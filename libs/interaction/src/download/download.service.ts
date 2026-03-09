@@ -2,13 +2,16 @@ import { ContentTypeEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { ContentPermissionService } from '@libs/content/permission'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  buildCreatedAtSqlFilter,
+  normalizeInteractionPagination,
+} from '../query.helper'
 import { DownloadTargetTypeEnum } from './download.constant'
 import {
   DownloadedWorkChapterPageDto,
   DownloadedWorkPageDto,
   QueryDownloadedWorkChapterDto,
   QueryDownloadedWorkDto,
-  QueryUserDownloadRecordDto,
   UserDownloadRecordKeyDto,
 } from './dto/download.dto'
 
@@ -24,56 +27,6 @@ export class DownloadService extends BaseService {
     return this.prisma.userDownloadRecord
   }
 
-  private normalizePagination(pageIndex?: number, pageSize?: number) {
-    const rawPageIndex = Number.isFinite(Number(pageIndex))
-      ? Math.floor(Number(pageIndex))
-      : 0
-    const normalizedPageIndex =
-      rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
-
-    const rawPageSize = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : 15
-    const normalizedPageSize = Math.min(Math.max(1, rawPageSize), 500)
-
-    const skip =
-      normalizedPageIndex >= 1
-        ? (normalizedPageIndex - 1) * normalizedPageSize
-        : normalizedPageIndex * normalizedPageSize
-
-    return {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take: normalizedPageSize,
-    }
-  }
-
-  private buildCreatedAtFilter(startDate?: string, endDate?: string) {
-    const filters: Prisma.Sql[] = []
-
-    if (startDate) {
-      const start = new Date(startDate)
-      if (!Number.isNaN(start.getTime())) {
-        filters.push(Prisma.sql`udr.created_at >= ${start}`)
-      }
-    }
-
-    if (endDate) {
-      const end = new Date(endDate)
-      if (!Number.isNaN(end.getTime())) {
-        end.setDate(end.getDate() + 1)
-        filters.push(Prisma.sql`udr.created_at < ${end}`)
-      }
-    }
-
-    if (filters.length === 0) {
-      return Prisma.empty
-    }
-
-    return Prisma.sql` AND ${Prisma.join(filters, ' AND ')}`
-  }
-
   async downloadTarget(
     dto: UserDownloadRecordKeyDto,
     chapterPermission?: Awaited<
@@ -86,7 +39,7 @@ export class DownloadService extends BaseService {
       targetType !== DownloadTargetTypeEnum.COMIC_CHAPTER &&
       targetType !== DownloadTargetTypeEnum.NOVEL_CHAPTER
     ) {
-      throw new BadRequestException('不支持的目标类型')
+      throw new BadRequestException('不支持的下载目标类型')
     }
 
     await this.contentPermissionService.checkChapterDownload(
@@ -95,45 +48,40 @@ export class DownloadService extends BaseService {
       chapterPermission,
     )
 
-    // 检查是否已下载（幂等设计：同一用户重复下载同一章节不重复计数）
-    const existingRecord = await this.userDownloadRecord.findUnique({
-      where: {
-        targetType_targetId_userId: {
-          targetType,
-          targetId,
-          userId,
-        },
-      },
-    })
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.userDownloadRecord.create({
+          data: dto,
+        })
 
-    if (existingRecord) {
-      // 已下载过：直接返回内容，不新增记录和计数
+        const workChapter = await tx.workChapter.update({
+          where: { id: targetId },
+          data: { downloadCount: { increment: 1 } },
+          select: { content: true },
+        })
+
+        if (!workChapter.content) {
+          throw new BadRequestException('下载内容不存在')
+        }
+
+        return workChapter.content
+      })
+    } catch (error) {
+      if (!this.isUniqueConstraintError(error)) {
+        throw error
+      }
+
       const workChapter = await this.prisma.workChapter.findUnique({
         where: { id: targetId },
         select: { content: true },
       })
+
       if (!workChapter?.content) {
         throw new BadRequestException('下载内容不存在')
       }
+
       return workChapter.content
     }
-
-    // 首次下载：创建记录 + 增加计数
-    return this.prisma.$transaction(async (tx) => {
-      await tx.userDownloadRecord.create({
-        data: dto,
-      })
-
-      const workChapter = await tx.workChapter.update({
-        where: { id: targetId },
-        data: { downloadCount: { increment: 1 } },
-        select: { content: true },
-      })
-      if (!workChapter.content) {
-        throw new BadRequestException('下载内容不存在')
-      }
-      return workChapter.content
-    })
   }
 
   async downloadChapter(userId: number, chapterId: number) {
@@ -162,7 +110,7 @@ export class DownloadService extends BaseService {
       )
     }
 
-    throw new BadRequestException('不支持的章节类型')
+    throw new BadRequestException('涓嶆敮鎸佺殑绔犺妭绫诲瀷')
   }
 
   async checkDownloadStatus(dto: UserDownloadRecordKeyDto) {
@@ -203,33 +151,6 @@ export class DownloadService extends BaseService {
     return result
   }
 
-  async recordDownload(dto: UserDownloadRecordKeyDto) {
-    return this.userDownloadRecord.create({
-      data: dto,
-    })
-  }
-
-  async deleteDownloadRecord(id: number) {
-    return this.userDownloadRecord.delete({
-      where: { id },
-    })
-  }
-
-  async getUserDownloadRecord(dto: QueryUserDownloadRecordDto) {
-    const { userId, targetType, ...restDto } = dto
-
-    return this.userDownloadRecord.findPagination({
-      where: {
-        ...restDto,
-        userId,
-        ...(targetType && { targetType }),
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
-  }
-
   async getDownloadedWorks(
     dto: QueryDownloadedWorkDto,
   ): Promise<DownloadedWorkPageDto> {
@@ -239,8 +160,12 @@ export class DownloadService extends BaseService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = this.normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = this.buildCreatedAtFilter(startDate, endDate)
+    } = normalizeInteractionPagination(pageIndex, pageSize)
+    const createdAtFilter = buildCreatedAtSqlFilter(
+      'udr.created_at',
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? Prisma.sql` AND w.type = ${workType}`
       : Prisma.empty
@@ -268,6 +193,8 @@ export class DownloadService extends BaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
@@ -281,6 +208,8 @@ export class DownloadService extends BaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),
@@ -322,8 +251,12 @@ export class DownloadService extends BaseService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = this.normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = this.buildCreatedAtFilter(startDate, endDate)
+    } = normalizeInteractionPagination(pageIndex, pageSize)
+    const createdAtFilter = buildCreatedAtSqlFilter(
+      'udr.created_at',
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? Prisma.sql` AND wc.work_type = ${workType}`
       : Prisma.empty
@@ -364,9 +297,12 @@ export class DownloadService extends BaseService {
           wc.publish_at AS "chapterPublishAt"
         FROM user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
+        INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
           AND wc.work_id = ${workId}
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         ORDER BY udr.created_at DESC
@@ -376,9 +312,12 @@ export class DownloadService extends BaseService {
         SELECT COUNT(*)::bigint AS "total"
         FROM user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
+        INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
           AND wc.work_id = ${workId}
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),

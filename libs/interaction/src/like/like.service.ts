@@ -176,7 +176,7 @@ export class LikeService extends BaseService {
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          duplicateMessage: 'Already liked',
+          duplicateMessage: '已点赞',
         })
       }
 
@@ -216,7 +216,7 @@ export class LikeService extends BaseService {
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          notFoundMessage: 'Like record not found',
+          notFoundMessage: '点赞记录不存在',
         })
       }
 

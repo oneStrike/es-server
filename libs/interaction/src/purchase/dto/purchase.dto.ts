@@ -12,7 +12,6 @@ import { BaseDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
   IntersectionType,
   OmitType,
-  PartialType,
   PickType,
 } from '@nestjs/swagger'
 import {
@@ -23,29 +22,29 @@ import {
 
 export class BaseUserPurchaseRecordDto extends BaseDto {
   @EnumProperty({
-    description: '目标类型：1=漫画, 2=小说, 3=漫画章节, 4=小说章节',
+    description: '目标类型（3=漫画章节，4=小说章节）',
     enum: PurchaseTargetTypeEnum,
-    example: 1,
+    example: PurchaseTargetTypeEnum.COMIC_CHAPTER,
     required: true,
   })
   targetType!: PurchaseTargetTypeEnum
 
   @NumberProperty({
-    description: '目标ID',
+    description: '目标 ID',
     example: 1,
     required: true,
   })
   targetId!: number
 
   @NumberProperty({
-    description: '用户ID',
+    description: '用户 ID',
     example: 1,
     required: true,
   })
   userId!: number
 
   @EnumProperty({
-    description: '支付方式：1=积分',
+    description: '支付方式（1=积分）',
     enum: PaymentMethodEnum,
     example: PaymentMethodEnum.POINTS,
     required: true,
@@ -58,27 +57,11 @@ export class PurchaseTargetDto extends OmitType(
   OMIT_BASE_FIELDS,
 ) {
   @StringProperty({
-    description: '第三方支付订单号（支付宝/微信支付时使用）',
+    description: '第三方支付订单号（如有）',
     example: '2024010123456789',
     required: false,
   })
   outTradeNo?: string
-}
-
-export class QueryUserPurchaseRecordDto extends IntersectionType(
-  IntersectionType(
-    PageDto,
-    PartialType(PickType(BaseUserPurchaseRecordDto, ['targetType'])),
-  ),
-  PickType(BaseUserPurchaseRecordDto, ['userId']),
-) {
-  @EnumProperty({
-    description: '购买状态：1=成功, 2=失败, 3=退款中, 4=已退款',
-    enum: PurchaseStatusEnum,
-    example: 1,
-    required: false,
-  })
-  status?: PurchaseStatusEnum
 }
 
 export class QueryPurchasedWorkDto extends IntersectionType(
@@ -86,7 +69,7 @@ export class QueryPurchasedWorkDto extends IntersectionType(
   PickType(BaseUserPurchaseRecordDto, ['userId']),
 ) {
   @EnumProperty({
-    description: '作品类型：1=漫画, 2=小说',
+    description: '作品类型（1=漫画，2=小说）',
     enum: ContentTypeEnum,
     example: ContentTypeEnum.COMIC,
     required: false,
@@ -94,7 +77,7 @@ export class QueryPurchasedWorkDto extends IntersectionType(
   workType?: ContentTypeEnum
 
   @EnumProperty({
-    description: '购买状态：1=成功, 2=失败, 3=退款中, 4=已退款',
+    description: '购买状态（1=成功，2=失败，3=退款中，4=已退款）',
     enum: PurchaseStatusEnum,
     example: PurchaseStatusEnum.SUCCESS,
     required: false,
@@ -104,7 +87,7 @@ export class QueryPurchasedWorkDto extends IntersectionType(
 
 export class QueryPurchasedWorkChapterDto extends QueryPurchasedWorkDto {
   @NumberProperty({
-    description: '作品ID',
+    description: '作品 ID',
     example: 1,
     required: true,
   })
@@ -113,16 +96,18 @@ export class QueryPurchasedWorkChapterDto extends QueryPurchasedWorkDto {
 
 export class PurchasedWorkInfoDto {
   @NumberProperty({
-    description: '作品ID',
+    description: '作品 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   id!: number
 
   @NumberProperty({
-    description: '作品类型：1=漫画, 2=小说',
-    example: 1,
+    description: '作品类型（1=漫画，2=小说）',
+    example: ContentTypeEnum.COMIC,
     required: true,
+    validation: false,
   })
   type!: number
 
@@ -130,6 +115,7 @@ export class PurchasedWorkInfoDto {
     description: '作品名称',
     example: '鬼灭之刃',
     required: true,
+    validation: false,
   })
   name!: string
 
@@ -137,6 +123,7 @@ export class PurchasedWorkInfoDto {
     description: '作品封面',
     example: '/uploads/work/cover-1.jpg',
     required: true,
+    validation: false,
   })
   cover!: string
 }
@@ -155,6 +142,7 @@ export class PurchasedWorkItemDto {
     example: 12,
     required: true,
     min: 0,
+    validation: false,
   })
   purchasedChapterCount!: number
 
@@ -182,6 +170,7 @@ export class PurchasedWorkPageDto {
     example: 100,
     required: true,
     min: 0,
+    validation: false,
   })
   total!: number
 
@@ -190,6 +179,7 @@ export class PurchasedWorkPageDto {
     example: 0,
     required: true,
     min: 0,
+    validation: false,
   })
   pageIndex!: number
 
@@ -198,29 +188,33 @@ export class PurchasedWorkPageDto {
     example: 15,
     required: true,
     min: 1,
+    validation: false,
   })
   pageSize!: number
 }
 
 export class PurchasedChapterInfoDto {
   @NumberProperty({
-    description: '章节ID',
+    description: '章节 ID',
     example: 101,
     required: true,
+    validation: false,
   })
   id!: number
 
   @NumberProperty({
-    description: '作品ID',
+    description: '作品 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   workId!: number
 
   @NumberProperty({
-    description: '作品类型：1=漫画, 2=小说',
-    example: 1,
+    description: '作品类型（1=漫画，2=小说）',
+    example: ContentTypeEnum.COMIC,
     required: true,
+    validation: false,
   })
   workType!: number
 
@@ -228,6 +222,7 @@ export class PurchasedChapterInfoDto {
     description: '章节标题',
     example: '第1话',
     required: true,
+    validation: false,
   })
   title!: string
 
@@ -235,6 +230,7 @@ export class PurchasedChapterInfoDto {
     description: '章节副标题',
     example: '初次登场',
     required: false,
+    validation: false,
   })
   subtitle?: string | null
 
@@ -242,6 +238,7 @@ export class PurchasedChapterInfoDto {
     description: '章节封面',
     example: '/uploads/chapter/cover-1.jpg',
     required: false,
+    validation: false,
   })
   cover?: string | null
 
@@ -249,13 +246,15 @@ export class PurchasedChapterInfoDto {
     description: '章节排序',
     example: 1,
     required: true,
+    validation: false,
   })
   sortOrder!: number
 
   @BooleanProperty({
-    description: '是否发布',
+    description: '是否已发布',
     example: true,
     required: true,
+    validation: false,
   })
   isPublished!: boolean
 
@@ -270,31 +269,35 @@ export class PurchasedChapterInfoDto {
 
 export class PurchasedWorkChapterItemDto {
   @NumberProperty({
-    description: '购买记录ID',
+    description: '购买记录 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   id!: number
 
   @EnumProperty({
-    description: '目标类型：1=漫画章节, 2=小说章节',
+    description: '目标类型（3=漫画章节，4=小说章节）',
     enum: PurchaseTargetTypeEnum,
     example: PurchaseTargetTypeEnum.COMIC_CHAPTER,
     required: true,
+    validation: false,
   })
   targetType!: PurchaseTargetTypeEnum
 
   @NumberProperty({
-    description: '目标ID（章节ID）',
+    description: '目标 ID（章节 ID）',
     example: 101,
     required: true,
+    validation: false,
   })
   targetId!: number
 
   @NumberProperty({
-    description: '用户ID',
+    description: '用户 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   userId!: number
 
@@ -302,22 +305,25 @@ export class PurchasedWorkChapterItemDto {
     description: '购买价格',
     example: 20,
     required: true,
+    validation: false,
   })
   price!: number
 
   @EnumProperty({
-    description: '购买状态：1=成功, 2=失败, 3=退款中, 4=已退款',
+    description: '购买状态（1=成功，2=失败，3=退款中，4=已退款）',
     enum: PurchaseStatusEnum,
     example: PurchaseStatusEnum.SUCCESS,
     required: true,
+    validation: false,
   })
   status!: PurchaseStatusEnum
 
   @EnumProperty({
-    description: '支付方式：1=积分',
+    description: '支付方式（1=积分）',
     enum: PaymentMethodEnum,
     example: PaymentMethodEnum.POINTS,
     required: true,
+    validation: false,
   })
   paymentMethod!: PaymentMethodEnum
 
@@ -325,6 +331,7 @@ export class PurchasedWorkChapterItemDto {
     description: '第三方支付订单号',
     example: '2024010123456789',
     required: false,
+    validation: false,
   })
   outTradeNo?: string | null
 
@@ -368,6 +375,7 @@ export class PurchasedWorkChapterPageDto {
     example: 100,
     required: true,
     min: 0,
+    validation: false,
   })
   total!: number
 
@@ -376,6 +384,7 @@ export class PurchasedWorkChapterPageDto {
     example: 0,
     required: true,
     min: 0,
+    validation: false,
   })
   pageIndex!: number
 
@@ -384,20 +393,21 @@ export class PurchasedWorkChapterPageDto {
     example: 15,
     required: true,
     min: 1,
+    validation: false,
   })
   pageSize!: number
 }
 
 export class RefundPurchaseDto extends BaseDto {
   @NumberProperty({
-    description: '购买记录ID',
+    description: '购买记录 ID',
     example: 1,
     required: true,
   })
   purchaseId!: number
 
   @NumberProperty({
-    description: '用户ID',
+    description: '用户 ID',
     example: 1,
     required: true,
   })

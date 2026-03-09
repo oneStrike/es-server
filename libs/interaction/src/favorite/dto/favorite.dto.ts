@@ -1,82 +1,47 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsIn, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator'
+import { BooleanProperty, EnumProperty } from '@libs/base/decorators'
+import { PageDto } from '@libs/base/dto'
+import { PartialType } from '@nestjs/swagger'
+import { TargetIdBodyDto } from '../../dto/target.dto'
 
-const FAVORITE_TARGET_TYPES = [
-  InteractionTargetTypeEnum.COMIC,
-  InteractionTargetTypeEnum.NOVEL,
-  InteractionTargetTypeEnum.FORUM_TOPIC,
-] as const
+const FAVORITE_TARGET_TYPES = {
+  COMIC: InteractionTargetTypeEnum.COMIC,
+  NOVEL: InteractionTargetTypeEnum.NOVEL,
+  FORUM_TOPIC: InteractionTargetTypeEnum.FORUM_TOPIC,
+} as const
 
-export class FavoriteDto {
-  @ApiProperty({
-    description: 'Favorite target type: 1=comic, 2=novel, 5=forum topic',
+export class FavoriteTargetDto extends TargetIdBodyDto {
+  @EnumProperty({
+    description: '收藏目标类型（1=漫画，2=小说，5=论坛主题）',
     enum: FAVORITE_TARGET_TYPES,
     example: InteractionTargetTypeEnum.COMIC,
+    required: true,
   })
-  @IsInt()
-  @IsIn(FAVORITE_TARGET_TYPES)
-  @IsNotEmpty()
   targetType!: InteractionTargetTypeEnum
-
-  @ApiProperty({
-    description: 'Target ID',
-    example: 1,
-  })
-  @IsInt()
-  @Min(1)
-  @IsNotEmpty()
-  targetId!: number
 }
 
-export class UnfavoriteDto extends FavoriteDto {}
+export class FavoriteDto extends FavoriteTargetDto {}
 
-export class FavoriteStatusQueryDto {
-  @ApiProperty({
-    description: 'Favorite target type',
+export class UnfavoriteDto extends FavoriteTargetDto {}
+
+export class FavoriteStatusQueryDto extends FavoriteTargetDto {}
+
+export class FavoriteListQueryDto extends PartialType(PageDto) {
+  @EnumProperty({
+    description: '按收藏目标类型筛选',
     enum: FAVORITE_TARGET_TYPES,
     example: InteractionTargetTypeEnum.COMIC,
+    required: false,
   })
-  @IsInt()
-  @IsIn(FAVORITE_TARGET_TYPES)
-  @IsNotEmpty()
-  targetType!: InteractionTargetTypeEnum
-
-  @ApiProperty({
-    description: 'Target ID',
-    example: 1,
-  })
-  @IsInt()
-  @Min(1)
-  @IsNotEmpty()
-  targetId!: number
-}
-
-export class FavoriteListQueryDto {
-  @ApiPropertyOptional({
-    description: 'Filter by favorite target type',
-    enum: FAVORITE_TARGET_TYPES,
-    example: InteractionTargetTypeEnum.COMIC,
-  })
-  @IsInt()
-  @IsIn(FAVORITE_TARGET_TYPES)
-  @IsOptional()
   targetType?: InteractionTargetTypeEnum
-
-  @ApiPropertyOptional({ description: 'Page index', default: 0, example: 0 })
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  pageIndex?: number = 0
-
-  @ApiPropertyOptional({ description: 'Page size', default: 15, example: 15 })
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  pageSize?: number = 15
 }
 
 export class FavoriteStatusResponseDto {
-  @ApiProperty({ description: 'Whether target is favorited', example: true })
+  @BooleanProperty({
+    description: '是否已收藏',
+    example: true,
+    required: true,
+    validation: false,
+  })
   isFavorited!: boolean
 }

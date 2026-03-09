@@ -7,6 +7,7 @@ import {
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
+import { refreshUserLevelByExperience } from '../user-level.helper'
 
 /**
  * 点赞成长奖励服务。
@@ -69,7 +70,7 @@ export class LikeGrowthService extends BaseService {
           experienceResult.success &&
           experienceResult.afterValue !== undefined
         ) {
-          await this.refreshLevelByExperience(
+          await refreshUserLevelByExperience(
             tx,
             userId,
             experienceResult.afterValue,
@@ -126,7 +127,7 @@ export class LikeGrowthService extends BaseService {
           experienceResult.success &&
           experienceResult.afterValue !== undefined
         ) {
-          await this.refreshLevelByExperience(
+          await refreshUserLevelByExperience(
             tx,
             comment.userId,
             experienceResult.afterValue,
@@ -136,31 +137,5 @@ export class LikeGrowthService extends BaseService {
     } catch {
       // 奖励失败不影响主流程。
     }
-  }
-
-  private async refreshLevelByExperience(
-    tx: any,
-    userId: number,
-    experience: number,
-  ): Promise<void> {
-    const levelRule = await tx.userLevelRule.findFirst({
-      where: {
-        isEnabled: true,
-        requiredExperience: { lte: experience },
-      },
-      orderBy: {
-        requiredExperience: 'desc',
-      },
-      select: { id: true },
-    })
-
-    if (!levelRule) {
-      return
-    }
-
-    await tx.appUser.update({
-      where: { id: userId },
-      data: { levelId: levelRule.id },
-    })
   }
 }

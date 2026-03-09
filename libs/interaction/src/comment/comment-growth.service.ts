@@ -5,6 +5,7 @@ import {
 } from '@libs/user/growth-ledger'
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
+import { refreshUserLevelByExperience } from '../user-level.helper'
 
 @Injectable()
 export class CommentGrowthService extends BaseService {
@@ -52,7 +53,7 @@ export class CommentGrowthService extends BaseService {
     })
 
     if (experienceResult.success && experienceResult.afterValue !== undefined) {
-      await this.refreshLevelByExperience(tx, userId, experienceResult.afterValue)
+      await refreshUserLevelByExperience(tx, userId, experienceResult.afterValue)
     }
   }
 
@@ -94,37 +95,11 @@ export class CommentGrowthService extends BaseService {
     })
 
     if (experienceResult.success && experienceResult.afterValue !== undefined) {
-      await this.refreshLevelByExperience(
+      await refreshUserLevelByExperience(
         tx,
         authorUserId,
         experienceResult.afterValue,
       )
     }
-  }
-
-  private async refreshLevelByExperience(
-    tx: any,
-    userId: number,
-    experience: number,
-  ) {
-    const levelRule = await tx.userLevelRule.findFirst({
-      where: {
-        isEnabled: true,
-        requiredExperience: { lte: experience },
-      },
-      orderBy: {
-        requiredExperience: 'desc',
-      },
-      select: { id: true },
-    })
-
-    if (!levelRule) {
-      return
-    }
-
-    await tx.appUser.update({
-      where: { id: userId },
-      data: { levelId: levelRule.id },
-    })
   }
 }

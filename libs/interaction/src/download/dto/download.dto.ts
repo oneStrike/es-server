@@ -9,7 +9,7 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { DownloadTargetTypeEnum } from '../download.constant'
 
 export class BaseUserDownloadRecordDto extends PickType(BaseDto, [
@@ -17,22 +17,22 @@ export class BaseUserDownloadRecordDto extends PickType(BaseDto, [
   'createdAt',
 ]) {
   @EnumProperty({
-    description: '目标类型：1=漫画, 2=小说, 3=漫画章节, 4=小说章节',
+    description: '目标类型（3=漫画章节，4=小说章节）',
     enum: DownloadTargetTypeEnum,
-    example: 1,
+    example: DownloadTargetTypeEnum.COMIC_CHAPTER,
     required: true,
   })
   targetType!: DownloadTargetTypeEnum
 
   @NumberProperty({
-    description: '目标ID',
+    description: '目标 ID',
     example: 1,
     required: true,
   })
   targetId!: number
 
   @NumberProperty({
-    description: '用户ID',
+    description: '用户 ID',
     example: 1,
     required: true,
   })
@@ -44,20 +44,12 @@ export class UserDownloadRecordKeyDto extends PickType(
   ['targetType', 'targetId', 'userId'],
 ) {}
 
-export class QueryUserDownloadRecordDto extends IntersectionType(
-  IntersectionType(
-    PageDto,
-    PartialType(PickType(BaseUserDownloadRecordDto, ['targetType'])),
-  ),
-  PickType(BaseUserDownloadRecordDto, ['userId']),
-) {}
-
 export class QueryDownloadedWorkDto extends IntersectionType(
   PageDto,
   PickType(BaseUserDownloadRecordDto, ['userId']),
 ) {
   @EnumProperty({
-    description: '作品类型：1=漫画, 2=小说',
+    description: '作品类型（1=漫画，2=小说）',
     enum: ContentTypeEnum,
     example: ContentTypeEnum.COMIC,
     required: false,
@@ -67,7 +59,7 @@ export class QueryDownloadedWorkDto extends IntersectionType(
 
 export class QueryDownloadedWorkChapterDto extends QueryDownloadedWorkDto {
   @NumberProperty({
-    description: '作品ID',
+    description: '作品 ID',
     example: 1,
     required: true,
   })
@@ -76,16 +68,18 @@ export class QueryDownloadedWorkChapterDto extends QueryDownloadedWorkDto {
 
 export class DownloadedWorkInfoDto {
   @NumberProperty({
-    description: '作品ID',
+    description: '作品 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   id!: number
 
   @NumberProperty({
-    description: '作品类型：1=漫画, 2=小说',
-    example: 1,
+    description: '作品类型（1=漫画，2=小说）',
+    example: ContentTypeEnum.COMIC,
     required: true,
+    validation: false,
   })
   type!: number
 
@@ -93,6 +87,7 @@ export class DownloadedWorkInfoDto {
     description: '作品名称',
     example: '鬼灭之刃',
     required: true,
+    validation: false,
   })
   name!: string
 
@@ -100,6 +95,7 @@ export class DownloadedWorkInfoDto {
     description: '作品封面',
     example: '/uploads/work/cover-1.jpg',
     required: true,
+    validation: false,
   })
   cover!: string
 }
@@ -118,6 +114,7 @@ export class DownloadedWorkItemDto {
     example: 12,
     required: true,
     min: 0,
+    validation: false,
   })
   downloadedChapterCount!: number
 
@@ -145,6 +142,7 @@ export class DownloadedWorkPageDto {
     example: 100,
     required: true,
     min: 0,
+    validation: false,
   })
   total!: number
 
@@ -153,6 +151,7 @@ export class DownloadedWorkPageDto {
     example: 0,
     required: true,
     min: 0,
+    validation: false,
   })
   pageIndex!: number
 
@@ -161,29 +160,33 @@ export class DownloadedWorkPageDto {
     example: 15,
     required: true,
     min: 1,
+    validation: false,
   })
   pageSize!: number
 }
 
 export class DownloadedChapterInfoDto {
   @NumberProperty({
-    description: '章节ID',
+    description: '章节 ID',
     example: 101,
     required: true,
+    validation: false,
   })
   id!: number
 
   @NumberProperty({
-    description: '作品ID',
+    description: '作品 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   workId!: number
 
   @NumberProperty({
-    description: '作品类型：1=漫画, 2=小说',
-    example: 1,
+    description: '作品类型（1=漫画，2=小说）',
+    example: ContentTypeEnum.COMIC,
     required: true,
+    validation: false,
   })
   workType!: number
 
@@ -191,6 +194,7 @@ export class DownloadedChapterInfoDto {
     description: '章节标题',
     example: '第1话',
     required: true,
+    validation: false,
   })
   title!: string
 
@@ -198,6 +202,7 @@ export class DownloadedChapterInfoDto {
     description: '章节副标题',
     example: '初次登场',
     required: false,
+    validation: false,
   })
   subtitle?: string | null
 
@@ -205,6 +210,7 @@ export class DownloadedChapterInfoDto {
     description: '章节封面',
     example: '/uploads/chapter/cover-1.jpg',
     required: false,
+    validation: false,
   })
   cover?: string | null
 
@@ -212,13 +218,15 @@ export class DownloadedChapterInfoDto {
     description: '章节排序',
     example: 1,
     required: true,
+    validation: false,
   })
   sortOrder!: number
 
   @BooleanProperty({
-    description: '是否发布',
+    description: '是否已发布',
     example: true,
     required: true,
+    validation: false,
   })
   isPublished!: boolean
 
@@ -233,31 +241,35 @@ export class DownloadedChapterInfoDto {
 
 export class DownloadedWorkChapterItemDto {
   @NumberProperty({
-    description: '下载记录ID',
+    description: '下载记录 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   id!: number
 
   @EnumProperty({
-    description: '目标类型：3=漫画章节, 4=小说章节',
+    description: '目标类型（3=漫画章节，4=小说章节）',
     enum: DownloadTargetTypeEnum,
     example: DownloadTargetTypeEnum.COMIC_CHAPTER,
     required: true,
+    validation: false,
   })
   targetType!: DownloadTargetTypeEnum
 
   @NumberProperty({
-    description: '目标ID（章节ID）',
+    description: '目标 ID（章节 ID）',
     example: 101,
     required: true,
+    validation: false,
   })
   targetId!: number
 
   @NumberProperty({
-    description: '用户ID',
+    description: '用户 ID',
     example: 1,
     required: true,
+    validation: false,
   })
   userId!: number
 
@@ -293,6 +305,7 @@ export class DownloadedWorkChapterPageDto {
     example: 100,
     required: true,
     min: 0,
+    validation: false,
   })
   total!: number
 
@@ -301,6 +314,7 @@ export class DownloadedWorkChapterPageDto {
     example: 0,
     required: true,
     min: 0,
+    validation: false,
   })
   pageIndex!: number
 
@@ -309,6 +323,7 @@ export class DownloadedWorkChapterPageDto {
     example: 15,
     required: true,
     min: 1,
+    validation: false,
   })
   pageSize!: number
 }

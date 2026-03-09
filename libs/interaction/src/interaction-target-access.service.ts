@@ -18,7 +18,7 @@ export class InteractionTargetAccessService extends BaseService {
   getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
     const definition = INTERACTION_TARGET_DEFINITIONS[targetType]
     if (!definition) {
-      throw new BadRequestException('Unsupported interaction target type')
+      throw new BadRequestException('不支持的交互目标类型')
     }
 
     const model = client?.[definition.modelKey]
@@ -40,7 +40,7 @@ export class InteractionTargetAccessService extends BaseService {
   ): Record<string, unknown> {
     const definition = INTERACTION_TARGET_DEFINITIONS[targetType]
     if (!definition) {
-      throw new BadRequestException('Unsupported interaction target type')
+      throw new BadRequestException('不支持的交互目标类型')
     }
 
     return definition.buildWhere(targetId)
@@ -55,7 +55,7 @@ export class InteractionTargetAccessService extends BaseService {
   ): Record<string, unknown> {
     const definition = INTERACTION_TARGET_DEFINITIONS[targetType]
     if (!definition) {
-      throw new BadRequestException('Unsupported interaction target type')
+      throw new BadRequestException('不支持的交互目标类型')
     }
 
     return definition.buildWhereIn(targetIds)
@@ -82,7 +82,7 @@ export class InteractionTargetAccessService extends BaseService {
     })
 
     if (!target) {
-      throw new NotFoundException(options?.notFoundMessage ?? 'Target not found')
+      throw new NotFoundException(options?.notFoundMessage ?? '目标不存在')
     }
 
     return target as T

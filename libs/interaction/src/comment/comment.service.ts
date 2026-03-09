@@ -11,19 +11,15 @@ import { ConfigReader } from '@libs/system-config'
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import {
   CreateCommentDto,
-  QueryCommentPageDto,
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
   ReplyCommentDto,
-  UpdateCommentAuditDto,
-  UpdateCommentHiddenDto,
 } from './dto/comment.dto'
 
 interface VisibleCommentPayload {
@@ -327,180 +323,6 @@ export class CommentService extends BaseService {
         },
       },
     })
-  }
-
-  async getCommentManagePage(query: QueryCommentPageDto) {
-    const { rootOnly = false, ...otherDto } = query
-
-    return this.prisma.userComment.findPagination({
-      where: {
-        ...(rootOnly && { replyToId: null }),
-        deletedAt: null,
-        ...otherDto,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
-      },
-    })
-  }
-
-  async getCommentDetail(commentId: number) {
-    const comment = await this.prisma.userComment.findUnique({
-      where: { id: commentId, deletedAt: null },
-      include: {
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
-        replyTo: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                nickname: true,
-                avatar: true,
-              },
-            },
-          },
-        },
-      },
-    })
-
-    if (!comment) {
-      throw new NotFoundException('未找到相关评论')
-    }
-
-    return comment
-  }
-
-  async updateCommentAudit(dto: UpdateCommentAuditDto) {
-    await this.prisma.$transaction(async (tx) => {
-      const comment = await tx.userComment.findUnique({
-        where: { id: dto.commentId, deletedAt: null },
-        select: {
-          id: true,
-          userId: true,
-          targetType: true,
-          targetId: true,
-          replyToId: true,
-          createdAt: true,
-          auditStatus: true,
-          isHidden: true,
-          deletedAt: true,
-        },
-      })
-      if (!comment) {
-        throw new NotFoundException('未找到相关评论')
-      }
-
-      const beforeVisible = this.isVisible(comment)
-
-      const { commentId, ...otherDto } = dto
-      const updated = await tx.userComment.update({
-        where: { id: commentId, deletedAt: null },
-        data: {
-          ...otherDto,
-          auditAt: new Date(),
-        },
-        select: {
-          id: true,
-          userId: true,
-          targetType: true,
-          targetId: true,
-          replyToId: true,
-          createdAt: true,
-          auditStatus: true,
-          isHidden: true,
-          deletedAt: true,
-        },
-      })
-
-      const afterVisible = this.isVisible(updated)
-      if (beforeVisible !== afterVisible) {
-        await this.applyCommentCountDelta(
-          tx,
-          updated.targetType as InteractionTargetTypeEnum,
-          updated.targetId,
-          afterVisible ? 1 : -1,
-        )
-      }
-
-      if (!beforeVisible && afterVisible) {
-        await this.compensateVisibleCommentEffects(tx, updated)
-      }
-    })
-
-    return { id: dto.commentId }
-  }
-
-  async updateCommentHidden(dto: UpdateCommentHiddenDto) {
-    await this.prisma.$transaction(async (tx) => {
-      const before = await tx.userComment.findUnique({
-        where: { id: dto.commentId, deletedAt: null },
-        select: {
-          id: true,
-          userId: true,
-          targetType: true,
-          targetId: true,
-          replyToId: true,
-          createdAt: true,
-          isHidden: true,
-          auditStatus: true,
-          deletedAt: true,
-        },
-      })
-
-      if (!before) {
-        throw new NotFoundException('未找到相关评论')
-      }
-
-      if (before.isHidden === dto.isHidden) {
-        return
-      }
-
-      const updated = await tx.userComment.update({
-        where: { id: dto.commentId, deletedAt: null },
-        data: { isHidden: dto.isHidden },
-        select: {
-          id: true,
-          userId: true,
-          targetType: true,
-          targetId: true,
-          replyToId: true,
-          createdAt: true,
-          isHidden: true,
-          auditStatus: true,
-          deletedAt: true,
-        },
-      })
-
-      const beforeVisible = this.isVisible(before)
-      const afterVisible = this.isVisible(updated)
-
-      if (beforeVisible !== afterVisible) {
-        await this.applyCommentCountDelta(
-          tx,
-          updated.targetType as InteractionTargetTypeEnum,
-          updated.targetId,
-          afterVisible ? 1 : -1,
-        )
-      }
-
-      if (!beforeVisible && afterVisible) {
-        await this.compensateVisibleCommentEffects(tx, updated)
-      }
-    })
-
-    return { id: dto.commentId }
   }
 
   async getUserComments(dto: QueryMyCommentPageDto, userId: number) {

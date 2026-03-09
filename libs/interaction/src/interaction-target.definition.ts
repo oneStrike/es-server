@@ -100,6 +100,18 @@ export const FAVORITE_SUPPORTED_TARGET_TYPES = new Set<
 ])
 
 /**
+ * Targets that can be viewed at business level.
+ * Comment is intentionally excluded because comment table has no viewCount field.
+ */
+export const VIEW_SUPPORTED_TARGET_TYPES = new Set<InteractionTargetTypeEnum>([
+  InteractionTargetTypeEnum.COMIC,
+  InteractionTargetTypeEnum.NOVEL,
+  InteractionTargetTypeEnum.COMIC_CHAPTER,
+  InteractionTargetTypeEnum.NOVEL_CHAPTER,
+  InteractionTargetTypeEnum.FORUM_TOPIC,
+])
+
+/**
  * Static target->scene map for non-comment direct targets.
  * Comment targets are dynamic and resolved from comment payload.
  */

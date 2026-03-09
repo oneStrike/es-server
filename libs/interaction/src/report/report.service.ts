@@ -12,6 +12,7 @@ import {
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { InteractionTargetResolverService } from '../interaction-target-resolver.service'
+import { refreshUserLevelByExperience } from '../user-level.helper'
 
 /**
  * 举报服务。
@@ -86,62 +87,6 @@ export class ReportService extends BaseService {
     })
 
     return report
-  }
-
-  /**
-   * 根据 ID 获取举报详情。
-   */
-  async getReportById(
-    id: number,
-    options?: {
-      include?: any
-      select?: any
-    },
-  ) {
-    return this.userReport.findUnique({
-      where: { id },
-      ...(options ?? {}),
-    })
-  }
-
-  /**
-   * 分页查询举报列表。
-   */
-  async queryReportPage(options: any) {
-    return this.userReport.findPagination(options)
-  }
-
-  /**
-   * 更新举报记录。
-   */
-  async updateReport(id: number, data: Record<string, unknown>) {
-    return this.userReport.update({
-      where: { id },
-      data,
-    })
-  }
-
-  /**
-   * 删除举报记录。
-   */
-  async deleteReport(id: number) {
-    return this.userReport.delete({
-      where: { id },
-    })
-  }
-
-  /**
-   * 统计举报数量。
-   */
-  async countReports(where?: Record<string, unknown>) {
-    return this.userReport.count({ where })
-  }
-
-  /**
-   * 分组统计举报数据。
-   */
-  async groupReportsBy(options: any) {
-    return this.userReport.groupBy(options)
   }
 
   /**
@@ -263,23 +208,7 @@ export class ReportService extends BaseService {
         })
 
         if (expResult.success && expResult.afterValue !== undefined) {
-          const levelRule = await tx.userLevelRule.findFirst({
-            where: {
-              isEnabled: true,
-              requiredExperience: { lte: expResult.afterValue },
-            },
-            orderBy: {
-              requiredExperience: 'desc',
-            },
-            select: { id: true },
-          })
-
-          if (levelRule) {
-            await tx.appUser.update({
-              where: { id: reporterId },
-              data: { levelId: levelRule.id },
-            })
-          }
+          await refreshUserLevelByExperience(tx, reporterId, expResult.afterValue)
         }
       })
     } catch {

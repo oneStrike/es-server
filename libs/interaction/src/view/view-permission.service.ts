@@ -5,6 +5,7 @@ import {
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
+import { VIEW_SUPPORTED_TARGET_TYPES } from '../interaction-target.definition'
 
 @Injectable()
 export class ViewPermissionService extends BaseService {
@@ -22,7 +23,7 @@ export class ViewPermissionService extends BaseService {
       this.prisma,
       targetType,
       targetId,
-      { notFoundMessage: 'Target not found' },
+      { notFoundMessage: '目标不存在' },
     )
   }
 
@@ -36,7 +37,7 @@ export class ViewPermissionService extends BaseService {
     })
 
     if (!user || !user.isEnabled) {
-      throw new BadRequestException('User does not exist or is disabled')
+      throw new BadRequestException('用户不存在或已禁用')
     }
 
     if (
@@ -47,19 +48,21 @@ export class ViewPermissionService extends BaseService {
         UserStatusEnum.PERMANENT_BANNED,
       ].includes(user.status)
     ) {
-      throw new BadRequestException('User is muted or banned and cannot view')
+      throw new BadRequestException('用户被禁言或封禁，无法浏览')
     }
   }
 
-  async isTargetValid(
+  async ensureTargetValid(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
-  ): Promise<boolean> {
-    try {
-      await this.ensureTargetExists(targetType, targetId)
-      return true
-    } catch {
-      return false
+  ): Promise<void> {
+    this.ensureTargetTypeSupported(targetType)
+    await this.ensureTargetExists(targetType, targetId)
+  }
+
+  private ensureTargetTypeSupported(targetType: InteractionTargetTypeEnum) {
+    if (!VIEW_SUPPORTED_TARGET_TYPES.has(targetType)) {
+      throw new BadRequestException('不支持的浏览目标类型')
     }
   }
 }

@@ -22,7 +22,7 @@ export class LikePermissionService extends BaseService {
       this.prisma,
       targetType,
       targetId,
-      { notFoundMessage: 'Target not found' },
+      { notFoundMessage: '目标不存在' },
     )
   }
 
@@ -75,7 +75,7 @@ export class LikePermissionService extends BaseService {
     })
 
     if (usedToday >= dailyLikeLimit) {
-      throw new BadRequestException('Daily like limit reached')
+      throw new BadRequestException('今日点赞次数已达上限')
     }
   }
 
@@ -94,7 +94,7 @@ export class LikePermissionService extends BaseService {
     })
 
     if (!user || !user.isEnabled) {
-      throw new BadRequestException('User does not exist or is disabled')
+      throw new BadRequestException('用户不存在或已禁用')
     }
 
     if (
@@ -105,7 +105,7 @@ export class LikePermissionService extends BaseService {
         UserStatusEnum.PERMANENT_BANNED,
       ].includes(user.status)
     ) {
-      throw new BadRequestException('User is muted or banned and cannot like')
+      throw new BadRequestException('用户被禁言或封禁，无法点赞')
     }
 
     return user

@@ -89,7 +89,7 @@ export class FavoriteService extends BaseService {
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          duplicateMessage: 'Already favorited',
+          duplicateMessage: '已收藏',
         })
       }
 
@@ -139,7 +139,7 @@ export class FavoriteService extends BaseService {
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          notFoundMessage: 'Favorite record not found',
+          notFoundMessage: '收藏记录不存在',
         })
       }
 

@@ -16,7 +16,6 @@ export * from './download/download.service'
 export * from './download/dto/download.dto'
 
 // shared dto
-export * from './dto/base-interaction.dto'
 export * from './dto/target.dto'
 
 // favorite

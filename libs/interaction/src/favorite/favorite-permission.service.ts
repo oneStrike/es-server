@@ -23,7 +23,7 @@ export class FavoritePermissionService extends BaseService {
       this.prisma,
       targetType,
       targetId,
-      { notFoundMessage: 'Target not found' },
+      { notFoundMessage: '目标不存在' },
     )
   }
 
@@ -55,7 +55,7 @@ export class FavoritePermissionService extends BaseService {
 
   private ensureTargetTypeSupported(targetType: InteractionTargetTypeEnum) {
     if (!FAVORITE_SUPPORTED_TARGET_TYPES.has(targetType)) {
-      throw new BadRequestException('Unsupported favorite target type')
+      throw new BadRequestException('不支持的收藏目标类型')
     }
   }
 
@@ -78,7 +78,7 @@ export class FavoritePermissionService extends BaseService {
     })
 
     if (usedToday >= dailyFavoriteLimit) {
-      throw new BadRequestException('Daily favorite limit reached')
+      throw new BadRequestException('今日收藏次数已达上限')
     }
   }
 
@@ -97,7 +97,7 @@ export class FavoritePermissionService extends BaseService {
     })
 
     if (!user || !user.isEnabled) {
-      throw new BadRequestException('User does not exist or is disabled')
+      throw new BadRequestException('用户不存在或已禁用')
     }
 
     if (
@@ -108,7 +108,7 @@ export class FavoritePermissionService extends BaseService {
         UserStatusEnum.PERMANENT_BANNED,
       ].includes(user.status)
     ) {
-      throw new BadRequestException('User is muted or banned and cannot favorite')
+      throw new BadRequestException('用户被禁言或封禁，无法收藏')
     }
 
     return user

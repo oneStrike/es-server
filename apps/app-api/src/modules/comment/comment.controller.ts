@@ -3,7 +3,6 @@ import { IdDto } from '@libs/base/dto'
 import {
   CommentService,
   CreateCommentBodyDto,
-  QueryCommentPageDto,
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
   ReplyCommentBodyDto,
@@ -58,7 +57,7 @@ export class CommentController {
   @Get('my')
   @ApiPageDoc({
     summary: '分页查询我的评论',
-    model: QueryCommentPageDto,
+    model: IdDto,
   })
   async page(
     @Query() query: QueryMyCommentPageDto,

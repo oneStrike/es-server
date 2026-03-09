@@ -1,4 +1,10 @@
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  RequestMeta,
+  RequestMetaResult,
+} from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
   ClearUserViewDto,
@@ -6,7 +12,7 @@ import {
   RecordViewDto,
   ViewService,
 } from '@libs/interaction'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('浏览模块')
@@ -19,14 +25,19 @@ export class ViewController {
     summary: '记录浏览',
     model: Boolean,
   })
-  async record(@Body() body: RecordViewDto, @CurrentUser('sub') userId: number) {
+  async record(
+    @Body() body: RecordViewDto,
+    @CurrentUser('sub') userId: number,
+    @RequestMeta() meta: RequestMetaResult,
+    @Headers('user-agent') userAgent?: string,
+  ) {
     await this.viewService.recordView(
       body.targetType,
       body.targetId,
       userId,
-      body.ipAddress,
-      body.device,
-      body.userAgent,
+      meta.ip,
+      meta.deviceId,
+      userAgent,
     )
     return { success: true }
   }

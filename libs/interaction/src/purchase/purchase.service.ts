@@ -8,12 +8,15 @@ import {
 } from '@libs/user/growth-ledger'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
+  buildCreatedAtSqlFilter,
+  normalizeInteractionPagination,
+} from '../query.helper'
+import {
   PurchasedWorkChapterPageDto,
   PurchasedWorkPageDto,
   PurchaseTargetDto,
   QueryPurchasedWorkChapterDto,
   QueryPurchasedWorkDto,
-  QueryUserPurchaseRecordDto,
 } from './dto/purchase.dto'
 import {
   PaymentMethodEnum,
@@ -21,10 +24,6 @@ import {
   PurchaseTargetTypeEnum,
 } from './purchase.constant'
 
-/**
- * 购买服务
- * 处理章节购买验证、结算和相关读取接口
- */
 @Injectable()
 export class PurchaseService extends BaseService {
   private readonly logger = new Logger(PurchaseService.name)
@@ -36,28 +35,9 @@ export class PurchaseService extends BaseService {
     super()
   }
 
-  /** 作品模型访问器 */
-  get work() {
-    return this.prisma.work
-  }
-
-  /** 用户模型访问器 */
-  get appUser() {
-    return this.prisma.appUser
-  }
-
-  /** 购买记录模型访问器 */
-  get userPurchaseRecord() {
-    return this.prisma.userPurchaseRecord
-  }
-
-  /**
-   * 检查目标是否需要购买
-   */
   async checkNeedPurchase(
     targetType: PurchaseTargetTypeEnum,
     targetId: number,
-    userId: number,
     chapterPermission?: Pick<
       Awaited<ReturnType<ContentPermissionService['resolveChapterPermission']>>,
       'price' | 'viewRule'
@@ -69,6 +49,7 @@ export class PurchaseService extends BaseService {
     ) {
       throw new BadRequestException('仅支持章节购买')
     }
+
     const { price, viewRule } =
       chapterPermission ??
       (await this.contentPermissionService.resolveChapterPermission(targetId))
@@ -77,32 +58,8 @@ export class PurchaseService extends BaseService {
       throw new BadRequestException('该章节不支持购买')
     }
 
-    // 防止无效配置，零价格是允许的，意味着不扣款
     if (price < 0) {
-      throw new BadRequestException('章节价格无效')
-    }
-
-    const existingPurchase =
-      await this.contentPermissionService.validateChapterPurchasePermission(
-        userId,
-        targetId,
-      )
-
-    if (existingPurchase) {
-      throw new BadRequestException('该章节已购买')
-    }
-
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-      select: { points: true },
-    })
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
-
-    const deficitPoints = Math.max(price - user.points, 0)
-    if (deficitPoints > 0) {
-      throw new BadRequestException('积分不足')
+      throw new BadRequestException('章节价格配置错误')
     }
 
     return {
@@ -110,12 +67,6 @@ export class PurchaseService extends BaseService {
     }
   }
 
-  /**
-   * 购买目标章节
-   * @param dto 购买请求
-   * @returns 购买记录
-   * @throws BadRequestException 验证失败时抛出
-   */
   async purchaseTarget(
     dto: PurchaseTargetDto,
     chapterPermission?: Pick<
@@ -128,7 +79,6 @@ export class PurchaseService extends BaseService {
     const { targetPrice } = await this.checkNeedPurchase(
       targetType,
       targetId,
-      userId,
       chapterPermission,
     )
 
@@ -190,6 +140,7 @@ export class PurchaseService extends BaseService {
         this.logger.log(
           `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} price=${targetPrice} purchaseId=${record.id}`,
         )
+
         return record
       })
     } catch (error) {
@@ -198,9 +149,11 @@ export class PurchaseService extends BaseService {
           `purchase_failed_duplicate userId=${userId} targetType=${targetType} targetId=${targetId}`,
         )
       }
+
       this.handlePrismaBusinessError(error, {
         duplicateMessage: '该章节已购买',
       })
+
       this.logger.error(
         `purchase_failed_unknown userId=${userId} targetType=${targetType} targetId=${targetId}`,
         error instanceof Error ? error.stack : undefined,
@@ -240,71 +193,6 @@ export class PurchaseService extends BaseService {
     throw new BadRequestException('不支持的章节类型')
   }
 
-  /**
-   * 获取分页购买记录
-   */
-  async getUserPurchases(dto: QueryUserPurchaseRecordDto) {
-    const { userId, targetType, status, ...other } = dto
-    return this.prisma.userPurchaseRecord.findPagination({
-      where: {
-        ...other,
-        userId,
-        targetType,
-        status,
-      },
-    })
-  }
-
-  private normalizePagination(pageIndex?: number, pageSize?: number) {
-    const rawPageIndex = Number.isFinite(Number(pageIndex))
-      ? Math.floor(Number(pageIndex))
-      : 0
-    const normalizedPageIndex =
-      rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
-
-    const rawPageSize = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : 15
-    const normalizedPageSize = Math.min(Math.max(1, rawPageSize), 500)
-
-    const skip =
-      normalizedPageIndex >= 1
-        ? (normalizedPageIndex - 1) * normalizedPageSize
-        : normalizedPageIndex * normalizedPageSize
-
-    return {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take: normalizedPageSize,
-    }
-  }
-
-  private buildCreatedAtFilter(startDate?: string, endDate?: string) {
-    const filters: Prisma.Sql[] = []
-
-    if (startDate) {
-      const start = new Date(startDate)
-      if (!Number.isNaN(start.getTime())) {
-        filters.push(Prisma.sql`upr.created_at >= ${start}`)
-      }
-    }
-
-    if (endDate) {
-      const end = new Date(endDate)
-      if (!Number.isNaN(end.getTime())) {
-        end.setDate(end.getDate() + 1)
-        filters.push(Prisma.sql`upr.created_at < ${end}`)
-      }
-    }
-
-    if (filters.length === 0) {
-      return Prisma.empty
-    }
-
-    return Prisma.sql` AND ${Prisma.join(filters, ' AND ')}`
-  }
-
   async getPurchasedWorks(dto: QueryPurchasedWorkDto): Promise<PurchasedWorkPageDto> {
     const {
       userId,
@@ -316,8 +204,12 @@ export class PurchaseService extends BaseService {
       endDate,
     } = dto
     const { pageIndex: normalizedPageIndex, pageSize: normalizedPageSize, skip, take } =
-      this.normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = this.buildCreatedAtFilter(startDate, endDate)
+      normalizeInteractionPagination(pageIndex, pageSize)
+    const createdAtFilter = buildCreatedAtSqlFilter(
+      'upr.created_at',
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? Prisma.sql` AND w.type = ${workType}`
       : Prisma.empty
@@ -346,6 +238,8 @@ export class PurchaseService extends BaseService {
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
           AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
@@ -356,9 +250,12 @@ export class PurchaseService extends BaseService {
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
         FROM user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
           AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),
@@ -397,8 +294,12 @@ export class PurchaseService extends BaseService {
       endDate,
     } = dto
     const { pageIndex: normalizedPageIndex, pageSize: normalizedPageSize, skip, take } =
-      this.normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = this.buildCreatedAtFilter(startDate, endDate)
+      normalizeInteractionPagination(pageIndex, pageSize)
+    const createdAtFilter = buildCreatedAtSqlFilter(
+      'upr.created_at',
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? Prisma.sql` AND wc.work_type = ${workType}`
       : Prisma.empty
@@ -449,10 +350,13 @@ export class PurchaseService extends BaseService {
           wc.publish_at AS "chapterPublishAt"
         FROM user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
           AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
           AND wc.work_id = ${workId}
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         ORDER BY upr.created_at DESC
@@ -462,14 +366,18 @@ export class PurchaseService extends BaseService {
         SELECT COUNT(*)::bigint AS "total"
         FROM user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
           AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
           AND wc.work_id = ${workId}
+          AND wc.deleted_at IS NULL
+          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),
     ])
+
     const total = Number(totalRows[0]?.total ?? 0n)
 
     return {

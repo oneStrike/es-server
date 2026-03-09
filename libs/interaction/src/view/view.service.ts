@@ -1,6 +1,7 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
+import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { ViewGrowthService } from './view-growth.service'
 import { ViewInteractionService } from './view-interaction.service'
 import { ViewPermissionService } from './view-permission.service'
@@ -11,8 +12,25 @@ export class ViewService extends BaseService {
     private readonly viewPermissionService: ViewPermissionService,
     private readonly viewInteractionService: ViewInteractionService,
     private readonly viewGrowthService: ViewGrowthService,
+    private readonly interactionTargetAccessService: InteractionTargetAccessService,
   ) {
     super()
+  }
+
+  private async applyTargetCountDelta(
+    tx: any,
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+    field: string,
+    delta: number,
+  ) {
+    await this.interactionTargetAccessService.applyTargetCountDelta(
+      tx,
+      targetType,
+      targetId,
+      field,
+      delta,
+    )
   }
 
   async recordView(
@@ -24,26 +42,22 @@ export class ViewService extends BaseService {
     userAgent?: string,
   ): Promise<void> {
     await this.viewPermissionService.ensureUserCanView(userId)
-    const isTargetValid = await this.viewPermissionService.isTargetValid(
-      targetType,
-      targetId,
-    )
+    await this.viewPermissionService.ensureTargetValid(targetType, targetId)
 
-    // 维持原行为：无效目标静默返回
-    if (!isTargetValid) {
-      return
-    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userView.create({
+        data: {
+          targetType,
+          targetId,
+          userId,
+          ipAddress,
+          device,
+          userAgent,
+          viewedAt: new Date(),
+        },
+      })
 
-    await this.prisma.userView.create({
-      data: {
-        targetType,
-        targetId,
-        userId,
-        ipAddress,
-        device,
-        userAgent,
-        viewedAt: new Date(),
-      },
+      await this.applyTargetCountDelta(tx, targetType, targetId, 'viewCount', 1)
     })
 
     await this.viewInteractionService.handleViewRecorded()

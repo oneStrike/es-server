@@ -1,1 +1,1 @@
-export * from './base-interaction.dto'
+export * from './target.dto'
