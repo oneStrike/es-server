@@ -47,7 +47,7 @@ export class FavoriteController {
 
   @Get('status')
   @ApiDoc({
-    summary: '查询收藏状态',
+    summary: '查询收藏状态（作品详情接口可复用）',
     model: Boolean,
   })
   async status(

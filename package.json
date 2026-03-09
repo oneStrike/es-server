@@ -97,7 +97,8 @@
     "tar": "^7.5.10",
     "uuid": "^13.0.0",
     "winston": "3.19.0",
-    "winston-daily-rotate-file": "5.0.0"
+    "winston-daily-rotate-file": "5.0.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^7.7.0",

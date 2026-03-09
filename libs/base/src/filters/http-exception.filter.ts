@@ -71,6 +71,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: parsed?.path,
       method: parsed?.method,
       ip: parsed?.ip,
+      params: parsed?.params,
     })
 
     response.code(status).send({

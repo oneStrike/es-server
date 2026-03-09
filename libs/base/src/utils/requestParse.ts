@@ -5,6 +5,7 @@ import type {
   RequestParams,
 } from './request-parse.types'
 import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/constant'
+import { maskString } from './mask'
 
 // 浏览器检测正则表达式（模块作用域，避免重复编译）
 const CHROME_REGEX = /Chrome\/(\d+)/
@@ -25,6 +26,76 @@ const IOS_REGEX = /iPhone OS \d+[._]\d+/
 // 设备类型检测正则表达式
 const MOBILE_REGEX = /Mobile/
 const TABLET_REGEX = /Tablet/
+
+const OMITTED_REQUEST_FIELDS = new Set(['scene', 'file'])
+const SENSITIVE_REQUEST_FIELDS = new Set([
+  'password',
+  'oldpassword',
+  'newpassword',
+  'confirmpassword',
+  'accesstoken',
+  'refreshtoken',
+  'token',
+  'authorization',
+  'accesskeyid',
+  'accesskeysecret',
+  'secret',
+])
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Object.prototype.toString.call(value) === '[object Object]'
+}
+
+function shouldOmitRequestField(key: string): boolean {
+  return OMITTED_REQUEST_FIELDS.has(key.toLowerCase())
+}
+
+function isSensitiveRequestField(key: string): boolean {
+  const normalized = key.toLowerCase()
+  return (
+    SENSITIVE_REQUEST_FIELDS.has(normalized) ||
+    normalized.endsWith('password') ||
+    normalized.endsWith('token') ||
+    normalized.endsWith('secret')
+  )
+}
+
+function maskSensitiveValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return maskString(value, 2, 2)
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => maskSensitiveValue(item))
+  }
+  if (isPlainObject(value)) {
+    return '[REDACTED]'
+  }
+  return value ?? '[REDACTED]'
+}
+
+function sanitizeRequestValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeRequestValue(item))
+  }
+
+  if (!isPlainObject(value)) {
+    return value
+  }
+
+  const sanitized: Record<string, unknown> = {}
+
+  for (const [key, fieldValue] of Object.entries(value)) {
+    if (shouldOmitRequestField(key)) {
+      continue
+    }
+
+    sanitized[key] = isSensitiveRequestField(key)
+      ? maskSensitiveValue(fieldValue)
+      : sanitizeRequestValue(fieldValue)
+  }
+
+  return sanitized
+}
 
 /**
  * 从 FastifyRequest 中提取 IP 地址
@@ -107,7 +178,7 @@ export function extractRequestParams(req: FastifyRequest): string | undefined {
 
     // 提取 body 参数
     if (req.body && typeof req.body === 'object') {
-      params.body = req.body
+      params.body = sanitizeRequestValue(req.body)
       hasParams = true
     }
 
@@ -117,7 +188,7 @@ export function extractRequestParams(req: FastifyRequest): string | undefined {
       typeof req.query === 'object' &&
       Object.keys(req.query).length > 0
     ) {
-      params.query = req.query
+      params.query = sanitizeRequestValue(req.query) as Record<string, unknown>
       hasParams = true
     }
 
@@ -127,14 +198,10 @@ export function extractRequestParams(req: FastifyRequest): string | undefined {
       typeof req.params === 'object' &&
       Object.keys(req.params).length > 0
     ) {
-      params.params = req.params
+      params.params = sanitizeRequestValue(req.params) as Record<string, unknown>
       hasParams = true
     }
-    // 密码字段
-    delete params?.body?.password
-    // 上传文件字段，无法被json转换
-    delete params?.body?.scene
-    delete params?.body?.file
+
     return hasParams ? JSON.stringify(params) : undefined
   } catch (error) {
     console.warn('提取请求参数失败:', error)

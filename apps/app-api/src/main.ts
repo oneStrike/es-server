@@ -1,49 +1,44 @@
 import type { AppConfigInterface } from '@libs/base/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { logStartupInfo, setupApp } from '@libs/base/bootstrap'
+import { MessageNativeWebSocketServer } from '@libs/message'
 import { ConfigService } from '@nestjs/config'
-
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AppModule } from './app.module'
 
-// Webpack HMR 声明模块类型
 declare const module: any
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
-    trustProxy: true, // 启用代理信任，用于正确解析 X-Forwarded-For 头部
+    trustProxy: true,
   })
 
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     fastifyAdapter,
     {
-      bufferLogs: true, // 缓冲日志，等待自定义logger初始化
+      bufferLogs: true,
     },
   )
-  // 允许优雅关闭钩子，以便 Terminus 在关闭期间报告状态
   app.enableShutdownHooks()
 
   const appConfig = app.get(ConfigService).get<AppConfigInterface>('app')!
-  // 配置应用（中间件、插件、日志等）
   await setupApp(app, fastifyAdapter, appConfig)
   app.useWebSocketAdapter(new IoAdapter(app))
 
-  await app.listen(appConfig.port, '0.0.0.0') // 监听所有网络接口（Docker 容器必需）
-
-  // 打印启动信息
+  await app.listen(appConfig.port, '0.0.0.0')
+  app.get(MessageNativeWebSocketServer).attach(app.getHttpServer())
   logStartupInfo(appConfig.port, appConfig.swaggerConfig.path)
-  // Webpack HMR 支持
+
   if (module.hot) {
     module.hot.accept()
     module.hot.dispose(async () => {
-      // 修复：添加错误处理，避免热重载卡住
       try {
         await app.close()
       } catch (error) {
-        console.error('热重载关闭应用时出错:', error)
+        console.error('Failed to close app during HMR:', error)
       }
     })
   }
