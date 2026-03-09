@@ -1,3 +1,6 @@
+/**
+ * 浏览模块统一导出。
+ */
 export * from './dto'
 export * from './view-growth.service'
 export * from './view-interaction.service'

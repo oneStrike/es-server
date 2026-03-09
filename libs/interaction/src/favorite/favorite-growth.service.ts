@@ -34,7 +34,7 @@ export class FavoriteGrowthService extends BaseService {
           ruleType,
           bizKey: `${baseBizKey}:POINTS`,
           source: 'interaction_favorite',
-          remark: `favorite target #${targetId}`,
+          remark: `收藏目标 #${targetId}`,
           targetType,
           targetId,
         })
@@ -47,7 +47,7 @@ export class FavoriteGrowthService extends BaseService {
             ruleType,
             bizKey: `${baseBizKey}:EXPERIENCE`,
             source: 'interaction_favorite',
-            remark: `favorite target #${targetId}`,
+            remark: `收藏目标 #${targetId}`,
             targetType,
             targetId,
           },

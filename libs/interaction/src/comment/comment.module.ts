@@ -1,3 +1,10 @@
+/**
+ * 评论模块。
+ *
+ * 说明：
+ * - 提供评论的创建、回复、删除、查询等功能
+ * - 集成敏感词检测、成长奖励、消息通知等能力
+ */
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { SystemConfigModule } from '@libs/system-config'

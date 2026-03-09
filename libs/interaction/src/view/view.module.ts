@@ -1,3 +1,10 @@
+/**
+ * 浏览模块。
+ *
+ * 说明：
+ * - 提供浏览记录功能
+ * - 集成成长奖励、浏览统计等能力
+ */
 import { GrowthLedgerModule } from '@libs/user/growth-ledger'
 import { Module } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'

@@ -110,7 +110,7 @@ export class DownloadService extends BaseService {
       )
     }
 
-    throw new BadRequestException('涓嶆敮鎸佺殑绔犺妭绫诲瀷')
+    throw new BadRequestException('不支持的章节类型')
   }
 
   async checkDownloadStatus(dto: UserDownloadRecordKeyDto) {

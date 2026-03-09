@@ -24,7 +24,7 @@ export class InteractionTargetAccessService extends BaseService {
     const model = client?.[definition.modelKey]
     if (!model) {
       throw new BadRequestException(
-        `Target model not found: ${definition.modelKey}`,
+        `目标模型不存在: ${definition.modelKey}`,
       )
     }
 

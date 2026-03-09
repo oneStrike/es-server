@@ -34,7 +34,7 @@ export class ViewGrowthService extends BaseService {
           ruleType,
           bizKey: `${baseBizKey}:POINTS`,
           source: 'interaction_view',
-          remark: `view target #${targetId}`,
+          remark: `浏览目标 #${targetId}`,
           targetType,
           targetId,
         })
@@ -47,7 +47,7 @@ export class ViewGrowthService extends BaseService {
             ruleType,
             bizKey: `${baseBizKey}:EXPERIENCE`,
             source: 'interaction_view',
-            remark: `view target #${targetId}`,
+            remark: `浏览目标 #${targetId}`,
             targetType,
             targetId,
           },

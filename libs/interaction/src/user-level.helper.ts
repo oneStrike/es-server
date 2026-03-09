@@ -1,3 +1,10 @@
+/**
+ * 用户等级辅助函数。
+ *
+ * 说明：
+ * - 根据用户经验值刷新用户等级
+ * - 查找满足经验值要求的最高等级规则并更新用户等级
+ */
 export async function refreshUserLevelByExperience(
   tx: any,
   userId: number,

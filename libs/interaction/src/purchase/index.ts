@@ -1,3 +1,6 @@
+/**
+ * 购买模块统一导出。
+ */
 export * from './dto/purchase.dto'
 export * from './purchase.constant'
 export * from './purchase.module'

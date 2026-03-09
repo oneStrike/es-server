@@ -66,8 +66,8 @@ export class FavoriteInteractionService extends BaseService {
         type: MessageNotificationTypeEnum.CONTENT_FAVORITE,
         targetType,
         targetId,
-        title: '\u4F60\u7684\u5185\u5BB9\u88AB\u6536\u85CF\u4E86',
-        content: '\u6709\u4EBA\u6536\u85CF\u4E86\u4F60\u7684\u5185\u5BB9',
+        title: '你的内容被收藏了',
+        content: '有人收藏了你的内容',
       },
     }
   }

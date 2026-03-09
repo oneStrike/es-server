@@ -64,8 +64,8 @@ export class LikeInteractionService extends BaseService {
           type: MessageNotificationTypeEnum.COMMENT_LIKE,
           targetType,
           targetId,
-          title: 'Your topic received a like',
-          content: 'Someone liked your topic',
+          title: '你的主题收到点赞',
+          content: '有人点赞了你的主题',
         },
       }
     }
@@ -95,8 +95,8 @@ export class LikeInteractionService extends BaseService {
           targetId: comment.targetId,
           subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
           subjectId: comment.id,
-          title: 'Your comment received a like',
-          content: 'Someone liked your comment',
+          title: '你的评论收到点赞',
+          content: '有人点赞了你的评论',
         },
       }
     }

@@ -1,3 +1,10 @@
+/**
+ * 交互模块核心入口。
+ *
+ * 说明：
+ * - 统一聚合点赞、收藏、浏览、评论、举报、下载、购买等子模块
+ * - 标记为 @Global() 以便在整个应用中共享交互服务
+ */
 import { Global, Module } from '@nestjs/common'
 import { CommentModule } from './comment/comment.module'
 import { DownloadModule } from './download/download.module'
