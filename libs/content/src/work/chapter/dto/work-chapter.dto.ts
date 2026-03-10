@@ -9,28 +9,64 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
-import { BaseUserLevelRuleDto } from '@libs/user'
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { BaseWorkDto } from '../../core'
 
 /**
  * 作品信息DTO（简化版）
  */
-class WorkInfoDto extends PickType(BaseWorkDto, ['id', 'name', 'type']) {}
+class WorkInfoDto {
+  @NumberProperty({
+    description: '作品ID',
+    example: 1,
+    required: true,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '作品名称',
+    example: '进击的巨人',
+    required: true,
+  })
+  name!: string
+
+  @NumberProperty({
+    description: '作品类型（1=漫画, 2=小说）',
+    example: 1,
+    required: true,
+  })
+  type!: number
+}
 
 /**
  * 会员等级规则信息DTO（简化版）
  */
-class UserLevelRuleInfoDto extends PickType(BaseUserLevelRuleDto, [
-  'id',
-  'name',
-  'color',
-]) {}
+class UserLevelRuleInfoDto {
+  @NumberProperty({
+    description: '等级规则ID',
+    example: 1,
+    required: true,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '等级名称',
+    example: 'VIP1',
+    required: true,
+  })
+  name!: string
+
+  @StringProperty({
+    description: '等级颜色',
+    example: '#FF0000',
+    required: true,
+  })
+  color!: string
+}
 
 /// 章节基础DTO
 export class BaseWorkChapterDto extends BaseDto {

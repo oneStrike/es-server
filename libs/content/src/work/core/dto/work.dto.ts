@@ -18,6 +18,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { BaseWorkChapterDto } from '../../chapter'
 import { WorkSerialStatusEnum } from '../work.constant'
 
 /**
@@ -610,47 +611,16 @@ export class WorkUserStatusFieldsDto {
 
 /**
  * 作品继续阅读章节 DTO
- * Keep this DTO minimal so it can be reused by detail pages and
- * continue-reading cards without leaking chapter-only fields.
  */
-export class ContinueReadingChapterDto {
-  @NumberProperty({
-    description: '章节 ID',
-    example: 101,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '章节标题',
-    example: 'Chapter 1',
-    required: true,
-    validation: false,
-  })
-  title!: string
-
-  @StringProperty({
-    description: '章节副标题',
-    example: 'Prologue',
-    required: false,
-    validation: false,
-  })
-  subtitle?: string
-
-  @NumberProperty({
-    description: '章节排序值',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  sortOrder!: number
-}
+export class ContinueReadingChapterDto extends PickType(BaseWorkChapterDto, [
+  'id',
+  'title',
+  'subtitle',
+  'sortOrder',
+]) {}
 
 /**
  * 作品浏览状态字段 DTO
- * These fields are separated from interaction booleans so they can be
- * composed into multiple response DTOs with minimal duplication.
  */
 export class WorkBrowseStatusFieldsDto {
   @DateProperty({
@@ -678,7 +648,6 @@ export class WorkBrowseStatusFieldsDto {
 
 /**
  * 作品基础信息 + 通用用户状态 DTO
- * Reuse this shape anywhere the client only needs interaction booleans.
  */
 export class WorkWithUserStatusDto extends IntersectionType(
   BaseWorkDto,
