@@ -6,4 +6,4 @@ export * from './browse-log.service'
 /**
  * 浏览模块统一导出。
  */
-export * from './dto'
+export * from './dto/browse-log.dto'

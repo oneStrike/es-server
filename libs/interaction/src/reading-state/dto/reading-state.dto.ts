@@ -4,9 +4,9 @@ import {
   EnumProperty,
   NestedProperty,
   NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
-import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content'
+import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseReadingStateDto extends BaseDto {
@@ -60,20 +60,57 @@ export class ClearReadingHistoryDto extends PickType(QueryReadingHistoryDto, [
   'workType',
 ]) {}
 
-export class WorkDto extends PickType(BaseWorkDto, [
-  'id',
-  'name',
-  'type',
-  'cover',
-  'serialStatus',
-]) {}
+export class WorkDto extends IdDto {
+  @EnumProperty({
+    description: '作品类型（1=漫画, 2=小说）',
+    example: ContentTypeEnum.COMIC,
+    required: true,
+    enum: ContentTypeEnum,
+  })
+  type!: ContentTypeEnum
 
-export class WorkChapterDto extends PickType(BaseWorkChapterDto, [
-  'id',
-  'title',
-  'subtitle',
-  'sortOrder',
-]) {}
+  @StringProperty({
+    description: '作品名称',
+    example: '进击的巨人',
+    required: true,
+    maxLength: 100,
+  })
+  name!: string
+
+  @StringProperty({
+    description: '作品封面URL',
+    example: 'https://example.com/cover.jpg',
+    required: true,
+    maxLength: 500,
+  })
+  cover!: string
+}
+
+export class WorkChapterDto extends IdDto {
+  @StringProperty({
+    description: '章节标题',
+    example: '第1话',
+    required: true,
+    maxLength: 100,
+  })
+  title!: string
+
+  @StringProperty({
+    description: '章节副标题',
+    example: '序幕',
+    required: false,
+    maxLength: 200,
+  })
+  subtitle?: string
+
+  @NumberProperty({
+    description: '章节序号',
+    example: 1,
+    required: true,
+    min: 0,
+  })
+  sortOrder!: number
+}
 
 export class ReadingHistoryWorkDto extends BaseReadingStateDto {
   @NestedProperty({
