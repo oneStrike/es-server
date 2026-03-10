@@ -1,7 +1,7 @@
 import type { FastifyRequest } from 'fastify'
 import { BaseService } from '@libs/base/database'
 import { UploadService } from '@libs/base/modules'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { ContentPermissionService } from '../../permission'
 import {
   DeleteComicContentDto,
@@ -12,8 +12,14 @@ import {
 
 @Injectable()
 export class ComicContentService extends BaseService {
+  private readonly logger = new Logger(ComicContentService.name)
+
   get workChapter() {
     return this.prisma.workChapter
+  }
+
+  get userWorkBrowseState() {
+    return this.prisma.userWorkBrowseState
   }
 
   constructor(
@@ -31,8 +37,24 @@ export class ComicContentService extends BaseService {
     const result = await this.contentPermissionService.checkChapterAccess(
       chapterId,
       userId,
-      { content: true, id: true, title: true, subtitle: true },
+      {
+        content: true,
+        id: true,
+        title: true,
+        subtitle: true,
+        workId: true,
+        workType: true,
+      },
     )
+    if (userId) {
+      await this.touchWorkBrowseStateFromChapter({
+        userId,
+        workId: result.chapter.workId,
+        workType: result.chapter.workType,
+        chapterId,
+      })
+    }
+
     return {
       content: this.parseContent(result.chapter.content),
       id: result.chapter.id,
@@ -186,6 +208,43 @@ export class ComicContentService extends BaseService {
       return Array.isArray(parsed) ? parsed : []
     } catch {
       return []
+    }
+  }
+
+  private async touchWorkBrowseStateFromChapter(params: {
+    userId: number
+    workId: number
+    workType: number
+    chapterId: number
+  }) {
+    const now = new Date()
+    try {
+      await this.userWorkBrowseState.upsert({
+        where: {
+          userId_workId: {
+            userId: params.userId,
+            workId: params.workId,
+          },
+        },
+        create: {
+          userId: params.userId,
+          workId: params.workId,
+          workType: params.workType,
+          lastViewedAt: now,
+          lastViewedChapterId: params.chapterId,
+        },
+        update: {
+          workType: params.workType,
+          lastViewedAt: now,
+          lastViewedChapterId: params.chapterId,
+        },
+      })
+    } catch (error) {
+      this.logger.warn(
+        `同步漫画章节浏览状态失败 userId=${params.userId} chapterId=${params.chapterId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 }

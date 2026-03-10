@@ -1,14 +1,20 @@
 import type { FastifyRequest } from 'fastify'
 import { BaseService } from '@libs/base/database'
 import { UploadService } from '@libs/base/modules'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { ContentPermissionService } from '../../permission'
 import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()
 export class NovelContentService extends BaseService {
+  private readonly logger = new Logger(NovelContentService.name)
+
   get workChapter() {
     return this.prisma.workChapter
+  }
+
+  get userWorkBrowseState() {
+    return this.prisma.userWorkBrowseState
   }
 
   constructor(
@@ -26,8 +32,16 @@ export class NovelContentService extends BaseService {
     const result = await this.contentPermissionService.checkChapterAccess(
       chapterId,
       userId,
-      { content: true },
+      { content: true, workId: true, workType: true },
     )
+    if (userId) {
+      await this.touchWorkBrowseStateFromChapter({
+        userId,
+        workId: result.chapter.workId,
+        workType: result.chapter.workType,
+        chapterId,
+      })
+    }
     return result.chapter.content
   }
 
@@ -93,5 +107,42 @@ export class NovelContentService extends BaseService {
     })
 
     return { id: chapterId }
+  }
+
+  private async touchWorkBrowseStateFromChapter(params: {
+    userId: number
+    workId: number
+    workType: number
+    chapterId: number
+  }) {
+    const now = new Date()
+    try {
+      await this.userWorkBrowseState.upsert({
+        where: {
+          userId_workId: {
+            userId: params.userId,
+            workId: params.workId,
+          },
+        },
+        create: {
+          userId: params.userId,
+          workId: params.workId,
+          workType: params.workType,
+          lastViewedAt: now,
+          lastViewedChapterId: params.chapterId,
+        },
+        update: {
+          workType: params.workType,
+          lastViewedAt: now,
+          lastViewedChapterId: params.chapterId,
+        },
+      })
+    } catch (error) {
+      this.logger.warn(
+        `同步小说章节浏览状态失败 userId=${params.userId} chapterId=${params.chapterId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
   }
 }

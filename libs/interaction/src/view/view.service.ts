@@ -1,4 +1,4 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
@@ -108,6 +108,56 @@ export class ViewService extends BaseService {
       where.targetType = targetType
     }
 
-    await this.prisma.userView.deleteMany({ where })
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userView.deleteMany({ where })
+
+      if (targetType === undefined) {
+        await tx.userWorkBrowseState.deleteMany({
+          where: { userId },
+        })
+        return
+      }
+
+      if (
+        targetType === InteractionTargetTypeEnum.COMIC ||
+        targetType === InteractionTargetTypeEnum.NOVEL
+      ) {
+        await tx.userWorkBrowseState.deleteMany({
+          where: {
+            userId,
+            workType: this.mapTargetTypeToWorkType(targetType),
+          },
+        })
+        return
+      }
+
+      if (
+        targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ||
+        targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
+      ) {
+        await tx.userWorkBrowseState.updateMany({
+          where: {
+            userId,
+            workType: this.mapTargetTypeToWorkType(targetType),
+          },
+          data: {
+            lastViewedChapterId: null,
+          },
+        })
+      }
+    })
+  }
+
+  private mapTargetTypeToWorkType(
+    targetType: InteractionTargetTypeEnum,
+  ): ContentTypeEnum {
+    if (
+      targetType === InteractionTargetTypeEnum.COMIC ||
+      targetType === InteractionTargetTypeEnum.COMIC_CHAPTER
+    ) {
+      return ContentTypeEnum.COMIC
+    }
+
+    return ContentTypeEnum.NOVEL
   }
 }

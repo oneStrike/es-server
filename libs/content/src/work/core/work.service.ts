@@ -3,7 +3,7 @@ import { ContentTypeEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
 import { FavoriteService, LikeService, ViewService } from '@libs/interaction'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   CreateWorkDto,
   QueryWorkDto,
@@ -13,18 +13,35 @@ import {
 } from './dto/work.dto'
 import { PAGE_WORK_SELECT, WORK_RELATION_SELECT } from './work.select'
 
+/**
+ * 作品详情上下文接口
+ * 用于传递用户访问作品详情时的上下文信息
+ */
 interface WorkDetailContext {
+  /** 用户ID */
   userId?: number
+  /** IP地址 */
   ipAddress?: string
+  /** 设备信息 */
   device?: string
+  /** 用户代理字符串 */
   userAgent?: string
 }
 
+/**
+ * 继续阅读章节状态接口
+ * 用于记录用户上次阅读的章节信息
+ */
 interface ContinueReadingChapterState {
+  /** 章节ID */
   id: number
+  /** 章节标题 */
   title: string
+  /** 章节副标题 */
   subtitle: string | null
+  /** 排序序号 */
   sortOrder: number
+  /** 浏览时间 */
   viewedAt?: Date
 }
 
@@ -35,6 +52,8 @@ interface ContinueReadingChapterState {
  */
 @Injectable()
 export class WorkService extends BaseService {
+  private readonly logger = new Logger(WorkService.name)
+
   get work() {
     return this.prisma.work
   }
@@ -60,8 +79,10 @@ export class WorkService extends BaseService {
   }
 
   /**
-   * Resolve interaction target types once so work detail logic does not need
-   * to repeat content-type branching in multiple places.
+   * 解析作品交互目标类型
+   * 一次性解析交互目标类型，避免作品详情逻辑在多处重复进行内容类型分支判断
+   * @param workType 作品类型
+   * @returns 作品目标类型和章节目标类型
    */
   private resolveWorkInteractionTargets(workType: number) {
     if (workType === ContentTypeEnum.COMIC) {
@@ -78,13 +99,17 @@ export class WorkService extends BaseService {
       }
     }
 
-    throw new BadRequestException('涓嶆敮鎸佺殑浣滃搧绫诲瀷')
+    throw new BadRequestException('不支持的作品类型')
   }
 
   /**
-   * Materialize the latest continue-reading chapter for a user/work pair.
-   * The browse-state table is the primary source, and user_view history is
-   * used as a fallback so existing chapter view history remains effective.
+   * 解析用户/作品对的最新继续阅读章节
+   * 浏览状态表是主要数据源，用户浏览历史作为后备，以确保现有章节浏览历史仍然有效
+   * @param userId 用户ID
+   * @param workId 作品ID
+   * @param workType 作品类型
+   * @param browseState 浏览状态
+   * @returns 继续阅读章节状态
    */
   private async resolveContinueReadingChapter(
     userId: number,
@@ -96,9 +121,19 @@ export class WorkService extends BaseService {
         title: string
         subtitle: string | null
         sortOrder: number
+        deletedAt: Date | null
       } | null
     } | null,
-  ): Promise<ContinueReadingChapterState | undefined> {
+  ) {
+    if (browseState?.lastViewedChapter?.deletedAt === null) {
+      return {
+        id: browseState.lastViewedChapter.id,
+        title: browseState.lastViewedChapter.title,
+        subtitle: browseState.lastViewedChapter.subtitle,
+        sortOrder: browseState.lastViewedChapter.sortOrder,
+      }
+    }
+
     const { chapterTargetType } = this.resolveWorkInteractionTargets(workType)
     const rows = await this.prisma.$queryRaw<ContinueReadingChapterState[]>(
       Prisma.sql`
@@ -123,21 +158,18 @@ export class WorkService extends BaseService {
       return rows[0]
     }
 
-    if (browseState?.lastViewedChapter) {
-      return {
-        id: browseState.lastViewedChapter.id,
-        title: browseState.lastViewedChapter.title,
-        subtitle: browseState.lastViewedChapter.subtitle,
-        sortOrder: browseState.lastViewedChapter.sortOrder,
-      }
-    }
-
     return undefined
   }
 
   /**
-   * Persist the latest browse state separately from history records.
-   * This keeps detail responses cheap and makes "continue reading" extensible.
+   * 将最新浏览状态与历史记录分开持久化
+   * 这使得详情响应开销更小，并使"继续阅读"功能可扩展
+   * @param params 参数对象
+   * @param params.userId 用户ID
+   * @param params.workId 作品ID
+   * @param params.workType 作品类型
+   * @param params.lastViewedAt 最近浏览时间
+   * @param params.lastViewedChapterId 最近浏览章节ID
    */
   private async upsertWorkBrowseState(params: {
     userId: number
@@ -169,6 +201,24 @@ export class WorkService extends BaseService {
         lastViewedChapterId,
       },
     })
+  }
+
+  private async syncWorkBrowseStateSafely(params: {
+    userId: number
+    workId: number
+    workType: number
+    lastViewedAt: Date
+    lastViewedChapterId?: number
+  }) {
+    try {
+      await this.upsertWorkBrowseState(params)
+    } catch (error) {
+      this.logger.warn(
+        `同步作品浏览状态失败 userId=${params.userId} workId=${params.workId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
   }
 
   /**
@@ -576,7 +626,6 @@ export class WorkService extends BaseService {
    * @throws BadRequestException 当作品不存在时抛出异常
    */
   async getWorkDetail(id: number, context: WorkDetailContext = {}) {
-    console.log("🚀 ~ WorkService ~ getWorkDetail ~ context:", context)
     const { userId, ipAddress, device, userAgent } = context
     const work = await this.work.findUnique({
       where: { id },
@@ -591,8 +640,7 @@ export class WorkService extends BaseService {
       throw new BadRequestException('作品不存在')
     }
 
-    // Keep a stable response shape for anonymous users so the app can reuse
-    // the same DTO without conditional parsing.
+    // 为匿名用户保持稳定的响应结构，使应用可以重用相同的DTO而无需条件解析
     if (!userId) {
       return {
         ...work,
@@ -622,6 +670,7 @@ export class WorkService extends BaseService {
               title: true,
               subtitle: true,
               sortOrder: true,
+              deletedAt: true,
             },
           },
         },
@@ -635,31 +684,29 @@ export class WorkService extends BaseService {
       browseState,
     )
 
-    // History records and browse state serve different purposes:
-    // - user_view keeps the append-only browsing trail and counters
-    // - user_work_browse_state keeps the latest snapshot for fast detail reads
-    await Promise.all([
-      this.viewService.recordView(
-        workTargetType,
-        id,
-        userId,
-        ipAddress,
-        device,
-        userAgent,
-      ),
-      this.upsertWorkBrowseState({
-        userId,
-        workId: id,
-        workType: work.type,
-        lastViewedAt: now,
-        lastViewedChapterId: continueChapter?.id,
-      }),
-    ])
+    // 历史记录和浏览状态服务于不同目的：
+    // - user_view 保持只追加的浏览轨迹和计数器
+    // - user_work_browse_state 保持最新快照以快速读取详情
+    await this.viewService.recordView(
+      workTargetType,
+      id,
+      userId,
+      ipAddress,
+      device,
+      userAgent,
+    )
+
+    await this.syncWorkBrowseStateSafely({
+      userId,
+      workId: id,
+      workType: work.type,
+      lastViewedAt: now,
+      lastViewedChapterId: continueChapter?.id,
+    })
 
     return {
       ...work,
-      // Reflect the just-recorded view immediately so the current response is
-      // consistent with the persisted counter update.
+      // 立即反映刚记录的浏览，使当前响应与持久化的计数器更新保持一致
       viewCount: work.viewCount + 1,
       liked,
       favorited,
