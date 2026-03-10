@@ -55,26 +55,6 @@ export class BrowseLogService extends BaseService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      console.log(
-        `🚀 ~ BrowseLogService ~ recordBrowseLog ~ {
-          targetType,
-          targetId,
-          userId,
-          ipAddress,
-          device,
-          userAgent,
-          viewedAt: new Date(),
-        },:`,
-        {
-          targetType,
-          targetId,
-          userId,
-          ipAddress,
-          device,
-          userAgent,
-          viewedAt: new Date(),
-        },
-      )
       await tx.userBrowseLog.create({
         data: {
           targetType,

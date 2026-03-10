@@ -24,7 +24,7 @@ model UserBrowseLog {
   /// 设备类型
   /// 用户使用的设备类型，如：mobile、desktop、tablet
   /// 用于设备统计和适配分析
-  device     String?  @db.VarChar(20)
+  device     String?  @db.VarChar(200)
   /// 用户代理
   /// 浏览器User-Agent字符串，用于详细的设备和浏览器分析
   userAgent  String?  @map("user_agent") @db.VarChar(500)

@@ -1,9 +1,9 @@
-import { ContentModule } from '@libs/content'
+import { WorkModule } from '@libs/content/work'
 import { Module } from '@nestjs/common'
 import { ChapterContentController } from './chapter-content.controller'
 
 @Module({
-  imports: [ContentModule],
+  imports: [WorkModule],
   controllers: [ChapterContentController],
   providers: [],
   exports: [],
