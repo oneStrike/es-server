@@ -178,6 +178,59 @@ CREATE TABLE "app_user" (
 );
 
 -- CreateTable
+CREATE TABLE "growth_audit_log" (
+    "id" SERIAL NOT NULL,
+    "request_id" VARCHAR(80),
+    "user_id" INTEGER NOT NULL,
+    "biz_key" VARCHAR(120) NOT NULL,
+    "asset_type" VARCHAR(30) NOT NULL,
+    "action" VARCHAR(30) NOT NULL,
+    "rule_type" SMALLINT,
+    "decision" VARCHAR(20) NOT NULL,
+    "reason" VARCHAR(80),
+    "delta_requested" INTEGER,
+    "delta_applied" INTEGER,
+    "context" JSONB,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "growth_audit_log_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "growth_ledger_record" (
+    "id" SERIAL NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    "asset_type" VARCHAR(30) NOT NULL,
+    "delta" INTEGER NOT NULL,
+    "before_value" INTEGER NOT NULL,
+    "after_value" INTEGER NOT NULL,
+    "biz_key" VARCHAR(120) NOT NULL,
+    "source" VARCHAR(50) NOT NULL,
+    "rule_type" SMALLINT,
+    "rule_id" INTEGER,
+    "target_type" SMALLINT,
+    "target_id" INTEGER,
+    "remark" VARCHAR(500),
+    "context" JSONB,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "growth_ledger_record_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "growth_rule_usage_slot" (
+    "id" SERIAL NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    "asset_type" VARCHAR(30) NOT NULL,
+    "rule_key" VARCHAR(80) NOT NULL,
+    "slot_type" VARCHAR(20) NOT NULL,
+    "slot_value" VARCHAR(60) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "growth_rule_usage_slot_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "task_assignment" (
     "id" SERIAL NOT NULL,
     "task_id" INTEGER NOT NULL,
@@ -269,31 +322,17 @@ CREATE TABLE "user_badge" (
 );
 
 -- CreateTable
-CREATE TABLE "user_comment_like" (
+CREATE TABLE "user_browse_log" (
     "id" SERIAL NOT NULL,
-    "comment_id" INTEGER NOT NULL,
+    "target_type" SMALLINT NOT NULL,
+    "target_id" INTEGER NOT NULL,
     "user_id" INTEGER NOT NULL,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "ip_address" VARCHAR(45),
+    "device" VARCHAR(20),
+    "user_agent" VARCHAR(500),
+    "viewed_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "user_comment_like_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "user_comment_report" (
-    "id" SERIAL NOT NULL,
-    "reporter_id" INTEGER NOT NULL,
-    "handler_id" INTEGER,
-    "comment_id" INTEGER NOT NULL,
-    "reason" VARCHAR(50) NOT NULL,
-    "description" VARCHAR(500),
-    "evidence_url" VARCHAR(500),
-    "status" VARCHAR(20) NOT NULL DEFAULT 'pending',
-    "handling_note" VARCHAR(500),
-    "handled_at" TIMESTAMPTZ(6),
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
-
-    CONSTRAINT "user_comment_report_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "user_browse_log_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -333,31 +372,12 @@ CREATE TABLE "user_download_record" (
 );
 
 -- CreateTable
-CREATE TABLE "user_experience_record" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "rule_id" INTEGER,
-    "event_id" INTEGER,
-    "experience" INTEGER NOT NULL,
-    "before_experience" INTEGER NOT NULL,
-    "after_experience" INTEGER NOT NULL,
-    "event_key" VARCHAR(50),
-    "remark" VARCHAR(500),
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "user_experience_record_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "user_experience_rule" (
     "id" SERIAL NOT NULL,
     "type" SMALLINT NOT NULL,
     "experience" INTEGER NOT NULL,
     "daily_limit" INTEGER NOT NULL DEFAULT 0,
     "total_limit" INTEGER NOT NULL DEFAULT 0,
-    "cooldown_seconds" INTEGER NOT NULL DEFAULT 0,
-    "business" VARCHAR(20),
-    "event_key" VARCHAR(50),
     "is_enabled" BOOLEAN NOT NULL DEFAULT true,
     "remark" VARCHAR(500),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -375,52 +395,6 @@ CREATE TABLE "user_favorite" (
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "user_favorite_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "user_growth_event_archive" (
-    "id" SERIAL NOT NULL,
-    "source_id" INTEGER NOT NULL,
-    "business" VARCHAR(20) NOT NULL,
-    "event_key" VARCHAR(50) NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "target_id" INTEGER,
-    "ip" VARCHAR(45),
-    "device_id" VARCHAR(100),
-    "occurred_at" TIMESTAMPTZ(6) NOT NULL,
-    "status" VARCHAR(30) NOT NULL,
-    "rule_refs" JSONB,
-    "points_delta_applied" INTEGER NOT NULL DEFAULT 0,
-    "experience_delta_applied" INTEGER NOT NULL DEFAULT 0,
-    "badge_assigned" JSONB,
-    "context" JSONB,
-    "created_at" TIMESTAMPTZ(6) NOT NULL,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
-    "archived_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "user_growth_event_archive_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "user_growth_event" (
-    "id" SERIAL NOT NULL,
-    "business" VARCHAR(20) NOT NULL,
-    "event_key" VARCHAR(50) NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "target_id" INTEGER,
-    "ip" VARCHAR(45),
-    "device_id" VARCHAR(100),
-    "occurred_at" TIMESTAMPTZ(6) NOT NULL,
-    "status" VARCHAR(30) NOT NULL,
-    "rule_refs" JSONB,
-    "points_delta_applied" INTEGER NOT NULL DEFAULT 0,
-    "experience_delta_applied" INTEGER NOT NULL DEFAULT 0,
-    "badge_assigned" JSONB,
-    "context" JSONB,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
-
-    CONSTRAINT "user_growth_event_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -455,30 +429,13 @@ CREATE TABLE "user_like" (
     "id" SERIAL NOT NULL,
     "target_type" SMALLINT NOT NULL,
     "target_id" INTEGER NOT NULL,
+    "scene_type" SMALLINT NOT NULL,
+    "scene_id" INTEGER NOT NULL,
+    "comment_level" SMALLINT,
     "user_id" INTEGER NOT NULL,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "user_like_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "user_point_record" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "rule_id" INTEGER,
-    "event_id" INTEGER,
-    "target_type" SMALLINT,
-    "target_id" INTEGER,
-    "exchange_id" INTEGER,
-    "purchase_id" INTEGER,
-    "points" INTEGER NOT NULL,
-    "before_points" INTEGER NOT NULL,
-    "after_points" INTEGER NOT NULL,
-    "event_key" VARCHAR(50),
-    "remark" VARCHAR(500),
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "user_point_record_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -488,9 +445,6 @@ CREATE TABLE "user_point_rule" (
     "points" INTEGER NOT NULL,
     "daily_limit" INTEGER NOT NULL DEFAULT 0,
     "total_limit" INTEGER NOT NULL DEFAULT 0,
-    "cooldown_seconds" INTEGER NOT NULL DEFAULT 0,
-    "business" VARCHAR(20),
-    "event_key" VARCHAR(50),
     "is_enabled" BOOLEAN NOT NULL DEFAULT true,
     "remark" VARCHAR(500),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -516,17 +470,39 @@ CREATE TABLE "user_purchase_record" (
 );
 
 -- CreateTable
-CREATE TABLE "user_view" (
+CREATE TABLE "user_report" (
     "id" SERIAL NOT NULL,
+    "reporter_id" INTEGER NOT NULL,
+    "handler_id" INTEGER,
     "target_type" SMALLINT NOT NULL,
     "target_id" INTEGER NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "ip_address" VARCHAR(45),
-    "device" VARCHAR(20),
-    "user_agent" VARCHAR(500),
-    "viewed_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "scene_type" SMALLINT NOT NULL,
+    "scene_id" INTEGER NOT NULL,
+    "comment_level" SMALLINT,
+    "reason_type" SMALLINT NOT NULL,
+    "description" VARCHAR(500),
+    "evidence_url" VARCHAR(500),
+    "status" SMALLINT NOT NULL DEFAULT 1,
+    "handling_note" VARCHAR(500),
+    "handled_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
 
-    CONSTRAINT "user_view_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "user_report_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_work_reading_state" (
+    "id" SERIAL NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    "work_id" INTEGER NOT NULL,
+    "work_type" SMALLINT NOT NULL,
+    "last_read_at" TIMESTAMPTZ(6) NOT NULL,
+    "last_read_chapter_id" INTEGER,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT "user_work_reading_state_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -683,55 +659,6 @@ CREATE TABLE "forum_profile" (
 );
 
 -- CreateTable
-CREATE TABLE "forum_reply_like" (
-    "id" SERIAL NOT NULL,
-    "reply_id" INTEGER NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "forum_reply_like_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "forum_reply" (
-    "id" SERIAL NOT NULL,
-    "topic_id" INTEGER NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "reply_to_id" INTEGER,
-    "actual_reply_to_id" INTEGER,
-    "content" TEXT NOT NULL,
-    "floor" INTEGER NOT NULL DEFAULT 0,
-    "like_count" INTEGER NOT NULL DEFAULT 0,
-    "is_hidden" BOOLEAN NOT NULL DEFAULT false,
-    "audit_status" SMALLINT NOT NULL DEFAULT 0,
-    "audit_reason" TEXT,
-    "sensitive_word_hits" JSONB,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
-    "deleted_at" TIMESTAMPTZ(6),
-
-    CONSTRAINT "forum_reply_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "forum_report" (
-    "id" SERIAL NOT NULL,
-    "reporter_id" INTEGER NOT NULL,
-    "handler_id" INTEGER,
-    "target_id" INTEGER NOT NULL,
-    "type" VARCHAR(20) NOT NULL,
-    "reason" VARCHAR(50) NOT NULL,
-    "description" VARCHAR(500),
-    "evidence_url" VARCHAR(500),
-    "status" VARCHAR(20) NOT NULL DEFAULT 'pending',
-    "handling_note" VARCHAR(500),
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
-
-    CONSTRAINT "forum_report_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "forum_section_group" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(50) NOT NULL,
@@ -843,6 +770,111 @@ CREATE TABLE "forum_user_action_log" (
 );
 
 -- CreateTable
+CREATE TABLE "chat_conversation_member" (
+    "id" SERIAL NOT NULL,
+    "conversation_id" INTEGER NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    "role" SMALLINT NOT NULL,
+    "joined_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "left_at" TIMESTAMPTZ(6),
+    "is_muted" BOOLEAN NOT NULL DEFAULT false,
+    "last_read_message_id" BIGINT,
+    "last_read_at" TIMESTAMPTZ(6),
+    "unread_count" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "chat_conversation_member_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "chat_conversation" (
+    "id" SERIAL NOT NULL,
+    "biz_key" VARCHAR(100) NOT NULL,
+    "last_message_id" BIGINT,
+    "last_message_at" TIMESTAMPTZ(6),
+    "last_sender_id" INTEGER,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT "chat_conversation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "chat_message" (
+    "id" BIGSERIAL NOT NULL,
+    "conversation_id" INTEGER NOT NULL,
+    "message_seq" BIGINT NOT NULL,
+    "sender_id" INTEGER NOT NULL,
+    "client_message_id" VARCHAR(64),
+    "message_type" SMALLINT NOT NULL,
+    "content" TEXT NOT NULL,
+    "payload" JSONB,
+    "status" SMALLINT NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "edited_at" TIMESTAMPTZ(6),
+    "revoked_at" TIMESTAMPTZ(6),
+
+    CONSTRAINT "chat_message_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "message_outbox" (
+    "id" BIGSERIAL NOT NULL,
+    "domain" SMALLINT NOT NULL,
+    "event_type" SMALLINT NOT NULL,
+    "biz_key" VARCHAR(180) NOT NULL,
+    "payload" JSONB NOT NULL,
+    "status" SMALLINT NOT NULL DEFAULT 1,
+    "retry_count" INTEGER NOT NULL DEFAULT 0,
+    "next_retry_at" TIMESTAMPTZ(6),
+    "last_error" VARCHAR(500),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "processed_at" TIMESTAMPTZ(6),
+
+    CONSTRAINT "message_outbox_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "message_ws_metric" (
+    "id" BIGSERIAL NOT NULL,
+    "bucket_at" TIMESTAMPTZ(6) NOT NULL,
+    "request_count" INTEGER NOT NULL DEFAULT 0,
+    "ack_success_count" INTEGER NOT NULL DEFAULT 0,
+    "ack_error_count" INTEGER NOT NULL DEFAULT 0,
+    "ack_latency_total_ms" BIGINT NOT NULL DEFAULT 0,
+    "reconnect_count" INTEGER NOT NULL DEFAULT 0,
+    "resync_trigger_count" INTEGER NOT NULL DEFAULT 0,
+    "resync_success_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT "message_ws_metric_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_notification" (
+    "id" SERIAL NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    "type" SMALLINT NOT NULL,
+    "biz_key" VARCHAR(160) NOT NULL,
+    "actor_user_id" INTEGER,
+    "target_type" SMALLINT,
+    "target_id" INTEGER,
+    "subject_type" SMALLINT,
+    "subject_id" INTEGER,
+    "title" VARCHAR(200) NOT NULL,
+    "content" VARCHAR(1000) NOT NULL,
+    "payload" JSONB,
+    "aggregate_key" VARCHAR(160),
+    "aggregate_count" INTEGER NOT NULL DEFAULT 1,
+    "is_read" BOOLEAN NOT NULL DEFAULT false,
+    "read_at" TIMESTAMPTZ(6),
+    "expired_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_notification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "sys_request_log" (
     "id" SERIAL NOT NULL,
     "user_id" INTEGER,
@@ -889,13 +921,9 @@ CREATE TABLE "sys_config" (
     "id" SERIAL NOT NULL,
     "updated_by_id" INTEGER,
     "aliyun_config" JSONB,
-    "growth_antifraud_config" JSONB,
-    "content_review_policy" JSONB,
-    "comment_rate_limit_config" JSONB,
     "site_config" JSONB,
     "maintenance_config" JSONB,
-    "register_config" JSONB,
-    "notify_config" JSONB,
+    "content_review_policy" JSONB,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
 
@@ -935,6 +963,18 @@ CREATE TABLE "sys_dictionary_item" (
 );
 
 -- CreateTable
+CREATE TABLE "work_author_relation" (
+    "id" SERIAL NOT NULL,
+    "work_id" INTEGER NOT NULL,
+    "author_id" INTEGER NOT NULL,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT "work_author_relation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "work_author" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(100) NOT NULL,
@@ -953,39 +993,6 @@ CREATE TABLE "work_author" (
     "deleted_at" TIMESTAMPTZ(6),
 
     CONSTRAINT "work_author_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "work_comic" (
-    "id" SERIAL NOT NULL,
-    "workId" INTEGER NOT NULL,
-    "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ(6) NOT NULL,
-
-    CONSTRAINT "work_comic_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "work_novel" (
-    "id" SERIAL NOT NULL,
-    "workId" INTEGER NOT NULL,
-    "wordCount" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ(6) NOT NULL,
-
-    CONSTRAINT "work_novel_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "work_author_relation" (
-    "id" SERIAL NOT NULL,
-    "work_id" INTEGER NOT NULL,
-    "author_id" INTEGER NOT NULL,
-    "sort_order" INTEGER NOT NULL DEFAULT 0,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
-
-    CONSTRAINT "work_author_relation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -1049,47 +1056,24 @@ CREATE TABLE "work_chapter" (
 );
 
 -- CreateTable
-CREATE TABLE "work_comment_report" (
+CREATE TABLE "work_comic" (
     "id" SERIAL NOT NULL,
-    "comment_id" INTEGER NOT NULL,
-    "reporter_id" INTEGER NOT NULL,
-    "handler_id" INTEGER,
-    "reason" TEXT NOT NULL,
-    "description" TEXT,
-    "evidence_url" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'pending',
-    "handling_note" TEXT,
-    "handled_at" TIMESTAMPTZ(6),
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+    "workId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(6) NOT NULL,
 
-    CONSTRAINT "work_comment_report_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "work_comic_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "work_comment" (
+CREATE TABLE "work_novel" (
     "id" SERIAL NOT NULL,
-    "work_id" INTEGER NOT NULL,
-    "work_type" INTEGER NOT NULL,
-    "chapter_id" INTEGER,
-    "user_id" INTEGER NOT NULL,
-    "content" TEXT NOT NULL,
-    "floor" INTEGER NOT NULL DEFAULT 0,
-    "reply_to_id" INTEGER,
-    "actual_reply_to_id" INTEGER,
-    "is_hidden" BOOLEAN NOT NULL DEFAULT false,
-    "audit_status" INTEGER NOT NULL DEFAULT 1,
-    "audit_by_id" INTEGER,
-    "audit_role" SMALLINT,
-    "audit_reason" TEXT,
-    "audit_at" TIMESTAMPTZ(6),
-    "like_count" INTEGER NOT NULL DEFAULT 0,
-    "sensitive_word_hits" JSONB,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL,
-    "deleted_at" TIMESTAMPTZ(6),
+    "workId" INTEGER NOT NULL,
+    "wordCount" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(6) NOT NULL,
 
-    CONSTRAINT "work_comment_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "work_novel_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -1309,6 +1293,33 @@ CREATE INDEX "app_user_status_idx" ON "app_user"("status");
 CREATE INDEX "app_user_level_id_idx" ON "app_user"("level_id");
 
 -- CreateIndex
+CREATE INDEX "growth_audit_log_user_id_biz_key_idx" ON "growth_audit_log"("user_id", "biz_key");
+
+-- CreateIndex
+CREATE INDEX "growth_audit_log_asset_type_action_decision_created_at_idx" ON "growth_audit_log"("asset_type", "action", "decision", "created_at");
+
+-- CreateIndex
+CREATE INDEX "growth_audit_log_request_id_idx" ON "growth_audit_log"("request_id");
+
+-- CreateIndex
+CREATE INDEX "growth_ledger_record_user_id_asset_type_created_at_idx" ON "growth_ledger_record"("user_id", "asset_type", "created_at");
+
+-- CreateIndex
+CREATE INDEX "growth_ledger_record_source_created_at_idx" ON "growth_ledger_record"("source", "created_at");
+
+-- CreateIndex
+CREATE INDEX "growth_ledger_record_target_type_target_id_idx" ON "growth_ledger_record"("target_type", "target_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "growth_ledger_record_user_id_biz_key_key" ON "growth_ledger_record"("user_id", "biz_key");
+
+-- CreateIndex
+CREATE INDEX "growth_rule_usage_slot_user_id_asset_type_rule_key_created__idx" ON "growth_rule_usage_slot"("user_id", "asset_type", "rule_key", "created_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "growth_rule_usage_slot_user_id_asset_type_rule_key_slot_typ_key" ON "growth_rule_usage_slot"("user_id", "asset_type", "rule_key", "slot_type", "slot_value");
+
+-- CreateIndex
 CREATE INDEX "task_assignment_user_id_status_idx" ON "task_assignment"("user_id", "status");
 
 -- CreateIndex
@@ -1381,31 +1392,31 @@ CREATE INDEX "user_badge_is_enabled_idx" ON "user_badge"("is_enabled");
 CREATE INDEX "user_badge_created_at_idx" ON "user_badge"("created_at");
 
 -- CreateIndex
-CREATE INDEX "user_comment_like_comment_id_idx" ON "user_comment_like"("comment_id");
+CREATE INDEX "user_browse_log_target_type_target_id_idx" ON "user_browse_log"("target_type", "target_id");
 
 -- CreateIndex
-CREATE INDEX "user_comment_like_user_id_idx" ON "user_comment_like"("user_id");
+CREATE INDEX "user_browse_log_user_id_idx" ON "user_browse_log"("user_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_comment_like_comment_id_user_id_key" ON "user_comment_like"("comment_id", "user_id");
+CREATE INDEX "user_browse_log_viewed_at_idx" ON "user_browse_log"("viewed_at");
 
 -- CreateIndex
-CREATE INDEX "user_comment_report_comment_id_idx" ON "user_comment_report"("comment_id");
+CREATE INDEX "user_browse_log_target_type_target_id_user_id_idx" ON "user_browse_log"("target_type", "target_id", "user_id");
 
 -- CreateIndex
-CREATE INDEX "user_comment_report_reporter_id_idx" ON "user_comment_report"("reporter_id");
-
--- CreateIndex
-CREATE INDEX "user_comment_report_status_idx" ON "user_comment_report"("status");
-
--- CreateIndex
-CREATE INDEX "user_comment_report_created_at_idx" ON "user_comment_report"("created_at");
+CREATE INDEX "user_browse_log_user_id_viewed_at_idx" ON "user_browse_log"("user_id", "viewed_at");
 
 -- CreateIndex
 CREATE INDEX "user_comment_target_type_target_id_created_at_idx" ON "user_comment"("target_type", "target_id", "created_at");
 
 -- CreateIndex
+CREATE INDEX "user_comment_target_type_target_id_reply_to_id_floor_idx" ON "user_comment"("target_type", "target_id", "reply_to_id", "floor");
+
+-- CreateIndex
 CREATE INDEX "user_comment_target_type_target_id_audit_status_is_hidden_d_idx" ON "user_comment"("target_type", "target_id", "audit_status", "is_hidden", "deleted_at");
+
+-- CreateIndex
+CREATE INDEX "user_comment_actual_reply_to_id_audit_status_is_hidden_dele_idx" ON "user_comment"("actual_reply_to_id", "audit_status", "is_hidden", "deleted_at", "created_at");
 
 -- CreateIndex
 CREATE INDEX "user_comment_target_type_target_id_deleted_at_created_at_idx" ON "user_comment"("target_type", "target_id", "deleted_at", "created_at");
@@ -1441,19 +1452,7 @@ CREATE INDEX "user_download_record_user_id_idx" ON "user_download_record"("user_
 CREATE INDEX "user_download_record_created_at_idx" ON "user_download_record"("created_at");
 
 -- CreateIndex
-CREATE INDEX "user_experience_record_user_id_idx" ON "user_experience_record"("user_id");
-
--- CreateIndex
-CREATE INDEX "user_experience_record_rule_id_idx" ON "user_experience_record"("rule_id");
-
--- CreateIndex
-CREATE INDEX "user_experience_record_event_id_idx" ON "user_experience_record"("event_id");
-
--- CreateIndex
-CREATE INDEX "user_experience_record_created_at_idx" ON "user_experience_record"("created_at");
-
--- CreateIndex
-CREATE INDEX "user_experience_record_user_id_created_at_idx" ON "user_experience_record"("user_id", "created_at");
+CREATE UNIQUE INDEX "user_download_record_target_type_target_id_user_id_key" ON "user_download_record"("target_type", "target_id", "user_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_experience_rule_type_key" ON "user_experience_rule"("type");
@@ -1480,24 +1479,6 @@ CREATE INDEX "user_favorite_created_at_idx" ON "user_favorite"("created_at");
 CREATE UNIQUE INDEX "user_favorite_target_type_target_id_user_id_key" ON "user_favorite"("target_type", "target_id", "user_id");
 
 -- CreateIndex
-CREATE INDEX "user_growth_event_archive_source_id_idx" ON "user_growth_event_archive"("source_id");
-
--- CreateIndex
-CREATE INDEX "user_growth_event_archive_user_id_idx" ON "user_growth_event_archive"("user_id");
-
--- CreateIndex
-CREATE INDEX "user_growth_event_archive_occurred_at_idx" ON "user_growth_event_archive"("occurred_at");
-
--- CreateIndex
-CREATE INDEX "user_growth_event_business_event_key_idx" ON "user_growth_event"("business", "event_key");
-
--- CreateIndex
-CREATE INDEX "user_growth_event_user_id_idx" ON "user_growth_event"("user_id");
-
--- CreateIndex
-CREATE INDEX "user_growth_event_occurred_at_idx" ON "user_growth_event"("occurred_at");
-
--- CreateIndex
 CREATE UNIQUE INDEX "user_level_rule_name_key" ON "user_level_rule"("name");
 
 -- CreateIndex
@@ -1507,37 +1488,16 @@ CREATE INDEX "user_level_rule_is_enabled_sortOrder_idx" ON "user_level_rule"("is
 CREATE INDEX "user_like_target_type_target_id_idx" ON "user_like"("target_type", "target_id");
 
 -- CreateIndex
-CREATE INDEX "user_like_user_id_idx" ON "user_like"("user_id");
+CREATE INDEX "user_like_scene_type_scene_id_idx" ON "user_like"("scene_type", "scene_id");
+
+-- CreateIndex
+CREATE INDEX "user_like_user_id_scene_type_created_at_idx" ON "user_like"("user_id", "scene_type", "created_at");
 
 -- CreateIndex
 CREATE INDEX "user_like_created_at_idx" ON "user_like"("created_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_like_target_type_target_id_user_id_key" ON "user_like"("target_type", "target_id", "user_id");
-
--- CreateIndex
-CREATE INDEX "user_point_record_user_id_idx" ON "user_point_record"("user_id");
-
--- CreateIndex
-CREATE INDEX "user_point_record_rule_id_idx" ON "user_point_record"("rule_id");
-
--- CreateIndex
-CREATE INDEX "user_point_record_event_id_idx" ON "user_point_record"("event_id");
-
--- CreateIndex
-CREATE INDEX "user_point_record_created_at_idx" ON "user_point_record"("created_at");
-
--- CreateIndex
-CREATE INDEX "user_point_record_user_id_created_at_idx" ON "user_point_record"("user_id", "created_at");
-
--- CreateIndex
-CREATE INDEX "user_point_record_target_type_target_id_idx" ON "user_point_record"("target_type", "target_id");
-
--- CreateIndex
-CREATE INDEX "user_point_record_exchange_id_idx" ON "user_point_record"("exchange_id");
-
--- CreateIndex
-CREATE INDEX "user_point_record_purchase_id_idx" ON "user_point_record"("purchase_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_point_rule_type_key" ON "user_point_rule"("type");
@@ -1570,19 +1530,37 @@ CREATE INDEX "user_purchase_record_user_id_status_target_type_created_at__idx" O
 CREATE UNIQUE INDEX "user_purchase_record_target_type_target_id_user_id_status_key" ON "user_purchase_record"("target_type", "target_id", "user_id", "status");
 
 -- CreateIndex
-CREATE INDEX "user_view_target_type_target_id_idx" ON "user_view"("target_type", "target_id");
+CREATE INDEX "user_report_target_type_target_id_idx" ON "user_report"("target_type", "target_id");
 
 -- CreateIndex
-CREATE INDEX "user_view_user_id_idx" ON "user_view"("user_id");
+CREATE INDEX "user_report_scene_type_scene_id_status_idx" ON "user_report"("scene_type", "scene_id", "status");
 
 -- CreateIndex
-CREATE INDEX "user_view_viewed_at_idx" ON "user_view"("viewed_at");
+CREATE INDEX "user_report_scene_type_status_created_at_idx" ON "user_report"("scene_type", "status", "created_at");
 
 -- CreateIndex
-CREATE INDEX "user_view_target_type_target_id_user_id_idx" ON "user_view"("target_type", "target_id", "user_id");
+CREATE INDEX "user_report_reason_type_status_created_at_idx" ON "user_report"("reason_type", "status", "created_at");
 
 -- CreateIndex
-CREATE INDEX "user_view_user_id_viewed_at_idx" ON "user_view"("user_id", "viewed_at");
+CREATE INDEX "user_report_handler_id_status_handled_at_idx" ON "user_report"("handler_id", "status", "handled_at");
+
+-- CreateIndex
+CREATE INDEX "user_report_created_at_idx" ON "user_report"("created_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_report_reporter_id_target_type_target_id_key" ON "user_report"("reporter_id", "target_type", "target_id");
+
+-- CreateIndex
+CREATE INDEX "user_work_reading_state_user_id_work_type_last_read_at_idx" ON "user_work_reading_state"("user_id", "work_type", "last_read_at");
+
+-- CreateIndex
+CREATE INDEX "user_work_reading_state_work_id_idx" ON "user_work_reading_state"("work_id");
+
+-- CreateIndex
+CREATE INDEX "user_work_reading_state_last_read_chapter_id_idx" ON "user_work_reading_state"("last_read_chapter_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_work_reading_state_user_id_work_id_key" ON "user_work_reading_state"("user_id", "work_id");
 
 -- CreateIndex
 CREATE INDEX "forum_config_history_config_id_idx" ON "forum_config_history"("config_id");
@@ -1715,57 +1693,6 @@ CREATE INDEX "forum_profile_favorite_count_idx" ON "forum_profile"("favorite_cou
 
 -- CreateIndex
 CREATE INDEX "forum_profile_created_at_idx" ON "forum_profile"("created_at");
-
--- CreateIndex
-CREATE INDEX "forum_reply_like_reply_id_idx" ON "forum_reply_like"("reply_id");
-
--- CreateIndex
-CREATE INDEX "forum_reply_like_user_id_idx" ON "forum_reply_like"("user_id");
-
--- CreateIndex
-CREATE INDEX "forum_reply_like_created_at_idx" ON "forum_reply_like"("created_at");
-
--- CreateIndex
-CREATE UNIQUE INDEX "forum_reply_like_reply_id_user_id_key" ON "forum_reply_like"("reply_id", "user_id");
-
--- CreateIndex
-CREATE INDEX "forum_reply_topic_id_idx" ON "forum_reply"("topic_id");
-
--- CreateIndex
-CREATE INDEX "forum_reply_user_id_idx" ON "forum_reply"("user_id");
-
--- CreateIndex
-CREATE INDEX "forum_reply_reply_to_id_idx" ON "forum_reply"("reply_to_id");
-
--- CreateIndex
-CREATE INDEX "forum_reply_actual_reply_to_id_idx" ON "forum_reply"("actual_reply_to_id");
-
--- CreateIndex
-CREATE INDEX "forum_reply_created_at_idx" ON "forum_reply"("created_at");
-
--- CreateIndex
-CREATE INDEX "forum_reply_deleted_at_idx" ON "forum_reply"("deleted_at");
-
--- CreateIndex
-CREATE INDEX "forum_reply_audit_status_idx" ON "forum_reply"("audit_status");
-
--- CreateIndex
-CREATE INDEX "forum_report_reporter_id_idx" ON "forum_report"("reporter_id");
-
--- CreateIndex
-CREATE INDEX "forum_report_handler_id_idx" ON "forum_report"("handler_id");
-
--- CreateIndex
-CREATE INDEX "forum_report_type_idx" ON "forum_report"("type");
-
--- CreateIndex
-CREATE INDEX "forum_report_target_id_idx" ON "forum_report"("target_id");
-
--- CreateIndex
-CREATE INDEX "forum_report_status_idx" ON "forum_report"("status");
-
--- CreateIndex
-CREATE INDEX "forum_report_created_at_idx" ON "forum_report"("created_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "forum_section_group_name_key" ON "forum_section_group"("name");
@@ -1909,6 +1836,63 @@ CREATE INDEX "forum_user_action_log_created_at_idx" ON "forum_user_action_log"("
 CREATE INDEX "forum_user_action_log_user_id_created_at_idx" ON "forum_user_action_log"("user_id", "created_at");
 
 -- CreateIndex
+CREATE INDEX "chat_conversation_member_conversation_id_idx" ON "chat_conversation_member"("conversation_id");
+
+-- CreateIndex
+CREATE INDEX "chat_conversation_member_user_id_unread_count_conversation__idx" ON "chat_conversation_member"("user_id", "unread_count", "conversation_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "chat_conversation_member_conversation_id_user_id_key" ON "chat_conversation_member"("conversation_id", "user_id");
+
+-- CreateIndex
+CREATE INDEX "chat_conversation_last_message_at_idx" ON "chat_conversation"("last_message_at" DESC);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "chat_conversation_biz_key_key" ON "chat_conversation"("biz_key");
+
+-- CreateIndex
+CREATE INDEX "chat_message_conversation_id_created_at_idx" ON "chat_message"("conversation_id", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "chat_message_sender_id_created_at_idx" ON "chat_message"("sender_id", "created_at" DESC);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "chat_message_conversation_id_message_seq_key" ON "chat_message"("conversation_id", "message_seq");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "chat_message_conversation_id_sender_id_client_message_id_key" ON "chat_message"("conversation_id", "sender_id", "client_message_id");
+
+-- CreateIndex
+CREATE INDEX "message_outbox_status_next_retry_at_id_idx" ON "message_outbox"("status", "next_retry_at", "id");
+
+-- CreateIndex
+CREATE INDEX "message_outbox_domain_status_created_at_idx" ON "message_outbox"("domain", "status", "created_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "message_outbox_biz_key_key" ON "message_outbox"("biz_key");
+
+-- CreateIndex
+CREATE INDEX "message_ws_metric_bucket_at_idx" ON "message_ws_metric"("bucket_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "message_ws_metric_bucket_at_key" ON "message_ws_metric"("bucket_at");
+
+-- CreateIndex
+CREATE INDEX "user_notification_user_id_is_read_created_at_idx" ON "user_notification"("user_id", "is_read", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "user_notification_user_id_created_at_idx" ON "user_notification"("user_id", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "user_notification_type_created_at_idx" ON "user_notification"("type", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "user_notification_user_id_aggregate_key_created_at_idx" ON "user_notification"("user_id", "aggregate_key", "created_at" DESC);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_notification_user_id_biz_key_key" ON "user_notification"("user_id", "biz_key");
+
+-- CreateIndex
 CREATE INDEX "sys_request_log_created_at_idx" ON "sys_request_log"("created_at");
 
 -- CreateIndex
@@ -1945,6 +1929,9 @@ CREATE INDEX "sensitive_word_created_at_idx" ON "sensitive_word"("created_at");
 CREATE INDEX "sys_config_updated_by_id_idx" ON "sys_config"("updated_by_id");
 
 -- CreateIndex
+CREATE INDEX "sys_config_created_at_idx" ON "sys_config"("created_at" DESC);
+
+-- CreateIndex
 CREATE UNIQUE INDEX "sys_dictionary_name_key" ON "sys_dictionary"("name");
 
 -- CreateIndex
@@ -1958,6 +1945,15 @@ CREATE INDEX "sys_dictionary_item_sort_order_idx" ON "sys_dictionary_item"("sort
 
 -- CreateIndex
 CREATE UNIQUE INDEX "sys_dictionary_item_dictionary_code_code_key" ON "sys_dictionary_item"("dictionary_code", "code");
+
+-- CreateIndex
+CREATE INDEX "work_author_relation_work_id_idx" ON "work_author_relation"("work_id");
+
+-- CreateIndex
+CREATE INDEX "work_author_relation_author_id_idx" ON "work_author_relation"("author_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "work_author_relation_work_id_author_id_key" ON "work_author_relation"("work_id", "author_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "work_author_name_key" ON "work_author"("name");
@@ -1985,21 +1981,6 @@ CREATE INDEX "work_author_is_recommended_work_count_idx" ON "work_author"("is_re
 
 -- CreateIndex
 CREATE INDEX "work_author_created_at_idx" ON "work_author"("created_at");
-
--- CreateIndex
-CREATE UNIQUE INDEX "work_comic_workId_key" ON "work_comic"("workId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "work_novel_workId_key" ON "work_novel"("workId");
-
--- CreateIndex
-CREATE INDEX "work_author_relation_work_id_idx" ON "work_author_relation"("work_id");
-
--- CreateIndex
-CREATE INDEX "work_author_relation_author_id_idx" ON "work_author_relation"("author_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "work_author_relation_work_id_author_id_key" ON "work_author_relation"("work_id", "author_id");
 
 -- CreateIndex
 CREATE INDEX "work_category_relation_category_id_idx" ON "work_category_relation"("category_id");
@@ -2059,40 +2040,10 @@ CREATE INDEX "work_chapter_work_type_idx" ON "work_chapter"("work_type");
 CREATE UNIQUE INDEX "work_chapter_work_id_sort_order_key" ON "work_chapter"("work_id", "sort_order");
 
 -- CreateIndex
-CREATE INDEX "work_comment_report_comment_id_idx" ON "work_comment_report"("comment_id");
+CREATE UNIQUE INDEX "work_comic_workId_key" ON "work_comic"("workId");
 
 -- CreateIndex
-CREATE INDEX "work_comment_report_reporter_id_idx" ON "work_comment_report"("reporter_id");
-
--- CreateIndex
-CREATE INDEX "work_comment_report_handler_id_idx" ON "work_comment_report"("handler_id");
-
--- CreateIndex
-CREATE INDEX "work_comment_report_status_idx" ON "work_comment_report"("status");
-
--- CreateIndex
-CREATE INDEX "work_comment_report_created_at_idx" ON "work_comment_report"("created_at");
-
--- CreateIndex
-CREATE UNIQUE INDEX "work_comment_report_comment_id_reporter_id_key" ON "work_comment_report"("comment_id", "reporter_id");
-
--- CreateIndex
-CREATE INDEX "work_comment_work_id_idx" ON "work_comment"("work_id");
-
--- CreateIndex
-CREATE INDEX "work_comment_chapter_id_idx" ON "work_comment"("chapter_id");
-
--- CreateIndex
-CREATE INDEX "work_comment_user_id_idx" ON "work_comment"("user_id");
-
--- CreateIndex
-CREATE INDEX "work_comment_audit_status_idx" ON "work_comment"("audit_status");
-
--- CreateIndex
-CREATE INDEX "work_comment_created_at_idx" ON "work_comment"("created_at");
-
--- CreateIndex
-CREATE INDEX "work_comment_deleted_at_idx" ON "work_comment"("deleted_at");
+CREATE UNIQUE INDEX "work_novel_workId_key" ON "work_novel"("workId");
 
 -- CreateIndex
 CREATE INDEX "work_tag_relation_tag_id_idx" ON "work_tag_relation"("tag_id");
@@ -2179,6 +2130,15 @@ ALTER TABLE "app_user_token" ADD CONSTRAINT "app_user_token_user_id_fkey" FOREIG
 ALTER TABLE "app_user" ADD CONSTRAINT "app_user_level_id_fkey" FOREIGN KEY ("level_id") REFERENCES "user_level_rule"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "growth_audit_log" ADD CONSTRAINT "growth_audit_log_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "growth_ledger_record" ADD CONSTRAINT "growth_ledger_record_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "growth_rule_usage_slot" ADD CONSTRAINT "growth_rule_usage_slot_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "task_assignment" ADD CONSTRAINT "task_assignment_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -2203,19 +2163,7 @@ ALTER TABLE "user_badge_assignment" ADD CONSTRAINT "user_badge_assignment_badge_
 ALTER TABLE "user_badge_assignment" ADD CONSTRAINT "user_badge_assignment_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_comment_like" ADD CONSTRAINT "user_comment_like_comment_id_fkey" FOREIGN KEY ("comment_id") REFERENCES "user_comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_comment_like" ADD CONSTRAINT "user_comment_like_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_comment_report" ADD CONSTRAINT "user_comment_report_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_comment_report" ADD CONSTRAINT "user_comment_report_handler_id_fkey" FOREIGN KEY ("handler_id") REFERENCES "app_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_comment_report" ADD CONSTRAINT "user_comment_report_comment_id_fkey" FOREIGN KEY ("comment_id") REFERENCES "user_comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "user_browse_log" ADD CONSTRAINT "user_browse_log_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_comment" ADD CONSTRAINT "user_comment_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -2230,40 +2178,28 @@ ALTER TABLE "user_comment" ADD CONSTRAINT "user_comment_actual_reply_to_id_fkey"
 ALTER TABLE "user_download_record" ADD CONSTRAINT "user_download_record_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_experience_record" ADD CONSTRAINT "user_experience_record_rule_id_fkey" FOREIGN KEY ("rule_id") REFERENCES "user_experience_rule"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_experience_record" ADD CONSTRAINT "user_experience_record_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "user_growth_event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_experience_record" ADD CONSTRAINT "user_experience_record_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "user_favorite" ADD CONSTRAINT "user_favorite_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_growth_event" ADD CONSTRAINT "user_growth_event_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_like" ADD CONSTRAINT "user_like_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_point_record" ADD CONSTRAINT "user_point_record_rule_id_fkey" FOREIGN KEY ("rule_id") REFERENCES "user_point_rule"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_point_record" ADD CONSTRAINT "user_point_record_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "user_growth_event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_point_record" ADD CONSTRAINT "user_point_record_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_point_record" ADD CONSTRAINT "user_point_record_purchase_id_fkey" FOREIGN KEY ("purchase_id") REFERENCES "user_purchase_record"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "user_purchase_record" ADD CONSTRAINT "user_purchase_record_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_view" ADD CONSTRAINT "user_view_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "user_report" ADD CONSTRAINT "user_report_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_report" ADD CONSTRAINT "user_report_handler_id_fkey" FOREIGN KEY ("handler_id") REFERENCES "app_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_work_reading_state" ADD CONSTRAINT "user_work_reading_state_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_work_reading_state" ADD CONSTRAINT "user_work_reading_state_work_id_fkey" FOREIGN KEY ("work_id") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_work_reading_state" ADD CONSTRAINT "user_work_reading_state_last_read_chapter_id_fkey" FOREIGN KEY ("last_read_chapter_id") REFERENCES "work_chapter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "forum_config_history" ADD CONSTRAINT "forum_config_history_config_id_fkey" FOREIGN KEY ("config_id") REFERENCES "forum_config"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -2305,34 +2241,7 @@ ALTER TABLE "forum_notification" ADD CONSTRAINT "forum_notification_user_id_fkey
 ALTER TABLE "forum_notification" ADD CONSTRAINT "forum_notification_topic_id_fkey" FOREIGN KEY ("topic_id") REFERENCES "forum_topic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "forum_notification" ADD CONSTRAINT "forum_notification_reply_id_fkey" FOREIGN KEY ("reply_id") REFERENCES "forum_reply"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "forum_profile" ADD CONSTRAINT "forum_profile_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_reply_like" ADD CONSTRAINT "forum_reply_like_reply_id_fkey" FOREIGN KEY ("reply_id") REFERENCES "forum_reply"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_reply_like" ADD CONSTRAINT "forum_reply_like_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_reply" ADD CONSTRAINT "forum_reply_topic_id_fkey" FOREIGN KEY ("topic_id") REFERENCES "forum_topic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_reply" ADD CONSTRAINT "forum_reply_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_reply" ADD CONSTRAINT "forum_reply_reply_to_id_fkey" FOREIGN KEY ("reply_to_id") REFERENCES "forum_reply"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_reply" ADD CONSTRAINT "forum_reply_actual_reply_to_id_fkey" FOREIGN KEY ("actual_reply_to_id") REFERENCES "forum_reply"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_report" ADD CONSTRAINT "forum_report_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "forum_report" ADD CONSTRAINT "forum_report_handler_id_fkey" FOREIGN KEY ("handler_id") REFERENCES "app_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "forum_section" ADD CONSTRAINT "forum_section_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "forum_section_group"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -2362,16 +2271,31 @@ ALTER TABLE "forum_topic" ADD CONSTRAINT "forum_topic_last_reply_user_id_fkey" F
 ALTER TABLE "forum_user_action_log" ADD CONSTRAINT "forum_user_action_log_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "sys_config" ADD CONSTRAINT "sys_config_updated_by_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "app_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "chat_conversation_member" ADD CONSTRAINT "chat_conversation_member_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "chat_conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "chat_conversation_member" ADD CONSTRAINT "chat_conversation_member_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "chat_conversation" ADD CONSTRAINT "chat_conversation_last_sender_id_fkey" FOREIGN KEY ("last_sender_id") REFERENCES "app_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "chat_message" ADD CONSTRAINT "chat_message_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "chat_conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "chat_message" ADD CONSTRAINT "chat_message_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_notification" ADD CONSTRAINT "user_notification_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_notification" ADD CONSTRAINT "user_notification_actor_user_id_fkey" FOREIGN KEY ("actor_user_id") REFERENCES "app_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sys_config" ADD CONSTRAINT "sys_config_updated_by_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "admin_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sys_dictionary_item" ADD CONSTRAINT "sys_dictionary_item_dictionary_code_fkey" FOREIGN KEY ("dictionary_code") REFERENCES "sys_dictionary"("code") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_comic" ADD CONSTRAINT "work_comic_workId_fkey" FOREIGN KEY ("workId") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_novel" ADD CONSTRAINT "work_novel_workId_fkey" FOREIGN KEY ("workId") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "work_author_relation" ADD CONSTRAINT "work_author_relation_work_id_fkey" FOREIGN KEY ("work_id") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -2392,28 +2316,10 @@ ALTER TABLE "work_chapter" ADD CONSTRAINT "work_chapter_work_id_fkey" FOREIGN KE
 ALTER TABLE "work_chapter" ADD CONSTRAINT "work_chapter_required_read_level_id_fkey" FOREIGN KEY ("required_read_level_id") REFERENCES "user_level_rule"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "work_comment_report" ADD CONSTRAINT "work_comment_report_comment_id_fkey" FOREIGN KEY ("comment_id") REFERENCES "work_comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "work_comic" ADD CONSTRAINT "work_comic_workId_fkey" FOREIGN KEY ("workId") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "work_comment_report" ADD CONSTRAINT "work_comment_report_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "app_user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_comment_report" ADD CONSTRAINT "work_comment_report_handler_id_fkey" FOREIGN KEY ("handler_id") REFERENCES "app_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_comment" ADD CONSTRAINT "work_comment_work_id_fkey" FOREIGN KEY ("work_id") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_comment" ADD CONSTRAINT "work_comment_chapter_id_fkey" FOREIGN KEY ("chapter_id") REFERENCES "work_chapter"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_comment" ADD CONSTRAINT "work_comment_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "app_user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_comment" ADD CONSTRAINT "work_comment_reply_to_id_fkey" FOREIGN KEY ("reply_to_id") REFERENCES "work_comment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "work_comment" ADD CONSTRAINT "work_comment_actual_reply_to_id_fkey" FOREIGN KEY ("actual_reply_to_id") REFERENCES "work_comment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "work_novel" ADD CONSTRAINT "work_novel_workId_fkey" FOREIGN KEY ("workId") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "work_tag_relation" ADD CONSTRAINT "work_tag_relation_work_id_fkey" FOREIGN KEY ("work_id") REFERENCES "work"("id") ON DELETE CASCADE ON UPDATE CASCADE;

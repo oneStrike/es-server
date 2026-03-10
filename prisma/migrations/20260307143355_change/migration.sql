@@ -1,2 +1,0 @@
--- RenameIndex
-ALTER INDEX "user_download_record_targettype_targetid_userid_key" RENAME TO "user_download_record_target_type_target_id_user_id_key";
