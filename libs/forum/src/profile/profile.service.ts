@@ -1,5 +1,6 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import {
+  BusinessModuleEnum,
   InteractionTargetTypeEnum,
   UserDefaults,
   UserStatusEnum,
@@ -144,7 +145,7 @@ export class ForumProfileService extends BaseService {
   async getMyFavorites(userId: number) {
     const result = await this.favoriteService.getUserFavorites(
       userId,
-      InteractionTargetTypeEnum.FORUM_TOPIC,
+      BusinessModuleEnum.FORUM,
     )
 
     if (result.list.length === 0) {

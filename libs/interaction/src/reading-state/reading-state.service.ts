@@ -29,6 +29,7 @@ export class ReadingStateService extends BaseService {
       title: string
       subtitle: string | null
       sortOrder: number
+      cover: string | null
       workId: number
       deletedAt: Date | null
     } | null,

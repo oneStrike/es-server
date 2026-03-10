@@ -24,8 +24,7 @@ export class FavoriteController {
     @Body() body: FavoriteDto,
     @CurrentUser('sub') userId: number,
   ) {
-    await this.favoriteService.favorite(body.targetType, body.targetId, userId)
-    return { id: body.targetId }
+    return this.favoriteService.favorite(body.targetType, body.targetId, userId)
   }
 
   @Post('cancel')

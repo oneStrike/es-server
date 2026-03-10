@@ -1,12 +1,13 @@
-import {
-  InteractionTargetTypeEnum,
-  UserStatusEnum,
-} from '@libs/base/constant'
+import { BusinessModuleEnum, UserStatusEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { FAVORITE_SUPPORTED_TARGET_TYPES } from '../interaction-target.definition'
 
+/**
+ * 收藏权限服务
+ * 负责收藏操作的权限校验，包括目标类型支持、用户状态、每日限额等
+ */
 @Injectable()
 export class FavoritePermissionService extends BaseService {
   constructor(
@@ -15,10 +16,15 @@ export class FavoritePermissionService extends BaseService {
     super()
   }
 
+  /**
+   * 确保目标存在
+   * @param targetType 目标类型
+   * @param targetId 目标 ID
+   */
   private async ensureTargetExists(
-    targetType: InteractionTargetTypeEnum,
+    targetType: BusinessModuleEnum,
     targetId: number,
-  ) {
+  ): Promise<void> {
     await this.interactionTargetAccessService.ensureTargetExists(
       this.prisma,
       targetType,
@@ -27,9 +33,15 @@ export class FavoritePermissionService extends BaseService {
     )
   }
 
+  /**
+   * 确保用户可以收藏目标
+   * @param userId 用户 ID
+   * @param targetType 目标类型
+   * @param targetId 目标 ID
+   */
   async ensureCanFavorite(
     userId: number,
-    targetType: InteractionTargetTypeEnum,
+    targetType: BusinessModuleEnum,
     targetId: number,
   ): Promise<void> {
     this.ensureTargetTypeSupported(targetType)
@@ -40,9 +52,15 @@ export class FavoritePermissionService extends BaseService {
     ])
   }
 
+  /**
+   * 确保用户可以取消收藏
+   * @param userId 用户 ID
+   * @param targetType 目标类型
+   * @param targetId 目标 ID
+   */
   async ensureCanUnfavorite(
     userId: number,
-    targetType: InteractionTargetTypeEnum,
+    targetType: BusinessModuleEnum,
     targetId: number,
   ): Promise<void> {
     this.ensureTargetTypeSupported(targetType)
@@ -53,12 +71,22 @@ export class FavoritePermissionService extends BaseService {
     ])
   }
 
-  private ensureTargetTypeSupported(targetType: InteractionTargetTypeEnum) {
+  /**
+   * 检查目标类型是否支持收藏
+   * @param targetType 目标类型
+   * @throws {BadRequestException} 不支持的收藏目标类型
+   */
+  private ensureTargetTypeSupported(targetType: BusinessModuleEnum): void {
     if (!FAVORITE_SUPPORTED_TARGET_TYPES.has(targetType)) {
       throw new BadRequestException('不支持的收藏目标类型')
     }
   }
 
+  /**
+   * 确保用户可以执行收藏操作（检查每日限额）
+   * @param userId 用户 ID
+   * @throws {BadRequestException} 今日收藏次数已达上限
+   */
   private async ensureUserCanFavorite(userId: number): Promise<void> {
     const user = await this.ensureUserIsActive(userId)
     const dailyFavoriteLimit = user.level?.dailyFavoriteLimit ?? 0
@@ -82,6 +110,12 @@ export class FavoritePermissionService extends BaseService {
     }
   }
 
+  /**
+   * 确保用户处于活跃状态
+   * @param userId 用户 ID
+   * @returns 用户信息（含等级配置）
+   * @throws {BadRequestException} 用户不存在、已禁用或被禁言/封禁
+   */
   private async ensureUserIsActive(userId: number) {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
