@@ -42,6 +42,7 @@ export class ReadingStateService extends BaseService {
       id: chapter.id,
       title: chapter.title,
       subtitle: chapter.subtitle,
+      cover: chapter.cover,
       sortOrder: chapter.sortOrder,
     }
   }
@@ -73,6 +74,7 @@ export class ReadingStateService extends BaseService {
             subtitle: true,
             sortOrder: true,
             workId: true,
+            cover: true,
             deletedAt: true,
           },
         },
@@ -225,6 +227,7 @@ export class ReadingStateService extends BaseService {
             title: true,
             subtitle: true,
             sortOrder: true,
+            cover: true,
             workId: true,
             deletedAt: true,
           },

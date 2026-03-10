@@ -88,6 +88,14 @@ export class WorkDto extends IdDto {
 
 export class WorkChapterDto extends IdDto {
   @StringProperty({
+    description: '作品封面URL',
+    example: 'https://example.com/cover.jpg',
+    required: true,
+    maxLength: 500,
+  })
+  cover!: string
+
+  @StringProperty({
     description: '章节标题',
     example: '第1话',
     required: true,
