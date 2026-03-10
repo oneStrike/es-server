@@ -402,6 +402,7 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
+  UserBrowseLog: 'UserBrowseLog',
   UserComment: 'UserComment',
   UserDownloadRecord: 'UserDownloadRecord',
   UserExperienceRule: 'UserExperienceRule',
@@ -411,8 +412,7 @@ export const ModelName = {
   UserPointRule: 'UserPointRule',
   UserPurchaseRecord: 'UserPurchaseRecord',
   UserReport: 'UserReport',
-  UserView: 'UserView',
-  UserWorkBrowseState: 'UserWorkBrowseState',
+  UserWorkReadingState: 'UserWorkReadingState',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -463,7 +463,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "userWorkBrowseState" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "messageWsMetric" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userBrowseLog" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userWorkReadingState" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "messageWsMetric" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1799,6 +1799,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UserBrowseLog: {
+      payload: Prisma.$UserBrowseLogPayload<ExtArgs>
+      fields: Prisma.UserBrowseLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserBrowseLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserBrowseLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>
+        }
+        findFirst: {
+          args: Prisma.UserBrowseLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserBrowseLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>
+        }
+        findMany: {
+          args: Prisma.UserBrowseLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>[]
+        }
+        create: {
+          args: Prisma.UserBrowseLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>
+        }
+        createMany: {
+          args: Prisma.UserBrowseLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserBrowseLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>[]
+        }
+        delete: {
+          args: Prisma.UserBrowseLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>
+        }
+        update: {
+          args: Prisma.UserBrowseLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserBrowseLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserBrowseLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserBrowseLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserBrowseLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBrowseLogPayload>
+        }
+        aggregate: {
+          args: Prisma.UserBrowseLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserBrowseLog>
+        }
+        groupBy: {
+          args: Prisma.UserBrowseLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBrowseLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserBrowseLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBrowseLogCountAggregateOutputType> | number
+        }
+      }
+    }
     UserComment: {
       payload: Prisma.$UserCommentPayload<ExtArgs>
       fields: Prisma.UserCommentFieldRefs
@@ -2465,151 +2539,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    UserView: {
-      payload: Prisma.$UserViewPayload<ExtArgs>
-      fields: Prisma.UserViewFieldRefs
+    UserWorkReadingState: {
+      payload: Prisma.$UserWorkReadingStatePayload<ExtArgs>
+      fields: Prisma.UserWorkReadingStateFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.UserViewFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload> | null
+          args: Prisma.UserWorkReadingStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.UserViewFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>
+          args: Prisma.UserWorkReadingStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>
         }
         findFirst: {
-          args: Prisma.UserViewFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload> | null
+          args: Prisma.UserWorkReadingStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.UserViewFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>
+          args: Prisma.UserWorkReadingStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>
         }
         findMany: {
-          args: Prisma.UserViewFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>[]
+          args: Prisma.UserWorkReadingStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>[]
         }
         create: {
-          args: Prisma.UserViewCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>
+          args: Prisma.UserWorkReadingStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>
         }
         createMany: {
-          args: Prisma.UserViewCreateManyArgs<ExtArgs>
+          args: Prisma.UserWorkReadingStateCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.UserViewCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>[]
+          args: Prisma.UserWorkReadingStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>[]
         }
         delete: {
-          args: Prisma.UserViewDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>
+          args: Prisma.UserWorkReadingStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>
         }
         update: {
-          args: Prisma.UserViewUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>
+          args: Prisma.UserWorkReadingStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>
         }
         deleteMany: {
-          args: Prisma.UserViewDeleteManyArgs<ExtArgs>
+          args: Prisma.UserWorkReadingStateDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.UserViewUpdateManyArgs<ExtArgs>
+          args: Prisma.UserWorkReadingStateUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.UserViewUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>[]
+          args: Prisma.UserWorkReadingStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>[]
         }
         upsert: {
-          args: Prisma.UserViewUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserViewPayload>
+          args: Prisma.UserWorkReadingStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkReadingStatePayload>
         }
         aggregate: {
-          args: Prisma.UserViewAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserView>
+          args: Prisma.UserWorkReadingStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserWorkReadingState>
         }
         groupBy: {
-          args: Prisma.UserViewGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserViewGroupByOutputType>[]
+          args: Prisma.UserWorkReadingStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserWorkReadingStateGroupByOutputType>[]
         }
         count: {
-          args: Prisma.UserViewCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserViewCountAggregateOutputType> | number
-        }
-      }
-    }
-    UserWorkBrowseState: {
-      payload: Prisma.$UserWorkBrowseStatePayload<ExtArgs>
-      fields: Prisma.UserWorkBrowseStateFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.UserWorkBrowseStateFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.UserWorkBrowseStateFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
-        }
-        findFirst: {
-          args: Prisma.UserWorkBrowseStateFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.UserWorkBrowseStateFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
-        }
-        findMany: {
-          args: Prisma.UserWorkBrowseStateFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>[]
-        }
-        create: {
-          args: Prisma.UserWorkBrowseStateCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
-        }
-        createMany: {
-          args: Prisma.UserWorkBrowseStateCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.UserWorkBrowseStateCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>[]
-        }
-        delete: {
-          args: Prisma.UserWorkBrowseStateDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
-        }
-        update: {
-          args: Prisma.UserWorkBrowseStateUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
-        }
-        deleteMany: {
-          args: Prisma.UserWorkBrowseStateDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.UserWorkBrowseStateUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.UserWorkBrowseStateUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>[]
-        }
-        upsert: {
-          args: Prisma.UserWorkBrowseStateUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
-        }
-        aggregate: {
-          args: Prisma.UserWorkBrowseStateAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserWorkBrowseState>
-        }
-        groupBy: {
-          args: Prisma.UserWorkBrowseStateGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserWorkBrowseStateGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.UserWorkBrowseStateCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserWorkBrowseStateCountAggregateOutputType> | number
+          args: Prisma.UserWorkReadingStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserWorkReadingStateCountAggregateOutputType> | number
         }
       }
     }
@@ -5573,6 +5573,20 @@ export const UserBadgeScalarFieldEnum = {
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
 
 
+export const UserBrowseLogScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  ipAddress: 'ipAddress',
+  device: 'device',
+  userAgent: 'userAgent',
+  viewedAt: 'viewedAt'
+} as const
+
+export type UserBrowseLogScalarFieldEnum = (typeof UserBrowseLogScalarFieldEnum)[keyof typeof UserBrowseLogScalarFieldEnum]
+
+
 export const UserCommentScalarFieldEnum = {
   id: 'id',
   targetType: 'targetType',
@@ -5729,32 +5743,18 @@ export const UserReportScalarFieldEnum = {
 export type UserReportScalarFieldEnum = (typeof UserReportScalarFieldEnum)[keyof typeof UserReportScalarFieldEnum]
 
 
-export const UserViewScalarFieldEnum = {
-  id: 'id',
-  targetType: 'targetType',
-  targetId: 'targetId',
-  userId: 'userId',
-  ipAddress: 'ipAddress',
-  device: 'device',
-  userAgent: 'userAgent',
-  viewedAt: 'viewedAt'
-} as const
-
-export type UserViewScalarFieldEnum = (typeof UserViewScalarFieldEnum)[keyof typeof UserViewScalarFieldEnum]
-
-
-export const UserWorkBrowseStateScalarFieldEnum = {
+export const UserWorkReadingStateScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   workId: 'workId',
   workType: 'workType',
-  lastViewedAt: 'lastViewedAt',
-  lastViewedChapterId: 'lastViewedChapterId',
+  lastReadAt: 'lastReadAt',
+  lastReadChapterId: 'lastReadChapterId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type UserWorkBrowseStateScalarFieldEnum = (typeof UserWorkBrowseStateScalarFieldEnum)[keyof typeof UserWorkBrowseStateScalarFieldEnum]
+export type UserWorkReadingStateScalarFieldEnum = (typeof UserWorkReadingStateScalarFieldEnum)[keyof typeof UserWorkReadingStateScalarFieldEnum]
 
 
 export const ForumConfigHistoryScalarFieldEnum = {
@@ -6668,6 +6668,7 @@ export type GlobalOmitConfig = {
   task?: Prisma.TaskOmit
   userBadgeAssignment?: Prisma.UserBadgeAssignmentOmit
   userBadge?: Prisma.UserBadgeOmit
+  userBrowseLog?: Prisma.UserBrowseLogOmit
   userComment?: Prisma.UserCommentOmit
   userDownloadRecord?: Prisma.UserDownloadRecordOmit
   userExperienceRule?: Prisma.UserExperienceRuleOmit
@@ -6677,8 +6678,7 @@ export type GlobalOmitConfig = {
   userPointRule?: Prisma.UserPointRuleOmit
   userPurchaseRecord?: Prisma.UserPurchaseRecordOmit
   userReport?: Prisma.UserReportOmit
-  userView?: Prisma.UserViewOmit
-  userWorkBrowseState?: Prisma.UserWorkBrowseStateOmit
+  userWorkReadingState?: Prisma.UserWorkReadingStateOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit
   forumConfig?: Prisma.ForumConfigOmit
   forumModeratorActionLog?: Prisma.ForumModeratorActionLogOmit

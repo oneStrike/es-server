@@ -4,25 +4,25 @@ model MessageWsMetric {
   id BigInt @id @default(autoincrement())
 
   /// 统计桶时间（按分钟截断）
-  bucketAt DateTime @map("bucket_at") @db.Timestamptz(6)
+  bucketAt           DateTime @map("bucket_at") @db.Timestamptz(6)
   /// WS 请求总数
-  requestCount Int @default(0) @map("request_count")
+  requestCount       Int      @default(0) @map("request_count")
   /// ack 成功数量（code=0）
-  ackSuccessCount Int @default(0) @map("ack_success_count")
+  ackSuccessCount    Int      @default(0) @map("ack_success_count")
   /// ack 失败数量（code!=0）
-  ackErrorCount Int @default(0) @map("ack_error_count")
+  ackErrorCount      Int      @default(0) @map("ack_error_count")
   /// ack 延迟累积毫秒
-  ackLatencyTotalMs BigInt @default(0) @map("ack_latency_total_ms")
+  ackLatencyTotalMs  BigInt   @default(0) @map("ack_latency_total_ms")
   /// 连接/重连次数
-  reconnectCount Int @default(0) @map("reconnect_count")
+  reconnectCount     Int      @default(0) @map("reconnect_count")
   /// 补偿触发次数（afterSeq 查询触发）
-  resyncTriggerCount Int @default(0) @map("resync_trigger_count")
+  resyncTriggerCount Int      @default(0) @map("resync_trigger_count")
   /// 补偿成功次数（afterSeq 查询成功返回）
-  resyncSuccessCount Int @default(0) @map("resync_success_count")
+  resyncSuccessCount Int      @default(0) @map("resync_success_count")
   /// 创建时间
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@unique([bucketAt])
   @@index([bucketAt])

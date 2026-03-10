@@ -443,7 +443,7 @@ export type WorkChapterWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkChapter"> | Date | string | null
   work?: Prisma.XOR<Prisma.WorkScalarRelationFilter, Prisma.WorkWhereInput>
   requiredViewLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateListRelationFilter
+  readingStates?: Prisma.UserWorkReadingStateListRelationFilter
 }
 
 export type WorkChapterOrderByWithRelationInput = {
@@ -476,7 +476,7 @@ export type WorkChapterOrderByWithRelationInput = {
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   work?: Prisma.WorkOrderByWithRelationInput
   requiredViewLevel?: Prisma.UserLevelRuleOrderByWithRelationInput
-  workBrowseStates?: Prisma.UserWorkBrowseStateOrderByRelationAggregateInput
+  readingStates?: Prisma.UserWorkReadingStateOrderByRelationAggregateInput
 }
 
 export type WorkChapterWhereUniqueInput = Prisma.AtLeast<{
@@ -513,7 +513,7 @@ export type WorkChapterWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkChapter"> | Date | string | null
   work?: Prisma.XOR<Prisma.WorkScalarRelationFilter, Prisma.WorkWhereInput>
   requiredViewLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateListRelationFilter
+  readingStates?: Prisma.UserWorkReadingStateListRelationFilter
 }, "id" | "workId_sortOrder">
 
 export type WorkChapterOrderByWithAggregationInput = {
@@ -611,7 +611,7 @@ export type WorkChapterCreateInput = {
   deletedAt?: Date | string | null
   work: Prisma.WorkCreateNestedOneWithoutChaptersInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutLastViewedChapterInput
+  readingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutLastReadChapterInput
 }
 
 export type WorkChapterUncheckedCreateInput = {
@@ -642,7 +642,7 @@ export type WorkChapterUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutLastViewedChapterInput
+  readingStates?: Prisma.UserWorkReadingStateUncheckedCreateNestedManyWithoutLastReadChapterInput
 }
 
 export type WorkChapterUpdateInput = {
@@ -672,7 +672,7 @@ export type WorkChapterUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutLastViewedChapterNestedInput
+  readingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutLastReadChapterNestedInput
 }
 
 export type WorkChapterUncheckedUpdateInput = {
@@ -703,7 +703,7 @@ export type WorkChapterUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutLastViewedChapterNestedInput
+  readingStates?: Prisma.UserWorkReadingStateUncheckedUpdateManyWithoutLastReadChapterNestedInput
 }
 
 export type WorkChapterCreateManyInput = {
@@ -977,20 +977,20 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredViewLevelNestedInput = 
   deleteMany?: Prisma.WorkChapterScalarWhereInput | Prisma.WorkChapterScalarWhereInput[]
 }
 
-export type WorkChapterCreateNestedOneWithoutWorkBrowseStatesInput = {
-  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutWorkBrowseStatesInput, Prisma.WorkChapterUncheckedCreateWithoutWorkBrowseStatesInput>
-  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutWorkBrowseStatesInput
+export type WorkChapterCreateNestedOneWithoutReadingStatesInput = {
+  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutReadingStatesInput, Prisma.WorkChapterUncheckedCreateWithoutReadingStatesInput>
+  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutReadingStatesInput
   connect?: Prisma.WorkChapterWhereUniqueInput
 }
 
-export type WorkChapterUpdateOneWithoutWorkBrowseStatesNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutWorkBrowseStatesInput, Prisma.WorkChapterUncheckedCreateWithoutWorkBrowseStatesInput>
-  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutWorkBrowseStatesInput
-  upsert?: Prisma.WorkChapterUpsertWithoutWorkBrowseStatesInput
+export type WorkChapterUpdateOneWithoutReadingStatesNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutReadingStatesInput, Prisma.WorkChapterUncheckedCreateWithoutReadingStatesInput>
+  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutReadingStatesInput
+  upsert?: Prisma.WorkChapterUpsertWithoutReadingStatesInput
   disconnect?: Prisma.WorkChapterWhereInput | boolean
   delete?: Prisma.WorkChapterWhereInput | boolean
   connect?: Prisma.WorkChapterWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkChapterUpdateToOneWithWhereWithoutWorkBrowseStatesInput, Prisma.WorkChapterUpdateWithoutWorkBrowseStatesInput>, Prisma.WorkChapterUncheckedUpdateWithoutWorkBrowseStatesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkChapterUpdateToOneWithWhereWithoutReadingStatesInput, Prisma.WorkChapterUpdateWithoutReadingStatesInput>, Prisma.WorkChapterUncheckedUpdateWithoutReadingStatesInput>
 }
 
 export type WorkChapterCreateNestedManyWithoutWorkInput = {
@@ -1061,7 +1061,7 @@ export type WorkChapterCreateWithoutRequiredViewLevelInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   work: Prisma.WorkCreateNestedOneWithoutChaptersInput
-  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutLastViewedChapterInput
+  readingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutLastReadChapterInput
 }
 
 export type WorkChapterUncheckedCreateWithoutRequiredViewLevelInput = {
@@ -1091,7 +1091,7 @@ export type WorkChapterUncheckedCreateWithoutRequiredViewLevelInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutLastViewedChapterInput
+  readingStates?: Prisma.UserWorkReadingStateUncheckedCreateNestedManyWithoutLastReadChapterInput
 }
 
 export type WorkChapterCreateOrConnectWithoutRequiredViewLevelInput = {
@@ -1153,7 +1153,7 @@ export type WorkChapterScalarWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkChapter"> | Date | string | null
 }
 
-export type WorkChapterCreateWithoutWorkBrowseStatesInput = {
+export type WorkChapterCreateWithoutReadingStatesInput = {
   workType: number
   title: string
   subtitle?: string | null
@@ -1182,7 +1182,7 @@ export type WorkChapterCreateWithoutWorkBrowseStatesInput = {
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
 }
 
-export type WorkChapterUncheckedCreateWithoutWorkBrowseStatesInput = {
+export type WorkChapterUncheckedCreateWithoutReadingStatesInput = {
   id?: number
   workId: number
   workType: number
@@ -1212,23 +1212,23 @@ export type WorkChapterUncheckedCreateWithoutWorkBrowseStatesInput = {
   deletedAt?: Date | string | null
 }
 
-export type WorkChapterCreateOrConnectWithoutWorkBrowseStatesInput = {
+export type WorkChapterCreateOrConnectWithoutReadingStatesInput = {
   where: Prisma.WorkChapterWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutWorkBrowseStatesInput, Prisma.WorkChapterUncheckedCreateWithoutWorkBrowseStatesInput>
+  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutReadingStatesInput, Prisma.WorkChapterUncheckedCreateWithoutReadingStatesInput>
 }
 
-export type WorkChapterUpsertWithoutWorkBrowseStatesInput = {
-  update: Prisma.XOR<Prisma.WorkChapterUpdateWithoutWorkBrowseStatesInput, Prisma.WorkChapterUncheckedUpdateWithoutWorkBrowseStatesInput>
-  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutWorkBrowseStatesInput, Prisma.WorkChapterUncheckedCreateWithoutWorkBrowseStatesInput>
+export type WorkChapterUpsertWithoutReadingStatesInput = {
+  update: Prisma.XOR<Prisma.WorkChapterUpdateWithoutReadingStatesInput, Prisma.WorkChapterUncheckedUpdateWithoutReadingStatesInput>
+  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutReadingStatesInput, Prisma.WorkChapterUncheckedCreateWithoutReadingStatesInput>
   where?: Prisma.WorkChapterWhereInput
 }
 
-export type WorkChapterUpdateToOneWithWhereWithoutWorkBrowseStatesInput = {
+export type WorkChapterUpdateToOneWithWhereWithoutReadingStatesInput = {
   where?: Prisma.WorkChapterWhereInput
-  data: Prisma.XOR<Prisma.WorkChapterUpdateWithoutWorkBrowseStatesInput, Prisma.WorkChapterUncheckedUpdateWithoutWorkBrowseStatesInput>
+  data: Prisma.XOR<Prisma.WorkChapterUpdateWithoutReadingStatesInput, Prisma.WorkChapterUncheckedUpdateWithoutReadingStatesInput>
 }
 
-export type WorkChapterUpdateWithoutWorkBrowseStatesInput = {
+export type WorkChapterUpdateWithoutReadingStatesInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1257,7 +1257,7 @@ export type WorkChapterUpdateWithoutWorkBrowseStatesInput = {
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
 }
 
-export type WorkChapterUncheckedUpdateWithoutWorkBrowseStatesInput = {
+export type WorkChapterUncheckedUpdateWithoutReadingStatesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   workId?: Prisma.IntFieldUpdateOperationsInput | number
   workType?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1313,7 +1313,7 @@ export type WorkChapterCreateWithoutWorkInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutLastViewedChapterInput
+  readingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutLastReadChapterInput
 }
 
 export type WorkChapterUncheckedCreateWithoutWorkInput = {
@@ -1343,7 +1343,7 @@ export type WorkChapterUncheckedCreateWithoutWorkInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutLastViewedChapterInput
+  readingStates?: Prisma.UserWorkReadingStateUncheckedCreateNestedManyWithoutLastReadChapterInput
 }
 
 export type WorkChapterCreateOrConnectWithoutWorkInput = {
@@ -1427,7 +1427,7 @@ export type WorkChapterUpdateWithoutRequiredViewLevelInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
-  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutLastViewedChapterNestedInput
+  readingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutLastReadChapterNestedInput
 }
 
 export type WorkChapterUncheckedUpdateWithoutRequiredViewLevelInput = {
@@ -1457,7 +1457,7 @@ export type WorkChapterUncheckedUpdateWithoutRequiredViewLevelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutLastViewedChapterNestedInput
+  readingStates?: Prisma.UserWorkReadingStateUncheckedUpdateManyWithoutLastReadChapterNestedInput
 }
 
 export type WorkChapterUncheckedUpdateManyWithoutRequiredViewLevelInput = {
@@ -1544,7 +1544,7 @@ export type WorkChapterUpdateWithoutWorkInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutLastViewedChapterNestedInput
+  readingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutLastReadChapterNestedInput
 }
 
 export type WorkChapterUncheckedUpdateWithoutWorkInput = {
@@ -1574,7 +1574,7 @@ export type WorkChapterUncheckedUpdateWithoutWorkInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutLastViewedChapterNestedInput
+  readingStates?: Prisma.UserWorkReadingStateUncheckedUpdateManyWithoutLastReadChapterNestedInput
 }
 
 export type WorkChapterUncheckedUpdateManyWithoutWorkInput = {
@@ -1612,11 +1612,11 @@ export type WorkChapterUncheckedUpdateManyWithoutWorkInput = {
  */
 
 export type WorkChapterCountOutputType = {
-  workBrowseStates: number
+  readingStates: number
 }
 
 export type WorkChapterCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  workBrowseStates?: boolean | WorkChapterCountOutputTypeCountWorkBrowseStatesArgs
+  readingStates?: boolean | WorkChapterCountOutputTypeCountReadingStatesArgs
 }
 
 /**
@@ -1632,8 +1632,8 @@ export type WorkChapterCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.
 /**
  * WorkChapterCountOutputType without action
  */
-export type WorkChapterCountOutputTypeCountWorkBrowseStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UserWorkBrowseStateWhereInput
+export type WorkChapterCountOutputTypeCountReadingStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWorkReadingStateWhereInput
 }
 
 
@@ -1667,7 +1667,7 @@ export type WorkChapterSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   deletedAt?: boolean
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   requiredViewLevel?: boolean | Prisma.WorkChapter$requiredViewLevelArgs<ExtArgs>
-  workBrowseStates?: boolean | Prisma.WorkChapter$workBrowseStatesArgs<ExtArgs>
+  readingStates?: boolean | Prisma.WorkChapter$readingStatesArgs<ExtArgs>
   _count?: boolean | Prisma.WorkChapterCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workChapter"]>
 
@@ -1769,7 +1769,7 @@ export type WorkChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type WorkChapterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   requiredViewLevel?: boolean | Prisma.WorkChapter$requiredViewLevelArgs<ExtArgs>
-  workBrowseStates?: boolean | Prisma.WorkChapter$workBrowseStatesArgs<ExtArgs>
+  readingStates?: boolean | Prisma.WorkChapter$readingStatesArgs<ExtArgs>
   _count?: boolean | Prisma.WorkChapterCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkChapterIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1793,9 +1793,9 @@ export type $WorkChapterPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     requiredViewLevel: Prisma.$UserLevelRulePayload<ExtArgs> | null
     /**
-     * 被作品浏览状态记录为最近章节的关联
+     * 被阅读状态记录为最近章节的关联
      */
-    workBrowseStates: Prisma.$UserWorkBrowseStatePayload<ExtArgs>[]
+    readingStates: Prisma.$UserWorkReadingStatePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -2302,7 +2302,7 @@ export interface Prisma__WorkChapterClient<T, Null = never, ExtArgs extends runt
   readonly [Symbol.toStringTag]: "PrismaPromise"
   work<T extends Prisma.WorkDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkClient<runtime.Types.Result.GetResult<Prisma.$WorkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   requiredViewLevel<T extends Prisma.WorkChapter$requiredViewLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$requiredViewLevelArgs<ExtArgs>>): Prisma.Prisma__UserLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$UserLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  workBrowseStates<T extends Prisma.WorkChapter$workBrowseStatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$workBrowseStatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserWorkBrowseStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  readingStates<T extends Prisma.WorkChapter$readingStatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$readingStatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserWorkReadingStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2783,27 +2783,27 @@ export type WorkChapter$requiredViewLevelArgs<ExtArgs extends runtime.Types.Exte
 }
 
 /**
- * WorkChapter.workBrowseStates
+ * WorkChapter.readingStates
  */
-export type WorkChapter$workBrowseStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type WorkChapter$readingStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the UserWorkBrowseState
+   * Select specific fields to fetch from the UserWorkReadingState
    */
-  select?: Prisma.UserWorkBrowseStateSelect<ExtArgs> | null
+  select?: Prisma.UserWorkReadingStateSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the UserWorkBrowseState
+   * Omit specific fields from the UserWorkReadingState
    */
-  omit?: Prisma.UserWorkBrowseStateOmit<ExtArgs> | null
+  omit?: Prisma.UserWorkReadingStateOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.UserWorkBrowseStateInclude<ExtArgs> | null
-  where?: Prisma.UserWorkBrowseStateWhereInput
-  orderBy?: Prisma.UserWorkBrowseStateOrderByWithRelationInput | Prisma.UserWorkBrowseStateOrderByWithRelationInput[]
-  cursor?: Prisma.UserWorkBrowseStateWhereUniqueInput
+  include?: Prisma.UserWorkReadingStateInclude<ExtArgs> | null
+  where?: Prisma.UserWorkReadingStateWhereInput
+  orderBy?: Prisma.UserWorkReadingStateOrderByWithRelationInput | Prisma.UserWorkReadingStateOrderByWithRelationInput[]
+  cursor?: Prisma.UserWorkReadingStateWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.UserWorkBrowseStateScalarFieldEnum | Prisma.UserWorkBrowseStateScalarFieldEnum[]
+  distinct?: Prisma.UserWorkReadingStateScalarFieldEnum | Prisma.UserWorkReadingStateScalarFieldEnum[]
 }
 
 /**

@@ -10,14 +10,14 @@ export enum InteractionTargetTypeEnum {
   COMIC = 1,
   /** 小说作品 */
   NOVEL = 2,
-  /** 漫画章节 */
-  COMIC_CHAPTER = 3,
-  /** 小说章节 */
-  NOVEL_CHAPTER = 4,
   /** 论坛主题 */
-  FORUM_TOPIC = 5,
+  FORUM_TOPIC = 3,
+  /** 漫画章节 */
+  COMIC_CHAPTER = 10,
+  /** 小说章节 */
+  NOVEL_CHAPTER = 11,
   /** 评论 */
-  COMMENT = 6,
+  COMMENT = 12,
 }
 
 /**
@@ -32,14 +32,14 @@ export enum SceneTypeEnum {
   COMIC_WORK = 1,
   /** 小说作品场景 */
   NOVEL_WORK = 2,
-  /** 漫画章节场景 */
-  COMIC_CHAPTER = 3,
-  /** 小说章节场景 */
-  NOVEL_CHAPTER = 4,
   /** 论坛主题场景 */
-  FORUM_TOPIC = 5,
+  FORUM_TOPIC = 3,
+  /** 漫画章节场景 */
+  COMIC_CHAPTER = 10,
+  /** 小说章节场景 */
+  NOVEL_CHAPTER = 11,
   /** 用户主页场景 */
-  USER_PROFILE = 6,
+  USER_PROFILE = 12,
 }
 
 /**

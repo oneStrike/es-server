@@ -620,16 +620,16 @@ export class ContinueReadingChapterDto extends PickType(BaseWorkChapterDto, [
 ]) {}
 
 /**
- * 作品浏览状态字段 DTO
+ * 作品阅读状态字段 DTO
  */
-export class WorkBrowseStatusFieldsDto {
+export class WorkReadingStatusFieldsDto {
   @DateProperty({
-    description: '最近一次浏览作品详情时间',
+    description: '最近一次阅读作品时间',
     example: '2026-03-09T10:00:00.000Z',
     required: false,
     validation: false,
   })
-  lastViewedAt?: Date
+  lastReadAt?: Date
 
   @NestedProperty({
     description: '继续阅读章节',
@@ -657,11 +657,11 @@ export class WorkWithUserStatusDto extends IntersectionType(
 /**
  * 作品详情 DTO
  * Detail responses reuse the generic interaction status fields and add
- * browse-state specific data in one extra layer.
+ * reading-state specific data in one extra layer.
  */
 export class WorkDetailDto extends IntersectionType(
   WorkWithUserStatusDto,
-  WorkBrowseStatusFieldsDto,
+  WorkReadingStatusFieldsDto,
 ) {}
 
 /**

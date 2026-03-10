@@ -69,6 +69,7 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
+  UserBrowseLog: 'UserBrowseLog',
   UserComment: 'UserComment',
   UserDownloadRecord: 'UserDownloadRecord',
   UserExperienceRule: 'UserExperienceRule',
@@ -78,8 +79,7 @@ export const ModelName = {
   UserPointRule: 'UserPointRule',
   UserPurchaseRecord: 'UserPurchaseRecord',
   UserReport: 'UserReport',
-  UserView: 'UserView',
-  UserWorkBrowseState: 'UserWorkBrowseState',
+  UserWorkReadingState: 'UserWorkReadingState',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -464,6 +464,20 @@ export const UserBadgeScalarFieldEnum = {
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
 
 
+export const UserBrowseLogScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  ipAddress: 'ipAddress',
+  device: 'device',
+  userAgent: 'userAgent',
+  viewedAt: 'viewedAt'
+} as const
+
+export type UserBrowseLogScalarFieldEnum = (typeof UserBrowseLogScalarFieldEnum)[keyof typeof UserBrowseLogScalarFieldEnum]
+
+
 export const UserCommentScalarFieldEnum = {
   id: 'id',
   targetType: 'targetType',
@@ -620,32 +634,18 @@ export const UserReportScalarFieldEnum = {
 export type UserReportScalarFieldEnum = (typeof UserReportScalarFieldEnum)[keyof typeof UserReportScalarFieldEnum]
 
 
-export const UserViewScalarFieldEnum = {
-  id: 'id',
-  targetType: 'targetType',
-  targetId: 'targetId',
-  userId: 'userId',
-  ipAddress: 'ipAddress',
-  device: 'device',
-  userAgent: 'userAgent',
-  viewedAt: 'viewedAt'
-} as const
-
-export type UserViewScalarFieldEnum = (typeof UserViewScalarFieldEnum)[keyof typeof UserViewScalarFieldEnum]
-
-
-export const UserWorkBrowseStateScalarFieldEnum = {
+export const UserWorkReadingStateScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   workId: 'workId',
   workType: 'workType',
-  lastViewedAt: 'lastViewedAt',
-  lastViewedChapterId: 'lastViewedChapterId',
+  lastReadAt: 'lastReadAt',
+  lastReadChapterId: 'lastReadChapterId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type UserWorkBrowseStateScalarFieldEnum = (typeof UserWorkBrowseStateScalarFieldEnum)[keyof typeof UserWorkBrowseStateScalarFieldEnum]
+export type UserWorkReadingStateScalarFieldEnum = (typeof UserWorkReadingStateScalarFieldEnum)[keyof typeof UserWorkReadingStateScalarFieldEnum]
 
 
 export const ForumConfigHistoryScalarFieldEnum = {

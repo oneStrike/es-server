@@ -39,7 +39,7 @@
 
 本仓库中大量多态表和多态 DTO 都使用 `targetType + targetId` 作为统一命名约定，例如：
 
-- `user_view`
+- `user_browse_log`
 - `user_like`
 - `user_favorite`
 - `user_download_record`

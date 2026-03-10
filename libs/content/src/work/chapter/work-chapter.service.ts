@@ -7,8 +7,9 @@ import {
   DownloadTargetTypeEnum,
   FavoriteService,
   LikeService,
+  ReadingStateService,
 } from '@libs/interaction'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkChapterDto,
   QueryWorkChapterDto,
@@ -22,8 +23,6 @@ import { PAGE_WORK_CHAPTER_SELECT } from './work-chapter.select'
  */
 @Injectable()
 export class WorkChapterService extends BaseService {
-  private readonly logger = new Logger(WorkChapterService.name)
-
   /** 章节 Prisma 代理 */
   get workChapter() {
     return this.prisma.workChapter
@@ -44,16 +43,12 @@ export class WorkChapterService extends BaseService {
     return this.prisma.userLevelRule
   }
 
-  /** 用户作品浏览状态 Prisma 代理 */
-  get userWorkBrowseState() {
-    return this.prisma.userWorkBrowseState
-  }
-
   constructor(
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
     private readonly downloadService: DownloadService,
     private readonly contentPermissionService: ContentPermissionService,
+    private readonly readingStateService: ReadingStateService,
   ) {
     super()
   }
@@ -167,11 +162,11 @@ export class WorkChapterService extends BaseService {
       ),
     ])
 
-    await this.touchWorkBrowseStateFromChapter({
+    await this.readingStateService.touchByWorkSafely({
       userId,
       workId: chapter.workId,
-      workType: chapter.workType,
-      chapterId: id,
+      workType: chapter.workType as ContentTypeEnum,
+      lastReadChapterId: id,
     })
 
     return {
@@ -180,43 +175,6 @@ export class WorkChapterService extends BaseService {
       liked,
       downloaded,
       purchased,
-    }
-  }
-
-  private async touchWorkBrowseStateFromChapter(params: {
-    userId: number
-    workId: number
-    workType: number
-    chapterId: number
-  }) {
-    const now = new Date()
-    try {
-      await this.userWorkBrowseState.upsert({
-        where: {
-          userId_workId: {
-            userId: params.userId,
-            workId: params.workId,
-          },
-        },
-        create: {
-          userId: params.userId,
-          workId: params.workId,
-          workType: params.workType,
-          lastViewedAt: now,
-          lastViewedChapterId: params.chapterId,
-        },
-        update: {
-          workType: params.workType,
-          lastViewedAt: now,
-          lastViewedChapterId: params.chapterId,
-        },
-      })
-    } catch (error) {
-      this.logger.warn(
-        `同步章节浏览状态失败 userId=${params.userId} chapterId=${params.chapterId}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      )
     }
   }
 

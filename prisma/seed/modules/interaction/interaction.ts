@@ -245,7 +245,7 @@ async function createViews(
   }
 
   if (views.length > 0) {
-    await prisma.userView.createMany({ data: views })
+    await prisma.userBrowseLog.createMany({ data: views })
     console.log(`  创建 ${views.length} 条浏览记录`)
   }
 }

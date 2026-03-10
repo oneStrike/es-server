@@ -1,9 +1,9 @@
-import { ViewModule as ViewCoreModule } from '@libs/interaction/view'
+import { ReadingStateModule } from '@libs/interaction/reading-state'
 import { Module } from '@nestjs/common'
-import { ViewController } from './view.controller'
+import { ReadingHistoryController } from './reading-history.controller'
 
 @Module({
-  imports: [ViewCoreModule],
-  controllers: [ViewController],
+  imports: [ReadingStateModule],
+  controllers: [ReadingHistoryController],
 })
 export class ViewModule {}

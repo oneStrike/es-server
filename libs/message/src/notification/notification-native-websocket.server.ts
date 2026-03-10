@@ -92,19 +92,21 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
       )
     })()
 
-    client.on('message', async (raw, isBinary) => {
-      if (isBinary) {
-        client.send(
-          this.messageWebSocketService.createNativeErrorMessage(
-            40001,
-            'Binary frames are not supported',
-          ),
-        )
-        return
-      }
+    client.on('message', (raw, isBinary) => {
+      void (async () => {
+        if (isBinary) {
+          client.send(
+            this.messageWebSocketService.createNativeErrorMessage(
+              40001,
+              'Binary frames are not supported',
+            ),
+          )
+          return
+        }
 
-      await initialAuthPromise
-      await this.handleMessage(client, state, raw.toString())
+        await initialAuthPromise
+        await this.handleMessage(client, state, raw.toString())
+      })()
     })
 
     client.on('close', () => {

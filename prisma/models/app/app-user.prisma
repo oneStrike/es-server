@@ -107,15 +107,15 @@ model AppUser {
   /// 收藏记录
   userFavorites       UserFavorite[]
   /// 浏览记录
-  userViews           UserView[]
-  /// 作品浏览状态
-  workBrowseStates    UserWorkBrowseState[]
+  browseLogs          UserBrowseLog[]
+  /// 作品阅读状态
+  workReadingStates   UserWorkReadingState[]
   /// 评论记录
   userComments        UserComment[]
   /// 举报记录（举报人）
-  userReports         UserReport[]         @relation("UserReportReporter")
+  userReports         UserReport[]           @relation("UserReportReporter")
   /// 举报记录（处理人）
-  handledUserReports  UserReport[]         @relation("UserReportHandler")
+  handledUserReports  UserReport[]           @relation("UserReportHandler")
   /// 下载记录
   userDownloadRecords UserDownloadRecord[]
   /// 购买记录

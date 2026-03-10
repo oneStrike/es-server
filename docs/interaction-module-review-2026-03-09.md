@@ -7,7 +7,7 @@
 ## 2. 本次整改范围
 
 - `libs/interaction/src/**`
-- `apps/app-api/src/modules/view/view.controller.ts`
+- `apps/app-api/src/modules/view/view-history.controller.ts`
 - `apps/app-api/src/modules/comment/comment.controller.ts`
 - `prisma/models/app/user-download-record.prisma`
 - `prisma/models/app/user-purchase-record.prisma`
@@ -17,9 +17,9 @@
 ### 3.1 浏览记录未更新 `viewCount`
 
 - 结果：已修复
-- 处理：`recordView` 在同事务内写入 `user_view` 后，调用 `applyTargetCountDelta(..., 'viewCount', 1)`。
+- 处理：`recordBrowseLog` 在同事务内写入 `user_browse_log` 后，调用 `applyTargetCountDelta(..., 'viewCount', 1)`。
 - 文件：
-  - `libs/interaction/src/view/view.service.ts`
+  - `libs/interaction/src/browse-log/browse-log.service.ts`
 
 ### 3.2 评论审核字段映射风险
 
@@ -33,10 +33,10 @@
 ### 3.3 `view` 校验吞错并静默成功
 
 - 结果：已修复
-- 处理：移除 `isTargetValid` 的吞异常语义，改为 `ensureTargetValid` 显式抛错；`recordView` 不再静默返回成功。
+- 处理：移除 `isTargetValid` 的吞异常语义，改为 `ensureTargetValid` 显式抛错；`recordBrowseLog` 不再静默返回成功。
 - 文件：
-  - `libs/interaction/src/view/view-permission.service.ts`
-  - `libs/interaction/src/view/view.service.ts`
+  - `libs/interaction/src/browse-log/browse-log-permission.service.ts`
+  - `libs/interaction/src/browse-log/browse-log.service.ts`
 
 ### 3.4 下载/购买列表未过滤软删除
 
@@ -54,7 +54,7 @@
 - 处理：`favorite/view` 已迁移到项目自定义装饰器；`base-interaction` 未使用 DTO 已删除。
 - 文件：
   - `libs/interaction/src/favorite/dto/favorite.dto.ts`
-  - `libs/interaction/src/view/dto/view.dto.ts`
+  - `libs/interaction/src/browse-log/dto/browse-log.dto.ts`
   - `libs/interaction/src/dto/base-interaction.dto.ts`（删除）
   - `libs/interaction/src/dto/index.ts`
   - `libs/interaction/src/index.ts`
@@ -132,7 +132,7 @@
   - `libs/interaction/src/query.helper.ts`
   - `libs/interaction/src/like/like-growth.service.ts`
   - `libs/interaction/src/favorite/favorite-growth.service.ts`
-  - `libs/interaction/src/view/view-growth.service.ts`
+  - `libs/interaction/src/browse-log/browse-log-growth.service.ts`
   - `libs/interaction/src/comment/comment-growth.service.ts`
   - `libs/interaction/src/report/report.service.ts`
   - `libs/interaction/src/download/download.service.ts`
@@ -143,10 +143,10 @@
 ### 6.1 view 入参可信度问题（IP/设备/User-Agent）
 
 - 结果：已修复
-- 处理：`RecordViewDto` 不再接收 `ipAddress/device/userAgent`；改由请求上下文提取（`RequestMeta` + Header）。
+- 处理：`RecordBrowseLogDto` 不再接收 `ipAddress/device/userAgent`；改由请求上下文提取（`RequestMeta` + Header）。
 - 文件：
-  - `apps/app-api/src/modules/view/view.controller.ts`
-  - `libs/interaction/src/view/dto/view.dto.ts`
+  - `apps/app-api/src/modules/view/view-history.controller.ts`
+  - `libs/interaction/src/browse-log/dto/browse-log.dto.ts`
 
 ### 6.2 Prisma 兜底减少查询
 
@@ -166,7 +166,7 @@
 ## 8. 验证结果
 
 - 已执行：
-  - `pnpm -s eslint libs/interaction/src apps/app-api/src/modules/view/view.controller.ts apps/app-api/src/modules/comment/comment.controller.ts --ext .ts`
+  - `pnpm -s eslint libs/interaction/src apps/app-api/src/modules/view/view-history.controller.ts apps/app-api/src/modules/comment/comment.controller.ts --ext .ts`
 - 结果：通过（仅存在 ESLintIgnoreWarning，不影响代码）
 
 - 已尝试：

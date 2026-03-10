@@ -3,7 +3,7 @@
 model Work {
   /// 主键ID
   id                  Int       @id @default(autoincrement())
-  /// 作品类型
+  /// 作品类型 (1=漫画, 2 =小说)
   type                Int       @db.SmallInt
   /// 作品名称
   name                String    @db.VarChar(100)
@@ -88,8 +88,8 @@ model Work {
   tags              WorkTagRelation[]
   /// 章节列表
   chapters          WorkChapter[]
-  /// 用户作品浏览状态
-  browseStates      UserWorkBrowseState[]
+  /// 用户阅读状态列表
+  userReadingStates UserWorkReadingState[]
   /// 阅读等级关联
   requiredViewLevel UserLevelRule?         @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
 

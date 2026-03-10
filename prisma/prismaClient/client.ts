@@ -134,6 +134,14 @@ export type UserBadgeAssignment = Prisma.UserBadgeAssignmentModel
  */
 export type UserBadge = Prisma.UserBadgeModel
 /**
+ * Model UserBrowseLog
+ * 用户浏览记录表
+ * 记录用户对各类目标（漫画、小说、章节、论坛主题）的浏览行为
+ * 用于浏览历史查询、热度统计、推荐算法等
+ * 支持用户删除浏览记录
+ */
+export type UserBrowseLog = Prisma.UserBrowseLogModel
+/**
  * Model UserComment
  * 用户评论表
  * 统一存储作品评论、章节评论和论坛回复
@@ -188,19 +196,11 @@ export type UserPurchaseRecord = Prisma.UserPurchaseRecordModel
  */
 export type UserReport = Prisma.UserReportModel
 /**
- * Model UserView
- * 用户浏览记录表
- * 记录用户对各类目标（漫画、小说、章节、论坛主题）的浏览行为
- * 用于浏览历史查询、热度统计、推荐算法等
- * 支持用户删除浏览记录
+ * Model UserWorkReadingState
+ * 用户作品阅读状态表
+ * 用于保存用户对作品（漫画/小说）的阅读进度状态
  */
-export type UserView = Prisma.UserViewModel
-/**
- * Model UserWorkBrowseState
- * 用户作品浏览状态表
- * 用于保存用户对每个作品的最新浏览状态，和 user_view 历史记录分离。
- */
-export type UserWorkBrowseState = Prisma.UserWorkBrowseStateModel
+export type UserWorkReadingState = Prisma.UserWorkReadingStateModel
 /**
  * Model ForumConfigHistory
  * 论坛配置历史表 - 记录配置项的变更历史，支持版本控制和回滚功能

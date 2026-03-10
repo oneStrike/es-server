@@ -1,25 +1,22 @@
 import type { FastifyRequest } from 'fastify'
+import { ContentTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { UploadService } from '@libs/base/modules'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { ReadingStateService } from '@libs/interaction'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { ContentPermissionService } from '../../permission'
 import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()
 export class NovelContentService extends BaseService {
-  private readonly logger = new Logger(NovelContentService.name)
-
   get workChapter() {
     return this.prisma.workChapter
-  }
-
-  get userWorkBrowseState() {
-    return this.prisma.userWorkBrowseState
   }
 
   constructor(
     private readonly uploadService: UploadService,
     private readonly contentPermissionService: ContentPermissionService,
+    private readonly readingStateService: ReadingStateService,
   ) {
     super()
   }
@@ -35,11 +32,11 @@ export class NovelContentService extends BaseService {
       { content: true, workId: true, workType: true },
     )
     if (userId) {
-      await this.touchWorkBrowseStateFromChapter({
+      await this.readingStateService.touchByWorkSafely({
         userId,
         workId: result.chapter.workId,
-        workType: result.chapter.workType,
-        chapterId,
+        workType: result.chapter.workType as ContentTypeEnum,
+        lastReadChapterId: chapterId,
       })
     }
     return result.chapter.content
@@ -107,42 +104,5 @@ export class NovelContentService extends BaseService {
     })
 
     return { id: chapterId }
-  }
-
-  private async touchWorkBrowseStateFromChapter(params: {
-    userId: number
-    workId: number
-    workType: number
-    chapterId: number
-  }) {
-    const now = new Date()
-    try {
-      await this.userWorkBrowseState.upsert({
-        where: {
-          userId_workId: {
-            userId: params.userId,
-            workId: params.workId,
-          },
-        },
-        create: {
-          userId: params.userId,
-          workId: params.workId,
-          workType: params.workType,
-          lastViewedAt: now,
-          lastViewedChapterId: params.chapterId,
-        },
-        update: {
-          workType: params.workType,
-          lastViewedAt: now,
-          lastViewedChapterId: params.chapterId,
-        },
-      })
-    } catch (error) {
-      this.logger.warn(
-        `同步小说章节浏览状态失败 userId=${params.userId} chapterId=${params.chapterId}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      )
-    }
   }
 }

@@ -6,20 +6,22 @@
  * - 标记为 @Global() 以便在整个应用中共享交互服务
  */
 import { Global, Module } from '@nestjs/common'
+import { BrowseLogModule } from './browse-log/browse-log.module'
 import { CommentModule } from './comment/comment.module'
 import { DownloadModule } from './download/download.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { LikeModule } from './like/like.module'
 import { PurchaseModule } from './purchase/purchase.module'
+import { ReadingStateModule } from './reading-state/reading-state.module'
 import { ReportModule } from './report/report.module'
-import { ViewModule } from './view/view.module'
 
 @Global()
 @Module({
   imports: [
     LikeModule,
     FavoriteModule,
-    ViewModule,
+    BrowseLogModule,
+    ReadingStateModule,
     CommentModule,
     ReportModule,
     DownloadModule,
@@ -28,7 +30,8 @@ import { ViewModule } from './view/view.module'
   exports: [
     LikeModule,
     FavoriteModule,
-    ViewModule,
+    BrowseLogModule,
+    ReadingStateModule,
     CommentModule,
     ReportModule,
     DownloadModule,

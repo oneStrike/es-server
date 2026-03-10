@@ -1,7 +1,7 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { EnumProperty, NumberProperty } from '@libs/base/decorators'
 
-const VIEW_TARGET_TYPES = {
+const BROWSE_LOG_TARGET_TYPES = {
   COMIC: InteractionTargetTypeEnum.COMIC,
   NOVEL: InteractionTargetTypeEnum.NOVEL,
   COMIC_CHAPTER: InteractionTargetTypeEnum.COMIC_CHAPTER,
@@ -9,10 +9,10 @@ const VIEW_TARGET_TYPES = {
   FORUM_TOPIC: InteractionTargetTypeEnum.FORUM_TOPIC,
 } as const
 
-export class RecordViewDto {
+export class RecordBrowseLogDto {
   @EnumProperty({
     description: '目标类型（1=漫画，2=小说，3=漫画章节，4=小说章节，5=论坛主题）',
-    enum: VIEW_TARGET_TYPES,
+    enum: BROWSE_LOG_TARGET_TYPES,
     example: InteractionTargetTypeEnum.COMIC,
     required: true,
   })
@@ -27,10 +27,10 @@ export class RecordViewDto {
   targetId!: number
 }
 
-export class QueryUserViewDto {
+export class QueryBrowseLogDto {
   @EnumProperty({
     description: '目标类型筛选',
-    enum: VIEW_TARGET_TYPES,
+    enum: BROWSE_LOG_TARGET_TYPES,
     example: InteractionTargetTypeEnum.COMIC,
     required: false,
   })
@@ -56,10 +56,10 @@ export class QueryUserViewDto {
   pageSize?: number = 20
 }
 
-export class ClearUserViewDto {
+export class ClearBrowseLogDto {
   @EnumProperty({
     description: '仅清理指定目标类型，不传则清理全部',
-    enum: VIEW_TARGET_TYPES,
+    enum: BROWSE_LOG_TARGET_TYPES,
     example: InteractionTargetTypeEnum.COMIC,
     required: false,
   })

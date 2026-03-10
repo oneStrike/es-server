@@ -535,7 +535,7 @@ export class UserService extends BaseService {
         where: { userId },
       }),
       // 浏览数
-      this.prisma.userView.count({
+      this.prisma.userBrowseLog.count({
         where: { userId },
       }),
       // 已购买章节数

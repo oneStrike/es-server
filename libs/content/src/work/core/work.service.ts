@@ -1,9 +1,14 @@
 import type { WorkWhereInput } from '@libs/base/database'
-import { ContentTypeEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
-import { BaseService, Prisma } from '@libs/base/database'
+import { ContentTypeEnum } from '@libs/base/constant'
+import { BaseService } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
-import { FavoriteService, LikeService, ViewService } from '@libs/interaction'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import {
+  BrowseLogService,
+  FavoriteService,
+  LikeService,
+  ReadingStateService,
+} from '@libs/interaction'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkDto,
   QueryWorkDto,
@@ -29,31 +34,12 @@ interface WorkDetailContext {
 }
 
 /**
- * 继续阅读章节状态接口
- * 用于记录用户上次阅读的章节信息
- */
-interface ContinueReadingChapterState {
-  /** 章节ID */
-  id: number
-  /** 章节标题 */
-  title: string
-  /** 章节副标题 */
-  subtitle: string | null
-  /** 排序序号 */
-  sortOrder: number
-  /** 浏览时间 */
-  viewedAt?: Date
-}
-
-/**
  * 作品服务类
  * 负责作品的全生命周期管理，包括创建、更新、查询、删除等操作
  * 同时处理与作品相关的用户交互（点赞、收藏、浏览）
  */
 @Injectable()
 export class WorkService extends BaseService {
-  private readonly logger = new Logger(WorkService.name)
-
   get work() {
     return this.prisma.work
   }
@@ -66,159 +52,13 @@ export class WorkService extends BaseService {
     return this.prisma.appUser
   }
 
-  get userWorkBrowseState() {
-    return this.prisma.userWorkBrowseState
-  }
-
   constructor(
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
-    private readonly viewService: ViewService,
+    private readonly browseLogService: BrowseLogService,
+    private readonly readingStateService: ReadingStateService,
   ) {
     super()
-  }
-
-  /**
-   * 解析作品交互目标类型
-   * 一次性解析交互目标类型，避免作品详情逻辑在多处重复进行内容类型分支判断
-   * @param workType 作品类型
-   * @returns 作品目标类型和章节目标类型
-   */
-  private resolveWorkInteractionTargets(workType: number) {
-    if (workType === ContentTypeEnum.COMIC) {
-      return {
-        workTargetType: InteractionTargetTypeEnum.COMIC,
-        chapterTargetType: InteractionTargetTypeEnum.COMIC_CHAPTER,
-      }
-    }
-
-    if (workType === ContentTypeEnum.NOVEL) {
-      return {
-        workTargetType: InteractionTargetTypeEnum.NOVEL,
-        chapterTargetType: InteractionTargetTypeEnum.NOVEL_CHAPTER,
-      }
-    }
-
-    throw new BadRequestException('不支持的作品类型')
-  }
-
-  /**
-   * 解析用户/作品对的最新继续阅读章节
-   * 浏览状态表是主要数据源，用户浏览历史作为后备，以确保现有章节浏览历史仍然有效
-   * @param userId 用户ID
-   * @param workId 作品ID
-   * @param workType 作品类型
-   * @param browseState 浏览状态
-   * @returns 继续阅读章节状态
-   */
-  private async resolveContinueReadingChapter(
-    userId: number,
-    workId: number,
-    workType: number,
-    browseState?: {
-      lastViewedChapter?: {
-        id: number
-        title: string
-        subtitle: string | null
-        sortOrder: number
-        deletedAt: Date | null
-      } | null
-    } | null,
-  ) {
-    if (browseState?.lastViewedChapter?.deletedAt === null) {
-      return {
-        id: browseState.lastViewedChapter.id,
-        title: browseState.lastViewedChapter.title,
-        subtitle: browseState.lastViewedChapter.subtitle,
-        sortOrder: browseState.lastViewedChapter.sortOrder,
-      }
-    }
-
-    const { chapterTargetType } = this.resolveWorkInteractionTargets(workType)
-    const rows = await this.prisma.$queryRaw<ContinueReadingChapterState[]>(
-      Prisma.sql`
-        SELECT
-          wc.id AS "id",
-          wc.title AS "title",
-          wc.subtitle AS "subtitle",
-          wc.sort_order AS "sortOrder",
-          uv.viewed_at AS "viewedAt"
-        FROM user_view uv
-        INNER JOIN work_chapter wc ON wc.id = uv.target_id
-        WHERE uv.user_id = ${userId}
-          AND uv.target_type = ${chapterTargetType}
-          AND wc.work_id = ${workId}
-          AND wc.deleted_at IS NULL
-        ORDER BY uv.viewed_at DESC
-        LIMIT 1
-      `,
-    )
-
-    if (rows[0]) {
-      return rows[0]
-    }
-
-    return undefined
-  }
-
-  /**
-   * 将最新浏览状态与历史记录分开持久化
-   * 这使得详情响应开销更小，并使"继续阅读"功能可扩展
-   * @param params 参数对象
-   * @param params.userId 用户ID
-   * @param params.workId 作品ID
-   * @param params.workType 作品类型
-   * @param params.lastViewedAt 最近浏览时间
-   * @param params.lastViewedChapterId 最近浏览章节ID
-   */
-  private async upsertWorkBrowseState(params: {
-    userId: number
-    workId: number
-    workType: number
-    lastViewedAt: Date
-    lastViewedChapterId?: number
-  }) {
-    const { userId, workId, workType, lastViewedAt, lastViewedChapterId } =
-      params
-
-    return this.userWorkBrowseState.upsert({
-      where: {
-        userId_workId: {
-          userId,
-          workId,
-        },
-      },
-      create: {
-        userId,
-        workId,
-        workType,
-        lastViewedAt,
-        lastViewedChapterId,
-      },
-      update: {
-        workType,
-        lastViewedAt,
-        lastViewedChapterId,
-      },
-    })
-  }
-
-  private async syncWorkBrowseStateSafely(params: {
-    userId: number
-    workId: number
-    workType: number
-    lastViewedAt: Date
-    lastViewedChapterId?: number
-  }) {
-    try {
-      await this.upsertWorkBrowseState(params)
-    } catch (error) {
-      this.logger.warn(
-        `同步作品浏览状态失败 userId=${params.userId} workId=${params.workId}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      )
-    }
   }
 
   /**
@@ -650,58 +490,42 @@ export class WorkService extends BaseService {
       }
     }
 
-    const { workTargetType } = this.resolveWorkInteractionTargets(work.type)
     const now = new Date()
 
-    const [liked, favorited, browseState] = await Promise.all([
-      this.likeService.checkLikeStatus(workTargetType, id, userId),
-      this.favoriteService.checkFavoriteStatus(workTargetType, id, userId),
-      this.userWorkBrowseState.findUnique({
-        where: {
-          userId_workId: {
-            userId,
-            workId: id,
-          },
-        },
-        include: {
-          lastViewedChapter: {
-            select: {
-              id: true,
-              title: true,
-              subtitle: true,
-              sortOrder: true,
-              deletedAt: true,
-            },
-          },
-        },
-      }),
+    const [liked, favorited, readingState] = await Promise.all([
+      this.likeService.checkLikeStatus(work.type, id, userId),
+      this.favoriteService.checkFavoriteStatus(work.type, id, userId),
+      this.readingStateService.getReadingState(
+        work.type as ContentTypeEnum,
+        id,
+        userId,
+      ),
     ])
 
-    const continueChapter = await this.resolveContinueReadingChapter(
-      userId,
-      id,
-      work.type,
-      browseState,
-    )
+    const continueChapter = readingState?.continueChapter
 
-    // 历史记录和浏览状态服务于不同目的：
-    // - user_view 保持只追加的浏览轨迹和计数器
-    // - user_work_browse_state 保持最新快照以快速读取详情
-    await this.viewService.recordView(
-      workTargetType,
+    // 历史记录和阅读状态服务于不同目的：
+    // - user_browse_log 保持只追加的浏览轨迹和计数器
+    // - user_work_reading_state 保持最新快照以快速读取详情
+    await this.browseLogService.recordBrowseLog(
+      work.type,
       id,
       userId,
       ipAddress,
       device,
       userAgent,
+      {
+        skipTargetValidation: true,
+        deferPostProcess: true,
+      },
     )
 
-    await this.syncWorkBrowseStateSafely({
+    await this.readingStateService.touchByWorkSafely({
       userId,
       workId: id,
-      workType: work.type,
-      lastViewedAt: now,
-      lastViewedChapterId: continueChapter?.id,
+      workType: work.type as ContentTypeEnum,
+      lastReadAt: now,
+      lastReadChapterId: continueChapter?.id,
     })
 
     return {
@@ -711,7 +535,7 @@ export class WorkService extends BaseService {
       liked,
       favorited,
       viewed: true,
-      lastViewedAt: now,
+      lastReadAt: now,
       continueChapter: continueChapter
         ? {
             id: continueChapter.id,

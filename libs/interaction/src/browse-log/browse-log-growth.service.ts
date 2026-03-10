@@ -9,12 +9,12 @@ import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-r
 import { refreshUserLevelByExperience } from '../user-level.helper'
 
 @Injectable()
-export class ViewGrowthService extends BaseService {
+export class BrowseLogGrowthService extends BaseService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }
 
-  async rewardViewRecorded(
+  async rewardBrowseLogRecorded(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,

@@ -8,7 +8,7 @@ import { InteractionTargetAccessService } from '../interaction-target-access.ser
 import { VIEW_SUPPORTED_TARGET_TYPES } from '../interaction-target.definition'
 
 @Injectable()
-export class ViewPermissionService extends BaseService {
+export class BrowseLogPermissionService extends BaseService {
   constructor(
     private readonly interactionTargetAccessService: InteractionTargetAccessService,
   ) {
