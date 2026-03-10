@@ -14,24 +14,24 @@ import { ApiTags } from '@nestjs/swagger'
 export class ReadingHistoryController {
   constructor(private readonly readingStateService: ReadingStateService) {}
 
-  // @Get('my')
-  // @ApiPageDoc({
-  //   summary: '分页查询我的阅读历史',
-  //   model: ReadingHistoryWorkDto,
-  // })
-  // async myHistory(
-  //   @Query() query: QueryReadingHistoryDto,
-  //   @CurrentUser('sub') userId: number,
-  // ) {
-  //   return this.readingStateService.getUserReadingHistory({
-  //     ...query,
-  //     userId,
-  //   })
-  // }
+  @Get('my')
+  @ApiPageDoc({
+    summary: '分页查询我的阅读记录',
+    model: ReadingHistoryWorkDto,
+  })
+  async myHistory(
+    @Query() query: QueryReadingHistoryDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.readingStateService.getUserReadingHistory({
+      ...query,
+      userId,
+    })
+  }
 
   @Post('delete')
   @ApiDoc({
-    summary: '删除单条阅读历史',
+    summary: '删除单条阅读记录',
     model: Boolean,
   })
   async delete(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
@@ -40,7 +40,7 @@ export class ReadingHistoryController {
 
   @Post('clear')
   @ApiDoc({
-    summary: '清空阅读历史',
+    summary: '清空阅读记录',
     model: Boolean,
   })
   async clear(

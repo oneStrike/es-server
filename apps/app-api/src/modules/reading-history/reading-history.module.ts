@@ -6,4 +6,4 @@ import { ReadingHistoryController } from './reading-history.controller'
   imports: [ReadingStateModule],
   controllers: [ReadingHistoryController],
 })
-export class ViewModule {}
+export class ReadingHistoryModule {}

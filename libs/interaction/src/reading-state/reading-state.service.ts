@@ -3,26 +3,6 @@ import { BaseService } from '@libs/base/database'
 import { Injectable, Logger } from '@nestjs/common'
 import { QueryReadingHistoryDto } from './dto/reading-state.dto'
 
-/**
- * 继续阅读章节快照
- * 用于记录用户上次阅读的章节信息
- */
-interface ContinueReadingChapterSnapshot {
-  id: number
-  title: string
-  subtitle: string | null
-  sortOrder: number
-}
-
-/**
- * 阅读状态快照
- * 包含最后阅读时间和可继续阅读的章节信息
- */
-interface ReadingStateSnapshot {
-  lastReadAt: Date
-  continueChapter?: ContinueReadingChapterSnapshot
-}
-
 @Injectable()
 export class ReadingStateService extends BaseService {
   private readonly logger = new Logger(ReadingStateService.name)
@@ -52,7 +32,7 @@ export class ReadingStateService extends BaseService {
       workId: number
       deletedAt: Date | null
     } | null,
-  ): ContinueReadingChapterSnapshot | undefined {
+  ) {
     // 章节不存在、已删除或不属于目标作品时，返回 undefined
     if (!chapter || chapter.deletedAt !== null || chapter.workId !== workId) {
       return undefined
@@ -77,7 +57,7 @@ export class ReadingStateService extends BaseService {
     workType: ContentTypeEnum,
     workId: number,
     userId: number,
-  ): Promise<ReadingStateSnapshot | null> {
+  ) {
     const state = await this.userWorkReadingState.findUnique({
       where: {
         userId_workId: {

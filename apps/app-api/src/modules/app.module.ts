@@ -5,11 +5,11 @@ import { DictionaryModule } from './dictionary/dictionary.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { LikeModule } from './like/like.module'
 import { MessageModule } from './message/message.module'
+import { ReadingHistoryModule } from './reading-history/reading-history.module'
 import { ReportModule } from './report/report.module'
 import { SystemModule } from './system/system.module'
 import { TaskModule } from './task/task.module'
 import { UserModule } from './user/user.module'
-import { ViewModule } from './view/view.module'
 import { WorkModule } from './work/work.module'
 
 @Module({
@@ -21,7 +21,7 @@ import { WorkModule } from './work/work.module'
     WorkModule,
     LikeModule,
     FavoriteModule,
-    ViewModule,
+    ReadingHistoryModule,
     SystemModule,
     CommentModule,
     MessageModule,
