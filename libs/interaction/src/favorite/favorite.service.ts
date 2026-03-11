@@ -57,8 +57,6 @@ export class FavoriteService extends BaseService {
     return resolver
   }
 
-
-
   /**
    * 批量检查收藏状态
    * @param targetType 目标类型
@@ -137,34 +135,19 @@ export class FavoriteService extends BaseService {
 
       await resolver.applyCountDelta(tx, targetId, 1)
 
-      if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
-        if (topicOwnerId !== undefined && topicOwnerId !== userId) {
-          await this.messageOutboxService.enqueueNotificationEvent(
-            {
-              eventType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
-              bizKey: `notify:favorite:${targetType}:${targetId}:actor:${userId}:receiver:${topicOwnerId}`,
-              payload: {
-                receiverUserId: topicOwnerId,
-                actorUserId: userId,
-                type: MessageNotificationTypeEnum.CONTENT_FAVORITE,
-                targetType,
-                targetId,
-                title: '你的内容被收藏了',
-                content: '有人收藏了你的内容',
-              },
-            },
-            tx,
-          )
-        }
+      if (resolver.postFavoriteHook) {
+        await resolver.postFavoriteHook(tx, targetId, userId, {
+          ownerUserId: topicOwnerId,
+        })
       }
-
-      await this.favoriteGrowthService.rewardFavoriteCreated(
-        tx,
-        targetType,
-        targetId,
-        userId,
-      )
     })
+
+    // 独立于主事务执行，防止崩溃或者过长影响核心数据落库
+    await this.favoriteGrowthService.rewardFavoriteCreated(
+      targetType,
+      targetId,
+      userId,
+    )
   }
 
   /**

@@ -27,7 +27,6 @@ export class FavoriteGrowthService extends BaseService {
    * @param userId 用户 ID
    */
   async rewardFavoriteCreated(
-    tx: any,
     targetType: FavoriteTargetTypeEnum,
     targetId: number,
     userId: number,
@@ -36,34 +35,39 @@ export class FavoriteGrowthService extends BaseService {
     const baseBizKey = `favorite:${targetType}:${targetId}:user:${userId}`
 
     try {
-      await this.growthLedgerService.applyByRule(tx, {
-        userId,
-        assetType: GrowthAssetTypeEnum.POINTS,
-        ruleType,
-        bizKey: `${baseBizKey}:POINTS`,
-        targetType,
-        targetId,
-      })
-
-      const experienceResult = await this.growthLedgerService.applyByRule(tx, {
-        userId,
-        assetType: GrowthAssetTypeEnum.EXPERIENCE,
-        ruleType,
-        bizKey: `${baseBizKey}:EXPERIENCE`,
-        targetType,
-        targetId,
-      })
-
-      if (
-        experienceResult.success &&
-        experienceResult.afterValue !== undefined
-      ) {
-        await refreshUserLevelByExperience(
-          tx,
+      await this.prisma.$transaction(async (tx) => {
+        await this.growthLedgerService.applyByRule(tx, {
           userId,
-          experienceResult.afterValue,
+          assetType: GrowthAssetTypeEnum.POINTS,
+          ruleType,
+          bizKey: `${baseBizKey}:POINTS`,
+          targetType,
+          targetId,
+        })
+
+        const experienceResult = await this.growthLedgerService.applyByRule(
+          tx,
+          {
+            userId,
+            assetType: GrowthAssetTypeEnum.EXPERIENCE,
+            ruleType,
+            bizKey: `${baseBizKey}:EXPERIENCE`,
+            targetType,
+            targetId,
+          },
         )
-      }
+
+        if (
+          experienceResult.success &&
+          experienceResult.afterValue !== undefined
+        ) {
+          await refreshUserLevelByExperience(
+            tx,
+            userId,
+            experienceResult.afterValue,
+          )
+        }
+      })
     } catch {
       // 奖励失败不影响主流程
     }

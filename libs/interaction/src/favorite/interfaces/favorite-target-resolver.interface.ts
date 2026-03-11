@@ -1,4 +1,4 @@
-import type { PrismaClientType } from '@libs/base/database/prisma.types'
+import type { PrismaTransactionClientType } from '@libs/base/database/prisma.types'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 export interface IFavoriteTargetResolver {
@@ -15,7 +15,7 @@ export interface IFavoriteTargetResolver {
    * @throws BadRequestException 如果目标不存在
    */
   ensureExists(
-    tx: PrismaClientType,
+    tx: PrismaTransactionClientType,
     targetId: number,
   ): Promise<{ ownerUserId?: number }>
 
@@ -26,9 +26,19 @@ export interface IFavoriteTargetResolver {
    * @param delta 增量 (+1 或 -1)
    */
   applyCountDelta(
-    tx: PrismaClientType,
+    tx: PrismaTransactionClientType,
     targetId: number,
     delta: number,
+  ): Promise<void>
+
+  /**
+   * 收藏成功的后续钩子（在事务内执行，主要用于发送入库消息）
+   */
+  postFavoriteHook?(
+    tx: PrismaTransactionClientType,
+    targetId: number,
+    actorUserId: number,
+    options: { ownerUserId?: number },
   ): Promise<void>
 
   /**
