@@ -1,11 +1,11 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  FavoriteDto,
   FavoriteListQueryDto,
+  FavoritePageQueryDto,
+  FavoritePageItemDto,
   FavoriteService,
-  FavoriteStatusQueryDto,
-  UnfavoriteDto,
+  FavoriteTargetDto,
 } from '@libs/interaction'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -21,7 +21,7 @@ export class FavoriteController {
     model: IdDto,
   })
   async favorite(
-    @Body() body: FavoriteDto,
+    @Body() body: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.favoriteService.favorite(body.targetType, body.targetId, userId)
@@ -33,7 +33,7 @@ export class FavoriteController {
     model: IdDto,
   })
   async unfavorite(
-    @Body() body: UnfavoriteDto,
+    @Body() body: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
     await this.favoriteService.unfavorite(
@@ -50,7 +50,7 @@ export class FavoriteController {
     model: Boolean,
   })
   async status(
-    @Query() query: FavoriteStatusQueryDto,
+    @Query() query: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
     return {
@@ -65,17 +65,12 @@ export class FavoriteController {
   @Get('my')
   @ApiPageDoc({
     summary: '分页查询我的收藏记录',
-    model: IdDto,
+    model: FavoritePageItemDto,
   })
   async my(
-    @Query() query: FavoriteListQueryDto,
+    @Query() query: FavoritePageQueryDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.favoriteService.getUserFavorites(
-      userId,
-      query.targetType,
-      query.pageIndex,
-      query.pageSize,
-    )
+    return this.favoriteService.getUserFavorites(query, userId)
   }
 }

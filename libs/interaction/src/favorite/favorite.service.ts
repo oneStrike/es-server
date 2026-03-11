@@ -4,6 +4,7 @@ import {
   MessageOutboxService,
 } from '@libs/message'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { FavoritePageQueryDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
 
@@ -267,25 +268,72 @@ export class FavoriteService extends BaseService {
    * @param pageSize 每页数量
    * @returns 分页收藏列表
    */
-  async getUserFavorites(
-    userId: number,
-    targetType?: FavoriteTargetTypeEnum,
-    pageIndex: number = 0,
-    pageSize: number = 15,
-  ) {
-    return this.prisma.userFavorite.findPagination({
+  async getUserFavorites(dto: FavoritePageQueryDto, userId: number) {
+    const page = await this.prisma.userFavorite.findPagination({
       where: {
         userId,
-        ...(targetType !== undefined && { targetType }),
-        pageIndex,
-        pageSize,
-      } as any,
-      orderBy: { createdAt: 'desc' },
+        ...dto,
+      },
       select: {
+        id: true,
+        userId: true,
         targetId: true,
         targetType: true,
         createdAt: true,
       },
     })
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const workTargetIds = [
+      ...new Set(
+        page.list
+          .filter(
+            (item) =>
+              item.targetType === FavoriteTargetTypeEnum.WORK_COMIC ||
+              item.targetType === FavoriteTargetTypeEnum.WORK_NOVEL,
+          )
+          .map((item) => item.targetId),
+      ),
+    ]
+
+    if (workTargetIds.length === 0) {
+      return page
+    }
+
+    const works = await this.prisma.work.findMany({
+      where: {
+        id: { in: workTargetIds },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        cover: true,
+      },
+    })
+
+    const workMap = new Map(works.map((work) => [work.id, work]))
+
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        if (
+          item.targetType === FavoriteTargetTypeEnum.WORK_COMIC ||
+          item.targetType === FavoriteTargetTypeEnum.WORK_NOVEL
+        ) {
+          const work = workMap.get(item.targetId)
+          if (work) {
+            return {
+              ...item,
+              work,
+            }
+          }
+        }
+        return item
+      }),
+    }
   }
 }

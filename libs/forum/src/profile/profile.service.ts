@@ -145,8 +145,8 @@ export class ForumProfileService extends BaseService {
 
   async getMyFavorites(userId: number) {
     const result = await this.favoriteService.getUserFavorites(
+      { targetType: FavoriteTargetTypeEnum.FORUM_TOPIC },
       userId,
-      FavoriteTargetTypeEnum.FORUM_TOPIC,
     )
 
     if (result.list.length === 0) {
