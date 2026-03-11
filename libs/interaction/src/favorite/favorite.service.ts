@@ -7,6 +7,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { FavoritePageQueryDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
+import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.interface'
 
 /**
  * 收藏服务
@@ -19,6 +20,11 @@ export class FavoriteService extends BaseService {
     return this.prisma.userFavorite
   }
 
+  private readonly resolvers = new Map<
+    FavoriteTargetTypeEnum,
+    IFavoriteTargetResolver
+  >()
+
   constructor(
     private readonly favoriteGrowthService: FavoriteGrowthService,
     private readonly messageOutboxService: MessageOutboxService,
@@ -26,75 +32,32 @@ export class FavoriteService extends BaseService {
     super()
   }
 
-  private async ensureTargetExists(
-    tx: any,
-    targetType: FavoriteTargetTypeEnum,
-    targetId: number,
-  ) {
-    if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
-      const topic = await tx.forumTopic.findFirst({
-        where: {
-          id: targetId,
-          deletedAt: null,
-        },
-        select: { userId: true },
-      })
-
-      if (!topic) {
-        throw new BadRequestException('帖子不存在')
-      }
-
-      return { topicOwnerId: topic.userId }
-    }
-
-    const work = await tx.work.findFirst({
-      where: {
-        id: targetId,
-        type: targetType,
-        deletedAt: null,
-      },
-      select: { id: true },
-    })
-
-    if (!work) {
-      throw new BadRequestException('作品不存在')
-    }
-
-    return {}
-  }
-
-  private async applyFavoriteCountDelta(
-    tx: any,
-    targetType: FavoriteTargetTypeEnum,
-    targetId: number,
-    delta: number,
-  ) {
-    if (delta === 0) {
-      return
-    }
-
-    if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
-      await tx.forumTopic.applyCountDelta(
-        {
-          id: targetId,
-          deletedAt: null,
-        },
-        'favoriteCount',
-        delta,
+  /**
+   * 供其他模块在应用启动时注册自己的解析器
+   */
+  registerResolver(resolver: IFavoriteTargetResolver) {
+    if (this.resolvers.has(resolver.targetType)) {
+      console.warn(
+        `Favorite resolver for type ${resolver.targetType} is being overwritten.`,
       )
-      return
     }
-
-    await tx.work.applyCountDelta(
-      {
-        id: targetId,
-        type: targetType,
-        deletedAt: null,
-      },
-      'favoriteCount',
-      delta,
-    )
+    this.resolvers.set(resolver.targetType, resolver)
   }
+
+  /**
+   * 获取对应的解析器
+   */
+  private getResolver(
+    targetType: FavoriteTargetTypeEnum,
+  ): IFavoriteTargetResolver {
+    const resolver = this.resolvers.get(targetType)
+    if (!resolver) {
+      throw new BadRequestException(`不支持的收藏类型: ${targetType}`)
+    }
+    return resolver
+  }
+
+
 
   /**
    * 批量检查收藏状态
@@ -144,10 +107,11 @@ export class FavoriteService extends BaseService {
     targetId: number,
     userId: number,
   ) {
+    const resolver = this.getResolver(targetType)
+
     await this.prisma.$transaction(async (tx) => {
-      const { topicOwnerId } = await this.ensureTargetExists(
+      const { ownerUserId: topicOwnerId } = await resolver.ensureExists(
         tx,
-        targetType,
         targetId,
       )
 
@@ -171,7 +135,7 @@ export class FavoriteService extends BaseService {
         })
       }
 
-      await this.applyFavoriteCountDelta(tx, targetType, targetId, 1)
+      await resolver.applyCountDelta(tx, targetId, 1)
 
       if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
         if (topicOwnerId !== undefined && topicOwnerId !== userId) {
@@ -214,6 +178,8 @@ export class FavoriteService extends BaseService {
     targetId: number,
     userId: number,
   ) {
+    const resolver = this.getResolver(targetType)
+
     await this.prisma.$transaction(async (tx) => {
       try {
         await tx.userFavorite.delete({
@@ -231,7 +197,7 @@ export class FavoriteService extends BaseService {
         })
       }
 
-      await this.applyFavoriteCountDelta(tx, targetType, targetId, -1)
+      await resolver.applyCountDelta(tx, targetId, -1)
     })
   }
 
@@ -287,49 +253,40 @@ export class FavoriteService extends BaseService {
       return page
     }
 
-    const workTargetIds = [
-      ...new Set(
-        page.list
-          .filter(
-            (item) =>
-              item.targetType === FavoriteTargetTypeEnum.WORK_COMIC ||
-              item.targetType === FavoriteTargetTypeEnum.WORK_NOVEL,
-          )
-          .map((item) => item.targetId),
-      ),
-    ]
-
-    if (workTargetIds.length === 0) {
-      return page
+    // 按照 TargetType 分组收集 IDs
+    const typeToIdsAggregator = new Map<FavoriteTargetTypeEnum, number[]>()
+    for (const item of page.list) {
+      if (!typeToIdsAggregator.has(item.targetType)) {
+        typeToIdsAggregator.set(item.targetType, [])
+      }
+      typeToIdsAggregator.get(item.targetType)!.push(item.targetId)
     }
 
-    const works = await this.prisma.work.findMany({
-      where: {
-        id: { in: workTargetIds },
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        name: true,
-        cover: true,
-      },
-    })
-
-    const workMap = new Map(works.map((work) => [work.id, work]))
+    // 并行调用各个 Resolver 获取详情
+    const detailMaps = new Map<FavoriteTargetTypeEnum, Map<number, any>>()
+    await Promise.all(
+      Array.from(typeToIdsAggregator.entries()).map(async ([type, ids]) => {
+        try {
+          const resolver = this.getResolver(type)
+          if (resolver.batchGetDetails) {
+            const detailMap = await resolver.batchGetDetails(ids)
+            detailMaps.set(type, detailMap)
+          }
+        } catch {
+          // 忽略不支持的类型
+        }
+      }),
+    )
 
     return {
       ...page,
       list: page.list.map((item) => {
-        if (
-          item.targetType === FavoriteTargetTypeEnum.WORK_COMIC ||
-          item.targetType === FavoriteTargetTypeEnum.WORK_NOVEL
-        ) {
-          const work = workMap.get(item.targetId)
-          if (work) {
-            return {
-              ...item,
-              work,
-            }
+        const targetDetail = detailMaps.get(item.targetType)?.get(item.targetId)
+        if (targetDetail) {
+          return {
+            ...item,
+            work: targetDetail, // 保持老前端兼容性或者视具体情况调整
+            targetDetail,
           }
         }
         return item

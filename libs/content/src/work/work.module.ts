@@ -8,6 +8,8 @@ import { WorkChapterService } from './chapter/work-chapter.service'
 import { ComicContentService } from './content/comic-content.service'
 import { NovelContentService } from './content/novel-content.service'
 import { WorkService } from './core/work.service'
+import { WorkComicFavoriteResolver } from './core/resolver/work-comic-favorite.resolver'
+import { WorkNovelFavoriteResolver } from './core/resolver/work-novel-favorite.resolver'
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { WorkService } from './core/work.service'
     WorkChapterService,
     NovelContentService,
     ComicContentService,
+    WorkComicFavoriteResolver,
+    WorkNovelFavoriteResolver,
   ],
   exports: [
     WorkService,
