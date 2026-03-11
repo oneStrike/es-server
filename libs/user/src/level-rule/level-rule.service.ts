@@ -1,6 +1,5 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { FavoriteService, LikeService } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CheckUserLevelPermissionDto,
@@ -26,10 +25,7 @@ export class UserLevelRuleService extends BaseService {
     return this.prisma.userComment
   }
 
-  constructor(
-    private readonly likeService: LikeService,
-    private readonly favoriteService: FavoriteService,
-  ) {
+  constructor() {
     super()
   }
 
@@ -202,10 +198,7 @@ export class UserLevelRuleService extends BaseService {
     }
   }
 
-  async getHighestLevelRuleByExperience(
-    experience: number,
-    tx?: any,
-  ) {
+  async getHighestLevelRuleByExperience(experience: number, tx?: any) {
     const client = tx ?? this.prisma
     return client.userLevelRule.findFirst({
       where: {

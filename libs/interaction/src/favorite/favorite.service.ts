@@ -25,22 +25,74 @@ export class FavoriteService extends BaseService {
     super()
   }
 
-  /**
-   * 验证关联的作品或者帖子是否存在
-   */
-  async ensureTargetExists(
+  private async ensureTargetExists(
+    tx: any,
     targetType: FavoriteTargetTypeEnum,
     targetId: number,
   ) {
     if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
-      if (!(await this.prisma.forumTopic.exists({ id: targetId }))) {
+      const topic = await tx.forumTopic.findFirst({
+        where: {
+          id: targetId,
+          deletedAt: null,
+        },
+        select: { userId: true },
+      })
+
+      if (!topic) {
         throw new BadRequestException('帖子不存在')
       }
-    } else {
-      if (!(await this.prisma.work.exists({ id: targetId }))) {
-        throw new BadRequestException('作品不存在')
-      }
+
+      return { topicOwnerId: topic.userId }
     }
+
+    const work = await tx.work.findFirst({
+      where: {
+        id: targetId,
+        type: targetType,
+        deletedAt: null,
+      },
+      select: { id: true },
+    })
+
+    if (!work) {
+      throw new BadRequestException('作品不存在')
+    }
+
+    return {}
+  }
+
+  private async applyFavoriteCountDelta(
+    tx: any,
+    targetType: FavoriteTargetTypeEnum,
+    targetId: number,
+    delta: number,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
+      await tx.forumTopic.applyCountDelta(
+        {
+          id: targetId,
+          deletedAt: null,
+        },
+        'favoriteCount',
+        delta,
+      )
+      return
+    }
+
+    await tx.work.applyCountDelta(
+      {
+        id: targetId,
+        type: targetType,
+        deletedAt: null,
+      },
+      'favoriteCount',
+      delta,
+    )
   }
 
   /**
@@ -91,8 +143,13 @@ export class FavoriteService extends BaseService {
     targetId: number,
     userId: number,
   ) {
-    await this.ensureTargetExists(targetType, targetId)
     await this.prisma.$transaction(async (tx) => {
+      const { topicOwnerId } = await this.ensureTargetExists(
+        tx,
+        targetType,
+        targetId,
+      )
+
       try {
         await tx.userFavorite.create({
           data: {
@@ -112,27 +169,17 @@ export class FavoriteService extends BaseService {
           notFoundMessage: '用户不存在',
         })
       }
+
+      await this.applyFavoriteCountDelta(tx, targetType, targetId, 1)
+
       if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
-        // 增加收藏数
-        await tx.forumTopic.applyCountDelta(
-          { id: targetId },
-          'favoriteCount',
-          1,
-        )
-
-        // 查询目标作者，避免给自己发通知
-        const topic = await tx.forumTopic.findUnique({
-          where: { id: targetId, deletedAt: null },
-          select: { userId: true },
-        })
-
-        if (topic && topic.userId !== userId) {
+        if (topicOwnerId !== undefined && topicOwnerId !== userId) {
           await this.messageOutboxService.enqueueNotificationEvent(
             {
               eventType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
-              bizKey: `notify:favorite:${targetType}:${targetId}:actor:${userId}:receiver:${topic.userId}`,
+              bizKey: `notify:favorite:${targetType}:${targetId}:actor:${userId}:receiver:${topicOwnerId}`,
               payload: {
-                receiverUserId: topic.userId,
+                receiverUserId: topicOwnerId,
                 actorUserId: userId,
                 type: MessageNotificationTypeEnum.CONTENT_FAVORITE,
                 targetType,
@@ -144,12 +191,6 @@ export class FavoriteService extends BaseService {
             tx,
           )
         }
-      } else {
-        await this.prisma.work.applyCountDelta(
-          { id: targetId },
-          'favoriteCount',
-          1,
-        )
       }
 
       await this.favoriteGrowthService.rewardFavoriteCreated(
@@ -189,13 +230,7 @@ export class FavoriteService extends BaseService {
         })
       }
 
-      // await this.interactionTargetAccessService.applyTargetCountDelta(
-      //   tx,
-      //   targetType,
-      //   targetId,
-      //   'favoriteCount',
-      //   -1,
-      // )
+      await this.applyFavoriteCountDelta(tx, targetType, targetId, -1)
     })
   }
 
