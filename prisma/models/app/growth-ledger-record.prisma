@@ -2,38 +2,31 @@
 /// 记录积分、经验等可计量资产的变更流水
 model GrowthLedgerRecord {
   /// 主键ID
-  id Int @id @default(autoincrement())
-
+  id          Int     @id @default(autoincrement())
   /// 用户ID
-  userId      Int    @map("user_id")
-  /// 资产类型（POINTS / EXPERIENCE）
-  assetType   String @map("asset_type") @db.VarChar(30)
+  userId      Int     @map("user_id")
+  /// 资产类型（1=积分 2=经验值）
+  assetType   Int     @map("asset_type") @db.SmallInt
   /// 变更值（正数发放，负数扣减）
   delta       Int
   /// 变更前余额
-  beforeValue Int    @map("before_value")
+  beforeValue Int     @map("before_value")
   /// 变更后余额
-  afterValue  Int    @map("after_value")
-
+  afterValue  Int     @map("after_value")
   /// 幂等业务键（同用户下全局唯一）
-  bizKey String @map("biz_key") @db.VarChar(120)
-  /// 来源模块（comment / purchase / task / sign 等）
-  source String @db.VarChar(50)
-
+  bizKey      String  @map("biz_key") @db.VarChar(120)
   /// 规则类型（可选）
-  ruleType Int? @map("rule_type") @db.SmallInt
+  ruleType    Int?    @map("rule_type") @db.SmallInt
   /// 规则ID（可选）
-  ruleId   Int? @map("rule_id")
-
+  ruleId      Int?    @map("rule_id")
   /// 目标类型（可选）
-  targetType Int? @map("target_type") @db.SmallInt
+  targetType  Int?    @map("target_type") @db.SmallInt
   /// 目标ID（可选）
-  targetId   Int? @map("target_id")
-
+  targetId    Int?    @map("target_id")
   /// 备注
-  remark  String? @db.VarChar(500)
+  remark      String? @db.VarChar(500)
   /// 扩展上下文
-  context Json?
+  context     Json?
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -45,8 +38,6 @@ model GrowthLedgerRecord {
   @@unique([userId, bizKey])
   /// 账单查询索引
   @@index([userId, assetType, createdAt])
-  /// 来源检索索引
-  @@index([source, createdAt])
   /// 目标检索索引
   @@index([targetType, targetId])
   @@map("growth_ledger_record")

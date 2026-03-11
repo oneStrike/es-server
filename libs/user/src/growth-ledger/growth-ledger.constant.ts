@@ -3,8 +3,8 @@
  * 统一积分与经验的资产标识
  */
 export enum GrowthAssetTypeEnum {
-  POINTS = 'POINTS',
-  EXPERIENCE = 'EXPERIENCE',
+  POINTS = 1,
+  EXPERIENCE = 2,
 }
 
 /**
@@ -31,7 +31,10 @@ export enum GrowthLedgerFailReasonEnum {
 /**
  * 成长结算失败原因中文映射
  */
-export const GrowthLedgerFailReasonLabel: Record<GrowthLedgerFailReasonEnum, string> = {
+export const GrowthLedgerFailReasonLabel: Record<
+  GrowthLedgerFailReasonEnum,
+  string
+> = {
   [GrowthLedgerFailReasonEnum.RULE_NOT_FOUND]: '规则不存在',
   [GrowthLedgerFailReasonEnum.RULE_DISABLED]: '规则已禁用',
   [GrowthLedgerFailReasonEnum.RULE_ZERO]: '规则值为零',

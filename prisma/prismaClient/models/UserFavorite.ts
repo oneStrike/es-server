@@ -566,21 +566,15 @@ export type $UserFavoritePayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     id: number
     /**
-     * 目标类型
-     * 1=漫画, 2=小说, 5=论坛主题
-     * 注意：作品必须区分漫画(1)和小说(2)，不能使用通用类型
+     * 目标类型 1=漫画, 2=小说, 3=论坛主题
      */
     targetType: number
     /**
      * 目标ID
-     * 关联的具体目标记录ID
-     * - targetType=1/2 时：work.id
-     * - targetType=5 时：forum_topic.id
      */
     targetId: number
     /**
      * 用户ID（关联 app_user.id）
-     * 执行收藏操作的用户
      */
     userId: number
     /**

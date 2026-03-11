@@ -48,15 +48,22 @@ export class ReportService extends BaseService {
     dto: CreateReportInputDto,
     options: CreateUserReportOptions = {},
   ) {
-    const { reporterId, targetType, targetId, reasonType, description, evidenceUrl } =
-      dto
+    const {
+      reporterId,
+      targetType,
+      targetId,
+      reasonType,
+      description,
+      evidenceUrl,
+    } = dto
 
     await this.ensureReporterExists(reporterId)
 
-    const targetMeta = await this.interactionTargetResolverService.resolveReportTargetMeta(
-      targetType,
-      targetId,
-    )
+    const targetMeta =
+      await this.interactionTargetResolverService.resolveReportTargetMeta(
+        targetType,
+        targetId,
+      )
 
     this.ensureCanReportOwnTarget(reporterId, targetMeta.ownerUserId)
 
@@ -180,8 +187,7 @@ export class ReportService extends BaseService {
     targetId: number
   }) {
     const { reportId, reporterId, targetType, targetId } = params
-    const source = 'report'
-    const baseBizKey = `${source}:create:${reportId}:user:${reporterId}`
+    const baseBizKey = `create:${reportId}:user:${reporterId}`
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -190,7 +196,6 @@ export class ReportService extends BaseService {
           assetType: GrowthAssetTypeEnum.POINTS,
           ruleType: GrowthRuleTypeEnum.REPORT_CREATE,
           bizKey: `${baseBizKey}:POINTS`,
-          source,
           remark: `创建举报 #${reportId}`,
           targetType,
           targetId,
@@ -201,14 +206,17 @@ export class ReportService extends BaseService {
           assetType: GrowthAssetTypeEnum.EXPERIENCE,
           ruleType: GrowthRuleTypeEnum.REPORT_CREATE,
           bizKey: `${baseBizKey}:EXPERIENCE`,
-          source,
           remark: `创建举报 #${reportId}`,
           targetType,
           targetId,
         })
 
         if (expResult.success && expResult.afterValue !== undefined) {
-          await refreshUserLevelByExperience(tx, reporterId, expResult.afterValue)
+          await refreshUserLevelByExperience(
+            tx,
+            reporterId,
+            expResult.afterValue,
+          )
         }
       })
     } catch {

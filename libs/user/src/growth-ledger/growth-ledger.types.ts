@@ -22,7 +22,6 @@ export interface ApplyRuleParams {
   assetType: GrowthAssetTypeEnum
   ruleType: number
   bizKey: string
-  source: string
   remark?: string
   targetType?: number
   targetId?: number

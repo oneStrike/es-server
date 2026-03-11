@@ -347,7 +347,6 @@ export const GrowthLedgerRecordScalarFieldEnum = {
   beforeValue: 'beforeValue',
   afterValue: 'afterValue',
   bizKey: 'bizKey',
-  source: 'source',
   ruleType: 'ruleType',
   ruleId: 'ruleId',
   targetType: 'targetType',

@@ -1,8 +1,8 @@
-import { BusinessModuleEnum } from '@libs/base/constant'
 import { BooleanProperty, EnumProperty } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
 import { PartialType } from '@nestjs/swagger'
 import { TargetIdBodyDto } from '../../dto/target.dto'
+import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 /**
  * 收藏目标 DTO
@@ -11,11 +11,11 @@ import { TargetIdBodyDto } from '../../dto/target.dto'
 export class FavoriteTargetDto extends TargetIdBodyDto {
   @EnumProperty({
     description: '收藏目标类型（1=漫画，2=小说，3=论坛主题）',
-    enum: BusinessModuleEnum,
-    example: BusinessModuleEnum.COMIC,
+    enum: FavoriteTargetTypeEnum,
+    example: FavoriteTargetTypeEnum.WORK_COMIC,
     required: true,
   })
-  targetType!: BusinessModuleEnum
+  targetType!: FavoriteTargetTypeEnum
 }
 
 /**
@@ -39,11 +39,11 @@ export class FavoriteStatusQueryDto extends FavoriteTargetDto {}
 export class FavoriteListQueryDto extends PartialType(PageDto) {
   @EnumProperty({
     description: '按收藏目标类型筛选',
-    enum: BusinessModuleEnum,
-    example: BusinessModuleEnum.COMIC,
+    enum: FavoriteTargetTypeEnum,
+    example: FavoriteTargetTypeEnum.WORK_COMIC,
     required: false,
   })
-  targetType?: BusinessModuleEnum
+  targetType?: FavoriteTargetTypeEnum
 }
 
 /**

@@ -1,12 +1,14 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/user/growth-ledger'
 import { Injectable } from '@nestjs/common'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 import { refreshUserLevelByExperience } from '../user-level.helper'
+import {
+  FAVORITE_GROWTH_RULE_TYPE_MAP,
+  FavoriteTargetTypeEnum,
+} from './favorite.constant'
 
 /**
  * 收藏成长服务
@@ -25,55 +27,43 @@ export class FavoriteGrowthService extends BaseService {
    * @param userId 用户 ID
    */
   async rewardFavoriteCreated(
-    targetType: InteractionTargetTypeEnum,
+    tx: any,
+    targetType: FavoriteTargetTypeEnum,
     targetId: number,
     userId: number,
-  ): Promise<void> {
-    const ruleType = resolveInteractionGrowthRuleType('favorite', targetType)
-    if (!ruleType) {
-      return
-    }
-
+  ) {
+    const ruleType = FAVORITE_GROWTH_RULE_TYPE_MAP[targetType]
     const baseBizKey = `favorite:${targetType}:${targetId}:user:${userId}`
 
     try {
-      await this.prisma.$transaction(async (tx) => {
-        await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType,
-          bizKey: `${baseBizKey}:POINTS`,
-          source: 'interaction_favorite',
-          remark: `收藏目标 #${targetId}`,
-          targetType,
-          targetId,
-        })
-
-        const experienceResult = await this.growthLedgerService.applyByRule(
-          tx,
-          {
-            userId,
-            assetType: GrowthAssetTypeEnum.EXPERIENCE,
-            ruleType,
-            bizKey: `${baseBizKey}:EXPERIENCE`,
-            source: 'interaction_favorite',
-            remark: `收藏目标 #${targetId}`,
-            targetType,
-            targetId,
-          },
-        )
-
-        if (
-          experienceResult.success &&
-          experienceResult.afterValue !== undefined
-        ) {
-          await refreshUserLevelByExperience(
-            tx,
-            userId,
-            experienceResult.afterValue,
-          )
-        }
+      await this.growthLedgerService.applyByRule(tx, {
+        userId,
+        assetType: GrowthAssetTypeEnum.POINTS,
+        ruleType,
+        bizKey: `${baseBizKey}:POINTS`,
+        targetType,
+        targetId,
       })
+
+      const experienceResult = await this.growthLedgerService.applyByRule(tx, {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        ruleType,
+        bizKey: `${baseBizKey}:EXPERIENCE`,
+        targetType,
+        targetId,
+      })
+
+      if (
+        experienceResult.success &&
+        experienceResult.afterValue !== undefined
+      ) {
+        await refreshUserLevelByExperience(
+          tx,
+          userId,
+          experienceResult.afterValue,
+        )
+      }
     } catch {
       // 奖励失败不影响主流程
     }

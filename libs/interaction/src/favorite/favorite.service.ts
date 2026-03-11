@@ -1,21 +1,11 @@
-import { BusinessModuleEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-  GrowthRuleTypeEnum,
-} from '@libs/user'
-import { Injectable } from '@nestjs/common'
-import { InteractionTargetAccessService } from '../interaction-target-access.service'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { refreshUserLevelByExperience } from '../user-level.helper'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { FavoriteGrowthService } from './favorite-growth.service'
-import { FavoriteInteractionService } from './favorite-interaction.service'
-import { FavoritePermissionService } from './favorite-permission.service'
+import { FavoriteTargetTypeEnum } from './favorite.constant'
 
 /**
  * 收藏服务
@@ -29,14 +19,28 @@ export class FavoriteService extends BaseService {
   }
 
   constructor(
-    private readonly favoritePermissionService: FavoritePermissionService,
-    private readonly favoriteInteractionService: FavoriteInteractionService,
     private readonly favoriteGrowthService: FavoriteGrowthService,
-    private readonly interactionTargetAccessService: InteractionTargetAccessService,
     private readonly messageOutboxService: MessageOutboxService,
-    private readonly growthLedgerService: GrowthLedgerService,
   ) {
     super()
+  }
+
+  /**
+   * 验证关联的作品或者帖子是否存在
+   */
+  async ensureTargetExists(
+    targetType: FavoriteTargetTypeEnum,
+    targetId: number,
+  ) {
+    if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
+      if (!(await this.prisma.forumTopic.exists({ id: targetId }))) {
+        throw new BadRequestException('帖子不存在')
+      }
+    } else {
+      if (!(await this.prisma.work.exists({ id: targetId }))) {
+        throw new BadRequestException('作品不存在')
+      }
+    }
   }
 
   /**
@@ -47,7 +51,7 @@ export class FavoriteService extends BaseService {
    * @returns 目标 ID 与收藏状态的映射
    */
   async checkStatusBatch(
-    targetType: BusinessModuleEnum,
+    targetType: FavoriteTargetTypeEnum,
     targetIds: number[],
     userId: number,
   ) {
@@ -83,10 +87,11 @@ export class FavoriteService extends BaseService {
    * @param userId 用户 ID
    */
   async favorite(
-    targetType: BusinessModuleEnum,
+    targetType: FavoriteTargetTypeEnum,
     targetId: number,
     userId: number,
   ) {
+    await this.ensureTargetExists(targetType, targetId)
     await this.prisma.$transaction(async (tx) => {
       try {
         await tx.userFavorite.create({
@@ -103,13 +108,13 @@ export class FavoriteService extends BaseService {
       } catch (error) {
         // 唯一键冲突：已收藏
         this.handlePrismaBusinessError(error, {
-          duplicateMessage: '已收藏',
+          duplicateMessage: '无法重复收藏',
+          notFoundMessage: '用户不存在',
         })
       }
-      let growthRuleType: GrowthRuleTypeEnum | null = null
-      if (targetType === BusinessModuleEnum.FORUM) {
+      if (targetType === FavoriteTargetTypeEnum.FORUM_TOPIC) {
         // 增加收藏数
-        await this.prisma.forumTopic.applyCountDelta(
+        await tx.forumTopic.applyCountDelta(
           { id: targetId },
           'favoriteCount',
           1,
@@ -122,8 +127,6 @@ export class FavoriteService extends BaseService {
         })
 
         if (topic && topic.userId !== userId) {
-          // growthRuleType在此处赋值表示收藏自己的帖子不会发放奖励
-          growthRuleType = GrowthRuleTypeEnum.TOPIC_FAVORITED
           await this.messageOutboxService.enqueueNotificationEvent(
             {
               eventType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
@@ -142,53 +145,19 @@ export class FavoriteService extends BaseService {
           )
         }
       } else {
-        growthRuleType =
-          targetType === BusinessModuleEnum.COMIC
-            ? GrowthRuleTypeEnum.COMIC_WORK_FAVORITE
-            : GrowthRuleTypeEnum.NOVEL_WORK_FAVORITE
         await this.prisma.work.applyCountDelta(
           { id: targetId },
           'favoriteCount',
           1,
         )
       }
-      if (!growthRuleType) {
-        return
-      }
 
-      const baseBizKey = `favorite:${targetType}:${targetId}:user:${userId}`
-      await this.growthLedgerService.applyByRule(tx, {
-        userId,
-        assetType: GrowthAssetTypeEnum.POINTS,
-        ruleType: growthRuleType,
-        bizKey: `${baseBizKey}:POINTS`,
-        source: 'interaction_favorite',
-        remark: `收藏目标 #${targetId}`,
+      await this.favoriteGrowthService.rewardFavoriteCreated(
+        tx,
         targetType,
         targetId,
-      })
-
-      const experienceResult = await this.growthLedgerService.applyByRule(tx, {
         userId,
-        assetType: GrowthAssetTypeEnum.EXPERIENCE,
-        ruleType: growthRuleType,
-        bizKey: `${baseBizKey}:EXPERIENCE`,
-        source: 'interaction_favorite',
-        remark: `收藏目标 #${targetId}`,
-        targetType,
-        targetId,
-      })
-
-      if (
-        experienceResult.success &&
-        experienceResult.afterValue !== undefined
-      ) {
-        await refreshUserLevelByExperience(
-          tx,
-          userId,
-          experienceResult.afterValue,
-        )
-      }
+      )
     })
   }
 
@@ -199,30 +168,24 @@ export class FavoriteService extends BaseService {
    * @param userId 用户 ID
    */
   async unfavorite(
-    targetType: BusinessModuleEnum,
+    targetType: FavoriteTargetTypeEnum,
     targetId: number,
     userId: number,
   ) {
-    await this.favoritePermissionService.ensureCanUnfavorite(
-      userId,
-      targetType,
-      targetId,
-    )
-
     await this.prisma.$transaction(async (tx) => {
       try {
         await tx.userFavorite.delete({
           where: {
             targetType_targetId_userId: {
-              targetType,
               targetId,
+              targetType,
               userId,
             },
           },
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          notFoundMessage: '收藏记录不存在',
+          notFoundMessage: '收藏记录或用户不存在',
         })
       }
 
@@ -244,7 +207,7 @@ export class FavoriteService extends BaseService {
    * @returns 是否已收藏
    */
   async checkFavoriteStatus(
-    targetType: BusinessModuleEnum,
+    targetType: FavoriteTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<boolean> {
@@ -271,7 +234,7 @@ export class FavoriteService extends BaseService {
    */
   async getUserFavorites(
     userId: number,
-    targetType?: BusinessModuleEnum,
+    targetType?: FavoriteTargetTypeEnum,
     pageIndex: number = 0,
     pageSize: number = 15,
   ) {

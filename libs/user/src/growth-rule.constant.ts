@@ -33,6 +33,28 @@ export enum GrowthRuleTypeEnum {
   COMIC_CHAPTER_PURCHASE = 302,
   COMIC_CHAPTER_DOWNLOAD = 303,
   COMIC_CHAPTER_EXCHANGE = 304,
+
+  // Novel chapter
+  NOVEL_CHAPTER_READ = 400,
+  NOVEL_CHAPTER_LIKE = 401,
+  NOVEL_CHAPTER_PURCHASE = 402,
+  NOVEL_CHAPTER_DOWNLOAD = 403,
+  NOVEL_CHAPTER_EXCHANGE = 404,
+
+  // Badge & Achievement
+  BADGE_EARNED = 600,
+  PROFILE_COMPLETE = 601,
+  AVATAR_UPLOAD = 602,
+
+  // Social interaction
+  FOLLOW_USER = 700,
+  BE_FOLLOWED = 701,
+  SHARE_CONTENT = 702,
+  INVITE_USER = 703,
+
+  // Report handling
+  REPORT_VALID = 800,
+  REPORT_INVALID = 801,
 }
 
 /**
@@ -61,6 +83,20 @@ export const GrowthRuleTypeNames: Record<GrowthRuleTypeEnum, string> = {
   [GrowthRuleTypeEnum.NOVEL_WORK_VIEW]: '小说浏览',
   [GrowthRuleTypeEnum.NOVEL_WORK_LIKE]: '小说点赞',
   [GrowthRuleTypeEnum.NOVEL_WORK_FAVORITE]: '小说收藏',
+  [GrowthRuleTypeEnum.NOVEL_CHAPTER_READ]: '小说章节阅读',
+  [GrowthRuleTypeEnum.NOVEL_CHAPTER_LIKE]: '小说章节点赞',
+  [GrowthRuleTypeEnum.NOVEL_CHAPTER_PURCHASE]: '小说章节购买',
+  [GrowthRuleTypeEnum.NOVEL_CHAPTER_DOWNLOAD]: '小说章节下载',
+  [GrowthRuleTypeEnum.NOVEL_CHAPTER_EXCHANGE]: '小说章节兑换',
+  [GrowthRuleTypeEnum.BADGE_EARNED]: '获得徽章',
+  [GrowthRuleTypeEnum.PROFILE_COMPLETE]: '完善资料',
+  [GrowthRuleTypeEnum.AVATAR_UPLOAD]: '上传头像',
+  [GrowthRuleTypeEnum.FOLLOW_USER]: '关注用户',
+  [GrowthRuleTypeEnum.BE_FOLLOWED]: '被关注',
+  [GrowthRuleTypeEnum.SHARE_CONTENT]: '分享内容',
+  [GrowthRuleTypeEnum.INVITE_USER]: '邀请用户',
+  [GrowthRuleTypeEnum.REPORT_VALID]: '举报有效',
+  [GrowthRuleTypeEnum.REPORT_INVALID]: '举报无效',
 }
 
 export function getGrowthRuleTypeName(type: GrowthRuleTypeEnum): string {

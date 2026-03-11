@@ -3,28 +3,17 @@
 /// 支持收藏计数统计和用户收藏列表查询
 model UserFavorite {
   /// 主键ID（自增）
-  id Int @id @default(autoincrement())
-
-  /// 目标类型
-  /// 1=漫画, 2=小说, 5=论坛主题
-  /// 注意：作品必须区分漫画(1)和小说(2)，不能使用通用类型
-  targetType Int @map("target_type") @db.SmallInt
-
+  id         Int      @id @default(autoincrement())
+  /// 目标类型 1=漫画, 2=小说, 3=论坛主题
+  targetType Int      @map("target_type") @db.SmallInt
   /// 目标ID
-  /// 关联的具体目标记录ID
-  /// - targetType=1/2 时：work.id
-  /// - targetType=5 时：forum_topic.id
-  targetId Int @map("target_id")
-
+  targetId   Int      @map("target_id")
   /// 用户ID（关联 app_user.id）
-  /// 执行收藏操作的用户
-  userId Int @map("user_id")
-
+  userId     Int      @map("user_id")
   /// 创建时间（收藏时间）
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 关联用户
-  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 唯一约束：同一用户对同一目标只能收藏一次
   @@unique([targetType, targetId, userId])

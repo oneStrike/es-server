@@ -30,6 +30,7 @@ export type AggregateGrowthLedgerRecord = {
 export type GrowthLedgerRecordAvgAggregateOutputType = {
   id: number | null
   userId: number | null
+  assetType: number | null
   delta: number | null
   beforeValue: number | null
   afterValue: number | null
@@ -42,6 +43,7 @@ export type GrowthLedgerRecordAvgAggregateOutputType = {
 export type GrowthLedgerRecordSumAggregateOutputType = {
   id: number | null
   userId: number | null
+  assetType: number | null
   delta: number | null
   beforeValue: number | null
   afterValue: number | null
@@ -54,12 +56,11 @@ export type GrowthLedgerRecordSumAggregateOutputType = {
 export type GrowthLedgerRecordMinAggregateOutputType = {
   id: number | null
   userId: number | null
-  assetType: string | null
+  assetType: number | null
   delta: number | null
   beforeValue: number | null
   afterValue: number | null
   bizKey: string | null
-  source: string | null
   ruleType: number | null
   ruleId: number | null
   targetType: number | null
@@ -71,12 +72,11 @@ export type GrowthLedgerRecordMinAggregateOutputType = {
 export type GrowthLedgerRecordMaxAggregateOutputType = {
   id: number | null
   userId: number | null
-  assetType: string | null
+  assetType: number | null
   delta: number | null
   beforeValue: number | null
   afterValue: number | null
   bizKey: string | null
-  source: string | null
   ruleType: number | null
   ruleId: number | null
   targetType: number | null
@@ -93,7 +93,6 @@ export type GrowthLedgerRecordCountAggregateOutputType = {
   beforeValue: number
   afterValue: number
   bizKey: number
-  source: number
   ruleType: number
   ruleId: number
   targetType: number
@@ -108,6 +107,7 @@ export type GrowthLedgerRecordCountAggregateOutputType = {
 export type GrowthLedgerRecordAvgAggregateInputType = {
   id?: true
   userId?: true
+  assetType?: true
   delta?: true
   beforeValue?: true
   afterValue?: true
@@ -120,6 +120,7 @@ export type GrowthLedgerRecordAvgAggregateInputType = {
 export type GrowthLedgerRecordSumAggregateInputType = {
   id?: true
   userId?: true
+  assetType?: true
   delta?: true
   beforeValue?: true
   afterValue?: true
@@ -137,7 +138,6 @@ export type GrowthLedgerRecordMinAggregateInputType = {
   beforeValue?: true
   afterValue?: true
   bizKey?: true
-  source?: true
   ruleType?: true
   ruleId?: true
   targetType?: true
@@ -154,7 +154,6 @@ export type GrowthLedgerRecordMaxAggregateInputType = {
   beforeValue?: true
   afterValue?: true
   bizKey?: true
-  source?: true
   ruleType?: true
   ruleId?: true
   targetType?: true
@@ -171,7 +170,6 @@ export type GrowthLedgerRecordCountAggregateInputType = {
   beforeValue?: true
   afterValue?: true
   bizKey?: true
-  source?: true
   ruleType?: true
   ruleId?: true
   targetType?: true
@@ -271,12 +269,11 @@ export type GrowthLedgerRecordGroupByArgs<ExtArgs extends runtime.Types.Extensio
 export type GrowthLedgerRecordGroupByOutputType = {
   id: number
   userId: number
-  assetType: string
+  assetType: number
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  source: string
   ruleType: number | null
   ruleId: number | null
   targetType: number | null
@@ -312,12 +309,11 @@ export type GrowthLedgerRecordWhereInput = {
   NOT?: Prisma.GrowthLedgerRecordWhereInput | Prisma.GrowthLedgerRecordWhereInput[]
   id?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   userId?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
-  assetType?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
+  assetType?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   delta?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   beforeValue?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   afterValue?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   bizKey?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
-  source?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
   ruleType?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
   ruleId?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
   targetType?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
@@ -336,7 +332,6 @@ export type GrowthLedgerRecordOrderByWithRelationInput = {
   beforeValue?: Prisma.SortOrder
   afterValue?: Prisma.SortOrder
   bizKey?: Prisma.SortOrder
-  source?: Prisma.SortOrder
   ruleType?: Prisma.SortOrderInput | Prisma.SortOrder
   ruleId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetType?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -354,12 +349,11 @@ export type GrowthLedgerRecordWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.GrowthLedgerRecordWhereInput[]
   NOT?: Prisma.GrowthLedgerRecordWhereInput | Prisma.GrowthLedgerRecordWhereInput[]
   userId?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
-  assetType?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
+  assetType?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   delta?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   beforeValue?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   afterValue?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   bizKey?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
-  source?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
   ruleType?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
   ruleId?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
   targetType?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
@@ -378,7 +372,6 @@ export type GrowthLedgerRecordOrderByWithAggregationInput = {
   beforeValue?: Prisma.SortOrder
   afterValue?: Prisma.SortOrder
   bizKey?: Prisma.SortOrder
-  source?: Prisma.SortOrder
   ruleType?: Prisma.SortOrderInput | Prisma.SortOrder
   ruleId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetType?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -399,12 +392,11 @@ export type GrowthLedgerRecordScalarWhereWithAggregatesInput = {
   NOT?: Prisma.GrowthLedgerRecordScalarWhereWithAggregatesInput | Prisma.GrowthLedgerRecordScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"GrowthLedgerRecord"> | number
   userId?: Prisma.IntWithAggregatesFilter<"GrowthLedgerRecord"> | number
-  assetType?: Prisma.StringWithAggregatesFilter<"GrowthLedgerRecord"> | string
+  assetType?: Prisma.IntWithAggregatesFilter<"GrowthLedgerRecord"> | number
   delta?: Prisma.IntWithAggregatesFilter<"GrowthLedgerRecord"> | number
   beforeValue?: Prisma.IntWithAggregatesFilter<"GrowthLedgerRecord"> | number
   afterValue?: Prisma.IntWithAggregatesFilter<"GrowthLedgerRecord"> | number
   bizKey?: Prisma.StringWithAggregatesFilter<"GrowthLedgerRecord"> | string
-  source?: Prisma.StringWithAggregatesFilter<"GrowthLedgerRecord"> | string
   ruleType?: Prisma.IntNullableWithAggregatesFilter<"GrowthLedgerRecord"> | number | null
   ruleId?: Prisma.IntNullableWithAggregatesFilter<"GrowthLedgerRecord"> | number | null
   targetType?: Prisma.IntNullableWithAggregatesFilter<"GrowthLedgerRecord"> | number | null
@@ -415,12 +407,11 @@ export type GrowthLedgerRecordScalarWhereWithAggregatesInput = {
 }
 
 export type GrowthLedgerRecordCreateInput = {
-  assetType: string
+  assetType: number
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  source: string
   ruleType?: number | null
   ruleId?: number | null
   targetType?: number | null
@@ -434,12 +425,11 @@ export type GrowthLedgerRecordCreateInput = {
 export type GrowthLedgerRecordUncheckedCreateInput = {
   id?: number
   userId: number
-  assetType: string
+  assetType: number
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  source: string
   ruleType?: number | null
   ruleId?: number | null
   targetType?: number | null
@@ -450,12 +440,11 @@ export type GrowthLedgerRecordUncheckedCreateInput = {
 }
 
 export type GrowthLedgerRecordUpdateInput = {
-  assetType?: Prisma.StringFieldUpdateOperationsInput | string
+  assetType?: Prisma.IntFieldUpdateOperationsInput | number
   delta?: Prisma.IntFieldUpdateOperationsInput | number
   beforeValue?: Prisma.IntFieldUpdateOperationsInput | number
   afterValue?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.StringFieldUpdateOperationsInput | string
   ruleType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -469,12 +458,11 @@ export type GrowthLedgerRecordUpdateInput = {
 export type GrowthLedgerRecordUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  assetType?: Prisma.StringFieldUpdateOperationsInput | string
+  assetType?: Prisma.IntFieldUpdateOperationsInput | number
   delta?: Prisma.IntFieldUpdateOperationsInput | number
   beforeValue?: Prisma.IntFieldUpdateOperationsInput | number
   afterValue?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.StringFieldUpdateOperationsInput | string
   ruleType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -487,12 +475,11 @@ export type GrowthLedgerRecordUncheckedUpdateInput = {
 export type GrowthLedgerRecordCreateManyInput = {
   id?: number
   userId: number
-  assetType: string
+  assetType: number
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  source: string
   ruleType?: number | null
   ruleId?: number | null
   targetType?: number | null
@@ -503,12 +490,11 @@ export type GrowthLedgerRecordCreateManyInput = {
 }
 
 export type GrowthLedgerRecordUpdateManyMutationInput = {
-  assetType?: Prisma.StringFieldUpdateOperationsInput | string
+  assetType?: Prisma.IntFieldUpdateOperationsInput | number
   delta?: Prisma.IntFieldUpdateOperationsInput | number
   beforeValue?: Prisma.IntFieldUpdateOperationsInput | number
   afterValue?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.StringFieldUpdateOperationsInput | string
   ruleType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -521,12 +507,11 @@ export type GrowthLedgerRecordUpdateManyMutationInput = {
 export type GrowthLedgerRecordUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  assetType?: Prisma.StringFieldUpdateOperationsInput | string
+  assetType?: Prisma.IntFieldUpdateOperationsInput | number
   delta?: Prisma.IntFieldUpdateOperationsInput | number
   beforeValue?: Prisma.IntFieldUpdateOperationsInput | number
   afterValue?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.StringFieldUpdateOperationsInput | string
   ruleType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -559,7 +544,6 @@ export type GrowthLedgerRecordCountOrderByAggregateInput = {
   beforeValue?: Prisma.SortOrder
   afterValue?: Prisma.SortOrder
   bizKey?: Prisma.SortOrder
-  source?: Prisma.SortOrder
   ruleType?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
@@ -572,6 +556,7 @@ export type GrowthLedgerRecordCountOrderByAggregateInput = {
 export type GrowthLedgerRecordAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  assetType?: Prisma.SortOrder
   delta?: Prisma.SortOrder
   beforeValue?: Prisma.SortOrder
   afterValue?: Prisma.SortOrder
@@ -589,7 +574,6 @@ export type GrowthLedgerRecordMaxOrderByAggregateInput = {
   beforeValue?: Prisma.SortOrder
   afterValue?: Prisma.SortOrder
   bizKey?: Prisma.SortOrder
-  source?: Prisma.SortOrder
   ruleType?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
@@ -606,7 +590,6 @@ export type GrowthLedgerRecordMinOrderByAggregateInput = {
   beforeValue?: Prisma.SortOrder
   afterValue?: Prisma.SortOrder
   bizKey?: Prisma.SortOrder
-  source?: Prisma.SortOrder
   ruleType?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
@@ -618,6 +601,7 @@ export type GrowthLedgerRecordMinOrderByAggregateInput = {
 export type GrowthLedgerRecordSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  assetType?: Prisma.SortOrder
   delta?: Prisma.SortOrder
   beforeValue?: Prisma.SortOrder
   afterValue?: Prisma.SortOrder
@@ -670,12 +654,11 @@ export type GrowthLedgerRecordUncheckedUpdateManyWithoutUserNestedInput = {
 }
 
 export type GrowthLedgerRecordCreateWithoutUserInput = {
-  assetType: string
+  assetType: number
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  source: string
   ruleType?: number | null
   ruleId?: number | null
   targetType?: number | null
@@ -687,12 +670,11 @@ export type GrowthLedgerRecordCreateWithoutUserInput = {
 
 export type GrowthLedgerRecordUncheckedCreateWithoutUserInput = {
   id?: number
-  assetType: string
+  assetType: number
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  source: string
   ruleType?: number | null
   ruleId?: number | null
   targetType?: number | null
@@ -734,12 +716,11 @@ export type GrowthLedgerRecordScalarWhereInput = {
   NOT?: Prisma.GrowthLedgerRecordScalarWhereInput | Prisma.GrowthLedgerRecordScalarWhereInput[]
   id?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   userId?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
-  assetType?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
+  assetType?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   delta?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   beforeValue?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   afterValue?: Prisma.IntFilter<"GrowthLedgerRecord"> | number
   bizKey?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
-  source?: Prisma.StringFilter<"GrowthLedgerRecord"> | string
   ruleType?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
   ruleId?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
   targetType?: Prisma.IntNullableFilter<"GrowthLedgerRecord"> | number | null
@@ -751,12 +732,11 @@ export type GrowthLedgerRecordScalarWhereInput = {
 
 export type GrowthLedgerRecordCreateManyUserInput = {
   id?: number
-  assetType: string
+  assetType: number
   delta: number
   beforeValue: number
   afterValue: number
   bizKey: string
-  source: string
   ruleType?: number | null
   ruleId?: number | null
   targetType?: number | null
@@ -767,12 +747,11 @@ export type GrowthLedgerRecordCreateManyUserInput = {
 }
 
 export type GrowthLedgerRecordUpdateWithoutUserInput = {
-  assetType?: Prisma.StringFieldUpdateOperationsInput | string
+  assetType?: Prisma.IntFieldUpdateOperationsInput | number
   delta?: Prisma.IntFieldUpdateOperationsInput | number
   beforeValue?: Prisma.IntFieldUpdateOperationsInput | number
   afterValue?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.StringFieldUpdateOperationsInput | string
   ruleType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -784,12 +763,11 @@ export type GrowthLedgerRecordUpdateWithoutUserInput = {
 
 export type GrowthLedgerRecordUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  assetType?: Prisma.StringFieldUpdateOperationsInput | string
+  assetType?: Prisma.IntFieldUpdateOperationsInput | number
   delta?: Prisma.IntFieldUpdateOperationsInput | number
   beforeValue?: Prisma.IntFieldUpdateOperationsInput | number
   afterValue?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.StringFieldUpdateOperationsInput | string
   ruleType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -801,12 +779,11 @@ export type GrowthLedgerRecordUncheckedUpdateWithoutUserInput = {
 
 export type GrowthLedgerRecordUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  assetType?: Prisma.StringFieldUpdateOperationsInput | string
+  assetType?: Prisma.IntFieldUpdateOperationsInput | number
   delta?: Prisma.IntFieldUpdateOperationsInput | number
   beforeValue?: Prisma.IntFieldUpdateOperationsInput | number
   afterValue?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.StringFieldUpdateOperationsInput | string
   ruleType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -826,7 +803,6 @@ export type GrowthLedgerRecordSelect<ExtArgs extends runtime.Types.Extensions.In
   beforeValue?: boolean
   afterValue?: boolean
   bizKey?: boolean
-  source?: boolean
   ruleType?: boolean
   ruleId?: boolean
   targetType?: boolean
@@ -845,7 +821,6 @@ export type GrowthLedgerRecordSelectCreateManyAndReturn<ExtArgs extends runtime.
   beforeValue?: boolean
   afterValue?: boolean
   bizKey?: boolean
-  source?: boolean
   ruleType?: boolean
   ruleId?: boolean
   targetType?: boolean
@@ -864,7 +839,6 @@ export type GrowthLedgerRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.
   beforeValue?: boolean
   afterValue?: boolean
   bizKey?: boolean
-  source?: boolean
   ruleType?: boolean
   ruleId?: boolean
   targetType?: boolean
@@ -883,7 +857,6 @@ export type GrowthLedgerRecordSelectScalar = {
   beforeValue?: boolean
   afterValue?: boolean
   bizKey?: boolean
-  source?: boolean
   ruleType?: boolean
   ruleId?: boolean
   targetType?: boolean
@@ -893,7 +866,7 @@ export type GrowthLedgerRecordSelectScalar = {
   createdAt?: boolean
 }
 
-export type GrowthLedgerRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "assetType" | "delta" | "beforeValue" | "afterValue" | "bizKey" | "source" | "ruleType" | "ruleId" | "targetType" | "targetId" | "remark" | "context" | "createdAt", ExtArgs["result"]["growthLedgerRecord"]>
+export type GrowthLedgerRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "assetType" | "delta" | "beforeValue" | "afterValue" | "bizKey" | "ruleType" | "ruleId" | "targetType" | "targetId" | "remark" | "context" | "createdAt", ExtArgs["result"]["growthLedgerRecord"]>
 export type GrowthLedgerRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
@@ -922,9 +895,9 @@ export type $GrowthLedgerRecordPayload<ExtArgs extends runtime.Types.Extensions.
      */
     userId: number
     /**
-     * 资产类型（POINTS / EXPERIENCE）
+     * 资产类型（1=积分 2=经验值）
      */
-    assetType: string
+    assetType: number
     /**
      * 变更值（正数发放，负数扣减）
      */
@@ -941,10 +914,6 @@ export type $GrowthLedgerRecordPayload<ExtArgs extends runtime.Types.Extensions.
      * 幂等业务键（同用户下全局唯一）
      */
     bizKey: string
-    /**
-     * 来源模块（comment / purchase / task / sign 等）
-     */
-    source: string
     /**
      * 规则类型（可选）
      */
@@ -1399,12 +1368,11 @@ export interface Prisma__GrowthLedgerRecordClient<T, Null = never, ExtArgs exten
 export interface GrowthLedgerRecordFieldRefs {
   readonly id: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
   readonly userId: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
-  readonly assetType: Prisma.FieldRef<"GrowthLedgerRecord", 'String'>
+  readonly assetType: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
   readonly delta: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
   readonly beforeValue: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
   readonly afterValue: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
   readonly bizKey: Prisma.FieldRef<"GrowthLedgerRecord", 'String'>
-  readonly source: Prisma.FieldRef<"GrowthLedgerRecord", 'String'>
   readonly ruleType: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
   readonly ruleId: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>
   readonly targetType: Prisma.FieldRef<"GrowthLedgerRecord", 'Int'>

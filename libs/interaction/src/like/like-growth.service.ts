@@ -46,7 +46,6 @@ export class LikeGrowthService extends BaseService {
           assetType: GrowthAssetTypeEnum.POINTS,
           ruleType,
           bizKey: `${baseBizKey}:POINTS`,
-          source: 'interaction_like',
           remark: `点赞目标 #${targetId}`,
           targetType,
           targetId,
@@ -59,7 +58,6 @@ export class LikeGrowthService extends BaseService {
             assetType: GrowthAssetTypeEnum.EXPERIENCE,
             ruleType,
             bizKey: `${baseBizKey}:EXPERIENCE`,
-            source: 'interaction_like',
             remark: `点赞目标 #${targetId}`,
             targetType,
             targetId,
@@ -108,7 +106,6 @@ export class LikeGrowthService extends BaseService {
           assetType: GrowthAssetTypeEnum.POINTS,
           ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
           bizKey: `${baseBizKey}:POINTS`,
-          source: 'comment_like',
           remark: `评论被点赞 #${commentId}`,
           targetId: commentId,
         })
@@ -118,7 +115,6 @@ export class LikeGrowthService extends BaseService {
           assetType: GrowthAssetTypeEnum.EXPERIENCE,
           ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
           bizKey: `${baseBizKey}:EXPERIENCE`,
-          source: 'comment_like',
           remark: `评论被点赞 #${commentId}`,
           targetId: commentId,
         })

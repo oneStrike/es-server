@@ -7,6 +7,7 @@ import {
 } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { FavoriteService } from '@libs/interaction'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { GrowthAssetTypeEnum } from '@libs/user/growth-ledger'
 import { UserPointService } from '@libs/user/point'
 import { Injectable } from '@nestjs/common'
@@ -145,7 +146,7 @@ export class ForumProfileService extends BaseService {
   async getMyFavorites(userId: number) {
     const result = await this.favoriteService.getUserFavorites(
       userId,
-      BusinessModuleEnum.FORUM,
+      FavoriteTargetTypeEnum.FORUM_TOPIC,
     )
 
     if (result.list.length === 0) {

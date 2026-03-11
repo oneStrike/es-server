@@ -59,7 +59,6 @@ export class UserPointService extends BaseService {
 
     const bizKey =
       addPointsDto.bizKey ?? this.buildBizKey(`point:rule:${ruleType}`, userId)
-    const source = addPointsDto.source ?? 'point_service'
 
     return this.prisma.$transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
@@ -67,7 +66,6 @@ export class UserPointService extends BaseService {
         assetType: GrowthAssetTypeEnum.POINTS,
         ruleType,
         bizKey,
-        source,
         remark,
       })
 

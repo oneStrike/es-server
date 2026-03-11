@@ -4,6 +4,8 @@ export enum ContentTypeEnum {
   COMIC = 1,
   /** 小说 */
   NOVEL = 2,
+  /** 帖子 */
+  TOPIC = 3,
 }
 
 export enum BusinessModuleEnum {

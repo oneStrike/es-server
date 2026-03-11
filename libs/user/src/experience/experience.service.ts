@@ -165,7 +165,6 @@ export class UserExperienceService extends BaseService {
     const bizKey =
       addExperienceDto.bizKey
       ?? this.buildBizKey(`experience:rule:${ruleType}`, userId)
-    const source = addExperienceDto.source ?? 'experience_service'
 
     return this.prisma.$transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
@@ -173,7 +172,6 @@ export class UserExperienceService extends BaseService {
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
         ruleType,
         bizKey,
-        source,
         remark,
         targetType: addExperienceDto.targetType,
         targetId: addExperienceDto.targetId,

@@ -3,6 +3,7 @@ import {
   ReportTargetTypeEnum,
   SceneTypeEnum,
 } from '@libs/base/constant'
+import { FavoriteTargetTypeEnum } from './favorite/favorite.constant'
 
 /**
  * Supported prisma model key for interaction targets.
@@ -91,12 +92,10 @@ export const INTERACTION_TARGET_DEFINITIONS: Record<
  * Targets that can be favorited at business level.
  * Keeping this here avoids duplicating support matrix in services.
  */
-export const FAVORITE_SUPPORTED_TARGET_TYPES = new Set<
-  InteractionTargetTypeEnum
->([
-  InteractionTargetTypeEnum.COMIC,
-  InteractionTargetTypeEnum.NOVEL,
-  InteractionTargetTypeEnum.FORUM_TOPIC,
+export const FAVORITE_SUPPORTED_TARGET_TYPES = new Set<FavoriteTargetTypeEnum>([
+  FavoriteTargetTypeEnum.WORK_COMIC,
+  FavoriteTargetTypeEnum.WORK_NOVEL,
+  FavoriteTargetTypeEnum.FORUM_TOPIC,
 ])
 
 /**

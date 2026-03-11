@@ -43,7 +43,6 @@ export class GrowthLedgerService extends BaseService {
       assetType,
       ruleType,
       bizKey,
-      source,
       remark,
       targetType,
       targetId,
@@ -105,7 +104,6 @@ export class GrowthLedgerService extends BaseService {
       userId,
       assetType,
       bizKey,
-      source,
       delta,
       ruleType,
       ruleId: rule.id,
@@ -223,7 +221,6 @@ export class GrowthLedgerService extends BaseService {
       action,
       amount,
       bizKey,
-      source,
       remark,
       targetType,
       targetId,
@@ -245,7 +242,6 @@ export class GrowthLedgerService extends BaseService {
       userId,
       assetType,
       bizKey,
-      source,
       delta: signedDelta,
       remark,
       targetType,
@@ -334,7 +330,6 @@ export class GrowthLedgerService extends BaseService {
       userId: number
       assetType: GrowthAssetTypeEnum
       bizKey: string
-      source: string
       delta: number
       ruleType?: number
       ruleId?: number
@@ -356,7 +351,6 @@ export class GrowthLedgerService extends BaseService {
         beforeValue: 0,
         afterValue: 0,
         bizKey: params.bizKey,
-        source: params.source,
         ruleType: params.ruleType,
         ruleId: params.ruleId,
         targetType: params.targetType,
