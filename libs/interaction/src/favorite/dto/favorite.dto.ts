@@ -7,7 +7,7 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
-import { IntersectionType, PartialType } from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 /**
@@ -34,19 +34,9 @@ export class FavoriteTargetDto {
 /**
  * 收藏列表查询 DTO
  */
-export class FavoriteListQueryDto extends PartialType(PageDto) {
-  @EnumProperty({
-    description: '按收藏目标类型筛选',
-    enum: FavoriteTargetTypeEnum,
-    example: FavoriteTargetTypeEnum.WORK_COMIC,
-    required: false,
-  })
-  targetType?: FavoriteTargetTypeEnum
-}
-
 export class FavoritePageQueryDto extends IntersectionType(
-  PartialType(FavoriteTargetDto),
   PageDto,
+  PickType(FavoriteTargetDto, ['targetType']),
 ) {}
 
 /**
@@ -140,6 +130,7 @@ export class FavoritePageItemDto {
     description: '作品信息（仅作品类型返回）',
     type: FavoriteWorkBriefDto,
     required: false,
+    nullable: false,
     validation: false,
   })
   work?: FavoriteWorkBriefDto

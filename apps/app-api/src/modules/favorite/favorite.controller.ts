@@ -1,9 +1,8 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  FavoriteListQueryDto,
-  FavoritePageQueryDto,
   FavoritePageItemDto,
+  FavoritePageQueryDto,
   FavoriteService,
   FavoriteTargetDto,
 } from '@libs/interaction'

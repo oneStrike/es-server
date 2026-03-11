@@ -68,7 +68,9 @@ export function NestedProperty(options: NestedPropertyOptions) {
       apiPropertyOptions.default = options.default
     }
 
-    if (!(options.required ?? true)) {
+    if (options.nullable !== undefined) {
+      apiPropertyOptions.nullable = options.nullable
+    } else if (!(options.required ?? true)) {
       apiPropertyOptions.nullable = true
     }
 

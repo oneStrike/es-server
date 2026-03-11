@@ -122,6 +122,8 @@ export interface NestedPropertyOptions extends BaseValidateOptions {
   example?: any
   /** 默认值 */
   default?: any
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }
