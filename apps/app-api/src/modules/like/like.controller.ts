@@ -3,7 +3,7 @@ import { IdDto } from '@libs/base/dto'
 import {
   CancelLikeBodyDto,
   CreateLikeBodyDto,
-  LikeListQueryDto,
+  LikePageQueryDto,
   LikeRecordResponseDto,
   LikeService,
   LikeStatusQueryDto,
@@ -17,7 +17,7 @@ import { ApiTags } from '@nestjs/swagger'
 export class LikeController {
   constructor(private readonly likeService: LikeService) {}
 
-  @Post()
+  @Post('like')
   @ApiDoc({
     summary: '点赞',
     model: IdDto,
@@ -50,7 +50,6 @@ export class LikeController {
     @CurrentUser('sub') userId: number,
   ) {
     return {
-      targetId: query.targetId,
       isLiked: await this.likeService.checkLikeStatus(
         query.targetType,
         query.targetId,
@@ -64,7 +63,7 @@ export class LikeController {
     summary: '分页查询我的点赞记录',
     model: LikeRecordResponseDto,
   })
-  async my(@Query() query: LikeListQueryDto, @CurrentUser('sub') userId: number) {
+  async my(@Query() query: LikePageQueryDto, @CurrentUser('sub') userId: number) {
     return this.likeService.getUserLikes(
       userId,
       query.targetType,

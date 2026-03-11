@@ -6,8 +6,8 @@ import {
 } from '@libs/user/growth-ledger'
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 import { refreshUserLevelByExperience } from '../user-level.helper'
+import { LIKE_GROWTH_RULE_TYPE_MAP } from './like.constant'
 
 /**
  * 点赞成长奖励服务。
@@ -32,7 +32,7 @@ export class LikeGrowthService extends BaseService {
       return
     }
 
-    const ruleType = resolveInteractionGrowthRuleType('like', targetType)
+    const ruleType = LIKE_GROWTH_RULE_TYPE_MAP[targetType]
     if (!ruleType) {
       return
     }

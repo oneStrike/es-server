@@ -7,37 +7,35 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
-import { PartialType } from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { LikeTargetBodyDto } from '../../dto/target.dto'
 
-export class CreateLikeBodyDto extends LikeTargetBodyDto {}
+/**
+ * 点赞目标 DTO
+ * 用于指定点赞操作的目标类型和目标 ID
+ */
+export class LikeTargetDto extends LikeTargetBodyDto {}
 
-export class CancelLikeBodyDto extends LikeTargetBodyDto {}
+export class CreateLikeBodyDto extends LikeTargetDto {}
 
-export class LikeStatusQueryDto extends LikeTargetBodyDto {}
+export class CancelLikeBodyDto extends LikeTargetDto {}
 
-export class LikeListQueryDto extends PartialType(PageDto) {
-  @EnumProperty({
-    description: '目标类型筛选',
-    enum: InteractionTargetTypeEnum,
-    example: InteractionTargetTypeEnum.COMIC,
-    required: false,
-  })
-  targetType?: InteractionTargetTypeEnum
-}
+export class LikeStatusQueryDto extends LikeTargetDto {}
+
+/**
+ * 点赞列表查询 DTO
+ */
+export class LikePageQueryDto extends IntersectionType(
+  PageDto,
+  PickType(LikeTargetDto, ['targetType']),
+) {}
 
 export class LikeStatusResponseDto {
-  @NumberProperty({
-    description: '目标 ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  targetId!: number
-
   @BooleanProperty({
     description: '是否已点赞',
     example: true,
@@ -45,6 +43,35 @@ export class LikeStatusResponseDto {
     validation: false,
   })
   isLiked!: boolean
+}
+
+/**
+ * 点赞作品简要信息响应 DTO
+ */
+export class LikeWorkBriefDto {
+  @NumberProperty({
+    description: '作品ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '作品名称',
+    example: '进击的巨人',
+    required: true,
+    validation: false,
+  })
+  name!: string
+
+  @StringProperty({
+    description: '作品封面',
+    example: 'https://example.com/cover.jpg',
+    required: true,
+    validation: false,
+  })
+  cover!: string
 }
 
 export class LikeRecordResponseDto {
@@ -106,4 +133,13 @@ export class LikeRecordResponseDto {
     validation: false,
   })
   createdAt!: Date
+
+  @NestedProperty({
+    description: '作品信息（仅作品类型返回）',
+    type: LikeWorkBriefDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  work?: LikeWorkBriefDto
 }
