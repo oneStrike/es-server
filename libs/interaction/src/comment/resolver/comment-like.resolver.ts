@@ -4,14 +4,8 @@ import {
   InteractionTargetTypeEnum,
 } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import {
-  mapInteractionTargetTypeToSceneType,
-} from '@libs/interaction/interaction-target.definition'
-import {
-  ILikeTargetResolver,
-  LikeTargetMeta,
-} from '@libs/interaction/like/interfaces/like-target-resolver.interface'
-import { LikeService } from '@libs/interaction/like/like.service'
+import { mapInteractionTargetTypeToSceneType } from '@libs/interaction/interaction-target.definition'
+import { ILikeTargetResolver, LikeService, LikeTargetMeta, LikeTargetTypeEnum } from '@libs/interaction/like'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -35,7 +29,7 @@ export class CommentLikeResolver
   implements ILikeTargetResolver, OnModuleInit
 {
   /** 目标类型：评论 */
-  readonly targetType = InteractionTargetTypeEnum.COMMENT
+  readonly targetType = LikeTargetTypeEnum.COMMENT
 
   constructor(
     private readonly likeService: LikeService,
@@ -61,10 +55,7 @@ export class CommentLikeResolver
    * @throws NotFoundException 当评论不存在时抛出异常
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
-  async resolveMeta(
-    tx: PrismaTransactionClientType,
-    targetId: number,
-  ) {
+  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
     const comment = await tx.userComment.findFirst({
       where: { id: targetId, deletedAt: null },
       select: {

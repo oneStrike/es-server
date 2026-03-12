@@ -3,8 +3,8 @@ import { IdDto } from '@libs/base/dto'
 import {
   CancelLikeBodyDto,
   CreateLikeBodyDto,
+  LikePageItemDto,
   LikePageQueryDto,
-  LikeRecordResponseDto,
   LikeService,
   LikeStatusQueryDto,
   LikeStatusResponseDto,
@@ -61,7 +61,7 @@ export class LikeController {
   @Get('my')
   @ApiPageDoc({
     summary: '分页查询我的点赞记录',
-    model: LikeRecordResponseDto,
+    model: LikePageItemDto,
   })
   async my(@Query() query: LikePageQueryDto, @CurrentUser('sub') userId: number) {
     return this.likeService.getUserLikes(

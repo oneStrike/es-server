@@ -1,4 +1,4 @@
-import { ContentTypeEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { DragReorderDto } from '@libs/base/dto'
 import { ContentPermissionService } from '@libs/content/permission'
@@ -9,6 +9,7 @@ import {
   LikeService,
   ReadingStateService,
 } from '@libs/interaction'
+import { LikeTargetTypeEnum } from '@libs/interaction/like'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkChapterDto,
@@ -137,12 +138,6 @@ export class WorkChapterService extends BaseService {
       return chapter
     }
 
-    // 根据 workType 确定目标类型
-    const interactionTargetType =
-      chapter.workType === ContentTypeEnum.COMIC
-        ? InteractionTargetTypeEnum.COMIC_CHAPTER
-        : InteractionTargetTypeEnum.NOVEL_CHAPTER
-
     const downloadTargetType =
       chapter.workType === ContentTypeEnum.COMIC
         ? DownloadTargetTypeEnum.COMIC_CHAPTER
@@ -150,7 +145,11 @@ export class WorkChapterService extends BaseService {
 
     // 并行查询三个交互状态
     const [liked, downloaded, purchased] = await Promise.all([
-      this.likeService.checkLikeStatus(interactionTargetType, id, userId),
+      this.likeService.checkLikeStatus(
+        LikeTargetTypeEnum.WORK_COMIC_CHAPTER,
+        id,
+        userId,
+      ),
       this.downloadService.checkDownloadStatus({
         targetType: downloadTargetType,
         targetId: id,
