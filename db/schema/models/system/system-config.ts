@@ -3,7 +3,6 @@
  */
 
 import { index, integer, jsonb, pgTable, timestamp } from "drizzle-orm/pg-core";
-import { adminUser } from "../admin/admin-user";
 
 /**
  * 系统配置
@@ -16,7 +15,7 @@ export const systemConfig = pgTable("sys_config", {
   /**
    * 最后修改人ID
    */
-  updatedById: integer().references(() => adminUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  updatedById: integer(),
   /**
    * 阿里云配置（JSON格式，包含 accessKeyId/accessKeySecret）
    */
@@ -51,4 +50,3 @@ export const systemConfig = pgTable("sys_config", {
      */
     index("sys_config_created_at_idx").on(table.createdAt.desc()),
 ]);
-

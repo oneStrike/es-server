@@ -62,4 +62,3 @@ export const workTag = pgTable("work_tag", {
      */
     index("work_tag_is_enabled_idx").on(table.isEnabled),
 ]);
-

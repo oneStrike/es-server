@@ -3,7 +3,6 @@
  */
 
 import { boolean, index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { adminUser } from "../admin/admin-user";
 
 /**
  * 任务定义
@@ -76,11 +75,11 @@ export const task = pgTable("task", {
   /**
    * 创建人ID
    */
-  createdById: integer().references(() => adminUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  createdById: integer(),
   /**
    * 更新人ID
    */
-  updatedById: integer().references(() => adminUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  updatedById: integer(),
   /**
    * 创建时间
    */
@@ -94,33 +93,32 @@ export const task = pgTable("task", {
    */
   deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
-    /**
-     * 唯一索引: code
-     */
-    unique("task_code_key").on(table.code),
-    /**
-     * 状态与启用索引
-     */
-    index("task_status_is_enabled_idx").on(table.status, table.isEnabled),
-    /**
-     * 任务类型索引
-     */
-    index("task_type_idx").on(table.type),
-    /**
-     * 发布开始时间索引
-     */
-    index("task_publish_start_at_idx").on(table.publishStartAt),
-    /**
-     * 发布结束时间索引
-     */
-    index("task_publish_end_at_idx").on(table.publishEndAt),
-    /**
-     * 创建时间索引
-     */
-    index("task_created_at_idx").on(table.createdAt),
-    /**
-     * 删除时间索引
-     */
-    index("task_deleted_at_idx").on(table.deletedAt),
+  /**
+   * 唯一索引: code
+   */
+  unique("task_code_key").on(table.code),
+  /**
+   * 状态与启用索引
+   */
+  index("task_status_is_enabled_idx").on(table.status, table.isEnabled),
+  /**
+   * 任务类型索引
+   */
+  index("task_type_idx").on(table.type),
+  /**
+   * 发布开始时间索引
+   */
+  index("task_publish_start_at_idx").on(table.publishStartAt),
+  /**
+   * 发布结束时间索引
+   */
+  index("task_publish_end_at_idx").on(table.publishEndAt),
+  /**
+   * 创建时间索引
+   */
+  index("task_created_at_idx").on(table.createdAt),
+  /**
+   * 删除时间索引
+   */
+  index("task_deleted_at_idx").on(table.deletedAt),
 ]);
-

@@ -3,9 +3,6 @@
  */
 
 import { boolean, index, integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import { userLevelRule } from "../app/user-level-rule";
-import { forumSectionGroup } from "./forum-section-group";
-import { forumTopic } from "./forum-topic";
 
 /**
  * 论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等
@@ -18,15 +15,15 @@ export const forumSection = pgTable("forum_section", {
   /**
    * 板块分组ID（可选，用于将板块分组管理）
    */
-  groupId: integer().references(() => forumSectionGroup.id, { onDelete: "set null", onUpdate: "cascade" }),
+  groupId: integer(),
   /**
    * 用户的论坛等级规则ID
    */
-  userLevelRuleId: integer().references(() => userLevelRule.id, { onDelete: "set null", onUpdate: "cascade" }),
+  userLevelRuleId: integer(),
   /**
    * 最后发表主题ID
    */
-  lastTopicId: integer().references(() => forumTopic.id, { onDelete: "set null", onUpdate: "cascade" }),
+  lastTopicId: integer(),
   /**
    * 板块名称
    */
@@ -80,33 +77,32 @@ export const forumSection = pgTable("forum_section", {
    */
   deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
-    /**
-     * 分组索引
-     */
-    index("forum_section_group_id_idx").on(table.groupId),
-    /**
-     * 排序索引
-     */
-    index("forum_section_sort_order_idx").on(table.sortOrder),
-    /**
-     * 启用状态索引
-     */
-    index("forum_section_is_enabled_idx").on(table.isEnabled),
-    /**
-     * 主题数索引
-     */
-    index("forum_section_topic_count_idx").on(table.topicCount),
-    /**
-     * 最后发表时间索引
-     */
-    index("forum_section_last_post_at_idx").on(table.lastPostAt),
-    /**
-     * 创建时间索引
-     */
-    index("forum_section_created_at_idx").on(table.createdAt),
-    /**
-     * 删除时间索引
-     */
-    index("forum_section_deleted_at_idx").on(table.deletedAt),
+  /**
+   * 分组索引
+   */
+  index("forum_section_group_id_idx").on(table.groupId),
+  /**
+   * 排序索引
+   */
+  index("forum_section_sort_order_idx").on(table.sortOrder),
+  /**
+   * 启用状态索引
+   */
+  index("forum_section_is_enabled_idx").on(table.isEnabled),
+  /**
+   * 主题数索引
+   */
+  index("forum_section_topic_count_idx").on(table.topicCount),
+  /**
+   * 最后发表时间索引
+   */
+  index("forum_section_last_post_at_idx").on(table.lastPostAt),
+  /**
+   * 创建时间索引
+   */
+  index("forum_section_created_at_idx").on(table.createdAt),
+  /**
+   * 删除时间索引
+   */
+  index("forum_section_deleted_at_idx").on(table.deletedAt),
 ]);
-

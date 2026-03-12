@@ -3,7 +3,6 @@
  */
 
 import { index, integer, jsonb, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { adminUser } from "./admin-user";
 
 /**
  * 管理端用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
@@ -20,7 +19,7 @@ export const adminUserToken = pgTable("admin_user_token", {
   /**
    * 用户ID
    */
-  userId: integer().references(() => adminUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 令牌类型（ACCESS:访问令牌, REFRESH:刷新令牌）
    */
@@ -89,4 +88,3 @@ export const adminUserToken = pgTable("admin_user_token", {
      */
     index("admin_user_token_user_id_token_type_idx").on(table.userId, table.tokenType),
 ]);
-

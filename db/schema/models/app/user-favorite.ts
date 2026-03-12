@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, smallint, timestamp, unique } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 用户收藏记录表
@@ -26,7 +25,7 @@ export const userFavorite = pgTable("user_favorite", {
   /**
    * 用户ID（关联 app_user.id）
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 创建时间（收藏时间）
    */
@@ -49,4 +48,3 @@ export const userFavorite = pgTable("user_favorite", {
      */
     index("user_favorite_created_at_idx").on(table.createdAt),
 ]);
-

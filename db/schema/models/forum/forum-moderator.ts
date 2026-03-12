@@ -2,10 +2,8 @@
  * Auto-converted from Prisma schema.
  */
 
-import { boolean, index, integer, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { appUser } from "../app/app-user";
-import { forumSectionGroup } from "./forum-section-group";
+import { boolean, index, integer, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 论坛版主表 - 管理论坛版主信息，包括角色类型、权限设置、启用状态等
@@ -18,11 +16,11 @@ export const forumModerator = pgTable("forum_moderator", {
   /**
    * 关联的用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 关联的分组ID（分组版主时必填）
    */
-  groupId: integer().references(() => forumSectionGroup.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  groupId: integer(),
   /**
    * 版主角色类型（1=超级版主，2=分组版主，3=板块版主）
    */
@@ -77,4 +75,3 @@ export const forumModerator = pgTable("forum_moderator", {
      */
     index("forum_moderator_deleted_at_idx").on(table.deletedAt),
 ]);
-

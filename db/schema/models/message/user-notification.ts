@@ -3,7 +3,6 @@
  */
 
 import { boolean, index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
 
 /**
  * 用户通知表
@@ -17,7 +16,7 @@ export const userNotification = pgTable("user_notification", {
   /**
    * 通知接收用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息）
    */
@@ -29,7 +28,7 @@ export const userNotification = pgTable("user_notification", {
   /**
    * 触发用户ID
    */
-  actorUserId: integer().references(() => appUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  actorUserId: integer(),
   /**
    * 目标类型
    */
@@ -104,4 +103,3 @@ export const userNotification = pgTable("user_notification", {
      */
     index("user_notification_user_id_aggregate_key_created_at_idx").on(table.userId, table.aggregateKey, table.createdAt.desc()),
 ]);
-

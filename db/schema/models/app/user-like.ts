@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, smallint, timestamp, unique } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 用户点赞记录表
@@ -42,7 +41,7 @@ export const userLike = pgTable("user_like", {
   /**
    * 点赞用户 ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 点赞时间
    */
@@ -69,4 +68,3 @@ export const userLike = pgTable("user_like", {
      */
     index("user_like_created_at_idx").on(table.createdAt),
 ]);
-

@@ -2,7 +2,7 @@
  * Auto-converted from Prisma schema.
  */
 
-import { boolean, index, pgTable, smallint, timestamp, varchar, integer } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, smallint, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 用户徽章表 - 存储通用用户徽章信息
@@ -74,4 +74,3 @@ export const userBadge = pgTable("user_badge", {
      */
     index("user_badge_created_at_idx").on(table.createdAt),
 ]);
-

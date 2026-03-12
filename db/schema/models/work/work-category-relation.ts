@@ -3,8 +3,6 @@
  */
 
 import { index, integer, pgTable, primaryKey, timestamp } from "drizzle-orm/pg-core";
-import { workCategory } from "./work-category";
-import { work } from "./work";
 
 /**
  * 作品分类关联表
@@ -13,11 +11,11 @@ export const workCategoryRelation = pgTable("work_category_relation", {
   /**
    * 作品ID
    */
-  workId: integer().references(() => work.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  workId: integer().notNull(),
   /**
    * 分类ID
    */
-  categoryId: integer().references(() => workCategory.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  categoryId: integer().notNull(),
   /**
    * 排序顺序（用于展示顺序）
    */
@@ -48,4 +46,3 @@ export const workCategoryRelation = pgTable("work_category_relation", {
      */
     primaryKey({ columns: [table.workId, table.categoryId] }),
 ]);
-

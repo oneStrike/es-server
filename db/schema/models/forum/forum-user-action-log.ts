@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
 
 /**
  * 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、回复、点赞、收藏等操作
@@ -16,7 +15,7 @@ export const forumUserActionLog = pgTable("forum_user_action_log", {
   /**
    * 关联的用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 目标ID
    */
@@ -75,4 +74,3 @@ export const forumUserActionLog = pgTable("forum_user_action_log", {
      */
     index("forum_user_action_log_user_id_created_at_idx").on(table.userId, table.createdAt),
 ]);
-

@@ -66,4 +66,3 @@ export const forumSectionGroup = pgTable("forum_section_group", {
      */
     index("forum_section_group_deleted_at_idx").on(table.deletedAt),
 ]);
-

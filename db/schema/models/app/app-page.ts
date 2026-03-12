@@ -66,4 +66,3 @@ export const appPage = pgTable("app_page", {
      */
     index("app_page_access_level_is_enabled_idx").on(table.accessLevel, table.isEnabled),
 ]);
-

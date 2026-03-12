@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
 
 /**
  * 论坛用户资料表 - 存储用户的论坛信息，包括积分、等级、统计数据、签名等
@@ -16,7 +15,7 @@ export const forumProfile = pgTable("forum_profile", {
   /**
    * 关联的用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 发表主题数
    */
@@ -79,4 +78,3 @@ export const forumProfile = pgTable("forum_profile", {
      */
     index("forum_profile_created_at_idx").on(table.createdAt),
 ]);
-

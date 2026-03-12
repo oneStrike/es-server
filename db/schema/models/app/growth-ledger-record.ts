@@ -3,7 +3,6 @@
  */
 
 import { index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 统一成长流水表
@@ -17,7 +16,7 @@ export const growthLedgerRecord = pgTable("growth_ledger_record", {
   /**
    * 用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 资产类型（1=积分 2=经验值）
    */
@@ -67,17 +66,16 @@ export const growthLedgerRecord = pgTable("growth_ledger_record", {
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (table) => [
-    /**
-     * 幂等唯一约束：同一用户同一业务键只允许生效一次
-     */
-    unique("growth_ledger_record_user_id_biz_key_key").on(table.userId, table.bizKey),
-    /**
-     * 账单查询索引
-     */
-    index("growth_ledger_record_user_id_asset_type_created_at_idx").on(table.userId, table.assetType, table.createdAt),
-    /**
-     * 目标检索索引
-     */
-    index("growth_ledger_record_target_type_target_id_idx").on(table.targetType, table.targetId),
+  /**
+   * 幂等唯一约束：同一用户同一业务键只允许生效一次
+   */
+  unique("growth_ledger_record_user_id_biz_key_key").on(table.userId, table.bizKey),
+  /**
+   * 账单查询索引
+   */
+  index("growth_ledger_record_user_id_asset_type_created_at_idx").on(table.userId, table.assetType, table.createdAt),
+  /**
+   * 目标检索索引
+   */
+  index("growth_ledger_record_target_type_target_id_idx").on(table.targetType, table.targetId),
 ]);
-

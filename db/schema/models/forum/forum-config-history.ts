@@ -3,8 +3,6 @@
  */
 
 import { index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
-import { forumConfig } from "./forum-config";
 
 /**
  * 论坛配置历史表 - 记录配置项的变更历史，支持版本控制和回滚功能
@@ -17,11 +15,11 @@ export const forumConfigHistory = pgTable("forum_config_history", {
   /**
    * 配置ID
    */
-  configId: integer().references(() => forumConfig.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  configId: integer().notNull(),
   /**
    * 操作人ID
    */
-  operatedById: integer().references(() => appUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  operatedById: integer(),
   /**
    * 变更的配置项（JSON格式，存储字段名和变更详情）
    * 示例：{"siteName": {"old": "旧站点名", "new": "新站点名"}, "topicTitleMaxLength": {"old": 200, "new": 300}}
@@ -65,4 +63,3 @@ export const forumConfigHistory = pgTable("forum_config_history", {
      */
     index("forum_config_history_operated_at_idx").on(table.operatedAt),
 ]);
-

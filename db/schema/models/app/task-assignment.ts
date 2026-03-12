@@ -3,8 +3,6 @@
  */
 
 import { index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
-import { task } from "./task";
 
 /**
  * 任务分配记录
@@ -17,11 +15,11 @@ export const taskAssignment = pgTable("task_assignment", {
   /**
    * 任务ID
    */
-  taskId: integer().references(() => task.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  taskId: integer().notNull(),
   /**
    * 用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 周期标识
    */
@@ -75,29 +73,28 @@ export const taskAssignment = pgTable("task_assignment", {
    */
   deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
-    /**
-     * 任务、用户与周期唯一约束
-     */
-    unique("task_assignment_task_id_user_id_cycle_key_key").on(table.taskId, table.userId, table.cycleKey),
-    /**
-     * 用户与状态索引
-     */
-    index("task_assignment_user_id_status_idx").on(table.userId, table.status),
-    /**
-     * 任务索引
-     */
-    index("task_assignment_task_id_idx").on(table.taskId),
-    /**
-     * 完成时间索引
-     */
-    index("task_assignment_completed_at_idx").on(table.completedAt),
-    /**
-     * 过期时间索引
-     */
-    index("task_assignment_expired_at_idx").on(table.expiredAt),
-    /**
-     * 删除时间索引
-     */
-    index("task_assignment_deleted_at_idx").on(table.deletedAt),
+  /**
+   * 任务、用户与周期唯一约束
+   */
+  unique("task_assignment_task_id_user_id_cycle_key_key").on(table.taskId, table.userId, table.cycleKey),
+  /**
+   * 用户与状态索引
+   */
+  index("task_assignment_user_id_status_idx").on(table.userId, table.status),
+  /**
+   * 任务索引
+   */
+  index("task_assignment_task_id_idx").on(table.taskId),
+  /**
+   * 完成时间索引
+   */
+  index("task_assignment_completed_at_idx").on(table.completedAt),
+  /**
+   * 过期时间索引
+   */
+  index("task_assignment_expired_at_idx").on(table.expiredAt),
+  /**
+   * 删除时间索引
+   */
+  index("task_assignment_deleted_at_idx").on(table.deletedAt),
 ]);
-

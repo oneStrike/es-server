@@ -3,7 +3,6 @@
  */
 
 import { integer, pgTable, timestamp, unique } from "drizzle-orm/pg-core";
-import { work } from "./work";
 
 /**
  * 小说作品扩展表
@@ -16,7 +15,7 @@ export const workNovel = pgTable("work_novel", {
   /**
    * 关联的作品ID
    */
-  workId: integer("workId").references(() => work.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  workId: integer("workId").notNull(),
   /**
    * 总字数
    */
@@ -35,4 +34,3 @@ export const workNovel = pgTable("work_novel", {
      */
     unique("work_novel_workId_key").on(table.workId),
 ]);
-

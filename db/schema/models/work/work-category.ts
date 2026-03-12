@@ -66,4 +66,3 @@ export const workCategory = pgTable("work_category", {
      */
     index("work_category_content_type_idx").on(table.contentType),
 ]);
-

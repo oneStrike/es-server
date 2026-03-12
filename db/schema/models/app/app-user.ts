@@ -3,7 +3,6 @@
  */
 
 import { boolean, date, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { userLevelRule } from "./user-level-rule";
 
 /**
  * 应用用户表
@@ -29,7 +28,7 @@ export const appUser = pgTable("app_user", {
   /**
    * 等级ID
    */
-  levelId: integer().references(() => userLevelRule.id, { onDelete: "set null", onUpdate: "cascade" }),
+  levelId: integer(),
   /**
    * 昵称
    */
@@ -144,4 +143,3 @@ export const appUser = pgTable("app_user", {
      */
     index("app_user_level_id_idx").on(table.levelId),
 ]);
-

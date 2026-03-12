@@ -2,10 +2,8 @@
  * Auto-converted from Prisma schema.
  */
 
-import { index, integer, pgTable, timestamp, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { forumModerator } from "./forum-moderator";
-import { forumSection } from "./forum-section";
+import { index, integer, pgTable, timestamp, unique } from "drizzle-orm/pg-core";
 
 /**
  * 论坛版主板块关联表 - 管理板块版主与板块的多对多关系，一个板块版主可以管理多个板块
@@ -18,11 +16,11 @@ export const forumModeratorSection = pgTable("forum_moderator_section", {
   /**
    * 关联的版主ID
    */
-  moderatorId: integer().references(() => forumModerator.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  moderatorId: integer().notNull(),
   /**
    * 关联的板块ID
    */
-  sectionId: integer().references(() => forumSection.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  sectionId: integer().notNull(),
   /**
    * 自定义权限数组（与版主基础权限做合并）
    */
@@ -53,4 +51,3 @@ export const forumModeratorSection = pgTable("forum_moderator_section", {
      */
     index("forum_moderator_section_created_at_idx").on(table.createdAt),
 ]);
-

@@ -11,7 +11,6 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { appUser } from './app-user'
 
 /**
  * 用户购买记录表
@@ -36,12 +35,7 @@ export const userPurchaseRecord = pgTable(
     /**
      * 用户ID（关联 app_user.id）
      */
-    userId: integer()
-      .references(() => appUser.id, {
-        onDelete: 'cascade',
-        onUpdate: 'cascade',
-      })
-      .notNull(),
+    userId: integer().notNull(),
     /**
      * 购买价格（实际支付金额）
      */

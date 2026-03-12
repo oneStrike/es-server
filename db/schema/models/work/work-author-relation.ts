@@ -3,8 +3,6 @@
  */
 
 import { index, integer, pgTable, timestamp, unique } from "drizzle-orm/pg-core";
-import { workAuthor } from "./work-author";
-import { work } from "./work";
 
 /**
  * 作品作者关联表（多对多关系中间表）
@@ -17,11 +15,11 @@ export const workAuthorRelation = pgTable("work_author_relation", {
   /**
    * 作品ID
    */
-  workId: integer().references(() => work.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  workId: integer().notNull(),
   /**
    * 作者ID
    */
-  authorId: integer().references(() => workAuthor.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  authorId: integer().notNull(),
   /**
    * 排序顺序（用于展示顺序）
    */
@@ -48,4 +46,3 @@ export const workAuthorRelation = pgTable("work_author_relation", {
      */
     index("work_author_relation_author_id_idx").on(table.authorId),
 ]);
-

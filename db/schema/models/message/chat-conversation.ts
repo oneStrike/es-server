@@ -3,7 +3,6 @@
  */
 
 import { bigint, index, integer, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
 
 /**
  * 聊天会话表（仅私聊）
@@ -28,7 +27,7 @@ export const chatConversation = pgTable("chat_conversation", {
   /**
    * 最后发言人ID（快照字段）
    */
-  lastSenderId: integer().references(() => appUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  lastSenderId: integer(),
   /**
    * 创建时间
    */
@@ -47,4 +46,3 @@ export const chatConversation = pgTable("chat_conversation", {
      */
     index("chat_conversation_last_message_at_idx").on(table.lastMessageAt.desc()),
 ]);
-

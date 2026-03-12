@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
-import { forumModerator } from "./forum-moderator";
 
 /**
  * 论坛版主操作日志表 - 记录版主的所有操作行为，包括主题管理、回复管理、审核等操作
@@ -16,7 +15,7 @@ export const forumModeratorActionLog = pgTable("forum_moderator_action_log", {
   /**
    * 关联的版主ID
    */
-  moderatorId: integer().references(() => forumModerator.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  moderatorId: integer().notNull(),
   /**
    * 目标ID
    */
@@ -63,4 +62,3 @@ export const forumModeratorActionLog = pgTable("forum_moderator_action_log", {
      */
     index("forum_moderator_action_log_created_at_idx").on(table.createdAt),
 ]);
-

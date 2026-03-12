@@ -3,9 +3,6 @@
  */
 
 import { index, integer, pgTable, smallint, timestamp, unique } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
-import { workChapter } from "../work/work-chapter";
-import { work } from "../work/work";
 
 /**
  * 用户作品阅读状态表
@@ -19,11 +16,11 @@ export const userWorkReadingState = pgTable("user_work_reading_state", {
   /**
    * 用户 ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 作品 ID
    */
-  workId: integer().references(() => work.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  workId: integer().notNull(),
   /**
    * 作品类型（1=漫画, 2=小说）
    */
@@ -35,7 +32,7 @@ export const userWorkReadingState = pgTable("user_work_reading_state", {
   /**
    * 最近一次阅读到的章节 ID，用于继续阅读
    */
-  lastReadChapterId: integer().references(() => workChapter.id, { onDelete: "set null", onUpdate: "cascade" }),
+  lastReadChapterId: integer(),
   /**
    * 创建时间
    */
@@ -62,4 +59,3 @@ export const userWorkReadingState = pgTable("user_work_reading_state", {
      */
     index("user_work_reading_state_last_read_chapter_id_idx").on(table.lastReadChapterId),
 ]);
-

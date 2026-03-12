@@ -3,7 +3,6 @@
  */
 
 import { index, integer, jsonb, pgTable, smallint, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 成长结算审计日志表
@@ -21,7 +20,7 @@ export const growthAuditLog = pgTable("growth_audit_log", {
   /**
    * 用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 幂等业务键
    */
@@ -63,17 +62,16 @@ export const growthAuditLog = pgTable("growth_audit_log", {
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (table) => [
-    /**
-     * 业务键检索索引
-     */
-    index("growth_audit_log_user_id_biz_key_idx").on(table.userId, table.bizKey),
-    /**
-     * 判定统计索引
-     */
-    index("growth_audit_log_asset_type_action_decision_created_at_idx").on(table.assetType, table.action, table.decision, table.createdAt),
-    /**
-     * 请求链路索引
-     */
-    index("growth_audit_log_request_id_idx").on(table.requestId),
+  /**
+   * 业务键检索索引
+   */
+  index("growth_audit_log_user_id_biz_key_idx").on(table.userId, table.bizKey),
+  /**
+   * 判定统计索引
+   */
+  index("growth_audit_log_asset_type_action_decision_created_at_idx").on(table.assetType, table.action, table.decision, table.createdAt),
+  /**
+   * 请求链路索引
+   */
+  index("growth_audit_log_request_id_idx").on(table.requestId),
 ]);
-

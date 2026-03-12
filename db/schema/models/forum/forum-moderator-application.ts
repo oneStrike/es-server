@@ -2,10 +2,8 @@
  * Auto-converted from Prisma schema.
  */
 
-import { index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { appUser } from "../app/app-user";
-import { forumSection } from "./forum-section";
+import { index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 论坛版主申请表 - 管理用户申请成为版主的申请记录，包括申请信息、审核状态、审核结果等
@@ -18,15 +16,15 @@ export const forumModeratorApplication = pgTable("forum_moderator_application", 
   /**
    * 申请人用户ID
    */
-  applicantId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  applicantId: integer().notNull(),
   /**
    * 申请的板块ID
    */
-  sectionId: integer().references(() => forumSection.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  sectionId: integer().notNull(),
   /**
    * 审核人ID
    */
-  auditById: integer().references(() => appUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  auditById: integer(),
   /**
    * 申请状态（0=待审核, 1=已通过, 2=已拒绝）
    */
@@ -93,4 +91,3 @@ export const forumModeratorApplication = pgTable("forum_moderator_application", 
      */
     index("forum_moderator_application_deleted_at_idx").on(table.deletedAt),
 ]);
-

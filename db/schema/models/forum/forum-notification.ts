@@ -3,8 +3,6 @@
  */
 
 import { boolean, index, integer, pgTable, smallint, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
-import { forumTopic } from "./forum-topic";
 
 /**
  * 论坛通知表
@@ -17,11 +15,11 @@ export const forumNotification = pgTable("forum_notification", {
   /**
    * 通知接收用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 关联主题ID
    */
-  topicId: integer().references(() => forumTopic.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  topicId: integer(),
   /**
    * 关联回复ID（兼容历史字段）
    */
@@ -104,4 +102,3 @@ export const forumNotification = pgTable("forum_notification", {
      */
     index("forum_notification_user_id_created_at_idx").on(table.userId, table.createdAt),
 ]);
-

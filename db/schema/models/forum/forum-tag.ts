@@ -45,29 +45,28 @@ export const forumTag = pgTable("forum_tag", {
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
 }, (table) => [
-    /**
-     * 唯一索引: name
-     */
-    unique("forum_tag_name_key").on(table.name),
-    /**
-     * 排序索引
-     */
-    index("forum_tag_sortOrder_idx").on(table.sortOrder),
-    /**
-     * 名称索引
-     */
-    index("forum_tag_name_idx").on(table.name),
-    /**
-     * 启用状态索引
-     */
-    index("forum_tag_is_enabled_idx").on(table.isEnabled),
-    /**
-     * 使用次数索引
-     */
-    index("forum_tag_use_count_idx").on(table.useCount),
-    /**
-     * 创建时间索引
-     */
-    index("forum_tag_created_at_idx").on(table.createdAt),
+  /**
+   * 唯一索引: name
+   */
+  unique("forum_tag_name_key").on(table.name),
+  /**
+   * 排序索引
+   */
+  index("forum_tag_sortOrder_idx").on(table.sortOrder),
+  /**
+   * 名称索引
+   */
+  index("forum_tag_name_idx").on(table.name),
+  /**
+   * 启用状态索引
+   */
+  index("forum_tag_is_enabled_idx").on(table.isEnabled),
+  /**
+   * 使用次数索引
+   */
+  index("forum_tag_use_count_idx").on(table.useCount),
+  /**
+   * 创建时间索引
+   */
+  index("forum_tag_created_at_idx").on(table.createdAt),
 ]);
-

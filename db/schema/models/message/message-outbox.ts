@@ -2,7 +2,7 @@
  * Auto-converted from Prisma schema.
  */
 
-import { index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar, bigint } from "drizzle-orm/pg-core";
+import { bigint, index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 消息投递外盒表

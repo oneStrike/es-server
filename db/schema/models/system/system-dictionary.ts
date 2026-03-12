@@ -2,7 +2,7 @@
  * Auto-converted from Prisma schema.
  */
 
-import { boolean, index, pgTable, smallserial, text, timestamp, unique, varchar, integer } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, smallserial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 数据字典
@@ -52,7 +52,6 @@ export const dictionary = pgTable("sys_dictionary", {
     unique("sys_dictionary_code_key").on(table.code),
 ]);
 
-
 /**
  * 数据字典项
  */
@@ -61,7 +60,7 @@ export const dictionaryItem = pgTable("sys_dictionary_item", {
   /**
    * 所属字典编码
    */
-  dictionaryCode: text().references(() => dictionary.code, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  dictionaryCode: text().notNull(),
   /**
    * 字典项名称
    */
@@ -112,4 +111,3 @@ export const dictionaryItem = pgTable("sys_dictionary_item", {
      */
     index("sys_dictionary_item_sort_order_idx").on(table.sortOrder),
 ]);
-

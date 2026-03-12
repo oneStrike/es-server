@@ -2,7 +2,7 @@
  * Auto-converted from Prisma schema.
  */
 
-import { boolean, index, pgTable, smallint, timestamp, unique, varchar, integer } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 管理端用户
@@ -74,4 +74,3 @@ export const adminUser = pgTable("admin_user", {
      */
     index("admin_user_last_login_at_idx").on(table.lastLoginAt),
 ]);
-

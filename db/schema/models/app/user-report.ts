@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 用户举报记录表
@@ -17,11 +16,11 @@ export const userReport = pgTable("user_report", {
   /**
    * 举报人 ID
    */
-  reporterId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  reporterId: integer().notNull(),
   /**
    * 处理人 ID
    */
-  handlerId: integer().references(() => appUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  handlerId: integer(),
   /**
    * 举报直接目标类型
    * 取值见 ReportTargetTypeEnum
@@ -111,4 +110,3 @@ export const userReport = pgTable("user_report", {
      */
     index("user_report_created_at_idx").on(table.createdAt),
 ]);
-

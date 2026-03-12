@@ -3,8 +3,6 @@
  */
 
 import { bigint, boolean, index, integer, pgTable, smallint, timestamp, unique } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
-import { chatConversation } from "./chat-conversation";
 
 /**
  * 聊天会话成员表（仅私聊）
@@ -17,11 +15,11 @@ export const chatConversationMember = pgTable("chat_conversation_member", {
   /**
    * 会话ID
    */
-  conversationId: integer().references(() => chatConversation.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  conversationId: integer().notNull(),
   /**
    * 用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 成员角色（1=会话所有者,2=普通成员）
    */
@@ -64,4 +62,3 @@ export const chatConversationMember = pgTable("chat_conversation_member", {
      */
     index("chat_conversation_member_user_id_unread_count_conversation_id_idx").on(table.userId, table.unreadCount, table.conversationId),
 ]);
-

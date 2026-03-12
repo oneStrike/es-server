@@ -3,7 +3,6 @@
  */
 
 import { boolean, index, integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "../app/app-user";
 
 /**
  * 论坛配置表 - 存储论坛系统的各项配置，采用直接字段方式定义
@@ -16,7 +15,7 @@ export const forumConfig = pgTable("forum_config", {
   /**
    * 最后修改人ID
    */
-  updatedById: integer().references(() => appUser.id, { onDelete: "set null", onUpdate: "cascade" }),
+  updatedById: integer(),
   /**
    * 站点名称
    */
@@ -159,4 +158,3 @@ export const forumConfig = pgTable("forum_config", {
      */
     index("forum_config_created_at_idx").on(table.createdAt),
 ]);
-

@@ -3,7 +3,6 @@
  */
 
 import { boolean, index, integer, jsonb, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 用户评论表
@@ -25,7 +24,7 @@ export const userComment = pgTable("user_comment", {
   /**
    * 评论用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 评论内容
    */
@@ -37,11 +36,11 @@ export const userComment = pgTable("user_comment", {
   /**
    * 回复目标评论ID
    */
-  replyToId: integer().references(() => userComment.id, { onDelete: "set null", onUpdate: "cascade" }),
+  replyToId: integer(),
   /**
    * 实际回复的根评论ID
    */
-  actualReplyToId: integer().references(() => userComment.id, { onDelete: "set null", onUpdate: "cascade" }),
+  actualReplyToId: integer(),
   /**
    * 是否隐藏
    */
@@ -136,4 +135,3 @@ export const userComment = pgTable("user_comment", {
      */
     index("user_comment_deleted_at_idx").on(table.deletedAt),
 ]);
-

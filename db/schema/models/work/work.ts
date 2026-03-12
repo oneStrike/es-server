@@ -3,7 +3,6 @@
  */
 
 import { boolean, date, doublePrecision, index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
-import { userLevelRule } from "../app/user-level-rule";
 
 /**
  * 作品表
@@ -101,7 +100,7 @@ export const work = pgTable("work", {
   /**
    * 阅读等级限制ID
    */
-  requiredViewLevelId: integer().references(() => userLevelRule.id, { onDelete: "set null", onUpdate: "cascade" }),
+  requiredViewLevelId: integer(),
   /**
    * 章节价格
    */
@@ -208,4 +207,3 @@ export const work = pgTable("work", {
      */
     index("work_comment_count_idx").on(table.commentCount),
 ]);
-

@@ -1,5 +1,5 @@
 import type { DrizzleConfig } from 'drizzle-orm'
-import { relations } from './relations'
+import * as relations from './relations'
 import * as schema from './schema'
 
 /**

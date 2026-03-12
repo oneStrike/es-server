@@ -3,8 +3,6 @@
  */
 
 import { index, integer, pgTable, timestamp, unique } from "drizzle-orm/pg-core";
-import { forumTag } from "./forum-tag";
-import { forumTopic } from "./forum-topic";
 
 /**
  * 论坛主题标签关联表 - 管理主题与标签的多对多关系
@@ -17,11 +15,11 @@ export const forumTopicTag = pgTable("forum_topic_tag", {
   /**
    * 关联的主题ID
    */
-  topicId: integer().references(() => forumTopic.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  topicId: integer().notNull(),
   /**
    * 关联的标签ID
    */
-  tagId: integer().references(() => forumTag.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  tagId: integer().notNull(),
   /**
    * 创建时间
    */
@@ -44,4 +42,3 @@ export const forumTopicTag = pgTable("forum_topic_tag", {
      */
     index("forum_topic_tag_created_at_idx").on(table.createdAt),
 ]);
-

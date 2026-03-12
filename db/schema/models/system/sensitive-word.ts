@@ -98,4 +98,3 @@ export const sensitiveWord = pgTable("sensitive_word", {
      */
     index("sensitive_word_created_at_idx").on(table.createdAt),
 ]);
-

@@ -1,0 +1,232 @@
+import { defineRelationsPart, } from 'drizzle-orm'
+import * as schema from '../schema'
+
+export const appRelations = defineRelationsPart(schema, r => ({
+  appAgreement: {
+    agreementLogs: r.many.appAgreementLog(),
+  },
+  appAgreementLog: {
+    agreement: r.one.appAgreement({
+      from: r.appAgreementLog.agreementId,
+      to: r.appAgreement.id,
+    }),
+    user: r.one.appUser({ from: r.appAgreementLog.userId, to: r.appUser.id }),
+  },
+  appAnnouncement: {
+    appPage: r.one.appPage({
+      from: r.appAnnouncement.pageId,
+      to: r.appPage.id,
+      alias: 'announcements',
+    }),
+    announcementReads: r.many.appAnnouncementRead(),
+  },
+  appAnnouncementRead: {
+    announcement: r.one.appAnnouncement({
+      from: r.appAnnouncementRead.announcementId,
+      to: r.appAnnouncement.id,
+    }),
+    user: r.one.appUser({
+      from: r.appAnnouncementRead.userId,
+      to: r.appUser.id,
+    }),
+  },
+  appPage: {
+    announcements: r.many.appAnnouncement({ alias: 'announcements' }),
+  },
+  appUser: {
+    agreementLogs: r.many.appAgreementLog(),
+    level: r.one.userLevelRule({
+      from: r.appUser.levelId,
+      to: r.userLevelRule.id,
+    }),
+    forumProfile: r.one.forumProfile({
+      from: r.appUser.id,
+      to: r.forumProfile.userId,
+    }),
+    announcementReads: r.many.appAnnouncementRead(),
+    tokens: r.many.appUserToken(),
+    forumTopics: r.many.forumTopic({ alias: 'UserTopics' }),
+    lastReplyTopics: r.many.forumTopic({ alias: 'UserLastReplyTopics' }),
+    forumNotifications: r.many.forumNotification(),
+    receivedNotifications: r.many.userNotification({
+      alias: 'UserNotificationReceiver',
+    }),
+    triggeredNotifications: r.many.userNotification({
+      alias: 'UserNotificationActor',
+    }),
+    chatConversationMembers: r.many.chatConversationMember({
+      alias: 'ChatConversationMemberUser',
+    }),
+    chatConversations: r.many.chatConversation({
+      from: r.appUser.id.through(r.chatConversationMember.userId),
+      to: r.chatConversation.id.through(
+        r.chatConversationMember.conversationId,
+      ),
+      alias: 'ChatConversationParticipants',
+    }),
+    sentChatMessages: r.many.chatMessage({ alias: 'ChatMessageSender' }),
+    lastSentConversations: r.many.chatConversation({
+      alias: 'ChatConversationLastSender',
+    }),
+    moderatorApplications: r.many.forumModeratorApplication({
+      alias: 'ModeratorApplicant',
+    }),
+    auditedApplications: r.many.forumModeratorApplication({
+      alias: 'ModeratorAuditor',
+    }),
+    moderator: r.one.forumModerator({
+      from: r.appUser.id,
+      to: r.forumModerator.userId,
+    }),
+    forumActionLogs: r.many.forumUserActionLog(),
+    userBadges: r.many.userBadgeAssignment(),
+    badges: r.many.userBadge({
+      from: r.appUser.id.through(r.userBadgeAssignment.userId),
+      to: r.userBadge.id.through(r.userBadgeAssignment.badgeId),
+    }),
+    growthLedgerRecords: r.many.growthLedgerRecord(),
+    growthAuditLogs: r.many.growthAuditLog(),
+    growthRuleUsageSlots: r.many.growthRuleUsageSlot(),
+    taskAssignments: r.many.taskAssignment(),
+    taskProgressLogs: r.many.taskProgressLog(),
+    updatedConfigs: r.many.forumConfig({ alias: 'ForumConfigUpdater' }),
+    operatedConfigHistories: r.many.forumConfigHistory({
+      alias: 'ForumConfigHistoryOperator',
+    }),
+    userLikes: r.many.userLike(),
+    userFavorites: r.many.userFavorite(),
+    browseLogs: r.many.userBrowseLog(),
+    workReadingStates: r.many.userWorkReadingState(),
+    userComments: r.many.userComment(),
+    userReports: r.many.userReport({ alias: 'UserReportReporter' }),
+    handledUserReports: r.many.userReport({ alias: 'UserReportHandler' }),
+    userDownloadRecords: r.many.userDownloadRecord(),
+    userPurchaseRecords: r.many.userPurchaseRecord(),
+  },
+  appUserToken: {
+    user: r.one.appUser({ from: r.appUserToken.userId, to: r.appUser.id }),
+  },
+  growthAuditLog: {
+    user: r.one.appUser({ from: r.growthAuditLog.userId, to: r.appUser.id }),
+  },
+  growthLedgerRecord: {
+    user: r.one.appUser({
+      from: r.growthLedgerRecord.userId,
+      to: r.appUser.id,
+    }),
+  },
+  growthRuleUsageSlot: {
+    user: r.one.appUser({
+      from: r.growthRuleUsageSlot.userId,
+      to: r.appUser.id,
+    }),
+  },
+  task: {
+    assignments: r.many.taskAssignment(),
+    createdBy: r.one.adminUser({
+      from: r.task.createdById,
+      to: r.adminUser.id,
+      alias: 'TaskCreatedBy',
+    }),
+    updatedBy: r.one.adminUser({
+      from: r.task.updatedById,
+      to: r.adminUser.id,
+      alias: 'TaskUpdatedBy',
+    }),
+  },
+  taskAssignment: {
+    task: r.one.task({ from: r.taskAssignment.taskId, to: r.task.id }),
+    user: r.one.appUser({ from: r.taskAssignment.userId, to: r.appUser.id }),
+    progressLogs: r.many.taskProgressLog(),
+  },
+  taskProgressLog: {
+    assignment: r.one.taskAssignment({
+      from: r.taskProgressLog.assignmentId,
+      to: r.taskAssignment.id,
+    }),
+    user: r.one.appUser({ from: r.taskProgressLog.userId, to: r.appUser.id }),
+  },
+  userBadge: {
+    assignments: r.many.userBadgeAssignment(),
+    users: r.many.appUser({
+      from: r.userBadge.id.through(r.userBadgeAssignment.badgeId),
+      to: r.appUser.id.through(r.userBadgeAssignment.userId),
+    }),
+  },
+  userBadgeAssignment: {
+    badge: r.one.userBadge({
+      from: r.userBadgeAssignment.badgeId,
+      to: r.userBadge.id,
+    }),
+    user: r.one.appUser({
+      from: r.userBadgeAssignment.userId,
+      to: r.appUser.id,
+    }),
+  },
+  userBrowseLog: {
+    user: r.one.appUser({ from: r.userBrowseLog.userId, to: r.appUser.id }),
+  },
+  userComment: {
+    user: r.one.appUser({ from: r.userComment.userId, to: r.appUser.id }),
+    replyTo: r.one.userComment({
+      from: r.userComment.replyToId,
+      to: r.userComment.id,
+      alias: 'CommentReply',
+    }),
+    replies: r.many.userComment({ alias: 'CommentReply' }),
+    actualReplyTo: r.one.userComment({
+      from: r.userComment.actualReplyToId,
+      to: r.userComment.id,
+      alias: 'CommentActualReply',
+    }),
+    actualReplies: r.many.userComment({ alias: 'CommentActualReply' }),
+  },
+  userDownloadRecord: {
+    user: r.one.appUser({
+      from: r.userDownloadRecord.userId,
+      to: r.appUser.id,
+    }),
+  },
+  userFavorite: {
+    user: r.one.appUser({ from: r.userFavorite.userId, to: r.appUser.id }),
+  },
+  userLevelRule: {
+    users: r.many.appUser(),
+    sections: r.many.forumSection(),
+    chaptersAsReadLevel: r.many.workChapter({ alias: 'ChapterReadLevel' }),
+    worksAsViewLevel: r.many.work({ alias: 'WorkViewLevel' }),
+  },
+  userLike: {
+    user: r.one.appUser({ from: r.userLike.userId, to: r.appUser.id }),
+  },
+  userPurchaseRecord: {
+    user: r.one.appUser({
+      from: r.userPurchaseRecord.userId,
+      to: r.appUser.id,
+    }),
+  },
+  userReport: {
+    reporter: r.one.appUser({
+      from: r.userReport.reporterId,
+      to: r.appUser.id,
+      alias: 'UserReportReporter',
+    }),
+    handler: r.one.appUser({
+      from: r.userReport.handlerId,
+      to: r.appUser.id,
+      alias: 'UserReportHandler',
+    }),
+  },
+  userWorkReadingState: {
+    user: r.one.appUser({
+      from: r.userWorkReadingState.userId,
+      to: r.appUser.id,
+    }),
+    work: r.one.work({ from: r.userWorkReadingState.workId, to: r.work.id }),
+    lastReadChapter: r.one.workChapter({
+      from: r.userWorkReadingState.lastReadChapterId,
+      to: r.workChapter.id,
+      alias: 'UserWorkReadingStateLastReadChapter',
+    }),
+  },
+}))

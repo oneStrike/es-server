@@ -3,8 +3,6 @@
  */
 
 import { boolean, index, integer, pgTable, smallint, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { userLevelRule } from "../app/user-level-rule";
-import { work } from "./work";
 
 /**
  * 作品章节表
@@ -18,7 +16,7 @@ export const workChapter = pgTable("work_chapter", {
   /**
    * 作品ID
    */
-  workId: integer().references(() => work.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  workId: integer().notNull(),
   /**
    * 作品类型
    */
@@ -62,7 +60,7 @@ export const workChapter = pgTable("work_chapter", {
   /**
    * 阅读等级限制ID
    */
-  requiredViewLevelId: integer("required_read_level_id").references(() => userLevelRule.id, { onDelete: "set null", onUpdate: "cascade" }),
+  requiredViewLevelId: integer("required_read_level_id"),
   /**
    * 章节价格
    */
@@ -169,4 +167,3 @@ export const workChapter = pgTable("work_chapter", {
      */
     index("work_chapter_work_type_idx").on(table.workType),
 ]);
-

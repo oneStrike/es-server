@@ -86,4 +86,3 @@ export const requestLog = pgTable("sys_request_log", {
      */
     index("sys_request_log_is_success_idx").on(table.isSuccess),
 ]);
-

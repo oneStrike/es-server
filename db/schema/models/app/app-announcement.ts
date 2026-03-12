@@ -3,7 +3,6 @@
  */
 
 import { boolean, index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appPage } from "./app-page";
 
 /**
  * 系统公告表 - 存储平台公告、活动公告、维护公告等信息
@@ -16,7 +15,7 @@ export const appAnnouncement = pgTable("app_announcement", {
   /**
    * 关联的页面ID（可选）
    */
-  pageId: integer().references(() => appPage.id, { onDelete: "set null", onUpdate: "cascade" }),
+  pageId: integer(),
   /**
    * 公告标题
    */
@@ -78,29 +77,28 @@ export const appAnnouncement = pgTable("app_announcement", {
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
 }, (table) => [
-    /**
-     * 发布状态与发布时间索引
-     */
-    index("app_announcement_is_published_publish_start_time_publish_end_time_idx").on(table.isPublished, table.publishStartTime, table.publishEndTime),
-    /**
-     * 类型与发布状态索引
-     */
-    index("app_announcement_announcement_type_is_published_idx").on(table.announcementType, table.isPublished),
-    /**
-     * 优先级与置顶索引
-     */
-    index("app_announcement_priority_level_is_pinned_idx").on(table.priorityLevel, table.isPinned),
-    /**
-     * 创建时间索引
-     */
-    index("app_announcement_created_at_idx").on(table.createdAt),
-    /**
-     * 页面索引
-     */
-    index("app_announcement_page_id_idx").on(table.pageId),
-    /**
-     * 弹窗与发布状态索引
-     */
-    index("app_announcement_show_as_popup_is_published_idx").on(table.showAsPopup, table.isPublished),
+  /**
+   * 发布状态与发布时间索引
+   */
+  index("app_announcement_is_published_publish_start_time_publish_end_time_idx").on(table.isPublished, table.publishStartTime, table.publishEndTime),
+  /**
+   * 类型与发布状态索引
+   */
+  index("app_announcement_announcement_type_is_published_idx").on(table.announcementType, table.isPublished),
+  /**
+   * 优先级与置顶索引
+   */
+  index("app_announcement_priority_level_is_pinned_idx").on(table.priorityLevel, table.isPinned),
+  /**
+   * 创建时间索引
+   */
+  index("app_announcement_created_at_idx").on(table.createdAt),
+  /**
+   * 页面索引
+   */
+  index("app_announcement_page_id_idx").on(table.pageId),
+  /**
+   * 弹窗与发布状态索引
+   */
+  index("app_announcement_show_as_popup_is_published_idx").on(table.showAsPopup, table.isPublished),
 ]);
-

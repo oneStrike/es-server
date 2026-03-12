@@ -2,7 +2,7 @@
  * Auto-converted from Prisma schema.
  */
 
-import { boolean, index, integer, pgTable, text, timestamp, unique, varchar, bigint } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, pgTable, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 import { appUser } from "./app-user";
 
 /**
@@ -50,16 +50,15 @@ export const appAgreement = pgTable("app_agreement", {
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
 }, (table) => [
-    /**
-     * 同标题与版本唯一约束
-     */
-    unique("app_agreement_title_version_key").on(table.title, table.version),
-    /**
-     * 标题与发布状态索引
-     */
-    index("app_agreement_title_is_published_idx").on(table.title, table.isPublished),
+  /**
+   * 同标题与版本唯一约束
+   */
+  unique("app_agreement_title_version_key").on(table.title, table.version),
+  /**
+   * 标题与发布状态索引
+   */
+  index("app_agreement_title_is_published_idx").on(table.title, table.isPublished),
 ]);
-
 
 /**
  * 应用协议签署记录表
@@ -72,11 +71,11 @@ export const appAgreementLog = pgTable("app_agreement_log", {
   /**
    * 用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "restrict", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 协议ID
    */
-  agreementId: integer().references(() => appAgreement.id, { onDelete: "restrict", onUpdate: "cascade" }).notNull(),
+  agreementId: integer().notNull(),
   /**
    * 签署时的协议版本快照
    */
@@ -94,13 +93,12 @@ export const appAgreementLog = pgTable("app_agreement_log", {
    */
   deviceInfo: varchar({ length: 500 }),
 }, (table) => [
-    /**
-     * 用户与协议索引
-     */
-    index("app_agreement_log_user_id_agreement_id_idx").on(table.userId, table.agreementId),
-    /**
-     * 签署时间索引
-     */
-    index("app_agreement_log_agreed_at_idx").on(table.agreedAt),
+  /**
+   * 用户与协议索引
+   */
+  index("app_agreement_log_user_id_agreement_id_idx").on(table.userId, table.agreementId),
+  /**
+   * 签署时间索引
+   */
+  index("app_agreement_log_agreed_at_idx").on(table.agreedAt),
 ]);
-

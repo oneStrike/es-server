@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, smallint, timestamp, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 用户浏览记录表
@@ -34,7 +33,7 @@ export const userBrowseLog = pgTable("user_browse_log", {
    * 用户ID（关联 app_user.id）
    * 执行浏览操作的用户
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * IP地址
    * 用户浏览时的IP地址，用于地域统计、风控等
@@ -56,25 +55,24 @@ export const userBrowseLog = pgTable("user_browse_log", {
    */
   viewedAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (table) => [
-    /**
-     * 目标类型与目标ID联合索引，用于查询某目标的浏览记录
-     */
-    index("user_browse_log_target_type_target_id_idx").on(table.targetType, table.targetId),
-    /**
-     * 用户ID索引，用于查询某用户的浏览历史
-     */
-    index("user_browse_log_user_id_idx").on(table.userId),
-    /**
-     * 浏览时间索引，用于按时间排序和清理过期数据
-     */
-    index("user_browse_log_viewed_at_idx").on(table.viewedAt),
-    /**
-     * 目标与用户联合索引，用于查询某用户对某目标的浏览记录
-     */
-    index("user_browse_log_target_type_target_id_user_id_idx").on(table.targetType, table.targetId, table.userId),
-    /**
-     * 用户与浏览时间联合索引，用于查询用户浏览历史并按时间排序
-     */
-    index("user_browse_log_user_id_viewed_at_idx").on(table.userId, table.viewedAt),
+  /**
+   * 目标类型与目标ID联合索引，用于查询某目标的浏览记录
+   */
+  index("user_browse_log_target_type_target_id_idx").on(table.targetType, table.targetId),
+  /**
+   * 用户ID索引，用于查询某用户的浏览历史
+   */
+  index("user_browse_log_user_id_idx").on(table.userId),
+  /**
+   * 浏览时间索引，用于按时间排序和清理过期数据
+   */
+  index("user_browse_log_viewed_at_idx").on(table.viewedAt),
+  /**
+   * 目标与用户联合索引，用于查询某用户对某目标的浏览记录
+   */
+  index("user_browse_log_target_type_target_id_user_id_idx").on(table.targetType, table.targetId, table.userId),
+  /**
+   * 用户与浏览时间联合索引，用于查询用户浏览历史并按时间排序
+   */
+  index("user_browse_log_user_id_viewed_at_idx").on(table.userId, table.viewedAt),
 ]);
-

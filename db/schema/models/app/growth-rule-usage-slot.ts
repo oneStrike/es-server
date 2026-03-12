@@ -3,7 +3,6 @@
  */
 
 import { index, integer, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
-import { appUser } from "./app-user";
 
 /**
  * 成长规则限流槽位表
@@ -17,7 +16,7 @@ export const growthRuleUsageSlot = pgTable("growth_rule_usage_slot", {
   /**
    * 用户ID
    */
-  userId: integer().references(() => appUser.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  userId: integer().notNull(),
   /**
    * 资产类型（POINTS / EXPERIENCE）
    */
@@ -39,13 +38,12 @@ export const growthRuleUsageSlot = pgTable("growth_rule_usage_slot", {
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (table) => [
-    /**
-     * 唯一槽位约束：核心并发防重
-     */
-    unique("growth_rule_usage_slot_user_id_asset_type_rule_key_slot_type_slot_value_key").on(table.userId, table.assetType, table.ruleKey, table.slotType, table.slotValue),
-    /**
-     * 用户规则检索索引
-     */
-    index("growth_rule_usage_slot_user_id_asset_type_rule_key_created_at_idx").on(table.userId, table.assetType, table.ruleKey, table.createdAt),
+  /**
+   * 唯一槽位约束：核心并发防重
+   */
+  unique("growth_rule_usage_slot_user_id_asset_type_rule_key_slot_type_slot_value_key").on(table.userId, table.assetType, table.ruleKey, table.slotType, table.slotValue),
+  /**
+   * 用户规则检索索引
+   */
+  index("growth_rule_usage_slot_user_id_asset_type_rule_key_created_at_idx").on(table.userId, table.assetType, table.ruleKey, table.createdAt),
 ]);
-
