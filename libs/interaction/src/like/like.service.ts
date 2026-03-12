@@ -1,13 +1,19 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
 import { LikeGrowthService } from './like-growth.service'
+import { LikeTargetTypeEnum } from './like.constant'
 
+/**
+ * 点赞服务
+ * 提供点赞、取消点赞、查询点赞状态等核心业务逻辑
+ * 通过解析器模式支持多种目标类型（作品、章节、评论、论坛主题等）的点赞操作
+ */
 @Injectable()
 export class LikeService extends BaseService {
+  /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
   private readonly resolvers = new Map<
-    InteractionTargetTypeEnum,
+    LikeTargetTypeEnum,
     ILikeTargetResolver
   >()
 
@@ -15,6 +21,11 @@ export class LikeService extends BaseService {
     super()
   }
 
+  /**
+   * 注册目标解析器
+   * 供其他模块在应用启动时注册自己的点赞解析器
+   * @param resolver - 点赞目标解析器实例
+   */
   registerResolver(resolver: ILikeTargetResolver) {
     if (this.resolvers.has(resolver.targetType)) {
       console.warn(
@@ -24,9 +35,13 @@ export class LikeService extends BaseService {
     this.resolvers.set(resolver.targetType, resolver)
   }
 
-  private getResolver(
-    targetType: InteractionTargetTypeEnum,
-  ): ILikeTargetResolver {
+  /**
+   * 获取指定目标类型的解析器
+   * @param targetType - 点赞目标类型
+   * @returns 对应的目标解析器
+   * @throws BadRequestException 当目标类型不支持时抛出异常
+   */
+  private getResolver(targetType: LikeTargetTypeEnum): ILikeTargetResolver {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException('不支持的点赞目标类型')
@@ -34,126 +49,16 @@ export class LikeService extends BaseService {
     return resolver
   }
 
-  private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
-    if (
-      targetType === InteractionTargetTypeEnum.COMIC ||
-      targetType === InteractionTargetTypeEnum.NOVEL
-    ) {
-      return client.work
-    }
-
-    if (
-      targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ||
-      targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
-    ) {
-      return client.workChapter
-    }
-
-    if (targetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
-      return client.forumTopic
-    }
-
-    if (targetType === InteractionTargetTypeEnum.COMMENT) {
-      return client.userComment
-    }
-
-    throw new BadRequestException('不支持的点赞目标类型')
-  }
-
-  private resolveWorkType(targetType: InteractionTargetTypeEnum) {
-    if (
-      targetType === InteractionTargetTypeEnum.COMIC ||
-      targetType === InteractionTargetTypeEnum.COMIC_CHAPTER
-    ) {
-      return 1
-    }
-
-    if (
-      targetType === InteractionTargetTypeEnum.NOVEL ||
-      targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
-    ) {
-      return 2
-    }
-
-    throw new BadRequestException('不支持的点赞目标类型')
-  }
-
-  private buildTargetWhere(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    if (
-      targetType === InteractionTargetTypeEnum.COMIC ||
-      targetType === InteractionTargetTypeEnum.NOVEL
-    ) {
-      return {
-        id: targetId,
-        type: this.resolveWorkType(targetType),
-        deletedAt: null,
-      }
-    }
-
-    if (
-      targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ||
-      targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
-    ) {
-      return {
-        id: targetId,
-        workType: this.resolveWorkType(targetType),
-        deletedAt: null,
-      }
-    }
-
-    if (targetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
-      return { id: targetId, deletedAt: null }
-    }
-
-    if (targetType === InteractionTargetTypeEnum.COMMENT) {
-      return { id: targetId, deletedAt: null }
-    }
-
-    throw new BadRequestException('不支持的点赞目标类型')
-  }
-
-  private buildTargetListWhere(
-    targetType: InteractionTargetTypeEnum,
-    targetIds: number[],
-  ) {
-    if (
-      targetType === InteractionTargetTypeEnum.COMIC ||
-      targetType === InteractionTargetTypeEnum.NOVEL
-    ) {
-      return {
-        id: { in: targetIds },
-        type: this.resolveWorkType(targetType),
-        deletedAt: null,
-      }
-    }
-
-    if (
-      targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ||
-      targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
-    ) {
-      return {
-        id: { in: targetIds },
-        workType: this.resolveWorkType(targetType),
-        deletedAt: null,
-      }
-    }
-
-    if (targetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
-      return { id: { in: targetIds }, deletedAt: null }
-    }
-
-    if (targetType === InteractionTargetTypeEnum.COMMENT) {
-      return { id: { in: targetIds }, deletedAt: null }
-    }
-
-    throw new BadRequestException('不支持的点赞目标类型')
-  }
-
+  /**
+   * 批量检查点赞状态
+   * 用于在列表页批量查询用户对多个目标的点赞状态
+   * @param targetType - 点赞目标类型
+   * @param targetIds - 目标ID数组
+   * @param userId - 用户ID
+   * @returns 目标ID到点赞状态的映射Map（true表示已点赞）
+   */
   async checkStatusBatch(
-    targetType: InteractionTargetTypeEnum,
+    targetType: LikeTargetTypeEnum,
     targetIds: number[],
     userId: number,
   ): Promise<Map<number, boolean>> {
@@ -182,8 +87,17 @@ export class LikeService extends BaseService {
     return statusMap
   }
 
+  /**
+   * 获取目标的点赞列表
+   * 查询指定目标的点赞记录，支持分页
+   * @param targetType - 点赞目标类型
+   * @param targetId - 目标ID
+   * @param pageIndex - 页码（默认1）
+   * @param pageSize - 每页数量（默认20）
+   * @returns 分页点赞记录列表
+   */
   async getTargetLikes(
-    targetType: InteractionTargetTypeEnum,
+    targetType: LikeTargetTypeEnum,
     targetId: number,
     pageIndex: number = 1,
     pageSize: number = 20,
@@ -207,51 +121,16 @@ export class LikeService extends BaseService {
     })
   }
 
-  async getLikeCount(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ): Promise<number> {
-    const model = this.getTargetModel(this.prisma, targetType)
-    const where = this.buildTargetWhere(targetType, targetId)
-    const result = await model.findFirst({
-      where,
-      select: {
-        likeCount: true,
-      },
-    })
-
-    return result?.likeCount ?? 0
-  }
-
-  async getLikeCounts(
-    targetType: InteractionTargetTypeEnum,
-    targetIds: number[],
-  ): Promise<Map<number, number>> {
-    const countMap = new Map<number, number>()
-
-    if (targetIds.length === 0) {
-      return countMap
-    }
-
-    const model = this.getTargetModel(this.prisma, targetType)
-    const where = this.buildTargetListWhere(targetType, targetIds)
-    const results = await model.findMany({
-      where,
-      select: {
-        id: true,
-        likeCount: true,
-      },
-    })
-
-    for (const item of results) {
-      countMap.set(item.id, item.likeCount ?? 0)
-    }
-
-    return countMap
-  }
-
+  /**
+   * 点赞操作
+   * 执行完整的点赞流程：解析目标元数据、创建点赞记录、更新计数、执行后置钩子、发放成长奖励
+   * @param targetType - 点赞目标类型
+   * @param targetId - 目标ID
+   * @param userId - 用户ID
+   * @throws BadRequestException 当已点赞或目标不存在时抛出异常
+   */
   async like(
-    targetType: InteractionTargetTypeEnum,
+    targetType: LikeTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
@@ -287,8 +166,16 @@ export class LikeService extends BaseService {
     await this.likeGrowthService.rewardLikeCreated(targetType, targetId, userId)
   }
 
+  /**
+   * 取消点赞操作
+   * 执行完整的取消点赞流程：删除点赞记录、更新计数
+   * @param targetType - 点赞目标类型
+   * @param targetId - 目标ID
+   * @param userId - 用户ID
+   * @throws BadRequestException 当点赞记录不存在时抛出异常
+   */
   async unlike(
-    targetType: InteractionTargetTypeEnum,
+    targetType: LikeTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
@@ -315,8 +202,16 @@ export class LikeService extends BaseService {
     })
   }
 
+  /**
+   * 检查点赞状态
+   * 查询指定用户对指定目标的点赞状态
+   * @param targetType - 点赞目标类型
+   * @param targetId - 目标ID
+   * @param userId - 用户ID
+   * @returns 是否已点赞（true表示已点赞）
+   */
   async checkLikeStatus(
-    targetType: InteractionTargetTypeEnum,
+    targetType: LikeTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<boolean> {
@@ -333,9 +228,18 @@ export class LikeService extends BaseService {
     return !!like
   }
 
+  /**
+   * 获取用户的点赞列表
+   * 查询指定用户的点赞记录，支持分页，并关联查询目标详情
+   * @param userId - 用户ID
+   * @param targetType - 点赞目标类型
+   * @param pageIndex - 页码（默认0）
+   * @param pageSize - 每页数量（默认15）
+   * @returns 分页点赞记录列表，包含目标详情
+   */
   async getUserLikes(
     userId: number,
-    targetType: InteractionTargetTypeEnum,
+    targetType: LikeTargetTypeEnum,
     pageIndex: number = 0,
     pageSize: number = 15,
   ) {

@@ -1,8 +1,4 @@
-import {
-  CommentLevelEnum,
-  InteractionTargetTypeEnum,
-  SceneTypeEnum,
-} from '@libs/base/constant'
+import { CommentLevelEnum, SceneTypeEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -14,6 +10,7 @@ import {
 import { PageDto } from '@libs/base/dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { LikeTargetBodyDto } from '../../dto/target.dto'
+import { LikeTargetTypeEnum } from '../like.constant'
 
 /**
  * 点赞目标 DTO
@@ -85,12 +82,12 @@ export class LikeRecordResponseDto {
 
   @EnumProperty({
     description: '点赞目标类型',
-    enum: InteractionTargetTypeEnum,
-    example: InteractionTargetTypeEnum.COMIC,
+    enum: LikeTargetTypeEnum,
+    example: LikeTargetTypeEnum.WORK_COMIC,
     required: true,
     validation: false,
   })
-  targetType!: InteractionTargetTypeEnum
+  targetType!: LikeTargetTypeEnum
 
   @NumberProperty({
     description: '点赞目标 ID',

@@ -1,4 +1,3 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
   GrowthAssetTypeEnum,
@@ -7,7 +6,7 @@ import {
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
 import { refreshUserLevelByExperience } from '../user-level.helper'
-import { LIKE_GROWTH_RULE_TYPE_MAP } from './like.constant'
+import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
 
 /**
  * 点赞成长奖励服务。
@@ -23,11 +22,11 @@ export class LikeGrowthService extends BaseService {
   }
 
   async rewardLikeCreated(
-    targetType: InteractionTargetTypeEnum,
+    targetType: LikeTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
-    if (targetType === InteractionTargetTypeEnum.COMMENT) {
+    if (targetType === LikeTargetTypeEnum.COMMENT) {
       await this.rewardCommentLiked(targetId, userId)
       return
     }
@@ -96,8 +95,7 @@ export class LikeGrowthService extends BaseService {
       return
     }
 
-    const baseBizKey =
-      `comment:liked:${commentId}:liker:${likerUserId}:author:${comment.userId}`
+    const baseBizKey = `comment:liked:${commentId}:liker:${likerUserId}:author:${comment.userId}`
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -110,14 +108,17 @@ export class LikeGrowthService extends BaseService {
           targetId: commentId,
         })
 
-        const experienceResult = await this.growthLedgerService.applyByRule(tx, {
-          userId: comment.userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          remark: `评论被点赞 #${commentId}`,
-          targetId: commentId,
-        })
+        const experienceResult = await this.growthLedgerService.applyByRule(
+          tx,
+          {
+            userId: comment.userId,
+            assetType: GrowthAssetTypeEnum.EXPERIENCE,
+            ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
+            bizKey: `${baseBizKey}:EXPERIENCE`,
+            remark: `评论被点赞 #${commentId}`,
+            targetId: commentId,
+          },
+        )
 
         if (
           experienceResult.success &&

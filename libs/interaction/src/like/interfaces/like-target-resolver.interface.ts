@@ -1,9 +1,6 @@
-import type {
-  CommentLevelEnum,
-  InteractionTargetTypeEnum,
-  SceneTypeEnum,
-} from '@libs/base/constant'
-import type { PrismaTransactionClientType } from '@libs/base/database/prisma.types'
+import type { CommentLevelEnum, SceneTypeEnum } from '@libs/base/constant'
+import type { PrismaTransactionClientType } from '@libs/base/database'
+import type { LikeTargetTypeEnum } from '../like.constant'
 
 export interface LikeTargetMeta {
   sceneType: SceneTypeEnum
@@ -15,7 +12,7 @@ export interface ILikeTargetResolver {
   /**
    * 目标类型标识
    */
-  readonly targetType: InteractionTargetTypeEnum
+  readonly targetType: LikeTargetTypeEnum
 
   /**
    * 检查目标是否存在，并解析点赞所需的场景元信息

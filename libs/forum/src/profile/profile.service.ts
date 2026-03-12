@@ -1,4 +1,4 @@
-import type { PrismaClientType } from '@libs/base/database/prisma.types'
+import type { PrismaClientType } from '@libs/base/database'
 import {
   UserDefaults,
   UserStatusEnum,

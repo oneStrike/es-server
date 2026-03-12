@@ -1,19 +1,27 @@
-import type { PrismaTransactionClientType } from '@libs/base/database/prisma.types'
+import type { PrismaTransactionClientType } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
-import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
+import {
+  FavoriteService,
+  FavoriteTargetTypeEnum,
+  IFavoriteTargetResolver,
+} from '@libs/interaction/favorite'
+
 import {
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 
+/**
+ * 论坛主题收藏解析器
+ * 负责处理论坛主题的收藏业务逻辑，包括验证主题存在性、更新收藏计数、发送通知等
+ */
 @Injectable()
 export class ForumTopicFavoriteResolver
   extends BaseService
   implements IFavoriteTargetResolver, OnModuleInit
 {
+  /** 目标类型：论坛主题 */
   readonly targetType = FavoriteTargetTypeEnum.FORUM_TOPIC
 
   constructor(
@@ -23,17 +31,29 @@ export class ForumTopicFavoriteResolver
     super()
   }
 
+  /**
+   * 模块初始化时注册解析器到收藏服务
+   * 使收藏服务能够识别并处理论坛主题类型的收藏请求
+   */
   onModuleInit() {
     this.favoriteService.registerResolver(this)
   }
 
+  /**
+   * 验证目标主题是否存在并返回主题所有者信息
+   * @param tx - Prisma 事务客户端
+   * @param targetId - 主题ID
+   * @returns 包含主题所有者用户ID的对象
+   * @throws BadRequestException 当主题不存在时抛出异常
+   */
   async ensureExists(tx: PrismaTransactionClientType, targetId: number) {
     const topic = await tx.forumTopic.findFirst({
       where: {
         id: targetId,
+        isHidden: false,
         deletedAt: null,
       },
-      select: { userId: true },
+      select: { userId: true, isLocked: true, isHidden: true },
     })
 
     if (!topic) {
@@ -43,13 +63,21 @@ export class ForumTopicFavoriteResolver
     return { ownerUserId: topic.userId }
   }
 
+  /**
+   * 应用收藏计数增量
+   * 当用户收藏或取消收藏时，更新主题的收藏计数
+   * @param tx - Prisma 事务客户端
+   * @param targetId - 主题ID
+   * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
+   */
   async applyCountDelta(
     tx: PrismaTransactionClientType,
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0)
-{ return }
+    if (delta === 0) {
+      return
+    }
 
     await tx.forumTopic.applyCountDelta(
       {
@@ -61,6 +89,14 @@ export class ForumTopicFavoriteResolver
     )
   }
 
+  /**
+   * 收藏后钩子函数
+   * 当用户成功收藏主题后，向主题作者发送通知（收藏者与被收藏者不是同一人时）
+   * @param tx - Prisma 事务客户端
+   * @param targetId - 被收藏的主题ID
+   * @param actorUserId - 执行收藏操作的用户ID
+   * @param options - 包含主题所有者用户ID的选项对象
+   */
   async postFavoriteHook(
     tx: PrismaTransactionClientType,
     targetId: number,
@@ -89,9 +125,16 @@ export class ForumTopicFavoriteResolver
     }
   }
 
+  /**
+   * 批量获取主题详情
+   * 用于在收藏列表中展示主题的标题等基本信息
+   * @param targetIds - 主题ID数组
+   * @returns 主题ID到主题详情的映射Map
+   */
   async batchGetDetails(targetIds: number[]) {
-    if (targetIds.length === 0)
-{ return new Map() }
+    if (targetIds.length === 0) {
+      return new Map()
+    }
 
     const topics = await this.prisma.forumTopic.findMany({
       where: {
