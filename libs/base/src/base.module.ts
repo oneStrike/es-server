@@ -2,6 +2,7 @@ import type { Provider } from '@nestjs/common/interfaces/modules/provider.interf
 import type { Type } from '@nestjs/common/interfaces/type.interface'
 import type { BaseModuleOptions } from './base.module.types'
 import { CustomPrismaModule, PrismaService } from '@libs/base/database'
+import { DrizzleModule } from '../../../db/drizzle.module'
 import { LoggerModule } from '@libs/base/modules'
 import {
   BadRequestException,
@@ -64,6 +65,7 @@ export class BaseModule {
           useClass: PrismaService,
         }),
       )
+      imports.push(DrizzleModule)
     }
 
     // 缓存模块
