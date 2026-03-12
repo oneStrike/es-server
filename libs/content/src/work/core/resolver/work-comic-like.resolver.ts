@@ -1,26 +1,29 @@
 import type { PrismaTransactionClientType } from '@libs/base/database/prisma.types'
+import { InteractionTargetTypeEnum, SceneTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
-import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { ILikeTargetResolver } from '@libs/interaction/like/interfaces/like-target-resolver.interface'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 @Injectable()
-export class WorkNovelFavoriteResolver
+export class WorkComicLikeResolver
   extends BaseService
-  implements IFavoriteTargetResolver, OnModuleInit
+  implements ILikeTargetResolver, OnModuleInit
 {
-  readonly targetType = FavoriteTargetTypeEnum.WORK_NOVEL
+  readonly targetType = InteractionTargetTypeEnum.COMIC
 
-  constructor(private readonly favoriteService: FavoriteService) {
+  constructor(private readonly likeService: LikeService) {
     super()
   }
 
   onModuleInit() {
-    this.favoriteService.registerResolver(this)
+    this.likeService.registerResolver(this)
   }
 
-  async ensureExists(tx: PrismaTransactionClientType, targetId: number) {
+  async resolveMeta(
+    tx: PrismaTransactionClientType,
+    targetId: number,
+  ) {
     const work = await tx.work.findFirst({
       where: {
         id: targetId,
@@ -31,10 +34,13 @@ export class WorkNovelFavoriteResolver
     })
 
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new NotFoundException('目标不存在')
     }
 
-    return {}
+    return {
+      sceneType: SceneTypeEnum.COMIC_WORK,
+      sceneId: targetId,
+    }
   }
 
   async applyCountDelta(
@@ -42,8 +48,9 @@ export class WorkNovelFavoriteResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0)
-{ return }
+    if (delta === 0) {
+      return
+    }
 
     await tx.work.applyCountDelta(
       {
@@ -51,18 +58,20 @@ export class WorkNovelFavoriteResolver
         type: this.targetType,
         deletedAt: null,
       },
-      'favoriteCount',
+      'likeCount',
       delta,
     )
   }
 
   async batchGetDetails(targetIds: number[]) {
-    if (targetIds.length === 0)
-{ return new Map() }
+    if (targetIds.length === 0) {
+      return new Map()
+    }
 
     const works = await this.prisma.work.findMany({
       where: {
         id: { in: targetIds },
+        type: this.targetType,
         deletedAt: null,
       },
       select: {

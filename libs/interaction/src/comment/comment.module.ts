@@ -14,6 +14,7 @@ import { InteractionTargetAccessService } from '../interaction-target-access.ser
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentService } from './comment.service'
+import { CommentLikeResolver } from './resolver/comment-like.resolver'
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CommentService } from './comment.service'
     CommentGrowthService,
     CommentService,
     CommentPermissionService,
+    CommentLikeResolver,
   ],
   exports: [CommentService],
 })

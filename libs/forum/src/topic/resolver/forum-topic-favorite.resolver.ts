@@ -1,5 +1,5 @@
-import { BaseService } from '@libs/base/database'
 import type { PrismaTransactionClientType } from '@libs/base/database/prisma.types'
+import { BaseService } from '@libs/base/database'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
@@ -48,7 +48,8 @@ export class ForumTopicFavoriteResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) return
+    if (delta === 0)
+{ return }
 
     await tx.forumTopic.applyCountDelta(
       {
@@ -89,7 +90,8 @@ export class ForumTopicFavoriteResolver
   }
 
   async batchGetDetails(targetIds: number[]) {
-    if (targetIds.length === 0) return new Map()
+    if (targetIds.length === 0)
+{ return new Map() }
 
     const topics = await this.prisma.forumTopic.findMany({
       where: {

@@ -1,5 +1,5 @@
 import type { PrismaTransactionClientType } from '@libs/base/database/prisma.types'
-import { FavoriteTargetTypeEnum } from '../favorite.constant'
+import type { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 export interface IFavoriteTargetResolver {
   /**
@@ -14,10 +14,10 @@ export interface IFavoriteTargetResolver {
    * @returns 属主 UserId（如果需要发通知）
    * @throws BadRequestException 如果目标不存在
    */
-  ensureExists(
+  ensureExists: (
     tx: PrismaTransactionClientType,
     targetId: number,
-  ): Promise<{ ownerUserId?: number }>
+  ) => Promise<{ ownerUserId?: number }>
 
   /**
    * 更新目标的收藏统计数
@@ -25,26 +25,26 @@ export interface IFavoriteTargetResolver {
    * @param targetId 目标 ID
    * @param delta 增量 (+1 或 -1)
    */
-  applyCountDelta(
+  applyCountDelta: (
     tx: PrismaTransactionClientType,
     targetId: number,
     delta: number,
-  ): Promise<void>
+  ) => Promise<void>
 
   /**
    * 收藏成功的后续钩子（在事务内执行，主要用于发送入库消息）
    */
-  postFavoriteHook?(
+  postFavoriteHook?: (
     tx: PrismaTransactionClientType,
     targetId: number,
     actorUserId: number,
     options: { ownerUserId?: number },
-  ): Promise<void>
+  ) => Promise<void>
 
   /**
    * (可选) 批量获取目标的详情信息，用于在 getUserFavorites 列表中进行数据聚合展示
    * @param targetIds 目标 ID 列表
    * @returns 目标 ID 与对应实体详情的映射
    */
-  batchGetDetails?(targetIds: number[]): Promise<Map<number, any>>
+  batchGetDetails?: (targetIds: number[]) => Promise<Map<number, any>>
 }

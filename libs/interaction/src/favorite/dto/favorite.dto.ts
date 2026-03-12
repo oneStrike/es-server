@@ -7,7 +7,7 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 /**

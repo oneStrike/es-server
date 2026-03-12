@@ -1,9 +1,9 @@
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
-import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import type { PrismaTransactionClientType } from '@libs/base/database/prisma.types'
 import { BaseService } from '@libs/base/database'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 
 @Injectable()
 export class WorkComicFavoriteResolver
@@ -38,7 +38,8 @@ export class WorkComicFavoriteResolver
   }
 
   async applyCountDelta(tx: PrismaTransactionClientType, targetId: number, delta: number) {
-    if (delta === 0) return
+    if (delta === 0)
+{ return }
 
     await tx.work.applyCountDelta(
       {
@@ -52,7 +53,8 @@ export class WorkComicFavoriteResolver
   }
 
   async batchGetDetails(targetIds: number[]) {
-    if (targetIds.length === 0) return new Map()
+    if (targetIds.length === 0)
+{ return new Map() }
 
     const works = await this.prisma.work.findMany({
       where: {

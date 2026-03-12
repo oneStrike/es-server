@@ -1,7 +1,5 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import {
-  BusinessModuleEnum,
-  InteractionTargetTypeEnum,
   UserDefaults,
   UserStatusEnum,
 } from '@libs/base/constant'

@@ -1,31 +1,37 @@
-import {
-  CommentLevelEnum,
-  InteractionTargetTypeEnum,
-  SceneTypeEnum,
-} from '@libs/base/constant'
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
-import { mapInteractionTargetTypeToSceneType } from '../interaction-target.definition'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
 import { LikeGrowthService } from './like-growth.service'
-import { LikeInteractionService } from './like-interaction.service'
-
-interface LikeTargetMeta {
-  sceneType: SceneTypeEnum
-  sceneId: number
-  commentLevel?: CommentLevelEnum
-}
 
 @Injectable()
 export class LikeService extends BaseService {
-  constructor(
-    private readonly likeInteractionService: LikeInteractionService,
-    private readonly likeGrowthService: LikeGrowthService,
-  ) {
+  private readonly resolvers = new Map<
+    InteractionTargetTypeEnum,
+    ILikeTargetResolver
+  >()
+
+  constructor(private readonly likeGrowthService: LikeGrowthService) {
     super()
+  }
+
+  registerResolver(resolver: ILikeTargetResolver) {
+    if (this.resolvers.has(resolver.targetType)) {
+      console.warn(
+        `Like resolver for type ${resolver.targetType} is being overwritten.`,
+      )
+    }
+    this.resolvers.set(resolver.targetType, resolver)
+  }
+
+  private getResolver(
+    targetType: InteractionTargetTypeEnum,
+  ): ILikeTargetResolver {
+    const resolver = this.resolvers.get(targetType)
+    if (!resolver) {
+      throw new BadRequestException('不支持的点赞目标类型')
+    }
+    return resolver
   }
 
   private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
@@ -146,103 +152,6 @@ export class LikeService extends BaseService {
     throw new BadRequestException('不支持的点赞目标类型')
   }
 
-  private async ensureTargetExists(
-    tx: any,
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    const model = this.getTargetModel(tx, targetType)
-    const where = this.buildTargetWhere(targetType, targetId)
-    const target = await model.findFirst({
-      where,
-      select: { id: true },
-    })
-
-    if (!target) {
-      throw new NotFoundException('目标不存在')
-    }
-  }
-
-  private mapCommentTargetTypeToSceneType(
-    targetType: InteractionTargetTypeEnum,
-  ): SceneTypeEnum {
-    if (targetType === InteractionTargetTypeEnum.COMMENT) {
-      throw new BadRequestException(
-        '评论不能继续挂载评论作为场景目标',
-      )
-    }
-
-    const sceneType = mapInteractionTargetTypeToSceneType(targetType)
-    if (!sceneType) {
-      throw new BadRequestException('评论挂载的目标类型不合法')
-    }
-
-    return sceneType
-  }
-
-  private async resolveLikeTargetMeta(
-    tx: any,
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ): Promise<LikeTargetMeta> {
-    if (targetType === InteractionTargetTypeEnum.COMMENT) {
-      const comment = await tx.userComment.findFirst({
-        where: { id: targetId, deletedAt: null },
-        select: {
-          id: true,
-          targetType: true,
-          targetId: true,
-          replyToId: true,
-        },
-      })
-
-      if (!comment) {
-        throw new NotFoundException('评论不存在')
-      }
-
-      const sceneType = this.mapCommentTargetTypeToSceneType(
-        comment.targetType as InteractionTargetTypeEnum,
-      )
-      const commentLevel = comment.replyToId
-        ? CommentLevelEnum.REPLY
-        : CommentLevelEnum.ROOT
-
-      return {
-        sceneType,
-        sceneId: comment.targetId,
-        commentLevel,
-      }
-    }
-
-    const sceneType = mapInteractionTargetTypeToSceneType(targetType)
-    if (!sceneType) {
-      throw new BadRequestException('不支持的点赞目标类型')
-    }
-
-    await this.ensureTargetExists(tx, targetType, targetId)
-
-    return {
-      sceneType,
-      sceneId: targetId,
-    }
-  }
-
-  private async applyTargetCountDelta(
-    tx: any,
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-    field: string,
-    delta: number,
-  ) {
-    if (delta === 0) {
-      return
-    }
-
-    const model = this.getTargetModel(tx, targetType)
-    const where = this.buildTargetWhere(targetType, targetId)
-    await model.applyCountDelta(where, field, delta)
-  }
-
   async checkStatusBatch(
     targetType: InteractionTargetTypeEnum,
     targetIds: number[],
@@ -346,13 +255,11 @@ export class LikeService extends BaseService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    const targetMeta = await this.resolveLikeTargetMeta(
-      this.prisma,
-      targetType,
-      targetId,
-    )
+    const resolver = this.getResolver(targetType)
 
     await this.prisma.$transaction(async (tx) => {
+      const targetMeta = await resolver.resolveMeta(tx, targetId)
+
       try {
         await tx.userLike.create({
           data: {
@@ -370,13 +277,11 @@ export class LikeService extends BaseService {
         })
       }
 
-      await this.applyTargetCountDelta(tx, targetType, targetId, 'likeCount', 1)
+      await resolver.applyCountDelta(tx, targetId, 1)
 
-      await this.likeInteractionService.handleLikeCreated(tx, {
-        targetType,
-        targetId,
-        userId,
-      })
+      if (resolver.postLikeHook) {
+        await resolver.postLikeHook(tx, targetId, userId, targetMeta)
+      }
     })
 
     await this.likeGrowthService.rewardLikeCreated(targetType, targetId, userId)
@@ -387,6 +292,8 @@ export class LikeService extends BaseService {
     targetId: number,
     userId: number,
   ): Promise<void> {
+    const resolver = this.getResolver(targetType)
+
     await this.prisma.$transaction(async (tx) => {
       try {
         await tx.userLike.delete({
@@ -404,7 +311,7 @@ export class LikeService extends BaseService {
         })
       }
 
-      await this.applyTargetCountDelta(tx, targetType, targetId, 'likeCount', -1)
+      await resolver.applyCountDelta(tx, targetId, -1)
     })
   }
 
@@ -455,44 +362,29 @@ export class LikeService extends BaseService {
       return page
     }
 
-    if (
-      targetType !== InteractionTargetTypeEnum.COMIC &&
-      targetType !== InteractionTargetTypeEnum.NOVEL
-    ) {
+    const resolver = this.getResolver(targetType)
+    if (!resolver.batchGetDetails) {
       return page
     }
 
-    const workTargetIds = [
-      ...new Set(page.list.map((item) => item.targetId)),
-    ]
-
-    if (workTargetIds.length === 0) {
+    const targetIds = [...new Set(page.list.map((item) => item.targetId))]
+    if (targetIds.length === 0) {
       return page
     }
 
-    const works = await this.prisma.work.findMany({
-      where: {
-        id: { in: workTargetIds },
-        type: this.resolveWorkType(targetType),
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        name: true,
-        cover: true,
-      },
-    })
-
-    const workMap = new Map(works.map((work) => [work.id, work]))
+    const detailMap = await resolver.batchGetDetails(targetIds)
+    if (!detailMap || detailMap.size === 0) {
+      return page
+    }
 
     return {
       ...page,
       list: page.list.map((item) => {
-        const work = workMap.get(item.targetId)
-        if (work) {
+        const detail = detailMap.get(item.targetId)
+        if (detail) {
           return {
             ...item,
-            work,
+            work: detail,
           }
         }
         return item

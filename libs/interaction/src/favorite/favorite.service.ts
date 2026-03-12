@@ -1,8 +1,5 @@
-import { BaseService } from '@libs/base/database'
-import {
-  MessageNotificationTypeEnum,
-  MessageOutboxService,
-} from '@libs/message'
+import { BaseService, UserFavorite } from '@libs/base/database'
+import { MessageOutboxService } from '@libs/message'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { FavoritePageQueryDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
@@ -107,14 +104,14 @@ export class FavoriteService extends BaseService {
   ) {
     const resolver = this.getResolver(targetType)
 
-    await this.prisma.$transaction(async (tx) => {
+    const record = await this.prisma.$transaction(async (tx) => {
       const { ownerUserId: topicOwnerId } = await resolver.ensureExists(
         tx,
         targetId,
       )
-
+      let favoriteRecord: null | UserFavorite = null
       try {
-        await tx.userFavorite.create({
+        favoriteRecord = await tx.userFavorite.create({
           data: {
             targetType,
             targetId,
@@ -140,6 +137,7 @@ export class FavoriteService extends BaseService {
           ownerUserId: topicOwnerId,
         })
       }
+      return favoriteRecord
     })
 
     // 独立于主事务执行，防止崩溃或者过长影响核心数据落库
@@ -148,6 +146,7 @@ export class FavoriteService extends BaseService {
       targetId,
       userId,
     )
+    return { id: record.id }
   }
 
   /**
@@ -248,7 +247,7 @@ export class FavoriteService extends BaseService {
     // 并行调用各个 Resolver 获取详情
     const detailMaps = new Map<FavoriteTargetTypeEnum, Map<number, any>>()
     await Promise.all(
-      Array.from(typeToIdsAggregator.entries()).map(async ([type, ids]) => {
+      Array.from(typeToIdsAggregator.entries(), async ([type, ids]) => {
         try {
           const resolver = this.getResolver(type)
           if (resolver.batchGetDetails) {
