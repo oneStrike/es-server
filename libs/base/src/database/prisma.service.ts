@@ -5,6 +5,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import {
   applyCountDelta,
   exists,
+  existsActive,
   findPagination,
   maxOrder,
   softDelete,
@@ -25,6 +26,7 @@ export function makePrismaClient(connectionString: string) {
       $allModels: {
         applyCountDelta,
         exists,
+        existsActive,
         ...softDelete,
         findPagination,
         maxOrder,

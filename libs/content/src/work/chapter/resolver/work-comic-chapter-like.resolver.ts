@@ -50,7 +50,7 @@ export class WorkComicChapterLikeResolver
     })
 
     if (!chapter) {
-      throw new NotFoundException('目标不存在')
+      throw new NotFoundException('漫画章节不存在')
     }
 
     return {

@@ -50,7 +50,7 @@ export class WorkNovelFavoriteResolver
     })
 
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new BadRequestException('小说作品不存在')
     }
 
     return {}

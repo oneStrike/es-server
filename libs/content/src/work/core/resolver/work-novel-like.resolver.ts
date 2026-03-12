@@ -47,7 +47,7 @@ export class WorkNovelLikeResolver
     })
 
     if (!work) {
-      throw new NotFoundException('目标不存在')
+      throw new NotFoundException('小说作品不存在')
     }
 
     return {

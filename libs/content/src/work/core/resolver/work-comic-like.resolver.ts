@@ -51,7 +51,7 @@ export class WorkComicLikeResolver
     })
 
     if (!work) {
-      throw new NotFoundException('目标不存在')
+      throw new NotFoundException('漫画作品不存在')
     }
 
     return {

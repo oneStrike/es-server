@@ -50,7 +50,7 @@ export class WorkComicFavoriteResolver
     })
 
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new BadRequestException('漫画作品不存在')
     }
 
     return {}

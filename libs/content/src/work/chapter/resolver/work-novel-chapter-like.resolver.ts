@@ -53,7 +53,7 @@ export class WorkNovelChapterLikeResolver
     })
 
     if (!chapter) {
-      throw new NotFoundException('目标不存在')
+      throw new NotFoundException('小说章节不存在')
     }
 
     return {
