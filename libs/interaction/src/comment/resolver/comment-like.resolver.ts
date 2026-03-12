@@ -26,8 +26,7 @@ import {
 @Injectable()
 export class CommentLikeResolver
   extends BaseService
-  implements ILikeTargetResolver, OnModuleInit
-{
+  implements ILikeTargetResolver, OnModuleInit {
   /** 目标类型：评论 */
   readonly targetType = LikeTargetTypeEnum.COMMENT
 
@@ -166,5 +165,38 @@ export class CommentLikeResolver
       },
       tx,
     )
+  }
+
+  /**
+   * 批量获取评论详情
+   * 用于在点赞列表中展示评论的基本信息
+   * @param targetIds - 作品ID数组
+   * @returns 作品ID到作品详情的映射Map
+   */
+  async batchGetDetails(targetIds: number[]) {
+    if (targetIds.length === 0) {
+      return new Map()
+    }
+
+    const comments = await this.prisma.userComment.findMany({
+      where: {
+        id: { in: targetIds },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        floor: true,
+        content: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            nickname: true
+          }
+        }
+      },
+    })
+
+    return new Map(comments.map((comment) => [comment.id, comment]))
   }
 }

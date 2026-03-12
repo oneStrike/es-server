@@ -1,7 +1,8 @@
 import { GrowthRuleTypeEnum } from '@libs/user'
 
 /**
- * 可点赞的类型
+ * 点赞目标类型枚举
+ * 定义所有支持点赞的目标类型
  */
 export enum LikeTargetTypeEnum {
   /** 漫画作品 */
@@ -29,7 +30,7 @@ export const LIKE_GROWTH_RULE_TYPE_MAP: Partial<
   [LikeTargetTypeEnum.WORK_COMIC_CHAPTER]:
     GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE,
   [LikeTargetTypeEnum.WORK_NOVEL_CHAPTER]:
-    GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE,
+    GrowthRuleTypeEnum.NOVEL_CHAPTER_LIKE,
   [LikeTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_LIKED,
   [LikeTargetTypeEnum.COMMENT]: GrowthRuleTypeEnum.COMMENT_LIKED,
 }

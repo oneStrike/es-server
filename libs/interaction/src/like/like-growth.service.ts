@@ -9,11 +9,21 @@ import { refreshUserLevelByExperience } from '../user-level.helper'
 import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
 
 /**
- * 点赞成长奖励服务。
+ * 点赞成长奖励服务
  *
- * 说明：
- * - 作品、章节、主题点赞奖励点赞人
- * - 评论点赞奖励评论作者，保持与历史行为一致
+ * 功能说明：
+ * - 处理点赞操作相关的成长奖励发放
+ * - 作品、章节、主题点赞：奖励点赞人（积分+经验值）
+ * - 评论点赞：奖励评论作者（保持与历史行为一致）
+ * - 自动刷新用户等级
+ *
+ * 奖励规则映射：
+ * - 漫画作品点赞 → COMIC_WORK_LIKE
+ * - 小说作品点赞 → NOVEL_WORK_LIKE
+ * - 漫画章节点赞 → COMIC_CHAPTER_LIKE
+ * - 小说章节点赞 → NOVEL_CHAPTER_LIKE
+ * - 论坛主题点赞 → TOPIC_LIKED
+ * - 评论被点赞 → COMMENT_LIKED
  */
 @Injectable()
 export class LikeGrowthService extends BaseService {
@@ -21,6 +31,15 @@ export class LikeGrowthService extends BaseService {
     super()
   }
 
+  /**
+   * 点赞创建奖励
+   * 根据点赞目标类型发放对应的成长奖励（积分、经验值）
+   * - 作品、章节、主题点赞：奖励点赞人
+   * - 评论点赞：奖励评论作者
+   * @param targetType - 点赞目标类型
+   * @param targetId - 目标ID
+   * @param userId - 执行点赞的用户ID
+   */
   async rewardLikeCreated(
     targetType: LikeTargetTypeEnum,
     targetId: number,
@@ -80,7 +99,10 @@ export class LikeGrowthService extends BaseService {
   }
 
   /**
-   * 奖励被点赞的评论作者。
+   * 奖励被点赞的评论作者
+   * 查询评论作者并发放积分和经验值奖励
+   * @param commentId - 评论ID
+   * @param likerUserId - 点赞者用户ID
    */
   private async rewardCommentLiked(
     commentId: number,

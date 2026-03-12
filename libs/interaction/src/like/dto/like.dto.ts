@@ -31,19 +31,13 @@ export class LikeTargetDto {
   targetType!: LikeTargetTypeEnum
 }
 
-export class CreateLikeBodyDto extends LikeTargetDto {}
-
-export class CancelLikeBodyDto extends LikeTargetDto {}
-
-export class LikeStatusQueryDto extends LikeTargetDto {}
-
 /**
  * 点赞列表查询 DTO
  */
 export class LikePageQueryDto extends IntersectionType(
   PageDto,
   PickType(LikeTargetDto, ['targetType']),
-) {}
+) { }
 
 /**
  * 点赞状态响应 DTO
@@ -145,4 +139,4 @@ export class LikePageItemDto {
 /**
  * @deprecated 使用 LikePageItemDto 替代
  */
-export class LikeRecordResponseDto extends LikePageItemDto {}
+export class LikeRecordResponseDto extends LikePageItemDto { }

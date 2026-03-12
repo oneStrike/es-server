@@ -20,8 +20,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 @Injectable()
 export class ForumTopicLikeResolver
   extends BaseService
-  implements ILikeTargetResolver, OnModuleInit
-{
+  implements ILikeTargetResolver, OnModuleInit {
   /** 目标类型：论坛主题 */
   readonly targetType = LikeTargetTypeEnum.FORUM_TOPIC
 
@@ -50,11 +49,8 @@ export class ForumTopicLikeResolver
    */
   async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
     const topic = await tx.forumTopic.exists({
-      where: {
-        id: targetId,
-        deletedAt: null,
-      },
-      select: { id: true },
+      id: targetId,
+      deletedAt: null,
     })
 
     if (!topic) {

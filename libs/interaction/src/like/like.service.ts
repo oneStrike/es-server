@@ -1,5 +1,6 @@
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { LikePageQueryDto } from './dto/like.dto'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
@@ -178,7 +179,7 @@ export class LikeService extends BaseService {
     targetType: LikeTargetTypeEnum,
     targetId: number,
     userId: number,
-  ): Promise<void> {
+  ) {
     const resolver = this.getResolver(targetType)
 
     await this.prisma.$transaction(async (tx) => {
@@ -237,19 +238,12 @@ export class LikeService extends BaseService {
    * @param pageSize - 每页数量（默认15）
    * @returns 分页点赞记录列表，包含目标详情
    */
-  async getUserLikes(
-    userId: number,
-    targetType: LikeTargetTypeEnum,
-    pageIndex: number = 0,
-    pageSize: number = 15,
-  ) {
+  async getUserLikes(dto: LikePageQueryDto, userId: number) {
     const page = await this.prisma.userLike.findPagination({
       where: {
-        userId,
-        targetType,
-        pageIndex,
-        pageSize,
-      } as any,
+        ...dto,
+        userId
+      },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -266,7 +260,7 @@ export class LikeService extends BaseService {
       return page
     }
 
-    const resolver = this.getResolver(targetType)
+    const resolver = this.getResolver(dto.targetType)
     if (!resolver.batchGetDetails) {
       return page
     }
