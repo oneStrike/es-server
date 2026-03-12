@@ -1,7 +1,6 @@
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
-  ReportTargetTypeEnum,
   SceneTypeEnum,
 } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
@@ -11,6 +10,7 @@ import {
   mapInteractionTargetTypeToSceneType,
   mapReportTargetTypeToInteractionTargetType,
 } from './interaction-target.definition'
+import { ReportTargetTypeEnum } from './report/report.constant'
 
 export interface ResolvedLikeTargetMeta {
   sceneType: SceneTypeEnum

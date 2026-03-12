@@ -1,4 +1,4 @@
-import { ReportReasonEnum } from '@libs/base/constant'
+import { ReportReasonEnum } from '../report.constant'
 import { EnumProperty, StringProperty } from '@libs/base/decorators'
 import { IntersectionType } from '@nestjs/swagger'
 import { ReportTargetBodyDto } from '../../dto/target.dto'

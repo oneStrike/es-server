@@ -3,5 +3,8 @@
  */
 export * from './dto/report-app.dto'
 export * from './dto/report.dto'
+export * from './interfaces/report-target-resolver.interface'
+export * from './report.constant'
+export * from './report-growth.service'
 export * from './report.module'
 export * from './report.service'

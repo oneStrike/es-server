@@ -10,7 +10,7 @@
  * - 6: 每日签到 (DAILY_CHECK_IN)
  * - 7: 管理员操作 (ADMIN)
  * - 8: 主题浏览 (TOPIC_VIEW)
- * - 9: 举报 (REPORT_CREATE)
+ * - 9: 举报主题 (TOPIC_REPORT)
  */
 interface IForumExperienceRuleData {
   name: string

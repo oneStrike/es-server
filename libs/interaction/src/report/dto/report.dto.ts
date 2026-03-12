@@ -1,10 +1,5 @@
-import type {
-  CommentLevelEnum,
-  ReportReasonEnum,
-  ReportStatusEnum,
-  ReportTargetTypeEnum,
-  SceneTypeEnum,
-} from '@libs/base/constant'
+import type { CommentLevelEnum, SceneTypeEnum } from '@libs/base/constant'
+import type { ReportReasonEnum, ReportStatusEnum, ReportTargetTypeEnum } from '../report.constant'
 
 /**
  * 创建举报入参。

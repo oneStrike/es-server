@@ -3,46 +3,63 @@ import type {
   CreateUserReportDto,
   CreateUserReportOptions,
 } from './dto/report.dto'
-import { ReportStatusEnum, ReportTargetTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/user/growth-ledger'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
+import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
+import { BaseService, PrismaTransactionClientType } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { InteractionTargetResolverService } from '../interaction-target-resolver.service'
-import { refreshUserLevelByExperience } from '../user-level.helper'
+import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
+import { ReportGrowthService } from './report-growth.service'
 
 /**
- * 举报服务。
- *
- * 说明：
- * - 所有举报统一走一个入口
- * - 目标存在性校验、场景维度解析、重复举报拦截全部收敛在此处
+ * 举报服务
+ * 提供举报创建、查询等核心业务逻辑
+ * 通过解析器模式支持多种目标类型（作品、章节、评论、论坛主题、用户等）的举报操作
  */
 @Injectable()
 export class ReportService extends BaseService {
-  constructor(
-    private readonly growthLedgerService: GrowthLedgerService,
-    private readonly interactionTargetResolverService: InteractionTargetResolverService,
-  ) {
+  /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
+  private readonly resolvers = new Map<
+    ReportTargetTypeEnum,
+    IReportTargetResolver
+  >()
+
+  constructor(private readonly reportGrowthService: ReportGrowthService) {
     super()
   }
 
   /**
-   * 获取用户举报表的 Prisma 访问器。
+   * 注册目标解析器
+   * 供其他模块在应用启动时注册自己的举报解析器
+   * @param resolver - 举报目标解析器实例
    */
-  private get userReport() {
-    return this.prisma.userReport
+  registerResolver(resolver: IReportTargetResolver) {
+    if (this.resolvers.has(resolver.targetType)) {
+      console.warn(
+        `Report resolver for type ${resolver.targetType} is being overwritten.`,
+      )
+    }
+    this.resolvers.set(resolver.targetType, resolver)
   }
 
   /**
-   * 创建举报。
-   *
-   * 说明：
-   * - controller 只传入直接目标和原因类型
-   * - 场景维度与评论层级由解析器自动补齐
+   * 获取指定目标类型的解析器
+   * @param targetType - 举报目标类型
+   * @returns 对应的目标解析器
+   * @throws BadRequestException 当目标类型不支持时抛出异常
+   */
+  private getResolver(targetType: ReportTargetTypeEnum): IReportTargetResolver {
+    const resolver = this.resolvers.get(targetType)
+    if (!resolver) {
+      throw new BadRequestException('不支持的举报目标类型')
+    }
+    return resolver
+  }
+
+  /**
+   * 创建举报
+   * 执行完整的举报流程：解析目标元数据、校验举报人、拦截自举报、创建举报记录、执行后置钩子、发放成长奖励
+   * @param dto - 创建举报入参
+   * @param options - 可选项
+   * @returns 创建的举报记录
    */
   async createReport(
     dto: CreateReportInputDto,
@@ -57,36 +74,43 @@ export class ReportService extends BaseService {
       evidenceUrl,
     } = dto
 
+    const resolver = this.getResolver(targetType)
+
     await this.ensureReporterExists(reporterId)
 
-    const targetMeta =
-      await this.interactionTargetResolverService.resolveReportTargetMeta(
-        targetType,
-        targetId,
+    const report = await this.prisma.$transaction(async (tx: PrismaTransactionClientType) => {
+      const targetMeta = await resolver.resolveMeta(tx, targetId)
+
+      this.ensureCanReportOwnTarget(reporterId, targetMeta.ownerUserId)
+
+      const created = await this.createUserReport(
+        tx,
+        {
+          reporterId,
+          targetType,
+          targetId,
+          sceneType: targetMeta.sceneType,
+          sceneId: targetMeta.sceneId,
+          commentLevel: targetMeta.commentLevel,
+          reasonType,
+          description,
+          evidenceUrl,
+          status: ReportStatusEnum.PENDING,
+        },
+        {
+          duplicateMessage:
+            options.duplicateMessage ?? this.getDuplicateMessage(targetType),
+        },
       )
 
-    this.ensureCanReportOwnTarget(reporterId, targetMeta.ownerUserId)
+      if (resolver.postReportHook) {
+        await resolver.postReportHook(tx, targetId, reporterId, targetMeta)
+      }
 
-    const report = await this.createUserReport(
-      {
-        reporterId,
-        targetType,
-        targetId,
-        sceneType: targetMeta.sceneType,
-        sceneId: targetMeta.sceneId,
-        commentLevel: targetMeta.commentLevel,
-        reasonType,
-        description,
-        evidenceUrl,
-        status: ReportStatusEnum.PENDING,
-      },
-      {
-        duplicateMessage:
-          options.duplicateMessage ?? this.getDuplicateMessage(targetType),
-      },
-    )
+      return created
+    })
 
-    await this.tryRewardReportCreated({
+    await this.reportGrowthService.rewardReportCreated({
       reportId: report.id,
       reporterId,
       targetType,
@@ -97,20 +121,22 @@ export class ReportService extends BaseService {
   }
 
   /**
-   * 真正执行举报落库。
-   *
-   * 说明：
-   * - 该方法只负责写库，不再承担目标校验职责
-   * - 所有校验逻辑必须在 `createReport` 阶段完成
+   * 真正执行举报落库
+   * 该方法只负责写库，不再承担目标校验职责
+   * @param tx - Prisma 事务客户端
+   * @param dto - 创建举报记录的完整数据
+   * @param options - 可选项
+   * @returns 创建的举报记录
    */
   private async createUserReport(
+    tx: PrismaTransactionClientType,
     dto: CreateUserReportDto,
     options: CreateUserReportOptions = {},
   ) {
     const { status, ...otherDto } = dto
 
     try {
-      return await this.userReport.create({
+      return await tx.userReport.create({
         data: {
           ...otherDto,
           status: status ?? ReportStatusEnum.PENDING,
@@ -125,7 +151,9 @@ export class ReportService extends BaseService {
   }
 
   /**
-   * 校验举报人是否存在。
+   * 校验举报人是否存在
+   * @param reporterId - 举报人ID
+   * @throws BadRequestException 当举报人不存在时抛出异常
    */
   private async ensureReporterExists(reporterId: number) {
     const reporter = await this.prisma.appUser.findUnique({
@@ -139,11 +167,10 @@ export class ReportService extends BaseService {
   }
 
   /**
-   * 拦截举报自己内容的请求。
-   *
-   * 说明：
-   * - 只有能够明确解析出目标拥有者时才拦截
-   * - 作品与章节当前未冗余作者归属，因此暂不在此处做自举报判断
+   * 拦截举报自己内容的请求
+   * @param reporterId - 举报人ID
+   * @param ownerUserId - 目标所有者ID
+   * @throws BadRequestException 当举报自己的内容时抛出异常
    */
   private ensureCanReportOwnTarget(reporterId: number, ownerUserId?: number) {
     if (ownerUserId && ownerUserId === reporterId) {
@@ -152,7 +179,9 @@ export class ReportService extends BaseService {
   }
 
   /**
-   * 根据目标类型生成更明确的重复举报提示。
+   * 根据目标类型生成更明确的重复举报提示
+   * @param targetType - 目标类型
+   * @returns 重复举报提示信息
    */
   private getDuplicateMessage(targetType: ReportTargetTypeEnum) {
     switch (targetType) {
@@ -170,57 +199,6 @@ export class ReportService extends BaseService {
         return '您已经举报过该用户，请勿重复举报'
       default:
         return '您已经举报过该内容，请勿重复举报'
-    }
-  }
-
-  /**
-   * 尝试发放举报奖励。
-   *
-   * 说明：
-   * - 奖励失败不能影响举报主流程
-   * - 奖励规则依旧沿用现有 `REPORT_CREATE`
-   */
-  private async tryRewardReportCreated(params: {
-    reportId: number
-    reporterId: number
-    targetType: number
-    targetId: number
-  }) {
-    const { reportId, reporterId, targetType, targetId } = params
-    const baseBizKey = `create:${reportId}:user:${reporterId}`
-
-    try {
-      await this.prisma.$transaction(async (tx) => {
-        await this.growthLedgerService.applyByRule(tx, {
-          userId: reporterId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType: GrowthRuleTypeEnum.REPORT_CREATE,
-          bizKey: `${baseBizKey}:POINTS`,
-          remark: `创建举报 #${reportId}`,
-          targetType,
-          targetId,
-        })
-
-        const expResult = await this.growthLedgerService.applyByRule(tx, {
-          userId: reporterId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType: GrowthRuleTypeEnum.REPORT_CREATE,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          remark: `创建举报 #${reportId}`,
-          targetType,
-          targetId,
-        })
-
-        if (expResult.success && expResult.afterValue !== undefined) {
-          await refreshUserLevelByExperience(
-            tx,
-            reporterId,
-            expResult.afterValue,
-          )
-        }
-      })
-    } catch {
-      // 奖励失败不影响举报主流程。
     }
   }
 }

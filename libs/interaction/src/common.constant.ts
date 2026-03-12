@@ -2,13 +2,14 @@
  * 交互模块常量定义
  */
 
-// 从 base 统一复用审核、举报与交互行为枚举
 export {
   AuditRoleEnum,
   AuditRoleNames,
   AuditStatusEnum,
   AuditStatusNames,
   InteractionActionType,
+} from '@libs/base/constant'
+export {
   ReportStatusEnum,
   ReportStatusNames,
-} from '@libs/base/constant'
+} from './report/report.constant'

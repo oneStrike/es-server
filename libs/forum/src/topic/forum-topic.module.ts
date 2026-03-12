@@ -1,4 +1,4 @@
-import { FavoriteModule } from '@libs/interaction'
+import { FavoriteModule, ReportModule } from '@libs/interaction'
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { UserGrowthRewardModule } from '@libs/user/growth-reward'
@@ -9,6 +9,7 @@ import { ForumConfigModule } from './../config/forum-config.module'
 import { ForumTopicService } from './forum-topic.service'
 import { ForumTopicFavoriteResolver } from './resolver/forum-topic-favorite.resolver'
 import { ForumTopicLikeResolver } from './resolver/forum-topic-like.resolver'
+import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver'
 
 /**
  * 论坛主题模块
@@ -20,6 +21,7 @@ import { ForumTopicLikeResolver } from './resolver/forum-topic-like.resolver'
     SensitiveWordModule,
     MessageModule,
     FavoriteModule,
+    ReportModule,
     ForumConfigModule,
     ForumCounterModule,
     ForumUserActionLogModule,
@@ -29,11 +31,13 @@ import { ForumTopicLikeResolver } from './resolver/forum-topic-like.resolver'
     ForumTopicService,
     ForumTopicFavoriteResolver,
     ForumTopicLikeResolver,
+    ForumTopicReportResolver,
   ],
   exports: [
     ForumTopicService,
     ForumTopicFavoriteResolver,
     ForumTopicLikeResolver,
+    ForumTopicReportResolver,
   ],
 })
 export class ForumTopicModule {}

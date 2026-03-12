@@ -1,23 +1,28 @@
 import { UploadModule } from '@libs/base/modules'
-import { InteractionModule } from '@libs/interaction'
+import { InteractionModule, ReportModule } from '@libs/interaction'
 import { UserPermissionModule } from '@libs/user/permission'
 import { UserPointModule } from '@libs/user/point'
 import { Module } from '@nestjs/common'
 import { ContentPermissionModule } from '../permission'
 import { WorkComicChapterLikeResolver } from './chapter/resolver/work-comic-chapter-like.resolver'
+import { WorkComicChapterReportResolver } from './chapter/resolver/work-comic-chapter-report.resolver'
 import { WorkNovelChapterLikeResolver } from './chapter/resolver/work-novel-chapter-like.resolver'
+import { WorkNovelChapterReportResolver } from './chapter/resolver/work-novel-chapter-report.resolver'
 import { WorkChapterService } from './chapter/work-chapter.service'
 import { ComicContentService } from './content/comic-content.service'
 import { NovelContentService } from './content/novel-content.service'
 import { WorkComicFavoriteResolver } from './core/resolver/work-comic-favorite.resolver'
 import { WorkComicLikeResolver } from './core/resolver/work-comic-like.resolver'
+import { WorkComicReportResolver } from './core/resolver/work-comic-report.resolver'
 import { WorkNovelFavoriteResolver } from './core/resolver/work-novel-favorite.resolver'
 import { WorkNovelLikeResolver } from './core/resolver/work-novel-like.resolver'
+import { WorkNovelReportResolver } from './core/resolver/work-novel-report.resolver'
 import { WorkService } from './core/work.service'
 
 @Module({
   imports: [
     InteractionModule,
+    ReportModule,
     UserPermissionModule,
     ContentPermissionModule,
     UserPointModule,
@@ -32,8 +37,12 @@ import { WorkService } from './core/work.service'
     WorkNovelFavoriteResolver,
     WorkComicLikeResolver,
     WorkNovelLikeResolver,
+    WorkComicReportResolver,
+    WorkNovelReportResolver,
     WorkComicChapterLikeResolver,
     WorkNovelChapterLikeResolver,
+    WorkComicChapterReportResolver,
+    WorkNovelChapterReportResolver,
   ],
   exports: [
     WorkService,

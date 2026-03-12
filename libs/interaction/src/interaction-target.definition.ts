@@ -1,8 +1,5 @@
-import {
-  InteractionTargetTypeEnum,
-  ReportTargetTypeEnum,
-  SceneTypeEnum,
-} from '@libs/base/constant'
+import { InteractionTargetTypeEnum, SceneTypeEnum } from '@libs/base/constant'
+import { ReportTargetTypeEnum } from './report/report.constant'
 import { FavoriteTargetTypeEnum } from './favorite/favorite.constant'
 
 /**

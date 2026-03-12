@@ -7,11 +7,13 @@ import type {
   AuditStatusEnum,
   CommentLevelEnum,
   InteractionTargetTypeEnum,
+  SceneTypeEnum,
+} from '@libs/base/constant'
+import type {
   ReportReasonEnum,
   ReportStatusEnum,
   ReportTargetTypeEnum,
-  SceneTypeEnum,
-} from '@libs/base/constant'
+} from './report/report.constant'
 
 /**
  * 交互记录基础接口。

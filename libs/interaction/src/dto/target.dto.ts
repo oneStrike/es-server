@@ -1,8 +1,6 @@
-import {
-  InteractionTargetTypeEnum,
-  ReportTargetTypeEnum,
-} from '@libs/base/constant'
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { EnumProperty, NumberProperty } from '@libs/base/decorators'
+import { ReportTargetTypeEnum } from '../report/report.constant'
 
 /**
  * 仅包含目标 ID 的基础请求体。

@@ -1,0 +1,59 @@
+import type { PrismaTransactionClientType } from '@libs/base/database'
+import { SceneTypeEnum } from '@libs/base/constant'
+import { BaseService } from '@libs/base/database'
+import {
+  IReportTargetResolver,
+  ReportService,
+  ReportTargetTypeEnum,
+} from '@libs/interaction/report'
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+
+/**
+ * 用户举报解析器
+ * 负责处理用户的举报业务逻辑，包括验证用户存在性、解析场景元数据等
+ */
+@Injectable()
+export class UserReportResolver
+  extends BaseService
+  implements IReportTargetResolver, OnModuleInit
+{
+  /** 目标类型：用户 */
+  readonly targetType = ReportTargetTypeEnum.USER
+
+  constructor(private readonly reportService: ReportService) {
+    super()
+  }
+
+  /**
+   * 模块初始化时注册解析器到举报服务
+   * 使举报服务能够识别并处理用户类型的举报请求
+   */
+  onModuleInit() {
+    this.reportService.registerResolver(this)
+  }
+
+  /**
+   * 解析目标用户的场景元数据
+   * 验证用户存在性并返回场景类型和场景ID
+   * @param tx - Prisma 事务客户端
+   * @param targetId - 用户ID
+   * @returns 包含场景类型、场景ID和用户ID的元数据对象
+   * @throws NotFoundException 当用户不存在时抛出异常
+   */
+  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
+    const user = await tx.appUser.findUnique({
+      where: { id: targetId },
+      select: { id: true },
+    })
+
+    if (!user) {
+      throw new NotFoundException('用户不存在')
+    }
+
+    return {
+      sceneType: SceneTypeEnum.USER_PROFILE,
+      sceneId: targetId,
+      ownerUserId: targetId,
+    }
+  }
+}
