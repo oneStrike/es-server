@@ -1,7 +1,8 @@
-import type { DictionaryItemWhereInput } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService } from '@db/drizzle.service'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, inArray, like, ne } from 'drizzle-orm'
 import {
   CreateDictionaryDto,
   CreateDictionaryItemDto,
@@ -12,92 +13,110 @@ import {
 } from './dto/dictionary.dto'
 
 @Injectable()
-export class LibDictionaryService extends BaseService {
-  get dictionary() {
-    return this.prisma.dictionary
+export class LibDictionaryService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
-  get dictionaryItem() {
-    return this.prisma.dictionaryItem
+  private get dictionary() {
+    return this.drizzle.schema.dictionary
+  }
+
+  private get dictionaryItem() {
+    return this.drizzle.schema.dictionaryItem
   }
 
   async createDictionary(dto: CreateDictionaryDto) {
     await this.checkDictionaryUnique(dto.code, dto.name)
-    return this.dictionary.create({
-      data: {
+    const [result] = await this.db
+      .insert(this.dictionary)
+      .values({
         ...dto,
         isEnabled: dto.isEnabled ?? true,
-      },
-      select: { id: true },
-    })
+      })
+      .returning({ id: this.dictionary.id })
+    return result
   }
 
   async updateDictionary(dto: UpdateDictionaryDto) {
     await this.checkDictionaryUnique(dto.code, dto.name, dto.id)
-    try {
-      return await this.dictionary.update({
-        where: { id: dto.id },
-        data: dto,
-        select: { id: true },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('字典不存在')
-        },
-      })
+    const [result] = await this.db
+      .update(this.dictionary)
+      .set(dto)
+      .where(eq(this.dictionary.id, dto.id))
+      .returning({ id: this.dictionary.id })
+    if (!result) {
+      throw new BadRequestException('字典不存在')
     }
+    return result
   }
 
   async updateDictionaryStatus(dto: UpdateEnabledStatusDto) {
-    try {
-      return await this.dictionary.update({
-        where: { id: dto.id },
-        data: { isEnabled: dto.isEnabled },
-        select: { id: true },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('字典不存在')
-        },
-      })
+    const [result] = await this.db
+      .update(this.dictionary)
+      .set({ isEnabled: dto.isEnabled })
+      .where(eq(this.dictionary.id, dto.id))
+      .returning({ id: this.dictionary.id })
+    if (!result) {
+      throw new BadRequestException('字典不存在')
     }
+    return result
   }
 
   async deleteDictionary(id: number) {
-    try {
-      return await this.dictionary.delete({ where: { id }, select: { id: true } })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('字典不存在')
-        },
-      })
+    const [result] = await this.db
+      .delete(this.dictionary)
+      .where(eq(this.dictionary.id, id))
+      .returning({ id: this.dictionary.id })
+    if (!result) {
+      throw new BadRequestException('字典不存在')
     }
+    return result
   }
 
   async findDictionaries(queryDto: QueryDictionaryDto) {
-    const { code, name, ...otherDto } = queryDto
-
-    return this.dictionary.findPagination({
-      where: {
-        code: { contains: code },
-        name: { contains: name },
-        ...otherDto,
-      },
+    const {
+      code,
+      name,
+      pageIndex,
+      pageSize,
+      startDate,
+      endDate,
+      orderBy,
+      ...otherDto
+    } = queryDto
+    const whereConditions = this.buildDictionaryWhere(code, name, otherDto)
+    return this.drizzle.ext.findPagination(this.dictionary, {
+      where: whereConditions,
+      pageIndex,
+      pageSize,
+      startDate,
+      endDate,
+      orderBy,
     })
+  }
+
+  async findDictionaryById(id: number) {
+    const [result] = await this.db
+      .select()
+      .from(this.dictionary)
+      .where(eq(this.dictionary.id, id))
+      .limit(1)
+    return result ?? null
   }
 
   async createDictionaryItem(dto: CreateDictionaryItemDto) {
     await this.checkDictionaryItemUnique(dto.dictionaryCode, dto.code, dto.name)
-    return this.dictionaryItem.create({
-      data: {
+    const [result] = await this.db
+      .insert(this.dictionaryItem)
+      .values({
         ...dto,
         isEnabled: dto.isEnabled ?? true,
-      },
-      select: { id: true },
-    })
+      })
+      .returning({ id: this.dictionaryItem.id })
+    return result
   }
 
   async updateDictionaryItem(dto: UpdateDictionaryItemDto) {
@@ -108,80 +127,123 @@ export class LibDictionaryService extends BaseService {
       dto.id,
     )
     const { id, ...data } = dto
-
-    try {
-      return await this.dictionaryItem.update({
-        where: { id },
-        data,
-        select: { id: true },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('字典项不存在')
-        },
-      })
+    const [result] = await this.db
+      .update(this.dictionaryItem)
+      .set(data)
+      .where(eq(this.dictionaryItem.id, id))
+      .returning({ id: this.dictionaryItem.id })
+    if (!result) {
+      throw new BadRequestException('字典项不存在')
     }
+    return result
   }
 
   async updateDictionaryItemStatus(dto: UpdateEnabledStatusDto) {
-    try {
-      return await this.dictionaryItem.update({
-        where: { id: dto.id },
-        data: { isEnabled: dto.isEnabled },
-        select: { id: true },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('字典项不存在')
-        },
-      })
+    const [result] = await this.db
+      .update(this.dictionaryItem)
+      .set({ isEnabled: dto.isEnabled })
+      .where(eq(this.dictionaryItem.id, dto.id))
+      .returning({ id: this.dictionaryItem.id })
+    if (!result) {
+      throw new BadRequestException('字典项不存在')
     }
+    return result
   }
 
   async deleteDictionaryItem(id: number) {
-    try {
-      return await this.dictionaryItem.delete({
-        where: { id },
-        select: { id: true },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('字典项不存在')
-        },
-      })
+    const [result] = await this.db
+      .delete(this.dictionaryItem)
+      .where(eq(this.dictionaryItem.id, id))
+      .returning({ id: this.dictionaryItem.id })
+    if (!result) {
+      throw new BadRequestException('字典项不存在')
     }
+    return result
   }
 
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
-    const { code, name, dictionaryCode, ...otherDto } = queryDto
-
-    const where: DictionaryItemWhereInput = {
-      ...otherDto,
-      code: { contains: code },
-      name: { contains: name },
-    }
-
-    if (dictionaryCode) {
-      where.dictionaryCode = { in: dictionaryCode.split(',') }
-    }
-
-    return this.dictionaryItem.findPagination({ where })
+    const {
+      code,
+      name,
+      dictionaryCode,
+      pageIndex,
+      pageSize,
+      orderBy,
+      ...otherDto
+    } = queryDto
+    const whereConditions = this.buildDictionaryItemWhere(
+      code,
+      name,
+      dictionaryCode,
+      otherDto,
+    )
+    return this.drizzle.ext.findPagination(this.dictionaryItem, {
+      where: whereConditions,
+      pageIndex,
+      pageSize,
+      orderBy,
+    })
   }
 
   async findAllDictionaryItems(dictionaryCode: string) {
-    return this.dictionaryItem.findMany({
-      where: { dictionaryCode: { in: dictionaryCode.split(',') } },
-    })
+    const codes = dictionaryCode.split(',')
+    return this.db
+      .select()
+      .from(this.dictionaryItem)
+      .where(inArray(this.dictionaryItem.dictionaryCode, codes))
   }
 
   async updateDictionaryItemSort(dto: DragReorderDto) {
-    return this.dictionaryItem.swapField({
+    return this.drizzle.ext.swapField(this.dictionaryItem, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
       sourceField: 'dictionaryCode',
     })
+  }
+
+  private buildDictionaryWhere(
+    code?: string,
+    name?: string,
+    otherDto?: Record<string, any>,
+  ): SQL | undefined {
+    const conditions: SQL[] = []
+
+    if (code) {
+      conditions.push(like(this.dictionary.code, `%${code}%`))
+    }
+    if (name) {
+      conditions.push(like(this.dictionary.name, `%${name}%`))
+    }
+    if (otherDto?.isEnabled !== undefined) {
+      conditions.push(eq(this.dictionary.isEnabled, otherDto.isEnabled))
+    }
+
+    return conditions.length > 0 ? and(...conditions) : undefined
+  }
+
+  private buildDictionaryItemWhere(
+    code?: string,
+    name?: string,
+    dictionaryCodes?: string,
+    otherDto?: Record<string, any>,
+  ): SQL | undefined {
+    const conditions: SQL[] = []
+
+    if (code) {
+      conditions.push(like(this.dictionaryItem.code, `%${code}%`))
+    }
+    if (name) {
+      conditions.push(like(this.dictionaryItem.name, `%${name}%`))
+    }
+    if (dictionaryCodes) {
+      conditions.push(
+        inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes.split(',')),
+      )
+    }
+    if (otherDto?.isEnabled !== undefined) {
+      conditions.push(eq(this.dictionaryItem.isEnabled, otherDto.isEnabled))
+    }
+
+    return conditions.length > 0 ? and(...conditions) : undefined
   }
 
   private async checkDictionaryUnique(
@@ -189,19 +251,25 @@ export class LibDictionaryService extends BaseService {
     name: string,
     excludeId?: number,
   ) {
-    const where: any = {
-      OR: [{ code }, { name }],
-    }
+    const baseConditions: SQL[] = []
     if (excludeId) {
-      where.id = { not: excludeId }
+      baseConditions.push(ne(this.dictionary.id, excludeId))
     }
 
-    const existing = await this.dictionary.findFirst({ where })
+    const codeExists = await this.drizzle.ext.exists(
+      this.dictionary,
+      and(eq(this.dictionary.code, code), ...baseConditions),
+    )
+    if (codeExists) {
+      throw new BadRequestException('字典编码已存在')
+    }
 
-    if (existing) {
-      throw new BadRequestException(
-        existing.code === code ? '字典编码已存在' : '字典名称已存在',
-      )
+    const nameExists = await this.drizzle.ext.exists(
+      this.dictionary,
+      and(eq(this.dictionary.name, name), ...baseConditions),
+    )
+    if (nameExists) {
+      throw new BadRequestException('字典名称已存在')
     }
   }
 
@@ -211,20 +279,28 @@ export class LibDictionaryService extends BaseService {
     name: string,
     excludeId?: number,
   ) {
-    const where: any = {
-      dictionaryCode,
-      OR: [{ code }, { name }],
-    }
+    const baseConditions: SQL[] = [
+      eq(this.dictionaryItem.dictionaryCode, dictionaryCode),
+    ]
+
     if (excludeId) {
-      where.NOT = { id: excludeId }
+      baseConditions.push(ne(this.dictionaryItem.id, excludeId))
     }
 
-    const existing = await this.dictionaryItem.findFirst({ where })
+    const codeExists = await this.drizzle.ext.exists(
+      this.dictionaryItem,
+      and(...baseConditions, eq(this.dictionaryItem.code, code)),
+    )
+    if (codeExists) {
+      throw new BadRequestException('该字典下编码已存在')
+    }
 
-    if (existing) {
-      throw new BadRequestException(
-        existing.code === code ? '该字典下编码已存在' : '该字典下名称已存在',
-      )
+    const nameExists = await this.drizzle.ext.exists(
+      this.dictionaryItem,
+      and(...baseConditions, eq(this.dictionaryItem.name, name)),
+    )
+    if (nameExists) {
+      throw new BadRequestException('该字典下名称已存在')
     }
   }
 }

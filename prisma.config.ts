@@ -1,15 +1,7 @@
 import path from 'node:path'
-import { configDotenv } from 'dotenv'
 import { defineConfig, env } from 'prisma/config'
 
 let seedCommand = ''
-
-configDotenv({
-  path: [
-    path.resolve(__dirname, `.env.development`),
-    path.resolve(__dirname, `.env`),
-  ],
-})
 
 seedCommand = 'pnpm tsx prisma/seed/index.ts'
 

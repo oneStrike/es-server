@@ -13,6 +13,7 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { ClsModule } from 'nestjs-cls'
 import { v4 as uuidv4 } from 'uuid'
+import { DrizzleModule } from '../../../db/drizzle.module'
 import { TransformInterceptor } from './interceptors'
 import { CustomCacheModule } from './modules/cache'
 import { HealthModule } from './modules/health'
@@ -64,6 +65,7 @@ export class BaseModule {
           useClass: PrismaService,
         }),
       )
+      imports.push(DrizzleModule)
     }
 
     // 缓存模块
