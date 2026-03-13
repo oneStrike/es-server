@@ -1,10 +1,25 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { DrizzleDbProvider, DrizzleService } from './drizzle.provider'
+import {
+  DrizzleDbLegacyProvider,
+  DrizzleDbProvider,
+  DrizzlePoolProvider,
+} from './drizzle.provider'
+import { DrizzleService } from './drizzle.service'
 
 @Module({
   imports: [ConfigModule],
-  providers: [DrizzleService, DrizzleDbProvider],
-  exports: [DrizzleService, DrizzleDbProvider],
+  providers: [
+    DrizzleService,
+    DrizzlePoolProvider,
+    DrizzleDbProvider,
+    DrizzleDbLegacyProvider,
+  ],
+  exports: [
+    DrizzleService,
+    DrizzlePoolProvider,
+    DrizzleDbProvider,
+    DrizzleDbLegacyProvider,
+  ],
 })
 export class DrizzleModule {}

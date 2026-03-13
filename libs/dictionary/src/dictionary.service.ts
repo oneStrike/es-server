@@ -1,11 +1,8 @@
 import type { SQL } from 'drizzle-orm'
-import type { PgTable } from 'drizzle-orm/pg-core'
-import { DrizzleBaseService, DrizzleService } from '@db/drizzle.provider'
-import { dictionary, dictionaryItem } from '@db/schema/system/system-dictionary'
-import { DbConfig } from '@libs/base/config'
+import { DrizzleService } from '@db/drizzle.service'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
-import { BadRequestException, Inject, Injectable } from '@nestjs/common'
-import { and, eq, inArray, like, ne, or, sql } from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, inArray, like, ne } from 'drizzle-orm'
 import {
   CreateDictionaryDto,
   CreateDictionaryItemDto,
@@ -16,30 +13,40 @@ import {
 } from './dto/dictionary.dto'
 
 @Injectable()
-export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
-  constructor(@Inject(DrizzleService) drizzleService: DrizzleService) {
-    super(drizzleService, 'dictionary')
+export class LibDictionaryService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get dictionary() {
+    return this.drizzle.schema.dictionary
+  }
+
+  private get dictionaryItem() {
+    return this.drizzle.schema.dictionaryItem
   }
 
   async createDictionary(dto: CreateDictionaryDto) {
     await this.checkDictionaryUnique(dto.code, dto.name)
     const [result] = await this.db
-      .insert(dictionary)
+      .insert(this.dictionary)
       .values({
         ...dto,
         isEnabled: dto.isEnabled ?? true,
       })
-      .returning({ id: dictionary.id })
+      .returning({ id: this.dictionary.id })
     return result
   }
 
   async updateDictionary(dto: UpdateDictionaryDto) {
     await this.checkDictionaryUnique(dto.code, dto.name, dto.id)
     const [result] = await this.db
-      .update(dictionary)
+      .update(this.dictionary)
       .set(dto)
-      .where(eq(dictionary.id, dto.id))
-      .returning({ id: dictionary.id })
+      .where(eq(this.dictionary.id, dto.id))
+      .returning({ id: this.dictionary.id })
     if (!result) {
       throw new BadRequestException('字典不存在')
     }
@@ -48,10 +55,10 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
 
   async updateDictionaryStatus(dto: UpdateEnabledStatusDto) {
     const [result] = await this.db
-      .update(dictionary)
+      .update(this.dictionary)
       .set({ isEnabled: dto.isEnabled })
-      .where(eq(dictionary.id, dto.id))
-      .returning({ id: dictionary.id })
+      .where(eq(this.dictionary.id, dto.id))
+      .returning({ id: this.dictionary.id })
     if (!result) {
       throw new BadRequestException('字典不存在')
     }
@@ -60,9 +67,9 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
 
   async deleteDictionary(id: number) {
     const [result] = await this.db
-      .delete(dictionary)
-      .where(eq(dictionary.id, id))
-      .returning({ id: dictionary.id })
+      .delete(this.dictionary)
+      .where(eq(this.dictionary.id, id))
+      .returning({ id: this.dictionary.id })
     if (!result) {
       throw new BadRequestException('字典不存在')
     }
@@ -70,16 +77,32 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
   }
 
   async findDictionaries(queryDto: QueryDictionaryDto) {
-    const { code, name, ...otherDto } = queryDto
+    const {
+      code,
+      name,
+      pageIndex,
+      pageSize,
+      startDate,
+      endDate,
+      orderBy,
+      ...otherDto
+    } = queryDto
     const whereConditions = this.buildDictionaryWhere(code, name, otherDto)
-    return this.findPagination(dictionary, whereConditions, otherDto)
+    return this.drizzle.ext.findPagination(this.dictionary, {
+      where: whereConditions,
+      pageIndex,
+      pageSize,
+      startDate,
+      endDate,
+      orderBy,
+    })
   }
 
   async findDictionaryById(id: number) {
     const [result] = await this.db
       .select()
-      .from(dictionary)
-      .where(eq(dictionary.id, id))
+      .from(this.dictionary)
+      .where(eq(this.dictionary.id, id))
       .limit(1)
     return result ?? null
   }
@@ -87,12 +110,12 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
   async createDictionaryItem(dto: CreateDictionaryItemDto) {
     await this.checkDictionaryItemUnique(dto.dictionaryCode, dto.code, dto.name)
     const [result] = await this.db
-      .insert(dictionaryItem)
+      .insert(this.dictionaryItem)
       .values({
         ...dto,
         isEnabled: dto.isEnabled ?? true,
       })
-      .returning({ id: dictionaryItem.id })
+      .returning({ id: this.dictionaryItem.id })
     return result
   }
 
@@ -105,10 +128,10 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
     )
     const { id, ...data } = dto
     const [result] = await this.db
-      .update(dictionaryItem)
+      .update(this.dictionaryItem)
       .set(data)
-      .where(eq(dictionaryItem.id, id))
-      .returning({ id: dictionaryItem.id })
+      .where(eq(this.dictionaryItem.id, id))
+      .returning({ id: this.dictionaryItem.id })
     if (!result) {
       throw new BadRequestException('字典项不存在')
     }
@@ -117,10 +140,10 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
 
   async updateDictionaryItemStatus(dto: UpdateEnabledStatusDto) {
     const [result] = await this.db
-      .update(dictionaryItem)
+      .update(this.dictionaryItem)
       .set({ isEnabled: dto.isEnabled })
-      .where(eq(dictionaryItem.id, dto.id))
-      .returning({ id: dictionaryItem.id })
+      .where(eq(this.dictionaryItem.id, dto.id))
+      .returning({ id: this.dictionaryItem.id })
     if (!result) {
       throw new BadRequestException('字典项不存在')
     }
@@ -129,9 +152,9 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
 
   async deleteDictionaryItem(id: number) {
     const [result] = await this.db
-      .delete(dictionaryItem)
-      .where(eq(dictionaryItem.id, id))
-      .returning({ id: dictionaryItem.id })
+      .delete(this.dictionaryItem)
+      .where(eq(this.dictionaryItem.id, id))
+      .returning({ id: this.dictionaryItem.id })
     if (!result) {
       throw new BadRequestException('字典项不存在')
     }
@@ -139,26 +162,39 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
   }
 
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
-    const { code, name, dictionaryCode, ...otherDto } = queryDto
+    const {
+      code,
+      name,
+      dictionaryCode,
+      pageIndex,
+      pageSize,
+      orderBy,
+      ...otherDto
+    } = queryDto
     const whereConditions = this.buildDictionaryItemWhere(
       code,
       name,
       dictionaryCode,
       otherDto,
     )
-    return this.findPagination(dictionaryItem, whereConditions, otherDto)
+    return this.drizzle.ext.findPagination(this.dictionaryItem, {
+      where: whereConditions,
+      pageIndex,
+      pageSize,
+      orderBy,
+    })
   }
 
   async findAllDictionaryItems(dictionaryCode: string) {
     const codes = dictionaryCode.split(',')
     return this.db
       .select()
-      .from(dictionaryItem)
-      .where(inArray(dictionaryItem.dictionaryCode, codes))
+      .from(this.dictionaryItem)
+      .where(inArray(this.dictionaryItem.dictionaryCode, codes))
   }
 
   async updateDictionaryItemSort(dto: DragReorderDto) {
-    return this.swapField({
+    return this.drizzle.ext.swapField(this.dictionaryItem, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
       sourceField: 'dictionaryCode',
     })
@@ -172,13 +208,13 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
     const conditions: SQL[] = []
 
     if (code) {
-      conditions.push(like(dictionary.code, `%${code}%`))
+      conditions.push(like(this.dictionary.code, `%${code}%`))
     }
     if (name) {
-      conditions.push(like(dictionary.name, `%${name}%`))
+      conditions.push(like(this.dictionary.name, `%${name}%`))
     }
     if (otherDto?.isEnabled !== undefined) {
-      conditions.push(eq(dictionary.isEnabled, otherDto.isEnabled))
+      conditions.push(eq(this.dictionary.isEnabled, otherDto.isEnabled))
     }
 
     return conditions.length > 0 ? and(...conditions) : undefined
@@ -193,66 +229,21 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
     const conditions: SQL[] = []
 
     if (code) {
-      conditions.push(like(dictionaryItem.code, `%${code}%`))
+      conditions.push(like(this.dictionaryItem.code, `%${code}%`))
     }
     if (name) {
-      conditions.push(like(dictionaryItem.name, `%${name}%`))
+      conditions.push(like(this.dictionaryItem.name, `%${name}%`))
     }
     if (dictionaryCodes) {
       conditions.push(
-        inArray(dictionaryItem.dictionaryCode, dictionaryCodes.split(',')),
+        inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes.split(',')),
       )
     }
     if (otherDto?.isEnabled !== undefined) {
-      conditions.push(eq(dictionaryItem.isEnabled, otherDto.isEnabled))
+      conditions.push(eq(this.dictionaryItem.isEnabled, otherDto.isEnabled))
     }
 
     return conditions.length > 0 ? and(...conditions) : undefined
-  }
-
-  private async findPagination(
-    table: PgTable,
-    where: SQL | undefined,
-    dto: Record<string, any>,
-  ) {
-    const pageIndex =
-      Number(dto.pageIndex) >= 1
-        ? Math.floor(Number(dto.pageIndex))
-        : DbConfig.query.pageIndex
-    const pageSize = Number.isFinite(Number(dto.pageSize))
-      ? Math.min(
-          Math.max(1, Math.floor(Number(dto.pageSize))),
-          DbConfig.query.maxListItemLimit,
-        )
-      : DbConfig.query.pageSize
-
-    const offset =
-      pageIndex >= 1 ? (pageIndex - 1) * pageSize : pageIndex * pageSize
-
-    const tableAsAny = table as any
-
-    const [list, countResult] = await Promise.all([
-      this.db
-        .select()
-        .from(table)
-        .where(where)
-        .limit(pageSize)
-        .offset(offset)
-        .orderBy(sql`${tableAsAny.id} DESC`),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(table)
-        .where(where),
-    ])
-
-    const total = Number(countResult[0]?.count ?? 0)
-
-    return {
-      list,
-      total,
-      pageIndex,
-      pageSize,
-    }
   }
 
   private async checkDictionaryUnique(
@@ -260,24 +251,25 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
     name: string,
     excludeId?: number,
   ) {
-    const conditions: SQL[] = [
-      or(eq(dictionary.code, code), eq(dictionary.name, name))!,
-    ]
-
+    const baseConditions: SQL[] = []
     if (excludeId) {
-      conditions.push(ne(dictionary.id, excludeId))
+      baseConditions.push(ne(this.dictionary.id, excludeId))
     }
 
-    const existing = await this.db
-      .select()
-      .from(dictionary)
-      .where(and(...conditions))
-      .limit(1)
+    const codeExists = await this.drizzle.ext.exists(
+      this.dictionary,
+      and(eq(this.dictionary.code, code), ...baseConditions),
+    )
+    if (codeExists) {
+      throw new BadRequestException('字典编码已存在')
+    }
 
-    if (existing.length > 0) {
-      throw new BadRequestException(
-        existing[0].code === code ? '字典编码已存在' : '字典名称已存在',
-      )
+    const nameExists = await this.drizzle.ext.exists(
+      this.dictionary,
+      and(eq(this.dictionary.name, name), ...baseConditions),
+    )
+    if (nameExists) {
+      throw new BadRequestException('字典名称已存在')
     }
   }
 
@@ -287,88 +279,28 @@ export class LibDictionaryService extends DrizzleBaseService<'dictionary'> {
     name: string,
     excludeId?: number,
   ) {
-    const conditions: SQL[] = [
-      eq(dictionaryItem.dictionaryCode, dictionaryCode),
-      or(eq(dictionaryItem.code, code), eq(dictionaryItem.name, name))!,
+    const baseConditions: SQL[] = [
+      eq(this.dictionaryItem.dictionaryCode, dictionaryCode),
     ]
 
     if (excludeId) {
-      conditions.push(ne(dictionaryItem.id, excludeId))
+      baseConditions.push(ne(this.dictionaryItem.id, excludeId))
     }
 
-    const existing = await this.db
-      .select()
-      .from(dictionaryItem)
-      .where(and(...conditions))
-      .limit(1)
-
-    if (existing.length > 0) {
-      throw new BadRequestException(
-        existing[0].code === code ? '该字典下编码已存在' : '该字典下名称已存在',
-      )
+    const codeExists = await this.drizzle.ext.exists(
+      this.dictionaryItem,
+      and(...baseConditions, eq(this.dictionaryItem.code, code)),
+    )
+    if (codeExists) {
+      throw new BadRequestException('该字典下编码已存在')
     }
-  }
 
-  private async swapField(options: {
-    where: [{ id: number }, { id: number }]
-    sourceField?: string
-  }): Promise<boolean> {
-    const { where, sourceField = 'dictionaryCode' } = options
-
-    return this.db.transaction(async (tx) => {
-      const [record1, record2] = await Promise.all([
-        tx
-          .select()
-          .from(dictionaryItem)
-          .where(eq(dictionaryItem.id, where[0].id))
-          .limit(1),
-        tx
-          .select()
-          .from(dictionaryItem)
-          .where(eq(dictionaryItem.id, where[1].id))
-          .limit(1),
-      ])
-
-      if (!record1[0] || !record2[0]) {
-        throw new BadRequestException('数据不存在')
-      }
-
-      const r1 = record1[0]
-      const r2 = record2[0]
-
-      if (
-        sourceField &&
-        r1[sourceField as keyof typeof r1] !==
-        r2[sourceField as keyof typeof r2]
-      ) {
-        throw new BadRequestException('数据不是同一来源')
-      }
-
-      const sortOrder1 = r1.sortOrder
-      const sortOrder2 = r2.sortOrder
-
-      if (sortOrder1 === sortOrder2) {
-        return true
-      }
-
-      const tempValue = Math.min(sortOrder1 ?? 0, sortOrder2 ?? 0) - 1
-
-      await tx
-        .update(dictionaryItem)
-        .set({ sortOrder: tempValue })
-        .where(eq(dictionaryItem.id, where[0].id))
-
-      await tx
-        .update(dictionaryItem)
-        .set({ sortOrder: sortOrder1 })
-        .where(eq(dictionaryItem.id, where[1].id))
-
-      await tx
-        .update(dictionaryItem)
-        .set({ sortOrder: sortOrder2 })
-        .where(eq(dictionaryItem.id, where[0].id))
-
-      return true
-    })
+    const nameExists = await this.drizzle.ext.exists(
+      this.dictionaryItem,
+      and(...baseConditions, eq(this.dictionaryItem.name, name)),
+    )
+    if (nameExists) {
+      throw new BadRequestException('该字典下名称已存在')
+    }
   }
 }
