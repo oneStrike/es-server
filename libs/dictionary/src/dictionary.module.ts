@@ -1,11 +1,9 @@
+import { DrizzleModule } from '@db/drizzle.module'
 import { Module } from '@nestjs/common'
 import { LibDictionaryService } from './dictionary.service'
 
-/**
- * 数据字典模块
- * 提供数据字典和字典项的管理功能
- */
 @Module({
+  imports: [DrizzleModule],
   controllers: [],
   providers: [LibDictionaryService],
   exports: [LibDictionaryService],

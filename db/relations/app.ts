@@ -1,5 +1,5 @@
 import { defineRelationsPart, } from 'drizzle-orm'
-import * as schema from '../schema'
+import * as schema from '../schema/index'
 
 export const appRelations = defineRelationsPart(schema, r => ({
   appAgreement: {
@@ -31,7 +31,11 @@ export const appRelations = defineRelationsPart(schema, r => ({
     }),
   },
   appPage: {
-    announcements: r.many.appAnnouncement({ alias: 'announcements' }),
+    announcements: r.many.appAnnouncement({
+      from: r.appPage.id,
+      to: r.appAnnouncement.pageId,
+      alias: 'announcements',
+    }),
   },
   appUser: {
     agreementLogs: r.many.appAgreementLog(),
@@ -45,16 +49,33 @@ export const appRelations = defineRelationsPart(schema, r => ({
     }),
     announcementReads: r.many.appAnnouncementRead(),
     tokens: r.many.appUserToken(),
-    forumTopics: r.many.forumTopic({ alias: 'UserTopics' }),
-    lastReplyTopics: r.many.forumTopic({ alias: 'UserLastReplyTopics' }),
-    forumNotifications: r.many.forumNotification(),
+    forumTopics: r.many.forumTopic({
+      from: r.appUser.id,
+      to: r.forumTopic.userId,
+      alias: 'UserTopics',
+    }),
+    lastReplyTopics: r.many.forumTopic({
+      from: r.appUser.id,
+      to: r.forumTopic.lastReplyUserId,
+      alias: 'UserLastReplyTopics',
+    }),
+    forumNotifications: r.many.forumNotification({
+      from: r.appUser.id,
+      to: r.forumNotification.userId,
+    }),
     receivedNotifications: r.many.userNotification({
+      from: r.appUser.id,
+      to: r.userNotification.userId,
       alias: 'UserNotificationReceiver',
     }),
     triggeredNotifications: r.many.userNotification({
+      from: r.appUser.id,
+      to: r.userNotification.actorUserId,
       alias: 'UserNotificationActor',
     }),
     chatConversationMembers: r.many.chatConversationMember({
+      from: r.appUser.id,
+      to: r.chatConversationMember.userId,
       alias: 'ChatConversationMemberUser',
     }),
     chatConversations: r.many.chatConversation({
@@ -64,21 +85,34 @@ export const appRelations = defineRelationsPart(schema, r => ({
       ),
       alias: 'ChatConversationParticipants',
     }),
-    sentChatMessages: r.many.chatMessage({ alias: 'ChatMessageSender' }),
+    sentChatMessages: r.many.chatMessage({
+      from: r.appUser.id,
+      to: r.chatMessage.senderId,
+      alias: 'ChatMessageSender',
+    }),
     lastSentConversations: r.many.chatConversation({
+      from: r.appUser.id,
+      to: r.chatConversation.lastSenderId,
       alias: 'ChatConversationLastSender',
     }),
     moderatorApplications: r.many.forumModeratorApplication({
+      from: r.appUser.id,
+      to: r.forumModeratorApplication.applicantId,
       alias: 'ModeratorApplicant',
     }),
     auditedApplications: r.many.forumModeratorApplication({
+      from: r.appUser.id,
+      to: r.forumModeratorApplication.auditById,
       alias: 'ModeratorAuditor',
     }),
     moderator: r.one.forumModerator({
       from: r.appUser.id,
       to: r.forumModerator.userId,
     }),
-    forumActionLogs: r.many.forumUserActionLog(),
+    forumActionLogs: r.many.forumUserActionLog({
+      from: r.appUser.id,
+      to: r.forumUserActionLog.userId,
+    }),
     userBadges: r.many.userBadgeAssignment(),
     badges: r.many.userBadge({
       from: r.appUser.id.through(r.userBadgeAssignment.userId),
@@ -89,8 +123,14 @@ export const appRelations = defineRelationsPart(schema, r => ({
     growthRuleUsageSlots: r.many.growthRuleUsageSlot(),
     taskAssignments: r.many.taskAssignment(),
     taskProgressLogs: r.many.taskProgressLog(),
-    updatedConfigs: r.many.forumConfig({ alias: 'ForumConfigUpdater' }),
+    updatedConfigs: r.many.forumConfig({
+      from: r.appUser.id,
+      to: r.forumConfig.updatedById,
+      alias: 'ForumConfigUpdater',
+    }),
     operatedConfigHistories: r.many.forumConfigHistory({
+      from: r.appUser.id,
+      to: r.forumConfigHistory.operatedById,
       alias: 'ForumConfigHistoryOperator',
     }),
     userLikes: r.many.userLike(),
@@ -98,8 +138,16 @@ export const appRelations = defineRelationsPart(schema, r => ({
     browseLogs: r.many.userBrowseLog(),
     workReadingStates: r.many.userWorkReadingState(),
     userComments: r.many.userComment(),
-    userReports: r.many.userReport({ alias: 'UserReportReporter' }),
-    handledUserReports: r.many.userReport({ alias: 'UserReportHandler' }),
+    userReports: r.many.userReport({
+      from: r.appUser.id,
+      to: r.userReport.reporterId,
+      alias: 'UserReportReporter',
+    }),
+    handledUserReports: r.many.userReport({
+      from: r.appUser.id,
+      to: r.userReport.handlerId,
+      alias: 'UserReportHandler',
+    }),
     userDownloadRecords: r.many.userDownloadRecord(),
     userPurchaseRecords: r.many.userPurchaseRecord(),
   },
@@ -173,13 +221,21 @@ export const appRelations = defineRelationsPart(schema, r => ({
       to: r.userComment.id,
       alias: 'CommentReply',
     }),
-    replies: r.many.userComment({ alias: 'CommentReply' }),
+    replies: r.many.userComment({
+      from: r.userComment.id,
+      to: r.userComment.replyToId,
+      alias: 'CommentReply',
+    }),
     actualReplyTo: r.one.userComment({
       from: r.userComment.actualReplyToId,
       to: r.userComment.id,
       alias: 'CommentActualReply',
     }),
-    actualReplies: r.many.userComment({ alias: 'CommentActualReply' }),
+    actualReplies: r.many.userComment({
+      from: r.userComment.id,
+      to: r.userComment.actualReplyToId,
+      alias: 'CommentActualReply',
+    }),
   },
   userDownloadRecord: {
     user: r.one.appUser({
@@ -192,9 +248,20 @@ export const appRelations = defineRelationsPart(schema, r => ({
   },
   userLevelRule: {
     users: r.many.appUser(),
-    sections: r.many.forumSection(),
-    chaptersAsReadLevel: r.many.workChapter({ alias: 'ChapterReadLevel' }),
-    worksAsViewLevel: r.many.work({ alias: 'WorkViewLevel' }),
+    sections: r.many.forumSection({
+      from: r.userLevelRule.id,
+      to: r.forumSection.userLevelRuleId,
+    }),
+    chaptersAsReadLevel: r.many.workChapter({
+      from: r.userLevelRule.id,
+      to: r.workChapter.requiredViewLevelId,
+      alias: 'ChapterReadLevel',
+    }),
+    worksAsViewLevel: r.many.work({
+      from: r.userLevelRule.id,
+      to: r.work.requiredViewLevelId,
+      alias: 'WorkViewLevel',
+    }),
   },
   userLike: {
     user: r.one.appUser({ from: r.userLike.userId, to: r.appUser.id }),

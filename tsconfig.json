@@ -7,6 +7,12 @@
     "baseUrl": "./",
     "module": "commonjs",
     "paths": {
+      "@db": [
+        "db"
+      ],
+      "@db/*": [
+        "db/*"
+      ],
       "@libs/base": [
         "libs/base/src"
       ],

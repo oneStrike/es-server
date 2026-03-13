@@ -34,7 +34,11 @@
     "prisma:migrate-interaction": "tsx prisma/scripts/run-migration.ts",
     "prisma:migrate-comment-unified": "tsx prisma/scripts/comment/full-migrate-to-user-comment.ts",
     "publish-api:admin": "tsx publish-api.ts --app admin",
-    "publish-api:app": "tsx publish-api.ts --app app"
+    "publish-api:app": "tsx publish-api.ts --app app",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.4",
@@ -79,7 +83,6 @@
     "fastify": "^5.8.2",
     "fastify-plugin": "^5.1.0",
     "file-type": "^21.3.0",
-    "fs-extra": "^11.3.4",
     "joi": "^18.0.2",
     "keyv": "^5.6.0",
     "mime-types": "^3.0.2",
@@ -124,6 +127,7 @@
     "@types/uuid": "^11.0.0",
     "@types/ws": "^8.18.1",
     "cross-env": "^10.1.0",
+    "drizzle-kit": "1.0.0-beta.17-67b1795",
     "eslint": "^10.0.3",
     "eslint-plugin-format": "^2.0.1",
     "globals": "^17.4.0",

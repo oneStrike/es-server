@@ -1,5 +1,5 @@
 import { defineRelationsPart } from 'drizzle-orm'
-import * as schema from '../schema'
+import * as schema from '../schema/index'
 
 export const workRelations = defineRelationsPart(schema, r => ({
   work: {
@@ -27,7 +27,10 @@ export const workRelations = defineRelationsPart(schema, r => ({
       to: r.workTag.id.through(r.workTagRelation.tagId),
     }),
     chapters: r.many.workChapter(),
-    userReadingStates: r.many.userWorkReadingState(),
+    userReadingStates: r.many.userWorkReadingState({
+      from: r.work.id,
+      to: r.userWorkReadingState.workId,
+    }),
     requiredViewLevel: r.one.userLevelRule({
       from: r.work.requiredViewLevelId,
       to: r.userLevelRule.id,
@@ -70,6 +73,8 @@ export const workRelations = defineRelationsPart(schema, r => ({
       alias: 'ChapterReadLevel',
     }),
     readingStates: r.many.userWorkReadingState({
+      from: r.workChapter.id,
+      to: r.userWorkReadingState.lastReadChapterId,
       alias: 'UserWorkReadingStateLastReadChapter',
     }),
   },

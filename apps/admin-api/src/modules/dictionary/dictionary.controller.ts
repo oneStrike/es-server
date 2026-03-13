@@ -40,7 +40,7 @@ export class DictionaryController {
     model: BaseDictionaryDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.libDictionaryService.dictionary.findUnique({ where: query })
+    return this.libDictionaryService.findDictionaryById(query.id)
   }
 
   @Post('create')

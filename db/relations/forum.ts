@@ -1,7 +1,7 @@
 import { defineRelationsPart } from 'drizzle-orm'
-import * as schema from '../schema'
+import * as schema from '../schema/index'
 
-export const forumRelations = defineRelationsPart(schema, r => ({
+export const forumRelations = defineRelationsPart(schema, (r) => ({
   forumConfig: {
     histories: r.many.forumConfigHistory(),
     updatedBy: r.one.appUser({
@@ -125,13 +125,21 @@ export const forumRelations = defineRelationsPart(schema, r => ({
       to: r.appUser.id,
       alias: 'UserLastReplyTopics',
     }),
-    lastSections: r.many.forumSection({ alias: 'LastTopic' }),
+    lastSections: r.many.forumSection({
+      from: r.forumTopic.id,
+      to: r.forumSection.lastTopicId,
+      alias: 'LastTopic',
+    }),
     topicTags: r.many.forumTopicTag(),
     tags: r.many.forumTag({
       from: r.forumTopic.id.through(r.forumTopicTag.topicId),
       to: r.forumTag.id.through(r.forumTopicTag.tagId),
     }),
-    notifications: r.many.forumNotification({ alias: 'NotificationTopic' }),
+    notifications: r.many.forumNotification({
+      from: r.forumTopic.id,
+      to: r.forumNotification.topicId,
+      alias: 'NotificationTopic',
+    }),
   },
   forumTopicTag: {
     tag: r.one.forumTag({ from: r.forumTopicTag.tagId, to: r.forumTag.id }),

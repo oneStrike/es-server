@@ -49,7 +49,7 @@ export class ForumTopicLikeResolver
    * @throws NotFoundException 当主题不存在时抛出异常
    */
   async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const topic = await tx.forumTopic.exists({
+    const topic = await tx.forumTopic.findFirst({
       where: {
         id: targetId,
         deletedAt: null,

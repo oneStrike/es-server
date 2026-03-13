@@ -20,11 +20,11 @@ export const appUser = pgTable("app_user", {
   /**
    * 手机号（唯一）
    */
-  phone: varchar("phone_number", { length: 20 }),
+  phoneNumber: varchar({ length: 20 }),
   /**
    * 邮箱（唯一）
    */
-  email: varchar("email_address", { length: 255 }),
+  emailAddress: varchar({ length: 255 }),
   /**
    * 等级ID
    */
@@ -40,7 +40,7 @@ export const appUser = pgTable("app_user", {
   /**
    * 头像URL
    */
-  avatar: varchar("avatar_url", { length: 500 }),
+  avatarUrl: varchar({ length: 500 }),
   /**
    * 是否启用
    */
@@ -48,7 +48,7 @@ export const appUser = pgTable("app_user", {
   /**
    * 性别（0=未知，1=男，2=女）
    */
-  gender: smallint("gender_type").default(0).notNull(),
+  genderType: smallint().default(0).notNull(),
   /**
    * 出生日期
    */
@@ -94,52 +94,16 @@ export const appUser = pgTable("app_user", {
    */
   deletedAt: timestamp({ withTimezone: true }),
 }, (table) => [
-    /**
-     * 唯一索引: account
-     */
     unique("app_user_account_key").on(table.account),
-    /**
-     * 唯一索引: phone
-     */
-    unique("app_user_phone_number_key").on(table.phone),
-    /**
-     * 唯一索引: email
-     */
-    unique("app_user_email_address_key").on(table.email),
-    /**
-     * 启用状态索引
-     */
+    unique("app_user_phone_number_key").on(table.phoneNumber),
+    unique("app_user_email_address_key").on(table.emailAddress),
     index("app_user_is_enabled_idx").on(table.isEnabled),
-    /**
-     * 性别索引
-     */
-    index("app_user_gender_type_idx").on(table.gender),
-    /**
-     * 创建时间索引
-     */
+    index("app_user_gender_type_idx").on(table.genderType),
     index("app_user_created_at_idx").on(table.createdAt),
-    /**
-     * 最后登录时间索引
-     */
     index("app_user_last_login_at_idx").on(table.lastLoginAt),
-    /**
-     * 手机号索引
-     */
-    index("app_user_phone_number_idx").on(table.phone),
-    /**
-     * 邮箱索引
-     */
-    index("app_user_email_address_idx").on(table.email),
-    /**
-     * 积分索引
-     */
+    index("app_user_phone_number_idx").on(table.phoneNumber),
+    index("app_user_email_address_idx").on(table.emailAddress),
     index("app_user_points_idx").on(table.points),
-    /**
-     * 状态索引
-     */
     index("app_user_status_idx").on(table.status),
-    /**
-     * 等级索引
-     */
     index("app_user_level_id_idx").on(table.levelId),
 ]);
