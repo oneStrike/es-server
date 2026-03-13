@@ -1,11 +1,11 @@
-import type { WorkTagWhereInput } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
-import { DragReorderDto, IdDto } from '@libs/base/dto'
+import type { WorkTagWhereInput } from '@libs/platform/database'
+import { PlatformService } from '@libs/platform/database'
+import { DragReorderDto, IdDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { CreateTagDto, QueryTagDto, UpdateTagDto } from './dto/tag.dto'
 
 @Injectable()
-export class WorkTagService extends BaseService {
+export class WorkTagService extends PlatformService {
   get workTag() {
     return this.prisma.workTag
   }

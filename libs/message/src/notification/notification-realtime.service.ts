@@ -1,4 +1,4 @@
-import type { UserNotification } from '@libs/base/database'
+import type { UserNotification } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import { MessageWebSocketService } from './notification-websocket.service'
 

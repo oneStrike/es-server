@@ -1,12 +1,12 @@
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/constant'
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,
   JsonProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { ActionTypeEnum } from '../audit.constant'
 

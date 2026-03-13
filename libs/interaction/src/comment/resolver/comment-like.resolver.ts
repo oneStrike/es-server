@@ -1,11 +1,16 @@
-import type { PrismaTransactionClientType } from '@libs/base/database'
+import type { PrismaTransactionClientType } from '@libs/platform/database'
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
-} from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { mapInteractionTargetTypeToSceneType } from '@libs/interaction/interaction-target.definition'
-import { ILikeTargetResolver, LikeService, LikeTargetMeta, LikeTargetTypeEnum } from '@libs/interaction/like'
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
+import {
+  ILikeTargetResolver,
+  LikeTargetMeta,
+} from '../../like/interfaces/like-target-resolver.interface'
+import { LikeTargetTypeEnum } from '../../like/like.constant'
+import { LikeService } from '../../like/like.service'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -25,7 +30,7 @@ import {
  */
 @Injectable()
 export class CommentLikeResolver
-  extends BaseService
+  extends PlatformService
   implements ILikeTargetResolver, OnModuleInit {
   /** 目标类型：评论 */
   readonly targetType = LikeTargetTypeEnum.COMMENT

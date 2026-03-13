@@ -1,12 +1,12 @@
 import {
   InteractionTargetTypeEnum,
   UserStatusEnum,
-} from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 @Injectable()
-export class CommentPermissionService extends BaseService {
+export class CommentPermissionService extends PlatformService {
   async ensureCanComment(
     userId: number,
     targetType: InteractionTargetTypeEnum,

@@ -1,10 +1,10 @@
-import { ContentTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable, Logger } from '@nestjs/common'
 import { QueryReadingHistoryDto } from './dto/reading-state.dto'
 
 @Injectable()
-export class ReadingStateService extends BaseService {
+export class ReadingStateService extends PlatformService {
   private readonly logger = new Logger(ReadingStateService.name)
 
   get userWorkReadingState() {

@@ -1,5 +1,5 @@
-import { WorkViewPermissionEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import { WorkViewPermissionEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 /**
@@ -7,7 +7,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
  * 负责处理用户相关的权限验证，包括视图权限、积分验证等
  */
 @Injectable()
-export class UserPermissionService extends BaseService {
+export class UserPermissionService extends PlatformService {
   /**
    * 获取 AppUser 模型访问器
    */

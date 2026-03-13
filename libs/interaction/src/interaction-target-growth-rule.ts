@@ -1,5 +1,5 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
+import { InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { GrowthRuleTypeEnum } from '@libs/user'
 
 /**
  * Growth action type used by interaction modules.

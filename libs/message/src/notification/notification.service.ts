@@ -1,7 +1,7 @@
-import type { UserNotification } from '@libs/base/database'
+import type { UserNotification } from '@libs/platform/database'
 import type { NotificationOutboxPayload } from '../outbox/dto/outbox-event.dto'
 import type { QueryUserNotificationListDto } from './dto/notification.dto'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
@@ -12,7 +12,7 @@ import { MessageNotificationTypeEnum } from './notification.constant'
  * 提供用户通知的查询、标记已读和创建功能
  */
 @Injectable()
-export class MessageNotificationService extends BaseService {
+export class MessageNotificationService extends PlatformService {
   constructor(
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,

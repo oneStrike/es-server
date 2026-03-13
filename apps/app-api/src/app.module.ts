@@ -1,4 +1,4 @@
-import { BaseModule } from '@libs/base'
+import { PlatformModule } from '@libs/platform'
 import {
   AliyunConfigRegister,
   AuthConfigRegister,
@@ -8,10 +8,10 @@ import {
   RedisConfigRegister,
   RsaConfigRegister,
   UploadConfigRegister
-} from '@libs/base/config'
-import { HttpExceptionFilter } from '@libs/base/filters'
-import { JwtAuthGuard, JwtAuthModule } from '@libs/base/modules'
-import { getEnv } from '@libs/base/utils'
+} from '@libs/platform/config'
+import { HttpExceptionFilter } from '@libs/platform/filters'
+import { JwtAuthGuard, JwtAuthModule } from '@libs/platform/modules'
+import { getEnv } from '@libs/platform/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD } from '@nestjs/core'
@@ -50,7 +50,7 @@ import { AppApiModule } from './modules/app.module'
      * 定时任务用于定期清理过期和已撤销的 Token
      */
     ScheduleModule.forRoot(),
-    BaseModule.forRoot(),
+    PlatformModule.forRoot(),
     JwtAuthModule,
 
     AppApiModule,

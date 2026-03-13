@@ -1,5 +1,5 @@
-import { BaseService } from '@libs/base/database'
-import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
+import { PlatformService } from '@libs/platform/database'
+import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -13,7 +13,7 @@ import {
  * 提供论坛板块的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ForumSectionService extends BaseService {
+export class ForumSectionService extends PlatformService {
   get forumSection() {
     return this.prisma.forumSection
   }

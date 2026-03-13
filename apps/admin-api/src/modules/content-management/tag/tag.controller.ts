@@ -1,12 +1,12 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BaseTagDto,
   CreateTagDto,
   QueryTagDto,
   UpdateTagDto,
   WorkTagService,
-} from '@libs/content/tag'
+} from '@libs/content'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

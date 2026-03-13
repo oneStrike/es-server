@@ -1,4 +1,4 @@
-import { UploadModule as BaseUploadModule } from '@libs/base/modules'
+import { UploadModule as BaseUploadModule } from '@libs/platform/modules'
 import { Module } from '@nestjs/common'
 import { UploadController } from './upload.controller'
 

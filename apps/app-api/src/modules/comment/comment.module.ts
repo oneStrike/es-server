@@ -1,4 +1,4 @@
-import { CommentModule as CommentCoreModule } from '@libs/interaction/comment'
+import { CommentModule as CommentCoreModule } from '@libs/interaction'
 import { Module } from '@nestjs/common'
 import { CommentController } from './comment.controller'
 

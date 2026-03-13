@@ -1,4 +1,4 @@
-import type { CommentLevelEnum, SceneTypeEnum } from '@libs/base/constant'
+import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import type { ReportReasonEnum, ReportStatusEnum, ReportTargetTypeEnum } from '../report.constant'
 
 /**

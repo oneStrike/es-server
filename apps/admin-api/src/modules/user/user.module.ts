@@ -1,4 +1,4 @@
-import { CryptoModule } from '@libs/base/modules'
+import { CryptoModule } from '@libs/platform/modules'
 import { Module } from '@nestjs/common'
 import { UserController } from './user.controller'
 import { UserService } from './user.service'

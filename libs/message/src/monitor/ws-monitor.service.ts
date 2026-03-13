@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 
 interface MessageWsMetricDelta {
@@ -12,7 +12,7 @@ interface MessageWsMetricDelta {
 }
 
 @Injectable()
-export class MessageWsMonitorService extends BaseService {
+export class MessageWsMonitorService extends PlatformService {
   async recordRequest() {
     await this.applyDelta({ requestCount: 1 })
   }

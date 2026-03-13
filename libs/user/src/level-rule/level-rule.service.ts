@@ -1,5 +1,5 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import { InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CheckUserLevelPermissionDto,
@@ -12,7 +12,7 @@ import {
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 @Injectable()
-export class UserLevelRuleService extends BaseService {
+export class UserLevelRuleService extends PlatformService {
   get userLevelRule() {
     return this.prisma.userLevelRule
   }

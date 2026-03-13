@@ -1,11 +1,11 @@
-import type { PrismaTransactionClientType } from '@libs/base/database'
-import { SceneTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { SceneTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import {
   ILikeTargetResolver,
   LikeService,
   LikeTargetTypeEnum,
-} from '@libs/interaction/like'
+} from '@libs/interaction'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 /**
@@ -14,7 +14,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class WorkComicLikeResolver
-  extends BaseService
+  extends PlatformService
   implements ILikeTargetResolver, OnModuleInit
 {
   /** 目标类型：漫画作品 */

@@ -1,5 +1,5 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import { InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
@@ -7,7 +7,7 @@ import { BrowseLogInteractionService } from './browse-log-interaction.service'
 import { BrowseLogPermissionService } from './browse-log-permission.service'
 
 @Injectable()
-export class BrowseLogService extends BaseService {
+export class BrowseLogService extends PlatformService {
   constructor(
     private readonly browseLogPermissionService: BrowseLogPermissionService,
     private readonly browseLogInteractionService: BrowseLogInteractionService,

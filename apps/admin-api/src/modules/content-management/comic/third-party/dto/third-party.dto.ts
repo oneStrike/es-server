@@ -1,5 +1,5 @@
-import { ArrayProperty, StringProperty } from '@libs/base/decorators'
-import { IdDto, PageDto } from '@libs/base/dto'
+import { ArrayProperty, StringProperty } from '@libs/platform/decorators'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { PickType } from '@nestjs/swagger'
 
 export class SearchComicRequestDto extends PageDto {

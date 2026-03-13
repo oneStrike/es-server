@@ -1,4 +1,4 @@
-import { WorkCategoryModule as WorkCategoryModuleLib } from '@libs/content/category'
+import { WorkCategoryModule as WorkCategoryModuleLib } from '@libs/content'
 import { Module } from '@nestjs/common'
 import { WorkCategoryController } from './category.controller'
 

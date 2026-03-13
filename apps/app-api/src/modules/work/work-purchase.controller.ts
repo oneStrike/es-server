@@ -1,12 +1,12 @@
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { PurchaseService } from '@libs/interaction'
 import {
   PurchasedWorkChapterItemDto,
   PurchasedWorkItemDto,
   QueryPurchasedWorkChapterDto,
   QueryPurchasedWorkDto,
-} from '@libs/interaction/purchase'
+} from '@libs/interaction'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags, OmitType } from '@nestjs/swagger'
 

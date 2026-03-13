@@ -1,5 +1,5 @@
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { DownloadService } from '@libs/interaction'
 import {
   BaseUserDownloadRecordDto,
@@ -7,7 +7,7 @@ import {
   DownloadedWorkItemDto,
   QueryDownloadedWorkChapterDto,
   QueryDownloadedWorkDto,
-} from '@libs/interaction/download'
+} from '@libs/interaction'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags, OmitType } from '@nestjs/swagger'
 

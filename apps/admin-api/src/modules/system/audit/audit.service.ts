@@ -1,7 +1,7 @@
-import type { RequestLogWhereInput } from '@libs/base/database'
+import type { RequestLogWhereInput } from '@libs/platform/database'
 import type { FastifyRequest } from 'fastify'
-import { BaseService } from '@libs/base/database'
-import { parseRequestLogFields } from '@libs/base/utils'
+import { PlatformService } from '@libs/platform/database'
+import { parseRequestLogFields } from '@libs/platform/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { ActionTypeEnum } from './audit.constant'
 import {
@@ -15,7 +15,7 @@ import {
  * 负责记录与查询后台操作审计日志
  */
 @Injectable()
-export class AuditService extends BaseService {
+export class AuditService extends PlatformService {
   get requestLog() {
     return this.prisma.requestLog
   }

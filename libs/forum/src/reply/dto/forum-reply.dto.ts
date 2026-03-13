@@ -1,11 +1,11 @@
-import { AuditStatusEnum, SortOrderEnum } from '@libs/base/constant'
+import { AuditStatusEnum, SortOrderEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { ForumReplySortFieldEnum } from '../forum-reply.constant'
 

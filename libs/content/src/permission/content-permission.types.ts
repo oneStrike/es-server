@@ -1,5 +1,5 @@
-import type { WorkViewPermissionEnum } from '@libs/base/constant'
-import type { Prisma } from '@libs/base/database'
+import type { WorkViewPermissionEnum } from '@libs/platform/constant'
+import type { Prisma } from '@libs/platform/database'
 import type {
   CHAPTER_PERMISSION_SELECT,
   WORK_PERMISSION_SELECT,

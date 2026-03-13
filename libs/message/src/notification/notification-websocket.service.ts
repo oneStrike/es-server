@@ -1,4 +1,4 @@
-import type { AuthConfigInterface } from '@libs/base/types'
+import type { AuthConfigInterface } from '@libs/platform/types'
 import type { IncomingMessage } from 'node:http'
 import type { Server, Socket } from 'socket.io'
 import type { WebSocket } from 'ws'
@@ -10,7 +10,7 @@ import type {
   WsSendPayload,
 } from './notification-websocket.types'
 import process from 'node:process'
-import { isDevelopment } from '@libs/base/utils'
+import { isDevelopment } from '@libs/platform/utils'
 import {
   BadRequestException,
   Injectable,

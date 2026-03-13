@@ -5,7 +5,7 @@ import {
   JsonProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
+} from '@libs/platform/decorators'
 import {
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,

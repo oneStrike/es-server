@@ -1,8 +1,8 @@
 import {
-  BaseService,
+  PlatformService,
   ForumTopicWhereInput,
   UserCommentWhereInput,
-} from '@libs/base/database'
+} from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import {
   ForumSearchDto,
@@ -16,7 +16,7 @@ import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
  * 支持主题与回复的关键词检索及混合搜索
  */
 @Injectable()
-export class ForumSearchService extends BaseService {
+export class ForumSearchService extends PlatformService {
   constructor() {
     super()
   }

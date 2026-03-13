@@ -1,12 +1,12 @@
-import { ContentTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
   JsonProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,

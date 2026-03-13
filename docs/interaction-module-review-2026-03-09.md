@@ -105,7 +105,7 @@
 - 处理：interaction 侧移除本地重复定义，仅从 base 统一 re-export。
 - 文件：
   - `libs/interaction/src/common.constant.ts`
-  - `libs/base/src/constant/interaction.constant.ts`（保留单一源）
+  - `libs/platform/src/constant/interaction.constant.ts`（保留单一源）
 
 ### 5.2 未接入方法/DTO 清理
 
@@ -172,7 +172,7 @@
 - 已尝试：
   - `pnpm -s tsc -p libs/interaction/tsconfig.lib.json --noEmit`
 - 结果：被仓库无关文件阻断：
-  - `libs/base/src/modules/upload/upload.service.ts:111`（非 interaction 改动引入）
+  - `libs/platform/src/modules/upload/upload.service.ts:111`（非 interaction 改动引入）
 
 ## 9. 当前状态
 

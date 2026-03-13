@@ -1,15 +1,15 @@
-import type { PrismaTransactionClientType } from '@libs/base/database'
+import type { PrismaTransactionClientType } from '@libs/platform/database'
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
-} from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { mapInteractionTargetTypeToSceneType } from '@libs/interaction/interaction-target.definition'
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
 import {
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
-} from '@libs/interaction/report'
+} from '../../report'
 import {
   BadRequestException,
   Injectable,
@@ -24,7 +24,7 @@ import {
  */
 @Injectable()
 export class CommentReportResolver
-  extends BaseService
+  extends PlatformService
   implements IReportTargetResolver, OnModuleInit
 {
   /** 目标类型：评论 */

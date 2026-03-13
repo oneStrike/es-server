@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { LikePageQueryDto } from './dto/like.dto'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
@@ -11,7 +11,7 @@ import { LikeTargetTypeEnum } from './like.constant'
  * 通过解析器模式支持多种目标类型（作品、章节、评论、论坛主题等）的点赞操作
  */
 @Injectable()
-export class LikeService extends BaseService {
+export class LikeService extends PlatformService {
   /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
   private readonly resolvers = new Map<
     LikeTargetTypeEnum,

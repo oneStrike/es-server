@@ -6,7 +6,7 @@ export default antfu(
       'test/**',
       'dist/**',
       'build/**',
-      'libs/base/src/database/prisma-client/**',
+      'libs/platform/src/database/prisma-client/**',
     ],
 
     formatters: {
@@ -47,6 +47,34 @@ export default antfu(
       // 确保花括号规则与 Prettier 一致
       "curly": ['error', 'all'],
       'nonblock-statement-body-position': 'off',
+    },
+  },
+  {
+    files: ['apps/**/*.{ts,tsx}', 'libs/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          patterns: [
+            {
+              group: [
+                '@libs/app-settings/*',
+                '@libs/content/*',
+                '@libs/dictionary/*',
+                '@libs/forum/*',
+                '@libs/interaction/*',
+                '@libs/message/*',
+                '@libs/sensitive-word/*',
+                '@libs/system-config/*',
+                '@libs/task/*',
+                '@libs/user/*',
+              ],
+              message:
+                'Use public API from @libs/<lib> (index.ts) instead of deep imports.',
+            },
+          ],
+        },
+      ],
     },
   },
 )

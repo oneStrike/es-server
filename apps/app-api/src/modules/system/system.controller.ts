@@ -1,18 +1,18 @@
 import {
   AgreementService,
-  BaseAgreementDto,
-  ListOrPageAgreementResponseDto,
-  QueryPublishedAgreementDto,
-} from '@libs/app-config/agreement'
-import {
   AnnouncementPageResponseDto,
   AppAnnouncementService,
+  AppConfigService,
+  AppPageResponseDto,
+  AppPageService,
+  BaseAgreementDto,
+  BaseAppConfigDto,
+  ListOrPageAgreementResponseDto,
   QueryAnnouncementDto,
-} from '@libs/app-config/announcement'
-import { AppConfigService, BaseAppConfigDto } from '@libs/app-config/config'
-import { AppPageResponseDto, AppPageService } from '@libs/app-config/page'
-import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+  QueryPublishedAgreementDto,
+} from '@libs/app-settings'
+import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

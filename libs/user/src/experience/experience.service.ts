@@ -1,5 +1,5 @@
-import { UserStatusEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import { UserStatusEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
@@ -19,7 +19,7 @@ import {
  * 对外保留原方法，内部统一走 GrowthLedger。
  */
 @Injectable()
-export class UserExperienceService extends BaseService {
+export class UserExperienceService extends PlatformService {
   constructor(
     private readonly levelRuleService: UserLevelRuleService,
     private readonly growthLedgerService: GrowthLedgerService,

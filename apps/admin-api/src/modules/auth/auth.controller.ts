@@ -1,6 +1,6 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc, Public } from '@libs/base/decorators'
-import { CaptchaDto, RsaService } from '@libs/base/modules'
+import { ApiDoc, Public } from '@libs/platform/decorators'
+import { CaptchaDto, RsaService } from '@libs/platform/modules'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

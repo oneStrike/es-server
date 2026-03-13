@@ -1,5 +1,5 @@
-import { BaseService } from '@libs/base/database'
-import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
+import { PlatformService } from '@libs/platform/database'
+import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Injectable,
@@ -12,7 +12,7 @@ import {
 } from './dto/forum-section-group.dto'
 
 @Injectable()
-export class ForumSectionGroupService extends BaseService {
+export class ForumSectionGroupService extends PlatformService {
   get forumSectionGroup() {
     return this.prisma.forumSectionGroup
   }

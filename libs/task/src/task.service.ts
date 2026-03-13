@@ -1,4 +1,4 @@
-import type { JwtUserInfoInterface } from '@libs/base/types'
+import type { JwtUserInfoInterface } from '@libs/platform/types'
 import type {
   ClaimTaskDto,
   CreateTaskDto,
@@ -11,8 +11,8 @@ import type {
   UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto'
-import { BaseService, Prisma } from '@libs/base/database'
-import { UserGrowthRewardService } from '@libs/user/growth-reward'
+import { PlatformService, Prisma } from '@libs/platform/database'
+import { UserGrowthRewardService } from '@libs/user'
 import {
   BadRequestException,
   Injectable,
@@ -33,7 +33,7 @@ import {
  * 负责任务配置、领取、进度与完成状态管理
  */
 @Injectable()
-export class TaskService extends BaseService {
+export class TaskService extends PlatformService {
   get task() {
     return this.prisma.task
   }

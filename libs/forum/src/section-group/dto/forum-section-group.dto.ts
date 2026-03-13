@@ -2,8 +2,8 @@ import {
   BooleanProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,

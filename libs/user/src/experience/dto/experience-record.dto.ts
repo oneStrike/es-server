@@ -1,5 +1,5 @@
-import { NumberProperty, StringProperty } from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
+import { NumberProperty, StringProperty } from '@libs/platform/decorators'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseUserExperienceRecordDto extends BaseDto {

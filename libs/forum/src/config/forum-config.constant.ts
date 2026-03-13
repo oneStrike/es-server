@@ -1,7 +1,7 @@
 /**
  * 论坛配置常量与枚举定义
  */
-import type { ForumConfig } from '@libs/base/database'
+import type { ForumConfig } from '@libs/platform/database'
 
 /**
  * 论坛默认配置

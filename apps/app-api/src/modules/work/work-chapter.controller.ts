@@ -4,8 +4,8 @@ import {
   CurrentUser,
   OptionalAuth,
   Public,
-} from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import {
   ComicChapterContentDto,
   ComicContentService,

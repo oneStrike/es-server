@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   GrowthAssetTypeEnum,
@@ -19,7 +19,7 @@ import { UserPointRuleService } from './point-rule.service'
  * 对外保留原有方法签名，内部统一切换到 GrowthLedger 写入。
  */
 @Injectable()
-export class UserPointService extends BaseService {
+export class UserPointService extends PlatformService {
   get appUser() {
     return this.prisma.appUser
   }

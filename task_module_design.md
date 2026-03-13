@@ -20,7 +20,7 @@
   - user：用户成长/积分/等级/徽章相关
   - forum：论坛相关
   - content：内容管理相关
-  - dictionary / app-config / system-config：系统与应用配置
+  - dictionary / app-settings / system-config：系统与应用配置
 
 ### 1.3 数据库设计与约定
 - Prisma 多文件模型，统一映射为 snake_case 表名
@@ -29,7 +29,7 @@
 - 业务枚举多采用 Int + SmallInt 存储
 
 ### 1.4 业务逻辑层结构
-- Service 继承 BaseService，统一注入 Prisma Client
+- Service 继承 PlatformService，统一注入 Prisma Client
 - 通用分页：findPagination 扩展，返回 list/total/pageIndex/pageSize
 - 管理端与客户端分层清晰，领域逻辑集中在 libs 中复用
 
@@ -44,7 +44,7 @@
 - Swagger 装饰器：ApiDoc / ApiPageDoc 统一描述响应模型
 
 ### 1.6 模块依赖关系概览
-- BaseModule 提供：日志、数据库、缓存、限流、健康检查、全局校验/响应拦截
+- PlatformModule 提供：日志、数据库、缓存、限流、健康检查、全局校验/响应拦截
 - Admin 模块聚合：用户、内容、字典、论坛管理、用户成长、系统配置、上传等
 - App 模块聚合：用户、内容、字典、基础配置、认证等
 
@@ -274,6 +274,6 @@
 - DTO 校验全量采用 ValidateX 装饰器与 PageDto 规范
 
 ## 6. 关键实现约束
-- 复用 BaseService 与 Prisma 扩展（findPagination / softDelete）
+- 复用 PlatformService 与 Prisma 扩展（findPagination / softDelete）
 - 只在 libs 新增领域逻辑，apps 侧只做 Controller 封装
 - 任务与成长体系对接使用现有 UserGrowthEvent 服务

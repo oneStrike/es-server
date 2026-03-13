@@ -1,4 +1,4 @@
-import { ApiDoc, Public } from '@libs/base/decorators'
+import { ApiDoc, Public } from '@libs/platform/decorators'
 
 import { BaseDictionaryItemDto, LibDictionaryService } from '@libs/dictionary'
 import { Controller, Get, Query } from '@nestjs/common'
@@ -8,7 +8,7 @@ import { QueryDictionaryItemDto } from './dto/dictionary.dto'
 @ApiTags('字典管理')
 @Controller('app/dictionary')
 export class DictionaryController {
-  constructor(private readonly libDictionaryService: LibDictionaryService) { }
+  constructor(private readonly libDictionaryService: LibDictionaryService) {}
 
   @Get('items')
   @ApiDoc({
@@ -18,7 +18,8 @@ export class DictionaryController {
   })
   @Public()
   async getItems(@Query() query: QueryDictionaryItemDto) {
-    const data = await this.libDictionaryService.findDictionaryItems({ ...query, pageSize: 500 })
-    return data.list
+    return this.libDictionaryService.findAllDictionaryItems(
+      query.dictionaryCode,
+    )
   }
 }

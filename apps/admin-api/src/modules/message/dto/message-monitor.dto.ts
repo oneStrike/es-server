@@ -3,7 +3,7 @@ import {
   DateProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
+} from '@libs/platform/decorators'
 
 export class QueryMessageOutboxMonitorDto {
   @NumberProperty({

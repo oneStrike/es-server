@@ -1,5 +1,5 @@
-import { NumberProperty } from '@libs/base/decorators'
-import { BaseDto, IdDto } from '@libs/base/dto'
+import { NumberProperty } from '@libs/platform/decorators'
+import { BaseDto, IdDto } from '@libs/platform/dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 
 /**

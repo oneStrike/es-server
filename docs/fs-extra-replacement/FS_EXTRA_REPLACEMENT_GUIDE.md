@@ -15,7 +15,7 @@
 
 ### 使用位置
 
-- `libs/base/src/modules/upload/upload.service.ts`
+- `libs/platform/src/modules/upload/upload.service.ts`
 
 ### 使用的 fs-extra 方法
 
@@ -131,12 +131,12 @@ pnpm remove fs-extra @types/fs-extra
 ### 修改后的 upload.service.ts
 
 ```typescript
-import type { UploadConfigInterface } from '@libs/base/config'
+import type { UploadConfigInterface } from '@libs/platform/config'
 import type { FastifyRequest } from 'fastify'
 import { join } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
-import { UploadResponseDto } from '@libs/base/dto'
+import { UploadResponseDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Inject,

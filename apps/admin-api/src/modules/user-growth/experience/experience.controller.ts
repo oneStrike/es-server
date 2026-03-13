@@ -1,5 +1,5 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import {
   AddUserExperienceDto,
   BaseUserExperienceRuleDto,
@@ -8,7 +8,7 @@ import {
   QueryUserExperienceRuleDto,
   UpdateUserExperienceRuleDto,
   UserExperienceService,
-} from '@libs/user/experience'
+} from '@libs/user'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

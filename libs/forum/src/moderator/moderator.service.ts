@@ -1,5 +1,5 @@
-import { BaseService, ForumModeratorWhereInput } from '@libs/base/database'
-import { IdDto } from '@libs/base/dto'
+import { PlatformService, ForumModeratorWhereInput } from '@libs/platform/database'
+import { IdDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AssignForumModeratorSectionDto,
@@ -17,7 +17,7 @@ import {
  * 提供论坛版主的增删改查、板块分配、权限管理等核心业务逻辑
  */
 @Injectable()
-export class ForumModeratorService extends BaseService {
+export class ForumModeratorService extends PlatformService {
   constructor() {
     super()
   }

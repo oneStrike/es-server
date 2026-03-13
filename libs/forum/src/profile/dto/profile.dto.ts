@@ -1,12 +1,12 @@
-import { GenderEnum, UserStatusEnum } from '@libs/base/constant'
+import { GenderEnum, UserStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   PartialType,

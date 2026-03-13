@@ -1,5 +1,5 @@
-import { BaseService } from '@libs/base/database'
-import { RsaService, ScryptService } from '@libs/base/modules'
+import { PlatformService } from '@libs/platform/database'
+import { RsaService, ScryptService } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { AuthErrorMessages } from './auth.constant'
 import { ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto'
@@ -11,7 +11,7 @@ import { AppTokenStorageService } from './token-storage.service'
  * 负责处理密码重置、修改密码等安全相关操作
  */
 @Injectable()
-export class PasswordService extends BaseService {
+export class PasswordService extends PlatformService {
   constructor(
     private readonly rsaService: RsaService,
     private readonly smsService: SmsService,

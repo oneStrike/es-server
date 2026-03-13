@@ -1,4 +1,4 @@
-import { ReadingStateModule } from '@libs/interaction/reading-state'
+import { ReadingStateModule } from '@libs/interaction'
 import { Module } from '@nestjs/common'
 import { ReadingHistoryController } from './reading-history.controller'
 

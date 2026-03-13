@@ -6,8 +6,8 @@ import {
   Public,
   RequestMeta,
   RequestMetaResult,
-} from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import {
   PageWorkDto,
   QueryWorkDto,

@@ -1,9 +1,9 @@
-import { AdminUserToken } from '@libs/base/database'
+import { AdminUserToken } from '@libs/platform/database'
 import {
   BaseTokenStorageService,
   CreateTokenDto,
   ITokenDelegate,
-} from '@libs/base/modules/auth'
+} from '@libs/platform/modules/auth'
 import { Injectable } from '@nestjs/common'
 
 /**

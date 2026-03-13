@@ -1,7 +1,7 @@
-import { ContentTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { DragReorderDto } from '@libs/base/dto'
-import { ContentPermissionService } from '@libs/content/permission'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { DragReorderDto } from '@libs/platform/dto'
+import { ContentPermissionService } from '../../permission'
 import {
   DownloadService,
   DownloadTargetTypeEnum,
@@ -9,7 +9,7 @@ import {
   LikeService,
   ReadingStateService,
 } from '@libs/interaction'
-import { LikeTargetTypeEnum } from '@libs/interaction/like'
+import { LikeTargetTypeEnum } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkChapterDto,
@@ -23,7 +23,7 @@ import { PAGE_WORK_CHAPTER_SELECT } from './work-chapter.select'
  * 负责处理作品章节的 CRUD 操作、交互状态查询、相邻章节导航等功能
  */
 @Injectable()
-export class WorkChapterService extends BaseService {
+export class WorkChapterService extends PlatformService {
   /** 章节 Prisma 代理 */
   get workChapter() {
     return this.prisma.workChapter

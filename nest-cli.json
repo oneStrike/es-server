@@ -28,22 +28,22 @@
         "tsConfigPath": "apps/app-api/tsconfig.app.json"
       }
     },
-    "base": {
+    "platform": {
       "type": "library",
-      "root": "libs/base",
+      "root": "libs/platform",
       "entryFile": "index",
-      "sourceRoot": "libs/base/src",
+      "sourceRoot": "libs/platform/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/base/tsconfig.lib.json"
+        "tsConfigPath": "libs/platform/tsconfig.lib.json"
       }
     },
-    "app-config": {
+    "app-settings": {
       "type": "library",
-      "root": "libs/app-config",
+      "root": "libs/app-settings",
       "entryFile": "index",
-      "sourceRoot": "libs/app-config/src",
+      "sourceRoot": "libs/app-settings/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/app-config/tsconfig.lib.json"
+        "tsConfigPath": "libs/app-settings/tsconfig.lib.json"
       }
     },
     "content": {

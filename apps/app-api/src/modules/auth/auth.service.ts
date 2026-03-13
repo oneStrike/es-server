@@ -1,12 +1,12 @@
 import type { FastifyRequest } from 'fastify'
-import { GenderEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { RsaService, ScryptService } from '@libs/base/modules'
+import { GenderEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthService as BaseAuthService,
   LoginGuardService,
-} from '@libs/base/modules/auth'
-import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
+} from '@libs/platform/modules/auth'
+import { extractIpAddress, parseDeviceInfo } from '@libs/platform/utils'
 import { ForumProfileService } from '@libs/forum'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -25,7 +25,7 @@ import { AppTokenStorageService } from './token-storage.service'
  * 负责应用端用户的注册、登录、登出与令牌刷新
  */
 @Injectable()
-export class AuthService extends BaseService {
+export class AuthService extends PlatformService {
   constructor(
     private readonly rsaService: RsaService,
     private readonly smsService: SmsService,

@@ -1,5 +1,5 @@
-import { NestedProperty, StringProperty } from '@libs/base/decorators'
-import { CaptchaDto } from '@libs/base/modules'
+import { NestedProperty, StringProperty } from '@libs/platform/decorators'
+import { CaptchaDto } from '@libs/platform/modules'
 import { OmitType } from '@nestjs/swagger'
 import { BaseUserDto } from '../../user/dto/user.dto'
 

@@ -1,5 +1,5 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { BatchOperationResponseDto, IdDto } from '@libs/platform/dto'
 import {
   BaseWorkDto,
   CreateWorkDto,

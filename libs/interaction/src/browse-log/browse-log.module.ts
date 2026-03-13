@@ -5,7 +5,7 @@
  * - 提供浏览记录功能
  * - 集成成长奖励、浏览统计等能力
  */
-import { GrowthLedgerModule } from '@libs/user/growth-ledger'
+import { GrowthLedgerModule } from '@libs/user'
 import { Module } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { BrowseLogGrowthService } from './browse-log-growth.service'

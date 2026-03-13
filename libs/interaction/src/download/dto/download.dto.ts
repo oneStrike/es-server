@@ -1,4 +1,4 @@
-import { ContentTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -7,8 +7,8 @@ import {
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { DownloadTargetTypeEnum } from '../download.constant'
 

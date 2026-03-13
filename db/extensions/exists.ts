@@ -2,6 +2,14 @@ import type { SQL } from 'drizzle-orm'
 import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
 import type { Db } from '../drizzle.provider'
 
+/**
+ * 检查记录是否存在
+ * 根据指定条件查询表中是否存在符合条件的记录
+ * @param db - 数据库连接实例
+ * @param table - 目标表
+ * @param where - 查询条件（可选）
+ * @returns 存在返回 true，不存在返回 false
+ */
 export async function exists(
   db: Db,
   table: PgTable<TableConfig>,

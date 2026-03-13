@@ -1,5 +1,5 @@
 declare module 'fastify' {
-  import type { JwtUserInfoInterface } from '@libs/base/types'
+  import type { JwtUserInfoInterface } from '@libs/platform/types'
 
   import type {
     FastifyRequest as BaseFastifyRequest,

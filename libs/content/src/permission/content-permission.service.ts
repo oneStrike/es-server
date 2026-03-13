@@ -1,5 +1,6 @@
-import { WorkViewPermissionEnum } from '@libs/base/constant'
-import { BaseService, Prisma } from '@libs/base/database'
+import { WorkViewPermissionEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
+// eslint-disable-next-line no-restricted-imports -- avoid circular deps via interaction barrel
 import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
@@ -45,7 +46,7 @@ export interface ChapterAccessResult<T = object> {
  * 5. PURCHASE：需要购买（仅章节）
  */
 @Injectable()
-export class ContentPermissionService extends BaseService {
+export class ContentPermissionService extends PlatformService {
   get appUser() {
     return this.prisma.appUser
   }

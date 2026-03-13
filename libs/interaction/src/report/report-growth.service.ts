@@ -1,9 +1,9 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-} from '@libs/user/growth-ledger'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
+} from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/user'
 import { Injectable } from '@nestjs/common'
 import { refreshUserLevelByExperience } from '../user-level.helper'
 import {
@@ -12,7 +12,7 @@ import {
 } from './report.constant'
 
 @Injectable()
-export class ReportGrowthService extends BaseService {
+export class ReportGrowthService extends PlatformService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }

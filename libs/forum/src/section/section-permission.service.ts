@@ -1,5 +1,5 @@
 import type { Permission } from './section-permission.types'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import { ForumModeratorPermissionEnum } from '../moderator/moderator.constant'
 
@@ -8,7 +8,7 @@ import { ForumModeratorPermissionEnum } from '../moderator/moderator.constant'
  * 提供版主板块权限的计算、分配、移除、检查等核心业务逻辑
  */
 @Injectable()
-export class ForumSectionPermissionService extends BaseService {
+export class ForumSectionPermissionService extends PlatformService {
   constructor() {
     super()
   }

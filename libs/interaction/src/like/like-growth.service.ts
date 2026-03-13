@@ -1,9 +1,9 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-} from '@libs/user/growth-ledger'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
+} from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/user'
 import { Injectable } from '@nestjs/common'
 import { refreshUserLevelByExperience } from '../user-level.helper'
 import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
@@ -26,7 +26,7 @@ import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
  * - 评论被点赞 → COMMENT_LIKED
  */
 @Injectable()
-export class LikeGrowthService extends BaseService {
+export class LikeGrowthService extends PlatformService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }

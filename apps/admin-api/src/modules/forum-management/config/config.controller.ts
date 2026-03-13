@@ -1,14 +1,14 @@
-import type { JwtUserInfoInterface } from '@libs/base/types'
+import type { JwtUserInfoInterface } from '@libs/platform/types'
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc } from '@libs/base/decorators'
-import { CurrentUser } from '@libs/base/decorators/current-user.decorator'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc } from '@libs/platform/decorators'
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { IdDto } from '@libs/platform/dto'
 import {
   BaseForumConfigDto,
   ForumConfigHistoryItemDto,
   ForumConfigService,
   UpdateForumConfigDto,
-} from '@libs/forum/config'
+} from '@libs/forum'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

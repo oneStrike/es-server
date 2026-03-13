@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import {
   GrowthAssetTypeEnum,
@@ -31,7 +31,7 @@ interface RewardTaskCompleteParams {
  * 设计原则：奖励失败不影响主业务流程
  */
 @Injectable()
-export class UserGrowthRewardService extends BaseService {
+export class UserGrowthRewardService extends PlatformService {
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly levelRuleService: UserLevelRuleService,

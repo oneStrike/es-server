@@ -4,7 +4,7 @@
  * 包含用户中心相关的所有数据传输对象
  * 尽量复用项目中已有的 DTO 定义
  */
-import { UserStatusEnum } from '@libs/base/constant'
+import { UserStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -12,10 +12,10 @@ import {
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseUserBadgeDto, QueryUserBadgeDto } from '@libs/user/badge'
-import { QueryUserExperienceRecordDto } from '@libs/user/experience'
-import { BaseUserLevelRuleDto } from '@libs/user/level-rule'
+} from '@libs/platform/decorators'
+import { BaseUserBadgeDto, QueryUserBadgeDto } from '@libs/user'
+import { QueryUserExperienceRecordDto } from '@libs/user'
+import { BaseUserLevelRuleDto } from '@libs/user'
 import { OmitType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseAppUserDto } from '../../auth/dto/auth.dto'
 
@@ -610,4 +610,4 @@ export class UserBadgeItemDto {
 }
 
 // 重新导出项目中已有的等级信息 DTO，方便使用
-export { UserLevelInfoDto } from '@libs/user/level-rule'
+export { UserLevelInfoDto } from '@libs/user'

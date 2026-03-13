@@ -25,8 +25,10 @@ export * from './dto/target.dto'
 
 // favorite
 export * from './favorite/dto/favorite.dto'
+export * from './favorite/favorite.constant'
 export * from './favorite/favorite.module'
 export * from './favorite/favorite.service'
+export * from './favorite/interfaces/favorite-target-resolver.interface'
 export * from './interaction-target-access.service'
 
 export * from './interaction-target-growth-rule'
@@ -35,11 +37,14 @@ export * from './interaction-target.definition'
 
 // like
 export * from './like/dto/like.dto'
+export * from './like/interfaces/like-target-resolver.interface'
+export * from './like/like.constant'
 export * from './like/like.module'
 export * from './like/like.service'
 
 // purchase
 export * from './purchase/dto/purchase.dto'
+export * from './purchase/purchase.constant'
 export * from './purchase/purchase.module'
 export * from './purchase/purchase.service'
 // reading state
@@ -51,5 +56,7 @@ export * from './reading-state/reading-state.service'
 export * from './report/dto/report-app.dto'
 
 export * from './report/dto/report.dto'
+export * from './report/interfaces/report-target-resolver.interface'
+export * from './report/report.constant'
 export * from './report/report.module'
 export * from './report/report.service'

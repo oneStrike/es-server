@@ -1,7 +1,7 @@
-import type { JwtUserInfoInterface } from '@libs/base/types'
+import type { JwtUserInfoInterface } from '@libs/platform/types'
 
-import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

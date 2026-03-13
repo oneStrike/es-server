@@ -1,4 +1,4 @@
-import { GenderEnum, UserStatusEnum } from '@libs/base/constant'
+import { GenderEnum, UserStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -6,9 +6,9 @@ import {
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto } from '@libs/base/dto'
-import { CheckVerifyCodeDto } from '@libs/base/modules'
+} from '@libs/platform/decorators'
+import { BaseDto } from '@libs/platform/dto'
+import { CheckVerifyCodeDto } from '@libs/platform/modules'
 import {
   IntersectionType,
   OmitType,

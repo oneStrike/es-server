@@ -1,4 +1,4 @@
-import { WorkModule } from '@libs/content/work'
+import { WorkModule } from '@libs/content'
 import { Module } from '@nestjs/common'
 import { NovelChapterCommentController } from './novel-chapter-comment.controller'
 import { NovelChapterController } from './novel-chapter.controller'

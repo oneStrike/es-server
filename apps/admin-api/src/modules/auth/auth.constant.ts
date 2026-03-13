@@ -1,7 +1,7 @@
 /**
  * 管理端认证模块常量
  */
-import { AuthConstants, createAuthRedisKeys } from '@libs/base/modules/auth'
+import { AuthConstants, createAuthRedisKeys } from '@libs/platform/modules/auth'
 
 export enum CacheKey {
   /** 登录验证码 Key 前缀 */

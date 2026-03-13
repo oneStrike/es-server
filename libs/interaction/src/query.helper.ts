@@ -1,4 +1,4 @@
-import { Prisma } from '@libs/base/database'
+import { Prisma } from '@libs/platform/database'
 
 export interface NormalizedPagination {
   pageIndex: number

@@ -1,11 +1,12 @@
-import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
-import { BaseService, Prisma } from '@libs/base/database'
+import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
+// eslint-disable-next-line no-restricted-imports -- avoid circular deps via content barrel
 import { ContentPermissionService } from '@libs/content/permission'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerService,
-} from '@libs/user/growth-ledger'
+} from '@libs/user'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   buildCreatedAtSqlFilter,
@@ -25,7 +26,7 @@ import {
 } from './purchase.constant'
 
 @Injectable()
-export class PurchaseService extends BaseService {
+export class PurchaseService extends PlatformService {
   private readonly logger = new Logger(PurchaseService.name)
 
   constructor(

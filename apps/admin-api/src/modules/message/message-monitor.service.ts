@@ -2,12 +2,12 @@ import type {
   QueryMessageOutboxMonitorDto,
   QueryMessageWsMonitorDto,
 } from './dto/message-monitor.dto'
-import { BaseService, Prisma } from '@libs/base/database'
-import { MessageOutboxStatusEnum } from '@libs/message/outbox/outbox.constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
+import { MessageOutboxStatusEnum } from '@libs/message'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()
-export class MessageMonitorService extends BaseService {
+export class MessageMonitorService extends PlatformService {
   async getOutboxMonitorSummary(query: QueryMessageOutboxMonitorDto) {
     const now = new Date()
     const windowHours = this.normalizeWindowHours(query.windowHours)

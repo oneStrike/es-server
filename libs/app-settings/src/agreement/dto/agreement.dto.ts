@@ -1,0 +1,111 @@
+import {
+  BooleanProperty,
+  DateProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
+
+/**
+ * 协议基础DTO
+ */
+export class BaseAgreementDto extends BaseDto {
+  @StringProperty({
+    description: '协议标题',
+    example: '隐私政策',
+    required: true,
+    maxLength: 50,
+  })
+  title!: string
+
+  @StringProperty({
+    description: '协议内容',
+    example: '<p>...</p>',
+    required: true,
+  })
+  content!: string
+
+  @StringProperty({
+    description: '版本号',
+    example: '1.0.0',
+    required: true,
+    maxLength: 50,
+  })
+  version!: string
+
+  @BooleanProperty({
+    description: '是否强制重新同意',
+    example: false,
+    required: false,
+    default: false,
+  })
+  isForce?: boolean
+
+  @BooleanProperty({
+    description: '是否展示在登录注册页',
+    example: false,
+    required: false,
+    default: false,
+  })
+  showInAuth?: boolean
+
+  @BooleanProperty({
+    description: '是否已发布',
+    example: false,
+    required: false,
+    default: false,
+  })
+  isPublished?: boolean
+
+  @DateProperty({
+    description: '发布时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+  })
+  publishedAt?: Date
+}
+
+/**
+ * 创建协议DTO
+ */
+export class CreateAgreementDto extends OmitType(BaseAgreementDto, [
+  ...OMIT_BASE_FIELDS,
+  'publishedAt',
+]) {}
+
+/**
+ * 更新协议DTO
+ */
+export class UpdateAgreementDto extends IntersectionType(
+  CreateAgreementDto,
+  IdDto,
+) {}
+
+/**
+ * 查询协议DTO
+ */
+export class QueryAgreementDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseAgreementDto, ['title', 'isPublished', 'showInAuth']),
+  ),
+) {}
+
+/**
+ * 列表或者分页响应dto
+ */
+export class ListOrPageAgreementResponseDto extends PickType(BaseAgreementDto, [
+  'content',
+]) {}
+
+/**
+ * 查询所有已发布的协议
+ */
+export class QueryPublishedAgreementDto extends PickType(BaseAgreementDto, [
+  'showInAuth',
+]) {}

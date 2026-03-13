@@ -172,8 +172,8 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "^@libs/app-config(|/.*)$": "<rootDir>/libs/app-config/src/$1",
-      "^@libs/base(|/.*)$": "<rootDir>/libs/base/src/$1",
+      "^@libs/app-settings(|/.*)$": "<rootDir>/libs/app-settings/src/$1",
+      "^@libs/platform(|/.*)$": "<rootDir>/libs/platform/src/$1",
       "^@libs/content(|/.*)$": "<rootDir>/libs/content/src/$1",
       "^@libs/dictionary(|/.*)$": "<rootDir>/libs/dictionary/src/$1",
       "^@libs/forum(|/.*)$": "<rootDir>/libs/forum/src/$1",

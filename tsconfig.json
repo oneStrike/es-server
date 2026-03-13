@@ -13,17 +13,17 @@
       "@db/*": [
         "db/*"
       ],
-      "@libs/base": [
-        "libs/base/src"
+      "@libs/platform": [
+        "libs/platform/src"
       ],
-      "@libs/base/*": [
-        "libs/base/src/*"
+      "@libs/platform/*": [
+        "libs/platform/src/*"
       ],
-      "@libs/app-config": [
-        "libs/app-config/src"
+      "@libs/app-settings": [
+        "libs/app-settings/src"
       ],
-      "@libs/app-config/*": [
-        "libs/app-config/src/*"
+      "@libs/app-settings/*": [
+        "libs/app-settings/src/*"
       ],
       "@libs/dictionary": [
         "libs/dictionary/src"
@@ -106,6 +106,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "libs/base/src/database/prisma-client/**/*"
+    "libs/platform/src/database/prisma-client/**/*"
   ]
 }

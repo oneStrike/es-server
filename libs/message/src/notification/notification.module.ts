@@ -1,4 +1,4 @@
-import { JwtAuthModule } from '@libs/base/modules/auth'
+import { JwtAuthModule } from '@libs/platform/modules/auth'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { MessageInboxModule } from '../inbox/inbox.module'

@@ -1,6 +1,6 @@
-import type { ForumConfig } from '@libs/base/database'
+import type { ForumConfig } from '@libs/platform/database'
 import type { Cache } from 'cache-manager'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import {
@@ -15,7 +15,7 @@ import { DEFAULT_FORUM_CONFIG } from './forum-config.constant'
  * 负责论坛配置的读取与缓存失效处理
  */
 @Injectable()
-export class ForumConfigCacheService extends BaseService {
+export class ForumConfigCacheService extends PlatformService {
   private readonly logger = new Logger(ForumConfigCacheService.name)
 
   private pendingRequests = new Map<string, Promise<ForumConfig>>()

@@ -1,4 +1,4 @@
-import { UserGrowthRewardModule } from '@libs/user/growth-reward'
+import { UserGrowthRewardModule } from '@libs/user'
 import { Module } from '@nestjs/common'
 import { TaskService } from './task.service'
 

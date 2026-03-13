@@ -1,10 +1,10 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import {
   BatchOperationResponseDto,
   DragReorderDto,
   IdDto,
   UpdateEnabledStatusDto,
-} from '@libs/base/dto'
+} from '@libs/platform/dto'
 import {
   BaseDictionaryDto,
   BaseDictionaryItemDto,

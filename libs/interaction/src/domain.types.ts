@@ -8,7 +8,7 @@ import type {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
   SceneTypeEnum,
-} from '@libs/base/constant'
+} from '@libs/platform/constant'
 import type {
   ReportReasonEnum,
   ReportStatusEnum,

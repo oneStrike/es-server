@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 
 import {
   BadRequestException,
@@ -18,7 +18,7 @@ import {
  * 提供对论坛标签的增删改查、标签与主题的关联管理等操作
  */
 @Injectable()
-export class ForumTagService extends BaseService {
+export class ForumTagService extends PlatformService {
   /**
    * 获取标签的 Prisma 模型
    */

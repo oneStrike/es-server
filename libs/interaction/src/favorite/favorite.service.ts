@@ -1,4 +1,4 @@
-import { BaseService, UserFavorite } from '@libs/base/database'
+import { PlatformService, UserFavorite } from '@libs/platform/database'
 import { MessageOutboxService } from '@libs/message'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { FavoritePageQueryDto } from './dto/favorite.dto'
@@ -11,7 +11,7 @@ import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.i
  * 提供收藏、取消收藏、查询收藏状态等核心业务逻辑
  */
 @Injectable()
-export class FavoriteService extends BaseService {
+export class FavoriteService extends PlatformService {
   /** 用户收藏 Prisma 代理 */
   get userFavorite() {
     return this.prisma.userFavorite

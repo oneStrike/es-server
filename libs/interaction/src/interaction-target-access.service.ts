@@ -1,5 +1,5 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import { InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import {
   BadRequestException,
   Injectable,
@@ -36,10 +36,10 @@ type SelectShape = Record<string, boolean>
  * - 统一目标查询策略，保证一致性和可维护性
  * - 通过定义文件 INTERACTION_TARGET_DEFINITIONS 实现配置化
  *
- * @extends BaseService
+ * @extends PlatformService
  */
 @Injectable()
-export class InteractionTargetAccessService extends BaseService {
+export class InteractionTargetAccessService extends PlatformService {
   /**
    * 获取目标类型对应的 Prisma 模型代理
    *

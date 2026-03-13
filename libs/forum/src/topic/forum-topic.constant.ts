@@ -1,5 +1,5 @@
 /**
  * 主题审核状态枚举
  */
-// 从 libs/base 重新导出
-export { AuditRoleEnum, AuditStatusEnum } from '@libs/base/constant'
+// 从 libs/platform 重新导出
+export { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'

@@ -2,8 +2,8 @@ import {
   EnumProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,

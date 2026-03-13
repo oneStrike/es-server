@@ -1,4 +1,4 @@
-import type { Prisma } from '@libs/base/database'
+import type { Prisma } from '@libs/platform/database'
 
 /**
  * 作品权限结果选择器（包含关联的等级信息）

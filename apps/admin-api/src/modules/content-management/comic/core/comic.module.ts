@@ -1,4 +1,4 @@
-import { WorkModule } from '@libs/content/work/core'
+import { WorkModule } from '@libs/content'
 import { Module } from '@nestjs/common'
 import { ComicController } from './comic.controller'
 

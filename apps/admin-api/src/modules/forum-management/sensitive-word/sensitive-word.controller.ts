@@ -1,5 +1,5 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BaseSensitiveWordDto,
   CreateSensitiveWordDto,

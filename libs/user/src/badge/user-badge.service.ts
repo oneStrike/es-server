@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   BadRequestException,
   Injectable,
@@ -12,7 +12,7 @@ import {
 } from './dto/user-badge.dto'
 
 @Injectable()
-export class UserBadgeService extends BaseService {
+export class UserBadgeService extends PlatformService {
   get userBadge() {
     return this.prisma.userBadge
   }

@@ -2,8 +2,8 @@ import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
   SceneTypeEnum,
-} from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { InteractionTargetAccessService } from './interaction-target-access.service'
 import {
@@ -27,7 +27,7 @@ export interface ResolvedReportTargetMeta {
 }
 
 @Injectable()
-export class InteractionTargetResolverService extends BaseService {
+export class InteractionTargetResolverService extends PlatformService {
   constructor(
     private readonly interactionTargetAccessService: InteractionTargetAccessService,
   ) {

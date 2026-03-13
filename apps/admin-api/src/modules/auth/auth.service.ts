@@ -1,18 +1,18 @@
 import type { FastifyRequest } from 'fastify'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 
-import { CaptchaService, RsaService, ScryptService } from '@libs/base/modules'
+import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthService as BaseAuthService,
   LoginGuardService,
-} from '@libs/base/modules/auth'
+} from '@libs/platform/modules/auth'
 
 import {
   extractIpAddress,
   extractUserAgent,
   isProduction,
   parseDeviceInfo,
-} from '@libs/base/utils'
+} from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { AuthConstants, AuthRedisKeys, CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
@@ -22,7 +22,7 @@ import { AdminTokenStorageService } from './token-storage.service'
  * 管理端认证服务
  */
 @Injectable()
-export class AuthService extends BaseService {
+export class AuthService extends PlatformService {
   get adminUser() {
     return this.prisma.adminUser
   }

@@ -2,9 +2,9 @@ import {
   AuditStatusEnum,
   InteractionTargetTypeEnum,
   UserStatusEnum,
-} from '@libs/base/constant'
+} from '@libs/platform/constant'
 
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -14,8 +14,8 @@ import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { UserGrowthRewardService } from '@libs/user/growth-reward'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
+import { UserGrowthRewardService } from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/user'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
@@ -30,7 +30,7 @@ import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
  * 提供论坛回复的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ForumReplyService extends BaseService {
+export class ForumReplyService extends PlatformService {
   constructor(
     private readonly messageOutboxService: MessageOutboxService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,

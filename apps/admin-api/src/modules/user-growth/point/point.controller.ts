@@ -1,12 +1,12 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import {
   BaseUserPointRuleDto,
   CreateUserPointRuleDto,
   QueryUserPointRuleDto,
   UpdateUserPointRuleDto,
   UserPointRuleService,
-} from '@libs/user/point'
+} from '@libs/user'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

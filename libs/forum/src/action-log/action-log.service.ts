@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
 import {
@@ -11,7 +11,7 @@ import {
  * 提供用户操作日志的记录、查询等核心业务逻辑
  */
 @Injectable()
-export class ForumUserActionLogService extends BaseService {
+export class ForumUserActionLogService extends PlatformService {
   get forumUserActionLog() {
     return this.prisma.forumUserActionLog
   }

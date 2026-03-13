@@ -1,5 +1,5 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { EnumProperty, NumberProperty } from '@libs/base/decorators'
+import { InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { EnumProperty, NumberProperty } from '@libs/platform/decorators'
 import { ReportTargetTypeEnum } from '../report/report.constant'
 
 /**

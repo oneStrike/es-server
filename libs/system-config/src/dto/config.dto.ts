@@ -1,12 +1,12 @@
-import { AuditStatusEnum } from '@libs/base/constant'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { IntersectionType } from '@nestjs/swagger'
 
 // ============================================================================

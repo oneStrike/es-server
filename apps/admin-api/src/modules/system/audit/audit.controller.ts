@@ -1,4 +1,4 @@
-import { ApiPageDoc } from '@libs/base/decorators'
+import { ApiPageDoc } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuditService } from './audit.service'

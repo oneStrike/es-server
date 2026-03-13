@@ -1,5 +1,5 @@
-import { CaptchaService } from '@libs/base/modules'
-import { AuthCronService, AuthStrategy } from '@libs/base/modules/auth'
+import { CaptchaService } from '@libs/platform/modules'
+import { AuthCronService, AuthStrategy } from '@libs/platform/modules/auth'
 import { Module } from '@nestjs/common'
 import { AuditModule } from '../system/audit/audit.module'
 import { AuthController } from './auth.controller'

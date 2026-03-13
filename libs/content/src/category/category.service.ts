@@ -1,6 +1,6 @@
-import type { WorkCategoryWhereInput } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
-import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
+import type { WorkCategoryWhereInput } from '@libs/platform/database'
+import { PlatformService } from '@libs/platform/database'
+import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateCategoryDto,
@@ -9,7 +9,7 @@ import {
 } from './dto/category.dto'
 
 @Injectable()
-export class WorkCategoryService extends BaseService {
+export class WorkCategoryService extends PlatformService {
   get workCategory() {
     return this.prisma.workCategory
   }

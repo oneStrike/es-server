@@ -1,12 +1,12 @@
-import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
-import { BaseService, Prisma } from '@libs/base/database'
+import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
-import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { SensitiveWordLevelEnum } from '@libs/sensitive-word'
+import { SensitiveWordDetectService } from '@libs/sensitive-word'
 import { ConfigReader } from '@libs/system-config'
 import {
   BadRequestException,
@@ -32,7 +32,7 @@ interface VisibleCommentPayload {
 }
 
 @Injectable()
-export class CommentService extends BaseService {
+export class CommentService extends PlatformService {
   constructor(
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly configReader: ConfigReader,

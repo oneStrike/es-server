@@ -1,14 +1,14 @@
 import {
   AuditStatusEnum,
   InteractionTargetTypeEnum,
-} from '@libs/base/constant'
+} from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, PageDto, UserIdDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   PartialType,

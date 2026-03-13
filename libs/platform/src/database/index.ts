@@ -1,0 +1,6 @@
+export * from '../../../../prisma/prismaClient/client'
+export * from '../../../../prisma/prismaClient/models'
+export * from './platform.service'
+export * from './prisma.service'
+export * from './prisma.types'
+export * from 'nestjs-prisma/dist/custom'

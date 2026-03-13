@@ -1,8 +1,8 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
-import { FileUploadResponseDto } from '@libs/base/modules/upload'
-import { ComicContentService, DeleteComicContentDto, MoveComicContentDto, UpdateComicContentDto, UploadContentDto } from '@libs/content/work/content'
+import { ApiDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { FileUploadResponseDto } from '@libs/platform/modules/upload'
+import { ComicContentService, DeleteComicContentDto, MoveComicContentDto, UpdateComicContentDto, UploadContentDto } from '@libs/content'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

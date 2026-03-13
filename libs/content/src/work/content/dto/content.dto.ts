@@ -2,7 +2,7 @@ import {
   ArrayProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
+} from '@libs/platform/decorators'
 
 /// 章节ID基础DTO
 export class ChapterIdDto {

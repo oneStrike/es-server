@@ -1,4 +1,4 @@
-import { BooleanProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
+import { BooleanProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 import {
   MatchModeEnum,
   SensitiveWordLevelEnum,

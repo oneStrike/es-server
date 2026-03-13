@@ -1,4 +1,4 @@
-import type { Prisma } from '@libs/base/database'
+import type { Prisma } from '@libs/platform/database'
 import type {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,

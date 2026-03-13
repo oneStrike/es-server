@@ -1,10 +1,10 @@
-import type { PrismaTransactionClientType } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
+import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
-} from '@libs/interaction/favorite'
+} from '@libs/interaction'
 
 import {
   MessageNotificationTypeEnum,
@@ -18,7 +18,7 @@ import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class ForumTopicFavoriteResolver
-  extends BaseService
+  extends PlatformService
   implements IFavoriteTargetResolver, OnModuleInit
 {
   /** 目标类型：论坛主题 */

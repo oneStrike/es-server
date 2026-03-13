@@ -3,7 +3,7 @@ import type {
   ApplyRuleParams,
   GrowthLedgerApplyResult,
 } from './growth-ledger.types'
-import { BaseService, Prisma } from '@libs/base/database'
+import { PlatformService, Prisma } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import {
   GrowthAssetTypeEnum,
@@ -22,7 +22,7 @@ type Tx = any
  * 3. 通过 growth_rule_usage_slot 做并发限流占位
  */
 @Injectable()
-export class GrowthLedgerService extends BaseService {
+export class GrowthLedgerService extends PlatformService {
   /**
    * 按规则结算（发放）
    *

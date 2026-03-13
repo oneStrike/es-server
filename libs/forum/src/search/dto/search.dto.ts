@@ -3,8 +3,8 @@ import {
   EnumProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto'
 import { OmitType } from '@nestjs/swagger'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant'
 

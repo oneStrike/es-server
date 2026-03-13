@@ -1,5 +1,5 @@
 import type { QueryInboxTimelineDto } from './dto/inbox.dto'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 
 /**
@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common'
  * 提供收件箱摘要和时间线功能
  */
 @Injectable()
-export class MessageInboxService extends BaseService {
+export class MessageInboxService extends PlatformService {
   /**
    * 获取用户收件箱摘要
    * 包含通知未读数、聊天未读数、最新通知和最新聊天

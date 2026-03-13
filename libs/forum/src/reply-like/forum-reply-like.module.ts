@@ -1,4 +1,4 @@
-import { UserGrowthRewardModule } from '@libs/user/growth-reward'
+import { UserGrowthRewardModule } from '@libs/user'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumReplyLikeService } from './forum-reply-like.service'

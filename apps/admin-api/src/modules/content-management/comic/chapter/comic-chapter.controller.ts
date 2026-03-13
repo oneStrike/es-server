@@ -1,12 +1,12 @@
-import { ContentTypeEnum } from '@libs/base/constant'
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { DragReorderDto, IdDto } from '@libs/base/dto'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { DragReorderDto, IdDto } from '@libs/platform/dto'
 import {
   CreateWorkChapterDto,
   QueryWorkChapterDto,
   UpdateWorkChapterDto,
   WorkChapterService,
-} from '@libs/content/work/chapter'
+} from '@libs/content'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

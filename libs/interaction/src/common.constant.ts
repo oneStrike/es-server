@@ -8,7 +8,7 @@ export {
   AuditStatusEnum,
   AuditStatusNames,
   InteractionActionType,
-} from '@libs/base/constant'
+} from '@libs/platform/constant'
 export {
   ReportStatusEnum,
   ReportStatusNames,

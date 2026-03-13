@@ -1,9 +1,9 @@
-import type { Prisma } from '@libs/base/database'
+import type { Prisma } from '@libs/platform/database'
 import type {
   CreateMessageOutboxEventDto,
   CreateNotificationOutboxEventDto,
 } from './dto/outbox-event.dto'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import {
   MessageOutboxDomainEnum,
@@ -15,7 +15,7 @@ import {
  * 提供消息事件的入队功能，实现发件箱模式
  */
 @Injectable()
-export class MessageOutboxService extends BaseService {
+export class MessageOutboxService extends PlatformService {
   /**
    * 将消息事件入队
    * @param dto 消息事件数据

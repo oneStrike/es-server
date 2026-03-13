@@ -1,4 +1,4 @@
-import { GenderEnum, UserStatusEnum } from '@libs/base/constant'
+import { GenderEnum, UserStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -6,18 +6,18 @@ import {
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
-import { BaseUserBadgeDto, QueryUserBadgeDto } from '@libs/user/badge'
+} from '@libs/platform/decorators'
+import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseUserBadgeDto, QueryUserBadgeDto } from '@libs/user'
 import {
   AddUserExperienceDto,
   QueryUserExperienceRecordDto,
-} from '@libs/user/experience'
+} from '@libs/user'
 import {
   AddUserPointsDto,
   ConsumeUserPointsDto,
   QueryUserPointRecordDto,
-} from '@libs/user/point'
+} from '@libs/user'
 import {
   IntersectionType,
   PartialType,

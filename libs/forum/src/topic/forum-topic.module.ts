@@ -1,7 +1,7 @@
 import { FavoriteModule, ReportModule } from '@libs/interaction'
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
-import { UserGrowthRewardModule } from '@libs/user/growth-reward'
+import { UserGrowthRewardModule } from '@libs/user'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'

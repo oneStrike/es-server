@@ -1,7 +1,7 @@
-import type { WorkWhereInput } from '@libs/base/database'
-import { ContentTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { isNotNil } from '@libs/base/utils'
+import type { WorkWhereInput } from '@libs/platform/database'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { isNotNil } from '@libs/platform/utils'
 import {
   BrowseLogService,
   FavoriteService,
@@ -39,7 +39,7 @@ interface WorkDetailContext {
  * 同时处理与作品相关的用户交互（点赞、收藏、浏览）
  */
 @Injectable()
-export class WorkService extends BaseService {
+export class WorkService extends PlatformService {
   get work() {
     return this.prisma.work
   }

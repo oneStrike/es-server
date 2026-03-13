@@ -1,4 +1,4 @@
-import type { SensitiveWord } from '@libs/base/database'
+import type { SensitiveWord } from '@libs/platform/database'
 import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import type { FuzzyMatchResult, MatchResult } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'

@@ -702,12 +702,12 @@ import {
   InteractionTargetTypeEnum,
   ReportReasonTypeEnum,
   ReportTargetTypeEnum,
-} from '@libs/base/constant'
+} from '@libs/platform/constant'
 import {
   EnumProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
+} from '@libs/platform/decorators'
 import { IntersectionType } from '@nestjs/swagger'
 
 /**

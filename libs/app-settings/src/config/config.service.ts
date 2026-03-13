@@ -1,0 +1,57 @@
+import { PlatformService } from '@libs/platform/database'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { DEFAULT_APP_CONFIG } from './config.constant'
+import {
+  UpdateAppConfigDto,
+} from './dto/config.dto'
+
+/**
+ * 应用配置服务
+ * 提供应用配置的创建、查询、更新等功能
+ */
+@Injectable()
+export class AppConfigService extends PlatformService {
+  get appConfig() {
+    return this.prisma.appConfig
+  }
+
+  constructor() {
+    super()
+  }
+
+  /**
+   * 获取最新应用配置
+   * @returns 最新版本的应用配置
+   */
+  async findActiveConfig() {
+    const config = await this.appConfig.findUnique({
+      where: { id: 1 },
+    })
+    if (!config) {
+      return this.appConfig.create({
+        data: DEFAULT_APP_CONFIG,
+      })
+    }
+    return config
+  }
+
+  /**
+   * 更新应用配置
+   * @param updateConfigDto 更新数据
+   * @returns 更新后的应用配置
+   */
+  async updateConfig(updateConfigDto: UpdateAppConfigDto) {
+    const existingConfig = await this.appConfig.findUnique({
+      where: { id: 1 },
+    })
+
+    if (!existingConfig) {
+      throw new BadRequestException('应用配置不存在')
+    }
+
+    return this.appConfig.update({
+      where: { id: 1 },
+      data: updateConfigDto,
+    })
+  }
+}

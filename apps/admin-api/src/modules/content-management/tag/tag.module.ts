@@ -1,4 +1,4 @@
-import { WorkTagModule as WorkTagModuleLib } from '@libs/content/tag'
+import { WorkTagModule as WorkTagModuleLib } from '@libs/content'
 import { Module } from '@nestjs/common'
 import { WorkTagController } from './tag.controller'
 

@@ -1,4 +1,4 @@
-import { WorkModule as WorkCoreModule } from '@libs/content/work/core'
+import { WorkModule as WorkCoreModule } from '@libs/content'
 import { Module } from '@nestjs/common'
 import { WorkChapterController } from './work-chapter.controller'
 import { WorkDownloadController } from './work-download.controller'

@@ -1,16 +1,16 @@
 import type {
   ForumTopicCreateInput,
   ForumTopicWhereInput,
-} from '@libs/base/database'
-import { AuditStatusEnum, UserStatusEnum } from '@libs/base/constant'
+} from '@libs/platform/database'
+import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
 
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { UserGrowthRewardService } from '@libs/user/growth-reward'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
+import { UserGrowthRewardService } from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/user'
 
 import {
   BadRequestException,
@@ -41,7 +41,7 @@ import {
  * 提供论坛主题的增删改查、置顶、精华、锁定等核心业务逻辑
  */
 @Injectable()
-export class ForumTopicService extends BaseService {
+export class ForumTopicService extends PlatformService {
   constructor(
     private readonly userGrowthRewardService: UserGrowthRewardService,
     private readonly forumConfigCacheService: ForumConfigCacheService,

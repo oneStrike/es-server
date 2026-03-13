@@ -1,5 +1,6 @@
-import { BaseService } from '@libs/base/database'
+import { DrizzleService } from '@db/drizzle.service'
 import { Injectable, Logger } from '@nestjs/common'
+import { and, desc, eq, gte, gt, isNotNull, sql } from 'drizzle-orm'
 import {
   SensitiveWordLevelStatisticsDto,
   SensitiveWordRecentHitStatisticsDto,
@@ -17,11 +18,19 @@ import {
  * 提供敏感词数量、命中与分类统计能力
  */
 @Injectable()
-export class SensitiveWordStatisticsService extends BaseService {
+export class SensitiveWordStatisticsService {
   private readonly logger = new Logger(SensitiveWordStatisticsService.name)
 
-  get sensitiveWord() {
-    return this.prisma.sensitiveWord
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  /** 数据库连接实例 */
+  private get db() {
+    return this.drizzle.db
+  }
+
+  /** 敏感词表 */
+  private get sensitiveWord() {
+    return this.drizzle.schema.sensitiveWord
   }
 
   /**
@@ -76,7 +85,10 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 敏感词总数
    */
   private async getTotalWords(): Promise<number> {
-    return this.sensitiveWord.count()
+    const [result] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(this.sensitiveWord)
+    return Number(result?.count ?? 0)
   }
 
   /**
@@ -84,11 +96,11 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 启用的敏感词数量
    */
   private async getEnabledWords(): Promise<number> {
-    return this.sensitiveWord.count({
-      where: {
-        isEnabled: true,
-      },
-    })
+    const [result] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(this.sensitiveWord)
+      .where(eq(this.sensitiveWord.isEnabled, true))
+    return Number(result?.count ?? 0)
   }
 
   /**
@@ -96,11 +108,11 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 禁用的敏感词数量
    */
   private async getDisabledWords(): Promise<number> {
-    return this.sensitiveWord.count({
-      where: {
-        isEnabled: false,
-      },
-    })
+    const [result] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(this.sensitiveWord)
+      .where(eq(this.sensitiveWord.isEnabled, false))
+    return Number(result?.count ?? 0)
   }
 
   /**
@@ -109,13 +121,10 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 总命中次数
    */
   private async getTotalHits(): Promise<number> {
-    const result = await this.sensitiveWord.aggregate({
-      _sum: {
-        hitCount: true,
-      },
-    })
-
-    return result._sum.hitCount || 0
+    const [result] = await this.db
+      .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
+      .from(this.sensitiveWord)
+    return Number(result?.sum ?? 0)
   }
 
   /**
@@ -125,18 +134,11 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 命中次数
    */
   private async getHitsInDateRange(startDate: Date): Promise<number> {
-    const result = await this.sensitiveWord.aggregate({
-      where: {
-        lastHitAt: {
-          gte: startDate,
-        },
-      },
-      _sum: {
-        hitCount: true,
-      },
-    })
-
-    return result._sum.hitCount || 0
+    const [result] = await this.db
+      .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
+      .from(this.sensitiveWord)
+      .where(gte(this.sensitiveWord.lastHitAt, startDate))
+    return Number(result?.sum ?? 0)
   }
 
   /**
@@ -178,21 +180,20 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 级别统计列表
    */
   private async getLevelStatistics(): Promise<SensitiveWordLevelStatisticsDto[]> {
-    const results = await this.sensitiveWord.groupBy({
-      by: ['level'],
-      _count: {
-        id: true,
-      },
-      _sum: {
-        hitCount: true,
-      },
-    })
+    const results = await this.db
+      .select({
+        level: this.sensitiveWord.level,
+        count: sql<number>`count(*)`,
+        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+      })
+      .from(this.sensitiveWord)
+      .groupBy(this.sensitiveWord.level)
 
     return results.map((result) => ({
       level: result.level,
       levelName: SensitiveWordLevelNames[result.level] || '未知',
-      count: result._count.id,
-      hitCount: result._sum.hitCount || 0,
+      count: Number(result.count),
+      hitCount: Number(result.hitCount) || 0,
     }))
   }
 
@@ -202,21 +203,20 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 类型统计列表
    */
   private async getTypeStatistics(): Promise<SensitiveWordTypeStatisticsDto[]> {
-    const results = await this.sensitiveWord.groupBy({
-      by: ['type'],
-      _count: {
-        id: true,
-      },
-      _sum: {
-        hitCount: true,
-      },
-    })
+    const results = await this.db
+      .select({
+        type: this.sensitiveWord.type,
+        count: sql<number>`count(*)`,
+        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+      })
+      .from(this.sensitiveWord)
+      .groupBy(this.sensitiveWord.type)
 
     return results.map((result) => ({
       type: result.type,
       typeName: SensitiveWordTypeNames[result.type] || '未知',
-      count: result._count.id,
-      hitCount: result._sum.hitCount || 0,
+      count: Number(result.count),
+      hitCount: Number(result.hitCount) || 0,
     }))
   }
 
@@ -226,24 +226,18 @@ export class SensitiveWordStatisticsService extends BaseService {
    * @returns 热门敏感词列表
    */
   private async getTopHitWords(): Promise<SensitiveWordTopHitStatisticsDto[]> {
-    const results = await this.sensitiveWord.findMany({
-      where: {
-        hitCount: {
-          gt: 0,
-        },
-      },
-      orderBy: {
-        hitCount: 'desc',
-      },
-      take: 20,
-      select: {
-        word: true,
-        hitCount: true,
-        level: true,
-        type: true,
-        lastHitAt: true,
-      },
-    })
+    const results = await this.db
+      .select({
+        word: this.sensitiveWord.word,
+        hitCount: this.sensitiveWord.hitCount,
+        level: this.sensitiveWord.level,
+        type: this.sensitiveWord.type,
+        lastHitAt: this.sensitiveWord.lastHitAt,
+      })
+      .from(this.sensitiveWord)
+      .where(gt(this.sensitiveWord.hitCount, 0))
+      .orderBy(desc(this.sensitiveWord.hitCount))
+      .limit(20)
 
     return results.map((result) => ({
       word: result.word,
@@ -262,24 +256,18 @@ export class SensitiveWordStatisticsService extends BaseService {
   private async getRecentHitWords(): Promise<
     SensitiveWordRecentHitStatisticsDto[]
   > {
-    const results = await this.sensitiveWord.findMany({
-      where: {
-        lastHitAt: {
-          not: null,
-        },
-      },
-      orderBy: {
-        lastHitAt: 'desc',
-      },
-      take: 20,
-      select: {
-        word: true,
-        hitCount: true,
-        level: true,
-        type: true,
-        lastHitAt: true,
-      },
-    })
+    const results = await this.db
+      .select({
+        word: this.sensitiveWord.word,
+        hitCount: this.sensitiveWord.hitCount,
+        level: this.sensitiveWord.level,
+        type: this.sensitiveWord.type,
+        lastHitAt: this.sensitiveWord.lastHitAt,
+      })
+      .from(this.sensitiveWord)
+      .where(isNotNull(this.sensitiveWord.lastHitAt))
+      .orderBy(desc(this.sensitiveWord.lastHitAt))
+      .limit(20)
 
     return results.map((result) => ({
       word: result.word,
@@ -297,17 +285,13 @@ export class SensitiveWordStatisticsService extends BaseService {
    */
   async incrementHitCount(word: string): Promise<void> {
     try {
-      await this.sensitiveWord.updateMany({
-        where: {
-          word,
-        },
-        data: {
-          hitCount: {
-            increment: 1,
-          },
+      await this.db
+        .update(this.sensitiveWord)
+        .set({
+          hitCount: sql`${this.sensitiveWord.hitCount} + 1`,
           lastHitAt: new Date(),
-        },
-      })
+        })
+        .where(eq(this.sensitiveWord.word, word))
     } catch (error) {
       this.logger.error(`更新敏感词命中次数失败: ${word}`, error)
     }

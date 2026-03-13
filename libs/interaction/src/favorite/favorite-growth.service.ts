@@ -1,8 +1,8 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-} from '@libs/user/growth-ledger'
+} from '@libs/user'
 import { Injectable } from '@nestjs/common'
 import { refreshUserLevelByExperience } from '../user-level.helper'
 import {
@@ -15,7 +15,7 @@ import {
  * 负责处理收藏操作带来的积分和经验值奖励
  */
 @Injectable()
-export class FavoriteGrowthService extends BaseService {
+export class FavoriteGrowthService extends PlatformService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }

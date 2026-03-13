@@ -1,5 +1,5 @@
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import {
   BaseChatConversationDto,
   BaseChatMessageDto,

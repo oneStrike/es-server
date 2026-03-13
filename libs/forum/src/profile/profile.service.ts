@@ -1,13 +1,13 @@
-import type { PrismaClientType } from '@libs/base/database'
+import type { PrismaClientType } from '@libs/platform/database'
 import {
   UserDefaults,
   UserStatusEnum,
-} from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { FavoriteService } from '@libs/interaction'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
-import { GrowthAssetTypeEnum } from '@libs/user/growth-ledger'
-import { UserPointService } from '@libs/user/point'
+import { FavoriteTargetTypeEnum } from '@libs/interaction'
+import { GrowthAssetTypeEnum } from '@libs/user'
+import { UserPointService } from '@libs/user'
 import { Injectable } from '@nestjs/common'
 import {
   QueryForumProfileListDto,
@@ -20,7 +20,7 @@ type ForumProfileTransactionClient = Pick<
 >
 
 @Injectable()
-export class ForumProfileService extends BaseService {
+export class ForumProfileService extends PlatformService {
   constructor(
     protected readonly pointService: UserPointService,
     protected readonly favoriteService: FavoriteService,

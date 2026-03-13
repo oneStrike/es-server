@@ -1,4 +1,4 @@
-import { ForumModeratorModule as ModeratorModuleLib } from '@libs/forum/moderator'
+import { ForumModeratorModule as ModeratorModuleLib } from '@libs/forum'
 import { Module } from '@nestjs/common'
 import { ModeratorController } from './moderator.controller'
 

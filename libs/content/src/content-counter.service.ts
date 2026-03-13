@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 
 /**
@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common'
  * 提供统一的计数更新接口，确保计数数据的一致性
  */
 @Injectable()
-export class ContentCounterService extends BaseService {
+export class ContentCounterService extends PlatformService {
   constructor() {
     super()
   }

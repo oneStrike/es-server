@@ -4,7 +4,7 @@ import type {
   CreateUserReportOptions,
 } from './dto/report.dto'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
-import { BaseService, PrismaTransactionClientType } from '@libs/base/database'
+import { PlatformService, PrismaTransactionClientType } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
@@ -15,7 +15,7 @@ import { ReportGrowthService } from './report-growth.service'
  * 通过解析器模式支持多种目标类型（作品、章节、评论、论坛主题、用户等）的举报操作
  */
 @Injectable()
-export class ReportService extends BaseService {
+export class ReportService extends PlatformService {
   /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
   private readonly resolvers = new Map<
     ReportTargetTypeEnum,

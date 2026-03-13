@@ -1,6 +1,6 @@
-import type { MessageOutbox } from '@libs/base/database'
+import type { MessageOutbox } from '@libs/platform/database'
 import type { NotificationOutboxPayload } from './dto/outbox-event.dto'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { MessageNotificationService } from '../notification/notification.service'
@@ -13,7 +13,7 @@ import {
 } from './outbox.constant'
 
 @Injectable()
-export class MessageOutboxWorker extends BaseService {
+export class MessageOutboxWorker extends PlatformService {
   private readonly logger = new Logger(MessageOutboxWorker.name)
 
   constructor(

@@ -6,7 +6,7 @@ import {
   AuthConstants,
   AuthDefaultValue,
   createAuthRedisKeys,
-} from '@libs/base/modules/auth'
+} from '@libs/platform/modules/auth'
 
 export { AuthConstants, AuthDefaultValue }
 

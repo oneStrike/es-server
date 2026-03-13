@@ -1,6 +1,6 @@
-import type { CommentLevelEnum, SceneTypeEnum } from '@libs/base/constant'
+import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import type { ReportTargetTypeEnum } from '../report.constant'
-import type { PrismaTransactionClientType } from '@libs/base/database'
+import type { PrismaTransactionClientType } from '@libs/platform/database'
 
 /**
  * 举报目标元信息

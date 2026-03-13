@@ -1,12 +1,12 @@
-import { ContentTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
   EnumProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseReadingStateDto extends BaseDto {

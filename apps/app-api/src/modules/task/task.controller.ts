@@ -1,5 +1,5 @@
-import type { JwtUserInfoInterface } from '@libs/base/types'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
+import type { JwtUserInfoInterface } from '@libs/platform/types'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,

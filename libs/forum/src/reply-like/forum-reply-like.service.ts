@@ -2,10 +2,10 @@ import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
   SceneTypeEnum,
-} from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { UserGrowthRewardService } from '@libs/user/growth-reward'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { UserGrowthRewardService } from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/user'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
@@ -18,7 +18,7 @@ import {
 } from './dto/forum-reply-like.dto'
 
 @Injectable()
-export class ForumReplyLikeService extends BaseService {
+export class ForumReplyLikeService extends PlatformService {
   constructor(
     private readonly actionLogService: ForumUserActionLogService,
     private readonly userGrowthRewardService: UserGrowthRewardService,

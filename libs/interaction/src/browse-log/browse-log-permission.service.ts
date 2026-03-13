@@ -1,14 +1,14 @@
 import {
   InteractionTargetTypeEnum,
   UserStatusEnum,
-} from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { VIEW_SUPPORTED_TARGET_TYPES } from '../interaction-target.definition'
 
 @Injectable()
-export class BrowseLogPermissionService extends BaseService {
+export class BrowseLogPermissionService extends PlatformService {
   constructor(
     private readonly interactionTargetAccessService: InteractionTargetAccessService,
   ) {

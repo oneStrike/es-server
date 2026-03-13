@@ -1,4 +1,4 @@
-import type { PrismaTransactionClientType } from '@libs/base/database'
+import type { PrismaTransactionClientType } from '@libs/platform/database'
 import type { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 export interface IFavoriteTargetResolver {

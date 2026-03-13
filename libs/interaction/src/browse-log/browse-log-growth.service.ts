@@ -1,15 +1,15 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
+import { InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-} from '@libs/user/growth-ledger'
+} from '@libs/user'
 import { Injectable } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 import { refreshUserLevelByExperience } from '../user-level.helper'
 
 @Injectable()
-export class BrowseLogGrowthService extends BaseService {
+export class BrowseLogGrowthService extends PlatformService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }

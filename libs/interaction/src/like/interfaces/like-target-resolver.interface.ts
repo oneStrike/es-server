@@ -1,5 +1,5 @@
-import type { CommentLevelEnum, SceneTypeEnum } from '@libs/base/constant'
-import type { PrismaTransactionClientType } from '@libs/base/database'
+import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
+import type { PrismaTransactionClientType } from '@libs/platform/database'
 import type { LikeTargetTypeEnum } from '../like.constant'
 
 /**

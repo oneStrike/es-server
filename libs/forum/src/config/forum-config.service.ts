@@ -1,8 +1,8 @@
-import type { ForumConfig, ForumConfigHistory } from '@libs/base/database'
+import type { ForumConfig, ForumConfigHistory } from '@libs/platform/database'
 
 import type { FastifyRequest } from 'fastify'
-import { BaseService } from '@libs/base/database'
-import { extractIpAddress, extractUserAgent } from '@libs/base/utils'
+import { PlatformService } from '@libs/platform/database'
+import { extractIpAddress, extractUserAgent } from '@libs/platform/utils'
 import {
   BadRequestException,
   Injectable,
@@ -17,7 +17,7 @@ import { ChangeTypeEnum, DEFAULT_FORUM_CONFIG } from './forum-config.constant'
  * 提供配置的增删改查、历史记录管理以及缓存管理功能
  */
 @Injectable()
-export class ForumConfigService extends BaseService {
+export class ForumConfigService extends PlatformService {
   constructor(private readonly cacheService: ForumConfigCacheService) {
     super()
   }

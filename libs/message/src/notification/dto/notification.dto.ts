@@ -5,8 +5,8 @@ import {
   JsonProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { PageDto } from '@libs/base/dto'
+} from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,

@@ -1,7 +1,7 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc, NumberProperty } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
-import { FileUploadResponseDto } from '@libs/base/modules/upload'
+import { ApiDoc, NumberProperty } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { FileUploadResponseDto } from '@libs/platform/modules/upload'
 import {
   ChapterIdDto,
   ComicContentService,

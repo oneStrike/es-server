@@ -1,7 +1,7 @@
-import type { AdminUserWhereInput } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
-import { ScryptService } from '@libs/base/modules'
-import { LoginGuardService } from '@libs/base/modules/auth'
+import type { AdminUserWhereInput } from '@libs/platform/database'
+import { PlatformService } from '@libs/platform/database'
+import { ScryptService } from '@libs/platform/modules'
+import { LoginGuardService } from '@libs/platform/modules/auth'
 import {
   BadRequestException,
   Injectable,
@@ -23,7 +23,7 @@ import { EXCLUDE_USER_FIELDS, UserRoleEnum } from './user.constant'
  * 负责后台用户的注册、查询、权限校验与密码管理
  */
 @Injectable()
-export class UserService extends BaseService {
+export class UserService extends PlatformService {
   get adminUser() {
     return this.prisma.adminUser
   }

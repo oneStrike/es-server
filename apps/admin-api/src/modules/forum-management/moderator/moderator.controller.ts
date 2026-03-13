@@ -1,5 +1,5 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import {
   AssignForumModeratorSectionDto,
   CreateForumModeratorDto,
@@ -7,7 +7,7 @@ import {
   ForumModeratorService,
   QueryForumModeratorDto,
   UpdateForumModeratorDto,
-} from '@libs/forum/moderator'
+} from '@libs/forum'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

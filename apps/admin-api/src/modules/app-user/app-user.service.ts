@@ -11,14 +11,14 @@ import type {
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
 } from './dto/app-user.dto'
-import { UserStatusEnum } from '@libs/base/constant'
-import { BaseService, Prisma } from '@libs/base/database'
+import { UserStatusEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
 import {
   UserBadgeService,
   UserExperienceService,
   UserPointService,
 } from '@libs/user'
-import { GrowthAssetTypeEnum } from '@libs/user/growth-ledger'
+import { GrowthAssetTypeEnum } from '@libs/user'
 import {
   BadRequestException,
   Injectable,
@@ -32,7 +32,7 @@ import { UserRoleEnum } from '../user/user.constant'
  * 负责管理端 APP 用户的查询、资料维护、状态维护与成长资产管理
  */
 @Injectable()
-export class AppUserService extends BaseService {
+export class AppUserService extends PlatformService {
   constructor(
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,

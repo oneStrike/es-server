@@ -1,4 +1,4 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
@@ -8,7 +8,7 @@ import {
 } from './dto/point-rule.dto'
 
 @Injectable()
-export class UserPointRuleService extends BaseService {
+export class UserPointRuleService extends PlatformService {
   get userPointRule() {
     return this.prisma.userPointRule
   }

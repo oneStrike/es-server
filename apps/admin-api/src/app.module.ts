@@ -1,4 +1,4 @@
-import { BaseModule } from '@libs/base'
+import { PlatformModule } from '@libs/platform'
 import {
   AuthConfigRegister,
   DbConfigRegister,
@@ -7,10 +7,10 @@ import {
   RedisConfigRegister,
   RsaConfigRegister,
   UploadConfigRegister,
-} from '@libs/base/config'
-import { HttpExceptionFilter } from '@libs/base/filters'
-import { JwtAuthGuard, JwtAuthModule } from '@libs/base/modules'
-import { getEnv } from '@libs/base/utils'
+} from '@libs/platform/config'
+import { HttpExceptionFilter } from '@libs/platform/filters'
+import { JwtAuthGuard, JwtAuthModule } from '@libs/platform/modules'
+import { getEnv } from '@libs/platform/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
@@ -46,7 +46,7 @@ import { AuditModule } from './modules/system/audit/audit.module'
         appConfigValidationSchema,
       ),
     }),
-    BaseModule.forRoot(),
+    PlatformModule.forRoot(),
     JwtAuthModule,
     ScheduleModule.forRoot(),
     // 业务功能模块

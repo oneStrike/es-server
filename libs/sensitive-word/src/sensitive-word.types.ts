@@ -3,6 +3,13 @@ import type {
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
 } from './sensitive-word-constant'
+import { sensitiveWord } from '@db/schema'
+
+/** 敏感词实体类型（从数据库查询的结果） */
+export type SensitiveWord = typeof sensitiveWord.$inferSelect
+
+/** 创建敏感词输入类型 */
+export type CreateSensitiveWordInput = typeof sensitiveWord.$inferInsert
 
 /**
  * 命中敏感词结果

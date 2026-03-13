@@ -1,10 +1,10 @@
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import {
   CheckVerifyCodeDto,
   SmsService as LibSmsService,
   SendVerifyCodeDto,
   SmsTemplateCodeEnum,
-} from '@libs/base/modules'
+} from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { AuthErrorMessages } from './auth.constant'
 
@@ -13,7 +13,7 @@ import { AuthErrorMessages } from './auth.constant'
  * 负责发送验证码、校验验证码等短信相关操作
  */
 @Injectable()
-export class SmsService extends BaseService {
+export class SmsService extends PlatformService {
   constructor(private readonly libSmsService: LibSmsService) {
     super()
   }
@@ -45,7 +45,7 @@ export class SmsService extends BaseService {
    * 校验验证码
    * @param dto - 验证码校验请求DTO，包含手机号、验证码和短信模板代码
    */
-   async validateVerifyCode(dto: CheckVerifyCodeDto) {
+  async validateVerifyCode(dto: CheckVerifyCodeDto) {
     if (await this.libSmsService.checkVerifyCode(dto)) {
       return true
     }

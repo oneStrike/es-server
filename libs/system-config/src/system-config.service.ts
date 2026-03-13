@@ -1,7 +1,7 @@
 import type { Cache } from 'cache-manager'
-import { BaseService } from '@libs/base/database'
-import { AesService, RsaService } from '@libs/base/modules'
-import { isMasked, maskString } from '@libs/base/utils'
+import { PlatformService } from '@libs/platform/database'
+import { AesService, RsaService } from '@libs/platform/modules'
+import { isMasked, maskString } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigReader } from './config-reader'
@@ -24,7 +24,7 @@ import {
  * 注意：其他模块读取配置请使用 ConfigReader，不要注入此服务。
  */
 @Injectable()
-export class SystemConfigService extends BaseService implements OnModuleInit {
+export class SystemConfigService extends PlatformService implements OnModuleInit {
   constructor(
     /** AES 加密服务，用于敏感字段加密存储 */
     private readonly aesService: AesService,

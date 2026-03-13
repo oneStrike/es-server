@@ -1,7 +1,7 @@
 import type { FastifyRequest } from 'fastify'
-import { ContentTypeEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { UploadService } from '@libs/base/modules'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { UploadService } from '@libs/platform/modules'
 import { ReadingStateService } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ContentPermissionService } from '../../permission'
@@ -13,7 +13,7 @@ import {
 } from './dto/content.dto'
 
 @Injectable()
-export class ComicContentService extends BaseService {
+export class ComicContentService extends PlatformService {
   get workChapter() {
     return this.prisma.workChapter
   }

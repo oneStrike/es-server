@@ -1,4 +1,4 @@
-import type { ChatMessage, Prisma } from '@libs/base/database'
+import type { ChatMessage, Prisma } from '@libs/platform/database'
 import type {
   MarkConversationReadDto,
   OpenDirectConversationDto,
@@ -6,7 +6,7 @@ import type {
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
-import { BaseService } from '@libs/base/database'
+import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
@@ -39,7 +39,7 @@ const DIGIT_STRING_REGEX = /^\d+$/
  * 4. 使用 PostgreSQL 咨询锁(pg_advisory_xact_lock)保证消息序列号的并发安全
  */
 @Injectable()
-export class MessageChatService extends BaseService {
+export class MessageChatService extends PlatformService {
   constructor(
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,

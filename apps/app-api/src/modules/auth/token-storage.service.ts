@@ -1,5 +1,5 @@
-import { AppUserToken } from '@libs/base/database'
-import { BaseTokenStorageService, CreateTokenDto, ITokenDelegate } from '@libs/base/modules/auth'
+import { AppUserToken } from '@libs/platform/database'
+import { BaseTokenStorageService, CreateTokenDto, ITokenDelegate } from '@libs/platform/modules/auth'
 import { Injectable } from '@nestjs/common'
 
 /**

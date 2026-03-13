@@ -1,5 +1,6 @@
-import { ContentTypeEnum } from '@libs/base/constant'
-import { BaseService, Prisma } from '@libs/base/database'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
+// eslint-disable-next-line no-restricted-imports -- avoid circular deps via content barrel
 import { ContentPermissionService } from '@libs/content/permission'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -16,7 +17,7 @@ import {
 } from './dto/download.dto'
 
 @Injectable()
-export class DownloadService extends BaseService {
+export class DownloadService extends PlatformService {
   constructor(
     private readonly contentPermissionService: ContentPermissionService,
   ) {

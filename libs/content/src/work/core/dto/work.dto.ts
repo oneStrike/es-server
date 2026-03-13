@@ -1,4 +1,4 @@
-import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
+import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -7,11 +7,11 @@ import {
   NestedProperty,
   NumberProperty,
   StringProperty,
-} from '@libs/base/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
-import { BaseAuthorDto } from '@libs/content/author'
-import { BaseCategoryDto } from '@libs/content/category'
-import { BaseTagDto } from '@libs/content/tag'
+} from '@libs/platform/decorators'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseAuthorDto } from '../../../author'
+import { BaseCategoryDto } from '../../../category'
+import { BaseTagDto } from '../../../tag'
 import {
   IntersectionType,
   OmitType,
