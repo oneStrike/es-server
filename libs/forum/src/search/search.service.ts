@@ -1,6 +1,6 @@
 import {
-  PlatformService,
   ForumTopicWhereInput,
+  PlatformService,
   UserCommentWhereInput,
 } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'

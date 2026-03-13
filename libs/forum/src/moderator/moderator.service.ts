@@ -1,4 +1,4 @@
-import { PlatformService, ForumModeratorWhereInput } from '@libs/platform/database'
+import { ForumModeratorWhereInput, PlatformService } from '@libs/platform/database'
 import { IdDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {

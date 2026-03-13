@@ -9,15 +9,15 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import { BaseAuthorDto } from '../../../author'
-import { BaseCategoryDto } from '../../../category'
-import { BaseTagDto } from '../../../tag'
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { BaseAuthorDto } from '../../../author'
+import { BaseCategoryDto } from '../../../category'
+import { BaseTagDto } from '../../../tag'
 import { BaseWorkChapterDto } from '../../chapter'
 import { WorkSerialStatusEnum } from '../work.constant'
 

@@ -1,7 +1,7 @@
-import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 // eslint-disable-next-line no-restricted-imports -- avoid circular deps via content barrel
 import { ContentPermissionService } from '@libs/content/permission'
+import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,

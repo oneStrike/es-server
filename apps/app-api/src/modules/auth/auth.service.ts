@@ -1,4 +1,5 @@
 import type { FastifyRequest } from 'fastify'
+import { ForumProfileService } from '@libs/forum'
 import { GenderEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { RsaService, ScryptService } from '@libs/platform/modules'
@@ -7,7 +8,6 @@ import {
   LoginGuardService,
 } from '@libs/platform/modules/auth'
 import { extractIpAddress, parseDeviceInfo } from '@libs/platform/utils'
-import { ForumProfileService } from '@libs/forum'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AuthConstants,

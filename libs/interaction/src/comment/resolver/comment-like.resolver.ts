@@ -1,9 +1,20 @@
 import type { PrismaTransactionClientType } from '@libs/platform/database'
 import {
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+  MessageOutboxService,
+} from '@libs/message'
+import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
 } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common'
 import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
 import {
   ILikeTargetResolver,
@@ -11,17 +22,6 @@ import {
 } from '../../like/interfaces/like-target-resolver.interface'
 import { LikeTargetTypeEnum } from '../../like/like.constant'
 import { LikeService } from '../../like/like.service'
-import {
-  MessageNotificationSubjectTypeEnum,
-  MessageNotificationTypeEnum,
-  MessageOutboxService,
-} from '@libs/message'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
 
 /**
  * 评论点赞解析器

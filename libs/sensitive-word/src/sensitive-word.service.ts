@@ -2,7 +2,7 @@ import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/drizzle.service'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, gt, like, isNotNull, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
 import {
   SensitiveWordLevelStatisticsDto,
   SensitiveWordRecentHitStatisticsDto,

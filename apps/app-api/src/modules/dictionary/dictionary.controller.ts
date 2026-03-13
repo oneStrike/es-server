@@ -1,6 +1,6 @@
-import { ApiDoc, Public } from '@libs/platform/decorators'
-
 import { BaseDictionaryItemDto, LibDictionaryService } from '@libs/dictionary'
+
+import { ApiDoc, Public } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { QueryDictionaryItemDto } from './dto/dictionary.dto'

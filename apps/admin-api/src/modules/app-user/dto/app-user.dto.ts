@@ -8,16 +8,8 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
-import { BaseUserBadgeDto, QueryUserBadgeDto } from '@libs/user'
-import {
-  AddUserExperienceDto,
-  QueryUserExperienceRecordDto,
-} from '@libs/user'
-import {
-  AddUserPointsDto,
-  ConsumeUserPointsDto,
-  QueryUserPointRecordDto,
-} from '@libs/user'
+import { AddUserExperienceDto, AddUserPointsDto, BaseUserBadgeDto, ConsumeUserPointsDto, QueryUserBadgeDto, QueryUserExperienceRecordDto, QueryUserPointRecordDto } from '@libs/user'
+
 import {
   IntersectionType,
   PartialType,

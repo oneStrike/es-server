@@ -1,7 +1,7 @@
-import { UploadModule } from '@libs/platform/modules'
 import { InteractionModule, ReportModule } from '@libs/interaction'
-import { UserPermissionModule } from '@libs/user'
-import { UserPointModule } from '@libs/user'
+import { UploadModule } from '@libs/platform/modules'
+import { UserPermissionModule, UserPointModule } from '@libs/user'
+
 import { Module } from '@nestjs/common'
 import { ContentPermissionModule } from '../permission'
 import { WorkComicChapterLikeResolver } from './chapter/resolver/work-comic-chapter-like.resolver'

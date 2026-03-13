@@ -1,6 +1,6 @@
 import { InteractionTargetTypeEnum, SceneTypeEnum } from '@libs/platform/constant'
-import { ReportTargetTypeEnum } from './report/report.constant'
 import { FavoriteTargetTypeEnum } from './favorite/favorite.constant'
+import { ReportTargetTypeEnum } from './report/report.constant'
 
 /**
  * Supported prisma model key for interaction targets.

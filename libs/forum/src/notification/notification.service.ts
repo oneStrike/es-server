@@ -1,4 +1,4 @@
-import { PlatformService, ForumNotificationCreateInput } from '@libs/platform/database'
+import { ForumNotificationCreateInput, PlatformService } from '@libs/platform/database'
 import { IdDto, IdsDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {

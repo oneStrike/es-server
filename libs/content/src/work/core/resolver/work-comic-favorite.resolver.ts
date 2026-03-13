@@ -1,10 +1,10 @@
 import type { PrismaTransactionClientType } from '@libs/platform/database'
-import { PlatformService } from '@libs/platform/database'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
 } from '@libs/interaction'
+import { PlatformService } from '@libs/platform/database'
 
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 

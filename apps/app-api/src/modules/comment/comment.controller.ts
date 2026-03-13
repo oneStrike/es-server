@@ -1,5 +1,3 @@
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import {
   CommentService,
   CreateCommentBodyDto,
@@ -7,6 +5,8 @@ import {
   QueryMyCommentPageDto,
   ReplyCommentBodyDto,
 } from '@libs/interaction'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

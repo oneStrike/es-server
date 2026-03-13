@@ -14,11 +14,12 @@ import type {
 import { UserStatusEnum } from '@libs/platform/constant'
 import { PlatformService, Prisma } from '@libs/platform/database'
 import {
+  GrowthAssetTypeEnum,
   UserBadgeService,
   UserExperienceService,
-  UserPointService,
+UserPointService
 } from '@libs/user'
-import { GrowthAssetTypeEnum } from '@libs/user'
+
 import {
   BadRequestException,
   Injectable,

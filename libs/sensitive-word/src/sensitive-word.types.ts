@@ -1,9 +1,9 @@
+import type { sensitiveWord } from '@db/schema'
 import type {
   MatchModeEnum,
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
 } from './sensitive-word-constant'
-import { sensitiveWord } from '@db/schema'
 
 /** 敏感词实体类型（从数据库查询的结果） */
 export type SensitiveWord = typeof sensitiveWord.$inferSelect

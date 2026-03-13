@@ -1,10 +1,10 @@
-import { WorkViewPermissionEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 // eslint-disable-next-line no-restricted-imports -- avoid circular deps via interaction barrel
 import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from '@libs/interaction/purchase/purchase.constant'
+import { WorkViewPermissionEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { PERMISSION_ERROR_MESSAGE } from './content-permission.constant'
 import {

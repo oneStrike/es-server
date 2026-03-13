@@ -1,5 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BaseForumSectionGroupDto,
   CreateForumSectionGroupDto,
@@ -7,6 +5,8 @@ import {
   QueryForumSectionGroupDto,
   UpdateForumSectionGroupDto,
 } from '@libs/forum'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

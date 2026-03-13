@@ -1,6 +1,6 @@
+import { ForumModule } from '@libs/forum'
 import { CaptchaService, RsaService, ScryptService, SmsModule } from '@libs/platform/modules'
 import { AuthCronService, AuthStrategy, JwtAuthModule } from '@libs/platform/modules/auth'
-import { ForumModule } from '@libs/forum'
 import { SystemConfigModule } from '@libs/system-config'
 import { Module } from '@nestjs/common'
 import { AuthController } from './auth.controller'

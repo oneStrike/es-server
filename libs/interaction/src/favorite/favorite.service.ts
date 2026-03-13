@@ -1,5 +1,5 @@
-import { PlatformService, UserFavorite } from '@libs/platform/database'
 import { MessageOutboxService } from '@libs/message'
+import { PlatformService, UserFavorite } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { FavoritePageQueryDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'

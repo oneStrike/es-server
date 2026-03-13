@@ -1,21 +1,21 @@
 import {
-  AuditStatusEnum,
-  InteractionTargetTypeEnum,
-  UserStatusEnum,
-} from '@libs/platform/constant'
-
-import { PlatformService } from '@libs/platform/database'
-import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
+
+import {
+  AuditStatusEnum,
+  InteractionTargetTypeEnum,
+  UserStatusEnum,
+} from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { UserGrowthRewardService } from '@libs/user'
-import { GrowthRuleTypeEnum } from '@libs/user'
+import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/user'
+
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,

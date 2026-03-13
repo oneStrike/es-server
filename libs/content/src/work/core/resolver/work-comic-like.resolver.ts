@@ -1,11 +1,11 @@
 import type { PrismaTransactionClientType } from '@libs/platform/database'
-import { SceneTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import {
   ILikeTargetResolver,
   LikeService,
   LikeTargetTypeEnum,
 } from '@libs/interaction'
+import { SceneTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 /**

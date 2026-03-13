@@ -1,13 +1,13 @@
 import type { WorkWhereInput } from '@libs/platform/database'
-import { ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
-import { isNotNil } from '@libs/platform/utils'
 import {
   BrowseLogService,
   FavoriteService,
   LikeService,
   ReadingStateService,
 } from '@libs/interaction'
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkDto,

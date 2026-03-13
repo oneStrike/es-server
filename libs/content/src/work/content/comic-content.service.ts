@@ -1,8 +1,8 @@
 import type { FastifyRequest } from 'fastify'
+import { ReadingStateService } from '@libs/interaction'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { UploadService } from '@libs/platform/modules'
-import { ReadingStateService } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ContentPermissionService } from '../../permission'
 import {

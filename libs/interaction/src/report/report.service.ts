@@ -3,11 +3,11 @@ import type {
   CreateUserReportDto,
   CreateUserReportOptions,
 } from './dto/report.dto'
-import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 import { PlatformService, PrismaTransactionClientType } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
+import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 
 /**
  * 举报服务

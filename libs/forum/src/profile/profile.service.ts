@@ -1,13 +1,13 @@
 import type { PrismaClientType } from '@libs/platform/database'
+import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction'
+
 import {
   UserDefaults,
   UserStatusEnum,
 } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { FavoriteService } from '@libs/interaction'
-import { FavoriteTargetTypeEnum } from '@libs/interaction'
-import { GrowthAssetTypeEnum } from '@libs/user'
-import { UserPointService } from '@libs/user'
+import { GrowthAssetTypeEnum, UserPointService } from '@libs/user'
+
 import { Injectable } from '@nestjs/common'
 import {
   QueryForumProfileListDto,

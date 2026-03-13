@@ -1,6 +1,6 @@
 import { DrizzleService } from '@db/drizzle.service'
 import { Injectable, Logger } from '@nestjs/common'
-import { and, desc, eq, gte, gt, isNotNull, sql } from 'drizzle-orm'
+import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
 import {
   SensitiveWordLevelStatisticsDto,
   SensitiveWordRecentHitStatisticsDto,

@@ -1,10 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import {
-  BatchOperationResponseDto,
-  DragReorderDto,
-  IdDto,
-  UpdateEnabledStatusDto,
-} from '@libs/platform/dto'
 import {
   BaseDictionaryDto,
   BaseDictionaryItemDto,
@@ -17,6 +10,13 @@ import {
   UpdateDictionaryDto,
   UpdateDictionaryItemDto,
 } from '@libs/dictionary'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import {
+  BatchOperationResponseDto,
+  DragReorderDto,
+  IdDto,
+  UpdateEnabledStatusDto,
+} from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

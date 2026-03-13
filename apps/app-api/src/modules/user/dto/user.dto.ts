@@ -13,9 +13,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseUserBadgeDto, QueryUserBadgeDto } from '@libs/user'
-import { QueryUserExperienceRecordDto } from '@libs/user'
-import { BaseUserLevelRuleDto } from '@libs/user'
+import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/user'
+
 import { OmitType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseAppUserDto } from '../../auth/dto/auth.dto'
 

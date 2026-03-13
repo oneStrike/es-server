@@ -1,9 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import {
-  BatchOperationResponseDto,
-  IdDto,
-  UpdateEnabledStatusDto,
-} from '@libs/platform/dto'
 import {
   AuthorPageResponseDto,
   BaseAuthorDto,
@@ -13,6 +7,12 @@ import {
   UpdateAuthorRecommendedDto,
   WorkAuthorService,
 } from '@libs/content'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import {
+  BatchOperationResponseDto,
+  IdDto,
+  UpdateEnabledStatusDto,
+} from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

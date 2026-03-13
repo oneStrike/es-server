@@ -1,12 +1,4 @@
 import {
-  ApiDoc,
-  ApiPageDoc,
-  CurrentUser,
-  OptionalAuth,
-  Public,
-} from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import {
   ComicChapterContentDto,
   ComicContentService,
   NovelChapterContentDto,
@@ -16,6 +8,14 @@ import {
   WorkChapterDetailWithUserStatusDto,
   WorkChapterService,
 } from '@libs/content'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  OptionalAuth,
+  Public,
+} from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

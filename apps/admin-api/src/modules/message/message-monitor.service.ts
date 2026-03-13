@@ -2,8 +2,8 @@ import type {
   QueryMessageOutboxMonitorDto,
   QueryMessageWsMonitorDto,
 } from './dto/message-monitor.dto'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import { MessageOutboxStatusEnum } from '@libs/message'
+import { PlatformService, Prisma } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()

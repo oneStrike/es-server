@@ -1,8 +1,7 @@
 import { InteractionModule } from '@libs/interaction'
 import { SensitiveWordModule } from '@libs/sensitive-word'
-import { UserExperienceModule } from '@libs/user'
-import { UserLevelRuleModule } from '@libs/user'
-import { UserPointModule } from '@libs/user'
+import { UserExperienceModule, UserLevelRuleModule, UserPointModule } from '@libs/user'
+
 import { Module } from '@nestjs/common'
 import { ForumConfigModule } from './config'
 import { ForumCounterModule } from './counter'

@@ -1,16 +1,17 @@
-import { ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
-import { DragReorderDto } from '@libs/platform/dto'
-import { ContentPermissionService } from '../../permission'
 import {
   DownloadService,
   DownloadTargetTypeEnum,
   FavoriteService,
   LikeService,
-  ReadingStateService,
+  LikeTargetTypeEnum,
+ReadingStateService
 } from '@libs/interaction'
-import { LikeTargetTypeEnum } from '@libs/interaction'
+
+import { ContentTypeEnum } from '@libs/platform/constant'
+import { PlatformService } from '@libs/platform/database'
+import { DragReorderDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { ContentPermissionService } from '../../permission'
 import {
   CreateWorkChapterDto,
   QueryWorkChapterDto,

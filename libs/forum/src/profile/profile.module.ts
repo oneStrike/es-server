@@ -1,6 +1,6 @@
 import { InteractionModule } from '@libs/interaction'
-import { UserLevelRuleModule } from '@libs/user'
-import { UserPointModule } from '@libs/user'
+import { UserLevelRuleModule, UserPointModule } from '@libs/user'
+
 import { Module } from '@nestjs/common'
 import { ForumProfileService } from './profile.service'
 

@@ -4,18 +4,18 @@ import {
   InteractionTargetTypeEnum,
 } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
-import {
-  IReportTargetResolver,
-  ReportService,
-  ReportTargetTypeEnum,
-} from '../../report'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common'
+import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
+import {
+  IReportTargetResolver,
+  ReportService,
+  ReportTargetTypeEnum,
+} from '../../report'
 
 /**
  * 评论举报解析器

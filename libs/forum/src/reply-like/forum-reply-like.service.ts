@@ -4,8 +4,8 @@ import {
   SceneTypeEnum,
 } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { UserGrowthRewardService } from '@libs/user'
-import { GrowthRuleTypeEnum } from '@libs/user'
+import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/user'
+
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,

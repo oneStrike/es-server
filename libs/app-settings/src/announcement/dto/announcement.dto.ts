@@ -1,4 +1,3 @@
-import { BaseAppPageDto } from '../../page'
 import { EnablePlatformEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -17,6 +16,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { BaseAppPageDto } from '../../page'
 import {
   AnnouncementPriorityEnum,
   AnnouncementTypeEnum,

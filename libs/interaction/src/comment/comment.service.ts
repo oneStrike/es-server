@@ -1,12 +1,12 @@
-import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-import { SensitiveWordLevelEnum } from '@libs/sensitive-word'
-import { SensitiveWordDetectService } from '@libs/sensitive-word'
+import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
+import { SensitiveWordDetectService, SensitiveWordLevelEnum } from '@libs/sensitive-word'
+
 import { ConfigReader } from '@libs/system-config'
 import {
   BadRequestException,

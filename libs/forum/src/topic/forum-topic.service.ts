@@ -9,8 +9,7 @@ import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { UserGrowthRewardService } from '@libs/user'
-import { GrowthRuleTypeEnum } from '@libs/user'
+import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/user'
 
 import {
   BadRequestException,

@@ -1,6 +1,6 @@
+import { CreateReportBodyDto, ReportService } from '@libs/interaction'
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { CreateReportBodyDto, ReportService } from '@libs/interaction'
 import { Body, Controller, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

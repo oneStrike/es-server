@@ -1,4 +1,11 @@
 import {
+  PageWorkDto,
+  QueryWorkDto,
+  QueryWorkTypeDto,
+  WorkDetailDto,
+  WorkService,
+} from '@libs/content'
+import {
   ApiDoc,
   ApiPageDoc,
   CurrentUser,
@@ -8,13 +15,6 @@ import {
   RequestMetaResult,
 } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import {
-  PageWorkDto,
-  QueryWorkDto,
-  QueryWorkTypeDto,
-  WorkDetailDto,
-  WorkService,
-} from '@libs/content'
 import { Controller, Get, Headers, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
