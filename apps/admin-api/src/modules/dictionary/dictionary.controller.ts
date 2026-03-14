@@ -46,7 +46,7 @@ export class DictionaryController {
   @Post('create')
   @ApiDoc({
     summary: '创建字典',
-    model: IdDto,
+    model: Boolean,
   })
   async create(@Body() createDictionaryDto: CreateDictionaryDto) {
     return this.libDictionaryService.createDictionary(createDictionaryDto)
@@ -55,7 +55,7 @@ export class DictionaryController {
   @Post('update')
   @ApiDoc({
     summary: '更新字典',
-    model: IdDto,
+    model: Boolean,
   })
   async update(@Body() updateDictionaryDto: UpdateDictionaryDto) {
     return this.libDictionaryService.updateDictionary(updateDictionaryDto)
@@ -64,7 +64,7 @@ export class DictionaryController {
   @Post('delete')
   @ApiDoc({
     summary: '删除字典',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() query: IdDto) {
     return this.libDictionaryService.deleteDictionary(query.id)
@@ -73,7 +73,7 @@ export class DictionaryController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新字典状态',
-    model: IdDto,
+    model: Boolean,
   })
   async updateStatus(@Body() query: UpdateEnabledStatusDto) {
     return this.libDictionaryService.updateDictionaryStatus(query)
@@ -102,7 +102,7 @@ export class DictionaryController {
   @Post('create-item')
   @ApiDoc({
     summary: '创建字典项',
-    model: IdDto,
+    model: Boolean,
   })
   async createItem(@Body() createDictionaryItemDto: CreateDictionaryItemDto) {
     return this.libDictionaryService.createDictionaryItem(
@@ -113,7 +113,7 @@ export class DictionaryController {
   @Post('update-item')
   @ApiDoc({
     summary: '更新字典项',
-    model: IdDto,
+    model: Boolean,
   })
   async updateItem(@Body() updateDictionaryItemDto: UpdateDictionaryItemDto) {
     return this.libDictionaryService.updateDictionaryItem(
@@ -133,7 +133,7 @@ export class DictionaryController {
   @Post('delete-item')
   @ApiDoc({
     summary: '删除字典项',
-    model: IdDto,
+    model: Boolean,
   })
   async deleteItem(@Body() query: IdDto) {
     return this.libDictionaryService.deleteDictionaryItem(query.id)
@@ -145,7 +145,7 @@ export class DictionaryController {
   @Post('/item-order')
   @ApiDoc({
     summary: '字典项拖拽排序',
-    model: DragReorderDto,
+    model: Boolean,
   })
   async itemOrder(@Body() body: DragReorderDto) {
     return this.libDictionaryService.updateDictionaryItemSort(body)

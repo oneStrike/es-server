@@ -91,11 +91,7 @@ export async function swapField(
     }
 
     // 如果指定了来源字段，验证两条记录是否属于同一来源
-    if (
-      sourceField &&
-      record1[sourceField] !==
-      record2[sourceField]
-    ) {
+    if (sourceField && record1[sourceField] !== record2[sourceField]) {
       throw new BadRequestException('数据不是同一来源')
     }
 

@@ -5,7 +5,7 @@ import { defineConfig } from 'drizzle-kit'
 export default defineConfig({
   dialect: 'postgresql',
   schema: './db/schema/index.ts',
-  out: './drizzle',
+  out: './db/migration',
   dbCredentials: {
     url: env.DATABASE_URL!,
   },
@@ -17,11 +17,7 @@ export default defineConfig({
     table: '__drizzle_migrations__',
     schema: 'public',
   },
-
-  introspect: {
-    casing: 'camel',
-  },
-
+  casing: 'snake_case',
   breakpoints: true,
   strict: true,
   verbose: true,

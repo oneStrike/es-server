@@ -3,7 +3,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,
@@ -120,29 +120,27 @@ export class BaseDictionaryItemDto extends BaseDto {
 
 // ==================== 创建 DTO ====================
 
-export class CreateDictionaryDto extends OmitType(BaseDictionaryDto, [
-  'id',
-  'createdAt',
-  'updatedAt',
-]) {}
+export class CreateDictionaryDto extends OmitType(
+  BaseDictionaryDto,
+  OMIT_BASE_FIELDS,
+) {}
 
-export class CreateDictionaryItemDto extends OmitType(BaseDictionaryItemDto, [
-  'id',
-  'createdAt',
-  'updatedAt',
-]) {}
+export class CreateDictionaryItemDto extends OmitType(
+  BaseDictionaryItemDto,
+  OMIT_BASE_FIELDS,
+) {}
 
 // ==================== 更新 DTO ====================
 
-export class UpdateDictionaryDto extends OmitType(BaseDictionaryDto, [
-  'createdAt',
-  'updatedAt',
-]) {}
+export class UpdateDictionaryDto extends IntersectionType(
+  CreateDictionaryDto,
+  IdDto,
+) {}
 
-export class UpdateDictionaryItemDto extends OmitType(BaseDictionaryItemDto, [
-  'createdAt',
-  'updatedAt',
-]) {}
+export class UpdateDictionaryItemDto extends IntersectionType(
+  CreateDictionaryItemDto,
+  IdDto,
+) {}
 
 // ==================== 查询 DTO ====================
 
