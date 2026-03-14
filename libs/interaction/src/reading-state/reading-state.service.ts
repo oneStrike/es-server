@@ -50,9 +50,9 @@ export class ReadingStateService extends PlatformService {
 
   /**
    * 获取用户的阅读状态
-   * @param userId - 用户ID
-   * @param workId - 作品ID
    * @param workType - 作品类型（漫画/小说）
+   * @param workId - 作品ID
+   * @param userId - 用户ID
    * @returns 阅读状态快照，不存在则返回 null
    */
   async getReadingState(
@@ -99,6 +99,11 @@ export class ReadingStateService extends PlatformService {
    * 更新阅读状态（按作品）
    * 创建或更新用户的阅读记录
    * @param params - 阅读状态参数
+   * @param params.userId - 用户ID
+   * @param params.workId - 作品ID
+   * @param params.workType - 作品类型
+   * @param params.lastReadChapterId - 最后阅读章节ID
+   * @param params.lastReadAt - 最后阅读时间
    */
   async touchByWork(params: {
     userId: number
@@ -141,6 +146,11 @@ export class ReadingStateService extends PlatformService {
    * 安全地更新阅读状态（按作品）
    * 捕获异常并记录警告日志，不影响主流程
    * @param params - 阅读状态参数
+   * @param params.userId - 用户ID
+   * @param params.workId - 作品ID
+   * @param params.workType - 作品类型
+   * @param params.lastReadChapterId - 最后阅读章节ID
+   * @param params.lastReadAt - 最后阅读时间
    */
   async touchByWorkSafely(params: {
     userId: number

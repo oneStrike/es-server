@@ -20,7 +20,8 @@
   - user：用户成长/积分/等级/徽章相关
   - forum：论坛相关
   - content：内容管理相关
-  - dictionary / app-settings / system-config：系统与应用配置
+- config（app-config / dictionary / system-config）：系统与应用配置
+- app-content：协议/公告/页面等应用内容
 
 ### 1.3 数据库设计与约定
 - Prisma 多文件模型，统一映射为 snake_case 表名

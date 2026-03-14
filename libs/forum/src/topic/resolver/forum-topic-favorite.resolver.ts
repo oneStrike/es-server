@@ -96,6 +96,7 @@ export class ForumTopicFavoriteResolver
    * @param targetId - 被收藏的主题ID
    * @param actorUserId - 执行收藏操作的用户ID
    * @param options - 包含主题所有者用户ID的选项对象
+   * @param options.ownerUserId - 主题所有者用户ID
    */
   async postFavoriteHook(
     tx: PrismaTransactionClientType,

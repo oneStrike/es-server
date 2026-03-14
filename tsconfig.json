@@ -19,17 +19,23 @@
       "@libs/platform/*": [
         "libs/platform/src/*"
       ],
-      "@libs/app-settings": [
-        "libs/app-settings/src"
+      "@libs/app-content": [
+        "libs/app-content/src"
       ],
-      "@libs/app-settings/*": [
-        "libs/app-settings/src/*"
+      "@libs/app-content/*": [
+        "libs/app-content/src/*"
+      ],
+      "@libs/app-config": [
+        "libs/config/app-config/src"
+      ],
+      "@libs/app-config/*": [
+        "libs/config/app-config/src/*"
       ],
       "@libs/dictionary": [
-        "libs/dictionary/src"
+        "libs/config/dictionary/src"
       ],
       "@libs/dictionary/*": [
-        "libs/dictionary/src/*"
+        "libs/config/dictionary/src/*"
       ],
       "@libs/forum": [
         "libs/forum/src"
@@ -50,16 +56,16 @@
         "libs/content/src/*"
       ],
       "@libs/system-config": [
-        "libs/system-config/src"
+        "libs/config/system-config/src"
       ],
       "@libs/system-config/*": [
-        "libs/system-config/src/*"
+        "libs/config/system-config/src/*"
       ],
       "@libs/sensitive-word": [
-        "libs/sensitive-word/src"
+        "libs/moderation/sensitive-word/src"
       ],
       "@libs/sensitive-word/*": [
-        "libs/sensitive-word/src/*"
+        "libs/moderation/sensitive-word/src/*"
       ],
       "@libs/task": [
         "libs/task/src"

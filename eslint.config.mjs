@@ -58,7 +58,8 @@ export default antfu(
           patterns: [
             {
               group: [
-                '@libs/app-settings/*',
+                '@libs/app-content/*',
+                '@libs/app-config/*',
                 '@libs/content/*',
                 '@libs/dictionary/*',
                 '@libs/forum/*',

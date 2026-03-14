@@ -172,13 +172,14 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "^@libs/app-settings(|/.*)$": "<rootDir>/libs/app-settings/src/$1",
+      "^@libs/app-content(|/.*)$": "<rootDir>/libs/app-content/src/$1",
+      "^@libs/app-config(|/.*)$": "<rootDir>/libs/config/app-config/src/$1",
       "^@libs/platform(|/.*)$": "<rootDir>/libs/platform/src/$1",
       "^@libs/content(|/.*)$": "<rootDir>/libs/content/src/$1",
-      "^@libs/dictionary(|/.*)$": "<rootDir>/libs/dictionary/src/$1",
+      "^@libs/dictionary(|/.*)$": "<rootDir>/libs/config/dictionary/src/$1",
       "^@libs/forum(|/.*)$": "<rootDir>/libs/forum/src/$1",
-      "^@libs/sensitive-word(|/.*)$": "<rootDir>/libs/sensitive-word/src/$1",
-      "^@libs/system-config(|/.*)$": "<rootDir>/libs/system-config/src/$1",
+      "^@libs/sensitive-word(|/.*)$": "<rootDir>/libs/moderation/sensitive-word/src/$1",
+      "^@libs/system-config(|/.*)$": "<rootDir>/libs/config/system-config/src/$1",
       "^@libs/message(|/.*)$": "<rootDir>/libs/message/src/$1",
       "^@libs/user(|/.*)$": "<rootDir>/libs/user/src/$1"
     }

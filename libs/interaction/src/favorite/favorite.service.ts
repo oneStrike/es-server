@@ -210,10 +210,11 @@ export class FavoriteService extends PlatformService {
 
   /**
    * 获取用户收藏列表
-   * @param userId 用户 ID
-   * @param targetType 目标类型（可选）
-   * @param pageIndex 页码
-   * @param pageSize 每页数量
+   * @param dto - 查询参数
+   * @param dto.targetType - 目标类型（可选）
+   * @param dto.pageIndex - 页码
+   * @param dto.pageSize - 每页数量
+   * @param userId - 用户 ID
    * @returns 分页收藏列表
    */
   async getUserFavorites(dto: FavoritePageQueryDto, userId: number) {

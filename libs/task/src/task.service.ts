@@ -1,4 +1,5 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
+import type { SQL } from 'drizzle-orm'
 import type {
   ClaimTaskDto,
   CreateTaskDto,
@@ -11,7 +12,8 @@ import type {
   UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto'
-import { PlatformService, Prisma } from '@libs/platform/database'
+import { DrizzleService } from '@db/drizzle.service'
+import { task, taskAssignment, taskProgressLog } from '@db/schema'
 import { UserGrowthRewardService } from '@libs/user'
 import {
   BadRequestException,
@@ -19,6 +21,17 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
+import {
+  and,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm'
 import {
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
@@ -28,266 +41,580 @@ import {
   TaskStatusEnum,
 } from './task.constant'
 
+/** 任务实体类型 */
+type Task = typeof task.$inferSelect
+/** 任务分配实体类型 */
+type TaskAssignment = typeof taskAssignment.$inferSelect
+
 /**
  * 任务服务
- * 负责任务配置、领取、进度与完成状态管理
+ *
+ * 负责任务配置、领取、进度与完成状态管理。
+ *
+ * 主要功能：
+ * - 任务配置管理（CRUD）：创建、更新、删除、查询任务配置
+ * - 任务分配管理：用户领取任务、自动分配任务
+ * - 任务进度管理：上报进度、完成任务
+ * - 任务过期处理：定时任务自动标记过期分配
+ *
+ * 任务生命周期：
+ * 1. 任务创建（草稿状态）
+ * 2. 任务发布（发布状态）
+ * 3. 用户领取任务（创建任务分配）
+ * 4. 用户执行任务（进度更新）
+ * 5. 任务完成（触发奖励）
+ * 6. 任务过期（自动标记）
  */
 @Injectable()
-export class TaskService extends PlatformService {
-  get task() {
-    return this.prisma.task
-  }
-
-  get taskAssignment() {
-    return this.prisma.taskAssignment
-  }
-
-  get taskProgressLog() {
-    return this.prisma.taskProgressLog
-  }
-
+export class TaskService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
-  ) {
-    super()
+  ) {}
+
+  /** 数据库连接实例 */
+  private get db() {
+    return this.drizzle.db
   }
 
-  async getTaskPage(queryDto: QueryTaskDto) {
-    const { title, status, type, isEnabled, ...other } = queryDto
-    const where: Prisma.TaskWhereInput = { deletedAt: null }
-    if (title) {
-      where.title = { contains: title, mode: 'insensitive' }
-    }
-    if (status !== undefined) {
-      where.status = status
-    }
-    if (type !== undefined) {
-      where.type = type
-    }
-    if (isEnabled !== undefined) {
-      where.isEnabled = isEnabled
-    }
-    return this.task.findPagination({ where: { ...where, ...other } })
-  }
-
-  async getTaskDetail(id: number) {
-    const task = await this.task.findFirst({
-      where: { id, deletedAt: null },
-    })
-    if (!task) {
-      throw new NotFoundException('任务不存在')
-    }
+  /** 任务表 */
+  private get taskTable() {
     return task
   }
 
-  async createTask(dto: CreateTaskDto, adminUser: JwtUserInfoInterface) {
-    this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
-    const data: Prisma.TaskCreateInput = {
-      code: dto.code,
-      title: dto.title,
-      description: dto.description,
-      cover: dto.cover,
-      type: dto.type,
-      status: dto.status ?? TaskStatusEnum.DRAFT,
-      priority: dto.priority,
-      isEnabled: dto.isEnabled,
-      claimMode: dto.claimMode,
-      completeMode: dto.completeMode,
-      targetCount: dto.targetCount,
-      rewardConfig: this.parseJsonValue(dto.rewardConfig),
-      publishStartAt: dto.publishStartAt,
-      publishEndAt: dto.publishEndAt,
-      repeatRule: this.parseJsonValue(dto.repeatRule),
-      createdBy: { connect: { id: Number(adminUser.sub) } },
-      updatedBy: { connect: { id: Number(adminUser.sub) } },
+  /** 任务分配表 */
+  private get taskAssignmentTable() {
+    return taskAssignment
+  }
+
+  /** 任务进度日志表 */
+  private get taskProgressLogTable() {
+    return taskProgressLog
+  }
+
+  // ==================== 管理端接口 ====================
+
+  /**
+   * 分页查询任务列表（管理端）
+   *
+   * @param queryDto 查询参数
+   *   - title: 任务标题（模糊搜索）
+   *   - status: 任务状态
+   *   - type: 任务类型
+   *   - isEnabled: 是否启用
+   *   - pageIndex: 页码
+   *   - pageSize: 每页数量
+   *   - orderBy: 排序条件
+   * @returns 分页结果
+   */
+  async getTaskPage(queryDto: QueryTaskDto) {
+    const { title, status, type, isEnabled, pageIndex = 1, pageSize = 20, orderBy } = queryDto
+
+    // 构建查询条件：排除已删除的记录
+    const conditions: SQL[] = [isNull(this.taskTable.deletedAt)]
+    if (title) {
+      conditions.push(ilike(this.taskTable.title, `%${title}%`))
     }
+    if (status !== undefined) {
+      conditions.push(eq(this.taskTable.status, status))
+    }
+    if (type !== undefined) {
+      conditions.push(eq(this.taskTable.type, type))
+    }
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.taskTable.isEnabled, isEnabled))
+    }
+
+    return this.drizzle.ext.findPagination(this.taskTable, {
+      where: and(...conditions),
+      pageIndex,
+      pageSize,
+      orderBy,
+    })
+  }
+
+  /**
+   * 获取任务详情（管理端）
+   *
+   * @param id 任务ID
+   * @returns 任务详情
+   * @throws NotFoundException 任务不存在
+   */
+  async getTaskDetail(id: number) {
+    const [taskRecord] = await this.db
+      .select()
+      .from(this.taskTable)
+      .where(and(eq(this.taskTable.id, id), isNull(this.taskTable.deletedAt)))
+      .limit(1)
+
+    if (!taskRecord) {
+      throw new NotFoundException('任务不存在')
+    }
+    return taskRecord
+  }
+
+  /**
+   * 创建任务（管理端）
+   *
+   * @param dto 创建参数
+   *   - code: 任务唯一标识码
+   *   - title: 任务标题
+   *   - description: 任务描述
+   *   - cover: 封面图片
+   *   - type: 任务类型
+   *   - status: 任务状态（默认草稿）
+   *   - priority: 优先级
+   *   - isEnabled: 是否启用
+   *   - claimMode: 领取模式（手动/自动）
+   *   - completeMode: 完成模式（自动/手动）
+   *   - targetCount: 目标数量
+   *   - rewardConfig: 奖励配置（JSON字符串）
+   *   - publishStartAt: 发布开始时间
+   *   - publishEndAt: 发布结束时间
+   *   - repeatRule: 重复规则（JSON字符串）
+   * @param adminUser 管理员用户信息
+   * @returns 创建结果，包含任务ID
+   * @throws BadRequestException 发布时间无效或任务编码已存在
+   */
+  async createTask(dto: CreateTaskDto, adminUser: JwtUserInfoInterface) {
+    // 校验发布时间窗口
+    this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
+
     try {
-      const created = await this.task.create({ data })
+      const [created] = await this.db
+        .insert(this.taskTable)
+        .values({
+          code: dto.code,
+          title: dto.title,
+          description: dto.description,
+          cover: dto.cover,
+          type: dto.type,
+          status: dto.status ?? TaskStatusEnum.DRAFT,
+          priority: dto.priority,
+          isEnabled: dto.isEnabled,
+          claimMode: dto.claimMode,
+          completeMode: dto.completeMode,
+          targetCount: dto.targetCount,
+          rewardConfig: this.parseJsonValue(dto.rewardConfig),
+          publishStartAt: dto.publishStartAt,
+          publishEndAt: dto.publishEndAt,
+          repeatRule: this.parseJsonValue(dto.repeatRule),
+          createdById: Number(adminUser.sub),
+          updatedById: Number(adminUser.sub),
+        })
+        .returning()
+
       return { id: created.id }
     } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Task code already exists')
-        },
-      })
+      // 处理唯一约束冲突（任务编码重复）
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BadRequestException('Task code already exists')
+      }
+      throw error
     }
   }
 
+  /**
+   * 更新任务（管理端）
+   *
+   * @param dto 更新参数，包含任务ID和需要更新的字段
+   * @param adminUser 管理员用户信息
+   * @returns 更新结果，包含任务ID
+   * @throws NotFoundException 任务不存在
+   * @throws BadRequestException 发布时间无效或任务编码已存在
+   */
   async updateTask(dto: UpdateTaskDto, adminUser: JwtUserInfoInterface) {
-    const task = await this.task.findFirst({
-      where: { id: dto.id, deletedAt: null },
-    })
-    if (!task) {
+    // 检查任务是否存在
+    const [taskRecord] = await this.db
+      .select()
+      .from(this.taskTable)
+      .where(and(eq(this.taskTable.id, dto.id), isNull(this.taskTable.deletedAt)))
+      .limit(1)
+
+    if (!taskRecord) {
       throw new NotFoundException('Task not found')
     }
+
+    // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
-    const data: Prisma.TaskUpdateInput = {
-      code: dto.code,
-      title: dto.title,
-      description: dto.description,
-      cover: dto.cover,
-      type: dto.type,
-      status: dto.status,
-      priority: dto.priority,
-      isEnabled: dto.isEnabled,
-      claimMode: dto.claimMode,
-      completeMode: dto.completeMode,
-      targetCount: dto.targetCount,
-      rewardConfig: this.parseJsonValue(dto.rewardConfig),
-      publishStartAt: dto.publishStartAt,
-      publishEndAt: dto.publishEndAt,
-      repeatRule: this.parseJsonValue(dto.repeatRule),
-      updatedBy: { connect: { id: Number(adminUser.sub) } },
-    }
+
     try {
-      await this.task.update({
-        where: { id: dto.id },
-        data,
-      })
+      await this.db
+        .update(this.taskTable)
+        .set({
+          code: dto.code,
+          title: dto.title,
+          description: dto.description,
+          cover: dto.cover,
+          type: dto.type,
+          status: dto.status,
+          priority: dto.priority,
+          isEnabled: dto.isEnabled,
+          claimMode: dto.claimMode,
+          completeMode: dto.completeMode,
+          targetCount: dto.targetCount,
+          rewardConfig: this.parseJsonValue(dto.rewardConfig),
+          publishStartAt: dto.publishStartAt,
+          publishEndAt: dto.publishEndAt,
+          repeatRule: this.parseJsonValue(dto.repeatRule),
+          updatedById: Number(adminUser.sub),
+        })
+        .where(eq(this.taskTable.id, dto.id))
+
       return { id: dto.id }
     } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Task code already exists')
-        },
-      })
+      // 处理唯一约束冲突（任务编码重复）
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BadRequestException('Task code already exists')
+      }
+      throw error
     }
   }
 
+  /**
+   * 更新任务状态（管理端）
+   *
+   * 用于快速切换任务的状态和启用/禁用状态。
+   *
+   * @param dto 更新参数
+   *   - id: 任务ID
+   *   - status: 任务状态
+   *   - isEnabled: 是否启用
+   * @returns 更新结果
+   * @throws NotFoundException 任务不存在
+   */
   async updateTaskStatus(dto: UpdateTaskStatusDto) {
-    await this.task.findFirstOrThrow({
-      where: { id: dto.id, deletedAt: null },
-    })
-    await this.task.update({
-      where: { id: dto.id },
-      data: {
+    const exists = await this.drizzle.ext.exists(
+      this.taskTable,
+      and(eq(this.taskTable.id, dto.id), isNull(this.taskTable.deletedAt)),
+    )
+    if (!exists) {
+      throw new NotFoundException('任务不存在')
+    }
+
+    await this.db
+      .update(this.taskTable)
+      .set({
         status: dto.status,
         isEnabled: dto.isEnabled,
-      },
-    })
+      })
+      .where(eq(this.taskTable.id, dto.id))
+
     return { id: dto.id }
   }
 
+  /**
+   * 删除任务（软删除）
+   *
+   * @param id 任务ID
+   * @returns 删除结果
+   */
   async deleteTask(id: number) {
-    await this.task.softDelete({ id })
+    await this.drizzle.ext.softDelete(this.taskTable, eq(this.taskTable.id, id))
     return { id }
   }
 
+  // ==================== 任务分配管理 ====================
+
+  /**
+   * 分页查询任务分配列表（管理端）
+   *
+   * 查询用户领取的任务分配记录，包含关联的任务信息。
+   *
+   * @param queryDto 查询参数
+   *   - taskId: 任务ID
+   *   - userId: 用户ID
+   *   - status: 分配状态
+   *   - pageIndex: 页码
+   *   - pageSize: 每页数量
+   *   - orderBy: 排序条件
+   * @returns 分页结果，包含任务分配和关联任务信息
+   */
   async getTaskAssignmentPage(queryDto: QueryTaskAssignmentDto) {
-    const { taskId, userId, status, ...other } = queryDto
-    const where: Prisma.TaskAssignmentWhereInput = { deletedAt: null }
+    const { taskId, userId, status, pageIndex = 1, pageSize = 20, orderBy } = queryDto
+
+    // 构建查询条件
+    const conditions: SQL[] = [isNull(this.taskAssignmentTable.deletedAt)]
     if (taskId !== undefined) {
-      where.taskId = taskId
+      conditions.push(eq(this.taskAssignmentTable.taskId, taskId))
     }
     if (userId !== undefined) {
-      where.userId = userId
+      conditions.push(eq(this.taskAssignmentTable.userId, userId))
     }
     if (status !== undefined) {
-      where.status = status
+      conditions.push(eq(this.taskAssignmentTable.status, status))
     }
-    return this.taskAssignment.findPagination({
-      where: { ...where, ...other },
-      include: {
-        task: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            rewardConfig: true,
-          },
-        },
-      },
-    })
+
+    // 分页查询
+    const offset = (pageIndex - 1) * pageSize
+    const whereClause = and(...conditions)
+
+    // 解析排序
+    const orderBys = this.parseOrderBy(orderBy, this.taskAssignmentTable)
+
+    // 查询列表（关联任务表获取任务基本信息）
+    const list = orderBys.length > 0
+      ? await this.db
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
+          .orderBy(...orderBys)
+      : await this.db
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
+
+    // 查询总数
+    const [countResult] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(this.taskAssignmentTable)
+      .where(whereClause)
+
+    // 转换结果格式（扁平化结构）
+    const formattedList = list.map((item) => ({
+      ...item.assignment,
+      task: item.task,
+    }))
+
+    return {
+      list: formattedList,
+      total: Number(countResult?.count ?? 0),
+      pageIndex,
+      pageSize,
+    }
   }
 
-  async getAvailableTasks(queryDto: QueryAppTaskDto, userId: number) {
-    const { type, ...other } = queryDto
-    const where = this.buildAvailableWhere(type)
-    const orderBy =
-      (other as { orderBy?: Prisma.TaskOrderByWithRelationInput }).orderBy ?? [
-        { priority: Prisma.SortOrder.desc },
-        { createdAt: Prisma.SortOrder.desc },
-      ]
+  // ==================== 应用端接口 ====================
 
-    const result = await this.task.findPagination({
-      where: { ...where, ...other },
-      orderBy,
+  /**
+   * 获取可领取的任务列表（应用端）
+   *
+   * 查询当前用户可领取的任务，同时自动为自动领取模式的任务创建分配。
+   *
+   * @param queryDto 查询参数
+   *   - type: 任务类型
+   *   - pageIndex: 页码
+   *   - pageSize: 每页数量
+   * @param userId 当前用户ID
+   * @returns 分页结果
+   */
+  async getAvailableTasks(queryDto: QueryAppTaskDto, userId: number) {
+    const { type, pageIndex = 1, pageSize = 20 } = queryDto
+    const where = this.buildAvailableWhere(type)
+
+    const result = await this.drizzle.ext.findPagination(this.taskTable, {
+      where,
+      pageIndex,
+      pageSize,
+      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
     })
-    await this.ensureAutoAssignments(userId, result.list)
+
+    // 为自动领取模式的任务确保分配已创建
+    await this.ensureAutoAssignments(userId, result.list as Task[])
     return result
   }
 
+  /**
+   * 获取我的任务列表（应用端）
+   *
+   * 查询当前用户已领取的任务分配列表。
+   * 会先确保所有自动领取的任务都已分配给用户。
+   *
+   * @param queryDto 查询参数
+   *   - status: 分配状态
+   *   - type: 任务类型
+   *   - pageIndex: 页码
+   *   - pageSize: 每页数量
+   *   - orderBy: 排序条件
+   * @param userId 当前用户ID
+   * @returns 分页结果，包含分配和任务信息
+   */
   async getMyTasks(queryDto: QueryMyTaskDto, userId: number) {
+    // 确保自动领取的任务都已分配
     await this.ensureAutoAssignmentsForUser(userId)
-    const { status, type, ...other } = queryDto
-    const where: Prisma.TaskAssignmentWhereInput = {
-      deletedAt: null,
-      userId,
-    }
+    const { status, type, pageIndex = 1, pageSize = 20, orderBy } = queryDto
+
+    // 构建查询条件
+    const conditions: SQL[] = [
+      isNull(this.taskAssignmentTable.deletedAt),
+      eq(this.taskAssignmentTable.userId, userId),
+    ]
     if (status !== undefined) {
-      where.status = status
+      conditions.push(eq(this.taskAssignmentTable.status, status))
     }
     if (type !== undefined) {
-      where.task = { type }
+      conditions.push(eq(this.taskTable.type, type))
     }
-    return this.taskAssignment.findPagination({
-      where: { ...where, ...other },
-      include: {
-        task: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            rewardConfig: true,
-            targetCount: true,
-            completeMode: true,
-            claimMode: true,
-          },
-        },
-      },
-    })
+
+    const whereClause = and(...conditions)
+    const offset = (pageIndex - 1) * pageSize
+
+    // 解析排序
+    const orderBys = this.parseOrderBy(orderBy, this.taskAssignmentTable)
+
+    // 查询列表（关联任务表获取任务详细信息）
+    const list = orderBys.length > 0
+      ? await this.db
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+              targetCount: this.taskTable.targetCount,
+              completeMode: this.taskTable.completeMode,
+              claimMode: this.taskTable.claimMode,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
+          .orderBy(...orderBys)
+      : await this.db
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+              targetCount: this.taskTable.targetCount,
+              completeMode: this.taskTable.completeMode,
+              claimMode: this.taskTable.claimMode,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
+
+    // 查询总数
+    const [countResult] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(this.taskAssignmentTable)
+      .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
+      .where(whereClause)
+
+    // 转换结果格式
+    const formattedList = list.map((item) => ({
+      ...item.assignment,
+      task: item.task,
+    }))
+
+    return {
+      list: formattedList,
+      total: Number(countResult?.count ?? 0),
+      pageIndex,
+      pageSize,
+    }
   }
 
+  /**
+   * 领取任务（应用端）
+   *
+   * 用户手动领取一个任务，创建任务分配记录。
+   * 如果当前周期内已有分配，返回已有分配。
+   *
+   * @param dto 领取参数
+   *   - taskId: 任务ID
+   * @param userId 当前用户ID
+   * @returns 任务分配记录
+   * @throws BadRequestException 任务未开始或已结束
+   * @throws NotFoundException 任务不存在
+   */
   async claimTask(dto: ClaimTaskDto, userId: number) {
-    const task = await this.findClaimableTask(dto.taskId)
+    // 检查任务是否可领取
+    const taskRecord = await this.findClaimableTask(dto.taskId)
     const now = new Date()
-    const cycleKey = this.buildCycleKey(task, now)
-    return this.createOrGetAssignment(task, userId, cycleKey, now)
+    // 计算当前周期标识
+    const cycleKey = this.buildCycleKey(taskRecord, now)
+    // 创建或获取已存在的分配
+    return this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
   }
 
+  /**
+   * 上报任务进度（应用端）
+   *
+   * 更新用户任务的执行进度。如果任务为自动领取模式且未领取，
+   * 会自动创建分配。当进度达到目标时自动标记为完成。
+   *
+   * 使用乐观锁机制防止并发更新冲突。
+   *
+   * @param dto 进度参数
+   *   - taskId: 任务ID
+   *   - delta: 进度增量（必须大于0）
+   *   - context: 上下文信息（JSON字符串）
+   * @param userId 当前用户ID
+   * @returns 更新后的任务分配
+   * @throws BadRequestException 进度增量无效或任务未领取
+   * @throws NotFoundException 任务不存在
+   */
   async reportProgress(dto: TaskProgressDto, userId: number) {
+    // 校验进度增量
     if (dto.delta <= 0) {
       throw new BadRequestException('进度增量必须大于0')
     }
-    const task = await this.findAvailableTask(dto.taskId)
+    // 检查任务是否可用
+    const taskRecord = await this.findAvailableTask(dto.taskId)
     const now = new Date()
-    const cycleKey = this.buildCycleKey(task, now)
-    let assignment = await this.taskAssignment.findUnique({
-      where: {
-        taskId_userId_cycleKey: {
-          taskId: task.id,
-          userId,
-          cycleKey,
-        },
-      },
-    })
+    const cycleKey = this.buildCycleKey(taskRecord, now)
+
+    // 查找现有分配
+    let assignment = await this.findAssignmentByUniqueKey(
+      taskRecord.id,
+      userId,
+      cycleKey,
+    )
+
+    // 如果没有分配，自动领取模式的任务会自动创建分配
     if (!assignment) {
-      if (task.claimMode === TaskClaimModeEnum.AUTO) {
-        assignment = await this.createOrGetAssignment(task, userId, cycleKey, now)
+      if (taskRecord.claimMode === TaskClaimModeEnum.AUTO) {
+        assignment = await this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
       } else {
         throw new BadRequestException('任务未领取')
       }
     }
+
+    // 已完成或已过期的分配直接返回
     if (
       assignment.status === TaskAssignmentStatusEnum.COMPLETED ||
       assignment.status === TaskAssignmentStatusEnum.EXPIRED
     ) {
       return assignment
     }
+
+    // 计算新进度（不超过目标值）
     const nextProgress = Math.min(
       assignment.target,
       assignment.progress + dto.delta,
     )
+    // 判断是否完成
     const nextStatus =
       nextProgress >= assignment.target
         ? TaskAssignmentStatusEnum.COMPLETED
@@ -295,116 +622,168 @@ export class TaskService extends PlatformService {
     const completedAt =
       nextStatus === TaskAssignmentStatusEnum.COMPLETED ? now : undefined
     const context = this.parseJsonValue(dto.context)
-    const assignmentContext = this.toInputJsonValue(assignment.context)
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const updatedAssignment = await tx.taskAssignment.update({
-        where: { id: assignment.id, version: assignment.version },
-        data: {
+    // 事务更新：更新分配并记录进度日志
+    const updated = await this.db.transaction(async (tx) => {
+      // 使用乐观锁更新（version字段）
+      const [updatedAssignment] = await tx
+        .update(this.taskAssignmentTable)
+        .set({
           progress: nextProgress,
           status: nextStatus,
           completedAt,
-          context: context ?? assignmentContext,
-          version: { increment: 1 },
-        },
+          context: context ?? assignment.context,
+          version: sql`${this.taskAssignmentTable.version} + 1`,
+        })
+        .where(
+          and(
+            eq(this.taskAssignmentTable.id, assignment.id),
+            eq(this.taskAssignmentTable.version, assignment.version),
+          ),
+        )
+        .returning()
+
+      // 记录进度日志
+      await tx.insert(this.taskProgressLogTable).values({
+        assignmentId: assignment.id,
+        userId,
+        actionType:
+          nextStatus === TaskAssignmentStatusEnum.COMPLETED
+            ? TaskProgressActionTypeEnum.COMPLETE
+            : TaskProgressActionTypeEnum.PROGRESS,
+        delta: dto.delta,
+        beforeValue: assignment.progress,
+        afterValue: nextProgress,
+        context,
       })
-      await tx.taskProgressLog.create({
-        data: {
-          assignmentId: assignment.id,
-          userId,
-          actionType:
-            nextStatus === TaskAssignmentStatusEnum.COMPLETED
-              ? TaskProgressActionTypeEnum.COMPLETE
-              : TaskProgressActionTypeEnum.PROGRESS,
-          delta: dto.delta,
-          beforeValue: assignment.progress,
-          afterValue: nextProgress,
-          context,
-        },
-      })
+
       return updatedAssignment
     })
 
+    // 如果刚完成，触发完成事件（发放奖励）
     if (
       assignment.status !== TaskAssignmentStatusEnum.COMPLETED &&
       updated.status === TaskAssignmentStatusEnum.COMPLETED
     ) {
-      await this.emitTaskCompleteEvent(userId, task, updated)
+      await this.emitTaskCompleteEvent(userId, taskRecord, updated)
     }
     return updated
   }
 
+  /**
+   * 完成任务（应用端）
+   *
+   * 手动标记任务为完成状态。仅适用于手动完成模式的任务。
+   * 自动完成模式的任务需要进度达标后才能完成。
+   *
+   * @param dto 完成参数
+   *   - taskId: 任务ID
+   * @param userId 当前用户ID
+   * @returns 更新后的任务分配
+   * @throws BadRequestException 任务未领取或进度未达成
+   * @throws NotFoundException 任务不存在
+   */
   async completeTask(dto: TaskCompleteDto, userId: number) {
-    const task = await this.findAvailableTask(dto.taskId)
+    const taskRecord = await this.findAvailableTask(dto.taskId)
     const now = new Date()
-    const cycleKey = this.buildCycleKey(task, now)
-    const assignment = await this.taskAssignment.findUnique({
-      where: {
-        taskId_userId_cycleKey: {
-          taskId: task.id,
-          userId,
-          cycleKey,
-        },
-      },
-    })
+    const cycleKey = this.buildCycleKey(taskRecord, now)
+
+    const assignment = await this.findAssignmentByUniqueKey(
+      taskRecord.id,
+      userId,
+      cycleKey,
+    )
+
     if (!assignment) {
       throw new BadRequestException('任务未领取')
     }
+    // 已完成则直接返回
     if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
       return assignment
     }
+    // 自动完成模式需要进度达标
     if (
-      task.completeMode === TaskCompleteModeEnum.AUTO &&
+      taskRecord.completeMode === TaskCompleteModeEnum.AUTO &&
       assignment.progress < assignment.target
     ) {
       throw new BadRequestException('任务进度未达成')
     }
+
     const finalProgress = Math.max(assignment.progress, assignment.target)
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const updatedAssignment = await tx.taskAssignment.update({
-        where: { id: assignment.id, version: assignment.version },
-        data: {
+
+    // 事务更新：标记完成并记录日志
+    const updated = await this.db.transaction(async (tx) => {
+      const [updatedAssignment] = await tx
+        .update(this.taskAssignmentTable)
+        .set({
           progress: finalProgress,
           status: TaskAssignmentStatusEnum.COMPLETED,
           completedAt: now,
-          version: { increment: 1 },
-        },
+          version: sql`${this.taskAssignmentTable.version} + 1`,
+        })
+        .where(
+          and(
+            eq(this.taskAssignmentTable.id, assignment.id),
+            eq(this.taskAssignmentTable.version, assignment.version),
+          ),
+        )
+        .returning()
+
+      await tx.insert(this.taskProgressLogTable).values({
+        assignmentId: assignment.id,
+        userId,
+        actionType: TaskProgressActionTypeEnum.COMPLETE,
+        delta: 0,
+        beforeValue: assignment.progress,
+        afterValue: finalProgress,
       })
-      await tx.taskProgressLog.create({
-        data: {
-          assignmentId: assignment.id,
-          userId,
-          actionType: TaskProgressActionTypeEnum.COMPLETE,
-          delta: 0,
-          beforeValue: assignment.progress,
-          afterValue: finalProgress,
-        },
-      })
+
       return updatedAssignment
     })
-    await this.emitTaskCompleteEvent(userId, task, updated)
+
+    // 触发完成事件（发放奖励）
+    await this.emitTaskCompleteEvent(userId, taskRecord, updated)
     return updated
   }
 
+  // ==================== 定时任务 ====================
+
+  /**
+   * 过期任务分配检查（定时任务）
+   *
+   * 每5分钟执行一次，自动将过期的任务分配标记为已过期。
+   * 检查条件：分配状态为待领取或进行中，且过期时间已到。
+   */
   @Cron('0 */5 * * * *')
   async expireAssignments() {
     const now = new Date()
-    await this.taskAssignment.updateMany({
-      where: {
-        status: {
-          in: [
+    await this.db
+      .update(this.taskAssignmentTable)
+      .set({
+        status: TaskAssignmentStatusEnum.EXPIRED,
+      })
+      .where(
+        and(
+          inArray(this.taskAssignmentTable.status, [
             TaskAssignmentStatusEnum.PENDING,
             TaskAssignmentStatusEnum.IN_PROGRESS,
-          ],
-        },
-        expiredAt: { lte: now },
-      },
-      data: {
-        status: TaskAssignmentStatusEnum.EXPIRED,
-      },
-    })
+          ]),
+          lte(this.taskAssignmentTable.expiredAt, now),
+        ),
+      )
   }
 
+  // ==================== 私有方法 ====================
+
+  /**
+   * 校验发布时间窗口
+   *
+   * 确保发布开始时间不晚于结束时间。
+   *
+   * @param startAt 发布开始时间
+   * @param endAt 发布结束时间
+   * @throws BadRequestException 发布时间无效
+   */
   private ensurePublishWindow(
     startAt?: Date | null,
     endAt?: Date | null,
@@ -414,86 +793,138 @@ export class TaskService extends PlatformService {
     }
   }
 
+  /**
+   * 解析JSON字符串
+   *
+   * 将字符串解析为JSON对象，用于处理前端传递的JSON配置。
+   *
+   * @param value JSON字符串
+   * @returns 解析后的对象，如果为空则返回undefined
+   * @throws BadRequestException JSON格式错误
+   */
   private parseJsonValue(value?: string | null) {
     if (value === undefined || value === null || value === '') {
       return undefined
     }
     try {
-      const parsed = JSON.parse(value) as Prisma.JsonValue
-      return this.toInputJsonValue(parsed)
+      return JSON.parse(value) as Record<string, unknown>
     } catch {
       throw new BadRequestException('JSON格式错误')
     }
   }
 
-  private toInputJsonValue(
-    value?: Prisma.JsonValue | null,
-  ): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput | undefined {
-    if (value === undefined) {
-      return undefined
-    }
-    if (value === null) {
-      return Prisma.JsonNull
-    }
-    return value as Prisma.InputJsonValue
-  }
-
-  private buildAvailableWhere(type?: number) {
+  /**
+   * 构建可领取任务的查询条件
+   *
+   * 条件包括：
+   * - 未删除
+   * - 已发布状态
+   * - 已启用
+   * - 在发布时间窗口内
+   *
+   * @param type 任务类型（可选）
+   * @returns 查询条件
+   */
+  private buildAvailableWhere(type?: number): SQL | undefined {
     const now = new Date()
-    const where: Prisma.TaskWhereInput = {
-      deletedAt: null,
-      status: TaskStatusEnum.PUBLISHED,
-      isEnabled: true,
-      AND: [
-        {
-          OR: [
-            { publishStartAt: null },
-            { publishStartAt: { lte: now } },
-          ],
-        },
-        {
-          OR: [
-            { publishEndAt: null },
-            { publishEndAt: { gte: now } },
-          ],
-        },
-      ],
+    // 发布开始时间条件：为空或已到开始时间
+    const publishStartCondition = or(
+      isNull(this.taskTable.publishStartAt),
+      lte(this.taskTable.publishStartAt, now),
+    )
+    // 发布结束时间条件：为空或未到结束时间
+    const publishEndCondition = or(
+      isNull(this.taskTable.publishEndAt),
+      gte(this.taskTable.publishEndAt, now),
+    )
+
+    const conditions: SQL[] = [
+      isNull(this.taskTable.deletedAt),
+      eq(this.taskTable.status, TaskStatusEnum.PUBLISHED),
+      eq(this.taskTable.isEnabled, true),
+    ]
+
+    if (publishStartCondition) {
+      conditions.push(publishStartCondition)
+    }
+    if (publishEndCondition) {
+      conditions.push(publishEndCondition)
     }
     if (type !== undefined) {
-      where.type = type
+      conditions.push(eq(this.taskTable.type, type))
     }
-    return where
+    return and(...conditions)
   }
 
-  private async findAvailableTask(taskId: number) {
-    const task = await this.task.findFirst({
-      where: {
-        id: taskId,
-        deletedAt: null,
-        isEnabled: true,
-        status: TaskStatusEnum.PUBLISHED,
-      },
-    })
-    if (!task) {
+  /**
+   * 查找可用任务
+   *
+   * 查找满足基本条件的任务：未删除、已启用、已发布。
+   *
+   * @param taskId 任务ID
+   * @returns 任务记录
+   * @throws NotFoundException 任务不存在
+   */
+  private async findAvailableTask(taskId: number): Promise<Task> {
+    const [taskRecord] = await this.db
+      .select()
+      .from(this.taskTable)
+      .where(
+        and(
+          eq(this.taskTable.id, taskId),
+          isNull(this.taskTable.deletedAt),
+          eq(this.taskTable.isEnabled, true),
+          eq(this.taskTable.status, TaskStatusEnum.PUBLISHED),
+        ),
+      )
+      .limit(1)
+
+    if (!taskRecord) {
       throw new NotFoundException('任务不存在')
     }
-    return task
+    return taskRecord
   }
 
-  private async findClaimableTask(taskId: number) {
-    const task = await this.findAvailableTask(taskId)
+  /**
+   * 查找可领取的任务
+   *
+   * 在可用任务基础上，额外校验任务是否在发布时间窗口内。
+   *
+   * @param taskId 任务ID
+   * @returns 任务记录
+   * @throws BadRequestException 任务未开始或已结束
+   * @throws NotFoundException 任务不存在
+   */
+  private async findClaimableTask(taskId: number): Promise<Task> {
+    const taskRecord = await this.findAvailableTask(taskId)
     const now = new Date()
-    if (task.publishStartAt && task.publishStartAt > now) {
+    // 校验任务是否已开始
+    if (taskRecord.publishStartAt && taskRecord.publishStartAt > now) {
       throw new BadRequestException('任务未开始')
     }
-    if (task.publishEndAt && task.publishEndAt < now) {
+    // 校验任务是否已结束
+    if (taskRecord.publishEndAt && taskRecord.publishEndAt < now) {
       throw new BadRequestException('任务已结束')
     }
-    return task
+    return taskRecord
   }
 
-  private buildCycleKey(task: { repeatRule: Prisma.JsonValue | null }, now: Date) {
-    const rule = task.repeatRule as { type?: string } | null
+  /**
+   * 构建任务周期标识
+   *
+   * 根据任务的重复规则生成当前周期的唯一标识：
+   * - 一次性任务：返回 'once'
+   * - 每日任务：返回日期字符串 'YYYY-MM-DD'
+   * - 每周任务：返回周起始日期 'week-YYYY-MM-DD'
+   * - 每月任务：返回月份 'YYYY-MM'
+   *
+   * @param taskRecord 任务记录对象
+   * @param taskRecord.repeatRule 重复规则
+   * @param now 当前时间
+   * @returns 周期标识
+   */
+  private buildCycleKey(taskRecord: { repeatRule: unknown }, now: Date): string {
+    const rule = taskRecord.repeatRule as { type?: string } | null
     const type = rule?.type ?? TaskRepeatTypeEnum.ONCE
     if (type === TaskRepeatTypeEnum.DAILY) {
       return this.formatDate(now)
@@ -502,19 +933,28 @@ export class TaskService extends PlatformService {
       return `week-${this.formatDate(this.getWeekStart(now))}`
     }
     if (type === TaskRepeatTypeEnum.MONTHLY) {
-      return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(
-        2,
-        '0',
-      )}`
+      return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
     }
     return TaskRepeatTypeEnum.ONCE
   }
 
-  private formatDate(date: Date) {
+  /**
+   * 格式化日期为 YYYY-MM-DD 格式
+   *
+   * @param date 日期对象
+   * @returns 格式化的日期字符串
+   */
+  private formatDate(date: Date): string {
     return date.toISOString().slice(0, 10)
   }
 
-  private getWeekStart(date: Date) {
+  /**
+   * 获取周起始日期（周一）
+   *
+   * @param date 日期对象
+   * @returns 该周周一的日期对象
+   */
+  private getWeekStart(date: Date): Date {
     const base = new Date(
       Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
     )
@@ -523,96 +963,179 @@ export class TaskService extends PlatformService {
     return base
   }
 
-  private buildTaskSnapshot(task: {
+  /**
+   * 构建任务快照
+   *
+   * 创建任务信息的快照，用于任务分配记录中保存任务状态。
+   * 确保即使任务配置变更，历史分配仍保留当时的任务信息。
+   *
+   * @param taskRecord 任务记录对象
+   * @param taskRecord.id 任务ID
+   * @param taskRecord.code 任务编码
+   * @param taskRecord.title 任务标题
+   * @param taskRecord.type 任务类型
+   * @param taskRecord.rewardConfig 奖励配置
+   * @param taskRecord.targetCount 目标数量
+   * @returns 任务快照对象
+   */
+  private buildTaskSnapshot(taskRecord: {
     id: number
     code: string
     title: string
     type: number
-    rewardConfig: Prisma.JsonValue | null
+    rewardConfig: unknown
     targetCount: number
   }) {
     return {
-      id: task.id,
-      code: task.code,
-      title: task.title,
-      type: task.type,
-      rewardConfig: task.rewardConfig,
-      targetCount: task.targetCount,
+      id: taskRecord.id,
+      code: taskRecord.code,
+      title: taskRecord.title,
+      type: taskRecord.type,
+      rewardConfig: taskRecord.rewardConfig,
+      targetCount: taskRecord.targetCount,
     }
   }
 
+  /**
+   * 根据唯一键查找任务分配
+   *
+   * 唯一键由 任务ID + 用户ID + 周期标识 组成。
+   *
+   * @param taskId 任务ID
+   * @param userId 用户ID
+   * @param cycleKey 周期标识
+   * @returns 任务分配记录，不存在则返回undefined
+   */
+  private async findAssignmentByUniqueKey(
+    taskId: number,
+    userId: number,
+    cycleKey: string,
+  ): Promise<TaskAssignment | undefined> {
+    const [assignment] = await this.db
+      .select()
+      .from(this.taskAssignmentTable)
+      .where(
+        and(
+          eq(this.taskAssignmentTable.taskId, taskId),
+          eq(this.taskAssignmentTable.userId, userId),
+          eq(this.taskAssignmentTable.cycleKey, cycleKey),
+        ),
+      )
+      .limit(1)
+    return assignment
+  }
+
+  /**
+   * 创建任务分配
+   *
+   * 在事务中创建分配记录并记录领取日志。
+   *
+   * @param taskRecord 任务信息对象
+   * @param taskRecord.id 任务ID
+   * @param taskRecord.code 任务编码
+   * @param taskRecord.title 任务标题
+   * @param taskRecord.type 任务类型
+   * @param taskRecord.rewardConfig 奖励配置
+   * @param taskRecord.targetCount 目标数量
+   * @param taskRecord.publishEndAt 发布结束时间
+   * @param userId 用户ID
+   * @param cycleKey 周期标识
+   * @param now 当前时间
+   * @returns 创建的任务分配
+   */
   private async createAssignment(
-    task: {
+    taskRecord: {
       id: number
       code: string
       title: string
       type: number
-      rewardConfig: Prisma.JsonValue | null
+      rewardConfig: unknown
       targetCount: number
       publishEndAt: Date | null
     },
     userId: number,
     cycleKey: string,
     now: Date,
-  ) {
-    const taskSnapshot = this.buildTaskSnapshot(task)
-    return this.prisma.$transaction(async (tx) => {
-      const assignment = await tx.taskAssignment.create({
-        data: {
-          taskId: task.id,
+  ): Promise<TaskAssignment> {
+    const taskSnapshot = this.buildTaskSnapshot(taskRecord)
+
+    return this.db.transaction(async (tx) => {
+      // 创建分配记录
+      const [assignment] = await tx
+        .insert(this.taskAssignmentTable)
+        .values({
+          taskId: taskRecord.id,
           userId,
           cycleKey,
           status: TaskAssignmentStatusEnum.IN_PROGRESS,
           progress: 0,
-          target: task.targetCount,
+          target: taskRecord.targetCount,
           claimedAt: now,
-          expiredAt: task.publishEndAt ?? undefined,
+          expiredAt: taskRecord.publishEndAt ?? undefined,
           taskSnapshot,
-        },
+        })
+        .returning()
+
+      // 记录领取日志
+      await tx.insert(this.taskProgressLogTable).values({
+        assignmentId: assignment.id,
+        userId,
+        actionType: TaskProgressActionTypeEnum.CLAIM,
+        delta: 0,
+        beforeValue: 0,
+        afterValue: 0,
       })
-      await tx.taskProgressLog.create({
-        data: {
-          assignmentId: assignment.id,
-          userId,
-          actionType: TaskProgressActionTypeEnum.CLAIM,
-          delta: 0,
-          beforeValue: 0,
-          afterValue: 0,
-        },
-      })
+
       return assignment
     })
   }
 
+  /**
+   * 创建或获取已存在的任务分配
+   *
+   * 处理并发领取场景：如果多个请求同时创建分配，
+   * 会因唯一约束冲突而回退到查询已有分配。
+   *
+   * @param taskRecord 任务信息对象
+   * @param taskRecord.id 任务ID
+   * @param taskRecord.code 任务编码
+   * @param taskRecord.title 任务标题
+   * @param taskRecord.type 任务类型
+   * @param taskRecord.rewardConfig 奖励配置
+   * @param taskRecord.targetCount 目标数量
+   * @param taskRecord.publishEndAt 发布结束时间
+   * @param userId 用户ID
+   * @param cycleKey 周期标识
+   * @param now 当前时间
+   * @returns 任务分配
+   */
   private async createOrGetAssignment(
-    task: {
+    taskRecord: {
       id: number
       code: string
       title: string
       type: number
-      rewardConfig: Prisma.JsonValue | null
+      rewardConfig: unknown
       targetCount: number
       publishEndAt: Date | null
     },
     userId: number,
     cycleKey: string,
     now: Date,
-  ) {
+  ): Promise<TaskAssignment> {
     try {
-      return await this.createAssignment(task, userId, cycleKey, now)
+      return await this.createAssignment(taskRecord, userId, cycleKey, now)
     } catch (error) {
-      if (!this.isUniqueConstraintError(error)) {
+      // 如果是唯一约束冲突，说明已有分配存在
+      if (!this.drizzle.isUniqueViolation(error)) {
         throw error
       }
-      const existing = await this.taskAssignment.findUnique({
-        where: {
-          taskId_userId_cycleKey: {
-            taskId: task.id,
-            userId,
-            cycleKey,
-          },
-        },
-      })
+      // 查询已存在的分配
+      const existing = await this.findAssignmentByUniqueKey(
+        taskRecord.id,
+        userId,
+        cycleKey,
+      )
       if (existing) {
         return existing
       }
@@ -620,91 +1143,215 @@ export class TaskService extends PlatformService {
     }
   }
 
-  private async ensureAutoAssignments(userId: number, tasks: Array<{ id: number }>) {
-    for (const task of tasks) {
-      await this.ensureAutoAssignment(userId, task.id)
+  /**
+   * 确保一组任务的自动分配
+   *
+   * 批量检查并为自动领取模式的任务创建分配。
+   *
+   * @param userId 用户ID
+   * @param tasks 任务列表
+   */
+  private async ensureAutoAssignments(userId: number, tasks: Task[]) {
+    for (const taskRecord of tasks) {
+      await this.ensureAutoAssignment(userId, taskRecord.id)
     }
   }
 
+  /**
+   * 确保用户的所有自动领取任务已分配
+   *
+   * 查询所有可用任务，为自动领取模式的任务创建分配。
+   *
+   * @param userId 用户ID
+   */
   private async ensureAutoAssignmentsForUser(userId: number) {
-    const tasks = await this.task.findMany({
-      where: this.buildAvailableWhere(),
-      select: {
-        id: true,
-        code: true,
-        title: true,
-        type: true,
-        rewardConfig: true,
-        targetCount: true,
-        claimMode: true,
-        publishStartAt: true,
-        publishEndAt: true,
-        repeatRule: true,
-      },
-    })
-    for (const task of tasks) {
-      await this.ensureAutoAssignmentByTask(userId, task)
+    const where = this.buildAvailableWhere()
+    const tasks = await this.db
+      .select({
+        id: this.taskTable.id,
+        code: this.taskTable.code,
+        title: this.taskTable.title,
+        type: this.taskTable.type,
+        rewardConfig: this.taskTable.rewardConfig,
+        targetCount: this.taskTable.targetCount,
+        claimMode: this.taskTable.claimMode,
+        publishStartAt: this.taskTable.publishStartAt,
+        publishEndAt: this.taskTable.publishEndAt,
+        repeatRule: this.taskTable.repeatRule,
+      })
+      .from(this.taskTable)
+      .where(where)
+
+    for (const taskRecord of tasks) {
+      await this.ensureAutoAssignmentByTask(userId, taskRecord)
     }
   }
 
+  /**
+   * 确保单个任务的自动分配
+   *
+   * 根据任务ID查找任务，如果为自动领取模式则创建分配。
+   *
+   * @param userId 用户ID
+   * @param taskId 任务ID
+   */
   private async ensureAutoAssignment(userId: number, taskId: number) {
-    const task = await this.task.findFirst({
-      where: {
-        id: taskId,
-        deletedAt: null,
-        isEnabled: true,
-        status: TaskStatusEnum.PUBLISHED,
-        claimMode: TaskClaimModeEnum.AUTO,
-      },
-    })
-    if (!task) {
+    // 查找自动领取模式的可用任务
+    const [taskRecord] = await this.db
+      .select()
+      .from(this.taskTable)
+      .where(
+        and(
+          eq(this.taskTable.id, taskId),
+          isNull(this.taskTable.deletedAt),
+          eq(this.taskTable.isEnabled, true),
+          eq(this.taskTable.status, TaskStatusEnum.PUBLISHED),
+          eq(this.taskTable.claimMode, TaskClaimModeEnum.AUTO),
+        ),
+      )
+      .limit(1)
+
+    if (!taskRecord) {
       return
     }
-    await this.ensureAutoAssignmentByTask(userId, task)
+    await this.ensureAutoAssignmentByTask(userId, taskRecord)
   }
 
+  /**
+   * 根据任务信息确保自动分配
+   *
+   * 校验任务的时间窗口和领取模式，创建分配。
+   *
+   * @param userId 用户ID
+   * @param taskRecord 任务信息对象
+   * @param taskRecord.id 任务ID
+   * @param taskRecord.code 任务编码
+   * @param taskRecord.title 任务标题
+   * @param taskRecord.type 任务类型
+   * @param taskRecord.rewardConfig 奖励配置
+   * @param taskRecord.targetCount 目标数量
+   * @param taskRecord.claimMode 领取模式
+   * @param taskRecord.publishStartAt 发布开始时间
+   * @param taskRecord.publishEndAt 发布结束时间
+   * @param taskRecord.repeatRule 重复规则
+   */
   private async ensureAutoAssignmentByTask(
     userId: number,
-    task: {
+    taskRecord: {
       id: number
       code: string
       title: string
       type: number
-      rewardConfig: Prisma.JsonValue | null
+      rewardConfig: unknown
       targetCount: number
       claimMode: number
       publishStartAt: Date | null
       publishEndAt: Date | null
-      repeatRule: Prisma.JsonValue | null
+      repeatRule: unknown
     },
   ) {
-    if (task.claimMode !== TaskClaimModeEnum.AUTO) {
+    // 非自动领取模式跳过
+    if (taskRecord.claimMode !== TaskClaimModeEnum.AUTO) {
       return
     }
     const now = new Date()
-    if (task.publishStartAt && task.publishStartAt > now) {
+    // 任务未开始
+    if (taskRecord.publishStartAt && taskRecord.publishStartAt > now) {
       return
     }
-    if (task.publishEndAt && task.publishEndAt < now) {
+    // 任务已结束
+    if (taskRecord.publishEndAt && taskRecord.publishEndAt < now) {
       return
     }
-    const cycleKey = this.buildCycleKey(task, now)
-    await this.createOrGetAssignment(task, userId, cycleKey, now)
+    // 计算周期并创建分配
+    const cycleKey = this.buildCycleKey(taskRecord, now)
+    await this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
   }
 
+  /**
+   * 触发任务完成事件
+   *
+   * 任务完成时调用用户成长奖励服务发放奖励。
+   *
+   * @param userId 用户ID
+   * @param taskRecord 任务信息对象
+   * @param taskRecord.id 任务ID
+   * @param taskRecord.rewardConfig 奖励配置
+   * @param assignment 任务分配信息对象
+   * @param assignment.id 分配ID
+   */
   private async emitTaskCompleteEvent(
     userId: number,
-    task: {
+    taskRecord: {
       id: number
-      rewardConfig: Prisma.JsonValue | null
+      rewardConfig: unknown
     },
     assignment: { id: number },
   ) {
     await this.userGrowthRewardService.tryRewardTaskComplete({
       userId,
-      taskId: task.id,
+      taskId: taskRecord.id,
       assignmentId: assignment.id,
-      rewardConfig: task.rewardConfig,
+      rewardConfig: taskRecord.rewardConfig as Record<string, unknown> | null,
     })
+  }
+
+  /**
+   * 解析排序条件
+   *
+   * 将前端传递的排序条件转换为SQL排序语句。
+   * 支持JSON字符串或对象格式。
+   *
+   * @param orderBy 排序条件（JSON字符串或对象）
+   * @param table 表对象
+   * @returns SQL排序数组
+   *
+   * @example
+   * // 输入: [{ createdAt: 'desc' }, { priority: 'asc' }]
+   * // 输出: [sql`created_at DESC`, sql`priority ASC`]
+   */
+  private parseOrderBy(
+    orderBy: unknown,
+    table: typeof this.taskTable | typeof this.taskAssignmentTable,
+  ): SQL[] {
+    if (!orderBy) {
+      return []
+    }
+
+    const tableAsAny = table as any
+    const result: SQL[] = []
+
+    // 解析 JSON 字符串
+    let parsed = orderBy
+    if (typeof orderBy === 'string') {
+      try {
+        parsed = JSON.parse(orderBy)
+      } catch {
+        return []
+      }
+    }
+
+    // 统一为数组处理
+    const records: Array<Record<string, string>> = Array.isArray(parsed)
+      ? parsed
+      : [parsed]
+
+    for (const record of records) {
+      for (const [field, direction] of Object.entries(record)) {
+        const column = tableAsAny[field]
+        if (!column) {
+          continue
+        }
+
+        const normalized = typeof direction === 'string' ? direction.toLowerCase() : ''
+        if (normalized === 'asc') {
+          result.push(sql`${column} ASC`)
+        } else if (normalized === 'desc') {
+          result.push(sql`${column} DESC`)
+        }
+      }
+    }
+
+    return result
   }
 }

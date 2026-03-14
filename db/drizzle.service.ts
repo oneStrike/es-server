@@ -1,14 +1,21 @@
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  OnApplicationShutdown,
+} from '@nestjs/common'
 import { Pool } from 'pg'
+import {
+  formatUniqueViolationMessage,
+  getPostgresError,
+  PostgresDefaultMessages,
+  PostgresError,
+  PostgresErrorCode,
+} from './constants/postgres-error'
 import { createDrizzleExtensions } from './drizzle.extensions'
 import { Db, DRIZZLE_DB, DRIZZLE_POOL } from './drizzle.provider'
 import * as schema from './schema'
-import {
-  isPostgresError,
-  PostgresDefaultMessages,
-  PostgresErrorCode,
-  PostgresError,
-} from './constants/postgres-error'
 
 /**
  * Drizzle 数据库服务
@@ -49,7 +56,8 @@ export class DrizzleService implements OnApplicationShutdown {
    * @param code PostgreSQL 错误码
    */
   isErrorCode(error: unknown, code: string): boolean {
-    return isPostgresError(error) && error.code === code
+    const pgError = getPostgresError(error)
+    return pgError !== null && pgError.code === code
   }
 
   /**
@@ -115,12 +123,15 @@ export class DrizzleService implements OnApplicationShutdown {
       conflict?: string
     },
   ): never {
-    if (!isPostgresError(error)) {
+    const pgError = getPostgresError(error)
+    if (!pgError) {
       throw error
     }
 
-    const { code } = error
-    const messageMap = {
+    const { code } = pgError
+
+    // 构建消息映射
+    const messageMap: Record<string, string | undefined> = {
       [PostgresErrorCode.UNIQUE_VIOLATION]: messages?.duplicate,
       [PostgresErrorCode.FOREIGN_KEY_VIOLATION]: messages?.foreignKey,
       [PostgresErrorCode.NOT_NULL_VIOLATION]: messages?.notNull,
@@ -128,13 +139,21 @@ export class DrizzleService implements OnApplicationShutdown {
       [PostgresErrorCode.SERIALIZATION_FAILURE]: messages?.conflict,
     }
 
-    // 使用自定义消息或默认消息
-    const message = messageMap[code] ?? PostgresDefaultMessages[code]
+    // 优先使用自定义消息，否则使用格式化的默认消息
+    let message = messageMap[code]
+    if (!message) {
+      // 唯一约束错误使用格式化消息
+      if (code === PostgresErrorCode.UNIQUE_VIOLATION) {
+        message = formatUniqueViolationMessage(
+          pgError,
+          PostgresDefaultMessages[code],
+        )
+      } else {
+        message = PostgresDefaultMessages[code]
+      }
+    }
 
     if (message) {
-      // 动态导入避免循环依赖
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { BadRequestException, ConflictException } = require('@nestjs/common')
       const isConflict =
         code === PostgresErrorCode.UNIQUE_VIOLATION ||
         code === PostgresErrorCode.SERIALIZATION_FAILURE
@@ -154,40 +173,6 @@ export class DrizzleService implements OnApplicationShutdown {
    * @returns PostgreSQL 错误信息或 null
    */
   extractError(error: unknown): PostgresError | null {
-    if (!isPostgresError(error)) {
-      return null
-    }
-    return {
-      code: error.code,
-      constraint: error.constraint,
-      table: error.table,
-      column: error.column,
-      detail: error.detail,
-      message: error.message,
-    }
-  }
-
-  // ==================== 重试机制 ====================
-
-  /**
-   * 事务冲突自动重试
-   * @param fn 要执行的操作
-   * @param maxRetries 最大重试次数，默认 3
-   */
-  async withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-    let lastError: unknown = new Error('事务冲突重试次数已耗尽')
-
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        return await fn()
-      } catch (error) {
-        lastError = error
-        if (!this.isSerializationFailure(error) || attempt >= maxRetries - 1) {
-          throw error
-        }
-      }
-    }
-
-    throw lastError
+    return getPostgresError(error)
   }
 }

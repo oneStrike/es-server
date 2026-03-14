@@ -232,10 +232,11 @@ export class LikeService extends PlatformService {
   /**
    * 获取用户的点赞列表
    * 查询指定用户的点赞记录，支持分页，并关联查询目标详情
+   * @param dto - 查询参数
+   * @param dto.targetType - 点赞目标类型
+   * @param dto.pageIndex - 页码（默认0）
+   * @param dto.pageSize - 每页数量（默认15）
    * @param userId - 用户ID
-   * @param targetType - 点赞目标类型
-   * @param pageIndex - 页码（默认0）
-   * @param pageSize - 每页数量（默认15）
    * @returns 分页点赞记录列表，包含目标详情
    */
   async getUserLikes(dto: LikePageQueryDto, userId: number) {
