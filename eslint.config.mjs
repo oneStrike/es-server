@@ -60,6 +60,7 @@ export default antfu(
               group: [
                 '@libs/app-content/*',
                 '@libs/app-config/*',
+                '@libs/config/*',
                 '@libs/content/*',
                 '@libs/dictionary/*',
                 '@libs/forum/*',
@@ -67,8 +68,8 @@ export default antfu(
                 '@libs/message/*',
                 '@libs/sensitive-word/*',
                 '@libs/system-config/*',
-                '@libs/task/*',
-                '@libs/user/*',
+                '@libs/growth/task/*',
+                '@libs/growth/*',
               ],
               message:
                 'Use public API from @libs/<lib> (index.ts) instead of deep imports.',

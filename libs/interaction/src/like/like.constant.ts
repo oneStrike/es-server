@@ -1,4 +1,4 @@
-import { GrowthRuleTypeEnum } from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/growth'
 
 /**
  * 点赞目标类型枚举

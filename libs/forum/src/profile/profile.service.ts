@@ -6,7 +6,7 @@ import {
   UserStatusEnum,
 } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { GrowthAssetTypeEnum, UserPointService } from '@libs/user'
+import { GrowthAssetTypeEnum, UserPointService } from '@libs/growth'
 
 import { Injectable } from '@nestjs/common'
 import {

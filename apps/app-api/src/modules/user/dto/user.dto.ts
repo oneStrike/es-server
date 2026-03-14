@@ -13,7 +13,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/user'
+import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/growth'
 
 import { OmitType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseAppUserDto } from '../../auth/dto/auth.dto'
@@ -609,4 +609,4 @@ export class UserBadgeItemDto {
 }
 
 // 重新导出项目中已有的等级信息 DTO，方便使用
-export { UserLevelInfoDto } from '@libs/user'
+export { UserLevelInfoDto } from '@libs/growth'

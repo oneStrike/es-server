@@ -18,7 +18,7 @@ import {
   UserBadgeService,
   UserExperienceService,
 UserPointService
-} from '@libs/user'
+} from '@libs/growth'
 
 import {
   BadRequestException,

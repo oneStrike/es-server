@@ -3,7 +3,7 @@ import { PlatformService } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-} from '@libs/user'
+} from '@libs/growth'
 import { Injectable } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 import { refreshUserLevelByExperience } from '../user-level.helper'

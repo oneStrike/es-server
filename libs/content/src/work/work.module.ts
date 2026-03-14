@@ -1,6 +1,6 @@
 import { InteractionModule, ReportModule } from '@libs/interaction'
 import { UploadModule } from '@libs/platform/modules'
-import { UserPermissionModule, UserPointModule } from '@libs/user'
+import { UserPermissionModule, UserPointModule } from '@libs/growth'
 
 import { Module } from '@nestjs/common'
 import { ContentPermissionModule } from '../permission'

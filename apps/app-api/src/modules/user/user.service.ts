@@ -21,7 +21,7 @@ import { DownloadTargetTypeEnum, PurchaseStatusEnum, PurchaseTargetTypeEnum } fr
 import { MessageInboxService } from '@libs/message'
 import { UserStatusEnum } from '@libs/platform/constant'
 import { PlatformService, Prisma } from '@libs/platform/database'
-import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/user'
+import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/growth'
 
 import {
   BadRequestException,

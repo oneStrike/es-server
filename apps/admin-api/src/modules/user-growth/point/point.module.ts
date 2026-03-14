@@ -1,4 +1,4 @@
-import { UserPointModule } from '@libs/user'
+import { UserPointModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { PointController } from './point.controller'
 

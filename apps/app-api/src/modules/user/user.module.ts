@@ -12,7 +12,7 @@ import { MessageModule } from '@libs/message'
 import {
   UserExperienceModule,
   UserPointModule,
-} from '@libs/user'
+} from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { UserController } from './user.controller'
 import { UserService } from './user.service'

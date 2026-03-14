@@ -6,7 +6,7 @@
  * - 集成成长奖励、消息通知等能力
  */
 import { MessageModule } from '@libs/message'
-import { GrowthLedgerModule } from '@libs/user'
+import { GrowthLedgerModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteService } from './favorite.service'

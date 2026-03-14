@@ -10,7 +10,7 @@ import {
   TaskService,
   UpdateTaskDto,
   UpdateTaskStatusDto,
-} from '@libs/task'
+} from '@libs/growth/task'
 import { Body, Controller, Get, ParseIntPipe, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

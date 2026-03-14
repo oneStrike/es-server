@@ -6,7 +6,7 @@ import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerService,
-} from '@libs/user'
+} from '@libs/growth'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   buildCreatedAtSqlFilter,

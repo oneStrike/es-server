@@ -1,4 +1,4 @@
-import { GrowthRuleTypeEnum } from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/growth'
 
 export enum ReportStatusEnum {
   PENDING = 1,

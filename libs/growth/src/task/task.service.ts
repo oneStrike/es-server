@@ -14,7 +14,7 @@ import type {
 } from './dto/task.dto'
 import { DrizzleService } from '@db/drizzle.service'
 import { task, taskAssignment, taskProgressLog } from '@db/schema'
-import { UserGrowthRewardService } from '@libs/user'
+import { UserGrowthRewardService } from '@libs/growth'
 import {
   BadRequestException,
   Injectable,

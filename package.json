@@ -173,15 +173,17 @@
     ],
     "moduleNameMapper": {
       "^@libs/app-content(|/.*)$": "<rootDir>/libs/app-content/src/$1",
-      "^@libs/app-config(|/.*)$": "<rootDir>/libs/config/app-config/src/$1",
+      "^@libs/app-config(|/.*)$": "<rootDir>/libs/config/src/app-config/$1",
+      "^@libs/config(|/.*)$": "<rootDir>/libs/config/src/$1",
       "^@libs/platform(|/.*)$": "<rootDir>/libs/platform/src/$1",
       "^@libs/content(|/.*)$": "<rootDir>/libs/content/src/$1",
-      "^@libs/dictionary(|/.*)$": "<rootDir>/libs/config/dictionary/src/$1",
+      "^@libs/dictionary(|/.*)$": "<rootDir>/libs/config/src/dictionary/$1",
       "^@libs/forum(|/.*)$": "<rootDir>/libs/forum/src/$1",
       "^@libs/sensitive-word(|/.*)$": "<rootDir>/libs/moderation/sensitive-word/src/$1",
-      "^@libs/system-config(|/.*)$": "<rootDir>/libs/config/system-config/src/$1",
+      "^@libs/system-config(|/.*)$": "<rootDir>/libs/config/src/system-config/$1",
       "^@libs/message(|/.*)$": "<rootDir>/libs/message/src/$1",
-      "^@libs/user(|/.*)$": "<rootDir>/libs/user/src/$1"
+      "^@libs/growth/task(|/.*)$": "<rootDir>/libs/growth/src/task/$1",
+      "^@libs/growth(|/.*)$": "<rootDir>/libs/growth/src/$1"
     }
   },
   "simple-git-hooks": {

@@ -1,5 +1,5 @@
 import { DrizzleModule } from '@db/drizzle.module'
-import { UserGrowthRewardModule } from '@libs/user'
+import { UserGrowthRewardModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { TaskService } from './task.service'
 

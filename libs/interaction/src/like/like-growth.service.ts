@@ -3,7 +3,7 @@ import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 GrowthRuleTypeEnum
-} from '@libs/user'
+} from '@libs/growth'
 
 import { Injectable } from '@nestjs/common'
 import { refreshUserLevelByExperience } from '../user-level.helper'

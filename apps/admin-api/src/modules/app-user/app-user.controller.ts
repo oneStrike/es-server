@@ -4,7 +4,7 @@ import { IdDto } from '@libs/platform/dto'
 import {
   BaseUserExperienceRecordDto,
   BaseUserPointRecordDto,
-} from '@libs/user'
+} from '@libs/growth'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

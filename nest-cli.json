@@ -46,13 +46,13 @@
         "tsConfigPath": "libs/app-content/tsconfig.lib.json"
       }
     },
-    "app-config": {
+    "config": {
       "type": "library",
-      "root": "libs/config/app-config",
+      "root": "libs/config",
       "entryFile": "index",
-      "sourceRoot": "libs/config/app-config/src",
+      "sourceRoot": "libs/config/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/config/app-config/tsconfig.lib.json"
+        "tsConfigPath": "libs/config/tsconfig.lib.json"
       }
     },
     "content": {
@@ -64,15 +64,6 @@
         "tsConfigPath": "libs/content/tsconfig.lib.json"
       }
     },
-    "dictionary": {
-      "type": "library",
-      "root": "libs/config/dictionary",
-      "entryFile": "index",
-      "sourceRoot": "libs/config/dictionary/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/config/dictionary/tsconfig.lib.json"
-      }
-    },
     "forum": {
       "type": "library",
       "root": "libs/forum",
@@ -80,15 +71,6 @@
       "sourceRoot": "libs/forum/src",
       "compilerOptions": {
         "tsConfigPath": "libs/forum/tsconfig.lib.json"
-      }
-    },
-    "system-config": {
-      "type": "library",
-      "root": "libs/config/system-config",
-      "entryFile": "index",
-      "sourceRoot": "libs/config/system-config/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/config/system-config/tsconfig.lib.json"
       }
     },
     "message": {
@@ -100,13 +82,13 @@
         "tsConfigPath": "libs/message/tsconfig.lib.json"
       }
     },
-    "user": {
+    "growth": {
       "type": "library",
-      "root": "libs/user",
+      "root": "libs/growth",
       "entryFile": "index",
-      "sourceRoot": "libs/user/src",
+      "sourceRoot": "libs/growth/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/user/tsconfig.lib.json"
+        "tsConfigPath": "libs/growth/tsconfig.lib.json"
       }
     }
   }

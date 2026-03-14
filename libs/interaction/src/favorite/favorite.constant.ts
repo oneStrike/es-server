@@ -1,4 +1,4 @@
-import { GrowthRuleTypeEnum } from '@libs/user'
+import { GrowthRuleTypeEnum } from '@libs/growth'
 
 // 可收藏的类型
 export enum FavoriteTargetTypeEnum {

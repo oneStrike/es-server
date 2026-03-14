@@ -7,7 +7,7 @@
  */
 // eslint-disable-next-line no-restricted-imports -- avoid circular deps via content barrel
 import { ContentPermissionModule } from '@libs/content/permission'
-import { GrowthLedgerModule } from '@libs/user'
+import { GrowthLedgerModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { PurchaseService } from './purchase.service'
 

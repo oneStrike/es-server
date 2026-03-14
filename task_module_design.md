@@ -15,13 +15,13 @@
 - apps
   - admin-api：后台管理接口
   - app-api：客户端接口
-- libs（领域与基础能力）
-  - base：基础模块（配置、数据库、缓存、日志、拦截器、装饰器等）
-  - user：用户成长/积分/等级/徽章相关
-  - forum：论坛相关
-  - content：内容管理相关
-- config（app-config / dictionary / system-config）：系统与应用配置
-- app-content：协议/公告/页面等应用内容
+  - libs（领域与基础能力）
+    - base：基础模块（配置、数据库、缓存、日志、拦截器、装饰器等）
+    - growth：用户成长/积分/等级/徽章相关
+    - forum：论坛相关
+    - content：内容管理相关
+  - config（app-config / dictionary / system-config）：系统与应用配置
+  - app-content：协议/公告/页面等应用内容
 
 ### 1.3 数据库设计与约定
 - Prisma 多文件模型，统一映射为 snake_case 表名

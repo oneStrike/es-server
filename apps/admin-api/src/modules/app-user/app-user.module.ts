@@ -2,7 +2,7 @@ import {
   UserBadgeModule,
   UserExperienceModule,
   UserPointModule,
-} from '@libs/user'
+} from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { AppUserController } from './app-user.controller'
 import { AppUserService } from './app-user.service'

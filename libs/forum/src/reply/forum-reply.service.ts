@@ -14,7 +14,7 @@ import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/user'
+import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {

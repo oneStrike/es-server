@@ -9,7 +9,7 @@
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { SystemConfigModule } from '@libs/system-config'
-import { GrowthLedgerModule } from '@libs/user'
+import { GrowthLedgerModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { CommentGrowthService } from './comment-growth.service'
