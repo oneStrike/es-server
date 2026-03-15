@@ -1,4 +1,3 @@
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/drizzle.service'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import {
@@ -6,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import {
   CreateAgreementDto,
   QueryAgreementDto,
@@ -21,7 +20,7 @@ import {
  */
 @Injectable()
 export class AgreementService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(private readonly drizzle: DrizzleService) { }
 
   /** 数据库连接实例 */
   private get db() {
@@ -145,27 +144,30 @@ export class AgreementService {
    * @returns 分页结果
    */
   async findPage(query: QueryAgreementDto) {
-    const conditions: SQL[] = []
+    const conditions = this.drizzle.buildWhereAnd(
+      this.agreement,
+      query,
+      {
+        like: ['title'],
+        eq: ['isPublished', 'showInAuth'],
+        between: [['createdAt', 'startDate', 'endDate']],
+      },
+    )
 
-    // 标题模糊查询
-    if (query.title) {
-      conditions.push(ilike(this.agreement.title, `%${query.title}%`))
-    }
-    // 发布状态
-    if (query.isPublished !== undefined) {
-      conditions.push(eq(this.agreement.isPublished, query.isPublished))
-    }
-    // 是否在登录页展示
-    if (query.showInAuth !== undefined) {
-      conditions.push(eq(this.agreement.showInAuth, query.showInAuth))
-    }
+    const pageIndex = query.pageIndex || 0
+    const pageSize = query.pageSize || 15
 
-    const where = conditions.length > 0 ? and(...conditions) : undefined
+    const [data, total] = await Promise.all([
+      this.db.select().from(this.agreement).where(conditions).offset(pageIndex * pageSize).limit(pageSize).orderBy(asc(this.agreement.id)), // ✅ 同一个条件
+      this.db.$count(this.agreement, conditions), // ✅ 同一个条件
+    ])
 
-    return this.drizzle.ext.findPagination(this.agreement, {
-      where,
-      ...query,
-    })
+    return {
+      list: data,
+      total,
+      pageIndex: query.pageIndex || 1,
+      pageSize: query.pageSize || 15,
+    }
   }
 
   /**
@@ -175,26 +177,15 @@ export class AgreementService {
    * @returns 协议列表
    */
   async getAllLatest(dto: QueryPublishedAgreementDto) {
-    const conditions: SQL[] = [eq(this.agreement.isPublished, true)]
-
-    if (dto.showInAuth !== undefined) {
-      conditions.push(eq(this.agreement.showInAuth, dto.showInAuth))
-    }
-
-    // 查询时排除 content 字段
-    return this.db
-      .select({
-        id: this.agreement.id,
-        title: this.agreement.title,
-        version: this.agreement.version,
-        isForce: this.agreement.isForce,
-        showInAuth: this.agreement.showInAuth,
-        isPublished: this.agreement.isPublished,
-        publishedAt: this.agreement.publishedAt,
-        createdAt: this.agreement.createdAt,
-        updatedAt: this.agreement.updatedAt,
-      })
-      .from(this.agreement)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
+    return this.db.query.appAgreement.findMany({
+      where: {
+        isPublished: true,
+        showInAuth: dto.showInAuth,
+      },
+      orderBy: {
+        publishedAt: 'desc',
+      },
+      columns: { content: false },
+    })
   }
 }

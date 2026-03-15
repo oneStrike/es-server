@@ -17,7 +17,7 @@ import {
  */
 @Injectable()
 export class AppAnnouncementService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(private readonly drizzle: DrizzleService) { }
 
   /** 数据库连接实例 */
   private get db() {

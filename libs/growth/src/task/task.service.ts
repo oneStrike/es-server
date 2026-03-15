@@ -58,7 +58,7 @@ export class TaskService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
-  ) {}
+  ) { }
 
   /** 数据库连接实例 */
   private get db() {
@@ -243,42 +243,42 @@ export class TaskService {
     const list =
       orderBys.length > 0
         ? await this.db
-            .select({
-              assignment: this.taskAssignmentTable,
-              task: {
-                id: this.taskTable.id,
-                title: this.taskTable.title,
-                type: this.taskTable.type,
-                rewardConfig: this.taskTable.rewardConfig,
-              },
-            })
-            .from(this.taskAssignmentTable)
-            .leftJoin(
-              this.taskTable,
-              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-            )
-            .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
-            .orderBy(...orderBys)
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(
+            this.taskTable,
+            eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+          )
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
+          .orderBy(...orderBys)
         : await this.db
-            .select({
-              assignment: this.taskAssignmentTable,
-              task: {
-                id: this.taskTable.id,
-                title: this.taskTable.title,
-                type: this.taskTable.type,
-                rewardConfig: this.taskTable.rewardConfig,
-              },
-            })
-            .from(this.taskAssignmentTable)
-            .leftJoin(
-              this.taskTable,
-              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-            )
-            .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(
+            this.taskTable,
+            eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+          )
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
 
     // 查询总数
     const [countResult] = await this.db
@@ -322,7 +322,7 @@ export class TaskService {
       where,
       pageIndex,
       pageSize,
-      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      orderBy: JSON.stringify([{ priority: 'desc' }, { createdAt: 'desc' }]),
     })
 
     // 为自动领取模式的任务确保分配已创建
@@ -377,48 +377,48 @@ export class TaskService {
     const list =
       orderBys.length > 0
         ? await this.db
-            .select({
-              assignment: this.taskAssignmentTable,
-              task: {
-                id: this.taskTable.id,
-                title: this.taskTable.title,
-                type: this.taskTable.type,
-                rewardConfig: this.taskTable.rewardConfig,
-                targetCount: this.taskTable.targetCount,
-                completeMode: this.taskTable.completeMode,
-                claimMode: this.taskTable.claimMode,
-              },
-            })
-            .from(this.taskAssignmentTable)
-            .leftJoin(
-              this.taskTable,
-              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-            )
-            .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
-            .orderBy(...orderBys)
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+              targetCount: this.taskTable.targetCount,
+              completeMode: this.taskTable.completeMode,
+              claimMode: this.taskTable.claimMode,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(
+            this.taskTable,
+            eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+          )
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
+          .orderBy(...orderBys)
         : await this.db
-            .select({
-              assignment: this.taskAssignmentTable,
-              task: {
-                id: this.taskTable.id,
-                title: this.taskTable.title,
-                type: this.taskTable.type,
-                rewardConfig: this.taskTable.rewardConfig,
-                targetCount: this.taskTable.targetCount,
-                completeMode: this.taskTable.completeMode,
-                claimMode: this.taskTable.claimMode,
-              },
-            })
-            .from(this.taskAssignmentTable)
-            .leftJoin(
-              this.taskTable,
-              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-            )
-            .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
+          .select({
+            assignment: this.taskAssignmentTable,
+            task: {
+              id: this.taskTable.id,
+              title: this.taskTable.title,
+              type: this.taskTable.type,
+              rewardConfig: this.taskTable.rewardConfig,
+              targetCount: this.taskTable.targetCount,
+              completeMode: this.taskTable.completeMode,
+              claimMode: this.taskTable.claimMode,
+            },
+          })
+          .from(this.taskAssignmentTable)
+          .leftJoin(
+            this.taskTable,
+            eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+          )
+          .where(whereClause)
+          .limit(pageSize)
+          .offset(offset)
 
     // 查询总数
     const [countResult] = await this.db

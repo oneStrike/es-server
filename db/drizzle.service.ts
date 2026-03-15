@@ -110,8 +110,9 @@ export class DrizzleService implements OnApplicationShutdown {
    * @param options.eq 等值匹配字段列表
    * @param options.like 模糊匹配字段列表（ILIKE %value%）
    * @param options.in IN 查询字段列表（数组值）
-   * @param options.gte 大于等于字段列表（对应 data 中 fieldGte）
-   * @param options.lte 小于等于字段列表（对应 data 中 fieldLte）
+   * @param options.gte 大于等于字段列表 [字段名, 值字段名]
+   * @param options.lte 小于等于字段列表 [字段名, 值字段名]
+   * @param options.between BETWEEN 查询字段列表 [字段名, 起始值字段名, 结束值字段名]
    * @returns SQL 条件（可直接用于 where）
    *
    * @example
@@ -127,14 +128,14 @@ export class DrizzleService implements OnApplicationShutdown {
    * buildWhereAnd(taskTable, dto, { inArray: ['type'] })
    *
    * @example
-   * // 范围查询（字段名 + Gte/Lte 后缀）
-   * // dto: { createdAtGte: start, createdAtLte: end }
-   * buildWhereAnd(taskTable, dto, { gte: ['createdAt'], lte: ['createdAt'] })
+   * // 范围查询
+   * // dto: { startDate: start, endDate: end }
+   * buildWhereAnd(taskTable, dto, { between: [['createdAt', 'startDate', 'endDate']] })
    */
   buildWhereAnd<TTable extends PgTable, TData extends object>(
     table: TTable,
     data: TData,
-    options: DrizzleWhereOptions<TTable>,
+    options: DrizzleWhereOptions<TTable, TData>,
   ): DrizzleWhere {
     const conditions = this.buildWhereConditions(table, data, options)
     return conditions.length > 0 ? and(...conditions) : undefined
@@ -152,7 +153,7 @@ export class DrizzleService implements OnApplicationShutdown {
   buildWhereOr<TTable extends PgTable, TData extends object>(
     table: TTable,
     data: TData,
-    options: DrizzleWhereOptions<TTable>,
+    options: DrizzleWhereOptions<TTable, TData>,
   ): DrizzleWhere {
     const conditions = this.buildWhereConditions(table, data, options)
     return conditions.length > 0 ? or(...conditions) : undefined
@@ -170,7 +171,7 @@ export class DrizzleService implements OnApplicationShutdown {
   buildWhereNot<TTable extends PgTable, TData extends object>(
     table: TTable,
     data: TData,
-    options: DrizzleWhereOptions<TTable>,
+    options: DrizzleWhereOptions<TTable, TData>,
   ): DrizzleWhere {
     const conditions = this.buildWhereConditions(table, data, options)
     if (conditions.length === 0) {
@@ -189,15 +190,11 @@ export class DrizzleService implements OnApplicationShutdown {
   buildWhereConditions<TTable extends PgTable, TData extends object>(
     table: TTable,
     data: TData,
-    options: DrizzleWhereOptions<TTable>,
+    options: DrizzleWhereOptions<TTable, TData>,
   ): DrizzleSql[] {
     const conditions: DrizzleSql[] = []
     const record = data as Record<string, unknown>
     const columns = table as unknown as Record<DrizzleColumnKey<TTable>, any>
-    const gteSuffix = 'Gte'
-    const lteSuffix = 'Lte'
-    const betweenFromSuffix = 'From'
-    const betweenToSuffix = 'To'
     const escapeLikePattern = (input: string) =>
       input
         .replace(this.BACKSLASH_REGEX, '\\\\')
@@ -241,9 +238,8 @@ export class DrizzleService implements OnApplicationShutdown {
     }
 
     // 大于等于
-    for (const field of options.gte ?? []) {
-      const key = `${field}${gteSuffix}`
-      const value = record[key]
+    for (const [field, valueKey] of options.gte ?? []) {
+      const value = record[valueKey]
       if (value === undefined) {
         continue
       }
@@ -251,28 +247,25 @@ export class DrizzleService implements OnApplicationShutdown {
     }
 
     // 小于等于
-    for (const field of options.lte ?? []) {
-      const key = `${field}${lteSuffix}`
-      const value = record[key]
+    for (const [field, valueKey] of options.lte ?? []) {
+      const value = record[valueKey]
       if (value === undefined) {
         continue
       }
       conditions.push(lte(columns[field], value))
     }
 
-    // BETWEEN
-    for (const field of options.between ?? []) {
-      const fromKey = `${field}${betweenFromSuffix}`
-      const toKey = `${field}${betweenToSuffix}`
+    // BETWEEN（允许降级到 gte/lte）
+    for (const [field, fromKey, toKey] of options.between ?? []) {
       const from = record[fromKey]
       const to = record[toKey]
-      if (from === undefined) {
-        continue
+      if (from !== undefined && to !== undefined) {
+        conditions.push(between(columns[field], from, to))
+      } else if (from !== undefined) {
+        conditions.push(gte(columns[field], from))
+      } else if (to !== undefined) {
+        conditions.push(lte(columns[field], to))
       }
-      if (to === undefined) {
-        continue
-      }
-      conditions.push(between(columns[field], from, to))
     }
 
     // IS NULL
