@@ -1,4 +1,11 @@
-import { BooleanProperty, DateProperty, EnumProperty, JsonProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
@@ -111,26 +118,22 @@ export class CreateTaskDto extends OmitType(BaseTaskDto, [
   ...OMIT_BASE_FIELDS,
   'createdById',
   'updatedById',
-]) { }
+]) {}
 
 export class UpdateTaskDto extends IntersectionType(
   PartialType(CreateTaskDto),
   IdDto,
-) { }
+) {}
 
 export class UpdateTaskStatusDto extends IntersectionType(
   IdDto,
-  PartialType(
-    PickType(BaseTaskDto, ['status', 'isEnabled'] as const),
-  ),
-) { }
+  PartialType(PickType(BaseTaskDto, ['status', 'isEnabled'] as const)),
+) {}
 
 export class QueryTaskDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BaseTaskDto, ['title', 'status', 'type', 'isEnabled'] as const),
-  ),
-) { }
+  PartialType(PickType(BaseTaskDto, ['title', 'status', 'type', 'isEnabled'])),
+) {}
 
 export class BaseTaskAssignmentDto extends BaseDto {
   @NumberProperty({ description: '任务ID', example: 1 })
@@ -196,12 +199,12 @@ export class QueryTaskAssignmentDto extends IntersectionType(
   PartialType(
     PickType(BaseTaskAssignmentDto, ['taskId', 'userId', 'status'] as const),
   ),
-) { }
+) {}
 
 export class QueryAppTaskDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseTaskDto, ['type'] as const)),
-) { }
+) {}
 
 export class QueryMyTaskDto extends IntersectionType(
   PageDto,
@@ -218,7 +221,7 @@ export class QueryMyTaskDto extends IntersectionType(
 
 export class ClaimTaskDto extends PickType(BaseTaskAssignmentDto, [
   'taskId',
-] as const) { }
+] as const) {}
 
 export class TaskProgressDto {
   @NumberProperty({ description: '任务ID', example: 1 })
@@ -237,4 +240,4 @@ export class TaskProgressDto {
 
 export class TaskCompleteDto extends PickType(BaseTaskAssignmentDto, [
   'taskId',
-] as const) { }
+] as const) {}

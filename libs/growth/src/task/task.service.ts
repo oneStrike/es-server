@@ -13,7 +13,6 @@ import type {
   UpdateTaskStatusDto,
 } from './dto/task.dto'
 import { DrizzleService } from '@db/drizzle.service'
-import { task, taskAssignment, taskProgressLog } from '@db/schema'
 import { UserGrowthRewardService } from '@libs/growth'
 import {
   BadRequestException,
@@ -21,17 +20,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
-import {
-  and,
-  eq,
-  gte,
-  ilike,
-  inArray,
-  isNull,
-  lte,
-  or,
-  sql,
-} from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
@@ -42,9 +31,8 @@ import {
 } from './task.constant'
 
 /** 任务实体类型 */
-type Task = typeof task.$inferSelect
+type Task = typeof import('@db/schema').task.$inferSelect
 /** 任务分配实体类型 */
-type TaskAssignment = typeof taskAssignment.$inferSelect
 
 /**
  * 任务服务
@@ -79,17 +67,17 @@ export class TaskService {
 
   /** 任务表 */
   private get taskTable() {
-    return task
+    return this.drizzle.schema.task
   }
 
   /** 任务分配表 */
   private get taskAssignmentTable() {
-    return taskAssignment
+    return this.drizzle.schema.taskAssignment
   }
 
   /** 任务进度日志表 */
   private get taskProgressLogTable() {
-    return taskProgressLog
+    return this.drizzle.schema.taskProgressLog
   }
 
   // ==================== 管理端接口 ====================
@@ -98,38 +86,16 @@ export class TaskService {
    * 分页查询任务列表（管理端）
    *
    * @param queryDto 查询参数
-   *   - title: 任务标题（模糊搜索）
-   *   - status: 任务状态
-   *   - type: 任务类型
-   *   - isEnabled: 是否启用
-   *   - pageIndex: 页码
-   *   - pageSize: 每页数量
-   *   - orderBy: 排序条件
    * @returns 分页结果
    */
   async getTaskPage(queryDto: QueryTaskDto) {
-    const { title, status, type, isEnabled, pageIndex = 1, pageSize = 20, orderBy } = queryDto
-
-    // 构建查询条件：排除已删除的记录
-    const conditions: SQL[] = [isNull(this.taskTable.deletedAt)]
-    if (title) {
-      conditions.push(ilike(this.taskTable.title, `%${title}%`))
-    }
-    if (status !== undefined) {
-      conditions.push(eq(this.taskTable.status, status))
-    }
-    if (type !== undefined) {
-      conditions.push(eq(this.taskTable.type, type))
-    }
-    if (isEnabled !== undefined) {
-      conditions.push(eq(this.taskTable.isEnabled, isEnabled))
-    }
-
     return this.drizzle.ext.findPagination(this.taskTable, {
-      where: and(...conditions),
-      pageIndex,
-      pageSize,
-      orderBy,
+      where: this.drizzle.buildWhereAnd(this.taskTable, queryDto, {
+        eq: ['status', 'type', 'isEnabled'],
+        like: ['title'],
+        isNull: ['deletedAt'],
+      }),
+      ...queryDto,
     })
   }
 
@@ -141,11 +107,12 @@ export class TaskService {
    * @throws NotFoundException 任务不存在
    */
   async getTaskDetail(id: number) {
-    const [taskRecord] = await this.db
-      .select()
-      .from(this.taskTable)
-      .where(and(eq(this.taskTable.id, id), isNull(this.taskTable.deletedAt)))
-      .limit(1)
+    const taskRecord = await this.db.query.task.findFirst({
+      where: {
+        id,
+        deletedAt: { isNull: true },
+      },
+    })
 
     if (!taskRecord) {
       throw new NotFoundException('任务不存在')
@@ -157,21 +124,6 @@ export class TaskService {
    * 创建任务（管理端）
    *
    * @param dto 创建参数
-   *   - code: 任务唯一标识码
-   *   - title: 任务标题
-   *   - description: 任务描述
-   *   - cover: 封面图片
-   *   - type: 任务类型
-   *   - status: 任务状态（默认草稿）
-   *   - priority: 优先级
-   *   - isEnabled: 是否启用
-   *   - claimMode: 领取模式（手动/自动）
-   *   - completeMode: 完成模式（自动/手动）
-   *   - targetCount: 目标数量
-   *   - rewardConfig: 奖励配置（JSON字符串）
-   *   - publishStartAt: 发布开始时间
-   *   - publishEndAt: 发布结束时间
-   *   - repeatRule: 重复规则（JSON字符串）
    * @param adminUser 管理员用户信息
    * @returns 创建结果，包含任务ID
    * @throws BadRequestException 发布时间无效或任务编码已存在
@@ -180,38 +132,18 @@ export class TaskService {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
 
-    try {
-      const [created] = await this.db
-        .insert(this.taskTable)
-        .values({
-          code: dto.code,
-          title: dto.title,
-          description: dto.description,
-          cover: dto.cover,
-          type: dto.type,
-          status: dto.status ?? TaskStatusEnum.DRAFT,
-          priority: dto.priority,
-          isEnabled: dto.isEnabled,
-          claimMode: dto.claimMode,
-          completeMode: dto.completeMode,
-          targetCount: dto.targetCount,
-          rewardConfig: this.parseJsonValue(dto.rewardConfig),
-          publishStartAt: dto.publishStartAt,
-          publishEndAt: dto.publishEndAt,
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db.insert(this.taskTable).values({
+          ...dto,
           repeatRule: this.parseJsonValue(dto.repeatRule),
           createdById: Number(adminUser.sub),
           updatedById: Number(adminUser.sub),
-        })
-        .returning()
+        }),
+      { duplicate: '任务编码已存在' },
+    )
 
-      return { id: created.id }
-    } catch (error) {
-      // 处理唯一约束冲突（任务编码重复）
-      if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('Task code already exists')
-      }
-      throw error
-    }
+    return true
   }
 
   /**
@@ -224,51 +156,25 @@ export class TaskService {
    * @throws BadRequestException 发布时间无效或任务编码已存在
    */
   async updateTask(dto: UpdateTaskDto, adminUser: JwtUserInfoInterface) {
-    // 检查任务是否存在
-    const [taskRecord] = await this.db
-      .select()
-      .from(this.taskTable)
-      .where(and(eq(this.taskTable.id, dto.id), isNull(this.taskTable.deletedAt)))
-      .limit(1)
-
-    if (!taskRecord) {
-      throw new NotFoundException('Task not found')
-    }
-
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
 
-    try {
-      await this.db
-        .update(this.taskTable)
-        .set({
-          code: dto.code,
-          title: dto.title,
-          description: dto.description,
-          cover: dto.cover,
-          type: dto.type,
-          status: dto.status,
-          priority: dto.priority,
-          isEnabled: dto.isEnabled,
-          claimMode: dto.claimMode,
-          completeMode: dto.completeMode,
-          targetCount: dto.targetCount,
-          rewardConfig: this.parseJsonValue(dto.rewardConfig),
-          publishStartAt: dto.publishStartAt,
-          publishEndAt: dto.publishEndAt,
-          repeatRule: this.parseJsonValue(dto.repeatRule),
-          updatedById: Number(adminUser.sub),
-        })
-        .where(eq(this.taskTable.id, dto.id))
+    const result = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.taskTable)
+          .set({
+            ...dto,
+            rewardConfig: this.parseJsonValue(dto.rewardConfig),
+            repeatRule: this.parseJsonValue(dto.repeatRule),
+            updatedById: Number(adminUser.sub),
+          })
+          .where(eq(this.taskTable.id, dto.id)),
+      { duplicate: '任务编码已存在' },
+    )
 
-      return { id: dto.id }
-    } catch (error) {
-      // 处理唯一约束冲突（任务编码重复）
-      if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('Task code already exists')
-      }
-      throw error
-    }
+    this.drizzle.assertAffectedRows(result, '任务不存在')
+    return true
   }
 
   /**
@@ -277,30 +183,22 @@ export class TaskService {
    * 用于快速切换任务的状态和启用/禁用状态。
    *
    * @param dto 更新参数
-   *   - id: 任务ID
-   *   - status: 任务状态
-   *   - isEnabled: 是否启用
    * @returns 更新结果
    * @throws NotFoundException 任务不存在
    */
   async updateTaskStatus(dto: UpdateTaskStatusDto) {
-    const exists = await this.drizzle.ext.exists(
-      this.taskTable,
-      and(eq(this.taskTable.id, dto.id), isNull(this.taskTable.deletedAt)),
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.taskTable)
+        .set({
+          status: dto.status,
+          isEnabled: dto.isEnabled,
+        })
+        .where(eq(this.taskTable.id, dto.id)),
     )
-    if (!exists) {
-      throw new NotFoundException('任务不存在')
-    }
 
-    await this.db
-      .update(this.taskTable)
-      .set({
-        status: dto.status,
-        isEnabled: dto.isEnabled,
-      })
-      .where(eq(this.taskTable.id, dto.id))
-
-    return { id: dto.id }
+    this.drizzle.assertAffectedRows(result, '任务不存在')
+    return true
   }
 
   /**
@@ -311,10 +209,8 @@ export class TaskService {
    */
   async deleteTask(id: number) {
     await this.drizzle.ext.softDelete(this.taskTable, eq(this.taskTable.id, id))
-    return { id }
+    return true
   }
-
-  // ==================== 任务分配管理 ====================
 
   /**
    * 分页查询任务分配列表（管理端）
@@ -322,69 +218,71 @@ export class TaskService {
    * 查询用户领取的任务分配记录，包含关联的任务信息。
    *
    * @param queryDto 查询参数
-   *   - taskId: 任务ID
-   *   - userId: 用户ID
-   *   - status: 分配状态
-   *   - pageIndex: 页码
-   *   - pageSize: 每页数量
-   *   - orderBy: 排序条件
    * @returns 分页结果，包含任务分配和关联任务信息
    */
   async getTaskAssignmentPage(queryDto: QueryTaskAssignmentDto) {
-    const { taskId, userId, status, pageIndex = 1, pageSize = 20, orderBy } = queryDto
+    const {
+      pageIndex = 1,
+      pageSize = 20,
+      orderBy,
+    } = queryDto
 
     // 构建查询条件
-    const conditions: SQL[] = [isNull(this.taskAssignmentTable.deletedAt)]
-    if (taskId !== undefined) {
-      conditions.push(eq(this.taskAssignmentTable.taskId, taskId))
-    }
-    if (userId !== undefined) {
-      conditions.push(eq(this.taskAssignmentTable.userId, userId))
-    }
-    if (status !== undefined) {
-      conditions.push(eq(this.taskAssignmentTable.status, status))
-    }
+    const whereClause = this.drizzle.buildWhereAnd(
+      this.taskAssignmentTable,
+      queryDto,
+      {
+        eq: ['taskId', 'userId', 'status'],
+        isNull: ['deletedAt'],
+      },
+    )
 
     // 分页查询
     const offset = (pageIndex - 1) * pageSize
-    const whereClause = and(...conditions)
 
     // 解析排序
     const orderBys = this.parseOrderBy(orderBy, this.taskAssignmentTable)
 
     // 查询列表（关联任务表获取任务基本信息）
-    const list = orderBys.length > 0
-      ? await this.db
-          .select({
-            assignment: this.taskAssignmentTable,
-            task: {
-              id: this.taskTable.id,
-              title: this.taskTable.title,
-              type: this.taskTable.type,
-              rewardConfig: this.taskTable.rewardConfig,
-            },
-          })
-          .from(this.taskAssignmentTable)
-          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
-          .where(whereClause)
-          .limit(pageSize)
-          .offset(offset)
-          .orderBy(...orderBys)
-      : await this.db
-          .select({
-            assignment: this.taskAssignmentTable,
-            task: {
-              id: this.taskTable.id,
-              title: this.taskTable.title,
-              type: this.taskTable.type,
-              rewardConfig: this.taskTable.rewardConfig,
-            },
-          })
-          .from(this.taskAssignmentTable)
-          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
-          .where(whereClause)
-          .limit(pageSize)
-          .offset(offset)
+    const list =
+      orderBys.length > 0
+        ? await this.db
+            .select({
+              assignment: this.taskAssignmentTable,
+              task: {
+                id: this.taskTable.id,
+                title: this.taskTable.title,
+                type: this.taskTable.type,
+                rewardConfig: this.taskTable.rewardConfig,
+              },
+            })
+            .from(this.taskAssignmentTable)
+            .leftJoin(
+              this.taskTable,
+              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+            )
+            .where(whereClause)
+            .limit(pageSize)
+            .offset(offset)
+            .orderBy(...orderBys)
+        : await this.db
+            .select({
+              assignment: this.taskAssignmentTable,
+              task: {
+                id: this.taskTable.id,
+                title: this.taskTable.title,
+                type: this.taskTable.type,
+                rewardConfig: this.taskTable.rewardConfig,
+              },
+            })
+            .from(this.taskAssignmentTable)
+            .leftJoin(
+              this.taskTable,
+              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+            )
+            .where(whereClause)
+            .limit(pageSize)
+            .offset(offset)
 
     // 查询总数
     const [countResult] = await this.db
@@ -457,68 +355,83 @@ export class TaskService {
     const { status, type, pageIndex = 1, pageSize = 20, orderBy } = queryDto
 
     // 构建查询条件
-    const conditions: SQL[] = [
-      isNull(this.taskAssignmentTable.deletedAt),
-      eq(this.taskAssignmentTable.userId, userId),
-    ]
-    if (status !== undefined) {
-      conditions.push(eq(this.taskAssignmentTable.status, status))
+    const assignmentWhere = this.drizzle.buildWhereAnd(
+      this.taskAssignmentTable,
+      { ...queryDto, userId },
+      {
+        eq: ['userId', 'status'],
+        isNull: ['deletedAt'],
+      },
+    )
+    const conditions: SQL[] = []
+    if (assignmentWhere) {
+      conditions.push(assignmentWhere)
     }
     if (type !== undefined) {
       conditions.push(eq(this.taskTable.type, type))
     }
 
-    const whereClause = and(...conditions)
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
     const offset = (pageIndex - 1) * pageSize
 
     // 解析排序
     const orderBys = this.parseOrderBy(orderBy, this.taskAssignmentTable)
 
     // 查询列表（关联任务表获取任务详细信息）
-    const list = orderBys.length > 0
-      ? await this.db
-          .select({
-            assignment: this.taskAssignmentTable,
-            task: {
-              id: this.taskTable.id,
-              title: this.taskTable.title,
-              type: this.taskTable.type,
-              rewardConfig: this.taskTable.rewardConfig,
-              targetCount: this.taskTable.targetCount,
-              completeMode: this.taskTable.completeMode,
-              claimMode: this.taskTable.claimMode,
-            },
-          })
-          .from(this.taskAssignmentTable)
-          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
-          .where(whereClause)
-          .limit(pageSize)
-          .offset(offset)
-          .orderBy(...orderBys)
-      : await this.db
-          .select({
-            assignment: this.taskAssignmentTable,
-            task: {
-              id: this.taskTable.id,
-              title: this.taskTable.title,
-              type: this.taskTable.type,
-              rewardConfig: this.taskTable.rewardConfig,
-              targetCount: this.taskTable.targetCount,
-              completeMode: this.taskTable.completeMode,
-              claimMode: this.taskTable.claimMode,
-            },
-          })
-          .from(this.taskAssignmentTable)
-          .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
-          .where(whereClause)
-          .limit(pageSize)
-          .offset(offset)
+    const list =
+      orderBys.length > 0
+        ? await this.db
+            .select({
+              assignment: this.taskAssignmentTable,
+              task: {
+                id: this.taskTable.id,
+                title: this.taskTable.title,
+                type: this.taskTable.type,
+                rewardConfig: this.taskTable.rewardConfig,
+                targetCount: this.taskTable.targetCount,
+                completeMode: this.taskTable.completeMode,
+                claimMode: this.taskTable.claimMode,
+              },
+            })
+            .from(this.taskAssignmentTable)
+            .leftJoin(
+              this.taskTable,
+              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+            )
+            .where(whereClause)
+            .limit(pageSize)
+            .offset(offset)
+            .orderBy(...orderBys)
+        : await this.db
+            .select({
+              assignment: this.taskAssignmentTable,
+              task: {
+                id: this.taskTable.id,
+                title: this.taskTable.title,
+                type: this.taskTable.type,
+                rewardConfig: this.taskTable.rewardConfig,
+                targetCount: this.taskTable.targetCount,
+                completeMode: this.taskTable.completeMode,
+                claimMode: this.taskTable.claimMode,
+              },
+            })
+            .from(this.taskAssignmentTable)
+            .leftJoin(
+              this.taskTable,
+              eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+            )
+            .where(whereClause)
+            .limit(pageSize)
+            .offset(offset)
 
     // 查询总数
     const [countResult] = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(this.taskAssignmentTable)
-      .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
+      .leftJoin(
+        this.taskTable,
+        eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+      )
       .where(whereClause)
 
     // 转换结果格式
@@ -595,7 +508,12 @@ export class TaskService {
     // 如果没有分配，自动领取模式的任务会自动创建分配
     if (!assignment) {
       if (taskRecord.claimMode === TaskClaimModeEnum.AUTO) {
-        assignment = await this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
+        assignment = await this.createOrGetAssignment(
+          taskRecord,
+          userId,
+          cycleKey,
+          now,
+        )
       } else {
         throw new BadRequestException('任务未领取')
       }
@@ -757,20 +675,22 @@ export class TaskService {
   @Cron('0 */5 * * * *')
   async expireAssignments() {
     const now = new Date()
-    await this.db
-      .update(this.taskAssignmentTable)
-      .set({
-        status: TaskAssignmentStatusEnum.EXPIRED,
-      })
-      .where(
-        and(
-          inArray(this.taskAssignmentTable.status, [
-            TaskAssignmentStatusEnum.PENDING,
-            TaskAssignmentStatusEnum.IN_PROGRESS,
-          ]),
-          lte(this.taskAssignmentTable.expiredAt, now),
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.taskAssignmentTable)
+        .set({
+          status: TaskAssignmentStatusEnum.EXPIRED,
+        })
+        .where(
+          and(
+            inArray(this.taskAssignmentTable.status, [
+              TaskAssignmentStatusEnum.PENDING,
+              TaskAssignmentStatusEnum.IN_PROGRESS,
+            ]),
+            lte(this.taskAssignmentTable.expiredAt, now),
+          ),
         ),
-      )
+    )
   }
 
   // ==================== 私有方法 ====================
@@ -784,10 +704,7 @@ export class TaskService {
    * @param endAt 发布结束时间
    * @throws BadRequestException 发布时间无效
    */
-  private ensurePublishWindow(
-    startAt?: Date | null,
-    endAt?: Date | null,
-  ) {
+  private ensurePublishWindow(startAt?: Date | null, endAt?: Date | null) {
     if (startAt && endAt && startAt.getTime() > endAt.getTime()) {
       throw new BadRequestException('发布开始时间不能晚于结束时间')
     }
@@ -853,7 +770,7 @@ export class TaskService {
     if (type !== undefined) {
       conditions.push(eq(this.taskTable.type, type))
     }
-    return and(...conditions)
+    return conditions.length > 0 ? and(...conditions) : undefined
   }
 
   /**
@@ -865,7 +782,7 @@ export class TaskService {
    * @returns 任务记录
    * @throws NotFoundException 任务不存在
    */
-  private async findAvailableTask(taskId: number): Promise<Task> {
+  private async findAvailableTask(taskId: number) {
     const [taskRecord] = await this.db
       .select()
       .from(this.taskTable)
@@ -895,7 +812,7 @@ export class TaskService {
    * @throws BadRequestException 任务未开始或已结束
    * @throws NotFoundException 任务不存在
    */
-  private async findClaimableTask(taskId: number): Promise<Task> {
+  private async findClaimableTask(taskId: number) {
     const taskRecord = await this.findAvailableTask(taskId)
     const now = new Date()
     // 校验任务是否已开始
@@ -923,7 +840,10 @@ export class TaskService {
    * @param now 当前时间
    * @returns 周期标识
    */
-  private buildCycleKey(taskRecord: { repeatRule: unknown }, now: Date): string {
+  private buildCycleKey(
+    taskRecord: { repeatRule: unknown },
+    now: Date,
+  ): string {
     const rule = taskRecord.repeatRule as { type?: string } | null
     const type = rule?.type ?? TaskRepeatTypeEnum.ONCE
     if (type === TaskRepeatTypeEnum.DAILY) {
@@ -1010,7 +930,7 @@ export class TaskService {
     taskId: number,
     userId: number,
     cycleKey: string,
-  ): Promise<TaskAssignment | undefined> {
+  ) {
     const [assignment] = await this.db
       .select()
       .from(this.taskAssignmentTable)
@@ -1056,7 +976,7 @@ export class TaskService {
     userId: number,
     cycleKey: string,
     now: Date,
-  ): Promise<TaskAssignment> {
+  ) {
     const taskSnapshot = this.buildTaskSnapshot(taskRecord)
 
     return this.db.transaction(async (tx) => {
@@ -1122,7 +1042,7 @@ export class TaskService {
     userId: number,
     cycleKey: string,
     now: Date,
-  ): Promise<TaskAssignment> {
+  ) {
     try {
       return await this.createAssignment(taskRecord, userId, cycleKey, now)
     } catch (error) {
@@ -1343,7 +1263,8 @@ export class TaskService {
           continue
         }
 
-        const normalized = typeof direction === 'string' ? direction.toLowerCase() : ''
+        const normalized =
+          typeof direction === 'string' ? direction.toLowerCase() : ''
         if (normalized === 'asc') {
           result.push(sql`${column} ASC`)
         } else if (normalized === 'desc') {

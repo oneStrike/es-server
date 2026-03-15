@@ -1,6 +1,10 @@
-import type { SQL, SQLWrapper } from 'drizzle-orm'
-import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
-import type { Db } from '../drizzle.provider'
+import type {
+  Db,
+  PgTable,
+  SQL,
+  SQLWrapper,
+  TableConfig,
+} from '../drizzle.type'
 import { and, isNull } from 'drizzle-orm'
 
 /**
@@ -37,3 +41,4 @@ export async function existsActive(
     .limit(1)
   return result.length > 0
 }
+

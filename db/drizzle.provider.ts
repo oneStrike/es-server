@@ -1,14 +1,11 @@
 import type { Provider } from '@nestjs/common'
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import process from 'node:process'
 import { ConfigService } from '@nestjs/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { relations } from './relations'
 import * as schema from './schema'
-
-/** Drizzle 数据库类型定义 */
-export type Db = NodePgDatabase<typeof schema, typeof relations>
+import type { Db } from './drizzle.type'
 
 /** 数据库连接池注入令牌 */
 export const DRIZZLE_POOL = 'DRIZZLE_POOL'

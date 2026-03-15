@@ -1,3 +1,11 @@
+import type {
+  Db,
+  DrizzleColumnKey,
+  DrizzleSql,
+  DrizzleWhere,
+  DrizzleWhereOptions,
+  PgTable,
+} from './drizzle.type'
 import {
   HttpException,
   Inject,
@@ -6,6 +14,18 @@ import {
   NotFoundException,
   OnApplicationShutdown,
 } from '@nestjs/common'
+import {
+  and,
+  between,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  lte,
+  not,
+  or,
+} from 'drizzle-orm'
 import { Pool } from 'pg'
 import {
   getPostgresError,
@@ -15,7 +35,7 @@ import {
   PostgresHttpStatus,
 } from './constants/postgres-error'
 import { createDrizzleExtensions } from './drizzle.extensions'
-import { Db, DRIZZLE_DB, DRIZZLE_POOL } from './drizzle.provider'
+import { DRIZZLE_DB, DRIZZLE_POOL } from './drizzle.provider'
 import * as schema from './schema'
 
 /**
@@ -46,6 +66,11 @@ export class DrizzleService implements OnApplicationShutdown {
   /** Drizzle 扩展方法集合 */
   public readonly ext: ReturnType<typeof createDrizzleExtensions>
 
+  /** 用于转义 LIKE 模式的正则表达式 */
+  private readonly BACKSLASH_REGEX = /\\/g
+  private readonly PERCENT_REGEX = /%/g
+  private readonly UNDERSCORE_REGEX = /_/g
+
   constructor(
     /** Drizzle 数据库实例 */
     @Inject(DRIZZLE_DB) public readonly db: Db,
@@ -73,6 +98,189 @@ export class DrizzleService implements OnApplicationShutdown {
    */
   get schema(): typeof schema {
     return schema
+  }
+
+  /**
+   * 构建查询条件
+   *
+   * @description 根据配置自动构建 WHERE 条件
+   * @param table Drizzle 表对象
+   * @param data 查询参数对象
+   * @param options 构建配置
+   * @param options.eq 等值匹配字段列表
+   * @param options.like 模糊匹配字段列表（ILIKE %value%）
+   * @param options.in IN 查询字段列表（数组值）
+   * @param options.gte 大于等于字段列表（对应 data 中 fieldGte）
+   * @param options.lte 小于等于字段列表（对应 data 中 fieldLte）
+   * @returns SQL 条件（可直接用于 where）
+   *
+   * @example
+   * // 等值匹配
+   * buildWhereAnd(taskTable, dto, { eq: ['status', 'type', 'isEnabled'] })
+   *
+   * @example
+   * // 模糊匹配（ILIKE %value%）
+   * buildWhereAnd(taskTable, dto, { like: ['title', 'code'] })
+   *
+   * @example
+   * // IN 查询（数组）
+   * buildWhereAnd(taskTable, dto, { inArray: ['type'] })
+   *
+   * @example
+   * // 范围查询（字段名 + Gte/Lte 后缀）
+   * // dto: { createdAtGte: start, createdAtLte: end }
+   * buildWhereAnd(taskTable, dto, { gte: ['createdAt'], lte: ['createdAt'] })
+   */
+  buildWhereAnd<TTable extends PgTable, TData extends object>(
+    table: TTable,
+    data: TData,
+    options: DrizzleWhereOptions<TTable>,
+  ): DrizzleWhere {
+    const conditions = this.buildWhereConditions(table, data, options)
+    return conditions.length > 0 ? and(...conditions) : undefined
+  }
+
+  /**
+   * 构建 OR 查询条件
+   *
+   * @description 根据配置自动构建 OR 条件
+   * @param table Drizzle 表对象
+   * @param data 查询参数对象
+   * @param options 构建配置（与 buildWhereAnd 相同）
+   * @returns SQL 条件（可直接用于 where）
+   */
+  buildWhereOr<TTable extends PgTable, TData extends object>(
+    table: TTable,
+    data: TData,
+    options: DrizzleWhereOptions<TTable>,
+  ): DrizzleWhere {
+    const conditions = this.buildWhereConditions(table, data, options)
+    return conditions.length > 0 ? or(...conditions) : undefined
+  }
+
+  /**
+   * 构建 NOT(AND(...)) 查询条件
+   *
+   * @description 根据配置自动构建 AND 条件后取反
+   * @param table Drizzle 表对象
+   * @param data 查询参数对象
+   * @param options 构建配置（与 buildWhereAnd 相同）
+   * @returns SQL 条件（可直接用于 where）
+   */
+  buildWhereNot<TTable extends PgTable, TData extends object>(
+    table: TTable,
+    data: TData,
+    options: DrizzleWhereOptions<TTable>,
+  ): DrizzleWhere {
+    const conditions = this.buildWhereConditions(table, data, options)
+    if (conditions.length === 0) {
+      return undefined
+    }
+    const combined = and(...conditions)
+    if (!combined) {
+      return undefined
+    }
+    return not(combined)
+  }
+
+  /**
+   * 构建查询条件集合
+   */
+  buildWhereConditions<TTable extends PgTable, TData extends object>(
+    table: TTable,
+    data: TData,
+    options: DrizzleWhereOptions<TTable>,
+  ): DrizzleSql[] {
+    const conditions: DrizzleSql[] = []
+    const record = data as Record<string, unknown>
+    const columns = table as unknown as Record<DrizzleColumnKey<TTable>, any>
+    const gteSuffix = 'Gte'
+    const lteSuffix = 'Lte'
+    const betweenFromSuffix = 'From'
+    const betweenToSuffix = 'To'
+    const escapeLikePattern = (input: string) =>
+      input
+        .replace(this.BACKSLASH_REGEX, '\\\\')
+        .replace(this.PERCENT_REGEX, '\\%')
+        .replace(this.UNDERSCORE_REGEX, '\\_')
+
+    // 等值匹配
+    for (const field of options.eq ?? []) {
+      const value = record[field]
+      if (value === undefined) {
+        continue
+      }
+      if (value === null) {
+        conditions.push(isNull(columns[field]))
+        continue
+      }
+      conditions.push(eq(columns[field], value))
+    }
+
+    // 模糊匹配（ILIKE %value%）
+    for (const field of options.like ?? []) {
+      const value = record[field]
+      if (value === undefined || value === '') {
+        continue
+      }
+      const raw = escapeLikePattern(String(value))
+      const pattern = `%${raw}%`
+      conditions.push(ilike(columns[field], pattern))
+    }
+
+    // IN 查询
+    for (const field of options.inArray ?? []) {
+      const value = record[field]
+      if (!Array.isArray(value)) {
+        continue
+      }
+      if (value.length === 0) {
+        continue
+      }
+      conditions.push(inArray(columns[field], value))
+    }
+
+    // 大于等于
+    for (const field of options.gte ?? []) {
+      const key = `${field}${gteSuffix}`
+      const value = record[key]
+      if (value === undefined) {
+        continue
+      }
+      conditions.push(gte(columns[field], value))
+    }
+
+    // 小于等于
+    for (const field of options.lte ?? []) {
+      const key = `${field}${lteSuffix}`
+      const value = record[key]
+      if (value === undefined) {
+        continue
+      }
+      conditions.push(lte(columns[field], value))
+    }
+
+    // BETWEEN
+    for (const field of options.between ?? []) {
+      const fromKey = `${field}${betweenFromSuffix}`
+      const toKey = `${field}${betweenToSuffix}`
+      const from = record[fromKey]
+      const to = record[toKey]
+      if (from === undefined) {
+        continue
+      }
+      if (to === undefined) {
+        continue
+      }
+      conditions.push(between(columns[field], from, to))
+    }
+
+    // IS NULL
+    for (const field of options.isNull ?? []) {
+      conditions.push(isNull(columns[field]))
+    }
+
+    return conditions
   }
 
   // ==================== 错误检测方法 ====================

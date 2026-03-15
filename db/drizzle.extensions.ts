@@ -1,6 +1,4 @@
-import type { SQL } from 'drizzle-orm'
-import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
-import type { Db } from './drizzle.provider'
+import type { Db, PgTable, SQL, TableConfig } from './drizzle.type'
 import {
   applyCountDelta,
   existsActive as existsActiveExtension,
@@ -43,3 +41,4 @@ export function createDrizzleExtensions(db: Db) {
     ) => applyCountDelta(db, table, where, field, delta),
   }
 }
+

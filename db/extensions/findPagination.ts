@@ -1,6 +1,10 @@
-import type { SQL, SQLWrapper } from 'drizzle-orm'
-import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
-import type { Db } from '../drizzle.provider'
+import type {
+  Db,
+  PgTable,
+  SQL,
+  SQLWrapper,
+  TableConfig,
+} from '../drizzle.type'
 import { DbConfig } from '@libs/platform/config'
 import { jsonParse } from '@libs/platform/utils'
 import { and, asc, desc, gte, lt, sql } from 'drizzle-orm'
@@ -235,3 +239,4 @@ export async function findPagination(
     pageSize: normalizedPageSize,
   }
 }
+

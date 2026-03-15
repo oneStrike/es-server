@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, inArray, like } from 'drizzle-orm'
+import { eq, like } from 'drizzle-orm'
 import {
   CreateDictionaryDto,
   CreateDictionaryItemDto,
@@ -114,14 +114,11 @@ export class LibDictionaryService {
    * @returns 分页字典列表
    */
   async findDictionaries(queryDto: QueryDictionaryDto) {
-    const { code, name, isEnabled } = queryDto
-    const conditions = this.buildSearchConditions(this.dictionary, {
-      code,
-      name,
-      isEnabled,
-    })
     return this.drizzle.ext.findPagination(this.dictionary, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
+      where: this.drizzle.buildWhereAnd(this.dictionary, queryDto, {
+        eq: ['isEnabled'],
+        like: ['code', 'name'],
+      }),
       ...queryDto,
     })
   }
@@ -227,31 +224,22 @@ export class LibDictionaryService {
    * @returns 分页字典项列表
    */
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
-    const {
-      code,
-      name,
-      dictionaryCode,
-      isEnabled,
-      pageIndex,
-      pageSize,
-      orderBy,
-    } = queryDto
-
-    const conditions = this.buildSearchConditions(this.dictionaryItem, {
-      code,
-      name,
-      isEnabled,
-    })
-    const dictionaryCodes = this.parseDictionaryCodes(dictionaryCode)
-    conditions.push(
-      inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes),
-    )
+    const { dictionaryCode } = queryDto
 
     return this.drizzle.ext.findPagination(this.dictionaryItem, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      pageIndex,
-      pageSize,
-      orderBy,
+      where: this.drizzle.buildWhereAnd(
+        this.dictionaryItem,
+        {
+          ...queryDto,
+          dictionaryCode: this.parseDictionaryCodes(dictionaryCode),
+        },
+        {
+          like: ['code', 'name'],
+          eq: ['isEnabled'],
+          inArray: ['dictionaryCode'],
+        },
+      ),
+      ...queryDto,
     })
   }
 

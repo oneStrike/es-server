@@ -1,6 +1,10 @@
-import type { SQL, SQLWrapper } from 'drizzle-orm'
-import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
-import type { Db } from '../drizzle.provider'
+import type {
+  Db,
+  PgTable,
+  SQL,
+  SQLWrapper,
+  TableConfig,
+} from '../drizzle.type'
 import { BadRequestException } from '@nestjs/common'
 import { and, isNull } from 'drizzle-orm'
 
@@ -83,3 +87,4 @@ export async function softDeleteMany(
 
   return result.length
 }
+

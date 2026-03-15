@@ -1,6 +1,4 @@
-import type { SQL } from 'drizzle-orm'
-import type { PgTable, TableConfig } from 'drizzle-orm/pg-core'
-import type { Db } from '../drizzle.provider'
+import type { Db, PgTable, SQL, TableConfig } from '../drizzle.type'
 
 /**
  * 检查记录是否存在
@@ -18,3 +16,4 @@ export async function exists(
   const result = await db.select().from(table).where(where).limit(1)
   return result.length > 0
 }
+
