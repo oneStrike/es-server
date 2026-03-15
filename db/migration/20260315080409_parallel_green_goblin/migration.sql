@@ -191,7 +191,7 @@ CREATE TABLE "growth_rule_usage_slot" (
 	"slot_type" varchar(20) NOT NULL,
 	"slot_value" varchar(60) NOT NULL,
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "growth_rule_usage_slot_user_id_asset_type_rule_key_slot_type_slot_value_key" UNIQUE("user_id","asset_type","rule_key","slot_type","slot_value")
+	CONSTRAINT "growth_rule_usage_slot_user_id_asset_type_rule_key_slot_typ_key" UNIQUE("user_id","asset_type","rule_key","slot_type","slot_value")
 );
 --> statement-breakpoint
 CREATE TABLE "task" (
@@ -989,7 +989,7 @@ CREATE INDEX "admin_user_token_user_id_token_type_idx" ON "admin_user_token" ("u
 CREATE INDEX "app_agreement_title_is_published_idx" ON "app_agreement" ("title","is_published");--> statement-breakpoint
 CREATE INDEX "app_agreement_log_user_id_agreement_id_idx" ON "app_agreement_log" ("user_id","agreement_id");--> statement-breakpoint
 CREATE INDEX "app_agreement_log_agreed_at_idx" ON "app_agreement_log" ("agreed_at");--> statement-breakpoint
-CREATE INDEX "app_announcement_is_published_publish_start_time_publish_end_time_idx" ON "app_announcement" ("is_published","publish_start_time","publish_end_time");--> statement-breakpoint
+CREATE INDEX "app_announcement_is_published_publish_start_time_publish_en_idx" ON "app_announcement" ("is_published","publish_start_time","publish_end_time");--> statement-breakpoint
 CREATE INDEX "app_announcement_announcement_type_is_published_idx" ON "app_announcement" ("announcement_type","is_published");--> statement-breakpoint
 CREATE INDEX "app_announcement_priority_level_is_pinned_idx" ON "app_announcement" ("priority_level","is_pinned");--> statement-breakpoint
 CREATE INDEX "app_announcement_created_at_idx" ON "app_announcement" ("created_at");--> statement-breakpoint
@@ -1020,7 +1020,7 @@ CREATE INDEX "growth_audit_log_asset_type_action_decision_created_at_idx" ON "gr
 CREATE INDEX "growth_audit_log_request_id_idx" ON "growth_audit_log" ("request_id");--> statement-breakpoint
 CREATE INDEX "growth_ledger_record_user_id_asset_type_created_at_idx" ON "growth_ledger_record" ("user_id","asset_type","created_at");--> statement-breakpoint
 CREATE INDEX "growth_ledger_record_target_type_target_id_idx" ON "growth_ledger_record" ("target_type","target_id");--> statement-breakpoint
-CREATE INDEX "growth_rule_usage_slot_user_id_asset_type_rule_key_created_at_idx" ON "growth_rule_usage_slot" ("user_id","asset_type","rule_key","created_at");--> statement-breakpoint
+CREATE INDEX "growth_rule_usage_slot_user_id_asset_type_rule_key_created__idx" ON "growth_rule_usage_slot" ("user_id","asset_type","rule_key","created_at");--> statement-breakpoint
 CREATE INDEX "task_status_is_enabled_idx" ON "task" ("status","is_enabled");--> statement-breakpoint
 CREATE INDEX "task_type_idx" ON "task" ("type");--> statement-breakpoint
 CREATE INDEX "task_publish_start_at_idx" ON "task" ("publish_start_at");--> statement-breakpoint
@@ -1049,8 +1049,8 @@ CREATE INDEX "user_browse_log_target_type_target_id_user_id_idx" ON "user_browse
 CREATE INDEX "user_browse_log_user_id_viewed_at_idx" ON "user_browse_log" ("user_id","viewed_at");--> statement-breakpoint
 CREATE INDEX "user_comment_target_type_target_id_created_at_idx" ON "user_comment" ("target_type","target_id","created_at");--> statement-breakpoint
 CREATE INDEX "user_comment_target_type_target_id_reply_to_id_floor_idx" ON "user_comment" ("target_type","target_id","reply_to_id","floor");--> statement-breakpoint
-CREATE INDEX "user_comment_target_type_target_id_audit_status_is_hidden_deleted_at_idx" ON "user_comment" ("target_type","target_id","audit_status","is_hidden","deleted_at");--> statement-breakpoint
-CREATE INDEX "user_comment_actual_reply_to_id_audit_status_is_hidden_deleted_at_created_at_idx" ON "user_comment" ("actual_reply_to_id","audit_status","is_hidden","deleted_at","created_at");--> statement-breakpoint
+CREATE INDEX "user_comment_target_type_target_id_audit_status_is_hidden_d_idx" ON "user_comment" ("target_type","target_id","audit_status","is_hidden","deleted_at");--> statement-breakpoint
+CREATE INDEX "user_comment_actual_reply_to_id_audit_status_is_hidden_dele_idx" ON "user_comment" ("actual_reply_to_id","audit_status","is_hidden","deleted_at","created_at");--> statement-breakpoint
 CREATE INDEX "user_comment_target_type_target_id_deleted_at_created_at_idx" ON "user_comment" ("target_type","target_id","deleted_at","created_at");--> statement-breakpoint
 CREATE INDEX "user_comment_user_id_idx" ON "user_comment" ("user_id");--> statement-breakpoint
 CREATE INDEX "user_comment_created_at_idx" ON "user_comment" ("created_at");--> statement-breakpoint
@@ -1176,7 +1176,7 @@ CREATE INDEX "forum_user_action_log_created_at_idx" ON "forum_user_action_log" (
 CREATE INDEX "forum_user_action_log_user_id_created_at_idx" ON "forum_user_action_log" ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "chat_conversation_last_message_at_idx" ON "chat_conversation" ("last_message_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "chat_conversation_member_conversation_id_idx" ON "chat_conversation_member" ("conversation_id");--> statement-breakpoint
-CREATE INDEX "chat_conversation_member_user_id_unread_count_conversation_id_idx" ON "chat_conversation_member" ("user_id","unread_count","conversation_id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_user_id_unread_count_conversation__idx" ON "chat_conversation_member" ("user_id","unread_count","conversation_id");--> statement-breakpoint
 CREATE INDEX "chat_message_conversation_id_created_at_idx" ON "chat_message" ("conversation_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "chat_message_sender_id_created_at_idx" ON "chat_message" ("sender_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "message_outbox_status_next_retry_at_id_idx" ON "message_outbox" ("status","next_retry_at","id");--> statement-breakpoint

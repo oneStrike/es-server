@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "c115f97e-8844-49d9-86f2-eec50349846d",
+  "id": "a115d0d9-c025-492d-bc98-2864aca24c4e",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -11178,7 +11178,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "app_announcement_is_published_publish_start_time_publish_end_time_idx",
+      "name": "app_announcement_is_published_publish_start_time_publish_en_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "app_announcement"
@@ -11934,7 +11934,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "growth_rule_usage_slot_user_id_asset_type_rule_key_created_at_idx",
+      "name": "growth_rule_usage_slot_user_id_asset_type_rule_key_created__idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "growth_rule_usage_slot"
@@ -12662,7 +12662,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_comment_target_type_target_id_audit_status_is_hidden_deleted_at_idx",
+      "name": "user_comment_target_type_target_id_audit_status_is_hidden_d_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_comment"
@@ -12711,7 +12711,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_comment_actual_reply_to_id_audit_status_is_hidden_deleted_at_created_at_idx",
+      "name": "user_comment_actual_reply_to_id_audit_status_is_hidden_dele_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_comment"
@@ -15644,7 +15644,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "chat_conversation_member_user_id_unread_count_conversation_id_idx",
+      "name": "chat_conversation_member_user_id_unread_count_conversation__idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "chat_conversation_member"
@@ -18028,7 +18028,7 @@
         "slot_value"
       ],
       "nullsNotDistinct": false,
-      "name": "growth_rule_usage_slot_user_id_asset_type_rule_key_slot_type_slot_value_key",
+      "name": "growth_rule_usage_slot_user_id_asset_type_rule_key_slot_typ_key",
       "entityType": "uniques",
       "schema": "public",
       "table": "growth_rule_usage_slot"

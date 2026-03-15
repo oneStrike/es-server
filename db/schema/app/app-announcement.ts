@@ -79,8 +79,9 @@ export const appAnnouncement = pgTable("app_announcement", {
 }, (table) => [
   /**
    * 发布状态与发布时间索引
+   * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
    */
-  index("app_announcement_is_published_publish_start_time_publish_end_time_idx").on(table.isPublished, table.publishStartTime, table.publishEndTime),
+  index("app_announcement_is_published_publish_start_time_publish_en_idx").on(table.isPublished, table.publishStartTime, table.publishEndTime),
   /**
    * 类型与发布状态索引
    */

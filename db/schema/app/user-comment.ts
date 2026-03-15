@@ -96,12 +96,14 @@ export const userComment = pgTable("user_comment", {
     index("user_comment_target_type_target_id_reply_to_id_floor_idx").on(table.targetType, table.targetId, table.replyToId, table.floor),
     /**
      * 可见评论索引
+     * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
      */
-    index("user_comment_target_type_target_id_audit_status_is_hidden_deleted_at_idx").on(table.targetType, table.targetId, table.auditStatus, table.isHidden, table.deletedAt),
+    index("user_comment_target_type_target_id_audit_status_is_hidden_d_idx").on(table.targetType, table.targetId, table.auditStatus, table.isHidden, table.deletedAt),
     /**
      * 回复分页索引
+     * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
      */
-    index("user_comment_actual_reply_to_id_audit_status_is_hidden_deleted_at_created_at_idx").on(table.actualReplyToId, table.auditStatus, table.isHidden, table.deletedAt, table.createdAt),
+    index("user_comment_actual_reply_to_id_audit_status_is_hidden_dele_idx").on(table.actualReplyToId, table.auditStatus, table.isHidden, table.deletedAt, table.createdAt),
     /**
      * 目标删除时间索引
      */

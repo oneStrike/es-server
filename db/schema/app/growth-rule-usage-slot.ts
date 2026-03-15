@@ -40,10 +40,12 @@ export const growthRuleUsageSlot = pgTable("growth_rule_usage_slot", {
 }, (table) => [
   /**
    * 唯一槽位约束：核心并发防重
+   * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
    */
-  unique("growth_rule_usage_slot_user_id_asset_type_rule_key_slot_type_slot_value_key").on(table.userId, table.assetType, table.ruleKey, table.slotType, table.slotValue),
+  unique("growth_rule_usage_slot_user_id_asset_type_rule_key_slot_typ_key").on(table.userId, table.assetType, table.ruleKey, table.slotType, table.slotValue),
   /**
    * 用户规则检索索引
+   * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
    */
-  index("growth_rule_usage_slot_user_id_asset_type_rule_key_created_at_idx").on(table.userId, table.assetType, table.ruleKey, table.createdAt),
+  index("growth_rule_usage_slot_user_id_asset_type_rule_key_created__idx").on(table.userId, table.assetType, table.ruleKey, table.createdAt),
 ]);

@@ -1,6 +1,4 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
@@ -10,8 +8,17 @@ import {
   TaskService,
   UpdateTaskDto,
   UpdateTaskStatusDto,
-} from '@libs/growth/task'
-import { Body, Controller, Get, ParseIntPipe, Post, Query } from '@nestjs/common'
+} from '@libs/growth'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import {
+  Body,
+  Controller,
+  Get,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('任务管理')
@@ -22,7 +29,7 @@ export class TaskController {
   @Post('/create')
   @ApiDoc({
     summary: '创建任务',
-    model: IdDto,
+    model: Boolean,
   })
   async create(
     @Body() body: CreateTaskDto,
@@ -34,7 +41,7 @@ export class TaskController {
   @Post('/update')
   @ApiDoc({
     summary: '更新任务',
-    model: IdDto,
+    model: Boolean,
   })
   async update(
     @Body() body: UpdateTaskDto,
@@ -46,7 +53,7 @@ export class TaskController {
   @Post('/update-status')
   @ApiDoc({
     summary: '更新任务状态',
-    model: IdDto,
+    model: Boolean,
   })
   async updateStatus(@Body() body: UpdateTaskStatusDto) {
     return this.taskService.updateTaskStatus(body)
@@ -55,7 +62,7 @@ export class TaskController {
   @Post('/delete')
   @ApiDoc({
     summary: '删除任务',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto) {
     return this.taskService.deleteTask(body.id)

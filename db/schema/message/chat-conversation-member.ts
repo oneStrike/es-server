@@ -59,6 +59,7 @@ export const chatConversationMember = pgTable("chat_conversation_member", {
     index("chat_conversation_member_conversation_id_idx").on(table.conversationId),
     /**
      * 未读会话查询索引
+     * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
      */
-    index("chat_conversation_member_user_id_unread_count_conversation_id_idx").on(table.userId, table.unreadCount, table.conversationId),
+    index("chat_conversation_member_user_id_unread_count_conversation__idx").on(table.userId, table.unreadCount, table.conversationId),
 ]);
