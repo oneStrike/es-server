@@ -1,9 +1,10 @@
 import type { Cache } from 'cache-manager'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/drizzle.service'
 import { AesService, RsaService } from '@libs/platform/modules'
 import { isMasked, maskString } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
+import { desc } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
 import { SystemConfigDto } from './dto/config.dto'
 import {
@@ -24,7 +25,7 @@ import {
  * 注意：其他模块读取配置请使用 ConfigReader，不要注入此服务。
  */
 @Injectable()
-export class SystemConfigService extends PlatformService implements OnModuleInit {
+export class SystemConfigService implements OnModuleInit {
   constructor(
     /** AES 加密服务，用于敏感字段加密存储 */
     private readonly aesService: AesService,
@@ -34,18 +35,23 @@ export class SystemConfigService extends PlatformService implements OnModuleInit
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     /** 配置读取器，更新后通知刷新 */
     private readonly configReader: ConfigReader,
-  ) {
-    super()
-  }
+    /** Drizzle 数据库服务 */
+    private readonly drizzle: DrizzleService,
+  ) {}
 
   /** 模块初始化时加载配置到缓存 */
   async onModuleInit() {
     await this.initCache()
   }
 
-  /** 获取 Prisma systemConfig 代理 */
-  get systemConfig() {
-    return this.prisma.systemConfig
+  /** 数据库连接实例 */
+  private get db() {
+    return this.drizzle.db
+  }
+
+  /** 系统配置表 */
+  private get systemConfig() {
+    return this.drizzle.schema.systemConfig
   }
 
   /**
@@ -90,7 +96,7 @@ export class SystemConfigService extends PlatformService implements OnModuleInit
    *
    * @param dto 配置数据（结构化入参）
    * @param userId 用户 ID（预留参数）
-   * @returns 更新后的配置对象
+   * @returns 是否成功
    */
   async updateConfig(dto: SystemConfigDto, userId: number) {
     const currentConfig = this.configReader.get()
@@ -124,18 +130,19 @@ export class SystemConfigService extends PlatformService implements OnModuleInit
     )
 
     // 创建新记录（支持历史配置）
-    const result = await this.systemConfig.create({
-      data: {
-        ...cleanData,
-        updatedBy: {
-          connect: { id: userId },
-        },
-      },
-    })
+    const [result] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.systemConfig)
+        .values({
+          ...cleanData,
+          updatedById: userId,
+        })
+        .returning(),
+    )
 
     // 刷新缓存并通知 ConfigReader
     await this.refreshCache(result)
-    return { id: result.id }
+    return true
   }
 
   /**
@@ -220,7 +227,10 @@ export class SystemConfigService extends PlatformService implements OnModuleInit
     if (config) {
       await this.refreshCache(config)
     } else {
-      const newConfig = await this.systemConfig.create({ data: DEFAULT_CONFIG })
+      const [newConfig] = await this.db
+        .insert(this.systemConfig)
+        .values(DEFAULT_CONFIG)
+        .returning()
       await this.refreshCache(newConfig)
     }
   }
@@ -229,9 +239,13 @@ export class SystemConfigService extends PlatformService implements OnModuleInit
    * 获取最新的配置记录
    */
   private async findLatestConfig() {
-    return this.systemConfig.findFirst({
-      orderBy: { createdAt: 'desc' },
-    })
+    const configs = await this.db
+      .select()
+      .from(this.systemConfig)
+      .orderBy(desc(this.systemConfig.createdAt))
+      .limit(1)
+
+    return configs[0] ?? null
   }
 
   /**
@@ -240,20 +254,23 @@ export class SystemConfigService extends PlatformService implements OnModuleInit
    * @param pageSize 每页数量
    */
   async findConfigHistory(page = 1, pageSize = 10) {
-    const skip = (page - 1) * pageSize
-    const [list, total] = await Promise.all([
-      this.systemConfig.findMany({
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: pageSize,
-        include: {
-          updatedBy: {
-            select: { id: true, username: true, avatar: true },
-          },
-        },
-      }),
-      this.systemConfig.count(),
-    ])
+    const offset = (page - 1) * pageSize
+
+    // 查询列表
+    const list = await this.db
+      .select()
+      .from(this.systemConfig)
+      .orderBy(desc(this.systemConfig.createdAt))
+      .limit(pageSize)
+      .offset(offset)
+
+    // 查询总数
+    const countResult = await this.db
+      .select({ count: this.systemConfig.id })
+      .from(this.systemConfig)
+
+    const total = countResult.length
+
     return { list, total, page, pageSize }
   }
 

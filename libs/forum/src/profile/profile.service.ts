@@ -1,12 +1,12 @@
 import type { PrismaClientType } from '@libs/platform/database'
-import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction'
+import { GrowthAssetTypeEnum, UserPointService } from '@libs/growth'
 
+import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction'
 import {
   UserDefaults,
   UserStatusEnum,
 } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { GrowthAssetTypeEnum, UserPointService } from '@libs/growth'
 
 import { Injectable } from '@nestjs/common'
 import {
@@ -19,10 +19,16 @@ type ForumProfileTransactionClient = Pick<
   'userLevelRule' | 'appUser' | 'forumProfile'
 >
 
+/**
+ * 论坛用户画像服务
+ * 提供用户论坛资料、积分记录、收藏等管理功能
+ */
 @Injectable()
 export class ForumProfileService extends PlatformService {
   constructor(
+    /** 用户积分服务 */
     protected readonly pointService: UserPointService,
+    /** 收藏服务 */
     protected readonly favoriteService: FavoriteService,
   ) {
     super()
@@ -141,6 +147,11 @@ export class ForumProfileService extends PlatformService {
     })
   }
 
+  /**
+   * 获取我的收藏
+   * @param userId - 用户ID
+   * @returns 分页的收藏列表，包含主题信息
+   */
   async getMyFavorites(userId: number) {
     const result = await this.favoriteService.getUserFavorites(
       { targetType: FavoriteTargetTypeEnum.FORUM_TOPIC },

@@ -1,9 +1,9 @@
-import { PlatformService } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 GrowthRuleTypeEnum
 } from '@libs/growth'
+import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
 import { refreshUserLevelByExperience } from '../user-level.helper'

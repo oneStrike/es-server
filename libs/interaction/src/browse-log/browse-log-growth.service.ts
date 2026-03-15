@@ -1,25 +1,42 @@
-import { InteractionTargetTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/growth'
+import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 import { refreshUserLevelByExperience } from '../user-level.helper'
+import {
+  BROWSE_LOG_GROWTH_RULE_TYPE_MAP,
+  BrowseLogTargetTypeEnum,
+} from './browse-log.constant'
 
+/**
+ * 浏览日志成长服务
+ * 处理浏览记录相关的积分和经验奖励
+ */
 @Injectable()
 export class BrowseLogGrowthService extends PlatformService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
+  constructor(
+    /** 成长账本服务 */
+    private readonly growthLedgerService: GrowthLedgerService,
+  ) {
     super()
   }
 
+  /**
+   * 奖励浏览记录
+   * 根据目标类型发放对应的积分和经验奖励
+   *
+   * @param targetType - 浏览目标类型
+   * @param targetId - 目标ID
+   * @param userId - 用户ID
+   */
   async rewardBrowseLogRecorded(
-    targetType: InteractionTargetTypeEnum,
+    targetType: BrowseLogTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
-    const ruleType = resolveInteractionGrowthRuleType('view', targetType)
+    const ruleType = BROWSE_LOG_GROWTH_RULE_TYPE_MAP[targetType]
     if (!ruleType) {
       return
     }

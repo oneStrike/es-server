@@ -1,3 +1,7 @@
+import {
+  BaseUserExperienceRecordDto,
+  BaseUserPointRecordDto,
+} from '@libs/growth'
 /**
  * 用户控制器
  *
@@ -10,10 +14,6 @@
  * - 用户成长信息（积分、经验、徽章）
  */
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import {
-  BaseUserExperienceRecordDto,
-  BaseUserPointRecordDto,
-} from '@libs/growth'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { BaseAppUserDto } from '../auth/dto/auth.dto'

@@ -8,29 +8,30 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PickType } from '@nestjs/swagger'
+import { PageDto } from '@libs/platform/dto'
 import { DownloadTargetTypeEnum } from '../download.constant'
 
-export class BaseUserDownloadRecordDto extends PickType(BaseDto, [
-  'id',
-  'createdAt',
-]) {
-  @EnumProperty({
-    description: '目标类型（3=漫画章节，4=小说章节）',
-    enum: DownloadTargetTypeEnum,
-    example: DownloadTargetTypeEnum.COMIC_CHAPTER,
-    required: true,
-  })
-  targetType!: DownloadTargetTypeEnum
-
+/**
+ * 下载目标 DTO
+ */
+export class DownloadTargetDto {
   @NumberProperty({
-    description: '目标 ID',
+    description: '下载的目标id',
     example: 1,
     required: true,
   })
   targetId!: number
 
+  @EnumProperty({
+    description: '下载目标类型（1=漫画章节，2=小说章节）',
+    enum: DownloadTargetTypeEnum,
+    example: DownloadTargetTypeEnum.COMIC_CHAPTER,
+    required: true,
+  })
+  targetType!: DownloadTargetTypeEnum
+}
+
+export class UserDownloadRecordKeyDto extends DownloadTargetDto {
   @NumberProperty({
     description: '用户 ID',
     example: 1,
@@ -39,15 +40,14 @@ export class BaseUserDownloadRecordDto extends PickType(BaseDto, [
   userId!: number
 }
 
-export class UserDownloadRecordKeyDto extends PickType(
-  BaseUserDownloadRecordDto,
-  ['targetType', 'targetId', 'userId'],
-) {}
+export class QueryDownloadedWorkDto extends PageDto {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
 
-export class QueryDownloadedWorkDto extends IntersectionType(
-  PageDto,
-  PickType(BaseUserDownloadRecordDto, ['userId']),
-) {
   @EnumProperty({
     description: '作品类型（1=漫画，2=小说）',
     enum: ContentTypeEnum,

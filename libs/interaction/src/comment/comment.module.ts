@@ -6,10 +6,10 @@
  * - 通过解析器模式支持评论的点赞、举报操作
  * - 集成敏感词检测、成长奖励、消息通知等能力
  */
+import { GrowthLedgerModule } from '@libs/growth'
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { SystemConfigModule } from '@libs/system-config'
-import { GrowthLedgerModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { CommentGrowthService } from './comment-growth.service'

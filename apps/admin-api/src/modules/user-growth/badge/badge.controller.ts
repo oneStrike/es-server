@@ -1,5 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import {
   AssignUserBadgeDto,
   BaseUserBadgeDto,
@@ -8,9 +6,17 @@ import {
   UpdateUserBadgeDto,
   UserBadgeService,
 } from '@libs/growth'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
+/**
+ * 用户徽章管理控制器
+ * 提供徽章的创建、更新、删除、分配等管理接口
+ *
+ * @class UserBadgeController
+ */
 @Controller('/admin/user-growth/badges')
 @ApiTags('用户成长/徽章管理')
 export class UserBadgeController {

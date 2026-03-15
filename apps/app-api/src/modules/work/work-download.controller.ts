@@ -1,4 +1,11 @@
-import { BaseUserDownloadRecordDto, DownloadedWorkChapterItemDto, DownloadedWorkItemDto, DownloadService, QueryDownloadedWorkChapterDto, QueryDownloadedWorkDto } from '@libs/interaction'
+import {
+  DownloadedWorkChapterItemDto,
+  DownloadedWorkItemDto,
+  DownloadService,
+  DownloadTargetDto,
+  QueryDownloadedWorkChapterDto,
+  QueryDownloadedWorkDto,
+} from '@libs/interaction'
 
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
@@ -52,12 +59,15 @@ export class WorkDownloadController {
   @Post('chapter')
   @ApiDoc({
     summary: '下载章节（漫画/小说）',
-    model: BaseUserDownloadRecordDto,
+    model: String,
   })
   async downloadChapter(
-    @Body() body: IdDto,
+    @Body() body: DownloadTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.downloadService.downloadChapter(userId, body.id)
+    return this.downloadService.downloadChapter({
+      userId,
+      ...body,
+    })
   }
 }

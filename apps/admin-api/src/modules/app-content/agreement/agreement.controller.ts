@@ -14,6 +14,12 @@ import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { ActionTypeEnum } from '../../system/audit/audit.constant'
 
+/**
+ * 协议管理控制器
+ * 提供协议的创建、更新、删除、查询等管理接口
+ *
+ * @class AgreementController
+ */
 @ApiTags('APP管理/协议管理')
 @Controller('admin/agreement')
 export class AgreementController {
@@ -22,7 +28,7 @@ export class AgreementController {
   @Post('/create')
   @ApiDoc({
     summary: '创建协议',
-    model: IdDto,
+    model: Boolean,
   })
   @Audit({
     actionType: ActionTypeEnum.CREATE,
@@ -35,7 +41,7 @@ export class AgreementController {
   @Post('/update')
   @ApiDoc({
     summary: '更新协议',
-    model: IdDto,
+    model: Boolean,
   })
   @Audit({
     actionType: ActionTypeEnum.UPDATE,
@@ -48,7 +54,7 @@ export class AgreementController {
   @Post('/update-status')
   @ApiDoc({
     summary: '更新协议状态',
-    model: IdDto,
+    model: Boolean,
   })
   @Audit({
     actionType: ActionTypeEnum.UPDATE,
@@ -61,7 +67,7 @@ export class AgreementController {
   @Post('/delete')
   @ApiDoc({
     summary: '删除协议',
-    model: IdDto,
+    model: Boolean,
   })
   @Audit({
     actionType: ActionTypeEnum.DELETE,

@@ -8,10 +8,16 @@ import {
   UpdateAnnouncementStatusDto,
 } from '@libs/app-content'
 import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
-import { BatchOperationResponseDto, IdDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
+/**
+ * 系统公告管理控制器
+ * 提供公告的创建、更新、删除、查询等管理接口
+ *
+ * @class AppAnnouncementController
+ */
 @ApiTags('APP管理/系统公告')
 @Controller('admin/announcement')
 export class AppAnnouncementController {
@@ -20,7 +26,7 @@ export class AppAnnouncementController {
   @Post('/create')
   @ApiDoc({
     summary: '创建公告',
-    model: IdDto,
+    model: Boolean,
   })
   async create(@Body() body: CreateAnnouncementDto) {
     return this.libAppAnnouncementService.createAnnouncement(body)
@@ -48,7 +54,7 @@ export class AppAnnouncementController {
   @Post('/update')
   @ApiDoc({
     summary: '更新公告',
-    model: IdDto,
+    model: Boolean,
   })
   async update(@Body() body: UpdateAnnouncementDto) {
     return this.libAppAnnouncementService.updateAnnouncement(body)
@@ -57,23 +63,18 @@ export class AppAnnouncementController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新公告状态',
-    model: BatchOperationResponseDto,
+    model: Boolean,
   })
   async updateStatus(@Body() body: UpdateAnnouncementStatusDto) {
-    return this.libAppAnnouncementService.appAnnouncement.update({
-      where: { id: body.id },
-      data: { isPublished: body.isPublished },
-    })
+    return this.libAppAnnouncementService.updateAnnouncementStatus(body)
   }
 
   @Post('/delete')
   @ApiDoc({
     summary: '删除公告',
-    model: BatchOperationResponseDto,
+    model: Boolean,
   })
-  async batchRemove(@Body() body: IdDto) {
-    return this.libAppAnnouncementService.appAnnouncement.delete({
-      where: { id: body.id },
-    })
+  async remove(@Body() body: IdDto) {
+    return this.libAppAnnouncementService.deleteAnnouncement(body)
   }
 }

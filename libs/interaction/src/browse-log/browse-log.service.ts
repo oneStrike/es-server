@@ -1,10 +1,10 @@
-import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { Injectable } from '@nestjs/common'
-import { InteractionTargetAccessService } from '../interaction-target-access.service'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
 import { BrowseLogInteractionService } from './browse-log-interaction.service'
 import { BrowseLogPermissionService } from './browse-log-permission.service'
+import { BrowseLogTargetTypeEnum } from './browse-log.constant'
+import { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.interface'
 
 @Injectable()
 export class BrowseLogService extends PlatformService {
@@ -12,29 +12,70 @@ export class BrowseLogService extends PlatformService {
     private readonly browseLogPermissionService: BrowseLogPermissionService,
     private readonly browseLogInteractionService: BrowseLogInteractionService,
     private readonly browseLogGrowthService: BrowseLogGrowthService,
-    private readonly interactionTargetAccessService: InteractionTargetAccessService,
   ) {
     super()
   }
 
-  private async applyTargetCountDelta(
-    tx: any,
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-    field: string,
-    delta: number,
-  ) {
-    await this.interactionTargetAccessService.applyTargetCountDelta(
-      tx,
-      targetType,
-      targetId,
-      field,
-      delta,
-    )
+  /** 目标类型到解析器的映射表 */
+  private readonly resolvers = new Map<
+    BrowseLogTargetTypeEnum,
+    IBrowseLogTargetResolver
+  >()
+
+  /**
+   * 注册目标解析器
+   * @param resolver - 浏览日志目标解析器实例
+   */
+  registerResolver(resolver: IBrowseLogTargetResolver) {
+    if (this.resolvers.has(resolver.targetType)) {
+      console.warn(
+        `BrowseLog resolver for type ${resolver.targetType} is being overwritten.`,
+      )
+    }
+    this.resolvers.set(resolver.targetType, resolver)
   }
 
+  /**
+   * 获取指定目标类型的解析器
+   * @param targetType - 浏览目标类型
+   * @returns 对应的目标解析器
+   */
+  getResolver(targetType: BrowseLogTargetTypeEnum): IBrowseLogTargetResolver {
+    const resolver = this.resolvers.get(targetType)
+    if (!resolver) {
+      throw new BadRequestException('不支持的浏览目标类型')
+    }
+    return resolver
+  }
+
+  /**
+   * 应用浏览数量变更到目标对象
+   */
+  private async applyTargetCountDelta(
+    tx: any,
+    targetType: BrowseLogTargetTypeEnum,
+    targetId: number,
+    delta: number,
+  ) {
+    const resolver = this.getResolver(targetType)
+    await resolver.applyCountDelta(tx, targetId, delta)
+  }
+
+  /**
+   * 记录浏览日志
+   *
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   * @param userId - 用户ID
+   * @param ipAddress - IP地址
+   * @param device - 设备信息
+   * @param userAgent - UserAgent
+   * @param options - 附加选项
+   * @param options.skipTargetValidation - 是否跳过目标合法性校验
+   * @param options.deferPostProcess - 是否延迟执行后置处理（成长奖励等）
+   */
   async recordBrowseLog(
-    targetType: InteractionTargetTypeEnum,
+    targetType: BrowseLogTargetTypeEnum,
     targetId: number,
     userId: number,
     ipAddress?: string,
@@ -45,16 +86,19 @@ export class BrowseLogService extends PlatformService {
       deferPostProcess?: boolean
     } = {},
   ): Promise<void> {
-    await this.browseLogPermissionService.ensureUserCanView(userId)
+    // 1. 校验用户权限
+    await this.browseLogPermissionService.ensureCanBrowse(userId)
 
-    if (!options.skipTargetValidation) {
-      await this.browseLogPermissionService.ensureTargetValid(
-        targetType,
-        targetId,
-      )
-    }
+    const resolver = this.getResolver(targetType)
 
+    // 2. 核心逻辑执行（事务内）
     await this.prisma.$transaction(async (tx) => {
+      // 业务目标合法性校验 (Resolver)
+      if (!options.skipTargetValidation) {
+        await resolver.ensureTargetValid(tx, targetId)
+      }
+
+      // 创建浏览记录
       await tx.userBrowseLog.create({
         data: {
           targetType,
@@ -67,7 +111,8 @@ export class BrowseLogService extends PlatformService {
         },
       })
 
-      await this.applyTargetCountDelta(tx, targetType, targetId, 'viewCount', 1)
+      // 更新浏览计数 (Resolver)
+      await this.applyTargetCountDelta(tx, targetType, targetId, 1)
     })
 
     const runPostProcess = async () => {

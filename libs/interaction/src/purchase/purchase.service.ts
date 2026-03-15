@@ -1,87 +1,78 @@
-// eslint-disable-next-line no-restricted-imports -- avoid circular deps via content barrel
-import { ContentPermissionService } from '@libs/content/permission'
-import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerService,
 } from '@libs/growth'
+import { PlatformService, Prisma } from '@libs/platform/database'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   buildCreatedAtSqlFilter,
   normalizeInteractionPagination,
 } from '../query.helper'
 import {
-  PurchasedWorkChapterPageDto,
-  PurchasedWorkPageDto,
   PurchaseTargetDto,
   QueryPurchasedWorkChapterDto,
   QueryPurchasedWorkDto,
 } from './dto/purchase.dto'
-import {
-  PaymentMethodEnum,
-  PurchaseStatusEnum,
-  PurchaseTargetTypeEnum,
-} from './purchase.constant'
+import { IPurchaseTargetResolver } from './interfaces/purchase-target-resolver.interface'
+import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from './purchase.constant'
 
 @Injectable()
 export class PurchaseService extends PlatformService {
   private readonly logger = new Logger(PurchaseService.name)
+  private readonly resolvers = new Map<
+    PurchaseTargetTypeEnum,
+    IPurchaseTargetResolver
+  >()
 
-  constructor(
-    private readonly contentPermissionService: ContentPermissionService,
-    private readonly growthLedgerService: GrowthLedgerService,
-  ) {
+  constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }
 
+  /**
+   * 注册购买目标解析器
+   */
+  registerResolver(resolver: IPurchaseTargetResolver) {
+    if (this.resolvers.has(resolver.targetType)) {
+      console.warn(
+        `Purchase resolver for type ${resolver.targetType} is being overwritten.`,
+      )
+    }
+    this.resolvers.set(resolver.targetType, resolver)
+  }
+
+  /**
+   * 获取指定的购买解析器
+   */
+  private getResolver(
+    targetType: PurchaseTargetTypeEnum,
+  ): IPurchaseTargetResolver {
+    const resolver = this.resolvers.get(targetType)
+    if (!resolver) {
+      throw new BadRequestException('不支持的购买业务类型')
+    }
+    return resolver
+  }
+
+  /**
+   * 校验购买条件并获取价格
+   */
   async checkNeedPurchase(
     targetType: PurchaseTargetTypeEnum,
     targetId: number,
-    chapterPermission?: Pick<
-      Awaited<ReturnType<ContentPermissionService['resolveChapterPermission']>>,
-      'price' | 'viewRule'
-    >,
   ) {
-    if (
-      targetType !== PurchaseTargetTypeEnum.COMIC_CHAPTER &&
-      targetType !== PurchaseTargetTypeEnum.NOVEL_CHAPTER
-    ) {
-      throw new BadRequestException('仅支持章节购买')
-    }
-
-    const { price, viewRule } =
-      chapterPermission ??
-      (await this.contentPermissionService.resolveChapterPermission(targetId))
-
-    if (viewRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BadRequestException('该章节不支持购买')
-    }
-
-    if (price < 0) {
-      throw new BadRequestException('章节价格配置错误')
-    }
-
-    return {
-      targetPrice: price,
-    }
+    const resolver = this.getResolver(targetType)
+    return resolver.ensurePurchaseable(targetId)
   }
 
-  async purchaseTarget(
-    dto: PurchaseTargetDto,
-    chapterPermission?: Pick<
-      Awaited<ReturnType<ContentPermissionService['resolveChapterPermission']>>,
-      'price' | 'viewRule'
-    >,
-  ) {
+  /**
+   * 执行购买逻辑
+   */
+  async purchaseTarget(dto: PurchaseTargetDto) {
     const { targetType, targetId, userId, paymentMethod, outTradeNo } = dto
+    const resolver = this.getResolver(targetType)
 
-    const { targetPrice } = await this.checkNeedPurchase(
-      targetType,
-      targetId,
-      chapterPermission,
-    )
+    const { price: targetPrice } = await resolver.ensurePurchaseable(targetId)
 
     this.logger.log(
       `purchase_start userId=${userId} targetType=${targetType} targetId=${targetId} price=${targetPrice}`,
@@ -109,7 +100,7 @@ export class PurchaseService extends PlatformService {
             amount: targetPrice,
             bizKey: `purchase:${record.id}:consume`,
             source: 'purchase',
-            remark: '购买章节积分扣减',
+            remark: '购买积分扣减',
             targetType,
             targetId,
             context: {
@@ -133,10 +124,8 @@ export class PurchaseService extends PlatformService {
           }
         }
 
-        await tx.workChapter.update({
-          where: { id: targetId },
-          data: { purchaseCount: { increment: 1 } },
-        })
+        // 更新各业务方购买计数
+        await resolver.applyCountDelta(tx, targetId, 1)
 
         this.logger.log(
           `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} price=${targetPrice} purchaseId=${record.id}`,
@@ -152,7 +141,7 @@ export class PurchaseService extends PlatformService {
       }
 
       this.handlePrismaBusinessError(error, {
-        duplicateMessage: '该章节已购买',
+        duplicateMessage: '该目标已购买',
       })
 
       this.logger.error(
@@ -163,38 +152,17 @@ export class PurchaseService extends PlatformService {
     }
   }
 
-  async purchaseChapter(userId: number, chapterId: number) {
-    const chapterPermission =
-      await this.contentPermissionService.resolveChapterPermission(chapterId)
-
-    if (chapterPermission.workType === ContentTypeEnum.COMIC) {
-      return this.purchaseTarget(
-        {
-          targetType: PurchaseTargetTypeEnum.COMIC_CHAPTER,
-          targetId: chapterId,
-          userId,
-          paymentMethod: PaymentMethodEnum.POINTS,
-        },
-        chapterPermission,
-      )
-    }
-
-    if (chapterPermission.workType === ContentTypeEnum.NOVEL) {
-      return this.purchaseTarget(
-        {
-          targetType: PurchaseTargetTypeEnum.NOVEL_CHAPTER,
-          targetId: chapterId,
-          userId,
-          paymentMethod: PaymentMethodEnum.POINTS,
-        },
-        chapterPermission,
-      )
-    }
-
-    throw new BadRequestException('不支持的章节类型')
+  /**
+   * 购买章节（对外通用接口）
+   */
+  async purchaseChapter(dto: PurchaseTargetDto) {
+    return this.purchaseTarget(dto)
   }
 
-  async getPurchasedWorks(dto: QueryPurchasedWorkDto): Promise<PurchasedWorkPageDto> {
+  /**
+   * 获取已购作品列表
+   */
+  async getPurchasedWorks(dto: QueryPurchasedWorkDto) {
     const {
       userId,
       workType,
@@ -204,8 +172,12 @@ export class PurchaseService extends PlatformService {
       startDate,
       endDate,
     } = dto
-    const { pageIndex: normalizedPageIndex, pageSize: normalizedPageSize, skip, take } =
-      normalizeInteractionPagination(pageIndex, pageSize)
+    const {
+      pageIndex: normalizedPageIndex,
+      pageSize: normalizedPageSize,
+      skip,
+      take,
+    } = normalizeInteractionPagination(pageIndex, pageSize)
     const createdAtFilter = buildCreatedAtSqlFilter(
       'upr.created_at',
       startDate,
@@ -281,9 +253,10 @@ export class PurchaseService extends PlatformService {
     }
   }
 
-  async getPurchasedWorkChapters(
-    dto: QueryPurchasedWorkChapterDto,
-  ): Promise<PurchasedWorkChapterPageDto> {
+  /**
+   * 获取已购章节列表
+   */
+  async getPurchasedWorkChapters(dto: QueryPurchasedWorkChapterDto) {
     const {
       userId,
       workId,
@@ -294,8 +267,12 @@ export class PurchaseService extends PlatformService {
       startDate,
       endDate,
     } = dto
-    const { pageIndex: normalizedPageIndex, pageSize: normalizedPageSize, skip, take } =
-      normalizeInteractionPagination(pageIndex, pageSize)
+    const {
+      pageIndex: normalizedPageIndex,
+      pageSize: normalizedPageSize,
+      skip,
+      take,
+    } = normalizeInteractionPagination(pageIndex, pageSize)
     const createdAtFilter = buildCreatedAtSqlFilter(
       'upr.created_at',
       startDate,

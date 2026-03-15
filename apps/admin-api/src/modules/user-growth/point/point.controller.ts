@@ -1,5 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import {
   BaseUserPointRuleDto,
   CreateUserPointRuleDto,
@@ -7,9 +5,17 @@ import {
   UpdateUserPointRuleDto,
   UserPointRuleService,
 } from '@libs/growth'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
+/**
+ * 用户积分规则管理控制器
+ * 提供积分规则的创建、更新、删除、查询等管理接口
+ *
+ * @class PointController
+ */
 @Controller('/admin/user-growth/points-rules')
 @ApiTags('用户成长/积分管理')
 export class PointController {

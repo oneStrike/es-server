@@ -1,7 +1,4 @@
-import {
-  AuditStatusEnum,
-  InteractionTargetTypeEnum,
-} from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,
@@ -9,21 +6,38 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
-import { InteractionTargetBodyDto } from '../../dto/target.dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { CommentTargetTypeEnum } from '../comment.constant'
+
+/**
+ * 评论目标 DTO
+ */
+export class CommentTargetDto {
+  @NumberProperty({
+    description: '目标 ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  targetId!: number
+
+  @EnumProperty({
+    description: '评论目标类型',
+    enum: CommentTargetTypeEnum,
+    example: CommentTargetTypeEnum.COMIC,
+    required: true,
+  })
+  targetType!: CommentTargetTypeEnum
+}
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
     description: '目标类型',
-    enum: InteractionTargetTypeEnum,
-    example: InteractionTargetTypeEnum.COMIC,
+    enum: CommentTargetTypeEnum,
+    example: CommentTargetTypeEnum.COMIC,
     required: true,
   })
-  targetType!: InteractionTargetTypeEnum
+  targetType!: CommentTargetTypeEnum
 
   @NumberProperty({ description: '目标 ID', example: 1, required: true, min: 1 })
   targetId!: number
@@ -99,12 +113,11 @@ export class CommentIdDto {
 
 export class CreateCommentDto extends IntersectionType(
   UserIdDto,
-  InteractionTargetBodyDto,
-  PickType(BaseCommentDto, ['content', 'replyToId']),
+  IntersectionType(CommentTargetDto, PickType(BaseCommentDto, ['content', 'replyToId'])),
 ) {}
 
 export class CreateCommentBodyDto extends IntersectionType(
-  InteractionTargetBodyDto,
+  CommentTargetDto,
   PickType(BaseCommentDto, ['content']),
 ) {}
 
@@ -131,8 +144,7 @@ export class ReplyCommentBodyDto extends IntersectionType(
 
 export class QueryMyCommentPageDto extends IntersectionType(
   PageDto,
-  PartialType(InteractionTargetBodyDto),
-  PickType(PartialType(BaseCommentDto), ['auditStatus']),
+  IntersectionType(PartialType(CommentTargetDto), PickType(PartialType(BaseCommentDto), ['auditStatus'])),
 ) {}
 
 export class QueryCommentRepliesDto extends IntersectionType(

@@ -1,14 +1,14 @@
-import {
-  AppAnnouncementCreateInput,
-  AppAnnouncementWhereInput,
-  PlatformService,
-} from '@libs/platform/database'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService } from '@db/drizzle.service'
+import { IdDto } from '@libs/platform/dto'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm'
 import {
   CreateAnnouncementDto,
   QueryAnnouncementDto,
   UpdateAnnouncementDto,
+  UpdateAnnouncementStatusDto,
 } from './dto/announcement.dto'
 
 /**
@@ -16,23 +16,28 @@ import {
  * 负责公告的创建、查询与更新
  */
 @Injectable()
-export class AppAnnouncementService extends PlatformService {
-  get appAnnouncement() {
-    return this.prisma.appAnnouncement
+export class AppAnnouncementService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  /** 数据库连接实例 */
+  private get db() {
+    return this.drizzle.db
   }
 
-  get appPage() {
-    return this.prisma.appPage
+  /** 公告表 */
+  private get appAnnouncement() {
+    return this.drizzle.schema.appAnnouncement
   }
 
-  constructor() {
-    super()
+  /** 页面表 */
+  private get appPage() {
+    return this.drizzle.schema.appPage
   }
 
   /**
    * 创建公告
    * @param createAnnouncementDto 创建数据
-   * @returns 创建后的公告记录
+   * @returns 是否成功
    */
   async createAnnouncement(createAnnouncementDto: CreateAnnouncementDto) {
     assertValidTimeRange(
@@ -42,22 +47,26 @@ export class AppAnnouncementService extends PlatformService {
     )
 
     const { pageId, ...others } = createAnnouncementDto
-    const createData: AppAnnouncementCreateInput = {
-      ...others,
-    }
+
+    // 校验关联页面是否存在
     if (pageId) {
-      if (!(await this.appPage.exists({ id: pageId }))) {
+      const page = await this.db.query.appPage.findFirst({
+        where: { id: pageId },
+        columns: { id: true },
+      })
+      if (!page) {
         throw new BadRequestException('关联页面不存在')
-      } else {
-        createData.appPage = {
-          connect: {
-            id: pageId,
-          },
-        }
       }
     }
 
-    return this.appAnnouncement.create({ data: createData })
+    await this.drizzle.withErrorHandling(() =>
+      this.db.insert(this.appAnnouncement).values({
+        ...others,
+        pageId: pageId ?? null,
+      }),
+    )
+
+    return true
   }
 
   /**
@@ -69,52 +78,71 @@ export class AppAnnouncementService extends PlatformService {
     const {
       title,
       publishStartTime,
-      enablePlatform,
       publishEndTime,
+      enablePlatform,
       ...pageParams
     } = queryAnnouncementDto
 
-    const where: AppAnnouncementWhereInput = {}
+    const conditions: SQL[] = []
 
+    // 标题模糊查询
     if (title) {
-      where.title = { contains: title, mode: 'insensitive' }
+      conditions.push(ilike(this.appAnnouncement.title, `%${title}%`))
     }
+
+    // 发布开始时间 <= 查询时间
     if (publishStartTime) {
-      where.AND = [{ publishStartTime: { lte: publishStartTime } }]
+      conditions.push(
+        lte(this.appAnnouncement.publishStartTime, publishStartTime),
+      )
     }
+
+    // 发布结束时间 >= 查询时间
+    if (publishEndTime) {
+      conditions.push(gte(this.appAnnouncement.publishEndTime, publishEndTime))
+    }
+
+    // 平台筛选
     if (enablePlatform && enablePlatform !== '[]') {
-      where.enablePlatform = {
-        hasEvery: JSON.parse(enablePlatform).map((item: string) =>
-          Number(item),
-        ),
+      const platforms = JSON.parse(enablePlatform).map((item: string) =>
+        Number(item),
+      )
+      if (platforms.length > 0) {
+        conditions.push(inArray(this.appAnnouncement.enablePlatform, platforms))
       }
     }
-    if (publishEndTime) {
-      where.AND = Array.isArray(where.AND)
-        ? [...where.AND, { publishEndTime: { gte: publishEndTime } }]
-        : [{ publishEndTime: { gte: publishEndTime } }]
-    }
 
-    return this.appAnnouncement.findPagination({
-      where: {
-        ...pageParams,
-        ...where,
+    // 使用 buildWhereAnd 处理其他条件
+    const otherConditions = this.drizzle.buildWhereAnd(
+      this.appAnnouncement,
+      queryAnnouncementDto,
+      {
+        eq: [
+          'announcementType',
+          'priorityLevel',
+          'isPublished',
+          'isPinned',
+          'showAsPopup',
+          'pageId',
+        ],
       },
-      omit: {
-        content: true,
-        popupBackgroundImage: true,
-      },
+    )
+
+    // 合并条件
+    const allConditions = otherConditions
+      ? [...conditions, otherConditions]
+      : conditions
+
+    return this.drizzle.ext.findPagination(this.appAnnouncement, {
+      where: allConditions.length > 0 ? and(...allConditions) : undefined,
+      ...pageParams,
     })
   }
 
   /**
-   * 查询已发布的所有公告
-   */
-
-  /**
    * 更新公告
    * @param updateAnnouncementDto 更新数据
-   * @returns 更新后的公告记录
+   * @returns 是否成功
    */
   async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementDto) {
     const { id, pageId, ...updateData } = updateAnnouncementDto
@@ -125,33 +153,74 @@ export class AppAnnouncementService extends PlatformService {
       '发布开始时间不能大于或等于结束时间',
     )
 
-    const announcement = await this.appAnnouncement.findUnique({
+    // 检查公告是否存在
+    const announcement = await this.db.query.appAnnouncement.findFirst({
       where: { id },
-      select: { id: true, pageId: true },
+      columns: { id: true, pageId: true },
     })
+
     if (!announcement) {
       throw new BadRequestException('公告不存在')
     }
-    const createData: AppAnnouncementCreateInput = {
-      ...updateData,
-    }
-    if (pageId && announcement.pageId !== pageId) {
-      if (!(await this.appPage.exists({ id: pageId }))) {
-        throw new BadRequestException('关联页面不存在')
-      } else {
-        createData.appPage = {
-          connect: {
-            id: pageId,
-          },
+
+    // 校验关联页面是否存在（仅在 pageId 变更时）
+    if (pageId !== undefined && announcement.pageId !== pageId) {
+      if (pageId !== null) {
+        const page = await this.db.query.appPage.findFirst({
+          where: { id: pageId },
+          columns: { id: true },
+        })
+        if (!page) {
+          throw new BadRequestException('关联页面不存在')
         }
       }
     }
 
-    return this.appAnnouncement.update({
-      where: { id },
-      data: createData,
-      select: { id: true },
-    })
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appAnnouncement)
+        .set({
+          ...updateData,
+          pageId: pageId ?? null,
+        })
+        .where(eq(this.appAnnouncement.id, id)),
+    )
+
+    this.drizzle.assertAffectedRows(result, '公告不存在')
+    return true
+  }
+
+  /**
+   * 更新公告状态
+   * @param dto 更新状态数据
+   * @returns 是否成功
+   */
+  async updateAnnouncementStatus(dto: UpdateAnnouncementStatusDto) {
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appAnnouncement)
+        .set({ isPublished: dto.isPublished })
+        .where(eq(this.appAnnouncement.id, dto.id)),
+    )
+
+    this.drizzle.assertAffectedRows(result, '公告不存在')
+    return true
+  }
+
+  /**
+   * 删除公告
+   * @param dto 删除数据
+   * @returns 是否成功
+   */
+  async deleteAnnouncement({ id }: IdDto) {
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.appAnnouncement)
+        .where(eq(this.appAnnouncement.id, id)),
+    )
+
+    this.drizzle.assertAffectedRows(result, '公告不存在')
+    return true
   }
 
   /**
@@ -160,11 +229,11 @@ export class AppAnnouncementService extends PlatformService {
    * @returns 公告详情
    */
   async findAnnouncementDetail(id: number) {
-    return this.appAnnouncement.findUnique({
+    return this.db.query.appAnnouncement.findFirst({
       where: { id },
-      include: {
+      with: {
         appPage: {
-          select: {
+          columns: {
             id: true,
             code: true,
             name: true,
@@ -180,13 +249,16 @@ export class AppAnnouncementService extends PlatformService {
    * @param id 公告ID
    */
   async incrementViewCount(id: number) {
-    return this.appAnnouncement.update({
-      where: { id },
-      data: {
-        viewCount: {
-          increment: 1,
-        },
-      },
-    })
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appAnnouncement)
+        .set({
+          viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
+        })
+        .where(eq(this.appAnnouncement.id, id)),
+    )
+
+    this.drizzle.assertAffectedRows(result, '公告不存在')
+    return true
   }
 }

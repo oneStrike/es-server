@@ -16,12 +16,12 @@ import type {
   UpdateMyForumProfileDto,
   UpdateMyProfileDto,
 } from './dto/user.dto'
-import { DownloadTargetTypeEnum, PurchaseStatusEnum, PurchaseTargetTypeEnum } from '@libs/interaction'
+import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/growth'
 
+import { DownloadTargetTypeEnum, PurchaseStatusEnum, PurchaseTargetTypeEnum } from '@libs/interaction'
 import { MessageInboxService } from '@libs/message'
 import { UserStatusEnum } from '@libs/platform/constant'
 import { PlatformService, Prisma } from '@libs/platform/database'
-import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/growth'
 
 import {
   BadRequestException,

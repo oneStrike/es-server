@@ -2,14 +2,14 @@ import type {
   ForumTopicCreateInput,
   ForumTopicWhereInput,
 } from '@libs/platform/database'
-import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
+import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
+import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
 import {
   BadRequestException,

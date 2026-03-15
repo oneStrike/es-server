@@ -1,12 +1,14 @@
+import { UserGrowthRewardModule } from '@libs/growth'
 import { FavoriteModule, ReportModule } from '@libs/interaction'
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
-import { UserGrowthRewardModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
 import { ForumConfigModule } from './../config/forum-config.module'
 import { ForumTopicService } from './forum-topic.service'
+import { ForumTopicBrowseLogResolver } from './resolver/forum-topic-browse-log.resolver'
+import { ForumTopicCommentResolver } from './resolver/forum-topic-comment.resolver'
 import { ForumTopicFavoriteResolver } from './resolver/forum-topic-favorite.resolver'
 import { ForumTopicLikeResolver } from './resolver/forum-topic-like.resolver'
 import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver'
@@ -32,12 +34,16 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     ForumTopicFavoriteResolver,
     ForumTopicLikeResolver,
     ForumTopicReportResolver,
+    ForumTopicCommentResolver,
+    ForumTopicBrowseLogResolver,
   ],
   exports: [
     ForumTopicService,
     ForumTopicFavoriteResolver,
     ForumTopicLikeResolver,
     ForumTopicReportResolver,
+    ForumTopicCommentResolver,
+    ForumTopicBrowseLogResolver,
   ],
 })
 export class ForumTopicModule {}

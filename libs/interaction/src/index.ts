@@ -1,25 +1,18 @@
-export * from './browse-log/browse-log.module'
-export * from './browse-log/browse-log.service'
-// browse log
-export * from './browse-log/dto/browse-log.dto'
+export * from './browse-log'
 // comment
 export * from './comment/comment-permission.service'
-
+export * from './comment/comment.constant'
 export * from './comment/comment.module'
 export * from './comment/comment.service'
 export * from './comment/dto/comment.dto'
+export * from './comment/interfaces/comment-target-resolver.interface'
 
 // constants and module
 export * from './common.constant'
 export * from './core.module'
 export * from './domain.types'
 // download
-export * from './download/download.constant'
-
-export * from './download/download.module'
-
-export * from './download/download.service'
-export * from './download/dto/download.dto'
+export * from './download'
 // shared dto
 export * from './dto/target.dto'
 
@@ -43,15 +36,9 @@ export * from './like/like.module'
 export * from './like/like.service'
 
 // purchase
-export * from './purchase/dto/purchase.dto'
-export * from './purchase/purchase.constant'
-export * from './purchase/purchase.module'
-export * from './purchase/purchase.service'
+export * from './purchase'
 // reading state
-export * from './reading-state/dto/reading-state.dto'
-
-export * from './reading-state/reading-state.module'
-export * from './reading-state/reading-state.service'
+export * from './reading-state'
 // report
 export * from './report/dto/report-app.dto'
 

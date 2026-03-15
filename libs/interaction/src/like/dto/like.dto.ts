@@ -12,7 +12,6 @@ import { LikeTargetTypeEnum } from '../like.constant'
 
 /**
  * 点赞目标 DTO
- * 用于指定点赞操作的目标类型和目标 ID
  */
 export class LikeTargetDto {
   @NumberProperty({
@@ -23,7 +22,8 @@ export class LikeTargetDto {
   targetId!: number
 
   @EnumProperty({
-    description: '点赞目标类型（1=漫画，2=小说，3=论坛主题，4=漫画章节，5=小说章节，6=评论）',
+    description:
+      '点赞目标类型（1=漫画，2=小说，3=论坛主题，4=漫画章节，5=小说章节，6=评论）',
     enum: LikeTargetTypeEnum,
     example: LikeTargetTypeEnum.WORK_COMIC,
     required: true,
@@ -37,7 +37,7 @@ export class LikeTargetDto {
 export class LikePageQueryDto extends IntersectionType(
   PageDto,
   PickType(LikeTargetDto, ['targetType']),
-) { }
+) {}
 
 /**
  * 点赞状态响应 DTO
@@ -110,7 +110,8 @@ export class LikePageItemDto {
   targetId!: number
 
   @EnumProperty({
-    description: '点赞目标类型（1=漫画，2=小说，3=论坛主题，4=漫画章节，5=小说章节，6=评论）',
+    description:
+      '点赞目标类型（1=漫画，2=小说，3=论坛主题，4=漫画章节，5=小说章节，6=评论）',
     enum: LikeTargetTypeEnum,
     example: LikeTargetTypeEnum.WORK_COMIC,
     required: true,
@@ -139,4 +140,4 @@ export class LikePageItemDto {
 /**
  * @deprecated 使用 LikePageItemDto 替代
  */
-export class LikeRecordResponseDto extends LikePageItemDto { }
+export class LikeRecordResponseDto extends LikePageItemDto {}

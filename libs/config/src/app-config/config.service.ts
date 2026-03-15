@@ -1,22 +1,25 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/drizzle.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { eq } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'
-import {
-  UpdateAppConfigDto,
-} from './dto/config.dto'
+import { UpdateAppConfigDto } from './dto/config.dto'
 
 /**
  * 应用配置服务
  * 提供应用配置的创建、查询、更新等功能
  */
 @Injectable()
-export class AppConfigService extends PlatformService {
-  get appConfig() {
-    return this.prisma.appConfig
+export class AppConfigService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  /** 数据库连接实例 */
+  private get db() {
+    return this.drizzle.db
   }
 
-  constructor() {
-    super()
+  /** 应用配置表 */
+  private get appConfig() {
+    return this.drizzle.schema.appConfig
   }
 
   /**
@@ -24,13 +27,20 @@ export class AppConfigService extends PlatformService {
    * @returns 最新版本的应用配置
    */
   async findActiveConfig() {
-    const config = await this.appConfig.findUnique({
-      where: { id: 1 },
-    })
+    const configs = await this.db
+      .select()
+      .from(this.appConfig)
+      .where(eq(this.appConfig.id, 1))
+      .limit(1)
+
+    const config = configs[0]
+
     if (!config) {
-      return this.appConfig.create({
-        data: DEFAULT_APP_CONFIG,
-      })
+      const [newConfig] = await this.db
+        .insert(this.appConfig)
+        .values(DEFAULT_APP_CONFIG)
+        .returning()
+      return newConfig
     }
     return config
   }
@@ -38,20 +48,28 @@ export class AppConfigService extends PlatformService {
   /**
    * 更新应用配置
    * @param updateConfigDto 更新数据
-   * @returns 更新后的应用配置
+   * @returns 是否成功
    */
   async updateConfig(updateConfigDto: UpdateAppConfigDto) {
-    const existingConfig = await this.appConfig.findUnique({
-      where: { id: 1 },
-    })
+    const configs = await this.db
+      .select()
+      .from(this.appConfig)
+      .where(eq(this.appConfig.id, 1))
+      .limit(1)
+
+    const existingConfig = configs[0]
 
     if (!existingConfig) {
       throw new BadRequestException('应用配置不存在')
     }
 
-    return this.appConfig.update({
-      where: { id: 1 },
-      data: updateConfigDto,
-    })
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appConfig)
+        .set(updateConfigDto)
+        .where(eq(this.appConfig.id, 1)),
+    )
+
+    return true
   }
 }

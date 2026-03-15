@@ -1,5 +1,4 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
@@ -10,6 +9,7 @@ import {
   TaskProgressDto,
   TaskService,
 } from '@libs/growth/task'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

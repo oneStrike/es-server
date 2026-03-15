@@ -221,11 +221,7 @@ export class TaskService {
    * @returns 分页结果，包含任务分配和关联任务信息
    */
   async getTaskAssignmentPage(queryDto: QueryTaskAssignmentDto) {
-    const {
-      pageIndex = 1,
-      pageSize = 20,
-      orderBy,
-    } = queryDto
+    const { pageIndex = 1, pageSize = 20, orderBy } = queryDto
 
     // 构建查询条件
     const whereClause = this.drizzle.buildWhereAnd(
@@ -352,7 +348,7 @@ export class TaskService {
   async getMyTasks(queryDto: QueryMyTaskDto, userId: number) {
     // 确保自动领取的任务都已分配
     await this.ensureAutoAssignmentsForUser(userId)
-    const { status, type, pageIndex = 1, pageSize = 20, orderBy } = queryDto
+    const { type, pageIndex = 1, pageSize = 20, orderBy } = queryDto
 
     // 构建查询条件
     const assignmentWhere = this.drizzle.buildWhereAnd(

@@ -1,4 +1,11 @@
-import { PurchasedWorkChapterItemDto, PurchasedWorkItemDto, PurchaseService, QueryPurchasedWorkChapterDto, QueryPurchasedWorkDto } from '@libs/interaction'
+import {
+  PurchasedWorkChapterItemDto,
+  PurchasedWorkItemDto,
+  PurchaseService,
+  PurchaseTargetBodyDto,
+  QueryPurchasedWorkChapterDto,
+  QueryPurchasedWorkDto,
+} from '@libs/interaction'
 
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
@@ -55,9 +62,12 @@ export class WorkPurchaseController {
     model: IdDto,
   })
   async purchaseChapter(
-    @Body() body: IdDto,
+    @Body() body: PurchaseTargetBodyDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.purchaseService.purchaseChapter(userId, body.id)
+    return this.purchaseService.purchaseChapter({
+      userId,
+      ...body,
+    })
   }
 }

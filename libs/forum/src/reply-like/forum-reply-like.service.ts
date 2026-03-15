@@ -1,10 +1,10 @@
+import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
   SceneTypeEnum,
 } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -17,23 +17,38 @@ import {
   DeleteForumReplyLikeDto,
 } from './dto/forum-reply-like.dto'
 
+/**
+ * 论坛回复点赞服务
+ * 提供回复点赞、取消点赞等功能
+ */
 @Injectable()
 export class ForumReplyLikeService extends PlatformService {
   constructor(
+    /** 操作日志服务 */
     private readonly actionLogService: ForumUserActionLogService,
+    /** 用户成长奖励服务 */
     private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {
     super()
   }
 
+  /** 回复点赞表 */
   get forumReplyLike() {
     return this.prisma.userLike
   }
 
+  /** 回复表 */
   get forumReply() {
     return this.prisma.userComment
   }
 
+  /**
+   * 点赞回复
+   *
+   * @param createForumReplyLikeDto - 点赞数据
+   * @returns 创建的点赞记录
+   * @throws BadRequestException 回复不存在或已点赞
+   */
   async likeReply(createForumReplyLikeDto: CreateForumReplyLikeDto) {
     const { replyId, userId } = createForumReplyLikeDto
 
@@ -119,6 +134,13 @@ export class ForumReplyLikeService extends PlatformService {
     return like
   }
 
+  /**
+   * 取消点赞回复
+   *
+   * @param deleteForumReplyLikeDto - 取消点赞数据
+   * @returns 删除的点赞记录
+   * @throws BadRequestException 点赞记录不存在或无权操作
+   */
   async unlikeReply(deleteForumReplyLikeDto: DeleteForumReplyLikeDto) {
     const { id, userId } = deleteForumReplyLikeDto
 
@@ -160,6 +182,13 @@ export class ForumReplyLikeService extends PlatformService {
     })
   }
 
+  /**
+   * 检查用户是否已点赞
+   *
+   * @param replyId - 回复ID
+   * @param userId - 用户ID
+   * @returns 是否已点赞
+   */
   async checkUserLiked(replyId: number, userId: number) {
     const like = await this.forumReplyLike.findUnique({
       where: {

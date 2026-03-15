@@ -1,6 +1,3 @@
-// eslint-disable-next-line no-restricted-imports -- avoid circular deps via content barrel
-import { ContentPermissionService } from '@libs/content/permission'
-import { ContentTypeEnum } from '@libs/platform/constant'
 import { PlatformService, Prisma } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -15,109 +12,104 @@ import {
   QueryDownloadedWorkDto,
   UserDownloadRecordKeyDto,
 } from './dto/download.dto'
+import { IDownloadTargetResolver } from './interfaces/download-target-resolver.interface'
 
 @Injectable()
 export class DownloadService extends PlatformService {
-  constructor(
-    private readonly contentPermissionService: ContentPermissionService,
-  ) {
+  private readonly resolvers = new Map<
+    DownloadTargetTypeEnum,
+    IDownloadTargetResolver
+  >()
+
+  constructor() {
     super()
+  }
+
+  /**
+   * 注册下载目标解析器
+   */
+  registerResolver(resolver: IDownloadTargetResolver) {
+    if (this.resolvers.has(resolver.targetType)) {
+      console.warn(
+        `Download resolver for type ${resolver.targetType} is being overwritten.`,
+      )
+    }
+    this.resolvers.set(resolver.targetType, resolver)
+  }
+
+  /**
+   * 获取指定的下载解析器
+   */
+  private getResolver(
+    targetType: DownloadTargetTypeEnum,
+  ): IDownloadTargetResolver {
+    const resolver = this.resolvers.get(targetType)
+    if (!resolver) {
+      throw new BadRequestException('不支持的下载业务类型')
+    }
+    return resolver
   }
 
   get userDownloadRecord() {
     return this.prisma.userDownloadRecord
   }
 
-  async downloadTarget(
-    dto: UserDownloadRecordKeyDto,
-    chapterPermission?: Awaited<
-      ReturnType<ContentPermissionService['resolveChapterPermission']>
-    >,
-  ) {
+  /**
+   * 执行下载逻辑
+   * @param dto 下载请求信息
+   * @returns 章节内容
+   */
+  async downloadTarget(dto: UserDownloadRecordKeyDto): Promise<string> {
     const { targetType, targetId, userId } = dto
-
-    if (
-      targetType !== DownloadTargetTypeEnum.COMIC_CHAPTER &&
-      targetType !== DownloadTargetTypeEnum.NOVEL_CHAPTER
-    ) {
-      throw new BadRequestException('不支持的下载目标类型')
-    }
-
-    await this.contentPermissionService.checkChapterDownload(
-      userId,
-      targetId,
-      chapterPermission,
-    )
+    const resolver = this.getResolver(targetType)
 
     try {
       return await this.prisma.$transaction(async (tx) => {
+        // 校验下载权限并获取内容（由各个业务方 Resolver 实现）
+        const content = await resolver.ensureDownloadable(tx, targetId)
+
+        // 记录下载记录
         await tx.userDownloadRecord.create({
-          data: dto,
+          data: {
+            targetType,
+            targetId,
+            userId,
+          },
         })
 
-        const workChapter = await tx.workChapter.update({
-          where: { id: targetId },
-          data: { downloadCount: { increment: 1 } },
-          select: { content: true },
-        })
+        // 更新各业务方下载计数
+        await resolver.applyCountDelta(tx, targetId, 1)
 
-        if (!workChapter.content) {
-          throw new BadRequestException('下载内容不存在')
-        }
-
-        return workChapter.content
+        return content
       })
     } catch (error) {
-      if (!this.isUniqueConstraintError(error)) {
-        throw error
+      // 如果已经下载过了，直接返回内容
+      if (this.isUniqueConstraintError(error)) {
+        return this.prisma.$transaction(async (tx) => {
+          return resolver.ensureDownloadable(tx, targetId)
+        })
       }
-
-      const workChapter = await this.prisma.workChapter.findUnique({
-        where: { id: targetId },
-        select: { content: true },
-      })
-
-      if (!workChapter?.content) {
-        throw new BadRequestException('下载内容不存在')
-      }
-
-      return workChapter.content
+      throw error
     }
   }
 
-  async downloadChapter(userId: number, chapterId: number) {
-    const chapterPermission =
-      await this.contentPermissionService.resolveChapterPermission(chapterId)
-
-    if (chapterPermission.workType === ContentTypeEnum.COMIC) {
-      return this.downloadTarget(
-        {
-          targetType: DownloadTargetTypeEnum.COMIC_CHAPTER,
-          targetId: chapterId,
-          userId,
-        },
-        chapterPermission,
-      )
-    }
-
-    if (chapterPermission.workType === ContentTypeEnum.NOVEL) {
-      return this.downloadTarget(
-        {
-          targetType: DownloadTargetTypeEnum.NOVEL_CHAPTER,
-          targetId: chapterId,
-          userId,
-        },
-        chapterPermission,
-      )
-    }
-
-    throw new BadRequestException('不支持的章节类型')
+  /**
+   * 下载章节（对外通用接口）
+   */
+  async downloadChapter(dto: UserDownloadRecordKeyDto) {
+    return this.downloadTarget(dto)
   }
 
+  /**
+   * 检查下载状态
+   */
   async checkDownloadStatus(dto: UserDownloadRecordKeyDto) {
     return this.userDownloadRecord.exists(dto)
   }
 
+  /**
+   * 批量检查状态
+   */
   async checkStatusBatch(
     targetType: DownloadTargetTypeEnum,
     targetIds: number[],
@@ -152,6 +144,9 @@ export class DownloadService extends PlatformService {
     return result
   }
 
+  /**
+   * 获取已下载作品列表
+   */
   async getDownloadedWorks(
     dto: QueryDownloadedWorkDto,
   ): Promise<DownloadedWorkPageDto> {
@@ -231,6 +226,9 @@ export class DownloadService extends PlatformService {
     }
   }
 
+  /**
+   * 获取已下载章节列表
+   */
   async getDownloadedWorkChapters(
     dto: QueryDownloadedWorkChapterDto,
   ): Promise<DownloadedWorkChapterPageDto> {

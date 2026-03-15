@@ -213,10 +213,10 @@ export class QueryAnnouncementDto extends IntersectionType(
 /**
  * 公告状态更新DTO
  */
-export class UpdateAnnouncementStatusDto extends PickType(BaseAnnouncementDto, [
-  'isPublished',
-  'id',
-]) {}
+export class UpdateAnnouncementStatusDto extends IntersectionType(
+  PickType(BaseAnnouncementDto, ['isPublished']),
+  IdDto,
+) {}
 
 /**
  * 分页接口返回DTO

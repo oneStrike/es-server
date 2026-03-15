@@ -1,3 +1,4 @@
+import { AddUserExperienceDto, AddUserPointsDto, BaseUserBadgeDto, ConsumeUserPointsDto, QueryUserBadgeDto, QueryUserExperienceRecordDto, QueryUserPointRecordDto } from '@libs/growth'
 import { GenderEnum, UserStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
@@ -8,7 +9,6 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
-import { AddUserExperienceDto, AddUserPointsDto, BaseUserBadgeDto, ConsumeUserPointsDto, QueryUserBadgeDto, QueryUserExperienceRecordDto, QueryUserPointRecordDto } from '@libs/growth'
 
 import {
   IntersectionType,

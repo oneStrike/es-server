@@ -11,14 +11,14 @@ import type {
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
 } from './dto/app-user.dto'
-import { UserStatusEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import {
   GrowthAssetTypeEnum,
   UserBadgeService,
   UserExperienceService,
 UserPointService
 } from '@libs/growth'
+import { UserStatusEnum } from '@libs/platform/constant'
+import { PlatformService, Prisma } from '@libs/platform/database'
 
 import {
   BadRequestException,

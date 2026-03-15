@@ -6,10 +6,12 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { PageDto } from '@libs/platform/dto'
 
-export class BaseReadingStateDto extends BaseDto {
+/**
+ * 基础阅读状态 DTO
+ */
+export class BaseReadingStateDto {
   @NumberProperty({
     description: '用户ID',
     example: 1,
@@ -51,16 +53,50 @@ export class BaseReadingStateDto extends BaseDto {
   lastReadChapterId?: number
 }
 
-export class QueryReadingHistoryDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseReadingStateDto, ['workType', 'workId', 'userId'])),
-) {}
+export class QueryReadingHistoryDto extends PageDto {
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  userId?: number
 
-export class ClearReadingHistoryDto extends PickType(QueryReadingHistoryDto, [
-  'workType',
-]) {}
+  @NumberProperty({
+    description: '作品ID',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  workId?: number
 
-export class WorkDto extends IdDto {
+  @EnumProperty({
+    description: '作品类型（1=漫画，2=小说）',
+    enum: ContentTypeEnum,
+    example: ContentTypeEnum.COMIC,
+    required: false,
+  })
+  workType?: ContentTypeEnum
+}
+
+export class ClearReadingHistoryDto {
+  @EnumProperty({
+    description: '作品类型（1=漫画，2=小说）',
+    enum: ContentTypeEnum,
+    example: ContentTypeEnum.COMIC,
+    required: false,
+  })
+  workType?: ContentTypeEnum
+}
+
+export class WorkDto {
+  @NumberProperty({
+    description: '主键id',
+    example: 1,
+    required: true,
+  })
+  id!: number
+
   @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
     example: ContentTypeEnum.COMIC,
@@ -86,7 +122,14 @@ export class WorkDto extends IdDto {
   cover!: string
 }
 
-export class WorkChapterDto extends IdDto {
+export class WorkChapterDto {
+  @NumberProperty({
+    description: '主键id',
+    example: 1,
+    required: true,
+  })
+  id!: number
+
   @StringProperty({
     description: '作品封面URL',
     example: 'https://example.com/cover.jpg',

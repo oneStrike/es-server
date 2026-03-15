@@ -1,5 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import {
   BaseUserLevelRuleDto,
   CheckUserLevelPermissionDto,
@@ -10,9 +8,17 @@ import {
   UserLevelPermissionResultDto,
   UserLevelRuleService,
 } from '@libs/growth'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
+/**
+ * 用户等级规则管理控制器
+ * 提供等级规则的创建、更新、删除、查询等管理接口
+ *
+ * @class LevelRuleController
+ */
 @Controller('/admin/user-growth/level-rules')
 @ApiTags('用户成长/等级规则管理')
 export class LevelRuleController {

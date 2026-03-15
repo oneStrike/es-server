@@ -1,4 +1,3 @@
-import { MessageOutboxService } from '@libs/message'
 import { PlatformService, UserFavorite } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { FavoritePageQueryDto } from './dto/favorite.dto'
@@ -22,10 +21,7 @@ export class FavoriteService extends PlatformService {
     IFavoriteTargetResolver
   >()
 
-  constructor(
-    private readonly favoriteGrowthService: FavoriteGrowthService,
-    private readonly messageOutboxService: MessageOutboxService,
-  ) {
+  constructor(private readonly favoriteGrowthService: FavoriteGrowthService) {
     super()
   }
 

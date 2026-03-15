@@ -1,3 +1,4 @@
+import { AppConfigService, BaseAppConfigDto } from '@libs/app-config'
 import {
   AgreementService,
   AnnouncementPageResponseDto,
@@ -9,12 +10,17 @@ import {
   QueryAnnouncementDto,
   QueryPublishedAgreementDto,
 } from '@libs/app-content'
-import { AppConfigService, BaseAppConfigDto } from '@libs/app-config'
 import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
+/**
+ * 系统模块控制器
+ * 提供APP系统配置、页面配置、公告、协议等公共信息的查询接口
+ *
+ * @class SystemController
+ */
 @ApiTags('系统模块')
 @Controller('app/system')
 export class SystemController {

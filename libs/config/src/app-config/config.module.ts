@@ -1,10 +1,13 @@
-/// 应用配置模块
-/// 提供应用基础配置的管理功能，包括配置的创建、查询、更新和删除
-/// 模块初始化时会自动创建默认配置数据
+import { DrizzleModule } from '@db/drizzle.module'
 import { Module } from '@nestjs/common'
 import { AppConfigService } from './config.service'
 
+/**
+ * 应用配置模块
+ * 提供应用基础配置的管理功能
+ */
 @Module({
+  imports: [DrizzleModule],
   controllers: [],
   providers: [AppConfigService],
   exports: [AppConfigService],

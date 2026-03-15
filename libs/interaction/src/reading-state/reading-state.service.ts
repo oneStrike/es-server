@@ -1,109 +1,88 @@
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
-import { Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { QueryReadingHistoryDto } from './dto/reading-state.dto'
+import { IReadingStateResolver } from './interfaces/reading-state-resolver.interface'
 
 @Injectable()
 export class ReadingStateService extends PlatformService {
   private readonly logger = new Logger(ReadingStateService.name)
+  private readonly resolvers = new Map<
+    ContentTypeEnum,
+    IReadingStateResolver
+  >()
+
+  constructor() {
+    super()
+  }
+
+  /**
+   * 注册阅读状态解析器
+   */
+  registerResolver(resolver: IReadingStateResolver) {
+    if (this.resolvers.has(resolver.workType)) {
+      console.warn(
+        `ReadingState resolver for type ${resolver.workType} is being overwritten.`,
+      )
+    }
+    this.resolvers.set(resolver.workType, resolver)
+  }
+
+  /**
+   * 获取指定的阅读状态解析器
+   */
+  private getResolver(
+    workType: ContentTypeEnum,
+  ): IReadingStateResolver {
+    const resolver = this.resolvers.get(workType)
+    if (!resolver) {
+      throw new BadRequestException('不支持的阅读状态业务类型')
+    }
+    return resolver
+  }
 
   get userWorkReadingState() {
     return this.prisma.userWorkReadingState
   }
 
-  get workChapter() {
-    return this.prisma.workChapter
-  }
-
-  /**
-   * 解析可继续阅读的章节
-   * 校验章节是否有效（未删除且属于目标作品）
-   * @param workId - 作品ID
-   * @param chapter - 章节信息
-   * @returns 有效的章节快照，无效则返回 undefined
-   */
-  private resolveContinueChapter(
-    workId: number,
-    chapter?: {
-      id: number
-      title: string
-      subtitle: string | null
-      sortOrder: number
-      cover: string | null
-      workId: number
-      deletedAt: Date | null
-    } | null,
-  ) {
-    // 章节不存在、已删除或不属于目标作品时，返回 undefined
-    if (!chapter || chapter.deletedAt !== null || chapter.workId !== workId) {
-      return undefined
-    }
-
-    return {
-      id: chapter.id,
-      title: chapter.title,
-      subtitle: chapter.subtitle,
-      cover: chapter.cover,
-      sortOrder: chapter.sortOrder,
-    }
-  }
-
   /**
    * 获取用户的阅读状态
-   * @param workType - 作品类型（漫画/小说）
-   * @param workId - 作品ID
-   * @param userId - 用户ID
-   * @returns 阅读状态快照，不存在则返回 null
    */
   async getReadingState(
     workType: ContentTypeEnum,
     workId: number,
     userId: number,
   ) {
-    const state = await this.userWorkReadingState.findUnique({
+    const resolver = this.getResolver(workType)
+
+    const state = await this.userWorkReadingState.findFirst({
       where: {
-        userId_workId: {
-          userId,
-          workId,
-        },
-      },
-      include: {
-        lastReadChapter: {
-          select: {
-            id: true,
-            title: true,
-            subtitle: true,
-            sortOrder: true,
-            workId: true,
-            cover: true,
-            deletedAt: true,
-          },
-        },
+        userId,
+        workId,
+        workType,
       },
     })
 
-    if (!state || state.workType !== workType) {
+    if (!state) {
       return null
     }
 
+    const continueChapter = state.lastReadChapterId
+      ? await resolver.resolveChapterSnapshot(
+          undefined,
+          workId,
+          state.lastReadChapterId,
+        )
+      : undefined
+
     return {
       lastReadAt: state.lastReadAt,
-      continueChapter: this.resolveContinueChapter(
-        workId,
-        state.lastReadChapter,
-      ),
+      continueChapter,
     }
   }
 
   /**
    * 更新阅读状态（按作品）
-   * 创建或更新用户的阅读记录
-   * @param params - 阅读状态参数
-   * @param params.userId - 用户ID
-   * @param params.workId - 作品ID
-   * @param params.workType - 作品类型
-   * @param params.lastReadChapterId - 最后阅读章节ID
-   * @param params.lastReadAt - 最后阅读时间
    */
   async touchByWork(params: {
     userId: number
@@ -119,6 +98,9 @@ export class ReadingStateService extends PlatformService {
       lastReadChapterId,
       lastReadAt = new Date(),
     } = params
+
+    // 预研：确保解析器存在
+    this.getResolver(workType)
 
     return this.userWorkReadingState.upsert({
       where: {
@@ -144,13 +126,6 @@ export class ReadingStateService extends PlatformService {
 
   /**
    * 安全地更新阅读状态（按作品）
-   * 捕获异常并记录警告日志，不影响主流程
-   * @param params - 阅读状态参数
-   * @param params.userId - 用户ID
-   * @param params.workId - 作品ID
-   * @param params.workType - 作品类型
-   * @param params.lastReadChapterId - 最后阅读章节ID
-   * @param params.lastReadAt - 最后阅读时间
    */
   async touchByWorkSafely(params: {
     userId: number
@@ -172,39 +147,32 @@ export class ReadingStateService extends PlatformService {
 
   /**
    * 更新阅读状态（按章节）
-   * 根据章节ID自动推断作品类型并更新阅读记录
-   * @param userId - 用户ID
-   * @param chapterId - 章节ID
    */
   async touchByChapter(userId: number, chapterId: number) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-      select: {
-        id: true,
-        workId: true,
-        workType: true,
-        deletedAt: true,
-      },
-    })
+    // 寻找哪个 resolver 能处理这个章节
+    let workInfo: { workId: number, workType: ContentTypeEnum } | undefined
 
-    // 章节不存在或已删除时直接返回
-    if (!chapter || chapter.deletedAt !== null) {
+    for (const resolver of this.resolvers.values()) {
+      workInfo = await resolver.resolveWorkInfoByChapter(chapterId)
+      if (workInfo) {
+        break
+      }
+    }
+
+    if (!workInfo) {
       return
     }
 
     await this.touchByWork({
       userId,
-      workId: chapter.workId,
-      workType: chapter.workType as ContentTypeEnum,
-      lastReadChapterId: chapter.id,
+      workId: workInfo.workId,
+      workType: workInfo.workType,
+      lastReadChapterId: chapterId,
     })
   }
 
   /**
    * 安全地更新阅读状态（按章节）
-   * 捕获异常并记录警告日志，不影响主流程
-   * @param userId - 用户ID
-   * @param chapterId - 章节ID
    */
   async touchByChapterSafely(userId: number, chapterId: number) {
     try {
@@ -220,85 +188,76 @@ export class ReadingStateService extends PlatformService {
 
   /**
    * 获取用户的阅读历史列表
-   * @param dto - 查询参数
-   * @returns 分页的阅读历史记录，包含作品信息和可继续阅读的章节
    */
   async getUserReadingHistory(dto: QueryReadingHistoryDto) {
     const { workType, ...otherDto } = dto
-    const page = await this.userWorkReadingState.findPagination({
+    const page = await (this.userWorkReadingState as any).findPagination({
       where: {
         ...otherDto,
         ...(workType !== undefined && { workType }),
       },
       orderBy: { lastReadAt: 'desc' },
-      include: {
-        lastReadChapter: {
-          select: {
-            id: true,
-            title: true,
-            subtitle: true,
-            sortOrder: true,
-            cover: true,
-            workId: true,
-            deletedAt: true,
-          },
-        },
-      },
-    } as any)
+    })
 
-    // 提取需要查询的作品ID列表
-    const workIds = [...new Set(page.list.map((item: any) => item.workId))]
+    // 按作品类型分组处理作品信息和章节信息
+    const list: any[] = []
+    const typeGroups = new Map<ContentTypeEnum, any[]>()
 
-    // 批量查询作品信息
-    const works = workIds.length
-      ? await this.prisma.work.findMany({
-          where: {
-            id: { in: workIds },
-            deletedAt: null,
-          },
-          select: {
-            id: true,
-            type: true,
-            name: true,
-            cover: true,
-            serialStatus: true,
-          },
+    for (const item of page.list) {
+      const type = item.workType as ContentTypeEnum
+      if (!typeGroups.has(type)) {
+        typeGroups.set(type, [])
+      }
+      typeGroups.get(type)!.push(item)
+    }
+
+    // 聚合处理各组
+    for (const [type, items] of typeGroups) {
+      const resolver = this.resolvers.get(type)
+      if (!resolver) {
+        continue
+      }
+
+      const workIds = [...new Set(items.map((i) => i.workId))]
+      const works = await resolver.resolveWorkSnapshots(workIds)
+      const workMap = new Map(works.map((w) => [w.id, w]))
+
+      for (const item of items) {
+        const work = workMap.get(item.workId)
+        if (!work) {
+          continue
+        }
+
+        const continueChapter = item.lastReadChapterId
+          ? await resolver.resolveChapterSnapshot(
+              undefined,
+              item.workId,
+              item.lastReadChapterId,
+            )
+          : undefined
+
+        list.push({
+          workId: item.workId,
+          workType: item.workType,
+          lastReadAt: item.lastReadAt,
+          lastReadChapterId: item.lastReadChapterId,
+          work,
+          continueChapter,
         })
-      : []
+      }
+    }
 
-    // 构建作品ID到作品信息的映射
-    const workMap = new Map(works.map((work) => [work.id, work]))
+    // 重新排序，因为分组处理打乱了顺序
+    list.sort((a, b) => b.lastReadAt.getTime() - a.lastReadAt.getTime())
 
     return {
       ...page,
-      list: page.list
-        .map((item: any) => {
-          const work = workMap.get(item.workId)
-          // 找不到对应作品时过滤掉该记录
-          if (!work) {
-            return null
-          }
-          const continueChapter = this.resolveContinueChapter(
-            item.workId,
-            item.lastReadChapter,
-          )
-          return {
-            workId: item.workId,
-            workType: item.workType,
-            lastReadAt: item.lastReadAt,
-            lastReadChapterId: item.lastReadChapterId,
-            work,
-            continueChapter,
-          }
-        })
-        .filter((item: any) => item !== null),
+      list,
     }
   }
 
   /**
    * 删除单条阅读历史记录
-   * @param id - 阅读记录ID
-   * @param userId - 用户ID（可选，用于权限校验）
    */
   async deleteUserReadingHistory(id: number, userId?: number) {
     await this.userWorkReadingState.delete({
@@ -311,8 +270,6 @@ export class ReadingStateService extends PlatformService {
 
   /**
    * 清空用户的阅读历史
-   * @param userId - 用户ID
-   * @param workType - 作品类型（可选，指定则只清空该类型的记录）
    */
   async clearUserReadingHistory(userId: number, workType?: ContentTypeEnum) {
     await this.userWorkReadingState.deleteMany({

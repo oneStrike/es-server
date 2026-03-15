@@ -1,32 +1,23 @@
-import {
-  InteractionTargetTypeEnum,
-  UserStatusEnum,
-} from '@libs/platform/constant'
+import { UserStatusEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { InteractionTargetAccessService } from '../interaction-target-access.service'
-import { VIEW_SUPPORTED_TARGET_TYPES } from '../interaction-target.definition'
 
+/**
+ * 浏览权限服务
+ * 校验用户浏览内容的权限
+ */
 @Injectable()
 export class BrowseLogPermissionService extends PlatformService {
-  constructor(
-    private readonly interactionTargetAccessService: InteractionTargetAccessService,
-  ) {
+  constructor() {
     super()
   }
 
-  private async ensureTargetExists(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    await this.interactionTargetAccessService.ensureTargetExists(
-      this.prisma,
-      targetType,
-      targetId,
-      { notFoundMessage: '目标不存在' },
-    )
-  }
-
+  /**
+   * 校验用户是否可以浏览内容
+   *
+   * @param userId - 用户ID
+   * @throws BadRequestException 用户不存在、已禁用或被封禁
+   */
   async ensureUserCanView(userId: number): Promise<void> {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
@@ -52,17 +43,13 @@ export class BrowseLogPermissionService extends PlatformService {
     }
   }
 
-  async ensureTargetValid(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ): Promise<void> {
-    this.ensureTargetTypeSupported(targetType)
-    await this.ensureTargetExists(targetType, targetId)
-  }
-
-  private ensureTargetTypeSupported(targetType: InteractionTargetTypeEnum) {
-    if (!VIEW_SUPPORTED_TARGET_TYPES.has(targetType)) {
-      throw new BadRequestException('不支持的浏览目标类型')
-    }
+  /**
+   * 校验用户是否可以浏览
+   *
+   * @param userId - 用户ID
+   * @throws BadRequestException 用户不存在、已禁用或被封禁
+   */
+  async ensureCanBrowse(userId: number): Promise<void> {
+    await this.ensureUserCanView(userId)
   }
 }

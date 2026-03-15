@@ -1,3 +1,4 @@
+import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/growth'
 /**
  * 用户模块 DTO 定义
  *
@@ -13,7 +14,6 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/growth'
 
 import { OmitType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseAppUserDto } from '../../auth/dto/auth.dto'

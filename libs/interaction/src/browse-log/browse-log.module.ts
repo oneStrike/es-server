@@ -7,7 +7,6 @@
  */
 import { GrowthLedgerModule } from '@libs/growth'
 import { Module } from '@nestjs/common'
-import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
 import { BrowseLogInteractionService } from './browse-log-interaction.service'
 import { BrowseLogPermissionService } from './browse-log-permission.service'
@@ -16,7 +15,6 @@ import { BrowseLogService } from './browse-log.service'
 @Module({
   imports: [GrowthLedgerModule],
   providers: [
-    InteractionTargetAccessService,
     BrowseLogService,
     BrowseLogPermissionService,
     BrowseLogInteractionService,

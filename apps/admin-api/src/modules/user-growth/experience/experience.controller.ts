@@ -1,5 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import {
   AddUserExperienceDto,
   BaseUserExperienceRuleDto,
@@ -9,9 +7,17 @@ import {
   UpdateUserExperienceRuleDto,
   UserExperienceService,
 } from '@libs/growth'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
+/**
+ * 用户经验规则管理控制器
+ * 提供经验规则的创建、更新、删除、查询等管理接口
+ *
+ * @class ExperienceController
+ */
 @Controller('/admin/user-growth/experience-rules')
 @ApiTags('用户成长/经验管理')
 export class ExperienceController {

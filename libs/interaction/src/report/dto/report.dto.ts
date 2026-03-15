@@ -1,28 +1,66 @@
 import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
-import type { ReportReasonEnum, ReportStatusEnum, ReportTargetTypeEnum } from '../report.constant'
+import {
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+import {
+  ReportReasonEnum,
+  ReportStatusEnum,
+  ReportTargetTypeEnum,
+} from '../report.constant'
+
+/**
+ * 举报目标 DTO
+ */
+class ReportTargetDto {
+  @NumberProperty({
+    description: '举报的目标id',
+    example: 1,
+    required: true,
+  })
+  targetId!: number
+
+  @EnumProperty({
+    description: '举报目标类型',
+    enum: ReportTargetTypeEnum,
+    required: true,
+  })
+  targetType!: ReportTargetTypeEnum
+}
 
 /**
  * 创建举报入参。
- *
- * 说明：
- * - 该结构表示 service 层收到的原始举报请求
- * - `sceneType` 等派生字段由目标解析器补齐，不要求调用方传入
  */
-export interface CreateReportInputDto {
-  reporterId: number
-  targetType: ReportTargetTypeEnum
-  targetId: number
-  reasonType: ReportReasonEnum
+export class CreateReportInputDto extends ReportTargetDto {
+  @NumberProperty({
+    description: '举报人ID',
+    required: true,
+  })
+  reporterId!: number
+
+  @EnumProperty({
+    description: '举报原因类型',
+    enum: ReportReasonEnum,
+    required: true,
+  })
+  reasonType!: ReportReasonEnum
+
+  @StringProperty({
+    description: '详细说明',
+    required: false,
+  })
   description?: string
+
+  @StringProperty({
+    description: '证据图片URL',
+    required: false,
+  })
   evidenceUrl?: string
 }
 
 /**
  * 创建举报记录的完整数据结构。
- *
- * 说明：
- * - 该结构表示落库前的最终数据
- * - `sceneType`、`sceneId`、`commentLevel` 均为服务内部解析结果
  */
 export interface CreateUserReportDto extends CreateReportInputDto {
   sceneType: SceneTypeEnum

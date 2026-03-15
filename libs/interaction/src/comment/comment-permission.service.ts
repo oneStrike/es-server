@@ -1,21 +1,16 @@
-import {
-  InteractionTargetTypeEnum,
-  UserStatusEnum,
-} from '@libs/platform/constant'
+import { UserStatusEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { CommentTargetTypeEnum } from './comment.constant'
 
 @Injectable()
 export class CommentPermissionService extends PlatformService {
   async ensureCanComment(
     userId: number,
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
+    _targetType: CommentTargetTypeEnum,
+    _targetId: number,
   ) {
-    await Promise.all([
-      this.ensureTargetCanComment(targetType, targetId),
-      this.ensureUserCanComment(userId),
-    ])
+    await this.ensureUserCanComment(userId)
   }
 
   async ensureUserCanComment(userId: number) {
@@ -49,79 +44,6 @@ export class CommentPermissionService extends PlatformService {
     }
 
     await this.ensureUserLevelRateLimit(userId, user.level)
-  }
-
-  async ensureTargetCanComment(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    const validators: Partial<Record<
-      InteractionTargetTypeEnum,
-      (id: number) => Promise<void>
-    >> = {
-      [InteractionTargetTypeEnum.COMIC]: async (id) => this.validateWork(id, 1),
-      [InteractionTargetTypeEnum.NOVEL]: async (id) => this.validateWork(id, 2),
-      [InteractionTargetTypeEnum.COMIC_CHAPTER]: async (id) =>
-        this.validateChapter(id, 1),
-      [InteractionTargetTypeEnum.NOVEL_CHAPTER]: async (id) =>
-        this.validateChapter(id, 2),
-      [InteractionTargetTypeEnum.FORUM_TOPIC]: async (id) =>
-        this.validateForumTopic(id),
-    }
-
-    const validator = validators[targetType]
-    if (!validator) {
-      throw new BadRequestException('不支持的目标类型')
-    }
-
-    await validator(targetId)
-  }
-
-  private async validateWork(
-    workId: number,
-    expectedType: number,
-  ): Promise<void> {
-    const work = await this.prisma.work.findUnique({
-      where: { id: workId },
-      select: { type: true, canComment: true, deletedAt: true },
-    })
-
-    this.ensureExists(work, '作品不存在')
-    this.ensureTypeMatch(work!.type, expectedType, '作品类型不匹配')
-
-    if (!work!.canComment) {
-      throw new BadRequestException('该作品不允许评论')
-    }
-  }
-
-  private async validateChapter(
-    chapterId: number,
-    expectedWorkType: number,
-  ): Promise<void> {
-    const chapter = await this.prisma.workChapter.findUnique({
-      where: { id: chapterId },
-      select: { workType: true, canComment: true, deletedAt: true },
-    })
-
-    this.ensureExists(chapter, '章节不存在')
-    this.ensureTypeMatch(chapter!.workType, expectedWorkType, '章节类型不匹配')
-
-    if (!chapter!.canComment) {
-      throw new BadRequestException('章节不允许评论')
-    }
-  }
-
-  private async validateForumTopic(topicId: number): Promise<void> {
-    const topic = await this.prisma.forumTopic.findUnique({
-      where: { id: topicId },
-      select: { isLocked: true, deletedAt: true },
-    })
-
-    this.ensureExists(topic, '帖子不存在')
-
-    if (topic!.isLocked) {
-      throw new BadRequestException('帖子已被锁定，无法评论')
-    }
   }
 
   private async ensureUserLevelRateLimit(

@@ -1,3 +1,7 @@
+import {
+  UserExperienceModule,
+  UserPointModule,
+} from '@libs/growth'
 /**
  * 用户模块
  *
@@ -9,10 +13,6 @@
  * - 用户资产统计
  */
 import { MessageModule } from '@libs/message'
-import {
-  UserExperienceModule,
-  UserPointModule,
-} from '@libs/growth'
 import { Module } from '@nestjs/common'
 import { UserController } from './user.controller'
 import { UserService } from './user.service'
