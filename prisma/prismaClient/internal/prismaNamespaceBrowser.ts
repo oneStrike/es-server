@@ -1268,6 +1268,7 @@ export const WorkScalarFieldEnum = {
   lastUpdated: 'lastUpdated',
   viewRule: 'viewRule',
   requiredViewLevelId: 'requiredViewLevelId',
+  forumSectionId: 'forumSectionId',
   chapterPrice: 'chapterPrice',
   canComment: 'canComment',
   recommendWeight: 'recommendWeight',

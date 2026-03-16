@@ -98,6 +98,10 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumModerator.id.through(r.forumModeratorSection.moderatorId),
     }),
     applications: r.many.forumModeratorApplication(),
+    work: r.one.work({
+      from: r.forumSection.id,
+      to: r.work.forumSectionId,
+    }),
   },
   forumSectionGroup: {
     sections: r.many.forumSection(),

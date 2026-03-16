@@ -313,15 +313,59 @@ const NOVEL_WORKS: IWorkData[] = [
 
 export async function createInitialWorks(prisma: any) {
   const allWorks = [...COMIC_WORKS, ...NOVEL_WORKS]
+  const sectionGroup = await prisma.forumSectionGroup.findFirst({
+    where: { name: '经验分享' },
+    select: { id: true },
+  })
 
   for (const item of allWorks) {
-    const existingWork = await prisma.work.findFirst({
+    // 先查找是否已存在
+    let section = await prisma.forumSection.findFirst({
       where: { name: item.name },
+      select: { id: true },
+    })
+
+    if (section) {
+      // 存在则更新
+      await prisma.forumSection.update({
+        where: { id: section.id },
+        data: {
+          description: item.description.slice(0, 500),
+          isEnabled: item.isPublished,
+        },
+      })
+    } else {
+      // 不存在则创建
+      section = await prisma.forumSection.create({
+        data: {
+          name: item.name,
+          description: item.description.slice(0, 500),
+          isEnabled: item.isPublished,
+          groupId: sectionGroup?.id ?? null,
+        },
+        select: { id: true },
+      })
+    }
+
+    const existingWork = await prisma.work.findFirst({
+      where: { name: item.name, type: item.type },
+      select: { id: true, forumSectionId: true },
     })
 
     if (!existingWork) {
       await prisma.work.create({
-        data: item,
+        data: {
+          ...item,
+          forumSectionId: section.id,
+        },
+      })
+      continue
+    }
+
+    if (existingWork.forumSectionId !== section.id) {
+      await prisma.work.update({
+        where: { id: existingWork.id },
+        data: { forumSectionId: section.id },
       })
     }
   }

@@ -5,13 +5,14 @@ import {
   LikeService,
   ReadingStateService,
 } from '@libs/interaction'
-import { ContentTypeEnum } from '@libs/platform/constant'
+import { AuditStatusEnum, ContentTypeEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkDto,
   QueryWorkDto,
+  QueryWorkForumTopicsDto,
   QueryWorkTypeDto,
   UpdateWorkDto,
   UpdateWorkStatusDto,
@@ -153,10 +154,19 @@ export class WorkService extends PlatformService {
 
     // 使用事务确保作品创建和作者作品数更新的一致性
     return this.prisma.$transaction(async (tx) => {
+      const createdSection = await tx.forumSection.create({
+        data: {
+          name: workData.name,
+          description: workData.description.slice(0, 500),
+          isEnabled: true,
+        },
+      })
+
       // 创建作品并关联作者、分类、标签
       const createdWork = await tx.work.create({
         data: {
           ...workData,
+          forumSectionId: createdSection.id,
           authors: {
             create: authorIds.map((authorId, index) => ({
               authorId,
@@ -246,6 +256,8 @@ export class WorkService extends PlatformService {
 
     // 获取原有关联的作者ID列表
     const originalAuthorIds = existingWork.authors.map((rel) => rel.authorId)
+    const shouldSyncSectionName =
+      isNotNil(updateData.name) && updateData.name !== existingWork.name
 
     /**
      * 事务处理：使用 $transaction 确保所有更新操作的原子性
@@ -256,6 +268,13 @@ export class WorkService extends PlatformService {
         where: { id },
         data: updateData,
       })
+
+      if (shouldSyncSectionName && existingWork.forumSectionId) {
+        await tx.forumSection.update({
+          where: { id: existingWork.forumSectionId },
+          data: { name: updateData.name },
+        })
+      }
 
       // 更新作者关联（先删除后重建）
       if (authorIds !== undefined) {
@@ -342,14 +361,32 @@ export class WorkService extends PlatformService {
    * @throws BadRequestException 当作品不存在时抛出异常
    */
   async updateStatus(body: UpdateWorkStatusDto) {
-    if (!(await this.work.exists({ id: body.id }))) {
+    const work = await this.work.findUnique({
+      where: { id: body.id },
+      select: {
+        id: true,
+        forumSectionId: true,
+      },
+    })
+    if (!work) {
       throw new BadRequestException('作品不存在')
     }
-    return this.work.update({
-      where: { id: body.id },
-      data: {
-        isPublished: body.isPublished,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const updatedWork = await tx.work.update({
+        where: { id: body.id },
+        data: {
+          isPublished: body.isPublished,
+        },
+      })
+
+      if (work.forumSectionId) {
+        await tx.forumSection.update({
+          where: { id: work.forumSectionId },
+          data: { isEnabled: body.isPublished },
+        })
+      }
+
+      return updatedWork
     })
   }
 
@@ -456,6 +493,76 @@ export class WorkService extends PlatformService {
     return this.work.findPagination({
       where: { ...where, ...otherDto },
       select: PAGE_WORK_SELECT,
+    })
+  }
+
+  async getWorkForumSection(id: number) {
+    const work = await this.work.findUnique({
+      where: { id },
+      select: {
+        forumSectionId: true,
+      },
+    })
+
+    if (!work) {
+      throw new BadRequestException('作品不存在')
+    }
+
+    if (!work.forumSectionId) {
+      throw new BadRequestException('作品未关联论坛板块')
+    }
+
+    const section = await this.prisma.forumSection.findUnique({
+      where: { id: work.forumSectionId, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        icon: true,
+        isEnabled: true,
+        topicReviewPolicy: true,
+        topicCount: true,
+        replyCount: true,
+        lastPostAt: true,
+      },
+    })
+
+    if (!section) {
+      throw new BadRequestException('论坛板块不存在')
+    }
+
+    return section
+  }
+
+  async getWorkForumTopics(query: QueryWorkForumTopicsDto) {
+    const { id, ...pageDto } = query
+    const section = await this.getWorkForumSection(id)
+
+    return this.prisma.forumTopic.findPagination({
+      where: {
+        ...pageDto,
+        sectionId: section.id,
+        deletedAt: null,
+        isHidden: false,
+        auditStatus: AuditStatusEnum.APPROVED,
+      },
+      orderBy: [{ isPinned: 'desc' }, { lastReplyAt: 'desc' }, { createdAt: 'desc' }],
+      select: {
+        id: true,
+        sectionId: true,
+        userId: true,
+        title: true,
+        isPinned: true,
+        isFeatured: true,
+        isLocked: true,
+        auditStatus: true,
+        viewCount: true,
+        replyCount: true,
+        likeCount: true,
+        favoriteCount: true,
+        lastReplyAt: true,
+        createdAt: true,
+      },
     })
   }
 
@@ -595,6 +702,16 @@ export class WorkService extends PlatformService {
         where: { id },
         data: { deletedAt: new Date() },
       })
+
+      if (work.forumSectionId) {
+        await tx.forumSection.update({
+          where: { id: work.forumSectionId },
+          data: {
+            isEnabled: false,
+            deletedAt: new Date(),
+          },
+        })
+      }
 
       // 更新关联作者的作品数量（-1）
       const authorIds = work.authors.map((rel) => rel.authorId)

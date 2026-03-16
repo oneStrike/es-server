@@ -36,6 +36,10 @@ export const workRelations = defineRelationsPart(schema, r => ({
       to: r.userLevelRule.id,
       alias: 'WorkViewLevel',
     }),
+    forumSection: r.one.forumSection({
+      from: r.work.forumSectionId,
+      to: r.forumSection.id,
+    }),
   },
   workAuthor: {
     workAuthors: r.many.workAuthorRelation(),

@@ -1,4 +1,8 @@
-import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+import {
+  AuditStatusEnum,
+  ContentTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -579,6 +583,200 @@ export class QueryWorkTypeDto extends IntersectionType(
   PageDto,
   PickType(QueryWorkDto, ['type']),
 ) {}
+
+export class WorkForumSectionDto {
+  @NumberProperty({
+    description: '板块ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '板块名称',
+    example: '作品讨论区',
+    required: true,
+    validation: false,
+  })
+  name!: string
+
+  @StringProperty({
+    description: '板块描述',
+    example: '围绕该作品的讨论',
+    required: false,
+    validation: false,
+  })
+  description?: string
+
+  @StringProperty({
+    description: '板块图标',
+    example: 'https://example.com/icon.png',
+    required: false,
+    validation: false,
+  })
+  icon?: string
+
+  @BooleanProperty({
+    description: '是否启用',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isEnabled!: boolean
+
+  @NumberProperty({
+    description: '主题审核策略',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  topicReviewPolicy!: number
+
+  @NumberProperty({
+    description: '主题数',
+    example: 20,
+    required: true,
+    validation: false,
+  })
+  topicCount!: number
+
+  @NumberProperty({
+    description: '回复数',
+    example: 100,
+    required: true,
+    validation: false,
+  })
+  replyCount!: number
+
+  @DateProperty({
+    description: '最后发帖时间',
+    example: '2026-03-16T12:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  lastPostAt?: Date
+}
+
+export class QueryWorkForumTopicsDto extends IntersectionType(
+  IdDto,
+  PickType(PageDto, ['pageIndex', 'pageSize']),
+) {}
+
+export class WorkForumTopicDto {
+  @NumberProperty({
+    description: '主题ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
+  @NumberProperty({
+    description: '板块ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  sectionId!: number
+
+  @NumberProperty({
+    description: '发帖用户ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  userId!: number
+
+  @StringProperty({
+    description: '主题标题',
+    example: '这部作品的世界观讨论',
+    required: true,
+    validation: false,
+  })
+  title!: string
+
+  @BooleanProperty({
+    description: '是否置顶',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  isPinned!: boolean
+
+  @BooleanProperty({
+    description: '是否精选',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  isFeatured!: boolean
+
+  @BooleanProperty({
+    description: '是否锁定',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  isLocked!: boolean
+
+  @EnumProperty({
+    description: '审核状态',
+    example: AuditStatusEnum.APPROVED,
+    required: true,
+    enum: AuditStatusEnum,
+    validation: false,
+  })
+  auditStatus!: AuditStatusEnum
+
+  @NumberProperty({
+    description: '浏览数',
+    example: 100,
+    required: true,
+    validation: false,
+  })
+  viewCount!: number
+
+  @NumberProperty({
+    description: '回复数',
+    example: 10,
+    required: true,
+    validation: false,
+  })
+  replyCount!: number
+
+  @NumberProperty({
+    description: '点赞数',
+    example: 10,
+    required: true,
+    validation: false,
+  })
+  likeCount!: number
+
+  @NumberProperty({
+    description: '收藏数',
+    example: 10,
+    required: true,
+    validation: false,
+  })
+  favoriteCount!: number
+
+  @DateProperty({
+    description: '最后回复时间',
+    example: '2026-03-16T12:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  lastReplyAt?: Date
+
+  @DateProperty({
+    description: '创建时间',
+    example: '2026-03-16T10:00:00.000Z',
+    required: true,
+    validation: false,
+  })
+  createdAt!: Date
+}
 
 /**
  * 作品用户状态字段DTO

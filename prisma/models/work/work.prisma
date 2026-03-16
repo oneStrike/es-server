@@ -47,6 +47,8 @@ model Work {
   viewRule            Int       @default(0) @map("view_rule") @db.SmallInt
   /// 阅读等级限制ID
   requiredViewLevelId Int?      @map("required_view_level_id")
+  /// 关联论坛板块ID
+  forumSectionId      Int?      @unique @map("forum_section_id")
   /// 章节价格
   chapterPrice        Int       @default(0) @map("chapter_price")
   /// 是否可评论
@@ -92,6 +94,8 @@ model Work {
   userReadingStates UserWorkReadingState[]
   /// 阅读等级关联
   requiredViewLevel UserLevelRule?         @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
+  /// 关联论坛板块
+  forumSection      ForumSection?          @relation(fields: [forumSectionId], references: [id], onDelete: SetNull)
 
   @@index([isPublished, publishAt])
   @@index([popularity])
@@ -104,6 +108,7 @@ model Work {
   @@index([type])
   @@index([viewRule])
   @@index([requiredViewLevelId])
+  @@index([forumSectionId])
   @@index([commentCount])
   @@map("work")
 }

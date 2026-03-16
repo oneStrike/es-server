@@ -750,7 +750,7 @@ export type $UserPurchaseRecordPayload<ExtArgs extends runtime.Types.Extensions.
      */
     id: number
     /**
-     * 目标类型 3=漫画章节, 4=小说章节
+     * 目标类型 1=漫画章节, 2=小说章节
      */
     targetType: number
     /**

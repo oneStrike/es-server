@@ -33,6 +33,7 @@ export type WorkAvgAggregateOutputType = {
   serialStatus: number | null
   viewRule: number | null
   requiredViewLevelId: number | null
+  forumSectionId: number | null
   chapterPrice: number | null
   recommendWeight: number | null
   viewCount: number | null
@@ -51,6 +52,7 @@ export type WorkSumAggregateOutputType = {
   serialStatus: number | null
   viewRule: number | null
   requiredViewLevelId: number | null
+  forumSectionId: number | null
   chapterPrice: number | null
   recommendWeight: number | null
   viewCount: number | null
@@ -87,6 +89,7 @@ export type WorkMinAggregateOutputType = {
   lastUpdated: Date | null
   viewRule: number | null
   requiredViewLevelId: number | null
+  forumSectionId: number | null
   chapterPrice: number | null
   canComment: boolean | null
   recommendWeight: number | null
@@ -127,6 +130,7 @@ export type WorkMaxAggregateOutputType = {
   lastUpdated: Date | null
   viewRule: number | null
   requiredViewLevelId: number | null
+  forumSectionId: number | null
   chapterPrice: number | null
   canComment: boolean | null
   recommendWeight: number | null
@@ -167,6 +171,7 @@ export type WorkCountAggregateOutputType = {
   lastUpdated: number
   viewRule: number
   requiredViewLevelId: number
+  forumSectionId: number
   chapterPrice: number
   canComment: number
   recommendWeight: number
@@ -191,6 +196,7 @@ export type WorkAvgAggregateInputType = {
   serialStatus?: true
   viewRule?: true
   requiredViewLevelId?: true
+  forumSectionId?: true
   chapterPrice?: true
   recommendWeight?: true
   viewCount?: true
@@ -209,6 +215,7 @@ export type WorkSumAggregateInputType = {
   serialStatus?: true
   viewRule?: true
   requiredViewLevelId?: true
+  forumSectionId?: true
   chapterPrice?: true
   recommendWeight?: true
   viewCount?: true
@@ -245,6 +252,7 @@ export type WorkMinAggregateInputType = {
   lastUpdated?: true
   viewRule?: true
   requiredViewLevelId?: true
+  forumSectionId?: true
   chapterPrice?: true
   canComment?: true
   recommendWeight?: true
@@ -285,6 +293,7 @@ export type WorkMaxAggregateInputType = {
   lastUpdated?: true
   viewRule?: true
   requiredViewLevelId?: true
+  forumSectionId?: true
   chapterPrice?: true
   canComment?: true
   recommendWeight?: true
@@ -325,6 +334,7 @@ export type WorkCountAggregateInputType = {
   lastUpdated?: true
   viewRule?: true
   requiredViewLevelId?: true
+  forumSectionId?: true
   chapterPrice?: true
   canComment?: true
   recommendWeight?: true
@@ -452,6 +462,7 @@ export type WorkGroupByOutputType = {
   lastUpdated: Date | null
   viewRule: number
   requiredViewLevelId: number | null
+  forumSectionId: number | null
   chapterPrice: number
   canComment: boolean
   recommendWeight: number
@@ -515,6 +526,7 @@ export type WorkWhereInput = {
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   viewRule?: Prisma.IntFilter<"Work"> | number
   requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  forumSectionId?: Prisma.IntNullableFilter<"Work"> | number | null
   chapterPrice?: Prisma.IntFilter<"Work"> | number
   canComment?: Prisma.BoolFilter<"Work"> | boolean
   recommendWeight?: Prisma.FloatFilter<"Work"> | number
@@ -537,6 +549,7 @@ export type WorkWhereInput = {
   chapters?: Prisma.WorkChapterListRelationFilter
   userReadingStates?: Prisma.UserWorkReadingStateListRelationFilter
   requiredViewLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
+  forumSection?: Prisma.XOR<Prisma.ForumSectionNullableScalarRelationFilter, Prisma.ForumSectionWhereInput> | null
 }
 
 export type WorkOrderByWithRelationInput = {
@@ -563,6 +576,7 @@ export type WorkOrderByWithRelationInput = {
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
   viewRule?: Prisma.SortOrder
   requiredViewLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  forumSectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   canComment?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
@@ -585,10 +599,12 @@ export type WorkOrderByWithRelationInput = {
   chapters?: Prisma.WorkChapterOrderByRelationAggregateInput
   userReadingStates?: Prisma.UserWorkReadingStateOrderByRelationAggregateInput
   requiredViewLevel?: Prisma.UserLevelRuleOrderByWithRelationInput
+  forumSection?: Prisma.ForumSectionOrderByWithRelationInput
 }
 
 export type WorkWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  forumSectionId?: number
   AND?: Prisma.WorkWhereInput | Prisma.WorkWhereInput[]
   OR?: Prisma.WorkWhereInput[]
   NOT?: Prisma.WorkWhereInput | Prisma.WorkWhereInput[]
@@ -636,7 +652,8 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   chapters?: Prisma.WorkChapterListRelationFilter
   userReadingStates?: Prisma.UserWorkReadingStateListRelationFilter
   requiredViewLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
-}, "id">
+  forumSection?: Prisma.XOR<Prisma.ForumSectionNullableScalarRelationFilter, Prisma.ForumSectionWhereInput> | null
+}, "id" | "forumSectionId">
 
 export type WorkOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -662,6 +679,7 @@ export type WorkOrderByWithAggregationInput = {
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
   viewRule?: Prisma.SortOrder
   requiredViewLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  forumSectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   canComment?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
@@ -710,6 +728,7 @@ export type WorkScalarWhereWithAggregatesInput = {
   lastUpdated?: Prisma.DateTimeNullableWithAggregatesFilter<"Work"> | Date | string | null
   viewRule?: Prisma.IntWithAggregatesFilter<"Work"> | number
   requiredViewLevelId?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
+  forumSectionId?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
   chapterPrice?: Prisma.IntWithAggregatesFilter<"Work"> | number
   canComment?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
   recommendWeight?: Prisma.FloatWithAggregatesFilter<"Work"> | number
@@ -770,6 +789,7 @@ export type WorkCreateInput = {
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateInput = {
@@ -796,6 +816,7 @@ export type WorkUncheckedCreateInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -863,6 +884,7 @@ export type WorkUpdateInput = {
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateInput = {
@@ -889,6 +911,7 @@ export type WorkUncheckedUpdateInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -936,6 +959,7 @@ export type WorkCreateManyInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -1014,6 +1038,7 @@ export type WorkUncheckedUpdateManyInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1045,6 +1070,11 @@ export type WorkScalarRelationFilter = {
   isNot?: Prisma.WorkWhereInput
 }
 
+export type WorkNullableScalarRelationFilter = {
+  is?: Prisma.WorkWhereInput | null
+  isNot?: Prisma.WorkWhereInput | null
+}
+
 export type WorkCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -1069,6 +1099,7 @@ export type WorkCountOrderByAggregateInput = {
   lastUpdated?: Prisma.SortOrder
   viewRule?: Prisma.SortOrder
   requiredViewLevelId?: Prisma.SortOrder
+  forumSectionId?: Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   canComment?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
@@ -1091,6 +1122,7 @@ export type WorkAvgOrderByAggregateInput = {
   serialStatus?: Prisma.SortOrder
   viewRule?: Prisma.SortOrder
   requiredViewLevelId?: Prisma.SortOrder
+  forumSectionId?: Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -1127,6 +1159,7 @@ export type WorkMaxOrderByAggregateInput = {
   lastUpdated?: Prisma.SortOrder
   viewRule?: Prisma.SortOrder
   requiredViewLevelId?: Prisma.SortOrder
+  forumSectionId?: Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   canComment?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
@@ -1167,6 +1200,7 @@ export type WorkMinOrderByAggregateInput = {
   lastUpdated?: Prisma.SortOrder
   viewRule?: Prisma.SortOrder
   requiredViewLevelId?: Prisma.SortOrder
+  forumSectionId?: Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   canComment?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
@@ -1189,6 +1223,7 @@ export type WorkSumOrderByAggregateInput = {
   serialStatus?: Prisma.SortOrder
   viewRule?: Prisma.SortOrder
   requiredViewLevelId?: Prisma.SortOrder
+  forumSectionId?: Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -1255,6 +1290,38 @@ export type WorkUpdateOneRequiredWithoutUserReadingStatesNestedInput = {
   upsert?: Prisma.WorkUpsertWithoutUserReadingStatesInput
   connect?: Prisma.WorkWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutUserReadingStatesInput, Prisma.WorkUpdateWithoutUserReadingStatesInput>, Prisma.WorkUncheckedUpdateWithoutUserReadingStatesInput>
+}
+
+export type WorkCreateNestedOneWithoutForumSectionInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutForumSectionInput, Prisma.WorkUncheckedCreateWithoutForumSectionInput>
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutForumSectionInput
+  connect?: Prisma.WorkWhereUniqueInput
+}
+
+export type WorkUncheckedCreateNestedOneWithoutForumSectionInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutForumSectionInput, Prisma.WorkUncheckedCreateWithoutForumSectionInput>
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutForumSectionInput
+  connect?: Prisma.WorkWhereUniqueInput
+}
+
+export type WorkUpdateOneWithoutForumSectionNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutForumSectionInput, Prisma.WorkUncheckedCreateWithoutForumSectionInput>
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutForumSectionInput
+  upsert?: Prisma.WorkUpsertWithoutForumSectionInput
+  disconnect?: Prisma.WorkWhereInput | boolean
+  delete?: Prisma.WorkWhereInput | boolean
+  connect?: Prisma.WorkWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutForumSectionInput, Prisma.WorkUpdateWithoutForumSectionInput>, Prisma.WorkUncheckedUpdateWithoutForumSectionInput>
+}
+
+export type WorkUncheckedUpdateOneWithoutForumSectionNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutForumSectionInput, Prisma.WorkUncheckedCreateWithoutForumSectionInput>
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutForumSectionInput
+  upsert?: Prisma.WorkUpsertWithoutForumSectionInput
+  disconnect?: Prisma.WorkWhereInput | boolean
+  delete?: Prisma.WorkWhereInput | boolean
+  connect?: Prisma.WorkWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutForumSectionInput, Prisma.WorkUpdateWithoutForumSectionInput>, Prisma.WorkUncheckedUpdateWithoutForumSectionInput>
 }
 
 export type WorkCreateNestedOneWithoutAuthorsInput = {
@@ -1400,6 +1467,7 @@ export type WorkCreateWithoutRequiredViewLevelInput = {
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
@@ -1425,6 +1493,7 @@ export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
   viewRule?: number
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -1501,6 +1570,7 @@ export type WorkScalarWhereInput = {
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   viewRule?: Prisma.IntFilter<"Work"> | number
   requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  forumSectionId?: Prisma.IntNullableFilter<"Work"> | number | null
   chapterPrice?: Prisma.IntFilter<"Work"> | number
   canComment?: Prisma.BoolFilter<"Work"> | boolean
   recommendWeight?: Prisma.FloatFilter<"Work"> | number
@@ -1560,6 +1630,7 @@ export type WorkCreateWithoutUserReadingStatesInput = {
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutUserReadingStatesInput = {
@@ -1586,6 +1657,7 @@ export type WorkUncheckedCreateWithoutUserReadingStatesInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -1667,9 +1739,212 @@ export type WorkUpdateWithoutUserReadingStatesInput = {
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutUserReadingStatesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comic?: Prisma.WorkComicUncheckedUpdateOneWithoutWorkNestedInput
+  novel?: Prisma.WorkNovelUncheckedUpdateOneWithoutWorkNestedInput
+  authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
+  categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
+  tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
+  chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+}
+
+export type WorkCreateWithoutForumSectionInput = {
+  type: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  remark?: string | null
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  viewRule?: number
+  chapterPrice?: number
+  canComment?: boolean
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  commentCount?: number
+  downloadCount?: number
+  rating?: number | null
+  ratingCount?: number
+  popularity?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
+  novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
+  authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
+  categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
+  tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
+  chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
+  requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+}
+
+export type WorkUncheckedCreateWithoutForumSectionInput = {
+  id?: number
+  type: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  remark?: string | null
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  chapterPrice?: number
+  canComment?: boolean
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  commentCount?: number
+  downloadCount?: number
+  rating?: number | null
+  ratingCount?: number
+  popularity?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comic?: Prisma.WorkComicUncheckedCreateNestedOneWithoutWorkInput
+  novel?: Prisma.WorkNovelUncheckedCreateNestedOneWithoutWorkInput
+  authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
+  categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
+  tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
+  chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  userReadingStates?: Prisma.UserWorkReadingStateUncheckedCreateNestedManyWithoutWorkInput
+}
+
+export type WorkCreateOrConnectWithoutForumSectionInput = {
+  where: Prisma.WorkWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkCreateWithoutForumSectionInput, Prisma.WorkUncheckedCreateWithoutForumSectionInput>
+}
+
+export type WorkUpsertWithoutForumSectionInput = {
+  update: Prisma.XOR<Prisma.WorkUpdateWithoutForumSectionInput, Prisma.WorkUncheckedUpdateWithoutForumSectionInput>
+  create: Prisma.XOR<Prisma.WorkCreateWithoutForumSectionInput, Prisma.WorkUncheckedCreateWithoutForumSectionInput>
+  where?: Prisma.WorkWhereInput
+}
+
+export type WorkUpdateToOneWithWhereWithoutForumSectionInput = {
+  where?: Prisma.WorkWhereInput
+  data: Prisma.XOR<Prisma.WorkUpdateWithoutForumSectionInput, Prisma.WorkUncheckedUpdateWithoutForumSectionInput>
+}
+
+export type WorkUpdateWithoutForumSectionInput = {
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
+  novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
+  authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
+  categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
+  tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
+  chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
+  requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+}
+
+export type WorkUncheckedUpdateWithoutForumSectionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1713,6 +1988,7 @@ export type WorkUncheckedUpdateWithoutUserReadingStatesInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  userReadingStates?: Prisma.UserWorkReadingStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateWithoutAuthorsInput = {
@@ -1758,6 +2034,7 @@ export type WorkCreateWithoutAuthorsInput = {
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutAuthorsInput = {
@@ -1784,6 +2061,7 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -1865,6 +2143,7 @@ export type WorkUpdateWithoutAuthorsInput = {
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutAuthorsInput = {
@@ -1891,6 +2170,7 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1956,6 +2236,7 @@ export type WorkCreateWithoutCategoriesInput = {
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutCategoriesInput = {
@@ -1982,6 +2263,7 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -2063,6 +2345,7 @@ export type WorkUpdateWithoutCategoriesInput = {
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutCategoriesInput = {
@@ -2089,6 +2372,7 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2154,6 +2438,7 @@ export type WorkCreateWithoutChaptersInput = {
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutChaptersInput = {
@@ -2180,6 +2465,7 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -2261,6 +2547,7 @@ export type WorkUpdateWithoutChaptersInput = {
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutChaptersInput = {
@@ -2287,6 +2574,7 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2352,6 +2640,7 @@ export type WorkCreateWithoutComicInput = {
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutComicInput = {
@@ -2378,6 +2667,7 @@ export type WorkUncheckedCreateWithoutComicInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -2459,6 +2749,7 @@ export type WorkUpdateWithoutComicInput = {
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutComicInput = {
@@ -2485,6 +2776,7 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2550,6 +2842,7 @@ export type WorkCreateWithoutNovelInput = {
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutNovelInput = {
@@ -2576,6 +2869,7 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -2657,6 +2951,7 @@ export type WorkUpdateWithoutNovelInput = {
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutNovelInput = {
@@ -2683,6 +2978,7 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2748,6 +3044,7 @@ export type WorkCreateWithoutTagsInput = {
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
   userReadingStates?: Prisma.UserWorkReadingStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+  forumSection?: Prisma.ForumSectionCreateNestedOneWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutTagsInput = {
@@ -2774,6 +3071,7 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   lastUpdated?: Date | string | null
   viewRule?: number
   requiredViewLevelId?: number | null
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -2855,6 +3153,7 @@ export type WorkUpdateWithoutTagsInput = {
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutTagsInput = {
@@ -2881,6 +3180,7 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
   requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -2926,6 +3226,7 @@ export type WorkCreateManyRequiredViewLevelInput = {
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
   viewRule?: number
+  forumSectionId?: number | null
   chapterPrice?: number
   canComment?: boolean
   recommendWeight?: number
@@ -2985,6 +3286,7 @@ export type WorkUpdateWithoutRequiredViewLevelInput = {
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
   userReadingStates?: Prisma.UserWorkReadingStateUpdateManyWithoutWorkNestedInput
+  forumSection?: Prisma.ForumSectionUpdateOneWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
@@ -3010,6 +3312,7 @@ export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -3056,6 +3359,7 @@ export type WorkUncheckedUpdateManyWithoutRequiredViewLevelInput = {
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  forumSectionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -3163,6 +3467,7 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   lastUpdated?: boolean
   viewRule?: boolean
   requiredViewLevelId?: boolean
+  forumSectionId?: boolean
   chapterPrice?: boolean
   canComment?: boolean
   recommendWeight?: boolean
@@ -3185,6 +3490,7 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   chapters?: boolean | Prisma.Work$chaptersArgs<ExtArgs>
   userReadingStates?: boolean | Prisma.Work$userReadingStatesArgs<ExtArgs>
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
+  forumSection?: boolean | Prisma.Work$forumSectionArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["work"]>
 
@@ -3212,6 +3518,7 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   lastUpdated?: boolean
   viewRule?: boolean
   requiredViewLevelId?: boolean
+  forumSectionId?: boolean
   chapterPrice?: boolean
   canComment?: boolean
   recommendWeight?: boolean
@@ -3227,6 +3534,7 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   updatedAt?: boolean
   deletedAt?: boolean
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
+  forumSection?: boolean | Prisma.Work$forumSectionArgs<ExtArgs>
 }, ExtArgs["result"]["work"]>
 
 export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -3253,6 +3561,7 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   lastUpdated?: boolean
   viewRule?: boolean
   requiredViewLevelId?: boolean
+  forumSectionId?: boolean
   chapterPrice?: boolean
   canComment?: boolean
   recommendWeight?: boolean
@@ -3268,6 +3577,7 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   updatedAt?: boolean
   deletedAt?: boolean
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
+  forumSection?: boolean | Prisma.Work$forumSectionArgs<ExtArgs>
 }, ExtArgs["result"]["work"]>
 
 export type WorkSelectScalar = {
@@ -3294,6 +3604,7 @@ export type WorkSelectScalar = {
   lastUpdated?: boolean
   viewRule?: boolean
   requiredViewLevelId?: boolean
+  forumSectionId?: boolean
   chapterPrice?: boolean
   canComment?: boolean
   recommendWeight?: boolean
@@ -3310,7 +3621,7 @@ export type WorkSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "remark" | "isPublished" | "isRecommended" | "isHot" | "isNew" | "publishAt" | "lastUpdated" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "canComment" | "recommendWeight" | "viewCount" | "favoriteCount" | "likeCount" | "commentCount" | "downloadCount" | "rating" | "ratingCount" | "popularity" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
+export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "remark" | "isPublished" | "isRecommended" | "isHot" | "isNew" | "publishAt" | "lastUpdated" | "viewRule" | "requiredViewLevelId" | "forumSectionId" | "chapterPrice" | "canComment" | "recommendWeight" | "viewCount" | "favoriteCount" | "likeCount" | "commentCount" | "downloadCount" | "rating" | "ratingCount" | "popularity" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
 export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.Work$comicArgs<ExtArgs>
   novel?: boolean | Prisma.Work$novelArgs<ExtArgs>
@@ -3320,13 +3631,16 @@ export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   chapters?: boolean | Prisma.Work$chaptersArgs<ExtArgs>
   userReadingStates?: boolean | Prisma.Work$userReadingStatesArgs<ExtArgs>
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
+  forumSection?: boolean | Prisma.Work$forumSectionArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
+  forumSection?: boolean | Prisma.Work$forumSectionArgs<ExtArgs>
 }
 export type WorkIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
+  forumSection?: boolean | Prisma.Work$forumSectionArgs<ExtArgs>
 }
 
 export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3364,6 +3678,10 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 阅读等级关联
      */
     requiredViewLevel: Prisma.$UserLevelRulePayload<ExtArgs> | null
+    /**
+     * 关联论坛板块
+     */
+    forumSection: Prisma.$ForumSectionPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -3458,6 +3776,10 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 阅读等级限制ID
      */
     requiredViewLevelId: number | null
+    /**
+     * 关联论坛板块ID
+     */
+    forumSectionId: number | null
     /**
      * 章节价格
      */
@@ -3916,6 +4238,7 @@ export interface Prisma__WorkClient<T, Null = never, ExtArgs extends runtime.Typ
   chapters<T extends Prisma.Work$chaptersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$chaptersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userReadingStates<T extends Prisma.Work$userReadingStatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$userReadingStatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserWorkReadingStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   requiredViewLevel<T extends Prisma.Work$requiredViewLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$requiredViewLevelArgs<ExtArgs>>): Prisma.Prisma__UserLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$UserLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  forumSection<T extends Prisma.Work$forumSectionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$forumSectionArgs<ExtArgs>>): Prisma.Prisma__ForumSectionClient<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3968,6 +4291,7 @@ export interface WorkFieldRefs {
   readonly lastUpdated: Prisma.FieldRef<"Work", 'DateTime'>
   readonly viewRule: Prisma.FieldRef<"Work", 'Int'>
   readonly requiredViewLevelId: Prisma.FieldRef<"Work", 'Int'>
+  readonly forumSectionId: Prisma.FieldRef<"Work", 'Int'>
   readonly chapterPrice: Prisma.FieldRef<"Work", 'Int'>
   readonly canComment: Prisma.FieldRef<"Work", 'Boolean'>
   readonly recommendWeight: Prisma.FieldRef<"Work", 'Float'>
@@ -4561,6 +4885,25 @@ export type Work$requiredViewLevelArgs<ExtArgs extends runtime.Types.Extensions.
    */
   include?: Prisma.UserLevelRuleInclude<ExtArgs> | null
   where?: Prisma.UserLevelRuleWhereInput
+}
+
+/**
+ * Work.forumSection
+ */
+export type Work$forumSectionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumSection
+   */
+  select?: Prisma.ForumSectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumSection
+   */
+  omit?: Prisma.ForumSectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumSectionInclude<ExtArgs> | null
+  where?: Prisma.ForumSectionWhereInput
 }
 
 /**

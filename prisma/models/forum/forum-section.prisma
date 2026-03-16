@@ -11,7 +11,7 @@ model ForumSection {
   lastTopicId     Int? @map("last_topic_id")
 
   /// 板块名称
-  name        String  @db.VarChar(50)
+  name        String  @db.VarChar(100)
   /// 板块描述
   description String? @db.VarChar(500)
   /// 板块图标URL
@@ -53,6 +53,8 @@ model ForumSection {
   moderatorSections ForumModeratorSection[]
   /// 版主申请关联
   applications      ForumModeratorApplication[]
+  /// 关联作品
+  work              Work?
 
   /// 分组索引
   @@index([groupId])

@@ -18,6 +18,7 @@ import {
   createInitialForumSections,
   createInitialForumSensitiveWords,
   createInitialForumTags,
+  createInitialForumTopics,
 } from './modules/forum'
 import {
   createInitialInteractionData,
@@ -83,6 +84,7 @@ async function runSeeds() {
   await createInitialAppAnnouncement(prisma)
   await createInitialAppUser(prisma)
   await createInitialForumProfile(prisma)
+  await createInitialForumTopics(prisma)
 
   console.log('✅ 核心业务数据初始化完成')
 

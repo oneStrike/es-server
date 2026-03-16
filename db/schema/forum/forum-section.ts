@@ -27,7 +27,7 @@ export const forumSection = pgTable("forum_section", {
   /**
    * 板块名称
    */
-  name: varchar({ length: 50 }).notNull(),
+  name: varchar({ length: 100 }).notNull(),
   /**
    * 板块描述
    */

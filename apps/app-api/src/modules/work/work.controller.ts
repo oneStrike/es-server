@@ -1,8 +1,11 @@
 import {
   PageWorkDto,
   QueryWorkDto,
+  QueryWorkForumTopicsDto,
   QueryWorkTypeDto,
   WorkDetailDto,
+  WorkForumSectionDto,
+  WorkForumTopicDto,
   WorkService,
 } from '@libs/content'
 import {
@@ -81,5 +84,25 @@ export class WorkController {
       device: meta.deviceId,
       userAgent,
     })
+  }
+
+  @Get('forum-section')
+  @Public()
+  @ApiDoc({
+    summary: '查询作品关联板块详情',
+    model: WorkForumSectionDto,
+  })
+  async getWorkForumSection(@Query() query: IdDto) {
+    return this.workService.getWorkForumSection(query.id)
+  }
+
+  @Get('forum-topics')
+  @Public()
+  @ApiPageDoc({
+    summary: '分页查询作品板块主题',
+    model: WorkForumTopicDto,
+  })
+  async getWorkForumTopics(@Query() query: QueryWorkForumTopicsDto) {
+    return this.workService.getWorkForumTopics(query)
   }
 }

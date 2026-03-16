@@ -346,6 +346,7 @@ export type ForumSectionWhereInput = {
   topics?: Prisma.ForumTopicListRelationFilter
   moderatorSections?: Prisma.ForumModeratorSectionListRelationFilter
   applications?: Prisma.ForumModeratorApplicationListRelationFilter
+  work?: Prisma.XOR<Prisma.WorkNullableScalarRelationFilter, Prisma.WorkWhereInput> | null
 }
 
 export type ForumSectionOrderByWithRelationInput = {
@@ -372,6 +373,7 @@ export type ForumSectionOrderByWithRelationInput = {
   topics?: Prisma.ForumTopicOrderByRelationAggregateInput
   moderatorSections?: Prisma.ForumModeratorSectionOrderByRelationAggregateInput
   applications?: Prisma.ForumModeratorApplicationOrderByRelationAggregateInput
+  work?: Prisma.WorkOrderByWithRelationInput
 }
 
 export type ForumSectionWhereUniqueInput = Prisma.AtLeast<{
@@ -401,6 +403,7 @@ export type ForumSectionWhereUniqueInput = Prisma.AtLeast<{
   topics?: Prisma.ForumTopicListRelationFilter
   moderatorSections?: Prisma.ForumModeratorSectionListRelationFilter
   applications?: Prisma.ForumModeratorApplicationListRelationFilter
+  work?: Prisma.XOR<Prisma.WorkNullableScalarRelationFilter, Prisma.WorkWhereInput> | null
 }, "id">
 
 export type ForumSectionOrderByWithAggregationInput = {
@@ -471,6 +474,7 @@ export type ForumSectionCreateInput = {
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUncheckedCreateInput = {
@@ -494,6 +498,7 @@ export type ForumSectionUncheckedCreateInput = {
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkUncheckedCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUpdateInput = {
@@ -516,6 +521,7 @@ export type ForumSectionUpdateInput = {
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateInput = {
@@ -539,6 +545,7 @@ export type ForumSectionUncheckedUpdateInput = {
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUncheckedUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionCreateManyInput = {
@@ -692,6 +699,11 @@ export type ForumSectionSumOrderByAggregateInput = {
   topicReviewPolicy?: Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
+}
+
+export type ForumSectionNullableScalarRelationFilter = {
+  is?: Prisma.ForumSectionWhereInput | null
+  isNot?: Prisma.ForumSectionWhereInput | null
 }
 
 export type ForumSectionCreateNestedManyWithoutUserLevelRuleInput = {
@@ -862,6 +874,22 @@ export type ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput = {
   deleteMany?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
 }
 
+export type ForumSectionCreateNestedOneWithoutWorkInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutWorkInput, Prisma.ForumSectionUncheckedCreateWithoutWorkInput>
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutWorkInput
+  connect?: Prisma.ForumSectionWhereUniqueInput
+}
+
+export type ForumSectionUpdateOneWithoutWorkNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutWorkInput, Prisma.ForumSectionUncheckedCreateWithoutWorkInput>
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutWorkInput
+  upsert?: Prisma.ForumSectionUpsertWithoutWorkInput
+  disconnect?: Prisma.ForumSectionWhereInput | boolean
+  delete?: Prisma.ForumSectionWhereInput | boolean
+  connect?: Prisma.ForumSectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumSectionUpdateToOneWithWhereWithoutWorkInput, Prisma.ForumSectionUpdateWithoutWorkInput>, Prisma.ForumSectionUncheckedUpdateWithoutWorkInput>
+}
+
 export type ForumSectionCreateWithoutUserLevelRuleInput = {
   name: string
   description?: string | null
@@ -881,6 +909,7 @@ export type ForumSectionCreateWithoutUserLevelRuleInput = {
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutUserLevelRuleInput = {
@@ -903,6 +932,7 @@ export type ForumSectionUncheckedCreateWithoutUserLevelRuleInput = {
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkUncheckedCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionCreateOrConnectWithoutUserLevelRuleInput = {
@@ -973,6 +1003,7 @@ export type ForumSectionCreateWithoutApplicationsInput = {
   lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutApplicationsInput = {
@@ -995,6 +1026,7 @@ export type ForumSectionUncheckedCreateWithoutApplicationsInput = {
   deletedAt?: Date | string | null
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkUncheckedCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionCreateOrConnectWithoutApplicationsInput = {
@@ -1032,6 +1064,7 @@ export type ForumSectionUpdateWithoutApplicationsInput = {
   lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutApplicationsInput = {
@@ -1054,6 +1087,7 @@ export type ForumSectionUncheckedUpdateWithoutApplicationsInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUncheckedUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionCreateWithoutModeratorSectionsInput = {
@@ -1075,6 +1109,7 @@ export type ForumSectionCreateWithoutModeratorSectionsInput = {
   lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutModeratorSectionsInput = {
@@ -1097,6 +1132,7 @@ export type ForumSectionUncheckedCreateWithoutModeratorSectionsInput = {
   deletedAt?: Date | string | null
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkUncheckedCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionCreateOrConnectWithoutModeratorSectionsInput = {
@@ -1134,6 +1170,7 @@ export type ForumSectionUpdateWithoutModeratorSectionsInput = {
   lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutModeratorSectionsInput = {
@@ -1156,6 +1193,7 @@ export type ForumSectionUncheckedUpdateWithoutModeratorSectionsInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUncheckedUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionCreateWithoutGroupInput = {
@@ -1177,6 +1215,7 @@ export type ForumSectionCreateWithoutGroupInput = {
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutGroupInput = {
@@ -1199,6 +1238,7 @@ export type ForumSectionUncheckedCreateWithoutGroupInput = {
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkUncheckedCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionCreateOrConnectWithoutGroupInput = {
@@ -1246,6 +1286,7 @@ export type ForumSectionCreateWithoutTopicsInput = {
   lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutTopicsInput = {
@@ -1268,6 +1309,7 @@ export type ForumSectionUncheckedCreateWithoutTopicsInput = {
   deletedAt?: Date | string | null
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkUncheckedCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionCreateOrConnectWithoutTopicsInput = {
@@ -1294,6 +1336,7 @@ export type ForumSectionCreateWithoutLastTopicInput = {
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutLastTopicInput = {
@@ -1316,6 +1359,7 @@ export type ForumSectionUncheckedCreateWithoutLastTopicInput = {
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutSectionInput
+  work?: Prisma.WorkUncheckedCreateNestedOneWithoutForumSectionInput
 }
 
 export type ForumSectionCreateOrConnectWithoutLastTopicInput = {
@@ -1358,6 +1402,7 @@ export type ForumSectionUpdateWithoutTopicsInput = {
   lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutTopicsInput = {
@@ -1380,6 +1425,7 @@ export type ForumSectionUncheckedUpdateWithoutTopicsInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUncheckedUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUpsertWithWhereUniqueWithoutLastTopicInput = {
@@ -1396,6 +1442,112 @@ export type ForumSectionUpdateWithWhereUniqueWithoutLastTopicInput = {
 export type ForumSectionUpdateManyWithWhereWithoutLastTopicInput = {
   where: Prisma.ForumSectionScalarWhereInput
   data: Prisma.XOR<Prisma.ForumSectionUpdateManyMutationInput, Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicInput>
+}
+
+export type ForumSectionCreateWithoutWorkInput = {
+  name: string
+  description?: string | null
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  remark?: string | null
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  group?: Prisma.ForumSectionGroupCreateNestedOneWithoutSectionsInput
+  userLevelRule?: Prisma.UserLevelRuleCreateNestedOneWithoutSectionsInput
+  lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
+  topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
+  moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
+  applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionUncheckedCreateWithoutWorkInput = {
+  id?: number
+  groupId?: number | null
+  userLevelRuleId?: number | null
+  lastTopicId?: number | null
+  name: string
+  description?: string | null
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  remark?: string | null
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionCreateOrConnectWithoutWorkInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutWorkInput, Prisma.ForumSectionUncheckedCreateWithoutWorkInput>
+}
+
+export type ForumSectionUpsertWithoutWorkInput = {
+  update: Prisma.XOR<Prisma.ForumSectionUpdateWithoutWorkInput, Prisma.ForumSectionUncheckedUpdateWithoutWorkInput>
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutWorkInput, Prisma.ForumSectionUncheckedCreateWithoutWorkInput>
+  where?: Prisma.ForumSectionWhereInput
+}
+
+export type ForumSectionUpdateToOneWithWhereWithoutWorkInput = {
+  where?: Prisma.ForumSectionWhereInput
+  data: Prisma.XOR<Prisma.ForumSectionUpdateWithoutWorkInput, Prisma.ForumSectionUncheckedUpdateWithoutWorkInput>
+}
+
+export type ForumSectionUpdateWithoutWorkInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  group?: Prisma.ForumSectionGroupUpdateOneWithoutSectionsNestedInput
+  userLevelRule?: Prisma.UserLevelRuleUpdateOneWithoutSectionsNestedInput
+  lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
+  topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
+  moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
+  applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionUncheckedUpdateWithoutWorkInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  groupId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 export type ForumSectionCreateManyUserLevelRuleInput = {
@@ -1436,6 +1588,7 @@ export type ForumSectionUpdateWithoutUserLevelRuleInput = {
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutUserLevelRuleInput = {
@@ -1458,6 +1611,7 @@ export type ForumSectionUncheckedUpdateWithoutUserLevelRuleInput = {
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUncheckedUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateManyWithoutUserLevelRuleInput = {
@@ -1517,6 +1671,7 @@ export type ForumSectionUpdateWithoutGroupInput = {
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutGroupInput = {
@@ -1539,6 +1694,7 @@ export type ForumSectionUncheckedUpdateWithoutGroupInput = {
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUncheckedUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateManyWithoutGroupInput = {
@@ -1598,6 +1754,7 @@ export type ForumSectionUpdateWithoutLastTopicInput = {
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutLastTopicInput = {
@@ -1620,6 +1777,7 @@ export type ForumSectionUncheckedUpdateWithoutLastTopicInput = {
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInput
+  work?: Prisma.WorkUncheckedUpdateOneWithoutForumSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateManyWithoutLastTopicInput = {
@@ -1714,6 +1872,7 @@ export type ForumSectionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   topics?: boolean | Prisma.ForumSection$topicsArgs<ExtArgs>
   moderatorSections?: boolean | Prisma.ForumSection$moderatorSectionsArgs<ExtArgs>
   applications?: boolean | Prisma.ForumSection$applicationsArgs<ExtArgs>
+  work?: boolean | Prisma.ForumSection$workArgs<ExtArgs>
   _count?: boolean | Prisma.ForumSectionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumSection"]>
 
@@ -1791,6 +1950,7 @@ export type ForumSectionInclude<ExtArgs extends runtime.Types.Extensions.Interna
   topics?: boolean | Prisma.ForumSection$topicsArgs<ExtArgs>
   moderatorSections?: boolean | Prisma.ForumSection$moderatorSectionsArgs<ExtArgs>
   applications?: boolean | Prisma.ForumSection$applicationsArgs<ExtArgs>
+  work?: boolean | Prisma.ForumSection$workArgs<ExtArgs>
   _count?: boolean | Prisma.ForumSectionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ForumSectionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1831,6 +1991,10 @@ export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 版主申请关联
      */
     applications: Prisma.$ForumModeratorApplicationPayload<ExtArgs>[]
+    /**
+     * 关联作品
+     */
+    work: Prisma.$WorkPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -2301,6 +2465,7 @@ export interface Prisma__ForumSectionClient<T, Null = never, ExtArgs extends run
   topics<T extends Prisma.ForumSection$topicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$topicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   moderatorSections<T extends Prisma.ForumSection$moderatorSectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$moderatorSectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumModeratorSectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   applications<T extends Prisma.ForumSection$applicationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$applicationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumModeratorApplicationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  work<T extends Prisma.ForumSection$workArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$workArgs<ExtArgs>>): Prisma.Prisma__WorkClient<runtime.Types.Result.GetResult<Prisma.$WorkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2878,6 +3043,25 @@ export type ForumSection$applicationsArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.ForumModeratorApplicationScalarFieldEnum | Prisma.ForumModeratorApplicationScalarFieldEnum[]
+}
+
+/**
+ * ForumSection.work
+ */
+export type ForumSection$workArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Work
+   */
+  select?: Prisma.WorkSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Work
+   */
+  omit?: Prisma.WorkOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkInclude<ExtArgs> | null
+  where?: Prisma.WorkWhereInput
 }
 
 /**
