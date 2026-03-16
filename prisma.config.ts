@@ -7,10 +7,12 @@ import { defineConfig } from 'prisma/config'
 let DATABASE_URL = process.env.DATABASE_URL
 
 if (process.env.NODE_ENV !== 'development') {
-  // 使用 node:util 的 parseEnv 解析环境变量
-  const envPath = path.join(process.cwd(), '.env')
-  const envContent = fs.readFileSync(envPath, 'utf-8')
-  DATABASE_URL = parseEnv(envContent).DATABASE_URL
+  try {
+    // 使用 node:util 的 parseEnv 解析环境变量
+    const envPath = path.join(process.cwd(), '.env')
+    const envContent = fs.readFileSync(envPath, 'utf-8')
+    DATABASE_URL = parseEnv(envContent).DATABASE_URL
+  } catch {}
 }
 
 export default defineConfig({
