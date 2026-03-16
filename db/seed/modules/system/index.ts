@@ -1,0 +1,1 @@
+export { seedDictionaries } from './dictionary'

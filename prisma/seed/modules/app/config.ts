@@ -1,6 +1,7 @@
 export async function createInitialAppConfig(prisma: any) {
   const existingConfig = await prisma.appConfig.findFirst()
 
+  // 尝试获取测试用户（如果用户尚未创建，updatedById 将为 null）
   const testUser = await prisma.appUser.findFirst({
     where: { phone: '13800138000' },
   })
@@ -16,7 +17,7 @@ export async function createInitialAppConfig(prisma: any) {
     enableMaintenanceMode: false,
     maintenanceMessage: '系统维护中，请稍后再来',
     version: '1.0.0',
-    updatedById: testUser?.id,
+    updatedById: testUser?.id ?? null,
   }
 
   let appConfig

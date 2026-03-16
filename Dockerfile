@@ -29,6 +29,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 # 复制源代码
 COPY libs libs
+COPY db db
 COPY prisma prisma
 
 # 参数化应用类型

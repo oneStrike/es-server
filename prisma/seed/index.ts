@@ -47,16 +47,17 @@ const prisma = makePrismaClient(connectUrl)
 async function runSeeds() {
   console.log('🌱 开始初始化种子数据...')
 
+  // ========== 第一阶段：基础配置数据（无依赖） ==========
+  console.log('📦 第一阶段：基础配置数据')
+
   await Promise.all([
     createInitialAdminAccount(prisma),
     createInitialDataDictionary(prisma),
     createInitialWorkCategory(prisma),
     createInitialWorkTag(prisma),
-    createInitialAppConfig(prisma),
     createInitialAppPage(prisma),
     createInitialForumConfig(prisma),
     createInitialForumSectionGroups(prisma),
-    createInitialForumSections(prisma),
     createInitialForumTags(prisma),
     createInitialForumBadges(prisma),
     createInitialForumPointRules(prisma),
@@ -69,26 +70,51 @@ async function runSeeds() {
 
   console.log('✅ 基础配置数据初始化完成')
 
+  // ========== 第二阶段：业务基础数据 ==========
+  console.log('📦 第二阶段：业务基础数据')
+
+  // 论坛板块需要在作品之前创建（因为作品依赖论坛板块）
+  await createInitialForumSections(prisma)
   await createInitialAuthors(prisma)
+
+  console.log('✅ 业务基础数据初始化完成')
+
+  // ========== 第三阶段：核心业务数据 ==========
+  console.log('📦 第三阶段：核心业务数据')
+
+  // 创建作品（会自动创建关联的论坛板块）
   await createInitialWorks(prisma)
   await createInitialWorkComics(prisma)
   await createInitialWorkNovels(prisma)
 
   console.log('✅ 核心业务数据初始化完成')
 
+  // ========== 第四阶段：用户相关数据 ==========
+  console.log('📦 第四阶段：用户相关数据')
+
+  // 先创建用户，因为 appConfig 依赖用户
+  await createInitialAppUser(prisma)
+  await createInitialAppConfig(prisma)
+  await createInitialAppAnnouncement(prisma)
+  await createInitialForumProfile(prisma)
+
+  console.log('✅ 用户相关数据初始化完成')
+
+  // ========== 第五阶段：关联数据和内容数据 ==========
+  console.log('📦 第五阶段：关联数据和内容数据')
+
   await createInitialWorkAuthorRelations(prisma)
   await createInitialWorkCategoryRelations(prisma)
   await createInitialWorkTagRelations(prisma)
   await createInitialWorkChapters(prisma)
   await createInitialWorkComments(prisma)
-  await createInitialAppAnnouncement(prisma)
-  await createInitialAppUser(prisma)
-  await createInitialForumProfile(prisma)
   await createInitialForumTopics(prisma)
 
-  console.log('✅ 核心业务数据初始化完成')
+  console.log('✅ 关联数据和内容数据初始化完成')
 
-  // 初始化交互模块数据
+  // ========== 第六阶段：交互模块数据 ==========
+  console.log('📦 第六阶段：交互模块数据')
+
   await createInitialInteractionData(prisma)
 
   console.log('🎉 所有种子数据初始化完成！')
