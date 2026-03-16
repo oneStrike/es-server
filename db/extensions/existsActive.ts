@@ -4,7 +4,7 @@ import type {
   SQL,
   SQLWrapper,
   TableConfig,
-} from '../drizzle.type'
+} from '../core/drizzle.type'
 import { and, isNull } from 'drizzle-orm'
 
 /**
@@ -41,4 +41,3 @@ export async function existsActive(
     .limit(1)
   return result.length > 0
 }
-

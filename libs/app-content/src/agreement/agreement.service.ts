@@ -1,11 +1,11 @@
-import { DrizzleService } from '@db/drizzle.service'
+import { DrizzleService } from '@db/core/drizzle.service'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { asc, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import {
   CreateAgreementDto,
   QueryAgreementDto,
@@ -20,7 +20,7 @@ import {
  */
 @Injectable()
 export class AgreementService {
-  constructor(private readonly drizzle: DrizzleService) { }
+  constructor(private readonly drizzle: DrizzleService) {}
 
   /** 数据库连接实例 */
   private get db() {
@@ -144,30 +144,19 @@ export class AgreementService {
    * @returns 分页结果
    */
   async findPage(query: QueryAgreementDto) {
-    const conditions = this.drizzle.buildWhereAnd(
-      this.agreement,
-      query,
-      {
-        like: ['title'],
-        eq: ['isPublished', 'showInAuth'],
-        between: [['createdAt', 'startDate', 'endDate']],
+    const conditions = this.drizzle.buildWhere(this.agreement, {
+      and: {
+        title: { like: query.title },
+        isPublished: query.isPublished,
+        showInAuth: query.showInAuth,
       },
-    )
+    })
 
-    const pageIndex = query.pageIndex || 0
-    const pageSize = query.pageSize || 15
-
-    const [data, total] = await Promise.all([
-      this.db.select().from(this.agreement).where(conditions).offset(pageIndex * pageSize).limit(pageSize).orderBy(asc(this.agreement.id)), // ✅ 同一个条件
-      this.db.$count(this.agreement, conditions), // ✅ 同一个条件
-    ])
-
-    return {
-      list: data,
-      total,
-      pageIndex: query.pageIndex || 1,
-      pageSize: query.pageSize || 15,
-    }
+    return this.drizzle.ext.findPagination(this.agreement, {
+      where: conditions,
+      omit: ['content'],
+      ...query,
+    })
   }
 
   /**

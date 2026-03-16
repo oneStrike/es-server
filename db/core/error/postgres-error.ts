@@ -58,7 +58,6 @@ export function getPostgresError(error: unknown): PostgresError | null {
 
   const err = error as Record<string, unknown>
 
-  // 情况1: code 直接在 error 上
   if ('code' in err && typeof err.code === 'string') {
     return {
       code: err.code,
@@ -70,7 +69,6 @@ export function getPostgresError(error: unknown): PostgresError | null {
     }
   }
 
-  // 情况2: code 在 error.cause 上
   if ('cause' in err && typeof err.cause === 'object' && err.cause !== null) {
     const cause = err.cause as Record<string, unknown>
     if ('code' in cause && typeof cause.code === 'string') {
@@ -88,7 +86,6 @@ export function getPostgresError(error: unknown): PostgresError | null {
   return null
 }
 
-/** 检查是否为 PostgreSQL 错误 */
 export function isPostgresError(error: unknown): error is PostgresError {
   return getPostgresError(error) !== null
 }

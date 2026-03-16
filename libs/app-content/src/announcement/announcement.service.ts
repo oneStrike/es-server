@@ -1,9 +1,8 @@
-import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/drizzle.service'
+import { DrizzleService } from '@db/core/drizzle.service'
 import { IdDto } from '@libs/platform/dto'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import {
   CreateAnnouncementDto,
   QueryAnnouncementDto,
@@ -83,58 +82,36 @@ export class AppAnnouncementService {
       ...pageParams
     } = queryAnnouncementDto
 
-    const conditions: SQL[] = []
-
-    // 标题模糊查询
-    if (title) {
-      conditions.push(ilike(this.appAnnouncement.title, `%${title}%`))
-    }
-
-    // 发布开始时间 <= 查询时间
-    if (publishStartTime) {
-      conditions.push(
-        lte(this.appAnnouncement.publishStartTime, publishStartTime),
-      )
-    }
-
-    // 发布结束时间 >= 查询时间
-    if (publishEndTime) {
-      conditions.push(gte(this.appAnnouncement.publishEndTime, publishEndTime))
-    }
-
-    // 平台筛选
+    let platforms: number[] | undefined
     if (enablePlatform && enablePlatform !== '[]') {
-      const platforms = JSON.parse(enablePlatform).map((item: string) =>
+      const parsed = JSON.parse(enablePlatform).map((item: string) =>
         Number(item),
       )
-      if (platforms.length > 0) {
-        conditions.push(inArray(this.appAnnouncement.enablePlatform, platforms))
+      if (parsed.length > 0) {
+        platforms = parsed
       }
     }
 
-    // 使用 buildWhereAnd 处理其他条件
-    const otherConditions = this.drizzle.buildWhereAnd(
+    const where = this.drizzle.buildWhere(
       this.appAnnouncement,
-      queryAnnouncementDto,
       {
-        eq: [
-          'announcementType',
-          'priorityLevel',
-          'isPublished',
-          'isPinned',
-          'showAsPopup',
-          'pageId',
-        ],
+        and: {
+          title: { like: title },
+          publishStartTime: { lte: publishStartTime },
+          publishEndTime: { gte: publishEndTime },
+          enablePlatform: { in: platforms },
+          announcementType: queryAnnouncementDto.announcementType,
+          priorityLevel: queryAnnouncementDto.priorityLevel,
+          isPublished: queryAnnouncementDto.isPublished,
+          isPinned: queryAnnouncementDto.isPinned,
+          showAsPopup: queryAnnouncementDto.showAsPopup,
+          pageId: queryAnnouncementDto.pageId,
+        },
       },
     )
 
-    // 合并条件
-    const allConditions = otherConditions
-      ? [...conditions, otherConditions]
-      : conditions
-
     return this.drizzle.ext.findPagination(this.appAnnouncement, {
-      where: allConditions.length > 0 ? and(...allConditions) : undefined,
+      where,
       ...pageParams,
     })
   }

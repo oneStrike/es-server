@@ -1,4 +1,4 @@
-import { DrizzleModule } from '@db/drizzle.module'
+import { DrizzleModule } from '@db/core/drizzle.module'
 import { CryptoModule } from '@libs/platform/modules'
 import { SMS_CONFIG_PROVIDER } from '@libs/platform/modules/sms'
 import { Module } from '@nestjs/common'

@@ -1,4 +1,4 @@
-import { DrizzleModule } from '@db/drizzle.module'
+import { DrizzleModule } from '@db/core/drizzle.module'
 import { Module } from '@nestjs/common'
 import { AgreementService } from './agreement.service'
 

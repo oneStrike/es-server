@@ -1,4 +1,4 @@
-import type { Db, PgTable, SQL, TableConfig } from '../drizzle.type'
+import type { Db, PgTable, SQL, TableConfig } from '../core/drizzle.type'
 import { desc } from 'drizzle-orm'
 
 /**
@@ -32,4 +32,3 @@ export async function maxOrder(
 
   return typeof result?.value === 'number' ? result.value : 0
 }
-

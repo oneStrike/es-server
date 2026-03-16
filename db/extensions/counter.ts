@@ -1,4 +1,4 @@
-import type { Db, PgTable, SQL, TableConfig } from '../drizzle.type'
+import type { Db, PgTable, SQL, TableConfig } from '../core/drizzle.type'
 import { NotFoundException } from '@nestjs/common'
 import { and, gte, sql } from 'drizzle-orm'
 
@@ -54,4 +54,3 @@ export async function applyCountDelta(
     .where(and(where, gte(column, amount)))
     .returning()
 }
-

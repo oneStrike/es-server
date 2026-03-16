@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/drizzle.service'
+import { DrizzleService } from '@db/core/drizzle.service'
 import { IdsDto } from '@libs/platform/dto'
 import {
   BadRequestException,

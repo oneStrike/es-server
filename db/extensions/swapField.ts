@@ -1,4 +1,4 @@
-import type { Db, PgTable, TableConfig } from '../drizzle.type'
+import type { Db, PgTable, TableConfig } from '../core/drizzle.type'
 import { BadRequestException } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 
@@ -127,4 +127,3 @@ export async function swapField(
     return true
   })
 }
-

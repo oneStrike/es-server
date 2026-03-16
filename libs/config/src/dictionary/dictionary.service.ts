@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/drizzle.service'
+import { DrizzleService } from '@db/core/drizzle.service'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,
@@ -115,9 +115,12 @@ export class LibDictionaryService {
    */
   async findDictionaries(queryDto: QueryDictionaryDto) {
     return this.drizzle.ext.findPagination(this.dictionary, {
-      where: this.drizzle.buildWhereAnd(this.dictionary, queryDto, {
-        eq: ['isEnabled'],
-        like: ['code', 'name'],
+      where: this.drizzle.buildWhere(this.dictionary, {
+        and: {
+          isEnabled: queryDto.isEnabled,
+          code: { like: queryDto.code },
+          name: { like: queryDto.name },
+        },
       }),
       ...queryDto,
     })
@@ -227,16 +230,17 @@ export class LibDictionaryService {
     const { dictionaryCode } = queryDto
 
     return this.drizzle.ext.findPagination(this.dictionaryItem, {
-      where: this.drizzle.buildWhereAnd(
+      where: this.drizzle.buildWhere(
         this.dictionaryItem,
         {
-          ...queryDto,
-          dictionaryCode: this.parseDictionaryCodes(dictionaryCode),
-        },
-        {
-          like: ['code', 'name'],
-          eq: ['isEnabled'],
-          inArray: ['dictionaryCode'],
+          and: {
+            code: { like: queryDto.code },
+            name: { like: queryDto.name },
+            isEnabled: queryDto.isEnabled,
+            dictionaryCode: {
+              in: this.parseDictionaryCodes(dictionaryCode),
+            },
+          },
         },
       ),
       ...queryDto,

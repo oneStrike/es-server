@@ -1,4 +1,4 @@
-import { DrizzleService } from '@db/drizzle.service'
+import { DrizzleService } from '@db/core/drizzle.service'
 import { Injectable, Logger } from '@nestjs/common'
 import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
 import {

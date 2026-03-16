@@ -12,7 +12,7 @@ import type {
   UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto'
-import { DrizzleService } from '@db/drizzle.service'
+import { DrizzleService } from '@db/core/drizzle.service'
 import { UserGrowthRewardService } from '@libs/growth'
 import {
   BadRequestException,
@@ -90,10 +90,14 @@ export class TaskService {
    */
   async getTaskPage(queryDto: QueryTaskDto) {
     return this.drizzle.ext.findPagination(this.taskTable, {
-      where: this.drizzle.buildWhereAnd(this.taskTable, queryDto, {
-        eq: ['status', 'type', 'isEnabled'],
-        like: ['title'],
-        isNull: ['deletedAt'],
+      where: this.drizzle.buildWhere(this.taskTable, {
+        and: {
+          status: queryDto.status,
+          type: queryDto.type,
+          isEnabled: queryDto.isEnabled,
+          title: { like: queryDto.title },
+          deletedAt: { isNull: true },
+        },
       }),
       ...queryDto,
     })
@@ -224,14 +228,14 @@ export class TaskService {
     const { pageIndex = 1, pageSize = 20, orderBy } = queryDto
 
     // 构建查询条件
-    const whereClause = this.drizzle.buildWhereAnd(
-      this.taskAssignmentTable,
-      queryDto,
-      {
-        eq: ['taskId', 'userId', 'status'],
-        isNull: ['deletedAt'],
+    const whereClause = this.drizzle.buildWhere(this.taskAssignmentTable, {
+      and: {
+        taskId: queryDto.taskId,
+        userId: queryDto.userId,
+        status: queryDto.status,
+        deletedAt: { isNull: true },
       },
-    )
+    })
 
     // 分页查询
     const offset = (pageIndex - 1) * pageSize
@@ -326,7 +330,7 @@ export class TaskService {
     })
 
     // 为自动领取模式的任务确保分配已创建
-    await this.ensureAutoAssignments(userId, result.list as Task[])
+    await this.ensureAutoAssignments(userId, result.list)
     return result
   }
 
@@ -351,14 +355,13 @@ export class TaskService {
     const { type, pageIndex = 1, pageSize = 20, orderBy } = queryDto
 
     // 构建查询条件
-    const assignmentWhere = this.drizzle.buildWhereAnd(
-      this.taskAssignmentTable,
-      { ...queryDto, userId },
-      {
-        eq: ['userId', 'status'],
-        isNull: ['deletedAt'],
+    const assignmentWhere = this.drizzle.buildWhere(this.taskAssignmentTable, {
+      and: {
+        userId,
+        status: queryDto.status,
+        deletedAt: { isNull: true },
       },
-    )
+    })
     const conditions: SQL[] = []
     if (assignmentWhere) {
       conditions.push(assignmentWhere)

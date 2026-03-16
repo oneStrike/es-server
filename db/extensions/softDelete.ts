@@ -1,10 +1,4 @@
-import type {
-  Db,
-  PgTable,
-  SQL,
-  SQLWrapper,
-  TableConfig,
-} from '../drizzle.type'
+import type { Db, PgTable, SQL, SQLWrapper, TableConfig } from '../core/drizzle.type'
 import { BadRequestException } from '@nestjs/common'
 import { and, isNull } from 'drizzle-orm'
 
@@ -42,11 +36,7 @@ export async function softDelete(
   const condition = and(where, isNull(deletedAtColumn))
 
   // 先查询确认记录存在且未删除
-  const [target] = await db
-    .select()
-    .from(table)
-    .where(condition)
-    .limit(1)
+  const [target] = await db.select().from(table).where(condition).limit(1)
 
   if (!target) {
     throw new BadRequestException('删除失败：数据不存在')
@@ -87,4 +77,3 @@ export async function softDeleteMany(
 
   return result.length
 }
-

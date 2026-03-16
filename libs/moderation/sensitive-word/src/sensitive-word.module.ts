@@ -1,4 +1,4 @@
-import { DrizzleModule } from '@db/drizzle.module'
+import { DrizzleModule } from '@db/core/drizzle.module'
 import { Module } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'

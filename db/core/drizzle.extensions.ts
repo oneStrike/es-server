@@ -1,3 +1,6 @@
+import type { InferSelectModel } from 'drizzle-orm'
+import type { AnyPgTable } from 'drizzle-orm/pg-core'
+import type { FindPaginationOptions } from '../extensions/findPagination'
 import type { Db, PgTable, SQL, TableConfig } from './drizzle.type'
 import {
   applyCountDelta,
@@ -8,7 +11,7 @@ import {
   softDelete as softDeleteExtension,
   softDeleteMany as softDeleteManyExtension,
   swapField as swapFieldExtension,
-} from './extensions'
+} from '../extensions'
 
 export function createDrizzleExtensions(db: Db) {
   return {
@@ -16,10 +19,13 @@ export function createDrizzleExtensions(db: Db) {
       existsExtension(db, table, where),
     existsActive: async (table: PgTable<TableConfig>, where?: SQL) =>
       existsActiveExtension(db, table, where),
-    findPagination: async (
-      table: PgTable<TableConfig>,
-      options?: Parameters<typeof findPaginationExtension>[2],
-    ) => findPaginationExtension(db, table, options),
+    findPagination: async <
+      TTable extends AnyPgTable,
+      TOmit extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
+    >(
+      table: TTable,
+      options?: FindPaginationOptions<TTable, TOmit>,
+    ) => findPaginationExtension<TTable, TOmit>(db, table, options),
     maxOrder: async (
       table: PgTable<TableConfig>,
       where?: SQL,
@@ -41,4 +47,3 @@ export function createDrizzleExtensions(db: Db) {
     ) => applyCountDelta(db, table, where, field, delta),
   }
 }
-
