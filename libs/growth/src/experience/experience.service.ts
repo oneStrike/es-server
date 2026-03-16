@@ -3,7 +3,6 @@ import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
-import { UserLevelRuleService } from '../level-rule/level-rule.service'
 import {
   AddUserExperienceDto,
   QueryUserExperienceRecordDto,
@@ -20,10 +19,7 @@ import {
  */
 @Injectable()
 export class UserExperienceService extends PlatformService {
-  constructor(
-    private readonly levelRuleService: UserLevelRuleService,
-    private readonly growthLedgerService: GrowthLedgerService,
-  ) {
+  constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }
 
@@ -179,29 +175,6 @@ export class UserExperienceService extends PlatformService {
 
       if (!result.success && !result.duplicated) {
         throw new BadRequestException(this.mapRuleFailReason(result.reason))
-      }
-
-      // 经验变化后按最新经验值刷新等级
-      const currentExperience = result.afterValue ?? (
-        await tx.appUser.findUniqueOrThrow({
-          where: { id: userId },
-          select: { experience: true },
-        })
-      ).experience
-
-      const newLevelRule =
-        await this.levelRuleService.getHighestLevelRuleByExperience(
-          currentExperience,
-          tx,
-        )
-
-      if (newLevelRule) {
-        await tx.appUser.update({
-          where: { id: userId },
-          data: {
-            levelId: newLevelRule.id,
-          },
-        })
       }
 
       const recordId = result.recordId

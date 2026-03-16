@@ -1,7 +1,10 @@
-import { EnumProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { IntersectionType } from '@nestjs/swagger'
-import { ReportTargetBodyDto } from '../../dto/target.dto'
-import { ReportReasonEnum } from '../report.constant'
+import { ReportReasonEnum, ReportTargetTypeEnum } from '../report.constant'
 
 /**
  * 举报原因请求体。
@@ -10,6 +13,27 @@ import { ReportReasonEnum } from '../report.constant'
  * - 举报原因统一使用数字枚举，不再使用字符串
  * - `description` 仅用于补充上下文，不承担原因类型职责
  */
+
+/**
+ * 点赞目标 DTO
+ */
+export class ReportTargetDto {
+  @NumberProperty({
+    description: '点赞的目标id',
+    example: 1,
+    required: true,
+  })
+  targetId!: number
+
+  @EnumProperty({
+    description:
+      '举报目标类型（1=漫画，2=小说，3=漫画章节，4=小说章节，5=论坛主题，6=评论，7=用户）',
+    enum: ReportTargetTypeEnum,
+    example: ReportTargetTypeEnum.COMIC,
+    required: true,
+  })
+  targetType!: ReportTargetTypeEnum
+}
 export class ReportReasonBodyDto {
   @EnumProperty({
     description: '举报原因类型',
@@ -44,6 +68,6 @@ export class ReportReasonBodyDto {
  * - 不再保留作品、章节、评论、主题、回复等拆分 DTO
  */
 export class CreateReportBodyDto extends IntersectionType(
-  ReportTargetBodyDto,
+  ReportTargetDto,
   ReportReasonBodyDto,
 ) {}

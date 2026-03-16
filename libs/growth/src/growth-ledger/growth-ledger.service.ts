@@ -113,6 +113,9 @@ export class GrowthLedgerService extends PlatformService {
       context,
     })
     if (gate.duplicated) {
+      if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
+        await this.syncUserLevelByExperience(tx, userId, gate.result.afterValue)
+      }
       return gate.result
     }
 
@@ -191,6 +194,10 @@ export class GrowthLedgerService extends PlatformService {
       context,
     })
 
+    if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
+      await this.syncUserLevelByExperience(tx, userId, afterValue)
+    }
+
     return {
       success: true,
       deltaApplied: delta,
@@ -249,6 +256,9 @@ export class GrowthLedgerService extends PlatformService {
       context,
     })
     if (gate.duplicated) {
+      if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
+        await this.syncUserLevelByExperience(tx, userId, gate.result.afterValue)
+      }
       return gate.result
     }
 
@@ -305,6 +315,10 @@ export class GrowthLedgerService extends PlatformService {
       deltaApplied: signedDelta,
       context,
     })
+
+    if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
+      await this.syncUserLevelByExperience(tx, userId, afterValue)
+    }
 
     return {
       success: true,
@@ -528,6 +542,39 @@ export class GrowthLedgerService extends PlatformService {
         deltaApplied: params.deltaApplied,
         context: params.context as Prisma.InputJsonValue | undefined,
       },
+    })
+  }
+
+  private async syncUserLevelByExperience(
+    tx: Tx,
+    userId: number,
+    experience?: number,
+  ): Promise<void> {
+    if (experience === undefined) {
+      return
+    }
+
+    const levelRule = await tx.userLevelRule.findFirst({
+      where: {
+        isEnabled: true,
+        requiredExperience: { lte: experience },
+      },
+      orderBy: {
+        requiredExperience: 'desc',
+      },
+      select: { id: true },
+    })
+
+    if (!levelRule) {
+      return
+    }
+
+    await tx.appUser.updateMany({
+      where: {
+        id: userId,
+        NOT: { levelId: levelRule.id },
+      },
+      data: { levelId: levelRule.id },
     })
   }
 

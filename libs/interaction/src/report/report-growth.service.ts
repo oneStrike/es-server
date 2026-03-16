@@ -1,12 +1,11 @@
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-GrowthRuleTypeEnum
+  GrowthRuleTypeEnum,
 } from '@libs/growth'
 import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
-import { refreshUserLevelByExperience } from '../user-level.helper'
 import {
   REPORT_GROWTH_RULE_TYPE_MAP,
   ReportTargetTypeEnum,
@@ -43,7 +42,7 @@ export class ReportGrowthService extends PlatformService {
           targetId,
         })
 
-        const expResult = await this.growthLedgerService.applyByRule(tx, {
+        await this.growthLedgerService.applyByRule(tx, {
           userId: reporterId,
           assetType: GrowthAssetTypeEnum.EXPERIENCE,
           ruleType,
@@ -52,14 +51,6 @@ export class ReportGrowthService extends PlatformService {
           targetType,
           targetId,
         })
-
-        if (expResult.success && expResult.afterValue !== undefined) {
-          await refreshUserLevelByExperience(
-            tx,
-            reporterId,
-            expResult.afterValue,
-          )
-        }
       })
     } catch {
       // 奖励失败不影响主流程。

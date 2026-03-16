@@ -8,13 +8,9 @@ export * from './comment/dto/comment.dto'
 export * from './comment/interfaces/comment-target-resolver.interface'
 
 // constants and module
-export * from './common.constant'
 export * from './core.module'
-export * from './domain.types'
 // download
 export * from './download'
-// shared dto
-export * from './dto/target.dto'
 
 // favorite
 export * from './favorite/dto/favorite.dto'

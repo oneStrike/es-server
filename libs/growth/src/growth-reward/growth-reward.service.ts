@@ -6,7 +6,6 @@ import {
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
-import { UserLevelRuleService } from '../level-rule/level-rule.service'
 
 interface RewardByRuleParams {
   userId: number
@@ -32,10 +31,7 @@ interface RewardTaskCompleteParams {
  */
 @Injectable()
 export class UserGrowthRewardService extends PlatformService {
-  constructor(
-    private readonly growthLedgerService: GrowthLedgerService,
-    private readonly levelRuleService: UserLevelRuleService,
-  ) {
+  constructor(private readonly growthLedgerService: GrowthLedgerService) {
     super()
   }
 
@@ -58,7 +54,7 @@ export class UserGrowthRewardService extends PlatformService {
         })
 
         // 发放经验
-        const expResult = await this.growthLedgerService.applyByRule(tx, {
+        await this.growthLedgerService.applyByRule(tx, {
           userId: params.userId,
           assetType: GrowthAssetTypeEnum.EXPERIENCE,
           ruleType: params.ruleType,
@@ -67,13 +63,6 @@ export class UserGrowthRewardService extends PlatformService {
           targetType: params.targetType,
           targetId: params.targetId,
         })
-
-        // 尝试更新用户等级
-        await this.tryRefreshLevel(
-          tx,
-          params.userId,
-          expResult.afterValue,
-        )
       })
     } catch {
       // 奖励失败不影响主业务流程
@@ -125,7 +114,7 @@ export class UserGrowthRewardService extends PlatformService {
 
         // 发放经验
         if (reward.experience > 0) {
-          const expResult = await this.growthLedgerService.applyDelta(tx, {
+          await this.growthLedgerService.applyDelta(tx, {
             userId: params.userId,
             assetType: GrowthAssetTypeEnum.EXPERIENCE,
             action: GrowthLedgerActionEnum.GRANT,
@@ -136,46 +125,11 @@ export class UserGrowthRewardService extends PlatformService {
             targetId: params.taskId,
             context,
           })
-
-          // 尝试更新用户等级
-          await this.tryRefreshLevel(
-            tx,
-            params.userId,
-            expResult.afterValue,
-          )
         }
       })
     } catch {
       // 奖励失败不影响主业务流程
     }
-  }
-
-  /** 尝试更新用户等级 */
-  private async tryRefreshLevel(
-    tx: any,
-    userId: number,
-    experience?: number,
-  ): Promise<void> {
-    if (experience === undefined) {
-      return
-    }
-
-    // 根据经验值获取最高匹配的等级规则
-    const levelRule =
-      await this.levelRuleService.getHighestLevelRuleByExperience(
-        experience,
-        tx,
-      )
-
-    if (!levelRule) {
-      return
-    }
-
-    // 更新用户等级
-    await tx.appUser.update({
-      where: { id: userId },
-      data: { levelId: levelRule.id },
-    })
   }
 
   /** 解析奖励配置 */

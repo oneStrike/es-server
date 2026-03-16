@@ -1,12 +1,11 @@
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-GrowthRuleTypeEnum
+  GrowthRuleTypeEnum,
 } from '@libs/growth'
 import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
-import { refreshUserLevelByExperience } from '../user-level.helper'
 import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
 
 /**
@@ -70,29 +69,15 @@ export class LikeGrowthService extends PlatformService {
           targetId,
         })
 
-        const experienceResult = await this.growthLedgerService.applyByRule(
-          tx,
-          {
-            userId,
-            assetType: GrowthAssetTypeEnum.EXPERIENCE,
-            ruleType,
-            bizKey: `${baseBizKey}:EXPERIENCE`,
-            remark: `点赞目标 #${targetId}`,
-            targetType,
-            targetId,
-          },
-        )
-
-        if (
-          experienceResult.success &&
-          experienceResult.afterValue !== undefined
-        ) {
-          await refreshUserLevelByExperience(
-            tx,
-            userId,
-            experienceResult.afterValue,
-          )
-        }
+        await this.growthLedgerService.applyByRule(tx, {
+          userId,
+          assetType: GrowthAssetTypeEnum.EXPERIENCE,
+          ruleType,
+          bizKey: `${baseBizKey}:EXPERIENCE`,
+          remark: `点赞目标 #${targetId}`,
+          targetType,
+          targetId,
+        })
       })
     } catch {
       // 奖励失败不影响主流程。
@@ -131,28 +116,14 @@ export class LikeGrowthService extends PlatformService {
           targetId: commentId,
         })
 
-        const experienceResult = await this.growthLedgerService.applyByRule(
-          tx,
-          {
-            userId: comment.userId,
-            assetType: GrowthAssetTypeEnum.EXPERIENCE,
-            ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
-            bizKey: `${baseBizKey}:EXPERIENCE`,
-            remark: `评论被点赞 #${commentId}`,
-            targetId: commentId,
-          },
-        )
-
-        if (
-          experienceResult.success &&
-          experienceResult.afterValue !== undefined
-        ) {
-          await refreshUserLevelByExperience(
-            tx,
-            comment.userId,
-            experienceResult.afterValue,
-          )
-        }
+        await this.growthLedgerService.applyByRule(tx, {
+          userId: comment.userId,
+          assetType: GrowthAssetTypeEnum.EXPERIENCE,
+          ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
+          bizKey: `${baseBizKey}:EXPERIENCE`,
+          remark: `评论被点赞 #${commentId}`,
+          targetId: commentId,
+        })
       })
     } catch {
       // 奖励失败不影响主流程。

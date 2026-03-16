@@ -1,12 +1,11 @@
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-GrowthRuleTypeEnum
+  GrowthRuleTypeEnum,
 } from '@libs/growth'
 import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
-import { refreshUserLevelByExperience } from '../user-level.helper'
 
 @Injectable()
 export class CommentGrowthService extends PlatformService {
@@ -39,7 +38,7 @@ export class CommentGrowthService extends PlatformService {
       occurredAt,
     })
 
-    const experienceResult = await this.growthLedgerService.applyByRule(tx, {
+    await this.growthLedgerService.applyByRule(tx, {
       userId,
       assetType: GrowthAssetTypeEnum.EXPERIENCE,
       ruleType: GrowthRuleTypeEnum.CREATE_COMMENT,
@@ -50,10 +49,6 @@ export class CommentGrowthService extends PlatformService {
       context: { targetId },
       occurredAt,
     })
-
-    if (experienceResult.success && experienceResult.afterValue !== undefined) {
-      await refreshUserLevelByExperience(tx, userId, experienceResult.afterValue)
-    }
   }
 
   async rewardCommentLiked(
@@ -82,7 +77,7 @@ export class CommentGrowthService extends PlatformService {
       targetId: commentId,
     })
 
-    const experienceResult = await this.growthLedgerService.applyByRule(tx, {
+    await this.growthLedgerService.applyByRule(tx, {
       userId: authorUserId,
       assetType: GrowthAssetTypeEnum.EXPERIENCE,
       ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
@@ -90,13 +85,5 @@ export class CommentGrowthService extends PlatformService {
       remark: `评论被点赞 #${commentId}`,
       targetId: commentId,
     })
-
-    if (experienceResult.success && experienceResult.afterValue !== undefined) {
-      await refreshUserLevelByExperience(
-        tx,
-        authorUserId,
-        experienceResult.afterValue,
-      )
-    }
   }
 }
