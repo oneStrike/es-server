@@ -1,4 +1,4 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
 import { BrowseLogInteractionService } from './browse-log-interaction.service'
@@ -7,13 +7,20 @@ import { BrowseLogTargetTypeEnum } from './browse-log.constant'
 import { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolver.interface'
 
 @Injectable()
-export class BrowseLogService extends PlatformService {
+export class BrowseLogService {
   constructor(
     private readonly browseLogPermissionService: BrowseLogPermissionService,
     private readonly browseLogInteractionService: BrowseLogInteractionService,
     private readonly browseLogGrowthService: BrowseLogGrowthService,
-  ) {
-    super()
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userBrowseLog() {
+    return this.drizzle.schema.userBrowseLog
   }
 
   /** 目标类型到解析器的映射表 */
@@ -92,23 +99,21 @@ export class BrowseLogService extends PlatformService {
     const resolver = this.getResolver(targetType)
 
     // 2. 核心逻辑执行（事务内）
-    await this.prisma.$transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       // 业务目标合法性校验 (Resolver)
       if (!options.skipTargetValidation) {
         await resolver.ensureTargetValid(tx, targetId)
       }
 
       // 创建浏览记录
-      await tx.userBrowseLog.create({
-        data: {
-          targetType,
-          targetId,
-          userId,
-          ipAddress,
-          device,
-          userAgent,
-          viewedAt: new Date(),
-        },
+      await tx.insert(this.userBrowseLog).values({
+        targetType,
+        targetId,
+        userId,
+        ipAddress,
+        device,
+        userAgent,
+        viewedAt: new Date(),
       })
 
       // 更新浏览计数 (Resolver)

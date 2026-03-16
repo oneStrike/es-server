@@ -1,9 +1,15 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
-import { ILikeTargetResolver, LikeService, LikeTargetTypeEnum } from '@libs/interaction'
+import { workChapter } from '@db/schema'
+import {
+  ILikeTargetResolver,
+  InteractionTx,
+  LikeService,
+  LikeTargetTypeEnum,
+} from '@libs/interaction'
 
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 漫画章节点赞解析器
@@ -39,14 +45,14 @@ export class WorkComicChapterLikeResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当章节不存在时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const chapter = await tx.workChapter.findFirst({
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
         workType: this.workType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { id: true },
+      columns: { id: true },
     })
 
     if (!chapter) {
@@ -67,7 +73,7 @@ export class WorkComicChapterLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -75,14 +81,28 @@ export class WorkComicChapterLikeResolver
       return
     }
 
-    await tx.workChapter.applyCountDelta(
-      {
+    await tx
+      .update(workChapter)
+      .set({
+        likeCount: sql`${workChapter.likeCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(workChapter.id, targetId),
+          eq(workChapter.workType, this.workType),
+          isNull(workChapter.deletedAt),
+        ),
+      )
+    const updated = await tx.query.workChapter.findFirst({
+      where: {
         id: targetId,
         workType: this.workType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      'likeCount',
-      delta,
-    )
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new NotFoundException('漫画章节不存在')
+    }
   }
 }

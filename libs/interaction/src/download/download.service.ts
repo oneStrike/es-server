@@ -1,5 +1,6 @@
-import { PlatformService, Prisma } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   buildCreatedAtSqlFilter,
   normalizeInteractionPagination,
@@ -15,14 +16,22 @@ import {
 import { IDownloadTargetResolver } from './interfaces/download-target-resolver.interface'
 
 @Injectable()
-export class DownloadService extends PlatformService {
+export class DownloadService {
   private readonly resolvers = new Map<
     DownloadTargetTypeEnum,
     IDownloadTargetResolver
   >()
 
-  constructor() {
-    super()
+  constructor(
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userDownloadRecord() {
+    return this.drizzle.schema.userDownloadRecord
   }
 
   /**
@@ -50,8 +59,11 @@ export class DownloadService extends PlatformService {
     return resolver
   }
 
-  get userDownloadRecord() {
-    return this.prisma.userDownloadRecord
+  private isUniqueConstraintError(error: unknown) {
+    return (
+      this.drizzle.isUniqueViolation(error)
+      || this.drizzle.isErrorCode(error, 'P2002')
+    )
   }
 
   /**
@@ -64,17 +76,15 @@ export class DownloadService extends PlatformService {
     const resolver = this.getResolver(targetType)
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.db.transaction(async (tx) => {
         // 校验下载权限并获取内容（由各个业务方 Resolver 实现）
         const content = await resolver.ensureDownloadable(tx, targetId)
 
         // 记录下载记录
-        await tx.userDownloadRecord.create({
-          data: {
-            targetType,
-            targetId,
-            userId,
-          },
+        await tx.insert(this.userDownloadRecord).values({
+          targetType,
+          targetId,
+          userId,
         })
 
         // 更新各业务方下载计数
@@ -85,7 +95,7 @@ export class DownloadService extends PlatformService {
     } catch (error) {
       // 如果已经下载过了，直接返回内容
       if (this.isUniqueConstraintError(error)) {
-        return this.prisma.$transaction(async (tx) => {
+        return this.db.transaction(async (tx) => {
           return resolver.ensureDownloadable(tx, targetId)
         })
       }
@@ -104,7 +114,13 @@ export class DownloadService extends PlatformService {
    * 检查下载状态
    */
   async checkDownloadStatus(dto: UserDownloadRecordKeyDto) {
-    return this.userDownloadRecord.exists(dto)
+    const record = await this.db.query.userDownloadRecord.findFirst({
+      where: dto,
+      columns: {
+        id: true,
+      },
+    })
+    return Boolean(record)
   }
 
   /**
@@ -121,16 +137,18 @@ export class DownloadService extends PlatformService {
 
     const uniqueTargetIds = [...new Set(targetIds)]
 
-    const downloads = await this.userDownloadRecord.findMany({
-      where: {
-        targetType,
-        targetId: { in: uniqueTargetIds },
-        userId,
-      },
-      select: {
-        targetId: true,
-      },
-    })
+    const downloads = await this.db
+      .select({
+        targetId: this.userDownloadRecord.targetId,
+      })
+      .from(this.userDownloadRecord)
+      .where(
+        and(
+          eq(this.userDownloadRecord.targetType, targetType),
+          inArray(this.userDownloadRecord.targetId, uniqueTargetIds),
+          eq(this.userDownloadRecord.userId, userId),
+        ),
+      )
 
     const downloadedIds = new Set(downloads.map((d) => d.targetId))
 
@@ -163,20 +181,11 @@ export class DownloadService extends PlatformService {
       endDate,
     )
     const workTypeFilter = workType
-      ? Prisma.sql` AND w.type = ${workType}`
-      : Prisma.empty
+      ? sql` AND w.type = ${workType}`
+      : sql.empty()
 
-    const [rows, totalRows] = await Promise.all([
-      this.prisma.$queryRaw<
-        Array<{
-          workId: number
-          workType: number
-          workName: string
-          workCover: string
-          downloadedChapterCount: bigint
-          lastDownloadedAt: Date
-        }>
-      >(Prisma.sql`
+    const [rowsResult, totalRowsResult] = await Promise.all([
+      this.db.execute(sql`
         SELECT
           wc.work_id AS "workId",
           w.type AS "workType",
@@ -195,7 +204,7 @@ export class DownloadService extends PlatformService {
         ORDER BY MAX(udr.created_at) DESC
         LIMIT ${take} OFFSET ${skip}
       `),
-      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+      this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
         FROM user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
@@ -206,6 +215,15 @@ export class DownloadService extends PlatformService {
           ${createdAtFilter}
       `),
     ])
+    const rows = (rowsResult as any).rows as Array<{
+      workId: number
+      workType: number
+      workName: string
+      workCover: string
+      downloadedChapterCount: bigint
+      lastDownloadedAt: Date
+    }>
+    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
 
     const total = Number(totalRows[0]?.total ?? 0n)
 
@@ -253,28 +271,11 @@ export class DownloadService extends PlatformService {
       endDate,
     )
     const workTypeFilter = workType
-      ? Prisma.sql` AND wc.work_type = ${workType}`
-      : Prisma.empty
+      ? sql` AND wc.work_type = ${workType}`
+      : sql.empty()
 
-    const [rows, totalRows] = await Promise.all([
-      this.prisma.$queryRaw<
-        Array<{
-          id: number
-          targetType: number
-          targetId: number
-          userId: number
-          createdAt: Date
-          chapterId: number
-          chapterWorkId: number
-          chapterWorkType: number
-          chapterTitle: string
-          chapterSubtitle: string | null
-          chapterCover: string | null
-          chapterSortOrder: number
-          chapterIsPublished: boolean
-          chapterPublishAt: Date | null
-        }>
-      >(Prisma.sql`
+    const [rowsResult, totalRowsResult] = await Promise.all([
+      this.db.execute(sql`
         SELECT
           udr.id AS "id",
           udr.target_type AS "targetType",
@@ -301,7 +302,7 @@ export class DownloadService extends PlatformService {
         ORDER BY udr.created_at DESC
         LIMIT ${take} OFFSET ${skip}
       `),
-      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+      this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
         FROM user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
@@ -313,6 +314,23 @@ export class DownloadService extends PlatformService {
           ${createdAtFilter}
       `),
     ])
+    const rows = (rowsResult as any).rows as Array<{
+      id: number
+      targetType: number
+      targetId: number
+      userId: number
+      createdAt: Date
+      chapterId: number
+      chapterWorkId: number
+      chapterWorkType: number
+      chapterTitle: string
+      chapterSubtitle: string | null
+      chapterCover: string | null
+      chapterSortOrder: number
+      chapterIsPublished: boolean
+      chapterPublishAt: Date | null
+    }>
+    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
 
     const total = Number(totalRows[0]?.total ?? 0n)
 

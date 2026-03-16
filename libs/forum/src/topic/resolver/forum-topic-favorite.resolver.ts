@@ -1,8 +1,9 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { forumTopic } from '@db/schema'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
 import {
   MessageNotificationTypeEnum,
@@ -11,6 +12,7 @@ import {
 
 import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛主题收藏解析器
@@ -46,14 +48,14 @@ export class ForumTopicFavoriteResolver
    * @returns 包含主题所有者用户ID的对象
    * @throws BadRequestException 当主题不存在时抛出异常
    */
-  async ensureExists(tx: PrismaTransactionClientType, targetId: number) {
-    const topic = await tx.forumTopic.findFirst({
+  async ensureExists(tx: InteractionTx, targetId: number) {
+    const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
         isHidden: false,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { userId: true, isLocked: true, isHidden: true },
+      columns: { userId: true, isLocked: true, isHidden: true },
     })
 
     if (!topic) {
@@ -71,7 +73,7 @@ export class ForumTopicFavoriteResolver
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -79,14 +81,22 @@ export class ForumTopicFavoriteResolver
       return
     }
 
-    await tx.forumTopic.applyCountDelta(
-      {
+    await tx
+      .update(forumTopic)
+      .set({
+        favoriteCount: sql`${forumTopic.favoriteCount} + ${delta}`,
+      })
+      .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
+    const updated = await tx.query.forumTopic.findFirst({
+      where: {
         id: targetId,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      'favoriteCount',
-      delta,
-    )
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new BadRequestException('帖子不存在')
+    }
   }
 
   /**
@@ -99,7 +109,7 @@ export class ForumTopicFavoriteResolver
    * @param options.ownerUserId - 主题所有者用户ID
    */
   async postFavoriteHook(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     actorUserId: number,
     options: { ownerUserId?: number },

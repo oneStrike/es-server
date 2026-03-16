@@ -1,11 +1,12 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
   IBrowseLogTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛帖子浏览日志解析器
@@ -13,14 +14,18 @@ import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class ForumTopicBrowseLogResolver
-  extends PlatformService
   implements IBrowseLogTargetResolver, OnModuleInit
 {
   /** 目标类型：论坛帖子 */
   readonly targetType = BrowseLogTargetTypeEnum.FORUM_TOPIC
 
-  constructor(private readonly browseLogService: BrowseLogService) {
-    super()
+  constructor(
+    private readonly browseLogService: BrowseLogService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get forumTopic() {
+    return this.drizzle.schema.forumTopic
   }
 
   /**
@@ -34,12 +39,12 @@ export class ForumTopicBrowseLogResolver
    * 应用浏览计数增量
    * 更新帖子的浏览数
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标帖子ID
    * @param delta - 变更量
    */
   applyCountDelta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) => Promise<void> = async (tx, targetId, delta) => {
@@ -47,33 +52,42 @@ export class ForumTopicBrowseLogResolver
       return
     }
 
-    await tx.forumTopic.applyCountDelta(
-      {
-        id: targetId,
-        deletedAt: null,
-      },
-      'viewCount',
-      delta,
-    )
+    await tx
+      .update(this.forumTopic)
+      .set({
+        viewCount: sql`${this.forumTopic.viewCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(this.forumTopic.id, targetId),
+          isNull(this.forumTopic.deletedAt),
+        ),
+      )
   }
 
   /**
    * 校验帖子是否有效
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标帖子ID
    * @throws 当帖子不存在时抛出 BadRequestException
    */
   ensureTargetValid: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
   ) => Promise<void> = async (tx, targetId) => {
-    const topic = await tx.forumTopic.findUnique({
-      where: { id: targetId },
-      select: { deletedAt: true },
-    })
+    const topic = await tx
+      .select({ id: this.forumTopic.id })
+      .from(this.forumTopic)
+      .where(
+        and(
+          eq(this.forumTopic.id, targetId),
+          isNull(this.forumTopic.deletedAt),
+        ),
+      )
+      .limit(1)
 
-    if (!topic || topic.deletedAt !== null) {
+    if (!topic[0]) {
       throw new BadRequestException('帖子不存在')
     }
   }

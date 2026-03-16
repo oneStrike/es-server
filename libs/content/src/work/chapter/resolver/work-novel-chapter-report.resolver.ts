@@ -1,11 +1,10 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
 import {
+  InteractionTx,
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
 } from '@libs/interaction'
 import { SceneTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 /**
@@ -14,15 +13,12 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class WorkNovelChapterReportResolver
-  extends PlatformService
   implements IReportTargetResolver, OnModuleInit
 {
   /** 目标类型：小说章节 */
   readonly targetType = ReportTargetTypeEnum.NOVEL_CHAPTER
 
-  constructor(private readonly reportService: ReportService) {
-    super()
-  }
+  constructor(private readonly reportService: ReportService) {}
 
   /**
    * 模块初始化时注册解析器到举报服务
@@ -40,14 +36,14 @@ export class WorkNovelChapterReportResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当章节不存在时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const chapter = await tx.workChapter.findFirst({
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
         workType: 2,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { id: true },
+      columns: { id: true },
     })
 
     if (!chapter) {

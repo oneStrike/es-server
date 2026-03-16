@@ -1,10 +1,11 @@
+import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerService,
 } from '@libs/growth'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { sql } from 'drizzle-orm'
 import {
   buildCreatedAtSqlFilter,
   normalizeInteractionPagination,
@@ -18,15 +19,24 @@ import { IPurchaseTargetResolver } from './interfaces/purchase-target-resolver.i
 import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from './purchase.constant'
 
 @Injectable()
-export class PurchaseService extends PlatformService {
+export class PurchaseService {
   private readonly logger = new Logger(PurchaseService.name)
   private readonly resolvers = new Map<
     PurchaseTargetTypeEnum,
     IPurchaseTargetResolver
   >()
 
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
-    super()
+  constructor(
+    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userPurchaseRecord() {
+    return this.drizzle.schema.userPurchaseRecord
   }
 
   /**
@@ -54,6 +64,23 @@ export class PurchaseService extends PlatformService {
     return resolver
   }
 
+  private isUniqueConstraintError(error: unknown) {
+    return (
+      this.drizzle.isUniqueViolation(error)
+      || this.drizzle.isErrorCode(error, 'P2002')
+    )
+  }
+
+  private handleBusinessError(
+    error: unknown,
+    options: { duplicateMessage?: string },
+  ): never {
+    if (options.duplicateMessage && this.drizzle.isErrorCode(error, 'P2002')) {
+      throw new BadRequestException(options.duplicateMessage)
+    }
+    throw error
+  }
+
   /**
    * 校验购买条件并获取价格
    */
@@ -79,9 +106,10 @@ export class PurchaseService extends PlatformService {
     )
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        const record = await tx.userPurchaseRecord.create({
-          data: {
+      return await this.db.transaction(async (tx) => {
+        const [record] = await tx
+          .insert(this.userPurchaseRecord)
+          .values({
             targetType,
             targetId,
             userId,
@@ -89,8 +117,8 @@ export class PurchaseService extends PlatformService {
             status: PurchaseStatusEnum.SUCCESS,
             paymentMethod,
             outTradeNo,
-          },
-        })
+          })
+          .returning()
 
         if (targetPrice > 0) {
           const consumeResult = await this.growthLedgerService.applyDelta(tx, {
@@ -140,7 +168,7 @@ export class PurchaseService extends PlatformService {
         )
       }
 
-      this.handlePrismaBusinessError(error, {
+      this.handleBusinessError(error, {
         duplicateMessage: '该目标已购买',
       })
 
@@ -184,20 +212,11 @@ export class PurchaseService extends PlatformService {
       endDate,
     )
     const workTypeFilter = workType
-      ? Prisma.sql` AND w.type = ${workType}`
-      : Prisma.empty
+      ? sql` AND w.type = ${workType}`
+      : sql.empty()
 
-    const [rows, totalRows] = await Promise.all([
-      this.prisma.$queryRaw<
-        Array<{
-          workId: number
-          workType: number
-          workName: string
-          workCover: string
-          purchasedChapterCount: bigint
-          lastPurchasedAt: Date
-        }>
-      >(Prisma.sql`
+    const [rowsResult, totalRowsResult] = await Promise.all([
+      this.db.execute(sql`
         SELECT
           wc.work_id AS "workId",
           w.type AS "workType",
@@ -219,7 +238,7 @@ export class PurchaseService extends PlatformService {
         ORDER BY MAX(upr.created_at) DESC
         LIMIT ${take} OFFSET ${skip}
       `),
-      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+      this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
         FROM user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
@@ -233,6 +252,15 @@ export class PurchaseService extends PlatformService {
           ${createdAtFilter}
       `),
     ])
+    const rows = (rowsResult as any).rows as Array<{
+      workId: number
+      workType: number
+      workName: string
+      workCover: string
+      purchasedChapterCount: bigint
+      lastPurchasedAt: Date
+    }>
+    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
 
     const total = Number(totalRows[0]?.total ?? 0n)
 
@@ -279,33 +307,11 @@ export class PurchaseService extends PlatformService {
       endDate,
     )
     const workTypeFilter = workType
-      ? Prisma.sql` AND wc.work_type = ${workType}`
-      : Prisma.empty
+      ? sql` AND wc.work_type = ${workType}`
+      : sql.empty()
 
-    const [rows, totalRows] = await Promise.all([
-      this.prisma.$queryRaw<
-        Array<{
-          id: number
-          targetType: number
-          targetId: number
-          userId: number
-          price: number
-          status: number
-          paymentMethod: number
-          outTradeNo: string | null
-          createdAt: Date
-          updatedAt: Date
-          chapterId: number
-          chapterWorkId: number
-          chapterWorkType: number
-          chapterTitle: string
-          chapterSubtitle: string | null
-          chapterCover: string | null
-          chapterSortOrder: number
-          chapterIsPublished: boolean
-          chapterPublishAt: Date | null
-        }>
-      >(Prisma.sql`
+    const [rowsResult, totalRowsResult] = await Promise.all([
+      this.db.execute(sql`
         SELECT
           upr.id AS "id",
           upr.target_type AS "targetType",
@@ -340,7 +346,7 @@ export class PurchaseService extends PlatformService {
         ORDER BY upr.created_at DESC
         LIMIT ${take} OFFSET ${skip}
       `),
-      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+      this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
         FROM user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
@@ -355,6 +361,28 @@ export class PurchaseService extends PlatformService {
           ${createdAtFilter}
       `),
     ])
+    const rows = (rowsResult as any).rows as Array<{
+      id: number
+      targetType: number
+      targetId: number
+      userId: number
+      price: number
+      status: number
+      paymentMethod: number
+      outTradeNo: string | null
+      createdAt: Date
+      updatedAt: Date
+      chapterId: number
+      chapterWorkId: number
+      chapterWorkType: number
+      chapterTitle: string
+      chapterSubtitle: string | null
+      chapterCover: string | null
+      chapterSortOrder: number
+      chapterIsPublished: boolean
+      chapterPublishAt: Date | null
+    }>
+    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
 
     const total = Number(totalRows[0]?.total ?? 0n)
 

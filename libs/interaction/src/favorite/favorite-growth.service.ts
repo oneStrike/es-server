@@ -1,5 +1,5 @@
+import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import {
   FAVORITE_GROWTH_RULE_TYPE_MAP,
@@ -11,9 +11,14 @@ import {
  * 负责处理收藏操作带来的积分和经验值奖励
  */
 @Injectable()
-export class FavoriteGrowthService extends PlatformService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
-    super()
+export class FavoriteGrowthService {
+  constructor(
+    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -31,7 +36,7 @@ export class FavoriteGrowthService extends PlatformService {
     const baseBizKey = `favorite:${targetType}:${targetId}:user:${userId}`
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         await this.growthLedgerService.applyByRule(tx, {
           userId,
           assetType: GrowthAssetTypeEnum.POINTS,

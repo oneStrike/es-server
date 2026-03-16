@@ -1,9 +1,9 @@
+import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
   GrowthRuleTypeEnum,
 } from '@libs/growth'
-import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
 import {
@@ -12,9 +12,14 @@ import {
 } from './report.constant'
 
 @Injectable()
-export class ReportGrowthService extends PlatformService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
-    super()
+export class ReportGrowthService {
+  constructor(
+    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   async rewardReportCreated(params: {
@@ -31,7 +36,7 @@ export class ReportGrowthService extends PlatformService {
       GrowthRuleTypeEnum.TOPIC_REPORT
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         await this.growthLedgerService.applyByRule(tx, {
           userId: reporterId,
           assetType: GrowthAssetTypeEnum.POINTS,

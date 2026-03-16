@@ -1,5 +1,6 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, desc, eq, gt, gte, lt, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -19,16 +20,23 @@ import { UserPointRuleService } from './point-rule.service'
  * 对外保留原有方法签名，内部统一切换到 GrowthLedger 写入。
  */
 @Injectable()
-export class UserPointService extends PlatformService {
-  get appUser() {
-    return this.prisma.appUser
-  }
-
+export class UserPointService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly pointRuleService: UserPointRuleService,
     private readonly growthLedgerService: GrowthLedgerService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get growthLedgerRecord() {
+    return this.drizzle.schema.growthLedgerRecord
+  }
+
+  get appUser() {
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -41,9 +49,9 @@ export class UserPointService extends PlatformService {
   ) {
     const { userId, ruleType, remark } = addPointsDto
 
-    const user = await this.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      select: { id: true },
+      columns: { id: true },
     })
     if (!user) {
       throw new BadRequestException('用户不存在')
@@ -60,7 +68,7 @@ export class UserPointService extends PlatformService {
     const bizKey =
       addPointsDto.bizKey ?? this.buildBizKey(`point:rule:${ruleType}`, userId)
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.db.transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
         userId,
         assetType: GrowthAssetTypeEnum.POINTS,
@@ -82,9 +90,7 @@ export class UserPointService extends PlatformService {
         throw new BadRequestException('积分发放失败')
       }
 
-      const record = await tx.growthLedgerRecord.findUniqueOrThrow({
-        where: { id: recordId },
-      })
+      const record = await this.findLedgerRecordById(tx, recordId)
 
       return this.toPointRecord(record)
     })
@@ -100,14 +106,12 @@ export class UserPointService extends PlatformService {
       bizKey?: string
       source?: string
     },
-    tx?: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
+    tx?: any,
   ) {
     const { userId, points, remark, targetType, targetId, exchangeId } =
       consumePointsDto
 
-    const applyConsume = async (
-      trx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
-    ) => {
+    const applyConsume = async (trx: any) => {
       const bizKey =
         consumePointsDto.bizKey ??
         this.buildBizKey(
@@ -116,7 +120,7 @@ export class UserPointService extends PlatformService {
         )
       const source = consumePointsDto.source ?? 'point_service'
 
-      const result = await this.growthLedgerService.applyDelta(trx as any, {
+      const result = await this.growthLedgerService.applyDelta(trx, {
         userId,
         assetType: GrowthAssetTypeEnum.POINTS,
         action: GrowthLedgerActionEnum.CONSUME,
@@ -142,9 +146,7 @@ export class UserPointService extends PlatformService {
         throw new BadRequestException('积分扣减失败')
       }
 
-      const record = await (trx as any).growthLedgerRecord.findUniqueOrThrow({
-        where: { id: recordId },
-      })
+      const record = await this.findLedgerRecordById(trx, recordId)
 
       return this.toPointRecord(record)
     }
@@ -153,7 +155,7 @@ export class UserPointService extends PlatformService {
       return applyConsume(tx)
     }
 
-    return this.prisma.$transaction(async (transaction) => {
+    return this.db.transaction(async (transaction) => {
       return applyConsume(transaction)
     })
   }
@@ -164,15 +166,16 @@ export class UserPointService extends PlatformService {
    * @returns 分页的记录列表
    */
   async getPointRecordPage(dto: QueryUserPointRecordDto) {
-    const { userId, ruleId, ...otherDto } = dto
-    const page = await this.prisma.growthLedgerRecord.findPagination({
-      where: {
-        ...otherDto,
-        userId,
-        ruleId,
-        assetType: GrowthAssetTypeEnum.POINTS,
-      },
-      orderBy: { id: 'desc' },
+    const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
+      where: this.drizzle.buildWhere(this.growthLedgerRecord, {
+        and: {
+          userId: dto.userId,
+          ruleId: dto.ruleId,
+          assetType: GrowthAssetTypeEnum.POINTS,
+        },
+      }),
+      ...dto,
+      orderBy: dto.orderBy ?? JSON.stringify([{ id: 'desc' }]),
     })
 
     return {
@@ -187,14 +190,17 @@ export class UserPointService extends PlatformService {
    * @returns 记录详情信息
    */
   async getPointRecordDetail(id: number) {
-    const record = await this.prisma.growthLedgerRecord.findUnique({
-      where: { id },
-      include: {
+    const record = await this.db.query.growthLedgerRecord.findFirst({
+      where: {
+        id,
+        assetType: GrowthAssetTypeEnum.POINTS,
+      },
+      with: {
         user: true,
       },
     })
 
-    if (!record || record.assetType !== GrowthAssetTypeEnum.POINTS) {
+    if (!record) {
       throw new BadRequestException('积分记录不存在')
     }
 
@@ -210,9 +216,9 @@ export class UserPointService extends PlatformService {
    * @returns 积分统计信息
    */
   async getUserPointStats(userId: number) {
-    const user = await this.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      select: { id: true, points: true },
+      columns: { id: true, points: true },
     })
 
     if (!user) {
@@ -223,30 +229,38 @@ export class UserPointService extends PlatformService {
     today.setHours(0, 0, 0, 0)
 
     const [todayEarned, todayConsumed] = await Promise.all([
-      this.prisma.growthLedgerRecord.aggregate({
-        where: {
-          userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          delta: { gt: 0 },
-          createdAt: { gte: today },
-        },
-        _sum: { delta: true },
-      }),
-      this.prisma.growthLedgerRecord.aggregate({
-        where: {
-          userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          delta: { lt: 0 },
-          createdAt: { gte: today },
-        },
-        _sum: { delta: true },
-      }),
+      this.db
+        .select({
+          total: sql<number>`coalesce(sum(${this.growthLedgerRecord.delta}), 0)`,
+        })
+        .from(this.growthLedgerRecord)
+        .where(
+          and(
+            eq(this.growthLedgerRecord.userId, userId),
+            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
+            gt(this.growthLedgerRecord.delta, 0),
+            gte(this.growthLedgerRecord.createdAt, today),
+          ),
+        ),
+      this.db
+        .select({
+          total: sql<number>`coalesce(sum(${this.growthLedgerRecord.delta}), 0)`,
+        })
+        .from(this.growthLedgerRecord)
+        .where(
+          and(
+            eq(this.growthLedgerRecord.userId, userId),
+            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
+            lt(this.growthLedgerRecord.delta, 0),
+            gte(this.growthLedgerRecord.createdAt, today),
+          ),
+        ),
     ])
 
     return {
       currentPoints: user.points,
-      todayEarned: todayEarned._sum.delta || 0,
-      todayConsumed: Math.abs(todayConsumed._sum.delta || 0),
+      todayEarned: Number(todayEarned[0]?.total ?? 0),
+      todayConsumed: Math.abs(Number(todayConsumed[0]?.total ?? 0)),
     }
   }
 
@@ -262,7 +276,7 @@ export class UserPointService extends PlatformService {
     points: number,
     operation: 'add' | 'consume',
   ) {
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.db.transaction(async (tx) => {
       const action =
         operation === 'add'
           ? GrowthLedgerActionEnum.GRANT
@@ -295,6 +309,33 @@ export class UserPointService extends PlatformService {
     })
 
     return result
+  }
+
+  private async findLedgerRecordById(tx: any, id: number) {
+    if (tx?.query?.growthLedgerRecord) {
+      const record = await tx.query.growthLedgerRecord.findFirst({
+        where: { id },
+      })
+      if (!record) {
+        throw new BadRequestException('积分记录不存在')
+      }
+      return record
+    }
+    if (tx?.growthLedgerRecord?.findUniqueOrThrow) {
+      return tx.growthLedgerRecord.findUniqueOrThrow({
+        where: { id },
+      })
+    }
+    const [record] = await this.db
+      .select()
+      .from(this.growthLedgerRecord)
+      .where(eq(this.growthLedgerRecord.id, id))
+      .orderBy(desc(this.growthLedgerRecord.id))
+      .limit(1)
+    if (!record) {
+      throw new BadRequestException('积分记录不存在')
+    }
+    return record
   }
 
   /**

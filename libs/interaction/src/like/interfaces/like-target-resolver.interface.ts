@@ -1,5 +1,5 @@
 import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import type { InteractionTx } from '../../interaction-tx.type'
 import type { LikeTargetTypeEnum } from '../like.constant'
 
 /**
@@ -35,7 +35,7 @@ export interface ILikeTargetResolver {
    * @throws 目标不存在时抛出异常
    */
   resolveMeta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
   ) => Promise<LikeTargetMeta>
 
@@ -47,7 +47,7 @@ export interface ILikeTargetResolver {
    * @param delta - 变化量（点赞+1，取消点赞-1）
    */
   applyCountDelta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) => Promise<void>
@@ -61,7 +61,7 @@ export interface ILikeTargetResolver {
    * @param meta - 目标元信息
    */
   postLikeHook?: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     actorUserId: number,
     meta: LikeTargetMeta,

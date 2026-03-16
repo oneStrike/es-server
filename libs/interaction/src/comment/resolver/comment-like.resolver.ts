@@ -1,4 +1,6 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import type { InteractionTx } from '../../interaction-tx.type'
+import { DrizzleService } from '@db/core'
+import { appUser, userComment } from '@db/schema'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -8,13 +10,13 @@ import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
 } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
 import {
   ILikeTargetResolver,
@@ -30,7 +32,6 @@ import { LikeService } from '../../like/like.service'
  */
 @Injectable()
 export class CommentLikeResolver
-  extends PlatformService
   implements ILikeTargetResolver, OnModuleInit {
   /** 目标类型：评论 */
   readonly targetType = LikeTargetTypeEnum.COMMENT
@@ -38,9 +39,8 @@ export class CommentLikeResolver
   constructor(
     private readonly likeService: LikeService,
     private readonly messageOutboxService: MessageOutboxService,
-  ) {
-    super()
-  }
+    private readonly drizzle: DrizzleService,
+  ) {}
 
   /**
    * 模块初始化时注册解析器到点赞服务
@@ -59,10 +59,10 @@ export class CommentLikeResolver
    * @throws NotFoundException 当评论不存在时抛出异常
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const comment = await tx.userComment.findFirst({
-      where: { id: targetId, deletedAt: null },
-      select: {
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const comment = await tx.query.userComment.findFirst({
+      where: { id: targetId, deletedAt: { isNull: true } },
+      columns: {
         id: true,
         targetType: true,
         targetId: true,
@@ -106,7 +106,7 @@ export class CommentLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -114,14 +114,19 @@ export class CommentLikeResolver
       return
     }
 
-    await tx.userComment.applyCountDelta(
-      {
-        id: targetId,
-        deletedAt: null,
-      },
-      'likeCount',
-      delta,
-    )
+    await tx
+      .update(userComment)
+      .set({
+        likeCount: sql`${userComment.likeCount} + ${delta}`,
+      })
+      .where(and(eq(userComment.id, targetId), isNull(userComment.deletedAt)))
+    const updated = await tx.query.userComment.findFirst({
+      where: { id: targetId, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new NotFoundException('评论不存在')
+    }
   }
 
   /**
@@ -133,14 +138,14 @@ export class CommentLikeResolver
    * @param _meta - 点赞目标元数据（本场景未使用）
    */
   async postLikeHook(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     actorUserId: number,
     _meta: LikeTargetMeta,
   ) {
-    const comment = await tx.userComment.findFirst({
-      where: { id: targetId, deletedAt: null },
-      select: {
+    const comment = await tx.query.userComment.findFirst({
+      where: { id: targetId, deletedAt: { isNull: true } },
+      columns: {
         id: true,
         userId: true,
         targetType: true,
@@ -183,25 +188,37 @@ export class CommentLikeResolver
       return new Map()
     }
 
-    const comments = await this.prisma.userComment.findMany({
-      where: {
-        id: { in: targetIds },
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        floor: true,
-        content: true,
-        createdAt: true,
-        user: {
-          select: {
-            id: true,
-            nickname: true
-          }
-        }
-      },
-    })
+    const comments = await this.drizzle.db
+      .select({
+        id: userComment.id,
+        floor: userComment.floor,
+        content: userComment.content,
+        createdAt: userComment.createdAt,
+        userId: appUser.id,
+        userNickname: appUser.nickname,
+      })
+      .from(userComment)
+      .leftJoin(appUser, eq(userComment.userId, appUser.id))
+      .where(
+        and(inArray(userComment.id, targetIds), isNull(userComment.deletedAt)),
+      )
 
-    return new Map(comments.map((comment) => [comment.id, comment]))
+    return new Map(
+      comments.map((comment) => [
+        comment.id,
+        {
+          id: comment.id,
+          floor: comment.floor,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          user: comment.userId
+            ? {
+                id: comment.userId,
+                nickname: comment.userNickname,
+              }
+            : null,
+        },
+      ]),
+    )
   }
 }

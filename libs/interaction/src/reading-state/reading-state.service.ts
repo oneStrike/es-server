@@ -1,19 +1,26 @@
+import { DrizzleService } from '@db/core'
 import { ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
 import { QueryReadingHistoryDto } from './dto/reading-state.dto'
 import { IReadingStateResolver } from './interfaces/reading-state-resolver.interface'
 
 @Injectable()
-export class ReadingStateService extends PlatformService {
+export class ReadingStateService {
   private readonly logger = new Logger(ReadingStateService.name)
   private readonly resolvers = new Map<
     ContentTypeEnum,
     IReadingStateResolver
   >()
 
-  constructor() {
-    super()
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userWorkReadingState() {
+    return this.drizzle.schema.userWorkReadingState
   }
 
   /**
@@ -41,10 +48,6 @@ export class ReadingStateService extends PlatformService {
     return resolver
   }
 
-  get userWorkReadingState() {
-    return this.prisma.userWorkReadingState
-  }
-
   /**
    * 获取用户的阅读状态
    */
@@ -55,7 +58,7 @@ export class ReadingStateService extends PlatformService {
   ) {
     const resolver = this.getResolver(workType)
 
-    const state = await this.userWorkReadingState.findFirst({
+    const state = await this.db.query.userWorkReadingState.findFirst({
       where: {
         userId,
         workId,
@@ -102,26 +105,29 @@ export class ReadingStateService extends PlatformService {
     // 预研：确保解析器存在
     this.getResolver(workType)
 
-    return this.userWorkReadingState.upsert({
-      where: {
-        userId_workId: {
-          userId,
-          workId,
-        },
-      },
-      create: {
+    const rows = await this.db
+      .insert(this.userWorkReadingState)
+      .values({
         userId,
         workId,
         workType,
         lastReadAt,
         lastReadChapterId,
-      },
-      update: {
-        workType,
-        lastReadAt,
-        lastReadChapterId,
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: [
+          this.userWorkReadingState.userId,
+          this.userWorkReadingState.workId,
+        ],
+        set: {
+          workType,
+          lastReadAt,
+          lastReadChapterId,
+        },
+      })
+      .returning()
+
+    return rows[0]
   }
 
   /**
@@ -190,13 +196,18 @@ export class ReadingStateService extends PlatformService {
    * 获取用户的阅读历史列表
    */
   async getUserReadingHistory(dto: QueryReadingHistoryDto) {
-    const { workType, ...otherDto } = dto
-    const page = await (this.userWorkReadingState as any).findPagination({
-      where: {
-        ...otherDto,
-        ...(workType !== undefined && { workType }),
-      },
+    const { workType, userId, workId, pageIndex, pageSize } = dto
+    const page = await this.drizzle.ext.findPagination(this.userWorkReadingState, {
+      where: this.drizzle.buildWhere(this.userWorkReadingState, {
+        and: {
+          userId,
+          workId,
+          ...(workType !== undefined && { workType }),
+        },
+      }),
       orderBy: { lastReadAt: 'desc' },
+      pageIndex,
+      pageSize,
     })
 
     // 按作品类型分组处理作品信息和章节信息
@@ -260,23 +271,31 @@ export class ReadingStateService extends PlatformService {
    * 删除单条阅读历史记录
    */
   async deleteUserReadingHistory(id: number, userId?: number) {
-    await this.userWorkReadingState.delete({
-      where: {
-        id,
-        userId,
-      },
-    })
+    await this.db
+      .delete(this.userWorkReadingState)
+      .where(
+        userId === undefined
+          ? eq(this.userWorkReadingState.id, id)
+          : and(
+              eq(this.userWorkReadingState.id, id),
+              eq(this.userWorkReadingState.userId, userId),
+            ),
+      )
   }
 
   /**
    * 清空用户的阅读历史
    */
   async clearUserReadingHistory(userId: number, workType?: ContentTypeEnum) {
-    await this.userWorkReadingState.deleteMany({
-      where: {
-        userId,
-        workType,
-      },
-    })
+    await this.db
+      .delete(this.userWorkReadingState)
+      .where(
+        workType === undefined
+          ? eq(this.userWorkReadingState.userId, userId)
+          : and(
+              eq(this.userWorkReadingState.userId, userId),
+              eq(this.userWorkReadingState.workType, workType),
+            ),
+      )
   }
 }

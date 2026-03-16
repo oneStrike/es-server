@@ -1,4 +1,5 @@
-import { Prisma } from '@libs/platform/database'
+import type { SQL } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 
 export interface NormalizedPagination {
   pageIndex: number
@@ -47,13 +48,13 @@ export function buildCreatedAtSqlFilter(
   startDate?: string,
   endDate?: string,
 ) {
-  const filters: Prisma.Sql[] = []
-  const columnRef = Prisma.raw(column)
+  const filters: SQL[] = []
+  const columnRef = sql.raw(column)
 
   if (startDate) {
     const start = new Date(startDate)
     if (!Number.isNaN(start.getTime())) {
-      filters.push(Prisma.sql`${columnRef} >= ${start}`)
+      filters.push(sql`${columnRef} >= ${start}`)
     }
   }
 
@@ -61,13 +62,13 @@ export function buildCreatedAtSqlFilter(
     const end = new Date(endDate)
     if (!Number.isNaN(end.getTime())) {
       end.setDate(end.getDate() + 1)
-      filters.push(Prisma.sql`${columnRef} < ${end}`)
+      filters.push(sql`${columnRef} < ${end}`)
     }
   }
 
   if (filters.length === 0) {
-    return Prisma.empty
+    return sql.empty()
   }
 
-  return Prisma.sql` AND ${Prisma.join(filters, ' AND ')}`
+  return sql` AND ${sql.join(filters, sql` AND `)}`
 }

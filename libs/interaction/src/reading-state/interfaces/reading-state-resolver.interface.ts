@@ -1,5 +1,5 @@
 import type { ContentTypeEnum } from '@libs/platform/constant'
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import type { InteractionTx } from '../../interaction-tx.type'
 
 /**
  * 阅读状态中使用的章节快照
@@ -39,7 +39,7 @@ export interface IReadingStateResolver {
    * @param chapterId - 章节ID
    */
   resolveChapterSnapshot: (
-    tx: PrismaTransactionClientType | undefined,
+    tx: InteractionTx | undefined,
     workId: number,
     chapterId: number,
   ) => Promise<ReadingStateChapterSnapshot | undefined>

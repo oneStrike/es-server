@@ -1,11 +1,13 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { work, workAuthorRelation } from '@db/schema'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
 import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 漫画作品评论解析器
@@ -40,7 +42,7 @@ export class WorkComicCommentResolver
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -48,15 +50,29 @@ export class WorkComicCommentResolver
       return
     }
 
-    await tx.work.applyCountDelta(
-      {
+    await tx
+      .update(work)
+      .set({
+        commentCount: sql`${work.commentCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(work.id, targetId),
+          eq(work.type, this.workType),
+          isNull(work.deletedAt),
+        ),
+      )
+    const updated = await tx.query.work.findFirst({
+      where: {
         id: targetId,
         type: this.workType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      'commentCount',
-      delta,
-    )
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new BadRequestException('漫画作品不存在')
+    }
   }
 
   /**
@@ -67,21 +83,21 @@ export class WorkComicCommentResolver
    * @param targetId - 目标作品ID
    * @throws 当作品不存在或不允许评论时抛出 BadRequestException
    */
-  async ensureCanComment(tx: PrismaTransactionClientType, targetId: number) {
-    const work = await tx.work.findFirst({
+  async ensureCanComment(tx: InteractionTx, targetId: number) {
+    const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
         type: this.workType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { canComment: true },
+      columns: { canComment: true },
     })
 
-    if (!work) {
+    if (!target) {
       throw new BadRequestException('漫画作品不存在')
     }
 
-    if (!work.canComment) {
+    if (!target.canComment) {
       throw new BadRequestException('该漫画作品不允许评论')
     }
   }
@@ -94,18 +110,17 @@ export class WorkComicCommentResolver
    * @param targetId - 目标作品ID
    * @returns 目标元信息，包含所有者用户ID
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const work = await tx.work.findUnique({
-      where: { id: targetId },
-      include: {
-        authors: {
-          take: 1,
-        },
-      },
-    })
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const [author] = await tx
+      .select({
+        authorId: workAuthorRelation.authorId,
+      })
+      .from(workAuthorRelation)
+      .where(eq(workAuthorRelation.workId, targetId))
+      .limit(1)
 
     return {
-      ownerUserId: work?.authors?.[0]?.authorId,
+      ownerUserId: author?.authorId,
     }
   }
 }

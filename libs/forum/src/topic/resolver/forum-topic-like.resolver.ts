@@ -1,6 +1,7 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { forumTopic } from '@db/schema'
 import {
   ILikeTargetResolver,
+  InteractionTx,
   LikeService,
   LikeTargetMeta,
   LikeTargetTypeEnum,
@@ -12,6 +13,7 @@ import {
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛主题点赞解析器
@@ -48,13 +50,13 @@ export class ForumTopicLikeResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当主题不存在时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const topic = await tx.forumTopic.findFirst({
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { id: true },
+      columns: { id: true },
     })
 
     if (!topic) {
@@ -75,7 +77,7 @@ export class ForumTopicLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -83,14 +85,19 @@ export class ForumTopicLikeResolver
       return
     }
 
-    await tx.forumTopic.applyCountDelta(
-      {
-        id: targetId,
-        deletedAt: null,
-      },
-      'likeCount',
-      delta,
-    )
+    await tx
+      .update(forumTopic)
+      .set({
+        likeCount: sql`${forumTopic.likeCount} + ${delta}`,
+      })
+      .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
+    const updated = await tx.query.forumTopic.findFirst({
+      where: { id: targetId, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new NotFoundException('帖子不存在')
+    }
   }
 
   /**
@@ -102,17 +109,17 @@ export class ForumTopicLikeResolver
    * @param _meta - 点赞目标元数据（本场景未使用）
    */
   async postLikeHook(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     actorUserId: number,
     _meta: LikeTargetMeta,
   ) {
-    const topic = await tx.forumTopic.findFirst({
+    const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { userId: true },
+      columns: { userId: true },
     })
 
     if (!topic || topic.userId === actorUserId) {

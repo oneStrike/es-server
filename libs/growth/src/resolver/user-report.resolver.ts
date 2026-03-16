@@ -1,11 +1,10 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
 import {
+  InteractionTx,
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
 } from '@libs/interaction'
 import { SceneTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 /**
@@ -14,15 +13,12 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class UserReportResolver
-  extends PlatformService
   implements IReportTargetResolver, OnModuleInit
 {
   /** 目标类型：用户 */
   readonly targetType = ReportTargetTypeEnum.USER
 
-  constructor(private readonly reportService: ReportService) {
-    super()
-  }
+  constructor(private readonly reportService: ReportService) {}
 
   /**
    * 模块初始化时注册解析器到举报服务
@@ -40,10 +36,10 @@ export class UserReportResolver
    * @returns 包含场景类型、场景ID和用户ID的元数据对象
    * @throws NotFoundException 当用户不存在时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const user = await tx.appUser.findUnique({
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const user = await tx.query.appUser.findFirst({
       where: { id: targetId },
-      select: { id: true },
+      columns: { id: true },
     })
 
     if (!user) {

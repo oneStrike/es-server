@@ -1,9 +1,9 @@
+import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
   GrowthRuleTypeEnum,
 } from '@libs/growth'
-import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
 import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
@@ -26,9 +26,14 @@ import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
  * - 评论被点赞 → COMMENT_LIKED
  */
 @Injectable()
-export class LikeGrowthService extends PlatformService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
-    super()
+export class LikeGrowthService {
+  constructor(
+    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -58,7 +63,7 @@ export class LikeGrowthService extends PlatformService {
     const baseBizKey = `like:${targetType}:${targetId}:user:${userId}`
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         await this.growthLedgerService.applyByRule(tx, {
           userId,
           assetType: GrowthAssetTypeEnum.POINTS,
@@ -94,9 +99,9 @@ export class LikeGrowthService extends PlatformService {
     commentId: number,
     likerUserId: number,
   ): Promise<void> {
-    const comment = await this.prisma.userComment.findFirst({
-      where: { id: commentId, deletedAt: null },
-      select: { userId: true },
+    const comment = await this.db.query.userComment.findFirst({
+      where: { id: commentId, deletedAt: { isNull: true } },
+      columns: { userId: true },
     })
 
     if (!comment || comment.userId === likerUserId) {
@@ -106,7 +111,7 @@ export class LikeGrowthService extends PlatformService {
     const baseBizKey = `comment:liked:${commentId}:liker:${likerUserId}:author:${comment.userId}`
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         await this.growthLedgerService.applyByRule(tx, {
           userId: comment.userId,
           assetType: GrowthAssetTypeEnum.POINTS,

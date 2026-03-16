@@ -1,3 +1,4 @@
+import { DrizzleService } from '@db/core'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -6,7 +7,6 @@ import {
 import {
   AuditStatusEnum,
 } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
@@ -14,6 +14,7 @@ import {
 
 import { ConfigReader } from '@libs/system-config'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, inArray, isNull, max } from 'drizzle-orm'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentTargetTypeEnum } from './comment.constant'
@@ -48,7 +49,7 @@ interface VisibleCommentPayload {
  * 集成了敏感词检测、审核决策、成长奖励、消息通知等功能。
  */
 @Injectable()
-export class CommentService extends PlatformService {
+export class CommentService {
   constructor(
     /** 敏感词检测服务，用于内容审核 */
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
@@ -60,8 +61,19 @@ export class CommentService extends PlatformService {
     private readonly commentGrowthService: CommentGrowthService,
     /** 消息发件箱服务，用于发送通知消息 */
     private readonly messageOutboxService: MessageOutboxService,
-  ) {
-    super()
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userComment() {
+    return this.drizzle.schema.userComment
+  }
+
+  private get appUser() {
+    return this.drizzle.schema.appUser
   }
 
   /** 目标类型到解析器的映射表 */
@@ -69,6 +81,59 @@ export class CommentService extends PlatformService {
     CommentTargetTypeEnum,
     ICommentTargetResolver
   >()
+
+  private handleBusinessError(
+    error: unknown,
+    options: {
+      duplicateMessage?: string
+      notFoundMessage?: string
+      conflictMessage?: string
+    },
+  ): never {
+    if (
+      options.duplicateMessage
+      && (this.drizzle.isUniqueViolation(error) || this.drizzle.isErrorCode(error, 'P2002'))
+    ) {
+      throw new BadRequestException(options.duplicateMessage)
+    }
+    if (options.notFoundMessage && this.drizzle.isErrorCode(error, 'P2025')) {
+      throw new BadRequestException(options.notFoundMessage)
+    }
+    if (
+      options.conflictMessage
+      && (this.drizzle.isSerializationFailure(error)
+        || this.drizzle.isErrorCode(error, 'P2034'))
+    ) {
+      throw new BadRequestException(options.conflictMessage)
+    }
+    throw error
+  }
+
+  private async withTransactionConflictRetry<T>(
+    operation: () => Promise<T>,
+    options?: {
+      maxRetries?: number
+    },
+  ): Promise<T> {
+    const maxRetries = Math.max(1, options?.maxRetries ?? 3)
+    let lastError: unknown = new Error('事务冲突重试次数已耗尽')
+
+    for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+      try {
+        return await operation()
+      } catch (error) {
+        lastError = error
+        if (
+          !this.drizzle.isSerializationFailure(error)
+          || attempt >= maxRetries - 1
+        ) {
+          throw error
+        }
+      }
+    }
+
+    throw lastError
+  }
 
   /**
    * 注册目标解析器
@@ -216,9 +281,12 @@ export class CommentService extends PlatformService {
     }
 
     // 查询被回复的评论，获取被回复者信息
-    const replyTarget = await tx.userComment.findUnique({
-      where: { id: comment.replyToId, deletedAt: null },
-      select: {
+    const replyTarget = await tx.query.userComment.findFirst({
+      where: {
+        id: comment.replyToId,
+        deletedAt: null,
+      },
+      columns: {
         userId: true,
       },
     })
@@ -281,80 +349,78 @@ export class CommentService extends PlatformService {
     const resolver = this.getResolver(targetType)
 
     try {
-      return await this.withTransactionConflictRetry(
+      const created = await this.withTransactionConflictRetry(
         async () =>
-          this.prisma.$transaction(
-            async (tx) => {
-              // 1. 业务目标校验 (Resolver)
-              await resolver.ensureCanComment(tx, targetId)
+          this.db.transaction(async (tx) => {
+            await resolver.ensureCanComment(tx, targetId)
 
-              // 2. 计算新评论的楼层号（当前最大楼层 + 1）
-              const result = await tx.userComment.aggregate({
-                where: {
-                  targetType,
-                  targetId,
-                  replyToId: null, // 只统计一级评论
-                },
-                _max: { floor: true },
+            const [floorResult] = await tx
+              .select({
+                floor: max(this.userComment.floor),
               })
-              const floor = (result._max.floor ?? 0) + 1
+              .from(this.userComment)
+              .where(
+                and(
+                  eq(this.userComment.targetType, targetType),
+                  eq(this.userComment.targetId, targetId),
+                  isNull(this.userComment.replyToId),
+                ),
+              )
+            const floor = (Number(floorResult?.floor ?? 0) || 0) + 1
 
-              // 创建评论记录
-              const newComment = await tx.userComment.create({
-                data: {
-                  targetType,
-                  targetId,
-                  userId,
-                  content,
-                  floor,
-                  ...decision, // 包含审核状态、隐藏标记、敏感词命中记录
-                },
-                select: {
-                  id: true,
-                  userId: true,
-                  targetType: true,
-                  targetId: true,
-                  replyToId: true,
-                  createdAt: true,
-                },
+            const [newComment] = await tx
+              .insert(this.userComment)
+              .values({
+                targetType,
+                targetId,
+                userId,
+                content,
+                floor,
+                ...decision,
+              })
+              .returning({
+                id: this.userComment.id,
+                userId: this.userComment.userId,
+                targetType: this.userComment.targetType,
+                targetId: this.userComment.targetId,
+                replyToId: this.userComment.replyToId,
+                createdAt: this.userComment.createdAt,
               })
 
-              // 如果评论可见，执行副作用补偿（计数+奖励+通知）
-              if (this.isVisible({ ...decision, deletedAt: null })) {
-                await this.applyCommentCountDelta(tx, targetType, targetId, 1)
+            if (this.isVisible({ ...decision, deletedAt: null })) {
+              await this.applyCommentCountDelta(tx, targetType, targetId, 1)
 
-                // 发放成长奖励
-                await this.commentGrowthService.rewardCommentCreated(tx, {
-                  userId: newComment.userId,
-                  commentId: newComment.id,
-                  targetType: newComment.targetType,
-                  targetId: newComment.targetId,
-                  occurredAt: newComment.createdAt,
-                })
-
-                // 解析目标元信息用于后置钩子（如通知）
-                const meta = await resolver.resolveMeta(tx, targetId)
-                if (resolver.postCommentHook) {
-                  await resolver.postCommentHook(tx, targetId, userId, meta)
-                }
-
-                // 处理通用副作用（如回复通知）
-                await this.compensateVisibleCommentEffects(tx, newComment, meta)
+              const meta = await resolver.resolveMeta(tx, targetId)
+              if (resolver.postCommentHook) {
+                await resolver.postCommentHook(tx, targetId, userId, meta)
               }
 
-              return { id: newComment.id }
-            },
-            {
-              // 使用 Serializable 隔离级别防止楼层号并发冲突
-              isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-            },
-          ),
+              await this.compensateVisibleCommentEffects(tx, newComment, meta)
+            }
+
+            return {
+              comment: newComment,
+              visible: this.isVisible({ ...decision, deletedAt: null }),
+            }
+          }),
         {
           maxRetries: 3,
         },
       )
+
+      if (created.visible) {
+        await this.commentGrowthService.rewardCommentCreated(this.db, {
+          userId: created.comment.userId,
+          commentId: created.comment.id,
+          targetType: created.comment.targetType,
+          targetId: created.comment.targetId,
+          occurredAt: created.comment.createdAt,
+        })
+      }
+
+      return { id: created.comment.id }
     } catch (error) {
-      this.handlePrismaBusinessError(error, {
+      this.handleBusinessError(error, {
         conflictMessage: '请求冲突，请稍后重试',
       })
     }
@@ -375,9 +441,9 @@ export class CommentService extends PlatformService {
     const { userId, content, replyToId } = dto
 
     // 查询被回复的评论
-    const replyTo = await this.prisma.userComment.findUnique({
+    const replyTo = await this.db.query.userComment.findFirst({
       where: { id: replyToId },
-      select: {
+      columns: {
         id: true,
         targetType: true,
         targetId: true,
@@ -413,32 +479,29 @@ export class CommentService extends PlatformService {
     const decision = this.resolveAuditDecision(content)
     const resolver = this.getResolver(targetType as CommentTargetTypeEnum)
 
-    return this.prisma.$transaction(async (tx) => {
-      // 1. 业务目标校验 (Resolver)
+    const created = await this.db.transaction(async (tx) => {
       await resolver.ensureCanComment(tx, targetId)
 
-      // 创建回复记录
-      const newComment = await tx.userComment.create({
-        data: {
+      const [newComment] = await tx
+        .insert(this.userComment)
+        .values({
           targetType,
           targetId,
           userId,
           content,
-          replyToId, // 直接回复的评论ID
-          actualReplyToId, // 实际归属的一级评论ID
+          replyToId,
+          actualReplyToId,
           ...decision,
-        },
-        select: {
-          id: true,
-          userId: true,
-          targetType: true,
-          targetId: true,
-          replyToId: true,
-          createdAt: true,
-        },
-      })
+        })
+        .returning({
+          id: this.userComment.id,
+          userId: this.userComment.userId,
+          targetType: this.userComment.targetType,
+          targetId: this.userComment.targetId,
+          replyToId: this.userComment.replyToId,
+          createdAt: this.userComment.createdAt,
+        })
 
-      // 如果回复可见，执行副作用补偿（计数+奖励+通知）
       if (this.isVisible({ ...decision, deletedAt: null })) {
         await this.applyCommentCountDelta(
           tx,
@@ -447,27 +510,31 @@ export class CommentService extends PlatformService {
           1,
         )
 
-        // 发放成长奖励
-        await this.commentGrowthService.rewardCommentCreated(tx, {
-          userId: newComment.userId,
-          commentId: newComment.id,
-          targetType: newComment.targetType as any,
-          targetId: newComment.targetId,
-          occurredAt: newComment.createdAt,
-        })
-
-        // 解析目标元信息用于后置钩子
         const meta = await resolver.resolveMeta(tx, targetId)
         if (resolver.postCommentHook) {
           await resolver.postCommentHook(tx, targetId, userId, meta)
         }
 
-        // 处理通用副作用（如回复通知）
         await this.compensateVisibleCommentEffects(tx, newComment, meta)
       }
 
-      return { id: newComment.id }
+      return {
+        comment: newComment,
+        visible: this.isVisible({ ...decision, deletedAt: null }),
+      }
     })
+
+    if (created.visible) {
+      await this.commentGrowthService.rewardCommentCreated(this.db, {
+        userId: created.comment.userId,
+        commentId: created.comment.id,
+        targetType: created.comment.targetType as any,
+        targetId: created.comment.targetId,
+        occurredAt: created.comment.createdAt,
+      })
+    }
+
+    return { id: created.comment.id }
   }
 
   /**
@@ -482,27 +549,49 @@ export class CommentService extends PlatformService {
    * @returns 被删除的评论ID
    */
   async deleteComment(commentId: number, userId?: number) {
-    return this.prisma.$transaction(async (tx) => {
-      // 根据 userId 是否存在决定删除条件（权限控制）
-      const where = userId ? { id: commentId, userId } : { id: commentId }
-
-      // 执行软删除
-      const result = await tx.userComment.softDelete(where)
-
-      // 如果删除前评论不可见，无需更新计数
-      if (!this.isVisible({ ...result, deletedAt: null })) {
-        return { id: result.id }
+    return this.db.transaction(async (tx) => {
+      const found = await tx.query.userComment.findFirst({
+        where: userId
+          ? {
+              id: commentId,
+              userId,
+              deletedAt: { isNull: true },
+            }
+          : {
+              id: commentId,
+              deletedAt: { isNull: true },
+            },
+        columns: {
+          id: true,
+          targetType: true,
+          targetId: true,
+          auditStatus: true,
+          isHidden: true,
+        },
+      })
+      if (!found) {
+        throw new BadRequestException('删除失败：数据不存在')
       }
 
-      // 减少目标对象的评论计数
+      await tx
+        .update(this.userComment)
+        .set({
+          deletedAt: new Date(),
+        })
+        .where(eq(this.userComment.id, found.id))
+
+      if (!this.isVisible({ ...found, deletedAt: null })) {
+        return { id: found.id }
+      }
+
       await this.applyCommentCountDelta(
         tx,
-        result.targetType as CommentTargetTypeEnum,
-        result.targetId,
+        found.targetType as CommentTargetTypeEnum,
+        found.targetId,
         -1,
       )
 
-      return { id: result.id }
+      return { id: found.id }
     })
   }
 
@@ -516,26 +605,52 @@ export class CommentService extends PlatformService {
    * @returns 分页的回复列表，包含用户基本信息
    */
   async getReplies(dto: QueryCommentRepliesDto) {
-    const { commentId, ...otherDto } = dto
-
-    return this.prisma.userComment.findPagination({
-      where: {
-        actualReplyToId: commentId, // 查询归属于该一级评论的所有回复
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-        deletedAt: null,
-        ...otherDto,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
+    const { commentId, pageIndex, pageSize } = dto
+    const page = await this.drizzle.ext.findPagination(this.userComment, {
+      where: this.drizzle.buildWhere(this.userComment, {
+        and: {
+          actualReplyToId: commentId,
+          auditStatus: AuditStatusEnum.APPROVED,
+          isHidden: false,
+          deletedAt: {
+            isNull: true,
           },
         },
+      }),
+      pageIndex,
+      pageSize,
+      orderBy: {
+        createdAt: 'desc',
       },
     })
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const userIds = [...new Set(page.list.map((item) => item.userId))]
+    const users = userIds.length
+      ? await this.db
+          .select({
+            id: this.appUser.id,
+            nickname: this.appUser.nickname,
+            avatar: this.appUser.avatarUrl,
+          })
+          .from(this.appUser)
+          .where(inArray(this.appUser.id, userIds))
+      : []
+    const userMap = new Map(users.map((item) => [item.id, item]))
+
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        const user = userMap.get(item.userId)
+        return {
+          ...item,
+          user: user ?? null,
+        }
+      }),
+    }
   }
 
   /**
@@ -549,11 +664,22 @@ export class CommentService extends PlatformService {
    * @returns 分页的评论列表
    */
   async getUserComments(dto: QueryMyCommentPageDto, userId: number) {
-    return this.prisma.userComment.findPagination({
-      where: {
-        userId,
-        deletedAt: null, // 排除已删除的评论
-        ...dto,
+    return this.drizzle.ext.findPagination(this.userComment, {
+      where: this.drizzle.buildWhere(this.userComment, {
+        and: {
+          userId,
+          targetType: dto.targetType,
+          targetId: dto.targetId,
+          auditStatus: dto.auditStatus,
+          deletedAt: {
+            isNull: true,
+          },
+        },
+      }),
+      pageIndex: dto.pageIndex,
+      pageSize: dto.pageSize,
+      orderBy: {
+        createdAt: 'desc',
       },
     })
   }

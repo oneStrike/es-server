@@ -1,5 +1,5 @@
+import { DrizzleService } from '@db/core'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import {
   BadRequestException,
   Injectable,
@@ -39,7 +39,25 @@ type SelectShape = Record<string, boolean>
  * @extends PlatformService
  */
 @Injectable()
-export class InteractionTargetAccessService extends PlatformService {
+export class InteractionTargetAccessService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  getTargetTable(targetType: InteractionTargetTypeEnum) {
+    const definition = INTERACTION_TARGET_DEFINITIONS[targetType]
+    if (!definition) {
+      throw new BadRequestException('不支持的交互目标类型')
+    }
+    const table = (this.drizzle.schema as any)[definition.tableKey]
+    if (!table) {
+      throw new BadRequestException(`目标模型不存在: ${definition.tableKey}`)
+    }
+    return table
+  }
+
   /**
    * 获取目标类型对应的 Prisma 模型代理
    *
@@ -66,10 +84,10 @@ export class InteractionTargetAccessService extends PlatformService {
     }
 
     // 通过模型键名动态获取 Prisma 模型
-    const model = client?.[definition.modelKey]
+    const model = client?.[definition.tableKey]
     if (!model) {
       throw new BadRequestException(
-        `目标模型不存在: ${definition.modelKey}`,
+        `目标模型不存在: ${definition.tableKey}`,
       )
     }
 
@@ -106,7 +124,7 @@ export class InteractionTargetAccessService extends PlatformService {
     }
 
     // 委托给定义中的构建函数
-    return definition.buildWhere(targetId)
+    return definition.whereBuilder(targetId)
   }
 
   /**
@@ -135,7 +153,7 @@ export class InteractionTargetAccessService extends PlatformService {
     }
 
     // 委托给定义中的批量构建函数
-    return definition.buildWhereIn(targetIds)
+    return definition.whereInBuilder(targetIds)
   }
 
   /**
@@ -145,7 +163,6 @@ export class InteractionTargetAccessService extends PlatformService {
    * 这是所有交互操作的前置检查，确保用户操作的目标是有效的。
    *
    * @typeParam T - 返回的目标数据类型，默认为 { id: number }
-   * @param client - Prisma 客户端实例（可以是普通客户端或事务客户端）
    * @param targetType - 交互目标类型枚举值
    * @param targetId - 目标的唯一标识ID
    * @param options - 可选配置项
@@ -156,12 +173,11 @@ export class InteractionTargetAccessService extends PlatformService {
    *
    * @example
    * // 基础用法 - 只检查存在性
-   * await this.ensureTargetExists(client, InteractionTargetTypeEnum.COMIC, 123)
+   * await this.ensureTargetExists(InteractionTargetTypeEnum.COMIC, 123)
    *
    * @example
    * // 获取完整数据
    * const work = await this.ensureTargetExists<{ id: number; title: string; authorId: number }>(
-   *   client,
    *   InteractionTargetTypeEnum.COMIC,
    *   123,
    *   { select: { id: true, title: true, authorId: true } }
@@ -170,14 +186,12 @@ export class InteractionTargetAccessService extends PlatformService {
    * @example
    * // 自定义错误消息
    * await this.ensureTargetExists(
-   *   client,
    *   InteractionTargetTypeEnum.COMIC,
    *   123,
    *   { notFoundMessage: '漫画作品不存在或已下架' }
    * )
    */
   async ensureTargetExists<T = { id: number }>(
-    client: any,
     targetType: InteractionTargetTypeEnum,
     targetId: number,
     options?: {
@@ -185,15 +199,22 @@ export class InteractionTargetAccessService extends PlatformService {
       notFoundMessage?: string
     },
   ): Promise<T> {
-    // 获取目标模型
-    const model = this.getTargetModel(client, targetType)
+    const definition = INTERACTION_TARGET_DEFINITIONS[targetType]
+    if (!definition) {
+      throw new BadRequestException('不支持的交互目标类型')
+    }
+    const modelKey = definition.tableKey
+    const model = (this.db.query as any)[modelKey]
+    if (!model) {
+      throw new BadRequestException(`目标模型不存在: ${modelKey}`)
+    }
     // 构建查询条件
-    const where = this.buildTargetWhere(targetType, targetId)
+    const where = definition.whereBuilder(targetId)
 
-    // 执行查询，默认只选择 id 字段以提升性能
+    const columns = options?.select ?? { id: true }
     const target = await model.findFirst({
       where,
-      select: options?.select ?? { id: true },
+      columns,
     })
 
     // 目标不存在时抛出异常
@@ -259,17 +280,24 @@ export class InteractionTargetAccessService extends PlatformService {
     field: string,
     delta: number,
   ) {
+    void tx
     // 增量为 0 时无需操作，直接返回
     if (delta === 0) {
       return
     }
 
-    // 获取目标模型
-    const model = this.getTargetModel(tx, targetType)
-    // 构建查询条件
-    const where = this.buildTargetWhere(targetType, targetId)
-    // 调用模型的原子计数更新方法
-    // applyCountDelta 方法会执行类似: UPDATE table SET field = field + delta WHERE ...
-    await model.applyCountDelta(where, field, delta)
+    const table = this.getTargetTable(targetType)
+    const definition = INTERACTION_TARGET_DEFINITIONS[targetType]
+    if (!definition) {
+      throw new BadRequestException('不支持的交互目标类型')
+    }
+    const where = definition.whereBuilder(targetId)
+    const condition = this.drizzle.buildWhere(table, {
+      and: where as any,
+    })
+    if (!condition) {
+      throw new NotFoundException('目标不存在')
+    }
+    await this.drizzle.ext.applyCountDelta(table, condition, field, delta)
   }
 }

@@ -1,11 +1,10 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
 import {
+  InteractionTx,
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
 } from '@libs/interaction'
 import { SceneTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 /**
@@ -14,15 +13,12 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class ForumTopicReportResolver
-  extends PlatformService
   implements IReportTargetResolver, OnModuleInit
 {
   /** 目标类型：论坛主题 */
   readonly targetType = ReportTargetTypeEnum.FORUM_TOPIC
 
-  constructor(private readonly reportService: ReportService) {
-    super()
-  }
+  constructor(private readonly reportService: ReportService) {}
 
   /**
    * 模块初始化时注册解析器到举报服务
@@ -40,13 +36,13 @@ export class ForumTopicReportResolver
    * @returns 包含场景类型、场景ID和主题作者的元数据对象
    * @throws NotFoundException 当主题不存在时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const topic = await tx.forumTopic.findFirst({
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: {
+      columns: {
         id: true,
         userId: true,
       },

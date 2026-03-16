@@ -2,11 +2,7 @@ import { InteractionTargetTypeEnum, SceneTypeEnum } from '@libs/platform/constan
 import { FavoriteTargetTypeEnum } from './favorite/favorite.constant'
 import { ReportTargetTypeEnum } from './report/report.constant'
 
-/**
- * Supported prisma model key for interaction targets.
- * Keep this list narrow to prevent accidental access to unrelated models.
- */
-export type InteractionTargetModelKey =
+export type InteractionTargetTableKey =
   | 'work'
   | 'workChapter'
   | 'forumTopic'
@@ -17,9 +13,9 @@ export type InteractionTargetModelKey =
  * Each target type maps to one model and one where-builder pair.
  */
 export interface InteractionTargetDefinition {
-  modelKey: InteractionTargetModelKey
-  buildWhere: (targetId: number) => Record<string, unknown>
-  buildWhereIn: (targetIds: number[]) => Record<string, unknown>
+  tableKey: InteractionTargetTableKey
+  whereBuilder: (targetId: number) => Record<string, unknown>
+  whereInBuilder: (targetIds: number[]) => Record<string, unknown>
 }
 
 /**
@@ -30,58 +26,58 @@ export const INTERACTION_TARGET_DEFINITIONS: Record<
   InteractionTargetDefinition
 > = {
   [InteractionTargetTypeEnum.COMIC]: {
-    modelKey: 'work',
-    buildWhere: (targetId) => ({ id: targetId, type: 1, deletedAt: null }),
-    buildWhereIn: (targetIds) => ({
+    tableKey: 'work',
+    whereBuilder: (targetId) => ({ id: targetId, type: 1, deletedAt: null }),
+    whereInBuilder: (targetIds) => ({
       id: { in: targetIds },
       type: 1,
       deletedAt: null,
     }),
   },
   [InteractionTargetTypeEnum.NOVEL]: {
-    modelKey: 'work',
-    buildWhere: (targetId) => ({ id: targetId, type: 2, deletedAt: null }),
-    buildWhereIn: (targetIds) => ({
+    tableKey: 'work',
+    whereBuilder: (targetId) => ({ id: targetId, type: 2, deletedAt: null }),
+    whereInBuilder: (targetIds) => ({
       id: { in: targetIds },
       type: 2,
       deletedAt: null,
     }),
   },
   [InteractionTargetTypeEnum.COMIC_CHAPTER]: {
-    modelKey: 'workChapter',
-    buildWhere: (targetId) => ({
+    tableKey: 'workChapter',
+    whereBuilder: (targetId) => ({
       id: targetId,
       workType: 1,
       deletedAt: null,
     }),
-    buildWhereIn: (targetIds) => ({
+    whereInBuilder: (targetIds) => ({
       id: { in: targetIds },
       workType: 1,
       deletedAt: null,
     }),
   },
   [InteractionTargetTypeEnum.NOVEL_CHAPTER]: {
-    modelKey: 'workChapter',
-    buildWhere: (targetId) => ({
+    tableKey: 'workChapter',
+    whereBuilder: (targetId) => ({
       id: targetId,
       workType: 2,
       deletedAt: null,
     }),
-    buildWhereIn: (targetIds) => ({
+    whereInBuilder: (targetIds) => ({
       id: { in: targetIds },
       workType: 2,
       deletedAt: null,
     }),
   },
   [InteractionTargetTypeEnum.FORUM_TOPIC]: {
-    modelKey: 'forumTopic',
-    buildWhere: (targetId) => ({ id: targetId, deletedAt: null }),
-    buildWhereIn: (targetIds) => ({ id: { in: targetIds }, deletedAt: null }),
+    tableKey: 'forumTopic',
+    whereBuilder: (targetId) => ({ id: targetId, deletedAt: null }),
+    whereInBuilder: (targetIds) => ({ id: { in: targetIds }, deletedAt: null }),
   },
   [InteractionTargetTypeEnum.COMMENT]: {
-    modelKey: 'userComment',
-    buildWhere: (targetId) => ({ id: targetId, deletedAt: null }),
-    buildWhereIn: (targetIds) => ({ id: { in: targetIds }, deletedAt: null }),
+    tableKey: 'userComment',
+    whereBuilder: (targetId) => ({ id: targetId, deletedAt: null }),
+    whereInBuilder: (targetIds) => ({ id: { in: targetIds }, deletedAt: null }),
   },
 }
 

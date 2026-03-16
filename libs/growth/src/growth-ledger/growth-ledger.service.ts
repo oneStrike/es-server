@@ -3,8 +3,9 @@ import type {
   ApplyRuleParams,
   GrowthLedgerApplyResult,
 } from './growth-ledger.types'
-import { PlatformService, Prisma } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
+import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -22,7 +23,45 @@ type Tx = any
  * 3. 通过 growth_rule_usage_slot 做并发限流占位
  */
 @Injectable()
-export class GrowthLedgerService extends PlatformService {
+export class GrowthLedgerService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  private get growthAuditLog() {
+    return this.drizzle.schema.growthAuditLog
+  }
+
+  private get growthLedgerRecord() {
+    return this.drizzle.schema.growthLedgerRecord
+  }
+
+  private get growthRuleUsageSlot() {
+    return this.drizzle.schema.growthRuleUsageSlot
+  }
+
+  private get userExperienceRule() {
+    return this.drizzle.schema.userExperienceRule
+  }
+
+  private get userLevelRule() {
+    return this.drizzle.schema.userLevelRule
+  }
+
+  private get userPointRule() {
+    return this.drizzle.schema.userPointRule
+  }
+
+  private isDrizzleTx(tx: Tx): boolean {
+    return !!tx?.query && typeof tx.insert === 'function'
+  }
+
   /**
    * 按规则结算（发放）
    *
@@ -52,29 +91,7 @@ export class GrowthLedgerService extends PlatformService {
 
     // 规则读取：按资产类型分别走对应规则表
     // POINTS -> userPointRule, EXPERIENCE -> userExperienceRule
-    const rule =
-      assetType === GrowthAssetTypeEnum.POINTS
-        ? await tx.userPointRule.findUnique({
-            where: { type: ruleType },
-            select: {
-              id: true,
-              points: true,
-              dailyLimit: true,
-              totalLimit: true,
-              isEnabled: true,
-            },
-          })
-        : await tx.userExperienceRule.findUnique({
-            where: { type: ruleType },
-            select: {
-              id: true,
-              experience: true,
-              dailyLimit: true,
-              totalLimit: true,
-              isEnabled: true,
-            },
-          })
-
+    const rule = await this.findRuleByType(tx, assetType, ruleType)
     // 规则不存在
     if (!rule) {
       return {
@@ -135,7 +152,7 @@ export class GrowthLedgerService extends PlatformService {
       })
       if (!reservedDaily) {
         // 每日限额已达，回滚账本记录
-        await tx.growthLedgerRecord.delete({ where: { id: gate.recordId } })
+        await this.deleteLedgerRecordById(tx, gate.recordId)
         return {
           success: false,
           reason: GrowthLedgerFailReasonEnum.DAILY_LIMIT,
@@ -155,7 +172,7 @@ export class GrowthLedgerService extends PlatformService {
       })
       if (!reservedTotal) {
         // 总限额已达，回滚账本记录
-        await tx.growthLedgerRecord.delete({ where: { id: gate.recordId } })
+        await this.deleteLedgerRecordById(tx, gate.recordId)
         return {
           success: false,
           reason: GrowthLedgerFailReasonEnum.TOTAL_LIMIT,
@@ -173,12 +190,9 @@ export class GrowthLedgerService extends PlatformService {
     const beforeValue = afterValue - delta
 
     // 更新账本记录的前后值
-    await tx.growthLedgerRecord.update({
-      where: { id: gate.recordId },
-      data: {
-        beforeValue,
-        afterValue,
-      },
+    await this.updateLedgerBeforeAfterValue(tx, gate.recordId, {
+      beforeValue,
+      afterValue,
     })
 
     // 写入审计日志
@@ -271,7 +285,7 @@ export class GrowthLedgerService extends PlatformService {
       })
       if (!decreased.ok) {
         // 余额不足，回滚账本记录
-        await tx.growthLedgerRecord.delete({ where: { id: gate.recordId } })
+        await this.deleteLedgerRecordById(tx, gate.recordId)
         return {
           success: false,
           reason: GrowthLedgerFailReasonEnum.INSUFFICIENT_BALANCE,
@@ -287,21 +301,15 @@ export class GrowthLedgerService extends PlatformService {
     }
 
     // 查询更新后的用户余额
-    const user = await tx.appUser.findUniqueOrThrow({
-      where: { id: userId },
-      select: { points: true, experience: true },
-    })
+    const user = await this.findUserBalanceById(tx, userId)
     const afterValue =
       assetType === GrowthAssetTypeEnum.POINTS ? user.points : user.experience
     const beforeValue = afterValue - signedDelta
 
     // 更新账本记录的前后值
-    await tx.growthLedgerRecord.update({
-      where: { id: gate.recordId },
-      data: {
-        beforeValue,
-        afterValue,
-      },
+    await this.updateLedgerBeforeAfterValue(tx, gate.recordId, {
+      beforeValue,
+      afterValue,
     })
 
     // 写入审计日志
@@ -356,45 +364,17 @@ export class GrowthLedgerService extends PlatformService {
     | { duplicated: false, recordId: number }
     | { duplicated: true, result: GrowthLedgerApplyResult }
   > {
-    // 使用 skipDuplicates 避免唯一冲突异常把整个事务打断
-    const inserted = await tx.growthLedgerRecord.createMany({
-      data: {
-        userId: params.userId,
-        assetType: params.assetType,
-        delta: params.delta,
-        beforeValue: 0,
-        afterValue: 0,
-        bizKey: params.bizKey,
-        ruleType: params.ruleType,
-        ruleId: params.ruleId,
-        targetType: params.targetType,
-        targetId: params.targetId,
-        remark: params.remark,
-        context: params.context as Prisma.InputJsonValue | undefined,
-      },
-      skipDuplicates: true,
-    })
-
-    const existing = await tx.growthLedgerRecord.findUnique({
-      where: {
-        userId_bizKey: {
-          userId: params.userId,
-          bizKey: params.bizKey,
-        },
-      },
-      select: {
-        id: true,
-        delta: true,
-        beforeValue: true,
-        afterValue: true,
-      },
+    const inserted = await this.insertLedgerGateRecord(tx, params)
+    const existing = await this.findLedgerByUserBizKey(tx, {
+      userId: params.userId,
+      bizKey: params.bizKey,
     })
 
     if (!existing) {
       throw new Error('账本记录创建失败')
     }
 
-    if (inserted.count === 0) {
+    if (!inserted) {
       return {
         duplicated: true,
         result: {
@@ -434,17 +414,14 @@ export class GrowthLedgerService extends PlatformService {
     // 槽位占用策略：
     // 对于 limit=N，仅允许成功占用 N 个唯一槽位，超出即失败。
     for (let slotNo = 1; slotNo <= params.limit; slotNo += 1) {
-      const inserted = await tx.growthRuleUsageSlot.createMany({
-        data: {
-          userId: params.userId,
-          assetType: params.assetType,
-          ruleKey: params.ruleKey,
-          slotType: params.slotType,
-          slotValue: `${params.slotScope}:${slotNo}`,
-        },
-        skipDuplicates: true,
+      const inserted = await this.insertUsageSlot(tx, {
+        userId: params.userId,
+        assetType: params.assetType,
+        ruleKey: params.ruleKey,
+        slotType: params.slotType,
+        slotValue: `${params.slotScope}:${slotNo}`,
       })
-      if (inserted.count > 0) {
+      if (inserted) {
         return true
       }
     }
@@ -464,14 +441,7 @@ export class GrowthLedgerService extends PlatformService {
       amount: number
     },
   ): Promise<number> {
-    const user = await tx.appUser.update({
-      where: { id: params.userId },
-      data:
-        params.assetType === GrowthAssetTypeEnum.POINTS
-          ? { points: { increment: params.amount } }
-          : { experience: { increment: params.amount } },
-      select: { points: true, experience: true },
-    })
+    const user = await this.incrementAndReturnUserBalance(tx, params)
 
     return params.assetType === GrowthAssetTypeEnum.POINTS
       ? user.points
@@ -491,23 +461,8 @@ export class GrowthLedgerService extends PlatformService {
       amount: number
     },
   ): Promise<{ ok: boolean }> {
-    const updateResult = await tx.appUser.updateMany({
-      where:
-        params.assetType === GrowthAssetTypeEnum.POINTS
-          ? {
-              id: params.userId,
-              points: { gte: params.amount },
-            }
-          : {
-              id: params.userId,
-              experience: { gte: params.amount },
-            },
-      data:
-        params.assetType === GrowthAssetTypeEnum.POINTS
-          ? { points: { decrement: params.amount } }
-          : { experience: { decrement: params.amount } },
-    })
-    return { ok: updateResult.count > 0 }
+    const ok = await this.decrementWithGuard(tx, params)
+    return { ok }
   }
 
   /**
@@ -529,6 +484,21 @@ export class GrowthLedgerService extends PlatformService {
       context?: Record<string, unknown>
     },
   ) {
+    if (this.isDrizzleTx(tx)) {
+      await tx.insert(this.growthAuditLog).values({
+        userId: params.userId,
+        bizKey: params.bizKey,
+        assetType: String(params.assetType),
+        action: params.action,
+        ruleType: params.ruleType,
+        decision: params.decision,
+        reason: params.reason,
+        deltaRequested: params.deltaRequested,
+        deltaApplied: params.deltaApplied,
+        context: params.context,
+      })
+      return
+    }
     await tx.growthAuditLog.create({
       data: {
         userId: params.userId,
@@ -540,7 +510,7 @@ export class GrowthLedgerService extends PlatformService {
         reason: params.reason,
         deltaRequested: params.deltaRequested,
         deltaApplied: params.deltaApplied,
-        context: params.context as Prisma.InputJsonValue | undefined,
+        context: params.context,
       },
     })
   }
@@ -554,7 +524,369 @@ export class GrowthLedgerService extends PlatformService {
       return
     }
 
-    const levelRule = await tx.userLevelRule.findFirst({
+    const levelRule = await this.findTargetLevelRule(tx, experience)
+
+    if (!levelRule) {
+      return
+    }
+
+    await this.syncUserLevel(tx, userId, levelRule.id)
+  }
+
+  /** 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键 */
+  private formatDateKey(input: Date): string {
+    const y = input.getFullYear()
+    const m = String(input.getMonth() + 1).padStart(2, '0')
+    const d = String(input.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  private async findRuleByType(
+    tx: Tx,
+    assetType: GrowthAssetTypeEnum,
+    ruleType: number,
+  ) {
+    if (this.isDrizzleTx(tx)) {
+      if (assetType === GrowthAssetTypeEnum.POINTS) {
+        return tx.query.userPointRule.findFirst({
+          where: { type: ruleType },
+          columns: {
+            id: true,
+            points: true,
+            dailyLimit: true,
+            totalLimit: true,
+            isEnabled: true,
+          },
+        })
+      }
+      return tx.query.userExperienceRule.findFirst({
+        where: { type: ruleType },
+        columns: {
+          id: true,
+          experience: true,
+          dailyLimit: true,
+          totalLimit: true,
+          isEnabled: true,
+        },
+      })
+    }
+    if (assetType === GrowthAssetTypeEnum.POINTS) {
+      return tx.userPointRule.findUnique({
+        where: { type: ruleType },
+        select: {
+          id: true,
+          points: true,
+          dailyLimit: true,
+          totalLimit: true,
+          isEnabled: true,
+        },
+      })
+    }
+    return tx.userExperienceRule.findUnique({
+      where: { type: ruleType },
+      select: {
+        id: true,
+        experience: true,
+        dailyLimit: true,
+        totalLimit: true,
+        isEnabled: true,
+      },
+    })
+  }
+
+  private async deleteLedgerRecordById(tx: Tx, id: number): Promise<void> {
+    if (this.isDrizzleTx(tx)) {
+      await tx
+        .delete(this.growthLedgerRecord)
+        .where(eq(this.growthLedgerRecord.id, id))
+      return
+    }
+    await tx.growthLedgerRecord.delete({ where: { id } })
+  }
+
+  private async updateLedgerBeforeAfterValue(
+    tx: Tx,
+    id: number,
+    payload: { beforeValue: number, afterValue: number },
+  ): Promise<void> {
+    if (this.isDrizzleTx(tx)) {
+      await tx
+        .update(this.growthLedgerRecord)
+        .set(payload)
+        .where(eq(this.growthLedgerRecord.id, id))
+      return
+    }
+    await tx.growthLedgerRecord.update({
+      where: { id },
+      data: payload,
+    })
+  }
+
+  private async findUserBalanceById(tx: Tx, userId: number) {
+    if (this.isDrizzleTx(tx)) {
+      const user = await tx.query.appUser.findFirst({
+        where: { id: userId },
+        columns: { points: true, experience: true },
+      })
+      if (!user) {
+        throw new Error('用户不存在')
+      }
+      return user
+    }
+    return tx.appUser.findUniqueOrThrow({
+      where: { id: userId },
+      select: { points: true, experience: true },
+    })
+  }
+
+  private async insertLedgerGateRecord(
+    tx: Tx,
+    params: {
+      userId: number
+      assetType: GrowthAssetTypeEnum
+      bizKey: string
+      delta: number
+      ruleType?: number
+      ruleId?: number
+      remark?: string
+      targetType?: number
+      targetId?: number
+      context?: Record<string, unknown>
+    },
+  ): Promise<boolean> {
+    if (this.isDrizzleTx(tx)) {
+      const rows = await tx
+        .insert(this.growthLedgerRecord)
+        .values({
+          userId: params.userId,
+          assetType: params.assetType,
+          delta: params.delta,
+          beforeValue: 0,
+          afterValue: 0,
+          bizKey: params.bizKey,
+          ruleType: params.ruleType,
+          ruleId: params.ruleId,
+          targetType: params.targetType,
+          targetId: params.targetId,
+          remark: params.remark,
+          context: params.context,
+        })
+        .onConflictDoNothing({
+          target: [
+            this.growthLedgerRecord.userId,
+            this.growthLedgerRecord.bizKey,
+          ],
+        })
+        .returning({ id: this.growthLedgerRecord.id })
+      return rows.length > 0
+    }
+    const inserted = await tx.growthLedgerRecord.createMany({
+      data: {
+        userId: params.userId,
+        assetType: params.assetType,
+        delta: params.delta,
+        beforeValue: 0,
+        afterValue: 0,
+        bizKey: params.bizKey,
+        ruleType: params.ruleType,
+        ruleId: params.ruleId,
+        targetType: params.targetType,
+        targetId: params.targetId,
+        remark: params.remark,
+        context: params.context,
+      },
+      skipDuplicates: true,
+    })
+    return inserted.count > 0
+  }
+
+  private async findLedgerByUserBizKey(
+    tx: Tx,
+    params: { userId: number, bizKey: string },
+  ) {
+    if (this.isDrizzleTx(tx)) {
+      return tx.query.growthLedgerRecord.findFirst({
+        where: {
+          userId: params.userId,
+          bizKey: params.bizKey,
+        },
+        columns: {
+          id: true,
+          delta: true,
+          beforeValue: true,
+          afterValue: true,
+        },
+      })
+    }
+    return tx.growthLedgerRecord.findUnique({
+      where: {
+        userId_bizKey: {
+          userId: params.userId,
+          bizKey: params.bizKey,
+        },
+      },
+      select: {
+        id: true,
+        delta: true,
+        beforeValue: true,
+        afterValue: true,
+      },
+    })
+  }
+
+  private async insertUsageSlot(
+    tx: Tx,
+    params: {
+      userId: number
+      assetType: GrowthAssetTypeEnum
+      ruleKey: string
+      slotType: 'DAILY' | 'TOTAL'
+      slotValue: string
+    },
+  ): Promise<boolean> {
+    if (this.isDrizzleTx(tx)) {
+      const rows = await tx
+        .insert(this.growthRuleUsageSlot)
+        .values({
+          userId: params.userId,
+          assetType: String(params.assetType),
+          ruleKey: params.ruleKey,
+          slotType: params.slotType,
+          slotValue: params.slotValue,
+        })
+        .onConflictDoNothing({
+          target: [
+            this.growthRuleUsageSlot.userId,
+            this.growthRuleUsageSlot.assetType,
+            this.growthRuleUsageSlot.ruleKey,
+            this.growthRuleUsageSlot.slotType,
+            this.growthRuleUsageSlot.slotValue,
+          ],
+        })
+        .returning({ id: this.growthRuleUsageSlot.id })
+      return rows.length > 0
+    }
+    const inserted = await tx.growthRuleUsageSlot.createMany({
+      data: {
+        userId: params.userId,
+        assetType: params.assetType,
+        ruleKey: params.ruleKey,
+        slotType: params.slotType,
+        slotValue: params.slotValue,
+      },
+      skipDuplicates: true,
+    })
+    return inserted.count > 0
+  }
+
+  private async incrementAndReturnUserBalance(
+    tx: Tx,
+    params: {
+      userId: number
+      assetType: GrowthAssetTypeEnum
+      amount: number
+    },
+  ): Promise<{ points: number, experience: number }> {
+    if (this.isDrizzleTx(tx)) {
+      const rows = await tx
+        .update(this.appUser)
+        .set(
+          params.assetType === GrowthAssetTypeEnum.POINTS
+            ? { points: sql`${this.appUser.points} + ${params.amount}` }
+            : {
+                experience: sql`${this.appUser.experience} + ${params.amount}`,
+              },
+        )
+        .where(eq(this.appUser.id, params.userId))
+        .returning({
+          points: this.appUser.points,
+          experience: this.appUser.experience,
+        })
+      const user = rows[0]
+      if (!user) {
+        throw new Error('用户不存在')
+      }
+      return user
+    }
+    return tx.appUser.update({
+      where: { id: params.userId },
+      data:
+        params.assetType === GrowthAssetTypeEnum.POINTS
+          ? { points: { increment: params.amount } }
+          : { experience: { increment: params.amount } },
+      select: { points: true, experience: true },
+    })
+  }
+
+  private async decrementWithGuard(
+    tx: Tx,
+    params: {
+      userId: number
+      assetType: GrowthAssetTypeEnum
+      amount: number
+    },
+  ): Promise<boolean> {
+    if (this.isDrizzleTx(tx)) {
+      const rows = await tx
+        .update(this.appUser)
+        .set(
+          params.assetType === GrowthAssetTypeEnum.POINTS
+            ? { points: sql`${this.appUser.points} - ${params.amount}` }
+            : {
+                experience: sql`${this.appUser.experience} - ${params.amount}`,
+              },
+        )
+        .where(
+          params.assetType === GrowthAssetTypeEnum.POINTS
+            ? and(
+                eq(this.appUser.id, params.userId),
+                gte(this.appUser.points, params.amount),
+              )
+            : and(
+                eq(this.appUser.id, params.userId),
+                gte(this.appUser.experience, params.amount),
+              ),
+        )
+        .returning({ id: this.appUser.id })
+      return rows.length > 0
+    }
+    const updateResult = await tx.appUser.updateMany({
+      where:
+        params.assetType === GrowthAssetTypeEnum.POINTS
+          ? {
+              id: params.userId,
+              points: { gte: params.amount },
+            }
+          : {
+              id: params.userId,
+              experience: { gte: params.amount },
+            },
+      data:
+        params.assetType === GrowthAssetTypeEnum.POINTS
+          ? { points: { decrement: params.amount } }
+          : { experience: { decrement: params.amount } },
+    })
+    return updateResult.count > 0
+  }
+
+  private async findTargetLevelRule(tx: Tx, experience: number) {
+    if (this.isDrizzleTx(tx)) {
+      const rows = await tx
+        .select({
+          id: this.userLevelRule.id,
+        })
+        .from(this.userLevelRule)
+        .where(
+          and(
+            eq(this.userLevelRule.isEnabled, true),
+            lte(this.userLevelRule.requiredExperience, experience),
+          ),
+        )
+        .orderBy(sql`${this.userLevelRule.requiredExperience} desc`)
+        .limit(1)
+      return rows[0]
+    }
+    return tx.userLevelRule.findFirst({
       where: {
         isEnabled: true,
         requiredExperience: { lte: experience },
@@ -564,25 +896,31 @@ export class GrowthLedgerService extends PlatformService {
       },
       select: { id: true },
     })
+  }
 
-    if (!levelRule) {
+  private async syncUserLevel(
+    tx: Tx,
+    userId: number,
+    levelId: number,
+  ): Promise<void> {
+    if (this.isDrizzleTx(tx)) {
+      await tx
+        .update(this.appUser)
+        .set({ levelId })
+        .where(
+          and(
+            eq(this.appUser.id, userId),
+            or(isNull(this.appUser.levelId), ne(this.appUser.levelId, levelId)),
+          ),
+        )
       return
     }
-
     await tx.appUser.updateMany({
       where: {
         id: userId,
-        NOT: { levelId: levelRule.id },
+        NOT: { levelId },
       },
-      data: { levelId: levelRule.id },
+      data: { levelId },
     })
-  }
-
-  /** 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键 */
-  private formatDateKey(input: Date): string {
-    const y = input.getFullYear()
-    const m = String(input.getMonth() + 1).padStart(2, '0')
-    const d = String(input.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
   }
 }

@@ -1,11 +1,12 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
   IBrowseLogTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 小说作品浏览日志解析器
@@ -13,7 +14,6 @@ import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class WorkNovelBrowseLogResolver
-  extends PlatformService
   implements IBrowseLogTargetResolver, OnModuleInit
 {
   /** 目标类型：小说作品 */
@@ -21,8 +21,13 @@ export class WorkNovelBrowseLogResolver
   /** 作品类型：2 表示小说 */
   private readonly workType = 2
 
-  constructor(private readonly browseLogService: BrowseLogService) {
-    super()
+  constructor(
+    private readonly browseLogService: BrowseLogService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get work() {
+    return this.drizzle.schema.work
   }
 
   /**
@@ -36,12 +41,12 @@ export class WorkNovelBrowseLogResolver
    * 应用浏览计数增量
    * 更新小说作品的浏览数
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标作品ID
    * @param delta - 变更量
    */
   applyCountDelta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) => Promise<void> = async (tx, targetId, delta) => {
@@ -49,38 +54,44 @@ export class WorkNovelBrowseLogResolver
       return
     }
 
-    await tx.work.applyCountDelta(
-      {
-        id: targetId,
-        type: this.workType,
-        deletedAt: null,
-      },
-      'viewCount',
-      delta,
-    )
+    await tx
+      .update(this.work)
+      .set({
+        viewCount: sql`${this.work.viewCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(this.work.id, targetId),
+          eq(this.work.type, this.workType),
+          isNull(this.work.deletedAt),
+        ),
+      )
   }
 
   /**
    * 校验小说作品是否有效
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标作品ID
    * @throws 当作品不存在时抛出 BadRequestException
    */
   ensureTargetValid: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
   ) => Promise<void> = async (tx, targetId) => {
-    const work = await tx.work.findFirst({
-      where: {
-        id: targetId,
-        type: this.workType,
-        deletedAt: null,
-      },
-      select: { id: true },
-    })
+    const work = await tx
+      .select({ id: this.work.id })
+      .from(this.work)
+      .where(
+        and(
+          eq(this.work.id, targetId),
+          eq(this.work.type, this.workType),
+          isNull(this.work.deletedAt),
+        ),
+      )
+      .limit(1)
 
-    if (!work) {
+    if (!work[0]) {
       throw new BadRequestException('小说作品不存在')
     }
   }

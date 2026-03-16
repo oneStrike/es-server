@@ -19,10 +19,11 @@ export * from './favorite/favorite.module'
 export * from './favorite/favorite.service'
 export * from './favorite/interfaces/favorite-target-resolver.interface'
 export * from './interaction-target-access.service'
-
 export * from './interaction-target-growth-rule'
+
 export * from './interaction-target-resolver.service'
 export * from './interaction-target.definition'
+export * from './interaction-tx.type'
 
 // like
 export * from './like/dto/like.dto'

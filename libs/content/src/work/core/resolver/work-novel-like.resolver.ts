@@ -1,8 +1,14 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
-import { ILikeTargetResolver, LikeService, LikeTargetTypeEnum } from '@libs/interaction'
+import { work } from '@db/schema'
+import {
+  ILikeTargetResolver,
+  InteractionTx,
+  LikeService,
+  LikeTargetTypeEnum,
+} from '@libs/interaction'
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 小说作品点赞解析器
@@ -36,17 +42,17 @@ export class WorkNovelLikeResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当作品不存在时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const work = await tx.work.findFirst({
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
         type: this.targetType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { id: true },
+      columns: { id: true },
     })
 
-    if (!work) {
+    if (!target) {
       throw new NotFoundException('小说作品不存在')
     }
 
@@ -64,7 +70,7 @@ export class WorkNovelLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -72,15 +78,29 @@ export class WorkNovelLikeResolver
       return
     }
 
-    await tx.work.applyCountDelta(
-      {
+    await tx
+      .update(work)
+      .set({
+        likeCount: sql`${work.likeCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(work.id, targetId),
+          eq(work.type, this.targetType),
+          isNull(work.deletedAt),
+        ),
+      )
+    const updated = await tx.query.work.findFirst({
+      where: {
         id: targetId,
         type: this.targetType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      'likeCount',
-      delta,
-    )
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new NotFoundException('小说作品不存在')
+    }
   }
 
   /**

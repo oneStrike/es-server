@@ -1,8 +1,8 @@
+import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/growth'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import {
   BROWSE_LOG_GROWTH_RULE_TYPE_MAP,
@@ -14,12 +14,15 @@ import {
  * 处理浏览记录相关的积分和经验奖励
  */
 @Injectable()
-export class BrowseLogGrowthService extends PlatformService {
+export class BrowseLogGrowthService {
   constructor(
     /** 成长账本服务 */
     private readonly growthLedgerService: GrowthLedgerService,
-  ) {
-    super()
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -43,7 +46,7 @@ export class BrowseLogGrowthService extends PlatformService {
     const baseBizKey = `view:${targetType}:${targetId}:user:${userId}`
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         await this.growthLedgerService.applyByRule(tx, {
           userId,
           assetType: GrowthAssetTypeEnum.POINTS,

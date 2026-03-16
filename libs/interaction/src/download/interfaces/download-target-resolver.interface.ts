@@ -1,4 +1,4 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import type { InteractionTx } from '../../interaction-tx.type'
 import type { DownloadTargetTypeEnum } from '../download.constant'
 
 /**
@@ -19,7 +19,7 @@ export interface IDownloadTargetResolver {
    * @throws BadRequestException 如果目标不存在或不可下载
    */
   ensureDownloadable: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
   ) => Promise<string>
 
@@ -30,7 +30,7 @@ export interface IDownloadTargetResolver {
    * @param delta - 增量 (+1)
    */
   applyCountDelta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) => Promise<void>

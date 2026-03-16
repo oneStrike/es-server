@@ -1,10 +1,17 @@
+import { DrizzleService } from '@db/core'
 import { UserStatusEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, desc, eq, gte } from 'drizzle-orm'
 import { CommentTargetTypeEnum } from './comment.constant'
 
 @Injectable()
-export class CommentPermissionService extends PlatformService {
+export class CommentPermissionService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   async ensureCanComment(
     userId: number,
     _targetType: CommentTargetTypeEnum,
@@ -14,13 +21,15 @@ export class CommentPermissionService extends PlatformService {
   }
 
   async ensureUserCanComment(userId: number) {
-    const user = await this.prisma.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      select: {
+      columns: {
         isEnabled: true,
         status: true,
+      },
+      with: {
         level: {
-          select: {
+          columns: {
             dailyReplyCommentLimit: true,
             postInterval: true,
           },
@@ -61,12 +70,13 @@ export class CommentPermissionService extends PlatformService {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      const usedToday = await this.prisma.userComment.count({
-        where: {
-          userId,
-          createdAt: { gte: today },
-        },
-      })
+      const usedToday = await this.db.$count(
+        this.drizzle.schema.userComment,
+        and(
+          eq(this.drizzle.schema.userComment.userId, userId),
+          gte(this.drizzle.schema.userComment.createdAt, today),
+        ),
+      )
 
       if (usedToday >= level.dailyReplyCommentLimit) {
         throw new BadRequestException(
@@ -77,24 +87,29 @@ export class CommentPermissionService extends PlatformService {
 
     if (level.postInterval > 0) {
       const [lastTopic, lastComment] = await Promise.all([
-        this.prisma.forumTopic.findFirst({
-          where: { userId },
-          orderBy: { createdAt: 'desc' },
-          select: { createdAt: true },
-        }),
-        this.prisma.userComment.findFirst({
-          where: { userId },
-          orderBy: { createdAt: 'desc' },
-          select: { createdAt: true },
-        }),
+        this.db
+          .select({ createdAt: this.drizzle.schema.forumTopic.createdAt })
+          .from(this.drizzle.schema.forumTopic)
+          .where(eq(this.drizzle.schema.forumTopic.userId, userId))
+          .orderBy(desc(this.drizzle.schema.forumTopic.createdAt))
+          .limit(1),
+        this.db
+          .select({ createdAt: this.drizzle.schema.userComment.createdAt })
+          .from(this.drizzle.schema.userComment)
+          .where(eq(this.drizzle.schema.userComment.userId, userId))
+          .orderBy(desc(this.drizzle.schema.userComment.createdAt))
+          .limit(1),
       ])
 
+      const latestTopic = lastTopic[0]
+      const latestComment = lastComment[0]
+
       const lastPostAt =
-        lastTopic && lastComment
-          ? lastTopic.createdAt > lastComment.createdAt
-            ? lastTopic.createdAt
-            : lastComment.createdAt
-          : lastTopic?.createdAt || lastComment?.createdAt || null
+        latestTopic && latestComment
+          ? latestTopic.createdAt > latestComment.createdAt
+            ? latestTopic.createdAt
+            : latestComment.createdAt
+          : latestTopic?.createdAt || latestComment?.createdAt || null
 
       if (lastPostAt) {
         const secondsSinceLastPost = Math.floor(

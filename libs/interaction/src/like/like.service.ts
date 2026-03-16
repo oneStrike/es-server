@@ -1,5 +1,6 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, inArray } from 'drizzle-orm'
 import { LikePageQueryDto } from './dto/like.dto'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
 import { LikeGrowthService } from './like-growth.service'
@@ -11,15 +12,43 @@ import { LikeTargetTypeEnum } from './like.constant'
  * 通过解析器模式支持多种目标类型（作品、章节、评论、论坛主题等）的点赞操作
  */
 @Injectable()
-export class LikeService extends PlatformService {
+export class LikeService {
   /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
   private readonly resolvers = new Map<
     LikeTargetTypeEnum,
     ILikeTargetResolver
   >()
 
-  constructor(private readonly likeGrowthService: LikeGrowthService) {
-    super()
+  constructor(
+    private readonly likeGrowthService: LikeGrowthService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userLike() {
+    return this.drizzle.schema.userLike
+  }
+
+  private handleBusinessError(
+    error: unknown,
+    options: {
+      duplicateMessage?: string
+      notFoundMessage?: string
+    },
+  ): never {
+    if (options.duplicateMessage && this.drizzle.isUniqueViolation(error)) {
+      throw new BadRequestException(options.duplicateMessage)
+    }
+    if (
+      options.notFoundMessage
+      && this.drizzle.isErrorCode(error, '02000')
+    ) {
+      throw new BadRequestException(options.notFoundMessage)
+    }
+    throw error
   }
 
   /**
@@ -67,16 +96,18 @@ export class LikeService extends PlatformService {
       return new Map()
     }
 
-    const likes = await this.prisma.userLike.findMany({
-      where: {
-        targetType,
-        targetId: { in: targetIds },
-        userId,
-      },
-      select: {
-        targetId: true,
-      },
-    })
+    const likes = await this.db
+      .select({
+        targetId: this.userLike.targetId,
+      })
+      .from(this.userLike)
+      .where(
+        and(
+          eq(this.userLike.targetType, targetType),
+          inArray(this.userLike.targetId, targetIds),
+          eq(this.userLike.userId, userId),
+        ),
+      )
 
     const likedSet = new Set(likes.map((item) => item.targetId))
     const statusMap = new Map<number, boolean>()
@@ -103,23 +134,28 @@ export class LikeService extends PlatformService {
     pageIndex: number = 1,
     pageSize: number = 20,
   ) {
-    return this.prisma.userLike.findPagination({
-      where: {
-        targetType,
-        targetId,
-        pageIndex,
-        pageSize,
-      } as any,
+    const page = await this.drizzle.ext.findPagination(this.userLike, {
+      where: this.drizzle.buildWhere(this.userLike, {
+        and: {
+          targetType,
+          targetId,
+        },
+      }),
+      pageIndex,
+      pageSize,
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        userId: true,
-        sceneType: true,
-        sceneId: true,
-        commentLevel: true,
-        createdAt: true,
-      },
     })
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        id: item.id,
+        userId: item.userId,
+        sceneType: item.sceneType,
+        sceneId: item.sceneId,
+        commentLevel: item.commentLevel,
+        createdAt: item.createdAt,
+      })),
+    }
   }
 
   /**
@@ -137,22 +173,20 @@ export class LikeService extends PlatformService {
   ): Promise<void> {
     const resolver = this.getResolver(targetType)
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const targetMeta = await resolver.resolveMeta(tx, targetId)
 
       try {
-        await tx.userLike.create({
-          data: {
-            targetType,
-            targetId,
-            sceneType: targetMeta.sceneType,
-            sceneId: targetMeta.sceneId,
-            commentLevel: targetMeta.commentLevel,
-            userId,
-          },
+        await tx.insert(this.userLike).values({
+          targetType,
+          targetId,
+          sceneType: targetMeta.sceneType,
+          sceneId: targetMeta.sceneId,
+          commentLevel: targetMeta.commentLevel,
+          userId,
         })
       } catch (error) {
-        this.handlePrismaBusinessError(error, {
+        this.handleBusinessError(error, {
           duplicateMessage: '已点赞',
         })
       }
@@ -182,21 +216,19 @@ export class LikeService extends PlatformService {
   ) {
     const resolver = this.getResolver(targetType)
 
-    await this.prisma.$transaction(async (tx) => {
-      try {
-        await tx.userLike.delete({
-          where: {
-            targetType_targetId_userId: {
-              targetType,
-              targetId,
-              userId,
-            },
-          },
-        })
-      } catch (error) {
-        this.handlePrismaBusinessError(error, {
-          notFoundMessage: '点赞记录不存在',
-        })
+    await this.db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(this.userLike)
+        .where(
+          and(
+            eq(this.userLike.targetType, targetType),
+            eq(this.userLike.targetId, targetId),
+            eq(this.userLike.userId, userId),
+          ),
+        )
+        .returning({ id: this.userLike.id })
+      if (deleted.length === 0) {
+        throw new BadRequestException('点赞记录不存在')
       }
 
       await resolver.applyCountDelta(tx, targetId, -1)
@@ -216,16 +248,19 @@ export class LikeService extends PlatformService {
     targetId: number,
     userId: number,
   ): Promise<boolean> {
-    const like = await this.prisma.userLike.findUnique({
-      where: {
-        targetType_targetId_userId: {
-          targetType,
-          targetId,
-          userId,
-        },
-      },
-      select: { id: true },
-    })
+    const [like] = await this.db
+      .select({
+        id: this.userLike.id,
+      })
+      .from(this.userLike)
+      .where(
+        and(
+          eq(this.userLike.targetType, targetType),
+          eq(this.userLike.targetId, targetId),
+          eq(this.userLike.userId, userId),
+        ),
+      )
+      .limit(1)
     return !!like
   }
 
@@ -240,21 +275,16 @@ export class LikeService extends PlatformService {
    * @returns 分页点赞记录列表，包含目标详情
    */
   async getUserLikes(dto: LikePageQueryDto, userId: number) {
-    const page = await this.prisma.userLike.findPagination({
-      where: {
-        ...dto,
-        userId
-      },
+    const page = await this.drizzle.ext.findPagination(this.userLike, {
+      where: this.drizzle.buildWhere(this.userLike, {
+        and: {
+          targetType: dto.targetType,
+          userId,
+        },
+      }),
+      pageIndex: dto.pageIndex,
+      pageSize: dto.pageSize,
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        targetId: true,
-        targetType: true,
-        sceneType: true,
-        sceneId: true,
-        commentLevel: true,
-        createdAt: true,
-      },
     })
 
     if (page.list.length === 0) {

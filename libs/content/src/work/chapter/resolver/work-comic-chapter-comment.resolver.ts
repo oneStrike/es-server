@@ -1,11 +1,13 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { workAuthorRelation, workChapter } from '@db/schema'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
 import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 漫画章节评论解析器
@@ -40,7 +42,7 @@ export class WorkComicChapterCommentResolver
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -48,15 +50,29 @@ export class WorkComicChapterCommentResolver
       return
     }
 
-    await tx.workChapter.applyCountDelta(
-      {
+    await tx
+      .update(workChapter)
+      .set({
+        commentCount: sql`${workChapter.commentCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(workChapter.id, targetId),
+          eq(workChapter.workType, this.workType),
+          isNull(workChapter.deletedAt),
+        ),
+      )
+    const updated = await tx.query.workChapter.findFirst({
+      where: {
         id: targetId,
         workType: this.workType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      'commentCount',
-      delta,
-    )
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new BadRequestException('漫画章节不存在')
+    }
   }
 
   /**
@@ -67,14 +83,14 @@ export class WorkComicChapterCommentResolver
    * @param targetId - 目标章节ID
    * @throws 当章节不存在或不允许评论时抛出 BadRequestException
    */
-  async ensureCanComment(tx: PrismaTransactionClientType, targetId: number) {
-    const chapter = await tx.workChapter.findFirst({
+  async ensureCanComment(tx: InteractionTx, targetId: number) {
+    const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
         workType: this.workType,
-        deletedAt: null
+        deletedAt: { isNull: true },
       },
-      select: { canComment: true },
+      columns: { canComment: true },
     })
 
     if (!chapter) {
@@ -94,22 +110,21 @@ export class WorkComicChapterCommentResolver
    * @param targetId - 目标章节ID
    * @returns 目标元信息，包含所有者用户ID
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const chapter = await tx.workChapter.findUnique({
-      where: { id: targetId },
-      select: {
-        work: {
-          select: {
-            authors: {
-              take: 1,
-            },
-          },
-        },
-      },
-    })
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const [author] = await tx
+      .select({
+        authorId: workAuthorRelation.authorId,
+      })
+      .from(workChapter)
+      .innerJoin(
+        workAuthorRelation,
+        eq(workAuthorRelation.workId, workChapter.workId),
+      )
+      .where(eq(workChapter.id, targetId))
+      .limit(1)
 
     return {
-      ownerUserId: (chapter as any)?.work?.authors?.[0]?.authorId,
+      ownerUserId: author?.authorId,
     }
   }
 }

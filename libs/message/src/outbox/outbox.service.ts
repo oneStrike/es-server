@@ -3,6 +3,7 @@ import type {
   CreateMessageOutboxEventDto,
   CreateNotificationOutboxEventDto,
 } from './dto/outbox-event.dto'
+import { messageOutbox } from '@db/schema'
 import { PlatformService } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import {
@@ -25,9 +26,19 @@ export class MessageOutboxService extends PlatformService {
     dto: CreateMessageOutboxEventDto,
     tx?: any,
   ) {
-    const outbox = tx?.messageOutbox ?? this.prisma.messageOutbox
     try {
-      await outbox.create({
+      if (tx?.insert) {
+        await tx.insert(messageOutbox).values({
+          domain: dto.domain,
+          eventType: dto.eventType,
+          bizKey: dto.bizKey,
+          payload: dto.payload,
+          status: MessageOutboxStatusEnum.PENDING,
+        })
+        return
+      }
+
+      await this.prisma.messageOutbox.create({
         data: {
           domain: dto.domain,
           eventType: dto.eventType,
@@ -37,6 +48,9 @@ export class MessageOutboxService extends PlatformService {
         },
       })
     } catch (error) {
+      if ((error)?.code === '23505') {
+        return
+      }
       this.handlePrismaError(error, {
         P2002: () => undefined,
       })

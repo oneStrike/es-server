@@ -1,9 +1,10 @@
+import type { InteractionTx } from '../interaction-tx.type'
 import type {
   CreateReportInputDto,
   CreateUserReportDto,
   CreateUserReportOptions,
 } from './dto/report.dto'
-import { PlatformService, PrismaTransactionClientType } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
@@ -15,15 +16,24 @@ import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
  * 通过解析器模式支持多种目标类型（作品、章节、评论、论坛主题、用户等）的举报操作
  */
 @Injectable()
-export class ReportService extends PlatformService {
+export class ReportService {
   /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
   private readonly resolvers = new Map<
     ReportTargetTypeEnum,
     IReportTargetResolver
   >()
 
-  constructor(private readonly reportGrowthService: ReportGrowthService) {
-    super()
+  constructor(
+    private readonly reportGrowthService: ReportGrowthService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userReport() {
+    return this.drizzle.schema.userReport
   }
 
   /**
@@ -78,7 +88,7 @@ export class ReportService extends PlatformService {
 
     await this.ensureReporterExists(reporterId)
 
-    const report = await this.prisma.$transaction(async (tx: PrismaTransactionClientType) => {
+    const report = await this.db.transaction(async (tx: InteractionTx) => {
       const targetMeta = await resolver.resolveMeta(tx, targetId)
 
       this.ensureCanReportOwnTarget(reporterId, targetMeta.ownerUserId)
@@ -129,24 +139,31 @@ export class ReportService extends PlatformService {
    * @returns 创建的举报记录
    */
   private async createUserReport(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     dto: CreateUserReportDto,
     options: CreateUserReportOptions = {},
   ) {
     const { status, ...otherDto } = dto
 
     try {
-      return await tx.userReport.create({
-        data: {
+      const [created] = await tx
+        .insert(this.userReport)
+        .values({
           ...otherDto,
           status: status ?? ReportStatusEnum.PENDING,
-        },
-      })
+        })
+        .returning()
+      return created
     } catch (error) {
-      this.handlePrismaBusinessError(error, {
-        duplicateMessage:
+      if (
+        this.drizzle.isUniqueViolation(error)
+        || this.drizzle.isErrorCode(error, 'P2002')
+      ) {
+        throw new BadRequestException(
           options.duplicateMessage ?? '您已经举报过该内容，请勿重复举报',
-      })
+        )
+      }
+      throw error
     }
   }
 
@@ -156,9 +173,9 @@ export class ReportService extends PlatformService {
    * @throws BadRequestException 当举报人不存在时抛出异常
    */
   private async ensureReporterExists(reporterId: number) {
-    const reporter = await this.prisma.appUser.findUnique({
+    const reporter = await this.db.query.appUser.findFirst({
       where: { id: reporterId },
-      select: { id: true },
+      columns: { id: true },
     })
 
     if (!reporter) {

@@ -1,12 +1,14 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { work } from '@db/schema'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
 import { PlatformService } from '@libs/platform/database'
 
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 漫画作品收藏解析器
@@ -39,17 +41,17 @@ export class WorkComicFavoriteResolver
    * @returns 空对象（收藏服务要求的接口规范）
    * @throws BadRequestException 当作品不存在时抛出异常
    */
-  async ensureExists(tx: PrismaTransactionClientType, targetId: number) {
-    const work = await tx.work.findFirst({
+  async ensureExists(tx: InteractionTx, targetId: number) {
+    const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
         type: this.targetType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { id: true },
+      columns: { id: true },
     })
 
-    if (!work) {
+    if (!target) {
       throw new BadRequestException('漫画作品不存在')
     }
 
@@ -64,7 +66,7 @@ export class WorkComicFavoriteResolver
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -72,15 +74,29 @@ export class WorkComicFavoriteResolver
       return
     }
 
-    await tx.work.applyCountDelta(
-      {
+    await tx
+      .update(work)
+      .set({
+        favoriteCount: sql`${work.favoriteCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(work.id, targetId),
+          eq(work.type, this.targetType),
+          isNull(work.deletedAt),
+        ),
+      )
+    const updated = await tx.query.work.findFirst({
+      where: {
         id: targetId,
         type: this.targetType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      'favoriteCount',
-      delta,
-    )
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new BadRequestException('漫画作品不存在')
+    }
   }
 
   /**

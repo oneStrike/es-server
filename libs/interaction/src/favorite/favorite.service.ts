@@ -1,5 +1,6 @@
-import { PlatformService, UserFavorite } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, inArray } from 'drizzle-orm'
 import { FavoritePageQueryDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
@@ -10,19 +11,43 @@ import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.i
  * 提供收藏、取消收藏、查询收藏状态等核心业务逻辑
  */
 @Injectable()
-export class FavoriteService extends PlatformService {
-  /** 用户收藏 Prisma 代理 */
-  get userFavorite() {
-    return this.prisma.userFavorite
-  }
-
+export class FavoriteService {
   private readonly resolvers = new Map<
     FavoriteTargetTypeEnum,
     IFavoriteTargetResolver
   >()
 
-  constructor(private readonly favoriteGrowthService: FavoriteGrowthService) {
-    super()
+  constructor(
+    private readonly favoriteGrowthService: FavoriteGrowthService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get userFavorite() {
+    return this.drizzle.schema.userFavorite
+  }
+
+  private handleBusinessError(
+    error: unknown,
+    options: {
+      duplicateMessage?: string
+      notFoundMessage?: string
+      conflictMessage?: string
+    },
+  ): never {
+    if (options.duplicateMessage && this.drizzle.isUniqueViolation(error)) {
+      throw new BadRequestException(options.duplicateMessage)
+    }
+    if (
+      options.conflictMessage
+      && this.drizzle.isSerializationFailure(error)
+    ) {
+      throw new BadRequestException(options.conflictMessage)
+    }
+    throw error
   }
 
   /**
@@ -66,16 +91,18 @@ export class FavoriteService extends PlatformService {
       return new Map()
     }
 
-    const favorites = await this.prisma.userFavorite.findMany({
-      where: {
-        targetType,
-        targetId: { in: targetIds },
-        userId,
-      },
-      select: {
-        targetId: true,
-      },
-    })
+    const favorites = await this.db
+      .select({
+        targetId: this.userFavorite.targetId,
+      })
+      .from(this.userFavorite)
+      .where(
+        and(
+          eq(this.userFavorite.targetType, targetType),
+          inArray(this.userFavorite.targetId, targetIds),
+          eq(this.userFavorite.userId, userId),
+        ),
+      )
 
     const favoritedSet = new Set(favorites.map((f) => f.targetId))
     const statusMap = new Map<number, boolean>()
@@ -100,29 +127,27 @@ export class FavoriteService extends PlatformService {
   ) {
     const resolver = this.getResolver(targetType)
 
-    const record = await this.prisma.$transaction(async (tx) => {
+    const record = await this.db.transaction(async (tx) => {
       const { ownerUserId: topicOwnerId } = await resolver.ensureExists(
         tx,
         targetId,
       )
-      let favoriteRecord: null | UserFavorite = null
+      let favoriteRecord: null | { id: number } = null
       try {
-        favoriteRecord = await tx.userFavorite.create({
-          data: {
+        const rows = await tx
+          .insert(this.userFavorite)
+          .values({
             targetType,
             targetId,
-            user: {
-              connect: {
-                id: userId,
-              },
-            },
-          },
-        })
+            userId,
+          })
+          .returning({
+            id: this.userFavorite.id,
+          })
+        favoriteRecord = rows[0] ?? null
       } catch (error) {
-        // 唯一键冲突：已收藏
-        this.handlePrismaBusinessError(error, {
+        this.handleBusinessError(error, {
           duplicateMessage: '无法重复收藏',
-          notFoundMessage: '用户不存在',
         })
       }
 
@@ -158,21 +183,19 @@ export class FavoriteService extends PlatformService {
   ) {
     const resolver = this.getResolver(targetType)
 
-    await this.prisma.$transaction(async (tx) => {
-      try {
-        await tx.userFavorite.delete({
-          where: {
-            targetType_targetId_userId: {
-              targetId,
-              targetType,
-              userId,
-            },
-          },
-        })
-      } catch (error) {
-        this.handlePrismaBusinessError(error, {
-          notFoundMessage: '收藏记录或用户不存在',
-        })
+    await this.db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(this.userFavorite)
+        .where(
+          and(
+            eq(this.userFavorite.targetType, targetType),
+            eq(this.userFavorite.targetId, targetId),
+            eq(this.userFavorite.userId, userId),
+          ),
+        )
+        .returning({ id: this.userFavorite.id })
+      if (deleted.length === 0) {
+        throw new BadRequestException('收藏记录或用户不存在')
       }
 
       await resolver.applyCountDelta(tx, targetId, -1)
@@ -191,16 +214,19 @@ export class FavoriteService extends PlatformService {
     targetId: number,
     userId: number,
   ): Promise<boolean> {
-    const favorite = await this.prisma.userFavorite.findUnique({
-      where: {
-        targetType_targetId_userId: {
-          targetType,
-          targetId,
-          userId,
-        },
-      },
-      select: { id: true },
-    })
+    const [favorite] = await this.db
+      .select({
+        id: this.userFavorite.id,
+      })
+      .from(this.userFavorite)
+      .where(
+        and(
+          eq(this.userFavorite.targetType, targetType),
+          eq(this.userFavorite.targetId, targetId),
+          eq(this.userFavorite.userId, userId),
+        ),
+      )
+      .limit(1)
     return !!favorite
   }
 
@@ -214,17 +240,17 @@ export class FavoriteService extends PlatformService {
    * @returns 分页收藏列表
    */
   async getUserFavorites(dto: FavoritePageQueryDto, userId: number) {
-    const page = await this.prisma.userFavorite.findPagination({
-      where: {
-        userId,
-        ...dto,
-      },
-      select: {
-        id: true,
-        userId: true,
-        targetId: true,
-        targetType: true,
-        createdAt: true,
+    const page = await this.drizzle.ext.findPagination(this.userFavorite, {
+      where: this.drizzle.buildWhere(this.userFavorite, {
+        and: {
+          userId,
+          targetType: dto.targetType,
+        },
+      }),
+      pageIndex: dto.pageIndex,
+      pageSize: dto.pageSize,
+      orderBy: {
+        createdAt: 'desc',
       },
     })
 

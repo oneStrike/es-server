@@ -1,11 +1,13 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { forumTopic } from '@db/schema'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
 import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛帖子评论解析器
@@ -39,7 +41,7 @@ export class ForumTopicCommentResolver
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -47,14 +49,19 @@ export class ForumTopicCommentResolver
       return
     }
 
-    await tx.forumTopic.applyCountDelta(
-      {
-        id: targetId,
-        deletedAt: null,
-      },
-      'commentCount',
-      delta,
-    )
+    await tx
+      .update(forumTopic)
+      .set({
+        commentCount: sql`${forumTopic.commentCount} + ${delta}`,
+      })
+      .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
+    const updated = await tx.query.forumTopic.findFirst({
+      where: { id: targetId, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (!updated) {
+      throw new BadRequestException('帖子不存在')
+    }
   }
 
   /**
@@ -65,10 +72,10 @@ export class ForumTopicCommentResolver
    * @param targetId - 目标帖子ID
    * @throws 当帖子不存在或被锁定时抛出 BadRequestException
    */
-  async ensureCanComment(tx: PrismaTransactionClientType, targetId: number) {
-    const topic = await tx.forumTopic.findUnique({
+  async ensureCanComment(tx: InteractionTx, targetId: number) {
+    const topic = await tx.query.forumTopic.findFirst({
       where: { id: targetId },
-      select: { isLocked: true, deletedAt: true },
+      columns: { isLocked: true, deletedAt: true },
     })
 
     if (!topic || topic.deletedAt !== null) {
@@ -88,10 +95,10 @@ export class ForumTopicCommentResolver
    * @param targetId - 目标帖子ID
    * @returns 目标元信息，包含所有者用户ID
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const topic = await tx.forumTopic.findUnique({
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const topic = await tx.query.forumTopic.findFirst({
       where: { id: targetId },
-      select: { userId: true },
+      columns: { userId: true },
     })
 
     return {

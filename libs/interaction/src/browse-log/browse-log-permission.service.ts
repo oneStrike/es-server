@@ -1,5 +1,5 @@
+import { DrizzleService } from '@db/core'
 import { UserStatusEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 /**
@@ -7,10 +7,8 @@ import { BadRequestException, Injectable } from '@nestjs/common'
  * 校验用户浏览内容的权限
  */
 @Injectable()
-export class BrowseLogPermissionService extends PlatformService {
-  constructor() {
-    super()
-  }
+export class BrowseLogPermissionService {
+  constructor(private readonly drizzle: DrizzleService) {}
 
   /**
    * 校验用户是否可以浏览内容
@@ -19,9 +17,9 @@ export class BrowseLogPermissionService extends PlatformService {
    * @throws BadRequestException 用户不存在、已禁用或被封禁
    */
   async ensureUserCanView(userId: number): Promise<void> {
-    const user = await this.prisma.appUser.findUnique({
+    const user = await this.drizzle.db.query.appUser.findFirst({
       where: { id: userId },
-      select: {
+      columns: {
         isEnabled: true,
         status: true,
       },

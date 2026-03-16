@@ -1,4 +1,4 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import type { InteractionTx } from '../../interaction-tx.type'
 import type { CommentTargetTypeEnum } from '../comment.constant'
 
 /**
@@ -29,7 +29,7 @@ export interface ICommentTargetResolver {
    * @throws 当不允许评论时抛出 BadRequestException
    */
   ensureCanComment: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
   ) => Promise<void>
 
@@ -41,7 +41,7 @@ export interface ICommentTargetResolver {
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   applyCountDelta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) => Promise<void>
@@ -55,7 +55,7 @@ export interface ICommentTargetResolver {
    * @returns 目标元信息
    */
   resolveMeta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
   ) => Promise<CommentTargetMeta>
 
@@ -69,7 +69,7 @@ export interface ICommentTargetResolver {
    * @param meta - 目标元信息
    */
   postCommentHook?: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     actorUserId: number,
     meta: CommentTargetMeta,

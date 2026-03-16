@@ -1,9 +1,8 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import type { InteractionTx } from '../../interaction-tx.type'
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
 } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import {
   BadRequestException,
   Injectable,
@@ -24,15 +23,12 @@ import {
  */
 @Injectable()
 export class CommentReportResolver
-  extends PlatformService
   implements IReportTargetResolver, OnModuleInit
 {
   /** 目标类型：评论 */
   readonly targetType = ReportTargetTypeEnum.COMMENT
 
-  constructor(private readonly reportService: ReportService) {
-    super()
-  }
+  constructor(private readonly reportService: ReportService) {}
 
   /**
    * 模块初始化时注册解析器到举报服务
@@ -51,10 +47,10 @@ export class CommentReportResolver
    * @throws NotFoundException 当评论不存在时抛出异常
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
-  async resolveMeta(tx: PrismaTransactionClientType, targetId: number) {
-    const comment = await tx.userComment.findFirst({
-      where: { id: targetId, deletedAt: null },
-      select: {
+  async resolveMeta(tx: InteractionTx, targetId: number) {
+    const comment = await tx.query.userComment.findFirst({
+      where: { id: targetId, deletedAt: { isNull: true } },
+      columns: {
         id: true,
         userId: true,
         targetType: true,

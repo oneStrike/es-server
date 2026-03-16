@@ -1,4 +1,4 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import type { InteractionTx } from '../../interaction-tx.type'
 import type { BrowseLogTargetTypeEnum } from '../browse-log.constant'
 
 /**
@@ -11,23 +11,23 @@ export interface IBrowseLogTargetResolver {
 
   /**
    * 应用浏览计数增量
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @param delta - 变更量
    */
   applyCountDelta: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) => Promise<void>
 
   /**
    * 校验目标是否有效且可以计入浏览日志
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    */
   ensureTargetValid: (
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
   ) => Promise<void>
 }

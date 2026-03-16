@@ -1,4 +1,4 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import {
   GrowthAssetTypeEnum,
@@ -30,9 +30,14 @@ interface RewardTaskCompleteParams {
  * 设计原则：奖励失败不影响主业务流程
  */
 @Injectable()
-export class UserGrowthRewardService extends PlatformService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
-    super()
+export class UserGrowthRewardService {
+  constructor(
+    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -41,7 +46,7 @@ export class UserGrowthRewardService extends PlatformService {
    */
   async tryRewardByRule(params: RewardByRuleParams): Promise<void> {
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         // 发放积分
         await this.growthLedgerService.applyByRule(tx, {
           userId: params.userId,
@@ -96,7 +101,7 @@ export class UserGrowthRewardService extends PlatformService {
     }
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         // 发放积分
         if (reward.points > 0) {
           await this.growthLedgerService.applyDelta(tx, {

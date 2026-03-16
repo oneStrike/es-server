@@ -1,9 +1,11 @@
-import { PlatformService } from '@libs/platform/database'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { and, desc, eq, inArray, like, sql } from 'drizzle-orm'
 import {
   AssignUserBadgeDto,
   CreateUserBadgeDto,
@@ -12,62 +14,85 @@ import {
 } from './dto/user-badge.dto'
 
 @Injectable()
-export class UserBadgeService extends PlatformService {
+export class UserBadgeService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   get userBadge() {
-    return this.prisma.userBadge
+    return this.drizzle.schema.userBadge
   }
 
   get userBadgeAssignment() {
-    return this.prisma.userBadgeAssignment
+    return this.drizzle.schema.userBadgeAssignment
+  }
+
+  get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  get userLevelRule() {
+    return this.drizzle.schema.userLevelRule
   }
 
   async createBadge(dto: CreateUserBadgeDto) {
-    return this.userBadge.create({
-      data: dto,
-    })
+    const rows = await this.db.insert(this.userBadge).values(dto).returning()
+    return rows[0]
   }
 
   async updateBadge(dto: UpdateUserBadgeDto) {
     const { id, ...updateData } = dto
-
-    try {
-      return await this.userBadge.update({
-        where: { id },
-        data: updateData,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new NotFoundException('徽章不存在')
-        },
-      })
+    const rows = await this.db
+      .update(this.userBadge)
+      .set(updateData)
+      .where(eq(this.userBadge.id, id))
+      .returning()
+    if (rows.length === 0) {
+      throw new NotFoundException('徽章不存在')
     }
+    return rows[0]
   }
 
   async deleteBadge(dto: { id: number }) {
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        await tx.userBadgeAssignment.deleteMany({
-          where: { badgeId: dto.id },
-        })
+    return this.db.transaction(async (tx) => {
+      await tx
+        .delete(this.userBadgeAssignment)
+        .where(eq(this.userBadgeAssignment.badgeId, dto.id))
+      const rows = await tx
+        .delete(this.userBadge)
+        .where(eq(this.userBadge.id, dto.id))
+        .returning()
+      if (rows.length === 0) {
+        throw new NotFoundException('徽章不存在')
+      }
+      return rows[0]
+    })
+  }
 
-        return tx.userBadge.delete({
-          where: { id: dto.id },
-        })
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new NotFoundException('徽章不存在')
-        },
-      })
+  private buildBadgeConditions(dto: QueryUserBadgeDto) {
+    const conditions: SQL[] = []
+    if (dto.name) {
+      conditions.push(like(this.userBadge.name, `%${dto.name}%`))
     }
+    if (dto.type !== undefined) {
+      conditions.push(eq(this.userBadge.type, dto.type))
+    }
+    if (dto.isEnabled !== undefined) {
+      conditions.push(eq(this.userBadge.isEnabled, dto.isEnabled))
+    }
+    if (dto.business) {
+      conditions.push(eq(this.userBadge.business, dto.business))
+    }
+    if (dto.eventKey) {
+      conditions.push(eq(this.userBadge.eventKey, dto.eventKey))
+    }
+    return conditions
   }
 
   async getBadgeDetail(dto: { id: number }) {
-    const badge = await this.userBadge.findUnique({
-      where: { id: dto.id },
-    })
+    const badge = await this.db.query.userBadge.findFirst({ where: { id: dto.id } })
 
     if (!badge) {
       throw new NotFoundException('徽章不存在')
@@ -77,151 +102,215 @@ export class UserBadgeService extends PlatformService {
   }
 
   async getBadges(dto: QueryUserBadgeDto) {
-    return this.userBadge.findPagination({
-      where: {
-        ...dto,
-        name: {
-          contains: dto.name,
-        },
-      },
+    const conditions = this.buildBadgeConditions(dto)
+    return this.drizzle.ext.findPagination(this.userBadge, {
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      ...dto,
     })
   }
 
   async assignBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
-    if (!(await this.userBadge.exists({ id: badgeId }))) {
+    const badge = await this.db.query.userBadge.findFirst({ where: { id: badgeId } })
+    if (!badge) {
       throw new NotFoundException('徽章不存在')
     }
 
-    if (!(await this.prisma.appUser.exists({ id: userId }))) {
+    const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
+    if (!user) {
       throw new NotFoundException('用户不存在')
     }
 
     try {
-      return await this.userBadgeAssignment.create({
-        data: {
+      const rows = await this.db
+        .insert(this.userBadgeAssignment)
+        .values({
           userId,
           badgeId,
-        },
-      })
+        })
+        .returning()
+      return rows[0]
     } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('用户已拥有该徽章')
-        },
-      })
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BadRequestException('用户已拥有该徽章')
+      }
+      throw error
     }
   }
 
   async revokeBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
-    try {
-      return await this.userBadgeAssignment.delete({
-        where: {
-          userId_badgeId: {
-            userId,
-            badgeId,
-          },
-        },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('用户徽章记录不存在')
-        },
-      })
+    const rows = await this.db
+      .delete(this.userBadgeAssignment)
+      .where(
+        and(
+          eq(this.userBadgeAssignment.userId, userId),
+          eq(this.userBadgeAssignment.badgeId, badgeId),
+        ),
+      )
+      .returning()
+    if (rows.length === 0) {
+      throw new BadRequestException('用户徽章记录不存在')
     }
+    return rows[0]
   }
 
   async getUserBadges(userId: number, dto: QueryUserBadgeDto) {
     const { name, type, isEnabled } = dto
 
-    if (!(await this.prisma.appUser.exists({ id: userId }))) {
+    const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
+    if (!user) {
       throw new NotFoundException('用户不存在')
     }
-
-    return this.userBadgeAssignment.findMany({
-      where: {
-        userId,
-        badge: {
-          name: {
-            contains: name,
-          },
-          type,
-          isEnabled,
-        },
-      },
-      include: {
-        badge: true,
-      },
-    })
+    const conditions = [eq(this.userBadgeAssignment.userId, userId)]
+    if (name) {
+      conditions.push(like(this.userBadge.name, `%${name}%`))
+    }
+    if (type !== undefined) {
+      conditions.push(eq(this.userBadge.type, type))
+    }
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.userBadge.isEnabled, isEnabled))
+    }
+    return this.db
+      .select({
+        id: this.userBadgeAssignment.id,
+        userId: this.userBadgeAssignment.userId,
+        badgeId: this.userBadgeAssignment.badgeId,
+        createdAt: this.userBadgeAssignment.createdAt,
+        badge: this.userBadge,
+      })
+      .from(this.userBadgeAssignment)
+      .innerJoin(
+        this.userBadge,
+        eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
+      )
+      .where(and(...conditions))
+      .orderBy(desc(this.userBadgeAssignment.id))
   }
 
   async getBadgeUsers(badgeId: number, dto: QueryUserBadgeDto) {
-    if (!(await this.userBadge.exists({ id: badgeId }))) {
+    const badge = await this.db.query.userBadge.findFirst({ where: { id: badgeId } })
+    if (!badge) {
       throw new NotFoundException('徽章不存在')
     }
 
-    return this.userBadgeAssignment.findPagination({
-      where: {
-        badgeId,
-        badge: {
-          ...dto,
-          name: {
-            contains: dto.name,
-          },
-        },
-      },
-      include: {
+    const pageIndex = dto.pageIndex ?? 1
+    const pageSize = dto.pageSize ?? 20
+    const offset = (pageIndex - 1) * pageSize
+
+    const conditions = [eq(this.userBadgeAssignment.badgeId, badgeId)]
+    if (dto.name) {
+      conditions.push(like(this.userBadge.name, `%${dto.name}%`))
+    }
+    if (dto.type !== undefined) {
+      conditions.push(eq(this.userBadge.type, dto.type))
+    }
+    if (dto.isEnabled !== undefined) {
+      conditions.push(eq(this.userBadge.isEnabled, dto.isEnabled))
+    }
+    if (dto.business) {
+      conditions.push(eq(this.userBadge.business, dto.business))
+    }
+    if (dto.eventKey) {
+      conditions.push(eq(this.userBadge.eventKey, dto.eventKey))
+    }
+    const where = and(...conditions)
+
+    const [totalRow] = await this.db
+      .select({ total: sql<number>`count(*)` })
+      .from(this.userBadgeAssignment)
+      .innerJoin(
+        this.userBadge,
+        eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
+      )
+      .where(where)
+
+    const list = await this.db
+      .select({
+        id: this.userBadgeAssignment.id,
+        userId: this.userBadgeAssignment.userId,
+        badgeId: this.userBadgeAssignment.badgeId,
+        createdAt: this.userBadgeAssignment.createdAt,
         user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-            level: true,
-            point: true,
-          },
+          id: this.appUser.id,
+          nickname: this.appUser.nickname,
+          avatar: this.appUser.avatarUrl,
+          level: this.userLevelRule.name,
+          point: this.appUser.points,
         },
-      },
-    })
+      })
+      .from(this.userBadgeAssignment)
+      .innerJoin(
+        this.userBadge,
+        eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
+      )
+      .innerJoin(this.appUser, eq(this.appUser.id, this.userBadgeAssignment.userId))
+      .leftJoin(this.userLevelRule, eq(this.userLevelRule.id, this.appUser.levelId))
+      .where(where)
+      .orderBy(desc(this.userBadgeAssignment.id))
+      .limit(pageSize)
+      .offset(offset)
+
+    const total = Number(totalRow?.total ?? 0)
+    return {
+      list,
+      total,
+      pageIndex,
+      pageSize,
+      totalPage: Math.ceil(total / pageSize),
+    }
   }
 
   async getBadgeStatistics() {
-    const [totalBadges, typeCounts, enabledCount, totalAssignments, topBadges] =
+    const [totalBadgesRow, enabledCountRow, totalAssignmentsRow, typeCounts, topBadges] =
       await Promise.all([
-        this.userBadge.count(),
-        this.userBadge.groupBy({
-          by: ['type'],
-          _count: true,
-        }),
-        this.userBadge.count({
-          where: { isEnabled: true },
-        }),
-        this.userBadgeAssignment.count(),
-        this.userBadgeAssignment.groupBy({
-          by: ['badgeId'],
-          _count: true,
-          orderBy: {
-            _count: {
-              badgeId: 'desc',
-            },
-          },
-          take: 5,
-        }),
+        this.db.select({ total: sql<number>`count(*)` }).from(this.userBadge),
+        this.db
+          .select({ total: sql<number>`count(*)` })
+          .from(this.userBadge)
+          .where(eq(this.userBadge.isEnabled, true)),
+        this.db
+          .select({ total: sql<number>`count(*)` })
+          .from(this.userBadgeAssignment),
+        this.db
+          .select({
+            type: this.userBadge.type,
+            count: sql<number>`count(*)`,
+          })
+          .from(this.userBadge)
+          .groupBy(this.userBadge.type),
+        this.db
+          .select({
+            badgeId: this.userBadgeAssignment.badgeId,
+            count: sql<number>`count(*)`,
+          })
+          .from(this.userBadgeAssignment)
+          .groupBy(this.userBadgeAssignment.badgeId)
+          .orderBy(sql`count(*) desc`)
+          .limit(5),
       ])
 
     const badgeIds = topBadges.map((item) => item.badgeId)
-    const badges = await this.userBadge.findMany({
-      where: { id: { in: badgeIds } },
-    })
+    const badges =
+      badgeIds.length > 0
+        ? await this.db
+            .select()
+            .from(this.userBadge)
+            .where(inArray(this.userBadge.id, badgeIds))
+        : []
 
     const badgeMap = new Map(badges.map((badge) => [badge.id, badge]))
     const topBadgesWithDetails = topBadges.map((item) => ({
       badge: badgeMap.get(item.badgeId),
-      count: item._count,
+      count: Number(item.count),
     }))
+
+    const totalBadges = Number(totalBadgesRow[0]?.total ?? 0)
+    const enabledCount = Number(enabledCountRow[0]?.total ?? 0)
+    const totalAssignments = Number(totalAssignmentsRow[0]?.total ?? 0)
 
     return {
       totalBadges,
@@ -230,7 +319,7 @@ export class UserBadgeService extends PlatformService {
       totalAssignments,
       typeDistribution: typeCounts.map((item) => ({
         type: item.type,
-        count: item._count,
+        count: Number(item.count),
       })),
       topBadges: topBadgesWithDetails,
     }

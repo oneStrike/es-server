@@ -1,10 +1,14 @@
+import { DrizzleService } from '@db/core'
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
   SceneTypeEnum,
 } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { InteractionTargetAccessService } from './interaction-target-access.service'
 import {
   mapInteractionTargetTypeToSceneType,
@@ -27,11 +31,14 @@ export interface ResolvedReportTargetMeta {
 }
 
 @Injectable()
-export class InteractionTargetResolverService extends PlatformService {
+export class InteractionTargetResolverService {
   constructor(
     private readonly interactionTargetAccessService: InteractionTargetAccessService,
-  ) {
-    super()
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -51,11 +58,12 @@ export class InteractionTargetResolverService extends PlatformService {
     }
 
     if (targetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
-      const topic = await this.interactionTargetAccessService.ensureTargetExists<{
-        userId: number
-      }>(this.prisma, targetType, targetId, {
-        select: { userId: true },
-      })
+      const topic =
+        await this.interactionTargetAccessService.ensureTargetExists<{
+          userId: number
+        }>(targetType, targetId, {
+          select: { userId: true },
+        })
 
       return {
         sceneType,
@@ -65,7 +73,6 @@ export class InteractionTargetResolverService extends PlatformService {
     }
 
     await this.interactionTargetAccessService.ensureTargetExists(
-      this.prisma,
       targetType,
       targetId,
     )
@@ -109,11 +116,12 @@ export class InteractionTargetResolverService extends PlatformService {
     }
 
     if (interactionTargetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
-      const topic = await this.interactionTargetAccessService.ensureTargetExists<{
-        userId: number
-      }>(this.prisma, interactionTargetType, targetId, {
-        select: { userId: true },
-      })
+      const topic =
+        await this.interactionTargetAccessService.ensureTargetExists<{
+          userId: number
+        }>(interactionTargetType, targetId, {
+          select: { userId: true },
+        })
 
       return {
         sceneType,
@@ -123,7 +131,6 @@ export class InteractionTargetResolverService extends PlatformService {
     }
 
     await this.interactionTargetAccessService.ensureTargetExists(
-      this.prisma,
       interactionTargetType,
       targetId,
     )
@@ -140,9 +147,9 @@ export class InteractionTargetResolverService extends PlatformService {
   private async resolveCommentTargetMeta(
     targetId: number,
   ): Promise<ResolvedLikeTargetMeta & ResolvedReportTargetMeta> {
-    const comment = await this.prisma.userComment.findFirst({
-      where: { id: targetId, deletedAt: null },
-      select: {
+    const comment = await this.db.query.userComment.findFirst({
+      where: { id: targetId },
+      columns: {
         id: true,
         userId: true,
         targetType: true,
@@ -172,9 +179,7 @@ export class InteractionTargetResolverService extends PlatformService {
     targetType: InteractionTargetTypeEnum,
   ): SceneTypeEnum {
     if (targetType === InteractionTargetTypeEnum.COMMENT) {
-      throw new BadRequestException(
-        '评论不能继续挂载评论作为场景目标',
-      )
+      throw new BadRequestException('评论不能继续挂载评论作为场景目标')
     }
 
     const sceneType = mapInteractionTargetTypeToSceneType(targetType)
@@ -186,9 +191,9 @@ export class InteractionTargetResolverService extends PlatformService {
   }
 
   private async ensureUserExists(targetId: number) {
-    const user = await this.prisma.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: targetId },
-      select: { id: true },
+      columns: { id: true },
     })
 
     if (!user) {

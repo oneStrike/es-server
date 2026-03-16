@@ -1,5 +1,6 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
   CreateUserPointRuleDto,
@@ -8,9 +9,15 @@ import {
 } from './dto/point-rule.dto'
 
 @Injectable()
-export class UserPointRuleService extends PlatformService {
+export class UserPointRuleService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   get userPointRule() {
-    return this.prisma.userPointRule
+    return this.drizzle.schema.userPointRule
   }
 
   async createPointRule(dto: CreateUserPointRuleDto) {
@@ -18,29 +25,30 @@ export class UserPointRuleService extends PlatformService {
       throw new BadRequestException('Invalid point rule type')
     }
 
-    try {
-      return await this.userPointRule.create({
-        data: dto,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Rule type already exists')
-        },
-      })
-    }
+    const rows = await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.userPointRule).values(dto).returning(),
+      {
+        duplicate: 'Rule type already exists',
+      },
+    )
+    return rows[0]
   }
 
   async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {
-    return this.userPointRule.findPagination({
-      where: queryPointRuleDto,
+    return this.drizzle.ext.findPagination(this.userPointRule, {
+      where: this.drizzle.buildWhere(this.userPointRule, {
+        and: queryPointRuleDto,
+      }),
+      ...queryPointRuleDto,
     })
   }
 
   async getPointRuleDetail(id: number) {
-    const rule = await this.userPointRule.findUnique({
-      where: { id },
-    })
+    const [rule] = await this.db
+      .select()
+      .from(this.userPointRule)
+      .where(eq(this.userPointRule.id, id))
+      .limit(1)
 
     if (!rule) {
       throw new BadRequestException('Point rule not found')
@@ -56,29 +64,32 @@ export class UserPointRuleService extends PlatformService {
 
     const { id, ...updateData } = dto
 
-    try {
-      return await this.userPointRule.update({
-        where: { id },
-        data: updateData,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Rule type already exists')
-        },
-        P2025: () => {
-          throw new BadRequestException('Point rule not found')
-        },
-      })
-    }
+    const data = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.userPointRule)
+          .set(updateData)
+          .where(eq(this.userPointRule.id, id))
+          .returning(),
+      {
+        duplicate: 'Rule type already exists',
+      },
+    )
+    this.drizzle.assertAffectedRows(data, 'Point rule not found')
+    return data[0]
   }
 
   async getEnabledRuleByType(ruleType: GrowthRuleTypeEnum) {
-    return this.userPointRule.findUnique({
-      where: {
-        type: ruleType,
-        isEnabled: true,
-      },
-    })
+    const [rule] = await this.db
+      .select()
+      .from(this.userPointRule)
+      .where(
+        and(
+          eq(this.userPointRule.type, ruleType),
+          eq(this.userPointRule.isEnabled, true),
+        ),
+      )
+      .limit(1)
+    return rule
   }
 }

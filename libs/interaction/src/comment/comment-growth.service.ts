@@ -3,15 +3,12 @@ import {
   GrowthLedgerService,
   GrowthRuleTypeEnum,
 } from '@libs/growth'
-import { PlatformService } from '@libs/platform/database'
 
 import { Injectable } from '@nestjs/common'
 
 @Injectable()
-export class CommentGrowthService extends PlatformService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
-    super()
-  }
+export class CommentGrowthService {
+  constructor(private readonly growthLedgerService: GrowthLedgerService) {}
 
   async rewardCommentCreated(
     tx: any,

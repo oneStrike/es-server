@@ -1,6 +1,7 @@
+import { DrizzleService } from '@db/core'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, asc, desc, eq, gt, gte, inArray, lte, sql } from 'drizzle-orm'
 import {
   CheckUserLevelPermissionDto,
   CreateUserLevelRuleDto,
@@ -12,21 +13,35 @@ import {
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 @Injectable()
-export class UserLevelRuleService extends PlatformService {
+export class UserLevelRuleService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
   get userLevelRule() {
-    return this.prisma.userLevelRule
+    return this.drizzle.schema.userLevelRule
   }
 
   get forumTopic() {
-    return this.prisma.forumTopic
+    return this.drizzle.schema.forumTopic
   }
 
   get forumReply() {
-    return this.prisma.userComment
+    return this.drizzle.schema.userComment
   }
 
-  constructor() {
-    super()
+  get userLike() {
+    return this.drizzle.schema.userLike
+  }
+
+  get userFavorite() {
+    return this.drizzle.schema.userFavorite
   }
 
   /**
@@ -35,17 +50,13 @@ export class UserLevelRuleService extends PlatformService {
    * @returns 创建的等级规则
    */
   async createLevelRule(dto: CreateUserLevelRuleDto) {
-    try {
-      return await this.userLevelRule.create({
-        data: dto,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Level rule already exists')
-        },
-      })
-    }
+    const rows = await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.userLevelRule).values(dto).returning(),
+      {
+        duplicate: 'Level rule already exists',
+      },
+    )
+    return rows[0]
   }
 
   /**
@@ -54,15 +65,15 @@ export class UserLevelRuleService extends PlatformService {
    * @returns 分页的等级规则列表
    */
   async getLevelRulePage(dto: QueryUserLevelRuleDto) {
-    return this.userLevelRule.findPagination({
-      where: {
-        ...dto,
-        isEnabled: dto.isEnabled,
-        name: {
-          contains: dto.name,
-          mode: 'insensitive',
+    return this.drizzle.ext.findPagination(this.userLevelRule, {
+      where: this.drizzle.buildWhere(this.userLevelRule, {
+        and: {
+          isEnabled: dto.isEnabled,
+          business: dto.business,
+          name: dto.name ? { like: dto.name } : undefined,
         },
-      },
+      }),
+      ...dto,
     })
   }
 
@@ -72,9 +83,13 @@ export class UserLevelRuleService extends PlatformService {
    * @returns 等级规则详情
    */
   async getLevelRuleDetail(id: number) {
-    return this.userLevelRule.findUnique({
+    const rule = await this.db.query.userLevelRule.findFirst({
       where: { id },
     })
+    if (!rule) {
+      throw new BadRequestException('等级规则不存在')
+    }
+    return rule
   }
 
   /**
@@ -84,19 +99,19 @@ export class UserLevelRuleService extends PlatformService {
    */
   async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
-
-    try {
-      return await this.userLevelRule.update({
-        where: { id },
-        data: updateData,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Level rule already exists')
-        },
-      })
-    }
+    const rows = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.userLevelRule)
+          .set(updateData)
+          .where(eq(this.userLevelRule.id, id))
+          .returning(),
+      {
+        duplicate: 'Level rule already exists',
+      },
+    )
+    this.drizzle.assertAffectedRows(rows, '等级规则不存在')
+    return rows[0]
   }
 
   /**
@@ -105,28 +120,28 @@ export class UserLevelRuleService extends PlatformService {
    * @returns 删除结果
    */
   async deleteLevelRule(id: number) {
-    const rule = await this.userLevelRule.findUnique({
+    const rule = await this.db.query.userLevelRule.findFirst({
       where: { id },
-      include: {
-        _count: {
-          select: {
-            users: true,
-          },
-        },
-      },
+      columns: { id: true },
     })
 
     if (!rule) {
       throw new BadRequestException('等级规则不存在')
     }
 
-    if (rule._count.users > 0) {
+    const users = await this.countByCondition(
+      this.appUser,
+      eq(this.appUser.levelId, id),
+    )
+    if (users > 0) {
       throw new BadRequestException('该等级规则下还有用户，无法删除')
     }
 
-    return this.userLevelRule.delete({
-      where: { id },
-    })
+    const rows = await this.db
+      .delete(this.userLevelRule)
+      .where(eq(this.userLevelRule.id, id))
+      .returning()
+    return rows[0]
   }
 
   /**
@@ -135,9 +150,9 @@ export class UserLevelRuleService extends PlatformService {
    * @returns 用户等级信息，包括当前等级、进度、权限等
    */
   async getUserLevelInfo(userId: number): Promise<UserLevelInfoDto> {
-    const user = await this.prisma.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      include: {
+      with: {
         level: true,
       },
     })
@@ -150,17 +165,17 @@ export class UserLevelRuleService extends PlatformService {
       throw new BadRequestException('用户等级规则不存在')
     }
 
-    const nextLevelRule = await this.userLevelRule.findFirst({
-      where: {
-        isEnabled: true,
-        requiredExperience: {
-          gt: user.experience,
-        },
-      },
-      orderBy: {
-        requiredExperience: 'asc',
-      },
-    })
+    const [nextLevelRule] = await this.db
+      .select()
+      .from(this.userLevelRule)
+      .where(
+        and(
+          eq(this.userLevelRule.isEnabled, true),
+          gt(this.userLevelRule.requiredExperience, user.experience),
+        ),
+      )
+      .orderBy(asc(this.userLevelRule.requiredExperience))
+      .limit(1)
 
     let progressPercentage = 0
     let nextLevelExperience: number | undefined
@@ -199,18 +214,27 @@ export class UserLevelRuleService extends PlatformService {
   }
 
   async getHighestLevelRuleByExperience(experience: number, tx?: any) {
-    const client = tx ?? this.prisma
-    return client.userLevelRule.findFirst({
-      where: {
-        isEnabled: true,
-        requiredExperience: {
-          lte: experience,
+    const client = tx ?? this.db
+    if (client?.query?.userLevelRule) {
+      return client.query.userLevelRule.findFirst({
+        where: {
+          isEnabled: true,
+          requiredExperience: { lte: experience },
         },
-      },
-      orderBy: {
-        requiredExperience: 'desc',
-      },
-    })
+      })
+    }
+    const [rule] = await this.db
+      .select()
+      .from(this.userLevelRule)
+      .where(
+        and(
+          eq(this.userLevelRule.isEnabled, true),
+          lte(this.userLevelRule.requiredExperience, experience),
+        ),
+      )
+      .orderBy(desc(this.userLevelRule.requiredExperience))
+      .limit(1)
+    return rule
   }
 
   /**
@@ -221,9 +245,9 @@ export class UserLevelRuleService extends PlatformService {
   async checkLevelPermission(dto: CheckUserLevelPermissionDto) {
     const { userId, permissionType } = dto
 
-    const user = await this.prisma.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      include: {
+      with: {
         level: true,
       },
     })
@@ -249,12 +273,13 @@ export class UserLevelRuleService extends PlatformService {
       case UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT:
         limit = level.dailyTopicLimit
         if (limit > 0) {
-          used = await this.forumTopic.count({
-            where: {
-              userId,
-              createdAt: { gte: today },
-            },
-          })
+          used = await this.countByCondition(
+            this.forumTopic,
+            and(
+              eq(this.forumTopic.userId, userId),
+              gte(this.forumTopic.createdAt, today),
+            ),
+          )
           hasPermission = used < limit
         }
         break
@@ -262,12 +287,13 @@ export class UserLevelRuleService extends PlatformService {
       case UserLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT:
         limit = level.dailyReplyCommentLimit
         if (limit > 0) {
-          used = await this.forumReply.count({
-            where: {
-              userId,
-              createdAt: { gte: today },
-            },
-          })
+          used = await this.countByCondition(
+            this.forumReply,
+            and(
+              eq(this.forumReply.userId, userId),
+              gte(this.forumReply.createdAt, today),
+            ),
+          )
           hasPermission = used < limit
         }
         break
@@ -275,17 +301,18 @@ export class UserLevelRuleService extends PlatformService {
       case UserLevelRulePermissionEnum.POST_INTERVAL:
         limit = level.postInterval
         if (limit > 0) {
-          const lastTopic = await this.forumTopic.findFirst({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-            select: { createdAt: true },
-          })
-
-          const lastReply = await this.forumReply.findFirst({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-            select: { createdAt: true },
-          })
+          const [lastTopic] = await this.db
+            .select({ createdAt: this.forumTopic.createdAt })
+            .from(this.forumTopic)
+            .where(eq(this.forumTopic.userId, userId))
+            .orderBy(desc(this.forumTopic.createdAt))
+            .limit(1)
+          const [lastReply] = await this.db
+            .select({ createdAt: this.forumReply.createdAt })
+            .from(this.forumReply)
+            .where(eq(this.forumReply.userId, userId))
+            .orderBy(desc(this.forumReply.createdAt))
+            .limit(1)
 
           let lastPostTime: Date | null = null
           if (lastTopic && lastReply) {
@@ -313,20 +340,17 @@ export class UserLevelRuleService extends PlatformService {
       case UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT:
         limit = level.dailyLikeLimit
         if (limit > 0) {
-          const today = new Date()
-          today.setHours(0, 0, 0, 0)
-          used = await this.prisma.userLike.count({
-            where: {
-              userId,
-              targetType: {
-                in: [
-                  InteractionTargetTypeEnum.FORUM_TOPIC,
-                  InteractionTargetTypeEnum.COMMENT,
-                ],
-              },
-              createdAt: { gte: today },
-            },
-          })
+          used = await this.countByCondition(
+            this.userLike,
+            and(
+              eq(this.userLike.userId, userId),
+              inArray(this.userLike.targetType, [
+                InteractionTargetTypeEnum.FORUM_TOPIC,
+                InteractionTargetTypeEnum.COMMENT,
+              ]),
+              gte(this.userLike.createdAt, today),
+            ),
+          )
           hasPermission = used < limit
         }
         break
@@ -334,15 +358,14 @@ export class UserLevelRuleService extends PlatformService {
       case UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT:
         limit = level.dailyFavoriteLimit
         if (limit > 0) {
-          const today = new Date()
-          today.setHours(0, 0, 0, 0)
-          used = await this.prisma.userFavorite.count({
-            where: {
-              userId,
-              targetType: InteractionTargetTypeEnum.FORUM_TOPIC,
-              createdAt: { gte: today },
-            },
-          })
+          used = await this.countByCondition(
+            this.userFavorite,
+            and(
+              eq(this.userFavorite.userId, userId),
+              eq(this.userFavorite.targetType, InteractionTargetTypeEnum.FORUM_TOPIC),
+              gte(this.userFavorite.createdAt, today),
+            ),
+          )
           hasPermission = used < limit
         }
         break
@@ -365,35 +388,45 @@ export class UserLevelRuleService extends PlatformService {
    * @returns 等级统计数据
    */
   async getLevelStatistics(): Promise<UserLevelStatisticsDto> {
-    const levels = await this.userLevelRule.findMany({
-      where: {
-        isEnabled: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        isEnabled: true,
-        _count: {
-          select: {
-            users: true,
-          },
-        },
-      },
-      orderBy: {
-        sortOrder: 'asc',
-      },
-    })
+    const levels = await this.db
+      .select({
+        id: this.userLevelRule.id,
+        name: this.userLevelRule.name,
+      })
+      .from(this.userLevelRule)
+      .where(eq(this.userLevelRule.isEnabled, true))
+      .orderBy(asc(this.userLevelRule.sortOrder))
 
-    const allLevelsCount = await this.userLevelRule.count()
+    const [allLevelsCount] = await this.db
+      .select({ total: sql<number>`count(*)` })
+      .from(this.userLevelRule)
+
+    const distribution = await Promise.all(
+      levels.map(async (item) => {
+        const userCount = await this.countByCondition(
+          this.appUser,
+          eq(this.appUser.levelId, item.id),
+        )
+        return {
+          levelId: item.id,
+          levelName: item.name,
+          userCount,
+        }
+      }),
+    )
 
     return {
-      totalLevels: allLevelsCount,
+      totalLevels: Number(allLevelsCount?.total ?? 0),
       enabledLevels: levels.length,
-      levelDistribution: levels.map((item) => ({
-        levelId: item.id,
-        levelName: item.name,
-        userCount: item._count.users,
-      })),
+      levelDistribution: distribution,
     }
+  }
+
+  private async countByCondition(table: any, where: any): Promise<number> {
+    const [result] = await this.db
+      .select({ total: sql<number>`count(*)` })
+      .from(table)
+      .where(where)
+    return Number(result?.total ?? 0)
   }
 }

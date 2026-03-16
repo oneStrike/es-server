@@ -1,18 +1,18 @@
-import type { PrismaTransactionClientType } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import {
   DownloadService,
   DownloadTargetTypeEnum,
   IDownloadTargetResolver,
+  InteractionTx,
 } from '@libs/interaction'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 小说章节下载解析器
  */
 @Injectable()
 export class WorkNovelChapterDownloadResolver
-  extends PlatformService
   implements IDownloadTargetResolver, OnModuleInit
 {
   /** 目标类型：小说章节 */
@@ -20,8 +20,13 @@ export class WorkNovelChapterDownloadResolver
   /** 作品类型：2 表示小说 */
   private readonly workType = 2
 
-  constructor(private readonly downloadService: DownloadService) {
-    super()
+  constructor(
+    private readonly downloadService: DownloadService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get workChapter() {
+    return this.drizzle.schema.workChapter
   }
 
   /**
@@ -34,14 +39,14 @@ export class WorkNovelChapterDownloadResolver
   /**
    * 检查下载权限并获取内容
    */
-  async ensureDownloadable(tx: PrismaTransactionClientType, targetId: number) {
-    const chapter = await tx.workChapter.findFirst({
+  async ensureDownloadable(tx: InteractionTx, targetId: number) {
+    const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
         workType: this.workType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: { content: true },
+      columns: { content: true },
     })
 
     if (!chapter) {
@@ -59,7 +64,7 @@ export class WorkNovelChapterDownloadResolver
    * 更新下载计数
    */
   async applyCountDelta(
-    tx: PrismaTransactionClientType,
+    tx: InteractionTx,
     targetId: number,
     delta: number,
   ) {
@@ -67,14 +72,17 @@ export class WorkNovelChapterDownloadResolver
       return
     }
 
-    await tx.workChapter.applyCountDelta(
-      {
-        id: targetId,
-        workType: this.workType,
-        deletedAt: null,
-      },
-      'downloadCount',
-      delta,
-    )
+    await tx
+      .update(this.workChapter)
+      .set({
+        downloadCount: sql`${this.workChapter.downloadCount} + ${delta}`,
+      })
+      .where(
+        and(
+          eq(this.workChapter.id, targetId),
+          eq(this.workChapter.workType, this.workType),
+          isNull(this.workChapter.deletedAt),
+        ),
+      )
   }
 }

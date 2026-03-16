@@ -1,5 +1,5 @@
+import { DrizzleService } from '@db/core'
 import { WorkViewPermissionEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 /**
@@ -7,19 +7,25 @@ import { BadRequestException, Injectable } from '@nestjs/common'
  * 负责处理用户相关的权限验证，包括视图权限、积分验证等
  */
 @Injectable()
-export class UserPermissionService extends PlatformService {
+export class UserPermissionService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   /**
    * 获取 AppUser 模型访问器
    */
   get appUser() {
-    return this.prisma.appUser
+    return this.drizzle.schema.appUser
   }
 
   /**
    * 获取 UserLevelRule 模型访问器
    */
   get userLevelRule() {
-    return this.prisma.userLevelRule
+    return this.drizzle.schema.userLevelRule
   }
 
   /**
@@ -29,9 +35,9 @@ export class UserPermissionService extends PlatformService {
    * @throws BadRequestException 当用户不存在时抛出异常
    */
   async getUserWithLevel(userId: number) {
-    const user = await this.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      include: { level: true },
+      with: { level: true },
     })
 
     if (!user) {
@@ -91,7 +97,7 @@ export class UserPermissionService extends PlatformService {
 
       // 如果指定了最低等级要求，验证用户等级是否满足
       if (requiredViewLevelId) {
-        const requiredLevel = await this.userLevelRule.findUnique({
+        const requiredLevel = await this.db.query.userLevelRule.findFirst({
           where: { id: requiredViewLevelId },
         })
 
@@ -115,7 +121,7 @@ export class UserPermissionService extends PlatformService {
    * @throws BadRequestException 当用户不存在或积分不足时抛出异常
    */
   async validatePoints(userId: number, points: number) {
-    const user = await this.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
     })
 

@@ -1,6 +1,7 @@
+import { DrizzleService } from '@db/core'
 import { UserStatusEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, gt, gte, sql } from 'drizzle-orm'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import {
@@ -18,23 +19,32 @@ import {
  * 对外保留原方法，内部统一走 GrowthLedger。
  */
 @Injectable()
-export class UserExperienceService extends PlatformService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {
-    super()
+export class UserExperienceService {
+  constructor(
+    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly drizzle: DrizzleService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get growthLedgerRecord() {
+    return this.drizzle.schema.growthLedgerRecord
   }
 
   /**
    * 获取经验规则数据库访问器
    */
   get userExperienceRule() {
-    return this.prisma.userExperienceRule
+    return this.drizzle.schema.userExperienceRule
   }
 
   /**
    * 获取用户资料数据库访问器
    */
   get appUser() {
-    return this.prisma.appUser
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -43,17 +53,13 @@ export class UserExperienceService extends PlatformService {
    * @returns 创建的规则信息
    */
   async createExperienceRule(dto: CreateUserExperienceRuleDto) {
-    try {
-      return await this.userExperienceRule.create({
-        data: dto,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Experience rule type already exists')
-        },
-      })
-    }
+    const rows = await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.userExperienceRule).values(dto).returning(),
+      {
+        duplicate: 'Experience rule type already exists',
+      },
+    )
+    return rows[0]
   }
 
   /**
@@ -62,12 +68,14 @@ export class UserExperienceService extends PlatformService {
    * @returns 分页的规则列表
    */
   async getExperienceRulePage(dto: QueryUserExperienceRuleDto) {
-    return this.userExperienceRule.findPagination({
-      where: {
-        ...dto,
-        isEnabled: dto.isEnabled,
-        type: dto.type,
-      },
+    return this.drizzle.ext.findPagination(this.userExperienceRule, {
+      where: this.drizzle.buildWhere(this.userExperienceRule, {
+        and: {
+          isEnabled: dto.isEnabled,
+          type: dto.type,
+        },
+      }),
+      ...dto,
     })
   }
 
@@ -77,9 +85,11 @@ export class UserExperienceService extends PlatformService {
    * @returns 规则详情信息
    */
   async getExperienceRuleDetail(id: number) {
-    const rule = await this.userExperienceRule.findUnique({
-      where: { id },
-    })
+    const [rule] = await this.db
+      .select()
+      .from(this.userExperienceRule)
+      .where(eq(this.userExperienceRule.id, id))
+      .limit(1)
 
     if (!rule) {
       throw new BadRequestException('经验规则不存在')
@@ -95,19 +105,19 @@ export class UserExperienceService extends PlatformService {
    */
   async updateExperienceRule(dto: UpdateUserExperienceRuleDto) {
     const { id, ...updateData } = dto
-
-    try {
-      return await this.userExperienceRule.update({
-        where: { id },
-        data: updateData,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Experience rule type already exists')
-        },
-      })
-    }
+    const rows = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.userExperienceRule)
+          .set(updateData)
+          .where(eq(this.userExperienceRule.id, id))
+          .returning(),
+      {
+        duplicate: 'Experience rule type already exists',
+      },
+    )
+    this.drizzle.assertAffectedRows(rows, '经验规则不存在')
+    return rows[0]
   }
 
   /**
@@ -116,17 +126,21 @@ export class UserExperienceService extends PlatformService {
    * @returns 删除结果
    */
   async deleteExperienceRule(id: number) {
-    const rule = await this.userExperienceRule.findUnique({
-      where: { id },
-    })
+    const [rule] = await this.db
+      .select({ id: this.userExperienceRule.id })
+      .from(this.userExperienceRule)
+      .where(eq(this.userExperienceRule.id, id))
+      .limit(1)
 
     if (!rule) {
       throw new BadRequestException('经验规则不存在')
     }
 
-    return this.userExperienceRule.delete({
-      where: { id },
-    })
+    const rows = await this.db
+      .delete(this.userExperienceRule)
+      .where(eq(this.userExperienceRule.id, id))
+      .returning()
+    return rows[0]
   }
 
   /**
@@ -144,17 +158,14 @@ export class UserExperienceService extends PlatformService {
   ) {
     const { userId, ruleType, remark } = addExperienceDto
 
-    const user = await this.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: {
         id: userId,
-        status: {
-          not: UserStatusEnum.PERMANENT_BANNED,
-        },
       },
-      select: { id: true },
+      columns: { id: true, status: true },
     })
 
-    if (!user) {
+    if (!user || user.status === UserStatusEnum.PERMANENT_BANNED) {
       throw new BadRequestException('用户不存在或已被永久封禁')
     }
 
@@ -162,7 +173,7 @@ export class UserExperienceService extends PlatformService {
       addExperienceDto.bizKey
       ?? this.buildBizKey(`experience:rule:${ruleType}`, userId)
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.db.transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
         userId,
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
@@ -182,9 +193,12 @@ export class UserExperienceService extends PlatformService {
         throw new BadRequestException('经验发放失败')
       }
 
-      const record = await tx.growthLedgerRecord.findUniqueOrThrow({
+      const record = await tx.query.growthLedgerRecord.findFirst({
         where: { id: recordId },
       })
+      if (!record) {
+        throw new BadRequestException('经验记录不存在')
+      }
 
       return this.toExperienceRecord(record)
     })
@@ -196,13 +210,16 @@ export class UserExperienceService extends PlatformService {
    * @returns 分页的记录列表
    */
   async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
-    const page = await this.prisma.growthLedgerRecord.findPagination({
-      where: {
-        userId: dto.userId,
-        ruleId: dto.ruleId,
-        assetType: GrowthAssetTypeEnum.EXPERIENCE,
-      },
-      orderBy: { id: 'desc' },
+    const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
+      where: this.drizzle.buildWhere(this.growthLedgerRecord, {
+        and: {
+          userId: dto.userId,
+          ruleId: dto.ruleId,
+          assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        },
+      }),
+      ...dto,
+      orderBy: dto.orderBy ?? JSON.stringify([{ id: 'desc' }]),
     })
 
     return {
@@ -217,14 +234,17 @@ export class UserExperienceService extends PlatformService {
    * @returns 记录详情信息
    */
   async getExperienceRecordDetail(id: number) {
-    const record = await this.prisma.growthLedgerRecord.findUnique({
-      where: { id },
-      include: {
+    const record = await this.db.query.growthLedgerRecord.findFirst({
+      where: {
+        id,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+      },
+      with: {
         user: true,
       },
     })
 
-    if (!record || record.assetType !== GrowthAssetTypeEnum.EXPERIENCE) {
+    if (!record) {
       throw new BadRequestException('经验记录不存在')
     }
 
@@ -240,9 +260,9 @@ export class UserExperienceService extends PlatformService {
    * @returns 经验统计信息
    */
   async getUserExperienceStats(userId: number) {
-    const user = await this.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      include: {
+      with: {
         level: true,
       },
     })
@@ -254,23 +274,23 @@ export class UserExperienceService extends PlatformService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const todayEarned = await this.prisma.growthLedgerRecord.aggregate({
-      where: {
-        userId,
-        assetType: GrowthAssetTypeEnum.EXPERIENCE,
-        delta: { gt: 0 },
-        createdAt: {
-          gte: today,
-        },
-      },
-      _sum: {
-        delta: true,
-      },
-    })
+    const [todayEarned] = await this.db
+      .select({
+        total: sql<number>`coalesce(sum(${this.growthLedgerRecord.delta}), 0)`,
+      })
+      .from(this.growthLedgerRecord)
+      .where(
+        and(
+          eq(this.growthLedgerRecord.userId, userId),
+          eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+          gt(this.growthLedgerRecord.delta, 0),
+          gte(this.growthLedgerRecord.createdAt, today),
+        ),
+      )
 
     return {
       currentExperience: user.experience,
-      todayEarned: todayEarned._sum.delta || 0,
+      todayEarned: Number(todayEarned?.total ?? 0),
       level: user.level,
     }
   }
