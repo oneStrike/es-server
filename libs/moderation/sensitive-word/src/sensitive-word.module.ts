@@ -1,4 +1,3 @@
-import { DrizzleModule } from '@db/core/drizzle.module'
 import { Module } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
@@ -6,7 +5,6 @@ import { SensitiveWordStatisticsService } from './sensitive-word-statistics.serv
 import { SensitiveWordService } from './sensitive-word.service'
 
 @Module({
-  imports: [DrizzleModule],
   controllers: [],
   providers: [
     SensitiveWordService,

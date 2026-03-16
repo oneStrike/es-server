@@ -1,4 +1,4 @@
-import { DrizzleService } from '@db/core/drizzle.service'
+import { DrizzleService } from '@db/core'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,

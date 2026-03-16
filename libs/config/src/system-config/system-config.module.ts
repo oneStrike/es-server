@@ -1,4 +1,3 @@
-import { DrizzleModule } from '@db/core/drizzle.module'
 import { CryptoModule } from '@libs/platform/modules'
 import { SMS_CONFIG_PROVIDER } from '@libs/platform/modules/sms'
 import { Module } from '@nestjs/common'
@@ -10,7 +9,7 @@ import { SystemConfigService } from './system-config.service'
  * 提供系统配置的管理和读取功能
  */
 @Module({
-  imports: [DrizzleModule, CryptoModule],
+  imports: [CryptoModule],
   providers: [
     ConfigReader,
     SystemConfigService,

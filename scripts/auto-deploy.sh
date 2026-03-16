@@ -109,7 +109,7 @@ run_with_timeout() {
     "$@"
 }
 
-# Git retry function - executes git command with retry logic
+# Git retry function (no timeout wrapper)
 # Usage: git_with_retry <git_args...>
 git_with_retry() {
     local attempt=1
@@ -129,12 +129,8 @@ git_with_retry() {
             GIT_TERMINAL_PROMPT=0 \
             GCM_INTERACTIVE=Never \
             GIT_ASKPASS= \
-            GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
-            run_with_timeout "$GIT_TIMEOUT_SECONDS" \
             git \
                 -c credential.interactive=never \
-                -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
-                -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
                 "$@" 2>&1
         )
         exit_code=$?
@@ -145,11 +141,7 @@ git_with_retry() {
             fi
             return 0
         else
-            if [ $exit_code -eq 124 ]; then
-                error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
-            else
-                error "执行失败 (退出码: $exit_code)"
-            fi
+            error "执行失败 (退出码: $exit_code)"
             if [ -n "$output" ]; then
                 error "错误信息: $output"
             fi
@@ -164,6 +156,56 @@ git_with_retry() {
 
     error "$git_cmd 在 $MAX_RETRIES 次尝试后仍然失败"
     return 1
+}
+
+git_pull_branch_until_success() {
+    local branch="$1"
+    local attempt=1
+    local git_cmd="git pull origin ${branch}"
+
+    log "执行: $git_cmd"
+
+    while true; do
+        if [ $attempt -gt 1 ]; then
+            warn "Retry #${attempt}: $git_cmd"
+        fi
+
+        local output
+        local exit_code
+        output=$(
+            GIT_TERMINAL_PROMPT=0 \
+            GCM_INTERACTIVE=Never \
+            GIT_ASKPASS= \
+            GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
+            run_with_timeout "$GIT_TIMEOUT_SECONDS" \
+            git \
+                -c credential.interactive=never \
+                -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
+                -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
+                pull origin "${branch}" 2>&1
+        )
+        exit_code=$?
+
+        if [ $exit_code -eq 0 ]; then
+            if [ -n "$output" ]; then
+                log "输出: $output"
+            fi
+            return 0
+        fi
+
+        if [ $exit_code -eq 124 ]; then
+            error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
+        else
+            error "执行失败 (退出码: $exit_code)"
+        fi
+        if [ -n "$output" ]; then
+            error "错误信息: $output"
+        fi
+
+        warn "等待 1 秒后重试..."
+        sleep 1
+        attempt=$((attempt + 1))
+    done
 }
 
 # Dedicated policy for: git fetch origin <branch>
@@ -299,7 +341,7 @@ deploy_project() {
 
     if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
         log "发现新版本，正在拉取 [$CURRENT_BRANCH]..."
-        if ! git_with_retry pull origin "${CURRENT_BRANCH}"; then
+        if ! git_pull_branch_until_success "${CURRENT_BRANCH}"; then
             error "Git pull 失败"
             return 1
         fi

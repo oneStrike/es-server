@@ -1,5 +1,5 @@
 import type { Cache } from 'cache-manager'
-import { DrizzleService } from '@db/core/drizzle.service'
+import { DrizzleService } from '@db/core'
 import { AesService, RsaService } from '@libs/platform/modules'
 import { isMasked, maskString } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'

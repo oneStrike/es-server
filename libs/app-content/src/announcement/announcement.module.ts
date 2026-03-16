@@ -1,4 +1,3 @@
-import { DrizzleModule } from '@db/core/drizzle.module'
 import { Module } from '@nestjs/common'
 import { AppAnnouncementService } from './announcement.service'
 
@@ -7,7 +6,6 @@ import { AppAnnouncementService } from './announcement.service'
  * 提供公告的管理功能
  */
 @Module({
-  imports: [DrizzleModule],
   providers: [AppAnnouncementService],
   exports: [AppAnnouncementService],
 })

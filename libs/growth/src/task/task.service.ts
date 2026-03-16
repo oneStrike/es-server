@@ -12,7 +12,7 @@ import type {
   UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto'
-import { DrizzleService } from '@db/core/drizzle.service'
+import { DrizzleService } from '@db/core'
 import { UserGrowthRewardService } from '@libs/growth'
 import {
   BadRequestException,

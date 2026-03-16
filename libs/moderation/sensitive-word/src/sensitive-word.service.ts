@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core/drizzle.service'
+import { DrizzleService } from '@db/core'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'

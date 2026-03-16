@@ -1,9 +1,7 @@
-import { DrizzleModule } from '@db/core/drizzle.module'
 import { Module } from '@nestjs/common'
 import { LibDictionaryService } from './dictionary.service'
 
 @Module({
-  imports: [DrizzleModule],
   controllers: [],
   providers: [LibDictionaryService],
   exports: [LibDictionaryService],

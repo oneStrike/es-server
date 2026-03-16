@@ -1,4 +1,4 @@
-import { DrizzleService } from '@db/core/drizzle.service'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'

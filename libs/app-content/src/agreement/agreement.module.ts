@@ -1,4 +1,3 @@
-import { DrizzleModule } from '@db/core/drizzle.module'
 import { Module } from '@nestjs/common'
 import { AgreementService } from './agreement.service'
 
@@ -7,7 +6,7 @@ import { AgreementService } from './agreement.service'
  * 提供协议的管理功能
  */
 @Module({
-  imports: [DrizzleModule],
+  imports: [],
   providers: [AgreementService],
   exports: [AgreementService],
 })
