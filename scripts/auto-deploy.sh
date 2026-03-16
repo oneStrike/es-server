@@ -516,6 +516,11 @@ for PROJECT in "${PROJECTS[@]}"; do
     PROJECT_DIR="${ROOT_DIR}/${PROJECT}"
     if ! deploy_project "$PROJECT_DIR" "$PROJECT"; then
         FAILURES=$((FAILURES + 1))
+        if [ "$PROJECT" = "es-server" ]; then
+            error "【es-server】部署失败，终止后续流程"
+            break
+        fi
+        warn "【${PROJECT}】部署失败，继续执行下一个项目"
     fi
 done
 
