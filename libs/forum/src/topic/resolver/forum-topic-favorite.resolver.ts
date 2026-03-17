@@ -40,7 +40,7 @@ export class ForumTopicFavoriteResolver
 
   /**
    * 验证目标主题是否存在并返回主题所有者信息
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 主题ID
    * @returns 包含主题所有者用户ID的对象
    * @throws BadRequestException 当主题不存在时抛出异常
@@ -65,7 +65,7 @@ export class ForumTopicFavoriteResolver
   /**
    * 应用收藏计数增量
    * 当用户收藏或取消收藏时，更新主题的收藏计数
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 主题ID
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
@@ -90,7 +90,7 @@ export class ForumTopicFavoriteResolver
   /**
    * 收藏后钩子函数
    * 当用户成功收藏主题后，向主题作者发送通知（收藏者与被收藏者不是同一人时）
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 被收藏的主题ID
    * @param actorUserId - 执行收藏操作的用户ID
    * @param options - 包含主题所有者用户ID的选项对象

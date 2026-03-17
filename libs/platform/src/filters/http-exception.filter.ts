@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import { PostgresErrorCode } from '@db/core'
 import { LoggerService } from '@libs/platform/modules'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import {
@@ -19,7 +20,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   constructor(private readonly loggerService: LoggerService) {}
 
   /**
-   * Known framework/Prisma error mappings.
+   * Known framework/database error mappings.
    * Keep this as the single global fallback map.
    */
   private readonly errorDescriptorMap: Record<string, ErrorDescriptor> = {
@@ -36,17 +37,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status: HttpStatus.BAD_REQUEST,
       message: '\u4E0A\u4F20\u6587\u4EF6\u4E0D\u80FD\u4E3A\u7A7A',
     },
-    // Prisma errors
-    P2002: {
+    // Database errors
+    [PostgresErrorCode.UNIQUE_VIOLATION]: {
       status: HttpStatus.CONFLICT,
       message:
         '\u6570\u636E\u5DF2\u5B58\u5728\uFF0C\u8BF7\u52FF\u91CD\u590D\u63D0\u4EA4',
     },
-    P2025: {
-      status: HttpStatus.NOT_FOUND,
-      message: '\u8BB0\u5F55\u4E0D\u5B58\u5728',
+    [PostgresErrorCode.FOREIGN_KEY_VIOLATION]: {
+      status: HttpStatus.BAD_REQUEST,
+      message: '\u5173\u8054\u6570\u636E\u4E0D\u5B58\u5728',
     },
-    P2034: {
+    [PostgresErrorCode.NOT_NULL_VIOLATION]: {
+      status: HttpStatus.BAD_REQUEST,
+      message: '\u5FC5\u586B\u5B57\u6BB5\u4E0D\u80FD\u4E3A\u7A7A',
+    },
+    [PostgresErrorCode.SERIALIZATION_FAILURE]: {
       status: HttpStatus.CONFLICT,
       message: '\u8BF7\u6C42\u51B2\u7A81\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5',
     },

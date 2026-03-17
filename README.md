@@ -167,7 +167,7 @@ export class DemoService {
 项目已替换为 NestJS 官方推荐的 Terminus 健康检查方案，并提供以下端点（受全局前缀 `api` 影响）：
 
 - `GET /api/health`：存活检查（liveness）。返回进程内存指标，并附带 `uptime` 与 `environment` 元信息。
-- `GET /api/ready`：就绪检查（readiness）。检查数据库（Prisma `SELECT 1`）与缓存（内存与 Redis）的可用性。
+- `GET /api/ready`：就绪检查（readiness）。检查数据库（`SELECT 1`）与缓存（内存与 Redis）的可用性。
 
 示例响应（成功）：
 

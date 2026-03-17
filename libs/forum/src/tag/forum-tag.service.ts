@@ -36,21 +36,21 @@ export class ForumTagService {
   }
 
   /**
-   * 获取标签的 Prisma 模型
+   * 获取标签的 数据模型
    */
   get forumTag() {
     return this.drizzle.schema.forumTag
   }
 
   /**
-   * 获取主题的 Prisma 模型
+   * 获取主题的 数据模型
    */
   get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
   /**
-   * 获取主题标签关联的 Prisma 模型
+   * 获取主题标签关联的 数据模型
    */
   get forumTopicTag() {
     return this.drizzle.schema.forumTopicTag

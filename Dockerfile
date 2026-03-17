@@ -20,7 +20,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 
 # 复制配置文件 - 保持原有优化
-COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts webpack.config.js ./
+COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json drizzle.config.ts webpack.config.js ./
 
 # 安装依赖 - 统一缓存ID，提高命中率
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
@@ -30,7 +30,6 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 # 复制源代码
 COPY libs libs
 COPY db db
-COPY prisma prisma
 
 # 参数化应用类型
 ARG APP_TYPE=admin
@@ -91,8 +90,6 @@ RUN apk add --no-cache dumb-init tzdata && \
 
 COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=nestjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/${APP_TYPE}-api/ ./
 
 EXPOSE 8080

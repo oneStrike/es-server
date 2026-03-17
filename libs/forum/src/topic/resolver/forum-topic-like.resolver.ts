@@ -43,7 +43,7 @@ export class ForumTopicLikeResolver
   /**
    * 解析目标主题的场景元数据
    * 验证主题存在性并返回场景类型和场景ID，用于统一交互记录的场景标识
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 主题ID
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当主题不存在时抛出异常
@@ -70,7 +70,7 @@ export class ForumTopicLikeResolver
   /**
    * 应用点赞计数增量
    * 当用户点赞或取消点赞时，更新主题的点赞计数
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 主题ID
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
@@ -95,7 +95,7 @@ export class ForumTopicLikeResolver
   /**
    * 点赞后钩子函数
    * 当用户成功点赞主题后，向主题作者发送通知（点赞者与被点赞者不是同一人时）
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 被点赞的主题ID
    * @param actorUserId - 执行点赞操作的用户ID
    * @param _meta - 点赞目标元数据（本场景未使用）

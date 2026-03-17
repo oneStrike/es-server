@@ -29,7 +29,7 @@ export class UserReportResolver implements IReportTargetResolver, OnModuleInit {
   /**
    * 解析目标用户的场景元数据
    * 验证用户存在性并返回场景类型和场景ID
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 用户ID
    * @returns 包含场景类型、场景ID和用户ID的元数据对象
    * @throws NotFoundException 当用户不存在时抛出异常

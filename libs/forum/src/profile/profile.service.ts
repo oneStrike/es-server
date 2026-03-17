@@ -285,7 +285,7 @@ export class ForumProfileService {
 
   /**
    * 初始化用户论坛资料
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param userId - 用户 ID
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */

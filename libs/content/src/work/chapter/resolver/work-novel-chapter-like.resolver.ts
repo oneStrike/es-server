@@ -35,7 +35,7 @@ export class WorkNovelChapterLikeResolver
   /**
    * 解析目标小说章节的场景元数据
    * 验证章节存在性并返回场景类型和场景ID，用于统一交互记录的场景标识
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 章节ID
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当章节不存在时抛出异常
@@ -63,7 +63,7 @@ export class WorkNovelChapterLikeResolver
   /**
    * 应用点赞计数增量
    * 当用户点赞或取消点赞时，更新小说章节的点赞计数
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 章节ID
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */

@@ -52,7 +52,7 @@ export interface CreateTokenDto {
 }
 
 /**
- * Prisma Delegate 接口抽象
+ * Token Delegate 接口抽象
  * 适配 AdminUserToken 和 AppUserToken
  *
  * @template T Token 实体类型

@@ -39,7 +39,7 @@ export class WorkNovelFavoriteResolver
 
   /**
    * 验证目标小说作品是否存在
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 作品ID
    * @returns 空对象（收藏服务要求的接口规范）
    * @throws BadRequestException 当作品不存在时抛出异常
@@ -64,7 +64,7 @@ export class WorkNovelFavoriteResolver
   /**
    * 应用收藏计数增量
    * 当用户收藏或取消收藏时，更新小说作品的收藏计数
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 作品ID
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */

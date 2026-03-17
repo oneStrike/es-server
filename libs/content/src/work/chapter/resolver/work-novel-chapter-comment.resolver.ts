@@ -33,7 +33,7 @@ export class WorkNovelChapterCommentResolver
    * 应用评论计数增量
    * 更新小说章节的评论数
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标章节ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
@@ -75,7 +75,7 @@ export class WorkNovelChapterCommentResolver
    * 校验是否允许对该小说章节发表评论
    * 检查章节是否存在、是否允许评论
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标章节ID
    * @throws 当章节不存在或不允许评论时抛出 BadRequestException
    */
@@ -102,7 +102,7 @@ export class WorkNovelChapterCommentResolver
    * 解析小说章节的元信息
    * 获取章节所属作品的作者ID，用于发送被评论通知
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标章节ID
    * @returns 目标元信息，包含所有者用户ID
    */

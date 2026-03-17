@@ -33,7 +33,7 @@ export class WorkComicCommentResolver
    * 应用评论计数增量
    * 更新漫画作品的评论数
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标作品ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
@@ -75,7 +75,7 @@ export class WorkComicCommentResolver
    * 校验是否允许对该漫画作品发表评论
    * 检查作品是否存在、是否允许评论
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标作品ID
    * @throws 当作品不存在或不允许评论时抛出 BadRequestException
    */
@@ -102,7 +102,7 @@ export class WorkComicCommentResolver
    * 解析漫画作品的元信息
    * 获取作品作者ID，用于发送被评论通知
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标作品ID
    * @returns 目标元信息，包含所有者用户ID
    */

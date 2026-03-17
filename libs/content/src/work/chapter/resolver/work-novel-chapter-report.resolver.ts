@@ -31,7 +31,7 @@ export class WorkNovelChapterReportResolver
   /**
    * 解析目标小说章节的场景元数据
    * 验证章节存在性并返回场景类型和场景ID
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 章节ID
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当章节不存在时抛出异常

@@ -1,5 +1,5 @@
 /**
- * Auto-converted from Prisma schema.
+ * Auto-converted from legacy schema.
  */
 
 import { index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";

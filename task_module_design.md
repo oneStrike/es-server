@@ -4,7 +4,7 @@
 
 ### 1.1 技术栈与基础设施
 - 后端框架：NestJS（基于 Fastify 适配器）
-- 数据访问：Prisma + PostgreSQL
+- 数据访问：Drizzle + PostgreSQL
 - 缓存与限流：Redis + Throttler
 - 认证与安全：JWT、CSRF、Helmet
 - 文档与校验：Swagger、class-validator/class-transformer
@@ -24,13 +24,13 @@
   - app-content：协议/公告/页面等应用内容
 
 ### 1.3 数据库设计与约定
-- Prisma 多文件模型，统一映射为 snake_case 表名
+- Drizzle 多文件 schema，统一映射为 snake_case 表名
 - 通用字段：created_at / updated_at，常见软删除字段 deleted_at
 - 索引策略：高频筛选字段与排序字段均建立索引
 - 业务枚举多采用 Int + SmallInt 存储
 
 ### 1.4 业务逻辑层结构
-- Service 继承 PlatformService，统一注入 Prisma Client
+- Service 注入 DrizzleService，统一作为数据库访问入口
 - 通用分页：findPagination 扩展，返回 list/total/pageIndex/pageSize
 - 管理端与客户端分层清晰，领域逻辑集中在 libs 中复用
 
@@ -275,6 +275,6 @@
 - DTO 校验全量采用 ValidateX 装饰器与 PageDto 规范
 
 ## 6. 关键实现约束
-- 复用 PlatformService 与 Prisma 扩展（findPagination / softDelete）
+- 复用 Drizzle 扩展（findPagination / softDelete）
 - 只在 libs 新增领域逻辑，apps 侧只做 Controller 封装
 - 任务与成长体系对接使用现有 UserGrowthEvent 服务

@@ -67,7 +67,6 @@ export class PurchaseService {
   private isUniqueConstraintError(error: unknown) {
     return (
       this.drizzle.isUniqueViolation(error)
-      || this.drizzle.isErrorCode(error, 'P2002')
     )
   }
 

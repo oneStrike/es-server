@@ -39,7 +39,7 @@ export class WorkReadingStateResolver
    */
   onModuleInit() {
     this.readingStateService.registerResolver(this)
-    // 如果小说也走这套逻辑，也注册一下 (Prisma 中 work 类型包含了漫画和小说)
+    // 如果小说也走这套逻辑，也注册一下 (旧模型中 work 类型包含了漫画和小说)
     this.readingStateService.registerResolver({
       ...this,
       workType: ContentTypeEnum.NOVEL,

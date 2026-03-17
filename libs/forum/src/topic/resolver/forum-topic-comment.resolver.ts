@@ -36,7 +36,7 @@ export class ForumTopicCommentResolver
    * 应用评论计数增量
    * 更新帖子的评论数
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标帖子ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
@@ -62,7 +62,7 @@ export class ForumTopicCommentResolver
    * 校验是否允许对该帖子发表评论
    * 检查帖子是否存在、是否被锁定
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标帖子ID
    * @throws 当帖子不存在或被锁定时抛出 BadRequestException
    */
@@ -85,7 +85,7 @@ export class ForumTopicCommentResolver
    * 解析帖子的元信息
    * 获取帖子作者ID，用于发送被评论通知
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标帖子ID
    * @returns 目标元信息，包含所有者用户ID
    */

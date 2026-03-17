@@ -541,7 +541,7 @@ export class MessageChatService {
    * 核心设计：
    * 1. 使用 PostgreSQL 咨询锁（pg_advisory_xact_lock）保证消息序列号的并发安全
    * 2. 支持幂等性：通过 clientMessageId 检查是否已发送过相同消息
-   * 3. 重试机制：处理并发时的唯一约束冲突（P2002错误）
+   * 3. 重试机制：处理并发时的唯一约束冲突（唯一约束冲突）
    *
    * 并发控制说明：
    * - 咨询锁在事务级别生效，事务结束后自动释放

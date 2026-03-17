@@ -30,7 +30,7 @@ export class ContentCounterService {
 
   /**
    * 更新版块的主题数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param sectionId - 版块ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的版块信息
@@ -49,7 +49,7 @@ export class ContentCounterService {
 
   /**
    * 更新版块的回复数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param sectionId - 版块ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的版块信息
@@ -68,7 +68,7 @@ export class ContentCounterService {
 
   /**
    * 更新主题的回复数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param topicId - 主题ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的主题信息
@@ -87,7 +87,7 @@ export class ContentCounterService {
 
   /**
    * 更新主题的点赞数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param topicId - 主题ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的主题信息
@@ -106,7 +106,7 @@ export class ContentCounterService {
 
   /**
    * 更新主题的收藏数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param topicId - 主题ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的主题信息
@@ -125,7 +125,7 @@ export class ContentCounterService {
 
   /**
    * 更新用户档案的主题数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
@@ -144,7 +144,7 @@ export class ContentCounterService {
 
   /**
    * 更新用户档案的回复数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
@@ -163,7 +163,7 @@ export class ContentCounterService {
 
   /**
    * 更新用户档案的点赞数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
@@ -182,7 +182,7 @@ export class ContentCounterService {
 
   /**
    * 更新用户档案的收藏数量
-   * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
@@ -202,7 +202,7 @@ export class ContentCounterService {
   /**
    * 批量更新回复相关的所有计数
    * 包括主题回复数、版块回复数、用户档案回复数
-   * @param tx - Prisma 事务对象
+   * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param sectionId - 版块ID
    * @param userId - 用户ID
@@ -225,7 +225,7 @@ export class ContentCounterService {
   /**
    * 批量更新主题相关的所有计数
    * 包括版块主题数、用户档案主题数
-   * @param tx - Prisma 事务对象
+   * @param tx - 事务对象
    * @param sectionId - 版块ID
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
@@ -245,7 +245,7 @@ export class ContentCounterService {
   /**
    * 批量更新主题点赞相关的所有计数
    * 包括主题点赞数、主题作者的用户档案点赞数
-   * @param tx - Prisma 事务对象
+   * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param authorUserId - 主题作者的用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
@@ -265,7 +265,7 @@ export class ContentCounterService {
   /**
    * 批量更新主题收藏相关的所有计数
    * 包括主题收藏数、主题作者的用户档案收藏数
-   * @param tx - Prisma 事务对象
+   * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param authorUserId - 主题作者的用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少

@@ -31,7 +31,7 @@ export class ForumTopicReportResolver
   /**
    * 解析目标主题的场景元数据
    * 验证主题存在性并返回场景类型、场景ID和主题作者ID
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 主题ID
    * @returns 包含场景类型、场景ID和主题作者的元数据对象
    * @throws NotFoundException 当主题不存在时抛出异常
