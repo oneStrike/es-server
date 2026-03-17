@@ -1,5 +1,7 @@
-import { PlatformService } from '@libs/platform/database'
+import type { InteractionTx } from '@libs/interaction'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 内容计数服务类
@@ -7,21 +9,23 @@ import { Injectable } from '@nestjs/common'
  * 提供统一的计数更新接口，确保计数数据的一致性
  */
 @Injectable()
-export class ContentCounterService extends PlatformService {
-  constructor() {
-    super()
+export class ContentCounterService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   get forumSection() {
-    return this.prisma.forumSection
+    return this.drizzle.schema.forumSection
   }
 
   get forumTopic() {
-    return this.prisma.forumTopic
+    return this.drizzle.schema.forumTopic
   }
 
   get forumProfile() {
-    return this.prisma.forumProfile
+    return this.drizzle.schema.forumProfile
   }
 
   /**
@@ -32,19 +36,15 @@ export class ContentCounterService extends PlatformService {
    * @returns 更新后的版块信息
    */
   async updateSectionTopicCount(
-    tx: any,
+    tx: InteractionTx | undefined,
     sectionId: number,
     delta: number,
   ) {
-    const prisma = tx || this.prisma
-    return prisma.forumSection.update({
-      where: { id: sectionId },
-      data: {
-        topicCount: {
-          increment: delta,
-        },
-      },
-    })
+    const db = tx ?? this.db
+    return db
+      .update(this.forumSection)
+      .set({ topicCount: sql`${this.forumSection.topicCount} + ${delta}` })
+      .where(and(eq(this.forumSection.id, sectionId), isNull(this.forumSection.deletedAt)))
   }
 
   /**
@@ -55,19 +55,15 @@ export class ContentCounterService extends PlatformService {
    * @returns 更新后的版块信息
    */
   async updateSectionReplyCount(
-    tx: any,
+    tx: InteractionTx | undefined,
     sectionId: number,
     delta: number,
   ) {
-    const prisma = tx || this.prisma
-    return prisma.forumSection.update({
-      where: { id: sectionId },
-      data: {
-        replyCount: {
-          increment: delta,
-        },
-      },
-    })
+    const db = tx ?? this.db
+    return db
+      .update(this.forumSection)
+      .set({ replyCount: sql`${this.forumSection.replyCount} + ${delta}` })
+      .where(and(eq(this.forumSection.id, sectionId), isNull(this.forumSection.deletedAt)))
   }
 
   /**
@@ -77,16 +73,16 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的主题信息
    */
-  async updateTopicReplyCount(tx: any, topicId: number, delta: number) {
-    const prisma = tx || this.prisma
-    return prisma.forumTopic.update({
-      where: { id: topicId },
-      data: {
-        replyCount: {
-          increment: delta,
-        },
-      },
-    })
+  async updateTopicReplyCount(
+    tx: InteractionTx | undefined,
+    topicId: number,
+    delta: number,
+  ) {
+    const db = tx ?? this.db
+    return db
+      .update(this.forumTopic)
+      .set({ replyCount: sql`${this.forumTopic.replyCount} + ${delta}` })
+      .where(and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)))
   }
 
   /**
@@ -96,16 +92,16 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的主题信息
    */
-  async updateTopicLikeCount(tx: any, topicId: number, delta: number) {
-    const prisma = tx || this.prisma
-    return prisma.forumTopic.update({
-      where: { id: topicId },
-      data: {
-        likeCount: {
-          increment: delta,
-        },
-      },
-    })
+  async updateTopicLikeCount(
+    tx: InteractionTx | undefined,
+    topicId: number,
+    delta: number,
+  ) {
+    const db = tx ?? this.db
+    return db
+      .update(this.forumTopic)
+      .set({ likeCount: sql`${this.forumTopic.likeCount} + ${delta}` })
+      .where(and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)))
   }
 
   /**
@@ -115,16 +111,16 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的主题信息
    */
-  async updateTopicFavoriteCount(tx: any, topicId: number, delta: number) {
-    const prisma = tx || this.prisma
-    return prisma.forumTopic.update({
-      where: { id: topicId },
-      data: {
-        favoriteCount: {
-          increment: delta,
-        },
-      },
-    })
+  async updateTopicFavoriteCount(
+    tx: InteractionTx | undefined,
+    topicId: number,
+    delta: number,
+  ) {
+    const db = tx ?? this.db
+    return db
+      .update(this.forumTopic)
+      .set({ favoriteCount: sql`${this.forumTopic.favoriteCount} + ${delta}` })
+      .where(and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)))
   }
 
   /**
@@ -134,16 +130,16 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileTopicCount(tx: any, userId: number, delta: number) {
-    const prisma = tx || this.prisma
-    return prisma.forumProfile.update({
-      where: { userId },
-      data: {
-        topicCount: {
-          increment: delta,
-        },
-      },
-    })
+  async updateProfileTopicCount(
+    tx: InteractionTx | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    const db = tx ?? this.db
+    return db
+      .update(this.forumProfile)
+      .set({ topicCount: sql`${this.forumProfile.topicCount} + ${delta}` })
+      .where(eq(this.forumProfile.userId, userId))
   }
 
   /**
@@ -153,16 +149,16 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileReplyCount(tx: any, userId: number, delta: number) {
-    const prisma = tx || this.prisma
-    return prisma.forumProfile.update({
-      where: { userId },
-      data: {
-        replyCount: {
-          increment: delta,
-        },
-      },
-    })
+  async updateProfileReplyCount(
+    tx: InteractionTx | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    const db = tx ?? this.db
+    return db
+      .update(this.forumProfile)
+      .set({ replyCount: sql`${this.forumProfile.replyCount} + ${delta}` })
+      .where(eq(this.forumProfile.userId, userId))
   }
 
   /**
@@ -172,16 +168,16 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileLikeCount(tx: any, userId: number, delta: number) {
-    const prisma = tx || this.prisma
-    return prisma.forumProfile.update({
-      where: { userId },
-      data: {
-        likeCount: {
-          increment: delta,
-        },
-      },
-    })
+  async updateProfileLikeCount(
+    tx: InteractionTx | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    const db = tx ?? this.db
+    return db
+      .update(this.forumProfile)
+      .set({ likeCount: sql`${this.forumProfile.likeCount} + ${delta}` })
+      .where(eq(this.forumProfile.userId, userId))
   }
 
   /**
@@ -191,16 +187,16 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileFavoriteCount(tx: any, userId: number, delta: number) {
-    const prisma = tx || this.prisma
-    return prisma.forumProfile.update({
-      where: { userId },
-      data: {
-        favoriteCount: {
-          increment: delta,
-        },
-      },
-    })
+  async updateProfileFavoriteCount(
+    tx: InteractionTx | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    const db = tx ?? this.db
+    return db
+      .update(this.forumProfile)
+      .set({ favoriteCount: sql`${this.forumProfile.favoriteCount} + ${delta}` })
+      .where(eq(this.forumProfile.userId, userId))
   }
 
   /**
@@ -213,7 +209,7 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateReplyRelatedCounts(
-    tx: any,
+    tx: InteractionTx | undefined,
     topicId: number,
     sectionId: number,
     userId: number,
@@ -235,7 +231,7 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateTopicRelatedCounts(
-    tx: any,
+    tx: InteractionTx | undefined,
     sectionId: number,
     userId: number,
     delta: number,
@@ -255,7 +251,7 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateTopicLikeRelatedCounts(
-    tx: any,
+    tx: InteractionTx | undefined,
     topicId: number,
     authorUserId: number,
     delta: number,
@@ -275,7 +271,7 @@ export class ContentCounterService extends PlatformService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateTopicFavoriteRelatedCounts(
-    tx: any,
+    tx: InteractionTx | undefined,
     topicId: number,
     authorUserId: number,
     delta: number,
@@ -287,9 +283,9 @@ export class ContentCounterService extends PlatformService {
   }
 
   async getTopicInfo(topicId: number) {
-    return this.prisma.forumTopic.findUnique({
-      where: { id: topicId },
-      select: { id: true, userId: true, sectionId: true },
+    return this.db.query.forumTopic.findFirst({
+      where: { id: topicId, deletedAt: { isNull: true } },
+      columns: { id: true, userId: true, sectionId: true },
     })
   }
 }

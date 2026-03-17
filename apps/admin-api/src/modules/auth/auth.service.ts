@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 
 import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
 import {
@@ -14,6 +14,7 @@ import {
   parseDeviceInfo,
 } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { eq } from 'drizzle-orm'
 import { AuthConstants, AuthRedisKeys, CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
 import { AdminTokenStorageService } from './token-storage.service'
@@ -22,20 +23,23 @@ import { AdminTokenStorageService } from './token-storage.service'
  * 管理端认证服务
  */
 @Injectable()
-export class AuthService extends PlatformService {
-  get adminUser() {
-    return this.prisma.adminUser
-  }
-
+export class AuthService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
     private readonly captchaService: CaptchaService,
     private readonly loginGuardService: LoginGuardService,
     private readonly adminTokenStorageService: AdminTokenStorageService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get adminUserTable() {
+    return this.drizzle.schema.adminUser
   }
 
   /**
@@ -71,11 +75,11 @@ export class AuthService extends PlatformService {
     await this.captchaService.remove(CacheKey.CAPTCHA, body.captchaId)
 
     // 查找用户
-    const user = await this.adminUser.findFirst({
-      where: {
-        username: body.username,
-      },
-    })
+    const [user] = await this.db
+      .select()
+      .from(this.adminUserTable)
+      .where(eq(this.adminUserTable.username, body.username))
+      .limit(1)
     if (!user) {
       throw new BadRequestException('账号或密码错误')
     }
@@ -123,13 +127,13 @@ export class AuthService extends PlatformService {
     }
 
     // 更新登录信息
-    await this.adminUser.update({
-      where: { id: user.id },
-      data: {
+    await this.db
+      .update(this.adminUserTable)
+      .set({
         lastLoginAt: new Date(),
         lastLoginIp: extractIpAddress(req) || 'unknown',
-      },
-    })
+      })
+      .where(eq(this.adminUserTable.id, user.id))
     // 生成令牌
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),

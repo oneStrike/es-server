@@ -1,13 +1,36 @@
 import type { QueryInboxTimelineDto } from './dto/inbox.dto'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
+import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 
 /**
  * 消息收件箱服务
  * 提供收件箱摘要和时间线功能
  */
 @Injectable()
-export class MessageInboxService extends PlatformService {
+export class MessageInboxService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get notification() {
+    return this.drizzle.schema.userNotification
+  }
+
+  private get conversation() {
+    return this.drizzle.schema.chatConversation
+  }
+
+  private get conversationMember() {
+    return this.drizzle.schema.chatConversationMember
+  }
+
+  private get chatMessage() {
+    return this.drizzle.schema.chatMessage
+  }
+
   /**
    * 获取用户收件箱摘要
    * 包含通知未读数、聊天未读数、最新通知和最新聊天
@@ -17,27 +40,27 @@ export class MessageInboxService extends PlatformService {
       notificationUnreadCount,
       chatUnreadAgg,
       latestNotification,
-      latestConversation,
+      latestConversationRows,
     ] = await Promise.all([
-      this.prisma.userNotification.count({
+      this.db.$count(this.notification, and(
+        eq(this.notification.userId, userId),
+        eq(this.notification.isRead, false),
+      )),
+      this.db
+        .select({
+          unreadCount: sql<number>`coalesce(sum(${this.conversationMember.unreadCount}), 0)`,
+        })
+        .from(this.conversationMember)
+        .where(and(
+          eq(this.conversationMember.userId, userId),
+          isNull(this.conversationMember.leftAt),
+        )),
+      this.db.query.userNotification.findFirst({
         where: {
           userId,
-          isRead: false,
         },
-      }),
-      this.prisma.chatConversationMember.aggregate({
-        where: {
-          userId,
-          leftAt: null,
-        },
-        _sum: {
-          unreadCount: true,
-        },
-      }),
-      this.prisma.userNotification.findFirst({
-        where: { userId },
         orderBy: { createdAt: 'desc' },
-        select: {
+        columns: {
           id: true,
           type: true,
           title: true,
@@ -45,30 +68,28 @@ export class MessageInboxService extends PlatformService {
           createdAt: true,
         },
       }),
-      this.prisma.chatConversation.findFirst({
-        where: {
-          members: {
-            some: {
-              userId,
-              leftAt: null,
-            },
-          },
-          lastMessageAt: { not: null },
-        },
-        orderBy: [
-          { lastMessageAt: 'desc' },
-          { id: 'desc' },
-        ],
-        select: {
-          id: true,
-          lastMessageId: true,
-          lastMessageAt: true,
-          lastSenderId: true,
-        },
-      }),
+      this.db
+        .select({
+          id: this.conversation.id,
+          lastMessageId: this.conversation.lastMessageId,
+          lastMessageAt: this.conversation.lastMessageAt,
+          lastSenderId: this.conversation.lastSenderId,
+        })
+        .from(this.conversation)
+        .innerJoin(
+          this.conversationMember,
+          and(
+            eq(this.conversationMember.conversationId, this.conversation.id),
+            eq(this.conversationMember.userId, userId),
+            isNull(this.conversationMember.leftAt),
+          ),
+        )
+        .where(isNotNull(this.conversation.lastMessageAt))
+        .orderBy(sql`${this.conversation.lastMessageAt} desc`, sql`${this.conversation.id} desc`)
+        .limit(1),
     ])
 
-    const chatUnreadCount = Number(chatUnreadAgg._sum.unreadCount ?? 0)
+    const chatUnreadCount = Number(chatUnreadAgg[0]?.unreadCount ?? 0)
     const totalUnreadCount = notificationUnreadCount + chatUnreadCount
 
     let latestChat:
@@ -81,11 +102,13 @@ export class MessageInboxService extends PlatformService {
         }
         | undefined
 
+    const latestConversation = latestConversationRows[0]
+
     if (latestConversation) {
       const lastMessage = latestConversation.lastMessageId
-        ? await this.prisma.chatMessage.findUnique({
+        ? await this.db.query.chatMessage.findFirst({
             where: { id: latestConversation.lastMessageId },
-            select: {
+            columns: {
               content: true,
             },
           })
@@ -120,73 +143,73 @@ export class MessageInboxService extends PlatformService {
     const { pageIndex, pageSize, offset } = this.normalizePagination(dto)
     const fetchTake = offset + pageSize + 20
 
-    const [notificationTotal, conversationTotal, notifications, conversations] =
+    const [notificationTotal, conversationTotalRows, notifications, conversations] =
       await Promise.all([
-        this.prisma.userNotification.count({
+        this.db.$count(this.notification, eq(this.notification.userId, userId)),
+        this.db
+          .select({
+            total: sql<number>`count(distinct ${this.conversation.id})`,
+          })
+          .from(this.conversation)
+          .innerJoin(
+            this.conversationMember,
+            and(
+              eq(this.conversationMember.conversationId, this.conversation.id),
+              eq(this.conversationMember.userId, userId),
+              isNull(this.conversationMember.leftAt),
+            ),
+          )
+          .where(isNotNull(this.conversation.lastMessageAt)),
+        this.db.query.userNotification.findMany({
           where: {
             userId,
           },
-        }),
-        this.prisma.chatConversation.count({
-          where: {
-            members: {
-              some: {
-                userId,
-                leftAt: null,
-              },
-            },
-            lastMessageAt: { not: null },
-          },
-        }),
-        this.prisma.userNotification.findMany({
-          where: { userId },
           orderBy: { createdAt: 'desc' },
-          take: fetchTake,
-          select: {
+          limit: fetchTake,
+          columns: {
             id: true,
             title: true,
             content: true,
             createdAt: true,
           },
         }),
-        this.prisma.chatConversation.findMany({
-          where: {
-            members: {
-              some: {
-                userId,
-                leftAt: null,
-              },
-            },
-            lastMessageAt: { not: null },
-          },
-          orderBy: [
-            { lastMessageAt: 'desc' },
-            { id: 'desc' },
-          ],
-          take: fetchTake,
-          select: {
-            id: true,
-            lastMessageId: true,
-            lastMessageAt: true,
-          },
-        }),
+        this.db
+          .select({
+            id: this.conversation.id,
+            lastMessageId: this.conversation.lastMessageId,
+            lastMessageAt: this.conversation.lastMessageAt,
+          })
+          .from(this.conversation)
+          .innerJoin(
+            this.conversationMember,
+            and(
+              eq(this.conversationMember.conversationId, this.conversation.id),
+              eq(this.conversationMember.userId, userId),
+              isNull(this.conversationMember.leftAt),
+            ),
+          )
+          .where(isNotNull(this.conversation.lastMessageAt))
+          .orderBy(sql`${this.conversation.lastMessageAt} desc`, sql`${this.conversation.id} desc`)
+          .limit(fetchTake),
       ])
 
     const lastMessageIds = conversations
       .map((item) => item.lastMessageId)
       .filter((item): item is bigint => typeof item === 'bigint')
 
-    const lastMessages = await this.prisma.chatMessage.findMany({
-      where: {
-        id: {
-          in: lastMessageIds,
-        },
-      },
-      select: {
-        id: true,
-        content: true,
-      },
-    })
+    const lastMessages = lastMessageIds.length
+      ? await this.db.query.chatMessage.findMany({
+          where: {
+            id: {
+              in: lastMessageIds,
+            },
+          },
+          columns: {
+            id: true,
+            content: true,
+          },
+        })
+      : []
 
     const lastMessageMap = new Map(
       lastMessages.map((item) => [item.id.toString(), item]),
@@ -218,7 +241,7 @@ export class MessageInboxService extends PlatformService {
 
     return {
       list: timeline.slice(offset, offset + pageSize),
-      total: notificationTotal + conversationTotal,
+      total: notificationTotal + Number(conversationTotalRows[0]?.total ?? 0),
       pageIndex,
       pageSize,
     }

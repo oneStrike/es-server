@@ -1,5 +1,6 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
+import { eq, sql } from 'drizzle-orm'
 
 interface MessageWsMetricDelta {
   requestCount?: number
@@ -12,7 +13,17 @@ interface MessageWsMetricDelta {
 }
 
 @Injectable()
-export class MessageWsMonitorService extends PlatformService {
+export class MessageWsMonitorService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get metric() {
+    return this.drizzle.schema.messageWsMetric
+  }
+
   async recordRequest() {
     await this.applyDelta({ requestCount: 1 })
   }
@@ -40,41 +51,49 @@ export class MessageWsMonitorService extends PlatformService {
 
   private async applyDelta(delta: MessageWsMetricDelta) {
     const bucketAt = this.getCurrentBucketAt()
-    await this.prisma.messageWsMetric.upsert({
-      where: { bucketAt },
-      create: {
-        bucketAt,
-        requestCount: delta.requestCount ?? 0,
-        ackSuccessCount: delta.ackSuccessCount ?? 0,
-        ackErrorCount: delta.ackErrorCount ?? 0,
-        ackLatencyTotalMs: BigInt(delta.ackLatencyTotalMs ?? 0),
-        reconnectCount: delta.reconnectCount ?? 0,
-        resyncTriggerCount: delta.resyncTriggerCount ?? 0,
-        resyncSuccessCount: delta.resyncSuccessCount ?? 0,
-      },
-      update: {
-        ...(delta.requestCount
-          ? { requestCount: { increment: delta.requestCount } }
-          : {}),
-        ...(delta.ackSuccessCount
-          ? { ackSuccessCount: { increment: delta.ackSuccessCount } }
-          : {}),
-        ...(delta.ackErrorCount
-          ? { ackErrorCount: { increment: delta.ackErrorCount } }
-          : {}),
-        ...(delta.ackLatencyTotalMs
-          ? { ackLatencyTotalMs: { increment: BigInt(delta.ackLatencyTotalMs) } }
-          : {}),
-        ...(delta.reconnectCount
-          ? { reconnectCount: { increment: delta.reconnectCount } }
-          : {}),
-        ...(delta.resyncTriggerCount
-          ? { resyncTriggerCount: { increment: delta.resyncTriggerCount } }
-          : {}),
-        ...(delta.resyncSuccessCount
-          ? { resyncSuccessCount: { increment: delta.resyncSuccessCount } }
-          : {}),
-      },
+    await this.drizzle.withErrorHandling(async () => {
+      const updated = await this.db
+        .update(this.metric)
+        .set({
+          requestCount: sql`${this.metric.requestCount} + ${delta.requestCount ?? 0}`,
+          ackSuccessCount: sql`${this.metric.ackSuccessCount} + ${delta.ackSuccessCount ?? 0}`,
+          ackErrorCount: sql`${this.metric.ackErrorCount} + ${delta.ackErrorCount ?? 0}`,
+          ackLatencyTotalMs: sql`${this.metric.ackLatencyTotalMs} + ${BigInt(delta.ackLatencyTotalMs ?? 0)}`,
+          reconnectCount: sql`${this.metric.reconnectCount} + ${delta.reconnectCount ?? 0}`,
+          resyncTriggerCount: sql`${this.metric.resyncTriggerCount} + ${delta.resyncTriggerCount ?? 0}`,
+          resyncSuccessCount: sql`${this.metric.resyncSuccessCount} + ${delta.resyncSuccessCount ?? 0}`,
+        })
+        .where(eq(this.metric.bucketAt, bucketAt))
+        .returning({ id: this.metric.id })
+
+      if (updated.length > 0) {
+        return
+      }
+
+      await this.db
+        .insert(this.metric)
+        .values({
+          bucketAt,
+          requestCount: delta.requestCount ?? 0,
+          ackSuccessCount: delta.ackSuccessCount ?? 0,
+          ackErrorCount: delta.ackErrorCount ?? 0,
+          ackLatencyTotalMs: BigInt(delta.ackLatencyTotalMs ?? 0),
+          reconnectCount: delta.reconnectCount ?? 0,
+          resyncTriggerCount: delta.resyncTriggerCount ?? 0,
+          resyncSuccessCount: delta.resyncSuccessCount ?? 0,
+        })
+        .onConflictDoUpdate({
+          target: this.metric.bucketAt,
+          set: {
+            requestCount: sql`${this.metric.requestCount} + ${delta.requestCount ?? 0}`,
+            ackSuccessCount: sql`${this.metric.ackSuccessCount} + ${delta.ackSuccessCount ?? 0}`,
+            ackErrorCount: sql`${this.metric.ackErrorCount} + ${delta.ackErrorCount ?? 0}`,
+            ackLatencyTotalMs: sql`${this.metric.ackLatencyTotalMs} + ${BigInt(delta.ackLatencyTotalMs ?? 0)}`,
+            reconnectCount: sql`${this.metric.reconnectCount} + ${delta.reconnectCount ?? 0}`,
+            resyncTriggerCount: sql`${this.metric.resyncTriggerCount} + ${delta.resyncTriggerCount ?? 0}`,
+            resyncSuccessCount: sql`${this.metric.resyncSuccessCount} + ${delta.resyncSuccessCount ?? 0}`,
+          },
+        })
     })
   }
 

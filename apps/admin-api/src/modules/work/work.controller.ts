@@ -61,11 +61,8 @@ export class WorkController {
     model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateWorkStatusDto) {
-    return this.workService.work.update({
-      where: { id: body.id },
-      data: {
-        isPublished: body.isPublished,
-      },
+    return this.workService.updateWorkFlags(body.id, {
+      isPublished: body.isPublished,
     })
   }
 
@@ -75,11 +72,8 @@ export class WorkController {
     model: BatchOperationResponseDto,
   })
   async updateRecommended(@Body() body: UpdateWorkRecommendedDto) {
-    return this.workService.work.updateMany({
-      where: { id: body.id },
-      data: {
-        isRecommended: body.isRecommended,
-      },
+    return this.workService.updateWorkFlags(body.id, {
+      isRecommended: body.isRecommended,
     })
   }
 
@@ -89,11 +83,8 @@ export class WorkController {
     model: BatchOperationResponseDto,
   })
   async updateHot(@Body() body: UpdateWorkHotDto) {
-    return this.workService.work.updateMany({
-      where: { id: body.id },
-      data: {
-        isHot: body.isHot,
-      },
+    return this.workService.updateWorkFlags(body.id, {
+      isHot: body.isHot,
     })
   }
 
@@ -103,11 +94,8 @@ export class WorkController {
     model: BatchOperationResponseDto,
   })
   async updateNew(@Body() body: UpdateWorkNewDto) {
-    return this.workService.work.updateMany({
-      where: { id: body.id },
-      data: {
-        isNew: body.isNew,
-      },
+    return this.workService.updateWorkFlags(body.id, {
+      isNew: body.isNew,
     })
   }
 

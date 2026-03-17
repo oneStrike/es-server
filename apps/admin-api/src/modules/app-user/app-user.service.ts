@@ -11,14 +11,14 @@ import type {
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
 } from './dto/app-user.dto'
+import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   UserBadgeService,
   UserExperienceService,
-UserPointService
+  UserPointService,
 } from '@libs/growth'
 import { UserStatusEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 
 import {
   BadRequestException,
@@ -26,6 +26,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
+import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
 import { UserRoleEnum } from '../user/user.constant'
 
 /**
@@ -33,13 +34,44 @@ import { UserRoleEnum } from '../user/user.constant'
  * 负责管理端 APP 用户的查询、资料维护、状态维护与成长资产管理
  */
 @Injectable()
-export class AppUserService extends PlatformService {
+export class AppUserService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
     private readonly userBadgeService: UserBadgeService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  private get adminUser() {
+    return this.drizzle.schema.adminUser
+  }
+
+  private get forumProfile() {
+    return this.drizzle.schema.forumProfile
+  }
+
+  private get userLevelRule() {
+    return this.drizzle.schema.userLevelRule
+  }
+
+  private get growthLedgerRecord() {
+    return this.drizzle.schema.growthLedgerRecord
+  }
+
+  private get userBadgeAssignment() {
+    return this.drizzle.schema.userBadgeAssignment
+  }
+
+  private get userBadge() {
+    return this.drizzle.schema.userBadge
   }
 
   /**
@@ -59,78 +91,66 @@ export class AppUserService extends PlatformService {
       lastLoginEndDate,
       pageIndex,
       pageSize,
-      startDate,
-      endDate,
-      orderBy,
     } = query
-
-    const where: Record<string, unknown> = {
-      deletedAt: null,
-      pageIndex,
-      pageSize,
-      startDate,
-      endDate,
-      orderBy,
-    }
-
-    if (id !== undefined) {
-      where.id = id
-    }
-    if (account) {
-      where.account = { contains: account }
-    }
-    if (phone) {
-      where.phone = { contains: phone }
-    }
-    if (nickname) {
-      where.nickname = { contains: nickname }
-    }
-    if (email) {
-      where.email = { contains: email }
-    }
-    if (isEnabled !== undefined) {
-      where.isEnabled = isEnabled
-    }
-    if (status !== undefined) {
-      where.status = status
-    }
-    if (levelId !== undefined) {
-      where.levelId = levelId
-    }
 
     const lastLoginAt = this.buildDateRange(
       lastLoginStartDate,
       lastLoginEndDate,
     )
-    if (lastLoginAt) {
-      where.lastLoginAt = lastLoginAt
-    }
 
-    const page = await this.prisma.appUser.findPagination({
-      where: where as any,
-      select: {
-        ...this.baseUserSelect,
-        level: {
-          select: {
-            name: true,
-          },
-        },
-        forumProfile: {
-          select: {
-            topicCount: true,
-            replyCount: true,
-          },
-        },
+    const where = this.drizzle.buildWhere(this.appUser, {
+      and: {
+        id,
+        account: account ? { like: account } : undefined,
+        phoneNumber: phone ? { like: phone } : undefined,
+        nickname: nickname ? { like: nickname } : undefined,
+        emailAddress: email ? { like: email } : undefined,
+        isEnabled,
+        status,
+        levelId,
+        deletedAt: { isNull: true },
+        lastLoginAt,
       },
     })
+
+    const page = await this.drizzle.ext.findPagination(this.appUser, {
+      where,
+      pageIndex,
+      pageSize,
+    })
+
+    const levelIds = [...new Set(page.list.map((item) => item.levelId).filter(Boolean))]
+    const userIds = page.list.map((item) => item.id)
+    const [levelRows, forumRows] = await Promise.all([
+      levelIds.length > 0
+        ? this.db
+            .select({ id: this.userLevelRule.id, name: this.userLevelRule.name })
+            .from(this.userLevelRule)
+            .where(inArray(this.userLevelRule.id, levelIds as number[]))
+        : [],
+      userIds.length > 0
+        ? this.db
+            .select({
+              userId: this.forumProfile.userId,
+              topicCount: this.forumProfile.topicCount,
+              replyCount: this.forumProfile.replyCount,
+            })
+            .from(this.forumProfile)
+            .where(inArray(this.forumProfile.userId, userIds))
+        : [],
+    ])
+    const levelMap = new Map(levelRows.map((item) => [item.id, item.name] as const))
+    const forumMap = new Map(
+      forumRows.map((item) => [item.userId, item] as const),
+    )
 
     return {
       ...page,
       list: page.list.map((item) => ({
         ...this.mapBaseUser(item),
-        levelName: item.level?.name ?? undefined,
-        topicCount: item.forumProfile?.topicCount ?? 0,
-        replyCount: item.forumProfile?.replyCount ?? 0,
+        levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
+        topicCount: forumMap.get(item.id)?.topicCount ?? 0,
+        replyCount: forumMap.get(item.id)?.replyCount ?? 0,
       })),
     }
   }
@@ -139,62 +159,66 @@ export class AppUserService extends PlatformService {
    * 获取 APP 用户详情
    */
   async getAppUserDetail(userId: number) {
-    const user = await this.prisma.appUser.findFirst({
-      where: { id: userId, deletedAt: null },
-      select: {
-        ...this.baseUserSelect,
-        level: {
-          select: {
-            id: true,
-            name: true,
-            requiredExperience: true,
-          },
-        },
-        forumProfile: {
-          select: {
-            signature: true,
-            bio: true,
-            topicCount: true,
-            replyCount: true,
-            likeCount: true,
-            favoriteCount: true,
-          },
-        },
-        _count: {
-          select: {
-            userBadges: true,
-          },
-        },
-      },
-    })
+    const [user] = await this.db
+      .select()
+      .from(this.appUser)
+      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
+      .limit(1)
 
     if (!user) {
       throw new NotFoundException('应用用户不存在')
     }
 
-    const [pointStats, experienceStats] = await Promise.all([
+    const [level, forumProfile, badgeRows, pointStats, experienceStats] = await Promise.all([
+      user.levelId
+        ? this.db
+            .select({
+              id: this.userLevelRule.id,
+              name: this.userLevelRule.name,
+              requiredExperience: this.userLevelRule.requiredExperience,
+            })
+            .from(this.userLevelRule)
+            .where(eq(this.userLevelRule.id, user.levelId))
+            .then((rows) => rows[0])
+        : undefined,
+      this.db
+        .select({
+          signature: this.forumProfile.signature,
+          bio: this.forumProfile.bio,
+          topicCount: this.forumProfile.topicCount,
+          replyCount: this.forumProfile.replyCount,
+          likeCount: this.forumProfile.likeCount,
+          favoriteCount: this.forumProfile.favoriteCount,
+        })
+        .from(this.forumProfile)
+        .where(eq(this.forumProfile.userId, userId))
+        .then((rows) => rows[0]),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userBadgeAssignment)
+        .where(eq(this.userBadgeAssignment.userId, userId)),
       this.userPointService.getUserPointStats(userId),
       this.getAppUserExperienceStats(userId),
     ])
 
     return {
       ...this.mapBaseUser(user),
-      level: user.level
+      level: level
         ? {
-            id: user.level.id,
-            name: user.level.name,
-            requiredExperience: user.level.requiredExperience,
+            id: level.id,
+            name: level.name,
+            requiredExperience: level.requiredExperience,
           }
         : undefined,
       forumProfile: {
-        signature: user.forumProfile?.signature ?? '',
-        bio: user.forumProfile?.bio ?? '',
-        topicCount: user.forumProfile?.topicCount ?? 0,
-        replyCount: user.forumProfile?.replyCount ?? 0,
-        likeCount: user.forumProfile?.likeCount ?? 0,
-        favoriteCount: user.forumProfile?.favoriteCount ?? 0,
+        signature: forumProfile?.signature ?? '',
+        bio: forumProfile?.bio ?? '',
+        topicCount: forumProfile?.topicCount ?? 0,
+        replyCount: forumProfile?.replyCount ?? 0,
+        likeCount: forumProfile?.likeCount ?? 0,
+        favoriteCount: forumProfile?.favoriteCount ?? 0,
       },
-      badgeCount: user._count.userBadges,
+      badgeCount: Number(badgeRows[0]?.count ?? 0),
       pointStats,
       experienceStats,
     }
@@ -210,37 +234,37 @@ export class AppUserService extends PlatformService {
     await this.ensureSuperAdmin(adminUserId)
     await this.ensureAppUserExists(dto.id)
 
-    const userData: Prisma.AppUserUpdateInput = {}
+    const userData: Record<string, unknown> = {}
     if (dto.nickname !== undefined) {
       userData.nickname = dto.nickname
     }
     if (dto.avatar !== undefined) {
-      userData.avatar = dto.avatar
+      userData.avatarUrl = dto.avatar
     }
     if (dto.phone !== undefined) {
-      userData.phone = dto.phone
+      userData.phoneNumber = dto.phone
     }
     if (dto.email !== undefined) {
-      userData.email = dto.email
+      userData.emailAddress = dto.email
     }
     if (dto.gender !== undefined) {
-      userData.gender = dto.gender
+      userData.genderType = dto.gender
     }
     if (dto.birthDate !== undefined) {
       userData.birthDate = dto.birthDate
     }
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.db.transaction(async (tx) => {
         if (Object.keys(userData).length > 0) {
-          await tx.appUser.update({
-            where: { id: dto.id },
-            data: userData,
-          })
+          await tx
+            .update(this.appUser)
+            .set(userData)
+            .where(eq(this.appUser.id, dto.id))
         }
 
         if (dto.signature !== undefined || dto.bio !== undefined) {
-          const forumProfileData: Record<string, string | null> = {}
+          const forumProfileData: Record<string, string> = {}
           if (dto.signature !== undefined) {
             forumProfileData.signature = dto.signature
           }
@@ -248,23 +272,30 @@ export class AppUserService extends PlatformService {
             forumProfileData.bio = dto.bio
           }
 
-          await tx.forumProfile.upsert({
-            where: { userId: dto.id },
-            create: {
+          const existing = await tx
+            .select({ id: this.forumProfile.id })
+            .from(this.forumProfile)
+            .where(eq(this.forumProfile.userId, dto.id))
+            .limit(1)
+          if (existing[0]) {
+            await tx
+              .update(this.forumProfile)
+              .set(forumProfileData)
+              .where(eq(this.forumProfile.userId, dto.id))
+          } else {
+            await tx.insert(this.forumProfile).values({
               userId: dto.id,
               signature: dto.signature ?? '',
               bio: dto.bio ?? '',
-            },
-            update: forumProfileData,
-          })
+            })
+          }
         }
       })
     } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
+      if (this.drizzle.isUniqueViolation(error)) {
           throw new BadRequestException('手机号或邮箱已存在')
-        },
-      })
+      }
+      throw error
     }
 
     return this.getAppUserDetail(dto.id)
@@ -280,12 +311,12 @@ export class AppUserService extends PlatformService {
     await this.ensureSuperAdmin(adminUserId)
     await this.ensureAppUserExists(dto.id)
 
-    await this.prisma.appUser.update({
-      where: { id: dto.id },
-      data: {
+    await this.db
+      .update(this.appUser)
+      .set({
         isEnabled: dto.isEnabled,
-      },
-    })
+      })
+      .where(eq(this.appUser.id, dto.id))
 
     return this.getAppUserDetail(dto.id)
   }
@@ -305,14 +336,14 @@ export class AppUserService extends PlatformService {
       dto.status === UserStatusEnum.PERMANENT_MUTED
       || dto.status === UserStatusEnum.PERMANENT_BANNED
 
-    await this.prisma.appUser.update({
-      where: { id: dto.id },
-      data: {
+    await this.db
+      .update(this.appUser)
+      .set({
         status: dto.status,
         banReason: isNormal ? null : (dto.banReason ?? null),
         banUntil: isNormal || isPermanent ? null : (dto.banUntil ?? null),
-      },
-    })
+      })
+      .where(eq(this.appUser.id, dto.id))
 
     return this.getAppUserDetail(dto.id)
   }
@@ -374,19 +405,11 @@ export class AppUserService extends PlatformService {
    * 获取 APP 用户经验统计
    */
   async getAppUserExperienceStats(userId: number) {
-    const user = await this.prisma.appUser.findFirst({
-      where: { id: userId, deletedAt: null },
-      select: {
-        experience: true,
-        level: {
-          select: {
-            id: true,
-            name: true,
-            requiredExperience: true,
-          },
-        },
-      },
-    })
+    const [user] = await this.db
+      .select()
+      .from(this.appUser)
+      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
+      .limit(1)
 
     if (!user) {
       throw new NotFoundException('应用用户不存在')
@@ -395,44 +418,56 @@ export class AppUserService extends PlatformService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const [todayEarned, nextLevel] = await Promise.all([
-      this.prisma.growthLedgerRecord.aggregate({
-        where: {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          delta: { gt: 0 },
-          createdAt: { gte: today },
-        },
-        _sum: {
-          delta: true,
-        },
-      }),
-      this.prisma.userLevelRule.findFirst({
-        where: {
-          isEnabled: true,
-          requiredExperience: {
-            gt: user.experience,
-          },
-        },
-        orderBy: {
-          requiredExperience: 'asc',
-        },
-        select: {
-          id: true,
-          name: true,
-          requiredExperience: true,
-        },
-      }),
+    const [todayEarnedRows, levelRows, nextLevelRows] = await Promise.all([
+      this.db
+        .select({ sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int` })
+        .from(this.growthLedgerRecord)
+        .where(
+          and(
+            eq(this.growthLedgerRecord.userId, userId),
+            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+            gt(this.growthLedgerRecord.delta, 0),
+            gte(this.growthLedgerRecord.createdAt, today),
+          ),
+        ),
+      user.levelId
+        ? this.db
+            .select({
+              id: this.userLevelRule.id,
+              name: this.userLevelRule.name,
+              requiredExperience: this.userLevelRule.requiredExperience,
+            })
+            .from(this.userLevelRule)
+            .where(eq(this.userLevelRule.id, user.levelId))
+        : [],
+      this.db
+        .select({
+          id: this.userLevelRule.id,
+          name: this.userLevelRule.name,
+          requiredExperience: this.userLevelRule.requiredExperience,
+        })
+        .from(this.userLevelRule)
+        .where(
+          and(
+            eq(this.userLevelRule.isEnabled, true),
+            gt(this.userLevelRule.requiredExperience, user.experience),
+          ),
+        )
+        .orderBy(this.userLevelRule.requiredExperience)
+        .limit(1),
     ])
+    const todayEarned = Number(todayEarnedRows[0]?.sum ?? 0)
+    const level = levelRows[0]
+    const nextLevel = nextLevelRows[0]
 
     return {
       currentExperience: user.experience,
-      todayEarned: todayEarned._sum.delta || 0,
-      level: user.level
+      todayEarned,
+      level: level
         ? {
-            id: user.level.id,
-            name: user.level.name,
-            requiredExperience: user.level.requiredExperience,
+            id: level.id,
+            name: level.name,
+            requiredExperience: level.requiredExperience,
           }
         : undefined,
       nextLevel: nextLevel
@@ -494,45 +529,49 @@ export class AppUserService extends PlatformService {
       ...pageQuery
     } = query
 
-    const badgeWhere: Prisma.UserBadgeWhereInput = {}
-    if (name) {
-      badgeWhere.name = {
-        contains: name,
-      }
-    }
-    if (type !== undefined) {
-      badgeWhere.type = type
-    }
-    if (isEnabled !== undefined) {
-      badgeWhere.isEnabled = isEnabled
-    }
-    if (business) {
-      badgeWhere.business = business
-    }
-    if (eventKey) {
-      badgeWhere.eventKey = eventKey
-    }
-
-    const page = await this.prisma.userBadgeAssignment.findPagination({
-      where: {
-        userId,
-        ...pageQuery,
-        ...(Object.keys(badgeWhere).length > 0 ? { badge: badgeWhere } : {}),
-      } as any,
-      include: {
-        badge: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
+    const badgeWhere = this.drizzle.buildWhere(this.userBadge, {
+      and: {
+        name: name ? { like: name } : undefined,
+        type,
+        isEnabled,
+        business,
+        eventKey,
       },
     })
+    const badges = await this.db
+      .select({ id: this.userBadge.id })
+      .from(this.userBadge)
+      .where(badgeWhere)
+    const badgeIds = badges.map((item) => item.id)
+    if (badgeIds.length === 0) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: pageQuery.pageIndex,
+        pageSize: pageQuery.pageSize,
+        totalPages: 0,
+      }
+    }
+    const page = await this.drizzle.ext.findPagination(this.userBadgeAssignment, {
+      where: and(
+        eq(this.userBadgeAssignment.userId, userId),
+        inArray(this.userBadgeAssignment.badgeId, badgeIds),
+      ),
+      ...pageQuery,
+    })
+    const pageBadgeIds = page.list.map((item) => item.badgeId)
+    const pageBadges = await this.db
+      .select()
+      .from(this.userBadge)
+      .where(inArray(this.userBadge.id, pageBadgeIds))
+    const badgeMap = new Map(pageBadges.map((item) => [item.id, item]))
 
     return {
       ...page,
-      list: page.list.map((item: any) => ({
+      list: page.list.map((item) => ({
         id: item.id,
         createdAt: item.createdAt,
-        badge: item.badge,
+        badge: badgeMap.get(item.badgeId),
       })),
     }
   }
@@ -573,10 +612,11 @@ export class AppUserService extends PlatformService {
    * 校验当前管理端用户是否为超级管理员
    */
   private async ensureSuperAdmin(adminUserId: number) {
-    const adminUser = await this.prisma.adminUser.findUnique({
-      where: { id: adminUserId },
-      select: { role: true },
-    })
+    const [adminUser] = await this.db
+      .select({ role: this.adminUser.role })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, adminUserId))
+      .limit(1)
 
     if (!adminUser) {
       throw new NotFoundException('管理端用户不存在')
@@ -591,7 +631,12 @@ export class AppUserService extends PlatformService {
    * 校验 APP 用户是否存在
    */
   private async ensureAppUserExists(userId: number) {
-    if (!(await this.prisma.appUser.exists({ id: userId, deletedAt: null }))) {
+    const [appUser] = await this.db
+      .select({ id: this.appUser.id })
+      .from(this.appUser)
+      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
+      .limit(1)
+    if (!appUser) {
       throw new NotFoundException('应用用户不存在')
     }
   }
@@ -604,13 +649,13 @@ export class AppUserService extends PlatformService {
     createdAt: Date
     updatedAt: Date
     account: string
-    phone: string | null
+    phoneNumber: string | null
     nickname: string
-    avatar: string | null
-    email: string | null
+    avatarUrl: string | null
+    emailAddress: string | null
     isEnabled: boolean
-    gender: number
-    birthDate: Date | null
+    genderType: number
+    birthDate: string | null
     points: number
     experience: number
     levelId: number | null
@@ -625,13 +670,13 @@ export class AppUserService extends PlatformService {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       account: user.account,
-      phone: user.phone ?? undefined,
+      phone: user.phoneNumber ?? undefined,
       nickname: user.nickname,
-      avatar: user.avatar ?? undefined,
-      email: user.email ?? undefined,
+      avatar: user.avatarUrl ?? undefined,
+      email: user.emailAddress ?? undefined,
       isEnabled: user.isEnabled,
-      gender: user.gender,
-      birthDate: user.birthDate ?? undefined,
+      gender: user.genderType,
+      birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
       points: user.points,
       experience: user.experience,
       levelId: user.levelId ?? undefined,
@@ -679,26 +724,4 @@ export class AppUserService extends PlatformService {
   ) {
     return `${action}:${adminUserId}:${appUserId}:${Date.now()}`
   }
-
-  private readonly baseUserSelect = {
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-    account: true,
-    phone: true,
-    nickname: true,
-    avatar: true,
-    email: true,
-    isEnabled: true,
-    gender: true,
-    birthDate: true,
-    points: true,
-    experience: true,
-    levelId: true,
-    status: true,
-    banReason: true,
-    banUntil: true,
-    lastLoginAt: true,
-    lastLoginIp: true,
-  } as const
 }

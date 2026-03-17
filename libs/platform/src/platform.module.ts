@@ -1,7 +1,6 @@
 import type { Provider } from '@nestjs/common/interfaces/modules/provider.interface'
 import type { Type } from '@nestjs/common/interfaces/type.interface'
 import type { PlatformModuleOptions } from './platform.module.types'
-import { CustomPrismaModule, PrismaService } from '@libs/platform/database'
 import { LoggerModule } from '@libs/platform/modules'
 import {
   BadRequestException,
@@ -58,13 +57,6 @@ export class PlatformModule {
 
     // 数据库模块
     if (mergedOptions.enableDatabase) {
-      imports.push(
-        CustomPrismaModule.forRootAsync({
-          isGlobal: true,
-          name: 'PrismaService',
-          useClass: PrismaService,
-        }),
-      )
       imports.push(DrizzleModule)
     }
 

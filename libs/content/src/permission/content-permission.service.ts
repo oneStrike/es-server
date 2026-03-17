@@ -1,16 +1,12 @@
+import { DrizzleService } from '@db/core'
 // eslint-disable-next-line no-restricted-imports -- avoid circular deps via interaction barrel
 import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from '@libs/interaction/purchase/purchase.constant'
 import { WorkViewPermissionEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { PERMISSION_ERROR_MESSAGE } from './content-permission.constant'
-import {
-  CHAPTER_PERMISSION_SELECT,
-  WORK_PERMISSION_SELECT,
-} from './content-permission.select'
 import {
   AccessRuleContext,
   PermissionChapterData,
@@ -46,29 +42,45 @@ export interface ChapterAccessResult<T = object> {
  * 5. PURCHASE：需要购买（仅章节）
  */
 @Injectable()
-export class ContentPermissionService extends PlatformService {
+export class ContentPermissionService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   get appUser() {
-    return this.prisma.appUser
+    return this.drizzle.schema.appUser
   }
 
   get work() {
-    return this.prisma.work
+    return this.drizzle.schema.work
   }
 
   get workChapter() {
-    return this.prisma.workChapter
+    return this.drizzle.schema.workChapter
   }
 
   get userPurchaseRecord() {
-    return this.prisma.userPurchaseRecord
+    return this.drizzle.schema.userPurchaseRecord
   }
 
   private async resolveWorkPermission(
     workId: number,
   ): Promise<WorkPermissionData> {
-    const work = await this.work.findUnique({
-      where: { id: workId },
-      select: WORK_PERMISSION_SELECT,
+    const work = await this.db.query.work.findFirst({
+      where: { id: workId, deletedAt: { isNull: true } },
+      columns: {
+        viewRule: true,
+        requiredViewLevelId: true,
+        chapterPrice: true,
+        canComment: true,
+      },
+      with: {
+        requiredViewLevel: {
+          columns: { requiredExperience: true },
+        },
+      },
     })
     if (!work) {
       throw new BadRequestException(PERMISSION_ERROR_MESSAGE.WORK_NOT_FOUND)
@@ -77,9 +89,23 @@ export class ContentPermissionService extends PlatformService {
   }
 
   async resolveChapterPermission(chapterId: number) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-      select: CHAPTER_PERMISSION_SELECT,
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: { id: chapterId, deletedAt: { isNull: true } },
+      columns: {
+        workId: true,
+        workType: true,
+        viewRule: true,
+        requiredViewLevelId: true,
+        price: true,
+        canDownload: true,
+        canComment: true,
+        isPreview: true,
+      },
+      with: {
+        requiredViewLevel: {
+          columns: { requiredExperience: true },
+        },
+      },
     })
     if (!chapter) {
       throw new BadRequestException(PERMISSION_ERROR_MESSAGE.CHAPTER_NOT_FOUND)
@@ -99,11 +125,11 @@ export class ContentPermissionService extends PlatformService {
    * 获取用户及其等级信息
    */
   private async getUserWithLevel(userId: number): Promise<UserWithLevel> {
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-      include: {
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      with: {
         level: {
-          select: { requiredExperience: true },
+          columns: { requiredExperience: true },
         },
       },
     })
@@ -114,9 +140,9 @@ export class ContentPermissionService extends PlatformService {
   }
 
   private async validateUserExists(userId: number) {
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-      select: { id: true },
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: { id: true },
     })
     if (!user) {
       throw new BadRequestException(PERMISSION_ERROR_MESSAGE.USER_NOT_FOUND)
@@ -158,13 +184,10 @@ export class ContentPermissionService extends PlatformService {
    * 检查用户是否已成功购买指定章节
    */
   async validateChapterPurchasePermission(userId: number, chapterId: number) {
-    const purchased = await this.userPurchaseRecord.findFirst({
+    const purchased = await this.db.query.userPurchaseRecord.findFirst({
       where: {
         targetType: {
-          in: [
-            PurchaseTargetTypeEnum.COMIC_CHAPTER,
-            PurchaseTargetTypeEnum.NOVEL_CHAPTER,
-          ],
+          in: [PurchaseTargetTypeEnum.COMIC_CHAPTER, PurchaseTargetTypeEnum.NOVEL_CHAPTER],
         },
         targetId: chapterId,
         userId,
@@ -245,22 +268,18 @@ export class ContentPermissionService extends PlatformService {
    * 检查章节访问权限（公开接口）
    * 用于业务层调用，校验用户是否有权访问指定章节
    */
-  async checkChapterAccess<T extends Prisma.WorkChapterSelect>(
+  async checkChapterAccess<T extends Record<string, boolean>>(
     chapterId: number,
     userId?: number,
     select?: T,
-  ): Promise<ChapterAccessResult<Prisma.WorkChapterGetPayload<{ select: T }>>> {
-    type ChapterPayload = Prisma.WorkChapterGetPayload<{ select: T }>
-    // 合并权限字段和额外请求的字段
-    const mergedSelect = {
-      ...CHAPTER_PERMISSION_SELECT,
-      ...select,
-    }
-
-    // 单次查询获取章节数据
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-      select: mergedSelect,
+  ): Promise<ChapterAccessResult<Record<string, unknown>>> {
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: { id: chapterId, deletedAt: { isNull: true } },
+      with: {
+        requiredViewLevel: {
+          columns: { requiredExperience: true },
+        },
+      },
     })
 
     if (!chapter) {
@@ -292,7 +311,11 @@ export class ContentPermissionService extends PlatformService {
 
     return {
       hasPermission: true,
-      chapter: chapter as unknown as ChapterPayload,
+      chapter: select
+        ? Object.fromEntries(
+            Object.keys(select).map((key) => [key, (chapter as Record<string, unknown>)[key]]),
+          )
+        : (chapter as unknown as Record<string, unknown>),
     }
   }
 

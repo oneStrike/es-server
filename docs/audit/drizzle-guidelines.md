@@ -59,3 +59,5 @@ async list(query: QueryDto) {
 
 ## 约束来源
 本规范基于 `libs/config/src/dictionary/dictionary.service.ts` 中对 Drizzle 的实际使用方式整理。
+
+

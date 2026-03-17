@@ -1,27 +1,30 @@
+import type { appUser, work, workChapter } from '@db/schema'
 import type { WorkViewPermissionEnum } from '@libs/platform/constant'
-import type { Prisma } from '@libs/platform/database'
-import type {
-  CHAPTER_PERMISSION_SELECT,
-  WORK_PERMISSION_SELECT,
-} from './content-permission.select'
 
-export type UserWithLevel = Prisma.AppUserGetPayload<{
-  include: {
-    level: {
-      select: {
-        requiredExperience: true
-      }
-    }
-  }
-}>
+export type UserWithLevel = typeof appUser.$inferSelect & {
+  level: { requiredExperience: number } | null
+}
 
-export type PermissionChapterData = Prisma.WorkChapterGetPayload<{
-  select: typeof CHAPTER_PERMISSION_SELECT
-}>
+export type PermissionChapterData = Pick<
+  typeof workChapter.$inferSelect,
+  | 'workId'
+  | 'workType'
+  | 'viewRule'
+  | 'requiredViewLevelId'
+  | 'price'
+  | 'canDownload'
+  | 'canComment'
+  | 'isPreview'
+> & {
+  requiredViewLevel: { requiredExperience: number } | null
+}
 
-export type WorkPermissionData = Prisma.WorkGetPayload<{
-  select: typeof WORK_PERMISSION_SELECT
-}>
+export type WorkPermissionData = Pick<
+  typeof work.$inferSelect,
+  'viewRule' | 'requiredViewLevelId' | 'chapterPrice' | 'canComment'
+> & {
+  requiredViewLevel: { requiredExperience: number } | null
+}
 
 export interface AccessRuleContext {
   scope: 'work' | 'chapter'

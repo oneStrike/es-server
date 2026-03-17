@@ -7,7 +7,6 @@ import {
 } from '@libs/interaction'
 
 import { SceneTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -17,7 +16,6 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class WorkComicChapterLikeResolver
-  extends PlatformService
   implements ILikeTargetResolver, OnModuleInit
 {
   /** 目标类型：漫画章节 */
@@ -25,9 +23,7 @@ export class WorkComicChapterLikeResolver
   /** 作品类型：1 表示漫画 */
   private readonly workType = 1
 
-  constructor(private readonly likeService: LikeService) {
-    super()
-  }
+  constructor(private readonly likeService: LikeService) {}
 
   /**
    * 模块初始化时注册解析器到点赞服务

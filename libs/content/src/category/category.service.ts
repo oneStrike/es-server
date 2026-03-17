@@ -1,7 +1,7 @@
-import type { WorkCategoryWhereInput } from '@libs/platform/database'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, sql } from 'drizzle-orm'
 import {
   CreateCategoryDto,
   QueryCategoryDto,
@@ -9,55 +9,63 @@ import {
 } from './dto/category.dto'
 
 @Injectable()
-export class WorkCategoryService extends PlatformService {
+export class WorkCategoryService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   get workCategory() {
-    return this.prisma.workCategory
+    return this.drizzle.schema.workCategory
   }
 
   async createCategory(createCategoryDto: CreateCategoryDto) {
     if (!createCategoryDto.sortOrder) {
-      const maxOrder = await this.workCategory.maxOrder()
+      const maxOrder = await this.drizzle.ext.maxOrder(this.workCategory)
       createCategoryDto.sortOrder = maxOrder + 1
     }
 
-    return this.workCategory.create({
-      data: {
+    const [created] = await this.db
+      .insert(this.workCategory)
+      .values({
         popularity: 0,
         ...createCategoryDto,
-      },
-      select: { id: true },
-    })
+      })
+      .returning({ id: this.workCategory.id })
+    return created
   }
 
   async getCategoryPage(queryDto: QueryCategoryDto) {
     const { name, isEnabled, contentType, ...pageParams } = queryDto
 
-    const where: WorkCategoryWhereInput = {}
-
-    if (name) {
-      where.name = { contains: name }
-    }
-
-    if (isEnabled !== undefined) {
-      where.isEnabled = isEnabled
-    }
     if (!pageParams.orderBy) {
       pageParams.orderBy = JSON.stringify({ sortOrder: 'desc' })
     }
 
+    let where = this.drizzle.buildWhere(this.workCategory, {
+      and: {
+        name: name ? { like: name } : undefined,
+        isEnabled,
+      },
+    })
+
     if (contentType?.length && contentType !== '[]') {
-      where.contentType = {
-        hasSome: JSON.parse(contentType),
+      const values = JSON.parse(contentType) as number[]
+      if (values.length > 0) {
+        const typeArray = sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::smallint[]`
+        where = and(where, sql`${this.workCategory.contentType} && ${typeArray}`)
       }
     }
 
-    return this.workCategory.findPagination({
-      where: { ...where, ...pageParams },
+    return this.drizzle.ext.findPagination(this.workCategory, {
+      where,
+      ...pageParams,
     })
   }
 
   async getCategoryDetail(id: number) {
-    return this.prisma.workCategory.findUnique({
+    return this.db.query.workCategory.findFirst({
       where: { id },
     })
   }
@@ -65,34 +73,34 @@ export class WorkCategoryService extends PlatformService {
   async updateCategory(updateCategoryDto: UpdateCategoryDto) {
     const { id, ...updateData } = updateCategoryDto as any
 
-    try {
-      return await this.workCategory.update({
-        where: { id },
-        data: updateData,
-        select: { id: true },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('Category name already exists')
-        },
-      })
-    }
+    const [updated] = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workCategory)
+          .set(updateData)
+          .where(eq(this.workCategory.id, id))
+          .returning({ id: this.workCategory.id }),
+      { duplicate: 'Category name already exists' },
+    )
+    this.drizzle.assertAffectedRows(updated ? [updated] : [], '分类不存在')
+    return updated
   }
 
   async updateCategoryStatus(updateStatusDto: UpdateEnabledStatusDto) {
     if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks())) {
       throw new BadRequestException('Category has related works and cannot be disabled')
     }
-    return this.workCategory.update({
-      where: { id: updateStatusDto.id },
-      data: { isEnabled: updateStatusDto.isEnabled },
-      select: { id: true },
-    })
+    const [updated] = await this.db
+      .update(this.workCategory)
+      .set({ isEnabled: updateStatusDto.isEnabled })
+      .where(eq(this.workCategory.id, updateStatusDto.id))
+      .returning({ id: this.workCategory.id })
+    this.drizzle.assertAffectedRows(updated ? [updated] : [], '分类不存在')
+    return updated
   }
 
   async updateCategorySort(updateSortDto: DragReorderDto) {
-    return this.workCategory.swapField({
+    return this.drizzle.ext.swapField(this.workCategory, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
   }
@@ -101,7 +109,9 @@ export class WorkCategoryService extends PlatformService {
     if (await this.checkCategoryHasWorks()) {
       throw new BadRequestException('Category has related works and cannot be deleted')
     }
-    return this.workCategory.delete({ where: { id } })
+    const result = await this.db.delete(this.workCategory).where(eq(this.workCategory.id, id))
+    this.drizzle.assertAffectedRows(result, '分类不存在')
+    return { id }
   }
 
   async checkCategoryHasWorks() {

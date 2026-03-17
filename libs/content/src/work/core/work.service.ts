@@ -1,4 +1,4 @@
-import type { WorkWhereInput } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import {
   BrowseLogService,
   FavoriteService,
@@ -6,9 +6,9 @@ import {
   ReadingStateService,
 } from '@libs/interaction'
 import { AuditStatusEnum, ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
 import {
   CreateWorkDto,
   QueryWorkDto,
@@ -17,7 +17,6 @@ import {
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
-import { PAGE_WORK_SELECT, WORK_RELATION_SELECT } from './work.select'
 
 /**
  * 作品详情上下文接口
@@ -40,26 +39,61 @@ interface WorkDetailContext {
  * 同时处理与作品相关的用户交互（点赞、收藏、浏览）
  */
 @Injectable()
-export class WorkService extends PlatformService {
-  get work() {
-    return this.prisma.work
-  }
-
-  get workChapter() {
-    return this.prisma.workChapter
-  }
-
-  get appUser() {
-    return this.prisma.appUser
-  }
-
+export class WorkService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
     private readonly browseLogService: BrowseLogService,
     private readonly readingStateService: ReadingStateService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  get work() {
+    return this.drizzle.schema.work
+  }
+
+  get workChapter() {
+    return this.drizzle.schema.workChapter
+  }
+
+  get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  get forumSection() {
+    return this.drizzle.schema.forumSection
+  }
+
+  get forumTopic() {
+    return this.drizzle.schema.forumTopic
+  }
+
+  get workAuthor() {
+    return this.drizzle.schema.workAuthor
+  }
+
+  get workCategory() {
+    return this.drizzle.schema.workCategory
+  }
+
+  get workTag() {
+    return this.drizzle.schema.workTag
+  }
+
+  get workAuthorRelation() {
+    return this.drizzle.schema.workAuthorRelation
+  }
+
+  get workCategoryRelation() {
+    return this.drizzle.schema.workCategoryRelation
+  }
+
+  get workTagRelation() {
+    return this.drizzle.schema.workTagRelation
   }
 
   /**
@@ -71,8 +105,10 @@ export class WorkService extends PlatformService {
    */
   async verifyWorkAndUserExist(id: number, userId: number) {
     const [work, user] = await Promise.all([
-      this.work.findUnique({ where: { id } }),
-      this.appUser.findUnique({ where: { id: userId } }),
+      this.db.query.work.findFirst({ where: { id, deletedAt: { isNull: true } } }),
+      this.db.query.appUser.findFirst({
+        where: { id: userId, deletedAt: { isNull: true } },
+      }),
     ])
 
     if (!work) {
@@ -100,15 +136,34 @@ export class WorkService extends PlatformService {
   ) {
     const [existingAuthors, existingCategories, existingTags] =
       await Promise.all([
-        this.prisma.workAuthor.findMany({
-          where: { id: { in: authorIds }, isEnabled: true },
-        }),
-        this.prisma.workCategory.findMany({
-          where: { id: { in: categoryIds }, isEnabled: true },
-        }),
-        this.prisma.workTag.findMany({
-          where: { id: { in: tagIds }, isEnabled: true },
-        }),
+        authorIds.length
+          ? this.db.query.workAuthor.findMany({
+              where: {
+                id: { in: authorIds },
+                isEnabled: true,
+                deletedAt: { isNull: true },
+              },
+              columns: { id: true },
+            })
+          : [],
+        categoryIds.length
+          ? this.db.query.workCategory.findMany({
+              where: {
+                id: { in: categoryIds },
+                isEnabled: true,
+              },
+              columns: { id: true },
+            })
+          : [],
+        tagIds.length
+          ? this.db.query.workTag.findMany({
+              where: {
+                id: { in: tagIds },
+                isEnabled: true,
+              },
+              columns: { id: true },
+            })
+          : [],
       ])
 
     if (existingAuthors.length !== authorIds.length) {
@@ -139,10 +194,20 @@ export class WorkService extends PlatformService {
    */
   async createWork(createWorkDto: CreateWorkDto) {
     const { authorIds, categoryIds, tagIds, ...workData } = createWorkDto
+    const normalizedWorkData = {
+      ...workData,
+      publishAt: workData.publishAt
+        ? new Date(workData.publishAt).toISOString()
+        : undefined,
+    }
 
     // 验证作品名称在同一类型下是否已存在
-    const existingWork = await this.work.findFirst({
-      where: { name: workData.name, type: workData.type },
+    const existingWork = await this.db.query.work.findFirst({
+      where: {
+        name: normalizedWorkData.name,
+        type: normalizedWorkData.type,
+        deletedAt: { isNull: true },
+      },
     })
 
     if (existingWork) {
@@ -153,46 +218,56 @@ export class WorkService extends PlatformService {
     await this.validateWorkRelations(authorIds, categoryIds, tagIds)
 
     // 使用事务确保作品创建和作者作品数更新的一致性
-    return this.prisma.$transaction(async (tx) => {
-      const createdSection = await tx.forumSection.create({
-        data: {
+    return this.db.transaction(async (tx) => {
+      const [createdSection] = await tx
+        .insert(this.forumSection)
+        .values({
           name: workData.name,
           description: workData.description.slice(0, 500),
           isEnabled: true,
-        },
-      })
+        })
+        .returning({ id: this.forumSection.id })
 
-      // 创建作品并关联作者、分类、标签
-      const createdWork = await tx.work.create({
-        data: {
-          ...workData,
+      const [createdWork] = await tx
+        .insert(this.work)
+        .values({
+          ...normalizedWorkData,
           forumSectionId: createdSection.id,
-          authors: {
-            create: authorIds.map((authorId, index) => ({
-              authorId,
-              sortOrder: index,
-            })),
-          },
-          categories: {
-            create: categoryIds.map((categoryId, index) => ({
-              categoryId,
-              // 分类按倒序设置排序权重（越靠前的分类权重越高）
-              sortOrder: categoryIds.length - index,
-            })),
-          },
-          tags: {
-            create: tagIds.map((tagId) => ({
-              tagId,
-            })),
-          },
-        },
-      })
+        })
+        .returning({ id: this.work.id })
 
-      // 更新关联作者的作品数量（+1）
-      await tx.workAuthor.updateMany({
-        where: { id: { in: authorIds } },
-        data: { workCount: { increment: 1 } },
-      })
+      if (authorIds.length) {
+        await tx.insert(this.workAuthorRelation).values(
+          authorIds.map((authorId, index) => ({
+            workId: createdWork.id,
+            authorId,
+            sortOrder: index,
+          })),
+        )
+        await tx
+          .update(this.workAuthor)
+          .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
+          .where(inArray(this.workAuthor.id, authorIds))
+      }
+
+      if (categoryIds.length) {
+        await tx.insert(this.workCategoryRelation).values(
+          categoryIds.map((categoryId, index) => ({
+            workId: createdWork.id,
+            categoryId,
+            sortOrder: categoryIds.length - index,
+          })),
+        )
+      }
+
+      if (tagIds.length) {
+        await tx.insert(this.workTagRelation).values(
+          tagIds.map((tagId) => ({
+            workId: createdWork.id,
+            tagId,
+          })),
+        )
+      }
 
       return createdWork
     })
@@ -218,12 +293,18 @@ export class WorkService extends PlatformService {
    */
   async updateWork(updateWorkDto: UpdateWorkDto) {
     const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
+    const normalizedUpdateData = {
+      ...updateData,
+      publishAt: updateData.publishAt
+        ? new Date(updateData.publishAt).toISOString()
+        : updateData.publishAt,
+    }
 
-    const existingWork = await this.work.findUnique({
-      where: { id },
-      include: {
+    const existingWork = await this.db.query.work.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      with: {
         authors: {
-          select: { authorId: true },
+          columns: { authorId: true },
         },
       },
     })
@@ -233,11 +314,12 @@ export class WorkService extends PlatformService {
 
     // 如果更新名称，需要验证同类型下是否重名
     if (isNotNil(updateData.name) && updateData.name !== existingWork.name) {
-      const duplicateWork = await this.work.findFirst({
+      const duplicateWork = await this.db.query.work.findFirst({
         where: {
           name: updateData.name,
           type: existingWork.type,
-          id: { not: id },
+          deletedAt: { isNull: true },
+          id: { ne: id },
         },
       })
       if (duplicateWork) {
@@ -263,33 +345,34 @@ export class WorkService extends PlatformService {
      * 事务处理：使用 $transaction 确保所有更新操作的原子性
      * 如果其中任何一步失败，整个事务会回滚，保证数据一致性
      */
-    return this.prisma.$transaction(async (tx) => {
-      const updatedWork = await tx.work.update({
-        where: { id },
-        data: updateData,
-      })
+    return this.db.transaction(async (tx) => {
+      const [updatedWork] = await tx
+        .update(this.work)
+        .set(normalizedUpdateData)
+        .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+        .returning()
 
       if (shouldSyncSectionName && existingWork.forumSectionId) {
-        await tx.forumSection.update({
-          where: { id: existingWork.forumSectionId },
-          data: { name: updateData.name },
-        })
+        await tx
+          .update(this.forumSection)
+          .set({ name: updateData.name })
+          .where(eq(this.forumSection.id, existingWork.forumSectionId))
       }
 
       // 更新作者关联（先删除后重建）
       if (authorIds !== undefined) {
-        await tx.workAuthorRelation.deleteMany({
-          where: { workId: id },
-        })
+        await tx
+          .delete(this.workAuthorRelation)
+          .where(eq(this.workAuthorRelation.workId, id))
 
         if (authorIds.length > 0) {
-          await tx.workAuthorRelation.createMany({
-            data: authorIds.map((authorId, index) => ({
+          await tx.insert(this.workAuthorRelation).values(
+            authorIds.map((authorId, index) => ({
               workId: id,
               authorId,
               sortOrder: index,
             })),
-          })
+          )
         }
 
         // 计算新增和移除的作者，更新作品数量
@@ -302,51 +385,51 @@ export class WorkService extends PlatformService {
 
         // 新增作者的作品数 +1
         if (addedAuthorIds.length > 0) {
-          await tx.workAuthor.updateMany({
-            where: { id: { in: addedAuthorIds } },
-            data: { workCount: { increment: 1 } },
-          })
+          await tx
+            .update(this.workAuthor)
+            .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
+            .where(inArray(this.workAuthor.id, addedAuthorIds))
         }
 
         // 移除作者的作品数 -1
         if (removedAuthorIds.length > 0) {
-          await tx.workAuthor.updateMany({
-            where: { id: { in: removedAuthorIds } },
-            data: { workCount: { decrement: 1 } },
-          })
+          await tx
+            .update(this.workAuthor)
+            .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
+            .where(inArray(this.workAuthor.id, removedAuthorIds))
         }
       }
 
       // 更新分类关联（先删除后重建）
       if (categoryIds !== undefined) {
-        await tx.workCategoryRelation.deleteMany({
-          where: { workId: id },
-        })
+        await tx
+          .delete(this.workCategoryRelation)
+          .where(eq(this.workCategoryRelation.workId, id))
 
         if (categoryIds.length > 0) {
-          await tx.workCategoryRelation.createMany({
-            data: categoryIds.map((categoryId, index) => ({
+          await tx.insert(this.workCategoryRelation).values(
+            categoryIds.map((categoryId, index) => ({
               workId: id,
               categoryId,
               sortOrder: categoryIds.length - index,
             })),
-          })
+          )
         }
       }
 
       // 更新标签关联（先删除后重建）
       if (tagIds !== undefined) {
-        await tx.workTagRelation.deleteMany({
-          where: { workId: id },
-        })
+        await tx
+          .delete(this.workTagRelation)
+          .where(eq(this.workTagRelation.workId, id))
 
         if (tagIds.length > 0) {
-          await tx.workTagRelation.createMany({
-            data: tagIds.map((tagId) => ({
+          await tx.insert(this.workTagRelation).values(
+            tagIds.map((tagId) => ({
               workId: id,
               tagId,
             })),
-          })
+          )
         }
       }
 
@@ -361,9 +444,9 @@ export class WorkService extends PlatformService {
    * @throws BadRequestException 当作品不存在时抛出异常
    */
   async updateStatus(body: UpdateWorkStatusDto) {
-    const work = await this.work.findUnique({
-      where: { id: body.id },
-      select: {
+    const work = await this.db.query.work.findFirst({
+      where: { id: body.id, deletedAt: { isNull: true } },
+      columns: {
         id: true,
         forumSectionId: true,
       },
@@ -371,23 +454,40 @@ export class WorkService extends PlatformService {
     if (!work) {
       throw new BadRequestException('作品不存在')
     }
-    return this.prisma.$transaction(async (tx) => {
-      const updatedWork = await tx.work.update({
-        where: { id: body.id },
-        data: {
-          isPublished: body.isPublished,
-        },
-      })
+    return this.db.transaction(async (tx) => {
+      const [updatedWork] = await tx
+        .update(this.work)
+        .set({ isPublished: body.isPublished })
+        .where(and(eq(this.work.id, body.id), isNull(this.work.deletedAt)))
+        .returning()
 
       if (work.forumSectionId) {
-        await tx.forumSection.update({
-          where: { id: work.forumSectionId },
-          data: { isEnabled: body.isPublished },
-        })
+        await tx
+          .update(this.forumSection)
+          .set({ isEnabled: body.isPublished })
+          .where(eq(this.forumSection.id, work.forumSectionId))
       }
 
       return updatedWork
     })
+  }
+
+  async updateWorkFlags(
+    id: number,
+    data: Partial<{
+      isPublished: boolean
+      isRecommended: boolean
+      isHot: boolean
+      isNew: boolean
+    }>,
+  ) {
+    const [updated] = await this.db
+      .update(this.work)
+      .set(data)
+      .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+      .returning({ id: this.work.id })
+    this.drizzle.assertAffectedRows(updated ? [updated] : [], '作品不存在')
+    return updated
   }
 
   /**
@@ -397,109 +497,131 @@ export class WorkService extends PlatformService {
    * @returns 分页的热门作品列表
    */
   async getHotWorkPage(dto: QueryWorkTypeDto) {
-    return this.work.findPagination({
-      where: {
-        ...dto,
-        isHot: true,
-      },
-      select: PAGE_WORK_SELECT,
-    })
+    return this.getWorkTypePage(dto, { isHot: true })
   }
 
-  /**
-   * 分页查询最新作品
-   * @param dto 查询条件（包含类型过滤等）
-   * @returns 分页的最新作品列表
-   */
+  private async getWorkTypePage(
+    dto: QueryWorkTypeDto,
+    extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
+  ) {
+    const page = await this.drizzle.ext.findPagination(this.work, {
+      where: this.drizzle.buildWhere(this.work, {
+        and: {
+          deletedAt: { isNull: true },
+          type: dto.type,
+          isPublished: true,
+          ...extra,
+        },
+      }),
+      ...dto,
+    })
+    return this.attachWorkRelations(page)
+  }
+
+  private async attachWorkRelations(page: {
+    list: Array<typeof this.work.$inferSelect>
+    total: number
+    pageIndex: number
+    pageSize: number
+  }) {
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const workIds = page.list.map((item) => item.id)
+    const [authors, categories, tags] = await Promise.all([
+      this.db.query.workAuthorRelation.findMany({
+        where: { workId: { in: workIds } },
+        with: { author: { columns: { id: true, name: true, type: true, avatar: true } } },
+      }),
+      this.db.query.workCategoryRelation.findMany({
+        where: { workId: { in: workIds } },
+        with: { category: { columns: { id: true, name: true, icon: true } } },
+      }),
+      this.db.query.workTagRelation.findMany({
+        where: { workId: { in: workIds } },
+        with: { tag: { columns: { id: true, name: true, icon: true } } },
+      }),
+    ])
+
+    const authorMap = new Map<number, typeof authors>()
+    const categoryMap = new Map<number, typeof categories>()
+    const tagMap = new Map<number, typeof tags>()
+    for (const item of authors) {
+      const list = authorMap.get(item.workId) ?? []
+      list.push(item)
+      authorMap.set(item.workId, list)
+    }
+    for (const item of categories) {
+      const list = categoryMap.get(item.workId) ?? []
+      list.push(item)
+      categoryMap.set(item.workId, list)
+    }
+    for (const item of tags) {
+      const list = tagMap.get(item.workId) ?? []
+      list.push(item)
+      tagMap.set(item.workId, list)
+    }
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        authors: authorMap.get(item.id) ?? [],
+        categories: categoryMap.get(item.id) ?? [],
+        tags: tagMap.get(item.id) ?? [],
+      })),
+    }
+  }
+
   async getNewWorkPage(dto: QueryWorkTypeDto) {
-    return this.work.findPagination({
-      where: {
-        ...dto,
-        isNew: true,
-      },
-      select: PAGE_WORK_SELECT,
-    })
+    return this.getWorkTypePage(dto, { isNew: true })
   }
 
-  /**
-   * 分页查询推荐作品
-   * @param dto 查询条件（包含类型过滤等）
-   * @returns 分页的推荐作品列表
-   */
   async getRecommendedWorkPage(dto: QueryWorkTypeDto) {
-    return this.work.findPagination({
-      where: {
-        ...dto,
-        isRecommended: true,
-      },
-      select: PAGE_WORK_SELECT,
-    })
+    return this.getWorkTypePage(dto, { isRecommended: true })
   }
 
-  /**
-   * 分页查询作品列表
-   * @param queryWorkDto 查询条件
-   * @returns 分页的作品列表
-   */
   async getWorkPage(queryWorkDto: QueryWorkDto) {
     const { name, publisher, author, tagIds, ...otherDto } = queryWorkDto
+    const conditions = [
+      isNull(this.work.deletedAt),
+      otherDto.type ? eq(this.work.type, otherDto.type) : undefined,
+      isNotNil(otherDto.isPublished) ? eq(this.work.isPublished, otherDto.isPublished) : undefined,
+      name?.trim() ? ilike(this.work.name, `%${name.trim()}%`) : undefined,
+      publisher?.trim() ? ilike(this.work.publisher, `%${publisher.trim()}%`) : undefined,
+    ].filter(Boolean)
 
-    // 构建查询条件
-    const where: WorkWhereInput = {}
-
-    // 作品名称模糊查询（不区分大小写）
-    if (name?.trim()) {
-      where.name = {
-        contains: name.trim(),
-        mode: 'insensitive',
-      }
-    }
-
-    // 出版社模糊查询（不区分大小写）
-    if (publisher?.trim()) {
-      where.publisher = {
-        contains: publisher.trim(),
-        mode: 'insensitive',
-      }
-    }
-
-    // 作者名称模糊查询（不区分大小写）
-    // 通过关联表查询，匹配任一关联作者的名称
     if (author?.trim()) {
-      where.authors = {
-        some: {
-          author: {
-            name: {
-              contains: author.trim(),
-              mode: 'insensitive',
-            },
-          },
-        },
-      }
+      const rows = await this.db
+        .select({ workId: this.workAuthorRelation.workId })
+        .from(this.workAuthorRelation)
+        .innerJoin(this.workAuthor, eq(this.workAuthor.id, this.workAuthorRelation.authorId))
+        .where(ilike(this.workAuthor.name, `%${author.trim()}%`))
+      const workIds = [...new Set(rows.map((row) => row.workId))]
+      conditions.push(workIds.length ? inArray(this.work.id, workIds) : eq(this.work.id, -1))
     }
 
-    // 标签ID数组精确匹配
-    // 查询包含任一指定标签的作品
     if (Array.isArray(tagIds) && tagIds.length > 0) {
-      where.tags = {
-        some: {
-          tagId: {
-            in: tagIds,
-          },
-        },
-      }
+      const rows = await this.db
+        .select({ workId: this.workTagRelation.workId })
+        .from(this.workTagRelation)
+        .where(inArray(this.workTagRelation.tagId, tagIds))
+      const workIds = [...new Set(rows.map((row) => row.workId))]
+      conditions.push(workIds.length ? inArray(this.work.id, workIds) : eq(this.work.id, -1))
     }
 
-    return this.work.findPagination({
-      where: { ...where, ...otherDto },
-      select: PAGE_WORK_SELECT,
+    const page = await this.drizzle.ext.findPagination(this.work, {
+      where: and(...(conditions as [any, ...any[]])),
+      ...otherDto,
     })
+    return this.attachWorkRelations(page as any)
   }
 
   async getWorkForumSection(id: number) {
-    const work = await this.work.findUnique({
-      where: { id },
-      select: {
+    const work = await this.db.query.work.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      columns: {
         forumSectionId: true,
       },
     })
@@ -512,9 +634,9 @@ export class WorkService extends PlatformService {
       throw new BadRequestException('作品未关联论坛板块')
     }
 
-    const section = await this.prisma.forumSection.findUnique({
-      where: { id: work.forumSectionId, deletedAt: null },
-      select: {
+    const section = await this.db.query.forumSection.findFirst({
+      where: { id: work.forumSectionId, deletedAt: { isNull: true } },
+      columns: {
         id: true,
         name: true,
         description: true,
@@ -538,31 +660,17 @@ export class WorkService extends PlatformService {
     const { id, ...pageDto } = query
     const section = await this.getWorkForumSection(id)
 
-    return this.prisma.forumTopic.findPagination({
-      where: {
-        ...pageDto,
-        sectionId: section.id,
-        deletedAt: null,
-        isHidden: false,
-        auditStatus: AuditStatusEnum.APPROVED,
-      },
+    return this.drizzle.ext.findPagination(this.forumTopic, {
+      where: this.drizzle.buildWhere(this.forumTopic, {
+        and: {
+          sectionId: section.id,
+          deletedAt: { isNull: true },
+          isHidden: false,
+          auditStatus: AuditStatusEnum.APPROVED,
+        },
+      }),
+      ...pageDto,
       orderBy: [{ isPinned: 'desc' }, { lastReplyAt: 'desc' }, { createdAt: 'desc' }],
-      select: {
-        id: true,
-        sectionId: true,
-        userId: true,
-        title: true,
-        isPinned: true,
-        isFeatured: true,
-        isLocked: true,
-        auditStatus: true,
-        viewCount: true,
-        replyCount: true,
-        likeCount: true,
-        favoriteCount: true,
-        lastReplyAt: true,
-        createdAt: true,
-      },
     })
   }
 
@@ -574,23 +682,26 @@ export class WorkService extends PlatformService {
    */
   async getWorkDetail(id: number, context: WorkDetailContext = {}) {
     const { userId, ipAddress, device, userAgent } = context
-    const work = await this.work.findUnique({
-      where: { id },
-      include: {
-        authors: WORK_RELATION_SELECT.authors,
-        categories: WORK_RELATION_SELECT.categories,
-        tags: WORK_RELATION_SELECT.tags,
-      },
+    const work = await this.db.query.work.findFirst({
+      where: { id, deletedAt: { isNull: true } },
     })
 
     if (!work) {
       throw new BadRequestException('作品不存在')
     }
 
+    const relationPage = await this.attachWorkRelations({
+      list: [work] as any,
+      total: 1,
+      pageIndex: 1,
+      pageSize: 1,
+    })
+    const workWithRelations = relationPage.list[0]
+
     // 为匿名用户保持稳定的响应结构，使应用可以重用相同的DTO而无需条件解析
     if (!userId) {
       return {
-        ...work,
+        ...workWithRelations,
         liked: false,
         favorited: false,
         viewed: false,
@@ -636,9 +747,9 @@ export class WorkService extends PlatformService {
     })
 
     return {
-      ...work,
+      ...workWithRelations,
       // 立即反映刚记录的浏览，使当前响应与持久化的计数器更新保持一致
-      viewCount: work.viewCount + 1,
+      viewCount: workWithRelations.viewCount + 1,
       liked,
       favorited,
       viewed: true,
@@ -668,12 +779,10 @@ export class WorkService extends PlatformService {
    */
   async deleteWork(id: number) {
     // 检查作品是否还有未删除的章节
-    const chapterCount = await this.workChapter.count({
-      where: {
-        workId: id,
-        deletedAt: null,
-      },
-    })
+    const chapterCount = await this.db.$count(
+      this.workChapter,
+      and(eq(this.workChapter.workId, id), isNull(this.workChapter.deletedAt)),
+    )
 
     if (chapterCount > 0) {
       throw new BadRequestException(
@@ -682,11 +791,11 @@ export class WorkService extends PlatformService {
     }
 
     // 获取作品信息，检查是否存在并获取关联作者
-    const work = await this.work.findUnique({
-      where: { id },
-      include: {
+    const work = await this.db.query.work.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      with: {
         authors: {
-          select: { authorId: true },
+          columns: { authorId: true },
         },
       },
     })
@@ -696,30 +805,30 @@ export class WorkService extends PlatformService {
     }
 
     // 使用事务确保作品删除和作者作品数更新的一致性
-    return this.prisma.$transaction(async (tx) => {
-      // 软删除作品
-      const deletedWork = await tx.work.update({
-        where: { id },
-        data: { deletedAt: new Date() },
-      })
+    return this.db.transaction(async (tx) => {
+      const [deletedWork] = await tx
+        .update(this.work)
+        .set({ deletedAt: new Date() })
+        .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+        .returning()
 
       if (work.forumSectionId) {
-        await tx.forumSection.update({
-          where: { id: work.forumSectionId },
-          data: {
+        await tx
+          .update(this.forumSection)
+          .set({
             isEnabled: false,
             deletedAt: new Date(),
-          },
-        })
+          })
+          .where(eq(this.forumSection.id, work.forumSectionId))
       }
 
       // 更新关联作者的作品数量（-1）
       const authorIds = work.authors.map((rel) => rel.authorId)
       if (authorIds.length > 0) {
-        await tx.workAuthor.updateMany({
-          where: { id: { in: authorIds } },
-          data: { workCount: { decrement: 1 } },
-        })
+        await tx
+          .update(this.workAuthor)
+          .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
+          .where(inArray(this.workAuthor.id, authorIds))
       }
 
       return deletedWork

@@ -38,7 +38,6 @@ type SelectShape = Record<string, boolean>
  * - 统一目标查询策略，保证一致性和可维护性
  * - 通过定义文件 INTERACTION_TARGET_DEFINITIONS 实现配置化
  *
- * @extends PlatformService
  */
 @Injectable()
 export class InteractionTargetAccessService {
@@ -239,7 +238,7 @@ export class InteractionTargetAccessService {
    *
    * @example
    * // 在事务中使用（推荐做法）
-   * await this.prisma.$transaction(async (tx) => {
+   * await this.drizzle.db.transaction(async (tx) => {
    *   // 1. 创建点赞记录
    *   await tx.userLike.create({ data: { ... } })
    *   // 2. 更新目标的点赞计数

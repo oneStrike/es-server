@@ -1,58 +1,57 @@
+import { DrizzleService } from '@db/core'
 import {
   DownloadService,
   DownloadTargetTypeEnum,
   FavoriteService,
   LikeService,
   LikeTargetTypeEnum,
-ReadingStateService
+  ReadingStateService,
 } from '@libs/interaction'
 
 import { ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { DragReorderDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
   CreateWorkChapterDto,
   QueryWorkChapterDto,
   UpdateWorkChapterDto,
 } from './dto/work-chapter.dto'
-import { PAGE_WORK_CHAPTER_SELECT } from './work-chapter.select'
 
 /**
  * 作品章节服务
  * 负责处理作品章节的 CRUD 操作、交互状态查询、相邻章节导航等功能
  */
 @Injectable()
-export class WorkChapterService extends PlatformService {
-  /** 章节 Prisma 代理 */
-  get workChapter() {
-    return this.prisma.workChapter
-  }
-
-  /** 作品 Prisma 代理 */
-  get work() {
-    return this.prisma.work
-  }
-
-  /** 用户 Prisma 代理 */
-  get appUser() {
-    return this.prisma.appUser
-  }
-
-  /** 用户等级规则 Prisma 代理 */
-  get userLevelRule() {
-    return this.prisma.userLevelRule
-  }
-
+export class WorkChapterService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
     private readonly downloadService: DownloadService,
     private readonly contentPermissionService: ContentPermissionService,
     private readonly readingStateService: ReadingStateService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  get workChapter() {
+    return this.drizzle.schema.workChapter
+  }
+
+  get work() {
+    return this.drizzle.schema.work
+  }
+
+  get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  get userLevelRule() {
+    return this.drizzle.schema.userLevelRule
   }
 
   /**
@@ -65,19 +64,20 @@ export class WorkChapterService extends PlatformService {
   async createChapter(createDto: CreateWorkChapterDto) {
     const { workId } = createDto
 
-    if (!(await this.work.exists({ id: workId }))) {
+    if (
+      !(await this.drizzle.ext.exists(
+        this.work,
+        and(eq(this.work.id, workId), isNull(this.work.deletedAt)),
+      ))
+    ) {
       throw new BadRequestException('关联的作品不存在')
     }
 
-    try {
-      return await this.workChapter.create({ data: createDto })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('该作品下章节号已存在')
-        },
-      })
-    }
+    const [created] = await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.workChapter).values(createDto).returning(),
+      { duplicate: '该作品下章节号已存在' },
+    )
+    return created
   }
 
   /**
@@ -86,18 +86,44 @@ export class WorkChapterService extends PlatformService {
    * @returns 分页章节列表
    */
   async getChapterPage(dto: QueryWorkChapterDto) {
-    return this.workChapter.findPagination({
-      where: {
-        ...dto,
-        title: dto.title
-          ? {
-              contains: dto.title,
-              mode: 'insensitive',
-            }
-          : undefined,
+    const where = this.drizzle.buildWhere(this.workChapter, {
+      and: {
+        deletedAt: { isNull: true },
+        workId: dto.workId,
+        isPublished: dto.isPublished,
+        isPreview: dto.isPreview,
+        viewRule: dto.viewRule,
+        canDownload: dto.canDownload,
+        canComment: dto.canComment,
+        title: dto.title ? { like: dto.title } : undefined,
       },
-      select: PAGE_WORK_CHAPTER_SELECT,
     })
+
+    const page = await this.drizzle.ext.findPagination(this.workChapter, {
+      where,
+      ...dto,
+    })
+
+    return {
+      ...page,
+      list: page.list.map((chapter) => ({
+        id: chapter.id,
+        isPreview: chapter.isPreview,
+        cover: chapter.cover,
+        title: chapter.title,
+        subtitle: chapter.subtitle,
+        price: chapter.price,
+        canComment: chapter.canComment,
+        sortOrder: chapter.sortOrder,
+        viewRule: chapter.viewRule,
+        canDownload: chapter.canDownload,
+        requiredViewLevelId: chapter.requiredViewLevelId,
+        publishAt: chapter.publishAt,
+        createdAt: chapter.createdAt,
+        updatedAt: chapter.updatedAt,
+        isPublished: chapter.isPublished,
+      })),
+    }
   }
 
   /**
@@ -109,18 +135,18 @@ export class WorkChapterService extends PlatformService {
    * @throws BadRequestException 章节不存在
    */
   async getChapterDetail(id: number, userId?: number) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id },
-      include: {
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      with: {
         work: {
-          select: {
+          columns: {
             id: true,
             name: true,
             type: true,
           },
         },
         requiredViewLevel: {
-          select: {
+          columns: {
             id: true,
             name: true,
             color: true,
@@ -135,7 +161,9 @@ export class WorkChapterService extends PlatformService {
 
     // 未登录用户直接返回基础信息
     if (!userId) {
-      chapter.content = JSON.parse(chapter.content as unknown as string)
+      chapter.content = chapter.content
+        ? JSON.parse(chapter.content as unknown as string)
+        : null
       return chapter
     }
 
@@ -212,9 +240,9 @@ export class WorkChapterService extends PlatformService {
     direction: 'previous' | 'next',
     userId?: number,
   ) {
-    const currentChapter = await this.workChapter.findUnique({
-      where: { id },
-      select: {
+    const currentChapter = await this.db.query.workChapter.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      columns: {
         workId: true,
         sortOrder: true,
       },
@@ -224,18 +252,24 @@ export class WorkChapterService extends PlatformService {
       throw new BadRequestException('章节不存在')
     }
 
-    const adjacentChapter = await this.workChapter.findFirst({
-      where: {
-        workId: currentChapter.workId,
-        sortOrder:
-          direction === 'previous'
-            ? { lt: currentChapter.sortOrder }
-            : { gt: currentChapter.sortOrder },
-      },
-      orderBy: {
-        sortOrder: direction === 'previous' ? 'desc' : 'asc',
-      },
-      select: {
+    const adjacentChapter = await this.db.query.workChapter.findFirst({
+      where:
+        direction === 'previous'
+          ? {
+              workId: currentChapter.workId,
+              sortOrder: { lt: currentChapter.sortOrder },
+              deletedAt: { isNull: true },
+            }
+          : {
+              workId: currentChapter.workId,
+              sortOrder: { gt: currentChapter.sortOrder },
+              deletedAt: { isNull: true },
+            },
+      orderBy:
+        direction === 'previous'
+          ? { sortOrder: 'desc' }
+          : { sortOrder: 'asc' },
+      columns: {
         id: true,
       },
     })
@@ -261,26 +295,25 @@ export class WorkChapterService extends PlatformService {
 
     if (
       requiredViewLevelId &&
-      !(await this.userLevelRule.exists({ id: requiredViewLevelId }))
+      !(await this.drizzle.ext.exists(
+        this.userLevelRule,
+        eq(this.userLevelRule.id, requiredViewLevelId),
+      ))
     ) {
       throw new BadRequestException('指定的阅读会员等级不存在')
     }
 
-    try {
-      return await this.workChapter.update({
-        where: { id },
-        data: updateData,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('该作品下章节号已存在')
-        },
-        P2025: () => {
-          throw new BadRequestException('章节不存在')
-        },
-      })
-    }
+    const [updated] = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set(updateData)
+          .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt)))
+          .returning(),
+      { duplicate: '该作品下章节号已存在' },
+    )
+    this.drizzle.assertAffectedRows(updated ? [updated] : [], '章节不存在')
+    return updated
   }
 
   /**
@@ -290,15 +323,13 @@ export class WorkChapterService extends PlatformService {
    * @throws BadRequestException 章节不存在
    */
   async deleteChapter(id: number) {
-    try {
-      return await this.workChapter.delete({ where: { id } })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new BadRequestException('章节不存在')
-        },
-      })
-    }
+    const [deleted] = await this.db
+      .update(this.workChapter)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt)))
+      .returning()
+    this.drizzle.assertAffectedRows(deleted ? [deleted] : [], '章节不存在')
+    return deleted
   }
 
   /**
@@ -307,7 +338,7 @@ export class WorkChapterService extends PlatformService {
    * @returns 交换结果
    */
   async swapChapterNumbers(dto: DragReorderDto) {
-    return this.workChapter.swapField({
+    return this.drizzle.ext.swapField(this.workChapter, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
       sourceField: 'workId',
     })

@@ -1,9 +1,9 @@
 import type { Cache } from 'cache-manager'
-import { PrismaService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { isDevelopment, isProduction } from '@libs/platform/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
-import { HealthIndicatorService } from '@nestjs/terminus'
+import { sql } from 'drizzle-orm'
 
 const PONG_VALUE = 'pong'
 
@@ -25,9 +25,8 @@ function makePingKey(label: string) {
 @Injectable()
 export class HealthService {
   constructor(
-    private readonly healthIndicatorService: HealthIndicatorService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    private readonly prismaService: PrismaService,
+    private readonly drizzle: DrizzleService,
   ) {}
 
   /**
@@ -36,12 +35,20 @@ export class HealthService {
    * @returns HealthIndicatorResult
    */
   async ping(key = 'database') {
-    const indicator = this.healthIndicatorService.check(key)
     try {
-      await this.prismaService.client.$queryRaw`SELECT 1`
-      return indicator.up()
+      await this.drizzle.db.execute(sql`SELECT 1`)
+      return {
+        [key]: {
+          status: 'up',
+        },
+      }
     } catch (error) {
-      return indicator.down({ error: String(error) })
+      return {
+        [key]: {
+          status: 'down',
+          error: String(error),
+        },
+      }
     }
   }
 
@@ -51,7 +58,6 @@ export class HealthService {
    * @returns HealthIndicatorResult
    */
   async checkMemory(key = 'cache_memory') {
-    const indicator = this.healthIndicatorService.check(key)
     try {
       const stores: any[] | undefined = (this.cacheManager as any)?.stores
       if (Array.isArray(stores)) {
@@ -66,15 +72,34 @@ export class HealthService {
               await store.del(k)
             }
             if (value !== PONG_VALUE) {
-              return indicator.down({ message: 'memory cache ping mismatch' })
+              return {
+                [key]: {
+                  status: 'down',
+                  message: 'memory cache ping mismatch',
+                },
+              }
             }
-            return indicator.up()
+            return {
+              [key]: {
+                status: 'up',
+              },
+            }
           }
         }
       }
-      return indicator.down({ message: 'memory cache store not found' })
+      return {
+        [key]: {
+          status: 'down',
+          message: 'memory cache store not found',
+        },
+      }
     } catch (error) {
-      return indicator.down({ error: String(error) })
+      return {
+        [key]: {
+          status: 'down',
+          error: String(error),
+        },
+      }
     }
   }
 
@@ -84,7 +109,6 @@ export class HealthService {
    * @returns HealthIndicatorResult
    */
   async checkRedis(key = 'cache_redis') {
-    const indicator = this.healthIndicatorService.check(key)
     try {
       const stores: any[] | undefined = (this.cacheManager as any)?.stores
       if (Array.isArray(stores)) {
@@ -99,15 +123,34 @@ export class HealthService {
               await store.del(k)
             }
             if (value !== PONG_VALUE) {
-              return indicator.down({ message: 'redis cache ping mismatch' })
+              return {
+                [key]: {
+                  status: 'down',
+                  message: 'redis cache ping mismatch',
+                },
+              }
             }
-            return indicator.up()
+            return {
+              [key]: {
+                status: 'up',
+              },
+            }
           }
         }
       }
-      return indicator.down({ message: 'redis cache store not found' })
+      return {
+        [key]: {
+          status: 'down',
+          message: 'redis cache store not found',
+        },
+      }
     } catch (error) {
-      return indicator.down({ error: String(error) })
+      return {
+        [key]: {
+          status: 'down',
+          error: String(error),
+        },
+      }
     }
   }
 

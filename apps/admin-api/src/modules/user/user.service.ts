@@ -1,5 +1,4 @@
-import type { AdminUserWhereInput } from '@libs/platform/database'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { ScryptService } from '@libs/platform/modules'
 import { LoginGuardService } from '@libs/platform/modules/auth'
 import {
@@ -9,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { eq } from 'drizzle-orm'
 import { AuthRedisKeys } from '../auth/auth.constant'
 import {
   ChangePasswordDto,
@@ -16,31 +16,35 @@ import {
   UserPageDto,
   UserRegisterDto,
 } from './dto/user.dto'
-import { EXCLUDE_USER_FIELDS, UserRoleEnum } from './user.constant'
+import { UserRoleEnum } from './user.constant'
 
 /**
  * 管理员用户服务
  * 负责后台用户的注册、查询、权限校验与密码管理
  */
 @Injectable()
-export class UserService extends PlatformService {
+export class UserService {
   get adminUser() {
-    return this.prisma.adminUser
+    return this.drizzle.schema.adminUser
   }
 
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly scryptService: ScryptService,
     private readonly configService: ConfigService,
     private readonly loginGuardService: LoginGuardService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   async isSuperAdmin(userId: number) {
-    const adminUser = await this.adminUser.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    })
+    const [adminUser] = await this.db
+      .select({ role: this.adminUser.role })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, userId))
+      .limit(1)
     if (!adminUser) {
       throw new NotFoundException('用户不存在')
     }
@@ -56,34 +60,37 @@ export class UserService extends PlatformService {
   async updateUserInfo(userId: number, updateData: UpdateUserDto) {
     await this.isSuperAdmin(userId)
     // 查找用户
-    const user = await this.adminUser.findUnique({
-      where: { id: updateData.id },
-      select: { id: true, username: true }, // 优化：只查询需要的字段
-    })
+    const [user] = await this.db
+      .select({ id: this.adminUser.id, username: this.adminUser.username })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, updateData.id))
+      .limit(1)
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
 
     // 如果要更新用户名，检查是否已存在
     if (updateData.username && updateData.username !== user.username) {
-      const existingUser = await this.adminUser.exists({
-        username: updateData.username,
-      })
+      const [existingUser] = await this.db
+        .select({ id: this.adminUser.id })
+        .from(this.adminUser)
+        .where(eq(this.adminUser.username, updateData.username))
+        .limit(1)
 
-      if (existingUser) {
+      if (existingUser?.id) {
         throw new BadRequestException('用户名已存在')
       }
     }
 
     // 返回更新后的用户信息（不包含密码）
 
-    return this.adminUser.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-      },
-    })
+    const { id: _id, ...data } = updateData
+    const [updated] = await this.db
+      .update(this.adminUser)
+      .set(data)
+      .where(eq(this.adminUser.id, updateData.id))
+      .returning({ id: this.adminUser.id })
+    return updated
   }
 
   /**
@@ -97,47 +104,60 @@ export class UserService extends PlatformService {
     }
 
     // 检查用户名是否已存在
-    if (await this.adminUser.exists({ username })) {
+    const [usernameExists] = await this.db
+      .select({ id: this.adminUser.id })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.username, username))
+      .limit(1)
+    if (usernameExists) {
       throw new BadRequestException('用户名已存在')
     }
     // 检查手机号是否已存在
-    if (await this.adminUser.exists({ mobile })) {
+    const [mobileExists] = mobile
+      ? await this.db
+          .select({ id: this.adminUser.id })
+          .from(this.adminUser)
+          .where(eq(this.adminUser.mobile, mobile))
+          .limit(1)
+      : []
+    if (mobileExists) {
       throw new BadRequestException('手机号已存在')
     }
 
     // 加密密码
     const encryptedPassword = await this.scryptService.encryptPassword(password)
 
-    return this.adminUser.create({
-      data: {
+    const [created] = await this.db
+      .insert(this.adminUser)
+      .values({
         username,
         password: encryptedPassword,
         avatar,
         mobile,
         role: role || 0,
         isEnabled: true,
-      },
-      select: {
-        id: true,
-      },
-    })
+      })
+      .returning({ id: this.adminUser.id })
+    return created
   }
 
   /**
    * 获取用户信息
    */
   async getUserInfo(userId: number) {
-    const user = await this.adminUser.findUnique({
-      where: { id: userId },
-      omit: EXCLUDE_USER_FIELDS,
-    })
+    const [user] = await this.db
+      .select()
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, userId))
+      .limit(1)
 
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
 
     // 返回用户信息（不包含密码）
-    return user
+    const { password: _password, ...rest } = user
+    return rest
   }
 
   /**
@@ -145,25 +165,22 @@ export class UserService extends PlatformService {
    */
   async getUsers(queryDto: UserPageDto) {
     const { username, isEnabled, mobile, role, ...pageDto } = queryDto
-    const where: AdminUserWhereInput = {}
-
-    if (username) {
-      where.username = { contains: username }
-    }
-    if (mobile) {
-      where.mobile = { contains: mobile }
-    }
-    if (isEnabled !== undefined) {
-      where.isEnabled = { equals: isEnabled }
-    }
-    if (role !== undefined) {
-      where.role = { equals: role }
-    }
-
-    return this.adminUser.findPagination({
-      where: { ...pageDto, ...where },
-      omit: EXCLUDE_USER_FIELDS,
+    const where = this.drizzle.buildWhere(this.adminUser, {
+      and: {
+        isEnabled,
+        role,
+        username: username ? { like: username } : undefined,
+        mobile: mobile ? { like: mobile } : undefined,
+      },
     })
+    const page = await this.drizzle.ext.findPagination(this.adminUser, {
+      where,
+      ...pageDto,
+    })
+    return {
+      ...page,
+      list: page.list.map(({ password: _password, ...item }) => item),
+    }
   }
 
   /**
@@ -183,10 +200,11 @@ export class UserService extends PlatformService {
     }
 
     // 查找用户（优化：只选择密码字段）
-    const user = await this.adminUser.findUnique({
-      where: { id: userId },
-      select: { id: true, password: true },
-    })
+    const [user] = await this.db
+      .select({ id: this.adminUser.id, password: this.adminUser.password })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, userId))
+      .limit(1)
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
@@ -201,13 +219,14 @@ export class UserService extends PlatformService {
     }
 
     // 更新密码
-    return this.adminUser.update({
-      where: { id: userId },
-      data: {
+    const [updated] = await this.db
+      .update(this.adminUser)
+      .set({
         password: await this.scryptService.encryptPassword(newPassword),
-      },
-      select: { id: true },
-    })
+      })
+      .where(eq(this.adminUser.id, userId))
+      .returning({ id: this.adminUser.id })
+    return updated
   }
 
   /**
@@ -215,7 +234,11 @@ export class UserService extends PlatformService {
    */
   async unlockUser(userId: number) {
     // 检查用户是否存在
-    const user = await this.adminUser.exists({ id: userId })
+    const [user] = await this.db
+      .select({ id: this.adminUser.id })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, userId))
+      .limit(1)
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
@@ -238,12 +261,12 @@ export class UserService extends PlatformService {
     const defaultPassword = await this.scryptService.encryptPassword(
       this.configService.get<string>('app.defaultPassword')!,
     )
-    await this.adminUser.update({
-      where: { id },
-      data: {
+    await this.db
+      .update(this.adminUser)
+      .set({
         password: await this.scryptService.encryptPassword(defaultPassword),
-      },
-    })
+      })
+      .where(eq(this.adminUser.id, id))
     return userId
   }
 }

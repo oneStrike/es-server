@@ -1,13 +1,13 @@
 /**
  * 论坛配置常量与枚举定义
  */
-import type { ForumConfig } from '@libs/platform/database'
+import type { forumConfig } from '@db/schema'
 
 /**
  * 论坛默认配置
  */
 export const DEFAULT_FORUM_CONFIG: Omit<
-  ForumConfig,
+  typeof forumConfig.$inferSelect,
   'id' | 'createdAt' | 'updatedAt' | 'updatedById'
 > = {
   /** 网站名称 */

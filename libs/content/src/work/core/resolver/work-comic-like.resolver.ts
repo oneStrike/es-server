@@ -1,3 +1,4 @@
+import { DrizzleService } from '@db/core'
 import { work } from '@db/schema'
 import {
   ILikeTargetResolver,
@@ -6,7 +7,6 @@ import {
   LikeTargetTypeEnum,
 } from '@libs/interaction'
 import { SceneTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -16,14 +16,18 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class WorkComicLikeResolver
-  extends PlatformService
   implements ILikeTargetResolver, OnModuleInit
 {
   /** 目标类型：漫画作品 */
   readonly targetType = LikeTargetTypeEnum.WORK_COMIC
 
-  constructor(private readonly likeService: LikeService) {
-    super()
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly likeService: LikeService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -114,13 +118,13 @@ export class WorkComicLikeResolver
       return new Map()
     }
 
-    const works = await this.prisma.work.findMany({
+    const works = await this.db.query.work.findMany({
       where: {
         id: { in: targetIds },
         type: this.targetType,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      select: {
+      columns: {
         id: true,
         name: true,
         cover: true,

@@ -1,8 +1,8 @@
-import type { RequestLogWhereInput } from '@libs/platform/database'
 import type { FastifyRequest } from 'fastify'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { and, eq, ilike } from 'drizzle-orm'
 import { ActionTypeEnum } from './audit.constant'
 import {
   AuditPageRequestDto,
@@ -15,9 +15,15 @@ import {
  * 负责记录与查询后台操作审计日志
  */
 @Injectable()
-export class AuditService extends PlatformService {
+export class AuditService {
   get requestLog() {
-    return this.prisma.requestLog
+    return this.drizzle.schema.requestLog
+  }
+
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -29,10 +35,11 @@ export class AuditService extends PlatformService {
       ...createDto,
       ...parseRequestLogFields(req),
     } as any
-    return this.requestLog.create({
-      data,
-      select: { id: true },
-    })
+    const [created] = await this.db
+      .insert(this.requestLog)
+      .values(data)
+      .returning({ id: this.requestLog.id })
+    return created
   }
 
   /**
@@ -59,7 +66,11 @@ export class AuditService extends PlatformService {
    * @returns 请求日志详情
    */
   async getRequestLogById(id: number) {
-    const requestLog = await this.requestLog.findUnique({ where: { id } })
+    const [requestLog] = await this.db
+      .select()
+      .from(this.requestLog)
+      .where(eq(this.requestLog.id, id))
+      .limit(1)
 
     if (!requestLog) {
       throw new NotFoundException('请求日志不存在')
@@ -86,43 +97,20 @@ export class AuditService extends PlatformService {
       ...pageOptions
     } = queryDto
 
-    // 构建查询条件
-    const where: RequestLogWhereInput = {}
+    const whereParts = [
+      userId ? eq(this.requestLog.userId, userId) : undefined,
+      username ? ilike(this.requestLog.username, `%${username}%`) : undefined,
+      apiType ? eq(this.requestLog.apiType, apiType) : undefined,
+      ip ? eq(this.requestLog.ip, ip) : undefined,
+      method ? eq(this.requestLog.method, method) : undefined,
+      path ? ilike(this.requestLog.path, `%${path}%`) : undefined,
+      actionType ? ilike(this.requestLog.actionType, `%${actionType}%`) : undefined,
+      isSuccess !== undefined ? eq(this.requestLog.isSuccess, isSuccess) : undefined,
+    ].filter(Boolean)
 
-    if (userId) {
-      where.userId = userId
-    }
-
-    if (username) {
-      where.username = { contains: username, mode: 'insensitive' }
-    }
-
-    if (apiType) {
-      where.apiType = apiType
-    }
-
-    if (ip) {
-      where.ip = ip
-    }
-
-    if (method) {
-      where.method = method
-    }
-
-    if (path) {
-      where.path = { contains: path, mode: 'insensitive' }
-    }
-
-    if (actionType) {
-      where.actionType = { contains: actionType, mode: 'insensitive' }
-    }
-
-    if (isSuccess !== undefined) {
-      where.isSuccess = isSuccess
-    }
-
-    return this.requestLog.findPagination({
-      where: { ...where, ...pageOptions },
+    return this.drizzle.ext.findPagination(this.requestLog, {
+      where: whereParts.length > 0 ? and(...whereParts) : undefined,
+      ...pageOptions,
     })
   }
 }

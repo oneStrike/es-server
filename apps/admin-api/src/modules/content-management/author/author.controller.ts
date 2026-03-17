@@ -82,14 +82,7 @@ export class WorkAuthorController {
     model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateEnabledStatusDto) {
-    return this.authorService.workAuthor.update({
-      where: {
-        id: body.id,
-      },
-      data: {
-        isEnabled: body.isEnabled,
-      },
-    })
+    return this.authorService.updateAuthorStatus(body.id, body.isEnabled)
   }
 
   /**
@@ -101,14 +94,10 @@ export class WorkAuthorController {
     model: BatchOperationResponseDto,
   })
   async updateRecommended(@Body() body: UpdateAuthorRecommendedDto) {
-    return this.authorService.workAuthor.update({
-      where: {
-        id: body.id,
-      },
-      data: {
-        isRecommended: body.isRecommended,
-      },
-    })
+    return this.authorService.updateAuthorRecommended(
+      body.id,
+      body.isRecommended,
+    )
   }
 
   /**

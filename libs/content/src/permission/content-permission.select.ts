@@ -1,5 +1,3 @@
-import type { Prisma } from '@libs/platform/database'
-
 /**
  * 作品权限结果选择器（包含关联的等级信息）
  * 用于 resolveWorkPermission 方法
@@ -14,7 +12,7 @@ export const WORK_PERMISSION_SELECT = {
       requiredExperience: true,
     },
   },
-} satisfies Prisma.WorkSelect
+} as const
 
 /**
  * 章节权限结果选择器（包含关联的等级信息）
@@ -39,4 +37,4 @@ export const CHAPTER_PERMISSION_SELECT = {
       requiredExperience: true,
     },
   },
-} satisfies Prisma.WorkChapterSelect
+} as const

@@ -1,8 +1,8 @@
-import type { UserNotification } from '@libs/platform/database'
 import type { NotificationOutboxPayload } from '../outbox/dto/outbox-event.dto'
 import type { QueryUserNotificationListDto } from './dto/notification.dto'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
 import { MessageNotificationTypeEnum } from './notification.constant'
@@ -12,16 +12,23 @@ import { MessageNotificationTypeEnum } from './notification.constant'
  * 提供用户通知的查询、标记已读和创建功能
  */
 @Injectable()
-export class MessageNotificationService extends PlatformService {
+export class MessageNotificationService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   private get notification() {
-    return this.prisma.userNotification
+    return this.drizzle.schema.userNotification
+  }
+
+  private get appUser() {
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -33,23 +40,46 @@ export class MessageNotificationService extends PlatformService {
     queryDto: QueryUserNotificationListDto,
   ) {
     const { isRead, type, ...pagination } = queryDto
-    return this.notification.findPagination({
-      where: {
+    const where = this.drizzle.buildWhere(this.notification, {
+      and: {
         userId,
         ...(isRead !== undefined ? { isRead } : {}),
         ...(type !== undefined ? { type } : {}),
-        ...pagination,
-      },
-      include: {
-        actorUser: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
       },
     })
+    const page = await this.drizzle.ext.findPagination(this.notification, {
+      where,
+      ...pagination,
+    })
+    const actorUserIds = [
+      ...new Set(
+        page.list
+          .map((item) => item.actorUserId)
+          .filter((item): item is number => typeof item === 'number'),
+      ),
+    ]
+    const actors = actorUserIds.length > 0
+      ? await this.db.query.appUser.findMany({
+          where: {
+            id: {
+              in: actorUserIds,
+            },
+          },
+          columns: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+          },
+        })
+      : []
+    const actorMap = new Map(actors.map((item) => [item.id, item]))
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        actorUser: item.actorUserId ? actorMap.get(item.actorUserId) : undefined,
+      })),
+    }
   }
 
   /**
@@ -57,12 +87,10 @@ export class MessageNotificationService extends PlatformService {
    */
   async getUnreadCount(userId: number) {
     return {
-      count: await this.notification.count({
-        where: {
-          userId,
-          isRead: false,
-        },
-      }),
+      count: await this.db.$count(this.notification, and(
+        eq(this.notification.userId, userId),
+        eq(this.notification.isRead, false),
+      )),
     }
   }
 
@@ -72,18 +100,19 @@ export class MessageNotificationService extends PlatformService {
    */
   async markRead(userId: number, id: number) {
     const now = new Date()
-    const result = await this.notification.updateMany({
-      where: {
-        id,
-        userId,
-        isRead: false,
-      },
-      data: {
+    const result = await this.db
+      .update(this.notification)
+      .set({
         isRead: true,
         readAt: now,
-      },
-    })
-    if (!result.count) {
+      })
+      .where(and(
+        eq(this.notification.id, id),
+        eq(this.notification.userId, userId),
+        eq(this.notification.isRead, false),
+      ))
+      .returning({ id: this.notification.id })
+    if (result.length === 0) {
       throw new BadRequestException('通知不存在或已读')
     }
 
@@ -101,23 +130,24 @@ export class MessageNotificationService extends PlatformService {
    */
   async markAllRead(userId: number) {
     const now = new Date()
-    const result = await this.notification.updateMany({
-      where: {
-        userId,
-        isRead: false,
-      },
-      data: {
+    const result = await this.db
+      .update(this.notification)
+      .set({
         isRead: true,
         readAt: now,
-      },
-    })
-    if (result.count > 0) {
+      })
+      .where(and(
+        eq(this.notification.userId, userId),
+        eq(this.notification.isRead, false),
+      ))
+      .returning({ id: this.notification.id })
+    if (result.length > 0) {
       this.messageNotificationRealtimeService.emitNotificationReadSync(userId, {
         readAt: now,
       })
       await this.emitInboxSummaryUpdate(userId)
     }
-    return result
+    return { count: result.length }
   }
 
   /**
@@ -130,7 +160,7 @@ export class MessageNotificationService extends PlatformService {
   async createFromOutbox(
     bizKey: string,
     payload: NotificationOutboxPayload,
-  ): Promise<UserNotification | null> {
+  ): Promise<typeof this.notification.$inferSelect | null> {
     const receiverUserId = Number(payload.receiverUserId)
     const actorUserId =
       payload.actorUserId === undefined ? undefined : Number(payload.actorUserId)
@@ -161,8 +191,9 @@ export class MessageNotificationService extends PlatformService {
     }
 
     try {
-      const notification = await this.notification.create({
-        data: {
+      const inserted = await this.db
+        .insert(this.notification)
+        .values({
           userId: receiverUserId,
           type: notificationType,
           bizKey,
@@ -190,17 +221,24 @@ export class MessageNotificationService extends PlatformService {
               ? payload.aggregateCount
               : 1,
           expiredAt,
-        },
-      })
+        })
+        .onConflictDoNothing({
+          target: [this.notification.userId, this.notification.bizKey],
+        })
+        .returning()
+      const notification = inserted[0]
+      if (!notification) {
+        return null
+      }
 
       this.messageNotificationRealtimeService.emitNotificationNew(notification)
       await this.emitInboxSummaryUpdate(receiverUserId)
       return notification
     } catch (error) {
-      // 唯一约束冲突（重复通知）静默忽略
-      return this.handlePrismaError(error, {
-        P2002: () => null,
-      })
+      if (this.drizzle.isUniqueViolation(error)) {
+        return null
+      }
+      throw error
     }
   }
 

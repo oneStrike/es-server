@@ -16,27 +16,79 @@ import type {
   UpdateMyForumProfileDto,
   UpdateMyProfileDto,
 } from './dto/user.dto'
-import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/growth'
+import { DrizzleService } from '@db/core'
 
+import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/growth'
 import { DownloadTargetTypeEnum, PurchaseStatusEnum, PurchaseTargetTypeEnum } from '@libs/interaction'
 import { MessageInboxService } from '@libs/message'
 import { UserStatusEnum } from '@libs/platform/constant'
-import { PlatformService, Prisma } from '@libs/platform/database'
 
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
 
 @Injectable()
-export class UserService extends PlatformService {
+export class UserService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
     private readonly messageInboxService: MessageInboxService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  private get forumProfile() {
+    return this.drizzle.schema.forumProfile
+  }
+
+  private get userBadgeAssignment() {
+    return this.drizzle.schema.userBadgeAssignment
+  }
+
+  private get userBadge() {
+    return this.drizzle.schema.userBadge
+  }
+
+  private get userLevelRule() {
+    return this.drizzle.schema.userLevelRule
+  }
+
+  private get growthLedgerRecord() {
+    return this.drizzle.schema.growthLedgerRecord
+  }
+
+  private get userComment() {
+    return this.drizzle.schema.userComment
+  }
+
+  private get userLike() {
+    return this.drizzle.schema.userLike
+  }
+
+  private get userFavorite() {
+    return this.drizzle.schema.userFavorite
+  }
+
+  private get userBrowseLog() {
+    return this.drizzle.schema.userBrowseLog
+  }
+
+  private get userPurchaseRecord() {
+    return this.drizzle.schema.userPurchaseRecord
+  }
+
+  private get userDownloadRecord() {
+    return this.drizzle.schema.userDownloadRecord
   }
 
   /**
@@ -46,16 +98,17 @@ export class UserService extends PlatformService {
    * @returns 用户资料信息
    */
   async getUserProfile(userId: number) {
-    const user = await this.prisma.appUser.findUnique({
-      where: { id: userId },
-      select: this.userProfileSelect,
-    })
+    const [user] = await this.db
+      .select()
+      .from(this.appUser)
+      .where(eq(this.appUser.id, userId))
+      .limit(1)
 
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
 
-    return user
+    return this.mapUserProfile(user)
   }
 
   /**
@@ -69,23 +122,28 @@ export class UserService extends PlatformService {
     await this.ensureUserExists(userId)
 
     try {
-      return await this.prisma.appUser.update({
-        where: { id: userId },
-        data: {
+      const [updated] = await this.db
+        .update(this.appUser)
+        .set({
           nickname: dto.nickname,
-          avatar: dto.avatar,
-          email: dto.email,
-          gender: dto.gender,
-          birthDate: dto.birthDate,
-        },
-        select: this.userProfileSelect,
-      })
+          avatarUrl: dto.avatar,
+          emailAddress: dto.email,
+          genderType: dto.gender,
+          birthDate: dto.birthDate
+            ? new Date(dto.birthDate).toISOString().slice(0, 10)
+            : undefined,
+        })
+        .where(eq(this.appUser.id, userId))
+        .returning()
+      if (!updated) {
+        throw new NotFoundException('用户不存在')
+      }
+      return this.mapUserProfile(updated)
     } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('邮箱已被使用')
-        },
-      })
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BadRequestException('邮箱已被使用')
+      }
+      throw error
     }
   }
 
@@ -96,36 +154,43 @@ export class UserService extends PlatformService {
    * @returns 用户论坛资料
    */
   async getUserForumProfile(userId: number) {
-    const user = await this.prisma.appUser.findUnique({
-      where: { id: userId },
-      select: {
-        status: true,
-        banReason: true,
-        banUntil: true,
-        forumProfile: {
-          select: {
-            signature: true,
-            bio: true,
-            topicCount: true,
-            replyCount: true,
-            likeCount: true,
-            favoriteCount: true,
-          },
-        },
-      },
-    })
+    const [user, forumProfile] = await Promise.all([
+      this.db
+        .select({
+          status: this.appUser.status,
+          banReason: this.appUser.banReason,
+          banUntil: this.appUser.banUntil,
+        })
+        .from(this.appUser)
+        .where(eq(this.appUser.id, userId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      this.db
+        .select({
+          signature: this.forumProfile.signature,
+          bio: this.forumProfile.bio,
+          topicCount: this.forumProfile.topicCount,
+          replyCount: this.forumProfile.replyCount,
+          likeCount: this.forumProfile.likeCount,
+          favoriteCount: this.forumProfile.favoriteCount,
+        })
+        .from(this.forumProfile)
+        .where(eq(this.forumProfile.userId, userId))
+        .limit(1)
+        .then((rows) => rows[0]),
+    ])
 
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
 
     return {
-      signature: user.forumProfile?.signature ?? '',
-      bio: user.forumProfile?.bio ?? '',
-      topicCount: user.forumProfile?.topicCount ?? 0,
-      replyCount: user.forumProfile?.replyCount ?? 0,
-      likeCount: user.forumProfile?.likeCount ?? 0,
-      favoriteCount: user.forumProfile?.favoriteCount ?? 0,
+      signature: forumProfile?.signature ?? '',
+      bio: forumProfile?.bio ?? '',
+      topicCount: forumProfile?.topicCount ?? 0,
+      replyCount: forumProfile?.replyCount ?? 0,
+      likeCount: forumProfile?.likeCount ?? 0,
+      favoriteCount: forumProfile?.favoriteCount ?? 0,
       status: user.status,
       banReason: user.banReason ?? undefined,
       banUntil: user.banUntil ?? undefined,
@@ -142,17 +207,27 @@ export class UserService extends PlatformService {
   async updateUserForumProfile(userId: number, dto: UpdateMyForumProfileDto) {
     await this.ensureUserExists(userId)
 
-    await this.prisma.forumProfile.upsert({
-      where: { userId },
-      create: {
-        userId,
-        signature: dto.signature ?? '',
-        bio: dto.bio ?? '',
-      },
-      update: {
-        signature: dto.signature,
-        bio: dto.bio,
-      },
+    await this.db.transaction(async (tx) => {
+      const existing = await tx
+        .select({ id: this.forumProfile.id })
+        .from(this.forumProfile)
+        .where(eq(this.forumProfile.userId, userId))
+        .limit(1)
+      if (existing[0]) {
+        await tx
+          .update(this.forumProfile)
+          .set({
+            signature: dto.signature,
+            bio: dto.bio,
+          })
+          .where(eq(this.forumProfile.userId, userId))
+      } else {
+        await tx.insert(this.forumProfile).values({
+          userId,
+          signature: dto.signature ?? '',
+          bio: dto.bio ?? '',
+        })
+      }
     })
 
     return this.getUserForumProfile(userId)
@@ -165,45 +240,28 @@ export class UserService extends PlatformService {
    * @returns 用户中心汇总信息
    */
   async getUserCenter(userId: number) {
-    const [user, assets, messageSummary] = await Promise.all([
-      this.prisma.appUser.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          account: true,
-          phone: true,
-          nickname: true,
-          avatar: true,
-          email: true,
-          gender: true,
-          birthDate: true,
-          points: true,
-          experience: true,
-          levelId: true,
-          status: true,
-          banReason: true,
-          banUntil: true,
-          level: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          forumProfile: {
-            select: {
-              topicCount: true,
-              replyCount: true,
-              likeCount: true,
-              favoriteCount: true,
-            },
-          },
-          _count: {
-            select: {
-              userBadges: true,
-            },
-          },
-        },
-      }),
+    const [user, forumProfile, badgeRows, assets, messageSummary] = await Promise.all([
+      this.db
+        .select()
+        .from(this.appUser)
+        .where(eq(this.appUser.id, userId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      this.db
+        .select({
+          topicCount: this.forumProfile.topicCount,
+          replyCount: this.forumProfile.replyCount,
+          likeCount: this.forumProfile.likeCount,
+          favoriteCount: this.forumProfile.favoriteCount,
+        })
+        .from(this.forumProfile)
+        .where(eq(this.forumProfile.userId, userId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userBadgeAssignment)
+        .where(eq(this.userBadgeAssignment.userId, userId)),
       this.getUserAssetsSummary(userId),
       this.messageInboxService.getSummary(userId),
     ])
@@ -211,33 +269,40 @@ export class UserService extends PlatformService {
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
+    const [level] = user.levelId
+      ? await this.db
+          .select({ id: this.userLevelRule.id, name: this.userLevelRule.name })
+          .from(this.userLevelRule)
+          .where(eq(this.userLevelRule.id, user.levelId))
+          .limit(1)
+      : []
 
     return {
       user: {
         id: user.id,
         account: user.account,
-        phone: user.phone ?? undefined,
+        phone: user.phoneNumber ?? undefined,
         nickname: user.nickname,
-        avatar: user.avatar ?? undefined,
-        email: user.email ?? undefined,
-        gender: user.gender,
+        avatar: user.avatarUrl ?? undefined,
+        email: user.emailAddress ?? undefined,
+        gender: user.genderType,
         birthDate: user.birthDate ?? undefined,
       },
       growth: {
         points: user.points,
         experience: user.experience,
         levelId: user.levelId ?? undefined,
-        levelName: user.level?.name ?? undefined,
-        badgeCount: user._count.userBadges,
+        levelName: level?.name ?? undefined,
+        badgeCount: Number(badgeRows[0]?.count ?? 0),
       },
       community: {
         status: user.status,
         banReason: user.banReason ?? undefined,
         banUntil: user.banUntil ?? undefined,
-        topicCount: user.forumProfile?.topicCount ?? 0,
-        replyCount: user.forumProfile?.replyCount ?? 0,
-        likeCount: user.forumProfile?.likeCount ?? 0,
-        favoriteCount: user.forumProfile?.favoriteCount ?? 0,
+        topicCount: forumProfile?.topicCount ?? 0,
+        replyCount: forumProfile?.replyCount ?? 0,
+        likeCount: forumProfile?.likeCount ?? 0,
+        favoriteCount: forumProfile?.favoriteCount ?? 0,
       },
       assets,
       message: {
@@ -254,15 +319,16 @@ export class UserService extends PlatformService {
    * @returns 用户状态信息
    */
   async getUserStatus(userId: number) {
-    const user = await this.prisma.appUser.findUnique({
-      where: { id: userId },
-      select: {
-        isEnabled: true,
-        status: true,
-        banReason: true,
-        banUntil: true,
-      },
-    })
+    const [user] = await this.db
+      .select({
+        isEnabled: this.appUser.isEnabled,
+        status: this.appUser.status,
+        banReason: this.appUser.banReason,
+        banUntil: this.appUser.banUntil,
+      })
+      .from(this.appUser)
+      .where(eq(this.appUser.id, userId))
+      .limit(1)
 
     if (!user) {
       throw new NotFoundException('用户不存在')
@@ -278,37 +344,42 @@ export class UserService extends PlatformService {
    * @returns 用户成长汇总信息
    */
   async getUserGrowthSummary(userId: number) {
-    const [user, pointStats, experienceStats, badgeCount] = await Promise.all([
-      this.prisma.appUser.findUnique({
-        where: { id: userId },
-        select: {
-          points: true,
-          experience: true,
-          levelId: true,
-          level: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      }),
+    const [user, pointStats, experienceStats, badgeRows] = await Promise.all([
+      this.db
+        .select({
+          points: this.appUser.points,
+          experience: this.appUser.experience,
+          levelId: this.appUser.levelId,
+        })
+        .from(this.appUser)
+        .where(eq(this.appUser.id, userId))
+        .limit(1)
+        .then((rows) => rows[0]),
       this.userPointService.getUserPointStats(userId),
       this.getUserExperienceStats(userId),
-      this.prisma.userBadgeAssignment.count({
-        where: { userId },
-      }),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userBadgeAssignment)
+        .where(eq(this.userBadgeAssignment.userId, userId)),
     ])
 
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
+    const [level] = user.levelId
+      ? await this.db
+          .select({ name: this.userLevelRule.name })
+          .from(this.userLevelRule)
+          .where(eq(this.userLevelRule.id, user.levelId))
+          .limit(1)
+      : []
 
     return {
       points: user.points,
       experience: user.experience,
       levelId: user.levelId ?? undefined,
-      levelName: user.level?.name ?? undefined,
-      badgeCount,
+      levelName: level?.name ?? undefined,
+      badgeCount: Number(badgeRows[0]?.count ?? 0),
       todayPointEarned: pointStats.todayEarned,
       todayExperienceEarned: experienceStats.todayEarned,
     }
@@ -345,19 +416,14 @@ export class UserService extends PlatformService {
    * @returns 用户经验统计
    */
   async getUserExperienceStats(userId: number) {
-    const user = await this.prisma.appUser.findUnique({
-      where: { id: userId },
-      select: {
-        experience: true,
-        level: {
-          select: {
-            id: true,
-            name: true,
-            requiredExperience: true,
-          },
-        },
-      },
-    })
+    const [user] = await this.db
+      .select({
+        experience: this.appUser.experience,
+        levelId: this.appUser.levelId,
+      })
+      .from(this.appUser)
+      .where(eq(this.appUser.id, userId))
+      .limit(1)
 
     if (!user) {
       throw new NotFoundException('用户不存在')
@@ -367,46 +433,56 @@ export class UserService extends PlatformService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const [todayEarned, nextLevel] = await Promise.all([
-      // 查询今日获得的经验值
-      this.prisma.growthLedgerRecord.aggregate({
-        where: {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          delta: { gt: 0 },
-          createdAt: { gte: today },
-        },
-        _sum: {
-          delta: true,
-        },
-      }),
-      // 查询下一个等级
-      this.prisma.userLevelRule.findFirst({
-        where: {
-          isEnabled: true,
-          requiredExperience: {
-            gt: user.experience,
-          },
-        },
-        orderBy: {
-          requiredExperience: 'asc',
-        },
-        select: {
-          id: true,
-          name: true,
-          requiredExperience: true,
-        },
-      }),
+    const [todayEarnedRows, levelRows, nextLevelRows] = await Promise.all([
+      this.db
+        .select({ sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int` })
+        .from(this.growthLedgerRecord)
+        .where(
+          and(
+            eq(this.growthLedgerRecord.userId, userId),
+            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+            gt(this.growthLedgerRecord.delta, 0),
+            gte(this.growthLedgerRecord.createdAt, today),
+          ),
+        ),
+      user.levelId
+        ? this.db
+            .select({
+              id: this.userLevelRule.id,
+              name: this.userLevelRule.name,
+              requiredExperience: this.userLevelRule.requiredExperience,
+            })
+            .from(this.userLevelRule)
+            .where(eq(this.userLevelRule.id, user.levelId))
+        : [],
+      this.db
+        .select({
+          id: this.userLevelRule.id,
+          name: this.userLevelRule.name,
+          requiredExperience: this.userLevelRule.requiredExperience,
+        })
+        .from(this.userLevelRule)
+        .where(
+          and(
+            eq(this.userLevelRule.isEnabled, true),
+            gt(this.userLevelRule.requiredExperience, user.experience),
+          ),
+        )
+        .orderBy(this.userLevelRule.requiredExperience)
+        .limit(1),
     ])
+    const todayEarned = Number(todayEarnedRows[0]?.sum ?? 0)
+    const level = levelRows[0]
+    const nextLevel = nextLevelRows[0]
 
     return {
       currentExperience: user.experience,
-      todayEarned: todayEarned._sum.delta || 0,
-      level: user.level
+      todayEarned,
+      level: level
         ? {
-            id: user.level.id,
-            name: user.level.name,
-            requiredExperience: user.level.requiredExperience,
+            id: level.id,
+            name: level.name,
+            requiredExperience: level.requiredExperience,
           }
         : undefined,
       nextLevel: nextLevel
@@ -450,47 +526,50 @@ export class UserService extends PlatformService {
     await this.ensureUserExists(userId)
 
     const { name, type, isEnabled, business, eventKey, ...pageQuery } = query
-    const badgeWhere: Prisma.UserBadgeWhereInput = {}
-
-    // 构建徽章筛选条件
-    if (name) {
-      badgeWhere.name = {
-        contains: name,
-      }
-    }
-    if (type !== undefined) {
-      badgeWhere.type = type
-    }
-    if (isEnabled !== undefined) {
-      badgeWhere.isEnabled = isEnabled
-    }
-    if (business) {
-      badgeWhere.business = business
-    }
-    if (eventKey) {
-      badgeWhere.eventKey = eventKey
-    }
-
-    const page = await this.prisma.userBadgeAssignment.findPagination({
-      where: {
-        userId,
-        ...pageQuery,
-        ...(Object.keys(badgeWhere).length > 0 ? { badge: badgeWhere } : {}),
-      } as any,
-      include: {
-        badge: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
+    const badgeWhere = this.drizzle.buildWhere(this.userBadge, {
+      and: {
+        name: name ? { like: name } : undefined,
+        type,
+        isEnabled,
+        business,
+        eventKey,
       },
     })
+    const badges = await this.db
+      .select({ id: this.userBadge.id })
+      .from(this.userBadge)
+      .where(badgeWhere)
+    const badgeIds = badges.map((item) => item.id)
+    if (badgeIds.length === 0) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: pageQuery.pageIndex,
+        pageSize: pageQuery.pageSize,
+        totalPages: 0,
+      }
+    }
+
+    const page = await this.drizzle.ext.findPagination(this.userBadgeAssignment, {
+      where: and(
+        eq(this.userBadgeAssignment.userId, userId),
+        inArray(this.userBadgeAssignment.badgeId, badgeIds),
+      ),
+      ...pageQuery,
+    })
+    const pageBadgeIds = page.list.map((item) => item.badgeId)
+    const pageBadges = await this.db
+      .select()
+      .from(this.userBadge)
+      .where(inArray(this.userBadge.id, pageBadgeIds))
+    const badgeMap = new Map(pageBadges.map((item) => [item.id, item]))
 
     return {
       ...page,
-      list: page.list.map((item: any) => ({
+      list: page.list.map((item) => ({
         id: item.id,
         createdAt: item.createdAt,
-        badge: item.badge,
+        badge: badgeMap.get(item.badgeId),
       })),
     }
   }
@@ -516,52 +595,48 @@ export class UserService extends PlatformService {
       purchasedWorkRows,
       downloadedWorkRows,
     ] = await Promise.all([
-      // 评论数
-      this.prisma.userComment.count({
-        where: {
-          userId,
-          deletedAt: null,
-        },
-      }),
-      // 点赞数
-      this.prisma.userLike.count({
-        where: { userId },
-      }),
-      // 收藏数
-      this.prisma.userFavorite.count({
-        where: { userId },
-      }),
-      // 浏览数
-      this.prisma.userBrowseLog.count({
-        where: { userId },
-      }),
-      // 已购买章节数
-      this.prisma.userPurchaseRecord.count({
-        where: {
-          userId,
-          status: PurchaseStatusEnum.SUCCESS,
-          targetType: {
-            in: [
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userComment)
+        .where(and(eq(this.userComment.userId, userId), isNull(this.userComment.deletedAt))),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userLike)
+        .where(eq(this.userLike.userId, userId)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userFavorite)
+        .where(eq(this.userFavorite.userId, userId)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userBrowseLog)
+        .where(eq(this.userBrowseLog.userId, userId)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userPurchaseRecord)
+        .where(
+          and(
+            eq(this.userPurchaseRecord.userId, userId),
+            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
+            inArray(this.userPurchaseRecord.targetType, [
               PurchaseTargetTypeEnum.COMIC_CHAPTER,
               PurchaseTargetTypeEnum.NOVEL_CHAPTER,
-            ],
-          },
-        },
-      }),
-      // 已下载章节数
-      this.prisma.userDownloadRecord.count({
-        where: {
-          userId,
-          targetType: {
-            in: [
+            ]),
+          ),
+        ),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userDownloadRecord)
+        .where(
+          and(
+            eq(this.userDownloadRecord.userId, userId),
+            inArray(this.userDownloadRecord.targetType, [
               DownloadTargetTypeEnum.COMIC_CHAPTER,
               DownloadTargetTypeEnum.NOVEL_CHAPTER,
-            ],
-          },
-        },
-      }),
-      // 已购买作品数（去重）
-      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+            ]),
+          ),
+        ),
+      this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
         FROM user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
@@ -569,8 +644,7 @@ export class UserService extends PlatformService {
           AND upr.status = ${PurchaseStatusEnum.SUCCESS}
           AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
       `),
-      // 已下载作品数（去重）
-      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+      this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
         FROM user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
@@ -578,16 +652,22 @@ export class UserService extends PlatformService {
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
       `),
     ])
+    const purchasedRows
+      = ((purchasedWorkRows as unknown as { rows?: Array<{ total: bigint }> }).rows
+        ?? [])
+    const downloadedRows
+      = ((downloadedWorkRows as unknown as { rows?: Array<{ total: bigint }> }).rows
+        ?? [])
 
     return {
-      purchasedWorkCount: Number(purchasedWorkRows[0]?.total ?? 0n),
-      purchasedChapterCount,
-      downloadedWorkCount: Number(downloadedWorkRows[0]?.total ?? 0n),
-      downloadedChapterCount,
-      favoriteCount,
-      likeCount,
-      viewCount,
-      commentCount,
+      purchasedWorkCount: Number(purchasedRows[0]?.total ?? 0n),
+      purchasedChapterCount: Number(purchasedChapterCount[0]?.count ?? 0),
+      downloadedWorkCount: Number(downloadedRows[0]?.total ?? 0n),
+      downloadedChapterCount: Number(downloadedChapterCount[0]?.count ?? 0),
+      favoriteCount: Number(favoriteCount[0]?.count ?? 0),
+      likeCount: Number(likeCount[0]?.count ?? 0),
+      viewCount: Number(viewCount[0]?.count ?? 0),
+      commentCount: Number(commentCount[0]?.count ?? 0),
     }
   }
 
@@ -598,7 +678,12 @@ export class UserService extends PlatformService {
    * @throws NotFoundException 用户不存在时抛出异常
    */
   private async ensureUserExists(userId: number) {
-    if (!(await this.prisma.appUser.exists({ id: userId }))) {
+    const [user] = await this.db
+      .select({ id: this.appUser.id })
+      .from(this.appUser)
+      .where(eq(this.appUser.id, userId))
+      .limit(1)
+    if (!user) {
       throw new NotFoundException('用户不存在')
     }
   }
@@ -647,28 +732,47 @@ export class UserService extends PlatformService {
     }
   }
 
-  /**
-   * 用户资料查询字段
-   */
-  private readonly userProfileSelect = {
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-    account: true,
-    phone: true,
-    nickname: true,
-    avatar: true,
-    email: true,
-    isEnabled: true,
-    gender: true,
-    birthDate: true,
-    lastLoginAt: true,
-    lastLoginIp: true,
-    points: true,
-    experience: true,
-    levelId: true,
-    status: true,
-    banReason: true,
-    banUntil: true,
-  } as const
+  private mapUserProfile(user: {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    account: string
+    phoneNumber: string | null
+    nickname: string
+    avatarUrl: string | null
+    emailAddress: string | null
+    isEnabled: boolean
+    genderType: number
+    birthDate: string | null
+    lastLoginAt: Date | null
+    lastLoginIp: string | null
+    points: number
+    experience: number
+    levelId: number | null
+    status: number
+    banReason: string | null
+    banUntil: Date | null
+  }) {
+    return {
+      id: user.id,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      account: user.account,
+      phone: user.phoneNumber ?? undefined,
+      nickname: user.nickname,
+      avatar: user.avatarUrl ?? undefined,
+      email: user.emailAddress ?? undefined,
+      isEnabled: user.isEnabled,
+      gender: user.genderType,
+      birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
+      lastLoginAt: user.lastLoginAt ?? undefined,
+      lastLoginIp: user.lastLoginIp ?? undefined,
+      points: user.points,
+      experience: user.experience,
+      levelId: user.levelId ?? undefined,
+      status: user.status,
+      banReason: user.banReason ?? undefined,
+      banUntil: user.banUntil ?? undefined,
+    }
+  }
 }

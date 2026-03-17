@@ -5,7 +5,6 @@ import {
   ICommentTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -14,7 +13,6 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class WorkNovelCommentResolver
-  extends PlatformService
   implements ICommentTargetResolver, OnModuleInit
 {
   /** 目标类型：小说作品 */
@@ -22,9 +20,7 @@ export class WorkNovelCommentResolver
   /** 作品类型：2 表示小说 */
   private readonly workType = 2
 
-  constructor(private readonly commentService: CommentService) {
-    super()
-  }
+  constructor(private readonly commentService: CommentService) {}
 
   /**
    * 模块初始化时注册解析器

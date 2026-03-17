@@ -1,3 +1,4 @@
+import { DrizzleService } from '@db/core'
 import { work } from '@db/schema'
 import {
   FavoriteService,
@@ -5,8 +6,6 @@ import {
   IFavoriteTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
-import { PlatformService } from '@libs/platform/database'
-
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -16,14 +15,18 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class WorkNovelFavoriteResolver
-  extends PlatformService
   implements IFavoriteTargetResolver, OnModuleInit
 {
   /** 目标类型：小说作品 */
   readonly targetType = FavoriteTargetTypeEnum.WORK_NOVEL
 
-  constructor(private readonly favoriteService: FavoriteService) {
-    super()
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly favoriteService: FavoriteService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -110,12 +113,13 @@ export class WorkNovelFavoriteResolver
       return new Map()
     }
 
-    const works = await this.prisma.work.findMany({
+    const works = await this.db.query.work.findMany({
       where: {
         id: { in: targetIds },
-        deletedAt: null,
+        type: this.targetType,
+        deletedAt: { isNull: true },
       },
-      select: {
+      columns: {
         id: true,
         name: true,
         cover: true,

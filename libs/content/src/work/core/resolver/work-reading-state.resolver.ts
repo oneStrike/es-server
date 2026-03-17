@@ -1,9 +1,10 @@
+import { DrizzleService } from '@db/core'
 import {
+  InteractionTx,
   IReadingStateResolver,
   ReadingStateService,
 } from '@libs/interaction'
 import { ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 
 /**
@@ -12,7 +13,6 @@ import { Injectable, OnModuleInit } from '@nestjs/common'
  */
 @Injectable()
 export class WorkReadingStateResolver
-  extends PlatformService
   implements IReadingStateResolver, OnModuleInit
 {
   /**
@@ -25,8 +25,13 @@ export class WorkReadingStateResolver
    */
   readonly workType = ContentTypeEnum.COMIC
 
-  constructor(private readonly readingStateService: ReadingStateService) {
-    super()
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly readingStateService: ReadingStateService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -45,16 +50,16 @@ export class WorkReadingStateResolver
    * 解析章节快照
    */
   async resolveChapterSnapshot(
-    _tx: any,
+    _tx: InteractionTx | undefined,
     workId: number,
     chapterId: number,
   ) {
-    const chapter = await this.prisma.workChapter.findFirst({
+    const chapter = await this.db.query.workChapter.findFirst({
       where: {
         id: chapterId,
         workId,
       },
-      select: {
+      columns: {
         id: true,
         title: true,
         subtitle: true,
@@ -84,11 +89,11 @@ export class WorkReadingStateResolver
     }
 
     const chapterIds = [...new Set(refs.map((ref) => ref.chapterId))]
-    const chapters = await this.prisma.workChapter.findMany({
+    const chapters = await this.db.query.workChapter.findMany({
       where: {
         id: { in: chapterIds },
       },
-      select: {
+      columns: {
         id: true,
         workId: true,
         title: true,
@@ -133,11 +138,11 @@ export class WorkReadingStateResolver
       return []
     }
 
-    const works = await this.prisma.work.findMany({
+    const works = await this.db.query.work.findMany({
       where: {
         id: { in: workIds },
       },
-      select: {
+      columns: {
         id: true,
         type: true,
         name: true,
@@ -164,9 +169,9 @@ export class WorkReadingStateResolver
    * @returns 作品关联信息，包含作品ID和类型
    */
   async resolveWorkInfoByChapter(chapterId: number) {
-    const chapter = await this.prisma.workChapter.findUnique({
+    const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId },
-      select: {
+      columns: {
         id: true,
         workId: true,
         workType: true,

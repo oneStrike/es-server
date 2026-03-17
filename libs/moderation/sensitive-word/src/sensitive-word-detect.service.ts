@@ -1,4 +1,4 @@
-import type { SensitiveWord } from '@libs/platform/database'
+import type { sensitiveWord } from '@db/schema'
 import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import type { FuzzyMatchResult, MatchResult } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
@@ -22,7 +22,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   private readonly logger = new Logger(SensitiveWordCacheService.name)
   private automaton: ACAutomaton
   private fuzzyMatcher: FuzzyMatcher
-  private wordMap: Map<string, SensitiveWord>
+  private wordMap: Map<string, typeof sensitiveWord.$inferSelect>
   private isInitialized: boolean
 
   /**
@@ -50,7 +50,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * 初始化敏感词检测器
    * @param words - 敏感词列表
    */
-  initialize(words: SensitiveWord[]) {
+  initialize(words: Array<typeof sensitiveWord.$inferSelect>) {
     if (!words || words.length === 0) {
       this.automaton.clear()
       this.wordMap.clear()

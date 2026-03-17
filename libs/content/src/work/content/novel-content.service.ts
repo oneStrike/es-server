@@ -1,24 +1,28 @@
 import type { FastifyRequest } from 'fastify'
+import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction'
 import { ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { UploadService } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()
-export class NovelContentService extends PlatformService {
-  get workChapter() {
-    return this.prisma.workChapter
-  }
-
+export class NovelContentService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly uploadService: UploadService,
     private readonly contentPermissionService: ContentPermissionService,
     private readonly readingStateService: ReadingStateService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  get workChapter() {
+    return this.drizzle.schema.workChapter
   }
 
   /**
@@ -31,15 +35,20 @@ export class NovelContentService extends PlatformService {
       userId,
       { content: true, workId: true, workType: true },
     )
+    const chapter = result.chapter as {
+      workId: number
+      workType: number
+      content: string | null
+    }
     if (userId) {
       await this.readingStateService.touchByWorkSafely({
         userId,
-        workId: result.chapter.workId,
-        workType: result.chapter.workType as ContentTypeEnum,
+        workId: chapter.workId,
+        workType: chapter.workType as ContentTypeEnum,
         lastReadChapterId: chapterId,
       })
     }
-    return result.chapter.content
+    return chapter.content
   }
 
   /**
@@ -47,9 +56,9 @@ export class NovelContentService extends PlatformService {
    * 管理端使用
    */
   async getChapterContent(chapterId: number) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-      select: {
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: { id: chapterId, deletedAt: { isNull: true } },
+      columns: {
         content: true,
       },
     })
@@ -65,10 +74,14 @@ export class NovelContentService extends PlatformService {
     const chapterId = query.chapterId
 
     if (
-      !(await this.workChapter.exists({
-        id: chapterId,
-        workId: query.workId,
-      }))
+      !(await this.drizzle.ext.exists(
+        this.workChapter,
+        and(
+          eq(this.workChapter.id, chapterId),
+          eq(this.workChapter.workId, query.workId),
+          isNull(this.workChapter.deletedAt),
+        ),
+      ))
     ) {
       throw new BadRequestException('章节不存在')
     }
@@ -80,28 +93,28 @@ export class NovelContentService extends PlatformService {
       `${chapterId}.txt`,
     ])
 
-    await this.workChapter.update({
-      where: { id: chapterId },
-      data: { content: file.filePath },
-    })
+    await this.db
+      .update(this.workChapter)
+      .set({ content: file.filePath })
+      .where(and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)))
 
     return file
   }
 
   async deleteChapterContent(chapterId: number) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-      select: { content: true },
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: { id: chapterId, deletedAt: { isNull: true } },
+      columns: { content: true },
     })
 
     if (!chapter) {
       throw new BadRequestException('章节不存在')
     }
 
-    await this.workChapter.update({
-      where: { id: chapterId },
-      data: { content: null },
-    })
+    await this.db
+      .update(this.workChapter)
+      .set({ content: null })
+      .where(and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)))
 
     return { id: chapterId }
   }

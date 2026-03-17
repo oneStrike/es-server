@@ -1,9 +1,10 @@
 import type { FastifyRequest } from 'fastify'
+import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction'
 import { ContentTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { UploadService } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
   DeleteComicContentDto,
@@ -13,17 +14,20 @@ import {
 } from './dto/content.dto'
 
 @Injectable()
-export class ComicContentService extends PlatformService {
-  get workChapter() {
-    return this.prisma.workChapter
-  }
-
+export class ComicContentService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly uploadService: UploadService,
     private readonly contentPermissionService: ContentPermissionService,
     private readonly readingStateService: ReadingStateService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  get workChapter() {
+    return this.drizzle.schema.workChapter
   }
 
   /**
@@ -43,20 +47,28 @@ export class ComicContentService extends PlatformService {
         workType: true,
       },
     )
+    const chapter = result.chapter as {
+      id: number
+      workId: number
+      workType: number
+      content: string | null
+      title: string
+      subtitle?: string | null
+    }
     if (userId) {
       await this.readingStateService.touchByWorkSafely({
         userId,
-        workId: result.chapter.workId,
-        workType: result.chapter.workType as ContentTypeEnum,
+        workId: chapter.workId,
+        workType: chapter.workType as ContentTypeEnum,
         lastReadChapterId: chapterId,
       })
     }
 
     return {
-      content: this.parseContent(result.chapter.content),
-      id: result.chapter.id,
-      title: result.chapter.title,
-      subtitle: result.chapter.subtitle,
+      content: this.parseContent(chapter.content),
+      id: chapter.id,
+      title: chapter.title,
+      subtitle: chapter.subtitle,
     }
   }
 
@@ -72,10 +84,14 @@ export class ComicContentService extends PlatformService {
     const chapterId = query.chapterId
 
     if (
-      !(await this.workChapter.exists({
-        id: chapterId,
-        workId: query.workId,
-      }))
+      !(await this.drizzle.ext.exists(
+        this.workChapter,
+        and(
+          eq(this.workChapter.id, chapterId),
+          eq(this.workChapter.workId, query.workId),
+          isNull(this.workChapter.deletedAt),
+        ),
+      ))
     ) {
       throw new BadRequestException('章节不存在')
     }
@@ -91,10 +107,10 @@ export class ComicContentService extends PlatformService {
 
     contents.push(file.filePath)
 
-    await this.workChapter.update({
-      where: { id: chapterId },
-      data: { content: JSON.stringify(contents) },
-    })
+    await this.db
+      .update(this.workChapter)
+      .set({ content: JSON.stringify(contents) })
+      .where(and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)))
 
     return file
   }
@@ -110,10 +126,10 @@ export class ComicContentService extends PlatformService {
 
     contents[index] = content
 
-    await this.workChapter.update({
-      where: { id: chapterId },
-      data: { content: JSON.stringify(contents) },
-    })
+    await this.db
+      .update(this.workChapter)
+      .set({ content: JSON.stringify(contents) })
+      .where(and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)))
 
     return { chapterId }
   }
@@ -130,10 +146,10 @@ export class ComicContentService extends PlatformService {
     index.sort((a, b) => b - a)
     index.forEach((i) => contents.splice(i, 1))
 
-    await this.workChapter.update({
-      where: { id: chapterId },
-      data: { content: contents.length > 0 ? JSON.stringify(contents) : null },
-    })
+    await this.db
+      .update(this.workChapter)
+      .set({ content: contents.length > 0 ? JSON.stringify(contents) : null })
+      .where(and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)))
 
     return contents
   }
@@ -155,19 +171,19 @@ export class ComicContentService extends PlatformService {
     const [movedContent] = contents.splice(fromIndex, 1)
     contents.splice(toIndex, 0, movedContent)
 
-    await this.workChapter.update({
-      where: { id: chapterId },
-      data: { content: JSON.stringify(contents) },
-    })
+    await this.db
+      .update(this.workChapter)
+      .set({ content: JSON.stringify(contents) })
+      .where(and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)))
 
     return contents
   }
 
   async clearChapterContents(chapterId: number) {
-    await this.workChapter.update({
-      where: { id: chapterId },
-      data: { content: null },
-    })
+    await this.db
+      .update(this.workChapter)
+      .set({ content: null })
+      .where(and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)))
 
     return { chapterId }
   }
@@ -177,9 +193,9 @@ export class ComicContentService extends PlatformService {
    * 用于其他方法内部调用或管理端直接调用
    */
   private async getChapterContentsInternal(chapterId: number) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-      select: {
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: { id: chapterId, deletedAt: { isNull: true } },
+      columns: {
         content: true,
       },
     })

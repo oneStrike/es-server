@@ -76,10 +76,7 @@ export class WorkTagController {
     model: IdDto,
   })
   async updateStatus(@Body() body: UpdateEnabledStatusDto) {
-    return this.tagService.workTag.update({
-      where: { id: body.id },
-      data: { isEnabled: body.isEnabled },
-    })
+    return this.tagService.updateTagStatus(body.id, body.isEnabled)
   }
 
   /**

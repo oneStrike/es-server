@@ -2,12 +2,27 @@ import type {
   QueryMessageOutboxMonitorDto,
   QueryMessageWsMonitorDto,
 } from './dto/message-monitor.dto'
+import { DrizzleService } from '@db/core'
 import { MessageOutboxStatusEnum } from '@libs/message'
-import { PlatformService, Prisma } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
+import { sql } from 'drizzle-orm'
 
 @Injectable()
-export class MessageMonitorService extends PlatformService {
+export class MessageMonitorService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private extractRows<T>(result: unknown): T[] {
+    if (!result || typeof result !== 'object' || !('rows' in result)) {
+      return []
+    }
+    const rows = (result as { rows?: unknown }).rows
+    return Array.isArray(rows) ? (rows as T[]) : []
+  }
+
   async getOutboxMonitorSummary(query: QueryMessageOutboxMonitorDto) {
     const now = new Date()
     const windowHours = this.normalizeWindowHours(query.windowHours)
@@ -29,91 +44,81 @@ export class MessageMonitorService extends PlatformService {
       failedWithoutErrorCount,
       topErrorsRows,
     ] = await Promise.all([
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.PENDING,
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.PROCESSING,
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.FAILED,
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.PENDING,
-          OR: [
-            { nextRetryAt: null },
-            { nextRetryAt: { lte: now } },
-          ],
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.PENDING,
-          nextRetryAt: { gt: now },
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.PENDING,
-          retryCount: { gt: 0 },
-        },
-      }),
-      this.prisma.messageOutbox.findFirst({
-        where: {
-          status: MessageOutboxStatusEnum.PENDING,
-        },
-        orderBy: { createdAt: 'asc' },
-        select: { createdAt: true },
-      }),
-      this.prisma.messageOutbox.groupBy({
-        by: ['domain', 'status'],
-        _count: {
-          status: true,
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.SUCCESS,
-          processedAt: { gte: windowStartAt },
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.FAILED,
-          processedAt: { gte: windowStartAt },
-        },
-      }),
-      this.prisma.messageOutbox.aggregate({
-        where: {
-          status: {
-            in: [
-              MessageOutboxStatusEnum.PENDING,
-              MessageOutboxStatusEnum.PROCESSING,
-              MessageOutboxStatusEnum.FAILED,
-            ],
-          },
-        },
-        _max: {
-          retryCount: true,
-        },
-        _avg: {
-          retryCount: true,
-        },
-      }),
-      this.prisma.messageOutbox.count({
-        where: {
-          status: MessageOutboxStatusEnum.FAILED,
-          lastError: null,
-        },
-      }),
-      this.prisma.$queryRaw<Array<{ message: string, count: bigint }>>(Prisma.sql`
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.PENDING}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.PROCESSING}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.FAILED}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.PENDING}
+          AND (next_retry_at IS NULL OR next_retry_at <= ${now})
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.PENDING}
+          AND next_retry_at > ${now}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.PENDING}
+          AND retry_count > 0
+      `),
+      this.db.execute(sql`
+        SELECT created_at AS "createdAt"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.PENDING}
+        ORDER BY created_at ASC
+        LIMIT 1
+      `),
+      this.db.execute(sql`
+        SELECT domain, status, COUNT(*)::int AS "count"
+        FROM message_outbox
+        GROUP BY domain, status
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.SUCCESS}
+          AND processed_at >= ${windowStartAt}
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.FAILED}
+          AND processed_at >= ${windowStartAt}
+      `),
+      this.db.execute(sql`
+        SELECT
+          MAX(retry_count)::int AS "maxRetryCount",
+          AVG(retry_count)::numeric AS "avgRetryCount"
+        FROM message_outbox
+        WHERE status IN (
+          ${MessageOutboxStatusEnum.PENDING},
+          ${MessageOutboxStatusEnum.PROCESSING},
+          ${MessageOutboxStatusEnum.FAILED}
+        )
+      `),
+      this.db.execute(sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM message_outbox
+        WHERE status = ${MessageOutboxStatusEnum.FAILED}
+          AND last_error IS NULL
+      `),
+      this.db.execute(sql`
         SELECT
           last_error AS "message",
           COUNT(*)::bigint AS "count"
@@ -126,7 +131,21 @@ export class MessageMonitorService extends PlatformService {
       `),
     ])
 
-    const oldestPendingCreatedAt = oldestPending?.createdAt ?? undefined
+    const pendingRows = this.extractRows<{ count: number }>(pendingCount)
+    const processingRows = this.extractRows<{ count: number }>(processingCount)
+    const failedRows = this.extractRows<{ count: number }>(failedCount)
+    const readyRows = this.extractRows<{ count: number }>(readyToConsumeCount)
+    const delayedRows = this.extractRows<{ count: number }>(delayedPendingCount)
+    const retryingRows = this.extractRows<{ count: number }>(retryingPendingCount)
+    const oldestRows = this.extractRows<{ createdAt: Date }>(oldestPending)
+    const domainRows = this.extractRows<{ domain: number, status: number, count: number }>(domainStatusRows)
+    const successWindowRows = this.extractRows<{ count: number }>(processedSuccessCountInWindow)
+    const failedWindowRows = this.extractRows<{ count: number }>(processedFailedCountInWindow)
+    const retryRows = this.extractRows<{ maxRetryCount: number | null, avgRetryCount: string | null }>(retryAggregate)
+    const failedWithoutErrorRows = this.extractRows<{ count: number }>(failedWithoutErrorCount)
+    const topErrorRows = this.extractRows<{ message: string, count: bigint }>(topErrorsRows)
+
+    const oldestPendingCreatedAt = oldestRows[0]?.createdAt ?? undefined
     const oldestPendingAgeSeconds
       = oldestPendingCreatedAt
         ? Math.max(
@@ -135,8 +154,9 @@ export class MessageMonitorService extends PlatformService {
           )
         : undefined
 
-    const processedTotalCountInWindow
-      = processedSuccessCountInWindow + processedFailedCountInWindow
+    const processedSuccessCount = Number(successWindowRows[0]?.count ?? 0)
+    const processedFailedCount = Number(failedWindowRows[0]?.count ?? 0)
+    const processedTotalCountInWindow = processedSuccessCount + processedFailedCount
     const averageProcessedPerMinute = Number(
       (processedTotalCountInWindow / (windowHours * 60)).toFixed(4),
     )
@@ -145,26 +165,26 @@ export class MessageMonitorService extends PlatformService {
       snapshotAt: now,
       windowStartAt,
       windowHours,
-      pendingCount,
-      processingCount,
-      failedCount,
-      readyToConsumeCount,
-      delayedPendingCount,
-      retryingPendingCount,
+      pendingCount: Number(pendingRows[0]?.count ?? 0),
+      processingCount: Number(processingRows[0]?.count ?? 0),
+      failedCount: Number(failedRows[0]?.count ?? 0),
+      readyToConsumeCount: Number(readyRows[0]?.count ?? 0),
+      delayedPendingCount: Number(delayedRows[0]?.count ?? 0),
+      retryingPendingCount: Number(retryingRows[0]?.count ?? 0),
       oldestPendingCreatedAt,
       oldestPendingAgeSeconds,
-      processedSuccessCountInWindow,
-      processedFailedCountInWindow,
+      processedSuccessCountInWindow: processedSuccessCount,
+      processedFailedCountInWindow: processedFailedCount,
       processedTotalCountInWindow,
       averageProcessedPerMinute,
-      maxRetryCount: retryAggregate._max.retryCount ?? 0,
-      avgRetryCount: Number((retryAggregate._avg.retryCount ?? 0).toFixed(4)),
-      failedWithoutErrorCount,
-      domainStatus: domainStatusRows
+      maxRetryCount: Number(retryRows[0]?.maxRetryCount ?? 0),
+      avgRetryCount: Number(Number(retryRows[0]?.avgRetryCount ?? 0).toFixed(4)),
+      failedWithoutErrorCount: Number(failedWithoutErrorRows[0]?.count ?? 0),
+      domainStatus: domainRows
         .map((item) => ({
           domain: item.domain,
           status: item.status,
-          count: item._count.status,
+          count: item.count,
         }))
         .sort((prev, next) => {
           if (prev.domain === next.domain) {
@@ -172,7 +192,7 @@ export class MessageMonitorService extends PlatformService {
           }
           return prev.domain - next.domain
         }),
-      topErrors: topErrorsRows.map((item) => ({
+      topErrors: topErrorRows.map((item) => ({
         message: item.message,
         count: Number(item.count),
       })),
@@ -184,31 +204,37 @@ export class MessageMonitorService extends PlatformService {
     const windowHours = this.normalizeWindowHours(query.windowHours)
     const windowStartAt = new Date(now.getTime() - windowHours * 60 * 60 * 1000)
 
-    const aggregate = await this.prisma.messageWsMetric.aggregate({
-      where: {
-        bucketAt: {
-          gte: windowStartAt,
-        },
-      },
-      _sum: {
-        requestCount: true,
-        ackSuccessCount: true,
-        ackErrorCount: true,
-        ackLatencyTotalMs: true,
-        reconnectCount: true,
-        resyncTriggerCount: true,
-        resyncSuccessCount: true,
-      },
-    })
+    const aggregateResult = await this.db.execute(sql`
+      SELECT
+        COALESCE(SUM(request_count), 0)::int AS "requestCount",
+        COALESCE(SUM(ack_success_count), 0)::int AS "ackSuccessCount",
+        COALESCE(SUM(ack_error_count), 0)::int AS "ackErrorCount",
+        COALESCE(SUM(ack_latency_total_ms), 0)::bigint AS "ackLatencyTotalMs",
+        COALESCE(SUM(reconnect_count), 0)::int AS "reconnectCount",
+        COALESCE(SUM(resync_trigger_count), 0)::int AS "resyncTriggerCount",
+        COALESCE(SUM(resync_success_count), 0)::int AS "resyncSuccessCount"
+      FROM message_ws_metric
+      WHERE bucket_at >= ${windowStartAt}
+    `)
+    const aggregateRows = this.extractRows<{
+      requestCount: number
+      ackSuccessCount: number
+      ackErrorCount: number
+      ackLatencyTotalMs: bigint
+      reconnectCount: number
+      resyncTriggerCount: number
+      resyncSuccessCount: number
+    }>(aggregateResult)
+    const aggregate = aggregateRows[0]
 
-    const requestCount = aggregate._sum.requestCount ?? 0
-    const ackSuccessCount = aggregate._sum.ackSuccessCount ?? 0
-    const ackErrorCount = aggregate._sum.ackErrorCount ?? 0
+    const requestCount = aggregate?.requestCount ?? 0
+    const ackSuccessCount = aggregate?.ackSuccessCount ?? 0
+    const ackErrorCount = aggregate?.ackErrorCount ?? 0
     const ackTotalCount = ackSuccessCount + ackErrorCount
-    const ackLatencyTotalMs = Number(aggregate._sum.ackLatencyTotalMs ?? 0n)
-    const reconnectCount = aggregate._sum.reconnectCount ?? 0
-    const resyncTriggerCount = aggregate._sum.resyncTriggerCount ?? 0
-    const resyncSuccessCount = aggregate._sum.resyncSuccessCount ?? 0
+    const ackLatencyTotalMs = Number(aggregate?.ackLatencyTotalMs ?? 0n)
+    const reconnectCount = aggregate?.reconnectCount ?? 0
+    const resyncTriggerCount = aggregate?.resyncTriggerCount ?? 0
+    const resyncSuccessCount = aggregate?.resyncSuccessCount ?? 0
 
     return {
       snapshotAt: now,

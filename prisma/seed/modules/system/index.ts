@@ -1,1 +1,0 @@
-export { createInitialDataDictionary } from './dictionary'

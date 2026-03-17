@@ -1,4 +1,3 @@
-import type { UserNotification } from '@libs/platform/database'
 import { Injectable } from '@nestjs/common'
 import { MessageWebSocketService } from './notification-websocket.service'
 
@@ -8,7 +7,24 @@ export class MessageNotificationRealtimeService {
     private readonly messageWebSocketService: MessageWebSocketService,
   ) {}
 
-  emitNotificationNew(notification: UserNotification) {
+  emitNotificationNew(notification: {
+    id: number
+    userId: number
+    type: number
+    actorUserId: number | null
+    targetType: number | null
+    targetId: number | null
+    subjectType: number | null
+    subjectId: number | null
+    title: string
+    content: string
+    payload: unknown
+    aggregateKey: string | null
+    aggregateCount: number
+    isRead: boolean
+    readAt: Date | null
+    createdAt: Date
+  }) {
     this.messageWebSocketService.emitToUser(notification.userId, 'notification.new', {
       id: notification.id,
       userId: notification.userId,

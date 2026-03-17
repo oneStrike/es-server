@@ -1,4 +1,3 @@
-import type { Prisma } from '@libs/platform/database'
 import type {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -29,7 +28,7 @@ export interface NotificationOutboxPayload {
   /** 通知内容 */
   content: string
   /** 扩展载荷 */
-  payload?: Prisma.InputJsonValue
+  payload?: unknown
   /** 聚合键 */
   aggregateKey?: string
   /** 聚合计数 */
@@ -49,7 +48,7 @@ export interface CreateMessageOutboxEventDto {
   /** 业务幂等键 */
   bizKey: string
   /** 事件载荷 */
-  payload: Prisma.InputJsonValue
+  payload: unknown
 }
 
 /**

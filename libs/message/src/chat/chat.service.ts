@@ -1,4 +1,3 @@
-import type { ChatMessage, Prisma } from '@libs/platform/database'
 import type {
   MarkConversationReadDto,
   OpenDirectConversationDto,
@@ -6,8 +5,21 @@ import type {
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
+import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  lt,
+  ne,
+  sql,
+} from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
@@ -39,13 +51,16 @@ const DIGIT_STRING_REGEX = /^\d+$/
  * 4. 使用 PostgreSQL 咨询锁(pg_advisory_xact_lock)保证消息序列号的并发安全
  */
 @Injectable()
-export class MessageChatService extends PlatformService {
+export class MessageChatService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
     private readonly messageWsMonitorService: MessageWsMonitorService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
@@ -64,82 +79,70 @@ export class MessageChatService extends PlatformService {
    * @returns 会话详情，包含成员信息和未读数
    */
   async openDirectConversation(userId: number, dto: OpenDirectConversationDto) {
-    // 参数校验：确保目标用户ID为正整数
     const targetUserId = this.parsePositiveInteger(dto.targetUserId, 'targetUserId')
-
-    // 业务规则：不允许与自己创建会话
     if (targetUserId === userId) {
       throw new BadRequestException('Cannot create direct conversation with yourself')
     }
-
-    // 校验目标用户存在且状态正常
-    const targetUser = await this.prisma.appUser.findFirst({
+    const targetUser = await this.db.query.appUser.findFirst({
       where: {
         id: targetUserId,
-        deletedAt: null, // 未被软删除
-        isEnabled: true, // 账号状态正常
+        deletedAt: { isNull: true },
+        isEnabled: true,
       },
-      select: { id: true },
+      columns: { id: true },
     })
     if (!targetUser) {
       throw new NotFoundException('Target user not found')
     }
-
-    // 生成会话唯一标识：使用较小和较大的用户ID保证双向一致性
-    // 例如：用户1和用户2的会话，无论谁发起，bizKey 都是 "direct:1:2"
     const bizKey = this.buildDirectBizKey(userId, targetUserId)
+    const conversation = await this.db.transaction(async (tx) => {
+      const insertedConversation = await tx
+        .insert(chatConversation)
+        .values({ bizKey })
+        .onConflictDoUpdate({
+          target: chatConversation.bizKey,
+          set: { bizKey },
+        })
+        .returning({ id: chatConversation.id })
+      const item = insertedConversation[0]
+      if (!item) {
+        throw new NotFoundException('Conversation not found')
+      }
 
-    // 事务：原子性地创建/更新会话及成员关系
-    const conversation = await this.prisma.$transaction(async (tx) => {
-      // upsert 会话：如果已存在则不做任何更新，否则创建新会话
-      const item = await tx.chatConversation.upsert({
-        where: { bizKey },
-        update: {}, // 已存在时不更新任何字段
-        create: { bizKey },
-      })
-
-      // upsert 发起者成员记录
-      // 如果用户之前退出过会话（leftAt 不为 null），则重新加入（leftAt 置为 null）
-      await tx.chatConversationMember.upsert({
-        where: {
-          conversationId_userId: {
-            conversationId: item.id,
-            userId,
-          },
-        },
-        update: {
-          leftAt: null, // 重置退出时间，表示重新加入
-          role: ChatConversationMemberRoleEnum.OWNER, // 发起者为会话所有者
-        },
-        create: {
+      await tx
+        .insert(chatConversationMember)
+        .values({
           conversationId: item.id,
           userId,
           role: ChatConversationMemberRoleEnum.OWNER,
-        },
-      })
-
-      // upsert 目标用户成员记录
-      await tx.chatConversationMember.upsert({
-        where: {
-          conversationId_userId: {
-            conversationId: item.id,
-            userId: targetUserId,
+          leftAt: null,
+        })
+        .onConflictDoUpdate({
+          target: [chatConversationMember.conversationId, chatConversationMember.userId],
+          set: {
+            leftAt: null,
+            role: ChatConversationMemberRoleEnum.OWNER,
           },
-        },
-        update: {
-          leftAt: null, // 重置退出时间
-          role: ChatConversationMemberRoleEnum.MEMBER, // 目标用户为普通成员
-        },
-        create: {
+        })
+
+      await tx
+        .insert(chatConversationMember)
+        .values({
           conversationId: item.id,
           userId: targetUserId,
           role: ChatConversationMemberRoleEnum.MEMBER,
-        },
-      })
+          leftAt: null,
+        })
+        .onConflictDoUpdate({
+          target: [chatConversationMember.conversationId, chatConversationMember.userId],
+          set: {
+            leftAt: null,
+            role: ChatConversationMemberRoleEnum.MEMBER,
+          },
+        })
 
       return item
     })
-
     return this.getConversationDetailForUser(conversation.id, userId)
   }
 
@@ -156,70 +159,112 @@ export class MessageChatService extends PlatformService {
    * @returns 分页的会话列表
    */
   async getConversationList(userId: number, dto: QueryChatConversationListDto) {
-    // 标准化分页参数
     const { pageIndex, pageSize, skip } = this.normalizePagination(dto)
-
-    // 查询条件：用户是会话成员且未退出
-    const where: Prisma.ChatConversationWhereInput = {
-      members: {
-        some: {
-          userId,
-          leftAt: null, // 未退出的会话
-        },
-      },
-    }
-
-    // 并行查询总数和列表数据
-    const [total, conversations] = await Promise.all([
-      this.prisma.chatConversation.count({ where }),
-      this.prisma.chatConversation.findMany({
-        where,
-        orderBy: [
-          { lastMessageAt: 'desc' }, // 按最后消息时间倒序
-          { id: 'desc' }, // 时间相同时按ID倒序
-        ],
-        skip,
-        take: pageSize,
-        include: {
-          members: {
-            where: { leftAt: null }, // 只包含未退出的成员
-            select: {
-              userId: true,
-              unreadCount: true,
-              lastReadAt: true,
-              lastReadMessageId: true,
-              user: {
-                select: {
-                  id: true,
-                  nickname: true,
-                  avatar: true,
-                },
-              },
-            },
-          },
-        },
-      }),
+    const [totalRows, conversationRows] = await Promise.all([
+      this.db
+        .select({ total: sql<number>`count(*)` })
+        .from(chatConversationMember)
+        .where(and(
+          eq(chatConversationMember.userId, userId),
+          isNull(chatConversationMember.leftAt),
+        )),
+      this.db
+        .select({
+          id: chatConversation.id,
+          bizKey: chatConversation.bizKey,
+          lastMessageId: chatConversation.lastMessageId,
+          lastMessageAt: chatConversation.lastMessageAt,
+          lastSenderId: chatConversation.lastSenderId,
+        })
+        .from(chatConversation)
+        .innerJoin(
+          chatConversationMember,
+          and(
+            eq(chatConversationMember.conversationId, chatConversation.id),
+            eq(chatConversationMember.userId, userId),
+            isNull(chatConversationMember.leftAt),
+          ),
+        )
+        .orderBy(sql`${chatConversation.lastMessageAt} desc nulls last`, desc(chatConversation.id))
+        .offset(skip)
+        .limit(pageSize),
     ])
 
-    // 提取所有最后消息ID，过滤掉无效值
-    const lastMessageIds = conversations
-      .map((item) => item.lastMessageId)
-      .filter((item): item is bigint => typeof item === 'bigint')
+    if (conversationRows.length === 0) {
+      return {
+        list: [],
+        total: Number(totalRows[0]?.total ?? 0),
+        pageIndex,
+        pageSize,
+      }
+    }
 
-    // 批量查询最后消息内容（避免N+1查询问题）
-    const lastMessageMap = await this.getMessageMapByIds(lastMessageIds)
+    const conversationIds = conversationRows.map((item) => item.id)
+    const [members, lastMessageMap] = await Promise.all([
+      this.db
+        .select({
+          conversationId: chatConversationMember.conversationId,
+          userId: chatConversationMember.userId,
+          unreadCount: chatConversationMember.unreadCount,
+          lastReadAt: chatConversationMember.lastReadAt,
+          lastReadMessageId: chatConversationMember.lastReadMessageId,
+          userProfileId: appUser.id,
+          userNickname: appUser.nickname,
+          userAvatar: appUser.avatarUrl,
+        })
+        .from(chatConversationMember)
+        .innerJoin(appUser, eq(appUser.id, chatConversationMember.userId))
+        .where(and(
+          inArray(chatConversationMember.conversationId, conversationIds),
+          isNull(chatConversationMember.leftAt),
+        )),
+      this.getMessageMapByIds(
+        conversationRows
+          .map((item) => item.lastMessageId)
+          .filter((item): item is bigint => typeof item === 'bigint'),
+      ),
+    ])
+
+    const memberMap = new Map<number, Array<{
+      userId: number
+      unreadCount: number
+      lastReadAt: Date | null
+      lastReadMessageId: bigint | null
+      user: { id: number, nickname: string | null, avatar: string | null }
+    }>>()
+    for (const member of members) {
+      const list = memberMap.get(member.conversationId) ?? []
+      list.push({
+        userId: member.userId,
+        unreadCount: member.unreadCount,
+        lastReadAt: member.lastReadAt,
+        lastReadMessageId: member.lastReadMessageId,
+        user: {
+          id: member.userProfileId,
+          nickname: member.userNickname,
+          avatar: member.userAvatar,
+        },
+      })
+      memberMap.set(member.conversationId, list)
+    }
 
     return {
-      list: conversations.map((item) =>
+      list: conversationRows.map((item) =>
         this.toConversationOutput(
-          item,
+          {
+            id: item.id,
+            bizKey: item.bizKey,
+            lastMessageId: item.lastMessageId,
+            lastMessageAt: item.lastMessageAt,
+            lastSenderId: item.lastSenderId,
+            members: memberMap.get(item.id) ?? [],
+          },
           userId,
           item.lastMessageId
             ? lastMessageMap.get(item.lastMessageId.toString())?.content
             : undefined,
-        ),
-      ),
-      total,
+        )),
+      total: Number(totalRows[0]?.total ?? 0),
       pageIndex,
       pageSize,
     }
@@ -242,65 +287,48 @@ export class MessageChatService extends PlatformService {
     userId: number,
     dto: QueryChatConversationMessagesDto,
   ) {
-    // 参数解析和校验
     const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
     const cursor = this.parseBigintCursor(dto.cursor, 'cursor')
     const afterSeq = this.parseBigintCursor(dto.afterSeq, 'afterSeq')
     const limit = this.normalizeMessageLimit(dto.limit)
-
-    // 互斥校验：cursor 和 afterSeq 不能同时使用
     if (cursor !== undefined && afterSeq !== undefined) {
       throw new BadRequestException('cursor and afterSeq cannot be used together')
     }
-
-    // 权限校验：确保用户是会话成员
     await this.ensureConversationMember(conversationId, userId)
-
-    // afterSeq 模式：获取指定序列号之后的新消息（用于实时拉取）
     if (afterSeq !== undefined) {
       this.recordResyncTriggeredMetric()
-      const messages = await this.prisma.chatMessage.findMany({
-        where: {
-          conversationId,
-          status: {
-            not: ChatMessageStatusEnum.DELETED, // 排除已删除的消息
-          },
-          messageSeq: {
-            gt: afterSeq, // 序列号大于指定值
-          },
-        },
-        orderBy: { messageSeq: 'asc' }, // 按序列号升序
-        take: limit,
-      })
-
+      const messages = await this.db
+        .select()
+        .from(chatMessage)
+        .where(and(
+          eq(chatMessage.conversationId, conversationId),
+          ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
+          gt(chatMessage.messageSeq, afterSeq),
+        ))
+        .orderBy(asc(chatMessage.messageSeq))
+        .limit(limit)
       const list = messages.map((item) => this.toMessageOutput(item))
       this.recordResyncSuccessMetric()
       return {
         list,
-        // 返回最后一条消息的序列号作为下次拉取的起点
         nextCursor: list?.length ? list.at(-1)?.messageSeq : null,
         hasMore: list.length >= limit,
       }
     }
-
-    // cursor 模式：向前翻页查看历史消息
-    const messages = await this.prisma.chatMessage.findMany({
-      where: {
-        conversationId,
-        status: {
-          not: ChatMessageStatusEnum.DELETED,
-        },
-        // 如果有游标，则查询序列号小于游标的消息
-        ...(cursor !== undefined ? { messageSeq: { lt: cursor } } : {}),
-      },
-        orderBy: { messageSeq: 'desc' }, // 按序列号倒序
-      take: limit,
-    })
-
+    const where = and(
+      eq(chatMessage.conversationId, conversationId),
+      ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
+      cursor !== undefined ? lt(chatMessage.messageSeq, cursor) : undefined,
+    )
+    const messages = await this.db
+      .select()
+      .from(chatMessage)
+      .where(where)
+      .orderBy(desc(chatMessage.messageSeq))
+      .limit(limit)
     const list = messages.map((item) => this.toMessageOutput(item))
     return {
       list,
-      // 返回最后一条消息的序列号作为下次翻页的游标
       nextCursor: list.length ? list.at(-1)?.messageSeq : null,
       hasMore: list.length >= limit,
     }
@@ -319,7 +347,6 @@ export class MessageChatService extends PlatformService {
    * @returns 消息ID、序列号等信息
    */
   async sendMessage(userId: number, dto: SendChatMessageDto) {
-    // 参数解析和校验
     const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
     const messageType = this.parseMessageType(dto.messageType)
     const content = dto.content?.trim()
@@ -334,9 +361,6 @@ export class MessageChatService extends PlatformService {
       messagePayload,
       clientMessageId,
     )
-
-    // 核心逻辑：创建消息（带重试机制）
-    // 重试是为了处理并发时的唯一约束冲突
     const result = await this.createMessageWithRetry(
       conversationId,
       userId,
@@ -347,10 +371,7 @@ export class MessageChatService extends PlatformService {
     )
 
     const message = this.toMessageOutput(result.message)
-
-    // 如果是新消息（非幂等命中），发送实时通知
     if (result.isNew) {
-      // 构建成员状态快照
       const conversationStates = result.memberStates.map((member) => ({
         userId: member.userId,
         unreadCount: member.unreadCount,
@@ -360,11 +381,8 @@ export class MessageChatService extends PlatformService {
             ? member.lastReadMessageId.toString()
             : undefined,
       }))
-
-      // 并行向所有会话成员推送通知
       await Promise.all(
         conversationStates.map(async (member) => {
-          // 推送会话更新事件（更新未读数、最后消息等）
           this.messageNotificationRealtimeService.emitChatConversationUpdate(
             member.userId,
             {
@@ -378,14 +396,10 @@ export class MessageChatService extends PlatformService {
               lastMessageContent: message.content,
             },
           )
-
-          // 推送新消息事件
           this.messageNotificationRealtimeService.emitChatMessageNew(member.userId, {
             conversationId,
             message,
           })
-
-          // 更新收件箱摘要并推送
           const summary = await this.messageInboxService.getSummary(member.userId)
           this.messageNotificationRealtimeService.emitInboxSummaryUpdate(
             member.userId,
@@ -401,7 +415,7 @@ export class MessageChatService extends PlatformService {
       messageId: message.id,
       messageSeq: message.messageSeq,
       createdAt: message.createdAt,
-      deduplicated: !result.isNew, // 标识是否为幂等命中的重复消息
+      deduplicated: !result.isNew,
     }
   }
 
@@ -424,18 +438,13 @@ export class MessageChatService extends PlatformService {
   async markConversationRead(userId: number, dto: MarkConversationReadDto) {
     const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
     const messageId = this.parseBigintId(dto.messageId, 'messageId')
-
-    // 事务：原子性地完成已读标记
-    const result = await this.prisma.$transaction(async (tx) => {
-      // 校验用户是会话成员且未退出
-      const member = await tx.chatConversationMember.findUnique({
+    const result = await this.db.transaction(async (tx) => {
+      const member = await tx.query.chatConversationMember.findFirst({
         where: {
-          conversationId_userId: {
-            conversationId,
-            userId,
-          },
+          conversationId,
+          userId,
         },
-        select: {
+        columns: {
           conversationId: true,
           leftAt: true,
           lastReadMessageId: true,
@@ -444,14 +453,12 @@ export class MessageChatService extends PlatformService {
       if (!member || member.leftAt) {
         throw new NotFoundException('Conversation not found')
       }
-
-      // 校验目标消息存在且属于该会话
-      const targetMessage = await tx.chatMessage.findFirst({
+      const targetMessage = await tx.query.chatMessage.findFirst({
         where: {
           id: messageId,
           conversationId,
         },
-        select: {
+        columns: {
           id: true,
           messageSeq: true,
         },
@@ -459,26 +466,19 @@ export class MessageChatService extends PlatformService {
       if (!targetMessage) {
         throw new NotFoundException('Message not found')
       }
-
-      // 确定最终的已读位置
-      // 关键逻辑：已读位置只能前进，不能后退
       let finalReadMessageId = targetMessage.id
       let finalReadMessageSeq = targetMessage.messageSeq
-
-      // 如果之前有已读消息，检查是否需要保留之前的已读位置
       if (typeof member.lastReadMessageId === 'bigint') {
-        const previousReadMessage = await tx.chatMessage.findFirst({
+        const previousReadMessage = await tx.query.chatMessage.findFirst({
           where: {
             id: member.lastReadMessageId,
             conversationId,
           },
-          select: {
+          columns: {
             id: true,
             messageSeq: true,
           },
         })
-
-        // 已读位置回退保护：如果之前的已读序列号更大，则保留之前的已读位置
         if (
           previousReadMessage
           && previousReadMessage.messageSeq > finalReadMessageSeq
@@ -487,36 +487,28 @@ export class MessageChatService extends PlatformService {
           finalReadMessageSeq = previousReadMessage.messageSeq
         }
       }
-
-      // 计算未读消息数：统计序列号大于已读位置且非自己发送的消息
-      const unreadCount = await tx.chatMessage.count({
-        where: {
-          conversationId,
-          senderId: { not: userId }, // 排除自己发送的消息
-          status: {
-            not: ChatMessageStatusEnum.DELETED,
-          },
-          messageSeq: {
-            gt: finalReadMessageSeq, // 序列号大于已读位置
-          },
-        },
-      })
-
-      // 更新成员的已读状态
+      const unreadCount = await tx.$count(
+        chatMessage,
+        and(
+          eq(chatMessage.conversationId, conversationId),
+          ne(chatMessage.senderId, userId),
+          ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
+          gt(chatMessage.messageSeq, finalReadMessageSeq),
+        ),
+      )
       const now = new Date()
-      await tx.chatConversationMember.update({
-        where: {
-          conversationId_userId: {
-            conversationId,
-            userId,
-          },
-        },
-        data: {
+      const updateResult = await tx
+        .update(chatConversationMember)
+        .set({
           lastReadMessageId: finalReadMessageId,
           lastReadAt: now,
           unreadCount,
-        },
-      })
+        })
+        .where(and(
+          eq(chatConversationMember.conversationId, conversationId),
+          eq(chatConversationMember.userId, userId),
+        ))
+      this.drizzle.assertAffectedRows(updateResult, 'Conversation not found')
 
       return {
         now,
@@ -524,16 +516,12 @@ export class MessageChatService extends PlatformService {
         lastReadMessageId: finalReadMessageId,
       }
     })
-
-    // 推送实时通知：会话更新
     this.messageNotificationRealtimeService.emitChatConversationUpdate(userId, {
       conversationId,
       unreadCount: result.unreadCount,
       lastReadAt: result.now,
       lastReadMessageId: result.lastReadMessageId.toString(),
     })
-
-    // 推送实时通知：收件箱摘要更新
     const summary = await this.messageInboxService.getSummary(userId)
     this.messageNotificationRealtimeService.emitInboxSummaryUpdate(
       userId,
@@ -572,7 +560,7 @@ export class MessageChatService extends PlatformService {
     userId: number,
     messageType: number,
     content: string,
-    payload?: Prisma.InputJsonValue,
+    payload?: Record<string, unknown>,
     clientMessageId?: string,
   ) {
     let lastError: unknown
@@ -581,16 +569,13 @@ export class MessageChatService extends PlatformService {
     // 重试循环：处理并发冲突
     for (let index = 0; index < maxRetry; index += 1) {
       try {
-        return await this.prisma.$transaction(async (tx) => {
-          // 校验用户是会话成员且未退出
-          const member = await tx.chatConversationMember.findUnique({
+        return await this.db.transaction(async (tx) => {
+          const member = await tx.query.chatConversationMember.findFirst({
             where: {
-              conversationId_userId: {
-                conversationId,
-                userId,
-              },
+              conversationId,
+              userId,
             },
-            select: {
+            columns: {
               conversationId: true,
               leftAt: true,
             },
@@ -598,35 +583,22 @@ export class MessageChatService extends PlatformService {
           if (!member || member.leftAt) {
             throw new NotFoundException('Conversation not found')
           }
-
-          // 校验会话存在
-          const conversation = await tx.chatConversation.findUnique({
+          const conversation = await tx.query.chatConversation.findFirst({
             where: { id: conversationId },
-            select: {
-              id: true,
-            },
+            columns: { id: true },
           })
           if (!conversation) {
             throw new NotFoundException('Conversation not found')
           }
-
-          // 【关键】获取会话级别的咨询锁
-          // 作用：同一会话的消息创建会串行执行，保证序列号生成的原子性
-          // 锁类型：事务级咨询锁，事务结束自动释放
-          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${conversationId})`
-
-          // 幂等性检查：如果提供了 clientMessageId，检查是否已存在相同消息
+          await tx.execute(sql`SELECT pg_advisory_xact_lock(${conversationId})`)
           if (clientMessageId) {
-            const existedMessage = await tx.chatMessage.findUnique({
+            const existedMessage = await tx.query.chatMessage.findFirst({
               where: {
-                conversationId_senderId_clientMessageId: {
-                  conversationId,
-                  senderId: userId,
-                  clientMessageId,
-                },
+                conversationId,
+                senderId: userId,
+                clientMessageId,
               },
             })
-            // 命中幂等：返回已存在的消息，不创建新消息
             if (existedMessage) {
               return {
                 message: existedMessage,
@@ -635,19 +607,15 @@ export class MessageChatService extends PlatformService {
               }
             }
           }
-
-          // 获取当前会话的最大消息序列号
-          const lastMessage = await tx.chatMessage.findFirst({
+          const lastMessage = await tx.query.chatMessage.findFirst({
             where: { conversationId },
             orderBy: { messageSeq: 'desc' },
-            select: { messageSeq: true },
+            columns: { messageSeq: true },
           })
-          // 计算新消息的序列号（递增1）
           const nextMessageSeq = (lastMessage?.messageSeq ?? 0n) + 1n
-
-          // 创建消息记录
-          const message = await tx.chatMessage.create({
-            data: {
+          const insertedMessage = await tx
+            .insert(chatMessage)
+            .values({
               conversationId,
               messageSeq: nextMessageSeq,
               senderId: userId,
@@ -656,38 +624,40 @@ export class MessageChatService extends PlatformService {
               content,
               payload,
               status: ChatMessageStatusEnum.NORMAL,
-            },
-          })
+            })
+            .returning()
+          const message = insertedMessage[0]
+          if (!message) {
+            throw new NotFoundException('Message not found')
+          }
 
-          // 更新会话的最后消息信息
-          await tx.chatConversation.update({
-            where: { id: conversationId },
-            data: {
+          const updateConversationResult = await tx
+            .update(chatConversation)
+            .set({
               lastMessageId: message.id,
               lastMessageAt: message.createdAt,
               lastSenderId: userId,
-            },
-          })
+            })
+            .where(eq(chatConversation.id, conversationId))
+          this.drizzle.assertAffectedRows(updateConversationResult, 'Conversation not found')
 
-          // 更新其他成员的未读数（发送者不计入未读）
-          await tx.chatConversationMember.updateMany({
+          await tx
+            .update(chatConversationMember)
+            .set({
+              unreadCount: sql`${chatConversationMember.unreadCount} + 1`,
+            })
+            .where(and(
+              eq(chatConversationMember.conversationId, conversationId),
+              ne(chatConversationMember.userId, userId),
+              isNull(chatConversationMember.leftAt),
+            ))
+
+          const memberStates = await tx.query.chatConversationMember.findMany({
             where: {
               conversationId,
-              userId: { not: userId }, // 排除发送者
-              leftAt: null, // 只更新未退出的成员
+              leftAt: { isNull: true },
             },
-            data: {
-              unreadCount: { increment: 1 }, // 未读数+1
-            },
-          })
-
-          // 获取所有成员的最新状态（用于推送通知）
-          const memberStates = await tx.chatConversationMember.findMany({
-            where: {
-              conversationId,
-              leftAt: null,
-            },
-            select: {
+            columns: {
               userId: true,
               unreadCount: true,
               lastReadAt: true,
@@ -704,14 +674,10 @@ export class MessageChatService extends PlatformService {
       } catch (error) {
         lastError = error
 
-        // 只处理唯一约束冲突错误（P2002），其他错误直接抛出
-        if (!this.isUniqueConstraintError(error)) {
+        if (!this.drizzle.isUniqueViolation(error)) {
           throw error
         }
 
-        // 重试前的幂等检查：
-        // 如果是因为序列号冲突导致的重试，需要再次检查 clientMessageId
-        // 因为可能在当前事务失败时，另一个事务已经成功创建了相同 clientMessageId 的消息
         if (clientMessageId) {
           const existedMessage = await this.findMessageByClientMessageId(
             conversationId,
@@ -728,8 +694,6 @@ export class MessageChatService extends PlatformService {
         }
       }
     }
-
-    // 重试次数用尽，抛出最后一次错误
     throw lastError
   }
 
@@ -748,13 +712,11 @@ export class MessageChatService extends PlatformService {
     userId: number,
     clientMessageId: string,
   ) {
-    return this.prisma.chatMessage.findUnique({
+    return this.db.query.chatMessage.findFirst({
       where: {
-        conversationId_senderId_clientMessageId: {
-          conversationId,
-          senderId: userId,
-          clientMessageId,
-        },
+        conversationId,
+        senderId: userId,
+        clientMessageId,
       },
     })
   }
@@ -769,14 +731,15 @@ export class MessageChatService extends PlatformService {
    * @throws NotFoundException 如果用户不是会话成员或已退出
    */
   private async ensureConversationMember(conversationId: number, userId: number) {
-    const member = await this.prisma.chatConversationMember.findUnique({
+    const member = await this.db.query.chatConversationMember.findFirst({
       where: {
-        conversationId_userId: {
-          conversationId,
-          userId,
-        },
+        conversationId,
+        userId,
       },
-      select: { id: true, leftAt: true },
+      columns: {
+        id: true,
+        leftAt: true,
+      },
     })
     if (!member || member.leftAt) {
       throw new NotFoundException('Conversation not found')
@@ -796,51 +759,70 @@ export class MessageChatService extends PlatformService {
    * @returns 会话详情
    */
   private async getConversationDetailForUser(conversationId: number, userId: number) {
-    const conversation = await this.prisma.chatConversation.findFirst({
-      where: {
-        id: conversationId,
-        members: {
-          some: {
-            userId,
-            leftAt: null,
-          },
-        },
-      },
-      include: {
-        members: {
-          where: { leftAt: null },
-          select: {
-            userId: true,
-            unreadCount: true,
-            lastReadAt: true,
-            lastReadMessageId: true,
-            user: {
-              select: {
-                id: true,
-                nickname: true,
-                avatar: true,
-              },
-            },
-          },
-        },
-      },
-    })
+    const conversationRows = await this.db
+      .select({
+        id: chatConversation.id,
+        bizKey: chatConversation.bizKey,
+        lastMessageId: chatConversation.lastMessageId,
+        lastMessageAt: chatConversation.lastMessageAt,
+        lastSenderId: chatConversation.lastSenderId,
+      })
+      .from(chatConversation)
+      .innerJoin(
+        chatConversationMember,
+        and(
+          eq(chatConversationMember.conversationId, chatConversation.id),
+          eq(chatConversationMember.userId, userId),
+          isNull(chatConversationMember.leftAt),
+        ),
+      )
+      .where(eq(chatConversation.id, conversationId))
+      .limit(1)
+    const conversation = conversationRows[0]
     if (!conversation) {
       throw new NotFoundException('Conversation not found')
     }
+    const members = await this.db
+      .select({
+        userId: chatConversationMember.userId,
+        unreadCount: chatConversationMember.unreadCount,
+        lastReadAt: chatConversationMember.lastReadAt,
+        lastReadMessageId: chatConversationMember.lastReadMessageId,
+        userProfileId: appUser.id,
+        userNickname: appUser.nickname,
+        userAvatar: appUser.avatarUrl,
+      })
+      .from(chatConversationMember)
+      .innerJoin(appUser, eq(appUser.id, chatConversationMember.userId))
+      .where(and(
+        eq(chatConversationMember.conversationId, conversationId),
+        isNull(chatConversationMember.leftAt),
+      ))
 
-    // 查询最后一条消息内容
     const lastMessage = conversation.lastMessageId
-      ? await this.prisma.chatMessage.findUnique({
+      ? await this.db.query.chatMessage.findFirst({
         where: { id: conversation.lastMessageId },
-        select: {
+        columns: {
           content: true,
         },
       })
       : null
 
     return this.toConversationOutput(
-      conversation,
+      {
+        ...conversation,
+        members: members.map((member) => ({
+          userId: member.userId,
+          unreadCount: member.unreadCount,
+          lastReadAt: member.lastReadAt,
+          lastReadMessageId: member.lastReadMessageId,
+          user: {
+            id: member.userProfileId,
+            nickname: member.userNickname,
+            avatar: member.userAvatar,
+          },
+        })),
+      },
       userId,
       lastMessage?.content,
     )
@@ -938,16 +920,13 @@ export class MessageChatService extends PlatformService {
     if (!ids.length) {
       return new Map<string, { id: bigint, content: string }>()
     }
-
-    const rows = await this.prisma.chatMessage.findMany({
-      where: {
-        id: { in: ids },
-      },
-      select: {
-        id: true,
-        content: true,
-      },
-    })
+    const rows = await this.db
+      .select({
+        id: chatMessage.id,
+        content: chatMessage.content,
+      })
+      .from(chatMessage)
+      .where(inArray(chatMessage.id, ids))
 
     return new Map(rows.map((item) => [item.id.toString(), item]))
   }
@@ -960,7 +939,7 @@ export class MessageChatService extends PlatformService {
    * @param item - 消息数据
    * @returns 格式化的消息输出
    */
-  private toMessageOutput(item: ChatMessage) {
+  private toMessageOutput(item: typeof chatMessage.$inferSelect) {
     return {
       id: item.id.toString(),
       conversationId: item.conversationId,
@@ -1095,12 +1074,16 @@ export class MessageChatService extends PlatformService {
    * @returns 解析后的 JSON 对象或 undefined
    * @throws BadRequestException 如果 JSON 格式无效
    */
-  private parseJsonPayload(payload?: string) {
+  private parseJsonPayload(payload?: string): Record<string, unknown> | undefined {
     if (!payload || !payload.trim()) {
       return undefined
     }
     try {
-      return JSON.parse(payload) as Prisma.InputJsonValue
+      const data = JSON.parse(payload) as unknown
+      if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+        throw new BadRequestException('payload must be a JSON object')
+      }
+      return data as Record<string, unknown>
     } catch {
       throw new BadRequestException('payload must be valid JSON')
     }
@@ -1167,27 +1150,21 @@ export class MessageChatService extends PlatformService {
    * @throws BadRequestException 如果原始载荷不是 JSON 对象
    */
   private attachClientMessageId(
-    payload: Prisma.InputJsonValue | undefined,
+    payload: Record<string, unknown> | undefined,
     clientMessageId?: string,
-  ) {
+  ): Record<string, unknown> | undefined {
     if (!clientMessageId) {
       return payload
     }
-    // 没有原始载荷，创建新的
     if (payload === undefined) {
       return {
         clientMessageId,
-      } as Prisma.InputJsonValue
+      }
     }
-    // 原始载荷必须是对象类型（不能是数组或原始值）
-    if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
-      throw new BadRequestException('payload must be a JSON object when clientMessageId is provided')
-    }
-    // 合并 clientMessageId 到现有载荷
     return {
-      ...(payload as Prisma.JsonObject),
+      ...payload,
       clientMessageId,
-    } as Prisma.InputJsonValue
+    }
   }
 
   private recordResyncTriggeredMetric() {

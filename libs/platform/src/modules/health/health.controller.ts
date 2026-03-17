@@ -4,36 +4,40 @@ import { getEnv } from '@libs/platform/utils'
 import { Controller, Get, HttpCode } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  DiskHealthIndicator,
-  HealthCheck,
-  HealthCheckService,
-  MemoryHealthIndicator,
-} from '@nestjs/terminus'
 import { HealthService } from './health.service'
+import { statfs } from 'node:fs/promises'
 
 @ApiTags('健康检查模块')
 @Controller('system')
 export class HealthController {
   constructor(
-    private readonly health: HealthCheckService,
-    private readonly memory: MemoryHealthIndicator,
-    private readonly disk: DiskHealthIndicator,
     private readonly healthService: HealthService,
     private readonly configService: ConfigService,
   ) {}
 
   @Get('health')
   @Public()
-  @HealthCheck()
   async healthCheck() {
-    const result = await this.health.check([
-      async () => this.memory.checkHeap('memory_heap', 512 * 1024 * 1024),
-      async () => this.memory.checkRSS('memory_rss', 1024 * 1024 * 1024),
-    ])
+    const heapUsed = process.memoryUsage().heapUsed
+    const rss = process.memoryUsage().rss
+    const memoryHeapStatus = heapUsed < 512 * 1024 * 1024 ? 'up' : 'down'
+    const memoryRssStatus = rss < 1024 * 1024 * 1024 ? 'up' : 'down'
+    const overallStatus = memoryHeapStatus === 'up' && memoryRssStatus === 'up'
+      ? 'ok'
+      : 'error'
 
     return {
-      ...result,
+      status: overallStatus,
+      info: {
+        memory_heap: {
+          status: memoryHeapStatus,
+          heapUsed,
+        },
+        memory_rss: {
+          status: memoryRssStatus,
+          rss,
+        },
+      },
       meta: {
         uptime: process.uptime(),
         environment: getEnv(),
@@ -42,24 +46,54 @@ export class HealthController {
   }
 
   @Get('ready')
-  @HealthCheck()
   @Public()
   @HttpCode(200)
   async readinessCheck() {
     const upload = this.configService.get('upload')
     const uploadPath = upload?.uploadDir || process.cwd()
     try {
-      return await this.health.check([
-        async () => this.healthService.ping('database'),
-        async () => this.healthService.checkCacheByEnv('cache'),
-        async () =>
-          this.disk.checkStorage('disk', {
-            path: uploadPath,
-            thresholdPercent: 0.9,
-          }),
+      const [database, cache, disk] = await Promise.all([
+        this.healthService.ping('database'),
+        this.healthService.checkCacheByEnv('cache'),
+        this.checkDisk('disk', uploadPath, 0.9),
       ])
-    } catch (error: any) {
-      return error?.response ?? error
+      const checks = { ...database, ...cache, ...disk }
+      const status = Object.values(checks).every((item: any) => item.status === 'up')
+        ? 'ok'
+        : 'error'
+      return {
+        status,
+        info: checks,
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        info: {
+          error: String(error),
+        },
+      }
+    }
+  }
+
+  private async checkDisk(key: string, path: string, thresholdPercent: number) {
+    try {
+      const stat = await statfs(path)
+      const total = stat.blocks * stat.bsize
+      const free = stat.bavail * stat.bsize
+      const usedPercent = total > 0 ? (total - free) / total : 1
+      return {
+        [key]: {
+          status: usedPercent < thresholdPercent ? 'up' : 'down',
+          usedPercent,
+        },
+      }
+    } catch (error) {
+      return {
+        [key]: {
+          status: 'down',
+          error: String(error),
+        },
+      }
     }
   }
 }

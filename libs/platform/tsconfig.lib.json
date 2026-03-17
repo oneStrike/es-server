@@ -9,7 +9,6 @@
     "node_modules",
     "dist",
     "test",
-    "**/*spec.ts",
-    "src/database/prisma-client/**/*"
+    "**/*spec.ts"
   ]
 }

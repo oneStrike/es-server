@@ -1,10 +1,9 @@
-import type { Prisma } from '@libs/platform/database'
+import type { Db } from '@db/core'
 import type {
   CreateMessageOutboxEventDto,
   CreateNotificationOutboxEventDto,
 } from './dto/outbox-event.dto'
-import { messageOutbox } from '@db/schema'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import {
   MessageOutboxDomainEnum,
@@ -16,7 +15,17 @@ import {
  * 提供消息事件的入队功能，实现发件箱模式
  */
 @Injectable()
-export class MessageOutboxService extends PlatformService {
+export class MessageOutboxService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
+  private get outbox() {
+    return this.drizzle.schema.messageOutbox
+  }
+
   /**
    * 将消息事件入队
    * @param dto 消息事件数据
@@ -24,36 +33,27 @@ export class MessageOutboxService extends PlatformService {
    */
   async enqueueEvent(
     dto: CreateMessageOutboxEventDto,
-    tx?: any,
+    tx?: Db,
   ) {
+    const client = tx ?? this.db
     try {
-      if (tx?.insert) {
-        await tx.insert(messageOutbox).values({
+      await client
+        .insert(this.outbox)
+        .values({
           domain: dto.domain,
           eventType: dto.eventType,
           bizKey: dto.bizKey,
           payload: dto.payload,
           status: MessageOutboxStatusEnum.PENDING,
         })
-        return
-      }
-
-      await this.prisma.messageOutbox.create({
-        data: {
-          domain: dto.domain,
-          eventType: dto.eventType,
-          bizKey: dto.bizKey,
-          payload: dto.payload,
-          status: MessageOutboxStatusEnum.PENDING,
-        },
-      })
+        .onConflictDoNothing({
+          target: this.outbox.bizKey,
+        })
     } catch (error) {
-      if ((error)?.code === '23505') {
+      if (this.drizzle.isUniqueViolation(error)) {
         return
       }
-      this.handlePrismaError(error, {
-        P2002: () => undefined,
-      })
+      throw error
     }
   }
 
@@ -64,14 +64,14 @@ export class MessageOutboxService extends PlatformService {
    */
   async enqueueNotificationEvent(
     dto: CreateNotificationOutboxEventDto,
-    tx?: any,
+    tx?: Db,
   ) {
     await this.enqueueEvent(
       {
         domain: MessageOutboxDomainEnum.NOTIFICATION,
         eventType: dto.eventType,
         bizKey: dto.bizKey,
-        payload: dto.payload as unknown as Prisma.InputJsonValue,
+        payload: dto.payload,
       },
       tx,
     )
