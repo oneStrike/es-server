@@ -282,17 +282,18 @@ export class InteractionTargetAccessService {
         .set({ [field]: sql`${column} + ${delta}` } as any)
         .where(condition)
         .returning()
-      if (updated.length === 0) {
-        throw new NotFoundException('目标不存在')
-      }
+      this.drizzle.assertAffectedRows(updated, '目标不存在')
       return
     }
 
     const amount = Math.abs(delta)
-    await tx
+    const updated = await tx
       .update(table)
       .set({ [field]: sql`${column} - ${amount}` } as any)
       .where(and(condition, gte(column, amount)))
-      .returning()
+      .returning({ id: column })
+    if (updated.length === 0) {
+      throw new BadRequestException('目标不存在或计数不足')
+    }
   }
 }

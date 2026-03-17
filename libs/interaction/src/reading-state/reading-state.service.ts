@@ -12,10 +12,7 @@ import {
 @Injectable()
 export class ReadingStateService {
   private readonly logger = new Logger(ReadingStateService.name)
-  private readonly resolvers = new Map<
-    ContentTypeEnum,
-    IReadingStateResolver
-  >()
+  private readonly resolvers = new Map<ContentTypeEnum, IReadingStateResolver>()
 
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -42,9 +39,7 @@ export class ReadingStateService {
   /**
    * 获取指定的阅读状态解析器
    */
-  private getResolver(
-    workType: ContentTypeEnum,
-  ): IReadingStateResolver {
+  private getResolver(workType: ContentTypeEnum): IReadingStateResolver {
     const resolver = this.resolvers.get(workType)
     if (!resolver) {
       throw new BadRequestException('不支持的阅读状态业务类型')
@@ -160,7 +155,7 @@ export class ReadingStateService {
    */
   async touchByChapter(userId: number, chapterId: number) {
     // 寻找哪个 resolver 能处理这个章节
-    let workInfo: { workId: number, workType: ContentTypeEnum } | undefined
+    let workInfo: { workId: number; workType: ContentTypeEnum } | undefined
 
     for (const resolver of this.resolvers.values()) {
       workInfo = await resolver.resolveWorkInfoByChapter(chapterId)
@@ -201,18 +196,21 @@ export class ReadingStateService {
    */
   async getUserReadingHistory(dto: QueryReadingHistoryDto) {
     const { workType, userId, workId, pageIndex, pageSize } = dto
-    const page = await this.drizzle.ext.findPagination(this.userWorkReadingState, {
-      where: this.drizzle.buildWhere(this.userWorkReadingState, {
-        and: {
-          userId,
-          workId,
-          ...(workType !== undefined && { workType }),
-        },
-      }),
-      orderBy: { lastReadAt: 'desc' },
-      pageIndex,
-      pageSize,
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.userWorkReadingState,
+      {
+        where: this.drizzle.buildWhere(this.userWorkReadingState, {
+          and: {
+            userId,
+            workId,
+            workType,
+          },
+        }),
+        orderBy: { lastReadAt: 'desc' },
+        pageIndex,
+        pageSize,
+      },
+    )
 
     // 按作品类型分组处理作品信息和章节信息
     const list: Array<{
@@ -251,23 +249,27 @@ export class ReadingStateService {
       const workIds = [...new Set(items.map((i) => i.workId))]
       const works = await resolver.resolveWorkSnapshots(workIds)
       const workMap = new Map(works.map((w) => [w.id, w]))
-      const chapterIds = [
-        ...new Set(
-          items
-            .map((item) => item.lastReadChapterId)
-            .filter((id): id is number => typeof id === 'number'),
-        ),
-      ]
+      const chapterIdToWorkId = new Map<number, number>()
+      for (const item of items) {
+        if (
+          typeof item.lastReadChapterId === 'number' &&
+          !chapterIdToWorkId.has(item.lastReadChapterId)
+        ) {
+          chapterIdToWorkId.set(item.lastReadChapterId, item.workId)
+        }
+      }
       const chapterSnapshots = await Promise.all(
-        chapterIds.map(async (chapterId) => ({
-          chapterId,
-          snapshot: await resolver.resolveChapterSnapshot(
-            undefined,
-            items.find((entry) => entry.lastReadChapterId === chapterId)
-              ?.workId ?? 0,
+        Array.from(
+          chapterIdToWorkId.entries(),
+          async ([chapterId, chapterWorkId]) => ({
             chapterId,
-          ),
-        })),
+            snapshot: await resolver.resolveChapterSnapshot(
+              undefined,
+              chapterWorkId,
+              chapterId,
+            ),
+          }),
+        ),
       )
       const chapterMap = new Map(
         chapterSnapshots.map((item) => [item.chapterId, item.snapshot]),

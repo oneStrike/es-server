@@ -71,6 +71,7 @@ export class FavoriteService {
     if (targetIds.length === 0) {
       return new Map()
     }
+    const uniqueTargetIds = [...new Set(targetIds)]
 
     const favorites = await this.db
       .select({
@@ -80,7 +81,7 @@ export class FavoriteService {
       .where(
         and(
           eq(this.userFavorite.targetType, targetType),
-          inArray(this.userFavorite.targetId, targetIds),
+          inArray(this.userFavorite.targetId, uniqueTargetIds),
           eq(this.userFavorite.userId, userId),
         ),
       )
@@ -88,7 +89,7 @@ export class FavoriteService {
     const favoritedSet = new Set(favorites.map((f) => f.targetId))
     const statusMap = new Map<number, boolean>()
 
-    for (const targetId of targetIds) {
+    for (const targetId of uniqueTargetIds) {
       statusMap.set(targetId, favoritedSet.has(targetId))
     }
 
@@ -194,20 +195,14 @@ export class FavoriteService {
     targetId: number,
     userId: number,
   ): Promise<boolean> {
-    const [favorite] = await this.db
-      .select({
-        id: this.userFavorite.id,
-      })
-      .from(this.userFavorite)
-      .where(
-        and(
-          eq(this.userFavorite.targetType, targetType),
-          eq(this.userFavorite.targetId, targetId),
-          eq(this.userFavorite.userId, userId),
-        ),
-      )
-      .limit(1)
-    return !!favorite
+    return this.drizzle.ext.exists(
+      this.userFavorite,
+      and(
+        eq(this.userFavorite.targetType, targetType),
+        eq(this.userFavorite.targetId, targetId),
+        eq(this.userFavorite.userId, userId),
+      ),
+    )
   }
 
   /**

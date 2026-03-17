@@ -12,9 +12,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
  * 负责处理用户的举报业务逻辑，包括验证用户存在性、解析场景元数据等
  */
 @Injectable()
-export class UserReportResolver
-  implements IReportTargetResolver, OnModuleInit
-{
+export class UserReportResolver implements IReportTargetResolver, OnModuleInit {
   /** 目标类型：用户 */
   readonly targetType = ReportTargetTypeEnum.USER
 
@@ -38,7 +36,7 @@ export class UserReportResolver
    */
   async resolveMeta(tx: InteractionTx, targetId: number) {
     const user = await tx.query.appUser.findFirst({
-      where: { id: targetId },
+      where: { id: targetId, deletedAt: { isNull: true } },
       columns: { id: true },
     })
 

@@ -1,7 +1,7 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, lt, sql } from 'drizzle-orm'
+import { and, eq, gte, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -298,39 +298,24 @@ export class UserPointService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const [todayEarned, todayConsumed] = await Promise.all([
-      this.db
-        .select({
-          total: sql<number>`coalesce(sum(${this.growthLedgerRecord.delta}), 0)`,
-        })
-        .from(this.growthLedgerRecord)
-        .where(
-          and(
-            eq(this.growthLedgerRecord.userId, userId),
-            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
-            gt(this.growthLedgerRecord.delta, 0),
-            gte(this.growthLedgerRecord.createdAt, today),
-          ),
+    const [todayStats] = await this.db
+      .select({
+        earned: sql<number>`coalesce(sum(case when ${this.growthLedgerRecord.delta} > 0 then ${this.growthLedgerRecord.delta} else 0 end), 0)`,
+        consumed: sql<number>`coalesce(sum(case when ${this.growthLedgerRecord.delta} < 0 then -${this.growthLedgerRecord.delta} else 0 end), 0)`,
+      })
+      .from(this.growthLedgerRecord)
+      .where(
+        and(
+          eq(this.growthLedgerRecord.userId, userId),
+          eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
+          gte(this.growthLedgerRecord.createdAt, today),
         ),
-      this.db
-        .select({
-          total: sql<number>`coalesce(sum(${this.growthLedgerRecord.delta}), 0)`,
-        })
-        .from(this.growthLedgerRecord)
-        .where(
-          and(
-            eq(this.growthLedgerRecord.userId, userId),
-            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
-            lt(this.growthLedgerRecord.delta, 0),
-            gte(this.growthLedgerRecord.createdAt, today),
-          ),
-        ),
-    ])
+      )
 
     return {
       currentPoints: user.points,
-      todayEarned: Number(todayEarned[0]?.total ?? 0),
-      todayConsumed: Math.abs(Number(todayConsumed[0]?.total ?? 0)),
+      todayEarned: Number(todayStats?.earned ?? 0),
+      todayConsumed: Number(todayStats?.consumed ?? 0),
     }
   }
 

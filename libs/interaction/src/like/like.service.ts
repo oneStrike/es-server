@@ -76,6 +76,7 @@ export class LikeService {
     if (targetIds.length === 0) {
       return new Map()
     }
+    const uniqueTargetIds = [...new Set(targetIds)]
 
     const likes = await this.db
       .select({
@@ -85,7 +86,7 @@ export class LikeService {
       .where(
         and(
           eq(this.userLike.targetType, targetType),
-          inArray(this.userLike.targetId, targetIds),
+          inArray(this.userLike.targetId, uniqueTargetIds),
           eq(this.userLike.userId, userId),
         ),
       )
@@ -93,7 +94,7 @@ export class LikeService {
     const likedSet = new Set(likes.map((item) => item.targetId))
     const statusMap = new Map<number, boolean>()
 
-    for (const targetId of targetIds) {
+    for (const targetId of uniqueTargetIds) {
       statusMap.set(targetId, likedSet.has(targetId))
     }
 
@@ -229,20 +230,14 @@ export class LikeService {
     targetId: number,
     userId: number,
   ): Promise<boolean> {
-    const [like] = await this.db
-      .select({
-        id: this.userLike.id,
-      })
-      .from(this.userLike)
-      .where(
-        and(
-          eq(this.userLike.targetType, targetType),
-          eq(this.userLike.targetId, targetId),
-          eq(this.userLike.userId, userId),
-        ),
-      )
-      .limit(1)
-    return !!like
+    return this.drizzle.ext.exists(
+      this.userLike,
+      and(
+        eq(this.userLike.targetType, targetType),
+        eq(this.userLike.targetId, targetId),
+        eq(this.userLike.userId, userId),
+      ),
+    )
   }
 
   /**

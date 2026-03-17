@@ -1,10 +1,10 @@
-import { DrizzleService } from '@db/core'
+import {
+  buildColumnDateRangeSqlFilter,
+  DrizzleService,
+  normalizePagination,
+} from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
-import {
-  buildCreatedAtSqlFilter,
-  normalizeInteractionPagination,
-} from '../query.helper'
 import { DownloadTargetTypeEnum } from './download.constant'
 import {
   DownloadedWorkChapterPageDto,
@@ -192,8 +192,8 @@ export class DownloadService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = normalizeInteractionPagination(pageIndex, pageSize)
-    const createdAtFilter = buildCreatedAtSqlFilter(
+    } = normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = buildColumnDateRangeSqlFilter(
       'udr.created_at',
       startDate,
       endDate,
@@ -282,8 +282,8 @@ export class DownloadService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = normalizeInteractionPagination(pageIndex, pageSize)
-    const createdAtFilter = buildCreatedAtSqlFilter(
+    } = normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = buildColumnDateRangeSqlFilter(
       'udr.created_at',
       startDate,
       endDate,

@@ -1,8 +1,8 @@
-import type { PgTable, SQL, TableConfig } from '@db/core'
+import type { Db, PgTable, SQL, TableConfig } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, inArray, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import {
   CheckUserLevelPermissionDto,
   CreateUserLevelRuleDto,
@@ -214,28 +214,15 @@ export class UserLevelRuleService {
     }
   }
 
-  async getHighestLevelRuleByExperience(experience: number, tx?: any) {
+  async getHighestLevelRuleByExperience(experience: number, tx?: Db) {
     const client = tx ?? this.db
-    if (client?.query?.userLevelRule) {
-      return client.query.userLevelRule.findFirst({
-        where: {
-          isEnabled: true,
-          requiredExperience: { lte: experience },
-        },
-      })
-    }
-    const [rule] = await this.db
-      .select()
-      .from(this.userLevelRule)
-      .where(
-        and(
-          eq(this.userLevelRule.isEnabled, true),
-          lte(this.userLevelRule.requiredExperience, experience),
-        ),
-      )
-      .orderBy(desc(this.userLevelRule.requiredExperience))
-      .limit(1)
-    return rule
+    return client.query.userLevelRule.findFirst({
+      where: {
+        isEnabled: true,
+        requiredExperience: { lte: experience },
+      },
+      orderBy: { requiredExperience: 'desc' },
+    })
   }
 
   /**
@@ -402,19 +389,25 @@ export class UserLevelRuleService {
       .select({ total: sql<number>`count(*)` })
       .from(this.userLevelRule)
 
-    const distribution = await Promise.all(
-      levels.map(async (item) => {
-        const userCount = await this.countByCondition(
-          this.appUser,
-          eq(this.appUser.levelId, item.id),
-        )
-        return {
-          levelId: item.id,
-          levelName: item.name,
-          userCount,
-        }
-      }),
+    const levelIds = levels.map((item) => item.id)
+    const distributionRows = levelIds.length > 0
+      ? await this.db
+        .select({
+          levelId: this.appUser.levelId,
+          total: sql<number>`count(*)`,
+        })
+        .from(this.appUser)
+        .where(inArray(this.appUser.levelId, levelIds))
+        .groupBy(this.appUser.levelId)
+      : []
+    const distributionMap = new Map(
+      distributionRows.map((item) => [item.levelId, Number(item.total)]),
     )
+    const distribution = levels.map((item) => ({
+      levelId: item.id,
+      levelName: item.name,
+      userCount: distributionMap.get(item.id) ?? 0,
+    }))
 
     return {
       totalLevels: Number(allLevelsCount?.total ?? 0),

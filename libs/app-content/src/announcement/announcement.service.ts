@@ -189,7 +189,8 @@ export class AppAnnouncementService {
    * @param dto 删除数据
    * @returns 是否成功
    */
-  async deleteAnnouncement({ id }: IdDto) {
+  async deleteAnnouncement(dto: IdDto) {
+    const { id } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.appAnnouncement)

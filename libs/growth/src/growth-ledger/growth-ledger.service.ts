@@ -25,6 +25,8 @@ type Tx = Db
  */
 @Injectable()
 export class GrowthLedgerService {
+  private readonly maxSlotReserveLimit = 2000
+
   constructor(private readonly drizzle: DrizzleService) {}
 
   private get db() {
@@ -335,6 +337,7 @@ export class GrowthLedgerService {
     }
 
     // 消费操作：检查余额是否充足
+    let afterValue: number
     if (action === GrowthLedgerActionEnum.CONSUME) {
       const decreased = await this.decrementUserBalance(tx, {
         userId,
@@ -359,19 +362,15 @@ export class GrowthLedgerService {
           reason: GrowthLedgerFailReasonEnum.INSUFFICIENT_BALANCE,
         }
       }
+      afterValue = decreased.afterValue
     } else {
-      // 发放操作：直接增加余额
-      await this.incrementUserBalance(tx, {
+      afterValue = await this.incrementUserBalance(tx, {
         userId,
         assetType,
         amount,
       })
     }
 
-    // 查询更新后的用户余额
-    const user = await this.findUserBalanceById(tx, userId)
-    const afterValue =
-      assetType === GrowthAssetTypeEnum.POINTS ? user.points : user.experience
     const beforeValue = afterValue - signedDelta
 
     // 更新账本记录的前后值
@@ -432,17 +431,16 @@ export class GrowthLedgerService {
     | { duplicated: false, recordId: number }
     | { duplicated: true, result: GrowthLedgerApplyResult }
   > {
-    const inserted = await this.insertLedgerGateRecord(tx, params)
+    const insertedRecordId = await this.insertLedgerGateRecord(tx, params)
+    if (insertedRecordId !== null) {
+      return { duplicated: false, recordId: insertedRecordId }
+    }
+
     const existing = await this.findLedgerByUserBizKey(tx, {
       userId: params.userId,
       bizKey: params.bizKey,
     })
-
-    if (!existing) {
-      throw new Error('账本记录创建失败')
-    }
-
-    if (!inserted) {
+    if (existing) {
       return {
         duplicated: true,
         result: {
@@ -455,8 +453,7 @@ export class GrowthLedgerService {
         },
       }
     }
-
-    return { duplicated: false, recordId: existing.id }
+    throw new Error('账本记录创建失败')
   }
 
   /**
@@ -479,8 +476,11 @@ export class GrowthLedgerService {
       limit: number
     },
   ): Promise<boolean> {
-    // 槽位占用策略：
-    // 对于 limit=N，仅允许成功占用 N 个唯一槽位，超出即失败。
+    if (params.limit > this.maxSlotReserveLimit) {
+      throw new Error(
+        `slot limit ${params.limit} exceeds max ${this.maxSlotReserveLimit}`,
+      )
+    }
     for (let slotNo = 1; slotNo <= params.limit; slotNo += 1) {
       const inserted = await this.insertUsageSlot(tx, {
         userId: params.userId,
@@ -528,9 +528,12 @@ export class GrowthLedgerService {
       assetType: GrowthAssetTypeEnum
       amount: number
     },
-  ): Promise<{ ok: boolean }> {
-    const ok = await this.decrementWithGuard(tx, params)
-    return { ok }
+  ): Promise<{ ok: boolean, afterValue: number }> {
+    const afterValue = await this.decrementWithGuard(tx, params)
+    if (afterValue === null) {
+      return { ok: false, afterValue: 0 }
+    }
+    return { ok: true, afterValue }
   }
 
   /**
@@ -642,17 +645,6 @@ export class GrowthLedgerService {
       .where(eq(this.growthLedgerRecord.id, id))
   }
 
-  private async findUserBalanceById(tx: Tx, userId: number) {
-    const user = await tx.query.appUser.findFirst({
-      where: { id: userId },
-      columns: { points: true, experience: true },
-    })
-    if (!user) {
-      throw new Error('用户不存在')
-    }
-    return user
-  }
-
   private async insertLedgerGateRecord(
     tx: Tx,
     params: {
@@ -667,7 +659,7 @@ export class GrowthLedgerService {
       targetId?: number
       context?: Record<string, unknown>
     },
-  ): Promise<boolean> {
+  ): Promise<number | null> {
     const rows = await tx
       .insert(this.growthLedgerRecord)
       .values({
@@ -691,7 +683,7 @@ export class GrowthLedgerService {
         ],
       })
       .returning({ id: this.growthLedgerRecord.id })
-    return rows.length > 0
+    return rows[0]?.id ?? null
   }
 
   private async findLedgerByUserBizKey(
@@ -780,7 +772,7 @@ export class GrowthLedgerService {
       assetType: GrowthAssetTypeEnum
       amount: number
     },
-  ): Promise<boolean> {
+  ): Promise<number | null> {
     const rows = await tx
       .update(this.appUser)
       .set(
@@ -801,8 +793,12 @@ export class GrowthLedgerService {
               gte(this.appUser.experience, params.amount),
             ),
       )
-      .returning({ id: this.appUser.id })
-    return rows.length > 0
+      .returning(
+        params.assetType === GrowthAssetTypeEnum.POINTS
+          ? { afterValue: this.appUser.points }
+          : { afterValue: this.appUser.experience },
+      )
+    return rows[0]?.afterValue ?? null
   }
 
   private async findTargetLevelRule(tx: Tx, experience: number) {

@@ -8,7 +8,7 @@ export interface NormalizedPagination {
   take: number
 }
 
-export function normalizeInteractionPagination(
+export function normalizePagination(
   pageIndex?: number,
   pageSize?: number,
 ): NormalizedPagination {
@@ -32,10 +32,8 @@ export function normalizeInteractionPagination(
   }
 }
 
-export type CreatedAtColumn = 'udr.created_at' | 'upr.created_at'
-
-export function buildCreatedAtSqlFilter(
-  column: CreatedAtColumn,
+export function buildColumnDateRangeSqlFilter(
+  column: string,
   startDate?: string,
   endDate?: string,
 ) {

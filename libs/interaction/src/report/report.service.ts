@@ -6,6 +6,7 @@ import type {
 } from './dto/report.dto'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { eq } from 'drizzle-orm'
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
@@ -86,9 +87,8 @@ export class ReportService {
 
     const resolver = this.getResolver(targetType)
 
-    await this.ensureReporterExists(reporterId)
-
     const report = await this.db.transaction(async (tx: InteractionTx) => {
+      await this.ensureReporterExists(reporterId)
       const targetMeta = await resolver.resolveMeta(tx, targetId)
 
       this.ensureCanReportOwnTarget(reporterId, targetMeta.ownerUserId)
@@ -166,12 +166,11 @@ export class ReportService {
    * @throws BadRequestException 当举报人不存在时抛出异常
    */
   private async ensureReporterExists(reporterId: number) {
-    const reporter = await this.db.query.appUser.findFirst({
-      where: { id: reporterId },
-      columns: { id: true },
-    })
-
-    if (!reporter) {
+    const existed = await this.drizzle.ext.existsActive(
+      this.drizzle.schema.appUser,
+      eq(this.drizzle.schema.appUser.id, reporterId),
+    )
+    if (!existed) {
       throw new BadRequestException('举报人不存在')
     }
   }

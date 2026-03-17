@@ -114,17 +114,14 @@ export class CommentLikeResolver
       return
     }
 
-    await tx
+    const updated = await tx
       .update(userComment)
       .set({
         likeCount: sql`${userComment.likeCount} + ${delta}`,
       })
       .where(and(eq(userComment.id, targetId), isNull(userComment.deletedAt)))
-    const updated = await tx.query.userComment.findFirst({
-      where: { id: targetId, deletedAt: { isNull: true } },
-      columns: { id: true },
-    })
-    if (!updated) {
+      .returning({ id: userComment.id })
+    if (!updated[0]) {
       throw new NotFoundException('评论不存在')
     }
   }

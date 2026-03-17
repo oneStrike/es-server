@@ -1,4 +1,8 @@
-import { DrizzleService } from '@db/core'
+import {
+  buildColumnDateRangeSqlFilter,
+  DrizzleService,
+  normalizePagination,
+} from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -6,10 +10,6 @@ import {
 } from '@libs/growth'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
-import {
-  buildCreatedAtSqlFilter,
-  normalizeInteractionPagination,
-} from '../query.helper'
 import {
   PurchaseTargetDto,
   QueryPurchasedWorkChapterDto,
@@ -207,8 +207,8 @@ export class PurchaseService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = normalizeInteractionPagination(pageIndex, pageSize)
-    const createdAtFilter = buildCreatedAtSqlFilter(
+    } = normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = buildColumnDateRangeSqlFilter(
       'upr.created_at',
       startDate,
       endDate,
@@ -302,8 +302,8 @@ export class PurchaseService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = normalizeInteractionPagination(pageIndex, pageSize)
-    const createdAtFilter = buildCreatedAtSqlFilter(
+    } = normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = buildColumnDateRangeSqlFilter(
       'upr.created_at',
       startDate,
       endDate,

@@ -171,7 +171,8 @@ export class AppPageService {
    * @param dto 删除数据
    * @returns 是否成功
    */
-  async batchDelete({ ids }: IdsDto) {
+  async batchDelete(dto: IdsDto) {
+    const { ids } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db.delete(this.appPage).where(inArray(this.appPage.id, ids)),
     )

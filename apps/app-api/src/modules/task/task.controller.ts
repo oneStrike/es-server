@@ -8,7 +8,7 @@ import {
   TaskCompleteDto,
   TaskProgressDto,
   TaskService,
-} from '@libs/growth/task'
+} from '@libs/growth'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
