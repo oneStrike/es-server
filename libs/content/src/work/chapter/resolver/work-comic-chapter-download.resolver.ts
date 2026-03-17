@@ -5,7 +5,7 @@ import {
   IDownloadTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
@@ -50,11 +50,11 @@ export class WorkComicChapterDownloadResolver
     })
 
     if (!chapter) {
-      throw new BadRequestException('漫画章节不存在')
+      throw new NotFoundException('漫画章节不存在')
     }
 
     if (!chapter.content) {
-      throw new BadRequestException('下载内容不存在')
+      throw new NotFoundException('下载内容不存在')
     }
 
     return chapter.content
@@ -72,7 +72,7 @@ export class WorkComicChapterDownloadResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(this.workChapter)
       .set({
         downloadCount: sql`${this.workChapter.downloadCount} + ${delta}`,
@@ -84,5 +84,6 @@ export class WorkComicChapterDownloadResolver
           isNull(this.workChapter.deletedAt),
         ),
       )
+    this.drizzle.assertAffectedRows(result, '漫画章节不存在')
   }
 }

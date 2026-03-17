@@ -154,23 +154,23 @@
 
 ## 7. 可执行迁移任务清单（forum 专项）
 
-| 序号 | 文件/范围 | 改造内容 | 预计工时 | 风险 |
-|---|---|---|---|---|
-| F1 | `libs/forum/src/counter/forum-counter.service.ts` | 先改计数中台：统一 tx 类型 + applyCountDelta + affectedRows 断言 | 3h | H |
-| F2 | `libs/forum/src/topic/forum-topic.service.ts` | 主题主链路迁移 Drizzle（创建/更新/删除/状态更新） | 8h | H |
-| F3 | `libs/forum/src/reply/*` | 回复域能力收口：统一切到 `CommentService`，下线 forum 历史 reply 服务 | 4h | H |
-| F4 | `libs/forum/src/reply-like/*` | 回复点赞能力收口：统一切到 `LikeService(comment)`，下线历史服务 | 2h | M |
-| F5 | `libs/forum/src/section/*.service.ts` | 板块与权限迁移；修复 createSection / 排序字段问题 | 5h | H |
-| F6 | `libs/forum/src/section-group/forum-section-group.service.ts` | 分组服务迁移，统一软删与异常语义 | 3h | M |
-| F7 | `libs/forum/src/tag/forum-tag.service.ts` | 标签链路迁移，收敛事务与去重查询 | 4h | M |
-| F8 | `libs/forum/src/profile/profile.service.ts` | 移除 Prisma 类型依赖，统一异常类型与分页构建 | 4h | M |
-| F9 | `libs/forum/src/notification/notification.service.ts` | 通知读写迁移，合并重复未读统计 | 3h | M |
-| F10 | `libs/forum/src/config/*.service.ts` | 配置与缓存回源迁移 Drizzle | 5h | M |
-| F11 | `libs/forum/src/search/search.service.ts` | 搜索查询迁移 + pageIndex 1-based 统一 | 3h | M |
-| F12 | `libs/forum/src/topic/resolver/*.resolver.ts` | resolver 全量去 PlatformService，统一 Drizzle 注入风格 | 4h | M |
-| F13 | `libs/forum/src/action-log/action-log.service.ts` | 行为日志迁移 Drizzle 风格分页与写入 | 2h | L |
-| F14 | `libs/forum/src/*/*.module.ts` + `forum.module.ts` | provider/import 收口，剔除遗留链路 | 2h | L |
-| F15 | 仓库级验证 | lint + typecheck 全量校验并修复 | 2h | M |
+| 序号 | 文件/范围 | 改造内容 | 预计工时 | 风险 | 完成状态 |
+|---|---|---|---|---|---|
+| F1 | `libs/forum/src/counter/forum-counter.service.ts` | 先改计数中台：统一 tx 类型 + applyCountDelta + affectedRows 断言 | 3h | H | 已完成 |
+| F2 | `libs/forum/src/topic/forum-topic.service.ts` | 主题主链路迁移 Drizzle（创建/更新/删除/状态更新） | 8h | H | 已完成 |
+| F3 | `libs/forum/src/reply/*` | 回复域能力收口：统一切到 `CommentService`，下线 forum 历史 reply 服务 | 4h | H | 已完成 |
+| F4 | `libs/forum/src/reply-like/*` | 回复点赞能力收口：统一切到 `LikeService(comment)`，下线历史服务 | 2h | M | 已完成 |
+| F5 | `libs/forum/src/section/*.service.ts` | 板块与权限迁移；修复 createSection / 排序字段问题 | 5h | H | 已完成 |
+| F6 | `libs/forum/src/section-group/forum-section-group.service.ts` | 分组服务迁移，统一软删与异常语义 | 3h | M | 已完成 |
+| F7 | `libs/forum/src/tag/forum-tag.service.ts` | 标签链路迁移，收敛事务与去重查询 | 4h | M | 已完成 |
+| F8 | `libs/forum/src/profile/profile.service.ts` | 移除 Prisma 类型依赖，统一异常类型与分页构建 | 4h | M | 已完成 |
+| F9 | `libs/forum/src/notification/notification.service.ts` | 通知读写迁移，合并重复未读统计 | 3h | M | 已完成 |
+| F10 | `libs/forum/src/config/*.service.ts` | 配置与缓存回源迁移 Drizzle | 5h | M | 已完成 |
+| F11 | `libs/forum/src/search/search.service.ts` | 搜索查询迁移 + pageIndex 1-based 统一 | 3h | M | 已完成 |
+| F12 | `libs/forum/src/topic/resolver/*.resolver.ts` | resolver 全量去 PlatformService，统一 Drizzle 注入风格 | 4h | M | 已完成 |
+| F13 | `libs/forum/src/action-log/action-log.service.ts` | 行为日志迁移 Drizzle 风格分页与写入 | 2h | L | 已完成 |
+| F14 | `libs/forum/src/*/*.module.ts` + `forum.module.ts` | provider/import 收口，剔除遗留链路 | 2h | L | 已完成 |
+| F15 | 仓库级验证 | lint + typecheck 全量校验并修复 | 2h | M | 已完成 |
 
 > 预计总工时：约 54h（快速开发模式，单人）
 
@@ -197,6 +197,36 @@
 
 ## 10. 结论
 
-- forum 当前整体处于“Prisma 主体 + 少量 Drizzle 过渡”状态，距离“彻底移除 Prisma”仍有明显差距。
-- 优先级应先打通 `counter/topic/section` 三个高耦合核心链路，并同步完成 reply/reply-like 能力收口，再收敛其余子模块。
-- 本报告已给出逐文件风险、可落地任务清单、验收标准，可直接作为 forum 下一轮迁移执行基线。
+- forum 主链路服务已完成 Drizzle 迁移，`libs/forum/src` 内已清理 `LegacyPlatformService / this.prisma / WhereInput / tx:any` 等遗留写法。
+- 历史 reply/reply-like/notification/section-permission 已完成下线，topic/section/search/tag/profile/moderator/section-group/config/action-log/counter 已完成迁移收口。
+- 当前建议将迁移重心转为跨模块一致性治理（例如 app-api/admin-api 中仍使用 Prisma 的业务服务），并沿用本报告验收标准持续推进。
+
+## 11. 下一步（2026-03-17 续）
+
+- 已补齐 `topic/resolver` 写操作断言语义：`comment/like/favorite` 统一使用 `drizzle.assertAffectedRows`。
+- 已完成 `counter/forum-counter.service.ts` 到纯 Drizzle 事务路径迁移，已移除旧事务兼容分支。
+- 已完成 `topic/forum-topic.service.ts` 创建/更新/删除/状态更新/计数更新到 Drizzle 实现，并移除 `LegacyPlatformService` 继承。
+- 已完成 `search/search.service.ts` 与 `section-group/forum-section-group.service.ts` 迁移到 Drizzle 实现。
+- 已完成 `section/forum-section.service.ts` 与 `moderator/moderator.service.ts` 迁移到 Drizzle 实现。
+- 已完成 `tag/forum-tag.service.ts` 与 `profile/profile.service.ts` 迁移到 Drizzle 实现。
+- 已完成 `app-api/auth.service.ts` 注册流程切换到 Drizzle 事务，`profile.initForumProfile` 已移除 Prisma 事务兼容分支。
+- 已完成 `app-api/auth.service.ts` 的 `appUser` 查询/登录/登录态更新时间迁移，已移除 `PlatformService` 继承与 `this.prisma` 访问。
+- 已完成 `app-api/sms.service.ts` 与 `app-api/password.service.ts` 的 `appUser` 读写迁移到 Drizzle 实现。
+- 已完成仓库校验：`lint + type-check` 通过。
+
+## 12. 未完成任务清单（跨模块）
+
+- `app-api`
+  - `apps/app-api/src/modules/user/user.service.ts`：用户中心主服务仍使用 Prisma；
+  - `apps/app-api/src/modules/auth/token-storage.service.ts`：仍使用 Prisma Delegate（`BaseTokenStorageService` 适配）。
+- `admin-api`
+  - `apps/admin-api/src/modules/auth/auth.service.ts`：管理端认证主服务仍使用 Prisma；
+  - `apps/admin-api/src/modules/user/user.service.ts`：管理员用户主服务仍使用 Prisma；
+  - `apps/admin-api/src/modules/app-user/app-user.service.ts`：APP 用户管理主服务仍使用 Prisma；
+  - `apps/admin-api/src/modules/system/audit/audit.service.ts`：审计服务仍使用 Prisma；
+  - `apps/admin-api/src/modules/message/message-monitor.service.ts`：消息监控服务仍使用 Prisma；
+  - `apps/admin-api/src/modules/auth/token-storage.service.ts`：仍使用 Prisma Delegate（`BaseTokenStorageService` 适配）。
+- 建议优先级
+  - P0：`admin-api/auth.service.ts`、`admin-api/user.service.ts`、`app-api/user.service.ts`
+  - P1：`admin-api/app-user.service.ts`
+  - P2：`audit/message-monitor/token-storage` 三类适配层收敛

@@ -1,7 +1,8 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, ilike, isNull } from 'drizzle-orm'
 import {
   CreateForumSectionDto,
   QueryForumSectionDto,
@@ -13,17 +14,23 @@ import {
  * 提供论坛板块的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ForumSectionService extends PlatformService {
+export class ForumSectionService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   get forumSection() {
-    return this.prisma.forumSection
+    return this.drizzle.schema.forumSection
   }
 
   get forumSectionGroup() {
-    return this.prisma.forumSectionGroup
+    return this.drizzle.schema.forumSectionGroup
   }
 
   get forumLevelRule() {
-    return this.prisma.userLevelRule
+    return this.drizzle.schema.userLevelRule
   }
 
   /**
@@ -32,12 +39,12 @@ export class ForumSectionService extends PlatformService {
    * @returns 统计信息对象
    */
   private async calculateStatistics(sectionId: number) {
-    const section = await this.forumSection.findUnique({
-      where: { id: sectionId },
-      include: {
+    const section = await this.db.query.forumSection.findFirst({
+      where: { id: sectionId, deletedAt: { isNull: true } },
+      with: {
         topics: {
-          where: { deletedAt: null },
-          select: { replyCount: true },
+          where: { deletedAt: { isNull: true } },
+          columns: { replyCount: true },
         },
       },
     })
@@ -65,43 +72,43 @@ export class ForumSectionService extends PlatformService {
   async createSection(createSectionDto: CreateForumSectionDto) {
     const { name, groupId, userLevelRuleId, ...sectionData } = createSectionDto
 
-    if (!(await this.forumSection.exists({ name, deletedAt: null }))) {
+    const existed = await this.db.query.forumSection.findFirst({
+      where: { name, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (existed) {
       throw new BadRequestException('板块名称已存在')
     }
 
     if (groupId) {
-      if (
-        !(await this.forumSectionGroup.exists({ id: groupId, deletedAt: null }))
-      ) {
+      const group = await this.db.query.forumSectionGroup.findFirst({
+        where: { id: groupId, deletedAt: { isNull: true } },
+        columns: { id: true },
+      })
+      if (!group) {
         throw new BadRequestException('板块分组不存在')
       }
     }
     if (userLevelRuleId) {
-      if (
-        !(await this.forumLevelRule.exists({
-          id: userLevelRuleId,
-        }))
-      ) {
+      const levelRule = await this.db.query.userLevelRule.findFirst({
+        where: { id: userLevelRuleId },
+        columns: { id: true },
+      })
+      if (!levelRule) {
         throw new BadRequestException('用户等级规则不存在')
       }
     }
 
-    return this.forumSection.create({
-      data: {
+    const [data] = await this.db
+      .insert(this.forumSection)
+      .values({
         name,
         ...sectionData,
-        userLevelRule: {
-          connect: {
-            id: userLevelRuleId,
-          },
-        },
-        group: {
-          connect: {
-            id: groupId,
-          },
-        },
-      },
-    })
+        userLevelRuleId,
+        groupId,
+      })
+      .returning()
+    return data
   }
 
   /**
@@ -109,13 +116,11 @@ export class ForumSectionService extends PlatformService {
    * @returns 板块列表
    */
   async getSectionTree() {
-    return this.forumSectionGroup.findMany({
+    return this.db.query.forumSectionGroup.findMany({
       where: {
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
-      orderBy: {
-        sortOrder: 'asc',
-      },
+      orderBy: (group, { asc }) => [asc(group.sortOrder)],
     })
   }
 
@@ -126,19 +131,18 @@ export class ForumSectionService extends PlatformService {
    */
   async getSectionPage(queryForumSectionDto: QueryForumSectionDto) {
     const { name, groupId, ...otherDto } = queryForumSectionDto
-
-    return this.forumSection.findPagination({
-      where: {
-        name: {
-          contains: name,
-          mode: 'insensitive',
-        },
-        group: {
-          id: groupId,
-        },
+    const where = this.drizzle.buildWhere(this.forumSection, {
+      and: {
         ...otherDto,
-        deletedAt: null,
+        deletedAt: { isNull: true },
+        groupId,
       },
+      ...(name ? { or: [ilike(this.forumSection.name, `%${name}%`)] } : {}),
+    })
+
+    return this.drizzle.ext.findPagination(this.forumSection, {
+      where,
+      ...otherDto,
     })
   }
 
@@ -148,18 +152,21 @@ export class ForumSectionService extends PlatformService {
    * @returns 板块详情信息
    */
   async getSectionDetail(id: number) {
-    const section = await this.forumSection.findUnique({
-      where: { id },
-      include: {
-        group: true,
-      },
+    const section = await this.db.query.forumSection.findFirst({
+      where: { id, deletedAt: { isNull: true } },
     })
 
     if (!section) {
       throw new BadRequestException('论坛板块不存在')
     }
 
-    return section
+    const group = section.groupId
+      ? await this.db.query.forumSectionGroup.findFirst({
+          where: { id: section.groupId, deletedAt: { isNull: true } },
+        })
+      : null
+
+    return { ...section, group }
   }
 
   /**
@@ -170,8 +177,8 @@ export class ForumSectionService extends PlatformService {
   async updateSection(updateSectionDto: UpdateForumSectionDto) {
     const { id, name, groupId, ...updateData } = updateSectionDto
 
-    const existingSection = await this.forumSection.findUnique({
-      where: { id },
+    const existingSection = await this.db.query.forumSection.findFirst({
+      where: { id, deletedAt: { isNull: true } },
     })
 
     if (!existingSection) {
@@ -179,36 +186,41 @@ export class ForumSectionService extends PlatformService {
     }
 
     if (name && name !== existingSection.name) {
-      const duplicateSection = await this.forumSection.findFirst({
+      const duplicateSection = await this.db.query.forumSection.findFirst({
         where: {
           name,
-          id: { not: id },
-          deletedAt: null,
+          deletedAt: { isNull: true },
         },
       })
-      if (duplicateSection) {
+      if (duplicateSection && duplicateSection.id !== id) {
         throw new BadRequestException('板块名称已存在')
       }
     }
 
-    const updatePayload: any = {
+    const updatePayload: Record<string, unknown> = {
       name,
       ...updateData,
     }
 
     if (groupId && groupId !== existingSection.groupId) {
-      if (!(await this.forumSectionGroup.exists({ id: groupId }))) {
+      const group = await this.db.query.forumSectionGroup.findFirst({
+        where: { id: groupId, deletedAt: { isNull: true } },
+        columns: { id: true },
+      })
+      if (!group) {
         throw new BadRequestException('板块分组不存在')
       }
-      updatePayload.group = { connect: { id: groupId } }
+      updatePayload.groupId = groupId
     } else if (groupId === null && existingSection.groupId !== null) {
-      updatePayload.group = { disconnect: true }
+      updatePayload.groupId = null
     }
 
-    return this.forumSection.update({
-      where: { id },
-      data: updatePayload,
-    })
+    const [data] = await this.db
+      .update(this.forumSection)
+      .set(updatePayload)
+      .where(and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)))
+      .returning()
+    return data
   }
 
   /**
@@ -217,8 +229,8 @@ export class ForumSectionService extends PlatformService {
    * @returns 删除结果
    */
   async deleteSection(id: number) {
-    const section = await this.forumSection.findUnique({
-      where: { id },
+    const section = await this.db.query.forumSection.findFirst({
+      where: { id, deletedAt: { isNull: true } },
     })
 
     if (!section) {
@@ -231,7 +243,12 @@ export class ForumSectionService extends PlatformService {
       )
     }
 
-    return this.forumSection.softDelete({ id })
+    const [data] = await this.db
+      .update(this.forumSection)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)))
+      .returning()
+    return data
   }
 
   /**
@@ -240,14 +257,17 @@ export class ForumSectionService extends PlatformService {
    * @returns 更新结果
    */
   async updateEnabledStatus(dto: UpdateEnabledStatusDto) {
-    if (!(await this.forumSection.exists({ id: dto.id }))) {
+    const [data] = await this.db
+      .update(this.forumSection)
+      .set({ isEnabled: dto.isEnabled })
+      .where(
+        and(eq(this.forumSection.id, dto.id), isNull(this.forumSection.deletedAt)),
+      )
+      .returning()
+    if (!data) {
       throw new BadRequestException('论坛板块不存在')
     }
-
-    return this.forumSection.update({
-      where: { id: dto.id },
-      data: { isEnabled: dto.isEnabled },
-    })
+    return data
   }
 
   /**
@@ -256,9 +276,9 @@ export class ForumSectionService extends PlatformService {
    * @returns 排序结果
    */
   async updateSectionSort(updateSortDto: DragReorderDto) {
-    return this.forumSection.swapField({
+    return this.drizzle.ext.swapField(this.forumSection, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
-      sourceField: 'groupId',
+      sourceField: 'sortOrder',
     })
   }
 }

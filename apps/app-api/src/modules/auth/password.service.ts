@@ -1,6 +1,7 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, isNull } from 'drizzle-orm'
 import { AuthErrorMessages } from './auth.constant'
 import { ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto'
 import { SmsService } from './sms.service'
@@ -11,18 +12,21 @@ import { AppTokenStorageService } from './token-storage.service'
  * 负责处理密码重置、修改密码等安全相关操作
  */
 @Injectable()
-export class PasswordService extends PlatformService {
+export class PasswordService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly rsaService: RsaService,
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
     private readonly tokenStorageService: AppTokenStorageService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   get appUser() {
-    return this.prisma.appUser
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -64,10 +68,13 @@ export class PasswordService extends PlatformService {
    */
   async forgotPassword(body: ForgotPasswordDto) {
     const { phone, password } = body
-    const user = await this.appUser.findUnique({
-      where: { phone },
-      select: { id: true },
-    })
+    const [user] = await this.db
+      .select({ id: this.appUser.id })
+      .from(this.appUser)
+      .where(
+        and(eq(this.appUser.phoneNumber, phone), isNull(this.appUser.deletedAt)),
+      )
+      .limit(1)
 
     if (!user) {
       throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
@@ -76,10 +83,10 @@ export class PasswordService extends PlatformService {
     // await this.smsService.validateVerifyCode({ phone, code })
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
-    await this.prisma.appUser.update({
-      where: { id: user.id },
-      data: { password: hashedPassword },
-    })
+    await this.db
+      .update(this.appUser)
+      .set({ password: hashedPassword })
+      .where(eq(this.appUser.id, user.id))
 
     await this.tokenStorageService.revokeAllByUserId(user.id, 'PASSWORD_CHANGE')
 
@@ -93,9 +100,11 @@ export class PasswordService extends PlatformService {
    * @returns 修改结果
    */
   async changePassword(userId: number, body: ChangePasswordDto) {
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-    })
+    const [user] = await this.db
+      .select({ id: this.appUser.id, password: this.appUser.password })
+      .from(this.appUser)
+      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
+      .limit(1)
 
     if (!user) {
       throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
@@ -124,10 +133,10 @@ export class PasswordService extends PlatformService {
 
     // 更新密码
     const hashedPassword = await this.scryptService.encryptPassword(newPassword)
-    await this.prisma.appUser.update({
-      where: { id: userId },
-      data: { password: hashedPassword },
-    })
+    await this.db
+      .update(this.appUser)
+      .set({ password: hashedPassword })
+      .where(eq(this.appUser.id, userId))
 
     // 撤销其他设备登录
     await this.tokenStorageService.revokeAllByUserId(userId, 'PASSWORD_CHANGE')
@@ -141,10 +150,13 @@ export class PasswordService extends PlatformService {
    * @returns 用户对象或 null
    */
   private async findUserByPhone(phone: string) {
-    return this.appUser.findFirst({
-      where: {
-        phone,
-      },
-    })
+    const [user] = await this.db
+      .select()
+      .from(this.appUser)
+      .where(
+        and(eq(this.appUser.phoneNumber, phone), isNull(this.appUser.deletedAt)),
+      )
+      .limit(1)
+    return user ?? null
   }
 }

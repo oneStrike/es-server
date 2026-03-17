@@ -1,10 +1,11 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { and, asc, eq, ilike, inArray, isNull } from 'drizzle-orm'
 import {
   CreateForumSectionGroupDto,
   QueryForumSectionGroupDto,
@@ -12,35 +13,33 @@ import {
 } from './dto/forum-section-group.dto'
 
 @Injectable()
-export class ForumSectionGroupService extends PlatformService {
+export class ForumSectionGroupService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   get forumSectionGroup() {
-    return this.prisma.forumSectionGroup
+    return this.drizzle.schema.forumSectionGroup
   }
 
   get forumSection() {
-    return this.prisma.forumSection
+    return this.drizzle.schema.forumSection
   }
 
   async createSectionGroup(dto: CreateForumSectionGroupDto) {
-    try {
-      return await this.forumSectionGroup.create({
-        data: dto,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('板块分组名称已存在')
-        },
-      })
-    }
+    const [data] = await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.forumSectionGroup).values(dto).returning(),
+      { duplicate: '板块分组名称已存在' },
+    )
+    return data
   }
 
   async getSectionGroupById(id: number) {
-    const group = await this.forumSectionGroup.findUnique({
-      where: { id },
-      omit: {
-        deletedAt: true,
-      },
+    const group = await this.db.query.forumSectionGroup.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      columns: { deletedAt: false },
     })
 
     if (!group) {
@@ -50,52 +49,50 @@ export class ForumSectionGroupService extends PlatformService {
   }
 
   async getSectionGroupPage(dto: QueryForumSectionGroupDto) {
-    return this.forumSectionGroup.findPagination({
-      where: {
-        deletedAt: null,
-        ...dto,
+    const where = this.drizzle.buildWhere(this.forumSectionGroup, {
+      and: {
+        deletedAt: { isNull: true },
         isEnabled: dto.isEnabled,
-        name: {
-          contains: dto.name,
-        },
       },
-      orderBy: {
-        sortOrder: dto.orderBy ? undefined : 'desc',
-      },
-      omit: {
-        deletedAt: true,
-      },
+      ...(dto.name ? { or: [ilike(this.forumSectionGroup.name, `%${dto.name}%`)] } : {}),
+    })
+
+    return this.drizzle.ext.findPagination(this.forumSectionGroup, {
+      where,
+      ...dto,
+      orderBy: dto.orderBy ? undefined : { sortOrder: 'desc' as const },
     })
   }
 
   async updateSectionGroup(updateSectionGroupDto: UpdateForumSectionGroupDto) {
     const { id, ...updateData } = updateSectionGroupDto
-
-    try {
-      return await this.forumSectionGroup.update({
-        where: { id },
-        data: updateData,
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2002: () => {
-          throw new BadRequestException('板块分组名称已存在')
-        },
-        P2025: () => {
-          throw new NotFoundException('板块分组不存在')
-        },
-      })
+    const [data] = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.forumSectionGroup)
+          .set(updateData)
+          .where(
+            and(
+              eq(this.forumSectionGroup.id, id),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
+          )
+          .returning(),
+      { duplicate: '板块分组名称已存在' },
+    )
+    if (!data) {
+      throw new NotFoundException('板块分组不存在')
     }
+    return data
   }
 
   async deleteSectionGroup(id: number) {
-    const group = await this.forumSectionGroup.findUnique({
-      where: { id },
-      include: {
+    const group = await this.db.query.forumSectionGroup.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      with: {
         sections: {
-          where: {
-            deletedAt: null,
-          },
+          where: { deletedAt: { isNull: true } },
+          columns: { id: true },
         },
       },
     })
@@ -105,16 +102,24 @@ export class ForumSectionGroupService extends PlatformService {
     }
 
     if (group.sections.length > 0) {
-      throw new Error('该分组下还有板块，无法删除')
+      throw new BadRequestException('该分组下还有板块，无法删除')
     }
 
-    return this.forumSectionGroup.delete({
-      where: { id },
-    })
+    const [data] = await this.db
+      .update(this.forumSectionGroup)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(this.forumSectionGroup.id, id),
+          isNull(this.forumSectionGroup.deletedAt),
+        ),
+      )
+      .returning()
+    return data
   }
 
   async swapSectionGroupSortOrder(dto: DragReorderDto) {
-    return this.forumSectionGroup.swapField({
+    return this.drizzle.ext.swapField(this.forumSectionGroup, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
     })
   }
@@ -123,51 +128,72 @@ export class ForumSectionGroupService extends PlatformService {
     updateSectionGroupEnabledDto: UpdateEnabledStatusDto,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
-
-    try {
-      return await this.forumSectionGroup.update({
-        where: { id },
-        data: { isEnabled },
-      })
-    } catch (error) {
-      this.handlePrismaError(error, {
-        P2025: () => {
-          throw new NotFoundException('板块分组不存在')
-        },
-      })
+    const [data] = await this.db
+      .update(this.forumSectionGroup)
+      .set({ isEnabled })
+      .where(
+        and(
+          eq(this.forumSectionGroup.id, id),
+          isNull(this.forumSectionGroup.deletedAt),
+        ),
+      )
+      .returning()
+    if (!data) {
+      throw new NotFoundException('板块分组不存在')
     }
+    return data
   }
 
   async getAllEnabledGroups() {
-    return this.forumSectionGroup.findMany({
-      where: {
-        isEnabled: true,
-      },
-      include: {
-        sections: {
-          where: {
-            isEnabled: true,
-            deletedAt: null,
-          },
-          orderBy: {
-            sortOrder: 'asc',
-          },
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            sortOrder: true,
-            _count: {
-              select: {
-                topics: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        sortOrder: 'asc',
-      },
-    })
+    const groups = await this.db
+      .select({
+        id: this.forumSectionGroup.id,
+        name: this.forumSectionGroup.name,
+        description: this.forumSectionGroup.description,
+        sortOrder: this.forumSectionGroup.sortOrder,
+        isEnabled: this.forumSectionGroup.isEnabled,
+        maxModerators: this.forumSectionGroup.maxModerators,
+        createdAt: this.forumSectionGroup.createdAt,
+        updatedAt: this.forumSectionGroup.updatedAt,
+      })
+      .from(this.forumSectionGroup)
+      .where(
+        and(
+          eq(this.forumSectionGroup.isEnabled, true),
+          isNull(this.forumSectionGroup.deletedAt),
+        ),
+      )
+      .orderBy(asc(this.forumSectionGroup.sortOrder))
+    const groupIds = groups.map((group) => group.id)
+    const sections = groupIds.length
+      ? await this.db
+          .select({
+            id: this.forumSection.id,
+            groupId: this.forumSection.groupId,
+            name: this.forumSection.name,
+            description: this.forumSection.description,
+            sortOrder: this.forumSection.sortOrder,
+            topicCount: this.forumSection.topicCount,
+          })
+          .from(this.forumSection)
+          .where(
+            and(
+              inArray(this.forumSection.groupId, groupIds),
+              eq(this.forumSection.isEnabled, true),
+              isNull(this.forumSection.deletedAt),
+            ),
+          )
+          .orderBy(asc(this.forumSection.sortOrder))
+      : []
+
+    return groups.map((group) => ({
+      ...group,
+      sections: sections
+        .filter((section) => section.groupId === group.id)
+        .map((section) => ({
+        ...section,
+        _count: { topics: section.topicCount },
+      })),
+    }))
   }
 }

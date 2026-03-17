@@ -1,5 +1,4 @@
-import { PlatformService } from '@libs/platform/database'
-
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import {
   CreateForumActionLogDto,
@@ -11,9 +10,15 @@ import {
  * 提供用户操作日志的记录、查询等核心业务逻辑
  */
 @Injectable()
-export class ForumUserActionLogService extends PlatformService {
+export class ForumUserActionLogService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   get forumUserActionLog() {
-    return this.prisma.forumUserActionLog
+    return this.drizzle.schema.forumUserActionLog
   }
 
   /**
@@ -33,8 +38,9 @@ export class ForumUserActionLogService extends PlatformService {
       userAgent,
     } = dto
 
-    return this.forumUserActionLog.create({
-      data: {
+    const data = await this.db
+      .insert(this.forumUserActionLog)
+      .values({
         userId,
         actionType,
         targetType,
@@ -51,8 +57,9 @@ export class ForumUserActionLogService extends PlatformService {
           : null,
         ipAddress,
         userAgent,
-      },
-    })
+      })
+      .returning()
+    return data[0]
   }
 
   /**
@@ -62,11 +69,14 @@ export class ForumUserActionLogService extends PlatformService {
    */
   async getActionLogsByUserId(dto: QueryForumActionLogDto) {
     const { userId, ...otherDto } = dto
-    return this.forumUserActionLog.findPagination({
-      where: {
-        userId,
-        ...otherDto,
-      },
+    return this.drizzle.ext.findPagination(this.forumUserActionLog, {
+      where: this.drizzle.buildWhere(this.forumUserActionLog, {
+        and: {
+          userId,
+          ...otherDto,
+        },
+      }),
+      ...otherDto,
     })
   }
 }

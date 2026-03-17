@@ -1,6 +1,6 @@
 import type { InteractionTx } from '../interaction-tx.type'
 import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
 import { BrowseLogInteractionService } from './browse-log-interaction.service'
 import { BrowseLogPermissionService } from './browse-log-permission.service'
@@ -9,6 +9,8 @@ import { IBrowseLogTargetResolver } from './interfaces/browse-log-target-resolve
 
 @Injectable()
 export class BrowseLogService {
+  private readonly logger = new Logger(BrowseLogService.name)
+
   constructor(
     private readonly browseLogPermissionService: BrowseLogPermissionService,
     private readonly browseLogInteractionService: BrowseLogInteractionService,
@@ -67,6 +69,20 @@ export class BrowseLogService {
   ) {
     const resolver = this.getResolver(targetType)
     await resolver.applyCountDelta(tx, targetId, delta)
+  }
+
+  private logPostProcessFailure(
+    targetType: BrowseLogTargetTypeEnum,
+    targetId: number,
+    userId: number,
+    deferPostProcess: boolean,
+    error: unknown,
+  ) {
+    this.logger.warn(
+      `browse_log_post_process_failed targetType=${targetType} targetId=${targetId} userId=${userId} deferPostProcess=${deferPostProcess} error=${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    )
   }
 
   /**
@@ -131,10 +147,28 @@ export class BrowseLogService {
     }
 
     if (options.deferPostProcess) {
-      void runPostProcess().catch(() => undefined)
+      void runPostProcess().catch((error) => {
+        this.logPostProcessFailure(
+          targetType,
+          targetId,
+          userId,
+          true,
+          error,
+        )
+      })
       return
     }
-
-    await runPostProcess()
+    try {
+      await runPostProcess()
+    } catch (error) {
+      this.logPostProcessFailure(
+        targetType,
+        targetId,
+        userId,
+        false,
+        error,
+      )
+      throw error
+    }
   }
 }

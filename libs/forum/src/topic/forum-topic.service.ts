@@ -1,11 +1,7 @@
-import type {
-  ForumTopicCreateInput,
-  ForumTopicWhereInput,
-} from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
 import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
@@ -16,6 +12,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { and, eq, ilike, isNull, sql } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -40,31 +37,30 @@ import {
  * 提供论坛主题的增删改查、置顶、精华、锁定等核心业务逻辑
  */
 @Injectable()
-export class ForumTopicService extends PlatformService {
+export class ForumTopicService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
     private readonly forumConfigCacheService: ForumConfigCacheService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
-  get forumTopic() {
-    return this.prisma.forumTopic
+  get forumTopicTable() {
+    return this.drizzle.schema.forumTopic
   }
 
-  get forumSection() {
-    return this.prisma.forumSection
+  get forumSectionTable() {
+    return this.drizzle.schema.forumSection
   }
 
-  /**
-   * 获取论坛资料模型
-   * @returns 论坛资料模型实例
-   */
-  get forumProfile() {
-    return this.prisma.forumProfile
+  get userCommentTable() {
+    return this.drizzle.schema.userComment
   }
 
   /**
@@ -121,9 +117,9 @@ export class ForumTopicService extends PlatformService {
   async createForumTopic(createTopicDto: CreateForumTopicDto) {
     const { sectionId, userId, ...topicData } = createTopicDto
 
-    const user = await this.prisma.appUser.findUnique({
+    const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      select: { status: true },
+      columns: { status: true },
     })
 
     if (!user) {
@@ -147,21 +143,14 @@ export class ForumTopicService extends PlatformService {
         content: topicData.content + topicData.title,
       })
 
-    const createPayload: ForumTopicCreateInput = {
-      ...topicData,
-      section: {
-        connect: { id: sectionId, isEnabled: true },
-      },
-      user: {
-        connect: { id: userId },
-      },
-    }
-
     // 优先使用板块审核策略，若未配置则回退到全局策略
-    const section = await this.forumSection.findUnique({
-      where: { id: sectionId },
-      select: { topicReviewPolicy: true },
+    const section = await this.db.query.forumSection.findFirst({
+      where: { id: sectionId, deletedAt: { isNull: true } },
+      columns: { topicReviewPolicy: true, isEnabled: true },
     })
+    if (!section || !section.isEnabled) {
+      throw new BadRequestException('板块不存在或已禁用')
+    }
 
     const { reviewPolicy: globalReviewPolicy } =
       await this.forumConfigCacheService.getConfig()
@@ -174,26 +163,21 @@ export class ForumTopicService extends PlatformService {
       highestLevel,
     )
 
-    if (highestLevel) {
-      createPayload.sensitiveWordHits = JSON.stringify(hits)
+    const createPayload = {
+      ...topicData,
+      sectionId,
+      userId,
+      auditStatus,
+      ...(highestLevel ? { sensitiveWordHits: JSON.stringify(hits) } : {}),
+      ...(isHidden ? { isHidden: true } : {}),
     }
-
-    if (isHidden) {
-      createPayload.isHidden = true
-    }
-
-    createPayload.auditStatus = auditStatus
 
     // 创建主题与计数更新放在同一事务中，避免数据与计数不一致
-    const topic = await this.prisma.$transaction(async (tx) => {
-      const newTopic = await tx.forumTopic.create({
-        data: createPayload,
-        omit: {
-          version: true,
-          deletedAt: true,
-          sensitiveWordHits: true,
-        },
-      })
+    const topic = await this.db.transaction(async (tx) => {
+      const [newTopic] = await tx
+        .insert(this.forumTopicTable)
+        .values(createPayload)
+        .returning()
 
       await this.forumCounterService.updateTopicRelatedCounts(
         tx,
@@ -202,7 +186,8 @@ export class ForumTopicService extends PlatformService {
         1,
       )
 
-      return newTopic
+      const { version, deletedAt, sensitiveWordHits, ...data } = newTopic
+      return data
     })
 
     // 记录创建行为，便于审计追踪
@@ -236,13 +221,16 @@ export class ForumTopicService extends PlatformService {
    * @throws {NotFoundException} 主题不存在
    */
   async getTopicById(id: number) {
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
-      include: {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id,
+        deletedAt: { isNull: true },
+      },
+      with: {
         topicTags: true,
         section: true,
         user: {
-          include: {
+          with: {
             forumProfile: true,
             level: true,
           },
@@ -264,27 +252,30 @@ export class ForumTopicService extends PlatformService {
    */
   async getTopics(queryForumTopicDto: QueryForumTopicDto) {
     const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
-
-    const where: ForumTopicWhereInput = {
-      ...otherDto,
-      deletedAt: null,
-      section: {
-        id: sectionId,
+    const where = this.drizzle.buildWhere(this.forumTopicTable, {
+      and: {
+        deletedAt: { isNull: true },
+        sectionId,
+        userId,
+        isPinned: otherDto.isPinned,
+        isFeatured: otherDto.isFeatured,
+        isLocked: otherDto.isLocked,
+        isHidden: otherDto.isHidden,
+        auditStatus: otherDto.auditStatus,
       },
-      user: {
-        id: userId,
-      },
-    }
+      ...(keyword
+        ? {
+            or: [
+              ilike(this.forumTopicTable.title, `%${keyword}%`),
+              ilike(this.forumTopicTable.content, `%${keyword}%`),
+            ],
+          }
+        : {}),
+    })
 
-    if (keyword) {
-      where.OR = [
-        { title: { contains: keyword } },
-        { content: { contains: keyword } },
-      ]
-    }
-
-    return this.forumTopic.findPagination({
+    return this.drizzle.ext.findPagination(this.forumTopicTable, {
       where,
+      ...otherDto,
     })
   }
 
@@ -298,8 +289,8 @@ export class ForumTopicService extends PlatformService {
   async updateTopic(updateForumTopicDto: UpdateForumTopicDto) {
     const { id, ...updateData } = updateForumTopicDto
 
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: { id, deletedAt: { isNull: true } },
     })
 
     if (!topic) {
@@ -310,15 +301,16 @@ export class ForumTopicService extends PlatformService {
       throw new BadRequestException('主题已锁定，无法编辑')
     }
 
-    const section = await this.forumSection.findUnique({
-      where: { id: topic.sectionId },
-      select: { topicReviewPolicy: true },
+    const section = await this.db.query.forumSection.findFirst({
+      where: { id: topic.sectionId, deletedAt: { isNull: true } },
+      columns: { topicReviewPolicy: true },
     })
 
     const { reviewPolicy: globalReviewPolicy } =
       await this.forumConfigCacheService.getConfig()
 
-    const reviewPolicy = section?.topicReviewPolicy ?? globalReviewPolicy
+    const reviewPolicy = (section?.topicReviewPolicy ??
+      globalReviewPolicy) as ForumReviewPolicyEnum
 
     // 合并标题与内容进行敏感词检测
     const { hits, highestLevel } =
@@ -334,23 +326,27 @@ export class ForumTopicService extends PlatformService {
       highestLevel,
     )
 
-    const updatePayload: any = { ...updateData }
-
-    if (highestLevel) {
-      updatePayload.sensitiveWordHits = JSON.stringify(hits)
+    const updatePayload = {
+      ...updateData,
+      auditStatus,
+      ...(highestLevel ? { sensitiveWordHits: JSON.stringify(hits) } : {}),
+      ...(isHidden ? { isHidden: true } : {}),
     }
-
-    if (isHidden) {
-      updatePayload.isHidden = true
-    }
-
-    updatePayload.auditStatus = auditStatus
 
     // 更新主题内容与审核状态
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
-      data: updatePayload,
-    })
+    const [updatedTopic] = await this.db
+      .update(this.forumTopicTable)
+      .set(updatePayload)
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+      .returning()
+    if (!updatedTopic) {
+      throw new NotFoundException('主题不存在')
+    }
 
     // 记录编辑行为，保存前后差异
     await this.actionLogService.createActionLog({
@@ -372,8 +368,8 @@ export class ForumTopicService extends PlatformService {
    * @throws {NotFoundException} 主题不存在
    */
   async deleteTopic(id: number) {
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: { id, deletedAt: { isNull: true } },
     })
 
     if (!topic) {
@@ -381,9 +377,26 @@ export class ForumTopicService extends PlatformService {
     }
 
     // 主题与回复软删除保持一致
-    await this.prisma.$transaction(async (tx) => {
-      await tx.userComment.softDeleteMany({ targetId: id })
-      await tx.forumTopic.softDelete({ id })
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(this.userCommentTable)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(this.userCommentTable.targetId, id),
+            isNull(this.userCommentTable.deletedAt),
+          ),
+        )
+      const result = await tx
+        .update(this.forumTopicTable)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(this.forumTopicTable.id, id),
+            isNull(this.forumTopicTable.deletedAt),
+          ),
+        )
+      this.drizzle.assertAffectedRows(result, '主题不存在')
 
       await this.forumCounterService.updateTopicRelatedCounts(
         tx,
@@ -410,12 +423,23 @@ export class ForumTopicService extends PlatformService {
    * @param updateData 更新字段
    * @returns 更新后的主题
    */
-  private async updateTopicStatus(id: number, updateData: Record<string, any>) {
-    const topic = await this.forumTopic.update({
-      where: { id, deletedAt: null },
-      data: updateData,
-    })
-
+  private async updateTopicStatus(
+    id: number,
+    updateData: Record<string, unknown>,
+  ) {
+    const [topic] = await this.db
+      .update(this.forumTopicTable)
+      .set(updateData)
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+      .returning()
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
     return topic
   }
 
@@ -492,14 +516,20 @@ export class ForumTopicService extends PlatformService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementViewCount(id: number) {
-    return this.forumTopic.update({
-      where: { id, deletedAt: null },
-      data: {
-        viewCount: {
-          increment: 1,
-        },
-      },
-    })
+    const [topic] = await this.db
+      .update(this.forumTopicTable)
+      .set({ viewCount: sql`${this.forumTopicTable.viewCount} + 1` })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+      .returning()
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
+    return topic
   }
 
   /**
@@ -510,16 +540,24 @@ export class ForumTopicService extends PlatformService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementReplyCount(id: number, replyUserId: number) {
-    return this.forumTopic.update({
-      where: { id, deletedAt: null },
-      data: {
-        replyCount: {
-          increment: 1,
-        },
+    const [topic] = await this.db
+      .update(this.forumTopicTable)
+      .set({
+        replyCount: sql`${this.forumTopicTable.replyCount} + 1`,
         lastReplyUserId: replyUserId,
         lastReplyAt: new Date(),
-      },
-    })
+      })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+      .returning()
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
+    return topic
   }
 
   /**
@@ -529,14 +567,20 @@ export class ForumTopicService extends PlatformService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementLikeCount(id: number) {
-    return this.forumTopic.update({
-      where: { id, deletedAt: null },
-      data: {
-        likeCount: {
-          increment: 1,
-        },
-      },
-    })
+    const [topic] = await this.db
+      .update(this.forumTopicTable)
+      .set({ likeCount: sql`${this.forumTopicTable.likeCount} + 1` })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+      .returning()
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
+    return topic
   }
 
   /**
@@ -546,13 +590,19 @@ export class ForumTopicService extends PlatformService {
    * @throws {NotFoundException} 主题不存在
    */
   async decrementLikeCount(id: number) {
-    return this.forumTopic.update({
-      where: { id, deletedAt: null },
-      data: {
-        likeCount: {
-          decrement: 1,
-        },
-      },
-    })
+    const [topic] = await this.db
+      .update(this.forumTopicTable)
+      .set({ likeCount: sql`${this.forumTopicTable.likeCount} - 1` })
+      .where(
+        and(
+          eq(this.forumTopicTable.id, id),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
+      .returning()
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
+    return topic
   }
 }

@@ -31,6 +31,14 @@ export class FavoriteService {
     return this.drizzle.schema.userFavorite
   }
 
+  private uniqueTargetIds(targetIds: number[]) {
+    return [...new Set(targetIds)]
+  }
+
+  private resolveErrorCode(error: unknown): string {
+    return this.drizzle.extractError(error)?.code ?? 'unknown'
+  }
+
   /**
    * 供其他模块在应用启动时注册自己的解析器
    */
@@ -71,7 +79,7 @@ export class FavoriteService {
     if (targetIds.length === 0) {
       return new Map()
     }
-    const uniqueTargetIds = [...new Set(targetIds)]
+    const uniqueTargetIds = this.uniqueTargetIds(targetIds)
 
     const favorites = await this.db
       .select({
@@ -246,15 +254,22 @@ export class FavoriteService {
     const detailMaps = new Map<FavoriteTargetTypeEnum, Map<number, any>>()
     await Promise.all(
       Array.from(typeToIdsAggregator.entries(), async ([type, ids]) => {
+        const uniqueIds = this.uniqueTargetIds(ids)
+        const startedAt = Date.now()
         try {
           const resolver = this.getResolver(type)
           if (resolver.batchGetDetails) {
-            const detailMap = await resolver.batchGetDetails(ids)
+            const detailMap = await resolver.batchGetDetails(uniqueIds)
             detailMaps.set(type, detailMap)
+            if (detailMap.size < uniqueIds.length) {
+              this.logger.warn(
+                `favorite_detail_partial_missing targetType=${type} batchSize=${uniqueIds.length} resolvedSize=${detailMap.size} missingSize=${uniqueIds.length - detailMap.size} elapsedMs=${Date.now() - startedAt}`,
+              )
+            }
           }
         } catch (error) {
           this.logger.warn(
-            `favorite_detail_resolve_failed targetType=${type} ids=${ids.join(',')} error=${
+            `favorite_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
               error instanceof Error ? error.message : String(error)
             }`,
           )

@@ -1,9 +1,6 @@
-import {
-  ForumTopicWhereInput,
-  PlatformService,
-  UserCommentWhereInput,
-} from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
+import { and, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
 import {
   ForumSearchDto,
   ForumSearchReplyDto,
@@ -16,23 +13,29 @@ import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
  * 支持主题与回复的关键词检索及混合搜索
  */
 @Injectable()
-export class ForumSearchService extends PlatformService {
-  constructor() {
-    super()
+export class ForumSearchService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   /**
    * 获取主题模型
    */
   get forumTopic() {
-    return this.prisma.forumTopic
+    return this.drizzle.schema.forumTopic
   }
 
   /**
    * 获取回复模型
    */
   get userComment() {
-    return this.prisma.userComment
+    return this.drizzle.schema.userComment
+  }
+
+  get forumTopicTag() {
+    return this.drizzle.schema.forumTopicTag
   }
 
   /**
@@ -44,7 +47,7 @@ export class ForumSearchService extends PlatformService {
   async search(searchDto: ForumSearchDto) {
     const {
       type = ForumSearchTypeEnum.ALL,
-      pageIndex = 0,
+      pageIndex = 1,
       pageSize = 15,
     } = searchDto
 
@@ -84,45 +87,28 @@ export class ForumSearchService extends PlatformService {
    * @returns 主题搜索结果
    */
   private async searchTopics(dto: ForumSearchTopicDto) {
-    const where: ForumTopicWhereInput = {
-      deletedAt: null,
-      OR: [
-        { title: { contains: dto.keyword } },
-        { content: { contains: dto.keyword } },
-      ],
-    }
-
-    if (dto.sectionId) {
-      where.sectionId = dto.sectionId
-    }
+    const conditions = [
+      isNull(this.forumTopic.deletedAt),
+      dto.sectionId ? eq(this.forumTopic.sectionId, dto.sectionId) : undefined,
+      or(
+        ilike(this.forumTopic.title, `%${dto.keyword}%`),
+        ilike(this.forumTopic.content, `%${dto.keyword}%`),
+      ),
+    ].filter(Boolean)
 
     if (dto.tagId) {
-      where.topicTags = {
-        some: {
-          tagId: dto.tagId,
-        },
-      }
+      const topicIds = await this.db
+        .select({ topicId: this.forumTopicTag.topicId })
+        .from(this.forumTopicTag)
+        .where(eq(this.forumTopicTag.tagId, dto.tagId))
+      const ids = topicIds.map((item) => item.topicId)
+      conditions.push(ids.length ? inArray(this.forumTopic.id, ids) : eq(this.forumTopic.id, -1))
     }
 
-    const orderBy = this.getOrderBy(dto.sort)
-
-    return this.forumTopic.findPagination({
-      where,
-      include: {
-        section: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-          },
-        },
-      },
-      orderBy,
+    return this.drizzle.ext.findPagination(this.forumTopic, {
+      where: and(...(conditions as [any, ...any[]])),
+      ...dto,
+      orderBy: this.getTopicOrderBy(dto.sort),
     })
   }
 
@@ -133,49 +119,13 @@ export class ForumSearchService extends PlatformService {
    * @returns 回复搜索结果
    */
   private async searchReplies(dto: ForumSearchReplyDto) {
-    const where: UserCommentWhereInput = {
-      deletedAt: null,
-      content: {
-        contains: dto.keyword,
-      },
-    }
-
-    const orderBy = this.getOrderBy(dto.sort)
-
-    return this.userComment.findPagination({
-      where,
-      include: {
-        topic: {
-          select: {
-            id: true,
-            title: true,
-            content: true,
-            sectionId: true,
-            viewCount: true,
-            replyCount: true,
-            likeCount: true,
-            section: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            user: {
-              select: {
-                id: true,
-                nickname: true,
-              },
-            },
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-          },
-        },
-      },
-      orderBy,
+    return this.drizzle.ext.findPagination(this.userComment, {
+      where: and(
+        isNull(this.userComment.deletedAt),
+        ilike(this.userComment.content, `%${dto.keyword}%`),
+      ),
+      ...dto,
+      orderBy: this.getTopicOrderBy(dto.sort),
     })
   }
 
@@ -184,19 +134,16 @@ export class ForumSearchService extends PlatformService {
    * @param sort 排序类型
    * @returns 排序条件
    */
-  private getOrderBy(sort?: ForumSearchSortTypeEnum) {
-    switch (sort) {
-      case ForumSearchSortTypeEnum.HOT:
-        return [
-          { replyCount: 'desc' as const },
-          { likeCount: 'desc' as const },
-          { viewCount: 'desc' as const },
-          { createdAt: 'desc' as const },
-        ]
-      case ForumSearchSortTypeEnum.LATEST:
-      case ForumSearchSortTypeEnum.RELEVANCE:
-      case undefined:
-        return { createdAt: 'desc' as const }
+  private getTopicOrderBy(sort?: ForumSearchSortTypeEnum) {
+    const defaultOrder: Record<string, 'asc' | 'desc'> = { createdAt: 'desc' }
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      return {
+        replyCount: 'desc' as const,
+        likeCount: 'desc' as const,
+        viewCount: 'desc' as const,
+        createdAt: 'desc' as const,
+      }
     }
+    return defaultOrder
   }
 }

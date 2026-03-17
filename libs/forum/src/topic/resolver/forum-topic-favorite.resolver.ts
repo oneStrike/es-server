@@ -1,3 +1,4 @@
+import { DrizzleService } from '@db/core'
 import { forumTopic } from '@db/schema'
 import {
   FavoriteService,
@@ -9,10 +10,8 @@ import {
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛主题收藏解析器
@@ -20,18 +19,16 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class ForumTopicFavoriteResolver
-  extends PlatformService
   implements IFavoriteTargetResolver, OnModuleInit
 {
   /** 目标类型：论坛主题 */
   readonly targetType = FavoriteTargetTypeEnum.FORUM_TOPIC
 
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
     private readonly messageOutboxService: MessageOutboxService,
-  ) {
-    super()
-  }
+  ) {}
 
   /**
    * 模块初始化时注册解析器到收藏服务
@@ -81,22 +78,13 @@ export class ForumTopicFavoriteResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(forumTopic)
       .set({
         favoriteCount: sql`${forumTopic.favoriteCount} + ${delta}`,
       })
       .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
-    const updated = await tx.query.forumTopic.findFirst({
-      where: {
-        id: targetId,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new BadRequestException('帖子不存在')
-    }
+    this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
   /**
@@ -147,16 +135,13 @@ export class ForumTopicFavoriteResolver
       return new Map()
     }
 
-    const topics = await this.prisma.forumTopic.findMany({
-      where: {
-        id: { in: targetIds },
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        title: true,
-      },
-    })
+    const topics = await this.drizzle.db
+      .select({
+        id: forumTopic.id,
+        title: forumTopic.title,
+      })
+      .from(forumTopic)
+      .where(and(inArray(forumTopic.id, targetIds), isNull(forumTopic.deletedAt)))
 
     return new Map(topics.map((topic) => [topic.id, topic]))
   }

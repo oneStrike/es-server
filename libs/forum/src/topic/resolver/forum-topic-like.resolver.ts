@@ -1,3 +1,4 @@
+import { DrizzleService } from '@db/core'
 import { forumTopic } from '@db/schema'
 import {
   ILikeTargetResolver,
@@ -11,7 +12,6 @@ import {
   MessageOutboxService,
 } from '@libs/message'
 import { SceneTypeEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -21,18 +21,16 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class ForumTopicLikeResolver
-  extends PlatformService
   implements ILikeTargetResolver, OnModuleInit
 {
   /** 目标类型：论坛主题 */
   readonly targetType = LikeTargetTypeEnum.FORUM_TOPIC
 
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly messageOutboxService: MessageOutboxService,
-  ) {
-    super()
-  }
+  ) {}
 
   /**
    * 模块初始化时注册解析器到点赞服务
@@ -85,19 +83,13 @@ export class ForumTopicLikeResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(forumTopic)
       .set({
         likeCount: sql`${forumTopic.likeCount} + ${delta}`,
       })
       .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
-    const updated = await tx.query.forumTopic.findFirst({
-      where: { id: targetId, deletedAt: { isNull: true } },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new NotFoundException('帖子不存在')
-    }
+    this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
   /**

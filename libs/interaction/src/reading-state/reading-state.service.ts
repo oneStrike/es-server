@@ -24,6 +24,24 @@ export class ReadingStateService {
     return this.drizzle.schema.userWorkReadingState
   }
 
+  private get workChapter() {
+    return this.drizzle.schema.workChapter
+  }
+
+  private buildFallbackWorkSnapshot(
+    workId: number,
+    workType: number,
+  ): ReadingStateWorkSnapshot {
+    return {
+      id: workId,
+      type: workType,
+      name: '',
+      cover: '',
+      serialStatus: 0,
+      shouldDelete: true,
+    }
+  }
+
   /**
    * 注册阅读状态解析器
    */
@@ -154,24 +172,23 @@ export class ReadingStateService {
    * 更新阅读状态（按章节）
    */
   async touchByChapter(userId: number, chapterId: number) {
-    // 寻找哪个 resolver 能处理这个章节
-    let workInfo: { workId: number; workType: ContentTypeEnum } | undefined
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: { id: chapterId },
+      columns: {
+        workId: true,
+        workType: true,
+        deletedAt: true,
+      },
+    })
 
-    for (const resolver of this.resolvers.values()) {
-      workInfo = await resolver.resolveWorkInfoByChapter(chapterId)
-      if (workInfo) {
-        break
-      }
-    }
-
-    if (!workInfo) {
+    if (!chapter || chapter.deletedAt) {
       return
     }
 
     await this.touchByWork({
       userId,
-      workId: workInfo.workId,
-      workType: workInfo.workType,
+      workId: chapter.workId,
+      workType: chapter.workType as ContentTypeEnum,
       lastReadChapterId: chapterId,
     })
   }
@@ -212,18 +229,18 @@ export class ReadingStateService {
       },
     )
 
-    // 按作品类型分组处理作品信息和章节信息
-    const list: Array<{
+    const orderedList: Array<{
       workId: number
       workType: number
       lastReadAt: Date
       lastReadChapterId: number | null
       work: ReadingStateWorkSnapshot
       continueChapter: ReadingStateChapterSnapshot | undefined
-    }> = []
+    } | undefined> = Array.from({ length: page.list.length })
     const typeGroups = new Map<
       ContentTypeEnum,
       Array<{
+        index: number
         workId: number
         workType: number
         lastReadAt: Date
@@ -231,73 +248,91 @@ export class ReadingStateService {
       }>
     >()
 
-    for (const item of page.list) {
+    for (const [index, item] of page.list.entries()) {
       const type = item.workType as ContentTypeEnum
       if (!typeGroups.has(type)) {
         typeGroups.set(type, [])
       }
-      typeGroups.get(type)!.push(item)
+      typeGroups.get(type)!.push({ ...item, index })
     }
 
-    // 聚合处理各组
     for (const [type, items] of typeGroups) {
       const resolver = this.resolvers.get(type)
       if (!resolver) {
+        for (const item of items) {
+          orderedList[item.index] = {
+            workId: item.workId,
+            workType: item.workType,
+            lastReadAt: item.lastReadAt,
+            lastReadChapterId: item.lastReadChapterId,
+            work: this.buildFallbackWorkSnapshot(item.workId, item.workType),
+            continueChapter: undefined,
+          }
+        }
         continue
       }
 
       const workIds = [...new Set(items.map((i) => i.workId))]
       const works = await resolver.resolveWorkSnapshots(workIds)
       const workMap = new Map(works.map((w) => [w.id, w]))
-      const chapterIdToWorkId = new Map<number, number>()
+      const chapterRefsMap = new Map<number, { workId: number, chapterId: number }>()
       for (const item of items) {
         if (
           typeof item.lastReadChapterId === 'number' &&
-          !chapterIdToWorkId.has(item.lastReadChapterId)
+          !chapterRefsMap.has(item.lastReadChapterId)
         ) {
-          chapterIdToWorkId.set(item.lastReadChapterId, item.workId)
+          chapterRefsMap.set(item.lastReadChapterId, {
+            workId: item.workId,
+            chapterId: item.lastReadChapterId,
+          })
         }
       }
-      const chapterSnapshots = await Promise.all(
-        Array.from(
-          chapterIdToWorkId.entries(),
-          async ([chapterId, chapterWorkId]) => ({
-            chapterId,
-            snapshot: await resolver.resolveChapterSnapshot(
-              undefined,
-              chapterWorkId,
+      const chapterRefs = [...chapterRefsMap.values()]
+      const chapterSnapshots = resolver.resolveChapterSnapshots
+        ? await resolver.resolveChapterSnapshots(chapterRefs)
+        : await Promise.all(
+            chapterRefs.map(async ({ chapterId, workId }) => ({
+              workId,
               chapterId,
-            ),
-          }),
-        ),
-      )
+              snapshot: await resolver.resolveChapterSnapshot(
+                undefined,
+                workId,
+                chapterId,
+              ),
+            })),
+          )
       const chapterMap = new Map(
         chapterSnapshots.map((item) => [item.chapterId, item.snapshot]),
       )
 
       for (const item of items) {
-        const work = workMap.get(item.workId)
-        if (!work) {
-          continue
-        }
+        const work
+          = workMap.get(item.workId)
+            ?? this.buildFallbackWorkSnapshot(item.workId, item.workType)
 
         const continueChapter = item.lastReadChapterId
           ? chapterMap.get(item.lastReadChapterId)
           : undefined
 
-        list.push({
+        orderedList[item.index] = {
           workId: item.workId,
           workType: item.workType,
           lastReadAt: item.lastReadAt,
           lastReadChapterId: item.lastReadChapterId,
           work,
           continueChapter,
-        })
+        }
       }
     }
 
-    // 重新排序，因为分组处理打乱了顺序
-    list.sort((a, b) => b.lastReadAt.getTime() - a.lastReadAt.getTime())
+    const list = orderedList.filter(Boolean) as Array<{
+      workId: number
+      workType: number
+      lastReadAt: Date
+      lastReadChapterId: number | null
+      work: ReadingStateWorkSnapshot
+      continueChapter: ReadingStateChapterSnapshot | undefined
+    }>
 
     return {
       ...page,

@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { LikePageQueryDto } from './dto/like.dto'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
@@ -13,6 +13,7 @@ import { LikeTargetTypeEnum } from './like.constant'
  */
 @Injectable()
 export class LikeService {
+  private readonly logger = new Logger(LikeService.name)
   /** 目标类型到解析器的映射表，用于根据目标类型路由到对应的解析器 */
   private readonly resolvers = new Map<
     LikeTargetTypeEnum,
@@ -30,6 +31,14 @@ export class LikeService {
 
   private get userLike() {
     return this.drizzle.schema.userLike
+  }
+
+  private uniqueTargetIds(targetIds: number[]) {
+    return [...new Set(targetIds)]
+  }
+
+  private resolveErrorCode(error: unknown): string {
+    return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
   /**
@@ -76,7 +85,7 @@ export class LikeService {
     if (targetIds.length === 0) {
       return new Map()
     }
-    const uniqueTargetIds = [...new Set(targetIds)]
+    const uniqueTargetIds = this.uniqueTargetIds(targetIds)
 
     const likes = await this.db
       .select({
@@ -272,14 +281,33 @@ export class LikeService {
       return page
     }
 
-    const targetIds = [...new Set(page.list.map((item) => item.targetId))]
+    const targetIds = this.uniqueTargetIds(page.list.map((item) => item.targetId))
     if (targetIds.length === 0) {
       return page
     }
 
-    const detailMap = await resolver.batchGetDetails(targetIds)
-    if (!detailMap || detailMap.size === 0) {
+    const startedAt = Date.now()
+    let detailMap: Map<number, unknown>
+    try {
+      detailMap = await resolver.batchGetDetails(targetIds)
+    } catch (error) {
+      this.logger.warn(
+        `like_detail_resolve_failed targetType=${dto.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
       return page
+    }
+    if (!detailMap || detailMap.size === 0) {
+      this.logger.warn(
+        `like_detail_empty targetType=${dto.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt}`,
+      )
+      return page
+    }
+    if (detailMap.size < targetIds.length) {
+      this.logger.warn(
+        `like_detail_partial_missing targetType=${dto.targetType} batchSize=${targetIds.length} resolvedSize=${detailMap.size} missingSize=${targetIds.length - detailMap.size} elapsedMs=${Date.now() - startedAt}`,
+      )
     }
 
     return {

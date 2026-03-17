@@ -1,6 +1,5 @@
-import type { ForumConfig } from '@libs/platform/database'
 import type { Cache } from 'cache-manager'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import {
@@ -10,23 +9,30 @@ import {
 } from './forum-config-cache.constant'
 import { DEFAULT_FORUM_CONFIG } from './forum-config.constant'
 
+type ForumConfigRecord = { id: number } & Record<string, unknown>
+
 /**
  * 论坛配置缓存服务
  * 负责论坛配置的读取与缓存失效处理
  */
 @Injectable()
-export class ForumConfigCacheService extends PlatformService {
+export class ForumConfigCacheService {
   private readonly logger = new Logger(ForumConfigCacheService.name)
 
-  private pendingRequests = new Map<string, Promise<ForumConfig>>()
+  private pendingRequests = new Map<string, Promise<ForumConfigRecord>>()
+
+  private get db() {
+    return this.drizzle.db
+  }
 
   get forumConfig() {
-    return this.prisma.forumConfig
+    return this.drizzle.schema.forumConfig
   }
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
-    super()
-  }
+  constructor(
+    private readonly drizzle: DrizzleService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   /**
    * 获取论坛配置
@@ -44,7 +50,7 @@ export class ForumConfigCacheService extends PlatformService {
     const cacheKey = FORUM_CONFIG_CACHE_KEYS.CONFIG
     const requestKey = `lock:${cacheKey}`
 
-    const config = await this.cacheManager.get<ForumConfig | null>(cacheKey)
+    const config = await this.cacheManager.get<ForumConfigRecord | null>(cacheKey)
 
     if (config) {
       await this.incrementMetric(FORUM_CONFIG_CACHE_METRICS.HIT_COUNT)
@@ -69,11 +75,13 @@ export class ForumConfigCacheService extends PlatformService {
    * @param cacheKey - 缓存键
    * @returns 论坛配置
    */
-  private async loadConfigFromDatabase(cacheKey: string): Promise<ForumConfig> {
+  private async loadConfigFromDatabase(
+    cacheKey: string,
+  ): Promise<ForumConfigRecord> {
     try {
       const requestKey = `lock:${cacheKey}`
 
-      const config = await this.forumConfig.findFirst()
+      const [config] = await this.db.select().from(this.forumConfig).limit(1)
 
       if (config) {
         const ttl = this.getRandomTTL(FORUM_CONFIG_CACHE_TTL.LONG)
@@ -122,13 +130,18 @@ export class ForumConfigCacheService extends PlatformService {
    * 创建默认论坛配置
    * @returns 论坛配置
    */
-  private async createDefaultConfig(): Promise<ForumConfig> {
+  private async createDefaultConfig(): Promise<ForumConfigRecord> {
     try {
-      const config = await this.forumConfig.create({
-        data: DEFAULT_FORUM_CONFIG,
-      })
+      const [existing] = await this.db.select().from(this.forumConfig).limit(1)
+      if (existing) {
+        return existing as ForumConfigRecord
+      }
+      const [config] = await this.db
+        .insert(this.forumConfig)
+        .values(DEFAULT_FORUM_CONFIG)
+        .returning()
       this.logger.log(`已创建默认论坛配置 ID: ${config.id}`)
-      return config
+      return config as ForumConfigRecord
     } catch (error) {
       this.logger.error(`创建默认论坛配置失败: ${error.message}`, error.stack)
       throw error

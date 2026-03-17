@@ -1,4 +1,4 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import {
   CheckVerifyCodeDto,
   SmsService as LibSmsService,
@@ -6,6 +6,7 @@ import {
   SmsTemplateCodeEnum,
 } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, isNull } from 'drizzle-orm'
 import { AuthErrorMessages } from './auth.constant'
 
 /**
@@ -13,13 +14,18 @@ import { AuthErrorMessages } from './auth.constant'
  * 负责发送验证码、校验验证码等短信相关操作
  */
 @Injectable()
-export class SmsService extends PlatformService {
-  constructor(private readonly libSmsService: LibSmsService) {
-    super()
+export class SmsService {
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly libSmsService: LibSmsService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   get appUser() {
-    return this.prisma.appUser
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -31,7 +37,14 @@ export class SmsService extends PlatformService {
       SmsTemplateCodeEnum.VERIFY_BIND_PHONE === dto.templateCode ||
       SmsTemplateCodeEnum.RESET_PASSWORD === dto.templateCode
     ) {
-      if (!(await this.appUser.exists({ phone: dto.phone }))) {
+      const [user] = await this.db
+        .select({ id: this.appUser.id })
+        .from(this.appUser)
+        .where(
+          and(eq(this.appUser.phoneNumber, dto.phone), isNull(this.appUser.deletedAt)),
+        )
+        .limit(1)
+      if (!user) {
         throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
       }
     }

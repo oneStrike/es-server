@@ -5,7 +5,7 @@ import {
   IBrowseLogTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
@@ -54,7 +54,7 @@ export class WorkComicChapterBrowseLogResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(this.workChapter)
       .set({
         viewCount: sql`${this.workChapter.viewCount} + ${delta}`,
@@ -66,6 +66,7 @@ export class WorkComicChapterBrowseLogResolver
           isNull(this.workChapter.deletedAt),
         ),
       )
+    this.drizzle.assertAffectedRows(result, '漫画章节不存在')
   }
 
   /**
@@ -92,7 +93,7 @@ export class WorkComicChapterBrowseLogResolver
       .limit(1)
 
     if (!chapter[0]) {
-      throw new BadRequestException('漫画章节不存在')
+      throw new NotFoundException('漫画章节不存在')
     }
   }
 }

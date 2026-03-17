@@ -7,8 +7,6 @@ import { ForumConfigModule } from './config'
 import { ForumCounterModule } from './counter'
 import { ForumModeratorModule } from './moderator'
 import { ForumProfileModule } from './profile'
-import { ForumReplyModule } from './reply'
-import { ForumReplyLikeModule } from './reply-like'
 import { ForumSearchModule } from './search'
 import { ForumSectionModule } from './section'
 import { ForumSectionGroupModule } from './section-group'
@@ -29,8 +27,6 @@ import { ForumTopicModule } from './topic'
     ForumModeratorModule,
     UserPointModule,
     ForumProfileModule,
-    ForumReplyModule,
-    ForumReplyLikeModule,
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,
@@ -47,8 +43,6 @@ import { ForumTopicModule } from './topic'
     ForumModeratorModule,
     UserPointModule,
     ForumProfileModule,
-    ForumReplyModule,
-    ForumReplyLikeModule,
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,

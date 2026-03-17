@@ -1,3 +1,4 @@
+import { DrizzleService } from '@db/core'
 import { forumTopic } from '@db/schema'
 import {
   CommentService,
@@ -5,7 +6,6 @@ import {
   ICommentTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
-import { PlatformService } from '@libs/platform/database'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -15,15 +15,15 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class ForumTopicCommentResolver
-  extends PlatformService
   implements ICommentTargetResolver, OnModuleInit
 {
   /** 目标类型：论坛帖子 */
   readonly targetType = CommentTargetTypeEnum.FORUM_TOPIC
 
-  constructor(private readonly commentService: CommentService) {
-    super()
-  }
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly commentService: CommentService,
+  ) {}
 
   /**
    * 模块初始化时注册解析器
@@ -49,19 +49,13 @@ export class ForumTopicCommentResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(forumTopic)
       .set({
         commentCount: sql`${forumTopic.commentCount} + ${delta}`,
       })
       .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
-    const updated = await tx.query.forumTopic.findFirst({
-      where: { id: targetId, deletedAt: { isNull: true } },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new BadRequestException('帖子不存在')
-    }
+    this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
   /**

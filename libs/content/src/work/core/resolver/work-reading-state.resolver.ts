@@ -53,7 +53,6 @@ export class WorkReadingStateResolver
       where: {
         id: chapterId,
         workId,
-        deletedAt: null,
       },
       select: {
         id: true,
@@ -61,10 +60,66 @@ export class WorkReadingStateResolver
         subtitle: true,
         cover: true,
         sortOrder: true,
+        deletedAt: true,
       },
     })
+    if (!chapter) {
+      return undefined
+    }
+    return {
+      id: chapter.id,
+      title: chapter.title,
+      subtitle: chapter.subtitle,
+      cover: chapter.cover,
+      sortOrder: chapter.sortOrder,
+      shouldDelete: Boolean(chapter.deletedAt),
+    }
+  }
 
-    return chapter || undefined
+  async resolveChapterSnapshots(
+    refs: Array<{ workId: number, chapterId: number }>,
+  ) {
+    if (refs.length === 0) {
+      return []
+    }
+
+    const chapterIds = [...new Set(refs.map((ref) => ref.chapterId))]
+    const chapters = await this.prisma.workChapter.findMany({
+      where: {
+        id: { in: chapterIds },
+      },
+      select: {
+        id: true,
+        workId: true,
+        title: true,
+        subtitle: true,
+        cover: true,
+        sortOrder: true,
+        deletedAt: true,
+      },
+    })
+    const chapterMap = new Map(chapters.map((chapter) => [chapter.id, chapter]))
+
+    return refs.map((ref) => {
+      const chapter = chapterMap.get(ref.chapterId)
+      const snapshot =
+        chapter && chapter.workId === ref.workId
+          ? {
+              id: chapter.id,
+              title: chapter.title,
+              subtitle: chapter.subtitle,
+              cover: chapter.cover,
+              sortOrder: chapter.sortOrder,
+              shouldDelete: Boolean(chapter.deletedAt),
+            }
+          : undefined
+
+      return {
+        workId: ref.workId,
+        chapterId: ref.chapterId,
+        snapshot,
+      }
+    })
   }
 
   /**
@@ -81,7 +136,6 @@ export class WorkReadingStateResolver
     const works = await this.prisma.work.findMany({
       where: {
         id: { in: workIds },
-        deletedAt: null,
       },
       select: {
         id: true,
@@ -89,12 +143,17 @@ export class WorkReadingStateResolver
         name: true,
         cover: true,
         serialStatus: true,
+        deletedAt: true,
       },
     })
 
     return works.map((w) => ({
-      ...w,
+      id: w.id,
       type: w.type,
+      name: w.name,
+      cover: w.cover,
+      serialStatus: w.serialStatus,
+      shouldDelete: Boolean(w.deletedAt),
     }))
   }
 

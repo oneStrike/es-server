@@ -6,7 +6,12 @@ import {
   PurchaseTargetTypeEnum,
 } from '@libs/interaction'
 import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
@@ -55,7 +60,7 @@ export class WorkComicChapterPurchaseResolver
     })
 
     if (!chapter) {
-      throw new BadRequestException('漫画章节不存在')
+      throw new NotFoundException('漫画章节不存在')
     }
 
     if (chapter.viewRule !== WorkViewPermissionEnum.PURCHASE) {
@@ -83,7 +88,7 @@ export class WorkComicChapterPurchaseResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(this.workChapter)
       .set({
         purchaseCount: sql`${this.workChapter.purchaseCount} + ${delta}`,
@@ -95,5 +100,6 @@ export class WorkComicChapterPurchaseResolver
           isNull(this.workChapter.deletedAt),
         ),
       )
+    this.drizzle.assertAffectedRows(result, '漫画章节不存在')
   }
 }

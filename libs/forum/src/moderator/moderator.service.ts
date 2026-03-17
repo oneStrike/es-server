@@ -1,6 +1,7 @@
-import { ForumModeratorWhereInput, PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { IdDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
 import {
   AssignForumModeratorSectionDto,
   CreateForumModeratorDto,
@@ -17,29 +18,27 @@ import {
  * 提供论坛版主的增删改查、板块分配、权限管理等核心业务逻辑
  */
 @Injectable()
-export class ForumModeratorService extends PlatformService {
-  constructor() {
-    super()
+export class ForumModeratorService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   get forumModerator() {
-    return this.prisma.forumModerator
+    return this.drizzle.schema.forumModerator
   }
 
   get forumModeratorSection() {
-    return this.prisma.forumModeratorSection
-  }
-
-  get forumModeratorActionLog() {
-    return this.prisma.forumModeratorActionLog
+    return this.drizzle.schema.forumModeratorSection
   }
 
   get forumSection() {
-    return this.prisma.forumSection
+    return this.drizzle.schema.forumSection
   }
 
   get appUser() {
-    return this.prisma.appUser
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -48,12 +47,20 @@ export class ForumModeratorService extends PlatformService {
    * @returns 创建结果
    */
   async createModerator(dto: CreateForumModeratorDto) {
-    if (!(await this.appUser.exists({ id: dto.userId }))) {
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: dto.userId },
+      columns: { id: true },
+    })
+    if (!user) {
       throw new BadRequestException(`ID【${dto.userId}】数据不存在`)
     }
 
-    const existing = await this.forumModerator.findUnique({
-      where: { userId: dto.userId },
+    const existing = await this.db.query.forumModerator.findFirst({
+      where: {
+        userId: dto.userId,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
     })
 
     if (existing) {
@@ -67,14 +74,12 @@ export class ForumModeratorService extends PlatformService {
       ] as ForumModeratorPermissionEnum[]
     }
 
-    const { sectionIds, ...moderatorData } = dto
-
-    return this.forumModerator.create({
-      data: moderatorData as any,
-      select: {
-        id: true,
-      },
-    })
+    const { sectionIds: _sectionIds, ...moderatorData } = dto
+    const [created] = await this.db
+      .insert(this.forumModerator)
+      .values(moderatorData as any)
+      .returning({ id: this.forumModerator.id })
+    return created
   }
 
   /**
@@ -83,16 +88,24 @@ export class ForumModeratorService extends PlatformService {
    * @returns 移除结果
    */
   async removeModerator(dto: IdDto) {
-    if (!(await this.forumModerator.exists({ id: dto.id }))) {
+    const moderator = await this.db.query.forumModerator.findFirst({
+      where: { id: dto.id, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (!moderator) {
       throw new BadRequestException(`ID【${dto.id}】数据不存在`)
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.forumModeratorSection.deleteMany({
-        where: { moderatorId: dto.id },
-      })
-
-      await tx.forumModerator.softDelete({ id: dto.id })
+    await this.db.transaction(async (tx) => {
+      await tx
+        .delete(this.forumModeratorSection)
+        .where(eq(this.forumModeratorSection.moderatorId, dto.id))
+      await tx
+        .update(this.forumModerator)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(eq(this.forumModerator.id, dto.id), isNull(this.forumModerator.deletedAt)),
+        )
     })
 
     return { id: dto.id }
@@ -108,14 +121,25 @@ export class ForumModeratorService extends PlatformService {
 
     const uniqueSectionIds = [...new Set(sectionIds)]
 
-    if (!(await this.forumModerator.exists({ id: moderatorId }))) {
+    const moderator = await this.db.query.forumModerator.findFirst({
+      where: { id: moderatorId, deletedAt: { isNull: true } },
+      columns: { id: true },
+    })
+    if (!moderator) {
       throw new BadRequestException('版主不存在')
     }
 
-    const sections = await this.forumSection.findMany({
-      where: { id: { in: uniqueSectionIds } },
-      select: { id: true },
-    })
+    const sections = uniqueSectionIds.length
+      ? await this.db
+          .select({ id: this.forumSection.id })
+          .from(this.forumSection)
+          .where(
+            and(
+              inArray(this.forumSection.id, uniqueSectionIds),
+              isNull(this.forumSection.deletedAt),
+            ),
+          )
+      : []
 
     const existingSectionIds = sections.map((s) => s.id)
     const missingSectionIds = uniqueSectionIds.filter(
@@ -128,25 +152,25 @@ export class ForumModeratorService extends PlatformService {
       )
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       await Promise.all(
         uniqueSectionIds.map(async (sectionId) =>
-          tx.forumModeratorSection.upsert({
-            where: {
-              moderatorId_sectionId: {
-                moderatorId,
-                sectionId,
-              },
-            },
-            update: {
-              permissions,
-            },
-            create: {
+          tx
+            .insert(this.forumModeratorSection)
+            .values({
               moderatorId,
               sectionId,
-              permissions,
-            },
-          }),
+              permissions: permissions as number[],
+            })
+            .onConflictDoUpdate({
+              target: [
+                this.forumModeratorSection.moderatorId,
+                this.forumModeratorSection.sectionId,
+              ],
+              set: {
+                permissions: permissions as number[],
+              },
+            }),
         ),
       )
     })
@@ -160,41 +184,59 @@ export class ForumModeratorService extends PlatformService {
    * @returns 版主列表
    */
   async getModeratorPage(queryDto: QueryForumModeratorDto) {
-    const { nickname, sectionId } = queryDto
+    const { nickname, sectionId, ...otherDto } = queryDto
+    const where = this.drizzle.buildWhere(this.forumModerator, {
+      and: {
+        deletedAt: { isNull: true },
+        isEnabled: queryDto.isEnabled,
+        userId: queryDto.userId,
+      },
+    })
 
-    const where: ForumModeratorWhereInput = {
-      deletedAt: null,
-    }
+    const conditions = [where]
 
     if (nickname) {
-      where.user = {
-        nickname: {
-          contains: nickname,
-          mode: 'insensitive',
-        },
-      }
+      const userIds = await this.db
+        .select({ id: this.appUser.id })
+        .from(this.appUser)
+        .where(ilike(this.appUser.nickname, `%${nickname}%`))
+      const ids = userIds.map((item) => item.id)
+      conditions.push(ids.length ? inArray(this.forumModerator.userId, ids) : eq(this.forumModerator.id, -1))
     }
 
     if (sectionId) {
-      where.sections = {
-        some: {
-          sectionId,
-        },
-      }
+      const moderatorIds = await this.db
+        .select({ moderatorId: this.forumModeratorSection.moderatorId })
+        .from(this.forumModeratorSection)
+        .where(eq(this.forumModeratorSection.sectionId, sectionId))
+      const ids = moderatorIds.map((item) => item.moderatorId)
+      conditions.push(ids.length ? inArray(this.forumModerator.id, ids) : eq(this.forumModerator.id, -1))
     }
 
-    return this.forumModerator.findPagination({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
-      },
+    const page = await this.drizzle.ext.findPagination(this.forumModerator, {
+      where: and(...(conditions as [any, ...any[]])),
+      ...otherDto,
     })
+    const userIds = page.list.map((item) => item.userId)
+    const users = userIds.length
+      ? await this.db
+          .select({
+            id: this.appUser.id,
+            nickname: this.appUser.nickname,
+            avatar: this.appUser.avatarUrl,
+          })
+          .from(this.appUser)
+          .where(inArray(this.appUser.id, userIds))
+      : []
+    const userMap = new Map(users.map((user) => [user.id, user]))
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        user: userMap.get(item.userId) ?? null,
+      })),
+    }
   }
 
   /**
@@ -203,19 +245,28 @@ export class ForumModeratorService extends PlatformService {
    * @returns 更新结果
    */
   async updateModerator(updateDto: UpdateForumModeratorDto) {
-    const { id, ...updateData } = updateDto
+    const { id, sectionIds: _sectionIds, ...updateData } = updateDto
 
-    const moderator = await this.forumModerator.findUnique({
-      where: { id },
+    const moderator = await this.db.query.forumModerator.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      columns: { id: true },
     })
 
     if (!moderator) {
       throw new BadRequestException('版主不存在')
     }
 
-    return this.forumModerator.update({
-      where: { id },
-      data: updateData,
-    })
+    if (updateData.roleType === ForumModeratorRoleTypeEnum.SUPER) {
+      updateData.permissions = [
+        ...Object.values(ForumModeratorPermissionEnum),
+      ] as ForumModeratorPermissionEnum[]
+    }
+
+    const [data] = await this.db
+      .update(this.forumModerator)
+      .set(updateData as any)
+      .where(and(eq(this.forumModerator.id, id), isNull(this.forumModerator.deletedAt)))
+      .returning()
+    return data
   }
 }

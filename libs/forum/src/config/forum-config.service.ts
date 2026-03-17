@@ -1,33 +1,43 @@
-import type { ForumConfig, ForumConfigHistory } from '@libs/platform/database'
-
 import type { FastifyRequest } from 'fastify'
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 import { extractIpAddress, extractUserAgent } from '@libs/platform/utils'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { desc, eq } from 'drizzle-orm'
 import { UpdateForumConfigDto } from './dto/forum-config.dto'
 import { ForumConfigCacheService } from './forum-config-cache.service'
 import { ChangeTypeEnum, DEFAULT_FORUM_CONFIG } from './forum-config.constant'
+
+type ForumConfigRow = Record<string, unknown> & { id: number, updatedById?: number | null }
 
 /**
  * 论坛配置服务
  * 提供配置的增删改查、历史记录管理以及缓存管理功能
  */
 @Injectable()
-export class ForumConfigService extends PlatformService {
-  constructor(private readonly cacheService: ForumConfigCacheService) {
-    super()
+export class ForumConfigService {
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly cacheService: ForumConfigCacheService,
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
   get adminUser() {
-    return this.prisma.adminUser
+    return this.drizzle.schema.adminUser
   }
 
   get forumConfig() {
-    return this.prisma.forumConfig
+    return this.drizzle.schema.forumConfig
+  }
+
+  get forumConfigHistory() {
+    return this.drizzle.schema.forumConfigHistory
   }
 
   /**
@@ -50,15 +60,22 @@ export class ForumConfigService extends PlatformService {
     req?: FastifyRequest,
   ) {
     // 验证用户是否存在
-    if (!(await this.adminUser.exists({ id: userId }))) {
+    const [adminUser] = await this.db
+      .select({ id: this.adminUser.id })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, userId))
+      .limit(1)
+    if (!adminUser) {
       throw new BadRequestException('更新失败，无法获取用户信息')
     }
     const { id, reason, ...updateData } = updateForumConfigDto
 
     // 检查配置是否存在
-    const existingConfig = await this.prisma.forumConfig.findUnique({
-      where: { id },
-    })
+    const [existingConfig] = await this.db
+      .select()
+      .from(this.forumConfig)
+      .where(eq(this.forumConfig.id, id))
+      .limit(1)
 
     if (!existingConfig) {
       throw new NotFoundException('配置不存在')
@@ -75,13 +92,14 @@ export class ForumConfigService extends PlatformService {
     }
 
     // 更新配置
-    const updatedConfig = await this.prisma.forumConfig.update({
-      where: { id },
-      data: {
+    const [updatedConfig] = await this.db
+      .update(this.forumConfig)
+      .set({
         ...updateData,
         updatedById: userId,
-      },
-    })
+      })
+      .where(eq(this.forumConfig.id, id))
+      .returning()
 
     await this.recordConfigHistory(
       id,
@@ -104,12 +122,12 @@ export class ForumConfigService extends PlatformService {
    * @param req FastifyRequest 对象，用于获取 IP 和 User-Agent
    */
   async resetToDefault(req?: FastifyRequest) {
-    const existingConfig = await this.prisma.forumConfig.findFirst()
+    const [existingConfig] = await this.db.select().from(this.forumConfig).limit(1)
 
     if (existingConfig) {
-      await this.prisma.forumConfig.delete({
-        where: { id: existingConfig.id },
-      })
+      await this.db
+        .delete(this.forumConfig)
+        .where(eq(this.forumConfig.id, existingConfig.id))
     }
 
     const config = await this.createDefaultConfig(req)
@@ -122,9 +140,10 @@ export class ForumConfigService extends PlatformService {
    * 获取配置历史记录列表
    */
   async getConfigHistory() {
-    return this.prisma.forumConfigHistory.findMany({
-      orderBy: { id: 'desc' },
-    })
+    return this.db
+      .select()
+      .from(this.forumConfigHistory)
+      .orderBy(desc(this.forumConfigHistory.id))
   }
 
   /**
@@ -132,22 +151,32 @@ export class ForumConfigService extends PlatformService {
    */
   async deleteConfigHistory(historyId: number, userId?: number) {
     // 验证用户是否存在
-    if (!userId || !(await this.adminUser.exists({ id: userId }))) {
+    if (!userId) {
+      throw new BadRequestException('更新失败，无法获取用户信息')
+    }
+    const [adminUser] = await this.db
+      .select({ id: this.adminUser.id })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, userId))
+      .limit(1)
+    if (!adminUser) {
       throw new BadRequestException('更新失败，无法获取用户信息')
     }
     // 检查历史记录是否存在
-    const history = await this.prisma.forumConfigHistory.findUnique({
-      where: { id: historyId },
-    })
+    const [history] = await this.db
+      .select()
+      .from(this.forumConfigHistory)
+      .where(eq(this.forumConfigHistory.id, historyId))
+      .limit(1)
 
     if (!history) {
       throw new NotFoundException('历史记录不存在')
     }
 
     // 删除历史记录
-    await this.prisma.forumConfigHistory.delete({
-      where: { id: historyId },
-    })
+    await this.db
+      .delete(this.forumConfigHistory)
+      .where(eq(this.forumConfigHistory.id, historyId))
   }
 
   /**
@@ -163,22 +192,34 @@ export class ForumConfigService extends PlatformService {
     req?: FastifyRequest,
   ) {
     // 验证用户是否存在
-    if (!userId || !(await this.adminUser.exists({ id: userId }))) {
+    if (!userId) {
+      throw new BadRequestException('更新失败，无法获取用户信息')
+    }
+    const [adminUser] = await this.db
+      .select({ id: this.adminUser.id })
+      .from(this.adminUser)
+      .where(eq(this.adminUser.id, userId))
+      .limit(1)
+    if (!adminUser) {
       throw new BadRequestException('更新失败，无法获取用户信息')
     }
     // 查找历史记录
-    const history = await this.prisma.forumConfigHistory.findUnique({
-      where: { id: historyId },
-    })
+    const [history] = await this.db
+      .select()
+      .from(this.forumConfigHistory)
+      .where(eq(this.forumConfigHistory.id, historyId))
+      .limit(1)
 
     if (!history) {
       throw new NotFoundException('历史记录不存在')
     }
 
     // 检查配置是否存在
-    const config = await this.prisma.forumConfig.findUnique({
-      where: { id: history.configId },
-    })
+    const [config] = await this.db
+      .select({ id: this.forumConfig.id })
+      .from(this.forumConfig)
+      .where(eq(this.forumConfig.id, history.configId))
+      .limit(1)
 
     if (!config) {
       throw new NotFoundException('配置不存在')
@@ -188,13 +229,14 @@ export class ForumConfigService extends PlatformService {
     const restoreData = this.extractRestoreData(history.changes)
 
     // 更新配置
-    const updatedConfig = await this.prisma.forumConfig.update({
-      where: { id: history.configId },
-      data: {
+    const [updatedConfig] = await this.db
+      .update(this.forumConfig)
+      .set({
         ...restoreData,
         updatedById: userId,
-      },
-    })
+      })
+      .where(eq(this.forumConfig.id, history.configId))
+      .returning()
 
     // 记录恢复操作
     await this.recordConfigHistory(
@@ -219,10 +261,11 @@ export class ForumConfigService extends PlatformService {
    */
   private async createDefaultConfig(
     req?: FastifyRequest,
-  ): Promise<ForumConfig> {
-    const config = await this.prisma.forumConfig.create({
-      data: DEFAULT_FORUM_CONFIG,
-    })
+  ): Promise<ForumConfigRow> {
+    const [config] = await this.db
+      .insert(this.forumConfig)
+      .values(DEFAULT_FORUM_CONFIG)
+      .returning()
 
     // 记录创建操作
     await this.recordConfigHistory(
@@ -248,14 +291,13 @@ export class ForumConfigService extends PlatformService {
    */
   private async recordConfigHistory(
     configId: number,
-    changes: any,
+    changes: Record<string, unknown>,
     changeType: ChangeTypeEnum,
     operatedById?: number,
     reason?: string,
     req?: FastifyRequest,
   ) {
-    await this.prisma.forumConfigHistory.create({
-      data: {
+    await this.db.insert(this.forumConfigHistory).values({
         configId,
         changes,
         changeType,
@@ -263,7 +305,6 @@ export class ForumConfigService extends PlatformService {
         reason,
         ipAddress: req ? extractIpAddress(req) : undefined,
         userAgent: req ? extractUserAgent(req) : undefined,
-      },
     })
   }
 
@@ -273,13 +314,13 @@ export class ForumConfigService extends PlatformService {
    * @param changes 变更记录
    * @returns 需要恢复的数据对象
    */
-  private extractRestoreData(changes: ForumConfigHistory['changes']) {
+  private extractRestoreData(changes: unknown) {
     if (!changes) {
       return {}
     }
-    const restoreData = {}
+    const restoreData: Record<string, unknown> = {}
 
-    for (const [key, value] of Object.entries(changes)) {
+    for (const [key, value] of Object.entries(changes as Record<string, unknown>)) {
       // 如果是包含old和new的变更记录，提取old值
       if (
         typeof value === 'object' &&
@@ -287,7 +328,7 @@ export class ForumConfigService extends PlatformService {
         'old' in value &&
         'new' in value
       ) {
-        const fieldChange = value
+        const fieldChange = value as { old: unknown, new: unknown }
         restoreData[key] = fieldChange.old
       } else if (value !== undefined) {
         // 否则直接使用该值
@@ -306,17 +347,17 @@ export class ForumConfigService extends PlatformService {
    * @returns 变更记录对象，包含每个变化字段的old和new值
    */
   private buildChangesRecord(
-    existingConfig: ForumConfig,
+    existingConfig: ForumConfigRow,
     updateData: UpdateForumConfigDto,
   ) {
-    const changes = {}
+    const changes: Record<string, { old: unknown, new: unknown }> = {}
 
     for (const [key, newValue] of Object.entries(updateData)) {
       if (key in existingConfig) {
-        const oldValue = existingConfig[key as keyof ForumConfig]
+        const oldValue = existingConfig[key]
         // 只记录发生变化的字段
         if (oldValue !== newValue) {
-          changes[key as keyof ForumConfig] = {
+          changes[key] = {
             old: oldValue,
             new: newValue,
           }

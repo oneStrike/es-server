@@ -10,6 +10,7 @@ export interface ReadingStateChapterSnapshot {
   subtitle: string | null
   cover: string | null
   sortOrder: number
+  shouldDelete: boolean
 }
 
 /**
@@ -21,6 +22,7 @@ export interface ReadingStateWorkSnapshot {
   name: string
   cover: string
   serialStatus: number
+  shouldDelete: boolean
 }
 
 /**
@@ -43,6 +45,15 @@ export interface IReadingStateResolver {
     workId: number,
     chapterId: number,
   ) => Promise<ReadingStateChapterSnapshot | undefined>
+  resolveChapterSnapshots?: (
+    refs: Array<{ workId: number, chapterId: number }>,
+  ) => Promise<
+    Array<{
+      workId: number
+      chapterId: number
+      snapshot: ReadingStateChapterSnapshot | undefined
+    }>
+  >
 
   /**
    * 解析作品快照列表

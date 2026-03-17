@@ -1,5 +1,6 @@
 import { ContentTypeEnum } from '@libs/platform/constant'
 import {
+  BooleanProperty,
   DateProperty,
   EnumProperty,
   NestedProperty,
@@ -120,6 +121,14 @@ export class WorkDto {
     maxLength: 500,
   })
   cover!: string
+
+  @BooleanProperty({
+    description: '作品是否已删除',
+    example: false,
+    required: false,
+    validation: false,
+  })
+  shouldDelete?: boolean
 }
 
 export class WorkChapterDto {
@@ -161,6 +170,14 @@ export class WorkChapterDto {
     min: 0,
   })
   sortOrder!: number
+
+  @BooleanProperty({
+    description: '章节是否已删除',
+    example: false,
+    required: false,
+    validation: false,
+  })
+  shouldDelete?: boolean
 }
 
 export class ReadingHistoryWorkDto extends BaseReadingStateDto {

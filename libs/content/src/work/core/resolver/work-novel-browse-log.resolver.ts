@@ -5,7 +5,7 @@ import {
   IBrowseLogTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
@@ -54,7 +54,7 @@ export class WorkNovelBrowseLogResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(this.work)
       .set({
         viewCount: sql`${this.work.viewCount} + ${delta}`,
@@ -66,6 +66,7 @@ export class WorkNovelBrowseLogResolver
           isNull(this.work.deletedAt),
         ),
       )
+    this.drizzle.assertAffectedRows(result, '小说作品不存在')
   }
 
   /**
@@ -92,7 +93,7 @@ export class WorkNovelBrowseLogResolver
       .limit(1)
 
     if (!work[0]) {
-      throw new BadRequestException('小说作品不存在')
+      throw new NotFoundException('小说作品不存在')
     }
   }
 }

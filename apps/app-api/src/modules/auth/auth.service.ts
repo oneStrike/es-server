@@ -1,7 +1,7 @@
 import type { FastifyRequest } from 'fastify'
+import { DrizzleService } from '@db/core'
 import { ForumProfileService } from '@libs/forum'
 import { GenderEnum } from '@libs/platform/constant'
-import { PlatformService } from '@libs/platform/database'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthService as BaseAuthService,
@@ -9,6 +9,7 @@ import {
 } from '@libs/platform/modules/auth'
 import { extractIpAddress, parseDeviceInfo } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, isNull, or } from 'drizzle-orm'
 import {
   AuthConstants,
   AuthDefaultValue,
@@ -25,8 +26,9 @@ import { AppTokenStorageService } from './token-storage.service'
  * 负责应用端用户的注册、登录、登出与令牌刷新
  */
 @Injectable()
-export class AuthService extends PlatformService {
+export class AuthService {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly rsaService: RsaService,
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
@@ -35,12 +37,14 @@ export class AuthService extends PlatformService {
     private readonly profileService: ForumProfileService,
     private readonly tokenStorageService: AppTokenStorageService,
     private readonly loginGuardService: LoginGuardService,
-  ) {
-    super()
+  ) {}
+
+  private get db() {
+    return this.drizzle.db
   }
 
-  get appUser() {
-    return this.prisma.appUser
+  get appUserTable() {
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -48,9 +52,11 @@ export class AuthService extends PlatformService {
    */
   async generateUniqueAccount() {
     const randomAccount = Math.floor(100000 + Math.random() * 900000)
-    const existingUser = await this.appUser.findUnique({
-      where: { account: String(randomAccount) },
-    })
+    const [existingUser] = await this.db
+      .select({ id: this.appUserTable.id })
+      .from(this.appUserTable)
+      .where(eq(this.appUserTable.account, String(randomAccount)))
+      .limit(1)
 
     if (existingUser) {
       return this.generateUniqueAccount()
@@ -82,19 +88,27 @@ export class AuthService extends PlatformService {
 
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
-    const user = await this.prisma.$transaction(async (tx) => {
+    const user = await this.drizzle.db.transaction(async (tx) => {
       const uid = await this.generateUniqueAccount()
 
-      const newUser = await tx.appUser.create({
-        data: {
+      const [newUser] = await tx
+        .insert(this.appUserTable)
+        .values({
           account: String(uid),
           nickname: `用户${uid}`,
           password: hashedPassword,
-          phone: body.phone,
-          gender: GenderEnum.UNKNOWN,
+          phoneNumber: body.phone,
+          genderType: GenderEnum.UNKNOWN,
           isEnabled: true,
-        },
-      })
+        })
+        .returning({
+          id: this.appUserTable.id,
+          account: this.appUserTable.account,
+          nickname: this.appUserTable.nickname,
+          password: this.appUserTable.password,
+          phone: this.appUserTable.phoneNumber,
+          isEnabled: this.appUserTable.isEnabled,
+        })
 
       await this.profileService.initForumProfile(tx, newUser.id)
       return newUser
@@ -123,25 +137,45 @@ export class AuthService extends PlatformService {
 
     let user
     if (body.phone) {
-      user = await this.appUser.findUnique({
-        where: { phone: body.phone },
-        omit: {
-          deletedAt: true,
-        },
-      })
+      ;[user] = await this.db
+        .select({
+          id: this.appUserTable.id,
+          account: this.appUserTable.account,
+          nickname: this.appUserTable.nickname,
+          password: this.appUserTable.password,
+          phone: this.appUserTable.phoneNumber,
+          isEnabled: this.appUserTable.isEnabled,
+        })
+        .from(this.appUserTable)
+        .where(
+          and(
+            eq(this.appUserTable.phoneNumber, body.phone),
+            isNull(this.appUserTable.deletedAt),
+          ),
+        )
+        .limit(1)
     } else {
       const accountInput = body.account!
-      const orConditions: Array<Record<string, string>> = [{ phone: accountInput }]
-      orConditions.push({ account: accountInput })
-
-      user = await this.appUser.findFirst({
-        where: {
-          OR: orConditions,
-        },
-        omit: {
-          deletedAt: true,
-        },
-      })
+      ;[user] = await this.db
+        .select({
+          id: this.appUserTable.id,
+          account: this.appUserTable.account,
+          nickname: this.appUserTable.nickname,
+          password: this.appUserTable.password,
+          phone: this.appUserTable.phoneNumber,
+          isEnabled: this.appUserTable.isEnabled,
+        })
+        .from(this.appUserTable)
+        .where(
+          and(
+            or(
+              eq(this.appUserTable.phoneNumber, accountInput),
+              eq(this.appUserTable.account, accountInput),
+            ),
+            isNull(this.appUserTable.deletedAt),
+          ),
+        )
+        .limit(1)
     }
 
     if (!user) {
@@ -202,14 +236,13 @@ export class AuthService extends PlatformService {
    * 更新最后登录信息
    */
   private async updateUserLoginInfo(userId: number, req: FastifyRequest) {
-    await this.prisma.appUser.update({
-      where: { id: userId },
-      data: {
+    await this.db
+      .update(this.appUserTable)
+      .set({
         lastLoginAt: new Date(),
-        lastLoginIp:
-          extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
-      },
-    })
+        lastLoginIp: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
+      })
+      .where(eq(this.appUserTable.id, userId))
   }
 
   /**

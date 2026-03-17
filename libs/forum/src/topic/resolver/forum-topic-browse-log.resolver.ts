@@ -5,7 +5,7 @@ import {
   IBrowseLogTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
@@ -52,7 +52,7 @@ export class ForumTopicBrowseLogResolver
       return
     }
 
-    await tx
+    const result = await tx
       .update(this.forumTopic)
       .set({
         viewCount: sql`${this.forumTopic.viewCount} + ${delta}`,
@@ -63,6 +63,7 @@ export class ForumTopicBrowseLogResolver
           isNull(this.forumTopic.deletedAt),
         ),
       )
+    this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
   /**
@@ -88,7 +89,7 @@ export class ForumTopicBrowseLogResolver
       .limit(1)
 
     if (!topic[0]) {
-      throw new BadRequestException('帖子不存在')
+      throw new NotFoundException('帖子不存在')
     }
   }
 }

@@ -1,10 +1,20 @@
-import { PlatformService } from '@libs/platform/database'
+import { DrizzleService } from '@db/core'
 
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  sql,
+} from 'drizzle-orm'
 import {
   AssignForumTagToTopicDto,
   CreateForumTagDto,
@@ -18,26 +28,32 @@ import {
  * 提供对论坛标签的增删改查、标签与主题的关联管理等操作
  */
 @Injectable()
-export class ForumTagService extends PlatformService {
+export class ForumTagService {
+  constructor(private readonly drizzle: DrizzleService) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
+
   /**
    * 获取标签的 Prisma 模型
    */
   get forumTag() {
-    return this.prisma.forumTag
+    return this.drizzle.schema.forumTag
   }
 
   /**
    * 获取主题的 Prisma 模型
    */
   get forumTopic() {
-    return this.prisma.forumTopic
+    return this.drizzle.schema.forumTopic
   }
 
   /**
    * 获取主题标签关联的 Prisma 模型
    */
   get forumTopicTag() {
-    return this.prisma.forumTopicTag
+    return this.drizzle.schema.forumTopicTag
   }
 
   /**
@@ -49,23 +65,21 @@ export class ForumTagService extends PlatformService {
   async createTag(createForumTagDto: CreateForumTagDto) {
     const { name, ...tagData } = createForumTagDto
 
-    const existingTag = await this.forumTag.findFirst({
-      where: {
-        name,
-      },
+    const existingTag = await this.db.query.forumTag.findFirst({
+      where: { name },
     })
 
     if (existingTag) {
       throw new BadRequestException('该标签名称已存在')
     }
 
-    const tag = await this.forumTag.create({
-      data: {
+    const [tag] = await this.db
+      .insert(this.forumTag)
+      .values({
         ...tagData,
         name,
-      },
-    })
-
+      })
+      .returning()
     return tag
   }
 
@@ -77,31 +91,39 @@ export class ForumTagService extends PlatformService {
   async getTags(queryForumTagDto: QueryForumTagDto) {
     const { name, isEnabled } = queryForumTagDto
 
-    const where: any = {}
-
-    if (name) {
-      where.name = {
-        contains: name,
-      }
-    }
-
-    if (isEnabled !== undefined) {
-      where.isEnabled = isEnabled
-    }
-
-    return this.forumTag.findPagination({
-      where,
-      include: {
-        _count: {
-          select: {
-            topicTags: true,
-          },
-        },
+    const where = this.drizzle.buildWhere(this.forumTag, {
+      and: {
+        isEnabled,
       },
-      orderBy: {
-        sortOrder: 'asc',
-      },
+      ...(name ? { or: [ilike(this.forumTag.name, `%${name}%`)] } : {}),
     })
+
+    const page = await this.drizzle.ext.findPagination(this.forumTag, {
+      where,
+      ...queryForumTagDto,
+      orderBy: { sortOrder: 'asc' as const },
+    })
+    const tagIds = page.list.map((item) => item.id)
+    const countRows = tagIds.length
+      ? await this.db
+          .select({
+            tagId: this.forumTopicTag.tagId,
+            count: sql<number>`count(*)`,
+          })
+          .from(this.forumTopicTag)
+          .where(inArray(this.forumTopicTag.tagId, tagIds))
+          .groupBy(this.forumTopicTag.tagId)
+      : []
+    const countMap = new Map(countRows.map((row) => [row.tagId, Number(row.count)]))
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        _count: {
+          topicTags: countMap.get(item.id) ?? 0,
+        },
+      })),
+    }
   }
 
   /**
@@ -111,39 +133,34 @@ export class ForumTagService extends PlatformService {
    * @throws NotFoundException 如果标签不存在
    */
   async getTagById(id: number) {
-    const tag = await this.forumTag.findUnique({
+    const tag = await this.db.query.forumTag.findFirst({
       where: { id },
-      include: {
-        topicTags: {
-          where: {
-            topic: {
-              deletedAt: null,
-            },
-          },
-          include: {
-            topic: {
-              select: {
-                id: true,
-                title: true,
-                createdAt: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 10,
-        },
-      },
     })
 
     if (!tag) {
       throw new NotFoundException('标签不存在')
     }
 
+    const topicRows = await this.db
+      .select({
+        id: this.forumTopic.id,
+        title: this.forumTopic.title,
+        createdAt: this.forumTopic.createdAt,
+      })
+      .from(this.forumTopicTag)
+      .innerJoin(this.forumTopic, eq(this.forumTopic.id, this.forumTopicTag.topicId))
+      .where(
+        and(
+          eq(this.forumTopicTag.tagId, id),
+          isNull(this.forumTopic.deletedAt),
+        ),
+      )
+      .orderBy(desc(this.forumTopicTag.createdAt))
+      .limit(10)
+
     return {
       ...tag,
-      topics: tag.topicTags.map((item) => item.topic),
+      topics: topicRows,
     }
   }
 
@@ -157,33 +174,25 @@ export class ForumTagService extends PlatformService {
   async updateTag(updateForumTagDto: UpdateForumTagDto) {
     const { id, name, ...updateData } = updateForumTagDto
 
-    const tag = await this.forumTag.findUnique({
-      where: { id },
-    })
+    const tag = await this.db.query.forumTag.findFirst({ where: { id } })
 
     if (!tag) {
       throw new NotFoundException('标签不存在')
     }
 
     if (name) {
-      const existingTag = await this.forumTag.findFirst({
-        where: {
-          name,
-          id: {
-            not: id,
-          },
-        },
-      })
+      const existingTag = await this.db.query.forumTag.findFirst({ where: { name } })
 
-      if (existingTag) {
+      if (existingTag && existingTag.id !== id) {
         throw new BadRequestException('该标签名称已存在')
       }
     }
 
-    const updatedTag = await this.forumTag.update({
-      where: { id },
-      data: updateData,
-    })
+    const [updatedTag] = await this.db
+      .update(this.forumTag)
+      .set({ name, ...updateData })
+      .where(eq(this.forumTag.id, id))
+      .returning()
 
     return updatedTag
   }
@@ -196,28 +205,21 @@ export class ForumTagService extends PlatformService {
    * @throws BadRequestException 如果标签已被使用
    */
   async deleteTag(id: number) {
-    const tag = await this.forumTag.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            topicTags: true,
-          },
-        },
-      },
-    })
+    const tag = await this.db.query.forumTag.findFirst({ where: { id } })
 
     if (!tag) {
       throw new NotFoundException('标签不存在')
     }
 
-    if (tag._count.topicTags > 0) {
+    const [countRow] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(this.forumTopicTag)
+      .where(eq(this.forumTopicTag.tagId, id))
+    if (Number(countRow?.count ?? 0) > 0) {
       throw new BadRequestException('该标签已被使用，无法删除')
     }
 
-    await this.forumTag.delete({
-      where: { id },
-    })
+    await this.db.delete(this.forumTag).where(eq(this.forumTag.id, id))
 
     return { success: true }
   }
@@ -232,17 +234,15 @@ export class ForumTagService extends PlatformService {
   async assignTagToTopic(assignTagToTopicDto: AssignForumTagToTopicDto) {
     const { topicId, tagId } = assignTagToTopicDto
 
-    const topic = await this.forumTopic.findUnique({
-      where: { id: topicId, deletedAt: null },
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: { id: topicId, deletedAt: { isNull: true } },
     })
 
     if (!topic) {
       throw new NotFoundException('主题不存在')
     }
 
-    const tag = await this.forumTag.findUnique({
-      where: { id: tagId },
-    })
+    const tag = await this.db.query.forumTag.findFirst({ where: { id: tagId } })
 
     if (!tag) {
       throw new NotFoundException('标签不存在')
@@ -252,13 +252,8 @@ export class ForumTagService extends PlatformService {
       throw new BadRequestException('该标签未启用')
     }
 
-    const existingRelation = await this.forumTopicTag.findUnique({
-      where: {
-        topicId_tagId: {
-          topicId,
-          tagId,
-        },
-      },
+    const existingRelation = await this.db.query.forumTopicTag.findFirst({
+      where: { topicId, tagId },
     })
 
     if (existingRelation) {
@@ -266,23 +261,18 @@ export class ForumTagService extends PlatformService {
     }
 
     // 关联关系与使用次数同步更新
-    return this.prisma.$transaction(async (tx) => {
-      const topicTag = await tx.forumTopicTag.create({
-        data: {
+    return this.db.transaction(async (tx) => {
+      const [topicTag] = await tx
+        .insert(this.forumTopicTag)
+        .values({
           topicId,
           tagId,
-        },
-      })
-
-      await tx.forumTag.update({
-        where: { id: tagId },
-        data: {
-          useCount: {
-            increment: 1,
-          },
-        },
-      })
-
+        })
+        .returning()
+      await tx
+        .update(this.forumTag)
+        .set({ useCount: sql`${this.forumTag.useCount} + 1` })
+        .where(eq(this.forumTag.id, tagId))
       return topicTag
     })
   }
@@ -296,13 +286,8 @@ export class ForumTagService extends PlatformService {
   async removeTagFromTopic(removeTagFromTopicDto: RemoveForumTagFromTopicDto) {
     const { topicId, tagId } = removeTagFromTopicDto
 
-    const topicTag = await this.forumTopicTag.findUnique({
-      where: {
-        topicId_tagId: {
-          topicId,
-          tagId,
-        },
-      },
+    const topicTag = await this.db.query.forumTopicTag.findFirst({
+      where: { topicId, tagId },
     })
 
     if (!topicTag) {
@@ -310,25 +295,19 @@ export class ForumTagService extends PlatformService {
     }
 
     // 解除关联并回收使用次数
-    return this.prisma.$transaction(async (tx) => {
-      await tx.forumTopicTag.delete({
-        where: {
-          topicId_tagId: {
-            topicId,
-            tagId,
-          },
-        },
-      })
-
-      await tx.forumTag.update({
-        where: { id: tagId },
-        data: {
-          useCount: {
-            decrement: 1,
-          },
-        },
-      })
-
+    return this.db.transaction(async (tx) => {
+      await tx
+        .delete(this.forumTopicTag)
+        .where(
+          and(
+            eq(this.forumTopicTag.topicId, topicId),
+            eq(this.forumTopicTag.tagId, tagId),
+          ),
+        )
+      await tx
+        .update(this.forumTag)
+        .set({ useCount: sql`${this.forumTag.useCount} - 1` })
+        .where(eq(this.forumTag.id, tagId))
       return { success: true }
     })
   }
@@ -340,29 +319,30 @@ export class ForumTagService extends PlatformService {
    * @throws NotFoundException 如果主题不存在
    */
   async getTopicTags(topicId: number) {
-    const topic = await this.forumTopic.findUnique({
-      where: { id: topicId, deletedAt: null },
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: { id: topicId, deletedAt: { isNull: true } },
     })
 
     if (!topic) {
       throw new NotFoundException('主题不存在')
     }
 
-    const topicTags = await this.forumTopicTag.findMany({
-      where: {
-        topicId,
-      },
-      include: {
-        tag: true,
-      },
-      orderBy: {
-        tag: {
-          sortOrder: 'asc',
-        },
-      },
-    })
-
-    return topicTags.map((item) => item.tag)
+    return this.db
+      .select({
+        id: this.forumTag.id,
+        name: this.forumTag.name,
+        icon: this.forumTag.icon,
+        description: this.forumTag.description,
+        isEnabled: this.forumTag.isEnabled,
+        useCount: this.forumTag.useCount,
+        sortOrder: this.forumTag.sortOrder,
+        createdAt: this.forumTag.createdAt,
+        updatedAt: this.forumTag.updatedAt,
+      })
+      .from(this.forumTopicTag)
+      .innerJoin(this.forumTag, eq(this.forumTag.id, this.forumTopicTag.tagId))
+      .where(eq(this.forumTopicTag.topicId, topicId))
+      .orderBy(asc(this.forumTag.sortOrder))
   }
 
   /**
@@ -371,14 +351,12 @@ export class ForumTagService extends PlatformService {
    * @returns 热门标签列表，按使用次数降序排列
    */
   async getPopularTags(limit = 10) {
-    return this.forumTag.findMany({
+    return this.db.query.forumTag.findMany({
       where: {
         isEnabled: true,
       },
-      orderBy: {
-        useCount: 'desc',
-      },
-      take: limit,
+      orderBy: (tag, { desc }) => [desc(tag.useCount)],
+      limit,
     })
   }
 
@@ -387,13 +365,11 @@ export class ForumTagService extends PlatformService {
    * @returns 启用的标签列表，按排序值升序排列
    */
   async getEnabledTags() {
-    return this.forumTag.findMany({
+    return this.db.query.forumTag.findMany({
       where: {
         isEnabled: true,
       },
-      orderBy: {
-        sortOrder: 'asc',
-      },
+      orderBy: (tag, { asc }) => [asc(tag.sortOrder)],
     })
   }
 }
