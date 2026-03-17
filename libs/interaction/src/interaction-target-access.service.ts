@@ -1,3 +1,4 @@
+import type { InteractionTx } from './interaction-tx.type'
 import { DrizzleService } from '@db/core'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 import {
@@ -5,12 +6,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { and, gte, sql } from 'drizzle-orm'
 import { INTERACTION_TARGET_DEFINITIONS } from './interaction-target.definition'
 
 /**
  * 选择字段形状类型
  *
- * 用于定义 Prisma 查询中 select 子句的结构
+ * 用于定义查询中 select 子句的结构
  * 键为字段名，值为 boolean 表示是否选择该字段
  *
  * @example
@@ -26,7 +28,7 @@ type SelectShape = Record<string, boolean>
  * 提供统一的目标资源访问能力。
  *
  * 主要职责：
- * 1. 根据目标类型获取对应的 Prisma 模型代理
+ * 1. 根据目标类型获取对应的数据模型
  * 2. 构建目标查询条件（单个/批量）
  * 3. 验证目标是否存在
  * 4. 原子性地更新目标的计数字段
@@ -51,7 +53,7 @@ export class InteractionTargetAccessService {
     if (!definition) {
       throw new BadRequestException('不支持的交互目标类型')
     }
-    const table = (this.drizzle.schema as any)[definition.tableKey]
+    const table = Reflect.get(this.drizzle.schema, definition.tableKey)
     if (!table) {
       throw new BadRequestException(`目标模型不存在: ${definition.tableKey}`)
     }
@@ -59,50 +61,14 @@ export class InteractionTargetAccessService {
   }
 
   /**
-   * 获取目标类型对应的 Prisma 模型代理
-   *
-   * 根据交互目标类型，从定义中查找对应的模型键名，并返回 Prisma 客户端中的模型代理对象。
-   * 这消除了多个服务中重复的 switch(targetType) 逻辑。
-   *
-   * @param client - Prisma 客户端实例（可以是普通客户端或事务客户端）
-   * @param targetType - 交互目标类型枚举值
-   * @returns 对应的 Prisma 模型代理对象
-   * @throws {BadRequestException} 当目标类型不支持时抛出
-   * @throws {BadRequestException} 当模型在客户端中不存在时抛出
-   *
-   * @example
-   * // 获取漫画作品模型
-   * const workModel = this.getTargetModel(prismaClient, InteractionTargetTypeEnum.COMIC)
-   * // 现在可以使用 workModel 进行数据库操作
-   * const work = await workModel.findFirst({ where: { id: 1 } })
-   */
-  getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
-    // 从定义中获取目标类型对应的配置
-    const definition = INTERACTION_TARGET_DEFINITIONS[targetType]
-    if (!definition) {
-      throw new BadRequestException('不支持的交互目标类型')
-    }
-
-    // 通过模型键名动态获取 Prisma 模型
-    const model = client?.[definition.tableKey]
-    if (!model) {
-      throw new BadRequestException(
-        `目标模型不存在: ${definition.tableKey}`,
-      )
-    }
-
-    return model
-  }
-
-  /**
    * 构建单个目标的查询条件
    *
-   * 根据目标类型和目标ID，构建用于 Prisma 查询的 where 条件对象。
+   * 根据目标类型和目标ID，构建查询 where 条件对象。
    * 不同类型的目标可能需要不同的查询条件结构（如作品需要过滤类型和删除状态）。
    *
    * @param targetType - 交互目标类型枚举值
    * @param targetId - 目标的唯一标识ID
-   * @returns Prisma where 条件对象
+   * @returns where 条件对象
    * @throws {BadRequestException} 当目标类型不支持时抛出
    *
    * @example
@@ -135,7 +101,7 @@ export class InteractionTargetAccessService {
    *
    * @param targetType - 交互目标类型枚举值
    * @param targetIds - 目标ID数组
-   * @returns 包含 in 条件的 Prisma where 条件对象
+   * @returns 包含 in 条件的 where 对象
    * @throws {BadRequestException} 当目标类型不支持时抛出
    *
    * @example
@@ -204,7 +170,14 @@ export class InteractionTargetAccessService {
       throw new BadRequestException('不支持的交互目标类型')
     }
     const modelKey = definition.tableKey
-    const model = (this.db.query as any)[modelKey]
+    const model = Reflect.get(this.db.query, modelKey) as unknown as
+      | {
+          findFirst: (args: {
+            where: Record<string, unknown>
+            columns: SelectShape
+          }) => Promise<unknown>
+        }
+        | undefined
     if (!model) {
       throw new BadRequestException(`目标模型不存在: ${modelKey}`)
     }
@@ -237,7 +210,7 @@ export class InteractionTargetAccessService {
    * - 浏览时更新 viewCount
    * - 评论/删除评论时更新 commentCount
    *
-   * @param tx - Prisma 事务客户端（必须使用事务以确保原子性）
+   * @param tx - 事务客户端（必须使用事务以确保原子性）
    * @param targetType - 交互目标类型枚举值
    * @param targetId - 目标的唯一标识ID
    * @param field - 要更新的计数字段名（如 'likeCount', 'viewCount' 等）
@@ -274,13 +247,12 @@ export class InteractionTargetAccessService {
    * })
    */
   async applyTargetCountDelta(
-    tx: any,
+    tx: InteractionTx,
     targetType: InteractionTargetTypeEnum,
     targetId: number,
     field: string,
     delta: number,
   ) {
-    void tx
     // 增量为 0 时无需操作，直接返回
     if (delta === 0) {
       return
@@ -293,11 +265,34 @@ export class InteractionTargetAccessService {
     }
     const where = definition.whereBuilder(targetId)
     const condition = this.drizzle.buildWhere(table, {
-      and: where as any,
+      and: where,
     })
     if (!condition) {
       throw new NotFoundException('目标不存在')
     }
-    await this.drizzle.ext.applyCountDelta(table, condition, field, delta)
+    const tableAsAny = table
+    const column = tableAsAny[field]
+    if (!column) {
+      throw new NotFoundException(`字段 "${field}" 不存在`)
+    }
+
+    if (delta > 0) {
+      const updated = await tx
+        .update(table)
+        .set({ [field]: sql`${column} + ${delta}` } as any)
+        .where(condition)
+        .returning()
+      if (updated.length === 0) {
+        throw new NotFoundException('目标不存在')
+      }
+      return
+    }
+
+    const amount = Math.abs(delta)
+    await tx
+      .update(table)
+      .set({ [field]: sql`${column} - ${amount}` } as any)
+      .where(and(condition, gte(column, amount)))
+      .returning()
   }
 }

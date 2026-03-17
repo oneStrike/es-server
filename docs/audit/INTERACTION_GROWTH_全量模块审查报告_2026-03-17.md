@@ -4,7 +4,7 @@
 
 ### 1.1 审查范围
 
-- interaction：`libs/interaction/src` 全部文件（69 个）
+- interaction：`libs/interaction/src` 全部文件（66 个）
 - growth：`libs/growth/src` 全部文件（44 个）
 
 ### 1.2 审查维度
@@ -505,3 +505,49 @@ interaction 与 growth 模块整体架构方向正确，但当前存在数个“
   - 禁止 `void tx`
   - 禁止新增 `(xxx as any).rows` 解包
   - 写操作必须经过统一错误处理器
+
+---
+
+## 11. 与现有代码对比复核与修复状态（2026-03-17）
+
+### 11.1 覆盖度复核
+
+- 已按当前代码重新核对 `libs/interaction/src` 与 `libs/growth/src` 文件清单。
+- 未发现新增“未进入审查清单”的核心业务文件。
+- 审查范围统计修正为：
+  - interaction：66 个文件（原文 69 个，已修正）
+  - growth：44 个文件（与原文一致）
+
+### 11.2 漏查结论
+
+- 未发现新的高风险漏查项；原报告问题可覆盖当前主要风险面。
+
+### 11.3 P0 修复落地状态
+
+- H1 已修复：`interaction-target-growth-rule.ts` 中 `NOVEL_CHAPTER` 映射改为 `NOVEL_CHAPTER_LIKE`。
+- H2 已修复：`interaction-target-access.service.ts` 去除 `void tx`，目标计数更新改为使用传入事务 `tx` 执行。
+- H3 已修复：`task.service.ts` 对乐观锁更新 0 行场景增加冲突判空与异常抛出，避免 `updated.status` 空对象访问。
+- H4 已修复：`report-growth.service.ts` 移除不安全默认兜底规则，未命中映射时直接返回。
+- H5 已修复：`task.constant.ts` 注释乱码已恢复为可读中文语义。
+
+### 11.4 M 级问题修复状态
+
+- M1 已修复：点赞/收藏/浏览/举报/成长奖励服务的吞错分支补齐结构化告警日志。
+- M2 已修复：`point.service.ts`、`experience.service.ts` 的默认 `bizKey` 改为稳定可重入键，不再使用时间戳。
+- M3 已修复：`comment-growth.service.ts` 评论创建奖励写账本改为使用真实 `targetId`。
+- M4 已修复：`task.service.ts` 自动分配由串行改为并发处理，降低任务列表链路放大成本。
+- M5 已修复：`reading-state.service.ts` 阅读历史章节快照改为分组聚合并行拉取，移除逐条串行查询。
+- M6 已修复：`growth-ledger.service.ts` 在规则缺失/禁用/零值/限额拒绝/余额不足等 deny 路径补写审计日志。
+- M7 已修复：`favorite.service.ts` 目标详情聚合异常补齐告警日志，不再静默吞错。
+- M8 已修复：`query.helper.ts` 分页统一收敛为 1 基语义。
+- M9 已修复：`comment.service.ts` 收敛关键 `any` 使用（事务参数、目标类型、命中详情）。
+- M10 已修复：`level-rule.service.ts` 计数通用方法收敛为强类型签名。
+- M11 已修复：`growth-ledger.service.ts` 事务类型由 `Tx = any` 收敛为 `Tx = Db`，并移除已无必要的双栈分支判断。
+
+### 11.5 低风险/技术债修复状态
+
+- 已修复：`interaction-target-access.service.ts` 删除未使用的 `getTargetModel` 迁移残留逻辑。
+- 已修复：interaction 模块历史 Prisma 文案已统一替换为通用事务表述。
+- 已修复：`libs/growth/src/task/tsconfig.lib.json` 冗余文件已移除，目录结构与模块根配置保持一致。
+- 已修复：`download/purchase/reading-state` 中 `any/as any` 结果解包已收敛为类型化提取。
+- 已修复：`browse-log.service.ts` 中 `tx: any` 已替换为 `InteractionTx`。

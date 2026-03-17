@@ -1,3 +1,4 @@
+import type { PgTable, SQL, TableConfig } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -422,7 +423,10 @@ export class UserLevelRuleService {
     }
   }
 
-  private async countByCondition(table: any, where: any): Promise<number> {
+  private async countByCondition(
+    table: PgTable<TableConfig>,
+    where: SQL | undefined,
+  ): Promise<number> {
     const [result] = await this.db
       .select({ total: sql<number>`count(*)` })
       .from(table)

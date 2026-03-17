@@ -133,7 +133,7 @@ export class ReportService {
   /**
    * 真正执行举报落库
    * 该方法只负责写库，不再承担目标校验职责
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param dto - 创建举报记录的完整数据
    * @param options - 可选项
    * @returns 创建的举报记录
@@ -144,27 +144,20 @@ export class ReportService {
     options: CreateUserReportOptions = {},
   ) {
     const { status, ...otherDto } = dto
-
-    try {
-      const [created] = await tx
-        .insert(this.userReport)
-        .values({
-          ...otherDto,
-          status: status ?? ReportStatusEnum.PENDING,
-        })
-        .returning()
-      return created
-    } catch (error) {
-      if (
-        this.drizzle.isUniqueViolation(error)
-        || this.drizzle.isErrorCode(error, 'P2002')
-      ) {
-        throw new BadRequestException(
-          options.duplicateMessage ?? '您已经举报过该内容，请勿重复举报',
-        )
-      }
-      throw error
-    }
+    const rows = await this.drizzle.withErrorHandling(
+      () =>
+        tx
+          .insert(this.userReport)
+          .values({
+            ...otherDto,
+            status: status ?? ReportStatusEnum.PENDING,
+          })
+          .returning(),
+      {
+        duplicate: options.duplicateMessage ?? '您已经举报过该内容，请勿重复举报',
+      },
+    )
+    return rows[0]
   }
 
   /**

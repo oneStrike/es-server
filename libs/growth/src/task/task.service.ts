@@ -16,6 +16,7 @@ import { DrizzleService } from '@db/core'
 import { UserGrowthRewardService } from '@libs/growth'
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
@@ -362,15 +363,14 @@ export class TaskService {
         deletedAt: { isNull: true },
       },
     })
-    const conditions: SQL[] = []
-    if (assignmentWhere) {
-      conditions.push(assignmentWhere)
-    }
-    if (type !== undefined) {
-      conditions.push(eq(this.taskTable.type, type))
-    }
-
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+    const taskWhere = this.drizzle.buildWhere(this.taskTable, {
+      and: {
+        type,
+      },
+    })
+    const whereClause = assignmentWhere && taskWhere
+      ? and(assignmentWhere, taskWhere)
+      : assignmentWhere ?? taskWhere
     const offset = (pageIndex - 1) * pageSize
 
     // 解析排序
@@ -577,6 +577,10 @@ export class TaskService {
       return updatedAssignment
     })
 
+    if (!updated) {
+      throw new ConflictException('任务进度更新冲突，请重试')
+    }
+
     // 如果刚完成，触发完成事件（发放奖励）
     if (
       assignment.status !== TaskAssignmentStatusEnum.COMPLETED &&
@@ -657,6 +661,10 @@ export class TaskService {
 
       return updatedAssignment
     })
+
+    if (!updated) {
+      throw new ConflictException('任务完成状态更新冲突，请重试')
+    }
 
     // 触发完成事件（发放奖励）
     await this.emitTaskCompleteEvent(userId, taskRecord, updated)
@@ -1045,11 +1053,24 @@ export class TaskService {
     try {
       return await this.createAssignment(taskRecord, userId, cycleKey, now)
     } catch (error) {
-      // 如果是唯一约束冲突，说明已有分配存在
-      if (!this.drizzle.isUniqueViolation(error)) {
-        throw error
+      let duplicateAssignment = false
+      try {
+        await this.drizzle.withErrorHandling(
+          async () => {
+            throw error
+          },
+          {
+            duplicate: '__TASK_ASSIGNMENT_DUPLICATE__',
+          },
+        )
+      } catch (mappedError) {
+        duplicateAssignment = mappedError instanceof Error
+          && mappedError.message === '__TASK_ASSIGNMENT_DUPLICATE__'
+        if (!duplicateAssignment) {
+          throw mappedError
+        }
       }
-      // 查询已存在的分配
+
       const existing = await this.findAssignmentByUniqueKey(
         taskRecord.id,
         userId,
@@ -1071,9 +1092,9 @@ export class TaskService {
    * @param tasks 任务列表
    */
   private async ensureAutoAssignments(userId: number, tasks: Task[]) {
-    for (const taskRecord of tasks) {
-      await this.ensureAutoAssignment(userId, taskRecord.id)
-    }
+    await Promise.all(
+      tasks.map(async (taskRecord) => this.ensureAutoAssignment(userId, taskRecord.id)),
+    )
   }
 
   /**
@@ -1101,9 +1122,9 @@ export class TaskService {
       .from(this.taskTable)
       .where(where)
 
-    for (const taskRecord of tasks) {
-      await this.ensureAutoAssignmentByTask(userId, taskRecord)
-    }
+    await Promise.all(
+      tasks.map(async (taskRecord) => this.ensureAutoAssignmentByTask(userId, taskRecord)),
+    )
   }
 
   /**

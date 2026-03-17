@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { FavoritePageQueryDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
@@ -12,6 +12,7 @@ import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.i
  */
 @Injectable()
 export class FavoriteService {
+  private readonly logger = new Logger(FavoriteService.name)
   private readonly resolvers = new Map<
     FavoriteTargetTypeEnum,
     IFavoriteTargetResolver
@@ -28,26 +29,6 @@ export class FavoriteService {
 
   private get userFavorite() {
     return this.drizzle.schema.userFavorite
-  }
-
-  private handleBusinessError(
-    error: unknown,
-    options: {
-      duplicateMessage?: string
-      notFoundMessage?: string
-      conflictMessage?: string
-    },
-  ): never {
-    if (options.duplicateMessage && this.drizzle.isUniqueViolation(error)) {
-      throw new BadRequestException(options.duplicateMessage)
-    }
-    if (
-      options.conflictMessage
-      && this.drizzle.isSerializationFailure(error)
-    ) {
-      throw new BadRequestException(options.conflictMessage)
-    }
-    throw error
   }
 
   /**
@@ -132,24 +113,23 @@ export class FavoriteService {
         tx,
         targetId,
       )
-      let favoriteRecord: null | { id: number } = null
-      try {
-        const rows = await tx
-          .insert(this.userFavorite)
-          .values({
-            targetType,
-            targetId,
-            userId,
-          })
-          .returning({
-            id: this.userFavorite.id,
-          })
-        favoriteRecord = rows[0] ?? null
-      } catch (error) {
-        this.handleBusinessError(error, {
-          duplicateMessage: '无法重复收藏',
-        })
-      }
+      const rows = await this.drizzle.withErrorHandling(
+        () =>
+          tx
+            .insert(this.userFavorite)
+            .values({
+              targetType,
+              targetId,
+              userId,
+            })
+            .returning({
+              id: this.userFavorite.id,
+            }),
+        {
+          duplicate: '无法重复收藏',
+        },
+      )
+      const favoriteRecord = rows[0] ?? null
 
       await resolver.applyCountDelta(tx, targetId, 1)
 
@@ -277,8 +257,12 @@ export class FavoriteService {
             const detailMap = await resolver.batchGetDetails(ids)
             detailMaps.set(type, detailMap)
           }
-        } catch {
-          // 忽略不支持的类型
+        } catch (error) {
+          this.logger.warn(
+            `favorite_detail_resolve_failed targetType=${type} ids=${ids.join(',')} error=${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          )
         }
       }),
     )

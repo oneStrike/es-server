@@ -1,6 +1,6 @@
 import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import {
   FAVORITE_GROWTH_RULE_TYPE_MAP,
   FavoriteTargetTypeEnum,
@@ -12,6 +12,8 @@ import {
  */
 @Injectable()
 export class FavoriteGrowthService {
+  private readonly logger = new Logger(FavoriteGrowthService.name)
+
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly drizzle: DrizzleService,
@@ -55,8 +57,12 @@ export class FavoriteGrowthService {
           targetId,
         })
       })
-    } catch {
-      // 奖励失败不影响主流程
+    } catch (error) {
+      this.logger.warn(
+        `reward_favorite_created_failed userId=${userId} targetType=${targetType} targetId=${targetId} ruleType=${ruleType ?? 'undefined'} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 }

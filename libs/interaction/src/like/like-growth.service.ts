@@ -5,7 +5,7 @@ import {
   GrowthRuleTypeEnum,
 } from '@libs/growth'
 
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
 
 /**
@@ -27,6 +27,8 @@ import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
  */
 @Injectable()
 export class LikeGrowthService {
+  private readonly logger = new Logger(LikeGrowthService.name)
+
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly drizzle: DrizzleService,
@@ -84,8 +86,12 @@ export class LikeGrowthService {
           targetId,
         })
       })
-    } catch {
-      // 奖励失败不影响主流程。
+    } catch (error) {
+      this.logger.warn(
+        `reward_like_created_failed userId=${userId} targetType=${targetType} targetId=${targetId} ruleType=${ruleType} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 
@@ -130,8 +136,12 @@ export class LikeGrowthService {
           targetId: commentId,
         })
       })
-    } catch {
-      // 奖励失败不影响主流程。
+    } catch (error) {
+      this.logger.warn(
+        `reward_comment_liked_failed commentId=${commentId} likerUserId=${likerUserId} authorUserId=${comment.userId} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 }

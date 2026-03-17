@@ -32,25 +32,6 @@ export class LikeService {
     return this.drizzle.schema.userLike
   }
 
-  private handleBusinessError(
-    error: unknown,
-    options: {
-      duplicateMessage?: string
-      notFoundMessage?: string
-    },
-  ): never {
-    if (options.duplicateMessage && this.drizzle.isUniqueViolation(error)) {
-      throw new BadRequestException(options.duplicateMessage)
-    }
-    if (
-      options.notFoundMessage
-      && this.drizzle.isErrorCode(error, '02000')
-    ) {
-      throw new BadRequestException(options.notFoundMessage)
-    }
-    throw error
-  }
-
   /**
    * 注册目标解析器
    * 供其他模块在应用启动时注册自己的点赞解析器
@@ -176,20 +157,20 @@ export class LikeService {
     await this.db.transaction(async (tx) => {
       const targetMeta = await resolver.resolveMeta(tx, targetId)
 
-      try {
-        await tx.insert(this.userLike).values({
-          targetType,
-          targetId,
-          sceneType: targetMeta.sceneType,
-          sceneId: targetMeta.sceneId,
-          commentLevel: targetMeta.commentLevel,
-          userId,
-        })
-      } catch (error) {
-        this.handleBusinessError(error, {
-          duplicateMessage: '已点赞',
-        })
-      }
+      await this.drizzle.withErrorHandling(
+        () =>
+          tx.insert(this.userLike).values({
+            targetType,
+            targetId,
+            sceneType: targetMeta.sceneType,
+            sceneId: targetMeta.sceneId,
+            commentLevel: targetMeta.commentLevel,
+            userId,
+          }),
+        {
+          duplicate: '已点赞',
+        },
+      )
 
       await resolver.applyCountDelta(tx, targetId, 1)
 

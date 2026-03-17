@@ -24,7 +24,7 @@ const INTERACTION_GROWTH_RULE_MAP: Record<
     [InteractionTargetTypeEnum.COMIC_CHAPTER]:
       GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE,
     [InteractionTargetTypeEnum.NOVEL_CHAPTER]:
-      GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE,
+      GrowthRuleTypeEnum.NOVEL_CHAPTER_LIKE,
     [InteractionTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_LIKED,
   },
   favorite: {

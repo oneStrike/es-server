@@ -3,7 +3,7 @@ import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/growth'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import {
   BROWSE_LOG_GROWTH_RULE_TYPE_MAP,
   BrowseLogTargetTypeEnum,
@@ -15,6 +15,8 @@ import {
  */
 @Injectable()
 export class BrowseLogGrowthService {
+  private readonly logger = new Logger(BrowseLogGrowthService.name)
+
   constructor(
     /** 成长账本服务 */
     private readonly growthLedgerService: GrowthLedgerService,
@@ -67,8 +69,12 @@ export class BrowseLogGrowthService {
           targetId,
         })
       })
-    } catch {
-      // 奖励失败不影响主流程
+    } catch (error) {
+      this.logger.warn(
+        `reward_browse_log_failed userId=${userId} targetType=${targetType} targetId=${targetId} ruleType=${ruleType} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 }

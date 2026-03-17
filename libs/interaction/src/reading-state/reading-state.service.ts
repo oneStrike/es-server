@@ -3,7 +3,11 @@ import { ContentTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { QueryReadingHistoryDto } from './dto/reading-state.dto'
-import { IReadingStateResolver } from './interfaces/reading-state-resolver.interface'
+import {
+  IReadingStateResolver,
+  ReadingStateChapterSnapshot,
+  ReadingStateWorkSnapshot,
+} from './interfaces/reading-state-resolver.interface'
 
 @Injectable()
 export class ReadingStateService {
@@ -211,8 +215,23 @@ export class ReadingStateService {
     })
 
     // 按作品类型分组处理作品信息和章节信息
-    const list: any[] = []
-    const typeGroups = new Map<ContentTypeEnum, any[]>()
+    const list: Array<{
+      workId: number
+      workType: number
+      lastReadAt: Date
+      lastReadChapterId: number | null
+      work: ReadingStateWorkSnapshot
+      continueChapter: ReadingStateChapterSnapshot | undefined
+    }> = []
+    const typeGroups = new Map<
+      ContentTypeEnum,
+      Array<{
+        workId: number
+        workType: number
+        lastReadAt: Date
+        lastReadChapterId: number | null
+      }>
+    >()
 
     for (const item of page.list) {
       const type = item.workType as ContentTypeEnum
@@ -232,6 +251,27 @@ export class ReadingStateService {
       const workIds = [...new Set(items.map((i) => i.workId))]
       const works = await resolver.resolveWorkSnapshots(workIds)
       const workMap = new Map(works.map((w) => [w.id, w]))
+      const chapterIds = [
+        ...new Set(
+          items
+            .map((item) => item.lastReadChapterId)
+            .filter((id): id is number => typeof id === 'number'),
+        ),
+      ]
+      const chapterSnapshots = await Promise.all(
+        chapterIds.map(async (chapterId) => ({
+          chapterId,
+          snapshot: await resolver.resolveChapterSnapshot(
+            undefined,
+            items.find((entry) => entry.lastReadChapterId === chapterId)
+              ?.workId ?? 0,
+            chapterId,
+          ),
+        })),
+      )
+      const chapterMap = new Map(
+        chapterSnapshots.map((item) => [item.chapterId, item.snapshot]),
+      )
 
       for (const item of items) {
         const work = workMap.get(item.workId)
@@ -240,11 +280,7 @@ export class ReadingStateService {
         }
 
         const continueChapter = item.lastReadChapterId
-          ? await resolver.resolveChapterSnapshot(
-              undefined,
-              item.workId,
-              item.lastReadChapterId,
-            )
+          ? chapterMap.get(item.lastReadChapterId)
           : undefined
 
         list.push({

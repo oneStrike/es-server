@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type {
   ApplyDeltaParams,
   ApplyRuleParams,
@@ -12,7 +13,7 @@ import {
   GrowthLedgerFailReasonEnum,
 } from './growth-ledger.constant'
 
-type Tx = any
+type Tx = Db
 
 /**
  * 统一成长账本服务
@@ -58,10 +59,6 @@ export class GrowthLedgerService {
     return this.drizzle.schema.userPointRule
   }
 
-  private isDrizzleTx(tx: Tx): boolean {
-    return !!tx?.query && typeof tx.insert === 'function'
-  }
-
   /**
    * 按规则结算（发放）
    *
@@ -94,6 +91,16 @@ export class GrowthLedgerService {
     const rule = await this.findRuleByType(tx, assetType, ruleType)
     // 规则不存在
     if (!rule) {
+      await this.writeAuditLog(tx, {
+        userId,
+        bizKey,
+        assetType,
+        action: GrowthLedgerActionEnum.GRANT,
+        ruleType,
+        decision: 'deny',
+        reason: GrowthLedgerFailReasonEnum.RULE_NOT_FOUND,
+        context,
+      })
       return {
         success: false,
         reason: GrowthLedgerFailReasonEnum.RULE_NOT_FOUND,
@@ -102,6 +109,16 @@ export class GrowthLedgerService {
 
     // 规则已禁用
     if (!rule.isEnabled) {
+      await this.writeAuditLog(tx, {
+        userId,
+        bizKey,
+        assetType,
+        action: GrowthLedgerActionEnum.GRANT,
+        ruleType,
+        decision: 'deny',
+        reason: GrowthLedgerFailReasonEnum.RULE_DISABLED,
+        context,
+      })
       return {
         success: false,
         reason: GrowthLedgerFailReasonEnum.RULE_DISABLED,
@@ -113,6 +130,16 @@ export class GrowthLedgerService {
 
     // 规则值为零，无需处理
     if (delta === 0) {
+      await this.writeAuditLog(tx, {
+        userId,
+        bizKey,
+        assetType,
+        action: GrowthLedgerActionEnum.GRANT,
+        ruleType,
+        decision: 'deny',
+        reason: GrowthLedgerFailReasonEnum.RULE_ZERO,
+        context,
+      })
       return { success: false, reason: GrowthLedgerFailReasonEnum.RULE_ZERO }
     }
 
@@ -153,6 +180,17 @@ export class GrowthLedgerService {
       if (!reservedDaily) {
         // 每日限额已达，回滚账本记录
         await this.deleteLedgerRecordById(tx, gate.recordId)
+        await this.writeAuditLog(tx, {
+          userId,
+          bizKey,
+          assetType,
+          action: GrowthLedgerActionEnum.GRANT,
+          ruleType,
+          decision: 'deny',
+          reason: GrowthLedgerFailReasonEnum.DAILY_LIMIT,
+          deltaRequested: delta,
+          context,
+        })
         return {
           success: false,
           reason: GrowthLedgerFailReasonEnum.DAILY_LIMIT,
@@ -173,6 +211,17 @@ export class GrowthLedgerService {
       if (!reservedTotal) {
         // 总限额已达，回滚账本记录
         await this.deleteLedgerRecordById(tx, gate.recordId)
+        await this.writeAuditLog(tx, {
+          userId,
+          bizKey,
+          assetType,
+          action: GrowthLedgerActionEnum.GRANT,
+          ruleType,
+          decision: 'deny',
+          reason: GrowthLedgerFailReasonEnum.TOTAL_LIMIT,
+          deltaRequested: delta,
+          context,
+        })
         return {
           success: false,
           reason: GrowthLedgerFailReasonEnum.TOTAL_LIMIT,
@@ -250,6 +299,15 @@ export class GrowthLedgerService {
 
     // 变动金额必须大于零
     if (amount <= 0) {
+      await this.writeAuditLog(tx, {
+        userId,
+        bizKey,
+        assetType,
+        action,
+        decision: 'deny',
+        reason: GrowthLedgerFailReasonEnum.RULE_ZERO,
+        context,
+      })
       return { success: false, reason: GrowthLedgerFailReasonEnum.RULE_ZERO }
     }
 
@@ -286,6 +344,16 @@ export class GrowthLedgerService {
       if (!decreased.ok) {
         // 余额不足，回滚账本记录
         await this.deleteLedgerRecordById(tx, gate.recordId)
+        await this.writeAuditLog(tx, {
+          userId,
+          bizKey,
+          assetType,
+          action,
+          decision: 'deny',
+          reason: GrowthLedgerFailReasonEnum.INSUFFICIENT_BALANCE,
+          deltaRequested: signedDelta,
+          context,
+        })
         return {
           success: false,
           reason: GrowthLedgerFailReasonEnum.INSUFFICIENT_BALANCE,
@@ -484,34 +552,17 @@ export class GrowthLedgerService {
       context?: Record<string, unknown>
     },
   ) {
-    if (this.isDrizzleTx(tx)) {
-      await tx.insert(this.growthAuditLog).values({
-        userId: params.userId,
-        bizKey: params.bizKey,
-        assetType: String(params.assetType),
-        action: params.action,
-        ruleType: params.ruleType,
-        decision: params.decision,
-        reason: params.reason,
-        deltaRequested: params.deltaRequested,
-        deltaApplied: params.deltaApplied,
-        context: params.context,
-      })
-      return
-    }
-    await tx.growthAuditLog.create({
-      data: {
-        userId: params.userId,
-        bizKey: params.bizKey,
-        assetType: params.assetType,
-        action: params.action,
-        ruleType: params.ruleType,
-        decision: params.decision,
-        reason: params.reason,
-        deltaRequested: params.deltaRequested,
-        deltaApplied: params.deltaApplied,
-        context: params.context,
-      },
+    await tx.insert(this.growthAuditLog).values({
+      userId: params.userId,
+      bizKey: params.bizKey,
+      assetType: String(params.assetType),
+      action: params.action,
+      ruleType: params.ruleType,
+      decision: params.decision,
+      reason: params.reason,
+      deltaRequested: params.deltaRequested,
+      deltaApplied: params.deltaApplied,
+      context: params.context,
     })
   }
 
@@ -546,62 +597,38 @@ export class GrowthLedgerService {
     assetType: GrowthAssetTypeEnum,
     ruleType: number,
   ) {
-    if (this.isDrizzleTx(tx)) {
-      if (assetType === GrowthAssetTypeEnum.POINTS) {
-        return tx.query.userPointRule.findFirst({
-          where: { type: ruleType },
-          columns: {
-            id: true,
-            points: true,
-            dailyLimit: true,
-            totalLimit: true,
-            isEnabled: true,
-          },
-        })
-      }
-      return tx.query.userExperienceRule.findFirst({
-        where: { type: ruleType },
-        columns: {
-          id: true,
-          experience: true,
-          dailyLimit: true,
-          totalLimit: true,
-          isEnabled: true,
-        },
-      })
-    }
     if (assetType === GrowthAssetTypeEnum.POINTS) {
-      return tx.userPointRule.findUnique({
-        where: { type: ruleType },
-        select: {
-          id: true,
-          points: true,
-          dailyLimit: true,
-          totalLimit: true,
-          isEnabled: true,
-        },
-      })
+      const rows = await tx
+        .select({
+          id: this.userPointRule.id,
+          points: this.userPointRule.points,
+          dailyLimit: this.userPointRule.dailyLimit,
+          totalLimit: this.userPointRule.totalLimit,
+          isEnabled: this.userPointRule.isEnabled,
+        })
+        .from(this.userPointRule)
+        .where(eq(this.userPointRule.type, ruleType))
+        .limit(1)
+      return rows[0]
     }
-    return tx.userExperienceRule.findUnique({
-      where: { type: ruleType },
-      select: {
-        id: true,
-        experience: true,
-        dailyLimit: true,
-        totalLimit: true,
-        isEnabled: true,
-      },
-    })
+    const rows = await tx
+      .select({
+        id: this.userExperienceRule.id,
+        experience: this.userExperienceRule.experience,
+        dailyLimit: this.userExperienceRule.dailyLimit,
+        totalLimit: this.userExperienceRule.totalLimit,
+        isEnabled: this.userExperienceRule.isEnabled,
+      })
+      .from(this.userExperienceRule)
+      .where(eq(this.userExperienceRule.type, ruleType))
+      .limit(1)
+    return rows[0]
   }
 
   private async deleteLedgerRecordById(tx: Tx, id: number): Promise<void> {
-    if (this.isDrizzleTx(tx)) {
-      await tx
-        .delete(this.growthLedgerRecord)
-        .where(eq(this.growthLedgerRecord.id, id))
-      return
-    }
-    await tx.growthLedgerRecord.delete({ where: { id } })
+    await tx
+      .delete(this.growthLedgerRecord)
+      .where(eq(this.growthLedgerRecord.id, id))
   }
 
   private async updateLedgerBeforeAfterValue(
@@ -609,34 +636,21 @@ export class GrowthLedgerService {
     id: number,
     payload: { beforeValue: number, afterValue: number },
   ): Promise<void> {
-    if (this.isDrizzleTx(tx)) {
-      await tx
-        .update(this.growthLedgerRecord)
-        .set(payload)
-        .where(eq(this.growthLedgerRecord.id, id))
-      return
-    }
-    await tx.growthLedgerRecord.update({
-      where: { id },
-      data: payload,
-    })
+    await tx
+      .update(this.growthLedgerRecord)
+      .set(payload)
+      .where(eq(this.growthLedgerRecord.id, id))
   }
 
   private async findUserBalanceById(tx: Tx, userId: number) {
-    if (this.isDrizzleTx(tx)) {
-      const user = await tx.query.appUser.findFirst({
-        where: { id: userId },
-        columns: { points: true, experience: true },
-      })
-      if (!user) {
-        throw new Error('用户不存在')
-      }
-      return user
-    }
-    return tx.appUser.findUniqueOrThrow({
+    const user = await tx.query.appUser.findFirst({
       where: { id: userId },
-      select: { points: true, experience: true },
+      columns: { points: true, experience: true },
     })
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+    return user
   }
 
   private async insertLedgerGateRecord(
@@ -654,34 +668,9 @@ export class GrowthLedgerService {
       context?: Record<string, unknown>
     },
   ): Promise<boolean> {
-    if (this.isDrizzleTx(tx)) {
-      const rows = await tx
-        .insert(this.growthLedgerRecord)
-        .values({
-          userId: params.userId,
-          assetType: params.assetType,
-          delta: params.delta,
-          beforeValue: 0,
-          afterValue: 0,
-          bizKey: params.bizKey,
-          ruleType: params.ruleType,
-          ruleId: params.ruleId,
-          targetType: params.targetType,
-          targetId: params.targetId,
-          remark: params.remark,
-          context: params.context,
-        })
-        .onConflictDoNothing({
-          target: [
-            this.growthLedgerRecord.userId,
-            this.growthLedgerRecord.bizKey,
-          ],
-        })
-        .returning({ id: this.growthLedgerRecord.id })
-      return rows.length > 0
-    }
-    const inserted = await tx.growthLedgerRecord.createMany({
-      data: {
+    const rows = await tx
+      .insert(this.growthLedgerRecord)
+      .values({
         userId: params.userId,
         assetType: params.assetType,
         delta: params.delta,
@@ -694,38 +683,27 @@ export class GrowthLedgerService {
         targetId: params.targetId,
         remark: params.remark,
         context: params.context,
-      },
-      skipDuplicates: true,
-    })
-    return inserted.count > 0
+      })
+      .onConflictDoNothing({
+        target: [
+          this.growthLedgerRecord.userId,
+          this.growthLedgerRecord.bizKey,
+        ],
+      })
+      .returning({ id: this.growthLedgerRecord.id })
+    return rows.length > 0
   }
 
   private async findLedgerByUserBizKey(
     tx: Tx,
     params: { userId: number, bizKey: string },
   ) {
-    if (this.isDrizzleTx(tx)) {
-      return tx.query.growthLedgerRecord.findFirst({
-        where: {
-          userId: params.userId,
-          bizKey: params.bizKey,
-        },
-        columns: {
-          id: true,
-          delta: true,
-          beforeValue: true,
-          afterValue: true,
-        },
-      })
-    }
-    return tx.growthLedgerRecord.findUnique({
+    return tx.query.growthLedgerRecord.findFirst({
       where: {
-        userId_bizKey: {
-          userId: params.userId,
-          bizKey: params.bizKey,
-        },
+        userId: params.userId,
+        bizKey: params.bizKey,
       },
-      select: {
+      columns: {
         id: true,
         delta: true,
         beforeValue: true,
@@ -744,39 +722,26 @@ export class GrowthLedgerService {
       slotValue: string
     },
   ): Promise<boolean> {
-    if (this.isDrizzleTx(tx)) {
-      const rows = await tx
-        .insert(this.growthRuleUsageSlot)
-        .values({
-          userId: params.userId,
-          assetType: String(params.assetType),
-          ruleKey: params.ruleKey,
-          slotType: params.slotType,
-          slotValue: params.slotValue,
-        })
-        .onConflictDoNothing({
-          target: [
-            this.growthRuleUsageSlot.userId,
-            this.growthRuleUsageSlot.assetType,
-            this.growthRuleUsageSlot.ruleKey,
-            this.growthRuleUsageSlot.slotType,
-            this.growthRuleUsageSlot.slotValue,
-          ],
-        })
-        .returning({ id: this.growthRuleUsageSlot.id })
-      return rows.length > 0
-    }
-    const inserted = await tx.growthRuleUsageSlot.createMany({
-      data: {
+    const rows = await tx
+      .insert(this.growthRuleUsageSlot)
+      .values({
         userId: params.userId,
-        assetType: params.assetType,
+        assetType: String(params.assetType),
         ruleKey: params.ruleKey,
         slotType: params.slotType,
         slotValue: params.slotValue,
-      },
-      skipDuplicates: true,
-    })
-    return inserted.count > 0
+      })
+      .onConflictDoNothing({
+        target: [
+          this.growthRuleUsageSlot.userId,
+          this.growthRuleUsageSlot.assetType,
+          this.growthRuleUsageSlot.ruleKey,
+          this.growthRuleUsageSlot.slotType,
+          this.growthRuleUsageSlot.slotValue,
+        ],
+      })
+      .returning({ id: this.growthRuleUsageSlot.id })
+    return rows.length > 0
   }
 
   private async incrementAndReturnUserBalance(
@@ -787,35 +752,25 @@ export class GrowthLedgerService {
       amount: number
     },
   ): Promise<{ points: number, experience: number }> {
-    if (this.isDrizzleTx(tx)) {
-      const rows = await tx
-        .update(this.appUser)
-        .set(
-          params.assetType === GrowthAssetTypeEnum.POINTS
-            ? { points: sql`${this.appUser.points} + ${params.amount}` }
-            : {
-                experience: sql`${this.appUser.experience} + ${params.amount}`,
-              },
-        )
-        .where(eq(this.appUser.id, params.userId))
-        .returning({
-          points: this.appUser.points,
-          experience: this.appUser.experience,
-        })
-      const user = rows[0]
-      if (!user) {
-        throw new Error('用户不存在')
-      }
-      return user
-    }
-    return tx.appUser.update({
-      where: { id: params.userId },
-      data:
+    const rows = await tx
+      .update(this.appUser)
+      .set(
         params.assetType === GrowthAssetTypeEnum.POINTS
-          ? { points: { increment: params.amount } }
-          : { experience: { increment: params.amount } },
-      select: { points: true, experience: true },
-    })
+          ? { points: sql`${this.appUser.points} + ${params.amount}` }
+          : {
+              experience: sql`${this.appUser.experience} + ${params.amount}`,
+            },
+      )
+      .where(eq(this.appUser.id, params.userId))
+      .returning({
+        points: this.appUser.points,
+        experience: this.appUser.experience,
+      })
+    const user = rows[0]
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+    return user
   }
 
   private async decrementWithGuard(
@@ -826,76 +781,45 @@ export class GrowthLedgerService {
       amount: number
     },
   ): Promise<boolean> {
-    if (this.isDrizzleTx(tx)) {
-      const rows = await tx
-        .update(this.appUser)
-        .set(
-          params.assetType === GrowthAssetTypeEnum.POINTS
-            ? { points: sql`${this.appUser.points} - ${params.amount}` }
-            : {
-                experience: sql`${this.appUser.experience} - ${params.amount}`,
-              },
-        )
-        .where(
-          params.assetType === GrowthAssetTypeEnum.POINTS
-            ? and(
-                eq(this.appUser.id, params.userId),
-                gte(this.appUser.points, params.amount),
-              )
-            : and(
-                eq(this.appUser.id, params.userId),
-                gte(this.appUser.experience, params.amount),
-              ),
-        )
-        .returning({ id: this.appUser.id })
-      return rows.length > 0
-    }
-    const updateResult = await tx.appUser.updateMany({
-      where:
+    const rows = await tx
+      .update(this.appUser)
+      .set(
         params.assetType === GrowthAssetTypeEnum.POINTS
-          ? {
-              id: params.userId,
-              points: { gte: params.amount },
-            }
+          ? { points: sql`${this.appUser.points} - ${params.amount}` }
           : {
-              id: params.userId,
-              experience: { gte: params.amount },
+              experience: sql`${this.appUser.experience} - ${params.amount}`,
             },
-      data:
+      )
+      .where(
         params.assetType === GrowthAssetTypeEnum.POINTS
-          ? { points: { decrement: params.amount } }
-          : { experience: { decrement: params.amount } },
-    })
-    return updateResult.count > 0
+          ? and(
+              eq(this.appUser.id, params.userId),
+              gte(this.appUser.points, params.amount),
+            )
+          : and(
+              eq(this.appUser.id, params.userId),
+              gte(this.appUser.experience, params.amount),
+            ),
+      )
+      .returning({ id: this.appUser.id })
+    return rows.length > 0
   }
 
   private async findTargetLevelRule(tx: Tx, experience: number) {
-    if (this.isDrizzleTx(tx)) {
-      const rows = await tx
-        .select({
-          id: this.userLevelRule.id,
-        })
-        .from(this.userLevelRule)
-        .where(
-          and(
-            eq(this.userLevelRule.isEnabled, true),
-            lte(this.userLevelRule.requiredExperience, experience),
-          ),
-        )
-        .orderBy(sql`${this.userLevelRule.requiredExperience} desc`)
-        .limit(1)
-      return rows[0]
-    }
-    return tx.userLevelRule.findFirst({
-      where: {
-        isEnabled: true,
-        requiredExperience: { lte: experience },
-      },
-      orderBy: {
-        requiredExperience: 'desc',
-      },
-      select: { id: true },
-    })
+    const rows = await tx
+      .select({
+        id: this.userLevelRule.id,
+      })
+      .from(this.userLevelRule)
+      .where(
+        and(
+          eq(this.userLevelRule.isEnabled, true),
+          lte(this.userLevelRule.requiredExperience, experience),
+        ),
+      )
+      .orderBy(sql`${this.userLevelRule.requiredExperience} desc`)
+      .limit(1)
+    return rows[0]
   }
 
   private async syncUserLevel(
@@ -903,24 +827,14 @@ export class GrowthLedgerService {
     userId: number,
     levelId: number,
   ): Promise<void> {
-    if (this.isDrizzleTx(tx)) {
-      await tx
-        .update(this.appUser)
-        .set({ levelId })
-        .where(
-          and(
-            eq(this.appUser.id, userId),
-            or(isNull(this.appUser.levelId), ne(this.appUser.levelId, levelId)),
-          ),
-        )
-      return
-    }
-    await tx.appUser.updateMany({
-      where: {
-        id: userId,
-        NOT: { levelId },
-      },
-      data: { levelId },
-    })
+    await tx
+      .update(this.appUser)
+      .set({ levelId })
+      .where(
+        and(
+          eq(this.appUser.id, userId),
+          or(isNull(this.appUser.levelId), ne(this.appUser.levelId, levelId)),
+        ),
+      )
   }
 }

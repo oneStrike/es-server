@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -31,6 +31,8 @@ interface RewardTaskCompleteParams {
  */
 @Injectable()
 export class UserGrowthRewardService {
+  private readonly logger = new Logger(UserGrowthRewardService.name)
+
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly drizzle: DrizzleService,
@@ -69,8 +71,12 @@ export class UserGrowthRewardService {
           targetId: params.targetId,
         })
       })
-    } catch {
-      // 奖励失败不影响主业务流程
+    } catch (error) {
+      this.logger.warn(
+        `reward_by_rule_failed userId=${params.userId} ruleType=${params.ruleType} bizKey=${params.bizKey} source=${params.source} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 
@@ -132,8 +138,12 @@ export class UserGrowthRewardService {
           })
         }
       })
-    } catch {
-      // 奖励失败不影响主业务流程
+    } catch (error) {
+      this.logger.warn(
+        `reward_task_complete_failed userId=${params.userId} taskId=${params.taskId} assignmentId=${params.assignmentId} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 

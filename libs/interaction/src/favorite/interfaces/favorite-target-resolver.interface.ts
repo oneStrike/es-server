@@ -9,7 +9,7 @@ export interface IFavoriteTargetResolver {
 
   /**
    * 检查目标是否存在，并返回必要的属主信息（例如用于发通知）
-   * @param tx Prisma 事务对象
+   * @param tx 事务对象
    * @param targetId 目标 ID
    * @returns 属主 UserId（如果需要发通知）
    * @throws BadRequestException 如果目标不存在
@@ -21,7 +21,7 @@ export interface IFavoriteTargetResolver {
 
   /**
    * 更新目标的收藏统计数
-   * @param tx Prisma 事务对象
+   * @param tx 事务对象
    * @param targetId 目标 ID
    * @param delta 增量 (+1 或 -1)
    */
@@ -46,5 +46,5 @@ export interface IFavoriteTargetResolver {
    * @param targetIds 目标 ID 列表
    * @returns 目标 ID 与对应实体详情的映射
    */
-  batchGetDetails?: (targetIds: number[]) => Promise<Map<number, any>>
+  batchGetDetails?: (targetIds: number[]) => Promise<Map<number, unknown>>
 }

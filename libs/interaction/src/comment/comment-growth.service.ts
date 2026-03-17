@@ -1,3 +1,4 @@
+import type { InteractionTx } from '../interaction-tx.type'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
@@ -11,7 +12,7 @@ export class CommentGrowthService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {}
 
   async rewardCommentCreated(
-    tx: any,
+    tx: InteractionTx,
     params: {
       userId: number
       commentId: number
@@ -30,7 +31,7 @@ export class CommentGrowthService {
       bizKey: `${baseBizKey}:POINTS`,
       remark: `发表评论 #${commentId}`,
       targetType,
-      targetId: commentId,
+      targetId,
       context: { targetId },
       occurredAt,
     })
@@ -42,14 +43,14 @@ export class CommentGrowthService {
       bizKey: `${baseBizKey}:EXPERIENCE`,
       remark: `发表评论 #${commentId}`,
       targetType,
-      targetId: commentId,
+      targetId,
       context: { targetId },
       occurredAt,
     })
   }
 
   async rewardCommentLiked(
-    tx: any,
+    tx: InteractionTx,
     params: {
       commentId: number
       authorUserId: number

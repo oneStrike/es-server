@@ -53,7 +53,7 @@ export class CommentLikeResolver
   /**
    * 解析目标评论的场景元数据
    * 验证评论存在性，根据评论挂载的目标类型和回复关系确定场景类型和评论层级
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 评论ID
    * @returns 包含场景类型、场景ID和评论层级的元数据对象
    * @throws NotFoundException 当评论不存在时抛出异常
@@ -101,7 +101,7 @@ export class CommentLikeResolver
   /**
    * 应用点赞计数增量
    * 当用户点赞或取消点赞时，更新评论的点赞计数
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 评论ID
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
@@ -132,7 +132,7 @@ export class CommentLikeResolver
   /**
    * 点赞后钩子函数
    * 当用户成功点赞评论后，向评论作者发送通知（点赞者与被点赞者不是同一人时）
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 被点赞的评论ID
    * @param actorUserId - 执行点赞操作的用户ID
    * @param _meta - 点赞目标元数据（本场景未使用）

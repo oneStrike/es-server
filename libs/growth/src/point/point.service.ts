@@ -1,6 +1,7 @@
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, desc, eq, gt, gte, lt, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, lt, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -14,6 +15,20 @@ import {
   QueryUserPointRecordDto,
 } from './dto/point-record.dto'
 import { UserPointRuleService } from './point-rule.service'
+
+interface LedgerRecordShape {
+  id: number
+  userId: number
+  ruleId: number | null
+  targetType: number | null
+  targetId: number | null
+  delta: number
+  beforeValue: number
+  afterValue: number
+  createdAt: Date
+  updatedAt?: Date
+  remark: string | null
+}
 
 /**
  * 积分服务类
@@ -66,7 +81,13 @@ export class UserPointService {
     }
 
     const bizKey =
-      addPointsDto.bizKey ?? this.buildBizKey(`point:rule:${ruleType}`, userId)
+      addPointsDto.bizKey
+      ?? this.buildStableBizKey('point:rule', {
+        userId,
+        ruleType,
+        remark,
+        source: addPointsDto.source,
+      })
 
     return this.db.transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
@@ -92,7 +113,19 @@ export class UserPointService {
 
       const record = await this.findLedgerRecordById(tx, recordId)
 
-      return this.toPointRecord(record)
+      return {
+        id: record.id,
+        userId: record.userId,
+        ruleId: record.ruleId ?? undefined,
+        targetType: record.targetType ?? undefined,
+        targetId: record.targetId ?? undefined,
+        points: record.delta,
+        beforePoints: record.beforeValue,
+        afterPoints: record.afterValue,
+        remark: record.remark ?? undefined,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      }
     })
   }
 
@@ -106,18 +139,23 @@ export class UserPointService {
       bizKey?: string
       source?: string
     },
-    tx?: any,
+    tx?: Db,
   ) {
     const { userId, points, remark, targetType, targetId, exchangeId } =
       consumePointsDto
 
-    const applyConsume = async (trx: any) => {
+    const applyConsume = async (trx: Db) => {
       const bizKey =
         consumePointsDto.bizKey ??
-        this.buildBizKey(
-          `point:consume:${targetType ?? 0}:${targetId ?? 0}`,
+        this.buildStableBizKey('point:consume', {
           userId,
-        )
+          points,
+          targetType,
+          targetId,
+          exchangeId,
+          remark,
+          source: consumePointsDto.source,
+        })
       const source = consumePointsDto.source ?? 'point_service'
 
       const result = await this.growthLedgerService.applyDelta(trx, {
@@ -148,7 +186,19 @@ export class UserPointService {
 
       const record = await this.findLedgerRecordById(trx, recordId)
 
-      return this.toPointRecord(record)
+      return {
+        id: record.id,
+        userId: record.userId,
+        ruleId: record.ruleId ?? undefined,
+        targetType: record.targetType ?? undefined,
+        targetId: record.targetId ?? undefined,
+        points: record.delta,
+        beforePoints: record.beforeValue,
+        afterPoints: record.afterValue,
+        remark: record.remark ?? undefined,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      }
     }
 
     if (tx) {
@@ -180,7 +230,18 @@ export class UserPointService {
 
     return {
       ...page,
-      list: page.list.map((item) => this.toPointRecord(item)),
+      list: page.list.map((item) => ({
+        id: item.id,
+        userId: item.userId,
+        ruleId: item.ruleId ?? undefined,
+        targetType: item.targetType ?? undefined,
+        targetId: item.targetId ?? undefined,
+        points: item.delta,
+        beforePoints: item.beforeValue,
+        afterPoints: item.afterValue,
+        remark: item.remark ?? undefined,
+        createdAt: item.createdAt,
+      })),
     }
   }
 
@@ -205,7 +266,16 @@ export class UserPointService {
     }
 
     return {
-      ...this.toPointRecord(record),
+      id: record.id,
+      userId: record.userId,
+      ruleId: record.ruleId ?? undefined,
+      targetType: record.targetType ?? undefined,
+      targetId: record.targetId ?? undefined,
+      points: record.delta,
+      beforePoints: record.beforeValue,
+      afterPoints: record.afterValue,
+      remark: record.remark ?? undefined,
+      createdAt: record.createdAt,
       user: record.user,
     }
   }
@@ -287,7 +357,11 @@ export class UserPointService {
         assetType: GrowthAssetTypeEnum.POINTS,
         action,
         amount: points,
-        bizKey: this.buildBizKey(`comic-sync:${operation}`, userId),
+        bizKey: this.buildStableBizKey('point:comic-sync', {
+          userId,
+          operation,
+          points,
+        }),
         source: 'comic_sync',
         remark: operation === 'add' ? '漫画系统积分增加' : '漫画系统积分消费',
       })
@@ -311,27 +385,25 @@ export class UserPointService {
     return result
   }
 
-  private async findLedgerRecordById(tx: any, id: number) {
-    if (tx?.query?.growthLedgerRecord) {
-      const record = await tx.query.growthLedgerRecord.findFirst({
-        where: { id },
-      })
-      if (!record) {
-        throw new BadRequestException('积分记录不存在')
-      }
-      return record
-    }
-    if (tx?.growthLedgerRecord?.findUniqueOrThrow) {
-      return tx.growthLedgerRecord.findUniqueOrThrow({
-        where: { id },
-      })
-    }
-    const [record] = await this.db
-      .select()
-      .from(this.growthLedgerRecord)
-      .where(eq(this.growthLedgerRecord.id, id))
-      .orderBy(desc(this.growthLedgerRecord.id))
-      .limit(1)
+  private async findLedgerRecordById(
+    tx: Db,
+    id: number,
+  ): Promise<LedgerRecordShape> {
+    const record = await tx.query.growthLedgerRecord.findFirst({
+      where: { id },
+      columns: {
+        id: true,
+        userId: true,
+        ruleId: true,
+        targetType: true,
+        targetId: true,
+        delta: true,
+        beforeValue: true,
+        afterValue: true,
+        createdAt: true,
+        remark: true,
+      },
+    })
     if (!record) {
       throw new BadRequestException('积分记录不存在')
     }
@@ -365,35 +437,15 @@ export class UserPointService {
     })
   }
 
-  private toPointRecord(record: {
-    id: number
-    userId: number
-    ruleId: number | null
-    targetType: number | null
-    targetId: number | null
-    delta: number
-    beforeValue: number
-    afterValue: number
-    remark: string | null
-    createdAt: Date
-    updatedAt?: Date
-  }) {
-    return {
-      id: record.id,
-      userId: record.userId,
-      ruleId: record.ruleId ?? undefined,
-      targetType: record.targetType ?? undefined,
-      targetId: record.targetId ?? undefined,
-      points: record.delta,
-      beforePoints: record.beforeValue,
-      afterPoints: record.afterValue,
-      remark: record.remark ?? undefined,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    }
-  }
-
-  private buildBizKey(prefix: string, userId: number) {
-    return `${prefix}:${userId}:${Date.now()}`
+  private buildStableBizKey(
+    prefix: string,
+    payload: Record<string, unknown>,
+  ) {
+    const serializedPayload = Object.entries(payload)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${String(value)}`)
+      .sort()
+      .join('|')
+    return `${prefix}:${serializedPayload}`
   }
 }

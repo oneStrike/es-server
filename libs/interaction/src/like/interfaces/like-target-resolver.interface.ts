@@ -29,7 +29,7 @@ export interface ILikeTargetResolver {
   /**
    * 解析目标元信息
    * 检查目标是否存在，并返回点赞所需的场景元信息
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @returns 目标元信息
    * @throws 目标不存在时抛出异常
@@ -42,7 +42,7 @@ export interface ILikeTargetResolver {
   /**
    * 更新点赞计数
    * 在事务中更新目标的点赞统计数
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @param delta - 变化量（点赞+1，取消点赞-1）
    */
@@ -55,7 +55,7 @@ export interface ILikeTargetResolver {
   /**
    * 点赞成功后钩子（可选）
    * 在事务内执行，可用于触发通知等后置逻辑
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @param actorUserId - 执行点赞的用户ID
    * @param meta - 目标元信息
@@ -73,5 +73,5 @@ export interface ILikeTargetResolver {
    * @param targetIds - 目标ID数组
    * @returns 目标ID到详情的映射
    */
-  batchGetDetails?: (targetIds: number[]) => Promise<Map<number, any>>
+  batchGetDetails?: (targetIds: number[]) => Promise<Map<number, unknown>>
 }

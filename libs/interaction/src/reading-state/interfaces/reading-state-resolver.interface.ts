@@ -34,7 +34,7 @@ export interface IReadingStateResolver {
 
   /**
    * 解析章节快照
-   * @param tx - Prisma 事务(可选)
+   * @param tx - 事务（可选）
    * @param workId - 作品ID
    * @param chapterId - 章节ID
    */

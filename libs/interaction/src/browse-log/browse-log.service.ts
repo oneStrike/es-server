@@ -1,3 +1,4 @@
+import type { InteractionTx } from '../interaction-tx.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { BrowseLogGrowthService } from './browse-log-growth.service'
@@ -59,7 +60,7 @@ export class BrowseLogService {
    * 应用浏览数量变更到目标对象
    */
   private async applyTargetCountDelta(
-    tx: any,
+    tx: InteractionTx,
     targetType: BrowseLogTargetTypeEnum,
     targetId: number,
     delta: number,

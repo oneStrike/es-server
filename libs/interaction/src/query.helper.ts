@@ -8,30 +8,21 @@ export interface NormalizedPagination {
   take: number
 }
 
-/**
- * Keep compatibility with existing pagination behavior:
- * - pageIndex >= 1 is treated as one-based
- * - pageIndex = 0 is treated as first page in zero-based mode
- */
 export function normalizeInteractionPagination(
   pageIndex?: number,
   pageSize?: number,
 ): NormalizedPagination {
   const rawPageIndex = Number.isFinite(Number(pageIndex))
     ? Math.floor(Number(pageIndex))
-    : 0
-  const normalizedPageIndex =
-    rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
+    : 1
+  const normalizedPageIndex = Math.max(1, rawPageIndex)
 
   const rawPageSize = Number.isFinite(Number(pageSize))
     ? Math.floor(Number(pageSize))
     : 15
   const normalizedPageSize = Math.min(Math.max(1, rawPageSize), 500)
 
-  const skip =
-    normalizedPageIndex >= 1
-      ? (normalizedPageIndex - 1) * normalizedPageSize
-      : normalizedPageIndex * normalizedPageSize
+  const skip = (normalizedPageIndex - 1) * normalizedPageSize
 
   return {
     pageIndex: normalizedPageIndex,

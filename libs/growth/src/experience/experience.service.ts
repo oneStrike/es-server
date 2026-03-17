@@ -171,7 +171,14 @@ export class UserExperienceService {
 
     const bizKey =
       addExperienceDto.bizKey
-      ?? this.buildBizKey(`experience:rule:${ruleType}`, userId)
+      ?? this.buildStableBizKey('experience:rule', {
+        userId,
+        ruleType,
+        targetType: addExperienceDto.targetType,
+        targetId: addExperienceDto.targetId,
+        remark,
+        source: addExperienceDto.source,
+      })
 
     return this.db.transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
@@ -331,7 +338,15 @@ export class UserExperienceService {
     return reason ? (reasonMap[reason] ?? 'Experience grant failed') : 'Experience grant failed'
   }
 
-  private buildBizKey(prefix: string, userId: number) {
-    return `${prefix}:${userId}:${Date.now()}`
+  private buildStableBizKey(
+    prefix: string,
+    payload: Record<string, unknown>,
+  ) {
+    const serializedPayload = Object.entries(payload)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${String(value)}`)
+      .sort()
+      .join('|')
+    return `${prefix}:${serializedPayload}`
   }
 }

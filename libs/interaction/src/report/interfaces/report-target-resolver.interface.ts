@@ -31,7 +31,7 @@ export interface IReportTargetResolver {
   /**
    * 解析目标元信息
    * 检查目标是否存在，并返回举报所需的场景元信息
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @returns 目标元信息
    * @throws 目标不存在时抛出异常
@@ -44,7 +44,7 @@ export interface IReportTargetResolver {
   /**
    * 举报成功后钩子（可选）
    * 在事务内执行，可用于触发通知、审核等后置逻辑
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @param reporterId - 举报人ID
    * @param meta - 目标元信息

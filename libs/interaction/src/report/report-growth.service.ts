@@ -2,10 +2,9 @@ import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-  GrowthRuleTypeEnum,
 } from '@libs/growth'
 
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import {
   REPORT_GROWTH_RULE_TYPE_MAP,
   ReportTargetTypeEnum,
@@ -13,6 +12,8 @@ import {
 
 @Injectable()
 export class ReportGrowthService {
+  private readonly logger = new Logger(ReportGrowthService.name)
+
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly drizzle: DrizzleService,
@@ -32,8 +33,10 @@ export class ReportGrowthService {
     const baseBizKey = `report:${reportId}:user:${reporterId}`
 
     const ruleType =
-      REPORT_GROWTH_RULE_TYPE_MAP[targetType as ReportTargetTypeEnum] ??
-      GrowthRuleTypeEnum.TOPIC_REPORT
+      REPORT_GROWTH_RULE_TYPE_MAP[targetType as ReportTargetTypeEnum]
+    if (!ruleType) {
+      return
+    }
 
     try {
       await this.db.transaction(async (tx) => {
@@ -57,8 +60,12 @@ export class ReportGrowthService {
           targetId,
         })
       })
-    } catch {
-      // 奖励失败不影响主流程。
+    } catch (error) {
+      this.logger.warn(
+        `reward_report_created_failed reportId=${reportId} reporterId=${reporterId} targetType=${targetType} targetId=${targetId} ruleType=${ruleType} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 }

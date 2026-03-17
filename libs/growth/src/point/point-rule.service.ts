@@ -22,16 +22,16 @@ export class UserPointRuleService {
 
   async createPointRule(dto: CreateUserPointRuleDto) {
     if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
-      throw new BadRequestException('Invalid point rule type')
+      throw new BadRequestException('无效的积分规则类型')
     }
 
-    const rows = await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userPointRule).values(dto).returning(),
+    await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.userPointRule).values(dto),
       {
-        duplicate: 'Rule type already exists',
+        duplicate: '积分规则类型已存在',
       },
     )
-    return rows[0]
+    return true
   }
 
   async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {

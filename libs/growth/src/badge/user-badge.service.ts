@@ -1,11 +1,10 @@
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, desc, eq, inArray, like, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import {
   AssignUserBadgeDto,
   CreateUserBadgeDto,
@@ -71,24 +70,16 @@ export class UserBadgeService {
     })
   }
 
-  private buildBadgeConditions(dto: QueryUserBadgeDto) {
-    const conditions: SQL[] = []
-    if (dto.name) {
-      conditions.push(like(this.userBadge.name, `%${dto.name}%`))
-    }
-    if (dto.type !== undefined) {
-      conditions.push(eq(this.userBadge.type, dto.type))
-    }
-    if (dto.isEnabled !== undefined) {
-      conditions.push(eq(this.userBadge.isEnabled, dto.isEnabled))
-    }
-    if (dto.business) {
-      conditions.push(eq(this.userBadge.business, dto.business))
-    }
-    if (dto.eventKey) {
-      conditions.push(eq(this.userBadge.eventKey, dto.eventKey))
-    }
-    return conditions
+  private buildBadgeWhere(dto: QueryUserBadgeDto) {
+    return this.drizzle.buildWhere(this.userBadge, {
+      and: {
+        name: dto.name ? { like: dto.name } : undefined,
+        type: dto.type,
+        isEnabled: dto.isEnabled,
+        business: dto.business,
+        eventKey: dto.eventKey,
+      },
+    })
   }
 
   async getBadgeDetail(dto: { id: number }) {
@@ -102,9 +93,8 @@ export class UserBadgeService {
   }
 
   async getBadges(dto: QueryUserBadgeDto) {
-    const conditions = this.buildBadgeConditions(dto)
     return this.drizzle.ext.findPagination(this.userBadge, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
+      where: this.buildBadgeWhere(dto),
       ...dto,
     })
   }
@@ -122,21 +112,20 @@ export class UserBadgeService {
       throw new NotFoundException('用户不存在')
     }
 
-    try {
-      const rows = await this.db
-        .insert(this.userBadgeAssignment)
-        .values({
-          userId,
-          badgeId,
-        })
-        .returning()
-      return rows[0]
-    } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('用户已拥有该徽章')
-      }
-      throw error
-    }
+    const rows = await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .insert(this.userBadgeAssignment)
+          .values({
+            userId,
+            badgeId,
+          })
+          .returning(),
+      {
+        duplicate: '用户已拥有该徽章',
+      },
+    )
+    return rows[0]
   }
 
   async revokeBadge(dto: AssignUserBadgeDto) {
@@ -158,22 +147,15 @@ export class UserBadgeService {
   }
 
   async getUserBadges(userId: number, dto: QueryUserBadgeDto) {
-    const { name, type, isEnabled } = dto
-
     const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
-    const conditions = [eq(this.userBadgeAssignment.userId, userId)]
-    if (name) {
-      conditions.push(like(this.userBadge.name, `%${name}%`))
-    }
-    if (type !== undefined) {
-      conditions.push(eq(this.userBadge.type, type))
-    }
-    if (isEnabled !== undefined) {
-      conditions.push(eq(this.userBadge.isEnabled, isEnabled))
-    }
+    const badgeWhere = this.buildBadgeWhere(dto)
+    const where = badgeWhere
+      ? and(eq(this.userBadgeAssignment.userId, userId), badgeWhere)
+      : eq(this.userBadgeAssignment.userId, userId)
+
     return this.db
       .select({
         id: this.userBadgeAssignment.id,
@@ -187,7 +169,7 @@ export class UserBadgeService {
         this.userBadge,
         eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
       )
-      .where(and(...conditions))
+      .where(where)
       .orderBy(desc(this.userBadgeAssignment.id))
   }
 
@@ -201,23 +183,10 @@ export class UserBadgeService {
     const pageSize = dto.pageSize ?? 20
     const offset = (pageIndex - 1) * pageSize
 
-    const conditions = [eq(this.userBadgeAssignment.badgeId, badgeId)]
-    if (dto.name) {
-      conditions.push(like(this.userBadge.name, `%${dto.name}%`))
-    }
-    if (dto.type !== undefined) {
-      conditions.push(eq(this.userBadge.type, dto.type))
-    }
-    if (dto.isEnabled !== undefined) {
-      conditions.push(eq(this.userBadge.isEnabled, dto.isEnabled))
-    }
-    if (dto.business) {
-      conditions.push(eq(this.userBadge.business, dto.business))
-    }
-    if (dto.eventKey) {
-      conditions.push(eq(this.userBadge.eventKey, dto.eventKey))
-    }
-    const where = and(...conditions)
+    const badgeWhere = this.buildBadgeWhere(dto)
+    const where = badgeWhere
+      ? and(eq(this.userBadgeAssignment.badgeId, badgeId), badgeWhere)
+      : eq(this.userBadgeAssignment.badgeId, badgeId)
 
     const [totalRow] = await this.db
       .select({ total: sql<number>`count(*)` })

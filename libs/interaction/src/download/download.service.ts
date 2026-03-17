@@ -59,11 +59,12 @@ export class DownloadService {
     return resolver
   }
 
-  private isUniqueConstraintError(error: unknown) {
-    return (
-      this.drizzle.isUniqueViolation(error)
-      || this.drizzle.isErrorCode(error, 'P2002')
-    )
+  private extractRows<T>(result: unknown): T[] {
+    if (!result || typeof result !== 'object' || !('rows' in result)) {
+      return []
+    }
+    const rows = (result as { rows?: unknown }).rows
+    return Array.isArray(rows) ? (rows as T[]) : []
   }
 
   /**
@@ -93,8 +94,25 @@ export class DownloadService {
         return content
       })
     } catch (error) {
-      // 如果已经下载过了，直接返回内容
-      if (this.isUniqueConstraintError(error)) {
+      let duplicateDownload = false
+      try {
+        await this.drizzle.withErrorHandling(
+          async () => {
+            throw error
+          },
+          {
+            duplicate: '__DOWNLOAD_DUPLICATE__',
+          },
+        )
+      } catch (mappedError) {
+        duplicateDownload = mappedError instanceof Error
+          && mappedError.message === '__DOWNLOAD_DUPLICATE__'
+        if (!duplicateDownload) {
+          throw mappedError
+        }
+      }
+
+      if (duplicateDownload) {
         return this.db.transaction(async (tx) => {
           return resolver.ensureDownloadable(tx, targetId)
         })
@@ -215,15 +233,15 @@ export class DownloadService {
           ${createdAtFilter}
       `),
     ])
-    const rows = (rowsResult as any).rows as Array<{
+    const rows = this.extractRows<{
       workId: number
       workType: number
       workName: string
       workCover: string
       downloadedChapterCount: bigint
       lastDownloadedAt: Date
-    }>
-    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
+    }>(rowsResult)
+    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
 
     const total = Number(totalRows[0]?.total ?? 0n)
 
@@ -314,7 +332,7 @@ export class DownloadService {
           ${createdAtFilter}
       `),
     ])
-    const rows = (rowsResult as any).rows as Array<{
+    const rows = this.extractRows<{
       id: number
       targetType: number
       targetId: number
@@ -329,8 +347,8 @@ export class DownloadService {
       chapterSortOrder: number
       chapterIsPublished: boolean
       chapterPublishAt: Date | null
-    }>
-    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
+    }>(rowsResult)
+    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
 
     const total = Number(totalRows[0]?.total ?? 0n)
 

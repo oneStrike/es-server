@@ -24,7 +24,7 @@ export interface ICommentTargetResolver {
    * 校验是否允许对该目标发表评论
    * 检查目标是否存在、是否已被删除、是否允许评论（如作品禁评、帖子锁定等）
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @throws 当不允许评论时抛出 BadRequestException
    */
@@ -36,7 +36,7 @@ export interface ICommentTargetResolver {
   /**
    * 应用评论计数增量
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
@@ -50,7 +50,7 @@ export interface ICommentTargetResolver {
    * 解析目标元信息
    * 获取用于后置处理（如通知、计分）的必要数据
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @returns 目标元信息
    */
@@ -63,7 +63,7 @@ export interface ICommentTargetResolver {
    * 评论成功后钩子（可选）
    * 在事务内执行，可用于触发自定义后置逻辑
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 目标ID
    * @param actorUserId - 执行评论的用户ID
    * @param meta - 目标元信息

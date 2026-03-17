@@ -71,14 +71,12 @@ export class PurchaseService {
     )
   }
 
-  private handleBusinessError(
-    error: unknown,
-    options: { duplicateMessage?: string },
-  ): never {
-    if (options.duplicateMessage && this.drizzle.isErrorCode(error, 'P2002')) {
-      throw new BadRequestException(options.duplicateMessage)
+  private extractRows<T>(result: unknown): T[] {
+    if (!result || typeof result !== 'object' || !('rows' in result)) {
+      return []
     }
-    throw error
+    const rows = (result as { rows?: unknown }).rows
+    return Array.isArray(rows) ? (rows as T[]) : []
   }
 
   /**
@@ -166,11 +164,15 @@ export class PurchaseService {
         this.logger.warn(
           `purchase_failed_duplicate userId=${userId} targetType=${targetType} targetId=${targetId}`,
         )
+        await this.drizzle.withErrorHandling(
+          async () => {
+            throw error
+          },
+          {
+            duplicate: '该目标已购买',
+          },
+        )
       }
-
-      this.handleBusinessError(error, {
-        duplicateMessage: '该目标已购买',
-      })
 
       this.logger.error(
         `purchase_failed_unknown userId=${userId} targetType=${targetType} targetId=${targetId}`,
@@ -252,15 +254,15 @@ export class PurchaseService {
           ${createdAtFilter}
       `),
     ])
-    const rows = (rowsResult as any).rows as Array<{
+    const rows = this.extractRows<{
       workId: number
       workType: number
       workName: string
       workCover: string
       purchasedChapterCount: bigint
       lastPurchasedAt: Date
-    }>
-    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
+    }>(rowsResult)
+    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
 
     const total = Number(totalRows[0]?.total ?? 0n)
 
@@ -361,7 +363,7 @@ export class PurchaseService {
           ${createdAtFilter}
       `),
     ])
-    const rows = (rowsResult as any).rows as Array<{
+    const rows = this.extractRows<{
       id: number
       targetType: number
       targetId: number
@@ -381,8 +383,8 @@ export class PurchaseService {
       chapterSortOrder: number
       chapterIsPublished: boolean
       chapterPublishAt: Date | null
-    }>
-    const totalRows = (totalRowsResult as any).rows as Array<{ total: bigint }>
+    }>(rowsResult)
+    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
 
     const total = Number(totalRows[0]?.total ?? 0n)
 

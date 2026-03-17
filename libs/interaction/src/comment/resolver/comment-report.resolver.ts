@@ -41,7 +41,7 @@ export class CommentReportResolver
   /**
    * 解析目标评论的场景元数据
    * 验证评论存在性，根据评论挂载的目标类型和回复关系确定场景类型和评论层级
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetId - 评论ID
    * @returns 包含场景类型、场景ID、评论层级和评论作者的元数据对象
    * @throws NotFoundException 当评论不存在时抛出异常

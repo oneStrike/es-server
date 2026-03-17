@@ -1,3 +1,4 @@
+import type { InteractionTx } from '../interaction-tx.type'
 import { DrizzleService } from '@db/core'
 import {
   MessageNotificationSubjectTypeEnum,
@@ -7,11 +8,11 @@ import {
 import {
   AuditStatusEnum,
 } from '@libs/platform/constant'
+
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-
 import { ConfigReader } from '@libs/system-config'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, max } from 'drizzle-orm'
@@ -81,33 +82,6 @@ export class CommentService {
     CommentTargetTypeEnum,
     ICommentTargetResolver
   >()
-
-  private handleBusinessError(
-    error: unknown,
-    options: {
-      duplicateMessage?: string
-      notFoundMessage?: string
-      conflictMessage?: string
-    },
-  ): never {
-    if (
-      options.duplicateMessage
-      && (this.drizzle.isUniqueViolation(error) || this.drizzle.isErrorCode(error, 'P2002'))
-    ) {
-      throw new BadRequestException(options.duplicateMessage)
-    }
-    if (options.notFoundMessage && this.drizzle.isErrorCode(error, 'P2025')) {
-      throw new BadRequestException(options.notFoundMessage)
-    }
-    if (
-      options.conflictMessage
-      && (this.drizzle.isSerializationFailure(error)
-        || this.drizzle.isErrorCode(error, 'P2034'))
-    ) {
-      throw new BadRequestException(options.conflictMessage)
-    }
-    throw error
-  }
 
   private async withTransactionConflictRetry<T>(
     operation: () => Promise<T>,
@@ -190,13 +164,13 @@ export class CommentService {
    * 更新目标对象（如漫画、小说等）的评论计数字段。
    * 当 delta 为 0 时跳过操作。
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param targetType - 目标类型（漫画、小说等）
    * @param targetId - 目标ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   private async applyCommentCountDelta(
-    tx: any,
+    tx: InteractionTx,
     targetType: CommentTargetTypeEnum,
     targetId: number,
     delta: number,
@@ -251,7 +225,7 @@ export class CommentService {
       // 根据配置决定是否记录命中详情
       sensitiveWordHits:
         policy.recordHits && result.hits?.length
-          ? (result.hits as any)
+          ? result.hits
           : undefined,
     }
   }
@@ -263,11 +237,11 @@ export class CommentService {
    * 1. 给评论者发放成长奖励（积分/经验）
    * 2. 如果是回复评论，向被回复者发送通知
    *
-   * @param tx - Prisma 事务客户端
+   * @param tx - 事务客户端
    * @param comment - 可见评论的载荷数据
    */
   private async compensateVisibleCommentEffects(
-    tx: any,
+    tx: InteractionTx,
     comment: VisibleCommentPayload,
     _meta: CommentTargetMeta,
   ) {
@@ -284,7 +258,7 @@ export class CommentService {
     const replyTarget = await tx.query.userComment.findFirst({
       where: {
         id: comment.replyToId,
-        deletedAt: null,
+        deletedAt: { isNull: true },
       },
       columns: {
         userId: true,
@@ -348,82 +322,82 @@ export class CommentService {
     const decision = this.resolveAuditDecision(content)
     const resolver = this.getResolver(targetType)
 
-    try {
-      const created = await this.withTransactionConflictRetry(
-        async () =>
-          this.db.transaction(async (tx) => {
-            await resolver.ensureCanComment(tx, targetId)
+    const created = await this.drizzle.withErrorHandling(
+      async () =>
+        this.withTransactionConflictRetry(
+          async () =>
+            this.db.transaction(async (tx) => {
+              await resolver.ensureCanComment(tx, targetId)
 
-            const [floorResult] = await tx
-              .select({
-                floor: max(this.userComment.floor),
-              })
-              .from(this.userComment)
-              .where(
-                and(
-                  eq(this.userComment.targetType, targetType),
-                  eq(this.userComment.targetId, targetId),
-                  isNull(this.userComment.replyToId),
-                ),
-              )
-            const floor = (Number(floorResult?.floor ?? 0) || 0) + 1
+              const [floorResult] = await tx
+                .select({
+                  floor: max(this.userComment.floor),
+                })
+                .from(this.userComment)
+                .where(
+                  and(
+                    eq(this.userComment.targetType, targetType),
+                    eq(this.userComment.targetId, targetId),
+                    isNull(this.userComment.replyToId),
+                  ),
+                )
+              const floor = (Number(floorResult?.floor ?? 0) || 0) + 1
 
-            const [newComment] = await tx
-              .insert(this.userComment)
-              .values({
-                targetType,
-                targetId,
-                userId,
-                content,
-                floor,
-                ...decision,
-              })
-              .returning({
-                id: this.userComment.id,
-                userId: this.userComment.userId,
-                targetType: this.userComment.targetType,
-                targetId: this.userComment.targetId,
-                replyToId: this.userComment.replyToId,
-                createdAt: this.userComment.createdAt,
-              })
+              const [newComment] = await tx
+                .insert(this.userComment)
+                .values({
+                  targetType,
+                  targetId,
+                  userId,
+                  content,
+                  floor,
+                  ...decision,
+                })
+                .returning({
+                  id: this.userComment.id,
+                  userId: this.userComment.userId,
+                  targetType: this.userComment.targetType,
+                  targetId: this.userComment.targetId,
+                  replyToId: this.userComment.replyToId,
+                  createdAt: this.userComment.createdAt,
+                })
 
-            if (this.isVisible({ ...decision, deletedAt: null })) {
-              await this.applyCommentCountDelta(tx, targetType, targetId, 1)
+              if (this.isVisible({ ...decision, deletedAt: null })) {
+                await this.applyCommentCountDelta(tx, targetType, targetId, 1)
 
-              const meta = await resolver.resolveMeta(tx, targetId)
-              if (resolver.postCommentHook) {
-                await resolver.postCommentHook(tx, targetId, userId, meta)
+                const meta = await resolver.resolveMeta(tx, targetId)
+                if (resolver.postCommentHook) {
+                  await resolver.postCommentHook(tx, targetId, userId, meta)
+                }
+
+                await this.compensateVisibleCommentEffects(tx, newComment, meta)
               }
 
-              await this.compensateVisibleCommentEffects(tx, newComment, meta)
-            }
+              return {
+                comment: newComment,
+                visible: this.isVisible({ ...decision, deletedAt: null }),
+              }
+            }),
+          {
+            maxRetries: 3,
+          },
+        ),
+      {
+        conflict: '请求冲突，请稍后重试',
+      },
+    )
 
-            return {
-              comment: newComment,
-              visible: this.isVisible({ ...decision, deletedAt: null }),
-            }
-          }),
-        {
-          maxRetries: 3,
-        },
-      )
-
-      if (created.visible) {
-        await this.commentGrowthService.rewardCommentCreated(this.db, {
-          userId: created.comment.userId,
-          commentId: created.comment.id,
-          targetType: created.comment.targetType,
-          targetId: created.comment.targetId,
-          occurredAt: created.comment.createdAt,
-        })
-      }
-
-      return { id: created.comment.id }
-    } catch (error) {
-      this.handleBusinessError(error, {
-        conflictMessage: '请求冲突，请稍后重试',
+    if (created.visible) {
+      await this.commentGrowthService.rewardCommentCreated(this.db, {
+        userId: created.comment.userId,
+        commentId: created.comment.id,
+        targetType: created.comment.targetType,
+        targetId: created.comment.targetId,
+        occurredAt: created.comment.createdAt,
       })
     }
+
+    return { id: created.comment.id }
   }
 
   /**
@@ -528,7 +502,7 @@ export class CommentService {
       await this.commentGrowthService.rewardCommentCreated(this.db, {
         userId: created.comment.userId,
         commentId: created.comment.id,
-        targetType: created.comment.targetType as any,
+        targetType: created.comment.targetType,
         targetId: created.comment.targetId,
         occurredAt: created.comment.createdAt,
       })
