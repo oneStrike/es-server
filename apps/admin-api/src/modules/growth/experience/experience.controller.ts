@@ -18,7 +18,7 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class ExperienceController
  */
-@Controller('/admin/user-growth/experience-rules')
+@Controller('/admin/growth/experience-rules')
 @ApiTags('用户成长/经验管理')
 export class ExperienceController {
   constructor(private readonly experienceService: UserExperienceService) {}
@@ -104,3 +104,4 @@ export class ExperienceController {
     return this.experienceService.getUserExperienceStats(userId)
   }
 }
+

@@ -12,17 +12,17 @@ import {
   UpdateUserDto,
   UserPageDto,
   UserRegisterDto,
-} from './dto/user.dto'
-import { UserService } from './user.service'
+} from './dto/admin-user.dto'
+import { AdminUserService } from './admin-user.service'
 
 /**
  * 管理端用户控制器
  * 提供用户管理相关的 RESTful API 接口
  */
 @ApiTags('管理端用户模块')
-@Controller('admin/user')
-export class UserController {
-  constructor(private readonly userService: UserService) {}
+@Controller('admin/system-user')
+export class AdminUserController {
+  constructor(private readonly adminUserService: AdminUserService) {}
 
   /**
    * 用户注册接口
@@ -34,7 +34,7 @@ export class UserController {
   })
   @Public()
   async register(@Body() body: UserRegisterDto) {
-    return this.userService.register(body)
+    return this.adminUserService.register(body)
   }
 
   /**
@@ -49,7 +49,7 @@ export class UserController {
     @Body() body: UpdateUserDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.userService.updateUserInfo(user.sub, body)
+    return this.adminUserService.updateUserInfo(user.sub, body)
   }
 
   /**
@@ -61,7 +61,7 @@ export class UserController {
     model: BaseUserDto,
   })
   async getUserInfo(@CurrentUser() user: JwtUserInfoInterface) {
-    return this.userService.getUserInfo(user.sub)
+    return this.adminUserService.getUserInfo(user.sub)
   }
 
   /**
@@ -73,7 +73,7 @@ export class UserController {
     model: BaseUserDto,
   })
   async getUserById(@Query() query: IdDto) {
-    return this.userService.getUserInfo(query.id)
+    return this.adminUserService.getUserInfo(query.id)
   }
 
   /**
@@ -85,7 +85,7 @@ export class UserController {
     model: BaseUserDto,
   })
   async getUsers(@Query() query: UserPageDto) {
-    return this.userService.getUsers(query)
+    return this.adminUserService.getUsers(query)
   }
 
   /**
@@ -104,7 +104,7 @@ export class UserController {
     @Body() body: ChangePasswordDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.userService.changePassword(user.sub, body)
+    return this.adminUserService.changePassword(user.sub, body)
   }
 
   /*
@@ -119,7 +119,7 @@ export class UserController {
     @Body() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.userService.resetPassword(user.sub, query.id)
+    return this.adminUserService.resetPassword(user.sub, query.id)
   }
 
   /**
@@ -131,6 +131,11 @@ export class UserController {
     model: IdDto,
   })
   async unlockUser(@Body() query: IdDto) {
-    return this.userService.unlockUser(query.id)
+    return this.adminUserService.unlockUser(query.id)
   }
 }
+
+
+
+
+

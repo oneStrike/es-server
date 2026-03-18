@@ -21,9 +21,9 @@ class AppQueryPurchasedWorkChapterDto extends OmitType(
   ['userId'],
 ) {}
 
-@ApiTags('作品模块/购买')
-@Controller('app/work/purchase')
-export class WorkPurchaseController {
+@ApiTags('购买模块')
+@Controller('app/purchase')
+export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
   @Get('works')

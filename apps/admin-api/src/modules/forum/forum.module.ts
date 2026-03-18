@@ -18,4 +18,4 @@ import { ForumTopicModule } from './topic/topic.module'
     ForumTagModule,
   ],
 })
-export class ForumManagementModule {}
+export class ForumModule {}

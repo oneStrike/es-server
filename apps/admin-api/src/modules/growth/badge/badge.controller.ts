@@ -17,7 +17,7 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class UserBadgeController
  */
-@Controller('/admin/user-growth/badges')
+@Controller('/admin/growth/badges')
 @ApiTags('用户成长/徽章管理')
 export class UserBadgeController {
   constructor(private readonly userBadgeService: UserBadgeService) {}
@@ -115,3 +115,4 @@ export class UserBadgeController {
     return this.userBadgeService.getBadgeStatistics()
   }
 }
+

@@ -20,9 +20,9 @@ class AppQueryDownloadedWorkChapterDto extends OmitType(
   ['userId'],
 ) {}
 
-@ApiTags('作品模块/下载')
-@Controller('app/work/download')
-export class WorkDownloadController {
+@ApiTags('下载模块')
+@Controller('app/download')
+export class DownloadController {
   constructor(private readonly downloadService: DownloadService) {}
 
   @Get('works')

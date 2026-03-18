@@ -16,7 +16,7 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class PointController
  */
-@Controller('/admin/user-growth/points-rules')
+@Controller('/admin/growth/points-rules')
 @ApiTags('用户成长/积分管理')
 export class PointController {
   constructor(private readonly userPointRuleService: UserPointRuleService) {}
@@ -57,3 +57,4 @@ export class PointController {
     return this.userPointRuleService.updatePointRule(dto)
   }
 }
+

@@ -19,7 +19,7 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class LevelRuleController
  */
-@Controller('/admin/user-growth/level-rules')
+@Controller('/admin/growth/level-rules')
 @ApiTags('用户成长/等级规则管理')
 export class LevelRuleController {
   constructor(private readonly levelRuleService: UserLevelRuleService) {}
@@ -96,3 +96,4 @@ export class LevelRuleController {
     return this.levelRuleService.getLevelStatistics()
   }
 }
+

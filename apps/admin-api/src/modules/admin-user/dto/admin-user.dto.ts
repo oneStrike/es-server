@@ -10,7 +10,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { UserRoleEnum } from '../user.constant'
+import { AdminUserRoleEnum } from '../admin-user.constant'
 
 export class BaseUserDto extends BaseDto {
   @StringProperty({
@@ -47,9 +47,9 @@ export class BaseUserDto extends BaseDto {
     description: '角色 0普通管理员 1超级管理员',
     example: 0,
     default: 0,
-    enum: UserRoleEnum,
+    enum: AdminUserRoleEnum,
   })
-  role: UserRoleEnum
+  role: AdminUserRoleEnum
 
   @DateProperty({
     description: '最后登录时间',

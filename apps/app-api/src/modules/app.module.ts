@@ -11,6 +11,8 @@ import { SystemModule } from './system/system.module'
 import { TaskModule } from './task/task.module'
 import { UserModule } from './user/user.module'
 import { WorkModule } from './work/work.module'
+import { DownloadModule } from './download/download.module'
+import { PurchaseModule } from './purchase/purchase.module'
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { WorkModule } from './work/work.module'
     CommentModule,
     MessageModule,
     ReportModule,
+    DownloadModule,
+    PurchaseModule,
   ],
 })
 export class AppApiModule {}

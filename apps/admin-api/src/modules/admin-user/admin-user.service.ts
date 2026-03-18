@@ -10,20 +10,20 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { eq } from 'drizzle-orm'
 import { AuthRedisKeys } from '../auth/auth.constant'
+import { AdminUserRoleEnum } from './admin-user.constant'
 import {
   ChangePasswordDto,
   UpdateUserDto,
   UserPageDto,
   UserRegisterDto,
-} from './dto/user.dto'
-import { UserRoleEnum } from './user.constant'
+} from './dto/admin-user.dto'
 
 /**
  * 管理员用户服务
  * 负责后台用户的注册、查询、权限校验与密码管理
  */
 @Injectable()
-export class UserService {
+export class AdminUserService {
   get adminUser() {
     return this.drizzle.schema.adminUser
   }
@@ -49,7 +49,7 @@ export class UserService {
       throw new NotFoundException('用户不存在')
     }
 
-    if (adminUser.role !== UserRoleEnum.SUPER_ADMIN) {
+    if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
       throw new UnauthorizedException('权限不足')
     }
   }

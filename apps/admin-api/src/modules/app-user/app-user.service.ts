@@ -27,7 +27,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
-import { UserRoleEnum } from '../user/user.constant'
+import { AdminUserRoleEnum } from '../admin-user/admin-user.constant'
 
 /**
  * APP 用户管理服务
@@ -632,7 +632,7 @@ export class AppUserService {
       throw new NotFoundException('管理端用户不存在')
     }
 
-    if (adminUser.role !== UserRoleEnum.SUPER_ADMIN) {
+    if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
       throw new UnauthorizedException('权限不足')
     }
   }

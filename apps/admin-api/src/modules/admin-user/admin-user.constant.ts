@@ -1,7 +1,7 @@
 /**
  * 管理员角色枚举
  */
-export enum UserRoleEnum {
+export enum AdminUserRoleEnum {
   /** 普通管理员 */
   NORMAL_ADMIN = 0,
 
@@ -12,7 +12,8 @@ export enum UserRoleEnum {
 /**
  * 固定排除的用户信息字段
  */
-export const EXCLUDE_USER_FIELDS = {
+export const EXCLUDE_ADMIN_USER_FIELDS = {
   /** 密码字段 */
   password: true,
 }
+

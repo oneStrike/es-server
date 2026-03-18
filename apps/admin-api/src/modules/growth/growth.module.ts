@@ -7,4 +7,4 @@ import { PointModule } from './point/point.module'
 @Module({
   imports: [PointModule, ExperienceModule, LevelRuleModule, BadgeModule],
 })
-export class UserGrowthModule {}
+export class GrowthModule {}
