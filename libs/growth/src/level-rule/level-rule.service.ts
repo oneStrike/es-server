@@ -214,9 +214,12 @@ export class UserLevelRuleService {
     }
   }
 
-  async getHighestLevelRuleByExperience(experience: number, tx?: Db) {
-    const client = tx ?? this.db
-    return client.query.userLevelRule.findFirst({
+  async getHighestLevelRuleByExperience(experience: number) {
+    return this.getHighestLevelRuleByExperienceInTx(this.db, experience)
+  }
+
+  async getHighestLevelRuleByExperienceInTx(tx: Db, experience: number) {
+    return tx.query.userLevelRule.findFirst({
       where: {
         isEnabled: true,
         requiredExperience: { lte: experience },

@@ -29,10 +29,12 @@ export class WorkAuthorService {
    * @returns 创建的作者信息
    */
   async createAuthor(createAuthorDto: CreateAuthorDto) {
-    const [created] = await this.db
-      .insert(this.workAuthor)
-      .values(createAuthorDto)
-      .returning()
+    const [created] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.workAuthor)
+        .values(createAuthorDto)
+        .returning(),
+    )
     return created
   }
 
@@ -113,30 +115,37 @@ export class WorkAuthorService {
     }
 
     // 更新作者信息
-    const [updated] = await this.db
-      .update(this.workAuthor)
-      .set(updateData)
-      .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
-      .returning()
+    const [updated] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workAuthor)
+        .set(updateData)
+        .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(updated ? [updated] : [], '作者不存在')
     return updated
   }
 
   async updateAuthorStatus(id: number, isEnabled: boolean) {
-    const [updated] = await this.db
-      .update(this.workAuthor)
-      .set({ isEnabled })
-      .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
-      .returning({ id: this.workAuthor.id })
+    const [updated] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workAuthor)
+        .set({ isEnabled })
+        .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
+        .returning({ id: this.workAuthor.id }),
+    )
     this.drizzle.assertAffectedRows(updated ? [updated] : [], '作者不存在')
     return updated
   }
 
   async updateAuthorRecommended(id: number, isRecommended: boolean) {
-    const [updated] = await this.db
-      .update(this.workAuthor)
-      .set({ isRecommended })
-      .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
-      .returning({ id: this.workAuthor.id })
+    const [updated] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workAuthor)
+        .set({ isRecommended })
+        .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
+        .returning({ id: this.workAuthor.id }),
+    )
     this.drizzle.assertAffectedRows(updated ? [updated] : [], '作者不存在')
     return updated
   }
@@ -160,11 +169,14 @@ export class WorkAuthorService {
       )
     }
 
-    const [deleted] = await this.db
-      .update(this.workAuthor)
-      .set({ deletedAt: new Date() })
-      .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
-      .returning()
+    const [deleted] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workAuthor)
+        .set({ deletedAt: new Date() })
+        .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(deleted ? [deleted] : [], '作者不存在')
     return deleted
   }
 }

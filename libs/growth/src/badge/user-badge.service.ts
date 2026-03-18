@@ -37,17 +37,21 @@ export class UserBadgeService {
   }
 
   async createBadge(dto: CreateUserBadgeDto) {
-    const rows = await this.db.insert(this.userBadge).values(dto).returning()
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db.insert(this.userBadge).values(dto).returning(),
+    )
     return rows[0]
   }
 
   async updateBadge(dto: UpdateUserBadgeDto) {
     const { id, ...updateData } = dto
-    const rows = await this.db
-      .update(this.userBadge)
-      .set(updateData)
-      .where(eq(this.userBadge.id, id))
-      .returning()
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.userBadge)
+        .set(updateData)
+        .where(eq(this.userBadge.id, id))
+        .returning(),
+    )
     if (rows.length === 0) {
       throw new NotFoundException('徽章不存在')
     }
@@ -55,19 +59,21 @@ export class UserBadgeService {
   }
 
   async deleteBadge(dto: { id: number }) {
-    return this.db.transaction(async (tx) => {
-      await tx
-        .delete(this.userBadgeAssignment)
-        .where(eq(this.userBadgeAssignment.badgeId, dto.id))
-      const rows = await tx
-        .delete(this.userBadge)
-        .where(eq(this.userBadge.id, dto.id))
-        .returning()
-      if (rows.length === 0) {
-        throw new NotFoundException('徽章不存在')
-      }
-      return rows[0]
-    })
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        await tx
+          .delete(this.userBadgeAssignment)
+          .where(eq(this.userBadgeAssignment.badgeId, dto.id))
+        const rows = await tx
+          .delete(this.userBadge)
+          .where(eq(this.userBadge.id, dto.id))
+          .returning()
+        if (rows.length === 0) {
+          throw new NotFoundException('徽章不存在')
+        }
+        return rows[0]
+      }),
+    )
   }
 
   private buildBadgeWhere(dto: QueryUserBadgeDto) {
@@ -131,15 +137,17 @@ export class UserBadgeService {
   async revokeBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
-    const rows = await this.db
-      .delete(this.userBadgeAssignment)
-      .where(
-        and(
-          eq(this.userBadgeAssignment.userId, userId),
-          eq(this.userBadgeAssignment.badgeId, badgeId),
-        ),
-      )
-      .returning()
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.userBadgeAssignment)
+        .where(
+          and(
+            eq(this.userBadgeAssignment.userId, userId),
+            eq(this.userBadgeAssignment.badgeId, badgeId),
+          ),
+        )
+        .returning(),
+    )
     if (rows.length === 0) {
       throw new BadRequestException('用户徽章记录不存在')
     }

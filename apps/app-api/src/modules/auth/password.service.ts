@@ -83,10 +83,14 @@ export class PasswordService {
     // await this.smsService.validateVerifyCode({ phone, code })
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
-    await this.db
-      .update(this.appUser)
-      .set({ password: hashedPassword })
-      .where(eq(this.appUser.id, user.id))
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({ password: hashedPassword })
+        .where(eq(this.appUser.id, user.id))
+        .returning({ id: this.appUser.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, AuthErrorMessages.ACCOUNT_NOT_FOUND)
 
     await this.tokenStorageService.revokeAllByUserId(user.id, 'PASSWORD_CHANGE')
 
@@ -133,10 +137,14 @@ export class PasswordService {
 
     // 更新密码
     const hashedPassword = await this.scryptService.encryptPassword(newPassword)
-    await this.db
-      .update(this.appUser)
-      .set({ password: hashedPassword })
-      .where(eq(this.appUser.id, userId))
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({ password: hashedPassword })
+        .where(eq(this.appUser.id, userId))
+        .returning({ id: this.appUser.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, AuthErrorMessages.ACCOUNT_NOT_FOUND)
 
     // 撤销其他设备登录
     await this.tokenStorageService.revokeAllByUserId(userId, 'PASSWORD_CHANGE')

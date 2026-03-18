@@ -139,7 +139,18 @@ export class UserPointService {
       bizKey?: string
       source?: string
     },
-    tx?: Db,
+  ) {
+    return this.db.transaction(async (transaction) => {
+      return this.consumePointsInTx(transaction, consumePointsDto)
+    })
+  }
+
+  async consumePointsInTx(
+    tx: Db,
+    consumePointsDto: ConsumeUserPointsDto & {
+      bizKey?: string
+      source?: string
+    },
   ) {
     const { userId, points, remark, targetType, targetId, exchangeId } =
       consumePointsDto
@@ -201,13 +212,7 @@ export class UserPointService {
       }
     }
 
-    if (tx) {
-      return applyConsume(tx)
-    }
-
-    return this.db.transaction(async (transaction) => {
-      return applyConsume(transaction)
-    })
+    return applyConsume(tx)
   }
 
   /**

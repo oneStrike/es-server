@@ -1,7 +1,6 @@
+import type { SQL } from 'drizzle-orm'
 import {
-  buildColumnDateRangeSqlFilter,
   DrizzleService,
-  normalizePagination,
 } from '@db/core'
 import {
   GrowthAssetTypeEnum,
@@ -76,6 +75,56 @@ export class PurchaseService {
     }
     const rows = (result as { rows?: unknown }).rows
     return Array.isArray(rows) ? (rows as T[]) : []
+  }
+
+  private normalizePagination(
+    pageIndex?: number,
+    pageSize?: number,
+  ): { pageIndex: number, pageSize: number, skip: number, take: number } {
+    const rawPageIndex = Number.isFinite(Number(pageIndex))
+      ? Math.floor(Number(pageIndex))
+      : 1
+    const normalizedPageIndex = Math.max(1, rawPageIndex)
+
+    const rawPageSize = Number.isFinite(Number(pageSize))
+      ? Math.floor(Number(pageSize))
+      : 15
+    const normalizedPageSize = Math.min(Math.max(1, rawPageSize), 500)
+
+    const skip = (normalizedPageIndex - 1) * normalizedPageSize
+
+    return {
+      pageIndex: normalizedPageIndex,
+      pageSize: normalizedPageSize,
+      skip,
+      take: normalizedPageSize,
+    }
+  }
+
+  private buildPurchaseCreatedAtFilter(startDate?: string, endDate?: string): SQL {
+    const filters: SQL[] = []
+    const columnRef = sql`upr.created_at`
+
+    if (startDate) {
+      const start = new Date(startDate)
+      if (!Number.isNaN(start.getTime())) {
+        filters.push(sql`${columnRef} >= ${start}`)
+      }
+    }
+
+    if (endDate) {
+      const end = new Date(endDate)
+      if (!Number.isNaN(end.getTime())) {
+        end.setDate(end.getDate() + 1)
+        filters.push(sql`${columnRef} < ${end}`)
+      }
+    }
+
+    if (filters.length === 0) {
+      return sql.empty()
+    }
+
+    return sql` AND ${sql.join(filters, sql` AND `)}`
   }
 
   /**
@@ -206,12 +255,8 @@ export class PurchaseService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = buildColumnDateRangeSqlFilter(
-      'upr.created_at',
-      startDate,
-      endDate,
-    )
+    } = this.normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
       : sql.empty()
@@ -262,7 +307,6 @@ export class PurchaseService {
       lastPurchasedAt: Date
     }>(rowsResult)
     const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
-
     const total = Number(totalRows[0]?.total ?? 0n)
 
     return {
@@ -301,12 +345,8 @@ export class PurchaseService {
       pageSize: normalizedPageSize,
       skip,
       take,
-    } = normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = buildColumnDateRangeSqlFilter(
-      'upr.created_at',
-      startDate,
-      endDate,
-    )
+    } = this.normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
       : sql.empty()
@@ -384,7 +424,6 @@ export class PurchaseService {
       chapterPublishAt: Date | null
     }>(rowsResult)
     const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
-
     const total = Number(totalRows[0]?.total ?? 0n)
 
     return {

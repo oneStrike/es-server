@@ -116,26 +116,25 @@ export class BrowseLogService {
     const resolver = this.getResolver(targetType)
 
     // 2. 核心逻辑执行（事务内）
-    await this.db.transaction(async (tx) => {
-      // 业务目标合法性校验 (Resolver)
-      if (!options.skipTargetValidation) {
-        await resolver.ensureTargetValid(tx, targetId)
-      }
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        if (!options.skipTargetValidation) {
+          await resolver.ensureTargetValid(tx, targetId)
+        }
 
-      // 创建浏览记录
-      await tx.insert(this.userBrowseLog).values({
-        targetType,
-        targetId,
-        userId,
-        ipAddress,
-        device,
-        userAgent,
-        viewedAt: new Date(),
-      })
+        await tx.insert(this.userBrowseLog).values({
+          targetType,
+          targetId,
+          userId,
+          ipAddress,
+          device,
+          userAgent,
+          viewedAt: new Date(),
+        })
 
-      // 更新浏览计数 (Resolver)
-      await this.applyTargetCountDelta(tx, targetType, targetId, 1)
-    })
+        await this.applyTargetCountDelta(tx, targetType, targetId, 1)
+      }),
+    )
 
     const runPostProcess = async () => {
       await this.browseLogInteractionService.handleBrowseLogRecorded()

@@ -154,7 +154,8 @@ export class CommentLikeResolver
       return
     }
 
-    await this.messageOutboxService.enqueueNotificationEvent(
+    await this.messageOutboxService.enqueueNotificationEventInTx(
+      tx,
       {
         eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
         bizKey: `notify:comment:like:${comment.id}:actor:${actorUserId}:receiver:${comment.userId}`,
@@ -170,7 +171,6 @@ export class CommentLikeResolver
           content: '有人点赞了你的评论',
         },
       },
-      tx,
     )
   }
 

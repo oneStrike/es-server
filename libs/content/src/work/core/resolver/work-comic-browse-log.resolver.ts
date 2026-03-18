@@ -54,18 +54,20 @@ export class WorkComicBrowseLogResolver
       return
     }
 
-    const result = await tx
-      .update(this.work)
-      .set({
-        viewCount: sql`${this.work.viewCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(this.work.id, targetId),
-          eq(this.work.type, this.workType),
-          isNull(this.work.deletedAt),
+    const result = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.work)
+        .set({
+          viewCount: sql`${this.work.viewCount} + ${delta}`,
+        })
+        .where(
+          and(
+            eq(this.work.id, targetId),
+            eq(this.work.type, this.workType),
+            isNull(this.work.deletedAt),
+          ),
         ),
-      )
+    )
     this.drizzle.assertAffectedRows(result, '漫画作品不存在')
   }
 

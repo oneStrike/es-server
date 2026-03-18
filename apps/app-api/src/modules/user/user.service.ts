@@ -91,6 +91,10 @@ export class UserService {
     return this.drizzle.schema.userDownloadRecord
   }
 
+  private get workChapter() {
+    return this.drizzle.schema.workChapter
+  }
+
   /**
    * 获取用户资料
    *
@@ -122,19 +126,21 @@ export class UserService {
     await this.ensureUserExists(userId)
 
     try {
-      const [updated] = await this.db
-        .update(this.appUser)
-        .set({
-          nickname: dto.nickname,
-          avatarUrl: dto.avatar,
-          emailAddress: dto.email,
-          genderType: dto.gender,
-          birthDate: dto.birthDate
-            ? new Date(dto.birthDate).toISOString().slice(0, 10)
-            : undefined,
-        })
-        .where(eq(this.appUser.id, userId))
-        .returning()
+      const [updated] = await this.drizzle.withErrorHandling(() =>
+        this.db
+          .update(this.appUser)
+          .set({
+            nickname: dto.nickname,
+            avatarUrl: dto.avatar,
+            emailAddress: dto.email,
+            genderType: dto.gender,
+            birthDate: dto.birthDate
+              ? new Date(dto.birthDate).toISOString().slice(0, 10)
+              : undefined,
+          })
+          .where(eq(this.appUser.id, userId))
+          .returning(),
+      )
       if (!updated) {
         throw new NotFoundException('用户不存在')
       }
@@ -207,28 +213,30 @@ export class UserService {
   async updateUserForumProfile(userId: number, dto: UpdateMyForumProfileDto) {
     await this.ensureUserExists(userId)
 
-    await this.db.transaction(async (tx) => {
-      const existing = await tx
-        .select({ id: this.forumProfile.id })
-        .from(this.forumProfile)
-        .where(eq(this.forumProfile.userId, userId))
-        .limit(1)
-      if (existing[0]) {
-        await tx
-          .update(this.forumProfile)
-          .set({
-            signature: dto.signature,
-            bio: dto.bio,
-          })
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const existing = await tx
+          .select({ id: this.forumProfile.id })
+          .from(this.forumProfile)
           .where(eq(this.forumProfile.userId, userId))
-      } else {
-        await tx.insert(this.forumProfile).values({
-          userId,
-          signature: dto.signature ?? '',
-          bio: dto.bio ?? '',
-        })
-      }
-    })
+          .limit(1)
+        if (existing[0]) {
+          await tx
+            .update(this.forumProfile)
+            .set({
+              signature: dto.signature,
+              bio: dto.bio,
+            })
+            .where(eq(this.forumProfile.userId, userId))
+        } else {
+          await tx.insert(this.forumProfile).values({
+            userId,
+            signature: dto.signature ?? '',
+            bio: dto.bio ?? '',
+          })
+        }
+      }),
+    )
 
     return this.getUserForumProfile(userId)
   }
@@ -636,33 +644,39 @@ export class UserService {
             ]),
           ),
         ),
-      this.db.execute(sql`
-        SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
-        FROM user_purchase_record upr
-        INNER JOIN work_chapter wc ON wc.id = upr.target_id
-        WHERE upr.user_id = ${userId}
-          AND upr.status = ${PurchaseStatusEnum.SUCCESS}
-          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
-      `),
-      this.db.execute(sql`
-        SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
-        FROM user_download_record udr
-        INNER JOIN work_chapter wc ON wc.id = udr.target_id
-        WHERE udr.user_id = ${userId}
-          AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
-      `),
+      this.db
+        .select({ total: sql<bigint>`COUNT(DISTINCT ${this.workChapter.workId})::bigint` })
+        .from(this.userPurchaseRecord)
+        .innerJoin(this.workChapter, eq(this.workChapter.id, this.userPurchaseRecord.targetId))
+        .where(
+          and(
+            eq(this.userPurchaseRecord.userId, userId),
+            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
+            inArray(this.userPurchaseRecord.targetType, [
+              PurchaseTargetTypeEnum.COMIC_CHAPTER,
+              PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+            ]),
+          ),
+        ),
+      this.db
+        .select({ total: sql<bigint>`COUNT(DISTINCT ${this.workChapter.workId})::bigint` })
+        .from(this.userDownloadRecord)
+        .innerJoin(this.workChapter, eq(this.workChapter.id, this.userDownloadRecord.targetId))
+        .where(
+          and(
+            eq(this.userDownloadRecord.userId, userId),
+            inArray(this.userDownloadRecord.targetType, [
+              DownloadTargetTypeEnum.COMIC_CHAPTER,
+              DownloadTargetTypeEnum.NOVEL_CHAPTER,
+            ]),
+          ),
+        ),
     ])
-    const purchasedRows
-      = ((purchasedWorkRows as unknown as { rows?: Array<{ total: bigint }> }).rows
-        ?? [])
-    const downloadedRows
-      = ((downloadedWorkRows as unknown as { rows?: Array<{ total: bigint }> }).rows
-        ?? [])
 
     return {
-      purchasedWorkCount: Number(purchasedRows[0]?.total ?? 0n),
+      purchasedWorkCount: Number(purchasedWorkRows[0]?.total ?? 0n),
       purchasedChapterCount: Number(purchasedChapterCount[0]?.count ?? 0),
-      downloadedWorkCount: Number(downloadedRows[0]?.total ?? 0n),
+      downloadedWorkCount: Number(downloadedWorkRows[0]?.total ?? 0n),
       downloadedChapterCount: Number(downloadedChapterCount[0]?.count ?? 0),
       favoriteCount: Number(favoriteCount[0]?.count ?? 0),
       likeCount: Number(likeCount[0]?.count ?? 0),

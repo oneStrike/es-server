@@ -92,11 +92,13 @@ export class WorkTagService {
   }
 
   async updateTagStatus(id: number, isEnabled: boolean) {
-    const [updated] = await this.db
-      .update(this.workTag)
-      .set({ isEnabled })
-      .where(eq(this.workTag.id, id))
-      .returning({ id: this.workTag.id })
+    const [updated] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workTag)
+        .set({ isEnabled })
+        .where(eq(this.workTag.id, id))
+        .returning({ id: this.workTag.id }),
+    )
     this.drizzle.assertAffectedRows(updated ? [updated] : [], 'Tag not found')
     return updated
   }
@@ -110,7 +112,13 @@ export class WorkTagService {
       throw new BadRequestException('Tag has related works and cannot be deleted')
     }
 
-    await this.db.delete(this.workTag).where(eq(this.workTag.id, dto.id))
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.workTag)
+        .where(eq(this.workTag.id, dto.id))
+        .returning({ id: this.workTag.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, 'Tag not found')
     return { id: dto.id }
   }
 

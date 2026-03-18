@@ -1,3 +1,4 @@
+import { DrizzleService } from '@db/core'
 import { work, workAuthorRelation } from '@db/schema'
 import {
   CommentService,
@@ -20,7 +21,10 @@ export class WorkNovelCommentResolver
   /** 作品类型：2 表示小说 */
   private readonly workType = 2
 
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly drizzle: DrizzleService,
+  ) {}
 
   /**
    * 模块初始化时注册解析器
@@ -46,18 +50,20 @@ export class WorkNovelCommentResolver
       return
     }
 
-    await tx
-      .update(work)
-      .set({
-        commentCount: sql`${work.commentCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(work.id, targetId),
-          eq(work.type, this.workType),
-          isNull(work.deletedAt),
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(work)
+        .set({
+          commentCount: sql`${work.commentCount} + ${delta}`,
+        })
+        .where(
+          and(
+            eq(work.id, targetId),
+            eq(work.type, this.workType),
+            isNull(work.deletedAt),
+          ),
         ),
-      )
+    )
     const updated = await tx.query.work.findFirst({
       where: {
         id: targetId,

@@ -29,15 +29,14 @@ export class MessageOutboxService {
   /**
    * 将消息事件入队
    * @param dto 消息事件数据
-   * @param tx 可选的事务对象
    */
-  async enqueueEvent(
-    dto: CreateMessageOutboxEventDto,
-    tx?: Db,
-  ) {
-    const client = tx ?? this.db
+  async enqueueEvent(dto: CreateMessageOutboxEventDto) {
+    return this.enqueueEventInTx(this.db, dto)
+  }
+
+  async enqueueEventInTx(tx: Db, dto: CreateMessageOutboxEventDto) {
     try {
-      await client
+      await tx
         .insert(this.outbox)
         .values({
           domain: dto.domain,
@@ -60,20 +59,23 @@ export class MessageOutboxService {
   /**
    * 将通知事件入队
    * @param dto 通知事件数据
-   * @param tx 可选的事务对象
    */
-  async enqueueNotificationEvent(
+  async enqueueNotificationEvent(dto: CreateNotificationOutboxEventDto) {
+    await this.enqueueNotificationEventInTx(this.db, dto)
+  }
+
+  async enqueueNotificationEventInTx(
+    tx: Db,
     dto: CreateNotificationOutboxEventDto,
-    tx?: Db,
   ) {
-    await this.enqueueEvent(
+    await this.enqueueEventInTx(
+      tx,
       {
         domain: MessageOutboxDomainEnum.NOTIFICATION,
         eventType: dto.eventType,
         bizKey: dto.bizKey,
         payload: dto.payload,
       },
-      tx,
     )
   }
 }

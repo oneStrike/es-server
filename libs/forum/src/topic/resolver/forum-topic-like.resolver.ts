@@ -83,12 +83,14 @@ export class ForumTopicLikeResolver
       return
     }
 
-    const result = await tx
-      .update(forumTopic)
-      .set({
-        likeCount: sql`${forumTopic.likeCount} + ${delta}`,
-      })
-      .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
+    const result = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(forumTopic)
+        .set({
+          likeCount: sql`${forumTopic.likeCount} + ${delta}`,
+        })
+        .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt))),
+    )
     this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
@@ -118,7 +120,8 @@ export class ForumTopicLikeResolver
       return
     }
 
-    await this.messageOutboxService.enqueueNotificationEvent(
+    await this.messageOutboxService.enqueueNotificationEventInTx(
+      tx,
       {
         eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
         bizKey: `notify:like:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${topic.userId}`,
@@ -132,7 +135,6 @@ export class ForumTopicLikeResolver
           content: '有人点赞了你的主题',
         },
       },
-      tx,
     )
   }
 }

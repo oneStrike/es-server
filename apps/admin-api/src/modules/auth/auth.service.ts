@@ -127,13 +127,15 @@ export class AuthService {
     }
 
     // 更新登录信息
-    await this.db
-      .update(this.adminUserTable)
-      .set({
-        lastLoginAt: new Date(),
-        lastLoginIp: extractIpAddress(req) || 'unknown',
-      })
-      .where(eq(this.adminUserTable.id, user.id))
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.adminUserTable)
+        .set({
+          lastLoginAt: new Date(),
+          lastLoginIp: extractIpAddress(req) || 'unknown',
+        })
+        .where(eq(this.adminUserTable.id, user.id)),
+    )
     // 生成令牌
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),

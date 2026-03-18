@@ -28,18 +28,20 @@ export class AdminTokenStorageService {
   }
 
   async createToken(data: CreateTokenDto) {
-    const [result] = await this.db
-      .insert(this.tokenTable)
-      .values({
-        userId: data.userId,
-        jti: data.jti,
-        tokenType: data.tokenType,
-        expiresAt: data.expiresAt,
-        deviceInfo: data.deviceInfo as any,
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
-      })
-      .returning()
+    const [result] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.tokenTable)
+        .values({
+          userId: data.userId,
+          jti: data.jti,
+          tokenType: data.tokenType,
+          expiresAt: data.expiresAt,
+          deviceInfo: data.deviceInfo as any,
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+        })
+        .returning(),
+    )
     const ttlMs = this.getTokenTtlMs(data.expiresAt)
     if (ttlMs > 0) {
       await this.cacheManager.set(`token:${data.jti}`, 'valid', ttlMs)
@@ -48,20 +50,22 @@ export class AdminTokenStorageService {
   }
 
   async createTokens(tokens: CreateTokenDto[]) {
-    const result = await this.db
-      .insert(this.tokenTable)
-      .values(
-        tokens.map((token) => ({
-          userId: token.userId,
-          jti: token.jti,
-          tokenType: token.tokenType,
-          expiresAt: token.expiresAt,
-          deviceInfo: token.deviceInfo as any,
-          ipAddress: token.ipAddress,
-          userAgent: token.userAgent,
-        })),
-      )
-      .returning({ id: this.tokenTable.id })
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.tokenTable)
+        .values(
+          tokens.map((token) => ({
+            userId: token.userId,
+            jti: token.jti,
+            tokenType: token.tokenType,
+            expiresAt: token.expiresAt,
+            deviceInfo: token.deviceInfo as any,
+            ipAddress: token.ipAddress,
+            userAgent: token.userAgent,
+          })),
+        )
+        .returning({ id: this.tokenTable.id }),
+    )
     await Promise.all(
       tokens.map(async (token) => {
         const ttlMs = this.getTokenTtlMs(token.expiresAt)
@@ -102,13 +106,15 @@ export class AdminTokenStorageService {
   }
 
   async revokeByJti(jti: string, reason: string) {
-    await this.db
-      .update(this.tokenTable)
-      .set({
-        revokedAt: new Date(),
-        revokeReason: reason,
-      })
-      .where(eq(this.tokenTable.jti, jti))
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.tokenTable)
+        .set({
+          revokedAt: new Date(),
+          revokeReason: reason,
+        })
+        .where(eq(this.tokenTable.jti, jti)),
+    )
     await this.cacheManager.set(`token:${jti}`, 'invalid', 24 * 60 * 60 * 1000)
   }
 
@@ -116,13 +122,15 @@ export class AdminTokenStorageService {
     if (jtis.length === 0) {
       return
     }
-    await this.db
-      .update(this.tokenTable)
-      .set({
-        revokedAt: new Date(),
-        revokeReason: reason,
-      })
-      .where(inArray(this.tokenTable.jti, jtis))
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.tokenTable)
+        .set({
+          revokedAt: new Date(),
+          revokeReason: reason,
+        })
+        .where(inArray(this.tokenTable.jti, jtis)),
+    )
     await Promise.all(
       jtis.map(async (jti) =>
         this.cacheManager.set(`token:${jti}`, 'invalid', 24 * 60 * 60 * 1000),
@@ -131,21 +139,26 @@ export class AdminTokenStorageService {
   }
 
   async revokeAllByUserId(userId: number, reason: string) {
-    const tokens = await this.db
-      .select({ jti: this.tokenTable.jti })
-      .from(this.tokenTable)
-      .where(
-        and(eq(this.tokenTable.userId, userId), isNull(this.tokenTable.revokedAt)),
-      )
-    await this.db
-      .update(this.tokenTable)
-      .set({
-        revokedAt: new Date(),
-        revokeReason: reason,
-      })
-      .where(
-        and(eq(this.tokenTable.userId, userId), isNull(this.tokenTable.revokedAt)),
-      )
+    const tokens = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const activeTokens = await tx
+          .select({ jti: this.tokenTable.jti })
+          .from(this.tokenTable)
+          .where(
+            and(eq(this.tokenTable.userId, userId), isNull(this.tokenTable.revokedAt)),
+          )
+        await tx
+          .update(this.tokenTable)
+          .set({
+            revokedAt: new Date(),
+            revokeReason: reason,
+          })
+          .where(
+            and(eq(this.tokenTable.userId, userId), isNull(this.tokenTable.revokedAt)),
+          )
+        return activeTokens
+      }),
+    )
     await Promise.all(
       tokens.map(async (token) =>
         this.cacheManager.set(
@@ -171,34 +184,38 @@ export class AdminTokenStorageService {
   }
 
   async cleanupExpiredTokens() {
-    const rows = await this.db
-      .update(this.tokenTable)
-      .set({
-        revokedAt: new Date(),
-        revokeReason: 'TOKEN_EXPIRED',
-      })
-      .where(
-        and(
-          lt(this.tokenTable.expiresAt, new Date()),
-          isNull(this.tokenTable.revokedAt),
-        ),
-      )
-      .returning({ id: this.tokenTable.id })
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.tokenTable)
+        .set({
+          revokedAt: new Date(),
+          revokeReason: 'TOKEN_EXPIRED',
+        })
+        .where(
+          and(
+            lt(this.tokenTable.expiresAt, new Date()),
+            isNull(this.tokenTable.revokedAt),
+          ),
+        )
+        .returning({ id: this.tokenTable.id }),
+    )
     return rows.length
   }
 
   async deleteOldRevokedTokens(retentionDays: number = 30) {
     const date = new Date()
     date.setDate(date.getDate() - retentionDays)
-    const rows = await this.db
-      .delete(this.tokenTable)
-      .where(
-        and(
-          lt(this.tokenTable.revokedAt, date),
-          isNotNull(this.tokenTable.revokedAt),
-        ),
-      )
-      .returning({ id: this.tokenTable.id })
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.tokenTable)
+        .where(
+          and(
+            lt(this.tokenTable.revokedAt, date),
+            isNotNull(this.tokenTable.revokedAt),
+          ),
+        )
+        .returning({ id: this.tokenTable.id }),
+    )
     return rows.length
   }
 }

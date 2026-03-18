@@ -52,17 +52,19 @@ export class ForumTopicBrowseLogResolver
       return
     }
 
-    const result = await tx
-      .update(this.forumTopic)
-      .set({
-        viewCount: sql`${this.forumTopic.viewCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(this.forumTopic.id, targetId),
-          isNull(this.forumTopic.deletedAt),
+    const result = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.forumTopic)
+        .set({
+          viewCount: sql`${this.forumTopic.viewCount} + ${delta}`,
+        })
+        .where(
+          and(
+            eq(this.forumTopic.id, targetId),
+            isNull(this.forumTopic.deletedAt),
+          ),
         ),
-      )
+    )
     this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 

@@ -73,13 +73,15 @@ export class ForumTagService {
       throw new BadRequestException('该标签名称已存在')
     }
 
-    const [tag] = await this.db
-      .insert(this.forumTag)
-      .values({
-        ...tagData,
-        name,
-      })
-      .returning()
+    const [tag] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.forumTag)
+        .values({
+          ...tagData,
+          name,
+        })
+        .returning(),
+    )
     return tag
   }
 
@@ -188,11 +190,14 @@ export class ForumTagService {
       }
     }
 
-    const [updatedTag] = await this.db
-      .update(this.forumTag)
-      .set({ name, ...updateData })
-      .where(eq(this.forumTag.id, id))
-      .returning()
+    const [updatedTag] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumTag)
+        .set({ name, ...updateData })
+        .where(eq(this.forumTag.id, id))
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(updatedTag ? [updatedTag] : [], '标签不存在')
 
     return updatedTag
   }
@@ -219,7 +224,13 @@ export class ForumTagService {
       throw new BadRequestException('该标签已被使用，无法删除')
     }
 
-    await this.db.delete(this.forumTag).where(eq(this.forumTag.id, id))
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.forumTag)
+        .where(eq(this.forumTag.id, id))
+        .returning({ id: this.forumTag.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, '标签不存在')
 
     return { success: true }
   }
@@ -261,20 +272,24 @@ export class ForumTagService {
     }
 
     // 关联关系与使用次数同步更新
-    return this.db.transaction(async (tx) => {
-      const [topicTag] = await tx
-        .insert(this.forumTopicTag)
-        .values({
-          topicId,
-          tagId,
-        })
-        .returning()
-      await tx
-        .update(this.forumTag)
-        .set({ useCount: sql`${this.forumTag.useCount} + 1` })
-        .where(eq(this.forumTag.id, tagId))
-      return topicTag
-    })
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const [topicTag] = await tx
+          .insert(this.forumTopicTag)
+          .values({
+            topicId,
+            tagId,
+          })
+          .returning()
+        const rows = await tx
+          .update(this.forumTag)
+          .set({ useCount: sql`${this.forumTag.useCount} + 1` })
+          .where(eq(this.forumTag.id, tagId))
+          .returning({ id: this.forumTag.id })
+        this.drizzle.assertAffectedRows(rows, '标签不存在')
+        return topicTag
+      }),
+    )
   }
 
   /**
@@ -295,21 +310,25 @@ export class ForumTagService {
     }
 
     // 解除关联并回收使用次数
-    return this.db.transaction(async (tx) => {
-      await tx
-        .delete(this.forumTopicTag)
-        .where(
-          and(
-            eq(this.forumTopicTag.topicId, topicId),
-            eq(this.forumTopicTag.tagId, tagId),
-          ),
-        )
-      await tx
-        .update(this.forumTag)
-        .set({ useCount: sql`${this.forumTag.useCount} - 1` })
-        .where(eq(this.forumTag.id, tagId))
-      return { success: true }
-    })
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        await tx
+          .delete(this.forumTopicTag)
+          .where(
+            and(
+              eq(this.forumTopicTag.topicId, topicId),
+              eq(this.forumTopicTag.tagId, tagId),
+            ),
+          )
+        const rows = await tx
+          .update(this.forumTag)
+          .set({ useCount: sql`${this.forumTag.useCount} - 1` })
+          .where(eq(this.forumTag.id, tagId))
+          .returning({ id: this.forumTag.id })
+        this.drizzle.assertAffectedRows(rows, '标签不存在')
+        return { success: true }
+      }),
+    )
   }
 
   /**

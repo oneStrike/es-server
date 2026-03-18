@@ -92,14 +92,17 @@ export class ForumConfigService {
     }
 
     // 更新配置
-    const [updatedConfig] = await this.db
-      .update(this.forumConfig)
-      .set({
-        ...updateData,
-        updatedById: userId,
-      })
-      .where(eq(this.forumConfig.id, id))
-      .returning()
+    const [updatedConfig] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumConfig)
+        .set({
+          ...updateData,
+          updatedById: userId,
+        })
+        .where(eq(this.forumConfig.id, id))
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(updatedConfig ? [updatedConfig] : [], '配置不存在')
 
     await this.recordConfigHistory(
       id,
@@ -125,9 +128,11 @@ export class ForumConfigService {
     const [existingConfig] = await this.db.select().from(this.forumConfig).limit(1)
 
     if (existingConfig) {
-      await this.db
-        .delete(this.forumConfig)
-        .where(eq(this.forumConfig.id, existingConfig.id))
+      await this.drizzle.withErrorHandling(() =>
+        this.db
+          .delete(this.forumConfig)
+          .where(eq(this.forumConfig.id, existingConfig.id)),
+      )
     }
 
     const config = await this.createDefaultConfig(req)
@@ -174,9 +179,13 @@ export class ForumConfigService {
     }
 
     // 删除历史记录
-    await this.db
-      .delete(this.forumConfigHistory)
-      .where(eq(this.forumConfigHistory.id, historyId))
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.forumConfigHistory)
+        .where(eq(this.forumConfigHistory.id, historyId))
+        .returning({ id: this.forumConfigHistory.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, '历史记录不存在')
   }
 
   /**
@@ -229,14 +238,17 @@ export class ForumConfigService {
     const restoreData = this.extractRestoreData(history.changes)
 
     // 更新配置
-    const [updatedConfig] = await this.db
-      .update(this.forumConfig)
-      .set({
-        ...restoreData,
-        updatedById: userId,
-      })
-      .where(eq(this.forumConfig.id, history.configId))
-      .returning()
+    const [updatedConfig] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumConfig)
+        .set({
+          ...restoreData,
+          updatedById: userId,
+        })
+        .where(eq(this.forumConfig.id, history.configId))
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(updatedConfig ? [updatedConfig] : [], '配置不存在')
 
     // 记录恢复操作
     await this.recordConfigHistory(
@@ -262,10 +274,12 @@ export class ForumConfigService {
   private async createDefaultConfig(
     req?: FastifyRequest,
   ): Promise<ForumConfigRow> {
-    const [config] = await this.db
-      .insert(this.forumConfig)
-      .values(DEFAULT_FORUM_CONFIG)
-      .returning()
+    const [config] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.forumConfig)
+        .values(DEFAULT_FORUM_CONFIG)
+        .returning(),
+    )
 
     // 记录创建操作
     await this.recordConfigHistory(
@@ -297,7 +311,7 @@ export class ForumConfigService {
     reason?: string,
     req?: FastifyRequest,
   ) {
-    await this.db.insert(this.forumConfigHistory).values({
+    await this.drizzle.withErrorHandling(() => this.db.insert(this.forumConfigHistory).values({
         configId,
         changes,
         changeType,
@@ -305,7 +319,7 @@ export class ForumConfigService {
         reason,
         ipAddress: req ? extractIpAddress(req) : undefined,
         userAgent: req ? extractUserAgent(req) : undefined,
-    })
+    }))
   }
 
   /**

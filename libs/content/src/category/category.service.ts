@@ -26,13 +26,15 @@ export class WorkCategoryService {
       createCategoryDto.sortOrder = maxOrder + 1
     }
 
-    const [created] = await this.db
-      .insert(this.workCategory)
-      .values({
-        popularity: 0,
-        ...createCategoryDto,
-      })
-      .returning({ id: this.workCategory.id })
+    const [created] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.workCategory)
+        .values({
+          popularity: 0,
+          ...createCategoryDto,
+        })
+        .returning({ id: this.workCategory.id }),
+    )
     return created
   }
 
@@ -90,11 +92,13 @@ export class WorkCategoryService {
     if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks())) {
       throw new BadRequestException('Category has related works and cannot be disabled')
     }
-    const [updated] = await this.db
-      .update(this.workCategory)
-      .set({ isEnabled: updateStatusDto.isEnabled })
-      .where(eq(this.workCategory.id, updateStatusDto.id))
-      .returning({ id: this.workCategory.id })
+    const [updated] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workCategory)
+        .set({ isEnabled: updateStatusDto.isEnabled })
+        .where(eq(this.workCategory.id, updateStatusDto.id))
+        .returning({ id: this.workCategory.id }),
+    )
     this.drizzle.assertAffectedRows(updated ? [updated] : [], '分类不存在')
     return updated
   }
@@ -109,7 +113,9 @@ export class WorkCategoryService {
     if (await this.checkCategoryHasWorks()) {
       throw new BadRequestException('Category has related works and cannot be deleted')
     }
-    const result = await this.db.delete(this.workCategory).where(eq(this.workCategory.id, id))
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db.delete(this.workCategory).where(eq(this.workCategory.id, id)),
+    )
     this.drizzle.assertAffectedRows(result, '分类不存在')
     return { id }
   }

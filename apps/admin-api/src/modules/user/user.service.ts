@@ -85,11 +85,14 @@ export class UserService {
     // 返回更新后的用户信息（不包含密码）
 
     const { id: _id, ...data } = updateData
-    const [updated] = await this.db
-      .update(this.adminUser)
-      .set(data)
-      .where(eq(this.adminUser.id, updateData.id))
-      .returning({ id: this.adminUser.id })
+    const [updated] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.adminUser)
+        .set(data)
+        .where(eq(this.adminUser.id, updateData.id))
+        .returning({ id: this.adminUser.id }),
+    )
+    this.drizzle.assertAffectedRows(updated ? [updated] : [], '用户不存在')
     return updated
   }
 
@@ -127,17 +130,19 @@ export class UserService {
     // 加密密码
     const encryptedPassword = await this.scryptService.encryptPassword(password)
 
-    const [created] = await this.db
-      .insert(this.adminUser)
-      .values({
-        username,
-        password: encryptedPassword,
-        avatar,
-        mobile,
-        role: role || 0,
-        isEnabled: true,
-      })
-      .returning({ id: this.adminUser.id })
+    const [created] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.adminUser)
+        .values({
+          username,
+          password: encryptedPassword,
+          avatar,
+          mobile,
+          role: role || 0,
+          isEnabled: true,
+        })
+        .returning({ id: this.adminUser.id }),
+    )
     return created
   }
 
@@ -219,13 +224,16 @@ export class UserService {
     }
 
     // 更新密码
-    const [updated] = await this.db
-      .update(this.adminUser)
-      .set({
-        password: await this.scryptService.encryptPassword(newPassword),
-      })
-      .where(eq(this.adminUser.id, userId))
-      .returning({ id: this.adminUser.id })
+    const [updated] = await this.drizzle.withErrorHandling(async () =>
+      this.db
+        .update(this.adminUser)
+        .set({
+          password: await this.scryptService.encryptPassword(newPassword),
+        })
+        .where(eq(this.adminUser.id, userId))
+        .returning({ id: this.adminUser.id }),
+    )
+    this.drizzle.assertAffectedRows(updated ? [updated] : [], '用户不存在')
     return updated
   }
 
@@ -261,12 +269,16 @@ export class UserService {
     const defaultPassword = await this.scryptService.encryptPassword(
       this.configService.get<string>('app.defaultPassword')!,
     )
-    await this.db
-      .update(this.adminUser)
-      .set({
-        password: await this.scryptService.encryptPassword(defaultPassword),
-      })
-      .where(eq(this.adminUser.id, id))
+    const rows = await this.drizzle.withErrorHandling(async () =>
+      this.db
+        .update(this.adminUser)
+        .set({
+          password: await this.scryptService.encryptPassword(defaultPassword),
+        })
+        .where(eq(this.adminUser.id, id))
+        .returning({ id: this.adminUser.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, '用户不存在')
     return userId
   }
 }

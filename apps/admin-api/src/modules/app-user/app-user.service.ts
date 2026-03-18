@@ -255,45 +255,47 @@ export class AppUserService {
     }
 
     try {
-      await this.db.transaction(async (tx) => {
-        if (Object.keys(userData).length > 0) {
-          await tx
-            .update(this.appUser)
-            .set(userData)
-            .where(eq(this.appUser.id, dto.id))
-        }
-
-        if (dto.signature !== undefined || dto.bio !== undefined) {
-          const forumProfileData: Record<string, string> = {}
-          if (dto.signature !== undefined) {
-            forumProfileData.signature = dto.signature
-          }
-          if (dto.bio !== undefined) {
-            forumProfileData.bio = dto.bio
-          }
-
-          const existing = await tx
-            .select({ id: this.forumProfile.id })
-            .from(this.forumProfile)
-            .where(eq(this.forumProfile.userId, dto.id))
-            .limit(1)
-          if (existing[0]) {
+      await this.drizzle.withErrorHandling(async () =>
+        this.db.transaction(async (tx) => {
+          if (Object.keys(userData).length > 0) {
             await tx
-              .update(this.forumProfile)
-              .set(forumProfileData)
-              .where(eq(this.forumProfile.userId, dto.id))
-          } else {
-            await tx.insert(this.forumProfile).values({
-              userId: dto.id,
-              signature: dto.signature ?? '',
-              bio: dto.bio ?? '',
-            })
+              .update(this.appUser)
+              .set(userData)
+              .where(eq(this.appUser.id, dto.id))
           }
-        }
-      })
+
+          if (dto.signature !== undefined || dto.bio !== undefined) {
+            const forumProfileData: Record<string, string> = {}
+            if (dto.signature !== undefined) {
+              forumProfileData.signature = dto.signature
+            }
+            if (dto.bio !== undefined) {
+              forumProfileData.bio = dto.bio
+            }
+
+            const existing = await tx
+              .select({ id: this.forumProfile.id })
+              .from(this.forumProfile)
+              .where(eq(this.forumProfile.userId, dto.id))
+              .limit(1)
+            if (existing[0]) {
+              await tx
+                .update(this.forumProfile)
+                .set(forumProfileData)
+                .where(eq(this.forumProfile.userId, dto.id))
+            } else {
+              await tx.insert(this.forumProfile).values({
+                userId: dto.id,
+                signature: dto.signature ?? '',
+                bio: dto.bio ?? '',
+              })
+            }
+          }
+        }),
+      )
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
-          throw new BadRequestException('手机号或邮箱已存在')
+        throw new BadRequestException('手机号或邮箱已存在')
       }
       throw error
     }
@@ -311,12 +313,16 @@ export class AppUserService {
     await this.ensureSuperAdmin(adminUserId)
     await this.ensureAppUserExists(dto.id)
 
-    await this.db
-      .update(this.appUser)
-      .set({
-        isEnabled: dto.isEnabled,
-      })
-      .where(eq(this.appUser.id, dto.id))
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({
+          isEnabled: dto.isEnabled,
+        })
+        .where(eq(this.appUser.id, dto.id))
+        .returning({ id: this.appUser.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, '用户不存在')
 
     return this.getAppUserDetail(dto.id)
   }
@@ -336,14 +342,18 @@ export class AppUserService {
       dto.status === UserStatusEnum.PERMANENT_MUTED
       || dto.status === UserStatusEnum.PERMANENT_BANNED
 
-    await this.db
-      .update(this.appUser)
-      .set({
-        status: dto.status,
-        banReason: isNormal ? null : (dto.banReason ?? null),
-        banUntil: isNormal || isPermanent ? null : (dto.banUntil ?? null),
-      })
-      .where(eq(this.appUser.id, dto.id))
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({
+          status: dto.status,
+          banReason: isNormal ? null : (dto.banReason ?? null),
+          banUntil: isNormal || isPermanent ? null : (dto.banUntil ?? null),
+        })
+        .where(eq(this.appUser.id, dto.id))
+        .returning({ id: this.appUser.id }),
+    )
+    this.drizzle.assertAffectedRows(rows, '用户不存在')
 
     return this.getAppUserDetail(dto.id)
   }

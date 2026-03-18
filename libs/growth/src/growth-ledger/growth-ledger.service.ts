@@ -5,7 +5,7 @@ import type {
   GrowthLedgerApplyResult,
 } from './growth-ledger.types'
 import { DrizzleService } from '@db/core'
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
@@ -555,18 +555,20 @@ export class GrowthLedgerService {
       context?: Record<string, unknown>
     },
   ) {
-    await tx.insert(this.growthAuditLog).values({
-      userId: params.userId,
-      bizKey: params.bizKey,
-      assetType: String(params.assetType),
-      action: params.action,
-      ruleType: params.ruleType,
-      decision: params.decision,
-      reason: params.reason,
-      deltaRequested: params.deltaRequested,
-      deltaApplied: params.deltaApplied,
-      context: params.context,
-    })
+    await this.drizzle.withErrorHandling(() =>
+      tx.insert(this.growthAuditLog).values({
+        userId: params.userId,
+        bizKey: params.bizKey,
+        assetType: String(params.assetType),
+        action: params.action,
+        ruleType: params.ruleType,
+        decision: params.decision,
+        reason: params.reason,
+        deltaRequested: params.deltaRequested,
+        deltaApplied: params.deltaApplied,
+        context: params.context,
+      }),
+    )
   }
 
   private async syncUserLevelByExperience(
@@ -629,9 +631,11 @@ export class GrowthLedgerService {
   }
 
   private async deleteLedgerRecordById(tx: Tx, id: number): Promise<void> {
-    await tx
-      .delete(this.growthLedgerRecord)
-      .where(eq(this.growthLedgerRecord.id, id))
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .delete(this.growthLedgerRecord)
+        .where(eq(this.growthLedgerRecord.id, id)),
+    )
   }
 
   private async updateLedgerBeforeAfterValue(
@@ -639,10 +643,12 @@ export class GrowthLedgerService {
     id: number,
     payload: { beforeValue: number, afterValue: number },
   ): Promise<void> {
-    await tx
-      .update(this.growthLedgerRecord)
-      .set(payload)
-      .where(eq(this.growthLedgerRecord.id, id))
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.growthLedgerRecord)
+        .set(payload)
+        .where(eq(this.growthLedgerRecord.id, id)),
+    )
   }
 
   private async insertLedgerGateRecord(
@@ -660,29 +666,31 @@ export class GrowthLedgerService {
       context?: Record<string, unknown>
     },
   ): Promise<number | null> {
-    const rows = await tx
-      .insert(this.growthLedgerRecord)
-      .values({
-        userId: params.userId,
-        assetType: params.assetType,
-        delta: params.delta,
-        beforeValue: 0,
-        afterValue: 0,
-        bizKey: params.bizKey,
-        ruleType: params.ruleType,
-        ruleId: params.ruleId,
-        targetType: params.targetType,
-        targetId: params.targetId,
-        remark: params.remark,
-        context: params.context,
-      })
-      .onConflictDoNothing({
-        target: [
-          this.growthLedgerRecord.userId,
-          this.growthLedgerRecord.bizKey,
-        ],
-      })
-      .returning({ id: this.growthLedgerRecord.id })
+    const rows = await this.drizzle.withErrorHandling(() =>
+      tx
+        .insert(this.growthLedgerRecord)
+        .values({
+          userId: params.userId,
+          assetType: params.assetType,
+          delta: params.delta,
+          beforeValue: 0,
+          afterValue: 0,
+          bizKey: params.bizKey,
+          ruleType: params.ruleType,
+          ruleId: params.ruleId,
+          targetType: params.targetType,
+          targetId: params.targetId,
+          remark: params.remark,
+          context: params.context,
+        })
+        .onConflictDoNothing({
+          target: [
+            this.growthLedgerRecord.userId,
+            this.growthLedgerRecord.bizKey,
+          ],
+        })
+        .returning({ id: this.growthLedgerRecord.id }),
+    )
     return rows[0]?.id ?? null
   }
 
@@ -714,25 +722,27 @@ export class GrowthLedgerService {
       slotValue: string
     },
   ): Promise<boolean> {
-    const rows = await tx
-      .insert(this.growthRuleUsageSlot)
-      .values({
-        userId: params.userId,
-        assetType: String(params.assetType),
-        ruleKey: params.ruleKey,
-        slotType: params.slotType,
-        slotValue: params.slotValue,
-      })
-      .onConflictDoNothing({
-        target: [
-          this.growthRuleUsageSlot.userId,
-          this.growthRuleUsageSlot.assetType,
-          this.growthRuleUsageSlot.ruleKey,
-          this.growthRuleUsageSlot.slotType,
-          this.growthRuleUsageSlot.slotValue,
-        ],
-      })
-      .returning({ id: this.growthRuleUsageSlot.id })
+    const rows = await this.drizzle.withErrorHandling(() =>
+      tx
+        .insert(this.growthRuleUsageSlot)
+        .values({
+          userId: params.userId,
+          assetType: String(params.assetType),
+          ruleKey: params.ruleKey,
+          slotType: params.slotType,
+          slotValue: params.slotValue,
+        })
+        .onConflictDoNothing({
+          target: [
+            this.growthRuleUsageSlot.userId,
+            this.growthRuleUsageSlot.assetType,
+            this.growthRuleUsageSlot.ruleKey,
+            this.growthRuleUsageSlot.slotType,
+            this.growthRuleUsageSlot.slotValue,
+          ],
+        })
+        .returning({ id: this.growthRuleUsageSlot.id }),
+    )
     return rows.length > 0
   }
 
@@ -744,23 +754,25 @@ export class GrowthLedgerService {
       amount: number
     },
   ): Promise<{ points: number, experience: number }> {
-    const rows = await tx
-      .update(this.appUser)
-      .set(
-        params.assetType === GrowthAssetTypeEnum.POINTS
-          ? { points: sql`${this.appUser.points} + ${params.amount}` }
-          : {
-              experience: sql`${this.appUser.experience} + ${params.amount}`,
-            },
-      )
-      .where(eq(this.appUser.id, params.userId))
-      .returning({
-        points: this.appUser.points,
-        experience: this.appUser.experience,
-      })
+    const rows = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.appUser)
+        .set(
+          params.assetType === GrowthAssetTypeEnum.POINTS
+            ? { points: sql`${this.appUser.points} + ${params.amount}` }
+            : {
+                experience: sql`${this.appUser.experience} + ${params.amount}`,
+              },
+        )
+        .where(eq(this.appUser.id, params.userId))
+        .returning({
+          points: this.appUser.points,
+          experience: this.appUser.experience,
+        }),
+    )
     const user = rows[0]
     if (!user) {
-      throw new Error('用户不存在')
+      throw new BadRequestException('用户不存在')
     }
     return user
   }
@@ -773,31 +785,33 @@ export class GrowthLedgerService {
       amount: number
     },
   ): Promise<number | null> {
-    const rows = await tx
-      .update(this.appUser)
-      .set(
-        params.assetType === GrowthAssetTypeEnum.POINTS
-          ? { points: sql`${this.appUser.points} - ${params.amount}` }
-          : {
-              experience: sql`${this.appUser.experience} - ${params.amount}`,
-            },
-      )
-      .where(
-        params.assetType === GrowthAssetTypeEnum.POINTS
-          ? and(
-              eq(this.appUser.id, params.userId),
-              gte(this.appUser.points, params.amount),
-            )
-          : and(
-              eq(this.appUser.id, params.userId),
-              gte(this.appUser.experience, params.amount),
-            ),
-      )
-      .returning(
-        params.assetType === GrowthAssetTypeEnum.POINTS
-          ? { afterValue: this.appUser.points }
-          : { afterValue: this.appUser.experience },
-      )
+    const rows = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.appUser)
+        .set(
+          params.assetType === GrowthAssetTypeEnum.POINTS
+            ? { points: sql`${this.appUser.points} - ${params.amount}` }
+            : {
+                experience: sql`${this.appUser.experience} - ${params.amount}`,
+              },
+        )
+        .where(
+          params.assetType === GrowthAssetTypeEnum.POINTS
+            ? and(
+                eq(this.appUser.id, params.userId),
+                gte(this.appUser.points, params.amount),
+              )
+            : and(
+                eq(this.appUser.id, params.userId),
+                gte(this.appUser.experience, params.amount),
+              ),
+        )
+        .returning(
+          params.assetType === GrowthAssetTypeEnum.POINTS
+            ? { afterValue: this.appUser.points }
+            : { afterValue: this.appUser.experience },
+        ),
+    )
     return rows[0]?.afterValue ?? null
   }
 
@@ -823,14 +837,16 @@ export class GrowthLedgerService {
     userId: number,
     levelId: number,
   ): Promise<void> {
-    await tx
-      .update(this.appUser)
-      .set({ levelId })
-      .where(
-        and(
-          eq(this.appUser.id, userId),
-          or(isNull(this.appUser.levelId), ne(this.appUser.levelId, levelId)),
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(this.appUser)
+        .set({ levelId })
+        .where(
+          and(
+            eq(this.appUser.id, userId),
+            or(isNull(this.appUser.levelId), ne(this.appUser.levelId, levelId)),
+          ),
         ),
-      )
+    )
   }
 }

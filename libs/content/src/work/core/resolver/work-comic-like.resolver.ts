@@ -82,18 +82,20 @@ export class WorkComicLikeResolver
       return
     }
 
-    await tx
-      .update(work)
-      .set({
-        likeCount: sql`${work.likeCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(work.id, targetId),
-          eq(work.type, this.targetType),
-          isNull(work.deletedAt),
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(work)
+        .set({
+          likeCount: sql`${work.likeCount} + ${delta}`,
+        })
+        .where(
+          and(
+            eq(work.id, targetId),
+            eq(work.type, this.targetType),
+            isNull(work.deletedAt),
+          ),
         ),
-      )
+    )
     const updated = await tx.query.work.findFirst({
       where: {
         id: targetId,

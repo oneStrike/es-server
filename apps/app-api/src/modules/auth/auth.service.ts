@@ -88,31 +88,33 @@ export class AuthService {
 
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
-    const user = await this.drizzle.db.transaction(async (tx) => {
-      const uid = await this.generateUniqueAccount()
+    const user = await this.drizzle.withErrorHandling(async () =>
+      this.drizzle.db.transaction(async (tx) => {
+        const uid = await this.generateUniqueAccount()
 
-      const [newUser] = await tx
-        .insert(this.appUserTable)
-        .values({
-          account: String(uid),
-          nickname: `用户${uid}`,
-          password: hashedPassword,
-          phoneNumber: body.phone,
-          genderType: GenderEnum.UNKNOWN,
-          isEnabled: true,
-        })
-        .returning({
-          id: this.appUserTable.id,
-          account: this.appUserTable.account,
-          nickname: this.appUserTable.nickname,
-          password: this.appUserTable.password,
-          phone: this.appUserTable.phoneNumber,
-          isEnabled: this.appUserTable.isEnabled,
-        })
+        const [newUser] = await tx
+          .insert(this.appUserTable)
+          .values({
+            account: String(uid),
+            nickname: `用户${uid}`,
+            password: hashedPassword,
+            phoneNumber: body.phone,
+            genderType: GenderEnum.UNKNOWN,
+            isEnabled: true,
+          })
+          .returning({
+            id: this.appUserTable.id,
+            account: this.appUserTable.account,
+            nickname: this.appUserTable.nickname,
+            password: this.appUserTable.password,
+            phone: this.appUserTable.phoneNumber,
+            isEnabled: this.appUserTable.isEnabled,
+          })
 
-      await this.profileService.initForumProfile(tx, newUser.id)
-      return newUser
-    })
+        await this.profileService.initForumProfile(tx, newUser.id)
+        return newUser
+      }),
+    )
 
     return this.handleLoginSuccess(user, req)
   }
@@ -236,13 +238,15 @@ export class AuthService {
    * 更新最后登录信息
    */
   private async updateUserLoginInfo(userId: number, req: FastifyRequest) {
-    await this.db
-      .update(this.appUserTable)
-      .set({
-        lastLoginAt: new Date(),
-        lastLoginIp: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
-      })
-      .where(eq(this.appUserTable.id, userId))
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUserTable)
+        .set({
+          lastLoginAt: new Date(),
+          lastLoginIp: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
+        })
+        .where(eq(this.appUserTable.id, userId)),
+    )
   }
 
   /**

@@ -78,12 +78,14 @@ export class ForumTopicFavoriteResolver
       return
     }
 
-    const result = await tx
-      .update(forumTopic)
-      .set({
-        favoriteCount: sql`${forumTopic.favoriteCount} + ${delta}`,
-      })
-      .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
+    const result = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(forumTopic)
+        .set({
+          favoriteCount: sql`${forumTopic.favoriteCount} + ${delta}`,
+        })
+        .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt))),
+    )
     this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
@@ -105,7 +107,8 @@ export class ForumTopicFavoriteResolver
     const { ownerUserId: topicOwnerId } = options
 
     if (topicOwnerId !== undefined && topicOwnerId !== actorUserId) {
-      await this.messageOutboxService.enqueueNotificationEvent(
+      await this.messageOutboxService.enqueueNotificationEventInTx(
+        tx,
         {
           eventType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
           bizKey: `notify:favorite:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${topicOwnerId}`,
@@ -119,7 +122,6 @@ export class ForumTopicFavoriteResolver
             content: '有人收藏了你的内容',
           },
         },
-        tx,
       )
     }
   }

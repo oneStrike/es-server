@@ -271,7 +271,8 @@ export class CommentService {
     }
 
     // 将回复通知加入消息队列
-    await this.messageOutboxService.enqueueNotificationEvent(
+    await this.messageOutboxService.enqueueNotificationEventInTx(
+      tx,
       {
         eventType: MessageNotificationTypeEnum.COMMENT_REPLY,
         bizKey: `comment:reply:${comment.id}:to:${replyTarget.userId}`,
@@ -287,7 +288,6 @@ export class CommentService {
           content: '你收到了一条新的评论回复',
         },
       },
-      tx,
     )
 
     // 如果目标所有者不是评论者，且不是回复评论（回复通知已发），可以发一个被评论通知

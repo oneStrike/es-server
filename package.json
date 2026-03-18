@@ -21,6 +21,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/akaiito-server-nestjs/test/jest-e2e.json",
+    "drizzle:guard": "node ./scripts/drizzle-guard.cjs",
     "publish-api:admin": "tsx publish-api.ts --app admin",
     "publish-api:app": "tsx publish-api.ts --app app",
     "db:generate": "drizzle-kit generate",

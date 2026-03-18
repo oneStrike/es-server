@@ -49,12 +49,14 @@ export class ForumTopicCommentResolver
       return
     }
 
-    const result = await tx
-      .update(forumTopic)
-      .set({
-        commentCount: sql`${forumTopic.commentCount} + ${delta}`,
-      })
-      .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt)))
+    const result = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(forumTopic)
+        .set({
+          commentCount: sql`${forumTopic.commentCount} + ${delta}`,
+        })
+        .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt))),
+    )
     this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
