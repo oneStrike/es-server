@@ -1,24 +1,15 @@
-import {
-  DownloadedWorkChapterItemDto,
-  DownloadedWorkItemDto,
-  DownloadService,
-  DownloadTargetDto,
-  QueryDownloadedWorkChapterDto,
-  QueryDownloadedWorkDto,
-} from '@libs/interaction'
+import { DownloadService } from '@libs/interaction'
 
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags, OmitType } from '@nestjs/swagger'
-
-class AppQueryDownloadedWorkDto extends OmitType(QueryDownloadedWorkDto, [
-  'userId',
-]) {}
-
-class AppQueryDownloadedWorkChapterDto extends OmitType(
-  QueryDownloadedWorkChapterDto,
-  ['userId'],
-) {}
+import { ApiTags } from '@nestjs/swagger'
+import {
+  AppQueryDownloadedWorkChapterDto,
+  AppQueryDownloadedWorkDto,
+  DownloadedWorkChapterItemDto,
+  DownloadedWorkItemDto,
+  DownloadTargetDto,
+} from './dto/download.dto'
 
 @ApiTags('下载模块')
 @Controller('app/download')

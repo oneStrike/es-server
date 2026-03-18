@@ -1,4 +1,5 @@
 import { ForumModule } from '@libs/forum'
+import { IdentityModule } from '@libs/identity'
 import { CaptchaService, RsaService, ScryptService, SmsModule } from '@libs/platform/modules'
 import { AuthCronService, AuthStrategy, JwtAuthModule } from '@libs/platform/modules/auth'
 import { SystemConfigModule } from '@libs/system-config'
@@ -13,6 +14,12 @@ import { AppTokenStorageService } from './token-storage.service'
   controllers: [AuthController],
   imports: [
     JwtAuthModule,
+    IdentityModule.register({
+      tokenStorageProvider: {
+        provide: 'ITokenStorageService',
+        useClass: AppTokenStorageService,
+      },
+    }),
     ForumModule,
     SmsModule.register({
       imports: [SystemConfigModule],

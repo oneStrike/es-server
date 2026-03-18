@@ -1,7 +1,7 @@
 import { NestedProperty, StringProperty } from '@libs/platform/decorators'
 import { CaptchaDto } from '@libs/platform/modules'
 import { OmitType } from '@nestjs/swagger'
-import { BaseUserDto } from '../../user/dto/user.dto'
+import { BaseUserDto } from '../../admin-user/dto/admin-user.dto'
 
 /**
  * RSA公钥响应DTO

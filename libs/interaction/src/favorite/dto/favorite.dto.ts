@@ -1,6 +1,5 @@
 import {
   BooleanProperty,
-  DateProperty,
   EnumProperty,
   NestedProperty,
   NumberProperty,

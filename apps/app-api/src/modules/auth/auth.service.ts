@@ -1,13 +1,14 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
 import { ForumProfileService } from '@libs/forum'
+import { AuthSessionService } from '@libs/identity'
 import { GenderEnum } from '@libs/platform/constant'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthService as BaseAuthService,
   LoginGuardService,
 } from '@libs/platform/modules/auth'
-import { extractIpAddress, parseDeviceInfo } from '@libs/platform/utils'
+import { extractIpAddress } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
 import {
@@ -19,7 +20,6 @@ import {
 import { LoginDto, TokenDto } from './dto/auth.dto'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
-import { AppTokenStorageService } from './token-storage.service'
 
 /**
  * 认证服务
@@ -33,9 +33,9 @@ export class AuthService {
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
+    private readonly authSessionService: AuthSessionService,
     private readonly passwordService: PasswordService,
     private readonly profileService: ForumProfileService,
-    private readonly tokenStorageService: AppTokenStorageService,
     private readonly loginGuardService: LoginGuardService,
   ) {}
 
@@ -107,7 +107,7 @@ export class AuthService {
             account: this.appUserTable.account,
             nickname: this.appUserTable.nickname,
             password: this.appUserTable.password,
-            phone: this.appUserTable.phoneNumber,
+            phoneNumber: this.appUserTable.phoneNumber,
             isEnabled: this.appUserTable.isEnabled,
           })
 
@@ -145,7 +145,7 @@ export class AuthService {
           account: this.appUserTable.account,
           nickname: this.appUserTable.nickname,
           password: this.appUserTable.password,
-          phone: this.appUserTable.phoneNumber,
+          phoneNumber: this.appUserTable.phoneNumber,
           isEnabled: this.appUserTable.isEnabled,
         })
         .from(this.appUserTable)
@@ -164,7 +164,7 @@ export class AuthService {
           account: this.appUserTable.account,
           nickname: this.appUserTable.nickname,
           password: this.appUserTable.password,
-          phone: this.appUserTable.phoneNumber,
+          phoneNumber: this.appUserTable.phoneNumber,
           isEnabled: this.appUserTable.isEnabled,
         })
         .from(this.appUserTable)
@@ -189,11 +189,11 @@ export class AuthService {
     }
 
     if (body.code) {
-      if (!user.phone) {
+      if (!user.phoneNumber) {
         throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_BOUND_PHONE)
       }
 
-      if (body.phone && body.phone !== user.phone) {
+      if (body.phone && body.phone !== user.phoneNumber) {
         throw new BadRequestException(AuthErrorMessages.PHONE_MISMATCH)
       }
 
@@ -250,73 +250,17 @@ export class AuthService {
   }
 
   /**
-   * 持久化访问令牌和刷新令牌
-   */
-  private async storeTokens(userId: number, tokens: any, req: FastifyRequest) {
-    const [accessPayload, refreshPayload] = await Promise.all([
-      this.baseJwtService.decodeToken(tokens.accessToken),
-      this.baseJwtService.decodeToken(tokens.refreshToken),
-    ])
-
-    const accessTokenExpiresAt = new Date(accessPayload.exp * 1000)
-    const refreshTokenExpiresAt = new Date(refreshPayload.exp * 1000)
-    const deviceInfo = parseDeviceInfo(req.headers['user-agent'])
-
-    await this.tokenStorageService.createTokens([
-      {
-        userId,
-        jti: accessPayload.jti,
-        tokenType: 'ACCESS',
-        expiresAt: accessTokenExpiresAt,
-        deviceInfo,
-        ipAddress: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
-        userAgent: req.headers['user-agent'],
-      },
-      {
-        userId,
-        jti: refreshPayload.jti,
-        tokenType: 'REFRESH',
-        expiresAt: refreshTokenExpiresAt,
-        deviceInfo,
-        ipAddress: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
-        userAgent: req.headers['user-agent'],
-      },
-    ])
-  }
-
-  /**
    * 用户退出登录
    */
   async logout(dto: TokenDto) {
-    const { accessToken, refreshToken } = dto
-
-    const [accessPayload, refreshPayload] = await Promise.all([
-      this.baseJwtService.decodeToken(accessToken),
-      this.baseJwtService.decodeToken(refreshToken),
-    ])
-
-    await this.tokenStorageService.revokeByJtis(
-      [accessPayload.jti, refreshPayload.jti],
-      'USER_LOGOUT',
-    )
-
-    return this.baseJwtService.logout(accessToken, refreshToken)
+    return this.authSessionService.logout(dto, { revokeDbTokens: true })
   }
 
   /**
    * 刷新令牌
    */
   async refreshToken(refreshToken: string, req: FastifyRequest) {
-    const tokens = await this.baseJwtService.refreshAccessToken(refreshToken, {
-      validateRefreshTokenJti: async (jti) => this.tokenStorageService.isTokenValid(jti),
-      revokeRefreshTokenJti: async (jti) =>
-        this.tokenStorageService.revokeByJti(jti, 'TOKEN_REFRESH'),
-    })
-    const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
-    const userId = Number(payload.sub)
-
-    await this.storeTokens(userId, tokens, req)
-    return tokens
+    return this.authSessionService.refreshAndPersist(refreshToken, req)
   }
 
   /**
@@ -327,10 +271,10 @@ export class AuthService {
 
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),
-      phone: user.phone,
+      phone: user.phoneNumber,
     })
 
-    await this.storeTokens(user.id, tokens, req)
+    await this.authSessionService.persistTokens(user.id, tokens, req)
 
     return {
       user: this.sanitizeUser(user),

@@ -90,6 +90,18 @@
       ],
       "@libs/message/*": [
         "libs/message/src/*"
+      ],
+      "@libs/user": [
+        "libs/user/src"
+      ],
+      "@libs/user/*": [
+        "libs/user/src/*"
+      ],
+      "@libs/identity": [
+        "libs/identity/src"
+      ],
+      "@libs/identity/*": [
+        "libs/identity/src/*"
       ]
     },
     "resolveJsonModule": true,

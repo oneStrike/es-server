@@ -1,4 +1,5 @@
 import type { InteractionTx } from '../interaction-tx.type'
+import { UserComment } from '@db/schema'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
@@ -13,15 +14,9 @@ export class CommentGrowthService {
 
   async rewardCommentCreated(
     tx: InteractionTx,
-    params: {
-      userId: number
-      commentId: number
-      targetType: number
-      targetId: number
-      occurredAt?: Date
-    },
+    params: Pick<UserComment, 'userId' | 'id' | 'targetType' | 'targetId'> & { occurredAt?: Date },
   ) {
-    const { userId, commentId, targetType, targetId, occurredAt } = params
+    const { userId, id: commentId, targetType, targetId, occurredAt } = params
     const baseBizKey = `comment:create:${commentId}:user:${userId}`
 
     await this.growthLedgerService.applyByRule(tx, {
@@ -51,13 +46,9 @@ export class CommentGrowthService {
 
   async rewardCommentLiked(
     tx: InteractionTx,
-    params: {
-      commentId: number
-      authorUserId: number
-      likerUserId: number
-    },
+    params: Pick<UserComment, 'id' | 'userId'> & { likerUserId: number },
   ) {
-    const { commentId, authorUserId, likerUserId } = params
+    const { id: commentId, userId: authorUserId, likerUserId } = params
 
     if (authorUserId === likerUserId) {
       return

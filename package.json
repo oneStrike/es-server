@@ -165,6 +165,8 @@
       "^@libs/sensitive-word(|/.*)$": "<rootDir>/libs/moderation/sensitive-word/src/$1",
       "^@libs/system-config(|/.*)$": "<rootDir>/libs/config/src/system-config/$1",
       "^@libs/message(|/.*)$": "<rootDir>/libs/message/src/$1",
+      "^@libs/user(|/.*)$": "<rootDir>/libs/user/src/$1",
+      "^@libs/identity(|/.*)$": "<rootDir>/libs/identity/src/$1",
       "^@libs/growth/task(|/.*)$": "<rootDir>/libs/growth/src/task/$1",
       "^@libs/growth(|/.*)$": "<rootDir>/libs/growth/src/$1"
     }

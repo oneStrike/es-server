@@ -1,4 +1,5 @@
 import { DrizzleService } from '@db/core'
+import { UserLevelRule } from '@db/schema'
 import { UserStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, gte } from 'drizzle-orm'
@@ -57,10 +58,7 @@ export class CommentPermissionService {
 
   private async ensureUserLevelRateLimit(
     userId: number,
-    level: {
-      dailyReplyCommentLimit: number
-      postInterval: number
-    } | null,
+    level: Pick<UserLevelRule, 'dailyReplyCommentLimit' | 'postInterval'> | null,
   ): Promise<void> {
     if (!level) {
       return

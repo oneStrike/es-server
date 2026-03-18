@@ -1,3 +1,4 @@
+import { IdentityModule } from '@libs/identity'
 import { CaptchaService } from '@libs/platform/modules'
 import { AuthCronService, AuthStrategy } from '@libs/platform/modules/auth'
 import { Module } from '@nestjs/common'
@@ -8,7 +9,15 @@ import { AdminTokenStorageService } from './token-storage.service'
 
 @Module({
   controllers: [AuthController],
-  imports: [AuditModule],
+  imports: [
+    AuditModule,
+    IdentityModule.register({
+      tokenStorageProvider: {
+        provide: 'ITokenStorageService',
+        useClass: AdminTokenStorageService,
+      },
+    }),
+  ],
   providers: [
     AuthService,
     CaptchaService,

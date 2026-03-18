@@ -107,3 +107,9 @@ export const appUser = pgTable("app_user", {
     index("app_user_status_idx").on(table.status),
     index("app_user_level_id_idx").on(table.levelId),
 ]);
+
+/**
+ * 应用用户推导类型
+ */
+export type AppUser = typeof appUser.$inferSelect;
+export type NewAppUser = typeof appUser.$inferInsert;

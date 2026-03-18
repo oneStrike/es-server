@@ -74,3 +74,9 @@ export const adminUser = pgTable("admin_user", {
      */
     index("admin_user_last_login_at_idx").on(table.lastLoginAt),
 ]);
+
+/**
+ * 管理端用户推导类型
+ */
+export type AdminUser = typeof adminUser.$inferSelect;
+export type NewAdminUser = typeof adminUser.$inferInsert;

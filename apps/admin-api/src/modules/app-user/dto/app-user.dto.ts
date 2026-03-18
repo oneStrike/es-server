@@ -1,14 +1,12 @@
 import { AddUserExperienceDto, AddUserPointsDto, BaseUserBadgeDto, ConsumeUserPointsDto, QueryUserBadgeDto, QueryUserExperienceRecordDto, QueryUserPointRecordDto } from '@libs/growth'
-import { GenderEnum, UserStatusEnum } from '@libs/platform/constant'
 import {
-  BooleanProperty,
   DateProperty,
-  EnumProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user'
 
 import {
   IntersectionType,
@@ -16,133 +14,7 @@ import {
   PickType,
 } from '@nestjs/swagger'
 
-export class BaseAdminAppUserDto extends BaseDto {
-  @StringProperty({
-    description: '应用端账号',
-    example: '123456',
-    required: true,
-    maxLength: 20,
-    minLength: 6,
-  })
-  account!: string
-
-  @StringProperty({
-    description: '手机号',
-    example: '13800000000',
-    required: false,
-    maxLength: 20,
-  })
-  phone?: string
-
-  @StringProperty({
-    description: '昵称',
-    example: '张三',
-    required: true,
-    maxLength: 100,
-  })
-  nickname!: string
-
-  @StringProperty({
-    description: '头像地址',
-    example: 'https://example.com/avatar.jpg',
-    required: false,
-    maxLength: 500,
-  })
-  avatar?: string
-
-  @StringProperty({
-    description: '邮箱地址',
-    example: 'user@example.com',
-    required: false,
-    maxLength: 255,
-  })
-  email?: string
-
-  @BooleanProperty({
-    description: '是否启用账号',
-    example: true,
-    required: true,
-  })
-  isEnabled!: boolean
-
-  @EnumProperty({
-    description: '性别',
-    example: GenderEnum.MALE,
-    enum: GenderEnum,
-    required: true,
-  })
-  gender!: GenderEnum
-
-  @DateProperty({
-    description: '出生日期',
-    example: '2026-03-08T00:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  birthDate?: Date
-
-  @NumberProperty({
-    description: '当前积分',
-    example: 120,
-    validation: false,
-  })
-  points!: number
-
-  @NumberProperty({
-    description: '当前经验值',
-    example: 350,
-    validation: false,
-  })
-  experience!: number
-
-  @NumberProperty({
-    description: '等级ID',
-    example: 1,
-    required: false,
-    validation: false,
-  })
-  levelId?: number
-
-  @EnumProperty({
-    description: '社区状态',
-    example: UserStatusEnum.NORMAL,
-    enum: UserStatusEnum,
-    validation: false,
-  })
-  status!: UserStatusEnum
-
-  @StringProperty({
-    description: '封禁或禁言原因',
-    example: '违反社区规范',
-    required: false,
-    validation: false,
-  })
-  banReason?: string
-
-  @DateProperty({
-    description: '封禁或禁言截止时间',
-    example: '2026-03-08T10:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  banUntil?: Date
-
-  @DateProperty({
-    description: '最后登录时间',
-    example: '2026-03-08T10:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  lastLoginAt?: Date
-
-  @StringProperty({
-    description: '最后登录IP',
-    example: '192.168.1.1',
-    required: false,
-    validation: false,
-  })
-  lastLoginIp?: string
-}
+export class BaseAdminAppUserDto extends BaseAppUserDto {}
 
 export class AdminAppUserLevelDto {
   @NumberProperty({
@@ -344,9 +216,9 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
     PickType(BaseAdminAppUserDto, [
       'id',
       'account',
-      'phone',
+      'phoneNumber',
       'nickname',
-      'email',
+      'emailAddress',
       'isEnabled',
       'status',
       'levelId',
@@ -385,10 +257,10 @@ export class UpdateAdminAppUserProfileDto extends IntersectionType(
   PartialType(
     PickType(BaseAdminAppUserDto, [
       'nickname',
-      'avatar',
-      'phone',
-      'email',
-      'gender',
+      'avatarUrl',
+      'phoneNumber',
+      'emailAddress',
+      'genderType',
       'birthDate',
     ] as const),
   ),

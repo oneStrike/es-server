@@ -29,6 +29,18 @@ export interface ITokenStorageService {
    */
   isTokenValid: (jti: string) => Promise<boolean>
 
+  createToken: (data: any) => Promise<any>
+
+  createTokens: (data: any[]) => Promise<any>
+
+  revokeByJti: (jti: string, reason: string) => Promise<void> | void
+
+  revokeByJtis: (jtis: string[], reason: string) => Promise<void> | void
+
+  revokeAllByUserId: (userId: number, reason: string) => Promise<void> | void
+
+  findActiveTokensByUserId: (userId: number) => Promise<any[]>
+
   /**
    * 清理过期 Token
    * @returns 清理数量

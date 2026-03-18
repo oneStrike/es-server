@@ -1,4 +1,5 @@
 import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/growth'
+import { UserAssetsSummaryDto } from '@libs/interaction'
 /**
  * 用户模块 DTO 定义
  *
@@ -14,9 +15,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
+import { BaseDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user'
 import { OmitType, PartialType, PickType } from '@nestjs/swagger'
-import { BaseAppUserDto } from '../../auth/dto/auth.dto'
 
 /**
  * 更新用户资料 DTO
@@ -24,9 +25,9 @@ import { BaseAppUserDto } from '../../auth/dto/auth.dto'
 export class UpdateMyProfileDto extends PartialType(
   PickType(BaseAppUserDto, [
     'nickname',
-    'avatar',
-    'email',
-    'gender',
+    'avatarUrl',
+    'emailAddress',
+    'genderType',
     'birthDate',
   ] as const),
 ) {}
@@ -347,66 +348,8 @@ export class UserGrowthSummaryDto {
   todayExperienceEarned!: number
 }
 
-/**
- * 用户资产统计 DTO
- */
-export class UserAssetsSummaryDto {
-  @NumberProperty({
-    description: '已购买作品数',
-    example: 5,
-    validation: false,
-  })
-  purchasedWorkCount!: number
-
-  @NumberProperty({
-    description: '已购买章节数',
-    example: 42,
-    validation: false,
-  })
-  purchasedChapterCount!: number
-
-  @NumberProperty({
-    description: '已下载作品数',
-    example: 3,
-    validation: false,
-  })
-  downloadedWorkCount!: number
-
-  @NumberProperty({
-    description: '已下载章节数',
-    example: 18,
-    validation: false,
-  })
-  downloadedChapterCount!: number
-
-  @NumberProperty({
-    description: '收藏数量',
-    example: 22,
-    validation: false,
-  })
-  favoriteCount!: number
-
-  @NumberProperty({
-    description: '点赞数量',
-    example: 31,
-    validation: false,
-  })
-  likeCount!: number
-
-  @NumberProperty({
-    description: '浏览数量',
-    example: 78,
-    validation: false,
-  })
-  viewCount!: number
-
-  @NumberProperty({
-    description: '评论数量',
-    example: 12,
-    validation: false,
-  })
-  commentCount!: number
-}
+// 重新导出项目中已有的等级信息 DTO，方便使用
+export { UserLevelInfoDto } from '@libs/growth'
 
 /**
  * 用户中心-用户信息 DTO
@@ -416,11 +359,11 @@ export class UserAssetsSummaryDto {
 export class UserCenterUserDto extends PickType(BaseAppUserDto, [
   'id',
   'account',
-  'phone',
+  'phoneNumber',
   'nickname',
-  'avatar',
-  'email',
-  'gender',
+  'avatarUrl',
+  'emailAddress',
+  'genderType',
   'birthDate',
 ] as const) {}
 
@@ -594,5 +537,7 @@ export class UserBadgeItemDto extends PickType(BaseDto, ['id', 'createdAt']) {
   badge!: BaseUserBadgeDto
 }
 
-// 重新导出项目中已有的等级信息 DTO，方便使用
-export { UserLevelInfoDto } from '@libs/growth'
+/**
+ * 用户资产统计 DTO
+ */
+export { UserAssetsSummaryDto } from '@libs/interaction'

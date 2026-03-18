@@ -14,6 +14,7 @@ import { LikeModule } from './like/like.module'
 import { PurchaseModule } from './purchase/purchase.module'
 import { ReadingStateModule } from './reading-state/reading-state.module'
 import { ReportModule } from './report/report.module'
+import { UserAssetsModule } from './user-assets/user-assets.module'
 
 @Global()
 @Module({
@@ -26,6 +27,7 @@ import { ReportModule } from './report/report.module'
     ReportModule,
     DownloadModule,
     PurchaseModule,
+    UserAssetsModule,
   ],
   exports: [
     LikeModule,
@@ -36,6 +38,7 @@ import { ReportModule } from './report/report.module'
     ReportModule,
     DownloadModule,
     PurchaseModule,
+    UserAssetsModule,
   ],
 })
 export class InteractionModule {}

@@ -19,6 +19,7 @@ import {
   UserPointService,
 } from '@libs/growth'
 import { UserStatusEnum } from '@libs/platform/constant'
+import { UserService as UserCoreService } from '@libs/user'
 
 import {
   BadRequestException,
@@ -26,7 +27,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AdminUserRoleEnum } from '../admin-user/admin-user.constant'
 
 /**
@@ -37,6 +38,7 @@ import { AdminUserRoleEnum } from '../admin-user/admin-user.constant'
 export class AppUserService {
   constructor(
     private readonly drizzle: DrizzleService,
+    private readonly userCoreService: UserCoreService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
     private readonly userBadgeService: UserBadgeService,
@@ -81,9 +83,9 @@ export class AppUserService {
     const {
       id,
       account,
-      phone,
+      phoneNumber,
       nickname,
-      email,
+      emailAddress,
       isEnabled,
       status,
       levelId,
@@ -102,9 +104,9 @@ export class AppUserService {
       and: {
         id,
         account: account ? { like: account } : undefined,
-        phoneNumber: phone ? { like: phone } : undefined,
+        phoneNumber: phoneNumber ? { like: phoneNumber } : undefined,
         nickname: nickname ? { like: nickname } : undefined,
-        emailAddress: email ? { like: email } : undefined,
+        emailAddress: emailAddress ? { like: emailAddress } : undefined,
         isEnabled,
         status,
         levelId,
@@ -147,7 +149,7 @@ export class AppUserService {
     return {
       ...page,
       list: page.list.map((item) => ({
-        ...this.mapBaseUser(item),
+        ...this.userCoreService.mapBaseUser(item),
         levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
         topicCount: forumMap.get(item.id)?.topicCount ?? 0,
         replyCount: forumMap.get(item.id)?.replyCount ?? 0,
@@ -159,50 +161,18 @@ export class AppUserService {
    * 获取 APP 用户详情
    */
   async getAppUserDetail(userId: number) {
-    const [user] = await this.db
-      .select()
-      .from(this.appUser)
-      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
-      .limit(1)
+    const user = await this.userCoreService.ensureUserExists(userId)
 
-    if (!user) {
-      throw new NotFoundException('应用用户不存在')
-    }
-
-    const [level, forumProfile, badgeRows, pointStats, experienceStats] = await Promise.all([
-      user.levelId
-        ? this.db
-            .select({
-              id: this.userLevelRule.id,
-              name: this.userLevelRule.name,
-              requiredExperience: this.userLevelRule.requiredExperience,
-            })
-            .from(this.userLevelRule)
-            .where(eq(this.userLevelRule.id, user.levelId))
-            .then((rows) => rows[0])
-        : undefined,
-      this.db
-        .select({
-          signature: this.forumProfile.signature,
-          bio: this.forumProfile.bio,
-          topicCount: this.forumProfile.topicCount,
-          replyCount: this.forumProfile.replyCount,
-          likeCount: this.forumProfile.likeCount,
-          favoriteCount: this.forumProfile.favoriteCount,
-        })
-        .from(this.forumProfile)
-        .where(eq(this.forumProfile.userId, userId))
-        .then((rows) => rows[0]),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userBadgeAssignment)
-        .where(eq(this.userBadgeAssignment.userId, userId)),
+    const [level, forumProfile, badgeCount, pointStats, experienceStats] = await Promise.all([
+      user.levelId ? this.userCoreService.getLevelInfo(user.levelId) : undefined,
+      this.userCoreService.getUserForumProfile(userId),
+      this.userCoreService.getBadgeCount(userId),
       this.userPointService.getUserPointStats(userId),
       this.getAppUserExperienceStats(userId),
     ])
 
     return {
-      ...this.mapBaseUser(user),
+      ...this.userCoreService.mapBaseUser(user),
       level: level
         ? {
             id: level.id,
@@ -210,15 +180,8 @@ export class AppUserService {
             requiredExperience: level.requiredExperience,
           }
         : undefined,
-      forumProfile: {
-        signature: forumProfile?.signature ?? '',
-        bio: forumProfile?.bio ?? '',
-        topicCount: forumProfile?.topicCount ?? 0,
-        replyCount: forumProfile?.replyCount ?? 0,
-        likeCount: forumProfile?.likeCount ?? 0,
-        favoriteCount: forumProfile?.favoriteCount ?? 0,
-      },
-      badgeCount: Number(badgeRows[0]?.count ?? 0),
+      forumProfile,
+      badgeCount,
       pointStats,
       experienceStats,
     }
@@ -232,23 +195,23 @@ export class AppUserService {
     dto: UpdateAdminAppUserProfileDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
-    await this.ensureAppUserExists(dto.id)
+    await this.userCoreService.ensureUserExists(dto.id)
 
     const userData: Record<string, unknown> = {}
     if (dto.nickname !== undefined) {
       userData.nickname = dto.nickname
     }
-    if (dto.avatar !== undefined) {
-      userData.avatarUrl = dto.avatar
+    if (dto.avatarUrl !== undefined) {
+      userData.avatarUrl = dto.avatarUrl
     }
-    if (dto.phone !== undefined) {
-      userData.phoneNumber = dto.phone
+    if (dto.phoneNumber !== undefined) {
+      userData.phoneNumber = dto.phoneNumber
     }
-    if (dto.email !== undefined) {
-      userData.emailAddress = dto.email
+    if (dto.emailAddress !== undefined) {
+      userData.emailAddress = dto.emailAddress
     }
-    if (dto.gender !== undefined) {
-      userData.genderType = dto.gender
+    if (dto.genderType !== undefined) {
+      userData.genderType = dto.genderType
     }
     if (dto.birthDate !== undefined) {
       userData.birthDate = dto.birthDate
@@ -311,7 +274,7 @@ export class AppUserService {
     dto: UpdateAdminAppUserEnabledDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
-    await this.ensureAppUserExists(dto.id)
+    await this.userCoreService.ensureUserExists(dto.id)
 
     const rows = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -335,7 +298,7 @@ export class AppUserService {
     dto: UpdateAdminAppUserStatusDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
-    await this.ensureAppUserExists(dto.id)
+    await this.userCoreService.ensureUserExists(dto.id)
 
     const isNormal = dto.status === UserStatusEnum.NORMAL
     const isPermanent =
@@ -362,7 +325,7 @@ export class AppUserService {
    * 获取 APP 用户积分统计
    */
   async getAppUserPointStats(userId: number) {
-    await this.ensureAppUserExists(userId)
+    await this.userCoreService.ensureUserExists(userId)
     return this.userPointService.getUserPointStats(userId)
   }
 
@@ -370,7 +333,7 @@ export class AppUserService {
    * 获取 APP 用户积分记录分页
    */
   async getAppUserPointRecords(query: QueryAdminAppUserPointRecordDto) {
-    await this.ensureAppUserExists(query.userId)
+    await this.userCoreService.ensureUserExists(query.userId)
     return this.userPointService.getPointRecordPage(query)
   }
 
@@ -415,20 +378,12 @@ export class AppUserService {
    * 获取 APP 用户经验统计
    */
   async getAppUserExperienceStats(userId: number) {
-    const [user] = await this.db
-      .select()
-      .from(this.appUser)
-      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
-      .limit(1)
-
-    if (!user) {
-      throw new NotFoundException('应用用户不存在')
-    }
+    const user = await this.userCoreService.ensureUserExists(userId)
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const [todayEarnedRows, levelRows, nextLevelRows] = await Promise.all([
+    const [todayEarnedRows, level, nextLevelRows] = await Promise.all([
       this.db
         .select({ sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int` })
         .from(this.growthLedgerRecord)
@@ -440,16 +395,7 @@ export class AppUserService {
             gte(this.growthLedgerRecord.createdAt, today),
           ),
         ),
-      user.levelId
-        ? this.db
-            .select({
-              id: this.userLevelRule.id,
-              name: this.userLevelRule.name,
-              requiredExperience: this.userLevelRule.requiredExperience,
-            })
-            .from(this.userLevelRule)
-            .where(eq(this.userLevelRule.id, user.levelId))
-        : [],
+      user.levelId ? this.userCoreService.getLevelInfo(user.levelId) : undefined,
       this.db
         .select({
           id: this.userLevelRule.id,
@@ -467,7 +413,6 @@ export class AppUserService {
         .limit(1),
     ])
     const todayEarned = Number(todayEarnedRows[0]?.sum ?? 0)
-    const level = levelRows[0]
     const nextLevel = nextLevelRows[0]
 
     return {
@@ -499,7 +444,7 @@ export class AppUserService {
   async getAppUserExperienceRecords(
     query: QueryAdminAppUserExperienceRecordDto,
   ) {
-    await this.ensureAppUserExists(query.userId)
+    await this.userCoreService.ensureUserExists(query.userId)
     return this.userExperienceService.getExperienceRecordPage(query)
   }
 
@@ -527,7 +472,7 @@ export class AppUserService {
    * 获取 APP 用户徽章分页
    */
   async getAppUserBadges(query: QueryAdminAppUserBadgeDto) {
-    await this.ensureAppUserExists(query.userId)
+    await this.userCoreService.ensureUserExists(query.userId)
 
     const {
       userId,
@@ -634,67 +579,6 @@ export class AppUserService {
 
     if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
       throw new UnauthorizedException('权限不足')
-    }
-  }
-
-  /**
-   * 校验 APP 用户是否存在
-   */
-  private async ensureAppUserExists(userId: number) {
-    const [appUser] = await this.db
-      .select({ id: this.appUser.id })
-      .from(this.appUser)
-      .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
-      .limit(1)
-    if (!appUser) {
-      throw new NotFoundException('应用用户不存在')
-    }
-  }
-
-  /**
-   * 映射 APP 用户基础字段
-   */
-  private mapBaseUser(user: {
-    id: number
-    createdAt: Date
-    updatedAt: Date
-    account: string
-    phoneNumber: string | null
-    nickname: string
-    avatarUrl: string | null
-    emailAddress: string | null
-    isEnabled: boolean
-    genderType: number
-    birthDate: string | null
-    points: number
-    experience: number
-    levelId: number | null
-    status: number
-    banReason: string | null
-    banUntil: Date | null
-    lastLoginAt: Date | null
-    lastLoginIp: string | null
-  }) {
-    return {
-      id: user.id,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      account: user.account,
-      phone: user.phoneNumber ?? undefined,
-      nickname: user.nickname,
-      avatar: user.avatarUrl ?? undefined,
-      email: user.emailAddress ?? undefined,
-      isEnabled: user.isEnabled,
-      gender: user.genderType,
-      birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
-      points: user.points,
-      experience: user.experience,
-      levelId: user.levelId ?? undefined,
-      status: user.status,
-      banReason: user.banReason ?? undefined,
-      banUntil: user.banUntil ?? undefined,
-      lastLoginAt: user.lastLoginAt ?? undefined,
-      lastLoginIp: user.lastLoginIp ?? undefined,
     }
   }
 

@@ -1,14 +1,15 @@
-import {
-  CommentService,
-  CreateCommentBodyDto,
-  QueryCommentRepliesDto,
-  QueryMyCommentPageDto,
-  ReplyCommentBodyDto,
-} from '@libs/interaction'
+import { CommentService } from '@libs/interaction'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  CommentItemDto,
+  CreateCommentBodyDto,
+  QueryCommentRepliesDto,
+  QueryMyCommentPageDto,
+  ReplyCommentBodyDto,
+} from './dto/comment.dto'
 
 @ApiTags('评论模块')
 @Controller('app/comment')
@@ -57,7 +58,7 @@ export class CommentController {
   @Get('my')
   @ApiPageDoc({
     summary: '分页查询我的评论',
-    model: IdDto,
+    model: CommentItemDto,
   })
   async page(
     @Query() query: QueryMyCommentPageDto,
@@ -69,7 +70,7 @@ export class CommentController {
   @Get('replies')
   @ApiPageDoc({
     summary: '分页查询评论回复',
-    model: QueryCommentRepliesDto,
+    model: CommentItemDto,
   })
   async replies(@Query() query: QueryCommentRepliesDto) {
     return this.commentService.getReplies(query)

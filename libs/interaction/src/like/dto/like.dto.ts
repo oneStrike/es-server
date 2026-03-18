@@ -1,8 +1,8 @@
 import {
   BooleanProperty,
-  DateProperty,
   EnumProperty,
   NestedProperty,
+  NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'

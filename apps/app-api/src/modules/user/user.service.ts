@@ -19,21 +19,22 @@ import type {
 import { DrizzleService } from '@db/core'
 
 import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/growth'
-import { DownloadTargetTypeEnum, PurchaseStatusEnum, PurchaseTargetTypeEnum } from '@libs/interaction'
+import { UserAssetsService } from '@libs/interaction'
 import { MessageInboxService } from '@libs/message'
-import { UserStatusEnum } from '@libs/platform/constant'
-
+import { UserService as UserCoreService } from '@libs/user'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly drizzle: DrizzleService,
+    private readonly userCoreService: UserCoreService,
+    private readonly userAssetsService: UserAssetsService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
     private readonly messageInboxService: MessageInboxService,
@@ -67,63 +68,19 @@ export class UserService {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  private get userComment() {
-    return this.drizzle.schema.userComment
-  }
-
-  private get userLike() {
-    return this.drizzle.schema.userLike
-  }
-
-  private get userFavorite() {
-    return this.drizzle.schema.userFavorite
-  }
-
-  private get userBrowseLog() {
-    return this.drizzle.schema.userBrowseLog
-  }
-
-  private get userPurchaseRecord() {
-    return this.drizzle.schema.userPurchaseRecord
-  }
-
-  private get userDownloadRecord() {
-    return this.drizzle.schema.userDownloadRecord
-  }
-
-  private get workChapter() {
-    return this.drizzle.schema.workChapter
-  }
-
   /**
    * 获取用户资料
-   *
-   * @param userId 用户ID
-   * @returns 用户资料信息
    */
   async getUserProfile(userId: number) {
-    const [user] = await this.db
-      .select()
-      .from(this.appUser)
-      .where(eq(this.appUser.id, userId))
-      .limit(1)
-
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
-
-    return this.mapUserProfile(user)
+    const user = await this.userCoreService.ensureUserExists(userId)
+    return this.userCoreService.mapBaseUser(user)
   }
 
   /**
    * 更新用户资料
-   *
-   * @param userId 用户ID
-   * @param dto 更新数据
-   * @returns 更新后的用户资料
    */
   async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
-    await this.ensureUserExists(userId)
+    await this.userCoreService.ensureUserExists(userId)
 
     try {
       const [updated] = await this.drizzle.withErrorHandling(() =>
@@ -131,9 +88,9 @@ export class UserService {
           .update(this.appUser)
           .set({
             nickname: dto.nickname,
-            avatarUrl: dto.avatar,
-            emailAddress: dto.email,
-            genderType: dto.gender,
+            avatarUrl: dto.avatarUrl,
+            emailAddress: dto.emailAddress,
+            genderType: dto.genderType,
             birthDate: dto.birthDate
               ? new Date(dto.birthDate).toISOString().slice(0, 10)
               : undefined,
@@ -144,7 +101,7 @@ export class UserService {
       if (!updated) {
         throw new NotFoundException('用户不存在')
       }
-      return this.mapUserProfile(updated)
+      return this.userCoreService.mapBaseUser(updated)
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
         throw new BadRequestException('邮箱已被使用')
@@ -155,48 +112,13 @@ export class UserService {
 
   /**
    * 获取用户论坛资料
-   *
-   * @param userId 用户ID
-   * @returns 用户论坛资料
    */
   async getUserForumProfile(userId: number) {
-    const [user, forumProfile] = await Promise.all([
-      this.db
-        .select({
-          status: this.appUser.status,
-          banReason: this.appUser.banReason,
-          banUntil: this.appUser.banUntil,
-        })
-        .from(this.appUser)
-        .where(eq(this.appUser.id, userId))
-        .limit(1)
-        .then((rows) => rows[0]),
-      this.db
-        .select({
-          signature: this.forumProfile.signature,
-          bio: this.forumProfile.bio,
-          topicCount: this.forumProfile.topicCount,
-          replyCount: this.forumProfile.replyCount,
-          likeCount: this.forumProfile.likeCount,
-          favoriteCount: this.forumProfile.favoriteCount,
-        })
-        .from(this.forumProfile)
-        .where(eq(this.forumProfile.userId, userId))
-        .limit(1)
-        .then((rows) => rows[0]),
-    ])
-
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
+    const user = await this.userCoreService.ensureUserExists(userId)
+    const forumProfile = await this.userCoreService.getUserForumProfile(userId)
 
     return {
-      signature: forumProfile?.signature ?? '',
-      bio: forumProfile?.bio ?? '',
-      topicCount: forumProfile?.topicCount ?? 0,
-      replyCount: forumProfile?.replyCount ?? 0,
-      likeCount: forumProfile?.likeCount ?? 0,
-      favoriteCount: forumProfile?.favoriteCount ?? 0,
+      ...forumProfile,
       status: user.status,
       banReason: user.banReason ?? undefined,
       banUntil: user.banUntil ?? undefined,
@@ -205,13 +127,9 @@ export class UserService {
 
   /**
    * 更新用户论坛资料
-   *
-   * @param userId 用户ID
-   * @param dto 更新数据
-   * @returns 更新后的用户论坛资料
    */
   async updateUserForumProfile(userId: number, dto: UpdateMyForumProfileDto) {
-    await this.ensureUserExists(userId)
+    await this.userCoreService.ensureUserExists(userId)
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
@@ -243,47 +161,19 @@ export class UserService {
 
   /**
    * 获取用户中心汇总信息
-   *
-   * @param userId 用户ID
-   * @returns 用户中心汇总信息
    */
   async getUserCenter(userId: number) {
-    const [user, forumProfile, badgeRows, assets, messageSummary] = await Promise.all([
-      this.db
-        .select()
-        .from(this.appUser)
-        .where(eq(this.appUser.id, userId))
-        .limit(1)
-        .then((rows) => rows[0]),
-      this.db
-        .select({
-          topicCount: this.forumProfile.topicCount,
-          replyCount: this.forumProfile.replyCount,
-          likeCount: this.forumProfile.likeCount,
-          favoriteCount: this.forumProfile.favoriteCount,
-        })
-        .from(this.forumProfile)
-        .where(eq(this.forumProfile.userId, userId))
-        .limit(1)
-        .then((rows) => rows[0]),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userBadgeAssignment)
-        .where(eq(this.userBadgeAssignment.userId, userId)),
+    const [user, forumProfile, badgeCount, assets, messageSummary] = await Promise.all([
+      this.userCoreService.ensureUserExists(userId),
+      this.userCoreService.getUserForumProfile(userId),
+      this.userCoreService.getBadgeCount(userId),
       this.getUserAssetsSummary(userId),
       this.messageInboxService.getSummary(userId),
     ])
 
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
-    const [level] = user.levelId
-      ? await this.db
-          .select({ id: this.userLevelRule.id, name: this.userLevelRule.name })
-          .from(this.userLevelRule)
-          .where(eq(this.userLevelRule.id, user.levelId))
-          .limit(1)
-      : []
+    const level = user.levelId
+      ? await this.userCoreService.getLevelInfo(user.levelId)
+      : undefined
 
     return {
       user: {
@@ -301,16 +191,16 @@ export class UserService {
         experience: user.experience,
         levelId: user.levelId ?? undefined,
         levelName: level?.name ?? undefined,
-        badgeCount: Number(badgeRows[0]?.count ?? 0),
+        badgeCount,
       },
       community: {
         status: user.status,
         banReason: user.banReason ?? undefined,
         banUntil: user.banUntil ?? undefined,
-        topicCount: forumProfile?.topicCount ?? 0,
-        replyCount: forumProfile?.replyCount ?? 0,
-        likeCount: forumProfile?.likeCount ?? 0,
-        favoriteCount: forumProfile?.favoriteCount ?? 0,
+        topicCount: forumProfile.topicCount,
+        replyCount: forumProfile.replyCount,
+        likeCount: forumProfile.likeCount,
+        favoriteCount: forumProfile.favoriteCount,
       },
       assets,
       message: {
@@ -322,72 +212,33 @@ export class UserService {
 
   /**
    * 获取用户状态信息
-   *
-   * @param userId 用户ID
-   * @returns 用户状态信息
    */
   async getUserStatus(userId: number) {
-    const [user] = await this.db
-      .select({
-        isEnabled: this.appUser.isEnabled,
-        status: this.appUser.status,
-        banReason: this.appUser.banReason,
-        banUntil: this.appUser.banUntil,
-      })
-      .from(this.appUser)
-      .where(eq(this.appUser.id, userId))
-      .limit(1)
-
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
-
-    return this.buildUserStatus(user)
+    const user = await this.userCoreService.ensureUserExists(userId)
+    return this.userCoreService.buildUserStatus(user)
   }
 
   /**
    * 获取用户成长汇总
-   *
-   * @param userId 用户ID
-   * @returns 用户成长汇总信息
    */
   async getUserGrowthSummary(userId: number) {
-    const [user, pointStats, experienceStats, badgeRows] = await Promise.all([
-      this.db
-        .select({
-          points: this.appUser.points,
-          experience: this.appUser.experience,
-          levelId: this.appUser.levelId,
-        })
-        .from(this.appUser)
-        .where(eq(this.appUser.id, userId))
-        .limit(1)
-        .then((rows) => rows[0]),
+    const [user, pointStats, experienceStats, badgeCount] = await Promise.all([
+      this.userCoreService.ensureUserExists(userId),
       this.userPointService.getUserPointStats(userId),
       this.getUserExperienceStats(userId),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userBadgeAssignment)
-        .where(eq(this.userBadgeAssignment.userId, userId)),
+      this.userCoreService.getBadgeCount(userId),
     ])
 
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
-    const [level] = user.levelId
-      ? await this.db
-          .select({ name: this.userLevelRule.name })
-          .from(this.userLevelRule)
-          .where(eq(this.userLevelRule.id, user.levelId))
-          .limit(1)
-      : []
+    const level = user.levelId
+      ? await this.userCoreService.getLevelInfo(user.levelId)
+      : undefined
 
     return {
       points: user.points,
       experience: user.experience,
       levelId: user.levelId ?? undefined,
       levelName: level?.name ?? undefined,
-      badgeCount: Number(badgeRows[0]?.count ?? 0),
+      badgeCount,
       todayPointEarned: pointStats.todayEarned,
       todayExperienceEarned: experienceStats.todayEarned,
     }
@@ -424,18 +275,7 @@ export class UserService {
    * @returns 用户经验统计
    */
   async getUserExperienceStats(userId: number) {
-    const [user] = await this.db
-      .select({
-        experience: this.appUser.experience,
-        levelId: this.appUser.levelId,
-      })
-      .from(this.appUser)
-      .where(eq(this.appUser.id, userId))
-      .limit(1)
-
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
+    const user = await this.userCoreService.ensureUserExists(userId)
 
     // 获取今日开始时间
     const today = new Date()
@@ -531,7 +371,7 @@ export class UserService {
    * @returns 徽章列表分页数据
    */
   async getUserBadges(userId: number, query: QueryMyBadgeDto) {
-    await this.ensureUserExists(userId)
+    await this.userCoreService.ensureUserExists(userId)
 
     const { name, type, isEnabled, business, eventKey, ...pageQuery } = query
     const badgeWhere = this.drizzle.buildWhere(this.userBadge, {
@@ -591,202 +431,7 @@ export class UserService {
    * @returns 用户资产统计
    */
   async getUserAssetsSummary(userId: number) {
-    await this.ensureUserExists(userId)
-
-    const [
-      commentCount,
-      likeCount,
-      favoriteCount,
-      viewCount,
-      purchasedChapterCount,
-      downloadedChapterCount,
-      purchasedWorkRows,
-      downloadedWorkRows,
-    ] = await Promise.all([
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userComment)
-        .where(and(eq(this.userComment.userId, userId), isNull(this.userComment.deletedAt))),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userLike)
-        .where(eq(this.userLike.userId, userId)),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userFavorite)
-        .where(eq(this.userFavorite.userId, userId)),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userBrowseLog)
-        .where(eq(this.userBrowseLog.userId, userId)),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userPurchaseRecord)
-        .where(
-          and(
-            eq(this.userPurchaseRecord.userId, userId),
-            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
-            inArray(this.userPurchaseRecord.targetType, [
-              PurchaseTargetTypeEnum.COMIC_CHAPTER,
-              PurchaseTargetTypeEnum.NOVEL_CHAPTER,
-            ]),
-          ),
-        ),
-      this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userDownloadRecord)
-        .where(
-          and(
-            eq(this.userDownloadRecord.userId, userId),
-            inArray(this.userDownloadRecord.targetType, [
-              DownloadTargetTypeEnum.COMIC_CHAPTER,
-              DownloadTargetTypeEnum.NOVEL_CHAPTER,
-            ]),
-          ),
-        ),
-      this.db
-        .select({ total: sql<bigint>`COUNT(DISTINCT ${this.workChapter.workId})::bigint` })
-        .from(this.userPurchaseRecord)
-        .innerJoin(this.workChapter, eq(this.workChapter.id, this.userPurchaseRecord.targetId))
-        .where(
-          and(
-            eq(this.userPurchaseRecord.userId, userId),
-            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
-            inArray(this.userPurchaseRecord.targetType, [
-              PurchaseTargetTypeEnum.COMIC_CHAPTER,
-              PurchaseTargetTypeEnum.NOVEL_CHAPTER,
-            ]),
-          ),
-        ),
-      this.db
-        .select({ total: sql<bigint>`COUNT(DISTINCT ${this.workChapter.workId})::bigint` })
-        .from(this.userDownloadRecord)
-        .innerJoin(this.workChapter, eq(this.workChapter.id, this.userDownloadRecord.targetId))
-        .where(
-          and(
-            eq(this.userDownloadRecord.userId, userId),
-            inArray(this.userDownloadRecord.targetType, [
-              DownloadTargetTypeEnum.COMIC_CHAPTER,
-              DownloadTargetTypeEnum.NOVEL_CHAPTER,
-            ]),
-          ),
-        ),
-    ])
-
-    return {
-      purchasedWorkCount: Number(purchasedWorkRows[0]?.total ?? 0n),
-      purchasedChapterCount: Number(purchasedChapterCount[0]?.count ?? 0),
-      downloadedWorkCount: Number(downloadedWorkRows[0]?.total ?? 0n),
-      downloadedChapterCount: Number(downloadedChapterCount[0]?.count ?? 0),
-      favoriteCount: Number(favoriteCount[0]?.count ?? 0),
-      likeCount: Number(likeCount[0]?.count ?? 0),
-      viewCount: Number(viewCount[0]?.count ?? 0),
-      commentCount: Number(commentCount[0]?.count ?? 0),
-    }
-  }
-
-  /**
-   * 确保用户存在
-   *
-   * @param userId 用户ID
-   * @throws NotFoundException 用户不存在时抛出异常
-   */
-  private async ensureUserExists(userId: number) {
-    const [user] = await this.db
-      .select({ id: this.appUser.id })
-      .from(this.appUser)
-      .where(eq(this.appUser.id, userId))
-      .limit(1)
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
-  }
-
-  /**
-   * 构建用户状态信息
-   *
-   * @param user 用户数据对象
-   * @param user.isEnabled 账号是否可用
-   * @param user.status 社区状态码
-   * @param user.banReason 封禁/禁言原因
-   * @param user.banUntil 封禁/禁言到期时间
-   * @returns 用户状态信息
-   */
-  private buildUserStatus(user: {
-    isEnabled: boolean
-    status: number
-    banReason: string | null
-    banUntil: Date | null
-  }) {
-    // 被禁止互动的状态集合
-    const interactionBlockedStatuses = new Set<number>([
-      UserStatusEnum.MUTED,
-      UserStatusEnum.PERMANENT_MUTED,
-      UserStatusEnum.BANNED,
-      UserStatusEnum.PERMANENT_BANNED,
-    ])
-
-    const canLogin = user.isEnabled
-    const canInteract =
-      user.isEnabled && !interactionBlockedStatuses.has(user.status)
-    const reason = !user.isEnabled
-      ? user.banReason || '账号已被禁用'
-      : user.banReason || undefined
-
-    return {
-      isEnabled: user.isEnabled,
-      status: user.status,
-      canLogin,
-      canPost: canInteract,
-      canReply: canInteract,
-      canLike: canInteract,
-      canFavorite: canInteract,
-      reason,
-      until: user.banUntil ?? undefined,
-    }
-  }
-
-  private mapUserProfile(user: {
-    id: number
-    createdAt: Date
-    updatedAt: Date
-    account: string
-    phoneNumber: string | null
-    nickname: string
-    avatarUrl: string | null
-    emailAddress: string | null
-    isEnabled: boolean
-    genderType: number
-    birthDate: string | null
-    lastLoginAt: Date | null
-    lastLoginIp: string | null
-    points: number
-    experience: number
-    levelId: number | null
-    status: number
-    banReason: string | null
-    banUntil: Date | null
-  }) {
-    return {
-      id: user.id,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      account: user.account,
-      phone: user.phoneNumber ?? undefined,
-      nickname: user.nickname,
-      avatar: user.avatarUrl ?? undefined,
-      email: user.emailAddress ?? undefined,
-      isEnabled: user.isEnabled,
-      gender: user.genderType,
-      birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
-      lastLoginAt: user.lastLoginAt ?? undefined,
-      lastLoginIp: user.lastLoginIp ?? undefined,
-      points: user.points,
-      experience: user.experience,
-      levelId: user.levelId ?? undefined,
-      status: user.status,
-      banReason: user.banReason ?? undefined,
-      banUntil: user.banUntil ?? undefined,
-    }
+    await this.userCoreService.ensureUserExists(userId)
+    return this.userAssetsService.getUserAssetsSummary(userId)
   }
 }

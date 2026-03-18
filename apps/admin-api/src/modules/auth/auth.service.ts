@@ -1,6 +1,7 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
 
+import { AuthSessionService } from '@libs/identity'
 import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthService as BaseAuthService,
@@ -9,15 +10,12 @@ import {
 
 import {
   extractIpAddress,
-  extractUserAgent,
   isProduction,
-  parseDeviceInfo,
 } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { AuthConstants, AuthRedisKeys, CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
-import { AdminTokenStorageService } from './token-storage.service'
 
 /**
  * 管理端认证服务
@@ -29,9 +27,9 @@ export class AuthService {
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
+    private readonly authSessionService: AuthSessionService,
     private readonly captchaService: CaptchaService,
     private readonly loginGuardService: LoginGuardService,
-    private readonly adminTokenStorageService: AdminTokenStorageService,
   ) {}
 
   private get db() {
@@ -142,8 +140,7 @@ export class AuthService {
       username: user.username,
     })
 
-    // 存储令牌
-    await this.storeTokens(user.id, tokens, req)
+    await this.authSessionService.persistTokens(user.id, tokens, req)
 
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
@@ -158,71 +155,13 @@ export class AuthService {
    * 退出登录
    */
   async logout(body: TokenDto) {
-    const { accessToken, refreshToken } = body
-    // 将令牌添加到黑名单
-    return this.baseJwtService.logout(accessToken, refreshToken)
+    return this.authSessionService.logout(body)
   }
 
   /**
    * 刷新访问令牌
    */
   async refreshToken(body: RefreshTokenDto, req: FastifyRequest) {
-    const tokens = await this.baseJwtService.refreshAccessToken(
-      body.refreshToken,
-      {
-        validateRefreshTokenJti: async (jti) =>
-          this.adminTokenStorageService.isTokenValid(jti),
-        revokeRefreshTokenJti: async (jti) =>
-          this.adminTokenStorageService.revokeByJti(jti, 'TOKEN_REFRESH'),
-      },
-    )
-
-    // 存储新令牌
-    const accessTokenPayload = await this.baseJwtService.decodeToken(
-      tokens.accessToken,
-    )
-    const userId = Number(accessTokenPayload.sub)
-
-    await this.storeTokens(userId, tokens, req)
-
-    return tokens
-  }
-
-  /**
-   * 存储 Token
-   */
-  private async storeTokens(userId: number, tokens: any, req: FastifyRequest) {
-    const accessTokenPayload = await this.baseJwtService.decodeToken(
-      tokens.accessToken,
-    )
-    const refreshTokenPayload = await this.baseJwtService.decodeToken(
-      tokens.refreshToken,
-    )
-
-    const ipAddress = extractIpAddress(req) || 'unknown'
-    const userAgent = extractUserAgent(req)
-    const deviceInfoStr = parseDeviceInfo(userAgent)
-    const deviceInfo = deviceInfoStr ? JSON.parse(deviceInfoStr) : undefined
-
-    await this.adminTokenStorageService.createTokens([
-      {
-        userId,
-        jti: accessTokenPayload.jti,
-        tokenType: 'ACCESS',
-        expiresAt: new Date(accessTokenPayload.exp * 1000),
-        deviceInfo,
-        ipAddress,
-        userAgent,
-      },
-      {
-        userId,
-        jti: refreshTokenPayload.jti,
-        tokenType: 'REFRESH',
-        expiresAt: new Date(refreshTokenPayload.exp * 1000),
-        deviceInfo,
-        ipAddress,
-        userAgent,
-      },
-    ])
+    return this.authSessionService.refreshAndPersist(body.refreshToken, req)
   }
 }

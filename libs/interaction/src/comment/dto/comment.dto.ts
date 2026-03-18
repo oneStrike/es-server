@@ -1,34 +1,14 @@
 import { AuditStatusEnum } from '@libs/platform/constant'
 import {
+  ArrayProperty,
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 import { CommentTargetTypeEnum } from '../comment.constant'
-
-/**
- * 评论目标 DTO
- */
-export class CommentTargetDto {
-  @NumberProperty({
-    description: '目标 ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  targetId!: number
-
-  @EnumProperty({
-    description: '评论目标类型',
-    enum: CommentTargetTypeEnum,
-    example: CommentTargetTypeEnum.COMIC,
-    required: true,
-  })
-  targetType!: CommentTargetTypeEnum
-}
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
@@ -39,7 +19,12 @@ export class BaseCommentDto extends BaseDto {
   })
   targetType!: CommentTargetTypeEnum
 
-  @NumberProperty({ description: '目标 ID', example: 1, required: true, min: 1 })
+  @NumberProperty({
+    description: '目标 ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
   targetId!: number
 
   @NumberProperty({
@@ -60,20 +45,28 @@ export class BaseCommentDto extends BaseDto {
   content!: string
 
   @NumberProperty({
-    description: '回复的评论 ID',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  replyToId?: number
-
-  @NumberProperty({
     description: '楼层号',
     example: 1,
     required: false,
     min: 1,
   })
-  floor?: number
+  floor?: number | null
+
+  @NumberProperty({
+    description: '回复的评论 ID',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  replyToId?: number | null
+
+  @NumberProperty({
+    description: '实际回复的根评论 ID',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  actualReplyToId?: number | null
 
   @BooleanProperty({
     description: '是否隐藏',
@@ -92,62 +85,57 @@ export class BaseCommentDto extends BaseDto {
   })
   auditStatus!: AuditStatusEnum
 
+  @NumberProperty({
+    description: '审核人 ID',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  auditById?: number | null
+
+  @NumberProperty({
+    description: '审核角色',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  auditRole?: number | null
+
   @StringProperty({
     description: '审核原因',
     example: '违反社区规范',
     required: false,
     maxLength: 500,
   })
-  auditReason?: string
-}
+  auditReason?: string | null
 
-export class CommentIdDto {
-  @NumberProperty({
-    description: '评论 ID',
-    example: 1,
-    required: true,
-    min: 1,
+  @DateProperty({
+    description: '审核时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
   })
-  commentId!: number
-}
+  auditAt?: Date | null
 
-export class CreateCommentDto extends IntersectionType(
-  UserIdDto,
-  IntersectionType(CommentTargetDto, PickType(BaseCommentDto, ['content', 'replyToId'])),
-) {}
-
-export class CreateCommentBodyDto extends IntersectionType(
-  CommentTargetDto,
-  PickType(BaseCommentDto, ['content']),
-) {}
-
-export class ReplyTargetDto {
   @NumberProperty({
-    description: '回复的评论 ID',
-    example: 1,
+    description: '点赞数',
+    example: 0,
     required: true,
-    min: 1,
+    default: 0,
   })
-  replyToId!: number
+  likeCount!: number
+
+  @ArrayProperty({
+    description: '敏感词命中记录',
+    itemType: 'string',
+    example: ['敏感词1'],
+    required: false,
+  })
+  sensitiveWordHits?: unknown | null
+
+  @DateProperty({
+    description: '删除时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+  })
+  deletedAt?: Date | null
 }
-
-export class ReplyCommentDto extends IntersectionType(
-  UserIdDto,
-  ReplyTargetDto,
-  PickType(BaseCommentDto, ['content']),
-) {}
-
-export class ReplyCommentBodyDto extends IntersectionType(
-  ReplyTargetDto,
-  PickType(BaseCommentDto, ['content']),
-) {}
-
-export class QueryMyCommentPageDto extends IntersectionType(
-  PageDto,
-  IntersectionType(PartialType(CommentTargetDto), PickType(PartialType(BaseCommentDto), ['auditStatus'])),
-) {}
-
-export class QueryCommentRepliesDto extends IntersectionType(
-  PageDto,
-  CommentIdDto,
-) {}

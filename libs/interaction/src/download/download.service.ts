@@ -1,17 +1,8 @@
 import type { SQL } from 'drizzle-orm'
-import {
-  DrizzleService,
-} from '@db/core'
+import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { DownloadTargetTypeEnum } from './download.constant'
-import {
-  DownloadedWorkChapterPageDto,
-  DownloadedWorkPageDto,
-  QueryDownloadedWorkChapterDto,
-  QueryDownloadedWorkDto,
-  UserDownloadRecordKeyDto,
-} from './dto/download.dto'
 import { IDownloadTargetResolver } from './interfaces/download-target-resolver.interface'
 
 @Injectable()
@@ -21,9 +12,7 @@ export class DownloadService {
     IDownloadTargetResolver
   >()
 
-  constructor(
-    private readonly drizzle: DrizzleService,
-  ) {}
+  constructor(private readonly drizzle: DrizzleService) {}
 
   private get db() {
     return this.drizzle.db
@@ -66,10 +55,7 @@ export class DownloadService {
     return Array.isArray(rows) ? (rows as T[]) : []
   }
 
-  private normalizePagination(
-    pageIndex?: number,
-    pageSize?: number,
-  ): { pageIndex: number, pageSize: number, skip: number, take: number } {
+  private normalizePagination(pageIndex?: number, pageSize?: number) {
     const rawPageIndex = Number.isFinite(Number(pageIndex))
       ? Math.floor(Number(pageIndex))
       : 1
@@ -90,7 +76,10 @@ export class DownloadService {
     }
   }
 
-  private buildDownloadCreatedAtFilter(startDate?: string, endDate?: string): SQL {
+  private buildDownloadCreatedAtFilter(
+    startDate?: string,
+    endDate?: string,
+  ): SQL {
     const filters: SQL[] = []
     const columnRef = sql`udr.created_at`
 
@@ -118,11 +107,15 @@ export class DownloadService {
 
   /**
    * 执行下载逻辑
-   * @param dto 下载请求信息
+   * @param input 下载请求信息
    * @returns 章节内容
    */
-  async downloadTarget(dto: UserDownloadRecordKeyDto): Promise<string> {
-    const { targetType, targetId, userId } = dto
+  async downloadTarget(input: {
+    targetType: DownloadTargetTypeEnum
+    targetId: number
+    userId: number
+  }): Promise<string> {
+    const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
     try {
@@ -154,8 +147,9 @@ export class DownloadService {
           },
         )
       } catch (mappedError) {
-        duplicateDownload = mappedError instanceof Error
-          && mappedError.message === '__DOWNLOAD_DUPLICATE__'
+        duplicateDownload =
+          mappedError instanceof Error &&
+          mappedError.message === '__DOWNLOAD_DUPLICATE__'
         if (!duplicateDownload) {
           throw mappedError
         }
@@ -173,16 +167,24 @@ export class DownloadService {
   /**
    * 下载章节（对外通用接口）
    */
-  async downloadChapter(dto: UserDownloadRecordKeyDto) {
-    return this.downloadTarget(dto)
+  async downloadChapter(input: {
+    targetType: DownloadTargetTypeEnum
+    targetId: number
+    userId: number
+  }) {
+    return this.downloadTarget(input)
   }
 
   /**
    * 检查下载状态
    */
-  async checkDownloadStatus(dto: UserDownloadRecordKeyDto) {
+  async checkDownloadStatus(input: {
+    targetType: DownloadTargetTypeEnum
+    targetId: number
+    userId: number
+  }) {
     const record = await this.db.query.userDownloadRecord.findFirst({
-      where: dto,
+      where: input,
       columns: {
         id: true,
       },
@@ -232,17 +234,25 @@ export class DownloadService {
   /**
    * 获取已下载作品列表
    */
-  async getDownloadedWorks(
-    dto: QueryDownloadedWorkDto,
-  ): Promise<DownloadedWorkPageDto> {
-    const { userId, workType, pageIndex, pageSize, startDate, endDate } = dto
+  async getDownloadedWorks(query: {
+    userId: number
+    workType?: number
+    pageIndex?: number
+    pageSize?: number
+    startDate?: string
+    endDate?: string
+  }) {
+    const { userId, workType, pageIndex, pageSize, startDate, endDate } = query
     const {
       pageIndex: normalizedPageIndex,
       pageSize: normalizedPageSize,
       skip,
       take,
     } = this.normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = this.buildDownloadCreatedAtFilter(startDate, endDate)
+    const createdAtFilter = this.buildDownloadCreatedAtFilter(
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
       : sql.empty()
@@ -308,9 +318,15 @@ export class DownloadService {
   /**
    * 获取已下载章节列表
    */
-  async getDownloadedWorkChapters(
-    dto: QueryDownloadedWorkChapterDto,
-  ): Promise<DownloadedWorkChapterPageDto> {
+  async getDownloadedWorkChapters(query: {
+    userId: number
+    workId: number
+    workType?: number
+    pageIndex?: number
+    pageSize?: number
+    startDate?: string
+    endDate?: string
+  }) {
     const {
       userId,
       workId,
@@ -319,14 +335,17 @@ export class DownloadService {
       pageSize,
       startDate,
       endDate,
-    } = dto
+    } = query
     const {
       pageIndex: normalizedPageIndex,
       pageSize: normalizedPageSize,
       skip,
       take,
     } = this.normalizePagination(pageIndex, pageSize)
-    const createdAtFilter = this.buildDownloadCreatedAtFilter(startDate, endDate)
+    const createdAtFilter = this.buildDownloadCreatedAtFilter(
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
       : sql.empty()

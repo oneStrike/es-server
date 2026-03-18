@@ -102,3 +102,6 @@ export const userLevelRule = pgTable("user_level_rule", {
      */
     index("user_level_rule_is_enabled_sortOrder_idx").on(table.isEnabled, table.sortOrder),
 ]);
+
+export type UserLevelRule = typeof userLevelRule.$inferSelect;
+export type UserLevelRuleInsert = typeof userLevelRule.$inferInsert;

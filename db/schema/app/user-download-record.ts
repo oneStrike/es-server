@@ -49,3 +49,6 @@ export const userDownloadRecord = pgTable("user_download_record", {
    */
   index("user_download_record_created_at_idx").on(table.createdAt),
 ]);
+
+export type UserDownloadRecord = typeof userDownloadRecord.$inferSelect;
+export type UserDownloadRecordInsert = typeof userDownloadRecord.$inferInsert;

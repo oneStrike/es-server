@@ -1,4 +1,5 @@
 import { DrizzleService } from '@db/core'
+import { AdminUser, NewAdminUser } from '@db/schema'
 import { ScryptService } from '@libs/platform/modules'
 import { LoginGuardService } from '@libs/platform/modules/auth'
 import {
@@ -11,12 +12,7 @@ import { ConfigService } from '@nestjs/config'
 import { eq } from 'drizzle-orm'
 import { AuthRedisKeys } from '../auth/auth.constant'
 import { AdminUserRoleEnum } from './admin-user.constant'
-import {
-  ChangePasswordDto,
-  UpdateUserDto,
-  UserPageDto,
-  UserRegisterDto,
-} from './dto/admin-user.dto'
+import { ChangePasswordDto, UserPageDto } from './dto/admin-user.dto'
 
 /**
  * 管理员用户服务
@@ -57,7 +53,10 @@ export class AdminUserService {
   /**
    * 更新用户信息
    */
-  async updateUserInfo(userId: number, updateData: UpdateUserDto) {
+  async updateUserInfo(
+    userId: number,
+    updateData: Partial<AdminUser> & { id: number },
+  ) {
     await this.isSuperAdmin(userId)
     // 查找用户
     const [user] = await this.db
@@ -99,12 +98,8 @@ export class AdminUserService {
   /**
    * 注册管理员用户
    */
-  async register(body: UserRegisterDto) {
-    const { username, password, confirmPassword, avatar, role, mobile } = body
-
-    if (password !== confirmPassword) {
-      throw new BadRequestException('密码和确认密码不一致')
-    }
+  async register(data: NewAdminUser) {
+    const { username, password, avatar, role, mobile } = data
 
     // 检查用户名是否已存在
     const [usernameExists] = await this.db
@@ -138,7 +133,7 @@ export class AdminUserService {
           password: encryptedPassword,
           avatar,
           mobile,
-          role: role || 0,
+          role: role || AdminUserRoleEnum.NORMAL_ADMIN,
           isEnabled: true,
         })
         .returning({ id: this.adminUser.id }),

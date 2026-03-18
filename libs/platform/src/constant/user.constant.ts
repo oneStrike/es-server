@@ -40,3 +40,14 @@ export enum GenderEnum {
   /** 未知 */
   UNKNOWN = 0,
 }
+
+/**
+ * 管理员角色枚举
+ */
+export enum AdminUserRoleEnum {
+  /** 普通管理员 */
+  NORMAL_ADMIN = 0,
+
+  /** 超级管理员 */
+  SUPER_ADMIN = 1,
+}

@@ -1,13 +1,12 @@
 import type { InteractionTx } from '../interaction-tx.type'
 import { DrizzleService } from '@db/core'
+import { UserComment } from '@db/schema'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-import {
-  AuditStatusEnum,
-} from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant'
 
 import {
   SensitiveWordDetectService,
@@ -20,28 +19,9 @@ import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentTargetTypeEnum } from './comment.constant'
 import {
-  CreateCommentDto,
-  QueryCommentRepliesDto,
-  QueryMyCommentPageDto,
-  ReplyCommentDto,
-} from './dto/comment.dto'
-import {
   CommentTargetMeta,
   ICommentTargetResolver,
 } from './interfaces/comment-target-resolver.interface'
-
-/**
- * 可见评论的载荷数据结构
- * 用于补偿效应处理时传递评论的核心信息
- */
-interface VisibleCommentPayload {
-  id: number
-  userId: number
-  targetType: number
-  targetId: number
-  replyToId: number | null
-  createdAt: Date
-}
 
 /**
  * 评论服务
@@ -98,8 +78,8 @@ export class CommentService {
       } catch (error) {
         lastError = error
         if (
-          !this.drizzle.isSerializationFailure(error)
-          || attempt >= maxRetries - 1
+          !this.drizzle.isSerializationFailure(error) ||
+          attempt >= maxRetries - 1
         ) {
           throw error
         }
@@ -224,9 +204,7 @@ export class CommentService {
       isHidden,
       // 根据配置决定是否记录命中详情
       sensitiveWordHits:
-        policy.recordHits && result.hits?.length
-          ? result.hits
-          : undefined,
+        policy.recordHits && result.hits?.length ? result.hits : undefined,
     }
   }
 
@@ -242,7 +220,10 @@ export class CommentService {
    */
   private async compensateVisibleCommentEffects(
     tx: InteractionTx,
-    comment: VisibleCommentPayload,
+    comment: Pick<
+      UserComment,
+      'id' | 'userId' | 'targetType' | 'targetId' | 'replyToId' | 'createdAt'
+    >,
     _meta: CommentTargetMeta,
   ) {
     // 移除成长奖励逻辑，由外部 createComment/replyComment 处理，
@@ -271,24 +252,21 @@ export class CommentService {
     }
 
     // 将回复通知加入消息队列
-    await this.messageOutboxService.enqueueNotificationEventInTx(
-      tx,
-      {
-        eventType: MessageNotificationTypeEnum.COMMENT_REPLY,
-        bizKey: `comment:reply:${comment.id}:to:${replyTarget.userId}`,
-        payload: {
-          receiverUserId: replyTarget.userId,
-          actorUserId: comment.userId,
-          type: MessageNotificationTypeEnum.COMMENT_REPLY,
-          targetType: comment.targetType,
-          targetId: comment.targetId,
-          subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
-          subjectId: comment.id,
-          title: '收到新的评论回复',
-          content: '你收到了一条新的评论回复',
-        },
+    await this.messageOutboxService.enqueueNotificationEventInTx(tx, {
+      eventType: MessageNotificationTypeEnum.COMMENT_REPLY,
+      bizKey: `comment:reply:${comment.id}:to:${replyTarget.userId}`,
+      payload: {
+        receiverUserId: replyTarget.userId,
+        actorUserId: comment.userId,
+        type: MessageNotificationTypeEnum.COMMENT_REPLY,
+        targetType: comment.targetType,
+        targetId: comment.targetId,
+        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+        subjectId: comment.id,
+        title: '收到新的评论回复',
+        content: '你收到了一条新的评论回复',
       },
-    )
+    })
 
     // 如果目标所有者不是评论者，且不是回复评论（回复通知已发），可以发一个被评论通知
     // 但目前业务可能更细化，暂时保留回复通知逻辑。
@@ -304,12 +282,17 @@ export class CommentService {
    * 使用 Serializable 隔离级别事务确保楼层号分配的准确性，
    * 并支持冲突重试机制。
    *
-   * @param dto - 创建评论参数，包含用户ID、目标类型、目标ID、评论内容
+   * @param input - 创建评论参数，包含用户ID、目标类型、目标ID、评论内容
    * @returns 新创建的评论ID
    * @throws BadRequestException - 当权限不足或请求冲突时抛出
    */
-  async createComment(dto: CreateCommentDto) {
-    const { userId, targetType, targetId, content } = dto
+  async createComment(input: {
+    userId: number
+    targetType: CommentTargetTypeEnum
+    targetId: number
+    content: string
+  }) {
+    const { userId, targetType, targetId, content } = input
 
     // 校验用户是否有权限在该目标下评论
     await this.commentPermissionService.ensureCanComment(
@@ -390,7 +373,7 @@ export class CommentService {
     if (created.visible) {
       await this.commentGrowthService.rewardCommentCreated(this.db, {
         userId: created.comment.userId,
-        commentId: created.comment.id,
+        id: created.comment.id,
         targetType: created.comment.targetType,
         targetId: created.comment.targetId,
         occurredAt: created.comment.createdAt,
@@ -407,12 +390,16 @@ export class CommentService {
    * 自动处理回复链（actualReplyToId 指向一级评论），
    * 进行敏感词审核，并处理可见回复的副作用。
    *
-   * @param dto - 回复评论参数，包含用户ID、评论内容、被回复评论ID
+   * @param input - 回复评论参数，包含用户ID、评论内容、被回复评论ID
    * @returns 新创建的回复ID
    * @throws BadRequestException - 当被回复的评论不存在时抛出
    */
-  async replyComment(dto: ReplyCommentDto) {
-    const { userId, content, replyToId } = dto
+  async replyComment(input: {
+    userId: number
+    content: string
+    replyToId: number
+  }) {
+    const { userId, content, replyToId } = input
 
     // 查询被回复的评论
     const replyTo = await this.db.query.userComment.findFirst({
@@ -501,7 +488,7 @@ export class CommentService {
     if (created.visible) {
       await this.commentGrowthService.rewardCommentCreated(this.db, {
         userId: created.comment.userId,
-        commentId: created.comment.id,
+        id: created.comment.id,
         targetType: created.comment.targetType,
         targetId: created.comment.targetId,
         occurredAt: created.comment.createdAt,
@@ -575,11 +562,15 @@ export class CommentService {
    * 分页查询指定一级评论下的所有回复（扁平化展示）。
    * 只返回审核通过、未隐藏、未删除的回复。
    *
-   * @param dto - 查询参数，包含一级评论ID和分页信息
+   * @param query - 查询参数，包含一级评论ID和分页信息
    * @returns 分页的回复列表，包含用户基本信息
    */
-  async getReplies(dto: QueryCommentRepliesDto) {
-    const { commentId, pageIndex, pageSize } = dto
+  async getReplies(query: {
+    commentId: number
+    pageIndex?: number
+    pageSize?: number
+  }) {
+    const { commentId, pageIndex, pageSize } = query
     const page = await this.drizzle.ext.findPagination(this.userComment, {
       where: this.drizzle.buildWhere(this.userComment, {
         and: {
@@ -633,25 +624,34 @@ export class CommentService {
    * 分页查询指定用户的所有评论（包括回复）。
    * 包含已隐藏和待审核的评论（用户自己的评论需要能看到状态）。
    *
-   * @param dto - 查询参数，包含分页信息
+   * @param query - 查询参数，包含分页信息
    * @param userId - 用户ID
    * @returns 分页的评论列表
    */
-  async getUserComments(dto: QueryMyCommentPageDto, userId: number) {
+  async getUserComments(
+    query: {
+      pageIndex?: number
+      pageSize?: number
+      targetType?: number
+      targetId?: number
+      auditStatus?: number
+    },
+    userId: number,
+  ) {
     return this.drizzle.ext.findPagination(this.userComment, {
       where: this.drizzle.buildWhere(this.userComment, {
         and: {
           userId,
-          targetType: dto.targetType,
-          targetId: dto.targetId,
-          auditStatus: dto.auditStatus,
+          targetType: query.targetType,
+          targetId: query.targetId,
+          auditStatus: query.auditStatus,
           deletedAt: {
             isNull: true,
           },
         },
       }),
-      pageIndex: dto.pageIndex,
-      pageSize: dto.pageSize,
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
       orderBy: {
         createdAt: 'desc',
       },

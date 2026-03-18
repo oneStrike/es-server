@@ -76,3 +76,6 @@ export const userBrowseLog = pgTable("user_browse_log", {
    */
   index("user_browse_log_user_id_viewed_at_idx").on(table.userId, table.viewedAt),
 ]);
+
+export type UserBrowseLog = typeof userBrowseLog.$inferSelect;
+export type NewUserBrowseLog = typeof userBrowseLog.$inferInsert;

@@ -44,3 +44,5 @@ export * from './report/interfaces/report-target-resolver.interface'
 export * from './report/report.constant'
 export * from './report/report.module'
 export * from './report/report.service'
+
+export * from './user-assets'
