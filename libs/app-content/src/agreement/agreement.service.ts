@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import {
-  CreateAgreementDto,
-  QueryAgreementDto,
-  QueryPublishedAgreementDto,
-  UpdateAgreementDto,
-} from './dto/agreement.dto'
+  AgreementPageQuery,
+  CreateAgreementInput,
+  PublishedAgreementQuery,
+  UpdateAgreementInput,
+} from './agreement.type'
 
 /**
  * 协议服务
@@ -39,7 +39,7 @@ export class AgreementService {
    * @returns 是否成功
    * @throws BadRequestException 当协议标题和版本已存在时
    */
-  async create(dto: CreateAgreementDto) {
+  async create(dto: CreateAgreementInput) {
     await this.drizzle.withErrorHandling(
       () =>
         this.db.insert(this.agreement).values({
@@ -62,7 +62,7 @@ export class AgreementService {
    * @throws NotFoundException 当协议不存在时
    * @throws BadRequestException 当标题和版本冲突时
    */
-  async update(dto: UpdateAgreementDto) {
+  async update(dto: UpdateAgreementInput) {
     const { id, ...updateData } = dto
     const data: Record<string, unknown> = { ...updateData }
 
@@ -143,7 +143,7 @@ export class AgreementService {
    * @param query 查询条件
    * @returns 分页结果
    */
-  async findPage(query: QueryAgreementDto) {
+  async findPage(query: AgreementPageQuery) {
     const conditions = this.drizzle.buildWhere(this.agreement, {
       and: {
         title: { like: query.title },
@@ -165,7 +165,7 @@ export class AgreementService {
    * @param dto 查询条件
    * @returns 协议列表
    */
-  async getAllLatest(dto: QueryPublishedAgreementDto) {
+  async getAllLatest(dto: PublishedAgreementQuery) {
     return this.db.query.appAgreement.findMany({
       where: {
         isPublished: true,

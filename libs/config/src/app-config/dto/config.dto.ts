@@ -3,8 +3,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto'
-import { OmitType } from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 /// 应用配置基础字段DTO
 export class BaseAppConfigDto extends BaseDto {
@@ -36,7 +35,7 @@ export class BaseAppConfigDto extends BaseDto {
     description: '引导页图片 URL',
     example: 'https://example.com/onboarding.jpg',
     required: false,
-    maxLength: 500,
+    maxLength: 1000,
   })
   onboardingImage?: string
 
@@ -96,9 +95,3 @@ export class BaseAppConfigDto extends BaseDto {
   })
   updatedById?: number
 }
-
-/// 更新应用配置DTO
-export class UpdateAppConfigDto extends OmitType(BaseAppConfigDto, [
-  ...OMIT_BASE_FIELDS,
-  'updatedById',
-]) {}

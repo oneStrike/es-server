@@ -42,3 +42,6 @@ export const appAnnouncementRead = pgTable("app_announcement_read", {
    */
   index("app_announcement_read_read_at_idx").on(table.readAt),
 ]);
+
+export type AppAnnouncementRead = typeof appAnnouncementRead.$inferSelect;
+export type AppAnnouncementReadInsert = typeof appAnnouncementRead.$inferInsert;

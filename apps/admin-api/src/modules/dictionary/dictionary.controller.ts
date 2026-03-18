@@ -1,14 +1,7 @@
 import {
   BaseDictionaryDto,
   BaseDictionaryItemDto,
-  CreateDictionaryDto,
-  CreateDictionaryItemDto,
   LibDictionaryService,
-  QueryAllDictionaryItemDto,
-  QueryDictionaryDto,
-  QueryDictionaryItemDto,
-  UpdateDictionaryDto,
-  UpdateDictionaryItemDto,
 } from '@libs/dictionary'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import {
@@ -19,6 +12,15 @@ import {
 } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  CreateDictionaryDto,
+  CreateDictionaryItemDto,
+  QueryAllDictionaryItemDto,
+  QueryDictionaryDto,
+  QueryDictionaryItemDto,
+  UpdateDictionaryDto,
+  UpdateDictionaryItemDto,
+} from './dto/dictionary.dto'
 
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')

@@ -10,11 +10,11 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { InteractionTargetAccessService } from './interaction-target-access.service'
-import {
-  mapInteractionTargetTypeToSceneType,
-  mapReportTargetTypeToInteractionTargetType,
-} from './interaction-target.definition'
+import { mapInteractionTargetTypeToSceneType } from './interaction-target.definition'
+import { CommentTargetTypeEnum } from './comment/comment.constant'
+import { mapCommentTargetTypeToInteractionTargetType } from './comment/comment-target.mapping'
 import { ReportTargetTypeEnum } from './report/report.constant'
+import { mapReportTargetTypeToInteractionTargetType } from './report/report-target.mapping'
 
 export interface ResolvedLikeTargetMeta {
   sceneType: SceneTypeEnum
@@ -162,7 +162,9 @@ export class InteractionTargetResolverService {
       throw new NotFoundException('评论不存在')
     }
 
-    const sceneType = this.mapCommentTargetTypeToSceneType(comment.targetType)
+    const sceneType = this.mapCommentTargetTypeToSceneType(
+      comment.targetType as CommentTargetTypeEnum,
+    )
     const commentLevel = comment.replyToId
       ? CommentLevelEnum.REPLY
       : CommentLevelEnum.ROOT
@@ -176,13 +178,16 @@ export class InteractionTargetResolverService {
   }
 
   private mapCommentTargetTypeToSceneType(
-    targetType: InteractionTargetTypeEnum,
+    targetType: CommentTargetTypeEnum,
   ): SceneTypeEnum {
-    if (targetType === InteractionTargetTypeEnum.COMMENT) {
+    const interactionTargetType =
+      mapCommentTargetTypeToInteractionTargetType(targetType)
+
+    if (interactionTargetType === InteractionTargetTypeEnum.COMMENT) {
       throw new BadRequestException('评论不能继续挂载评论作为场景目标')
     }
 
-    const sceneType = mapInteractionTargetTypeToSceneType(targetType)
+    const sceneType = mapInteractionTargetTypeToSceneType(interactionTargetType)
     if (!sceneType) {
       throw new BadRequestException('评论挂载的目标类型不合法')
     }

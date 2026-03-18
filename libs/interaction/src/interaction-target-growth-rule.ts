@@ -5,7 +5,7 @@ import { InteractionTargetTypeEnum } from '@libs/platform/constant'
  * Growth action type used by interaction modules.
  * We keep it explicit to avoid passing arbitrary strings.
  */
-export type InteractionGrowthAction = 'like' | 'favorite' | 'view'
+export type InteractionGrowthAction = 'like' | 'favorite' | 'view' | 'report'
 
 /**
  * Shared growth rule mapping by action and target type.
@@ -36,6 +36,16 @@ const INTERACTION_GROWTH_RULE_MAP: Record<
     [InteractionTargetTypeEnum.COMIC]: GrowthRuleTypeEnum.COMIC_WORK_VIEW,
     [InteractionTargetTypeEnum.NOVEL]: GrowthRuleTypeEnum.NOVEL_WORK_VIEW,
     [InteractionTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_VIEW,
+  },
+  report: {
+    [InteractionTargetTypeEnum.COMIC]: GrowthRuleTypeEnum.COMIC_WORK_REPORT,
+    [InteractionTargetTypeEnum.NOVEL]: GrowthRuleTypeEnum.NOVEL_WORK_REPORT,
+    [InteractionTargetTypeEnum.COMIC_CHAPTER]:
+      GrowthRuleTypeEnum.COMIC_CHAPTER_REPORT,
+    [InteractionTargetTypeEnum.NOVEL_CHAPTER]:
+      GrowthRuleTypeEnum.NOVEL_CHAPTER_REPORT,
+    [InteractionTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_REPORT,
+    [InteractionTargetTypeEnum.COMMENT]: GrowthRuleTypeEnum.COMMENT_REPORT,
   },
 }
 

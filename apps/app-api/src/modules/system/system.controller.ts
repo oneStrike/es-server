@@ -1,19 +1,21 @@
 import { AppConfigService, BaseAppConfigDto } from '@libs/app-config'
 import {
   AgreementService,
-  AnnouncementPageResponseDto,
   AppAnnouncementService,
-  AppPageResponseDto,
   AppPageService,
   BaseAgreementDto,
-  ListOrPageAgreementResponseDto,
-  QueryAnnouncementDto,
-  QueryPublishedAgreementDto,
+  BaseAppPageDto,
 } from '@libs/app-content'
 import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  AnnouncementPageResponseDto,
+  ListOrPageAgreementResponseDto,
+  QueryAnnouncementDto,
+  QueryPublishedAgreementDto,
+} from './dto/system-content.dto'
 
 /**
  * 系统模块控制器
@@ -44,7 +46,7 @@ export class SystemController {
   @Get('/page')
   @ApiPageDoc({
     summary: 'APP页面配置',
-    model: AppPageResponseDto,
+    model: BaseAppPageDto,
   })
   @Public()
   async findPage() {

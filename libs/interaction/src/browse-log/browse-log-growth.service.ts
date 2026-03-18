@@ -1,13 +1,9 @@
 import { DrizzleService } from '@db/core'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth'
+import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
 import { Injectable, Logger } from '@nestjs/common'
-import {
-  BROWSE_LOG_GROWTH_RULE_TYPE_MAP,
-  BrowseLogTargetTypeEnum,
-} from './browse-log.constant'
+import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
+import { BrowseLogTargetTypeEnum } from './browse-log.constant'
+import { mapBrowseLogTargetTypeToInteractionTargetType } from './browse-log-target.mapping'
 
 /**
  * 浏览日志成长服务
@@ -40,7 +36,12 @@ export class BrowseLogGrowthService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    const ruleType = BROWSE_LOG_GROWTH_RULE_TYPE_MAP[targetType]
+    const interactionTargetType =
+      mapBrowseLogTargetTypeToInteractionTargetType(targetType)
+    const ruleType = resolveInteractionGrowthRuleType(
+      'view',
+      interactionTargetType,
+    )
     if (!ruleType) {
       return
     }

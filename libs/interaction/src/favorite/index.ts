@@ -1,6 +1,7 @@
 export * from './dto/favorite.dto'
 export * from './favorite-growth.service'
 export * from './favorite.constant'
+export * from './favorite-target.mapping'
 export * from './favorite.module'
 export * from './favorite.service'
 export * from './favorite.type'

@@ -8,13 +8,13 @@ import {
 } from '@nestjs/common'
 import { eq, like } from 'drizzle-orm'
 import {
-  CreateDictionaryDto,
-  CreateDictionaryItemDto,
-  QueryDictionaryDto,
-  QueryDictionaryItemDto,
-  UpdateDictionaryDto,
-  UpdateDictionaryItemDto,
-} from './dto/dictionary.dto'
+  CreateDictionaryInput,
+  CreateDictionaryItemInput,
+  DictionaryItemPageQueryInput,
+  DictionaryPageQueryInput,
+  UpdateDictionaryInput,
+  UpdateDictionaryItemInput,
+} from './dictionary.type'
 
 /**
  * 字典服务
@@ -53,7 +53,7 @@ export class LibDictionaryService {
    */
   private buildSearchConditions(
     table: typeof this.dictionary | typeof this.dictionaryItem,
-    filters: QueryDictionaryDto,
+    filters: DictionaryPageQueryInput,
   ) {
     const conditions: SQL[] = []
     if (filters.code) {
@@ -113,7 +113,7 @@ export class LibDictionaryService {
    * @param queryDto - 查询条件数据传输对象
    * @returns 分页字典列表
    */
-  async findDictionaries(queryDto: QueryDictionaryDto) {
+  async findDictionaries(queryDto: DictionaryPageQueryInput) {
     return this.drizzle.ext.findPagination(this.dictionary, {
       where: this.drizzle.buildWhere(this.dictionary, {
         and: {
@@ -150,7 +150,7 @@ export class LibDictionaryService {
    * @returns 是否成功
    * @throws BadRequestException - 当字典编码或名称已存在时抛出
    */
-  async createDictionary(dto: CreateDictionaryDto) {
+  async createDictionary(dto: CreateDictionaryInput) {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.dictionary).values({
         ...dto,
@@ -167,7 +167,7 @@ export class LibDictionaryService {
    * @returns 是否成功
    * @throws BadRequestException - 当字典不存在或编码/名称冲突时抛出
    */
-  async updateDictionary(dto: UpdateDictionaryDto) {
+  async updateDictionary(dto: UpdateDictionaryInput) {
     const { id, ...updateData } = dto
     const data = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -226,7 +226,7 @@ export class LibDictionaryService {
    * @param queryDto - 查询条件数据传输对象
    * @returns 分页字典项列表
    */
-  async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
+  async findDictionaryItems(queryDto: DictionaryItemPageQueryInput) {
     const { dictionaryCode } = queryDto
 
     return this.drizzle.ext.findPagination(this.dictionaryItem, {
@@ -272,7 +272,7 @@ export class LibDictionaryService {
    * @returns 是否成功
    * @throws BadRequestException - 当同一字典下编码或名称已存在时抛出
    */
-  async createDictionaryItem(dto: CreateDictionaryItemDto) {
+  async createDictionaryItem(dto: CreateDictionaryItemInput) {
     await this.assertDictionaryExists(dto.dictionaryCode)
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.dictionaryItem).values({
@@ -290,7 +290,7 @@ export class LibDictionaryService {
    * @returns 是否成功
    * @throws BadRequestException - 当字典项不存在或编码/名称冲突时抛出
    */
-  async updateDictionaryItem(dto: UpdateDictionaryItemDto) {
+  async updateDictionaryItem(dto: UpdateDictionaryItemInput) {
     await this.assertDictionaryExists(dto.dictionaryCode)
     const { id, ...data } = dto
     const result = await this.drizzle.withErrorHandling(() =>

@@ -4,11 +4,11 @@ import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
 import {
-  CreateAnnouncementDto,
-  QueryAnnouncementDto,
-  UpdateAnnouncementDto,
-  UpdateAnnouncementStatusDto,
-} from './dto/announcement.dto'
+  AnnouncementPageQuery,
+  CreateAnnouncementInput,
+  UpdateAnnouncementInput,
+  UpdateAnnouncementStatusInput,
+} from './announcement.type'
 
 /**
  * 系统公告服务
@@ -38,7 +38,7 @@ export class AppAnnouncementService {
    * @param createAnnouncementDto 创建数据
    * @returns 是否成功
    */
-  async createAnnouncement(createAnnouncementDto: CreateAnnouncementDto) {
+  async createAnnouncement(createAnnouncementDto: CreateAnnouncementInput) {
     assertValidTimeRange(
       createAnnouncementDto.publishStartTime,
       createAnnouncementDto.publishEndTime,
@@ -73,7 +73,7 @@ export class AppAnnouncementService {
    * @param queryAnnouncementDto 查询条件
    * @returns 分页结果
    */
-  async findAnnouncementPage(queryAnnouncementDto: QueryAnnouncementDto) {
+  async findAnnouncementPage(queryAnnouncementDto: AnnouncementPageQuery) {
     const {
       title,
       publishStartTime,
@@ -121,7 +121,7 @@ export class AppAnnouncementService {
    * @param updateAnnouncementDto 更新数据
    * @returns 是否成功
    */
-  async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementDto) {
+  async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementInput) {
     const { id, pageId, ...updateData } = updateAnnouncementDto
 
     assertValidTimeRange(
@@ -172,7 +172,7 @@ export class AppAnnouncementService {
    * @param dto 更新状态数据
    * @returns 是否成功
    */
-  async updateAnnouncementStatus(dto: UpdateAnnouncementStatusDto) {
+  async updateAnnouncementStatus(dto: UpdateAnnouncementStatusInput) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appAnnouncement)

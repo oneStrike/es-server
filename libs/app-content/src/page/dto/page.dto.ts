@@ -3,16 +3,9 @@ import {
   ArrayProperty,
   BooleanProperty,
   EnumProperty,
-  JsonProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 import { PageRuleEnum } from '../page.constant'
 
 /**
@@ -84,43 +77,3 @@ export class BaseAppPageDto extends BaseDto {
   })
   description?: string
 }
-
-/**
- * 页面配置创建DTO
- */
-export class CreateAppPageDto extends OmitType(
-  BaseAppPageDto,
-  OMIT_BASE_FIELDS,
-) {}
-
-/**
- * 更新页面配置DTO
- */
-export class UpdateAppPageDto extends IntersectionType(
-  PartialType(CreateAppPageDto),
-  IdDto,
-) {}
-
-/**
- * 页面配置查询DTO
- */
-export class QueryAppPageDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseAppPageDto, ['name', 'code', 'accessLevel', 'isEnabled']),
-  ),
-) {
-  @JsonProperty({
-    description: '所启用的平台',
-    example: '[1,2,3]',
-    required: false,
-  })
-  enablePlatform?: string
-}
-
-/**
- * 页面配置分页响应DTO
- */
-export class AppPageResponseDto extends OmitType(BaseAppPageDto, [
-  'description',
-]) {}

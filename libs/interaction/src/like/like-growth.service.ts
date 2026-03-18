@@ -4,9 +4,10 @@ import {
   GrowthLedgerService,
   GrowthRuleTypeEnum,
 } from '@libs/growth'
-
 import { Injectable, Logger } from '@nestjs/common'
-import { LIKE_GROWTH_RULE_TYPE_MAP, LikeTargetTypeEnum } from './like.constant'
+import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
+import { LikeTargetTypeEnum } from './like.constant'
+import { mapLikeTargetTypeToInteractionTargetType } from './like-target.mapping'
 
 /**
  * 点赞成长奖励服务
@@ -57,7 +58,12 @@ export class LikeGrowthService {
       return
     }
 
-    const ruleType = LIKE_GROWTH_RULE_TYPE_MAP[targetType]
+    const interactionTargetType =
+      mapLikeTargetTypeToInteractionTargetType(targetType)
+    const ruleType = resolveInteractionGrowthRuleType(
+      'like',
+      interactionTargetType,
+    )
     if (!ruleType) {
       return
     }

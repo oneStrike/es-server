@@ -3,13 +3,7 @@ import {
   DateProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 /**
  * 协议基础DTO
@@ -19,7 +13,7 @@ export class BaseAgreementDto extends BaseDto {
     description: '协议标题',
     example: '隐私政策',
     required: true,
-    maxLength: 50,
+    maxLength: 200,
   })
   title!: string
 
@@ -69,43 +63,3 @@ export class BaseAgreementDto extends BaseDto {
   })
   publishedAt?: Date
 }
-
-/**
- * 创建协议DTO
- */
-export class CreateAgreementDto extends OmitType(BaseAgreementDto, [
-  ...OMIT_BASE_FIELDS,
-  'publishedAt',
-]) {}
-
-/**
- * 更新协议DTO
- */
-export class UpdateAgreementDto extends IntersectionType(
-  CreateAgreementDto,
-  IdDto,
-) {}
-
-/**
- * 查询协议DTO
- */
-export class QueryAgreementDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseAgreementDto, ['title', 'isPublished', 'showInAuth']),
-  ),
-) {}
-
-/**
- * 列表或者分页响应dto
- */
-export class ListOrPageAgreementResponseDto extends PickType(BaseAgreementDto, [
-  'content',
-]) {}
-
-/**
- * 查询所有已发布的协议
- */
-export class QueryPublishedAgreementDto extends PickType(BaseAgreementDto, [
-  'showInAuth',
-]) {}

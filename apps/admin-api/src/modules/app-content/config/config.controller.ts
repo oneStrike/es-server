@@ -1,13 +1,13 @@
 import {
   AppConfigService,
   BaseAppConfigDto,
-  UpdateAppConfigDto,
 } from '@libs/app-config'
 import { ApiDoc } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
+import { UpdateAppConfigDto } from './dto/config.dto'
 
 @ApiTags('APP管理/应用配置')
 @Controller('admin/app-config')

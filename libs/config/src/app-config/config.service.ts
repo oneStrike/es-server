@@ -2,7 +2,7 @@ import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'
-import { UpdateAppConfigDto } from './dto/config.dto'
+import { UpdateAppConfigInput } from './config.type'
 
 /**
  * 应用配置服务
@@ -50,7 +50,7 @@ export class AppConfigService {
    * @param updateConfigDto 更新数据
    * @returns 是否成功
    */
-  async updateConfig(updateConfigDto: UpdateAppConfigDto) {
+  async updateConfig(updateConfigDto: UpdateAppConfigInput) {
     const configs = await this.db
       .select()
       .from(this.appConfig)

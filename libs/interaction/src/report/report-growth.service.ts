@@ -1,14 +1,9 @@
 import { DrizzleService } from '@db/core'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth'
-
+import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
 import { Injectable, Logger } from '@nestjs/common'
-import {
-  REPORT_GROWTH_RULE_TYPE_MAP,
-  ReportTargetTypeEnum,
-} from './report.constant'
+import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
+import { ReportTargetTypeEnum } from './report.constant'
+import { mapReportTargetTypeToInteractionTargetType } from './report-target.mapping'
 
 @Injectable()
 export class ReportGrowthService {
@@ -32,8 +27,17 @@ export class ReportGrowthService {
     const { reportId, reporterId, targetType, targetId } = params
     const baseBizKey = `report:${reportId}:user:${reporterId}`
 
-    const ruleType =
-      REPORT_GROWTH_RULE_TYPE_MAP[targetType as ReportTargetTypeEnum]
+    const interactionTargetType = mapReportTargetTypeToInteractionTargetType(
+      targetType as ReportTargetTypeEnum,
+    )
+    if (!interactionTargetType) {
+      return
+    }
+
+    const ruleType = resolveInteractionGrowthRuleType(
+      'report',
+      interactionTargetType,
+    )
     if (!ruleType) {
       return
     }

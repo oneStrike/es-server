@@ -50,3 +50,6 @@ export const systemConfig = pgTable("sys_config", {
      */
     index("sys_config_created_at_idx").on(table.createdAt.desc()),
 ]);
+
+export type SystemConfig = typeof systemConfig.$inferSelect;
+export type SystemConfigInsert = typeof systemConfig.$inferInsert;

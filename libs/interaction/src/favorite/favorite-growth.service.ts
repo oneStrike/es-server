@@ -1,10 +1,9 @@
 import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
 import { Injectable, Logger } from '@nestjs/common'
-import {
-  FAVORITE_GROWTH_RULE_TYPE_MAP,
-  FavoriteTargetTypeEnum,
-} from './favorite.constant'
+import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
+import { FavoriteTargetTypeEnum } from './favorite.constant'
+import { mapFavoriteTargetTypeToInteractionTargetType } from './favorite-target.mapping'
 
 /**
  * 收藏成长服务
@@ -34,7 +33,15 @@ export class FavoriteGrowthService {
     targetId: number,
     userId: number,
   ) {
-    const ruleType = FAVORITE_GROWTH_RULE_TYPE_MAP[targetType]
+    const interactionTargetType =
+      mapFavoriteTargetTypeToInteractionTargetType(targetType)
+    const ruleType = resolveInteractionGrowthRuleType(
+      'favorite',
+      interactionTargetType,
+    )
+    if (!ruleType) {
+      return
+    }
     const baseBizKey = `favorite:${targetType}:${targetId}:user:${userId}`
 
     try {

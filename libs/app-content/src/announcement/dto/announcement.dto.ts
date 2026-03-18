@@ -4,19 +4,10 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  JsonProperty,
-  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
-import { BaseAppPageDto } from '../../page'
+import { BaseDto } from '@libs/platform/dto'
 import {
   AnnouncementPriorityEnum,
   AnnouncementTypeEnum,
@@ -30,6 +21,7 @@ export class BaseAnnouncementDto extends BaseDto {
     description: '公告标题',
     example: '系统维护公告',
     required: true,
+    maxLength: 100,
   })
   title!: string
 
@@ -91,6 +83,7 @@ export class BaseAnnouncementDto extends BaseDto {
     description: '公告弹窗背景图片URL',
     example: 'https://example.com/bg.jpg',
     required: false,
+    maxLength: 200,
   })
   popupBackgroundImage?: string
 
@@ -135,94 +128,3 @@ export class BaseAnnouncementDto extends BaseDto {
   })
   viewCount?: number
 }
-
-/**
- * 关联的页面DTO
- */
-
-export class RelatedPageDto extends PickType(BaseAppPageDto, [
-  'id',
-  'name',
-  'code',
-  'path',
-]) {}
-
-/**
- * 公告详情DTO
- */
-export class AnnouncementDetailDto extends BaseAnnouncementDto {
-  @NestedProperty({
-    description: '公告详情',
-    example: {
-      id: 1,
-      name: '首页',
-      code: 'home',
-      path: '/home',
-    },
-    required: true,
-    type: RelatedPageDto,
-    validation: false,
-  })
-  appPage!: RelatedPageDto
-}
-
-/**
- * 创建公告DTO
- */
-export class CreateAnnouncementDto extends OmitType(BaseAnnouncementDto, [
-  ...OMIT_BASE_FIELDS,
-  'isPublished',
-  'viewCount',
-]) {}
-
-/**
- * 更新公告DTO
- */
-export class UpdateAnnouncementDto extends IntersectionType(
-  CreateAnnouncementDto,
-  IdDto,
-) {}
-
-/**
- * 公告查询DTO
- */
-export class QueryAnnouncementDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseAnnouncementDto, [
-      'title',
-      'announcementType',
-      'priorityLevel',
-      'isPublished',
-      'isPinned',
-      'showAsPopup',
-      'pageId',
-      'publishStartTime',
-      'publishEndTime',
-    ]),
-  ),
-) {
-  @JsonProperty({
-    description: '所启用的平台',
-    example: '[1,2,3]',
-    required: false,
-  })
-  enablePlatform?: string
-}
-
-/**
- * 公告状态更新DTO
- */
-export class UpdateAnnouncementStatusDto extends IntersectionType(
-  PickType(BaseAnnouncementDto, ['isPublished']),
-  IdDto,
-) {}
-
-/**
- * 分页接口返回DTO
- */
-
-export class AnnouncementPageResponseDto extends OmitType(BaseAnnouncementDto, [
-  'content',
-  'popupBackgroundImage',
-]) {}

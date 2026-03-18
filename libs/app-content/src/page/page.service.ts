@@ -8,10 +8,10 @@ import {
 } from '@nestjs/common'
 import { and, eq, ilike, inArray } from 'drizzle-orm'
 import {
-  BaseAppPageDto,
-  QueryAppPageDto,
-  UpdateAppPageDto,
-} from './dto/page.dto'
+  AppPageQueryInput,
+  CreateAppPageInput,
+  UpdateAppPageInput,
+} from './page.type'
 
 /**
  * 应用页面服务
@@ -39,7 +39,7 @@ export class AppPageService {
    * @returns 是否成功
    * @throws BadRequestException 当页面编码或路径已存在时
    */
-  async createPage(createPageDto: BaseAppPageDto) {
+  async createPage(createPageDto: CreateAppPageInput) {
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.appPage).values(createPageDto),
       { duplicate: '页面编码或路径已存在' },
@@ -53,7 +53,7 @@ export class AppPageService {
    * @param queryPageDto 查询条件
    * @returns 分页结果
    */
-  async findPage(queryPageDto: QueryAppPageDto) {
+  async findPage(queryPageDto: AppPageQueryInput) {
     const { name, code, accessLevel, isEnabled, enablePlatform, ...other } =
       queryPageDto
 
@@ -149,7 +149,7 @@ export class AppPageService {
    * @returns 是否成功
    * @throws BadRequestException 当页面不存在或编码/路径冲突时
    */
-  async updatePage(updatePageDto: UpdateAppPageDto) {
+  async updatePage(updatePageDto: UpdateAppPageInput) {
     const { id, ...updateData } = updatePageDto
 
     const result = await this.drizzle.withErrorHandling(

@@ -1,6 +1,4 @@
 import { InteractionTargetTypeEnum, SceneTypeEnum } from '@libs/platform/constant'
-import { FavoriteTargetTypeEnum } from './favorite/favorite.constant'
-import { ReportTargetTypeEnum } from './report/report.constant'
 
 export type InteractionTargetTableKey =
   | 'work'
@@ -82,16 +80,6 @@ export const INTERACTION_TARGET_DEFINITIONS: Record<
 }
 
 /**
- * Targets that can be favorited at business level.
- * Keeping this here avoids duplicating support matrix in services.
- */
-export const FAVORITE_SUPPORTED_TARGET_TYPES = new Set<FavoriteTargetTypeEnum>([
-  FavoriteTargetTypeEnum.WORK_COMIC,
-  FavoriteTargetTypeEnum.WORK_NOVEL,
-  FavoriteTargetTypeEnum.FORUM_TOPIC,
-])
-
-/**
  * Targets that can be viewed at business level.
  * Comment is intentionally excluded because comment table has no viewCount field.
  */
@@ -121,25 +109,4 @@ export function mapInteractionTargetTypeToSceneType(
   targetType: InteractionTargetTypeEnum,
 ): SceneTypeEnum | null {
   return INTERACTION_TARGET_SCENE_TYPE_MAP[targetType] ?? null
-}
-
-/**
- * Report type can be projected to interaction target type for common targets.
- * USER is intentionally excluded because it has dedicated resolver logic.
- */
-const REPORT_TARGET_TO_INTERACTION_TARGET_MAP: Partial<
-  Record<ReportTargetTypeEnum, InteractionTargetTypeEnum>
-> = {
-  [ReportTargetTypeEnum.COMIC]: InteractionTargetTypeEnum.COMIC,
-  [ReportTargetTypeEnum.NOVEL]: InteractionTargetTypeEnum.NOVEL,
-  [ReportTargetTypeEnum.COMIC_CHAPTER]: InteractionTargetTypeEnum.COMIC_CHAPTER,
-  [ReportTargetTypeEnum.NOVEL_CHAPTER]: InteractionTargetTypeEnum.NOVEL_CHAPTER,
-  [ReportTargetTypeEnum.FORUM_TOPIC]: InteractionTargetTypeEnum.FORUM_TOPIC,
-  [ReportTargetTypeEnum.COMMENT]: InteractionTargetTypeEnum.COMMENT,
-}
-
-export function mapReportTargetTypeToInteractionTargetType(
-  targetType: ReportTargetTypeEnum,
-): InteractionTargetTypeEnum | null {
-  return REPORT_TARGET_TO_INTERACTION_TARGET_MAP[targetType] ?? null
 }

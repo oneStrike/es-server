@@ -4,8 +4,8 @@
 
 ## 1. 审计范围与方法
 
-- 审计范围：当前仓库内全部 `*.constant.ts` 文件，共 `42` 个文件。
-- 导出符号：共识别 `118` 个导出项，包含 `const`、`enum`、`interface`、`function` 以及同名重导出。
+- 审计范围：当前仓库内全部 `*.constant.ts` 文件，共 `40` 个文件。
+- 导出符号：共识别 `96` 个导出项，包含 `const`、`enum`、`interface`、`function` 以及同名重导出。
 - 引用统计：基于当前源码中的命名导入做静态扫描，排除了 `.history`、`node_modules`、`dist`、`coverage`、`.next`。
 - 统计口径说明：
   - “引用数”表示外部文件的命名导入次数，不代表运行时反射、字符串访问或同文件内部使用。
@@ -31,8 +31,8 @@
 
 - 重名导出组：`0` 组
 - 显式 `export { ... } from ...` 重导出链：`0` 处
-- 整文件当前无外部命名导入：`1` 个
-- 当前无外部命名导入的导出项：`21` 个
+- 整文件当前无外部命名导入：`0` 个
+- 当前无外部命名导入的导出项：`0` 个
 
 ## 2.1 整改状态更新
 
@@ -48,8 +48,14 @@
 - 已将论坛与 Growth 的消费方统一改为直接使用 source/barrel，不再经过 `*.constant.ts` 包装层
 - 已将 Auth 包装层收敛为“仅保留本端私有常量”，不再重导出 `AuthConstants` / `AuthDefaultValue`
 - 已将本地 Auth 私有常量改为上下文命名：`AdminAuthCacheKeys`、`AdminAuthRedisKeys`、`AppAuthRedisKeys`
+- 已完成一轮命名统一：`ActionTypeEnum -> AuditActionTypeEnum`、`LoggerLevel -> LoggerLevelEnum`、`PLATFORMS -> COMIC_THIRD_PARTY_PLATFORMS`
+- 已完成一轮职责拆分：`createAuthRedisKeys` 已迁移到 `libs/platform/src/modules/auth/auth.helpers.ts`；`response-dto.constant.ts` 已拆分为 `response-dto.metadata.ts` 与 `response-dto.decorator.ts`
+- 已统一认证错误文案命名：平台共享层改为 `AuthErrorMessages`，应用端私有错误文案改为 `AppAuthErrorMessages`
+- 已完成第四阶段清理：删除 `libs/platform/src/constant/sort.constant.ts`，并移除全部 `0` 外部命名导入导出项
+- `RevokeTokenReasonEnum` 已接入密码重置、刷新令牌轮换、主动登出和过期清理链路
+- `LoggerLevelEnum` 已改为 logger 模块内部直接依赖，不再通过 `@libs/platform/constant` barrel 对外暴露
 - 当前统一结论：内容域常量统一收敛在 `content.constant.ts`，其中 `ContentTypeEnum` 负责顶层内容分类，`WorkTypeEnum` 负责作品子集分类
-- 当前统计：`42` 个常量文件、`118` 个导出项、`0` 组重名导出、`0` 处显式重导出链
+- 当前统计：`40` 个常量文件、`96` 个导出项、`0` 组重名导出、`0` 处显式重导出链
 - 校验结果：`pnpm type-check` 已通过
 
 ## 3. 关键问题
@@ -287,27 +293,35 @@
 - 各模块只保留差异补充或映射表，例如 `ReportTargetTypeToInteractionTargetMap`。
 - 如果确实不能统一，至少在注释里明确“为什么该模块不能复用平台目标枚举”。
 
-### 3.5 中优先级：命名规范不统一，部分名字过泛或职责不清
+### 3.5 已部分完成：命名规范不统一问题已开始收敛
+
+本轮已完成的命名统一：
+
+- `apps/admin-api/src/modules/system/audit/audit.constant.ts` 中的 `ActionTypeEnum` 已改为 `AuditActionTypeEnum`
+- `libs/platform/src/constant/logger.constant.ts` 中的 `LoggerLevel` 已改为 `LoggerLevelEnum`
+- `libs/platform/src/constant/interaction.constant.ts` 中的历史遗留 `InteractionActionType` 已在命名收口后移除
+- `libs/platform/src/modules/auth/auth.constant.ts` 中的 `AuthErrorConstant` 已改为 `AuthErrorMessages`
+- `apps/app-api/src/modules/auth/auth.constant.ts` 中的本地错误文案已改为 `AppAuthErrorMessages`
+- `apps/admin-api/src/modules/content/comic/third-party/third-party.constant.ts` 中的 `PLATFORMS` 已改为 `COMIC_THIRD_PARTY_PLATFORMS`
 
 具体表现：
 
 - 枚举后缀不统一：
-  - `LoggerLevel` 没有 `Enum` 后缀
-  - `InteractionActionType` 没有 `Enum` 后缀
+  - 原 `LoggerLevel` 没有 `Enum` 后缀
+  - 原 `InteractionActionType` 没有 `Enum` 后缀
   - 其他大多数文件使用 `XxxEnum`
 - 键名对象命名不统一：
   - `CacheKey`
   - `CACHE_KEY`
   - `FORUM_CONFIG_CACHE_KEYS`
 - 消息常量命名不统一：
-  - `AuthErrorConstant`
+  - 原 `AuthErrorConstant`
   - `AuthErrorMessages`
   - `PERMISSION_ERROR_MESSAGE`
   - `SmsErrorMessages`
-- 个别命名本身不规范：
-  - `ActionTypeEnum` 过于泛，建议改为 `AuditActionTypeEnum`
-  - `PLATFORMS` 过于宽泛，建议改为 `COMIC_THIRD_PARTY_PLATFORMS` 等更具体名称
-  - `AuthErrorConstant` 与 `AuthErrorMessages` 并存，建议统一为一套消息命名
+- 个别命名本身仍可继续优化：
+  - `AuthDefaultValue` 仍偏单数语义，后续可评估是否统一为 `AuthDefaultValues`
+  - 审计动作枚举仍然把中文展示文案直接作为稳定值，后续应继续拆分编码与标签
 
 社区推荐做法：
 
@@ -318,18 +332,19 @@
 
 额外说明：
 
-- `apps/admin-api/src/modules/system/audit/audit.constant.ts:4` 当前把中文展示文案直接放进 `ActionTypeEnum` 值里。
+- `apps/admin-api/src/modules/system/audit/audit.constant.ts:4` 当前仍把中文展示文案直接放进 `AuditActionTypeEnum` 值里。
 - 更稳妥的做法是：
   - `AuditActionTypeEnum.LOGIN = 'LOGIN'`
   - `AuditActionTypeLabels[AuditActionTypeEnum.LOGIN] = '用户登录'`
 
-### 3.6 中优先级：`*.constant.ts` 文件职责已经开始漂移
+### 3.6 已部分完成：`*.constant.ts` 文件职责已开始回收
 
 例子：
 
-- `libs/platform/src/modules/auth/auth.constant.ts:10` 导出了函数 `createAuthRedisKeys`
-- `libs/platform/src/decorators/response-dto.constant.ts:25` 导出了函数 `SetResponseDtoMetadata`
-- `libs/platform/src/decorators/response-dto.constant.ts:13` 还导出了接口 `ResponseDtoMetadata`
+- `libs/platform/src/modules/auth/auth.constant.ts` 原先导出的函数 `createAuthRedisKeys` 已迁移到 `libs/platform/src/modules/auth/auth.helpers.ts`
+- `libs/platform/src/decorators/response-dto.constant.ts` 已删除，原有元数据常量/类型/装饰器已拆分到：
+  - `libs/platform/src/decorators/response-dto.metadata.ts`
+  - `libs/platform/src/decorators/response-dto.decorator.ts`
 
 判断：
 
@@ -342,35 +357,30 @@
 - 构造器/工厂函数：迁移到 `*.factory.ts` 或 `*.helpers.ts`
 - 元数据接口与装饰器：迁移到 `*.metadata.ts` / `*.decorator.ts`
 
-### 3.7 低优先级：存在较多“当前无外部命名导入”的导出项
+### 3.7 已完成：`0` 外部命名导入的导出项已清理完毕
 
-整文件当前无外部命名导入：
+整改结果：
 
-- `libs/platform/src/constant/sort.constant.ts`
-
-典型“当前无外部命名导入”的导出项：
-
-- `EXCLUDE_ADMIN_USER_FIELDS`
-- `WorkTypeMap`
-- `ForumUserActionTypeDescriptionMap`
-- `ForumModeratorPermissionNames`
-- `ForumModeratorRoleTypeNames`
-- `GrowthRuleTypeNames`
-- `getGrowthRuleTypeName`
-- `COMMENT_GROWTH_RULE_TYPE_MAP`
-- `ReportReasonNames`
-- `ReportStatusNames`
-- `ReportTargetTypeNames`
-- `AuditRoleNames`
-- `AuditStatusNames`
-- `SceneTypeNames`
-- `CommentLevelNames`
-- `RevokeTokenReasonEnum`
-
-注意：
-
-- 这并不等价于“死代码”，因为有些符号只在同文件内部使用，或者为未来 API 预留。
-- 但它们至少说明当前公共导出面偏大，建议逐项确认是否真的需要对外公开。
+- 已删除整文件无人使用的 `libs/platform/src/constant/sort.constant.ts`
+- 已移除一批仅定义未消费的导出，包括：
+  - `WorkTypeMap`
+  - `ForumUserActionTypeDescriptionMap`
+  - `ForumModeratorPermissionNames`
+  - `ForumModeratorRoleTypeNames`
+  - `GrowthRuleTypeNames`
+  - `getGrowthRuleTypeName`
+  - `LevelRulePermissionNames`
+  - `COMMENT_GROWTH_RULE_TYPE_MAP`
+  - `ReportReasonNames`
+  - `ReportStatusNames`
+  - `ReportTargetTypeNames`
+  - `AuditRoleNames`
+  - `AuditStatusNames`
+  - `SceneTypeNames`
+  - `CommentLevelNames`
+  - `InteractionActionTypeEnum`
+- `RevokeTokenReasonEnum` 未删除，而是被接入真实业务调用点，回到“单一事实源”的角色
+- 当前统计已收敛为：`0` 个整文件无人导入、`0` 个导出项无人导入
 
 ## 4. 社区最佳实践建议
 
@@ -452,7 +462,6 @@
 
 当前最典型例子：
 
-- `libs/platform/src/constant/sort.constant.ts` 已进入 barrel，但当前没有外部命名导入
 - `libs/platform/src/constant/business.constant.ts` 已在本次整改中删除
 
 ## 5. 建议的整改顺序
@@ -472,15 +481,15 @@
 
 ### 第三阶段：统一命名和职责
 
-1. 统一 `Enum / Labels / Messages / CacheKeys / Defaults` 命名体系
-2. 将行为型 helper 从 `*.constant.ts` 中迁出
-3. 为跨模块共享的目标类型建立公共根模型
+1. 已部分完成：统一 `Enum / Labels / Messages / CacheKeys / Defaults` 命名体系
+2. 已部分完成：将行为型 helper 从 `*.constant.ts` 中迁出
+3. 待处理：为跨模块共享的目标类型建立公共根模型
 
 ### 第四阶段：清理公共导出面
 
-1. 逐项确认 0 外部命名导入的导出项
-2. 删除确认无用的导出
-3. 对“保留但暂未使用”的导出补充注释，避免下次再次被误判
+1. 已完成：逐项确认 `0` 外部命名导入的导出项
+2. 已完成：删除确认无用的导出
+3. 已完成：将 `RevokeTokenReasonEnum` 这类应保留的概念重新接入真实业务调用
 
 ## 6. 附录：常量文件外部引用清单
 
@@ -488,45 +497,43 @@
 
 ```text
 apps/admin-api/src/modules/auth/auth.constant.ts => AdminAuthCacheKeys(1), AdminAuthRedisKeys(2)
-apps/admin-api/src/modules/content/comic/third-party/third-party.constant.ts => PLATFORMS(1)
-apps/admin-api/src/modules/system/audit/audit.constant.ts => ActionTypeEnum(10)
-apps/app-api/src/modules/auth/auth.constant.ts => AppAuthRedisKeys(1), AuthErrorMessages(3)
+apps/admin-api/src/modules/content/comic/third-party/third-party.constant.ts => COMIC_THIRD_PARTY_PLATFORMS(1)
+apps/admin-api/src/modules/system/audit/audit.constant.ts => AuditActionTypeEnum(10)
+apps/app-api/src/modules/auth/auth.constant.ts => AppAuthErrorMessages(3), AppAuthRedisKeys(1)
 libs/app-content/src/announcement/announcement.constant.ts => AnnouncementPriorityEnum(1), AnnouncementTypeEnum(1)
 libs/app-content/src/page/page.constant.ts => PageRuleEnum(1)
 libs/config/src/app-config/config.constant.ts => DEFAULT_APP_CONFIG(1)
 libs/config/src/system-config/system-config.constant.ts => CACHE_KEY(2), CACHE_TTL(1), CONFIG_SECURITY_META(1), DEFAULT_CONFIG(2)
 libs/content/src/author/author.constant.ts => AuthorTypeEnum(1)
 libs/content/src/permission/content-permission.constant.ts => PERMISSION_ERROR_MESSAGE(1)
-libs/content/src/work/core/work.constant.ts => WorkSerialStatusEnum(1), WorkTypeMap(0)
-libs/forum/src/action-log/action-log.constant.ts => ForumUserActionTargetTypeEnum(2), ForumUserActionTypeDescriptionMap(0), ForumUserActionTypeEnum(2)
+libs/content/src/work/core/work.constant.ts => WorkSerialStatusEnum(1)
+libs/forum/src/action-log/action-log.constant.ts => ForumUserActionTargetTypeEnum(2), ForumUserActionTypeEnum(2)
 libs/forum/src/config/forum-config-cache.constant.ts => FORUM_CONFIG_CACHE_KEYS(1), FORUM_CONFIG_CACHE_METRICS(1), FORUM_CONFIG_CACHE_TTL(1)
 libs/forum/src/config/forum-config.constant.ts => ChangeTypeEnum(2), DEFAULT_FORUM_CONFIG(2), ForumReviewPolicyEnum(3)
-libs/forum/src/moderator/moderator.constant.ts => ForumModeratorPermissionEnum(2), ForumModeratorPermissionNames(0), ForumModeratorRoleTypeEnum(2), ForumModeratorRoleTypeNames(0)
+libs/forum/src/moderator/moderator.constant.ts => ForumModeratorPermissionEnum(2), ForumModeratorRoleTypeEnum(2)
 libs/forum/src/search/search.constant.ts => ForumSearchSortTypeEnum(2), ForumSearchTypeEnum(2)
 libs/growth/src/badge/user-badge.constant.ts => UserBadgeTypeEnum(1)
 libs/growth/src/growth-ledger/growth-ledger.constant.ts => GrowthAssetTypeEnum(14), GrowthLedgerActionEnum(4), GrowthLedgerFailReasonEnum(2), GrowthLedgerFailReasonLabel(1)
-libs/growth/src/growth-rule.constant.ts => getGrowthRuleTypeName(0), GrowthRuleTypeEnum(15), GrowthRuleTypeNames(0)
-libs/growth/src/level-rule/level-rule.constant.ts => LevelRulePermissionNames(0), UserLevelRulePermissionEnum(2)
+libs/growth/src/growth-rule.constant.ts => GrowthRuleTypeEnum(15)
+libs/growth/src/level-rule/level-rule.constant.ts => UserLevelRulePermissionEnum(2)
 libs/growth/src/task/task.constant.ts => TaskAssignmentStatusEnum(2), TaskClaimModeEnum(2), TaskCompleteModeEnum(2), TaskProgressActionTypeEnum(1), TaskRepeatTypeEnum(1), TaskStatusEnum(2), TaskTypeEnum(1)
 libs/interaction/src/browse-log/browse-log.constant.ts => BROWSE_LOG_GROWTH_RULE_TYPE_MAP(1), BrowseLogTargetTypeEnum(9)
-libs/interaction/src/comment/comment.constant.ts => COMMENT_GROWTH_RULE_TYPE_MAP(0), CommentTargetTypeEnum(10)
+libs/interaction/src/comment/comment.constant.ts => CommentTargetTypeEnum(10)
 libs/interaction/src/download/download.constant.ts => DownloadTargetTypeEnum(7)
 libs/interaction/src/favorite/favorite.constant.ts => FAVORITE_GROWTH_RULE_TYPE_MAP(1), FavoriteTargetTypeEnum(9)
 libs/interaction/src/like/like.constant.ts => LIKE_GROWTH_RULE_TYPE_MAP(1), LikeTargetTypeEnum(11)
 libs/interaction/src/purchase/purchase.constant.ts => PaymentMethodEnum(1), PurchaseStatusEnum(4), PurchaseTargetTypeEnum(7)
-libs/interaction/src/report/report.constant.ts => REPORT_GROWTH_RULE_TYPE_MAP(1), ReportReasonEnum(2), ReportReasonNames(0), ReportStatusEnum(2), ReportStatusNames(0), ReportTargetTypeEnum(14), ReportTargetTypeNames(0)
+libs/interaction/src/report/report.constant.ts => REPORT_GROWTH_RULE_TYPE_MAP(1), ReportReasonEnum(2), ReportStatusEnum(2), ReportTargetTypeEnum(14)
 libs/message/src/chat/chat.constant.ts => CHAT_MESSAGE_PAGE_LIMIT_DEFAULT(1), CHAT_MESSAGE_PAGE_LIMIT_MAX(1), ChatConversationMemberRoleEnum(1), ChatMessageStatusEnum(1), ChatMessageTypeEnum(3), MESSAGE_CHAT_SERVICE_TOKEN(2)
 libs/message/src/notification/notification.constant.ts => MessageNotificationSubjectTypeEnum(4), MessageNotificationTypeEnum(7)
 libs/message/src/outbox/outbox.constant.ts => MESSAGE_OUTBOX_BATCH_SIZE(1), MESSAGE_OUTBOX_MAX_RETRY(1), MESSAGE_OUTBOX_PROCESSING_TIMEOUT_SECONDS(1), MessageOutboxDomainEnum(3), MessageOutboxStatusEnum(3)
 libs/moderation/sensitive-word/src/sensitive-word-cache.constant.ts => SENSITIVE_WORD_CACHE_KEYS(1), SENSITIVE_WORD_CACHE_TTL(1)
-libs/platform/src/constant/audit.constant.ts => AuditRoleEnum(1), AuditRoleNames(0), AuditStatusEnum(7), AuditStatusNames(0)
+libs/platform/src/constant/audit.constant.ts => AuditRoleEnum(1), AuditStatusEnum(7)
 libs/platform/src/constant/base.constant.ts => ApiTypeEnum(3), EnablePlatformEnum(2), HttpMethodEnum(3)
 libs/platform/src/constant/content.constant.ts => ContentTypeEnum(15), WorkTypeEnum(7), WorkViewPermissionEnum(7)
-libs/platform/src/constant/interaction.constant.ts => CommentLevelEnum(7), CommentLevelNames(0), InteractionActionType(0), InteractionTargetTypeEnum(7), SceneTypeEnum(17), SceneTypeNames(0)
-libs/platform/src/constant/logger.constant.ts => LoggerLevel(1)
-libs/platform/src/constant/sort.constant.ts => SortOrderEnum(0), SortOrderNames(0)
+libs/platform/src/constant/interaction.constant.ts => CommentLevelEnum(7), InteractionTargetTypeEnum(7), SceneTypeEnum(17)
+libs/platform/src/constant/logger.constant.ts => LoggerLevelEnum(1)
 libs/platform/src/constant/user.constant.ts => AdminUserRoleEnum(3), GenderEnum(4), UserDefaults(1), UserStatusEnum(10)
-libs/platform/src/decorators/response-dto.constant.ts => RESPONSE_DTO_METADATA_KEY(0), ResponseDtoMetadata(0), SetResponseDtoMetadata(1)
-libs/platform/src/modules/auth/auth.constant.ts => AuthConstants(2), AuthDefaultValue(2), AuthErrorConstant(3), createAuthRedisKeys(2), RevokeTokenReasonEnum(0)
+libs/platform/src/modules/auth/auth.constant.ts => AuthConstants(2), AuthDefaultValue(2), AuthErrorMessages(3), RevokeTokenReasonEnum(4)
 libs/platform/src/modules/sms/sms.constant.ts => SmsErrorMap(1), SmsErrorMessages(1), SmsTemplateCodeEnum(3)
 ```

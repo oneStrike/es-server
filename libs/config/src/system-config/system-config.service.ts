@@ -1,4 +1,8 @@
 import type { Cache } from 'cache-manager'
+import type {
+  ConfigAllowedTemplate,
+  UpdateSystemConfigInput,
+} from './system-config.type'
 import { DrizzleService } from '@db/core'
 import { AesService, RsaService } from '@libs/platform/modules'
 import { isMasked, maskString } from '@libs/platform/utils'
@@ -6,7 +10,6 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
 import { desc } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
-import { SystemConfigDto } from './dto/config.dto'
 import {
   CACHE_KEY,
   CACHE_TTL,
@@ -98,9 +101,9 @@ export class SystemConfigService implements OnModuleInit {
    * @param userId 用户 ID（预留参数）
    * @returns 是否成功
    */
-  async updateConfig(dto: SystemConfigDto, userId: number) {
+  async updateConfig(dto: UpdateSystemConfigInput, userId: number) {
     const currentConfig = this.configReader.get()
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     // 结构化入参处理
     for (const key of Object.keys(dto)) {
@@ -112,14 +115,19 @@ export class SystemConfigService implements OnModuleInit {
       const meta = CONFIG_SECURITY_META[key]
       if (meta) {
         data[key] = await this.processSensitiveFields(
-          this.filterAllowedFields(dto[key], (DEFAULT_CONFIG as any)[key]),
-          (currentConfig as any)[key],
+          this.filterAllowedFields(
+            dto[key as keyof UpdateSystemConfigInput],
+            (DEFAULT_CONFIG as ConfigAllowedTemplate)[key] as ConfigAllowedTemplate,
+          ),
+          (currentConfig as Record<string, unknown>)[key] as
+          | Record<string, unknown>
+          | null,
           meta.sensitiveFields,
         )
       } else {
         data[key] = this.filterAllowedFields(
-          dto[key],
-          (DEFAULT_CONFIG as any)[key],
+          dto[key as keyof UpdateSystemConfigInput],
+          (DEFAULT_CONFIG as ConfigAllowedTemplate)[key] as ConfigAllowedTemplate,
         )
       }
     }
@@ -152,14 +160,14 @@ export class SystemConfigService implements OnModuleInit {
    * @returns 过滤后的对象
    */
   private filterAllowedFields(
-    input: any,
-    allowedFields: any,
-  ): Record<string, any> {
+    input: unknown,
+    allowedFields: ConfigAllowedTemplate,
+  ): Record<string, unknown> {
     if (!input || typeof input !== 'object') {
-      return input
+      return {}
     }
 
-    const result: Record<string, any> = {}
+    const result: Record<string, unknown> = {}
     for (const key of Object.keys(allowedFields)) {
       if (key in input) {
         // 递归处理嵌套对象
@@ -168,7 +176,10 @@ export class SystemConfigService implements OnModuleInit {
           allowedFields[key] !== null &&
           !Array.isArray(allowedFields[key])
         ) {
-          result[key] = this.filterAllowedFields(input[key], allowedFields[key])
+          result[key] = this.filterAllowedFields(
+            input[key],
+            allowedFields[key] as ConfigAllowedTemplate,
+          )
         } else {
           result[key] = input[key]
         }
@@ -181,17 +192,17 @@ export class SystemConfigService implements OnModuleInit {
    * 处理敏感字段（掩码回填 + 加密）
    */
   private async processSensitiveFields(
-    input: Record<string, any>,
-    current: Record<string, any> | null,
+    input: Record<string, unknown>,
+    current: Record<string, unknown> | null,
     sensitiveFields: string[],
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, unknown>> {
     for (const field of sensitiveFields) {
       const inputValue = input[field]
 
-      if (inputValue && isMasked(inputValue)) {
+      if (typeof inputValue === 'string' && inputValue && isMasked(inputValue)) {
         // 前端传回掩码则保留旧值
         input[field] = current?.[field] || ''
-      } else if (inputValue) {
+      } else if (typeof inputValue === 'string' && inputValue) {
         // 尝试 RSA 解密，失败则视为明文
         try {
           const decryptedValue = this.rsaService.decryptWith(inputValue)

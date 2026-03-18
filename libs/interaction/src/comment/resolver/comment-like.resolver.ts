@@ -24,6 +24,8 @@ import {
 } from '../../like/interfaces/like-target-resolver.interface'
 import { LikeTargetTypeEnum } from '../../like/like.constant'
 import { LikeService } from '../../like/like.service'
+import { CommentTargetTypeEnum } from '../comment.constant'
+import { mapCommentTargetTypeToInteractionTargetType } from '../comment-target.mapping'
 
 /**
  * 评论点赞解析器
@@ -75,13 +77,15 @@ export class CommentLikeResolver
     }
 
     // 评论不能继续挂载评论作为场景目标，避免嵌套层级过深
-    if (comment.targetType === InteractionTargetTypeEnum.COMMENT) {
+    const interactionTargetType = mapCommentTargetTypeToInteractionTargetType(
+      comment.targetType as CommentTargetTypeEnum,
+    )
+
+    if (interactionTargetType === InteractionTargetTypeEnum.COMMENT) {
       throw new BadRequestException('评论不能继续挂载评论作为场景目标')
     }
 
-    const sceneType = mapInteractionTargetTypeToSceneType(
-      comment.targetType as InteractionTargetTypeEnum,
-    )
+    const sceneType = mapInteractionTargetTypeToSceneType(interactionTargetType)
     if (!sceneType) {
       throw new BadRequestException('评论挂载的目标类型不合法')
     }

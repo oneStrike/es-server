@@ -3,13 +3,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 // ==================== 基础响应 DTO ====================
 
@@ -67,7 +61,6 @@ export class BaseDictionaryItemDto extends BaseDto {
     description: '所属字典编码',
     example: 'user_status',
     required: true,
-    maxLength: 500,
   })
   dictionaryCode!: string
 
@@ -117,52 +110,3 @@ export class BaseDictionaryItemDto extends BaseDto {
   })
   description?: string
 }
-
-// ==================== 创建 DTO ====================
-
-export class CreateDictionaryDto extends OmitType(
-  BaseDictionaryDto,
-  OMIT_BASE_FIELDS,
-) {}
-
-export class CreateDictionaryItemDto extends OmitType(
-  BaseDictionaryItemDto,
-  OMIT_BASE_FIELDS,
-) {}
-
-// ==================== 更新 DTO ====================
-
-export class UpdateDictionaryDto extends IntersectionType(
-  CreateDictionaryDto,
-  IdDto,
-) {}
-
-export class UpdateDictionaryItemDto extends IntersectionType(
-  CreateDictionaryItemDto,
-  IdDto,
-) {}
-
-// ==================== 查询 DTO ====================
-
-export class QueryDictionaryDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseDictionaryDto, ['name', 'code', 'isEnabled'])),
-) {}
-
-export class QueryDictionaryItemDto extends IntersectionType(
-  PickType(BaseDictionaryItemDto, ['dictionaryCode']),
-  PartialType(
-    PickType(QueryDictionaryDto, [
-      'name',
-      'code',
-      'isEnabled',
-      'orderBy',
-      'pageIndex',
-      'pageSize',
-    ]),
-  ),
-) {}
-
-export class QueryAllDictionaryItemDto extends PickType(BaseDictionaryItemDto, [
-  'dictionaryCode',
-]) {}

@@ -70,3 +70,6 @@ export const appConfig = pgTable("app_config", {
      */
     index("app_config_updated_by_id_idx").on(table.updatedById),
 ]);
+
+export type AppConfig = typeof appConfig.$inferSelect;
+export type AppConfigInsert = typeof appConfig.$inferInsert;

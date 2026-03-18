@@ -6,8 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { IntersectionType } from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 // ============================================================================
 // 阿里云配置
@@ -223,7 +222,14 @@ export class ContentReviewPolicyDto {
  * 系统配置 DTO
  * 用于管理端获取和更新系统配置
  */
-export class SystemConfigDto {
+export class BaseSystemConfigDto extends BaseDto {
+  @NumberProperty({
+    description: '最后修改人ID',
+    example: 1,
+    required: false,
+  })
+  updatedById?: number
+
   @NestedProperty({
     description: '阿里云配置',
     type: AliyunConfigDto,
@@ -252,8 +258,3 @@ export class SystemConfigDto {
   })
   contentReviewPolicy?: ContentReviewPolicyDto
 }
-
-export class SystemConfigBodyDto extends IntersectionType(
-  SystemConfigDto,
-  IdDto,
-) {}

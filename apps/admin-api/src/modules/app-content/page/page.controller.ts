@@ -1,9 +1,6 @@
 import {
-  AppPageResponseDto,
   AppPageService,
   BaseAppPageDto,
-  QueryAppPageDto,
-  UpdateAppPageDto,
 } from '@libs/app-content'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdsDto } from '@libs/platform/dto'
@@ -18,6 +15,12 @@ import {
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
+import {
+  AppPageResponseDto,
+  CreateAppPageDto,
+  QueryAppPageDto,
+  UpdateAppPageDto,
+} from './dto/page.dto'
 
 /**
  * APP页面配置管理控制器
@@ -35,7 +38,7 @@ export class AppPageController {
     summary: '创建页面配置',
     model: Boolean,
   })
-  async create(@Body() body: BaseAppPageDto) {
+  async create(@Body() body: CreateAppPageDto) {
     return this.libAppPageService.createPage(body)
   }
 

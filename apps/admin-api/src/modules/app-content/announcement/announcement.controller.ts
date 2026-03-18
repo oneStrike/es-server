@@ -1,16 +1,18 @@
 import {
-  AnnouncementDetailDto,
-  AnnouncementPageResponseDto,
   AppAnnouncementService,
-  CreateAnnouncementDto,
-  QueryAnnouncementDto,
-  UpdateAnnouncementDto,
-  UpdateAnnouncementStatusDto,
 } from '@libs/app-content'
 import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  AnnouncementDetailDto,
+  AnnouncementPageResponseDto,
+  CreateAnnouncementDto,
+  QueryAnnouncementDto,
+  UpdateAnnouncementDto,
+  UpdateAnnouncementStatusDto,
+} from './dto/announcement.dto'
 
 /**
  * 系统公告管理控制器

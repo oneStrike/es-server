@@ -1,12 +1,14 @@
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import {
-  SystemConfigBodyDto,
-  SystemConfigDto,
+  BaseSystemConfigDto,
   SystemConfigService,
 } from '@libs/system-config'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  SystemConfigBodyDto,
+} from './dto/system-config.dto'
 
 @ApiTags('系统配置')
 @Controller('admin/system')
@@ -16,7 +18,7 @@ export class SystemConfigController {
   @Get('config-detail')
   @ApiDoc({
     summary: '获取系统配置',
-    model: SystemConfigDto,
+    model: BaseSystemConfigDto,
   })
   async getConfig() {
     // 使用脱敏方法
@@ -29,7 +31,7 @@ export class SystemConfigController {
   @Get('config')
   @ApiDoc({
     summary: '获取系统配置',
-    model: SystemConfigDto,
+    model: BaseSystemConfigDto,
   })
   async getConfigByAlias() {
     return this.systemConfigService.findMaskedConfig()

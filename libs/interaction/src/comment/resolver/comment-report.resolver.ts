@@ -15,6 +15,8 @@ import {
   ReportService,
   ReportTargetTypeEnum,
 } from '../../report'
+import { CommentTargetTypeEnum } from '../comment.constant'
+import { mapCommentTargetTypeToInteractionTargetType } from '../comment-target.mapping'
 
 /**
  * 评论举报解析器
@@ -63,13 +65,15 @@ export class CommentReportResolver
       throw new NotFoundException('评论不存在')
     }
 
-    if (comment.targetType === InteractionTargetTypeEnum.COMMENT) {
+    const interactionTargetType = mapCommentTargetTypeToInteractionTargetType(
+      comment.targetType as CommentTargetTypeEnum,
+    )
+
+    if (interactionTargetType === InteractionTargetTypeEnum.COMMENT) {
       throw new BadRequestException('评论不能继续挂载评论作为场景目标')
     }
 
-    const sceneType = mapInteractionTargetTypeToSceneType(
-      comment.targetType as InteractionTargetTypeEnum,
-    )
+    const sceneType = mapInteractionTargetTypeToSceneType(interactionTargetType)
     if (!sceneType) {
       throw new BadRequestException('评论挂载的目标类型不合法')
     }
