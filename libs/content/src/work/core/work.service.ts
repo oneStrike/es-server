@@ -714,7 +714,11 @@ export class WorkService {
 
     const [liked, favorited, readingState] = await Promise.all([
       this.likeService.checkLikeStatus(work.type, id, userId),
-      this.favoriteService.checkFavoriteStatus(work.type, id, userId),
+      this.favoriteService.checkFavoriteStatus({
+        targetType: work.type,
+        targetId: id,
+        userId,
+      }),
       this.readingStateService.getReadingState(
         work.type as ContentTypeEnum,
         id,

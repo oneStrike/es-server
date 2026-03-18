@@ -1,10 +1,22 @@
+import type { UserFavorite } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
-import { FavoritePageQueryDto } from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
 import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.interface'
+
+type FavoriteTargetInput = Pick<UserFavorite, 'targetId'> & {
+  targetType: FavoriteTargetTypeEnum
+}
+
+type FavoriteRecordInput = FavoriteTargetInput & Pick<UserFavorite, 'userId'>
+
+type FavoriteListQuery = Pick<UserFavorite, 'userId'> &
+  Partial<Pick<FavoriteTargetInput, 'targetType'>> & {
+    pageIndex?: number
+    pageSize?: number
+  }
 
 /**
  * 收藏服务
@@ -106,15 +118,10 @@ export class FavoriteService {
 
   /**
    * 收藏目标
-   * @param targetType 目标类型
-   * @param targetId 目标 ID
-   * @param userId 用户 ID
+   * @param input 收藏参数
    */
-  async favorite(
-    targetType: FavoriteTargetTypeEnum,
-    targetId: number,
-    userId: number,
-  ) {
+  async favorite(input: FavoriteRecordInput): Promise<Pick<UserFavorite, 'id'>> {
+    const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
     const record = await this.db.transaction(async (tx) => {
@@ -161,15 +168,10 @@ export class FavoriteService {
 
   /**
    * 取消收藏
-   * @param targetType 目标类型
-   * @param targetId 目标 ID
-   * @param userId 用户 ID
+   * @param input 取消收藏参数
    */
-  async unfavorite(
-    targetType: FavoriteTargetTypeEnum,
-    targetId: number,
-    userId: number,
-  ) {
+  async unfavorite(input: FavoriteRecordInput) {
+    const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
     await this.db.transaction(async (tx) => {
@@ -193,16 +195,11 @@ export class FavoriteService {
 
   /**
    * 检查单个目标收藏状态
-   * @param targetType 目标类型
-   * @param targetId 目标 ID
-   * @param userId 用户 ID
+   * @param input 查询参数
    * @returns 是否已收藏
    */
-  async checkFavoriteStatus(
-    targetType: FavoriteTargetTypeEnum,
-    targetId: number,
-    userId: number,
-  ): Promise<boolean> {
+  async checkFavoriteStatus(input: FavoriteRecordInput): Promise<boolean> {
+    const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
       this.userFavorite,
       and(
@@ -215,23 +212,23 @@ export class FavoriteService {
 
   /**
    * 获取用户收藏列表
-   * @param dto - 查询参数
-   * @param dto.targetType - 目标类型（可选）
-   * @param dto.pageIndex - 页码
-   * @param dto.pageSize - 每页数量
-   * @param userId - 用户 ID
+   * @param query - 查询参数
+   * @param query.targetType - 目标类型（可选）
+   * @param query.pageIndex - 页码
+   * @param query.pageSize - 每页数量
+   * @param query.userId - 用户 ID
    * @returns 分页收藏列表
    */
-  async getUserFavorites(dto: FavoritePageQueryDto, userId: number) {
+  async getUserFavorites(query: FavoriteListQuery) {
     const page = await this.drizzle.ext.findPagination(this.userFavorite, {
       where: this.drizzle.buildWhere(this.userFavorite, {
         and: {
-          userId,
-          targetType: dto.targetType,
+          userId: query.userId,
+          targetType: query.targetType,
         },
       }),
-      pageIndex: dto.pageIndex,
-      pageSize: dto.pageSize,
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
       orderBy: {
         createdAt: 'desc',
       },
@@ -251,7 +248,7 @@ export class FavoriteService {
     }
 
     // 并行调用各个 Resolver 获取详情
-    const detailMaps = new Map<FavoriteTargetTypeEnum, Map<number, any>>()
+    const detailMaps = new Map<FavoriteTargetTypeEnum, Map<number, unknown>>()
     await Promise.all(
       Array.from(typeToIdsAggregator.entries(), async ([type, ids]) => {
         const uniqueIds = this.uniqueTargetIds(ids)

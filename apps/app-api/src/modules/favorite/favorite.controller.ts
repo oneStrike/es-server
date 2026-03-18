@@ -1,13 +1,16 @@
 import {
-  FavoritePageItemDto,
-  FavoritePageQueryDto,
   FavoriteService,
-  FavoriteTargetDto,
 } from '@libs/interaction'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  FavoritePageItemDto,
+  FavoritePageQueryDto,
+  FavoriteStatusResponseDto,
+  FavoriteTargetDto,
+} from './dto/favorite.dto'
 
 @ApiTags('收藏模块')
 @Controller('app/favorite')
@@ -23,7 +26,10 @@ export class FavoriteController {
     @Body() body: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.favoriteService.favorite(body.targetType, body.targetId, userId)
+    return this.favoriteService.favorite({
+      ...body,
+      userId,
+    })
   }
 
   @Post('cancel')
@@ -35,29 +41,27 @@ export class FavoriteController {
     @Body() body: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
-    await this.favoriteService.unfavorite(
-      body.targetType,
-      body.targetId,
+    await this.favoriteService.unfavorite({
+      ...body,
       userId,
-    )
+    })
     return { id: body.targetId }
   }
 
   @Get('status')
   @ApiDoc({
     summary: '查询收藏状态（作品详情接口可复用）',
-    model: Boolean,
+    model: FavoriteStatusResponseDto,
   })
   async status(
     @Query() query: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
     return {
-      isFavorited: await this.favoriteService.checkFavoriteStatus(
-        query.targetType,
-        query.targetId,
+      isFavorited: await this.favoriteService.checkFavoriteStatus({
+        ...query,
         userId,
-      ),
+      }),
     }
   }
 
@@ -70,6 +74,9 @@ export class FavoriteController {
     @Query() query: FavoritePageQueryDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.favoriteService.getUserFavorites(query, userId)
+    return this.favoriteService.getUserFavorites({
+      ...query,
+      userId,
+    })
   }
 }

@@ -48,3 +48,6 @@ export const userFavorite = pgTable("user_favorite", {
      */
     index("user_favorite_created_at_idx").on(table.createdAt),
 ]);
+
+export type UserFavorite = typeof userFavorite.$inferSelect;
+export type UserFavoriteInsert = typeof userFavorite.$inferInsert;

@@ -214,10 +214,10 @@ export class ForumProfileService {
    * @returns 分页的收藏列表，包含主题信息
    */
   async getMyFavorites(userId: number) {
-    const result = await this.favoriteService.getUserFavorites(
-      { targetType: FavoriteTargetTypeEnum.FORUM_TOPIC },
+    const result = await this.favoriteService.getUserFavorites({
       userId,
-    )
+      targetType: FavoriteTargetTypeEnum.FORUM_TOPIC,
+    })
 
     if (result.list.length === 0) {
       return { list: [], total: result.total }
