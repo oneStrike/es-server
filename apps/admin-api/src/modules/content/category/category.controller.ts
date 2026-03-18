@@ -1,14 +1,18 @@
 import {
   BaseCategoryDto,
-  CreateCategoryDto,
-  QueryCategoryDto,
-  UpdateCategoryDto,
   WorkCategoryService,
 } from '@libs/content'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  CreateCategoryDto,
+  QueryCategoryDto,
+  UpdateCategoryDto,
+  UpdateCategorySortDto,
+  UpdateCategoryStatusDto,
+} from './dto/category.dto'
 
 /**
  * 分类管理控制器
@@ -52,7 +56,7 @@ export class WorkCategoryController {
     model: BaseCategoryDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.categoryService.getCategoryDetail(query.id)
+    return this.categoryService.getCategoryDetail(query)
   }
 
   /**
@@ -75,7 +79,7 @@ export class WorkCategoryController {
     summary: '更新分类状态',
     model: IdDto,
   })
-  async updateStatus(@Body() body: UpdateEnabledStatusDto) {
+  async updateStatus(@Body() body: UpdateCategoryStatusDto) {
     return this.categoryService.updateCategoryStatus(body)
   }
 
@@ -88,7 +92,7 @@ export class WorkCategoryController {
     model: IdDto,
   })
   async deleteBatch(@Body() body: IdDto) {
-    return this.categoryService.deleteCategory(body.id)
+    return this.categoryService.deleteCategory(body)
   }
 
   /**
@@ -97,9 +101,9 @@ export class WorkCategoryController {
   @Post('/order')
   @ApiDoc({
     summary: '分类拖拽排序',
-    model: DragReorderDto,
+    model: UpdateCategorySortDto,
   })
-  async categoryOrder(@Body() body: DragReorderDto) {
+  async categoryOrder(@Body() body: UpdateCategorySortDto) {
     return this.categoryService.updateCategorySort(body)
   }
 }

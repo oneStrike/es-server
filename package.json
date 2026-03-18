@@ -26,6 +26,8 @@
     "publish-api:app": "tsx publish-api.ts --app app",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx db/seed/index.ts",
+    "db:bootstrap": "node ./scripts/db-bootstrap.cjs",
     "db:push": "drizzle-kit push --force",
     "db:studio": "drizzle-kit studio"
   },

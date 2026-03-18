@@ -106,3 +106,6 @@ export const workAuthor = pgTable("work_author", {
      */
     index("work_author_created_at_idx").on(table.createdAt),
 ]);
+
+export type WorkAuthor = typeof workAuthor.$inferSelect;
+export type WorkAuthorInsert = typeof workAuthor.$inferInsert;

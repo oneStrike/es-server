@@ -5,6 +5,7 @@ export type InteractionTargetTableKey =
   | 'workChapter'
   | 'forumTopic'
   | 'userComment'
+  | 'appUser'
 
 /**
  * A single source of truth for target lookup strategy.
@@ -77,6 +78,11 @@ export const INTERACTION_TARGET_DEFINITIONS: Record<
     whereBuilder: (targetId) => ({ id: targetId, deletedAt: null }),
     whereInBuilder: (targetIds) => ({ id: { in: targetIds }, deletedAt: null }),
   },
+  [InteractionTargetTypeEnum.USER]: {
+    tableKey: 'appUser',
+    whereBuilder: (targetId) => ({ id: targetId, deletedAt: null }),
+    whereInBuilder: (targetIds) => ({ id: { in: targetIds }, deletedAt: null }),
+  },
 }
 
 /**
@@ -103,6 +109,7 @@ const INTERACTION_TARGET_SCENE_TYPE_MAP: Partial<
   [InteractionTargetTypeEnum.COMIC_CHAPTER]: SceneTypeEnum.COMIC_CHAPTER,
   [InteractionTargetTypeEnum.NOVEL_CHAPTER]: SceneTypeEnum.NOVEL_CHAPTER,
   [InteractionTargetTypeEnum.FORUM_TOPIC]: SceneTypeEnum.FORUM_TOPIC,
+  [InteractionTargetTypeEnum.USER]: SceneTypeEnum.USER_PROFILE,
 }
 
 export function mapInteractionTargetTypeToSceneType(

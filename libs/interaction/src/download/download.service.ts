@@ -11,8 +11,14 @@ import type {
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
+import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from './download-target.mapping'
 import { DownloadTargetTypeEnum } from './download.constant'
 import { IDownloadTargetResolver } from './interfaces/download-target-resolver.interface'
+
+const DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(
+  DOWNLOAD_WORK_CHAPTER_TARGET_TYPES.map((targetType) => sql`${targetType}`),
+  sql`, `,
+)
 
 @Injectable()
 export class DownloadService {
@@ -259,7 +265,7 @@ export class DownloadService {
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
-          AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
+          AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
           ${workTypeFilter}
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
@@ -272,7 +278,7 @@ export class DownloadService {
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
-          AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
+          AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
           ${workTypeFilter}
           ${createdAtFilter}
       `),
@@ -345,7 +351,7 @@ export class DownloadService {
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
-          AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
+          AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.work_id = ${workId}
           ${workTypeFilter}
           ${createdAtFilter}
@@ -358,7 +364,7 @@ export class DownloadService {
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
-          AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
+          AND udr.target_type IN (${DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.work_id = ${workId}
           ${workTypeFilter}
           ${createdAtFilter}

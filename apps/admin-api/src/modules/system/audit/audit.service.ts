@@ -2,8 +2,13 @@ import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, ilike } from 'drizzle-orm'
+import { and, eq, ilike, or } from 'drizzle-orm'
 import { AuditActionTypeEnum } from './audit.constant'
+import {
+  getAuditActionTypeLabel,
+  normalizeAuditActionType,
+  resolveAuditActionTypeSearchTerms,
+} from './audit.helpers'
 import {
   AuditPageRequestDto,
   CreateRequestLogDto,
@@ -30,9 +35,12 @@ export class AuditService {
    * 创建请求日志
    */
   async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
+    const normalizedActionType = normalizeAuditActionType(createDto.actionType)
+
     // 处理JSON字段的转换
     const data = {
       ...createDto,
+      actionType: normalizedActionType ?? undefined,
       ...parseRequestLogFields(req),
     } as any
     const [created] = await this.db
@@ -76,7 +84,7 @@ export class AuditService {
       throw new NotFoundException('请求日志不存在')
     }
 
-    return requestLog
+    return this.decorateRequestLog(requestLog)
   }
 
   /**
@@ -96,6 +104,9 @@ export class AuditService {
       isSuccess,
       ...pageOptions
     } = queryDto
+    const actionTypeSearchTerms = actionType
+      ? resolveAuditActionTypeSearchTerms(actionType)
+      : []
 
     const whereParts = [
       userId ? eq(this.requestLog.userId, userId) : undefined,
@@ -104,13 +115,34 @@ export class AuditService {
       ip ? eq(this.requestLog.ip, ip) : undefined,
       method ? eq(this.requestLog.method, method) : undefined,
       path ? ilike(this.requestLog.path, `%${path}%`) : undefined,
-      actionType ? ilike(this.requestLog.actionType, `%${actionType}%`) : undefined,
+      actionTypeSearchTerms.length > 0
+        ? or(
+            ...actionTypeSearchTerms.map((term) =>
+              eq(this.requestLog.actionType, term),
+            ),
+          )
+        : undefined,
       isSuccess !== undefined ? eq(this.requestLog.isSuccess, isSuccess) : undefined,
     ].filter(Boolean)
 
-    return this.drizzle.ext.findPagination(this.requestLog, {
+    const page = await this.drizzle.ext.findPagination(this.requestLog, {
       where: whereParts.length > 0 ? and(...whereParts) : undefined,
       ...pageOptions,
     })
+
+    return {
+      ...page,
+      list: page.list.map((requestLog) => this.decorateRequestLog(requestLog)),
+    }
+  }
+
+  private decorateRequestLog<T extends { actionType: string | null }>(
+    requestLog: T,
+  ) {
+    return {
+      ...requestLog,
+      actionType: normalizeAuditActionType(requestLog.actionType),
+      actionTypeLabel: getAuditActionTypeLabel(requestLog.actionType),
+    }
   }
 }

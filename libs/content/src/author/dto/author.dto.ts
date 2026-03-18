@@ -3,17 +3,10 @@ import {
   ArrayProperty,
   BooleanProperty,
   EnumProperty,
-  JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 import { AuthorTypeEnum } from '../author.constant'
 
 /**
@@ -87,7 +80,7 @@ export class BaseAuthorDto extends BaseDto {
     min: 0,
     default: 0,
   })
-  worksCount!: number
+  workCount!: number
 
   @NumberProperty({
     description: '粉丝数量（冗余字段，用于前台展示）',
@@ -106,58 +99,3 @@ export class BaseAuthorDto extends BaseDto {
   })
   isRecommended!: boolean
 }
-
-/**
- * 创建作者DTO
- */
-export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
-  ...OMIT_BASE_FIELDS,
-  'worksCount',
-  'isEnabled',
-  'isRecommended',
-  'followersCount',
-]) {}
-
-/**
- * 更新作者DTO
- */
-export class UpdateAuthorDto extends IntersectionType(CreateAuthorDto, IdDto) {}
-
-/**
- * 查询作者DTO
- */
-export class QueryAuthorDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseAuthorDto, [
-      'name',
-      'isEnabled',
-      'nationality',
-      'gender',
-      'isRecommended',
-    ]),
-  ),
-) {
-  @JsonProperty({
-    description: '作者角色类型',
-    example: '[123]',
-    required: false,
-  })
-  type?: string
-}
-
-/**
- * 更新作者推荐状态DTO
- */
-export class UpdateAuthorRecommendedDto extends IntersectionType(
-  PickType(BaseAuthorDto, ['isRecommended']),
-  IdDto,
-) {}
-
-/**
- * 作者分页响应DTO
- */
-export class AuthorPageResponseDto extends OmitType(BaseAuthorDto, [
-  'remark',
-  'description',
-]) {}

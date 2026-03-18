@@ -90,15 +90,6 @@ export class InteractionTargetResolverService {
     targetType: ReportTargetTypeEnum,
     targetId: number,
   ): Promise<ResolvedReportTargetMeta> {
-    if (targetType === ReportTargetTypeEnum.USER) {
-      await this.ensureUserExists(targetId)
-      return {
-        sceneType: SceneTypeEnum.USER_PROFILE,
-        sceneId: targetId,
-        ownerUserId: targetId,
-      }
-    }
-
     const interactionTargetType =
       mapReportTargetTypeToInteractionTargetType(targetType)
 
@@ -113,6 +104,20 @@ export class InteractionTargetResolverService {
     const sceneType = mapInteractionTargetTypeToSceneType(interactionTargetType)
     if (!sceneType) {
       throw new BadRequestException('不支持的举报目标类型')
+    }
+
+    if (interactionTargetType === InteractionTargetTypeEnum.USER) {
+      await this.interactionTargetAccessService.ensureTargetExists(
+        InteractionTargetTypeEnum.USER,
+        targetId,
+        { notFoundMessage: '用户不存在' },
+      )
+
+      return {
+        sceneType,
+        sceneId: targetId,
+        ownerUserId: targetId,
+      }
     }
 
     if (interactionTargetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
@@ -193,18 +198,5 @@ export class InteractionTargetResolverService {
     }
 
     return sceneType
-  }
-
-  private async ensureUserExists(targetId: number) {
-    const user = await this.db.query.appUser.findFirst({
-      where: { id: targetId },
-      columns: { id: true },
-    })
-
-    if (!user) {
-      throw new NotFoundException('用户不存在')
-    }
-
-    return user
   }
 }

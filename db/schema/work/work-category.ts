@@ -66,3 +66,6 @@ export const workCategory = pgTable("work_category", {
      */
     index("work_category_content_type_idx").on(table.contentType),
 ]);
+
+export type WorkCategory = typeof workCategory.$inferSelect;
+export type WorkCategoryInsert = typeof workCategory.$inferInsert;

@@ -2,10 +2,13 @@ import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import {
-  CreateAuthorDto,
-  QueryAuthorDto,
-  UpdateAuthorDto,
-} from './dto/author.dto'
+  AuthorIdInput,
+  CreateAuthorInput,
+  QueryAuthorInput,
+  UpdateAuthorInput,
+  UpdateAuthorRecommendedInput,
+  UpdateAuthorStatusInput,
+} from './author.type'
 
 /**
  * 作者服务类
@@ -25,14 +28,14 @@ export class WorkAuthorService {
 
   /**
    * 创建作者
-   * @param createAuthorDto 创建作者的数据
+   * @param createAuthorInput 创建作者的数据
    * @returns 创建的作者信息
    */
-  async createAuthor(createAuthorDto: CreateAuthorDto) {
+  async createAuthor(createAuthorInput: CreateAuthorInput) {
     const [created] = await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.workAuthor)
-        .values(createAuthorDto)
+        .values(createAuthorInput)
         .returning(),
     )
     return created
@@ -43,7 +46,7 @@ export class WorkAuthorService {
    * @param queryAuthorDto 查询条件
    * @returns 分页作者列表
    */
-  async getAuthorPage(queryAuthorDto: QueryAuthorDto) {
+  async getAuthorPage(queryAuthorDto: QueryAuthorInput) {
     const {
       name,
       isEnabled,
@@ -83,12 +86,12 @@ export class WorkAuthorService {
 
   /**
    * 获取作者详情
-   * @param id 作者ID
+   * @param input 作者ID
    * @returns 作者详情信息
    */
-  async getAuthorDetail(id: number) {
+  async getAuthorDetail(input: AuthorIdInput) {
     const author = await this.db.query.workAuthor.findFirst({
-      where: { id, deletedAt: { isNull: true } },
+      where: { id: input.id, deletedAt: { isNull: true } },
     })
 
     if (!author) {
@@ -103,7 +106,7 @@ export class WorkAuthorService {
    * @param updateAuthorDto 更新作者的数据
    * @returns 更新后的作者信息
    */
-  async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
+  async updateAuthor(updateAuthorDto: UpdateAuthorInput) {
     const { id, ...updateData } = updateAuthorDto
 
     // 验证作者是否存在
@@ -126,24 +129,24 @@ export class WorkAuthorService {
     return updated
   }
 
-  async updateAuthorStatus(id: number, isEnabled: boolean) {
+  async updateAuthorStatus(input: UpdateAuthorStatusInput) {
     const [updated] = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
-        .set({ isEnabled })
-        .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
+        .set({ isEnabled: input.isEnabled })
+        .where(and(eq(this.workAuthor.id, input.id), isNull(this.workAuthor.deletedAt)))
         .returning({ id: this.workAuthor.id }),
     )
     this.drizzle.assertAffectedRows(updated ? [updated] : [], '作者不存在')
     return updated
   }
 
-  async updateAuthorRecommended(id: number, isRecommended: boolean) {
+  async updateAuthorRecommended(input: UpdateAuthorRecommendedInput) {
     const [updated] = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
-        .set({ isRecommended })
-        .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
+        .set({ isRecommended: input.isRecommended })
+        .where(and(eq(this.workAuthor.id, input.id), isNull(this.workAuthor.deletedAt)))
         .returning({ id: this.workAuthor.id }),
     )
     this.drizzle.assertAffectedRows(updated ? [updated] : [], '作者不存在')
@@ -152,13 +155,13 @@ export class WorkAuthorService {
 
   /**
    * 软删除作者
-   * @param id 作者ID
+   * @param input 作者ID
    * @returns 删除结果
    */
-  async deleteAuthor(id: number) {
+  async deleteAuthor(input: AuthorIdInput) {
     // 验证作者是否存在
     const existingAuthor = await this.db.query.workAuthor.findFirst({
-      where: { id, deletedAt: { isNull: true } },
+      where: { id: input.id, deletedAt: { isNull: true } },
     })
     if (!existingAuthor) {
       throw new BadRequestException('作者不存在')
@@ -173,7 +176,7 @@ export class WorkAuthorService {
       this.db
         .update(this.workAuthor)
         .set({ deletedAt: new Date() })
-        .where(and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)))
+        .where(and(eq(this.workAuthor.id, input.id), isNull(this.workAuthor.deletedAt)))
         .returning(),
     )
     this.drizzle.assertAffectedRows(deleted ? [deleted] : [], '作者不存在')

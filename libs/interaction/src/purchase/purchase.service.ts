@@ -13,10 +13,16 @@ import { sql } from 'drizzle-orm'
 import {
   IPurchaseTargetResolver,
 } from './interfaces/purchase-target-resolver.interface'
+import { PURCHASE_WORK_CHAPTER_TARGET_TYPES } from './purchase-target.mapping'
 import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from './purchase.constant'
+
+const PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(
+  PURCHASE_WORK_CHAPTER_TARGET_TYPES.map((targetType) => sql`${targetType}`),
+  sql`, `,
+)
 
 type PurchaseTargetInput = Pick<
   UserPurchaseRecord,
@@ -296,7 +302,7 @@ export class PurchaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
-          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.deleted_at IS NULL
           AND w.deleted_at IS NULL
           ${workTypeFilter}
@@ -312,7 +318,7 @@ export class PurchaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
-          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.deleted_at IS NULL
           AND w.deleted_at IS NULL
           ${workTypeFilter}
@@ -399,7 +405,7 @@ export class PurchaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
-          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.work_id = ${workId}
           AND wc.deleted_at IS NULL
           AND w.deleted_at IS NULL
@@ -415,7 +421,7 @@ export class PurchaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
-          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.work_id = ${workId}
           AND wc.deleted_at IS NULL
           AND w.deleted_at IS NULL

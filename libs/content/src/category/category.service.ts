@@ -1,12 +1,14 @@
 import { DrizzleService } from '@db/core'
-import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, sql } from 'drizzle-orm'
 import {
-  CreateCategoryDto,
-  QueryCategoryDto,
-  UpdateCategoryDto,
-} from './dto/category.dto'
+  CategoryIdInput,
+  CreateCategoryInput,
+  QueryCategoryInput,
+  UpdateCategoryInput,
+  UpdateCategorySortInput,
+  UpdateCategoryStatusInput,
+} from './category.type'
 
 @Injectable()
 export class WorkCategoryService {
@@ -20,10 +22,10 @@ export class WorkCategoryService {
     return this.drizzle.schema.workCategory
   }
 
-  async createCategory(createCategoryDto: CreateCategoryDto) {
-    if (!createCategoryDto.sortOrder) {
+  async createCategory(createCategoryInput: CreateCategoryInput) {
+    if (!createCategoryInput.sortOrder) {
       const maxOrder = await this.drizzle.ext.maxOrder(this.workCategory)
-      createCategoryDto.sortOrder = maxOrder + 1
+      createCategoryInput.sortOrder = maxOrder + 1
     }
 
     const [created] = await this.drizzle.withErrorHandling(() =>
@@ -31,14 +33,14 @@ export class WorkCategoryService {
         .insert(this.workCategory)
         .values({
           popularity: 0,
-          ...createCategoryDto,
+          ...createCategoryInput,
         })
         .returning({ id: this.workCategory.id }),
     )
     return created
   }
 
-  async getCategoryPage(queryDto: QueryCategoryDto) {
+  async getCategoryPage(queryDto: QueryCategoryInput) {
     const { name, isEnabled, contentType, ...pageParams } = queryDto
 
     if (!pageParams.orderBy) {
@@ -66,14 +68,14 @@ export class WorkCategoryService {
     })
   }
 
-  async getCategoryDetail(id: number) {
+  async getCategoryDetail(input: CategoryIdInput) {
     return this.db.query.workCategory.findFirst({
-      where: { id },
+      where: { id: input.id },
     })
   }
 
-  async updateCategory(updateCategoryDto: UpdateCategoryDto) {
-    const { id, ...updateData } = updateCategoryDto as any
+  async updateCategory(updateCategoryDto: UpdateCategoryInput) {
+    const { id, ...updateData } = updateCategoryDto
 
     const [updated] = await this.drizzle.withErrorHandling(
       () =>
@@ -88,7 +90,7 @@ export class WorkCategoryService {
     return updated
   }
 
-  async updateCategoryStatus(updateStatusDto: UpdateEnabledStatusDto) {
+  async updateCategoryStatus(updateStatusDto: UpdateCategoryStatusInput) {
     if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks())) {
       throw new BadRequestException('Category has related works and cannot be disabled')
     }
@@ -103,21 +105,21 @@ export class WorkCategoryService {
     return updated
   }
 
-  async updateCategorySort(updateSortDto: DragReorderDto) {
+  async updateCategorySort(updateSortDto: UpdateCategorySortInput) {
     return this.drizzle.ext.swapField(this.workCategory, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
   }
 
-  async deleteCategory(id: number) {
+  async deleteCategory(input: CategoryIdInput) {
     if (await this.checkCategoryHasWorks()) {
       throw new BadRequestException('Category has related works and cannot be deleted')
     }
     const result = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.workCategory).where(eq(this.workCategory.id, id)),
+      this.db.delete(this.workCategory).where(eq(this.workCategory.id, input.id)),
     )
     this.drizzle.assertAffectedRows(result, '分类不存在')
-    return { id }
+    return { id: input.id }
   }
 
   async checkCategoryHasWorks() {

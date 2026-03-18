@@ -4,6 +4,11 @@ import { PurchaseTargetTypeEnum } from './purchase.constant'
 /**
  * 购买模块本地目标类型到系统级交互目标语义的映射。
  */
+export const PURCHASE_WORK_CHAPTER_TARGET_TYPES = [
+  PurchaseTargetTypeEnum.COMIC_CHAPTER,
+  PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+] as const
+
 export const PURCHASE_TARGET_TYPE_TO_INTERACTION_TARGET_TYPE_MAP: Record<
   PurchaseTargetTypeEnum,
   InteractionTargetTypeEnum

@@ -7,8 +7,9 @@ import type {
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { DownloadTargetTypeEnum } from '../download/download.constant'
-import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from '../purchase/purchase.constant'
+import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from '../download/download-target.mapping'
+import { PURCHASE_WORK_CHAPTER_TARGET_TYPES } from '../purchase/purchase-target.mapping'
+import { PurchaseStatusEnum } from '../purchase/purchase.constant'
 
 @Injectable()
 export class UserAssetsService {
@@ -85,8 +86,7 @@ export class UserAssetsService {
             eq(this.userPurchaseRecord.userId, userId),
             eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
             inArray(this.userPurchaseRecord.targetType, [
-              PurchaseTargetTypeEnum.COMIC_CHAPTER,
-              PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+              ...PURCHASE_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),
         ),
@@ -97,8 +97,7 @@ export class UserAssetsService {
           and(
             eq(this.userDownloadRecord.userId, userId),
             inArray(this.userDownloadRecord.targetType, [
-              DownloadTargetTypeEnum.COMIC_CHAPTER,
-              DownloadTargetTypeEnum.NOVEL_CHAPTER,
+              ...DOWNLOAD_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),
         ),
@@ -116,8 +115,7 @@ export class UserAssetsService {
             eq(this.userPurchaseRecord.userId, userId),
             eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
             inArray(this.userPurchaseRecord.targetType, [
-              PurchaseTargetTypeEnum.COMIC_CHAPTER,
-              PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+              ...PURCHASE_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),
         ),
@@ -134,8 +132,7 @@ export class UserAssetsService {
           and(
             eq(this.userDownloadRecord.userId, userId),
             inArray(this.userDownloadRecord.targetType, [
-              DownloadTargetTypeEnum.COMIC_CHAPTER,
-              DownloadTargetTypeEnum.NOVEL_CHAPTER,
+              ...DOWNLOAD_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),
         ),

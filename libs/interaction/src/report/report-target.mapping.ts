@@ -3,7 +3,6 @@ import { ReportTargetTypeEnum } from './report.constant'
 
 /**
  * 举报模块本地目标类型到系统级交互目标语义的映射。
- * USER 为举报模块特有目标，不进入公共交互目标语义层。
  */
 export const REPORT_TARGET_TYPE_TO_INTERACTION_TARGET_TYPE_MAP: Partial<
   Record<ReportTargetTypeEnum, InteractionTargetTypeEnum>
@@ -16,6 +15,7 @@ export const REPORT_TARGET_TYPE_TO_INTERACTION_TARGET_TYPE_MAP: Partial<
     InteractionTargetTypeEnum.NOVEL_CHAPTER,
   [ReportTargetTypeEnum.FORUM_TOPIC]: InteractionTargetTypeEnum.FORUM_TOPIC,
   [ReportTargetTypeEnum.COMMENT]: InteractionTargetTypeEnum.COMMENT,
+  [ReportTargetTypeEnum.USER]: InteractionTargetTypeEnum.USER,
 }
 
 export function mapReportTargetTypeToInteractionTargetType(

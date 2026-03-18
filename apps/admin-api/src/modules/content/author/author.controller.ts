@@ -1,20 +1,19 @@
 import {
-  AuthorPageResponseDto,
   BaseAuthorDto,
+  WorkAuthorService,
+} from '@libs/content'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { BatchOperationResponseDto, IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import {
+  AuthorPageResponseDto,
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,
   UpdateAuthorRecommendedDto,
-  WorkAuthorService,
-} from '@libs/content'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import {
-  BatchOperationResponseDto,
-  IdDto,
-  UpdateEnabledStatusDto,
-} from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
+  UpdateAuthorStatusDto,
+} from './dto/author.dto'
 
 /**
  * 作者管理控制器
@@ -58,7 +57,7 @@ export class WorkAuthorController {
     model: BaseAuthorDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.authorService.getAuthorDetail(query.id)
+    return this.authorService.getAuthorDetail(query)
   }
 
   /**
@@ -81,8 +80,8 @@ export class WorkAuthorController {
     summary: '更新作者状态',
     model: BatchOperationResponseDto,
   })
-  async updateStatus(@Body() body: UpdateEnabledStatusDto) {
-    return this.authorService.updateAuthorStatus(body.id, body.isEnabled)
+  async updateStatus(@Body() body: UpdateAuthorStatusDto) {
+    return this.authorService.updateAuthorStatus(body)
   }
 
   /**
@@ -94,10 +93,7 @@ export class WorkAuthorController {
     model: BatchOperationResponseDto,
   })
   async updateRecommended(@Body() body: UpdateAuthorRecommendedDto) {
-    return this.authorService.updateAuthorRecommended(
-      body.id,
-      body.isRecommended,
-    )
+    return this.authorService.updateAuthorRecommended(body)
   }
 
   /**
@@ -109,6 +105,6 @@ export class WorkAuthorController {
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.authorService.deleteAuthor(body.id)
+    return this.authorService.deleteAuthor(body)
   }
 }

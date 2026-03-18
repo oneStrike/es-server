@@ -67,12 +67,20 @@ export class BaseAuditDto extends BaseDto {
   params?: string
 
   @EnumProperty({
-    description: '操作类型',
-    example: '用户登录',
+    description: '操作类型编码',
+    example: AuditActionTypeEnum.LOGIN,
     required: false,
     enum: AuditActionTypeEnum,
   })
   actionType?: AuditActionTypeEnum
+
+  @StringProperty({
+    description: '操作类型展示文案',
+    example: '用户登录',
+    required: false,
+    maxLength: 50,
+  })
+  actionTypeLabel?: string
 
   @BooleanProperty({
     description: '操作是否成功',

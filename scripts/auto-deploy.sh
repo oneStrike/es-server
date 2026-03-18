@@ -356,6 +356,7 @@
 
                                                                                 # 使用 es-server 的统一版本号
                                                                                 local VERSION="${SERVER_VERSION}"
+                                                                                export SERVER_VERSION="$VERSION"
 
                                                                                 export DOCKER_BUILDKIT=1
 
@@ -405,6 +406,10 @@
                                                                                             error "app-api 构建失败"
                                                                                             return 1
                                                                                         fi
+                                                                                        if ! docker_build "./Dockerfile" "--target migrator" "-t es/server-migrator:$VERSION" "migrator"; then
+                                                                                            error "migrator 构建失败"
+                                                                                            return 1
+                                                                                        fi
                                                                                         ;;
 
                                                                                     *)
@@ -438,14 +443,18 @@
                                                                                     log "部署服务..."
 
                                                                                     if [ "$project_name" = "es-server" ]; then
-                                                                                        # admin-server 和 app-server 都执行 down 和 up
-                                                                                        log "重启 admin-server..."
-                                                                                        docker compose down admin-server 2>/dev/null || true
-                                                                                        docker compose up -d admin-server --remove-orphans || { error "admin-server 启动失败"; popd > /dev/null; return 1; }
+                                                                                        log "清理旧的服务容器..."
+                                                                                        docker compose rm -sf migrator admin-server app-server 2>/dev/null || true
 
-                                                                                        log "重启 app-server..."
-                                                                                        docker compose down app-server 2>/dev/null || true
-                                                                                        docker compose up -d app-server --remove-orphans || { error "app-server 启动失败"; popd > /dev/null; return 1; }
+                                                                                        log "执行数据库迁移..."
+                                                                                        if ! docker compose up --abort-on-container-exit --exit-code-from migrator migrator; then
+                                                                                            error "数据库迁移失败"
+                                                                                            popd > /dev/null
+                                                                                            return 1
+                                                                                        fi
+
+                                                                                        log "启动 API 服务..."
+                                                                                        docker compose up -d --remove-orphans admin-server app-server || { error "API 服务启动失败"; popd > /dev/null; return 1; }
                                                                                     else
                                                                                         # 其他项目也使用 down + up 确保新镜像生效
                                                                                         # shellcheck disable=SC2086

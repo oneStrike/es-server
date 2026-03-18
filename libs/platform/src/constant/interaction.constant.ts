@@ -18,6 +18,8 @@ export enum InteractionTargetTypeEnum {
   NOVEL_CHAPTER = 11,
   /** 评论 */
   COMMENT = 12,
+  /** 用户 */
+  USER = 13,
 }
 
 /**

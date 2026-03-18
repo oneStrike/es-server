@@ -34,8 +34,7 @@ services:
     environment:
       # 注入当前服务特定的配置
       - APP_NAME=admin-api
-      # 如果代码中没有处理 DATABASE_URL 组合逻辑，则需在此显式声明
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - REDIS_URL=${REDIS_URL}
       # 配置隔离映射
       - JWT_EXPIRATION_IN=${ADMIN_JWT_EXPIRATION_IN}
@@ -58,18 +57,19 @@ services:
 
   # 数据库迁移服务
   migrator:
-    image: es/app/server:${SERVER_VERSION}
+    image: es/server-migrator:${SERVER_VERSION}
     container_name: es-migrator
     pull_policy: never
     user: '1001:1001'
-    # 覆盖默认启动命令，执行迁移
-    command: [pnpm, db:migrate]
     # 任务执行完成后退出，不重启
     restart: no
     env_file:
       - ./.env
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DB_WAIT_TIMEOUT_MS=${DB_WAIT_TIMEOUT_MS:-120000}
+      - DB_WAIT_INTERVAL_MS=${DB_WAIT_INTERVAL_MS:-2000}
+      - DB_SEED=${DB_SEED:-false}
     networks:
       - 1panel-network
 
@@ -108,7 +108,7 @@ services:
     environment:
       - APP_NAME=app-api
       - APP_PORT=8080
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - REDIS_URL=${REDIS_URL}
       # 配置隔离映射
       - JWT_EXPIRATION_IN=${APP_JWT_EXPIRATION_IN}

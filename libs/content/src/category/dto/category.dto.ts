@@ -2,17 +2,10 @@ import { ContentTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
-  JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 /**
  * 分类基础 DTO
@@ -30,77 +23,50 @@ export class BaseCategoryDto extends BaseDto {
     description: '分类图标URL',
     example: 'https://example.com/icon.png',
     required: false,
-    maxLength: 200,
+    maxLength: 255,
   })
   icon?: string
 
   @NumberProperty({
     description: '人气值',
     example: 1000,
-    required: false,
+    required: true,
     min: 0,
+    default: 0,
   })
   popularity!: number
 
   @NumberProperty({
     description: '排序值',
     example: 1,
-    required: false,
+    required: true,
     min: 0,
     max: 32767,
+    default: 0,
   })
   sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    required: false,
+    required: true,
+    default: true,
   })
   isEnabled!: boolean
 
   @ArrayProperty({
     description: '分类关联的内容类型',
     example: [ContentTypeEnum.COMIC],
-    required: true,
+    required: false,
     itemType: 'number',
   })
-  contentType!: number[]
+  contentType?: number[]
 
   @StringProperty({
     description: '分类的描述 （可选）',
     example: '科幻类分类',
     required: false,
+    maxLength: 200,
   })
   description?: string
-}
-
-/**
- * 创建分类 DTO
- */
-export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
-  ...OMIT_BASE_FIELDS,
-  'popularity',
-]) {}
-
-/**
- * 更新分类 DTO
- */
-export class UpdateCategoryDto extends IntersectionType(
-  CreateCategoryDto,
-  IdDto,
-) {}
-
-/**
- * 查询分类 DTO
- */
-export class QueryCategoryDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(CreateCategoryDto, ['name', 'isEnabled'])),
-) {
-  @JsonProperty({
-    description: '分类关联的内容类型',
-    example: '[1]',
-    required: false,
-  })
-  contentType?: string
 }

@@ -5,7 +5,7 @@
 ## 1. 审计范围与方法
 
 - 审计范围：当前仓库内全部 `*.constant.ts` 文件，共 `40` 个文件。
-- 导出符号：共识别 `96` 个导出项，包含 `const`、`enum`、`interface`、`function` 以及同名重导出。
+- 导出符号：共识别 `93` 个导出项，包含 `const`、`enum`、`interface`、`function` 以及同名重导出。
 - 引用统计：基于当前源码中的命名导入做静态扫描，排除了 `.history`、`node_modules`、`dist`、`coverage`、`.next`。
 - 统计口径说明：
   - “引用数”表示外部文件的命名导入次数，不代表运行时反射、字符串访问或同文件内部使用。
@@ -55,11 +55,14 @@
 - `RevokeTokenReasonEnum` 已接入密码重置、刷新令牌轮换、主动登出和过期清理链路
 - `LoggerLevelEnum` 已改为 logger 模块内部直接依赖，不再通过 `@libs/platform/constant` barrel 对外暴露
 - 当前统一结论：内容域常量统一收敛在 `content.constant.ts`，其中 `ContentTypeEnum` 负责顶层内容分类，`WorkTypeEnum` 负责作品子集分类
-- 已完成互动目标类型体系统一的第一轮落地：保留 `InteractionTargetTypeEnum` 作为公共语义层，各互动模块保留本地 `targetType` 枚举，并新增模块到公共语义的映射文件
+- 已完成互动目标类型体系统一的收尾：保留 `InteractionTargetTypeEnum` 作为公共语义层，各互动模块保留本地 `targetType` 枚举，并通过映射文件投影到公共语义
 - 已将点赞 / 收藏 / 浏览 / 举报的成长规则统一收敛到 `libs/interaction/src/interaction-target-growth-rule.ts`
 - 已修正评论目标场景解析中的编码错位风险：评论链路不再把 `CommentTargetTypeEnum` 直接强转为 `InteractionTargetTypeEnum`
-- 当前统计：`40` 个常量文件、`92` 个导出项、`0` 组重名导出、`0` 处显式重导出链
-- 校验结果：未处理与本轮无关的存量类型错误；全量 `pnpm type-check` 被 `libs/config/src/dictionary/dictionary.service.ts:294` 阻断，互动库定向检查被 `libs/platform/src/modules/upload/upload.service.ts:111` 阻断
+- `ReportTargetTypeEnum.USER` 已进入公共语义层，并落到统一的目标定义与场景映射
+- `download / purchase` 的章节目标集合已回收到各自模块映射文件，避免继续在 SQL 中散落重复字面量
+- 已完成审计动作编码/展示拆分：`AuditActionTypeEnum` 改为稳定编码，`AuditActionTypeLabels` 负责中文文案，并兼容历史中文数据查询
+- 当前统计：`40` 个常量文件、`93` 个导出项、`0` 组重名导出、`0` 处显式重导出链
+- 校验结果：`apps/admin-api` 定向类型检查已通过；未处理与本轮无关的存量类型错误；全量 `pnpm type-check` 仍会被 `libs/config/src/dictionary/dictionary.service.ts:294` 阻断，互动库定向检查仍被 `libs/platform/src/modules/upload/upload.service.ts:111` 阻断
 
 ## 3. 关键问题
 
@@ -265,7 +268,7 @@
 - 管理端私有常量已更名为 `AdminAuthCacheKeys`、`AdminAuthRedisKeys`
 - 应用端私有常量已更名为 `AppAuthRedisKeys`
 
-### 3.4 已完成第一轮：互动目标类型已收敛为“公共语义层 + 模块映射层”
+### 3.4 已完成收尾：互动目标类型已收敛为“公共语义层 + 模块映射层”
 
 典型文件：
 
@@ -304,6 +307,8 @@
 - 跨模块共享能力已改为统一依赖公共语义层：
   - 成长规则统一收敛到 `libs/interaction/src/interaction-target-growth-rule.ts`
   - 举报目标到公共语义的投影从 `interaction-target.definition.ts` 移出，归还到举报模块自身维护
+- `ReportTargetTypeEnum.USER` 已纳入 `InteractionTargetTypeEnum.USER`，并落到统一的目标查询定义和 `SceneTypeEnum.USER_PROFILE` 场景映射
+- `download / purchase` 的章节目标集合已收敛到各自模块映射文件，模块内 SQL 与聚合逻辑改为复用本地数组，不再重复写死章节类型字面量
 - 评论链路中的历史错误已修正：
   - `libs/interaction/src/comment/resolver/comment-like.resolver.ts`
   - `libs/interaction/src/comment/resolver/comment-report.resolver.ts`
@@ -315,8 +320,9 @@
 - “统一”不是删除模块枚举，而是把“系统共享语义”和“模块本地编码”拆开。
 - 模块继续拥有自己的 `targetType` 事实源；平台只拥有公共语义事实源。
 - 后续如果新增互动模块，应先定义本模块枚举，再补一份到 `InteractionTargetTypeEnum` 的映射，而不是直接复用别的模块编码。
+- 本轮明确没有继续引入额外的全局 capability framework，避免把共享层膨胀成新的上帝文件。
 
-### 3.5 已部分完成：命名规范不统一问题已开始收敛
+### 3.5 已完成本轮高优先级整改：命名规范不统一问题已进一步收敛
 
 本轮已完成的命名统一：
 
@@ -326,6 +332,7 @@
 - `libs/platform/src/modules/auth/auth.constant.ts` 中的 `AuthErrorConstant` 已改为 `AuthErrorMessages`
 - `apps/app-api/src/modules/auth/auth.constant.ts` 中的本地错误文案已改为 `AppAuthErrorMessages`
 - `apps/admin-api/src/modules/content/comic/third-party/third-party.constant.ts` 中的 `PLATFORMS` 已改为 `COMIC_THIRD_PARTY_PLATFORMS`
+- `apps/admin-api/src/modules/system/audit/audit.constant.ts` 已将 `AuditActionTypeEnum` 值改为稳定编码，并新增 `AuditActionTypeLabels`
 
 具体表现：
 
@@ -344,7 +351,6 @@
   - `SmsErrorMessages`
 - 个别命名本身仍可继续优化：
   - `AuthDefaultValue` 仍偏单数语义，后续可评估是否统一为 `AuthDefaultValues`
-  - 审计动作枚举仍然把中文展示文案直接作为稳定值，后续应继续拆分编码与标签
 
 社区推荐做法：
 
@@ -355,10 +361,10 @@
 
 额外说明：
 
-- `apps/admin-api/src/modules/system/audit/audit.constant.ts:4` 当前仍把中文展示文案直接放进 `AuditActionTypeEnum` 值里。
-- 更稳妥的做法是：
+- `apps/admin-api/src/modules/system/audit/audit.constant.ts:4` 已完成拆分：
   - `AuditActionTypeEnum.LOGIN = 'LOGIN'`
   - `AuditActionTypeLabels[AuditActionTypeEnum.LOGIN] = '用户登录'`
+- `apps/admin-api/src/modules/system/audit/audit.service.ts` 查询时会同时兼容新编码和历史中文值，列表响应额外补充 `actionTypeLabel`
 
 ### 3.6 已部分完成：`*.constant.ts` 文件职责已开始回收
 
@@ -505,7 +511,7 @@
 
 ### 第三阶段：统一命名和职责
 
-1. 已部分完成：统一 `Enum / Labels / Messages / CacheKeys / Defaults` 命名体系
+1. 已完成本轮高优先级项：统一 `Enum / Labels / Messages / CacheKeys / Defaults` 命名体系
 2. 已部分完成：将行为型 helper 从 `*.constant.ts` 中迁出
 3. 已完成：为跨模块共享的目标类型建立公共根模型，并为互动模块补齐模块到公共语义的映射层
 
@@ -522,7 +528,7 @@
 ```text
 apps/admin-api/src/modules/auth/auth.constant.ts => AdminAuthCacheKeys(1), AdminAuthRedisKeys(2)
 apps/admin-api/src/modules/content/comic/third-party/third-party.constant.ts => COMIC_THIRD_PARTY_PLATFORMS(1)
-apps/admin-api/src/modules/system/audit/audit.constant.ts => AuditActionTypeEnum(10)
+apps/admin-api/src/modules/system/audit/audit.constant.ts => AuditActionTypeEnum(11), AuditActionTypeLabels(1)
 apps/app-api/src/modules/auth/auth.constant.ts => AppAuthErrorMessages(3), AppAuthRedisKeys(1)
 libs/app-content/src/announcement/announcement.constant.ts => AnnouncementPriorityEnum(1), AnnouncementTypeEnum(1)
 libs/app-content/src/page/page.constant.ts => PageRuleEnum(1)
@@ -543,10 +549,10 @@ libs/growth/src/level-rule/level-rule.constant.ts => UserLevelRulePermissionEnum
 libs/growth/src/task/task.constant.ts => TaskAssignmentStatusEnum(2), TaskClaimModeEnum(2), TaskCompleteModeEnum(2), TaskProgressActionTypeEnum(1), TaskRepeatTypeEnum(1), TaskStatusEnum(2), TaskTypeEnum(1)
 libs/interaction/src/browse-log/browse-log.constant.ts => BrowseLogTargetTypeEnum(10)
 libs/interaction/src/comment/comment.constant.ts => CommentTargetTypeEnum(15)
-libs/interaction/src/download/download.constant.ts => DownloadTargetTypeEnum(9)
+libs/interaction/src/download/download.constant.ts => DownloadTargetTypeEnum(8)
 libs/interaction/src/favorite/favorite.constant.ts => FavoriteTargetTypeEnum(10)
 libs/interaction/src/like/like.constant.ts => LikeTargetTypeEnum(13)
-libs/interaction/src/purchase/purchase.constant.ts => PaymentMethodEnum(1), PurchaseStatusEnum(4), PurchaseTargetTypeEnum(9)
+libs/interaction/src/purchase/purchase.constant.ts => PaymentMethodEnum(1), PurchaseStatusEnum(4), PurchaseTargetTypeEnum(8)
 libs/interaction/src/report/report.constant.ts => ReportReasonEnum(2), ReportStatusEnum(2), ReportTargetTypeEnum(14)
 libs/message/src/chat/chat.constant.ts => CHAT_MESSAGE_PAGE_LIMIT_DEFAULT(1), CHAT_MESSAGE_PAGE_LIMIT_MAX(1), ChatConversationMemberRoleEnum(1), ChatMessageStatusEnum(1), ChatMessageTypeEnum(3), MESSAGE_CHAT_SERVICE_TOKEN(2)
 libs/message/src/notification/notification.constant.ts => MessageNotificationSubjectTypeEnum(4), MessageNotificationTypeEnum(7)
