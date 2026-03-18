@@ -57,4 +57,3 @@ export class PointController {
     return this.userPointRuleService.updatePointRule(dto)
   }
 }
-

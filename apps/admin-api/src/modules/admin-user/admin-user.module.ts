@@ -10,8 +10,3 @@ import { AdminUserService } from './admin-user.service'
   exports: [],
 })
 export class AdminUserModule {}
-
-
-
-
-

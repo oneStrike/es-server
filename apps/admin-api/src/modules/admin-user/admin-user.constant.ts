@@ -16,4 +16,3 @@ export const EXCLUDE_ADMIN_USER_FIELDS = {
   /** 密码字段 */
   password: true,
 }
-

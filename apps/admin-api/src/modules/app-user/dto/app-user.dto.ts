@@ -470,21 +470,7 @@ export class AssignAdminAppUserBadgeDto {
   badgeId!: number
 }
 
-export class AdminAppUserBadgeItemDto {
-  @NumberProperty({
-    description: '徽章分配记录ID',
-    example: 1,
-    validation: false,
-  })
-  id!: number
-
-  @DateProperty({
-    description: '分配时间',
-    example: '2026-03-08T10:00:00.000Z',
-    validation: false,
-  })
-  createdAt!: Date
-
+export class AdminAppUserBadgeItemDto extends PickType(BaseDto, ['id', 'createdAt']) {
   @NestedProperty({
     description: '徽章信息',
     type: BaseUserBadgeDto,

@@ -6,7 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
@@ -55,15 +55,7 @@ export class FavoriteStatusResponseDto {
 /**
  * 收藏作品简要信息响应 DTO
  */
-export class FavoriteWorkBriefDto {
-  @NumberProperty({
-    description: '作品ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
+export class FavoriteWorkBriefDto extends IdDto {
   @StringProperty({
     description: '作品名称',
     example: '进击的巨人',
@@ -84,15 +76,7 @@ export class FavoriteWorkBriefDto {
 /**
  * 收藏列表项响应 DTO
  */
-export class FavoritePageItemDto {
-  @NumberProperty({
-    description: '收藏记录ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
+export class FavoritePageItemDto extends BaseDto {
   @NumberProperty({
     description: '用户ID',
     example: 1,
@@ -117,14 +101,6 @@ export class FavoritePageItemDto {
     validation: false,
   })
   targetType!: FavoriteTargetTypeEnum
-
-  @DateProperty({
-    description: '收藏时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: true,
-    validation: false,
-  })
-  createdAt!: Date
 
   @NestedProperty({
     description: '作品信息（仅作品类型返回）',

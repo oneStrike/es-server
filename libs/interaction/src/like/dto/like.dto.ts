@@ -3,10 +3,9 @@ import {
   DateProperty,
   EnumProperty,
   NestedProperty,
-  NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { LikeTargetTypeEnum } from '../like.constant'
 
@@ -55,15 +54,7 @@ export class LikeStatusResponseDto {
 /**
  * 点赞作品简要信息响应 DTO
  */
-export class LikeWorkBriefDto {
-  @NumberProperty({
-    description: '作品ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
+export class LikeWorkBriefDto extends IdDto {
   @StringProperty({
     description: '作品名称',
     example: '进击的巨人',
@@ -84,15 +75,7 @@ export class LikeWorkBriefDto {
 /**
  * 点赞列表项响应 DTO
  */
-export class LikePageItemDto {
-  @NumberProperty({
-    description: '点赞记录ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
+export class LikePageItemDto extends BaseDto {
   @NumberProperty({
     description: '用户ID',
     example: 1,
@@ -118,14 +101,6 @@ export class LikePageItemDto {
     validation: false,
   })
   targetType!: LikeTargetTypeEnum
-
-  @DateProperty({
-    description: '点赞时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: true,
-    validation: false,
-  })
-  createdAt!: Date
 
   @NestedProperty({
     description: '作品信息（仅作品类型返回）',

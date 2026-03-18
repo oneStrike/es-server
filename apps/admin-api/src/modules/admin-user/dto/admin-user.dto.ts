@@ -53,7 +53,7 @@ export class BaseUserDto extends BaseDto {
 
   @DateProperty({
     description: '最后登录时间',
-    example: '2021-01-01 00:00:00',
+    example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
   lastLoginAt?: Date

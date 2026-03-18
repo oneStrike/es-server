@@ -115,4 +115,3 @@ export class UserBadgeController {
     return this.userBadgeService.getBadgeStatistics()
   }
 }
-

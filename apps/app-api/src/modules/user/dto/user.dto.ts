@@ -585,21 +585,7 @@ export class UserCenterDto {
 /**
  * 用户徽章项 DTO
  */
-export class UserBadgeItemDto {
-  @NumberProperty({
-    description: '分配记录ID',
-    example: 1,
-    validation: false,
-  })
-  id!: number
-
-  @DateProperty({
-    description: '徽章获得时间',
-    example: '2026-03-08T10:00:00.000Z',
-    validation: false,
-  })
-  createdAt!: Date
-
+export class UserBadgeItemDto extends PickType(BaseDto, ['id', 'createdAt']) {
   @NestedProperty({
     description: '徽章详情',
     type: BaseUserBadgeDto,

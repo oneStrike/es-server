@@ -6,6 +6,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { ActionTypeEnum } from '../system/audit/audit.constant'
+import { AdminUserService } from './admin-user.service'
 import {
   BaseUserDto,
   ChangePasswordDto,
@@ -13,7 +14,6 @@ import {
   UserPageDto,
   UserRegisterDto,
 } from './dto/admin-user.dto'
-import { AdminUserService } from './admin-user.service'
 
 /**
  * 管理端用户控制器
@@ -134,8 +134,3 @@ export class AdminUserController {
     return this.adminUserService.unlockUser(query.id)
   }
 }
-
-
-
-
-
