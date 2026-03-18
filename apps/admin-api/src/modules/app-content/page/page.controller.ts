@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
-import { ActionTypeEnum } from '../../system/audit/audit.constant'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * APP页面配置管理控制器
@@ -72,7 +72,7 @@ export class AppPageController {
     model: Boolean,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '更新页面配置',
   })
   async update(@Body() body: UpdateAppPageDto) {

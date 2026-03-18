@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
-import { AuthErrorConstant } from './auth.constant'
+import { AuthErrorMessages } from './auth.constant'
 
 /**
  * AuthGuard JWT认证守卫
@@ -72,7 +72,7 @@ export class JwtAuthGuard
 
     // 强制认证时，必须有用户信息
     if (err || !user) {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
     return user
   }

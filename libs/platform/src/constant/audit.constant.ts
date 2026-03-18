@@ -17,15 +17,6 @@ export enum AuditStatusEnum {
 }
 
 /**
- * 审核状态名称映射
- */
-export const AuditStatusNames: Record<AuditStatusEnum, string> = {
-  [AuditStatusEnum.PENDING]: '待审核',
-  [AuditStatusEnum.APPROVED]: '已通过',
-  [AuditStatusEnum.REJECTED]: '已拒绝',
-}
-
-/**
  * 审核角色枚举
  * 用于标识执行审核操作的角色类型
  */
@@ -34,12 +25,4 @@ export enum AuditRoleEnum {
   MODERATOR = 0,
   /** 管理员 - 系统管理员 */
   ADMIN = 1,
-}
-
-/**
- * 审核角色名称映射
- */
-export const AuditRoleNames: Record<AuditRoleEnum, string> = {
-  [AuditRoleEnum.MODERATOR]: '版主',
-  [AuditRoleEnum.ADMIN]: '管理员',
 }

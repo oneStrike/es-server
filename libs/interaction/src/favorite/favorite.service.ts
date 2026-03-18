@@ -1,22 +1,14 @@
 import type { UserFavorite } from '@db/schema'
+import type {
+  FavoriteListQuery,
+  FavoriteRecordInput,
+} from './favorite.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
 import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.interface'
-
-type FavoriteTargetInput = Pick<UserFavorite, 'targetId'> & {
-  targetType: FavoriteTargetTypeEnum
-}
-
-type FavoriteRecordInput = FavoriteTargetInput & Pick<UserFavorite, 'userId'>
-
-type FavoriteListQuery = Pick<UserFavorite, 'userId'> &
-  Partial<Pick<FavoriteTargetInput, 'targetType'>> & {
-    pageIndex?: number
-    pageSize?: number
-  }
 
 /**
  * 收藏服务

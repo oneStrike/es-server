@@ -68,3 +68,6 @@ export const userLike = pgTable("user_like", {
      */
     index("user_like_created_at_idx").on(table.createdAt),
 ]);
+
+export type UserLike = typeof userLike.$inferSelect;
+export type UserLikeInsert = typeof userLike.$inferInsert;

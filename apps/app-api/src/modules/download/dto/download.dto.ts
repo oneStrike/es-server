@@ -1,6 +1,6 @@
 import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content'
 import { BaseDownloadRecordDto } from '@libs/interaction'
-import { ContentTypeEnum } from '@libs/platform/constant'
+import { ContentTypeEnum, WorkTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
   EnumProperty,
@@ -21,11 +21,11 @@ export class QueryDownloadedWorkDto extends IntersectionType(
 ) {
   @EnumProperty({
     description: '作品类型（1=漫画，2=小说）',
-    enum: ContentTypeEnum,
-    example: ContentTypeEnum.COMIC,
+    enum: WorkTypeEnum,
+    example: WorkTypeEnum.COMIC,
     required: false,
   })
-  workType?: ContentTypeEnum
+  workType?: WorkTypeEnum
 }
 
 export class AppQueryDownloadedWorkDto extends OmitType(QueryDownloadedWorkDto, ['userId']) {}

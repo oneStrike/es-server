@@ -59,3 +59,6 @@ export const userWorkReadingState = pgTable("user_work_reading_state", {
      */
     index("user_work_reading_state_last_read_chapter_id_idx").on(table.lastReadChapterId),
 ]);
+
+export type UserWorkReadingState = typeof userWorkReadingState.$inferSelect;
+export type UserWorkReadingStateInsert = typeof userWorkReadingState.$inferInsert;

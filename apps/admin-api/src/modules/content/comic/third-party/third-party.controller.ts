@@ -9,7 +9,7 @@ import {
   SearchComicRequestDto,
 } from './dto/third-party.dto'
 import { ComicThirdPartyService } from './third-party-service'
-import { PLATFORMS } from './third-party.constant'
+import { COMIC_THIRD_PARTY_PLATFORMS } from './third-party.constant'
 
 @ApiTags('内容管理/漫画管理模块/三方平台内容解析')
 @Controller('admin/work/comic/third-party')
@@ -23,7 +23,7 @@ export class ComicThirdPartyController {
     isArray: true,
   })
   async getPlatforms() {
-    return PLATFORMS
+    return COMIC_THIRD_PARTY_PLATFORMS
   }
 
   @Get('/search')

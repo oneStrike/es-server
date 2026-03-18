@@ -1,6 +1,6 @@
 import {
   AuditStatusEnum,
-  ContentTypeEnum,
+  WorkTypeEnum,
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import {
@@ -126,11 +126,11 @@ export class BaseWorkDto extends BaseDto {
   // ==================== 基础信息 ====================
   @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
-    example: ContentTypeEnum.COMIC,
+    example: WorkTypeEnum.COMIC,
     required: true,
-    enum: ContentTypeEnum,
+    enum: WorkTypeEnum,
   })
-  type!: ContentTypeEnum
+  type!: WorkTypeEnum
 
   @StringProperty({
     description: '作品名称',
@@ -553,11 +553,11 @@ export class QueryWorkDto extends IntersectionType(
 
   @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
-    example: ContentTypeEnum.COMIC,
+    example: WorkTypeEnum.COMIC,
     required: true,
-    enum: ContentTypeEnum,
+    enum: WorkTypeEnum,
   })
-  type!: ContentTypeEnum
+  type!: WorkTypeEnum
 
   @ArrayProperty({
     description: '分类ID列表',

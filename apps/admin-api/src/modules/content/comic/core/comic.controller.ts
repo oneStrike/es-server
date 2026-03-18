@@ -9,7 +9,7 @@ import {
   UpdateWorkStatusDto,
   WorkService,
 } from '@libs/content'
-import { ContentTypeEnum } from '@libs/platform/constant'
+import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { BatchOperationResponseDto, IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -26,7 +26,7 @@ export class ComicController {
     model: IdDto,
   })
   async create(@Body() body: CreateWorkDto) {
-    return this.workService.createWork({ ...body, type: ContentTypeEnum.COMIC })
+    return this.workService.createWork({ ...body, type: WorkTypeEnum.COMIC })
   }
 
   @Get('/page')
@@ -35,7 +35,7 @@ export class ComicController {
     model: BaseWorkDto,
   })
   async getPage(@Query() query: QueryWorkDto) {
-    return this.workService.getWorkPage({ ...query, type: ContentTypeEnum.COMIC })
+    return this.workService.getWorkPage({ ...query, type: WorkTypeEnum.COMIC })
   }
 
   @Get('/detail')

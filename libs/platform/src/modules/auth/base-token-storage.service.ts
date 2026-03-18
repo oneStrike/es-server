@@ -6,6 +6,7 @@ import type {
 } from './token-storage.types'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
+import { RevokeTokenReasonEnum } from './auth.constant'
 
 const INVALID_TOKEN_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
@@ -95,7 +96,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     return false
   }
 
-  async revokeByJti(jti: string, reason: string) {
+  async revokeByJti(jti: string, reason: RevokeTokenReasonEnum) {
     await this.updateManyItems(
       { jti },
       {
@@ -106,7 +107,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
   }
 
-  async revokeByJtis(jtis: string[], reason: string) {
+  async revokeByJtis(jtis: string[], reason: RevokeTokenReasonEnum) {
     await this.updateManyItems(
       { jti: { in: jtis } },
       {
@@ -121,7 +122,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     )
   }
 
-  async revokeAllByUserId(userId: number, reason: string) {
+  async revokeAllByUserId(userId: number, reason: RevokeTokenReasonEnum) {
     const tokens = await this.findManyItems({
       userId,
       revokedAt: null,
@@ -165,7 +166,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
       },
       {
         revokedAt: new Date(),
-        revokeReason: 'TOKEN_EXPIRED',
+        revokeReason: RevokeTokenReasonEnum.TOKEN_EXPIRED,
       },
     )
   }

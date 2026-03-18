@@ -18,7 +18,7 @@ import {
   UserExperienceService,
   UserPointService,
 } from '@libs/growth'
-import { UserStatusEnum } from '@libs/platform/constant'
+import { AdminUserRoleEnum, UserStatusEnum } from '@libs/platform/constant'
 import { UserService as UserCoreService } from '@libs/user'
 
 import {
@@ -28,7 +28,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
-import { AdminUserRoleEnum } from '../admin-user/admin-user.constant'
 
 /**
  * APP 用户管理服务

@@ -1,8 +1,9 @@
 import { DrizzleService } from '@db/core'
 import { RsaService, ScryptService } from '@libs/platform/modules'
+import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { AuthErrorMessages } from './auth.constant'
+import { AppAuthErrorMessages } from './auth.constant'
 import { ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto'
 import { SmsService } from './sms.service'
 import { AppTokenStorageService } from './token-storage.service'
@@ -77,7 +78,7 @@ export class PasswordService {
       .limit(1)
 
     if (!user) {
-      throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
     // TODO
     // await this.smsService.validateVerifyCode({ phone, code })
@@ -90,9 +91,15 @@ export class PasswordService {
         .where(eq(this.appUser.id, user.id))
         .returning({ id: this.appUser.id }),
     )
-    this.drizzle.assertAffectedRows(rows, AuthErrorMessages.ACCOUNT_NOT_FOUND)
+    this.drizzle.assertAffectedRows(
+      rows,
+      AppAuthErrorMessages.ACCOUNT_NOT_FOUND,
+    )
 
-    await this.tokenStorageService.revokeAllByUserId(user.id, 'PASSWORD_CHANGE')
+    await this.tokenStorageService.revokeAllByUserId(
+      user.id,
+      RevokeTokenReasonEnum.PASSWORD_CHANGE,
+    )
 
     return true
   }
@@ -111,7 +118,7 @@ export class PasswordService {
       .limit(1)
 
     if (!user) {
-      throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
 
     // 验证旧密码
@@ -144,10 +151,16 @@ export class PasswordService {
         .where(eq(this.appUser.id, userId))
         .returning({ id: this.appUser.id }),
     )
-    this.drizzle.assertAffectedRows(rows, AuthErrorMessages.ACCOUNT_NOT_FOUND)
+    this.drizzle.assertAffectedRows(
+      rows,
+      AppAuthErrorMessages.ACCOUNT_NOT_FOUND,
+    )
 
     // 撤销其他设备登录
-    await this.tokenStorageService.revokeAllByUserId(userId, 'PASSWORD_CHANGE')
+    await this.tokenStorageService.revokeAllByUserId(
+      userId,
+      RevokeTokenReasonEnum.PASSWORD_CHANGE,
+    )
 
     return true
   }

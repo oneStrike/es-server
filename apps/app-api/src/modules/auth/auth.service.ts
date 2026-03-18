@@ -5,6 +5,8 @@ import { AuthSessionService } from '@libs/identity'
 import { GenderEnum } from '@libs/platform/constant'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import {
+  AuthConstants,
+  AuthDefaultValue,
   AuthService as BaseAuthService,
   LoginGuardService,
 } from '@libs/platform/modules/auth'
@@ -12,10 +14,8 @@ import { extractIpAddress } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
 import {
-  AuthConstants,
-  AuthDefaultValue,
-  AuthErrorMessages,
-  AuthRedisKeys,
+  AppAuthRedisKeys,
+  AppAuthErrorMessages,
 } from './auth.constant'
 import { LoginDto, TokenDto } from './dto/auth.dto'
 import { PasswordService } from './password.service'
@@ -71,7 +71,7 @@ export class AuthService {
   async register(body: LoginDto, req: FastifyRequest) {
     if (!body.phone) {
       throw new BadRequestException(
-        AuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
+        AppAuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
       )
     }
 
@@ -124,16 +124,20 @@ export class AuthService {
    */
   async login(body: LoginDto, req: FastifyRequest) {
     if (!body.phone && !body.account) {
-      throw new BadRequestException(AuthErrorMessages.PHONE_OR_ACCOUNT_REQUIRED)
+      throw new BadRequestException(
+        AppAuthErrorMessages.PHONE_OR_ACCOUNT_REQUIRED,
+      )
     }
 
     if (!body.code && !body.password) {
-      throw new BadRequestException(AuthErrorMessages.PASSWORD_OR_CODE_REQUIRED)
+      throw new BadRequestException(
+        AppAuthErrorMessages.PASSWORD_OR_CODE_REQUIRED,
+      )
     }
 
     if (body.code && !body.phone) {
       throw new BadRequestException(
-        AuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
+        AppAuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
       )
     }
 
@@ -185,16 +189,18 @@ export class AuthService {
         return this.register(body, req)
       }
 
-      throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
 
     if (body.code) {
       if (!user.phoneNumber) {
-        throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_BOUND_PHONE)
+        throw new BadRequestException(
+          AppAuthErrorMessages.ACCOUNT_NOT_BOUND_PHONE,
+        )
       }
 
       if (body.phone && body.phone !== user.phoneNumber) {
-        throw new BadRequestException(AuthErrorMessages.PHONE_MISMATCH)
+        throw new BadRequestException(AppAuthErrorMessages.PHONE_MISMATCH)
       }
 
       // await this.smsService.validateVerifyCode({
@@ -202,7 +208,9 @@ export class AuthService {
       //   code: body.code,
       // })
     } else {
-      await this.loginGuardService.checkLock(AuthRedisKeys.LOGIN_LOCK(user.id))
+      await this.loginGuardService.checkLock(
+        AppAuthRedisKeys.LOGIN_LOCK(user.id),
+      )
 
       const password = this.rsaService.decryptWith(body.password!)
       const isPasswordValid = await this.scryptService.verifyPassword(
@@ -212,8 +220,8 @@ export class AuthService {
 
       if (!isPasswordValid) {
         await this.loginGuardService.recordFail(
-          AuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
-          AuthRedisKeys.LOGIN_LOCK(user.id),
+          AppAuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
+          AppAuthRedisKeys.LOGIN_LOCK(user.id),
           {
             maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
             failTtl: AuthConstants.LOGIN_FAIL_TTL,
@@ -223,12 +231,12 @@ export class AuthService {
       }
 
       await this.loginGuardService.clearHistory(
-        AuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
+        AppAuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
       )
     }
 
     if (!user.isEnabled) {
-      throw new BadRequestException(AuthErrorMessages.ACCOUNT_DISABLED)
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_DISABLED)
     }
 
     return this.handleLoginSuccess(user, req)

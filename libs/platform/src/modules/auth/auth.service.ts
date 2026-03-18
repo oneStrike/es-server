@@ -4,7 +4,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
-import { AuthErrorConstant } from './auth.constant'
+import { AuthErrorMessages } from './auth.constant'
 import { JwtBlacklistService } from './jwt-blacklist.service'
 
 interface RefreshAccessTokenOptions {
@@ -69,7 +69,7 @@ export class AuthService {
     const { aud, jti, ...payload } =
       await this.jwtService.verifyAsync(refreshToken)
     if (!jti || typeof jti !== 'string') {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     const isBlacklist = await this.blacklistService.isInBlacklist(jti)
@@ -83,7 +83,7 @@ export class AuthService {
       || isBlacklist
       || !isPersisted
     ) {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     if (options.revokeRefreshTokenJti) {

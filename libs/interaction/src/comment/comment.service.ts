@@ -1,13 +1,21 @@
 import type { InteractionTx } from '../interaction-tx.type'
+import type {
+  CommentVisibleState,
+  CreateCommentInput,
+  RepliesQuery,
+  ReplyCommentInput,
+  TransactionRetryOptions,
+  UserCommentsQuery,
+  VisibleCommentEffectPayload,
+} from './comment.type'
 import { DrizzleService } from '@db/core'
-import { UserComment } from '@db/schema'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-import { AuditStatusEnum } from '@libs/platform/constant'
 
+import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
@@ -65,9 +73,7 @@ export class CommentService {
 
   private async withTransactionConflictRetry<T>(
     operation: () => Promise<T>,
-    options?: {
-      maxRetries?: number
-    },
+    options?: TransactionRetryOptions,
   ): Promise<T> {
     const maxRetries = Math.max(1, options?.maxRetries ?? 3)
     let lastError: unknown = new Error('事务冲突重试次数已耗尽')
@@ -126,11 +132,7 @@ export class CommentService {
    * @param comment.deletedAt 删除时间
    * @returns 是否可见
    */
-  private isVisible(comment: {
-    auditStatus: number
-    isHidden: boolean
-    deletedAt: Date | null
-  }): boolean {
+  private isVisible(comment: CommentVisibleState): boolean {
     return (
       comment.auditStatus === AuditStatusEnum.APPROVED &&
       !comment.isHidden &&
@@ -220,10 +222,7 @@ export class CommentService {
    */
   private async compensateVisibleCommentEffects(
     tx: InteractionTx,
-    comment: Pick<
-      UserComment,
-      'id' | 'userId' | 'targetType' | 'targetId' | 'replyToId' | 'createdAt'
-    >,
+    comment: VisibleCommentEffectPayload,
     _meta: CommentTargetMeta,
   ) {
     // 移除成长奖励逻辑，由外部 createComment/replyComment 处理，
@@ -286,12 +285,7 @@ export class CommentService {
    * @returns 新创建的评论ID
    * @throws BadRequestException - 当权限不足或请求冲突时抛出
    */
-  async createComment(input: {
-    userId: number
-    targetType: CommentTargetTypeEnum
-    targetId: number
-    content: string
-  }) {
+  async createComment(input: CreateCommentInput) {
     const { userId, targetType, targetId, content } = input
 
     // 校验用户是否有权限在该目标下评论
@@ -394,11 +388,7 @@ export class CommentService {
    * @returns 新创建的回复ID
    * @throws BadRequestException - 当被回复的评论不存在时抛出
    */
-  async replyComment(input: {
-    userId: number
-    content: string
-    replyToId: number
-  }) {
+  async replyComment(input: ReplyCommentInput) {
     const { userId, content, replyToId } = input
 
     // 查询被回复的评论
@@ -565,11 +555,7 @@ export class CommentService {
    * @param query - 查询参数，包含一级评论ID和分页信息
    * @returns 分页的回复列表，包含用户基本信息
    */
-  async getReplies(query: {
-    commentId: number
-    pageIndex?: number
-    pageSize?: number
-  }) {
+  async getReplies(query: RepliesQuery) {
     const { commentId, pageIndex, pageSize } = query
     const page = await this.drizzle.ext.findPagination(this.userComment, {
       where: this.drizzle.buildWhere(this.userComment, {
@@ -628,16 +614,7 @@ export class CommentService {
    * @param userId - 用户ID
    * @returns 分页的评论列表
    */
-  async getUserComments(
-    query: {
-      pageIndex?: number
-      pageSize?: number
-      targetType?: number
-      targetId?: number
-      auditStatus?: number
-    },
-    userId: number,
-  ) {
+  async getUserComments(query: UserCommentsQuery, userId: number) {
     return this.drizzle.ext.findPagination(this.userComment, {
       where: this.drizzle.buildWhere(this.userComment, {
         and: {

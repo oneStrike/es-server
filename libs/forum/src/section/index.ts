@@ -1,4 +1,3 @@
 export * from './dto/forum-section.dto'
-export * from './forum-section.constant'
 export * from './forum-section.module'
 export * from './forum-section.service'

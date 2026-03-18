@@ -1,4 +1,7 @@
-/// 内容类型枚举
+/**
+ * 内容类型枚举
+ * 统一覆盖作品与论坛内容的顶层分类。
+ */
 export enum ContentTypeEnum {
   /** 漫画 */
   COMIC = 1,
@@ -8,16 +11,20 @@ export enum ContentTypeEnum {
   TOPIC = 3,
 }
 
-export enum BusinessModuleEnum {
+/**
+ * 作品类型枚举
+ * 仅覆盖作品域，复用内容类型中的漫画/小说取值。
+ */
+export enum WorkTypeEnum {
   /** 漫画 */
   COMIC = 1,
   /** 小说 */
-  NOVEL = 2,
-  /** 论坛 */
-  FORUM = 3,
+  NOVEL = 2
 }
 
-/// 作品可见权限枚举
+/**
+ * 作品可见权限枚举
+ */
 export enum WorkViewPermissionEnum {
   INHERIT = -1,
   /** 所有人可见 */

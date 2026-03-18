@@ -1,10 +1,21 @@
+import type { UserLike } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
-import { LikePageQueryDto } from './dto/like.dto'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
+
+type LikeTargetInput = Pick<UserLike, 'targetId'> & {
+  targetType: LikeTargetTypeEnum
+}
+
+type LikeRecordInput = LikeTargetInput & Pick<UserLike, 'userId'>
+
+type LikeListQuery = Pick<LikeRecordInput, 'userId' | 'targetType'> & {
+  pageIndex?: number
+  pageSize?: number
+}
 
 /**
  * 点赞服务
@@ -152,16 +163,14 @@ export class LikeService {
   /**
    * 点赞操作
    * 执行完整的点赞流程：解析目标元数据、创建点赞记录、更新计数、执行后置钩子、发放成长奖励
-   * @param targetType - 点赞目标类型
-   * @param targetId - 目标ID
-   * @param userId - 用户ID
+   * @param input - 点赞参数
+   * @param input.targetType - 点赞目标类型
+   * @param input.targetId - 目标ID
+   * @param input.userId - 用户ID
    * @throws BadRequestException 当已点赞或目标不存在时抛出异常
    */
-  async like(
-    targetType: LikeTargetTypeEnum,
-    targetId: number,
-    userId: number,
-  ): Promise<void> {
+  async like(input: LikeRecordInput): Promise<void> {
+    const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
     await this.db.transaction(async (tx) => {
@@ -195,16 +204,14 @@ export class LikeService {
   /**
    * 取消点赞操作
    * 执行完整的取消点赞流程：删除点赞记录、更新计数
-   * @param targetType - 点赞目标类型
-   * @param targetId - 目标ID
-   * @param userId - 用户ID
+   * @param input - 取消点赞参数
+   * @param input.targetType - 点赞目标类型
+   * @param input.targetId - 目标ID
+   * @param input.userId - 用户ID
    * @throws BadRequestException 当点赞记录不存在时抛出异常
    */
-  async unlike(
-    targetType: LikeTargetTypeEnum,
-    targetId: number,
-    userId: number,
-  ) {
+  async unlike(input: LikeRecordInput) {
+    const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
     await this.db.transaction(async (tx) => {
@@ -229,16 +236,14 @@ export class LikeService {
   /**
    * 检查点赞状态
    * 查询指定用户对指定目标的点赞状态
-   * @param targetType - 点赞目标类型
-   * @param targetId - 目标ID
-   * @param userId - 用户ID
+   * @param input - 查询参数
+   * @param input.targetType - 点赞目标类型
+   * @param input.targetId - 目标ID
+   * @param input.userId - 用户ID
    * @returns 是否已点赞（true表示已点赞）
    */
-  async checkLikeStatus(
-    targetType: LikeTargetTypeEnum,
-    targetId: number,
-    userId: number,
-  ): Promise<boolean> {
+  async checkLikeStatus(input: LikeRecordInput): Promise<boolean> {
+    const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
       this.userLike,
       and(
@@ -252,23 +257,22 @@ export class LikeService {
   /**
    * 获取用户的点赞列表
    * 查询指定用户的点赞记录，支持分页，并关联查询目标详情
-   * @param dto - 查询参数
-   * @param dto.targetType - 点赞目标类型
-   * @param dto.pageIndex - 页码（默认0）
-   * @param dto.pageSize - 每页数量（默认15）
-   * @param userId - 用户ID
+   * @param query - 查询参数
+   * @param query.targetType - 点赞目标类型
+   * @param query.pageIndex - 页码（默认0）
+   * @param query.pageSize - 每页数量（默认15）
    * @returns 分页点赞记录列表，包含目标详情
    */
-  async getUserLikes(dto: LikePageQueryDto, userId: number) {
+  async getUserLikes(query: LikeListQuery) {
     const page = await this.drizzle.ext.findPagination(this.userLike, {
       where: this.drizzle.buildWhere(this.userLike, {
         and: {
-          targetType: dto.targetType,
-          userId,
+          targetType: query.targetType,
+          userId: query.userId,
         },
       }),
-      pageIndex: dto.pageIndex,
-      pageSize: dto.pageSize,
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
       orderBy: { createdAt: 'desc' },
     })
 
@@ -276,7 +280,7 @@ export class LikeService {
       return page
     }
 
-    const resolver = this.getResolver(dto.targetType)
+    const resolver = this.getResolver(query.targetType)
     if (!resolver.batchGetDetails) {
       return page
     }
@@ -292,7 +296,7 @@ export class LikeService {
       detailMap = await resolver.batchGetDetails(targetIds)
     } catch (error) {
       this.logger.warn(
-        `like_detail_resolve_failed targetType=${dto.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
+        `like_detail_resolve_failed targetType=${query.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
           error instanceof Error ? error.message : String(error)
         }`,
       )
@@ -300,13 +304,13 @@ export class LikeService {
     }
     if (!detailMap || detailMap.size === 0) {
       this.logger.warn(
-        `like_detail_empty targetType=${dto.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt}`,
+        `like_detail_empty targetType=${query.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt}`,
       )
       return page
     }
     if (detailMap.size < targetIds.length) {
       this.logger.warn(
-        `like_detail_partial_missing targetType=${dto.targetType} batchSize=${targetIds.length} resolvedSize=${detailMap.size} missingSize=${targetIds.length - detailMap.size} elapsedMs=${Date.now() - startedAt}`,
+        `like_detail_partial_missing targetType=${query.targetType} batchSize=${targetIds.length} resolvedSize=${detailMap.size} missingSize=${targetIds.length - detailMap.size} elapsedMs=${Date.now() - startedAt}`,
       )
     }
 

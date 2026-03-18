@@ -7,7 +7,7 @@ import { ApiDoc } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
-import { ActionTypeEnum } from '../../system/audit/audit.constant'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @ApiTags('APP管理/应用配置')
 @Controller('admin/app-config')
@@ -31,7 +31,7 @@ export class AppConfigController {
     model: BaseAppConfigDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '更新应用配置',
   })
   async update(@Body() body: UpdateAppConfigDto) {

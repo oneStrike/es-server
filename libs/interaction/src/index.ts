@@ -37,12 +37,11 @@ export * from './purchase'
 // reading state
 export * from './reading-state'
 // report
-export * from './report/dto/report-app.dto'
-
 export * from './report/dto/report.dto'
 export * from './report/interfaces/report-target-resolver.interface'
 export * from './report/report.constant'
 export * from './report/report.module'
 export * from './report/report.service'
+export * from './report/report.type'
 
 export * from './user-assets'

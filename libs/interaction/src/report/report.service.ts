@@ -1,9 +1,9 @@
 import type { InteractionTx } from '../interaction-tx.type'
 import type {
-  CreateReportInputDto,
-  CreateUserReportDto,
+  CreateReportInput,
+  CreateUserReportInput,
   CreateUserReportOptions,
-} from './dto/report.dto'
+} from './report.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
@@ -73,7 +73,7 @@ export class ReportService {
    * @returns 创建的举报记录
    */
   async createReport(
-    dto: CreateReportInputDto,
+    dto: CreateReportInput,
     options: CreateUserReportOptions = {},
   ) {
     const {
@@ -140,7 +140,7 @@ export class ReportService {
    */
   private async createUserReport(
     tx: InteractionTx,
-    dto: CreateUserReportDto,
+    dto: CreateUserReportInput,
     options: CreateUserReportOptions = {},
   ) {
     const { status, ...otherDto } = dto

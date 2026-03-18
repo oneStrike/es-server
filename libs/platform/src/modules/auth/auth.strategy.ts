@@ -4,7 +4,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt'
-import { AuthErrorConstant } from './auth.constant'
+import { AuthErrorMessages } from './auth.constant'
 import { JwtBlacklistService } from './jwt-blacklist.service'
 
 /**
@@ -62,36 +62,36 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     // 验证 audience
     const expectedAud = this.configService.get<string>('auth.aud')
     if (expectedAud && payload.aud !== expectedAud) {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     // 验证令牌类型必须为 access
     if (payload.type !== 'access') {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     // 验证发行者（可选）
     const expectedIss = this.configService.get<string>('auth.iss')
     if (expectedIss && payload.iss !== expectedIss) {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     // 验证 token ID 是否存在
     const jti = payload.jti
     if (!jti) {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     // 检查令牌是否在黑名单中
     const isBlacklisted = await this.jwtBlacklistService.isInBlacklist(jti)
     if (isBlacklisted) {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     // 检查令牌是否在数据库中被撤销
     const isRevoked = !(await this.tokenStorageService.isTokenValid(jti))
     if (isRevoked) {
-      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     // 验证通过，返回用户信息

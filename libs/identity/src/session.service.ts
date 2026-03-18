@@ -3,6 +3,7 @@ import type { FastifyRequest } from 'fastify'
 
 import {
   AuthDefaultValue,
+  RevokeTokenReasonEnum,
   AuthService as BaseAuthService,
 } from '@libs/platform/modules/auth'
 import {
@@ -65,7 +66,10 @@ export class AuthSessionService {
       validateRefreshTokenJti: async (jti) =>
         this.tokenStorageService.isTokenValid(jti),
       revokeRefreshTokenJti: async (jti) =>
-        this.tokenStorageService.revokeByJti(jti, 'TOKEN_REFRESH'),
+        this.tokenStorageService.revokeByJti(
+          jti,
+          RevokeTokenReasonEnum.TOKEN_REFRESH,
+        ),
     })
 
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
@@ -88,7 +92,7 @@ export class AuthSessionService {
 
       await this.tokenStorageService.revokeByJtis(
         [accessPayload.jti, refreshPayload.jti],
-        'USER_LOGOUT',
+        RevokeTokenReasonEnum.USER_LOGOUT,
       )
     }
 

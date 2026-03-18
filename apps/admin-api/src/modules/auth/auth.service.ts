@@ -4,6 +4,7 @@ import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity'
 import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
 import {
+  AuthConstants,
   AuthService as BaseAuthService,
   LoginGuardService,
 } from '@libs/platform/modules/auth'
@@ -14,7 +15,7 @@ import {
 } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
-import { AuthConstants, AuthRedisKeys, CacheKey } from './auth.constant'
+import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
 
 /**
@@ -44,7 +45,7 @@ export class AuthService {
    * 获取验证码
    */
   async getCaptcha() {
-    return this.captchaService.generateSvgCaptcha(CacheKey.CAPTCHA)
+    return this.captchaService.generateSvgCaptcha(AdminAuthCacheKeys.CAPTCHA)
   }
 
   /**
@@ -59,18 +60,21 @@ export class AuthService {
     if (isProduction()) {
       // 验证验证码是否正确
       const isValid = await this.captchaService.verify(
-        CacheKey.CAPTCHA,
+        AdminAuthCacheKeys.CAPTCHA,
         body.captchaId,
         body.captcha,
       )
       if (!isValid) {
-        await this.captchaService.remove(CacheKey.CAPTCHA, body.captchaId)
+        await this.captchaService.remove(
+          AdminAuthCacheKeys.CAPTCHA,
+          body.captchaId,
+        )
         throw new BadRequestException('验证码错误')
       }
     }
 
     // 验证通过后，删除已使用的验证码
-    await this.captchaService.remove(CacheKey.CAPTCHA, body.captchaId)
+    await this.captchaService.remove(AdminAuthCacheKeys.CAPTCHA, body.captchaId)
 
     // 查找用户
     const [user] = await this.db
@@ -87,7 +91,7 @@ export class AuthService {
     }
 
     // 检查账户是否被锁定
-    await this.loginGuardService.checkLock(AuthRedisKeys.LOGIN_LOCK(user.id))
+    await this.loginGuardService.checkLock(AdminAuthRedisKeys.LOGIN_LOCK(user.id))
 
     // 解密密码
     let password = body.password
@@ -95,8 +99,8 @@ export class AuthService {
       password = this.rsaService.decryptWith(body.password)
     } catch {
       await this.loginGuardService.recordFail(
-        AuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
-        AuthRedisKeys.LOGIN_LOCK(user.id),
+        AdminAuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
+        AdminAuthRedisKeys.LOGIN_LOCK(user.id),
         {
           maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
           failTtl: AuthConstants.LOGIN_FAIL_TTL,
@@ -113,8 +117,8 @@ export class AuthService {
     )
     if (!isPasswordValid) {
       await this.loginGuardService.recordFail(
-        AuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
-        AuthRedisKeys.LOGIN_LOCK(user.id),
+        AdminAuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
+        AdminAuthRedisKeys.LOGIN_LOCK(user.id),
         {
           maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
           failTtl: AuthConstants.LOGIN_FAIL_TTL,

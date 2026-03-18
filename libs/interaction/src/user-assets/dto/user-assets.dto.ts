@@ -1,6 +1,6 @@
 import { NumberProperty } from '@libs/platform/decorators'
 
-export class UserAssetsSummaryDto {
+export class BaseUserAssetsSummaryDto {
   @NumberProperty({
     description: '已购买作品数',
     example: 5,
@@ -57,3 +57,5 @@ export class UserAssetsSummaryDto {
   })
   commentCount!: number
 }
+
+export class UserAssetsSummaryDto extends BaseUserAssetsSummaryDto {}

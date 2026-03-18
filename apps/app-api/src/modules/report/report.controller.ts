@@ -1,8 +1,9 @@
-import { CreateReportBodyDto, ReportService } from '@libs/interaction'
+import { ReportService } from '@libs/interaction'
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { CreateReportBodyDto } from './dto/report.dto'
 
 @ApiTags('举报模块')
 @Controller('app/report')

@@ -1,11 +1,15 @@
+import type {
+  ReadingHistoryIndexedRow,
+  ReadingHistoryItem,
+  ReadingHistoryQuery,
+  TouchByWorkInput,
+} from './reading-state.type'
 import { DrizzleService } from '@db/core'
-import { ContentTypeEnum } from '@libs/platform/constant'
+import { ContentTypeEnum, WorkTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
-import { QueryReadingHistoryDto } from './dto/reading-state.dto'
 import {
   IReadingStateResolver,
-  ReadingStateChapterSnapshot,
   ReadingStateWorkSnapshot,
 } from './interfaces/reading-state-resolver.interface'
 
@@ -104,13 +108,7 @@ export class ReadingStateService {
   /**
    * 更新阅读状态（按作品）
    */
-  async touchByWork(params: {
-    userId: number
-    workId: number
-    workType: ContentTypeEnum
-    lastReadChapterId?: number
-    lastReadAt?: Date
-  }) {
+  async touchByWork(params: TouchByWorkInput) {
     const {
       userId,
       workId,
@@ -150,13 +148,7 @@ export class ReadingStateService {
   /**
    * 安全地更新阅读状态（按作品）
    */
-  async touchByWorkSafely(params: {
-    userId: number
-    workId: number
-    workType: ContentTypeEnum
-    lastReadChapterId?: number
-    lastReadAt?: Date
-  }) {
+  async touchByWorkSafely(params: TouchByWorkInput) {
     try {
       await this.touchByWork(params)
     } catch (error) {
@@ -211,8 +203,8 @@ export class ReadingStateService {
   /**
    * 获取用户的阅读历史列表
    */
-  async getUserReadingHistory(dto: QueryReadingHistoryDto) {
-    const { workType, userId, workId, pageIndex, pageSize } = dto
+  async getUserReadingHistory(query: ReadingHistoryQuery) {
+    const { workType, userId, workId, pageIndex, pageSize } = query
     const page = await this.drizzle.ext.findPagination(
       this.userWorkReadingState,
       {
@@ -229,23 +221,12 @@ export class ReadingStateService {
       },
     )
 
-    const orderedList: Array<{
-      workId: number
-      workType: number
-      lastReadAt: Date
-      lastReadChapterId: number | null
-      work: ReadingStateWorkSnapshot
-      continueChapter: ReadingStateChapterSnapshot | undefined
-    } | undefined> = Array.from({ length: page.list.length })
+    const orderedList: Array<ReadingHistoryItem | undefined> = Array.from({
+      length: page.list.length,
+    })
     const typeGroups = new Map<
       ContentTypeEnum,
-      Array<{
-        index: number
-        workId: number
-        workType: number
-        lastReadAt: Date
-        lastReadChapterId: number | null
-      }>
+      ReadingHistoryIndexedRow[]
     >()
 
     for (const [index, item] of page.list.entries()) {
@@ -325,14 +306,7 @@ export class ReadingStateService {
       }
     }
 
-    const list = orderedList.filter(Boolean) as Array<{
-      workId: number
-      workType: number
-      lastReadAt: Date
-      lastReadChapterId: number | null
-      work: ReadingStateWorkSnapshot
-      continueChapter: ReadingStateChapterSnapshot | undefined
-    }>
+    const list = orderedList.filter(Boolean) as ReadingHistoryItem[]
 
     return {
       ...page,
@@ -359,7 +333,7 @@ export class ReadingStateService {
   /**
    * 清空用户的阅读历史
    */
-  async clearUserReadingHistory(userId: number, workType?: ContentTypeEnum) {
+  async clearUserReadingHistory(userId: number, workType?: WorkTypeEnum) {
     await this.db
       .delete(this.userWorkReadingState)
       .where(

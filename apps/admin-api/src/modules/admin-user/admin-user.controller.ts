@@ -5,7 +5,7 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
-import { ActionTypeEnum } from '../system/audit/audit.constant'
+import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AdminUserService } from './admin-user.service'
 import {
   BaseUserDto,
@@ -97,7 +97,7 @@ export class AdminUserController {
     model: IdDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '用户修改账户密码',
   })
   async changePassword(

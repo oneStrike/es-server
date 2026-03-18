@@ -1,3 +1,4 @@
+import type { UserPurchaseRecord } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import {
   DrizzleService,
@@ -10,12 +11,32 @@ import {
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import {
-  PurchaseTargetDto,
-  QueryPurchasedWorkChapterDto,
-  QueryPurchasedWorkDto,
-} from './dto/purchase.dto'
-import { IPurchaseTargetResolver } from './interfaces/purchase-target-resolver.interface'
-import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from './purchase.constant'
+  IPurchaseTargetResolver,
+} from './interfaces/purchase-target-resolver.interface'
+import {
+  PurchaseStatusEnum,
+  PurchaseTargetTypeEnum,
+} from './purchase.constant'
+
+type PurchaseTargetInput = Pick<
+  UserPurchaseRecord,
+  'targetType' | 'targetId' | 'userId' | 'paymentMethod'
+> & {
+  outTradeNo?: string | null
+}
+
+type PurchasedWorksQuery = Pick<UserPurchaseRecord, 'userId'> &
+  Partial<Pick<UserPurchaseRecord, 'status' | 'targetType'>> & {
+    workType?: number
+    pageIndex?: number
+    pageSize?: number
+    startDate?: string
+    endDate?: string
+  }
+
+type PurchasedWorkChaptersQuery = PurchasedWorksQuery & {
+  workId: number
+}
 
 @Injectable()
 export class PurchaseService {
@@ -141,8 +162,8 @@ export class PurchaseService {
   /**
    * 执行购买逻辑
    */
-  async purchaseTarget(dto: PurchaseTargetDto) {
-    const { targetType, targetId, userId, paymentMethod, outTradeNo } = dto
+  async purchaseTarget(input: PurchaseTargetInput) {
+    const { targetType, targetId, userId, paymentMethod, outTradeNo } = input
     const resolver = this.getResolver(targetType)
 
     const { price: targetPrice } = await resolver.ensurePurchaseable(targetId)
@@ -233,14 +254,14 @@ export class PurchaseService {
   /**
    * 购买章节（对外通用接口）
    */
-  async purchaseChapter(dto: PurchaseTargetDto) {
-    return this.purchaseTarget(dto)
+  async purchaseChapter(input: PurchaseTargetInput) {
+    return this.purchaseTarget(input)
   }
 
   /**
    * 获取已购作品列表
    */
-  async getPurchasedWorks(dto: QueryPurchasedWorkDto) {
+  async getPurchasedWorks(query: PurchasedWorksQuery) {
     const {
       userId,
       workType,
@@ -249,7 +270,7 @@ export class PurchaseService {
       pageSize,
       startDate,
       endDate,
-    } = dto
+    } = query
     const {
       pageIndex: normalizedPageIndex,
       pageSize: normalizedPageSize,
@@ -329,7 +350,7 @@ export class PurchaseService {
   /**
    * 获取已购章节列表
    */
-  async getPurchasedWorkChapters(dto: QueryPurchasedWorkChapterDto) {
+  async getPurchasedWorkChapters(query: PurchasedWorkChaptersQuery) {
     const {
       userId,
       workId,
@@ -339,7 +360,7 @@ export class PurchaseService {
       pageSize,
       startDate,
       endDate,
-    } = dto
+    } = query
     const {
       pageIndex: normalizedPageIndex,
       pageSize: normalizedPageSize,

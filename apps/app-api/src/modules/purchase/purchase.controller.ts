@@ -1,25 +1,17 @@
 import {
-  PurchasedWorkChapterItemDto,
-  PurchasedWorkItemDto,
   PurchaseService,
-  PurchaseTargetBodyDto,
-  QueryPurchasedWorkChapterDto,
-  QueryPurchasedWorkDto,
 } from '@libs/interaction'
-
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags, OmitType } from '@nestjs/swagger'
-
-class AppQueryPurchasedWorkDto extends OmitType(QueryPurchasedWorkDto, [
-  'userId',
-]) {}
-
-class AppQueryPurchasedWorkChapterDto extends OmitType(
+import { ApiTags } from '@nestjs/swagger'
+import {
+  PurchasedWorkChapterItemDto,
+  PurchasedWorkItemDto,
+  PurchaseTargetBodyDto,
   QueryPurchasedWorkChapterDto,
-  ['userId'],
-) {}
+  QueryPurchasedWorkDto,
+} from './dto/purchase.dto'
 
 @ApiTags('购买模块')
 @Controller('app/purchase')
@@ -32,7 +24,7 @@ export class PurchaseController {
     model: PurchasedWorkItemDto,
   })
   async getPurchasedWorks(
-    @Query() query: AppQueryPurchasedWorkDto,
+    @Query() query: QueryPurchasedWorkDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.purchaseService.getPurchasedWorks({
@@ -47,7 +39,7 @@ export class PurchaseController {
     model: PurchasedWorkChapterItemDto,
   })
   async getPurchasedWorkChapters(
-    @Query() query: AppQueryPurchasedWorkChapterDto,
+    @Query() query: QueryPurchasedWorkChapterDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.purchaseService.getPurchasedWorkChapters({

@@ -1,4 +1,4 @@
-import type { ActionTypeEnum } from '../../modules/system/audit/audit.constant'
+import type { AuditActionTypeEnum } from '../../modules/system/audit/audit.constant'
 
 /**
  * 审计日志装饰器元数据
@@ -7,7 +7,7 @@ export interface AuditMetadata {
   /**
    * 操作类型
    */
-  actionType: ActionTypeEnum
+  actionType: AuditActionTypeEnum
   /**
    * 自定义内容模板
    */

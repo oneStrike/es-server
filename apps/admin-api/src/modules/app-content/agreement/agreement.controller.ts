@@ -12,7 +12,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 import { Audit } from '../../../common/decorators/audit.decorator'
-import { ActionTypeEnum } from '../../system/audit/audit.constant'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 协议管理控制器
@@ -31,7 +31,7 @@ export class AgreementController {
     model: Boolean,
   })
   @Audit({
-    actionType: ActionTypeEnum.CREATE,
+    actionType: AuditActionTypeEnum.CREATE,
     content: '创建协议',
   })
   async create(@Body() dto: CreateAgreementDto) {
@@ -44,7 +44,7 @@ export class AgreementController {
     model: Boolean,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '更新协议',
   })
   async update(@Body() dto: UpdateAgreementDto) {
@@ -57,7 +57,7 @@ export class AgreementController {
     model: Boolean,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '更新协议状态',
   })
   async updateStatus(@Body() dto: UpdatePublishedStatusDto) {
@@ -70,7 +70,7 @@ export class AgreementController {
     model: Boolean,
   })
   @Audit({
-    actionType: ActionTypeEnum.DELETE,
+    actionType: AuditActionTypeEnum.DELETE,
     content: '删除协议',
   })
   async delete(@Body() dto: IdDto) {

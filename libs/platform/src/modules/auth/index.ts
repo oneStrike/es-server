@@ -1,6 +1,7 @@
 export * from './auth-cron.service'
 export * from './auth.constant'
 export * from './auth.guard'
+export * from './auth.helpers'
 export * from './auth.module'
 export * from './auth.service'
 export * from './auth.strategy'

@@ -2,17 +2,11 @@
  * 应用端认证常量定义
  * 覆盖错误文案、登录限制与缓存键
  */
-import {
-  AuthConstants,
-  AuthDefaultValue,
-  createAuthRedisKeys,
-} from '@libs/platform/modules/auth'
+import { createAuthRedisKeys } from '@libs/platform/modules/auth'
 
-export { AuthConstants, AuthDefaultValue }
+export const AppAuthRedisKeys = createAuthRedisKeys('app')
 
-export const AuthRedisKeys = createAuthRedisKeys('app')
-
-export const AuthErrorMessages = {
+export const AppAuthErrorMessages = {
   ACCOUNT_OR_PASSWORD_ERROR: '账号或密码错误',
   ACCOUNT_DISABLED: '账号已被禁用，请联系管理员',
   ACCOUNT_NOT_FOUND: '账号不存在',

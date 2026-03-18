@@ -7,8 +7,3 @@ export enum WorkSerialStatusEnum {
   PAUSED = 3,
   DISCONTINUED = 4,
 }
-
-export const WorkTypeMap = {
-  [ContentTypeEnum.COMIC]: 'comic',
-  [ContentTypeEnum.NOVEL]: 'novel',
-} as const

@@ -1,5 +1,6 @@
 import { DrizzleService } from '@db/core'
 import { AdminUser, NewAdminUser } from '@db/schema'
+import { AdminUserRoleEnum } from '@libs/platform/constant'
 import { ScryptService } from '@libs/platform/modules'
 import { LoginGuardService } from '@libs/platform/modules/auth'
 import {
@@ -10,8 +11,7 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { eq } from 'drizzle-orm'
-import { AuthRedisKeys } from '../auth/auth.constant'
-import { AdminUserRoleEnum } from './admin-user.constant'
+import { AdminAuthRedisKeys } from '../auth/auth.constant'
 import { ChangePasswordDto, UserPageDto } from './dto/admin-user.dto'
 
 /**
@@ -248,8 +248,8 @@ export class AdminUserService {
 
     // 解锁用户（清除 Redis 锁）
     await this.loginGuardService.unlock(
-      AuthRedisKeys.LOGIN_LOCK(userId),
-      AuthRedisKeys.LOGIN_FAIL_COUNT(userId),
+      AdminAuthRedisKeys.LOGIN_LOCK(userId),
+      AdminAuthRedisKeys.LOGIN_FAIL_COUNT(userId),
     )
 
     return userId

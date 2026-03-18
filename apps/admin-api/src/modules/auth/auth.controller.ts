@@ -4,7 +4,7 @@ import { CaptchaDto, RsaService } from '@libs/platform/modules'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
-import { ActionTypeEnum } from '../system/audit/audit.constant'
+import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AuthService } from './auth.service'
 import {
   LoginResponseDto,
@@ -49,7 +49,7 @@ export class AuthController {
   })
   @Public()
   @Audit({
-    actionType: ActionTypeEnum.LOGIN,
+    actionType: AuditActionTypeEnum.LOGIN,
     content: '用户登录',
   })
   async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
@@ -67,7 +67,7 @@ export class AuthController {
     },
   })
   @Audit({
-    actionType: ActionTypeEnum.LOGOUT,
+    actionType: AuditActionTypeEnum.LOGOUT,
     content: '管理员退出登录',
   })
   async logout(@Body() body: TokenDto) {

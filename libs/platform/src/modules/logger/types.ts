@@ -1,12 +1,12 @@
-import type { LoggerLevel } from '@libs/platform/constant'
+import type { LoggerLevelEnum } from '../../constant/logger.constant'
 
-export type { LoggerLevel } from '@libs/platform/constant'
+export type { LoggerLevelEnum } from '../../constant/logger.constant'
 
 export interface LoggerConfig {
-  level: LoggerLevel
+  level: LoggerLevelEnum
   path: string
   maxSize: string
   retainDays: string
   compress: boolean
-  consoleLevel: LoggerLevel
+  consoleLevel: LoggerLevelEnum
 }

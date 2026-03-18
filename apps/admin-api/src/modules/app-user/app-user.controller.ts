@@ -8,7 +8,7 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
-import { ActionTypeEnum } from '../system/audit/audit.constant'
+import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AppUserService } from './app-user.service'
 import {
   AddAdminAppUserExperienceDto,
@@ -73,7 +73,7 @@ export class AppUserController {
     model: AdminAppUserDetailDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '更新 APP 用户资料',
   })
   async updateAppUserProfile(
@@ -92,7 +92,7 @@ export class AppUserController {
     model: AdminAppUserDetailDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '更新 APP 用户启用状态',
   })
   async updateAppUserEnabled(
@@ -111,7 +111,7 @@ export class AppUserController {
     model: AdminAppUserDetailDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '更新 APP 用户社区状态',
   })
   async updateAppUserStatus(
@@ -156,7 +156,7 @@ export class AppUserController {
     model: BaseUserPointRecordDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.CREATE,
+    actionType: AuditActionTypeEnum.CREATE,
     content: '手动增加 APP 用户积分',
   })
   async addAppUserPoints(
@@ -175,7 +175,7 @@ export class AppUserController {
     model: BaseUserPointRecordDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.UPDATE,
+    actionType: AuditActionTypeEnum.UPDATE,
     content: '手动扣减 APP 用户积分',
   })
   async consumeAppUserPoints(
@@ -220,7 +220,7 @@ export class AppUserController {
     model: BaseUserExperienceRecordDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.CREATE,
+    actionType: AuditActionTypeEnum.CREATE,
     content: '手动增加 APP 用户经验',
   })
   async addAppUserExperience(
@@ -251,7 +251,7 @@ export class AppUserController {
     model: AdminAppUserBadgeOperationResultDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.CREATE,
+    actionType: AuditActionTypeEnum.CREATE,
     content: '为 APP 用户分配徽章',
   })
   async assignAppUserBadge(
@@ -270,7 +270,7 @@ export class AppUserController {
     model: AdminAppUserBadgeOperationResultDto,
   })
   @Audit({
-    actionType: ActionTypeEnum.DELETE,
+    actionType: AuditActionTypeEnum.DELETE,
     content: '撤销 APP 用户徽章',
   })
   async revokeAppUserBadge(

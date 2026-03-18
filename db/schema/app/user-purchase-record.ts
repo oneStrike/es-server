@@ -106,3 +106,6 @@ export const userPurchaseRecord = pgTable(
     ),
   ],
 )
+
+export type UserPurchaseRecord = typeof userPurchaseRecord.$inferSelect
+export type UserPurchaseRecordInsert = typeof userPurchaseRecord.$inferInsert

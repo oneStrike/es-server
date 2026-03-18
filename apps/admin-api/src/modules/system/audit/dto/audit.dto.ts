@@ -8,7 +8,7 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { ActionTypeEnum } from '../audit.constant'
+import { AuditActionTypeEnum } from '../audit.constant'
 
 export class BaseAuditDto extends BaseDto {
   @NumberProperty({
@@ -70,9 +70,9 @@ export class BaseAuditDto extends BaseDto {
     description: '操作类型',
     example: '用户登录',
     required: false,
-    enum: ActionTypeEnum,
+    enum: AuditActionTypeEnum,
   })
-  actionType?: ActionTypeEnum
+  actionType?: AuditActionTypeEnum
 
   @BooleanProperty({
     description: '操作是否成功',

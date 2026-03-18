@@ -10,7 +10,7 @@ import {
 import { Reflector } from '@nestjs/core'
 import { catchError, Observable, tap } from 'rxjs'
 
-import { ActionTypeEnum } from '../../modules/system/audit/audit.constant'
+import { AuditActionTypeEnum } from '../../modules/system/audit/audit.constant'
 import { AuditService } from '../../modules/system/audit/audit.service'
 
 @Injectable()
@@ -73,7 +73,7 @@ export class AuditInterceptor implements NestInterceptor {
         isSuccess,
       }
 
-      if (actionType === ActionTypeEnum.LOGIN) {
+      if (actionType === AuditActionTypeEnum.LOGIN) {
         // @ts-expect-error ignore
         logContent.username = request.body.username
       }

@@ -1,3 +1,5 @@
+import type { RevokeTokenReasonEnum } from './auth.constant'
+
 /**
  * JWT负载接口定义
  */
@@ -33,11 +35,11 @@ export interface ITokenStorageService {
 
   createTokens: (data: any[]) => Promise<any>
 
-  revokeByJti: (jti: string, reason: string) => Promise<void> | void
+  revokeByJti: (jti: string, reason: RevokeTokenReasonEnum) => Promise<void> | void
 
-  revokeByJtis: (jtis: string[], reason: string) => Promise<void> | void
+  revokeByJtis: (jtis: string[], reason: RevokeTokenReasonEnum) => Promise<void> | void
 
-  revokeAllByUserId: (userId: number, reason: string) => Promise<void> | void
+  revokeAllByUserId: (userId: number, reason: RevokeTokenReasonEnum) => Promise<void> | void
 
   findActiveTokensByUserId: (userId: number) => Promise<any[]>
 

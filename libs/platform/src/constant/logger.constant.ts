@@ -2,7 +2,7 @@
  * 日志等级枚举
  * 用于统一日志输出级别
  */
-export enum LoggerLevel {
+export enum LoggerLevelEnum {
   /** 调试日志 */
   DEBUG = 'debug',
   /** 常规信息 */

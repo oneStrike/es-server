@@ -7,7 +7,7 @@ import {
 } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { AuthErrorMessages } from './auth.constant'
+import { AppAuthErrorMessages } from './auth.constant'
 
 /**
  * 短信服务类
@@ -45,13 +45,13 @@ export class SmsService {
         )
         .limit(1)
       if (!user) {
-        throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
+        throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
       }
     }
     if (await this.libSmsService.sendVerifyCode(dto)) {
       return true
     }
-    throw new BadRequestException(AuthErrorMessages.VERIFY_CODE_SEND_FAILED)
+    throw new BadRequestException(AppAuthErrorMessages.VERIFY_CODE_SEND_FAILED)
   }
 
   /**
@@ -62,6 +62,8 @@ export class SmsService {
     if (await this.libSmsService.checkVerifyCode(dto)) {
       return true
     }
-    throw new BadRequestException(AuthErrorMessages.VERIFY_CODE_CHECK_FAILED)
+    throw new BadRequestException(
+      AppAuthErrorMessages.VERIFY_CODE_CHECK_FAILED,
+    )
   }
 }

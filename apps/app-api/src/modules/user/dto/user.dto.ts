@@ -1,5 +1,5 @@
 import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/growth'
-import { UserAssetsSummaryDto } from '@libs/interaction'
+import { BaseUserAssetsSummaryDto } from '@libs/interaction'
 /**
  * 用户模块 DTO 定义
  *
@@ -486,6 +486,20 @@ export class UserCenterMessageDto {
 }
 
 /**
+ * 用户资产统计 DTO
+ */
+export class UserAssetsSummaryDto extends PickType(BaseUserAssetsSummaryDto, [
+  'purchasedWorkCount',
+  'purchasedChapterCount',
+  'downloadedWorkCount',
+  'downloadedChapterCount',
+  'favoriteCount',
+  'likeCount',
+  'viewCount',
+  'commentCount',
+] as const) {}
+
+/**
  * 用户中心汇总 DTO
  */
 export class UserCenterDto {
@@ -536,8 +550,3 @@ export class UserBadgeItemDto extends PickType(BaseDto, ['id', 'createdAt']) {
   })
   badge!: BaseUserBadgeDto
 }
-
-/**
- * 用户资产统计 DTO
- */
-export { UserAssetsSummaryDto } from '@libs/interaction'

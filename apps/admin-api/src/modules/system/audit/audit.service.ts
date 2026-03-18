@@ -3,7 +3,7 @@ import { DrizzleService } from '@db/core'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, ilike } from 'drizzle-orm'
-import { ActionTypeEnum } from './audit.constant'
+import { AuditActionTypeEnum } from './audit.constant'
 import {
   AuditPageRequestDto,
   CreateRequestLogDto,
@@ -50,7 +50,7 @@ export class AuditService {
    * @returns 创建的请求日志ID
    */
   private async createSuccessRequestLog(
-    actionType: ActionTypeEnum,
+    actionType: AuditActionTypeEnum,
     createDto: CreateRequestLogSimpleDto,
     req: FastifyRequest,
   ) {

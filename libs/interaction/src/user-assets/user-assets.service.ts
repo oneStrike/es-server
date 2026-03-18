@@ -1,3 +1,9 @@
+import type {
+  UserAssetsCountRow,
+  UserAssetsDistinctWorkCountRow,
+  UserAssetsSummary,
+  UserAssetsSummaryQueryInput,
+} from './user-assets.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
@@ -40,7 +46,9 @@ export class UserAssetsService {
     return this.drizzle.schema.workChapter
   }
 
-  async getUserAssetsSummary(userId: number) {
+  async getUserAssetsSummary(
+    userId: UserAssetsSummaryQueryInput['userId'],
+  ): Promise<UserAssetsSummary> {
     const [
       commentCount,
       likeCount,
@@ -52,25 +60,25 @@ export class UserAssetsService {
       downloadedWorkRows,
     ] = await Promise.all([
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
         .from(this.userComment)
         .where(
           and(eq(this.userComment.userId, userId), isNull(this.userComment.deletedAt)),
         ),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
         .from(this.userLike)
         .where(eq(this.userLike.userId, userId)),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
         .from(this.userFavorite)
         .where(eq(this.userFavorite.userId, userId)),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
         .from(this.userBrowseLog)
         .where(eq(this.userBrowseLog.userId, userId)),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
         .from(this.userPurchaseRecord)
         .where(
           and(
@@ -83,7 +91,7 @@ export class UserAssetsService {
           ),
         ),
       this.db
-        .select({ count: sql<number>`count(*)::int` })
+        .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
         .from(this.userDownloadRecord)
         .where(
           and(
@@ -96,7 +104,7 @@ export class UserAssetsService {
         ),
       this.db
         .select({
-          total: sql<bigint>`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
+          total: sql<UserAssetsDistinctWorkCountRow['total']>`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
         })
         .from(this.userPurchaseRecord)
         .innerJoin(
@@ -115,7 +123,7 @@ export class UserAssetsService {
         ),
       this.db
         .select({
-          total: sql<bigint>`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
+          total: sql<UserAssetsDistinctWorkCountRow['total']>`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
         })
         .from(this.userDownloadRecord)
         .innerJoin(

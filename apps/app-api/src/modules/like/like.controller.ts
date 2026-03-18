@@ -1,14 +1,16 @@
 import {
-  LikePageItemDto,
-  LikePageQueryDto,
   LikeService,
-  LikeStatusResponseDto,
-  LikeTargetDto,
 } from '@libs/interaction'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  LikePageItemDto,
+  LikePageQueryDto,
+  LikeStatusResponseDto,
+  LikeTargetDto,
+} from './dto/like.dto'
 
 @ApiTags('点赞模块')
 @Controller('app/like')
@@ -21,7 +23,10 @@ export class LikeController {
     model: IdDto,
   })
   async like(@Body() body: LikeTargetDto, @CurrentUser('sub') userId: number) {
-    await this.likeService.like(body.targetType, body.targetId, userId)
+    await this.likeService.like({
+      ...body,
+      userId,
+    })
     return { id: body.targetId }
   }
 
@@ -34,7 +39,10 @@ export class LikeController {
     @Body() body: LikeTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
-    await this.likeService.unlike(body.targetType, body.targetId, userId)
+    await this.likeService.unlike({
+      ...body,
+      userId,
+    })
     return { id: body.targetId }
   }
 
@@ -48,11 +56,10 @@ export class LikeController {
     @CurrentUser('sub') userId: number,
   ) {
     return {
-      isLiked: await this.likeService.checkLikeStatus(
-        query.targetType,
-        query.targetId,
+      isLiked: await this.likeService.checkLikeStatus({
+        ...query,
         userId,
-      ),
+      }),
     }
   }
 
@@ -62,6 +69,9 @@ export class LikeController {
     model: LikePageItemDto,
   })
   async my(@Query() query: LikePageQueryDto, @CurrentUser('sub') userId: number) {
-    return this.likeService.getUserLikes(query, userId,)
+    return this.likeService.getUserLikes({
+      ...query,
+      userId,
+    })
   }
 }

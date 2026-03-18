@@ -713,7 +713,11 @@ export class WorkService {
     const now = new Date()
 
     const [liked, favorited, readingState] = await Promise.all([
-      this.likeService.checkLikeStatus(work.type, id, userId),
+      this.likeService.checkLikeStatus({
+        targetType: work.type,
+        targetId: id,
+        userId,
+      }),
       this.favoriteService.checkFavoriteStatus({
         targetType: work.type,
         targetId: id,

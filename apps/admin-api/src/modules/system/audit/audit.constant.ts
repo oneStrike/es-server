@@ -1,7 +1,7 @@
 /**
  * 常用操作类型
  */
-export enum ActionTypeEnum {
+export enum AuditActionTypeEnum {
   /** 用户登录 */
   LOGIN = '用户登录',
   /** 用户登出 */

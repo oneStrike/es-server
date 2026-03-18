@@ -44,12 +44,15 @@
 - 入参与返回优先使用 Drizzle-ORM 推导类型或其变体（如 `Pick<T, Keys>`）。
 - **内部接口**：Service 内部的临时数据结构（如 Payload）应优先基于 Drizzle 类型通过 `Pick` 或 `Omit` 构建，禁止重复定义字段。
 - **强制要求**：推导类型（如 `type User = typeof users.$inferSelect`）必须在对应 `db/schema` 的表定义文件中定义并导出，确保 Schema 与 Type 同步。
+- **类型文件拆分**：当 Service 内部存在多处自定义类型（入参、查询、聚合结果等）时，必须新建同模块的 `*.type.ts` 文件集中维护，Service 通过 `import type` 引用，避免在 Service 文件内堆叠大量类型定义。
+- **注释要求**：`*.type.ts` 中每个导出类型必须有清晰注释，至少说明用途与关键字段语义（如“分页查询条件”“聚合后的返回项”）。
 
 ## 4. 命名规范
 
 - **基类（全量）**：`BaseXxxDto`
 - **请求**：`CreateXxxDto`, `UpdateXxxDto`, `QueryXxxDto`, `XxxTargetDto`
 - **响应**：`XxxResponseDto`, `XxxItemDto`（列表项）, `XxxBriefDto`（简要）
+- **类型文件**：`xxx.type.ts`（与模块同目录）
 
 ## 5. 复用与覆盖规则
 
@@ -64,6 +67,12 @@
 - 当 apps 层需要对某个字段施加更严格或不同的校验/文档描述时：
   - 在 apps DTO 中重新声明该属性，并添加对应的校验与 Swagger 装饰器；
   - 其余字段保持从基类继承/组合，避免复制粘贴。
+
+### 5.3 响应模型复用
+
+- 对于 apps 层响应中的嵌套对象（如 `XxxInfoDto`, `XxxBriefDto`），优先从已有领域基类 DTO 通过 `PickType`/`OmitType` 复用字段（例如 `BaseWorkDto`, `BaseWorkChapterDto`）。
+- 当目标字段可由现有基类完整覆盖时，禁止在 apps DTO 中手动逐字段重复定义。
+- 仅当现有基类无法表达目标语义（字段缺失、可空性冲突、文档语义明显不符）时，允许局部补充字段，并在同一 DTO 内保持最小化新增。
 
 ## 6. 例外情况
 
@@ -84,7 +93,9 @@
 - [ ] 移除手动重复定义的 `id`, `createdAt`, `updatedAt` 等字段。
 - [ ] 基类 DTO 字段与 Drizzle Table 定义一致（字段/类型/可空/枚举/长度）。
 - [ ] Swagger 文档中的日期示例值统一为 ISO 8601。
+- [ ] apps 响应嵌套对象优先通过 `PickType/OmitType` 复用领域基类 DTO，避免手动重复定义字段。
 - [ ] Service 层方法签名不直接引用 apps 侧 DTO，且优先通过 `Pick<DrizzleType, Keys>` 复用实体类型。
 - [ ] Service 内部临时接口（如 Payload）已全部基于 Drizzle 类型构建，无重复字段定义。
+- [ ] 自定义类型较多的 Service 已拆分 `*.type.ts`，并在类型文件中补全清晰注释。
 - [ ] Drizzle 推导类型在对应 `db/schema` 表定义文件中定义并导出。
 

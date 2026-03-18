@@ -1,13 +1,15 @@
 import {
-  ClearReadingHistoryDto,
-  QueryReadingHistoryDto,
-  ReadingHistoryWorkDto,
   ReadingStateService,
 } from '@libs/interaction'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  ClearReadingHistoryDto,
+  QueryReadingHistoryDto,
+  ReadingHistoryWorkDto,
+} from './dto/reading-history.dto'
 
 @ApiTags('阅读模块')
 @Controller('app/')

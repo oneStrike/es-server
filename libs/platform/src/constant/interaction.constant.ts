@@ -43,18 +43,6 @@ export enum SceneTypeEnum {
 }
 
 /**
- * 业务场景中文名称映射。
- */
-export const SceneTypeNames: Record<SceneTypeEnum, string> = {
-  [SceneTypeEnum.COMIC_WORK]: '漫画作品',
-  [SceneTypeEnum.NOVEL_WORK]: '小说作品',
-  [SceneTypeEnum.COMIC_CHAPTER]: '漫画章节',
-  [SceneTypeEnum.NOVEL_CHAPTER]: '小说章节',
-  [SceneTypeEnum.FORUM_TOPIC]: '论坛主题',
-  [SceneTypeEnum.USER_PROFILE]: '用户主页',
-}
-
-/**
  * 评论层级枚举。
  *
  * 说明：
@@ -68,41 +56,3 @@ export enum CommentLevelEnum {
   REPLY = 2,
 }
 
-/**
- * 评论层级中文名称映射。
- */
-export const CommentLevelNames: Record<CommentLevelEnum, string> = {
-  [CommentLevelEnum.ROOT]: '根评论',
-  [CommentLevelEnum.REPLY]: '回复评论',
-}
-
-/**
- * 交互操作类型枚举。
- *
- * 说明：
- * - 用于标识用户针对目标执行的操作
- */
-export enum InteractionActionType {
-  /** 点赞 */
-  LIKE = 1,
-  /** 取消点赞 */
-  UNLIKE = 2,
-  /** 收藏 */
-  FAVORITE = 3,
-  /** 取消收藏 */
-  UNFAVORITE = 4,
-  /** 浏览 */
-  VIEW = 5,
-  /** 删除浏览记录 */
-  DELETE_VIEW = 6,
-  /** 发表评论 */
-  COMMENT = 7,
-  /** 删除评论 */
-  DELETE_COMMENT = 8,
-  /** 下载 */
-  DOWNLOAD = 9,
-  /** 购买 */
-  PURCHASE = 10,
-  /** 退款 */
-  REFUND = 11,
-}

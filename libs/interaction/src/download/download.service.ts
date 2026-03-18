@@ -1,4 +1,13 @@
 import type { SQL } from 'drizzle-orm'
+import type {
+  DownloadedWorkChapterRow,
+  DownloadedWorkChaptersQuery,
+  DownloadedWorkChapterTotalRow,
+  DownloadedWorkRow,
+  DownloadedWorksQuery,
+  DownloadedWorkTotalRow,
+  DownloadTargetInput,
+} from './download.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
@@ -110,11 +119,7 @@ export class DownloadService {
    * @param input 下载请求信息
    * @returns 章节内容
    */
-  async downloadTarget(input: {
-    targetType: DownloadTargetTypeEnum
-    targetId: number
-    userId: number
-  }): Promise<string> {
+  async downloadTarget(input: DownloadTargetInput): Promise<string> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -167,22 +172,14 @@ export class DownloadService {
   /**
    * 下载章节（对外通用接口）
    */
-  async downloadChapter(input: {
-    targetType: DownloadTargetTypeEnum
-    targetId: number
-    userId: number
-  }) {
+  async downloadChapter(input: DownloadTargetInput) {
     return this.downloadTarget(input)
   }
 
   /**
    * 检查下载状态
    */
-  async checkDownloadStatus(input: {
-    targetType: DownloadTargetTypeEnum
-    targetId: number
-    userId: number
-  }) {
+  async checkDownloadStatus(input: DownloadTargetInput) {
     const record = await this.db.query.userDownloadRecord.findFirst({
       where: input,
       columns: {
@@ -234,14 +231,7 @@ export class DownloadService {
   /**
    * 获取已下载作品列表
    */
-  async getDownloadedWorks(query: {
-    userId: number
-    workType?: number
-    pageIndex?: number
-    pageSize?: number
-    startDate?: string
-    endDate?: string
-  }) {
+  async getDownloadedWorks(query: DownloadedWorksQuery) {
     const { userId, workType, pageIndex, pageSize, startDate, endDate } = query
     const {
       pageIndex: normalizedPageIndex,
@@ -287,15 +277,8 @@ export class DownloadService {
           ${createdAtFilter}
       `),
     ])
-    const rows = this.extractRows<{
-      workId: number
-      workType: number
-      workName: string
-      workCover: string
-      downloadedChapterCount: bigint
-      lastDownloadedAt: Date
-    }>(rowsResult)
-    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
+    const rows = this.extractRows<DownloadedWorkRow>(rowsResult)
+    const totalRows = this.extractRows<DownloadedWorkTotalRow>(totalRowsResult)
     const total = Number(totalRows[0]?.total ?? 0n)
 
     return {
@@ -318,15 +301,7 @@ export class DownloadService {
   /**
    * 获取已下载章节列表
    */
-  async getDownloadedWorkChapters(query: {
-    userId: number
-    workId: number
-    workType?: number
-    pageIndex?: number
-    pageSize?: number
-    startDate?: string
-    endDate?: string
-  }) {
+  async getDownloadedWorkChapters(query: DownloadedWorkChaptersQuery) {
     const {
       userId,
       workId,
@@ -389,23 +364,8 @@ export class DownloadService {
           ${createdAtFilter}
       `),
     ])
-    const rows = this.extractRows<{
-      id: number
-      targetType: number
-      targetId: number
-      userId: number
-      createdAt: Date
-      chapterId: number
-      chapterWorkId: number
-      chapterWorkType: number
-      chapterTitle: string
-      chapterSubtitle: string | null
-      chapterCover: string | null
-      chapterSortOrder: number
-      chapterIsPublished: boolean
-      chapterPublishAt: Date | null
-    }>(rowsResult)
-    const totalRows = this.extractRows<{ total: bigint }>(totalRowsResult)
+    const rows = this.extractRows<DownloadedWorkChapterRow>(rowsResult)
+    const totalRows = this.extractRows<DownloadedWorkChapterTotalRow>(totalRowsResult)
     const total = Number(totalRows[0]?.total ?? 0n)
 
     return {

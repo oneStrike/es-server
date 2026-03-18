@@ -110,3 +110,6 @@ export const userReport = pgTable("user_report", {
      */
     index("user_report_created_at_idx").on(table.createdAt),
 ]);
+
+export type UserReport = typeof userReport.$inferSelect;
+export type UserReportInsert = typeof userReport.$inferInsert;

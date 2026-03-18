@@ -174,11 +174,11 @@ export class WorkChapterService {
 
     // 并行查询三个交互状态
     const [liked, downloaded, purchased] = await Promise.all([
-      this.likeService.checkLikeStatus(
-        LikeTargetTypeEnum.WORK_COMIC_CHAPTER,
-        id,
+      this.likeService.checkLikeStatus({
+        targetType: LikeTargetTypeEnum.WORK_COMIC_CHAPTER,
+        targetId: id,
         userId,
-      ),
+      }),
       this.downloadService.checkDownloadStatus({
         targetType: downloadTargetType,
         targetId: id,

@@ -4,19 +4,6 @@
  */
 
 /**
- * 创建认证 Redis Key 生成器
- * @param prefix - 应用前缀 (如 'admin' 或 'app')
- */
-export function createAuthRedisKeys (prefix: string) {
-  return {
-  /** 登录失败计数 Key */
-  LOGIN_FAIL_COUNT: (id: number) => `${prefix}:auth:login:fail:${id}`,
-  /** 账号锁定 Key */
-  LOGIN_LOCK: (id: number) => `${prefix}:auth:login:lock:${id}`,
-}
-}
-
-/**
  * 认证通用常量
  */
 export const AuthConstants = {
@@ -42,6 +29,8 @@ export const AuthDefaultValue = {
 export enum RevokeTokenReasonEnum {
   /** 密码变更 */
   PASSWORD_CHANGE = 'PASSWORD_CHANGE',
+  /** 刷新令牌轮换 */
+  TOKEN_REFRESH = 'TOKEN_REFRESH',
   /** 用户主动注销 */
   USER_LOGOUT = 'USER_LOGOUT',
   /** 管理员主动注销 */
@@ -55,7 +44,7 @@ export enum RevokeTokenReasonEnum {
 /**
  * 对外抛出的错误信息常量
  */
-export const AuthErrorConstant = {
+export const AuthErrorMessages = {
   /** 登录失效 */
   LOGIN_INVALID: '登录失效，请重新登录！',
   /** 账号异地登录 */

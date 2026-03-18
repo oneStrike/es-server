@@ -1,20 +1,19 @@
+import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import {
-  BooleanProperty,
+  DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
-  StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PickType } from '@nestjs/swagger'
+import { IdDto, UserIdDto } from '@libs/platform/dto'
+import { IntersectionType } from '@nestjs/swagger'
 import { LikeTargetTypeEnum } from '../like.constant'
 
 /**
- * 点赞目标 DTO
+ * 点赞记录基础 DTO（全量字段）
  */
-export class LikeTargetDto {
+export class BaseLikeDto extends IntersectionType(IdDto, UserIdDto) {
   @NumberProperty({
-    description: '点赞的目标id',
+    description: '点赞目标 ID',
     example: 1,
     required: true,
   })
@@ -28,91 +27,34 @@ export class LikeTargetDto {
     required: true,
   })
   targetType!: LikeTargetTypeEnum
-}
-
-/**
- * 点赞列表查询 DTO
- */
-export class LikePageQueryDto extends IntersectionType(
-  PageDto,
-  PickType(LikeTargetDto, ['targetType']),
-) {}
-
-/**
- * 点赞状态响应 DTO
- */
-export class LikeStatusResponseDto {
-  @BooleanProperty({
-    description: '是否已点赞',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  isLiked!: boolean
-}
-
-/**
- * 点赞作品简要信息响应 DTO
- */
-export class LikeWorkBriefDto extends IdDto {
-  @StringProperty({
-    description: '作品名称',
-    example: '进击的巨人',
-    required: true,
-    validation: false,
-  })
-  name!: string
-
-  @StringProperty({
-    description: '作品封面',
-    example: 'https://example.com/cover.jpg',
-    required: true,
-    validation: false,
-  })
-  cover!: string
-}
-
-/**
- * 点赞列表项响应 DTO
- */
-export class LikePageItemDto extends BaseDto {
-  @NumberProperty({
-    description: '用户ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  userId!: number
-
-  @NumberProperty({
-    description: '点赞目标ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  targetId!: number
 
   @EnumProperty({
-    description:
-      '点赞目标类型（1=漫画，2=小说，3=论坛主题，4=漫画章节，5=小说章节，6=评论）',
-    enum: LikeTargetTypeEnum,
-    example: LikeTargetTypeEnum.WORK_COMIC,
+    description: '业务场景类型',
+    enum: SceneTypeEnum,
+    example: SceneTypeEnum.COMIC_WORK,
     required: true,
-    validation: false,
   })
-  targetType!: LikeTargetTypeEnum
+  sceneType!: SceneTypeEnum
 
-  @NestedProperty({
-    description: '作品信息（仅作品类型返回）',
-    type: LikeWorkBriefDto,
+  @NumberProperty({
+    description: '业务场景根对象 ID',
+    example: 1,
+    required: true,
+  })
+  sceneId!: number
+
+  @EnumProperty({
+    description: '评论层级（仅评论目标有值）',
+    enum: CommentLevelEnum,
+    example: CommentLevelEnum.ROOT,
     required: false,
-    nullable: false,
-    validation: false,
   })
-  work?: LikeWorkBriefDto
-}
+  commentLevel?: CommentLevelEnum | null
 
-/**
- * @deprecated 使用 LikePageItemDto 替代
- */
-export class LikeRecordResponseDto extends LikePageItemDto {}
+  @DateProperty({
+    description: '创建时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: true,
+  })
+  createdAt!: Date
+}
