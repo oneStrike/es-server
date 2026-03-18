@@ -24,8 +24,8 @@ import {
 } from '../../like/interfaces/like-target-resolver.interface'
 import { LikeTargetTypeEnum } from '../../like/like.constant'
 import { LikeService } from '../../like/like.service'
-import { CommentTargetTypeEnum } from '../comment.constant'
 import { mapCommentTargetTypeToInteractionTargetType } from '../comment-target.mapping'
+import { CommentTargetTypeEnum } from '../comment.constant'
 
 /**
  * 评论点赞解析器

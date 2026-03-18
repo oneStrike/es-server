@@ -55,4 +55,3 @@ export enum CommentLevelEnum {
   /** 回复评论 */
   REPLY = 2,
 }
-

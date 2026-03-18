@@ -2,8 +2,8 @@ import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
 import { Injectable, Logger } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { FavoriteTargetTypeEnum } from './favorite.constant'
 import { mapFavoriteTargetTypeToInteractionTargetType } from './favorite-target.mapping'
+import { FavoriteTargetTypeEnum } from './favorite.constant'
 
 /**
  * 收藏成长服务

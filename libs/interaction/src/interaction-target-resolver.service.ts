@@ -9,12 +9,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { mapCommentTargetTypeToInteractionTargetType } from './comment/comment-target.mapping'
+import { CommentTargetTypeEnum } from './comment/comment.constant'
 import { InteractionTargetAccessService } from './interaction-target-access.service'
 import { mapInteractionTargetTypeToSceneType } from './interaction-target.definition'
-import { CommentTargetTypeEnum } from './comment/comment.constant'
-import { mapCommentTargetTypeToInteractionTargetType } from './comment/comment-target.mapping'
-import { ReportTargetTypeEnum } from './report/report.constant'
 import { mapReportTargetTypeToInteractionTargetType } from './report/report-target.mapping'
+import { ReportTargetTypeEnum } from './report/report.constant'
 
 export interface ResolvedLikeTargetMeta {
   sceneType: SceneTypeEnum

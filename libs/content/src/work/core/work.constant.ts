@@ -1,5 +1,3 @@
-import { ContentTypeEnum } from '@libs/platform/constant'
-
 export enum WorkSerialStatusEnum {
   NOT_STARTED = 0,
   SERIALIZING = 1,

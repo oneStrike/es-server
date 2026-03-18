@@ -3,8 +3,8 @@
  */
 export * from './dto/purchase.dto'
 export * from './interfaces/purchase-target-resolver.interface'
-export * from './purchase.constant'
 export * from './purchase-target.mapping'
+export * from './purchase.constant'
 export * from './purchase.module'
 export * from './purchase.service'
 export * from './purchase.type'

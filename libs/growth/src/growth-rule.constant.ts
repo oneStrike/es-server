@@ -71,4 +71,3 @@ export enum GrowthRuleTypeEnum {
   REPORT_VALID = 800,
   REPORT_INVALID = 801,
 }
-

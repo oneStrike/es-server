@@ -2,8 +2,8 @@ import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
 import { Injectable, Logger } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { ReportTargetTypeEnum } from './report.constant'
 import { mapReportTargetTypeToInteractionTargetType } from './report-target.mapping'
+import { ReportTargetTypeEnum } from './report.constant'
 
 @Injectable()
 export class ReportGrowthService {
@@ -21,15 +21,14 @@ export class ReportGrowthService {
   async rewardReportCreated(params: {
     reportId: number
     reporterId: number
-    targetType: number
+    targetType: ReportTargetTypeEnum
     targetId: number
   }): Promise<void> {
     const { reportId, reporterId, targetType, targetId } = params
     const baseBizKey = `report:${reportId}:user:${reporterId}`
 
-    const interactionTargetType = mapReportTargetTypeToInteractionTargetType(
-      targetType as ReportTargetTypeEnum,
-    )
+    const interactionTargetType =
+      mapReportTargetTypeToInteractionTargetType(targetType)
     if (!interactionTargetType) {
       return
     }

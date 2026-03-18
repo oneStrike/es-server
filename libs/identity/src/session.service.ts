@@ -3,8 +3,8 @@ import type { FastifyRequest } from 'fastify'
 
 import {
   AuthDefaultValue,
-  RevokeTokenReasonEnum,
   AuthService as BaseAuthService,
+  RevokeTokenReasonEnum,
 } from '@libs/platform/modules/auth'
 import {
   extractIpAddress,

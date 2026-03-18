@@ -6,8 +6,8 @@ import {
 } from '@libs/growth'
 import { Injectable, Logger } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { LikeTargetTypeEnum } from './like.constant'
 import { mapLikeTargetTypeToInteractionTargetType } from './like-target.mapping'
+import { LikeTargetTypeEnum } from './like.constant'
 
 /**
  * 点赞成长奖励服务

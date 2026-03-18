@@ -55,8 +55,11 @@
 - `RevokeTokenReasonEnum` 已接入密码重置、刷新令牌轮换、主动登出和过期清理链路
 - `LoggerLevelEnum` 已改为 logger 模块内部直接依赖，不再通过 `@libs/platform/constant` barrel 对外暴露
 - 当前统一结论：内容域常量统一收敛在 `content.constant.ts`，其中 `ContentTypeEnum` 负责顶层内容分类，`WorkTypeEnum` 负责作品子集分类
-- 当前统计：`40` 个常量文件、`96` 个导出项、`0` 组重名导出、`0` 处显式重导出链
-- 校验结果：`pnpm type-check` 已通过
+- 已完成互动目标类型体系统一的第一轮落地：保留 `InteractionTargetTypeEnum` 作为公共语义层，各互动模块保留本地 `targetType` 枚举，并新增模块到公共语义的映射文件
+- 已将点赞 / 收藏 / 浏览 / 举报的成长规则统一收敛到 `libs/interaction/src/interaction-target-growth-rule.ts`
+- 已修正评论目标场景解析中的编码错位风险：评论链路不再把 `CommentTargetTypeEnum` 直接强转为 `InteractionTargetTypeEnum`
+- 当前统计：`40` 个常量文件、`92` 个导出项、`0` 组重名导出、`0` 处显式重导出链
+- 校验结果：未处理与本轮无关的存量类型错误；全量 `pnpm type-check` 被 `libs/config/src/dictionary/dictionary.service.ts:294` 阻断，互动库定向检查被 `libs/platform/src/modules/upload/upload.service.ts:111` 阻断
 
 ## 3. 关键问题
 
@@ -262,7 +265,7 @@
 - 管理端私有常量已更名为 `AdminAuthCacheKeys`、`AdminAuthRedisKeys`
 - 应用端私有常量已更名为 `AppAuthRedisKeys`
 
-### 3.4 中优先级：存在多套“目标类型枚举”，概念重叠明显
+### 3.4 已完成第一轮：互动目标类型已收敛为“公共语义层 + 模块映射层”
 
 典型文件：
 
@@ -273,7 +276,7 @@
 - `libs/interaction/src/like/like.constant.ts`
 - `libs/interaction/src/report/report.constant.ts`
 
-现象：
+原现象：
 
 - 多个模块都在描述“作品 / 章节 / 论坛主题 / 评论 / 用户”等目标类型。
 - 命名和编码并不完全统一，例如：
@@ -282,16 +285,36 @@
   - `FavoriteTargetTypeEnum` 只覆盖部分目标
   - `ReportTargetTypeEnum` 又扩展了 `USER`
 
-判断：
+原判断：
 
 - 这不一定是错误，因为不同表可能确实需要不同编码。
-- 但当前缺少“共享目标模型”和“模块特定映射”的边界说明，长期会演变为隐式重复定义。
+- 但如果没有显式映射层，模块本地编码会被误当成公共语义使用，最终演变为隐式重复定义甚至错误场景映射。
 
-建议：
+整改结果：
 
-- 如果多个表的目标域本质一致，优先抽出统一的 `InteractionTargetTypeEnum` 作为根枚举。
-- 各模块只保留差异补充或映射表，例如 `ReportTargetTypeToInteractionTargetMap`。
-- 如果确实不能统一，至少在注释里明确“为什么该模块不能复用平台目标枚举”。
+- 平台层保留 `libs/platform/src/constant/interaction.constant.ts` 作为公共语义层，明确 `InteractionTargetTypeEnum` 不再等同于各模块数据库表中的 `target_type` 编码
+- 各互动模块保留自己的本地枚举，并各自维护映射文件：
+  - `libs/interaction/src/like/like-target.mapping.ts`
+  - `libs/interaction/src/favorite/favorite-target.mapping.ts`
+  - `libs/interaction/src/browse-log/browse-log-target.mapping.ts`
+  - `libs/interaction/src/comment/comment-target.mapping.ts`
+  - `libs/interaction/src/report/report-target.mapping.ts`
+  - `libs/interaction/src/download/download-target.mapping.ts`
+  - `libs/interaction/src/purchase/purchase-target.mapping.ts`
+- 跨模块共享能力已改为统一依赖公共语义层：
+  - 成长规则统一收敛到 `libs/interaction/src/interaction-target-growth-rule.ts`
+  - 举报目标到公共语义的投影从 `interaction-target.definition.ts` 移出，归还到举报模块自身维护
+- 评论链路中的历史错误已修正：
+  - `libs/interaction/src/comment/resolver/comment-like.resolver.ts`
+  - `libs/interaction/src/comment/resolver/comment-report.resolver.ts`
+  - `libs/interaction/src/interaction-target-resolver.service.ts`
+  - 以上位置不再把 `CommentTargetTypeEnum` 直接强转成 `InteractionTargetTypeEnum`
+
+当前结论：
+
+- “统一”不是删除模块枚举，而是把“系统共享语义”和“模块本地编码”拆开。
+- 模块继续拥有自己的 `targetType` 事实源；平台只拥有公共语义事实源。
+- 后续如果新增互动模块，应先定义本模块枚举，再补一份到 `InteractionTargetTypeEnum` 的映射，而不是直接复用别的模块编码。
 
 ### 3.5 已部分完成：命名规范不统一问题已开始收敛
 
@@ -442,15 +465,16 @@
 
 ### 4.5 把“目标类型体系”做成平台层公共模型
 
-建议分两层：
+本轮已按三层模型落地：
 
 - 第一层：平台根枚举，例如 `InteractionTargetTypeEnum`
-- 第二层：模块映射，例如：
-  - `LikeTargetTypeToInteractionTargetMap`
-  - `ReportTargetTypeToInteractionTargetMap`
-  - `CommentTargetTypeToInteractionTargetMap`
+- 第二层：模块本地枚举，例如 `LikeTargetTypeEnum`、`FavoriteTargetTypeEnum`、`ReportTargetTypeEnum`
+- 第三层：模块映射，例如：
+  - `mapLikeTargetTypeToInteractionTargetType`
+  - `mapReportTargetTypeToInteractionTargetType`
+  - `mapCommentTargetTypeToInteractionTargetType`
 
-这样可以避免多个模块重复维护“漫画 / 小说 / 章节 / 论坛主题 / 评论 / 用户”的概念集合。
+这样可以避免多个模块重复维护“漫画 / 小说 / 章节 / 论坛主题 / 评论 / 用户”的概念集合，同时也不会强迫各模块共享数据库编码。
 
 ### 4.6 控制 barrel 导出面
 
@@ -483,7 +507,7 @@
 
 1. 已部分完成：统一 `Enum / Labels / Messages / CacheKeys / Defaults` 命名体系
 2. 已部分完成：将行为型 helper 从 `*.constant.ts` 中迁出
-3. 待处理：为跨模块共享的目标类型建立公共根模型
+3. 已完成：为跨模块共享的目标类型建立公共根模型，并为互动模块补齐模块到公共语义的映射层
 
 ### 第四阶段：清理公共导出面
 
@@ -517,13 +541,13 @@ libs/growth/src/growth-ledger/growth-ledger.constant.ts => GrowthAssetTypeEnum(1
 libs/growth/src/growth-rule.constant.ts => GrowthRuleTypeEnum(15)
 libs/growth/src/level-rule/level-rule.constant.ts => UserLevelRulePermissionEnum(2)
 libs/growth/src/task/task.constant.ts => TaskAssignmentStatusEnum(2), TaskClaimModeEnum(2), TaskCompleteModeEnum(2), TaskProgressActionTypeEnum(1), TaskRepeatTypeEnum(1), TaskStatusEnum(2), TaskTypeEnum(1)
-libs/interaction/src/browse-log/browse-log.constant.ts => BROWSE_LOG_GROWTH_RULE_TYPE_MAP(1), BrowseLogTargetTypeEnum(9)
-libs/interaction/src/comment/comment.constant.ts => CommentTargetTypeEnum(10)
-libs/interaction/src/download/download.constant.ts => DownloadTargetTypeEnum(7)
-libs/interaction/src/favorite/favorite.constant.ts => FAVORITE_GROWTH_RULE_TYPE_MAP(1), FavoriteTargetTypeEnum(9)
-libs/interaction/src/like/like.constant.ts => LIKE_GROWTH_RULE_TYPE_MAP(1), LikeTargetTypeEnum(11)
-libs/interaction/src/purchase/purchase.constant.ts => PaymentMethodEnum(1), PurchaseStatusEnum(4), PurchaseTargetTypeEnum(7)
-libs/interaction/src/report/report.constant.ts => REPORT_GROWTH_RULE_TYPE_MAP(1), ReportReasonEnum(2), ReportStatusEnum(2), ReportTargetTypeEnum(14)
+libs/interaction/src/browse-log/browse-log.constant.ts => BrowseLogTargetTypeEnum(10)
+libs/interaction/src/comment/comment.constant.ts => CommentTargetTypeEnum(15)
+libs/interaction/src/download/download.constant.ts => DownloadTargetTypeEnum(9)
+libs/interaction/src/favorite/favorite.constant.ts => FavoriteTargetTypeEnum(10)
+libs/interaction/src/like/like.constant.ts => LikeTargetTypeEnum(13)
+libs/interaction/src/purchase/purchase.constant.ts => PaymentMethodEnum(1), PurchaseStatusEnum(4), PurchaseTargetTypeEnum(9)
+libs/interaction/src/report/report.constant.ts => ReportReasonEnum(2), ReportStatusEnum(2), ReportTargetTypeEnum(14)
 libs/message/src/chat/chat.constant.ts => CHAT_MESSAGE_PAGE_LIMIT_DEFAULT(1), CHAT_MESSAGE_PAGE_LIMIT_MAX(1), ChatConversationMemberRoleEnum(1), ChatMessageStatusEnum(1), ChatMessageTypeEnum(3), MESSAGE_CHAT_SERVICE_TOKEN(2)
 libs/message/src/notification/notification.constant.ts => MessageNotificationSubjectTypeEnum(4), MessageNotificationTypeEnum(7)
 libs/message/src/outbox/outbox.constant.ts => MESSAGE_OUTBOX_BATCH_SIZE(1), MESSAGE_OUTBOX_MAX_RETRY(1), MESSAGE_OUTBOX_PROCESSING_TIMEOUT_SECONDS(1), MessageOutboxDomainEnum(3), MessageOutboxStatusEnum(3)
@@ -531,7 +555,7 @@ libs/moderation/sensitive-word/src/sensitive-word-cache.constant.ts => SENSITIVE
 libs/platform/src/constant/audit.constant.ts => AuditRoleEnum(1), AuditStatusEnum(7)
 libs/platform/src/constant/base.constant.ts => ApiTypeEnum(3), EnablePlatformEnum(2), HttpMethodEnum(3)
 libs/platform/src/constant/content.constant.ts => ContentTypeEnum(15), WorkTypeEnum(7), WorkViewPermissionEnum(7)
-libs/platform/src/constant/interaction.constant.ts => CommentLevelEnum(7), InteractionTargetTypeEnum(7), SceneTypeEnum(17)
+libs/platform/src/constant/interaction.constant.ts => CommentLevelEnum(7), InteractionTargetTypeEnum(14), SceneTypeEnum(17)
 libs/platform/src/constant/logger.constant.ts => LoggerLevelEnum(1)
 libs/platform/src/constant/user.constant.ts => AdminUserRoleEnum(3), GenderEnum(4), UserDefaults(1), UserStatusEnum(10)
 libs/platform/src/modules/auth/auth.constant.ts => AuthConstants(2), AuthDefaultValue(2), AuthErrorMessages(3), RevokeTokenReasonEnum(4)

@@ -15,8 +15,8 @@ import {
   ReportService,
   ReportTargetTypeEnum,
 } from '../../report'
-import { CommentTargetTypeEnum } from '../comment.constant'
 import { mapCommentTargetTypeToInteractionTargetType } from '../comment-target.mapping'
+import { CommentTargetTypeEnum } from '../comment.constant'
 
 /**
  * 评论举报解析器

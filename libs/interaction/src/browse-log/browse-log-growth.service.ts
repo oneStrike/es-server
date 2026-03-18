@@ -2,8 +2,8 @@ import { DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
 import { Injectable, Logger } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { BrowseLogTargetTypeEnum } from './browse-log.constant'
 import { mapBrowseLogTargetTypeToInteractionTargetType } from './browse-log-target.mapping'
+import { BrowseLogTargetTypeEnum } from './browse-log.constant'
 
 /**
  * 浏览日志成长服务
