@@ -1,13 +1,13 @@
 import type { FastifyRequest } from 'fastify'
 import {
   NovelContentService,
-  UploadContentDto,
 } from '@libs/content'
 import { ApiDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { FileUploadResponseDto } from '@libs/platform/modules/upload'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { UploadContentDto } from './dto/novel-content.dto'
 
 @ApiTags('内容管理/小说章节内容')
 @Controller('admin/content/novel-chapter-content')

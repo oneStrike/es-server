@@ -11,7 +11,7 @@ import {
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-import { SceneTypeEnum } from '@libs/platform/constant'
+import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -52,12 +52,22 @@ export class ForumTopicLikeResolver
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
         deletedAt: { isNull: true },
       },
       columns: { id: true },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
     })
 
-    if (!topic) {
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
       throw new NotFoundException('帖子不存在')
     }
 
@@ -135,6 +145,47 @@ export class ForumTopicLikeResolver
           content: '有人点赞了你的主题',
         },
       },
+    )
+  }
+
+  async batchGetDetails(targetIds: number[]) {
+    if (targetIds.length === 0) {
+      return new Map()
+    }
+
+    const topics = await this.drizzle.db.query.forumTopic.findMany({
+      where: {
+        id: { in: targetIds },
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        title: true,
+      },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
+    })
+
+    const visibleTopics = topics.filter(
+      (topic) => topic.section && !topic.section.deletedAt && topic.section.isEnabled,
+    )
+
+    return new Map(
+      visibleTopics.map((topic) => [
+        topic.id,
+        {
+          id: topic.id,
+          title: topic.title,
+        },
+      ]),
     )
   }
 }

@@ -106,3 +106,6 @@ export const forumSection = pgTable("forum_section", {
    */
   index("forum_section_deleted_at_idx").on(table.deletedAt),
 ]);
+
+export type ForumSection = typeof forumSection.$inferSelect;
+export type ForumSectionInsert = typeof forumSection.$inferInsert;

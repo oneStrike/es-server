@@ -30,5 +30,5 @@ export type ConfigAllowedTemplate = Record<string, unknown>
 export interface SensitiveFieldProcessInput {
   input: Record<string, unknown>
   current: Record<string, unknown> | null
-  sensitiveFields: string[]
+  sensitivePaths: string[]
 }

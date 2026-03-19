@@ -1,5 +1,6 @@
 import {
   BooleanProperty,
+  DateProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -50,6 +51,14 @@ export class BaseDictionaryDto extends BaseDto {
     maxLength: 255,
   })
   description?: string
+
+  @DateProperty({
+    description: '软删除时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }
 
 /**
@@ -109,4 +118,12 @@ export class BaseDictionaryItemDto extends BaseDto {
     maxLength: 255,
   })
   description?: string
+
+  @DateProperty({
+    description: '软删除时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }

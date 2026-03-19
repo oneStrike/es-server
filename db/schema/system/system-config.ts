@@ -33,6 +33,10 @@ export const systemConfig = pgTable("sys_config", {
    */
   contentReviewPolicy: jsonb(),
   /**
+   * 上传配置（JSON格式，包含 provider/七牛/Superbed 配置）
+   */
+  uploadConfig: jsonb(),
+  /**
    * 创建时间
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),

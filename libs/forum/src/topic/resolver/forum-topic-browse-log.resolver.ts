@@ -5,6 +5,7 @@ import {
   IBrowseLogTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
@@ -79,18 +80,25 @@ export class ForumTopicBrowseLogResolver
     tx: InteractionTx,
     targetId: number,
   ) => Promise<void> = async (tx, targetId) => {
-    const topic = await tx
-      .select({ id: this.forumTopic.id })
-      .from(this.forumTopic)
-      .where(
-        and(
-          eq(this.forumTopic.id, targetId),
-          isNull(this.forumTopic.deletedAt),
-        ),
-      )
-      .limit(1)
+    const topic = await tx.query.forumTopic.findFirst({
+      where: {
+        id: targetId,
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
+    })
 
-    if (!topic[0]) {
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
       throw new NotFoundException('帖子不存在')
     }
   }

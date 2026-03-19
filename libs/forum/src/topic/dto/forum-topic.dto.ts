@@ -196,7 +196,7 @@ export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
  * 用于更新现有的论坛主题
  */
 export class UpdateForumTopicDto extends IntersectionType(
-  CreateForumTopicDto,
+  PartialType(PickType(BaseForumTopicDto, ['title', 'content'] as const)),
   IdDto,
 ) {}
 

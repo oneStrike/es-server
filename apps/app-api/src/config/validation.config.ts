@@ -15,9 +15,4 @@ export const appConfigValidationSchema = {
    * 应用版本
    */
   APP_VERSION: Joi.string().default('1.0.0'),
-
-  /**
-   * 文件URL前缀
-   */
-  APP_FILE_URL_PREFIX: Joi.string().default('/files'),
 }

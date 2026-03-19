@@ -1,399 +1,83 @@
 import { WorkViewPermissionEnum } from '@libs/platform/constant'
 import {
-  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
-/**
- * 作品信息DTO（简化版）
- */
-class WorkInfoDto {
-  @NumberProperty({
-    description: '作品ID',
-    example: 1,
-    required: true,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '作品名称',
-    example: '进击的巨人',
-    required: true,
-  })
-  name!: string
-
-  @NumberProperty({
-    description: '作品类型（1=漫画, 2=小说）',
-    example: 1,
-    required: true,
-  })
-  type!: number
-}
-
-/**
- * 会员等级规则信息DTO（简化版）
- */
-class UserLevelRuleInfoDto {
-  @NumberProperty({
-    description: '等级规则ID',
-    example: 1,
-    required: true,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '等级名称',
-    example: 'VIP1',
-    required: true,
-  })
-  name!: string
-
-  @StringProperty({
-    description: '等级颜色',
-    example: '#FF0000',
-    required: true,
-  })
-  color!: string
-}
-
-/// 章节基础DTO
 export class BaseWorkChapterDto extends BaseDto {
-  @NumberProperty({
-    description: '作品ID',
-    example: 1,
-    required: true,
-  })
+  @NumberProperty({ description: '作品ID', example: 1, required: true })
   workId!: number
 
-  @NumberProperty({
-    description: '作品类型（1=漫画, 2=小说）',
-    example: 1,
-    required: true,
-  })
+  @NumberProperty({ description: '作品类型', example: 1, required: true })
   workType!: number
 
-  @StringProperty({
-    description: '章节标题',
-    example: '第1话',
-    required: true,
-    maxLength: 100,
-  })
+  @StringProperty({ description: '章节标题', example: '第1话', required: true, maxLength: 100 })
   title!: string
 
-  @StringProperty({
-    description: '章节副标题',
-    example: '序幕',
-    required: false,
-    maxLength: 200,
-  })
+  @StringProperty({ description: '章节副标题', example: '序章', required: false, maxLength: 200 })
   subtitle?: string
 
-  @StringProperty({
-    description: '章节封面',
-    example: 'https://example.com/cover.jpg',
-    required: false,
-    maxLength: 500,
-  })
+  @StringProperty({ description: '章节封面', example: 'https://example.com/cover.jpg', required: false, maxLength: 500 })
   cover?: string
 
-  @StringProperty({
-    description: '章节描述',
-    example: '这是第一章的内容描述',
-    required: false,
-    maxLength: 1000,
-  })
+  @StringProperty({ description: '章节简介', example: '章节简介', required: false, maxLength: 1000 })
   description?: string
 
-  @NumberProperty({
-    description: '章节序号',
-    example: 1,
-    required: true,
-    min: 0,
-  })
+  @NumberProperty({ description: '排序值', example: 1, required: true })
   sortOrder!: number
 
-  @EnumProperty({
-    description: '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=购买）',
-    example: WorkViewPermissionEnum.INHERIT,
-    required: true,
-    enum: WorkViewPermissionEnum,
-    default: WorkViewPermissionEnum.INHERIT,
-  })
-  viewRule!: WorkViewPermissionEnum
-
-  @NumberProperty({
-    description: '章节价格',
-    example: 0,
-    required: true,
-    default: 0,
-  })
-  price!: number
-
-  @NumberProperty({
-    description: '阅读所需会员等级ID',
-    example: 1,
-    required: false,
-  })
-  requiredViewLevelId?: number
-
-  @BooleanProperty({
-    description: '是否允许下载',
-    example: true,
-    required: true,
-    default: true,
-  })
-  canDownload!: boolean
-
-  @BooleanProperty({
-    description: '发布状态',
-    example: false,
-    required: true,
-    default: false,
-  })
+  @BooleanProperty({ description: '是否发布', example: false, required: true })
   isPublished!: boolean
 
-  @BooleanProperty({
-    description: '是否为试读章节',
-    example: false,
-    required: true,
-    default: false,
-  })
+  @BooleanProperty({ description: '是否试读', example: false, required: true })
   isPreview!: boolean
 
-  @BooleanProperty({
-    description: '是否允许评论',
-    example: true,
-    required: true,
-    default: true,
-  })
-  canComment!: boolean
-
-  @DateProperty({
-    description: '发布时间',
-    example: '2024-01-01',
-    required: false,
-  })
+  @DateProperty({ description: '发布时间', example: '2024-01-01T00:00:00.000Z', required: false })
   publishAt?: Date
 
-  @NumberProperty({
-    description: '阅读次数',
-    example: 1000,
-    required: true,
-    default: 0,
-    validation: false,
-  })
-  viewCount!: number
+  @EnumProperty({ description: '查看规则', example: WorkViewPermissionEnum.INHERIT, required: true, enum: WorkViewPermissionEnum })
+  viewRule!: WorkViewPermissionEnum
 
-  @NumberProperty({
-    description: '点赞数',
-    example: 100,
-    required: true,
-    default: 0,
-    validation: false,
-  })
-  likeCount!: number
+  @NumberProperty({ description: '阅读所需会员等级ID', example: 1, required: false })
+  requiredViewLevelId?: number
 
-  @NumberProperty({
-    description: '评论数',
-    example: 50,
-    required: true,
-    default: 0,
-    validation: false,
-  })
-  commentCount!: number
+  @NumberProperty({ description: '章节价格', example: 0, required: true })
+  price!: number
 
-  @NumberProperty({
-    description: '购买次数',
-    example: 20,
-    required: true,
-    default: 0,
-    validation: false,
-  })
-  purchaseCount!: number
+  @BooleanProperty({ description: '是否允许下载', example: true, required: true })
+  canDownload!: boolean
 
-  @NumberProperty({
-    description: '下载次数',
-    example: 20,
-    required: true,
-    default: 0,
-    validation: false,
-  })
-  downloadCount!: number
+  @BooleanProperty({ description: '是否允许评论', example: true, required: true })
+  canComment!: boolean
 
-  @NumberProperty({
-    description: '字数（小说章节）',
-    example: 3000,
-    required: true,
-    default: 0,
-    validation: false,
-  })
-  wordCount!: number
-
-  @StringProperty({
-    description: '内容存储路径',
-    example: '/uploads/chapters/1/',
-    required: false,
-    maxLength: 500,
-  })
+  @StringProperty({ description: '章节内容', example: '内容路径或文本', required: false })
   content?: string
 
-  @StringProperty({
-    description: '备注',
-    example: '管理员备注',
-    required: false,
-    maxLength: 1000,
-  })
+  @NumberProperty({ description: '字数', example: 3000, required: true, validation: false })
+  wordCount!: number
+
+  @NumberProperty({ description: '浏览数', example: 100, required: true, validation: false })
+  viewCount!: number
+
+  @NumberProperty({ description: '点赞数', example: 10, required: true, validation: false })
+  likeCount!: number
+
+  @NumberProperty({ description: '评论数', example: 10, required: true, validation: false })
+  commentCount!: number
+
+  @NumberProperty({ description: '购买数', example: 10, required: true, validation: false })
+  purchaseCount!: number
+
+  @NumberProperty({ description: '下载数', example: 10, required: true, validation: false })
+  downloadCount!: number
+
+  @StringProperty({ description: '备注', example: '管理员备注', required: false, maxLength: 1000 })
   remark?: string
 
-  @NestedProperty({
-    description: '关联作品信息',
-    example: { id: 1, name: '进击的巨人', type: 1 },
-    required: false,
-    type: WorkInfoDto,
-    validation: false,
-  })
-  work?: WorkInfoDto
-
-  @NestedProperty({
-    description: '阅读所需会员等级信息',
-    example: { id: 1, name: 'VIP1', color: '#FF0000' },
-    required: false,
-    type: UserLevelRuleInfoDto,
-    validation: false,
-  })
-  requiredViewLevel?: UserLevelRuleInfoDto
+  @DateProperty({ description: '删除时间', example: '2024-01-01T00:00:00.000Z', required: false, validation: false })
+  deletedAt?: Date | null
 }
-
-/// 创建章节DTO
-export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
-  ...OMIT_BASE_FIELDS,
-  'viewCount',
-  'likeCount',
-  'commentCount',
-  'purchaseCount',
-  'downloadCount',
-  'wordCount',
-  'work',
-  'isPublished',
-  'requiredViewLevel',
-]) {
-  @BooleanProperty({
-    description: '发布状态',
-    example: false,
-    required: false,
-    default: false,
-  })
-  isPublished!: boolean
-}
-
-// 分页返回的章节DTO
-export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
-  'id',
-  'isPreview',
-  'cover',
-  'title',
-  'subtitle',
-  'canComment',
-  'sortOrder',
-  'viewRule',
-  'canDownload',
-  'price',
-  'requiredViewLevelId',
-  'publishAt',
-  'createdAt',
-  'updatedAt',
-  'isPublished',
-]) {}
-
-/// 更新章节DTO
-export class UpdateWorkChapterDto extends IntersectionType(
-  PartialType(CreateWorkChapterDto),
-  IdDto,
-) {}
-
-/// 查询章节DTO
-export class QueryWorkChapterDto extends IntersectionType(
-  IntersectionType(PageDto, PickType(BaseWorkChapterDto, ['workId'])),
-  PickType(PartialType(BaseWorkChapterDto), [
-    'title',
-    'isPublished',
-    'isPreview',
-    'viewRule',
-    'canDownload',
-    'canComment',
-  ]),
-) {}
-
-/// 章节用户状态字段DTO
-export class ChapterUserStatusFieldsDto {
-  @BooleanProperty({
-    description: '是否已点赞',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  liked!: boolean
-
-  @BooleanProperty({
-    description: '是否已购买',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  purchased!: boolean
-
-  @BooleanProperty({
-    description: '是否已下载',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  downloaded!: boolean
-}
-
-/// 漫画章节内容DTO
-export class ComicChapterContentDto extends IntersectionType(
-  IdDto,
-  PickType(BaseWorkChapterDto, ['title', 'subtitle']),
-) {
-  @ArrayProperty({
-    description: '章节内容',
-    example: ['/uploads/chapters/1/1.jpg', '/uploads/chapters/1/2.jpg'],
-    itemType: 'string',
-    required: true,
-    validation: false,
-  })
-  content!: string[]
-}
-
-/// 漫画章节内容DTO
-export class NovelChapterContentDto extends IntersectionType(
-  IdDto,
-  OmitType(ComicChapterContentDto, ['content']),
-  PickType(BaseWorkChapterDto, ['content']),
-) {}
-
-/// 章节详情带用户状态DTO
-export class WorkChapterDetailWithUserStatusDto extends IntersectionType(
-  BaseWorkChapterDto,
-  ChapterUserStatusFieldsDto,
-  PickType(ComicChapterContentDto, ['content']),
-) {}
-
-/// 章节用户状态DTO
-export class WorkChapterUserStatusDto extends IntersectionType(
-  IdDto,
-  ChapterUserStatusFieldsDto,
-) {}

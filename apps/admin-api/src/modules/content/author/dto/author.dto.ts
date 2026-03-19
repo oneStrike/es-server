@@ -1,4 +1,4 @@
-import { BaseAuthorDto } from '@libs/content'
+import { BaseAuthorDto as ContentBaseAuthorDto } from '@libs/content'
 import { JsonProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
@@ -7,6 +7,8 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+
+export class BaseAuthorDto extends ContentBaseAuthorDto {}
 
 export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
   ...OMIT_BASE_FIELDS,

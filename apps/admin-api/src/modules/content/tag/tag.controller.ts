@@ -1,14 +1,16 @@
 import {
-  BaseTagDto,
-  CreateTagDto,
-  QueryTagDto,
-  UpdateTagDto,
   WorkTagService,
 } from '@libs/content'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  BaseTagDto,
+  CreateTagDto,
+  QueryTagDto,
+  UpdateTagDto,
+} from './dto/tag.dto'
 
 /**
  * 标签管理控制器

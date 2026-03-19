@@ -5,18 +5,17 @@ import {
   LikeService,
   ReadingStateService,
 } from '@libs/interaction'
-import { AuditStatusEnum, ContentTypeEnum } from '@libs/platform/constant'
+import { ContentTypeEnum } from '@libs/platform/constant'
 import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
 import {
-  CreateWorkDto,
-  QueryWorkDto,
-  QueryWorkForumTopicsDto,
-  QueryWorkTypeDto,
-  UpdateWorkDto,
-  UpdateWorkStatusDto,
-} from './dto/work.dto'
+  CreateWorkInput,
+  QueryWorkInput,
+  QueryWorkTypeInput,
+  UpdateWorkInput,
+  UpdateWorkStatusInput,
+} from './work.type'
 
 /**
  * 作品详情上下文接口
@@ -31,6 +30,8 @@ interface WorkDetailContext {
   device?: string
   /** 用户代理字符串 */
   userAgent?: string
+  /** 是否跳过 app 侧可见性约束，供管理端复用详情查询 */
+  bypassVisibilityCheck?: boolean
 }
 
 /**
@@ -66,10 +67,6 @@ export class WorkService {
 
   get forumSection() {
     return this.drizzle.schema.forumSection
-  }
-
-  get forumTopic() {
-    return this.drizzle.schema.forumTopic
   }
 
   get workAuthor() {
@@ -192,7 +189,7 @@ export class WorkService {
    * @returns 创建的作品信息
    * @throws BadRequestException 当作品名称重复或关联项无效时抛出异常
    */
-  async createWork(createWorkDto: CreateWorkDto) {
+  async createWork(createWorkDto: CreateWorkInput) {
     const { authorIds, categoryIds, tagIds, ...workData } = createWorkDto
     const normalizedWorkData = {
       ...workData,
@@ -224,7 +221,7 @@ export class WorkService {
         .values({
           name: workData.name,
           description: workData.description.slice(0, 500),
-          isEnabled: true,
+          isEnabled: workData.isPublished ?? true,
         })
         .returning({ id: this.forumSection.id })
 
@@ -291,7 +288,7 @@ export class WorkService {
    * @returns 更新后的作品信息
    * @throws BadRequestException 当作品不存在、名称重复或关联项无效时抛出异常
    */
-  async updateWork(updateWorkDto: UpdateWorkDto) {
+  async updateWork(updateWorkDto: UpdateWorkInput) {
     const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
     const normalizedUpdateData = {
       ...updateData,
@@ -340,6 +337,8 @@ export class WorkService {
     const originalAuthorIds = existingWork.authors.map((rel) => rel.authorId)
     const shouldSyncSectionName =
       isNotNil(updateData.name) && updateData.name !== existingWork.name
+    const shouldSyncSectionDescription = isNotNil(updateData.description)
+    const shouldSyncSectionEnabled = isNotNil(updateData.isPublished)
 
     /**
      * 事务处理：使用 $transaction 确保所有更新操作的原子性
@@ -352,10 +351,27 @@ export class WorkService {
         .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
         .returning()
 
-      if (shouldSyncSectionName && existingWork.forumSectionId) {
+      if (
+        existingWork.forumSectionId &&
+        (
+          shouldSyncSectionName ||
+          shouldSyncSectionDescription ||
+          shouldSyncSectionEnabled
+        )
+      ) {
+        const sectionUpdateData: Record<string, unknown> = {}
+        if (shouldSyncSectionName) {
+          sectionUpdateData.name = updateData.name
+        }
+        if (shouldSyncSectionDescription) {
+          sectionUpdateData.description = updateData.description?.slice(0, 500)
+        }
+        if (shouldSyncSectionEnabled) {
+          sectionUpdateData.isEnabled = updateData.isPublished
+        }
         await tx
           .update(this.forumSection)
-          .set({ name: updateData.name })
+          .set(sectionUpdateData)
           .where(eq(this.forumSection.id, existingWork.forumSectionId))
       }
 
@@ -443,7 +459,7 @@ export class WorkService {
    * @returns 更新结果
    * @throws BadRequestException 当作品不存在时抛出异常
    */
-  async updateStatus(body: UpdateWorkStatusDto) {
+  async updateStatus(body: UpdateWorkStatusInput) {
     const work = await this.db.query.work.findFirst({
       where: { id: body.id, deletedAt: { isNull: true } },
       columns: {
@@ -498,12 +514,12 @@ export class WorkService {
    * @param dto 查询条件（包含类型过滤等）
    * @returns 分页的热门作品列表
    */
-  async getHotWorkPage(dto: QueryWorkTypeDto) {
+  async getHotWorkPage(dto: QueryWorkTypeInput) {
     return this.getWorkTypePage(dto, { isHot: true })
   }
 
   private async getWorkTypePage(
-    dto: QueryWorkTypeDto,
+    dto: QueryWorkTypeInput,
     extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
   ) {
     const page = await this.drizzle.ext.findPagination(this.work, {
@@ -576,41 +592,59 @@ export class WorkService {
     }
   }
 
-  async getNewWorkPage(dto: QueryWorkTypeDto) {
+  async getNewWorkPage(dto: QueryWorkTypeInput) {
     return this.getWorkTypePage(dto, { isNew: true })
   }
 
-  async getRecommendedWorkPage(dto: QueryWorkTypeDto) {
+  async getRecommendedWorkPage(dto: QueryWorkTypeInput) {
     return this.getWorkTypePage(dto, { isRecommended: true })
   }
 
-  async getWorkPage(queryWorkDto: QueryWorkDto) {
+  async getWorkPage(queryWorkDto: QueryWorkInput) {
     const { name, publisher, author, tagIds, ...otherDto } = queryWorkDto
+    const normalizedAuthor = author?.trim()
+    const normalizedName = name?.trim()
+    const normalizedPublisher = publisher?.trim()
+    const normalizedLanguage = otherDto.language?.trim()
+    const normalizedRegion = otherDto.region?.trim()
+    const normalizedAgeRating = otherDto.ageRating?.trim()
     const conditions = [
       isNull(this.work.deletedAt),
       otherDto.type ? eq(this.work.type, otherDto.type) : undefined,
       isNotNil(otherDto.isPublished) ? eq(this.work.isPublished, otherDto.isPublished) : undefined,
-      name?.trim() ? ilike(this.work.name, `%${name.trim()}%`) : undefined,
-      publisher?.trim() ? ilike(this.work.publisher, `%${publisher.trim()}%`) : undefined,
+      isNotNil(otherDto.serialStatus) ? eq(this.work.serialStatus, otherDto.serialStatus) : undefined,
+      normalizedLanguage ? eq(this.work.language, normalizedLanguage) : undefined,
+      normalizedRegion ? eq(this.work.region, normalizedRegion) : undefined,
+      normalizedAgeRating ? eq(this.work.ageRating, normalizedAgeRating) : undefined,
+      isNotNil(otherDto.isRecommended) ? eq(this.work.isRecommended, otherDto.isRecommended) : undefined,
+      isNotNil(otherDto.isHot) ? eq(this.work.isHot, otherDto.isHot) : undefined,
+      isNotNil(otherDto.isNew) ? eq(this.work.isNew, otherDto.isNew) : undefined,
+      normalizedName ? ilike(this.work.name, `%${normalizedName}%`) : undefined,
+      normalizedPublisher ? ilike(this.work.publisher, `%${normalizedPublisher}%`) : undefined,
     ].filter(Boolean)
 
-    if (author?.trim()) {
-      const rows = await this.db
-        .select({ workId: this.workAuthorRelation.workId })
-        .from(this.workAuthorRelation)
-        .innerJoin(this.workAuthor, eq(this.workAuthor.id, this.workAuthorRelation.authorId))
-        .where(ilike(this.workAuthor.name, `%${author.trim()}%`))
-      const workIds = [...new Set(rows.map((row) => row.workId))]
-      conditions.push(workIds.length ? inArray(this.work.id, workIds) : eq(this.work.id, -1))
+    if (normalizedAuthor) {
+      conditions.push(sql`
+        exists (
+          select 1
+          from ${this.workAuthorRelation}
+          inner join ${this.workAuthor}
+            on ${this.workAuthor.id} = ${this.workAuthorRelation.authorId}
+          where ${this.workAuthorRelation.workId} = ${this.work.id}
+            and ${ilike(this.workAuthor.name, `%${normalizedAuthor}%`)}
+        )
+      `)
     }
 
     if (Array.isArray(tagIds) && tagIds.length > 0) {
-      const rows = await this.db
-        .select({ workId: this.workTagRelation.workId })
-        .from(this.workTagRelation)
-        .where(inArray(this.workTagRelation.tagId, tagIds))
-      const workIds = [...new Set(rows.map((row) => row.workId))]
-      conditions.push(workIds.length ? inArray(this.work.id, workIds) : eq(this.work.id, -1))
+      conditions.push(sql`
+        exists (
+          select 1
+          from ${this.workTagRelation}
+          where ${this.workTagRelation.workId} = ${this.work.id}
+            and ${inArray(this.workTagRelation.tagId, tagIds)}
+        )
+      `)
     }
 
     const page = await this.drizzle.ext.findPagination(this.work, {
@@ -625,6 +659,7 @@ export class WorkService {
       where: { id, deletedAt: { isNull: true } },
       columns: {
         forumSectionId: true,
+        isPublished: true,
       },
     })
 
@@ -632,12 +667,20 @@ export class WorkService {
       throw new BadRequestException('作品不存在')
     }
 
+    if (!work.isPublished) {
+      throw new BadRequestException('作品未发布')
+    }
+
     if (!work.forumSectionId) {
       throw new BadRequestException('作品未关联论坛板块')
     }
 
     const section = await this.db.query.forumSection.findFirst({
-      where: { id: work.forumSectionId, deletedAt: { isNull: true } },
+      where: {
+        id: work.forumSectionId,
+        deletedAt: { isNull: true },
+        isEnabled: true,
+      },
       columns: {
         id: true,
         name: true,
@@ -658,24 +701,6 @@ export class WorkService {
     return section
   }
 
-  async getWorkForumTopics(query: QueryWorkForumTopicsDto) {
-    const { id, ...pageDto } = query
-    const section = await this.getWorkForumSection(id)
-
-    return this.drizzle.ext.findPagination(this.forumTopic, {
-      where: this.drizzle.buildWhere(this.forumTopic, {
-        and: {
-          sectionId: section.id,
-          deletedAt: { isNull: true },
-          isHidden: false,
-          auditStatus: AuditStatusEnum.APPROVED,
-        },
-      }),
-      ...pageDto,
-      orderBy: [{ isPinned: 'desc' }, { lastReplyAt: 'desc' }, { createdAt: 'desc' }],
-    })
-  }
-
   /**
    * 获取作品详情
    * @param id 作品ID
@@ -683,13 +708,23 @@ export class WorkService {
    * @throws BadRequestException 当作品不存在时抛出异常
    */
   async getWorkDetail(id: number, context: WorkDetailContext = {}) {
-    const { userId, ipAddress, device, userAgent } = context
+    const {
+      userId,
+      ipAddress,
+      device,
+      userAgent,
+      bypassVisibilityCheck = false,
+    } = context
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
     })
 
     if (!work) {
       throw new BadRequestException('作品不存在')
+    }
+
+    if (!bypassVisibilityCheck && !work.isPublished) {
+      throw new BadRequestException('作品未发布')
     }
 
     const relationPage = await this.attachWorkRelations({

@@ -65,7 +65,8 @@ RUN apk add --no-cache dumb-init tzdata && \
         /app/logs \
         /app/secrets \
         /app/uploads \
-        /app/uploads/${APP_TYPE}
+        /app/uploads/public \
+        /app/uploads/tmp
 
 COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=nestjs:nodejs /app/package.json ./package.json

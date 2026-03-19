@@ -1,7 +1,14 @@
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { FastifyRequest } from 'fastify'
-import fs from 'node:fs'
-import { join } from 'node:path'
+import type {
+  PreparedUploadFile,
+  UploadConfigProvider,
+  UploadFileCategory,
+  UploadSystemConfig,
+} from './upload.types'
+import { Buffer as NodeBuffer } from 'node:buffer'
+import { createWriteStream, promises as fs } from 'node:fs'
+import { extname, join, posix } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 import { UploadResponseDto } from '@libs/platform/dto'
@@ -9,101 +16,47 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Optional,
   PayloadTooLargeException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { fileTypeFromBuffer } from 'file-type'
+import mime from 'mime-types'
 import { v4 as uuidv4 } from 'uuid'
+import { LocalUploadProvider } from './local-upload.provider'
+import { QiniuUploadProvider } from './qiniu-upload.provider'
+import { SuperbedUploadProvider } from './superbed-upload.provider'
+import {
+  UPLOAD_CONFIG_PROVIDER,
+  UploadProviderEnum,
+} from './upload.types'
 
 const pump = promisify(pipeline)
-
-/** 场景名称验证正则：只允许字母和数字，最大长度20 */
 const SCENE_NAME_REGEX = /^[a-z0-9]+$/i
+const PATH_SEGMENT_REGEX = /^[\w.-]+$/
+const LEADING_DOT_REGEX = /^\./
 
-/** Windows 路径分隔符替换正则 */
-const BACKSLASH_REGEX = /\\/g
+interface MultipartFieldLike {
+  type?: unknown
+  value?: unknown
+}
 
-/**
- * 文件上传服务 - 单文件模式重构版本
- * 主要负责单个文件上传的完整流程
- */
 @Injectable()
 export class UploadService {
   private readonly uploadConfig: UploadConfigInterface
-  private readonly fileUrlPrefix: string
 
-  constructor(@Inject(ConfigService) private configService: ConfigService) {
-    this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
-    this.fileUrlPrefix = this.configService.get('app.fileUrlPrefix')!
-  }
-
-  /**
-   * 生成文件保存路径
-   * @param uploadPath 基础上传路径
-   * @param fileType 文件类型分类
-   * @param scene 场景名称
-   * @param pathSegments 路径片段数组
-   * @returns 完整的文件保存路径
-   */
-  generateFilePath(
-    uploadPath: string,
-    fileType: string,
-    scene: string,
-    pathSegments?: string[],
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly localUploadProvider: LocalUploadProvider,
+    private readonly qiniuUploadProvider: QiniuUploadProvider,
+    private readonly superbedUploadProvider: SuperbedUploadProvider,
+    @Optional()
+    @Inject(UPLOAD_CONFIG_PROVIDER)
+    private readonly uploadConfigProvider?: UploadConfigProvider,
   ) {
-    // 参数验证
-    if (!uploadPath || !fileType) {
-      throw new Error('上传失败')
-    }
-
-    if (pathSegments && pathSegments?.length > 0) {
-      const savePath = join(uploadPath, scene, ...pathSegments)
-    fs.mkdirSync(savePath, { recursive: true, mode: 0o755 })
-    return savePath
-    }
-
-    // 使用现代日期处理方式生成日期字符串
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const dateStr = `${year}-${month}-${day}`
-    const savePath = join(uploadPath, scene, dateStr, fileType)
-    fs.mkdirSync(savePath, { recursive: true, mode: 0o755 })
-    // 安全地拼接路径
-    return savePath
+    this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
   }
 
-  /**
-   * 根据文件扩展名获取文件类型
-   * @param ext 文件扩展名（带点）
-   * @returns 文件类型分类（如image、audio等）
-   */
-  getFileTypeFromExt(ext: string) {
-    ext = ext.toLowerCase() // 转换为小写
-    for (const type in this.uploadConfig.allowExtensions) {
-      if (this.uploadConfig.allowExtensions[type].includes(ext)) {
-        return type
-      }
-    }
-  }
-
-  /**
-   * 消费流并等待结束，防止连接重置
-   */
-  private async consumeStream(stream: NodeJS.ReadableStream): Promise<void> {
-    return new Promise((resolve) => {
-      stream.on('end', resolve)
-      stream.on('error', resolve)
-      stream.resume()
-    })
-  }
-
-  /**
-   * 上传单个文件
-   * @param data Fastify multipart数据
-   * @returns 上传结果
-   */
   async uploadFile(
     data: FastifyRequest,
     pathSegments?: string[],
@@ -113,101 +66,308 @@ export class UploadService {
       throw new BadRequestException('上传文件不能为空')
     }
 
-    // 获取场景值，处理字段类型
-    let scene: string | undefined
-    const sceneField = targetFile.fields.scene
-    if (sceneField) {
-      // 如果是单个字段
-      if (typeof sceneField === 'object' && 'type' in sceneField) {
-        if (sceneField.type === 'field') {
-          scene = String(sceneField.value)
-        }
-      } else if (Array.isArray(sceneField)) {
-        // 如果是数组，取第一个值
-        const firstField = sceneField[0]
-        if (firstField.type === 'field') {
-          scene = String(firstField.value)
-        }
-      }
-    }
-    if (!scene || !SCENE_NAME_REGEX.test(scene) || scene.length > 20) {
-      // 必须消费完文件流，否则会导致客户端连接重置 (ERR_CONNECTION_RESET)
+    const scene = this.extractScene(targetFile.fields.scene)
+    if (!scene) {
       await this.consumeStream(targetFile.file)
       throw new BadRequestException('未知的上传场景')
     }
 
-    // 使用fileTypeStream函数检测文件类型，返回一个带有fileType属性的流
-    const firstChunk = await new Promise<Uint8Array>((resolve, reject) => {
-      targetFile.file.once('error', reject)
-      targetFile.file.once('readable', () => {
-        const chunk =
-          targetFile.file.read(4100) ||
-          targetFile.file.read() ||
-          new Uint8Array(0)
-        resolve(chunk)
-      })
-    })
+    const firstChunk = await this.readFirstChunk(targetFile.file)
     const detectedFileType = await fileTypeFromBuffer(firstChunk)
-    const detectionStream = new PassThrough()
-    detectionStream.write(firstChunk)
-    targetFile.file.pipe(detectionStream)
-    const { ext, mime } = detectedFileType || {}
-    if (!ext || !mime) {
-      await this.consumeStream(detectionStream)
+    const resolvedFileType = this.resolveFileType(
+      detectedFileType?.ext,
+      detectedFileType?.mime,
+      targetFile.filename,
+      targetFile.mimetype,
+    )
+
+    if (!resolvedFileType) {
+      await this.consumeStream(targetFile.file)
       throw new BadRequestException('无法识别的文件类型')
     }
 
-    if (!this.uploadConfig.allowMimeTypesFlat?.includes(mime)) {
-      await this.consumeStream(detectionStream)
+    const { ext, mime, fileCategory } = resolvedFileType
+    if (!this.uploadConfig.allowMimeTypesFlat.includes(mime)) {
+      await this.consumeStream(targetFile.file)
       throw new BadRequestException('不被允许的文件类型')
     }
 
-    // 生成保存路径
-    const fileType = this.getFileTypeFromExt(ext)
-    if (!fileType) {
-      await this.consumeStream(detectionStream)
-      throw new BadRequestException('未知的文件类型')
-    }
-    const savePath = this.generateFilePath(
-      this.uploadConfig.uploadDir,
-      fileType,
+    const finalName = `${uuidv4()}.${ext}`
+    const objectKey = this.buildObjectKey(
       scene,
+      fileCategory,
+      finalName,
       pathSegments,
     )
-    // 生成文件名（保留原扩展，规范化小写）
-    const tempName = `.${uuidv4()}.uploading`
-    const tempPath = join(savePath, tempName)
-    const writeStream = fs.createWriteStream(tempPath)
+    const tempPath = join(this.uploadConfig.tmpDir, `.${uuidv4()}.uploading`)
+
+    await fs.mkdir(this.uploadConfig.tmpDir, { recursive: true })
+
+    const detectionStream = new PassThrough()
+    detectionStream.write(firstChunk)
+    targetFile.file.pipe(detectionStream)
+
     try {
-      // 使用管道流式处理文件，使用detectionStream而不是targetFile.file
-      await pump(detectionStream, writeStream)
+      await pump(detectionStream, createWriteStream(tempPath))
       if (targetFile.file.truncated) {
         throw new PayloadTooLargeException('文件大小超过限制')
       }
-      // 生成最终文件名并重命名临时文件
-      const finalName = `${uuidv4()}.${ext}`
-      const finalPath = join(savePath, finalName)
-      fs.renameSync(tempPath, finalPath)
-      const relativePath = finalPath
-        .replace(this.uploadConfig.uploadDir, '')
-        .replace(BACKSLASH_REGEX, '/')
+
+      const stats = await fs.stat(tempPath)
+      const preparedFile: PreparedUploadFile = {
+        tempPath,
+        objectKey,
+        finalName,
+        originalName: targetFile.filename,
+        mimeType: mime,
+        ext,
+        fileCategory,
+        scene,
+        fileSize: stats.size,
+      }
+
+      const systemUploadConfig = this.getSystemUploadConfig()
+      const provider = this.resolveProvider(
+        systemUploadConfig.provider,
+        fileCategory,
+        systemUploadConfig.superbedNonImageFallbackToLocal,
+      )
+
+      const result = await this.uploadByProvider(
+        provider,
+        preparedFile,
+        systemUploadConfig,
+      )
 
       return {
         filename: finalName,
         originalName: targetFile.filename,
-        filePath: `${this.fileUrlPrefix}${relativePath}`,
-        fileSize: fs.statSync(finalPath).size,
+        filePath: result.filePath,
+        fileSize: stats.size,
         mimeType: mime,
         fileType: ext,
         scene,
         uploadTime: new Date(),
       }
-    } catch (error) {
-      fs.rmSync(tempPath, { recursive: true, force: true })
-      if (error.response.message) {
+    } catch (error: any) {
+      if (error?.response?.message) {
+        throw error
+      }
+      if (error instanceof BadRequestException || error instanceof PayloadTooLargeException) {
         throw error
       }
       throw new BadRequestException('上传文件失败')
+    } finally {
+      await fs.rm(tempPath, { force: true }).catch(() => undefined)
     }
+  }
+
+  private getSystemUploadConfig(): UploadSystemConfig {
+    return (
+      this.uploadConfigProvider?.getUploadConfig() ?? {
+        provider: UploadProviderEnum.LOCAL,
+        superbedNonImageFallbackToLocal: true,
+        qiniu: {
+          accessKey: '',
+          secretKey: '',
+          bucket: '',
+          domain: '',
+          region: '',
+          pathPrefix: '',
+          useHttps: true,
+          tokenExpires: 3600,
+        },
+        superbed: {
+          token: '',
+          categories: '',
+        },
+      }
+    )
+  }
+
+  private async uploadByProvider(
+    provider: UploadProviderEnum,
+    file: PreparedUploadFile,
+    systemConfig: UploadSystemConfig,
+  ) {
+    switch (provider) {
+      case UploadProviderEnum.QINIU:
+        return this.qiniuUploadProvider.upload(file, systemConfig)
+      case UploadProviderEnum.SUPERBED:
+        return this.superbedUploadProvider.upload(file, systemConfig)
+      case UploadProviderEnum.LOCAL:
+      default:
+        return this.localUploadProvider.upload(file)
+    }
+  }
+
+  private resolveProvider(
+    provider: UploadProviderEnum,
+    fileCategory: UploadFileCategory,
+    superbedNonImageFallbackToLocal: boolean,
+  ) {
+    if (
+      provider === UploadProviderEnum.SUPERBED &&
+      fileCategory !== 'image' &&
+      superbedNonImageFallbackToLocal
+    ) {
+      return UploadProviderEnum.LOCAL
+    }
+
+    return provider
+  }
+
+  private buildObjectKey(
+    scene: string,
+    fileCategory: UploadFileCategory,
+    finalName: string,
+    pathSegments?: string[],
+  ) {
+    const normalizedSegments = (pathSegments ?? [])
+      .map(segment => segment.trim())
+      .filter(Boolean)
+      .map((segment) => {
+        if (!PATH_SEGMENT_REGEX.test(segment)) {
+          throw new BadRequestException('上传路径不合法')
+        }
+        return segment
+      })
+
+    if (normalizedSegments.length > 0) {
+      return posix.join(scene, ...normalizedSegments, finalName)
+    }
+
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+
+    return posix.join(scene, dateStr, fileCategory, finalName)
+  }
+
+  private resolveFileType(
+    detectedExt: string | undefined,
+    detectedMime: string | undefined,
+    originalName: string,
+    requestMime?: string,
+  ): { ext: string, mime: string, fileCategory: UploadFileCategory } | null {
+    const filenameExt = extname(originalName).replace(LEADING_DOT_REGEX, '').toLowerCase()
+    const ext = (detectedExt || filenameExt).toLowerCase()
+    if (!ext) {
+      return null
+    }
+
+    const fileCategory = this.getFileCategoryFromExt(ext)
+    if (!fileCategory) {
+      return null
+    }
+
+    const mime =
+      detectedMime?.toLowerCase()
+      || (requestMime && requestMime !== 'application/octet-stream'
+        ? requestMime.toLowerCase()
+        : '')
+      || this.lookupMimeByExt(ext)
+
+    if (!mime) {
+      return null
+    }
+
+    return {
+      ext,
+      mime,
+      fileCategory,
+    }
+  }
+
+  private lookupMimeByExt(ext: string) {
+    const lookupValue = mime.lookup(ext)
+    return lookupValue ? String(lookupValue).toLowerCase() : ''
+  }
+
+  private getFileCategoryFromExt(ext: string): UploadFileCategory | null {
+    const lowerExt = ext.toLowerCase()
+    for (const type of Object.keys(this.uploadConfig.allowExtensions) as UploadFileCategory[]) {
+      if (this.uploadConfig.allowExtensions[type].includes(lowerExt)) {
+        return type
+      }
+    }
+    return null
+  }
+
+  private extractScene(sceneField: unknown): string | null {
+    let scene: string | undefined
+
+    if (
+      sceneField
+      && typeof sceneField === 'object'
+      && 'type' in sceneField
+      && 'value' in sceneField
+    ) {
+      const field = sceneField as MultipartFieldLike
+      if (field.type === 'field') {
+        scene = String(field.value)
+      }
+    } else if (Array.isArray(sceneField)) {
+      const firstField = sceneField[0] as MultipartFieldLike | undefined
+      if (firstField?.type === 'field') {
+        scene = String(firstField.value)
+      }
+    }
+
+    if (!scene || !SCENE_NAME_REGEX.test(scene) || scene.length > 20) {
+      return null
+    }
+
+    return scene
+  }
+
+  private async readFirstChunk(stream: NodeJS.ReadableStream & {
+    read: (size?: number) => NodeBuffer | null
+  }): Promise<NodeBuffer> {
+    const initialChunk = stream.read(4100) || stream.read()
+    if (initialChunk) {
+      return this.toBuffer(initialChunk)
+    }
+
+    return new Promise<NodeBuffer>((resolve, reject) => {
+      let onEnd: () => void
+      let onError: (error: Error) => void
+
+      const onReadable = () => {
+        stream.off('readable', onReadable)
+        stream.off('end', onEnd)
+        stream.off('error', onError)
+        resolve(this.toBuffer(stream.read(4100) || stream.read() || NodeBuffer.alloc(0)))
+      }
+      onEnd = () => {
+        stream.off('readable', onReadable)
+        stream.off('end', onEnd)
+        stream.off('error', onError)
+        resolve(NodeBuffer.alloc(0))
+      }
+      onError = (error: Error) => {
+        stream.off('readable', onReadable)
+        stream.off('end', onEnd)
+        stream.off('error', onError)
+        reject(error)
+      }
+      stream.on('readable', onReadable)
+      stream.on('end', onEnd)
+      stream.on('error', onError)
+    })
+  }
+
+  private toBuffer(chunk: string | NodeBuffer): NodeBuffer {
+    return typeof chunk === 'string' ? NodeBuffer.from(chunk) : chunk
+  }
+
+  private async consumeStream(stream: NodeJS.ReadableStream): Promise<void> {
+    return new Promise((resolve) => {
+      stream.on('end', resolve)
+      stream.on('error', resolve)
+      stream.resume()
+    })
   }
 }

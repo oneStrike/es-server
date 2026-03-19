@@ -41,6 +41,7 @@ export class WorkNovelReportResolver
       where: {
         id: targetId,
         type: 2,
+        isPublished: true,
         deletedAt: { isNull: true },
       },
       columns: { id: true },

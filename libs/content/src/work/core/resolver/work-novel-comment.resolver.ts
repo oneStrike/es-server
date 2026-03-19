@@ -68,6 +68,7 @@ export class WorkNovelCommentResolver
       where: {
         id: targetId,
         type: this.workType,
+        isPublished: true,
         deletedAt: { isNull: true },
       },
       columns: { id: true },

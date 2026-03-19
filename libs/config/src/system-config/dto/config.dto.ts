@@ -2,11 +2,13 @@ import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,
+  JsonProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
 
 // ============================================================================
 // 阿里云配置
@@ -215,6 +217,139 @@ export class ContentReviewPolicyDto {
 }
 
 // ============================================================================
+// 上传配置
+// ============================================================================
+
+export class QiniuUploadConfigDto {
+  @StringProperty({
+    description: '七牛 AccessKey（敏感字段，前端输入明文或 RSA 加密值）',
+    example: 'your-access-key',
+    required: false,
+  })
+  accessKey?: string
+
+  @StringProperty({
+    description: '七牛 SecretKey（敏感字段，前端输入明文或 RSA 加密值）',
+    example: 'your-secret-key',
+    required: false,
+  })
+  secretKey?: string
+
+  @StringProperty({
+    description: '七牛存储空间 bucket',
+    example: 'es-public',
+    required: false,
+  })
+  bucket?: string
+
+  @StringProperty({
+    description: '七牛公开访问域名',
+    example: 'https://cdn.example.com',
+    required: false,
+  })
+  domain?: string
+
+  @StringProperty({
+    description: '七牛区域 ID，留空时自动查询',
+    example: 'z0',
+    required: false,
+  })
+  region?: string
+
+  @StringProperty({
+    description: '七牛对象前缀',
+    example: 'uploads',
+    required: false,
+  })
+  pathPrefix?: string
+
+  @BooleanProperty({
+    description: '是否使用 HTTPS',
+    example: true,
+    default: true,
+    required: false,
+  })
+  useHttps?: boolean
+
+  @NumberProperty({
+    description: '上传凭证有效期（秒）',
+    example: 3600,
+    default: 3600,
+    required: false,
+  })
+  tokenExpires?: number
+}
+
+export class SuperbedUploadConfigDto {
+  @StringProperty({
+    description: 'Superbed token（敏感字段，前端输入明文或 RSA 加密值）',
+    example: 'your-superbed-token',
+    required: false,
+  })
+  token?: string
+
+  @StringProperty({
+    description: 'Superbed 相册分类，多个使用英文逗号分隔',
+    example: 'cover,chapter',
+    required: false,
+  })
+  categories?: string
+
+  @BooleanProperty({
+    description: '是否开启水印',
+    example: false,
+    required: false,
+  })
+  watermark?: boolean
+
+  @BooleanProperty({
+    description: '是否开启压缩',
+    example: true,
+    required: false,
+  })
+  compress?: boolean
+
+  @BooleanProperty({
+    description: '是否强制转 webp',
+    example: false,
+    required: false,
+  })
+  webp?: boolean
+}
+
+export class UploadConfigDto {
+  @EnumProperty({
+    description: '上传提供方',
+    enum: UploadProviderEnum,
+    example: UploadProviderEnum.LOCAL,
+    required: false,
+  })
+  provider?: UploadProviderEnum
+
+  @BooleanProperty({
+    description: '当 provider 为 superbed 时，非图片文件是否自动回落本地',
+    example: true,
+    default: true,
+    required: false,
+  })
+  superbedNonImageFallbackToLocal?: boolean
+
+  @NestedProperty({
+    description: '七牛上传配置',
+    type: QiniuUploadConfigDto,
+    required: false,
+  })
+  qiniu?: QiniuUploadConfigDto
+
+  @NestedProperty({
+    description: 'Superbed 上传配置',
+    type: SuperbedUploadConfigDto,
+    required: false,
+  })
+  superbed?: SuperbedUploadConfigDto
+}
+
+// ============================================================================
 // 系统配置总入口
 // ============================================================================
 
@@ -230,31 +365,38 @@ export class BaseSystemConfigDto extends BaseDto {
   })
   updatedById?: number
 
-  @NestedProperty({
-    description: '阿里云配置',
-    type: AliyunConfigDto,
+  @JsonProperty({
+    description: '阿里云配置（jsonb）',
+    example: { sms: { endpoint: 'dypnsapi.aliyuncs.com' } },
     required: false,
   })
-  aliyunConfig?: AliyunConfigDto
+  aliyunConfig?: Record<string, unknown>
 
-  @NestedProperty({
-    description: '站点基础配置',
-    type: SiteConfigDto,
+  @JsonProperty({
+    description: '站点配置（jsonb）',
+    example: { siteName: '示例站点' },
     required: false,
   })
-  siteConfig?: SiteConfigDto
+  siteConfig?: Record<string, unknown>
 
-  @NestedProperty({
-    description: '维护模式配置',
-    type: MaintenanceConfigDto,
+  @JsonProperty({
+    description: '维护配置（jsonb）',
+    example: { enableMaintenanceMode: false },
     required: false,
   })
-  maintenanceConfig?: MaintenanceConfigDto
+  maintenanceConfig?: Record<string, unknown>
 
-  @NestedProperty({
-    description: '内容审核策略配置',
-    type: ContentReviewPolicyDto,
+  @JsonProperty({
+    description: '内容审核策略（jsonb）',
+    example: { severeAction: { auditStatus: 2 } },
     required: false,
   })
-  contentReviewPolicy?: ContentReviewPolicyDto
+  contentReviewPolicy?: Record<string, unknown>
+
+  @JsonProperty({
+    description: '上传配置（jsonb）',
+    example: { provider: 'local' },
+    required: false,
+  })
+  uploadConfig?: Record<string, unknown>
 }

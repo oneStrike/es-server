@@ -41,6 +41,7 @@ export class WorkComicReportResolver
       where: {
         id: targetId,
         type: 1,
+        isPublished: true,
         deletedAt: { isNull: true },
       },
       columns: { id: true },

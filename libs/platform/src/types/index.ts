@@ -20,10 +20,6 @@ export interface AppConfigInterface {
    */
   port: number
   /**
-   * 文件访问URL前缀
-   */
-  fileUrlPrefix: string
-  /**
    * 全局API前缀
    */
   globalApiPrefix: string

@@ -1,11 +1,6 @@
 import {
-  ComicChapterContentDto,
   ComicContentService,
-  NovelChapterContentDto,
   NovelContentService,
-  PageWorkChapterDto,
-  QueryWorkChapterDto,
-  WorkChapterDetailWithUserStatusDto,
   WorkChapterService,
 } from '@libs/content'
 import {
@@ -19,6 +14,13 @@ import { IdDto } from '@libs/platform/dto'
 
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  ComicChapterContentDto,
+  NovelChapterContentDto,
+  PageWorkChapterDto,
+  QueryWorkChapterDto,
+  WorkChapterDetailWithUserStatusDto,
+} from './dto/work-chapter.dto'
 
 @ApiTags('作品')
 @Controller('app/work/chapter')

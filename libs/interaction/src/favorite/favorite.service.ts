@@ -273,7 +273,6 @@ export class FavoriteService {
         if (targetDetail) {
           return {
             ...item,
-            work: targetDetail, // 保持老前端兼容性或者视具体情况调整
             targetDetail,
           }
         }

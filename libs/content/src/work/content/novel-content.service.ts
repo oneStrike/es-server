@@ -6,7 +6,7 @@ import { UploadService } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
-import { UploadContentDto } from './dto/content.dto'
+import { UploadContentInput } from './content.type'
 
 @Injectable()
 export class NovelContentService {
@@ -70,7 +70,7 @@ export class NovelContentService {
     return chapter.content
   }
 
-  async uploadChapterContent(req: FastifyRequest, query: UploadContentDto) {
+  async uploadChapterContent(req: FastifyRequest, query: UploadContentInput) {
     const chapterId = query.chapterId
 
     if (
@@ -90,7 +90,7 @@ export class NovelContentService {
       'novel',
       query.workId.toString(),
       'chapter',
-      `${chapterId}.txt`,
+      chapterId.toString(),
     ])
 
     await this.db

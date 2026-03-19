@@ -51,6 +51,7 @@ export class WorkComicLikeResolver
       where: {
         id: targetId,
         type: this.targetType,
+        isPublished: true,
         deletedAt: { isNull: true },
       },
       columns: { id: true },
@@ -92,6 +93,7 @@ export class WorkComicLikeResolver
           and(
             eq(work.id, targetId),
             eq(work.type, this.targetType),
+            eq(work.isPublished, true),
             isNull(work.deletedAt),
           ),
         ),
@@ -100,6 +102,7 @@ export class WorkComicLikeResolver
       where: {
         id: targetId,
         type: this.targetType,
+        isPublished: true,
         deletedAt: { isNull: true },
       },
       columns: { id: true },
@@ -124,6 +127,7 @@ export class WorkComicLikeResolver
       where: {
         id: { in: targetIds },
         type: this.targetType,
+        isPublished: true,
         deletedAt: { isNull: true },
       },
       columns: {

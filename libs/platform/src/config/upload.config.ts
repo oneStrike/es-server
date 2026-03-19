@@ -39,7 +39,12 @@ const allowExtensions = {
   archive: ['zip', 'rar', '7z', 'gz', 'tar'],
 }
 
-const { UPLOAD_DIR = './uploads', UPLOAD_MAX_FILE_SIZE = '100MB' } = process.env
+const {
+  UPLOAD_LOCAL_DIR = './uploads/public',
+  UPLOAD_TMP_DIR = './uploads/tmp',
+  UPLOAD_LOCAL_URL_PREFIX = '/files',
+  UPLOAD_MAX_FILE_SIZE = '100MB',
+} = process.env
 
 // 扁平化的扩展名数组
 export const allowExtensionsFlat = Object.values(allowExtensions).flat()
@@ -58,7 +63,11 @@ export const allowMimeTypesFlat = Object.values(allowMimeTypes).flat()
 
 export const UploadConfig = {
   maxFileSize: parseBytes(UPLOAD_MAX_FILE_SIZE),
-  uploadDir: isAbsolute(UPLOAD_DIR) ? UPLOAD_DIR : resolve(UPLOAD_DIR),
+  localDir: isAbsolute(UPLOAD_LOCAL_DIR)
+    ? UPLOAD_LOCAL_DIR
+    : resolve(UPLOAD_LOCAL_DIR),
+  tmpDir: isAbsolute(UPLOAD_TMP_DIR) ? UPLOAD_TMP_DIR : resolve(UPLOAD_TMP_DIR),
+  localUrlPrefix: UPLOAD_LOCAL_URL_PREFIX,
   allowExtensions,
   allowExtensionsFlat,
   allowMimeTypes,

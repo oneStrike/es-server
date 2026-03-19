@@ -85,6 +85,7 @@ export class BaseAppConfigDto extends BaseDto {
     example: '1.0.0',
     required: true,
     default: '1.0.0',
+    maxLength: 50,
   })
   version!: string
 

@@ -1,4 +1,12 @@
 import {
+  WorkService,
+} from '@libs/content'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { BatchOperationResponseDto, IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import {
   BaseWorkDto,
   CreateWorkDto,
   QueryWorkDto,
@@ -7,13 +15,7 @@ import {
   UpdateWorkNewDto,
   UpdateWorkRecommendedDto,
   UpdateWorkStatusDto,
-  WorkService,
-} from '@libs/content'
-import { WorkTypeEnum } from '@libs/platform/constant'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { BatchOperationResponseDto, IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
+} from './dto/novel.dto'
 
 @ApiTags('内容管理/小说管理')
 @Controller('admin/content/novel')
@@ -44,7 +46,9 @@ export class NovelController {
     model: BaseWorkDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.workService.getWorkDetail(query.id)
+    return this.workService.getWorkDetail(query.id, {
+      bypassVisibilityCheck: true,
+    })
   }
 
   @Post('update')
@@ -62,9 +66,7 @@ export class NovelController {
     model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateWorkStatusDto) {
-    return this.workService.updateWorkFlags(body.id, {
-      isPublished: body.isPublished,
-    })
+    return this.workService.updateStatus(body)
   }
 
   @Post('update-recommended')

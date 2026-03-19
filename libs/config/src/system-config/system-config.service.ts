@@ -72,15 +72,15 @@ export class SystemConfigService implements OnModuleInit {
    */
   async findMaskedConfig() {
     const config = this.configReader.get()
-    // 深拷贝避免污染原对象
     const maskedConfig = JSON.parse(JSON.stringify(config))
-    // 遍历敏感字段元数据进行脱敏
+
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
       const configItem = maskedConfig[key]
       if (configItem) {
-        for (const field of metadata.sensitiveFields) {
-          if (configItem[field]) {
-            configItem[field] = maskString(configItem[field])
+        for (const path of metadata.sensitivePaths) {
+          const value = this.getValueByPath(configItem, path)
+          if (typeof value === 'string' && value) {
+            this.setValueByPath(configItem, path, maskString(value))
           }
         }
       }
@@ -102,53 +102,57 @@ export class SystemConfigService implements OnModuleInit {
    * @returns 是否成功
    */
   async updateConfig(dto: UpdateSystemConfigInput, userId: number) {
-    const currentConfig = this.configReader.get()
-    const data: Record<string, unknown> = {}
+    const currentConfig = this.cloneConfig(this.configReader.get())
+    const nextConfig = this.cloneConfig(currentConfig)
 
-    // 结构化入参处理
     for (const key of Object.keys(dto)) {
-      // 只处理 DEFAULT_CONFIG 中定义的配置项
       if (!(key in DEFAULT_CONFIG)) {
         continue
       }
 
+      const allowedTemplate = (DEFAULT_CONFIG as ConfigAllowedTemplate)[key] as
+        | ConfigAllowedTemplate
+        | undefined
+      const filteredInput = this.filterAllowedFields(
+        dto[key as keyof UpdateSystemConfigInput],
+        allowedTemplate ?? {},
+      )
       const meta = CONFIG_SECURITY_META[key]
-      if (meta) {
-        data[key] = await this.processSensitiveFields(
-          this.filterAllowedFields(
-            dto[key as keyof UpdateSystemConfigInput],
-            (DEFAULT_CONFIG as ConfigAllowedTemplate)[key] as ConfigAllowedTemplate,
-          ),
-          (currentConfig as Record<string, unknown>)[key] as
-          | Record<string, unknown>
-          | null,
-          meta.sensitiveFields,
-        )
-      } else {
-        data[key] = this.filterAllowedFields(
-          dto[key as keyof UpdateSystemConfigInput],
-          (DEFAULT_CONFIG as ConfigAllowedTemplate)[key] as ConfigAllowedTemplate,
-        )
-      }
+      const currentItem = (currentConfig as Record<string, unknown>)[key] as
+        | Record<string, unknown>
+        | null
+
+      const processedInput = meta
+        ? await this.processSensitiveFields(
+            filteredInput,
+            currentItem,
+            meta.sensitivePaths,
+          )
+        : filteredInput
+
+      const mergedValue = this.deepMerge(
+        this.cloneConfig(
+          ((currentConfig as Record<string, unknown>)[key] ??
+            (DEFAULT_CONFIG as Record<string, unknown>)[key]) as Record<
+            string,
+            unknown
+          >,
+        ),
+        processedInput,
+      )
+
+      ;(nextConfig as Record<string, unknown>)[key] = mergedValue
     }
 
-    // 过滤 undefined 字段
-    const cleanData = Object.fromEntries(
-      Object.entries(data).filter(([, value]) => value !== undefined),
-    )
+    const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
 
-    // 创建新记录（支持历史配置）
     const [result] = await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.systemConfig)
-        .values({
-          ...cleanData,
-          updatedById: userId,
-        })
+        .values(snapshot)
         .returning(),
     )
 
-    // 刷新缓存并通知 ConfigReader
     await this.refreshCache(result)
     return true
   }
@@ -170,7 +174,6 @@ export class SystemConfigService implements OnModuleInit {
     const result: Record<string, unknown> = {}
     for (const key of Object.keys(allowedFields)) {
       if (key in input) {
-        // 递归处理嵌套对象
         if (
           typeof allowedFields[key] === 'object' &&
           allowedFields[key] !== null &&
@@ -194,24 +197,35 @@ export class SystemConfigService implements OnModuleInit {
   private async processSensitiveFields(
     input: Record<string, unknown>,
     current: Record<string, unknown> | null,
-    sensitiveFields: string[],
+    sensitivePaths: string[],
   ): Promise<Record<string, unknown>> {
-    for (const field of sensitiveFields) {
-      const inputValue = input[field]
+    for (const path of sensitivePaths) {
+      if (!this.hasPath(input, path)) {
+        continue
+      }
+
+      const inputValue = this.getValueByPath(input, path)
 
       if (typeof inputValue === 'string' && inputValue && isMasked(inputValue)) {
-        // 前端传回掩码则保留旧值
-        input[field] = current?.[field] || ''
+        this.setValueByPath(input, path, this.getValueByPath(current, path) || '')
       } else if (typeof inputValue === 'string' && inputValue) {
-        // 尝试 RSA 解密，失败则视为明文
         try {
           const decryptedValue = this.rsaService.decryptWith(inputValue)
-          input[field] = await this.aesService.encrypt(decryptedValue)
+          this.setValueByPath(
+            input,
+            path,
+            await this.aesService.encrypt(decryptedValue),
+          )
         } catch {
-          input[field] = await this.aesService.encrypt(inputValue)
+          this.setValueByPath(
+            input,
+            path,
+            await this.aesService.encrypt(inputValue),
+          )
         }
       }
     }
+
     return input
   }
 
@@ -219,11 +233,11 @@ export class SystemConfigService implements OnModuleInit {
    * 刷新缓存并通知 ConfigReader
    */
   private async refreshCache(config: any) {
-    const decryptedConfig = JSON.parse(JSON.stringify(config))
-    await this.decryptSensitiveFields(decryptedConfig)
+    const mergedConfig = this.mergeWithDefaults(config)
+    await this.decryptSensitiveFields(mergedConfig)
     await this.cacheManager.set(
       CACHE_KEY.CONFIG,
-      decryptedConfig,
+      mergedConfig,
       this.getRandomTTL(CACHE_TTL.LONG),
     )
     await this.configReader.refresh()
@@ -240,7 +254,7 @@ export class SystemConfigService implements OnModuleInit {
     } else {
       const [newConfig] = await this.db
         .insert(this.systemConfig)
-        .values(DEFAULT_CONFIG)
+        .values(this.buildPersistedSnapshot(DEFAULT_CONFIG))
         .returning()
       await this.refreshCache(newConfig)
     }
@@ -267,7 +281,6 @@ export class SystemConfigService implements OnModuleInit {
   async findConfigHistory(page = 1, pageSize = 10) {
     const offset = (page - 1) * pageSize
 
-    // 查询列表
     const list = await this.db
       .select()
       .from(this.systemConfig)
@@ -275,7 +288,6 @@ export class SystemConfigService implements OnModuleInit {
       .limit(pageSize)
       .offset(offset)
 
-    // 查询总数
     const countResult = await this.db
       .select({ count: this.systemConfig.id })
       .from(this.systemConfig)
@@ -292,11 +304,14 @@ export class SystemConfigService implements OnModuleInit {
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
       const configItem = config[key]
       if (configItem) {
-        for (const field of metadata.sensitiveFields) {
-          if (configItem[field]) {
+        for (const path of metadata.sensitivePaths) {
+          const value = this.getValueByPath(configItem, path)
+          if (typeof value === 'string' && value) {
             try {
-              configItem[field] = await this.aesService.decrypt(
-                configItem[field],
+              this.setValueByPath(
+                configItem,
+                path,
+                await this.aesService.decrypt(value),
               )
             } catch {
               // 解密失败则保留原值
@@ -305,6 +320,100 @@ export class SystemConfigService implements OnModuleInit {
         }
       }
     }
+  }
+
+  private mergeWithDefaults(config: Record<string, unknown>) {
+    return this.deepMerge(
+      this.cloneConfig(DEFAULT_CONFIG) as Record<string, unknown>,
+      this.cloneConfig(config),
+    )
+  }
+
+  private buildPersistedSnapshot(
+    config: Record<string, unknown>,
+    userId?: number,
+  ) {
+    return {
+      aliyunConfig: config.aliyunConfig,
+      siteConfig: config.siteConfig,
+      maintenanceConfig: config.maintenanceConfig,
+      contentReviewPolicy: config.contentReviewPolicy,
+      uploadConfig: config.uploadConfig,
+      updatedById: userId,
+    }
+  }
+
+  private deepMerge(
+    target: Record<string, any>,
+    source: Record<string, any>,
+  ): Record<string, any> {
+    for (const [key, sourceValue] of Object.entries(source)) {
+      if (
+        this.isPlainObject(sourceValue) &&
+        this.isPlainObject(target[key])
+      ) {
+        target[key] = this.deepMerge(target[key], sourceValue)
+      } else if (sourceValue !== undefined) {
+        target[key] = sourceValue
+      }
+    }
+
+    return target
+  }
+
+  private isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+  }
+
+  private cloneConfig<T>(config: T): T {
+    return JSON.parse(JSON.stringify(config)) as T
+  }
+
+  private getValueByPath(target: Record<string, any> | null, path: string) {
+    if (!target) {
+      return undefined
+    }
+
+    return path
+      .split('.')
+      .reduce<any>((current, segment) => current?.[segment], target)
+  }
+
+  private setValueByPath(
+    target: Record<string, any>,
+    path: string,
+    value: unknown,
+  ) {
+    const segments = path.split('.')
+    let current: Record<string, any> = target
+
+    for (let i = 0; i < segments.length - 1; i += 1) {
+      const segment = segments[i]
+      if (!this.isPlainObject(current[segment])) {
+        current[segment] = {}
+      }
+      current = current[segment]
+    }
+
+    const lastSegment = segments.at(-1)
+    if (!lastSegment) {
+      return
+    }
+    current[lastSegment] = value
+  }
+
+  private hasPath(target: Record<string, any>, path: string) {
+    const segments = path.split('.')
+    let current: any = target
+
+    for (const segment of segments) {
+      if (!this.isPlainObject(current) || !(segment in current)) {
+        return false
+      }
+      current = current[segment]
+    }
+
+    return true
   }
 
   /**

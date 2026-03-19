@@ -10,8 +10,9 @@ import {
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛主题收藏解析器
@@ -49,13 +50,22 @@ export class ForumTopicFavoriteResolver
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
+        auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
         deletedAt: { isNull: true },
       },
-      columns: { userId: true, isLocked: true, isHidden: true },
+      columns: { userId: true },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
     })
 
-    if (!topic) {
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
       throw new BadRequestException('帖子不存在')
     }
 
@@ -137,14 +147,39 @@ export class ForumTopicFavoriteResolver
       return new Map()
     }
 
-    const topics = await this.drizzle.db
-      .select({
-        id: forumTopic.id,
-        title: forumTopic.title,
-      })
-      .from(forumTopic)
-      .where(and(inArray(forumTopic.id, targetIds), isNull(forumTopic.deletedAt)))
+    const topics = await this.drizzle.db.query.forumTopic.findMany({
+      where: {
+        id: { in: targetIds },
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        title: true,
+      },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
+    })
 
-    return new Map(topics.map((topic) => [topic.id, topic]))
+    const visibleTopics = topics.filter(
+      (topic) => topic.section && !topic.section.deletedAt && topic.section.isEnabled,
+    )
+
+    return new Map(
+      visibleTopics.map((topic) => [
+        topic.id,
+        {
+          id: topic.id,
+          title: topic.title,
+        },
+      ]),
+    )
   }
 }

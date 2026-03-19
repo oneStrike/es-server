@@ -1,6 +1,10 @@
 import { BaseWorkDto } from '@libs/content'
 import { BaseLikeDto } from '@libs/interaction'
-import { BooleanProperty, NestedProperty } from '@libs/platform/decorators'
+import {
+  BooleanProperty,
+  NestedProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 
@@ -18,15 +22,39 @@ export class LikeStatusResponseDto {
   isLiked!: boolean
 }
 
-export class LikeWorkBriefDto extends PickType(BaseWorkDto, ['id', 'name', 'cover']) {}
+export class LikeTargetDetailDto extends PickType(BaseWorkDto, ['id']) {
+  @StringProperty({
+    description: '作品名称（作品类型返回）',
+    example: '进击的巨人',
+    required: false,
+    validation: false,
+  })
+  name?: string
+
+  @StringProperty({
+    description: '作品封面（作品类型返回）',
+    example: 'https://example.com/cover.jpg',
+    required: false,
+    validation: false,
+  })
+  cover?: string
+
+  @StringProperty({
+    description: '主题标题（论坛主题类型返回）',
+    example: '如何学习 TypeScript？',
+    required: false,
+    validation: false,
+  })
+  title?: string
+}
 
 export class LikePageItemDto extends BaseLikeDto {
   @NestedProperty({
-    description: '作品信息（仅作品类型返回）',
-    type: LikeWorkBriefDto,
+    description: '目标简要信息（作品返回 name/cover，论坛主题返回 title）',
+    type: LikeTargetDetailDto,
     required: false,
     nullable: false,
     validation: false,
   })
-  work?: LikeWorkBriefDto
+  targetDetail?: LikeTargetDetailDto
 }

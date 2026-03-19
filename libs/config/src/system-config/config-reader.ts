@@ -97,4 +97,11 @@ export class ConfigReader implements OnModuleInit {
   getContentReviewPolicy(): SystemConfig['contentReviewPolicy'] {
     return this.config.contentReviewPolicy
   }
+
+  /**
+   * 获取上传配置
+   */
+  getUploadConfig(): SystemConfig['uploadConfig'] {
+    return this.config.uploadConfig
+  }
 }

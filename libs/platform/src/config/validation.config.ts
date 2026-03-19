@@ -28,6 +28,8 @@ export const environmentValidationSchema = Joi.object({
   LOG_CONSOLE_LEVEL: Joi.string().default('info'),
 
   // 文件上传配置
-  UPLOAD_DIR: Joi.string().default('./uploads'),
+  UPLOAD_LOCAL_DIR: Joi.string().default('./uploads/public'),
+  UPLOAD_TMP_DIR: Joi.string().default('./uploads/tmp'),
+  UPLOAD_LOCAL_URL_PREFIX: Joi.string().default('/files'),
   UPLOAD_MAX_FILE_SIZE: Joi.string().default('100MB'),
 })

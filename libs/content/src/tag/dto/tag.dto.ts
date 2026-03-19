@@ -3,13 +3,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 /**
  * 标签基础 DTO
@@ -63,24 +57,3 @@ export class BaseTagDto extends BaseDto {
   })
   description?: string
 }
-
-/**
- * 创建标签 DTO
- */
-export class CreateTagDto extends OmitType(BaseTagDto, [
-  ...OMIT_BASE_FIELDS,
-  'popularity',
-]) {}
-
-/**
- * 更新标签 DTO
- */
-export class UpdateTagDto extends IntersectionType(CreateTagDto, IdDto) {}
-
-/**
- * 查询标签 DTO
- */
-export class QueryTagDto extends IntersectionType(
-  PageDto,
-  PickType(PartialType(CreateTagDto), ['name', 'isEnabled']),
-) {}

@@ -64,6 +64,7 @@ export class WorkComicBrowseLogResolver
           and(
             eq(this.work.id, targetId),
             eq(this.work.type, this.workType),
+            eq(this.work.isPublished, true),
             isNull(this.work.deletedAt),
           ),
         ),
@@ -89,6 +90,7 @@ export class WorkComicBrowseLogResolver
         and(
           eq(this.work.id, targetId),
           eq(this.work.type, this.workType),
+          eq(this.work.isPublished, true),
           isNull(this.work.deletedAt),
         ),
       )

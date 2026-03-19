@@ -1,26 +1,31 @@
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
+
 /**
  * 配置安全元数据 - 定义每个配置项的敏感字段
  * 用于自动加密存储和脱敏展示
  */
 export const CONFIG_SECURITY_META: Record<
   string,
-  { sensitiveFields: string[] }
+  { sensitivePaths: string[] }
 > = {
   // 阿里云配置：包含短信服务密钥等敏感信息
   aliyunConfig: {
-    sensitiveFields: ['accessKeyId', 'accessKeySecret'],
+    sensitivePaths: ['accessKeyId', 'accessKeySecret'],
   },
   // 站点配置：无敏感字段
   siteConfig: {
-    sensitiveFields: [],
+    sensitivePaths: [],
   },
   // 维护模式配置：无敏感字段
   maintenanceConfig: {
-    sensitiveFields: [],
+    sensitivePaths: [],
   },
   // 内容审核策略配置：无敏感字段
   contentReviewPolicy: {
-    sensitiveFields: [],
+    sensitivePaths: [],
+  },
+  uploadConfig: {
+    sensitivePaths: ['qiniu.accessKey', 'qiniu.secretKey', 'superbed.token'],
   },
 }
 
@@ -117,5 +122,43 @@ export const DEFAULT_CONFIG = {
     },
     /** 是否记录敏感词命中明细（默认：记录） */
     recordHits: true,
+  },
+
+  // 上传配置
+  uploadConfig: {
+    /** 默认上传提供方 */
+    provider: UploadProviderEnum.LOCAL,
+    /** Superbed 对非图片文件自动回落到本地 */
+    superbedNonImageFallbackToLocal: true,
+    qiniu: {
+      /** 七牛 AccessKey（敏感字段，会加密存储） */
+      accessKey: '',
+      /** 七牛 SecretKey（敏感字段，会加密存储） */
+      secretKey: '',
+      /** 存储空间 bucket */
+      bucket: '',
+      /** 公开访问域名 */
+      domain: '',
+      /** 区域 ID，例如 z0；留空时自动查询 */
+      region: '',
+      /** 对象前缀 */
+      pathPrefix: '',
+      /** 是否使用 HTTPS */
+      useHttps: true,
+      /** 上传凭证有效期（秒） */
+      tokenExpires: 3600,
+    },
+    superbed: {
+      /** Superbed token（敏感字段，会加密存储） */
+      token: '',
+      /** 相册分类 */
+      categories: '',
+      /** 是否开启水印 */
+      watermark: undefined as boolean | undefined,
+      /** 是否开启压缩 */
+      compress: undefined as boolean | undefined,
+      /** 是否强制 webp */
+      webp: undefined as boolean | undefined,
+    },
   },
 }

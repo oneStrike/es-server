@@ -4,6 +4,7 @@ import { CommentModule } from './comment/comment.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { DownloadModule } from './download/download.module'
 import { FavoriteModule } from './favorite/favorite.module'
+import { ForumModule } from './forum/forum.module'
 import { LikeModule } from './like/like.module'
 import { MessageModule } from './message/message.module'
 import { PurchaseModule } from './purchase/purchase.module'
@@ -21,6 +22,7 @@ import { WorkModule } from './work/work.module'
     DictionaryModule,
     TaskModule,
     WorkModule,
+    ForumModule,
     LikeModule,
     FavoriteModule,
     ReadingHistoryModule,

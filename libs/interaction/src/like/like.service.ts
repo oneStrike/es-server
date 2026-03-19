@@ -321,7 +321,7 @@ export class LikeService {
         if (detail) {
           return {
             ...item,
-            work: detail,
+            targetDetail: detail,
           }
         }
         return item

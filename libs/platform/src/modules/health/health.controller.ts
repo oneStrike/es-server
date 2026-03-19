@@ -50,7 +50,7 @@ export class HealthController {
   @HttpCode(200)
   async readinessCheck() {
     const upload = this.configService.get('upload')
-    const uploadPath = upload?.uploadDir || process.cwd()
+    const uploadPath = upload?.localDir || process.cwd()
     try {
       const [database, cache, disk] = await Promise.all([
         this.healthService.ping('database'),

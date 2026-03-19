@@ -1,8 +1,9 @@
-import { resolve } from 'node:path'
+import fs from 'node:fs'
 import process from 'node:process'
-import axios from 'axios'
-import dotenv from 'dotenv'
+import { parseEnv } from 'node:util'
 import kill from 'tree-kill'
+
+const env = parseEnv(fs.readFileSync('.env', 'utf8'))
 
 interface AppConfig {
   name: string
@@ -20,7 +21,7 @@ const APPS: Record<string, AppConfig> = {
     envPath: 'apps/admin-api/.env.development',
     startCommand: 'start:admin',
     swaggerPath: 'api-doc-json',
-    projectId: process.env.APIFOX_ADMIN_PROJECT_ID || '',
+    projectId: env.APIFOX_ADMIN_PROJECT_ID || '',
   },
   app: {
     name: 'app',
@@ -28,7 +29,7 @@ const APPS: Record<string, AppConfig> = {
     envPath: 'apps/app-api/.env.development',
     startCommand: 'start:app',
     swaggerPath: 'api-doc-json',
-    projectId: process.env.APIFOX_APP_PROJECT_ID || '',
+    projectId: env.APIFOX_APP_PROJECT_ID || '',
   },
 }
 
@@ -62,12 +63,8 @@ function getAppConfig(appType: string): AppConfig {
 }
 
 function loadEnvFile(appConfig: AppConfig): void {
-  dotenv.config({
-    path: [resolve(__dirname, appConfig.envPath), resolve(__dirname, '.env')],
-  })
-
   APPS[appConfig.name].projectId =
-    process.env[`APIFOX_${appConfig.name.toUpperCase()}_PROJECT_ID`] || ''
+    env[`APIFOX_${appConfig.name.toUpperCase()}_PROJECT_ID`] || ''
 }
 
 async function checkPortInUse(port: string): Promise<boolean> {
@@ -128,13 +125,24 @@ async function getOpenAPIDocument(
   console.log(`📡 正在从 ${swaggerUrl} 获取 OpenAPI 文档...`)
 
   try {
-    const response = await axios.get(swaggerUrl, {
-      timeout: 5000,
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+    const response = await fetch(swaggerUrl, {
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const data = await response.json()
     console.log('✅ 成功获取 OpenAPI 文档')
-    return response.data
+    return data
   } catch (error) {
-    if (axios.isAxiosError(error)) {
+    if (error instanceof Error) {
       console.error(`❌ 获取文档失败: ${error.message}`)
     }
     throw error
@@ -155,26 +163,41 @@ async function publishToApifox(
         deleteUnmatchedResources: true,
       },
     }
-    const response = await axios.post(
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000)
+
+    const response = await fetch(
       APIFOX_OPENAPI_URL.replace('PROJECT_ID', appConfig.projectId),
-      postData,
       {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-Apifox-Api-Version': '2024-03-28',
-          Authorization: `Bearer ${process.env.APIFOX_API_KEY}`,
+          "Authorization": `Bearer ${env.APIFOX_API_KEY}`,
         },
-        timeout: 60000,
+        body: JSON.stringify(postData),
+        signal: controller.signal,
       },
     )
 
-    console.log('✅ 成功发布到 Apifox!')
-    console.log('📊 响应数据:', JSON.stringify(response.data, null, 2))
-    console.log('🚀 ~ publishToApifox ~ response:', response.data)
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
+    clearTimeout(timeoutId)
+
+    const responseData = await response.json()
+
+    if (!response.ok) {
       console.error('❌ 发布失败!')
-      console.error(`状态码: ${error.response?.status}`)
-      console.error(`响应数据:`, error.response?.data)
+      console.error(`状态码: ${response.status}`)
+      console.error(`响应数据:`, responseData)
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    console.log('✅ 成功发布到 Apifox!')
+    console.log('📊 响应数据:', JSON.stringify(responseData, null, 2))
+    console.log('🚀 ~ publishToApifox ~ response:', responseData)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('❌ 发布失败!')
       console.error(`错误信息: ${error.message}`)
     } else {
       console.error('❌ 未知错误:', error)
@@ -235,7 +258,7 @@ async function main() {
   let isAppStartedByScript = false
 
   try {
-    const port = process.env.APP_PORT || appConfig.port
+    const port = env.APP_PORT || appConfig.port
     const isPortInUse = await checkPortInUse(port)
 
     if (isPortInUse) {

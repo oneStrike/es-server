@@ -17,11 +17,6 @@ export const appConfigValidationSchema = {
   APP_VERSION: Joi.string().default('1.0.0'),
 
   /**
-   * 文件URL前缀
-   */
-  APP_FILE_URL_PREFIX: Joi.string().default('/files'),
-
-  /**
    * 默认密码
    */
   APP_DEFAULT_PASSWORD: Joi.string().default('Aa@123456'),

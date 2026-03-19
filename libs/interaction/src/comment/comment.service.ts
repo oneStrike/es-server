@@ -514,8 +514,11 @@ export class CommentService {
             },
         columns: {
           id: true,
+          userId: true,
           targetType: true,
           targetId: true,
+          replyToId: true,
+          createdAt: true,
           auditStatus: true,
           isHidden: true,
         },
@@ -535,12 +538,30 @@ export class CommentService {
         return { id: found.id }
       }
 
+      const resolver = this.getResolver(found.targetType as CommentTargetTypeEnum)
+
       await this.applyCommentCountDelta(
         tx,
         found.targetType as CommentTargetTypeEnum,
         found.targetId,
         -1,
       )
+
+      const meta = await resolver.resolveMeta(tx, found.targetId)
+      if (resolver.postDeleteCommentHook) {
+        await resolver.postDeleteCommentHook(
+          tx,
+          {
+            id: found.id,
+            userId: found.userId,
+            targetType: found.targetType as CommentTargetTypeEnum,
+            targetId: found.targetId,
+            replyToId: found.replyToId,
+            createdAt: found.createdAt,
+          },
+          meta,
+        )
+      }
 
       return { id: found.id }
     })

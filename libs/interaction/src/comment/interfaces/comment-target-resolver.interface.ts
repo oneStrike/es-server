@@ -8,6 +8,8 @@ import type { CommentTargetTypeEnum } from '../comment.constant'
 export interface CommentTargetMeta {
   /** 目标所有者用户ID，用于发送被评论通知 */
   ownerUserId?: number
+  /** 论坛主题所属板块ID，仅 forum topic 等场景使用 */
+  sectionId?: number
 }
 
 /**
@@ -72,6 +74,23 @@ export interface ICommentTargetResolver {
     tx: InteractionTx,
     targetId: number,
     actorUserId: number,
+    meta: CommentTargetMeta,
+  ) => Promise<void>
+
+  /**
+   * 可见评论删除后的钩子（可选）
+   * 在事务内执行，可用于同步回复计数、最后回复时间等派生字段
+   */
+  postDeleteCommentHook?: (
+    tx: InteractionTx,
+    comment: {
+      id: number
+      userId: number
+      targetType: CommentTargetTypeEnum
+      targetId: number
+      replyToId?: number | null
+      createdAt: Date
+    },
     meta: CommentTargetMeta,
   ) => Promise<void>
 }

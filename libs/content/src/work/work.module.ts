@@ -1,6 +1,7 @@
 import { UserPermissionModule, UserPointModule } from '@libs/growth'
 import { InteractionModule, ReportModule } from '@libs/interaction'
 import { UploadModule } from '@libs/platform/modules'
+import { SystemConfigModule } from '@libs/system-config'
 
 import { Module } from '@nestjs/common'
 import { ContentPermissionModule } from '../permission'
@@ -43,7 +44,9 @@ import { WorkService } from './core/work.service'
     UserPermissionModule,
     ContentPermissionModule,
     UserPointModule,
-    UploadModule,
+    UploadModule.register({
+      imports: [SystemConfigModule],
+    }),
   ],
   providers: [
     WorkService,

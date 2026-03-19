@@ -1,903 +1,120 @@
 import {
-  AuditStatusEnum,
   WorkTypeEnum,
   WorkViewPermissionEnum,
 } from '@libs/platform/constant'
 import {
-  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
-import { BaseAuthorDto } from '../../../author'
-import { BaseCategoryDto } from '../../../category'
-import { BaseTagDto } from '../../../tag'
-import { BaseWorkChapterDto } from '../../chapter'
+import { BaseDto } from '@libs/platform/dto'
 import { WorkSerialStatusEnum } from '../work.constant'
 
-/**
- * 作者信息DTO
- */
-class AuthorInfoDto extends PickType(BaseAuthorDto, [
-  'id',
-  'name',
-  'type',
-  'avatar',
-]) {}
-
-/**
- * 作品作者关联DTO
- */
-export class WorkAuthorRelationDto {
-  @NestedProperty({
-    description: '作者信息',
-    example: {
-      id: 1,
-      name: '村上春树',
-      avatar: 'https://example.com/avatar.jpg',
-    },
-    required: true,
-    type: AuthorInfoDto,
-    validation: false,
-  })
-  author!: AuthorInfoDto
-
-  @NumberProperty({
-    description: '排序顺序',
-    example: 0,
-    required: false,
-    validation: false,
-  })
-  sortOrder?: number
-}
-
-/**
- * 分类信息DTO
- */
-class CategoryInfoDto extends PickType(BaseCategoryDto, [
-  'id',
-  'name',
-  'icon',
-]) {}
-
-/**
- * 作品分类关联DTO
- */
-export class WorkCategoryRelationDto {
-  @NestedProperty({
-    description: '分类信息',
-    example: { id: 1, name: '科幻', icon: 'https://example.com/icon.jpg' },
-    required: true,
-    type: CategoryInfoDto,
-    validation: false,
-  })
-  category!: CategoryInfoDto
-
-  @NumberProperty({
-    description: '排序顺序',
-    example: 0,
-    required: false,
-    validation: false,
-  })
-  sortOrder?: number
-}
-
-/**
- * 标签信息DTO
- */
-class TagInfoDto extends PickType(BaseTagDto, ['id', 'name', 'icon']) {}
-
-/**
- * 作品标签关联DTO
- */
-export class WorkTagRelationDto {
-  @NestedProperty({
-    description: '标签信息',
-    example: { id: 1, name: '热血', icon: 'https://example.com/icon.jpg' },
-    required: true,
-    type: TagInfoDto,
-    validation: false,
-  })
-  tag!: TagInfoDto
-
-  @NumberProperty({
-    description: '排序顺序',
-    example: 0,
-    required: false,
-    validation: false,
-  })
-  sortOrder?: number
-}
-
-/**
- * 作品基础DTO
- */
 export class BaseWorkDto extends BaseDto {
-  // ==================== 基础信息 ====================
-  @EnumProperty({
-    description: '作品类型（1=漫画, 2=小说）',
-    example: WorkTypeEnum.COMIC,
-    required: true,
-    enum: WorkTypeEnum,
-  })
+  @EnumProperty({ description: '作品类型', example: WorkTypeEnum.COMIC, required: true, enum: WorkTypeEnum })
   type!: WorkTypeEnum
 
-  @StringProperty({
-    description: '作品名称',
-    example: '进击的巨人',
-    required: true,
-    maxLength: 100,
-  })
+  @StringProperty({ description: '作品名称', example: '进击的巨人', required: true, maxLength: 100 })
   name!: string
 
-  @StringProperty({
-    description: '作品别名（支持多别名，用逗号分隔）',
-    example: 'Attack on Titan,進撃の巨人',
-    required: false,
-    maxLength: 200,
-  })
+  @StringProperty({ description: '作品别名', example: 'Attack on Titan', required: false, maxLength: 200 })
   alias?: string
 
-  @StringProperty({
-    description: '作品封面URL',
-    example: 'https://example.com/cover.jpg',
-    required: true,
-    maxLength: 500,
-  })
+  @StringProperty({ description: '作品封面', example: 'https://example.com/cover.jpg', required: true, maxLength: 500 })
   cover!: string
 
-  @StringProperty({
-    description: '作品简介',
-    example: '这是一部关于巨人的作品...',
-    required: true,
-  })
+  @StringProperty({ description: '作品简介', example: '这是一部关于巨人的作品', required: true })
   description!: string
 
-  // ==================== 元数据 ====================
-  @StringProperty({
-    description: '语言代码',
-    example: 'en',
-    required: true,
-    maxLength: 10,
-  })
+  @StringProperty({ description: '语言代码', example: 'zh-CN', required: true, maxLength: 10 })
   language!: string
 
-  @StringProperty({
-    description: '地区代码',
-    example: 'CN',
-    required: true,
-    maxLength: 10,
-  })
+  @StringProperty({ description: '地区代码', example: 'CN', required: true, maxLength: 10 })
   region!: string
 
-  @StringProperty({
-    description: '年龄分级',
-    example: 'R14',
-    required: false,
-    maxLength: 10,
-  })
+  @StringProperty({ description: '年龄分级', example: 'R14', required: false, maxLength: 10 })
   ageRating?: string
 
-  @EnumProperty({
-    description: '连载状态',
-    example: WorkSerialStatusEnum.SERIALIZING,
-    required: true,
-    enum: WorkSerialStatusEnum,
-    default: WorkSerialStatusEnum.SERIALIZING,
-  })
+  @EnumProperty({ description: '连载状态', example: WorkSerialStatusEnum.SERIALIZING, required: true, enum: WorkSerialStatusEnum })
   serialStatus!: WorkSerialStatusEnum
 
-  @StringProperty({
-    description: '出版社',
-    example: '讲谈社',
-    required: false,
-    maxLength: 100,
-  })
+  @StringProperty({ description: '出版社', example: '讲谈社', required: false, maxLength: 100 })
   publisher?: string
 
-  @StringProperty({
-    description: '原始来源',
-    example: '官方授权',
-    required: false,
-    maxLength: 100,
-  })
+  @StringProperty({ description: '原始来源', example: '官方授权', required: false, maxLength: 100 })
   originalSource?: string
 
-  // ==================== 版权与备注 ====================
-  @StringProperty({
-    description: '版权信息',
-    example: '© 2024 作者名',
-    required: false,
-    maxLength: 500,
-  })
+  @StringProperty({ description: '版权信息', example: '© 2024', required: false, maxLength: 500 })
   copyright?: string
 
-  @StringProperty({
-    description: '免责声明',
-    example: '本作品仅供娱乐，不代表任何立场',
-    required: false,
-  })
+  @StringProperty({ description: '免责声明', example: '仅供学习', required: false })
   disclaimer?: string
 
-  @StringProperty({
-    description: '备注',
-    example: '管理员备注',
-    required: false,
-    maxLength: 1000,
-  })
+  @StringProperty({ description: '备注', example: '管理员备注', required: false, maxLength: 1000 })
   remark?: string
 
-  // ==================== 发布状态 ====================
-  @BooleanProperty({
-    description: '发布状态',
-    example: true,
-    required: true,
-    default: true,
-  })
+  @BooleanProperty({ description: '是否发布', example: true, required: true })
   isPublished!: boolean
 
-  @DateProperty({
-    description: '发布日期',
-    example: '2024-01-01',
-    required: false,
-  })
-  publishAt?: Date
-
-  @DateProperty({
-    description: '最后更新时间',
-    example: '2025-10-10',
-    required: false,
-    validation: false,
-  })
-  lastUpdated?: Date
-
-  // ==================== 权限控制 ====================
-  @EnumProperty({
-    description: '查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
-    example: WorkViewPermissionEnum.ALL,
-    required: true,
-    enum: WorkViewPermissionEnum,
-    default: WorkViewPermissionEnum.ALL,
-  })
-  viewRule!: WorkViewPermissionEnum
-
-  @NumberProperty({
-    description: '阅读所需会员等级ID',
-    example: 1,
-    required: false,
-  })
-  requiredViewLevelId?: number
-
-  // ==================== 价格设置 ====================
-  @NumberProperty({
-    description: '章节默认购买价格（积分）',
-    example: 0,
-    required: true,
-    default: 0,
-  })
-  chapterPrice!: number
-
-  // ==================== 功能开关 ====================
-  @BooleanProperty({
-    description: '是否允许评论',
-    example: true,
-    required: false,
-    default: true,
-  })
-  canComment?: boolean
-
-  // ==================== 统计数据 ====================
-  @NumberProperty({
-    description: '浏览量',
-    example: 1000,
-    required: true,
-    min: 0,
-    default: 0,
-    validation: false,
-  })
-  viewCount!: number
-
-  @NumberProperty({
-    description: '下载量',
-    example: 1000,
-    required: true,
-    min: 0,
-    default: 0,
-    validation: false,
-  })
-  downloadCount!: number
-
-  @NumberProperty({
-    description: '收藏数',
-    example: 50,
-    required: true,
-    min: 0,
-    default: 0,
-    validation: false,
-  })
-  favoriteCount!: number
-
-  @NumberProperty({
-    description: '点赞数',
-    example: 1000,
-    required: true,
-    min: 0,
-    default: 0,
-    validation: false,
-  })
-  likeCount!: number
-
-  @NumberProperty({
-    description: '评分（1-10分，保留1位小数）',
-    example: 8.5,
-    required: false,
-    min: 0,
-    max: 10,
-    validation: false,
-  })
-  rating?: number
-
-  @NumberProperty({
-    description: '评分人数',
-    example: 1000,
-    required: true,
-    min: 0,
-    default: 0,
-    validation: false,
-  })
-  ratingCount!: number
-
-  @NumberProperty({
-    description: '热度值',
-    example: 1000,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  popularity!: number
-
-  // ==================== 推荐标记 ====================
-  @BooleanProperty({
-    description: '是否推荐',
-    example: false,
-    required: true,
-    default: false,
-  })
+  @BooleanProperty({ description: '是否推荐', example: false, required: true })
   isRecommended!: boolean
 
-  @BooleanProperty({
-    description: '是否热门',
-    example: false,
-    required: true,
-    default: false,
-  })
+  @BooleanProperty({ description: '是否热门', example: false, required: true })
   isHot!: boolean
 
-  @BooleanProperty({
-    description: '是否新作',
-    example: true,
-    required: true,
-    default: false,
-  })
+  @BooleanProperty({ description: '是否新作', example: false, required: true })
   isNew!: boolean
 
-  @NumberProperty({
-    description: '推荐权重',
-    example: 1.0,
-    required: false,
-    min: 0,
-    default: 1.0,
-  })
-  recommendWeight?: number
+  @DateProperty({ description: '发布日期', example: '2024-01-01T00:00:00.000Z', required: false })
+  publishAt?: Date
 
-  // ==================== 关联数据 ====================
-  @ArrayProperty({
-    description: '作品作者',
-    example: [
-      {
-        author: {
-          id: 1,
-          name: '村上春树',
-          avatar: 'https://example.com/avatar.jpg',
-        },
-        sortOrder: 0,
-        role: '作者',
-      },
-    ],
-    required: true,
-    itemClass: WorkAuthorRelationDto,
-    itemType: 'object',
-    validation: false,
-  })
-  authors!: WorkAuthorRelationDto[]
+  @DateProperty({ description: '最近更新时间', example: '2024-01-01T00:00:00.000Z', required: false })
+  lastUpdated?: Date
 
-  @ArrayProperty({
-    description: '作品分类',
-    example: [
-      {
-        category: { id: 1, name: '科幻', icon: 'https://example.com/icon.jpg' },
-        sortOrder: 0,
-      },
-    ],
-    required: true,
-    itemClass: WorkCategoryRelationDto,
-    itemType: 'object',
-    validation: false,
-  })
-  categories!: WorkCategoryRelationDto[]
+  @EnumProperty({ description: '查看规则', example: WorkViewPermissionEnum.ALL, required: true, enum: WorkViewPermissionEnum })
+  viewRule!: WorkViewPermissionEnum
 
-  @ArrayProperty({
-    description: '作品标签',
-    example: [
-      {
-        tag: { id: 1, name: '热血', icon: 'https://example.com/icon.jpg' },
-        sortOrder: 0,
-      },
-    ],
-    required: true,
-    itemClass: WorkTagRelationDto,
-    itemType: 'object',
-    validation: false,
-  })
-  tags!: WorkTagRelationDto[]
-}
+  @NumberProperty({ description: '阅读所需会员等级ID', example: 1, required: false })
+  requiredViewLevelId?: number
 
-/**
- * 分页返回作品DTO
- */
-export class PageWorkDto extends PickType(BaseWorkDto, [
-  'id',
-  'name',
-  'type',
-  'cover',
-  'popularity',
-  'isRecommended',
-  'isHot',
-  'isNew',
-  'serialStatus',
-  'publisher',
-  'language',
-  'region',
-  'ageRating',
-  'createdAt',
-  'updatedAt',
-  'publishAt',
-  'isPublished',
-  'authors',
-  'categories',
-  'tags',
-]) {}
+  @NumberProperty({ description: '论坛板块ID', example: 1, required: false })
+  forumSectionId?: number
 
-/**
- * 创建作品DTO
- */
-export class CreateWorkDto extends OmitType(BaseWorkDto, [
-  ...OMIT_BASE_FIELDS,
-  'popularity',
-  'isPublished',
-  'authors',
-  'categories',
-  'tags',
-  'viewCount',
-  'downloadCount',
-  'likeCount',
-  'favoriteCount',
-  'ratingCount',
-]) {
-  @ArrayProperty({
-    description: '关联的作者ID列表',
-    itemType: 'number',
-    example: [1, 2],
-    required: true,
-  })
-  authorIds!: number[]
+  @NumberProperty({ description: '章节默认价格', example: 0, required: true })
+  chapterPrice!: number
 
-  @ArrayProperty({
-    description: '关联的分类ID列表',
-    itemType: 'number',
-    example: [1, 2, 3],
-    required: true,
-  })
-  categoryIds!: number[]
+  @BooleanProperty({ description: '是否允许评论', example: true, required: true })
+  canComment!: boolean
 
-  @ArrayProperty({
-    description: '关联的标签ID列表',
-    itemType: 'number',
-    example: [1, 2],
-    required: true,
-  })
-  tagIds!: number[]
-}
+  @NumberProperty({ description: '推荐权重', example: 1, required: true })
+  recommendWeight!: number
 
-/**
- * 更新作品DTO
- */
-export class UpdateWorkDto extends IntersectionType(CreateWorkDto, IdDto) {}
-
-/**
- * 查询作品DTO
- */
-export class QueryWorkDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseWorkDto, [
-      'name',
-      'publisher',
-      'isPublished',
-      'serialStatus',
-      'language',
-      'region',
-      'ageRating',
-      'isRecommended',
-      'isHot',
-      'isNew',
-    ]),
-  ),
-) {
-  @StringProperty({
-    description: '作者名称',
-    example: '村',
-    required: false,
-  })
-  author?: string
-
-  @EnumProperty({
-    description: '作品类型（1=漫画, 2=小说）',
-    example: WorkTypeEnum.COMIC,
-    required: true,
-    enum: WorkTypeEnum,
-  })
-  type!: WorkTypeEnum
-
-  @ArrayProperty({
-    description: '分类ID列表',
-    itemType: 'number',
-    example: [1, 2],
-    required: false,
-  })
-  categoryIds?: number[]
-
-  @ArrayProperty({
-    description: '标签ID列表',
-    itemType: 'number',
-    example: [1, 2],
-    required: false,
-  })
-  tagIds?: number[]
-}
-
-/**
- * 根据类型查询作品
- */
-export class QueryWorkTypeDto extends IntersectionType(
-  PageDto,
-  PickType(QueryWorkDto, ['type']),
-) {}
-
-export class WorkForumSectionDto {
-  @NumberProperty({
-    description: '板块ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '板块名称',
-    example: '作品讨论区',
-    required: true,
-    validation: false,
-  })
-  name!: string
-
-  @StringProperty({
-    description: '板块描述',
-    example: '围绕该作品的讨论',
-    required: false,
-    validation: false,
-  })
-  description?: string
-
-  @StringProperty({
-    description: '板块图标',
-    example: 'https://example.com/icon.png',
-    required: false,
-    validation: false,
-  })
-  icon?: string
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  isEnabled!: boolean
-
-  @NumberProperty({
-    description: '主题审核策略',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  topicReviewPolicy!: number
-
-  @NumberProperty({
-    description: '主题数',
-    example: 20,
-    required: true,
-    validation: false,
-  })
-  topicCount!: number
-
-  @NumberProperty({
-    description: '回复数',
-    example: 100,
-    required: true,
-    validation: false,
-  })
-  replyCount!: number
-
-  @DateProperty({
-    description: '最后发帖时间',
-    example: '2026-03-16T12:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  lastPostAt?: Date
-}
-
-export class QueryWorkForumTopicsDto extends IntersectionType(
-  IdDto,
-  PickType(PageDto, ['pageIndex', 'pageSize']),
-) {}
-
-export class WorkForumTopicDto {
-  @NumberProperty({
-    description: '主题ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
-  @NumberProperty({
-    description: '板块ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  sectionId!: number
-
-  @NumberProperty({
-    description: '发帖用户ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  userId!: number
-
-  @StringProperty({
-    description: '主题标题',
-    example: '这部作品的世界观讨论',
-    required: true,
-    validation: false,
-  })
-  title!: string
-
-  @BooleanProperty({
-    description: '是否置顶',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  isPinned!: boolean
-
-  @BooleanProperty({
-    description: '是否精选',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  isFeatured!: boolean
-
-  @BooleanProperty({
-    description: '是否锁定',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  isLocked!: boolean
-
-  @EnumProperty({
-    description: '审核状态',
-    example: AuditStatusEnum.APPROVED,
-    required: true,
-    enum: AuditStatusEnum,
-    validation: false,
-  })
-  auditStatus!: AuditStatusEnum
-
-  @NumberProperty({
-    description: '浏览数',
-    example: 100,
-    required: true,
-    validation: false,
-  })
+  @NumberProperty({ description: '浏览量', example: 100, required: true, validation: false })
   viewCount!: number
 
-  @NumberProperty({
-    description: '回复数',
-    example: 10,
-    required: true,
-    validation: false,
-  })
-  replyCount!: number
-
-  @NumberProperty({
-    description: '点赞数',
-    example: 10,
-    required: true,
-    validation: false,
-  })
-  likeCount!: number
-
-  @NumberProperty({
-    description: '收藏数',
-    example: 10,
-    required: true,
-    validation: false,
-  })
+  @NumberProperty({ description: '收藏数', example: 10, required: true, validation: false })
   favoriteCount!: number
 
-  @DateProperty({
-    description: '最后回复时间',
-    example: '2026-03-16T12:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  lastReplyAt?: Date
+  @NumberProperty({ description: '点赞数', example: 10, required: true, validation: false })
+  likeCount!: number
 
-  @DateProperty({
-    description: '创建时间',
-    example: '2026-03-16T10:00:00.000Z',
-    required: true,
-    validation: false,
-  })
-  createdAt!: Date
+  @NumberProperty({ description: '评论数', example: 10, required: true, validation: false })
+  commentCount!: number
+
+  @NumberProperty({ description: '下载数', example: 10, required: true, validation: false })
+  downloadCount!: number
+
+  @NumberProperty({ description: '评分', example: 8.5, required: false, validation: false })
+  rating?: number
+
+  @NumberProperty({ description: '评分人数', example: 100, required: true, validation: false })
+  ratingCount!: number
+
+  @NumberProperty({ description: '热度值', example: 1000, required: true, validation: false })
+  popularity!: number
+
+  @DateProperty({ description: '删除时间', example: '2024-01-01T00:00:00.000Z', required: false, validation: false })
+  deletedAt?: Date | null
 }
-
-/**
- * 作品用户状态字段DTO
- */
-export class WorkUserStatusFieldsDto {
-  @BooleanProperty({
-    description: '是否已点赞',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  liked!: boolean
-
-  @BooleanProperty({
-    description: '是否已收藏',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  favorited!: boolean
-
-  @BooleanProperty({
-    description: '作品是否已浏览',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  viewed!: boolean
-}
-
-/**
- * 作品继续阅读章节 DTO
- */
-export class ContinueReadingChapterDto extends PickType(BaseWorkChapterDto, [
-  'id',
-  'title',
-  'subtitle',
-  'sortOrder',
-]) {}
-
-/**
- * 作品阅读状态字段 DTO
- */
-export class WorkReadingStatusFieldsDto {
-  @DateProperty({
-    description: '最近一次阅读作品时间',
-    example: '2026-03-09T10:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  lastReadAt?: Date
-
-  @NestedProperty({
-    description: '继续阅读章节',
-    example: {
-      id: 101,
-      title: 'Chapter 1',
-      subtitle: 'Prologue',
-      sortOrder: 1,
-    },
-    required: false,
-    type: ContinueReadingChapterDto,
-    validation: false,
-  })
-  continueChapter?: ContinueReadingChapterDto
-}
-
-/**
- * 作品基础信息 + 通用用户状态 DTO
- */
-export class WorkWithUserStatusDto extends IntersectionType(
-  BaseWorkDto,
-  WorkUserStatusFieldsDto,
-) {}
-
-/**
- * 作品详情 DTO
- * Detail responses reuse the generic interaction status fields and add
- * reading-state specific data in one extra layer.
- */
-export class WorkDetailDto extends IntersectionType(
-  WorkWithUserStatusDto,
-  WorkReadingStatusFieldsDto,
-) {}
-
-/**
- * 作品用户状态 DTO
- */
-export class WorkUserStatusDto extends IntersectionType(
-  IdDto,
-  WorkUserStatusFieldsDto,
-) {}
-
-/**
- * 更新作品推荐状态DTO
- */
-export class UpdateWorkRecommendedDto extends IntersectionType(
-  IdDto,
-  PickType(BaseWorkDto, ['isRecommended']),
-) {}
-
-/**
- * 更新作品发布状态DTO
- */
-export class UpdateWorkStatusDto extends IntersectionType(
-  IdDto,
-  PickType(BaseWorkDto, ['isPublished']),
-) {}
-
-/**
- * 更新作品热门状态DTO
- */
-export class UpdateWorkHotDto extends IntersectionType(
-  IdDto,
-  PickType(BaseWorkDto, ['isHot']),
-) {}
-
-/**
- * 更新作品新作状态DTO
- */
-export class UpdateWorkNewDto extends IntersectionType(
-  IdDto,
-  PickType(BaseWorkDto, ['isNew']),
-) {}

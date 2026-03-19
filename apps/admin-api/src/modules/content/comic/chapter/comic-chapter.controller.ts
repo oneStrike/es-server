@@ -1,7 +1,4 @@
 import {
-  CreateWorkChapterDto,
-  QueryWorkChapterDto,
-  UpdateWorkChapterDto,
   WorkChapterService,
 } from '@libs/content'
 import { ContentTypeEnum } from '@libs/platform/constant'
@@ -9,6 +6,11 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  CreateWorkChapterDto,
+  QueryWorkChapterDto,
+  UpdateWorkChapterDto,
+} from './dto/comic-chapter.dto'
 
 @ApiTags('内容管理/漫画章节')
 @Controller('admin/content/comic-chapter')

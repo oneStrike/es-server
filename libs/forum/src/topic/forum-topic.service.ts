@@ -1,18 +1,31 @@
+import type { Db } from '@db/core'
+import type {
+  CreateForumTopicInput,
+  QueryForumTopicInput,
+  QueryPublicForumTopicInput,
+  UpdateForumTopicAuditStatusInput,
+  UpdateForumTopicFeaturedInput,
+  UpdateForumTopicHiddenInput,
+  UpdateForumTopicInput,
+  UpdateForumTopicLockedInput,
+  UpdateForumTopicPinnedInput,
+} from './forum-topic.type'
 import { DrizzleService } from '@db/core'
 import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
+import { CommentTargetTypeEnum } from '@libs/interaction'
 import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
+
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, ilike, isNull, sql } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -21,16 +34,6 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ForumReviewPolicyEnum } from '../config/forum-config.constant'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import {
-  CreateForumTopicDto,
-  QueryForumTopicDto,
-  UpdateForumTopicAuditStatusDto,
-  UpdateForumTopicDto,
-  UpdateForumTopicFeaturedDto,
-  UpdateForumTopicHiddenDto,
-  UpdateForumTopicLockedDto,
-  UpdateForumTopicPinnedDto,
-} from './dto/forum-topic.dto'
 
 /**
  * 论坛主题服务类
@@ -61,6 +64,112 @@ export class ForumTopicService {
 
   get userCommentTable() {
     return this.drizzle.schema.userComment
+  }
+
+  async syncTopicReplyState(tx: Db | undefined, topicId: number) {
+    const client = tx ?? this.db
+    const visibleReplyWhere = and(
+      eq(this.userCommentTable.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+      eq(this.userCommentTable.targetId, topicId),
+      eq(this.userCommentTable.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.userCommentTable.isHidden, false),
+      isNull(this.userCommentTable.deletedAt),
+    )
+
+    const [replySummaryRows, latestReplyRows] = await Promise.all([
+      client
+        .select({
+          replyCount: sql<number>`count(*)::int`,
+        })
+        .from(this.userCommentTable)
+        .where(visibleReplyWhere),
+      client
+        .select({
+          userId: this.userCommentTable.userId,
+          createdAt: this.userCommentTable.createdAt,
+        })
+        .from(this.userCommentTable)
+        .where(visibleReplyWhere)
+        .orderBy(
+          desc(this.userCommentTable.createdAt),
+          desc(this.userCommentTable.id),
+        )
+        .limit(1),
+    ])
+
+    const replyCount = replySummaryRows[0]?.replyCount ?? 0
+    const latestReply = latestReplyRows[0]
+
+    const result = await this.drizzle.withErrorHandling(() =>
+      client
+        .update(this.forumTopicTable)
+        .set({
+          replyCount,
+          commentCount: replyCount,
+          lastReplyAt: latestReply?.createdAt ?? null,
+          lastReplyUserId: latestReply?.userId ?? null,
+        })
+        .where(
+          and(
+            eq(this.forumTopicTable.id, topicId),
+            isNull(this.forumTopicTable.deletedAt),
+          ),
+        ),
+    )
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+  }
+
+  async syncSectionVisibleState(tx: Db | undefined, sectionId: number) {
+    const client = tx ?? this.db
+    const visibleTopicWhere = and(
+      eq(this.forumTopicTable.sectionId, sectionId),
+      eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumTopicTable.isHidden, false),
+      isNull(this.forumTopicTable.deletedAt),
+    )
+
+    const activityAtSql =
+      sql<Date | null>`coalesce(${this.forumTopicTable.lastReplyAt}, ${this.forumTopicTable.createdAt})`
+
+    const [summaryRows, latestTopicRows] = await Promise.all([
+      client
+        .select({
+          topicCount: sql<number>`count(*)::int`,
+          replyCount: sql<number>`coalesce(sum(${this.forumTopicTable.replyCount}), 0)::int`,
+        })
+        .from(this.forumTopicTable)
+        .where(visibleTopicWhere),
+      client
+        .select({
+          id: this.forumTopicTable.id,
+          lastPostAt: activityAtSql,
+        })
+        .from(this.forumTopicTable)
+        .where(visibleTopicWhere)
+        .orderBy(desc(activityAtSql), desc(this.forumTopicTable.id))
+        .limit(1),
+    ])
+
+    const summary = summaryRows[0]
+    const latestTopic = latestTopicRows[0]
+
+    const result = await this.drizzle.withErrorHandling(() =>
+      client
+        .update(this.forumSectionTable)
+        .set({
+          topicCount: summary?.topicCount ?? 0,
+          replyCount: summary?.replyCount ?? 0,
+          lastTopicId: latestTopic?.id ?? null,
+          lastPostAt: latestTopic?.lastPostAt ?? null,
+        })
+        .where(
+          and(
+            eq(this.forumSectionTable.id, sectionId),
+            isNull(this.forumSectionTable.deletedAt),
+          ),
+        ),
+    )
+    this.drizzle.assertAffectedRows(result, '板块不存在')
   }
 
   /**
@@ -114,7 +223,7 @@ export class ForumTopicService {
    * @throws {BadRequestException} 板块不存在或已禁用
    * @throws {BadRequestException} 用户论坛资料不存在或已被封禁
    */
-  async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  async createForumTopic(createTopicDto: CreateForumTopicInput) {
     const { sectionId, userId, ...topicData } = createTopicDto
 
     const user = await this.db.query.appUser.findFirst({
@@ -173,22 +282,25 @@ export class ForumTopicService {
     }
 
     // 创建主题与计数更新放在同一事务中，避免数据与计数不一致
-    const topic = await this.db.transaction(async (tx) => {
-      const [newTopic] = await tx
-        .insert(this.forumTopicTable)
-        .values(createPayload)
-        .returning()
+    const topic = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const [newTopic] = await tx
+          .insert(this.forumTopicTable)
+          .values(createPayload)
+          .returning()
 
-      await this.forumCounterService.updateTopicRelatedCounts(
-        tx,
-        sectionId,
-        userId,
-        1,
-      )
+        await this.forumCounterService.updateTopicRelatedCounts(
+          tx,
+          sectionId,
+          userId,
+          1,
+        )
+        await this.syncSectionVisibleState(tx, sectionId)
 
-      const { version, deletedAt, sensitiveWordHits, ...data } = newTopic
-      return data
-    })
+        const { version, deletedAt, sensitiveWordHits, ...data } = newTopic
+        return data
+      }),
+    )
 
     // 记录创建行为，便于审计追踪
     await this.actionLogService.createActionLog({
@@ -245,12 +357,39 @@ export class ForumTopicService {
     return topic
   }
 
+  async getPublicTopicById(id: number) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id,
+        deletedAt: { isNull: true },
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+      },
+      with: {
+        topicTags: true,
+        section: true,
+        user: {
+          with: {
+            forumProfile: true,
+            level: true,
+          },
+        },
+      },
+    })
+
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+      throw new NotFoundException('主题不存在')
+    }
+
+    return topic
+  }
+
   /**
    * 获取论坛主题列表（分页）
    * @param queryForumTopicDto - 查询参数对象
    * @returns 分页的论坛主题列表
    */
-  async getTopics(queryForumTopicDto: QueryForumTopicDto) {
+  async getTopics(queryForumTopicDto: QueryForumTopicInput) {
     const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
     const where = this.drizzle.buildWhere(this.forumTopicTable, {
       and: {
@@ -279,6 +418,35 @@ export class ForumTopicService {
     })
   }
 
+  async getPublicTopics(query: QueryPublicForumTopicInput) {
+    const section = await this.db.query.forumSection.findFirst({
+      where: {
+        id: query.sectionId,
+        deletedAt: { isNull: true },
+        isEnabled: true,
+      },
+      columns: { id: true },
+    })
+
+    if (!section) {
+      throw new BadRequestException('板块不存在或已禁用')
+    }
+
+    return this.drizzle.ext.findPagination(this.forumTopicTable, {
+      where: this.drizzle.buildWhere(this.forumTopicTable, {
+        and: {
+          sectionId: query.sectionId,
+          deletedAt: { isNull: true },
+          auditStatus: AuditStatusEnum.APPROVED,
+          isHidden: false,
+        },
+      }),
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
+      orderBy: [{ isPinned: 'desc' }, { lastReplyAt: 'desc' }, { createdAt: 'desc' }],
+    })
+  }
+
   /**
    * 更新论坛主题
    * @param updateForumTopicDto - 更新论坛主题的数据传输对象
@@ -286,8 +454,12 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    * @throws {BadRequestException} 主题已锁定，无法编辑
    */
-  async updateTopic(updateForumTopicDto: UpdateForumTopicDto) {
+  async updateTopic(updateForumTopicDto: UpdateForumTopicInput) {
     const { id, ...updateData } = updateForumTopicDto
+
+    if (updateData.title === undefined && updateData.content === undefined) {
+      throw new BadRequestException('至少需要更新标题或内容')
+    }
 
     const topic = await this.db.query.forumTopic.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -334,19 +506,26 @@ export class ForumTopicService {
     }
 
     // 更新主题内容与审核状态
-    const [updatedTopic] = await this.db
-      .update(this.forumTopicTable)
-      .set(updatePayload)
-      .where(
-        and(
-          eq(this.forumTopicTable.id, id),
-          isNull(this.forumTopicTable.deletedAt),
-        ),
-      )
-      .returning()
-    if (!updatedTopic) {
-      throw new NotFoundException('主题不存在')
-    }
+    const updatedTopic = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const [nextTopic] = await tx
+          .update(this.forumTopicTable)
+          .set(updatePayload)
+          .where(
+            and(
+              eq(this.forumTopicTable.id, id),
+              isNull(this.forumTopicTable.deletedAt),
+            ),
+          )
+          .returning()
+        if (!nextTopic) {
+          throw new NotFoundException('主题不存在')
+        }
+
+        await this.syncSectionVisibleState(tx, topic.sectionId)
+        return nextTopic
+      }),
+    )
 
     // 记录编辑行为，保存前后差异
     await this.actionLogService.createActionLog({
@@ -377,34 +556,64 @@ export class ForumTopicService {
     }
 
     // 主题与回复软删除保持一致
-    await this.db.transaction(async (tx) => {
-      await tx
-        .update(this.userCommentTable)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            eq(this.userCommentTable.targetId, id),
-            isNull(this.userCommentTable.deletedAt),
-          ),
-        )
-      const result = await tx
-        .update(this.forumTopicTable)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            eq(this.forumTopicTable.id, id),
-            isNull(this.forumTopicTable.deletedAt),
-          ),
-        )
-      this.drizzle.assertAffectedRows(result, '主题不存在')
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const visibleReplies = await tx.query.userComment.findMany({
+          where: {
+            targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+            targetId: id,
+            auditStatus: AuditStatusEnum.APPROVED,
+            isHidden: false,
+            deletedAt: { isNull: true },
+          },
+          columns: { userId: true },
+        })
 
-      await this.forumCounterService.updateTopicRelatedCounts(
-        tx,
-        topic.sectionId,
-        topic.userId,
-        -1,
-      )
-    })
+        await tx
+          .update(this.userCommentTable)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(this.userCommentTable.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+              eq(this.userCommentTable.targetId, id),
+              isNull(this.userCommentTable.deletedAt),
+            ),
+          )
+
+        const result = await tx
+          .update(this.forumTopicTable)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(this.forumTopicTable.id, id),
+              isNull(this.forumTopicTable.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '主题不存在')
+
+        await this.forumCounterService.updateTopicRelatedCounts(
+          tx,
+          topic.sectionId,
+          topic.userId,
+          -1,
+        )
+
+        const replyCountByUser = new Map<number, number>()
+        for (const reply of visibleReplies) {
+          replyCountByUser.set(
+            reply.userId,
+            (replyCountByUser.get(reply.userId) ?? 0) + 1,
+          )
+        }
+
+        await Promise.all(
+          Array.from(replyCountByUser.entries(), async ([userId, count]) =>
+            this.forumCounterService.updateProfileReplyCount(tx, userId, -count)),
+        )
+
+        await this.syncSectionVisibleState(tx, topic.sectionId)
+      }),
+    )
 
     await this.actionLogService.createActionLog({
       userId: topic.userId,
@@ -426,21 +635,42 @@ export class ForumTopicService {
   private async updateTopicStatus(
     id: number,
     updateData: Record<string, unknown>,
+    options?: {
+      syncSectionVisibility?: boolean
+    },
   ) {
-    const [topic] = await this.db
-      .update(this.forumTopicTable)
-      .set(updateData)
-      .where(
-        and(
-          eq(this.forumTopicTable.id, id),
-          isNull(this.forumTopicTable.deletedAt),
-        ),
-      )
-      .returning()
-    if (!topic) {
+    const currentTopic = await this.db.query.forumTopic.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      columns: { sectionId: true },
+    })
+
+    if (!currentTopic) {
       throw new NotFoundException('主题不存在')
     }
-    return topic
+
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const [topic] = await tx
+          .update(this.forumTopicTable)
+          .set(updateData)
+          .where(
+            and(
+              eq(this.forumTopicTable.id, id),
+              isNull(this.forumTopicTable.deletedAt),
+            ),
+          )
+          .returning()
+        if (!topic) {
+          throw new NotFoundException('主题不存在')
+        }
+
+        if (options?.syncSectionVisibility) {
+          await this.syncSectionVisibleState(tx, currentTopic.sectionId)
+        }
+
+        return topic
+      }),
+    )
   }
 
   /**
@@ -449,7 +679,7 @@ export class ForumTopicService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedDto) {
+  async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedInput) {
     return this.updateTopicStatus(updateTopicPinnedDto.id, {
       isPinned: updateTopicPinnedDto.isPinned,
     })
@@ -462,7 +692,7 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    */
   async updateTopicFeatured(
-    updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
+    updateTopicFeaturedDto: UpdateForumTopicFeaturedInput,
   ) {
     return this.updateTopicStatus(updateTopicFeaturedDto.id, {
       isFeatured: updateTopicFeaturedDto.isFeatured,
@@ -475,7 +705,7 @@ export class ForumTopicService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedDto) {
+  async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedInput) {
     return this.updateTopicStatus(updateTopicLockedDto.id, {
       isLocked: updateTopicLockedDto.isLocked,
     })
@@ -487,10 +717,16 @@ export class ForumTopicService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenDto) {
-    return this.updateTopicStatus(updateTopicHiddenDto.id, {
-      isHidden: updateTopicHiddenDto.isHidden,
-    })
+  async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenInput) {
+    return this.updateTopicStatus(
+      updateTopicHiddenDto.id,
+      {
+        isHidden: updateTopicHiddenDto.isHidden,
+      },
+      {
+        syncSectionVisibility: true,
+      },
+    )
   }
 
   /**
@@ -500,13 +736,19 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    */
   async updateTopicAuditStatus(
-    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
+    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusInput,
   ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
-    return this.updateTopicStatus(id, {
-      auditStatus,
-      auditReason,
-    })
+    return this.updateTopicStatus(
+      id,
+      {
+        auditStatus,
+        auditReason,
+      },
+      {
+        syncSectionVisibility: true,
+      },
+    )
   }
 
   /**
@@ -516,16 +758,18 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementViewCount(id: number) {
-    const [topic] = await this.db
-      .update(this.forumTopicTable)
-      .set({ viewCount: sql`${this.forumTopicTable.viewCount} + 1` })
-      .where(
-        and(
-          eq(this.forumTopicTable.id, id),
-          isNull(this.forumTopicTable.deletedAt),
-        ),
-      )
-      .returning()
+    const [topic] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumTopicTable)
+        .set({ viewCount: sql`${this.forumTopicTable.viewCount} + 1` })
+        .where(
+          and(
+            eq(this.forumTopicTable.id, id),
+            isNull(this.forumTopicTable.deletedAt),
+          ),
+        )
+        .returning(),
+    )
     if (!topic) {
       throw new NotFoundException('主题不存在')
     }
@@ -540,20 +784,23 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementReplyCount(id: number, replyUserId: number) {
-    const [topic] = await this.db
-      .update(this.forumTopicTable)
-      .set({
-        replyCount: sql`${this.forumTopicTable.replyCount} + 1`,
-        lastReplyUserId: replyUserId,
-        lastReplyAt: new Date(),
-      })
-      .where(
-        and(
-          eq(this.forumTopicTable.id, id),
-          isNull(this.forumTopicTable.deletedAt),
-        ),
-      )
-      .returning()
+    const [topic] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumTopicTable)
+        .set({
+          replyCount: sql`${this.forumTopicTable.replyCount} + 1`,
+          commentCount: sql`${this.forumTopicTable.commentCount} + 1`,
+          lastReplyUserId: replyUserId,
+          lastReplyAt: new Date(),
+        })
+        .where(
+          and(
+            eq(this.forumTopicTable.id, id),
+            isNull(this.forumTopicTable.deletedAt),
+          ),
+        )
+        .returning(),
+    )
     if (!topic) {
       throw new NotFoundException('主题不存在')
     }
@@ -567,16 +814,18 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementLikeCount(id: number) {
-    const [topic] = await this.db
-      .update(this.forumTopicTable)
-      .set({ likeCount: sql`${this.forumTopicTable.likeCount} + 1` })
-      .where(
-        and(
-          eq(this.forumTopicTable.id, id),
-          isNull(this.forumTopicTable.deletedAt),
-        ),
-      )
-      .returning()
+    const [topic] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumTopicTable)
+        .set({ likeCount: sql`${this.forumTopicTable.likeCount} + 1` })
+        .where(
+          and(
+            eq(this.forumTopicTable.id, id),
+            isNull(this.forumTopicTable.deletedAt),
+          ),
+        )
+        .returning(),
+    )
     if (!topic) {
       throw new NotFoundException('主题不存在')
     }
@@ -590,19 +839,55 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    */
   async decrementLikeCount(id: number) {
-    const [topic] = await this.db
-      .update(this.forumTopicTable)
-      .set({ likeCount: sql`${this.forumTopicTable.likeCount} - 1` })
-      .where(
-        and(
-          eq(this.forumTopicTable.id, id),
-          isNull(this.forumTopicTable.deletedAt),
-        ),
-      )
-      .returning()
+    const [topic] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumTopicTable)
+        .set({ likeCount: sql`${this.forumTopicTable.likeCount} - 1` })
+        .where(
+          and(
+            eq(this.forumTopicTable.id, id),
+            isNull(this.forumTopicTable.deletedAt),
+          ),
+        )
+        .returning(),
+    )
     if (!topic) {
       throw new NotFoundException('主题不存在')
     }
     return topic
+  }
+
+  async updateUserTopic(userId: number, input: UpdateForumTopicInput) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: { id: input.id, deletedAt: { isNull: true } },
+      columns: { userId: true },
+    })
+
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
+
+    if (topic.userId !== userId) {
+      throw new BadRequestException('无权修改该主题')
+    }
+
+    return this.updateTopic(input)
+  }
+
+  async deleteUserTopic(userId: number, id: number) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      columns: { userId: true },
+    })
+
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
+
+    if (topic.userId !== userId) {
+      throw new BadRequestException('无权删除该主题')
+    }
+
+    return this.deleteTopic(id)
   }
 }

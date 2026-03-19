@@ -1,13 +1,13 @@
-import { DrizzleService } from '@db/core'
-import { forumTopic } from '@db/schema'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
   InteractionTx,
 } from '@libs/interaction'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { ForumCounterService } from '../../counter/forum-counter.service'
+import { ForumTopicService } from '../forum-topic.service'
 
 /**
  * 论坛帖子评论解析器
@@ -21,8 +21,9 @@ export class ForumTopicCommentResolver
   readonly targetType = CommentTargetTypeEnum.FORUM_TOPIC
 
   constructor(
-    private readonly drizzle: DrizzleService,
     private readonly commentService: CommentService,
+    private readonly forumCounterService: ForumCounterService,
+    private readonly forumTopicService: ForumTopicService,
   ) {}
 
   /**
@@ -41,23 +42,11 @@ export class ForumTopicCommentResolver
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(
-    tx: InteractionTx,
-    targetId: number,
-    delta: number,
+    _tx: InteractionTx,
+    _targetId: number,
+    _delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
 
-    const result = await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(forumTopic)
-        .set({
-          commentCount: sql`${forumTopic.commentCount} + ${delta}`,
-        })
-        .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt))),
-    )
-    this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
   /**
@@ -70,11 +59,24 @@ export class ForumTopicCommentResolver
    */
   async ensureCanComment(tx: InteractionTx, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
-      where: { id: targetId },
-      columns: { isLocked: true, deletedAt: true },
+      where: {
+        id: targetId,
+        deletedAt: { isNull: true },
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+      },
+      columns: { isLocked: true },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
     })
 
-    if (!topic || topic.deletedAt !== null) {
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
       throw new BadRequestException('帖子不存在')
     }
 
@@ -93,12 +95,70 @@ export class ForumTopicCommentResolver
    */
   async resolveMeta(tx: InteractionTx, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
-      where: { id: targetId },
-      columns: { userId: true },
+      where: {
+        id: targetId,
+        deletedAt: { isNull: true },
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+      },
+      columns: { userId: true, sectionId: true },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
     })
 
-    return {
-      ownerUserId: topic?.userId,
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+      throw new BadRequestException('帖子不存在')
     }
+
+    return {
+      ownerUserId: topic.userId,
+      sectionId: topic.sectionId,
+    }
+  }
+
+  async postCommentHook(
+    tx: InteractionTx,
+    targetId: number,
+    actorUserId: number,
+    meta: { sectionId?: number },
+  ) {
+    if (!meta.sectionId) {
+      throw new BadRequestException('帖子板块信息缺失')
+    }
+
+    await this.forumCounterService.updateProfileReplyCount(
+      tx,
+      actorUserId,
+      1,
+    )
+    await this.forumTopicService.syncTopicReplyState(tx, targetId)
+    await this.forumTopicService.syncSectionVisibleState(tx, meta.sectionId)
+  }
+
+  async postDeleteCommentHook(
+    tx: InteractionTx,
+    comment: {
+      userId: number
+      targetId: number
+    },
+    meta: { sectionId?: number },
+  ) {
+    if (!meta.sectionId) {
+      throw new BadRequestException('帖子板块信息缺失')
+    }
+
+    await this.forumCounterService.updateProfileReplyCount(
+      tx,
+      comment.userId,
+      -1,
+    )
+    await this.forumTopicService.syncTopicReplyState(tx, comment.targetId)
+    await this.forumTopicService.syncSectionVisibleState(tx, meta.sectionId)
   }
 }

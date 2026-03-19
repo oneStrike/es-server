@@ -2,6 +2,7 @@ import { GenderEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
@@ -17,6 +18,7 @@ export class BaseAuthorDto extends BaseDto {
     description: '作者姓名',
     example: '村上春树',
     required: true,
+    maxLength: 100,
   })
   name!: string
 
@@ -24,6 +26,7 @@ export class BaseAuthorDto extends BaseDto {
     description: '作者头像URL',
     example: 'https://example.com/avatar.jpg',
     required: false,
+    maxLength: 500,
   })
   avatar?: string
 
@@ -31,6 +34,7 @@ export class BaseAuthorDto extends BaseDto {
     description: '作者描述',
     example: '日本著名小说家，代表作有《挪威的森林》等',
     required: false,
+    maxLength: 1000,
   })
   description?: string
 
@@ -54,6 +58,7 @@ export class BaseAuthorDto extends BaseDto {
     description: '国籍',
     example: '日本',
     required: false,
+    maxLength: 50,
   })
   nationality?: string
 
@@ -70,6 +75,7 @@ export class BaseAuthorDto extends BaseDto {
     description: '管理员备注',
     example: '优秀作者，作品质量高',
     required: false,
+    maxLength: 1000,
   })
   remark?: string
 
@@ -98,4 +104,12 @@ export class BaseAuthorDto extends BaseDto {
     default: false,
   })
   isRecommended!: boolean
+
+  @DateProperty({
+    description: '删除时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }

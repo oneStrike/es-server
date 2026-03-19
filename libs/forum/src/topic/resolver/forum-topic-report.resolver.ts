@@ -4,7 +4,7 @@ import {
   ReportService,
   ReportTargetTypeEnum,
 } from '@libs/interaction'
-import { SceneTypeEnum } from '@libs/platform/constant'
+import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 /**
@@ -40,15 +40,25 @@ export class ForumTopicReportResolver
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
         deletedAt: { isNull: true },
       },
       columns: {
         id: true,
         userId: true,
       },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
     })
 
-    if (!topic) {
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
       throw new NotFoundException('帖子不存在')
     }
 

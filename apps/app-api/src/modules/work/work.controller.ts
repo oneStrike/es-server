@@ -1,11 +1,4 @@
 import {
-  PageWorkDto,
-  QueryWorkDto,
-  QueryWorkForumTopicsDto,
-  QueryWorkTypeDto,
-  WorkDetailDto,
-  WorkForumSectionDto,
-  WorkForumTopicDto,
   WorkService,
 } from '@libs/content'
 import {
@@ -20,6 +13,13 @@ import {
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Headers, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  PageWorkDto,
+  QueryWorkDto,
+  QueryWorkTypeDto,
+  WorkDetailDto,
+  WorkForumSectionDto,
+} from './dto/work.dto'
 
 @ApiTags('作品')
 @Controller('app/work')
@@ -63,7 +63,10 @@ export class WorkController {
     model: PageWorkDto,
   })
   async getWorkPage(@Query() query: QueryWorkDto) {
-    return this.workService.getWorkPage(query)
+    return this.workService.getWorkPage({
+      ...query,
+      isPublished: true,
+    })
   }
 
   @Get('detail')
@@ -94,15 +97,5 @@ export class WorkController {
   })
   async getWorkForumSection(@Query() query: IdDto) {
     return this.workService.getWorkForumSection(query.id)
-  }
-
-  @Get('forum-topic/page')
-  @Public()
-  @ApiPageDoc({
-    summary: '分页查询作品板块主题',
-    model: WorkForumTopicDto,
-  })
-  async getWorkForumTopics(@Query() query: QueryWorkForumTopicsDto) {
-    return this.workService.getWorkForumTopics(query)
   }
 }

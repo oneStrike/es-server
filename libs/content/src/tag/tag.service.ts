@@ -2,7 +2,11 @@ import { DrizzleService } from '@db/core'
 import { DragReorderDto, IdDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
-import { CreateTagDto, QueryTagDto, UpdateTagDto } from './dto/tag.dto'
+import {
+  CreateTagInput,
+  QueryTagInput,
+  UpdateTagInput,
+} from './tag.type'
 
 @Injectable()
 export class WorkTagService {
@@ -20,7 +24,7 @@ export class WorkTagService {
     return this.drizzle.schema.workTagRelation
   }
 
-  async createTag(createTagDto: CreateTagDto) {
+  async createTag(createTagDto: CreateTagInput) {
     if (!createTagDto.sortOrder) {
       createTagDto.sortOrder = (await this.drizzle.ext.maxOrder(this.workTag)) + 1
     }
@@ -39,7 +43,7 @@ export class WorkTagService {
     return created
   }
 
-  async getTagPage(queryDto: QueryTagDto) {
+  async getTagPage(queryDto: QueryTagInput) {
     const { name, isEnabled, ...pageParams } = queryDto
 
     if (!pageParams.orderBy) {
@@ -69,7 +73,7 @@ export class WorkTagService {
     return tag
   }
 
-  async updateTag(updateTagDto: UpdateTagDto) {
+  async updateTag(updateTagDto: UpdateTagInput) {
     const { id, ...updateData } = updateTagDto
 
     const [updated] = await this.drizzle.withErrorHandling(

@@ -219,3 +219,6 @@ export const work = pgTable("work", {
      */
     index("work_comment_count_idx").on(table.commentCount),
 ]);
+
+export type Work = typeof work.$inferSelect;
+export type WorkInsert = typeof work.$inferInsert;

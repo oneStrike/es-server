@@ -14,10 +14,10 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
-  CreateWorkChapterDto,
-  QueryWorkChapterDto,
-  UpdateWorkChapterDto,
-} from './dto/work-chapter.dto'
+  CreateWorkChapterInput,
+  QueryWorkChapterInput,
+  UpdateWorkChapterInput,
+} from './work-chapter.type'
 
 /**
  * 作品章节服务
@@ -61,7 +61,7 @@ export class WorkChapterService {
    * @throws BadRequestException 关联的作品不存在
    * @throws BadRequestException 该作品下章节号已存在（唯一约束冲突）
    */
-  async createChapter(createDto: CreateWorkChapterDto) {
+  async createChapter(createDto: CreateWorkChapterInput) {
     const { workId } = createDto
 
     if (
@@ -85,7 +85,7 @@ export class WorkChapterService {
    * @param dto - 查询参数，支持按 workId、title 筛选
    * @returns 分页章节列表
    */
-  async getChapterPage(dto: QueryWorkChapterDto) {
+  async getChapterPage(dto: QueryWorkChapterInput) {
     const where = this.drizzle.buildWhere(this.workChapter, {
       and: {
         deletedAt: { isNull: true },
@@ -289,7 +289,7 @@ export class WorkChapterService {
    * @throws BadRequestException 该作品下章节号已存在（唯一约束冲突）
    * @throws BadRequestException 章节不存在
    */
-  async updateChapter(dto: UpdateWorkChapterDto) {
+  async updateChapter(dto: UpdateWorkChapterInput) {
     const { id, ...updateData } = dto
     const { requiredViewLevelId } = updateData
 
