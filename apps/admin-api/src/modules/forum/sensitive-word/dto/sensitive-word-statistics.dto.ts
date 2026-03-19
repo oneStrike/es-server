@@ -1,4 +1,4 @@
-import { ArrayProperty, EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import { ArrayProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
 import {
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
@@ -156,34 +156,34 @@ export class SensitiveWordStatisticsDataDto {
   @NumberProperty({ description: '最近一月命中次数', example: 180, validation: false })
   lastMonthHits!: number
 
-  @NestedProperty({
+  @ArrayProperty({
     description: '级别统计',
-    type: SensitiveWordLevelStatisticsDto,
-    isArray: true,
+    itemClass: SensitiveWordLevelStatisticsDto,
+    itemType: 'object',
     validation: false,
   })
   levelStatistics!: SensitiveWordLevelStatisticsDto[]
 
-  @NestedProperty({
+  @ArrayProperty({
     description: '类型统计',
-    type: SensitiveWordTypeStatisticsDto,
-    isArray: true,
+    itemClass: SensitiveWordTypeStatisticsDto,
+    itemType: 'object',
     validation: false,
   })
   typeStatistics!: SensitiveWordTypeStatisticsDto[]
 
-  @NestedProperty({
+  @ArrayProperty({
     description: '热门命中词',
-    type: SensitiveWordTopHitStatisticsDto,
-    isArray: true,
+    itemClass: SensitiveWordTopHitStatisticsDto,
+    itemType: 'object',
     validation: false,
   })
   topHitWords!: SensitiveWordTopHitStatisticsDto[]
 
-  @NestedProperty({
+  @ArrayProperty({
     description: '最近命中词',
-    type: SensitiveWordRecentHitStatisticsDto,
-    isArray: true,
+    itemClass: SensitiveWordRecentHitStatisticsDto,
+    itemType: 'object',
     validation: false,
   })
   recentHitWords!: SensitiveWordRecentHitStatisticsDto[]

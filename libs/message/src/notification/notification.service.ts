@@ -141,7 +141,8 @@ export class MessageNotificationService {
           eq(this.notification.isRead, false),
         ))
     )
-    if (result.rowCount > 0) {
+    const affectedRows = result.rowCount ?? 0
+    if (affectedRows > 0) {
       this.messageNotificationRealtimeService.emitNotificationReadSync(userId, {
         readAt: now,
       })

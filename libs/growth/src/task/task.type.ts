@@ -81,6 +81,7 @@ export interface QueryMyTaskInput {
   type?: TaskTypeEnum
   pageIndex?: number
   pageSize?: number
+  orderBy?: string
 }
 
 /**

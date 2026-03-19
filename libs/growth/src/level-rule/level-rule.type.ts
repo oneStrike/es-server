@@ -42,7 +42,7 @@ export interface QueryUserLevelRulePageInput {
   pageSize?: number
   orderBy?: string
   name?: string
-  business?: string
+  business?: string | null
   isEnabled?: boolean
 }
 

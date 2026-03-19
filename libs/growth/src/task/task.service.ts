@@ -464,7 +464,8 @@ export class TaskService {
     // 计算当前周期标识
     const cycleKey = this.buildCycleKey(taskRecord, now)
     // 创建或获取已存在的分配
-    return this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
+    await this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
+    return true
   }
 
   /**
@@ -480,7 +481,7 @@ export class TaskService {
    *   - delta: 进度增量（必须大于0）
    *   - context: 上下文信息（JSON字符串）
    * @param userId 当前用户ID
-   * @returns 更新后的任务分配
+   * @returns 是否更新成功
    * @throws BadRequestException 进度增量无效或任务未领取
    * @throws NotFoundException 任务不存在
    */
@@ -520,7 +521,7 @@ export class TaskService {
       assignment.status === TaskAssignmentStatusEnum.COMPLETED ||
       assignment.status === TaskAssignmentStatusEnum.EXPIRED
     ) {
-      return assignment
+      return true
     }
 
     // 计算新进度（不超过目标值）
@@ -538,9 +539,9 @@ export class TaskService {
     const context = this.parseJsonValue(dto.context)
 
     // 事务更新：更新分配并记录进度日志
-    const updated = await this.db.transaction(async (tx) => {
+    const updatedRows = await this.db.transaction(async (tx) => {
       // 使用乐观锁更新（version字段）
-      const [updatedAssignment] = await tx
+      const updateResult = await tx
         .update(this.taskAssignmentTable)
         .set({
           progress: nextProgress,
@@ -555,7 +556,6 @@ export class TaskService {
             eq(this.taskAssignmentTable.version, assignment.version),
           ),
         )
-        .returning()
 
       // 记录进度日志
       await tx.insert(this.taskProgressLogTable).values({
@@ -571,21 +571,21 @@ export class TaskService {
         context,
       })
 
-      return updatedAssignment
+      return updateResult.rowCount ?? 0
     })
 
-    if (!updated) {
+    if (updatedRows === 0) {
       throw new ConflictException('任务进度更新冲突，请重试')
     }
 
     // 如果刚完成，触发完成事件（发放奖励）
     if (
       assignment.status !== TaskAssignmentStatusEnum.COMPLETED &&
-      updated.status === TaskAssignmentStatusEnum.COMPLETED
+      nextStatus === TaskAssignmentStatusEnum.COMPLETED
     ) {
-      await this.emitTaskCompleteEvent(userId, taskRecord, updated)
+      await this.emitTaskCompleteEvent(userId, taskRecord, assignment)
     }
-    return updated
+    return true
   }
 
   /**
@@ -597,7 +597,7 @@ export class TaskService {
    * @param dto 完成参数
    *   - taskId: 任务ID
    * @param userId 当前用户ID
-   * @returns 更新后的任务分配
+   * @returns 是否更新成功
    * @throws BadRequestException 任务未领取或进度未达成
    * @throws NotFoundException 任务不存在
    */
@@ -617,7 +617,7 @@ export class TaskService {
     }
     // 已完成则直接返回
     if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
-      return assignment
+      return true
     }
     // 自动完成模式需要进度达标
     if (
@@ -630,8 +630,8 @@ export class TaskService {
     const finalProgress = Math.max(assignment.progress, assignment.target)
 
     // 事务更新：标记完成并记录日志
-    const updated = await this.db.transaction(async (tx) => {
-      const [updatedAssignment] = await tx
+    const updatedRows = await this.db.transaction(async (tx) => {
+      const updateResult = await tx
         .update(this.taskAssignmentTable)
         .set({
           progress: finalProgress,
@@ -645,7 +645,6 @@ export class TaskService {
             eq(this.taskAssignmentTable.version, assignment.version),
           ),
         )
-        .returning()
 
       await tx.insert(this.taskProgressLogTable).values({
         assignmentId: assignment.id,
@@ -656,16 +655,16 @@ export class TaskService {
         afterValue: finalProgress,
       })
 
-      return updatedAssignment
+      return updateResult.rowCount ?? 0
     })
 
-    if (!updated) {
+    if (updatedRows === 0) {
       throw new ConflictException('任务完成状态更新冲突，请重试')
     }
 
     // 触发完成事件（发放奖励）
-    await this.emitTaskCompleteEvent(userId, taskRecord, updated)
-    return updated
+    await this.emitTaskCompleteEvent(userId, taskRecord, assignment)
+    return true
   }
 
   // ==================== 定时任务 ====================
@@ -990,7 +989,7 @@ export class TaskService {
 
     return this.db.transaction(async (tx) => {
       // 创建分配记录
-      const [assignment] = await tx
+      await tx
         .insert(this.taskAssignmentTable)
         .values({
           taskId: taskRecord.id,
@@ -1003,7 +1002,22 @@ export class TaskService {
           expiredAt: taskRecord.publishEndAt ?? undefined,
           taskSnapshot,
         })
-        .returning()
+
+      const [assignment] = await tx
+        .select()
+        .from(this.taskAssignmentTable)
+        .where(
+          and(
+            eq(this.taskAssignmentTable.taskId, taskRecord.id),
+            eq(this.taskAssignmentTable.userId, userId),
+            eq(this.taskAssignmentTable.cycleKey, cycleKey),
+          ),
+        )
+        .limit(1)
+
+      if (!assignment) {
+        throw new NotFoundException('任务分配创建失败')
+      }
 
       // 记录领取日志
       await tx.insert(this.taskProgressLogTable).values({

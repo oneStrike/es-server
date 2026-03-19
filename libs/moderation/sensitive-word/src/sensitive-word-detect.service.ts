@@ -102,7 +102,9 @@ export class SensitiveWordDetectService implements OnModuleInit {
     const { content, matchMode = MatchModeEnum.EXACT } = dto
 
     if (!this.isInitialized || !content) {
-      return {}
+      return {
+        hits: [],
+      }
     }
 
     let results: (MatchResult | FuzzyMatchResult)[] = []

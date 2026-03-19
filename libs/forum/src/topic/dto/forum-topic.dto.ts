@@ -8,7 +8,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
-import { MatchedWordDto } from '@libs/sensitive-word'
+import { BaseSensitiveWordHitDto } from '@libs/sensitive-word'
 
 /**
  * 论坛主题基础 DTO。
@@ -176,12 +176,12 @@ export class BaseForumTopicDto extends BaseDto {
 
   @ArrayProperty({
     description: '敏感词命中记录',
-    itemClass: MatchedWordDto,
+    itemClass: BaseSensitiveWordHitDto,
     itemType: 'object',
     required: false,
     validation: false,
   })
-  sensitiveWordHits?: MatchedWordDto[]
+  sensitiveWordHits?: BaseSensitiveWordHitDto[]
 
   @DateProperty({
     description: '最后回复时间',

@@ -1,5 +1,3 @@
-export * from './dto/sensitive-word-detect.dto'
-export * from './dto/sensitive-word-statistics.dto'
 export * from './dto/sensitive-word.dto'
 export * from './sensitive-word-cache.constant'
 export * from './sensitive-word-cache.service'

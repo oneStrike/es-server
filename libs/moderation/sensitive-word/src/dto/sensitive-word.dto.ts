@@ -117,3 +117,50 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   lastHitAt?: Date | null
 }
+
+export class BaseSensitiveWordHitDto {
+  @StringProperty({
+    description: '敏感词内容',
+    example: '测试',
+    validation: false,
+  })
+  word!: string
+
+  @NumberProperty({
+    description: '起始位置',
+    example: 0,
+    validation: false,
+  })
+  start!: number
+
+  @NumberProperty({
+    description: '结束位置',
+    example: 2,
+    validation: false,
+  })
+  end!: number
+
+  @EnumProperty({
+    description: '敏感词级别',
+    example: SensitiveWordLevelEnum.SEVERE,
+    enum: SensitiveWordLevelEnum,
+    validation: false,
+  })
+  level!: SensitiveWordLevelEnum
+
+  @EnumProperty({
+    description: '敏感词类型',
+    example: SensitiveWordTypeEnum.POLITICS,
+    enum: SensitiveWordTypeEnum,
+    validation: false,
+  })
+  type!: SensitiveWordTypeEnum
+
+  @StringProperty({
+    description: '替换词',
+    example: '***',
+    required: false,
+    validation: false,
+  })
+  replaceWord?: string | null
+}

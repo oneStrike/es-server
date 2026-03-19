@@ -42,9 +42,9 @@ export interface QueryUserPointRecordPageInput {
   pageSize?: number
   orderBy?: string
   userId: number
-  ruleId?: number
-  targetType?: number
-  targetId?: number
+  ruleId?: number | null
+  targetType?: number | null
+  targetId?: number | null
 }
 
 /**

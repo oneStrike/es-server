@@ -251,10 +251,10 @@ export class SensitiveWordService {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
     let data:
-      | SensitiveWordLevelStatisticsDto[]
-      | SensitiveWordTypeStatisticsDto[]
-      | SensitiveWordRecentHitStatisticsDto[]
-      | SensitiveWordTopHitStatisticsDto[]
+      | SensitiveWordLevelStatistics[]
+      | SensitiveWordTypeStatistics[]
+      | SensitiveWordRecentHitStatistics[]
+      | SensitiveWordTopHitStatistics[]
 
     switch (type) {
       case StatisticsTypeEnum.LEVEL:

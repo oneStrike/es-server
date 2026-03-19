@@ -47,7 +47,7 @@ export class TaskController {
   @Post('claim')
   @ApiDoc({
     summary: '领取任务',
-    model: BaseTaskAssignmentDto,
+    model: Boolean,
   })
   async claim(
     @Body() body: ClaimTaskDto,
@@ -59,7 +59,7 @@ export class TaskController {
   @Post('progress')
   @ApiDoc({
     summary: '上报任务进度',
-    model: BaseTaskAssignmentDto,
+    model: Boolean,
   })
   async progress(
     @Body() body: TaskProgressDto,
@@ -71,7 +71,7 @@ export class TaskController {
   @Post('complete')
   @ApiDoc({
     summary: '完成任务',
-    model: BaseTaskAssignmentDto,
+    model: Boolean,
   })
   async complete(
     @Body() body: TaskCompleteDto,

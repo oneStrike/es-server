@@ -48,7 +48,7 @@ export interface QueryUserExperienceRecordPageInput {
   pageSize?: number
   orderBy?: string
   userId: number
-  ruleId?: number
+  ruleId?: number | null
 }
 
 /**

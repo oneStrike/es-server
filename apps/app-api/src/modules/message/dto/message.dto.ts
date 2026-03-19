@@ -6,6 +6,7 @@ import {
   MessageNotificationTypeEnum,
 } from '@libs/message'
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
@@ -85,14 +86,14 @@ export class ChatConversationDto extends BaseChatConversationDto {
     required: false,
     validation: false,
   })
-  peerUser?: ChatPeerDto
+  declare peerUser?: ChatPeerDto
 }
 
 export class ChatConversationMessagesResponseDto {
-  @NestedProperty({
+  @ArrayProperty({
     description: '消息列表',
-    type: BaseChatMessageDto,
-    isArray: true,
+    itemClass: BaseChatMessageDto,
+    itemType: 'object',
     validation: false,
   })
   list!: BaseChatMessageDto[]
