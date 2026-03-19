@@ -13,7 +13,10 @@ import {
 
 export class CreateForumSectionGroupDto extends OmitType(
   BaseForumSectionGroupDto,
-  OMIT_BASE_FIELDS,
+  [
+    ...OMIT_BASE_FIELDS,
+    'deletedAt',
+  ] as const,
 ) {}
 
 export class UpdateForumSectionGroupDto extends IntersectionType(

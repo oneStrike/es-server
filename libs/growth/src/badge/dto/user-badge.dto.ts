@@ -63,15 +63,19 @@ export class BaseUserBadgeDto extends BaseDto {
   @NumberProperty({
     description: '排序值（数值越小越靠前）',
     example: 0,
+    required: true,
     min: 0,
+    default: 0,
   })
-  sortOrder?: number
+  sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',
     example: true,
+    required: true,
+    default: true,
   })
-  isEnabled?: boolean
+  isEnabled!: boolean
 }
 
 export class CreateUserBadgeDto extends OmitType(

@@ -47,10 +47,10 @@ export class BaseAppPageDto extends BaseDto {
   @ArrayProperty({
     description: '启用的平台',
     example: [EnablePlatformEnum.APP],
-    required: true,
+    required: false,
     itemType: 'number',
   })
-  enablePlatform!: EnablePlatformEnum[]
+  enablePlatform?: EnablePlatformEnum[] | null
 
   @EnumProperty({
     description: '页面权限级别',

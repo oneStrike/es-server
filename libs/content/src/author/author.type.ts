@@ -4,8 +4,13 @@ import type { WorkAuthor } from '@db/schema'
  * 创建作者入参。
  * - 对应作者创建表单的可写字段
  */
-export type CreateAuthorInput = Pick<WorkAuthor, 'name' | 'type' | 'gender'> &
-  Partial<Pick<WorkAuthor, 'avatar' | 'description' | 'nationality' | 'remark'>>
+export type CreateAuthorInput = Pick<WorkAuthor, 'name' | 'gender'> &
+  Partial<
+    Pick<
+      WorkAuthor,
+      'type' | 'avatar' | 'description' | 'nationality' | 'remark'
+    >
+  >
 
 /**
  * 更新作者基础信息入参。

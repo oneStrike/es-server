@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
 import {
   SensitiveWordLevelStatisticsDto,
@@ -30,8 +30,6 @@ import { SensitiveWordDetectService } from './sensitive-word-detect.service'
  */
 @Injectable()
 export class SensitiveWordService {
-  private readonly logger = new Logger(SensitiveWordDetectService.name)
-
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly cacheService: SensitiveWordCacheService,
@@ -78,18 +76,16 @@ export class SensitiveWordService {
    * @returns 新建敏感词
    */
   async createSensitiveWord(dto: CreateSensitiveWordDto) {
-    try {
-      const [result] = await this.db
+    const [result] = await this.drizzle.withErrorHandling(() =>
+      this.db
         .insert(this.sensitiveWord)
         .values(dto)
-        .returning()
+        .returning(),
+    )
 
-      await this.cacheService.invalidateAll()
-      await this.detectService.reloadWords()
-      return result
-    } catch (err) {
-      this.drizzle.handleError(err)
-    }
+    await this.cacheService.invalidateAll()
+    await this.detectService.reloadWords()
+    return result
   }
 
   /**
@@ -98,19 +94,18 @@ export class SensitiveWordService {
    * @returns 更新后的敏感词
    */
   async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
-    const exists = await this.drizzle.ext.exists(
-      this.sensitiveWord,
-      eq(this.sensitiveWord.id, dto.id),
+    const { id, ...updateData } = dto
+    const [result] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.sensitiveWord)
+        .set(updateData)
+        .where(eq(this.sensitiveWord.id, id))
+        .returning(),
     )
-    if (!exists) {
-      throw new BadRequestException(`ID【${dto.id}】数据不存在`)
-    }
-
-    const [result] = await this.db
-      .update(this.sensitiveWord)
-      .set(dto)
-      .where(eq(this.sensitiveWord.id, dto.id))
-      .returning()
+    this.drizzle.assertAffectedRows(
+      result ? [result] : [],
+      `ID【${id}】数据不存在`,
+    )
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
@@ -123,10 +118,16 @@ export class SensitiveWordService {
    * @returns 删除结果
    */
   async deleteSensitiveWord(dto: IdDto) {
-    const [result] = await this.db
-      .delete(this.sensitiveWord)
-      .where(eq(this.sensitiveWord.id, dto.id))
-      .returning()
+    const [result] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.sensitiveWord)
+        .where(eq(this.sensitiveWord.id, dto.id))
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(
+      result ? [result] : [],
+      `ID【${dto.id}】数据不存在`,
+    )
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
@@ -139,11 +140,17 @@ export class SensitiveWordService {
    * @returns 更新结果
    */
   async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
-    const [result] = await this.db
-      .update(this.sensitiveWord)
-      .set({ isEnabled: dto.isEnabled })
-      .where(eq(this.sensitiveWord.id, dto.id))
-      .returning()
+    const [result] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.sensitiveWord)
+        .set({ isEnabled: dto.isEnabled })
+        .where(eq(this.sensitiveWord.id, dto.id))
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(
+      result ? [result] : [],
+      `ID【${dto.id}】数据不存在`,
+    )
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()

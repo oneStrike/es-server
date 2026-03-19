@@ -100,18 +100,20 @@ export class MessageNotificationService {
    */
   async markRead(userId: number, id: number) {
     const now = new Date()
-    const result = await this.db
-      .update(this.notification)
-      .set({
-        isRead: true,
-        readAt: now,
-      })
-      .where(and(
-        eq(this.notification.id, id),
-        eq(this.notification.userId, userId),
-        eq(this.notification.isRead, false),
-      ))
-      .returning({ id: this.notification.id })
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.notification)
+        .set({
+          isRead: true,
+          readAt: now,
+        })
+        .where(and(
+          eq(this.notification.id, id),
+          eq(this.notification.userId, userId),
+          eq(this.notification.isRead, false),
+        ))
+        .returning({ id: this.notification.id }),
+    )
     if (result.length === 0) {
       throw new BadRequestException('通知不存在或已读')
     }
@@ -130,17 +132,19 @@ export class MessageNotificationService {
    */
   async markAllRead(userId: number) {
     const now = new Date()
-    const result = await this.db
-      .update(this.notification)
-      .set({
-        isRead: true,
-        readAt: now,
-      })
-      .where(and(
-        eq(this.notification.userId, userId),
-        eq(this.notification.isRead, false),
-      ))
-      .returning({ id: this.notification.id })
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.notification)
+        .set({
+          isRead: true,
+          readAt: now,
+        })
+        .where(and(
+          eq(this.notification.userId, userId),
+          eq(this.notification.isRead, false),
+        ))
+        .returning({ id: this.notification.id }),
+    )
     if (result.length > 0) {
       this.messageNotificationRealtimeService.emitNotificationReadSync(userId, {
         readAt: now,
@@ -190,8 +194,8 @@ export class MessageNotificationService {
       }
     }
 
-    try {
-      const inserted = await this.db
+    const inserted = await this.drizzle.withErrorHandling(() =>
+      this.db
         .insert(this.notification)
         .values({
           userId: receiverUserId,
@@ -225,21 +229,16 @@ export class MessageNotificationService {
         .onConflictDoNothing({
           target: [this.notification.userId, this.notification.bizKey],
         })
-        .returning()
-      const notification = inserted[0]
-      if (!notification) {
-        return null
-      }
-
-      this.messageNotificationRealtimeService.emitNotificationNew(notification)
-      await this.emitInboxSummaryUpdate(receiverUserId)
-      return notification
-    } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
-        return null
-      }
-      throw error
+        .returning(),
+    )
+    const notification = inserted[0]
+    if (!notification) {
+      return null
     }
+
+    this.messageNotificationRealtimeService.emitNotificationNew(notification)
+    await this.emitInboxSummaryUpdate(receiverUserId)
+    return notification
   }
 
   /** 推送收件箱摘要更新 */

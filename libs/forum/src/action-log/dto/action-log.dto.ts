@@ -1,9 +1,10 @@
 import {
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -13,7 +14,7 @@ import {
  * 论坛用户操作日志基础 DTO。
  * 严格对应 forum_user_action_log 表字段。
  */
-export class BaseForumActionLogDto extends BaseDto {
+export class BaseForumActionLogDto extends IdDto {
   @NumberProperty({
     description: '关联的用户ID',
     example: 1,
@@ -74,4 +75,11 @@ export class BaseForumActionLogDto extends BaseDto {
     required: false,
   })
   userAgent?: string
+
+  @DateProperty({
+    description: '创建时间',
+    example: '2026-03-19T12:00:00.000Z',
+    required: true,
+  })
+  createdAt!: Date
 }

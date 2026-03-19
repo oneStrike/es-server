@@ -285,13 +285,15 @@ export class SensitiveWordStatisticsService {
    */
   async incrementHitCount(word: string): Promise<void> {
     try {
-      await this.db
-        .update(this.sensitiveWord)
-        .set({
-          hitCount: sql`${this.sensitiveWord.hitCount} + 1`,
-          lastHitAt: new Date(),
-        })
-        .where(eq(this.sensitiveWord.word, word))
+      await this.drizzle.withErrorHandling(() =>
+        this.db
+          .update(this.sensitiveWord)
+          .set({
+            hitCount: sql`${this.sensitiveWord.hitCount} + 1`,
+            lastHitAt: new Date(),
+          })
+          .where(eq(this.sensitiveWord.word, word)),
+      )
     } catch (error) {
       this.logger.error(`更新敏感词命中次数失败: ${word}`, error)
     }

@@ -49,10 +49,10 @@ export class BaseAuthorDto extends BaseDto {
   @ArrayProperty({
     description: '作者角色类型，1 => 漫画家 2 => 小说家',
     example: [AuthorTypeEnum.NOVEL],
-    required: true,
+    required: false,
     itemType: 'number',
   })
-  type!: number[]
+  type?: number[] | null
 
   @StringProperty({
     description: '国籍',

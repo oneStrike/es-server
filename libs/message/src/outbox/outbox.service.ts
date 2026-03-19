@@ -31,29 +31,24 @@ export class MessageOutboxService {
    * @param dto 消息事件数据
    */
   async enqueueEvent(dto: CreateMessageOutboxEventDto) {
-    return this.enqueueEventInTx(this.db, dto)
+    return this.drizzle.withErrorHandling(async () =>
+      this.enqueueEventInTx(this.db, dto),
+    )
   }
 
   async enqueueEventInTx(tx: Db, dto: CreateMessageOutboxEventDto) {
-    try {
-      await tx
-        .insert(this.outbox)
-        .values({
-          domain: dto.domain,
-          eventType: dto.eventType,
-          bizKey: dto.bizKey,
-          payload: dto.payload,
-          status: MessageOutboxStatusEnum.PENDING,
-        })
-        .onConflictDoNothing({
-          target: this.outbox.bizKey,
-        })
-    } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
-        return
-      }
-      throw error
-    }
+    await tx
+      .insert(this.outbox)
+      .values({
+        domain: dto.domain,
+        eventType: dto.eventType,
+        bizKey: dto.bizKey,
+        payload: dto.payload,
+        status: MessageOutboxStatusEnum.PENDING,
+      })
+      .onConflictDoNothing({
+        target: this.outbox.bizKey,
+      })
   }
 
   /**
@@ -61,7 +56,9 @@ export class MessageOutboxService {
    * @param dto 通知事件数据
    */
   async enqueueNotificationEvent(dto: CreateNotificationOutboxEventDto) {
-    await this.enqueueNotificationEventInTx(this.db, dto)
+    await this.drizzle.withErrorHandling(async () =>
+      this.enqueueNotificationEventInTx(this.db, dto),
+    )
   }
 
   async enqueueNotificationEventInTx(

@@ -1,5 +1,6 @@
 import {
   BooleanProperty,
+  DateProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -42,4 +43,21 @@ export class BaseForumSectionGroupDto extends BaseDto {
     default: true,
   })
   isEnabled!: boolean
+
+  @NumberProperty({
+    description: '分组版主数量限制（0表示不限制）',
+    example: 0,
+    required: true,
+    min: 0,
+    default: 0,
+  })
+  maxModerators!: number
+
+  @DateProperty({
+    description: '删除时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }

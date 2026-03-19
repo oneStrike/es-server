@@ -1,6 +1,7 @@
 import {
   ArrayProperty,
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
@@ -61,4 +62,12 @@ export class BaseForumModeratorDto extends IntersectionType(
     maxLength: 500,
   })
   remark?: string
+
+  @DateProperty({
+    description: '删除时间',
+    example: '2026-03-19T12:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }

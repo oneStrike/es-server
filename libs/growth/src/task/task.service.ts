@@ -723,9 +723,14 @@ export class TaskService {
    * @returns 解析后的对象，如果为空则返回undefined
    * @throws BadRequestException JSON格式错误
    */
-  private parseJsonValue(value?: string | null) {
+  private parseJsonValue(
+    value?: string | Record<string, unknown> | null,
+  ) {
     if (value === undefined || value === null || value === '') {
       return undefined
+    }
+    if (typeof value === 'object') {
+      return value
     }
     try {
       return JSON.parse(value) as Record<string, unknown>

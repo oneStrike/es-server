@@ -6,9 +6,9 @@ import type { AppPage } from '@db/schema'
  */
 export type CreateAppPageInput = Pick<
   AppPage,
-  'code' | 'path' | 'name' | 'title' | 'enablePlatform' | 'accessLevel' | 'isEnabled'
+  'code' | 'path' | 'name' | 'title' | 'accessLevel' | 'isEnabled'
 > &
-Partial<Pick<AppPage, 'description'>>
+Partial<Pick<AppPage, 'enablePlatform' | 'description'>>
 
 /**
  * 更新页面入参。

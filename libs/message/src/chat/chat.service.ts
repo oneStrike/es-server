@@ -95,54 +95,56 @@ export class MessageChatService {
       throw new NotFoundException('Target user not found')
     }
     const bizKey = this.buildDirectBizKey(userId, targetUserId)
-    const conversation = await this.db.transaction(async (tx) => {
-      const insertedConversation = await tx
-        .insert(chatConversation)
-        .values({ bizKey })
-        .onConflictDoUpdate({
-          target: chatConversation.bizKey,
-          set: { bizKey },
-        })
-        .returning({ id: chatConversation.id })
-      const item = insertedConversation[0]
-      if (!item) {
-        throw new NotFoundException('Conversation not found')
-      }
+    const conversation = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const insertedConversation = await tx
+          .insert(chatConversation)
+          .values({ bizKey })
+          .onConflictDoUpdate({
+            target: chatConversation.bizKey,
+            set: { bizKey },
+          })
+          .returning({ id: chatConversation.id })
+        const item = insertedConversation[0]
+        if (!item) {
+          throw new NotFoundException('Conversation not found')
+        }
 
-      await tx
-        .insert(chatConversationMember)
-        .values({
-          conversationId: item.id,
-          userId,
-          role: ChatConversationMemberRoleEnum.OWNER,
-          leftAt: null,
-        })
-        .onConflictDoUpdate({
-          target: [chatConversationMember.conversationId, chatConversationMember.userId],
-          set: {
-            leftAt: null,
+        await tx
+          .insert(chatConversationMember)
+          .values({
+            conversationId: item.id,
+            userId,
             role: ChatConversationMemberRoleEnum.OWNER,
-          },
-        })
-
-      await tx
-        .insert(chatConversationMember)
-        .values({
-          conversationId: item.id,
-          userId: targetUserId,
-          role: ChatConversationMemberRoleEnum.MEMBER,
-          leftAt: null,
-        })
-        .onConflictDoUpdate({
-          target: [chatConversationMember.conversationId, chatConversationMember.userId],
-          set: {
             leftAt: null,
-            role: ChatConversationMemberRoleEnum.MEMBER,
-          },
-        })
+          })
+          .onConflictDoUpdate({
+            target: [chatConversationMember.conversationId, chatConversationMember.userId],
+            set: {
+              leftAt: null,
+              role: ChatConversationMemberRoleEnum.OWNER,
+            },
+          })
 
-      return item
-    })
+        await tx
+          .insert(chatConversationMember)
+          .values({
+            conversationId: item.id,
+            userId: targetUserId,
+            role: ChatConversationMemberRoleEnum.MEMBER,
+            leftAt: null,
+          })
+          .onConflictDoUpdate({
+            target: [chatConversationMember.conversationId, chatConversationMember.userId],
+            set: {
+              leftAt: null,
+              role: ChatConversationMemberRoleEnum.MEMBER,
+            },
+          })
+
+        return item
+      }),
+    )
     return this.getConversationDetailForUser(conversation.id, userId)
   }
 
@@ -438,40 +440,25 @@ export class MessageChatService {
   async markConversationRead(userId: number, dto: MarkConversationReadDto) {
     const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
     const messageId = this.parseBigintId(dto.messageId, 'messageId')
-    const result = await this.db.transaction(async (tx) => {
-      const member = await tx.query.chatConversationMember.findFirst({
-        where: {
-          conversationId,
-          userId,
-        },
-        columns: {
-          conversationId: true,
-          leftAt: true,
-          lastReadMessageId: true,
-        },
-      })
-      if (!member || member.leftAt) {
-        throw new NotFoundException('Conversation not found')
-      }
-      const targetMessage = await tx.query.chatMessage.findFirst({
-        where: {
-          id: messageId,
-          conversationId,
-        },
-        columns: {
-          id: true,
-          messageSeq: true,
-        },
-      })
-      if (!targetMessage) {
-        throw new NotFoundException('Message not found')
-      }
-      let finalReadMessageId = targetMessage.id
-      let finalReadMessageSeq = targetMessage.messageSeq
-      if (typeof member.lastReadMessageId === 'bigint') {
-        const previousReadMessage = await tx.query.chatMessage.findFirst({
+    const result = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const member = await tx.query.chatConversationMember.findFirst({
           where: {
-            id: member.lastReadMessageId,
+            conversationId,
+            userId,
+          },
+          columns: {
+            conversationId: true,
+            leftAt: true,
+            lastReadMessageId: true,
+          },
+        })
+        if (!member || member.leftAt) {
+          throw new NotFoundException('Conversation not found')
+        }
+        const targetMessage = await tx.query.chatMessage.findFirst({
+          where: {
+            id: messageId,
             conversationId,
           },
           columns: {
@@ -479,43 +466,60 @@ export class MessageChatService {
             messageSeq: true,
           },
         })
-        if (
-          previousReadMessage
-          && previousReadMessage.messageSeq > finalReadMessageSeq
-        ) {
-          finalReadMessageId = previousReadMessage.id
-          finalReadMessageSeq = previousReadMessage.messageSeq
+        if (!targetMessage) {
+          throw new NotFoundException('Message not found')
         }
-      }
-      const unreadCount = await tx.$count(
-        chatMessage,
-        and(
-          eq(chatMessage.conversationId, conversationId),
-          ne(chatMessage.senderId, userId),
-          ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
-          gt(chatMessage.messageSeq, finalReadMessageSeq),
-        ),
-      )
-      const now = new Date()
-      const updateResult = await tx
-        .update(chatConversationMember)
-        .set({
-          lastReadMessageId: finalReadMessageId,
-          lastReadAt: now,
-          unreadCount,
-        })
-        .where(and(
-          eq(chatConversationMember.conversationId, conversationId),
-          eq(chatConversationMember.userId, userId),
-        ))
-      this.drizzle.assertAffectedRows(updateResult, 'Conversation not found')
+        let finalReadMessageId = targetMessage.id
+        let finalReadMessageSeq = targetMessage.messageSeq
+        if (typeof member.lastReadMessageId === 'bigint') {
+          const previousReadMessage = await tx.query.chatMessage.findFirst({
+            where: {
+              id: member.lastReadMessageId,
+              conversationId,
+            },
+            columns: {
+              id: true,
+              messageSeq: true,
+            },
+          })
+          if (
+            previousReadMessage
+            && previousReadMessage.messageSeq > finalReadMessageSeq
+          ) {
+            finalReadMessageId = previousReadMessage.id
+            finalReadMessageSeq = previousReadMessage.messageSeq
+          }
+        }
+        const unreadCount = await tx.$count(
+          chatMessage,
+          and(
+            eq(chatMessage.conversationId, conversationId),
+            ne(chatMessage.senderId, userId),
+            ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
+            gt(chatMessage.messageSeq, finalReadMessageSeq),
+          ),
+        )
+        const now = new Date()
+        const updateResult = await tx
+          .update(chatConversationMember)
+          .set({
+            lastReadMessageId: finalReadMessageId,
+            lastReadAt: now,
+            unreadCount,
+          })
+          .where(and(
+            eq(chatConversationMember.conversationId, conversationId),
+            eq(chatConversationMember.userId, userId),
+          ))
+        this.drizzle.assertAffectedRows(updateResult, 'Conversation not found')
 
-      return {
-        now,
-        unreadCount,
-        lastReadMessageId: finalReadMessageId,
-      }
-    })
+        return {
+          now,
+          unreadCount,
+          lastReadMessageId: finalReadMessageId,
+        }
+      }),
+    )
     this.messageNotificationRealtimeService.emitChatConversationUpdate(userId, {
       conversationId,
       unreadCount: result.unreadCount,

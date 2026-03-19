@@ -276,21 +276,25 @@ export class InteractionTargetAccessService {
     }
 
     if (delta > 0) {
-      const updated = await tx
-        .update(table)
-        .set({ [field]: sql`${column} + ${delta}` } as any)
-        .where(condition)
-        .returning()
+      const updated = await this.drizzle.withErrorHandling(() =>
+        tx
+          .update(table)
+          .set({ [field]: sql`${column} + ${delta}` } as any)
+          .where(condition)
+          .returning(),
+      )
       this.drizzle.assertAffectedRows(updated, '目标不存在')
       return
     }
 
     const amount = Math.abs(delta)
-    const updated = await tx
-      .update(table)
-      .set({ [field]: sql`${column} - ${amount}` } as any)
-      .where(and(condition, gte(column, amount)))
-      .returning({ id: column })
+    const updated = await this.drizzle.withErrorHandling(() =>
+      tx
+        .update(table)
+        .set({ [field]: sql`${column} - ${amount}` } as any)
+        .where(and(condition, gte(column, amount)))
+        .returning({ id: column }),
+    )
     if (updated.length === 0) {
       throw new BadRequestException('目标不存在或计数不足')
     }

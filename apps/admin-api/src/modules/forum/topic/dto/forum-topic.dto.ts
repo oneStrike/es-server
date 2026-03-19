@@ -184,6 +184,7 @@ export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
   'isFeatured',
   'isLocked',
   'isHidden',
+  'deletedAt',
 ] as const) {}
 
 export class UpdateForumTopicDto extends IntersectionType(

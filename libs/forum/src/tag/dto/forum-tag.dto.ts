@@ -37,23 +37,26 @@ export class BaseForumTagDto extends BaseDto {
   @BooleanProperty({
     description: '是否启用',
     example: true,
-    required: false,
+    required: true,
+    default: true,
   })
-  isEnabled?: boolean
+  isEnabled!: boolean
 
   @NumberProperty({
     description: '使用次数',
     example: 100,
-    required: false,
+    required: true,
     min: 0,
+    default: 0,
   })
-  useCount?: number
+  useCount!: number
 
   @NumberProperty({
     description: '排序权重',
     example: 0,
-    required: false,
+    required: true,
     min: 0,
+    default: 0,
   })
-  sortOrder?: number
+  sortOrder!: number
 }

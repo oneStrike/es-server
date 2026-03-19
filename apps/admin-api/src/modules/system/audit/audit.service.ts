@@ -43,10 +43,12 @@ export class AuditService {
       actionType: normalizedActionType ?? undefined,
       ...parseRequestLogFields(req),
     } as any
-    const [created] = await this.db
-      .insert(this.requestLog)
-      .values(data)
-      .returning({ id: this.requestLog.id })
+    const [created] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.requestLog)
+        .values(data)
+        .returning({ id: this.requestLog.id }),
+    )
     return created
   }
 

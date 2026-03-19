@@ -23,7 +23,10 @@ import {
 
 export class CreateForumModeratorDto extends OmitType(
   BaseForumModeratorDto,
-  OMIT_BASE_FIELDS,
+  [
+    ...OMIT_BASE_FIELDS,
+    'deletedAt',
+  ] as const,
 ) {
   @ArrayProperty({
     description: '板块ID列表（板块版主时必填）',

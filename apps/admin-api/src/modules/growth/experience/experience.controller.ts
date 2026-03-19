@@ -1,11 +1,11 @@
 import {
   AddUserExperienceDto,
-  BaseUserExperienceRecordDto,
   BaseUserExperienceRuleDto,
   CreateUserExperienceRuleDto,
   QueryUserExperienceRecordDto,
   QueryUserExperienceRuleDto,
   UpdateUserExperienceRuleDto,
+  UserExperienceRecordDto,
   UserExperienceService,
 } from '@libs/growth'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
@@ -76,7 +76,7 @@ export class ExperienceController {
   @Post('grant')
   @ApiDoc({
     summary: '增加用户经验',
-    model: BaseUserExperienceRecordDto,
+    model: UserExperienceRecordDto,
   })
   async grantExperience(@Body() dto: AddUserExperienceDto) {
     return this.experienceService.addExperience(dto)
@@ -85,7 +85,7 @@ export class ExperienceController {
   @Get('record/page')
   @ApiPageDoc({
     summary: '获取用户经验记录分页',
-    model: BaseUserExperienceRecordDto,
+    model: UserExperienceRecordDto,
   })
   async getExperienceRecords(@Query() query: QueryUserExperienceRecordDto) {
     return this.experienceService.getExperienceRecordPage(query)

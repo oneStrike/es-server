@@ -38,27 +38,29 @@ export class ForumUserActionLogService {
       userAgent,
     } = dto
 
-    const data = await this.db
-      .insert(this.forumUserActionLog)
-      .values({
-        userId,
-        actionType,
-        targetType,
-        targetId,
-        beforeData: beforeData
-          ? typeof beforeData === 'string'
-            ? beforeData
-            : JSON.stringify(beforeData)
-          : null,
-        afterData: afterData
-          ? typeof afterData === 'string'
-            ? afterData
-            : JSON.stringify(afterData)
-          : null,
-        ipAddress,
-        userAgent,
-      })
-      .returning()
+    const data = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.forumUserActionLog)
+        .values({
+          userId,
+          actionType,
+          targetType,
+          targetId,
+          beforeData: beforeData
+            ? typeof beforeData === 'string'
+              ? beforeData
+              : JSON.stringify(beforeData)
+            : null,
+          afterData: afterData
+            ? typeof afterData === 'string'
+              ? afterData
+              : JSON.stringify(afterData)
+            : null,
+          ipAddress,
+          userAgent,
+        })
+        .returning(),
+    )
     return data[0]
   }
 

@@ -70,7 +70,7 @@ export class BaseUserLevelRuleDto extends BaseDto {
     required: false,
     maxLength: 20,
   })
-  business?: string
+  business?: string | null
 
   @BooleanProperty({
     description: '是否启用',
@@ -113,6 +113,28 @@ export class BaseUserLevelRuleDto extends BaseDto {
     required: true,
   })
   dailyFavoriteLimit!: number
+
+  @NumberProperty({
+    description: '黑名单上限',
+    example: 10,
+    required: true,
+  })
+  blacklistLimit!: number
+
+  @NumberProperty({
+    description: '作品收藏上限',
+    example: 100,
+    required: true,
+  })
+  workCollectionLimit!: number
+
+  @StringProperty({
+    description: '积分购买折扣（0-1之间的小数）',
+    example: '0.80',
+    required: true,
+    maxLength: 4,
+  })
+  discount!: string
 
   @StringProperty({
     description: '等级专属颜色（十六进制）',

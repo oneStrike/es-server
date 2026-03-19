@@ -2,7 +2,7 @@ import { ApiPageDoc } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuditService } from './audit.service'
-import { AuditPageRequestDto, BaseAuditDto } from './dto/audit.dto'
+import { AuditItemDto, AuditPageRequestDto } from './dto/audit.dto'
 
 @Controller('admin/audit')
 @ApiTags('系统管理/审计日志')
@@ -15,7 +15,7 @@ export class AuditController {
   @Get('page')
   @ApiPageDoc({
     summary: '获取审计日志列表',
-    model: BaseAuditDto,
+    model: AuditItemDto,
   })
   async getAuditPage(@Query() query: AuditPageRequestDto) {
     return this.auditService.getAuditPage(query)

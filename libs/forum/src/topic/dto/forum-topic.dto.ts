@@ -197,4 +197,12 @@ export class BaseForumTopicDto extends BaseDto {
     required: false,
   })
   lastReplyUserId?: number
+
+  @DateProperty({
+    description: '删除时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }

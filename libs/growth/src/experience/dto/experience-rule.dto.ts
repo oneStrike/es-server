@@ -38,37 +38,13 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   dailyLimit!: number
 
-  @StringProperty({
-    description: '业务域标识',
-    example: 'forum',
-    required: false,
-    maxLength: 20,
-  })
-  business?: string
-
-  @StringProperty({
-    description: '事件键',
-    example: 'forum.topic.create',
-    required: false,
-    maxLength: 50,
-  })
-  eventKey?: string
-
-  @NumberProperty({
-    description: '冷却秒数（0=无限制）',
-    example: 0,
-    required: false,
-    default: 0,
-  })
-  cooldownSeconds?: number
-
   @NumberProperty({
     description: '总上限（0=无限制）',
     example: 0,
-    required: false,
+    required: true,
     default: 0,
   })
-  totalLimit?: number
+  totalLimit!: number
 
   @BooleanProperty({
     description: '是否启用',
@@ -102,8 +78,6 @@ export class QueryUserExperienceRuleDto extends IntersectionType(
   PartialType(
     PickType(BaseUserExperienceRuleDto, [
       'type',
-      'business',
-      'eventKey',
       'isEnabled',
     ]),
   ),

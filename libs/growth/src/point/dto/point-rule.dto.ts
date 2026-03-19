@@ -38,29 +38,13 @@ export class BaseUserPointRuleDto extends BaseDto {
   })
   dailyLimit!: number
 
-  @StringProperty({
-    description: '业务域标识',
-    example: 'forum',
-    required: false,
-    maxLength: 20,
-  })
-  business?: string
-
-  @NumberProperty({
-    description: '冷却秒数（0=无限制）',
-    example: 0,
-    required: false,
-    default: 0,
-  })
-  cooldownSeconds?: number
-
   @NumberProperty({
     description: '总上限（0=无限制）',
     example: 0,
-    required: false,
+    required: true,
     default: 0,
   })
-  totalLimit?: number
+  totalLimit!: number
 
   @BooleanProperty({
     description: '是否启用',
@@ -92,6 +76,6 @@ export class UpdateUserPointRuleDto extends IntersectionType(
 export class QueryUserPointRuleDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseUserPointRuleDto, ['type', 'business', 'isEnabled']),
+    PickType(BaseUserPointRuleDto, ['type', 'isEnabled']),
   ),
 ) {}

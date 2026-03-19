@@ -100,15 +100,17 @@ export class ForumSectionService {
       }
     }
 
-    const [data] = await this.db
-      .insert(this.forumSection)
-      .values({
-        name,
-        ...sectionData,
-        userLevelRuleId,
-        groupId,
-      })
-      .returning()
+    const [data] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.forumSection)
+        .values({
+          name,
+          ...sectionData,
+          userLevelRuleId,
+          groupId,
+        })
+        .returning(),
+    )
     return data
   }
 
@@ -234,11 +236,16 @@ export class ForumSectionService {
       updatePayload.groupId = null
     }
 
-    const [data] = await this.db
-      .update(this.forumSection)
-      .set(updatePayload)
-      .where(and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)))
-      .returning()
+    const [data] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumSection)
+        .set(updatePayload)
+        .where(
+          and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)),
+        )
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(data ? [data] : [], '论坛板块不存在')
     return data
   }
 
@@ -262,11 +269,16 @@ export class ForumSectionService {
       )
     }
 
-    const [data] = await this.db
-      .update(this.forumSection)
-      .set({ deletedAt: new Date() })
-      .where(and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)))
-      .returning()
+    const [data] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumSection)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)),
+        )
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(data ? [data] : [], '论坛板块不存在')
     return data
   }
 
@@ -276,16 +288,19 @@ export class ForumSectionService {
    * @returns 更新结果
    */
   async updateEnabledStatus(dto: UpdateForumSectionEnabledInput) {
-    const [data] = await this.db
-      .update(this.forumSection)
-      .set({ isEnabled: dto.isEnabled })
-      .where(
-        and(eq(this.forumSection.id, dto.id), isNull(this.forumSection.deletedAt)),
-      )
-      .returning()
-    if (!data) {
-      throw new BadRequestException('论坛板块不存在')
-    }
+    const [data] = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumSection)
+        .set({ isEnabled: dto.isEnabled })
+        .where(
+          and(
+            eq(this.forumSection.id, dto.id),
+            isNull(this.forumSection.deletedAt),
+          ),
+        )
+        .returning(),
+    )
+    this.drizzle.assertAffectedRows(data ? [data] : [], '论坛板块不存在')
     return data
   }
 

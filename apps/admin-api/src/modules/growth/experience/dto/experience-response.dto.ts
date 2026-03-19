@@ -1,23 +1,23 @@
 import {
-  BaseAppUserInfoDto,
+  ForumAppUserInfoDto,
 } from '@libs/forum'
 import {
-  BaseUserExperienceRecordDto,
   BaseUserLevelRuleDto,
+  UserExperienceRecordDto,
 } from '@libs/growth'
 import {
   NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 
-export class UserExperienceRecordDetailDto extends BaseUserExperienceRecordDto {
+export class UserExperienceRecordDetailDto extends UserExperienceRecordDto {
   @NestedProperty({
     description: '经验所属用户',
-    type: BaseAppUserInfoDto,
+    type: ForumAppUserInfoDto,
     required: true,
     validation: false,
   })
-  user!: BaseAppUserInfoDto
+  user!: ForumAppUserInfoDto
 }
 
 export class UserExperienceStatsDto {

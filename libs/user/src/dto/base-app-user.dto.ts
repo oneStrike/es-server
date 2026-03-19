@@ -27,7 +27,7 @@ export class BaseAppUserDto extends BaseDto {
     required: false,
     maxLength: 20,
   })
-  phoneNumber?: string
+  phoneNumber?: string | null
 
   @StringProperty({
     description: '邮箱',
@@ -35,14 +35,14 @@ export class BaseAppUserDto extends BaseDto {
     required: false,
     maxLength: 255,
   })
-  emailAddress?: string
+  emailAddress?: string | null
 
   @NumberProperty({
     description: '等级ID',
     example: 1,
     required: false,
   })
-  levelId?: number
+  levelId?: number | null
 
   @StringProperty({
     description: '昵称',
@@ -67,7 +67,7 @@ export class BaseAppUserDto extends BaseDto {
     required: false,
     maxLength: 500,
   })
-  avatarUrl?: string
+  avatarUrl?: string | null
 
   @BooleanProperty({
     description: '是否启用',
@@ -91,7 +91,7 @@ export class BaseAppUserDto extends BaseDto {
     example: '2000-01-01',
     required: false,
   })
-  birthDate?: string | Date
+  birthDate?: string | Date | null
 
   @NumberProperty({
     description: '积分',
@@ -124,21 +124,21 @@ export class BaseAppUserDto extends BaseDto {
     required: false,
     maxLength: 500,
   })
-  banReason?: string
+  banReason?: string | null
 
   @DateProperty({
     description: '封禁到期时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  banUntil?: Date
+  banUntil?: Date | null
 
   @DateProperty({
     description: '最后登录时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  lastLoginAt?: Date
+  lastLoginAt?: Date | null
 
   @StringProperty({
     description: '最后登录IP',
@@ -146,5 +146,13 @@ export class BaseAppUserDto extends BaseDto {
     required: false,
     maxLength: 45,
   })
-  lastLoginIp?: string
+  lastLoginIp?: string | null
+
+  @DateProperty({
+    description: '删除时间（软删除）',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }

@@ -1,6 +1,8 @@
 import {
   BooleanProperty,
+  DateProperty,
   EnumProperty,
+  NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
@@ -65,12 +67,21 @@ export class BaseSensitiveWordDto extends BaseDto {
 
   @EnumProperty({
     description: '匹配模式',
-    required: false,
+    required: true,
     example: MatchModeEnum.EXACT,
     default: MatchModeEnum.EXACT,
     enum: MatchModeEnum,
   })
-  matchMode?: MatchModeEnum
+  matchMode!: MatchModeEnum
+
+  @NumberProperty({
+    description: '版本号（乐观锁）',
+    required: true,
+    example: 0,
+    default: 0,
+    validation: false,
+  })
+  version!: number
 
   @StringProperty({
     description: '备注',
@@ -78,6 +89,39 @@ export class BaseSensitiveWordDto extends BaseDto {
     required: false,
   })
   remark?: string
+
+  @NumberProperty({
+    description: '创建人ID',
+    required: false,
+    example: 1,
+    validation: false,
+  })
+  createdBy?: number | null
+
+  @NumberProperty({
+    description: '更新人ID',
+    required: false,
+    example: 1,
+    validation: false,
+  })
+  updatedBy?: number | null
+
+  @NumberProperty({
+    description: '命中次数',
+    required: true,
+    example: 0,
+    default: 0,
+    validation: false,
+  })
+  hitCount!: number
+
+  @DateProperty({
+    description: '最后命中时间',
+    required: false,
+    example: '2026-03-19T12:00:00.000Z',
+    validation: false,
+  })
+  lastHitAt?: Date | null
 }
 
 /**
@@ -85,7 +129,14 @@ export class BaseSensitiveWordDto extends BaseDto {
  */
 export class CreateSensitiveWordDto extends OmitType(
   BaseSensitiveWordDto,
-  OMIT_BASE_FIELDS,
+  [
+    ...OMIT_BASE_FIELDS,
+    'version',
+    'createdBy',
+    'updatedBy',
+    'hitCount',
+    'lastHitAt',
+  ] as const,
 ) {}
 
 /**

@@ -74,14 +74,6 @@ export class BaseAuditDto extends BaseDto {
   })
   actionType?: AuditActionTypeEnum
 
-  @StringProperty({
-    description: '操作类型展示文案',
-    example: '用户登录',
-    required: false,
-    maxLength: 50,
-  })
-  actionTypeLabel?: string
-
   @BooleanProperty({
     description: '操作是否成功',
     example: true,
@@ -110,6 +102,17 @@ export class BaseAuditDto extends BaseDto {
     required: true,
   })
   content!: string
+}
+
+export class AuditItemDto extends BaseAuditDto {
+  @StringProperty({
+    description: '操作类型展示文案',
+    example: '用户登录',
+    required: false,
+    maxLength: 50,
+    validation: false,
+  })
+  actionTypeLabel?: string
 }
 
 /**

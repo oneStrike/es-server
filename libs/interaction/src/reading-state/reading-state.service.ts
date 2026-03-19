@@ -120,27 +120,29 @@ export class ReadingStateService {
     // 预研：确保解析器存在
     this.getResolver(workType)
 
-    const rows = await this.db
-      .insert(this.userWorkReadingState)
-      .values({
-        userId,
-        workId,
-        workType,
-        lastReadAt,
-        lastReadChapterId,
-      })
-      .onConflictDoUpdate({
-        target: [
-          this.userWorkReadingState.userId,
-          this.userWorkReadingState.workId,
-        ],
-        set: {
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.userWorkReadingState)
+        .values({
+          userId,
+          workId,
           workType,
           lastReadAt,
           lastReadChapterId,
-        },
-      })
-      .returning()
+        })
+        .onConflictDoUpdate({
+          target: [
+            this.userWorkReadingState.userId,
+            this.userWorkReadingState.workId,
+          ],
+          set: {
+            workType,
+            lastReadAt,
+            lastReadChapterId,
+          },
+        })
+        .returning(),
+    )
 
     return rows[0]
   }
@@ -318,31 +320,36 @@ export class ReadingStateService {
    * 删除单条阅读历史记录
    */
   async deleteUserReadingHistory(id: number, userId?: number) {
-    await this.db
-      .delete(this.userWorkReadingState)
-      .where(
-        userId === undefined
-          ? eq(this.userWorkReadingState.id, id)
-          : and(
-              eq(this.userWorkReadingState.id, id),
-              eq(this.userWorkReadingState.userId, userId),
-            ),
-      )
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.userWorkReadingState)
+        .where(
+          userId === undefined
+            ? eq(this.userWorkReadingState.id, id)
+            : and(
+                eq(this.userWorkReadingState.id, id),
+                eq(this.userWorkReadingState.userId, userId),
+              ),
+        ),
+    )
+    this.drizzle.assertAffectedRows(result, '阅读历史不存在')
   }
 
   /**
    * 清空用户的阅读历史
    */
   async clearUserReadingHistory(userId: number, workType?: WorkTypeEnum) {
-    await this.db
-      .delete(this.userWorkReadingState)
-      .where(
-        workType === undefined
-          ? eq(this.userWorkReadingState.userId, userId)
-          : and(
-              eq(this.userWorkReadingState.userId, userId),
-              eq(this.userWorkReadingState.workType, workType),
-            ),
-      )
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.userWorkReadingState)
+        .where(
+          workType === undefined
+            ? eq(this.userWorkReadingState.userId, userId)
+            : and(
+                eq(this.userWorkReadingState.userId, userId),
+                eq(this.userWorkReadingState.workType, workType),
+              ),
+        ),
+    )
   }
 }

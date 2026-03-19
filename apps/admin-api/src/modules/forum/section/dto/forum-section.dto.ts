@@ -13,7 +13,14 @@ import {
 
 export class CreateForumSectionDto extends OmitType(
   BaseForumSectionDto,
-  OMIT_BASE_FIELDS,
+  [
+    ...OMIT_BASE_FIELDS,
+    'lastTopicId',
+    'topicCount',
+    'replyCount',
+    'lastPostAt',
+    'deletedAt',
+  ] as const,
 ) {}
 
 export class UpdateForumSectionDto extends IntersectionType(

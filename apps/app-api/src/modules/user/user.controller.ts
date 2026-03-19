@@ -1,6 +1,6 @@
 import {
-  BaseUserExperienceRecordDto,
-  BaseUserPointRecordDto,
+  UserExperienceRecordDto,
+  UserPointRecordDto,
 } from '@libs/growth'
 /**
  * 用户控制器
@@ -159,7 +159,7 @@ export class UserController {
   @Get('points/record/page')
   @ApiPageDoc({
     summary: '查询用户积分记录',
-    model: BaseUserPointRecordDto,
+    model: UserPointRecordDto,
   })
   async getPointRecords(
     @Query() query: QueryMyPointRecordDto,
@@ -186,7 +186,7 @@ export class UserController {
   @Get('experience/record/page')
   @ApiPageDoc({
     summary: '查询用户经验记录',
-    model: BaseUserExperienceRecordDto,
+    model: UserExperienceRecordDto,
   })
   async getExperienceRecords(
     @Query() query: QueryMyExperienceRecordDto,

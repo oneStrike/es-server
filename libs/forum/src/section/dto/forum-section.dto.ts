@@ -1,5 +1,6 @@
 import {
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
@@ -34,15 +35,23 @@ export class BaseForumSectionDto extends BaseDto {
     required: false,
     min: 1,
   })
-  userLevelRuleId?: number
+  userLevelRuleId?: number | null
+
+  @NumberProperty({
+    description: '最后发表主题ID',
+    example: 100,
+    required: false,
+    min: 1,
+  })
+  lastTopicId?: number | null
 
   @StringProperty({
     description: '板块图标',
     example: 'https://example.com/icon.png',
     required: false,
-    maxLength: 500,
+    maxLength: 255,
   })
-  icon?: string
+  icon?: string | null
 
   @NumberProperty({
     description: '排序权重',
@@ -73,8 +82,50 @@ export class BaseForumSectionDto extends BaseDto {
   @StringProperty({
     description: '板块描述',
     example: '讨论技术相关问题',
-    required: true,
+    required: false,
     maxLength: 500,
   })
-  description!: string
+  description?: string | null
+
+  @StringProperty({
+    description: '备注信息',
+    example: '仅管理员可见',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string | null
+
+  @NumberProperty({
+    description: '主题数',
+    example: 120,
+    required: true,
+    default: 0,
+    validation: false,
+  })
+  topicCount!: number
+
+  @NumberProperty({
+    description: '回复数',
+    example: 560,
+    required: true,
+    default: 0,
+    validation: false,
+  })
+  replyCount!: number
+
+  @DateProperty({
+    description: '最后发表时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  lastPostAt?: Date | null
+
+  @DateProperty({
+    description: '删除时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  deletedAt?: Date | null
 }

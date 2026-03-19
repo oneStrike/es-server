@@ -10,7 +10,7 @@ export type CreateAnnouncementInput = Omit<
 > &
 Pick<
     AppAnnouncement,
-    'title' | 'content' | 'announcementType' | 'priorityLevel' | 'enablePlatform'
+    'title' | 'content' | 'announcementType' | 'priorityLevel'
   >
 
 /**

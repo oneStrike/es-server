@@ -35,26 +35,26 @@ export class BaseAgreementDto extends BaseDto {
   @BooleanProperty({
     description: '是否强制重新同意',
     example: false,
-    required: false,
+    required: true,
     default: false,
   })
-  isForce?: boolean
+  isForce!: boolean
 
   @BooleanProperty({
     description: '是否展示在登录注册页',
     example: false,
-    required: false,
+    required: true,
     default: false,
   })
-  showInAuth?: boolean
+  showInAuth!: boolean
 
   @BooleanProperty({
     description: '是否已发布',
     example: false,
-    required: false,
+    required: true,
     default: false,
   })
-  isPublished?: boolean
+  isPublished!: boolean
 
   @DateProperty({
     description: '发布时间',

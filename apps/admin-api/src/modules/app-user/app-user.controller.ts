@@ -1,7 +1,7 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
 import {
-  BaseUserExperienceRecordDto,
-  BaseUserPointRecordDto,
+  UserExperienceRecordDto,
+  UserPointRecordDto,
 } from '@libs/growth'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
@@ -139,7 +139,7 @@ export class AppUserController {
   @Get('points/record/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户积分记录',
-    model: BaseUserPointRecordDto,
+    model: UserPointRecordDto,
   })
   async getAppUserPointRecords(
     @Query() query: QueryAdminAppUserPointRecordDto,
@@ -153,7 +153,7 @@ export class AppUserController {
   @Post('points/grant')
   @ApiDoc({
     summary: '手动增加 APP 用户积分',
-    model: BaseUserPointRecordDto,
+    model: UserPointRecordDto,
   })
   @Audit({
     actionType: AuditActionTypeEnum.CREATE,
@@ -172,7 +172,7 @@ export class AppUserController {
   @Post('points/consume')
   @ApiDoc({
     summary: '手动扣减 APP 用户积分',
-    model: BaseUserPointRecordDto,
+    model: UserPointRecordDto,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,
@@ -203,7 +203,7 @@ export class AppUserController {
   @Get('experience/record/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户经验记录',
-    model: BaseUserExperienceRecordDto,
+    model: UserExperienceRecordDto,
   })
   async getAppUserExperienceRecords(
     @Query() query: QueryAdminAppUserExperienceRecordDto,
@@ -217,7 +217,7 @@ export class AppUserController {
   @Post('experience/grant')
   @ApiDoc({
     summary: '手动增加 APP 用户经验',
-    model: BaseUserExperienceRecordDto,
+    model: UserExperienceRecordDto,
   })
   @Audit({
     actionType: AuditActionTypeEnum.CREATE,

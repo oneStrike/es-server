@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type { InteractionTx } from '@libs/interaction'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
@@ -28,6 +29,18 @@ export class ContentCounterService {
     return this.drizzle.schema.forumProfile
   }
 
+  private async executeCountUpdate(
+    tx: InteractionTx | undefined,
+    operation: (client: Db) => Promise<{ rowCount?: number | null } | unknown[]>,
+    message: string,
+  ) {
+    const client = tx ?? this.db
+    const result = tx
+      ? await operation(client)
+      : await this.drizzle.withErrorHandling(async () => operation(client))
+    this.drizzle.assertAffectedRows(result, message)
+  }
+
   /**
    * 更新版块的主题数量
    * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
@@ -40,11 +53,17 @@ export class ContentCounterService {
     sectionId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumSection)
-      .set({ topicCount: sql`${this.forumSection.topicCount} + ${delta}` })
-      .where(and(eq(this.forumSection.id, sectionId), isNull(this.forumSection.deletedAt)))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumSection)
+          .set({ topicCount: sql`${this.forumSection.topicCount} + ${delta}` })
+          .where(
+            and(eq(this.forumSection.id, sectionId), isNull(this.forumSection.deletedAt)),
+          ),
+      '版块不存在',
+    )
   }
 
   /**
@@ -59,11 +78,17 @@ export class ContentCounterService {
     sectionId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumSection)
-      .set({ replyCount: sql`${this.forumSection.replyCount} + ${delta}` })
-      .where(and(eq(this.forumSection.id, sectionId), isNull(this.forumSection.deletedAt)))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumSection)
+          .set({ replyCount: sql`${this.forumSection.replyCount} + ${delta}` })
+          .where(
+            and(eq(this.forumSection.id, sectionId), isNull(this.forumSection.deletedAt)),
+          ),
+      '版块不存在',
+    )
   }
 
   /**
@@ -78,11 +103,17 @@ export class ContentCounterService {
     topicId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumTopic)
-      .set({ replyCount: sql`${this.forumTopic.replyCount} + ${delta}` })
-      .where(and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumTopic)
+          .set({ replyCount: sql`${this.forumTopic.replyCount} + ${delta}` })
+          .where(
+            and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)),
+          ),
+      '主题不存在',
+    )
   }
 
   /**
@@ -97,11 +128,17 @@ export class ContentCounterService {
     topicId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumTopic)
-      .set({ likeCount: sql`${this.forumTopic.likeCount} + ${delta}` })
-      .where(and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumTopic)
+          .set({ likeCount: sql`${this.forumTopic.likeCount} + ${delta}` })
+          .where(
+            and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)),
+          ),
+      '主题不存在',
+    )
   }
 
   /**
@@ -116,11 +153,17 @@ export class ContentCounterService {
     topicId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumTopic)
-      .set({ favoriteCount: sql`${this.forumTopic.favoriteCount} + ${delta}` })
-      .where(and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumTopic)
+          .set({ favoriteCount: sql`${this.forumTopic.favoriteCount} + ${delta}` })
+          .where(
+            and(eq(this.forumTopic.id, topicId), isNull(this.forumTopic.deletedAt)),
+          ),
+      '主题不存在',
+    )
   }
 
   /**
@@ -135,11 +178,15 @@ export class ContentCounterService {
     userId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumProfile)
-      .set({ topicCount: sql`${this.forumProfile.topicCount} + ${delta}` })
-      .where(eq(this.forumProfile.userId, userId))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumProfile)
+          .set({ topicCount: sql`${this.forumProfile.topicCount} + ${delta}` })
+          .where(eq(this.forumProfile.userId, userId)),
+      '用户画像不存在',
+    )
   }
 
   /**
@@ -154,11 +201,15 @@ export class ContentCounterService {
     userId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumProfile)
-      .set({ replyCount: sql`${this.forumProfile.replyCount} + ${delta}` })
-      .where(eq(this.forumProfile.userId, userId))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumProfile)
+          .set({ replyCount: sql`${this.forumProfile.replyCount} + ${delta}` })
+          .where(eq(this.forumProfile.userId, userId)),
+      '用户画像不存在',
+    )
   }
 
   /**
@@ -173,11 +224,15 @@ export class ContentCounterService {
     userId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumProfile)
-      .set({ likeCount: sql`${this.forumProfile.likeCount} + ${delta}` })
-      .where(eq(this.forumProfile.userId, userId))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumProfile)
+          .set({ likeCount: sql`${this.forumProfile.likeCount} + ${delta}` })
+          .where(eq(this.forumProfile.userId, userId)),
+      '用户画像不存在',
+    )
   }
 
   /**
@@ -192,11 +247,15 @@ export class ContentCounterService {
     userId: number,
     delta: number,
   ) {
-    const db = tx ?? this.db
-    return db
-      .update(this.forumProfile)
-      .set({ favoriteCount: sql`${this.forumProfile.favoriteCount} + ${delta}` })
-      .where(eq(this.forumProfile.userId, userId))
+    await this.executeCountUpdate(
+      tx,
+      (client) =>
+        client
+          .update(this.forumProfile)
+          .set({ favoriteCount: sql`${this.forumProfile.favoriteCount} + ${delta}` })
+          .where(eq(this.forumProfile.userId, userId)),
+      '用户画像不存在',
+    )
   }
 
   /**

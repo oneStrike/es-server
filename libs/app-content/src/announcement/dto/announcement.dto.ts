@@ -98,33 +98,33 @@ export class BaseAnnouncementDto extends BaseDto {
   @ArrayProperty({
     description: '启用的平台',
     example: [EnablePlatformEnum.APP],
-    required: true,
+    required: false,
     itemType: 'number',
   })
-  enablePlatform!: EnablePlatformEnum[]
+  enablePlatform?: EnablePlatformEnum[] | null
 
   @BooleanProperty({
     description: '是否置顶',
     example: false,
-    required: false,
+    required: true,
     default: false,
   })
-  isPinned?: boolean
+  isPinned!: boolean
 
   @BooleanProperty({
     description: '是否弹窗显示',
     example: false,
-    required: false,
+    required: true,
     default: false,
   })
-  showAsPopup?: boolean
+  showAsPopup!: boolean
 
   @NumberProperty({
     description: '浏览次数',
     example: 0,
-    required: false,
+    required: true,
     min: 0,
     default: 0,
   })
-  viewCount?: number
+  viewCount!: number
 }
