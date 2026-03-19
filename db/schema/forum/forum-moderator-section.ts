@@ -51,3 +51,6 @@ export const forumModeratorSection = pgTable("forum_moderator_section", {
      */
     index("forum_moderator_section_created_at_idx").on(table.createdAt),
 ]);
+
+export type ForumModeratorSection = typeof forumModeratorSection.$inferSelect;
+export type ForumModeratorSectionInsert = typeof forumModeratorSection.$inferInsert;

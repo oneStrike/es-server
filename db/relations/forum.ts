@@ -2,25 +2,6 @@ import { defineRelationsPart } from 'drizzle-orm'
 import * as schema from '../schema/index'
 
 export const forumRelations = defineRelationsPart(schema, (r) => ({
-  forumConfig: {
-    histories: r.many.forumConfigHistory(),
-    updatedBy: r.one.appUser({
-      from: r.forumConfig.updatedById,
-      to: r.appUser.id,
-      alias: 'ForumConfigUpdater',
-    }),
-  },
-  forumConfigHistory: {
-    config: r.one.forumConfig({
-      from: r.forumConfigHistory.configId,
-      to: r.forumConfig.id,
-    }),
-    operatedBy: r.one.appUser({
-      from: r.forumConfigHistory.operatedById,
-      to: r.appUser.id,
-      alias: 'ForumConfigHistoryOperator',
-    }),
-  },
   forumModerator: {
     user: r.one.appUser({ from: r.forumModerator.userId, to: r.appUser.id }),
     group: r.one.forumSectionGroup({

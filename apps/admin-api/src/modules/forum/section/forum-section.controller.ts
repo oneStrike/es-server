@@ -1,14 +1,16 @@
 import {
   BaseForumSectionDto,
-  CreateForumSectionDto,
   ForumSectionService,
-  QueryForumSectionDto,
-  UpdateForumSectionDto,
 } from '@libs/forum'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  CreateForumSectionDto,
+  QueryForumSectionDto,
+  UpdateForumSectionDto,
+} from './dto/forum-section.dto'
 
 @Controller('admin/forum/sections')
 @ApiTags('论坛管理/板块管理')

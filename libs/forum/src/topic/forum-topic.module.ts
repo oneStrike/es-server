@@ -5,7 +5,7 @@ import { SensitiveWordModule } from '@libs/sensitive-word'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
-import { ForumConfigModule } from './../config/forum-config.module'
+import { ForumPermissionModule } from '../permission'
 import { ForumTopicService } from './forum-topic.service'
 import { ForumTopicBrowseLogResolver } from './resolver/forum-topic-browse-log.resolver'
 import { ForumTopicCommentResolver } from './resolver/forum-topic-comment.resolver'
@@ -24,8 +24,8 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     MessageModule,
     FavoriteModule,
     ReportModule,
-    ForumConfigModule,
     ForumCounterModule,
+    ForumPermissionModule,
     ForumUserActionLogModule,
   ],
   controllers: [],

@@ -1,6 +1,6 @@
 import { DrizzleService } from '@db/core'
 import { UserLevelRule } from '@db/schema'
-import { UserStatusEnum } from '@libs/platform/constant'
+import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, gte } from 'drizzle-orm'
 import { CommentTargetTypeEnum } from './comment.constant'
@@ -15,18 +15,23 @@ export class CommentPermissionService {
 
   async ensureCanComment(
     userId: number,
-    _targetType: CommentTargetTypeEnum,
-    _targetId: number,
+    targetType: CommentTargetTypeEnum,
+    targetId: number,
   ) {
-    await this.ensureUserCanComment(userId)
+    await this.ensureUserCanComment(userId, targetType, targetId)
   }
 
-  async ensureUserCanComment(userId: number) {
+  async ensureUserCanComment(
+    userId: number,
+    targetType?: CommentTargetTypeEnum,
+    targetId?: number,
+  ) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
       columns: {
         isEnabled: true,
         status: true,
+        experience: true,
       },
       with: {
         level: {
@@ -53,7 +58,60 @@ export class CommentPermissionService {
       throw new BadRequestException('用户已被禁言或封禁，无法评论')
     }
 
+    if (
+      targetType === CommentTargetTypeEnum.FORUM_TOPIC &&
+      typeof targetId === 'number'
+    ) {
+      await this.ensureForumTopicSectionAccess(targetId, user)
+    }
+
     await this.ensureUserLevelRateLimit(userId, user.level)
+  }
+
+  private async ensureForumTopicSectionAccess(
+    topicId: number,
+    user: { experience: number },
+  ) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id: topicId,
+        deletedAt: { isNull: true },
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+      },
+      columns: { id: true },
+      with: {
+        section: {
+          columns: {
+            id: true,
+            isEnabled: true,
+            deletedAt: true,
+            userLevelRuleId: true,
+          },
+          with: {
+            userLevelRule: {
+              columns: {
+                requiredExperience: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+      throw new BadRequestException('帖子不存在')
+    }
+
+    const requiredExperience = topic.section.userLevelRule?.requiredExperience
+    if (
+      topic.section.userLevelRuleId &&
+      requiredExperience !== undefined &&
+      requiredExperience !== null &&
+      user.experience < requiredExperience
+    ) {
+      throw new BadRequestException('当前板块需要更高等级')
+    }
   }
 
   private async ensureUserLevelRateLimit(

@@ -1,3 +1,10 @@
+import type {
+  AssignForumTagToTopicInput,
+  CreateForumTagInput,
+  QueryForumTagInput,
+  RemoveForumTagFromTopicInput,
+  UpdateForumTagInput,
+} from './tag.type'
 import { DrizzleService } from '@db/core'
 
 import {
@@ -15,13 +22,6 @@ import {
   isNull,
   sql,
 } from 'drizzle-orm'
-import {
-  AssignForumTagToTopicDto,
-  CreateForumTagDto,
-  QueryForumTagDto,
-  RemoveForumTagFromTopicDto,
-  UpdateForumTagDto,
-} from './dto/forum-tag.dto'
 
 /**
  * 论坛标签服务类
@@ -62,7 +62,7 @@ export class ForumTagService {
    * @returns 创建成功的标签
    * @throws BadRequestException 如果标签名称已存在
    */
-  async createTag(createForumTagDto: CreateForumTagDto) {
+  async createTag(createForumTagDto: CreateForumTagInput) {
     const { name, ...tagData } = createForumTagDto
 
     const existingTag = await this.db.query.forumTag.findFirst({
@@ -90,7 +90,7 @@ export class ForumTagService {
    * @param queryForumTagDto 查询条件的数据传输对象
    * @returns 分页后的标签列表
    */
-  async getTags(queryForumTagDto: QueryForumTagDto) {
+  async getTags(queryForumTagDto: QueryForumTagInput) {
     const { name, isEnabled } = queryForumTagDto
 
     const where = this.drizzle.buildWhere(this.forumTag, {
@@ -173,7 +173,7 @@ export class ForumTagService {
    * @throws NotFoundException 如果标签不存在
    * @throws BadRequestException 如果标签名称已存在
    */
-  async updateTag(updateForumTagDto: UpdateForumTagDto) {
+  async updateTag(updateForumTagDto: UpdateForumTagInput) {
     const { id, name, ...updateData } = updateForumTagDto
 
     const tag = await this.db.query.forumTag.findFirst({ where: { id } })
@@ -242,7 +242,7 @@ export class ForumTagService {
    * @throws NotFoundException 如果主题或标签不存在
    * @throws BadRequestException 如果标签未启用或已关联
    */
-  async assignTagToTopic(assignTagToTopicDto: AssignForumTagToTopicDto) {
+  async assignTagToTopic(assignTagToTopicDto: AssignForumTagToTopicInput) {
     const { topicId, tagId } = assignTagToTopicDto
 
     const topic = await this.db.query.forumTopic.findFirst({
@@ -298,7 +298,9 @@ export class ForumTagService {
    * @returns 移除操作结果
    * @throws NotFoundException 如果主题未关联该标签
    */
-  async removeTagFromTopic(removeTagFromTopicDto: RemoveForumTagFromTopicDto) {
+  async removeTagFromTopic(
+    removeTagFromTopicDto: RemoveForumTagFromTopicInput,
+  ) {
     const { topicId, tagId } = removeTagFromTopicDto
 
     const topicTag = await this.db.query.forumTopicTag.findFirst({

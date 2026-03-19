@@ -1,16 +1,17 @@
+import type {
+  CreateForumSectionGroupInput,
+  QueryForumSectionGroupInput,
+  SwapForumSectionGroupSortInput,
+  UpdateForumSectionGroupEnabledInput,
+  UpdateForumSectionGroupInput,
+} from './section-group.type'
 import { DrizzleService } from '@db/core'
-import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
 import { and, asc, eq, ilike, inArray, isNull } from 'drizzle-orm'
-import {
-  CreateForumSectionGroupDto,
-  QueryForumSectionGroupDto,
-  UpdateForumSectionGroupDto,
-} from './dto/forum-section-group.dto'
 
 @Injectable()
 export class ForumSectionGroupService {
@@ -28,7 +29,7 @@ export class ForumSectionGroupService {
     return this.drizzle.schema.forumSection
   }
 
-  async createSectionGroup(dto: CreateForumSectionGroupDto) {
+  async createSectionGroup(dto: CreateForumSectionGroupInput) {
     const [data] = await this.drizzle.withErrorHandling(
       () => this.db.insert(this.forumSectionGroup).values(dto).returning(),
       { duplicate: '板块分组名称已存在' },
@@ -48,7 +49,7 @@ export class ForumSectionGroupService {
     return group
   }
 
-  async getSectionGroupPage(dto: QueryForumSectionGroupDto) {
+  async getSectionGroupPage(dto: QueryForumSectionGroupInput) {
     const where = this.drizzle.buildWhere(this.forumSectionGroup, {
       and: {
         deletedAt: { isNull: true },
@@ -64,7 +65,9 @@ export class ForumSectionGroupService {
     })
   }
 
-  async updateSectionGroup(updateSectionGroupDto: UpdateForumSectionGroupDto) {
+  async updateSectionGroup(
+    updateSectionGroupDto: UpdateForumSectionGroupInput,
+  ) {
     const { id, ...updateData } = updateSectionGroupDto
     const [data] = await this.drizzle.withErrorHandling(
       () =>
@@ -118,14 +121,14 @@ export class ForumSectionGroupService {
     return data
   }
 
-  async swapSectionGroupSortOrder(dto: DragReorderDto) {
+  async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortInput) {
     return this.drizzle.ext.swapField(this.forumSectionGroup, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
     })
   }
 
   async updateSectionGroupEnabled(
-    updateSectionGroupEnabledDto: UpdateEnabledStatusDto,
+    updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledInput,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
     const [data] = await this.db

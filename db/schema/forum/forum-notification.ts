@@ -102,3 +102,6 @@ export const forumNotification = pgTable("forum_notification", {
      */
     index("forum_notification_user_id_created_at_idx").on(table.userId, table.createdAt),
 ]);
+
+export type ForumNotification = typeof forumNotification.$inferSelect;
+export type ForumNotificationInsert = typeof forumNotification.$inferInsert;

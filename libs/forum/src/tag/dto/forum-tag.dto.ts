@@ -3,12 +3,11 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 /**
- * 基础论坛标签 DTO
- * 包含论坛标签的所有基础字段定义
+ * 论坛标签基础 DTO。
+ * 严格对应 forum_tag 表中当前对外复用的实体字段。
  */
 export class BaseForumTagDto extends BaseDto {
   @StringProperty({
@@ -58,61 +57,3 @@ export class BaseForumTagDto extends BaseDto {
   })
   sortOrder?: number
 }
-
-/**
- * 创建论坛标签 DTO
- * 用于创建新的论坛标签
- */
-export class CreateForumTagDto extends PickType(BaseForumTagDto, [
-  'icon',
-  'name',
-  'description',
-  'sortOrder',
-  'isEnabled',
-]) {}
-
-/**
- * 更新论坛标签 DTO
- * 用于更新现有的论坛标签信息
- */
-export class UpdateForumTagDto extends IntersectionType(
-  CreateForumTagDto,
-  IdDto,
-) {}
-
-/**
- * 查询论坛标签 DTO
- * 用于查询论坛标签列表，支持分页和条件筛选
- */
-export class QueryForumTagDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseForumTagDto, ['name', 'isEnabled'])),
-) {}
-
-/**
- * 为主题分配标签 DTO
- * 用于将标签分配给指定的主题
- */
-export class AssignForumTagToTopicDto {
-  @NumberProperty({
-    description: '主题ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  topicId!: number
-
-  @NumberProperty({
-    description: '标签ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  tagId!: number
-}
-
-/**
- * 从主题移除标签 DTO
- * 用于从指定主题中移除标签
- */
-export class RemoveForumTagFromTopicDto extends AssignForumTagToTopicDto {}

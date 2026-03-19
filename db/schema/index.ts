@@ -28,8 +28,6 @@ export * from './app/user-purchase-record'
 export * from './app/user-report'
 export * from './app/user-work-reading-state'
 
-export * from './forum/forum-config'
-export * from './forum/forum-config-history'
 export * from './forum/forum-moderator'
 export * from './forum/forum-moderator-action-log'
 export * from './forum/forum-moderator-application'

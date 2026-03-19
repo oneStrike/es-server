@@ -3,9 +3,11 @@ import { InteractionModule } from '@libs/interaction'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 
 import { Module } from '@nestjs/common'
-import { ForumConfigModule } from './config'
 import { ForumCounterModule } from './counter'
 import { ForumModeratorModule } from './moderator'
+import { ForumModeratorApplicationModule } from './moderator-application'
+import { ForumNotificationModule } from './notification'
+import { ForumPermissionModule } from './permission'
 import { ForumProfileModule } from './profile'
 import { ForumSearchModule } from './search'
 import { ForumSectionModule } from './section'
@@ -20,11 +22,13 @@ import { ForumTopicModule } from './topic'
 @Module({
   imports: [
     InteractionModule,
-    ForumConfigModule,
     ForumCounterModule,
     UserExperienceModule,
     UserLevelRuleModule,
     ForumModeratorModule,
+    ForumModeratorApplicationModule,
+    ForumNotificationModule,
+    ForumPermissionModule,
     UserPointModule,
     ForumProfileModule,
     ForumSearchModule,
@@ -36,11 +40,13 @@ import { ForumTopicModule } from './topic'
   ],
   exports: [
     InteractionModule,
-    ForumConfigModule,
     ForumCounterModule,
     UserExperienceModule,
     UserLevelRuleModule,
     ForumModeratorModule,
+    ForumModeratorApplicationModule,
+    ForumNotificationModule,
+    ForumPermissionModule,
     UserPointModule,
     ForumProfileModule,
     ForumSearchModule,

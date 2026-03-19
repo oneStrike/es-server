@@ -1,4 +1,4 @@
-import { GenderEnum, UserStatusEnum } from '@libs/platform/constant'
+import { GenderEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -6,17 +6,12 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 /**
- * 基础用户个人信息数据传输对象
+ * 基础用户个人信息 DTO。
+ * 作为论坛场景下复用的 app_user 简要基类。
  */
-
 export class BaseAppUserInfoDto extends BaseDto {
   @StringProperty({
     description: '用户名（登录账号）',
@@ -75,7 +70,7 @@ export class BaseAppUserInfoDto extends BaseDto {
 
   @DateProperty({
     description: '出生日期',
-    example: '2023-09-15T00:00:00.000Z',
+    example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
   birthDate?: Date
@@ -91,7 +86,7 @@ export class BaseAppUserInfoDto extends BaseDto {
   @DateProperty({
     description: '最后登录时间',
     default: null,
-    example: '2023-09-15T00:00:00.000Z',
+    example: '2024-01-01T00:00:00.000Z',
     validation: false,
   })
   lastLoginAt?: Date
@@ -106,8 +101,8 @@ export class BaseAppUserInfoDto extends BaseDto {
 }
 
 /**
- * 基础用户资料数据传输对象
- * 包含用户ID、积分数量、等级ID、签名、个人简介、用户状态、封禁原因、封禁结束时间等字段
+ * 论坛用户画像基础 DTO。
+ * 严格对应 forum_profile 表字段。
  */
 export class BaseForumProfileDto extends BaseDto {
   @NumberProperty({
@@ -117,58 +112,21 @@ export class BaseForumProfileDto extends BaseDto {
   })
   userId!: number
 
-  @NumberProperty({
-    description: '积分数量',
-    example: 100,
-    required: true,
-  })
-  points!: number
-
-  @NumberProperty({
-    description: '等级ID',
-    example: 100,
-    required: true,
-  })
-  levelId!: number
-
   @StringProperty({
     description: '签名',
     example: '这是我的签名',
-    required: true,
+    required: false,
     maxLength: 200,
   })
-  signature!: string
+  signature?: string
 
   @StringProperty({
     description: '个人简介',
     example: '这是我的个人简介',
-    required: true,
+    required: false,
     maxLength: 500,
   })
-  bio!: string
-
-  @EnumProperty({
-    description: '用户状态',
-    example: UserStatusEnum.NORMAL,
-    enum: UserStatusEnum,
-    required: true,
-  })
-  status!: UserStatusEnum
-
-  @StringProperty({
-    description: '封禁原因',
-    example: '违反社区规则',
-    required: true,
-    maxLength: 200,
-  })
-  banReason!: string
-
-  @DateProperty({
-    description: '封禁结束时间',
-    example: '2023-09-15T00:00:00.000Z',
-    required: true,
-  })
-  banUntil!: Date
+  bio?: string
 
   @NumberProperty({
     description: '主题数',
@@ -202,48 +160,3 @@ export class BaseForumProfileDto extends BaseDto {
   })
   favoriteCount!: number
 }
-
-/**
- * 查询用户资料列表DTO
- */
-export class QueryForumProfileListDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseForumProfileDto, ['levelId', 'status'])),
-) {
-  @StringProperty({
-    description: '昵称',
-    example: '张三',
-    required: false,
-    maxLength: 50,
-  })
-  nickname?: string
-}
-
-/**
- * 更新用户资料状态DTO
- */
-export class UpdateForumProfileStatusDto extends PickType(BaseForumProfileDto, [
-  'userId',
-  'status',
-  'banReason',
-]) {}
-
-/**
- * 授予徽章DTO
- * 用于为用户授予徽章
- */
-export class GrantForumBadgeDto extends PickType(BaseForumProfileDto, [
-  'userId',
-]) {
-  @NumberProperty({
-    description: '徽章ID',
-    example: 1,
-    required: true,
-  })
-  badgeId!: number
-}
-
-/**
- * 撤销徽章DTO
- */
-export class RevokeForumBadgeDto extends GrantForumBadgeDto {}

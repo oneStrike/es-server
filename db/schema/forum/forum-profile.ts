@@ -78,3 +78,6 @@ export const forumProfile = pgTable("forum_profile", {
      */
     index("forum_profile_created_at_idx").on(table.createdAt),
 ]);
+
+export type ForumProfile = typeof forumProfile.$inferSelect;
+export type ForumProfileInsert = typeof forumProfile.$inferInsert;

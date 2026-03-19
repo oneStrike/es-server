@@ -75,3 +75,6 @@ export const forumModerator = pgTable("forum_moderator", {
      */
     index("forum_moderator_deleted_at_idx").on(table.deletedAt),
 ]);
+
+export type ForumModerator = typeof forumModerator.$inferSelect;
+export type ForumModeratorInsert = typeof forumModerator.$inferInsert;

@@ -3,16 +3,11 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 
 /**
- * 论坛板块分组基础DTO
+ * 论坛板块分组基础 DTO。
+ * 严格对应 forum_section_group 表字段。
  */
 export class BaseForumSectionGroupDto extends BaseDto {
   @StringProperty({
@@ -48,27 +43,3 @@ export class BaseForumSectionGroupDto extends BaseDto {
   })
   isEnabled!: boolean
 }
-
-/**
- * 创建论坛板块分组DTO
- */
-export class CreateForumSectionGroupDto extends OmitType(
-  BaseForumSectionGroupDto,
-  [...OMIT_BASE_FIELDS],
-) {}
-
-/**
- * 更新论坛板块分组DTO
- */
-export class UpdateForumSectionGroupDto extends IntersectionType(
-  PartialType(CreateForumSectionGroupDto),
-  IdDto,
-) {}
-
-/**
- * 查询论坛板块分组DTO
- */
-export class QueryForumSectionGroupDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseForumSectionGroupDto, ['name', 'isEnabled'])),
-) {}

@@ -1,5 +1,4 @@
 import { DrizzleService } from '@db/core'
-import { forumTopic } from '@db/schema'
 import {
   ILikeTargetResolver,
   InteractionTx,
@@ -13,7 +12,7 @@ import {
 } from '@libs/message'
 import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { ForumCounterService } from '../../counter/forum-counter.service'
 
 /**
  * 论坛主题点赞解析器
@@ -30,6 +29,7 @@ export class ForumTopicLikeResolver
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly forumCounterService: ForumCounterService,
   ) {}
 
   /**
@@ -93,15 +93,24 @@ export class ForumTopicLikeResolver
       return
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(forumTopic)
-        .set({
-          likeCount: sql`${forumTopic.likeCount} + ${delta}`,
-        })
-        .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt))),
+    const topic = await tx.query.forumTopic.findFirst({
+      where: {
+        id: targetId,
+        deletedAt: { isNull: true },
+      },
+      columns: { userId: true },
+    })
+
+    if (!topic) {
+      throw new NotFoundException('帖子不存在')
+    }
+
+    await this.forumCounterService.updateTopicLikeRelatedCounts(
+      tx,
+      targetId,
+      topic.userId,
+      delta,
     )
-    this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
   /**

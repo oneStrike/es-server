@@ -1,22 +1,18 @@
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
+import { MatchedWordDto } from '@libs/sensitive-word'
 
 /**
- * 论坛主题基础 DTO
- * 包含论坛主题的所有基础字段定义
+ * 论坛主题基础 DTO。
+ * 当前供 admin/app 控制器按字段组合复用。
  */
 export class BaseForumTopicDto extends BaseDto {
   @StringProperty({
@@ -116,6 +112,14 @@ export class BaseForumTopicDto extends BaseDto {
   })
   auditReason?: string
 
+  @DateProperty({
+    description: '审核时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  auditAt?: Date
+
   @NumberProperty({
     description: '浏览次数',
     example: 100,
@@ -144,6 +148,15 @@ export class BaseForumTopicDto extends BaseDto {
   likeCount!: number
 
   @NumberProperty({
+    description: '评论次数',
+    example: 10,
+    required: true,
+    default: 0,
+    validation: false,
+  })
+  commentCount!: number
+
+  @NumberProperty({
     description: '收藏次数',
     example: 5,
     required: true,
@@ -152,9 +165,27 @@ export class BaseForumTopicDto extends BaseDto {
   })
   favoriteCount!: number
 
+  @NumberProperty({
+    description: '乐观锁版本号',
+    example: 0,
+    required: true,
+    default: 0,
+    validation: false,
+  })
+  version!: number
+
+  @ArrayProperty({
+    description: '敏感词命中记录',
+    itemClass: MatchedWordDto,
+    itemType: 'object',
+    required: false,
+    validation: false,
+  })
+  sensitiveWordHits?: MatchedWordDto[]
+
   @DateProperty({
     description: '最后回复时间',
-    example: '2022-01-01T00:00:00.000Z',
+    example: '2024-01-01T00:00:00.000Z',
     required: false,
     validation: false,
   })
@@ -167,106 +198,3 @@ export class BaseForumTopicDto extends BaseDto {
   })
   lastReplyUserId?: number
 }
-
-/**
- * 创建论坛主题 DTO
- * 用于创建新的论坛主题
- */
-export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
-  ...OMIT_BASE_FIELDS,
-  'viewCount',
-  'replyCount',
-  'likeCount',
-  'favoriteCount',
-  'lastReplyUserId',
-  'lastReplyAt',
-  'auditStatus',
-  'auditReason',
-  'auditRole',
-  'auditById',
-  'isPinned',
-  'isFeatured',
-  'isLocked',
-  'isHidden',
-  'auditStatus',
-]) {}
-
-/**
- * 更新论坛主题 DTO
- * 用于更新现有的论坛主题
- */
-export class UpdateForumTopicDto extends IntersectionType(
-  PartialType(PickType(BaseForumTopicDto, ['title', 'content'] as const)),
-  IdDto,
-) {}
-
-/**
- * 查询论坛主题 DTO
- * 用于分页查询和筛选论坛主题
- */
-export class QueryForumTopicDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseForumTopicDto, [
-      'sectionId',
-      'userId',
-      'isPinned',
-      'isFeatured',
-      'isLocked',
-      'isHidden',
-      'auditStatus',
-    ]),
-  ),
-) {
-  @StringProperty({
-    description: '关键词搜索（标题或内容）',
-    example: 'TypeScript',
-    required: false,
-  })
-  keyword?: string
-}
-
-/**
- * 更新主题审核状态 DTO
- * 用于更新论坛主题的审核状态
- */
-export class UpdateForumTopicAuditStatusDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['auditStatus', 'auditReason']),
-) {}
-
-/**
- * 更新主题置顶状态 DTO
- * 用于更新论坛主题的置顶状态
- */
-export class UpdateForumTopicPinnedDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isPinned']),
-) {}
-
-/**
- * 更新主题精华状态 DTO
- * 用于更新论坛主题的精华状态
- */
-export class UpdateForumTopicFeaturedDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isFeatured']),
-) {}
-
-/**
- * 更新主题锁定状态 DTO
- * 用于更新论坛主题的锁定状态
- */
-export class UpdateForumTopicLockedDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isLocked']),
-) {}
-
-/**
- * 更新主题隐藏状态 DTO
- * 用于更新论坛主题的隐藏状态
- */
-export class UpdateForumTopicHiddenDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isHidden']),
-) {}

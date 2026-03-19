@@ -3,21 +3,15 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
 } from '../action-log.constant'
 
 /**
- * 论坛用户操作日志基础DTO
- * 包含论坛用户操作日志的所有基础字段定义
+ * 论坛用户操作日志基础 DTO。
+ * 严格对应 forum_user_action_log 表字段。
  */
 export class BaseForumActionLogDto extends BaseDto {
   @NumberProperty({
@@ -54,14 +48,14 @@ export class BaseForumActionLogDto extends BaseDto {
 
   @StringProperty({
     description: '操作前数据',
-    example: '{"title": "旧标题"}',
+    example: '{"title":"旧标题"}',
     required: false,
   })
   beforeData?: string
 
   @StringProperty({
     description: '操作后数据',
-    example: '{"title": "新标题"}',
+    example: '{"title":"新标题"}',
     required: false,
   })
   afterData?: string
@@ -81,28 +75,3 @@ export class BaseForumActionLogDto extends BaseDto {
   })
   userAgent?: string
 }
-
-/**
- * 论坛用户操作日志创建DTO
- * 包含创建论坛用户操作日志所需的所有字段定义
- */
-export class CreateForumActionLogDto extends OmitType(
-  BaseForumActionLogDto,
-  OMIT_BASE_FIELDS,
-) {}
-
-/**
- * 论坛用户操作日志查询DTO
- * 包含查询论坛用户操作日志所需的所有字段定义
- */
-export class QueryForumActionLogDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseForumActionLogDto, [
-      'userId',
-      'actionType',
-      'targetType',
-      'targetId',
-    ]),
-  ),
-) {}

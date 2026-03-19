@@ -3,7 +3,7 @@ import {
   ApiDoc,
   ApiPageDoc,
   CurrentUser,
-  Public,
+  OptionalAuth,
 } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -61,13 +61,19 @@ export class ForumController {
   }
 
   @Get('page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询公开论坛主题',
     model: AppForumTopicPageItemDto,
   })
-  async getPage(@Query() query: QueryAppForumTopicPageDto) {
-    const page = await this.forumTopicService.getPublicTopics(query)
+  async getPage(
+    @Query() query: QueryAppForumTopicPageDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    const page = await this.forumTopicService.getPublicTopics({
+      ...query,
+      userId,
+    })
     return {
       ...page,
       list: page.list.map((item) => this.mapTopicItem(item as Record<string, unknown>)),
@@ -75,14 +81,14 @@ export class ForumController {
   }
 
   @Get('detail')
-  @Public()
+  @OptionalAuth()
   @ApiDoc({
     summary: '获取公开论坛主题详情',
     model: AppForumTopicDetailDto,
   })
-  async getDetail(@Query() query: IdDto) {
+  async getDetail(@Query() query: IdDto, @CurrentUser('sub') userId?: number) {
     return this.mapTopicDetail(
-      await this.forumTopicService.getPublicTopicById(query.id) as Record<string, any>,
+      await this.forumTopicService.getPublicTopicById(query.id, userId) as Record<string, any>,
     )
   }
 

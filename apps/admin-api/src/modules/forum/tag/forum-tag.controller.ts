@@ -1,17 +1,19 @@
 import {
-  AssignForumTagToTopicDto,
   BaseForumTagDto,
-  CreateForumTagDto,
   ForumTagService,
-  QueryForumTagDto,
-  RemoveForumTagFromTopicDto,
-  UpdateForumTagDto,
 } from '@libs/forum'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ForumTagDetailResponseDto } from './dto/forum-tag-response.dto'
+import {
+  AssignForumTagToTopicDto,
+  CreateForumTagDto,
+  QueryForumTagDto,
+  RemoveForumTagFromTopicDto,
+  UpdateForumTagDto,
+} from './dto/forum-tag.dto'
 
 @Controller('admin/forum/tags')
 @ApiTags('论坛管理/标签管理')

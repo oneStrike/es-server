@@ -1,15 +1,17 @@
 import {
-  AssignForumModeratorSectionDto,
-  CreateForumModeratorDto,
-  ForumModeratorDto,
   ForumModeratorService,
-  QueryForumModeratorDto,
-  UpdateForumModeratorDto,
 } from '@libs/forum'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  AssignForumModeratorSectionDto,
+  CreateForumModeratorDto,
+  ForumModeratorDto,
+  QueryForumModeratorDto,
+  UpdateForumModeratorDto,
+} from './dto/moderator.dto'
 
 @Controller('admin/forum/moderators')
 @ApiTags('论坛管理/版主管理')
@@ -46,10 +48,10 @@ export class ModeratorController {
   @Post('delete')
   @ApiDoc({
     summary: '移除版主',
-    model: ForumModeratorDto,
+    model: IdDto,
   })
   async deleteModerator(@Body() dto: IdDto) {
-    return this.forumModeratorService.removeModerator(dto)
+    return this.forumModeratorService.removeModerator(dto.id)
   }
 
   @Post('assign-section')
@@ -58,7 +60,6 @@ export class ModeratorController {
     model: ForumModeratorDto,
   })
   async assignModeratorSection(@Body() dto: AssignForumModeratorSectionDto) {
-    await this.forumModeratorService.assignModeratorSection(dto)
-    return true
+    return this.forumModeratorService.assignModeratorSection(dto)
   }
 }

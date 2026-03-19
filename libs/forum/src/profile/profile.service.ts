@@ -1,4 +1,8 @@
 import type { Db } from '@db/core'
+import type {
+  QueryForumProfileListInput,
+  UpdateForumProfileStatusInput,
+} from './profile.type'
 import { DrizzleService } from '@db/core'
 
 import { GrowthAssetTypeEnum, UserPointService } from '@libs/growth'
@@ -10,10 +14,6 @@ import {
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
-import {
-  QueryForumProfileListDto,
-  UpdateForumProfileStatusDto,
-} from './dto/profile.dto'
 
 /**
  * 论坛用户画像服务
@@ -70,7 +70,7 @@ export class ForumProfileService {
    * @param queryDto - 查询参数，包含用户ID、昵称、状态等过滤条件
    * @returns 分页的用户资料列表，包含用户信息和徽章信息
    */
-  async queryProfileList(queryDto: QueryForumProfileListDto) {
+  async queryProfileList(queryDto: QueryForumProfileListInput) {
     const { levelId, status, nickname, ...rest } = queryDto
 
     const where = this.drizzle.buildWhere(this.appUser, {
@@ -166,9 +166,9 @@ export class ForumProfileService {
    * @throws Error 用户不存在
    */
   async updateProfileStatus(
-    updateDto: UpdateForumProfileStatusDto,
+    updateDto: UpdateForumProfileStatusInput,
   ): Promise<void> {
-    const { userId, status, banReason } = updateDto
+    const { userId, status, banReason, banUntil } = updateDto
 
     const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
 
@@ -176,10 +176,12 @@ export class ForumProfileService {
       throw new BadRequestException('用户不存在')
     }
 
-    await this.db
-      .update(this.appUser)
-      .set({ status, banReason })
-      .where(eq(this.appUser.id, userId))
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({ status, banReason, banUntil })
+        .where(eq(this.appUser.id, userId)),
+    )
   }
 
   /**

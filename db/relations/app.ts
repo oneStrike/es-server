@@ -123,16 +123,6 @@ export const appRelations = defineRelationsPart(schema, r => ({
     growthRuleUsageSlots: r.many.growthRuleUsageSlot(),
     taskAssignments: r.many.taskAssignment(),
     taskProgressLogs: r.many.taskProgressLog(),
-    updatedConfigs: r.many.forumConfig({
-      from: r.appUser.id,
-      to: r.forumConfig.updatedById,
-      alias: 'ForumConfigUpdater',
-    }),
-    operatedConfigHistories: r.many.forumConfigHistory({
-      from: r.appUser.id,
-      to: r.forumConfigHistory.operatedById,
-      alias: 'ForumConfigHistoryOperator',
-    }),
     userLikes: r.many.userLike(),
     userFavorites: r.many.userFavorite(),
     browseLogs: r.many.userBrowseLog(),

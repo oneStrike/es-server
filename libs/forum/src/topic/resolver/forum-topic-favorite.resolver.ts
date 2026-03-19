@@ -1,5 +1,4 @@
 import { DrizzleService } from '@db/core'
-import { forumTopic } from '@db/schema'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
@@ -11,8 +10,8 @@ import {
   MessageOutboxService,
 } from '@libs/message'
 import { AuditStatusEnum } from '@libs/platform/constant'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { ForumCounterService } from '../../counter/forum-counter.service'
 
 /**
  * 论坛主题收藏解析器
@@ -29,6 +28,7 @@ export class ForumTopicFavoriteResolver
     private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly forumCounterService: ForumCounterService,
   ) {}
 
   /**
@@ -88,15 +88,24 @@ export class ForumTopicFavoriteResolver
       return
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(forumTopic)
-        .set({
-          favoriteCount: sql`${forumTopic.favoriteCount} + ${delta}`,
-        })
-        .where(and(eq(forumTopic.id, targetId), isNull(forumTopic.deletedAt))),
+    const topic = await tx.query.forumTopic.findFirst({
+      where: {
+        id: targetId,
+        deletedAt: { isNull: true },
+      },
+      columns: { userId: true },
+    })
+
+    if (!topic) {
+      throw new NotFoundException('帖子不存在')
+    }
+
+    await this.forumCounterService.updateTopicFavoriteRelatedCounts(
+      tx,
+      targetId,
+      topic.userId,
+      delta,
     )
-    this.drizzle.assertAffectedRows(result, '帖子不存在')
   }
 
   /**

@@ -1,9 +1,9 @@
+import type {
+  CreateForumActionLogInput,
+  QueryForumActionLogInput,
+} from './action-log.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
-import {
-  CreateForumActionLogDto,
-  QueryForumActionLogDto,
-} from './dto/action-log.dto'
 
 /**
  * 论坛用户操作日志服务类
@@ -26,7 +26,7 @@ export class ForumUserActionLogService {
    * @param dto - 操作日志选项对象
    * @returns 创建的操作日志记录
    */
-  async createActionLog(dto: CreateForumActionLogDto) {
+  async createActionLog(dto: CreateForumActionLogInput) {
     const {
       userId,
       actionType,
@@ -67,7 +67,7 @@ export class ForumUserActionLogService {
    * @param dto - 查询选项对象
    * @returns 操作日志分页结果，包含列表、总数、页码和每页数量
    */
-  async getActionLogsByUserId(dto: QueryForumActionLogDto) {
+  async getActionLogsByUserId(dto: QueryForumActionLogInput) {
     const { userId, ...otherDto } = dto
     return this.drizzle.ext.findPagination(this.forumUserActionLog, {
       where: this.drizzle.buildWhere(this.forumUserActionLog, {

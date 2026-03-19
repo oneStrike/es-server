@@ -14,7 +14,7 @@ import { DrizzleService } from '@db/core'
 import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
 import { CommentTargetTypeEnum } from '@libs/interaction'
-import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant'
 
 import {
   SensitiveWordDetectService,
@@ -31,9 +31,9 @@ import {
   ForumUserActionTypeEnum,
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
-import { ForumConfigCacheService } from '../config/forum-config-cache.service'
-import { ForumReviewPolicyEnum } from '../config/forum-config.constant'
 import { ForumCounterService } from '../counter/forum-counter.service'
+import { ForumReviewPolicyEnum } from '../forum.constant'
+import { ForumPermissionService } from '../permission'
 
 /**
  * 论坛主题服务类
@@ -44,10 +44,10 @@ export class ForumTopicService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
-    private readonly forumConfigCacheService: ForumConfigCacheService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
+    private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
   private get db() {
@@ -64,6 +64,37 @@ export class ForumTopicService {
 
   get userCommentTable() {
     return this.drizzle.schema.userComment
+  }
+
+  private async getSectionTopicReviewPolicy(
+    sectionId: number,
+    options?: {
+      requireEnabled?: boolean
+      notFoundMessage?: string
+    },
+  ) {
+    const section = await this.db.query.forumSection.findFirst({
+      where: {
+        id: sectionId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        topicReviewPolicy: true,
+        isEnabled: true,
+      },
+    })
+
+    if (!section) {
+      throw new BadRequestException(
+        options?.notFoundMessage ?? '板块不存在或已禁用',
+      )
+    }
+
+    if (options?.requireEnabled && !section.isEnabled) {
+      throw new BadRequestException('板块不存在或已禁用')
+    }
+
+    return section.topicReviewPolicy as ForumReviewPolicyEnum
   }
 
   async syncTopicReplyState(tx: Db | undefined, topicId: number) {
@@ -174,7 +205,7 @@ export class ForumTopicService {
 
   /**
    * 计算主题审核状态与隐藏策略
-   * 根据板块或全局的审核策略以及最高敏感词等级决定是否审核与隐藏
+   * 根据板块审核策略以及最高敏感词等级决定是否审核与隐藏
    * @param reviewPolicy 审核策略
    * @param highestLevel 命中的最高敏感词等级
    * @returns 审核状态与是否隐藏
@@ -226,25 +257,10 @@ export class ForumTopicService {
   async createForumTopic(createTopicDto: CreateForumTopicInput) {
     const { sectionId, userId, ...topicData } = createTopicDto
 
-    const user = await this.db.query.appUser.findFirst({
-      where: { id: userId },
-      columns: { status: true },
-    })
-
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
-
-    if (
-      [
-        UserStatusEnum.MUTED,
-        UserStatusEnum.PERMANENT_MUTED,
-        UserStatusEnum.BANNED,
-        UserStatusEnum.PERMANENT_BANNED,
-      ].includes(user.status)
-    ) {
-      throw new BadRequestException('用户已被禁言或封禁，无法发布主题')
-    }
+    const section = await this.forumPermissionService.ensureUserCanCreateTopic(
+      userId,
+      sectionId,
+    )
 
     // 合并标题与内容进行敏感词检测
     const { hits, highestLevel } =
@@ -252,19 +268,7 @@ export class ForumTopicService {
         content: topicData.content + topicData.title,
       })
 
-    // 优先使用板块审核策略，若未配置则回退到全局策略
-    const section = await this.db.query.forumSection.findFirst({
-      where: { id: sectionId, deletedAt: { isNull: true } },
-      columns: { topicReviewPolicy: true, isEnabled: true },
-    })
-    if (!section || !section.isEnabled) {
-      throw new BadRequestException('板块不存在或已禁用')
-    }
-
-    const { reviewPolicy: globalReviewPolicy } =
-      await this.forumConfigCacheService.getConfig()
-
-    const reviewPolicy = section?.topicReviewPolicy ?? globalReviewPolicy
+    const reviewPolicy = section.topicReviewPolicy as ForumReviewPolicyEnum
 
     // 根据策略与敏感词等级计算审核与隐藏状态
     const { auditStatus, isHidden } = this.calculateAuditStatus(
@@ -277,8 +281,8 @@ export class ForumTopicService {
       sectionId,
       userId,
       auditStatus,
-      ...(highestLevel ? { sensitiveWordHits: JSON.stringify(hits) } : {}),
-      ...(isHidden ? { isHidden: true } : {}),
+      sensitiveWordHits: hits?.length ? hits : undefined,
+      isHidden,
     }
 
     // 创建主题与计数更新放在同一事务中，避免数据与计数不一致
@@ -297,7 +301,7 @@ export class ForumTopicService {
         )
         await this.syncSectionVisibleState(tx, sectionId)
 
-        const { version, deletedAt, sensitiveWordHits, ...data } = newTopic
+        const { deletedAt, ...data } = newTopic
         return data
       }),
     )
@@ -357,7 +361,7 @@ export class ForumTopicService {
     return topic
   }
 
-  async getPublicTopicById(id: number) {
+  async getPublicTopicById(id: number, userId?: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
         id,
@@ -380,6 +384,15 @@ export class ForumTopicService {
     if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
       throw new NotFoundException('主题不存在')
     }
+
+    await this.forumPermissionService.ensureUserCanAccessSection(
+      topic.section.id,
+      userId,
+      {
+        requireEnabled: true,
+        notFoundMessage: '主题不存在',
+      },
+    )
 
     return topic
   }
@@ -419,18 +432,13 @@ export class ForumTopicService {
   }
 
   async getPublicTopics(query: QueryPublicForumTopicInput) {
-    const section = await this.db.query.forumSection.findFirst({
-      where: {
-        id: query.sectionId,
-        deletedAt: { isNull: true },
-        isEnabled: true,
+    await this.forumPermissionService.ensureUserCanAccessSection(
+      query.sectionId,
+      query.userId,
+      {
+        requireEnabled: true,
       },
-      columns: { id: true },
-    })
-
-    if (!section) {
-      throw new BadRequestException('板块不存在或已禁用')
-    }
+    )
 
     return this.drizzle.ext.findPagination(this.forumTopicTable, {
       where: this.drizzle.buildWhere(this.forumTopicTable, {
@@ -473,16 +481,12 @@ export class ForumTopicService {
       throw new BadRequestException('主题已锁定，无法编辑')
     }
 
-    const section = await this.db.query.forumSection.findFirst({
-      where: { id: topic.sectionId, deletedAt: { isNull: true } },
-      columns: { topicReviewPolicy: true },
-    })
-
-    const { reviewPolicy: globalReviewPolicy } =
-      await this.forumConfigCacheService.getConfig()
-
-    const reviewPolicy = (section?.topicReviewPolicy ??
-      globalReviewPolicy) as ForumReviewPolicyEnum
+    const reviewPolicy = await this.getSectionTopicReviewPolicy(
+      topic.sectionId,
+      {
+        notFoundMessage: '主题所属板块不存在',
+      },
+    )
 
     // 合并标题与内容进行敏感词检测
     const { hits, highestLevel } =
@@ -501,8 +505,8 @@ export class ForumTopicService {
     const updatePayload = {
       ...updateData,
       auditStatus,
-      ...(highestLevel ? { sensitiveWordHits: JSON.stringify(hits) } : {}),
-      ...(isHidden ? { isHidden: true } : {}),
+      sensitiveWordHits: hits?.length ? hits : null,
+      isHidden,
     }
 
     // 更新主题内容与审核状态

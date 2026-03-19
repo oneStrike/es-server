@@ -1,13 +1,14 @@
+import type {
+  CreateForumSectionInput,
+  QueryForumSectionInput,
+  SwapForumSectionSortInput,
+  UpdateForumSectionEnabledInput,
+  UpdateForumSectionInput,
+} from './section.type'
 import { DrizzleService } from '@db/core'
-import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, ilike, isNull } from 'drizzle-orm'
-import {
-  CreateForumSectionDto,
-  QueryForumSectionDto,
-  UpdateForumSectionDto,
-} from './dto/forum-section.dto'
 
 /**
  * 论坛板块服务类
@@ -69,7 +70,7 @@ export class ForumSectionService {
    * @param createSectionDto 创建板块的数据
    * @returns 创建的板块信息
    */
-  async createSection(createSectionDto: CreateForumSectionDto) {
+  async createSection(createSectionDto: CreateForumSectionInput) {
     const { name, groupId, userLevelRuleId, ...sectionData } = createSectionDto
 
     const existed = await this.db.query.forumSection.findFirst({
@@ -129,7 +130,7 @@ export class ForumSectionService {
    * @param queryForumSectionDto 查询条件
    * @returns 分页的板块列表
    */
-  async getSectionPage(queryForumSectionDto: QueryForumSectionDto) {
+  async getSectionPage(queryForumSectionDto: QueryForumSectionInput) {
     const { name, groupId, ...otherDto } = queryForumSectionDto
     const where = this.drizzle.buildWhere(this.forumSection, {
       and: {
@@ -174,7 +175,7 @@ export class ForumSectionService {
    * @param updateSectionDto 更新板块的数据
    * @returns 更新后的板块信息
    */
-  async updateSection(updateSectionDto: UpdateForumSectionDto) {
+  async updateSection(updateSectionDto: UpdateForumSectionInput) {
     const { id, name, groupId, ...updateData } = updateSectionDto
 
     const existingSection = await this.db.query.forumSection.findFirst({
@@ -200,6 +201,24 @@ export class ForumSectionService {
     const updatePayload: Record<string, unknown> = {
       name,
       ...updateData,
+    }
+
+    if (
+      updateData.userLevelRuleId !== undefined &&
+      updateData.userLevelRuleId !== existingSection.userLevelRuleId
+    ) {
+      if (updateData.userLevelRuleId === null) {
+        updatePayload.userLevelRuleId = null
+      } else {
+      const levelRule = await this.db.query.userLevelRule.findFirst({
+        where: { id: updateData.userLevelRuleId },
+        columns: { id: true },
+      })
+
+      if (!levelRule) {
+        throw new BadRequestException('用户等级规则不存在')
+      }
+      }
     }
 
     if (groupId && groupId !== existingSection.groupId) {
@@ -256,7 +275,7 @@ export class ForumSectionService {
    * @param dto 更新状态数据
    * @returns 更新结果
    */
-  async updateEnabledStatus(dto: UpdateEnabledStatusDto) {
+  async updateEnabledStatus(dto: UpdateForumSectionEnabledInput) {
     const [data] = await this.db
       .update(this.forumSection)
       .set({ isEnabled: dto.isEnabled })
@@ -275,7 +294,7 @@ export class ForumSectionService {
    * @param updateSortDto 排序数据
    * @returns 排序结果
    */
-  async updateSectionSort(updateSortDto: DragReorderDto) {
+  async updateSectionSort(updateSortDto: SwapForumSectionSortInput) {
     return this.drizzle.ext.swapField(this.forumSection, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
       sourceField: 'sortOrder',

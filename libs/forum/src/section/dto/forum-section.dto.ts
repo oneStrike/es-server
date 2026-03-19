@@ -4,17 +4,12 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
-import { ForumReviewPolicyEnum } from '../../config/forum-config.constant'
+import { BaseDto } from '@libs/platform/dto'
+import { ForumReviewPolicyEnum } from '../../forum.constant'
 
 /**
- * 论坛板块基础DTO
+ * 论坛板块基础 DTO。
+ * 当前供应用侧按字段组合复用。
  */
 export class BaseForumSectionDto extends BaseDto {
   @StringProperty({
@@ -83,34 +78,3 @@ export class BaseForumSectionDto extends BaseDto {
   })
   description!: string
 }
-
-/**
- * 创建论坛板块DTO
- */
-export class CreateForumSectionDto extends OmitType(
-  BaseForumSectionDto,
-  OMIT_BASE_FIELDS,
-) {}
-
-/**
- * 更新论坛板块DTO
- */
-export class UpdateForumSectionDto extends IntersectionType(
-  CreateForumSectionDto,
-  IdDto,
-) {}
-
-/**
- * 查询论坛板块DTO
- */
-export class QueryForumSectionDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseForumSectionDto, [
-      'name',
-      'isEnabled',
-      'topicReviewPolicy',
-      'groupId',
-    ]),
-  ),
-) {}

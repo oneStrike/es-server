@@ -39,6 +39,7 @@ export interface QueryForumTopicInput {
  */
 export interface QueryPublicForumTopicInput {
   sectionId: number
+  userId?: number
   pageIndex?: number
   pageSize?: number
 }

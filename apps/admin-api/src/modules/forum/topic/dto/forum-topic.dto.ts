@@ -9,9 +9,18 @@ import {
   DateProperty,
   NestedProperty,
   NumberProperty,
+  StringProperty,
 } from '@libs/platform/decorators'
+import {
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user'
 import {
+  IntersectionType,
+  OmitType,
+  PartialType,
   PickType,
 } from '@nestjs/swagger'
 
@@ -61,11 +70,8 @@ class AdminForumTopicSectionDto extends PickType(BaseForumSectionDto, [
 class AdminForumTopicProfileDto extends PickType(BaseForumProfileDto, [
   'id',
   'userId',
-  'points',
-  'levelId',
   'signature',
   'bio',
-  'status',
   'topicCount',
   'replyCount',
   'likeCount',
@@ -84,7 +90,11 @@ class AdminForumTopicUserDto extends PickType(BaseAppUserDto, [
   'nickname',
   'avatarUrl',
   'isEnabled',
+  'points',
+  'levelId',
   'status',
+  'banReason',
+  'banUntil',
 ] as const) {
   @NestedProperty({
     description: '论坛画像',
@@ -115,10 +125,14 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'isHidden',
   'auditStatus',
   'auditReason',
+  'auditAt',
   'viewCount',
   'replyCount',
   'likeCount',
+  'commentCount',
   'favoriteCount',
+  'version',
+  'sensitiveWordHits',
   'lastReplyAt',
   'lastReplyUserId',
   'createdAt',
@@ -149,3 +163,77 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   })
   user!: AdminForumTopicUserDto
 }
+
+export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
+  ...OMIT_BASE_FIELDS,
+  'commentCount',
+  'version',
+  'sensitiveWordHits',
+  'auditAt',
+  'viewCount',
+  'replyCount',
+  'likeCount',
+  'favoriteCount',
+  'lastReplyUserId',
+  'lastReplyAt',
+  'auditStatus',
+  'auditReason',
+  'auditRole',
+  'auditById',
+  'isPinned',
+  'isFeatured',
+  'isLocked',
+  'isHidden',
+] as const) {}
+
+export class UpdateForumTopicDto extends IntersectionType(
+  PartialType(PickType(BaseForumTopicDto, ['title', 'content'] as const)),
+  IdDto,
+) {}
+
+export class QueryForumTopicDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseForumTopicDto, [
+      'sectionId',
+      'userId',
+      'isPinned',
+      'isFeatured',
+      'isLocked',
+      'isHidden',
+      'auditStatus',
+    ] as const),
+  ),
+) {
+  @StringProperty({
+    description: '关键词搜索（标题或内容）',
+    example: 'TypeScript',
+    required: false,
+  })
+  keyword?: string
+}
+
+export class UpdateForumTopicAuditStatusDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['auditStatus', 'auditReason'] as const),
+) {}
+
+export class UpdateForumTopicPinnedDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isPinned'] as const),
+) {}
+
+export class UpdateForumTopicFeaturedDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isFeatured'] as const),
+) {}
+
+export class UpdateForumTopicLockedDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isLocked'] as const),
+) {}
+
+export class UpdateForumTopicHiddenDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isHidden'] as const),
+) {}

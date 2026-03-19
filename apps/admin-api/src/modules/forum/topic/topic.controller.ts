@@ -1,7 +1,14 @@
 import {
   BaseForumTopicDto,
-  CreateForumTopicDto,
   ForumTopicService,
+} from '@libs/forum'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import {
+  AdminForumTopicDetailDto,
+  CreateForumTopicDto,
   QueryForumTopicDto,
   UpdateForumTopicAuditStatusDto,
   UpdateForumTopicDto,
@@ -9,12 +16,7 @@ import {
   UpdateForumTopicHiddenDto,
   UpdateForumTopicLockedDto,
   UpdateForumTopicPinnedDto,
-} from '@libs/forum'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { AdminForumTopicDetailDto } from './dto/forum-topic.dto'
+} from './dto/forum-topic.dto'
 
 @ApiTags('论坛管理/主题管理')
 @Controller('admin/forum/topic')
@@ -34,10 +36,14 @@ export class ForumTopicController {
       isHidden: topic.isHidden,
       auditStatus: topic.auditStatus,
       auditReason: topic.auditReason,
+      auditAt: topic.auditAt,
       viewCount: topic.viewCount,
       replyCount: topic.replyCount,
       likeCount: topic.likeCount,
+      commentCount: topic.commentCount,
       favoriteCount: topic.favoriteCount,
+      version: topic.version,
+      sensitiveWordHits: topic.sensitiveWordHits,
       lastReplyAt: topic.lastReplyAt,
       lastReplyUserId: topic.lastReplyUserId,
       createdAt: topic.createdAt,
@@ -64,16 +70,17 @@ export class ForumTopicController {
             nickname: topic.user.nickname,
             avatarUrl: topic.user.avatarUrl,
             isEnabled: topic.user.isEnabled,
+            points: topic.user.points,
+            levelId: topic.user.levelId,
             status: topic.user.status,
+            banReason: topic.user.banReason,
+            banUntil: topic.user.banUntil,
             forumProfile: topic.user.forumProfile
               ? {
                   id: topic.user.forumProfile.id,
                   userId: topic.user.forumProfile.userId,
-                  points: topic.user.forumProfile.points,
-                  levelId: topic.user.forumProfile.levelId,
                   signature: topic.user.forumProfile.signature,
                   bio: topic.user.forumProfile.bio,
-                  status: topic.user.forumProfile.status,
                   topicCount: topic.user.forumProfile.topicCount,
                   replyCount: topic.user.forumProfile.replyCount,
                   likeCount: topic.user.forumProfile.likeCount,

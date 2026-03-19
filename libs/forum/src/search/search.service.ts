@@ -1,11 +1,15 @@
+import type { ForumTopic } from '@db/schema'
+import type {
+  ForumSearchInput,
+  ForumSearchPageResult,
+  ForumSearchResultItem,
+} from './search.type'
 import { DrizzleService } from '@db/core'
+import { CommentTargetTypeEnum } from '@libs/interaction'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
-import {
-  ForumSearchDto,
-  ForumSearchReplyDto,
-  ForumSearchTopicDto,
-} from './dto/search.dto'
+import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import { ForumPermissionService } from '../permission'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 
 /**
@@ -14,7 +18,10 @@ import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
  */
 @Injectable()
 export class ForumSearchService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly forumPermissionService: ForumPermissionService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -38,78 +45,391 @@ export class ForumSearchService {
     return this.drizzle.schema.forumTopicTag
   }
 
-  /**
-   * 搜索
-   * 根据搜索类型分发至主题/回复搜索，或合并结果
-   * @param searchDto 搜索参数
-   * @returns 搜索结果
-   */
-  async search(searchDto: ForumSearchDto) {
-    const {
-      type = ForumSearchTypeEnum.ALL,
-      pageIndex = 1,
-      pageSize = 15,
-    } = searchDto
+  get forumSection() {
+    return this.drizzle.schema.forumSection
+  }
+
+  get appUser() {
+    return this.drizzle.schema.appUser
+  }
+
+  async search(searchInput: ForumSearchInput) {
+    return this.searchAdmin(searchInput)
+  }
+
+  async searchAdmin(searchInput: ForumSearchInput) {
+    return this.searchInternal(searchInput, { publicOnly: false })
+  }
+
+  async searchPublic(searchInput: ForumSearchInput, userId?: number) {
+    return this.searchInternal(searchInput, { publicOnly: true, userId })
+  }
+
+  private normalizePagination(searchInput: ForumSearchInput) {
+    const pageIndex = Number.isFinite(Number(searchInput.pageIndex))
+      ? Math.max(1, Number(searchInput.pageIndex))
+      : 1
+    const pageSize = Number.isFinite(Number(searchInput.pageSize))
+      ? Math.max(1, Number(searchInput.pageSize))
+      : 15
+
+    return {
+      pageIndex,
+      pageSize,
+      skip: (pageIndex - 1) * pageSize,
+    }
+  }
+
+  private createEmptyPage(searchInput: ForumSearchInput): ForumSearchPageResult {
+    const { pageIndex, pageSize } = this.normalizePagination(searchInput)
+
+    return {
+      list: [],
+      total: 0,
+      pageIndex,
+      pageSize,
+    }
+  }
+
+  private buildSnippet(content: string, keyword: string, size = 120) {
+    const normalizedContent = content.trim()
+    if (!normalizedContent) {
+      return ''
+    }
+
+    const lowerContent = normalizedContent.toLowerCase()
+    const lowerKeyword = keyword.trim().toLowerCase()
+    const matchIndex = lowerKeyword ? lowerContent.indexOf(lowerKeyword) : -1
+
+    if (matchIndex === -1) {
+      return normalizedContent.slice(0, size)
+    }
+
+    const start = Math.max(0, matchIndex - Math.floor(size / 3))
+    const end = Math.min(normalizedContent.length, start + size)
+    return normalizedContent.slice(start, end)
+  }
+
+  private getTopicOrderBy(sort?: ForumSearchSortTypeEnum) {
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      return [
+        { replyCount: 'desc' as const },
+        { likeCount: 'desc' as const },
+        { viewCount: 'desc' as const },
+        { createdAt: 'desc' as const },
+      ] as Array<Record<string, 'asc' | 'desc'>>
+    }
+
+    return [{ createdAt: 'desc' as const }] as Array<
+      Record<string, 'asc' | 'desc'>
+    >
+  }
+
+  private getReplyOrderBy(sort?: ForumSearchSortTypeEnum) {
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      return [
+        desc(this.userComment.likeCount),
+        desc(this.userComment.createdAt),
+      ]
+    }
+
+    return [desc(this.userComment.createdAt)]
+  }
+
+  private compareResults(
+    left: ForumSearchResultItem,
+    right: ForumSearchResultItem,
+    sort?: ForumSearchSortTypeEnum,
+  ) {
+    if (sort === ForumSearchSortTypeEnum.HOT) {
+      const leftHotScore =
+        left.replyCount * 5 +
+        left.likeCount * 3 +
+        left.favoriteCount * 3 +
+        left.viewCount
+      const rightHotScore =
+        right.replyCount * 5 +
+        right.likeCount * 3 +
+        right.favoriteCount * 3 +
+        right.viewCount
+
+      if (leftHotScore !== rightHotScore) {
+        return rightHotScore - leftHotScore
+      }
+    }
+
+    const createdAtDiff =
+      right.createdAt.getTime() - left.createdAt.getTime()
+    if (createdAtDiff !== 0) {
+      return createdAtDiff
+    }
+
+    if ((right.replyId ?? 0) !== (left.replyId ?? 0)) {
+      return (right.replyId ?? 0) - (left.replyId ?? 0)
+    }
+
+    return right.topicId - left.topicId
+  }
+
+  private async resolveSectionScope(
+    sectionId: number | undefined,
+    options: {
+      publicOnly: boolean
+      userId?: number
+    },
+  ) {
+    if (!options.publicOnly) {
+      return sectionId === undefined ? undefined : [sectionId]
+    }
+
+    if (sectionId !== undefined) {
+      await this.forumPermissionService.ensureUserCanAccessSection(
+        sectionId,
+        options.userId,
+        {
+          requireEnabled: true,
+        },
+      )
+      return [sectionId]
+    }
+
+    return this.forumPermissionService.getAccessibleSectionIds(options.userId)
+  }
+
+  private async getTopicIdsByTag(tagId: number) {
+    const topicIds = await this.db
+      .select({ topicId: this.forumTopicTag.topicId })
+      .from(this.forumTopicTag)
+      .where(eq(this.forumTopicTag.tagId, tagId))
+
+    return [...new Set(topicIds.map((item) => item.topicId))]
+  }
+
+  private async mapTopicResults(
+    topics: ForumTopic[],
+    keyword: string,
+  ): Promise<ForumSearchResultItem[]> {
+    if (topics.length === 0) {
+      return []
+    }
+
+    const sectionIds = [...new Set(topics.map((item) => item.sectionId))]
+    const userIds = [...new Set(topics.map((item) => item.userId))]
+
+    const [sections, users] = await Promise.all([
+      this.db.query.forumSection.findMany({
+        where: { id: { in: sectionIds } },
+        columns: {
+          id: true,
+          name: true,
+        },
+      }),
+      this.db.query.appUser.findMany({
+        where: { id: { in: userIds } },
+        columns: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+        },
+      }),
+    ])
+
+    const sectionMap = new Map(sections.map((item) => [item.id, item.name]))
+    const userMap = new Map(users.map((item) => [item.id, item]))
+
+    return topics.map((topic) => {
+      const user = userMap.get(topic.userId)
+
+      return {
+        resultType: ForumSearchTypeEnum.TOPIC,
+        topicId: topic.id,
+        topicTitle: topic.title,
+        topicContentSnippet: this.buildSnippet(topic.content, keyword),
+        sectionId: topic.sectionId,
+        sectionName: sectionMap.get(topic.sectionId) ?? '',
+        userId: topic.userId,
+        userNickname: user?.nickname ?? '',
+        userAvatarUrl: user?.avatarUrl ?? undefined,
+        createdAt: topic.createdAt,
+        replyCount: topic.replyCount,
+        viewCount: topic.viewCount,
+        likeCount: topic.likeCount,
+        favoriteCount: topic.favoriteCount,
+      }
+    })
+  }
+
+  private async mapReplyResults(
+    replies: Array<{
+      replyId: number
+      topicId: number
+      topicTitle: string
+      sectionId: number
+      userId: number
+      replyContent: string
+      createdAt: Date
+      replyCount: number
+      viewCount: number
+      likeCount: number
+      favoriteCount: number
+    }>,
+    keyword: string,
+  ): Promise<ForumSearchResultItem[]> {
+    if (replies.length === 0) {
+      return []
+    }
+
+    const sectionIds = [...new Set(replies.map((item) => item.sectionId))]
+    const userIds = [...new Set(replies.map((item) => item.userId))]
+
+    const [sections, users] = await Promise.all([
+      this.db.query.forumSection.findMany({
+        where: { id: { in: sectionIds } },
+        columns: {
+          id: true,
+          name: true,
+        },
+      }),
+      this.db.query.appUser.findMany({
+        where: { id: { in: userIds } },
+        columns: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+        },
+      }),
+    ])
+
+    const sectionMap = new Map(sections.map((item) => [item.id, item.name]))
+    const userMap = new Map(users.map((item) => [item.id, item]))
+
+    return replies.map((reply) => {
+      const user = userMap.get(reply.userId)
+
+      return {
+        resultType: ForumSearchTypeEnum.REPLY,
+        topicId: reply.topicId,
+        topicTitle: reply.topicTitle,
+        sectionId: reply.sectionId,
+        sectionName: sectionMap.get(reply.sectionId) ?? '',
+        userId: reply.userId,
+        userNickname: user?.nickname ?? '',
+        userAvatarUrl: user?.avatarUrl ?? undefined,
+        replyId: reply.replyId,
+        replyContentSnippet: this.buildSnippet(reply.replyContent, keyword),
+        createdAt: reply.createdAt,
+        replyCount: reply.replyCount,
+        viewCount: reply.viewCount,
+        likeCount: reply.likeCount,
+        favoriteCount: reply.favoriteCount,
+      }
+    })
+  }
+
+  private async searchInternal(
+    searchInput: ForumSearchInput,
+    options: {
+      publicOnly: boolean
+      userId?: number
+    },
+  ): Promise<ForumSearchPageResult> {
+    const type = searchInput.type ?? ForumSearchTypeEnum.ALL
 
     if (type === ForumSearchTypeEnum.TOPIC) {
-      return this.searchTopics(searchDto)
+      return this.searchTopics(searchInput, options)
     }
 
     if (type === ForumSearchTypeEnum.REPLY) {
-      return this.searchReplies(searchDto)
+      return this.searchReplies(searchInput, options)
     }
 
-    // 混合搜索时按比例拆分主题与回复数量
-    const topicPageSize = Math.ceil(pageSize / 2)
-    const replyPageSize = Math.floor(pageSize / 2)
+    const pageSize = this.normalizePagination(searchInput).pageSize
+    const { pageIndex, skip } = this.normalizePagination(searchInput)
+    const mergedWindowSize = skip + pageSize
 
     const [topicResults, replyResults] = await Promise.all([
-      this.searchTopics({ ...searchDto, pageSize: topicPageSize }),
-      this.searchReplies({ ...searchDto, pageSize: replyPageSize }),
+      this.searchTopics(
+        {
+          ...searchInput,
+          type: ForumSearchTypeEnum.TOPIC,
+          pageIndex: 1,
+          pageSize: mergedWindowSize,
+        },
+        options,
+      ),
+      this.searchReplies(
+        {
+          ...searchInput,
+          type: ForumSearchTypeEnum.REPLY,
+          pageIndex: 1,
+          pageSize: mergedWindowSize,
+        },
+        options,
+      ),
     ])
 
-    // 合并不同类型的搜索结果
-    const results = [...topicResults.list, ...replyResults.list]
-    const total = topicResults.total + replyResults.total
+    const mergedList = [...topicResults.list, ...replyResults.list]
+      .sort((left, right) => this.compareResults(left, right, searchInput.sort))
+      .slice(skip, skip + pageSize)
 
     return {
-      list: results,
-      total,
+      list: mergedList,
+      total: topicResults.total + replyResults.total,
       pageIndex,
       pageSize,
     }
   }
 
   /**
-   * 搜索主题
-   * 支持按关键词与排序方式筛选
-   * @param dto 搜索参数
-   * @returns 主题搜索结果
+   * 搜索
+   * 根据搜索类型分发至主题/回复搜索，或合并结果
+   * @param searchDto 搜索参数
+   * @returns 搜索结果
    */
-  private async searchTopics(dto: ForumSearchTopicDto) {
+  private async searchTopics(
+    dto: ForumSearchInput,
+    options: {
+      publicOnly: boolean
+      userId?: number
+    },
+  ): Promise<ForumSearchPageResult> {
+    const sectionIds = await this.resolveSectionScope(dto.sectionId, options)
+    if (sectionIds && sectionIds.length === 0) {
+      return this.createEmptyPage(dto)
+    }
+
     const conditions = [
       isNull(this.forumTopic.deletedAt),
-      dto.sectionId ? eq(this.forumTopic.sectionId, dto.sectionId) : undefined,
       or(
         ilike(this.forumTopic.title, `%${dto.keyword}%`),
         ilike(this.forumTopic.content, `%${dto.keyword}%`),
       ),
+      options.publicOnly
+        ? eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED)
+        : undefined,
+      options.publicOnly ? eq(this.forumTopic.isHidden, false) : undefined,
+      sectionIds
+        ? sectionIds.length === 1
+          ? eq(this.forumTopic.sectionId, sectionIds[0])
+          : inArray(this.forumTopic.sectionId, sectionIds)
+        : undefined,
     ].filter(Boolean)
 
     if (dto.tagId) {
-      const topicIds = await this.db
-        .select({ topicId: this.forumTopicTag.topicId })
-        .from(this.forumTopicTag)
-        .where(eq(this.forumTopicTag.tagId, dto.tagId))
-      const ids = topicIds.map((item) => item.topicId)
+      const ids = await this.getTopicIdsByTag(dto.tagId)
       conditions.push(ids.length ? inArray(this.forumTopic.id, ids) : eq(this.forumTopic.id, -1))
     }
 
-    return this.drizzle.ext.findPagination(this.forumTopic, {
+    const page = await this.drizzle.ext.findPagination(this.forumTopic, {
       where: and(...(conditions as [any, ...any[]])),
       ...dto,
       orderBy: this.getTopicOrderBy(dto.sort),
     })
+
+    return {
+      ...page,
+      list: await this.mapTopicResults(page.list, dto.keyword),
+    }
   }
 
   /**
@@ -118,32 +438,85 @@ export class ForumSearchService {
    * @param dto 搜索参数
    * @returns 回复搜索结果
    */
-  private async searchReplies(dto: ForumSearchReplyDto) {
-    return this.drizzle.ext.findPagination(this.userComment, {
-      where: and(
-        isNull(this.userComment.deletedAt),
-        ilike(this.userComment.content, `%${dto.keyword}%`),
-      ),
-      ...dto,
-      orderBy: this.getTopicOrderBy(dto.sort),
-    })
-  }
-
-  /**
-   * 获取排序条件
-   * @param sort 排序类型
-   * @returns 排序条件
-   */
-  private getTopicOrderBy(sort?: ForumSearchSortTypeEnum) {
-    const defaultOrder: Record<string, 'asc' | 'desc'> = { createdAt: 'desc' }
-    if (sort === ForumSearchSortTypeEnum.HOT) {
-      return {
-        replyCount: 'desc' as const,
-        likeCount: 'desc' as const,
-        viewCount: 'desc' as const,
-        createdAt: 'desc' as const,
-      }
+  private async searchReplies(
+    dto: ForumSearchInput,
+    options: {
+      publicOnly: boolean
+      userId?: number
+    },
+  ): Promise<ForumSearchPageResult> {
+    const sectionIds = await this.resolveSectionScope(dto.sectionId, options)
+    if (sectionIds && sectionIds.length === 0) {
+      return this.createEmptyPage(dto)
     }
-    return defaultOrder
+
+    const topicIdsByTag = dto.tagId ? await this.getTopicIdsByTag(dto.tagId) : undefined
+    if (topicIdsByTag && topicIdsByTag.length === 0) {
+      return this.createEmptyPage(dto)
+    }
+
+    const { pageIndex, pageSize, skip } = this.normalizePagination(dto)
+    const conditions = [
+      eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+      isNull(this.userComment.deletedAt),
+      ilike(this.userComment.content, `%${dto.keyword}%`),
+      eq(this.userComment.targetId, this.forumTopic.id),
+      isNull(this.forumTopic.deletedAt),
+      options.publicOnly
+        ? eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED)
+        : undefined,
+      options.publicOnly ? eq(this.userComment.isHidden, false) : undefined,
+      options.publicOnly
+        ? eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED)
+        : undefined,
+      options.publicOnly ? eq(this.forumTopic.isHidden, false) : undefined,
+      sectionIds
+        ? sectionIds.length === 1
+          ? eq(this.forumTopic.sectionId, sectionIds[0])
+          : inArray(this.forumTopic.sectionId, sectionIds)
+        : undefined,
+      topicIdsByTag
+        ? inArray(this.forumTopic.id, topicIdsByTag)
+        : undefined,
+    ].filter(Boolean)
+
+    const where = and(...(conditions as [any, ...any[]]))
+
+    const [rows, totalRows] = await Promise.all([
+      this.db
+        .select({
+          replyId: this.userComment.id,
+          topicId: this.forumTopic.id,
+          topicTitle: this.forumTopic.title,
+          sectionId: this.forumTopic.sectionId,
+          userId: this.userComment.userId,
+          replyContent: this.userComment.content,
+          createdAt: this.userComment.createdAt,
+          replyCount: this.forumTopic.replyCount,
+          viewCount: this.forumTopic.viewCount,
+          likeCount: this.userComment.likeCount,
+          favoriteCount: this.forumTopic.favoriteCount,
+        })
+        .from(this.userComment)
+        .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
+        .where(where)
+        .orderBy(...this.getReplyOrderBy(dto.sort))
+        .limit(pageSize)
+        .offset(skip),
+      this.db
+        .select({
+          total: sql<number>`count(*)::int`,
+        })
+        .from(this.userComment)
+        .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
+        .where(where),
+    ])
+
+    return {
+      list: await this.mapReplyResults(rows, dto.keyword),
+      total: totalRows[0]?.total ?? 0,
+      pageIndex,
+      pageSize,
+    }
   }
 }

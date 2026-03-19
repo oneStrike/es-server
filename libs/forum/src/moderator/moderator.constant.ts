@@ -25,3 +25,24 @@ export enum ForumModeratorPermissionEnum {
   /** 移动 */
   MOVE = 6,
 }
+
+export const ALL_FORUM_MODERATOR_PERMISSIONS: ForumModeratorPermissionEnum[] = [
+  ForumModeratorPermissionEnum.PIN,
+  ForumModeratorPermissionEnum.FEATURE,
+  ForumModeratorPermissionEnum.LOCK,
+  ForumModeratorPermissionEnum.DELETE,
+  ForumModeratorPermissionEnum.AUDIT,
+  ForumModeratorPermissionEnum.MOVE,
+]
+
+export const FORUM_MODERATOR_PERMISSION_LABELS: Record<
+  ForumModeratorPermissionEnum,
+  string
+> = {
+  [ForumModeratorPermissionEnum.PIN]: '置顶',
+  [ForumModeratorPermissionEnum.FEATURE]: '加精',
+  [ForumModeratorPermissionEnum.LOCK]: '锁定',
+  [ForumModeratorPermissionEnum.DELETE]: '删除',
+  [ForumModeratorPermissionEnum.AUDIT]: '审核',
+  [ForumModeratorPermissionEnum.MOVE]: '移动',
+}

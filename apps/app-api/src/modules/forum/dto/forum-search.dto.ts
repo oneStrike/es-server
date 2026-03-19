@@ -1,3 +1,4 @@
+import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '@libs/forum'
 import {
   DateProperty,
   EnumProperty,
@@ -5,12 +6,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import { OmitType } from '@nestjs/swagger'
-import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant'
 
-/**
- * 搜索DTO
- */
 export class ForumSearchDto extends PageDto {
   @StringProperty({
     description: '搜索关键词',
@@ -52,14 +48,15 @@ export class ForumSearchDto extends PageDto {
   sort?: ForumSearchSortTypeEnum
 }
 
-export class ForumSearchTopicDto extends OmitType(ForumSearchDto, ['type']) {}
-export class ForumSearchReplyDto extends OmitType(ForumSearchDto, ['type']) {}
-
-/**
- * 搜索结果DTO
- * 返回搜索结果的数据结构
- */
 export class ForumSearchResultDto {
+  @EnumProperty({
+    description: '结果类型',
+    example: ForumSearchTypeEnum.TOPIC,
+    enum: ForumSearchTypeEnum,
+    validation: false,
+  })
+  resultType!: ForumSearchTypeEnum
+
   @NumberProperty({
     description: '主题ID',
     example: 1,
@@ -75,11 +72,12 @@ export class ForumSearchResultDto {
   topicTitle!: string
 
   @StringProperty({
-    description: '主题内容',
+    description: '主题内容摘要',
     example: '这是测试内容',
+    required: false,
     validation: false,
   })
-  topicContent!: string
+  topicContentSnippet?: string
 
   @NumberProperty({
     description: '板块ID',
@@ -109,6 +107,14 @@ export class ForumSearchResultDto {
   })
   userNickname!: string
 
+  @StringProperty({
+    description: '用户头像',
+    example: 'https://example.com/avatar.png',
+    required: false,
+    validation: false,
+  })
+  userAvatarUrl?: string
+
   @NumberProperty({
     description: '回复ID',
     example: 1,
@@ -118,12 +124,12 @@ export class ForumSearchResultDto {
   replyId?: number
 
   @StringProperty({
-    description: '回复内容',
+    description: '回复内容摘要',
     example: '这是回复内容',
     required: false,
     validation: false,
   })
-  replyContent?: string
+  replyContentSnippet?: string
 
   @DateProperty({
     description: '创建时间',
@@ -152,4 +158,11 @@ export class ForumSearchResultDto {
     validation: false,
   })
   likeCount!: number
+
+  @NumberProperty({
+    description: '收藏数',
+    example: 5,
+    validation: false,
+  })
+  favoriteCount!: number
 }
