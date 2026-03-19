@@ -19,7 +19,7 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('消息中心')
+@ApiTags('消息')
 @Controller('app/message')
 export class MessageController {
   constructor(
@@ -28,7 +28,7 @@ export class MessageController {
     private readonly messageInboxService: MessageInboxService,
   ) {}
 
-  @Get('notification/list')
+  @Get('notification/page')
   @ApiPageDoc({
     summary: '分页查询站内通知',
     model: BaseUserNotificationDto,
@@ -83,7 +83,7 @@ export class MessageController {
     return this.messageChatService.openDirectConversation(userId, body)
   }
 
-  @Get('chat/conversation/list')
+  @Get('chat/conversation/page')
   @ApiPageDoc({
     summary: '分页查询会话列表',
     model: BaseChatConversationDto,
@@ -116,7 +116,7 @@ export class MessageController {
     return this.messageInboxService.getSummary(userId)
   }
 
-  @Get('inbox/timeline')
+  @Get('inbox/timeline/page')
   @ApiPageDoc({
     summary: '分页查询消息中心时间线',
     model: InboxTimelineItemDto,

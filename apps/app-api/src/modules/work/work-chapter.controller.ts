@@ -20,7 +20,7 @@ import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('作品模块/章节')
+@ApiTags('作品')
 @Controller('app/work/chapter')
 export class WorkChapterController {
   constructor(
@@ -52,7 +52,7 @@ export class WorkChapterController {
     return this.workChapterService.getChapterDetail(query.id, userId)
   }
 
-  @Get('previous-detail')
+  @Get('previous/detail')
   @OptionalAuth()
   @ApiDoc({
     summary: '查询上一章节详情',
@@ -65,7 +65,7 @@ export class WorkChapterController {
     return this.workChapterService.getPreviousChapterDetail(query.id, userId)
   }
 
-  @Get('next-detail')
+  @Get('next/detail')
   @OptionalAuth()
   @ApiDoc({
     summary: '查询下一章节详情',
@@ -78,7 +78,7 @@ export class WorkChapterController {
     return this.workChapterService.getNextChapterDetail(query.id, userId)
   }
 
-  @Get('comic-content')
+  @Get('comic-content/detail')
   @OptionalAuth()
   @ApiDoc({
     summary: '查询漫画章节内容（内容可复用详情接口）',
@@ -94,7 +94,7 @@ export class WorkChapterController {
     )
   }
 
-  @Get('novel-content')
+  @Get('novel-content/detail')
   @OptionalAuth()
   @ApiDoc({
     summary: '查询小说章节内容（内容可复用详情接口）',

@@ -12,12 +12,12 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@Controller('/admin/forum/config')
-@ApiTags('论坛模块/系统配置')
+@Controller('admin/forum/config')
+@ApiTags('论坛管理/论坛配置')
 export class ForumConfigController {
   constructor(private readonly forumConfigService: ForumConfigService) {}
 
-  @Get('get')
+  @Get('detail')
   @ApiDoc({
     summary: '获取论坛配置',
     model: BaseForumConfigDto,
@@ -48,7 +48,7 @@ export class ForumConfigController {
     return this.forumConfigService.resetToDefault(req)
   }
 
-  @Get('history')
+  @Get('history/list')
   @ApiDoc({
     summary: '获取配置变更历史',
     model: ForumConfigHistoryItemDto,
@@ -58,7 +58,7 @@ export class ForumConfigController {
     return this.forumConfigService.getConfigHistory()
   }
 
-  @Post('restore')
+  @Post('history/restore')
   @ApiDoc({
     summary: '从历史记录恢复配置',
     model: BaseForumConfigDto,
@@ -75,7 +75,7 @@ export class ForumConfigController {
     )
   }
 
-  @Post('delete')
+  @Post('history/delete')
   @ApiDoc({
     summary: '删除配置历史记录',
     model: BaseForumConfigDto,

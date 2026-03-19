@@ -12,7 +12,7 @@ export class AuditController {
   /**
    * 获取审计日志列表
    */
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '获取审计日志列表',
     model: BaseAuditDto,

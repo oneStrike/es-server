@@ -33,7 +33,7 @@ import {
 export class AppPageController {
   constructor(private readonly libAppPageService: AppPageService) {}
 
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建页面配置',
     model: Boolean,
@@ -42,7 +42,7 @@ export class AppPageController {
     return this.libAppPageService.createPage(body)
   }
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
     model: AppPageResponseDto,
@@ -51,7 +51,7 @@ export class AppPageController {
     return this.libAppPageService.findPage(query)
   }
 
-  @Get('/detail-by-id')
+  @Get('detail')
   @ApiDoc({
     summary: '根据ID查询页面配置详情',
     model: BaseAppPageDto,
@@ -60,7 +60,7 @@ export class AppPageController {
     return this.libAppPageService.findById(id)
   }
 
-  @Get('/detail-by-code')
+  @Get('detail/code')
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
     model: BaseAppPageDto,
@@ -69,7 +69,7 @@ export class AppPageController {
     return this.libAppPageService.findByCode(code)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新页面配置',
     model: Boolean,
@@ -82,7 +82,7 @@ export class AppPageController {
     return this.libAppPageService.updatePage(body)
   }
 
-  @Post('/batch-delete')
+  @Post('delete')
   @ApiDoc({
     summary: '批量删除页面配置',
     model: Boolean,

@@ -6,12 +6,12 @@ import { FileUploadResponseDto } from '@libs/platform/modules/upload'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('内容管理/漫画章节内容模块')
-@Controller('admin/work/chapter-content')
+@ApiTags('内容管理/漫画章节内容')
+@Controller('admin/content/comic-chapter-content')
 export class ChapterContentController {
   constructor(private readonly comicContentService: ComicContentService) {}
 
-  @Get('/list')
+  @Get('list')
   @ApiDoc({
     summary: '获取章节内容',
     model: String,
@@ -21,16 +21,16 @@ export class ChapterContentController {
     return this.comicContentService.getChapterContents(query.id)
   }
 
-  @Post('/add')
+  @Post('upload')
   @ApiDoc({
-    summary: '添加章节内容',
+    summary: '上传章节内容',
     model: FileUploadResponseDto,
   })
-  async add(@Req() req: FastifyRequest, @Query() query: UploadContentDto) {
+  async upload(@Req() req: FastifyRequest, @Query() query: UploadContentDto) {
     return this.comicContentService.addChapterContent(req, query)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新章节内容',
     model: IdDto,
@@ -39,7 +39,7 @@ export class ChapterContentController {
     return this.comicContentService.updateChapterContent(body)
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除章节内容',
     model: String,
@@ -49,7 +49,7 @@ export class ChapterContentController {
     return this.comicContentService.deleteChapterContent(body)
   }
 
-  @Post('/move')
+  @Post('move')
   @ApiDoc({
     summary: '移动章节内容',
     model: String,
@@ -59,7 +59,7 @@ export class ChapterContentController {
     return this.comicContentService.moveChapterContent(body)
   }
 
-  @Post('/clear')
+  @Post('clear')
   @ApiDoc({
     summary: '清空章节内容',
     model: IdDto,

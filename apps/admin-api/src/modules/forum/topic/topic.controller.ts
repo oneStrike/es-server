@@ -15,12 +15,12 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('论坛模块/主题管理模块')
+@ApiTags('论坛管理/主题管理')
 @Controller('admin/forum/topic')
 export class ForumTopicController {
   constructor(private readonly forumTopicService: ForumTopicService) {}
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询论坛主题列表',
     model: BaseForumTopicDto,
@@ -29,7 +29,7 @@ export class ForumTopicController {
     return this.forumTopicService.getTopics(query)
   }
 
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取论坛主题详情',
     model: BaseForumTopicDto,
@@ -38,7 +38,7 @@ export class ForumTopicController {
     return this.forumTopicService.getTopicById(query.id)
   }
 
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建论坛主题',
     model: BaseForumTopicDto,
@@ -47,7 +47,7 @@ export class ForumTopicController {
     return this.forumTopicService.createForumTopic(body)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新论坛主题',
     model: BaseForumTopicDto,
@@ -56,7 +56,7 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopic(body)
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除论坛主题',
     model: BaseForumTopicDto,
@@ -65,7 +65,7 @@ export class ForumTopicController {
     return this.forumTopicService.deleteTopic(body.id)
   }
 
-  @Post('/update-pinned')
+  @Post('update-pinned')
   @ApiDoc({
     summary: '更新主题置顶状态',
     model: BaseForumTopicDto,
@@ -74,7 +74,7 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopicPinned(body)
   }
 
-  @Post('/update-featured')
+  @Post('update-featured')
   @ApiDoc({
     summary: '更新主题精华状态',
     model: BaseForumTopicDto,
@@ -83,7 +83,7 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopicFeatured(body)
   }
 
-  @Post('/update-locked')
+  @Post('update-locked')
   @ApiDoc({
     summary: '更新主题锁定状态',
     model: BaseForumTopicDto,
@@ -92,7 +92,7 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopicLocked(body)
   }
 
-  @Post('/update-hidden')
+  @Post('update-hidden')
   @ApiDoc({
     summary: '更新主题隐藏状态',
     model: BaseForumTopicDto,
@@ -101,7 +101,7 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopicHidden(body)
   }
 
-  @Post('/update-audit-status')
+  @Post('update-audit-status')
   @ApiDoc({
     summary: '更新主题审核状态',
     model: BaseForumTopicDto,
@@ -110,7 +110,7 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopicAuditStatus(body)
   }
 
-  @Post('/increment-view-count')
+  @Post('increment-view-count')
   @ApiDoc({
     summary: '增加主题浏览次数',
     model: BaseForumTopicDto,

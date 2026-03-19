@@ -17,7 +17,7 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class UserBadgeController
  */
-@Controller('/admin/growth/badges')
+@Controller('admin/growth/badges')
 @ApiTags('用户成长/徽章管理')
 export class UserBadgeController {
   constructor(private readonly userBadgeService: UserBadgeService) {}
@@ -94,7 +94,7 @@ export class UserBadgeController {
     return this.userBadgeService.revokeBadge(dto)
   }
 
-  @Get('users')
+  @Get('user/page')
   @ApiPageDoc({
     summary: '获取拥有某个用户徽章的用户列表',
     model: BaseUserBadgeDto,
@@ -106,7 +106,7 @@ export class UserBadgeController {
     return this.userBadgeService.getBadgeUsers(badgeId, query)
   }
 
-  @Get('statistics')
+  @Get('stats')
   @ApiDoc({
     summary: '获取用户徽章统计信息',
     model: BaseUserBadgeDto,

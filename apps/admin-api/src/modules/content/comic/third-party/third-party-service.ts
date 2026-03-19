@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 import {
+  ChapterContentComicRequestDto,
   DetailComicRequestDto,
   SearchComicRequestDto,
 } from './dto/third-party.dto'
@@ -53,7 +54,7 @@ export class ComicThirdPartyService {
    * @param searchDto 搜索参数
    * @returns 漫画章节内容
    */
-  async content(searchDto: DetailComicRequestDto) {
+  async content(searchDto: ChapterContentComicRequestDto) {
     return this[searchDto.platform].content(searchDto)
   }
 }

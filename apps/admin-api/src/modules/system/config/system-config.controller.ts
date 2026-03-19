@@ -10,34 +10,21 @@ import {
   SystemConfigBodyDto,
 } from './dto/system-config.dto'
 
-@ApiTags('系统配置')
+@ApiTags('系统管理/系统配置')
 @Controller('admin/system')
 export class SystemConfigController {
   constructor(private readonly systemConfigService: SystemConfigService) {}
 
-  @Get('config-detail')
-  @ApiDoc({
-    summary: '获取系统配置',
-    model: BaseSystemConfigDto,
-  })
-  async getConfig() {
-    // 使用脱敏方法
-    return this.systemConfigService.findMaskedConfig()
-  }
-
-  /**
-   * 兼容任务清单要求的 /admin/system/config 路径
-   */
   @Get('config')
   @ApiDoc({
     summary: '获取系统配置',
     model: BaseSystemConfigDto,
   })
-  async getConfigByAlias() {
+  async getConfig() {
     return this.systemConfigService.findMaskedConfig()
   }
 
-  @Post('config-update')
+  @Post('update')
   @ApiDoc({
     summary: '更新系统配置',
     model: IdDto,

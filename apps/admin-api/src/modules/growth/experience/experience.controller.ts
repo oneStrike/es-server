@@ -1,5 +1,6 @@
 import {
   AddUserExperienceDto,
+  BaseUserExperienceRecordDto,
   BaseUserExperienceRuleDto,
   CreateUserExperienceRuleDto,
   QueryUserExperienceRecordDto,
@@ -11,6 +12,10 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  UserExperienceRecordDetailDto,
+  UserExperienceStatsDto,
+} from './dto/experience-response.dto'
 
 /**
  * 用户经验规则管理控制器
@@ -18,12 +23,12 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class ExperienceController
  */
-@Controller('/admin/growth/experience-rules')
+@Controller('admin/growth/experience-rules')
 @ApiTags('用户成长/经验管理')
 export class ExperienceController {
   constructor(private readonly experienceService: UserExperienceService) {}
 
-  @Get('rules-page')
+  @Get('page')
   @ApiPageDoc({
     summary: '获取用户经验规则分页',
     model: BaseUserExperienceRuleDto,
@@ -32,7 +37,7 @@ export class ExperienceController {
     return this.experienceService.getExperienceRulePage(query)
   }
 
-  @Get('rules-detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取用户经验规则详情',
     model: BaseUserExperienceRuleDto,
@@ -41,7 +46,7 @@ export class ExperienceController {
     return this.experienceService.getExperienceRuleDetail(dto.id)
   }
 
-  @Post('rules-create')
+  @Post('create')
   @ApiDoc({
     summary: '创建用户经验规则',
     model: BaseUserExperienceRuleDto,
@@ -50,7 +55,7 @@ export class ExperienceController {
     return this.experienceService.createExperienceRule(dto)
   }
 
-  @Post('rules-update')
+  @Post('update')
   @ApiDoc({
     summary: '更新用户经验规则',
     model: BaseUserExperienceRuleDto,
@@ -59,7 +64,7 @@ export class ExperienceController {
     return this.experienceService.updateExperienceRule(dto)
   }
 
-  @Post('rules-delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除用户经验规则',
     model: BaseUserExperienceRuleDto,
@@ -68,37 +73,37 @@ export class ExperienceController {
     return this.experienceService.deleteExperienceRule(dto.id)
   }
 
-  @Post('add')
+  @Post('grant')
   @ApiDoc({
     summary: '增加用户经验',
-    model: BaseUserExperienceRuleDto,
+    model: BaseUserExperienceRecordDto,
   })
-  async addExperience(@Body() dto: AddUserExperienceDto) {
+  async grantExperience(@Body() dto: AddUserExperienceDto) {
     return this.experienceService.addExperience(dto)
   }
 
-  @Get('records-page')
+  @Get('record/page')
   @ApiPageDoc({
     summary: '获取用户经验记录分页',
-    model: BaseUserExperienceRuleDto,
+    model: BaseUserExperienceRecordDto,
   })
   async getExperienceRecords(@Query() query: QueryUserExperienceRecordDto) {
     return this.experienceService.getExperienceRecordPage(query)
   }
 
-  @Get('records-detail')
+  @Get('record/detail')
   @ApiDoc({
     summary: '获取用户经验记录详情',
-    model: BaseUserExperienceRuleDto,
+    model: UserExperienceRecordDetailDto,
   })
   async getExperienceRecord(@Query() dto: IdDto) {
     return this.experienceService.getExperienceRecordDetail(dto.id)
   }
 
-  @Get('user-stats')
+  @Get('stats')
   @ApiDoc({
     summary: '获取用户经验统计信息',
-    model: BaseUserExperienceRuleDto,
+    model: UserExperienceStatsDto,
   })
   async getUserExperienceStats(@Query('userId') userId: number) {
     return this.experienceService.getUserExperienceStats(userId)

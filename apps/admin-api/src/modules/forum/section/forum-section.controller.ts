@@ -10,8 +10,8 @@ import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dt
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@Controller('/admin/forum/sections')
-@ApiTags('论坛模块/板块管理')
+@Controller('admin/forum/sections')
+@ApiTags('论坛管理/板块管理')
 export class ForumSectionController {
   constructor(private readonly forumSectionService: ForumSectionService) {}
 

@@ -11,7 +11,7 @@ import {
   ReplyCommentBodyDto,
 } from './dto/comment.dto'
 
-@ApiTags('评论模块')
+@ApiTags('评论')
 @Controller('app/comment')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
@@ -55,7 +55,7 @@ export class CommentController {
     return this.commentService.deleteComment(body.id, userId)
   }
 
-  @Get('my')
+  @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的评论',
     model: CommentItemDto,
@@ -67,7 +67,7 @@ export class CommentController {
     return this.commentService.getUserComments(query, userId)
   }
 
-  @Get('replies')
+  @Get('reply/page')
   @ApiPageDoc({
     summary: '分页查询评论回复',
     model: CommentItemDto,

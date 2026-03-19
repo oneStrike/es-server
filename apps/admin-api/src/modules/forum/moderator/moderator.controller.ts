@@ -11,12 +11,12 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@Controller('/admin/forum/moderators')
-@ApiTags('论坛模块/版主管理')
+@Controller('admin/forum/moderators')
+@ApiTags('论坛管理/版主管理')
 export class ModeratorController {
   constructor(private readonly forumModeratorService: ForumModeratorService) {}
 
-  @Get('list')
+  @Get('page')
   @ApiPageDoc({
     summary: '查看版主列表',
     model: ForumModeratorDto,
@@ -25,12 +25,12 @@ export class ModeratorController {
     return this.forumModeratorService.getModeratorPage(query)
   }
 
-  @Post('add')
+  @Post('create')
   @ApiDoc({
     summary: '添加版主',
     model: ForumModeratorDto,
   })
-  async addModerator(@Body() dto: CreateForumModeratorDto) {
+  async createModerator(@Body() dto: CreateForumModeratorDto) {
     return this.forumModeratorService.createModerator(dto)
   }
 
@@ -43,16 +43,16 @@ export class ModeratorController {
     return this.forumModeratorService.updateModerator(dto)
   }
 
-  @Post('remove')
+  @Post('delete')
   @ApiDoc({
     summary: '移除版主',
     model: ForumModeratorDto,
   })
-  async removeModerator(@Body() dto: IdDto) {
+  async deleteModerator(@Body() dto: IdDto) {
     return this.forumModeratorService.removeModerator(dto)
   }
 
-  @Post('section-assign')
+  @Post('assign-section')
   @ApiDoc({
     summary: '分配版主管理的板块',
     model: ForumModeratorDto,

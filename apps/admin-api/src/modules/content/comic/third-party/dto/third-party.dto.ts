@@ -32,6 +32,34 @@ export class DetailComicRequestDto extends PickType(SearchComicRequestDto, [
   comicId!: string
 }
 
+export class ChapterContentComicRequestDto extends DetailComicRequestDto {
+  @StringProperty({
+    required: true,
+    maxLength: 100,
+    description: '章节ID',
+    example: '654321',
+  })
+  chapterId!: string
+}
+
+export const THIRD_PARTY_COMIC_DETAIL_SCHEMA = {
+  type: 'object',
+  additionalProperties: true,
+  description: '第三方平台漫画详情原始数据',
+} as const
+
+export const THIRD_PARTY_COMIC_CHAPTER_SCHEMA = {
+  type: 'object',
+  additionalProperties: true,
+  description: '第三方平台漫画章节原始数据',
+} as const
+
+export const THIRD_PARTY_COMIC_CHAPTER_CONTENT_SCHEMA = {
+  type: 'object',
+  additionalProperties: true,
+  description: '第三方平台漫画章节内容原始数据',
+} as const
+
 export class PlatformResponseDto {
   @StringProperty({
     description: '平台名称',

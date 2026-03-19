@@ -14,7 +14,6 @@ import { MessageModule } from './message/message.module'
 import { SystemConfigModule } from './system/config/system-config.module'
 import { UploadModule } from './system/upload/upload.module'
 import { TaskModule } from './task/task.module'
-import { WorkModule } from './work/work.module'
 
 @Module({
   imports: [
@@ -33,7 +32,6 @@ import { WorkModule } from './work/work.module'
     MessageModule,
     TaskModule,
     GrowthModule,
-    WorkModule,
   ],
   controllers: [],
   providers: [],

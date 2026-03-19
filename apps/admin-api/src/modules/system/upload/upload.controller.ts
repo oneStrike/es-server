@@ -11,7 +11,7 @@ import { ApiTags } from '@nestjs/swagger'
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post('/upload-file')
+  @Post('file/upload')
   @ApiDoc({
     summary: '上传文件',
     model: UploadResponseDto,

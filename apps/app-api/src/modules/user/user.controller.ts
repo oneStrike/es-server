@@ -81,7 +81,7 @@ export class UserController {
   /**
    * 更新当前用户论坛资料
    */
-  @Post('profile/forum-update')
+  @Post('profile/forum/update')
   @ApiDoc({
     summary: '更新当前用户论坛资料',
     model: UserForumProfileDto,
@@ -120,7 +120,7 @@ export class UserController {
   /**
    * 获取用户资产统计
    */
-  @Get('assets/summary')
+  @Get('assets/stats')
   @ApiDoc({
     summary: '获取用户资产统计',
     model: UserAssetsSummaryDto,
@@ -156,7 +156,7 @@ export class UserController {
   /**
    * 查询用户积分记录
    */
-  @Get('points/records')
+  @Get('points/record/page')
   @ApiPageDoc({
     summary: '查询用户积分记录',
     model: BaseUserPointRecordDto,
@@ -183,7 +183,7 @@ export class UserController {
   /**
    * 查询用户经验记录
    */
-  @Get('experience/records')
+  @Get('experience/record/page')
   @ApiPageDoc({
     summary: '查询用户经验记录',
     model: BaseUserExperienceRecordDto,
@@ -198,7 +198,7 @@ export class UserController {
   /**
    * 查询用户徽章
    */
-  @Get('badges')
+  @Get('badges/page')
   @ApiPageDoc({
     summary: '查询用户徽章',
     model: UserBadgeItemDto,

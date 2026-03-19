@@ -1,6 +1,6 @@
 import { WorkCategoryModule as WorkCategoryModuleLib } from '@libs/content'
 import { Module } from '@nestjs/common'
-import { WorkCategoryController } from './category.controller'
+import { ContentCategoryController } from './category.controller'
 
 /**
  * 分类管理模块
@@ -8,8 +8,8 @@ import { WorkCategoryController } from './category.controller'
  */
 @Module({
   imports: [WorkCategoryModuleLib],
-  controllers: [WorkCategoryController],
+  controllers: [ContentCategoryController],
   providers: [],
   exports: [WorkCategoryModuleLib],
 })
-export class WorkCategoryModule {}
+export class ContentCategoryModule {}

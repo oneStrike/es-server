@@ -1,6 +1,6 @@
 import { WorkTagModule as WorkTagModuleLib } from '@libs/content'
 import { Module } from '@nestjs/common'
-import { WorkTagController } from './tag.controller'
+import { ContentTagController } from './tag.controller'
 
 /**
  * 标签管理模块
@@ -8,8 +8,8 @@ import { WorkTagController } from './tag.controller'
  */
 @Module({
   imports: [WorkTagModuleLib],
-  controllers: [WorkTagController],
+  controllers: [ContentTagController],
   providers: [],
   exports: [WorkTagModuleLib],
 })
-export class WorkTagModule {}
+export class ContentTagModule {}

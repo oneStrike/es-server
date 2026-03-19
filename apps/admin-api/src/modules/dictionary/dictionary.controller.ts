@@ -22,8 +22,8 @@ import {
   UpdateDictionaryItemDto,
 } from './dto/dictionary.dto'
 
-@ApiTags('字典管理')
-@Controller('/admin/dictionary')
+@ApiTags('系统管理/字典管理')
+@Controller('admin/dictionary')
 export class DictionaryController {
   constructor(private readonly libDictionaryService: LibDictionaryService) {}
 
@@ -81,7 +81,7 @@ export class DictionaryController {
     return this.libDictionaryService.updateDictionaryStatus(query)
   }
 
-  @Get('items')
+  @Get('item/page')
   @ApiPageDoc({
     summary: '分页获取字典项',
     model: BaseDictionaryItemDto,
@@ -90,7 +90,7 @@ export class DictionaryController {
     return this.libDictionaryService.findDictionaryItems(query)
   }
 
-  @Get('all-items')
+  @Get('item/list')
   @ApiDoc({
     summary: '获取所有字典项',
     model: BaseDictionaryItemDto,
@@ -101,7 +101,7 @@ export class DictionaryController {
     )
   }
 
-  @Post('create-item')
+  @Post('item/create')
   @ApiDoc({
     summary: '创建字典项',
     model: Boolean,
@@ -112,7 +112,7 @@ export class DictionaryController {
     )
   }
 
-  @Post('update-item')
+  @Post('item/update')
   @ApiDoc({
     summary: '更新字典项',
     model: Boolean,
@@ -123,7 +123,7 @@ export class DictionaryController {
     )
   }
 
-  @Post('update-item-status')
+  @Post('item/update-status')
   @ApiDoc({
     summary: '启用禁用字典项',
     model: BatchOperationResponseDto,
@@ -132,7 +132,7 @@ export class DictionaryController {
     return this.libDictionaryService.updateDictionaryItemStatus(query)
   }
 
-  @Post('delete-item')
+  @Post('item/delete')
   @ApiDoc({
     summary: '删除字典项',
     model: Boolean,
@@ -144,9 +144,9 @@ export class DictionaryController {
   /**
    * 拖拽排序
    */
-  @Post('/item-order')
+  @Post('item/swap-sort-order')
   @ApiDoc({
-    summary: '字典项拖拽排序',
+    summary: '字典项交换排序',
     model: Boolean,
   })
   async itemOrder(@Body() body: DragReorderDto) {

@@ -15,12 +15,12 @@ import { BatchOperationResponseDto, IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('内容管理/漫画管理模块')
-@Controller('admin/work/comic')
+@ApiTags('内容管理/漫画管理')
+@Controller('admin/content/comic')
 export class ComicController {
   constructor(private readonly workService: WorkService) {}
 
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建漫画',
     model: IdDto,
@@ -29,7 +29,7 @@ export class ComicController {
     return this.workService.createWork({ ...body, type: WorkTypeEnum.COMIC })
   }
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询漫画列表',
     model: BaseWorkDto,
@@ -38,7 +38,7 @@ export class ComicController {
     return this.workService.getWorkPage({ ...query, type: WorkTypeEnum.COMIC })
   }
 
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取漫画详情',
     model: BaseWorkDto,
@@ -47,7 +47,7 @@ export class ComicController {
     return this.workService.getWorkDetail(query.id)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新漫画信息',
     model: IdDto,
@@ -56,7 +56,7 @@ export class ComicController {
     return this.workService.updateWork(body)
   }
 
-  @Post('/update-status')
+  @Post('update-status')
   @ApiDoc({
     summary: '更新漫画发布状态',
     model: BatchOperationResponseDto,
@@ -67,7 +67,7 @@ export class ComicController {
     })
   }
 
-  @Post('/update-recommended')
+  @Post('update-recommended')
   @ApiDoc({
     summary: '更新漫画推荐状态',
     model: BatchOperationResponseDto,
@@ -78,7 +78,7 @@ export class ComicController {
     })
   }
 
-  @Post('/update-hot')
+  @Post('update-hot')
   @ApiDoc({
     summary: '更新漫画热门状态',
     model: BatchOperationResponseDto,
@@ -89,7 +89,7 @@ export class ComicController {
     })
   }
 
-  @Post('/update-new')
+  @Post('update-new')
   @ApiDoc({
     summary: '更新漫画新作状态',
     model: BatchOperationResponseDto,
@@ -100,7 +100,7 @@ export class ComicController {
     })
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '软删除漫画',
     model: IdDto,

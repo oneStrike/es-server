@@ -1,6 +1,6 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
 
-import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -19,7 +19,7 @@ import {
  * 管理端用户控制器
  * 提供用户管理相关的 RESTful API 接口
  */
-@ApiTags('管理端用户模块')
+@ApiTags('认证与账号/管理员账号')
 @Controller('admin/system-user')
 export class AdminUserController {
   constructor(private readonly adminUserService: AdminUserService) {}
@@ -27,20 +27,22 @@ export class AdminUserController {
   /**
    * 用户注册接口
    */
-  @Post('register')
+  @Post('create')
   @ApiDoc({
     summary: '用户注册',
     model: IdDto,
   })
-  @Public()
-  async register(@Body() body: UserRegisterDto) {
-    return this.adminUserService.register(body)
+  async register(
+    @Body() body: UserRegisterDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.adminUserService.register(user.sub, body)
   }
 
   /**
    * 更新用户信息接口
    */
-  @Post('update-info')
+  @Post('profile/update')
   @ApiDoc({
     summary: '更新用户信息',
     model: BaseUserDto,
@@ -55,7 +57,7 @@ export class AdminUserController {
   /**
    * 获取当前用户信息接口
    */
-  @Get('info')
+  @Get('profile')
   @ApiDoc({
     summary: '获取当前用户信息',
     model: BaseUserDto,
@@ -67,7 +69,7 @@ export class AdminUserController {
   /**
    * 根据ID获取用户信息接口
    */
-  @Get('info-by-id')
+  @Get('detail')
   @ApiDoc({
     summary: '根据ID获取用户信息',
     model: BaseUserDto,
@@ -91,7 +93,7 @@ export class AdminUserController {
   /**
    * 修改密码接口
    */
-  @Post('change-password')
+  @Post('password/change')
   @ApiDoc({
     summary: '修改密码',
     model: IdDto,
@@ -110,7 +112,7 @@ export class AdminUserController {
   /*
    * 重置用户密码为默认密码接口
    */
-  @Post('reset-password')
+  @Post('password/reset')
   @ApiDoc({
     summary: '重置用户密码为默认密码',
     model: IdDto,

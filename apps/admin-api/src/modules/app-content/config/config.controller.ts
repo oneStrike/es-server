@@ -16,7 +16,7 @@ export class AppConfigController {
     private readonly appConfigService: AppConfigService,
   ) { }
 
-  @Get('/active')
+  @Get('active')
   @ApiDoc({
     summary: '获取最新应用配置',
     model: BaseAppConfigDto,
@@ -25,7 +25,7 @@ export class AppConfigController {
     return this.appConfigService.findActiveConfig()
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新应用配置',
     model: BaseAppConfigDto,

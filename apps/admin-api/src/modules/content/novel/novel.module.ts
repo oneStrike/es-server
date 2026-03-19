@@ -1,6 +1,5 @@
 import { WorkModule } from '@libs/content'
 import { Module } from '@nestjs/common'
-import { NovelChapterCommentController } from './novel-chapter-comment.controller'
 import { NovelChapterController } from './novel-chapter.controller'
 import { NovelContentController } from './novel-content.controller'
 import { NovelController } from './novel.controller'
@@ -10,7 +9,6 @@ import { NovelController } from './novel.controller'
   controllers: [
     NovelController,
     NovelChapterController,
-    NovelChapterCommentController,
     NovelContentController,
   ],
   providers: [],

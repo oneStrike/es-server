@@ -15,14 +15,14 @@ import { ApiTags } from '@nestjs/swagger'
  * 提供标签相关的 RESTful API 接口
  */
 @ApiTags('内容管理/标签管理')
-@Controller('admin/work/tag')
-export class WorkTagController {
+@Controller('admin/content/tag')
+export class ContentTagController {
   constructor(private readonly tagService: WorkTagService) {}
 
   /**
    * 创建标签
    */
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建标签',
     model: IdDto,
@@ -34,7 +34,7 @@ export class WorkTagController {
   /**
    * 分页查询标签列表
    */
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询标签列表',
     model: BaseTagDto,
@@ -46,7 +46,7 @@ export class WorkTagController {
   /**
    * 获取标签详情
    */
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取标签详情',
     model: BaseTagDto,
@@ -58,7 +58,7 @@ export class WorkTagController {
   /**
    * 更新标签信息
    */
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新标签信息',
     model: IdDto,
@@ -70,7 +70,7 @@ export class WorkTagController {
   /**
    * 批量更新标签状态
    */
-  @Post('/update-status')
+  @Post('update-status')
   @ApiDoc({
     summary: '更新标签状态',
     model: IdDto,
@@ -82,7 +82,7 @@ export class WorkTagController {
   /**
    * 批量删除标签
    */
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除标签',
     model: IdDto,
@@ -94,9 +94,9 @@ export class WorkTagController {
   /**
    * 标签拖拽排序
    */
-  @Post('/order')
+  @Post('swap-sort-order')
   @ApiDoc({
-    summary: '标签拖拽排序',
+    summary: '标签交换排序',
     model: DragReorderDto,
   })
   async tagOrder(@Body() body: DragReorderDto) {

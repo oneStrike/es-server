@@ -12,7 +12,7 @@ import {
   LikeTargetDto,
 } from './dto/like.dto'
 
-@ApiTags('点赞模块')
+@ApiTags('点赞')
 @Controller('app/like')
 export class LikeController {
   constructor(private readonly likeService: LikeService) { }
@@ -63,7 +63,7 @@ export class LikeController {
     }
   }
 
-  @Get('my')
+  @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的点赞记录',
     model: LikePageItemDto,

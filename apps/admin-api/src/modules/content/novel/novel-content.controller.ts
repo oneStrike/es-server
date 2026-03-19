@@ -9,12 +9,12 @@ import { FileUploadResponseDto } from '@libs/platform/modules/upload'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('内容管理/小说章节内容模块')
-@Controller('admin/work/novel-content')
+@ApiTags('内容管理/小说章节内容')
+@Controller('admin/content/novel-chapter-content')
 export class NovelContentController {
   constructor(private readonly novelContentService: NovelContentService) {}
 
-  @Get('/content')
+  @Get('detail')
   @ApiDoc({
     summary: '获取章节内容',
     model: String,
@@ -23,7 +23,7 @@ export class NovelContentController {
     return this.novelContentService.getChapterContent(query.id)
   }
 
-  @Post('/upload')
+  @Post('upload')
   @ApiDoc({
     summary: '上传章节文件',
     model: FileUploadResponseDto,
@@ -32,7 +32,7 @@ export class NovelContentController {
     return this.novelContentService.uploadChapterContent(req, query)
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除章节文件',
     model: IdDto,

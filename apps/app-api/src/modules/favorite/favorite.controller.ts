@@ -12,7 +12,7 @@ import {
   FavoriteTargetDto,
 } from './dto/favorite.dto'
 
-@ApiTags('收藏模块')
+@ApiTags('收藏')
 @Controller('app/favorite')
 export class FavoriteController {
   constructor(private readonly favoriteService: FavoriteService) {}
@@ -65,7 +65,7 @@ export class FavoriteController {
     }
   }
 
-  @Get('my')
+  @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的收藏记录',
     model: FavoritePageItemDto,

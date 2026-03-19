@@ -5,12 +5,12 @@ import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { QueryDictionaryItemDto } from './dto/dictionary.dto'
 
-@ApiTags('字典管理')
+@ApiTags('字典')
 @Controller('app/dictionary')
 export class DictionaryController {
   constructor(private readonly libDictionaryService: LibDictionaryService) {}
 
-  @Get('items')
+  @Get('item/list')
   @ApiDoc({
     summary: '获取数据字典',
     model: BaseDictionaryItemDto,

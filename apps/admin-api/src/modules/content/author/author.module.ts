@@ -1,6 +1,6 @@
 import { WorkAuthorModule as WorkAuthorModuleLib } from '@libs/content'
 import { Module } from '@nestjs/common'
-import { WorkAuthorController } from './author.controller'
+import { ContentAuthorController } from './author.controller'
 
 /**
  * 作者管理模块
@@ -8,8 +8,8 @@ import { WorkAuthorController } from './author.controller'
  */
 @Module({
   imports: [WorkAuthorModuleLib],
-  controllers: [WorkAuthorController],
+  controllers: [ContentAuthorController],
   providers: [],
   exports: [WorkAuthorModuleLib], // 导出服务供其他模块使用
 })
-export class WorkAuthorModule {}
+export class ContentAuthorModule {}

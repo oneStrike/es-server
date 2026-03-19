@@ -157,12 +157,12 @@
 - index(assignmentId)
 - index(userId, createdAt)
 
-## 4. API 接口设计（RESTful）
+## 4. API 接口设计（当前 RPC 风格）
 
 ### 4.1 管理端接口（/api/admin/task）
 
 1) 查询任务列表（分页）
-- GET /api/admin/task/list
+- GET /api/admin/task/page
 - Query：pageIndex, pageSize, status, type, isEnabled, title
 - Response（分页）
 
@@ -191,19 +191,19 @@
 - Response：{ id }
 
 7) 查询用户任务列表（分页）
-- GET /api/admin/task/assignment/list
+- GET /api/admin/task/assignment/page
 - Query：userId, status, taskId, pageIndex, pageSize
 - Response（分页）
 
 ### 4.2 客户端接口（/api/app/task）
 
 1) 获取可领取任务列表（分页）
-- GET /api/app/task/list
+- GET /api/app/task/page
 - Query：type, status, pageIndex, pageSize
 - Response（分页）
 
 2) 获取我的任务列表（分页）
-- GET /api/app/task/my
+- GET /api/app/task/my/page
 - Query：status, pageIndex, pageSize
 - Response（分页）
 

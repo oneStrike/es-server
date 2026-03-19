@@ -164,24 +164,19 @@ export class DemoService {
 
 ## 💚 Terminus 健康检查
 
-项目已替换为 NestJS 官方推荐的 Terminus 健康检查方案，并提供以下端点（受全局前缀 `api` 影响）：
+项目提供以下健康检查端点（受全局前缀 `api` 影响）：
 
 - `GET /api/health`：存活检查（liveness）。返回进程内存指标，并附带 `uptime` 与 `environment` 元信息。
 - `GET /api/ready`：就绪检查（readiness）。检查数据库（`SELECT 1`）与缓存（内存与 Redis）的可用性。
 
-示例响应（成功）：
+`GET /api/health` 示例响应（成功）：
 
 ```json
 {
   "status": "ok",
   "info": {
-    "memory_heap": { "status": "up" },
-    "memory_rss": { "status": "up" }
-  },
-  "error": {},
-  "details": {
-    "memory_heap": { "status": "up" },
-    "memory_rss": { "status": "up" }
+    "memory_heap": { "status": "up", "heapUsed": 12345678 },
+    "memory_rss": { "status": "up", "rss": 23456789 }
   },
   "meta": {
     "uptime": 123.45,
@@ -211,4 +206,4 @@ readinessProbe:
 
 - 关闭期间优雅退出：已启用应用 `Shutdown Hooks`，并配置 Terminus `gracefulShutdownTimeoutMs: 1000`，有助于在编排器下实现零停机切换。
 
-- 监控系统：Terminus 返回结构包含 `status`、`info`、`error`、`details`，便于 Prometheus/Grafana 或外部探针采集健康状态。
+- 监控系统：当前健康检查返回以 `status`、`info`、`meta` 为主，可直接供 Prometheus/Grafana 或外部探针采集状态。

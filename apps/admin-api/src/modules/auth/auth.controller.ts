@@ -18,7 +18,7 @@ import {
  * 管理端认证控制器
  * 提供登录、登出、令牌刷新、验证码等认证相关接口
  */
-@ApiTags('管理端认证模块')
+@ApiTags('认证与账号/管理员认证')
 @Controller('admin/auth')
 export class AuthController {
   constructor(
@@ -80,7 +80,7 @@ export class AuthController {
    * @param body 包含刷新令牌的请求体
    * @returns 新的访问令牌及有效期
    */
-  @Post('refresh-token')
+  @Post('token/refresh')
   @ApiDoc({
     summary: '刷新访问令牌',
     model: TokenDto,
@@ -95,7 +95,7 @@ export class AuthController {
    * 前端可以使用此公钥对管理员敏感数据进行加密
    * @returns Admin RSA公钥
    */
-  @Get('public-key')
+  @Get('key/public')
   @ApiDoc({
     summary: '获取Admin专用RSA公钥',
     model: RsaPublicKeyDto,

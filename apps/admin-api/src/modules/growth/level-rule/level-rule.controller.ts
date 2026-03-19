@@ -19,7 +19,7 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class LevelRuleController
  */
-@Controller('/admin/growth/level-rules')
+@Controller('admin/growth/level-rules')
 @ApiTags('用户成长/等级规则管理')
 export class LevelRuleController {
   constructor(private readonly levelRuleService: UserLevelRuleService) {}
@@ -69,7 +69,7 @@ export class LevelRuleController {
     return this.levelRuleService.deleteLevelRule(dto.id)
   }
 
-  @Get('user-level-info')
+  @Get('user/detail')
   @ApiDoc({
     summary: '获取用户等级信息详情',
     model: UserLevelInfoDto,
@@ -78,7 +78,7 @@ export class LevelRuleController {
     return this.levelRuleService.getUserLevelInfo(dto.id)
   }
 
-  @Post('check-permission')
+  @Post('permission/check')
   @ApiDoc({
     summary: '检查用户等级权限配置',
     model: UserLevelPermissionResultDto,
@@ -87,7 +87,7 @@ export class LevelRuleController {
     return this.levelRuleService.checkLevelPermission(dto)
   }
 
-  @Get('statistics')
+  @Get('stats')
   @ApiDoc({
     summary: '获取用户等级统计信息',
     model: BaseUserLevelRuleDto,

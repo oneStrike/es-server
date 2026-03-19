@@ -35,8 +35,8 @@ import {
  * APP 用户管理控制器
  * 提供管理端 APP 用户的查询、状态维护与成长资产管理接口
  */
-@ApiTags('APP管理/APP用户管理')
-@Controller('/admin/app-users')
+@ApiTags('APP管理/用户管理')
+@Controller('admin/app-users')
 export class AppUserController {
   constructor(private readonly appUserService: AppUserService) {}
 
@@ -67,7 +67,7 @@ export class AppUserController {
   /**
    * 更新 APP 用户资料
    */
-  @Post('update-profile')
+  @Post('profile/update')
   @ApiDoc({
     summary: '更新 APP 用户资料',
     model: AdminAppUserDetailDto,
@@ -136,7 +136,7 @@ export class AppUserController {
   /**
    * 获取 APP 用户积分记录分页
    */
-  @Get('points/records')
+  @Get('points/record/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户积分记录',
     model: BaseUserPointRecordDto,
@@ -150,7 +150,7 @@ export class AppUserController {
   /**
    * 手动增加 APP 用户积分
    */
-  @Post('points/add')
+  @Post('points/grant')
   @ApiDoc({
     summary: '手动增加 APP 用户积分',
     model: BaseUserPointRecordDto,
@@ -200,7 +200,7 @@ export class AppUserController {
   /**
    * 获取 APP 用户经验记录分页
    */
-  @Get('experience/records')
+  @Get('experience/record/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户经验记录',
     model: BaseUserExperienceRecordDto,
@@ -214,7 +214,7 @@ export class AppUserController {
   /**
    * 手动增加 APP 用户经验
    */
-  @Post('experience/add')
+  @Post('experience/grant')
   @ApiDoc({
     summary: '手动增加 APP 用户经验',
     model: BaseUserExperienceRecordDto,
@@ -233,7 +233,7 @@ export class AppUserController {
   /**
    * 获取 APP 用户徽章分页
    */
-  @Get('badges')
+  @Get('badges/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户徽章',
     model: AdminAppUserBadgeItemDto,

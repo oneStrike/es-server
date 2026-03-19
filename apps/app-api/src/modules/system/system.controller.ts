@@ -23,7 +23,7 @@ import {
  *
  * @class SystemController
  */
-@ApiTags('系统模块')
+@ApiTags('系统')
 @Controller('app/system')
 export class SystemController {
   constructor(
@@ -33,7 +33,7 @@ export class SystemController {
     private readonly appPageService: AppPageService,
   ) {}
 
-  @Get('/config')
+  @Get('config')
   @ApiDoc({
     summary: 'APP系统配置',
     model: BaseAppConfigDto,
@@ -43,17 +43,18 @@ export class SystemController {
     return this.appConfigService.findActiveConfig()
   }
 
-  @Get('/page')
-  @ApiPageDoc({
-    summary: 'APP页面配置',
+  @Get('page/list')
+  @ApiDoc({
+    summary: 'APP页面列表',
     model: BaseAppPageDto,
+    isArray: true,
   })
   @Public()
-  async findPage() {
+  async listPages() {
     return this.appPageService.findActivePages()
   }
 
-  @Get('/announcement')
+  @Get('announcement/page')
   @ApiPageDoc({
     summary: '系统公告',
     model: AnnouncementPageResponseDto,
@@ -63,7 +64,7 @@ export class SystemController {
     return this.appAnnouncementService.findAnnouncementPage(query)
   }
 
-  @Get('/agreement')
+  @Get('agreement/list')
   @ApiDoc({
     summary: '协议列表',
     model: ListOrPageAgreementResponseDto,
@@ -74,7 +75,7 @@ export class SystemController {
     return this.agreementService.getAllLatest(query)
   }
 
-  @Get('/agreement-detail')
+  @Get('agreement/detail')
   @ApiDoc({
     summary: '协议详情',
     model: BaseAgreementDto,

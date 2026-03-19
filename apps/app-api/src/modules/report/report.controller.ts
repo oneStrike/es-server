@@ -5,7 +5,7 @@ import { Body, Controller, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { CreateReportBodyDto } from './dto/report.dto'
 
-@ApiTags('举报模块')
+@ApiTags('举报')
 @Controller('app/report')
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}

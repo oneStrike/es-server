@@ -10,12 +10,12 @@ import { DragReorderDto, IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('内容管理/小说章节模块')
-@Controller('admin/work/novel-chapter')
+@ApiTags('内容管理/小说章节')
+@Controller('admin/content/novel-chapter')
 export class NovelChapterController {
   constructor(private readonly workChapterService: WorkChapterService) {}
 
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建小说章节',
     model: IdDto,
@@ -27,7 +27,7 @@ export class NovelChapterController {
     })
   }
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询小说章节列表',
     model: IdDto,
@@ -36,7 +36,7 @@ export class NovelChapterController {
     return this.workChapterService.getChapterPage(query)
   }
 
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取小说章节详情',
     model: IdDto,
@@ -45,7 +45,7 @@ export class NovelChapterController {
     return this.workChapterService.getChapterDetail(query.id)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新小说章节',
     model: IdDto,
@@ -54,7 +54,7 @@ export class NovelChapterController {
     return this.workChapterService.updateChapter(body)
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除小说章节',
     model: IdDto,
@@ -63,7 +63,7 @@ export class NovelChapterController {
     return this.workChapterService.deleteChapter(query.id)
   }
 
-  @Post('/swap-sort-order')
+  @Post('swap-sort-order')
   @ApiDoc({
     summary: '交换章节序号',
     model: DragReorderDto,

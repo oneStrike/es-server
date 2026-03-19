@@ -16,12 +16,12 @@ import { ApiTags } from '@nestjs/swagger'
  *
  * @class PointController
  */
-@Controller('/admin/growth/points-rules')
+@Controller('admin/growth/points-rules')
 @ApiTags('用户成长/积分管理')
 export class PointController {
   constructor(private readonly userPointRuleService: UserPointRuleService) {}
 
-  @Get('rules-page')
+  @Get('page')
   @ApiPageDoc({
     summary: '获取积分规则分页',
     model: BaseUserPointRuleDto,
@@ -30,7 +30,7 @@ export class PointController {
     return this.userPointRuleService.getPointRulePage(query)
   }
 
-  @Get('rules-detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取积分规则详情',
     model: BaseUserPointRuleDto,
@@ -39,7 +39,7 @@ export class PointController {
     return this.userPointRuleService.getPointRuleDetail(dto.id)
   }
 
-  @Post('rules-create')
+  @Post('create')
   @ApiDoc({
     summary: '创建积分规则',
     model: BaseUserPointRuleDto,
@@ -48,7 +48,7 @@ export class PointController {
     return this.userPointRuleService.createPointRule(dto)
   }
 
-  @Post('rules-update')
+  @Post('update')
   @ApiDoc({
     summary: '更新积分规则',
     model: BaseUserPointRuleDto,

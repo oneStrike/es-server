@@ -27,7 +27,7 @@ import {
 export class AgreementController {
   constructor(private readonly agreementService: AgreementService) {}
 
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建协议',
     model: Boolean,
@@ -40,7 +40,7 @@ export class AgreementController {
     return this.agreementService.create(dto)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新协议',
     model: Boolean,
@@ -53,7 +53,7 @@ export class AgreementController {
     return this.agreementService.update(dto)
   }
 
-  @Post('/update-status')
+  @Post('update-status')
   @ApiDoc({
     summary: '更新协议状态',
     model: Boolean,
@@ -66,7 +66,7 @@ export class AgreementController {
     return this.agreementService.updatePublishStatus(dto)
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除协议',
     model: Boolean,
@@ -79,7 +79,7 @@ export class AgreementController {
     return this.agreementService.delete(dto)
   }
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '查询协议分页',
     model: ListOrPageAgreementResponseDto,
@@ -88,7 +88,7 @@ export class AgreementController {
     return this.agreementService.findPage(query)
   }
 
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取协议详情',
     model: BaseAgreementDto,

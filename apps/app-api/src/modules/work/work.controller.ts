@@ -21,12 +21,12 @@ import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Headers, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('作品模块')
+@ApiTags('作品')
 @Controller('app/work')
 export class WorkController {
   constructor(private readonly workService: WorkService) {}
 
-  @Get('hot')
+  @Get('hot/page')
   @Public()
   @ApiPageDoc({
     summary: '分页查询热门作品',
@@ -36,7 +36,7 @@ export class WorkController {
     return this.workService.getHotWorkPage(query)
   }
 
-  @Get('new')
+  @Get('new/page')
   @Public()
   @ApiPageDoc({
     summary: '分页查询最新作品',
@@ -46,7 +46,7 @@ export class WorkController {
     return this.workService.getNewWorkPage(query)
   }
 
-  @Get('recommended')
+  @Get('recommended/page')
   @Public()
   @ApiPageDoc({
     summary: '分页查询推荐作品',
@@ -86,7 +86,7 @@ export class WorkController {
     })
   }
 
-  @Get('forum-section')
+  @Get('forum-section/detail')
   @Public()
   @ApiDoc({
     summary: '查询作品关联板块详情',
@@ -96,7 +96,7 @@ export class WorkController {
     return this.workService.getWorkForumSection(query.id)
   }
 
-  @Get('forum-topics')
+  @Get('forum-topic/page')
   @Public()
   @ApiPageDoc({
     summary: '分页查询作品板块主题',

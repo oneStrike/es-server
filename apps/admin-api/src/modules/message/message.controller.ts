@@ -14,7 +14,7 @@ import { MessageMonitorService } from './message-monitor.service'
 export class MessageController {
   constructor(private readonly messageMonitorService: MessageMonitorService) {}
 
-  @Get('monitor/summary')
+  @Get('monitor/outbox/summary')
   @ApiDoc({
     summary: '获取消息 outbox 监控摘要',
     model: MessageOutboxMonitorSummaryDto,
@@ -23,7 +23,7 @@ export class MessageController {
     return this.messageMonitorService.getOutboxMonitorSummary(query)
   }
 
-  @Get('monitor/ws-summary')
+  @Get('monitor/ws/summary')
   @ApiDoc({
     summary: '获取消息 WS 监控摘要',
     model: MessageWsMonitorSummaryDto,

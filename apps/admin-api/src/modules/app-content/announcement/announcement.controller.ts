@@ -1,7 +1,7 @@
 import {
   AppAnnouncementService,
 } from '@libs/app-content'
-import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -25,7 +25,7 @@ import {
 export class AppAnnouncementController {
   constructor(private readonly libAppAnnouncementService: AppAnnouncementService) {}
 
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建公告',
     model: Boolean,
@@ -34,17 +34,16 @@ export class AppAnnouncementController {
     return this.libAppAnnouncementService.createAnnouncement(body)
   }
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询公告列表',
     model: AnnouncementPageResponseDto,
   })
-  @Public()
   async getPage(@Query() query: QueryAnnouncementDto) {
     return this.libAppAnnouncementService.findAnnouncementPage(query)
   }
 
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '公告详情',
     model: AnnouncementDetailDto,
@@ -53,7 +52,7 @@ export class AppAnnouncementController {
     return this.libAppAnnouncementService.findAnnouncementDetail(query.id)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新公告',
     model: Boolean,
@@ -71,7 +70,7 @@ export class AppAnnouncementController {
     return this.libAppAnnouncementService.updateAnnouncementStatus(body)
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除公告',
     model: Boolean,

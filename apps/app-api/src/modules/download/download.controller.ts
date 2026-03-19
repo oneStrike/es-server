@@ -11,12 +11,12 @@ import {
   DownloadTargetDto,
 } from './dto/download.dto'
 
-@ApiTags('下载模块')
+@ApiTags('下载')
 @Controller('app/download')
 export class DownloadController {
   constructor(private readonly downloadService: DownloadService) {}
 
-  @Get('works')
+  @Get('work/page')
   @ApiPageDoc({
     summary: '分页查询已下载作品',
     model: DownloadedWorkItemDto,
@@ -31,7 +31,7 @@ export class DownloadController {
     })
   }
 
-  @Get('work-chapters')
+  @Get('chapter/page')
   @ApiPageDoc({
     summary: '分页查询指定作品已下载章节',
     model: DownloadedWorkChapterItemDto,

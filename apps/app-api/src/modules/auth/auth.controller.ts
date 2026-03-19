@@ -17,7 +17,7 @@ import {
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 
-@ApiTags('认证模块')
+@ApiTags('认证')
 @Controller('app/auth')
 export class AuthController {
   constructor(
@@ -27,7 +27,7 @@ export class AuthController {
     private readonly passwordService: PasswordService,
   ) {}
 
-  @Post('send-verify-code')
+  @Post('verify-code/send')
   @ApiDoc({
     summary: '发送验证码',
     model: {
@@ -39,7 +39,7 @@ export class AuthController {
     return this.smsService.sendVerifyCode(body)
   }
 
-  @Get('public-key')
+  @Get('key/public')
   @ApiDoc({
     summary: '获取RSA公钥',
     model: RsaPublicKeyDto,
@@ -72,7 +72,7 @@ export class AuthController {
     return this.authService.logout(body)
   }
 
-  @Post('refresh-token')
+  @Post('token/refresh')
   @ApiDoc({
     summary: '刷新访问令牌',
     model: TokenDto,
@@ -85,7 +85,7 @@ export class AuthController {
     return this.authService.refreshToken(body.refreshToken, req)
   }
 
-  @Post('forgot-password')
+  @Post('password/forgot')
   @ApiDoc({
     summary: '找回密码',
     model: LoginResponseDto,
@@ -95,7 +95,7 @@ export class AuthController {
     return this.passwordService.forgotPassword(body)
   }
 
-  @Post('change-password')
+  @Post('password/change')
   @ApiDoc({
     summary: '修改密码',
     model: {

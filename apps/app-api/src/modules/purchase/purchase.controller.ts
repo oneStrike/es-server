@@ -13,12 +13,12 @@ import {
   QueryPurchasedWorkDto,
 } from './dto/purchase.dto'
 
-@ApiTags('购买模块')
+@ApiTags('购买')
 @Controller('app/purchase')
 export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
-  @Get('works')
+  @Get('work/page')
   @ApiPageDoc({
     summary: '分页查询已购作品',
     model: PurchasedWorkItemDto,
@@ -33,7 +33,7 @@ export class PurchaseController {
     })
   }
 
-  @Get('work-chapters')
+  @Get('chapter/page')
   @ApiPageDoc({
     summary: '分页查询指定作品已购章节',
     model: PurchasedWorkChapterItemDto,

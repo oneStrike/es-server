@@ -20,14 +20,14 @@ import {
  * 提供作者相关的API接口
  */
 @ApiTags('内容管理/作者管理')
-@Controller('admin/work/author')
-export class WorkAuthorController {
+@Controller('admin/content/author')
+export class ContentAuthorController {
   constructor(private readonly authorService: WorkAuthorService) {}
 
   /**
    * 创建作者
    */
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建作者',
     model: IdDto,
@@ -39,7 +39,7 @@ export class WorkAuthorController {
   /**
    * 分页查询作者列表
    */
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询作者列表',
     model: AuthorPageResponseDto,
@@ -51,7 +51,7 @@ export class WorkAuthorController {
   /**
    * 获取作者详情
    */
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取作者详情',
     model: BaseAuthorDto,
@@ -63,7 +63,7 @@ export class WorkAuthorController {
   /**
    * 更新作者信息
    */
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新作者信息',
     model: IdDto,
@@ -75,7 +75,7 @@ export class WorkAuthorController {
   /**
    * 批量更新作者状态
    */
-  @Post('/update-status')
+  @Post('update-status')
   @ApiDoc({
     summary: '更新作者状态',
     model: BatchOperationResponseDto,
@@ -87,7 +87,7 @@ export class WorkAuthorController {
   /**
    * 批量更新作者推荐状态
    */
-  @Post('/update-isRecommended')
+  @Post('update-recommended')
   @ApiDoc({
     summary: '更新作者推荐状态',
     model: BatchOperationResponseDto,
@@ -99,7 +99,7 @@ export class WorkAuthorController {
   /**
    * 删除作者
    */
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除作者',
     model: IdDto,

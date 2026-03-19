@@ -13,12 +13,12 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('任务模块')
+@ApiTags('任务')
 @Controller('app/task')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询可领取任务',
     model: BaseTaskDto,
@@ -30,7 +30,7 @@ export class TaskController {
     return this.taskService.getAvailableTasks(query, user.sub)
   }
 
-  @Get('/my-page')
+  @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的任务',
     model: BaseTaskAssignmentDto,
@@ -42,7 +42,7 @@ export class TaskController {
     return this.taskService.getMyTasks(query, user.sub)
   }
 
-  @Post('/claim')
+  @Post('claim')
   @ApiDoc({
     summary: '领取任务',
     model: BaseTaskAssignmentDto,
@@ -54,7 +54,7 @@ export class TaskController {
     return this.taskService.claimTask(body, user.sub)
   }
 
-  @Post('/progress')
+  @Post('progress')
   @ApiDoc({
     summary: '上报任务进度',
     model: BaseTaskAssignmentDto,
@@ -66,7 +66,7 @@ export class TaskController {
     return this.taskService.reportProgress(body, user.sub)
   }
 
-  @Post('/complete')
+  @Post('complete')
   @ApiDoc({
     summary: '完成任务',
     model: BaseTaskAssignmentDto,

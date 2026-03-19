@@ -11,12 +11,12 @@ import {
   ReadingHistoryWorkDto,
 } from './dto/reading-history.dto'
 
-@ApiTags('阅读模块')
-@Controller('app/')
+@ApiTags('阅读记录')
+@Controller('app/reading-history')
 export class ReadingHistoryController {
   constructor(private readonly readingStateService: ReadingStateService) {}
 
-  @Get('my')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询我的阅读记录',
     model: ReadingHistoryWorkDto,

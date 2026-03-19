@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common'
-import { WorkAuthorModule } from './author/author.module'
-import { WorkCategoryModule } from './category/category.module'
+import { ContentAuthorModule } from './author/author.module'
+import { ContentCategoryModule } from './category/category.module'
 import { ChapterContentModule } from './comic/chapter-content/chapter-content.module'
 import { ComicChapterModule } from './comic/chapter/comic-chapter.module'
 import { ComicModule } from './comic/core/comic.module'
 import { ComicThirdPartyModule } from './comic/third-party/third-party.module'
 import { NovelModule } from './novel/novel.module'
-import { WorkTagModule } from './tag/tag.module'
+import { ContentTagModule } from './tag/tag.module'
 
 @Module({
   imports: [
@@ -15,9 +15,9 @@ import { WorkTagModule } from './tag/tag.module'
     ChapterContentModule,
     ComicThirdPartyModule,
     NovelModule,
-    WorkAuthorModule,
-    WorkCategoryModule,
-    WorkTagModule,
+    ContentAuthorModule,
+    ContentCategoryModule,
+    ContentTagModule,
   ],
 })
 export class ContentModule {}

@@ -3,7 +3,7 @@ import {
   WorkCategoryService,
 } from '@libs/content'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { DragReorderDto, IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
@@ -19,14 +19,14 @@ import {
  * 提供分类相关的 RESTful API 接口
  */
 @ApiTags('内容管理/分类管理')
-@Controller('admin/work/category')
-export class WorkCategoryController {
+@Controller('admin/content/category')
+export class ContentCategoryController {
   constructor(private readonly categoryService: WorkCategoryService) {}
 
   /**
    * 创建分类
    */
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建分类',
     model: IdDto,
@@ -38,7 +38,7 @@ export class WorkCategoryController {
   /**
    * 分页查询分类列表
    */
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询分类列表',
     model: BaseCategoryDto,
@@ -50,7 +50,7 @@ export class WorkCategoryController {
   /**
    * 获取分类详情
    */
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '获取分类详情',
     model: BaseCategoryDto,
@@ -62,7 +62,7 @@ export class WorkCategoryController {
   /**
    * 更新分类信息
    */
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新分类信息',
     model: IdDto,
@@ -74,7 +74,7 @@ export class WorkCategoryController {
   /**
    * 更新分类状态
    */
-  @Post('/update-status')
+  @Post('update-status')
   @ApiDoc({
     summary: '更新分类状态',
     model: IdDto,
@@ -86,7 +86,7 @@ export class WorkCategoryController {
   /**
    * 批量删除分类
    */
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除分类',
     model: IdDto,
@@ -98,10 +98,10 @@ export class WorkCategoryController {
   /**
    * 拖拽排序
    */
-  @Post('/order')
+  @Post('swap-sort-order')
   @ApiDoc({
-    summary: '分类拖拽排序',
-    model: UpdateCategorySortDto,
+    summary: '分类交换排序',
+    model: DragReorderDto,
   })
   async categoryOrder(@Body() body: UpdateCategorySortDto) {
     return this.categoryService.updateCategorySort(body)

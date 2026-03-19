@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import {
+  ChapterContentComicRequestDto,
   DetailComicRequestDto,
   SearchComicRequestDto,
 } from '../dto/third-party.dto'
@@ -81,50 +82,62 @@ export class CopyService {
       const { data } = await this.httpClient.get(
         `/api/v3/comic2/${dto.comicId}?in_mainland=true&platform=3`,
       )
-      console.log(data)
-      return data.code !== 200
-        ? { code: 201 }
-        : { code: 200, data: data.results }
+      if (data.code !== 200) {
+        throw new Error('解析服务出现错误，请稍后再试！')
+      }
+      return data.results
     } catch (error) {
-      console.log(error)
-      return { code: 201 }
+      throw new BadRequestException(
+        typeof error === 'string'
+          ? error
+          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+      )
     }
   }
 
   /**
    * 获取章节列表
-   * @param path 漫画路径
+   * @param dto 请求参数
    * @returns 章节列表
    */
-  async chapter(path: string) {
+  async chapter(dto: DetailComicRequestDto) {
     try {
       const { data } = await this.httpClient.get(
-        `/api/v3/comic/${path}/group/default/chapters?limit=500&offset=0&in_mainland=true&platform=3`,
+        `/api/v3/comic/${dto.comicId}/group/default/chapters?limit=500&offset=0&in_mainland=true&platform=3`,
       )
-      return data.code !== 200
-        ? { code: 201 }
-        : { code: 200, data: data.results.list }
-    } catch {
-      return { code: 201 }
+      if (data.code !== 200) {
+        throw new Error('解析服务出现错误，请稍后再试！')
+      }
+      return data.results.list
+    } catch (error) {
+      throw new BadRequestException(
+        typeof error === 'string'
+          ? error
+          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+      )
     }
   }
 
   /**
    * 获取章节内容
-   * @param path 漫画路径
-   * @param chapterId 章节ID
+   * @param dto 请求参数
    * @returns 章节内容
    */
-  async content(path: string, chapterId: string) {
+  async content(dto: ChapterContentComicRequestDto) {
     try {
       const { data } = await this.httpClient.get(
-        `/api/v3/comic/${path}/chapter2/${chapterId}?in_mainland=true&platform=3`,
+        `/api/v3/comic/${dto.comicId}/chapter2/${dto.chapterId}?in_mainland=true&platform=3`,
       )
-      return data.code !== 200
-        ? { code: 201 }
-        : { code: 200, data: data.results }
-    } catch {
-      return { code: 201 }
+      if (data.code !== 200) {
+        throw new Error('解析服务出现错误，请稍后再试！')
+      }
+      return data.results
+    } catch (error) {
+      throw new BadRequestException(
+        typeof error === 'string'
+          ? error
+          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+      )
     }
   }
 }

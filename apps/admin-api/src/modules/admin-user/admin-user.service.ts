@@ -98,7 +98,8 @@ export class AdminUserService {
   /**
    * 注册管理员用户
    */
-  async register(data: NewAdminUser) {
+  async register(operatorId: number, data: NewAdminUser) {
+    await this.isSuperAdmin(operatorId)
     const { username, password, avatar, role, mobile } = data
 
     // 检查用户名是否已存在

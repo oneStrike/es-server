@@ -26,7 +26,7 @@ import { ApiTags } from '@nestjs/swagger'
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建任务',
     model: Boolean,
@@ -38,7 +38,7 @@ export class TaskController {
     return this.taskService.createTask(body, user)
   }
 
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新任务',
     model: Boolean,
@@ -50,7 +50,7 @@ export class TaskController {
     return this.taskService.updateTask(body, user)
   }
 
-  @Post('/update-status')
+  @Post('update-status')
   @ApiDoc({
     summary: '更新任务状态',
     model: Boolean,
@@ -59,7 +59,7 @@ export class TaskController {
     return this.taskService.updateTaskStatus(body)
   }
 
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除任务',
     model: Boolean,
@@ -68,7 +68,7 @@ export class TaskController {
     return this.taskService.deleteTask(body.id)
   }
 
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页查询任务',
     model: BaseTaskDto,
@@ -77,7 +77,7 @@ export class TaskController {
     return this.taskService.getTaskPage(query)
   }
 
-  @Get('/detail')
+  @Get('detail')
   @ApiDoc({
     summary: '查询任务详情',
     model: BaseTaskDto,
@@ -86,7 +86,7 @@ export class TaskController {
     return this.taskService.getTaskDetail(id)
   }
 
-  @Get('/assignment/page')
+  @Get('assignment/page')
   @ApiPageDoc({
     summary: '分页查询任务领取记录',
     model: BaseTaskAssignmentDto,

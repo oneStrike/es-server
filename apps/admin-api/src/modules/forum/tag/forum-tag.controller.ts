@@ -1,5 +1,6 @@
 import {
   AssignForumTagToTopicDto,
+  BaseForumTagDto,
   CreateForumTagDto,
   ForumTagService,
   QueryForumTagDto,
@@ -10,16 +11,17 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ForumTagDetailResponseDto } from './dto/forum-tag-response.dto'
 
-@Controller('/admin/forum/tags')
-@ApiTags('论坛模块/标签管理')
+@Controller('admin/forum/tags')
+@ApiTags('论坛管理/标签管理')
 export class ForumTagController {
   constructor(private readonly forumTagService: ForumTagService) {}
 
-  @Get('list')
+  @Get('page')
   @ApiPageDoc({
     summary: '查看标签列表',
-    model: CreateForumTagDto,
+    model: BaseForumTagDto,
   })
   async getTagList(@Query() query: QueryForumTagDto) {
     return this.forumTagService.getTags(query)
@@ -28,7 +30,7 @@ export class ForumTagController {
   @Get('detail')
   @ApiDoc({
     summary: '查看标签详情',
-    model: CreateForumTagDto,
+    model: ForumTagDetailResponseDto,
   })
   async getTagDetail(@Query() query: IdDto) {
     return this.forumTagService.getTagById(query.id)
@@ -37,66 +39,60 @@ export class ForumTagController {
   @Get('popular')
   @ApiDoc({
     summary: '获取热门标签',
-    model: CreateForumTagDto,
+    model: BaseForumTagDto,
+    isArray: true,
   })
   async getPopularTags(@Query('limit') limit?: number) {
     return this.forumTagService.getPopularTags(limit)
   }
 
-  @Get('system')
+  @Get('enabled')
   @ApiDoc({
-    summary: '获取系统标签',
-    model: CreateForumTagDto,
+    summary: '获取启用标签',
+    model: BaseForumTagDto,
+    isArray: true,
   })
-  async getSystemTags() {
-    return this.forumTagService.getEnabledTags()
-  }
-
-  @Get('user')
-  @ApiDoc({
-    summary: '获取用户标签',
-    model: CreateForumTagDto,
-  })
-  async getUserTags() {
+  async getEnabledTags() {
     return this.forumTagService.getEnabledTags()
   }
 
   @Get('topic-tags')
   @ApiDoc({
     summary: '获取主题的所有标签',
-    model: CreateForumTagDto,
+    model: BaseForumTagDto,
+    isArray: true,
   })
   async getTopicTags(@Query('topicId') topicId: number) {
     return this.forumTagService.getTopicTags(topicId)
   }
 
-  @Post('add')
+  @Post('create')
   @ApiDoc({
     summary: '添加标签',
-    model: CreateForumTagDto,
+    model: BaseForumTagDto,
   })
-  async addTag(@Body() dto: CreateForumTagDto) {
+  async createTag(@Body() dto: CreateForumTagDto) {
     return this.forumTagService.createTag(dto)
   }
 
   @Post('update')
   @ApiDoc({
     summary: '更新标签',
-    model: UpdateForumTagDto,
+    model: BaseForumTagDto,
   })
   async updateTag(@Body() dto: UpdateForumTagDto) {
     return this.forumTagService.updateTag(dto)
   }
 
-  @Post('remove')
+  @Post('delete')
   @ApiDoc({
     summary: '删除标签',
   })
-  async removeTag(@Body() dto: IdDto) {
+  async deleteTag(@Body() dto: IdDto) {
     return this.forumTagService.deleteTag(dto.id)
   }
 
-  @Post('assign')
+  @Post('assign-topic')
   @ApiDoc({
     summary: '为主题分配标签',
   })
@@ -104,7 +100,7 @@ export class ForumTagController {
     return this.forumTagService.assignTagToTopic(dto)
   }
 
-  @Post('remove-tag')
+  @Post('unassign-topic')
   @ApiDoc({
     summary: '从主题移除标签',
   })

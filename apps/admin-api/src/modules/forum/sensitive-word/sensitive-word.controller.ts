@@ -27,7 +27,7 @@ import { ApiTags } from '@nestjs/swagger'
  * 敏感词管理控制器
  * 提供敏感词管理、检测、统计相关的API接口
  */
-@ApiTags('论坛模块/敏感词管理模块')
+@ApiTags('论坛管理/敏感词管理')
 @Controller('admin/forum/sensitive-word')
 export class SensitiveWordController {
   constructor(
@@ -41,7 +41,7 @@ export class SensitiveWordController {
    * @param query - 查询参数
    * @returns 敏感词分页数据
    */
-  @Get('/page')
+  @Get('page')
   @ApiPageDoc({
     summary: '获取敏感词分页列表',
     model: BaseSensitiveWordDto,
@@ -55,7 +55,7 @@ export class SensitiveWordController {
    * @param body - 创建敏感词请求对象
    * @returns 创建的敏感词信息
    */
-  @Post('/create')
+  @Post('create')
   @ApiDoc({
     summary: '创建敏感词',
     model: BaseSensitiveWordDto,
@@ -69,7 +69,7 @@ export class SensitiveWordController {
    * @param body - 更新敏感词请求对象
    * @returns 更新后的敏感词信息
    */
-  @Post('/update')
+  @Post('update')
   @ApiDoc({
     summary: '更新敏感词',
     model: BaseSensitiveWordDto,
@@ -83,7 +83,7 @@ export class SensitiveWordController {
    * @param body - 删除敏感词请求对象
    * @returns 删除结果
    */
-  @Post('/delete')
+  @Post('delete')
   @ApiDoc({
     summary: '删除敏感词',
     model: BaseSensitiveWordDto,
@@ -97,7 +97,7 @@ export class SensitiveWordController {
    * @param body - 更新状态请求对象
    * @returns 更新结果
    */
-  @Post('/update-status')
+  @Post('update-status')
   @ApiDoc({
     summary: '更新敏感词状态',
     model: BaseSensitiveWordDto,
@@ -111,7 +111,7 @@ export class SensitiveWordController {
    * @param body - 检测请求对象
    * @returns 检测结果
    */
-  @Post('/detect')
+  @Post('detect')
   @ApiDoc({
     summary: '检测文本中的敏感词',
     model: MatchedWordDto,
@@ -126,7 +126,7 @@ export class SensitiveWordController {
    * @param query - 统计查询请求对象
    * @returns 统计查询结果
    */
-  @Get('/statistics')
+  @Get('stats')
   @ApiDoc({
     summary: '获取统计查询结果',
     model: SensitiveWordStatisticsResponseDto,
@@ -139,7 +139,7 @@ export class SensitiveWordController {
    * 获取完整统计数据
    * @returns 完整统计数据
    */
-  @Get('/statistics/full')
+  @Get('stats/full')
   @ApiDoc({
     summary: '获取完整统计数据',
     model: SensitiveWordStatisticsDataDto,
@@ -153,7 +153,7 @@ export class SensitiveWordController {
    * @param body - 替换请求对象
    * @returns 替换后的文本
    */
-  @Post('/replace')
+  @Post('replace')
   @ApiDoc({
     summary: '替换文本中的敏感词',
     model: SensitiveWordReplaceResponseDto,
@@ -167,7 +167,7 @@ export class SensitiveWordController {
    * @param body - 检测请求对象
    * @returns 敏感词最高等级
    */
-  @Post('/detect/highest-level')
+  @Post('detect/highest-level')
   @ApiDoc({
     summary: '获取文本中敏感词的最高等级',
     model: SensitiveWordHighestLevelResponseDto,
@@ -182,7 +182,7 @@ export class SensitiveWordController {
    * 检查敏感词检测器状态
    * @returns 检测器状态
    */
-  @Get('/detect/status')
+  @Get('detect/status')
   @ApiDoc({
     summary: '检查敏感词检测器状态',
     model: SensitiveWordDetectStatusResponseDto,
@@ -198,7 +198,7 @@ export class SensitiveWordController {
    * 获取当前加载的敏感词数量
    * @returns 敏感词数量
    */
-  @Get('/count')
+  @Get('count')
   @ApiDoc({
     summary: '获取当前加载的敏感词数量',
     model: SensitiveWordCountResponseDto,
