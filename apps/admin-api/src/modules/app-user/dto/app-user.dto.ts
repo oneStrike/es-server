@@ -22,6 +22,12 @@ import {
 
 export class BaseAdminAppUserDto extends BaseAppUserDto {}
 
+export enum AdminAppUserDeletedScopeEnum {
+  ACTIVE = 'active',
+  DELETED = 'deleted',
+  ALL = 'all',
+}
+
 export class AdminAppUserLevelDto {
   @NumberProperty({
     description: '等级ID',
@@ -232,6 +238,15 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
   ),
   PageDto,
 ) {
+  @EnumProperty({
+    description: '删除态筛选（active=未删除，deleted=已删除，all=全部）',
+    enum: AdminAppUserDeletedScopeEnum,
+    example: AdminAppUserDeletedScopeEnum.ACTIVE,
+    required: false,
+    default: AdminAppUserDeletedScopeEnum.ACTIVE,
+  })
+  deletedScope?: AdminAppUserDeletedScopeEnum
+
   @StringProperty({
     description: '最后登录开始时间',
     example: '2026-03-01',
@@ -256,6 +271,33 @@ export class QueryAdminAppUserIdDto {
     required: true,
   })
   userId!: number
+}
+
+export class CreateAdminAppUserDto extends IntersectionType(
+  PickType(BaseAdminAppUserDto, ['nickname', 'password'] as const),
+  PartialType(
+    PickType(BaseAdminAppUserDto, [
+      'phoneNumber',
+      'emailAddress',
+      'avatarUrl',
+      'genderType',
+      'birthDate',
+      'isEnabled',
+      'status',
+    ] as const),
+  ),
+) {}
+
+export class ResetAdminAppUserPasswordDto extends PickType(BaseAdminAppUserDto, [
+  'id',
+] as const) {
+  @StringProperty({
+    description: '前端 RSA 加密后的新密码',
+    example: 'Base64EncodedCipherText',
+    required: true,
+    maxLength: 2000,
+  })
+  password!: string
 }
 
 export class UpdateAdminAppUserProfileDto extends IntersectionType(

@@ -1,5 +1,3 @@
-import type { JwtUserInfoInterface } from '@libs/platform/types'
-
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -34,9 +32,9 @@ export class AdminUserController {
   })
   async register(
     @Body() body: UserRegisterDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.register(user.sub, body)
+    return this.adminUserService.register(userId, body)
   }
 
   /**
@@ -49,9 +47,9 @@ export class AdminUserController {
   })
   async updateUserInfo(
     @Body() body: UpdateUserDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.updateUserInfo(user.sub, body)
+    return this.adminUserService.updateUserInfo(userId, body)
   }
 
   /**
@@ -62,8 +60,8 @@ export class AdminUserController {
     summary: '获取当前用户信息',
     model: BaseUserDto,
   })
-  async getUserInfo(@CurrentUser() user: JwtUserInfoInterface) {
-    return this.adminUserService.getUserInfo(user.sub)
+  async getUserInfo(@CurrentUser('sub') userId: number) {
+    return this.adminUserService.getUserInfo(userId)
   }
 
   /**
@@ -104,9 +102,9 @@ export class AdminUserController {
   })
   async changePassword(
     @Body() body: ChangePasswordDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.changePassword(user.sub, body)
+    return this.adminUserService.changePassword(userId, body)
   }
 
   /*
@@ -119,9 +117,9 @@ export class AdminUserController {
   })
   async resetPassword(
     @Body() query: IdDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.adminUserService.resetPassword(user.sub, query.id)
+    return this.adminUserService.resetPassword(userId, query.id)
   }
 
   /**

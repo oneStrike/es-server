@@ -1,4 +1,3 @@
-import type { JwtUserInfoInterface } from '@libs/platform/types'
 import type { SQL } from 'drizzle-orm'
 import type {
   ClaimTaskInput,
@@ -250,11 +249,11 @@ export class TaskService {
    * 创建任务（管理端）
    *
    * @param dto 创建参数
-   * @param adminUser 管理员用户信息
+   * @param adminUserId 管理员用户ID
    * @returns 创建结果，包含任务ID
    * @throws BadRequestException 发布时间无效或任务编码已存在
    */
-  async createTask(dto: CreateTaskInput, adminUser: JwtUserInfoInterface) {
+  async createTask(dto: CreateTaskInput, adminUserId: number) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
 
@@ -263,8 +262,8 @@ export class TaskService {
         this.db.insert(this.taskTable).values({
           ...dto,
           repeatRule: this.parseJsonValue(dto.repeatRule),
-          createdById: Number(adminUser.sub),
-          updatedById: Number(adminUser.sub),
+          createdById: adminUserId,
+          updatedById: adminUserId,
         }),
       { duplicate: '任务编码已存在' },
     )
@@ -276,12 +275,12 @@ export class TaskService {
    * 更新任务（管理端）
    *
    * @param dto 更新参数，包含任务ID和需要更新的字段
-   * @param adminUser 管理员用户信息
+   * @param adminUserId 管理员用户ID
    * @returns 更新结果，包含任务ID
    * @throws NotFoundException 任务不存在
    * @throws BadRequestException 发布时间无效或任务编码已存在
    */
-  async updateTask(dto: UpdateTaskInput, adminUser: JwtUserInfoInterface) {
+  async updateTask(dto: UpdateTaskInput, adminUserId: number) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
 
@@ -293,7 +292,7 @@ export class TaskService {
             ...dto,
             rewardConfig: this.parseJsonValue(dto.rewardConfig),
             repeatRule: this.parseJsonValue(dto.repeatRule),
-            updatedById: Number(adminUser.sub),
+            updatedById: adminUserId,
           })
           .where(eq(this.taskTable.id, dto.id)),
       { duplicate: '任务编码已存在' },

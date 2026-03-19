@@ -18,14 +18,15 @@ import type {
 } from './dto/user.dto'
 import { DrizzleService } from '@db/core'
 
-import { GrowthAssetTypeEnum, UserExperienceService, UserPointService } from '@libs/growth'
+import {
+  GrowthAssetTypeEnum,
+  UserExperienceService,
+  UserPointService,
+} from '@libs/growth'
 import { UserAssetsService } from '@libs/interaction'
 import { MessageInboxService } from '@libs/message'
 import { UserService as UserCoreService } from '@libs/user'
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 
 @Injectable()
@@ -71,8 +72,7 @@ export class UserService {
    * 获取用户资料
    */
   async getUserProfile(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
-    return this.userCoreService.mapBaseUser(user)
+    return this.userCoreService.ensureUserExists(userId)
   }
 
   /**
@@ -159,13 +159,14 @@ export class UserService {
    * 获取用户中心汇总信息
    */
   async getUserCenter(userId: number) {
-    const [user, forumProfile, badgeCount, assets, messageSummary] = await Promise.all([
-      this.userCoreService.ensureUserExists(userId),
-      this.userCoreService.getUserForumProfile(userId),
-      this.userCoreService.getBadgeCount(userId),
-      this.getUserAssetsSummary(userId),
-      this.messageInboxService.getSummary(userId),
-    ])
+    const [user, forumProfile, badgeCount, assets, messageSummary] =
+      await Promise.all([
+        this.userCoreService.ensureUserExists(userId),
+        this.userCoreService.getUserForumProfile(userId),
+        this.userCoreService.getBadgeCount(userId),
+        this.getUserAssetsSummary(userId),
+        this.messageInboxService.getSummary(userId),
+      ])
 
     const level = user.levelId
       ? await this.userCoreService.getLevelInfo(user.levelId)
@@ -279,12 +280,17 @@ export class UserService {
 
     const [todayEarnedRows, levelRows, nextLevelRows] = await Promise.all([
       this.db
-        .select({ sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int` })
+        .select({
+          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int`,
+        })
         .from(this.growthLedgerRecord)
         .where(
           and(
             eq(this.growthLedgerRecord.userId, userId),
-            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+            eq(
+              this.growthLedgerRecord.assetType,
+              GrowthAssetTypeEnum.EXPERIENCE,
+            ),
             gt(this.growthLedgerRecord.delta, 0),
             gte(this.growthLedgerRecord.createdAt, today),
           ),
@@ -394,13 +400,16 @@ export class UserService {
       }
     }
 
-    const page = await this.drizzle.ext.findPagination(this.userBadgeAssignment, {
-      where: and(
-        eq(this.userBadgeAssignment.userId, userId),
-        inArray(this.userBadgeAssignment.badgeId, badgeIds),
-      ),
-      ...pageQuery,
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.userBadgeAssignment,
+      {
+        where: and(
+          eq(this.userBadgeAssignment.userId, userId),
+          inArray(this.userBadgeAssignment.badgeId, badgeIds),
+        ),
+        ...pageQuery,
+      },
+    )
     const pageBadgeIds = page.list.map((item) => item.badgeId)
     const pageBadges = await this.db
       .select()

@@ -1,4 +1,3 @@
-import type { JwtUserInfoInterface } from '@libs/platform/types'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -18,11 +17,13 @@ import {
   AdminAppUserPointStatsDto,
   AssignAdminAppUserBadgeDto,
   ConsumeAdminAppUserPointsDto,
+  CreateAdminAppUserDto,
   QueryAdminAppUserBadgeDto,
   QueryAdminAppUserExperienceRecordDto,
   QueryAdminAppUserIdDto,
   QueryAdminAppUserPageDto,
   QueryAdminAppUserPointRecordDto,
+  ResetAdminAppUserPasswordDto,
   UpdateAdminAppUserEnabledDto,
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
@@ -61,6 +62,22 @@ export class AppUserController {
     return this.appUserService.getAppUserDetail(query.id)
   }
 
+  @Post('create')
+  @ApiDoc({
+    summary: '新建 APP 用户',
+    model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '新建 APP 用户',
+  })
+  async createAppUser(
+    @Body() body: CreateAdminAppUserDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appUserService.createAppUser(userId, body)
+  }
+
   /**
    * 更新 APP 用户资料
    */
@@ -75,9 +92,9 @@ export class AppUserController {
   })
   async updateAppUserProfile(
     @Body() body: UpdateAdminAppUserProfileDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.updateAppUserProfile(user.sub, body)
+    return this.appUserService.updateAppUserProfile(userId, body)
   }
 
   /**
@@ -94,9 +111,9 @@ export class AppUserController {
   })
   async updateAppUserEnabled(
     @Body() body: UpdateAdminAppUserEnabledDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.updateAppUserEnabled(user.sub, body)
+    return this.appUserService.updateAppUserEnabled(userId, body)
   }
 
   /**
@@ -113,9 +130,57 @@ export class AppUserController {
   })
   async updateAppUserStatus(
     @Body() body: UpdateAdminAppUserStatusDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.updateAppUserStatus(user.sub, body)
+    return this.appUserService.updateAppUserStatus(userId, body)
+  }
+
+  @Post('delete')
+  @ApiDoc({
+    summary: '删除 APP 用户',
+    model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除 APP 用户',
+  })
+  async deleteAppUser(
+    @Body() body: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appUserService.deleteAppUser(userId, body.id)
+  }
+
+  @Post('restore')
+  @ApiDoc({
+    summary: '恢复 APP 用户',
+    model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '恢复 APP 用户',
+  })
+  async restoreAppUser(
+    @Body() body: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appUserService.restoreAppUser(userId, body.id)
+  }
+
+  @Post('password/reset')
+  @ApiDoc({
+    summary: '重置 APP 用户密码',
+    model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '重置 APP 用户密码',
+  })
+  async resetAppUserPassword(
+    @Body() body: ResetAdminAppUserPasswordDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appUserService.resetAppUserPassword(userId, body)
   }
 
   /**
@@ -158,9 +223,9 @@ export class AppUserController {
   })
   async addAppUserPoints(
     @Body() body: AddAdminAppUserPointsDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.addAppUserPoints(user.sub, body)
+    return this.appUserService.addAppUserPoints(userId, body)
   }
 
   /**
@@ -177,9 +242,9 @@ export class AppUserController {
   })
   async consumeAppUserPoints(
     @Body() body: ConsumeAdminAppUserPointsDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.consumeAppUserPoints(user.sub, body)
+    return this.appUserService.consumeAppUserPoints(userId, body)
   }
 
   /**
@@ -222,9 +287,9 @@ export class AppUserController {
   })
   async addAppUserExperience(
     @Body() body: AddAdminAppUserExperienceDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.addAppUserExperience(user.sub, body)
+    return this.appUserService.addAppUserExperience(userId, body)
   }
 
   /**
@@ -253,9 +318,9 @@ export class AppUserController {
   })
   async assignAppUserBadge(
     @Body() body: AssignAdminAppUserBadgeDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.assignAppUserBadge(user.sub, body)
+    return this.appUserService.assignAppUserBadge(userId, body)
   }
 
   /**
@@ -272,8 +337,8 @@ export class AppUserController {
   })
   async revokeAppUserBadge(
     @Body() body: AssignAdminAppUserBadgeDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.appUserService.revokeAppUserBadge(user.sub, body)
+    return this.appUserService.revokeAppUserBadge(userId, body)
   }
 }

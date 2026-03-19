@@ -1,4 +1,3 @@
-import type { JwtUserInfoInterface } from '@libs/platform/types'
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
@@ -27,9 +26,9 @@ export class TaskController {
   })
   async getAvailable(
     @Query() query: QueryAppTaskDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.taskService.getAvailableTasks(query, user.sub)
+    return this.taskService.getAvailableTasks(query, userId)
   }
 
   @Get('my/page')
@@ -39,9 +38,9 @@ export class TaskController {
   })
   async getMyTasks(
     @Query() query: QueryMyTaskDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.taskService.getMyTasks(query, user.sub)
+    return this.taskService.getMyTasks(query, userId)
   }
 
   @Post('claim')
@@ -51,9 +50,9 @@ export class TaskController {
   })
   async claim(
     @Body() body: ClaimTaskDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.taskService.claimTask(body, user.sub)
+    return this.taskService.claimTask(body, userId)
   }
 
   @Post('progress')
@@ -63,9 +62,9 @@ export class TaskController {
   })
   async progress(
     @Body() body: TaskProgressDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.taskService.reportProgress(body, user.sub)
+    return this.taskService.reportProgress(body, userId)
   }
 
   @Post('complete')
@@ -75,8 +74,8 @@ export class TaskController {
   })
   async complete(
     @Body() body: TaskCompleteDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.taskService.completeTask(body, user.sub)
+    return this.taskService.completeTask(body, userId)
   }
 }

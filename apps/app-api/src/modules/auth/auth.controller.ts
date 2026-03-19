@@ -1,4 +1,3 @@
-import type { JwtUserInfoInterface } from '@libs/platform/types'
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 import { RsaService, SendVerifyCodeDto } from '@libs/platform/modules'
@@ -104,8 +103,8 @@ export class AuthController {
   })
   async changePassword(
     @Body() body: ChangePasswordDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.passwordService.changePassword(user.sub, body)
+    return this.passwordService.changePassword(userId, body)
   }
 }

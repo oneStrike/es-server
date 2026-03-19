@@ -1,4 +1,3 @@
-import type { JwtUserInfoInterface } from '@libs/platform/types'
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
@@ -35,9 +34,9 @@ export class TaskController {
   })
   async create(
     @Body() body: CreateTaskDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.taskService.createTask(body, user)
+    return this.taskService.createTask(body, userId)
   }
 
   @Post('update')
@@ -47,9 +46,9 @@ export class TaskController {
   })
   async update(
     @Body() body: UpdateTaskDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.taskService.updateTask(body, user)
+    return this.taskService.updateTask(body, userId)
   }
 
   @Post('update-status')

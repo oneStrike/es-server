@@ -1,10 +1,7 @@
 import { DrizzleService } from '@db/core'
 import { AppUser } from '@db/schema'
 import { UserStatusEnum } from '@libs/platform/constant'
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 @Injectable()
@@ -92,33 +89,6 @@ export class UserService {
       canFavorite: canInteract,
       reason,
       until: user.banUntil ?? undefined,
-    }
-  }
-
-  /**
-   * 映射用户基础字段（脱敏或格式化）
-   */
-  mapBaseUser(user: AppUser) {
-    return {
-      id: user.id,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      account: user.account,
-      phone: user.phoneNumber ?? undefined,
-      nickname: user.nickname,
-      avatar: user.avatarUrl ?? undefined,
-      email: user.emailAddress ?? undefined,
-      isEnabled: user.isEnabled,
-      gender: user.genderType,
-      birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
-      points: user.points,
-      experience: user.experience,
-      levelId: user.levelId ?? undefined,
-      status: user.status,
-      banReason: user.banReason ?? undefined,
-      banUntil: user.banUntil ?? undefined,
-      lastLoginAt: user.lastLoginAt ?? undefined,
-      lastLoginIp: user.lastLoginIp ?? undefined,
     }
   }
 

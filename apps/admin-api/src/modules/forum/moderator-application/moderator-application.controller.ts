@@ -1,4 +1,3 @@
-import type { JwtUserInfoInterface } from '@libs/platform/types'
 import {
   ForumModeratorApplicationService,
 } from '@libs/forum'
@@ -44,9 +43,9 @@ export class ForumModeratorApplicationController {
   })
   async audit(
     @Body() body: AuditForumModeratorApplicationDto,
-    @CurrentUser() user: JwtUserInfoInterface,
+    @CurrentUser('sub') userId: number,
   ) {
-    return this.forumModeratorApplicationService.auditApplication(user.sub, body)
+    return this.forumModeratorApplicationService.auditApplication(userId, body)
   }
 
   @Post('delete')

@@ -3,10 +3,12 @@ import type {
   AddAdminAppUserPointsDto,
   AssignAdminAppUserBadgeDto,
   ConsumeAdminAppUserPointsDto,
+  CreateAdminAppUserDto,
   QueryAdminAppUserBadgeDto,
   QueryAdminAppUserExperienceRecordDto,
   QueryAdminAppUserPageDto,
   QueryAdminAppUserPointRecordDto,
+  ResetAdminAppUserPasswordDto,
   UpdateAdminAppUserEnabledDto,
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
@@ -18,7 +20,12 @@ import {
   UserExperienceService,
   UserPointService,
 } from '@libs/growth'
-import { AdminUserRoleEnum, UserStatusEnum } from '@libs/platform/constant'
+import {
+  AdminUserRoleEnum,
+  GenderEnum,
+  UserStatusEnum,
+} from '@libs/platform/constant'
+import { RsaService, ScryptService } from '@libs/platform/modules'
 import { UserService as UserCoreService } from '@libs/user'
 
 import {
@@ -27,7 +34,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 
 /**
  * APP 用户管理服务
@@ -41,6 +48,8 @@ export class AppUserService {
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
     private readonly userBadgeService: UserBadgeService,
+    private readonly rsaService: RsaService,
+    private readonly scryptService: ScryptService,
   ) {}
 
   private get db() {
@@ -88,6 +97,7 @@ export class AppUserService {
       isEnabled,
       status,
       levelId,
+      deletedScope,
       lastLoginStartDate,
       lastLoginEndDate,
       pageIndex,
@@ -109,7 +119,12 @@ export class AppUserService {
         isEnabled,
         status,
         levelId,
-        deletedAt: { isNull: true },
+        deletedAt:
+          deletedScope === 'deleted'
+            ? { isNotNull: true }
+            : deletedScope === 'all'
+              ? undefined
+              : { isNull: true },
         lastLoginAt,
       },
     })
@@ -120,12 +135,17 @@ export class AppUserService {
       pageSize,
     })
 
-    const levelIds = [...new Set(page.list.map((item) => item.levelId).filter(Boolean))]
+    const levelIds = [
+      ...new Set(page.list.map((item) => item.levelId).filter(Boolean)),
+    ]
     const userIds = page.list.map((item) => item.id)
     const [levelRows, forumRows] = await Promise.all([
       levelIds.length > 0
         ? this.db
-            .select({ id: this.userLevelRule.id, name: this.userLevelRule.name })
+            .select({
+              id: this.userLevelRule.id,
+              name: this.userLevelRule.name,
+            })
             .from(this.userLevelRule)
             .where(inArray(this.userLevelRule.id, levelIds as number[]))
         : [],
@@ -140,7 +160,9 @@ export class AppUserService {
             .where(inArray(this.forumProfile.userId, userIds))
         : [],
     ])
-    const levelMap = new Map(levelRows.map((item) => [item.id, item.name] as const))
+    const levelMap = new Map(
+      levelRows.map((item) => [item.id, item.name] as const),
+    )
     const forumMap = new Map(
       forumRows.map((item) => [item.userId, item] as const),
     )
@@ -148,7 +170,8 @@ export class AppUserService {
     return {
       ...page,
       list: page.list.map((item) => ({
-        ...this.userCoreService.mapBaseUser(item),
+        ...item,
+        deletedAt: item.deletedAt ?? undefined,
         levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
         topicCount: forumMap.get(item.id)?.topicCount ?? 0,
         replyCount: forumMap.get(item.id)?.replyCount ?? 0,
@@ -162,16 +185,19 @@ export class AppUserService {
   async getAppUserDetail(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
 
-    const [level, forumProfile, badgeCount, pointStats, experienceStats] = await Promise.all([
-      user.levelId ? this.userCoreService.getLevelInfo(user.levelId) : undefined,
-      this.userCoreService.getUserForumProfile(userId),
-      this.userCoreService.getBadgeCount(userId),
-      this.userPointService.getUserPointStats(userId),
-      this.getAppUserExperienceStats(userId),
-    ])
+    const [level, forumProfile, badgeCount, pointStats, experienceStats] =
+      await Promise.all([
+        user.levelId
+          ? this.userCoreService.getLevelInfo(user.levelId)
+          : undefined,
+        this.userCoreService.getUserForumProfile(userId),
+        this.userCoreService.getBadgeCount(userId),
+        this.userPointService.getUserPointStats(userId),
+        this.getAppUserExperienceStats(userId),
+      ])
 
     return {
-      ...this.userCoreService.mapBaseUser(user),
+      ...user,
       level: level
         ? {
             id: level.id,
@@ -184,6 +210,63 @@ export class AppUserService {
       pointStats,
       experienceStats,
     }
+  }
+
+  async createAppUser(adminUserId: number, dto: CreateAdminAppUserDto) {
+    await this.ensureSuperAdmin(adminUserId)
+    const account = await this.generateUniqueAccount()
+    const hashedPassword = await this.scryptService.encryptPassword(
+      dto.password,
+    )
+
+    try {
+      await this.drizzle.withErrorHandling(async () =>
+        this.db.transaction(async (tx) => {
+          const [defaultLevel] = await tx
+            .select({ id: this.userLevelRule.id })
+            .from(this.userLevelRule)
+            .where(eq(this.userLevelRule.isEnabled, true))
+            .orderBy(this.userLevelRule.sortOrder)
+            .limit(1)
+
+          const [created] = await tx
+            .insert(this.appUser)
+            .values({
+              account: String(account),
+              nickname: dto.nickname,
+              password: hashedPassword,
+              phoneNumber: dto.phoneNumber,
+              emailAddress: dto.emailAddress,
+              avatarUrl: dto.avatarUrl,
+              genderType: dto.genderType ?? GenderEnum.UNKNOWN,
+              birthDate: this.normalizeBirthDate(dto.birthDate),
+              isEnabled: dto.isEnabled ?? true,
+              status: dto.status ?? UserStatusEnum.NORMAL,
+              points: 0,
+              experience: 0,
+              levelId: defaultLevel?.id ?? null,
+            })
+            .returning({ id: this.appUser.id })
+
+          await tx.insert(this.forumProfile).values({
+            userId: created.id,
+            topicCount: 0,
+            replyCount: 0,
+            likeCount: 0,
+            favoriteCount: 0,
+            signature: '',
+            bio: '',
+          })
+        }),
+      )
+    } catch (error) {
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BadRequestException('手机号或邮箱已存在')
+      }
+      throw error
+    }
+
+    return true
   }
 
   /**
@@ -298,21 +381,80 @@ export class AppUserService {
     await this.userCoreService.ensureUserExists(dto.id)
 
     const isNormal = dto.status === UserStatusEnum.NORMAL
+    const isTimed =
+      dto.status === UserStatusEnum.MUTED ||
+      dto.status === UserStatusEnum.BANNED
     const isPermanent =
-      dto.status === UserStatusEnum.PERMANENT_MUTED
-      || dto.status === UserStatusEnum.PERMANENT_BANNED
+      dto.status === UserStatusEnum.PERMANENT_MUTED ||
+      dto.status === UserStatusEnum.PERMANENT_BANNED
+    if (!isNormal && !dto.banReason?.trim()) {
+      throw new BadRequestException('禁言或封禁必须填写原因')
+    }
+    if (isTimed && !dto.banUntil) {
+      throw new BadRequestException('临时禁言或封禁必须填写截止时间')
+    }
+    if (isTimed && dto.banUntil && dto.banUntil <= new Date()) {
+      throw new BadRequestException('截止时间必须晚于当前时间')
+    }
 
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({
           status: dto.status,
-          banReason: isNormal ? null : (dto.banReason ?? null),
-          banUntil: isNormal || isPermanent ? null : (dto.banUntil ?? null),
+          banReason: isNormal ? null : dto.banReason?.trim(),
+          banUntil: isNormal || isPermanent ? null : dto.banUntil,
         })
         .where(eq(this.appUser.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(result, '用户不存在')
+    return true
+  }
+
+  async deleteAppUser(adminUserId: number, userId: number) {
+    await this.ensureSuperAdmin(adminUserId)
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)),
+        ),
+    )
+    this.drizzle.assertAffectedRows(rows, '用户不存在')
+    return true
+  }
+
+  async restoreAppUser(adminUserId: number, userId: number) {
+    await this.ensureSuperAdmin(adminUserId)
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({ deletedAt: null })
+        .where(
+          and(eq(this.appUser.id, userId), isNotNull(this.appUser.deletedAt)),
+        ),
+    )
+    this.drizzle.assertAffectedRows(rows, '用户不存在或未删除')
+    return true
+  }
+
+  async resetAppUserPassword(
+    adminUserId: number,
+    dto: ResetAdminAppUserPasswordDto,
+  ) {
+    await this.ensureSuperAdmin(adminUserId)
+    await this.userCoreService.ensureUserExists(dto.id)
+    const plainPassword = this.rsaService.decryptWith(dto.password)
+    const encryptedPassword =
+      await this.scryptService.encryptPassword(plainPassword)
+    const rows = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({ password: encryptedPassword })
+        .where(and(eq(this.appUser.id, dto.id), isNull(this.appUser.deletedAt))),
+    )
+    this.drizzle.assertAffectedRows(rows, '用户不存在')
     return true
   }
 
@@ -380,17 +522,24 @@ export class AppUserService {
 
     const [todayEarnedRows, level, nextLevelRows] = await Promise.all([
       this.db
-        .select({ sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int` })
+        .select({
+          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int`,
+        })
         .from(this.growthLedgerRecord)
         .where(
           and(
             eq(this.growthLedgerRecord.userId, userId),
-            eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+            eq(
+              this.growthLedgerRecord.assetType,
+              GrowthAssetTypeEnum.EXPERIENCE,
+            ),
             gt(this.growthLedgerRecord.delta, 0),
             gte(this.growthLedgerRecord.createdAt, today),
           ),
         ),
-      user.levelId ? this.userCoreService.getLevelInfo(user.levelId) : undefined,
+      user.levelId
+        ? this.userCoreService.getLevelInfo(user.levelId)
+        : undefined,
       this.db
         .select({
           id: this.userLevelRule.id,
@@ -469,15 +618,8 @@ export class AppUserService {
   async getAppUserBadges(query: QueryAdminAppUserBadgeDto) {
     await this.userCoreService.ensureUserExists(query.userId)
 
-    const {
-      userId,
-      name,
-      type,
-      isEnabled,
-      business,
-      eventKey,
-      ...pageQuery
-    } = query
+    const { userId, name, type, isEnabled, business, eventKey, ...pageQuery } =
+      query
 
     const badgeWhere = this.drizzle.buildWhere(this.userBadge, {
       and: {
@@ -502,13 +644,16 @@ export class AppUserService {
         totalPages: 0,
       }
     }
-    const page = await this.drizzle.ext.findPagination(this.userBadgeAssignment, {
-      where: and(
-        eq(this.userBadgeAssignment.userId, userId),
-        inArray(this.userBadgeAssignment.badgeId, badgeIds),
-      ),
-      ...pageQuery,
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.userBadgeAssignment,
+      {
+        where: and(
+          eq(this.userBadgeAssignment.userId, userId),
+          inArray(this.userBadgeAssignment.badgeId, badgeIds),
+        ),
+        ...pageQuery,
+      },
+    )
     const pageBadgeIds = page.list.map((item) => item.badgeId)
     const pageBadges = await this.db
       .select()
@@ -606,5 +751,32 @@ export class AppUserService {
     appUserId: number,
   ) {
     return `${action}:${adminUserId}:${appUserId}:${Date.now()}`
+  }
+
+  private normalizeBirthDate(value?: string | Date | null) {
+    if (value === undefined) {
+      return undefined
+    }
+    if (value === null || value === '') {
+      return null
+    }
+    if (typeof value === 'string') {
+      return value
+    }
+    return value.toISOString().slice(0, 10)
+  }
+
+  private async generateUniqueAccount() {
+    const randomAccount = Math.floor(100000 + Math.random() * 900000)
+    const [existingUser] = await this.db
+      .select({ id: this.appUser.id })
+      .from(this.appUser)
+      .where(eq(this.appUser.account, String(randomAccount)))
+      .limit(1)
+
+    if (existingUser) {
+      return this.generateUniqueAccount()
+    }
+    return randomAccount
   }
 }
