@@ -98,7 +98,10 @@ export abstract class BaseDrizzleTokenStorageService<
         .where(condition) as any
     }
 
-    return this.drizzle.db.select().from(this.tokenTable).where(condition) as any
+    return this.drizzle.db
+      .select()
+      .from(this.tokenTable)
+      .where(condition) as any
   }
 
   protected async deleteManyItems(where: WhereInput) {

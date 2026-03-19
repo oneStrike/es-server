@@ -1,5 +1,6 @@
 import { DrizzleService } from '@db/core'
 import {
+  CommentTargetTypeEnum,
   DownloadService,
   DownloadTargetTypeEnum,
   FavoriteService,
@@ -124,6 +125,54 @@ export class WorkChapterService {
         isPublished: chapter.isPublished,
       })),
     }
+  }
+
+  async getChapterCommentTarget(id: number) {
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: {
+        id,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        workId: true,
+        workType: true,
+      },
+    })
+
+    if (!chapter) {
+      throw new BadRequestException('章节不存在')
+    }
+
+    const work = await this.db.query.work.findFirst({
+      where: {
+        id: chapter.workId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        isPublished: true,
+      },
+    })
+
+    if (!work || !work.isPublished) {
+      throw new BadRequestException('章节所属作品未发布或不存在')
+    }
+
+    if (chapter.workType === ContentTypeEnum.COMIC) {
+      return {
+        targetType: CommentTargetTypeEnum.COMIC_CHAPTER,
+        targetId: chapter.id,
+      }
+    }
+
+    if (chapter.workType === ContentTypeEnum.NOVEL) {
+      return {
+        targetType: CommentTargetTypeEnum.NOVEL_CHAPTER,
+        targetId: chapter.id,
+      }
+    }
+
+    throw new BadRequestException('章节类型不支持评论')
   }
 
   /**

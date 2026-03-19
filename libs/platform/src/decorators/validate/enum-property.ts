@@ -6,6 +6,74 @@ import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import { IsEnum, IsIn, IsOptional } from 'class-validator'
 
+const DESCRIPTION_HAS_ENUM_MAPPING_REGEX = /[（(][^)=\uFF09\uFF1D]*[=\uFF1D][^)\uFF09]*[）)]/
+const NUMERIC_KEY_REGEX = /^\d+$/
+const ENUM_MAPPING_PAIR_REGEX = /([^\s=＝，,；;、:：()（）]+)\s*[=＝]\s*([^\s=＝，,；;、:：()（）]+)/g
+
+function getEnumItems(enumObj: EnumPropertyOptions['enum']) {
+  return Object.entries(enumObj).filter(([key, value]) => {
+    if (NUMERIC_KEY_REGEX.test(key)) {
+      return false
+    }
+    return typeof value === 'string' || typeof value === 'number'
+  })
+}
+
+function getDescriptionMappingValues(description: string) {
+  const pairs = [...description.matchAll(ENUM_MAPPING_PAIR_REGEX)]
+  if (pairs.length === 0) {
+    return null
+  }
+
+  return pairs.map((pair) => ({
+    left: pair[1].trim(),
+    right: pair[2].trim(),
+  }))
+}
+
+function validateDescriptionMapping(description: string, enumObj: EnumPropertyOptions['enum']) {
+  const mappings = getDescriptionMappingValues(description)
+  if (!mappings) {
+    return
+  }
+
+  const enumValues = new Set(getEnumItems(enumObj).map(([, value]) => String(value)))
+  const leftValues = new Set(mappings.map((item) => item.left))
+  const rightValues = new Set(mappings.map((item) => item.right))
+
+  const leftIsEnumValues = [...leftValues].every((value) => enumValues.has(value))
+  const rightIsEnumValues = [...rightValues].every((value) => enumValues.has(value))
+
+  if (!leftIsEnumValues && !rightIsEnumValues) {
+    throw new Error(`EnumProperty: description 枚举映射与 enum 不匹配: ${description}`)
+  }
+
+  const descriptionEnumValues = leftIsEnumValues ? leftValues : rightValues
+
+  for (const enumValue of enumValues) {
+    if (!descriptionEnumValues.has(enumValue)) {
+      throw new Error(
+        `EnumProperty: description 缺少枚举值 ${enumValue} 的说明: ${description}`,
+      )
+    }
+  }
+}
+
+function getEnumDescription(description: string, enumObj: EnumPropertyOptions['enum']) {
+  if (DESCRIPTION_HAS_ENUM_MAPPING_REGEX.test(description)) {
+    return description
+  }
+
+  const enumItems = getEnumItems(enumObj)
+
+  if (enumItems.length === 0) {
+    return description
+  }
+
+  const enumDescription = enumItems.map(([key, value]) => `${value}=${key}`).join('，')
+  return `${description}（${enumDescription}）`
+}
+
 /**
  * 枚举属性装饰器
  *
@@ -54,6 +122,10 @@ export function EnumProperty(options: EnumPropertyOptions) {
   const isNumEnum = isNumberEnum(options.enum)
 
   const decorators: any[] = []
+
+  if (isDevelopment()) {
+    validateDescriptionMapping(options.description, options.enum)
+  }
 
   if (validation) {
     // 对于数字枚举，使用 IsIn 替代 IsEnum，避免双向映射问题
@@ -118,7 +190,7 @@ export function EnumProperty(options: EnumPropertyOptions) {
 
   if (isDevelopment()) {
     const apiPropertyOptions: ApiPropertyOptions = {
-      description: options.description,
+      description: getEnumDescription(options.description, options.enum),
       example: options.example,
       required: options.required ?? true,
       default: options.default,

@@ -25,7 +25,6 @@ import { UserService as UserCoreService } from '@libs/user'
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 

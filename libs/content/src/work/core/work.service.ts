@@ -1,6 +1,7 @@
 import { DrizzleService } from '@db/core'
 import {
   BrowseLogService,
+  CommentTargetTypeEnum,
   FavoriteService,
   LikeService,
   ReadingStateService,
@@ -699,6 +700,41 @@ export class WorkService {
     }
 
     return section
+  }
+
+  async getWorkCommentTarget(id: number) {
+    const work = await this.db.query.work.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+      columns: {
+        id: true,
+        type: true,
+        isPublished: true,
+      },
+    })
+
+    if (!work) {
+      throw new BadRequestException('作品不存在')
+    }
+
+    if (!work.isPublished) {
+      throw new BadRequestException('作品未发布')
+    }
+
+    if (work.type === ContentTypeEnum.COMIC) {
+      return {
+        targetType: CommentTargetTypeEnum.COMIC,
+        targetId: work.id,
+      }
+    }
+
+    if (work.type === ContentTypeEnum.NOVEL) {
+      return {
+        targetType: CommentTargetTypeEnum.NOVEL,
+        targetId: work.id,
+      }
+    }
+
+    throw new BadRequestException('作品类型不支持评论')
   }
 
   /**

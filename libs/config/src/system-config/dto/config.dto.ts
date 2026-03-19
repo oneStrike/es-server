@@ -2,7 +2,6 @@ import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,
   EnumProperty,
-  JsonProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
@@ -319,7 +318,7 @@ export class SuperbedUploadConfigDto {
 
 export class UploadConfigDto {
   @EnumProperty({
-    description: '上传提供方',
+    description: '上传提供方：local=本地存储，qiniu=七牛云存储，superbed=Superbed图床',
     enum: UploadProviderEnum,
     example: UploadProviderEnum.LOCAL,
     required: false,
@@ -365,38 +364,97 @@ export class BaseSystemConfigDto extends BaseDto {
   })
   updatedById?: number
 
-  @JsonProperty({
-    description: '阿里云配置（jsonb）',
-    example: { sms: { endpoint: 'dypnsapi.aliyuncs.com' } },
+  @NestedProperty({
+    description: '阿里云配置',
+    type: AliyunConfigDto,
+    example: {
+      accessKeyId: 'LTAI...',
+      accessKeySecret: 'secret...',
+      sms: {
+        endpoint: 'dypnsapi.aliyuncs.com',
+        signName: '阿里云',
+        verifyCodeLength: 6,
+        verifyCodeExpire: 300,
+      },
+    },
     required: false,
   })
-  aliyunConfig?: Record<string, unknown>
+  aliyunConfig?: AliyunConfigDto
 
-  @JsonProperty({
-    description: '站点配置（jsonb）',
-    example: { siteName: '示例站点' },
+  @NestedProperty({
+    description: '站点配置',
+    type: SiteConfigDto,
+    example: {
+      siteName: '示例站点',
+      siteDescription: '这是一个示例站点',
+      siteKeywords: '漫画,社区',
+      siteLogo: 'https://example.com/logo.png',
+      siteFavicon: 'https://example.com/favicon.ico',
+      contactEmail: 'support@example.com',
+      icpNumber: '粤ICP备xxxxxx号',
+    },
     required: false,
   })
-  siteConfig?: Record<string, unknown>
+  siteConfig?: SiteConfigDto
 
-  @JsonProperty({
-    description: '维护配置（jsonb）',
-    example: { enableMaintenanceMode: false },
+  @NestedProperty({
+    description: '维护配置',
+    type: MaintenanceConfigDto,
+    example: {
+      enableMaintenanceMode: false,
+      maintenanceMessage: '系统维护中，请稍后再试',
+    },
     required: false,
   })
-  maintenanceConfig?: Record<string, unknown>
+  maintenanceConfig?: MaintenanceConfigDto
 
-  @JsonProperty({
-    description: '内容审核策略（jsonb）',
-    example: { severeAction: { auditStatus: 2 } },
+  @NestedProperty({
+    description: '内容审核策略',
+    type: ContentReviewPolicyDto,
+    example: {
+      severeAction: {
+        auditStatus: AuditStatusEnum.REJECTED,
+        isHidden: true,
+      },
+      generalAction: {
+        auditStatus: AuditStatusEnum.PENDING,
+        isHidden: false,
+      },
+      lightAction: {
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+      },
+      recordHits: true,
+    },
     required: false,
   })
-  contentReviewPolicy?: Record<string, unknown>
+  contentReviewPolicy?: ContentReviewPolicyDto
 
-  @JsonProperty({
-    description: '上传配置（jsonb）',
-    example: { provider: 'local' },
+  @NestedProperty({
+    description: '上传配置',
+    type: UploadConfigDto,
+    example: {
+      provider: UploadProviderEnum.LOCAL,
+      superbedNonImageFallbackToLocal: true,
+      qiniu: {
+        accessKey: 'your-access-key',
+        secretKey: 'your-secret-key',
+        bucket: 'es-public',
+        domain: 'https://cdn.example.com',
+        region: 'z0',
+        pathPrefix: 'uploads',
+        useHttps: true,
+        tokenExpires: 3600,
+      },
+      superbed: {
+        token: 'your-superbed-token',
+        categories: 'cover,chapter',
+        watermark: false,
+        compress: true,
+        webp: false,
+      },
+    },
     required: false,
   })
-  uploadConfig?: Record<string, unknown>
+  uploadConfig?: UploadConfigDto
 }

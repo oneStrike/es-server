@@ -10,6 +10,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { TargetCommentItemDto } from '../../comment/dto/comment.dto'
 
 export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'id',
@@ -71,3 +72,7 @@ export class WorkChapterDetailWithUserStatusDto extends IntersectionType(
   ChapterUserStatusFieldsDto,
   PickType(ComicChapterContentDto, ['content']),
 ) {}
+
+export class QueryWorkChapterCommentPageDto extends IntersectionType(PageDto, IdDto) {}
+
+export class WorkChapterCommentItemDto extends TargetCommentItemDto {}

@@ -1,14 +1,4 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core'
-import { Injectable } from '@nestjs/common'
-import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
-import { SensitiveWordCacheService } from './sensitive-word-cache.service'
-import {
-  SensitiveWordLevelNames,
-  SensitiveWordTypeNames,
-  StatisticsTypeEnum,
-} from './sensitive-word-constant'
-import { SensitiveWordDetectService } from './sensitive-word-detect.service'
 import type {
   CreateSensitiveWordInput,
   QuerySensitiveWordPageInput,
@@ -21,6 +11,16 @@ import type {
   UpdateSensitiveWordInput,
   UpdateSensitiveWordStatusInput,
 } from './sensitive-word.types'
+import { DrizzleService } from '@db/core'
+import { Injectable } from '@nestjs/common'
+import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
+import { SensitiveWordCacheService } from './sensitive-word-cache.service'
+import {
+  SensitiveWordLevelNames,
+  SensitiveWordTypeNames,
+  StatisticsTypeEnum,
+} from './sensitive-word-constant'
+import { SensitiveWordDetectService } from './sensitive-word-detect.service'
 
 /**
  * 敏感词服务类

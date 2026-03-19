@@ -1,5 +1,6 @@
 import { BaseReportDto } from '@libs/interaction'
-import { IntersectionType, PickType } from '@nestjs/swagger'
+import { PageDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class ReportTargetDto extends PickType(BaseReportDto, [
   'targetId',
@@ -16,3 +17,12 @@ export class CreateReportBodyDto extends IntersectionType(
   ReportTargetDto,
   ReportReasonBodyDto,
 ) {}
+
+export class QueryMyReportPageDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseReportDto, ['targetType', 'targetId', 'reasonType', 'status']),
+  ),
+) {}
+
+export class ReportItemDto extends BaseReportDto {}

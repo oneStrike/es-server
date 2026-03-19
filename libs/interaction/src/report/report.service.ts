@@ -3,10 +3,15 @@ import type {
   CreateReportInput,
   CreateUserReportInput,
   CreateUserReportOptions,
+  ReportListQuery,
 } from './report.type'
 import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
@@ -126,6 +131,55 @@ export class ReportService {
       targetType,
       targetId,
     })
+
+    return report
+  }
+
+  /**
+   * 获取用户举报列表
+   * @param query - 举报列表查询条件
+   * @returns 分页举报记录
+   */
+  async getUserReports(query: ReportListQuery) {
+    return this.drizzle.ext.findPagination(this.userReport, {
+      where: this.drizzle.buildWhere(this.userReport, {
+        and: {
+          reporterId: query.reporterId,
+          targetType: query.targetType,
+          targetId: query.targetId,
+          reasonType: query.reasonType,
+          status: query.status,
+        },
+      }),
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+  }
+
+  /**
+   * 获取用户举报详情
+   * @param reportId - 举报记录 ID
+   * @param reporterId - 举报人 ID
+   * @returns 举报记录详情
+   */
+  async getReportDetail(reportId: number, reporterId: number) {
+    const [report] = await this.db
+      .select()
+      .from(this.userReport)
+      .where(
+        and(
+          eq(this.userReport.id, reportId),
+          eq(this.userReport.reporterId, reporterId),
+        ),
+      )
+      .limit(1)
+
+    if (!report) {
+      throw new NotFoundException('举报记录不存在')
+    }
 
     return report
   }

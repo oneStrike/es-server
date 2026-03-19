@@ -1,6 +1,7 @@
 import {
   WorkService,
 } from '@libs/content'
+import { CommentService } from '@libs/interaction'
 import {
   ApiDoc,
   ApiPageDoc,
@@ -15,8 +16,10 @@ import { Controller, Get, Headers, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   PageWorkDto,
+  QueryWorkCommentPageDto,
   QueryWorkDto,
   QueryWorkTypeDto,
+  WorkCommentItemDto,
   WorkDetailDto,
   WorkForumSectionDto,
 } from './dto/work.dto'
@@ -24,7 +27,10 @@ import {
 @ApiTags('作品')
 @Controller('app/work')
 export class WorkController {
-  constructor(private readonly workService: WorkService) {}
+  constructor(
+    private readonly workService: WorkService,
+    private readonly commentService: CommentService,
+  ) {}
 
   @Get('hot/page')
   @Public()
@@ -97,5 +103,21 @@ export class WorkController {
   })
   async getWorkForumSection(@Query() query: IdDto) {
     return this.workService.getWorkForumSection(query.id)
+  }
+
+  @Get('comment/page')
+  @Public()
+  @ApiPageDoc({
+    summary: '分页查询作品评论',
+    model: WorkCommentItemDto,
+  })
+  async getWorkCommentPage(@Query() query: QueryWorkCommentPageDto) {
+    const target = await this.workService.getWorkCommentTarget(query.id)
+    return this.commentService.getTargetComments({
+      ...target,
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
+      previewReplyLimit: 3,
+    })
   }
 }

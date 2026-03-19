@@ -1,6 +1,7 @@
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
+  TaskTypeEnum
 } from '@libs/growth'
 import {
   EnumProperty,
@@ -13,10 +14,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import {
-  TaskAssignmentStatusEnum,
-  TaskTypeEnum,
-} from '@libs/growth'
 
 export class QueryAppTaskDto extends IntersectionType(
   PageDto,

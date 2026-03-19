@@ -7,6 +7,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { TargetCommentItemDto } from '../../comment/dto/comment.dto'
 
 export class QueryAppForumTopicPageDto extends IntersectionType(
   PageDto,
@@ -72,3 +73,7 @@ export class AppForumTopicDetailDto extends IntersectionType(
   })
   user!: AppForumTopicUserBriefDto
 }
+
+export class QueryForumTopicCommentPageDto extends IntersectionType(PageDto, IdDto) {}
+
+export class ForumTopicCommentItemDto extends TargetCommentItemDto {}

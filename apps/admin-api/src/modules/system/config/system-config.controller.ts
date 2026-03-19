@@ -1,5 +1,4 @@
 import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import {
   BaseSystemConfigDto,
   SystemConfigService,

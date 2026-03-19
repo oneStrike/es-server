@@ -12,7 +12,7 @@ export class AdminTokenStorageService extends BaseDrizzleTokenStorageService<any
   }
 
   constructor(
-    drizzle: DrizzleService,
+    @Inject(DrizzleService) drizzle: DrizzleService,
     @Inject(CACHE_MANAGER) cacheManager: Cache,
   ) {
     super(drizzle, cacheManager)

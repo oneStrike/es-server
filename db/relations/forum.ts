@@ -44,16 +44,8 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
     }),
     section: r.one.forumSection({
       from: r.forumModeratorSection.sectionId,
-      to: r.forumSection.id,
-    }),
-  },
-  forumNotification: {
-    user: r.one.appUser({ from: r.forumNotification.userId, to: r.appUser.id }),
-    topic: r.one.forumTopic({
-      from: r.forumNotification.topicId,
-      to: r.forumTopic.id,
-      alias: 'NotificationTopic',
-    }),
+        to: r.forumSection.id,
+      }),
   },
   forumProfile: {
     user: r.one.appUser({ from: r.forumProfile.userId, to: r.appUser.id }),
@@ -119,11 +111,6 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
     tags: r.many.forumTag({
       from: r.forumTopic.id.through(r.forumTopicTag.topicId),
       to: r.forumTag.id.through(r.forumTopicTag.tagId),
-    }),
-    notifications: r.many.forumNotification({
-      from: r.forumTopic.id,
-      to: r.forumNotification.topicId,
-      alias: 'NotificationTopic',
     }),
   },
   forumTopicTag: {

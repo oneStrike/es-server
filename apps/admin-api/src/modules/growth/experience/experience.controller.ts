@@ -7,6 +7,10 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  UserExperienceRecordDetailDto,
+  UserExperienceStatsDto,
+} from './dto/experience-response.dto'
+import {
   AddUserExperienceDto,
   CreateUserExperienceRuleDto,
   QueryUserExperienceRecordDto,
@@ -14,10 +18,6 @@ import {
   UpdateUserExperienceRuleDto,
   UserExperienceRecordDto,
 } from './dto/experience.dto'
-import {
-  UserExperienceRecordDetailDto,
-  UserExperienceStatsDto,
-} from './dto/experience-response.dto'
 
 /**
  * 用户经验规则管理控制器

@@ -3,6 +3,7 @@ import {
   NovelContentService,
   WorkChapterService,
 } from '@libs/content'
+import { CommentService } from '@libs/interaction'
 import {
   ApiDoc,
   ApiPageDoc,
@@ -18,7 +19,9 @@ import {
   ComicChapterContentDto,
   NovelChapterContentDto,
   PageWorkChapterDto,
+  QueryWorkChapterCommentPageDto,
   QueryWorkChapterDto,
+  WorkChapterCommentItemDto,
   WorkChapterDetailWithUserStatusDto,
 } from './dto/work-chapter.dto'
 
@@ -29,6 +32,7 @@ export class WorkChapterController {
     private readonly workChapterService: WorkChapterService,
     private readonly comicContentService: ComicContentService,
     private readonly novelContentService: NovelContentService,
+    private readonly commentService: CommentService,
   ) {}
 
   @Get('page')
@@ -52,6 +56,22 @@ export class WorkChapterController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.workChapterService.getChapterDetail(query.id, userId)
+  }
+
+  @Get('comment/page')
+  @Public()
+  @ApiPageDoc({
+    summary: '分页查询章节评论',
+    model: WorkChapterCommentItemDto,
+  })
+  async getWorkChapterCommentPage(@Query() query: QueryWorkChapterCommentPageDto) {
+    const target = await this.workChapterService.getChapterCommentTarget(query.id)
+    return this.commentService.getTargetComments({
+      ...target,
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
+      previewReplyLimit: 3,
+    })
   }
 
   @Get('previous/detail')

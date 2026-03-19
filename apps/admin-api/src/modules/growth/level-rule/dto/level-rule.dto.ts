@@ -1,4 +1,4 @@
-import { BaseUserLevelRuleDto } from '@libs/growth'
+import { BaseUserLevelRuleDto, UserLevelRulePermissionEnum } from '@libs/growth'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -14,7 +14,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { UserLevelRulePermissionEnum } from '@libs/growth'
 
 export class CreateUserLevelRuleDto extends OmitType(
   BaseUserLevelRuleDto,

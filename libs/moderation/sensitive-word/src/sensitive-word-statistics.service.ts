@@ -1,10 +1,3 @@
-import { DrizzleService } from '@db/core'
-import { Injectable, Logger } from '@nestjs/common'
-import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
-import {
-  SensitiveWordLevelNames,
-  SensitiveWordTypeNames,
-} from './sensitive-word-constant'
 import type {
   SensitiveWordLevelStatistics,
   SensitiveWordRecentHitStatistics,
@@ -12,6 +5,13 @@ import type {
   SensitiveWordTopHitStatistics,
   SensitiveWordTypeStatistics,
 } from './sensitive-word.types'
+import { DrizzleService } from '@db/core'
+import { Injectable, Logger } from '@nestjs/common'
+import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
+import {
+  SensitiveWordLevelNames,
+  SensitiveWordTypeNames,
+} from './sensitive-word-constant'
 
 /**
  * 敏感词统计服务

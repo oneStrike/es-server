@@ -325,7 +325,7 @@ export class SystemConfigService implements OnModuleInit {
   private mergeWithDefaults(config: Record<string, unknown>) {
     return this.deepMerge(
       this.cloneConfig(DEFAULT_CONFIG) as Record<string, unknown>,
-      this.cloneConfig(config),
+      this.removeNullValues(this.cloneConfig(config)),
     )
   }
 
@@ -367,6 +367,27 @@ export class SystemConfigService implements OnModuleInit {
 
   private cloneConfig<T>(config: T): T {
     return JSON.parse(JSON.stringify(config)) as T
+  }
+
+  private removeNullValues<T>(value: T): T {
+    if (Array.isArray(value)) {
+      return value.map(item => this.removeNullValues(item)) as T
+    }
+
+    if (this.isPlainObject(value)) {
+      const result: Record<string, unknown> = {}
+
+      for (const [key, item] of Object.entries(value)) {
+        if (item === null) {
+          continue
+        }
+        result[key] = this.removeNullValues(item)
+      }
+
+      return result as T
+    }
+
+    return value
   }
 
   private getValueByPath(target: Record<string, any> | null, path: string) {

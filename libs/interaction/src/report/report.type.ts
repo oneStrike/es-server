@@ -30,3 +30,15 @@ export type CreateUserReportInput = CreateReportInput &
 export interface CreateUserReportOptions {
   duplicateMessage?: string
 }
+
+/**
+ * 举报列表查询条件。
+ * - reporterId 用于限定“我的举报”视角
+ * - 其余字段为可选筛选条件
+ */
+export type ReportListQuery = Pick<UserReport, 'reporterId'> &
+  Partial<Pick<UserReport, 'targetId' | 'reasonType' | 'status'>> & {
+    targetType?: ReportTargetTypeEnum
+    pageIndex?: number
+    pageSize?: number
+  }

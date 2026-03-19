@@ -1,10 +1,3 @@
-import { DrizzleService } from '@db/core'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import type {
   AssignUserBadgeInput,
   CreateUserBadgeInput,
@@ -12,6 +5,12 @@ import type {
   UpdateUserBadgeInput,
   UpdateUserBadgeStatusInput,
 } from './badge.type'
+import { DrizzleService } from '@db/core'
+import {
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 
 @Injectable()
 export class UserBadgeService {

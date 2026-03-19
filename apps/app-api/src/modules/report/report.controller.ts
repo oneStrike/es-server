@@ -1,9 +1,13 @@
 import { ReportService } from '@libs/interaction'
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Post } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { CreateReportBodyDto } from './dto/report.dto'
+import {
+  CreateReportBodyDto,
+  QueryMyReportPageDto,
+  ReportItemDto,
+} from './dto/report.dto'
 
 @ApiTags('举报')
 @Controller('app/report')
@@ -25,5 +29,29 @@ export class ReportController {
     })
 
     return { id: report.id }
+  }
+
+  @Get('my/page')
+  @ApiPageDoc({
+    summary: '分页查询我的举报记录',
+    model: ReportItemDto,
+  })
+  async my(
+    @Query() query: QueryMyReportPageDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.reportService.getUserReports({
+      ...query,
+      reporterId: userId,
+    })
+  }
+
+  @Get('detail')
+  @ApiDoc({
+    summary: '查询举报详情',
+    model: ReportItemDto,
+  })
+  async detail(@Query() query: IdDto, @CurrentUser('sub') userId: number) {
+    return this.reportService.getReportDetail(query.id, userId)
   }
 }

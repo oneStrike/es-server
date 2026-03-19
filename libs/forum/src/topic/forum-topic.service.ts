@@ -397,6 +397,14 @@ export class ForumTopicService {
     return topic
   }
 
+  async getTopicCommentTarget(id: number, userId?: number) {
+    await this.getPublicTopicById(id, userId)
+    return {
+      targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+      targetId: id,
+    }
+  }
+
   /**
    * 获取论坛主题列表（分页）
    * @param queryForumTopicDto - 查询参数对象

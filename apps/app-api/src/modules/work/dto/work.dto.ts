@@ -14,12 +14,13 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { TargetCommentItemDto } from '../../comment/dto/comment.dto'
 
 class AuthorInfoDto extends PickType(BaseAuthorDto, [
   'id',
@@ -274,3 +275,7 @@ export class WorkForumSectionDto extends IntersectionType(
   ]),
   WorkForumSectionExtraDto,
 ) {}
+
+export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}
+
+export class WorkCommentItemDto extends TargetCommentItemDto {}

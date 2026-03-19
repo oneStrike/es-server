@@ -1,6 +1,13 @@
 import { BaseCommentDto, CommentTargetTypeEnum } from '@libs/interaction'
-import { EnumProperty, NumberProperty } from '@libs/platform/decorators'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+} from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class CommentIdDto {
@@ -63,3 +70,70 @@ export class QueryCommentRepliesDto extends IntersectionType(
 ) {}
 
 export class CommentItemDto extends BaseCommentDto {}
+
+export class CommentUserDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+] as const) {}
+
+export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
+  'id',
+  'userId',
+  'content',
+  'replyToId',
+  'createdAt',
+] as const) {
+  @NestedProperty({
+    description: '回复用户',
+    required: false,
+    nullable: false,
+    type: CommentUserDto,
+    validation: false,
+  })
+  user?: CommentUserDto
+}
+
+export class TargetCommentItemDto extends PickType(BaseCommentDto, [
+  'id',
+  'targetType',
+  'targetId',
+  'userId',
+  'content',
+  'floor',
+  'createdAt',
+] as const) {
+  @NestedProperty({
+    description: '评论用户',
+    required: false,
+    nullable: false,
+    type: CommentUserDto,
+    validation: false,
+  })
+  user?: CommentUserDto
+
+  @NumberProperty({
+    description: '楼中楼回复总数',
+    required: true,
+    validation: false,
+    example: 12,
+  })
+  replyCount!: number
+
+  @ArrayProperty({
+    description: '楼中楼预览（最多3条）',
+    itemClass: CommentPreviewReplyDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  previewReplies!: CommentPreviewReplyDto[]
+
+  @BooleanProperty({
+    description: '是否还有更多楼中楼回复',
+    required: true,
+    validation: false,
+    example: true,
+  })
+  hasMoreReplies!: boolean
+}

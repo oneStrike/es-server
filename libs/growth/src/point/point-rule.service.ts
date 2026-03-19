@@ -1,12 +1,12 @@
-import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
-import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   CreateUserPointRuleInput,
   QueryUserPointRulePageInput,
   UpdateUserPointRuleInput,
 } from './point.type'
+import { DrizzleService } from '@db/core'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
+import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 
 @Injectable()
 export class UserPointRuleService {

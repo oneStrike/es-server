@@ -12,7 +12,7 @@ import { DownloadTargetTypeEnum } from '../download.constant'
  */
 export class BaseDownloadRecordDto extends IntersectionType(IdDto, UserIdDto) {
   @EnumProperty({
-    description: '下载目标类型（3=漫画章节，4=小说章节）',
+    description: '下载目标类型（1=漫画章节，2=小说章节）',
     enum: DownloadTargetTypeEnum,
     example: DownloadTargetTypeEnum.COMIC_CHAPTER,
     required: true,

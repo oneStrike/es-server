@@ -6,7 +6,6 @@ import { Module } from '@nestjs/common'
 import { ForumCounterModule } from './counter'
 import { ForumModeratorModule } from './moderator'
 import { ForumModeratorApplicationModule } from './moderator-application'
-import { ForumNotificationModule } from './notification'
 import { ForumPermissionModule } from './permission'
 import { ForumProfileModule } from './profile'
 import { ForumSearchModule } from './search'
@@ -27,7 +26,6 @@ import { ForumTopicModule } from './topic'
     UserLevelRuleModule,
     ForumModeratorModule,
     ForumModeratorApplicationModule,
-    ForumNotificationModule,
     ForumPermissionModule,
     UserPointModule,
     ForumProfileModule,
@@ -45,7 +43,6 @@ import { ForumTopicModule } from './topic'
     UserLevelRuleModule,
     ForumModeratorModule,
     ForumModeratorApplicationModule,
-    ForumNotificationModule,
     ForumPermissionModule,
     UserPointModule,
     ForumProfileModule,

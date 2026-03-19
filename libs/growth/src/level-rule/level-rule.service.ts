@@ -1,9 +1,4 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
-import { DrizzleService } from '@db/core'
-import { InteractionTargetTypeEnum } from '@libs/platform/constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm'
-import { UserLevelRulePermissionEnum } from './level-rule.constant'
 import type {
   CheckUserLevelPermissionInput,
   CreateUserLevelRuleInput,
@@ -12,6 +7,11 @@ import type {
   UserLevelInfoResult,
   UserLevelStatisticsResult,
 } from './level-rule.type'
+import { DrizzleService } from '@db/core'
+import { InteractionTargetTypeEnum } from '@libs/platform/constant'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, asc, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm'
+import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 @Injectable()
 export class UserLevelRuleService {

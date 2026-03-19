@@ -3,7 +3,6 @@ import {
   BaseSensitiveWordHitDto,
   MatchModeEnum,
   SensitiveWordLevelEnum,
-  SensitiveWordTypeEnum,
 } from '@libs/sensitive-word'
 
 export class SensitiveWordDetectDto {

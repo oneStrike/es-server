@@ -4,6 +4,7 @@ import type {
   CreateCommentInput,
   RepliesQuery,
   ReplyCommentInput,
+  TargetCommentsQuery,
   TransactionRetryOptions,
   UserCommentsQuery,
   VisibleCommentEffectPayload,
@@ -22,7 +23,7 @@ import {
 } from '@libs/sensitive-word'
 import { ConfigReader } from '@libs/system-config'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, max } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, max, sql } from 'drizzle-orm'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentTargetTypeEnum } from './comment.constant'
@@ -619,7 +620,158 @@ export class CommentService {
         const user = userMap.get(item.userId)
         return {
           ...item,
-          user: user ?? null,
+          user: user ?? undefined,
+        }
+      }),
+    }
+  }
+
+  async getTargetComments(query: TargetCommentsQuery) {
+    const {
+      targetType,
+      targetId,
+      pageIndex,
+      pageSize,
+      previewReplyLimit = 3,
+    } = query
+    const limit = Math.max(0, Math.min(previewReplyLimit, 10))
+    const page = await this.drizzle.ext.findPagination(this.userComment, {
+      where: this.drizzle.buildWhere(this.userComment, {
+        and: {
+          targetType,
+          targetId,
+          replyToId: {
+            isNull: true,
+          },
+          auditStatus: AuditStatusEnum.APPROVED,
+          isHidden: false,
+          deletedAt: {
+            isNull: true,
+          },
+        },
+      }),
+      pageIndex,
+      pageSize,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const rootIds = page.list.map((item) => item.id)
+
+    const [replyCountRows, allPreviewReplies] = await Promise.all([
+      this.db
+        .select({
+          rootId: this.userComment.actualReplyToId,
+          count: sql<number>`count(*)`,
+        })
+        .from(this.userComment)
+        .where(
+          and(
+            inArray(this.userComment.actualReplyToId, rootIds),
+            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+            eq(this.userComment.isHidden, false),
+            isNull(this.userComment.deletedAt),
+          ),
+        )
+        .groupBy(this.userComment.actualReplyToId),
+      limit > 0
+        ? this.db
+            .select({
+              id: this.userComment.id,
+              userId: this.userComment.userId,
+              actualReplyToId: this.userComment.actualReplyToId,
+              replyToId: this.userComment.replyToId,
+              content: this.userComment.content,
+              createdAt: this.userComment.createdAt,
+            })
+            .from(this.userComment)
+            .where(
+              and(
+                inArray(this.userComment.actualReplyToId, rootIds),
+                eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+                eq(this.userComment.isHidden, false),
+                isNull(this.userComment.deletedAt),
+              ),
+            )
+            .orderBy(
+              asc(this.userComment.actualReplyToId),
+              asc(this.userComment.createdAt),
+            )
+        : Promise.resolve([]),
+    ])
+
+    const replyCountMap = new Map(
+      replyCountRows
+        .filter((row) => row.rootId !== null)
+        .map((row) => [row.rootId as number, Number(row.count)]),
+    )
+
+    const previewRepliesByRoot = new Map<
+      number,
+      {
+        id: number
+        userId: number
+        actualReplyToId: number | null
+        replyToId: number | null
+        content: string
+        createdAt: Date
+      }[]
+    >()
+
+    for (const reply of allPreviewReplies) {
+      if (!reply.actualReplyToId) {
+        continue
+      }
+      const rootReplyList = previewRepliesByRoot.get(reply.actualReplyToId) ?? []
+      if (rootReplyList.length >= limit) {
+        continue
+      }
+      rootReplyList.push(reply)
+      previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
+    }
+
+    const userIds = [
+      ...new Set([
+        ...page.list.map((item) => item.userId),
+        ...allPreviewReplies.map((item) => item.userId),
+      ]),
+    ]
+    const users = userIds.length
+      ? await this.db
+          .select({
+            id: this.appUser.id,
+            nickname: this.appUser.nickname,
+            avatar: this.appUser.avatarUrl,
+          })
+          .from(this.appUser)
+          .where(inArray(this.appUser.id, userIds))
+      : []
+    const userMap = new Map(users.map((item) => [item.id, item]))
+
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        const replyCount = replyCountMap.get(item.id) ?? 0
+        const previewReplies = (previewRepliesByRoot.get(item.id) ?? []).map((reply) => ({
+          id: reply.id,
+          userId: reply.userId,
+          content: reply.content,
+          replyToId: reply.replyToId,
+          createdAt: reply.createdAt,
+          user: userMap.get(reply.userId) ?? undefined,
+        }))
+
+        return {
+          ...item,
+          user: userMap.get(item.userId) ?? undefined,
+          replyCount,
+          previewReplies,
+          hasMoreReplies: replyCount > previewReplies.length,
         }
       }),
     }

@@ -2,17 +2,17 @@ import type { sensitiveWord } from '@db/schema'
 import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import type {
   FuzzyMatchResult,
+  MatchedWord,
   MatchResult,
   SensitiveWordDetectInput,
   SensitiveWordDetectResult,
-  SensitiveWordReplaceInput,
+SensitiveWordReplaceInput
 } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { MatchModeEnum } from './sensitive-word-constant'
 import { ACAutomaton } from './utils/ac-automaton'
 import { FuzzyMatcher } from './utils/fuzzy-matcher'
-import type { MatchedWord } from './sensitive-word.types'
 
 /**
  * 敏感词检测服务类

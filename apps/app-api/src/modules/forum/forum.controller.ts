@@ -1,4 +1,5 @@
 import { ForumTopicService } from '@libs/forum'
+import { CommentService } from '@libs/interaction'
 import {
   ApiDoc,
   ApiPageDoc,
@@ -12,14 +13,19 @@ import {
   AppForumTopicDetailDto,
   AppForumTopicPageItemDto,
   CreateAppForumTopicDto,
+  ForumTopicCommentItemDto,
   QueryAppForumTopicPageDto,
+  QueryForumTopicCommentPageDto,
   UpdateAppForumTopicDto,
 } from './dto/forum-topic.dto'
 
 @ApiTags('论坛主题')
 @Controller('app/forum/topic')
 export class ForumController {
-  constructor(private readonly forumTopicService: ForumTopicService) {}
+  constructor(
+    private readonly forumTopicService: ForumTopicService,
+    private readonly commentService: CommentService,
+  ) {}
 
   private mapTopicItem(item: Record<string, unknown>) {
     return {
@@ -90,6 +96,28 @@ export class ForumController {
     return this.mapTopicDetail(
       await this.forumTopicService.getPublicTopicById(query.id, userId) as Record<string, any>,
     )
+  }
+
+  @Get('comment/page')
+  @OptionalAuth()
+  @ApiPageDoc({
+    summary: '分页查询论坛主题评论',
+    model: ForumTopicCommentItemDto,
+  })
+  async getTopicCommentPage(
+    @Query() query: QueryForumTopicCommentPageDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    const target = await this.forumTopicService.getTopicCommentTarget(
+      query.id,
+      userId,
+    )
+    return this.commentService.getTargetComments({
+      ...target,
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
+      previewReplyLimit: 3,
+    })
   }
 
   @Post('create')

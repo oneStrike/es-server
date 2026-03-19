@@ -60,6 +60,18 @@ export interface UserCommentsQuery {
 }
 
 /**
+ * 目标评论列表查询入参。
+ * - 用于作品/主题/章节等目标的一级评论分页
+ */
+export interface TargetCommentsQuery {
+  targetType: CommentTargetTypeEnum
+  targetId: number
+  pageIndex?: number
+  pageSize?: number
+  previewReplyLimit?: number
+}
+
+/**
  * 可见评论补偿副作用载荷。
  * - 用于奖励与通知补偿流程
  */
