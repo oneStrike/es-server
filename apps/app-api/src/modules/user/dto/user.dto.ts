@@ -1,4 +1,8 @@
-import { BaseUserBadgeDto, BaseUserLevelRuleDto, QueryUserBadgeDto, QueryUserExperienceRecordDto } from '@libs/growth'
+import {
+  BaseUserBadgeDto,
+  BaseUserExperienceRecordDto,
+  BaseUserLevelRuleDto,
+} from '@libs/growth'
 import { BaseUserAssetsSummaryDto } from '@libs/interaction'
 /**
  * 用户模块 DTO 定义
@@ -15,9 +19,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user'
-import { OmitType, PartialType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
  * 更新用户资料 DTO
@@ -56,15 +60,52 @@ export class UpdateMyForumProfileDto {
 /**
  * 查询我的经验记录 DTO
  */
-export class QueryMyExperienceRecordDto extends OmitType(
-  QueryUserExperienceRecordDto,
-  ['userId'] as const,
+export class QueryMyExperienceRecordDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
 ) {}
 
 /**
  * 查询我的徽章 DTO
  */
-export class QueryMyBadgeDto extends QueryUserBadgeDto {}
+export class QueryMyBadgeDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(
+      BaseUserBadgeDto,
+      ['name', 'type', 'isEnabled', 'business', 'eventKey'] as const,
+    ),
+  ),
+) {}
+
+export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDto, [
+  'id',
+  'userId',
+  'ruleId',
+  'remark',
+  'createdAt',
+] as const) {
+  @NumberProperty({
+    description: '经验值变化',
+    example: 5,
+    validation: false,
+  })
+  experience!: number
+
+  @NumberProperty({
+    description: '变化前经验值',
+    example: 100,
+    validation: false,
+  })
+  beforeExperience!: number
+
+  @NumberProperty({
+    description: '变化后经验值',
+    example: 105,
+    validation: false,
+  })
+  afterExperience!: number
+}
 
 /**
  * 用户论坛资料 DTO
@@ -347,9 +388,6 @@ export class UserGrowthSummaryDto {
   })
   todayExperienceEarned!: number
 }
-
-// 重新导出项目中已有的等级信息 DTO，方便使用
-export { UserLevelInfoDto } from '@libs/growth'
 
 /**
  * 用户中心-用户信息 DTO

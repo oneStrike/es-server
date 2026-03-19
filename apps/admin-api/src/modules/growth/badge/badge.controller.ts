@@ -1,15 +1,20 @@
 import {
-  AssignUserBadgeDto,
   BaseUserBadgeDto,
-  CreateUserBadgeDto,
-  QueryUserBadgeDto,
-  UpdateUserBadgeDto,
   UserBadgeService,
 } from '@libs/growth'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  AssignUserBadgeDto,
+  BadgeUserPageItemDto,
+  CreateUserBadgeDto,
+  QueryUserBadgeDto,
+  UpdateUserBadgeDto,
+  UpdateUserBadgeStatusDto,
+  UserBadgeStatisticsDto,
+} from './dto/badge.dto'
 
 /**
  * 用户徽章管理控制器
@@ -43,7 +48,7 @@ export class UserBadgeController {
   @Post('create')
   @ApiDoc({
     summary: '创建用户徽章',
-    model: BaseUserBadgeDto,
+    model: Boolean,
   })
   async createBadge(@Body() dto: CreateUserBadgeDto) {
     return this.userBadgeService.createBadge(dto)
@@ -52,7 +57,7 @@ export class UserBadgeController {
   @Post('update')
   @ApiDoc({
     summary: '更新用户徽章',
-    model: BaseUserBadgeDto,
+    model: Boolean,
   })
   async updateBadge(@Body() dto: UpdateUserBadgeDto) {
     return this.userBadgeService.updateBadge(dto)
@@ -61,7 +66,7 @@ export class UserBadgeController {
   @Post('delete')
   @ApiDoc({
     summary: '删除用户徽章',
-    model: BaseUserBadgeDto,
+    model: Boolean,
   })
   async deleteBadge(@Body() dto: IdDto) {
     return this.userBadgeService.deleteBadge(dto)
@@ -70,16 +75,16 @@ export class UserBadgeController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新用户徽章状态',
-    model: BaseUserBadgeDto,
+    model: Boolean,
   })
-  async updateBadgeStatus(@Body() dto: UpdateUserBadgeDto) {
-    return this.userBadgeService.updateBadge(dto)
+  async updateBadgeStatus(@Body() dto: UpdateUserBadgeStatusDto) {
+    return this.userBadgeService.updateBadgeStatus(dto)
   }
 
   @Post('assign')
   @ApiDoc({
     summary: '为用户分配用户徽章',
-    model: BaseUserBadgeDto,
+    model: Boolean,
   })
   async assignBadge(@Body() dto: AssignUserBadgeDto) {
     return this.userBadgeService.assignBadge(dto)
@@ -88,7 +93,7 @@ export class UserBadgeController {
   @Post('revoke')
   @ApiDoc({
     summary: '撤销用户徽章',
-    model: BaseUserBadgeDto,
+    model: Boolean,
   })
   async revokeBadge(@Body() dto: AssignUserBadgeDto) {
     return this.userBadgeService.revokeBadge(dto)
@@ -97,7 +102,7 @@ export class UserBadgeController {
   @Get('user/page')
   @ApiPageDoc({
     summary: '获取拥有某个用户徽章的用户列表',
-    model: BaseUserBadgeDto,
+    model: BadgeUserPageItemDto,
   })
   async getBadgeUsers(
     @Query('badgeId') badgeId: number,
@@ -109,7 +114,7 @@ export class UserBadgeController {
   @Get('stats')
   @ApiDoc({
     summary: '获取用户徽章统计信息',
-    model: BaseUserBadgeDto,
+    model: UserBadgeStatisticsDto,
   })
   async getBadgeStatistics() {
     return this.userBadgeService.getBadgeStatistics()

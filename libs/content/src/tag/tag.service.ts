@@ -29,18 +29,17 @@ export class WorkTagService {
       createTagDto.sortOrder = (await this.drizzle.ext.maxOrder(this.workTag)) + 1
     }
 
-    const [created] = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .insert(this.workTag)
           .values({
             ...createTagDto,
             popularity: 0,
-          })
-          .returning({ id: this.workTag.id }),
+          }),
       { duplicate: 'Tag name already exists' },
     )
-    return created
+    return true
   }
 
   async getTagPage(queryDto: QueryTagInput) {
@@ -76,35 +75,34 @@ export class WorkTagService {
   async updateTag(updateTagDto: UpdateTagInput) {
     const { id, ...updateData } = updateTagDto
 
-    const [updated] = await this.drizzle.withErrorHandling(
+    const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.workTag)
           .set(updateData)
-          .where(eq(this.workTag.id, id))
-          .returning({ id: this.workTag.id }),
+          .where(eq(this.workTag.id, id)),
       { duplicate: 'Tag name already exists' },
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], 'Tag not found')
-    return { id }
+    this.drizzle.assertAffectedRows(result, 'Tag not found')
+    return true
   }
 
   async updateTagSort(updateSortDto: DragReorderDto) {
-    return this.drizzle.ext.swapField(this.workTag, {
+    await this.drizzle.ext.swapField(this.workTag, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
+    return true
   }
 
   async updateTagStatus(id: number, isEnabled: boolean) {
-    const [updated] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workTag)
         .set({ isEnabled })
-        .where(eq(this.workTag.id, id))
-        .returning({ id: this.workTag.id }),
+        .where(eq(this.workTag.id, id)),
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], 'Tag not found')
-    return updated
+    this.drizzle.assertAffectedRows(result, 'Tag not found')
+    return true
   }
 
   async deleteTagBatch(dto: IdDto) {
@@ -119,11 +117,10 @@ export class WorkTagService {
     const rows = await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.workTag)
-        .where(eq(this.workTag.id, dto.id))
-        .returning({ id: this.workTag.id }),
+        .where(eq(this.workTag.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(rows, 'Tag not found')
-    return { id: dto.id }
+    return true
   }
 
   async checkTagHasWorks(tagId: number) {

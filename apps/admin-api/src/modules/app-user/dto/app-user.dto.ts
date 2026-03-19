@@ -1,5 +1,11 @@
-import { AddUserExperienceDto, AddUserPointsDto, BaseUserBadgeDto, ConsumeUserPointsDto, QueryUserBadgeDto, QueryUserExperienceRecordDto, QueryUserPointRecordDto } from '@libs/growth'
 import {
+  BaseUserBadgeDto,
+  BaseUserExperienceRecordDto,
+  BaseUserPointRecordDto,
+  GrowthRuleTypeEnum,
+} from '@libs/growth'
+import {
+  EnumProperty,
   DateProperty,
   NestedProperty,
   NumberProperty,
@@ -307,11 +313,46 @@ export class UpdateAdminAppUserStatusDto extends PickType(BaseAdminAppUserDto, [
   banUntil?: Date
 }
 
-export class QueryAdminAppUserPointRecordDto extends QueryUserPointRecordDto {}
+export class AdminAppUserPointRecordDto extends PickType(BaseUserPointRecordDto, [
+  'id',
+  'userId',
+  'ruleId',
+  'targetType',
+  'targetId',
+  'remark',
+  'createdAt',
+] as const) {
+  @NumberProperty({
+    description: '积分变化（正数为获得，负数为消费）',
+    example: 5,
+    validation: false,
+  })
+  points!: number
 
-export class QueryAdminAppUserExperienceRecordDto extends QueryUserExperienceRecordDto {}
+  @NumberProperty({
+    description: '变化前积分',
+    example: 100,
+    validation: false,
+  })
+  beforePoints!: number
 
-export class QueryAdminAppUserBadgeDto extends QueryUserBadgeDto {
+  @NumberProperty({
+    description: '变化后积分',
+    example: 105,
+    validation: false,
+  })
+  afterPoints!: number
+}
+
+export class QueryAdminAppUserPointRecordDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(
+      BaseUserPointRecordDto,
+      ['ruleId', 'targetType', 'targetId'] as const,
+    ),
+  ),
+) {
   @NumberProperty({
     description: '应用端用户ID',
     example: 1,
@@ -320,11 +361,153 @@ export class QueryAdminAppUserBadgeDto extends QueryUserBadgeDto {
   userId!: number
 }
 
-export class AddAdminAppUserPointsDto extends AddUserPointsDto {}
+export class AdminAppUserExperienceRecordDto extends PickType(
+  BaseUserExperienceRecordDto,
+  ['id', 'userId', 'ruleId', 'remark', 'createdAt'] as const,
+) {
+  @NumberProperty({
+    description: '经验值变化',
+    example: 5,
+    validation: false,
+  })
+  experience!: number
 
-export class ConsumeAdminAppUserPointsDto extends ConsumeUserPointsDto {}
+  @NumberProperty({
+    description: '变化前经验值',
+    example: 100,
+    validation: false,
+  })
+  beforeExperience!: number
 
-export class AddAdminAppUserExperienceDto extends AddUserExperienceDto {}
+  @NumberProperty({
+    description: '变化后经验值',
+    example: 105,
+    validation: false,
+  })
+  afterExperience!: number
+}
+
+export class QueryAdminAppUserExperienceRecordDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
+) {
+  @NumberProperty({
+    description: '应用端用户ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+}
+
+export class QueryAdminAppUserBadgeDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(
+      BaseUserBadgeDto,
+      ['name', 'type', 'isEnabled', 'business', 'eventKey'] as const,
+    ),
+  ),
+) {
+  @NumberProperty({
+    description: '应用端用户ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+}
+
+export class AddAdminAppUserPointsDto {
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+
+  @EnumProperty({
+    description: '规则类型',
+    example: GrowthRuleTypeEnum.CREATE_TOPIC,
+    enum: GrowthRuleTypeEnum,
+  })
+  ruleType!: GrowthRuleTypeEnum
+
+  @StringProperty({
+    description: '备注',
+    example: '管理员发放积分',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string
+}
+
+export class ConsumeAdminAppUserPointsDto {
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+
+  @NumberProperty({
+    description: '消费积分数量',
+    example: 10,
+    required: true,
+  })
+  points!: number
+
+  @NumberProperty({
+    description: '关联目标类型',
+    example: 3,
+    required: false,
+  })
+  targetType?: number
+
+  @NumberProperty({
+    description: '关联目标ID',
+    example: 1,
+    required: false,
+  })
+  targetId?: number
+
+  @NumberProperty({
+    description: '关联兑换ID',
+    example: 1,
+    required: false,
+  })
+  exchangeId?: number
+
+  @StringProperty({
+    description: '备注',
+    example: '管理员扣减积分',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string
+}
+
+export class AddAdminAppUserExperienceDto {
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+
+  @EnumProperty({
+    description: '规则类型',
+    example: GrowthRuleTypeEnum.CREATE_TOPIC,
+    enum: GrowthRuleTypeEnum,
+  })
+  ruleType!: GrowthRuleTypeEnum
+
+  @StringProperty({
+    description: '备注',
+    example: '管理员发放经验',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string
+}
 
 export class AssignAdminAppUserBadgeDto {
   @NumberProperty({

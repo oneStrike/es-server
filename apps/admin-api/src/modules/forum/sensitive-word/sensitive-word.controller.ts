@@ -2,26 +2,32 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BaseSensitiveWordDto,
-  CreateSensitiveWordDto,
-  MatchedWordDto,
-  QuerySensitiveWordDto,
-  SensitiveWordCountResponseDto,
-  SensitiveWordDetectDto,
   SensitiveWordDetectService,
-  SensitiveWordDetectStatusResponseDto,
-  SensitiveWordHighestLevelResponseDto,
-  SensitiveWordReplaceDto,
-  SensitiveWordReplaceResponseDto,
   SensitiveWordService,
-  SensitiveWordStatisticsDataDto,
-  SensitiveWordStatisticsQueryDto,
-  SensitiveWordStatisticsResponseDto,
   SensitiveWordStatisticsService,
-  UpdateSensitiveWordDto,
 } from '@libs/sensitive-word'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  SensitiveWordCountResponseDto,
+  SensitiveWordDetectDto,
+  SensitiveWordDetectResponseDto,
+  SensitiveWordDetectStatusResponseDto,
+  SensitiveWordHighestLevelResponseDto,
+  SensitiveWordReplaceDto,
+  SensitiveWordReplaceResponseDto,
+} from './dto/sensitive-word-detect.dto'
+import {
+  SensitiveWordStatisticsDataDto,
+  SensitiveWordStatisticsQueryDto,
+  SensitiveWordStatisticsResponseDto,
+} from './dto/sensitive-word-statistics.dto'
+import {
+  CreateSensitiveWordDto,
+  QuerySensitiveWordDto,
+  UpdateSensitiveWordDto,
+} from './dto/sensitive-word.dto'
 
 /**
  * 敏感词管理控制器
@@ -58,7 +64,7 @@ export class SensitiveWordController {
   @Post('create')
   @ApiDoc({
     summary: '创建敏感词',
-    model: BaseSensitiveWordDto,
+    model: Boolean,
   })
   async createSensitiveWord(@Body() body: CreateSensitiveWordDto) {
     return this.sensitiveWordService.createSensitiveWord(body)
@@ -72,7 +78,7 @@ export class SensitiveWordController {
   @Post('update')
   @ApiDoc({
     summary: '更新敏感词',
-    model: BaseSensitiveWordDto,
+    model: Boolean,
   })
   async updateSensitiveWord(@Body() body: UpdateSensitiveWordDto) {
     return this.sensitiveWordService.updateSensitiveWord(body)
@@ -86,7 +92,7 @@ export class SensitiveWordController {
   @Post('delete')
   @ApiDoc({
     summary: '删除敏感词',
-    model: BaseSensitiveWordDto,
+    model: Boolean,
   })
   async deleteSensitiveWord(@Body() body: IdDto) {
     return this.sensitiveWordService.deleteSensitiveWord(body)
@@ -100,7 +106,7 @@ export class SensitiveWordController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新敏感词状态',
-    model: BaseSensitiveWordDto,
+    model: Boolean,
   })
   async updateSensitiveWordStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.sensitiveWordService.updateSensitiveWordStatus(body)
@@ -114,8 +120,7 @@ export class SensitiveWordController {
   @Post('detect')
   @ApiDoc({
     summary: '检测文本中的敏感词',
-    model: MatchedWordDto,
-    isArray: true,
+    model: SensitiveWordDetectResponseDto,
   })
   async detect(@Body() body: SensitiveWordDetectDto) {
     return this.detectService.getMatchedWords(body)
@@ -159,7 +164,9 @@ export class SensitiveWordController {
     model: SensitiveWordReplaceResponseDto,
   })
   async replaceSensitiveWords(@Body() body: SensitiveWordReplaceDto) {
-    return this.detectService.replaceSensitiveWords(body)
+    return {
+      replacedText: this.detectService.replaceSensitiveWords(body),
+    }
   }
 
   /**
@@ -175,7 +182,9 @@ export class SensitiveWordController {
   async getHighestSensitiveWordLevel(
     @Body() body: SensitiveWordDetectDto,
   ) {
-    return this.detectService.getHighestSensitiveWordLevel(body)
+    return {
+      highestLevel: this.detectService.getHighestSensitiveWordLevel(body),
+    }
   }
 
   /**
@@ -204,6 +213,8 @@ export class SensitiveWordController {
     model: SensitiveWordCountResponseDto,
   })
   async getWordCount() {
-    return this.detectService.getWordCount()
+    return {
+      count: this.detectService.getWordCount(),
+    }
   }
 }

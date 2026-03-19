@@ -6,7 +6,6 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -138,35 +137,4 @@ export class BaseUserNotificationDto {
     example: '2026-03-07T12:00:00.000Z',
   })
   createdAt: Date
-}
-
-/**
- * 查询用户通知列表数据传输对象
- */
-export class QueryUserNotificationListDto extends PageDto {
-  @BooleanProperty({
-    description: '是否已读',
-    required: false,
-    example: false,
-  })
-  isRead?: boolean
-
-  @EnumProperty({
-    description: '通知类型',
-    required: false,
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
-  })
-  type?: MessageNotificationTypeEnum
-}
-
-/**
- * 通知未读数量数据传输对象
- */
-export class NotificationUnreadCountDto {
-  @NumberProperty({
-    description: '未读通知数量',
-    example: 3,
-  })
-  count: number
 }

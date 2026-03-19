@@ -3,12 +3,19 @@ import {
 } from '@libs/forum'
 import {
   BaseUserLevelRuleDto,
-  UserExperienceRecordDto,
 } from '@libs/growth'
 import {
   NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
+import { PickType } from '@nestjs/swagger'
+import { UserExperienceRecordDto } from './experience.dto'
+
+export class UserExperienceLevelDto extends PickType(BaseUserLevelRuleDto, [
+  'id',
+  'name',
+  'requiredExperience',
+] as const) {}
 
 export class UserExperienceRecordDetailDto extends UserExperienceRecordDto {
   @NestedProperty({
@@ -39,9 +46,9 @@ export class UserExperienceStatsDto {
 
   @NestedProperty({
     description: '当前等级信息',
-    type: BaseUserLevelRuleDto,
+    type: UserExperienceLevelDto,
     required: false,
     validation: false,
   })
-  level?: BaseUserLevelRuleDto
+  level?: UserExperienceLevelDto
 }

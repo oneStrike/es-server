@@ -6,13 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 import {
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
@@ -134,28 +128,6 @@ export class BaseTaskDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateTaskDto extends OmitType(BaseTaskDto, [
-  ...OMIT_BASE_FIELDS,
-  'createdById',
-  'updatedById',
-  'deletedAt',
-]) {}
-
-export class UpdateTaskDto extends IntersectionType(
-  PartialType(CreateTaskDto),
-  IdDto,
-) {}
-
-export class UpdateTaskStatusDto extends IntersectionType(
-  IdDto,
-  PartialType(PickType(BaseTaskDto, ['status', 'isEnabled'] as const)),
-) {}
-
-export class QueryTaskDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseTaskDto, ['title', 'status', 'type', 'isEnabled'])),
-) {}
-
 export class BaseTaskAssignmentDto extends BaseDto {
   @NumberProperty({ description: '任务ID', example: 1 })
   taskId: number
@@ -236,51 +208,3 @@ export class BaseTaskAssignmentDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
-
-export class QueryTaskAssignmentDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseTaskAssignmentDto, ['taskId', 'userId', 'status'] as const),
-  ),
-) {}
-
-export class QueryAppTaskDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseTaskDto, ['type'] as const)),
-) {}
-
-export class QueryMyTaskDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseTaskAssignmentDto, ['status'] as const)),
-) {
-  @EnumProperty({
-    description: '任务类型',
-    example: TaskTypeEnum.DAILY,
-    required: false,
-    enum: TaskTypeEnum,
-  })
-  type?: TaskTypeEnum
-}
-
-export class ClaimTaskDto extends PickType(BaseTaskAssignmentDto, [
-  'taskId',
-] as const) {}
-
-export class TaskProgressDto {
-  @NumberProperty({ description: '任务ID', example: 1 })
-  taskId: number
-
-  @NumberProperty({ description: '进度增量', example: 1 })
-  delta: number
-
-  @JsonProperty({
-    description: '变更上下文',
-    example: '{"action":"post_comment"}',
-    required: false,
-  })
-  context?: string
-}
-
-export class TaskCompleteDto extends PickType(BaseTaskAssignmentDto, [
-  'taskId',
-] as const) {}

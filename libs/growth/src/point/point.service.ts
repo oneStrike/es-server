@@ -1,4 +1,9 @@
 import type { Db } from '@db/core'
+import type {
+  AddUserPointsInput,
+  ConsumeUserPointsInput,
+  QueryUserPointRecordPageInput,
+} from './point.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, sql } from 'drizzle-orm'
@@ -9,11 +14,6 @@ import {
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
-import {
-  AddUserPointsDto,
-  ConsumeUserPointsDto,
-  QueryUserPointRecordDto,
-} from './dto/point-record.dto'
 import { UserPointRuleService } from './point-rule.service'
 
 interface LedgerRecordShape {
@@ -60,7 +60,7 @@ export class UserPointService {
    * @returns 增加积分的结果
    */
   async addPoints(
-    addPointsDto: AddUserPointsDto & { bizKey?: string, source?: string },
+    addPointsDto: AddUserPointsInput & { bizKey?: string, source?: string },
   ) {
     const { userId, ruleType, remark } = addPointsDto
 
@@ -89,7 +89,7 @@ export class UserPointService {
         source: addPointsDto.source,
       })
 
-    return this.db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
         userId,
         assetType: GrowthAssetTypeEnum.POINTS,
@@ -110,23 +110,9 @@ export class UserPointService {
       if (!recordId) {
         throw new BadRequestException('积分发放失败')
       }
-
-      const record = await this.findLedgerRecordById(tx, recordId)
-
-      return {
-        id: record.id,
-        userId: record.userId,
-        ruleId: record.ruleId ?? undefined,
-        targetType: record.targetType ?? undefined,
-        targetId: record.targetId ?? undefined,
-        points: record.delta,
-        beforePoints: record.beforeValue,
-        afterPoints: record.afterValue,
-        remark: record.remark ?? undefined,
-        createdAt: record.createdAt,
-        updatedAt: record.updatedAt,
-      }
+      await this.findLedgerRecordById(tx, recordId)
     })
+    return true
   }
 
   /**
@@ -135,7 +121,7 @@ export class UserPointService {
    * @returns 消费积分的结果
    */
   async consumePoints(
-    consumePointsDto: ConsumeUserPointsDto & {
+    consumePointsDto: ConsumeUserPointsInput & {
       bizKey?: string
       source?: string
     },
@@ -147,7 +133,7 @@ export class UserPointService {
 
   async consumePointsInTx(
     tx: Db,
-    consumePointsDto: ConsumeUserPointsDto & {
+    consumePointsDto: ConsumeUserPointsInput & {
       bizKey?: string
       source?: string
     },
@@ -195,21 +181,8 @@ export class UserPointService {
         throw new BadRequestException('积分扣减失败')
       }
 
-      const record = await this.findLedgerRecordById(trx, recordId)
-
-      return {
-        id: record.id,
-        userId: record.userId,
-        ruleId: record.ruleId ?? undefined,
-        targetType: record.targetType ?? undefined,
-        targetId: record.targetId ?? undefined,
-        points: record.delta,
-        beforePoints: record.beforeValue,
-        afterPoints: record.afterValue,
-        remark: record.remark ?? undefined,
-        createdAt: record.createdAt,
-        updatedAt: record.updatedAt,
-      }
+      await this.findLedgerRecordById(trx, recordId)
+      return true
     }
 
     return applyConsume(tx)
@@ -220,12 +193,14 @@ export class UserPointService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getPointRecordPage(dto: QueryUserPointRecordDto) {
+  async getPointRecordPage(dto: QueryUserPointRecordPageInput) {
     const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
       where: this.drizzle.buildWhere(this.growthLedgerRecord, {
         and: {
           userId: dto.userId,
           ruleId: dto.ruleId,
+          targetType: dto.targetType,
+          targetId: dto.targetId,
           assetType: GrowthAssetTypeEnum.POINTS,
         },
       }),

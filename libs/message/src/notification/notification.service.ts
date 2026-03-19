@@ -1,5 +1,5 @@
 import type { NotificationOutboxPayload } from '../outbox/dto/outbox-event.dto'
-import type { QueryUserNotificationListDto } from './dto/notification.dto'
+import type { QueryUserNotificationListInput } from './notification.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
@@ -37,7 +37,7 @@ export class MessageNotificationService {
    */
   async queryUserNotificationList(
     userId: number,
-    queryDto: QueryUserNotificationListDto,
+    queryDto: QueryUserNotificationListInput,
   ) {
     const { isRead, type, ...pagination } = queryDto
     const where = this.drizzle.buildWhere(this.notification, {
@@ -112,18 +112,15 @@ export class MessageNotificationService {
           eq(this.notification.userId, userId),
           eq(this.notification.isRead, false),
         ))
-        .returning({ id: this.notification.id }),
     )
-    if (result.length === 0) {
-      throw new BadRequestException('通知不存在或已读')
-    }
+    this.drizzle.assertAffectedRows(result, '通知不存在或已读')
 
     this.messageNotificationRealtimeService.emitNotificationReadSync(userId, {
       id,
       readAt: now,
     })
     await this.emitInboxSummaryUpdate(userId)
-    return { id }
+    return true
   }
 
   /**
@@ -143,15 +140,14 @@ export class MessageNotificationService {
           eq(this.notification.userId, userId),
           eq(this.notification.isRead, false),
         ))
-        .returning({ id: this.notification.id }),
     )
-    if (result.length > 0) {
+    if (result.rowCount > 0) {
       this.messageNotificationRealtimeService.emitNotificationReadSync(userId, {
         readAt: now,
       })
       await this.emitInboxSummaryUpdate(userId)
     }
-    return { count: result.length }
+    return true
   }
 
   /**

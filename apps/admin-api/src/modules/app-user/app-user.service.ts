@@ -262,7 +262,7 @@ export class AppUserService {
       throw error
     }
 
-    return this.getAppUserDetail(dto.id)
+    return true
   }
 
   /**
@@ -275,18 +275,16 @@ export class AppUserService {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
 
-    const rows = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({
           isEnabled: dto.isEnabled,
         })
-        .where(eq(this.appUser.id, dto.id))
-        .returning({ id: this.appUser.id }),
+        .where(eq(this.appUser.id, dto.id)),
     )
-    this.drizzle.assertAffectedRows(rows, '用户不存在')
-
-    return this.getAppUserDetail(dto.id)
+    this.drizzle.assertAffectedRows(result, '用户不存在')
+    return true
   }
 
   /**
@@ -304,7 +302,7 @@ export class AppUserService {
       dto.status === UserStatusEnum.PERMANENT_MUTED
       || dto.status === UserStatusEnum.PERMANENT_BANNED
 
-    const rows = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({
@@ -312,12 +310,10 @@ export class AppUserService {
           banReason: isNormal ? null : (dto.banReason ?? null),
           banUntil: isNormal || isPermanent ? null : (dto.banUntil ?? null),
         })
-        .where(eq(this.appUser.id, dto.id))
-        .returning({ id: this.appUser.id }),
+        .where(eq(this.appUser.id, dto.id)),
     )
-    this.drizzle.assertAffectedRows(rows, '用户不存在')
-
-    return this.getAppUserDetail(dto.id)
+    this.drizzle.assertAffectedRows(result, '用户不存在')
+    return true
   }
 
   /**
@@ -540,10 +536,7 @@ export class AppUserService {
     await this.ensureSuperAdmin(adminUserId)
 
     await this.userBadgeService.assignBadge(dto)
-    return {
-      userId: dto.userId,
-      badgeId: dto.badgeId,
-    }
+    return true
   }
 
   /**
@@ -556,10 +549,7 @@ export class AppUserService {
     await this.ensureSuperAdmin(adminUserId)
 
     await this.userBadgeService.revokeBadge(dto)
-    return {
-      userId: dto.userId,
-      badgeId: dto.badgeId,
-    }
+    return true
   }
 
   /**

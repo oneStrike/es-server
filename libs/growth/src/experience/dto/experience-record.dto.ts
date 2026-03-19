@@ -5,8 +5,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { IdDto } from '@libs/platform/dto'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
@@ -105,92 +104,4 @@ export class BaseUserExperienceRecordDto extends IdDto {
     required: true,
   })
   createdAt!: Date
-}
-
-export class UserExperienceRecordDto extends IdDto {
-  @NumberProperty({
-    description: '关联的用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-
-  @NumberProperty({
-    description: '关联的规则ID',
-    example: 1,
-    required: false,
-  })
-  ruleId?: number
-
-  @NumberProperty({
-    description: '经验值变化',
-    example: 5,
-    required: true,
-  })
-  experience!: number
-
-  @NumberProperty({
-    description: '变化前经验值',
-    example: 100,
-    required: true,
-  })
-  beforeExperience!: number
-
-  @NumberProperty({
-    description: '变化后经验值',
-    example: 105,
-    required: true,
-  })
-  afterExperience!: number
-
-  @StringProperty({
-    description: '备注',
-    example: '发表主题获得经验',
-    required: false,
-    maxLength: 500,
-  })
-  remark?: string
-
-  @DateProperty({
-    description: '创建时间',
-    example: '2026-03-19T12:00:00.000Z',
-    required: true,
-  })
-  createdAt!: Date
-}
-
-export class QueryUserExperienceRecordDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'])),
-) {
-  @NumberProperty({
-    description: '用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-}
-
-export class AddUserExperienceDto {
-  @NumberProperty({
-    description: '用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-
-  @NumberProperty({
-    description: '规则类型',
-    example: 1,
-    required: true,
-  })
-  ruleType!: number
-
-  @StringProperty({
-    description: '备注',
-    example: '发表主题获得经验',
-    required: false,
-    maxLength: 500,
-  })
-  remark?: string
 }

@@ -1,4 +1,5 @@
 export * from './dto/user-badge.dto'
+export * from './badge.type'
 export * from './user-badge.constant'
 export * from './user-badge.module'
 export * from './user-badge.service'

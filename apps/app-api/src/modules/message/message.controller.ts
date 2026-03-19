@@ -1,23 +1,25 @@
 import {
-  BaseChatConversationDto,
-  BaseChatMessageDto,
-  BaseUserNotificationDto,
-  InboxSummaryDto,
-  InboxTimelineItemDto,
   MessageChatService,
   MessageInboxService,
   MessageNotificationService,
+} from '@libs/message'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import {
+  ChatConversationDto,
+  ChatConversationMessagesResponseDto,
+  InboxSummaryDto,
+  InboxTimelineItemDto,
   NotificationUnreadCountDto,
   OpenDirectConversationDto,
   QueryChatConversationListDto,
   QueryChatConversationMessagesDto,
   QueryInboxTimelineDto,
   QueryUserNotificationListDto,
-} from '@libs/message'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
+  UserNotificationDto,
+} from './dto/message.dto'
 
 @ApiTags('消息')
 @Controller('app/message')
@@ -31,7 +33,7 @@ export class MessageController {
   @Get('notification/page')
   @ApiPageDoc({
     summary: '分页查询站内通知',
-    model: BaseUserNotificationDto,
+    model: UserNotificationDto,
   })
   async list(
     @Query() query: QueryUserNotificationListDto,
@@ -55,7 +57,7 @@ export class MessageController {
   @Post('notification/read')
   @ApiDoc({
     summary: '标记单条通知已读',
-    model: IdDto,
+    model: Boolean,
   })
   async markRead(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
     return this.messageNotificationService.markRead(userId, body.id)
@@ -64,17 +66,16 @@ export class MessageController {
   @Post('notification/read-all')
   @ApiDoc({
     summary: '标记全部通知已读',
-    model: NotificationUnreadCountDto,
+    model: Boolean,
   })
   async markAllRead(@CurrentUser('sub') userId: number) {
-    const result = await this.messageNotificationService.markAllRead(userId)
-    return { count: result.count }
+    return this.messageNotificationService.markAllRead(userId)
   }
 
   @Post('chat/direct/open')
   @ApiDoc({
     summary: '打开私聊会话',
-    model: BaseChatConversationDto,
+    model: ChatConversationDto,
   })
   async openDirect(
     @Body() body: OpenDirectConversationDto,
@@ -86,7 +87,7 @@ export class MessageController {
   @Get('chat/conversation/page')
   @ApiPageDoc({
     summary: '分页查询会话列表',
-    model: BaseChatConversationDto,
+    model: ChatConversationDto,
   })
   async conversationList(
     @Query() query: QueryChatConversationListDto,
@@ -98,7 +99,7 @@ export class MessageController {
   @Get('chat/conversation/messages')
   @ApiDoc({
     summary: '查询会话消息',
-    model: BaseChatMessageDto,
+    model: ChatConversationMessagesResponseDto,
   })
   async conversationMessages(
     @Query() query: QueryChatConversationMessagesDto,

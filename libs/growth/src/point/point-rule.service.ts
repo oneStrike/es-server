@@ -2,11 +2,11 @@ import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
-import {
-  CreateUserPointRuleDto,
-  QueryUserPointRuleDto,
-  UpdateUserPointRuleDto,
-} from './dto/point-rule.dto'
+import type {
+  CreateUserPointRuleInput,
+  QueryUserPointRulePageInput,
+  UpdateUserPointRuleInput,
+} from './point.type'
 
 @Injectable()
 export class UserPointRuleService {
@@ -20,7 +20,7 @@ export class UserPointRuleService {
     return this.drizzle.schema.userPointRule
   }
 
-  async createPointRule(dto: CreateUserPointRuleDto) {
+  async createPointRule(dto: CreateUserPointRuleInput) {
     if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
       throw new BadRequestException('无效的积分规则类型')
     }
@@ -34,7 +34,7 @@ export class UserPointRuleService {
     return true
   }
 
-  async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {
+  async getPointRulePage(queryPointRuleDto: QueryUserPointRulePageInput) {
     return this.drizzle.ext.findPagination(this.userPointRule, {
       where: this.drizzle.buildWhere(this.userPointRule, {
         and: queryPointRuleDto,
@@ -57,26 +57,25 @@ export class UserPointRuleService {
     return rule
   }
 
-  async updatePointRule(dto: UpdateUserPointRuleDto) {
+  async updatePointRule(dto: UpdateUserPointRuleInput) {
     if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
       throw new BadRequestException('Invalid point rule type')
     }
 
     const { id, ...updateData } = dto
 
-    const data = await this.drizzle.withErrorHandling(
+    const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.userPointRule)
           .set(updateData)
-          .where(eq(this.userPointRule.id, id))
-          .returning(),
+          .where(eq(this.userPointRule.id, id)),
       {
         duplicate: 'Rule type already exists',
       },
     )
-    this.drizzle.assertAffectedRows(data, 'Point rule not found')
-    return data[0]
+    this.drizzle.assertAffectedRows(result, 'Point rule not found')
+    return true
   }
 
   async getEnabledRuleByType(ruleType: GrowthRuleTypeEnum) {

@@ -1,21 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
-import {
-  SensitiveWordLevelStatisticsDto,
-  SensitiveWordRecentHitStatisticsDto,
-  SensitiveWordStatisticsQueryDto,
-  SensitiveWordStatisticsResponseDto,
-  SensitiveWordTopHitStatisticsDto,
-  SensitiveWordTypeStatisticsDto,
-} from './dto/sensitive-word-statistics.dto'
-import {
-  CreateSensitiveWordDto,
-  QuerySensitiveWordDto,
-  UpdateSensitiveWordDto,
-} from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import {
   SensitiveWordLevelNames,
@@ -23,6 +9,18 @@ import {
   StatisticsTypeEnum,
 } from './sensitive-word-constant'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
+import type {
+  CreateSensitiveWordInput,
+  QuerySensitiveWordPageInput,
+  SensitiveWordLevelStatistics,
+  SensitiveWordRecentHitStatistics,
+  SensitiveWordStatisticsQueryInput,
+  SensitiveWordStatisticsResponse,
+  SensitiveWordTopHitStatistics,
+  SensitiveWordTypeStatistics,
+  UpdateSensitiveWordInput,
+  UpdateSensitiveWordStatusInput,
+} from './sensitive-word.types'
 
 /**
  * 敏感词服务类
@@ -51,7 +49,7 @@ export class SensitiveWordService {
    * @param dto 查询条件
    * @returns 分页结果
    */
-  async getSensitiveWordPage(dto: QuerySensitiveWordDto) {
+  async getSensitiveWordPage(dto: QuerySensitiveWordPageInput) {
     // 构建查询条件
     const conditions: SQL[] = []
     if (dto.word) {
@@ -75,17 +73,16 @@ export class SensitiveWordService {
    * @param dto 创建参数
    * @returns 新建敏感词
    */
-  async createSensitiveWord(dto: CreateSensitiveWordDto) {
-    const [result] = await this.drizzle.withErrorHandling(() =>
+  async createSensitiveWord(dto: CreateSensitiveWordInput) {
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.sensitiveWord)
-        .values(dto)
-        .returning(),
+        .values(dto),
     )
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
-    return result
+    return true
   }
 
   /**
@@ -93,23 +90,19 @@ export class SensitiveWordService {
    * @param dto 更新参数
    * @returns 更新后的敏感词
    */
-  async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
+  async updateSensitiveWord(dto: UpdateSensitiveWordInput) {
     const { id, ...updateData } = dto
-    const [result] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.sensitiveWord)
         .set(updateData)
-        .where(eq(this.sensitiveWord.id, id))
-        .returning(),
+        .where(eq(this.sensitiveWord.id, id)),
     )
-    this.drizzle.assertAffectedRows(
-      result ? [result] : [],
-      `ID【${id}】数据不存在`,
-    )
+    this.drizzle.assertAffectedRows(result, `ID【${id}】数据不存在`)
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
-    return result
+    return true
   }
 
   /**
@@ -117,21 +110,17 @@ export class SensitiveWordService {
    * @param dto 删除参数
    * @returns 删除结果
    */
-  async deleteSensitiveWord(dto: IdDto) {
-    const [result] = await this.drizzle.withErrorHandling(() =>
+  async deleteSensitiveWord(dto: { id: number }) {
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.sensitiveWord)
-        .where(eq(this.sensitiveWord.id, dto.id))
-        .returning(),
+        .where(eq(this.sensitiveWord.id, dto.id)),
     )
-    this.drizzle.assertAffectedRows(
-      result ? [result] : [],
-      `ID【${dto.id}】数据不存在`,
-    )
+    this.drizzle.assertAffectedRows(result, `ID【${dto.id}】数据不存在`)
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
-    return result
+    return true
   }
 
   /**
@@ -139,31 +128,25 @@ export class SensitiveWordService {
    * @param dto 状态更新参数
    * @returns 更新结果
    */
-  async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
-    const [result] = await this.drizzle.withErrorHandling(() =>
+  async updateSensitiveWordStatus(dto: UpdateSensitiveWordStatusInput) {
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.sensitiveWord)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.sensitiveWord.id, dto.id))
-        .returning(),
+        .where(eq(this.sensitiveWord.id, dto.id)),
     )
-    this.drizzle.assertAffectedRows(
-      result ? [result] : [],
-      `ID【${dto.id}】数据不存在`,
-    )
+    this.drizzle.assertAffectedRows(result, `ID【${dto.id}】数据不存在`)
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
-    return result
+    return true
   }
 
   /**
    * 获取级别统计
    * @returns 级别统计列表
    */
-  private async getLevelStatistics(): Promise<
-    SensitiveWordLevelStatisticsDto[]
-  > {
+  private async getLevelStatistics(): Promise<SensitiveWordLevelStatistics[]> {
     const results = await this.db
       .select({
         level: this.sensitiveWord.level,
@@ -185,7 +168,7 @@ export class SensitiveWordService {
    * 获取类型统计
    * @returns 类型统计列表
    */
-  private async getTypeStatistics(): Promise<SensitiveWordTypeStatisticsDto[]> {
+  private async getTypeStatistics(): Promise<SensitiveWordTypeStatistics[]> {
     const results = await this.db
       .select({
         type: this.sensitiveWord.type,
@@ -207,9 +190,7 @@ export class SensitiveWordService {
    * 获取顶部命中统计
    * @returns 命中次数最高的敏感词
    */
-  private async getTopHitStatistics(): Promise<
-    SensitiveWordTopHitStatisticsDto[]
-  > {
+  private async getTopHitStatistics(): Promise<SensitiveWordTopHitStatistics[]> {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,
@@ -236,9 +217,7 @@ export class SensitiveWordService {
    * 获取最近命中统计
    * @returns 最近命中的敏感词
    */
-  private async getRecentHitStatistics(): Promise<
-    SensitiveWordRecentHitStatisticsDto[]
-  > {
+  private async getRecentHitStatistics(): Promise<SensitiveWordRecentHitStatistics[]> {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,
@@ -267,8 +246,8 @@ export class SensitiveWordService {
    * @returns 统计结果
    */
   async getStatistics(
-    dto: SensitiveWordStatisticsQueryDto,
-  ): Promise<SensitiveWordStatisticsResponseDto> {
+    dto: SensitiveWordStatisticsQueryInput,
+  ): Promise<SensitiveWordStatisticsResponse> {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
     let data:

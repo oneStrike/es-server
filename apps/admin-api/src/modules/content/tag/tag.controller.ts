@@ -27,7 +27,7 @@ export class ContentTagController {
   @Post('create')
   @ApiDoc({
     summary: '创建标签',
-    model: IdDto,
+    model: Boolean,
   })
   async create(@Body() body: CreateTagDto) {
     return this.tagService.createTag(body)
@@ -63,7 +63,7 @@ export class ContentTagController {
   @Post('update')
   @ApiDoc({
     summary: '更新标签信息',
-    model: IdDto,
+    model: Boolean,
   })
   async update(@Body() body: UpdateTagDto) {
     return this.tagService.updateTag(body)
@@ -75,7 +75,7 @@ export class ContentTagController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新标签状态',
-    model: IdDto,
+    model: Boolean,
   })
   async updateStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.tagService.updateTagStatus(body.id, body.isEnabled)
@@ -87,7 +87,7 @@ export class ContentTagController {
   @Post('delete')
   @ApiDoc({
     summary: '删除标签',
-    model: IdDto,
+    model: Boolean,
   })
   async deleteBatch(@Body() body: IdDto) {
     return this.tagService.deleteTagBatch(body)
@@ -99,7 +99,7 @@ export class ContentTagController {
   @Post('swap-sort-order')
   @ApiDoc({
     summary: '标签交换排序',
-    model: DragReorderDto,
+    model: Boolean,
   })
   async tagOrder(@Body() body: DragReorderDto) {
     return this.tagService.updateTagSort(body)

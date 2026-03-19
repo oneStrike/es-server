@@ -84,15 +84,14 @@ export class AdminUserService {
     // 返回更新后的用户信息（不包含密码）
 
     const { id: _id, ...data } = updateData
-    const [updated] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.adminUser)
         .set(data)
-        .where(eq(this.adminUser.id, updateData.id))
-        .returning({ id: this.adminUser.id }),
+        .where(eq(this.adminUser.id, updateData.id)),
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], '用户不存在')
-    return updated
+    this.drizzle.assertAffectedRows(result, '用户不存在')
+    return true
   }
 
   /**
@@ -126,7 +125,7 @@ export class AdminUserService {
     // 加密密码
     const encryptedPassword = await this.scryptService.encryptPassword(password)
 
-    const [created] = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.adminUser)
         .values({
@@ -136,10 +135,9 @@ export class AdminUserService {
           mobile,
           role: role || AdminUserRoleEnum.NORMAL_ADMIN,
           isEnabled: true,
-        })
-        .returning({ id: this.adminUser.id }),
+        }),
     )
-    return created
+    return true
   }
 
   /**
@@ -220,17 +218,16 @@ export class AdminUserService {
     }
 
     // 更新密码
-    const [updated] = await this.drizzle.withErrorHandling(async () =>
+    const result = await this.drizzle.withErrorHandling(async () =>
       this.db
         .update(this.adminUser)
         .set({
           password: await this.scryptService.encryptPassword(newPassword),
         })
-        .where(eq(this.adminUser.id, userId))
-        .returning({ id: this.adminUser.id }),
+        .where(eq(this.adminUser.id, userId)),
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], '用户不存在')
-    return updated
+    this.drizzle.assertAffectedRows(result, '用户不存在')
+    return true
   }
 
   /**
@@ -253,7 +250,7 @@ export class AdminUserService {
       AdminAuthRedisKeys.LOGIN_FAIL_COUNT(userId),
     )
 
-    return userId
+    return true
   }
 
   /**
@@ -271,10 +268,9 @@ export class AdminUserService {
         .set({
           password: await this.scryptService.encryptPassword(defaultPassword),
         })
-        .where(eq(this.adminUser.id, id))
-        .returning({ id: this.adminUser.id }),
+        .where(eq(this.adminUser.id, id)),
     )
     this.drizzle.assertAffectedRows(rows, '用户不存在')
-    return userId
+    return true
   }
 }

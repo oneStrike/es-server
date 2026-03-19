@@ -83,7 +83,7 @@ export class UserService {
     await this.userCoreService.ensureUserExists(userId)
 
     try {
-      const [updated] = await this.drizzle.withErrorHandling(() =>
+      const result = await this.drizzle.withErrorHandling(() =>
         this.db
           .update(this.appUser)
           .set({
@@ -95,13 +95,10 @@ export class UserService {
               ? new Date(dto.birthDate).toISOString().slice(0, 10)
               : undefined,
           })
-          .where(eq(this.appUser.id, userId))
-          .returning(),
+          .where(eq(this.appUser.id, userId)),
       )
-      if (!updated) {
-        throw new NotFoundException('用户不存在')
-      }
-      return this.userCoreService.mapBaseUser(updated)
+      this.drizzle.assertAffectedRows(result, '用户不存在')
+      return true
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
         throw new BadRequestException('邮箱已被使用')
@@ -156,7 +153,7 @@ export class UserService {
       }),
     )
 
-    return this.getUserForumProfile(userId)
+    return true
   }
 
   /**

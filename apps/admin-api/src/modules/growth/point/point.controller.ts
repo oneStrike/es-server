@@ -1,14 +1,16 @@
 import {
   BaseUserPointRuleDto,
-  CreateUserPointRuleDto,
-  QueryUserPointRuleDto,
-  UpdateUserPointRuleDto,
   UserPointRuleService,
 } from '@libs/growth'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  CreateUserPointRuleDto,
+  QueryUserPointRuleDto,
+  UpdateUserPointRuleDto,
+} from './dto/point.dto'
 
 /**
  * 用户积分规则管理控制器
@@ -42,7 +44,7 @@ export class PointController {
   @Post('create')
   @ApiDoc({
     summary: '创建积分规则',
-    model: BaseUserPointRuleDto,
+    model: Boolean,
   })
   async createPointRule(@Body() dto: CreateUserPointRuleDto) {
     return this.userPointRuleService.createPointRule(dto)
@@ -51,7 +53,7 @@ export class PointController {
   @Post('update')
   @ApiDoc({
     summary: '更新积分规则',
-    model: BaseUserPointRuleDto,
+    model: Boolean,
   })
   async updatePointRule(@Body() dto: UpdateUserPointRuleDto) {
     return this.userPointRuleService.updatePointRule(dto)

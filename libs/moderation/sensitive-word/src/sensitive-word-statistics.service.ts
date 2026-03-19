@@ -2,16 +2,16 @@ import { DrizzleService } from '@db/core'
 import { Injectable, Logger } from '@nestjs/common'
 import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
 import {
-  SensitiveWordLevelStatisticsDto,
-  SensitiveWordRecentHitStatisticsDto,
-  SensitiveWordStatisticsDataDto,
-  SensitiveWordTopHitStatisticsDto,
-  SensitiveWordTypeStatisticsDto,
-} from './dto/sensitive-word-statistics.dto'
-import {
   SensitiveWordLevelNames,
   SensitiveWordTypeNames,
 } from './sensitive-word-constant'
+import type {
+  SensitiveWordLevelStatistics,
+  SensitiveWordRecentHitStatistics,
+  SensitiveWordStatisticsData,
+  SensitiveWordTopHitStatistics,
+  SensitiveWordTypeStatistics,
+} from './sensitive-word.types'
 
 /**
  * 敏感词统计服务
@@ -38,7 +38,7 @@ export class SensitiveWordStatisticsService {
    * 包含所有维度的统计信息
    * @returns 完整的统计数据
    */
-  async getStatistics(): Promise<SensitiveWordStatisticsDataDto> {
+  async getStatistics(): Promise<SensitiveWordStatisticsData> {
     const [
       totalWords,
       enabledWords,
@@ -179,7 +179,7 @@ export class SensitiveWordStatisticsService {
    * 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
    * @returns 级别统计列表
    */
-  private async getLevelStatistics(): Promise<SensitiveWordLevelStatisticsDto[]> {
+  private async getLevelStatistics(): Promise<SensitiveWordLevelStatistics[]> {
     const results = await this.db
       .select({
         level: this.sensitiveWord.level,
@@ -202,7 +202,7 @@ export class SensitiveWordStatisticsService {
    * 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
    * @returns 类型统计列表
    */
-  private async getTypeStatistics(): Promise<SensitiveWordTypeStatisticsDto[]> {
+  private async getTypeStatistics(): Promise<SensitiveWordTypeStatistics[]> {
     const results = await this.db
       .select({
         type: this.sensitiveWord.type,
@@ -225,7 +225,7 @@ export class SensitiveWordStatisticsService {
    * 返回命中次数最高的20个敏感词
    * @returns 热门敏感词列表
    */
-  private async getTopHitWords(): Promise<SensitiveWordTopHitStatisticsDto[]> {
+  private async getTopHitWords(): Promise<SensitiveWordTopHitStatistics[]> {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,
@@ -254,7 +254,7 @@ export class SensitiveWordStatisticsService {
    * @returns 最近命中的敏感词列表
    */
   private async getRecentHitWords(): Promise<
-    SensitiveWordRecentHitStatisticsDto[]
+    SensitiveWordRecentHitStatistics[]
   > {
     const results = await this.db
       .select({

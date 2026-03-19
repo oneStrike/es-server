@@ -1,10 +1,10 @@
 import type {
-  MarkConversationReadDto,
-  OpenDirectConversationDto,
-  QueryChatConversationListDto,
-  QueryChatConversationMessagesDto,
-  SendChatMessageDto,
-} from './dto/chat.dto'
+  MarkConversationReadInput,
+  OpenDirectConversationInput,
+  QueryChatConversationListInput,
+  QueryChatConversationMessagesInput,
+  SendChatMessageInput,
+} from './chat.type'
 import { DrizzleService } from '@db/core'
 import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
@@ -78,7 +78,7 @@ export class MessageChatService {
    * @param dto - 包含目标用户ID的请求参数
    * @returns 会话详情，包含成员信息和未读数
    */
-  async openDirectConversation(userId: number, dto: OpenDirectConversationDto) {
+  async openDirectConversation(userId: number, dto: OpenDirectConversationInput) {
     const targetUserId = this.parsePositiveInteger(dto.targetUserId, 'targetUserId')
     if (targetUserId === userId) {
       throw new BadRequestException('Cannot create direct conversation with yourself')
@@ -160,7 +160,7 @@ export class MessageChatService {
    * @param dto - 分页查询参数
    * @returns 分页的会话列表
    */
-  async getConversationList(userId: number, dto: QueryChatConversationListDto) {
+  async getConversationList(userId: number, dto: QueryChatConversationListInput) {
     const { pageIndex, pageSize, skip } = this.normalizePagination(dto)
     const [totalRows, conversationRows] = await Promise.all([
       this.db
@@ -287,7 +287,7 @@ export class MessageChatService {
    */
   async getConversationMessages(
     userId: number,
-    dto: QueryChatConversationMessagesDto,
+    dto: QueryChatConversationMessagesInput,
   ) {
     const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
     const cursor = this.parseBigintCursor(dto.cursor, 'cursor')
@@ -348,7 +348,7 @@ export class MessageChatService {
    * @param dto - 消息内容参数
    * @returns 消息ID、序列号等信息
    */
-  async sendMessage(userId: number, dto: SendChatMessageDto) {
+  async sendMessage(userId: number, dto: SendChatMessageInput) {
     const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
     const messageType = this.parseMessageType(dto.messageType)
     const content = dto.content?.trim()
@@ -437,7 +437,7 @@ export class MessageChatService {
    * @param dto - 包含会话ID和已读消息ID的参数
    * @returns 已读标记结果
    */
-  async markConversationRead(userId: number, dto: MarkConversationReadDto) {
+  async markConversationRead(userId: number, dto: MarkConversationReadInput) {
     const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
     const messageId = this.parseBigintId(dto.messageId, 'messageId')
     const result = await this.drizzle.withErrorHandling(async () =>
@@ -984,7 +984,7 @@ export class MessageChatService {
    * @param dto - 分页参数
    * @returns 标准化的分页参数
    */
-  private normalizePagination(dto: QueryChatConversationListDto) {
+  private normalizePagination(dto: QueryChatConversationListInput) {
     // 页码处理：支持从1开始或从0开始
     const rawPageIndex = Number.isFinite(Number(dto.pageIndex))
       ? Math.floor(Number(dto.pageIndex))

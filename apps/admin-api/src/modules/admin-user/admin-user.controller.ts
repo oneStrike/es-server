@@ -30,7 +30,7 @@ export class AdminUserController {
   @Post('create')
   @ApiDoc({
     summary: '用户注册',
-    model: IdDto,
+    model: Boolean,
   })
   async register(
     @Body() body: UserRegisterDto,
@@ -45,7 +45,7 @@ export class AdminUserController {
   @Post('profile/update')
   @ApiDoc({
     summary: '更新用户信息',
-    model: BaseUserDto,
+    model: Boolean,
   })
   async updateUserInfo(
     @Body() body: UpdateUserDto,
@@ -96,7 +96,7 @@ export class AdminUserController {
   @Post('password/change')
   @ApiDoc({
     summary: '修改密码',
-    model: IdDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,
@@ -115,7 +115,7 @@ export class AdminUserController {
   @Post('password/reset')
   @ApiDoc({
     summary: '重置用户密码为默认密码',
-    model: IdDto,
+    model: Boolean,
   })
   async resetPassword(
     @Body() query: IdDto,
@@ -130,7 +130,7 @@ export class AdminUserController {
   @Post('unlock')
   @ApiDoc({
     summary: '解锁指定用户的锁定状态',
-    model: IdDto,
+    model: Boolean,
   })
   async unlockUser(@Body() query: IdDto) {
     return this.adminUserService.unlockUser(query.id)

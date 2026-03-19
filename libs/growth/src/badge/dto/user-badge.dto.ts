@@ -4,13 +4,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 import { UserBadgeTypeEnum } from '../user-badge.constant'
 
 export class BaseUserBadgeDto extends BaseDto {
@@ -76,43 +70,4 @@ export class BaseUserBadgeDto extends BaseDto {
     default: true,
   })
   isEnabled!: boolean
-}
-
-export class CreateUserBadgeDto extends OmitType(
-  BaseUserBadgeDto,
-  OMIT_BASE_FIELDS,
-) {}
-
-export class UpdateUserBadgeDto extends IntersectionType(
-  CreateUserBadgeDto,
-  IdDto,
-) {}
-
-export class QueryUserBadgeDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseUserBadgeDto, [
-      'name',
-      'type',
-      'isEnabled',
-      'business',
-      'eventKey',
-    ]),
-  ),
-) {}
-
-export class AssignUserBadgeDto {
-  @NumberProperty({
-    description: '徽章id',
-    example: 1,
-    required: true,
-  })
-  badgeId!: number
-
-  @NumberProperty({
-    description: '用户id',
-    example: 1,
-    required: true,
-  })
-  userId!: number
 }

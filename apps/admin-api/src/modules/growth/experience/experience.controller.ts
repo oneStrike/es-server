@@ -1,17 +1,19 @@
 import {
-  AddUserExperienceDto,
   BaseUserExperienceRuleDto,
-  CreateUserExperienceRuleDto,
-  QueryUserExperienceRecordDto,
-  QueryUserExperienceRuleDto,
-  UpdateUserExperienceRuleDto,
-  UserExperienceRecordDto,
   UserExperienceService,
 } from '@libs/growth'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  AddUserExperienceDto,
+  CreateUserExperienceRuleDto,
+  QueryUserExperienceRecordDto,
+  QueryUserExperienceRuleDto,
+  UpdateUserExperienceRuleDto,
+  UserExperienceRecordDto,
+} from './dto/experience.dto'
 import {
   UserExperienceRecordDetailDto,
   UserExperienceStatsDto,
@@ -49,7 +51,7 @@ export class ExperienceController {
   @Post('create')
   @ApiDoc({
     summary: '创建用户经验规则',
-    model: BaseUserExperienceRuleDto,
+    model: Boolean,
   })
   async createExperienceRule(@Body() dto: CreateUserExperienceRuleDto) {
     return this.experienceService.createExperienceRule(dto)
@@ -58,7 +60,7 @@ export class ExperienceController {
   @Post('update')
   @ApiDoc({
     summary: '更新用户经验规则',
-    model: BaseUserExperienceRuleDto,
+    model: Boolean,
   })
   async updateExperienceRule(@Body() dto: UpdateUserExperienceRuleDto) {
     return this.experienceService.updateExperienceRule(dto)
@@ -67,7 +69,7 @@ export class ExperienceController {
   @Post('delete')
   @ApiDoc({
     summary: '删除用户经验规则',
-    model: BaseUserExperienceRuleDto,
+    model: Boolean,
   })
   async deleteExperienceRule(@Body() dto: IdDto) {
     return this.experienceService.deleteExperienceRule(dto.id)
@@ -76,7 +78,7 @@ export class ExperienceController {
   @Post('grant')
   @ApiDoc({
     summary: '增加用户经验',
-    model: UserExperienceRecordDto,
+    model: Boolean,
   })
   async grantExperience(@Body() dto: AddUserExperienceDto) {
     return this.experienceService.addExperience(dto)

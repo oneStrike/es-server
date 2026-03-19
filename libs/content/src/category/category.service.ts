@@ -28,16 +28,15 @@ export class WorkCategoryService {
       createCategoryInput.sortOrder = maxOrder + 1
     }
 
-    const [created] = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.workCategory)
         .values({
           popularity: 0,
           ...createCategoryInput,
-        })
-        .returning({ id: this.workCategory.id }),
+        }),
     )
-    return created
+    return true
   }
 
   async getCategoryPage(queryDto: QueryCategoryInput) {
@@ -77,38 +76,37 @@ export class WorkCategoryService {
   async updateCategory(updateCategoryDto: UpdateCategoryInput) {
     const { id, ...updateData } = updateCategoryDto
 
-    const [updated] = await this.drizzle.withErrorHandling(
+    const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.workCategory)
           .set(updateData)
-          .where(eq(this.workCategory.id, id))
-          .returning({ id: this.workCategory.id }),
+          .where(eq(this.workCategory.id, id)),
       { duplicate: 'Category name already exists' },
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], '分类不存在')
-    return updated
+    this.drizzle.assertAffectedRows(result, '分类不存在')
+    return true
   }
 
   async updateCategoryStatus(updateStatusDto: UpdateCategoryStatusInput) {
     if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks())) {
       throw new BadRequestException('Category has related works and cannot be disabled')
     }
-    const [updated] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workCategory)
         .set({ isEnabled: updateStatusDto.isEnabled })
-        .where(eq(this.workCategory.id, updateStatusDto.id))
-        .returning({ id: this.workCategory.id }),
+        .where(eq(this.workCategory.id, updateStatusDto.id)),
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], '分类不存在')
-    return updated
+    this.drizzle.assertAffectedRows(result, '分类不存在')
+    return true
   }
 
   async updateCategorySort(updateSortDto: UpdateCategorySortInput) {
-    return this.drizzle.ext.swapField(this.workCategory, {
+    await this.drizzle.ext.swapField(this.workCategory, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
+    return true
   }
 
   async deleteCategory(input: CategoryIdInput) {
@@ -119,7 +117,7 @@ export class WorkCategoryService {
       this.db.delete(this.workCategory).where(eq(this.workCategory.id, input.id)),
     )
     this.drizzle.assertAffectedRows(result, '分类不存在')
-    return { id: input.id }
+    return true
   }
 
   async checkCategoryHasWorks() {

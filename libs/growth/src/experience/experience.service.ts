@@ -5,14 +5,12 @@ import { and, eq, gt, gte, sql } from 'drizzle-orm'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import {
-  AddUserExperienceDto,
-  QueryUserExperienceRecordDto,
-} from './dto/experience-record.dto'
-import {
-  CreateUserExperienceRuleDto,
-  QueryUserExperienceRuleDto,
-  UpdateUserExperienceRuleDto,
-} from './dto/experience-rule.dto'
+  AddUserExperienceInput,
+  CreateUserExperienceRuleInput,
+  QueryUserExperienceRecordPageInput,
+  QueryUserExperienceRulePageInput,
+  UpdateUserExperienceRuleInput,
+} from './experience.type'
 
 /**
  * 经验服务类
@@ -52,14 +50,14 @@ export class UserExperienceService {
    * @param dto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createExperienceRule(dto: CreateUserExperienceRuleDto) {
-    const rows = await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userExperienceRule).values(dto).returning(),
+  async createExperienceRule(dto: CreateUserExperienceRuleInput) {
+    await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.userExperienceRule).values(dto),
       {
         duplicate: 'Experience rule type already exists',
       },
     )
-    return rows[0]
+    return true
   }
 
   /**
@@ -67,7 +65,7 @@ export class UserExperienceService {
    * @param dto 查询条件
    * @returns 分页的规则列表
    */
-  async getExperienceRulePage(dto: QueryUserExperienceRuleDto) {
+  async getExperienceRulePage(dto: QueryUserExperienceRulePageInput) {
     return this.drizzle.ext.findPagination(this.userExperienceRule, {
       where: this.drizzle.buildWhere(this.userExperienceRule, {
         and: {
@@ -103,21 +101,20 @@ export class UserExperienceService {
    * @param dto 更新规则的数据
    * @returns 更新后的规则信息
    */
-  async updateExperienceRule(dto: UpdateUserExperienceRuleDto) {
+  async updateExperienceRule(dto: UpdateUserExperienceRuleInput) {
     const { id, ...updateData } = dto
-    const rows = await this.drizzle.withErrorHandling(
+    const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.userExperienceRule)
           .set(updateData)
-          .where(eq(this.userExperienceRule.id, id))
-          .returning(),
+          .where(eq(this.userExperienceRule.id, id)),
       {
         duplicate: 'Experience rule type already exists',
       },
     )
-    this.drizzle.assertAffectedRows(rows, '经验规则不存在')
-    return rows[0]
+    this.drizzle.assertAffectedRows(result, '经验规则不存在')
+    return true
   }
 
   /**
@@ -136,11 +133,13 @@ export class UserExperienceService {
       throw new BadRequestException('经验规则不存在')
     }
 
-    const rows = await this.db
-      .delete(this.userExperienceRule)
-      .where(eq(this.userExperienceRule.id, id))
-      .returning()
-    return rows[0]
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.userExperienceRule)
+        .where(eq(this.userExperienceRule.id, id)),
+    )
+    this.drizzle.assertAffectedRows(result, '经验规则不存在')
+    return true
   }
 
   /**
@@ -149,7 +148,7 @@ export class UserExperienceService {
    * @returns 增加经验的结果
    */
   async addExperience(
-    addExperienceDto: AddUserExperienceDto & {
+    addExperienceDto: AddUserExperienceInput & {
       bizKey?: string
       source?: string
       targetType?: number
@@ -180,7 +179,7 @@ export class UserExperienceService {
         source: addExperienceDto.source,
       })
 
-    return this.db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
         userId,
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
@@ -206,9 +205,8 @@ export class UserExperienceService {
       if (!record) {
         throw new BadRequestException('经验记录不存在')
       }
-
-      return this.toExperienceRecord(record)
     })
+    return true
   }
 
   /**
@@ -216,7 +214,7 @@ export class UserExperienceService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
+  async getExperienceRecordPage(dto: QueryUserExperienceRecordPageInput) {
     const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
       where: this.drizzle.buildWhere(this.growthLedgerRecord, {
         and: {

@@ -2,16 +2,18 @@ import type { JwtUserInfoInterface } from '@libs/platform/types'
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
-  ClaimTaskDto,
-  QueryAppTaskDto,
-  QueryMyTaskDto,
-  TaskCompleteDto,
-  TaskProgressDto,
   TaskService,
 } from '@libs/growth'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  ClaimTaskDto,
+  QueryAppTaskDto,
+  QueryMyTaskDto,
+  TaskCompleteDto,
+  TaskProgressDto,
+} from './dto/task.dto'
 
 @ApiTags('任务')
 @Controller('app/task')

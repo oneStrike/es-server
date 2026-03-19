@@ -3,15 +3,15 @@ import { DrizzleService } from '@db/core'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm'
-import {
-  CheckUserLevelPermissionDto,
-  CreateUserLevelRuleDto,
-  QueryUserLevelRuleDto,
-  UpdateUserLevelRuleDto,
-  UserLevelInfoDto,
-  UserLevelStatisticsDto,
-} from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
+import type {
+  CheckUserLevelPermissionInput,
+  CreateUserLevelRuleInput,
+  QueryUserLevelRulePageInput,
+  UpdateUserLevelRuleInput,
+  UserLevelInfoResult,
+  UserLevelStatisticsResult,
+} from './level-rule.type'
 
 @Injectable()
 export class UserLevelRuleService {
@@ -50,14 +50,14 @@ export class UserLevelRuleService {
    * @param dto 等级规则数据
    * @returns 创建的等级规则
    */
-  async createLevelRule(dto: CreateUserLevelRuleDto) {
-    const rows = await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userLevelRule).values(dto).returning(),
+  async createLevelRule(dto: CreateUserLevelRuleInput) {
+    await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.userLevelRule).values(dto),
       {
         duplicate: 'Level rule already exists',
       },
     )
-    return rows[0]
+    return true
   }
 
   /**
@@ -65,7 +65,7 @@ export class UserLevelRuleService {
    * @param dto 查询参数
    * @returns 分页的等级规则列表
    */
-  async getLevelRulePage(dto: QueryUserLevelRuleDto) {
+  async getLevelRulePage(dto: QueryUserLevelRulePageInput) {
     return this.drizzle.ext.findPagination(this.userLevelRule, {
       where: this.drizzle.buildWhere(this.userLevelRule, {
         and: {
@@ -98,21 +98,20 @@ export class UserLevelRuleService {
    * @param updateLevelRuleDto 更新数据
    * @returns 更新后的等级规则
    */
-  async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
+  async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleInput) {
     const { id, ...updateData } = updateLevelRuleDto
-    const rows = await this.drizzle.withErrorHandling(
+    const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.userLevelRule)
           .set(updateData)
-          .where(eq(this.userLevelRule.id, id))
-          .returning(),
+          .where(eq(this.userLevelRule.id, id)),
       {
         duplicate: 'Level rule already exists',
       },
     )
-    this.drizzle.assertAffectedRows(rows, '等级规则不存在')
-    return rows[0]
+    this.drizzle.assertAffectedRows(result, '等级规则不存在')
+    return true
   }
 
   /**
@@ -138,11 +137,13 @@ export class UserLevelRuleService {
       throw new BadRequestException('该等级规则下还有用户，无法删除')
     }
 
-    const rows = await this.db
-      .delete(this.userLevelRule)
-      .where(eq(this.userLevelRule.id, id))
-      .returning()
-    return rows[0]
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.userLevelRule)
+        .where(eq(this.userLevelRule.id, id)),
+    )
+    this.drizzle.assertAffectedRows(result, '等级规则不存在')
+    return true
   }
 
   /**
@@ -150,7 +151,7 @@ export class UserLevelRuleService {
    * @param userId 用户ID
    * @returns 用户等级信息，包括当前等级、进度、权限等
    */
-  async getUserLevelInfo(userId: number): Promise<UserLevelInfoDto> {
+  async getUserLevelInfo(userId: number): Promise<UserLevelInfoResult> {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
       with: {
@@ -233,7 +234,7 @@ export class UserLevelRuleService {
    * @param dto 等级权限检查DTO
    * @returns 权限检查结果
    */
-  async checkLevelPermission(dto: CheckUserLevelPermissionDto) {
+  async checkLevelPermission(dto: CheckUserLevelPermissionInput) {
     const { userId, permissionType } = dto
 
     const user = await this.db.query.appUser.findFirst({
@@ -378,7 +379,7 @@ export class UserLevelRuleService {
    * 获取等级统计信息
    * @returns 等级统计数据
    */
-  async getLevelStatistics(): Promise<UserLevelStatisticsDto> {
+  async getLevelStatistics(): Promise<UserLevelStatisticsResult> {
     const levels = await this.db
       .select({
         id: this.userLevelRule.id,

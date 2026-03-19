@@ -1,7 +1,3 @@
-import {
-  UserExperienceRecordDto,
-  UserPointRecordDto,
-} from '@libs/growth'
 /**
  * 用户控制器
  *
@@ -17,12 +13,13 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { BaseAppUserDto } from '../auth/dto/auth.dto'
-import { QueryMyPointRecordDto } from './dto/user-point.dto'
+import { QueryMyPointRecordDto, UserPointRecordDto } from './dto/user-point.dto'
 import {
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
   UpdateMyForumProfileDto,
   UpdateMyProfileDto,
+  UserExperienceRecordDto,
   UserAssetsSummaryDto,
   UserBadgeItemDto,
   UserCenterDto,
@@ -57,7 +54,7 @@ export class UserController {
   @Post('profile/update')
   @ApiDoc({
     summary: '更新当前用户资料',
-    model: BaseAppUserDto,
+    model: Boolean,
   })
   async updateProfile(
     @Body() body: UpdateMyProfileDto,
@@ -84,7 +81,7 @@ export class UserController {
   @Post('profile/forum/update')
   @ApiDoc({
     summary: '更新当前用户论坛资料',
-    model: UserForumProfileDto,
+    model: Boolean,
   })
   async updateForumProfile(
     @Body() body: UpdateMyForumProfileDto,

@@ -5,13 +5,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto } from '@libs/platform/dto'
 import {
   MatchModeEnum,
   SensitiveWordLevelEnum,
@@ -123,42 +117,3 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   lastHitAt?: Date | null
 }
-
-/**
- * 创建敏感词DTO
- */
-export class CreateSensitiveWordDto extends OmitType(
-  BaseSensitiveWordDto,
-  [
-    ...OMIT_BASE_FIELDS,
-    'version',
-    'createdBy',
-    'updatedBy',
-    'hitCount',
-    'lastHitAt',
-  ] as const,
-) {}
-
-/**
- * 更新敏感词DTO
- */
-export class UpdateSensitiveWordDto extends IntersectionType(
-  CreateSensitiveWordDto,
-  IdDto,
-) {}
-
-/**
- * 查询敏感词DTO
- */
-export class QuerySensitiveWordDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(CreateSensitiveWordDto, [
-      'word',
-      'isEnabled',
-      'level',
-      'matchMode',
-      'type',
-    ]),
-  ),
-) {}

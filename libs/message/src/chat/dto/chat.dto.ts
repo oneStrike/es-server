@@ -5,19 +5,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
 import {
   ChatMessageTypeEnum,
 } from '../chat.constant'
-
-/** 开启私聊会话数据传输对象 */
-export class OpenDirectConversationDto {
-  @NumberProperty({
-    description: '目标用户ID',
-    example: 10002,
-  })
-  targetUserId: number
-}
 
 /** 聊天对方用户基础信息 */
 export class BaseChatPeerDto {
@@ -171,93 +161,4 @@ export class BaseChatConversationDto {
   lastReadMessageId?: string
 
   peerUser?: BaseChatPeerDto
-}
-
-/** 查询聊天会话列表数据传输对象 */
-export class QueryChatConversationListDto extends PageDto {}
-
-/** 查询聊天会话消息列表数据传输对象 */
-export class QueryChatConversationMessagesDto {
-  @NumberProperty({
-    description: '会话ID',
-    example: 1,
-  })
-  conversationId: number
-
-  @StringProperty({
-    description: '分页游标，使用上一页最小 messageSeq',
-    example: '120',
-    required: false,
-  })
-  cursor?: string
-
-  @StringProperty({
-    description: '补偿游标，获取 messageSeq > afterSeq 的消息',
-    example: '120',
-    required: false,
-  })
-  afterSeq?: string
-
-  @NumberProperty({
-    description: '分页大小',
-    example: 20,
-    required: false,
-    min: 1,
-    max: 100,
-    default: 20,
-  })
-  limit?: number
-}
-
-/** 发送聊天消息数据传输对象 */
-export class SendChatMessageDto {
-  @NumberProperty({
-    description: '会话ID',
-    example: 1,
-  })
-  conversationId: number
-
-  @EnumProperty({
-    description: '消息类型（1=文本,2=图片,3=系统）',
-    example: ChatMessageTypeEnum.TEXT,
-    enum: ChatMessageTypeEnum,
-  })
-  messageType: ChatMessageTypeEnum
-
-  @StringProperty({
-    description: '消息内容',
-    example: 'hello',
-    maxLength: 5000,
-  })
-  content: string
-
-  @StringProperty({
-    description: '客户端幂等键',
-    example: 'cmsg_9d7a4a0b',
-    required: false,
-    maxLength: 64,
-  })
-  clientMessageId?: string
-
-  @JsonProperty({
-    description: '扩展载荷',
-    example: '{"foo":"bar"}',
-    required: false,
-  })
-  payload?: string
-}
-
-/** 标记会话已读数据传输对象 */
-export class MarkConversationReadDto {
-  @NumberProperty({
-    description: '会话ID',
-    example: 1,
-  })
-  conversationId: number
-
-  @StringProperty({
-    description: '已读位置消息ID（BigInt）',
-    example: '123456',
-  })
-  messageId: string
 }

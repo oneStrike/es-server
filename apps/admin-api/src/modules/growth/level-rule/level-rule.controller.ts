@@ -1,17 +1,20 @@
 import {
   BaseUserLevelRuleDto,
-  CheckUserLevelPermissionDto,
-  CreateUserLevelRuleDto,
-  QueryUserLevelRuleDto,
-  UpdateUserLevelRuleDto,
-  UserLevelInfoDto,
-  UserLevelPermissionResultDto,
   UserLevelRuleService,
 } from '@libs/growth'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import {
+  CheckUserLevelPermissionDto,
+  CreateUserLevelRuleDto,
+  QueryUserLevelRuleDto,
+  UpdateUserLevelRuleDto,
+  UserLevelInfoDto,
+  UserLevelPermissionResultDto,
+  UserLevelStatisticsDto,
+} from './dto/level-rule.dto'
 
 /**
  * 用户等级规则管理控制器
@@ -45,7 +48,7 @@ export class LevelRuleController {
   @Post('create')
   @ApiDoc({
     summary: '创建用户等级规则',
-    model: BaseUserLevelRuleDto,
+    model: Boolean,
   })
   async createLevelRule(@Body() dto: CreateUserLevelRuleDto) {
     return this.levelRuleService.createLevelRule(dto)
@@ -54,7 +57,7 @@ export class LevelRuleController {
   @Post('update')
   @ApiDoc({
     summary: '更新用户等级规则',
-    model: BaseUserLevelRuleDto,
+    model: Boolean,
   })
   async updateLevelRule(@Body() dto: UpdateUserLevelRuleDto) {
     return this.levelRuleService.updateLevelRule(dto)
@@ -63,7 +66,7 @@ export class LevelRuleController {
   @Post('delete')
   @ApiDoc({
     summary: '删除用户等级规则',
-    model: BaseUserLevelRuleDto,
+    model: Boolean,
   })
   async deleteLevelRule(@Body() dto: IdDto) {
     return this.levelRuleService.deleteLevelRule(dto.id)
@@ -90,7 +93,7 @@ export class LevelRuleController {
   @Get('stats')
   @ApiDoc({
     summary: '获取用户等级统计信息',
-    model: BaseUserLevelRuleDto,
+    model: UserLevelStatisticsDto,
   })
   async getLevelStatistics() {
     return this.levelRuleService.getLevelStatistics()

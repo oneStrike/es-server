@@ -30,7 +30,7 @@ export class ContentAuthorController {
   @Post('create')
   @ApiDoc({
     summary: '创建作者',
-    model: IdDto,
+    model: Boolean,
   })
   async create(@Body() body: CreateAuthorDto) {
     return this.authorService.createAuthor(body)
@@ -66,7 +66,7 @@ export class ContentAuthorController {
   @Post('update')
   @ApiDoc({
     summary: '更新作者信息',
-    model: IdDto,
+    model: Boolean,
   })
   async update(@Body() body: UpdateAuthorDto) {
     return this.authorService.updateAuthor(body)
@@ -78,7 +78,7 @@ export class ContentAuthorController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新作者状态',
-    model: BatchOperationResponseDto,
+    model: Boolean,
   })
   async updateStatus(@Body() body: UpdateAuthorStatusDto) {
     return this.authorService.updateAuthorStatus(body)
@@ -90,7 +90,7 @@ export class ContentAuthorController {
   @Post('update-recommended')
   @ApiDoc({
     summary: '更新作者推荐状态',
-    model: BatchOperationResponseDto,
+    model: Boolean,
   })
   async updateRecommended(@Body() body: UpdateAuthorRecommendedDto) {
     return this.authorService.updateAuthorRecommended(body)
@@ -102,7 +102,7 @@ export class ContentAuthorController {
   @Post('delete')
   @ApiDoc({
     summary: '删除作者',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto) {
     return this.authorService.deleteAuthor(body)

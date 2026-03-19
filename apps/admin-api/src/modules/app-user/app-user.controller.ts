@@ -1,8 +1,4 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
-import {
-  UserExperienceRecordDto,
-  UserPointRecordDto,
-} from '@libs/growth'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -14,10 +10,11 @@ import {
   AddAdminAppUserExperienceDto,
   AddAdminAppUserPointsDto,
   AdminAppUserBadgeItemDto,
-  AdminAppUserBadgeOperationResultDto,
   AdminAppUserDetailDto,
+  AdminAppUserExperienceRecordDto,
   AdminAppUserExperienceStatsDto,
   AdminAppUserPageItemDto,
+  AdminAppUserPointRecordDto,
   AdminAppUserPointStatsDto,
   AssignAdminAppUserBadgeDto,
   ConsumeAdminAppUserPointsDto,
@@ -70,7 +67,7 @@ export class AppUserController {
   @Post('profile/update')
   @ApiDoc({
     summary: '更新 APP 用户资料',
-    model: AdminAppUserDetailDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,
@@ -89,7 +86,7 @@ export class AppUserController {
   @Post('update-enabled')
   @ApiDoc({
     summary: '更新 APP 用户启用状态',
-    model: AdminAppUserDetailDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,
@@ -108,7 +105,7 @@ export class AppUserController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新 APP 用户社区状态',
-    model: AdminAppUserDetailDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,
@@ -139,7 +136,7 @@ export class AppUserController {
   @Get('points/record/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户积分记录',
-    model: UserPointRecordDto,
+    model: AdminAppUserPointRecordDto,
   })
   async getAppUserPointRecords(
     @Query() query: QueryAdminAppUserPointRecordDto,
@@ -153,7 +150,7 @@ export class AppUserController {
   @Post('points/grant')
   @ApiDoc({
     summary: '手动增加 APP 用户积分',
-    model: UserPointRecordDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.CREATE,
@@ -172,7 +169,7 @@ export class AppUserController {
   @Post('points/consume')
   @ApiDoc({
     summary: '手动扣减 APP 用户积分',
-    model: UserPointRecordDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,
@@ -203,7 +200,7 @@ export class AppUserController {
   @Get('experience/record/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户经验记录',
-    model: UserExperienceRecordDto,
+    model: AdminAppUserExperienceRecordDto,
   })
   async getAppUserExperienceRecords(
     @Query() query: QueryAdminAppUserExperienceRecordDto,
@@ -217,7 +214,7 @@ export class AppUserController {
   @Post('experience/grant')
   @ApiDoc({
     summary: '手动增加 APP 用户经验',
-    model: UserExperienceRecordDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.CREATE,
@@ -248,7 +245,7 @@ export class AppUserController {
   @Post('badges/assign')
   @ApiDoc({
     summary: '为 APP 用户分配徽章',
-    model: AdminAppUserBadgeOperationResultDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.CREATE,
@@ -267,7 +264,7 @@ export class AppUserController {
   @Post('badges/revoke')
   @ApiDoc({
     summary: '撤销 APP 用户徽章',
-    model: AdminAppUserBadgeOperationResultDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.DELETE,

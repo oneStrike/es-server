@@ -27,7 +27,7 @@ export class SystemConfigController {
   @Post('update')
   @ApiDoc({
     summary: '更新系统配置',
-    model: IdDto,
+    model: Boolean,
   })
   async updateConfig(
     @Body() dto: SystemConfigBodyDto,

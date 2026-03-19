@@ -29,7 +29,7 @@ export class ContentCategoryController {
   @Post('create')
   @ApiDoc({
     summary: '创建分类',
-    model: IdDto,
+    model: Boolean,
   })
   async create(@Body() body: CreateCategoryDto) {
     return this.categoryService.createCategory(body)
@@ -65,7 +65,7 @@ export class ContentCategoryController {
   @Post('update')
   @ApiDoc({
     summary: '更新分类信息',
-    model: IdDto,
+    model: Boolean,
   })
   async update(@Body() body: UpdateCategoryDto) {
     return this.categoryService.updateCategory(body)
@@ -77,7 +77,7 @@ export class ContentCategoryController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新分类状态',
-    model: IdDto,
+    model: Boolean,
   })
   async updateStatus(@Body() body: UpdateCategoryStatusDto) {
     return this.categoryService.updateCategoryStatus(body)
@@ -89,7 +89,7 @@ export class ContentCategoryController {
   @Post('delete')
   @ApiDoc({
     summary: '删除分类',
-    model: IdDto,
+    model: Boolean,
   })
   async deleteBatch(@Body() body: IdDto) {
     return this.categoryService.deleteCategory(body)
@@ -101,7 +101,7 @@ export class ContentCategoryController {
   @Post('swap-sort-order')
   @ApiDoc({
     summary: '分类交换排序',
-    model: DragReorderDto,
+    model: Boolean,
   })
   async categoryOrder(@Body() body: UpdateCategorySortDto) {
     return this.categoryService.updateCategorySort(body)

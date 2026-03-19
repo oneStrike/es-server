@@ -1,17 +1,17 @@
 import type { JwtUserInfoInterface } from '@libs/platform/types'
 import type { SQL } from 'drizzle-orm'
 import type {
-  ClaimTaskDto,
-  CreateTaskDto,
-  QueryAppTaskDto,
-  QueryMyTaskDto,
-  QueryTaskAssignmentDto,
-  QueryTaskDto,
-  TaskCompleteDto,
-  TaskProgressDto,
-  UpdateTaskDto,
-  UpdateTaskStatusDto,
-} from './dto/task.dto'
+  ClaimTaskInput,
+  CreateTaskInput,
+  QueryAppTaskInput,
+  QueryMyTaskInput,
+  QueryTaskAssignmentPageInput,
+  QueryTaskPageInput,
+  TaskCompleteInput,
+  TaskProgressInput,
+  UpdateTaskInput,
+  UpdateTaskStatusInput,
+} from './task.type'
 import { DrizzleService } from '@db/core'
 import { UserGrowthRewardService } from '@libs/growth'
 import {
@@ -210,7 +210,7 @@ export class TaskService {
    * @param queryDto 查询参数
    * @returns 分页结果
    */
-  async getTaskPage(queryDto: QueryTaskDto) {
+  async getTaskPage(queryDto: QueryTaskPageInput) {
     return this.drizzle.ext.findPagination(this.taskTable, {
       where: this.drizzle.buildWhere(this.taskTable, {
         and: {
@@ -254,7 +254,7 @@ export class TaskService {
    * @returns 创建结果，包含任务ID
    * @throws BadRequestException 发布时间无效或任务编码已存在
    */
-  async createTask(dto: CreateTaskDto, adminUser: JwtUserInfoInterface) {
+  async createTask(dto: CreateTaskInput, adminUser: JwtUserInfoInterface) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
 
@@ -281,7 +281,7 @@ export class TaskService {
    * @throws NotFoundException 任务不存在
    * @throws BadRequestException 发布时间无效或任务编码已存在
    */
-  async updateTask(dto: UpdateTaskDto, adminUser: JwtUserInfoInterface) {
+  async updateTask(dto: UpdateTaskInput, adminUser: JwtUserInfoInterface) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
 
@@ -312,7 +312,7 @@ export class TaskService {
    * @returns 更新结果
    * @throws NotFoundException 任务不存在
    */
-  async updateTaskStatus(dto: UpdateTaskStatusDto) {
+  async updateTaskStatus(dto: UpdateTaskStatusInput) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.taskTable)
@@ -346,7 +346,7 @@ export class TaskService {
    * @param queryDto 查询参数
    * @returns 分页结果，包含任务分配和关联任务信息
    */
-  async getTaskAssignmentPage(queryDto: QueryTaskAssignmentDto) {
+  async getTaskAssignmentPage(queryDto: QueryTaskAssignmentPageInput) {
     const { pageIndex = 1, pageSize = 20, orderBy } = queryDto
 
     const whereClause = this.drizzle.buildWhere(this.taskAssignmentTable, {
@@ -382,7 +382,7 @@ export class TaskService {
    * @param userId 当前用户ID
    * @returns 分页结果
    */
-  async getAvailableTasks(queryDto: QueryAppTaskDto, userId: number) {
+  async getAvailableTasks(queryDto: QueryAppTaskInput, userId: number) {
     const { type, pageIndex = 1, pageSize = 20 } = queryDto
     const where = this.buildAvailableWhere(type)
 
@@ -413,7 +413,7 @@ export class TaskService {
    * @param userId 当前用户ID
    * @returns 分页结果，包含分配和任务信息
    */
-  async getMyTasks(queryDto: QueryMyTaskDto, userId: number) {
+  async getMyTasks(queryDto: QueryMyTaskInput, userId: number) {
     // 确保自动领取的任务都已分配
     await this.ensureAutoAssignmentsForUser(userId)
     const { type, pageIndex = 1, pageSize = 20, orderBy } = queryDto
@@ -457,7 +457,7 @@ export class TaskService {
    * @throws BadRequestException 任务未开始或已结束
    * @throws NotFoundException 任务不存在
    */
-  async claimTask(dto: ClaimTaskDto, userId: number) {
+  async claimTask(dto: ClaimTaskInput, userId: number) {
     // 检查任务是否可领取
     const taskRecord = await this.findClaimableTask(dto.taskId)
     const now = new Date()
@@ -484,7 +484,7 @@ export class TaskService {
    * @throws BadRequestException 进度增量无效或任务未领取
    * @throws NotFoundException 任务不存在
    */
-  async reportProgress(dto: TaskProgressDto, userId: number) {
+  async reportProgress(dto: TaskProgressInput, userId: number) {
     // 校验进度增量
     if (dto.delta <= 0) {
       throw new BadRequestException('进度增量必须大于0')
@@ -601,7 +601,7 @@ export class TaskService {
    * @throws BadRequestException 任务未领取或进度未达成
    * @throws NotFoundException 任务不存在
    */
-  async completeTask(dto: TaskCompleteDto, userId: number) {
+  async completeTask(dto: TaskCompleteInput, userId: number) {
     const taskRecord = await this.findAvailableTask(dto.taskId)
     const now = new Date()
     const cycleKey = this.buildCycleKey(taskRecord, now)

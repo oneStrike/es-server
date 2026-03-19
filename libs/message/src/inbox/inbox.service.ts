@@ -1,4 +1,4 @@
-import type { QueryInboxTimelineDto } from './dto/inbox.dto'
+import type { QueryInboxTimelineInput } from './inbox.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
@@ -139,7 +139,7 @@ export class MessageInboxService {
    * 获取用户收件箱时间线
    * 合并通知和聊天消息，按时间倒序排列
    */
-  async getTimeline(userId: number, dto: QueryInboxTimelineDto) {
+  async getTimeline(userId: number, dto: QueryInboxTimelineInput) {
     const { pageIndex, pageSize, offset } = this.normalizePagination(dto)
     const fetchTake = offset + pageSize + 20
 
@@ -248,7 +248,7 @@ export class MessageInboxService {
   }
 
   /** 标准化分页参数 */
-  private normalizePagination(dto: QueryInboxTimelineDto) {
+  private normalizePagination(dto: QueryInboxTimelineInput) {
     const rawPageIndex = Number.isFinite(Number(dto.pageIndex))
       ? Math.floor(Number(dto.pageIndex))
       : 0
