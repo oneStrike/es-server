@@ -24,10 +24,6 @@ module.exports = function (options, webpack) {
     /^token-types(\/.*)?$/,
     /^uint8array-extras(\/.*)?$/,
   ]
-  const productionExternals = {
-    '@nestjs/platform-express': 'commonjs @nestjs/platform-express',
-    '@fastify/view': 'commonjs @fastify/view',
-  }
   const allowlist = (request) => {
     // 使用 300ms 轮询间隔，减少 CPU 占用
     if (request === 'webpack/hot/poll?300') {
@@ -78,15 +74,11 @@ module.exports = function (options, webpack) {
   if (isProduction) {
     // 生产环境配置
     config.devtool = productionDevtool
-    // 生产环境尽量内联依赖，缩小 runtime 镜像体积。
-    // Node 内置模块仍会按 target=node 保持 external，不需要额外处理。
-    // 只保留项目中未安装的可选依赖为 external，避免 bundle 阶段解析失败。
-    config.externals = [productionExternals]
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: false,
-      runtimeChunk: false,
-    }
+    config.externals = [
+      nodeExternals({
+        allowlist,
+      }),
+    ]
     config.plugins = [...options.plugins]
   } else {
     // 开发环境配置
