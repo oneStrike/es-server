@@ -1,6 +1,5 @@
 import type { Db } from '../../db-client'
 import { eq } from 'drizzle-orm'
-import { AdminUserRoleEnum } from '../../../../libs/platform/src/constant/user.constant'
 import { adminUser, adminUserToken } from '../../../schema'
 import {
   createAvatar,
@@ -14,7 +13,7 @@ const ADMIN_FIXTURE = {
   password: SEED_PASSWORD_HASH,
   mobile: '13800138099',
   avatar: createAvatar('seed-admin'),
-  role: AdminUserRoleEnum.SUPER_ADMIN,
+  role: 1,
   isEnabled: true,
   lastLoginAt: SEED_TIMELINE.seedAt,
   lastLoginIp: '127.0.0.1',

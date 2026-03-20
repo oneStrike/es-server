@@ -1,51 +1,6 @@
 import type { Db } from '../../db-client'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
-  AnnouncementPriorityEnum,
-  AnnouncementTypeEnum,
-} from '../../../../libs/app-content/src/announcement/announcement.constant'
-import { DEFAULT_APP_CONFIG } from '../../../../libs/config/src/app-config/config.constant'
-import {
-  ForumUserActionTargetTypeEnum,
-  ForumUserActionTypeEnum,
-} from '../../../../libs/forum/src/action-log/action-log.constant'
-import {
-  TaskAssignmentStatusEnum,
-  TaskClaimModeEnum,
-  TaskCompleteModeEnum,
-  TaskProgressActionTypeEnum,
-  TaskStatusEnum,
-  TaskTypeEnum,
-} from '../../../../libs/growth/src/task/task.constant'
-import { CommentTargetTypeEnum } from '../../../../libs/interaction/src/comment/comment.constant'
-import { DownloadTargetTypeEnum } from '../../../../libs/interaction/src/download/download.constant'
-import { FavoriteTargetTypeEnum } from '../../../../libs/interaction/src/favorite/favorite.constant'
-import { LikeTargetTypeEnum } from '../../../../libs/interaction/src/like/like.constant'
-import {
-  PaymentMethodEnum,
-  PurchaseStatusEnum,
-  PurchaseTargetTypeEnum,
-} from '../../../../libs/interaction/src/purchase/purchase.constant'
-import {
-  ReportReasonEnum,
-  ReportStatusEnum,
-  ReportTargetTypeEnum,
-} from '../../../../libs/interaction/src/report/report.constant'
-import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-} from '../../../../libs/platform/src/constant/audit.constant'
-import { ContentTypeEnum } from '../../../../libs/platform/src/constant/content.constant'
-import {
-  CommentLevelEnum,
-  InteractionTargetTypeEnum,
-  SceneTypeEnum,
-} from '../../../../libs/platform/src/constant/interaction.constant'
-import {
-  GenderEnum,
-  UserStatusEnum,
-} from '../../../../libs/platform/src/constant/user.constant'
-import {
   adminUser,
   appAgreement,
   appAgreementLog,
@@ -91,6 +46,19 @@ import {
   SEED_PLATFORM_ALL,
   SEED_TIMELINE,
 } from '../../shared'
+
+const DEFAULT_APP_CONFIG = {
+  appName: '默认应用',
+  appDesc: '这是一个默认的应用配置',
+  appLogo: '',
+  onboardingImage: '',
+  themeColor: '#007AFF',
+  secondaryColor: '#5856D6',
+  optionalThemeColors: '#FF9500,#FF3B30,#4CD964,#5AC8FA,#007AFF',
+  enableMaintenanceMode: false,
+  maintenanceMessage: '系统维护中，请稍后再试',
+  version: '1.0.0',
+} as const
 
 const LEVEL_FIXTURES = [
   {
@@ -218,11 +186,11 @@ const USER_FIXTURES = [
     avatarUrl: createAvatar('seed-reader-001'),
     signature: '把追更变成日常习惯。',
     bio: '偏爱长线叙事和世界观铺陈。',
-    genderType: GenderEnum.MALE,
+    genderType: 1,
     birthDate: '1998-05-12',
     points: 90,
     experience: 280,
-    status: UserStatusEnum.NORMAL,
+    status: 1,
     lastLoginAt: addHours(SEED_TIMELINE.seedAt, -2),
     lastLoginIp: '127.0.0.11',
   },
@@ -235,11 +203,11 @@ const USER_FIXTURES = [
     avatarUrl: createAvatar('seed-reader-002'),
     signature: '喜欢推理，也喜欢讨论角色动机。',
     bio: '小说和漫画都会看，偏爱悬疑题材。',
-    genderType: GenderEnum.FEMALE,
+    genderType: 2,
     birthDate: '1996-11-04',
     points: 180,
     experience: 520,
-    status: UserStatusEnum.NORMAL,
+    status: 1,
     lastLoginAt: addHours(SEED_TIMELINE.seedAt, -4),
     lastLoginIp: '127.0.0.12',
   },
@@ -252,11 +220,11 @@ const USER_FIXTURES = [
     avatarUrl: createAvatar('seed-reader-003'),
     signature: '更喜欢帮大家整理资料和目录。',
     bio: '社区维护型用户，擅长整理时间线和设定。',
-    genderType: GenderEnum.UNKNOWN,
+    genderType: 0,
     birthDate: '1994-08-21',
     points: 360,
     experience: 860,
-    status: UserStatusEnum.NORMAL,
+    status: 1,
     lastLoginAt: addHours(SEED_TIMELINE.seedAt, -1),
     lastLoginIp: '127.0.0.13',
   },
@@ -316,8 +284,8 @@ const ANNOUNCEMENT_FIXTURES = [
     title: '2026 春季版本更新',
     summary: '新增长线追更能力和社区话题联动。',
     content: 'seed 版本更新公告：补齐作品、论坛、消息和成长相关联调数据。',
-    announcementType: AnnouncementTypeEnum.UPDATE,
-    priorityLevel: AnnouncementPriorityEnum.HIGH,
+    announcementType: 2,
+    priorityLevel: 2,
     isPublished: true,
     isPinned: true,
     showAsPopup: true,
@@ -332,8 +300,8 @@ const ANNOUNCEMENT_FIXTURES = [
     summary: '统一社区发言边界和处理流程。',
     content:
       'seed 政策公告：更新社区发言规范和处理建议，用于公告、通知、已读联调。',
-    announcementType: AnnouncementTypeEnum.POLICY,
-    priorityLevel: AnnouncementPriorityEnum.MEDIUM,
+    announcementType: 1,
+    priorityLevel: 1,
     isPublished: true,
     isPinned: false,
     showAsPopup: false,
@@ -380,10 +348,10 @@ const TASK_FIXTURES = [
     title: '每日阅读付费章节',
     description: '每天完成一次付费章节阅读。',
     cover: 'https://static.example.com/tasks/read-chapter.jpg',
-    type: TaskTypeEnum.DAILY,
-    status: TaskStatusEnum.PUBLISHED,
-    claimMode: TaskClaimModeEnum.AUTO,
-    completeMode: TaskCompleteModeEnum.AUTO,
+    type: 1,
+    status: 2,
+    claimMode: 1,
+    completeMode: 1,
     targetCount: 1,
     rewardConfig: { points: 5, experience: 12 },
     repeatRule: { type: 'daily' },
@@ -393,10 +361,10 @@ const TASK_FIXTURES = [
     title: '每日参与讨论',
     description: '每天参与一次主题讨论或回复。',
     cover: 'https://static.example.com/tasks/forum-interaction.jpg',
-    type: TaskTypeEnum.DAILY,
-    status: TaskStatusEnum.PUBLISHED,
-    claimMode: TaskClaimModeEnum.MANUAL,
-    completeMode: TaskCompleteModeEnum.AUTO,
+    type: 1,
+    status: 2,
+    claimMode: 2,
+    completeMode: 1,
     targetCount: 1,
     rewardConfig: { points: 3, experience: 8 },
     repeatRule: { type: 'daily' },
@@ -753,11 +721,11 @@ export async function seedAppActivityDomain(db: Db) {
   const aotWork = await db.query.work.findFirst({
     where: and(
       eq(work.name, '进击的巨人'),
-      eq(work.type, ContentTypeEnum.COMIC),
+      eq(work.type, 1),
     ),
   })
   const whiteNightWork = await db.query.work.findFirst({
-    where: and(eq(work.name, '白夜行'), eq(work.type, ContentTypeEnum.NOVEL)),
+    where: and(eq(work.name, '白夜行'), eq(work.type, 2)),
   })
   const aotChapterTwo = aotWork
     ? await db.query.workChapter.findFirst({
@@ -864,7 +832,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   const existingWorkComment = await db.query.userComment.findFirst({
     where: and(
-      eq(userComment.targetType, CommentTargetTypeEnum.COMIC),
+      eq(userComment.targetType, 1),
       eq(userComment.targetId, aotWork.id),
       eq(userComment.userId, userB.id),
       eq(
@@ -876,15 +844,15 @@ export async function seedAppActivityDomain(db: Db) {
 
   let workComment = existingWorkComment
   const workCommentPayload = {
-    targetType: CommentTargetTypeEnum.COMIC,
+    targetType: 1,
     targetId: aotWork.id,
     userId: userB.id,
     content: '墙内外的信息差在这部作品里几乎从第一话就埋下了。',
     floor: 1,
     isHidden: false,
-    auditStatus: AuditStatusEnum.APPROVED,
+    auditStatus: 2,
     auditById: moderatorUser.id,
-    auditRole: AuditRoleEnum.MODERATOR,
+    auditRole: 2,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 2),
     likeCount: existingWorkComment?.likeCount ?? 0,
@@ -907,7 +875,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   const existingChapterComment = await db.query.userComment.findFirst({
     where: and(
-      eq(userComment.targetType, CommentTargetTypeEnum.COMIC_CHAPTER),
+      eq(userComment.targetType, 2),
       eq(userComment.targetId, aotChapterTwo.id),
       eq(userComment.userId, userA.id),
       eq(userComment.content, '第二话的节奏明显收紧，购买后继续读的体验很顺。'),
@@ -916,15 +884,15 @@ export async function seedAppActivityDomain(db: Db) {
 
   let chapterComment = existingChapterComment
   const chapterCommentPayload = {
-    targetType: CommentTargetTypeEnum.COMIC_CHAPTER,
+    targetType: 2,
     targetId: aotChapterTwo.id,
     userId: userA.id,
     content: '第二话的节奏明显收紧，购买后继续读的体验很顺。',
     floor: 1,
     isHidden: false,
-    auditStatus: AuditStatusEnum.APPROVED,
+    auditStatus: 2,
     auditById: moderatorUser.id,
-    auditRole: AuditRoleEnum.MODERATOR,
+    auditRole: 2,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 3),
     likeCount: existingChapterComment?.likeCount ?? 0,
@@ -947,7 +915,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   const existingForumRootReply = await db.query.userComment.findFirst({
     where: and(
-      eq(userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+      eq(userComment.targetType, 3),
       eq(userComment.targetId, aotTopic.id),
       eq(userComment.userId, userB.id),
       eq(userComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
@@ -956,15 +924,15 @@ export async function seedAppActivityDomain(db: Db) {
 
   let forumRootReply = existingForumRootReply
   const forumRootReplyPayload = {
-    targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+    targetType: 3,
     targetId: aotTopic.id,
     userId: userB.id,
     content: '我觉得第一卷就把未来冲突埋得很深。',
     floor: 1,
     isHidden: false,
-    auditStatus: AuditStatusEnum.APPROVED,
+    auditStatus: 2,
     auditById: moderatorUser.id,
-    auditRole: AuditRoleEnum.MODERATOR,
+    auditRole: 2,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 4),
     likeCount: existingForumRootReply?.likeCount ?? 0,
@@ -987,7 +955,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   const existingForumReply = await db.query.userComment.findFirst({
     where: and(
-      eq(userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+      eq(userComment.targetType, 3),
       eq(userComment.targetId, aotTopic.id),
       eq(userComment.userId, userA.id),
       eq(userComment.content, '而且艾伦和调查兵团的立场差异很早就有预警。'),
@@ -995,7 +963,7 @@ export async function seedAppActivityDomain(db: Db) {
   })
 
   const forumReplyPayload = {
-    targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+    targetType: 3,
     targetId: aotTopic.id,
     userId: userA.id,
     content: '而且艾伦和调查兵团的立场差异很早就有预警。',
@@ -1003,9 +971,9 @@ export async function seedAppActivityDomain(db: Db) {
     replyToId: forumRootReply.id,
     actualReplyToId: forumRootReply.id,
     isHidden: false,
-    auditStatus: AuditStatusEnum.APPROVED,
+    auditStatus: 2,
     auditById: moderatorUser.id,
-    auditRole: AuditRoleEnum.MODERATOR,
+    auditRole: 2,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 5),
     likeCount: existingForumReply?.likeCount ?? 0,
@@ -1025,7 +993,7 @@ export async function seedAppActivityDomain(db: Db) {
 
   const forumReplyComments = await db.query.userComment.findMany({
     where: and(
-      eq(userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+      eq(userComment.targetType, 3),
       eq(userComment.targetId, aotTopic.id),
       isNull(userComment.deletedAt),
     ),
@@ -1036,7 +1004,7 @@ export async function seedAppActivityDomain(db: Db) {
       where: and(
         eq(forumUserActionLog.userId, comment.userId),
         eq(forumUserActionLog.targetId, comment.id),
-        eq(forumUserActionLog.actionType, ForumUserActionTypeEnum.CREATE_REPLY),
+        eq(forumUserActionLog.actionType, 3),
       ),
     })
 
@@ -1044,8 +1012,8 @@ export async function seedAppActivityDomain(db: Db) {
       await db.insert(forumUserActionLog).values({
         userId: comment.userId,
         targetId: comment.id,
-        actionType: ForumUserActionTypeEnum.CREATE_REPLY,
-        targetType: ForumUserActionTargetTypeEnum.REPLY,
+        actionType: 3,
+        targetType: 3,
         afterData: JSON.stringify({ content: comment.content }),
         ipAddress: '127.0.0.1',
         userAgent: 'seed-script/comment',
@@ -1057,33 +1025,33 @@ export async function seedAppActivityDomain(db: Db) {
 
   const likeFixtures = [
     {
-      targetType: LikeTargetTypeEnum.FORUM_TOPIC,
+      targetType: 3,
       targetId: aotTopic.id,
-      sceneType: SceneTypeEnum.FORUM_TOPIC,
+      sceneType: 3,
       sceneId: aotTopic.id,
       userId: userC.id,
       commentLevel: null,
     },
     {
-      targetType: LikeTargetTypeEnum.COMMENT,
+      targetType: 4,
       targetId: forumRootReply.id,
-      sceneType: SceneTypeEnum.FORUM_TOPIC,
+      sceneType: 3,
       sceneId: aotTopic.id,
       userId: userA.id,
-      commentLevel: CommentLevelEnum.ROOT,
+      commentLevel: 1,
     },
     {
-      targetType: LikeTargetTypeEnum.WORK_COMIC,
+      targetType: 1,
       targetId: aotWork.id,
-      sceneType: SceneTypeEnum.COMIC_WORK,
+      sceneType: 1,
       sceneId: aotWork.id,
       userId: userB.id,
       commentLevel: null,
     },
     {
-      targetType: LikeTargetTypeEnum.WORK_COMIC_CHAPTER,
+      targetType: 2,
       targetId: aotChapterTwo.id,
-      sceneType: SceneTypeEnum.COMIC_CHAPTER,
+      sceneType: 2,
       sceneId: aotChapterTwo.id,
       userId: userA.id,
       commentLevel: null,
@@ -1107,17 +1075,17 @@ export async function seedAppActivityDomain(db: Db) {
 
   const favoriteFixtures = [
     {
-      targetType: FavoriteTargetTypeEnum.WORK_COMIC,
+      targetType: 1,
       targetId: aotWork.id,
       userId: userC.id,
     },
     {
-      targetType: FavoriteTargetTypeEnum.FORUM_TOPIC,
+      targetType: 3,
       targetId: whiteNightTopic.id,
       userId: userA.id,
     },
     {
-      targetType: FavoriteTargetTypeEnum.WORK_NOVEL,
+      targetType: 2,
       targetId: whiteNightWork.id,
       userId: userB.id,
     },
@@ -1140,13 +1108,13 @@ export async function seedAppActivityDomain(db: Db) {
 
   const downloadFixtures = [
     {
-      targetType: DownloadTargetTypeEnum.COMIC_CHAPTER,
+      targetType: 1,
       targetId: aotChapterTwo.id,
       userId: userA.id,
       createdAt: addHours(SEED_TIMELINE.seedAt, -5),
     },
     {
-      targetType: DownloadTargetTypeEnum.NOVEL_CHAPTER,
+      targetType: 2,
       targetId: whiteNightChapterTwo.id,
       userId: userB.id,
       createdAt: addHours(SEED_TIMELINE.seedAt, -4),
@@ -1175,23 +1143,23 @@ export async function seedAppActivityDomain(db: Db) {
 
   const purchaseFixtures = [
     {
-      targetType: PurchaseTargetTypeEnum.COMIC_CHAPTER,
+      targetType: 1,
       targetId: aotChapterTwo.id,
       userId: userA.id,
       price: 30,
-      status: PurchaseStatusEnum.SUCCESS,
-      paymentMethod: PaymentMethodEnum.POINTS,
+      status: 2,
+      paymentMethod: 1,
       outTradeNo: 'seed-purchase-aot-chapter-2',
       createdAt: addHours(SEED_TIMELINE.seedAt, -3),
       updatedAt: addHours(SEED_TIMELINE.seedAt, -3),
     },
     {
-      targetType: PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+      targetType: 2,
       targetId: whiteNightChapterTwo.id,
       userId: userB.id,
       price: 25,
-      status: PurchaseStatusEnum.SUCCESS,
-      paymentMethod: PaymentMethodEnum.POINTS,
+      status: 2,
+      paymentMethod: 1,
       outTradeNo: 'seed-purchase-byh-chapter-2',
       createdAt: addHours(SEED_TIMELINE.seedAt, -2),
       updatedAt: addHours(SEED_TIMELINE.seedAt, -2),
@@ -1271,15 +1239,15 @@ export async function seedAppActivityDomain(db: Db) {
 
   const reportFixture = {
     reporterId: userC.id,
-    targetType: ReportTargetTypeEnum.COMMENT,
+    targetType: 4,
     targetId: forumRootReply.id,
-    sceneType: SceneTypeEnum.FORUM_TOPIC,
+    sceneType: 3,
     sceneId: aotTopic.id,
-    commentLevel: CommentLevelEnum.ROOT,
-    reasonType: ReportReasonEnum.SPAM,
+    commentLevel: 1,
+    reasonType: 1,
     description: 'seed: 用于举报流程联调。',
     evidenceUrl: 'https://static.example.com/evidence/report-seed.png',
-    status: ReportStatusEnum.PENDING,
+    status: 1,
   }
 
   const existingReport = await db.query.userReport.findFirst({
@@ -1304,14 +1272,14 @@ export async function seedAppActivityDomain(db: Db) {
     {
       userId: userA.id,
       workId: aotWork.id,
-      workType: ContentTypeEnum.COMIC,
+      workType: 1,
       lastReadAt: addHours(SEED_TIMELINE.seedAt, -1),
       lastReadChapterId: aotChapterTwo.id,
     },
     {
       userId: userB.id,
       workId: whiteNightWork.id,
-      workType: ContentTypeEnum.NOVEL,
+      workType: 2,
       lastReadAt: addHours(SEED_TIMELINE.seedAt, -2),
       lastReadChapterId: whiteNightChapterTwo.id,
     },
@@ -1388,7 +1356,7 @@ export async function seedAppActivityDomain(db: Db) {
       bizKey: 'purchase:seed:aot:chapter-2',
       ruleType: 113,
       ruleId: pointPurchaseRule?.id ?? null,
-      targetType: InteractionTargetTypeEnum.COMIC_CHAPTER,
+      targetType: 2,
       targetId: aotChapterTwo.id,
       remark: 'seed: 漫画章节购买扣点',
       context: { source: 'seed', target: 'aot-chapter-2' },
@@ -1402,7 +1370,7 @@ export async function seedAppActivityDomain(db: Db) {
       bizKey: 'topic:create:seed:aot',
       ruleType: 1,
       ruleId: experienceTopicRule?.id ?? null,
-      targetType: InteractionTargetTypeEnum.FORUM_TOPIC,
+      targetType: 5,
       targetId: aotTopic.id,
       remark: 'seed: 发帖经验奖励',
       context: { source: 'seed', target: 'forum-topic' },
@@ -1520,7 +1488,7 @@ export async function seedAppActivityDomain(db: Db) {
       taskId: readChapterTask.id,
       userId: userA.id,
       cycleKey: '20260320',
-      status: TaskAssignmentStatusEnum.COMPLETED,
+      status: 3,
       progress: 1,
       target: 1,
       taskSnapshot: {
@@ -1560,7 +1528,7 @@ export async function seedAppActivityDomain(db: Db) {
       {
         assignmentId: currentAssignment.id,
         userId: userA.id,
-        actionType: TaskProgressActionTypeEnum.CLAIM,
+        actionType: 1,
         delta: 0,
         beforeValue: 0,
         afterValue: 0,
@@ -1569,7 +1537,7 @@ export async function seedAppActivityDomain(db: Db) {
       {
         assignmentId: currentAssignment.id,
         userId: userA.id,
-        actionType: TaskProgressActionTypeEnum.PROGRESS,
+        actionType: 2,
         delta: 1,
         beforeValue: 0,
         afterValue: 1,
@@ -1578,7 +1546,7 @@ export async function seedAppActivityDomain(db: Db) {
       {
         assignmentId: currentAssignment.id,
         userId: userA.id,
-        actionType: TaskProgressActionTypeEnum.COMPLETE,
+        actionType: 3,
         delta: 0,
         beforeValue: 1,
         afterValue: 1,
@@ -1614,7 +1582,7 @@ export async function seedAppActivityDomain(db: Db) {
       taskId: forumTask.id,
       userId: userB.id,
       cycleKey: '20260320',
-      status: TaskAssignmentStatusEnum.IN_PROGRESS,
+      status: 2,
       progress: 0,
       target: 1,
       taskSnapshot: { code: forumTask.code, title: forumTask.title },
@@ -1642,7 +1610,7 @@ export async function seedAppActivityDomain(db: Db) {
     const existingClaimLog = await db.query.taskProgressLog.findFirst({
       where: and(
         eq(taskProgressLog.assignmentId, currentAssignment.id),
-        eq(taskProgressLog.actionType, TaskProgressActionTypeEnum.CLAIM),
+        eq(taskProgressLog.actionType, 1),
       ),
     })
 
@@ -1650,7 +1618,7 @@ export async function seedAppActivityDomain(db: Db) {
       await db.insert(taskProgressLog).values({
         assignmentId: currentAssignment.id,
         userId: userB.id,
-        actionType: TaskProgressActionTypeEnum.CLAIM,
+        actionType: 1,
         delta: 0,
         beforeValue: 0,
         afterValue: 0,
@@ -1664,7 +1632,7 @@ export async function seedAppActivityDomain(db: Db) {
   for (const topicItem of touchedTopics) {
     const topicComments = await db.query.userComment.findMany({
       where: and(
-        eq(userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+        eq(userComment.targetType, 3),
         eq(userComment.targetId, topicItem.id),
         isNull(userComment.deletedAt),
       ),
@@ -1677,13 +1645,13 @@ export async function seedAppActivityDomain(db: Db) {
       .at(-1)
     const topicLikes = await db.query.userLike.findMany({
       where: and(
-        eq(userLike.targetType, LikeTargetTypeEnum.FORUM_TOPIC),
+        eq(userLike.targetType, 3),
         eq(userLike.targetId, topicItem.id),
       ),
     })
     const topicFavorites = await db.query.userFavorite.findMany({
       where: and(
-        eq(userFavorite.targetType, FavoriteTargetTypeEnum.FORUM_TOPIC),
+        eq(userFavorite.targetType, 3),
         eq(userFavorite.targetId, topicItem.id),
       ),
     })

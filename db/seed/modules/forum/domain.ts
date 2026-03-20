@@ -1,19 +1,6 @@
 import type { Db } from '../../db-client'
 import { and, eq, isNull } from 'drizzle-orm'
 import {
-  ForumUserActionTargetTypeEnum,
-  ForumUserActionTypeEnum,
-} from '../../../../libs/forum/src/action-log/action-log.constant'
-import { ForumModeratorApplicationStatusEnum } from '../../../../libs/forum/src/moderator-application/moderator-application.constant'
-import {
-  ALL_FORUM_MODERATOR_PERMISSIONS,
-  ForumModeratorRoleTypeEnum,
-} from '../../../../libs/forum/src/moderator/moderator.constant'
-import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-} from '../../../../libs/platform/src/constant/audit.constant'
-import {
   appUser,
   forumModerator,
   forumModeratorActionLog,
@@ -267,8 +254,8 @@ export async function seedForumActivityDomain(db: Db) {
   const moderatorPayload = {
     userId: moderatorUser.id,
     groupId: discussionSection?.groupId ?? null,
-    roleType: ForumModeratorRoleTypeEnum.SECTION,
-    permissions: [...ALL_FORUM_MODERATOR_PERMISSIONS],
+    roleType: 1,
+    permissions: [1, 2, 3, 4, 5],
     isEnabled: true,
     remark: 'seed: 社区版主',
   }
@@ -328,7 +315,7 @@ export async function seedForumActivityDomain(db: Db) {
       applicantId: applicantUser.id,
       sectionId: discussionSection.id,
       auditById: moderatorUser.id,
-      status: ForumModeratorApplicationStatusEnum.APPROVED,
+      status: 2,
       permissions: [1, 2, 5],
       reason: '长期参与内容讨论，希望协助维护板块秩序。',
       auditReason: '历史发言质量稳定，允许试运行。',
