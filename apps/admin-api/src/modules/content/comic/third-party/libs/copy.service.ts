@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
-import axios, { AxiosInstance } from 'axios'
 import type {
   ChapterContentComicRequestInput,
   DetailComicRequestInput,
   SearchComicRequestInput,
 } from '../third-party.type'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import axios, { AxiosInstance } from 'axios'
 
 /**
  * 拷贝漫画平台服务

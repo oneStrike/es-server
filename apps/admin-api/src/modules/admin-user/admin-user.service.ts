@@ -1,3 +1,7 @@
+import type {
+  AdminUserChangePasswordInput,
+  AdminUserPageQueryInput,
+} from './admin-user.type'
 import { DrizzleService } from '@db/core'
 import { AdminUser, NewAdminUser } from '@db/schema'
 import { AdminUserRoleEnum } from '@libs/platform/constant'
@@ -12,10 +16,6 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { eq } from 'drizzle-orm'
 import { AdminAuthRedisKeys } from '../auth/auth.constant'
-import type {
-  AdminUserChangePasswordInput,
-  AdminUserPageQueryInput,
-} from './admin-user.type'
 
 /**
  * 管理员用户服务

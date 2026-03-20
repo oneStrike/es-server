@@ -1,3 +1,7 @@
+import type {
+  AppCheckVerifyCodeInput,
+  AppSendVerifyCodeInput,
+} from './auth.type'
 import { DrizzleService } from '@db/core'
 import {
   SmsService as LibSmsService,
@@ -6,10 +10,6 @@ import {
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
-import type {
-  AppCheckVerifyCodeInput,
-  AppSendVerifyCodeInput,
-} from './auth.type'
 
 /**
  * 短信服务类

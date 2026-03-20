@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
-
 import type {
   ChapterContentComicRequestInput,
   DetailComicRequestInput,
   SearchComicRequestInput,
 } from './third-party.type'
+
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { CopyService } from './libs/copy.service'
 
 @Injectable()

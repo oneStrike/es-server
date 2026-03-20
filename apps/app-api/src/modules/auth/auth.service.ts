@@ -1,4 +1,8 @@
 import type { FastifyRequest } from 'fastify'
+import type {
+  AppLoginInput,
+  AppTokenPairInput,
+} from './auth.type'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum'
 import { AuthSessionService } from '@libs/identity'
@@ -17,10 +21,6 @@ import {
   AppAuthErrorMessages,
   AppAuthRedisKeys,
 } from './auth.constant'
-import type {
-  AppLoginInput,
-  AppTokenPairInput,
-} from './auth.type'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 

@@ -5,8 +5,8 @@ import {
   CreateTagInput,
   DeleteTagInput,
   QueryTagInput,
-  UpdateTagSortInput,
   UpdateTagInput,
+  UpdateTagSortInput,
 } from './tag.type'
 
 @Injectable()

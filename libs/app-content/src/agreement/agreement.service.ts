@@ -10,8 +10,8 @@ import {
   AgreementPageQuery,
   CreateAgreementInput,
   PublishedAgreementQuery,
-  UpdateAgreementPublishStatusInput,
   UpdateAgreementInput,
+  UpdateAgreementPublishStatusInput,
 } from './agreement.type'
 
 /**

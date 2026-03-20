@@ -1,14 +1,19 @@
 import type { FastifyRequest } from 'fastify'
-import { DrizzleService } from '@db/core'
+import type {
+  AdminLoginInput,
+  AdminRefreshTokenInput,
+  AdminTokenPairInput,
+} from './auth.type'
 
+import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity'
 import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
+
 import {
   AuthConstants,
   AuthService as BaseAuthService,
   LoginGuardService,
 } from '@libs/platform/modules/auth'
-
 import {
   extractIpAddress,
   isProduction,
@@ -16,11 +21,6 @@ import {
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
-import type {
-  AdminLoginInput,
-  AdminRefreshTokenInput,
-  AdminTokenPairInput,
-} from './auth.type'
 
 /**
  * 管理端认证服务

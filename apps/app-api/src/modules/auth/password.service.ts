@@ -1,13 +1,13 @@
+import type {
+  AppChangePasswordInput,
+  AppForgotPasswordInput,
+} from './auth.type'
 import { DrizzleService } from '@db/core'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
-import type {
-  AppChangePasswordInput,
-  AppForgotPasswordInput,
-} from './auth.type'
 import { SmsService } from './sms.service'
 import { AppTokenStorageService } from './token-storage.service'
 
