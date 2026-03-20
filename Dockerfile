@@ -20,7 +20,6 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 COPY libs libs
 COPY db db
-COPY scripts scripts
 
 FROM install AS builder
 
@@ -30,25 +29,11 @@ COPY apps/${APP_TYPE}-api apps/${APP_TYPE}-api
 
 RUN pnpm exec cross-env NODE_ENV=production nest build ${APP_TYPE}-api --webpack --webpackPath webpack.config.js
 
-FROM base AS deps
+FROM install AS runtime-deps
 
-ENV NODE_ENV=production
+RUN pnpm --filter . deploy --legacy --prod /opt/runtime-deps
 
-COPY pnpm-lock.yaml package.json ./
-
-RUN --mount=type=cache,target=/root/.cache/corepack \
-    --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    corepack enable && \
-    pnpm config set store-dir /pnpm/store && \
-    pnpm install --prod --frozen-lockfile --config.node-linker=hoisted && \
-    find node_modules -type f \( \
-        -name "*.md" -o -name "*.ts" -o -name "*.map" -o \
-        -name "*.test.js" -o -name "*.spec.js" -o -name "*.d.ts" \
-    \) -print0 | xargs -0 rm -f 2>/dev/null || true && \
-    find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -empty -delete 2>/dev/null || true
-
-FROM oven/bun:alpine AS runtime
+FROM node:24-alpine AS runtime
 
 ARG APP_TYPE=admin
 
@@ -68,8 +53,8 @@ RUN apk add --no-cache dumb-init tzdata && \
         /app/uploads/public \
         /app/uploads/tmp
 
-COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=deps --chown=nestjs:nodejs /app/package.json ./package.json
+COPY --from=runtime-deps --chown=nestjs:nodejs /opt/runtime-deps/package.json ./package.json
+COPY --from=runtime-deps --chown=nestjs:nodejs /opt/runtime-deps/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/${APP_TYPE}-api/ ./
 
 EXPOSE 8080
@@ -77,7 +62,7 @@ EXPOSE 8080
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
-CMD ["bun", "main.js"]
+CMD ["node", "main.js"]
 
 FROM base AS migrator
 
@@ -96,9 +81,8 @@ COPY --from=install --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
 COPY --from=install --chown=nestjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=install --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=install --chown=nestjs:nodejs /app/db ./db
-COPY --from=install --chown=nestjs:nodejs /app/scripts ./scripts
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
-CMD ["node", "scripts/db-bootstrap.cjs"]
+CMD ["pnpm", "db:migrate"]

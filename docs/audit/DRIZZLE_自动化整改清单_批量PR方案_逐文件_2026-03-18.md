@@ -110,6 +110,7 @@
 - 新增 `scripts/drizzle-guard.cjs` 门禁脚本，检查 `db._query`、业务层 `db.execute`、rows 手工解包、`sql.raw` 非白名单入口。
 - `package.json` 新增脚本：`pnpm drizzle:guard`。
 - 验证结果：`pnpm drizzle:guard`、`pnpm test -- interaction-query.helper.spec.ts`、`pnpm type-check` 已通过。
+- 备注：上述门禁脚本与 `pnpm drizzle:guard` 入口已在后续清理中移除，此处仅保留历史整改记录。
 
 ### PR-6（已完成）
 - `apps/admin-api/src/modules/message/message-monitor.service.ts`：将 WS 聚合查询与 outbox 汇总查询改为“ORM 主体 + `sql\`\`` 聚合表达式”写法。
