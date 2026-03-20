@@ -16,6 +16,30 @@ export class BaseAppUserCountDto {
   userId!: number
 
   @NumberProperty({
+    description: '发出的评论总数',
+    example: 48,
+    default: 0,
+    validation: false,
+  })
+  commentCount!: number
+
+  @NumberProperty({
+    description: '发出的点赞总数',
+    example: 66,
+    default: 0,
+    validation: false,
+  })
+  likeCount!: number
+
+  @NumberProperty({
+    description: '发出的收藏总数',
+    example: 9,
+    default: 0,
+    validation: false,
+  })
+  favoriteCount!: number
+
+  @NumberProperty({
     description: '论坛主题数',
     example: 12,
     default: 0,
@@ -24,28 +48,28 @@ export class BaseAppUserCountDto {
   forumTopicCount!: number
 
   @NumberProperty({
-    description: '论坛回复数',
-    example: 48,
+    description: '评论收到的点赞总数',
+    example: 18,
     default: 0,
     validation: false,
   })
-  forumReplyCount!: number
+  commentReceivedLikeCount!: number
 
   @NumberProperty({
-    description: '论坛收到的点赞数',
-    example: 66,
+    description: '论坛主题收到的点赞总数',
+    example: 25,
     default: 0,
     validation: false,
   })
-  forumReceivedLikeCount!: number
+  forumTopicReceivedLikeCount!: number
 
   @NumberProperty({
-    description: '论坛收到的收藏数',
-    example: 9,
+    description: '论坛主题收到的收藏总数',
+    example: 7,
     default: 0,
     validation: false,
   })
-  forumReceivedFavoriteCount!: number
+  forumTopicReceivedFavoriteCount!: number
 
   @DateProperty({
     description: '创建时间',

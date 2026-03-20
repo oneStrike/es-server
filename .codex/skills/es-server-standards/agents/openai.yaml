@@ -1,0 +1,4 @@
+interface:
+  display_name: "ES Server Standards"
+  short_description: "Apply ES server NestJS/Drizzle conventions"
+  default_prompt: "Use $es-server-standards to plan or implement a repo-aligned change in this server."

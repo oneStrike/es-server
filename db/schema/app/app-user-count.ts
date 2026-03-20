@@ -1,8 +1,8 @@
-import { index, integer, pgTable, timestamp } from 'drizzle-orm/pg-core'
+import { integer, pgTable, timestamp } from 'drizzle-orm/pg-core'
 
 /**
  * 应用用户计数表
- * 承载跨项目可复用的用户计数扩展字段
+ * 承载高频读取的用户聚合读模型字段
  */
 export const appUserCount = pgTable(
   'app_user_count',
@@ -12,21 +12,33 @@ export const appUserCount = pgTable(
      */
     userId: integer().primaryKey().notNull(),
     /**
-     * 论坛主题数
+     * 发出的评论总数
+     */
+    commentCount: integer().default(0).notNull(),
+    /**
+     * 发出的点赞总数
+     */
+    likeCount: integer().default(0).notNull(),
+    /**
+     * 发出的收藏总数
+     */
+    favoriteCount: integer().default(0).notNull(),
+    /**
+     * 发布的论坛主题总数
      */
     forumTopicCount: integer().default(0).notNull(),
     /**
-     * 论坛回复数
+     * 评论收到的点赞总数
      */
-    forumReplyCount: integer().default(0).notNull(),
+    commentReceivedLikeCount: integer().default(0).notNull(),
     /**
-     * 论坛收到的点赞数
+     * 论坛主题收到的点赞总数
      */
-    forumReceivedLikeCount: integer().default(0).notNull(),
+    forumTopicReceivedLikeCount: integer().default(0).notNull(),
     /**
-     * 论坛收到的收藏数
+     * 论坛主题收到的收藏总数
      */
-    forumReceivedFavoriteCount: integer().default(0).notNull(),
+    forumTopicReceivedFavoriteCount: integer().default(0).notNull(),
     /**
      * 创建时间
      */
@@ -40,17 +52,7 @@ export const appUserCount = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [
-    index('app_user_count_forum_topic_count_idx').on(table.forumTopicCount),
-    index('app_user_count_forum_reply_count_idx').on(table.forumReplyCount),
-    index('app_user_count_forum_received_like_count_idx').on(
-      table.forumReceivedLikeCount,
-    ),
-    index('app_user_count_forum_received_favorite_count_idx').on(
-      table.forumReceivedFavoriteCount,
-    ),
-    index('app_user_count_created_at_idx').on(table.createdAt),
-  ],
+  () => [],
 )
 
 export type AppUserCount = typeof appUserCount.$inferSelect

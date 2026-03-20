@@ -177,33 +177,18 @@ export class ForumCounterService {
   }
 
   /**
-   * 更新用户的论坛回复数量
+   * 更新用户收到的论坛主题点赞数量
    * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户计数信息
    */
-  async updateUserForumReplyCount(
+  async updateUserForumTopicReceivedLikeCount(
     tx: Db | undefined,
     userId: number,
     delta: number,
   ) {
-    await this.appUserCountService.updateForumReplyCount(tx, userId, delta)
-  }
-
-  /**
-   * 更新用户收到的论坛点赞数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户计数信息
-   */
-  async updateUserForumReceivedLikeCount(
-    tx: Db | undefined,
-    userId: number,
-    delta: number,
-  ) {
-    await this.appUserCountService.updateForumReceivedLikeCount(
+    await this.appUserCountService.updateForumTopicReceivedLikeCount(
       tx,
       userId,
       delta,
@@ -211,45 +196,22 @@ export class ForumCounterService {
   }
 
   /**
-   * 更新用户收到的论坛收藏数量
+   * 更新用户收到的论坛主题收藏数量
    * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户计数信息
    */
-  async updateUserForumReceivedFavoriteCount(
+  async updateUserForumTopicReceivedFavoriteCount(
     tx: Db | undefined,
     userId: number,
     delta: number,
   ) {
-    await this.appUserCountService.updateForumReceivedFavoriteCount(
+    await this.appUserCountService.updateForumTopicReceivedFavoriteCount(
       tx,
       userId,
       delta,
     )
-  }
-
-  /**
-   * 批量更新回复相关的所有计数
-   * 包括主题回复数、版块回复数、用户论坛回复数
-   * @param tx - 事务对象
-   * @param topicId - 主题ID
-   * @param sectionId - 版块ID
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   */
-  async updateReplyRelatedCounts(
-    tx: Db | undefined,
-    topicId: number,
-    sectionId: number,
-    userId: number,
-    delta: number,
-  ) {
-    await Promise.all([
-      this.updateTopicReplyCount(tx, topicId, delta),
-      this.updateSectionReplyCount(tx, sectionId, delta),
-      this.updateUserForumReplyCount(tx, userId, delta),
-    ])
   }
 
   /**
@@ -288,7 +250,7 @@ export class ForumCounterService {
   ) {
     await Promise.all([
       this.updateTopicLikeCount(tx, topicId, delta),
-      this.updateUserForumReceivedLikeCount(tx, authorUserId, delta),
+      this.updateUserForumTopicReceivedLikeCount(tx, authorUserId, delta),
     ])
   }
 
@@ -308,7 +270,11 @@ export class ForumCounterService {
   ) {
     await Promise.all([
       this.updateTopicFavoriteCount(tx, topicId, delta),
-      this.updateUserForumReceivedFavoriteCount(tx, authorUserId, delta),
+      this.updateUserForumTopicReceivedFavoriteCount(
+        tx,
+        authorUserId,
+        delta,
+      ),
     ])
   }
 

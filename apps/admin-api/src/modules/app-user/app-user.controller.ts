@@ -117,16 +117,16 @@ export class AppUserController {
   }
 
   /**
-   * 更新 APP 用户社区状态
+   * 更新 APP 用户状态
    */
   @Post('update-status')
   @ApiDoc({
-    summary: '更新 APP 用户社区状态',
+    summary: '更新 APP 用户状态',
     model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新 APP 用户社区状态',
+    content: '更新 APP 用户状态',
   })
   async updateAppUserStatus(
     @Body() body: UpdateAdminAppUserStatusDto,

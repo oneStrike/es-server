@@ -22,6 +22,7 @@ import {
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
 import { ConfigReader } from '@libs/system-config'
+import { AppUserCountService } from '@libs/user'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull, max, sql } from 'drizzle-orm'
 import { CommentGrowthService } from './comment-growth.service'
@@ -51,6 +52,7 @@ export class CommentService {
     private readonly commentGrowthService: CommentGrowthService,
     /** 消息发件箱服务，用于发送通知消息 */
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -340,6 +342,8 @@ export class CommentService {
                   createdAt: this.userComment.createdAt,
                 })
 
+              await this.appUserCountService.updateCommentCount(tx, userId, 1)
+
               if (this.isVisible({ ...decision, deletedAt: null })) {
                 await this.applyCommentCountDelta(tx, targetType, targetId, 1)
 
@@ -454,6 +458,8 @@ export class CommentService {
           createdAt: this.userComment.createdAt,
         })
 
+      await this.appUserCountService.updateCommentCount(tx, userId, 1)
+
       if (this.isVisible({ ...decision, deletedAt: null })) {
         await this.applyCommentCountDelta(
           tx,
@@ -522,6 +528,7 @@ export class CommentService {
           createdAt: true,
           auditStatus: true,
           isHidden: true,
+          likeCount: true,
         },
       })
       if (!found) {
@@ -534,6 +541,15 @@ export class CommentService {
           deletedAt: new Date(),
         })
         .where(eq(this.userComment.id, found.id))
+
+      await this.appUserCountService.updateCommentCount(tx, found.userId, -1)
+      if (found.likeCount > 0) {
+        await this.appUserCountService.updateCommentReceivedLikeCount(
+          tx,
+          found.userId,
+          -found.likeCount,
+        )
+      }
 
       if (!this.isVisible({ ...found, deletedAt: null })) {
         return { id: found.id }

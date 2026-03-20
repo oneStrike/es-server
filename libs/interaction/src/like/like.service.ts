@@ -1,5 +1,6 @@
 import type { UserLike } from '@db/schema'
 import { DrizzleService } from '@db/core'
+import { AppUserCountService } from '@libs/user'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
@@ -33,6 +34,7 @@ export class LikeService {
 
   constructor(
     private readonly likeGrowthService: LikeGrowthService,
+    private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -191,6 +193,7 @@ export class LikeService {
         },
       )
 
+      await this.appUserCountService.updateLikeCount(tx, userId, 1)
       await resolver.applyCountDelta(tx, targetId, 1)
 
       if (resolver.postLikeHook) {
@@ -229,6 +232,7 @@ export class LikeService {
         throw new BadRequestException('点赞记录不存在')
       }
 
+      await this.appUserCountService.updateLikeCount(tx, userId, -1)
       await resolver.applyCountDelta(tx, targetId, -1)
     })
   }

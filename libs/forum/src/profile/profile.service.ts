@@ -1,28 +1,28 @@
 import type { Db } from '@db/core'
 import type { AppUser } from '@db/schema'
 import type {
-  QueryForumProfileListInput,
-  UpdateForumProfileStatusInput,
+  QueryUserProfileListInput,
+  UpdateUserStatusInput,
 } from './profile.type'
 import { DrizzleService } from '@db/core'
 
 import { GrowthAssetTypeEnum, UserPointService } from '@libs/growth'
 import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction'
-import { AppUserCountService } from '@libs/user'
 import {
   UserDefaults,
   UserStatusEnum,
 } from '@libs/platform/constant'
+import { AppUserCountService } from '@libs/user'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
 
 /**
- * 论坛用户画像服务
- * 提供用户论坛资料、积分记录、收藏等管理功能
+ * 用户资料服务
+ * 提供用户资料、积分记录、收藏等管理功能
  */
 @Injectable()
-export class ForumProfileService {
+export class UserProfileService {
   constructor(
     private readonly drizzle: DrizzleService,
     /** 用户积分服务 */
@@ -100,7 +100,7 @@ export class ForumProfileService {
    * @param queryDto - 查询参数，包含用户ID、昵称、状态等过滤条件
    * @returns 分页的用户资料列表，包含用户信息和徽章信息
    */
-  async queryProfileList(queryDto: QueryForumProfileListInput) {
+  async queryProfileList(queryDto: QueryUserProfileListInput) {
     const { levelId, status, nickname, ...rest } = queryDto
 
     const where = this.drizzle.buildWhere(this.appUser, {
@@ -148,10 +148,13 @@ export class ForumProfileService {
         avatar: item.avatarUrl ?? undefined,
         counts: countMap.get(item.id) ?? {
           userId: item.id,
+          commentCount: 0,
+          likeCount: 0,
+          favoriteCount: 0,
           forumTopicCount: 0,
-          forumReplyCount: 0,
-          forumReceivedLikeCount: 0,
-          forumReceivedFavoriteCount: 0,
+          commentReceivedLikeCount: 0,
+          forumTopicReceivedLikeCount: 0,
+          forumTopicReceivedFavoriteCount: 0,
         },
         userBadges: badgeMap.get(item.id) ?? [],
       }
@@ -193,10 +196,13 @@ export class ForumProfileService {
       avatar: user.avatarUrl ?? undefined,
       counts: counts ?? {
         userId,
+        commentCount: 0,
+        likeCount: 0,
+        favoriteCount: 0,
         forumTopicCount: 0,
-        forumReplyCount: 0,
-        forumReceivedLikeCount: 0,
-        forumReceivedFavoriteCount: 0,
+        commentReceivedLikeCount: 0,
+        forumTopicReceivedLikeCount: 0,
+        forumTopicReceivedFavoriteCount: 0,
       },
       userBadges,
     }
@@ -208,7 +214,7 @@ export class ForumProfileService {
    * @throws Error 用户不存在
    */
   async updateProfileStatus(
-    updateDto: UpdateForumProfileStatusInput,
+    updateDto: UpdateUserStatusInput,
   ): Promise<void> {
     const { userId, status, banReason, banUntil } = updateDto
 
@@ -328,12 +334,12 @@ export class ForumProfileService {
   }
 
   /**
-   * 初始化用户论坛资料
+   * 初始化用户资料
    * @param tx - 事务客户端
    * @param userId - 用户 ID
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */
-  async initForumProfile(tx: Db | undefined, userId: number) {
+  async initUserProfile(tx: Db | undefined, userId: number) {
     const client = tx ?? this.db
     const [defaultLevel] = await client
       .select({ id: this.userLevelRule.id })

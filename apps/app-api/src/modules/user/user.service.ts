@@ -3,7 +3,7 @@
  *
  * 提供用户中心相关的业务逻辑，包括：
  * - 用户基本信息的获取和更新
- * - 用户论坛资料的获取和更新
+ * - 用户计数的获取
  * - 用户中心汇总信息
  * - 用户状态判断
  * - 用户资产统计（购买、下载、收藏、点赞等）
@@ -13,7 +13,6 @@ import type { QueryMyPointRecordDto } from './dto/user-point.dto'
 import type {
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
-  UpdateMyForumProfileDto,
   UpdateMyProfileDto,
 } from './dto/user.dto'
 import { DrizzleService } from '@db/core'
@@ -87,6 +86,8 @@ export class UserService {
             avatarUrl: dto.avatarUrl,
             emailAddress: dto.emailAddress,
             genderType: dto.genderType,
+            signature: dto.signature,
+            bio: dto.bio,
             birthDate: dto.birthDate
               ? new Date(dto.birthDate).toISOString().slice(0, 10)
               : undefined,
@@ -104,51 +105,21 @@ export class UserService {
   }
 
   /**
-   * 获取用户论坛资料
+   * 获取用户计数
    */
-  async getUserForumProfile(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
-    const communityProfile =
-      await this.userCoreService.getUserForumProfile(userId)
-
-    return {
-      signature: communityProfile.signature,
-      bio: communityProfile.bio,
-      counts: communityProfile.counts,
-      status: user.status,
-      banReason: user.banReason ?? undefined,
-      banUntil: user.banUntil ?? undefined,
-    }
-  }
-
-  /**
-   * 更新用户论坛资料
-   */
-  async updateUserForumProfile(userId: number, dto: UpdateMyForumProfileDto) {
+  async getUserCounts(userId: number) {
     await this.userCoreService.ensureUserExists(userId)
-
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({
-          signature: dto.signature,
-          bio: dto.bio,
-        })
-        .where(eq(this.appUser.id, userId)),
-    )
-    this.drizzle.assertAffectedRows(result, '用户不存在')
-
-    return true
+    return this.userCoreService.getUserCounts(userId)
   }
 
   /**
    * 获取用户中心汇总信息
    */
   async getUserCenter(userId: number) {
-    const [user, communityProfile, badgeCount, assets, messageSummary] =
+    const [user, counts, badgeCount, assets, messageSummary] =
       await Promise.all([
         this.userCoreService.ensureUserExists(userId),
-        this.userCoreService.getUserForumProfile(userId),
+        this.userCoreService.getUserCounts(userId),
         this.userCoreService.getBadgeCount(userId),
         this.getUserAssetsSummary(userId),
         this.messageInboxService.getSummary(userId),
@@ -176,13 +147,13 @@ export class UserService {
         levelName: level?.name ?? undefined,
         badgeCount,
       },
-      community: {
-        signature: communityProfile.signature,
-        bio: communityProfile.bio,
+      profile: {
+        signature: user.signature ?? undefined,
+        bio: user.bio ?? undefined,
         status: user.status,
         banReason: user.banReason ?? undefined,
         banUntil: user.banUntil ?? undefined,
-        counts: communityProfile.counts,
+        counts,
       },
       assets,
       message: {

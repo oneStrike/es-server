@@ -10,6 +10,7 @@ import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
 } from '@libs/platform/constant'
+import { AppUserCountService } from '@libs/user'
 import {
   BadRequestException,
   Injectable,
@@ -41,6 +42,7 @@ export class CommentLikeResolver
   constructor(
     private readonly likeService: LikeService,
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -124,10 +126,16 @@ export class CommentLikeResolver
         likeCount: sql`${userComment.likeCount} + ${delta}`,
       })
       .where(and(eq(userComment.id, targetId), isNull(userComment.deletedAt)))
-      .returning({ id: userComment.id })
+      .returning({ id: userComment.id, userId: userComment.userId })
     if (!updated[0]) {
       throw new NotFoundException('评论不存在')
     }
+
+    await this.appUserCountService.updateCommentReceivedLikeCount(
+      tx,
+      updated[0].userId,
+      delta,
+    )
   }
 
   /**

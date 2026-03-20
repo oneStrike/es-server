@@ -6,7 +6,6 @@ import {
 } from '@libs/interaction'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { ForumCounterService } from '../../counter/forum-counter.service'
 import { ForumTopicService } from '../forum-topic.service'
 
 /**
@@ -22,7 +21,6 @@ export class ForumTopicCommentResolver
 
   constructor(
     private readonly commentService: CommentService,
-    private readonly forumCounterService: ForumCounterService,
     private readonly forumTopicService: ForumTopicService,
   ) {}
 
@@ -35,19 +33,17 @@ export class ForumTopicCommentResolver
 
   /**
    * 应用评论计数增量
-   * 更新帖子的评论数
+   * 论坛主题的用户评论计数由 CommentService 统一维护
    *
-   * @param tx - 事务客户端
-   * @param targetId - 目标帖子ID
-   * @param delta - 变更量（+1 增加，-1 减少）
+   * @param _tx - 事务客户端
+   * @param _targetId - 目标帖子ID
+   * @param _delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(
     _tx: InteractionTx,
     _targetId: number,
     _delta: number,
-  ) {
-
-  }
+  ) {}
 
   /**
    * 校验是否允许对该帖子发表评论
@@ -125,18 +121,13 @@ export class ForumTopicCommentResolver
   async postCommentHook(
     tx: InteractionTx,
     targetId: number,
-    actorUserId: number,
+    _actorUserId: number,
     meta: { sectionId?: number },
   ) {
     if (!meta.sectionId) {
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumCounterService.updateUserForumReplyCount(
-      tx,
-      actorUserId,
-      1,
-    )
     await this.forumTopicService.syncTopicReplyState(tx, targetId)
     await this.forumTopicService.syncSectionVisibleState(tx, meta.sectionId)
   }
@@ -153,11 +144,6 @@ export class ForumTopicCommentResolver
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumCounterService.updateUserForumReplyCount(
-      tx,
-      comment.userId,
-      -1,
-    )
     await this.forumTopicService.syncTopicReplyState(tx, comment.targetId)
     await this.forumTopicService.syncSectionVisibleState(tx, meta.sectionId)
   }

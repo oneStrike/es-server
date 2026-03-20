@@ -157,11 +157,16 @@ export class AppUserService {
         ? this.db
             .select({
               userId: this.appUserCount.userId,
+              commentCount: this.appUserCount.commentCount,
+              likeCount: this.appUserCount.likeCount,
+              favoriteCount: this.appUserCount.favoriteCount,
               forumTopicCount: this.appUserCount.forumTopicCount,
-              forumReplyCount: this.appUserCount.forumReplyCount,
-              forumReceivedLikeCount: this.appUserCount.forumReceivedLikeCount,
-              forumReceivedFavoriteCount:
-                this.appUserCount.forumReceivedFavoriteCount,
+              commentReceivedLikeCount:
+                this.appUserCount.commentReceivedLikeCount,
+              forumTopicReceivedLikeCount:
+                this.appUserCount.forumTopicReceivedLikeCount,
+              forumTopicReceivedFavoriteCount:
+                this.appUserCount.forumTopicReceivedFavoriteCount,
             })
             .from(this.appUserCount)
             .where(inArray(this.appUserCount.userId, userIds))
@@ -180,12 +185,16 @@ export class AppUserService {
         ...this.userCoreService.mapBaseUser(item),
         levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
         counts: {
+          commentCount: countMap.get(item.id)?.commentCount ?? 0,
+          likeCount: countMap.get(item.id)?.likeCount ?? 0,
+          favoriteCount: countMap.get(item.id)?.favoriteCount ?? 0,
           forumTopicCount: countMap.get(item.id)?.forumTopicCount ?? 0,
-          forumReplyCount: countMap.get(item.id)?.forumReplyCount ?? 0,
-          forumReceivedLikeCount:
-            countMap.get(item.id)?.forumReceivedLikeCount ?? 0,
-          forumReceivedFavoriteCount:
-            countMap.get(item.id)?.forumReceivedFavoriteCount ?? 0,
+          commentReceivedLikeCount:
+            countMap.get(item.id)?.commentReceivedLikeCount ?? 0,
+          forumTopicReceivedLikeCount:
+            countMap.get(item.id)?.forumTopicReceivedLikeCount ?? 0,
+          forumTopicReceivedFavoriteCount:
+            countMap.get(item.id)?.forumTopicReceivedFavoriteCount ?? 0,
         },
       })),
     }
@@ -354,7 +363,7 @@ export class AppUserService {
   }
 
   /**
-   * 更新 APP 用户社区状态
+   * 更新 APP 用户状态
    */
   async updateAppUserStatus(
     adminUserId: number,

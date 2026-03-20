@@ -4,6 +4,7 @@ import type {
   FavoriteRecordInput,
 } from './favorite.type'
 import { DrizzleService } from '@db/core'
+import { AppUserCountService } from '@libs/user'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { FavoriteGrowthService } from './favorite-growth.service'
@@ -24,6 +25,7 @@ export class FavoriteService {
 
   constructor(
     private readonly favoriteGrowthService: FavoriteGrowthService,
+    private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -139,6 +141,7 @@ export class FavoriteService {
       )
       const favoriteRecord = rows[0] ?? null
 
+      await this.appUserCountService.updateFavoriteCount(tx, userId, 1)
       await resolver.applyCountDelta(tx, targetId, 1)
 
       if (resolver.postFavoriteHook) {
@@ -181,6 +184,7 @@ export class FavoriteService {
         throw new BadRequestException('收藏记录或用户不存在')
       }
 
+      await this.appUserCountService.updateFavoriteCount(tx, userId, -1)
       await resolver.applyCountDelta(tx, targetId, -1)
     })
   }

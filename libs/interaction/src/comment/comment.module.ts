@@ -10,6 +10,7 @@ import { GrowthLedgerModule } from '@libs/growth'
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { SystemConfigModule } from '@libs/system-config'
+import { UserModule } from '@libs/user'
 import { Module } from '@nestjs/common'
 import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { CommentGrowthService } from './comment-growth.service'
@@ -24,6 +25,7 @@ import { CommentReportResolver } from './resolver/comment-report.resolver'
     SystemConfigModule,
     GrowthLedgerModule,
     MessageModule,
+    UserModule,
   ],
   providers: [
     InteractionTargetAccessService,

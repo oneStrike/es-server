@@ -67,10 +67,13 @@ class AdminForumTopicSectionDto extends PickType(BaseForumSectionDto, [
 ] as const) {}
 
 class AdminForumTopicUserCountDto extends PickType(BaseAppUserCountDto, [
+  'commentCount',
+  'likeCount',
+  'favoriteCount',
   'forumTopicCount',
-  'forumReplyCount',
-  'forumReceivedLikeCount',
-  'forumReceivedFavoriteCount',
+  'commentReceivedLikeCount',
+  'forumTopicReceivedLikeCount',
+  'forumTopicReceivedFavoriteCount',
 ] as const) {}
 
 class AdminForumTopicUserLevelDto extends PickType(BaseUserLevelRuleDto, [

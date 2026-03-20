@@ -130,26 +130,6 @@ export class UserService {
   }
 
   /**
-   * 获取用户论坛资料
-   */
-  async getUserForumProfile(userId: number) {
-    const [user, counts] = await Promise.all([
-      this.findById(userId),
-      this.getUserCounts(userId),
-    ])
-
-    if (!user) {
-      throw new NotFoundException('应用用户不存在')
-    }
-
-    return {
-      signature: user.signature ?? '',
-      bio: user.bio ?? '',
-      counts,
-    }
-  }
-
-  /**
    * 获取用户徽章总数
    */
   async getBadgeCount(userId: number): Promise<number> {

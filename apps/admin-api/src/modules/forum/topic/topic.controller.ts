@@ -79,12 +79,16 @@ export class ForumTopicController {
             banUntil: topic.user.banUntil,
             counts: topic.user.counts
               ? {
+                  commentCount: topic.user.counts.commentCount,
+                  likeCount: topic.user.counts.likeCount,
+                  favoriteCount: topic.user.counts.favoriteCount,
                   forumTopicCount: topic.user.counts.forumTopicCount,
-                  forumReplyCount: topic.user.counts.forumReplyCount,
-                  forumReceivedLikeCount:
-                    topic.user.counts.forumReceivedLikeCount,
-                  forumReceivedFavoriteCount:
-                    topic.user.counts.forumReceivedFavoriteCount,
+                  commentReceivedLikeCount:
+                    topic.user.counts.commentReceivedLikeCount,
+                  forumTopicReceivedLikeCount:
+                    topic.user.counts.forumTopicReceivedLikeCount,
+                  forumTopicReceivedFavoriteCount:
+                    topic.user.counts.forumTopicReceivedFavoriteCount,
                 }
               : null,
             level: topic.user.level

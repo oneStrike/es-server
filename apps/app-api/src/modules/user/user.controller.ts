@@ -3,7 +3,7 @@
  *
  * 提供用户中心相关的 API 接口，包括：
  * - 用户基本信息获取和更新
- * - 用户论坛资料获取和更新
+ * - 用户计数获取
  * - 用户中心汇总信息
  * - 用户状态信息
  * - 用户资产统计
@@ -17,14 +17,13 @@ import { QueryMyPointRecordDto, UserPointRecordDto } from './dto/user-point.dto'
 import {
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
-  UpdateMyForumProfileDto,
   UpdateMyProfileDto,
   UserAssetsSummaryDto,
   UserBadgeItemDto,
   UserCenterDto,
+  UserCountDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
-  UserForumProfileDto,
   UserGrowthSummaryDto,
   UserPointStatsDto,
   UserStatusSummaryDto,
@@ -64,30 +63,15 @@ export class UserController {
   }
 
   /**
-   * 获取当前用户论坛资料
+   * 获取当前用户计数
    */
-  @Get('profile/forum')
+  @Get('counts/stats')
   @ApiDoc({
-    summary: '获取当前用户论坛资料',
-    model: UserForumProfileDto,
+    summary: '获取当前用户计数',
+    model: UserCountDto,
   })
-  async getForumProfile(@CurrentUser('sub') userId: number) {
-    return this.userService.getUserForumProfile(userId)
-  }
-
-  /**
-   * 更新当前用户论坛资料
-   */
-  @Post('profile/forum/update')
-  @ApiDoc({
-    summary: '更新当前用户论坛资料',
-    model: Boolean,
-  })
-  async updateForumProfile(
-    @Body() body: UpdateMyForumProfileDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.userService.updateUserForumProfile(userId, body)
+  async getCounts(@CurrentUser('sub') userId: number) {
+    return this.userService.getUserCounts(userId)
   }
 
   /**

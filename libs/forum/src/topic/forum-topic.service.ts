@@ -15,11 +15,11 @@ import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
 import { CommentTargetTypeEnum } from '@libs/interaction'
 import { AuditStatusEnum } from '@libs/platform/constant'
-
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
+import { AppUserCountService } from '@libs/user'
 import {
   BadRequestException,
   Injectable,
@@ -46,6 +46,7 @@ export class ForumTopicService {
     private readonly userGrowthRewardService: UserGrowthRewardService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly appUserCountService: AppUserCountService,
     private readonly actionLogService: ForumUserActionLogService,
     private readonly forumPermissionService: ForumPermissionService,
   ) {}
@@ -252,7 +253,7 @@ export class ForumTopicService {
    * @param createTopicDto - 创建论坛主题的数据传输对象
    * @returns 创建的论坛主题信息
    * @throws {BadRequestException} 板块不存在或已禁用
-   * @throws {BadRequestException} 用户论坛资料不存在或已被封禁
+   * @throws {BadRequestException} 用户资料不存在或已被封禁
    */
   async createForumTopic(createTopicDto: CreateForumTopicInput) {
     const { sectionId, userId, ...topicData } = createTopicDto
@@ -570,15 +571,13 @@ export class ForumTopicService {
     // 主题与回复软删除保持一致
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const visibleReplies = await tx.query.userComment.findMany({
+        const replyRows = await tx.query.userComment.findMany({
           where: {
             targetType: CommentTargetTypeEnum.FORUM_TOPIC,
             targetId: id,
-            auditStatus: AuditStatusEnum.APPROVED,
-            isHidden: false,
             deletedAt: { isNull: true },
           },
-          columns: { userId: true },
+          columns: { userId: true, likeCount: true },
         })
 
         await tx
@@ -610,22 +609,56 @@ export class ForumTopicService {
           -1,
         )
 
+        if (topic.likeCount > 0) {
+          await this.forumCounterService.updateUserForumTopicReceivedLikeCount(
+            tx,
+            topic.userId,
+            -topic.likeCount,
+          )
+        }
+        if (topic.favoriteCount > 0) {
+          await this.forumCounterService.updateUserForumTopicReceivedFavoriteCount(
+            tx,
+            topic.userId,
+            -topic.favoriteCount,
+          )
+        }
+
         const replyCountByUser = new Map<number, number>()
-        for (const reply of visibleReplies) {
+        const replyReceivedLikeCountByUser = new Map<number, number>()
+        for (const reply of replyRows) {
           replyCountByUser.set(
             reply.userId,
             (replyCountByUser.get(reply.userId) ?? 0) + 1,
           )
+          if (reply.likeCount > 0) {
+            replyReceivedLikeCountByUser.set(
+              reply.userId,
+              (
+                replyReceivedLikeCountByUser.get(reply.userId) ?? 0
+              ) + reply.likeCount,
+            )
+          }
         }
 
-        await Promise.all(
-          Array.from(replyCountByUser.entries(), async ([userId, count]) =>
-            this.forumCounterService.updateUserForumReplyCount(
+        const replyCountTasks: Promise<void>[] = []
+        for (const [userId, count] of replyCountByUser.entries()) {
+          replyCountTasks.push(
+            this.appUserCountService.updateCommentCount(tx, userId, -count),
+          )
+        }
+
+        for (const [userId, likeCount] of replyReceivedLikeCountByUser.entries()) {
+          replyCountTasks.push(
+            this.appUserCountService.updateCommentReceivedLikeCount(
               tx,
               userId,
-              -count,
-            )),
-        )
+              -likeCount,
+            ),
+          )
+        }
+
+        await Promise.all(replyCountTasks)
 
         await this.syncSectionVisibleState(tx, topic.sectionId)
       }),

@@ -7,7 +7,7 @@ import { ForumCounterModule } from './counter'
 import { ForumModeratorModule } from './moderator'
 import { ForumModeratorApplicationModule } from './moderator-application'
 import { ForumPermissionModule } from './permission'
-import { ForumProfileModule } from './profile'
+import { UserProfileModule } from './profile'
 import { ForumSearchModule } from './search'
 import { ForumSectionModule } from './section'
 import { ForumSectionGroupModule } from './section-group'
@@ -28,7 +28,7 @@ import { ForumTopicModule } from './topic'
     ForumModeratorApplicationModule,
     ForumPermissionModule,
     UserPointModule,
-    ForumProfileModule,
+    UserProfileModule,
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,
@@ -45,7 +45,7 @@ import { ForumTopicModule } from './topic'
     ForumModeratorApplicationModule,
     ForumPermissionModule,
     UserPointModule,
-    ForumProfileModule,
+    UserProfileModule,
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,

@@ -52,10 +52,13 @@ export class AdminAppUserLevelDto {
 }
 
 export class AdminAppUserCountDto extends PickType(BaseAppUserCountDto, [
+  'commentCount',
+  'likeCount',
+  'favoriteCount',
   'forumTopicCount',
-  'forumReplyCount',
-  'forumReceivedLikeCount',
-  'forumReceivedFavoriteCount',
+  'commentReceivedLikeCount',
+  'forumTopicReceivedLikeCount',
+  'forumTopicReceivedFavoriteCount',
 ] as const) {}
 
 export class AdminAppUserPointStatsDto {

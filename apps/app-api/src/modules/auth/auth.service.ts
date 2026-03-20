@@ -1,6 +1,6 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
-import { ForumProfileService } from '@libs/forum'
+import { UserProfileService } from '@libs/forum'
 import { AuthSessionService } from '@libs/identity'
 import { GenderEnum } from '@libs/platform/constant'
 import { RsaService, ScryptService } from '@libs/platform/modules'
@@ -35,7 +35,7 @@ export class AuthService {
     private readonly baseJwtService: BaseAuthService,
     private readonly authSessionService: AuthSessionService,
     private readonly passwordService: PasswordService,
-    private readonly profileService: ForumProfileService,
+    private readonly profileService: UserProfileService,
     private readonly loginGuardService: LoginGuardService,
   ) {}
 
@@ -111,7 +111,7 @@ export class AuthService {
             isEnabled: this.appUserTable.isEnabled,
           })
 
-        await this.profileService.initForumProfile(tx, newUser.id)
+        await this.profileService.initUserProfile(tx, newUser.id)
         return newUser
       }),
     )

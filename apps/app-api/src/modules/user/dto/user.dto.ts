@@ -33,11 +33,9 @@ export class UpdateMyProfileDto extends PartialType(
     'emailAddress',
     'genderType',
     'birthDate',
+    'signature',
+    'bio',
   ] as const),
-) {}
-
-export class UpdateMyForumProfileDto extends PartialType(
-  PickType(BaseAppUserDto, ['signature', 'bio'] as const),
 ) {}
 
 /**
@@ -91,29 +89,14 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
 }
 
 export class UserCountDto extends PickType(BaseAppUserCountDto, [
+  'commentCount',
+  'likeCount',
+  'favoriteCount',
   'forumTopicCount',
-  'forumReplyCount',
-  'forumReceivedLikeCount',
-  'forumReceivedFavoriteCount',
+  'commentReceivedLikeCount',
+  'forumTopicReceivedLikeCount',
+  'forumTopicReceivedFavoriteCount',
 ] as const) {}
-
-/**
- * 用户论坛资料 DTO
- */
-export class UserForumProfileDto extends PickType(BaseAppUserDto, [
-  'signature',
-  'bio',
-  'status',
-  'banReason',
-  'banUntil',
-] as const) {
-  @NestedProperty({
-    description: '用户计数',
-    type: UserCountDto,
-    validation: false,
-  })
-  counts!: UserCountDto
-}
 
 /**
  * 用户状态摘要 DTO
@@ -127,7 +110,7 @@ export class UserStatusSummaryDto {
   isEnabled!: boolean
 
   @EnumProperty({
-    description: '社区状态',
+    description: '用户状态',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
     validation: false,
@@ -171,7 +154,7 @@ export class UserStatusSummaryDto {
 
   @StringProperty({
     description: '限制原因',
-    example: '违反社区规则。',
+    example: '违反平台规则。',
     required: false,
     validation: false,
   })
@@ -383,9 +366,9 @@ export class UserCenterGrowthDto {
 }
 
 /**
- * 用户中心-社区信息 DTO
+ * 用户中心-用户资料 DTO
  */
-export class UserCenterCommunityDto {
+export class UserCenterProfileDto {
   @StringProperty({
     description: '用户签名',
     example: '持续输出，永不停歇。',
@@ -403,7 +386,7 @@ export class UserCenterCommunityDto {
   bio?: string
 
   @EnumProperty({
-    description: '社区状态',
+    description: '用户状态',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
     validation: false,
@@ -411,8 +394,8 @@ export class UserCenterCommunityDto {
   status!: UserStatusEnum
 
   @StringProperty({
-    description: '封禁或禁言原因',
-    example: '违反社区规则。',
+    description: '限制原因',
+    example: '违反平台规则。',
     required: false,
     validation: false,
   })
@@ -486,11 +469,11 @@ export class UserCenterDto {
   growth!: UserCenterGrowthDto
 
   @NestedProperty({
-    description: '社区信息',
-    type: UserCenterCommunityDto,
+    description: '用户资料',
+    type: UserCenterProfileDto,
     validation: false,
   })
-  community!: UserCenterCommunityDto
+  profile!: UserCenterProfileDto
 
   @NestedProperty({
     description: '资产统计',
