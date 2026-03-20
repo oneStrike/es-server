@@ -10,6 +10,7 @@ import {
 } from '@libs/interaction'
 
 import { ContentTypeEnum } from '@libs/platform/constant'
+import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
@@ -210,9 +211,7 @@ export class WorkChapterService {
 
     // 未登录用户直接返回基础信息
     if (!userId) {
-      chapter.content = chapter.content
-        ? JSON.parse(chapter.content as unknown as string)
-        : null
+      chapter.content = jsonParse(chapter.content, []) as unknown as string
       return chapter
     }
 
@@ -248,7 +247,7 @@ export class WorkChapterService {
 
     return {
       ...chapter,
-      content: JSON.parse(chapter.content as unknown as string),
+      content: jsonParse(chapter.content, []) as unknown as string,
       liked,
       downloaded,
       purchased,
@@ -315,9 +314,7 @@ export class WorkChapterService {
               deletedAt: { isNull: true },
             },
       orderBy:
-        direction === 'previous'
-          ? { sortOrder: 'desc' }
-          : { sortOrder: 'asc' },
+        direction === 'previous' ? { sortOrder: 'desc' } : { sortOrder: 'asc' },
       columns: {
         id: true,
       },
@@ -357,7 +354,12 @@ export class WorkChapterService {
         this.db
           .update(this.workChapter)
           .set(updateData)
-          .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt))),
+          .where(
+            and(
+              eq(this.workChapter.id, id),
+              isNull(this.workChapter.deletedAt),
+            ),
+          ),
       { duplicate: '该作品下章节号已存在' },
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
@@ -375,7 +377,9 @@ export class WorkChapterService {
       this.db
         .update(this.workChapter)
         .set({ deletedAt: new Date() })
-        .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt))),
+        .where(
+          and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt)),
+        ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
     return true
