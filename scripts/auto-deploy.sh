@@ -417,27 +417,21 @@ deploy_project() {
             ;;
 
         es-server)
+            # migrator 必须同步等待完成（不带 -d），否则 depends_on: service_completed_successfully
+            # 条件尚未满足，compose 在启动 admin-server/app-server 时会重新触发 migrator
             log "执行数据库迁移 (migrator)..."
             docker compose rm -s -f migrator 2>/dev/null || true
-            if ! docker compose up -d --force-recreate migrator; then
-                error "migrator 启动失败"
+            if ! docker compose up --force-recreate migrator; then
+                error "migrator 执行失败"
                 deploy_failed=true
             fi
 
             if [ "$deploy_failed" = false ]; then
-                log "重启 admin-server..."
-                docker compose rm -s -f admin-server 2>/dev/null || true
-                if ! docker compose up -d --force-recreate --remove-orphans admin-server; then
-                    error "admin-server 启动失败"
-                    deploy_failed=true
-                fi
-            fi
-
-            if [ "$deploy_failed" = false ]; then
-                log "重启 app-server..."
-                docker compose rm -s -f app-server 2>/dev/null || true
-                if ! docker compose up -d --force-recreate --remove-orphans app-server; then
-                    error "app-server 启动失败"
+                # 两个服务合并为一条命令同时启动，避免分步使用 --remove-orphans 时互相干扰
+                log "重启 admin-server 和 app-server..."
+                docker compose rm -s -f admin-server app-server 2>/dev/null || true
+                if ! docker compose up -d --force-recreate --remove-orphans admin-server app-server; then
+                    error "server 启动失败"
                     deploy_failed=true
                 fi
             fi
