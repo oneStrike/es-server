@@ -138,7 +138,9 @@ _run_git_cmd() {
 }
 
 # Git retry function - executes git command with retry logic.
-# Only retries on timeout (exit code 124); other failures are returned immediately.
+# Retries on ALL failures (timeout, network slow, transient errors) up to MAX_RETRIES times.
+# Network operations like pull can fail with exit code 1 due to low-speed errors,
+# which are just as retriable as timeouts.
 # Usage: git_with_retry <git_args...>
 git_with_retry() {
     local attempt=1
@@ -159,13 +161,12 @@ git_with_retry() {
             return 0
         fi
 
-        # 非超时错误（认证失败、仓库问题等）不重试，直接失败
-        if [ $exit_code -ne 124 ]; then
-            error "执行失败 (退出码: $exit_code)，不重试"
-            return "$exit_code"
+        if [ $exit_code -eq 124 ]; then
+            error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
+        else
+            # 包括网络慢 (Operation too slow)、连接重置等，均视为可重试的网络错误
+            error "执行失败 (退出码: $exit_code)"
         fi
-
-        error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
 
         if [ $attempt -lt $MAX_RETRIES ]; then
             warn "等待 1 秒后重试..."
