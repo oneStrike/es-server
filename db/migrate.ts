@@ -17,7 +17,9 @@ async function runMigration() {
     connectionString: process.env.DATABASE_URL,
   })
 
-  const db = drizzle(pool)
+  const db = drizzle({
+    client: pool,
+  })
   let isFreshDb = false
 
   try {
@@ -36,10 +38,10 @@ async function runMigration() {
     const migrationsFolder = resolve(__dirname, 'migration')
     console.log(`📁 迁移文件目录: ${migrationsFolder}`)
 
-    await migrate(db, { 
+    await migrate(db, {
       migrationsFolder,
       migrationsSchema: 'public',
-      migrationsTable: '__drizzle_migrations__'
+      migrationsTable: '__drizzle_migrations__',
     })
     console.log('✅ 数据库迁移成功！')
   } catch (error) {
