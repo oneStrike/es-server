@@ -27,26 +27,26 @@ NC='\033[0m'
 CURRENT_PROJECT=""
 
 # Helper Functions - with project prefix
-log() { 
+log() {
     local prefix=""
     [ -n "$CURRENT_PROJECT" ] && prefix="【${CURRENT_PROJECT}】"
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: ${prefix}$1${NC}"; 
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: ${prefix}$1${NC}"
 }
-warn() { 
+warn() {
     local prefix=""
     [ -n "$CURRENT_PROJECT" ] && prefix="【${CURRENT_PROJECT}】"
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARN: ${prefix}$1${NC}"; 
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARN: ${prefix}$1${NC}"
 }
-error() { 
+error() {
     local prefix=""
     [ -n "$CURRENT_PROJECT" ] && prefix="【${CURRENT_PROJECT}】"
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: ${prefix}$1${NC}"; 
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: ${prefix}$1${NC}"
 }
 
 # Git retry configuration
 readonly MAX_RETRIES=5
 readonly GIT_TIMEOUT_SECONDS="${GIT_TIMEOUT_SECONDS:-90}"
-readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-10}}"
+readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-30}}"
 readonly GIT_CONNECT_TIMEOUT_SECONDS="${GIT_CONNECT_TIMEOUT_SECONDS:-15}"
 readonly GIT_LOW_SPEED_LIMIT="${GIT_LOW_SPEED_LIMIT:-1024}"
 readonly GIT_LOW_SPEED_TIME="${GIT_LOW_SPEED_TIME:-30}"
@@ -109,11 +109,41 @@ run_with_timeout() {
     "$@"
 }
 
-# Git retry function - executes git command with retry logic
+# Execute a git command with env isolation. Prints output and returns exit code.
+# Usage: _run_git_cmd <git_args...>
+_run_git_cmd() {
+    local output
+    local exit_code
+    output=$(
+        GIT_TERMINAL_PROMPT=0 \
+        GCM_INTERACTIVE=Never \
+        GIT_ASKPASS= \
+        GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=30 -o ServerAliveCountMax=3" \
+        run_with_timeout "$GIT_TIMEOUT_SECONDS" \
+        git \
+            -c credential.interactive=never \
+            -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
+            -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
+            "$@" 2>&1
+    )
+    exit_code=$?
+    if [ -n "$output" ]; then
+        if [ $exit_code -eq 0 ]; then
+            log "输出: $output"
+        else
+            error "错误信息: $output"
+        fi
+    fi
+    return "$exit_code"
+}
+
+# Git retry function - executes git command with retry logic.
+# Only retries on timeout (exit code 124); other failures are returned immediately.
 # Usage: git_with_retry <git_args...>
 git_with_retry() {
     local attempt=1
     local git_cmd="git $*"
+    local exit_code
 
     log "执行: $git_cmd"
 
@@ -122,38 +152,20 @@ git_with_retry() {
             warn "第 $attempt 次重试: $git_cmd"
         fi
 
-        # 捕获输出和错误
-        local output
-        local exit_code
-        output=$(
-            GIT_TERMINAL_PROMPT=0 \
-            GCM_INTERACTIVE=Never \
-            GIT_ASKPASS= \
-            GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
-            run_with_timeout "$GIT_TIMEOUT_SECONDS" \
-            git \
-                -c credential.interactive=never \
-                -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
-                -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
-                "$@" 2>&1
-        )
+        _run_git_cmd "$@"
         exit_code=$?
 
         if [ $exit_code -eq 0 ]; then
-            if [ -n "$output" ]; then
-                log "输出: $output"
-            fi
             return 0
-        else
-            if [ $exit_code -eq 124 ]; then
-                error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
-            else
-                error "执行失败 (退出码: $exit_code)"
-            fi
-            if [ -n "$output" ]; then
-                error "错误信息: $output"
-            fi
         fi
+
+        # 非超时错误（认证失败、仓库问题等）不重试，直接失败
+        if [ $exit_code -ne 124 ]; then
+            error "执行失败 (退出码: $exit_code)，不重试"
+            return "$exit_code"
+        fi
+
+        error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
 
         if [ $attempt -lt $MAX_RETRIES ]; then
             warn "等待 1 秒后重试..."
@@ -167,11 +179,12 @@ git_with_retry() {
 }
 
 # Dedicated policy for: git fetch origin <branch>
-# If it runs longer than 10s, kill it and retry forever until success.
+# Retries indefinitely on timeout; returns immediately on non-timeout errors.
 git_fetch_branch_until_success() {
     local branch="$1"
     local attempt=1
     local git_cmd="git fetch origin ${branch}"
+    local exit_code
 
     log "执行: $git_cmd"
 
@@ -180,38 +193,30 @@ git_fetch_branch_until_success() {
             warn "Retry #${attempt}: $git_cmd"
         fi
 
-        local output
-        local exit_code
-        output=$(
-            GIT_TERMINAL_PROMPT=0 \
-            GCM_INTERACTIVE=Never \
-            GIT_ASKPASS= \
-            GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
-            run_with_timeout "$GIT_FETCH_TIMEOUT_SECONDS" \
-            git \
-                -c credential.interactive=never \
-                -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
-                -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
-                fetch origin "${branch}" 2>&1
-        )
-        exit_code=$?
+        GIT_TERMINAL_PROMPT=0 \
+        GCM_INTERACTIVE=Never \
+        GIT_ASKPASS= \
+        GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=30 -o ServerAliveCountMax=3" \
+        run_with_timeout "$GIT_FETCH_TIMEOUT_SECONDS" \
+        git \
+            -c credential.interactive=never \
+            -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
+            -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
+            fetch origin "${branch}" 2>&1 | while IFS= read -r line; do log "输出: $line"; done
+        # 通过管道会丢失退出码，需要用 PIPESTATUS
+        exit_code="${PIPESTATUS[0]}"
 
         if [ $exit_code -eq 0 ]; then
-            if [ -n "$output" ]; then
-                log "输出: $output"
-            fi
             return 0
         fi
 
-        if [ $exit_code -eq 124 ]; then
-            error "Timed out (${GIT_FETCH_TIMEOUT_SECONDS}s), killed and retrying"
-        else
-            error "执行失败 (退出码: $exit_code)"
-        fi
-        if [ -n "$output" ]; then
-            error "错误信息: $output"
+        # 非超时错误（如认证失败、仓库不存在）直接失败，不无限重试
+        if [ $exit_code -ne 124 ]; then
+            error "Fetch 失败 (退出码: $exit_code)，停止重试"
+            return "$exit_code"
         fi
 
+        error "Fetch 超时 (${GIT_FETCH_TIMEOUT_SECONDS}s)，killed and retrying"
         warn "Retrying in 1 second..."
         sleep 1
         attempt=$((attempt + 1))
@@ -221,17 +226,18 @@ git_fetch_branch_until_success() {
 # Git Stash Helpers - Per-project stash state using associative array
 declare -A STASH_NEEDED
 
-# Cleanup function - restores stash for current directory (quiet)
-cleanup_stash() {
-    local dir=$(pwd)
+# Restore stash for the given directory (quiet)
+cleanup_stash_for_dir() {
+    local dir="$1"
     if [ "${STASH_NEEDED[$dir]:-false}" = true ]; then
-        git stash pop 2>/dev/null || true
+        git -C "$dir" stash pop 2>/dev/null || true
         STASH_NEEDED[$dir]=false
     fi
 }
 
 stash_changes() {
-    local dir=$(pwd)
+    local dir
+    dir="$(pwd)"
     if [[ -n $(git status -s) ]]; then
         warn "检测到本地修改，正在暂存..."
         git stash save "Auto-deploy stash $(date +'%Y-%m-%d %H:%M:%S')" 2>/dev/null
@@ -247,24 +253,20 @@ docker_build() {
     local dockerfile_path="$1"
     local build_args="$2"
     local tags="$3"
-    local build_name="$4"
 
     local cache_args=""
     [ "$FORCE_DEPLOY" = "true" ] && cache_args="--no-cache"
 
     # shellcheck disable=SC2086
-    if docker build -f "$dockerfile_path" \
+    docker build -f "$dockerfile_path" \
         $build_args \
         $cache_args \
         $tags \
-        . ; then
-        return 0
-    else
-        return 1
-    fi
+        .
 }
 
-# Deploy single project function
+# Deploy single project function.
+# Returns 0 on success, 1 on failure (caller continues to next project).
 deploy_project() {
     local project_dir="$1"
     local project_name="$2"
@@ -280,29 +282,37 @@ deploy_project() {
 
     pushd "$project_dir" > /dev/null || { error "无法切换到项目目录"; CURRENT_PROJECT=""; return 1; }
 
-    # Set trap to ensure stash is restored on exit
-    trap 'cleanup_stash; popd > /dev/null; CURRENT_PROJECT=""' EXIT
-
     stash_changes
 
     local CURRENT_BRANCH
     CURRENT_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null)" || {
         error "获取当前分支失败"
+        cleanup_stash_for_dir "$project_dir"
+        popd > /dev/null
+        CURRENT_PROJECT=""
         return 1
     }
-    log "输出: $CURRENT_BRANCH"
+    log "当前分支: $CURRENT_BRANCH"
 
     if ! git_fetch_branch_until_success "${CURRENT_BRANCH}"; then
+        error "Fetch 失败，跳过此项目"
+        cleanup_stash_for_dir "$project_dir"
+        popd > /dev/null
+        CURRENT_PROJECT=""
         return 1
     fi
 
-    local LOCAL_HASH=$(git rev-parse HEAD)
-    local REMOTE_HASH=$(git rev-parse "origin/${CURRENT_BRANCH}")
+    local LOCAL_HASH REMOTE_HASH
+    LOCAL_HASH=$(git rev-parse HEAD)
+    REMOTE_HASH=$(git rev-parse "origin/${CURRENT_BRANCH}")
 
     if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
         log "发现新版本，正在拉取 [$CURRENT_BRANCH]..."
         if ! git_with_retry pull origin "${CURRENT_BRANCH}"; then
-            error "Git pull 失败"
+            error "Git pull 失败，跳过此项目"
+            cleanup_stash_for_dir "$project_dir"
+            popd > /dev/null
+            CURRENT_PROJECT=""
             return 1
         fi
     else
@@ -310,6 +320,9 @@ deploy_project() {
             log "强制部署 [$CURRENT_BRANCH]"
         else
             log "已是最新，跳过"
+            cleanup_stash_for_dir "$project_dir"
+            popd > /dev/null
+            CURRENT_PROJECT=""
             return 0
         fi
     fi
@@ -320,50 +333,40 @@ deploy_project() {
     export DOCKER_BUILDKIT=1
 
     # Build based on project type
-    local BUILD_SUCCESS=false
+    local build_failed=false
     case "$project_name" in
         es-admin)
             log "构建镜像 (v$VERSION)..."
             local DOCKERFILE_PATH="apps/web-ele/Dockerfile"
             if [ ! -f "$DOCKERFILE_PATH" ]; then
                 error "找不到 Dockerfile"
-                return 1
-            fi
-            # 匹配 docker-compose.yml: es-admin-web-ele:${SERVER_VERSION}
-            if docker_build "$DOCKERFILE_PATH" "" "-t es-admin-web-ele:$VERSION" "es-admin"; then
-                BUILD_SUCCESS=true
-            else
+                build_failed=true
+            elif ! docker_build "$DOCKERFILE_PATH" "" "-t es-admin-web-ele:$VERSION"; then
                 error "镜像构建失败"
-                return 1
+                build_failed=true
             fi
             ;;
 
         es-app-v2)
             if [ -f "Dockerfile" ]; then
                 log "构建镜像 (v$VERSION)..."
-                # 匹配 docker-compose.yml: es-app-web:${SERVER_VERSION}
-                if ! docker_build "./Dockerfile" "" "-t es-app-web:$VERSION" "$project_name"; then
+                if ! docker_build "./Dockerfile" "" "-t es-app-web:$VERSION"; then
                     error "镜像构建失败"
-                    return 1
+                    build_failed=true
                 fi
-                BUILD_SUCCESS=true
             else
-                warn "未找到 Dockerfile"
-                BUILD_SUCCESS=true
+                warn "未找到 Dockerfile，跳过构建"
             fi
             ;;
 
         es-server)
             log "构建镜像 (v$VERSION)..."
-            BUILD_SUCCESS=true
-            # 匹配 docker-compose.yml: es/admin/server:${SERVER_VERSION} 和 es/app/server:${SERVER_VERSION}
-            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=admin" "-t es/admin/server:$VERSION" "admin-api"; then
+            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=admin" "-t es/admin/server:$VERSION"; then
                 error "admin-api 构建失败"
-                return 1
-            fi
-            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=app" "-t es/app/server:$VERSION" "app-api"; then
+                build_failed=true
+            elif ! docker_build "./Dockerfile" "--build-arg APP_TYPE=app" "-t es/app/server:$VERSION"; then
                 error "app-api 构建失败"
-                return 1
+                build_failed=true
             fi
             ;;
 
@@ -371,63 +374,93 @@ deploy_project() {
             if [ -f "Dockerfile" ]; then
                 log "构建镜像 (v$VERSION)..."
                 local IMAGE_NAME="es/${project_name,,}"
-                if ! docker_build "./Dockerfile" "" "-t $IMAGE_NAME:$VERSION" "$project_name"; then
+                if ! docker_build "./Dockerfile" "" "-t $IMAGE_NAME:$VERSION"; then
                     error "镜像构建失败"
-                    return 1
+                    build_failed=true
                 fi
-                BUILD_SUCCESS=true
             else
-                warn "未找到 Dockerfile"
-                BUILD_SUCCESS=true
+                warn "未找到 Dockerfile，跳过构建"
+            fi
+            ;;
+    esac
+
+    cleanup_stash_for_dir "$project_dir"
+    popd > /dev/null
+
+    if [ "$build_failed" = true ]; then
+        CURRENT_PROJECT=""
+        return 1
+    fi
+
+    # ── Deploy ──────────────────────────────────────────────────────────────
+    pushd "$ROOT_DIR" > /dev/null || { error "无法切换到根目录"; CURRENT_PROJECT=""; return 1; }
+
+    local deploy_failed=false
+    case "$project_name" in
+        es-admin)
+            log "部署服务 admin..."
+            docker compose rm -s -f admin 2>/dev/null || true
+            if ! docker compose up -d --force-recreate --remove-orphans admin; then
+                error "admin 部署失败"
+                deploy_failed=true
+            fi
+            ;;
+
+        es-app-v2)
+            log "部署服务 app..."
+            docker compose rm -s -f app 2>/dev/null || true
+            if ! docker compose up -d --force-recreate --remove-orphans app; then
+                error "app 部署失败"
+                deploy_failed=true
+            fi
+            ;;
+
+        es-server)
+            log "执行数据库迁移 (migrator)..."
+            docker compose rm -s -f migrator 2>/dev/null || true
+            if ! docker compose up -d --force-recreate migrator; then
+                error "migrator 启动失败"
+                deploy_failed=true
+            fi
+
+            if [ "$deploy_failed" = false ]; then
+                log "重启 admin-server..."
+                docker compose rm -s -f admin-server 2>/dev/null || true
+                if ! docker compose up -d --force-recreate --remove-orphans admin-server; then
+                    error "admin-server 启动失败"
+                    deploy_failed=true
+                fi
+            fi
+
+            if [ "$deploy_failed" = false ]; then
+                log "重启 app-server..."
+                docker compose rm -s -f app-server 2>/dev/null || true
+                if ! docker compose up -d --force-recreate --remove-orphans app-server; then
+                    error "app-server 启动失败"
+                    deploy_failed=true
+                fi
+            fi
+            ;;
+
+        *)
+            local SERVICE_NAME="es/${project_name,,}"
+            log "部署服务 $SERVICE_NAME..."
+            docker compose rm -s -f "$SERVICE_NAME" 2>/dev/null || true
+            if ! docker compose up -d --force-recreate --remove-orphans "$SERVICE_NAME"; then
+                error "部署失败"
+                deploy_failed=true
             fi
             ;;
     esac
 
     popd > /dev/null
-    trap - EXIT
-    pushd "$ROOT_DIR" > /dev/null || { error "无法切换到根目录"; return 1; }
-
-    local SERVICE_NAME=""
-    case "$project_name" in
-        es-admin)   SERVICE_NAME="admin" ;;
-        es-app-v2)  SERVICE_NAME="app" ;;
-        es-server)  SERVICE_NAME="app-server admin-server migrator" ;;
-    esac
-
-    if [ -n "$SERVICE_NAME" ]; then
-        log "部署服务..."
-
-        if [ "$project_name" = "es-server" ]; then
-            # 先执行 migrator，否则新的数据库迁移代码不会执行
-            log "执行数据库迁移(migrator)..."
-            docker compose rm -s -f migrator 2>/dev/null || true
-            docker compose up -d --force-recreate migrator || { error "migrator 启动失败"; popd > /dev/null; return 1; }
-
-            # admin-server 和 app-server 都执行 rm 和 force-recreate
-            log "重启 admin-server..."
-            docker compose rm -s -f admin-server 2>/dev/null || true
-            docker compose up -d --force-recreate admin-server --remove-orphans || { error "admin-server 启动失败"; popd > /dev/null; return 1; }
-
-            log "重启 app-server..."
-            docker compose rm -s -f app-server 2>/dev/null || true
-            docker compose up -d --force-recreate app-server --remove-orphans || { error "app-server 启动失败"; popd > /dev/null; return 1; }
-        else
-            # 其他项目也使用 rm + up 确保新镜像生效
-            # shellcheck disable=SC2086
-            docker compose rm -s -f $SERVICE_NAME 2>/dev/null || true
-            if docker compose up -d --force-recreate --remove-orphans $SERVICE_NAME; then
-                log "部署成功"
-            else
-                error "部署失败"
-                popd > /dev/null
-                return 1
-            fi
-        fi
-    fi
-
-    popd > /dev/null
     CURRENT_PROJECT=""
 
+    if [ "$deploy_failed" = true ]; then
+        return 1
+    fi
+
+    log "部署成功"
     return 0
 }
 
@@ -448,7 +481,7 @@ log "=== 多项目自动部署脚本启动 ==="
 # 读取 es-server 的版本号作为统一版本
 SERVER_VERSION="0.0.2"
 if [ -f "${ROOT_DIR}/es-server/package.json" ]; then
-    SERVER_VERSION=$(grep -m1 '"version":' "${ROOT_DIR}/es-server/package.json" | awk -F: '{ print $2 }' | sed 's/[", ]//g')
+    SERVER_VERSION=$(grep -m1 '"version":' "${ROOT_DIR}/es-server/package.json" | awk -F: '{ print $2 }' | sed 's/[\", ]//g')
 fi
 log "统一版本号: v${SERVER_VERSION}"
 
@@ -481,6 +514,7 @@ for PROJECT in "${PROJECTS[@]}"; do
     PROJECT_DIR="${ROOT_DIR}/${PROJECT}"
     if ! deploy_project "$PROJECT_DIR" "$PROJECT"; then
         FAILURES=$((FAILURES + 1))
+        warn "项目 $PROJECT 失败，继续处理下一个项目..."
     fi
 done
 
