@@ -1,20 +1,6 @@
 import type { Db } from '../../db-client'
 import { and, eq } from 'drizzle-orm'
 import {
-  ChatConversationMemberRoleEnum,
-  ChatMessageStatusEnum,
-  ChatMessageTypeEnum,
-} from '../../../../libs/message/src/chat/chat.constant'
-import {
-  MessageNotificationSubjectTypeEnum,
-  MessageNotificationTypeEnum,
-} from '../../../../libs/message/src/notification/notification.constant'
-import {
-  MessageOutboxDomainEnum,
-  MessageOutboxStatusEnum,
-} from '../../../../libs/message/src/outbox/outbox.constant'
-import { InteractionTargetTypeEnum } from '../../../../libs/platform/src/constant/interaction.constant'
-import {
   appAnnouncement,
   appUser,
   chatConversation,
@@ -66,30 +52,30 @@ export async function seedMessageDomain(db: Db) {
       messageSeq: 1n,
       senderId: userA.id,
       clientMessageId: 'seed-chat-1',
-      messageType: ChatMessageTypeEnum.TEXT,
+      messageType: 1,
       content: '你把进击的巨人前三卷的伏笔整理得很完整。',
       payload: null,
-      status: ChatMessageStatusEnum.NORMAL,
+      status: 1,
       createdAt: addMinutes(SEED_TIMELINE.seedAt, -15),
     },
     {
       messageSeq: 2n,
       senderId: userB.id,
       clientMessageId: 'seed-chat-2',
-      messageType: ChatMessageTypeEnum.TEXT,
+      messageType: 1,
       content: '我后面想把白夜行的人物线也整理成帖子。',
       payload: null,
-      status: ChatMessageStatusEnum.NORMAL,
+      status: 1,
       createdAt: addMinutes(SEED_TIMELINE.seedAt, -13),
     },
     {
       messageSeq: 3n,
       senderId: userB.id,
       clientMessageId: 'seed-chat-3',
-      messageType: ChatMessageTypeEnum.SYSTEM,
+      messageType: 2,
       content: '今晚如果有空，我们把论坛标签也统一一下。',
       payload: { source: 'seed' },
-      status: ChatMessageStatusEnum.NORMAL,
+      status: 1,
       createdAt: addMinutes(SEED_TIMELINE.seedAt, -10),
     },
   ] as const
@@ -146,7 +132,7 @@ export async function seedMessageDomain(db: Db) {
   const memberFixtures = [
     {
       userId: userA.id,
-      role: ChatConversationMemberRoleEnum.OWNER,
+      role: 1,
       lastReadMessageId: messageBySeq.get(2n)?.id ?? null,
       lastReadAt: messageBySeq.get(2n)?.createdAt ?? null,
       unreadCount: 1,
@@ -154,7 +140,7 @@ export async function seedMessageDomain(db: Db) {
     },
     {
       userId: userB.id,
-      role: ChatConversationMemberRoleEnum.MEMBER,
+      role: 2,
       lastReadMessageId: messageBySeq.get(3n)?.id ?? null,
       lastReadAt: messageBySeq.get(3n)?.createdAt ?? null,
       unreadCount: 0,
@@ -203,12 +189,12 @@ export async function seedMessageDomain(db: Db) {
   const notificationFixtures = [
     {
       userId: userB.id,
-      type: MessageNotificationTypeEnum.COMMENT_REPLY,
+      type: 1,
       bizKey: 'seed:notif:comment-reply:aot',
       actorUserId: userA.id,
-      targetType: InteractionTargetTypeEnum.COMMENT,
+      targetType: 4,
       targetId: rootReply?.id ?? null,
-      subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+      subjectType: 1,
       subjectId: replyComment?.id ?? null,
       title: '你的评论收到了回复',
       content: '小光回复了你在《进击的巨人》话题下的评论。',
@@ -221,12 +207,12 @@ export async function seedMessageDomain(db: Db) {
     },
     {
       userId: userC.id,
-      type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
+      type: 2,
       bizKey: 'seed:notif:system-announcement:2026-spring',
       actorUserId: null,
       targetType: null,
       targetId: announcement?.id ?? null,
-      subjectType: MessageNotificationSubjectTypeEnum.SYSTEM,
+      subjectType: 2,
       subjectId: announcement?.id ?? null,
       title: '春季版本更新公告',
       content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
@@ -239,12 +225,12 @@ export async function seedMessageDomain(db: Db) {
     },
     {
       userId: userA.id,
-      type: MessageNotificationTypeEnum.CHAT_MESSAGE,
+      type: 3,
       bizKey: 'seed:notif:chat-message:direct',
       actorUserId: userB.id,
-      targetType: InteractionTargetTypeEnum.USER,
+      targetType: 6,
       targetId: userB.id,
-      subjectType: MessageNotificationSubjectTypeEnum.USER,
+      subjectType: 3,
       subjectId: userB.id,
       title: '你收到一条新私信',
       content: '阿澈刚刚给你发送了一条消息。',
@@ -278,27 +264,27 @@ export async function seedMessageDomain(db: Db) {
 
   const outboxFixtures = [
     {
-      domain: MessageOutboxDomainEnum.NOTIFICATION,
-      eventType: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
+      domain: 1,
+      eventType: 2,
       bizKey: 'seed:outbox:notif:2026-spring',
       payload: {
         notificationBizKey: 'seed:notif:system-announcement:2026-spring',
       },
-      status: MessageOutboxStatusEnum.SUCCESS,
+      status: 2,
       retryCount: 0,
       nextRetryAt: null,
       lastError: null,
       processedAt: addMinutes(SEED_TIMELINE.seedAt, -8),
     },
     {
-      domain: MessageOutboxDomainEnum.CHAT,
-      eventType: ChatMessageTypeEnum.SYSTEM,
+      domain: 2,
+      eventType: 2,
       bizKey: 'seed:outbox:chat:direct',
       payload: {
         conversationId: conversation.id,
         messageSeq: 3,
       },
-      status: MessageOutboxStatusEnum.SUCCESS,
+      status: 2,
       retryCount: 0,
       nextRetryAt: null,
       lastError: null,

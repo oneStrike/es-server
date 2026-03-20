@@ -1716,16 +1716,16 @@ export async function seedAppActivityDomain(db: Db) {
   const workTargets = [
     {
       row: aotWork,
-      contentType: ContentTypeEnum.COMIC,
-      likeTargetType: LikeTargetTypeEnum.WORK_COMIC,
-      favoriteTargetType: FavoriteTargetTypeEnum.WORK_COMIC,
+      contentType: 1,
+      likeTargetType: 1,
+      favoriteTargetType: 1,
       browseTargetType: 1,
     },
     {
       row: whiteNightWork,
-      contentType: ContentTypeEnum.NOVEL,
-      likeTargetType: LikeTargetTypeEnum.WORK_NOVEL,
-      favoriteTargetType: FavoriteTargetTypeEnum.WORK_NOVEL,
+      contentType: 2,
+      likeTargetType: 2,
+      favoriteTargetType: 2,
       browseTargetType: 2,
     },
   ] as const
@@ -1778,19 +1778,19 @@ export async function seedAppActivityDomain(db: Db) {
   const chapterTargets = [
     {
       row: aotChapterTwo,
-      commentTargetType: CommentTargetTypeEnum.COMIC_CHAPTER,
-      likeTargetType: LikeTargetTypeEnum.WORK_COMIC_CHAPTER,
+      commentTargetType: 2,
+      likeTargetType: 2,
       browseTargetType: 3,
-      downloadTargetType: DownloadTargetTypeEnum.COMIC_CHAPTER,
-      purchaseTargetType: PurchaseTargetTypeEnum.COMIC_CHAPTER,
+      downloadTargetType: 1,
+      purchaseTargetType: 1,
     },
     {
       row: whiteNightChapterTwo,
-      commentTargetType: CommentTargetTypeEnum.NOVEL_CHAPTER,
-      likeTargetType: LikeTargetTypeEnum.WORK_NOVEL_CHAPTER,
+      commentTargetType: 4,
+      likeTargetType: 4,
       browseTargetType: 4,
-      downloadTargetType: DownloadTargetTypeEnum.NOVEL_CHAPTER,
-      purchaseTargetType: PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+      downloadTargetType: 2,
+      purchaseTargetType: 2,
     },
   ] as const
 
@@ -1824,7 +1824,7 @@ export async function seedAppActivityDomain(db: Db) {
       where: and(
         eq(userPurchaseRecord.targetType, target.purchaseTargetType),
         eq(userPurchaseRecord.targetId, target.row.id),
-        eq(userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
+        eq(userPurchaseRecord.status, 2),
       ),
     })
 
@@ -1868,7 +1868,7 @@ export async function seedAppActivityDomain(db: Db) {
     const commentReceivedLikes = commentIds.length
       ? await db.query.userLike.findMany({
           where: and(
-            eq(userLike.targetType, LikeTargetTypeEnum.COMMENT),
+            eq(userLike.targetType, 4),
             inArray(userLike.targetId, commentIds),
           ),
         })
@@ -1876,7 +1876,7 @@ export async function seedAppActivityDomain(db: Db) {
     const topicReceivedLikes = topicIds.length
       ? await db.query.userLike.findMany({
           where: and(
-            eq(userLike.targetType, LikeTargetTypeEnum.FORUM_TOPIC),
+            eq(userLike.targetType, 3),
             inArray(userLike.targetId, topicIds),
           ),
         })
@@ -1884,7 +1884,7 @@ export async function seedAppActivityDomain(db: Db) {
     const topicReceivedFavorites = topicIds.length
       ? await db.query.userFavorite.findMany({
           where: and(
-            eq(userFavorite.targetType, FavoriteTargetTypeEnum.FORUM_TOPIC),
+            eq(userFavorite.targetType, 3),
             inArray(userFavorite.targetId, topicIds),
           ),
         })

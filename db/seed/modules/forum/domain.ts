@@ -369,8 +369,8 @@ export async function seedForumActivityDomain(db: Db) {
       isFeatured: topicFixture.isFeatured,
       isLocked: false,
       isHidden: false,
-      auditStatus: AuditStatusEnum.APPROVED,
-      auditRole: AuditRoleEnum.MODERATOR,
+      auditStatus: 2,
+      auditRole: 2,
       auditReason: 'seed: 自动通过',
       auditAt: topicFixture.createdAt,
       viewCount: existingTopic?.viewCount ?? 0,
@@ -422,7 +422,7 @@ export async function seedForumActivityDomain(db: Db) {
       where: and(
         eq(forumUserActionLog.userId, user.id),
         eq(forumUserActionLog.targetId, currentTopic.id),
-        eq(forumUserActionLog.actionType, ForumUserActionTypeEnum.CREATE_TOPIC),
+        eq(forumUserActionLog.actionType, 1),
       ),
     })
 
@@ -430,8 +430,8 @@ export async function seedForumActivityDomain(db: Db) {
       await db.insert(forumUserActionLog).values({
         userId: user.id,
         targetId: currentTopic.id,
-        actionType: ForumUserActionTypeEnum.CREATE_TOPIC,
-        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        actionType: 1,
+        targetType: 1,
         afterData: JSON.stringify({ title: currentTopic.title }),
         ipAddress: '127.0.0.1',
         userAgent: 'seed-script/forum',
