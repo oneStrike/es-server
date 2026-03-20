@@ -42,6 +42,14 @@ export const appUser = pgTable("app_user", {
    */
   avatarUrl: varchar({ length: 500 }),
   /**
+   * 个性签名
+   */
+  signature: varchar({ length: 200 }),
+  /**
+   * 个人简介
+   */
+  bio: varchar({ length: 500 }),
+  /**
    * 是否启用
    */
   isEnabled: boolean().default(true).notNull(),

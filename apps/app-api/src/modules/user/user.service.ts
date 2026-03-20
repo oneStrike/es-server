@@ -48,10 +48,6 @@ export class UserService {
     return this.drizzle.schema.appUser
   }
 
-  private get forumProfile() {
-    return this.drizzle.schema.forumProfile
-  }
-
   private get userBadgeAssignment() {
     return this.drizzle.schema.userBadgeAssignment
   }
@@ -72,7 +68,8 @@ export class UserService {
    * 获取用户资料
    */
   async getUserProfile(userId: number) {
-    return this.userCoreService.ensureUserExists(userId)
+    const user = await this.userCoreService.ensureUserExists(userId)
+    return this.userCoreService.mapBaseUser(user)
   }
 
   /**
@@ -111,10 +108,13 @@ export class UserService {
    */
   async getUserForumProfile(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
-    const forumProfile = await this.userCoreService.getUserForumProfile(userId)
+    const communityProfile =
+      await this.userCoreService.getUserForumProfile(userId)
 
     return {
-      ...forumProfile,
+      signature: communityProfile.signature,
+      bio: communityProfile.bio,
+      counts: communityProfile.counts,
       status: user.status,
       banReason: user.banReason ?? undefined,
       banUntil: user.banUntil ?? undefined,
@@ -127,30 +127,16 @@ export class UserService {
   async updateUserForumProfile(userId: number, dto: UpdateMyForumProfileDto) {
     await this.userCoreService.ensureUserExists(userId)
 
-    await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        const existing = await tx
-          .select({ id: this.forumProfile.id })
-          .from(this.forumProfile)
-          .where(eq(this.forumProfile.userId, userId))
-          .limit(1)
-        if (existing[0]) {
-          await tx
-            .update(this.forumProfile)
-            .set({
-              signature: dto.signature,
-              bio: dto.bio,
-            })
-            .where(eq(this.forumProfile.userId, userId))
-        } else {
-          await tx.insert(this.forumProfile).values({
-            userId,
-            signature: dto.signature ?? '',
-            bio: dto.bio ?? '',
-          })
-        }
-      }),
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.appUser)
+        .set({
+          signature: dto.signature,
+          bio: dto.bio,
+        })
+        .where(eq(this.appUser.id, userId)),
     )
+    this.drizzle.assertAffectedRows(result, '用户不存在')
 
     return true
   }
@@ -159,7 +145,7 @@ export class UserService {
    * 获取用户中心汇总信息
    */
   async getUserCenter(userId: number) {
-    const [user, forumProfile, badgeCount, assets, messageSummary] =
+    const [user, communityProfile, badgeCount, assets, messageSummary] =
       await Promise.all([
         this.userCoreService.ensureUserExists(userId),
         this.userCoreService.getUserForumProfile(userId),
@@ -176,11 +162,11 @@ export class UserService {
       user: {
         id: user.id,
         account: user.account,
-        phone: user.phoneNumber ?? undefined,
+        phoneNumber: user.phoneNumber ?? undefined,
         nickname: user.nickname,
-        avatar: user.avatarUrl ?? undefined,
-        email: user.emailAddress ?? undefined,
-        gender: user.genderType,
+        avatarUrl: user.avatarUrl ?? undefined,
+        emailAddress: user.emailAddress ?? undefined,
+        genderType: user.genderType,
         birthDate: user.birthDate ?? undefined,
       },
       growth: {
@@ -191,13 +177,12 @@ export class UserService {
         badgeCount,
       },
       community: {
+        signature: communityProfile.signature,
+        bio: communityProfile.bio,
         status: user.status,
         banReason: user.banReason ?? undefined,
         banUntil: user.banUntil ?? undefined,
-        topicCount: forumProfile.topicCount,
-        replyCount: forumProfile.replyCount,
-        likeCount: forumProfile.likeCount,
-        favoriteCount: forumProfile.favoriteCount,
+        counts: communityProfile.counts,
       },
       assets,
       message: {

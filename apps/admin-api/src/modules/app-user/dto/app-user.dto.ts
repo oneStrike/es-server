@@ -12,7 +12,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
-import { BaseAppUserDto } from '@libs/user'
+import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
 
 import {
   IntersectionType,
@@ -51,51 +51,12 @@ export class AdminAppUserLevelDto {
   requiredExperience!: number
 }
 
-export class AdminAppUserForumProfileDto {
-  @StringProperty({
-    description: '论坛签名',
-    example: '持续交付，持续迭代',
-    required: false,
-    validation: false,
-  })
-  signature?: string
-
-  @StringProperty({
-    description: '论坛简介',
-    example: '一个简单的自我介绍',
-    required: false,
-    validation: false,
-  })
-  bio?: string
-
-  @NumberProperty({
-    description: '主题数',
-    example: 12,
-    validation: false,
-  })
-  topicCount!: number
-
-  @NumberProperty({
-    description: '回复数',
-    example: 48,
-    validation: false,
-  })
-  replyCount!: number
-
-  @NumberProperty({
-    description: '获赞数',
-    example: 66,
-    validation: false,
-  })
-  likeCount!: number
-
-  @NumberProperty({
-    description: '获收藏数',
-    example: 9,
-    validation: false,
-  })
-  favoriteCount!: number
-}
+export class AdminAppUserCountDto extends PickType(BaseAppUserCountDto, [
+  'forumTopicCount',
+  'forumReplyCount',
+  'forumReceivedLikeCount',
+  'forumReceivedFavoriteCount',
+] as const) {}
 
 export class AdminAppUserPointStatsDto {
   @NumberProperty({
@@ -169,19 +130,12 @@ export class AdminAppUserPageItemDto extends BaseAdminAppUserDto {
   })
   levelName?: string
 
-  @NumberProperty({
-    description: '主题数',
-    example: 12,
+  @NestedProperty({
+    description: '用户计数',
+    type: AdminAppUserCountDto,
     validation: false,
   })
-  topicCount!: number
-
-  @NumberProperty({
-    description: '回复数',
-    example: 48,
-    validation: false,
-  })
-  replyCount!: number
+  counts!: AdminAppUserCountDto
 }
 
 export class AdminAppUserDetailDto extends BaseAdminAppUserDto {
@@ -194,12 +148,12 @@ export class AdminAppUserDetailDto extends BaseAdminAppUserDto {
   level?: AdminAppUserLevelDto
 
   @NestedProperty({
-    description: '论坛画像信息',
-    type: AdminAppUserForumProfileDto,
+    description: '用户计数',
+    type: AdminAppUserCountDto,
     required: false,
     validation: false,
   })
-  forumProfile?: AdminAppUserForumProfileDto
+  counts?: AdminAppUserCountDto
 
   @NumberProperty({
     description: '已拥有徽章数量',
@@ -274,7 +228,7 @@ export class QueryAdminAppUserIdDto {
 }
 
 export class CreateAdminAppUserDto extends IntersectionType(
-  PickType(BaseAdminAppUserDto, ['nickname', 'password'] as const),
+  PickType(BaseAdminAppUserDto, ['nickname'] as const),
   PartialType(
     PickType(BaseAdminAppUserDto, [
       'phoneNumber',
@@ -284,9 +238,19 @@ export class CreateAdminAppUserDto extends IntersectionType(
       'birthDate',
       'isEnabled',
       'status',
+      'signature',
+      'bio',
     ] as const),
   ),
-) {}
+) {
+  @StringProperty({
+    description: '前端 RSA 加密后的密码',
+    example: 'Base64EncodedCipherText',
+    required: true,
+    maxLength: 2000,
+  })
+  password!: string
+}
 
 export class ResetAdminAppUserPasswordDto extends PickType(BaseAdminAppUserDto, [
   'id',
@@ -310,25 +274,11 @@ export class UpdateAdminAppUserProfileDto extends IntersectionType(
       'emailAddress',
       'genderType',
       'birthDate',
+      'signature',
+      'bio',
     ] as const),
   ),
-) {
-  @StringProperty({
-    description: '论坛签名',
-    example: '持续交付，持续迭代',
-    required: false,
-    maxLength: 200,
-  })
-  signature?: string
-
-  @StringProperty({
-    description: '论坛简介',
-    example: '一个简单的自我介绍',
-    required: false,
-    maxLength: 500,
-  })
-  bio?: string
-}
+) {}
 
 export class UpdateAdminAppUserEnabledDto extends PickType(BaseAdminAppUserDto, [
   'id',

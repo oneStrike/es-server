@@ -1,17 +1,20 @@
 import type { Db } from '@db/core'
 import type { InteractionTx } from '@libs/interaction'
 import { DrizzleService } from '@db/core'
+import { AppUserCountService } from '@libs/user'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
- * 内容计数服务类
- * 负责管理内容相关的计数器，包括漫画、小说、漫画章节和小说章节的各种计数
- * 提供统一的计数更新接口，确保计数数据的一致性
+ * 内容领域计数服务
+ * 负责管理内容相关实体计数，并委托全局用户计数服务维护用户计数字段
  */
 @Injectable()
 export class ContentCounterService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly appUserCountService: AppUserCountService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -23,10 +26,6 @@ export class ContentCounterService {
 
   get forumTopic() {
     return this.drizzle.schema.forumTopic
-  }
-
-  get forumProfile() {
-    return this.drizzle.schema.forumProfile
   }
 
   private async executeCountUpdate(
@@ -167,100 +166,76 @@ export class ContentCounterService {
   }
 
   /**
-   * 更新用户档案的主题数量
+   * 更新用户的论坛主题数量
    * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户档案信息
+   * @returns 更新后的用户计数信息
    */
-  async updateProfileTopicCount(
+  async updateUserForumTopicCount(
     tx: InteractionTx | undefined,
     userId: number,
     delta: number,
   ) {
-    await this.executeCountUpdate(
+    await this.appUserCountService.updateForumTopicCount(tx, userId, delta)
+  }
+
+  /**
+   * 更新用户的论坛回复数量
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
+   * @param userId - 用户ID
+   * @param delta - 增量值，正数表示增加，负数表示减少
+   * @returns 更新后的用户计数信息
+   */
+  async updateUserForumReplyCount(
+    tx: InteractionTx | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    await this.appUserCountService.updateForumReplyCount(tx, userId, delta)
+  }
+
+  /**
+   * 更新用户收到的论坛点赞数量
+   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
+   * @param userId - 用户ID
+   * @param delta - 增量值，正数表示增加，负数表示减少
+   * @returns 更新后的用户计数信息
+   */
+  async updateUserForumReceivedLikeCount(
+    tx: InteractionTx | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    await this.appUserCountService.updateForumReceivedLikeCount(
       tx,
-      (client) =>
-        client
-          .update(this.forumProfile)
-          .set({ topicCount: sql`${this.forumProfile.topicCount} + ${delta}` })
-          .where(eq(this.forumProfile.userId, userId)),
-      '用户画像不存在',
+      userId,
+      delta,
     )
   }
 
   /**
-   * 更新用户档案的回复数量
+   * 更新用户收到的论坛收藏数量
    * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户档案信息
+   * @returns 更新后的用户计数信息
    */
-  async updateProfileReplyCount(
+  async updateUserForumReceivedFavoriteCount(
     tx: InteractionTx | undefined,
     userId: number,
     delta: number,
   ) {
-    await this.executeCountUpdate(
+    await this.appUserCountService.updateForumReceivedFavoriteCount(
       tx,
-      (client) =>
-        client
-          .update(this.forumProfile)
-          .set({ replyCount: sql`${this.forumProfile.replyCount} + ${delta}` })
-          .where(eq(this.forumProfile.userId, userId)),
-      '用户画像不存在',
-    )
-  }
-
-  /**
-   * 更新用户档案的点赞数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户档案信息
-   */
-  async updateProfileLikeCount(
-    tx: InteractionTx | undefined,
-    userId: number,
-    delta: number,
-  ) {
-    await this.executeCountUpdate(
-      tx,
-      (client) =>
-        client
-          .update(this.forumProfile)
-          .set({ likeCount: sql`${this.forumProfile.likeCount} + ${delta}` })
-          .where(eq(this.forumProfile.userId, userId)),
-      '用户画像不存在',
-    )
-  }
-
-  /**
-   * 更新用户档案的收藏数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param userId - 用户ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的用户档案信息
-   */
-  async updateProfileFavoriteCount(
-    tx: InteractionTx | undefined,
-    userId: number,
-    delta: number,
-  ) {
-    await this.executeCountUpdate(
-      tx,
-      (client) =>
-        client
-          .update(this.forumProfile)
-          .set({ favoriteCount: sql`${this.forumProfile.favoriteCount} + ${delta}` })
-          .where(eq(this.forumProfile.userId, userId)),
-      '用户画像不存在',
+      userId,
+      delta,
     )
   }
 
   /**
    * 批量更新回复相关的所有计数
-   * 包括主题回复数、版块回复数、用户档案回复数
+   * 包括主题回复数、版块回复数、用户论坛回复数
    * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param sectionId - 版块ID
@@ -277,13 +252,13 @@ export class ContentCounterService {
     await Promise.all([
       this.updateTopicReplyCount(tx, topicId, delta),
       this.updateSectionReplyCount(tx, sectionId, delta),
-      this.updateProfileReplyCount(tx, userId, delta),
+      this.updateUserForumReplyCount(tx, userId, delta),
     ])
   }
 
   /**
    * 批量更新主题相关的所有计数
-   * 包括版块主题数、用户档案主题数
+   * 包括版块主题数、用户论坛主题数
    * @param tx - 事务对象
    * @param sectionId - 版块ID
    * @param userId - 用户ID
@@ -297,13 +272,13 @@ export class ContentCounterService {
   ) {
     await Promise.all([
       this.updateSectionTopicCount(tx, sectionId, delta),
-      this.updateProfileTopicCount(tx, userId, delta),
+      this.updateUserForumTopicCount(tx, userId, delta),
     ])
   }
 
   /**
    * 批量更新主题点赞相关的所有计数
-   * 包括主题点赞数、主题作者的用户档案点赞数
+   * 包括主题点赞数、主题作者收到的论坛点赞数
    * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param authorUserId - 主题作者的用户ID
@@ -317,13 +292,13 @@ export class ContentCounterService {
   ) {
     await Promise.all([
       this.updateTopicLikeCount(tx, topicId, delta),
-      this.updateProfileLikeCount(tx, authorUserId, delta),
+      this.updateUserForumReceivedLikeCount(tx, authorUserId, delta),
     ])
   }
 
   /**
    * 批量更新主题收藏相关的所有计数
-   * 包括主题收藏数、主题作者的用户档案收藏数
+   * 包括主题收藏数、主题作者收到的论坛收藏数
    * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param authorUserId - 主题作者的用户ID
@@ -337,7 +312,7 @@ export class ContentCounterService {
   ) {
     await Promise.all([
       this.updateTopicFavoriteCount(tx, topicId, delta),
-      this.updateProfileFavoriteCount(tx, authorUserId, delta),
+      this.updateUserForumReceivedFavoriteCount(tx, authorUserId, delta),
     ])
   }
 

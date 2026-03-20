@@ -26,7 +26,10 @@ import {
   UserStatusEnum,
 } from '@libs/platform/constant'
 import { RsaService, ScryptService } from '@libs/platform/modules'
-import { UserService as UserCoreService } from '@libs/user'
+import {
+  AppUserCountService,
+  UserService as UserCoreService,
+} from '@libs/user'
 
 import {
   BadRequestException,
@@ -48,6 +51,7 @@ export class AppUserService {
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
     private readonly userBadgeService: UserBadgeService,
+    private readonly appUserCountService: AppUserCountService,
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
   ) {}
@@ -64,8 +68,8 @@ export class AppUserService {
     return this.drizzle.schema.adminUser
   }
 
-  private get forumProfile() {
-    return this.drizzle.schema.forumProfile
+  private get appUserCount() {
+    return this.drizzle.schema.appUserCount
   }
 
   private get userLevelRule() {
@@ -139,7 +143,7 @@ export class AppUserService {
       ...new Set(page.list.map((item) => item.levelId).filter(Boolean)),
     ]
     const userIds = page.list.map((item) => item.id)
-    const [levelRows, forumRows] = await Promise.all([
+    const [levelRows, countRows] = await Promise.all([
       levelIds.length > 0
         ? this.db
             .select({
@@ -152,29 +156,37 @@ export class AppUserService {
       userIds.length > 0
         ? this.db
             .select({
-              userId: this.forumProfile.userId,
-              topicCount: this.forumProfile.topicCount,
-              replyCount: this.forumProfile.replyCount,
+              userId: this.appUserCount.userId,
+              forumTopicCount: this.appUserCount.forumTopicCount,
+              forumReplyCount: this.appUserCount.forumReplyCount,
+              forumReceivedLikeCount: this.appUserCount.forumReceivedLikeCount,
+              forumReceivedFavoriteCount:
+                this.appUserCount.forumReceivedFavoriteCount,
             })
-            .from(this.forumProfile)
-            .where(inArray(this.forumProfile.userId, userIds))
+            .from(this.appUserCount)
+            .where(inArray(this.appUserCount.userId, userIds))
         : [],
     ])
     const levelMap = new Map(
       levelRows.map((item) => [item.id, item.name] as const),
     )
-    const forumMap = new Map(
-      forumRows.map((item) => [item.userId, item] as const),
+    const countMap = new Map(
+      countRows.map((item) => [item.userId, item] as const),
     )
 
     return {
       ...page,
       list: page.list.map((item) => ({
-        ...item,
-        deletedAt: item.deletedAt ?? undefined,
+        ...this.userCoreService.mapBaseUser(item),
         levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
-        topicCount: forumMap.get(item.id)?.topicCount ?? 0,
-        replyCount: forumMap.get(item.id)?.replyCount ?? 0,
+        counts: {
+          forumTopicCount: countMap.get(item.id)?.forumTopicCount ?? 0,
+          forumReplyCount: countMap.get(item.id)?.forumReplyCount ?? 0,
+          forumReceivedLikeCount:
+            countMap.get(item.id)?.forumReceivedLikeCount ?? 0,
+          forumReceivedFavoriteCount:
+            countMap.get(item.id)?.forumReceivedFavoriteCount ?? 0,
+        },
       })),
     }
   }
@@ -185,19 +197,19 @@ export class AppUserService {
   async getAppUserDetail(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
 
-    const [level, forumProfile, badgeCount, pointStats, experienceStats] =
+    const [level, counts, badgeCount, pointStats, experienceStats] =
       await Promise.all([
         user.levelId
           ? this.userCoreService.getLevelInfo(user.levelId)
           : undefined,
-        this.userCoreService.getUserForumProfile(userId),
+        this.userCoreService.getUserCounts(userId),
         this.userCoreService.getBadgeCount(userId),
         this.userPointService.getUserPointStats(userId),
         this.getAppUserExperienceStats(userId),
       ])
 
     return {
-      ...user,
+      ...this.userCoreService.mapBaseUser(user),
       level: level
         ? {
             id: level.id,
@@ -205,7 +217,7 @@ export class AppUserService {
             requiredExperience: level.requiredExperience,
           }
         : undefined,
-      forumProfile,
+      counts,
       badgeCount,
       pointStats,
       experienceStats,
@@ -238,6 +250,8 @@ export class AppUserService {
               phoneNumber: dto.phoneNumber,
               emailAddress: dto.emailAddress,
               avatarUrl: dto.avatarUrl,
+              signature: dto.signature,
+              bio: dto.bio,
               genderType: dto.genderType ?? GenderEnum.UNKNOWN,
               birthDate: this.normalizeBirthDate(dto.birthDate),
               isEnabled: dto.isEnabled ?? true,
@@ -248,15 +262,7 @@ export class AppUserService {
             })
             .returning({ id: this.appUser.id })
 
-          await tx.insert(this.forumProfile).values({
-            userId: created.id,
-            topicCount: 0,
-            replyCount: 0,
-            likeCount: 0,
-            favoriteCount: 0,
-            signature: '',
-            bio: '',
-          })
+          await this.appUserCountService.initUserCounts(tx, created.id)
         }),
       )
     } catch (error) {
@@ -296,48 +302,25 @@ export class AppUserService {
       userData.genderType = dto.genderType
     }
     if (dto.birthDate !== undefined) {
-      userData.birthDate = dto.birthDate
+      userData.birthDate = this.normalizeBirthDate(dto.birthDate)
+    }
+    if (dto.signature !== undefined) {
+      userData.signature = dto.signature
+    }
+    if (dto.bio !== undefined) {
+      userData.bio = dto.bio
     }
 
     try {
-      await this.drizzle.withErrorHandling(async () =>
-        this.db.transaction(async (tx) => {
-          if (Object.keys(userData).length > 0) {
-            await tx
-              .update(this.appUser)
-              .set(userData)
-              .where(eq(this.appUser.id, dto.id))
-          }
-
-          if (dto.signature !== undefined || dto.bio !== undefined) {
-            const forumProfileData: Record<string, string> = {}
-            if (dto.signature !== undefined) {
-              forumProfileData.signature = dto.signature
-            }
-            if (dto.bio !== undefined) {
-              forumProfileData.bio = dto.bio
-            }
-
-            const existing = await tx
-              .select({ id: this.forumProfile.id })
-              .from(this.forumProfile)
-              .where(eq(this.forumProfile.userId, dto.id))
-              .limit(1)
-            if (existing[0]) {
-              await tx
-                .update(this.forumProfile)
-                .set(forumProfileData)
-                .where(eq(this.forumProfile.userId, dto.id))
-            } else {
-              await tx.insert(this.forumProfile).values({
-                userId: dto.id,
-                signature: dto.signature ?? '',
-                bio: dto.bio ?? '',
-              })
-            }
-          }
-        }),
-      )
+      if (Object.keys(userData).length > 0) {
+        const result = await this.drizzle.withErrorHandling(() =>
+          this.db
+            .update(this.appUser)
+            .set(userData)
+            .where(eq(this.appUser.id, dto.id)),
+        )
+        this.drizzle.assertAffectedRows(result, '用户不存在')
+      }
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
         throw new BadRequestException('手机号或邮箱已存在')

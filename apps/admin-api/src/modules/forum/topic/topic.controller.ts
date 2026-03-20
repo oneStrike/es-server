@@ -69,22 +69,22 @@ export class ForumTopicController {
             id: topic.user.id,
             nickname: topic.user.nickname,
             avatarUrl: topic.user.avatarUrl,
+            signature: topic.user.signature,
+            bio: topic.user.bio,
             isEnabled: topic.user.isEnabled,
             points: topic.user.points,
             levelId: topic.user.levelId,
             status: topic.user.status,
             banReason: topic.user.banReason,
             banUntil: topic.user.banUntil,
-            forumProfile: topic.user.forumProfile
+            counts: topic.user.counts
               ? {
-                  id: topic.user.forumProfile.id,
-                  userId: topic.user.forumProfile.userId,
-                  signature: topic.user.forumProfile.signature,
-                  bio: topic.user.forumProfile.bio,
-                  topicCount: topic.user.forumProfile.topicCount,
-                  replyCount: topic.user.forumProfile.replyCount,
-                  likeCount: topic.user.forumProfile.likeCount,
-                  favoriteCount: topic.user.forumProfile.favoriteCount,
+                  forumTopicCount: topic.user.counts.forumTopicCount,
+                  forumReplyCount: topic.user.counts.forumReplyCount,
+                  forumReceivedLikeCount:
+                    topic.user.counts.forumReceivedLikeCount,
+                  forumReceivedFavoriteCount:
+                    topic.user.counts.forumReceivedFavoriteCount,
                 }
               : null,
             level: topic.user.level

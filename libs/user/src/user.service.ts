@@ -3,10 +3,14 @@ import { AppUser } from '@db/schema'
 import { UserStatusEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
+import { AppUserCountService } from './app-user-count.service'
 
 @Injectable()
 export class UserService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly appUserCountService: AppUserCountService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -14,10 +18,6 @@ export class UserService {
 
   private get appUser() {
     return this.drizzle.schema.appUser
-  }
-
-  private get forumProfile() {
-    return this.drizzle.schema.forumProfile
   }
 
   private get userLevelRule() {
@@ -53,6 +53,36 @@ export class UserService {
       .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
       .limit(1)
     return user
+  }
+
+  /**
+   * 将数据库用户实体映射为安全的对外用户对象
+   */
+  mapBaseUser(user: AppUser) {
+    return {
+      id: user.id,
+      account: user.account,
+      phoneNumber: user.phoneNumber ?? undefined,
+      emailAddress: user.emailAddress ?? undefined,
+      levelId: user.levelId ?? undefined,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl ?? undefined,
+      signature: user.signature ?? undefined,
+      bio: user.bio ?? undefined,
+      isEnabled: user.isEnabled,
+      genderType: user.genderType,
+      birthDate: user.birthDate ?? undefined,
+      points: user.points,
+      experience: user.experience,
+      status: user.status,
+      banReason: user.banReason ?? undefined,
+      banUntil: user.banUntil ?? undefined,
+      lastLoginAt: user.lastLoginAt ?? undefined,
+      lastLoginIp: user.lastLoginIp ?? undefined,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      deletedAt: user.deletedAt ?? undefined,
+    }
   }
 
   /**
@@ -93,30 +123,29 @@ export class UserService {
   }
 
   /**
+   * 获取用户计数
+   */
+  async getUserCounts(userId: number) {
+    return this.appUserCountService.getUserCounts(userId)
+  }
+
+  /**
    * 获取用户论坛资料
    */
   async getUserForumProfile(userId: number) {
-    const forumProfile = await this.db
-      .select({
-        signature: this.forumProfile.signature,
-        bio: this.forumProfile.bio,
-        topicCount: this.forumProfile.topicCount,
-        replyCount: this.forumProfile.replyCount,
-        likeCount: this.forumProfile.likeCount,
-        favoriteCount: this.forumProfile.favoriteCount,
-      })
-      .from(this.forumProfile)
-      .where(eq(this.forumProfile.userId, userId))
-      .limit(1)
-      .then((rows) => rows[0])
+    const [user, counts] = await Promise.all([
+      this.findById(userId),
+      this.getUserCounts(userId),
+    ])
+
+    if (!user) {
+      throw new NotFoundException('应用用户不存在')
+    }
 
     return {
-      signature: forumProfile?.signature ?? '',
-      bio: forumProfile?.bio ?? '',
-      topicCount: forumProfile?.topicCount ?? 0,
-      replyCount: forumProfile?.replyCount ?? 0,
-      likeCount: forumProfile?.likeCount ?? 0,
-      favoriteCount: forumProfile?.favoriteCount ?? 0,
+      signature: user.signature ?? '',
+      bio: user.bio ?? '',
+      counts,
     }
   }
 

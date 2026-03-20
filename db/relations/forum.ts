@@ -47,9 +47,6 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
         to: r.forumSection.id,
       }),
   },
-  forumProfile: {
-    user: r.one.appUser({ from: r.forumProfile.userId, to: r.appUser.id }),
-  },
   forumSection: {
     group: r.one.forumSectionGroup({
       from: r.forumSection.groupId,

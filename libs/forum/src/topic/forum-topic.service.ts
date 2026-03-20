@@ -347,7 +347,7 @@ export class ForumTopicService {
         section: true,
         user: {
           with: {
-            forumProfile: true,
+            counts: true,
             level: true,
           },
         },
@@ -374,7 +374,7 @@ export class ForumTopicService {
         section: true,
         user: {
           with: {
-            forumProfile: true,
+            counts: true,
             level: true,
           },
         },
@@ -620,7 +620,11 @@ export class ForumTopicService {
 
         await Promise.all(
           Array.from(replyCountByUser.entries(), async ([userId, count]) =>
-            this.forumCounterService.updateProfileReplyCount(tx, userId, -count)),
+            this.forumCounterService.updateUserForumReplyCount(
+              tx,
+              userId,
+              -count,
+            )),
         )
 
         await this.syncSectionVisibleState(tx, topic.sectionId)

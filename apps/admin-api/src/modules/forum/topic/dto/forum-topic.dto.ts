@@ -1,5 +1,4 @@
 import {
-  BaseForumProfileDto,
   BaseForumSectionDto,
   BaseForumTopicDto,
 } from '@libs/forum'
@@ -16,7 +15,7 @@ import {
   OMIT_BASE_FIELDS,
   PageDto,
 } from '@libs/platform/dto'
-import { BaseAppUserDto } from '@libs/user'
+import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
 import {
   IntersectionType,
   OmitType,
@@ -67,15 +66,11 @@ class AdminForumTopicSectionDto extends PickType(BaseForumSectionDto, [
   'topicReviewPolicy',
 ] as const) {}
 
-class AdminForumTopicProfileDto extends PickType(BaseForumProfileDto, [
-  'id',
-  'userId',
-  'signature',
-  'bio',
-  'topicCount',
-  'replyCount',
-  'likeCount',
-  'favoriteCount',
+class AdminForumTopicUserCountDto extends PickType(BaseAppUserCountDto, [
+  'forumTopicCount',
+  'forumReplyCount',
+  'forumReceivedLikeCount',
+  'forumReceivedFavoriteCount',
 ] as const) {}
 
 class AdminForumTopicUserLevelDto extends PickType(BaseUserLevelRuleDto, [
@@ -89,6 +84,8 @@ class AdminForumTopicUserDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
   'avatarUrl',
+  'signature',
+  'bio',
   'isEnabled',
   'points',
   'levelId',
@@ -97,12 +94,12 @@ class AdminForumTopicUserDto extends PickType(BaseAppUserDto, [
   'banUntil',
 ] as const) {
   @NestedProperty({
-    description: '论坛画像',
+    description: '用户计数',
     required: false,
-    type: AdminForumTopicProfileDto,
+    type: AdminForumTopicUserCountDto,
     validation: false,
   })
-  forumProfile?: AdminForumTopicProfileDto
+  counts?: AdminForumTopicUserCountDto
 
   @NestedProperty({
     description: '论坛等级',

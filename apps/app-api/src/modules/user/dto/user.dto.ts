@@ -20,7 +20,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
-import { BaseAppUserDto } from '@libs/user'
+import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
@@ -36,26 +36,9 @@ export class UpdateMyProfileDto extends PartialType(
   ] as const),
 ) {}
 
-/**
- * 更新用户论坛资料 DTO
- */
-export class UpdateMyForumProfileDto {
-  @StringProperty({
-    description: '用户签名',
-    example: '持续输出，永不停歇。',
-    required: false,
-    maxLength: 200,
-  })
-  signature?: string
-
-  @StringProperty({
-    description: '用户简介',
-    example: '一段简短的自我介绍。',
-    required: false,
-    maxLength: 500,
-  })
-  bio?: string
-}
+export class UpdateMyForumProfileDto extends PartialType(
+  PickType(BaseAppUserDto, ['signature', 'bio'] as const),
+) {}
 
 /**
  * 查询我的经验记录 DTO
@@ -107,77 +90,29 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
   afterExperience!: number
 }
 
+export class UserCountDto extends PickType(BaseAppUserCountDto, [
+  'forumTopicCount',
+  'forumReplyCount',
+  'forumReceivedLikeCount',
+  'forumReceivedFavoriteCount',
+] as const) {}
+
 /**
  * 用户论坛资料 DTO
  */
-export class UserForumProfileDto {
-  @StringProperty({
-    description: '用户签名',
-    example: '持续输出，永不停歇。',
-    required: false,
+export class UserForumProfileDto extends PickType(BaseAppUserDto, [
+  'signature',
+  'bio',
+  'status',
+  'banReason',
+  'banUntil',
+] as const) {
+  @NestedProperty({
+    description: '用户计数',
+    type: UserCountDto,
     validation: false,
   })
-  signature?: string
-
-  @StringProperty({
-    description: '用户简介',
-    example: '一段简短的自我介绍。',
-    required: false,
-    validation: false,
-  })
-  bio?: string
-
-  @NumberProperty({
-    description: '主题数量',
-    example: 12,
-    validation: false,
-  })
-  topicCount!: number
-
-  @NumberProperty({
-    description: '回复数量',
-    example: 48,
-    validation: false,
-  })
-  replyCount!: number
-
-  @NumberProperty({
-    description: '获得的点赞数',
-    example: 66,
-    validation: false,
-  })
-  likeCount!: number
-
-  @NumberProperty({
-    description: '获得的收藏数',
-    example: 9,
-    validation: false,
-  })
-  favoriteCount!: number
-
-  @EnumProperty({
-    description: '社区状态',
-    enum: UserStatusEnum,
-    example: UserStatusEnum.NORMAL,
-    validation: false,
-  })
-  status!: UserStatusEnum
-
-  @StringProperty({
-    description: '封禁或禁言原因',
-    example: '违反社区规则。',
-    required: false,
-    validation: false,
-  })
-  banReason?: string
-
-  @DateProperty({
-    description: '限制到期时间',
-    example: '2026-03-08T10:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  banUntil?: Date
+  counts!: UserCountDto
 }
 
 /**
@@ -451,6 +386,22 @@ export class UserCenterGrowthDto {
  * 用户中心-社区信息 DTO
  */
 export class UserCenterCommunityDto {
+  @StringProperty({
+    description: '用户签名',
+    example: '持续输出，永不停歇。',
+    required: false,
+    validation: false,
+  })
+  signature?: string
+
+  @StringProperty({
+    description: '用户简介',
+    example: '一段简短的自我介绍。',
+    required: false,
+    validation: false,
+  })
+  bio?: string
+
   @EnumProperty({
     description: '社区状态',
     enum: UserStatusEnum,
@@ -475,33 +426,12 @@ export class UserCenterCommunityDto {
   })
   banUntil?: Date
 
-  @NumberProperty({
-    description: '主题数量',
-    example: 12,
+  @NestedProperty({
+    description: '用户计数',
+    type: UserCountDto,
     validation: false,
   })
-  topicCount!: number
-
-  @NumberProperty({
-    description: '回复数量',
-    example: 48,
-    validation: false,
-  })
-  replyCount!: number
-
-  @NumberProperty({
-    description: '获得的点赞数',
-    example: 66,
-    validation: false,
-  })
-  likeCount!: number
-
-  @NumberProperty({
-    description: '获得的收藏数',
-    example: 9,
-    validation: false,
-  })
-  favoriteCount!: number
+  counts!: UserCountDto
 }
 
 /**

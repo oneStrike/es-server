@@ -9,8 +9,8 @@ import {
 import { BaseDto } from '@libs/platform/dto'
 
 /**
- * 应用用户全量基类 DTO
- * 100% 对齐 app_user 表定义
+ * 应用用户对外基类 DTO
+ * 对齐 app_user 公共输出字段，不暴露敏感信息
  */
 export class BaseAppUserDto extends BaseDto {
   @StringProperty({
@@ -53,21 +53,28 @@ export class BaseAppUserDto extends BaseDto {
   nickname!: string
 
   @StringProperty({
-    description: '密码',
-    example: 'Aa@123456',
-    required: true,
-    maxLength: 500,
-    password: true,
-  })
-  password!: string
-
-  @StringProperty({
     description: '头像URL',
     example: 'https://example.com/avatar.png',
     required: false,
     maxLength: 500,
   })
   avatarUrl?: string | null
+
+  @StringProperty({
+    description: '个性签名',
+    example: '持续输出，永不停歇。',
+    required: false,
+    maxLength: 200,
+  })
+  signature?: string | null
+
+  @StringProperty({
+    description: '个人简介',
+    example: '一段简短的自我介绍。',
+    required: false,
+    maxLength: 500,
+  })
+  bio?: string | null
 
   @BooleanProperty({
     description: '是否启用',

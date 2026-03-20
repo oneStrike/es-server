@@ -132,7 +132,7 @@ export class ForumTopicCommentResolver
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumCounterService.updateProfileReplyCount(
+    await this.forumCounterService.updateUserForumReplyCount(
       tx,
       actorUserId,
       1,
@@ -153,7 +153,7 @@ export class ForumTopicCommentResolver
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumCounterService.updateProfileReplyCount(
+    await this.forumCounterService.updateUserForumReplyCount(
       tx,
       comment.userId,
       -1,

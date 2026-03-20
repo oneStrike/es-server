@@ -43,9 +43,9 @@ export const appRelations = defineRelationsPart(schema, r => ({
       from: r.appUser.levelId,
       to: r.userLevelRule.id,
     }),
-    forumProfile: r.one.forumProfile({
+    counts: r.one.appUserCount({
       from: r.appUser.id,
-      to: r.forumProfile.userId,
+      to: r.appUserCount.userId,
     }),
     announcementReads: r.many.appAnnouncementRead(),
     tokens: r.many.appUserToken(),
@@ -136,6 +136,12 @@ export const appRelations = defineRelationsPart(schema, r => ({
     }),
     userDownloadRecords: r.many.userDownloadRecord(),
     userPurchaseRecords: r.many.userPurchaseRecord(),
+  },
+  appUserCount: {
+    user: r.one.appUser({
+      from: r.appUserCount.userId,
+      to: r.appUser.id,
+    }),
   },
   appUserToken: {
     user: r.one.appUser({ from: r.appUserToken.userId, to: r.appUser.id }),

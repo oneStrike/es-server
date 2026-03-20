@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { AppUser } from '@db/schema'
 import type {
   QueryForumProfileListInput,
   UpdateForumProfileStatusInput,
@@ -7,6 +8,7 @@ import { DrizzleService } from '@db/core'
 
 import { GrowthAssetTypeEnum, UserPointService } from '@libs/growth'
 import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction'
+import { AppUserCountService } from '@libs/user'
 import {
   UserDefaults,
   UserStatusEnum,
@@ -27,6 +29,7 @@ export class ForumProfileService {
     protected readonly pointService: UserPointService,
     /** 收藏服务 */
     protected readonly favoriteService: FavoriteService,
+    private readonly appUserCountService: AppUserCountService,
   ) {}
 
   private get db() {
@@ -37,8 +40,8 @@ export class ForumProfileService {
     return this.drizzle.schema.appUser
   }
 
-  get forumProfile() {
-    return this.drizzle.schema.forumProfile
+  get appUserCount() {
+    return this.drizzle.schema.appUserCount
   }
 
   get forumTopic() {
@@ -65,6 +68,33 @@ export class ForumProfileService {
     return this.drizzle.schema.userLevelRule
   }
 
+  private mapUser(user: AppUser) {
+    return {
+      id: user.id,
+      account: user.account,
+      phoneNumber: user.phoneNumber ?? undefined,
+      emailAddress: user.emailAddress ?? undefined,
+      levelId: user.levelId ?? undefined,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl ?? undefined,
+      signature: user.signature ?? undefined,
+      bio: user.bio ?? undefined,
+      isEnabled: user.isEnabled,
+      genderType: user.genderType,
+      birthDate: user.birthDate ?? undefined,
+      points: user.points,
+      experience: user.experience,
+      status: user.status,
+      banReason: user.banReason ?? undefined,
+      banUntil: user.banUntil ?? undefined,
+      lastLoginAt: user.lastLoginAt ?? undefined,
+      lastLoginIp: user.lastLoginIp ?? undefined,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      deletedAt: user.deletedAt ?? undefined,
+    }
+  }
+
   /**
    * 查询用户资料列表
    * @param queryDto - 查询参数，包含用户ID、昵称、状态等过滤条件
@@ -86,13 +116,13 @@ export class ForumProfileService {
       ...rest,
     })
     const userIds = page.list.map((item) => item.id)
-    const profiles = userIds.length
+    const counts = userIds.length
       ? await this.db
           .select()
-          .from(this.forumProfile)
-          .where(inArray(this.forumProfile.userId, userIds))
+          .from(this.appUserCount)
+          .where(inArray(this.appUserCount.userId, userIds))
       : []
-    const profileMap = new Map(profiles.map((item) => [item.userId, item]))
+    const countMap = new Map(counts.map((item) => [item.userId, item]))
     const badgeRows = userIds.length
       ? await this.db
           .select({
@@ -114,9 +144,15 @@ export class ForumProfileService {
 
     const list = page.list.map((item) => {
       return {
-        ...item,
-        avatar: item.avatarUrl,
-        forumProfile: profileMap.get(item.id) ?? null,
+        ...this.mapUser(item),
+        avatar: item.avatarUrl ?? undefined,
+        counts: countMap.get(item.id) ?? {
+          userId: item.id,
+          forumTopicCount: 0,
+          forumReplyCount: 0,
+          forumReceivedLikeCount: 0,
+          forumReceivedFavoriteCount: 0,
+        },
         userBadges: badgeMap.get(item.id) ?? [],
       }
     })
@@ -137,10 +173,10 @@ export class ForumProfileService {
     if (!user) {
       throw new BadRequestException('用户不存在')
     }
-    const [profile] = await this.db
+    const [counts] = await this.db
       .select()
-      .from(this.forumProfile)
-      .where(eq(this.forumProfile.userId, userId))
+      .from(this.appUserCount)
+      .where(eq(this.appUserCount.userId, userId))
     const userBadges = await this.db
       .select({
         id: this.userBadgeAssignment.id,
@@ -153,9 +189,15 @@ export class ForumProfileService {
       .innerJoin(this.userBadge, eq(this.userBadge.id, this.userBadgeAssignment.badgeId))
       .where(eq(this.userBadgeAssignment.userId, userId))
     return {
-      ...user,
-      avatar: user.avatarUrl,
-      forumProfile: profile ?? null,
+      ...this.mapUser(user),
+      avatar: user.avatarUrl ?? undefined,
+      counts: counts ?? {
+        userId,
+        forumTopicCount: 0,
+        forumReplyCount: 0,
+        forumReceivedLikeCount: 0,
+        forumReceivedFavoriteCount: 0,
+      },
       userBadges,
     }
   }
@@ -307,17 +349,11 @@ export class ForumProfileService {
         experience: UserDefaults.INITIAL_EXPERIENCE,
         levelId: defaultLevel?.id ?? null,
         status: UserStatusEnum.NORMAL,
+        signature: '',
+        bio: '',
       })
       .where(eq(this.appUser.id, userId))
 
-    await client.insert(this.forumProfile).values({
-      userId,
-      topicCount: 0,
-      replyCount: 0,
-      likeCount: 0,
-      favoriteCount: 0,
-      signature: '',
-      bio: '',
-    })
+    await this.appUserCountService.initUserCounts(client, userId)
   }
 }
