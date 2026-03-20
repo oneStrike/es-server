@@ -10,7 +10,7 @@ export type Db = Omit<CoreDb, 'query'> & {
 }
 
 export function getDatabaseUrl(): string {
-  const url = 'postgresql://postgres:259158@localhost:5432/foo'
+  const url = process.env.DATABASE_URL
   if (!url) {
     throw new Error('DATABASE_URL environment variable is not set')
   }

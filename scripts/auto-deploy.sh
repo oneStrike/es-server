@@ -83,7 +83,7 @@ run_with_timeout() {
                 sleep 5
                 kill -KILL -- "-$cmd_pid" 2>/dev/null || true
             fi
-        ) &
+        ) >/dev/null 2>&1 &
         watchdog_pid=$!
 
         wait "$cmd_pid"
@@ -285,10 +285,12 @@ deploy_project() {
 
     stash_changes
 
-    if ! git_with_retry symbolic-ref --short HEAD; then
+    local CURRENT_BRANCH
+    CURRENT_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null)" || {
+        error "获取当前分支失败"
         return 1
-    fi
-    local CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
+    }
+    log "输出: $CURRENT_BRANCH"
 
     if ! git_fetch_branch_until_success "${CURRENT_BRANCH}"; then
         return 1

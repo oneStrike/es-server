@@ -169,10 +169,6 @@ build_project() {
         error "app-api 构建失败"
         return 1
       }
-      docker_build "$project_dir" "./Dockerfile" --target migrator -t "es/server-migrator:$version" || {
-        error "migrator 构建失败"
-        return 1
-      }
       ;;
   esac
 }
