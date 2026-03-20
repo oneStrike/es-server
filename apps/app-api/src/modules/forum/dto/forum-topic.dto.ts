@@ -1,5 +1,5 @@
 import { BaseForumSectionDto, BaseForumTopicDto } from '@libs/forum'
-import { NestedProperty } from '@libs/platform/decorators'
+import { BooleanProperty, NestedProperty } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user'
 import {
@@ -57,6 +57,22 @@ export class AppForumTopicDetailDto extends IntersectionType(
   AppForumTopicPageItemDto,
   PickType(BaseForumTopicDto, ['content'] as const),
 ) {
+  @BooleanProperty({
+    description: '当前用户是否已点赞',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @BooleanProperty({
+    description: '当前用户是否已收藏',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  favorited!: boolean
+
   @NestedProperty({
     description: '所属板块',
     required: true,

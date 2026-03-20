@@ -1,5 +1,5 @@
-import { and, desc, eq } from 'drizzle-orm'
 import type { Db } from '../../db-client'
+import { and, desc, eq } from 'drizzle-orm'
 import {
   adminUser,
   appUser,
@@ -100,7 +100,7 @@ export async function seedSystemReferenceData(db: Db) {
 
   for (const dictFixture of DICTIONARY_FIXTURES) {
     const existingDictionary = await db.query.dictionary.findFirst({
-      where: eq(dictionary.code, dictFixture.code),
+      where: (table, { eq }) => eq(table.code, dictFixture.code),
     })
 
     let currentDictionary = existingDictionary

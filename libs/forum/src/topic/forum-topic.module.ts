@@ -1,5 +1,5 @@
 import { UserGrowthRewardModule } from '@libs/growth'
-import { FavoriteModule, ReportModule } from '@libs/interaction'
+import { FavoriteModule, LikeModule, ReportModule } from '@libs/interaction'
 import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { UserModule } from '@libs/user'
@@ -24,6 +24,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     SensitiveWordModule,
     MessageModule,
     FavoriteModule,
+    LikeModule,
     ReportModule,
     UserModule,
     ForumCounterModule,

@@ -22,10 +22,11 @@ export function createDrizzleExtensions(db: Db) {
     findPagination: async <
       TTable extends AnyPgTable,
       TOmit extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
+      TPick extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
     >(
       table: TTable,
-      options?: FindPaginationOptions<TTable, TOmit>,
-    ) => findPaginationExtension<TTable, TOmit>(db, table, options),
+      options?: FindPaginationOptions<TTable, TOmit, TPick>,
+    ) => findPaginationExtension<TTable, TOmit, TPick>(db, table, options),
     maxOrder: async (
       table: PgTable<TableConfig>,
       where?: SQL,

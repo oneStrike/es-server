@@ -13,7 +13,13 @@ import type {
 import { DrizzleService } from '@db/core'
 import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
-import { CommentTargetTypeEnum } from '@libs/interaction'
+import {
+  CommentTargetTypeEnum,
+  FavoriteService,
+  FavoriteTargetTypeEnum,
+  LikeService,
+  LikeTargetTypeEnum,
+} from '@libs/interaction'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   SensitiveWordDetectService,
@@ -49,6 +55,8 @@ export class ForumTopicService {
     private readonly appUserCountService: AppUserCountService,
     private readonly actionLogService: ForumUserActionLogService,
     private readonly forumPermissionService: ForumPermissionService,
+    private readonly likeService: LikeService,
+    private readonly favoriteService: FavoriteService,
   ) {}
 
   private get db() {
@@ -362,7 +370,7 @@ export class ForumTopicService {
     return topic
   }
 
-  async getPublicTopicById(id: number, userId?: number) {
+  private async getVisiblePublicTopic(id: number, userId?: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
         id,
@@ -398,8 +406,40 @@ export class ForumTopicService {
     return topic
   }
 
+  async getPublicTopicById(id: number, userId?: number) {
+    const topic = await this.getVisiblePublicTopic(id, userId)
+
+    // 为匿名用户保持稳定的详情结构，避免调用方按登录态分支解析字段。
+    if (!userId) {
+      return {
+        ...topic,
+        liked: false,
+        favorited: false,
+      }
+    }
+
+    const [liked, favorited] = await Promise.all([
+      this.likeService.checkLikeStatus({
+        targetType: LikeTargetTypeEnum.FORUM_TOPIC,
+        targetId: id,
+        userId,
+      }),
+      this.favoriteService.checkFavoriteStatus({
+        targetType: FavoriteTargetTypeEnum.FORUM_TOPIC,
+        targetId: id,
+        userId,
+      }),
+    ])
+
+    return {
+      ...topic,
+      liked,
+      favorited,
+    }
+  }
+
   async getTopicCommentTarget(id: number, userId?: number) {
-    await this.getPublicTopicById(id, userId)
+    await this.getVisiblePublicTopic(id, userId)
     return {
       targetType: CommentTargetTypeEnum.FORUM_TOPIC,
       targetId: id,
@@ -461,6 +501,21 @@ export class ForumTopicService {
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: [{ isPinned: 'desc' }, { lastReplyAt: 'desc' }, { createdAt: 'desc' }],
+      pick: [
+        'id',
+        'sectionId',
+        'userId',
+        'title',
+        'isPinned',
+        'isFeatured',
+        'isLocked',
+        'viewCount',
+        'replyCount',
+        'likeCount',
+        'favoriteCount',
+        'lastReplyAt',
+        'createdAt',
+      ],
     })
   }
 

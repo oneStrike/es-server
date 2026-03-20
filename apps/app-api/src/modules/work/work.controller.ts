@@ -12,7 +12,7 @@ import {
   RequestMetaResult,
 } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { Controller, Get, Headers, Query } from '@nestjs/common'
+import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   PageWorkDto,
@@ -85,13 +85,11 @@ export class WorkController {
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
     @RequestMeta() meta: RequestMetaResult,
-    @Headers('user-agent') userAgent?: string,
   ) {
     return this.workService.getWorkDetail(query.id, {
       userId,
       ipAddress: meta.ip,
       device: meta.deviceId,
-      userAgent,
     })
   }
 

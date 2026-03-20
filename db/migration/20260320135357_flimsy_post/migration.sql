@@ -119,6 +119,8 @@ CREATE TABLE "app_user" (
 	"nickname" varchar(100) NOT NULL,
 	"password" varchar(500) NOT NULL,
 	"avatar_url" varchar(500),
+	"signature" varchar(200),
+	"bio" varchar(500),
 	"is_enabled" boolean DEFAULT true NOT NULL,
 	"gender_type" smallint DEFAULT 0 NOT NULL,
 	"birth_date" date,
@@ -132,6 +134,19 @@ CREATE TABLE "app_user" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	"deleted_at" timestamp with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "app_user_count" (
+	"user_id" integer PRIMARY KEY,
+	"comment_count" integer DEFAULT 0 NOT NULL,
+	"like_count" integer DEFAULT 0 NOT NULL,
+	"favorite_count" integer DEFAULT 0 NOT NULL,
+	"forum_topic_count" integer DEFAULT 0 NOT NULL,
+	"comment_received_like_count" integer DEFAULT 0 NOT NULL,
+	"forum_topic_received_like_count" integer DEFAULT 0 NOT NULL,
+	"forum_topic_received_favorite_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "app_user_token" (
@@ -393,8 +408,7 @@ CREATE TABLE "user_purchase_record" (
 	"payment_method" smallint NOT NULL,
 	"out_trade_no" varchar(100),
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp(6) with time zone NOT NULL,
-	CONSTRAINT "user_purchase_record_target_type_target_id_user_id_status_key" UNIQUE("target_type","target_id","user_id","status")
+	"updated_at" timestamp(6) with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user_report" (
@@ -427,56 +441,6 @@ CREATE TABLE "user_work_reading_state" (
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(6) with time zone NOT NULL,
 	CONSTRAINT "user_work_reading_state_user_id_work_id_key" UNIQUE("user_id","work_id")
-);
---> statement-breakpoint
-CREATE TABLE "forum_config" (
-	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_config_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"updated_by_id" integer,
-	"site_name" varchar(100) NOT NULL,
-	"site_description" varchar(500),
-	"site_keywords" varchar(200),
-	"site_logo" varchar(255),
-	"site_favicon" varchar(255),
-	"contact_email" varchar(100),
-	"icp_number" varchar(50),
-	"topic_title_max_length" integer DEFAULT 200 NOT NULL,
-	"topic_content_max_length" integer DEFAULT 10000 NOT NULL,
-	"reply_content_max_length" integer DEFAULT 5000 NOT NULL,
-	"review_policy" integer DEFAULT 1 NOT NULL,
-	"allow_anonymous_view" boolean DEFAULT true NOT NULL,
-	"allow_anonymous_post" boolean DEFAULT false NOT NULL,
-	"allow_anonymous_reply" boolean DEFAULT false NOT NULL,
-	"allow_user_register" boolean DEFAULT true NOT NULL,
-	"register_require_email_verify" boolean DEFAULT true NOT NULL,
-	"register_require_phone_verify" boolean DEFAULT false NOT NULL,
-	"username_min_length" integer DEFAULT 3 NOT NULL,
-	"username_max_length" integer DEFAULT 20 NOT NULL,
-	"signature_max_length" integer DEFAULT 200 NOT NULL,
-	"bio_max_length" integer DEFAULT 500 NOT NULL,
-	"default_points_for_new_user" integer DEFAULT 100 NOT NULL,
-	"enable_email_notification" boolean DEFAULT true NOT NULL,
-	"enable_in_app_notification" boolean DEFAULT true NOT NULL,
-	"enable_new_topic_notification" boolean DEFAULT true NOT NULL,
-	"enable_new_reply_notification" boolean DEFAULT true NOT NULL,
-	"enable_like_notification" boolean DEFAULT true NOT NULL,
-	"enable_favorite_notification" boolean DEFAULT true NOT NULL,
-	"enable_system_notification" boolean DEFAULT true NOT NULL,
-	"enable_maintenance_mode" boolean DEFAULT false NOT NULL,
-	"maintenance_message" varchar(500),
-	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp(6) with time zone NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "forum_config_history" (
-	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_config_history_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"config_id" integer NOT NULL,
-	"operated_by_id" integer,
-	"changes" jsonb NOT NULL,
-	"change_type" varchar(20) NOT NULL,
-	"reason" varchar(500),
-	"ip_address" varchar(50),
-	"user_agent" varchar(500),
-	"operated_at" timestamp(6) with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "forum_moderator" (
@@ -531,41 +495,12 @@ CREATE TABLE "forum_moderator_section" (
 	CONSTRAINT "forum_moderator_section_moderator_id_section_id_key" UNIQUE("moderator_id","section_id")
 );
 --> statement-breakpoint
-CREATE TABLE "forum_notification" (
-	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_notification_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"user_id" integer NOT NULL,
-	"topic_id" integer,
-	"reply_id" integer,
-	"type" smallint NOT NULL,
-	"priority" smallint DEFAULT 1 NOT NULL,
-	"title" varchar(200) NOT NULL,
-	"content" varchar(1000) NOT NULL,
-	"is_read" boolean DEFAULT false NOT NULL,
-	"read_at" timestamp(6) with time zone,
-	"expired_at" timestamp(6) with time zone,
-	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "forum_profile" (
-	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_profile_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"user_id" integer NOT NULL CONSTRAINT "forum_profile_user_id_key" UNIQUE,
-	"topic_count" integer DEFAULT 0 NOT NULL,
-	"reply_count" integer DEFAULT 0 NOT NULL,
-	"like_count" integer DEFAULT 0 NOT NULL,
-	"favorite_count" integer DEFAULT 0 NOT NULL,
-	"signature" varchar(200),
-	"bio" varchar(500),
-	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp(6) with time zone NOT NULL,
-	"deleted_at" timestamp(6) with time zone
-);
---> statement-breakpoint
 CREATE TABLE "forum_section" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_section_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"group_id" integer,
 	"user_level_rule_id" integer,
 	"last_topic_id" integer,
-	"name" varchar(50) NOT NULL,
+	"name" varchar(100) NOT NULL,
 	"description" varchar(500),
 	"icon" varchar(255),
 	"sort_order" integer DEFAULT 0 NOT NULL,
@@ -788,6 +723,7 @@ CREATE TABLE "sys_config" (
 	"site_config" jsonb,
 	"maintenance_config" jsonb,
 	"content_review_policy" jsonb,
+	"upload_config" jsonb,
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(6) with time zone NOT NULL
 );
@@ -843,6 +779,7 @@ CREATE TABLE "work" (
 	"lastUpdated" timestamp(6) with time zone,
 	"view_rule" smallint DEFAULT 0 NOT NULL,
 	"required_view_level_id" integer,
+	"forum_section_id" integer CONSTRAINT "work_forum_section_id_key" UNIQUE,
 	"chapter_price" integer DEFAULT 0 NOT NULL,
 	"can_comment" boolean DEFAULT true NOT NULL,
 	"recommendWeight" double precision DEFAULT 1 NOT NULL,
@@ -1076,6 +1013,7 @@ CREATE INDEX "user_like_created_at_idx" ON "user_like" ("created_at");--> statem
 CREATE INDEX "user_point_rule_type_idx" ON "user_point_rule" ("type");--> statement-breakpoint
 CREATE INDEX "user_point_rule_is_enabled_idx" ON "user_point_rule" ("is_enabled");--> statement-breakpoint
 CREATE INDEX "user_point_rule_created_at_idx" ON "user_point_rule" ("created_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_purchase_record_success_unique_idx" ON "user_purchase_record" ("target_type","target_id","user_id") WHERE "status" = 1;--> statement-breakpoint
 CREATE INDEX "user_purchase_record_target_type_target_id_idx" ON "user_purchase_record" ("target_type","target_id");--> statement-breakpoint
 CREATE INDEX "user_purchase_record_user_id_idx" ON "user_purchase_record" ("user_id");--> statement-breakpoint
 CREATE INDEX "user_purchase_record_status_idx" ON "user_purchase_record" ("status");--> statement-breakpoint
@@ -1090,12 +1028,6 @@ CREATE INDEX "user_report_created_at_idx" ON "user_report" ("created_at");--> st
 CREATE INDEX "user_work_reading_state_user_id_work_type_last_read_at_idx" ON "user_work_reading_state" ("user_id","work_type","last_read_at");--> statement-breakpoint
 CREATE INDEX "user_work_reading_state_work_id_idx" ON "user_work_reading_state" ("work_id");--> statement-breakpoint
 CREATE INDEX "user_work_reading_state_last_read_chapter_id_idx" ON "user_work_reading_state" ("last_read_chapter_id");--> statement-breakpoint
-CREATE INDEX "forum_config_updated_by_id_idx" ON "forum_config" ("updated_by_id");--> statement-breakpoint
-CREATE INDEX "forum_config_created_at_idx" ON "forum_config" ("created_at");--> statement-breakpoint
-CREATE INDEX "forum_config_history_config_id_idx" ON "forum_config_history" ("config_id");--> statement-breakpoint
-CREATE INDEX "forum_config_history_change_type_idx" ON "forum_config_history" ("change_type");--> statement-breakpoint
-CREATE INDEX "forum_config_history_operated_by_id_idx" ON "forum_config_history" ("operated_by_id");--> statement-breakpoint
-CREATE INDEX "forum_config_history_operated_at_idx" ON "forum_config_history" ("operated_at");--> statement-breakpoint
 CREATE INDEX "forum_moderator_group_id_idx" ON "forum_moderator" ("group_id");--> statement-breakpoint
 CREATE INDEX "forum_moderator_role_type_idx" ON "forum_moderator" ("role_type");--> statement-breakpoint
 CREATE INDEX "forum_moderator_is_enabled_idx" ON "forum_moderator" ("is_enabled");--> statement-breakpoint
@@ -1114,22 +1046,6 @@ CREATE INDEX "forum_moderator_application_deleted_at_idx" ON "forum_moderator_ap
 CREATE INDEX "forum_moderator_section_moderator_id_idx" ON "forum_moderator_section" ("moderator_id");--> statement-breakpoint
 CREATE INDEX "forum_moderator_section_section_id_idx" ON "forum_moderator_section" ("section_id");--> statement-breakpoint
 CREATE INDEX "forum_moderator_section_created_at_idx" ON "forum_moderator_section" ("created_at");--> statement-breakpoint
-CREATE INDEX "forum_notification_user_id_idx" ON "forum_notification" ("user_id");--> statement-breakpoint
-CREATE INDEX "forum_notification_topic_id_idx" ON "forum_notification" ("topic_id");--> statement-breakpoint
-CREATE INDEX "forum_notification_reply_id_idx" ON "forum_notification" ("reply_id");--> statement-breakpoint
-CREATE INDEX "forum_notification_type_idx" ON "forum_notification" ("type");--> statement-breakpoint
-CREATE INDEX "forum_notification_priority_idx" ON "forum_notification" ("priority");--> statement-breakpoint
-CREATE INDEX "forum_notification_is_read_idx" ON "forum_notification" ("is_read");--> statement-breakpoint
-CREATE INDEX "forum_notification_expired_at_idx" ON "forum_notification" ("expired_at");--> statement-breakpoint
-CREATE INDEX "forum_notification_created_at_idx" ON "forum_notification" ("created_at");--> statement-breakpoint
-CREATE INDEX "forum_notification_user_id_is_read_idx" ON "forum_notification" ("user_id","is_read");--> statement-breakpoint
-CREATE INDEX "forum_notification_user_id_priority_idx" ON "forum_notification" ("user_id","priority");--> statement-breakpoint
-CREATE INDEX "forum_notification_user_id_created_at_idx" ON "forum_notification" ("user_id","created_at");--> statement-breakpoint
-CREATE INDEX "forum_profile_topic_count_idx" ON "forum_profile" ("topic_count");--> statement-breakpoint
-CREATE INDEX "forum_profile_reply_count_idx" ON "forum_profile" ("reply_count");--> statement-breakpoint
-CREATE INDEX "forum_profile_like_count_idx" ON "forum_profile" ("like_count");--> statement-breakpoint
-CREATE INDEX "forum_profile_favorite_count_idx" ON "forum_profile" ("favorite_count");--> statement-breakpoint
-CREATE INDEX "forum_profile_created_at_idx" ON "forum_profile" ("created_at");--> statement-breakpoint
 CREATE INDEX "forum_section_group_id_idx" ON "forum_section" ("group_id");--> statement-breakpoint
 CREATE INDEX "forum_section_sort_order_idx" ON "forum_section" ("sort_order");--> statement-breakpoint
 CREATE INDEX "forum_section_is_enabled_idx" ON "forum_section" ("is_enabled");--> statement-breakpoint
@@ -1175,7 +1091,9 @@ CREATE INDEX "forum_user_action_log_ip_address_idx" ON "forum_user_action_log" (
 CREATE INDEX "forum_user_action_log_created_at_idx" ON "forum_user_action_log" ("created_at");--> statement-breakpoint
 CREATE INDEX "forum_user_action_log_user_id_created_at_idx" ON "forum_user_action_log" ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "chat_conversation_last_message_at_idx" ON "chat_conversation" ("last_message_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "chat_conversation_last_message_id_idx" ON "chat_conversation" ("last_message_id");--> statement-breakpoint
 CREATE INDEX "chat_conversation_member_conversation_id_idx" ON "chat_conversation_member" ("conversation_id");--> statement-breakpoint
+CREATE INDEX "chat_conversation_member_last_read_message_id_idx" ON "chat_conversation_member" ("last_read_message_id");--> statement-breakpoint
 CREATE INDEX "chat_conversation_member_user_id_unread_count_conversation__idx" ON "chat_conversation_member" ("user_id","unread_count","conversation_id");--> statement-breakpoint
 CREATE INDEX "chat_message_conversation_id_created_at_idx" ON "chat_message" ("conversation_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "chat_message_sender_id_created_at_idx" ON "chat_message" ("sender_id","created_at" DESC NULLS LAST);--> statement-breakpoint
@@ -1211,6 +1129,7 @@ CREATE INDEX "work_isHot_isNew_idx" ON "work" ("isHot","isNew");--> statement-br
 CREATE INDEX "work_type_idx" ON "work" ("type");--> statement-breakpoint
 CREATE INDEX "work_view_rule_idx" ON "work" ("view_rule");--> statement-breakpoint
 CREATE INDEX "work_required_view_level_id_idx" ON "work" ("required_view_level_id");--> statement-breakpoint
+CREATE INDEX "work_forum_section_id_idx" ON "work" ("forum_section_id");--> statement-breakpoint
 CREATE INDEX "work_comment_count_idx" ON "work" ("comment_count");--> statement-breakpoint
 CREATE INDEX "work_author_type_idx" ON "work_author" ("type");--> statement-breakpoint
 CREATE INDEX "work_author_is_enabled_idx" ON "work_author" ("is_enabled");--> statement-breakpoint

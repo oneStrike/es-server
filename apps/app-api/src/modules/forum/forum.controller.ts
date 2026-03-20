@@ -49,6 +49,8 @@ export class ForumController {
     return {
       ...this.mapTopicItem(topic),
       content: topic.content,
+      liked: topic.liked,
+      favorited: topic.favorited,
       section: topic.section
         ? {
             id: topic.section.id,
@@ -76,14 +78,10 @@ export class ForumController {
     @Query() query: QueryAppForumTopicPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    const page = await this.forumTopicService.getPublicTopics({
+    return this.forumTopicService.getPublicTopics({
       ...query,
       userId,
     })
-    return {
-      ...page,
-      list: page.list.map((item) => this.mapTopicItem(item as Record<string, unknown>)),
-    }
   }
 
   @Get('detail')

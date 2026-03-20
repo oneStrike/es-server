@@ -46,7 +46,7 @@
                                                                             # Git retry configuration
                                                                             readonly MAX_RETRIES=5
                                                                             readonly GIT_TIMEOUT_SECONDS="${GIT_TIMEOUT_SECONDS:-90}"
-                                                                            readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-10}}"
+                                                                            readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-30}}"
                                                                             readonly GIT_CONNECT_TIMEOUT_SECONDS="${GIT_CONNECT_TIMEOUT_SECONDS:-15}"
                                                                             readonly GIT_LOW_SPEED_LIMIT="${GIT_LOW_SPEED_LIMIT:-1024}"
                                                                             readonly GIT_LOW_SPEED_TIME="${GIT_LOW_SPEED_TIME:-30}"
@@ -176,7 +176,7 @@
                                                                                         GIT_TERMINAL_PROMPT=0 \
                                                                                         GCM_INTERACTIVE=Never \
                                                                                         GIT_ASKPASS= \
-                                                                                        GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
+                                                                                        GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=30 -o ServerAliveCountMax=3" \
                                                                                         run_with_timeout "$GIT_TIMEOUT_SECONDS" \
                                                                                         git \
                                                                                             -c credential.interactive=never \
@@ -228,7 +228,7 @@
                                                                                         GIT_TERMINAL_PROMPT=0 \
                                                                                         GCM_INTERACTIVE=Never \
                                                                                         GIT_ASKPASS= \
-                                                                                        GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
+                                                                                        GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=30 -o ServerAliveCountMax=3" \
                                                                                         run_with_timeout "$GIT_FETCH_TIMEOUT_SECONDS" \
                                                                                         git \
                                                                                             -c credential.interactive=never \

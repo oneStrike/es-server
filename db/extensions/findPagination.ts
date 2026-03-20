@@ -14,28 +14,39 @@ type FindPaginationOrderBy =
 export interface FindPaginationOptions<
   TTable extends AnyPgTable,
   TOmit extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
+  TPick extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
 > {
   where?: SQL
   pageIndex?: number | string
   pageSize?: number | string
   orderBy?: FindPaginationOrderBy
   omit?: TOmit
+  pick?: TPick
 }
+
+type FindPaginationResultItem<
+  TTable extends AnyPgTable,
+  TOmit extends readonly (keyof InferSelectModel<TTable> & string)[],
+  TPick extends readonly (keyof InferSelectModel<TTable> & string)[],
+> = TPick extends []
+  ? Omit<InferSelectModel<TTable>, TOmit[number]>
+  : Pick<InferSelectModel<TTable>, TPick[number]>
 
 export async function findPagination<
   TTable extends AnyPgTable,
   TOmit extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
+  TPick extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
 >(
   db: Db,
   table: TTable,
-  options: FindPaginationOptions<TTable, TOmit> = {},
+  options: FindPaginationOptions<TTable, TOmit, TPick> = {},
 ): Promise<{
-  list: Omit<InferSelectModel<TTable>, TOmit[number]>[]
+  list: FindPaginationResultItem<TTable, TOmit, TPick>[]
   total: number
   pageIndex: number
   pageSize: number
 }> {
-  const { where, pageIndex, pageSize, orderBy, omit } = options
+  const { where, pageIndex, pageSize, orderBy, omit, pick } = options
   const tableAsAny = table as any
 
   const rawPageIndex = Number.isFinite(Number(pageIndex))
@@ -82,14 +93,25 @@ export async function findPagination<
   }
 
   const omittedFields = new Set<string>(omit ?? [])
+  const pickedFields = new Set<string>(pick ?? [])
+  if (omittedFields.size > 0 && pickedFields.size > 0) {
+    throw new Error('不支持pick和omit同时使用')
+  }
+  const hasPick = pickedFields.size > 0
   const tableColumns = (tableAsAny._?.columns ?? {}) as Record<string, unknown>
   const selectedColumns = Object.fromEntries(
-    Object.entries(tableColumns).filter(([key]) => !omittedFields.has(key)),
+    Object.entries(tableColumns).filter(([key]) =>
+      hasPick ? pickedFields.has(key) : !omittedFields.has(key),
+    ),
   )
   const baseQuery =
-    Object.keys(selectedColumns).length > 0
+    !hasPick && Object.keys(selectedColumns).length === 0
+      ? db.select().from(table as AnyPgTable)
+      : Object.keys(selectedColumns).length > 0
       ? db.select(selectedColumns as any).from(table as AnyPgTable)
-      : db.select().from(table as AnyPgTable)
+      : (() => {
+          throw new Error('findPagination options.pick has no valid fields')
+        })()
   const [list, countResult] = await Promise.all([
     baseQuery
       .where(where)
@@ -100,7 +122,7 @@ export async function findPagination<
   ])
 
   return {
-    list: list as Omit<InferSelectModel<TTable>, TOmit[number]>[],
+    list: list as FindPaginationResultItem<TTable, TOmit, TPick>[],
     total: countResult,
     pageIndex: normalizedPageIndex,
     pageSize: normalizedPageSize,
