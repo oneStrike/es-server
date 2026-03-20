@@ -53,10 +53,26 @@ const DICTIONARY_FIXTURES = [
     code: DICTIONARY_CODES.workPublisher,
     description: '作品出版社字典，作品 publisher 字段统一写入对应编码',
     items: [
-      { name: '讲谈社', code: DICTIONARY_ITEMS.workPublisher.kodansha, sortOrder: 1 },
-      { name: '集英社', code: DICTIONARY_ITEMS.workPublisher.shueisha, sortOrder: 2 },
-      { name: 'KADOKAWA', code: DICTIONARY_ITEMS.workPublisher.kadokawa, sortOrder: 3 },
-      { name: '新潮社', code: DICTIONARY_ITEMS.workPublisher.shinchosha, sortOrder: 4 },
+      {
+        name: '讲谈社',
+        code: DICTIONARY_ITEMS.workPublisher.kodansha,
+        sortOrder: 1,
+      },
+      {
+        name: '集英社',
+        code: DICTIONARY_ITEMS.workPublisher.shueisha,
+        sortOrder: 2,
+      },
+      {
+        name: 'KADOKAWA',
+        code: DICTIONARY_ITEMS.workPublisher.kadokawa,
+        sortOrder: 3,
+      },
+      {
+        name: '新潮社',
+        code: DICTIONARY_ITEMS.workPublisher.shinchosha,
+        sortOrder: 4,
+      },
     ],
   },
   {
@@ -64,8 +80,16 @@ const DICTIONARY_FIXTURES = [
     code: DICTIONARY_CODES.workAgeRating,
     description: '作品年龄分级字典',
     items: [
-      { name: '全年龄', code: DICTIONARY_ITEMS.workAgeRating.all, sortOrder: 1 },
-      { name: 'PG-13', code: DICTIONARY_ITEMS.workAgeRating.pg13, sortOrder: 2 },
+      {
+        name: '全年龄',
+        code: DICTIONARY_ITEMS.workAgeRating.all,
+        sortOrder: 1,
+      },
+      {
+        name: 'PG-13',
+        code: DICTIONARY_ITEMS.workAgeRating.pg13,
+        sortOrder: 2,
+      },
       { name: 'R15', code: DICTIONARY_ITEMS.workAgeRating.r15, sortOrder: 3 },
       { name: 'R18', code: DICTIONARY_ITEMS.workAgeRating.r18, sortOrder: 4 },
     ],

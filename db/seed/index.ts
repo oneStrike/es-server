@@ -3,9 +3,15 @@ import { sql } from 'drizzle-orm'
 import { createDbClient, disconnectDbClient, getDatabaseUrl } from './db-client'
 import { seedAdminDomain } from './modules/admin'
 import { seedAppActivityDomain, seedAppCoreDomain } from './modules/app'
-import { seedForumActivityDomain, seedForumReferenceDomain } from './modules/forum'
+import {
+  seedForumActivityDomain,
+  seedForumReferenceDomain,
+} from './modules/forum'
 import { seedMessageDomain } from './modules/message'
-import { seedSystemOperationalData, seedSystemReferenceData } from './modules/system'
+import {
+  seedSystemOperationalData,
+  seedSystemReferenceData,
+} from './modules/system'
 import { seedWorkDomain } from './modules/work'
 
 async function runSeeds() {

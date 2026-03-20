@@ -1,12 +1,12 @@
+import type { Db } from '../../db-client'
 import { eq } from 'drizzle-orm'
 import { AdminUserRoleEnum } from '../../../../libs/platform/src/constant/user.constant'
-import type { Db } from '../../db-client'
 import { adminUser, adminUserToken } from '../../../schema'
 import {
+  createAvatar,
   SEED_ADMIN_USERNAME,
   SEED_PASSWORD_HASH,
   SEED_TIMELINE,
-  createAvatar,
 } from '../../shared'
 
 const ADMIN_FIXTURE = {

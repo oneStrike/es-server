@@ -1,7 +1,10 @@
+import type { Db } from '../../db-client'
 import { and, eq, isNull } from 'drizzle-orm'
 import { WorkSerialStatusEnum } from '../../../../libs/content/src/work/core/work.constant'
-import { WorkViewPermissionEnum, WorkTypeEnum } from '../../../../libs/platform/src/constant/content.constant'
-import type { Db } from '../../db-client'
+import {
+  WorkTypeEnum,
+  WorkViewPermissionEnum,
+} from '../../../../libs/platform/src/constant/content.constant'
 import {
   forumSection,
   forumSectionGroup,
@@ -18,10 +21,10 @@ import {
   workTagRelation,
 } from '../../../schema'
 import {
-  DICTIONARY_ITEMS,
-  SEED_TIMELINE,
   addHours,
   createAvatar,
+  DICTIONARY_ITEMS,
+  SEED_TIMELINE,
 } from '../../shared'
 
 const WORK_SECTION_GROUP_NAME = '作品讨论'
@@ -148,7 +151,8 @@ const WORK_FIXTURES = [
     alias: 'Attack on Titan,進撃の巨人',
     type: WorkTypeEnum.COMIC,
     cover: 'https://static.example.com/works/aot/cover.jpg',
-    description: '围墙、人类与巨人的冲突被一点点翻开，设定和人物弧线都极具层次。',
+    description:
+      '围墙、人类与巨人的冲突被一点点翻开，设定和人物弧线都极具层次。',
     language: DICTIONARY_ITEMS.workLanguage.ja,
     region: DICTIONARY_ITEMS.workRegion.jp,
     ageRating: DICTIONARY_ITEMS.workAgeRating.r15,
@@ -462,7 +466,10 @@ export async function seedWorkDomain(db: Db) {
 
   for (const [index, workFixture] of WORK_FIXTURES.entries()) {
     let section = await db.query.forumSection.findFirst({
-      where: and(eq(forumSection.name, workFixture.name), isNull(forumSection.deletedAt)),
+      where: and(
+        eq(forumSection.name, workFixture.name),
+        isNull(forumSection.deletedAt),
+      ),
     })
 
     const sectionPayload = {
@@ -482,7 +489,10 @@ export async function seedWorkDomain(db: Db) {
     }
 
     if (!section) {
-      ;[section] = await db.insert(forumSection).values(sectionPayload).returning()
+      ;[section] = await db
+        .insert(forumSection)
+        .values(sectionPayload)
+        .returning()
     } else {
       ;[section] = await db
         .update(forumSection)
@@ -492,7 +502,10 @@ export async function seedWorkDomain(db: Db) {
     }
 
     const existingWork = await db.query.work.findFirst({
-      where: and(eq(work.name, workFixture.name), eq(work.type, workFixture.type)),
+      where: and(
+        eq(work.name, workFixture.name),
+        eq(work.type, workFixture.type),
+      ),
     })
 
     const requiredLevelId =
@@ -588,8 +601,14 @@ export async function seedWorkDomain(db: Db) {
       }
     }
 
-    for (const [chapterIndex, chapterFixture] of workFixture.chapters.entries()) {
-      const publishAt = addHours(SEED_TIMELINE.releaseDay, index * 6 + chapterIndex)
+    for (const [
+      chapterIndex,
+      chapterFixture,
+    ] of workFixture.chapters.entries()) {
+      const publishAt = addHours(
+        SEED_TIMELINE.releaseDay,
+        index * 6 + chapterIndex,
+      )
       const existingChapter = await db.query.workChapter.findFirst({
         where: and(
           eq(workChapter.workId, currentWork.id),
@@ -640,7 +659,10 @@ export async function seedWorkDomain(db: Db) {
 
   for (const workFixture of WORK_FIXTURES) {
     const currentWork = await db.query.work.findFirst({
-      where: and(eq(work.name, workFixture.name), eq(work.type, workFixture.type)),
+      where: and(
+        eq(work.name, workFixture.name),
+        eq(work.type, workFixture.type),
+      ),
     })
 
     if (!currentWork) {
@@ -651,7 +673,9 @@ export async function seedWorkDomain(db: Db) {
       const author = await db.query.workAuthor.findFirst({
         where: eq(workAuthor.name, authorName),
       })
-      if (!author) continue
+      if (!author) {
+        continue
+      }
 
       const existingRelation = await db.query.workAuthorRelation.findFirst({
         where: and(
@@ -680,7 +704,9 @@ export async function seedWorkDomain(db: Db) {
       const category = await db.query.workCategory.findFirst({
         where: eq(workCategory.name, categoryName),
       })
-      if (!category) continue
+      if (!category) {
+        continue
+      }
 
       const existingRelation = await db.query.workCategoryRelation.findFirst({
         where: and(
@@ -712,7 +738,9 @@ export async function seedWorkDomain(db: Db) {
       const tag = await db.query.workTag.findFirst({
         where: eq(workTag.name, tagName),
       })
-      if (!tag) continue
+      if (!tag) {
+        continue
+      }
 
       const existingRelation = await db.query.workTagRelation.findFirst({
         where: and(

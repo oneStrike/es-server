@@ -1,3 +1,4 @@
+import type { Db } from '../../db-client'
 import { and, eq } from 'drizzle-orm'
 import {
   ChatConversationMemberRoleEnum,
@@ -13,7 +14,6 @@ import {
   MessageOutboxStatusEnum,
 } from '../../../../libs/message/src/outbox/outbox.constant'
 import { InteractionTargetTypeEnum } from '../../../../libs/platform/src/constant/interaction.constant'
-import type { Db } from '../../db-client'
 import {
   appAnnouncement,
   appUser,
@@ -25,7 +25,7 @@ import {
   userComment,
   userNotification,
 } from '../../../schema'
-import { SEED_ACCOUNTS, SEED_TIMELINE, addMinutes } from '../../shared'
+import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
 export async function seedMessageDomain(db: Db) {
   console.log('🌱 初始化消息域数据...')
@@ -121,9 +121,11 @@ export async function seedMessageDomain(db: Db) {
   const messages = await db.query.chatMessage.findMany({
     where: eq(chatMessage.conversationId, conversation.id),
   })
-  const lastMessage = [...messages].sort((left, right) => {
-    return Number(left.messageSeq - right.messageSeq)
-  }).at(-1)
+  const lastMessage = [...messages]
+    .sort((left, right) => {
+      return Number(left.messageSeq - right.messageSeq)
+    })
+    .at(-1)
 
   if (lastMessage) {
     ;[conversation] = await db
@@ -139,7 +141,7 @@ export async function seedMessageDomain(db: Db) {
   console.log('  ✓ 会话与消息完成')
 
   const messageBySeq = new Map<bigint, (typeof messages)[number]>(
-    messages.map(item => [item.messageSeq, item]),
+    messages.map((item) => [item.messageSeq, item]),
   )
   const memberFixtures = [
     {
@@ -192,7 +194,10 @@ export async function seedMessageDomain(db: Db) {
     where: eq(userComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
   })
   const replyComment = await db.query.userComment.findFirst({
-    where: eq(userComment.content, '而且艾伦和调查兵团的立场差异很早就有预警。'),
+    where: eq(
+      userComment.content,
+      '而且艾伦和调查兵团的立场差异很早就有预警。',
+    ),
   })
 
   const notificationFixtures = [

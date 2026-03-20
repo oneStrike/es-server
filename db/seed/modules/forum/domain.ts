@@ -1,12 +1,18 @@
+import type { Db } from '../../db-client'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ForumUserActionTargetTypeEnum, ForumUserActionTypeEnum } from '../../../../libs/forum/src/action-log/action-log.constant'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../../../../libs/forum/src/action-log/action-log.constant'
+import { ForumModeratorApplicationStatusEnum } from '../../../../libs/forum/src/moderator-application/moderator-application.constant'
 import {
   ALL_FORUM_MODERATOR_PERMISSIONS,
   ForumModeratorRoleTypeEnum,
 } from '../../../../libs/forum/src/moderator/moderator.constant'
-import { ForumModeratorApplicationStatusEnum } from '../../../../libs/forum/src/moderator-application/moderator-application.constant'
-import { AuditRoleEnum, AuditStatusEnum } from '../../../../libs/platform/src/constant/audit.constant'
-import type { Db } from '../../db-client'
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+} from '../../../../libs/platform/src/constant/audit.constant'
 import {
   appUser,
   forumModerator,
@@ -109,7 +115,8 @@ const TOPIC_FIXTURES = [
     sectionName: '白夜行',
     userAccount: SEED_ACCOUNTS.readerB,
     title: '白夜行：你更在意悬疑线还是人物线？',
-    content: '这部作品我二刷之后更能感受到人物关系带来的压迫感，想看看大家的阅读重点。',
+    content:
+      '这部作品我二刷之后更能感受到人物关系带来的压迫感，想看看大家的阅读重点。',
     isPinned: false,
     isFeatured: true,
     tagNames: ['剧情讨论', '推荐安利'],
@@ -168,7 +175,10 @@ export async function seedForumReferenceDomain(db: Db) {
     })
 
     const existing = await db.query.forumSection.findFirst({
-      where: and(eq(forumSection.name, sectionFixture.name), isNull(forumSection.deletedAt)),
+      where: and(
+        eq(forumSection.name, sectionFixture.name),
+        isNull(forumSection.deletedAt),
+      ),
     })
 
     const payload = {
@@ -245,7 +255,10 @@ export async function seedForumActivityDomain(db: Db) {
   })
 
   const discussionSection = await db.query.forumSection.findFirst({
-    where: and(eq(forumSection.name, '创作讨论'), isNull(forumSection.deletedAt)),
+    where: and(
+      eq(forumSection.name, '创作讨论'),
+      isNull(forumSection.deletedAt),
+    ),
   })
   const aotWork = await db.query.work.findFirst({
     where: eq(work.name, '进击的巨人'),
@@ -261,7 +274,10 @@ export async function seedForumActivityDomain(db: Db) {
   }
 
   if (!moderator) {
-    ;[moderator] = await db.insert(forumModerator).values(moderatorPayload).returning()
+    ;[moderator] = await db
+      .insert(forumModerator)
+      .values(moderatorPayload)
+      .returning()
   } else {
     ;[moderator] = await db
       .update(forumModerator)
@@ -271,9 +287,10 @@ export async function seedForumActivityDomain(db: Db) {
   }
   console.log('  ✓ 版主完成')
 
-  for (const sectionId of [discussionSection?.id, aotWork?.forumSectionId].filter(
-    (value): value is number => Boolean(value),
-  )) {
+  for (const sectionId of [
+    discussionSection?.id,
+    aotWork?.forumSectionId,
+  ].filter((value): value is number => Boolean(value))) {
     const existingRelation = await db.query.forumModeratorSection.findFirst({
       where: and(
         eq(forumModeratorSection.moderatorId, moderator.id),
@@ -299,12 +316,13 @@ export async function seedForumActivityDomain(db: Db) {
   console.log('  ✓ 版主管辖板块完成')
 
   if (discussionSection) {
-    const existingApplication = await db.query.forumModeratorApplication.findFirst({
-      where: and(
-        eq(forumModeratorApplication.applicantId, applicantUser.id),
-        eq(forumModeratorApplication.sectionId, discussionSection.id),
-      ),
-    })
+    const existingApplication =
+      await db.query.forumModeratorApplication.findFirst({
+        where: and(
+          eq(forumModeratorApplication.applicantId, applicantUser.id),
+          eq(forumModeratorApplication.sectionId, discussionSection.id),
+        ),
+      })
 
     const applicationPayload = {
       applicantId: applicantUser.id,
@@ -331,7 +349,10 @@ export async function seedForumActivityDomain(db: Db) {
 
   for (const topicFixture of TOPIC_FIXTURES) {
     const section = await db.query.forumSection.findFirst({
-      where: and(eq(forumSection.name, topicFixture.sectionName), isNull(forumSection.deletedAt)),
+      where: and(
+        eq(forumSection.name, topicFixture.sectionName),
+        isNull(forumSection.deletedAt),
+      ),
     })
     const user = await db.query.appUser.findFirst({
       where: eq(appUser.account, topicFixture.userAccount),
@@ -343,7 +364,10 @@ export async function seedForumActivityDomain(db: Db) {
     touchedSectionIds.add(section.id)
 
     const existingTopic = await db.query.forumTopic.findFirst({
-      where: and(eq(forumTopic.title, topicFixture.title), isNull(forumTopic.deletedAt)),
+      where: and(
+        eq(forumTopic.title, topicFixture.title),
+        isNull(forumTopic.deletedAt),
+      ),
     })
 
     let currentTopic = existingTopic
@@ -372,7 +396,10 @@ export async function seedForumActivityDomain(db: Db) {
     }
 
     if (!currentTopic) {
-      ;[currentTopic] = await db.insert(forumTopic).values(topicPayload).returning()
+      ;[currentTopic] = await db
+        .insert(forumTopic)
+        .values(topicPayload)
+        .returning()
     } else {
       ;[currentTopic] = await db
         .update(forumTopic)
@@ -385,7 +412,9 @@ export async function seedForumActivityDomain(db: Db) {
       const tag = await db.query.forumTag.findFirst({
         where: eq(forumTag.name, tagName),
       })
-      if (!tag) continue
+      if (!tag) {
+        continue
+      }
 
       const existingTopicTag = await db.query.forumTopicTag.findFirst({
         where: and(
@@ -433,13 +462,14 @@ export async function seedForumActivityDomain(db: Db) {
   })
 
   if (pinnedTopic) {
-    const existingModeratorLog = await db.query.forumModeratorActionLog.findFirst({
-      where: and(
-        eq(forumModeratorActionLog.moderatorId, moderator.id),
-        eq(forumModeratorActionLog.targetId, pinnedTopic.id),
-        eq(forumModeratorActionLog.actionType, 1),
-      ),
-    })
+    const existingModeratorLog =
+      await db.query.forumModeratorActionLog.findFirst({
+        where: and(
+          eq(forumModeratorActionLog.moderatorId, moderator.id),
+          eq(forumModeratorActionLog.targetId, pinnedTopic.id),
+          eq(forumModeratorActionLog.actionType, 1),
+        ),
+      })
 
     if (!existingModeratorLog) {
       await db.insert(forumModeratorActionLog).values({
@@ -479,7 +509,10 @@ export async function seedForumActivityDomain(db: Db) {
     }
 
     const sectionTopics = await db.query.forumTopic.findMany({
-      where: and(eq(forumTopic.sectionId, sectionId), isNull(forumTopic.deletedAt)),
+      where: and(
+        eq(forumTopic.sectionId, sectionId),
+        isNull(forumTopic.deletedAt),
+      ),
     })
     const lastTopic = [...sectionTopics]
       .sort((a, b) => {
@@ -493,9 +526,15 @@ export async function seedForumActivityDomain(db: Db) {
       .update(forumSection)
       .set({
         topicCount: sectionTopics.length,
-        replyCount: sectionTopics.reduce((sum, item) => sum + item.replyCount, 0),
+        replyCount: sectionTopics.reduce(
+          (sum, item) => sum + item.replyCount,
+          0,
+        ),
         lastTopicId: lastTopic?.id ?? null,
-        lastPostAt: lastTopic?.lastReplyAt ?? lastTopic?.createdAt ?? currentSection.lastPostAt,
+        lastPostAt:
+          lastTopic?.lastReplyAt ??
+          lastTopic?.createdAt ??
+          currentSection.lastPostAt,
       })
       .where(eq(forumSection.id, sectionId))
   }
