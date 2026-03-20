@@ -13,10 +13,8 @@ async function runMigration() {
     process.exit(1)
   }
 
-  // 必须使用数据库直连配置，max: 1 表示只需要一个连接
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 1,
   })
 
   const db = drizzle(pool)
@@ -38,7 +36,11 @@ async function runMigration() {
     const migrationsFolder = resolve(__dirname, 'migration')
     console.log(`📁 迁移文件目录: ${migrationsFolder}`)
 
-    await migrate(db, { migrationsFolder })
+    await migrate(db, { 
+      migrationsFolder,
+      migrationsSchema: 'public',
+      migrationsTable: '__drizzle_migrations__'
+    })
     console.log('✅ 数据库迁移成功！')
   } catch (error) {
     console.error('❌ 数据库迁移失败:', error)
