@@ -1,1 +1,1 @@
-export { seedDictionaries } from './dictionary'
+export { seedSystemOperationalData, seedSystemReferenceData } from './domain'

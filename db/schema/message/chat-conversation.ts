@@ -45,4 +45,8 @@ export const chatConversation = pgTable("chat_conversation", {
      * 会话列表排序索引
      */
     index("chat_conversation_last_message_at_idx").on(table.lastMessageAt.desc()),
+    /**
+     * 最后一条消息索引
+     */
+    index("chat_conversation_last_message_id_idx").on(table.lastMessageId),
 ]);

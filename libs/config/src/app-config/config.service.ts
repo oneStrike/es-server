@@ -1,6 +1,6 @@
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'
 import { UpdateAppConfigInput } from './config.type'
 
@@ -30,7 +30,7 @@ export class AppConfigService {
     const configs = await this.db
       .select()
       .from(this.appConfig)
-      .where(eq(this.appConfig.id, 1))
+      .orderBy(desc(this.appConfig.id))
       .limit(1)
 
     const config = configs[0]
@@ -54,7 +54,7 @@ export class AppConfigService {
     const configs = await this.db
       .select()
       .from(this.appConfig)
-      .where(eq(this.appConfig.id, 1))
+      .orderBy(desc(this.appConfig.id))
       .limit(1)
 
     const existingConfig = configs[0]
@@ -67,7 +67,7 @@ export class AppConfigService {
       this.db
         .update(this.appConfig)
         .set(updateConfigDto)
-        .where(eq(this.appConfig.id, 1)),
+        .where(eq(this.appConfig.id, existingConfig.id)),
     )
 
     return true

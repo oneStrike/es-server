@@ -3,6 +3,11 @@ import * as schema from '../schema/index'
 
 export const messageRelations = defineRelationsPart(schema, r => ({
   chatConversation: {
+    lastMessage: r.one.chatMessage({
+      from: r.chatConversation.lastMessageId,
+      to: r.chatMessage.id,
+      alias: 'ChatConversationLastMessage',
+    }),
     lastSender: r.one.appUser({
       from: r.chatConversation.lastSenderId,
       to: r.appUser.id,
@@ -22,6 +27,11 @@ export const messageRelations = defineRelationsPart(schema, r => ({
     conversation: r.one.chatConversation({
       from: r.chatConversationMember.conversationId,
       to: r.chatConversation.id,
+    }),
+    lastReadMessage: r.one.chatMessage({
+      from: r.chatConversationMember.lastReadMessageId,
+      to: r.chatMessage.id,
+      alias: 'ChatConversationMemberLastReadMessage',
     }),
     user: r.one.appUser({
       from: r.chatConversationMember.userId,

@@ -2,13 +2,14 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from 'drizzle-orm'
 import {
   index,
   integer,
   pgTable,
   smallint,
   timestamp,
-  unique,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -67,14 +68,11 @@ export const userPurchaseRecord = pgTable(
   },
   (table) => [
     /**
-     * 唯一约束：同一用户对同一目标只能有一条成功购买记录
+     * 唯一约束：同一用户对同一目标只允许存在一条成功购买记录
      */
-    unique('user_purchase_record_target_type_target_id_user_id_status_key').on(
-      table.targetType,
-      table.targetId,
-      table.userId,
-      table.status,
-    ),
+    uniqueIndex('user_purchase_record_success_unique_idx')
+      .on(table.targetType, table.targetId, table.userId)
+      .where(sql`${table.status} = 1`),
     /**
      * 目标类型与目标ID联合索引
      */

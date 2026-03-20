@@ -1,1 +1,1 @@
-export { seedAdminAccount } from './admin-account'
+export { seedAdminDomain } from './domain'

@@ -44,7 +44,22 @@
 - Service 方法签名不要直接使用 apps 层 DTO；优先使用 Drizzle 推导类型或模块内 `*.type.ts` 领域类型。
 - 日期时间 Swagger 示例统一使用 ISO 8601。
 
-## 5. Drizzle 规则
+## 5. TypeScript 类型规则
+
+- TypeScript 类型定义规范以 `.trae/rules/TS_TYPE_SPEC.md` 为准。
+- `db/schema` 中的 Drizzle 推导类型与表定义放在同一文件维护，并通过 `@db/schema` 聚合导出复用。
+- Service、resolver、worker 的稳定输入输出优先使用 Drizzle 推导类型或模块内 `*.type.ts` 领域类型。
+- 纯类型依赖统一使用 `import type`。
+- 新增业务领域类型文件默认使用 `*.type.ts`；平台层、基础设施层沿用既有 `*.types.ts` 例外。
+
+## 6. 注释规则
+
+- 注释规范以 `.trae/rules/COMMENT_SPEC.md` 为准。
+- 注释优先说明原因、约束、语义与风险，不逐行翻译代码。
+- Controller、DTO 保持克制；Service、Resolver、Extension、复杂查询、原生 SQL、稳定领域类型按规范补充必要注释。
+- 修改代码时同步修正或删除失真的历史注释，不让错误描述继续保留。
+
+## 7. Drizzle 规则
 
 - Drizzle 规范以 `.trae/rules/drizzle-guidelines.md` 为准。
 - 只注入 `DrizzleService`，通过 `drizzle.db`、`drizzle.schema`、`drizzle.ext` 工作。
@@ -55,32 +70,35 @@
 - 不新增 Prisma 遗留写法。
 - 原生 SQL 只允许 `sql\`...\`` / `db.execute`；`sql.raw()` 只能注入白名单常量。
 
-## 6. 当前实现约束
+## 8. 当前实现约束
 
 - 全局 HTTP 前缀是 `/api`，controller 路径中不要重复写 `/api`。
 - `findPagination` 当前兼容 `pageIndex` 0-based 与 1-based 输入；新增代码直接复用 `PageDto` 与 `findPagination`，不要在业务层自行换算页码。
 - admin-api 默认受保护，`@Public()` 只能用于认证或明确公开能力。
 - app-api 除 WebSocket 相关能力外，仍按普通 HTTP controller 组织。
 
-## 7. 工作方式
+## 9. 工作方式
 
-1. 先定位修改所在层：controller、DTO、service、resolver、schema、bootstrap。
-2. 再读取对应规范：
+1. 先定位修改所在层：controller、DTO、type、service、resolver、schema、bootstrap。
+2. 先查看 `.trae/rules/RULE_INDEX.md`，再读取对应规范：
    - Controller：`.trae/rules/CONTROLLER_SPEC.md`
    - DTO：`.trae/rules/DTO_SPEC.md`
+   - TypeScript 类型：`.trae/rules/TS_TYPE_SPEC.md`
+   - 注释：`.trae/rules/COMMENT_SPEC.md`
    - Drizzle：`.trae/rules/drizzle-guidelines.md`
 3. 改代码前先查相邻模块的现有实现，优先复用仓库内既有模式。
 4. 仅在现有抽象不满足时新增类型、DTO 或 helper。
 
-## 8. 验证命令
+## 10. 验证命令
 
 - 全量类型检查：`pnpm type-check`
 - 根 tsconfig 检查：`pnpm exec tsc -p tsconfig.json --noEmit`
 - admin-api 检查：`pnpm exec tsc -p apps/admin-api/tsconfig.app.json --noEmit`
 - app-api 检查：`pnpm exec tsc -p apps/app-api/tsconfig.app.json --noEmit`
 
-## 9. 交付要求
+## 11. 交付要求
 
 - 说明修改影响的层与模块。
 - 如果发现“规范与现状”冲突，明确写出冲突点，而不是默默扩散不一致。
+- 涉及逻辑变更时，同步说明是否修正了相关注释或存在待后续清理的存量注释。
 - 除非用户明确要求，不顺手做大范围风格迁移或历史代码清理。

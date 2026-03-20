@@ -1,3 +1,1 @@
-export { seedForumSectionGroups } from './section-group'
-export { seedForumSections } from './section'
-export { seedForumTopics } from './topic'
+export { seedForumActivityDomain, seedForumReferenceDomain } from './domain'

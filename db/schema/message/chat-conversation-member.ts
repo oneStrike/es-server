@@ -58,6 +58,10 @@ export const chatConversationMember = pgTable("chat_conversation_member", {
      */
     index("chat_conversation_member_conversation_id_idx").on(table.conversationId),
     /**
+     * 最后已读消息索引
+     */
+    index("chat_conversation_member_last_read_message_id_idx").on(table.lastReadMessageId),
+    /**
      * 未读会话查询索引
      * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
      */
