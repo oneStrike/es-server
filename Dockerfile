@@ -31,7 +31,9 @@ RUN pnpm exec cross-env NODE_ENV=production nest build ${APP_TYPE}-api --webpack
 
 FROM install AS runtime-deps
 
-RUN pnpm --filter . deploy --legacy --prod /opt/runtime-deps
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm --filter . deploy --legacy --prod /opt/runtime-deps
 
 FROM base AS migrator
 
