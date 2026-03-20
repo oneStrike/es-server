@@ -1,22 +1,21 @@
 #!/bin/bash
 
-# Auto Deploy Script for @akaiito/server-nestjs
-# Function: Pull code, install deps, build images, and deploy using docker-compose
+# Multi-Project Auto Deploy Script
+# Supports: es-admin, es-app-v2, es-server
+# Function: Pull code, build images, and deploy using docker-compose
+#
+# Directory structure on server:
+# /path/to/deploy/
+# ├── auto-deploy.sh       (this script)
+# ├── docker-compose.yml
+# ├── .env
+# ├── es-admin/
+# ├── es-app-v2/
+# └── es-server/
 
-# Get script directory
+# Get script directory (root deployment directory)
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-# Project directory configuration
-# In production: script and project are siblings (deploy-scripts/auto-deploy.sh and es-server/)
-# In development: script is inside project (scripts/auto-deploy.sh)
-if [ -d "${SCRIPT_DIR}/../es-server" ]; then
-    PROJECT_ROOT="${SCRIPT_DIR}/../es-server"
-elif [ -f "${SCRIPT_DIR}/../package.json" ]; then
-    PROJECT_ROOT="${SCRIPT_DIR}/.."
-else
-    echo "ERROR: Cannot find project directory. Please ensure the project folder is named 'es-server' and is located alongside the script."
-    exit 1
-fi
+ROOT_DIR="${SCRIPT_DIR}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -24,56 +23,408 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-# Helper Functions
-log() { echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $1${NC}"; }
-warn() { echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARN: $1${NC}"; }
-error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"; }
+# Current project context
+CURRENT_PROJECT=""
 
+# Helper Functions - with project prefix
+log() { 
+    local prefix=""
+    [ -n "$CURRENT_PROJECT" ] && prefix="【${CURRENT_PROJECT}】"
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: ${prefix}$1${NC}"; 
+}
+warn() { 
+    local prefix=""
+    [ -n "$CURRENT_PROJECT" ] && prefix="【${CURRENT_PROJECT}】"
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARN: ${prefix}$1${NC}"; 
+}
+error() { 
+    local prefix=""
+    [ -n "$CURRENT_PROJECT" ] && prefix="【${CURRENT_PROJECT}】"
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: ${prefix}$1${NC}"; 
+}
 
-# Git Stash Helpers
-STASH_NEEDED=false
+# Git retry configuration
+readonly MAX_RETRIES=5
+readonly GIT_TIMEOUT_SECONDS="${GIT_TIMEOUT_SECONDS:-90}"
+readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-10}}"
+readonly GIT_CONNECT_TIMEOUT_SECONDS="${GIT_CONNECT_TIMEOUT_SECONDS:-15}"
+readonly GIT_LOW_SPEED_LIMIT="${GIT_LOW_SPEED_LIMIT:-1024}"
+readonly GIT_LOW_SPEED_TIME="${GIT_LOW_SPEED_TIME:-30}"
+
+# Run command with hard timeout and kill the whole process group on timeout.
+# Returns 124 when timeout is reached.
+run_with_timeout() {
+    local timeout_seconds="$1"
+    shift
+
+    if ! [[ "$timeout_seconds" =~ ^[0-9]+$ ]] || [ "$timeout_seconds" -le 0 ]; then
+        "$@"
+        return $?
+    fi
+
+    # Preferred path: manual watchdog + process-group termination.
+    # It guarantees cleanup before the next retry starts.
+    if command -v setsid > /dev/null 2>&1; then
+        local timeout_flag
+        local cmd_pid
+        local watchdog_pid
+        local exit_code
+        timeout_flag="$(mktemp 2>/dev/null || echo "/tmp/auto-deploy-timeout.$$.$RANDOM")"
+        : > "$timeout_flag"
+
+        setsid "$@" &
+        cmd_pid=$!
+
+        (
+            sleep "$timeout_seconds"
+            if kill -0 "$cmd_pid" 2>/dev/null; then
+                echo "timeout" > "$timeout_flag"
+                kill -TERM -- "-$cmd_pid" 2>/dev/null || true
+                sleep 5
+                kill -KILL -- "-$cmd_pid" 2>/dev/null || true
+            fi
+        ) &
+        watchdog_pid=$!
+
+        wait "$cmd_pid"
+        exit_code=$?
+
+        kill "$watchdog_pid" 2>/dev/null || true
+        wait "$watchdog_pid" 2>/dev/null || true
+
+        if [ -s "$timeout_flag" ]; then
+            rm -f "$timeout_flag"
+            return 124
+        fi
+
+        rm -f "$timeout_flag"
+        return "$exit_code"
+    fi
+
+    if command -v timeout > /dev/null 2>&1; then
+        timeout -k 5s "${timeout_seconds}s" "$@"
+        return $?
+    fi
+
+    "$@"
+}
+
+# Git retry function - executes git command with retry logic
+# Usage: git_with_retry <git_args...>
+git_with_retry() {
+    local attempt=1
+    local git_cmd="git $*"
+
+    log "执行: $git_cmd"
+
+    while [ $attempt -le $MAX_RETRIES ]; do
+        if [ $attempt -gt 1 ]; then
+            warn "第 $attempt 次重试: $git_cmd"
+        fi
+
+        # 捕获输出和错误
+        local output
+        local exit_code
+        output=$(
+            GIT_TERMINAL_PROMPT=0 \
+            GCM_INTERACTIVE=Never \
+            GIT_ASKPASS= \
+            GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
+            run_with_timeout "$GIT_TIMEOUT_SECONDS" \
+            git \
+                -c credential.interactive=never \
+                -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
+                -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
+                "$@" 2>&1
+        )
+        exit_code=$?
+
+        if [ $exit_code -eq 0 ]; then
+            if [ -n "$output" ]; then
+                log "输出: $output"
+            fi
+            return 0
+        else
+            if [ $exit_code -eq 124 ]; then
+                error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
+            else
+                error "执行失败 (退出码: $exit_code)"
+            fi
+            if [ -n "$output" ]; then
+                error "错误信息: $output"
+            fi
+        fi
+
+        if [ $attempt -lt $MAX_RETRIES ]; then
+            warn "等待 1 秒后重试..."
+            sleep 1
+        fi
+        attempt=$((attempt + 1))
+    done
+
+    error "$git_cmd 在 $MAX_RETRIES 次尝试后仍然失败"
+    return 1
+}
+
+# Dedicated policy for: git fetch origin <branch>
+# If it runs longer than 10s, kill it and retry forever until success.
+git_fetch_branch_until_success() {
+    local branch="$1"
+    local attempt=1
+    local git_cmd="git fetch origin ${branch}"
+
+    log "执行: $git_cmd"
+
+    while true; do
+        if [ $attempt -gt 1 ]; then
+            warn "Retry #${attempt}: $git_cmd"
+        fi
+
+        local output
+        local exit_code
+        output=$(
+            GIT_TERMINAL_PROMPT=0 \
+            GCM_INTERACTIVE=Never \
+            GIT_ASKPASS= \
+            GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=${GIT_CONNECT_TIMEOUT_SECONDS} -o ServerAliveInterval=10 -o ServerAliveCountMax=3" \
+            run_with_timeout "$GIT_FETCH_TIMEOUT_SECONDS" \
+            git \
+                -c credential.interactive=never \
+                -c http.lowSpeedLimit="${GIT_LOW_SPEED_LIMIT}" \
+                -c http.lowSpeedTime="${GIT_LOW_SPEED_TIME}" \
+                fetch origin "${branch}" 2>&1
+        )
+        exit_code=$?
+
+        if [ $exit_code -eq 0 ]; then
+            if [ -n "$output" ]; then
+                log "输出: $output"
+            fi
+            return 0
+        fi
+
+        if [ $exit_code -eq 124 ]; then
+            error "Timed out (${GIT_FETCH_TIMEOUT_SECONDS}s), killed and retrying"
+        else
+            error "执行失败 (退出码: $exit_code)"
+        fi
+        if [ -n "$output" ]; then
+            error "错误信息: $output"
+        fi
+
+        warn "Retrying in 1 second..."
+        sleep 1
+        attempt=$((attempt + 1))
+    done
+}
+
+# Git Stash Helpers - Per-project stash state using associative array
+declare -A STASH_NEEDED
+
+# Cleanup function - restores stash for current directory (quiet)
+cleanup_stash() {
+    local dir=$(pwd)
+    if [ "${STASH_NEEDED[$dir]:-false}" = true ]; then
+        git stash pop 2>/dev/null || true
+        STASH_NEEDED[$dir]=false
+    fi
+}
 
 stash_changes() {
+    local dir=$(pwd)
     if [[ -n $(git status -s) ]]; then
         warn "检测到本地修改，正在暂存..."
-        git stash save "Auto-deploy stash $(date +'%Y-%m-%d %H:%M:%S')"
-        STASH_NEEDED=true
+        git stash save "Auto-deploy stash $(date +'%Y-%m-%d %H:%M:%S')" 2>/dev/null
+        STASH_NEEDED[$dir]=true
+    else
+        STASH_NEEDED[$dir]=false
     fi
 }
 
-pop_stash() {
-    if [ "$STASH_NEEDED" = true ]; then
-        warn "正在恢复暂存的修改..."
-        git stash pop
-    fi
-}
+# Docker build helper function (full output)
+# Usage: docker_build <dockerfile_path> <build_args> <tags> <project_name>
+docker_build() {
+    local dockerfile_path="$1"
+    local build_args="$2"
+    local tags="$3"
+    local build_name="$4"
 
-# Docker Build Helper
-build_image() {
-    local name="$1"
-    local dockerfile="$2"
-    local image_name="$3"
-    local version="$4"
-    local cache_tag="$5"
-    local app_type="$6"
+    local cache_args=""
+    [ "$FORCE_DEPLOY" = "true" ] && cache_args="--no-cache"
 
-    log "构建 $name ($image_name:$version)..."
-    if docker build -f "$dockerfile" \
-        --cache-from "$image_name:$cache_tag" \
-        --build-arg APP_TYPE="$app_type" \
-        -t "$image_name:$version" \
-        -t "$image_name:$cache_tag" \
+    # shellcheck disable=SC2086
+    if docker build -f "$dockerfile_path" \
+        $build_args \
+        $cache_args \
+        $tags \
         . ; then
-        log "$name 镜像构建成功。"
         return 0
     else
-        error "$name 构建失败。"
         return 1
     fi
 }
 
-# Main Execution
+# Deploy single project function
+deploy_project() {
+    local project_dir="$1"
+    local project_name="$2"
 
+    # Set current project context for logging
+    CURRENT_PROJECT="$project_name"
+
+    if [ ! -d "$project_dir" ]; then
+        error "项目目录不存在: $project_dir"
+        CURRENT_PROJECT=""
+        return 1
+    fi
+
+    pushd "$project_dir" > /dev/null || { error "无法切换到项目目录"; CURRENT_PROJECT=""; return 1; }
+
+    # Set trap to ensure stash is restored on exit
+    trap 'cleanup_stash; popd > /dev/null; CURRENT_PROJECT=""' EXIT
+
+    stash_changes
+
+    if ! git_with_retry symbolic-ref --short HEAD; then
+        return 1
+    fi
+    local CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
+
+    if ! git_fetch_branch_until_success "${CURRENT_BRANCH}"; then
+        return 1
+    fi
+
+    local LOCAL_HASH=$(git rev-parse HEAD)
+    local REMOTE_HASH=$(git rev-parse "origin/${CURRENT_BRANCH}")
+
+    if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+        log "发现新版本，正在拉取 [$CURRENT_BRANCH]..."
+        if ! git_with_retry pull origin "${CURRENT_BRANCH}"; then
+            error "Git pull 失败"
+            return 1
+        fi
+    else
+        if [ "$FORCE_DEPLOY" = "true" ]; then
+            log "强制部署 [$CURRENT_BRANCH]"
+        else
+            log "已是最新，跳过"
+            return 0
+        fi
+    fi
+
+    # 使用 es-server 的统一版本号
+    local VERSION="${SERVER_VERSION}"
+
+    export DOCKER_BUILDKIT=1
+
+    # Build based on project type
+    local BUILD_SUCCESS=false
+    case "$project_name" in
+        es-admin)
+            log "构建镜像 (v$VERSION)..."
+            local DOCKERFILE_PATH="apps/web-ele/Dockerfile"
+            if [ ! -f "$DOCKERFILE_PATH" ]; then
+                error "找不到 Dockerfile"
+                return 1
+            fi
+            # 匹配 docker-compose.yml: es-admin-web-ele:${SERVER_VERSION}
+            if docker_build "$DOCKERFILE_PATH" "" "-t es-admin-web-ele:$VERSION" "es-admin"; then
+                BUILD_SUCCESS=true
+            else
+                error "镜像构建失败"
+                return 1
+            fi
+            ;;
+
+        es-app-v2)
+            if [ -f "Dockerfile" ]; then
+                log "构建镜像 (v$VERSION)..."
+                # 匹配 docker-compose.yml: es-app-web:${SERVER_VERSION}
+                if ! docker_build "./Dockerfile" "" "-t es-app-web:$VERSION" "$project_name"; then
+                    error "镜像构建失败"
+                    return 1
+                fi
+                BUILD_SUCCESS=true
+            else
+                warn "未找到 Dockerfile"
+                BUILD_SUCCESS=true
+            fi
+            ;;
+
+        es-server)
+            log "构建镜像 (v$VERSION)..."
+            BUILD_SUCCESS=true
+            # 匹配 docker-compose.yml: es/admin/server:${SERVER_VERSION} 和 es/app/server:${SERVER_VERSION}
+            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=admin" "-t es/admin/server:$VERSION" "admin-api"; then
+                error "admin-api 构建失败"
+                return 1
+            fi
+            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=app" "-t es/app/server:$VERSION" "app-api"; then
+                error "app-api 构建失败"
+                return 1
+            fi
+            ;;
+
+        *)
+            if [ -f "Dockerfile" ]; then
+                log "构建镜像 (v$VERSION)..."
+                local IMAGE_NAME="es/${project_name,,}"
+                if ! docker_build "./Dockerfile" "" "-t $IMAGE_NAME:$VERSION" "$project_name"; then
+                    error "镜像构建失败"
+                    return 1
+                fi
+                BUILD_SUCCESS=true
+            else
+                warn "未找到 Dockerfile"
+                BUILD_SUCCESS=true
+            fi
+            ;;
+    esac
+
+    popd > /dev/null
+    trap - EXIT
+    pushd "$ROOT_DIR" > /dev/null || { error "无法切换到根目录"; return 1; }
+
+    local SERVICE_NAME=""
+    case "$project_name" in
+        es-admin)   SERVICE_NAME="admin" ;;
+        es-app-v2)  SERVICE_NAME="app" ;;
+        es-server)  SERVICE_NAME="app-server admin-server migrator" ;;
+    esac
+
+    if [ -n "$SERVICE_NAME" ]; then
+        log "部署服务..."
+
+        if [ "$project_name" = "es-server" ]; then
+            # admin-server 和 app-server 都执行 down 和 up
+            log "重启 admin-server..."
+            docker compose down admin-server 2>/dev/null || true
+            docker compose up -d admin-server --remove-orphans || { error "admin-server 启动失败"; popd > /dev/null; return 1; }
+
+            log "重启 app-server..."
+            docker compose down app-server 2>/dev/null || true
+            docker compose up -d app-server --remove-orphans || { error "app-server 启动失败"; popd > /dev/null; return 1; }
+        else
+            # 其他项目也使用 down + up 确保新镜像生效
+            # shellcheck disable=SC2086
+            docker compose down $SERVICE_NAME 2>/dev/null || true
+            if docker compose up -d --remove-orphans $SERVICE_NAME; then
+                log "部署成功"
+            else
+                error "部署失败"
+                popd > /dev/null
+                return 1
+            fi
+        fi
+    fi
+
+    popd > /dev/null
+    CURRENT_PROJECT=""
+
+    return 0
+}
+
+# Main Execution
 FORCE_DEPLOY=false
 
 # Parse arguments
@@ -85,181 +436,52 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-cd "${PROJECT_ROOT}" || { error "切换到项目根目录失败"; exit 1; }
+log "=== 多项目自动部署脚本启动 ==="
 
-# 1. Check Environment
-log "正在检查环境..."
-if [ -f .env ]; then
-    log "加载 .env 环境变量..."
+# 读取 es-server 的版本号作为统一版本
+SERVER_VERSION="0.0.2"
+if [ -f "${ROOT_DIR}/es-server/package.json" ]; then
+    SERVER_VERSION=$(grep -m1 '"version":' "${ROOT_DIR}/es-server/package.json" | awk -F: '{ print $2 }' | sed 's/[", ]//g')
+fi
+log "统一版本号: v${SERVER_VERSION}"
+
+if [ -f "${ROOT_DIR}/.env" ]; then
     set -a
-    # shellcheck disable=SC1091
-    source .env
+    source "${ROOT_DIR}/.env" 2>/dev/null
     set +a
-else
-    warn "未找到 .env 文件，将使用默认环境变量或系统环境变量。"
 fi
 
 if ! command -v docker &> /dev/null; then
-    error "未找到 Docker 命令。"
+    error "未找到 Docker 命令"
     exit 1
 fi
 
 if ! docker info > /dev/null 2>&1; then
-    error "Docker 未运行。请启动 Docker。"
+    error "Docker 未运行"
     exit 1
 fi
 
-# 2. Git Operations
-log "开始 Git 操作..."
-stash_changes
-
-CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
-log "当前分支: ${CURRENT_BRANCH}"
-
-log "正在检查远程更新..."
-git fetch origin "${CURRENT_BRANCH}"
-LOCAL_HASH=$(git rev-parse HEAD)
-REMOTE_HASH=$(git rev-parse "origin/${CURRENT_BRANCH}")
-CHANGED_FILES=$(git diff --name-only "${LOCAL_HASH}" "${REMOTE_HASH}" 2>/dev/null || true)
-
-if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
-    log "发现新版本，正在拉取..."
-    if ! git pull origin "${CURRENT_BRANCH}"; then
-        error "Git pull 失败。"
-        pop_stash
-        exit 1
-    fi
-else
-    log "代码已是最新，无需部署。"
-    if [ "$FORCE_DEPLOY" = "true" ]; then
-        log "强制部署模式开启，继续执行..."
-    else
-        pop_stash
-        exit 0
-    fi
-fi
-
-# 3. Version
-if [ -f "package.json" ]; then
-    VERSION=$(grep -m1 '"version":' package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
-else
-    VERSION="latest"
-fi
-log "项目版本: ${VERSION}"
-
-
-# 4. Build Images
-log "开始构建 Docker 镜像..."
-
-NEED_ADMIN=false
-NEED_APP=false
-NEED_MIGRATOR=false
-if [ "$FORCE_DEPLOY" = "true" ]; then
-    log "强制部署模式：构建所有镜像"
-    NEED_ADMIN=true
-    NEED_APP=true
-    NEED_MIGRATOR=true
-elif echo "${CHANGED_FILES}" | grep -Eq '^(libs/|prisma/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|tsconfig(\.|$)|tsconfig\.build\.json$|nest-cli\.json$|webpack\.config\.js$)'; then
-    NEED_ADMIN=true
-    NEED_APP=true
-    NEED_MIGRATOR=true
-else
-    if echo "${CHANGED_FILES}" | grep -Eq '^apps/admin-api/'; then NEED_ADMIN=true; fi
-    if echo "${CHANGED_FILES}" | grep -Eq '^apps/app-api/'; then NEED_APP=true; fi
-fi
-
-if [ "${NEED_ADMIN}" != "true" ] && [ "${NEED_APP}" != "true" ] && [ "${NEED_MIGRATOR}" != "true" ]; then
-    log "代码更新不影响镜像构建，跳过构建。"
-    pop_stash
-    exit 0
-fi
-
-export DOCKER_BUILDKIT=1
-ADMIN_IMAGE="es/admin/server"
-APP_IMAGE="es/app/server"
-CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
-ROOT_DOCKERFILE="./Dockerfile"  # 使用根目录的统一Dockerfile
-
-log "当前工作目录: $(pwd)"
-if [ -f "${ROOT_DOCKERFILE}" ]; then
-    log "找到 Dockerfile: ${ROOT_DOCKERFILE}"
-else
-    error "未找到 Dockerfile: ${ROOT_DOCKERFILE}"
-    ls -la
+if [ ! -f "${ROOT_DIR}/docker-compose.yml" ]; then
+    error "未找到 docker-compose.yml"
     exit 1
 fi
 
-ADMIN_PID=""
-APP_PID=""
-MIGRATOR_PID=""
-FAIL=0
+# Projects to deploy (in order)
+PROJECTS=("es-admin" "es-app-v2" "es-server")
+FAILURES=0
 
-if [ "${NEED_ADMIN}" = "true" ]; then
-    build_image "Admin Server" "${ROOT_DOCKERFILE}" "${ADMIN_IMAGE}" "${VERSION}" "${CACHE_TAG}" "admin" &
-    ADMIN_PID=$!
-fi
-
-if [ "${NEED_APP}" = "true" ]; then
-    build_image "App Server" "${ROOT_DOCKERFILE}" "${APP_IMAGE}" "${VERSION}" "${CACHE_TAG}" "app" &
-    APP_PID=$!
-fi
-
-if [ "${NEED_MIGRATOR}" = "true" ]; then
-    build_image "Migrator" "${ROOT_DOCKERFILE}" "${APP_IMAGE}" "${VERSION}" "${CACHE_TAG}" "app" &
-    MIGRATOR_PID=$!
-fi
-
-# Wait for builds
-if [ -n "${ADMIN_PID}" ]; then
-    wait "${ADMIN_PID}" || FAIL=1
-fi
-if [ -n "${APP_PID}" ]; then
-    wait "${APP_PID}" || FAIL=1
-fi
-if [ -n "${MIGRATOR_PID}" ]; then
-    wait "${MIGRATOR_PID}" || FAIL=1
-fi
-
-if [ "${FAIL}" -ne 0 ]; then
-    error "有一个或多个镜像构建失败，终止部署。"
-    exit 1
-fi
-
-log "所有镜像构建完成。"
-
-# 5. Deploy Services
-DEPLOY_TARGETS=""
-if [ "${NEED_ADMIN}" = "true" ]; then
-    DEPLOY_TARGETS="${DEPLOY_TARGETS} admin-server"
-fi
-if [ "${NEED_APP}" = "true" ]; then
-    DEPLOY_TARGETS="${DEPLOY_TARGETS} app-server"
-fi
-if [ "${NEED_MIGRATOR}" = "true" ]; then
-    DEPLOY_TARGETS="${DEPLOY_TARGETS} migrator"
-fi
-
-DEPLOY_TARGETS=$(echo "${DEPLOY_TARGETS}" | xargs)
-
-if [ -n "${DEPLOY_TARGETS}" ]; then
-    log "正在部署变更的服务: ${DEPLOY_TARGETS} (及其依赖)..."
-    # shellcheck disable=SC2086
-    if docker compose up -d --remove-orphans ${DEPLOY_TARGETS}; then
-        log "服务部署成功！"
-    else
-        error "服务部署失败，请检查 docker compose 日志。"
-        exit 1
+for PROJECT in "${PROJECTS[@]}"; do
+    PROJECT_DIR="${ROOT_DIR}/${PROJECT}"
+    if ! deploy_project "$PROJECT_DIR" "$PROJECT"; then
+        FAILURES=$((FAILURES + 1))
     fi
+done
+
+echo ""
+if [ $FAILURES -eq 0 ]; then
+    log "✅ 所有项目部署成功"
 else
-    log "没有服务需要部署。"
+    error "❌ $FAILURES 个项目部署失败"
 fi
 
-# 6. Cleanup & Post-Deployment
-# log "正在清理无用镜像..."
-# docker image prune -f
-
-pop_stash
-
-log "所有操作完成。"
-log "如需查看日志，请运行: docker compose logs -f"
-exit 0
+exit $FAILURES
