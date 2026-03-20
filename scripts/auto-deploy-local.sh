@@ -161,11 +161,11 @@ build_project() {
     es-server)
       [ -f "${project_dir}/Dockerfile" ] || { error "找不到 Dockerfile"; return 1; }
       log "构建镜像 (v$version)..."
-      docker_build "$project_dir" "./Dockerfile" --build-arg APP_TYPE=admin -t "es/admin/server:$version" || {
+      docker_build "$project_dir" "./Dockerfile" --target runtime --build-arg APP_TYPE=admin -t "es/admin/server:$version" || {
         error "admin-api 构建失败"
         return 1
       }
-      docker_build "$project_dir" "./Dockerfile" --build-arg APP_TYPE=app -t "es/app/server:$version" || {
+      docker_build "$project_dir" "./Dockerfile" --target runtime --build-arg APP_TYPE=app -t "es/app/server:$version" || {
         error "app-api 构建失败"
         return 1
       }

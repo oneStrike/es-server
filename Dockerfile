@@ -33,6 +33,29 @@ FROM install AS runtime-deps
 
 RUN pnpm --filter . deploy --legacy --prod /opt/runtime-deps
 
+FROM base AS migrator
+
+ENV NODE_ENV=production \
+    TZ="Asia/Shanghai"
+
+WORKDIR /app
+
+RUN apk add --no-cache dumb-init tzdata && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+COPY --from=install --chown=nestjs:nodejs /app/package.json ./package.json
+COPY --from=install --chown=nestjs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=install --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
+COPY --from=install --chown=nestjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=install --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=install --chown=nestjs:nodejs /app/db ./db
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+USER nestjs
+
+CMD ["pnpm", "db:migrate"]
+
 FROM node:24-alpine AS runtime
 
 ARG APP_TYPE=admin
@@ -63,26 +86,3 @@ ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
 CMD ["node", "main.js"]
-
-FROM base AS migrator
-
-ENV NODE_ENV=production \
-    TZ="Asia/Shanghai"
-
-WORKDIR /app
-
-RUN apk add --no-cache dumb-init tzdata && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
-
-COPY --from=install --chown=nestjs:nodejs /app/package.json ./package.json
-COPY --from=install --chown=nestjs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=install --chown=nestjs:nodejs /app/tsconfig.json ./tsconfig.json
-COPY --from=install --chown=nestjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=install --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=install --chown=nestjs:nodejs /app/db ./db
-
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-USER nestjs
-
-CMD ["pnpm", "db:migrate"]

@@ -213,8 +213,8 @@ build_project() {
       ;;
     es-server)
       log "构建镜像 (v$version)..."
-      docker_build "./Dockerfile" --build-arg APP_TYPE=admin -t "es/admin/server:$version" || { error "admin-api 构建失败"; return 1; }
-      docker_build "./Dockerfile" --build-arg APP_TYPE=app -t "es/app/server:$version" || { error "app-api 构建失败"; return 1; }
+      docker_build "./Dockerfile" --target runtime --build-arg APP_TYPE=admin -t "es/admin/server:$version" || { error "admin-api 构建失败"; return 1; }
+      docker_build "./Dockerfile" --target runtime --build-arg APP_TYPE=app -t "es/app/server:$version" || { error "app-api 构建失败"; return 1; }
       docker_build "./Dockerfile" --target migrator -t "es/server-migrator:$version" || { error "migrator 构建失败"; return 1; }
       ;;
   esac
