@@ -27,7 +27,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx db/seed/index.ts",
     "db:push": "drizzle-kit push --force",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:migrate:prod": "bun db/migrate.ts"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.4",
