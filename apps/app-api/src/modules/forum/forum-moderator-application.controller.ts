@@ -45,7 +45,7 @@ export class ForumModeratorApplicationController {
   @Post('create')
   @ApiDoc({
     summary: '提交版主申请',
-    model: ForumModeratorApplicationDto,
+    model: Boolean,
   })
   async create(
     @Body() body: CreateForumModeratorApplicationDto,
@@ -61,7 +61,7 @@ export class ForumModeratorApplicationController {
   @Post('delete')
   @ApiDoc({
     summary: '删除我的版主申请',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
     return this.forumModeratorApplicationService.deleteMyApplication(

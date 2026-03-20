@@ -1,36 +1,12 @@
-import { BaseForumTagDto } from '@libs/forum'
-import {
-  ArrayProperty,
-  DateProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
+import { BaseForumTagDto, BaseForumTopicDto } from '@libs/forum'
+import { ArrayProperty } from '@libs/platform/decorators'
+import { PickType } from '@nestjs/swagger'
 
-export class ForumTagTopicSummaryDto {
-  @NumberProperty({
-    description: '主题ID',
-    example: 1,
-    required: true,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '主题标题',
-    example: '如何统一 controller 路由规范',
-    required: true,
-    validation: false,
-  })
-  title!: string
-
-  @DateProperty({
-    description: '主题创建时间',
-    example: '2026-03-19T00:00:00.000Z',
-    required: true,
-    validation: false,
-  })
-  createdAt!: Date
-}
+export class ForumTagTopicSummaryDto extends PickType(BaseForumTopicDto, [
+  'id',
+  'title',
+  'createdAt',
+] as const) {}
 
 export class ForumTagDetailResponseDto extends BaseForumTagDto {
   @ArrayProperty({

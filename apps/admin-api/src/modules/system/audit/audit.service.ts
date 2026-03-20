@@ -9,11 +9,11 @@ import {
   normalizeAuditActionType,
   resolveAuditActionTypeSearchTerms,
 } from './audit.helpers'
-import {
-  AuditPageRequestDto,
-  CreateRequestLogDto,
-  CreateRequestLogSimpleDto,
-} from './dto/audit.dto'
+import type {
+  AuditPageQueryInput,
+  CreateRequestLogInput,
+  CreateRequestLogSimpleInput,
+} from './audit.type'
 
 /**
  * 审计日志服务
@@ -34,7 +34,7 @@ export class AuditService {
   /**
    * 创建请求日志
    */
-  async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
+  async createRequestLog(createDto: CreateRequestLogInput, req: FastifyRequest) {
     const normalizedActionType = normalizeAuditActionType(createDto.actionType)
 
     // 处理JSON字段的转换
@@ -61,7 +61,7 @@ export class AuditService {
    */
   private async createSuccessRequestLog(
     actionType: AuditActionTypeEnum,
-    createDto: CreateRequestLogSimpleDto,
+    createDto: CreateRequestLogSimpleInput,
     req: FastifyRequest,
   ) {
     return this.createRequestLog(
@@ -94,7 +94,7 @@ export class AuditService {
    * @param queryDto 分页查询参数
    * @returns 分页结果
    */
-  async getAuditPage(queryDto: AuditPageRequestDto) {
+  async getAuditPage(queryDto: AuditPageQueryInput) {
     const {
       userId,
       username,

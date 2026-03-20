@@ -36,3 +36,11 @@ export interface AppPageQueryInput {
   pageIndex?: number
   pageSize?: number
 }
+
+/**
+ * 页面批量删除入参。
+ * - 用于按 id 集合删除页面配置
+ */
+export interface BatchDeleteAppPageInput {
+  ids: number[]
+}

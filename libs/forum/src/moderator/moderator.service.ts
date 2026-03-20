@@ -490,7 +490,7 @@ export class ForumModeratorService {
 
     const scope = await this.normalizeScope(input, { isCreate: true })
 
-    const [created] = await this.drizzle.withErrorHandling(async () =>
+    await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const [newModerator] = await tx
           .insert(this.forumModerator)
@@ -502,17 +502,15 @@ export class ForumModeratorService {
             isEnabled: input.isEnabled ?? true,
             remark: input.remark,
           })
-          .returning()
+          .returning({ id: this.forumModerator.id })
 
         if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
           await this.syncModeratorSections(tx, newModerator.id, scope.sectionIds)
         }
-
-        return [newModerator]
       }),
     )
 
-    return this.getModeratorDetail(created.id)
+    return true
   }
 
   /**
@@ -565,7 +563,7 @@ export class ForumModeratorService {
       }),
     )
 
-    return { id }
+    return true
   }
 
   /**
@@ -597,7 +595,7 @@ export class ForumModeratorService {
       }),
     )
 
-    return this.getModeratorDetail(input.moderatorId)
+    return true
   }
 
   /**
@@ -712,7 +710,7 @@ export class ForumModeratorService {
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const [updated] = await tx
+        const result = await tx
           .update(this.forumModerator)
           .set({
             groupId: scope.groupId,
@@ -727,9 +725,7 @@ export class ForumModeratorService {
               isNull(this.forumModerator.deletedAt),
             ),
           )
-          .returning({ id: this.forumModerator.id })
-
-        this.drizzle.assertAffectedRows(updated ? [updated] : [], '版主不存在')
+        this.drizzle.assertAffectedRows(result, '版主不存在')
 
         if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
           await this.syncModeratorSections(tx, input.id, scope.sectionIds)
@@ -739,6 +735,6 @@ export class ForumModeratorService {
       }),
     )
 
-    return this.getModeratorDetail(input.id)
+    return true
   }
 }

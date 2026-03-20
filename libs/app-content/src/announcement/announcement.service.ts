@@ -1,11 +1,11 @@
 import { DrizzleService } from '@db/core'
-import { IdDto } from '@libs/platform/dto'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
 import {
   AnnouncementPageQuery,
   CreateAnnouncementInput,
+  DeleteAnnouncementInput,
   UpdateAnnouncementInput,
   UpdateAnnouncementStatusInput,
 } from './announcement.type'
@@ -189,7 +189,7 @@ export class AppAnnouncementService {
    * @param dto 删除数据
    * @returns 是否成功
    */
-  async deleteAnnouncement(dto: IdDto) {
+  async deleteAnnouncement(dto: DeleteAnnouncementInput) {
     const { id } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db

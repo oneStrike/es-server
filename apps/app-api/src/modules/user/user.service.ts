@@ -9,12 +9,12 @@
  * - 用户资产统计（购买、下载、收藏、点赞等）
  * - 用户成长信息（积分、经验、等级、徽章）
  */
-import type { QueryMyPointRecordDto } from './dto/user-point.dto'
 import type {
-  QueryMyBadgeDto,
-  QueryMyExperienceRecordDto,
-  UpdateMyProfileDto,
-} from './dto/user.dto'
+  QueryMyBadgeInput,
+  QueryMyExperienceRecordInput,
+  QueryMyPointRecordInput,
+  UpdateMyProfileInput,
+} from './user.type'
 import { DrizzleService } from '@db/core'
 
 import {
@@ -74,7 +74,7 @@ export class UserService {
   /**
    * 更新用户资料
    */
-  async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
+  async updateUserProfile(userId: number, dto: UpdateMyProfileInput) {
     await this.userCoreService.ensureUserExists(userId)
 
     try {
@@ -214,7 +214,7 @@ export class UserService {
    * @param query 查询条件
    * @returns 积分记录分页数据
    */
-  async getUserPointRecords(userId: number, query: QueryMyPointRecordDto) {
+  async getUserPointRecords(userId: number, query: QueryMyPointRecordInput) {
     return this.userPointService.getPointRecordPage({
       ...query,
       userId,
@@ -313,7 +313,7 @@ export class UserService {
    */
   async getUserExperienceRecords(
     userId: number,
-    query: QueryMyExperienceRecordDto,
+    query: QueryMyExperienceRecordInput,
   ) {
     return this.userExperienceService.getExperienceRecordPage({
       ...query,
@@ -328,7 +328,7 @@ export class UserService {
    * @param query 查询条件
    * @returns 徽章列表分页数据
    */
-  async getUserBadges(userId: number, query: QueryMyBadgeDto) {
+  async getUserBadges(userId: number, query: QueryMyBadgeInput) {
     await this.userCoreService.ensureUserExists(userId)
 
     const { name, type, isEnabled, business, eventKey, ...pageQuery } = query

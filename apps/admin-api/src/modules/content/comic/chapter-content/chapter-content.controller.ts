@@ -39,7 +39,7 @@ export class ChapterContentController {
   @Post('update')
   @ApiDoc({
     summary: '更新章节内容',
-    model: IdDto,
+    model: Boolean,
   })
   async update(@Body() body: UpdateComicContentDto) {
     return this.comicContentService.updateChapterContent(body)
@@ -48,8 +48,7 @@ export class ChapterContentController {
   @Post('delete')
   @ApiDoc({
     summary: '删除章节内容',
-    model: String,
-    isArray: true,
+    model: Boolean,
   })
   async delete(@Body() body: DeleteComicContentDto) {
     return this.comicContentService.deleteChapterContent(body)
@@ -58,8 +57,7 @@ export class ChapterContentController {
   @Post('move')
   @ApiDoc({
     summary: '移动章节内容',
-    model: String,
-    isArray: true,
+    model: Boolean,
   })
   async move(@Body() body: MoveComicContentDto) {
     return this.comicContentService.moveChapterContent(body)
@@ -68,7 +66,7 @@ export class ChapterContentController {
   @Post('clear')
   @ApiDoc({
     summary: '清空章节内容',
-    model: IdDto,
+    model: Boolean,
   })
   async clear(@Body() body: IdDto) {
     return this.comicContentService.clearChapterContents(body.id)

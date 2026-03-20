@@ -12,7 +12,10 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { eq } from 'drizzle-orm'
 import { AdminAuthRedisKeys } from '../auth/auth.constant'
-import { ChangePasswordDto, UserPageDto } from './dto/admin-user.dto'
+import type {
+  AdminUserChangePasswordInput,
+  AdminUserPageQueryInput,
+} from './admin-user.type'
 
 /**
  * 管理员用户服务
@@ -162,7 +165,7 @@ export class AdminUserService {
   /**
    * 获取用户列表（分页）
    */
-  async getUsers(queryDto: UserPageDto) {
+  async getUsers(queryDto: AdminUserPageQueryInput) {
     const { username, isEnabled, mobile, role, ...pageDto } = queryDto
     const where = this.drizzle.buildWhere(this.adminUser, {
       and: {
@@ -185,7 +188,10 @@ export class AdminUserService {
   /**
    * 修改密码
    */
-  async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
+  async changePassword(
+    userId: number,
+    changePasswordDto: AdminUserChangePasswordInput,
+  ) {
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto
 
     // 检查新密码和确认密码是否一致

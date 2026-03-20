@@ -30,7 +30,7 @@ export class ModeratorController {
   @Post('create')
   @ApiDoc({
     summary: '添加版主',
-    model: ForumModeratorDto,
+    model: Boolean,
   })
   async createModerator(@Body() dto: CreateForumModeratorDto) {
     return this.forumModeratorService.createModerator(dto)
@@ -39,7 +39,7 @@ export class ModeratorController {
   @Post('update')
   @ApiDoc({
     summary: '更新版主信息',
-    model: ForumModeratorDto,
+    model: Boolean,
   })
   async updateModerator(@Body() dto: UpdateForumModeratorDto) {
     return this.forumModeratorService.updateModerator(dto)
@@ -48,7 +48,7 @@ export class ModeratorController {
   @Post('delete')
   @ApiDoc({
     summary: '移除版主',
-    model: IdDto,
+    model: Boolean,
   })
   async deleteModerator(@Body() dto: IdDto) {
     return this.forumModeratorService.removeModerator(dto.id)
@@ -57,7 +57,7 @@ export class ModeratorController {
   @Post('assign-section')
   @ApiDoc({
     summary: '分配版主管理的板块',
-    model: ForumModeratorDto,
+    model: Boolean,
   })
   async assignModeratorSection(@Body() dto: AssignForumModeratorSectionDto) {
     return this.forumModeratorService.assignModeratorSection(dto)

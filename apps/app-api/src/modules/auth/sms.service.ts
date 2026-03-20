@@ -1,13 +1,15 @@
 import { DrizzleService } from '@db/core'
 import {
-  CheckVerifyCodeDto,
   SmsService as LibSmsService,
-  SendVerifyCodeDto,
   SmsTemplateCodeEnum,
 } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
+import type {
+  AppCheckVerifyCodeInput,
+  AppSendVerifyCodeInput,
+} from './auth.type'
 
 /**
  * 短信服务类
@@ -32,7 +34,7 @@ export class SmsService {
    * 发送验证码
    * @param dto - 验证码发送请求DTO，包含手机号和短信模板代码
    */
-  async sendVerifyCode(dto: SendVerifyCodeDto) {
+  async sendVerifyCode(dto: AppSendVerifyCodeInput) {
     if (
       SmsTemplateCodeEnum.VERIFY_BIND_PHONE === dto.templateCode ||
       SmsTemplateCodeEnum.RESET_PASSWORD === dto.templateCode
@@ -58,7 +60,7 @@ export class SmsService {
    * 校验验证码
    * @param dto - 验证码校验请求DTO，包含手机号、验证码和短信模板代码
    */
-  async validateVerifyCode(dto: CheckVerifyCodeDto) {
+  async validateVerifyCode(dto: AppCheckVerifyCodeInput) {
     if (await this.libSmsService.checkVerifyCode(dto)) {
       return true
     }

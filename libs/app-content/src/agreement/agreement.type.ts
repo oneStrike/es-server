@@ -46,3 +46,18 @@ export interface AgreementPageQuery {
  * - 按登录注册页展示开关筛选
  */
 export type PublishedAgreementQuery = Partial<Pick<AppAgreement, 'showInAuth'>>
+
+/**
+ * 协议主键入参。
+ * - 用于按 id 查询或删除协议
+ */
+export type AgreementIdInput = Pick<AppAgreement, 'id'>
+
+/**
+ * 协议发布状态更新入参。
+ * - 仅用于切换协议发布状态
+ */
+export type UpdateAgreementPublishStatusInput = Pick<
+  AppAgreement,
+  'id' | 'isPublished'
+>

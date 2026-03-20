@@ -1,10 +1,11 @@
 import { DrizzleService } from '@db/core'
-import { DragReorderDto, IdDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq, sql } from 'drizzle-orm'
 import {
   CreateTagInput,
+  DeleteTagInput,
   QueryTagInput,
+  UpdateTagSortInput,
   UpdateTagInput,
 } from './tag.type'
 
@@ -87,7 +88,7 @@ export class WorkTagService {
     return true
   }
 
-  async updateTagSort(updateSortDto: DragReorderDto) {
+  async updateTagSort(updateSortDto: UpdateTagSortInput) {
     await this.drizzle.ext.swapField(this.workTag, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
@@ -105,7 +106,7 @@ export class WorkTagService {
     return true
   }
 
-  async deleteTagBatch(dto: IdDto) {
+  async deleteTagBatch(dto: DeleteTagInput) {
     if (!(await this.drizzle.ext.exists(this.workTag, eq(this.workTag.id, dto.id)))) {
       throw new BadRequestException('Tag not found')
     }

@@ -179,7 +179,7 @@ export class UserExperienceService {
         source: addExperienceDto.source,
       })
 
-    await this.db.transaction(async (tx) => {
+    await this.drizzle.withTransaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
         userId,
         assetType: GrowthAssetTypeEnum.EXPERIENCE,

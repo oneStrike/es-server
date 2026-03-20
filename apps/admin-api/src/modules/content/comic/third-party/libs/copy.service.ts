@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
-import {
-  ChapterContentComicRequestDto,
-  DetailComicRequestDto,
-  SearchComicRequestDto,
-} from '../dto/third-party.dto'
+import type {
+  ChapterContentComicRequestInput,
+  DetailComicRequestInput,
+  SearchComicRequestInput,
+} from '../third-party.type'
 
 /**
  * 拷贝漫画平台服务
@@ -30,7 +30,7 @@ export class CopyService {
   /**
    * 搜索漫画关键词
    */
-  async searchWord(dto: SearchComicRequestDto) {
+  async searchWord(dto: SearchComicRequestInput) {
     try {
       const { data } = await this.httpClient.get('/api/v3/search/comic', {
         params: {
@@ -77,7 +77,7 @@ export class CopyService {
    * @returns 漫画详情数据
    * @param dto
    */
-  async detail(dto: DetailComicRequestDto) {
+  async detail(dto: DetailComicRequestInput) {
     try {
       const { data } = await this.httpClient.get(
         `/api/v3/comic2/${dto.comicId}?in_mainland=true&platform=3`,
@@ -100,7 +100,7 @@ export class CopyService {
    * @param dto 请求参数
    * @returns 章节列表
    */
-  async chapter(dto: DetailComicRequestDto) {
+  async chapter(dto: DetailComicRequestInput) {
     try {
       const { data } = await this.httpClient.get(
         `/api/v3/comic/${dto.comicId}/group/default/chapters?limit=500&offset=0&in_mainland=true&platform=3`,
@@ -123,7 +123,7 @@ export class CopyService {
    * @param dto 请求参数
    * @returns 章节内容
    */
-  async content(dto: ChapterContentComicRequestDto) {
+  async content(dto: ChapterContentComicRequestInput) {
     try {
       const { data } = await this.httpClient.get(
         `/api/v3/comic/${dto.comicId}/chapter2/${dto.chapterId}?in_mainland=true&platform=3`,

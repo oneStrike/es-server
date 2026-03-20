@@ -538,7 +538,7 @@ export class TaskService {
     const context = this.parseJsonValue(dto.context)
 
     // 事务更新：更新分配并记录进度日志
-    const updatedRows = await this.db.transaction(async (tx) => {
+    const updatedRows = await this.drizzle.withTransaction(async (tx) => {
       // 使用乐观锁更新（version字段）
       const updateResult = await tx
         .update(this.taskAssignmentTable)
@@ -629,7 +629,7 @@ export class TaskService {
     const finalProgress = Math.max(assignment.progress, assignment.target)
 
     // 事务更新：标记完成并记录日志
-    const updatedRows = await this.db.transaction(async (tx) => {
+    const updatedRows = await this.drizzle.withTransaction(async (tx) => {
       const updateResult = await tx
         .update(this.taskAssignmentTable)
         .set({
@@ -986,7 +986,7 @@ export class TaskService {
   ) {
     const taskSnapshot = this.buildTaskSnapshot(taskRecord)
 
-    return this.db.transaction(async (tx) => {
+    return this.drizzle.withTransaction(async (tx) => {
       // 创建分配记录
       await tx
         .insert(this.taskAssignmentTable)

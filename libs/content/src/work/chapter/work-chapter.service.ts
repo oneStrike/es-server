@@ -10,13 +10,13 @@ import {
 } from '@libs/interaction'
 
 import { ContentTypeEnum } from '@libs/platform/constant'
-import { DragReorderDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
   CreateWorkChapterInput,
   QueryWorkChapterInput,
+  SwapWorkChapterNumbersInput,
   UpdateWorkChapterInput,
 } from './work-chapter.type'
 
@@ -74,11 +74,11 @@ export class WorkChapterService {
       throw new BadRequestException('关联的作品不存在')
     }
 
-    const [created] = await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.workChapter).values(createDto).returning(),
+    await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.workChapter).values(createDto),
       { duplicate: '该作品下章节号已存在' },
     )
-    return created
+    return true
   }
 
   /**
@@ -352,17 +352,16 @@ export class WorkChapterService {
       throw new BadRequestException('指定的阅读会员等级不存在')
     }
 
-    const [updated] = await this.drizzle.withErrorHandling(
+    const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.workChapter)
           .set(updateData)
-          .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt)))
-          .returning(),
+          .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt))),
       { duplicate: '该作品下章节号已存在' },
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], '章节不存在')
-    return updated
+    this.drizzle.assertAffectedRows(result, '章节不存在')
+    return true
   }
 
   /**
@@ -372,13 +371,14 @@ export class WorkChapterService {
    * @throws BadRequestException 章节不存在
    */
   async deleteChapter(id: number) {
-    const [deleted] = await this.db
-      .update(this.workChapter)
-      .set({ deletedAt: new Date() })
-      .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt)))
-      .returning()
-    this.drizzle.assertAffectedRows(deleted ? [deleted] : [], '章节不存在')
-    return deleted
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.workChapter)
+        .set({ deletedAt: new Date() })
+        .where(and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt))),
+    )
+    this.drizzle.assertAffectedRows(result, '章节不存在')
+    return true
   }
 
   /**
@@ -386,7 +386,7 @@ export class WorkChapterService {
    * @param dto - 拖拽参数，包含 dragId 和 targetId
    * @returns 交换结果
    */
-  async swapChapterNumbers(dto: DragReorderDto) {
+  async swapChapterNumbers(dto: SwapWorkChapterNumbersInput) {
     return this.drizzle.ext.swapField(this.workChapter, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
       sourceField: 'workId',

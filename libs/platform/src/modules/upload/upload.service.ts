@@ -4,6 +4,7 @@ import type {
   PreparedUploadFile,
   UploadConfigProvider,
   UploadFileCategory,
+  UploadResult,
   UploadSystemConfig,
 } from './upload.types'
 import { Buffer as NodeBuffer } from 'node:buffer'
@@ -11,7 +12,6 @@ import { createWriteStream, promises as fs } from 'node:fs'
 import { extname, join, posix } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
-import { UploadResponseDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Inject,
@@ -60,7 +60,7 @@ export class UploadService {
   async uploadFile(
     data: FastifyRequest,
     pathSegments?: string[],
-  ): Promise<UploadResponseDto> {
+  ): Promise<UploadResult> {
     const targetFile = await data.file()
     if (!targetFile) {
       throw new BadRequestException('上传文件不能为空')

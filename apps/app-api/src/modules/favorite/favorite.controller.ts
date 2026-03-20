@@ -2,7 +2,6 @@ import {
   FavoriteService,
 } from '@libs/interaction'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
@@ -20,7 +19,7 @@ export class FavoriteController {
   @Post('favorite')
   @ApiDoc({
     summary: '收藏',
-    model: IdDto,
+    model: Boolean,
   })
   async favorite(
     @Body() body: FavoriteTargetDto,
@@ -35,17 +34,16 @@ export class FavoriteController {
   @Post('cancel')
   @ApiDoc({
     summary: '取消收藏',
-    model: IdDto,
+    model: Boolean,
   })
   async unfavorite(
     @Body() body: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
-    await this.favoriteService.unfavorite({
+    return this.favoriteService.unfavorite({
       ...body,
       userId,
     })
-    return { id: body.targetId }
   }
 
   @Get('status')

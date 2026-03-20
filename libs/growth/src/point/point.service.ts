@@ -89,7 +89,7 @@ export class UserPointService {
         source: addPointsDto.source,
       })
 
-    await this.db.transaction(async (tx) => {
+    await this.drizzle.withTransaction(async (tx) => {
       const result = await this.growthLedgerService.applyByRule(tx, {
         userId,
         assetType: GrowthAssetTypeEnum.POINTS,
@@ -126,7 +126,7 @@ export class UserPointService {
       source?: string
     },
   ) {
-    return this.db.transaction(async (transaction) => {
+    return this.drizzle.withTransaction(async (transaction) => {
       return this.consumePointsInTx(transaction, consumePointsDto)
     })
   }
@@ -311,7 +311,7 @@ export class UserPointService {
     points: number,
     operation: 'add' | 'consume',
   ) {
-    const result = await this.db.transaction(async (tx) => {
+    const result = await this.drizzle.withTransaction(async (tx) => {
       const action =
         operation === 'add'
           ? GrowthLedgerActionEnum.GRANT

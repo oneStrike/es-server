@@ -100,7 +100,7 @@ export class ForumSectionService {
       }
     }
 
-    const [data] = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.forumSection)
         .values({
@@ -108,10 +108,9 @@ export class ForumSectionService {
           ...sectionData,
           userLevelRuleId,
           groupId,
-        })
-        .returning(),
+        }),
     )
-    return data
+    return true
   }
 
   /**
@@ -236,17 +235,16 @@ export class ForumSectionService {
       updatePayload.groupId = null
     }
 
-    const [data] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumSection)
         .set(updatePayload)
         .where(
           and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)),
         )
-        .returning(),
     )
-    this.drizzle.assertAffectedRows(data ? [data] : [], '论坛板块不存在')
-    return data
+    this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+    return true
   }
 
   /**
@@ -269,17 +267,16 @@ export class ForumSectionService {
       )
     }
 
-    const [data] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumSection)
         .set({ deletedAt: new Date() })
         .where(
           and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)),
         )
-        .returning(),
     )
-    this.drizzle.assertAffectedRows(data ? [data] : [], '论坛板块不存在')
-    return data
+    this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+    return true
   }
 
   /**
@@ -288,7 +285,7 @@ export class ForumSectionService {
    * @returns 更新结果
    */
   async updateEnabledStatus(dto: UpdateForumSectionEnabledInput) {
-    const [data] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumSection)
         .set({ isEnabled: dto.isEnabled })
@@ -298,10 +295,9 @@ export class ForumSectionService {
             isNull(this.forumSection.deletedAt),
           ),
         )
-        .returning(),
     )
-    this.drizzle.assertAffectedRows(data ? [data] : [], '论坛板块不存在')
-    return data
+    this.drizzle.assertAffectedRows(result, '论坛板块不存在')
+    return true
   }
 
   /**

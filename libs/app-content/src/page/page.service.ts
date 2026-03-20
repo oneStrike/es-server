@@ -1,6 +1,5 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { IdsDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Injectable,
@@ -9,6 +8,7 @@ import {
 import { and, eq, ilike, inArray } from 'drizzle-orm'
 import {
   AppPageQueryInput,
+  BatchDeleteAppPageInput,
   CreateAppPageInput,
   UpdateAppPageInput,
 } from './page.type'
@@ -171,7 +171,7 @@ export class AppPageService {
    * @param dto 删除数据
    * @returns 是否成功
    */
-  async batchDelete(dto: IdsDto) {
+  async batchDelete(dto: BatchDeleteAppPageInput) {
     const { ids } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db.delete(this.appPage).where(inArray(this.appPage.id, ids)),

@@ -141,7 +141,7 @@ export class ComicContentService {
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
 
-    return { chapterId }
+    return true
   }
 
   async deleteChapterContent(dto: DeleteComicContentInput) {
@@ -166,7 +166,7 @@ export class ComicContentService {
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
 
-    return contents
+    return true
   }
 
   async moveChapterContent(body: MoveComicContentInput) {
@@ -196,7 +196,7 @@ export class ComicContentService {
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
 
-    return contents
+    return true
   }
 
   async clearChapterContents(chapterId: number) {
@@ -210,7 +210,7 @@ export class ComicContentService {
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
 
-    return { chapterId }
+    return true
   }
 
   /**

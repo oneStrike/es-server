@@ -241,10 +241,10 @@ export class ForumModeratorApplicationService {
       throw new BadRequestException('当前板块已有待审核申请')
     }
 
-    const application = await this.drizzle.withErrorHandling(async () =>
+    await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         if (existing) {
-          const [updated] = await tx
+          const result = await tx
             .update(this.forumModeratorApplication)
             .set({
               status: ForumModeratorApplicationStatusEnum.PENDING,
@@ -257,16 +257,11 @@ export class ForumModeratorApplicationService {
               deletedAt: null,
             })
             .where(eq(this.forumModeratorApplication.id, existing.id))
-            .returning()
-
-          if (!updated) {
-            throw new NotFoundException('版主申请不存在')
-          }
-
-          return updated
+          this.drizzle.assertAffectedRows(result, '版主申请不存在')
+          return true
         }
 
-        const [created] = await tx
+        await tx
           .insert(this.forumModeratorApplication)
           .values({
             applicantId,
@@ -276,13 +271,11 @@ export class ForumModeratorApplicationService {
             reason: input.reason,
             remark: input.remark,
           })
-          .returning()
-
-        return created
+        return true
       }),
     )
 
-    return this.getApplicationDetail(application.id)
+    return true
   }
 
   async getApplicationPage(query: QueryForumModeratorApplicationInput) {
@@ -388,11 +381,11 @@ export class ForumModeratorApplicationService {
         .where(eq(this.forumModeratorApplication.id, input.id)),
     )
 
-    return this.getApplicationDetail(input.id)
+    return true
   }
 
   async deleteApplication(id: number) {
-    const [application] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumModeratorApplication)
         .set({
@@ -404,18 +397,13 @@ export class ForumModeratorApplicationService {
             isNull(this.forumModeratorApplication.deletedAt),
           ),
         )
-        .returning({ id: this.forumModeratorApplication.id }),
     )
-
-    if (!application) {
-      throw new NotFoundException('版主申请不存在')
-    }
-
-    return { id }
+    this.drizzle.assertAffectedRows(result, '版主申请不存在')
+    return true
   }
 
   async deleteMyApplication(userId: number, id: number) {
-    const [application] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumModeratorApplication)
         .set({
@@ -428,13 +416,8 @@ export class ForumModeratorApplicationService {
             isNull(this.forumModeratorApplication.deletedAt),
           ),
         )
-        .returning({ id: this.forumModeratorApplication.id }),
     )
-
-    if (!application) {
-      throw new NotFoundException('版主申请不存在')
-    }
-
-    return { id }
+    this.drizzle.assertAffectedRows(result, '版主申请不存在')
+    return true
   }
 }

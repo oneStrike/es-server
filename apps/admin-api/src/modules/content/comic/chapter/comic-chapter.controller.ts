@@ -20,7 +20,7 @@ export class ComicChapterController {
   @Post('create')
   @ApiDoc({
     summary: '创建漫画章节',
-    model: IdDto,
+    model: Boolean,
   })
   async create(@Body() body: CreateWorkChapterDto) {
     return this.workChapterService.createChapter({
@@ -50,7 +50,7 @@ export class ComicChapterController {
   @Post('update')
   @ApiDoc({
     summary: '更新漫画章节',
-    model: IdDto,
+    model: Boolean,
   })
   async update(@Body() body: UpdateWorkChapterDto) {
     return this.workChapterService.updateChapter(body)
@@ -59,7 +59,7 @@ export class ComicChapterController {
   @Post('delete')
   @ApiDoc({
     summary: '删除漫画章节',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() query: IdDto) {
     return this.workChapterService.deleteChapter(query.id)
@@ -68,7 +68,7 @@ export class ComicChapterController {
   @Post('swap-sort-order')
   @ApiDoc({
     summary: '交换章节序号',
-    model: DragReorderDto,
+    model: Boolean,
   })
   async swapSortOrder(@Body() body: DragReorderDto) {
     return this.workChapterService.swapChapterNumbers(body)

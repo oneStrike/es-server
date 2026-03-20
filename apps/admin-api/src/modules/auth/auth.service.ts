@@ -16,7 +16,11 @@ import {
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
-import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
+import type {
+  AdminLoginInput,
+  AdminRefreshTokenInput,
+  AdminTokenPairInput,
+} from './auth.type'
 
 /**
  * 管理端认证服务
@@ -51,7 +55,7 @@ export class AuthService {
   /**
    * 登录
    */
-  async login(body: UserLoginDto, req: FastifyRequest) {
+  async login(body: AdminLoginInput, req: FastifyRequest) {
     // 检查用户输入的验证码
     if (!body.captcha) {
       throw new BadRequestException('请输入验证码')
@@ -158,14 +162,14 @@ export class AuthService {
   /**
    * 退出登录
    */
-  async logout(body: TokenDto) {
+  async logout(body: AdminTokenPairInput) {
     return this.authSessionService.logout(body)
   }
 
   /**
    * 刷新访问令牌
    */
-  async refreshToken(body: RefreshTokenDto, req: FastifyRequest) {
+  async refreshToken(body: AdminRefreshTokenInput, req: FastifyRequest) {
     return this.authSessionService.refreshAndPersist(body.refreshToken, req)
   }
 }

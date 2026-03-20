@@ -1,7 +1,7 @@
 import type { Cache } from 'cache-manager'
 import type { ITokenStorageService } from './auth.types'
 import type {
-  CreateTokenDto,
+  CreateTokenInput,
   ITokenEntity,
 } from './token-storage.types'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
@@ -16,9 +16,9 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
 {
   constructor(@Inject(CACHE_MANAGER) protected readonly cacheManager: Cache) {}
 
-  protected abstract createOne(data: CreateTokenDto): Promise<T>
+  protected abstract createOne(data: CreateTokenInput): Promise<T>
 
-  protected abstract createManyItems(data: CreateTokenDto[]): Promise<number>
+  protected abstract createManyItems(data: CreateTokenInput[]): Promise<number>
 
   protected abstract findOneByJti(jti: string): Promise<T | null>
 
@@ -38,7 +38,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     return Math.max(0, Math.floor(expiresAt.getTime() - Date.now()))
   }
 
-  async createToken(data: CreateTokenDto) {
+  async createToken(data: CreateTokenInput) {
     const result = await this.createOne(data)
     const ttlMs = this.getTokenTtlMs(data.expiresAt)
     if (ttlMs > 0) {
@@ -47,7 +47,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     return result
   }
 
-  async createTokens(tokens: CreateTokenDto[]) {
+  async createTokens(tokens: CreateTokenInput[]) {
     const result = await this.createManyItems(tokens)
     await Promise.all(
       tokens.map(async (token) => {

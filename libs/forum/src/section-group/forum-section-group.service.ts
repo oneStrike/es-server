@@ -30,11 +30,11 @@ export class ForumSectionGroupService {
   }
 
   async createSectionGroup(dto: CreateForumSectionGroupInput) {
-    const [data] = await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.forumSectionGroup).values(dto).returning(),
+    await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.forumSectionGroup).values(dto),
       { duplicate: '板块分组名称已存在' },
     )
-    return data
+    return true
   }
 
   async getSectionGroupById(id: number) {
@@ -69,7 +69,7 @@ export class ForumSectionGroupService {
     updateSectionGroupDto: UpdateForumSectionGroupInput,
   ) {
     const { id, ...updateData } = updateSectionGroupDto
-    const [data] = await this.drizzle.withErrorHandling(
+    const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.forumSectionGroup)
@@ -79,14 +79,11 @@ export class ForumSectionGroupService {
               eq(this.forumSectionGroup.id, id),
               isNull(this.forumSectionGroup.deletedAt),
             ),
-          )
-          .returning(),
+          ),
       { duplicate: '板块分组名称已存在' },
     )
-    if (!data) {
-      throw new NotFoundException('板块分组不存在')
-    }
-    return data
+    this.drizzle.assertAffectedRows(result, '板块分组不存在')
+    return true
   }
 
   async deleteSectionGroup(id: number) {
@@ -108,17 +105,19 @@ export class ForumSectionGroupService {
       throw new BadRequestException('该分组下还有板块，无法删除')
     }
 
-    const [data] = await this.db
-      .update(this.forumSectionGroup)
-      .set({ deletedAt: new Date() })
-      .where(
-        and(
-          eq(this.forumSectionGroup.id, id),
-          isNull(this.forumSectionGroup.deletedAt),
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumSectionGroup)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(this.forumSectionGroup.id, id),
+            isNull(this.forumSectionGroup.deletedAt),
+          ),
         ),
-      )
-      .returning()
-    return data
+    )
+    this.drizzle.assertAffectedRows(result, '板块分组不存在')
+    return true
   }
 
   async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortInput) {
@@ -131,20 +130,19 @@ export class ForumSectionGroupService {
     updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledInput,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
-    const [data] = await this.db
-      .update(this.forumSectionGroup)
-      .set({ isEnabled })
-      .where(
-        and(
-          eq(this.forumSectionGroup.id, id),
-          isNull(this.forumSectionGroup.deletedAt),
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .update(this.forumSectionGroup)
+        .set({ isEnabled })
+        .where(
+          and(
+            eq(this.forumSectionGroup.id, id),
+            isNull(this.forumSectionGroup.deletedAt),
+          ),
         ),
-      )
-      .returning()
-    if (!data) {
-      throw new NotFoundException('板块分组不存在')
-    }
-    return data
+    )
+    this.drizzle.assertAffectedRows(result, '板块分组不存在')
+    return true
   }
 
   async getAllEnabledGroups() {

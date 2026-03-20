@@ -64,3 +64,21 @@ export type UpdateDictionaryItemInput = Pick<DictionaryItem, 'id'> &
       'name' | 'code' | 'sortOrder' | 'cover' | 'isEnabled' | 'description'
     >
   >
+
+/**
+ * 字典启用状态更新入参。
+ * - 用于字典或字典项的启用禁用切换
+ */
+export interface UpdateDictionaryEnabledInput {
+  id: number
+  isEnabled: boolean
+}
+
+/**
+ * 字典项拖拽排序入参。
+ * - 通过 dragId 与 targetId 表达交换排序目标
+ */
+export interface DictionaryDragReorderInput {
+  dragId: number
+  targetId: number
+}

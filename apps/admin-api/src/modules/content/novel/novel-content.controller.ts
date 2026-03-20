@@ -35,7 +35,7 @@ export class NovelContentController {
   @Post('delete')
   @ApiDoc({
     summary: '删除章节文件',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto) {
     return this.novelContentService.deleteChapterContent(body.id)

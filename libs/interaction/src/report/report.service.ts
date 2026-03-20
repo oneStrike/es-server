@@ -92,7 +92,7 @@ export class ReportService {
 
     const resolver = this.getResolver(targetType)
 
-    const report = await this.db.transaction(async (tx: InteractionTx) => {
+    const report = await this.drizzle.withTransaction(async (tx: InteractionTx) => {
       await this.ensureReporterExists(reporterId)
       const targetMeta = await resolver.resolveMeta(tx, targetId)
 

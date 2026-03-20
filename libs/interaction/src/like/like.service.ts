@@ -175,7 +175,7 @@ export class LikeService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    await this.db.transaction(async (tx) => {
+    await this.drizzle.withTransaction(async (tx) => {
       const targetMeta = await resolver.resolveMeta(tx, targetId)
 
       await this.drizzle.withErrorHandling(
@@ -217,7 +217,7 @@ export class LikeService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    await this.db.transaction(async (tx) => {
+    await this.drizzle.withTransaction(async (tx) => {
       const deleted = await tx
         .delete(this.userLike)
         .where(
@@ -227,10 +227,7 @@ export class LikeService {
             eq(this.userLike.userId, userId),
           ),
         )
-        .returning({ id: this.userLike.id })
-      if (deleted.length === 0) {
-        throw new BadRequestException('点赞记录不存在')
-      }
+      this.drizzle.assertAffectedRows(deleted, '点赞记录不存在')
 
       await this.appUserCountService.updateLikeCount(tx, userId, -1)
       await resolver.applyCountDelta(tx, targetId, -1)

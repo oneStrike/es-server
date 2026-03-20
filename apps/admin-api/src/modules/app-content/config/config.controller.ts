@@ -28,7 +28,7 @@ export class AppConfigController {
   @Post('update')
   @ApiDoc({
     summary: '更新应用配置',
-    model: BaseAppConfigDto,
+    model: Boolean,
   })
   @Audit({
     actionType: AuditActionTypeEnum.UPDATE,

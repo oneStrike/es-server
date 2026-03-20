@@ -4,7 +4,10 @@ import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
-import { ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto'
+import type {
+  AppChangePasswordInput,
+  AppForgotPasswordInput,
+} from './auth.type'
 import { SmsService } from './sms.service'
 import { AppTokenStorageService } from './token-storage.service'
 
@@ -67,7 +70,7 @@ export class PasswordService {
    * @returns 找回结果
    * @throws {BadRequestException} 账号不存在
    */
-  async forgotPassword(body: ForgotPasswordDto) {
+  async forgotPassword(body: AppForgotPasswordInput) {
     const { phone, password } = body
     const [user] = await this.db
       .select({ id: this.appUser.id })
@@ -110,7 +113,7 @@ export class PasswordService {
    * @param body - 修改密码数据
    * @returns 修改结果
    */
-  async changePassword(userId: number, body: ChangePasswordDto) {
+  async changePassword(userId: number, body: AppChangePasswordInput) {
     const [user] = await this.db
       .select({ id: this.appUser.id, password: this.appUser.password })
       .from(this.appUser)

@@ -5,7 +5,6 @@ import {
 } from '@libs/dictionary'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import {
-  BatchOperationResponseDto,
   DragReorderDto,
   IdDto,
   UpdateEnabledStatusDto,
@@ -126,7 +125,7 @@ export class DictionaryController {
   @Post('item/update-status')
   @ApiDoc({
     summary: '启用禁用字典项',
-    model: BatchOperationResponseDto,
+    model: Boolean,
   })
   async enableItem(@Body() query: UpdateEnabledStatusDto) {
     return this.libDictionaryService.updateDictionaryItemStatus(query)

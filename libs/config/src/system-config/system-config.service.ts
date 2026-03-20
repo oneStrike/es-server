@@ -279,22 +279,20 @@ export class SystemConfigService implements OnModuleInit {
    * @param pageSize 每页数量
    */
   async findConfigHistory(page = 1, pageSize = 10) {
-    const offset = (page - 1) * pageSize
+    const result = await this.drizzle.ext.findPagination(this.systemConfig, {
+      pageIndex: page,
+      pageSize,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
 
-    const list = await this.db
-      .select()
-      .from(this.systemConfig)
-      .orderBy(desc(this.systemConfig.createdAt))
-      .limit(pageSize)
-      .offset(offset)
-
-    const countResult = await this.db
-      .select({ count: this.systemConfig.id })
-      .from(this.systemConfig)
-
-    const total = countResult.length
-
-    return { list, total, page, pageSize }
+    return {
+      list: result.list,
+      total: result.total,
+      page: result.pageIndex,
+      pageSize: result.pageSize,
+    }
   }
 
   /**

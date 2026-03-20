@@ -1,7 +1,7 @@
 import type {
-  QueryMessageOutboxMonitorDto,
-  QueryMessageWsMonitorDto,
-} from './dto/message-monitor.dto'
+  MessageOutboxMonitorQueryInput,
+  MessageWsMonitorQueryInput,
+} from './message-monitor.type'
 import { DrizzleService } from '@db/core'
 import { messageOutbox, messageWsMetric } from '@db/schema'
 import { MessageOutboxStatusEnum } from '@libs/message'
@@ -16,7 +16,7 @@ export class MessageMonitorService {
     return this.drizzle.db
   }
 
-  async getOutboxMonitorSummary(query: QueryMessageOutboxMonitorDto) {
+  async getOutboxMonitorSummary(query: MessageOutboxMonitorQueryInput) {
     const now = new Date()
     const windowHours = this.normalizeWindowHours(query.windowHours)
     const topErrorsLimit = this.normalizeTopErrorsLimit(query.topErrorsLimit)
@@ -96,7 +96,7 @@ export class MessageMonitorService {
     }
   }
 
-  async getWsMonitorSummary(query: QueryMessageWsMonitorDto) {
+  async getWsMonitorSummary(query: MessageWsMonitorQueryInput) {
     const now = new Date()
     const windowHours = this.normalizeWindowHours(query.windowHours)
     const windowStartAt = new Date(now.getTime() - windowHours * 60 * 60 * 1000)

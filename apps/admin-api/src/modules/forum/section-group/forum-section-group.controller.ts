@@ -40,7 +40,7 @@ export class ForumSectionGroupController {
   @Post('create')
   @ApiDoc({
     summary: '添加板块组',
-    model: BaseForumSectionGroupDto,
+    model: Boolean,
   })
   async createSectionGroup(@Body() dto: CreateForumSectionGroupDto) {
     return this.forumSectionGroupService.createSectionGroup(dto)
@@ -49,7 +49,7 @@ export class ForumSectionGroupController {
   @Post('update')
   @ApiDoc({
     summary: '更新板块组',
-    model: BaseForumSectionGroupDto,
+    model: Boolean,
   })
   async updateSectionGroup(@Body() dto: UpdateForumSectionGroupDto) {
     return this.forumSectionGroupService.updateSectionGroup(dto)
@@ -58,7 +58,7 @@ export class ForumSectionGroupController {
   @Post('delete')
   @ApiDoc({
     summary: '删除板块组',
-    model: BaseForumSectionGroupDto,
+    model: Boolean,
   })
   async deleteSectionGroup(@Body() dto: IdDto) {
     return this.forumSectionGroupService.deleteSectionGroup(dto.id)
@@ -67,7 +67,7 @@ export class ForumSectionGroupController {
   @Post('update-enabled')
   @ApiDoc({
     summary: '更新板块组启用状态',
-    model: BaseForumSectionGroupDto,
+    model: Boolean,
   })
   async updateEnabledStatus(@Body() dto: UpdateEnabledStatusDto) {
     return this.forumSectionGroupService.updateSectionGroupEnabled(dto)
@@ -76,7 +76,7 @@ export class ForumSectionGroupController {
   @Post('swap-sort-order')
   @ApiDoc({
     summary: '交换板块组排序顺序',
-    model: BaseForumSectionGroupDto,
+    model: Boolean,
   })
   async swapSortOrder(@Body() dto: DragReorderDto) {
     return this.forumSectionGroupService.swapSectionGroupSortOrder(dto)

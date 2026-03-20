@@ -1,6 +1,5 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Injectable,
@@ -10,8 +9,10 @@ import { eq, like } from 'drizzle-orm'
 import {
   CreateDictionaryInput,
   CreateDictionaryItemInput,
+  DictionaryDragReorderInput,
   DictionaryItemPageQueryInput,
   DictionaryPageQueryInput,
+  UpdateDictionaryEnabledInput,
   UpdateDictionaryInput,
   UpdateDictionaryItemInput,
 } from './dictionary.type'
@@ -186,7 +187,7 @@ export class LibDictionaryService {
    * @returns 是否成功
    * @throws BadRequestException - 当字典不存在时抛出
    */
-  async updateDictionaryStatus(dto: UpdateEnabledStatusDto) {
+  async updateDictionaryStatus(dto: UpdateDictionaryEnabledInput) {
     const data = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionary)
@@ -312,7 +313,7 @@ export class LibDictionaryService {
    * @returns 是否成功
    * @throws BadRequestException - 当字典项不存在时抛出
    */
-  async updateDictionaryItemStatus(dto: UpdateEnabledStatusDto) {
+  async updateDictionaryItemStatus(dto: UpdateDictionaryEnabledInput) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionaryItem)
@@ -332,7 +333,7 @@ export class LibDictionaryService {
    * @param dto - 拖拽排序的数据传输对象
    * @returns 排序是否成功
    */
-  async updateDictionaryItemSort(dto: DragReorderDto) {
+  async updateDictionaryItemSort(dto: DictionaryDragReorderInput) {
     return this.drizzle.ext.swapField(this.dictionaryItem, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
       sourceField: 'dictionaryCode',

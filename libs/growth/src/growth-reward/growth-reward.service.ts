@@ -48,7 +48,7 @@ export class UserGrowthRewardService {
    */
   async tryRewardByRule(params: RewardByRuleParams): Promise<void> {
     try {
-      await this.db.transaction(async (tx) => {
+      await this.drizzle.withTransaction(async (tx) => {
         // 发放积分
         await this.growthLedgerService.applyByRule(tx, {
           userId: params.userId,
@@ -107,7 +107,7 @@ export class UserGrowthRewardService {
     }
 
     try {
-      await this.db.transaction(async (tx) => {
+      await this.drizzle.withTransaction(async (tx) => {
         // 发放积分
         if (reward.points > 0) {
           await this.growthLedgerService.applyDelta(tx, {

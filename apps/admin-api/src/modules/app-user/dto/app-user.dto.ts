@@ -1,6 +1,7 @@
 import {
   BaseUserBadgeDto,
   BaseUserExperienceRecordDto,
+  BaseUserLevelRuleDto,
   BaseUserPointRecordDto,
   GrowthRuleTypeEnum,
 } from '@libs/growth'
@@ -11,7 +12,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
 
 import {
@@ -28,28 +29,11 @@ export enum AdminAppUserDeletedScopeEnum {
   ALL = 'all',
 }
 
-export class AdminAppUserLevelDto {
-  @NumberProperty({
-    description: '等级ID',
-    example: 1,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '等级名称',
-    example: '新手',
-    validation: false,
-  })
-  name!: string
-
-  @NumberProperty({
-    description: '升级所需经验值',
-    example: 100,
-    validation: false,
-  })
-  requiredExperience!: number
-}
+export class AdminAppUserLevelDto extends PickType(BaseUserLevelRuleDto, [
+  'id',
+  'name',
+  'requiredExperience',
+] as const) {}
 
 export class AdminAppUserCountDto extends PickType(BaseAppUserCountDto, [
   'commentCount',
@@ -221,14 +205,7 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
   lastLoginEndDate?: string
 }
 
-export class QueryAdminAppUserIdDto {
-  @NumberProperty({
-    description: '应用端用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-}
+export class QueryAdminAppUserIdDto extends UserIdDto {}
 
 export class CreateAdminAppUserDto extends IntersectionType(
   PickType(BaseAdminAppUserDto, ['nickname'] as const),
@@ -340,21 +317,17 @@ export class AdminAppUserPointRecordDto extends PickType(BaseUserPointRecordDto,
 }
 
 export class QueryAdminAppUserPointRecordDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(
-      BaseUserPointRecordDto,
-      ['ruleId', 'targetType', 'targetId'] as const,
+  UserIdDto,
+  IntersectionType(
+    PageDto,
+    PartialType(
+      PickType(
+        BaseUserPointRecordDto,
+        ['ruleId', 'targetType', 'targetId'] as const,
+      ),
     ),
   ),
-) {
-  @NumberProperty({
-    description: '应用端用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-}
+) {}
 
 export class AdminAppUserExperienceRecordDto extends PickType(
   BaseUserExperienceRecordDto,
@@ -383,42 +356,27 @@ export class AdminAppUserExperienceRecordDto extends PickType(
 }
 
 export class QueryAdminAppUserExperienceRecordDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
-) {
-  @NumberProperty({
-    description: '应用端用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-}
+  UserIdDto,
+  IntersectionType(
+    PageDto,
+    PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
+  ),
+) {}
 
 export class QueryAdminAppUserBadgeDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(
-      BaseUserBadgeDto,
-      ['name', 'type', 'isEnabled', 'business', 'eventKey'] as const,
+  UserIdDto,
+  IntersectionType(
+    PageDto,
+    PartialType(
+      PickType(
+        BaseUserBadgeDto,
+        ['name', 'type', 'isEnabled', 'business', 'eventKey'] as const,
+      ),
     ),
   ),
-) {
-  @NumberProperty({
-    description: '应用端用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-}
+) {}
 
-export class AddAdminAppUserPointsDto {
-  @NumberProperty({
-    description: '用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-
+export class AddAdminAppUserPointsDto extends UserIdDto {
   @EnumProperty({
     description:
       '规则类型（论坛：1=发表主题，2=发表回复，3=主题被点赞，4=回复被点赞，5=主题被收藏，6=每日签到，7=管理员操作，8=主题浏览，9=主题举报，10=发表评论，11=评论被点赞，12=评论被举报，16=主题被评论；漫画作品：100=浏览，101=点赞，102=收藏，103=举报，104=评论；小说作品：200=浏览，201=点赞，202=收藏，203=举报，204=评论；漫画章节：300=阅读，301=点赞，302=购买，303=下载，304=兑换，305=举报，306=评论；小说章节：400=阅读，401=点赞，402=购买，403=下载，404=兑换，405=举报，406=评论；徽章与成就：600=获得徽章，601=完善资料，602=上传头像；社交：700=关注用户，701=被关注，702=分享内容，703=邀请用户；举报处理：800=举报有效，801=举报无效）',
@@ -436,14 +394,7 @@ export class AddAdminAppUserPointsDto {
   remark?: string
 }
 
-export class ConsumeAdminAppUserPointsDto {
-  @NumberProperty({
-    description: '用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-
+export class ConsumeAdminAppUserPointsDto extends UserIdDto {
   @NumberProperty({
     description: '消费积分数量',
     example: 10,
@@ -481,14 +432,7 @@ export class ConsumeAdminAppUserPointsDto {
   remark?: string
 }
 
-export class AddAdminAppUserExperienceDto {
-  @NumberProperty({
-    description: '用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-
+export class AddAdminAppUserExperienceDto extends UserIdDto {
   @EnumProperty({
     description:
       '规则类型（论坛：1=发表主题，2=发表回复，3=主题被点赞，4=回复被点赞，5=主题被收藏，6=每日签到，7=管理员操作，8=主题浏览，9=主题举报，10=发表评论，11=评论被点赞，12=评论被举报，16=主题被评论；漫画作品：100=浏览，101=点赞，102=收藏，103=举报，104=评论；小说作品：200=浏览，201=点赞，202=收藏，203=举报，204=评论；漫画章节：300=阅读，301=点赞，302=购买，303=下载，304=兑换，305=举报，306=评论；小说章节：400=阅读，401=点赞，402=购买，403=下载，404=兑换，405=举报，406=评论；徽章与成就：600=获得徽章，601=完善资料，602=上传头像；社交：700=关注用户，701=被关注，702=分享内容，703=邀请用户；举报处理：800=举报有效，801=举报无效）',
@@ -506,14 +450,7 @@ export class AddAdminAppUserExperienceDto {
   remark?: string
 }
 
-export class AssignAdminAppUserBadgeDto {
-  @NumberProperty({
-    description: '应用端用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-
+export class AssignAdminAppUserBadgeDto extends UserIdDto {
   @NumberProperty({
     description: '徽章ID',
     example: 1,
@@ -531,14 +468,7 @@ export class AdminAppUserBadgeItemDto extends PickType(BaseDto, ['id', 'createdA
   badge!: BaseUserBadgeDto
 }
 
-export class AdminAppUserBadgeOperationResultDto {
-  @NumberProperty({
-    description: '应用端用户ID',
-    example: 1,
-    validation: false,
-  })
-  userId!: number
-
+export class AdminAppUserBadgeOperationResultDto extends UserIdDto {
   @NumberProperty({
     description: '徽章ID',
     example: 1,

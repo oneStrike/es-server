@@ -48,3 +48,9 @@ export type UpdateAnnouncementStatusInput = Pick<
   AppAnnouncement,
   'id' | 'isPublished'
 >
+
+/**
+ * 公告删除入参。
+ * - 用于按公告 id 删除数据
+ */
+export type DeleteAnnouncementInput = Pick<AppAnnouncement, 'id'>

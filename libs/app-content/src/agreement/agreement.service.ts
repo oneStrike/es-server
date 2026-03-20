@@ -1,5 +1,4 @@
 import { DrizzleService } from '@db/core'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import {
   BadRequestException,
   Injectable,
@@ -7,9 +6,11 @@ import {
 } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import {
+  AgreementIdInput,
   AgreementPageQuery,
   CreateAgreementInput,
   PublishedAgreementQuery,
+  UpdateAgreementPublishStatusInput,
   UpdateAgreementInput,
 } from './agreement.type'
 
@@ -91,7 +92,7 @@ export class AgreementService {
    * @returns 是否成功
    * @throws NotFoundException 当协议不存在时
    */
-  async updatePublishStatus(dto: UpdatePublishedStatusDto) {
+  async updatePublishStatus(dto: UpdateAgreementPublishStatusInput) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.agreement)
@@ -110,7 +111,7 @@ export class AgreementService {
    * @returns 是否成功
    * @throws NotFoundException 当协议不存在时
    */
-  async delete(dto: IdDto) {
+  async delete(dto: AgreementIdInput) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db.delete(this.agreement).where(eq(this.agreement.id, dto.id)),
     )
@@ -126,7 +127,7 @@ export class AgreementService {
    * @returns 协议详情
    * @throws NotFoundException 当协议不存在时
    */
-  async findOne(dto: IdDto) {
+  async findOne(dto: AgreementIdInput) {
     const agreement = await this.db.query.appAgreement.findFirst({
       where: { id: dto.id },
     })

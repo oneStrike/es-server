@@ -123,39 +123,36 @@ export class ForumController {
   @Post('create')
   @ApiDoc({
     summary: '创建论坛主题',
-    model: IdDto,
+    model: Boolean,
   })
   async create(
     @Body() body: CreateAppForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
-    const topic = await this.forumTopicService.createForumTopic({
+    return this.forumTopicService.createForumTopic({
       ...body,
       userId,
     })
-    return { id: topic.id }
   }
 
   @Post('update')
   @ApiDoc({
     summary: '更新我的论坛主题',
-    model: IdDto,
+    model: Boolean,
   })
   async update(
     @Body() body: UpdateAppForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
-    const topic = await this.forumTopicService.updateUserTopic(userId, body)
-    return { id: topic.id }
+    return this.forumTopicService.updateUserTopic(userId, body)
   }
 
   @Post('delete')
   @ApiDoc({
     summary: '删除我的论坛主题',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
-    const topic = await this.forumTopicService.deleteUserTopic(userId, body.id)
-    return { id: topic.id }
+    return this.forumTopicService.deleteUserTopic(userId, body.id)
   }
 }

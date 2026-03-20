@@ -328,7 +328,7 @@ export class ForumTopicService {
       })
     }
 
-    return topic
+    return true
   }
 
   /**
@@ -550,7 +550,7 @@ export class ForumTopicService {
       afterData: JSON.stringify(updatedTopic),
     })
 
-    return updatedTopic
+    return true
   }
 
   /**
@@ -672,7 +672,7 @@ export class ForumTopicService {
       beforeData: JSON.stringify(topic),
     })
 
-    return topic
+    return true
   }
 
   /**
@@ -699,7 +699,7 @@ export class ForumTopicService {
 
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const [topic] = await tx
+        const result = await tx
           .update(this.forumTopicTable)
           .set(updateData)
           .where(
@@ -708,16 +708,13 @@ export class ForumTopicService {
               isNull(this.forumTopicTable.deletedAt),
             ),
           )
-          .returning()
-        if (!topic) {
-          throw new NotFoundException('主题不存在')
-        }
+        this.drizzle.assertAffectedRows(result, '主题不存在')
 
         if (options?.syncSectionVisibility) {
           await this.syncSectionVisibleState(tx, currentTopic.sectionId)
         }
 
-        return topic
+        return true
       }),
     )
   }
@@ -807,7 +804,7 @@ export class ForumTopicService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementViewCount(id: number) {
-    const [topic] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumTopicTable)
         .set({ viewCount: sql`${this.forumTopicTable.viewCount} + 1` })
@@ -817,12 +814,9 @@ export class ForumTopicService {
             isNull(this.forumTopicTable.deletedAt),
           ),
         )
-        .returning(),
     )
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-    return topic
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+    return true
   }
 
   /**

@@ -126,6 +126,6 @@ export class NovelContentService {
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
 
-    return { id: chapterId }
+    return true
   }
 }

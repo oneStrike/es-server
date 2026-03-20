@@ -64,3 +64,18 @@ export interface PreparedUploadFile {
 export interface UploadExecutionResult {
   filePath: string
 }
+
+/**
+ * 上传结果。
+ * - 用于 service 返回文件上传后的稳定元数据
+ */
+export interface UploadResult {
+  filename: string
+  originalName: string
+  filePath: string
+  fileSize: number
+  mimeType: string
+  fileType: string
+  scene: string
+  uploadTime: Date
+}

@@ -39,7 +39,7 @@ export class ForumModeratorApplicationController {
   @Post('audit')
   @ApiDoc({
     summary: '审核版主申请',
-    model: ForumModeratorApplicationDto,
+    model: Boolean,
   })
   async audit(
     @Body() body: AuditForumModeratorApplicationDto,
@@ -51,7 +51,7 @@ export class ForumModeratorApplicationController {
   @Post('delete')
   @ApiDoc({
     summary: '删除版主申请',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto) {
     return this.forumModeratorApplicationService.deleteApplication(body.id)

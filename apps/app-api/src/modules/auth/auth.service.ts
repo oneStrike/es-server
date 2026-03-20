@@ -17,7 +17,10 @@ import {
   AppAuthErrorMessages,
   AppAuthRedisKeys,
 } from './auth.constant'
-import { LoginDto, TokenDto } from './dto/auth.dto'
+import type {
+  AppLoginInput,
+  AppTokenPairInput,
+} from './auth.type'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 
@@ -68,7 +71,7 @@ export class AuthService {
   /**
    * 用户注册
    */
-  async register(body: LoginDto, req: FastifyRequest) {
+  async register(body: AppLoginInput, req: FastifyRequest) {
     if (!body.phone) {
       throw new BadRequestException(
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
@@ -122,7 +125,7 @@ export class AuthService {
   /**
    * 用户登录
    */
-  async login(body: LoginDto, req: FastifyRequest) {
+  async login(body: AppLoginInput, req: FastifyRequest) {
     if (!body.phone && !body.account) {
       throw new BadRequestException(
         AppAuthErrorMessages.PHONE_OR_ACCOUNT_REQUIRED,
@@ -260,7 +263,7 @@ export class AuthService {
   /**
    * 用户退出登录
    */
-  async logout(dto: TokenDto) {
+  async logout(dto: AppTokenPairInput) {
     return this.authSessionService.logout(dto, { revokeDbTokens: true })
   }
 

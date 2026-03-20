@@ -267,7 +267,7 @@ export class WorkService {
         )
       }
 
-      return createdWork
+      return true
     }))
   }
 
@@ -346,11 +346,11 @@ export class WorkService {
      * 如果其中任何一步失败，整个事务会回滚，保证数据一致性
      */
     return this.drizzle.withErrorHandling(async () => this.db.transaction(async (tx) => {
-      const [updatedWork] = await tx
+      const result = await tx
         .update(this.work)
         .set(normalizedUpdateData)
         .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
-        .returning()
+      this.drizzle.assertAffectedRows(result, '作品不存在')
 
       if (
         existingWork.forumSectionId &&
@@ -450,7 +450,7 @@ export class WorkService {
         }
       }
 
-      return updatedWork
+      return true
     }))
   }
 
@@ -472,11 +472,11 @@ export class WorkService {
       throw new BadRequestException('作品不存在')
     }
     return this.drizzle.withErrorHandling(async () => this.db.transaction(async (tx) => {
-      const [updatedWork] = await tx
+      const result = await tx
         .update(this.work)
         .set({ isPublished: body.isPublished })
         .where(and(eq(this.work.id, body.id), isNull(this.work.deletedAt)))
-        .returning()
+      this.drizzle.assertAffectedRows(result, '作品不存在')
 
       if (work.forumSectionId) {
         await tx
@@ -485,7 +485,7 @@ export class WorkService {
           .where(eq(this.forumSection.id, work.forumSectionId))
       }
 
-      return updatedWork
+      return true
     }))
   }
 
@@ -498,15 +498,14 @@ export class WorkService {
       isNew: boolean
     }>,
   ) {
-    const [updated] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.work)
         .set(data)
         .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
-        .returning({ id: this.work.id }),
     )
-    this.drizzle.assertAffectedRows(updated ? [updated] : [], '作品不存在')
-    return updated
+    this.drizzle.assertAffectedRows(result, '作品不存在')
+    return true
   }
 
   /**
@@ -887,11 +886,11 @@ export class WorkService {
 
     // 使用事务确保作品删除和作者作品数更新的一致性
     return this.drizzle.withErrorHandling(async () => this.db.transaction(async (tx) => {
-      const [deletedWork] = await tx
+      const result = await tx
         .update(this.work)
         .set({ deletedAt: new Date() })
         .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
-        .returning()
+      this.drizzle.assertAffectedRows(result, '作品不存在')
 
       if (work.forumSectionId) {
         await tx
@@ -912,7 +911,7 @@ export class WorkService {
           .where(inArray(this.workAuthor.id, authorIds))
       }
 
-      return deletedWork
+      return true
     }))
   }
 }

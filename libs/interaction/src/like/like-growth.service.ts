@@ -71,7 +71,7 @@ export class LikeGrowthService {
     const baseBizKey = `like:${targetType}:${targetId}:user:${userId}`
 
     try {
-      await this.db.transaction(async (tx) => {
+      await this.drizzle.withTransaction(async (tx) => {
         await this.growthLedgerService.applyByRule(tx, {
           userId,
           assetType: GrowthAssetTypeEnum.POINTS,
@@ -123,7 +123,7 @@ export class LikeGrowthService {
     const baseBizKey = `comment:liked:${commentId}:liker:${likerUserId}:author:${comment.userId}`
 
     try {
-      await this.db.transaction(async (tx) => {
+      await this.drizzle.withTransaction(async (tx) => {
         await this.growthLedgerService.applyByRule(tx, {
           userId: comment.userId,
           assetType: GrowthAssetTypeEnum.POINTS,

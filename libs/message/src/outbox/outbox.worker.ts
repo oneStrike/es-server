@@ -1,4 +1,4 @@
-import type { NotificationOutboxPayload } from './dto/outbox-event.dto'
+import type { NotificationOutboxPayload } from './outbox.type'
 import { DrizzleService } from '@db/core'
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'

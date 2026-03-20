@@ -1,8 +1,8 @@
 import type { Db } from '@db/core'
 import type {
-  CreateMessageOutboxEventDto,
-  CreateNotificationOutboxEventDto,
-} from './dto/outbox-event.dto'
+  CreateMessageOutboxEventInput,
+  CreateNotificationOutboxEventInput,
+} from './outbox.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import {
@@ -30,13 +30,13 @@ export class MessageOutboxService {
    * 将消息事件入队
    * @param dto 消息事件数据
    */
-  async enqueueEvent(dto: CreateMessageOutboxEventDto) {
+  async enqueueEvent(dto: CreateMessageOutboxEventInput) {
     return this.drizzle.withErrorHandling(async () =>
       this.enqueueEventInTx(this.db, dto),
     )
   }
 
-  async enqueueEventInTx(tx: Db, dto: CreateMessageOutboxEventDto) {
+  async enqueueEventInTx(tx: Db, dto: CreateMessageOutboxEventInput) {
     await tx
       .insert(this.outbox)
       .values({
@@ -55,7 +55,7 @@ export class MessageOutboxService {
    * 将通知事件入队
    * @param dto 通知事件数据
    */
-  async enqueueNotificationEvent(dto: CreateNotificationOutboxEventDto) {
+  async enqueueNotificationEvent(dto: CreateNotificationOutboxEventInput) {
     await this.drizzle.withErrorHandling(async () =>
       this.enqueueNotificationEventInTx(this.db, dto),
     )
@@ -63,7 +63,7 @@ export class MessageOutboxService {
 
   async enqueueNotificationEventInTx(
     tx: Db,
-    dto: CreateNotificationOutboxEventDto,
+    dto: CreateNotificationOutboxEventInput,
   ) {
     await this.enqueueEventInTx(
       tx,

@@ -73,16 +73,15 @@ export class ForumTagService {
       throw new BadRequestException('该标签名称已存在')
     }
 
-    const [tag] = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.forumTag)
         .values({
           ...tagData,
           name,
-        })
-        .returning(),
+        }),
     )
-    return tag
+    return true
   }
 
   /**
@@ -190,16 +189,14 @@ export class ForumTagService {
       }
     }
 
-    const [updatedTag] = await this.drizzle.withErrorHandling(() =>
+    const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumTag)
         .set({ name, ...updateData })
         .where(eq(this.forumTag.id, id))
-        .returning(),
     )
-    this.drizzle.assertAffectedRows(updatedTag ? [updatedTag] : [], '标签不存在')
-
-    return updatedTag
+    this.drizzle.assertAffectedRows(result, '标签不存在')
+    return true
   }
 
   /**
@@ -228,11 +225,10 @@ export class ForumTagService {
       this.db
         .delete(this.forumTag)
         .where(eq(this.forumTag.id, id))
-        .returning({ id: this.forumTag.id }),
     )
     this.drizzle.assertAffectedRows(rows, '标签不存在')
 
-    return { success: true }
+    return true
   }
 
   /**
@@ -274,20 +270,18 @@ export class ForumTagService {
     // 关联关系与使用次数同步更新
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const [topicTag] = await tx
+        await tx
           .insert(this.forumTopicTag)
           .values({
             topicId,
             tagId,
           })
-          .returning()
         const rows = await tx
           .update(this.forumTag)
           .set({ useCount: sql`${this.forumTag.useCount} + 1` })
           .where(eq(this.forumTag.id, tagId))
-          .returning({ id: this.forumTag.id })
         this.drizzle.assertAffectedRows(rows, '标签不存在')
-        return topicTag
+        return true
       }),
     )
   }
@@ -326,9 +320,8 @@ export class ForumTagService {
           .update(this.forumTag)
           .set({ useCount: sql`${this.forumTag.useCount} - 1` })
           .where(eq(this.forumTag.id, tagId))
-          .returning({ id: this.forumTag.id })
         this.drizzle.assertAffectedRows(rows, '标签不存在')
-        return { success: true }
+        return true
       }),
     )
   }

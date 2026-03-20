@@ -71,7 +71,7 @@ export class ForumTagController {
   @Post('create')
   @ApiDoc({
     summary: '添加标签',
-    model: BaseForumTagDto,
+    model: Boolean,
   })
   async createTag(@Body() dto: CreateForumTagDto) {
     return this.forumTagService.createTag(dto)
@@ -80,7 +80,7 @@ export class ForumTagController {
   @Post('update')
   @ApiDoc({
     summary: '更新标签',
-    model: BaseForumTagDto,
+    model: Boolean,
   })
   async updateTag(@Body() dto: UpdateForumTagDto) {
     return this.forumTagService.updateTag(dto)
@@ -89,6 +89,7 @@ export class ForumTagController {
   @Post('delete')
   @ApiDoc({
     summary: '删除标签',
+    model: Boolean,
   })
   async deleteTag(@Body() dto: IdDto) {
     return this.forumTagService.deleteTag(dto.id)
@@ -97,6 +98,7 @@ export class ForumTagController {
   @Post('assign-topic')
   @ApiDoc({
     summary: '为主题分配标签',
+    model: Boolean,
   })
   async assignTagToTopic(@Body() dto: AssignForumTagToTopicDto) {
     return this.forumTagService.assignTagToTopic(dto)
@@ -105,6 +107,7 @@ export class ForumTagController {
   @Post('unassign-topic')
   @ApiDoc({
     summary: '从主题移除标签',
+    model: Boolean,
   })
   async removeTagFromTopic(@Body() dto: RemoveForumTagFromTopicDto) {
     return this.forumTagService.removeTagFromTopic(dto)

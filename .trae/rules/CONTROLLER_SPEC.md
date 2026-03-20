@@ -241,6 +241,12 @@ app-api 使用一级分组：
 - 当现有领域 DTO 无法准确表达返回结构时，必须在 apps 层补充专用响应 DTO。
 - 使用 `ApiPageDoc` 的接口必须真实返回分页结构。
 
+### 7.3 变更类接口返回规范
+
+- 对 `create`、`update`、`delete`、`update-status`、`update-enabled`、`swap-sort-order` 等增删改接口，除非存在明确业务需求，否则 Controller 统一只返回 `boolean` 状态。
+- 对应的 Service 方法默认也只返回 `boolean` 或 `Promise<boolean>`，禁止为了形式统一额外包装无意义的成功对象。
+- 当写操作只需要判断是否成功时，禁止无意义使用 Drizzle 的 `returning()`；只有确实需要返回新增/更新后的数据，或需要依赖返回值继续完成后续业务处理时才允许使用。
+
 ## 8. 权限与审计规范
 
 - admin-api 默认受保护，除认证与明确公开能力外，禁止使用 `@Public()`。
@@ -260,7 +266,8 @@ app-api 使用一级分组：
 3. 选择对应的标准路径与 tag。
 4. 确认输入 DTO、输出 DTO、Swagger 文档匹配。
 5. 确认 admin 接口权限与审计装饰器正确。
-6. 变更后执行类型检查，并复扫路径语义是否一致。
+6. 对增删改接口确认是否可以收敛为 `boolean` 返回，并检查 Service 与数据库写操作未引入无意义 `returning()`。
+7. 变更后执行类型检查，并复扫路径语义是否一致。
 
 ## 11. 验收清单
 
@@ -272,5 +279,7 @@ app-api 使用一级分组：
 - [ ] 当前用户分页集合统一使用 `my/page`。
 - [ ] 统计接口统一使用 `stats`。
 - [ ] Swagger 未使用输入 DTO 作为输出模型。
+- [ ] 增删改接口在无特殊需求时统一返回 `boolean`，对应 Service 方法同步收敛。
+- [ ] 数据写操作未为“仅返回成功状态”而无意义使用 Drizzle `returning()`。
 - [ ] admin 公开接口均经过明确确认。
 - [ ] `apps/admin-api` 与 `apps/app-api` 的类型检查通过。

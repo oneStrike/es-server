@@ -46,7 +46,7 @@ export class ForumSectionController {
   @Post('create')
   @ApiDoc({
     summary: '添加板块',
-    model: BaseForumSectionDto,
+    model: Boolean,
   })
   async createSection(@Body() dto: CreateForumSectionDto) {
     return this.forumSectionService.createSection(dto)
@@ -55,7 +55,7 @@ export class ForumSectionController {
   @Post('update')
   @ApiDoc({
     summary: '更新板块',
-    model: BaseForumSectionDto,
+    model: Boolean,
   })
   async updateSection(@Body() dto: UpdateForumSectionDto) {
     return this.forumSectionService.updateSection(dto)
@@ -64,7 +64,7 @@ export class ForumSectionController {
   @Post('delete')
   @ApiDoc({
     summary: '删除板块',
-    model: BaseForumSectionDto,
+    model: Boolean,
   })
   async deleteSection(@Body() dto: IdDto) {
     return this.forumSectionService.deleteSection(dto.id)
@@ -73,7 +73,7 @@ export class ForumSectionController {
   @Post('update-enabled')
   @ApiDoc({
     summary: '更新板块启用状态',
-    model: BaseForumSectionDto,
+    model: Boolean,
   })
   async updateEnabledStatus(@Body() dto: UpdateEnabledStatusDto) {
     return this.forumSectionService.updateEnabledStatus(dto)
@@ -82,7 +82,7 @@ export class ForumSectionController {
   @Post('swap-sort-order')
   @ApiDoc({
     summary: '交换板块排序顺序',
-    model: BaseForumSectionDto,
+    model: Boolean,
   })
   async swapSortOrder(@Body() dto: DragReorderDto) {
     return this.forumSectionService.updateSectionSort(dto)

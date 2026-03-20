@@ -1,4 +1,4 @@
-import type { CreateTokenDto, ITokenEntity } from '@libs/platform/modules/auth'
+import type { CreateTokenInput, ITokenEntity } from '@libs/platform/modules/auth'
 import type { Cache } from 'cache-manager'
 
 import { DrizzleService } from '@db/core'
@@ -29,7 +29,7 @@ export abstract class BaseDrizzleTokenStorageService<
 
   protected abstract get tokenTable(): any
 
-  protected async createOne(data: CreateTokenDto): Promise<TEntity> {
+  protected async createOne(data: CreateTokenInput): Promise<TEntity> {
     const rows = await this.drizzle.withErrorHandling(() =>
       this.drizzle.db
         .insert(this.tokenTable)
@@ -47,7 +47,7 @@ export abstract class BaseDrizzleTokenStorageService<
     return rows[0] as TEntity
   }
 
-  protected async createManyItems(data: CreateTokenDto[]): Promise<number> {
+  protected async createManyItems(data: CreateTokenInput[]): Promise<number> {
     const rows = await this.drizzle.withErrorHandling(() =>
       this.drizzle.db
         .insert(this.tokenTable)

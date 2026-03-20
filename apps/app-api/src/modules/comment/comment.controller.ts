@@ -49,7 +49,7 @@ export class CommentController {
   @Post('delete')
   @ApiDoc({
     summary: '删除我的评论',
-    model: IdDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
     return this.commentService.deleteComment(body.id, userId)

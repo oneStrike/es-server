@@ -1,4 +1,4 @@
-import type { NotificationOutboxPayload } from '../outbox/dto/outbox-event.dto'
+import type { NotificationOutboxPayload } from '../outbox/outbox.type'
 import type { QueryUserNotificationListInput } from './notification.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'

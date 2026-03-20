@@ -2,7 +2,6 @@ import {
   LikeService,
 } from '@libs/interaction'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
@@ -20,20 +19,20 @@ export class LikeController {
   @Post('like')
   @ApiDoc({
     summary: '点赞',
-    model: IdDto,
+    model: Boolean,
   })
   async like(@Body() body: LikeTargetDto, @CurrentUser('sub') userId: number) {
     await this.likeService.like({
       ...body,
       userId,
     })
-    return { id: body.targetId }
+    return true
   }
 
   @Post('cancel')
   @ApiDoc({
     summary: '取消点赞',
-    model: IdDto,
+    model: Boolean,
   })
   async unlike(
     @Body() body: LikeTargetDto,
@@ -43,7 +42,7 @@ export class LikeController {
       ...body,
       userId,
     })
-    return { id: body.targetId }
+    return true
   }
 
   @Get('status')

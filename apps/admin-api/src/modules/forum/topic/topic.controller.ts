@@ -127,7 +127,7 @@ export class ForumTopicController {
   @Post('create')
   @ApiDoc({
     summary: '创建论坛主题',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async create(@Body() body: CreateForumTopicDto) {
     return this.forumTopicService.createForumTopic(body)
@@ -136,7 +136,7 @@ export class ForumTopicController {
   @Post('update')
   @ApiDoc({
     summary: '更新论坛主题',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async update(@Body() body: UpdateForumTopicDto) {
     return this.forumTopicService.updateTopic(body)
@@ -145,7 +145,7 @@ export class ForumTopicController {
   @Post('delete')
   @ApiDoc({
     summary: '删除论坛主题',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async delete(@Body() body: IdDto) {
     return this.forumTopicService.deleteTopic(body.id)
@@ -154,7 +154,7 @@ export class ForumTopicController {
   @Post('update-pinned')
   @ApiDoc({
     summary: '更新主题置顶状态',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async updatePinned(@Body() body: UpdateForumTopicPinnedDto) {
     return this.forumTopicService.updateTopicPinned(body)
@@ -163,7 +163,7 @@ export class ForumTopicController {
   @Post('update-featured')
   @ApiDoc({
     summary: '更新主题精华状态',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async updateFeatured(@Body() body: UpdateForumTopicFeaturedDto) {
     return this.forumTopicService.updateTopicFeatured(body)
@@ -172,7 +172,7 @@ export class ForumTopicController {
   @Post('update-locked')
   @ApiDoc({
     summary: '更新主题锁定状态',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async updateLocked(@Body() body: UpdateForumTopicLockedDto) {
     return this.forumTopicService.updateTopicLocked(body)
@@ -181,7 +181,7 @@ export class ForumTopicController {
   @Post('update-hidden')
   @ApiDoc({
     summary: '更新主题隐藏状态',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async updateHidden(@Body() body: UpdateForumTopicHiddenDto) {
     return this.forumTopicService.updateTopicHidden(body)
@@ -190,7 +190,7 @@ export class ForumTopicController {
   @Post('update-audit-status')
   @ApiDoc({
     summary: '更新主题审核状态',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async updateAuditStatus(@Body() body: UpdateForumTopicAuditStatusDto) {
     return this.forumTopicService.updateTopicAuditStatus(body)
@@ -199,7 +199,7 @@ export class ForumTopicController {
   @Post('increment-view-count')
   @ApiDoc({
     summary: '增加主题浏览次数',
-    model: BaseForumTopicDto,
+    model: Boolean,
   })
   async incrementViewCount(@Body() body: IdDto) {
     return this.forumTopicService.incrementViewCount(body.id)

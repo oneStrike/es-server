@@ -32,9 +32,10 @@ export interface ITokenEntity {
 }
 
 /**
- * 创建 Token 数据传输对象
+ * 创建 Token 入参。
+ * 用于持久化 access/refresh token 的核心字段。
  */
-export interface CreateTokenDto {
+export interface CreateTokenInput {
   /** 用户 ID */
   userId: number
   /** JWT ID */
@@ -50,6 +51,12 @@ export interface CreateTokenDto {
   /** User-Agent */
   userAgent?: string
 }
+
+/**
+ * 兼容旧命名的 Token 创建类型。
+ * 保留别名以避免外部导入立即断裂。
+ */
+export type CreateTokenDto = CreateTokenInput
 
 /**
  * Token Delegate 接口抽象

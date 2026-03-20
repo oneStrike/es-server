@@ -435,7 +435,7 @@ export class CommentService {
     const decision = this.resolveAuditDecision(content)
     const resolver = this.getResolver(targetType as CommentTargetTypeEnum)
 
-    const created = await this.db.transaction(async (tx) => {
+    const created = await this.drizzle.withTransaction(async (tx) => {
       await resolver.ensureCanComment(tx, targetId)
 
       const [newComment] = await tx
@@ -507,7 +507,7 @@ export class CommentService {
    * @returns 被删除的评论ID
    */
   async deleteComment(commentId: number, userId?: number) {
-    return this.db.transaction(async (tx) => {
+    return this.drizzle.withTransaction(async (tx) => {
       const found = await tx.query.userComment.findFirst({
         where: userId
           ? {
