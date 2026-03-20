@@ -34,6 +34,7 @@ services:
     environment:
       # 注入当前服务特定的配置
       - APP_NAME=admin-api
+      # 如果代码中没有处理 DATABASE_URL 组合逻辑，则需在此显式声明
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       # 配置隔离映射
@@ -41,10 +42,8 @@ services:
       - JWT_REFRESH_EXPIRATION_IN=${ADMIN_JWT_REFRESH_EXPIRATION_IN}
       - JWT_JWT_ISSUER=${ADMIN_JWT_ISSUER}
       - REDIS_NAMESPACE=${ADMIN_REDIS_NAMESPACE}
-      - UPLOAD_LOCAL_DIR=${UPLOAD_LOCAL_DIR:-/app/uploads/public}
-      - UPLOAD_TMP_DIR=${UPLOAD_TMP_DIR:-/app/uploads/tmp}
-      - UPLOAD_LOCAL_URL_PREFIX=${UPLOAD_LOCAL_URL_PREFIX:-/files}
-      - UPLOAD_MAX_FILE_SIZE=${UPLOAD_MAX_FILE_SIZE:-100MB}
+      - UPLOAD_DIR=${ADMIN_UPLOAD_DIR:-/app/uploads/admin}
+      - UPLOAD_MAX_FILE_SIZE=${ADMIN_UPLOAD_MAX_FILE_SIZE}
       # 日志路径 (区分项目)
       - LOG_PATH=/app/logs/app
       # 控制台日志级别
@@ -59,10 +58,12 @@ services:
 
   # 数据库迁移服务
   migrator:
-    image: es/server-migrator:${SERVER_VERSION}
+    image: es/app/server:${SERVER_VERSION}
     container_name: es-migrator
     pull_policy: never
     user: '1001:1001'
+    # 覆盖默认启动命令，执行迁移
+    command: [bun, run, drizzle-kit, migrate]
     # 任务执行完成后退出，不重启
     restart: no
     env_file:
@@ -113,12 +114,11 @@ services:
       - JWT_EXPIRATION_IN=${APP_JWT_EXPIRATION_IN}
       - JWT_REFRESH_EXPIRATION_IN=${APP_JWT_REFRESH_EXPIRATION_IN}
       - JWT_JWT_ISSUER=${APP_JWT_ISSUER}
-      - UPLOAD_LOCAL_DIR=${UPLOAD_LOCAL_DIR:-/app/uploads/public}
-      - UPLOAD_TMP_DIR=${UPLOAD_TMP_DIR:-/app/uploads/tmp}
-      - UPLOAD_LOCAL_URL_PREFIX=${UPLOAD_LOCAL_URL_PREFIX:-/files}
-      - UPLOAD_MAX_FILE_SIZE=${UPLOAD_MAX_FILE_SIZE:-100MB}
+      - UPLOAD_DIR=${APP_UPLOAD_DIR:-/app/uploads/app}
+      - UPLOAD_MAX_FILE_SIZE=${APP_UPLOAD_MAX_FILE_SIZE}
       - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE}
       - APP_VERSION=${APP_APP_VERSION}
+      - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
       # 日志路径 (区分项目)
       - LOG_PATH=/app/logs/app
       # 控制台日志级别
