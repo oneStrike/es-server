@@ -104,30 +104,6 @@ export class PurchaseService {
     return Array.isArray(rows) ? (rows as T[]) : []
   }
 
-  private normalizePagination(
-    pageIndex?: number,
-    pageSize?: number,
-  ): { pageIndex: number, pageSize: number, skip: number, take: number } {
-    const rawPageIndex = Number.isFinite(Number(pageIndex))
-      ? Math.floor(Number(pageIndex))
-      : 1
-    const normalizedPageIndex = Math.max(1, rawPageIndex)
-
-    const rawPageSize = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : 15
-    const normalizedPageSize = Math.min(Math.max(1, rawPageSize), 500)
-
-    const skip = (normalizedPageIndex - 1) * normalizedPageSize
-
-    return {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take: normalizedPageSize,
-    }
-  }
-
   private buildPurchaseCreatedAtFilter(startDate?: string, endDate?: string): SQL {
     const filters: SQL[] = []
     const columnRef = sql`upr.created_at`
@@ -277,12 +253,7 @@ export class PurchaseService {
       startDate,
       endDate,
     } = query
-    const {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take,
-    } = this.normalizePagination(pageIndex, pageSize)
+    const pageQuery = this.drizzle.buildPageQuery({ pageIndex, pageSize })
     const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
@@ -309,7 +280,7 @@ export class PurchaseService {
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
         ORDER BY MAX(upr.created_at) DESC
-        LIMIT ${take} OFFSET ${skip}
+        LIMIT ${pageQuery.limit} OFFSET ${pageQuery.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
@@ -348,8 +319,8 @@ export class PurchaseService {
         lastPurchasedAt: row.lastPurchasedAt,
       })),
       total,
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 
@@ -367,12 +338,7 @@ export class PurchaseService {
       startDate,
       endDate,
     } = query
-    const {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take,
-    } = this.normalizePagination(pageIndex, pageSize)
+    const pageQuery = this.drizzle.buildPageQuery({ pageIndex, pageSize })
     const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
@@ -412,7 +378,7 @@ export class PurchaseService {
           ${workTypeFilter}
           ${createdAtFilter}
         ORDER BY upr.created_at DESC
-        LIMIT ${take} OFFSET ${skip}
+        LIMIT ${pageQuery.limit} OFFSET ${pageQuery.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
@@ -478,8 +444,8 @@ export class PurchaseService {
         },
       })),
       total,
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 }

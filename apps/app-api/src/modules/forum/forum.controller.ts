@@ -1,4 +1,4 @@
-import { ForumTopicService } from '@libs/forum'
+import { ForumTopicService, UserProfileService } from '@libs/forum'
 import { CommentService } from '@libs/interaction'
 import {
   ApiDoc,
@@ -14,8 +14,10 @@ import {
   AppForumTopicPageItemDto,
   CreateAppForumTopicDto,
   ForumTopicCommentItemDto,
+  MyForumTopicItemDto,
   QueryAppForumTopicPageDto,
   QueryForumTopicCommentPageDto,
+  QueryMyForumTopicPageDto,
   UpdateAppForumTopicDto,
 } from './dto/forum-topic.dto'
 
@@ -24,8 +26,9 @@ import {
 export class ForumController {
   constructor(
     private readonly forumTopicService: ForumTopicService,
+    private readonly userProfileService: UserProfileService,
     private readonly commentService: CommentService,
-  ) {}
+  ) { }
 
   @Get('page')
   @OptionalAuth()
@@ -71,8 +74,19 @@ export class ForumController {
       ...target,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
-      previewReplyLimit: 3,
     })
+  }
+
+  @Get('my')
+  @ApiPageDoc({
+    summary: '分页查询我发布的主题',
+    model: MyForumTopicItemDto,
+  })
+  async getMyTopicPage(
+    @Query() query: QueryMyForumTopicPageDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.userProfileService.getMyTopics(userId, query)
   }
 
   @Post('create')

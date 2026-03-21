@@ -10,36 +10,38 @@ import {
 } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user'
-import { IntersectionType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { TargetCommentItemDto } from '../../comment/dto/comment.dto'
 
 export class QueryAppForumTopicPageDto extends IntersectionType(
   PageDto,
   PickType(BaseForumTopicDto, ['sectionId'] as const),
-) {}
+) { }
+
+export class QueryMyForumTopicPageDto extends PartialType(QueryAppForumTopicPageDto) { }
 
 export class CreateAppForumTopicDto extends PickType(BaseForumTopicDto, [
   'sectionId',
   'title',
   'content',
-] as const) {}
+] as const) { }
 
 export class UpdateAppForumTopicDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['title', 'content'] as const),
-) {}
+) { }
 
 export class AppForumSectionBriefDto extends PickType(BaseForumSectionDto, [
   'id',
   'name',
   'icon',
-] as const) {}
+] as const) { }
 
 export class AppForumTopicUserBriefDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
   'avatarUrl',
-] as const) {}
+] as const) { }
 
 export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'id',
@@ -77,7 +79,7 @@ export class ForumTopicTagItemDto extends PickType(BaseForumTagDto, [
   'id',
   'name',
   'icon',
-] as const) {}
+] as const) { }
 
 export class AppForumTopicDetailDto extends IntersectionType(
   BaseForumTopicDto,
@@ -103,6 +105,35 @@ export class AppForumTopicDetailDto extends IntersectionType(
 export class QueryForumTopicCommentPageDto extends IntersectionType(
   PageDto,
   IdDto,
-) {}
+) { }
 
-export class ForumTopicCommentItemDto extends TargetCommentItemDto {}
+export class ForumTopicCommentItemDto extends TargetCommentItemDto { }
+
+export class MyForumTopicSectionDto extends PickType(BaseForumSectionDto, [
+  'id',
+  'name',
+] as const) { }
+
+export class MyForumTopicItemDto extends PickType(BaseForumTopicDto, [
+  'id',
+  'sectionId',
+  'title',
+  'isPinned',
+  'isFeatured',
+  'isLocked',
+  'viewCount',
+  'replyCount',
+  'likeCount',
+  'favoriteCount',
+  'lastReplyAt',
+  'createdAt',
+  'auditStatus',
+] as const) {
+  @NestedProperty({
+    description: '所属板块',
+    required: false,
+    type: MyForumTopicSectionDto,
+    validation: false,
+  })
+  section?: MyForumTopicSectionDto | null
+}

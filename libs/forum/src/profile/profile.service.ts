@@ -30,7 +30,7 @@ export class UserProfileService {
     /** 收藏服务 */
     protected readonly favoriteService: FavoriteService,
     private readonly appUserCountService: AppUserCountService,
-  ) {}
+  ) { }
 
   private get db() {
     return this.drizzle.db
@@ -118,22 +118,22 @@ export class UserProfileService {
     const userIds = page.list.map((item) => item.id)
     const counts = userIds.length
       ? await this.db
-          .select()
-          .from(this.appUserCount)
-          .where(inArray(this.appUserCount.userId, userIds))
+        .select()
+        .from(this.appUserCount)
+        .where(inArray(this.appUserCount.userId, userIds))
       : []
     const countMap = new Map(counts.map((item) => [item.userId, item]))
     const badgeRows = userIds.length
       ? await this.db
-          .select({
-            userId: this.userBadgeAssignment.userId,
-            assignmentId: this.userBadgeAssignment.id,
-            createdAt: this.userBadgeAssignment.createdAt,
-            badge: this.userBadge,
-          })
-          .from(this.userBadgeAssignment)
-          .innerJoin(this.userBadge, eq(this.userBadge.id, this.userBadgeAssignment.badgeId))
-          .where(inArray(this.userBadgeAssignment.userId, userIds))
+        .select({
+          userId: this.userBadgeAssignment.userId,
+          assignmentId: this.userBadgeAssignment.id,
+          createdAt: this.userBadgeAssignment.createdAt,
+          badge: this.userBadge,
+        })
+        .from(this.userBadgeAssignment)
+        .innerJoin(this.userBadge, eq(this.userBadge.id, this.userBadgeAssignment.badgeId))
+        .where(inArray(this.userBadgeAssignment.userId, userIds))
       : []
     const badgeMap = new Map<number, any[]>()
     for (const row of badgeRows) {
@@ -235,18 +235,38 @@ export class UserProfileService {
   /**
    * 查看我的主题
    * @param userId - 用户ID
+   * @param query - 分页参数
    * @returns 分页的主题列表，包含板块信息和回复数统计
    */
-  async getMyTopics(userId: number) {
+  async getMyTopics(userId: number, query?: { sectionId?: number, pageIndex?: number, pageSize?: number }) {
+    const foo = await this.db.query.forumTopic.findMany({
+      where: {
+        userId,
+        sectionId: query?.sectionId,
+      },
+      with: {
+        section: {
+          columns: {
+            id: true,
+            name: true
+          }
+        }
+      },
+    })
+    console.log("🚀 ~ UserProfileService ~ getMyTopics ~ foo:", foo)
+
     const page = await this.drizzle.ext.findPagination(this.forumTopic, {
       where: and(eq(this.forumTopic.userId, userId), isNull(this.forumTopic.deletedAt)),
+      pageIndex: query?.pageIndex,
+      pageSize: query?.pageSize,
+      orderBy: { createdAt: 'desc' },
     })
     const sectionIds = page.list.map((item) => item.sectionId).filter((id) => !!id)
     const sections = sectionIds.length
       ? await this.db
-          .select({ id: this.forumSection.id, name: this.forumSection.name })
-          .from(this.forumSection)
-          .where(inArray(this.forumSection.id, sectionIds))
+        .select({ id: this.forumSection.id, name: this.forumSection.name })
+        .from(this.forumSection)
+        .where(inArray(this.forumSection.id, sectionIds))
       : []
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const list = page.list.map((item) => {
@@ -281,9 +301,9 @@ export class UserProfileService {
     const sectionIds = topics.map((item) => item.sectionId).filter((id) => !!id)
     const sections = sectionIds.length
       ? await this.db
-          .select({ id: this.forumSection.id, name: this.forumSection.name })
-          .from(this.forumSection)
-          .where(inArray(this.forumSection.id, sectionIds))
+        .select({ id: this.forumSection.id, name: this.forumSection.name })
+        .from(this.forumSection)
+        .where(inArray(this.forumSection.id, sectionIds))
       : []
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const topicsWithSection = topics.map((item) => ({

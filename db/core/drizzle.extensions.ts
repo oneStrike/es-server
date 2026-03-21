@@ -1,3 +1,4 @@
+import type { DbQueryConfig } from '@libs/platform/config'
 import type { InferSelectModel } from 'drizzle-orm'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import type { FindPaginationOptions } from '../extensions/findPagination'
@@ -13,7 +14,10 @@ import {
   swapField as swapFieldExtension,
 } from '../extensions'
 
-export function createDrizzleExtensions(db: Db) {
+export function createDrizzleExtensions(
+  db: Db,
+  queryConfig: DbQueryConfig,
+) {
   return {
     exists: async (table: PgTable<TableConfig>, where?: SQL) =>
       existsExtension(db, table, where),
@@ -26,7 +30,13 @@ export function createDrizzleExtensions(db: Db) {
     >(
       table: TTable,
       options?: FindPaginationOptions<TTable, TOmit, TPick>,
-    ) => findPaginationExtension<TTable, TOmit, TPick>(db, table, options),
+    ) =>
+      findPaginationExtension<TTable, TOmit, TPick>(
+        db,
+        table,
+        options,
+        queryConfig,
+      ),
     maxOrder: async (
       table: PgTable<TableConfig>,
       where?: SQL,

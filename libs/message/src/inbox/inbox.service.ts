@@ -140,8 +140,10 @@ export class MessageInboxService {
    * 合并通知和聊天消息，按时间倒序排列
    */
   async getTimeline(userId: number, dto: QueryInboxTimelineInput) {
-    const { pageIndex, pageSize, offset } = this.normalizePagination(dto)
-    const fetchTake = offset + pageSize + 20
+    const pageQuery = this.drizzle.buildPageQuery(dto, {
+      maxPageSize: 100,
+    })
+    const fetchTake = pageQuery.offset + pageQuery.pageSize + 20
 
     const [notificationTotal, conversationTotalRows, notifications, conversations] =
       await Promise.all([
@@ -240,30 +242,13 @@ export class MessageInboxService {
     ].sort((prev, next) => next.createdAt.getTime() - prev.createdAt.getTime())
 
     return {
-      list: timeline.slice(offset, offset + pageSize),
+      list: timeline.slice(
+        pageQuery.offset,
+        pageQuery.offset + pageQuery.pageSize,
+      ),
       total: notificationTotal + Number(conversationTotalRows[0]?.total ?? 0),
-      pageIndex,
-      pageSize,
-    }
-  }
-
-  /** 标准化分页参数 */
-  private normalizePagination(dto: QueryInboxTimelineInput) {
-    const rawPageIndex = Number.isFinite(Number(dto.pageIndex))
-      ? Math.floor(Number(dto.pageIndex))
-      : 0
-    const pageIndex = rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
-
-    const rawPageSize = Number.isFinite(Number(dto.pageSize))
-      ? Math.floor(Number(dto.pageSize))
-      : 15
-    const pageSize = Math.min(Math.max(1, rawPageSize), 100)
-    const offset = pageIndex >= 1 ? (pageIndex - 1) * pageSize : pageIndex * pageSize
-
-    return {
-      pageIndex,
-      pageSize,
-      offset,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 }

@@ -37,7 +37,7 @@ export class PageDto extends DateRangeDto {
   pageSize?: number
 
   @NumberProperty({
-    description: '当前页码',
+    description: '当前页码（从0开始）',
     example: 0,
     min: 0,
     required: false,

@@ -188,9 +188,10 @@ export class UserBadgeService {
       throw new NotFoundException('徽章不存在')
     }
 
-    const pageIndex = dto.pageIndex ?? 1
-    const pageSize = dto.pageSize ?? 20
-    const offset = (pageIndex - 1) * pageSize
+    const pageQuery = this.drizzle.buildPageQuery(dto, {
+      table: this.userBadgeAssignment,
+      defaultOrderBy: { id: 'desc' },
+    })
 
     const badgeWhere = this.buildBadgeWhere(dto)
     const where = badgeWhere
@@ -228,17 +229,17 @@ export class UserBadgeService {
       .innerJoin(this.appUser, eq(this.appUser.id, this.userBadgeAssignment.userId))
       .leftJoin(this.userLevelRule, eq(this.userLevelRule.id, this.appUser.levelId))
       .where(where)
-      .orderBy(desc(this.userBadgeAssignment.id))
-      .limit(pageSize)
-      .offset(offset)
+      .orderBy(...pageQuery.orderBySql)
+      .limit(pageQuery.limit)
+      .offset(pageQuery.offset)
 
     const total = Number(totalRow?.total ?? 0)
     return {
       list,
       total,
-      pageIndex,
-      pageSize,
-      totalPage: Math.ceil(total / pageSize),
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
+      totalPage: Math.ceil(total / pageQuery.pageSize),
     }
   }
 

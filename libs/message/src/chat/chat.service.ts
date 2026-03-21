@@ -161,7 +161,9 @@ export class MessageChatService {
    * @returns 分页的会话列表
    */
   async getConversationList(userId: number, dto: QueryChatConversationListInput) {
-    const { pageIndex, pageSize, skip } = this.normalizePagination(dto)
+    const pageQuery = this.drizzle.buildPageQuery(dto, {
+      maxPageSize: 100,
+    })
     const [totalRows, conversationRows] = await Promise.all([
       this.db
         .select({ total: sql<number>`count(*)` })
@@ -188,16 +190,16 @@ export class MessageChatService {
           ),
         )
         .orderBy(sql`${chatConversation.lastMessageAt} desc nulls last`, desc(chatConversation.id))
-        .offset(skip)
-        .limit(pageSize),
+        .offset(pageQuery.offset)
+        .limit(pageQuery.limit),
     ])
 
     if (conversationRows.length === 0) {
       return {
         list: [],
         total: Number(totalRows[0]?.total ?? 0),
-        pageIndex,
-        pageSize,
+        pageIndex: pageQuery.pageIndex,
+        pageSize: pageQuery.pageSize,
       }
     }
 
@@ -267,8 +269,8 @@ export class MessageChatService {
             : undefined,
         )),
       total: Number(totalRows[0]?.total ?? 0),
-      pageIndex,
-      pageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 
@@ -971,39 +973,6 @@ export class MessageChatService {
     const minUserId = Math.min(userId, targetUserId)
     const maxUserId = Math.max(userId, targetUserId)
     return `direct:${minUserId}:${maxUserId}`
-  }
-
-  /**
-   * 标准化分页参数
-   *
-   * 处理逻辑：
-   * 1. 页码转换：支持从1开始计数，也兼容从0开始
-   * 2. 页大小限制：最小1，最大100
-   * 3. 计算跳过记录数
-   *
-   * @param dto - 分页参数
-   * @returns 标准化的分页参数
-   */
-  private normalizePagination(dto: QueryChatConversationListInput) {
-    // 页码处理：支持从1开始或从0开始
-    const rawPageIndex = Number.isFinite(Number(dto.pageIndex))
-      ? Math.floor(Number(dto.pageIndex))
-      : 0
-    // 如果页码>=1，则保持原值；否则使用0或负数本身
-    const pageIndex = rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
-
-    // 页大小处理：默认15，范围 [1, 100]
-    const rawPageSize = Number.isFinite(Number(dto.pageSize))
-      ? Math.floor(Number(dto.pageSize))
-      : 15
-    const pageSize = Math.min(Math.max(1, rawPageSize), 100)
-
-    // 计算跳过记录数
-    // 页码从1开始时：(pageIndex - 1) * pageSize
-    // 页码从0开始时：pageIndex * pageSize
-    const skip = pageIndex >= 1 ? (pageIndex - 1) * pageSize : pageIndex * pageSize
-
-    return { pageIndex, pageSize, skip }
   }
 
   /**

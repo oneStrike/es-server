@@ -144,7 +144,7 @@ export function ApiPageDoc<TModel extends Type<any>>(
                 properties: {
                   pageIndex: {
                     type: 'number',
-                    description: '当前页码',
+                    description: '当前页码（从0开始）',
                     required: true,
                     example: 0,
                   },

@@ -83,15 +83,21 @@ export class TaskService {
   private async queryTaskAssignmentPage(
     params: {
       whereClause: SQL | undefined
-      pageIndex: number
-      pageSize: number
+      pageIndex?: number
+      pageSize?: number
       orderBy?: unknown
       includeTaskDetail: boolean
     },
   ) {
     const { whereClause, pageIndex, pageSize, orderBy, includeTaskDetail } = params
-    const offset = (pageIndex - 1) * pageSize
-    const orderBys = this.parseOrderBy(orderBy, this.taskAssignmentTable)
+    const pageQuery = this.drizzle.buildPageQuery(
+      { pageIndex, pageSize, orderBy },
+      {
+        table: this.taskAssignmentTable,
+        defaultOrderBy: { id: 'desc' },
+      },
+    )
+    const orderBys = pageQuery.orderBySql
 
     const list = includeTaskDetail
       ? await (
@@ -115,8 +121,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
+            .limit(pageQuery.limit)
+            .offset(pageQuery.offset)
             .orderBy(...orderBys)
           : this.db
             .select({
@@ -137,8 +143,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
+            .limit(pageQuery.limit)
+            .offset(pageQuery.offset)
       )
       : await (
         orderBys.length > 0
@@ -158,8 +164,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
+            .limit(pageQuery.limit)
+            .offset(pageQuery.offset)
             .orderBy(...orderBys)
           : this.db
             .select({
@@ -177,8 +183,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageSize)
-            .offset(offset)
+            .limit(pageQuery.limit)
+            .offset(pageQuery.offset)
       )
 
     const [countResult] = await this.db
@@ -196,8 +202,8 @@ export class TaskService {
         task: item.task,
       })),
       total: Number(countResult?.count ?? 0),
-      pageIndex,
-      pageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 
@@ -346,7 +352,7 @@ export class TaskService {
    * @returns 分页结果，包含任务分配和关联任务信息
    */
   async getTaskAssignmentPage(queryDto: QueryTaskAssignmentPageInput) {
-    const { pageIndex = 1, pageSize = 20, orderBy } = queryDto
+    const { orderBy } = queryDto
 
     const whereClause = this.drizzle.buildWhere(this.taskAssignmentTable, {
       and: {
@@ -359,8 +365,8 @@ export class TaskService {
 
     const result = await this.queryTaskAssignmentPage({
       whereClause,
-      pageIndex,
-      pageSize,
+      pageIndex: queryDto.pageIndex,
+      pageSize: queryDto.pageSize,
       orderBy,
       includeTaskDetail: false,
     })
@@ -382,13 +388,13 @@ export class TaskService {
    * @returns 分页结果
    */
   async getAvailableTasks(queryDto: QueryAppTaskInput, userId: number) {
-    const { type, pageIndex = 1, pageSize = 20 } = queryDto
+    const { type } = queryDto
     const where = this.buildAvailableWhere(type)
 
     const result = await this.drizzle.ext.findPagination(this.taskTable, {
       where,
-      pageIndex,
-      pageSize,
+      pageIndex: queryDto.pageIndex,
+      pageSize: queryDto.pageSize,
       orderBy: JSON.stringify([{ priority: 'desc' }, { createdAt: 'desc' }]),
     })
 
@@ -415,7 +421,7 @@ export class TaskService {
   async getMyTasks(queryDto: QueryMyTaskInput, userId: number) {
     // 确保自动领取的任务都已分配
     await this.ensureAutoAssignmentsForUser(userId)
-    const { type, pageIndex = 1, pageSize = 20, orderBy } = queryDto
+    const { type, orderBy } = queryDto
 
     // 构建查询条件
     const assignmentWhere = this.drizzle.buildWhere(this.taskAssignmentTable, {
@@ -435,8 +441,8 @@ export class TaskService {
       : assignmentWhere ?? taskWhere
     const result = await this.queryTaskAssignmentPage({
       whereClause,
-      pageIndex,
-      pageSize,
+      pageIndex: queryDto.pageIndex,
+      pageSize: queryDto.pageSize,
       orderBy,
       includeTaskDetail: true,
     })
@@ -1249,65 +1255,5 @@ export class TaskService {
       assignmentId: assignment.id,
       rewardConfig: taskRecord.rewardConfig as Record<string, unknown> | null,
     })
-  }
-
-  /**
-   * 解析排序条件
-   *
-   * 将前端传递的排序条件转换为SQL排序语句。
-   * 支持JSON字符串或对象格式。
-   *
-   * @param orderBy 排序条件（JSON字符串或对象）
-   * @param table 表对象
-   * @returns SQL排序数组
-   *
-   * @example
-   * // 输入: [{ createdAt: 'desc' }, { priority: 'asc' }]
-   * // 输出: [sql`created_at DESC`, sql`priority ASC`]
-   */
-  private parseOrderBy(
-    orderBy: unknown,
-    table: typeof this.taskTable | typeof this.taskAssignmentTable,
-  ): SQL[] {
-    if (!orderBy) {
-      return []
-    }
-
-    const tableAsAny = table as any
-    const result: SQL[] = []
-
-    // 解析 JSON 字符串
-    let parsed = orderBy
-    if (typeof orderBy === 'string') {
-      try {
-        parsed = JSON.parse(orderBy)
-      } catch {
-        return []
-      }
-    }
-
-    // 统一为数组处理
-    const records: Array<Record<string, string>> = Array.isArray(parsed)
-      ? parsed
-      : [parsed]
-
-    for (const record of records) {
-      for (const [field, direction] of Object.entries(record)) {
-        const column = tableAsAny[field]
-        if (!column) {
-          continue
-        }
-
-        const normalized =
-          typeof direction === 'string' ? direction.toLowerCase() : ''
-        if (normalized === 'asc') {
-          result.push(sql`${column} ASC`)
-        } else if (normalized === 'desc') {
-          result.push(sql`${column} DESC`)
-        }
-      }
-    }
-
-    return result
   }
 }

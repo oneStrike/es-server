@@ -70,27 +70,6 @@ export class DownloadService {
     return Array.isArray(rows) ? (rows as T[]) : []
   }
 
-  private normalizePagination(pageIndex?: number, pageSize?: number) {
-    const rawPageIndex = Number.isFinite(Number(pageIndex))
-      ? Math.floor(Number(pageIndex))
-      : 1
-    const normalizedPageIndex = Math.max(1, rawPageIndex)
-
-    const rawPageSize = Number.isFinite(Number(pageSize))
-      ? Math.floor(Number(pageSize))
-      : 15
-    const normalizedPageSize = Math.min(Math.max(1, rawPageSize), 500)
-
-    const skip = (normalizedPageIndex - 1) * normalizedPageSize
-
-    return {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take: normalizedPageSize,
-    }
-  }
-
   private buildDownloadCreatedAtFilter(
     startDate?: string,
     endDate?: string,
@@ -239,12 +218,7 @@ export class DownloadService {
    */
   async getDownloadedWorks(query: DownloadedWorksQuery) {
     const { userId, workType, pageIndex, pageSize, startDate, endDate } = query
-    const {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take,
-    } = this.normalizePagination(pageIndex, pageSize)
+    const pageQuery = this.drizzle.buildPageQuery({ pageIndex, pageSize })
     const createdAtFilter = this.buildDownloadCreatedAtFilter(
       startDate,
       endDate,
@@ -270,7 +244,7 @@ export class DownloadService {
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
         ORDER BY MAX(udr.created_at) DESC
-        LIMIT ${take} OFFSET ${skip}
+        LIMIT ${pageQuery.limit} OFFSET ${pageQuery.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
@@ -299,8 +273,8 @@ export class DownloadService {
         lastDownloadedAt: row.lastDownloadedAt,
       })),
       total,
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 
@@ -317,12 +291,7 @@ export class DownloadService {
       startDate,
       endDate,
     } = query
-    const {
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
-      skip,
-      take,
-    } = this.normalizePagination(pageIndex, pageSize)
+    const pageQuery = this.drizzle.buildPageQuery({ pageIndex, pageSize })
     const createdAtFilter = this.buildDownloadCreatedAtFilter(
       startDate,
       endDate,
@@ -356,7 +325,7 @@ export class DownloadService {
           ${workTypeFilter}
           ${createdAtFilter}
         ORDER BY udr.created_at DESC
-        LIMIT ${take} OFFSET ${skip}
+        LIMIT ${pageQuery.limit} OFFSET ${pageQuery.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
@@ -394,8 +363,8 @@ export class DownloadService {
         },
       })),
       total,
-      pageIndex: normalizedPageIndex,
-      pageSize: normalizedPageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 }

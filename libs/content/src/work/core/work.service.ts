@@ -765,7 +765,7 @@ export class WorkService {
     const relationPage = await this.attachWorkRelations({
       list: [work] as any,
       total: 1,
-      pageIndex: 1,
+      pageIndex: 0,
       pageSize: 1,
     })
     const workWithRelations = relationPage.list[0]

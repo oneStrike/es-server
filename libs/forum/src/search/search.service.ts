@@ -65,29 +65,14 @@ export class ForumSearchService {
     return this.searchInternal(searchInput, { publicOnly: true, userId })
   }
 
-  private normalizePagination(searchInput: ForumSearchInput) {
-    const pageIndex = Number.isFinite(Number(searchInput.pageIndex))
-      ? Math.max(1, Number(searchInput.pageIndex))
-      : 1
-    const pageSize = Number.isFinite(Number(searchInput.pageSize))
-      ? Math.max(1, Number(searchInput.pageSize))
-      : 15
-
-    return {
-      pageIndex,
-      pageSize,
-      skip: (pageIndex - 1) * pageSize,
-    }
-  }
-
   private createEmptyPage(searchInput: ForumSearchInput): ForumSearchPageResult {
-    const { pageIndex, pageSize } = this.normalizePagination(searchInput)
+    const pageQuery = this.drizzle.buildPageQuery(searchInput)
 
     return {
       list: [],
       total: 0,
-      pageIndex,
-      pageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 
@@ -343,16 +328,15 @@ export class ForumSearchService {
       return this.searchReplies(searchInput, options)
     }
 
-    const pageSize = this.normalizePagination(searchInput).pageSize
-    const { pageIndex, skip } = this.normalizePagination(searchInput)
-    const mergedWindowSize = skip + pageSize
+    const pageQuery = this.drizzle.buildPageQuery(searchInput)
+    const mergedWindowSize = pageQuery.offset + pageQuery.pageSize
 
     const [topicResults, replyResults] = await Promise.all([
       this.searchTopics(
         {
           ...searchInput,
           type: ForumSearchTypeEnum.TOPIC,
-          pageIndex: 1,
+          pageIndex: 0,
           pageSize: mergedWindowSize,
         },
         options,
@@ -361,7 +345,7 @@ export class ForumSearchService {
         {
           ...searchInput,
           type: ForumSearchTypeEnum.REPLY,
-          pageIndex: 1,
+          pageIndex: 0,
           pageSize: mergedWindowSize,
         },
         options,
@@ -370,13 +354,13 @@ export class ForumSearchService {
 
     const mergedList = [...topicResults.list, ...replyResults.list]
       .sort((left, right) => this.compareResults(left, right, searchInput.sort))
-      .slice(skip, skip + pageSize)
+      .slice(pageQuery.offset, pageQuery.offset + pageQuery.pageSize)
 
     return {
       list: mergedList,
       total: topicResults.total + replyResults.total,
-      pageIndex,
-      pageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 
@@ -455,7 +439,7 @@ export class ForumSearchService {
       return this.createEmptyPage(dto)
     }
 
-    const { pageIndex, pageSize, skip } = this.normalizePagination(dto)
+    const pageQuery = this.drizzle.buildPageQuery(dto)
     const conditions = [
       eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
       isNull(this.userComment.deletedAt),
@@ -501,8 +485,8 @@ export class ForumSearchService {
         .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
         .where(where)
         .orderBy(...this.getReplyOrderBy(dto.sort))
-        .limit(pageSize)
-        .offset(skip),
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset),
       this.db
         .select({
           total: sql<number>`count(*)::int`,
@@ -515,8 +499,8 @@ export class ForumSearchService {
     return {
       list: await this.mapReplyResults(rows, dto.keyword),
       total: totalRows[0]?.total ?? 0,
-      pageIndex,
-      pageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
     }
   }
 }

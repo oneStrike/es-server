@@ -858,7 +858,7 @@
             if (!httpBaseUrl || !token) return;
 
             try {
-                const response = await fetch(`${httpBaseUrl}/api/app/message/chat/conversation/list?pageIndex=1&pageSize=20`, {
+                const response = await fetch(`${httpBaseUrl}/api/app/message/chat/conversation/list?pageIndex=0&pageSize=20`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

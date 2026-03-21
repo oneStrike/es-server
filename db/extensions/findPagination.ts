@@ -1,15 +1,11 @@
 import type { InferSelectModel } from 'drizzle-orm'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
+import type { DbQueryConfig, DbQueryOrderBy } from '@libs/platform/config'
 import type { Db, SQL } from '../core/drizzle.type'
-import { DbConfig } from '@libs/platform/config'
-import { jsonParse } from '@libs/platform/utils'
-import { asc, desc, getTableColumns } from 'drizzle-orm'
+import { buildDrizzlePageQuery } from '../core/query/page-query'
+import { getTableColumns } from 'drizzle-orm'
 
-type FindPaginationOrderByRecord = Record<string, 'asc' | 'desc'>
-type FindPaginationOrderBy =
-  | FindPaginationOrderByRecord
-  | FindPaginationOrderByRecord[]
-  | string
+type FindPaginationOrderBy = DbQueryOrderBy | string
 
 export interface FindPaginationOptions<
   TTable extends AnyPgTable,
@@ -40,6 +36,7 @@ export async function findPagination<
   db: Db,
   table: TTable,
   options: FindPaginationOptions<TTable, TOmit, TPick> = {},
+  queryConfig?: DbQueryConfig,
 ): Promise<{
   list: FindPaginationResultItem<TTable, TOmit, TPick>[]
   total: number
@@ -47,50 +44,13 @@ export async function findPagination<
   pageSize: number
 }> {
   const { where, pageIndex, pageSize, orderBy, omit, pick } = options
-  const tableAsAny = table as any
-
-  const rawPageIndex = Number.isFinite(Number(pageIndex))
-    ? Math.floor(Number(pageIndex))
-    : DbConfig.query.pageIndex
-  const normalizedPageIndex =
-    rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
-  const rawPageSize = Number.isFinite(Number(pageSize))
-    ? Math.floor(Number(pageSize))
-    : DbConfig.query.pageSize
-  const normalizedPageSize = Math.min(
-    Math.max(1, rawPageSize),
-    DbConfig.query.maxListItemLimit,
+  const pageQuery = buildDrizzlePageQuery(
+    { pageIndex, pageSize, orderBy },
+    {
+      table,
+      defaults: queryConfig,
+    },
   )
-  const skip = Math.max(
-    0,
-    normalizedPageIndex >= 1
-      ? (normalizedPageIndex - 1) * normalizedPageSize
-      : normalizedPageIndex * normalizedPageSize,
-  )
-  const take = normalizedPageSize
-
-  const orderBySql: SQL[] = []
-  const resolvedOrderBy = orderBy ?? DbConfig?.query.orderBy
-  const parsedOrderBy =
-    typeof resolvedOrderBy === 'string'
-      ? jsonParse<FindPaginationOrderBy>(resolvedOrderBy)
-      : resolvedOrderBy
-  if (parsedOrderBy) {
-    const records = Array.isArray(parsedOrderBy)
-      ? parsedOrderBy
-      : [parsedOrderBy]
-    for (const record of records) {
-      for (const [field, direction] of Object.entries(record)) {
-        const column = tableAsAny[field]
-        if (column) {
-          orderBySql.push(direction === 'asc' ? asc(column) : desc(column))
-        }
-      }
-    }
-  }
-  if (orderBySql.length === 0 && tableAsAny.id) {
-    orderBySql.push(desc(tableAsAny.id))
-  }
 
   const omittedFields = new Set<string>(omit ?? [])
   const pickedFields = new Set<string>(pick ?? [])
@@ -112,19 +72,21 @@ export async function findPagination<
       : (() => {
           throw new Error('findPagination options.pick has no valid fields')
         })()
+  const listQuery = baseQuery
+    .where(where)
+    .limit(pageQuery.limit)
+    .offset(pageQuery.offset)
   const [list, countResult] = await Promise.all([
-    baseQuery
-      .where(where)
-      .limit(take)
-      .offset(skip)
-      .orderBy(...orderBySql),
+    pageQuery.orderBySql.length > 0
+      ? listQuery.orderBy(...pageQuery.orderBySql)
+      : listQuery,
     db.$count(table as AnyPgTable, where),
   ])
 
   return {
     list: list as FindPaginationResultItem<TTable, TOmit, TPick>[],
     total: countResult,
-    pageIndex: normalizedPageIndex,
-    pageSize: normalizedPageSize,
+    pageIndex: pageQuery.pageIndex,
+    pageSize: pageQuery.pageSize,
   }
 }

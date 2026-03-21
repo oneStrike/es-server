@@ -24,7 +24,7 @@ import {
 import { ConfigReader } from '@libs/system-config'
 import { AppUserCountService } from '@libs/user'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, eq, inArray, isNull, max, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentTargetTypeEnum } from './comment.constant'
@@ -54,7 +54,7 @@ export class CommentService {
     private readonly messageOutboxService: MessageOutboxService,
     private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
-  ) {}
+  ) { }
 
   private get db() {
     return this.drizzle.db
@@ -74,6 +74,16 @@ export class CommentService {
     ICommentTargetResolver
   >()
 
+  /**
+   * 事务冲突重试包装器
+   *
+   * PostgreSQL 在 Serializable 隔离级别下可能因并发冲突抛出序列化失败错误，
+   * 此方法自动捕获该错误并重试，适用于楼层号分配等需要严格顺序保证的场景。
+   *
+   * @param operation - 需要在事务中执行的操作
+   * @param options - 重试选项，maxRetries 默认 3 次
+   * @returns 操作执行结果
+   */
   private async withTransactionConflictRetry<T>(
     operation: () => Promise<T>,
     options?: TransactionRetryOptions,
@@ -511,14 +521,14 @@ export class CommentService {
       const found = await tx.query.userComment.findFirst({
         where: userId
           ? {
-              id: commentId,
-              userId,
-              deletedAt: { isNull: true },
-            }
+            id: commentId,
+            userId,
+            deletedAt: { isNull: true },
+          }
           : {
-              id: commentId,
-              deletedAt: { isNull: true },
-            },
+            id: commentId,
+            deletedAt: { isNull: true },
+          },
         columns: {
           id: true,
           userId: true,
@@ -555,7 +565,9 @@ export class CommentService {
         return { id: found.id }
       }
 
-      const resolver = this.getResolver(found.targetType as CommentTargetTypeEnum)
+      const resolver = this.getResolver(
+        found.targetType as CommentTargetTypeEnum,
+      )
 
       await this.applyCommentCountDelta(
         tx,
@@ -620,13 +632,13 @@ export class CommentService {
     const userIds = [...new Set(page.list.map((item) => item.userId))]
     const users = userIds.length
       ? await this.db
-          .select({
-            id: this.appUser.id,
-            nickname: this.appUser.nickname,
-            avatar: this.appUser.avatarUrl,
-          })
-          .from(this.appUser)
-          .where(inArray(this.appUser.id, userIds))
+        .select({
+          id: this.appUser.id,
+          nickname: this.appUser.nickname,
+          avatarUrl: this.appUser.avatarUrl,
+        })
+        .from(this.appUser)
+        .where(inArray(this.appUser.id, userIds))
       : []
     const userMap = new Map(users.map((item) => [item.id, item]))
 
@@ -642,6 +654,18 @@ export class CommentService {
     }
   }
 
+  /**
+   * 获取目标对象的评论列表
+   *
+   * 分页查询指定目标（漫画/小说等）下的一级评论，
+   * 并预加载每条评论的前 N 条回复预览。
+   *
+   * 只返回审核通过、未隐藏、未删除的评论。
+   * 回复采用扁平化展示（actualReplyToId 指向一级评论）。
+   *
+   * @param query - 查询参数，包含目标类型、目标ID、分页信息、回复预览数量限制
+   * @returns 分页的评论列表，每条评论包含用户信息、回复计数、回复预览
+   */
   async getTargetComments(query: TargetCommentsQuery) {
     const {
       targetType,
@@ -671,6 +695,7 @@ export class CommentService {
       orderBy: {
         createdAt: 'desc',
       },
+      pick: ['id', 'userId', 'targetType', 'content', 'createdAt', 'targetId'],
     })
 
     if (page.list.length === 0) {
@@ -679,8 +704,63 @@ export class CommentService {
 
     const rootIds = page.list.map((item) => item.id)
 
-    const [replyCountRows, allPreviewReplies] = await Promise.all([
-      this.db
+    let previewReplies: {
+      id: number
+      userId: number
+      actualReplyToId: number | null
+      replyToId: number | null
+      content: string
+      createdAt: Date
+      totalCount?: number
+    }[] = []
+    const replyCountMap = new Map<number, number>()
+
+    if (limit > 0) {
+      // 合并计数与预览查询：使用窗口函数同时获取前 N 条回复和总回复数
+      const subquery = this.db
+        .select({
+          id: this.userComment.id,
+          userId: this.userComment.userId,
+          actualReplyToId: this.userComment.actualReplyToId,
+          replyToId: this.userComment.replyToId,
+          content: this.userComment.content,
+          createdAt: this.userComment.createdAt,
+          rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
+            'rn',
+          ),
+          totalCount:
+            sql<number>`COUNT(*) OVER (PARTITION BY ${this.userComment.actualReplyToId})`.as(
+              'totalCount',
+            ),
+        })
+        .from(this.userComment)
+        .where(
+          and(
+            inArray(this.userComment.actualReplyToId, rootIds),
+            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+            eq(this.userComment.isHidden, false),
+            isNull(this.userComment.deletedAt),
+          ),
+        )
+        .as('t')
+
+      previewReplies = await this.db
+        .select()
+        .from(subquery)
+        .where(lte(subquery.rn, limit))
+
+      // 从预览结果中提取总计数
+      for (const reply of previewReplies) {
+        if (
+          reply.actualReplyToId &&
+          !replyCountMap.has(reply.actualReplyToId)
+        ) {
+          replyCountMap.set(reply.actualReplyToId, Number(reply.totalCount))
+        }
+      }
+    } else {
+      // 如果不需要预览，则只查询总计数
+      const replyCountRows = await this.db
         .select({
           rootId: this.userComment.actualReplyToId,
           count: sql<number>`count(*)`,
@@ -694,78 +774,59 @@ export class CommentService {
             isNull(this.userComment.deletedAt),
           ),
         )
-        .groupBy(this.userComment.actualReplyToId),
-      limit > 0
-        ? this.db
-            .select({
-              id: this.userComment.id,
-              userId: this.userComment.userId,
-              actualReplyToId: this.userComment.actualReplyToId,
-              replyToId: this.userComment.replyToId,
-              content: this.userComment.content,
-              createdAt: this.userComment.createdAt,
-            })
-            .from(this.userComment)
-            .where(
-              and(
-                inArray(this.userComment.actualReplyToId, rootIds),
-                eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-                eq(this.userComment.isHidden, false),
-                isNull(this.userComment.deletedAt),
-              ),
-            )
-            .orderBy(
-              asc(this.userComment.actualReplyToId),
-              asc(this.userComment.createdAt),
-            )
-        : Promise.resolve([]),
-    ])
+        .groupBy(this.userComment.actualReplyToId)
 
-    const replyCountMap = new Map(
-      replyCountRows
-        .filter((row) => row.rootId !== null)
-        .map((row) => [row.rootId as number, Number(row.count)]),
-    )
+      for (const row of replyCountRows) {
+        if (row.rootId !== null) {
+          replyCountMap.set(row.rootId, Number(row.count))
+        }
+      }
+    }
 
     const previewRepliesByRoot = new Map<
       number,
       {
         id: number
         userId: number
-        actualReplyToId: number | null
+        actualReplyToId: number
         replyToId: number | null
         content: string
         createdAt: Date
       }[]
     >()
 
-    for (const reply of allPreviewReplies) {
+    for (const reply of previewReplies) {
       if (!reply.actualReplyToId) {
         continue
       }
-      const rootReplyList = previewRepliesByRoot.get(reply.actualReplyToId) ?? []
-      if (rootReplyList.length >= limit) {
-        continue
-      }
-      rootReplyList.push(reply)
+      const rootReplyList =
+        previewRepliesByRoot.get(reply.actualReplyToId) ?? []
+      rootReplyList.push({
+        id: reply.id,
+        userId: reply.userId,
+        actualReplyToId: reply.actualReplyToId,
+        replyToId: reply.replyToId,
+        content: reply.content,
+        createdAt: reply.createdAt,
+      })
       previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
     }
 
     const userIds = [
       ...new Set([
         ...page.list.map((item) => item.userId),
-        ...allPreviewReplies.map((item) => item.userId),
+        ...previewReplies.map((item) => item.userId),
       ]),
     ]
     const users = userIds.length
       ? await this.db
-          .select({
-            id: this.appUser.id,
-            nickname: this.appUser.nickname,
-            avatar: this.appUser.avatarUrl,
-          })
-          .from(this.appUser)
-          .where(inArray(this.appUser.id, userIds))
+        .select({
+          id: this.appUser.id,
+          nickname: this.appUser.nickname,
+          avatarUrl: this.appUser.avatarUrl,
+        })
+        .from(this.appUser)
+        .where(inArray(this.appUser.id, userIds))
       : []
     const userMap = new Map(users.map((item) => [item.id, item]))
 
@@ -773,14 +834,16 @@ export class CommentService {
       ...page,
       list: page.list.map((item) => {
         const replyCount = replyCountMap.get(item.id) ?? 0
-        const previewReplies = (previewRepliesByRoot.get(item.id) ?? []).map((reply) => ({
-          id: reply.id,
-          userId: reply.userId,
-          content: reply.content,
-          replyToId: reply.replyToId,
-          createdAt: reply.createdAt,
-          user: userMap.get(reply.userId) ?? undefined,
-        }))
+        const previewReplies = (previewRepliesByRoot.get(item.id) ?? []).map(
+          (reply) => ({
+            id: reply.id,
+            userId: reply.userId,
+            content: reply.content,
+            replyToId: reply.replyToId,
+            createdAt: reply.createdAt,
+            user: userMap.get(reply.userId) ?? undefined,
+          }),
+        )
 
         return {
           ...item,
