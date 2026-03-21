@@ -3,6 +3,7 @@ import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { UploadService } from '@libs/platform/modules'
+import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
@@ -241,11 +242,7 @@ export class ComicContentService {
       return []
     }
 
-    try {
-      const parsed = JSON.parse(content)
-      return Array.isArray(parsed) ? parsed : []
-    } catch {
-      return []
-    }
+    const parsed = jsonParse(content, [])
+    return Array.isArray(parsed) ? (parsed as string[]) : []
   }
 }

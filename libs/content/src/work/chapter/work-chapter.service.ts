@@ -211,7 +211,10 @@ export class WorkChapterService {
 
     // 未登录用户直接返回基础信息
     if (!userId) {
-      chapter.content = jsonParse(chapter.content, []) as unknown as string
+      chapter.content =
+        chapter.workType === ContentTypeEnum.COMIC
+          ? (jsonParse(chapter.content, []) as unknown as string)
+          : chapter.content
       return chapter
     }
 
@@ -247,7 +250,10 @@ export class WorkChapterService {
 
     return {
       ...chapter,
-      content: jsonParse(chapter.content, []) as unknown as string,
+      content:
+        chapter.workType === ContentTypeEnum.COMIC
+          ? (jsonParse(chapter.content, []) as unknown as string)
+          : chapter.content,
       liked,
       downloaded,
       purchased,
