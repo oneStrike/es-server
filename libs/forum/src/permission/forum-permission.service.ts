@@ -100,7 +100,7 @@ export class ForumPermissionService {
       requireEnabled?: boolean
       notFoundMessage?: string
     },
-  ): Promise<ForumSectionPermissionContext> {
+  ) {
     const section = await this.db.query.forumSection.findFirst({
       where: {
         id: sectionId,
@@ -184,7 +184,7 @@ export class ForumPermissionService {
     }
 
     if (user.experience < section.requiredExperience) {
-      throw new BadRequestException('当前板块需要更高等级')
+      throw new BadRequestException('当前板块需要更高等级访问')
     }
   }
 

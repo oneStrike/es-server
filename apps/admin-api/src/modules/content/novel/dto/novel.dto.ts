@@ -1,6 +1,4 @@
-import {
-  BaseWorkDto as ContentBaseWorkDto,
-} from '@libs/content'
+import { BaseWorkDto as ContentBaseWorkDto } from '@libs/content'
 import { ArrayProperty, StringProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
@@ -24,13 +22,28 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   'forumSectionId',
   'deletedAt',
 ]) {
-  @ArrayProperty({ description: '作者ID列表', itemType: 'number', example: [1], required: true })
+  @ArrayProperty({
+    description: '作者ID列表',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
   authorIds!: number[]
 
-  @ArrayProperty({ description: '分类ID列表', itemType: 'number', example: [1], required: true })
+  @ArrayProperty({
+    description: '分类ID列表',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
   categoryIds!: number[]
 
-  @ArrayProperty({ description: '标签ID列表', itemType: 'number', example: [1], required: true })
+  @ArrayProperty({
+    description: '标签ID列表',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
   tagIds!: number[]
 }
 
@@ -54,11 +67,19 @@ export class QueryWorkDto extends IntersectionType(
   @StringProperty({ description: '作者名称', example: '村上', required: false })
   author?: string
 
-  @ArrayProperty({ description: '标签ID列表', itemType: 'number', example: [1], required: false })
+  @ArrayProperty({
+    description: '标签ID列表',
+    itemType: 'number',
+    example: [1],
+    required: false,
+  })
   tagIds?: number[]
 }
 
-export class UpdateWorkDto extends IntersectionType(PartialType(CreateWorkDto), IdDto) {}
+export class UpdateWorkDto extends IntersectionType(
+  PartialType(CreateWorkDto),
+  IdDto,
+) {}
 
 export class UpdateWorkStatusDto extends IntersectionType(
   IdDto,

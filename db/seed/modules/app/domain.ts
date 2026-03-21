@@ -719,10 +719,7 @@ export async function seedAppActivityDomain(db: Db) {
   }
 
   const aotWork = await db.query.work.findFirst({
-    where: and(
-      eq(work.name, '进击的巨人'),
-      eq(work.type, 1),
-    ),
+    where: and(eq(work.name, '进击的巨人'), eq(work.type, 1)),
   })
   const whiteNightWork = await db.query.work.findFirst({
     where: and(eq(work.name, '白夜行'), eq(work.type, 2)),
@@ -850,7 +847,7 @@ export async function seedAppActivityDomain(db: Db) {
     content: '墙内外的信息差在这部作品里几乎从第一话就埋下了。',
     floor: 1,
     isHidden: false,
-    auditStatus: 2,
+    auditStatus: 1,
     auditById: moderatorUser.id,
     auditRole: 2,
     auditReason: 'seed: 通过',
@@ -890,7 +887,7 @@ export async function seedAppActivityDomain(db: Db) {
     content: '第二话的节奏明显收紧，购买后继续读的体验很顺。',
     floor: 1,
     isHidden: false,
-    auditStatus: 2,
+    auditStatus: 1,
     auditById: moderatorUser.id,
     auditRole: 2,
     auditReason: 'seed: 通过',
@@ -930,7 +927,7 @@ export async function seedAppActivityDomain(db: Db) {
     content: '我觉得第一卷就把未来冲突埋得很深。',
     floor: 1,
     isHidden: false,
-    auditStatus: 2,
+    auditStatus: 1,
     auditById: moderatorUser.id,
     auditRole: 2,
     auditReason: 'seed: 通过',
@@ -971,7 +968,7 @@ export async function seedAppActivityDomain(db: Db) {
     replyToId: forumRootReply.id,
     actualReplyToId: forumRootReply.id,
     isHidden: false,
-    auditStatus: 2,
+    auditStatus: 1,
     auditById: moderatorUser.id,
     auditRole: 2,
     auditReason: 'seed: 通过',

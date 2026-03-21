@@ -3,7 +3,7 @@ import type { ArrayPropertyOptions } from './types'
 import { isDevelopment } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
-import { Transform } from 'class-transformer'
+import { Transform, Type } from 'class-transformer'
 import {
   IsArray,
   IsBoolean,
@@ -15,6 +15,7 @@ import {
   MaxLength,
   MinLength,
   ValidateBy,
+  ValidateNested,
 } from 'class-validator'
 
 /**
@@ -61,6 +62,8 @@ import {
  * @returns 装饰器函数
  */
 export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
+  const itemType = options.itemClass ? 'object' : options.itemType
+
   const validation = options.validation ?? true
 
   if (
@@ -75,7 +78,7 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
   if (validation) {
     const getItemValidator = () => {
-      switch (options.itemType) {
+      switch (itemType) {
         case 'string':
           return IsString({
             each: true,
@@ -107,15 +110,20 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
           return IsString({
             each: true,
             message:
-              options.itemErrorMessage || '数组中的每个元素都必须是字符串类型',
+              (options as any).itemErrorMessage ||
+              '数组中的每个元素都必须是字符串类型',
           })
       }
     }
 
-    decorators.push(
-      IsArray({ message: '必须是数组类型' }),
-      getItemValidator(),
-    )
+    decorators.push(IsArray({ message: '必须是数组类型' }), getItemValidator())
+
+    if (itemType === 'object' && options.itemClass) {
+      decorators.push(
+        ValidateNested({ each: true }),
+        Type(() => options.itemClass as any),
+      )
+    }
 
     if (options.itemValidator) {
       decorators.push(
@@ -170,7 +178,7 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
         if (Array.isArray(value)) {
           return value.map((item) => {
-            switch (options.itemType) {
+            switch (itemType) {
               case 'number':
                 if (typeof item === 'string') {
                   const trimmedItem = item.trim()
@@ -221,7 +229,7 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
   if (isDevelopment()) {
     const getApiType = () => {
-      switch (options.itemType) {
+      switch (itemType) {
         case 'string':
           return String
         case 'number':

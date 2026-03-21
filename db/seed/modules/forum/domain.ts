@@ -369,7 +369,7 @@ export async function seedForumActivityDomain(db: Db) {
       isFeatured: topicFixture.isFeatured,
       isLocked: false,
       isHidden: false,
-      auditStatus: 2,
+      auditStatus: 1,
       auditRole: 2,
       auditReason: 'seed: 自动通过',
       auditAt: topicFixture.createdAt,

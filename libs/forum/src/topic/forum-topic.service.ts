@@ -57,7 +57,7 @@ export class ForumTopicService {
     private readonly forumPermissionService: ForumPermissionService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
-  ) {}
+  ) { }
 
   private get db() {
     return this.drizzle.db
@@ -382,11 +382,18 @@ export class ForumTopicService {
         isHidden: false,
       },
       with: {
-        topicTags: true,
-        user: true,
-        section: {
+        tags: {
           columns: {
             id: true,
+            icon: true,
+            name: true,
+          },
+        },
+        user: {
+          columns: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
           },
         },
       },
@@ -397,14 +404,13 @@ export class ForumTopicService {
     }
 
     await this.forumPermissionService.ensureUserCanAccessSection(
-      topic.section!.id,
+      topic.sectionId,
       userId,
       {
         requireEnabled: true,
         notFoundMessage: '主题不存在',
       },
     )
-
     return topic
   }
 
@@ -470,11 +476,11 @@ export class ForumTopicService {
       },
       ...(keyword
         ? {
-            or: [
-              ilike(this.forumTopicTable.title, `%${keyword}%`),
-              ilike(this.forumTopicTable.content, `%${keyword}%`),
-            ],
-          }
+          or: [
+            ilike(this.forumTopicTable.title, `%${keyword}%`),
+            ilike(this.forumTopicTable.content, `%${keyword}%`),
+          ],
+        }
         : {}),
     })
 

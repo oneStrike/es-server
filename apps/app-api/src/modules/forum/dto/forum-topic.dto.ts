@@ -1,5 +1,13 @@
-import { BaseForumSectionDto, BaseForumTopicDto } from '@libs/forum'
-import { BooleanProperty, NestedProperty } from '@libs/platform/decorators'
+import {
+  BaseForumSectionDto,
+  BaseForumTagDto,
+  BaseForumTopicDto,
+} from '@libs/forum'
+import {
+  ArrayProperty,
+  BooleanProperty,
+  NestedProperty,
+} from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user'
 import { IntersectionType, PickType } from '@nestjs/swagger'
@@ -65,18 +73,16 @@ export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   favorited!: boolean
 }
 
-export class AppForumTopicDetailDto extends IntersectionType(
-  AppForumTopicPageItemDto,
-  PickType(BaseForumTopicDto, ['content'] as const),
-) {
-  @NestedProperty({
-    description: '所属板块',
-    required: true,
-    type: AppForumSectionBriefDto,
-    validation: false,
-  })
-  section!: AppForumSectionBriefDto
+export class ForumTopicTagItemDto extends PickType(BaseForumTagDto, [
+  'id',
+  'name',
+  'icon',
+] as const) {}
 
+export class AppForumTopicDetailDto extends IntersectionType(
+  BaseForumTopicDto,
+  PickType(AppForumTopicPageItemDto, ['liked', 'favorited'] as const),
+) {
   @NestedProperty({
     description: '发帖用户',
     required: true,
@@ -84,6 +90,14 @@ export class AppForumTopicDetailDto extends IntersectionType(
     validation: false,
   })
   user!: AppForumTopicUserBriefDto
+
+  @ArrayProperty({
+    description: '标签',
+    required: true,
+    validation: false,
+    itemClass: ForumTopicTagItemDto,
+  })
+  tags!: ForumTopicTagItemDto[]
 }
 
 export class QueryForumTopicCommentPageDto extends IntersectionType(

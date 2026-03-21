@@ -9,11 +9,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import {
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,
@@ -21,13 +17,10 @@ import {
   PickType,
 } from '@nestjs/swagger'
 
-export class CreateForumModeratorDto extends OmitType(
-  BaseForumModeratorDto,
-  [
-    ...OMIT_BASE_FIELDS,
-    'deletedAt',
-  ] as const,
-) {
+export class CreateForumModeratorDto extends OmitType(BaseForumModeratorDto, [
+  ...OMIT_BASE_FIELDS,
+  'deletedAt',
+] as const) {
   @ArrayProperty({
     description: '板块ID列表（板块版主时必填）',
     itemType: 'number',
@@ -70,7 +63,9 @@ export class AssignForumModeratorSectionDto {
 
 export class QueryForumModeratorDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumModeratorDto, ['isEnabled', 'userId'] as const)),
+  PartialType(
+    PickType(BaseForumModeratorDto, ['isEnabled', 'userId'] as const),
+  ),
 ) {
   @StringProperty({
     description: '用户名',

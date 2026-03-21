@@ -67,7 +67,7 @@ export interface NumberArrayPropertyOptions extends BaseValidateOptions {
 /**
  * 通用数组属性选项
  */
-export interface ArrayPropertyOptions<T = any> extends BaseValidateOptions {
+export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
   /** 示例值 */
   example?: T[]
   /** 数组最大长度 */
@@ -76,17 +76,26 @@ export interface ArrayPropertyOptions<T = any> extends BaseValidateOptions {
   minLength?: number
   /** 默认值 */
   default?: T[]
-  /** 数组元素类型 */
-  itemType: 'string' | 'number' | 'boolean' | 'object'
-  /** 数组元素DTO类型（用于API文档） */
-  itemClass?: new (...args: any[]) => any
   /** 数组元素验证器（可选，用于复杂类型验证） */
   itemValidator?: (value: any) => boolean
   /** 数组元素验证失败时的错误消息 */
   itemErrorMessage?: string
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
-}
+} & (
+  | {
+      /** 数组元素类型 */
+      itemType: 'string' | 'number' | 'boolean'
+      /** 基础类型不需要 itemClass */
+      itemClass?: never
+    }
+    | {
+      /** 数组元素类型，如果传入了 itemClass 可省略，自动推断为 object */
+      itemType?: 'object'
+      /** 数组元素DTO类型（必传，用于深度校验和API文档） */
+      itemClass: new (...args: any[]) => any
+    }
+)
 
 /**
  * 日期属性选项
