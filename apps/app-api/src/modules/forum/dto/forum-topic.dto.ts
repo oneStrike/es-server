@@ -2,7 +2,7 @@ import { BaseForumSectionDto, BaseForumTopicDto } from '@libs/forum'
 import { BooleanProperty, NestedProperty } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { TargetCommentItemDto } from '../../comment/dto/comment.dto'
 
 export class QueryAppForumTopicPageDto extends IntersectionType(
@@ -18,7 +18,7 @@ export class CreateAppForumTopicDto extends PickType(BaseForumTopicDto, [
 
 export class UpdateAppForumTopicDto extends IntersectionType(
   IdDto,
-  PartialType(PickType(BaseForumTopicDto, ['title', 'content'] as const)),
+  PickType(BaseForumTopicDto, ['title', 'content'] as const),
 ) {}
 
 export class AppForumSectionBriefDto extends PickType(BaseForumSectionDto, [
