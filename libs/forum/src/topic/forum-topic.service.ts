@@ -183,8 +183,7 @@ export class ForumTopicService {
       isNull(this.forumTopicTable.deletedAt),
     )
 
-    const activityAtSql =
-      sql<Date | null>`coalesce(${this.forumTopicTable.lastReplyAt}, ${this.forumTopicTable.createdAt})`
+    const activityAtSql = sql<Date | null>`coalesce(${this.forumTopicTable.lastReplyAt}, ${this.forumTopicTable.createdAt})`
 
     const [summaryRows, latestTopicRows] = await Promise.all([
       client
@@ -384,22 +383,21 @@ export class ForumTopicService {
       },
       with: {
         topicTags: true,
-        section: true,
-        user: {
-          with: {
-            counts: true,
-            level: true,
+        user: true,
+        section: {
+          columns: {
+            id: true,
           },
         },
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+    if (!topic) {
       throw new NotFoundException('主题不存在')
     }
 
     await this.forumPermissionService.ensureUserCanAccessSection(
-      topic.section.id,
+      topic.section!.id,
       userId,
       {
         requireEnabled: true,
@@ -513,7 +511,11 @@ export class ForumTopicService {
       }),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
-      orderBy: [{ isPinned: 'desc' }, { lastReplyAt: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [
+        { isPinned: 'desc' },
+        { lastReplyAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
       pick: [
         'id',
         'sectionId',
@@ -575,10 +577,6 @@ export class ForumTopicService {
    */
   async updateTopic(updateForumTopicDto: UpdateForumTopicInput) {
     const { id, ...updateData } = updateForumTopicDto
-
-    if (updateData.title === undefined && updateData.content === undefined) {
-      throw new BadRequestException('至少需要更新标题或内容')
-    }
 
     const topic = await this.db.query.forumTopic.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -683,7 +681,10 @@ export class ForumTopicService {
           .set({ deletedAt: new Date() })
           .where(
             and(
-              eq(this.userCommentTable.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+              eq(
+                this.userCommentTable.targetType,
+                CommentTargetTypeEnum.FORUM_TOPIC,
+              ),
               eq(this.userCommentTable.targetId, id),
               isNull(this.userCommentTable.deletedAt),
             ),
@@ -732,9 +733,8 @@ export class ForumTopicService {
           if (reply.likeCount > 0) {
             replyReceivedLikeCountByUser.set(
               reply.userId,
-              (
-                replyReceivedLikeCountByUser.get(reply.userId) ?? 0
-              ) + reply.likeCount,
+              (replyReceivedLikeCountByUser.get(reply.userId) ?? 0) +
+              reply.likeCount,
             )
           }
         }
@@ -746,7 +746,10 @@ export class ForumTopicService {
           )
         }
 
-        for (const [userId, likeCount] of replyReceivedLikeCountByUser.entries()) {
+        for (const [
+          userId,
+          likeCount,
+        ] of replyReceivedLikeCountByUser.entries()) {
           replyCountTasks.push(
             this.appUserCountService.updateCommentReceivedLikeCount(
               tx,
@@ -881,7 +884,7 @@ export class ForumTopicService {
             eq(this.forumTopicTable.id, id),
             isNull(this.forumTopicTable.deletedAt),
           ),
-        )
+        ),
     )
     this.drizzle.assertAffectedRows(result, '主题不存在')
     return true

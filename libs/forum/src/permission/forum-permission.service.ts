@@ -74,9 +74,7 @@ export class ForumPermissionService {
    * 获取访问权限校验所需的用户上下文。
    * 用户不存在时返回 null，由调用方决定如何处理。
    */
-  private async getAccessUserContext(
-    userId: number,
-  ) {
+  private async getAccessUserContext(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: {
         id: userId,
@@ -166,16 +164,19 @@ export class ForumPermissionService {
    * - 无等级限制的板块直接放行
    * - 有等级限制时，未登录用户需先登录，已登录用户需经验值达标
    */
-  private ensureSectionLevelAccess(
+  ensureSectionLevelAccess(
     section: ForumSectionPermissionContext,
-    user?: ForumAccessUserContext | Pick<ForumPostingUserContext, 'experience'> | null,
+    user?:
+      | ForumAccessUserContext
+      | Pick<ForumPostingUserContext, 'experience'>
+      | null,
   ) {
     if (!section.userLevelRuleId || section.requiredExperience === null) {
       return
     }
 
     if (!user) {
-        throw new BadRequestException('请先登录后访问该板块')
+      throw new BadRequestException('请先登录后访问该板块')
     }
 
     if ('isEnabled' in user && !user.isEnabled) {
@@ -242,7 +243,7 @@ export class ForumPermissionService {
           ? latestTopic.createdAt > latestComment.createdAt
             ? latestTopic.createdAt
             : latestComment.createdAt
-          : latestTopic?.createdAt ?? latestComment?.createdAt ?? null
+          : (latestTopic?.createdAt ?? latestComment?.createdAt ?? null)
 
       if (!lastPostAt) {
         return
@@ -327,7 +328,8 @@ export class ForumPermissionService {
 
     return sections
       .filter((section) => {
-        const requiredExperience = section.userLevelRule?.requiredExperience ?? null
+        const requiredExperience =
+          section.userLevelRule?.requiredExperience ?? null
         if (!section.userLevelRuleId || requiredExperience === null) {
           return true
         }

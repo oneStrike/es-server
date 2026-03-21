@@ -15,7 +15,7 @@ export type CreateForumTopicInput = Pick<
  * 仅允许修改标题与内容，不允许迁移板块或变更发帖人。
  */
 export type UpdateForumTopicInput = Pick<ForumTopic, 'id'> &
-  Partial<Pick<ForumTopic, 'title' | 'content'>>
+  Pick<ForumTopic, 'title' | 'content'>
 
 /**
  * 后台分页查询论坛主题的条件。

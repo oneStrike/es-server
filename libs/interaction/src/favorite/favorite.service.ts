@@ -1,8 +1,5 @@
 import type { UserFavorite } from '@db/schema'
-import type {
-  FavoriteListQuery,
-  FavoriteRecordInput,
-} from './favorite.type'
+import type { FavoriteListQuery, FavoriteRecordInput } from './favorite.type'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -114,7 +111,9 @@ export class FavoriteService {
    * 收藏目标
    * @param input 收藏参数
    */
-  async favorite(input: FavoriteRecordInput): Promise<Pick<UserFavorite, 'id'>> {
+  async favorite(
+    input: FavoriteRecordInput,
+  ): Promise<Pick<UserFavorite, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -195,11 +194,13 @@ export class FavoriteService {
     const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
       this.userFavorite,
-      and(
-        eq(this.userFavorite.targetType, targetType),
-        eq(this.userFavorite.targetId, targetId),
-        eq(this.userFavorite.userId, userId),
-      ),
+      this.drizzle.buildWhere(this.userFavorite, {
+        and: {
+          targetType,
+          targetId,
+          userId,
+        },
+      }),
     )
   }
 

@@ -46,7 +46,7 @@ export class ForumController {
   @Get('detail')
   @OptionalAuth()
   @ApiDoc({
-    summary: '获取公开论坛主题详情',
+    summary: '获取论坛主题详情',
     model: AppForumTopicDetailDto,
   })
   async getDetail(@Query() query: IdDto, @CurrentUser('sub') userId?: number) {
