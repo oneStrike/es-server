@@ -36,6 +36,9 @@ export class ForumPermissionService {
     return this.drizzle.schema.userComment
   }
 
+  /**
+   * 获取发帖所需的用户上下文，包含等级配置中的频控参数。
+   */
   private async getPostingUserContext(
     userId: number,
   ): Promise<ForumPostingUserContext> {
@@ -67,9 +70,13 @@ export class ForumPermissionService {
     return user
   }
 
+  /**
+   * 获取访问权限校验所需的用户上下文。
+   * 用户不存在时返回 null，由调用方决定如何处理。
+   */
   private async getAccessUserContext(
     userId: number,
-  ): Promise<ForumAccessUserContext | null> {
+  ) {
     const user = await this.db.query.appUser.findFirst({
       where: {
         id: userId,
@@ -85,6 +92,10 @@ export class ForumPermissionService {
     return user ?? null
   }
 
+  /**
+   * 获取板块权限上下文，包含等级规则与所需经验值。
+   * @param requireEnabled 为 true 时，板块未启用会抛出异常
+   */
   private async getSectionPermissionContext(
     sectionId: number,
     options?: {
@@ -129,6 +140,10 @@ export class ForumPermissionService {
     }
   }
 
+  /**
+   * 校验用户是否可发帖。
+   * 禁用用户、禁言/封禁状态用户不允许发帖。
+   */
   private ensurePostingUserAvailable(user: ForumPostingUserContext) {
     if (!user.isEnabled) {
       throw new BadRequestException('用户不存在或已被禁用')
@@ -146,6 +161,11 @@ export class ForumPermissionService {
     }
   }
 
+  /**
+   * 校验用户等级是否满足板块访问要求。
+   * - 无等级限制的板块直接放行
+   * - 有等级限制时，未登录用户需先登录，已登录用户需经验值达标
+   */
   private ensureSectionLevelAccess(
     section: ForumSectionPermissionContext,
     user?: ForumAccessUserContext | Pick<ForumPostingUserContext, 'experience'> | null,
@@ -167,6 +187,11 @@ export class ForumPermissionService {
     }
   }
 
+  /**
+   * 校验发帖频率限制。
+   * - 每日发帖上限：统计当天已发主题数
+   * - 发帖间隔：取最近一次发帖/评论时间计算冷却时间
+   */
   private async ensureTopicRateLimit(
     userId: number,
     level: ForumPostingUserContext['level'],
@@ -237,7 +262,8 @@ export class ForumPermissionService {
 
   /**
    * 校验用户是否可在指定板块发帖。
-   * 同时返回板块权限上下文，供上层读取审核策略等字段。
+   * 依次检查：用户状态 → 板块等级限制 → 发帖频率限制。
+   * @returns 板块权限上下文，供上层读取审核策略等字段
    */
   async ensureUserCanCreateTopic(userId: number, sectionId: number) {
     const [user, section] = await Promise.all([
@@ -254,6 +280,7 @@ export class ForumPermissionService {
 
   /**
    * 校验当前用户是否可访问指定板块。
+   * 仅检查板块等级限制，不涉及发帖频控。
    */
   async ensureUserCanAccessSection(
     sectionId: number,

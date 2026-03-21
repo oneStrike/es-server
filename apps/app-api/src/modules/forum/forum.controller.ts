@@ -27,51 +27,10 @@ export class ForumController {
     private readonly commentService: CommentService,
   ) {}
 
-  private mapTopicItem(item: Record<string, unknown>) {
-    return {
-      id: item.id,
-      sectionId: item.sectionId,
-      userId: item.userId,
-      title: item.title,
-      isPinned: item.isPinned,
-      isFeatured: item.isFeatured,
-      isLocked: item.isLocked,
-      viewCount: item.viewCount,
-      replyCount: item.replyCount,
-      likeCount: item.likeCount,
-      favoriteCount: item.favoriteCount,
-      lastReplyAt: item.lastReplyAt,
-      createdAt: item.createdAt,
-    }
-  }
-
-  private mapTopicDetail(topic: Record<string, any>) {
-    return {
-      ...this.mapTopicItem(topic),
-      content: topic.content,
-      liked: topic.liked,
-      favorited: topic.favorited,
-      section: topic.section
-        ? {
-            id: topic.section.id,
-            name: topic.section.name,
-            icon: topic.section.icon,
-          }
-        : null,
-      user: topic.user
-        ? {
-            id: topic.user.id,
-            nickname: topic.user.nickname,
-            avatarUrl: topic.user.avatarUrl,
-          }
-        : null,
-    }
-  }
-
   @Get('page')
   @OptionalAuth()
   @ApiPageDoc({
-    summary: '分页查询公开论坛主题',
+    summary: '分页查询论坛主题',
     model: AppForumTopicPageItemDto,
   })
   async getPage(
@@ -91,12 +50,7 @@ export class ForumController {
     model: AppForumTopicDetailDto,
   })
   async getDetail(@Query() query: IdDto, @CurrentUser('sub') userId?: number) {
-    return this.mapTopicDetail(
-      (await this.forumTopicService.getPublicTopicById(
-        query.id,
-        userId,
-      )) as Record<string, any>,
-    )
+    return this.forumTopicService.getPublicTopicById(query.id, userId)
   }
 
   @Get('comment/page')

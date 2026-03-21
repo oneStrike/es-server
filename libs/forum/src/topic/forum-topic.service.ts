@@ -42,8 +42,8 @@ import { ForumReviewPolicyEnum } from '../forum.constant'
 import { ForumPermissionService } from '../permission'
 
 /**
- * 论坛主题服务类
- * 提供论坛主题的增删改查、置顶、精华、锁定等核心业务逻辑
+ * 论坛主题服务，负责主题的增删改查、审核、置顶、精华、锁定等核心业务。
+ * 写操作统一记录操作日志，计数变更与主题状态同步在同一事务中完成。
  */
 @Injectable()
 export class ForumTopicService {
@@ -75,6 +75,10 @@ export class ForumTopicService {
     return this.drizzle.schema.userComment
   }
 
+  /**
+   * 获取板块的主题审核策略。
+   * 用于创建/编辑主题时决定是否需要进入审核队列。
+   */
   private async getSectionTopicReviewPolicy(
     sectionId: number,
     options?: {
@@ -106,6 +110,11 @@ export class ForumTopicService {
     return section.topicReviewPolicy as ForumReviewPolicyEnum
   }
 
+  /**
+   * 同步主题的回复计数与最后回复信息。
+   * 用于评论增删后保持主题统计字段一致性。
+   * @param tx 事务客户端，若未传入则使用默认连接
+   */
   async syncTopicReplyState(tx: Db | undefined, topicId: number) {
     const client = tx ?? this.db
     const visibleReplyWhere = and(
@@ -159,6 +168,12 @@ export class ForumTopicService {
     this.drizzle.assertAffectedRows(result, '主题不存在')
   }
 
+  /**
+   * 同步板块的主题计数与最后发帖信息。
+   * 用于主题增删、状态变更后保持板块统计字段一致性。
+   * 只统计已审核通过且未隐藏的主题。
+   * @param tx 事务客户端，若未传入则使用默认连接
+   */
   async syncSectionVisibleState(tx: Db | undefined, sectionId: number) {
     const client = tx ?? this.db
     const visibleTopicWhere = and(
@@ -213,11 +228,9 @@ export class ForumTopicService {
   }
 
   /**
-   * 计算主题审核状态与隐藏策略
-   * 根据板块审核策略以及最高敏感词等级决定是否审核与隐藏
-   * @param reviewPolicy 审核策略
-   * @param highestLevel 命中的最高敏感词等级
-   * @returns 审核状态与是否隐藏
+   * 根据板块审核策略与敏感词等级计算主题的审核状态与隐藏状态。
+   * - 严重敏感词一律隐藏
+   * - 审核策略决定哪些敏感词等级需要进入审核队列
    */
   private calculateAuditStatus(
     reviewPolicy: ForumReviewPolicyEnum,
@@ -255,13 +268,11 @@ export class ForumTopicService {
   }
 
   /**
-   * 创建论坛主题
-   * 同步处理敏感词检测、审核策略、计数器与操作日志
-   * 审核通过后触发成长事件
-   * @param createTopicDto - 创建论坛主题的数据传输对象
-   * @returns 创建的论坛主题信息
-   * @throws {BadRequestException} 板块不存在或已禁用
-   * @throws {BadRequestException} 用户资料不存在或已被封禁
+   * 创建论坛主题。
+   * - 敏感词检测与审核策略计算在写入前完成
+   * - 计数更新与板块状态同步在同一事务中执行
+   * - 审核通过时触发成长奖励事件
+   * - 写入后记录操作日志
    */
   async createForumTopic(createTopicDto: CreateForumTopicInput) {
     const { sectionId, userId, ...topicData } = createTopicDto
@@ -271,7 +282,6 @@ export class ForumTopicService {
       sectionId,
     )
 
-    // 合并标题与内容进行敏感词检测
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
         content: topicData.content + topicData.title,
@@ -279,7 +289,6 @@ export class ForumTopicService {
 
     const reviewPolicy = section.topicReviewPolicy as ForumReviewPolicyEnum
 
-    // 根据策略与敏感词等级计算审核与隐藏状态
     const { auditStatus, isHidden } = this.calculateAuditStatus(
       reviewPolicy,
       highestLevel,
@@ -294,7 +303,6 @@ export class ForumTopicService {
       isHidden,
     }
 
-    // 创建主题与计数更新放在同一事务中，避免数据与计数不一致
     const topic = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const [newTopic] = await tx
@@ -315,7 +323,6 @@ export class ForumTopicService {
       }),
     )
 
-    // 记录创建行为，便于审计追踪
     await this.actionLogService.createActionLog({
       userId,
       actionType: ForumUserActionTypeEnum.CREATE_TOPIC,
@@ -324,7 +331,6 @@ export class ForumTopicService {
       afterData: JSON.stringify(topic),
     })
 
-    // 未进入审核队列才触发成长事件
     if (topic.auditStatus !== AuditStatusEnum.PENDING) {
       await this.userGrowthRewardService.tryRewardByRule({
         userId,
@@ -339,12 +345,6 @@ export class ForumTopicService {
     return true
   }
 
-  /**
-   * 根据ID获取论坛主题详情
-   * @param id - 论坛主题ID
-   * @returns 论坛主题详情信息
-   * @throws {NotFoundException} 主题不存在
-   */
   async getTopicById(id: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
@@ -370,6 +370,10 @@ export class ForumTopicService {
     return topic
   }
 
+  /**
+   * 获取对公开访问可见的主题详情。
+   * 只返回已审核通过且未隐藏的主题，同时校验板块访问权限。
+   */
   private async getVisiblePublicTopic(id: number, userId?: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: {
@@ -406,10 +410,13 @@ export class ForumTopicService {
     return topic
   }
 
+  /**
+   * 获取公开主题详情，包含当前用户的点赞与收藏状态。
+   * 匿名用户返回固定的 liked/favorited 为 false，保持响应结构稳定。
+   */
   async getPublicTopicById(id: number, userId?: number) {
     const topic = await this.getVisiblePublicTopic(id, userId)
 
-    // 为匿名用户保持稳定的详情结构，避免调用方按登录态分支解析字段。
     if (!userId) {
       return {
         ...topic,
@@ -438,6 +445,10 @@ export class ForumTopicService {
     }
   }
 
+  /**
+   * 获取主题的评论目标信息，用于评论服务定位评论对象。
+   * 会先校验主题是否对当前用户可见。
+   */
   async getTopicCommentTarget(id: number, userId?: number) {
     await this.getVisiblePublicTopic(id, userId)
     return {
@@ -446,11 +457,6 @@ export class ForumTopicService {
     }
   }
 
-  /**
-   * 获取论坛主题列表（分页）
-   * @param queryForumTopicDto - 查询参数对象
-   * @returns 分页的论坛主题列表
-   */
   async getTopics(queryForumTopicDto: QueryForumTopicInput) {
     const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
     const where = this.drizzle.buildWhere(this.forumTopicTable, {
@@ -480,6 +486,13 @@ export class ForumTopicService {
     })
   }
 
+  /**
+   * 获取公开主题分页列表。
+   * - 只返回已审核通过且未隐藏的主题
+   * - 排序规则：置顶优先，其次按最后回复时间倒序，再按创建时间倒序
+   * - 会校验用户对板块的访问权限
+   * - 登录用户会返回每条主题的点赞与收藏状态
+   */
   async getPublicTopics(query: QueryPublicForumTopicInput) {
     await this.forumPermissionService.ensureUserCanAccessSection(
       query.sectionId,
@@ -489,7 +502,7 @@ export class ForumTopicService {
       },
     )
 
-    return this.drizzle.ext.findPagination(this.forumTopicTable, {
+    const page = await this.drizzle.ext.findPagination(this.forumTopicTable, {
       where: this.drizzle.buildWhere(this.forumTopicTable, {
         and: {
           sectionId: query.sectionId,
@@ -517,14 +530,48 @@ export class ForumTopicService {
         'createdAt',
       ],
     })
+
+    if (!query.userId || page.list.length === 0) {
+      return {
+        ...page,
+        list: page.list.map((item) => ({
+          ...item,
+          liked: false,
+          favorited: false,
+        })),
+      }
+    }
+
+    const topicIds = page.list.map((item) => item.id)
+    const [likedMap, favoritedMap] = await Promise.all([
+      this.likeService.checkStatusBatch(
+        LikeTargetTypeEnum.FORUM_TOPIC,
+        topicIds,
+        query.userId,
+      ),
+      this.favoriteService.checkStatusBatch(
+        FavoriteTargetTypeEnum.FORUM_TOPIC,
+        topicIds,
+        query.userId,
+      ),
+    ])
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        liked: likedMap.get(item.id) ?? false,
+        favorited: favoritedMap.get(item.id) ?? false,
+      })),
+    }
   }
 
   /**
-   * 更新论坛主题
-   * @param updateForumTopicDto - 更新论坛主题的数据传输对象
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
-   * @throws {BadRequestException} 主题已锁定，无法编辑
+   * 更新论坛主题内容。
+   * - 锁定主题不允许编辑
+   * - 编辑时会重新检测敏感词并重新计算审核状态
+   * - 板块可见状态在事务中同步更新
+   * - 记录编辑前后的差异日志
    */
   async updateTopic(updateForumTopicDto: UpdateForumTopicInput) {
     const { id, ...updateData } = updateForumTopicDto
@@ -552,7 +599,6 @@ export class ForumTopicService {
       },
     )
 
-    // 合并标题与内容进行敏感词检测
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
         content:
@@ -560,7 +606,6 @@ export class ForumTopicService {
           (updateData.title || topic.title),
       })
 
-    // 根据策略与敏感词等级计算审核与隐藏状态
     const { auditStatus, isHidden } = this.calculateAuditStatus(
       reviewPolicy,
       highestLevel,
@@ -573,7 +618,6 @@ export class ForumTopicService {
       isHidden,
     }
 
-    // 更新主题内容与审核状态
     const updatedTopic = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const [nextTopic] = await tx
@@ -595,7 +639,6 @@ export class ForumTopicService {
       }),
     )
 
-    // 记录编辑行为，保存前后差异
     await this.actionLogService.createActionLog({
       userId: topic.userId,
       actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
@@ -609,10 +652,11 @@ export class ForumTopicService {
   }
 
   /**
-   * 删除论坛主题（软删除）
-   * @param id - 论坛主题ID
-   * @returns 删除结果
-   * @throws {NotFoundException} 主题不存在
+   * 删除论坛主题（软删除）。
+   * - 同时软删除该主题下的所有回复
+   * - 在同一事务中回退相关计数：用户发帖数、回复数、点赞数、收藏数
+   * - 同步更新板块可见状态
+   * - 记录删除操作日志
    */
   async deleteTopic(id: number) {
     const topic = await this.db.query.forumTopic.findFirst({
@@ -623,7 +667,6 @@ export class ForumTopicService {
       throw new NotFoundException('主题不存在')
     }
 
-    // 主题与回复软删除保持一致
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const replyRows = await tx.query.userComment.findMany({
@@ -731,10 +774,8 @@ export class ForumTopicService {
   }
 
   /**
-   * 更新主题状态通用方法
-   * @param id 主题ID
-   * @param updateData 更新字段
-   * @returns 更新后的主题
+   * 主题状态更新通用方法。
+   * 统一处理存在性校验、事务包装与板块可见状态同步。
    */
   private async updateTopicStatus(
     id: number,
@@ -774,24 +815,12 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 更新主题置顶状态
-   * @param updateTopicPinnedDto - 更新置顶状态的数据传输对象
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
-   */
   async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedInput) {
     return this.updateTopicStatus(updateTopicPinnedDto.id, {
       isPinned: updateTopicPinnedDto.isPinned,
     })
   }
 
-  /**
-   * 更新主题精华状态
-   * @param updateTopicFeaturedDto - 更新精华状态的数据传输对象
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
-   */
   async updateTopicFeatured(
     updateTopicFeaturedDto: UpdateForumTopicFeaturedInput,
   ) {
@@ -800,12 +829,6 @@ export class ForumTopicService {
     })
   }
 
-  /**
-   * 更新主题锁定状态
-   * @param updateTopicLockedDto - 更新锁定状态的数据传输对象
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
-   */
   async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedInput) {
     return this.updateTopicStatus(updateTopicLockedDto.id, {
       isLocked: updateTopicLockedDto.isLocked,
@@ -813,10 +836,8 @@ export class ForumTopicService {
   }
 
   /**
-   * 更新主题隐藏状态
-   * @param updateTopicHiddenDto - 更新隐藏状态的数据传输对象
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
+   * 更新主题隐藏状态。
+   * 隐藏状态变更会影响板块可见主题统计，需同步更新板块状态。
    */
   async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenInput) {
     return this.updateTopicStatus(
@@ -831,10 +852,8 @@ export class ForumTopicService {
   }
 
   /**
-   * 更新主题审核状态
-   * @param updateTopicAuditStatusDto - 更新审核状态的数据传输对象
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
+   * 更新主题审核状态。
+   * 审核状态变更会影响板块可见主题统计，需同步更新板块状态。
    */
   async updateTopicAuditStatus(
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusInput,
@@ -852,12 +871,6 @@ export class ForumTopicService {
     )
   }
 
-  /**
-   * 增加主题浏览量
-   * @param id - 论坛主题ID
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
-   */
   async incrementViewCount(id: number) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -875,11 +888,8 @@ export class ForumTopicService {
   }
 
   /**
-   * 增加主题回复数并更新最后回复信息
-   * @param id - 论坛主题ID
-   * @param replyUserId - 回复者用户ID
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
+   * 增加主题回复计数并更新最后回复信息。
+   * 用于评论创建后同步更新主题统计。
    */
   async incrementReplyCount(id: number, replyUserId: number) {
     const [topic] = await this.drizzle.withErrorHandling(() =>
@@ -905,12 +915,6 @@ export class ForumTopicService {
     return topic
   }
 
-  /**
-   * 增加主题点赞数
-   * @param id - 论坛主题ID
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
-   */
   async incrementLikeCount(id: number) {
     const [topic] = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -930,12 +934,6 @@ export class ForumTopicService {
     return topic
   }
 
-  /**
-   * 减少主题点赞数
-   * @param id - 论坛主题ID
-   * @returns 更新后的论坛主题信息
-   * @throws {NotFoundException} 主题不存在
-   */
   async decrementLikeCount(id: number) {
     const [topic] = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -955,6 +953,10 @@ export class ForumTopicService {
     return topic
   }
 
+  /**
+   * 用户编辑自己的主题。
+   * 校验主题所有权后调用通用更新方法。
+   */
   async updateUserTopic(userId: number, input: UpdateForumTopicInput) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: { id: input.id, deletedAt: { isNull: true } },
@@ -972,6 +974,10 @@ export class ForumTopicService {
     return this.updateTopic(input)
   }
 
+  /**
+   * 用户删除自己的主题。
+   * 校验主题所有权后调用通用删除方法。
+   */
   async deleteUserTopic(userId: number, id: number) {
     const topic = await this.db.query.forumTopic.findFirst({
       where: { id, deletedAt: { isNull: true } },
