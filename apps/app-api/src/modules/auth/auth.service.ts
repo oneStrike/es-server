@@ -1,8 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import type {
-  AppLoginInput,
-  AppTokenPairInput,
-} from './auth.type'
+import type { AppLoginInput, AppTokenPairInput } from './auth.type'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum'
 import { AuthSessionService } from '@libs/identity'
@@ -17,10 +14,7 @@ import {
 import { extractIpAddress } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
-import {
-  AppAuthErrorMessages,
-  AppAuthRedisKeys,
-} from './auth.constant'
+import { AppAuthErrorMessages, AppAuthRedisKeys } from './auth.constant'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 
@@ -85,11 +79,9 @@ export class AuthService {
       // })
     }
 
-    const password = body.password
-      ? this.rsaService.decryptWith(body.password)
-      : this.passwordService.generateSecureRandomPassword()
-
-    const hashedPassword = await this.scryptService.encryptPassword(password)
+    const hashedPassword = await this.scryptService.encryptPassword(
+      this.passwordService.generateSecureRandomPassword(),
+    )
 
     const user = await this.drizzle.withErrorHandling(async () =>
       this.drizzle.db.transaction(async (tx) => {
@@ -143,6 +135,7 @@ export class AuthService {
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
       )
     }
+    console.log(body)
 
     let user
     if (body.phone) {
@@ -194,7 +187,6 @@ export class AuthService {
 
       throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
-
     if (body.code) {
       if (!user.phoneNumber) {
         throw new BadRequestException(
@@ -254,7 +246,8 @@ export class AuthService {
         .update(this.appUserTable)
         .set({
           lastLoginAt: new Date(),
-          lastLoginIp: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
+          lastLoginIp:
+            extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
         })
         .where(eq(this.appUserTable.id, userId)),
     )

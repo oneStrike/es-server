@@ -3,7 +3,7 @@ import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import type { Db, SQL } from '../core/drizzle.type'
 import { DbConfig } from '@libs/platform/config'
 import { jsonParse } from '@libs/platform/utils'
-import { asc, desc } from 'drizzle-orm'
+import { asc, desc, getTableColumns } from 'drizzle-orm'
 
 type FindPaginationOrderByRecord = Record<string, 'asc' | 'desc'>
 type FindPaginationOrderBy =
@@ -98,7 +98,7 @@ export async function findPagination<
     throw new Error('不支持pick和omit同时使用')
   }
   const hasPick = pickedFields.size > 0
-  const tableColumns = (tableAsAny._?.columns ?? {}) as Record<string, unknown>
+  const tableColumns = getTableColumns(table as any) as Record<string, unknown>
   const selectedColumns = Object.fromEntries(
     Object.entries(tableColumns).filter(([key]) =>
       hasPick ? pickedFields.has(key) : !omittedFields.has(key),

@@ -92,7 +92,10 @@ export class ForumController {
   })
   async getDetail(@Query() query: IdDto, @CurrentUser('sub') userId?: number) {
     return this.mapTopicDetail(
-      await this.forumTopicService.getPublicTopicById(query.id, userId) as Record<string, any>,
+      (await this.forumTopicService.getPublicTopicById(
+        query.id,
+        userId,
+      )) as Record<string, any>,
     )
   }
 

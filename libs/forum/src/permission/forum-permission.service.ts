@@ -155,7 +155,7 @@ export class ForumPermissionService {
     }
 
     if (!user) {
-      throw new BadRequestException('请先登录后访问该板块')
+        throw new BadRequestException('请先登录后访问该板块')
     }
 
     if ('isEnabled' in user && !user.isEnabled) {

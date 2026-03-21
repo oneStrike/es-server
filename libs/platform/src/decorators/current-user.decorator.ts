@@ -31,7 +31,6 @@ export const CurrentUser = createParamDecorator(
       return null
     }
     requestUser.sub = Number(requestUser.sub)
-
     // 如果传入了字段名，返回该字段的值；否则返回完整用户信息
     return data ? requestUser[data] : requestUser
   },
