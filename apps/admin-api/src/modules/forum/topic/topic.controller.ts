@@ -1,7 +1,4 @@
-import {
-  BaseForumTopicDto,
-  ForumTopicService,
-} from '@libs/forum'
+import { BaseForumTopicDto, ForumTopicService } from '@libs/forum'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -48,12 +45,14 @@ export class ForumTopicController {
       lastReplyUserId: topic.lastReplyUserId,
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
-      topicTags: (topic.topicTags ?? []).map((item: Record<string, unknown>) => ({
-        id: item.id,
-        topicId: item.topicId,
-        tagId: item.tagId,
-        createdAt: item.createdAt,
-      })),
+      topicTags: (topic.topicTags ?? []).map(
+        (item: Record<string, unknown>) => ({
+          id: item.id,
+          topicId: item.topicId,
+          tagId: item.tagId,
+          createdAt: item.createdAt,
+        }),
+      ),
       section: topic.section
         ? {
             id: topic.section.id,
@@ -120,7 +119,10 @@ export class ForumTopicController {
   })
   async getDetail(@Query() query: IdDto) {
     return this.mapTopicDetail(
-      await this.forumTopicService.getTopicById(query.id) as Record<string, any>,
+      (await this.forumTopicService.getTopicById(query.id)) as Record<
+        string,
+        any
+      >,
     )
   }
 

@@ -1,7 +1,4 @@
-import {
-  BaseForumSectionDto,
-  BaseForumTopicDto,
-} from '@libs/forum'
+import { BaseForumSectionDto, BaseForumTopicDto } from '@libs/forum'
 import { BaseUserLevelRuleDto } from '@libs/growth'
 import {
   ArrayProperty,
@@ -10,11 +7,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import {
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
 import {
   IntersectionType,
@@ -188,7 +181,7 @@ export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
 ] as const) {}
 
 export class UpdateForumTopicDto extends IntersectionType(
-  PartialType(PickType(BaseForumTopicDto, ['title', 'content'] as const)),
+  PickType(BaseForumTopicDto, ['title', 'content'] as const),
   IdDto,
 ) {}
 
