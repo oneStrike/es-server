@@ -114,6 +114,7 @@ export const appUser = pgTable("app_user", {
     index("app_user_points_idx").on(table.points),
     index("app_user_status_idx").on(table.status),
     index("app_user_level_id_idx").on(table.levelId),
+    index("app_user_deleted_at_idx").on(table.deletedAt),
 ]);
 
 /**

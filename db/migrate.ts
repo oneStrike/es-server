@@ -1,74 +1,431 @@
 import { execSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import process from 'node:process'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { Pool } from 'pg'
 
+const MIGRATIONS_SCHEMA = 'public'
+const MIGRATIONS_TABLE = '__drizzle_migrations__'
+const DB_RECORD_PREVIEW_LIMIT = 10
+const DATABASE_URL_CREDENTIALS_PATTERN = /\/\/[^@]+@/
+
+type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS'
+
+interface LocalMigrationMeta {
+  name: string
+  hasMigrationSql: boolean
+  hasSnapshot: boolean
+}
+
+interface DbMigrationRecord {
+  id: number
+  hash: string
+  createdAt: string
+  name: string | null
+  appliedAt: string | null
+}
+
+interface MigrationTableSnapshot {
+  exists: boolean
+  columns: string[]
+  records: DbMigrationRecord[]
+}
+
+function log(level: LogLevel, message: string, details?: Record<string, unknown>) {
+  console.log(`[${new Date().toISOString()}] [${level}] ${message}`)
+
+  if (!details) {
+    return
+  }
+
+  for (const [key, value] of Object.entries(details)) {
+    console.log(`  - ${key}: ${formatLogValue(value)}`)
+  }
+}
+
+function formatLogValue(value: unknown): string {
+  if (value === undefined) {
+    return 'undefined'
+  }
+
+  if (value === null) {
+    return 'null'
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return '(empty)'
+    }
+
+    const isPrimitiveList = value.every(item =>
+      item === null
+      || ['string', 'number', 'boolean'].includes(typeof item),
+    )
+
+    return isPrimitiveList
+      ? value.map(item => String(item)).join(', ')
+      : JSON.stringify(value)
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value)
+  }
+
+  return String(value)
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) {
+    return `${ms}ms`
+  }
+
+  if (ms < 60_000) {
+    return `${(ms / 1000).toFixed(2)}s`
+  }
+
+  const minutes = Math.floor(ms / 60_000)
+  const seconds = ((ms % 60_000) / 1000).toFixed(2)
+  return `${minutes}m ${seconds}s`
+}
+
+function getRuntimeLabel(): string {
+  return process.versions.bun
+    ? `bun ${process.versions.bun}`
+    : `node ${process.version}`
+}
+
+function maskDatabaseUrl(databaseUrl: string): string {
+  try {
+    const parsed = new URL(databaseUrl)
+
+    if (parsed.username) {
+      parsed.username = '***'
+    }
+
+    if (parsed.password) {
+      parsed.password = '***'
+    }
+
+    return parsed.toString()
+  } catch {
+    return databaseUrl.replace(DATABASE_URL_CREDENTIALS_PATTERN, '//***:***@')
+  }
+}
+
+function serializeError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack ?? `${error.name}: ${error.message}`
+  }
+
+  return String(error)
+}
+
+function readLocalMigrations(migrationsFolder: string): LocalMigrationMeta[] {
+  if (!existsSync(migrationsFolder)) {
+    return []
+  }
+
+  return readdirSync(migrationsFolder, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((entry) => {
+      const directoryPath = join(migrationsFolder, entry.name)
+
+      return {
+        name: entry.name,
+        hasMigrationSql: existsSync(join(directoryPath, 'migration.sql')),
+        hasSnapshot: existsSync(join(directoryPath, 'snapshot.json')),
+      }
+    })
+}
+
+function printLocalMigrationDetails(localMigrations: LocalMigrationMeta[]) {
+  if (localMigrations.length === 0) {
+    log('WARN', '迁移目录下未发现任何本地 migration')
+    return
+  }
+
+  log('INFO', '本地 migration 清单')
+
+  for (const migration of localMigrations) {
+    console.log(
+      `  - ${migration.name}: migration.sql=${migration.hasMigrationSql ? 'yes' : 'no'}, snapshot.json=${migration.hasSnapshot ? 'yes' : 'no'}`,
+    )
+  }
+}
+
+function printDbMigrationRecords(title: string, records: DbMigrationRecord[]) {
+  if (records.length === 0) {
+    log('INFO', `${title}: 无`)
+    return
+  }
+
+  const previewRecords = records.slice(-DB_RECORD_PREVIEW_LIMIT)
+  log('INFO', title, {
+    totalCount: records.length,
+    previewCount: previewRecords.length,
+  })
+
+  for (const record of previewRecords) {
+    console.log(
+      `  - id=${record.id}, name=${record.name ?? '(legacy/no-name)'}, createdAt=${record.createdAt}, appliedAt=${record.appliedAt ?? 'n/a'}, hash=${record.hash}`,
+    )
+  }
+
+  if (records.length > previewRecords.length) {
+    console.log(`  - ... 其余 ${records.length - previewRecords.length} 条未展开`)
+  }
+}
+
+async function getMigrationTableSnapshot(pool: Pool): Promise<MigrationTableSnapshot> {
+  const columnResult = await pool.query<{ column_name: string }>(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = $1
+        AND table_name = $2
+      ORDER BY ordinal_position
+    `,
+    [MIGRATIONS_SCHEMA, MIGRATIONS_TABLE],
+  )
+
+  const columns = columnResult.rows.map(row => row.column_name)
+
+  if (columns.length === 0) {
+    return {
+      exists: false,
+      columns: [],
+      records: [],
+    }
+  }
+
+  const selectedColumns = ['id', 'hash', 'created_at']
+
+  if (columns.includes('name')) {
+    selectedColumns.push('name')
+  }
+
+  if (columns.includes('applied_at')) {
+    selectedColumns.push('applied_at')
+  }
+
+  const qualifiedTable = `"${MIGRATIONS_SCHEMA}"."${MIGRATIONS_TABLE}"`
+  const recordResult = await pool.query<Record<string, unknown>>(
+    `SELECT ${selectedColumns.map(column => `"${column}"`).join(', ')} FROM ${qualifiedTable} ORDER BY "id" ASC`,
+  )
+
+  return {
+    exists: true,
+    columns,
+    records: recordResult.rows.map(row => ({
+      id: Number(row.id ?? 0),
+      hash: String(row.hash ?? ''),
+      createdAt: String(row.created_at ?? ''),
+      name: row.name == null ? null : String(row.name),
+      appliedAt: row.applied_at == null ? null : String(row.applied_at),
+    })),
+  }
+}
+
+function getPendingLocalMigrationNames(
+  localMigrations: LocalMigrationMeta[],
+  snapshot: MigrationTableSnapshot,
+): string[] | null {
+  if (!snapshot.exists) {
+    return localMigrations
+      .filter(migration => migration.hasMigrationSql)
+      .map(migration => migration.name)
+  }
+
+  if (!snapshot.columns.includes('name')) {
+    return null
+  }
+
+  const appliedNames = new Set(
+    snapshot.records
+      .map(record => record.name)
+      .filter((name): name is string => Boolean(name)),
+  )
+
+  return localMigrations
+    .filter(migration => migration.hasMigrationSql && !appliedNames.has(migration.name))
+    .map(migration => migration.name)
+}
+
+function getNewMigrationRecords(
+  beforeSnapshot: MigrationTableSnapshot,
+  afterSnapshot: MigrationTableSnapshot,
+): DbMigrationRecord[] {
+  const appliedIds = new Set(beforeSnapshot.records.map(record => record.id))
+
+  return afterSnapshot.records.filter(record => !appliedIds.has(record.id))
+}
+
 async function runMigration() {
-  console.log('⏳ 开始执行数据库迁移...')
+  const startedAt = Date.now()
+  log('INFO', '开始执行数据库迁移', {
+    runtime: getRuntimeLabel(),
+    pid: process.pid,
+    cwd: process.cwd(),
+  })
 
   if (!process.env.DATABASE_URL) {
-    console.error('❌ DATABASE_URL 环境变量未设置')
-    process.exit(1)
+    log('ERROR', 'DATABASE_URL 环境变量未设置')
+    throw new Error('DATABASE_URL 环境变量未设置')
+  }
+
+  const databaseUrl = process.env.DATABASE_URL
+  const migrationsFolder = resolve(__dirname, 'migration')
+  // Seed 仍沿用当前基于 cwd 的定位方式，避免改变现有脚本的执行契约。
+  const seedTsPath = join(process.cwd(), 'db', 'seed', 'index.ts')
+  const localMigrations = readLocalMigrations(migrationsFolder)
+  const invalidLocalMigrations = localMigrations.filter(migration => !migration.hasMigrationSql)
+
+  log('INFO', '迁移脚本配置已解析', {
+    databaseUrl: maskDatabaseUrl(databaseUrl),
+    migrationsFolder,
+    migrationsSchema: MIGRATIONS_SCHEMA,
+    migrationsTable: MIGRATIONS_TABLE,
+    seedTsPath,
+    localMigrationCount: localMigrations.length,
+  })
+
+  printLocalMigrationDetails(localMigrations)
+
+  if (invalidLocalMigrations.length > 0) {
+    log('WARN', '检测到缺少 migration.sql 的 migration 目录', {
+      invalidMigrationDirectories: invalidLocalMigrations.map(migration => migration.name),
+    })
   }
 
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
   })
 
   const db = drizzle({
     client: pool,
   })
+
   let isFreshDb = false
+  let beforeSnapshot: MigrationTableSnapshot = {
+    exists: false,
+    columns: [],
+    records: [],
+  }
 
   try {
-    // 检查是否是刚创建的空数据库 (通过判断有没有迁移记录表)
-    const result = await pool.query(
-      "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '__drizzle_migrations__'",
-    )
-    isFreshDb = Number.parseInt(result.rows[0].count, 10) === 0
+    const connectStartedAt = Date.now()
+    log('INFO', '检查数据库连接')
+    await pool.query('SELECT 1')
+    log('SUCCESS', '数据库连接可用', {
+      cost: formatDuration(Date.now() - connectStartedAt),
+    })
+
+    beforeSnapshot = await getMigrationTableSnapshot(pool)
+    isFreshDb = !beforeSnapshot.exists
 
     if (isFreshDb) {
-      console.log('🆕 检测到全新的空数据库，迁移结束后将自动执行 Seed')
+      log('INFO', '检测到全新的空数据库，迁移结束后将自动执行 Seed')
+    } else {
+      log('INFO', '迁移记录表状态', {
+        columns: beforeSnapshot.columns,
+        appliedCount: beforeSnapshot.records.length,
+      })
+      printDbMigrationRecords('迁移前已应用的 migration 记录', beforeSnapshot.records)
     }
 
-    // 指向由 drizzle.config.ts out 配置项指定的迁移文件夹
-    // 使用绝对路径避免执行目录不同的问题
-    const migrationsFolder = resolve(__dirname, 'migration')
-    console.log(`📁 迁移文件目录: ${migrationsFolder}`)
+    const pendingLocalMigrationNames = getPendingLocalMigrationNames(localMigrations, beforeSnapshot)
 
+    if (pendingLocalMigrationNames === null) {
+      log('INFO', '当前无法精确推断待执行 migration 名称', {
+        reason: '迁移记录表缺少 name 列，继续交给 Drizzle 按内部状态处理',
+      })
+    } else if (pendingLocalMigrationNames.length === 0) {
+      log('INFO', '未检测到待执行的本地 migration')
+    } else {
+      log('INFO', '检测到待执行的本地 migration', {
+        pendingCount: pendingLocalMigrationNames.length,
+      })
+
+      for (const migrationName of pendingLocalMigrationNames) {
+        console.log(`  - ${migrationName}`)
+      }
+    }
+
+    const migrateStartedAt = Date.now()
+    log('INFO', '开始调用 Drizzle migrator')
     await migrate(db, {
       migrationsFolder,
-      migrationsSchema: 'public',
-      migrationsTable: '__drizzle_migrations__',
+      migrationsSchema: MIGRATIONS_SCHEMA,
+      migrationsTable: MIGRATIONS_TABLE,
     })
-    console.log('✅ 数据库迁移成功！')
+
+    const afterSnapshot = await getMigrationTableSnapshot(pool)
+    const newRecords = getNewMigrationRecords(beforeSnapshot, afterSnapshot)
+
+    if (newRecords.length === 0) {
+      log('SUCCESS', '数据库迁移完成，未发现新增迁移记录', {
+        cost: formatDuration(Date.now() - migrateStartedAt),
+        appliedCount: afterSnapshot.records.length,
+      })
+    } else {
+      log('SUCCESS', '数据库迁移完成', {
+        cost: formatDuration(Date.now() - migrateStartedAt),
+        newlyAppliedCount: newRecords.length,
+        appliedCount: afterSnapshot.records.length,
+      })
+      printDbMigrationRecords('本次新增的 migration 记录', newRecords)
+    }
   } catch (error) {
-    console.error('❌ 数据库迁移失败:', error)
-    process.exit(1)
+    log('ERROR', '数据库迁移失败', {
+      cost: formatDuration(Date.now() - startedAt),
+      error: serializeError(error),
+    })
+    throw error
   } finally {
-    // 务必关闭连接池
+    const closeStartedAt = Date.now()
+    log('INFO', '关闭数据库连接池')
     await pool.end()
+    log('SUCCESS', '数据库连接池已关闭', {
+      cost: formatDuration(Date.now() - closeStartedAt),
+    })
   }
 
-  // 迁移完成且连接池释放后，如果是空数据库，则自动执行 seed
   if (isFreshDb) {
-    console.log('🌱 开始自动注入种子数据...')
-    const seedTsPath = join(process.cwd(), 'db', 'seed', 'index.ts')
+    const seedStartedAt = Date.now()
 
-    try {
-      if (existsSync(seedTsPath)) {
-        // 由于你的生产环境 Docker 是基于 oven/bun 的，它可以原生直接运行 TS
-        execSync(`bun ${seedTsPath}`, { stdio: 'inherit' })
-      } else {
-        console.warn('⚠️ 找不到种子数据脚本文件，跳过 Auto-Seed')
+    if (!existsSync(seedTsPath)) {
+      log('WARN', '找不到种子数据脚本文件，跳过 Auto-Seed', {
+        seedTsPath,
+      })
+    } else {
+      log('INFO', '开始自动执行 Seed', {
+        seedTsPath,
+        command: `bun "${seedTsPath}"`,
+      })
+
+      try {
+        execSync(`bun "${seedTsPath}"`, { stdio: 'inherit' })
+        log('SUCCESS', 'Auto-Seed 执行完成', {
+          cost: formatDuration(Date.now() - seedStartedAt),
+        })
+      } catch (seedError) {
+        log('ERROR', 'Auto-Seed 执行失败', {
+          cost: formatDuration(Date.now() - seedStartedAt),
+          error: serializeError(seedError),
+        })
+        throw seedError
       }
-    } catch (seedError) {
-      console.error('❌ Auto-Seed 执行失败:', seedError)
-      process.exit(1)
     }
   }
+
+  log('SUCCESS', '数据库迁移流程结束', {
+    totalCost: formatDuration(Date.now() - startedAt),
+  })
 }
 
-runMigration()
+runMigration().catch(() => {
+  process.exitCode = 1
+})

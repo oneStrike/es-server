@@ -7,6 +7,7 @@ import type {
 } from './badge.type'
 import { DrizzleService } from '@db/core'
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
@@ -36,6 +37,16 @@ export class UserBadgeService {
     return this.drizzle.schema.userLevelRule
   }
 
+  private async checkBadgeHasAssignments(badgeId: number) {
+    const rows = await this.db
+      .select({ id: this.userBadgeAssignment.id })
+      .from(this.userBadgeAssignment)
+      .where(eq(this.userBadgeAssignment.badgeId, badgeId))
+      .limit(1)
+
+    return rows.length > 0
+  }
+
   async createBadge(dto: CreateUserBadgeInput) {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.userBadge).values(dto),
@@ -45,6 +56,11 @@ export class UserBadgeService {
 
   async updateBadge(dto: UpdateUserBadgeInput) {
     const { id, ...updateData } = dto
+
+    if (updateData.isEnabled === false && (await this.checkBadgeHasAssignments(id))) {
+      throw new BadRequestException('徽章已被分配，无法禁用')
+    }
+
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.userBadge)
@@ -56,21 +72,25 @@ export class UserBadgeService {
   }
 
   async deleteBadge(dto: { id: number }) {
-    return this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async (tx) => {
-        await tx
-          .delete(this.userBadgeAssignment)
-          .where(eq(this.userBadgeAssignment.badgeId, dto.id))
-        const result = await tx
-          .delete(this.userBadge)
-          .where(eq(this.userBadge.id, dto.id))
-        this.drizzle.assertAffectedRows(result, '徽章不存在')
-        return true
-      }),
+    if (await this.checkBadgeHasAssignments(dto.id)) {
+      throw new BadRequestException('徽章已被分配，无法删除')
+    }
+
+    const result = await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.userBadge)
+        .where(eq(this.userBadge.id, dto.id)),
     )
+
+    this.drizzle.assertAffectedRows(result, '徽章不存在')
+    return true
   }
 
   async updateBadgeStatus(dto: UpdateUserBadgeStatusInput) {
+    if (!dto.isEnabled && (await this.checkBadgeHasAssignments(dto.id))) {
+      throw new BadRequestException('徽章已被分配，无法禁用')
+    }
+
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.userBadge)

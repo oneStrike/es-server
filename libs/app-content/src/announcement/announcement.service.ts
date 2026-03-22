@@ -71,9 +71,15 @@ export class AppAnnouncementService {
   /**
    * 分页查询公告
    * @param queryAnnouncementDto 查询条件
+   * @param options 查询选项
    * @returns 分页结果
    */
-  async findAnnouncementPage(queryAnnouncementDto: AnnouncementPageQuery) {
+  async findAnnouncementPage(
+    queryAnnouncementDto: AnnouncementPageQuery,
+    options?: {
+      publishedOnly?: boolean
+    },
+  ) {
     const {
       title,
       publishStartTime,
@@ -102,7 +108,7 @@ export class AppAnnouncementService {
           enablePlatform: { in: platforms },
           announcementType: queryAnnouncementDto.announcementType,
           priorityLevel: queryAnnouncementDto.priorityLevel,
-          isPublished: queryAnnouncementDto.isPublished,
+          isPublished: options?.publishedOnly ? true : queryAnnouncementDto.isPublished,
           isPinned: queryAnnouncementDto.isPinned,
           showAsPopup: queryAnnouncementDto.showAsPopup,
           pageId: queryAnnouncementDto.pageId,
@@ -185,7 +191,7 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 删除公告
+   * 下线公告
    * @param dto 删除数据
    * @returns 是否成功
    */
@@ -193,7 +199,8 @@ export class AppAnnouncementService {
     const { id } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .delete(this.appAnnouncement)
+        .update(this.appAnnouncement)
+        .set({ isPublished: false })
         .where(eq(this.appAnnouncement.id, id)),
     )
 

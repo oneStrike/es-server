@@ -2,6 +2,7 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from "drizzle-orm";
 import { boolean, index, integer, jsonb, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
@@ -121,6 +122,18 @@ export const forumTopic = pgTable("forum_topic", {
    * 索引: userId
    */
   index("forum_topic_user_id_idx").on(table.userId),
+  /**
+   * 索引: userId, createdAt（仅未删除主题）
+   */
+  index("forum_topic_user_id_created_at_live_idx")
+    .on(table.userId, table.createdAt.desc())
+    .where(sql`${table.deletedAt} is null`),
+  /**
+   * 索引: userId, sectionId, createdAt（仅未删除主题）
+   */
+  index("forum_topic_user_id_section_id_created_at_live_idx")
+    .on(table.userId, table.sectionId, table.createdAt.desc())
+    .where(sql`${table.deletedAt} is null`),
   /**
    * 索引: isPinned, createdAt
    */

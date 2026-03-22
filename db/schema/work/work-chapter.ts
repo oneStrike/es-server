@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   index,
@@ -6,7 +7,7 @@ import {
   smallint,
   text,
   timestamp,
-  unique,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 /**
@@ -135,12 +136,16 @@ export const workChapter = pgTable(
   },
   (table) => [
     /**
-     * 唯一索引: workId, sortOrder
+     * 唯一索引: workId, sortOrder（仅未删除章节）
      */
-    unique('work_chapter_work_id_sort_order_key').on(
+    uniqueIndex('work_chapter_work_id_sort_order_live_idx').on(
       table.workId,
       table.sortOrder,
-    ),
+    ).where(sql`${table.deletedAt} is null`),
+    /**
+     * 索引: deletedAt
+     */
+    index('work_chapter_deleted_at_idx').on(table.deletedAt),
     /**
      * 索引: workId
      */

@@ -1,6 +1,6 @@
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import {
   CreateTagInput,
   DeleteTagInput,
@@ -23,6 +23,10 @@ export class WorkTagService {
 
   get workTagRelation() {
     return this.drizzle.schema.workTagRelation
+  }
+
+  get work() {
+    return this.drizzle.schema.work
   }
 
   async createTag(createTagDto: CreateTagInput) {
@@ -76,6 +80,10 @@ export class WorkTagService {
   async updateTag(updateTagDto: UpdateTagInput) {
     const { id, ...updateData } = updateTagDto
 
+    if (updateData.isEnabled === false && (await this.checkTagHasWorks(id))) {
+      throw new BadRequestException('Tag has related works and cannot be disabled')
+    }
+
     const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -96,6 +104,10 @@ export class WorkTagService {
   }
 
   async updateTagStatus(id: number, isEnabled: boolean) {
+    if (!isEnabled && (await this.checkTagHasWorks(id))) {
+      throw new BadRequestException('Tag has related works and cannot be disabled')
+    }
+
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workTag)
@@ -125,10 +137,18 @@ export class WorkTagService {
   }
 
   async checkTagHasWorks(tagId: number) {
-    const [countRow] = await this.db
-      .select({ count: sql<number>`count(*)` })
+    const rows = await this.db
+      .select({ workId: this.workTagRelation.workId })
       .from(this.workTagRelation)
-      .where(eq(this.workTagRelation.tagId, tagId))
-    return Number(countRow?.count ?? 0) > 0
+      .innerJoin(this.work, eq(this.work.id, this.workTagRelation.workId))
+      .where(
+        and(
+          eq(this.workTagRelation.tagId, tagId),
+          isNull(this.work.deletedAt),
+        ),
+      )
+      .limit(1)
+
+    return rows.length > 0
   }
 }

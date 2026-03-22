@@ -68,7 +68,7 @@ export class AgreementController {
 
   @Post('delete')
   @ApiDoc({
-    summary: '删除协议',
+    summary: '下线协议',
     model: Boolean,
   })
   @Audit({

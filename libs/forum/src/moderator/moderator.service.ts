@@ -479,12 +479,11 @@ export class ForumModeratorService {
     const existing = await this.db.query.forumModerator.findFirst({
       where: {
         userId: input.userId,
-        deletedAt: { isNull: true },
       },
-      columns: { id: true },
+      columns: { id: true, deletedAt: true },
     })
 
-    if (existing) {
+    if (existing && existing.deletedAt === null) {
       throw new BadRequestException('该用户已是版主')
     }
 
@@ -492,20 +491,41 @@ export class ForumModeratorService {
 
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const [newModerator] = await tx
-          .insert(this.forumModerator)
-          .values({
-            userId: input.userId,
-            groupId: scope.groupId,
-            roleType: scope.roleType,
-            permissions: scope.permissions,
-            isEnabled: input.isEnabled ?? true,
-            remark: input.remark,
-          })
-          .returning({ id: this.forumModerator.id })
+        const moderatorData = {
+          groupId: scope.groupId,
+          roleType: scope.roleType,
+          permissions: scope.permissions,
+          isEnabled: input.isEnabled ?? true,
+          remark: input.remark ?? null,
+        }
+
+        const moderatorId = existing?.id
+          ? existing.id
+          : (
+              await tx
+                .insert(this.forumModerator)
+                .values({
+                  userId: input.userId,
+                  ...moderatorData,
+                })
+                .returning({ id: this.forumModerator.id })
+            )[0]!.id
+
+        if (existing?.id) {
+          const result = await tx
+            .update(this.forumModerator)
+            .set({
+              ...moderatorData,
+              deletedAt: null,
+            })
+            .where(eq(this.forumModerator.id, existing.id))
+          this.drizzle.assertAffectedRows(result, '版主不存在')
+        }
 
         if (scope.roleType === ForumModeratorRoleTypeEnum.SECTION) {
-          await this.syncModeratorSections(tx, newModerator.id, scope.sectionIds)
+          await this.syncModeratorSections(tx, moderatorId, scope.sectionIds)
+        } else {
+          await this.clearModeratorSections(tx, moderatorId)
         }
       }),
     )

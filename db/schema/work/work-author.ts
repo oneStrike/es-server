@@ -90,6 +90,10 @@ export const workAuthor = pgTable("work_author", {
      */
     index("work_author_is_enabled_deleted_at_idx").on(table.isEnabled, table.deletedAt),
     /**
+     * 软删除时间索引
+     */
+    index("work_author_deleted_at_idx").on(table.deletedAt),
+    /**
      * 国籍索引
      */
     index("work_author_nationality_idx").on(table.nationality),

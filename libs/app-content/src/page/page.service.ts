@@ -166,7 +166,7 @@ export class AppPageService {
   }
 
   /**
-   * 批量删除页面
+   * 批量下线页面
    *
    * @param dto 删除数据
    * @returns 是否成功
@@ -174,7 +174,10 @@ export class AppPageService {
   async batchDelete(dto: BatchDeleteAppPageInput) {
     const { ids } = dto
     const result = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.appPage).where(inArray(this.appPage.id, ids)),
+      this.db
+        .update(this.appPage)
+        .set({ isEnabled: false })
+        .where(inArray(this.appPage.id, ids)),
     )
 
     this.drizzle.assertAffectedRows(result, '页面不存在')

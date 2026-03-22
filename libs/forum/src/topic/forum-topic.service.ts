@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { ForumTopic } from '@db/schema'
 import type {
   CreateForumTopicInput,
   QueryForumTopicInput,
@@ -73,6 +74,22 @@ export class ForumTopicService {
 
   get userCommentTable() {
     return this.drizzle.schema.userComment
+  }
+
+  /**
+   * 获取未删除的主题快照。
+   * 供编辑、删除等需要复用主题当前状态的写路径共享使用。
+   */
+  private async getActiveTopicOrThrow(id: number) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: { id, deletedAt: { isNull: true } },
+    })
+
+    if (!topic) {
+      throw new NotFoundException('主题不存在')
+    }
+
+    return topic
   }
 
   /**
@@ -581,16 +598,11 @@ export class ForumTopicService {
    * - 板块可见状态在事务中同步更新
    * - 记录编辑前后的差异日志
    */
-  async updateTopic(updateForumTopicDto: UpdateForumTopicInput) {
+  private async updateTopicWithCurrent(
+    topic: ForumTopic,
+    updateForumTopicDto: UpdateForumTopicInput,
+  ) {
     const { id, ...updateData } = updateForumTopicDto
-
-    const topic = await this.db.query.forumTopic.findFirst({
-      where: { id, deletedAt: { isNull: true } },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
 
     if (topic.isLocked) {
       throw new BadRequestException('主题已锁定，无法编辑')
@@ -655,6 +667,11 @@ export class ForumTopicService {
     return true
   }
 
+  async updateTopic(updateForumTopicDto: UpdateForumTopicInput) {
+    const topic = await this.getActiveTopicOrThrow(updateForumTopicDto.id)
+    return this.updateTopicWithCurrent(topic, updateForumTopicDto)
+  }
+
   /**
    * 删除论坛主题（软删除）。
    * - 同时软删除该主题下的所有回复
@@ -662,15 +679,8 @@ export class ForumTopicService {
    * - 同步更新板块可见状态
    * - 记录删除操作日志
    */
-  async deleteTopic(id: number) {
-    const topic = await this.db.query.forumTopic.findFirst({
-      where: { id, deletedAt: { isNull: true } },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
+  private async deleteTopicWithCurrent(topic: ForumTopic) {
+    const { id } = topic
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const replyRows = await tx.query.userComment.findMany({
@@ -780,6 +790,11 @@ export class ForumTopicService {
     })
 
     return true
+  }
+
+  async deleteTopic(id: number) {
+    const topic = await this.getActiveTopicOrThrow(id)
+    return this.deleteTopicWithCurrent(topic)
   }
 
   /**
@@ -967,20 +982,13 @@ export class ForumTopicService {
    * 校验主题所有权后调用通用更新方法。
    */
   async updateUserTopic(userId: number, input: UpdateForumTopicInput) {
-    const topic = await this.db.query.forumTopic.findFirst({
-      where: { id: input.id, deletedAt: { isNull: true } },
-      columns: { userId: true },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
+    const topic = await this.getActiveTopicOrThrow(input.id)
 
     if (topic.userId !== userId) {
       throw new BadRequestException('无权修改该主题')
     }
 
-    return this.updateTopic(input)
+    return this.updateTopicWithCurrent(topic, input)
   }
 
   /**
@@ -988,19 +996,12 @@ export class ForumTopicService {
    * 校验主题所有权后调用通用删除方法。
    */
   async deleteUserTopic(userId: number, id: number) {
-    const topic = await this.db.query.forumTopic.findFirst({
-      where: { id, deletedAt: { isNull: true } },
-      columns: { userId: true },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
+    const topic = await this.getActiveTopicOrThrow(id)
 
     if (topic.userId !== userId) {
       throw new BadRequestException('无权删除该主题')
     }
 
-    return this.deleteTopic(id)
+    return this.deleteTopicWithCurrent(topic)
   }
 }

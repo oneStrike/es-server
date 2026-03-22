@@ -160,7 +160,7 @@ export const work = pgTable("work", {
   /**
    * 删除时间
    */
-  deletedAt: timestamp("deletedAt", { withTimezone: true, precision: 6 }),
+  deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
     /**
      * 索引: isPublished, publishAt
@@ -218,6 +218,10 @@ export const work = pgTable("work", {
      * 索引: commentCount
      */
     index("work_comment_count_idx").on(table.commentCount),
+    /**
+     * 索引: deletedAt
+     */
+    index("work_deleted_at_idx").on(table.deletedAt),
 ]);
 
 export type Work = typeof work.$inferSelect;

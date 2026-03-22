@@ -56,6 +56,22 @@ export class ForumTagService {
     return this.drizzle.schema.forumTopicTag
   }
 
+  private async checkTagHasTopics(id: number) {
+    const rows = await this.db
+      .select({ topicId: this.forumTopicTag.topicId })
+      .from(this.forumTopicTag)
+      .innerJoin(this.forumTopic, eq(this.forumTopic.id, this.forumTopicTag.topicId))
+      .where(
+        and(
+          eq(this.forumTopicTag.tagId, id),
+          isNull(this.forumTopic.deletedAt),
+        ),
+      )
+      .limit(1)
+
+    return rows.length > 0
+  }
+
   /**
    * 创建新的论坛标签
    * @param createForumTagDto 创建标签的数据传输对象
@@ -189,6 +205,10 @@ export class ForumTagService {
       }
     }
 
+    if (updateData.isEnabled === false && (await this.checkTagHasTopics(id))) {
+      throw new BadRequestException('该标签已被使用，无法禁用')
+    }
+
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumTag)
@@ -213,11 +233,7 @@ export class ForumTagService {
       throw new NotFoundException('标签不存在')
     }
 
-    const [countRow] = await this.db
-      .select({ count: sql<number>`count(*)` })
-      .from(this.forumTopicTag)
-      .where(eq(this.forumTopicTag.tagId, id))
-    if (Number(countRow?.count ?? 0) > 0) {
+    if (await this.checkTagHasTopics(id)) {
       throw new BadRequestException('该标签已被使用，无法删除')
     }
 

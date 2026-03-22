@@ -84,7 +84,7 @@ export class AppPageController {
 
   @Post('delete')
   @ApiDoc({
-    summary: '批量删除页面配置',
+    summary: '批量下线页面配置',
     model: Boolean,
   })
   async batchDelete(@Body() body: IdsDto) {

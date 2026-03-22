@@ -239,34 +239,45 @@ export class UserProfileService {
    * @returns 分页的主题列表，包含板块信息和回复数统计
    */
   async getMyTopics(userId: number, query?: { sectionId?: number, pageIndex?: number, pageSize?: number }) {
-    const foo = await this.db.query.forumTopic.findMany({
-      where: {
+    const where = this.drizzle.buildWhere(this.forumTopic, {
+      and: {
         userId,
         sectionId: query?.sectionId,
-      },
-      with: {
-        section: {
-          columns: {
-            id: true,
-            name: true
-          }
-        }
+        deletedAt: { isNull: true },
       },
     })
-    console.log("🚀 ~ UserProfileService ~ getMyTopics ~ foo:", foo)
-
     const page = await this.drizzle.ext.findPagination(this.forumTopic, {
-      where: and(eq(this.forumTopic.userId, userId), isNull(this.forumTopic.deletedAt)),
+      where,
       pageIndex: query?.pageIndex,
       pageSize: query?.pageSize,
       orderBy: { createdAt: 'desc' },
+      pick: [
+        'id',
+        'sectionId',
+        'title',
+        'isPinned',
+        'isFeatured',
+        'isLocked',
+        'viewCount',
+        'replyCount',
+        'likeCount',
+        'favoriteCount',
+        'lastReplyAt',
+        'createdAt',
+        'auditStatus',
+      ],
     })
-    const sectionIds = page.list.map((item) => item.sectionId).filter((id) => !!id)
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const sectionIds = [...new Set(page.list.map((item) => item.sectionId).filter((id) => !!id))]
     const sections = sectionIds.length
       ? await this.db
         .select({ id: this.forumSection.id, name: this.forumSection.name })
         .from(this.forumSection)
-        .where(inArray(this.forumSection.id, sectionIds))
+        .where(and(inArray(this.forumSection.id, sectionIds), isNull(this.forumSection.deletedAt)))
       : []
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const list = page.list.map((item) => {

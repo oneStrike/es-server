@@ -61,7 +61,9 @@ export class SystemController {
   })
   @Public()
   async getAnnouncementPage(@Query() query: QueryAnnouncementDto) {
-    return this.appAnnouncementService.findAnnouncementPage(query)
+    return this.appAnnouncementService.findAnnouncementPage(query, {
+      publishedOnly: true,
+    })
   }
 
   @Get('agreement/list')
@@ -82,6 +84,6 @@ export class SystemController {
   })
   @Public()
   async findOne(@Query() query: IdDto) {
-    return this.agreementService.findOne(query)
+    return this.agreementService.findOne(query, { publishedOnly: true })
   }
 }

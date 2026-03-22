@@ -37,10 +37,6 @@ export const dictionary = pgTable("sys_dictionary", {
    * 更新时间
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
-  /**
-   * 软删除时间
-   */
-  deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
     /**
      * 唯一索引: name
@@ -93,10 +89,6 @@ export const dictionaryItem = pgTable("sys_dictionary_item", {
    * 更新时间
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
-  /**
-   * 软删除时间
-   */
-  deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
     /**
      * 字典编码与项编码唯一约束

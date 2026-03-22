@@ -72,7 +72,7 @@ export class AppAnnouncementController {
 
   @Post('delete')
   @ApiDoc({
-    summary: '删除公告',
+    summary: '下线公告',
     model: Boolean,
   })
   async remove(@Body() body: IdDto) {

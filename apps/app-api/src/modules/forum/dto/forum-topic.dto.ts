@@ -134,6 +134,7 @@ export class MyForumTopicItemDto extends PickType(BaseForumTopicDto, [
     required: false,
     type: MyForumTopicSectionDto,
     validation: false,
+    nullable: false,
   })
-  section?: MyForumTopicSectionDto | null
+  section?: MyForumTopicSectionDto
 }

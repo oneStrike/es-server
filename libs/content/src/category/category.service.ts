@@ -1,6 +1,6 @@
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import {
   CategoryIdInput,
   CreateCategoryInput,
@@ -20,6 +20,14 @@ export class WorkCategoryService {
 
   get workCategory() {
     return this.drizzle.schema.workCategory
+  }
+
+  get workCategoryRelation() {
+    return this.drizzle.schema.workCategoryRelation
+  }
+
+  get work() {
+    return this.drizzle.schema.work
   }
 
   async createCategory(createCategoryInput: CreateCategoryInput) {
@@ -76,6 +84,10 @@ export class WorkCategoryService {
   async updateCategory(updateCategoryDto: UpdateCategoryInput) {
     const { id, ...updateData } = updateCategoryDto
 
+    if (updateData.isEnabled === false && (await this.checkCategoryHasWorks(id))) {
+      throw new BadRequestException('Category has related works and cannot be disabled')
+    }
+
     const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -89,7 +101,7 @@ export class WorkCategoryService {
   }
 
   async updateCategoryStatus(updateStatusDto: UpdateCategoryStatusInput) {
-    if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks())) {
+    if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks(updateStatusDto.id))) {
       throw new BadRequestException('Category has related works and cannot be disabled')
     }
     const result = await this.drizzle.withErrorHandling(() =>
@@ -110,7 +122,7 @@ export class WorkCategoryService {
   }
 
   async deleteCategory(input: CategoryIdInput) {
-    if (await this.checkCategoryHasWorks()) {
+    if (await this.checkCategoryHasWorks(input.id)) {
       throw new BadRequestException('Category has related works and cannot be deleted')
     }
     const result = await this.drizzle.withErrorHandling(() =>
@@ -120,7 +132,19 @@ export class WorkCategoryService {
     return true
   }
 
-  async checkCategoryHasWorks() {
-    return false
+  async checkCategoryHasWorks(categoryId: number) {
+    const rows = await this.db
+      .select({ workId: this.workCategoryRelation.workId })
+      .from(this.workCategoryRelation)
+      .innerJoin(this.work, eq(this.work.id, this.workCategoryRelation.workId))
+      .where(
+        and(
+          eq(this.workCategoryRelation.categoryId, categoryId),
+          isNull(this.work.deletedAt),
+        ),
+      )
+      .limit(1)
+
+    return rows.length > 0
   }
 }

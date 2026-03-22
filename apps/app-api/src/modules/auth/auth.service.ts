@@ -135,19 +135,10 @@ export class AuthService {
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
       )
     }
-    console.log(body)
-
     let user
     if (body.phone) {
       ;[user] = await this.db
-        .select({
-          id: this.appUserTable.id,
-          account: this.appUserTable.account,
-          nickname: this.appUserTable.nickname,
-          password: this.appUserTable.password,
-          phoneNumber: this.appUserTable.phoneNumber,
-          isEnabled: this.appUserTable.isEnabled,
-        })
+        .select()
         .from(this.appUserTable)
         .where(
           and(
@@ -159,14 +150,7 @@ export class AuthService {
     } else {
       const accountInput = body.account!
       ;[user] = await this.db
-        .select({
-          id: this.appUserTable.id,
-          account: this.appUserTable.account,
-          nickname: this.appUserTable.nickname,
-          password: this.appUserTable.password,
-          phoneNumber: this.appUserTable.phoneNumber,
-          isEnabled: this.appUserTable.isEnabled,
-        })
+        .select()
         .from(this.appUserTable)
         .where(
           and(

@@ -1,6 +1,5 @@
 import { DrizzleService } from '@db/core'
 import {
-  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
@@ -93,10 +92,14 @@ export class AgreementService {
    * @throws NotFoundException 当协议不存在时
    */
   async updatePublishStatus(dto: UpdateAgreementPublishStatusInput) {
+    const updateData = dto.isPublished
+      ? { isPublished: true, publishedAt: new Date() }
+      : { isPublished: false }
+
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.agreement)
-        .set({ isPublished: dto.isPublished })
+        .set(updateData)
         .where(eq(this.agreement.id, dto.id)),
     )
 
@@ -105,7 +108,7 @@ export class AgreementService {
   }
 
   /**
-   * 删除协议
+   * 下线协议
    *
    * @param dto 删除参数
    * @returns 是否成功
@@ -113,7 +116,10 @@ export class AgreementService {
    */
   async delete(dto: AgreementIdInput) {
     const result = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.agreement).where(eq(this.agreement.id, dto.id)),
+      this.db
+        .update(this.agreement)
+        .set({ isPublished: false })
+        .where(eq(this.agreement.id, dto.id)),
     )
 
     this.drizzle.assertAffectedRows(result, '协议不存在')
@@ -127,9 +133,17 @@ export class AgreementService {
    * @returns 协议详情
    * @throws NotFoundException 当协议不存在时
    */
-  async findOne(dto: AgreementIdInput) {
+  async findOne(
+    dto: AgreementIdInput,
+    options?: {
+      publishedOnly?: boolean
+    },
+  ) {
     const agreement = await this.db.query.appAgreement.findFirst({
-      where: { id: dto.id },
+      where: {
+        id: dto.id,
+        isPublished: options?.publishedOnly ? true : undefined,
+      },
     })
 
     if (!agreement) {
