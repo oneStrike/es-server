@@ -74,6 +74,22 @@ function parseOrderBy(
   return null
 }
 
+function normalizePageIndex(
+  value: DrizzlePageQueryInput['pageIndex'],
+  fallback: number,
+): number {
+  const rawPageIndex = Number.isFinite(Number(value))
+    ? Math.floor(Number(value))
+    : fallback
+  if (rawPageIndex <= 0) {
+    return 0
+  }
+  if (rawPageIndex === 1) {
+    return 0
+  }
+  return rawPageIndex
+}
+
 function normalizeOrderBy(
   value: DrizzlePageQueryInput['orderBy'],
   validColumns?: Record<string, unknown>,
@@ -157,10 +173,10 @@ export function buildDrizzlePageQuery<TTable extends AnyPgTable = AnyPgTable>(
       ?? DEFAULT_DB_QUERY_CONFIG.pageSize,
     orderBy: options.defaults?.orderBy ?? DEFAULT_DB_QUERY_CONFIG.orderBy,
   }
-  const rawPageIndex = Number.isFinite(Number(input.pageIndex))
-    ? Math.floor(Number(input.pageIndex))
-    : resolvedDefaults.pageIndex
-  const pageIndex = Math.max(0, rawPageIndex)
+  const pageIndex = normalizePageIndex(
+    input.pageIndex,
+    resolvedDefaults.pageIndex,
+  )
   const rawPageSize = Number.isFinite(Number(input.pageSize))
     ? Math.floor(Number(input.pageSize))
     : resolvedDefaults.pageSize
