@@ -1,6 +1,7 @@
 import type {
   CreateForumSectionGroupInput,
   QueryForumSectionGroupInput,
+  QueryPublicForumSectionGroupInput,
   SwapForumSectionGroupSortInput,
   UpdateForumSectionGroupEnabledInput,
   UpdateForumSectionGroupInput,
@@ -12,10 +13,14 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { and, asc, eq, ilike, inArray, isNull } from 'drizzle-orm'
+import { ForumPermissionService } from '../permission'
 
 @Injectable()
 export class ForumSectionGroupService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly forumPermissionService: ForumPermissionService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -63,6 +68,81 @@ export class ForumSectionGroupService {
       ...dto,
       orderBy: dto.orderBy ? undefined : { sortOrder: 'desc' as const },
     })
+  }
+
+  /**
+   * 查询应用侧公开板块分组列表。
+   * 仅返回启用中的分组，并挂载当前用户可访问的启用板块。
+   */
+  async getPublicSectionGroupList(
+    query: QueryPublicForumSectionGroupInput = {},
+  ) {
+    const accessibleSectionIds =
+      await this.forumPermissionService.getAccessibleSectionIds(query.userId)
+
+    if (accessibleSectionIds.length === 0) {
+      return []
+    }
+
+    const groups = await this.db
+      .select({
+        id: this.forumSectionGroup.id,
+        name: this.forumSectionGroup.name,
+        description: this.forumSectionGroup.description,
+        sortOrder: this.forumSectionGroup.sortOrder,
+        isEnabled: this.forumSectionGroup.isEnabled,
+      })
+      .from(this.forumSectionGroup)
+      .where(
+        and(
+          eq(this.forumSectionGroup.isEnabled, true),
+          isNull(this.forumSectionGroup.deletedAt),
+        ),
+      )
+      .orderBy(
+        asc(this.forumSectionGroup.sortOrder),
+        asc(this.forumSectionGroup.id),
+      )
+
+    const groupIds = groups.map((group) => group.id)
+    if (groupIds.length === 0) {
+      return []
+    }
+
+    const sections = await this.db
+      .select({
+        id: this.forumSection.id,
+        groupId: this.forumSection.groupId,
+        userLevelRuleId: this.forumSection.userLevelRuleId,
+        name: this.forumSection.name,
+        description: this.forumSection.description,
+        icon: this.forumSection.icon,
+        sortOrder: this.forumSection.sortOrder,
+        isEnabled: this.forumSection.isEnabled,
+        topicReviewPolicy: this.forumSection.topicReviewPolicy,
+        topicCount: this.forumSection.topicCount,
+        replyCount: this.forumSection.replyCount,
+        lastPostAt: this.forumSection.lastPostAt,
+      })
+      .from(this.forumSection)
+      .where(
+        and(
+          inArray(this.forumSection.groupId, groupIds),
+          eq(this.forumSection.isEnabled, true),
+          isNull(this.forumSection.deletedAt),
+          accessibleSectionIds.length === 1
+            ? eq(this.forumSection.id, accessibleSectionIds[0])
+            : inArray(this.forumSection.id, accessibleSectionIds),
+        ),
+      )
+      .orderBy(asc(this.forumSection.sortOrder), asc(this.forumSection.id))
+
+    return groups
+      .map((group) => ({
+        ...group,
+        sections: sections.filter((section) => section.groupId === group.id),
+      }))
+      .filter((group) => group.sections.length > 0)
   }
 
   async updateSectionGroup(

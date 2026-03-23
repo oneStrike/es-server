@@ -15,11 +15,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { TargetCommentItemDto } from '../../comment/dto/comment.dto'
 
 class AuthorInfoDto extends PickType(BaseAuthorDto, [
@@ -36,36 +32,6 @@ class CategoryInfoDto extends PickType(BaseCategoryDto, [
 ]) {}
 
 class TagInfoDto extends PickType(BaseTagDto, ['id', 'name', 'icon']) {}
-
-export class WorkAuthorRelationDto {
-  @NestedProperty({
-    description: '作者信息',
-    required: true,
-    type: AuthorInfoDto,
-    validation: false,
-  })
-  author!: AuthorInfoDto
-}
-
-export class WorkCategoryRelationDto {
-  @NestedProperty({
-    description: '分类信息',
-    required: true,
-    type: CategoryInfoDto,
-    validation: false,
-  })
-  category!: CategoryInfoDto
-}
-
-export class WorkTagRelationDto {
-  @NestedProperty({
-    description: '标签信息',
-    required: true,
-    type: TagInfoDto,
-    validation: false,
-  })
-  tag!: TagInfoDto
-}
 
 export class PageWorkDto extends PickType(BaseWorkDto, [
   'id',
@@ -88,30 +54,30 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
 ]) {
   @ArrayProperty({
     description: '作者列表',
-    itemClass: WorkAuthorRelationDto,
+    itemClass: AuthorInfoDto,
     itemType: 'object',
     required: true,
     validation: false,
   })
-  authors!: WorkAuthorRelationDto[]
+  authorList!: AuthorInfoDto[]
 
   @ArrayProperty({
     description: '分类列表',
-    itemClass: WorkCategoryRelationDto,
+    itemClass: CategoryInfoDto,
     itemType: 'object',
     required: true,
     validation: false,
   })
-  categories!: WorkCategoryRelationDto[]
+  categoryList!: CategoryInfoDto[]
 
   @ArrayProperty({
     description: '标签列表',
-    itemClass: WorkTagRelationDto,
+    itemClass: TagInfoDto,
     itemType: 'object',
     required: true,
     validation: false,
   })
-  tags!: WorkTagRelationDto[]
+  tagList!: TagInfoDto[]
 }
 
 export class QueryWorkDto extends IntersectionType(

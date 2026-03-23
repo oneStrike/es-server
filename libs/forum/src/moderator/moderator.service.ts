@@ -509,7 +509,7 @@ export class ForumModeratorService {
                   ...moderatorData,
                 })
                 .returning({ id: this.forumModerator.id })
-            )[0]!.id
+            )[0].id
 
         if (existing?.id) {
           const result = await tx

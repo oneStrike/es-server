@@ -16,7 +16,7 @@ import {
 export class ReadingHistoryController {
   constructor(private readonly readingStateService: ReadingStateService) {}
 
-  @Get('page')
+  @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的阅读记录',
     model: ReadingHistoryWorkDto,

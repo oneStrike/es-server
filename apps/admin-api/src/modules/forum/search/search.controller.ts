@@ -6,7 +6,7 @@ import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ForumSearchDto, ForumSearchResultDto } from './dto/search.dto'
 
-@ApiTags('论坛管理/论坛搜索')
+@ApiTags('论坛管理/搜索')
 @Controller('admin/forum/search')
 export class ForumSearchController {
   constructor(private readonly forumSearchService: ForumSearchService) {}

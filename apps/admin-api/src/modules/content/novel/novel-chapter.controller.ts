@@ -12,8 +12,8 @@ import {
   UpdateWorkChapterDto,
 } from './dto/novel-chapter.dto'
 
-@ApiTags('内容管理/小说章节')
-@Controller('admin/content/novel-chapter')
+@ApiTags('内容管理/小说管理/章节管理')
+@Controller('admin/content/novel/chapter')
 export class NovelChapterController {
   constructor(private readonly workChapterService: WorkChapterService) {}
 

@@ -30,7 +30,7 @@ export class ComicThirdPartyController {
     return COMIC_THIRD_PARTY_PLATFORMS
   }
 
-  @Get('search')
+  @Get('search/page')
   @ApiPageDoc({
     summary: '搜索第三方平台漫画',
     model: SearchComicItemDto,

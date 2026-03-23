@@ -12,8 +12,8 @@ import {
   UploadContentDto,
 } from './dto/chapter-content.dto'
 
-@ApiTags('内容管理/漫画章节内容')
-@Controller('admin/content/comic-chapter-content')
+@ApiTags('内容管理/漫画管理/章节内容')
+@Controller('admin/content/comic/chapter-content')
 export class ChapterContentController {
   constructor(private readonly comicContentService: ComicContentService) {}
 

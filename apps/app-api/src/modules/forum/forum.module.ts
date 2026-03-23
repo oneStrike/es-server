@@ -3,14 +3,18 @@ import { CommentModule as CommentCoreModule } from '@libs/interaction'
 import { Module } from '@nestjs/common'
 import { ForumModeratorApplicationController } from './forum-moderator-application.controller'
 import { ForumSearchController } from './forum-search.controller'
-import { ForumController } from './forum.controller'
+import { ForumSectionGroupController } from './forum-section-group.controller'
+import { ForumSectionController } from './forum-section.controller'
+import { ForumTopicController } from './forum-topic.controller'
 
 @Module({
   imports: [ForumCoreModule, CommentCoreModule],
   controllers: [
-    ForumController,
+    ForumTopicController,
     ForumSearchController,
     ForumModeratorApplicationController,
+    ForumSectionGroupController,
+    ForumSectionController,
   ],
 })
 export class ForumModule {}

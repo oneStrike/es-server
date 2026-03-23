@@ -31,6 +31,14 @@ export interface QueryForumSectionGroupInput {
 }
 
 /**
+ * 应用侧查询公开板块分组列表的条件。
+ * 仅依赖当前用户上下文过滤可访问板块。
+ */
+export interface QueryPublicForumSectionGroupInput {
+  userId?: number
+}
+
+/**
  * 更新板块分组启用状态的领域输入。
  */
 export interface UpdateForumSectionGroupEnabledInput {

@@ -1,14 +1,20 @@
 import type {
   CreateForumSectionInput,
   QueryForumSectionInput,
+  QueryPublicForumSectionInput,
   SwapForumSectionSortInput,
   UpdateForumSectionEnabledInput,
   UpdateForumSectionInput,
 } from './section.type'
 import { DrizzleService } from '@db/core'
 
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { and, eq, ilike, isNull } from 'drizzle-orm'
+import { ForumPermissionService } from '../permission'
 
 /**
  * 论坛板块服务类
@@ -16,7 +22,10 @@ import { and, eq, ilike, isNull } from 'drizzle-orm'
  */
 @Injectable()
 export class ForumSectionService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly forumPermissionService: ForumPermissionService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -32,6 +41,174 @@ export class ForumSectionService {
 
   get forumLevelRule() {
     return this.drizzle.schema.userLevelRule
+  }
+
+  /**
+   * 判断公开板块挂载的分组是否仍可对外展示。
+   * 未分组板块允许直接展示；有分组时要求分组启用且未删除。
+   */
+  private isAvailablePublicGroup(
+    group?:
+      | {
+          isEnabled: boolean
+          deletedAt: Date | null
+        }
+        | null,
+  ) {
+    return Boolean(group && group.isEnabled && !group.deletedAt)
+  }
+
+  /**
+   * 查询当前用户可访问的公开板块列表。
+   * - 仅返回启用且未删除的板块
+   * - 有分组的板块要求分组也处于启用状态
+   * - 默认按分组排序、板块排序输出，便于应用侧直接渲染
+   */
+  async getPublicSectionList(query: QueryPublicForumSectionInput = {}) {
+    const accessibleSectionIds =
+      await this.forumPermissionService.getAccessibleSectionIds(query.userId)
+
+    if (accessibleSectionIds.length === 0) {
+      return []
+    }
+
+    const sections = await this.db.query.forumSection.findMany({
+      where: {
+        id: {
+          in: accessibleSectionIds,
+        },
+        isEnabled: true,
+        deletedAt: {
+          isNull: true,
+        },
+        groupId: query.groupId,
+      },
+      columns: {
+        id: true,
+        groupId: true,
+        userLevelRuleId: true,
+        name: true,
+        description: true,
+        icon: true,
+        sortOrder: true,
+        isEnabled: true,
+        topicReviewPolicy: true,
+        topicCount: true,
+        replyCount: true,
+        lastPostAt: true,
+      },
+      with: {
+        group: {
+          columns: {
+            id: true,
+            name: true,
+            description: true,
+            sortOrder: true,
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
+      orderBy: (section, { asc }) => [asc(section.sortOrder), asc(section.id)],
+    })
+
+    return sections
+      .filter(
+        (section) =>
+          !section.groupId || this.isAvailablePublicGroup(section.group),
+      )
+      .sort((left, right) => {
+        const leftGroupSortOrder =
+          left.group?.sortOrder ?? Number.MAX_SAFE_INTEGER
+        const rightGroupSortOrder =
+          right.group?.sortOrder ?? Number.MAX_SAFE_INTEGER
+
+        return (
+          leftGroupSortOrder - rightGroupSortOrder ||
+          left.sortOrder - right.sortOrder ||
+          left.id - right.id
+        )
+      })
+      .map(({ group, ...section }) => section)
+  }
+
+  /**
+   * 查询公开板块详情。
+   * 详情访问复用板块权限校验，避免绕过等级限制读取板块信息。
+   */
+  async getPublicSectionDetail(id: number, userId?: number) {
+    await this.forumPermissionService.ensureUserCanAccessSection(id, userId, {
+      requireEnabled: true,
+      notFoundMessage: '板块不存在',
+    })
+
+    const section = await this.db.query.forumSection.findFirst({
+      where: {
+        id,
+        isEnabled: true,
+        deletedAt: {
+          isNull: true,
+        },
+      },
+      columns: {
+        id: true,
+        groupId: true,
+        userLevelRuleId: true,
+        name: true,
+        description: true,
+        icon: true,
+        sortOrder: true,
+        isEnabled: true,
+        topicReviewPolicy: true,
+        topicCount: true,
+        replyCount: true,
+        lastPostAt: true,
+      },
+      with: {
+        group: {
+          columns: {
+            id: true,
+            name: true,
+            description: true,
+            sortOrder: true,
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+      },
+    })
+
+    if (!section) {
+      throw new NotFoundException('板块不存在')
+    }
+
+    if (section.groupId && !this.isAvailablePublicGroup(section.group)) {
+      throw new NotFoundException('板块不存在')
+    }
+
+    const { group, ...data } = section
+    let publicGroup:
+      | {
+          id: number
+          name: string
+          description: string | null
+          sortOrder: number
+        }
+        | undefined
+
+    if (group && this.isAvailablePublicGroup(group)) {
+      publicGroup = {
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        sortOrder: group.sortOrder,
+      }
+    }
+
+    return {
+      ...data,
+      group: publicGroup,
+    }
   }
 
   /**

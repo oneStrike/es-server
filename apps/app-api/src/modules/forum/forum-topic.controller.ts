@@ -21,9 +21,9 @@ import {
   UpdateAppForumTopicDto,
 } from './dto/forum-topic.dto'
 
-@ApiTags('论坛主题')
+@ApiTags('论坛/主题')
 @Controller('app/forum/topic')
-export class ForumController {
+export class ForumTopicController {
   constructor(
     private readonly forumTopicService: ForumTopicService,
     private readonly userProfileService: UserProfileService,
@@ -77,7 +77,7 @@ export class ForumController {
     })
   }
 
-  @Get('my')
+  @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我发布的主题',
     model: MyForumTopicItemDto,

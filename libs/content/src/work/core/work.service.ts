@@ -103,7 +103,9 @@ export class WorkService {
    */
   async verifyWorkAndUserExist(id: number, userId: number) {
     const [work, user] = await Promise.all([
-      this.db.query.work.findFirst({ where: { id, deletedAt: { isNull: true } } }),
+      this.db.query.work.findFirst({
+        where: { id, deletedAt: { isNull: true } },
+      }),
       this.db.query.appUser.findFirst({
         where: { id: userId, deletedAt: { isNull: true } },
       }),
@@ -216,59 +218,61 @@ export class WorkService {
     await this.validateWorkRelations(authorIds, categoryIds, tagIds)
 
     // 使用事务确保作品创建和作者作品数更新的一致性
-    return this.drizzle.withErrorHandling(async () => this.db.transaction(async (tx) => {
-      const [createdSection] = await tx
-        .insert(this.forumSection)
-        .values({
-          name: workData.name,
-          description: workData.description.slice(0, 500),
-          isEnabled: workData.isPublished ?? true,
-        })
-        .returning({ id: this.forumSection.id })
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const [createdSection] = await tx
+          .insert(this.forumSection)
+          .values({
+            name: workData.name,
+            description: workData.description.slice(0, 500),
+            isEnabled: workData.isPublished ?? true,
+          })
+          .returning({ id: this.forumSection.id })
 
-      const [createdWork] = await tx
-        .insert(this.work)
-        .values({
-          ...normalizedWorkData,
-          forumSectionId: createdSection.id,
-        })
-        .returning({ id: this.work.id })
+        const [createdWork] = await tx
+          .insert(this.work)
+          .values({
+            ...normalizedWorkData,
+            forumSectionId: createdSection.id,
+          })
+          .returning({ id: this.work.id })
 
-      if (authorIds.length) {
-        await tx.insert(this.workAuthorRelation).values(
-          authorIds.map((authorId, index) => ({
-            workId: createdWork.id,
-            authorId,
-            sortOrder: index,
-          })),
-        )
-        await tx
-          .update(this.workAuthor)
-          .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
-          .where(inArray(this.workAuthor.id, authorIds))
-      }
+        if (authorIds.length) {
+          await tx.insert(this.workAuthorRelation).values(
+            authorIds.map((authorId, index) => ({
+              workId: createdWork.id,
+              authorId,
+              sortOrder: index,
+            })),
+          )
+          await tx
+            .update(this.workAuthor)
+            .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
+            .where(inArray(this.workAuthor.id, authorIds))
+        }
 
-      if (categoryIds.length) {
-        await tx.insert(this.workCategoryRelation).values(
-          categoryIds.map((categoryId, index) => ({
-            workId: createdWork.id,
-            categoryId,
-            sortOrder: categoryIds.length - index,
-          })),
-        )
-      }
+        if (categoryIds.length) {
+          await tx.insert(this.workCategoryRelation).values(
+            categoryIds.map((categoryId, index) => ({
+              workId: createdWork.id,
+              categoryId,
+              sortOrder: categoryIds.length - index,
+            })),
+          )
+        }
 
-      if (tagIds.length) {
-        await tx.insert(this.workTagRelation).values(
-          tagIds.map((tagId) => ({
-            workId: createdWork.id,
-            tagId,
-          })),
-        )
-      }
+        if (tagIds.length) {
+          await tx.insert(this.workTagRelation).values(
+            tagIds.map((tagId) => ({
+              workId: createdWork.id,
+              tagId,
+            })),
+          )
+        }
 
-      return true
-    }))
+        return true
+      }),
+    )
   }
 
   /**
@@ -345,113 +349,116 @@ export class WorkService {
      * 事务处理：使用 $transaction 确保所有更新操作的原子性
      * 如果其中任何一步失败，整个事务会回滚，保证数据一致性
      */
-    return this.drizzle.withErrorHandling(async () => this.db.transaction(async (tx) => {
-      const result = await tx
-        .update(this.work)
-        .set(normalizedUpdateData)
-        .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
-      this.drizzle.assertAffectedRows(result, '作品不存在')
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const result = await tx
+          .update(this.work)
+          .set(normalizedUpdateData)
+          .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+        this.drizzle.assertAffectedRows(result, '作品不存在')
 
-      if (
-        existingWork.forumSectionId &&
-        (
-          shouldSyncSectionName ||
-          shouldSyncSectionDescription ||
-          shouldSyncSectionEnabled
-        )
-      ) {
-        const sectionUpdateData: Record<string, unknown> = {}
-        if (shouldSyncSectionName) {
-          sectionUpdateData.name = updateData.name
-        }
-        if (shouldSyncSectionDescription) {
-          sectionUpdateData.description = updateData.description?.slice(0, 500)
-        }
-        if (shouldSyncSectionEnabled) {
-          sectionUpdateData.isEnabled = updateData.isPublished
-        }
-        await tx
-          .update(this.forumSection)
-          .set(sectionUpdateData)
-          .where(eq(this.forumSection.id, existingWork.forumSectionId))
-      }
-
-      // 更新作者关联（先删除后重建）
-      if (authorIds !== undefined) {
-        await tx
-          .delete(this.workAuthorRelation)
-          .where(eq(this.workAuthorRelation.workId, id))
-
-        if (authorIds.length > 0) {
-          await tx.insert(this.workAuthorRelation).values(
-            authorIds.map((authorId, index) => ({
-              workId: id,
-              authorId,
-              sortOrder: index,
-            })),
-          )
-        }
-
-        // 计算新增和移除的作者，更新作品数量
-        const addedAuthorIds = authorIds.filter(
-          (aid) => !originalAuthorIds.includes(aid),
-        )
-        const removedAuthorIds = originalAuthorIds.filter(
-          (aid) => !authorIds.includes(aid),
-        )
-
-        // 新增作者的作品数 +1
-        if (addedAuthorIds.length > 0) {
+        if (
+          existingWork.forumSectionId &&
+          (shouldSyncSectionName ||
+            shouldSyncSectionDescription ||
+            shouldSyncSectionEnabled)
+        ) {
+          const sectionUpdateData: Record<string, unknown> = {}
+          if (shouldSyncSectionName) {
+            sectionUpdateData.name = updateData.name
+          }
+          if (shouldSyncSectionDescription) {
+            sectionUpdateData.description = updateData.description?.slice(
+              0,
+              500,
+            )
+          }
+          if (shouldSyncSectionEnabled) {
+            sectionUpdateData.isEnabled = updateData.isPublished
+          }
           await tx
-            .update(this.workAuthor)
-            .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
-            .where(inArray(this.workAuthor.id, addedAuthorIds))
+            .update(this.forumSection)
+            .set(sectionUpdateData)
+            .where(eq(this.forumSection.id, existingWork.forumSectionId))
         }
 
-        // 移除作者的作品数 -1
-        if (removedAuthorIds.length > 0) {
+        // 更新作者关联（先删除后重建）
+        if (authorIds !== undefined) {
           await tx
-            .update(this.workAuthor)
-            .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
-            .where(inArray(this.workAuthor.id, removedAuthorIds))
-        }
-      }
+            .delete(this.workAuthorRelation)
+            .where(eq(this.workAuthorRelation.workId, id))
 
-      // 更新分类关联（先删除后重建）
-      if (categoryIds !== undefined) {
-        await tx
-          .delete(this.workCategoryRelation)
-          .where(eq(this.workCategoryRelation.workId, id))
+          if (authorIds.length > 0) {
+            await tx.insert(this.workAuthorRelation).values(
+              authorIds.map((authorId, index) => ({
+                workId: id,
+                authorId,
+                sortOrder: index,
+              })),
+            )
+          }
 
-        if (categoryIds.length > 0) {
-          await tx.insert(this.workCategoryRelation).values(
-            categoryIds.map((categoryId, index) => ({
-              workId: id,
-              categoryId,
-              sortOrder: categoryIds.length - index,
-            })),
+          // 计算新增和移除的作者，更新作品数量
+          const addedAuthorIds = authorIds.filter(
+            (aid) => !originalAuthorIds.includes(aid),
           )
-        }
-      }
-
-      // 更新标签关联（先删除后重建）
-      if (tagIds !== undefined) {
-        await tx
-          .delete(this.workTagRelation)
-          .where(eq(this.workTagRelation.workId, id))
-
-        if (tagIds.length > 0) {
-          await tx.insert(this.workTagRelation).values(
-            tagIds.map((tagId) => ({
-              workId: id,
-              tagId,
-            })),
+          const removedAuthorIds = originalAuthorIds.filter(
+            (aid) => !authorIds.includes(aid),
           )
-        }
-      }
 
-      return true
-    }))
+          // 新增作者的作品数 +1
+          if (addedAuthorIds.length > 0) {
+            await tx
+              .update(this.workAuthor)
+              .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
+              .where(inArray(this.workAuthor.id, addedAuthorIds))
+          }
+
+          // 移除作者的作品数 -1
+          if (removedAuthorIds.length > 0) {
+            await tx
+              .update(this.workAuthor)
+              .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
+              .where(inArray(this.workAuthor.id, removedAuthorIds))
+          }
+        }
+
+        // 更新分类关联（先删除后重建）
+        if (categoryIds !== undefined) {
+          await tx
+            .delete(this.workCategoryRelation)
+            .where(eq(this.workCategoryRelation.workId, id))
+
+          if (categoryIds.length > 0) {
+            await tx.insert(this.workCategoryRelation).values(
+              categoryIds.map((categoryId, index) => ({
+                workId: id,
+                categoryId,
+                sortOrder: categoryIds.length - index,
+              })),
+            )
+          }
+        }
+
+        // 更新标签关联（先删除后重建）
+        if (tagIds !== undefined) {
+          await tx
+            .delete(this.workTagRelation)
+            .where(eq(this.workTagRelation.workId, id))
+
+          if (tagIds.length > 0) {
+            await tx.insert(this.workTagRelation).values(
+              tagIds.map((tagId) => ({
+                workId: id,
+                tagId,
+              })),
+            )
+          }
+        }
+
+        return true
+      }),
+    )
   }
 
   /**
@@ -471,22 +478,24 @@ export class WorkService {
     if (!work) {
       throw new BadRequestException('作品不存在')
     }
-    return this.drizzle.withErrorHandling(async () => this.db.transaction(async (tx) => {
-      const result = await tx
-        .update(this.work)
-        .set({ isPublished: body.isPublished })
-        .where(and(eq(this.work.id, body.id), isNull(this.work.deletedAt)))
-      this.drizzle.assertAffectedRows(result, '作品不存在')
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const result = await tx
+          .update(this.work)
+          .set({ isPublished: body.isPublished })
+          .where(and(eq(this.work.id, body.id), isNull(this.work.deletedAt)))
+        this.drizzle.assertAffectedRows(result, '作品不存在')
 
-      if (work.forumSectionId) {
-        await tx
-          .update(this.forumSection)
-          .set({ isEnabled: body.isPublished })
-          .where(eq(this.forumSection.id, work.forumSectionId))
-      }
+        if (work.forumSectionId) {
+          await tx
+            .update(this.forumSection)
+            .set({ isEnabled: body.isPublished })
+            .where(eq(this.forumSection.id, work.forumSectionId))
+        }
 
-      return true
-    }))
+        return true
+      }),
+    )
   }
 
   async updateWorkFlags(
@@ -502,7 +511,7 @@ export class WorkService {
       this.db
         .update(this.work)
         .set(data)
-        .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+        .where(and(eq(this.work.id, id), isNull(this.work.deletedAt))),
     )
     this.drizzle.assertAffectedRows(result, '作品不存在')
     return true
@@ -550,7 +559,11 @@ export class WorkService {
     const [authors, categories, tags] = await Promise.all([
       this.db.query.workAuthorRelation.findMany({
         where: { workId: { in: workIds } },
-        with: { author: { columns: { id: true, name: true, type: true, avatar: true } } },
+        with: {
+          author: {
+            columns: { id: true, name: true, type: true, avatar: true },
+          },
+        },
       }),
       this.db.query.workCategoryRelation.findMany({
         where: { workId: { in: workIds } },
@@ -611,16 +624,32 @@ export class WorkService {
     const conditions = [
       isNull(this.work.deletedAt),
       otherDto.type ? eq(this.work.type, otherDto.type) : undefined,
-      isNotNil(otherDto.isPublished) ? eq(this.work.isPublished, otherDto.isPublished) : undefined,
-      isNotNil(otherDto.serialStatus) ? eq(this.work.serialStatus, otherDto.serialStatus) : undefined,
-      normalizedLanguage ? eq(this.work.language, normalizedLanguage) : undefined,
+      isNotNil(otherDto.isPublished)
+        ? eq(this.work.isPublished, otherDto.isPublished)
+        : undefined,
+      isNotNil(otherDto.serialStatus)
+        ? eq(this.work.serialStatus, otherDto.serialStatus)
+        : undefined,
+      normalizedLanguage
+        ? eq(this.work.language, normalizedLanguage)
+        : undefined,
       normalizedRegion ? eq(this.work.region, normalizedRegion) : undefined,
-      normalizedAgeRating ? eq(this.work.ageRating, normalizedAgeRating) : undefined,
-      isNotNil(otherDto.isRecommended) ? eq(this.work.isRecommended, otherDto.isRecommended) : undefined,
-      isNotNil(otherDto.isHot) ? eq(this.work.isHot, otherDto.isHot) : undefined,
-      isNotNil(otherDto.isNew) ? eq(this.work.isNew, otherDto.isNew) : undefined,
+      normalizedAgeRating
+        ? eq(this.work.ageRating, normalizedAgeRating)
+        : undefined,
+      isNotNil(otherDto.isRecommended)
+        ? eq(this.work.isRecommended, otherDto.isRecommended)
+        : undefined,
+      isNotNil(otherDto.isHot)
+        ? eq(this.work.isHot, otherDto.isHot)
+        : undefined,
+      isNotNil(otherDto.isNew)
+        ? eq(this.work.isNew, otherDto.isNew)
+        : undefined,
       normalizedName ? ilike(this.work.name, `%${normalizedName}%`) : undefined,
-      normalizedPublisher ? ilike(this.work.publisher, `%${normalizedPublisher}%`) : undefined,
+      normalizedPublisher
+        ? ilike(this.work.publisher, `%${normalizedPublisher}%`)
+        : undefined,
     ].filter(Boolean)
 
     if (normalizedAuthor) {
@@ -752,6 +781,33 @@ export class WorkService {
     } = context
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
+      columns: {
+        deletedAt: false,
+      },
+      with: {
+        authorList: {
+          columns: {
+            id: true,
+            name: true,
+            type: true,
+            avatar: true,
+          },
+        },
+        categoryList: {
+          columns: {
+            id: true,
+            name: true,
+            icon: true,
+          },
+        },
+        tagList: {
+          columns: {
+            id: true,
+            name: true,
+            icon: true,
+          },
+        },
+      },
     })
 
     if (!work) {
@@ -762,18 +818,10 @@ export class WorkService {
       throw new BadRequestException('作品未发布')
     }
 
-    const relationPage = await this.attachWorkRelations({
-      list: [work] as any,
-      total: 1,
-      pageIndex: 0,
-      pageSize: 1,
-    })
-    const workWithRelations = relationPage.list[0]
-
     // 为匿名用户保持稳定的响应结构，使应用可以重用相同的DTO而无需条件解析
     if (!userId) {
       return {
-        ...workWithRelations,
+        ...work,
         liked: false,
         favorited: false,
         viewed: false,
@@ -827,9 +875,9 @@ export class WorkService {
     })
 
     return {
-      ...workWithRelations,
+      ...work,
       // 立即反映刚记录的浏览，使当前响应与持久化的计数器更新保持一致
-      viewCount: workWithRelations.viewCount + 1,
+      viewCount: work.viewCount + 1,
       liked,
       favorited,
       viewed: true,
@@ -885,33 +933,35 @@ export class WorkService {
     }
 
     // 使用事务确保作品删除和作者作品数更新的一致性
-    return this.drizzle.withErrorHandling(async () => this.db.transaction(async (tx) => {
-      const result = await tx
-        .update(this.work)
-        .set({ deletedAt: new Date() })
-        .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
-      this.drizzle.assertAffectedRows(result, '作品不存在')
+    return this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const result = await tx
+          .update(this.work)
+          .set({ deletedAt: new Date() })
+          .where(and(eq(this.work.id, id), isNull(this.work.deletedAt)))
+        this.drizzle.assertAffectedRows(result, '作品不存在')
 
-      if (work.forumSectionId) {
-        await tx
-          .update(this.forumSection)
-          .set({
-            isEnabled: false,
-            deletedAt: new Date(),
-          })
-          .where(eq(this.forumSection.id, work.forumSectionId))
-      }
+        if (work.forumSectionId) {
+          await tx
+            .update(this.forumSection)
+            .set({
+              isEnabled: false,
+              deletedAt: new Date(),
+            })
+            .where(eq(this.forumSection.id, work.forumSectionId))
+        }
 
-      // 更新关联作者的作品数量（-1）
-      const authorIds = work.authors.map((rel) => rel.authorId)
-      if (authorIds.length > 0) {
-        await tx
-          .update(this.workAuthor)
-          .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
-          .where(inArray(this.workAuthor.id, authorIds))
-      }
+        // 更新关联作者的作品数量（-1）
+        const authorIds = work.authors.map((rel) => rel.authorId)
+        if (authorIds.length > 0) {
+          await tx
+            .update(this.workAuthor)
+            .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
+            .where(inArray(this.workAuthor.id, authorIds))
+        }
 
-      return true
-    }))
+        return true
+      }),
+    )
   }
 }

@@ -9,8 +9,8 @@ import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UploadContentDto } from './dto/novel-content.dto'
 
-@ApiTags('内容管理/小说章节内容')
-@Controller('admin/content/novel-chapter-content')
+@ApiTags('内容管理/小说管理/章节内容')
+@Controller('admin/content/novel/chapter-content')
 export class NovelContentController {
   constructor(private readonly novelContentService: NovelContentService) {}
 

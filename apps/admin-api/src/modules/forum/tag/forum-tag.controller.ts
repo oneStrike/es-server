@@ -38,7 +38,7 @@ export class ForumTagController {
     return this.forumTagService.getTagById(query.id)
   }
 
-  @Get('popular')
+  @Get('popular/list')
   @ApiDoc({
     summary: '获取热门标签',
     model: BaseForumTagDto,
@@ -48,7 +48,7 @@ export class ForumTagController {
     return this.forumTagService.getPopularTags(limit)
   }
 
-  @Get('enabled')
+  @Get('enabled/list')
   @ApiDoc({
     summary: '获取启用标签',
     model: BaseForumTagDto,
@@ -58,7 +58,7 @@ export class ForumTagController {
     return this.forumTagService.getEnabledTags()
   }
 
-  @Get('topic-tags')
+  @Get('topic-tag/list')
   @ApiDoc({
     summary: '获取主题的所有标签',
     model: BaseForumTagDto,

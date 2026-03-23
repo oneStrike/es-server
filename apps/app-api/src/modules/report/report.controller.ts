@@ -14,7 +14,7 @@ import {
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
-  @Post()
+  @Post('create')
   @ApiDoc({
     summary: '创建举报',
     model: IdDto,

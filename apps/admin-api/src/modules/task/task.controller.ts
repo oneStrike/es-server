@@ -22,7 +22,7 @@ import {
   UpdateTaskStatusDto,
 } from './dto/task.dto'
 
-@ApiTags('任务管理')
+@ApiTags('任务管理/任务配置')
 @Controller('admin/task')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}

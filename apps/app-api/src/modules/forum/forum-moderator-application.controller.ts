@@ -11,14 +11,14 @@ import {
   QueryForumModeratorApplicationDto,
 } from './dto/forum-moderator-application.dto'
 
-@ApiTags('版主申请')
+@ApiTags('论坛/版主申请')
 @Controller('app/forum/moderator-application')
 export class ForumModeratorApplicationController {
   constructor(
     private readonly forumModeratorApplicationService: ForumModeratorApplicationService,
   ) {}
 
-  @Get('page')
+  @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的版主申请',
     model: ForumModeratorApplicationDto,

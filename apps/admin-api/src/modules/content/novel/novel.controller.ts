@@ -17,7 +17,7 @@ import {
   UpdateWorkStatusDto,
 } from './dto/novel.dto'
 
-@ApiTags('内容管理/小说管理')
+@ApiTags('内容管理/小说管理/基础信息')
 @Controller('admin/content/novel')
 export class NovelController {
   constructor(private readonly workService: WorkService) {}

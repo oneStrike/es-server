@@ -13,7 +13,7 @@ import {
 } from './dto/forum-section-group.dto'
 
 @Controller('admin/forum/section-groups')
-@ApiTags('论坛管理/板块组管理')
+@ApiTags('论坛管理/板块管理')
 export class ForumSectionGroupController {
   constructor(
     private readonly forumSectionGroupService: ForumSectionGroupService,
