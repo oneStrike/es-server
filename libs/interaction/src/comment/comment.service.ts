@@ -13,9 +13,8 @@ import { DrizzleService } from '@db/core'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
-  MessageOutboxService,
-} from '@libs/message'
-
+} from '@libs/message/notification'
+import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   SensitiveWordDetectService,

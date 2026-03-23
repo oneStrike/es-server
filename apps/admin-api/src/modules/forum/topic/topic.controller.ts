@@ -1,4 +1,7 @@
-import { BaseForumTopicDto, ForumTopicService } from '@libs/forum'
+import {
+  BaseForumTopicDto,
+  ForumTopicService,
+} from '@libs/forum/topic'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

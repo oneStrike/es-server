@@ -1,11 +1,9 @@
-import {
-  UserPermissionModule,
-  UserPointModule
- } from '@libs/growth'
-import { InteractionModule, ReportModule,} from '@libs/interaction'
+import { UserPermissionModule } from '@libs/growth/permission'
+import { UserPointModule } from '@libs/growth/point'
+import { InteractionModule } from '@libs/interaction/interaction'
+import { ReportModule } from '@libs/interaction/report'
 import { UploadModule } from '@libs/platform/modules'
 import { SystemConfigModule } from '@libs/system-config'
-
 import { Module } from '@nestjs/common'
 import { ContentPermissionModule } from '../permission'
 import { WorkComicChapterBrowseLogResolver } from './chapter/resolver/work-comic-chapter-browse-log.resolver'

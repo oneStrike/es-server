@@ -6,7 +6,7 @@ import {
   DownloadService,
   DownloadTargetTypeEnum,
   IDownloadTargetResolver,
-} from '@libs/interaction'
+} from '@libs/interaction/download'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 

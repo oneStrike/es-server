@@ -1,7 +1,7 @@
 import {
   BaseForumSectionDto,
   ForumSectionService,
-} from '@libs/forum'
+} from '@libs/forum/section'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

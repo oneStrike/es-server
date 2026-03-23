@@ -1,7 +1,5 @@
-import {
-  BaseForumSectionDto,
-  BaseForumSectionGroupDto,
-} from '@libs/forum'
+import { BaseForumSectionDto } from '@libs/forum/section'
+import { BaseForumSectionGroupDto } from '@libs/forum/section-group'
 import { BooleanProperty, NestedProperty } from '@libs/platform/decorators'
 import { PartialType, PickType } from '@nestjs/swagger'
 

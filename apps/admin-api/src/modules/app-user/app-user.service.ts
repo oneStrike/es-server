@@ -14,12 +14,10 @@ import type {
   UpdateAdminAppUserStatusInput,
 } from './app-user.type'
 import { DrizzleService } from '@db/core'
-import {
-  GrowthAssetTypeEnum,
-  UserBadgeService,
-  UserExperienceService,
-  UserPointService,
-} from '@libs/growth'
+import { UserBadgeService } from '@libs/growth/badge'
+import { UserExperienceService } from '@libs/growth/experience'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
+import { UserPointService } from '@libs/growth/point'
 import {
   AdminUserRoleEnum,
   GenderEnum,
@@ -30,7 +28,6 @@ import {
   AppUserCountService,
   UserService as UserCoreService,
 } from '@libs/user'
-
 import {
   BadRequestException,
   Injectable,

@@ -1,5 +1,8 @@
-import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content'
-import { BaseDownloadRecordDto } from '@libs/interaction'
+import {
+  BaseWorkChapterDto,
+  BaseWorkDto,
+} from '@libs/content/work'
+import { BaseDownloadRecordDto } from '@libs/interaction/download'
 import { ContentTypeEnum, WorkTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,

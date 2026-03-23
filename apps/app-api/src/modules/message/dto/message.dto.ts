@@ -2,9 +2,11 @@ import {
   BaseChatConversationDto,
   BaseChatMessageDto,
   BaseChatPeerDto,
+} from '@libs/message/chat'
+import {
   BaseUserNotificationDto,
   MessageNotificationTypeEnum,
-} from '@libs/message'
+} from '@libs/message/notification'
 import {
   ArrayProperty,
   BooleanProperty,

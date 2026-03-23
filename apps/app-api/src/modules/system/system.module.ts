@@ -1,9 +1,7 @@
 import { AppConfigModule } from '@libs/app-config'
-import {
-  AgreementModule,
-  AppAnnouncementModule,
-  AppPageModule,
-} from '@libs/app-content'
+import { AgreementModule } from '@libs/app-content/agreement'
+import { AppAnnouncementModule } from '@libs/app-content/announcement'
+import { AppPageModule } from '@libs/app-content/page'
 import { Module } from '@nestjs/common'
 import { SystemController } from './system.controller'
 

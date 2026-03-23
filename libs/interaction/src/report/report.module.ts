@@ -9,7 +9,7 @@
  * 依赖模块：
  * - GrowthLedgerModule：成长账本模块，用于发放举报奖励
  */
-import { GrowthLedgerModule } from '@libs/growth'
+import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
 import { Module } from '@nestjs/common'
 import { ReportGrowthService } from './report-growth.service'
 import { ReportService } from './report.service'

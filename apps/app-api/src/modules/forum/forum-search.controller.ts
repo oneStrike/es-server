@@ -1,6 +1,4 @@
-import {
-  ForumSearchService,
-} from '@libs/forum'
+import { ForumSearchService } from '@libs/forum/search'
 import {
   ApiPageDoc,
   CurrentUser,

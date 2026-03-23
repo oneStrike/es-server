@@ -1,9 +1,9 @@
 import { DrizzleService } from '@db/core'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-  GrowthRuleTypeEnum,
-} from '@libs/growth'
+} from '@libs/growth/growth-ledger'
 import { Injectable, Logger } from '@nestjs/common'
 import { FollowTargetTypeEnum } from './follow.constant'
 

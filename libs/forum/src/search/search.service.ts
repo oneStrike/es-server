@@ -5,7 +5,7 @@ import type {
   ForumSearchResultItem,
 } from './search.type'
 import { DrizzleService } from '@db/core'
-import { CommentTargetTypeEnum } from '@libs/interaction'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'

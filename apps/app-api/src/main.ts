@@ -1,6 +1,6 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { MessageNativeWebSocketServer } from '@libs/message'
+import { MessageNativeWebSocketServer } from '@libs/message/notification'
 import { logStartupInfo, setupApp } from '@libs/platform/bootstrap'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'

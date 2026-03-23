@@ -1,6 +1,4 @@
-import {
-  WorkChapterService,
-} from '@libs/content'
+import { WorkChapterService } from '@libs/content/work'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto } from '@libs/platform/dto'

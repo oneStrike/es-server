@@ -7,7 +7,7 @@ import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
-} from '@libs/interaction'
+} from '@libs/interaction/favorite'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 

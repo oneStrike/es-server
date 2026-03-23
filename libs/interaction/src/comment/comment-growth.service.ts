@@ -1,11 +1,10 @@
 import type { Db } from '@db/core'
 import { UserComment } from '@db/schema'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
-  GrowthRuleTypeEnum,
-} from '@libs/growth'
-
+} from '@libs/growth/growth-ledger'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()

@@ -1,6 +1,5 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth'
 import type { FastifyRequest } from 'fastify'
-
 import {
   AuthDefaultValue,
   AuthService as BaseAuthService,

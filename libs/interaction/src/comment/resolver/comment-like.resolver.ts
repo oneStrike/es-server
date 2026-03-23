@@ -4,8 +4,8 @@ import { appUser, userComment } from '@db/schema'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
-  MessageOutboxService,
-} from '@libs/message'
+} from '@libs/message/notification'
+import { MessageOutboxService } from '@libs/message/outbox'
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,

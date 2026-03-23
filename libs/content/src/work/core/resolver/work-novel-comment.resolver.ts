@@ -7,7 +7,7 @@ import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
-} from '@libs/interaction'
+} from '@libs/interaction/comment'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 

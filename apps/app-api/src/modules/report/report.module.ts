@@ -1,4 +1,4 @@
-import { ReportModule as ReportCoreModule } from '@libs/interaction'
+import { ReportModule as ReportCoreModule } from '@libs/interaction/report'
 import { Module } from '@nestjs/common'
 import { ReportController } from './report.controller'
 

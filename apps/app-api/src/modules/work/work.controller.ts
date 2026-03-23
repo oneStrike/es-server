@@ -1,7 +1,5 @@
-import {
-  WorkService,
-} from '@libs/content'
-import { CommentService } from '@libs/interaction'
+import { WorkService } from '@libs/content/work'
+import { CommentService } from '@libs/interaction/comment'
 import {
   ApiDoc,
   ApiPageDoc,

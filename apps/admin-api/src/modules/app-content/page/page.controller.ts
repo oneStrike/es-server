@@ -1,7 +1,7 @@
 import {
   AppPageService,
   BaseAppPageDto,
-} from '@libs/app-content'
+} from '@libs/app-content/page'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdsDto } from '@libs/platform/dto'
 import {

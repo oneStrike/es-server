@@ -1,9 +1,7 @@
 import type { AppUser } from '@db/schema'
-import type {
-  QueryUserBadgePageInput,
-  QueryUserExperienceRecordPageInput,
-  QueryUserPointRecordPageInput,
-} from '@libs/growth'
+import type { QueryUserBadgePageInput } from '@libs/growth/badge'
+import type { QueryUserExperienceRecordPageInput } from '@libs/growth/experience'
+import type { QueryUserPointRecordPageInput } from '@libs/growth/point'
 
 /**
  * 更新当前用户资料入参。

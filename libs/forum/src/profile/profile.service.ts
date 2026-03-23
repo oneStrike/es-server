@@ -5,15 +5,17 @@ import type {
   UpdateUserStatusInput,
 } from './profile.type'
 import { DrizzleService } from '@db/core'
-
-import { GrowthAssetTypeEnum, UserPointService } from '@libs/growth'
-import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
+import { UserPointService } from '@libs/growth/point'
+import {
+  FavoriteService,
+  FavoriteTargetTypeEnum,
+} from '@libs/interaction/favorite'
 import {
   UserDefaults,
   UserStatusEnum,
 } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user'
-
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
 

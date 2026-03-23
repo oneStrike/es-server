@@ -1,4 +1,4 @@
-import { BaseForumTagDto } from '@libs/forum'
+import { BaseForumTagDto } from '@libs/forum/tag'
 import { NumberProperty } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import {

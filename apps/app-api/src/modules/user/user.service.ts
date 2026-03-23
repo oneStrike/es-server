@@ -16,14 +16,11 @@ import type {
   UpdateMyProfileInput,
 } from './user.type'
 import { DrizzleService } from '@db/core'
-
-import {
-  GrowthAssetTypeEnum,
-  UserExperienceService,
-  UserPointService,
-} from '@libs/growth'
-import { UserAssetsService } from '@libs/interaction'
-import { MessageInboxService } from '@libs/message'
+import { UserExperienceService } from '@libs/growth/experience'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
+import { UserPointService } from '@libs/growth/point'
+import { UserAssetsService } from '@libs/interaction/user-assets'
+import { MessageInboxService } from '@libs/message/inbox'
 import { UserService as UserCoreService } from '@libs/user'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'

@@ -2,7 +2,7 @@ import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
   TaskService,
-} from '@libs/growth'
+} from '@libs/growth/task'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import {

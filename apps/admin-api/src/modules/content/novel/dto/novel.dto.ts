@@ -1,4 +1,4 @@
-import { BaseWorkDto as ContentBaseWorkDto } from '@libs/content'
+import { BaseWorkDto as ContentBaseWorkDto } from '@libs/content/work'
 import { ArrayProperty, StringProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {

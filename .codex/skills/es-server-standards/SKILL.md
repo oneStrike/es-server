@@ -51,6 +51,7 @@ Use this skill whenever work touches `apps/admin-api`, `apps/app-api`, `libs/*`,
 - `findPagination` currently accepts both 0-based and 1-based `pageIndex` inputs. Reuse that behavior instead of translating page numbers locally.
 - `apps/*` are entry layers; reusable domain logic usually belongs in `libs/*`.
 - Define and export Drizzle inferred types close to the corresponding `db/schema` files.
+- For multi-domain shared libs (`app-content`, `content`, `forum`, `growth`, `interaction`, `message`), import via `@libs/<lib>/<domain>` only; do not use the root barrel or file-level deep imports.
 
 ## References
 

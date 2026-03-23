@@ -1,4 +1,4 @@
-import { GrowthRuleTypeEnum } from '@libs/growth'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 
 /**

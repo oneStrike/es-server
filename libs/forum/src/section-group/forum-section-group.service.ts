@@ -10,7 +10,7 @@ import { DrizzleService } from '@db/core'
 import {
   FollowService,
   FollowTargetTypeEnum,
-} from '@libs/interaction'
+} from '@libs/interaction/follow'
 import {
   BadRequestException,
   Injectable,

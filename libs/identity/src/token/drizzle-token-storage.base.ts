@@ -1,6 +1,5 @@
 import type { CreateTokenInput, ITokenEntity } from '@libs/platform/modules/auth'
 import type { Cache } from 'cache-manager'
-
 import { DrizzleService } from '@db/core'
 import { BaseTokenStorageService } from '@libs/platform/modules/auth'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'

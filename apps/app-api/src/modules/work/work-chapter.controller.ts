@@ -2,8 +2,8 @@ import {
   ComicContentService,
   NovelContentService,
   WorkChapterService,
-} from '@libs/content'
-import { CommentService } from '@libs/interaction'
+} from '@libs/content/work'
+import { CommentService } from '@libs/interaction/comment'
 import {
   ApiDoc,
   ApiPageDoc,
@@ -12,7 +12,6 @@ import {
   Public,
 } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {

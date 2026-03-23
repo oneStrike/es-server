@@ -1,4 +1,4 @@
-import { ForumSectionGroupService } from '@libs/forum'
+import { ForumSectionGroupService } from '@libs/forum/section-group'
 import { ApiDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

@@ -1,5 +1,8 @@
-import { BaseUserExperienceRecordDto, BaseUserExperienceRuleDto, GrowthRuleTypeEnum } from '@libs/growth'
-
+import {
+  BaseUserExperienceRecordDto,
+  BaseUserExperienceRuleDto,
+} from '@libs/growth/experience'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   EnumProperty,
   NumberProperty,

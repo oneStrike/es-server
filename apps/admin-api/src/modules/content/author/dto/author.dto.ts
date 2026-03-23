@@ -1,4 +1,4 @@
-import { BaseAuthorDto as ContentBaseAuthorDto } from '@libs/content'
+import { BaseAuthorDto as ContentBaseAuthorDto } from '@libs/content/author'
 import { JsonProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {

@@ -4,7 +4,7 @@ import type {
 } from './message-monitor.type'
 import { DrizzleService } from '@db/core'
 import { messageOutbox, messageWsMetric } from '@db/schema'
-import { MessageOutboxStatusEnum } from '@libs/message'
+import { MessageOutboxStatusEnum } from '@libs/message/outbox'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 

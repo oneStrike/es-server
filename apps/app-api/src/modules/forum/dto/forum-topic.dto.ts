@@ -1,8 +1,6 @@
-import {
-  BaseForumSectionDto,
-  BaseForumTagDto,
-  BaseForumTopicDto,
-} from '@libs/forum'
+import { BaseForumSectionDto } from '@libs/forum/section'
+import { BaseForumTagDto } from '@libs/forum/tag'
+import { BaseForumTopicDto } from '@libs/forum/topic'
 import {
   ArrayProperty,
   BooleanProperty,

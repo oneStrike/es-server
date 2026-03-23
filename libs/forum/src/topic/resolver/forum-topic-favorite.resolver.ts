@@ -6,11 +6,9 @@ import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
-} from '@libs/interaction'
-import {
-  MessageNotificationTypeEnum,
-  MessageOutboxService,
-} from '@libs/message'
+} from '@libs/interaction/favorite'
+import { MessageNotificationTypeEnum } from '@libs/message/notification'
+import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'

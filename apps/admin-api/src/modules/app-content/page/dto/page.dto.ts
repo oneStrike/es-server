@@ -1,4 +1,4 @@
-import { BaseAppPageDto } from '@libs/app-content'
+import { BaseAppPageDto } from '@libs/app-content/page'
 import { JsonProperty } from '@libs/platform/decorators'
 import {
   IdDto,

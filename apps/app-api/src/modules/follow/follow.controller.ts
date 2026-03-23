@@ -1,4 +1,4 @@
-import { FollowService } from '@libs/interaction'
+import { FollowService } from '@libs/interaction/follow'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

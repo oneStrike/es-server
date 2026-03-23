@@ -2,7 +2,6 @@ import type {
   ForumModerator,
   ForumModeratorSection,
 } from '@db/schema'
-
 import type {
   ForumModeratorPermissionEnum,
   ForumModeratorRoleTypeEnum,

@@ -2,8 +2,7 @@ import type { FastifyRequest } from 'fastify'
 import {
   DrizzleService
  } from '@db/core'
-import { ReadingStateService,
-} from '@libs/interaction'
+import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { UploadService } from '@libs/platform/modules'
 import { jsonParse } from '@libs/platform/utils'

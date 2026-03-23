@@ -1,7 +1,7 @@
 import {
   BaseForumModeratorDto,
   ForumModeratorPermissionEnum,
-} from '@libs/forum'
+} from '@libs/forum/moderator'
 import {
   ArrayProperty,
   BooleanProperty,

@@ -1,4 +1,4 @@
-import { ForumSectionService } from '@libs/forum'
+import { ForumSectionService } from '@libs/forum/section'
 import {
   ApiDoc,
   CurrentUser,

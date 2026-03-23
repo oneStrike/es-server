@@ -1,4 +1,7 @@
-import { BaseUserLevelRuleDto, UserLevelRulePermissionEnum } from '@libs/growth'
+import {
+  BaseUserLevelRuleDto,
+  UserLevelRulePermissionEnum,
+} from '@libs/growth/level-rule'
 import {
   ArrayProperty,
   BooleanProperty,

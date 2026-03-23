@@ -1,7 +1,6 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-
 import {
   ChapterContentComicRequestDto,
   DetailComicRequestDto,

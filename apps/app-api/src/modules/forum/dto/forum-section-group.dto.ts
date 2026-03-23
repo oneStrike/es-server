@@ -1,4 +1,4 @@
-import { BaseForumSectionGroupDto } from '@libs/forum'
+import { BaseForumSectionGroupDto } from '@libs/forum/section-group'
 import { ArrayProperty } from '@libs/platform/decorators'
 import { PickType } from '@nestjs/swagger'
 import { AppForumSectionListItemDto } from './forum-section.dto'

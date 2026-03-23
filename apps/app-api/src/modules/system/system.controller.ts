@@ -1,11 +1,13 @@
 import { AppConfigService, BaseAppConfigDto } from '@libs/app-config'
 import {
   AgreementService,
-  AppAnnouncementService,
-  AppPageService,
   BaseAgreementDto,
+} from '@libs/app-content/agreement'
+import { AppAnnouncementService } from '@libs/app-content/announcement'
+import {
+  AppPageService,
   BaseAppPageDto,
-} from '@libs/app-content'
+} from '@libs/app-content/page'
 import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'

@@ -7,7 +7,7 @@ import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerService,
-} from '@libs/growth'
+} from '@libs/growth/growth-ledger'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import {

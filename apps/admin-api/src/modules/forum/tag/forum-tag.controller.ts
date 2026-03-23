@@ -1,7 +1,7 @@
 import {
   BaseForumTagDto,
   ForumTagService,
-} from '@libs/forum'
+} from '@libs/forum/tag'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

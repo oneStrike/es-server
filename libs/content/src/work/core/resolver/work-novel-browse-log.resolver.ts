@@ -6,7 +6,7 @@ import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
   IBrowseLogTargetResolver,
-} from '@libs/interaction'
+} from '@libs/interaction/browse-log'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 

@@ -3,7 +3,7 @@ import {
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
-} from '@libs/interaction'
+} from '@libs/interaction/report'
 import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 

@@ -1,6 +1,4 @@
-import {
-  ForumSearchService,
-} from '@libs/forum'
+import { ForumSearchService } from '@libs/forum/search'
 import { ApiPageDoc } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

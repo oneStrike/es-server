@@ -1,4 +1,4 @@
-import { WorkAuthorModule as WorkAuthorModuleLib } from '@libs/content'
+import { WorkAuthorModule as WorkAuthorModuleLib } from '@libs/content/author'
 import { Module } from '@nestjs/common'
 import { ContentAuthorController } from './author.controller'
 

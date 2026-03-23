@@ -1,4 +1,4 @@
-import { BaseCategoryDto as ContentBaseCategoryDto } from '@libs/content'
+import { BaseCategoryDto as ContentBaseCategoryDto } from '@libs/content/category'
 import { JsonProperty } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {

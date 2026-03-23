@@ -1,5 +1,5 @@
-import { ForumModule as ForumCoreModule } from '@libs/forum'
-import { CommentModule as CommentCoreModule } from '@libs/interaction'
+import { ForumModule as ForumCoreModule } from '@libs/forum/forum'
+import { CommentModule as CommentCoreModule } from '@libs/interaction/comment'
 import { Module } from '@nestjs/common'
 import { ForumModeratorApplicationController } from './forum-moderator-application.controller'
 import { ForumSearchController } from './forum-search.controller'

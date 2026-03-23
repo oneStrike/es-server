@@ -1,4 +1,4 @@
-import { LikeModule as LikeCoreModule } from '@libs/interaction'
+import { LikeModule as LikeCoreModule } from '@libs/interaction/like'
 import { Module } from '@nestjs/common'
 import { LikeController } from './like.controller'
 

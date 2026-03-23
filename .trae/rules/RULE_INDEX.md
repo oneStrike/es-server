@@ -20,6 +20,7 @@
 - 分页语义：平台层 `PageDto` 与 `findPagination` 当前兼容 0-based 和 1-based `pageIndex`；不要在业务层再次手工转换页码。
 - 历史模块里仍可能存在命名或中英文错误消息不完全统一的情况；新增代码应跟随共享抽象和当前规则，而不是复制旧不一致模式。
 - 仓库内同时存在 `*.type.ts` 与少量既有 `*.types.ts`；新增业务领域类型默认使用 `*.type.ts`，历史基础设施文件按 `TS_TYPE_SPEC.md` 例外处理。
+- 多域共享库 `@libs/app-content`、`@libs/content`、`@libs/forum`、`@libs/growth`、`@libs/interaction`、`@libs/message` 已切换为二级 public API；使用 `@libs/<lib>/<domain>`，不要再从 `@libs/<lib>` 或 `@libs/<lib>/<domain>/*` 导入。
 
 ## Editing Heuristics
 

@@ -3,7 +3,7 @@ import { DrizzleService } from '@db/core'
 import {
   IReadingStateResolver,
   ReadingStateService,
-} from '@libs/interaction'
+} from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 

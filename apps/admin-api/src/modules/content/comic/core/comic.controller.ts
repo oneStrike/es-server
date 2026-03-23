@@ -1,6 +1,4 @@
-import {
-  WorkService,
-} from '@libs/content'
+import { WorkService } from '@libs/content/work'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'

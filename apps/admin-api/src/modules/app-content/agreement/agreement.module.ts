@@ -1,6 +1,5 @@
-import { AgreementModule as LibAgreementModule } from '@libs/app-content'
+import { AgreementModule as LibAgreementModule } from '@libs/app-content/agreement'
 import { Module } from '@nestjs/common'
-
 import { AgreementController } from './agreement.controller'
 
 @Module({

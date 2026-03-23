@@ -2,7 +2,6 @@ import type { AppConfigInterface } from '@libs/platform/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { logStartupInfo, setupApp } from '@libs/platform/bootstrap'
 import { ConfigService } from '@nestjs/config'
-
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'

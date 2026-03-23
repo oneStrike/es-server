@@ -1,7 +1,5 @@
-import {
-  BaseAgreementDto,
-  BaseAnnouncementDto,
-} from '@libs/app-content'
+import { BaseAgreementDto } from '@libs/app-content/agreement'
+import { BaseAnnouncementDto } from '@libs/app-content/announcement'
 import { JsonProperty } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
 import {

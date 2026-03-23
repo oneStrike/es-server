@@ -1,15 +1,7 @@
-import {
-  BaseUserBadgeDto,
-  BaseUserExperienceRecordDto,
-  BaseUserLevelRuleDto,
-} from '@libs/growth'
-import { BaseUserAssetsSummaryDto } from '@libs/interaction'
-/**
- * 用户模块 DTO 定义
- *
- * 包含用户中心相关的所有数据传输对象
- * 尽量复用项目中已有的 DTO 定义
- */
+import { BaseUserBadgeDto } from '@libs/growth/badge'
+import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
+import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets'
 import { UserStatusEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,

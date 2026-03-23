@@ -1,7 +1,5 @@
-import {
-  BaseForumModeratorApplicationDto,
-  BaseForumSectionDto,
-} from '@libs/forum'
+import { BaseForumModeratorApplicationDto } from '@libs/forum/moderator-application'
+import { BaseForumSectionDto } from '@libs/forum/section'
 import {
   ArrayProperty,
   NestedProperty,

@@ -1,8 +1,6 @@
-import {
-  MessageChatService,
-  MessageInboxService,
-  MessageNotificationService,
-} from '@libs/message'
+import { MessageChatService } from '@libs/message/chat'
+import { MessageInboxService } from '@libs/message/inbox'
+import { MessageNotificationService } from '@libs/message/notification'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

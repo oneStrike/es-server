@@ -1,5 +1,6 @@
-import { BaseForumSectionDto, BaseForumTopicDto } from '@libs/forum'
-import { BaseUserLevelRuleDto } from '@libs/growth'
+import { BaseForumSectionDto } from '@libs/forum/section'
+import { BaseForumTopicDto } from '@libs/forum/topic'
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import {
   ArrayProperty,
   DateProperty,

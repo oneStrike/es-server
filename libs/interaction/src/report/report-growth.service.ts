@@ -1,5 +1,8 @@
 import { DrizzleService } from '@db/core'
-import { GrowthAssetTypeEnum, GrowthLedgerService } from '@libs/growth'
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerService,
+} from '@libs/growth/growth-ledger'
 import { Injectable, Logger } from '@nestjs/common'
 import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 import { mapReportTargetTypeToInteractionTargetType } from './report-target.mapping'

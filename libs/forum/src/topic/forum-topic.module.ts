@@ -1,8 +1,8 @@
-import {
-  UserGrowthRewardModule
- } from '@libs/growth'
-import { FavoriteModule, LikeModule, ReportModule,} from '@libs/interaction'
-import { MessageModule } from '@libs/message'
+import { UserGrowthRewardModule } from '@libs/growth/growth-reward'
+import { FavoriteModule } from '@libs/interaction/favorite'
+import { LikeModule } from '@libs/interaction/like'
+import { ReportModule } from '@libs/interaction/report'
+import { MessageModule } from '@libs/message/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { UserModule } from '@libs/user'
 import { Module } from '@nestjs/common'

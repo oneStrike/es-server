@@ -1,8 +1,8 @@
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
-  TaskTypeEnum
-} from '@libs/growth'
+  TaskTypeEnum,
+} from '@libs/growth/task'
 import {
   EnumProperty,
   JsonProperty,

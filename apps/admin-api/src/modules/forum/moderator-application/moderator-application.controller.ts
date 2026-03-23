@@ -1,6 +1,4 @@
-import {
-  ForumModeratorApplicationService,
-} from '@libs/forum'
+import { ForumModeratorApplicationService } from '@libs/forum/moderator-application'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

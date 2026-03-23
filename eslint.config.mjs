@@ -52,26 +52,63 @@ export default antfu(
     files: ['apps/**/*.{ts,tsx}', 'libs/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
-        'warn',
+        'error',
         {
+          paths: [
+            {
+              name: '@libs/app-content',
+              message:
+                'Use domain public API from @libs/app-content/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/content',
+              message:
+                'Use domain public API from @libs/content/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/forum',
+              message:
+                'Use domain public API from @libs/forum/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/growth',
+              message:
+                'Use domain public API from @libs/growth/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/interaction',
+              message:
+                'Use domain public API from @libs/interaction/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/message',
+              message:
+                'Use domain public API from @libs/message/<domain> instead of the root barrel.',
+            },
+          ],
           patterns: [
             {
               group: [
-                '@libs/app-content/*',
-                '@libs/app-config/*',
-                '@libs/config/*',
-                '@libs/content/*',
-                '@libs/dictionary/*',
-                '@libs/forum/*',
-                '@libs/interaction/*',
-                '@libs/message/*',
-                '@libs/sensitive-word/*',
-                '@libs/system-config/*',
-                '@libs/growth/task/*',
-                '@libs/growth/*',
+                '@libs/app-content/*/*',
+                '@libs/content/*/*',
+                '@libs/forum/*/*',
+                '@libs/growth/*/*',
+                '@libs/interaction/*/*',
+                '@libs/message/*/*',
               ],
               message:
-                'Use public API from @libs/<lib> (index.ts) instead of deep imports.',
+                'Use second-level public API @libs/<lib>/<domain> instead of file deep imports.',
+            },
+            {
+              group: [
+                '@libs/app-config/*',
+                '@libs/config/*',
+                '@libs/dictionary/*',
+                '@libs/sensitive-word/*',
+                '@libs/system-config/*',
+              ],
+              message:
+                'Use public API from @libs/<lib> instead of file deep imports.',
             },
           ],
         },

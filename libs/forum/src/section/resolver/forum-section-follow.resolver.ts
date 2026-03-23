@@ -1,10 +1,11 @@
 import type { Db } from '@db/core'
-import type { IFollowTargetResolver } from '@libs/interaction'
+import type {IFollowTargetResolver} from '@libs/interaction/follow';
 import { DrizzleService } from '@db/core'
 import {
   FollowService,
-  FollowTargetTypeEnum,
-} from '@libs/interaction'
+  FollowTargetTypeEnum
+
+} from '@libs/interaction/follow'
 import {
   BadRequestException,
   Injectable,

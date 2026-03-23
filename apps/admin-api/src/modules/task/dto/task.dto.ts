@@ -1,7 +1,7 @@
 import {
   BaseTaskAssignmentDto,
   BaseTaskDto,
-} from '@libs/growth'
+} from '@libs/growth/task'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,

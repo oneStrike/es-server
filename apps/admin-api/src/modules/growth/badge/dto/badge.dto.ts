@@ -1,4 +1,4 @@
-import { BaseUserBadgeDto } from '@libs/growth'
+import { BaseUserBadgeDto } from '@libs/growth/badge'
 import {
   ArrayProperty,
   DateProperty,

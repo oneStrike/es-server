@@ -1,4 +1,5 @@
-import { BaseForumTagDto, BaseForumTopicDto } from '@libs/forum'
+import { BaseForumTagDto } from '@libs/forum/tag'
+import { BaseForumTopicDto } from '@libs/forum/topic'
 import { ArrayProperty } from '@libs/platform/decorators'
 import { PickType } from '@nestjs/swagger'
 

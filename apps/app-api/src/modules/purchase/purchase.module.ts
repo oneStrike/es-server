@@ -1,4 +1,4 @@
-import { PurchaseModule as PurchaseCoreModule } from '@libs/interaction'
+import { PurchaseModule as PurchaseCoreModule } from '@libs/interaction/purchase'
 import { Module } from '@nestjs/common'
 import { PurchaseController } from './purchase.controller'
 

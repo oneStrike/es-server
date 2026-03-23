@@ -1,13 +1,17 @@
 import type { AppUser } from '@db/schema'
 import type {
-  AddUserExperienceInput,
-  AddUserPointsInput,
   AssignUserBadgeInput,
-  ConsumeUserPointsInput,
   QueryUserBadgePageInput,
+} from '@libs/growth/badge'
+import type {
+  AddUserExperienceInput,
   QueryUserExperienceRecordPageInput,
+} from '@libs/growth/experience'
+import type {
+  AddUserPointsInput,
+  ConsumeUserPointsInput,
   QueryUserPointRecordPageInput,
-} from '@libs/growth'
+} from '@libs/growth/point'
 
 /**
  * APP 用户删除态筛选值。

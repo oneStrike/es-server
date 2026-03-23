@@ -1,4 +1,4 @@
-import { BaseUserPointRuleDto } from '@libs/growth'
+import { BaseUserPointRuleDto } from '@libs/growth/point'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,

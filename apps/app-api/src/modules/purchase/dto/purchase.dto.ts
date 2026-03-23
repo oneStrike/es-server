@@ -1,5 +1,8 @@
-import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content'
-import { BasePurchaseRecordDto } from '@libs/interaction'
+import {
+  BaseWorkChapterDto,
+  BaseWorkDto,
+} from '@libs/content/work'
+import { BasePurchaseRecordDto } from '@libs/interaction/purchase'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,

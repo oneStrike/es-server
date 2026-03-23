@@ -1,4 +1,4 @@
-import { BaseReportDto } from '@libs/interaction'
+import { BaseReportDto } from '@libs/interaction/report'
 import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 

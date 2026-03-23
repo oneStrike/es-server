@@ -3,7 +3,7 @@ import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
-} from '@libs/interaction'
+} from '@libs/interaction/comment'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumTopicService } from '../forum-topic.service'

@@ -1,6 +1,4 @@
-import {
-  ReadingStateService,
-} from '@libs/interaction'
+import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

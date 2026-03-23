@@ -1,4 +1,4 @@
-import { BaseForumSectionGroupDto } from '@libs/forum'
+import { BaseForumSectionGroupDto } from '@libs/forum/section-group'
 import {
   IdDto,
   OMIT_BASE_FIELDS,

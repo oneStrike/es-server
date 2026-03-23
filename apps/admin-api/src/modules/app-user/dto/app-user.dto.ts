@@ -1,10 +1,8 @@
-import {
-  BaseUserBadgeDto,
-  BaseUserExperienceRecordDto,
-  BaseUserLevelRuleDto,
-  BaseUserPointRecordDto,
-  GrowthRuleTypeEnum,
-} from '@libs/growth'
+import { BaseUserBadgeDto } from '@libs/growth/badge'
+import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
+import { BaseUserPointRecordDto } from '@libs/growth/point'
 import {
   DateProperty,
   EnumProperty,
@@ -14,7 +12,6 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
-
 import {
   IntersectionType,
   PartialType,

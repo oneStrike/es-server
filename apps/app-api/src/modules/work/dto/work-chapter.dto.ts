@@ -1,4 +1,4 @@
-import { BaseWorkChapterDto } from '@libs/content'
+import { BaseWorkChapterDto } from '@libs/content/work'
 import {
   ArrayProperty,
   BooleanProperty,

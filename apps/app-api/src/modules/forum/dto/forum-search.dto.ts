@@ -1,4 +1,7 @@
-import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '@libs/forum'
+import {
+  ForumSearchSortTypeEnum,
+  ForumSearchTypeEnum,
+} from '@libs/forum/search'
 import {
   DateProperty,
   EnumProperty,

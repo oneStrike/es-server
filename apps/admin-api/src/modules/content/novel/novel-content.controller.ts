@@ -1,7 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import {
-  NovelContentService,
-} from '@libs/content'
+import { NovelContentService } from '@libs/content/work'
 import { ApiDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { FileUploadResponseDto } from '@libs/platform/modules/upload'

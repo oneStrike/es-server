@@ -1,16 +1,17 @@
 import {
   DrizzleService
  } from '@db/core'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import {
-  CommentTargetTypeEnum,
   DownloadService,
   DownloadTargetTypeEnum,
-  FavoriteService,
+} from '@libs/interaction/download'
+import { FavoriteService } from '@libs/interaction/favorite'
+import {
   LikeService,
   LikeTargetTypeEnum,
-  ReadingStateService,
-} from '@libs/interaction'
-
+} from '@libs/interaction/like'
+import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'

@@ -5,7 +5,6 @@
  * - 提供章节内容下载功能
  * - 集成内容权限校验，确保用户有权限下载
  */
-// eslint-disable-next-line no-restricted-imports -- avoid circular deps via content barrel
 import { ContentPermissionModule } from '@libs/content/permission'
 import { Module } from '@nestjs/common'
 import { DownloadService } from './download.service'

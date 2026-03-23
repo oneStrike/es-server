@@ -1,5 +1,5 @@
-import { BaseWorkDto } from '@libs/content'
-import { BaseLikeDto } from '@libs/interaction'
+import { BaseWorkDto } from '@libs/content/work'
+import { BaseLikeDto } from '@libs/interaction/like'
 import {
   BooleanProperty,
   NestedProperty,

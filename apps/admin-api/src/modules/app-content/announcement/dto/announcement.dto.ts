@@ -1,7 +1,5 @@
-import {
-  BaseAnnouncementDto,
-  BaseAppPageDto,
-} from '@libs/app-content'
+import { BaseAnnouncementDto } from '@libs/app-content/announcement'
+import { BaseAppPageDto } from '@libs/app-content/page'
 import {
   JsonProperty,
   NestedProperty,

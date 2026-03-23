@@ -1,5 +1,6 @@
-import { ForumTopicService, UserProfileService } from '@libs/forum'
-import { CommentService } from '@libs/interaction'
+import { UserProfileService } from '@libs/forum/profile'
+import { ForumTopicService } from '@libs/forum/topic'
+import { CommentService } from '@libs/interaction/comment'
 import {
   ApiDoc,
   ApiPageDoc,

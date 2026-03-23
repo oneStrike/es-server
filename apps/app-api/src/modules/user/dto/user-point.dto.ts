@@ -1,7 +1,4 @@
-import { BaseUserPointRecordDto } from '@libs/growth'
-/**
- * 用户积分相关 DTO 定义
- */
+import { BaseUserPointRecordDto } from '@libs/growth/point'
 import { NumberProperty } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'

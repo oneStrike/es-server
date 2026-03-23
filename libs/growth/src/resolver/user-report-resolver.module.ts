@@ -1,4 +1,4 @@
-import { ReportModule } from '@libs/interaction'
+import { ReportModule } from '@libs/interaction/report'
 import { Module } from '@nestjs/common'
 import { UserReportResolver } from './user-report.resolver'
 

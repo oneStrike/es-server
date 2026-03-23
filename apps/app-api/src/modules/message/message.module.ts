@@ -1,4 +1,4 @@
-import { MessageModule as MessageCoreModule } from '@libs/message'
+import { MessageModule as MessageCoreModule } from '@libs/message/message'
 import { Module } from '@nestjs/common'
 import { MessageController } from './message.controller'
 

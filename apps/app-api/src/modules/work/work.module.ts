@@ -1,5 +1,5 @@
-import { WorkModule as WorkCoreModule } from '@libs/content'
-import { CommentModule as CommentCoreModule } from '@libs/interaction'
+import { WorkModule as WorkCoreModule } from '@libs/content/work'
+import { CommentModule as CommentCoreModule } from '@libs/interaction/comment'
 import { Module } from '@nestjs/common'
 import { WorkChapterController } from './work-chapter.controller'
 import { WorkController } from './work.controller'

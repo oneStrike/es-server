@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { ComicContentService } from '@libs/content'
+import { ComicContentService } from '@libs/content/work'
 import { ApiDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { FileUploadResponseDto } from '@libs/platform/modules/upload'

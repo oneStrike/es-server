@@ -12,7 +12,7 @@ import type {
   UpdateTaskStatusInput,
 } from './task.type'
 import { DrizzleService } from '@db/core'
-import { UserGrowthRewardService } from '@libs/growth'
+import { UserGrowthRewardService } from '@libs/growth/growth-reward'
 import {
   BadRequestException,
   ConflictException,

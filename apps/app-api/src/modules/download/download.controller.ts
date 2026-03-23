@@ -1,5 +1,4 @@
-import { DownloadService } from '@libs/interaction'
-
+import { DownloadService } from '@libs/interaction/download'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

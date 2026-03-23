@@ -1,9 +1,5 @@
-import {
-  ForumAppUserInfoDto,
-} from '@libs/forum'
-import {
-  BaseUserLevelRuleDto,
-} from '@libs/growth'
+import { ForumAppUserInfoDto } from '@libs/forum/profile'
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import {
   NestedProperty,
   NumberProperty,

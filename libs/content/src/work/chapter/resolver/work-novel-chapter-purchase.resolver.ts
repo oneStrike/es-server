@@ -4,7 +4,7 @@ import {
   IPurchaseTargetResolver,
   PurchaseService,
   PurchaseTargetTypeEnum,
-} from '@libs/interaction'
+} from '@libs/interaction/purchase'
 import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
 import {
   BadRequestException,

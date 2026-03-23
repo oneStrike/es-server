@@ -1,12 +1,8 @@
 import type { Db } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { WorkAuthorService } from '@libs/content/author/author.service'
-import {
-  BadRequestException,
-  Injectable,
-  OnModuleInit,
-} from '@nestjs/common'
+import { WorkAuthorService } from '@libs/content/author'
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { FollowTargetTypeEnum } from '../follow.constant'
 import { FollowService } from '../follow.service'
 

@@ -1,11 +1,11 @@
+import { BaseAuthorDto } from '@libs/content/author'
+import { BaseCategoryDto } from '@libs/content/category'
+import { BaseTagDto } from '@libs/content/tag'
 import {
-  BaseAuthorDto,
-  BaseCategoryDto,
-  BaseTagDto,
   BaseWorkChapterDto,
   BaseWorkDto,
-} from '@libs/content'
-import { BaseForumSectionDto } from '@libs/forum'
+} from '@libs/content/work'
+import { BaseForumSectionDto } from '@libs/forum/section'
 import {
   ArrayProperty,
   BooleanProperty,

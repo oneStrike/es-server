@@ -1,6 +1,5 @@
 import type { AppConfigInterface } from '@libs/platform/types'
 import type { INestApplication } from '@nestjs/common'
-
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 export function setupSwagger(

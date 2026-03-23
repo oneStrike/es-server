@@ -1,4 +1,7 @@
-import { BaseCommentDto, CommentTargetTypeEnum } from '@libs/interaction'
+import {
+  BaseCommentDto,
+  CommentTargetTypeEnum,
+} from '@libs/interaction/comment'
 import {
   ArrayProperty,
   BooleanProperty,

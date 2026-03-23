@@ -6,7 +6,6 @@ import type {
   UpdateForumTagInput,
 } from './tag.type'
 import { DrizzleService } from '@db/core'
-
 import {
   BadRequestException,
   Injectable,

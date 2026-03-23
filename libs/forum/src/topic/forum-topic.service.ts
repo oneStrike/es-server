@@ -14,15 +14,17 @@ import type {
 import {
   DrizzleService
  } from '@db/core'
-import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
-
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { UserGrowthRewardService } from '@libs/growth/growth-reward'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import {
-  CommentTargetTypeEnum,
   FavoriteService,
   FavoriteTargetTypeEnum,
+} from '@libs/interaction/favorite'
+import {
   LikeService,
   LikeTargetTypeEnum,
-} from '@libs/interaction'
+} from '@libs/interaction/like'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   SensitiveWordDetectService,

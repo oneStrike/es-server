@@ -1,5 +1,8 @@
-import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content'
-import { BaseReadingStateDto } from '@libs/interaction'
+import {
+  BaseWorkChapterDto,
+  BaseWorkDto,
+} from '@libs/content/work'
+import { BaseReadingStateDto } from '@libs/interaction/reading-state'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
   BooleanProperty,

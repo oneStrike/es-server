@@ -1,6 +1,4 @@
-import {
-  BaseWorkChapterDto as ContentBaseWorkChapterDto,
-} from '@libs/content'
+import { BaseWorkChapterDto as ContentBaseWorkChapterDto } from '@libs/content/work'
 import { BooleanProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {

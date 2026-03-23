@@ -1,7 +1,7 @@
 import {
   BaseUserPointRuleDto,
   UserPointRuleService,
-} from '@libs/growth'
+} from '@libs/growth/point'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'

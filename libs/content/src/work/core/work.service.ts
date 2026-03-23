@@ -1,15 +1,15 @@
 import {
   DrizzleService
  } from '@db/core'
+import { BrowseLogService } from '@libs/interaction/browse-log'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment'
+import { FavoriteService } from '@libs/interaction/favorite'
 import {
-  BrowseLogService,
-  CommentTargetTypeEnum,
-  FavoriteService,
   FollowService,
   FollowTargetTypeEnum,
-  LikeService,
-  ReadingStateService,
-} from '@libs/interaction'
+} from '@libs/interaction/follow'
+import { LikeService } from '@libs/interaction/like'
+import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'

@@ -1,4 +1,4 @@
-import { BaseFollowDto } from '@libs/interaction'
+import { BaseFollowDto } from '@libs/interaction/follow'
 import {
   ArrayProperty,
   BooleanProperty,

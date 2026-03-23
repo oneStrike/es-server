@@ -1,4 +1,4 @@
-import { BaseAgreementDto } from '@libs/app-content'
+import { BaseAgreementDto } from '@libs/app-content/agreement'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,

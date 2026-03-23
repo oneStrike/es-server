@@ -7,11 +7,9 @@ import {
   LikeService,
   LikeTargetMeta,
   LikeTargetTypeEnum,
-} from '@libs/interaction'
-import {
-  MessageNotificationTypeEnum,
-  MessageOutboxService,
-} from '@libs/message'
+} from '@libs/interaction/like'
+import { MessageNotificationTypeEnum } from '@libs/message/notification'
+import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'

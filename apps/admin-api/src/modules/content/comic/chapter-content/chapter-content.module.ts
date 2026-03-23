@@ -1,4 +1,4 @@
-import { WorkModule } from '@libs/content'
+import { WorkModule } from '@libs/content/work'
 import { Module } from '@nestjs/common'
 import { ChapterContentController } from './chapter-content.controller'
 
