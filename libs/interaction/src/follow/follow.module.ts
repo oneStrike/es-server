@@ -1,4 +1,4 @@
-import { WorkAuthorModule } from '@libs/content'
+import { WorkAuthorModule } from '@libs/content/author/author.module'
 import { GrowthLedgerModule } from '@libs/growth'
 import { MessageModule } from '@libs/message'
 import { UserModule } from '@libs/user'
