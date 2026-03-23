@@ -11,7 +11,9 @@ import type {
   UpdateForumTopicLockedInput,
   UpdateForumTopicPinnedInput,
 } from './forum-topic.type'
-import { DrizzleService } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import { GrowthRuleTypeEnum, UserGrowthRewardService } from '@libs/growth'
 
 import {

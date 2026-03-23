@@ -40,6 +40,22 @@ export class BaseAppUserCountDto {
   favoriteCount!: number
 
   @NumberProperty({
+    description: '发起关注总数',
+    example: 21,
+    default: 0,
+    validation: false,
+  })
+  followingCount!: number
+
+  @NumberProperty({
+    description: '粉丝总数',
+    example: 34,
+    default: 0,
+    validation: false,
+  })
+  followersCount!: number
+
+  @NumberProperty({
     description: '论坛主题数',
     example: 12,
     default: 0,

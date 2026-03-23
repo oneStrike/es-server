@@ -1,5 +1,5 @@
+import type { Db } from '@db/core'
 import {
-  InteractionTx,
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
@@ -36,7 +36,7 @@ export class WorkComicReportResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当作品不存在时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const work = await tx.query.work.findFirst({
       where: {
         id: targetId,

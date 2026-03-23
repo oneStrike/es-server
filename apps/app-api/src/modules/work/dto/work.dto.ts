@@ -23,7 +23,15 @@ class AuthorInfoDto extends PickType(BaseAuthorDto, [
   'name',
   'type',
   'avatar',
-]) {}
+]) {
+  @BooleanProperty({
+    description: '当前用户是否已关注该作者',
+    example: true,
+    required: false,
+    validation: false,
+  })
+  isFollowed?: boolean
+}
 
 class CategoryInfoDto extends PickType(BaseCategoryDto, [
   'id',
@@ -221,6 +229,14 @@ class WorkForumSectionExtraDto {
   })
   replyCount!: number
 
+  @NumberProperty({
+    description: '关注人数',
+    example: 35,
+    required: true,
+    validation: false,
+  })
+  followersCount!: number
+
   @DateProperty({
     description: '最后发帖时间',
     example: '2026-03-16T12:00:00.000Z',
@@ -228,6 +244,14 @@ class WorkForumSectionExtraDto {
     validation: false,
   })
   lastPostAt?: Date
+
+  @BooleanProperty({
+    description: '当前用户是否已关注该板块',
+    example: true,
+    required: false,
+    validation: false,
+  })
+  isFollowed?: boolean
 }
 
 export class WorkForumSectionDto extends IntersectionType(

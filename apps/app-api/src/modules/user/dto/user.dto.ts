@@ -92,6 +92,8 @@ export class UserCountDto extends PickType(BaseAppUserCountDto, [
   'commentCount',
   'likeCount',
   'favoriteCount',
+  'followingCount',
+  'followersCount',
   'forumTopicCount',
   'commentReceivedLikeCount',
   'forumTopicReceivedLikeCount',
@@ -151,6 +153,13 @@ export class UserStatusSummaryDto {
     validation: false,
   })
   canFavorite!: boolean
+
+  @BooleanProperty({
+    description: '用户是否可以关注',
+    example: true,
+    validation: false,
+  })
+  canFollow!: boolean
 
   @StringProperty({
     description: '限制原因',

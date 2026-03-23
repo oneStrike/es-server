@@ -1,5 +1,5 @@
+import type { Db } from '@db/core'
 import {
-  InteractionTx,
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
@@ -36,7 +36,7 @@ export class ForumTopicReportResolver
    * @returns 包含场景类型、场景ID和主题作者的元数据对象
    * @throws NotFoundException 当主题不存在时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,

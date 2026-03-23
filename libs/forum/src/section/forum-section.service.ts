@@ -9,11 +9,16 @@ import type {
 import { DrizzleService } from '@db/core'
 
 import {
+  FollowService,
+  FollowTargetTypeEnum,
+} from '@libs/interaction'
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq, ilike, isNull } from 'drizzle-orm'
+import { ForumCounterService } from '../counter'
 import { ForumPermissionService } from '../permission'
 
 /**
@@ -25,6 +30,8 @@ export class ForumSectionService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly forumPermissionService: ForumPermissionService,
+    private readonly followService: FollowService,
+    private readonly forumCounterService: ForumCounterService,
   ) {}
 
   private get db() {
@@ -41,6 +48,17 @@ export class ForumSectionService {
 
   get forumLevelRule() {
     return this.drizzle.schema.userLevelRule
+  }
+
+  private async processIdsInBatches(
+    ids: number[],
+    batchSize: number,
+    handler: (batchIds: number[]) => Promise<void>,
+  ) {
+    for (let index = 0; index < ids.length; index += batchSize) {
+      const batchIds = ids.slice(index, index + batchSize)
+      await handler(batchIds)
+    }
   }
 
   /**
@@ -95,6 +113,7 @@ export class ForumSectionService {
         topicReviewPolicy: true,
         topicCount: true,
         replyCount: true,
+        followersCount: true,
         lastPostAt: true,
       },
       with: {
@@ -112,7 +131,7 @@ export class ForumSectionService {
       orderBy: (section, { asc }) => [asc(section.sortOrder), asc(section.id)],
     })
 
-    return sections
+    const visibleSections = sections
       .filter(
         (section) =>
           !section.groupId || this.isAvailablePublicGroup(section.group),
@@ -130,6 +149,24 @@ export class ForumSectionService {
         )
       })
       .map(({ group, ...section }) => section)
+
+    if (!query.userId || visibleSections.length === 0) {
+      return visibleSections.map((section) => ({
+        ...section,
+        isFollowed: false,
+      }))
+    }
+
+    const followStatusMap = await this.followService.checkStatusBatch(
+      FollowTargetTypeEnum.FORUM_SECTION,
+      visibleSections.map((section) => section.id),
+      query.userId,
+    )
+
+    return visibleSections.map((section) => ({
+      ...section,
+      isFollowed: followStatusMap.get(section.id) ?? false,
+    }))
   }
 
   /**
@@ -162,6 +199,7 @@ export class ForumSectionService {
         topicReviewPolicy: true,
         topicCount: true,
         replyCount: true,
+        followersCount: true,
         lastPostAt: true,
       },
       with: {
@@ -205,9 +243,18 @@ export class ForumSectionService {
       }
     }
 
+    const followStatus = userId
+      ? await this.followService.checkFollowStatus({
+          targetType: FollowTargetTypeEnum.FORUM_SECTION,
+          targetId: id,
+          userId,
+        })
+      : undefined
+
     return {
       ...data,
       group: publicGroup,
+      isFollowed: followStatus?.isFollowing ?? false,
     }
   }
 
@@ -346,6 +393,47 @@ export class ForumSectionService {
       : null
 
     return { ...section, group }
+  }
+
+  /**
+   * 重建板块关注人数。
+   * 用于管理端修复入口与离线运维场景。
+   */
+  async rebuildSectionFollowersCount(id: number) {
+    const result = await this.forumCounterService.rebuildSectionFollowersCount(
+      undefined,
+      id,
+    )
+    return {
+      id: result.sectionId,
+      followersCount: result.followersCount,
+    }
+  }
+
+  /**
+   * 全量重建板块关注人数。
+   * 当前用于管理端运维入口，按批次串行推进以避免单次压力过大。
+   */
+  async rebuildAllSectionFollowersCount(batchSize = 200) {
+    const sectionIds = await this.db
+      .select({ id: this.forumSection.id })
+      .from(this.forumSection)
+      .where(isNull(this.forumSection.deletedAt))
+      .orderBy(this.forumSection.id)
+      .then((rows) => rows.map((row) => row.id))
+
+    await this.processIdsInBatches(sectionIds, batchSize, async (ids) => {
+      await Promise.all(
+        ids.map(async (sectionId) =>
+          this.forumCounterService.rebuildSectionFollowersCount(
+            undefined,
+            sectionId,
+          ),
+        ),
+      )
+    })
+
+    return true
   }
 
   /**

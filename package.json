@@ -23,6 +23,7 @@
     "test:e2e": "jest --config ./apps/akaiito-server-nestjs/test/jest-e2e.json",
     "publish-api:admin": "node publish-api.ts --app admin",
     "publish-api:app": "tsx publish-api.ts --app app",
+    "db:repair:follow-counts": "tsx scripts/rebuild-follow-counts.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx --env-file=.env db/seed/index.ts",

@@ -88,6 +88,17 @@ export class AppUserService {
     return this.drizzle.schema.userBadge
   }
 
+  private async processIdsInBatches(
+    ids: number[],
+    batchSize: number,
+    handler: (batchIds: number[]) => Promise<void>,
+  ) {
+    for (let index = 0; index < ids.length; index += batchSize) {
+      const batchIds = ids.slice(index, index + batchSize)
+      await handler(batchIds)
+    }
+  }
+
   /**
    * 获取 APP 用户分页列表
    */
@@ -160,6 +171,8 @@ export class AppUserService {
               commentCount: this.appUserCount.commentCount,
               likeCount: this.appUserCount.likeCount,
               favoriteCount: this.appUserCount.favoriteCount,
+              followingCount: this.appUserCount.followingCount,
+              followersCount: this.appUserCount.followersCount,
               forumTopicCount: this.appUserCount.forumTopicCount,
               commentReceivedLikeCount:
                 this.appUserCount.commentReceivedLikeCount,
@@ -188,6 +201,8 @@ export class AppUserService {
           commentCount: countMap.get(item.id)?.commentCount ?? 0,
           likeCount: countMap.get(item.id)?.likeCount ?? 0,
           favoriteCount: countMap.get(item.id)?.favoriteCount ?? 0,
+          followingCount: countMap.get(item.id)?.followingCount ?? 0,
+          followersCount: countMap.get(item.id)?.followersCount ?? 0,
           forumTopicCount: countMap.get(item.id)?.forumTopicCount ?? 0,
           commentReceivedLikeCount:
             countMap.get(item.id)?.commentReceivedLikeCount ?? 0,
@@ -447,6 +462,40 @@ export class AppUserService {
         .where(and(eq(this.appUser.id, dto.id), isNull(this.appUser.deletedAt))),
     )
     this.drizzle.assertAffectedRows(rows, '用户不存在')
+    return true
+  }
+
+  /**
+   * 重建 APP 用户关注相关计数。
+   * 当前仅回填 followingCount / followersCount。
+   */
+  async rebuildAppUserFollowCounts(adminUserId: number, userId: number) {
+    await this.ensureSuperAdmin(adminUserId)
+    await this.userCoreService.ensureUserExists(userId)
+    return this.appUserCountService.rebuildFollowCounts(undefined, userId)
+  }
+
+  /**
+   * 全量重建 APP 用户关注相关计数。
+   * 当前仅回填 followingCount / followersCount。
+   */
+  async rebuildAllAppUserFollowCounts(adminUserId: number, batchSize = 200) {
+    await this.ensureSuperAdmin(adminUserId)
+    const userIds = await this.db
+      .select({ id: this.appUser.id })
+      .from(this.appUser)
+      .where(isNull(this.appUser.deletedAt))
+      .orderBy(this.appUser.id)
+      .then((rows) => rows.map((row) => row.id))
+
+    await this.processIdsInBatches(userIds, batchSize, async (ids) => {
+      await Promise.all(
+        ids.map(async (userId) =>
+          this.appUserCountService.rebuildFollowCounts(undefined, userId),
+        ),
+      )
+    })
+
     return true
   }
 

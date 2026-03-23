@@ -1,8 +1,8 @@
+import type { Db } from '@db/core'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
-  InteractionTx,
 } from '@libs/interaction'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
@@ -40,7 +40,7 @@ export class ForumTopicCommentResolver
    * @param _delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(
-    _tx: InteractionTx,
+    _tx: Db,
     _targetId: number,
     _delta: number,
   ) {}
@@ -53,7 +53,7 @@ export class ForumTopicCommentResolver
    * @param targetId - 目标帖子ID
    * @throws 当帖子不存在或被锁定时抛出 BadRequestException
    */
-  async ensureCanComment(tx: InteractionTx, targetId: number) {
+  async ensureCanComment(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
@@ -89,7 +89,7 @@ export class ForumTopicCommentResolver
    * @param targetId - 目标帖子ID
    * @returns 目标元信息，包含所有者用户ID
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
@@ -119,7 +119,7 @@ export class ForumTopicCommentResolver
   }
 
   async postCommentHook(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     _actorUserId: number,
     meta: { sectionId?: number },
@@ -133,7 +133,7 @@ export class ForumTopicCommentResolver
   }
 
   async postDeleteCommentHook(
-    tx: InteractionTx,
+    tx: Db,
     comment: {
       userId: number
       targetId: number

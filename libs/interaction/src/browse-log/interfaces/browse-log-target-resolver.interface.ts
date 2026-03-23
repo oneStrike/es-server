@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../../interaction-tx.type'
+import type { Db } from '@db/core'
 import type { BrowseLogTargetTypeEnum } from '../browse-log.constant'
 
 /**
@@ -16,7 +16,7 @@ export interface IBrowseLogTargetResolver {
    * @param delta - 变更量
    */
   applyCountDelta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) => Promise<void>
@@ -27,7 +27,7 @@ export interface IBrowseLogTargetResolver {
    * @param targetId - 目标ID
    */
   ensureTargetValid: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
   ) => Promise<void>
 }

@@ -1,9 +1,11 @@
-import { DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
   IBrowseLogTargetResolver,
-  InteractionTx,
 } from '@libs/interaction'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
@@ -46,7 +48,7 @@ export class WorkComicBrowseLogResolver
    * @param delta - 变更量
    */
   applyCountDelta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) => Promise<void> = async (tx, targetId, delta) => {
@@ -80,7 +82,7 @@ export class WorkComicBrowseLogResolver
    * @throws 当作品不存在时抛出 BadRequestException
    */
   ensureTargetValid: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
   ) => Promise<void> = async (tx, targetId) => {
     const work = await tx

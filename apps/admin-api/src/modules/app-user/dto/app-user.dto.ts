@@ -39,6 +39,8 @@ export class AdminAppUserCountDto extends PickType(BaseAppUserCountDto, [
   'commentCount',
   'likeCount',
   'favoriteCount',
+  'followingCount',
+  'followersCount',
   'forumTopicCount',
   'commentReceivedLikeCount',
   'forumTopicReceivedLikeCount',
@@ -206,6 +208,11 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
 }
 
 export class QueryAdminAppUserIdDto extends UserIdDto {}
+
+export class AdminAppUserFollowCountRepairResultDto extends IntersectionType(
+  UserIdDto,
+  PickType(AdminAppUserCountDto, ['followingCount', 'followersCount'] as const),
+) {}
 
 export class CreateAdminAppUserDto extends IntersectionType(
   PickType(BaseAdminAppUserDto, ['nickname'] as const),

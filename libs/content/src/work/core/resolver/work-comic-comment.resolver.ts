@@ -1,10 +1,12 @@
-import { DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import { work, workAuthorRelation } from '@db/schema'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
-  InteractionTx,
 } from '@libs/interaction'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
@@ -42,7 +44,7 @@ export class WorkComicCommentResolver
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {
@@ -86,7 +88,7 @@ export class WorkComicCommentResolver
    * @param targetId - 目标作品ID
    * @throws 当作品不存在或不允许评论时抛出 BadRequestException
    */
-  async ensureCanComment(tx: InteractionTx, targetId: number) {
+  async ensureCanComment(tx: Db, targetId: number) {
     const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
@@ -113,7 +115,7 @@ export class WorkComicCommentResolver
    * @param targetId - 目标作品ID
    * @returns 目标元信息，包含所有者用户ID
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const [author] = await tx
       .select({
         authorId: workAuthorRelation.authorId,

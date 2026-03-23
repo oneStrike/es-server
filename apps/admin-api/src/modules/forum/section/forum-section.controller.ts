@@ -8,6 +8,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   CreateForumSectionDto,
+  ForumSectionFollowCountRepairResultDto,
   QueryForumSectionDto,
   UpdateForumSectionDto,
 } from './dto/forum-section.dto'
@@ -77,6 +78,24 @@ export class ForumSectionController {
   })
   async updateEnabledStatus(@Body() dto: UpdateEnabledStatusDto) {
     return this.forumSectionService.updateEnabledStatus(dto)
+  }
+
+  @Post('rebuild-follow-count')
+  @ApiDoc({
+    summary: '重建板块关注计数',
+    model: ForumSectionFollowCountRepairResultDto,
+  })
+  async rebuildFollowCount(@Body() dto: IdDto) {
+    return this.forumSectionService.rebuildSectionFollowersCount(dto.id)
+  }
+
+  @Post('rebuild-follow-count-all')
+  @ApiDoc({
+    summary: '全量重建板块关注计数',
+    model: Boolean,
+  })
+  async rebuildFollowCountAll() {
+    return this.forumSectionService.rebuildAllSectionFollowersCount()
   }
 
   @Post('swap-sort-order')

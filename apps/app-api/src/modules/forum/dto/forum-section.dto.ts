@@ -2,7 +2,7 @@ import {
   BaseForumSectionDto,
   BaseForumSectionGroupDto,
 } from '@libs/forum'
-import { NestedProperty } from '@libs/platform/decorators'
+import { BooleanProperty, NestedProperty } from '@libs/platform/decorators'
 import { PartialType, PickType } from '@nestjs/swagger'
 
 export class QueryAppForumSectionDto extends PartialType(
@@ -26,8 +26,16 @@ export class AppForumSectionListItemDto extends PickType(BaseForumSectionDto, [
   'topicReviewPolicy',
   'topicCount',
   'replyCount',
+  'followersCount',
   'lastPostAt',
-] as const) {}
+] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已关注该板块',
+    example: true,
+    validation: false,
+  })
+  isFollowed!: boolean
+}
 
 export class AppForumSectionDetailDto extends AppForumSectionListItemDto {
   @NestedProperty({

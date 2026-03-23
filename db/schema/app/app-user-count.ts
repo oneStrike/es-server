@@ -24,6 +24,16 @@ export const appUserCount = pgTable(
      */
     favoriteCount: integer().default(0).notNull(),
     /**
+     * 发起关注总数
+     * 当前统一统计所有关注目标
+     */
+    followingCount: integer().default(0).notNull(),
+    /**
+     * 被关注总数
+     * 当前仅统计其他用户对本用户的关注
+     */
+    followersCount: integer().default(0).notNull(),
+    /**
      * 发布的论坛主题总数
      */
     forumTopicCount: integer().default(0).notNull(),

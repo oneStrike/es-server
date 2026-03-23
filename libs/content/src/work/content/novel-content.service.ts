@@ -1,6 +1,9 @@
 import type { FastifyRequest } from 'fastify'
-import { DrizzleService } from '@db/core'
-import { ReadingStateService } from '@libs/interaction'
+import {
+  DrizzleService
+ } from '@db/core'
+import { ReadingStateService,
+} from '@libs/interaction'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { UploadService } from '@libs/platform/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'

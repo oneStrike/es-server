@@ -61,6 +61,10 @@ export const forumSection = pgTable("forum_section", {
    */
   replyCount: integer().default(0).notNull(),
   /**
+   * 关注人数
+   */
+  followersCount: integer().default(0).notNull(),
+  /**
    * 最后发表时间
    */
   lastPostAt: timestamp({ withTimezone: true, precision: 6 }),

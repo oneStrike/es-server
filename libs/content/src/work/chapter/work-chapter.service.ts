@@ -1,4 +1,6 @@
-import { DrizzleService } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import {
   CommentTargetTypeEnum,
   DownloadService,

@@ -12,6 +12,7 @@ import {
   AdminAppUserDetailDto,
   AdminAppUserExperienceRecordDto,
   AdminAppUserExperienceStatsDto,
+  AdminAppUserFollowCountRepairResultDto,
   AdminAppUserPageItemDto,
   AdminAppUserPointRecordDto,
   AdminAppUserPointStatsDto,
@@ -165,6 +166,35 @@ export class AppUserController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.appUserService.restoreAppUser(userId, body.id)
+  }
+
+  @Post('rebuild-follow-count')
+  @ApiDoc({
+    summary: '重建 APP 用户关注计数',
+    model: AdminAppUserFollowCountRepairResultDto,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '重建 APP 用户关注计数',
+  })
+  async rebuildFollowCount(
+    @Body() body: QueryAdminAppUserIdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appUserService.rebuildAppUserFollowCounts(userId, body.userId)
+  }
+
+  @Post('rebuild-follow-count-all')
+  @ApiDoc({
+    summary: '全量重建 APP 用户关注计数',
+    model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '全量重建 APP 用户关注计数',
+  })
+  async rebuildFollowCountAll(@CurrentUser('sub') userId: number) {
+    return this.appUserService.rebuildAllAppUserFollowCounts(userId)
   }
 
   @Post('password/reset')

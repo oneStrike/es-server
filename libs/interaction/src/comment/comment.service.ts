@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../interaction-tx.type'
+import type { Db } from '@db/core'
 import type {
   CommentVisibleState,
   CreateCommentInput,
@@ -165,7 +165,7 @@ export class CommentService {
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   private async applyCommentCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetType: CommentTargetTypeEnum,
     targetId: number,
     delta: number,
@@ -234,7 +234,7 @@ export class CommentService {
    * @param comment - 可见评论的载荷数据
    */
   private async compensateVisibleCommentEffects(
-    tx: InteractionTx,
+    tx: Db,
     comment: VisibleCommentEffectPayload,
     _meta: CommentTargetMeta,
   ) {

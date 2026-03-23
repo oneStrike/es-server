@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../../interaction-tx.type'
+import type { Db } from '@db/core'
 import {
   CommentLevelEnum,
   InteractionTargetTypeEnum,
@@ -49,7 +49,7 @@ export class CommentReportResolver
    * @throws NotFoundException 当评论不存在时抛出异常
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const comment = await tx.query.userComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: {

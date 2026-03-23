@@ -1,4 +1,4 @@
-import type { InteractionTx } from './interaction-tx.type'
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 import {
@@ -246,7 +246,7 @@ export class InteractionTargetAccessService {
    * })
    */
   async applyTargetCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetType: InteractionTargetTypeEnum,
     targetId: number,
     field: string,

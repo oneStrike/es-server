@@ -39,3 +39,8 @@ export class QueryForumSectionDto extends IntersectionType(
     ] as const),
   ),
 ) {}
+
+export class ForumSectionFollowCountRepairResultDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumSectionDto, ['followersCount'] as const),
+) {}

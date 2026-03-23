@@ -1,5 +1,5 @@
+import type { Db } from '@db/core'
 import type { ContentTypeEnum } from '@libs/platform/constant'
-import type { InteractionTx } from '../../interaction-tx.type'
 
 /**
  * 阅读状态中使用的章节快照
@@ -41,7 +41,7 @@ export interface IReadingStateResolver {
    * @param chapterId - 章节ID
    */
   resolveChapterSnapshot: (
-    tx: InteractionTx | undefined,
+    tx: Db | undefined,
     workId: number,
     chapterId: number,
   ) => Promise<ReadingStateChapterSnapshot | undefined>

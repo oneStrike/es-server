@@ -1,6 +1,6 @@
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import {
-  InteractionTx,
   IPurchaseTargetResolver,
   PurchaseService,
   PurchaseTargetTypeEnum,
@@ -80,7 +80,7 @@ export class WorkNovelChapterPurchaseResolver
    * 更新购买计数
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {

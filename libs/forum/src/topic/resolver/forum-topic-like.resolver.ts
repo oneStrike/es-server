@@ -1,7 +1,9 @@
-import { DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import {
   ILikeTargetResolver,
-  InteractionTx,
   LikeService,
   LikeTargetMeta,
   LikeTargetTypeEnum,
@@ -48,7 +50,7 @@ export class ForumTopicLikeResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当主题不存在时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
@@ -85,7 +87,7 @@ export class ForumTopicLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {
@@ -122,7 +124,7 @@ export class ForumTopicLikeResolver
    * @param _meta - 点赞目标元数据（本场景未使用）
    */
   async postLikeHook(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     actorUserId: number,
     _meta: LikeTargetMeta,

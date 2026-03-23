@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../interaction-tx.type'
+import type { Db } from '@db/core'
 import type {
   CreateReportInput,
   CreateUserReportInput,
@@ -92,7 +92,7 @@ export class ReportService {
 
     const resolver = this.getResolver(targetType)
 
-    const report = await this.drizzle.withTransaction(async (tx: InteractionTx) => {
+    const report = await this.drizzle.withTransaction(async (tx: Db) => {
       await this.ensureReporterExists(reporterId)
       const targetMeta = await resolver.resolveMeta(tx, targetId)
 
@@ -193,7 +193,7 @@ export class ReportService {
    * @returns 创建的举报记录
    */
   private async createUserReport(
-    tx: InteractionTx,
+    tx: Db,
     dto: CreateUserReportInput,
     options: CreateUserReportOptions = {},
   ) {

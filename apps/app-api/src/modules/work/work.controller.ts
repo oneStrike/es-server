@@ -33,46 +33,58 @@ export class WorkController {
   ) {}
 
   @Get('hot/page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询热门作品',
     model: PageWorkDto,
   })
-  async getAvailable(@Query() query: QueryWorkTypeDto) {
-    return this.workService.getHotWorkPage(query)
+  async getAvailable(
+    @Query() query: QueryWorkTypeDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.workService.getHotWorkPage(query, userId)
   }
 
   @Get('new/page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询最新作品',
     model: PageWorkDto,
   })
-  async getNewWorkPage(@Query() query: QueryWorkTypeDto) {
-    return this.workService.getNewWorkPage(query)
+  async getNewWorkPage(
+    @Query() query: QueryWorkTypeDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.workService.getNewWorkPage(query, userId)
   }
 
   @Get('recommended/page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询推荐作品',
     model: PageWorkDto,
   })
-  async getRecommendedWorkPage(@Query() query: QueryWorkTypeDto) {
-    return this.workService.getRecommendedWorkPage(query)
+  async getRecommendedWorkPage(
+    @Query() query: QueryWorkTypeDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.workService.getRecommendedWorkPage(query, userId)
   }
 
   @Get('page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询作品列表',
     model: PageWorkDto,
   })
-  async getWorkPage(@Query() query: QueryWorkDto) {
+  async getWorkPage(
+    @Query() query: QueryWorkDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
     return this.workService.getWorkPage({
       ...query,
       isPublished: true,
-    })
+    }, userId)
   }
 
   @Get('detail')
@@ -94,13 +106,16 @@ export class WorkController {
   }
 
   @Get('forum-section/detail')
-  @Public()
+  @OptionalAuth()
   @ApiDoc({
     summary: '查询作品关联板块详情',
     model: WorkForumSectionDto,
   })
-  async getWorkForumSection(@Query() query: IdDto) {
-    return this.workService.getWorkForumSection(query.id)
+  async getWorkForumSection(
+    @Query() query: IdDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.workService.getWorkForumSection(query.id, userId)
   }
 
   @Get('comment/page')

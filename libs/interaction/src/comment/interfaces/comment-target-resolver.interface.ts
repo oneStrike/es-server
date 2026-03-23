@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../../interaction-tx.type'
+import type { Db } from '@db/core'
 import type { CommentTargetTypeEnum } from '../comment.constant'
 
 /**
@@ -31,7 +31,7 @@ export interface ICommentTargetResolver {
    * @throws 当不允许评论时抛出 BadRequestException
    */
   ensureCanComment: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
   ) => Promise<void>
 
@@ -43,7 +43,7 @@ export interface ICommentTargetResolver {
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   applyCountDelta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) => Promise<void>
@@ -57,7 +57,7 @@ export interface ICommentTargetResolver {
    * @returns 目标元信息
    */
   resolveMeta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
   ) => Promise<CommentTargetMeta>
 
@@ -71,7 +71,7 @@ export interface ICommentTargetResolver {
    * @param meta - 目标元信息
    */
   postCommentHook?: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     actorUserId: number,
     meta: CommentTargetMeta,
@@ -82,7 +82,7 @@ export interface ICommentTargetResolver {
    * 在事务内执行，可用于同步回复计数、最后回复时间等派生字段
    */
   postDeleteCommentHook?: (
-    tx: InteractionTx,
+    tx: Db,
     comment: {
       id: number
       userId: number

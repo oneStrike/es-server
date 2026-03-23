@@ -117,6 +117,7 @@ export class UserService {
       canReply: canInteract,
       canLike: canInteract,
       canFavorite: canInteract,
+      canFollow: canInteract,
       reason,
       until: user.banUntil ?? undefined,
     }

@@ -1,9 +1,11 @@
-import { DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import {
   DownloadService,
   DownloadTargetTypeEnum,
   IDownloadTargetResolver,
-  InteractionTx,
 } from '@libs/interaction'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
@@ -39,7 +41,7 @@ export class WorkComicChapterDownloadResolver
   /**
    * 检查下载权限并获取内容
    */
-  async ensureDownloadable(tx: InteractionTx, targetId: number) {
+  async ensureDownloadable(tx: Db, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
@@ -64,7 +66,7 @@ export class WorkComicChapterDownloadResolver
    * 更新下载计数
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {

@@ -10,6 +10,7 @@ import { BrowseLogModule } from './browse-log/browse-log.module'
 import { CommentModule } from './comment/comment.module'
 import { DownloadModule } from './download/download.module'
 import { FavoriteModule } from './favorite/favorite.module'
+import { FollowModule } from './follow/follow.module'
 import { LikeModule } from './like/like.module'
 import { PurchaseModule } from './purchase/purchase.module'
 import { ReadingStateModule } from './reading-state/reading-state.module'
@@ -21,6 +22,7 @@ import { UserAssetsModule } from './user-assets/user-assets.module'
   imports: [
     LikeModule,
     FavoriteModule,
+    FollowModule,
     BrowseLogModule,
     ReadingStateModule,
     CommentModule,
@@ -32,6 +34,7 @@ import { UserAssetsModule } from './user-assets/user-assets.module'
   exports: [
     LikeModule,
     FavoriteModule,
+    FollowModule,
     BrowseLogModule,
     ReadingStateModule,
     CommentModule,

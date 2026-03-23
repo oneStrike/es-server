@@ -1,10 +1,12 @@
-import { DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import { work } from '@db/schema'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
-  InteractionTx,
 } from '@libs/interaction'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
@@ -44,7 +46,7 @@ export class WorkNovelFavoriteResolver
    * @returns 空对象（收藏服务要求的接口规范）
    * @throws BadRequestException 当作品不存在时抛出异常
    */
-  async ensureExists(tx: InteractionTx, targetId: number) {
+  async ensureExists(tx: Db, targetId: number) {
     const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
@@ -70,7 +72,7 @@ export class WorkNovelFavoriteResolver
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {

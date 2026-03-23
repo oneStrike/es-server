@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../../interaction-tx.type'
+import type { Db } from '@db/core'
 import type { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 export interface IFavoriteTargetResolver {
@@ -15,7 +15,7 @@ export interface IFavoriteTargetResolver {
    * @throws BadRequestException 如果目标不存在
    */
   ensureExists: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
   ) => Promise<{ ownerUserId?: number }>
 
@@ -26,7 +26,7 @@ export interface IFavoriteTargetResolver {
    * @param delta 增量 (+1 或 -1)
    */
   applyCountDelta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) => Promise<void>
@@ -35,7 +35,7 @@ export interface IFavoriteTargetResolver {
    * 收藏成功的后续钩子（在事务内执行，主要用于发送入库消息）
    */
   postFavoriteHook?: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     actorUserId: number,
     options: { ownerUserId?: number },

@@ -1,5 +1,8 @@
-import { UserPermissionModule, UserPointModule } from '@libs/growth'
-import { InteractionModule, ReportModule } from '@libs/interaction'
+import {
+  UserPermissionModule,
+  UserPointModule
+ } from '@libs/growth'
+import { InteractionModule, ReportModule,} from '@libs/interaction'
 import { UploadModule } from '@libs/platform/modules'
 import { SystemConfigModule } from '@libs/system-config'
 

@@ -1,13 +1,15 @@
 import type { Db } from '@db/core'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { Injectable } from '@nestjs/common'
-import { and, eq, gte, sql } from 'drizzle-orm'
+import { applyCountDelta } from '@db/extensions'
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { and, eq, sql } from 'drizzle-orm'
 
 type AppUserCountField =
   | 'commentCount'
   | 'likeCount'
   | 'favoriteCount'
+  | 'followingCount'
+  | 'followersCount'
   | 'forumTopicCount'
   | 'commentReceivedLikeCount'
   | 'forumTopicReceivedLikeCount'
@@ -19,6 +21,12 @@ type AppUserCountField =
  */
 @Injectable()
 export class AppUserCountService {
+  /**
+   * 关注用户目标类型值。
+   * 与 follow 模块解耦，避免用户域反向依赖 interaction follow 常量。
+   */
+  private readonly userFollowTargetType = 1
+
   constructor(private readonly drizzle: DrizzleService) {}
 
   private get db() {
@@ -29,16 +37,8 @@ export class AppUserCountService {
     return this.drizzle.schema.appUserCount
   }
 
-  private async executeCountUpdate(
-    tx: Db | undefined,
-    operation: (client: Db) => Promise<{ rowCount?: number | null } | unknown[]>,
-    message: string,
-  ) {
-    const client = tx ?? this.db
-    const result = tx
-      ? await operation(client)
-      : await this.drizzle.withErrorHandling(async () => operation(client))
-    this.drizzle.assertAffectedRows(result, message)
+  private get userFollow() {
+    return this.drizzle.schema.userFollow
   }
 
   /**
@@ -51,6 +51,8 @@ export class AppUserCountService {
         commentCount: this.appUserCount.commentCount,
         likeCount: this.appUserCount.likeCount,
         favoriteCount: this.appUserCount.favoriteCount,
+        followingCount: this.appUserCount.followingCount,
+        followersCount: this.appUserCount.followersCount,
         forumTopicCount: this.appUserCount.forumTopicCount,
         commentReceivedLikeCount: this.appUserCount.commentReceivedLikeCount,
         forumTopicReceivedLikeCount:
@@ -68,6 +70,8 @@ export class AppUserCountService {
       commentCount: counts?.commentCount ?? 0,
       likeCount: counts?.likeCount ?? 0,
       favoriteCount: counts?.favoriteCount ?? 0,
+      followingCount: counts?.followingCount ?? 0,
+      followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
       forumTopicReceivedLikeCount:
@@ -87,6 +91,8 @@ export class AppUserCountService {
       commentCount: 0,
       likeCount: 0,
       favoriteCount: 0,
+      followingCount: 0,
+      followersCount: 0,
       forumTopicCount: 0,
       commentReceivedLikeCount: 0,
       forumTopicReceivedLikeCount: 0,
@@ -107,31 +113,27 @@ export class AppUserCountService {
     if (delta === 0) {
       return
     }
-    const column = this.appUserCount[field]
-    const amount = Math.abs(delta)
-    const setValue: Partial<Record<AppUserCountField, SQL>> = {
-      [field]: delta > 0 ? sql`${column} + ${delta}` : sql`${column} - ${amount}`,
-    }
+    const execute = async (client: Db) =>
+      applyCountDelta(
+        client,
+        this.appUserCount,
+        eq(this.appUserCount.userId, userId),
+        field,
+        delta,
+      )
 
-    await this.executeCountUpdate(
-      tx,
-      (client) =>
-        delta > 0
-          ? client
-              .update(this.appUserCount)
-              .set(setValue)
-              .where(eq(this.appUserCount.userId, userId))
-          : client
-              .update(this.appUserCount)
-              .set(setValue)
-              .where(
-                and(
-                  eq(this.appUserCount.userId, userId),
-                  gte(column, amount),
-                ),
-              ),
-      message,
-    )
+    try {
+      if (tx) {
+        await execute(tx)
+        return
+      }
+      await this.drizzle.withErrorHandling(async () => execute(this.db))
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(message)
+      }
+      throw error
+    }
   }
 
   /**
@@ -165,6 +167,84 @@ export class AppUserCountService {
     delta: number,
   ) {
     await this.updateCountField(tx, userId, 'favoriteCount', delta)
+  }
+
+  /**
+   * 更新用户发起关注数量
+   */
+  async updateFollowingCount(
+    tx: Db | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    await this.updateCountField(tx, userId, 'followingCount', delta)
+  }
+
+  /**
+   * 更新用户粉丝数量
+   */
+  async updateFollowersCount(
+    tx: Db | undefined,
+    userId: number,
+    delta: number,
+  ) {
+    await this.updateCountField(tx, userId, 'followersCount', delta)
+  }
+
+  /**
+   * 根据 follow 事实表重建用户关注相关计数。
+   * 仅回填 followingCount / followersCount，不改动其他计数字段。
+   */
+  async rebuildFollowCounts(tx: Db | undefined, userId: number) {
+    const client = tx ?? this.db
+    const [followingRow, followersRow] = await Promise.all([
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userFollow)
+        .where(eq(this.userFollow.userId, userId))
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userFollow)
+        .where(
+          and(
+            eq(this.userFollow.targetType, this.userFollowTargetType),
+            eq(this.userFollow.targetId, userId),
+          ),
+        )
+        .then((rows) => rows[0]),
+    ])
+
+    const followingCount = Number(followingRow?.count ?? 0)
+    const followersCount = Number(followersRow?.count ?? 0)
+    const persist = (executor: Db) =>
+      executor
+        .insert(this.appUserCount)
+        .values({
+          userId,
+          followingCount,
+          followersCount,
+        })
+        .onConflictDoUpdate({
+          target: this.appUserCount.userId,
+          set: {
+            followingCount,
+            followersCount,
+            updatedAt: new Date(),
+          },
+        })
+
+    if (tx) {
+      await persist(tx)
+    } else {
+      await this.drizzle.withErrorHandling(() => persist(this.db))
+    }
+
+    return {
+      userId,
+      followingCount,
+      followersCount,
+    }
   }
 
   /**

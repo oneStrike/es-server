@@ -1,5 +1,5 @@
+import type { Db } from '@db/core'
 import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
-import type { InteractionTx } from '../../interaction-tx.type'
 import type { ReportTargetTypeEnum } from '../report.constant'
 
 /**
@@ -37,7 +37,7 @@ export interface IReportTargetResolver {
    * @throws 目标不存在时抛出异常
    */
   resolveMeta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
   ) => Promise<ReportTargetMeta>
 
@@ -50,7 +50,7 @@ export interface IReportTargetResolver {
    * @param meta - 目标元信息
    */
   postReportHook?: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     reporterId: number,
     meta: ReportTargetMeta,

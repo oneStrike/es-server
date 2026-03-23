@@ -1,5 +1,5 @@
+import type { Db } from '@db/core'
 import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
-import type { InteractionTx } from '../../interaction-tx.type'
 import type { LikeTargetTypeEnum } from '../like.constant'
 
 /**
@@ -35,7 +35,7 @@ export interface ILikeTargetResolver {
    * @throws 目标不存在时抛出异常
    */
   resolveMeta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
   ) => Promise<LikeTargetMeta>
 
@@ -47,7 +47,7 @@ export interface ILikeTargetResolver {
    * @param delta - 变化量（点赞+1，取消点赞-1）
    */
   applyCountDelta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) => Promise<void>
@@ -61,7 +61,7 @@ export interface ILikeTargetResolver {
    * @param meta - 目标元信息
    */
   postLikeHook?: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     actorUserId: number,
     meta: LikeTargetMeta,

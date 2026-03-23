@@ -8,6 +8,10 @@ import type {
 } from './section-group.type'
 import { DrizzleService } from '@db/core'
 import {
+  FollowService,
+  FollowTargetTypeEnum,
+} from '@libs/interaction'
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -20,6 +24,7 @@ export class ForumSectionGroupService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly forumPermissionService: ForumPermissionService,
+    private readonly followService: FollowService,
   ) {}
 
   private get db() {
@@ -122,6 +127,7 @@ export class ForumSectionGroupService {
         topicReviewPolicy: this.forumSection.topicReviewPolicy,
         topicCount: this.forumSection.topicCount,
         replyCount: this.forumSection.replyCount,
+        followersCount: this.forumSection.followersCount,
         lastPostAt: this.forumSection.lastPostAt,
       })
       .from(this.forumSection)
@@ -137,10 +143,25 @@ export class ForumSectionGroupService {
       )
       .orderBy(asc(this.forumSection.sortOrder), asc(this.forumSection.id))
 
+    const sectionFollowStatusMap =
+      query.userId && sections.length > 0
+        ? await this.followService.checkStatusBatch(
+            FollowTargetTypeEnum.FORUM_SECTION,
+            sections.map((section) => section.id),
+            query.userId,
+          )
+        : undefined
+
     return groups
       .map((group) => ({
         ...group,
-        sections: sections.filter((section) => section.groupId === group.id),
+        sections: sections
+          .filter((section) => section.groupId === group.id)
+          .map((section) => ({
+            ...section,
+            isFollowed:
+              sectionFollowStatusMap?.get(section.id) ?? false,
+          })),
       }))
       .filter((group) => group.sections.length > 0)
   }

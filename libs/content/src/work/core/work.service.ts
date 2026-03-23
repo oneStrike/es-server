@@ -1,8 +1,12 @@
-import { DrizzleService } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import {
   BrowseLogService,
   CommentTargetTypeEnum,
   FavoriteService,
+  FollowService,
+  FollowTargetTypeEnum,
   LikeService,
   ReadingStateService,
 } from '@libs/interaction'
@@ -46,6 +50,7 @@ export class WorkService {
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
+    private readonly followService: FollowService,
     private readonly browseLogService: BrowseLogService,
     private readonly readingStateService: ReadingStateService,
   ) {}
@@ -523,13 +528,14 @@ export class WorkService {
    * @param dto 查询条件（包含类型过滤等）
    * @returns 分页的热门作品列表
    */
-  async getHotWorkPage(dto: QueryWorkTypeInput) {
-    return this.getWorkTypePage(dto, { isHot: true })
+  async getHotWorkPage(dto: QueryWorkTypeInput, userId?: number) {
+    return this.getWorkTypePage(dto, { isHot: true }, userId)
   }
 
   private async getWorkTypePage(
     dto: QueryWorkTypeInput,
     extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
+    userId?: number,
   ) {
     const page = await this.drizzle.ext.findPagination(this.work, {
       where: this.drizzle.buildWhere(this.work, {
@@ -542,7 +548,7 @@ export class WorkService {
       }),
       ...dto,
     })
-    return this.attachWorkRelations(page)
+    return this.attachWorkRelations(page, userId)
   }
 
   private async attachWorkRelations(page: {
@@ -550,7 +556,7 @@ export class WorkService {
     total: number
     pageIndex: number
     pageSize: number
-  }) {
+  }, userId?: number) {
     if (page.list.length === 0) {
       return page
     }
@@ -574,6 +580,14 @@ export class WorkService {
         with: { tag: { columns: { id: true, name: true, icon: true } } },
       }),
     ])
+    const authorIds = [...new Set(authors.map((item) => item.authorId))]
+    const authorFollowStatusMap = userId && authorIds.length > 0
+      ? await this.followService.checkStatusBatch(
+          FollowTargetTypeEnum.AUTHOR,
+          authorIds,
+          userId,
+        )
+      : new Map<number, boolean>()
 
     const authorMap = new Map<number, typeof authors>()
     const categoryMap = new Map<number, typeof categories>()
@@ -598,22 +612,48 @@ export class WorkService {
       ...page,
       list: page.list.map((item) => ({
         ...item,
-        authors: authorMap.get(item.id) ?? [],
+        authors: (authorMap.get(item.id) ?? []).map((relation) => ({
+          ...relation,
+          author: relation.author
+            ? {
+                ...relation.author,
+                isFollowed:
+                  authorFollowStatusMap.get(relation.authorId) ?? false,
+              }
+            : relation.author,
+        })),
         categories: categoryMap.get(item.id) ?? [],
         tags: tagMap.get(item.id) ?? [],
+        authorList: (authorMap.get(item.id) ?? [])
+          .map((relation) =>
+            relation.author
+              ? {
+                  ...relation.author,
+                  isFollowed:
+                    authorFollowStatusMap.get(relation.authorId) ?? false,
+                }
+              : undefined,
+          )
+          .filter(Boolean),
+        categoryList: (categoryMap.get(item.id) ?? [])
+          .map((relation) => relation.category)
+          .filter(Boolean),
+        tagList: (tagMap.get(item.id) ?? [])
+          .map((relation) => relation.tag)
+          .filter(Boolean),
       })),
     }
   }
 
-  async getNewWorkPage(dto: QueryWorkTypeInput) {
-    return this.getWorkTypePage(dto, { isNew: true })
+  async getNewWorkPage(dto: QueryWorkTypeInput, userId?: number) {
+    return this.getWorkTypePage(dto, { isNew: true }, userId)
   }
 
-  async getRecommendedWorkPage(dto: QueryWorkTypeInput) {
-    return this.getWorkTypePage(dto, { isRecommended: true })
+  async getRecommendedWorkPage(dto: QueryWorkTypeInput, userId?: number) {
+    return this.getWorkTypePage(dto, { isRecommended: true }, userId)
   }
 
-  async getWorkPage(queryWorkDto: QueryWorkInput) {
+  async getWorkPage(queryWorkDto: QueryWorkInput, userId?: number) {
     const { name, publisher, author, tagIds, ...otherDto } = queryWorkDto
     const normalizedAuthor = author?.trim()
     const normalizedName = name?.trim()
@@ -680,10 +720,10 @@ export class WorkService {
       where: and(...(conditions as [any, ...any[]])),
       ...otherDto,
     })
-    return this.attachWorkRelations(page as any)
+    return this.attachWorkRelations(page as any, userId)
   }
 
-  async getWorkForumSection(id: number) {
+  async getWorkForumSection(id: number, userId?: number) {
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
       columns: {
@@ -719,6 +759,7 @@ export class WorkService {
         topicReviewPolicy: true,
         topicCount: true,
         replyCount: true,
+        followersCount: true,
         lastPostAt: true,
       },
     })
@@ -727,7 +768,23 @@ export class WorkService {
       throw new BadRequestException('论坛板块不存在')
     }
 
-    return section
+    if (!userId) {
+      return {
+        ...section,
+        isFollowed: false,
+      }
+    }
+
+    const followStatus = await this.followService.checkFollowStatus({
+      targetType: FollowTargetTypeEnum.FORUM_SECTION,
+      targetId: section.id,
+      userId,
+    })
+
+    return {
+      ...section,
+      isFollowed: followStatus.isFollowing,
+    }
   }
 
   async getWorkCommentTarget(id: number) {
@@ -818,10 +875,16 @@ export class WorkService {
       throw new BadRequestException('作品未发布')
     }
 
+    const authorList = work.authorList.map((author) => ({
+      ...author,
+      isFollowed: false,
+    }))
+
     // 为匿名用户保持稳定的响应结构，使应用可以重用相同的DTO而无需条件解析
     if (!userId) {
       return {
         ...work,
+        authorList,
         liked: false,
         favorited: false,
         viewed: false,
@@ -829,8 +892,10 @@ export class WorkService {
     }
 
     const now = new Date()
+    const authorIds = work.authorList.map((author) => author.id)
 
-    const [liked, favorited, readingState] = await Promise.all([
+    const [liked, favorited, readingState, authorFollowStatusMap] =
+      await Promise.all([
       this.likeService.checkLikeStatus({
         targetType: work.type,
         targetId: id,
@@ -846,6 +911,13 @@ export class WorkService {
         id,
         userId,
       ),
+      authorIds.length > 0
+        ? this.followService.checkStatusBatch(
+            FollowTargetTypeEnum.AUTHOR,
+            authorIds,
+            userId,
+          )
+        : Promise.resolve(new Map<number, boolean>()),
     ])
 
     const continueChapter = readingState?.continueChapter
@@ -876,6 +948,10 @@ export class WorkService {
 
     return {
       ...work,
+      authorList: work.authorList.map((author) => ({
+        ...author,
+        isFollowed: authorFollowStatusMap.get(author.id) ?? false,
+      })),
       // 立即反映刚记录的浏览，使当前响应与持久化的计数器更新保持一致
       viewCount: work.viewCount + 1,
       liked,

@@ -1,0 +1,109 @@
+import { FollowService } from '@libs/interaction'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import {
+  FollowPageItemDto,
+  FollowPageQueryDto,
+  FollowRecordResultDto,
+  FollowStatusResponseDto,
+  FollowTargetDto,
+  FollowUserPageItemDto,
+  FollowUserPageQueryDto,
+} from './dto/follow.dto'
+
+@ApiTags('关注')
+@Controller('app/follow')
+export class FollowController {
+  constructor(private readonly followService: FollowService) {}
+
+  @Post('follow')
+  @ApiDoc({
+    summary: '关注目标',
+    model: FollowRecordResultDto,
+  })
+  async follow(
+    @Body() body: FollowTargetDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.followService.follow({
+      ...body,
+      userId,
+    })
+  }
+
+  @Post('cancel')
+  @ApiDoc({
+    summary: '取消关注',
+    model: Boolean,
+  })
+  async unfollow(
+    @Body() body: FollowTargetDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.followService.unfollow({
+      ...body,
+      userId,
+    })
+  }
+
+  @Get('status')
+  @ApiDoc({
+    summary: '查询关注状态',
+    model: FollowStatusResponseDto,
+  })
+  async status(
+    @Query() query: FollowTargetDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.followService.checkFollowStatus({
+      ...query,
+      userId,
+    })
+  }
+
+  @Get('my/page')
+  @ApiPageDoc({
+    summary: '分页查询我的关注记录',
+    model: FollowPageItemDto,
+  })
+  async my(
+    @Query() query: FollowPageQueryDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.followService.getUserFollows({
+      ...query,
+      userId,
+    })
+  }
+
+  @Get('my/following/page')
+  @ApiPageDoc({
+    summary: '分页查询我关注的用户',
+    model: FollowUserPageItemDto,
+  })
+  async myFollowing(
+    @Query() query: FollowUserPageQueryDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.followService.getMyFollowingUserPage({
+      ...query,
+      userId,
+    })
+  }
+
+  @Get('my/follower/page')
+  @ApiPageDoc({
+    summary: '分页查询关注我的用户',
+    model: FollowUserPageItemDto,
+  })
+  async myFollower(
+    @Query() query: FollowUserPageQueryDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.followService.getMyFollowerUserPage({
+      ...query,
+      userId,
+    })
+  }
+}

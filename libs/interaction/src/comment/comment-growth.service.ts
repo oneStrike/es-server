@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../interaction-tx.type'
+import type { Db } from '@db/core'
 import { UserComment } from '@db/schema'
 import {
   GrowthAssetTypeEnum,
@@ -13,7 +13,7 @@ export class CommentGrowthService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {}
 
   async rewardCommentCreated(
-    tx: InteractionTx,
+    tx: Db,
     params: Pick<UserComment, 'userId' | 'id' | 'targetType' | 'targetId'> & { occurredAt?: Date },
   ) {
     const { userId, id: commentId, targetType, targetId, occurredAt } = params
@@ -45,7 +45,7 @@ export class CommentGrowthService {
   }
 
   async rewardCommentLiked(
-    tx: InteractionTx,
+    tx: Db,
     params: Pick<UserComment, 'id' | 'userId'> & { likerUserId: number },
   ) {
     const { id: commentId, userId: authorUserId, likerUserId } = params

@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../../interaction-tx.type'
+import type { Db } from '@db/core'
 import type { PurchaseTargetTypeEnum } from '../purchase.constant'
 
 /**
@@ -23,7 +23,7 @@ export interface IPurchaseTargetResolver {
    * 更新目标的购买统计数
    */
   applyCountDelta: (
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) => Promise<void>

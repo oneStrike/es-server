@@ -1,6 +1,6 @@
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import {
-  InteractionTx,
   IReadingStateResolver,
   ReadingStateService,
 } from '@libs/interaction'
@@ -50,7 +50,7 @@ export class WorkReadingStateResolver
    * 解析章节快照
    */
   async resolveChapterSnapshot(
-    _tx: InteractionTx | undefined,
+    _tx: Db | undefined,
     workId: number,
     chapterId: number,
   ) {

@@ -1,4 +1,4 @@
-import type { InteractionTx } from '../../interaction-tx.type'
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
 import {
@@ -63,7 +63,7 @@ export class CommentLikeResolver
    * @throws NotFoundException 当评论不存在时抛出异常
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const comment = await tx.query.userComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: {
@@ -112,7 +112,7 @@ export class CommentLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {
@@ -147,7 +147,7 @@ export class CommentLikeResolver
    * @param _meta - 点赞目标元数据（本场景未使用）
    */
   async postLikeHook(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     actorUserId: number,
     _meta: LikeTargetMeta,

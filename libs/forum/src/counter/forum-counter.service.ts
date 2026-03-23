@@ -1,8 +1,9 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
+import { applyCountDelta } from '@db/extensions'
 import { AppUserCountService } from '@libs/user'
 import { Injectable } from '@nestjs/common'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 /**
  * 论坛领域计数服务
@@ -10,6 +11,12 @@ import { eq, sql } from 'drizzle-orm'
  */
 @Injectable()
 export class ForumCounterService {
+  /**
+   * 关注板块目标类型值。
+   * 与 follow 模块解耦，避免论坛域反向依赖 interaction follow 常量。
+   */
+  private readonly forumSectionFollowTargetType = 3
+
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly appUserCountService: AppUserCountService,
@@ -25,6 +32,10 @@ export class ForumCounterService {
 
   get forumTopic() {
     return this.drizzle.schema.forumTopic
+  }
+
+  private get userFollow() {
+    return this.drizzle.schema.userFollow
   }
 
   private async executeCountUpdate(
@@ -193,6 +204,71 @@ export class ForumCounterService {
       userId,
       delta,
     )
+  }
+
+  /**
+   * 更新板块关注人数
+   */
+  async updateSectionFollowersCount(
+    tx: Db | undefined,
+    sectionId: number,
+    delta: number,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    const execute = async (client: Db) =>
+      applyCountDelta(
+        client,
+        this.forumSection,
+        eq(this.forumSection.id, sectionId),
+        'followersCount',
+        delta,
+      )
+
+    if (tx) {
+      await execute(tx)
+      return
+    }
+
+    await this.drizzle.withErrorHandling(async () => execute(this.db))
+  }
+
+  /**
+   * 根据 follow 事实表重建板块关注人数。
+   */
+  async rebuildSectionFollowersCount(
+    tx: Db | undefined,
+    sectionId: number,
+  ) {
+    const client = tx ?? this.db
+    const row = await client
+      .select({ count: sql<number>`count(*)::int` })
+      .from(this.userFollow)
+      .where(
+        and(
+          eq(this.userFollow.targetType, this.forumSectionFollowTargetType),
+          eq(this.userFollow.targetId, sectionId),
+        ),
+      )
+      .then((rows) => rows[0])
+
+    const followersCount = Number(row?.count ?? 0)
+    await this.executeCountUpdate(
+      tx,
+      (executor) =>
+        executor
+          .update(this.forumSection)
+          .set({ followersCount })
+          .where(eq(this.forumSection.id, sectionId)),
+      '板块不存在',
+    )
+
+    return {
+      sectionId,
+      followersCount,
+    }
   }
 
   /**

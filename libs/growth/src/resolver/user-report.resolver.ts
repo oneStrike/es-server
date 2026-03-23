@@ -1,5 +1,5 @@
+import type { Db } from '@db/core'
 import {
-  InteractionTx,
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
@@ -34,7 +34,7 @@ export class UserReportResolver implements IReportTargetResolver, OnModuleInit {
    * @returns 包含场景类型、场景ID和用户ID的元数据对象
    * @throws NotFoundException 当用户不存在时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const user = await tx.query.appUser.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: { id: true },

@@ -1,7 +1,9 @@
-import { workChapter } from '@db/schema'
+import type { Db } from '@db/core'
+import {
+  workChapter
+ } from '@db/schema'
 import {
   ILikeTargetResolver,
-  InteractionTx,
   LikeService,
   LikeTargetTypeEnum,
 } from '@libs/interaction'
@@ -41,7 +43,7 @@ export class WorkComicChapterLikeResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当章节不存在时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
       where: {
         id: targetId,
@@ -69,7 +71,7 @@ export class WorkComicChapterLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {

@@ -48,9 +48,13 @@ export async function applyCountDelta(
   // 负数增量：减少字段值，并确保不会减到负数
   // 使用 gte(column, amount) 条件保证计数器不会变成负数
   const amount = Math.abs(delta)
-  await db
+  const updated = await db
     .update(table)
     .set({ [field]: sql`${column} - ${amount}` } as any)
     .where(and(where, gte(column, amount)))
     .returning()
+
+  if (updated.length === 0) {
+    throw new NotFoundException('目标不存在或计数不足')
+  }
 }

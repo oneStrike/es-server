@@ -1,8 +1,10 @@
-import { DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import { work } from '@db/schema'
 import {
   ILikeTargetResolver,
-  InteractionTx,
   LikeService,
   LikeTargetTypeEnum,
 } from '@libs/interaction'
@@ -46,7 +48,7 @@ export class WorkNovelLikeResolver
    * @returns 包含场景类型和场景ID的元数据对象
    * @throws NotFoundException 当作品不存在时抛出异常
    */
-  async resolveMeta(tx: InteractionTx, targetId: number) {
+  async resolveMeta(tx: Db, targetId: number) {
     const target = await tx.query.work.findFirst({
       where: {
         id: targetId,
@@ -75,7 +77,7 @@ export class WorkNovelLikeResolver
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {

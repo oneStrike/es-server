@@ -6,6 +6,7 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  AuthorFollowCountRepairResultDto,
   AuthorPageResponseDto,
   BaseAuthorDto,
   CreateAuthorDto,
@@ -94,6 +95,24 @@ export class ContentAuthorController {
   })
   async updateRecommended(@Body() body: UpdateAuthorRecommendedDto) {
     return this.authorService.updateAuthorRecommended(body)
+  }
+
+  @Post('rebuild-follow-count')
+  @ApiDoc({
+    summary: '重建作者关注计数',
+    model: AuthorFollowCountRepairResultDto,
+  })
+  async rebuildFollowCount(@Body() body: IdDto) {
+    return this.authorService.rebuildAuthorFollowersCountById(body.id)
+  }
+
+  @Post('rebuild-follow-count-all')
+  @ApiDoc({
+    summary: '全量重建作者关注计数',
+    model: Boolean,
+  })
+  async rebuildFollowCountAll() {
+    return this.authorService.rebuildAllAuthorFollowersCount()
   }
 
   /**

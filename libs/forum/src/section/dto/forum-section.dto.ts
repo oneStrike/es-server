@@ -113,6 +113,15 @@ export class BaseForumSectionDto extends BaseDto {
   })
   replyCount!: number
 
+  @NumberProperty({
+    description: '关注人数',
+    example: 88,
+    required: true,
+    default: 0,
+    validation: false,
+  })
+  followersCount!: number
+
   @DateProperty({
     description: '最后发表时间',
     example: '2024-01-01T00:00:00.000Z',

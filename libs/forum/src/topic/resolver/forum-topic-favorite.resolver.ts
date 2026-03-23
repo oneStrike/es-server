@@ -1,9 +1,11 @@
-import { DrizzleService } from '@db/core'
+import type { Db } from '@db/core'
+import {
+  DrizzleService
+ } from '@db/core'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
-  InteractionTx,
 } from '@libs/interaction'
 import {
   MessageNotificationTypeEnum,
@@ -46,7 +48,7 @@ export class ForumTopicFavoriteResolver
    * @returns 包含主题所有者用户ID的对象
    * @throws BadRequestException 当主题不存在时抛出异常
    */
-  async ensureExists(tx: InteractionTx, targetId: number) {
+  async ensureExists(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
@@ -80,7 +82,7 @@ export class ForumTopicFavoriteResolver
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
   async applyCountDelta(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     delta: number,
   ) {
@@ -118,7 +120,7 @@ export class ForumTopicFavoriteResolver
    * @param options.ownerUserId - 主题所有者用户ID
    */
   async postFavoriteHook(
-    tx: InteractionTx,
+    tx: Db,
     targetId: number,
     actorUserId: number,
     options: { ownerUserId?: number },
