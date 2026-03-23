@@ -230,6 +230,7 @@ export class WorkService {
           .values({
             name: workData.name,
             description: workData.description.slice(0, 500),
+            userLevelRuleId: null,
             isEnabled: workData.isPublished ?? true,
           })
           .returning({ id: this.forumSection.id })

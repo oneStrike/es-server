@@ -1,4 +1,4 @@
-import { BaseWorkChapterDto as ContentBaseWorkChapterDto } from '@libs/content/work'
+import { BaseWorkChapterDto } from '@libs/content/work'
 import { BooleanProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
@@ -7,8 +7,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-
-export class BaseWorkChapterDto extends ContentBaseWorkChapterDto {}
 
 export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
   ...OMIT_BASE_FIELDS,

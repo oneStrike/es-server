@@ -1,7 +1,7 @@
 import { NestedProperty, StringProperty } from '@libs/platform/decorators'
 import { CaptchaDto } from '@libs/platform/modules'
 import { OmitType } from '@nestjs/swagger'
-import { BaseUserDto } from '../../admin-user/dto/admin-user.dto'
+import { BaseAdminUserDto } from '../../admin-user/dto/admin-user.dto'
 
 /**
  * RSA公钥响应DTO
@@ -71,8 +71,8 @@ export class LoginResponseDto {
   @NestedProperty({
     description: '用户信息',
     required: true,
-    type: BaseUserDto,
+    type: BaseAdminUserDto,
     validation: false,
   })
-  user: BaseUserDto
+  user: BaseAdminUserDto
 }

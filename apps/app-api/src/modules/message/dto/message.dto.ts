@@ -26,8 +26,6 @@ export class OpenDirectConversationDto {
   targetUserId!: number
 }
 
-export class QueryChatConversationListDto extends PageDto {}
-
 export class QueryChatConversationMessagesDto {
   @NumberProperty({
     description: '会话ID',
@@ -77,18 +75,14 @@ export class QueryUserNotificationListDto extends PageDto {
   type?: MessageNotificationTypeEnum
 }
 
-export class QueryInboxTimelineDto extends PageDto {}
-
-export class ChatPeerDto extends BaseChatPeerDto {}
-
 export class ChatConversationDto extends BaseChatConversationDto {
   @NestedProperty({
     description: '对端用户',
-    type: ChatPeerDto,
+    type: BaseChatPeerDto,
     required: false,
     validation: false,
   })
-  declare peerUser?: ChatPeerDto
+  declare peerUser?: BaseChatPeerDto
 }
 
 export class ChatConversationMessagesResponseDto {

@@ -1,15 +1,14 @@
 import { FollowService } from '@libs/interaction/follow'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   FollowPageItemDto,
   FollowPageQueryDto,
-  FollowRecordResultDto,
   FollowStatusResponseDto,
   FollowTargetDto,
   FollowUserPageItemDto,
-  FollowUserPageQueryDto,
 } from './dto/follow.dto'
 
 @ApiTags('关注')
@@ -20,7 +19,7 @@ export class FollowController {
   @Post('follow')
   @ApiDoc({
     summary: '关注目标',
-    model: FollowRecordResultDto,
+    model: IdDto,
   })
   async follow(
     @Body() body: FollowTargetDto,
@@ -83,7 +82,7 @@ export class FollowController {
     model: FollowUserPageItemDto,
   })
   async myFollowing(
-    @Query() query: FollowUserPageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.followService.getMyFollowingUserPage({
@@ -98,7 +97,7 @@ export class FollowController {
     model: FollowUserPageItemDto,
   })
   async myFollower(
-    @Query() query: FollowUserPageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.followService.getMyFollowerUserPage({

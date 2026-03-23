@@ -24,5 +24,3 @@ export class QueryMyReportPageDto extends IntersectionType(
     PickType(BaseReportDto, ['targetType', 'targetId', 'reasonType', 'status']),
   ),
 ) {}
-
-export class ReportItemDto extends BaseReportDto {}

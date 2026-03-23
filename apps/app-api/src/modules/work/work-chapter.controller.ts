@@ -14,13 +14,13 @@ import {
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { TargetCommentItemDto } from '../comment/dto/comment.dto'
 import {
   ComicChapterContentDto,
   NovelChapterContentDto,
   PageWorkChapterDto,
   QueryWorkChapterCommentPageDto,
   QueryWorkChapterDto,
-  WorkChapterCommentItemDto,
   WorkChapterDetailWithUserStatusDto,
 } from './dto/work-chapter.dto'
 
@@ -61,7 +61,7 @@ export class WorkChapterController {
   @Public()
   @ApiPageDoc({
     summary: '分页查询章节评论',
-    model: WorkChapterCommentItemDto,
+    model: TargetCommentItemDto,
   })
   async getWorkChapterCommentPage(@Query() query: QueryWorkChapterCommentPageDto) {
     const target = await this.workChapterService.getChapterCommentTarget(query.id)

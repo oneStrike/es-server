@@ -23,8 +23,6 @@ export class FollowPageQueryDto extends IntersectionType(
   PartialType(PickType(BaseFollowDto, ['targetType'] as const)),
 ) {}
 
-export class FollowUserPageQueryDto extends PageDto {}
-
 export class FollowStatusResponseDto {
   @BooleanProperty({
     description: '当前用户是否已关注目标',
@@ -47,8 +45,6 @@ export class FollowStatusResponseDto {
   })
   isMutualFollow!: boolean
 }
-
-export class FollowRecordResultDto extends IdDto {}
 
 export class FollowTargetDetailDto extends IdDto {
   @StringProperty({

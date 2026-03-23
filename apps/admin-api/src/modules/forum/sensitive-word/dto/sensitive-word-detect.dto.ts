@@ -33,16 +33,14 @@ export class SensitiveWordReplaceDto extends SensitiveWordDetectDto {
   replaceChar?: string
 }
 
-export class MatchedWordDto extends BaseSensitiveWordHitDto {}
-
 export class SensitiveWordDetectResponseDto {
   @ArrayProperty({
     description: '命中的敏感词列表',
-    itemClass: MatchedWordDto,
+    itemClass: BaseSensitiveWordHitDto,
     itemType: 'object',
     validation: false,
   })
-  hits!: MatchedWordDto[]
+  hits!: BaseSensitiveWordHitDto[]
 
   @EnumProperty({
     description: '最高敏感等级',

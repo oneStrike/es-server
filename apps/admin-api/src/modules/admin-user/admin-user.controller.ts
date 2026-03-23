@@ -6,7 +6,7 @@ import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AdminUserService } from './admin-user.service'
 import {
-  BaseUserDto,
+  BaseAdminUserDto,
   ChangePasswordDto,
   UpdateUserDto,
   UserPageDto,
@@ -58,7 +58,7 @@ export class AdminUserController {
   @Get('profile')
   @ApiDoc({
     summary: '获取当前用户信息',
-    model: BaseUserDto,
+    model: BaseAdminUserDto,
   })
   async getUserInfo(@CurrentUser('sub') userId: number) {
     return this.adminUserService.getUserInfo(userId)
@@ -70,7 +70,7 @@ export class AdminUserController {
   @Get('detail')
   @ApiDoc({
     summary: '根据ID获取用户信息',
-    model: BaseUserDto,
+    model: BaseAdminUserDto,
   })
   async getUserById(@Query() query: IdDto) {
     return this.adminUserService.getUserInfo(query.id)
@@ -82,7 +82,7 @@ export class AdminUserController {
   @Get('page')
   @ApiPageDoc({
     summary: '获取管理端用户分页列表',
-    model: BaseUserDto,
+    model: BaseAdminUserDto,
   })
   async getUsers(@Query() query: UserPageDto) {
     return this.adminUserService.getUsers(query)

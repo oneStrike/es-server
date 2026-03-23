@@ -75,6 +75,8 @@
 - 列表项、简要信息、嵌套对象优先从既有领域 DTO 通过 `PickType` 或 `OmitType` 派生。
 - 只有现有基类无法表达目标语义时，才允许局部补充字段。
 - 补充字段时保持最小化新增，避免形成第二套实体定义。
+- 禁止新增纯别名 DTO，例如 `export class XxxDto extends YyyDto {}` 这类空壳继承。
+- 需要复用现有 DTO 时直接使用原 DTO；仅为避免命名冲突时，使用 `import { YyyDto as XxxSourceDto }` 这类导入别名，而不是再声明一个 class。
 
 ## 6. 放置例外
 
@@ -96,6 +98,7 @@
 - [ ] `BaseXxxDto` 与对应 Drizzle Table 的字段、类型、可空性、枚举、长度一致。
 - [ ] 日期字段 Swagger 示例统一为 ISO 8601。
 - [ ] apps 层嵌套响应优先通过 `PickType/OmitType` 复用领域 DTO。
+- [ ] 不存在 `export class XxxDto extends YyyDto {}` 这类无新增字段、无新增语义的空壳别名 DTO。
 - [ ] Service 方法签名不直接引用 apps 层 DTO。
 - [ ] Service 内部临时结构已优先基于 Drizzle 类型构建。
 - [ ] 稳定领域类型已拆分到 `*.type.ts` 并补充清晰注释。

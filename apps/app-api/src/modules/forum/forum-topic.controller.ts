@@ -10,11 +10,11 @@ import {
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { TargetCommentItemDto } from '../comment/dto/comment.dto'
 import {
   AppForumTopicDetailDto,
   AppForumTopicPageItemDto,
   CreateAppForumTopicDto,
-  ForumTopicCommentItemDto,
   MyForumTopicItemDto,
   QueryAppForumTopicPageDto,
   QueryForumTopicCommentPageDto,
@@ -61,7 +61,7 @@ export class ForumTopicController {
   @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询论坛主题评论',
-    model: ForumTopicCommentItemDto,
+    model: TargetCommentItemDto,
   })
   async getTopicCommentPage(
     @Query() query: QueryForumTopicCommentPageDto,

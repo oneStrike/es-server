@@ -1,4 +1,4 @@
-import { BaseCategoryDto as ContentBaseCategoryDto } from '@libs/content/category'
+import { BaseCategoryDto } from '@libs/content/category'
 import { JsonProperty } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
@@ -7,8 +7,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-
-export class BaseCategoryDto extends ContentBaseCategoryDto {}
 
 export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
   ...OMIT_BASE_FIELDS,

@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto, UserIdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
@@ -21,7 +21,6 @@ import {
   CreateAdminAppUserDto,
   QueryAdminAppUserBadgeDto,
   QueryAdminAppUserExperienceRecordDto,
-  QueryAdminAppUserIdDto,
   QueryAdminAppUserPageDto,
   QueryAdminAppUserPointRecordDto,
   ResetAdminAppUserPasswordDto,
@@ -178,7 +177,7 @@ export class AppUserController {
     content: '重建 APP 用户关注计数',
   })
   async rebuildFollowCount(
-    @Body() body: QueryAdminAppUserIdDto,
+    @Body() body: UserIdDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.appUserService.rebuildAppUserFollowCounts(userId, body.userId)
@@ -221,7 +220,7 @@ export class AppUserController {
     summary: '获取 APP 用户积分统计',
     model: AdminAppUserPointStatsDto,
   })
-  async getAppUserPointStats(@Query() query: QueryAdminAppUserIdDto) {
+  async getAppUserPointStats(@Query() query: UserIdDto) {
     return this.appUserService.getAppUserPointStats(query.userId)
   }
 
@@ -285,7 +284,7 @@ export class AppUserController {
     summary: '获取 APP 用户经验统计',
     model: AdminAppUserExperienceStatsDto,
   })
-  async getAppUserExperienceStats(@Query() query: QueryAdminAppUserIdDto) {
+  async getAppUserExperienceStats(@Query() query: UserIdDto) {
     return this.appUserService.getAppUserExperienceStats(query.userId)
   }
 

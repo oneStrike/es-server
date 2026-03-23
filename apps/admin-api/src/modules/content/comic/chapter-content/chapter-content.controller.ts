@@ -1,13 +1,20 @@
 import type { FastifyRequest } from 'fastify'
-import { ComicContentService } from '@libs/content/work'
+import {
+  ComicArchiveImportService,
+  ComicContentService,
+} from '@libs/content/work'
 import { ApiDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { FileUploadResponseDto } from '@libs/platform/modules/upload'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  ComicArchiveTaskIdDto,
+  ComicArchiveTaskResponseDto,
+  ConfirmComicArchiveDto,
   DeleteComicContentDto,
   MoveComicContentDto,
+  PreviewComicArchiveDto,
   UpdateComicContentDto,
   UploadContentDto,
 } from './dto/chapter-content.dto'
@@ -15,7 +22,10 @@ import {
 @ApiTags('内容管理/漫画管理/章节内容')
 @Controller('admin/content/comic/chapter-content')
 export class ChapterContentController {
-  constructor(private readonly comicContentService: ComicContentService) {}
+  constructor(
+    private readonly comicContentService: ComicContentService,
+    private readonly comicArchiveImportService: ComicArchiveImportService,
+  ) {}
 
   @Get('list')
   @ApiDoc({
@@ -70,5 +80,35 @@ export class ChapterContentController {
   })
   async clear(@Body() body: IdDto) {
     return this.comicContentService.clearChapterContents(body.id)
+  }
+
+  @Post('archive/preview')
+  @ApiDoc({
+    summary: '预解析漫画压缩包',
+    model: ComicArchiveTaskResponseDto,
+  })
+  async archivePreview(
+    @Req() req: FastifyRequest,
+    @Query() query: PreviewComicArchiveDto,
+  ) {
+    return this.comicArchiveImportService.previewArchive(req, query)
+  }
+
+  @Post('archive/confirm')
+  @ApiDoc({
+    summary: '确认漫画压缩包导入',
+    model: Boolean,
+  })
+  async archiveConfirm(@Body() body: ConfirmComicArchiveDto) {
+    return this.comicArchiveImportService.confirmArchive(body)
+  }
+
+  @Get('archive/detail')
+  @ApiDoc({
+    summary: '查询漫画压缩包导入任务详情',
+    model: ComicArchiveTaskResponseDto,
+  })
+  async archiveDetail(@Query() query: ComicArchiveTaskIdDto) {
+    return this.comicArchiveImportService.getArchiveDetail(query)
   }
 }

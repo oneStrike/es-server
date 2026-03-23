@@ -66,6 +66,17 @@ export interface UploadExecutionResult {
 }
 
 /**
+ * 本地文件二次上传参数。
+ * 用于压缩包解压后的文件继续复用统一上传 provider 流程。
+ */
+export interface UploadLocalFileOptions {
+  localPath: string
+  objectKeySegments: string[]
+  originalName?: string
+  finalName?: string
+}
+
+/**
  * 上传结果。
  * - 用于 service 返回文件上传后的稳定元数据
  */

@@ -11,7 +11,6 @@ import {
   AssignForumTagToTopicDto,
   CreateForumTagDto,
   QueryForumTagDto,
-  RemoveForumTagFromTopicDto,
   UpdateForumTagDto,
 } from './dto/forum-tag.dto'
 
@@ -109,7 +108,7 @@ export class ForumTagController {
     summary: '从主题移除标签',
     model: Boolean,
   })
-  async removeTagFromTopic(@Body() dto: RemoveForumTagFromTopicDto) {
+  async removeTagFromTopic(@Body() dto: AssignForumTagToTopicDto) {
     return this.forumTagService.removeTagFromTopic(dto)
   }
 }

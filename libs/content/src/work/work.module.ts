@@ -19,6 +19,8 @@ import { WorkNovelChapterLikeResolver } from './chapter/resolver/work-novel-chap
 import { WorkNovelChapterPurchaseResolver } from './chapter/resolver/work-novel-chapter-purchase.resolver'
 import { WorkNovelChapterReportResolver } from './chapter/resolver/work-novel-chapter-report.resolver'
 import { WorkChapterService } from './chapter/work-chapter.service'
+import { ComicArchiveImportService } from './content/comic-archive-import.service'
+import { ComicArchiveImportWorker } from './content/comic-archive-import.worker'
 import { ComicContentService } from './content/comic-content.service'
 import { NovelContentService } from './content/novel-content.service'
 import { WorkComicBrowseLogResolver } from './core/resolver/work-comic-browse-log.resolver'
@@ -54,6 +56,8 @@ import { WorkService } from './core/work.service'
     WorkChapterService,
     NovelContentService,
     ComicContentService,
+    ComicArchiveImportService,
+    ComicArchiveImportWorker,
     WorkComicFavoriteResolver,
     WorkNovelFavoriteResolver,
     WorkComicLikeResolver,
@@ -83,6 +87,7 @@ import { WorkService } from './core/work.service'
     WorkChapterService,
     NovelContentService,
     ComicContentService,
+    ComicArchiveImportService,
   ],
 })
 export class WorkModule {}

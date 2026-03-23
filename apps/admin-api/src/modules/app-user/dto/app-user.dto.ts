@@ -18,8 +18,6 @@ import {
   PickType,
 } from '@nestjs/swagger'
 
-export class BaseAdminAppUserDto extends BaseAppUserDto {}
-
 export enum AdminAppUserDeletedScopeEnum {
   ACTIVE = 'active',
   DELETED = 'deleted',
@@ -107,7 +105,7 @@ export class AdminAppUserExperienceStatsDto {
   gapToNextLevel?: number
 }
 
-export class AdminAppUserPageItemDto extends BaseAdminAppUserDto {
+export class AdminAppUserPageItemDto extends BaseAppUserDto {
   @StringProperty({
     description: '等级名称',
     example: '新手',
@@ -124,7 +122,7 @@ export class AdminAppUserPageItemDto extends BaseAdminAppUserDto {
   counts!: AdminAppUserCountDto
 }
 
-export class AdminAppUserDetailDto extends BaseAdminAppUserDto {
+export class AdminAppUserDetailDto extends BaseAppUserDto {
   @NestedProperty({
     description: '等级信息',
     type: AdminAppUserLevelDto,
@@ -165,7 +163,7 @@ export class AdminAppUserDetailDto extends BaseAdminAppUserDto {
 
 export class QueryAdminAppUserPageDto extends IntersectionType(
   PartialType(
-    PickType(BaseAdminAppUserDto, [
+    PickType(BaseAppUserDto, [
       'id',
       'account',
       'phoneNumber',
@@ -204,17 +202,15 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
   lastLoginEndDate?: string
 }
 
-export class QueryAdminAppUserIdDto extends UserIdDto {}
-
 export class AdminAppUserFollowCountRepairResultDto extends IntersectionType(
   UserIdDto,
   PickType(AdminAppUserCountDto, ['followingCount', 'followersCount'] as const),
 ) {}
 
 export class CreateAdminAppUserDto extends IntersectionType(
-  PickType(BaseAdminAppUserDto, ['nickname'] as const),
+  PickType(BaseAppUserDto, ['nickname'] as const),
   PartialType(
-    PickType(BaseAdminAppUserDto, [
+    PickType(BaseAppUserDto, [
       'phoneNumber',
       'emailAddress',
       'avatarUrl',
@@ -236,7 +232,7 @@ export class CreateAdminAppUserDto extends IntersectionType(
   password!: string
 }
 
-export class ResetAdminAppUserPasswordDto extends PickType(BaseAdminAppUserDto, [
+export class ResetAdminAppUserPasswordDto extends PickType(BaseAppUserDto, [
   'id',
 ] as const) {
   @StringProperty({
@@ -249,9 +245,9 @@ export class ResetAdminAppUserPasswordDto extends PickType(BaseAdminAppUserDto, 
 }
 
 export class UpdateAdminAppUserProfileDto extends IntersectionType(
-  PickType(BaseAdminAppUserDto, ['id'] as const),
+  PickType(BaseAppUserDto, ['id'] as const),
   PartialType(
-    PickType(BaseAdminAppUserDto, [
+    PickType(BaseAppUserDto, [
       'nickname',
       'avatarUrl',
       'phoneNumber',
@@ -264,12 +260,12 @@ export class UpdateAdminAppUserProfileDto extends IntersectionType(
   ),
 ) {}
 
-export class UpdateAdminAppUserEnabledDto extends PickType(BaseAdminAppUserDto, [
+export class UpdateAdminAppUserEnabledDto extends PickType(BaseAppUserDto, [
   'id',
   'isEnabled',
 ] as const) {}
 
-export class UpdateAdminAppUserStatusDto extends PickType(BaseAdminAppUserDto, [
+export class UpdateAdminAppUserStatusDto extends PickType(BaseAppUserDto, [
   'id',
   'status',
 ] as const) {

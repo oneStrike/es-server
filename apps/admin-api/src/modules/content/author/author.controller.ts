@@ -1,4 +1,4 @@
-import { WorkAuthorService } from '@libs/content/author'
+import { BaseAuthorDto, WorkAuthorService } from '@libs/content/author'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -6,7 +6,6 @@ import { ApiTags } from '@nestjs/swagger'
 import {
   AuthorFollowCountRepairResultDto,
   AuthorPageResponseDto,
-  BaseAuthorDto,
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,

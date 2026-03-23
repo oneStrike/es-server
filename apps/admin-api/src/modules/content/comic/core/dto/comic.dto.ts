@@ -1,4 +1,4 @@
-import { BaseWorkDto as ContentBaseWorkDto } from '@libs/content/work'
+import { BaseWorkDto } from '@libs/content/work'
 import { ArrayProperty, StringProperty } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
@@ -7,8 +7,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-
-export class BaseWorkDto extends ContentBaseWorkDto {}
 
 export class CreateWorkDto extends OmitType(BaseWorkDto, [
   ...OMIT_BASE_FIELDS,

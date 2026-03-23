@@ -3,7 +3,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { CheckVerifyCodeDto } from '@libs/platform/modules'
-import { BaseAppUserDto as BaseAppUserCoreDto } from '@libs/user'
+import { BaseAppUserDto } from '@libs/user'
 import {
   IntersectionType,
   OmitType,
@@ -23,11 +23,6 @@ export class RsaPublicKeyDto {
   })
   publicKey!: string
 }
-
-/**
- * 基础用户信息
- */
-export class BaseAppUserDto extends BaseAppUserCoreDto {}
 
 /**
  * jwt令牌信息

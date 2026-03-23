@@ -79,9 +79,7 @@ export class BaseAdminUserDto extends BaseDto {
   lastLoginIp?: string
 }
 
-export class BaseUserDto extends BaseAdminUserDto {}
-
-export class UserRegisterDto extends PickType(BaseUserDto, [
+export class UserRegisterDto extends PickType(BaseAdminUserDto, [
   'username',
   'mobile',
   'avatar',
@@ -97,7 +95,7 @@ export class UserRegisterDto extends PickType(BaseUserDto, [
   confirmPassword!: string
 }
 
-export class UpdateUserDto extends PickType(BaseUserDto, [
+export class UpdateUserDto extends PickType(BaseAdminUserDto, [
   'id',
   'username',
   'avatar',
@@ -108,7 +106,7 @@ export class UpdateUserDto extends PickType(BaseUserDto, [
 
 export class UserPageDto extends IntersectionType(
   PartialType(
-    PickType(BaseUserDto, ['username', 'mobile', 'isEnabled', 'role']),
+    PickType(BaseAdminUserDto, ['username', 'mobile', 'isEnabled', 'role']),
   ),
   PageDto,
 ) {}

@@ -57,5 +57,3 @@ export class BaseUserAssetsSummaryDto {
   })
   commentCount!: number
 }
-
-export class UserAssetsSummaryDto extends BaseUserAssetsSummaryDto {}

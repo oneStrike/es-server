@@ -23,7 +23,6 @@ import {
 } from '../../shared'
 
 const WORK_SECTION_GROUP_NAME = '作品讨论'
-const BASIC_LEVEL_NAME = '新手读者'
 const ADVANCED_LEVEL_NAME = '活跃读者'
 
 const CATEGORY_FIXTURES = [
@@ -452,9 +451,6 @@ export async function seedWorkDomain(db: Db) {
       isNull(forumSectionGroup.deletedAt),
     ),
   })
-  const basicLevel = await db.query.userLevelRule.findFirst({
-    where: eq(userLevelRule.name, BASIC_LEVEL_NAME),
-  })
   const advancedLevel = await db.query.userLevelRule.findFirst({
     where: eq(userLevelRule.name, ADVANCED_LEVEL_NAME),
   })
@@ -469,7 +465,7 @@ export async function seedWorkDomain(db: Db) {
 
     const sectionPayload = {
       groupId: workSectionGroup?.id ?? null,
-      userLevelRuleId: basicLevel?.id ?? null,
+      userLevelRuleId: null,
       name: workFixture.name,
       description: `${workFixture.name} 作品专属讨论板块`,
       icon: workFixture.cover,

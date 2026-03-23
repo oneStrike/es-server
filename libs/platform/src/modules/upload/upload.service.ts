@@ -4,12 +4,13 @@ import type {
   PreparedUploadFile,
   UploadConfigProvider,
   UploadFileCategory,
+  UploadLocalFileOptions,
   UploadResult,
   UploadSystemConfig,
 } from './upload.types'
 import { Buffer as NodeBuffer } from 'node:buffer'
 import { createWriteStream, promises as fs } from 'node:fs'
-import { extname, join, posix } from 'node:path'
+import { basename, extname, join, posix } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 import {
@@ -20,7 +21,7 @@ import {
   PayloadTooLargeException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { fileTypeFromBuffer } from 'file-type'
+import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type'
 import mime from 'mime-types'
 import { v4 as uuidv4 } from 'uuid'
 import { LocalUploadProvider } from './local-upload.provider'
@@ -35,6 +36,7 @@ const pump = promisify(pipeline)
 const SCENE_NAME_REGEX = /^[a-z0-9]+$/i
 const PATH_SEGMENT_REGEX = /^[\w.-]+$/
 const LEADING_DOT_REGEX = /^\./
+const TRAILING_EXTENSION_REGEX = /\.[^.]+$/
 
 interface MultipartFieldLike {
   type?: unknown
@@ -126,29 +128,7 @@ export class UploadService {
         fileSize: stats.size,
       }
 
-      const systemUploadConfig = this.getSystemUploadConfig()
-      const provider = this.resolveProvider(
-        systemUploadConfig.provider,
-        fileCategory,
-        systemUploadConfig.superbedNonImageFallbackToLocal,
-      )
-
-      const result = await this.uploadByProvider(
-        provider,
-        preparedFile,
-        systemUploadConfig,
-      )
-
-      return {
-        filename: finalName,
-        originalName: targetFile.filename,
-        filePath: result.filePath,
-        fileSize: stats.size,
-        mimeType: mime,
-        fileType: ext,
-        scene,
-        uploadTime: new Date(),
-      }
+      return this.uploadPreparedFile(preparedFile)
     } catch (error: any) {
       if (error?.response?.message) {
         throw error
@@ -160,6 +140,51 @@ export class UploadService {
     } finally {
       await fs.rm(tempPath, { force: true }).catch(() => undefined)
     }
+  }
+
+  /**
+   * 将本地文件继续走统一上传 provider 流程。
+   * 用于压缩包解压后的图片按既有上传配置决定最终落点。
+   */
+  async uploadLocalFile(options: UploadLocalFileOptions): Promise<UploadResult> {
+    const detectedFileType = await fileTypeFromFile(options.localPath).catch(
+      () => null,
+    )
+    const originalName = options.originalName ?? basename(options.localPath)
+    const resolvedFileType = this.resolveFileType(
+      detectedFileType?.ext,
+      detectedFileType?.mime,
+      originalName,
+    )
+
+    if (!resolvedFileType) {
+      throw new BadRequestException('无法识别的文件类型')
+    }
+
+    const { ext, mime: resolvedMime, fileCategory } = resolvedFileType
+    if (!this.uploadConfig.allowMimeTypesFlat.includes(resolvedMime)) {
+      throw new BadRequestException('不被允许的文件类型')
+    }
+
+    const finalName = this.resolveFinalName(ext, options.finalName)
+    const objectKey = this.buildObjectKeyFromSegments(
+      options.objectKeySegments,
+      finalName,
+    )
+    const stats = await fs.stat(options.localPath)
+    const preparedFile: PreparedUploadFile = {
+      tempPath: options.localPath,
+      objectKey,
+      finalName,
+      originalName,
+      mimeType: resolvedMime,
+      ext,
+      fileCategory,
+      scene: options.objectKeySegments[0] ?? 'shared',
+      fileSize: stats.size,
+    }
+
+    return this.uploadPreparedFile(preparedFile)
   }
 
   private getSystemUploadConfig(): UploadSystemConfig {
@@ -217,21 +242,40 @@ export class UploadService {
     return provider
   }
 
+  private async uploadPreparedFile(
+    preparedFile: PreparedUploadFile,
+  ): Promise<UploadResult> {
+    const systemUploadConfig = this.getSystemUploadConfig()
+    const provider = this.resolveProvider(
+      systemUploadConfig.provider,
+      preparedFile.fileCategory,
+      systemUploadConfig.superbedNonImageFallbackToLocal,
+    )
+    const result = await this.uploadByProvider(
+      provider,
+      preparedFile,
+      systemUploadConfig,
+    )
+
+    return {
+      filename: preparedFile.finalName,
+      originalName: preparedFile.originalName,
+      filePath: result.filePath,
+      fileSize: preparedFile.fileSize,
+      mimeType: preparedFile.mimeType,
+      fileType: preparedFile.ext,
+      scene: preparedFile.scene,
+      uploadTime: new Date(),
+    }
+  }
+
   private buildObjectKey(
     scene: string,
     fileCategory: UploadFileCategory,
     finalName: string,
     pathSegments?: string[],
   ) {
-    const normalizedSegments = (pathSegments ?? [])
-      .map(segment => segment.trim())
-      .filter(Boolean)
-      .map((segment) => {
-        if (!PATH_SEGMENT_REGEX.test(segment)) {
-          throw new BadRequestException('上传路径不合法')
-        }
-        return segment
-      })
+    const normalizedSegments = this.normalizePathSegments(pathSegments)
 
     if (normalizedSegments.length > 0) {
       return posix.join(scene, ...normalizedSegments, finalName)
@@ -244,6 +288,48 @@ export class UploadService {
     const dateStr = `${year}-${month}-${day}`
 
     return posix.join(scene, dateStr, fileCategory, finalName)
+  }
+
+  private buildObjectKeyFromSegments(
+    pathSegments: string[],
+    finalName: string,
+  ) {
+    const normalizedSegments = this.normalizePathSegments(pathSegments)
+    if (normalizedSegments.length === 0) {
+      throw new BadRequestException('上传路径不合法')
+    }
+
+    return posix.join(...normalizedSegments, finalName)
+  }
+
+  private normalizePathSegments(pathSegments?: string[]) {
+    return (pathSegments ?? [])
+      .map(segment => segment.trim())
+      .filter(Boolean)
+      .map((segment) => {
+        if (!PATH_SEGMENT_REGEX.test(segment)) {
+          throw new BadRequestException('上传路径不合法')
+        }
+        return segment
+      })
+  }
+
+  private resolveFinalName(ext: string, finalName?: string) {
+    if (!finalName) {
+      return `${uuidv4()}.${ext}`
+    }
+
+    const trimmedName = finalName.trim()
+    if (!trimmedName) {
+      throw new BadRequestException('上传文件名不合法')
+    }
+
+    const nameWithoutExt = trimmedName.replace(TRAILING_EXTENSION_REGEX, '')
+    if (!nameWithoutExt || !PATH_SEGMENT_REGEX.test(nameWithoutExt)) {
+      throw new BadRequestException('上传文件名不合法')
+    }
+
+    return `${nameWithoutExt}.${ext}`
   }
 
   private resolveFileType(

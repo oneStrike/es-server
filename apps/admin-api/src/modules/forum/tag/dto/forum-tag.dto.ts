@@ -42,5 +42,3 @@ export class AssignForumTagToTopicDto {
   })
   tagId!: number
 }
-
-export class RemoveForumTagFromTopicDto extends AssignForumTagToTopicDto {}

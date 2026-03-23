@@ -99,8 +99,6 @@ export class SensitiveWordTopHitStatisticsDto {
   lastHitAt?: Date
 }
 
-export class SensitiveWordRecentHitStatisticsDto extends SensitiveWordTopHitStatisticsDto {}
-
 export class SensitiveWordStatisticsQueryDto {
   @EnumProperty({
     description: '统计类型',
@@ -130,7 +128,6 @@ export class SensitiveWordStatisticsResponseDto {
     | SensitiveWordLevelStatisticsDto
     | SensitiveWordTypeStatisticsDto
     | SensitiveWordTopHitStatisticsDto
-    | SensitiveWordRecentHitStatisticsDto
   >
 }
 
@@ -182,9 +179,9 @@ export class SensitiveWordStatisticsDataDto {
 
   @ArrayProperty({
     description: '最近命中词',
-    itemClass: SensitiveWordRecentHitStatisticsDto,
+    itemClass: SensitiveWordTopHitStatisticsDto,
     itemType: 'object',
     validation: false,
   })
-  recentHitWords!: SensitiveWordRecentHitStatisticsDto[]
+  recentHitWords!: SensitiveWordTopHitStatisticsDto[]
 }

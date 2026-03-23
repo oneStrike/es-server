@@ -16,7 +16,6 @@ import {
 } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { TargetCommentItemDto } from '../../comment/dto/comment.dto'
 
 class AuthorInfoDto extends PickType(BaseAuthorDto, [
   'id',
@@ -267,5 +266,3 @@ export class WorkForumSectionDto extends IntersectionType(
 ) {}
 
 export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}
-
-export class WorkCommentItemDto extends TargetCommentItemDto {}

@@ -72,8 +72,6 @@ export class QueryCommentRepliesDto extends IntersectionType(
   CommentIdDto,
 ) {}
 
-export class CommentItemDto extends BaseCommentDto {}
-
 export class CommentUserDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',

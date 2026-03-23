@@ -4,8 +4,6 @@ import {
 } from '@libs/system-config'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 
-export class SystemConfigDto extends BaseSystemConfigDto {}
-
 export class SystemConfigBodyDto extends IntersectionType(
   PickType(BaseSystemConfigDto, [
     'updatedById',

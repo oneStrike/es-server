@@ -1,10 +1,9 @@
-import { WorkTagService } from '@libs/content/tag'
+import { BaseTagDto, WorkTagService } from '@libs/content/tag'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
-  BaseTagDto,
   CreateTagDto,
   QueryTagDto,
   UpdateTagDto,
