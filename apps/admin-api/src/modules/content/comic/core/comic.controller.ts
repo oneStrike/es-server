@@ -6,6 +6,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   CreateWorkDto,
+  PageWorkDto,
   QueryWorkDto,
   UpdateWorkDto,
   UpdateWorkHotDto,
@@ -17,7 +18,7 @@ import {
 @ApiTags('内容管理/漫画管理/基础信息')
 @Controller('admin/content/comic')
 export class ComicController {
-  constructor(private readonly workService: WorkService) {}
+  constructor(private readonly workService: WorkService) { }
 
   @Post('create')
   @ApiDoc({
@@ -31,7 +32,7 @@ export class ComicController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询漫画列表',
-    model: BaseWorkDto,
+    model: PageWorkDto,
   })
   async getPage(@Query() query: QueryWorkDto) {
     return this.workService.getWorkPage({ ...query, type: WorkTypeEnum.COMIC })

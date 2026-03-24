@@ -50,7 +50,7 @@ export class WorkService {
     private readonly followService: FollowService,
     private readonly browseLogService: BrowseLogService,
     private readonly readingStateService: ReadingStateService,
-  ) {}
+  ) { }
 
   private get db() {
     return this.drizzle.db
@@ -140,31 +140,31 @@ export class WorkService {
       await Promise.all([
         authorIds.length
           ? this.db.query.workAuthor.findMany({
-              where: {
-                id: { in: authorIds },
-                isEnabled: true,
-                deletedAt: { isNull: true },
-              },
-              columns: { id: true },
-            })
+            where: {
+              id: { in: authorIds },
+              isEnabled: true,
+              deletedAt: { isNull: true },
+            },
+            columns: { id: true },
+          })
           : [],
         categoryIds.length
           ? this.db.query.workCategory.findMany({
-              where: {
-                id: { in: categoryIds },
-                isEnabled: true,
-              },
-              columns: { id: true },
-            })
+            where: {
+              id: { in: categoryIds },
+              isEnabled: true,
+            },
+            columns: { id: true },
+          })
           : [],
         tagIds.length
           ? this.db.query.workTag.findMany({
-              where: {
-                id: { in: tagIds },
-                isEnabled: true,
-              },
-              columns: { id: true },
-            })
+            where: {
+              id: { in: tagIds },
+              isEnabled: true,
+            },
+            columns: { id: true },
+          })
           : [],
       ])
 
@@ -502,6 +502,10 @@ export class WorkService {
     )
   }
 
+  /**
+   * 批量更新作品标志位（发布/推荐/热门/新作）
+   * 用于管理端快速切换作品的展示状态
+   */
   async updateWorkFlags(
     id: number,
     data: Partial<{
@@ -522,56 +526,66 @@ export class WorkService {
   }
 
   /**
-   * 分页查询热门作品
-   * 业务规则：仅返回标记为热门的作品
-   * @param dto 查询条件（包含类型过滤等）
-   * @returns 分页的热门作品列表
+   * 按类型分页查询作品的通用方法
+   * 支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能
    */
-  async getHotWorkPage(dto: QueryWorkTypeInput, userId?: number) {
-    return this.getWorkTypePage(dto, { isHot: true }, userId)
-  }
+  async getWorkTypePage(dto: QueryWorkInput) {
+    const { args } = this.drizzle.buildPageQuery(dto)
+    console.log("🚀 ~ WorkService ~ getWorkTypePage ~ args:", args)
 
-  private async getWorkTypePage(
-    dto: QueryWorkTypeInput,
-    extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
-    userId?: number,
-  ) {
-    const page = await this.drizzle.ext.findPagination(this.work, {
-      where: this.drizzle.buildWhere(this.work, {
-        and: {
-          deletedAt: { isNull: true },
-          type: dto.type,
-          isPublished: true,
-          ...extra,
+    const data = await this.db.query.work.findMany({
+      where: dto,
+      columns: {
+        id: true,
+        name: true,
+        cover: true,
+        isPublished: true,
+        isHot: true,
+        isNew: true,
+        isRecommended: true,
+        recommendWeight: true,
+        viewCount: true,
+        favoriteCount: true,
+        likeCount: true,
+        commentCount: true,
+        downloadCount: true,
+        rating: true,
+        deletedAt: true,
+      },
+      with: {
+        authors: {
+          columns: {
+            id: true,
+            name: true,
+            type: true,
+            avatar: true,
+          },
         },
-      }),
-      ...dto,
-      omit: [
-        'alias',
-        'description',
-        'originalSource',
-        'copyright',
-        'disclaimer',
-        'remark',
-        'lastUpdated',
-        'viewRule',
-        'requiredViewLevelId',
-        'forumSectionId',
-        'chapterPrice',
-        'canComment',
-        'recommendWeight',
-        'viewCount',
-        'favoriteCount',
-        'likeCount',
-        'commentCount',
-        'downloadCount',
-        'rating',
-        'deletedAt',
-      ],
+        categories: {
+          columns: {
+            id: true,
+            name: true,
+            icon: true,
+          },
+        },
+        tags: {
+          columns: {
+            id: true,
+            name: true,
+            icon: true,
+          },
+        },
+      },
+      ...args
     })
-    return this.attachWorkRelations(page, userId)
+    return data
   }
 
+  /**
+   * 批量附加作品的关联数据（作者、分类、标签）
+   * 采用批量查询 + 内存映射的方式避免 N+1 查询问题
+   * 若传入 userId，会额外查询用户对各作者的关注状态
+   */
   private async attachWorkRelations<TWork extends { id: number }>(
     page: {
       list: TWork[]
@@ -608,10 +622,10 @@ export class WorkService {
     const authorFollowStatusMap =
       userId && authorIds.length > 0
         ? await this.followService.checkStatusBatch(
-            FollowTargetTypeEnum.AUTHOR,
-            authorIds,
-            userId,
-          )
+          FollowTargetTypeEnum.AUTHOR,
+          authorIds,
+          userId,
+        )
         : new Map<number, boolean>()
 
     const authorMap = new Map<number, typeof authors>()
@@ -641,10 +655,10 @@ export class WorkService {
           .map((relation) =>
             relation.author
               ? {
-                  ...relation.author,
-                  isFollowed:
-                    authorFollowStatusMap.get(relation.authorId) ?? false,
-                }
+                ...relation.author,
+                isFollowed:
+                  authorFollowStatusMap.get(relation.authorId) ?? false,
+              }
               : undefined,
           )
           .filter(Boolean),
@@ -658,14 +672,14 @@ export class WorkService {
     }
   }
 
-  async getNewWorkPage(dto: QueryWorkTypeInput, userId?: number) {
-    return this.getWorkTypePage(dto, { isNew: true }, userId)
-  }
-
-  async getRecommendedWorkPage(dto: QueryWorkTypeInput, userId?: number) {
-    return this.getWorkTypePage(dto, { isRecommended: true }, userId)
-  }
-
+  /**
+   * 分页查询作品（支持多条件组合过滤）
+   * 查询说明：
+   * - 名称、发布者支持模糊匹配（ILIKE）
+   * - 作者通过 EXISTS 子查询关联 workAuthor 表实现模糊匹配
+   * - 标签通过 EXISTS 子查询支持多标签筛选（AND 语义）
+   * - 其他字段（类型、发布状态、连载状态等）支持精确匹配
+   */
   async getWorkPage(queryWorkDto: QueryWorkInput, userId?: number) {
     const { name, publisher, author, tagIds, ...otherDto } = queryWorkDto
     const normalizedAuthor = author?.trim()
@@ -736,6 +750,11 @@ export class WorkService {
     return this.attachWorkRelations(page as any, userId)
   }
 
+  /**
+   * 获取作品关联的论坛板块信息
+   * 业务规则：仅已发布的作品才能访问其论坛板块
+   * 若用户已登录，会额外返回用户对该板块的关注状态
+   */
   async getWorkForumSection(id: number, userId?: number) {
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -800,6 +819,13 @@ export class WorkService {
     }
   }
 
+  /**
+   * 获取作品的评论目标信息
+   * 业务规则：
+   * - 仅已发布的作品才能评论
+   * - 根据作品类型映射到对应的评论目标类型（漫画/小说）
+   * - 其他类型作品不支持评论
+   */
   async getWorkCommentTarget(id: number) {
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -930,10 +956,10 @@ export class WorkService {
         ),
         authorIds.length > 0
           ? this.followService.checkStatusBatch(
-              FollowTargetTypeEnum.AUTHOR,
-              authorIds,
-              userId,
-            )
+            FollowTargetTypeEnum.AUTHOR,
+            authorIds,
+            userId,
+          )
           : Promise.resolve(new Map<number, boolean>()),
       ])
 
@@ -979,11 +1005,11 @@ export class WorkService {
       lastReadAt: now,
       continueChapter: continueChapter
         ? {
-            id: continueChapter.id,
-            title: continueChapter.title,
-            subtitle: continueChapter.subtitle ?? undefined,
-            sortOrder: continueChapter.sortOrder,
-          }
+          id: continueChapter.id,
+          title: continueChapter.title,
+          subtitle: continueChapter.subtitle ?? undefined,
+          sortOrder: continueChapter.sortOrder,
+        }
         : undefined,
     }
   }

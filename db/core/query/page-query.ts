@@ -27,7 +27,7 @@ export interface DrizzlePageQueryOptions<TTable extends AnyPgTable = AnyPgTable>
 export interface DrizzlePageQueryArgs {
   limit: number
   offset: number
-  orderBy?: DbQueryOrderBy
+  orderBy: DbQueryOrderBy
 }
 
 export interface DrizzlePageQueryResult {
@@ -35,7 +35,7 @@ export interface DrizzlePageQueryResult {
   pageSize: number
   limit: number
   offset: number
-  orderBy?: DbQueryOrderBy
+  orderBy: DbQueryOrderBy
   orderBySql: SQL[]
   args: DrizzlePageQueryArgs
 }

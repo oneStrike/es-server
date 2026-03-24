@@ -36,11 +36,8 @@ export class WorkController {
     summary: '分页查询热门作品',
     model: PageWorkDto,
   })
-  async getAvailable(
-    @Query() query: QueryWorkTypeDto,
-    @CurrentUser('sub') userId?: number,
-  ) {
-    return this.workService.getHotWorkPage(query, userId)
+  async getAvailable(@Query() query: QueryWorkTypeDto) {
+    return this.workService.getWorkTypePage({ ...query, isHot: true })
   }
 
   @Get('new/page')
@@ -49,11 +46,8 @@ export class WorkController {
     summary: '分页查询最新作品',
     model: PageWorkDto,
   })
-  async getNewWorkPage(
-    @Query() query: QueryWorkTypeDto,
-    @CurrentUser('sub') userId?: number,
-  ) {
-    return this.workService.getNewWorkPage(query, userId)
+  async getNewWorkPage(@Query() query: QueryWorkTypeDto) {
+    return this.workService.getWorkTypePage({ ...query, isNew: true })
   }
 
   @Get('recommended/page')
@@ -62,11 +56,8 @@ export class WorkController {
     summary: '分页查询推荐作品',
     model: PageWorkDto,
   })
-  async getRecommendedWorkPage(
-    @Query() query: QueryWorkTypeDto,
-    @CurrentUser('sub') userId?: number,
-  ) {
-    return this.workService.getRecommendedWorkPage(query, userId)
+  async getRecommendedWorkPage(@Query() query: QueryWorkTypeDto) {
+    return this.workService.getWorkTypePage({ ...query, isRecommended: true })
   }
 
   @Get('page')
@@ -77,12 +68,8 @@ export class WorkController {
   })
   async getWorkPage(
     @Query() query: QueryWorkDto,
-    @CurrentUser('sub') userId?: number,
   ) {
-    return this.workService.getWorkPage({
-      ...query,
-      isPublished: true,
-    }, userId)
+    return this.workService.getWorkTypePage({ ...query, isPublished: true })
   }
 
   @Get('detail')

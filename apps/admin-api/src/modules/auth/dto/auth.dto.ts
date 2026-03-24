@@ -56,6 +56,10 @@ export class UserLoginDto extends CaptchaDto {
   password!: string
 }
 
+export class AdminUserOmitPwdDto extends OmitType(BaseAdminUserDto, [
+  'password',
+]) {}
+
 /**
  * 登录响应 DTO
  */
@@ -71,8 +75,8 @@ export class LoginResponseDto {
   @NestedProperty({
     description: '用户信息',
     required: true,
-    type: BaseAdminUserDto,
+    type: AdminUserOmitPwdDto,
     validation: false,
   })
-  user!: BaseAdminUserDto
+  user!: AdminUserOmitPwdDto
 }
