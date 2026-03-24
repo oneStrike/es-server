@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, jsonb, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, jsonb, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 论坛主题表
@@ -174,6 +174,14 @@ export const forumTopic = pgTable("forum_topic", {
    * 索引: favoriteCount
    */
   index("forum_topic_favorite_count_idx").on(table.favoriteCount),
+  /**
+   * 计数字段非负约束
+   */
+  check("forum_topic_view_count_non_negative_chk", sql`${table.viewCount} >= 0`),
+  check("forum_topic_reply_count_non_negative_chk", sql`${table.replyCount} >= 0`),
+  check("forum_topic_like_count_non_negative_chk", sql`${table.likeCount} >= 0`),
+  check("forum_topic_comment_count_non_negative_chk", sql`${table.commentCount} >= 0`),
+  check("forum_topic_favorite_count_non_negative_chk", sql`${table.favoriteCount} >= 0`),
   /**
    * 索引: lastReplyAt
    */

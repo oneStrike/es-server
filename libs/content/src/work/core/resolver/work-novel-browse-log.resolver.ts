@@ -8,7 +8,8 @@ import {
   IBrowseLogTargetResolver,
 } from '@libs/interaction/browse-log'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 小说作品浏览日志解析器
@@ -26,6 +27,7 @@ export class WorkNovelBrowseLogResolver
   constructor(
     private readonly browseLogService: BrowseLogService,
     private readonly drizzle: DrizzleService,
+    private readonly workCounterService: WorkCounterService,
   ) {}
 
   private get work() {
@@ -52,26 +54,13 @@ export class WorkNovelBrowseLogResolver
     targetId: number,
     delta: number,
   ) => Promise<void> = async (tx, targetId, delta) => {
-    if (delta === 0) {
-      return
-    }
-
-    const result = await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(this.work)
-        .set({
-          viewCount: sql`${this.work.viewCount} + ${delta}`,
-        })
-        .where(
-          and(
-            eq(this.work.id, targetId),
-            eq(this.work.type, this.workType),
-            eq(this.work.isPublished, true),
-            isNull(this.work.deletedAt),
-          ),
-        ),
+    await this.workCounterService.updateWorkViewCount(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '小说作品不存在',
     )
-    this.drizzle.assertAffectedRows(result, '小说作品不存在')
   }
 
   /**

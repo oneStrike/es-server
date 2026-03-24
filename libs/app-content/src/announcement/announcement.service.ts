@@ -71,7 +71,6 @@ export class AppAnnouncementService {
   /**
    * 分页查询公告
    * @param queryAnnouncementDto 查询条件
-   * @param options 查询选项
    * @returns 分页结果
    */
   async findAnnouncementPage(

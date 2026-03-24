@@ -1,15 +1,19 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
-import { work, workAuthorRelation } from '@db/schema'
+
+import { workAuthorRelation } from '@db/schema'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
 } from '@libs/interaction/comment'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common'
+import { eq } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 小说作品评论解析器
@@ -25,7 +29,7 @@ export class WorkNovelCommentResolver
 
   constructor(
     private readonly commentService: CommentService,
-    private readonly drizzle: DrizzleService,
+    private readonly workCounterService: WorkCounterService,
   ) {}
 
   /**
@@ -48,35 +52,19 @@ export class WorkNovelCommentResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(work)
-        .set({
-          commentCount: sql`${work.commentCount} + ${delta}`,
-        })
-        .where(
-          and(
-            eq(work.id, targetId),
-            eq(work.type, this.workType),
-            isNull(work.deletedAt),
-          ),
-        ),
-    )
-    const updated = await tx.query.work.findFirst({
-      where: {
-        id: targetId,
-        type: this.workType,
-        isPublished: true,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new BadRequestException('小说作品不存在')
+    try {
+      await this.workCounterService.updateWorkCommentCount(
+        tx,
+        targetId,
+        this.workType,
+        delta,
+        '小说作品不存在',
+      )
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new BadRequestException(error.message)
+      }
+      throw error
     }
   }
 

@@ -10,6 +10,8 @@ import {
   CurrentUser,
   OptionalAuth,
   Public,
+  RequestMeta,
+  RequestMetaResult,
 } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
@@ -53,8 +55,13 @@ export class WorkChapterController {
   async getWorkChapterDetail(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    return this.workChapterService.getChapterDetail(query.id, userId)
+    return this.workChapterService.getChapterDetail(query.id, {
+      userId,
+      ipAddress: meta.ip,
+      device: meta.deviceId,
+    })
   }
 
   @Get('comment/page')
@@ -82,8 +89,13 @@ export class WorkChapterController {
   async getPreviousWorkChapterDetail(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    return this.workChapterService.getPreviousChapterDetail(query.id, userId)
+    return this.workChapterService.getPreviousChapterDetail(query.id, {
+      userId,
+      ipAddress: meta.ip,
+      device: meta.deviceId,
+    })
   }
 
   @Get('next/detail')
@@ -95,8 +107,13 @@ export class WorkChapterController {
   async getNextWorkChapterDetail(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    return this.workChapterService.getNextChapterDetail(query.id, userId)
+    return this.workChapterService.getNextChapterDetail(query.id, {
+      userId,
+      ipAddress: meta.ip,
+      device: meta.deviceId,
+    })
   }
 
   @Get('comic-content/detail')

@@ -107,7 +107,6 @@ export class SensitiveWordService {
 
   /**
    * 删除敏感词
-   * @param dto 删除参数
    * @returns 删除结果
    */
   async deleteSensitiveWord(dto: { id: number }) {

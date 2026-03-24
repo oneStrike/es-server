@@ -1,4 +1,6 @@
 import { UserGrowthRewardModule } from '@libs/growth/growth-reward'
+import { BrowseLogModule } from '@libs/interaction/browse-log'
+import { CommentModule } from '@libs/interaction/comment'
 import { FavoriteModule } from '@libs/interaction/favorite'
 import { LikeModule } from '@libs/interaction/like'
 import { ReportModule } from '@libs/interaction/report'
@@ -25,6 +27,8 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     UserGrowthRewardModule,
     SensitiveWordModule,
     MessageModule,
+    BrowseLogModule,
+    CommentModule,
     FavoriteModule,
     LikeModule,
     ReportModule,

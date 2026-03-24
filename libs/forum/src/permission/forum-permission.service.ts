@@ -92,7 +92,6 @@ export class ForumPermissionService {
 
   /**
    * 获取板块权限上下文，包含等级规则与所需经验值。
-   * @param requireEnabled 为 true 时，板块未启用会抛出异常
    */
   private async getSectionPermissionContext(
     sectionId: number,

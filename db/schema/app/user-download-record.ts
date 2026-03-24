@@ -15,7 +15,7 @@ export const userDownloadRecord = pgTable("user_download_record", {
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
-   * 目标类型 3=漫画章节, 4=小说章节
+   * 目标类型 1=漫画章节, 2=小说章节
    */
   targetType: smallint().notNull(),
   /**

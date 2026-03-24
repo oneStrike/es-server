@@ -1,6 +1,10 @@
 import {
   DrizzleService
  } from '@db/core'
+import {
+  BrowseLogService,
+  BrowseLogTargetTypeEnum,
+} from '@libs/interaction/browse-log'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import {
   DownloadService,
@@ -22,6 +26,7 @@ import {
   QueryWorkChapterInput,
   SwapWorkChapterNumbersInput,
   UpdateWorkChapterInput,
+  WorkChapterDetailContext,
 } from './work-chapter.type'
 
 /**
@@ -34,6 +39,7 @@ export class WorkChapterService {
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
+    private readonly browseLogService: BrowseLogService,
     private readonly downloadService: DownloadService,
     private readonly contentPermissionService: ContentPermissionService,
     private readonly readingStateService: ReadingStateService,
@@ -183,11 +189,12 @@ export class WorkChapterService {
    * 获取章节详情
    * 未登录用户返回基础信息，登录用户额外返回交互状态（点赞、收藏、下载、购买）
    * @param id - 章节ID
-   * @param userId - 当前用户ID（可选）
+   * @param context - 当前用户与请求上下文（可选）
    * @returns 章节详情，包含作品信息、等级要求、交互状态
    * @throws BadRequestException 章节不存在
    */
-  async getChapterDetail(id: number, userId?: number) {
+  async getChapterDetail(id: number, context: WorkChapterDetailContext = {}) {
+    const { userId, ipAddress, device } = context
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id, deletedAt: { isNull: true } },
       with: {
@@ -225,11 +232,15 @@ export class WorkChapterService {
       chapter.workType === ContentTypeEnum.COMIC
         ? DownloadTargetTypeEnum.COMIC_CHAPTER
         : DownloadTargetTypeEnum.NOVEL_CHAPTER
+    const likeTargetType =
+      chapter.workType === ContentTypeEnum.COMIC
+        ? LikeTargetTypeEnum.WORK_COMIC_CHAPTER
+        : LikeTargetTypeEnum.WORK_NOVEL_CHAPTER
 
     // 并行查询三个交互状态
     const [liked, downloaded, purchased] = await Promise.all([
       this.likeService.checkLikeStatus({
-        targetType: LikeTargetTypeEnum.WORK_COMIC_CHAPTER,
+        targetType: likeTargetType,
         targetId: id,
         userId,
       }),
@@ -244,6 +255,24 @@ export class WorkChapterService {
       ),
     ])
 
+    const browseTargetType =
+      chapter.workType === ContentTypeEnum.COMIC
+        ? BrowseLogTargetTypeEnum.COMIC_CHAPTER
+        : BrowseLogTargetTypeEnum.NOVEL_CHAPTER
+
+    await this.browseLogService.recordBrowseLog(
+      browseTargetType,
+      id,
+      userId,
+      ipAddress,
+      device,
+      undefined,
+      {
+        skipTargetValidation: true,
+        deferPostProcess: true,
+      },
+    )
+
     await this.readingStateService.touchByWorkSafely({
       userId,
       workId: chapter.workId,
@@ -257,6 +286,7 @@ export class WorkChapterService {
         chapter.workType === ContentTypeEnum.COMIC
           ? (jsonParse(chapter.content, []) as unknown as string)
           : chapter.content,
+      viewCount: chapter.viewCount + 1,
       liked,
       downloaded,
       purchased,
@@ -266,21 +296,27 @@ export class WorkChapterService {
   /**
    * 获取上一章详情
    * @param id - 当前章节ID
-   * @param userId - 当前用户ID（可选）
+   * @param context - 当前用户与请求上下文（可选）
    * @returns 上一章详情，不存在则返回 null
    */
-  async getPreviousChapterDetail(id: number, userId?: number) {
-    return this.getAdjacentChapterDetail(id, 'previous', userId)
+  async getPreviousChapterDetail(
+    id: number,
+    context: WorkChapterDetailContext = {},
+  ) {
+    return this.getAdjacentChapterDetail(id, 'previous', context)
   }
 
   /**
    * 获取下一章详情
    * @param id - 当前章节ID
-   * @param userId - 当前用户ID（可选）
+   * @param context - 当前用户与请求上下文（可选）
    * @returns 下一章详情，不存在则返回 null
    */
-  async getNextChapterDetail(id: number, userId?: number) {
-    return this.getAdjacentChapterDetail(id, 'next', userId)
+  async getNextChapterDetail(
+    id: number,
+    context: WorkChapterDetailContext = {},
+  ) {
+    return this.getAdjacentChapterDetail(id, 'next', context)
   }
 
   /**
@@ -288,14 +324,14 @@ export class WorkChapterService {
    * 根据 sortOrder 查找相邻章节
    * @param id - 当前章节ID
    * @param direction - 方向：'previous' 上一章 | 'next' 下一章
-   * @param userId - 当前用户ID（可选）
+   * @param context - 当前用户与请求上下文（可选）
    * @returns 相邻章节详情，不存在则返回 null
    * @throws BadRequestException 当前章节不存在
    */
   private async getAdjacentChapterDetail(
     id: number,
     direction: 'previous' | 'next',
-    userId?: number,
+    context: WorkChapterDetailContext = {},
   ) {
     const currentChapter = await this.db.query.workChapter.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -333,7 +369,7 @@ export class WorkChapterService {
       return null
     }
 
-    return this.getChapterDetail(adjacentChapter.id, userId)
+    return this.getChapterDetail(adjacentChapter.id, context)
   }
 
   /**

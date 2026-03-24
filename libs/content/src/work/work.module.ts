@@ -5,7 +5,9 @@ import { ReportModule } from '@libs/interaction/report'
 import { UploadModule } from '@libs/platform/modules'
 import { SystemConfigModule } from '@libs/system-config'
 import { Module } from '@nestjs/common'
+import { WorkAuthorModule } from '../author'
 import { ContentPermissionModule } from '../permission'
+import { WorkCounterModule } from '../work-counter'
 import { WorkComicChapterBrowseLogResolver } from './chapter/resolver/work-comic-chapter-browse-log.resolver'
 import { WorkComicChapterCommentResolver } from './chapter/resolver/work-comic-chapter-comment.resolver'
 import { WorkComicChapterDownloadResolver } from './chapter/resolver/work-comic-chapter-download.resolver'
@@ -42,6 +44,8 @@ import { WorkService } from './core/work.service'
  */
 @Module({
   imports: [
+    WorkCounterModule,
+    WorkAuthorModule,
     InteractionModule,
     ReportModule,
     UserPermissionModule,
@@ -84,6 +88,7 @@ import { WorkService } from './core/work.service'
   ],
   exports: [
     WorkService,
+    WorkCounterModule,
     WorkChapterService,
     NovelContentService,
     ComicContentService,

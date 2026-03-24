@@ -2,7 +2,21 @@
  * Auto-converted from legacy schema.
  */
 
-import { boolean, date, doublePrecision, index, integer, pgTable, smallint, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import {
+  boolean,
+  check,
+  date,
+  doublePrecision,
+  index,
+  integer,
+  pgTable,
+  smallint,
+  text,
+  timestamp,
+  unique,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 作品表
@@ -142,10 +156,6 @@ export const work = pgTable("work", {
    */
   rating: doublePrecision(),
   /**
-   * 评分人数
-   */
-  ratingCount: integer("ratingCount").default(0).notNull(),
-  /**
    * 热度值
    */
   popularity: integer().default(0).notNull(),
@@ -218,6 +228,14 @@ export const work = pgTable("work", {
      * 索引: commentCount
      */
     index("work_comment_count_idx").on(table.commentCount),
+    /**
+     * 计数字段非负约束
+     */
+    check("work_view_count_non_negative_chk", sql`${table.viewCount} >= 0`),
+    check("work_favorite_count_non_negative_chk", sql`${table.favoriteCount} >= 0`),
+    check("work_like_count_non_negative_chk", sql`${table.likeCount} >= 0`),
+    check("work_comment_count_non_negative_chk", sql`${table.commentCount} >= 0`),
+    check("work_download_count_non_negative_chk", sql`${table.downloadCount} >= 0`),
     /**
      * 索引: deletedAt
      */

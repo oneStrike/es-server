@@ -8,7 +8,7 @@ import {
   IDownloadTargetResolver,
 } from '@libs/interaction/download'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 漫画章节下载解析器
@@ -25,6 +25,7 @@ export class WorkComicChapterDownloadResolver
   constructor(
     private readonly downloadService: DownloadService,
     private readonly drizzle: DrizzleService,
+    private readonly workCounterService: WorkCounterService,
   ) {}
 
   private get workChapter() {
@@ -70,22 +71,13 @@ export class WorkComicChapterDownloadResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    const result = await tx
-      .update(this.workChapter)
-      .set({
-        downloadCount: sql`${this.workChapter.downloadCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(this.workChapter.id, targetId),
-          eq(this.workChapter.workType, this.workType),
-          isNull(this.workChapter.deletedAt),
-        ),
-      )
-    this.drizzle.assertAffectedRows(result, '漫画章节不存在')
+    await this.workCounterService.updateWorkDownloadCountsByChapter(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '漫画章节不存在',
+      '漫画作品不存在',
+    )
   }
 }

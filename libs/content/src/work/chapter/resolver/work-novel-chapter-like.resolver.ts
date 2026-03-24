@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  workChapter
- } from '@db/schema'
+
 import {
   ILikeTargetResolver,
   LikeService,
@@ -9,7 +7,7 @@ import {
 } from '@libs/interaction/like'
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 小说章节点赞解析器
@@ -24,7 +22,10 @@ export class WorkNovelChapterLikeResolver
   /** 作品类型：2 表示小说 */
   private readonly workType = 2
 
-  constructor(private readonly likeService: LikeService) {}
+  constructor(
+    private readonly likeService: LikeService,
+    private readonly workCounterService: WorkCounterService,
+  ) {}
 
   /**
    * 模块初始化时注册解析器到点赞服务
@@ -74,32 +75,12 @@ export class WorkNovelChapterLikeResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    await tx
-      .update(workChapter)
-      .set({
-        likeCount: sql`${workChapter.likeCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(workChapter.id, targetId),
-          eq(workChapter.workType, this.workType),
-          isNull(workChapter.deletedAt),
-        ),
-      )
-    const updated = await tx.query.workChapter.findFirst({
-      where: {
-        id: targetId,
-        workType: this.workType,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new NotFoundException('小说章节不存在')
-    }
+    await this.workCounterService.updateWorkChapterLikeCount(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '小说章节不存在',
+    )
   }
 }

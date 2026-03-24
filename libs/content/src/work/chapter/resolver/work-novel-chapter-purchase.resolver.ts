@@ -12,7 +12,7 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 小说章节购买解析器
@@ -29,6 +29,7 @@ export class WorkNovelChapterPurchaseResolver
   constructor(
     private readonly purchaseService: PurchaseService,
     private readonly drizzle: DrizzleService,
+    private readonly workCounterService: WorkCounterService,
   ) {}
 
   private get db() {
@@ -84,22 +85,12 @@ export class WorkNovelChapterPurchaseResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    const result = await tx
-      .update(this.workChapter)
-      .set({
-        purchaseCount: sql`${this.workChapter.purchaseCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(this.workChapter.id, targetId),
-          eq(this.workChapter.workType, this.workType),
-          isNull(this.workChapter.deletedAt),
-        ),
-      )
-    this.drizzle.assertAffectedRows(result, '小说章节不存在')
+    await this.workCounterService.updateWorkChapterPurchaseCount(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '小说章节不存在',
+    )
   }
 }

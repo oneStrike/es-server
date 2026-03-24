@@ -9,7 +9,7 @@ import {
 } from '@libs/interaction/browse-log'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { ForumCounterService } from '../../counter/forum-counter.service'
 
 /**
  * 论坛帖子浏览日志解析器
@@ -25,6 +25,7 @@ export class ForumTopicBrowseLogResolver
   constructor(
     private readonly browseLogService: BrowseLogService,
     private readonly drizzle: DrizzleService,
+    private readonly forumCounterService: ForumCounterService,
   ) {}
 
   private get forumTopic() {
@@ -51,24 +52,7 @@ export class ForumTopicBrowseLogResolver
     targetId: number,
     delta: number,
   ) => Promise<void> = async (tx, targetId, delta) => {
-    if (delta === 0) {
-      return
-    }
-
-    const result = await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(this.forumTopic)
-        .set({
-          viewCount: sql`${this.forumTopic.viewCount} + ${delta}`,
-        })
-        .where(
-          and(
-            eq(this.forumTopic.id, targetId),
-            isNull(this.forumTopic.deletedAt),
-          ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '帖子不存在')
+    await this.forumCounterService.updateTopicViewCount(tx, targetId, delta)
   }
 
   /**

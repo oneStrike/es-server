@@ -1,7 +1,7 @@
-import type { Db } from '@db/core'
 import type { ForumTopic } from '@db/schema'
 import type {
   CreateForumTopicInput,
+  PublicForumTopicDetailContext,
   QueryForumTopicInput,
   QueryPublicForumTopicInput,
   UpdateForumTopicAuditStatusInput,
@@ -16,6 +16,10 @@ import {
  } from '@db/core'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward'
+import {
+  BrowseLogService,
+  BrowseLogTargetTypeEnum,
+} from '@libs/interaction/browse-log'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import {
   FavoriteService,
@@ -36,7 +40,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, desc, eq, ilike, isNull, sql } from 'drizzle-orm'
+import { and, eq, ilike, isNull } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -56,6 +60,7 @@ export class ForumTopicService {
     private readonly drizzle: DrizzleService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+    private readonly browseLogService: BrowseLogService,
     private readonly forumCounterService: ForumCounterService,
     private readonly appUserCountService: AppUserCountService,
     private readonly actionLogService: ForumUserActionLogService,
@@ -70,10 +75,6 @@ export class ForumTopicService {
 
   get forumTopicTable() {
     return this.drizzle.schema.forumTopic
-  }
-
-  get forumSectionTable() {
-    return this.drizzle.schema.forumSection
   }
 
   get userCommentTable() {
@@ -129,122 +130,6 @@ export class ForumTopicService {
     }
 
     return section.topicReviewPolicy as ForumReviewPolicyEnum
-  }
-
-  /**
-   * 同步主题的回复计数与最后回复信息。
-   * 用于评论增删后保持主题统计字段一致性。
-   * @param tx 事务客户端，若未传入则使用默认连接
-   */
-  async syncTopicReplyState(tx: Db | undefined, topicId: number) {
-    const client = tx ?? this.db
-    const visibleReplyWhere = and(
-      eq(this.userCommentTable.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
-      eq(this.userCommentTable.targetId, topicId),
-      eq(this.userCommentTable.auditStatus, AuditStatusEnum.APPROVED),
-      eq(this.userCommentTable.isHidden, false),
-      isNull(this.userCommentTable.deletedAt),
-    )
-
-    const [replySummaryRows, latestReplyRows] = await Promise.all([
-      client
-        .select({
-          replyCount: sql<number>`count(*)::int`,
-        })
-        .from(this.userCommentTable)
-        .where(visibleReplyWhere),
-      client
-        .select({
-          userId: this.userCommentTable.userId,
-          createdAt: this.userCommentTable.createdAt,
-        })
-        .from(this.userCommentTable)
-        .where(visibleReplyWhere)
-        .orderBy(
-          desc(this.userCommentTable.createdAt),
-          desc(this.userCommentTable.id),
-        )
-        .limit(1),
-    ])
-
-    const replyCount = replySummaryRows[0]?.replyCount ?? 0
-    const latestReply = latestReplyRows[0]
-
-    const result = await this.drizzle.withErrorHandling(() =>
-      client
-        .update(this.forumTopicTable)
-        .set({
-          replyCount,
-          commentCount: replyCount,
-          lastReplyAt: latestReply?.createdAt ?? null,
-          lastReplyUserId: latestReply?.userId ?? null,
-        })
-        .where(
-          and(
-            eq(this.forumTopicTable.id, topicId),
-            isNull(this.forumTopicTable.deletedAt),
-          ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '主题不存在')
-  }
-
-  /**
-   * 同步板块的主题计数与最后发帖信息。
-   * 用于主题增删、状态变更后保持板块统计字段一致性。
-   * 只统计已审核通过且未隐藏的主题。
-   * @param tx 事务客户端，若未传入则使用默认连接
-   */
-  async syncSectionVisibleState(tx: Db | undefined, sectionId: number) {
-    const client = tx ?? this.db
-    const visibleTopicWhere = and(
-      eq(this.forumTopicTable.sectionId, sectionId),
-      eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
-      eq(this.forumTopicTable.isHidden, false),
-      isNull(this.forumTopicTable.deletedAt),
-    )
-
-    const activityAtSql = sql<Date | null>`coalesce(${this.forumTopicTable.lastReplyAt}, ${this.forumTopicTable.createdAt})`
-
-    const [summaryRows, latestTopicRows] = await Promise.all([
-      client
-        .select({
-          topicCount: sql<number>`count(*)::int`,
-          replyCount: sql<number>`coalesce(sum(${this.forumTopicTable.replyCount}), 0)::int`,
-        })
-        .from(this.forumTopicTable)
-        .where(visibleTopicWhere),
-      client
-        .select({
-          id: this.forumTopicTable.id,
-          lastPostAt: activityAtSql,
-        })
-        .from(this.forumTopicTable)
-        .where(visibleTopicWhere)
-        .orderBy(desc(activityAtSql), desc(this.forumTopicTable.id))
-        .limit(1),
-    ])
-
-    const summary = summaryRows[0]
-    const latestTopic = latestTopicRows[0]
-
-    const result = await this.drizzle.withErrorHandling(() =>
-      client
-        .update(this.forumSectionTable)
-        .set({
-          topicCount: summary?.topicCount ?? 0,
-          replyCount: summary?.replyCount ?? 0,
-          lastTopicId: latestTopic?.id ?? null,
-          lastPostAt: latestTopic?.lastPostAt ?? null,
-        })
-        .where(
-          and(
-            eq(this.forumSectionTable.id, sectionId),
-            isNull(this.forumSectionTable.deletedAt),
-          ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '板块不存在')
   }
 
   /**
@@ -336,7 +221,7 @@ export class ForumTopicService {
           userId,
           1,
         )
-        await this.syncSectionVisibleState(tx, sectionId)
+        await this.forumCounterService.syncSectionVisibleState(tx, sectionId)
 
         const { deletedAt, ...data } = newTopic
         return data
@@ -439,7 +324,11 @@ export class ForumTopicService {
    * 获取公开主题详情，包含当前用户的点赞与收藏状态。
    * 匿名用户返回固定的 liked/favorited 为 false，保持响应结构稳定。
    */
-  async getPublicTopicById(id: number, userId?: number) {
+  async getPublicTopicById(
+    id: number,
+    context: PublicForumTopicDetailContext = {},
+  ) {
+    const { userId, ipAddress, device } = context
     const topic = await this.getVisiblePublicTopic(id, userId)
 
     if (!userId) {
@@ -463,8 +352,22 @@ export class ForumTopicService {
       }),
     ])
 
+    await this.browseLogService.recordBrowseLog(
+      BrowseLogTargetTypeEnum.FORUM_TOPIC,
+      id,
+      userId,
+      ipAddress,
+      device,
+      undefined,
+      {
+        skipTargetValidation: true,
+        deferPostProcess: true,
+      },
+    )
+
     return {
       ...topic,
+      viewCount: topic.viewCount + 1,
       liked,
       favorited,
     }
@@ -654,7 +557,10 @@ export class ForumTopicService {
           throw new NotFoundException('主题不存在')
         }
 
-        await this.syncSectionVisibleState(tx, topic.sectionId)
+        await this.forumCounterService.syncSectionVisibleState(
+          tx,
+          topic.sectionId,
+        )
         return nextTopic
       }),
     )
@@ -781,7 +687,10 @@ export class ForumTopicService {
 
         await Promise.all(replyCountTasks)
 
-        await this.syncSectionVisibleState(tx, topic.sectionId)
+        await this.forumCounterService.syncSectionVisibleState(
+          tx,
+          topic.sectionId,
+        )
       }),
     )
 
@@ -835,7 +744,10 @@ export class ForumTopicService {
         this.drizzle.assertAffectedRows(result, '主题不存在')
 
         if (options?.syncSectionVisibility) {
-          await this.syncSectionVisibleState(tx, currentTopic.sectionId)
+          await this.forumCounterService.syncSectionVisibleState(
+            tx,
+            currentTopic.sectionId,
+          )
         }
 
         return true
@@ -897,88 +809,6 @@ export class ForumTopicService {
         syncSectionVisibility: true,
       },
     )
-  }
-
-  async incrementViewCount(id: number) {
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumTopicTable)
-        .set({ viewCount: sql`${this.forumTopicTable.viewCount} + 1` })
-        .where(
-          and(
-            eq(this.forumTopicTable.id, id),
-            isNull(this.forumTopicTable.deletedAt),
-          ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '主题不存在')
-    return true
-  }
-
-  /**
-   * 增加主题回复计数并更新最后回复信息。
-   * 用于评论创建后同步更新主题统计。
-   */
-  async incrementReplyCount(id: number, replyUserId: number) {
-    const [topic] = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumTopicTable)
-        .set({
-          replyCount: sql`${this.forumTopicTable.replyCount} + 1`,
-          commentCount: sql`${this.forumTopicTable.commentCount} + 1`,
-          lastReplyUserId: replyUserId,
-          lastReplyAt: new Date(),
-        })
-        .where(
-          and(
-            eq(this.forumTopicTable.id, id),
-            isNull(this.forumTopicTable.deletedAt),
-          ),
-        )
-        .returning(),
-    )
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-    return topic
-  }
-
-  async incrementLikeCount(id: number) {
-    const [topic] = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumTopicTable)
-        .set({ likeCount: sql`${this.forumTopicTable.likeCount} + 1` })
-        .where(
-          and(
-            eq(this.forumTopicTable.id, id),
-            isNull(this.forumTopicTable.deletedAt),
-          ),
-        )
-        .returning(),
-    )
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-    return topic
-  }
-
-  async decrementLikeCount(id: number) {
-    const [topic] = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumTopicTable)
-        .set({ likeCount: sql`${this.forumTopicTable.likeCount} - 1` })
-        .where(
-          and(
-            eq(this.forumTopicTable.id, id),
-            isNull(this.forumTopicTable.deletedAt),
-          ),
-        )
-        .returning(),
-    )
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-    return topic
   }
 
   /**

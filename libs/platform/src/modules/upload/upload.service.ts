@@ -27,10 +27,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'
 import { SuperbedUploadProvider } from './superbed-upload.provider'
-import {
-  UPLOAD_CONFIG_PROVIDER,
-  UploadProviderEnum,
-} from './upload.types'
+import { UPLOAD_CONFIG_PROVIDER, UploadProviderEnum } from './upload.types'
 
 const pump = promisify(pipeline)
 const SCENE_NAME_REGEX = /^[a-z0-9]+$/i
@@ -128,12 +125,15 @@ export class UploadService {
         fileSize: stats.size,
       }
 
-      return this.uploadPreparedFile(preparedFile)
+      return await this.uploadPreparedFile(preparedFile)
     } catch (error: any) {
       if (error?.response?.message) {
         throw error
       }
-      if (error instanceof BadRequestException || error instanceof PayloadTooLargeException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof PayloadTooLargeException
+      ) {
         throw error
       }
       throw new BadRequestException('上传文件失败')
@@ -146,7 +146,9 @@ export class UploadService {
    * 将本地文件继续走统一上传 provider 流程。
    * 用于压缩包解压后的图片按既有上传配置决定最终落点。
    */
-  async uploadLocalFile(options: UploadLocalFileOptions): Promise<UploadResult> {
+  async uploadLocalFile(
+    options: UploadLocalFileOptions,
+  ): Promise<UploadResult> {
     const detectedFileType = await fileTypeFromFile(options.localPath).catch(
       () => null,
     )
@@ -304,7 +306,7 @@ export class UploadService {
 
   private normalizePathSegments(pathSegments?: string[]) {
     return (pathSegments ?? [])
-      .map(segment => segment.trim())
+      .map((segment) => segment.trim())
       .filter(Boolean)
       .map((segment) => {
         if (!PATH_SEGMENT_REGEX.test(segment)) {
@@ -338,7 +340,9 @@ export class UploadService {
     originalName: string,
     requestMime?: string,
   ): { ext: string, mime: string, fileCategory: UploadFileCategory } | null {
-    const filenameExt = extname(originalName).replace(LEADING_DOT_REGEX, '').toLowerCase()
+    const filenameExt = extname(originalName)
+      .replace(LEADING_DOT_REGEX, '')
+      .toLowerCase()
     const ext = (detectedExt || filenameExt).toLowerCase()
     if (!ext) {
       return null
@@ -350,11 +354,11 @@ export class UploadService {
     }
 
     const mime =
-      detectedMime?.toLowerCase()
-      || (requestMime && requestMime !== 'application/octet-stream'
+      detectedMime?.toLowerCase() ||
+      (requestMime && requestMime !== 'application/octet-stream'
         ? requestMime.toLowerCase()
-        : '')
-      || this.lookupMimeByExt(ext)
+        : '') ||
+        this.lookupMimeByExt(ext)
 
     if (!mime) {
       return null
@@ -374,7 +378,9 @@ export class UploadService {
 
   private getFileCategoryFromExt(ext: string): UploadFileCategory | null {
     const lowerExt = ext.toLowerCase()
-    for (const type of Object.keys(this.uploadConfig.allowExtensions) as UploadFileCategory[]) {
+    for (const type of Object.keys(
+      this.uploadConfig.allowExtensions,
+    ) as UploadFileCategory[]) {
       if (this.uploadConfig.allowExtensions[type].includes(lowerExt)) {
         return type
       }
@@ -386,10 +392,10 @@ export class UploadService {
     let scene: string | undefined
 
     if (
-      sceneField
-      && typeof sceneField === 'object'
-      && 'type' in sceneField
-      && 'value' in sceneField
+      sceneField &&
+      typeof sceneField === 'object' &&
+      'type' in sceneField &&
+      'value' in sceneField
     ) {
       const field = sceneField as MultipartFieldLike
       if (field.type === 'field') {
@@ -409,9 +415,11 @@ export class UploadService {
     return scene
   }
 
-  private async readFirstChunk(stream: NodeJS.ReadableStream & {
-    read: (size?: number) => NodeBuffer | null
-  }): Promise<NodeBuffer> {
+  private async readFirstChunk(
+    stream: NodeJS.ReadableStream & {
+      read: (size?: number) => NodeBuffer | null
+    },
+  ): Promise<NodeBuffer> {
     const initialChunk = stream.read(4100) || stream.read()
     if (initialChunk) {
       return this.toBuffer(initialChunk)
@@ -425,7 +433,11 @@ export class UploadService {
         stream.off('readable', onReadable)
         stream.off('end', onEnd)
         stream.off('error', onError)
-        resolve(this.toBuffer(stream.read(4100) || stream.read() || NodeBuffer.alloc(0)))
+        resolve(
+          this.toBuffer(
+            stream.read(4100) || stream.read() || NodeBuffer.alloc(0),
+          ),
+        )
       }
       onEnd = () => {
         stream.off('readable', onReadable)

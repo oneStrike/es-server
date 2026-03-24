@@ -2,7 +2,6 @@ import type { Db } from '@db/core'
 import {
   DrizzleService
  } from '@db/core'
-import { work } from '@db/schema'
 import {
   ILikeTargetResolver,
   LikeService,
@@ -10,7 +9,7 @@ import {
 } from '@libs/interaction/like'
 import { SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 漫画作品点赞解析器
@@ -26,6 +25,7 @@ export class WorkComicLikeResolver
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
+    private readonly workCounterService: WorkCounterService,
   ) {}
 
   private get db() {
@@ -81,37 +81,13 @@ export class WorkComicLikeResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(work)
-        .set({
-          likeCount: sql`${work.likeCount} + ${delta}`,
-        })
-        .where(
-          and(
-            eq(work.id, targetId),
-            eq(work.type, this.targetType),
-            eq(work.isPublished, true),
-            isNull(work.deletedAt),
-          ),
-        ),
+    await this.workCounterService.updateWorkLikeCount(
+      tx,
+      targetId,
+      this.targetType,
+      delta,
+      '漫画作品不存在',
     )
-    const updated = await tx.query.work.findFirst({
-      where: {
-        id: targetId,
-        type: this.targetType,
-        isPublished: true,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new NotFoundException('漫画作品不存在')
-    }
   }
 
   /**

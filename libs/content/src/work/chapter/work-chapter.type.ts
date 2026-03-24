@@ -50,3 +50,9 @@ export interface SwapWorkChapterNumbersInput {
   dragId: number
   targetId: number
 }
+
+export interface WorkChapterDetailContext {
+  userId?: number
+  ipAddress?: string
+  device?: string
+}

@@ -367,7 +367,7 @@ export class ForumSearchService {
   /**
    * 搜索
    * 根据搜索类型分发至主题/回复搜索，或合并结果
-   * @param searchDto 搜索参数
+   * @param dto 搜索参数
    * @returns 搜索结果
    */
   private async searchTopics(

@@ -6,6 +6,8 @@ import {
   ApiPageDoc,
   CurrentUser,
   OptionalAuth,
+  RequestMeta,
+  RequestMetaResult,
 } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -53,8 +55,16 @@ export class ForumTopicController {
     summary: '获取论坛主题详情',
     model: AppForumTopicDetailDto,
   })
-  async getDetail(@Query() query: IdDto, @CurrentUser('sub') userId?: number) {
-    return this.forumTopicService.getPublicTopicById(query.id, userId)
+  async getDetail(
+    @Query() query: IdDto,
+    @CurrentUser('sub') userId?: number,
+    @RequestMeta() meta?: RequestMetaResult,
+  ) {
+    return this.forumTopicService.getPublicTopicById(query.id, {
+      userId,
+      ipAddress: meta?.ip,
+      device: meta?.deviceId,
+    })
   }
 
   @Get('comment/page')

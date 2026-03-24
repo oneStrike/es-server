@@ -44,6 +44,12 @@ export interface QueryPublicForumTopicInput {
   pageSize?: number
 }
 
+export interface PublicForumTopicDetailContext {
+  userId?: number
+  ipAddress?: string
+  device?: string
+}
+
 /**
  * 更新主题审核状态的领域输入。
  */

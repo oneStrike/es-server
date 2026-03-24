@@ -200,13 +200,4 @@ export class ForumTopicController {
   async updateAuditStatus(@Body() body: UpdateForumTopicAuditStatusDto) {
     return this.forumTopicService.updateTopicAuditStatus(body)
   }
-
-  @Post('increment-view-count')
-  @ApiDoc({
-    summary: '增加主题浏览次数',
-    model: Boolean,
-  })
-  async incrementViewCount(@Body() body: IdDto) {
-    return this.forumTopicService.incrementViewCount(body.id)
-  }
 }

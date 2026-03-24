@@ -2,14 +2,18 @@ import type { Db } from '@db/core'
 import {
   DrizzleService
  } from '@db/core'
-import { work } from '@db/schema'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
 } from '@libs/interaction/favorite'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 漫画作品收藏解析器
@@ -25,6 +29,7 @@ export class WorkComicFavoriteResolver
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
+    private readonly workCounterService: WorkCounterService,
   ) {}
 
   private get db() {
@@ -76,36 +81,19 @@ export class WorkComicFavoriteResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    await this.drizzle.withErrorHandling(() =>
-      tx
-        .update(work)
-        .set({
-          favoriteCount: sql`${work.favoriteCount} + ${delta}`,
-        })
-        .where(
-          and(
-            eq(work.id, targetId),
-            eq(work.type, this.targetType),
-            eq(work.isPublished, true),
-            isNull(work.deletedAt),
-          ),
-        ),
-    )
-    const updated = await tx.query.work.findFirst({
-      where: {
-        id: targetId,
-        type: this.targetType,
-        isPublished: true,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new BadRequestException('漫画作品不存在')
+    try {
+      await this.workCounterService.updateWorkFavoriteCount(
+        tx,
+        targetId,
+        this.targetType,
+        delta,
+        '漫画作品不存在',
+      )
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new BadRequestException(error.message)
+      }
+      throw error
     }
   }
 

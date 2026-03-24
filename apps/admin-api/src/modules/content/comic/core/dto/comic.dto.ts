@@ -16,7 +16,6 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   'likeCount',
   'commentCount',
   'downloadCount',
-  'ratingCount',
   'forumSectionId',
   'deletedAt',
 ]) {

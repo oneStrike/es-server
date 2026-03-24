@@ -109,9 +109,6 @@ export class BaseWorkDto extends BaseDto {
   @NumberProperty({ description: '评分', example: 8.5, required: false, validation: false })
   rating?: number
 
-  @NumberProperty({ description: '评分人数', example: 100, required: true, validation: false })
-  ratingCount!: number
-
   @NumberProperty({ description: '热度值', example: 1000, required: true, validation: false })
   popularity!: number
 

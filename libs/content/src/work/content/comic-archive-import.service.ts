@@ -43,6 +43,8 @@ const ARCHIVE_EXTENSION = '.zip'
 const ARCHIVE_TASK_TTL_MS = 24 * 60 * 60 * 1000
 const ARCHIVE_TASK_CLEANUP_RETENTION_MS = 24 * 60 * 60 * 1000
 const AUTO_IGNORED_ENTRY_NAMES = new Set(['__MACOSX', '.DS_Store', 'Thumbs.db'])
+const CHAPTER_ID_DIRECTORY_RE = /^\d+$/
+const WINDOWS_ABSOLUTE_PATH_RE = /^[a-z]:/i
 const TERMINAL_TASK_STATUSES = [
   ComicArchiveTaskStatusEnum.SUCCESS,
   ComicArchiveTaskStatusEnum.PARTIAL_FAILED,
@@ -382,7 +384,7 @@ export class ComicArchiveImportService {
         continue
       }
 
-      if (!/^\d+$/.test(entry.name)) {
+      if (!CHAPTER_ID_DIRECTORY_RE.test(entry.name)) {
         ignoredItems.push({
           path: entry.name,
           reason: ComicArchiveIgnoreReasonEnum.INVALID_CHAPTER_ID_DIR,
@@ -585,7 +587,7 @@ export class ComicArchiveImportService {
     try {
       const zip = await unzipper.Open.file(archivePath)
       for (const entry of zip.files) {
-        const entryPath = entry.path.replace(/\\/g, '/')
+        const entryPath = entry.path.split('\\').join('/')
         if (!entryPath || this.shouldAutoIgnoreArchivePath(entryPath)) {
           continue
         }
@@ -616,7 +618,7 @@ export class ComicArchiveImportService {
   }
 
   private normalizeArchiveSegments(entryPath: string) {
-    if (entryPath.startsWith('/') || /^[a-z]:/i.test(entryPath)) {
+    if (entryPath.startsWith('/') || WINDOWS_ABSOLUTE_PATH_RE.test(entryPath)) {
       throw new BadRequestException('压缩包路径不合法')
     }
 
@@ -633,8 +635,12 @@ export class ComicArchiveImportService {
   }
 
   private isAllowedImageFile(fileName: string) {
-    const ext = extname(fileName).replace(/^\./, '').toLowerCase()
-    return Boolean(ext && this.uploadConfig.allowExtensions.image.includes(ext))
+    const ext = extname(fileName).toLowerCase()
+    const normalizedExt = ext.startsWith('.') ? ext.slice(1) : ext
+    return Boolean(
+      normalizedExt &&
+      this.uploadConfig.allowExtensions.image.includes(normalizedExt),
+    )
   }
 
   private shouldAutoIgnoreName(name: string) {

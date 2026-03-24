@@ -6,7 +6,7 @@ import {
 } from '@libs/interaction/comment'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { ForumTopicService } from '../forum-topic.service'
+import { ForumCounterService } from '../../counter/forum-counter.service'
 
 /**
  * 论坛帖子评论解析器
@@ -21,7 +21,7 @@ export class ForumTopicCommentResolver
 
   constructor(
     private readonly commentService: CommentService,
-    private readonly forumTopicService: ForumTopicService,
+    private readonly forumCounterService: ForumCounterService,
   ) {}
 
   /**
@@ -128,8 +128,8 @@ export class ForumTopicCommentResolver
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumTopicService.syncTopicReplyState(tx, targetId)
-    await this.forumTopicService.syncSectionVisibleState(tx, meta.sectionId)
+    await this.forumCounterService.syncTopicReplyState(tx, targetId)
+    await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
   }
 
   async postDeleteCommentHook(
@@ -144,7 +144,7 @@ export class ForumTopicCommentResolver
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumTopicService.syncTopicReplyState(tx, comment.targetId)
-    await this.forumTopicService.syncSectionVisibleState(tx, meta.sectionId)
+    await this.forumCounterService.syncTopicReplyState(tx, comment.targetId)
+    await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
   }
 }

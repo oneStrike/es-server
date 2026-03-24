@@ -6,6 +6,7 @@ export default antfu(
       'test/**',
       'dist/**',
       'build/**',
+      'prisma/seed/**',
     ],
 
     formatters: {

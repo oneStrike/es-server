@@ -1,9 +1,20 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
+import { AuditStatusEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user'
-import { Injectable } from '@nestjs/common'
-import { and, eq, sql } from 'drizzle-orm'
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { and, desc, eq, isNull, sql } from 'drizzle-orm'
+
+type ForumSectionCountField =
+  | 'topicCount'
+  | 'replyCount'
+  | 'followersCount'
+
+type ForumTopicCountField =
+  | 'viewCount'
+  | 'likeCount'
+  | 'favoriteCount'
 
 /**
  * 论坛领域计数服务
@@ -16,6 +27,10 @@ export class ForumCounterService {
    * 与 follow 模块解耦，避免论坛域反向依赖 interaction follow 常量。
    */
   private readonly forumSectionFollowTargetType = 3
+  private readonly forumTopicLikeTargetType = 3
+  private readonly forumTopicFavoriteTargetType = 3
+  private readonly forumTopicBrowseTargetType = 5
+  private readonly forumTopicCommentTargetType = 5
 
   constructor(
     private readonly drizzle: DrizzleService,
@@ -38,6 +53,22 @@ export class ForumCounterService {
     return this.drizzle.schema.userFollow
   }
 
+  private get userLike() {
+    return this.drizzle.schema.userLike
+  }
+
+  private get userFavorite() {
+    return this.drizzle.schema.userFavorite
+  }
+
+  private get userBrowseLog() {
+    return this.drizzle.schema.userBrowseLog
+  }
+
+  private get userComment() {
+    return this.drizzle.schema.userComment
+  }
+
   private async executeCountUpdate(
     tx: Db | undefined,
     operation: (client: Db) => Promise<{ rowCount?: number | null } | unknown[]>,
@@ -48,6 +79,84 @@ export class ForumCounterService {
       ? await operation(client)
       : await this.drizzle.withErrorHandling(async () => operation(client))
     this.drizzle.assertAffectedRows(result, message)
+  }
+
+  private rethrowNotFound(error: unknown, message: string): never {
+    if (
+      error instanceof NotFoundException
+      && !error.message.includes('计数不足')
+    ) {
+      throw new NotFoundException(message)
+    }
+    throw error
+  }
+
+  private async updateSectionCountField(
+    tx: Db | undefined,
+    sectionId: number,
+    field: ForumSectionCountField,
+    delta: number,
+    message: string,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    const execute = async (client: Db) =>
+      applyCountDelta(
+        client,
+        this.forumSection,
+        and(
+          eq(this.forumSection.id, sectionId),
+          isNull(this.forumSection.deletedAt),
+        )!,
+        field,
+        delta,
+      )
+
+    try {
+      if (tx) {
+        await execute(tx)
+        return
+      }
+      await this.drizzle.withErrorHandling(async () => execute(this.db))
+    } catch (error) {
+      this.rethrowNotFound(error, message)
+    }
+  }
+
+  private async updateTopicCountField(
+    tx: Db | undefined,
+    topicId: number,
+    field: ForumTopicCountField,
+    delta: number,
+    message: string,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    const execute = async (client: Db) =>
+      applyCountDelta(
+        client,
+        this.forumTopic,
+        and(
+          eq(this.forumTopic.id, topicId),
+          isNull(this.forumTopic.deletedAt),
+        )!,
+        field,
+        delta,
+      )
+
+    try {
+      if (tx) {
+        await execute(tx)
+        return
+      }
+      await this.drizzle.withErrorHandling(async () => execute(this.db))
+    } catch (error) {
+      this.rethrowNotFound(error, message)
+    }
   }
 
   /**
@@ -62,16 +171,11 @@ export class ForumCounterService {
     sectionId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-    await this.executeCountUpdate(
+    await this.updateSectionCountField(
       tx,
-      (client) =>
-        client
-          .update(this.forumSection)
-          .set({ topicCount: sql`${this.forumSection.topicCount} + ${delta}` })
-          .where(eq(this.forumSection.id, sectionId)),
+      sectionId,
+      'topicCount',
+      delta,
       '板块不存在',
     )
   }
@@ -88,39 +192,12 @@ export class ForumCounterService {
     sectionId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-    await this.executeCountUpdate(
+    await this.updateSectionCountField(
       tx,
-      (client) =>
-        client
-          .update(this.forumSection)
-          .set({ replyCount: sql`${this.forumSection.replyCount} + ${delta}` })
-          .where(eq(this.forumSection.id, sectionId)),
+      sectionId,
+      'replyCount',
+      delta,
       '板块不存在',
-    )
-  }
-
-  /**
-   * 更新主题的回复数量
-   * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
-   * @param topicId - 主题ID
-   * @param delta - 增量值，正数表示增加，负数表示减少
-   * @returns 更新后的主题信息
-   */
-  async updateTopicReplyCount(tx: Db | undefined, topicId: number, delta: number) {
-    if (delta === 0) {
-      return
-    }
-    await this.executeCountUpdate(
-      tx,
-      (client) =>
-        client
-          .update(this.forumTopic)
-          .set({ replyCount: sql`${this.forumTopic.replyCount} + ${delta}` })
-          .where(eq(this.forumTopic.id, topicId)),
-      '主题不存在',
     )
   }
 
@@ -132,16 +209,11 @@ export class ForumCounterService {
    * @returns 更新后的主题信息
    */
   async updateTopicLikeCount(tx: Db | undefined, topicId: number, delta: number) {
-    if (delta === 0) {
-      return
-    }
-    await this.executeCountUpdate(
+    await this.updateTopicCountField(
       tx,
-      (client) =>
-        client
-          .update(this.forumTopic)
-          .set({ likeCount: sql`${this.forumTopic.likeCount} + ${delta}` })
-          .where(eq(this.forumTopic.id, topicId)),
+      topicId,
+      'likeCount',
+      delta,
       '主题不存在',
     )
   }
@@ -158,16 +230,28 @@ export class ForumCounterService {
     topicId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-    await this.executeCountUpdate(
+    await this.updateTopicCountField(
       tx,
-      (client) =>
-        client
-          .update(this.forumTopic)
-          .set({ favoriteCount: sql`${this.forumTopic.favoriteCount} + ${delta}` })
-          .where(eq(this.forumTopic.id, topicId)),
+      topicId,
+      'favoriteCount',
+      delta,
+      '主题不存在',
+    )
+  }
+
+  /**
+   * 更新主题浏览数量
+   */
+  async updateTopicViewCount(
+    tx: Db | undefined,
+    topicId: number,
+    delta: number,
+  ) {
+    await this.updateTopicCountField(
+      tx,
+      topicId,
+      'viewCount',
+      delta,
       '主题不存在',
     )
   }
@@ -214,25 +298,13 @@ export class ForumCounterService {
     sectionId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    const execute = async (client: Db) =>
-      applyCountDelta(
-        client,
-        this.forumSection,
-        eq(this.forumSection.id, sectionId),
-        'followersCount',
-        delta,
-      )
-
-    if (tx) {
-      await execute(tx)
-      return
-    }
-
-    await this.drizzle.withErrorHandling(async () => execute(this.db))
+    await this.updateSectionCountField(
+      tx,
+      sectionId,
+      'followersCount',
+      delta,
+      '板块不存在',
+    )
   }
 
   /**
@@ -269,6 +341,179 @@ export class ForumCounterService {
       sectionId,
       followersCount,
     }
+  }
+
+  /**
+   * 根据点赞/收藏/浏览事实表重建主题对象计数。
+   * replyCount / commentCount 由 syncTopicReplyState 负责重算。
+   */
+  async rebuildTopicInteractionCounts(
+    tx: Db | undefined,
+    topicId: number,
+  ) {
+    const client = tx ?? this.db
+    const [likeCount, favoriteCount, viewCount] = await Promise.all([
+      client.$count(
+        this.userLike,
+        and(
+          eq(this.userLike.targetType, this.forumTopicLikeTargetType),
+          eq(this.userLike.targetId, topicId),
+        ),
+      ),
+      client.$count(
+        this.userFavorite,
+        and(
+          eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
+          eq(this.userFavorite.targetId, topicId),
+        ),
+      ),
+      client.$count(
+        this.userBrowseLog,
+        and(
+          eq(this.userBrowseLog.targetType, this.forumTopicBrowseTargetType),
+          eq(this.userBrowseLog.targetId, topicId),
+        ),
+      ),
+    ])
+
+    const persist = async (executor: Db) =>
+      executor
+        .update(this.forumTopic)
+        .set({
+          likeCount,
+          favoriteCount,
+          viewCount,
+        })
+        .where(
+          and(
+            eq(this.forumTopic.id, topicId),
+            isNull(this.forumTopic.deletedAt),
+          ),
+        )
+
+    const result = tx
+      ? await persist(tx)
+      : await this.drizzle.withErrorHandling(async () => persist(this.db))
+    this.drizzle.assertAffectedRows(result, '主题不存在')
+
+    return {
+      topicId,
+      likeCount,
+      favoriteCount,
+      viewCount,
+    }
+  }
+
+  /**
+   * 按可见回复事实表重建主题 replyCount/commentCount 与最后回复信息。
+   */
+  async syncTopicReplyState(tx: Db | undefined, topicId: number) {
+    const client = tx ?? this.db
+    const visibleReplyWhere = and(
+      eq(this.userComment.targetType, this.forumTopicCommentTargetType),
+      eq(this.userComment.targetId, topicId),
+      eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.userComment.isHidden, false),
+      isNull(this.userComment.deletedAt),
+    )
+
+    const [replySummaryRows, latestReplyRows] = await Promise.all([
+      client
+        .select({
+          replyCount: sql<number>`count(*)::int`,
+        })
+        .from(this.userComment)
+        .where(visibleReplyWhere),
+      client
+        .select({
+          userId: this.userComment.userId,
+          createdAt: this.userComment.createdAt,
+        })
+        .from(this.userComment)
+        .where(visibleReplyWhere)
+        .orderBy(desc(this.userComment.createdAt), desc(this.userComment.id))
+        .limit(1),
+    ])
+
+    const replyCount = replySummaryRows[0]?.replyCount ?? 0
+    const latestReply = latestReplyRows[0]
+
+    await this.executeCountUpdate(
+      tx,
+      (executor) =>
+        executor
+          .update(this.forumTopic)
+          .set({
+            replyCount,
+            commentCount: replyCount,
+            lastReplyAt: latestReply?.createdAt ?? null,
+            lastReplyUserId: latestReply?.userId ?? null,
+          })
+          .where(
+            and(
+              eq(this.forumTopic.id, topicId),
+              isNull(this.forumTopic.deletedAt),
+            ),
+          ),
+      '主题不存在',
+    )
+  }
+
+  /**
+   * 按可见主题事实表重建板块 topicCount/replyCount/lastTopicId/lastPostAt。
+   */
+  async syncSectionVisibleState(tx: Db | undefined, sectionId: number) {
+    const client = tx ?? this.db
+    const visibleTopicWhere = and(
+      eq(this.forumTopic.sectionId, sectionId),
+      eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumTopic.isHidden, false),
+      isNull(this.forumTopic.deletedAt),
+    )
+
+    const activityAtSql = sql<Date | null>`coalesce(${this.forumTopic.lastReplyAt}, ${this.forumTopic.createdAt})`
+
+    const [summaryRows, latestTopicRows] = await Promise.all([
+      client
+        .select({
+          topicCount: sql<number>`count(*)::int`,
+          replyCount: sql<number>`coalesce(sum(${this.forumTopic.replyCount}), 0)::int`,
+        })
+        .from(this.forumTopic)
+        .where(visibleTopicWhere),
+      client
+        .select({
+          id: this.forumTopic.id,
+          lastPostAt: activityAtSql,
+        })
+        .from(this.forumTopic)
+        .where(visibleTopicWhere)
+        .orderBy(desc(activityAtSql), desc(this.forumTopic.id))
+        .limit(1),
+    ])
+
+    const summary = summaryRows[0]
+    const latestTopic = latestTopicRows[0]
+
+    await this.executeCountUpdate(
+      tx,
+      (executor) =>
+        executor
+          .update(this.forumSection)
+          .set({
+            topicCount: summary?.topicCount ?? 0,
+            replyCount: summary?.replyCount ?? 0,
+            lastTopicId: latestTopic?.id ?? null,
+            lastPostAt: latestTopic?.lastPostAt ?? null,
+          })
+          .where(
+            and(
+              eq(this.forumSection.id, sectionId),
+              isNull(this.forumSection.deletedAt),
+            ),
+          ),
+      '板块不存在',
+    )
   }
 
   /**

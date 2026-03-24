@@ -241,7 +241,6 @@ export class UserProfileService {
   /**
    * 查看我的主题
    * @param userId - 用户ID
-   * @param query - 分页参数
    * @returns 分页的主题列表，包含板块信息和回复数统计
    */
   async getMyTopics(userId: number, query?: { sectionId?: number, pageIndex?: number, pageSize?: number }) {

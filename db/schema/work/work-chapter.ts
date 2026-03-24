@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import {
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -198,6 +199,14 @@ export const workChapter = pgTable(
      * 索引: workType
      */
     index('work_chapter_work_type_idx').on(table.workType),
+    /**
+     * 计数字段非负约束
+     */
+    check('work_chapter_view_count_non_negative_chk', sql`${table.viewCount} >= 0`),
+    check('work_chapter_like_count_non_negative_chk', sql`${table.likeCount} >= 0`),
+    check('work_chapter_comment_count_non_negative_chk', sql`${table.commentCount} >= 0`),
+    check('work_chapter_purchase_count_non_negative_chk', sql`${table.purchaseCount} >= 0`),
+    check('work_chapter_download_count_non_negative_chk', sql`${table.downloadCount} >= 0`),
   ],
 )
 

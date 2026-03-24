@@ -8,7 +8,8 @@ import {
   IBrowseLogTargetResolver,
 } from '@libs/interaction/browse-log'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 小说章节浏览日志解析器
@@ -26,6 +27,7 @@ export class WorkNovelChapterBrowseLogResolver
   constructor(
     private readonly browseLogService: BrowseLogService,
     private readonly drizzle: DrizzleService,
+    private readonly workCounterService: WorkCounterService,
   ) {}
 
   private get workChapter() {
@@ -52,23 +54,13 @@ export class WorkNovelChapterBrowseLogResolver
     targetId: number,
     delta: number,
   ) => Promise<void> = async (tx, targetId, delta) => {
-    if (delta === 0) {
-      return
-    }
-
-    const result = await tx
-      .update(this.workChapter)
-      .set({
-        viewCount: sql`${this.workChapter.viewCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(this.workChapter.id, targetId),
-          eq(this.workChapter.workType, this.workType),
-          isNull(this.workChapter.deletedAt),
-        ),
-      )
-    this.drizzle.assertAffectedRows(result, '小说章节不存在')
+    await this.workCounterService.updateWorkChapterViewCount(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '小说章节不存在',
+    )
   }
 
   /**

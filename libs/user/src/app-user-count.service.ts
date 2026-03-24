@@ -2,7 +2,7 @@ import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 type AppUserCountField =
   | 'commentCount'
@@ -15,6 +15,19 @@ type AppUserCountField =
   | 'forumTopicReceivedLikeCount'
   | 'forumTopicReceivedFavoriteCount'
 
+interface RebuiltAppUserCounts {
+  userId: number
+  commentCount: number
+  likeCount: number
+  favoriteCount: number
+  followingCount: number
+  followersCount: number
+  forumTopicCount: number
+  commentReceivedLikeCount: number
+  forumTopicReceivedLikeCount: number
+  forumTopicReceivedFavoriteCount: number
+}
+
 /**
  * 应用用户计数服务
  * 负责维护 app_user_count 的全局用户计数字段
@@ -26,6 +39,9 @@ export class AppUserCountService {
    * 与 follow 模块解耦，避免用户域反向依赖 interaction follow 常量。
    */
   private readonly userFollowTargetType = 1
+  private readonly forumTopicLikeTargetType = 3
+  private readonly forumTopicFavoriteTargetType = 3
+  private readonly commentLikeTargetType = 6
 
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -39,6 +55,22 @@ export class AppUserCountService {
 
   private get userFollow() {
     return this.drizzle.schema.userFollow
+  }
+
+  private get userLike() {
+    return this.drizzle.schema.userLike
+  }
+
+  private get userFavorite() {
+    return this.drizzle.schema.userFavorite
+  }
+
+  private get userComment() {
+    return this.drizzle.schema.userComment
+  }
+
+  private get forumTopic() {
+    return this.drizzle.schema.forumTopic
   }
 
   /**
@@ -245,6 +277,155 @@ export class AppUserCountService {
       followingCount,
       followersCount,
     }
+  }
+
+  /**
+   * 根据事实表重建 app_user_count 的全部核心聚合字段。
+   * 该方法以事实表为准，不依赖现有读模型值。
+   */
+  async rebuildUserCounts(
+    tx: Db | undefined,
+    userId: number,
+  ): Promise<RebuiltAppUserCounts> {
+    const client = tx ?? this.db
+    const [
+      commentRow,
+      likeRow,
+      favoriteRow,
+      followingRow,
+      followersRow,
+      forumTopicRow,
+      commentReceivedLikeRow,
+      forumTopicReceivedLikeRow,
+      forumTopicReceivedFavoriteRow,
+    ] = await Promise.all([
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userComment)
+        .where(
+          and(
+            eq(this.userComment.userId, userId),
+            isNull(this.userComment.deletedAt),
+          ),
+        )
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userLike)
+        .where(eq(this.userLike.userId, userId))
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userFavorite)
+        .where(eq(this.userFavorite.userId, userId))
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userFollow)
+        .where(eq(this.userFollow.userId, userId))
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userFollow)
+        .where(
+          and(
+            eq(this.userFollow.targetType, this.userFollowTargetType),
+            eq(this.userFollow.targetId, userId),
+          ),
+        )
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.forumTopic)
+        .where(
+          and(
+            eq(this.forumTopic.userId, userId),
+            isNull(this.forumTopic.deletedAt),
+          ),
+        )
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userLike)
+        .innerJoin(
+          this.userComment,
+          and(
+            eq(this.userComment.id, this.userLike.targetId),
+            eq(this.userComment.userId, userId),
+            isNull(this.userComment.deletedAt),
+          ),
+        )
+        .where(eq(this.userLike.targetType, this.commentLikeTargetType))
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userLike)
+        .innerJoin(
+          this.forumTopic,
+          and(
+            eq(this.forumTopic.id, this.userLike.targetId),
+            eq(this.forumTopic.userId, userId),
+            isNull(this.forumTopic.deletedAt),
+          ),
+        )
+        .where(eq(this.userLike.targetType, this.forumTopicLikeTargetType))
+        .then((rows) => rows[0]),
+      client
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.userFavorite)
+        .innerJoin(
+          this.forumTopic,
+          and(
+            eq(this.forumTopic.id, this.userFavorite.targetId),
+            eq(this.forumTopic.userId, userId),
+            isNull(this.forumTopic.deletedAt),
+          ),
+        )
+        .where(
+          eq(
+            this.userFavorite.targetType,
+            this.forumTopicFavoriteTargetType,
+          ),
+        )
+        .then((rows) => rows[0]),
+    ])
+
+    const rebuiltCounts: RebuiltAppUserCounts = {
+      userId,
+      commentCount: Number(commentRow?.count ?? 0),
+      likeCount: Number(likeRow?.count ?? 0),
+      favoriteCount: Number(favoriteRow?.count ?? 0),
+      followingCount: Number(followingRow?.count ?? 0),
+      followersCount: Number(followersRow?.count ?? 0),
+      forumTopicCount: Number(forumTopicRow?.count ?? 0),
+      commentReceivedLikeCount: Number(commentReceivedLikeRow?.count ?? 0),
+      forumTopicReceivedLikeCount: Number(
+        forumTopicReceivedLikeRow?.count ?? 0,
+      ),
+      forumTopicReceivedFavoriteCount: Number(
+        forumTopicReceivedFavoriteRow?.count ?? 0,
+      ),
+    }
+
+    const persist = (executor: Db) =>
+      executor
+        .insert(this.appUserCount)
+        .values(rebuiltCounts)
+        .onConflictDoUpdate({
+          target: this.appUserCount.userId,
+          set: {
+            ...rebuiltCounts,
+            updatedAt: new Date(),
+          },
+        })
+
+    if (tx) {
+      await persist(tx)
+    } else {
+      await this.drizzle.withErrorHandling(() => persist(this.db))
+    }
+
+    return rebuiltCounts
   }
 
   /**

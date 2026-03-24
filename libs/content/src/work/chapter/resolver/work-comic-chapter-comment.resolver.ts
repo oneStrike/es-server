@@ -8,8 +8,14 @@ import {
   CommentTargetTypeEnum,
   ICommentTargetResolver,
 } from '@libs/interaction/comment'
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common'
+import { eq } from 'drizzle-orm'
+import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
  * 漫画章节评论解析器
@@ -23,7 +29,10 @@ export class WorkComicChapterCommentResolver
   /** 作品类型：1 表示漫画 */
   private readonly workType = 1
 
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly workCounterService: WorkCounterService,
+  ) {}
 
   /**
    * 模块初始化时注册解析器
@@ -45,32 +54,19 @@ export class WorkComicChapterCommentResolver
     targetId: number,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    await tx
-      .update(workChapter)
-      .set({
-        commentCount: sql`${workChapter.commentCount} + ${delta}`,
-      })
-      .where(
-        and(
-          eq(workChapter.id, targetId),
-          eq(workChapter.workType, this.workType),
-          isNull(workChapter.deletedAt),
-        ),
+    try {
+      await this.workCounterService.updateWorkChapterCommentCount(
+        tx,
+        targetId,
+        this.workType,
+        delta,
+        '漫画章节不存在',
       )
-    const updated = await tx.query.workChapter.findFirst({
-      where: {
-        id: targetId,
-        workType: this.workType,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-    if (!updated) {
-      throw new BadRequestException('漫画章节不存在')
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new BadRequestException(error.message)
+      }
+      throw error
     }
   }
 

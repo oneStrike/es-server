@@ -193,7 +193,6 @@ class WorkDetailExtraDto extends PickType(BaseWorkDto, [
   'commentCount',
   'downloadCount',
   'rating',
-  'ratingCount',
 ]) {}
 
 class WorkDetailBodyDto extends IntersectionType(

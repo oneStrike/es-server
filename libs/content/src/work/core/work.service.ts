@@ -14,6 +14,7 @@ import { ContentTypeEnum } from '@libs/platform/constant'
 import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { WorkAuthorService } from '../../author'
 import {
   CreateWorkInput,
   QueryWorkInput,
@@ -48,6 +49,7 @@ interface WorkDetailContext {
 export class WorkService {
   constructor(
     private readonly drizzle: DrizzleService,
+    private readonly workAuthorService: WorkAuthorService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
     private readonly followService: FollowService,
@@ -251,10 +253,7 @@ export class WorkService {
               sortOrder: index,
             })),
           )
-          await tx
-            .update(this.workAuthor)
-            .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
-            .where(inArray(this.workAuthor.id, authorIds))
+          await this.workAuthorService.updateAuthorWorkCounts(tx, authorIds, 1)
         }
 
         if (categoryIds.length) {
@@ -414,18 +413,20 @@ export class WorkService {
 
           // 新增作者的作品数 +1
           if (addedAuthorIds.length > 0) {
-            await tx
-              .update(this.workAuthor)
-              .set({ workCount: sql`${this.workAuthor.workCount} + 1` })
-              .where(inArray(this.workAuthor.id, addedAuthorIds))
+            await this.workAuthorService.updateAuthorWorkCounts(
+              tx,
+              addedAuthorIds,
+              1,
+            )
           }
 
           // 移除作者的作品数 -1
           if (removedAuthorIds.length > 0) {
-            await tx
-              .update(this.workAuthor)
-              .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
-              .where(inArray(this.workAuthor.id, removedAuthorIds))
+            await this.workAuthorService.updateAuthorWorkCounts(
+              tx,
+              removedAuthorIds,
+              -1,
+            )
           }
         }
 
@@ -1031,10 +1032,7 @@ export class WorkService {
         // 更新关联作者的作品数量（-1）
         const authorIds = work.authors.map((rel) => rel.authorId)
         if (authorIds.length > 0) {
-          await tx
-            .update(this.workAuthor)
-            .set({ workCount: sql`${this.workAuthor.workCount} - 1` })
-            .where(inArray(this.workAuthor.id, authorIds))
+          await this.workAuthorService.updateAuthorWorkCounts(tx, authorIds, -1)
         }
 
         return true

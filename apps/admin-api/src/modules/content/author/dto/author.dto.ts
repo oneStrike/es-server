@@ -53,6 +53,11 @@ export class AuthorFollowCountRepairResultDto extends IntersectionType(
   PickType(BaseAuthorDto, ['followersCount'] as const),
 ) {}
 
+export class AuthorWorkCountRepairResultDto extends IntersectionType(
+  IdDto,
+  PickType(BaseAuthorDto, ['workCount'] as const),
+) {}
+
 export class AuthorPageResponseDto extends OmitType(BaseAuthorDto, [
   'remark',
   'description',

@@ -6,6 +6,7 @@ import { ApiTags } from '@nestjs/swagger'
 import {
   AuthorFollowCountRepairResultDto,
   AuthorPageResponseDto,
+  AuthorWorkCountRepairResultDto,
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,
@@ -110,6 +111,24 @@ export class ContentAuthorController {
   })
   async rebuildFollowCountAll() {
     return this.authorService.rebuildAllAuthorFollowersCount()
+  }
+
+  @Post('rebuild-work-count')
+  @ApiDoc({
+    summary: '重建作者作品计数',
+    model: AuthorWorkCountRepairResultDto,
+  })
+  async rebuildWorkCount(@Body() body: IdDto) {
+    return this.authorService.rebuildAuthorWorkCountById(body.id)
+  }
+
+  @Post('rebuild-work-count-all')
+  @ApiDoc({
+    summary: '全量重建作者作品计数',
+    model: Boolean,
+  })
+  async rebuildWorkCountAll() {
+    return this.authorService.rebuildAllAuthorWorkCount()
   }
 
   /**

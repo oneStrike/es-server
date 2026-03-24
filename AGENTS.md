@@ -64,6 +64,7 @@
 ## 7. Drizzle 规则
 
 - Drizzle 规范以 `.trae/rules/drizzle-guidelines.md` 为准。
+- 计数器、聚合读模型与冗余统计字段规范以 `.trae/rules/COUNTER_SPEC.md` 为准；实现模式与仓库现状对照参考 `.trae/rules/COUNTER_PATTERNS.md`、`.trae/rules/COUNTER_REGISTRY.md`。
 - 只注入 `DrizzleService`，通过 `drizzle.db`、`drizzle.schema`、`drizzle.ext` 工作。
 - 写操作统一使用 `withErrorHandling` 或等价事务封装；需要保证资源存在时调用 `assertAffectedRows`。依赖原始数据库错误做重试/幂等判断的事务路径，按 `drizzle-guidelines.md` 的例外处理。
 - 常规分页统一使用 `drizzle.ext.findPagination`；复合分页按 `drizzle-guidelines.md` 的例外条款处理。
@@ -87,6 +88,7 @@
    - DTO：`.trae/rules/DTO_SPEC.md`
    - TypeScript 类型：`.trae/rules/TS_TYPE_SPEC.md`
    - 注释：`.trae/rules/COMMENT_SPEC.md`
+   - Counter：`.trae/rules/COUNTER_SPEC.md`、`.trae/rules/COUNTER_PATTERNS.md`、`.trae/rules/COUNTER_REGISTRY.md`
    - Drizzle：`.trae/rules/drizzle-guidelines.md`
 3. 改代码前先查相邻模块的现有实现，优先复用仓库内既有模式。
 4. 仅在现有抽象不满足时新增类型、DTO 或 helper。
