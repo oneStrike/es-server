@@ -1,16 +1,27 @@
 import { DrizzleService } from '@db/core'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/growth/growth-ledger'
 import { Injectable, Logger } from '@nestjs/common'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { mapReportTargetTypeToInteractionTargetType } from './report-target.mapping'
 import { ReportTargetTypeEnum } from './report.constant'
 
 @Injectable()
 export class ReportGrowthService {
   private readonly logger = new Logger(ReportGrowthService.name)
+  private readonly reportGrowthRuleMap: Partial<
+    Record<ReportTargetTypeEnum, GrowthRuleTypeEnum>
+  > = {
+    [ReportTargetTypeEnum.COMIC]: GrowthRuleTypeEnum.COMIC_WORK_REPORT,
+    [ReportTargetTypeEnum.NOVEL]: GrowthRuleTypeEnum.NOVEL_WORK_REPORT,
+    [ReportTargetTypeEnum.COMIC_CHAPTER]:
+      GrowthRuleTypeEnum.COMIC_CHAPTER_REPORT,
+    [ReportTargetTypeEnum.NOVEL_CHAPTER]:
+      GrowthRuleTypeEnum.NOVEL_CHAPTER_REPORT,
+    [ReportTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_REPORT,
+    [ReportTargetTypeEnum.COMMENT]: GrowthRuleTypeEnum.COMMENT_REPORT,
+  }
 
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
@@ -30,16 +41,7 @@ export class ReportGrowthService {
     const { reportId, reporterId, targetType, targetId } = params
     const baseBizKey = `report:${reportId}:user:${reporterId}`
 
-    const interactionTargetType =
-      mapReportTargetTypeToInteractionTargetType(targetType)
-    if (!interactionTargetType) {
-      return
-    }
-
-    const ruleType = resolveInteractionGrowthRuleType(
-      'report',
-      interactionTargetType,
-    )
+    const ruleType = this.reportGrowthRuleMap[targetType] ?? null
     if (!ruleType) {
       return
     }

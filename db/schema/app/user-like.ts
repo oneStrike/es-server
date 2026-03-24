@@ -15,7 +15,7 @@ export const userLike = pgTable("user_like", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 点赞直接目标类型
-   * 取值见 InteractionTargetTypeEnum
+   * 取值见 like 模块的 LikeTargetTypeEnum
    */
   targetType: smallint().notNull(),
   /**

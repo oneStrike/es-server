@@ -1,4 +1,3 @@
-export * from './download-target.mapping'
 /**
  * 下载模块统一导出。
  */

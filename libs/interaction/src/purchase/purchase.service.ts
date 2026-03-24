@@ -13,8 +13,8 @@ import { sql } from 'drizzle-orm'
 import {
   IPurchaseTargetResolver,
 } from './interfaces/purchase-target-resolver.interface'
-import { PURCHASE_WORK_CHAPTER_TARGET_TYPES } from './purchase-target.mapping'
 import {
+  PURCHASE_WORK_CHAPTER_TARGET_TYPES,
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from './purchase.constant'

@@ -5,6 +5,11 @@ export enum PurchaseTargetTypeEnum {
   NOVEL_CHAPTER = 2,
 }
 
+export const PURCHASE_WORK_CHAPTER_TARGET_TYPES = [
+  PurchaseTargetTypeEnum.COMIC_CHAPTER,
+  PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+] as const
+
 export enum PurchaseStatusEnum {
   /** 成功 */
   SUCCESS = 1,

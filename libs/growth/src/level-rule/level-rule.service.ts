@@ -8,13 +8,20 @@ import type {
   UserLevelStatisticsResult,
 } from './level-rule.type'
 import { DrizzleService } from '@db/core'
-import { InteractionTargetTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 @Injectable()
 export class UserLevelRuleService {
+  /**
+   * 权限统计直接读取 interaction 事实表。
+   * 这里保留本地常量，避免 growth 反向依赖 interaction 形成循环引用。
+   */
+  private readonly forumTopicLikeTargetType = 3
+  private readonly commentLikeTargetType = 6
+  private readonly forumTopicFavoriteTargetType = 3
+
   constructor(private readonly drizzle: DrizzleService) {}
 
   private get db() {
@@ -337,8 +344,8 @@ export class UserLevelRuleService {
             and(
               eq(this.userLike.userId, userId),
               inArray(this.userLike.targetType, [
-                InteractionTargetTypeEnum.FORUM_TOPIC,
-                InteractionTargetTypeEnum.COMMENT,
+                this.forumTopicLikeTargetType,
+                this.commentLikeTargetType,
               ]),
               gte(this.userLike.createdAt, today),
             ),
@@ -354,7 +361,7 @@ export class UserLevelRuleService {
             this.userFavorite,
             and(
               eq(this.userFavorite.userId, userId),
-              eq(this.userFavorite.targetType, InteractionTargetTypeEnum.FORUM_TOPIC),
+              eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
               gte(this.userFavorite.createdAt, today),
             ),
           )

@@ -7,9 +7,11 @@ import type {
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from '../download/download-target.mapping'
-import { PURCHASE_WORK_CHAPTER_TARGET_TYPES } from '../purchase/purchase-target.mapping'
-import { PurchaseStatusEnum } from '../purchase/purchase.constant'
+import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from '../download/download.constant'
+import {
+  PurchaseStatusEnum,
+  PURCHASE_WORK_CHAPTER_TARGET_TYPES,
+} from '../purchase/purchase.constant'
 
 @Injectable()
 export class UserAssetsService {

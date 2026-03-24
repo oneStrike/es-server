@@ -1,11 +1,10 @@
 import { DrizzleService } from '@db/core'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/growth/growth-ledger'
 import { Injectable, Logger } from '@nestjs/common'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { mapBrowseLogTargetTypeToInteractionTargetType } from './browse-log-target.mapping'
 import { BrowseLogTargetTypeEnum } from './browse-log.constant'
 
 /**
@@ -15,6 +14,13 @@ import { BrowseLogTargetTypeEnum } from './browse-log.constant'
 @Injectable()
 export class BrowseLogGrowthService {
   private readonly logger = new Logger(BrowseLogGrowthService.name)
+  private readonly browseGrowthRuleMap: Partial<
+    Record<BrowseLogTargetTypeEnum, GrowthRuleTypeEnum>
+  > = {
+    [BrowseLogTargetTypeEnum.COMIC]: GrowthRuleTypeEnum.COMIC_WORK_VIEW,
+    [BrowseLogTargetTypeEnum.NOVEL]: GrowthRuleTypeEnum.NOVEL_WORK_VIEW,
+    [BrowseLogTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_VIEW,
+  }
 
   constructor(
     /** 成长账本服务 */
@@ -39,12 +45,7 @@ export class BrowseLogGrowthService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    const interactionTargetType =
-      mapBrowseLogTargetTypeToInteractionTargetType(targetType)
-    const ruleType = resolveInteractionGrowthRuleType(
-      'view',
-      interactionTargetType,
-    )
+    const ruleType = this.browseGrowthRuleMap[targetType] ?? null
     if (!ruleType) {
       return
     }

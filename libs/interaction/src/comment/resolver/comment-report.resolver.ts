@@ -1,22 +1,20 @@
 import type { Db } from '@db/core'
-import {
-  CommentLevelEnum,
-  InteractionTargetTypeEnum,
-} from '@libs/platform/constant'
+import { CommentLevelEnum } from '@libs/platform/constant'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common'
-import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
 import {
   IReportTargetResolver,
   ReportService,
   ReportTargetTypeEnum,
 } from '../../report'
-import { mapCommentTargetTypeToInteractionTargetType } from '../comment-target.mapping'
-import { CommentTargetTypeEnum } from '../comment.constant'
+import {
+  CommentTargetTypeEnum,
+  mapCommentTargetTypeToSceneType,
+} from '../comment.constant'
 
 /**
  * 评论举报解析器
@@ -65,15 +63,9 @@ export class CommentReportResolver
       throw new NotFoundException('评论不存在')
     }
 
-    const interactionTargetType = mapCommentTargetTypeToInteractionTargetType(
+    const sceneType = mapCommentTargetTypeToSceneType(
       comment.targetType as CommentTargetTypeEnum,
     )
-
-    if (interactionTargetType === InteractionTargetTypeEnum.COMMENT) {
-      throw new BadRequestException('评论不能继续挂载评论作为场景目标')
-    }
-
-    const sceneType = mapInteractionTargetTypeToSceneType(interactionTargetType)
     if (!sceneType) {
       throw new BadRequestException('评论挂载的目标类型不合法')
     }

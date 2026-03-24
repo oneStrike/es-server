@@ -1,11 +1,10 @@
 import { DrizzleService } from '@db/core'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/growth/growth-ledger'
 import { Injectable, Logger } from '@nestjs/common'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { mapFavoriteTargetTypeToInteractionTargetType } from './favorite-target.mapping'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
 
 /**
@@ -15,6 +14,16 @@ import { FavoriteTargetTypeEnum } from './favorite.constant'
 @Injectable()
 export class FavoriteGrowthService {
   private readonly logger = new Logger(FavoriteGrowthService.name)
+  private readonly favoriteGrowthRuleMap: Partial<
+    Record<FavoriteTargetTypeEnum, GrowthRuleTypeEnum>
+  > = {
+    [FavoriteTargetTypeEnum.WORK_COMIC]:
+      GrowthRuleTypeEnum.COMIC_WORK_FAVORITE,
+    [FavoriteTargetTypeEnum.WORK_NOVEL]:
+      GrowthRuleTypeEnum.NOVEL_WORK_FAVORITE,
+    [FavoriteTargetTypeEnum.FORUM_TOPIC]:
+      GrowthRuleTypeEnum.TOPIC_FAVORITED,
+  }
 
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
@@ -36,12 +45,7 @@ export class FavoriteGrowthService {
     targetId: number,
     userId: number,
   ) {
-    const interactionTargetType =
-      mapFavoriteTargetTypeToInteractionTargetType(targetType)
-    const ruleType = resolveInteractionGrowthRuleType(
-      'favorite',
-      interactionTargetType,
-    )
+    const ruleType = this.favoriteGrowthRuleMap[targetType] ?? null
     if (!ruleType) {
       return
     }

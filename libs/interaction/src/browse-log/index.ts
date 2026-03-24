@@ -1,7 +1,6 @@
 export * from './browse-log-growth.service'
 export * from './browse-log-interaction.service'
 export * from './browse-log-permission.service'
-export * from './browse-log-target.mapping'
 export * from './browse-log.constant'
 export * from './browse-log.module'
 export * from './browse-log.service'

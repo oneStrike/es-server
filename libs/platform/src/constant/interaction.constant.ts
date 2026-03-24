@@ -1,33 +1,9 @@
 /**
- * 交互目标类型枚举。
- *
- * 说明：
- * - 该枚举表示系统级共享的“目标语义”，用于跨模块的统一解析、场景映射与成长规则
- * - 各互动模块可以继续维护自己的 `target_type` 编码，但应通过映射层投影到该枚举
- */
-export enum InteractionTargetTypeEnum {
-  /** 漫画作品 */
-  COMIC = 1,
-  /** 小说作品 */
-  NOVEL = 2,
-  /** 论坛主题 */
-  FORUM_TOPIC = 3,
-  /** 漫画章节 */
-  COMIC_CHAPTER = 10,
-  /** 小说章节 */
-  NOVEL_CHAPTER = 11,
-  /** 评论 */
-  COMMENT = 12,
-  /** 用户 */
-  USER = 13,
-}
-
-/**
  * 业务场景类型枚举。
  *
  * 说明：
  * - 该枚举用于补充多态交互表的统计维度
- * - `sceneType` 表示直接目标所属的根业务场景，而不是替代 `targetType`
+ * - `sceneType` 表示直接目标所属的根业务场景，而不是替代各交互表自己的 `targetType`
  */
 export enum SceneTypeEnum {
   /** 漫画作品场景 */

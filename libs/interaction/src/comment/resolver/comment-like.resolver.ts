@@ -6,10 +6,7 @@ import {
   MessageNotificationTypeEnum,
 } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
-import {
-  CommentLevelEnum,
-  InteractionTargetTypeEnum,
-} from '@libs/platform/constant'
+import { CommentLevelEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user'
 import {
   BadRequestException,
@@ -18,15 +15,16 @@ import {
   OnModuleInit,
 } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { mapInteractionTargetTypeToSceneType } from '../../interaction-target.definition'
 import {
   ILikeTargetResolver,
   LikeTargetMeta,
 } from '../../like/interfaces/like-target-resolver.interface'
 import { LikeTargetTypeEnum } from '../../like/like.constant'
 import { LikeService } from '../../like/like.service'
-import { mapCommentTargetTypeToInteractionTargetType } from '../comment-target.mapping'
-import { CommentTargetTypeEnum } from '../comment.constant'
+import {
+  CommentTargetTypeEnum,
+  mapCommentTargetTypeToSceneType,
+} from '../comment.constant'
 
 /**
  * 评论点赞解析器
@@ -78,16 +76,9 @@ export class CommentLikeResolver
       throw new NotFoundException('评论不存在')
     }
 
-    // 评论不能继续挂载评论作为场景目标，避免嵌套层级过深
-    const interactionTargetType = mapCommentTargetTypeToInteractionTargetType(
+    const sceneType = mapCommentTargetTypeToSceneType(
       comment.targetType as CommentTargetTypeEnum,
     )
-
-    if (interactionTargetType === InteractionTargetTypeEnum.COMMENT) {
-      throw new BadRequestException('评论不能继续挂载评论作为场景目标')
-    }
-
-    const sceneType = mapInteractionTargetTypeToSceneType(interactionTargetType)
     if (!sceneType) {
       throw new BadRequestException('评论挂载的目标类型不合法')
     }

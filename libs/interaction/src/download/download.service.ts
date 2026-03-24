@@ -11,8 +11,10 @@ import type {
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
-import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from './download-target.mapping'
-import { DownloadTargetTypeEnum } from './download.constant'
+import {
+  DOWNLOAD_WORK_CHAPTER_TARGET_TYPES,
+  DownloadTargetTypeEnum,
+} from './download.constant'
 import { IDownloadTargetResolver } from './interfaces/download-target-resolver.interface'
 
 const DOWNLOAD_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(

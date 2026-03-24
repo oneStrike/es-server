@@ -5,8 +5,6 @@ import {
   GrowthLedgerService,
 } from '@libs/growth/growth-ledger'
 import { Injectable, Logger } from '@nestjs/common'
-import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
-import { mapLikeTargetTypeToInteractionTargetType } from './like-target.mapping'
 import { LikeTargetTypeEnum } from './like.constant'
 
 /**
@@ -29,6 +27,17 @@ import { LikeTargetTypeEnum } from './like.constant'
 @Injectable()
 export class LikeGrowthService {
   private readonly logger = new Logger(LikeGrowthService.name)
+  private readonly likeGrowthRuleMap: Partial<
+    Record<LikeTargetTypeEnum, GrowthRuleTypeEnum>
+  > = {
+    [LikeTargetTypeEnum.WORK_COMIC]: GrowthRuleTypeEnum.COMIC_WORK_LIKE,
+    [LikeTargetTypeEnum.WORK_NOVEL]: GrowthRuleTypeEnum.NOVEL_WORK_LIKE,
+    [LikeTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_LIKED,
+    [LikeTargetTypeEnum.WORK_COMIC_CHAPTER]:
+      GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE,
+    [LikeTargetTypeEnum.WORK_NOVEL_CHAPTER]:
+      GrowthRuleTypeEnum.NOVEL_CHAPTER_LIKE,
+  }
 
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
@@ -58,12 +67,7 @@ export class LikeGrowthService {
       return
     }
 
-    const interactionTargetType =
-      mapLikeTargetTypeToInteractionTargetType(targetType)
-    const ruleType = resolveInteractionGrowthRuleType(
-      'like',
-      interactionTargetType,
-    )
+    const ruleType = this.likeGrowthRuleMap[targetType] ?? null
     if (!ruleType) {
       return
     }

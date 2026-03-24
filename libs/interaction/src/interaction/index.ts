@@ -1,5 +1,1 @@
 export * from '../core.module'
-export * from '../interaction-target-access.service'
-export * from '../interaction-target-growth-rule'
-export * from '../interaction-target-resolver.service'
-export * from '../interaction-target.definition'

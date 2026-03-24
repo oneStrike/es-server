@@ -1,4 +1,3 @@
-export * from './comment-target.mapping'
 /**
  * 评论模块统一导出。
  */
