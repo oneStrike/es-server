@@ -8,7 +8,7 @@ import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 
 type ForumSectionCountField =
   | 'topicCount'
-  | 'replyCount'
+  | 'commentCount'
   | 'followersCount'
 
 type ForumTopicCountField =
@@ -181,13 +181,13 @@ export class ForumCounterService {
   }
 
   /**
-   * 更新版块的回复数量
+   * 更新版块的评论数量
    * @param tx - 事务对象，如果在事务中调用则传入，否则使用默认 数据库客户端
    * @param sectionId - 版块ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的版块信息
    */
-  async updateSectionReplyCount(
+  async updateSectionCommentCount(
     tx: Db | undefined,
     sectionId: number,
     delta: number,
@@ -195,7 +195,7 @@ export class ForumCounterService {
     await this.updateSectionCountField(
       tx,
       sectionId,
-      'replyCount',
+      'commentCount',
       delta,
       '板块不存在',
     )
@@ -345,7 +345,7 @@ export class ForumCounterService {
 
   /**
    * 根据点赞/收藏/浏览事实表重建主题对象计数。
-   * replyCount / commentCount 由 syncTopicReplyState 负责重算。
+   * commentCount 与最后评论快照由 syncTopicCommentState 负责重算。
    */
   async rebuildTopicInteractionCounts(
     tx: Db | undefined,
@@ -405,11 +405,11 @@ export class ForumCounterService {
   }
 
   /**
-   * 按可见回复事实表重建主题 replyCount/commentCount 与最后回复信息。
+   * 按可见评论事实表重建主题 commentCount 与最后评论信息。
    */
-  async syncTopicReplyState(tx: Db | undefined, topicId: number) {
+  async syncTopicCommentState(tx: Db | undefined, topicId: number) {
     const client = tx ?? this.db
-    const visibleReplyWhere = and(
+    const visibleCommentWhere = and(
       eq(this.userComment.targetType, this.forumTopicCommentTargetType),
       eq(this.userComment.targetId, topicId),
       eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
@@ -417,26 +417,26 @@ export class ForumCounterService {
       isNull(this.userComment.deletedAt),
     )
 
-    const [replySummaryRows, latestReplyRows] = await Promise.all([
+    const [commentSummaryRows, latestCommentRows] = await Promise.all([
       client
         .select({
-          replyCount: sql<number>`count(*)::int`,
+          commentCount: sql<number>`count(*)::int`,
         })
         .from(this.userComment)
-        .where(visibleReplyWhere),
+        .where(visibleCommentWhere),
       client
         .select({
           userId: this.userComment.userId,
           createdAt: this.userComment.createdAt,
         })
         .from(this.userComment)
-        .where(visibleReplyWhere)
+        .where(visibleCommentWhere)
         .orderBy(desc(this.userComment.createdAt), desc(this.userComment.id))
         .limit(1),
     ])
 
-    const replyCount = replySummaryRows[0]?.replyCount ?? 0
-    const latestReply = latestReplyRows[0]
+    const commentCount = commentSummaryRows[0]?.commentCount ?? 0
+    const latestComment = latestCommentRows[0]
 
     await this.executeCountUpdate(
       tx,
@@ -444,10 +444,9 @@ export class ForumCounterService {
         executor
           .update(this.forumTopic)
           .set({
-            replyCount,
-            commentCount: replyCount,
-            lastReplyAt: latestReply?.createdAt ?? null,
-            lastReplyUserId: latestReply?.userId ?? null,
+            commentCount,
+            lastCommentAt: latestComment?.createdAt ?? null,
+            lastCommentUserId: latestComment?.userId ?? null,
           })
           .where(
             and(
@@ -460,7 +459,7 @@ export class ForumCounterService {
   }
 
   /**
-   * 按可见主题事实表重建板块 topicCount/replyCount/lastTopicId/lastPostAt。
+   * 按可见主题事实表重建板块 topicCount/commentCount/lastTopicId/lastPostAt。
    */
   async syncSectionVisibleState(tx: Db | undefined, sectionId: number) {
     const client = tx ?? this.db
@@ -471,13 +470,13 @@ export class ForumCounterService {
       isNull(this.forumTopic.deletedAt),
     )
 
-    const activityAtSql = sql<Date | null>`coalesce(${this.forumTopic.lastReplyAt}, ${this.forumTopic.createdAt})`
+    const activityAtSql = sql<Date | null>`coalesce(${this.forumTopic.lastCommentAt}, ${this.forumTopic.createdAt})`
 
     const [summaryRows, latestTopicRows] = await Promise.all([
       client
         .select({
           topicCount: sql<number>`count(*)::int`,
-          replyCount: sql<number>`coalesce(sum(${this.forumTopic.replyCount}), 0)::int`,
+          commentCount: sql<number>`coalesce(sum(${this.forumTopic.commentCount}), 0)::int`,
         })
         .from(this.forumTopic)
         .where(visibleTopicWhere),
@@ -502,7 +501,7 @@ export class ForumCounterService {
           .update(this.forumSection)
           .set({
             topicCount: summary?.topicCount ?? 0,
-            replyCount: summary?.replyCount ?? 0,
+            commentCount: summary?.commentCount ?? 0,
             lastTopicId: latestTopic?.id ?? null,
             lastPostAt: latestTopic?.lastPostAt ?? null,
           })
@@ -606,3 +605,4 @@ export class ForumCounterService {
     })
   }
 }
+

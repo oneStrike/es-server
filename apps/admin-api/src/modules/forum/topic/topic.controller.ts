@@ -38,14 +38,13 @@ export class ForumTopicController {
       auditReason: topic.auditReason,
       auditAt: topic.auditAt,
       viewCount: topic.viewCount,
-      replyCount: topic.replyCount,
       likeCount: topic.likeCount,
       commentCount: topic.commentCount,
       favoriteCount: topic.favoriteCount,
       version: topic.version,
       sensitiveWordHits: topic.sensitiveWordHits,
-      lastReplyAt: topic.lastReplyAt,
-      lastReplyUserId: topic.lastReplyUserId,
+      lastCommentAt: topic.lastCommentAt,
+      lastCommentUserId: topic.lastCommentUserId,
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
       topicTags: (topic.topicTags ?? []).map(
@@ -201,3 +200,4 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopicAuditStatus(body)
   }
 }
+

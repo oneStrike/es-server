@@ -121,14 +121,13 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'auditReason',
   'auditAt',
   'viewCount',
-  'replyCount',
   'likeCount',
   'commentCount',
   'favoriteCount',
   'version',
   'sensitiveWordHits',
-  'lastReplyAt',
-  'lastReplyUserId',
+  'lastCommentAt',
+  'lastCommentUserId',
   'createdAt',
   'updatedAt',
 ] as const) {
@@ -160,16 +159,15 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
 
 export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
   ...OMIT_BASE_FIELDS,
-  'commentCount',
   'version',
   'sensitiveWordHits',
   'auditAt',
   'viewCount',
-  'replyCount',
+  'commentCount',
   'likeCount',
   'favoriteCount',
-  'lastReplyUserId',
-  'lastReplyAt',
+  'lastCommentUserId',
+  'lastCommentAt',
   'auditStatus',
   'auditReason',
   'auditRole',
@@ -232,3 +230,4 @@ export class UpdateForumTopicHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isHidden'] as const),
 ) {}
+

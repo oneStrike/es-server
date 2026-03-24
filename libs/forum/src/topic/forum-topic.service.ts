@@ -417,7 +417,7 @@ export class ForumTopicService {
   /**
    * 获取公开主题分页列表。
    * - 只返回已审核通过且未隐藏的主题
-   * - 排序规则：置顶优先，其次按最后回复时间倒序，再按创建时间倒序
+   * - 排序规则：置顶优先，其次按最后评论时间倒序，再按创建时间倒序
    * - 会校验用户对板块的访问权限
    * - 登录用户会返回每条主题的点赞与收藏状态
    */
@@ -443,7 +443,7 @@ export class ForumTopicService {
       pageSize: query.pageSize,
       orderBy: [
         { isPinned: 'desc' },
-        { lastReplyAt: 'desc' },
+        { lastCommentAt: 'desc' },
         { createdAt: 'desc' },
       ],
       pick: [
@@ -455,10 +455,10 @@ export class ForumTopicService {
         'isFeatured',
         'isLocked',
         'viewCount',
-        'replyCount',
+        'commentCount',
         'likeCount',
         'favoriteCount',
-        'lastReplyAt',
+        'lastCommentAt',
         'createdAt',
       ],
     })
@@ -584,8 +584,8 @@ export class ForumTopicService {
 
   /**
    * 删除论坛主题（软删除）。
-   * - 同时软删除该主题下的所有回复
-   * - 在同一事务中回退相关计数：用户发帖数、回复数、点赞数、收藏数
+   * - 同时软删除该主题下的所有评论
+   * - 在同一事务中回退相关计数：用户发帖数、评论数、点赞数、收藏数
    * - 同步更新板块可见状态
    * - 记录删除操作日志
    */
@@ -593,7 +593,7 @@ export class ForumTopicService {
     const { id } = topic
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const replyRows = await tx.query.userComment.findMany({
+        const commentRows = await tx.query.userComment.findMany({
           where: {
             targetType: CommentTargetTypeEnum.FORUM_TOPIC,
             targetId: id,
@@ -649,25 +649,25 @@ export class ForumTopicService {
           )
         }
 
-        const replyCountByUser = new Map<number, number>()
-        const replyReceivedLikeCountByUser = new Map<number, number>()
-        for (const reply of replyRows) {
-          replyCountByUser.set(
-            reply.userId,
-            (replyCountByUser.get(reply.userId) ?? 0) + 1,
+        const commentCountByUser = new Map<number, number>()
+        const commentReceivedLikeCountByUser = new Map<number, number>()
+        for (const comment of commentRows) {
+          commentCountByUser.set(
+            comment.userId,
+            (commentCountByUser.get(comment.userId) ?? 0) + 1,
           )
-          if (reply.likeCount > 0) {
-            replyReceivedLikeCountByUser.set(
-              reply.userId,
-              (replyReceivedLikeCountByUser.get(reply.userId) ?? 0) +
-              reply.likeCount,
+          if (comment.likeCount > 0) {
+            commentReceivedLikeCountByUser.set(
+              comment.userId,
+              (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
+              comment.likeCount,
             )
           }
         }
 
-        const replyCountTasks: Promise<void>[] = []
-        for (const [userId, count] of replyCountByUser.entries()) {
-          replyCountTasks.push(
+        const commentCountTasks: Promise<void>[] = []
+        for (const [userId, count] of commentCountByUser.entries()) {
+          commentCountTasks.push(
             this.appUserCountService.updateCommentCount(tx, userId, -count),
           )
         }
@@ -675,8 +675,8 @@ export class ForumTopicService {
         for (const [
           userId,
           likeCount,
-        ] of replyReceivedLikeCountByUser.entries()) {
-          replyCountTasks.push(
+        ] of commentReceivedLikeCountByUser.entries()) {
+          commentCountTasks.push(
             this.appUserCountService.updateCommentReceivedLikeCount(
               tx,
               userId,
@@ -685,7 +685,7 @@ export class ForumTopicService {
           )
         }
 
-        await Promise.all(replyCountTasks)
+        await Promise.all(commentCountTasks)
 
         await this.forumCounterService.syncSectionVisibleState(
           tx,
@@ -839,3 +839,4 @@ export class ForumTopicService {
     return this.deleteTopicWithCurrent(topic)
   }
 }
+

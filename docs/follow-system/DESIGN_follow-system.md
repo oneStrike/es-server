@@ -190,7 +190,7 @@ export enum FollowTargetTypeEnum {
 
 - 板块列表 / 详情是高频读接口
 - 后续会展示“关注人数”并可能排序
-- 与现有 `topicCount`、`replyCount` 模式一致
+- 与现有 `topicCount`、`commentCount` 模式一致
 
 #### `work_author`
 

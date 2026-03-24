@@ -7,7 +7,7 @@
 - [x] app 侧未发布作品详情/作品论坛入口不可见
 - [x] app 侧 forum topic 的点赞/收藏/评论/浏览/举报统一收口到公开可见主题
 - [x] forum topic 更新 DTO 仅允许修改标题与内容
-- [x] forum reply 的 topic/section/profile 计数与最近活跃字段形成闭环
+- [x] forum comment 的 topic/section/profile 计数与最近活跃字段形成闭环
 - [x] app 侧补齐 forum topic page/detail/create/update/delete 接口
 - [x] work/forum/like/favorite/admin forum detail 的 DTO/Swagger 与真实返回结构对齐
 - [x] `getWorkPage` 支持 DTO 暴露的筛选条件，并优化作者/标签过滤查询方式
@@ -19,7 +19,7 @@
 - [x] 下线 `forum_config` / `forum_config_history` 两张表及 admin/forum/config 全链路，论坛主题审核策略改为仅依赖 `forum_section.topicReviewPolicy`
 - [x] forum section 的 `userLevelRuleId` 约束接入公开主题详情/列表、发帖、回帖与公开搜索，并补齐板块更新时的等级规则校验
 - [x] `forum_topic.sensitiveWordHits` 改为结构化 JSON 写入，`BaseForumTopicDto` 与 admin detail 返回补齐 `auditAt/commentCount/version/sensitiveWordHits`
-- [x] forum search 补齐 admin/app controller，对 topic/reply/all 三类搜索统一返回 `ForumSearchResultDto`，并限制 reply 仅搜索 `FORUM_TOPIC`
+- [x] forum search 补齐 admin/app controller，对 topic/comment/all 三类搜索统一返回 `ForumSearchResultDto`，并限制 comment 仅搜索 `FORUM_TOPIC`
 - [x] forum notification / moderator application 补齐 service、module 与 admin/app controller，版主申请审核可直接落地创建板块版主
 - [x] `libs/forum` DTO 分层已重新收敛：libs 仅保留 `BaseXxxDto`，controller 使用的 Create/Update/Query/Response DTO 全部下沉到 apps 侧组合
 - [x] `libs/forum` 内部 service 已移除对业务 DTO 的直接依赖，`action-log / section / section-group / tag` 改为领域 `*.type.ts` 入参

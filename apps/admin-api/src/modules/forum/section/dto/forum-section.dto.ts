@@ -17,7 +17,7 @@ export class CreateForumSectionDto extends OmitType(
     ...OMIT_BASE_FIELDS,
     'lastTopicId',
     'topicCount',
-    'replyCount',
+    'commentCount',
     'lastPostAt',
     'deletedAt',
   ] as const,
@@ -44,3 +44,4 @@ export class ForumSectionFollowCountRepairResultDto extends IntersectionType(
   IdDto,
   PickType(BaseForumSectionDto, ['followersCount'] as const),
 ) {}
+

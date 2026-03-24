@@ -142,7 +142,7 @@
   - 如果业务不允许迁移归属，直接从 `UpdateForumTopicDto` 去掉 `sectionId`、`userId`。
   - 如果业务允许迁移，就必须单独做“迁移主题”服务并补齐计数与审核策略。
 
-### P1. 论坛回复统计与板块最后发帖时间没有真正维护，作品侧读取到的数据不可靠
+### P1. 论坛评论统计与板块最后发帖时间没有真正维护，作品侧读取到的数据不可靠
 
 - 证据：
   - `libs/forum/src/counter/forum-counter.service.ts:61-75`
@@ -156,17 +156,17 @@
   - 创建/删除主题时只更新 `topicCount`，没有更新 `forum_section.lastPostAt` / `lastTopicId`。
   - `ForumCounterService.updateReplyRelatedCounts()` 存在，但没有被实际使用。
   - `ForumTopicService.incrementReplyCount()` 也没有被调用。
-  - 作品侧论坛板块详情却把 `replyCount`、`lastPostAt` 当成可返回字段。
+  - 作品侧论坛板块详情却把 `commentCount`、`lastPostAt` 当成可返回字段。
 - 影响：
-  - 板块页、作品讨论区页拿到的 `replyCount` / `lastPostAt` 可能长期失真。
+  - 板块页、作品讨论区页拿到的 `commentCount` / `lastPostAt` 可能长期失真。
   - 排序、推荐、运营判断都会受影响。
 - 维度：
   - 联动正确性
   - 数据质量
   - 接口可靠性
 - 建议：
-  - 明确“论坛回复”是否就是 `user_comment`。
-  - 如果是，评论创建/删除必须回写 topic/section/profile 的 reply 统计与最后发帖时间。
+  - 明确“论坛评论”是否就是 `user_comment`。
+  - 如果是，评论创建/删除必须回写 topic/section/profile 的 comment 统计与最后发帖时间。
   - 如果不是，就不要继续在用户端返回这套字段，避免误导。
 
 ### P1. 用户端论坛 API 不完整，底层有能力但接口层没有接齐
@@ -209,7 +209,7 @@
   - `libs/forum/src/topic/forum-topic.service.ts:223-245`
 - 现状：
   - `WorkDetailDto` 基于 `PageWorkDto`，没有声明 `description`、`viewRule`、`chapterPrice`、`canComment`、`commentCount`、`forumSectionId` 等字段，但 `getWorkDetail()` 实际返回的是完整 work 行再加用户态。
-  - `WorkForumSectionDto` 没声明 `topicCount`、`replyCount`，但 `getWorkForumSection()` 实际会返回。
+  - `WorkForumSectionDto` 没声明 `topicCount`、`commentCount`，但 `getWorkForumSection()` 实际会返回。
   - `WorkForumTopicDto` 只声明了精简字段，但 `getWorkForumTopics()` 直接返回 `forum_topic` 全行分页结果。
   - admin 侧 `ForumTopicController.getDetail()` 文档声明 `BaseForumTopicDto`，但 `getTopicById()` 实际返回 `topicTags`、`section`、`user.forumProfile`、`user.level`。
 - 影响：
@@ -349,7 +349,7 @@
 ### 第二批：联动闭环补齐
 
 1. 收口论坛主题更新 DTO，禁止无补偿地修改 `sectionId` / `userId`。
-2. 补齐 replyCount、lastPostAt、lastTopicId 的维护链路，或者下掉无效字段。
+2. 补齐 commentCount、lastPostAt、lastTopicId 的维护链路，或者下掉无效字段。
 3. 明确作品与论坛板块哪些字段需要强同步，哪些字段独立维护。
 
 ### 第三批：接口与契约治理

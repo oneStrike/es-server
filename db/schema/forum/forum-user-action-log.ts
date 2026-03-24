@@ -5,7 +5,7 @@
 import { index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
- * 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、回复、点赞、收藏等操作
+ * 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、评论、点赞、收藏等操作
  */
 export const forumUserActionLog = pgTable("forum_user_action_log", {
   /**
@@ -21,11 +21,11 @@ export const forumUserActionLog = pgTable("forum_user_action_log", {
    */
   targetId: integer().notNull(),
   /**
-   * 操作类型（1=创建主题, 2=创建回复, 3=点赞主题, 4=取消点赞主题, 5=点赞回复, 6=取消点赞回复, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新回复, 11=删除主题, 12=删除回复）
+   * 操作类型（1=创建主题, 2=创建评论, 3=点赞主题, 4=取消点赞主题, 5=点赞评论, 6=取消点赞评论, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新评论, 11=删除主题, 12=删除评论）
    */
   actionType: smallint().notNull(),
   /**
-   * 目标类型（1=主题, 2=回复）
+   * 目标类型（1=主题, 2=评论）
    */
   targetType: smallint().notNull(),
   /**

@@ -111,7 +111,7 @@ export class ForumSectionService {
         isEnabled: true,
         topicReviewPolicy: true,
         topicCount: true,
-        replyCount: true,
+        commentCount: true,
         followersCount: true,
         lastPostAt: true,
       },
@@ -197,7 +197,7 @@ export class ForumSectionService {
         isEnabled: true,
         topicReviewPolicy: true,
         topicCount: true,
-        replyCount: true,
+        commentCount: true,
         followersCount: true,
         lastPostAt: true,
       },
@@ -268,23 +268,23 @@ export class ForumSectionService {
       with: {
         topics: {
           where: { deletedAt: { isNull: true } },
-          columns: { replyCount: true },
+          columns: { commentCount: true },
         },
       },
     })
 
     if (!section) {
-      return { topicCount: 0, replyCount: 0 }
+      return { topicCount: 0, commentCount: 0 }
     }
 
-    const totalReplyCount = section.topics.reduce(
-      (sum, topic) => sum + topic.replyCount,
+    const totalCommentCount = section.topics.reduce(
+      (sum, topic) => sum + topic.commentCount,
       0,
     )
 
     return {
       topicCount: section.topics.length,
-      replyCount: totalReplyCount,
+      commentCount: totalCommentCount,
     }
   }
 
@@ -576,3 +576,4 @@ export class ForumSectionService {
     })
   }
 }
+

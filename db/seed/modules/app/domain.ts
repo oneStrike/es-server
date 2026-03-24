@@ -910,7 +910,7 @@ export async function seedAppActivityDomain(db: Db) {
       .returning()
   }
 
-  const existingForumRootReply = await db.query.userComment.findFirst({
+  const existingForumRootComment = await db.query.userComment.findFirst({
     where: and(
       eq(userComment.targetType, 3),
       eq(userComment.targetId, aotTopic.id),
@@ -919,8 +919,8 @@ export async function seedAppActivityDomain(db: Db) {
     ),
   })
 
-  let forumRootReply = existingForumRootReply
-  const forumRootReplyPayload = {
+  let forumRootComment = existingForumRootComment
+  const forumRootCommentPayload = {
     targetType: 3,
     targetId: aotTopic.id,
     userId: userB.id,
@@ -932,25 +932,25 @@ export async function seedAppActivityDomain(db: Db) {
     auditRole: 2,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 4),
-    likeCount: existingForumRootReply?.likeCount ?? 0,
+    likeCount: existingForumRootComment?.likeCount ?? 0,
     sensitiveWordHits: [],
     createdAt: addHours(SEED_TIMELINE.previousDay, 4),
   }
 
-  if (!forumRootReply) {
-    ;[forumRootReply] = await db
+  if (!forumRootComment) {
+    ;[forumRootComment] = await db
       .insert(userComment)
-      .values(forumRootReplyPayload)
+      .values(forumRootCommentPayload)
       .returning()
   } else {
-    ;[forumRootReply] = await db
+    ;[forumRootComment] = await db
       .update(userComment)
-      .set(forumRootReplyPayload)
-      .where(eq(userComment.id, forumRootReply.id))
+      .set(forumRootCommentPayload)
+      .where(eq(userComment.id, forumRootComment.id))
       .returning()
   }
 
-  const existingForumReply = await db.query.userComment.findFirst({
+  const existingForumComment = await db.query.userComment.findFirst({
     where: and(
       eq(userComment.targetType, 3),
       eq(userComment.targetId, aotTopic.id),
@@ -959,36 +959,36 @@ export async function seedAppActivityDomain(db: Db) {
     ),
   })
 
-  const forumReplyPayload = {
+  const forumCommentPayload = {
     targetType: 3,
     targetId: aotTopic.id,
     userId: userA.id,
     content: '而且艾伦和调查兵团的立场差异很早就有预警。',
     floor: 2,
-    replyToId: forumRootReply.id,
-    actualReplyToId: forumRootReply.id,
+    replyToId: forumRootComment.id,
+    actualReplyToId: forumRootComment.id,
     isHidden: false,
     auditStatus: 1,
     auditById: moderatorUser.id,
     auditRole: 2,
     auditReason: 'seed: 通过',
     auditAt: addHours(SEED_TIMELINE.previousDay, 5),
-    likeCount: existingForumReply?.likeCount ?? 0,
+    likeCount: existingForumComment?.likeCount ?? 0,
     sensitiveWordHits: [],
     createdAt: addHours(SEED_TIMELINE.previousDay, 5),
   }
 
-  if (!existingForumReply) {
-    await db.insert(userComment).values(forumReplyPayload)
+  if (!existingForumComment) {
+    await db.insert(userComment).values(forumCommentPayload)
   } else {
     await db
       .update(userComment)
-      .set(forumReplyPayload)
-      .where(eq(userComment.id, existingForumReply.id))
+      .set(forumCommentPayload)
+      .where(eq(userComment.id, existingForumComment.id))
   }
-  console.log('  ✓ 评论与回复完成')
+  console.log('  ✓ 论坛评论完成')
 
-  const forumReplyComments = await db.query.userComment.findMany({
+  const forumTopicComments = await db.query.userComment.findMany({
     where: and(
       eq(userComment.targetType, 3),
       eq(userComment.targetId, aotTopic.id),
@@ -996,7 +996,7 @@ export async function seedAppActivityDomain(db: Db) {
     ),
   })
 
-  for (const comment of forumReplyComments) {
+  for (const comment of forumTopicComments) {
     const existingAction = await db.query.forumUserActionLog.findFirst({
       where: and(
         eq(forumUserActionLog.userId, comment.userId),
@@ -1018,7 +1018,7 @@ export async function seedAppActivityDomain(db: Db) {
       })
     }
   }
-  console.log('  ✓ 论坛回复操作日志完成')
+  console.log('  ✓ 论坛评论操作日志完成')
 
   const likeFixtures = [
     {
@@ -1031,7 +1031,7 @@ export async function seedAppActivityDomain(db: Db) {
     },
     {
       targetType: 4,
-      targetId: forumRootReply.id,
+      targetId: forumRootComment.id,
       sceneType: 3,
       sceneId: aotTopic.id,
       userId: userA.id,
@@ -1237,7 +1237,7 @@ export async function seedAppActivityDomain(db: Db) {
   const reportFixture = {
     reporterId: userC.id,
     targetType: 4,
-    targetId: forumRootReply.id,
+    targetId: forumRootComment.id,
     sceneType: 3,
     sceneId: aotTopic.id,
     commentLevel: 1,
@@ -1634,7 +1634,7 @@ export async function seedAppActivityDomain(db: Db) {
         isNull(userComment.deletedAt),
       ),
     })
-    const latestReply = [...topicComments]
+    const latestComment = [...topicComments]
       .sort(
         (a, b) =>
           (a.createdAt?.getTime?.() ?? 0) - (b.createdAt?.getTime?.() ?? 0),
@@ -1656,12 +1656,11 @@ export async function seedAppActivityDomain(db: Db) {
     await db
       .update(forumTopic)
       .set({
-        replyCount: topicComments.length,
         commentCount: topicComments.length,
         likeCount: topicLikes.length,
         favoriteCount: topicFavorites.length,
-        lastReplyUserId: latestReply?.userId ?? null,
-        lastReplyAt: latestReply?.createdAt ?? topicItem.createdAt,
+        lastCommentUserId: latestComment?.userId ?? null,
+        lastCommentAt: latestComment?.createdAt ?? topicItem.createdAt,
       })
       .where(eq(forumTopic.id, topicItem.id))
   }
@@ -1688,8 +1687,8 @@ export async function seedAppActivityDomain(db: Db) {
     })
     const lastTopic = [...sectionTopics]
       .sort((a, b) => {
-        const left = a.lastReplyAt ?? a.createdAt
-        const right = b.lastReplyAt ?? b.createdAt
+        const left = a.lastCommentAt ?? a.createdAt
+        const right = b.lastCommentAt ?? b.createdAt
         return (left?.getTime?.() ?? 0) - (right?.getTime?.() ?? 0)
       })
       .at(-1)
@@ -1698,13 +1697,13 @@ export async function seedAppActivityDomain(db: Db) {
       .update(forumSection)
       .set({
         topicCount: sectionTopics.length,
-        replyCount: sectionTopics.reduce(
-          (sum, item) => sum + item.replyCount,
+        commentCount: sectionTopics.reduce(
+          (sum, item) => sum + item.commentCount,
           0,
         ),
         lastTopicId: lastTopic?.id ?? null,
         lastPostAt:
-          lastTopic?.lastReplyAt ?? lastTopic?.createdAt ?? section.lastPostAt,
+          lastTopic?.lastCommentAt ?? lastTopic?.createdAt ?? section.lastPostAt,
       })
       .where(eq(forumSection.id, section.id))
   }
@@ -1915,3 +1914,4 @@ export async function seedAppActivityDomain(db: Db) {
 
   console.log('✅ 应用互动数据完成')
 }
+

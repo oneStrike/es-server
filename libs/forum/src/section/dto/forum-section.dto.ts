@@ -105,13 +105,13 @@ export class BaseForumSectionDto extends BaseDto {
   topicCount!: number
 
   @NumberProperty({
-    description: '回复数',
+    description: '评论数',
     example: 560,
     required: true,
     default: 0,
     validation: false,
   })
-  replyCount!: number
+  commentCount!: number
 
   @NumberProperty({
     description: '关注人数',
@@ -138,3 +138,4 @@ export class BaseForumSectionDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+

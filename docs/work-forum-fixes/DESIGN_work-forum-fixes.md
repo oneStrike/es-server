@@ -17,7 +17,7 @@ flowchart TD
   - 仅负责 apps/admin DTO 组合、响应裁剪、鉴权入口。
 - Service 层：
   - WorkService 负责作品可见性、作品与 forum section 联动、作品论坛入口查询。
-  - ForumTopicService 负责 topic 创建、更新、删除、public page/detail、回复统计同步。
+  - ForumTopicService 负责 topic 创建、更新、删除、public page/detail、评论统计同步。
 - Resolver 层：
   - 负责 forum topic 与 interaction(comment/like/favorite/browse/report) 的目标校验与计数副作用。
 - Counter 层：
@@ -27,7 +27,7 @@ flowchart TD
 
 - Work app DTO：
   - `WorkDetailDto` 扩展为真实详情结构。
-  - `WorkForumSectionDto` 补齐 `topicCount/replyCount/lastPostAt`。
+  - `WorkForumSectionDto` 补齐 `topicCount/commentCount/lastPostAt`。
   - `WorkForumTopicDto` 只声明 public page 真实返回字段。
 - Like/Favorite app DTO：
   - 统一只保留 `targetDetail` 承载跨目标类型详情。
@@ -42,11 +42,11 @@ flowchart TD
 2. WorkService 在事务内更新 `work.isPublished`
 3. 若存在 `forumSectionId`，同步更新 `forum_section.isEnabled`
 
-### forum 回复
+### forum 评论
 
-1. CommentService 在主题可评论校验通过后创建回复
-2. Forum topic comment resolver 在可见回复落库后同步 topic/section/profile 计数与最近回复信息
-3. 删除回复时执行逆向同步
+1. CommentService 在主题可评论校验通过后创建评论
+2. Forum topic comment resolver 在可见评论落库后同步 topic/section/profile 计数与最近评论信息
+3. 删除评论时执行逆向同步
 
 ### forum topic 可见性
 

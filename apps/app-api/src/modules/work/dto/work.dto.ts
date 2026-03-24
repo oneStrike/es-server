@@ -217,12 +217,12 @@ class WorkForumSectionExtraDto {
   topicCount!: number
 
   @NumberProperty({
-    description: '可见回复数',
+    description: '可见评论数',
     example: 58,
     required: true,
     validation: false,
   })
-  replyCount!: number
+  commentCount!: number
 
   @NumberProperty({
     description: '关注人数',
@@ -262,3 +262,4 @@ export class WorkForumSectionDto extends IntersectionType(
 ) {}
 
 export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}
+

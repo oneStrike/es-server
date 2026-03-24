@@ -81,7 +81,7 @@ export class ForumSectionFollowResolver
         description: true,
         icon: true,
         topicCount: true,
-        replyCount: true,
+        commentCount: true,
         followersCount: true,
       },
     })
@@ -95,10 +95,11 @@ export class ForumSectionFollowResolver
           description: section.description ?? undefined,
           icon: section.icon ?? undefined,
           topicCount: section.topicCount,
-          replyCount: section.replyCount,
+          commentCount: section.commentCount,
           followersCount: section.followersCount,
         },
       ]),
     )
   }
 }
+

@@ -137,12 +137,12 @@ export class FollowTargetDetailDto extends IdDto {
   topicCount?: number
 
   @NumberProperty({
-    description: '回复数（板块目标返回）',
+    description: '评论数（板块目标返回）',
     example: 89,
     required: false,
     validation: false,
   })
-  replyCount?: number
+  commentCount?: number
 }
 
 export class FollowPageItemDto extends BaseFollowDto {

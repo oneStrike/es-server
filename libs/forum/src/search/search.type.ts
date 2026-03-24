@@ -2,7 +2,7 @@ import type { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.cons
 
 /**
  * 论坛搜索的领域输入。
- * 支持主题、回复及混合检索。
+ * 支持主题、评论及混合检索。
  */
 export interface ForumSearchInput {
   keyword: string
@@ -16,7 +16,7 @@ export interface ForumSearchInput {
 
 /**
  * 论坛搜索统一结果项。
- * topic/reply 结果统一映射为同一结构，方便 app/admin 复用。
+ * topic/comment 结果统一映射为同一结构，方便 app/admin 复用。
  */
 export interface ForumSearchResultItem {
   resultType: ForumSearchTypeEnum
@@ -28,10 +28,10 @@ export interface ForumSearchResultItem {
   userId: number
   userNickname: string
   userAvatarUrl?: string
-  replyId?: number
-  replyContentSnippet?: string
+  commentId?: number
+  commentContentSnippet?: string
   createdAt: Date
-  replyCount: number
+  commentCount: number
   viewCount: number
   likeCount: number
   favoriteCount: number
@@ -46,3 +46,4 @@ export interface ForumSearchPageResult {
   pageIndex: number
   pageSize: number
 }
+

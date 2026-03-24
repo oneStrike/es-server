@@ -470,7 +470,7 @@ export async function seedWorkDomain(db: Db) {
       topicReviewPolicy: 1,
       remark: 'seed: 作品绑定论坛板块',
       topicCount: section?.topicCount ?? 0,
-      replyCount: section?.replyCount ?? 0,
+      commentCount: section?.commentCount ?? 0,
       lastPostAt: section?.lastPostAt ?? null,
       lastTopicId: section?.lastTopicId ?? null,
     }

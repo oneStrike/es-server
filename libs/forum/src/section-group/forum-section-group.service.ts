@@ -126,7 +126,7 @@ export class ForumSectionGroupService {
         isEnabled: this.forumSection.isEnabled,
         topicReviewPolicy: this.forumSection.topicReviewPolicy,
         topicCount: this.forumSection.topicCount,
-        replyCount: this.forumSection.replyCount,
+        commentCount: this.forumSection.commentCount,
         followersCount: this.forumSection.followersCount,
         lastPostAt: this.forumSection.lastPostAt,
       })
@@ -299,3 +299,4 @@ export class ForumSectionGroupService {
     }))
   }
 }
+

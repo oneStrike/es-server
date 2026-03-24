@@ -94,10 +94,10 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.appUser.id,
       alias: 'UserTopics',
     }),
-    lastReplyUser: r.one.appUser({
-      from: r.forumTopic.lastReplyUserId,
+    lastCommentUser: r.one.appUser({
+      from: r.forumTopic.lastCommentUserId,
       to: r.appUser.id,
-      alias: 'UserLastReplyTopics',
+      alias: 'UserLastCommentTopics',
     }),
     lastSections: r.many.forumSection({
       from: r.forumTopic.id,

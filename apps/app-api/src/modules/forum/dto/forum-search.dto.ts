@@ -119,20 +119,20 @@ export class ForumSearchResultDto {
   userAvatarUrl?: string
 
   @NumberProperty({
-    description: '回复ID',
+    description: '评论ID',
     example: 1,
     required: false,
     validation: false,
   })
-  replyId?: number
+  commentId?: number
 
   @StringProperty({
-    description: '回复内容摘要',
-    example: '这是回复内容',
+    description: '评论内容摘要',
+    example: '这是评论内容',
     required: false,
     validation: false,
   })
-  replyContentSnippet?: string
+  commentContentSnippet?: string
 
   @DateProperty({
     description: '创建时间',
@@ -142,11 +142,11 @@ export class ForumSearchResultDto {
   createdAt!: Date
 
   @NumberProperty({
-    description: '回复数',
+    description: '评论数',
     example: 10,
     validation: false,
   })
-  replyCount!: number
+  commentCount!: number
 
   @NumberProperty({
     description: '浏览数',
@@ -169,3 +169,4 @@ export class ForumSearchResultDto {
   })
   favoriteCount!: number
 }
+

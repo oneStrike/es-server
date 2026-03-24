@@ -49,10 +49,10 @@ export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'isFeatured',
   'isLocked',
   'viewCount',
-  'replyCount',
+  'commentCount',
   'likeCount',
   'favoriteCount',
-  'lastReplyAt',
+  'lastCommentAt',
   'createdAt',
 ] as const) {
   @BooleanProperty({
@@ -117,10 +117,10 @@ export class MyForumTopicItemDto extends PickType(BaseForumTopicDto, [
   'isFeatured',
   'isLocked',
   'viewCount',
-  'replyCount',
+  'commentCount',
   'likeCount',
   'favoriteCount',
-  'lastReplyAt',
+  'lastCommentAt',
   'createdAt',
   'auditStatus',
 ] as const) {
@@ -133,3 +133,4 @@ export class MyForumTopicItemDto extends PickType(BaseForumTopicDto, [
   })
   section?: MyForumTopicSectionDto
 }
+

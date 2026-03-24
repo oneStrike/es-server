@@ -16,7 +16,7 @@
   - 收窄更新 DTO
   - 删除 topic 时修复误删评论问题
   - 新增公开 topic page/detail 与用户态 create/update/delete
-  - forum reply 触发的 topic/section/profile 计数与最近活跃字段同步修复
+  - forum comment 触发的 topic/section/profile 计数与最近活跃字段同步修复
   - forum topic 的 like/favorite resolver 改为同事务联动更新 topic 计数与作者 `forum_profile` 计数
 - forum moderator / profile 链路：
   - moderator service 改为领域类型入参，创建/更新/assign-section 统一同步 `forum_moderator_section`
@@ -34,7 +34,7 @@
   - 新增 `ForumPermissionService`，将 `forum_section.userLevelRuleId` 真实接入主题公开访问、发帖、回帖与公开搜索
   - `ForumSectionService.updateSection` 补齐 `userLevelRuleId` 更新校验，避免无效规则 ID 落库
   - `forum_topic.sensitiveWordHits` 改为结构化 JSON 写入，`CreateForumTopicDto` 移除不合理的 `commentCount/version/sensitiveWordHits/auditAt` 入参
-  - forum search 补齐 admin/app controller，统一 topic/reply/all 返回结构，并修复 reply 搜索未限制 `FORUM_TOPIC` 的问题
+  - forum search 补齐 admin/app controller，统一 topic/comment/all 返回结构，并修复 comment 搜索未限制 `FORUM_TOPIC` 的问题
   - 新增 forum notification 的 admin/app 查询、创建、删除、已读接口
   - 新增 forum moderator application 的 app 申请/查询/删除与 admin 审核/查询/删除接口，审核通过可直接创建板块版主
   - 追加完成 `libs/forum` DTO 规范收敛：libs 层仅保留 `BaseXxxDto`，apps 层本地组装 Create/Update/Query/Response DTO

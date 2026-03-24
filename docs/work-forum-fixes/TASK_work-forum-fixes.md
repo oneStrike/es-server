@@ -4,7 +4,7 @@
 flowchart TD
   T1["T1 作品与论坛状态同步"] --> T2["T2 app 可见性收口"]
   T2 --> T3["T3 forum topic 更新与删除修复"]
-  T3 --> T4["T4 forum reply 计数闭环"]
+  T3 --> T4["T4 forum comment 计数闭环"]
   T4 --> T5["T5 DTO 与接口契约修复"]
   T5 --> T6["T6 app forum topic 接口补齐"]
   T6 --> T7["T7 验证与文档收尾"]
@@ -35,14 +35,14 @@ flowchart TD
   - 更新接口仅允许修改标题与内容
   - 删除接口只删除 forum topic 自身评论
 
-## T4 forum reply 计数闭环
+## T4 forum comment 计数闭环
 
 - 输入契约：
-  - 创建/删除 forum 回复
+  - 创建/删除 forum 评论
   - 删除 topic
 - 输出契约：
   - topic/section/profile 计数闭环
-  - 最近回复和最近发帖字段同步
+  - 最近评论和最近发帖字段同步
 
 ## T5 DTO 与接口契约修复
 

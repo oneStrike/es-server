@@ -128,7 +128,7 @@ export class ForumTopicCommentResolver
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumCounterService.syncTopicReplyState(tx, targetId)
+    await this.forumCounterService.syncTopicCommentState(tx, targetId)
     await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
   }
 
@@ -144,7 +144,8 @@ export class ForumTopicCommentResolver
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumCounterService.syncTopicReplyState(tx, comment.targetId)
+    await this.forumCounterService.syncTopicCommentState(tx, comment.targetId)
     await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
   }
 }
+

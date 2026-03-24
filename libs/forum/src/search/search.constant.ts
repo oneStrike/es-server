@@ -4,8 +4,8 @@
 export enum ForumSearchTypeEnum {
   /** 主题 */
   TOPIC = 'topic',
-  /** 回复 */
-  REPLY = 'reply',
+  /** 评论 */
+  COMMENT = 'comment',
   /** 全部 */
   ALL = 'all',
 }

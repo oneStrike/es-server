@@ -23,7 +23,7 @@ export class AppForumSectionListItemDto extends PickType(BaseForumSectionDto, [
   'isEnabled',
   'topicReviewPolicy',
   'topicCount',
-  'replyCount',
+  'commentCount',
   'followersCount',
   'lastPostAt',
 ] as const) {
@@ -45,3 +45,4 @@ export class AppForumSectionDetailDto extends AppForumSectionListItemDto {
   })
   group?: AppForumSectionGroupBriefDto
 }
+

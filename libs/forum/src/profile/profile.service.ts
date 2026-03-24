@@ -264,10 +264,10 @@ export class UserProfileService {
         'isFeatured',
         'isLocked',
         'viewCount',
-        'replyCount',
+        'commentCount',
         'likeCount',
         'favoriteCount',
-        'lastReplyAt',
+        'lastCommentAt',
         'createdAt',
         'auditStatus',
       ],
@@ -399,3 +399,4 @@ export class UserProfileService {
     await this.appUserCountService.initUserCounts(client, userId)
   }
 }
+

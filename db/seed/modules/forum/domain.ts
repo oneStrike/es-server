@@ -178,7 +178,7 @@ export async function seedForumReferenceDomain(db: Db) {
       topicReviewPolicy: sectionFixture.topicReviewPolicy,
       remark: 'seed: 论坛公共板块',
       topicCount: existing?.topicCount ?? 0,
-      replyCount: existing?.replyCount ?? 0,
+      commentCount: existing?.commentCount ?? 0,
       lastPostAt: existing?.lastPostAt ?? null,
       lastTopicId: existing?.lastTopicId ?? null,
     }
@@ -361,7 +361,7 @@ export async function seedForumActivityDomain(db: Db) {
     const topicPayload = {
       sectionId: section.id,
       userId: user.id,
-      lastReplyUserId: existingTopic?.lastReplyUserId ?? null,
+      lastCommentUserId: existingTopic?.lastCommentUserId ?? null,
       auditById: moderatorUser.id,
       title: topicFixture.title,
       content: topicFixture.content,
@@ -374,11 +374,10 @@ export async function seedForumActivityDomain(db: Db) {
       auditReason: 'seed: 自动通过',
       auditAt: topicFixture.createdAt,
       viewCount: existingTopic?.viewCount ?? 0,
-      replyCount: existingTopic?.replyCount ?? 0,
-      likeCount: existingTopic?.likeCount ?? 0,
       commentCount: existingTopic?.commentCount ?? 0,
+      likeCount: existingTopic?.likeCount ?? 0,
       favoriteCount: existingTopic?.favoriteCount ?? 0,
-      lastReplyAt: existingTopic?.lastReplyAt ?? topicFixture.createdAt,
+      lastCommentAt: existingTopic?.lastCommentAt ?? topicFixture.createdAt,
       createdAt: topicFixture.createdAt,
     }
 
@@ -503,8 +502,8 @@ export async function seedForumActivityDomain(db: Db) {
     })
     const lastTopic = [...sectionTopics]
       .sort((a, b) => {
-        const left = a.lastReplyAt ?? a.createdAt
-        const right = b.lastReplyAt ?? b.createdAt
+        const left = a.lastCommentAt ?? a.createdAt
+        const right = b.lastCommentAt ?? b.createdAt
         return (left?.getTime?.() ?? 0) - (right?.getTime?.() ?? 0)
       })
       .at(-1)
@@ -513,13 +512,13 @@ export async function seedForumActivityDomain(db: Db) {
       .update(forumSection)
       .set({
         topicCount: sectionTopics.length,
-        replyCount: sectionTopics.reduce(
-          (sum, item) => sum + item.replyCount,
+        commentCount: sectionTopics.reduce(
+          (sum, item) => sum + item.commentCount,
           0,
         ),
         lastTopicId: lastTopic?.id ?? null,
         lastPostAt:
-          lastTopic?.lastReplyAt ??
+          lastTopic?.lastCommentAt ??
           lastTopic?.createdAt ??
           currentSection.lastPostAt,
       })
@@ -529,3 +528,4 @@ export async function seedForumActivityDomain(db: Db) {
 
   console.log('✅ 论坛业务数据完成')
 }
+

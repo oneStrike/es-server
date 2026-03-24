@@ -22,9 +22,9 @@ export const forumTopic = pgTable("forum_topic", {
    */
   userId: integer().notNull(),
   /**
-   * 最后回复用户ID
+   * 最后评论用户ID
    */
-  lastReplyUserId: integer(),
+  lastCommentUserId: integer(),
   /**
    * 审核人ID
    */
@@ -82,10 +82,6 @@ export const forumTopic = pgTable("forum_topic", {
    */
   viewCount: integer().default(0).notNull(),
   /**
-   * 回复数
-   */
-  replyCount: integer().default(0).notNull(),
-  /**
    * 点赞数
    */
   likeCount: integer().default(0).notNull(),
@@ -98,9 +94,9 @@ export const forumTopic = pgTable("forum_topic", {
    */
   favoriteCount: integer().default(0).notNull(),
   /**
-   * 最后回复时间
+   * 最后评论时间
    */
-  lastReplyAt: timestamp({ withTimezone: true, precision: 6 }),
+  lastCommentAt: timestamp({ withTimezone: true, precision: 6 }),
   /**
    * 创建时间
    */
@@ -159,10 +155,6 @@ export const forumTopic = pgTable("forum_topic", {
    */
   index("forum_topic_view_count_idx").on(table.viewCount),
   /**
-   * 索引: replyCount
-   */
-  index("forum_topic_reply_count_idx").on(table.replyCount),
-  /**
    * 索引: likeCount
    */
   index("forum_topic_like_count_idx").on(table.likeCount),
@@ -178,14 +170,13 @@ export const forumTopic = pgTable("forum_topic", {
    * 计数字段非负约束
    */
   check("forum_topic_view_count_non_negative_chk", sql`${table.viewCount} >= 0`),
-  check("forum_topic_reply_count_non_negative_chk", sql`${table.replyCount} >= 0`),
   check("forum_topic_like_count_non_negative_chk", sql`${table.likeCount} >= 0`),
   check("forum_topic_comment_count_non_negative_chk", sql`${table.commentCount} >= 0`),
   check("forum_topic_favorite_count_non_negative_chk", sql`${table.favoriteCount} >= 0`),
   /**
-   * 索引: lastReplyAt
+   * 索引: lastCommentAt
    */
-  index("forum_topic_last_reply_at_idx").on(table.lastReplyAt),
+  index("forum_topic_last_comment_at_idx").on(table.lastCommentAt),
   /**
    * 索引: createdAt
    */
@@ -207,9 +198,9 @@ export const forumTopic = pgTable("forum_topic", {
    */
   index("forum_topic_section_id_is_featured_created_at_idx").on(table.sectionId, table.isFeatured, table.createdAt),
   /**
-   * 索引: sectionId, lastReplyAt
+   * 索引: sectionId, lastCommentAt
    */
-  index("forum_topic_section_id_last_reply_at_idx").on(table.sectionId, table.lastReplyAt),
+  index("forum_topic_section_id_last_comment_at_idx").on(table.sectionId, table.lastCommentAt),
 ]);
 
 export type ForumTopic = typeof forumTopic.$inferSelect;

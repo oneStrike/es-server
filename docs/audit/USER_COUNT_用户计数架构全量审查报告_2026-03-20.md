@@ -50,7 +50,7 @@ flowchart TD
   A --> C["用户资产统计<br/>UserAssetsService 按事实表实时聚合"]
   B --> D["论坛主题/版块展示"]
   A --> E["论坛特定用户计数补偿<br/>ForumCounterService -> AppUserCountService"]
-  E --> F["app_user_count<br/>论坛作者/发帖/回复物化计数"]
+  E --> F["app_user_count<br/>论坛作者/发帖/评论相关物化计数"]
   F --> G["用户中心 community.counts / 后台用户详情 counts"]
 ```
 
@@ -60,7 +60,7 @@ flowchart TD
 
 | 表 | 当前职责 | 说明 |
 | --- | --- | --- |
-| `user_comment` | 统一存储作品评论、章节评论、论坛回复 | 通过 `targetType + targetId` 区分挂载目标 |
+| `user_comment` | 统一存储作品评论、章节评论、论坛评论 | 通过 `targetType + targetId` 区分挂载目标 |
 | `user_like` | 统一存储作品、章节、论坛主题、评论点赞 | 同时记录 `sceneType + sceneId + commentLevel` |
 | `user_favorite` | 统一存储作品、论坛主题收藏 | 当前未覆盖评论收藏这类场景 |
 
@@ -86,8 +86,8 @@ flowchart TD
 | --- | --- |
 | `work` | `viewCount` / `favoriteCount` / `likeCount` / `commentCount` |
 | `work_chapter` | `viewCount` / `likeCount` / `commentCount` / `purchaseCount` / `downloadCount` |
-| `forum_topic` | `viewCount` / `replyCount` / `likeCount` / `commentCount` / `favoriteCount` |
-| `forum_section` | `topicCount` / `replyCount` |
+| `forum_topic` | `viewCount` / `commentCount` / `likeCount` / `favoriteCount` |
+| `forum_section` | `topicCount` / `commentCount` |
 
 这些字段由各自 resolver 或领域服务在事务内增减，服务于列表页、详情页、排序和搜索。
 
@@ -97,7 +97,7 @@ flowchart TD
 
 | 输出位置 | 来源 | 当前内容 |
 | --- | --- | --- |
-| `community.counts` / 后台用户 `counts` | `app_user_count` | `forumTopicCount` / `forumReplyCount` / `forumReceivedLikeCount` / `forumReceivedFavoriteCount` |
+| `community.counts` / 后台用户 `counts` | `app_user_count` | `forumTopicCount` / `commentCount` / `commentReceivedLikeCount` / `forumTopicReceivedLikeCount` / `forumTopicReceivedFavoriteCount` |
 | `assets` | `UserAssetsService` 实时查询事实表 | `favoriteCount` / `likeCount` / `commentCount` / `viewCount` / `purchase/download` |
 
 这说明当前已经不是“一套统一用户计数系统”，而是：
@@ -127,14 +127,13 @@ flowchart TD
 - `ForumTopicCommentResolver.applyCountDelta()` 当前为空实现
 - 实际计数变更依赖 `postCommentHook()` 和 `postDeleteCommentHook()`
 - Hook 内部调用：
-  - `ForumCounterService.updateUserForumReplyCount(...)`
-  - `ForumTopicService.syncTopicReplyState(...)`
-  - `ForumTopicService.syncSectionVisibleState(...)`
+  - `ForumCounterService.syncTopicCommentState(...)`
+  - `ForumCounterService.syncSectionVisibleState(...)`
 
 也就是说：
 
 - 内容评论走“增量更新目标计数”
-- 论坛评论走“评论写入后重算主题/版块可见回复状态 + 手工补偿用户回复数”
+- 论坛评论走“评论写入后重算主题/版块评论状态，用户评论数由通用评论链路维护”
 
 这是当前第一处明显的计数架构分叉。
 
@@ -157,7 +156,7 @@ flowchart TD
   `ForumCounterService.updateTopicLikeRelatedCounts(...)`
 - 该方法同时更新：
   - `forum_topic.likeCount`
-  - `app_user_count.forumReceivedLikeCount`
+  - `app_user_count.forumTopicReceivedLikeCount`
 
 评论点赞：
 
@@ -189,7 +188,7 @@ flowchart TD
   `ForumCounterService.updateTopicFavoriteRelatedCounts(...)`
 - 该方法同时更新：
   - `forum_topic.favoriteCount`
-  - `app_user_count.forumReceivedFavoriteCount`
+  - `app_user_count.forumTopicReceivedFavoriteCount`
 
 因此当前“收到的收藏数”也只是：
 
@@ -208,9 +207,9 @@ flowchart TD
 论坛主题删除时：
 
 - 软删主题
-- 软删该主题下所有回复
+- 软删该主题下所有评论
 - 给主题作者 `forumTopicCount - 1`
-- 按可见回复逐用户补偿 `forumReplyCount - N`
+- 按主题下评论逐用户补偿 `commentCount - N`
 - 重算版块可见状态
 
 这里说明当前论坛用户计数并不是完全基于事实表重算，而是高度依赖业务路径里的增量补偿。
@@ -222,9 +221,9 @@ flowchart TD
 | 指标 | 当前来源 | 写入方式 | 统计口径 |
 | --- | --- | --- | --- |
 | `forumTopicCount` | `app_user_count` | 主题创建/删除时增减 | 作者名下未删除主题数，未区分可见性 |
-| `forumReplyCount` | `app_user_count` | 可见论坛回复创建/删除、删主题时补偿 | 仅统计可见回复 |
-| `forumReceivedLikeCount` | `app_user_count` | 论坛主题点赞/取消点赞时增减 | 仅论坛主题作者收到的点赞 |
-| `forumReceivedFavoriteCount` | `app_user_count` | 论坛主题收藏/取消收藏时增减 | 仅论坛主题作者收到的收藏 |
+| `commentCount` | `app_user_count` | 评论创建/删除、删主题时补偿 | 用户自己发出的评论数 |
+| `forumTopicReceivedLikeCount` | `app_user_count` | 论坛主题点赞/取消点赞时增减 | 仅论坛主题作者收到的点赞 |
+| `forumTopicReceivedFavoriteCount` | `app_user_count` | 论坛主题收藏/取消收藏时增减 | 仅论坛主题作者收到的收藏 |
 | `assets.commentCount` | 实时查询 `user_comment` | 无物化 | 用户自己发出的评论数 |
 | `assets.likeCount` | 实时查询 `user_like` | 无物化 | 用户自己发出的点赞数 |
 | `assets.favoriteCount` | 实时查询 `user_favorite` | 无物化 | 用户自己发出的收藏数 |
@@ -234,8 +233,8 @@ flowchart TD
 最需要注意的一点：
 
 - `forumTopicCount` 是“作者发布的主题数”
-- `forumReplyCount` 是“作者可见回复数”
-- `forumReceivedLikeCount` 是“作者的论坛主题收到的点赞数”
+- `commentCount` 是“用户自己发出的评论数”
+- `forumTopicReceivedLikeCount` 是“作者的论坛主题收到的点赞数”
 - `assets.likeCount` 是“用户自己点过多少赞”
 
 这些指标看上去都叫“用户计数”，但维度完全不同：
@@ -253,14 +252,15 @@ flowchart TD
 
 ### 问题 1：`app_user_count` 的命名是全局的，但实现仍然是论坛特化的
 
-`app_user_count` 注释写的是“跨项目可复用的用户计数扩展字段”，但当前字段只有：
+`app_user_count` 注释写的是“跨项目可复用的用户计数扩展字段”，但当前高频字段主要是：
 
 - `forumTopicCount`
-- `forumReplyCount`
-- `forumReceivedLikeCount`
-- `forumReceivedFavoriteCount`
+- `commentCount`
+- `commentReceivedLikeCount`
+- `forumTopicReceivedLikeCount`
+- `forumTopicReceivedFavoriteCount`
 
-这不是“全局用户计数模型”，而是“论坛作者与发帖相关的用户计数模型”。
+这不是“清晰的全局用户计数模型”，而是“论坛主题计数与全局互动计数混搭的用户计数模型”。
 
 问题不在于字段带 `forum` 前缀。  
 问题在于服务命名已经上升到了全局，但模型语义并没有完成全局化设计。
@@ -270,7 +270,7 @@ flowchart TD
 当前：
 
 - 用户自己发出的评论/点赞/收藏，在 `UserAssetsService` 中直接查事实表
-- 用户论坛发帖/回复/收到的论坛点赞/收藏，在 `app_user_count` 中手工维护
+- 用户论坛发帖、用户评论数、收到的论坛主题点赞/收藏，在 `app_user_count` 中手工维护
 
 这不是不能共存，但必须回答三个问题：
 
@@ -302,12 +302,12 @@ flowchart TD
 
 - `forumTopicCount` 在创建主题时无条件 `+1`
 - 主题待审核、隐藏时不会回滚该计数
-- `forumReplyCount` 只有评论可见时才 `+1`
+- `commentCount` 承载的是用户自己发出的评论总数，不是论坛主题的专属评论数
 
 所以：
 
 - 主题数偏“作者总发布数”
-- 回复数偏“可见回复数”
+- 评论数偏“跨目标评论总数”
 
 这两个字段如果同时出现在一个“用户社区统计”对象里，前端和产品会天然认为它们口径相近，但实际上不是。
 
@@ -333,8 +333,8 @@ flowchart TD
 `InteractionTargetAccessService.applyTargetCountDelta()` 对负数增量有 `gte(column, amount)` 保护。  
 但 `AppUserCountService` 当前是直接：
 
-- `forumReplyCount = forumReplyCount + delta`
-- `forumReceivedLikeCount = forumReceivedLikeCount + delta`
+- `commentCount = commentCount + delta`
+- `forumTopicReceivedLikeCount = forumTopicReceivedLikeCount + delta`
 
 这意味着如果补偿链路重复执行或顺序异常，用户计数可能被减成负数。
 
@@ -427,7 +427,7 @@ flowchart TD
 - `work.favoriteCount`
 - `work.commentCount`
 - `work_chapter.likeCount`
-- `forum_topic.replyCount`
+- `forum_topic.commentCount`
 - `forum_topic.favoriteCount`
 
 职责：
@@ -464,8 +464,8 @@ flowchart TD
 如果继续用单表 `app_user_count`，每个字段都要补一句正式定义，例如：
 
 - `forumTopicCount`: 用户创建且未删除的论坛主题数
-- `forumReplyCount`: 用户发表且当前可见的论坛回复数
-- `forumReceivedLikeCount`: 用户论坛主题收到的点赞数
+- `commentCount`: 用户发表且未删除的评论数
+- `forumTopicReceivedLikeCount`: 用户论坛主题收到的点赞数
 
 如果这些字段以后继续扩张到内容域，必须保持同样的粒度和命名方式。
 
@@ -481,7 +481,7 @@ flowchart TD
 我的建议是：
 
 - 用户自己做过多少评论/点赞/收藏：继续实时统计或做专门缓存
-- 用户收到多少互动、发了多少论坛主题/回复：按是否高频读取决定是否保留在 `app_user_count`
+- 用户收到多少互动、发了多少论坛主题/评论：按是否高频读取决定是否保留在 `app_user_count`
 
 #### 建议 4：删除或重构 `ContentCounterService`
 

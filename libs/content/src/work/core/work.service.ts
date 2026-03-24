@@ -749,7 +749,7 @@ export class WorkService {
         isEnabled: true,
         topicReviewPolicy: true,
         topicCount: true,
-        replyCount: true,
+        commentCount: true,
         followersCount: true,
         lastPostAt: true,
       },
@@ -1035,3 +1035,4 @@ export class WorkService {
     )
   }
 }
+

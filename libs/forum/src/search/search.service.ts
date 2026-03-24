@@ -14,7 +14,7 @@ import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 
 /**
  * 论坛搜索服务类
- * 支持主题与回复的关键词检索及混合搜索
+ * 支持主题与评论的关键词检索及混合搜索
  */
 @Injectable()
 export class ForumSearchService {
@@ -35,7 +35,7 @@ export class ForumSearchService {
   }
 
   /**
-   * 获取回复模型
+   * 获取评论模型
    */
   get userComment() {
     return this.drizzle.schema.userComment
@@ -98,7 +98,7 @@ export class ForumSearchService {
   private getTopicOrderBy(sort?: ForumSearchSortTypeEnum) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
       return [
-        { replyCount: 'desc' as const },
+        { commentCount: 'desc' as const },
         { likeCount: 'desc' as const },
         { viewCount: 'desc' as const },
         { createdAt: 'desc' as const },
@@ -110,7 +110,7 @@ export class ForumSearchService {
     >
   }
 
-  private getReplyOrderBy(sort?: ForumSearchSortTypeEnum) {
+  private getCommentOrderBy(sort?: ForumSearchSortTypeEnum) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
       return [
         desc(this.userComment.likeCount),
@@ -128,12 +128,12 @@ export class ForumSearchService {
   ) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
       const leftHotScore =
-        left.replyCount * 5 +
+        left.commentCount * 5 +
         left.likeCount * 3 +
         left.favoriteCount * 3 +
         left.viewCount
       const rightHotScore =
-        right.replyCount * 5 +
+        right.commentCount * 5 +
         right.likeCount * 3 +
         right.favoriteCount * 3 +
         right.viewCount
@@ -149,8 +149,8 @@ export class ForumSearchService {
       return createdAtDiff
     }
 
-    if ((right.replyId ?? 0) !== (left.replyId ?? 0)) {
-      return (right.replyId ?? 0) - (left.replyId ?? 0)
+    if ((right.commentId ?? 0) !== (left.commentId ?? 0)) {
+      return (right.commentId ?? 0) - (left.commentId ?? 0)
     }
 
     return right.topicId - left.topicId
@@ -236,7 +236,7 @@ export class ForumSearchService {
         userNickname: user?.nickname ?? '',
         userAvatarUrl: user?.avatarUrl ?? undefined,
         createdAt: topic.createdAt,
-        replyCount: topic.replyCount,
+        commentCount: topic.commentCount,
         viewCount: topic.viewCount,
         likeCount: topic.likeCount,
         favoriteCount: topic.favoriteCount,
@@ -244,28 +244,28 @@ export class ForumSearchService {
     })
   }
 
-  private async mapReplyResults(
-    replies: Array<{
-      replyId: number
+  private async mapCommentResults(
+    comments: Array<{
+      commentId: number
       topicId: number
       topicTitle: string
       sectionId: number
       userId: number
-      replyContent: string
+      commentContent: string
       createdAt: Date
-      replyCount: number
+      commentCount: number
       viewCount: number
       likeCount: number
       favoriteCount: number
     }>,
     keyword: string,
   ): Promise<ForumSearchResultItem[]> {
-    if (replies.length === 0) {
+    if (comments.length === 0) {
       return []
     }
 
-    const sectionIds = [...new Set(replies.map((item) => item.sectionId))]
-    const userIds = [...new Set(replies.map((item) => item.userId))]
+    const sectionIds = [...new Set(comments.map((item) => item.sectionId))]
+    const userIds = [...new Set(comments.map((item) => item.userId))]
 
     const [sections, users] = await Promise.all([
       this.db.query.forumSection.findMany({
@@ -288,25 +288,25 @@ export class ForumSearchService {
     const sectionMap = new Map(sections.map((item) => [item.id, item.name]))
     const userMap = new Map(users.map((item) => [item.id, item]))
 
-    return replies.map((reply) => {
-      const user = userMap.get(reply.userId)
+    return comments.map((comment) => {
+      const user = userMap.get(comment.userId)
 
       return {
-        resultType: ForumSearchTypeEnum.REPLY,
-        topicId: reply.topicId,
-        topicTitle: reply.topicTitle,
-        sectionId: reply.sectionId,
-        sectionName: sectionMap.get(reply.sectionId) ?? '',
-        userId: reply.userId,
+        resultType: ForumSearchTypeEnum.COMMENT,
+        topicId: comment.topicId,
+        topicTitle: comment.topicTitle,
+        sectionId: comment.sectionId,
+        sectionName: sectionMap.get(comment.sectionId) ?? '',
+        userId: comment.userId,
         userNickname: user?.nickname ?? '',
         userAvatarUrl: user?.avatarUrl ?? undefined,
-        replyId: reply.replyId,
-        replyContentSnippet: this.buildSnippet(reply.replyContent, keyword),
-        createdAt: reply.createdAt,
-        replyCount: reply.replyCount,
-        viewCount: reply.viewCount,
-        likeCount: reply.likeCount,
-        favoriteCount: reply.favoriteCount,
+        commentId: comment.commentId,
+        commentContentSnippet: this.buildSnippet(comment.commentContent, keyword),
+        createdAt: comment.createdAt,
+        commentCount: comment.commentCount,
+        viewCount: comment.viewCount,
+        likeCount: comment.likeCount,
+        favoriteCount: comment.favoriteCount,
       }
     })
   }
@@ -324,14 +324,14 @@ export class ForumSearchService {
       return this.searchTopics(searchInput, options)
     }
 
-    if (type === ForumSearchTypeEnum.REPLY) {
-      return this.searchReplies(searchInput, options)
+    if (type === ForumSearchTypeEnum.COMMENT) {
+      return this.searchComments(searchInput, options)
     }
 
     const pageQuery = this.drizzle.buildPageQuery(searchInput)
     const mergedWindowSize = pageQuery.offset + pageQuery.pageSize
 
-    const [topicResults, replyResults] = await Promise.all([
+    const [topicResults, commentResults] = await Promise.all([
       this.searchTopics(
         {
           ...searchInput,
@@ -341,10 +341,10 @@ export class ForumSearchService {
         },
         options,
       ),
-      this.searchReplies(
+      this.searchComments(
         {
           ...searchInput,
-          type: ForumSearchTypeEnum.REPLY,
+          type: ForumSearchTypeEnum.COMMENT,
           pageIndex: 0,
           pageSize: mergedWindowSize,
         },
@@ -352,13 +352,13 @@ export class ForumSearchService {
       ),
     ])
 
-    const mergedList = [...topicResults.list, ...replyResults.list]
+    const mergedList = [...topicResults.list, ...commentResults.list]
       .sort((left, right) => this.compareResults(left, right, searchInput.sort))
       .slice(pageQuery.offset, pageQuery.offset + pageQuery.pageSize)
 
     return {
       list: mergedList,
-      total: topicResults.total + replyResults.total,
+      total: topicResults.total + commentResults.total,
       pageIndex: pageQuery.pageIndex,
       pageSize: pageQuery.pageSize,
     }
@@ -366,7 +366,7 @@ export class ForumSearchService {
 
   /**
    * 搜索
-   * 根据搜索类型分发至主题/回复搜索，或合并结果
+   * 根据搜索类型分发至主题/评论搜索，或合并结果
    * @param dto 搜索参数
    * @returns 搜索结果
    */
@@ -417,12 +417,12 @@ export class ForumSearchService {
   }
 
   /**
-   * 搜索回复
+   * 搜索评论
    * 支持按关键词与排序方式筛选
    * @param dto 搜索参数
-   * @returns 回复搜索结果
+   * @returns 评论搜索结果
    */
-  private async searchReplies(
+  private async searchComments(
     dto: ForumSearchInput,
     options: {
       publicOnly: boolean
@@ -469,14 +469,14 @@ export class ForumSearchService {
     const [rows, totalRows] = await Promise.all([
       this.db
         .select({
-          replyId: this.userComment.id,
+          commentId: this.userComment.id,
           topicId: this.forumTopic.id,
           topicTitle: this.forumTopic.title,
           sectionId: this.forumTopic.sectionId,
           userId: this.userComment.userId,
-          replyContent: this.userComment.content,
+          commentContent: this.userComment.content,
           createdAt: this.userComment.createdAt,
-          replyCount: this.forumTopic.replyCount,
+          commentCount: this.forumTopic.commentCount,
           viewCount: this.forumTopic.viewCount,
           likeCount: this.userComment.likeCount,
           favoriteCount: this.forumTopic.favoriteCount,
@@ -484,7 +484,7 @@ export class ForumSearchService {
         .from(this.userComment)
         .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
         .where(where)
-        .orderBy(...this.getReplyOrderBy(dto.sort))
+        .orderBy(...this.getCommentOrderBy(dto.sort))
         .limit(pageQuery.limit)
         .offset(pageQuery.offset),
       this.db
@@ -497,10 +497,11 @@ export class ForumSearchService {
     ])
 
     return {
-      list: await this.mapReplyResults(rows, dto.keyword),
+      list: await this.mapCommentResults(rows, dto.keyword),
       total: totalRows[0]?.total ?? 0,
       pageIndex: pageQuery.pageIndex,
       pageSize: pageQuery.pageSize,
     }
   }
 }
+

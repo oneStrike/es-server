@@ -14,7 +14,7 @@
   - forum topic 与 interaction(comment/like/favorite/browse/report) 的可见性和计数闭环
   - 必要的本地文档更新
 - 范围外：
-  - 底层表结构变更
+  - work-forum fixes 原始范围不包含底层表结构变更；forum `reply -> comment` 语义收口已另行迁移处理
   - 与作品/论坛无关的现有脏工作区改动
   - 无明确证据的问题扩散式重构
 
@@ -26,7 +26,7 @@
   - forum topic 删除时按 `targetId` 误删其他目标评论
   - app 侧对未发布作品、隐藏主题、未审核主题的可见性约束不足
   - forum topic 更新 DTO 允许越权修改 `sectionId/userId`
-  - forum 回复计数、最近回复、section 最近发帖信息缺少闭环
+  - forum 评论计数、最近评论、section 最近发帖信息缺少闭环
   - app 侧接口能力与 DTO 返回契约不完整
 
 ## 项目约束对齐
@@ -54,4 +54,4 @@
 
 - 工作区已有较多未提交改动，必须避免误覆盖。
 - forum comment 计数修复需要同时兼顾 topic、section、profile 三层数据。
-- DTO 契约修复可能影响现有前端兼容性，需要尽量采用“补充字段 + 兼容保留”的方式收敛。
+- DTO 契约修复可能影响现有前端兼容性，需要以移除旧 `reply` 语义、统一收口到 `comment` 为准。

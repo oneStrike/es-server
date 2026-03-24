@@ -20,7 +20,7 @@ flowchart TD
 - `app_user_count` 保留，但重新定义为“用户聚合读模型表”。
 - `app_user_count` 只存高频展示、明确可重建、业务语义稳定的字段。
 - 所有写入 `app_user_count` 的动作，统一收口到 `AppUserCountService`。
-- 不再保留 `forumReplyCount`，因为论坛回复本质上就是评论子集。
+- 不再保留历史字段 `forumReplyCount`，因为论坛评论本质上就是评论子集。
 
 ## 范围与非目标
 
@@ -56,7 +56,7 @@ flowchart TD
 
 因此，`app_user_count` 继续保留是合理的。
 
-### 为什么删除 `forumReplyCount`
+### 为什么删除历史字段 `forumReplyCount`
 
 当前评论目标类型一共有 5 类：
 
@@ -66,13 +66,13 @@ flowchart TD
 - 小说章节
 - 论坛主题
 
-论坛回复在事实层仍然是 `user_comment` 的一种，不存在独立事实模型。  
+论坛评论在事实层仍然是 `user_comment` 的一种，不存在独立事实模型。  
 因此：
 
 - `commentCount` 是完整的用户评论总数
-- `forumReplyCount` 只是 `commentCount` 的论坛子集
+- 历史字段 `forumReplyCount` 只是 `commentCount` 的论坛子集
 
-保留 `forumReplyCount` 的问题是：
+保留历史字段 `forumReplyCount` 的问题是：
 
 - 冗余链路更多
 - 更容易漂移
@@ -211,8 +211,8 @@ export const appUserCount = pgTable('app_user_count', {
 
 说明：
 
-- 覆盖全部评论类型，包括论坛回复
-- 因为论坛回复本质就是评论，所以不单独拆 `forumReplyReceivedLikeCount`
+- 覆盖全部评论类型，包括论坛评论
+- 因为论坛评论本质就是评论，所以不单独拆 `forumReplyReceivedLikeCount`
 
 ### 6. `forumTopicReceivedLikeCount`
 
@@ -244,7 +244,7 @@ export const appUserCount = pgTable('app_user_count', {
 
 以下字段当前不建议进入 `app_user_count`：
 
-### `forumReplyCount`
+### 历史字段 `forumReplyCount`
 
 原因：
 
@@ -402,9 +402,9 @@ export const appUserCount = pgTable('app_user_count', {
 
 内部字段按最终 schema 输出，不再出现：
 
-- `forumReplyCount`
-- `forumReceivedLikeCount`
-- `forumReceivedFavoriteCount`
+- 旧字段 `forumReplyCount`
+- 旧字段 `forumReceivedLikeCount`
+- 旧字段 `forumReceivedFavoriteCount`
 
 统一改为：
 
@@ -463,9 +463,9 @@ export const appUserCount = pgTable('app_user_count', {
 | 当前字段 | 最终动作 |
 | --- | --- |
 | `forumTopicCount` | 保留 |
-| `forumReplyCount` | 删除 |
-| `forumReceivedLikeCount` | 重命名为 `forumTopicReceivedLikeCount` |
-| `forumReceivedFavoriteCount` | 重命名为 `forumTopicReceivedFavoriteCount` |
+| 历史字段 `forumReplyCount` | 删除 |
+| 旧命名 `forumReceivedLikeCount` | 重命名为 `forumTopicReceivedLikeCount` |
+| 旧命名 `forumReceivedFavoriteCount` | 重命名为 `forumTopicReceivedFavoriteCount` |
 | 无 | 新增 `commentCount` |
 | 无 | 新增 `likeCount` |
 | 无 | 新增 `favoriteCount` |
@@ -476,7 +476,7 @@ export const appUserCount = pgTable('app_user_count', {
 1. 新增新字段
 2. 回填新字段
 3. 切换 DTO / service / resolver 使用新字段
-4. 删除 `forumReplyCount`
+4. 删除历史字段 `forumReplyCount`
 5. 删除旧命名字段
 
 ## 回填与重建策略
@@ -538,9 +538,9 @@ export const appUserCount = pgTable('app_user_count', {
 
 本最终方案相对当前代码有以下关键调整：
 
-1. 删除 `forumReplyCount`
-2. 将 `forumReceivedLikeCount` 精确重命名为 `forumTopicReceivedLikeCount`
-3. 将 `forumReceivedFavoriteCount` 精确重命名为 `forumTopicReceivedFavoriteCount`
+1. 删除历史字段 `forumReplyCount`
+2. 将旧命名 `forumReceivedLikeCount` 精确重命名为 `forumTopicReceivedLikeCount`
+3. 将旧命名 `forumReceivedFavoriteCount` 精确重命名为 `forumTopicReceivedFavoriteCount`
 4. 新增用户主动行为计数：
    - `commentCount`
    - `likeCount`
@@ -575,7 +575,7 @@ export const appUserCount = pgTable('app_user_count', {
 
 - 统一事实表继续保留
 - `app_user_count` 继续保留，但只作为用户聚合读模型
-- 不保留 `forumReplyCount`
+- 不保留历史字段 `forumReplyCount`
 - 保留论坛主题收到互动字段，但名称必须精确到 `forumTopic*`
 - 增加用户主动行为计数和评论收到点赞计数
 - 所有写入统一收口到 `AppUserCountService`

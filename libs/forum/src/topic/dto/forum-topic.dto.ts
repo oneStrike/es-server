@@ -130,15 +130,6 @@ export class BaseForumTopicDto extends BaseDto {
   viewCount!: number
 
   @NumberProperty({
-    description: '回复次数',
-    example: 10,
-    required: true,
-    default: 0,
-    validation: false,
-  })
-  replyCount!: number
-
-  @NumberProperty({
     description: '点赞次数',
     example: 5,
     required: true,
@@ -184,19 +175,19 @@ export class BaseForumTopicDto extends BaseDto {
   sensitiveWordHits?: BaseSensitiveWordHitDto[]
 
   @DateProperty({
-    description: '最后回复时间',
+    description: '最后评论时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
     validation: false,
   })
-  lastReplyAt?: Date
+  lastCommentAt?: Date
 
   @NumberProperty({
-    description: '最后回复用户ID',
+    description: '最后评论用户ID',
     example: 2,
     required: false,
   })
-  lastReplyUserId?: number
+  lastCommentUserId?: number
 
   @DateProperty({
     description: '删除时间',
@@ -206,3 +197,5 @@ export class BaseForumTopicDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+

@@ -184,7 +184,7 @@ async function rebuildTopicCounts(
       ids.map(async (topicId) =>
         drizzle.db.transaction(async (tx) => {
           await forumCounterService.rebuildTopicInteractionCounts(tx, topicId)
-          await forumCounterService.syncTopicReplyState(tx, topicId)
+          await forumCounterService.syncTopicCommentState(tx, topicId)
         }),
       ),
     )

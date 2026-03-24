@@ -57,9 +57,9 @@ export const forumSection = pgTable("forum_section", {
    */
   topicCount: integer().default(0).notNull(),
   /**
-   * 回复数（包含所有子版块）
+   * 评论数（包含所有可见主题下的评论）
    */
-  replyCount: integer().default(0).notNull(),
+  commentCount: integer().default(0).notNull(),
   /**
    * 关注人数
    */
