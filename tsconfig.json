@@ -13,9 +13,6 @@
       "@db/*": [
         "db/*"
       ],
-      "@libs/platform": [
-        "libs/platform/src"
-      ],
       "@libs/platform/*": [
         "libs/platform/src/*"
       ],
@@ -27,9 +24,6 @@
       ],
       "@libs/app-config/*": [
         "libs/config/src/app-config/*"
-      ],
-      "@libs/config": [
-        "libs/config/src"
       ],
       "@libs/config/*": [
         "libs/config/src/*"
@@ -73,14 +67,8 @@
       "@libs/message/*": [
         "libs/message/src/*"
       ],
-      "@libs/user": [
-        "libs/user/src"
-      ],
       "@libs/user/*": [
         "libs/user/src/*"
-      ],
-      "@libs/identity": [
-        "libs/identity/src"
       ],
       "@libs/identity/*": [
         "libs/identity/src/*"
