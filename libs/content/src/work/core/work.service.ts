@@ -533,7 +533,7 @@ export class WorkService {
 
   private async getWorkTypePage(
     dto: QueryWorkTypeInput,
-    extra: { isHot?: boolean; isNew?: boolean; isRecommended?: boolean },
+    extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
     userId?: number,
   ) {
     const page = await this.drizzle.ext.findPagination(this.work, {
@@ -1035,4 +1035,3 @@ export class WorkService {
     )
   }
 }
-

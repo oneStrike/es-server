@@ -148,4 +148,3 @@ export class ForumTopicCommentResolver
     await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
   }
 }
-

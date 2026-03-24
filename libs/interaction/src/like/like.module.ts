@@ -10,7 +10,7 @@
  * - GrowthLedgerModule：成长账本模块，用于发放点赞奖励
  */
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
-import { UserModule } from '@libs/user'
+import { UserModule } from '@libs/user/core'
 import { Module } from '@nestjs/common'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeService } from './like.service'

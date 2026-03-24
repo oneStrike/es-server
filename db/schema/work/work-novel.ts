@@ -15,22 +15,22 @@ export const workNovel = pgTable("work_novel", {
   /**
    * 关联的作品ID
    */
-  workId: integer("workId").notNull(),
+  workId: integer().notNull(),
   /**
    * 总字数
    */
-  wordCount: integer("wordCount").default(0).notNull(),
+  wordCount: integer().default(0).notNull(),
   /**
    * 创建时间
    */
-  createdAt: timestamp("createdAt", { withTimezone: true, precision: 6 }).defaultNow().notNull(),
+  createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
   /**
    * 更新时间
    */
-  updatedAt: timestamp("updatedAt", { withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
+  updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
 }, (table) => [
     /**
      * 唯一索引: workId
      */
-    unique("work_novel_workId_key").on(table.workId),
+    unique("work_novel_work_id_key").on(table.workId),
 ]);

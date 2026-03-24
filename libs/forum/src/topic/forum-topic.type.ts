@@ -82,4 +82,3 @@ export type UpdateForumTopicLockedInput = Pick<ForumTopic, 'id' | 'isLocked'>
  * 更新主题隐藏状态的领域输入。
  */
 export type UpdateForumTopicHiddenInput = Pick<ForumTopic, 'id' | 'isHidden'>
-

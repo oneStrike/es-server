@@ -138,4 +138,3 @@ export class BaseForumSectionDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
-

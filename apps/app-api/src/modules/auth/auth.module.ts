@@ -1,5 +1,5 @@
-import { ForumModule } from '@libs/forum/forum'
-import { IdentityModule } from '@libs/identity'
+import { ForumModule } from '@libs/forum/module'
+import { IdentityModule } from '@libs/identity/core'
 import { CaptchaService, RsaService, ScryptService, SmsModule } from '@libs/platform/modules'
 import { AuthCronService, AuthStrategy, JwtAuthModule } from '@libs/platform/modules/auth'
 import { SystemConfigModule } from '@libs/system-config'

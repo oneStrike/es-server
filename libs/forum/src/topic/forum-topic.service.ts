@@ -34,7 +34,7 @@ import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { AppUserCountService } from '@libs/user'
+import { AppUserCountService } from '@libs/user/core'
 import {
   BadRequestException,
   Injectable,
@@ -839,4 +839,3 @@ export class ForumTopicService {
     return this.deleteTopicWithCurrent(topic)
   }
 }
-

@@ -5,7 +5,7 @@ import type {
   AdminTokenPairInput,
 } from './auth.type'
 import { DrizzleService } from '@db/core'
-import { AuthSessionService } from '@libs/identity'
+import { AuthSessionService } from '@libs/identity/core'
 import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthConstants,

@@ -3,7 +3,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { CheckVerifyCodeDto } from '@libs/platform/modules'
-import { BaseAppUserDto } from '@libs/user'
+import { BaseAppUserDto } from '@libs/user/core'
 import {
   IntersectionType,
   OmitType,

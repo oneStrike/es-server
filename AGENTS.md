@@ -14,8 +14,10 @@
   - Drizzle 核心：`db/core`
   - 扩展函数：`db/extensions`
 - 路径别名统一定义在 `tsconfig.json`，优先使用 `@db/*`、`@libs/*`。
+- 所有 `libs` 统一使用命名明确的 public API 入口，不直接从根入口 `@libs/<lib>` 导入业务代码。
 - 多域共享库 `@libs/app-content`、`@libs/content`、`@libs/forum`、`@libs/growth`、`@libs/interaction`、`@libs/message` 统一使用二级 public API：`@libs/<lib>/<domain>`。
-- 上述多域共享库禁止从根入口 `@libs/<lib>` 导入，也禁止继续 deep import 到 `@libs/<lib>/<domain>/*`。
+- 单域/聚合库使用约定的二级入口，例如聚合 Nest 模块使用 `@libs/<lib>/module`，单域聚合导出使用 `@libs/<lib>/core`。
+- 除平台层已约定的公开嵌套命名空间（如 `@libs/platform/modules/auth`）外，禁止继续 deep import 到 `@libs/<lib>/<domain>/*`。
 
 ## 2. 分层要求
 

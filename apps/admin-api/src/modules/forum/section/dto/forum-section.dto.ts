@@ -44,4 +44,3 @@ export class ForumSectionFollowCountRepairResultDto extends IntersectionType(
   IdDto,
   PickType(BaseForumSectionDto, ['followersCount'] as const),
 ) {}
-

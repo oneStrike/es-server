@@ -15,7 +15,7 @@ import {
   UserDefaults,
   UserStatusEnum,
 } from '@libs/platform/constant'
-import { AppUserCountService } from '@libs/user'
+import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
 
@@ -399,4 +399,3 @@ export class UserProfileService {
     await this.appUserCountService.initUserCounts(client, userId)
   }
 }
-

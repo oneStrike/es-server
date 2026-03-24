@@ -1,4 +1,4 @@
-import { IdentityModule } from '@libs/identity'
+import { IdentityModule } from '@libs/identity/core'
 import { CaptchaService } from '@libs/platform/modules'
 import { AuthCronService, AuthStrategy } from '@libs/platform/modules/auth'
 import { Module } from '@nestjs/common'

@@ -39,7 +39,7 @@ export const userBadge = pgTable("user_badge", {
   /**
    * 排序值（数值越小越靠前）
    */
-  sortOrder: smallint("sortOrder").default(0).notNull(),
+  sortOrder: smallint().default(0).notNull(),
   /**
    * 是否启用
    */
@@ -64,7 +64,7 @@ export const userBadge = pgTable("user_badge", {
     /**
      * 排序索引
      */
-    index("user_badge_sortOrder_idx").on(table.sortOrder),
+    index("user_badge_sort_order_idx").on(table.sortOrder),
     /**
      * 启用状态索引
      */

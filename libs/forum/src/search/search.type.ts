@@ -46,4 +46,3 @@ export interface ForumSearchPageResult {
   pageIndex: number
   pageSize: number
 }
-

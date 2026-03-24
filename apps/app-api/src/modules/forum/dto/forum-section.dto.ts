@@ -45,4 +45,3 @@ export class AppForumSectionDetailDto extends AppForumSectionListItemDto {
   })
   group?: AppForumSectionGroupBriefDto
 }
-

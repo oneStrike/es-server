@@ -1,6 +1,6 @@
 import type { UserLike } from '@db/schema'
 import { DrizzleService } from '@db/core'
-import { AppUserCountService } from '@libs/user'
+import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'

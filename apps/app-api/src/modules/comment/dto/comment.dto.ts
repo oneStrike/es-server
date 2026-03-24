@@ -10,7 +10,7 @@ import {
   NumberProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import { BaseAppUserDto } from '@libs/user'
+import { BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class CommentIdDto {

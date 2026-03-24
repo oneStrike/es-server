@@ -1,4 +1,4 @@
-import { InteractionModule } from '@libs/interaction/interaction'
+import { InteractionModule } from '@libs/interaction/module'
 import { Module } from '@nestjs/common'
 import { ForumCounterModule } from '../counter'
 import { ForumPermissionModule } from '../permission'

@@ -58,11 +58,11 @@ export const work = pgTable("work", {
   /**
    * 年龄分级
    */
-  ageRating: varchar("ageRating", { length: 10 }),
+  ageRating: varchar({ length: 10 }),
   /**
    * 连载状态
    */
-  serialStatus: smallint("serialStatus").default(0).notNull(),
+  serialStatus: smallint().default(0).notNull(),
   /**
    * 出版方
    */
@@ -70,7 +70,7 @@ export const work = pgTable("work", {
   /**
    * 原作来源
    */
-  originalSource: varchar("originalSource", { length: 100 }),
+  originalSource: varchar({ length: 100 }),
   /**
    * 版权信息
    */
@@ -86,27 +86,27 @@ export const work = pgTable("work", {
   /**
    * 是否发布
    */
-  isPublished: boolean("isPublished").default(true).notNull(),
+  isPublished: boolean().default(true).notNull(),
   /**
    * 是否推荐
    */
-  isRecommended: boolean("isRecommended").default(false).notNull(),
+  isRecommended: boolean().default(false).notNull(),
   /**
    * 是否热门
    */
-  isHot: boolean("isHot").default(false).notNull(),
+  isHot: boolean().default(false).notNull(),
   /**
    * 是否最新
    */
-  isNew: boolean("isNew").default(false).notNull(),
+  isNew: boolean().default(false).notNull(),
   /**
    * 发布日期
    */
-  publishAt: date("publishAt"),
+  publishAt: date(),
   /**
    * 最近更新时间
    */
-  lastUpdated: timestamp("lastUpdated", { withTimezone: true, precision: 6 }),
+  lastUpdated: timestamp({ withTimezone: true, precision: 6 }),
   /**
    * 阅读规则
    */
@@ -130,19 +130,19 @@ export const work = pgTable("work", {
   /**
    * 推荐权重
    */
-  recommendWeight: doublePrecision("recommendWeight").default(1.0).notNull(),
+  recommendWeight: doublePrecision().default(1.0).notNull(),
   /**
    * 浏览数
    */
-  viewCount: integer("viewCount").default(0).notNull(),
+  viewCount: integer().default(0).notNull(),
   /**
    * 收藏数
    */
-  favoriteCount: integer("favoriteCount").default(0).notNull(),
+  favoriteCount: integer().default(0).notNull(),
   /**
    * 点赞数
    */
-  likeCount: integer("likeCount").default(0).notNull(),
+  likeCount: integer().default(0).notNull(),
   /**
    * 评论数
    */
@@ -150,7 +150,7 @@ export const work = pgTable("work", {
   /**
    * 下载数
    */
-  downloadCount: integer("downloadCount").default(0).notNull(),
+  downloadCount: integer().default(0).notNull(),
   /**
    * 评分
    */
@@ -162,11 +162,11 @@ export const work = pgTable("work", {
   /**
    * 创建时间
    */
-  createdAt: timestamp("createdAt", { withTimezone: true, precision: 6 }).defaultNow().notNull(),
+  createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
   /**
    * 更新时间
    */
-  updatedAt: timestamp("updatedAt", { withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
+  updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
   /**
    * 删除时间
    */
@@ -175,7 +175,7 @@ export const work = pgTable("work", {
     /**
      * 索引: isPublished, publishAt
      */
-    index("work_isPublished_publishAt_idx").on(table.isPublished, table.publishAt),
+    index("work_is_published_publish_at_idx").on(table.isPublished, table.publishAt),
     /**
      * 索引: popularity
      */
@@ -187,11 +187,11 @@ export const work = pgTable("work", {
     /**
      * 索引: serialStatus
      */
-    index("work_serialStatus_idx").on(table.serialStatus),
+    index("work_serial_status_idx").on(table.serialStatus),
     /**
      * 索引: lastUpdated
      */
-    index("work_lastUpdated_idx").on(table.lastUpdated),
+    index("work_last_updated_idx").on(table.lastUpdated),
     /**
      * 索引: name
      */
@@ -199,11 +199,11 @@ export const work = pgTable("work", {
     /**
      * 索引: isRecommended
      */
-    index("work_isRecommended_idx").on(table.isRecommended),
+    index("work_is_recommended_idx").on(table.isRecommended),
     /**
      * 索引: isHot, isNew
      */
-    index("work_isHot_isNew_idx").on(table.isHot, table.isNew),
+    index("work_is_hot_is_new_idx").on(table.isHot, table.isNew),
     /**
      * 索引: type
      */

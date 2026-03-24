@@ -12,7 +12,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
-import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
+import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**

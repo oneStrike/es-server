@@ -169,4 +169,3 @@ export class ForumSearchResultDto {
   })
   favoriteCount!: number
 }
-

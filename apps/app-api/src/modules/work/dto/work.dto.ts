@@ -262,4 +262,3 @@ export class WorkForumSectionDto extends IntersectionType(
 ) {}
 
 export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}
-

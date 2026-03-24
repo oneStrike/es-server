@@ -9,7 +9,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
-import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user'
+import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import {
   IntersectionType,
   OmitType,
@@ -230,4 +230,3 @@ export class UpdateForumTopicHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isHidden'] as const),
 ) {}
-

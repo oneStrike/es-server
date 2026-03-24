@@ -7,10 +7,10 @@
  * - 集成敏感词检测、成长奖励、消息通知等能力
  */
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
-import { MessageModule } from '@libs/message/message'
+import { MessageModule } from '@libs/message/module'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { SystemConfigModule } from '@libs/system-config'
-import { UserModule } from '@libs/user'
+import { UserModule } from '@libs/user/core'
 import { Module } from '@nestjs/common'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'

@@ -21,7 +21,7 @@ import {
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
 import { ConfigReader } from '@libs/system-config'
-import { AppUserCountService } from '@libs/user'
+import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
 import { CommentGrowthService } from './comment-growth.service'

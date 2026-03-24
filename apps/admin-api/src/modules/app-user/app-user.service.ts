@@ -27,7 +27,7 @@ import { RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AppUserCountService,
   UserService as UserCoreService,
-} from '@libs/user'
+} from '@libs/user/core'
 import {
   BadRequestException,
   Injectable,

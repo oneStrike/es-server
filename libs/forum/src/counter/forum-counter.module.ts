@@ -1,4 +1,4 @@
-import { UserModule } from '@libs/user'
+import { UserModule } from '@libs/user/core'
 import { Module } from '@nestjs/common'
 import { ForumCounterService } from './forum-counter.service'
 

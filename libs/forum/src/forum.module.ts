@@ -1,7 +1,7 @@
 import { UserExperienceModule } from '@libs/growth/experience'
 import { UserLevelRuleModule } from '@libs/growth/level-rule'
 import { UserPointModule } from '@libs/growth/point'
-import { InteractionModule } from '@libs/interaction/interaction'
+import { InteractionModule } from '@libs/interaction/module'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { Module } from '@nestjs/common'
 import { ForumCounterModule } from './counter'

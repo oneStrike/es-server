@@ -2,7 +2,7 @@ import type { FastifyRequest } from 'fastify'
 import type { AppLoginInput, AppTokenPairInput } from './auth.type'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile'
-import { AuthSessionService } from '@libs/identity'
+import { AuthSessionService } from '@libs/identity/core'
 import { GenderEnum } from '@libs/platform/constant'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import {

@@ -1,7 +1,7 @@
 import type { UserFavorite } from '@db/schema'
 import type { FavoriteListQuery, FavoriteRecordInput } from './favorite.type'
 import { DrizzleService } from '@db/core'
-import { AppUserCountService } from '@libs/user'
+import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import { FavoriteGrowthService } from './favorite-growth.service'

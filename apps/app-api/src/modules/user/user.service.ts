@@ -21,7 +21,7 @@ import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
 import { UserAssetsService } from '@libs/interaction/user-assets'
 import { MessageInboxService } from '@libs/message/inbox'
-import { UserService as UserCoreService } from '@libs/user'
+import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 

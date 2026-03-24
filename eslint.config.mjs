@@ -86,6 +86,26 @@ export default antfu(
               message:
                 'Use domain public API from @libs/message/<domain> instead of the root barrel.',
             },
+            {
+              name: '@libs/config',
+              message:
+                'Use named public API from @libs/config/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/identity',
+              message:
+                'Use named public API from @libs/identity/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/platform',
+              message:
+                'Use named public API from @libs/platform/<domain> instead of the root barrel.',
+            },
+            {
+              name: '@libs/user',
+              message:
+                'Use named public API from @libs/user/<domain> instead of the root barrel.',
+            },
           ],
           patterns: [
             {
@@ -103,13 +123,21 @@ export default antfu(
             {
               group: [
                 '@libs/app-config/*',
-                '@libs/config/*',
                 '@libs/dictionary/*',
                 '@libs/sensitive-word/*',
                 '@libs/system-config/*',
               ],
               message:
                 'Use public API from @libs/<lib> instead of file deep imports.',
+            },
+            {
+              group: [
+                '@libs/user/*/*',
+                '@libs/identity/*/*',
+                '@libs/config/*/*',
+              ],
+              message:
+                'Use second-level public API @libs/<lib>/<domain> instead of file deep imports.',
             },
           ],
         },

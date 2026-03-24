@@ -9,8 +9,8 @@ import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { DOWNLOAD_WORK_CHAPTER_TARGET_TYPES } from '../download/download.constant'
 import {
-  PurchaseStatusEnum,
   PURCHASE_WORK_CHAPTER_TARGET_TYPES,
+  PurchaseStatusEnum,
 } from '../purchase/purchase.constant'
 
 @Injectable()

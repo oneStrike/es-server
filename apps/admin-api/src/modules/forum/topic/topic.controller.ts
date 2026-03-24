@@ -200,4 +200,3 @@ export class ForumTopicController {
     return this.forumTopicService.updateTopicAuditStatus(body)
   }
 }
-

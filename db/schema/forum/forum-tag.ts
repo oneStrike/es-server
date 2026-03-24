@@ -27,7 +27,7 @@ export const forumTag = pgTable("forum_tag", {
   /**
    * 排序值（数值越小越靠前）
    */
-  sortOrder: smallint("sortOrder").default(0).notNull(),
+  sortOrder: smallint().default(0).notNull(),
   /**
    * 是否启用
    */
@@ -52,7 +52,7 @@ export const forumTag = pgTable("forum_tag", {
   /**
    * 排序索引
    */
-  index("forum_tag_sortOrder_idx").on(table.sortOrder),
+  index("forum_tag_sort_order_idx").on(table.sortOrder),
   /**
    * 名称索引
    */

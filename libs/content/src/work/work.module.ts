@@ -1,6 +1,6 @@
 import { UserPermissionModule } from '@libs/growth/permission'
 import { UserPointModule } from '@libs/growth/point'
-import { InteractionModule } from '@libs/interaction/interaction'
+import { InteractionModule } from '@libs/interaction/module'
 import { ReportModule } from '@libs/interaction/report'
 import { UploadModule } from '@libs/platform/modules'
 import { SystemConfigModule } from '@libs/system-config'

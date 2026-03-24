@@ -197,5 +197,3 @@ export class BaseForumTopicDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
-
-

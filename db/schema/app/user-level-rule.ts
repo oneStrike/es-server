@@ -43,7 +43,7 @@ export const userLevelRule = pgTable("user_level_rule", {
   /**
    * 排序值（数值越小越靠前）
    */
-  sortOrder: smallint("sortOrder").default(0).notNull(),
+  sortOrder: smallint().default(0).notNull(),
   /**
    * 是否启用
    */
@@ -100,7 +100,7 @@ export const userLevelRule = pgTable("user_level_rule", {
     /**
      * 启用与排序索引
      */
-    index("user_level_rule_is_enabled_sortOrder_idx").on(table.isEnabled, table.sortOrder),
+    index("user_level_rule_is_enabled_sort_order_idx").on(table.isEnabled, table.sortOrder),
 ]);
 
 export type UserLevelRule = typeof userLevelRule.$inferSelect;
