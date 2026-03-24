@@ -9,6 +9,7 @@ export const AppAuthRedisKeys = createAuthRedisKeys('app')
 export const AppAuthErrorMessages = {
   ACCOUNT_OR_PASSWORD_ERROR: '账号或密码错误',
   ACCOUNT_DISABLED: '账号已被禁用，请联系管理员',
+  ACCOUNT_BANNED: '账号已被封禁',
   ACCOUNT_NOT_FOUND: '账号不存在',
   PHONE_EXISTS: '手机号已注册',
   EMAIL_EXISTS: '邮箱已注册',

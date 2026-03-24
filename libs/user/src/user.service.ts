@@ -1,7 +1,11 @@
 import { DrizzleService } from '@db/core'
 import { AppUser } from '@db/schema'
 import { UserStatusEnum } from '@libs/platform/constant'
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
 
@@ -55,6 +59,59 @@ export class UserService {
     return user
   }
 
+  isMutedStatus(status: number): boolean {
+    return (
+      status === UserStatusEnum.MUTED
+      || status === UserStatusEnum.PERMANENT_MUTED
+    )
+  }
+
+  isBannedStatus(status: number): boolean {
+    return (
+      status === UserStatusEnum.BANNED
+      || status === UserStatusEnum.PERMANENT_BANNED
+    )
+  }
+
+  private formatRestrictionUntil(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  }
+
+  buildBanAccessMessage(user: {
+    banReason: string | null
+    banUntil: Date | null
+  }): string {
+    const parts = ['账号已被封禁']
+
+    if (user.banReason?.trim()) {
+      parts.push(`原因：${user.banReason.trim()}`)
+    }
+
+    parts.push(
+      user.banUntil
+        ? `解封时间：${this.formatRestrictionUntil(user.banUntil)}`
+        : '解封时间：永久封禁',
+    )
+
+    return parts.join('，')
+  }
+
+  ensureAppUserNotBanned(user: {
+    status: number
+    banReason: string | null
+    banUntil: Date | null
+  }): void {
+    if (this.isBannedStatus(user.status)) {
+      throw new ForbiddenException(this.buildBanAccessMessage(user))
+    }
+  }
+
   /**
    * 将数据库用户实体映射为安全的对外用户对象
    */
@@ -94,17 +151,14 @@ export class UserService {
     banReason: string | null
     banUntil: Date | null
   }) {
-    // 被禁止互动的状态集合
-    const interactionBlockedStatuses = new Set<number>([
-      UserStatusEnum.MUTED,
-      UserStatusEnum.PERMANENT_MUTED,
-      UserStatusEnum.BANNED,
-      UserStatusEnum.PERMANENT_BANNED,
-    ])
-
-    const canLogin = user.isEnabled
-    const canInteract =
-      user.isEnabled && !interactionBlockedStatuses.has(user.status)
+    const isMuted = this.isMutedStatus(user.status)
+    const isBanned = this.isBannedStatus(user.status)
+    const canLogin = user.isEnabled && !isBanned
+    const canPost = user.isEnabled && !isMuted && !isBanned
+    const canReply = canPost
+    const canLike = user.isEnabled && !isBanned
+    const canFavorite = user.isEnabled && !isBanned
+    const canFollow = user.isEnabled && !isBanned
     const reason = !user.isEnabled
       ? user.banReason || '账号已被禁用'
       : user.banReason || undefined
@@ -113,11 +167,11 @@ export class UserService {
       isEnabled: user.isEnabled,
       status: user.status,
       canLogin,
-      canPost: canInteract,
-      canReply: canInteract,
-      canLike: canInteract,
-      canFavorite: canInteract,
-      canFollow: canInteract,
+      canPost,
+      canReply,
+      canLike,
+      canFavorite,
+      canFollow,
       reason,
       until: user.banUntil ?? undefined,
     }

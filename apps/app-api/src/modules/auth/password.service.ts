@@ -5,6 +5,7 @@ import type {
 import { DrizzleService } from '@db/core'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
+import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
@@ -23,6 +24,7 @@ export class PasswordService {
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
     private readonly tokenStorageService: AppTokenStorageService,
+    private readonly userCoreService: UserCoreService,
   ) {}
 
   private get db() {
@@ -73,7 +75,13 @@ export class PasswordService {
   async forgotPassword(body: AppForgotPasswordInput) {
     const { phone, password } = body
     const [user] = await this.db
-      .select({ id: this.appUser.id })
+      .select({
+        id: this.appUser.id,
+        isEnabled: this.appUser.isEnabled,
+        status: this.appUser.status,
+        banReason: this.appUser.banReason,
+        banUntil: this.appUser.banUntil,
+      })
       .from(this.appUser)
       .where(
         and(eq(this.appUser.phoneNumber, phone), isNull(this.appUser.deletedAt)),
@@ -83,6 +91,13 @@ export class PasswordService {
     if (!user) {
       throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
+
+    if (!user.isEnabled) {
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_DISABLED)
+    }
+
+    this.userCoreService.ensureAppUserNotBanned(user)
+
     // TODO
     // await this.smsService.validateVerifyCode({ phone, code })
     const hashedPassword = await this.scryptService.encryptPassword(password)

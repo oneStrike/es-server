@@ -11,6 +11,7 @@ import {
   AuthService as BaseAuthService,
   LoginGuardService,
 } from '@libs/platform/modules/auth'
+import { UserService as UserCoreService } from '@libs/user/core'
 import { extractIpAddress } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
@@ -34,6 +35,7 @@ export class AuthService {
     private readonly passwordService: PasswordService,
     private readonly profileService: UserProfileService,
     private readonly loginGuardService: LoginGuardService,
+    private readonly userCoreService: UserCoreService,
   ) {}
 
   private get db() {
@@ -42,6 +44,19 @@ export class AuthService {
 
   get appUserTable() {
     return this.drizzle.schema.appUser
+  }
+
+  private ensureSessionAllowed(user: {
+    isEnabled: boolean
+    status: number
+    banReason: string | null
+    banUntil: Date | null
+  }) {
+    if (!user.isEnabled) {
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_DISABLED)
+    }
+
+    this.userCoreService.ensureAppUserNotBanned(user)
   }
 
   /**
@@ -214,9 +229,7 @@ export class AuthService {
       )
     }
 
-    if (!user.isEnabled) {
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_DISABLED)
-    }
+    this.ensureSessionAllowed(user)
 
     return this.handleLoginSuccess(user, req)
   }
@@ -248,7 +261,23 @@ export class AuthService {
    * 刷新令牌
    */
   async refreshToken(refreshToken: string, req: FastifyRequest) {
-    return this.authSessionService.refreshAndPersist(refreshToken, req)
+    const tokens = await this.authSessionService.refreshAndPersist(refreshToken, req)
+    const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
+    const user = await this.userCoreService.findById(Number(payload.sub))
+
+    if (!user) {
+      await this.authSessionService.logout(tokens, { revokeDbTokens: true })
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
+    }
+
+    try {
+      this.ensureSessionAllowed(user)
+    } catch (error) {
+      await this.authSessionService.logout(tokens, { revokeDbTokens: true })
+      throw error
+    }
+
+    return tokens
   }
 
   /**
