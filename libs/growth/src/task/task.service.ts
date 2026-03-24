@@ -959,90 +959,10 @@ export class TaskService {
   }
 
   /**
-   * 创建任务分配
-   *
-   * 在事务中创建分配记录并记录领取日志。
-   *
-   * @param taskRecord 任务信息对象
-   * @param taskRecord.id 任务ID
-   * @param taskRecord.code 任务编码
-   * @param taskRecord.title 任务标题
-   * @param taskRecord.type 任务类型
-   * @param taskRecord.rewardConfig 奖励配置
-   * @param taskRecord.targetCount 目标数量
-   * @param taskRecord.publishEndAt 发布结束时间
-   * @param userId 用户ID
-   * @param cycleKey 周期标识
-   * @param now 当前时间
-   * @returns 创建的任务分配
-   */
-  private async createAssignment(
-    taskRecord: {
-      id: number
-      code: string
-      title: string
-      type: number
-      rewardConfig: unknown
-      targetCount: number
-      publishEndAt: Date | null
-    },
-    userId: number,
-    cycleKey: string,
-    now: Date,
-  ) {
-    const taskSnapshot = this.buildTaskSnapshot(taskRecord)
-
-    return this.drizzle.withTransaction(async (tx) => {
-      // 创建分配记录
-      await tx
-        .insert(this.taskAssignmentTable)
-        .values({
-          taskId: taskRecord.id,
-          userId,
-          cycleKey,
-          status: TaskAssignmentStatusEnum.IN_PROGRESS,
-          progress: 0,
-          target: taskRecord.targetCount,
-          claimedAt: now,
-          expiredAt: taskRecord.publishEndAt ?? undefined,
-          taskSnapshot,
-        })
-
-      const [assignment] = await tx
-        .select()
-        .from(this.taskAssignmentTable)
-        .where(
-          and(
-            eq(this.taskAssignmentTable.taskId, taskRecord.id),
-            eq(this.taskAssignmentTable.userId, userId),
-            eq(this.taskAssignmentTable.cycleKey, cycleKey),
-          ),
-        )
-        .limit(1)
-
-      if (!assignment) {
-        throw new NotFoundException('任务分配创建失败')
-      }
-
-      // 记录领取日志
-      await tx.insert(this.taskProgressLogTable).values({
-        assignmentId: assignment.id,
-        userId,
-        actionType: TaskProgressActionTypeEnum.CLAIM,
-        delta: 0,
-        beforeValue: 0,
-        afterValue: 0,
-      })
-
-      return assignment
-    })
-  }
-
-  /**
    * 创建或获取已存在的任务分配
    *
-   * 处理并发领取场景：如果多个请求同时创建分配，
-   * 会因唯一约束冲突而回退到查询已有分配。
+   * 处理并发领取场景：通过唯一键 + onConflictDoNothing
+   * 保证只创建一条分配记录，并在并发命中时回查已有分配。
    *
    * @param taskRecord 任务信息对象
    * @param taskRecord.id 任务ID
@@ -1071,37 +991,55 @@ export class TaskService {
     cycleKey: string,
     now: Date,
   ) {
-    try {
-      return await this.createAssignment(taskRecord, userId, cycleKey, now)
-    } catch (error) {
-      let duplicateAssignment = false
-      try {
-        await this.drizzle.withErrorHandling(
-          async () => {
-            throw error
-          },
-          {
-            duplicate: '__TASK_ASSIGNMENT_DUPLICATE__',
-          },
-        )
-      } catch (mappedError) {
-        duplicateAssignment = mappedError instanceof Error
-          && mappedError.message === '__TASK_ASSIGNMENT_DUPLICATE__'
-        if (!duplicateAssignment) {
-          throw mappedError
-        }
+    const taskSnapshot = this.buildTaskSnapshot(taskRecord)
+
+    return this.drizzle.withTransaction(async (tx) => {
+      const [createdAssignment] = await tx
+        .insert(this.taskAssignmentTable)
+        .values({
+          taskId: taskRecord.id,
+          userId,
+          cycleKey,
+          status: TaskAssignmentStatusEnum.IN_PROGRESS,
+          progress: 0,
+          target: taskRecord.targetCount,
+          claimedAt: now,
+          expiredAt: taskRecord.publishEndAt ?? undefined,
+          taskSnapshot,
+        })
+        .onConflictDoNothing()
+        .returning()
+
+      if (createdAssignment) {
+        await tx.insert(this.taskProgressLogTable).values({
+          assignmentId: createdAssignment.id,
+          userId,
+          actionType: TaskProgressActionTypeEnum.CLAIM,
+          delta: 0,
+          beforeValue: 0,
+          afterValue: 0,
+        })
+        return createdAssignment
       }
 
-      const existing = await this.findAssignmentByUniqueKey(
-        taskRecord.id,
-        userId,
-        cycleKey,
-      )
+      const [existing] = await tx
+        .select()
+        .from(this.taskAssignmentTable)
+        .where(
+          and(
+            eq(this.taskAssignmentTable.taskId, taskRecord.id),
+            eq(this.taskAssignmentTable.userId, userId),
+            eq(this.taskAssignmentTable.cycleKey, cycleKey),
+          ),
+        )
+        .limit(1)
+
       if (existing) {
         return existing
       }
-      throw error
-    }
+
+      throw new NotFoundException('任务分配创建失败')
+    })
   }
 
   /**

@@ -1,5 +1,6 @@
 import type { Provider } from '@nestjs/common/interfaces/modules/provider.interface'
 import type { Type } from '@nestjs/common/interfaces/type.interface'
+import type { ValidationError } from 'class-validator'
 import type { PlatformModuleOptions } from './platform.module.types'
 import { LoggerModule } from '@libs/platform/modules'
 import {
@@ -16,6 +17,32 @@ import { DrizzleModule } from '../../../db/core/drizzle.module'
 import { TransformInterceptor } from './interceptors'
 import { CustomCacheModule } from './modules/cache'
 import { HealthModule } from './modules/health'
+
+function flattenValidationErrors(
+  errors: ValidationError[],
+  parentPath = '',
+): string[] {
+  const messages: string[] = []
+
+  for (const error of errors) {
+    const propertyPath = parentPath
+      ? `${parentPath}.${error.property}`
+      : error.property
+
+    if (error.constraints) {
+      const constraintMessages = Object.values(error.constraints)
+      if (constraintMessages.length > 0) {
+        messages.push(`${propertyPath}${constraintMessages.join('，')}`)
+      }
+    }
+
+    if (error.children?.length) {
+      messages.push(...flattenValidationErrors(error.children, propertyPath))
+    }
+  }
+
+  return messages
+}
 
 @Module({})
 export class PlatformModule {
@@ -100,18 +127,12 @@ export class PlatformModule {
         useValue: new ValidationPipe({
           transform: true, // 自动转换请求数据类型
           whitelist: true, // 过滤掉未在 DTO 中定义的属性
-          exceptionFactory: (errors) =>
-            new BadRequestException(
-              errors
-                .map((error) => {
-                  const errorMsg: string[] = []
-                  if (error.constraints) {
-                    errorMsg.push(...Object.values(error.constraints))
-                  }
-                  return `${error.property}${errorMsg.join('，')}`
-                })
-                .join(','),
-            ),
+          exceptionFactory: (errors) => {
+            const messages = flattenValidationErrors(errors)
+            return new BadRequestException(
+              messages.length > 0 ? messages.join(',') : '参数校验失败',
+            )
+          },
         }),
       })
     }

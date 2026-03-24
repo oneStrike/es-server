@@ -170,4 +170,37 @@ export class BrowseLogService {
       throw error
     }
   }
+
+  async recordBrowseLogSafely(
+    targetType: BrowseLogTargetTypeEnum,
+    targetId: number,
+    userId: number,
+    ipAddress?: string,
+    device?: string,
+    userAgent?: string,
+    options: {
+      skipTargetValidation?: boolean
+      deferPostProcess?: boolean
+    } = {},
+  ): Promise<void> {
+    try {
+      await this.recordBrowseLog(
+        targetType,
+        targetId,
+        userId,
+        ipAddress,
+        device,
+        userAgent,
+        options,
+      )
+    } catch (error) {
+      this.logger.warn(
+        `record_browse_log_failed targetType=${targetType} targetId=${targetId} userId=${userId} skipTargetValidation=${Boolean(
+          options.skipTargetValidation,
+        )} deferPostProcess=${Boolean(options.deferPostProcess)} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
+  }
 }

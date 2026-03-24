@@ -31,7 +31,6 @@ import {
   handleError,
   isCheckViolation,
   isErrorCode,
-  isForeignKeyViolation,
   isNotNullViolation,
   isSerializationFailure,
   isUniqueViolation,
@@ -88,10 +87,6 @@ export class DrizzleService implements OnApplicationShutdown {
 
   isUniqueViolation(error: unknown): boolean {
     return isUniqueViolation(error)
-  }
-
-  isForeignKeyViolation(error: unknown): boolean {
-    return isForeignKeyViolation(error)
   }
 
   isNotNullViolation(error: unknown): boolean {

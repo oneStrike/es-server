@@ -7,6 +7,7 @@
 - `./DTO_SPEC.md`: DTO 分层、复用方式、命名规则、Service 类型边界。
 - `./TS_TYPE_SPEC.md`: TypeScript 领域类型、`db/schema` 推导类型、`*.type.ts` 放置与命名规范。
 - `./COMMENT_SPEC.md`: 代码注释密度、文档注释与事务/类型说明规范。
+- `./ERROR_HANDLING_SPEC.md`: ValidationPipe、业务异常、Drizzle 错误分类、全局异常过滤器、幂等与日志规范。
 - `./drizzle-guidelines.md`: Drizzle 入口、事务、分页、原生 SQL 与 Resolver 规范。
 - `./COUNTER_SPEC.md`: 计数器硬约束、决策顺序与验收基线。
 - `./COUNTER_PATTERNS.md`: 计数器分层模式、迁移方式与最小实现模板。
@@ -33,6 +34,7 @@
 
 - 同时改 controller、DTO、service 时，先对齐 controller 和 DTO 规则，再收敛 service 签名。
 - 涉及 service 签名、领域输入输出、事务别名或聚合结果时，先对齐 `TS_TYPE_SPEC.md`，再决定类型放置层级。
+- 涉及异常语义、数据库错误翻译、幂等防重、全局错误响应、日志上下文时，先对齐 `ERROR_HANDLING_SPEC.md`，再决定是在业务层、Drizzle 边界还是全局 filter 处理。
 - 涉及点赞数、收藏数、评论数、浏览量、关注数、未读数、聚合读模型等计数字段时，先阅读 `COUNTER_SPEC.md`、`COUNTER_PATTERNS.md`、`COUNTER_REGISTRY.md` 与 `drizzle-guidelines.md`，再决定是增量维护还是按事实重算。
 - 仅供 service 内部使用的稳定结构，优先落到 `*.type.ts`，不要把 apps DTO 向下传递。
 - 发现“规范与现状”冲突时，在交付说明里显式指出，不要默默扩散冲突。

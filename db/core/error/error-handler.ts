@@ -2,10 +2,10 @@ import type { DrizzleErrorMessages } from '../drizzle.type'
 import type { PostgresError } from './postgres-error'
 import { HttpException, InternalServerErrorException } from '@nestjs/common'
 import {
+  getPostgresErrorDescriptor,
   getPostgresError,
   PostgresDefaultMessages,
   PostgresErrorCode,
-  PostgresHttpStatus,
 } from './postgres-error'
 
 export function isErrorCode(error: unknown, code: string): boolean {
@@ -15,10 +15,6 @@ export function isErrorCode(error: unknown, code: string): boolean {
 
 export function isUniqueViolation(error: unknown): boolean {
   return isErrorCode(error, PostgresErrorCode.UNIQUE_VIOLATION)
-}
-
-export function isForeignKeyViolation(error: unknown): boolean {
-  return isErrorCode(error, PostgresErrorCode.FOREIGN_KEY_VIOLATION)
 }
 
 export function isNotNullViolation(error: unknown): boolean {
@@ -50,7 +46,6 @@ export function handleError(
 
   const messageMap: Record<string, string | undefined> = {
     [PostgresErrorCode.UNIQUE_VIOLATION]: messages?.duplicate,
-    [PostgresErrorCode.FOREIGN_KEY_VIOLATION]: messages?.foreignKey,
     [PostgresErrorCode.NOT_NULL_VIOLATION]: messages?.notNull,
     [PostgresErrorCode.CHECK_VIOLATION]: messages?.check,
     [PostgresErrorCode.SERIALIZATION_FAILURE]: messages?.conflict,
@@ -61,14 +56,22 @@ export function handleError(
     message = PostgresDefaultMessages[code]
   }
 
-  if (message) {
-    const status = PostgresHttpStatus[code]
-    if (status) {
-      throw new HttpException(message, status)
-    }
+  const descriptor = message
+    ? {
+        message,
+        status: getPostgresErrorDescriptor(code)?.status,
+      }
+    : getPostgresErrorDescriptor(code)
+
+  if (descriptor?.status) {
+    throw new HttpException(descriptor.message, descriptor.status, {
+      cause: error,
+    })
   }
 
-  throw new InternalServerErrorException('数据库操作失败')
+  throw new InternalServerErrorException('数据库操作失败', {
+    cause: error,
+  })
 }
 
 export async function executeWithErrorHandling<T>(

@@ -352,7 +352,7 @@ export class ForumTopicService {
       }),
     ])
 
-    await this.browseLogService.recordBrowseLog(
+    await this.browseLogService.recordBrowseLogSafely(
       BrowseLogTargetTypeEnum.FORUM_TOPIC,
       id,
       userId,

@@ -260,7 +260,7 @@ export class WorkChapterService {
         ? BrowseLogTargetTypeEnum.COMIC_CHAPTER
         : BrowseLogTargetTypeEnum.NOVEL_CHAPTER
 
-    await this.browseLogService.recordBrowseLog(
+    await this.browseLogService.recordBrowseLogSafely(
       browseTargetType,
       id,
       userId,

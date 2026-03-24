@@ -16,7 +16,6 @@ export type DrizzleWhere = SQL | undefined
 
 export interface DrizzleErrorMessages {
   duplicate?: string
-  foreignKey?: string
   notNull?: string
   check?: string
   conflict?: string

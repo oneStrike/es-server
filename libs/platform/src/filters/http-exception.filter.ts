@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import { PostgresErrorCode } from '@db/core'
+import { extractError, getPostgresErrorDescriptor } from '@db/core'
 import { LoggerService } from '@libs/platform/modules'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import {
@@ -20,8 +20,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
   constructor(private readonly loggerService: LoggerService) {}
 
   /**
-   * Known framework/database error mappings.
-   * Keep this as the single global fallback map.
+   * Known framework error mappings.
+   * Database fallback uses the shared descriptor from db/core.
    */
   private readonly errorDescriptorMap: Record<string, ErrorDescriptor> = {
     // Fastify multipart errors
@@ -37,24 +37,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status: HttpStatus.BAD_REQUEST,
       message: '\u4E0A\u4F20\u6587\u4EF6\u4E0D\u80FD\u4E3A\u7A7A',
     },
-    // Database errors
-    [PostgresErrorCode.UNIQUE_VIOLATION]: {
-      status: HttpStatus.CONFLICT,
-      message:
-        '\u6570\u636E\u5DF2\u5B58\u5728\uFF0C\u8BF7\u52FF\u91CD\u590D\u63D0\u4EA4',
-    },
-    [PostgresErrorCode.FOREIGN_KEY_VIOLATION]: {
-      status: HttpStatus.BAD_REQUEST,
-      message: '\u5173\u8054\u6570\u636E\u4E0D\u5B58\u5728',
-    },
-    [PostgresErrorCode.NOT_NULL_VIOLATION]: {
-      status: HttpStatus.BAD_REQUEST,
-      message: '\u5FC5\u586B\u5B57\u6BB5\u4E0D\u80FD\u4E3A\u7A7A',
-    },
-    [PostgresErrorCode.SERIALIZATION_FAILURE]: {
-      status: HttpStatus.CONFLICT,
-      message: '\u8BF7\u6C42\u51B2\u7A81\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5',
-    },
   }
 
   catch(exception: unknown, host: ArgumentsHost): void {
@@ -62,7 +44,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<FastifyReply>()
     const request = ctx.getRequest<FastifyRequest>()
 
-    const { status, message, code } = this.extractErrorInfo(exception)
+    const {
+      status,
+      message,
+      code,
+      constraint,
+      table,
+      column,
+      detail,
+    } = this.extractErrorInfo(exception)
     const parsed = this.safeParse(request)
     const logger = this.loggerService.getLoggerWithContext('http-exception')
 
@@ -70,6 +60,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       level: 'error',
       message: 'http_exception',
       errorCode: code,
+      errorConstraint: constraint,
+      errorTable: table,
+      errorColumn: column,
+      errorDetail: detail,
       errorMessage: message,
       stack: exception instanceof Error ? exception.stack : undefined,
       status,
@@ -90,24 +84,40 @@ export class HttpExceptionFilter implements ExceptionFilter {
     status: number
     message: string | object
     code?: string
+    constraint?: string
+    table?: string
+    column?: string
+    detail?: string
   } {
+    const postgresError = this.extractPostgresError(exception)
+
     if (exception instanceof HttpException) {
       const status = exception.getStatus()
       const response = exception.getResponse() as any
       return {
         status,
         message: response?.message ?? response,
+        code: postgresError?.code,
+        constraint: postgresError?.constraint,
+        table: postgresError?.table,
+        column: postgresError?.column,
+        detail: postgresError?.detail,
       }
     }
 
-    if (this.hasErrorCode(exception)) {
-      const code = exception.code
-      const descriptor = this.errorDescriptorMap[code]
+    if (postgresError) {
+      const code = postgresError.code
+      const descriptor =
+        getPostgresErrorDescriptor(code) ?? this.errorDescriptorMap[code]
       if (descriptor) {
         return {
           status: descriptor.status,
           message: descriptor.message,
           code,
+          constraint: postgresError.constraint,
+          table: postgresError.table,
+          column: postgresError.column,
+          detail: postgresError.detail,
         }
       }
 
@@ -115,6 +125,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: '\u5185\u90E8\u670D\u52A1\u5668\u9519\u8BEF',
         code,
+        constraint: postgresError.constraint,
+        table: postgresError.table,
+        column: postgresError.column,
+        detail: postgresError.detail,
       }
     }
 
@@ -124,14 +138,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
   }
 
-  private hasErrorCode(
-    exception: unknown,
-  ): exception is Error & { code: string } {
-    return (
-      exception instanceof Error &&
-      'code' in exception &&
-      typeof (exception as { code?: unknown }).code === 'string'
-    )
+  private extractPostgresError(exception: unknown) {
+    const directError = extractError(exception)
+    if (directError) {
+      return directError
+    }
+
+    if (exception instanceof HttpException) {
+      return extractError(exception.cause)
+    }
+
+    return null
   }
 
   private safeParse(req: FastifyRequest | undefined) {

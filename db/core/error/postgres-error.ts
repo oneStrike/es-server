@@ -7,8 +7,6 @@
 export const PostgresErrorCode = {
   /** 唯一约束冲突 */
   UNIQUE_VIOLATION: '23505',
-  /** 外键约束冲突 */
-  FOREIGN_KEY_VIOLATION: '23503',
   /** 非空约束冲突 */
   NOT_NULL_VIOLATION: '23502',
   /** 检查约束冲突 */
@@ -20,7 +18,6 @@ export const PostgresErrorCode = {
 /** 默认错误消息 */
 export const PostgresDefaultMessages: Record<string, string> = {
   [PostgresErrorCode.UNIQUE_VIOLATION]: '数据已存在',
-  [PostgresErrorCode.FOREIGN_KEY_VIOLATION]: '关联数据不存在',
   [PostgresErrorCode.NOT_NULL_VIOLATION]: '必填字段不能为空',
   [PostgresErrorCode.CHECK_VIOLATION]: '数据不符合要求',
   [PostgresErrorCode.SERIALIZATION_FAILURE]: '操作冲突，请重试',
@@ -29,7 +26,6 @@ export const PostgresDefaultMessages: Record<string, string> = {
 /** 默认 HTTP 状态码 */
 export const PostgresHttpStatus: Record<string, number> = {
   [PostgresErrorCode.UNIQUE_VIOLATION]: 409,
-  [PostgresErrorCode.FOREIGN_KEY_VIOLATION]: 400,
   [PostgresErrorCode.NOT_NULL_VIOLATION]: 400,
   [PostgresErrorCode.CHECK_VIOLATION]: 400,
   [PostgresErrorCode.SERIALIZATION_FAILURE]: 409,
@@ -43,6 +39,11 @@ export interface PostgresError {
   column?: string
   detail?: string
   message: string
+}
+
+export interface PostgresErrorDescriptor {
+  message: string
+  status: number
 }
 
 /**
@@ -88,4 +89,20 @@ export function getPostgresError(error: unknown): PostgresError | null {
 
 export function isPostgresError(error: unknown): error is PostgresError {
   return getPostgresError(error) !== null
+}
+
+export function getPostgresErrorDescriptor(
+  code: string,
+): PostgresErrorDescriptor | null {
+  const message = PostgresDefaultMessages[code]
+  const status = PostgresHttpStatus[code]
+
+  if (!message || !status) {
+    return null
+  }
+
+  return {
+    message,
+    status,
+  }
 }

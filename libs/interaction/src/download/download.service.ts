@@ -110,50 +110,27 @@ export class DownloadService {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    try {
-      return await this.db.transaction(async (tx) => {
-        // 校验下载权限并获取内容（由各个业务方 Resolver 实现）
-        const content = await resolver.ensureDownloadable(tx, targetId)
+    return this.drizzle.withTransaction(async (tx) => {
+      // 校验下载权限并获取内容（由各个业务方 Resolver 实现）
+      const content = await resolver.ensureDownloadable(tx, targetId)
 
-        // 记录下载记录
-        await tx.insert(this.userDownloadRecord).values({
+      // 通过唯一键保证下载记录幂等，避免重复计数
+      const inserted = await tx
+        .insert(this.userDownloadRecord)
+        .values({
           targetType,
           targetId,
           userId,
         })
+        .onConflictDoNothing()
+        .returning({ id: this.userDownloadRecord.id })
 
-        // 更新各业务方下载计数
+      if (inserted.length > 0) {
         await resolver.applyCountDelta(tx, targetId, 1)
-
-        return content
-      })
-    } catch (error) {
-      let duplicateDownload = false
-      try {
-        await this.drizzle.withErrorHandling(
-          async () => {
-            throw error
-          },
-          {
-            duplicate: '__DOWNLOAD_DUPLICATE__',
-          },
-        )
-      } catch (mappedError) {
-        duplicateDownload =
-          mappedError instanceof Error &&
-          mappedError.message === '__DOWNLOAD_DUPLICATE__'
-        if (!duplicateDownload) {
-          throw mappedError
-        }
       }
 
-      if (duplicateDownload) {
-        return this.db.transaction(async (tx) => {
-          return resolver.ensureDownloadable(tx, targetId)
-        })
-      }
-      throw error
-    }
+      return content
+    })
   }
 
   /**

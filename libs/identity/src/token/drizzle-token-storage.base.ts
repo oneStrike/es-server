@@ -29,39 +29,47 @@ export abstract class BaseDrizzleTokenStorageService<
   protected abstract get tokenTable(): any
 
   protected async createOne(data: CreateTokenInput): Promise<TEntity> {
-    const rows = await this.drizzle.withErrorHandling(() =>
-      this.drizzle.db
-        .insert(this.tokenTable)
-        .values({
-          userId: data.userId,
-          jti: data.jti,
-          tokenType: data.tokenType,
-          expiresAt: data.expiresAt,
-          deviceInfo: data.deviceInfo as any,
-          ipAddress: data.ipAddress,
-          userAgent: data.userAgent,
-        })
-        .returning(),
+    const rows = await this.drizzle.withErrorHandling(
+      () =>
+        this.drizzle.db
+          .insert(this.tokenTable)
+          .values({
+            userId: data.userId,
+            jti: data.jti,
+            tokenType: data.tokenType,
+            expiresAt: data.expiresAt,
+            deviceInfo: data.deviceInfo as any,
+            ipAddress: data.ipAddress,
+            userAgent: data.userAgent,
+          })
+          .returning(),
+      {
+        duplicate: '登录状态创建失败，请重试',
+      },
     )
     return rows[0] as TEntity
   }
 
   protected async createManyItems(data: CreateTokenInput[]): Promise<number> {
-    const rows = await this.drizzle.withErrorHandling(() =>
-      this.drizzle.db
-        .insert(this.tokenTable)
-        .values(
-          data.map((token) => ({
-            userId: token.userId,
-            jti: token.jti,
-            tokenType: token.tokenType,
-            expiresAt: token.expiresAt,
-            deviceInfo: token.deviceInfo as any,
-            ipAddress: token.ipAddress,
-            userAgent: token.userAgent,
-          })),
-        )
-        .returning({ id: this.tokenTable.id }),
+    const rows = await this.drizzle.withErrorHandling(
+      () =>
+        this.drizzle.db
+          .insert(this.tokenTable)
+          .values(
+            data.map((token) => ({
+              userId: token.userId,
+              jti: token.jti,
+              tokenType: token.tokenType,
+              expiresAt: token.expiresAt,
+              deviceInfo: token.deviceInfo as any,
+              ipAddress: token.ipAddress,
+              userAgent: token.userAgent,
+            })),
+          )
+          .returning({ id: this.tokenTable.id }),
+      {
+        duplicate: '登录状态创建失败，请重试',
+      },
     )
     return rows.length
   }

@@ -533,7 +533,7 @@ export class WorkService {
 
   private async getWorkTypePage(
     dto: QueryWorkTypeInput,
-    extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
+    extra: { isHot?: boolean; isNew?: boolean; isRecommended?: boolean },
     userId?: number,
   ) {
     const page = await this.drizzle.ext.findPagination(this.work, {
@@ -546,6 +546,28 @@ export class WorkService {
         },
       }),
       ...dto,
+      omit: [
+        'alias',
+        'description',
+        'originalSource',
+        'copyright',
+        'disclaimer',
+        'remark',
+        'lastUpdated',
+        'viewRule',
+        'requiredViewLevelId',
+        'forumSectionId',
+        'chapterPrice',
+        'canComment',
+        'recommendWeight',
+        'viewCount',
+        'favoriteCount',
+        'likeCount',
+        'commentCount',
+        'downloadCount',
+        'rating',
+        'deletedAt',
+      ],
     })
     return this.attachWorkRelations(page, userId)
   }
@@ -920,7 +942,7 @@ export class WorkService {
     // 历史记录和阅读状态服务于不同目的：
     // - user_browse_log 保持只追加的浏览轨迹和计数器
     // - user_work_reading_state 保持最新快照以快速读取详情
-    await this.browseLogService.recordBrowseLog(
+    await this.browseLogService.recordBrowseLogSafely(
       work.type,
       id,
       userId,

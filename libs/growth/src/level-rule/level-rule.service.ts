@@ -61,7 +61,7 @@ export class UserLevelRuleService {
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.userLevelRule).values(dto),
       {
-        duplicate: 'Level rule already exists',
+        duplicate: '经验规则已经存在',
       },
     )
     return true
