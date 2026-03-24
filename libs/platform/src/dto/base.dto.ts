@@ -113,12 +113,12 @@ export class BaseDto extends IdDto {
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  createdAt: Date
+  createdAt!: Date
 
   @DateProperty({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  updatedAt: Date
+  updatedAt!: Date
 }

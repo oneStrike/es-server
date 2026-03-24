@@ -56,10 +56,13 @@ export class CopyService {
         })),
       }
     } catch (error) {
+      const detail = axios.isAxiosError(error)
+        ? error.response?.data?.detail
+        : undefined
       throw new BadRequestException(
         typeof error === 'string'
           ? error
-          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+          : detail || '解析服务出现错误，请稍后再试！',
       )
     }
   }
@@ -87,10 +90,13 @@ export class CopyService {
       }
       return data.results
     } catch (error) {
+      const detail = axios.isAxiosError(error)
+        ? error.response?.data?.detail
+        : undefined
       throw new BadRequestException(
         typeof error === 'string'
           ? error
-          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+          : detail || '解析服务出现错误，请稍后再试！',
       )
     }
   }
@@ -110,10 +116,13 @@ export class CopyService {
       }
       return data.results.list
     } catch (error) {
+      const detail = axios.isAxiosError(error)
+        ? error.response?.data?.detail
+        : undefined
       throw new BadRequestException(
         typeof error === 'string'
           ? error
-          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+          : detail || '解析服务出现错误，请稍后再试！',
       )
     }
   }
@@ -133,10 +142,13 @@ export class CopyService {
       }
       return data.results
     } catch (error) {
+      const detail = axios.isAxiosError(error)
+        ? error.response?.data?.detail
+        : undefined
       throw new BadRequestException(
         typeof error === 'string'
           ? error
-          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+          : detail || '解析服务出现错误，请稍后再试！',
       )
     }
   }

@@ -132,10 +132,10 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
+    "typescript": "^5.9.2",
     "typescript-eslint": "^8.57.2",
     "webpack": "^5.105.4",
-    "webpack-cli": "^7.0.2",
+    "webpack-cli": "^6.0.1",
     "webpack-node-externals": "^3.0.0"
   },
   "jest": {

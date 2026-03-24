@@ -11,16 +11,16 @@ import {
 import { HttpExceptionFilter } from '@libs/platform/filters'
 import { PlatformModule } from '@libs/platform/module'
 import { JwtAuthGuard, JwtAuthModule } from '@libs/platform/modules'
-import { UserModule as UserCoreModule } from '@libs/user/core'
 import { getEnv } from '@libs/platform/utils'
+import { UserModule as UserCoreModule } from '@libs/user/core'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD } from '@nestjs/core'
 import { ScheduleModule } from '@nestjs/schedule'
-import { AppUserStatusGuard } from './modules/auth/app-user-status.guard'
 import { AppConfigRegister } from './config/app.config'
 import { appConfigValidationSchema } from './config/validation.config'
 import { AppApiModule } from './modules/app.module'
+import { AppUserStatusGuard } from './modules/auth/app-user-status.guard'
 
 @Module({
   imports: [

@@ -1,3 +1,4 @@
+import type { CacheManagerOptions } from '@nestjs/cache-manager'
 import { createKeyv } from '@keyv/redis'
 import { isDevelopment } from '@libs/platform/utils'
 import { CacheModule } from '@nestjs/cache-manager'
@@ -22,15 +23,18 @@ export class CustomCacheModule {
           const { connection, namespace = 0 } = configService.get('redis')
 
           const redisUrl = connection
+          const stores = (
+            isDevelopment()
+              ? new Keyv({
+                  store: new CacheableMemory({ lruSize: 5000 }),
+                })
+              : createKeyv(redisUrl, { namespace })
+          ) as unknown as CacheManagerOptions['stores']
 
           return {
             ttl: 0,
             namespace,
-            stores: isDevelopment()
-              ? new Keyv({
-                  store: new CacheableMemory({ lruSize: 5000 }),
-                })
-              : createKeyv(redisUrl, { namespace }),
+            stores,
           }
         },
       }),

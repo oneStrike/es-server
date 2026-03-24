@@ -66,7 +66,7 @@ export class LoginResponseDto {
     required: true,
     validation: false,
   })
-  tokens: TokenDto
+  tokens!: TokenDto
 
   @NestedProperty({
     description: '用户信息',
@@ -74,5 +74,5 @@ export class LoginResponseDto {
     type: BaseAdminUserDto,
     validation: false,
   })
-  user: BaseAdminUserDto
+  user!: BaseAdminUserDto
 }

@@ -533,7 +533,7 @@ export class WorkService {
 
   private async getWorkTypePage(
     dto: QueryWorkTypeInput,
-    extra: { isHot?: boolean; isNew?: boolean; isRecommended?: boolean },
+    extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
     userId?: number,
   ) {
     const page = await this.drizzle.ext.findPagination(this.work, {
@@ -572,9 +572,9 @@ export class WorkService {
     return this.attachWorkRelations(page, userId)
   }
 
-  private async attachWorkRelations(
+  private async attachWorkRelations<TWork extends { id: number }>(
     page: {
-      list: Array<typeof this.work.$inferSelect>
+      list: TWork[]
       total: number
       pageIndex: number
       pageSize: number

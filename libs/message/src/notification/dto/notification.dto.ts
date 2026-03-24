@@ -19,27 +19,27 @@ export class BaseUserNotificationDto {
     description: '通知ID',
     example: 1,
   })
-  id: number
+  id!: number
 
   @NumberProperty({
     description: '接收用户ID',
     example: 10001,
   })
-  userId: number
+  userId!: number
 
   @EnumProperty({
     description: '通知类型',
     example: MessageNotificationTypeEnum.COMMENT_REPLY,
     enum: MessageNotificationTypeEnum,
   })
-  type: MessageNotificationTypeEnum
+  type!: MessageNotificationTypeEnum
 
   @StringProperty({
     description: '业务幂等键',
     example: 'comment:reply:123:to:10001',
     maxLength: 160,
   })
-  bizKey: string
+  bizKey!: string
 
   @NumberProperty({
     description: '触发用户ID',
@@ -82,14 +82,14 @@ export class BaseUserNotificationDto {
     example: '收到新的评论回复',
     maxLength: 200,
   })
-  title: string
+  title!: string
 
   @StringProperty({
     description: '通知内容',
     example: '你收到了一条新的评论回复',
     maxLength: 1000,
   })
-  content: string
+  content!: string
 
   @JsonProperty({
     description: '扩展载荷',
@@ -110,13 +110,13 @@ export class BaseUserNotificationDto {
     description: '聚合计数',
     example: 1,
   })
-  aggregateCount: number
+  aggregateCount!: number
 
   @BooleanProperty({
     description: '是否已读',
     example: false,
   })
-  isRead: boolean
+  isRead!: boolean
 
   @DateProperty({
     description: '已读时间',
@@ -136,5 +136,5 @@ export class BaseUserNotificationDto {
     description: '创建时间',
     example: '2026-03-07T12:00:00.000Z',
   })
-  createdAt: Date
+  createdAt!: Date
 }

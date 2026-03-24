@@ -8,7 +8,7 @@ export class FileUploadResponseDto {
     maxLength: 255,
     validation: false,
   })
-  filename: string
+  filename!: string
 
   @StringProperty({
     description: '原始文件名',
@@ -17,7 +17,7 @@ export class FileUploadResponseDto {
     maxLength: 255,
     validation: false,
   })
-  originalName: string
+  originalName!: string
 
   @StringProperty({
     description: '文件路径',
@@ -26,7 +26,7 @@ export class FileUploadResponseDto {
     maxLength: 500,
     validation: false,
   })
-  filePath: string
+  filePath!: string
 
   @NumberProperty({
     description: '文件大小',
@@ -34,7 +34,7 @@ export class FileUploadResponseDto {
     required: true,
     validation: false,
   })
-  fileSize: number
+  fileSize!: number
 
   @StringProperty({
     description: 'MIME 类型',
@@ -43,7 +43,7 @@ export class FileUploadResponseDto {
     maxLength: 255,
     validation: false,
   })
-  mimeType: string
+  mimeType!: string
 
   @StringProperty({
     description: '文件类型',
@@ -52,7 +52,7 @@ export class FileUploadResponseDto {
     maxLength: 255,
     validation: false,
   })
-  fileType: string
+  fileType!: string
 
   @StringProperty({
     description: '场景',
@@ -61,7 +61,7 @@ export class FileUploadResponseDto {
     maxLength: 255,
     validation: false,
   })
-  scene: string
+  scene!: string
 
   @DateProperty({
     description: '上传时间',
@@ -69,5 +69,5 @@ export class FileUploadResponseDto {
     required: true,
     validation: false,
   })
-  uploadTime: Date
+  uploadTime!: Date
 }

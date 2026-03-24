@@ -67,7 +67,7 @@ export class PlatformResponseDto {
     required: true,
     validation: false,
   })
-  name: string
+  name!: string
 
   @StringProperty({
     description: '平台名称code',
@@ -75,7 +75,7 @@ export class PlatformResponseDto {
     required: true,
     validation: false,
   })
-  code: string
+  code!: string
 }
 
 export class SearchComicItemDto extends IdDto {
@@ -84,14 +84,14 @@ export class SearchComicItemDto extends IdDto {
     example: '进击的巨人',
     validation: false,
   })
-  name: string
+  name!: string
 
   @StringProperty({
     description: '封面图片URL',
     example: 'https://example.com/cover.jpg',
     validation: false,
   })
-  cover: string
+  cover!: string
 
   @ArrayProperty({
     description: '作者列表',
@@ -99,12 +99,12 @@ export class SearchComicItemDto extends IdDto {
     example: ['谏山创'],
     validation: false,
   })
-  author: string[]
+  author!: string[]
 
   @StringProperty({
     description: '来源平台',
     example: '拷贝',
     validation: false,
   })
-  source: string
+  source!: string
 }

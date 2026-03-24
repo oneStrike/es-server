@@ -26,7 +26,9 @@ export class AuthCronService {
         this.logger.log(`清理了 ${count} 个过期 Token`)
       }
     } catch (error) {
-      this.logger.error(`清理过期 Token 失败: ${error.message}`, error.stack)
+      const message = error instanceof Error ? error.message : String(error)
+      const stack = error instanceof Error ? error.stack : undefined
+      this.logger.error(`清理过期 Token 失败: ${message}`, stack)
     }
   }
 
@@ -41,7 +43,9 @@ export class AuthCronService {
         this.logger.log(`清理了 ${count} 个已撤销的旧 Token（保留 30 天）`)
       }
     } catch (error) {
-      this.logger.error(`清理已撤销 Token 失败: ${error.message}`, error.stack)
+      const message = error instanceof Error ? error.message : String(error)
+      const stack = error instanceof Error ? error.stack : undefined
+      this.logger.error(`清理已撤销 Token 失败: ${message}`, stack)
     }
   }
 }

@@ -22,7 +22,7 @@ export class BaseTaskDto extends BaseDto {
     required: true,
     maxLength: 50,
   })
-  code: string
+  code!: string
 
   @StringProperty({
     description: '任务标题',
@@ -30,7 +30,7 @@ export class BaseTaskDto extends BaseDto {
     required: true,
     maxLength: 200,
   })
-  title: string
+  title!: string
 
   @StringProperty({
     description: '任务说明',
@@ -53,37 +53,37 @@ export class BaseTaskDto extends BaseDto {
     example: TaskTypeEnum.NEWBIE,
     enum: TaskTypeEnum,
   })
-  type: TaskTypeEnum
+  type!: TaskTypeEnum
 
   @EnumProperty({
     description: '任务状态',
     example: TaskStatusEnum.DRAFT,
     enum: TaskStatusEnum,
   })
-  status: TaskStatusEnum
+  status!: TaskStatusEnum
 
   @NumberProperty({ description: '优先级', example: 10 })
-  priority: number
+  priority!: number
 
   @BooleanProperty({ description: '启用状态', example: true })
-  isEnabled: boolean
+  isEnabled!: boolean
 
   @EnumProperty({
     description: '领取模式',
     example: TaskClaimModeEnum.AUTO,
     enum: TaskClaimModeEnum,
   })
-  claimMode: TaskClaimModeEnum
+  claimMode!: TaskClaimModeEnum
 
   @EnumProperty({
     description: '完成模式',
     example: TaskCompleteModeEnum.AUTO,
     enum: TaskCompleteModeEnum,
   })
-  completeMode: TaskCompleteModeEnum
+  completeMode!: TaskCompleteModeEnum
 
   @NumberProperty({ description: '完成目标次数', example: 1 })
-  targetCount: number
+  targetCount!: number
 
   @JsonProperty({
     description: '奖励配置',
@@ -130,10 +130,10 @@ export class BaseTaskDto extends BaseDto {
 
 export class BaseTaskAssignmentDto extends BaseDto {
   @NumberProperty({ description: '任务ID', example: 1 })
-  taskId: number
+  taskId!: number
 
   @NumberProperty({ description: '用户ID', example: 10001 })
-  userId: number
+  userId!: number
 
   @StringProperty({
     description: '周期实例键',
@@ -141,20 +141,20 @@ export class BaseTaskAssignmentDto extends BaseDto {
     required: true,
     maxLength: 32,
   })
-  cycleKey: string
+  cycleKey!: string
 
   @EnumProperty({
     description: '任务状态',
     example: TaskAssignmentStatusEnum.IN_PROGRESS,
     enum: TaskAssignmentStatusEnum,
   })
-  status: TaskAssignmentStatusEnum
+  status!: TaskAssignmentStatusEnum
 
   @NumberProperty({ description: '当前进度', example: 0 })
-  progress: number
+  progress!: number
 
   @NumberProperty({ description: '目标进度', example: 1 })
-  target: number
+  target!: number
 
   @NumberProperty({
     description: '乐观锁版本号',
@@ -163,7 +163,7 @@ export class BaseTaskAssignmentDto extends BaseDto {
     default: 0,
     validation: false,
   })
-  version: number
+  version!: number
 
   @DateProperty({
     description: '领取时间',

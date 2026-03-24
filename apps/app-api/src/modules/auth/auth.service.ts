@@ -11,8 +11,8 @@ import {
   AuthService as BaseAuthService,
   LoginGuardService,
 } from '@libs/platform/modules/auth'
-import { UserService as UserCoreService } from '@libs/user/core'
 import { extractIpAddress } from '@libs/platform/utils'
+import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
 import { AppAuthErrorMessages, AppAuthRedisKeys } from './auth.constant'
