@@ -1,6 +1,6 @@
 // 作品关联关系查询字段选择
 export const WORK_RELATION_SELECT = {
-  authors: {
+  authorRelations: {
     select: {
       sortOrder: true,
       author: {
@@ -13,7 +13,7 @@ export const WORK_RELATION_SELECT = {
       },
     },
   },
-  categories: {
+  categoryRelations: {
     select: {
       sortOrder: true,
       category: {
@@ -25,7 +25,7 @@ export const WORK_RELATION_SELECT = {
       },
     },
   },
-  tags: {
+  tagRelations: {
     select: {
       sortOrder: true,
       tag: {
@@ -57,7 +57,7 @@ export const PAGE_WORK_SELECT = {
   createdAt: true,
   updatedAt: true,
   isPublished: true,
-  authors: WORK_RELATION_SELECT.authors,
-  categories: WORK_RELATION_SELECT.categories,
-  tags: WORK_RELATION_SELECT.tags,
+  authorRelations: WORK_RELATION_SELECT.authorRelations,
+  categoryRelations: WORK_RELATION_SELECT.categoryRelations,
+  tagRelations: WORK_RELATION_SELECT.tagRelations,
 } as const

@@ -1,7 +1,7 @@
-import { defineRelationsPart, } from 'drizzle-orm'
+import { defineRelationsPart } from 'drizzle-orm'
 import * as schema from '../schema/index'
 
-export const messageRelations = defineRelationsPart(schema, r => ({
+export const messageRelations = defineRelationsPart(schema, (r) => ({
   chatConversation: {
     lastMessage: r.one.chatMessage({
       from: r.chatConversation.lastMessageId,
@@ -13,7 +13,7 @@ export const messageRelations = defineRelationsPart(schema, r => ({
       to: r.appUser.id,
       alias: 'ChatConversationLastSender',
     }),
-    members: r.many.chatConversationMember(),
+    conversationMembers: r.many.chatConversationMember(),
     participants: r.many.appUser({
       from: r.chatConversation.id.through(
         r.chatConversationMember.conversationId,

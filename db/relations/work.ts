@@ -1,7 +1,7 @@
 import { defineRelationsPart } from 'drizzle-orm'
 import * as schema from '../schema/index'
 
-export const workRelations = defineRelationsPart(schema, r => ({
+export const workRelations = defineRelationsPart(schema, (r) => ({
   work: {
     comic: r.one.workComic({
       from: r.work.id,
@@ -11,18 +11,18 @@ export const workRelations = defineRelationsPart(schema, r => ({
       from: r.work.id,
       to: r.workNovel.workId,
     }),
-    authors: r.many.workAuthorRelation(),
-    authorList: r.many.workAuthor({
+    authorRelations: r.many.workAuthorRelation(),
+    authors: r.many.workAuthor({
       from: r.work.id.through(r.workAuthorRelation.workId),
       to: r.workAuthor.id.through(r.workAuthorRelation.authorId),
     }),
-    categories: r.many.workCategoryRelation(),
-    categoryList: r.many.workCategory({
+    categoryRelations: r.many.workCategoryRelation(),
+    categories: r.many.workCategory({
       from: r.work.id.through(r.workCategoryRelation.workId),
       to: r.workCategory.id.through(r.workCategoryRelation.categoryId),
     }),
-    tags: r.many.workTagRelation(),
-    tagList: r.many.workTag({
+    tagRelations: r.many.workTagRelation(),
+    tags: r.many.workTag({
       from: r.work.id.through(r.workTagRelation.workId),
       to: r.workTag.id.through(r.workTagRelation.tagId),
     }),
@@ -42,7 +42,7 @@ export const workRelations = defineRelationsPart(schema, r => ({
     }),
   },
   workAuthor: {
-    workAuthors: r.many.workAuthorRelation(),
+    workRelations: r.many.workAuthorRelation(),
     works: r.many.work({
       from: r.workAuthor.id.through(r.workAuthorRelation.authorId),
       to: r.work.id.through(r.workAuthorRelation.workId),
@@ -56,7 +56,7 @@ export const workRelations = defineRelationsPart(schema, r => ({
     }),
   },
   workCategory: {
-    workCategories: r.many.workCategoryRelation(),
+    workRelations: r.many.workCategoryRelation(),
     works: r.many.work({
       from: r.workCategory.id.through(r.workCategoryRelation.categoryId),
       to: r.work.id.through(r.workCategoryRelation.workId),
@@ -89,7 +89,7 @@ export const workRelations = defineRelationsPart(schema, r => ({
     work: r.one.work({ from: r.workNovel.workId, to: r.work.id }),
   },
   workTag: {
-    workTags: r.many.workTagRelation(),
+    workRelations: r.many.workTagRelation(),
     works: r.many.work({
       from: r.workTag.id.through(r.workTagRelation.tagId),
       to: r.work.id.through(r.workTagRelation.workId),

@@ -1,10 +1,7 @@
 import { BaseAuthorDto } from '@libs/content/author'
 import { BaseCategoryDto } from '@libs/content/category'
 import { BaseTagDto } from '@libs/content/tag'
-import {
-  BaseWorkChapterDto,
-  BaseWorkDto,
-} from '@libs/content/work'
+import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content/work'
 import { BaseForumSectionDto } from '@libs/forum/section'
 import {
   ArrayProperty,
@@ -66,7 +63,7 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
     required: true,
     validation: false,
   })
-  authorList!: AuthorInfoDto[]
+  authors!: AuthorInfoDto[]
 
   @ArrayProperty({
     description: '分类列表',
@@ -75,7 +72,7 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
     required: true,
     validation: false,
   })
-  categoryList!: CategoryInfoDto[]
+  categories!: CategoryInfoDto[]
 
   @ArrayProperty({
     description: '标签列表',
@@ -84,7 +81,7 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
     required: true,
     validation: false,
   })
-  tagList!: TagInfoDto[]
+  tags!: TagInfoDto[]
 }
 
 export class QueryWorkDto extends IntersectionType(

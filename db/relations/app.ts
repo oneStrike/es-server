@@ -1,7 +1,7 @@
-import { defineRelationsPart, } from 'drizzle-orm'
+import { defineRelationsPart } from 'drizzle-orm'
 import * as schema from '../schema/index'
 
-export const appRelations = defineRelationsPart(schema, r => ({
+export const appRelations = defineRelationsPart(schema, (r) => ({
   appAgreement: {
     agreementLogs: r.many.appAgreementLog(),
   },
@@ -109,7 +109,7 @@ export const appRelations = defineRelationsPart(schema, r => ({
       from: r.appUser.id,
       to: r.forumUserActionLog.userId,
     }),
-    userBadges: r.many.userBadgeAssignment(),
+    badgeAssignments: r.many.userBadgeAssignment(),
     badges: r.many.userBadge({
       from: r.appUser.id.through(r.userBadgeAssignment.userId),
       to: r.userBadge.id.through(r.userBadgeAssignment.badgeId),

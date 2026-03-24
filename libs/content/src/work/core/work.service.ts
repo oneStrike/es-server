@@ -1,13 +1,8 @@
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import { FavoriteService } from '@libs/interaction/favorite'
-import {
-  FollowService,
-  FollowTargetTypeEnum,
-} from '@libs/interaction/follow'
+import { FollowService, FollowTargetTypeEnum } from '@libs/interaction/follow'
 import { LikeService } from '@libs/interaction/like'
 import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
@@ -310,7 +305,7 @@ export class WorkService {
     const existingWork = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
       with: {
-        authors: {
+        authorRelations: {
           columns: { authorId: true },
         },
       },
@@ -344,7 +339,9 @@ export class WorkService {
     }
 
     // 获取原有关联的作者ID列表
-    const originalAuthorIds = existingWork.authors.map((rel) => rel.authorId)
+    const originalAuthorIds = existingWork.authorRelations.map(
+      (rel) => rel.authorId,
+    )
     const shouldSyncSectionName =
       isNotNil(updateData.name) && updateData.name !== existingWork.name
     const shouldSyncSectionDescription = isNotNil(updateData.description)
@@ -536,7 +533,7 @@ export class WorkService {
 
   private async getWorkTypePage(
     dto: QueryWorkTypeInput,
-    extra: { isHot?: boolean, isNew?: boolean, isRecommended?: boolean },
+    extra: { isHot?: boolean; isNew?: boolean; isRecommended?: boolean },
     userId?: number,
   ) {
     const page = await this.drizzle.ext.findPagination(this.work, {
@@ -553,12 +550,15 @@ export class WorkService {
     return this.attachWorkRelations(page, userId)
   }
 
-  private async attachWorkRelations(page: {
-    list: Array<typeof this.work.$inferSelect>
-    total: number
-    pageIndex: number
-    pageSize: number
-  }, userId?: number) {
+  private async attachWorkRelations(
+    page: {
+      list: Array<typeof this.work.$inferSelect>
+      total: number
+      pageIndex: number
+      pageSize: number
+    },
+    userId?: number,
+  ) {
     if (page.list.length === 0) {
       return page
     }
@@ -583,13 +583,14 @@ export class WorkService {
       }),
     ])
     const authorIds = [...new Set(authors.map((item) => item.authorId))]
-    const authorFollowStatusMap = userId && authorIds.length > 0
-      ? await this.followService.checkStatusBatch(
-          FollowTargetTypeEnum.AUTHOR,
-          authorIds,
-          userId,
-        )
-      : new Map<number, boolean>()
+    const authorFollowStatusMap =
+      userId && authorIds.length > 0
+        ? await this.followService.checkStatusBatch(
+            FollowTargetTypeEnum.AUTHOR,
+            authorIds,
+            userId,
+          )
+        : new Map<number, boolean>()
 
     const authorMap = new Map<number, typeof authors>()
     const categoryMap = new Map<number, typeof categories>()
@@ -614,19 +615,7 @@ export class WorkService {
       ...page,
       list: page.list.map((item) => ({
         ...item,
-        authors: (authorMap.get(item.id) ?? []).map((relation) => ({
-          ...relation,
-          author: relation.author
-            ? {
-                ...relation.author,
-                isFollowed:
-                  authorFollowStatusMap.get(relation.authorId) ?? false,
-              }
-            : relation.author,
-        })),
-        categories: categoryMap.get(item.id) ?? [],
-        tags: tagMap.get(item.id) ?? [],
-        authorList: (authorMap.get(item.id) ?? [])
+        authors: (authorMap.get(item.id) ?? [])
           .map((relation) =>
             relation.author
               ? {
@@ -637,10 +626,10 @@ export class WorkService {
               : undefined,
           )
           .filter(Boolean),
-        categoryList: (categoryMap.get(item.id) ?? [])
+        categories: (categoryMap.get(item.id) ?? [])
           .map((relation) => relation.category)
           .filter(Boolean),
-        tagList: (tagMap.get(item.id) ?? [])
+        tags: (tagMap.get(item.id) ?? [])
           .map((relation) => relation.tag)
           .filter(Boolean),
       })),
@@ -844,7 +833,7 @@ export class WorkService {
         deletedAt: false,
       },
       with: {
-        authorList: {
+        authors: {
           columns: {
             id: true,
             name: true,
@@ -852,14 +841,14 @@ export class WorkService {
             avatar: true,
           },
         },
-        categoryList: {
+        categories: {
           columns: {
             id: true,
             name: true,
             icon: true,
           },
         },
-        tagList: {
+        tags: {
           columns: {
             id: true,
             name: true,
@@ -877,7 +866,9 @@ export class WorkService {
       throw new BadRequestException('作品未发布')
     }
 
-    const authorList = work.authorList.map((author) => ({
+    const { authors, categories, tags, ...workData } = work
+
+    const workAuthors = authors.map((author) => ({
       ...author,
       isFollowed: false,
     }))
@@ -885,8 +876,10 @@ export class WorkService {
     // 为匿名用户保持稳定的响应结构，使应用可以重用相同的DTO而无需条件解析
     if (!userId) {
       return {
-        ...work,
-        authorList,
+        ...workData,
+        authors: workAuthors,
+        categories,
+        tags,
         liked: false,
         favorited: false,
         viewed: false,
@@ -894,33 +887,33 @@ export class WorkService {
     }
 
     const now = new Date()
-    const authorIds = work.authorList.map((author) => author.id)
+    const authorIds = authors.map((author) => author.id)
 
     const [liked, favorited, readingState, authorFollowStatusMap] =
       await Promise.all([
-      this.likeService.checkLikeStatus({
-        targetType: work.type,
-        targetId: id,
-        userId,
-      }),
-      this.favoriteService.checkFavoriteStatus({
-        targetType: work.type,
-        targetId: id,
-        userId,
-      }),
-      this.readingStateService.getReadingState(
-        work.type as ContentTypeEnum,
-        id,
-        userId,
-      ),
-      authorIds.length > 0
-        ? this.followService.checkStatusBatch(
-            FollowTargetTypeEnum.AUTHOR,
-            authorIds,
-            userId,
-          )
-        : Promise.resolve(new Map<number, boolean>()),
-    ])
+        this.likeService.checkLikeStatus({
+          targetType: work.type,
+          targetId: id,
+          userId,
+        }),
+        this.favoriteService.checkFavoriteStatus({
+          targetType: work.type,
+          targetId: id,
+          userId,
+        }),
+        this.readingStateService.getReadingState(
+          work.type as ContentTypeEnum,
+          id,
+          userId,
+        ),
+        authorIds.length > 0
+          ? this.followService.checkStatusBatch(
+              FollowTargetTypeEnum.AUTHOR,
+              authorIds,
+              userId,
+            )
+          : Promise.resolve(new Map<number, boolean>()),
+      ])
 
     const continueChapter = readingState?.continueChapter
 
@@ -943,19 +936,21 @@ export class WorkService {
     await this.readingStateService.touchByWorkSafely({
       userId,
       workId: id,
-      workType: work.type as ContentTypeEnum,
+      workType: workData.type as ContentTypeEnum,
       lastReadAt: now,
       lastReadChapterId: continueChapter?.id,
     })
 
     return {
-      ...work,
-      authorList: work.authorList.map((author) => ({
+      ...workData,
+      authors: authors.map((author) => ({
         ...author,
         isFollowed: authorFollowStatusMap.get(author.id) ?? false,
       })),
+      categories,
+      tags,
       // 立即反映刚记录的浏览，使当前响应与持久化的计数器更新保持一致
-      viewCount: work.viewCount + 1,
+      viewCount: workData.viewCount + 1,
       liked,
       favorited,
       viewed: true,
@@ -1000,7 +995,7 @@ export class WorkService {
     const work = await this.db.query.work.findFirst({
       where: { id, deletedAt: { isNull: true } },
       with: {
-        authors: {
+        authorRelations: {
           columns: { authorId: true },
         },
       },
@@ -1030,7 +1025,7 @@ export class WorkService {
         }
 
         // 更新关联作者的作品数量（-1）
-        const authorIds = work.authors.map((rel) => rel.authorId)
+        const authorIds = work.authorRelations.map((rel) => rel.authorId)
         if (authorIds.length > 0) {
           await this.workAuthorService.updateAuthorWorkCounts(tx, authorIds, -1)
         }

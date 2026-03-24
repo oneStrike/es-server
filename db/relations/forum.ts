@@ -9,7 +9,7 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumSectionGroup.id,
     }),
     actionLogs: r.many.forumModeratorActionLog(),
-    sections: r.many.forumModeratorSection(),
+    moderatorSections: r.many.forumModeratorSection(),
     moderatedSections: r.many.forumSection({
       from: r.forumModerator.id.through(r.forumModeratorSection.moderatorId),
       to: r.forumSection.id.through(r.forumModeratorSection.sectionId),
@@ -44,8 +44,8 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
     }),
     section: r.one.forumSection({
       from: r.forumModeratorSection.sectionId,
-        to: r.forumSection.id,
-      }),
+      to: r.forumSection.id,
+    }),
   },
   forumSection: {
     group: r.one.forumSectionGroup({

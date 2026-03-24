@@ -24,13 +24,14 @@
 9. 事务统一使用 `db.transaction(async (tx) => ...)` 或 `drizzle.withTransaction(...)`，并在调用链中显式传递 tx；禁止 `tx: any` 与忽略传入事务。若外层逻辑需要基于原始数据库错误做重试或分支判断，优先直接保留 `db.transaction(...)`，并在外层显式处理错误。
 10. 存在性校验优先使用 `drizzle.ext.exists/existsActive`，避免“先查再判”的重复查询。
 11. 计数、余额、库存等增减优先使用 `drizzle.ext.applyCountDelta` 或 `update ... returning`，且必须在同一事务中完成。
-12. 原生 SQL 仅允许使用 `sql\`...\`` 与 `db.execute`；禁止字符串拼接 SQL；复杂 SQL 必须下沉到业务模块内的 query helper 或私有查询方法。
+12. 原生 SQL 仅允许使用 `sql\`...\``与`db.execute`；禁止字符串拼接 SQL；复杂 SQL 必须下沉到业务模块内的 query helper 或私有查询方法。
 13. `sql.raw()` 只能注入白名单受信任常量，禁止拼接任何用户输入。
 14. 查询 API 统一使用 `db.query`、`select/from/where` 等 Drizzle 正式接口；禁止新增 `db._query` 风格写法。
-15. 业务校验失败抛 `BadRequestException`，资源不存在抛 `NotFoundException`；禁止 `throw new Error` 直接暴露通用异常。
-16. 对允许失败的流程必须记录结构化日志，不能静默吞错。
-17. 删除策略遵循表结构：存在 `deletedAt` 字段时走软删，否则走硬删。
-18. 不得为了满足规范而改变既有 service/controller 的返回结构、异常语义、分页结果语义或幂等/重试语义；若规范与现状冲突，应先补充例外条款或调整规范。
+15. Drizzle relations 命名必须区分“目标实体集合”和“中间表记录集合”：直接实体集合优先使用实体复数名，或比实体复数更贴切的领域名称；中间表记录集合必须显式带上 `Relations`、`Assignments`、`Members` 等关联语义，禁止在已存在直接实体集合时继续占用裸实体名。示例：`authors` / `authorRelations`、`badges` / `badgeAssignments`、`participants` / `conversationMembers`。
+16. 业务校验失败抛 `BadRequestException`，资源不存在抛 `NotFoundException`；禁止 `throw new Error` 直接暴露通用异常。
+17. 对允许失败的流程必须记录结构化日志，不能静默吞错。
+18. 删除策略遵循表结构：存在 `deletedAt` 字段时走软删，否则走硬删。
+19. 不得为了满足规范而改变既有 service/controller 的返回结构、异常语义、分页结果语义或幂等/重试语义；若规范与现状冲突，应先补充例外条款或调整规范。
 
 ## 3. 推荐规则（Should）
 
@@ -47,7 +48,7 @@
 11. 多值查询参数先标准化为数组并完成空值过滤，再进入查询构建。
 12. 状态筛选使用 `xxx !== undefined` 判断是否追加条件，避免把 `false` 当成未传。
 13. 排序字段显式通过 `orderBy` 声明，禁止依赖隐式顺序。
-14. 可用 ORM 主体表达的单表或常规聚合查询，优先 `select/from/where` 配合少量 `sql\`\`` 表达式，而不是整段 `db.execute`。
+14. 可用 ORM 主体表达的单表或常规聚合查询，优先 `select/from/where` 配合少量 `sql\`\``表达式，而不是整段`db.execute`。
 15. 收敛旧代码时优先替换数据库入口、条件构建、存在性校验和常规分页，不要顺手调整对外返回契约；接口语义变更必须单独评估。
 
 ## 4. 禁止行为（Don’t）
@@ -137,5 +138,6 @@ async createWithRetry(input: CreateInput) {
 4. 事务类型无 `any`，没有忽略传入事务的写法；依赖原始数据库错误的路径没有被通用包装吞掉错误码。
 5. 原生 SQL 已下沉到业务模块内 helper/私有方法，业务层没有手工 `rows` 解包。
 6. 代码中未新增 `db._query`，且不存在将用户输入传给 `sql.raw()` 的写法。
-7. 对外返回结构、异常语义与主要查询排序语义未因“规范收敛”被顺手修改。
-8. 类型检查通过，并且相关模块的主要查询/写入路径已完成自测。
+7. Drizzle relations 中不存在“中间表记录却使用裸实体复数名”的歧义命名。
+8. 对外返回结构、异常语义与主要查询排序语义未因“规范收敛”被顺手修改。
+9. 类型检查通过，并且相关模块的主要查询/写入路径已完成自测。
