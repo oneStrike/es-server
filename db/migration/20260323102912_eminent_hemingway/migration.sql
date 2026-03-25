@@ -1,1 +1,0 @@
-ALTER TABLE "forum_section" ADD COLUMN "followers_count" integer DEFAULT 0 NOT NULL;

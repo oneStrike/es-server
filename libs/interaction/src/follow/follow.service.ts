@@ -1,7 +1,6 @@
 import type { UserFollow } from '@db/schema'
-import type { SQL } from 'drizzle-orm'
 import type {
-  FollowListQuery,
+  FollowPageQuery,
   FollowRecordInput,
   FollowStatusView,
 } from './follow.type'
@@ -224,15 +223,19 @@ export class FollowService {
     }
   }
 
-  async getUserFollows(query: FollowListQuery) {
-    const conditions: SQL[] = [eq(this.userFollow.userId, query.userId)]
-
-    if (query.targetType !== undefined) {
-      conditions.push(eq(this.userFollow.targetType, query.targetType))
-    }
-
+  /**
+   * 按目标类型分页查询当前用户的关注记录。
+   * 该方法只负责分页与详情聚合，不直接决定对外字段命名。
+   */
+  private async getFollowPageByTargetType(
+    query: FollowPageQuery,
+    targetType: FollowTargetTypeEnum,
+  ) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
-      where: and(...conditions),
+      where: and(
+        eq(this.userFollow.userId, query.userId),
+        eq(this.userFollow.targetType, targetType),
+      ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {
@@ -241,67 +244,103 @@ export class FollowService {
     })
 
     if (page.list.length === 0) {
-      return page
-    }
-
-    const typeToIdsAggregator = new Map<FollowTargetTypeEnum, number[]>()
-    for (const item of page.list) {
-      if (!typeToIdsAggregator.has(item.targetType as FollowTargetTypeEnum)) {
-        typeToIdsAggregator.set(item.targetType as FollowTargetTypeEnum, [])
+      return {
+        page,
+        detailMap: new Map<number, unknown>(),
       }
-      typeToIdsAggregator.get(item.targetType as FollowTargetTypeEnum)!.push(
-        item.targetId,
-      )
     }
 
-    const detailMaps = new Map<FollowTargetTypeEnum, Map<number, unknown>>()
-    await Promise.all(
-      Array.from(typeToIdsAggregator.entries(), async ([type, ids]) => {
-        const uniqueIds = this.uniqueTargetIds(ids)
-        const startedAt = Date.now()
-        try {
-          const resolver = this.getResolver(type)
-          if (resolver.batchGetDetails) {
-            const detailMap = await resolver.batchGetDetails(uniqueIds)
-            detailMaps.set(type, detailMap)
-            if (detailMap.size < uniqueIds.length) {
-              this.logger.warn(
-                `follow_detail_partial_missing targetType=${type} batchSize=${uniqueIds.length} resolvedSize=${detailMap.size} missingSize=${uniqueIds.length - detailMap.size} elapsedMs=${Date.now() - startedAt}`,
-              )
-            }
-          }
-        } catch (error) {
-          this.logger.warn(
-            `follow_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          )
-        }
-      }),
+    const targetIds = this.uniqueTargetIds(page.list.map((item) => item.targetId))
+    const resolver = this.getResolver(targetType)
+    if (!resolver.batchGetDetails || targetIds.length === 0) {
+      return {
+        page,
+        detailMap: new Map<number, unknown>(),
+      }
+    }
+
+    const startedAt = Date.now()
+    try {
+      const detailMap = await resolver.batchGetDetails(targetIds)
+      if (detailMap.size < targetIds.length) {
+        this.logger.warn(
+          `follow_detail_partial_missing targetType=${targetType} batchSize=${targetIds.length} resolvedSize=${detailMap.size} missingSize=${targetIds.length - detailMap.size} elapsedMs=${Date.now() - startedAt}`,
+        )
+      }
+      return {
+        page,
+        detailMap,
+      }
+    } catch (error) {
+      this.logger.warn(
+        `follow_detail_resolve_failed targetType=${targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+      return {
+        page,
+        detailMap: new Map<number, unknown>(),
+      }
+    }
+  }
+
+  /**
+   * 分页查询当前用户关注的作者。
+   */
+  async getUserAuthorFollows(query: FollowPageQuery) {
+    const { page, detailMap } = await this.getFollowPageByTargetType(
+      query,
+      FollowTargetTypeEnum.AUTHOR,
     )
 
     return {
       ...page,
       list: page.list.map((item) => {
-        const targetDetail = detailMaps
-          .get(item.targetType as FollowTargetTypeEnum)
-          ?.get(item.targetId)
-        if (targetDetail) {
-          return {
-            ...item,
-            targetDetail,
-          }
+        const author = detailMap.get(item.targetId)
+        if (!author || typeof author !== 'object') {
+          return item
         }
-        return item
+
+        return {
+          ...item,
+          author: {
+            ...(author as Record<string, unknown>),
+            isFollowed: true,
+          },
+        }
       }),
     }
   }
 
-  async getMyFollowingUserPage(query: {
-    userId: number
-    pageIndex?: number
-    pageSize?: number
-  }) {
+  /**
+   * 分页查询当前用户关注的论坛板块。
+   */
+  async getUserSectionFollows(query: FollowPageQuery) {
+    const { page, detailMap } = await this.getFollowPageByTargetType(
+      query,
+      FollowTargetTypeEnum.FORUM_SECTION,
+    )
+
+    return {
+      ...page,
+      list: page.list.map((item) => {
+        const section = detailMap.get(item.targetId)
+        if (!section || typeof section !== 'object') {
+          return item
+        }
+
+        return {
+          ...item,
+          section: {
+            ...(section as Record<string, unknown>),
+            isFollowed: true,
+          },
+        }
+      }),
+    }
+  }
+
+  async getMyFollowingUserPage(query: FollowPageQuery) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
       where: and(
         eq(this.userFollow.userId, query.userId),
@@ -344,11 +383,7 @@ export class FollowService {
     }
   }
 
-  async getMyFollowerUserPage(query: {
-    userId: number
-    pageIndex?: number
-    pageSize?: number
-  }) {
+  async getMyFollowerUserPage(query: FollowPageQuery) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
       where: and(
         eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),

@@ -141,6 +141,8 @@ CREATE TABLE "app_user_count" (
 	"comment_count" integer DEFAULT 0 NOT NULL,
 	"like_count" integer DEFAULT 0 NOT NULL,
 	"favorite_count" integer DEFAULT 0 NOT NULL,
+	"following_count" integer DEFAULT 0 NOT NULL,
+	"followers_count" integer DEFAULT 0 NOT NULL,
 	"forum_topic_count" integer DEFAULT 0 NOT NULL,
 	"comment_received_like_count" integer DEFAULT 0 NOT NULL,
 	"forum_topic_received_like_count" integer DEFAULT 0 NOT NULL,
@@ -273,7 +275,7 @@ CREATE TABLE "user_badge" (
 	"icon" varchar(255),
 	"business" varchar(20),
 	"event_key" varchar(50),
-	"sortOrder" smallint DEFAULT 0 NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
 	"is_enabled" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(6) with time zone NOT NULL
@@ -350,6 +352,15 @@ CREATE TABLE "user_favorite" (
 	CONSTRAINT "user_favorite_target_type_target_id_user_id_key" UNIQUE("target_type","target_id","user_id")
 );
 --> statement-breakpoint
+CREATE TABLE "user_follow" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_follow_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"target_type" smallint NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_follow_target_type_target_id_user_id_key" UNIQUE("target_type","target_id","user_id")
+);
+--> statement-breakpoint
 CREATE TABLE "user_level_rule" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_level_rule_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"name" varchar(20) NOT NULL CONSTRAINT "user_level_rule_name_key" UNIQUE,
@@ -359,7 +370,7 @@ CREATE TABLE "user_level_rule" (
 	"icon" varchar(255),
 	"badge" varchar(255),
 	"color" varchar(20),
-	"sortOrder" smallint DEFAULT 0 NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
 	"is_enabled" boolean DEFAULT true NOT NULL,
 	"business" varchar(20),
 	"daily_topic_limit" smallint DEFAULT 0 NOT NULL,
@@ -508,7 +519,8 @@ CREATE TABLE "forum_section" (
 	"topic_review_policy" integer DEFAULT 1 NOT NULL,
 	"remark" varchar(500),
 	"topic_count" integer DEFAULT 0 NOT NULL,
-	"reply_count" integer DEFAULT 0 NOT NULL,
+	"comment_count" integer DEFAULT 0 NOT NULL,
+	"followers_count" integer DEFAULT 0 NOT NULL,
 	"last_post_at" timestamp(6) with time zone,
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(6) with time zone NOT NULL,
@@ -532,7 +544,7 @@ CREATE TABLE "forum_tag" (
 	"name" varchar(20) NOT NULL CONSTRAINT "forum_tag_name_key" UNIQUE,
 	"icon" varchar(255),
 	"description" varchar(200),
-	"sortOrder" smallint DEFAULT 0 NOT NULL,
+	"sort_order" smallint DEFAULT 0 NOT NULL,
 	"is_enabled" boolean DEFAULT true NOT NULL,
 	"use_count" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
@@ -543,10 +555,12 @@ CREATE TABLE "forum_topic" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "forum_topic_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"section_id" integer NOT NULL,
 	"user_id" integer NOT NULL,
-	"last_reply_user_id" integer,
+	"last_comment_user_id" integer,
 	"audit_by_id" integer,
 	"title" varchar(200) NOT NULL,
 	"content" text NOT NULL,
+	"images" varchar(500)[] DEFAULT ARRAY[]::varchar(500)[] NOT NULL,
+	"videos" varchar(500)[] DEFAULT ARRAY[]::varchar(500)[] NOT NULL,
 	"is_pinned" boolean DEFAULT false NOT NULL,
 	"is_featured" boolean DEFAULT false NOT NULL,
 	"is_locked" boolean DEFAULT false NOT NULL,
@@ -558,14 +572,17 @@ CREATE TABLE "forum_topic" (
 	"version" integer DEFAULT 0 NOT NULL,
 	"sensitive_word_hits" jsonb,
 	"view_count" integer DEFAULT 0 NOT NULL,
-	"reply_count" integer DEFAULT 0 NOT NULL,
 	"like_count" integer DEFAULT 0 NOT NULL,
 	"comment_count" integer DEFAULT 0 NOT NULL,
 	"favorite_count" integer DEFAULT 0 NOT NULL,
-	"last_reply_at" timestamp(6) with time zone,
+	"last_comment_at" timestamp(6) with time zone,
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(6) with time zone NOT NULL,
-	"deleted_at" timestamp(6) with time zone
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "forum_topic_view_count_non_negative_chk" CHECK ("view_count" >= 0),
+	CONSTRAINT "forum_topic_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "forum_topic_comment_count_non_negative_chk" CHECK ("comment_count" >= 0),
+	CONSTRAINT "forum_topic_favorite_count_non_negative_chk" CHECK ("favorite_count" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "forum_topic_tag" (
@@ -736,8 +753,7 @@ CREATE TABLE "sys_dictionary" (
 	"is_enabled" boolean DEFAULT true NOT NULL,
 	"description" varchar(255),
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp(6) with time zone NOT NULL,
-	"deleted_at" timestamp(6) with time zone
+	"updated_at" timestamp(6) with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "sys_dictionary_item" (
@@ -751,7 +767,6 @@ CREATE TABLE "sys_dictionary_item" (
 	"description" varchar(255),
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(6) with time zone NOT NULL,
-	"deleted_at" timestamp(6) with time zone,
 	CONSTRAINT "sys_dictionary_item_dictionary_code_code_key" UNIQUE("dictionary_code","code")
 );
 --> statement-breakpoint
@@ -764,36 +779,40 @@ CREATE TABLE "work" (
 	"description" text NOT NULL,
 	"language" varchar(10) NOT NULL,
 	"region" varchar(10) NOT NULL,
-	"ageRating" varchar(10),
-	"serialStatus" smallint DEFAULT 0 NOT NULL,
+	"age_rating" varchar(10),
+	"serial_status" smallint DEFAULT 0 NOT NULL,
 	"publisher" varchar(100),
-	"originalSource" varchar(100),
+	"original_source" varchar(100),
 	"copyright" varchar(500),
 	"disclaimer" text,
 	"remark" varchar(1000),
-	"isPublished" boolean DEFAULT true NOT NULL,
-	"isRecommended" boolean DEFAULT false NOT NULL,
-	"isHot" boolean DEFAULT false NOT NULL,
-	"isNew" boolean DEFAULT false NOT NULL,
-	"publishAt" date,
-	"lastUpdated" timestamp(6) with time zone,
+	"is_published" boolean DEFAULT true NOT NULL,
+	"is_recommended" boolean DEFAULT false NOT NULL,
+	"is_hot" boolean DEFAULT false NOT NULL,
+	"is_new" boolean DEFAULT false NOT NULL,
+	"publish_at" date,
+	"last_updated" timestamp(6) with time zone,
 	"view_rule" smallint DEFAULT 0 NOT NULL,
 	"required_view_level_id" integer,
 	"forum_section_id" integer CONSTRAINT "work_forum_section_id_key" UNIQUE,
 	"chapter_price" integer DEFAULT 0 NOT NULL,
 	"can_comment" boolean DEFAULT true NOT NULL,
-	"recommendWeight" double precision DEFAULT 1 NOT NULL,
-	"viewCount" integer DEFAULT 0 NOT NULL,
-	"favoriteCount" integer DEFAULT 0 NOT NULL,
-	"likeCount" integer DEFAULT 0 NOT NULL,
+	"recommend_weight" double precision DEFAULT 1 NOT NULL,
+	"view_count" integer DEFAULT 0 NOT NULL,
+	"favorite_count" integer DEFAULT 0 NOT NULL,
+	"like_count" integer DEFAULT 0 NOT NULL,
 	"comment_count" integer DEFAULT 0 NOT NULL,
-	"downloadCount" integer DEFAULT 0 NOT NULL,
+	"download_count" integer DEFAULT 0 NOT NULL,
 	"rating" double precision,
-	"ratingCount" integer DEFAULT 0 NOT NULL,
 	"popularity" integer DEFAULT 0 NOT NULL,
-	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updatedAt" timestamp(6) with time zone NOT NULL,
-	"deletedAt" timestamp(6) with time zone
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL,
+	"deleted_at" timestamp(6) with time zone,
+	CONSTRAINT "work_view_count_non_negative_chk" CHECK ("view_count" >= 0),
+	CONSTRAINT "work_favorite_count_non_negative_chk" CHECK ("favorite_count" >= 0),
+	CONSTRAINT "work_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "work_comment_count_non_negative_chk" CHECK ("comment_count" >= 0),
+	CONSTRAINT "work_download_count_non_negative_chk" CHECK ("download_count" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "work_author" (
@@ -874,22 +893,49 @@ CREATE TABLE "work_chapter" (
 	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(6) with time zone NOT NULL,
 	"deleted_at" timestamp(6) with time zone,
-	CONSTRAINT "work_chapter_work_id_sort_order_key" UNIQUE("work_id","sort_order")
+	CONSTRAINT "work_chapter_view_count_non_negative_chk" CHECK ("view_count" >= 0),
+	CONSTRAINT "work_chapter_like_count_non_negative_chk" CHECK ("like_count" >= 0),
+	CONSTRAINT "work_chapter_comment_count_non_negative_chk" CHECK ("comment_count" >= 0),
+	CONSTRAINT "work_chapter_purchase_count_non_negative_chk" CHECK ("purchase_count" >= 0),
+	CONSTRAINT "work_chapter_download_count_non_negative_chk" CHECK ("download_count" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "work_comic" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_comic_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"workId" integer NOT NULL CONSTRAINT "work_comic_workId_key" UNIQUE,
-	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updatedAt" timestamp(6) with time zone NOT NULL
+	"work_id" integer NOT NULL CONSTRAINT "work_comic_work_id_key" UNIQUE,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "work_comic_archive_import_task" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_comic_archive_import_task_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"task_id" varchar(36) NOT NULL CONSTRAINT "work_comic_archive_import_task_task_id_key" UNIQUE,
+	"work_id" integer NOT NULL,
+	"mode" varchar(32) NOT NULL,
+	"status" varchar(32) NOT NULL,
+	"archive_name" varchar(255) NOT NULL,
+	"archive_path" varchar(1000) NOT NULL,
+	"extract_path" varchar(1000) NOT NULL,
+	"require_confirm" boolean DEFAULT true NOT NULL,
+	"summary" jsonb NOT NULL,
+	"matched_items" jsonb NOT NULL,
+	"ignored_items" jsonb NOT NULL,
+	"result_items" jsonb NOT NULL,
+	"confirmed_chapter_ids" jsonb NOT NULL,
+	"started_at" timestamp(6) with time zone,
+	"finished_at" timestamp(6) with time zone,
+	"expires_at" timestamp(6) with time zone NOT NULL,
+	"last_error" text,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "work_novel" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "work_novel_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"workId" integer NOT NULL CONSTRAINT "work_novel_workId_key" UNIQUE,
-	"wordCount" integer DEFAULT 0 NOT NULL,
-	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updatedAt" timestamp(6) with time zone NOT NULL
+	"work_id" integer NOT NULL CONSTRAINT "work_novel_work_id_key" UNIQUE,
+	"word_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp(6) with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "work_tag" (
@@ -946,6 +992,7 @@ CREATE INDEX "app_user_email_address_idx" ON "app_user" ("email_address");--> st
 CREATE INDEX "app_user_points_idx" ON "app_user" ("points");--> statement-breakpoint
 CREATE INDEX "app_user_status_idx" ON "app_user" ("status");--> statement-breakpoint
 CREATE INDEX "app_user_level_id_idx" ON "app_user" ("level_id");--> statement-breakpoint
+CREATE INDEX "app_user_deleted_at_idx" ON "app_user" ("deleted_at");--> statement-breakpoint
 CREATE INDEX "app_user_token_user_id_idx" ON "app_user_token" ("user_id");--> statement-breakpoint
 CREATE INDEX "app_user_token_jti_idx" ON "app_user_token" ("jti");--> statement-breakpoint
 CREATE INDEX "app_user_token_token_type_idx" ON "app_user_token" ("token_type");--> statement-breakpoint
@@ -973,7 +1020,7 @@ CREATE INDEX "task_progress_log_assignment_id_idx" ON "task_progress_log" ("assi
 CREATE INDEX "task_progress_log_user_id_created_at_idx" ON "task_progress_log" ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "user_badge_type_idx" ON "user_badge" ("type");--> statement-breakpoint
 CREATE INDEX "user_badge_business_event_key_idx" ON "user_badge" ("business","event_key");--> statement-breakpoint
-CREATE INDEX "user_badge_sortOrder_idx" ON "user_badge" ("sortOrder");--> statement-breakpoint
+CREATE INDEX "user_badge_sort_order_idx" ON "user_badge" ("sort_order");--> statement-breakpoint
 CREATE INDEX "user_badge_is_enabled_idx" ON "user_badge" ("is_enabled");--> statement-breakpoint
 CREATE INDEX "user_badge_created_at_idx" ON "user_badge" ("created_at");--> statement-breakpoint
 CREATE INDEX "user_badge_assignment_user_id_idx" ON "user_badge_assignment" ("user_id");--> statement-breakpoint
@@ -1005,7 +1052,10 @@ CREATE INDEX "user_experience_rule_created_at_idx" ON "user_experience_rule" ("c
 CREATE INDEX "user_favorite_target_type_target_id_idx" ON "user_favorite" ("target_type","target_id");--> statement-breakpoint
 CREATE INDEX "user_favorite_user_id_idx" ON "user_favorite" ("user_id");--> statement-breakpoint
 CREATE INDEX "user_favorite_created_at_idx" ON "user_favorite" ("created_at");--> statement-breakpoint
-CREATE INDEX "user_level_rule_is_enabled_sortOrder_idx" ON "user_level_rule" ("is_enabled","sortOrder");--> statement-breakpoint
+CREATE INDEX "user_follow_user_id_target_type_created_at_idx" ON "user_follow" ("user_id","target_type","created_at");--> statement-breakpoint
+CREATE INDEX "user_follow_target_type_target_id_created_at_idx" ON "user_follow" ("target_type","target_id","created_at");--> statement-breakpoint
+CREATE INDEX "user_follow_target_type_target_id_idx" ON "user_follow" ("target_type","target_id");--> statement-breakpoint
+CREATE INDEX "user_level_rule_is_enabled_sort_order_idx" ON "user_level_rule" ("is_enabled","sort_order");--> statement-breakpoint
 CREATE INDEX "user_like_target_type_target_id_idx" ON "user_like" ("target_type","target_id");--> statement-breakpoint
 CREATE INDEX "user_like_scene_type_scene_id_idx" ON "user_like" ("scene_type","scene_id");--> statement-breakpoint
 CREATE INDEX "user_like_user_id_scene_type_created_at_idx" ON "user_like" ("user_id","scene_type","created_at");--> statement-breakpoint
@@ -1057,30 +1107,31 @@ CREATE INDEX "forum_section_group_sort_order_idx" ON "forum_section_group" ("sor
 CREATE INDEX "forum_section_group_is_enabled_idx" ON "forum_section_group" ("is_enabled");--> statement-breakpoint
 CREATE INDEX "forum_section_group_created_at_idx" ON "forum_section_group" ("created_at");--> statement-breakpoint
 CREATE INDEX "forum_section_group_deleted_at_idx" ON "forum_section_group" ("deleted_at");--> statement-breakpoint
-CREATE INDEX "forum_tag_sortOrder_idx" ON "forum_tag" ("sortOrder");--> statement-breakpoint
+CREATE INDEX "forum_tag_sort_order_idx" ON "forum_tag" ("sort_order");--> statement-breakpoint
 CREATE INDEX "forum_tag_name_idx" ON "forum_tag" ("name");--> statement-breakpoint
 CREATE INDEX "forum_tag_is_enabled_idx" ON "forum_tag" ("is_enabled");--> statement-breakpoint
 CREATE INDEX "forum_tag_use_count_idx" ON "forum_tag" ("use_count");--> statement-breakpoint
 CREATE INDEX "forum_tag_created_at_idx" ON "forum_tag" ("created_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_section_id_idx" ON "forum_topic" ("section_id");--> statement-breakpoint
 CREATE INDEX "forum_topic_user_id_idx" ON "forum_topic" ("user_id");--> statement-breakpoint
+CREATE INDEX "forum_topic_user_id_created_at_live_idx" ON "forum_topic" ("user_id","created_at" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "forum_topic_user_id_section_id_created_at_live_idx" ON "forum_topic" ("user_id","section_id","created_at" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
 CREATE INDEX "forum_topic_is_pinned_created_at_idx" ON "forum_topic" ("is_pinned","created_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_is_featured_created_at_idx" ON "forum_topic" ("is_featured","created_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_is_locked_idx" ON "forum_topic" ("is_locked");--> statement-breakpoint
 CREATE INDEX "forum_topic_is_hidden_idx" ON "forum_topic" ("is_hidden");--> statement-breakpoint
 CREATE INDEX "forum_topic_audit_status_idx" ON "forum_topic" ("audit_status");--> statement-breakpoint
 CREATE INDEX "forum_topic_view_count_idx" ON "forum_topic" ("view_count");--> statement-breakpoint
-CREATE INDEX "forum_topic_reply_count_idx" ON "forum_topic" ("reply_count");--> statement-breakpoint
 CREATE INDEX "forum_topic_like_count_idx" ON "forum_topic" ("like_count");--> statement-breakpoint
 CREATE INDEX "forum_topic_comment_count_idx" ON "forum_topic" ("comment_count");--> statement-breakpoint
 CREATE INDEX "forum_topic_favorite_count_idx" ON "forum_topic" ("favorite_count");--> statement-breakpoint
-CREATE INDEX "forum_topic_last_reply_at_idx" ON "forum_topic" ("last_reply_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_last_comment_at_idx" ON "forum_topic" ("last_comment_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_created_at_idx" ON "forum_topic" ("created_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_updated_at_idx" ON "forum_topic" ("updated_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_deleted_at_idx" ON "forum_topic" ("deleted_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_section_id_is_pinned_created_at_idx" ON "forum_topic" ("section_id","is_pinned","created_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_section_id_is_featured_created_at_idx" ON "forum_topic" ("section_id","is_featured","created_at");--> statement-breakpoint
-CREATE INDEX "forum_topic_section_id_last_reply_at_idx" ON "forum_topic" ("section_id","last_reply_at");--> statement-breakpoint
+CREATE INDEX "forum_topic_section_id_last_comment_at_idx" ON "forum_topic" ("section_id","last_comment_at");--> statement-breakpoint
 CREATE INDEX "forum_topic_tag_topic_id_idx" ON "forum_topic_tag" ("topic_id");--> statement-breakpoint
 CREATE INDEX "forum_topic_tag_tag_id_idx" ON "forum_topic_tag" ("tag_id");--> statement-breakpoint
 CREATE INDEX "forum_topic_tag_created_at_idx" ON "forum_topic_tag" ("created_at");--> statement-breakpoint
@@ -1118,23 +1169,25 @@ CREATE INDEX "sys_config_updated_by_id_idx" ON "sys_config" ("updated_by_id");--
 CREATE INDEX "sys_config_created_at_idx" ON "sys_config" ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "sys_dictionary_item_dictionary_code_idx" ON "sys_dictionary_item" ("dictionary_code");--> statement-breakpoint
 CREATE INDEX "sys_dictionary_item_sort_order_idx" ON "sys_dictionary_item" ("sort_order");--> statement-breakpoint
-CREATE INDEX "work_isPublished_publishAt_idx" ON "work" ("isPublished","publishAt");--> statement-breakpoint
+CREATE INDEX "work_is_published_publish_at_idx" ON "work" ("is_published","publish_at");--> statement-breakpoint
 CREATE INDEX "work_popularity_idx" ON "work" ("popularity");--> statement-breakpoint
 CREATE INDEX "work_language_region_idx" ON "work" ("language","region");--> statement-breakpoint
-CREATE INDEX "work_serialStatus_idx" ON "work" ("serialStatus");--> statement-breakpoint
-CREATE INDEX "work_lastUpdated_idx" ON "work" ("lastUpdated");--> statement-breakpoint
+CREATE INDEX "work_serial_status_idx" ON "work" ("serial_status");--> statement-breakpoint
+CREATE INDEX "work_last_updated_idx" ON "work" ("last_updated");--> statement-breakpoint
 CREATE INDEX "work_name_idx" ON "work" ("name");--> statement-breakpoint
-CREATE INDEX "work_isRecommended_idx" ON "work" ("isRecommended");--> statement-breakpoint
-CREATE INDEX "work_isHot_isNew_idx" ON "work" ("isHot","isNew");--> statement-breakpoint
+CREATE INDEX "work_is_recommended_idx" ON "work" ("is_recommended");--> statement-breakpoint
+CREATE INDEX "work_is_hot_is_new_idx" ON "work" ("is_hot","is_new");--> statement-breakpoint
 CREATE INDEX "work_type_idx" ON "work" ("type");--> statement-breakpoint
 CREATE INDEX "work_view_rule_idx" ON "work" ("view_rule");--> statement-breakpoint
 CREATE INDEX "work_required_view_level_id_idx" ON "work" ("required_view_level_id");--> statement-breakpoint
 CREATE INDEX "work_forum_section_id_idx" ON "work" ("forum_section_id");--> statement-breakpoint
 CREATE INDEX "work_comment_count_idx" ON "work" ("comment_count");--> statement-breakpoint
+CREATE INDEX "work_deleted_at_idx" ON "work" ("deleted_at");--> statement-breakpoint
 CREATE INDEX "work_author_type_idx" ON "work_author" ("type");--> statement-breakpoint
 CREATE INDEX "work_author_is_enabled_idx" ON "work_author" ("is_enabled");--> statement-breakpoint
 CREATE INDEX "work_author_is_enabled_is_recommended_idx" ON "work_author" ("is_enabled","is_recommended");--> statement-breakpoint
 CREATE INDEX "work_author_is_enabled_deleted_at_idx" ON "work_author" ("is_enabled","deleted_at");--> statement-breakpoint
+CREATE INDEX "work_author_deleted_at_idx" ON "work_author" ("deleted_at");--> statement-breakpoint
 CREATE INDEX "work_author_nationality_idx" ON "work_author" ("nationality");--> statement-breakpoint
 CREATE INDEX "work_author_gender_idx" ON "work_author" ("gender");--> statement-breakpoint
 CREATE INDEX "work_author_is_recommended_work_count_idx" ON "work_author" ("is_recommended","work_count" DESC NULLS LAST);--> statement-breakpoint
@@ -1147,6 +1200,8 @@ CREATE INDEX "work_category_content_type_idx" ON "work_category" ("content_type"
 CREATE INDEX "work_category_relation_category_id_idx" ON "work_category_relation" ("category_id");--> statement-breakpoint
 CREATE INDEX "work_category_relation_sort_order_idx" ON "work_category_relation" ("sort_order");--> statement-breakpoint
 CREATE INDEX "work_category_relation_work_id_sort_order_idx" ON "work_category_relation" ("work_id","sort_order");--> statement-breakpoint
+CREATE UNIQUE INDEX "work_chapter_work_id_sort_order_live_idx" ON "work_chapter" ("work_id","sort_order") WHERE "deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "work_chapter_deleted_at_idx" ON "work_chapter" ("deleted_at");--> statement-breakpoint
 CREATE INDEX "work_chapter_work_id_idx" ON "work_chapter" ("work_id");--> statement-breakpoint
 CREATE INDEX "work_chapter_work_id_sort_order_idx" ON "work_chapter" ("work_id","sort_order");--> statement-breakpoint
 CREATE INDEX "work_chapter_is_published_publish_at_idx" ON "work_chapter" ("is_published","publish_at");--> statement-breakpoint
@@ -1158,6 +1213,11 @@ CREATE INDEX "work_chapter_created_at_idx" ON "work_chapter" ("created_at");--> 
 CREATE INDEX "work_chapter_publish_at_idx" ON "work_chapter" ("publish_at");--> statement-breakpoint
 CREATE INDEX "work_chapter_required_read_level_id_idx" ON "work_chapter" ("required_read_level_id");--> statement-breakpoint
 CREATE INDEX "work_chapter_work_type_idx" ON "work_chapter" ("work_type");--> statement-breakpoint
+CREATE INDEX "work_comic_archive_import_task_work_id_idx" ON "work_comic_archive_import_task" ("work_id");--> statement-breakpoint
+CREATE INDEX "work_comic_archive_import_task_status_idx" ON "work_comic_archive_import_task" ("status");--> statement-breakpoint
+CREATE INDEX "work_comic_archive_import_task_status_expires_at_idx" ON "work_comic_archive_import_task" ("status","expires_at");--> statement-breakpoint
+CREATE INDEX "work_comic_archive_import_task_expires_at_idx" ON "work_comic_archive_import_task" ("expires_at");--> statement-breakpoint
+CREATE INDEX "work_comic_archive_import_task_created_at_idx" ON "work_comic_archive_import_task" ("created_at");--> statement-breakpoint
 CREATE INDEX "work_tag_sort_order_idx" ON "work_tag" ("sort_order");--> statement-breakpoint
 CREATE INDEX "work_tag_name_idx" ON "work_tag" ("name");--> statement-breakpoint
 CREATE INDEX "work_tag_is_enabled_idx" ON "work_tag" ("is_enabled");--> statement-breakpoint

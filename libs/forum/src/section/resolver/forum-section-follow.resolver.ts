@@ -77,12 +77,18 @@ export class ForumSectionFollowResolver
       },
       columns: {
         id: true,
+        groupId: true,
+        userLevelRuleId: true,
         name: true,
         description: true,
         icon: true,
+        sortOrder: true,
+        isEnabled: true,
+        topicReviewPolicy: true,
         topicCount: true,
         commentCount: true,
         followersCount: true,
+        lastPostAt: true,
       },
     })
 
@@ -91,12 +97,18 @@ export class ForumSectionFollowResolver
         section.id,
         {
           id: section.id,
+          groupId: section.groupId ?? undefined,
+          userLevelRuleId: section.userLevelRuleId ?? undefined,
           name: section.name,
           description: section.description ?? undefined,
           icon: section.icon ?? undefined,
+          sortOrder: section.sortOrder,
+          isEnabled: section.isEnabled,
+          topicReviewPolicy: section.topicReviewPolicy,
           topicCount: section.topicCount,
           commentCount: section.commentCount,
           followersCount: section.followersCount,
+          lastPostAt: section.lastPostAt ?? undefined,
         },
       ]),
     )

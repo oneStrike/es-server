@@ -16,14 +16,13 @@ export type FollowTargetInput = Pick<UserFollow, 'targetId'> & {
 export type FollowRecordInput = FollowTargetInput & Pick<UserFollow, 'userId'>
 
 /**
- * 用户关注记录分页查询入参。
- * - 支持按目标类型筛选当前用户的关注记录
+ * 用户关注分页查询入参。
+ * - 以当前用户为主
  */
-export type FollowListQuery = Pick<UserFollow, 'userId'> &
-  Partial<Pick<FollowTargetInput, 'targetType'>> & {
-    pageIndex?: number
-    pageSize?: number
-  }
+export type FollowPageQuery = Pick<UserFollow, 'userId'> & {
+  pageIndex?: number
+  pageSize?: number
+}
 
 /**
  * 用户关注/互关状态视图。

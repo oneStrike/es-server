@@ -1,2 +1,0 @@
-CREATE INDEX "forum_topic_user_id_created_at_live_idx" ON "forum_topic" ("user_id","created_at" DESC NULLS LAST) WHERE "deleted_at" is null;--> statement-breakpoint
-CREATE INDEX "forum_topic_user_id_section_id_created_at_live_idx" ON "forum_topic" ("user_id","section_id","created_at" DESC NULLS LAST) WHERE "deleted_at" is null;

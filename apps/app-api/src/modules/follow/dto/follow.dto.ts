@@ -1,27 +1,20 @@
+import { BaseAuthorDto } from '@libs/content/author'
 import { BaseFollowDto } from '@libs/interaction/follow'
 import {
-  ArrayProperty,
   BooleanProperty,
   NestedProperty,
   NumberProperty,
-  StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/core'
 import {
-  IntersectionType,
-  PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { AppForumSectionListItemDto } from '../../forum/dto/forum-section.dto'
 
 export class FollowTargetDto extends PickType(BaseFollowDto, [
   'targetId',
   'targetType',
 ] as const) {}
-
-export class FollowPageQueryDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseFollowDto, ['targetType'] as const)),
-) {}
 
 export class FollowStatusResponseDto {
   @BooleanProperty({
@@ -46,72 +39,12 @@ export class FollowStatusResponseDto {
   isMutualFollow!: boolean
 }
 
-export class FollowTargetDetailDto extends IdDto {
-  @StringProperty({
-    description: '用户昵称（用户目标返回）',
-    example: 'Lonsun',
-    required: false,
-    validation: false,
-  })
-  nickname?: string
-
-  @StringProperty({
-    description: '用户头像（用户目标返回）',
-    example: 'https://example.com/avatar.jpg',
-    required: false,
-    validation: false,
-  })
-  avatarUrl?: string
-
-  @StringProperty({
-    description: '用户签名（用户目标返回）',
-    example: '持续输出，永不停歇。',
-    required: false,
-    validation: false,
-  })
-  signature?: string
-
-  @StringProperty({
-    description: '作者名称（作者目标返回）',
-    example: '村上春树',
-    required: false,
-    validation: false,
-  })
-  name?: string
-
-  @StringProperty({
-    description: '作者头像（作者目标返回）',
-    example: 'https://example.com/author.jpg',
-    required: false,
-    validation: false,
-  })
-  avatar?: string
-
-  @StringProperty({
-    description: '板块描述（板块目标返回）',
-    example: '讨论技术相关问题',
-    required: false,
-    validation: false,
-  })
-  description?: string
-
-  @StringProperty({
-    description: '板块图标（板块目标返回）',
-    example: 'https://example.com/section-icon.png',
-    required: false,
-    validation: false,
-  })
-  icon?: string
-
-  @ArrayProperty({
-    description: '作者类型（作者目标返回）',
-    itemType: 'number',
-    example: [1, 2],
-    required: false,
-    validation: false,
-  })
-  type?: number[]
-
+export class FollowUserBriefDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+  'signature',
+] as const) {
   @NumberProperty({
     description: '关注数',
     example: 12,
@@ -121,48 +54,57 @@ export class FollowTargetDetailDto extends IdDto {
   followingCount?: number
 
   @NumberProperty({
-    description: '粉丝数/关注人数',
+    description: '粉丝数',
     example: 34,
     required: false,
     validation: false,
   })
   followersCount?: number
-
-  @NumberProperty({
-    description: '主题数（板块目标返回）',
-    example: 21,
-    required: false,
-    validation: false,
-  })
-  topicCount?: number
-
-  @NumberProperty({
-    description: '评论数（板块目标返回）',
-    example: 89,
-    required: false,
-    validation: false,
-  })
-  commentCount?: number
 }
 
-export class FollowPageItemDto extends BaseFollowDto {
+export class FollowAuthorBriefDto extends PickType(BaseAuthorDto, [
+  'id',
+  'name',
+  'avatar',
+  'type',
+  'followersCount',
+] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已关注该作者',
+    example: true,
+    validation: false,
+  })
+  isFollowed!: boolean
+}
+
+export class FollowAuthorPageItemDto extends BaseFollowDto {
   @NestedProperty({
-    description: '目标简要信息',
-    type: FollowTargetDetailDto,
+    description: '作者信息',
+    type: FollowAuthorBriefDto,
     required: false,
     validation: false,
   })
-  targetDetail?: FollowTargetDetailDto
+  author?: FollowAuthorBriefDto
+}
+
+export class FollowSectionPageItemDto extends BaseFollowDto {
+  @NestedProperty({
+    description: '板块信息',
+    type: AppForumSectionListItemDto,
+    required: false,
+    validation: false,
+  })
+  section?: AppForumSectionListItemDto
 }
 
 export class FollowUserPageItemDto extends BaseFollowDto {
   @NestedProperty({
     description: '用户简要信息',
-    type: FollowTargetDetailDto,
+    type: FollowUserBriefDto,
     required: false,
     validation: false,
   })
-  user?: FollowTargetDetailDto
+  user?: FollowUserBriefDto
 
   @BooleanProperty({
     description: '当前用户是否已关注该用户',

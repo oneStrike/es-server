@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "dc13d3b4-12b7-494d-899a-500b9ac0789c",
+  "id": "4b58b71a-8f96-4f1b-8df7-a6cb1980cdfe",
   "prevIds": [
-    "805561ab-094c-4cf9-9297-35ad11ead51a"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -147,6 +147,12 @@
     {
       "isRlsEnabled": false,
       "name": "user_favorite",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "user_follow",
       "entityType": "tables",
       "schema": "public"
     },
@@ -351,6 +357,12 @@
     {
       "isRlsEnabled": false,
       "name": "work_comic",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "work_comic_archive_import_task",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1930,6 +1942,32 @@
       "default": "0",
       "generated": null,
       "identity": null,
+      "name": "following_count",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "app_user_count"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "followers_count",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "app_user_count"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
       "name": "forum_topic_count",
       "entityType": "columns",
       "schema": "public",
@@ -3367,7 +3405,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "sortOrder",
+      "name": "sort_order",
       "entityType": "columns",
       "schema": "public",
       "table": "user_badge"
@@ -4124,6 +4162,80 @@
       "generated": null,
       "identity": {
         "type": "always",
+        "name": "user_follow_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "target_type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "target_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
         "name": "user_level_rule_id_seq",
         "increment": "1",
         "startWith": "1",
@@ -4236,7 +4348,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "sortOrder",
+      "name": "sort_order",
       "entityType": "columns",
       "schema": "public",
       "table": "user_level_rule"
@@ -5808,7 +5920,20 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "reply_count",
+      "name": "comment_count",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "forum_section"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "followers_count",
       "entityType": "columns",
       "schema": "public",
       "table": "forum_section"
@@ -6060,7 +6185,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "sortOrder",
+      "name": "sort_order",
       "entityType": "columns",
       "schema": "public",
       "table": "forum_tag"
@@ -6173,7 +6298,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "last_reply_user_id",
+      "name": "last_comment_user_id",
       "entityType": "columns",
       "schema": "public",
       "table": "forum_topic"
@@ -6213,6 +6338,32 @@
       "generated": null,
       "identity": null,
       "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "forum_topic"
+    },
+    {
+      "type": "varchar(500)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "ARRAY[]",
+      "generated": null,
+      "identity": null,
+      "name": "images",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "forum_topic"
+    },
+    {
+      "type": "varchar(500)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "ARRAY[]",
+      "generated": null,
+      "identity": null,
+      "name": "videos",
       "entityType": "columns",
       "schema": "public",
       "table": "forum_topic"
@@ -6368,19 +6519,6 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "reply_count",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "forum_topic"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
       "name": "like_count",
       "entityType": "columns",
       "schema": "public",
@@ -6420,7 +6558,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "last_reply_at",
+      "name": "last_comment_at",
       "entityType": "columns",
       "schema": "public",
       "table": "forum_topic"
@@ -8263,19 +8401,6 @@
       "table": "sys_dictionary"
     },
     {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deleted_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "sys_dictionary"
-    },
-    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -8415,19 +8540,6 @@
       "table": "sys_dictionary_item"
     },
     {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deleted_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "sys_dictionary_item"
-    },
-    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -8548,7 +8660,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "ageRating",
+      "name": "age_rating",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8561,7 +8673,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "serialStatus",
+      "name": "serial_status",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8587,7 +8699,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "originalSource",
+      "name": "original_source",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8639,7 +8751,7 @@
       "default": "true",
       "generated": null,
       "identity": null,
-      "name": "isPublished",
+      "name": "is_published",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8652,7 +8764,7 @@
       "default": "false",
       "generated": null,
       "identity": null,
-      "name": "isRecommended",
+      "name": "is_recommended",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8665,7 +8777,7 @@
       "default": "false",
       "generated": null,
       "identity": null,
-      "name": "isHot",
+      "name": "is_hot",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8678,7 +8790,7 @@
       "default": "false",
       "generated": null,
       "identity": null,
-      "name": "isNew",
+      "name": "is_new",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8691,7 +8803,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "publishAt",
+      "name": "publish_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8704,7 +8816,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "lastUpdated",
+      "name": "last_updated",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8782,7 +8894,7 @@
       "default": "1",
       "generated": null,
       "identity": null,
-      "name": "recommendWeight",
+      "name": "recommend_weight",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8795,7 +8907,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "viewCount",
+      "name": "view_count",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8808,7 +8920,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "favoriteCount",
+      "name": "favorite_count",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8821,7 +8933,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "likeCount",
+      "name": "like_count",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8847,7 +8959,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "downloadCount",
+      "name": "download_count",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8873,19 +8985,6 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "ratingCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
       "name": "popularity",
       "entityType": "columns",
       "schema": "public",
@@ -8899,7 +8998,7 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "createdAt",
+      "name": "created_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8912,7 +9011,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "updatedAt",
+      "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -8925,7 +9024,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "deletedAt",
+      "name": "deleted_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work"
@@ -9815,7 +9914,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "workId",
+      "name": "work_id",
       "entityType": "columns",
       "schema": "public",
       "table": "work_comic"
@@ -9828,7 +9927,7 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "createdAt",
+      "name": "created_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work_comic"
@@ -9841,10 +9940,279 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "updatedAt",
+      "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work_comic"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "work_comic_archive_import_task_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "varchar(36)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "task_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "work_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "mode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "archive_name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "varchar(1000)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "archive_path",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "varchar(1000)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "extract_path",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "require_confirm",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "summary",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "matched_items",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ignored_items",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "result_items",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "confirmed_chapter_ids",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "started_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "finished_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "last_error",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
     },
     {
       "type": "integer",
@@ -9876,7 +10244,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "workId",
+      "name": "work_id",
       "entityType": "columns",
       "schema": "public",
       "table": "work_novel"
@@ -9889,7 +10257,7 @@
       "default": "0",
       "generated": null,
       "identity": null,
-      "name": "wordCount",
+      "name": "word_count",
       "entityType": "columns",
       "schema": "public",
       "table": "work_novel"
@@ -9902,7 +10270,7 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "createdAt",
+      "name": "created_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work_novel"
@@ -9915,7 +10283,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "updatedAt",
+      "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work_novel"
@@ -10871,6 +11239,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "app_user_deleted_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "app_user"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "user_id",
           "isExpression": false,
           "asc": true,
@@ -11543,7 +11932,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "sortOrder",
+          "value": "sort_order",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -11555,7 +11944,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_badge_sortOrder_idx",
+      "name": "user_badge_sort_order_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_badge"
@@ -12369,14 +12758,21 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "is_enabled",
+          "value": "user_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
         },
         {
-          "value": "sortOrder",
+          "value": "target_type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "created_at",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -12388,7 +12784,98 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_level_rule_is_enabled_sortOrder_idx",
+      "name": "user_follow_user_id_target_type_created_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "target_type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "target_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "created_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "user_follow_target_type_target_id_created_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "target_type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "target_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "user_follow_target_type_target_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "user_follow"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "is_enabled",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sort_order",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "user_level_rule_is_enabled_sort_order_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_level_rule"
@@ -13629,7 +14116,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "sortOrder",
+          "value": "sort_order",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -13641,7 +14128,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "forum_tag_sortOrder_idx",
+      "name": "forum_tag_sort_order_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "forum_tag"
@@ -13979,27 +14466,6 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "reply_count",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "forum_topic_reply_count_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "forum_topic"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "like_count",
           "isExpression": false,
           "asc": true,
@@ -14063,7 +14529,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "last_reply_at",
+          "value": "last_comment_at",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -14075,7 +14541,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "forum_topic_last_reply_at_idx",
+      "name": "forum_topic_last_comment_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "forum_topic"
@@ -14224,7 +14690,7 @@
           "opclass": null
         },
         {
-          "value": "last_reply_at",
+          "value": "last_comment_at",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -14236,7 +14702,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "forum_topic_section_id_last_reply_at_idx",
+      "name": "forum_topic_section_id_last_comment_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "forum_topic"
@@ -15134,14 +15600,14 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "isPublished",
+          "value": "is_published",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
         },
         {
-          "value": "publishAt",
+          "value": "publish_at",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -15153,7 +15619,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "work_isPublished_publishAt_idx",
+      "name": "work_is_published_publish_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work"
@@ -15211,7 +15677,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "serialStatus",
+          "value": "serial_status",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -15223,7 +15689,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "work_serialStatus_idx",
+      "name": "work_serial_status_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work"
@@ -15232,7 +15698,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "lastUpdated",
+          "value": "last_updated",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -15244,7 +15710,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "work_lastUpdated_idx",
+      "name": "work_last_updated_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work"
@@ -15274,7 +15740,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "isRecommended",
+          "value": "is_recommended",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -15286,7 +15752,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "work_isRecommended_idx",
+      "name": "work_is_recommended_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work"
@@ -15295,14 +15761,14 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "isHot",
+          "value": "is_hot",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
         },
         {
-          "value": "isNew",
+          "value": "is_new",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -15314,7 +15780,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "work_isHot_isNew_idx",
+      "name": "work_is_hot_is_new_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work"
@@ -15428,6 +15894,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_deleted_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "type",
           "isExpression": false,
           "asc": true,
@@ -15518,6 +16005,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "work_author_is_enabled_deleted_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_author"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_author_deleted_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work_author"
@@ -15797,6 +16305,55 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "sort_order",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"deleted_at\" is null",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_chapter_work_id_sort_order_live_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_chapter"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_chapter_deleted_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_chapter"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "work_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": false,
@@ -16032,6 +16589,118 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "work_chapter"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "work_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_comic_archive_import_task_work_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_comic_archive_import_task_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "expires_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_comic_archive_import_task_status_expires_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "expires_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_comic_archive_import_task_expires_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "created_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_comic_archive_import_task_created_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
     },
     {
       "nameExplicit": true,
@@ -16454,6 +17123,16 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "user_follow_pkey",
+      "schema": "public",
+      "table": "user_follow",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "user_level_rule_pkey",
       "schema": "public",
       "table": "user_level_rule",
@@ -16784,6 +17463,16 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "work_comic_archive_import_task_pkey",
+      "schema": "public",
+      "table": "work_comic_archive_import_task",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "work_novel_pkey",
       "schema": "public",
       "table": "work_novel",
@@ -17010,6 +17699,19 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "user_favorite"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "target_type",
+        "target_id",
+        "user_id"
+      ],
+      "nullsNotDistinct": false,
+      "name": "user_follow_target_type_target_id_user_id_key",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "user_follow"
     },
     {
       "nameExplicit": true,
@@ -17315,22 +18017,10 @@
     {
       "nameExplicit": true,
       "columns": [
-        "work_id",
-        "sort_order"
+        "work_id"
       ],
       "nullsNotDistinct": false,
-      "name": "work_chapter_work_id_sort_order_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "work_chapter"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "workId"
-      ],
-      "nullsNotDistinct": false,
-      "name": "work_comic_workId_key",
+      "name": "work_comic_work_id_key",
       "entityType": "uniques",
       "schema": "public",
       "table": "work_comic"
@@ -17338,10 +18028,21 @@
     {
       "nameExplicit": true,
       "columns": [
-        "workId"
+        "task_id"
       ],
       "nullsNotDistinct": false,
-      "name": "work_novel_workId_key",
+      "name": "work_comic_archive_import_task_task_id_key",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "work_comic_archive_import_task"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "work_id"
+      ],
+      "nullsNotDistinct": false,
+      "name": "work_novel_work_id_key",
       "entityType": "uniques",
       "schema": "public",
       "table": "work_novel"
@@ -17356,6 +18057,104 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "work_tag"
+    },
+    {
+      "value": "\"view_count\" >= 0",
+      "name": "forum_topic_view_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "forum_topic"
+    },
+    {
+      "value": "\"like_count\" >= 0",
+      "name": "forum_topic_like_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "forum_topic"
+    },
+    {
+      "value": "\"comment_count\" >= 0",
+      "name": "forum_topic_comment_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "forum_topic"
+    },
+    {
+      "value": "\"favorite_count\" >= 0",
+      "name": "forum_topic_favorite_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "forum_topic"
+    },
+    {
+      "value": "\"view_count\" >= 0",
+      "name": "work_view_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work"
+    },
+    {
+      "value": "\"favorite_count\" >= 0",
+      "name": "work_favorite_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work"
+    },
+    {
+      "value": "\"like_count\" >= 0",
+      "name": "work_like_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work"
+    },
+    {
+      "value": "\"comment_count\" >= 0",
+      "name": "work_comment_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work"
+    },
+    {
+      "value": "\"download_count\" >= 0",
+      "name": "work_download_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work"
+    },
+    {
+      "value": "\"view_count\" >= 0",
+      "name": "work_chapter_view_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work_chapter"
+    },
+    {
+      "value": "\"like_count\" >= 0",
+      "name": "work_chapter_like_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work_chapter"
+    },
+    {
+      "value": "\"comment_count\" >= 0",
+      "name": "work_chapter_comment_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work_chapter"
+    },
+    {
+      "value": "\"purchase_count\" >= 0",
+      "name": "work_chapter_purchase_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work_chapter"
+    },
+    {
+      "value": "\"download_count\" >= 0",
+      "name": "work_chapter_download_count_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "work_chapter"
     }
   ],
   "renames": []

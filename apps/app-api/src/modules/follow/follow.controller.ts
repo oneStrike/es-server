@@ -4,8 +4,8 @@ import { IdDto, PageDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
-  FollowPageItemDto,
-  FollowPageQueryDto,
+  FollowAuthorPageItemDto,
+  FollowSectionPageItemDto,
   FollowStatusResponseDto,
   FollowTargetDto,
   FollowUserPageItemDto,
@@ -61,16 +61,31 @@ export class FollowController {
     })
   }
 
-  @Get('my/page')
+  @Get('author/page')
   @ApiPageDoc({
-    summary: '分页查询我的关注记录',
-    model: FollowPageItemDto,
+    summary: '分页查询我关注的作者',
+    model: FollowAuthorPageItemDto,
   })
-  async my(
-    @Query() query: FollowPageQueryDto,
+  async authorPage(
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.followService.getUserFollows({
+    return this.followService.getUserAuthorFollows({
+      ...query,
+      userId,
+    })
+  }
+
+  @Get('section/page')
+  @ApiPageDoc({
+    summary: '分页查询我关注的论坛板块',
+    model: FollowSectionPageItemDto,
+  })
+  async sectionPage(
+    @Query() query: PageDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.followService.getUserSectionFollows({
       ...query,
       userId,
     })
