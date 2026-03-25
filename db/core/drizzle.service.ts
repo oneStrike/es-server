@@ -1,10 +1,6 @@
-import type {
-  DbQueryConfig,
-  DbQueryOrderBy,
-  DbQueryOrderByRecord,
-} from '@libs/platform/config'
+import type { DbQueryConfig } from '@libs/platform/config'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
-import type { Db, DrizzleErrorMessages, SQL } from './drizzle.type'
+import type { Db, DrizzleErrorMessages } from './drizzle.type'
 import type { PostgresError } from './error/postgres-error'
 import type {
   DrizzlePageQueryInput,
@@ -12,14 +8,12 @@ import type {
   DrizzlePageQueryResult,
 } from './query/page-query'
 import {
-  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
   OnApplicationShutdown,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { asc, desc, getTableColumns } from 'drizzle-orm'
 import { Pool } from 'pg'
 import * as schema from '../schema'
 import { createDrizzleExtensions } from './drizzle.extensions'
@@ -67,20 +61,15 @@ export class DrizzleService implements OnApplicationShutdown {
     pageSize?: number
     maxPageSize?: number
   }) {
-    const pageIndex = input.pageIndex || this.queryConfig.pageIndex
-    const pageSize = input.pageSize
-      ? input.pageSize > this.queryConfig.maxListItemLimit
-        ? input.maxPageSize
-          ? input.maxPageSize
-          : this.queryConfig.maxListItemLimit
-        : input.pageSize
-      : this.queryConfig.pageSize
+    const pageQuery = this.buildPageQuery(input, {
+      maxPageSize: input.maxPageSize,
+    })
 
     return {
-      pageIndex,
-      pageSize,
-      limit: pageSize,
-      offset: (pageIndex - 1) * pageSize,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
+      limit: pageQuery.limit,
+      offset: pageQuery.offset,
     }
   }
 
@@ -92,133 +81,18 @@ export class DrizzleService implements OnApplicationShutdown {
     table: TTable,
     orderBy?: unknown,
   ) {
-    const validColumns = getTableColumns(table) as Record<string, unknown>
-    const rawOrderBy = orderBy ?? this.queryConfig.orderBy
-
-    let parsedOrderBy: DbQueryOrderBy | undefined
-    if (rawOrderBy === undefined || rawOrderBy === null) {
-      parsedOrderBy = undefined
-    } else if (typeof rawOrderBy === 'string') {
-      if (!rawOrderBy.trim()) {
-        parsedOrderBy = undefined
-      } else {
-        try {
-          parsedOrderBy = JSON.parse(rawOrderBy) as DbQueryOrderBy
-        } catch {
-          throw new BadRequestException('orderBy 参数格式不合法')
-        }
-      }
-    } else if (Array.isArray(rawOrderBy)) {
-      parsedOrderBy = rawOrderBy as DbQueryOrderBy
-    } else if (typeof rawOrderBy === 'object') {
-      parsedOrderBy = rawOrderBy as DbQueryOrderBy
-    } else {
-      throw new BadRequestException('orderBy 参数格式不合法')
-    }
-
-    let normalizedOrderBy: DbQueryOrderBy | undefined
-    if (!parsedOrderBy) {
-      normalizedOrderBy = undefined
-    } else {
-      const records = Array.isArray(parsedOrderBy)
-        ? parsedOrderBy
-        : [parsedOrderBy]
-      if (records.length === 0) {
-        throw new BadRequestException('orderBy 不能为空')
-      }
-
-      const normalizedRecords: DbQueryOrderByRecord[] = []
-      for (const record of records) {
-        if (!record || typeof record !== 'object' || Array.isArray(record)) {
-          throw new BadRequestException('orderBy 参数格式不合法')
-        }
-
-        const entries = Object.entries(record as Record<string, unknown>)
-        if (entries.length === 0) {
-          throw new BadRequestException('orderBy 不能为空')
-        }
-
-        const normalizedRecord: DbQueryOrderByRecord = {}
-        for (const [field, direction] of entries) {
-          if (!validColumns[field]) {
-            throw new BadRequestException(`排序字段 "${field}" 不存在`)
-          }
-
-          let normalizedDirection: 'asc' | 'desc' | undefined
-          if (direction === 'asc' || direction === 'desc') {
-            normalizedDirection = direction
-          } else if (typeof direction === 'string') {
-            const normalized = direction.toLowerCase()
-            normalizedDirection =
-              normalized === 'asc' || normalized === 'desc'
-                ? normalized
-                : undefined
-          }
-
-          if (!normalizedDirection) {
-            throw new BadRequestException(`排序字段 "${field}" 的排序方向无效`)
-          }
-
-          normalizedRecord[field] = normalizedDirection
-        }
-
-        normalizedRecords.push(normalizedRecord)
-      }
-
-      normalizedOrderBy =
-        normalizedRecords.length === 1
-          ? normalizedRecords[0]
-          : normalizedRecords
-    }
-
-    if (!normalizedOrderBy && validColumns.id) {
-      normalizedOrderBy = { id: 'desc' }
-    }
-
-    if (normalizedOrderBy && validColumns.id) {
-      const records = Array.isArray(normalizedOrderBy)
-        ? [...normalizedOrderBy]
-        : [normalizedOrderBy]
-      if (!records.some((record) => Object.hasOwn(record, 'id'))) {
-        let idDirection: 'asc' | 'desc' = 'desc'
-        for (
-          let recordIndex = records.length - 1;
-          recordIndex >= 0;
-          recordIndex -= 1
-        ) {
-          const lastDirection = Object.values(records[recordIndex]).at(-1)
-          if (lastDirection === 'asc' || lastDirection === 'desc') {
-            idDirection = lastDirection
-            break
-          }
-        }
-        normalizedOrderBy = [...records, { id: idDirection }]
-      }
-    }
-
-    const orderBySql: SQL[] = []
-    if (normalizedOrderBy) {
-      const records = Array.isArray(normalizedOrderBy)
-        ? normalizedOrderBy
-        : [normalizedOrderBy]
-
-      for (const record of records) {
-        for (const [field, direction] of Object.entries(record)) {
-          const column = validColumns[field]
-          if (!column) {
-            continue
-          }
-
-          orderBySql.push(
-            direction === 'asc' ? asc(column as never) : desc(column as never),
-          )
-        }
-      }
-    }
+    const pageQuery = this.buildPageQuery(
+      {
+        orderBy,
+      },
+      {
+        table,
+      },
+    )
 
     return {
-      orderBy: normalizedOrderBy,
-      orderBySql,
+      orderBy: pageQuery.orderBy,
+      orderBySql: pageQuery.orderBySql,
     }
   }
 

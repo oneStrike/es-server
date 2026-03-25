@@ -30,6 +30,8 @@ export class ForumTopicController {
       userId: topic.userId,
       title: topic.title,
       content: topic.content,
+      images: topic.images ?? [],
+      videos: topic.videos ?? [],
       isPinned: topic.isPinned,
       isFeatured: topic.isFeatured,
       isLocked: topic.isLocked,

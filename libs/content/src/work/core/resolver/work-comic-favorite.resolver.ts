@@ -14,6 +14,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common'
 import { WorkCounterService } from '../../counter/work-counter.service'
+import { WorkService } from '../work.service'
 
 /**
  * 漫画作品收藏解析器
@@ -30,6 +31,7 @@ export class WorkComicFavoriteResolver
     private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
     private readonly workCounterService: WorkCounterService,
+    private readonly workService: WorkService,
   ) {}
 
   private get db() {
@@ -99,29 +101,16 @@ export class WorkComicFavoriteResolver
 
   /**
    * 批量获取漫画作品详情
-   * 用于在收藏列表中展示作品的名称、封面等基本信息
+   * 用于在收藏列表中展示与作品分页项一致的详情字段
    * @param targetIds - 作品ID数组
+   * @param userId - 当前用户ID，用于补充作者关注状态
    * @returns 作品ID到作品详情的映射Map
    */
-  async batchGetDetails(targetIds: number[]) {
-    if (targetIds.length === 0) {
-      return new Map()
-    }
-
-    const works = await this.db.query.work.findMany({
-      where: {
-        id: { in: targetIds },
-        type: this.targetType,
-        isPublished: true,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        id: true,
-        name: true,
-        cover: true,
-      },
-    })
-
-    return new Map(works.map((work) => [work.id, work]))
+  async batchGetDetails(targetIds: number[], userId?: number) {
+    return this.workService.batchGetPageWorkDetails(
+      targetIds,
+      this.targetType,
+      userId,
+    )
   }
 }

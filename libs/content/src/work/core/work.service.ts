@@ -1,3 +1,4 @@
+import type { Work } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log'
@@ -17,26 +18,6 @@ import {
   UpdateWorkInput,
   UpdateWorkStatusInput,
 } from './work.type'
-
-const PAGE_WORK_PICK_FIELDS = [
-  'id',
-  'type',
-  'name',
-  'cover',
-  'popularity',
-  'isRecommended',
-  'isHot',
-  'isNew',
-  'serialStatus',
-  'publisher',
-  'language',
-  'region',
-  'ageRating',
-  'createdAt',
-  'updatedAt',
-  'publishAt',
-  'isPublished',
-] as const
 
 /**
  * 作品详情上下文接口
@@ -114,6 +95,28 @@ export class WorkService {
 
   get workTagRelation() {
     return this.drizzle.schema.workTagRelation
+  }
+
+  private getPageWorkSelectFields() {
+    return {
+      id: this.work.id,
+      type: this.work.type,
+      name: this.work.name,
+      cover: this.work.cover,
+      popularity: this.work.popularity,
+      isRecommended: this.work.isRecommended,
+      isHot: this.work.isHot,
+      isNew: this.work.isNew,
+      serialStatus: this.work.serialStatus,
+      publisher: this.work.publisher,
+      language: this.work.language,
+      region: this.work.region,
+      ageRating: this.work.ageRating,
+      createdAt: this.work.createdAt,
+      updatedAt: this.work.updatedAt,
+      publishAt: this.work.publishAt,
+      isPublished: this.work.isPublished,
+    }
   }
 
   /**
@@ -550,16 +553,48 @@ export class WorkService {
    * 支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能
    */
   async getWorkTypePage(dto: QueryWorkInput, userId?: number) {
-    const { pageIndex, pageSize, orderBy } = dto
-    const page = await this.drizzle.ext.findPagination(this.work, {
-      where: and(...this.buildWorkPageConditions(dto, { forcePublished: true })),
-      pageIndex,
-      pageSize,
-      orderBy,
-      pick: PAGE_WORK_PICK_FIELDS,
+    return this.paginateWorkList(dto, userId, {
+      forcePublished: true,
+      selectPageFields: true,
     })
+  }
 
-    return this.attachWorkRelations(page, userId)
+  /**
+   * 批量获取作品分页项详情。
+   * 供收藏列表等聚合接口复用，保持与作品分页接口字段语义一致。
+   */
+  async batchGetPageWorkDetails(
+    targetIds: number[],
+    type: Work['type'],
+    userId?: number,
+  ) {
+    if (targetIds.length === 0) {
+      return new Map<number, unknown>()
+    }
+
+    const list = await this.db
+      .select(this.getPageWorkSelectFields())
+      .from(this.work)
+      .where(
+        and(
+          inArray(this.work.id, targetIds),
+          eq(this.work.type, type),
+          eq(this.work.isPublished, true),
+          isNull(this.work.deletedAt),
+        ),
+      )
+
+    const page = await this.attachWorkRelations(
+      {
+        list,
+        total: list.length,
+        pageIndex: 1,
+        pageSize: list.length,
+      },
+      userId,
+    )
+
+    return new Map(page.list.map((item) => [item.id, item]))
   }
 
   /**
@@ -571,7 +606,16 @@ export class WorkService {
     queryWorkDto: QueryWorkInput,
     options?: { forcePublished?: boolean },
   ): SQL[] {
-    const { name, publisher, author, tagIds, ...otherDto } = queryWorkDto
+    const {
+      name,
+      publisher,
+      author,
+      authorId,
+      categoryIds,
+      tagIds,
+      ...otherDto
+    } =
+      queryWorkDto
     const normalizedAuthor = author?.trim()
     const normalizedName = name?.trim()
     const normalizedPublisher = publisher?.trim()
@@ -626,18 +670,49 @@ export class WorkService {
       )
     }
 
-    if (normalizedAuthor) {
+    if (isNotNil(authorId) || normalizedAuthor) {
+      const authorConditions: SQL[] = [
+        eq(this.workAuthorRelation.workId, this.work.id),
+      ]
+
+      if (isNotNil(authorId)) {
+        authorConditions.push(eq(this.workAuthorRelation.authorId, authorId))
+      }
+
+      if (normalizedAuthor) {
+        authorConditions.push(
+          ilike(
+            this.workAuthor.name,
+            `%${escapeLikePattern(normalizedAuthor)}%`,
+          ),
+        )
+        conditions.push(sql`
+          exists (
+            select 1
+            from ${this.workAuthorRelation}
+            inner join ${this.workAuthor}
+              on ${this.workAuthor.id} = ${this.workAuthorRelation.authorId}
+            where ${and(...authorConditions)}
+          )
+        `)
+      } else {
+        conditions.push(sql`
+          exists (
+            select 1
+            from ${this.workAuthorRelation}
+            where ${and(...authorConditions)}
+          )
+        `)
+      }
+    }
+
+    if (Array.isArray(categoryIds) && categoryIds.length > 0) {
       conditions.push(sql`
         exists (
           select 1
-          from ${this.workAuthorRelation}
-          inner join ${this.workAuthor}
-            on ${this.workAuthor.id} = ${this.workAuthorRelation.authorId}
-          where ${this.workAuthorRelation.workId} = ${this.work.id}
-            and ${ilike(
-              this.workAuthor.name,
-              `%${escapeLikePattern(normalizedAuthor)}%`,
-            )}
+          from ${this.workCategoryRelation}
+          where ${this.workCategoryRelation.workId} = ${this.work.id}
+            and ${inArray(this.workCategoryRelation.categoryId, categoryIds)}
         )
       `)
     }
@@ -654,6 +729,56 @@ export class WorkService {
     }
 
     return conditions
+  }
+
+  /**
+   * 手工分页查询作品列表。
+   * 在需要定制筛选与排序时，直接复用 Drizzle 基础能力，不依赖 findPagination 扩展。
+   */
+  private async paginateWorkList(
+    dto: QueryWorkInput,
+    userId?: number,
+    options?: {
+      forcePublished?: boolean
+      selectPageFields?: boolean
+    },
+  ) {
+    const pageQuery = this.drizzle.buildPageQuery(dto, {
+      table: this.work,
+    })
+    const { pageIndex, pageSize, limit, offset, orderBySql } = pageQuery
+    const where = and(...this.buildWorkPageConditions(dto, options))
+
+    const listPromise = options?.selectPageFields
+      ? this.db
+          .select(this.getPageWorkSelectFields())
+          .from(this.work)
+          .where(where)
+          .orderBy(...orderBySql)
+          .limit(limit)
+          .offset(offset)
+      : this.db
+          .select()
+          .from(this.work)
+          .where(where)
+          .orderBy(...orderBySql)
+          .limit(limit)
+          .offset(offset)
+
+    const [list, total] = await Promise.all([
+      listPromise,
+      this.db.$count(this.work, where),
+    ])
+
+    return this.attachWorkRelations(
+      {
+        list,
+        total,
+        pageIndex,
+        pageSize,
+      },
+      userId,
+    )
   }
 
   /**
@@ -751,21 +876,12 @@ export class WorkService {
    * 分页查询作品（支持多条件组合过滤）
    * 查询说明：
    * - 名称、发布者支持模糊匹配（ILIKE）
-   * - 作者通过 EXISTS 子查询关联 workAuthor 表实现模糊匹配
-   * - 标签通过 EXISTS 子查询支持多标签筛选（AND 语义）
+   * - 作者支持按 ID 精确筛选和名称模糊筛选
+   * - 分类、标签支持按 ID 列表筛选
    * - 其他字段（类型、发布状态、连载状态等）支持精确匹配
    */
-  async getWorkPage(queryWorkDto: QueryWorkInput, userId?: number) {
-    const { pageIndex, pageSize, orderBy } = queryWorkDto
-    const conditions = this.buildWorkPageConditions(queryWorkDto)
-
-    const page = await this.drizzle.ext.findPagination(this.work, {
-      where: and(...conditions),
-      pageIndex,
-      pageSize,
-      orderBy,
-    })
-    return this.attachWorkRelations(page, userId)
+  async getWorkPage(dto: QueryWorkInput, userId?: number) {
+    return this.paginateWorkList(dto, userId)
   }
 
   /**

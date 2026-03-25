@@ -25,6 +25,8 @@ import { ConfigReader } from '@libs/system-config'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
+import { LikeTargetTypeEnum } from '../like/like.constant'
+import { LikeService } from '../like/like.service'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentTargetTypeEnum } from './comment.constant'
@@ -50,6 +52,7 @@ export class CommentService {
     private readonly commentPermissionService: CommentPermissionService,
     /** 评论成长服务，处理评论相关的积分/经验奖励 */
     private readonly commentGrowthService: CommentGrowthService,
+    private readonly likeService: LikeService,
     /** 消息发件箱服务，用于发送通知消息 */
     private readonly messageOutboxService: MessageOutboxService,
     private readonly appUserCountService: AppUserCountService,
@@ -150,6 +153,24 @@ export class CommentService {
       comment.auditStatus === AuditStatusEnum.APPROVED &&
       !comment.isHidden &&
       comment.deletedAt === null
+    )
+  }
+
+  /**
+   * 批量查询评论点赞状态。
+   *
+   * 仅在登录用户场景下查询，匿名访问统一返回空映射，
+   * 由调用方按需兜底为 false，保持响应结构稳定。
+   */
+  private async getCommentLikedMap(commentIds: number[], userId?: number) {
+    if (!userId || commentIds.length === 0) {
+      return new Map<number, boolean>()
+    }
+
+    return this.likeService.checkStatusBatch(
+      LikeTargetTypeEnum.COMMENT,
+      commentIds,
+      userId,
     )
   }
 
@@ -669,6 +690,7 @@ export class CommentService {
       pageIndex,
       pageSize,
       previewReplyLimit = 3,
+      userId,
     } = query
     const limit = Math.max(0, Math.min(previewReplyLimit, 10))
     const page = await this.drizzle.ext.findPagination(this.userComment, {
@@ -685,7 +707,15 @@ export class CommentService {
       orderBy: {
         createdAt: 'desc',
       },
-      pick: ['id', 'userId', 'targetType', 'content', 'createdAt', 'targetId'],
+      pick: [
+        'id',
+        'userId',
+        'targetType',
+        'targetId',
+        'content',
+        'floor',
+        'createdAt',
+      ],
     })
 
     if (page.list.length === 0) {
@@ -808,17 +838,21 @@ export class CommentService {
         ...previewReplies.map((item) => item.userId),
       ]),
     ]
-    const users = userIds.length
-      ? await this.db
-        .select({
-          id: this.appUser.id,
-          nickname: this.appUser.nickname,
-          avatarUrl: this.appUser.avatarUrl,
-        })
-        .from(this.appUser)
-        .where(inArray(this.appUser.id, userIds))
-      : []
-    const userMap = new Map(users.map((item) => [item.id, item]))
+    const commentIds = [...new Set([...rootIds, ...previewReplies.map((item) => item.id)])]
+    const [users, likedMap] = await Promise.all([
+      userIds.length
+        ? this.db
+          .select({
+            id: this.appUser.id,
+            nickname: this.appUser.nickname,
+            avatarUrl: this.appUser.avatarUrl,
+          })
+          .from(this.appUser)
+          .where(inArray(this.appUser.id, userIds))
+        : Promise.resolve([]),
+      this.getCommentLikedMap(commentIds, userId),
+    ])
+    const userMap = new Map(users.map((item) => [item.id, item] as const))
 
     return {
       ...page,
@@ -831,12 +865,14 @@ export class CommentService {
             content: reply.content,
             replyToId: reply.replyToId,
             createdAt: reply.createdAt,
+            liked: likedMap.get(reply.id) ?? false,
             user: userMap.get(reply.userId) ?? undefined,
           }),
         )
 
         return {
           ...item,
+          liked: likedMap.get(item.id) ?? false,
           user: userMap.get(item.userId) ?? undefined,
           replyCount,
           previewReplies,

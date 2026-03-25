@@ -1,12 +1,13 @@
 import { FavoriteService } from '@libs/interaction/favorite'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
-  FavoritePageItemDto,
-  FavoritePageQueryDto,
   FavoriteStatusResponseDto,
   FavoriteTargetDto,
+  FavoriteTopicPageItemDto,
+  FavoriteWorkPageItemDto,
 } from './dto/favorite.dto'
 
 @ApiTags('收藏')
@@ -17,7 +18,7 @@ export class FavoriteController {
   @Post('favorite')
   @ApiDoc({
     summary: '收藏',
-    model: Boolean,
+    model: IdDto,
   })
   async favorite(
     @Body() body: FavoriteTargetDto,
@@ -38,10 +39,11 @@ export class FavoriteController {
     @Body() body: FavoriteTargetDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.favoriteService.unfavorite({
+    await this.favoriteService.unfavorite({
       ...body,
       userId,
     })
+    return true
   }
 
   @Get('status')
@@ -61,16 +63,31 @@ export class FavoriteController {
     }
   }
 
-  @Get('my/page')
+  @Get('work/page')
   @ApiPageDoc({
-    summary: '分页查询我的收藏记录',
-    model: FavoritePageItemDto,
+    summary: '分页查询我收藏的作品',
+    model: FavoriteWorkPageItemDto,
   })
-  async my(
-    @Query() query: FavoritePageQueryDto,
+  async workPage(
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.favoriteService.getUserFavorites({
+    return this.favoriteService.getUserWorkFavorites({
+      ...query,
+      userId,
+    })
+  }
+
+  @Get('topic/page')
+  @ApiPageDoc({
+    summary: '分页查询我收藏的论坛主题',
+    model: FavoriteTopicPageItemDto,
+  })
+  async topicPage(
+    @Query() query: PageDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.favoriteService.getUserTopicFavorites({
       ...query,
       userId,
     })

@@ -1,8 +1,8 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   AdminUserChangePasswordInput,
   AdminUserPageQueryInput,
 } from './admin-user.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { AdminUser, NewAdminUser } from '@db/schema'
 import { AdminUserRoleEnum } from '@libs/platform/constant'

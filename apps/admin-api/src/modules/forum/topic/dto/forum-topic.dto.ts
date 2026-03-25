@@ -1,5 +1,8 @@
 import { BaseForumSectionDto } from '@libs/forum/section'
-import { BaseForumTopicDto } from '@libs/forum/topic'
+import {
+  BaseForumTopicDto,
+  ForumTopicWritableFieldsDto,
+} from '@libs/forum/topic'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import {
   ArrayProperty,
@@ -8,11 +11,10 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import {
   IntersectionType,
-  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
@@ -113,6 +115,8 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   'userId',
   'title',
   'content',
+  'images',
+  'videos',
   'isPinned',
   'isFeatured',
   'isLocked',
@@ -157,31 +161,14 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   user!: AdminForumTopicUserDto
 }
 
-export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
-  ...OMIT_BASE_FIELDS,
-  'version',
-  'sensitiveWordHits',
-  'auditAt',
-  'viewCount',
-  'commentCount',
-  'likeCount',
-  'favoriteCount',
-  'lastCommentUserId',
-  'lastCommentAt',
-  'auditStatus',
-  'auditReason',
-  'auditRole',
-  'auditById',
-  'isPinned',
-  'isFeatured',
-  'isLocked',
-  'isHidden',
-  'deletedAt',
-] as const) {}
+export class CreateForumTopicDto extends IntersectionType(
+  PickType(BaseForumTopicDto, ['sectionId', 'userId'] as const),
+  ForumTopicWritableFieldsDto,
+) {}
 
 export class UpdateForumTopicDto extends IntersectionType(
-  PickType(BaseForumTopicDto, ['title', 'content'] as const),
   IdDto,
+  ForumTopicWritableFieldsDto,
 ) {}
 
 export class QueryForumTopicDto extends IntersectionType(

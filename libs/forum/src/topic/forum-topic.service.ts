@@ -2,6 +2,7 @@ import type { ForumTopic } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateForumTopicInput,
+  ForumTopicMediaInput,
   PublicForumTopicDetailContext,
   QueryForumTopicInput,
   QueryPublicForumTopicInput,
@@ -15,7 +16,7 @@ import type {
 import {
   DrizzleService,
   escapeLikePattern,
- } from '@db/core'
+} from '@db/core'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward'
 import {
@@ -51,6 +52,11 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumReviewPolicyEnum } from '../forum.constant'
 import { ForumPermissionService } from '../permission'
+import {
+  FORUM_TOPIC_IMAGE_MAX_COUNT,
+  FORUM_TOPIC_MEDIA_URL_MAX_LENGTH,
+  FORUM_TOPIC_VIDEO_MAX_COUNT,
+} from './forum-topic.constant'
 
 /**
  * 论坛主题服务，负责主题的增删改查、审核、置顶、精华、锁定等核心业务。
@@ -81,6 +87,81 @@ export class ForumTopicService {
 
   get userCommentTable() {
     return this.drizzle.schema.userComment
+  }
+
+  /**
+   * 规范化论坛主题媒体列表。
+   * - 去除空白字符串
+   * - 保留首个出现顺序并去重
+   * - 统一校验单项长度与数量上限
+   */
+  private normalizeMediaList(
+    value: string[] | null | undefined,
+    options: {
+      label: string
+      maxCount: number
+      fallback: string[]
+    },
+  ) {
+    if (value === undefined) {
+      return options.fallback
+    }
+    if (value === null) {
+      return []
+    }
+
+    const normalizedList: string[] = []
+    const seen = new Set<string>()
+
+    for (const item of value) {
+      const normalizedItem = item.trim()
+      if (!normalizedItem) {
+        continue
+      }
+      if (normalizedItem.length > FORUM_TOPIC_MEDIA_URL_MAX_LENGTH) {
+        throw new BadRequestException(
+          `${options.label}地址长度不能超过 ${FORUM_TOPIC_MEDIA_URL_MAX_LENGTH} 个字符`,
+        )
+      }
+      if (seen.has(normalizedItem)) {
+        continue
+      }
+      seen.add(normalizedItem)
+      normalizedList.push(normalizedItem)
+    }
+
+    if (normalizedList.length > options.maxCount) {
+      throw new BadRequestException(
+        `${options.label}最多支持 ${options.maxCount} 个`,
+      )
+    }
+
+    return normalizedList
+  }
+
+  /**
+   * 统一规范化论坛主题媒体输入。
+   * 创建时补空数组，更新时对未传字段保留当前值。
+   */
+  private normalizeTopicMedia(
+    media: ForumTopicMediaInput,
+    fallback: Pick<ForumTopic, 'images' | 'videos'> = {
+      images: [],
+      videos: [],
+    },
+  ) {
+    return {
+      images: this.normalizeMediaList(media.images, {
+        label: '图片',
+        maxCount: FORUM_TOPIC_IMAGE_MAX_COUNT,
+        fallback: fallback.images,
+      }),
+      videos: this.normalizeMediaList(media.videos, {
+        label: '视频',
+        maxCount: FORUM_TOPIC_VIDEO_MAX_COUNT,
+        fallback: fallback.videos,
+      }),
+    }
   }
 
   /**
@@ -182,7 +263,7 @@ export class ForumTopicService {
    * - 写入后记录操作日志
    */
   async createForumTopic(createTopicDto: CreateForumTopicInput) {
-    const { sectionId, userId, ...topicData } = createTopicDto
+    const { sectionId, userId, images, videos, ...topicData } = createTopicDto
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
       userId,
@@ -201,10 +282,13 @@ export class ForumTopicService {
       highestLevel,
     )
 
+    const media = this.normalizeTopicMedia({ images, videos })
+
     const createPayload = {
       ...topicData,
       sectionId,
       userId,
+      ...media,
       auditStatus,
       sensitiveWordHits: hits?.length ? hits : undefined,
       isHidden,
@@ -470,6 +554,8 @@ export class ForumTopicService {
         'sectionId',
         'userId',
         'title',
+        'images',
+        'videos',
         'isPinned',
         'isFeatured',
         'isLocked',
@@ -518,6 +604,109 @@ export class ForumTopicService {
   }
 
   /**
+   * 批量获取收藏列表所需的公开主题分页项详情。
+   * 复用主题分页的字段语义，并补充当前用户的点赞/收藏状态与发帖用户简要信息。
+   */
+  async batchGetFavoriteTopicDetails(targetIds: number[], userId?: number) {
+    if (targetIds.length === 0) {
+      return new Map<number, unknown>()
+    }
+
+    const topics = await this.db.query.forumTopic.findMany({
+      where: {
+        id: { in: targetIds },
+        auditStatus: AuditStatusEnum.APPROVED,
+        isHidden: false,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        sectionId: true,
+        userId: true,
+        title: true,
+        images: true,
+        videos: true,
+        isPinned: true,
+        isFeatured: true,
+        isLocked: true,
+        viewCount: true,
+        commentCount: true,
+        likeCount: true,
+        favoriteCount: true,
+        lastCommentAt: true,
+        createdAt: true,
+      },
+      with: {
+        section: {
+          columns: {
+            isEnabled: true,
+            deletedAt: true,
+          },
+        },
+        user: {
+          columns: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    })
+
+    const visibleTopics = topics.filter(
+      (topic) => topic.section && !topic.section.deletedAt && topic.section.isEnabled,
+    )
+
+    if (visibleTopics.length === 0) {
+      return new Map()
+    }
+
+    let likedMap = new Map<number, boolean>()
+    let favoritedMap = new Map<number, boolean>()
+    if (userId) {
+      const visibleTopicIds = visibleTopics.map((topic) => topic.id)
+      ;[likedMap, favoritedMap] = await Promise.all([
+        this.likeService.checkStatusBatch(
+          LikeTargetTypeEnum.FORUM_TOPIC,
+          visibleTopicIds,
+          userId,
+        ),
+        this.favoriteService.checkStatusBatch(
+          FavoriteTargetTypeEnum.FORUM_TOPIC,
+          visibleTopicIds,
+          userId,
+        ),
+      ])
+    }
+
+    return new Map(
+      visibleTopics.map((topic) => [
+        topic.id,
+        {
+          id: topic.id,
+          sectionId: topic.sectionId,
+          userId: topic.userId,
+          title: topic.title,
+          images: topic.images,
+          videos: topic.videos,
+          isPinned: topic.isPinned,
+          isFeatured: topic.isFeatured,
+          isLocked: topic.isLocked,
+          viewCount: topic.viewCount,
+          commentCount: topic.commentCount,
+          likeCount: topic.likeCount,
+          favoriteCount: topic.favoriteCount,
+          lastCommentAt: topic.lastCommentAt,
+          createdAt: topic.createdAt,
+          liked: likedMap.get(topic.id) ?? false,
+          favorited: favoritedMap.get(topic.id) ?? false,
+          user: topic.user ?? undefined,
+        },
+      ]),
+    )
+  }
+
+  /**
    * 更新论坛主题内容。
    * - 锁定主题不允许编辑
    * - 编辑时会重新检测敏感词并重新计算审核状态
@@ -528,7 +717,7 @@ export class ForumTopicService {
     topic: ForumTopic,
     updateForumTopicDto: UpdateForumTopicInput,
   ) {
-    const { id, ...updateData } = updateForumTopicDto
+    const { id, images, videos, ...updateData } = updateForumTopicDto
 
     if (topic.isLocked) {
       throw new BadRequestException('主题已锁定，无法编辑')
@@ -553,8 +742,17 @@ export class ForumTopicService {
       highestLevel,
     )
 
+    const media = this.normalizeTopicMedia(
+      { images, videos },
+      {
+        images: topic.images,
+        videos: topic.videos,
+      },
+    )
+
     const updatePayload = {
       ...updateData,
+      ...media,
       auditStatus,
       sensitiveWordHits: hits?.length ? hits : null,
       isHidden,

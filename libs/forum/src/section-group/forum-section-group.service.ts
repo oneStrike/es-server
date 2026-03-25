@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   CreateForumSectionGroupInput,
   QueryForumSectionGroupInput,
@@ -6,7 +7,6 @@ import type {
   UpdateForumSectionGroupEnabledInput,
   UpdateForumSectionGroupInput,
 } from './section-group.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   FollowService,

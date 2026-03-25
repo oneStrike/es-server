@@ -1,10 +1,10 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   ReadingHistoryIndexedRow,
   ReadingHistoryItem,
   ReadingHistoryQuery,
   TouchByWorkInput,
 } from './reading-state.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { ContentTypeEnum, WorkTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'

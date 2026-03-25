@@ -1,6 +1,6 @@
+import type { SQL } from 'drizzle-orm'
 import type { NotificationOutboxPayload } from '../outbox/outbox.type'
 import type { QueryUserNotificationListInput } from './notification.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'

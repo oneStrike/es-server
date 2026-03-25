@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   CreateUserPointRuleInput,
   QueryUserPointRulePageInput,
@@ -5,7 +6,6 @@ import type {
 } from './point.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import type { SQL } from 'drizzle-orm'
 import { and, eq } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 

@@ -69,6 +69,7 @@ export interface TargetCommentsQuery {
   pageIndex?: number
   pageSize?: number
   previewReplyLimit?: number
+  userId?: number
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   AssignUserBadgeInput,
   CreateUserBadgeInput,
@@ -5,7 +6,6 @@ import type {
   UpdateUserBadgeInput,
   UpdateUserBadgeStatusInput,
 } from './badge.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   BadRequestException,

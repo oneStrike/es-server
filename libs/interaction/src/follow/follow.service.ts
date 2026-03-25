@@ -1,11 +1,11 @@
 import type { UserFollow } from '@db/schema'
+import type { SQL } from 'drizzle-orm'
 import type {
   FollowListQuery,
   FollowRecordInput,
   FollowStatusView,
 } from './follow.type'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'

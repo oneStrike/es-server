@@ -1,26 +1,19 @@
-import { BaseWorkDto } from '@libs/content/work'
 import { BaseFavoriteDto } from '@libs/interaction/favorite'
 import {
   BooleanProperty,
   NestedProperty,
-  StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/core'
 import {
-  IntersectionType,
-  PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { AppForumTopicPageItemDto } from '../../forum/dto/forum-topic.dto'
+import { PageWorkDto } from '../../work/dto/work.dto'
 
 export class FavoriteTargetDto extends PickType(BaseFavoriteDto, [
   'targetId',
   'targetType',
 ]) {}
-
-export class FavoritePageQueryDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseFavoriteDto, ['targetType'])),
-) {}
 
 export class FavoriteStatusResponseDto {
   @BooleanProperty({
@@ -32,39 +25,41 @@ export class FavoriteStatusResponseDto {
   isFavorited!: boolean
 }
 
-export class FavoriteTargetDetailDto extends PickType(BaseWorkDto, ['id']) {
-  @StringProperty({
-    description: '作品名称（作品类型返回）',
-    example: '进击的巨人',
-    required: false,
-    validation: false,
-  })
-  name?: string
+export class FavoriteTopicUserBriefDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+] as const) {}
 
-  @StringProperty({
-    description: '作品封面（作品类型返回）',
-    example: 'https://example.com/cover.jpg',
-    required: false,
-    validation: false,
-  })
-  cover?: string
-
-  @StringProperty({
-    description: '主题标题（论坛主题类型返回）',
-    example: '如何学习 TypeScript？',
-    required: false,
-    validation: false,
-  })
-  title?: string
-}
-
-export class FavoritePageItemDto extends BaseFavoriteDto {
+export class FavoriteTopicInfoDto extends AppForumTopicPageItemDto {
   @NestedProperty({
-    description: '目标简要信息（作品返回 name/cover，论坛主题返回 title）',
-    type: FavoriteTargetDetailDto,
+    description: '发帖用户（论坛主题类型返回）',
+    type: FavoriteTopicUserBriefDto,
     required: false,
     nullable: false,
     validation: false,
   })
-  targetDetail?: FavoriteTargetDetailDto
+  user?: FavoriteTopicUserBriefDto
+}
+
+export class FavoriteWorkPageItemDto extends BaseFavoriteDto {
+  @NestedProperty({
+    description: '作品详情',
+    type: PageWorkDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  work?: PageWorkDto
+}
+
+export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
+  @NestedProperty({
+    description: '论坛主题详情',
+    type: FavoriteTopicInfoDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  topic?: FavoriteTopicInfoDto
 }

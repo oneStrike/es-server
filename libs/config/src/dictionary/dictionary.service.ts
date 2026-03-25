@@ -165,14 +165,37 @@ export class LibDictionaryService {
    * @throws BadRequestException - 当字典不存在或编码/名称冲突时抛出
    */
   async updateDictionary(dto: UpdateDictionaryInput) {
-    const { id, ...updateData } = dto
-    const data = await this.drizzle.withErrorHandling(() =>
-      this.db
+    const { id, code, ...otherUpdateData } = dto
+
+    await this.drizzle.withTransaction(async (tx) => {
+      const currentDictionary = await tx.query.dictionary.findFirst({
+        where: { id },
+        columns: { code: true },
+      })
+
+      if (!currentDictionary) {
+        throw new NotFoundException('字典不存在')
+      }
+
+      const updateData = code === undefined
+        ? otherUpdateData
+        : { ...otherUpdateData, code }
+      const result = await tx
         .update(this.dictionary)
         .set(updateData)
-        .where(eq(this.dictionary.id, id)),
-    )
-    this.drizzle.assertAffectedRows(data, '字典不存在')
+        .where(eq(this.dictionary.id, id))
+
+      this.drizzle.assertAffectedRows(result, '字典不存在')
+
+      // 字典编码变更时，同步刷新子项绑定编码，避免父子关系失联。
+      if (code && code !== currentDictionary.code) {
+        await tx
+          .update(this.dictionaryItem)
+          .set({ dictionaryCode: code })
+          .where(eq(this.dictionaryItem.dictionaryCode, currentDictionary.code))
+      }
+    })
+
     return true
   }
 

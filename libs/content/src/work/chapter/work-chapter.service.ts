@@ -1,8 +1,8 @@
+import type { SQL } from 'drizzle-orm'
 import {
   DrizzleService,
   escapeLikePattern,
  } from '@db/core'
-import type { SQL } from 'drizzle-orm'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,

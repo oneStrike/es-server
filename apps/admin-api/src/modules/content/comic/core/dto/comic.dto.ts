@@ -4,7 +4,7 @@ import { BaseTagDto } from '@libs/content/tag'
 import { BaseWorkDto } from '@libs/content/work'
 import {
   ArrayProperty,
-  BooleanProperty,
+  NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
@@ -70,6 +70,17 @@ export class QueryWorkDto extends IntersectionType(
 ) {
   @StringProperty({ description: '作者名称', example: '村上', required: false })
   author?: string
+
+  @NumberProperty({ description: '作者ID', example: 1, required: false })
+  authorId?: number
+
+  @ArrayProperty({
+    description: '分类ID列表',
+    itemType: 'number',
+    example: [1],
+    required: false,
+  })
+  categoryIds?: number[]
 
   @ArrayProperty({
     description: '标签ID列表',

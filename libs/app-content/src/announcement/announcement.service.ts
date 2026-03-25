@@ -2,7 +2,7 @@ import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm'
+import { and, eq, gte, ilike, lte, sql } from 'drizzle-orm'
 import {
   AnnouncementPageQuery,
   CreateAnnouncementInput,

@@ -1,10 +1,10 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   CreateForumActionLogInput,
   QueryForumActionLogInput,
 } from './action-log.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
-import type { SQL } from 'drizzle-orm'
 import { and, eq } from 'drizzle-orm'
 
 /**

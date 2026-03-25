@@ -17,12 +17,11 @@ export type FavoriteRecordInput = FavoriteTargetInput &
   Pick<UserFavorite, 'userId'>
 
 /**
- * 用户收藏列表查询入参。
- * - 以用户ID为主，目标类型支持可选筛选
+ * 用户收藏分页查询入参。
+ * - 以用户ID为主
  * - 分页参数与 PageDto 语义保持一致
  */
-export type FavoriteListQuery = Pick<UserFavorite, 'userId'> &
-  Partial<Pick<FavoriteTargetInput, 'targetType'>> & {
-    pageIndex?: number
-    pageSize?: number
-  }
+export type FavoritePageQuery = Pick<UserFavorite, 'userId'> & {
+  pageIndex?: number
+  pageSize?: number
+}

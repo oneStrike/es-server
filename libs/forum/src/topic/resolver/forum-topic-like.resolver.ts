@@ -172,6 +172,8 @@ export class ForumTopicLikeResolver
       columns: {
         id: true,
         title: true,
+        images: true,
+        videos: true,
       },
       with: {
         section: {
@@ -193,6 +195,8 @@ export class ForumTopicLikeResolver
         {
           id: topic.id,
           title: topic.title,
+          images: topic.images,
+          videos: topic.videos,
         },
       ]),
     )

@@ -1,17 +1,14 @@
 import type { Db } from '@db/core'
 import type { AppUser } from '@db/schema'
+import type { SQL } from 'drizzle-orm'
 import type {
   QueryUserProfileListInput,
   UpdateUserStatusInput,
 } from './profile.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
-import {
-  FavoriteService,
-  FavoriteTargetTypeEnum,
-} from '@libs/interaction/favorite'
+import { FavoriteService } from '@libs/interaction/favorite'
 import {
   UserDefaults,
   UserStatusEnum,
@@ -272,6 +269,8 @@ export class UserProfileService {
         'id',
         'sectionId',
         'title',
+        'images',
+        'videos',
         'isPinned',
         'isFeatured',
         'isLocked',
@@ -312,9 +311,8 @@ export class UserProfileService {
    * @returns 分页的收藏列表，包含主题信息
    */
   async getMyFavorites(userId: number) {
-    const result = await this.favoriteService.getUserFavorites({
+    const result = await this.favoriteService.getUserTopicFavorites({
       userId,
-      targetType: FavoriteTargetTypeEnum.FORUM_TOPIC,
     })
 
     if (result.list.length === 0) {

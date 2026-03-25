@@ -50,6 +50,7 @@ export interface QueryWorkInput {
   name?: string
   publisher?: string
   author?: string
+  authorId?: number
   isPublished?: boolean
   serialStatus?: number
   language?: string
@@ -58,6 +59,7 @@ export interface QueryWorkInput {
   isRecommended?: boolean
   isHot?: boolean
   isNew?: boolean
+  categoryIds?: number[]
   tagIds?: number[]
   pageIndex?: number
   pageSize?: number

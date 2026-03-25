@@ -1,6 +1,5 @@
 import type { UserFavorite } from '@db/schema'
-import type { FavoriteListQuery, FavoriteRecordInput } from './favorite.type'
-import type { SQL } from 'drizzle-orm'
+import type { FavoritePageQuery, FavoriteRecordInput } from './favorite.type'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -204,23 +203,18 @@ export class FavoriteService {
   }
 
   /**
-   * 获取用户收藏列表
-   * @param query - 查询参数
-   * @param query.targetType - 目标类型（可选）
-   * @param query.pageIndex - 页码
-   * @param query.pageSize - 每页数量
-   * @param query.userId - 用户 ID
-   * @returns 分页收藏列表
+   * 按目标类型分页查询用户收藏记录。
+   * 该方法只负责基础分页，不直接拼装对外响应结构。
    */
-  async getUserFavorites(query: FavoriteListQuery) {
-    const conditions: SQL[] = [eq(this.userFavorite.userId, query.userId)]
-
-    if (query.targetType !== undefined) {
-      conditions.push(eq(this.userFavorite.targetType, query.targetType))
-    }
-
+  private async getFavoritePageByTargetTypes(
+    query: FavoritePageQuery,
+    targetTypes: FavoriteTargetTypeEnum[],
+  ) {
     const page = await this.drizzle.ext.findPagination(this.userFavorite, {
-      where: and(...conditions),
+      where: and(
+        eq(this.userFavorite.userId, query.userId),
+        inArray(this.userFavorite.targetType, targetTypes),
+      ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {
@@ -229,10 +223,12 @@ export class FavoriteService {
     })
 
     if (page.list.length === 0) {
-      return page
+      return {
+        page,
+        detailMaps: new Map<FavoriteTargetTypeEnum, Map<number, unknown>>(),
+      }
     }
 
-    // 按照 TargetType 分组收集 IDs
     const typeToIdsAggregator = new Map<FavoriteTargetTypeEnum, number[]>()
     for (const item of page.list) {
       if (!typeToIdsAggregator.has(item.targetType)) {
@@ -241,7 +237,6 @@ export class FavoriteService {
       typeToIdsAggregator.get(item.targetType)!.push(item.targetId)
     }
 
-    // 并行调用各个 Resolver 获取详情
     const detailMaps = new Map<FavoriteTargetTypeEnum, Map<number, unknown>>()
     await Promise.all(
       Array.from(typeToIdsAggregator.entries(), async ([type, ids]) => {
@@ -250,7 +245,10 @@ export class FavoriteService {
         try {
           const resolver = this.getResolver(type)
           if (resolver.batchGetDetails) {
-            const detailMap = await resolver.batchGetDetails(uniqueIds)
+            const detailMap = await resolver.batchGetDetails(
+              uniqueIds,
+              query.userId,
+            )
             detailMaps.set(type, detailMap)
             if (detailMap.size < uniqueIds.length) {
               this.logger.warn(
@@ -269,17 +267,45 @@ export class FavoriteService {
     )
 
     return {
+      page,
+      detailMaps,
+    }
+  }
+
+  /**
+   * 分页查询用户收藏的作品。
+   * 作品收藏由漫画与小说两种目标类型组成，统一返回 work 字段。
+   */
+  async getUserWorkFavorites(query: FavoritePageQuery) {
+    const { page, detailMaps } = await this.getFavoritePageByTargetTypes(query, [
+      FavoriteTargetTypeEnum.WORK_COMIC,
+      FavoriteTargetTypeEnum.WORK_NOVEL,
+    ])
+
+    return {
       ...page,
-      list: page.list.map((item) => {
-        const targetDetail = detailMaps.get(item.targetType)?.get(item.targetId)
-        if (targetDetail) {
-          return {
-            ...item,
-            targetDetail,
-          }
-        }
-        return item
-      }),
+      list: page.list.map((item) => ({
+        ...item,
+        work: detailMaps.get(item.targetType)?.get(item.targetId),
+      })),
+    }
+  }
+
+  /**
+   * 分页查询用户收藏的论坛主题。
+   * 主题收藏只返回论坛主题字段，避免与作品结构混杂。
+   */
+  async getUserTopicFavorites(query: FavoritePageQuery) {
+    const { page, detailMaps } = await this.getFavoritePageByTargetTypes(query, [
+      FavoriteTargetTypeEnum.FORUM_TOPIC,
+    ])
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        topic: detailMaps.get(item.targetType)?.get(item.targetId),
+      })),
     }
   }
 }

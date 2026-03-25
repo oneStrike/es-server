@@ -85,6 +85,14 @@ export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
   'replyToId',
   'createdAt',
 ] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已点赞该回复',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
   @NestedProperty({
     description: '回复用户',
     required: false,
@@ -112,6 +120,14 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   user?: CommentUserDto
+
+  @BooleanProperty({
+    description: '当前用户是否已点赞该评论',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
 
   @NumberProperty({
     description: '楼中楼回复总数',

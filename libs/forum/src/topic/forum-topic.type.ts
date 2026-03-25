@@ -2,20 +2,26 @@ import type { ForumTopic } from '@db/schema'
 import type { AuditStatusEnum } from '@libs/platform/constant'
 
 /**
+ * 论坛主题媒体输入。
+ * 使用有序附件列表承载图片与视频，controller 可按需省略字段。
+ */
+export type ForumTopicMediaInput = Partial<Pick<ForumTopic, 'images' | 'videos'>>
+
+/**
  * 创建论坛主题的领域输入。
  * 由 controller 侧 DTO 映射而来，service 不直接依赖 DTO。
  */
-export type CreateForumTopicInput = Pick<
-  ForumTopic,
-  'sectionId' | 'userId' | 'title' | 'content'
->
+export type CreateForumTopicInput = Pick<ForumTopic, 'sectionId' | 'userId'> &
+  Pick<ForumTopic, 'title' | 'content'> &
+  ForumTopicMediaInput
 
 /**
  * 更新论坛主题正文的领域输入。
- * 仅允许修改标题与内容，不允许迁移板块或变更发帖人。
+ * 仅允许修改标题、内容与媒体列表，不允许迁移板块或变更发帖人。
  */
 export type UpdateForumTopicInput = Pick<ForumTopic, 'id'> &
-  Pick<ForumTopic, 'title' | 'content'>
+  Pick<ForumTopic, 'title' | 'content'> &
+  ForumTopicMediaInput
 
 /**
  * 后台分页查询论坛主题的条件。

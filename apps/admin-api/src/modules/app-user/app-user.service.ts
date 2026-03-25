@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   AddAdminAppUserExperienceInput,
   AddAdminAppUserPointsInput,
@@ -13,7 +14,6 @@ import type {
   UpdateAdminAppUserProfileInput,
   UpdateAdminAppUserStatusInput,
 } from './app-user.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserBadgeService } from '@libs/growth/badge'
 import { UserExperienceService } from '@libs/growth/experience'

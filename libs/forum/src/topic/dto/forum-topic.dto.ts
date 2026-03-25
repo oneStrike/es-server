@@ -9,6 +9,37 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word'
+import { IntersectionType, PickType } from '@nestjs/swagger'
+import {
+  FORUM_TOPIC_IMAGE_MAX_COUNT,
+  FORUM_TOPIC_MEDIA_URL_MAX_LENGTH,
+  FORUM_TOPIC_VIDEO_MAX_COUNT,
+} from '../forum-topic.constant'
+
+function forumTopicMediaItemValidator (value: unknown) {
+  return typeof value === 'string' &&
+    value.trim().length > 0 &&
+    value.trim().length <= FORUM_TOPIC_MEDIA_URL_MAX_LENGTH
+}
+
+const forumTopicImageArrayOptions = {
+  itemType: 'string' as const,
+  example: [
+    '/files/forum/2026-03-25/image/topic-1.png',
+    'https://cdn.example.com/forum/topic-2.jpg',
+  ],
+  maxLength: FORUM_TOPIC_IMAGE_MAX_COUNT,
+  itemValidator: forumTopicMediaItemValidator,
+  itemErrorMessage: `图片地址不能为空且长度不能超过 ${FORUM_TOPIC_MEDIA_URL_MAX_LENGTH} 个字符`,
+}
+
+const forumTopicVideoArrayOptions = {
+  itemType: 'string' as const,
+  example: ['https://cdn.example.com/forum/topic-1.mp4'],
+  maxLength: FORUM_TOPIC_VIDEO_MAX_COUNT,
+  itemValidator: forumTopicMediaItemValidator,
+  itemErrorMessage: `视频地址不能为空且长度不能超过 ${FORUM_TOPIC_MEDIA_URL_MAX_LENGTH} 个字符`,
+}
 
 /**
  * 论坛主题基础 DTO。
@@ -29,6 +60,22 @@ export class BaseForumTopicDto extends BaseDto {
     required: true,
   })
   content!: string
+
+  @ArrayProperty({
+    description: '主题图片列表',
+    required: true,
+    default: [],
+    ...forumTopicImageArrayOptions,
+  })
+  images!: string[]
+
+  @ArrayProperty({
+    description: '主题视频列表',
+    required: true,
+    default: [],
+    ...forumTopicVideoArrayOptions,
+  })
+  videos!: string[]
 
   @NumberProperty({
     description: '关联的板块ID',
@@ -197,3 +244,32 @@ export class BaseForumTopicDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+/**
+ * 论坛主题媒体输入 DTO。
+ * 供创建、更新接口复用，允许省略字段以保持现有客户端兼容。
+ */
+export class ForumTopicMediaInputDto {
+  @ArrayProperty({
+    description: '主题图片列表',
+    required: false,
+    ...forumTopicImageArrayOptions,
+  })
+  images?: string[]
+
+  @ArrayProperty({
+    description: '主题视频列表',
+    required: false,
+    ...forumTopicVideoArrayOptions,
+  })
+  videos?: string[]
+}
+
+/**
+ * 论坛主题可编辑字段 DTO。
+ * 统一约束标题、正文和可选媒体列表，避免 app/admin 入口重复声明。
+ */
+export class ForumTopicWritableFieldsDto extends IntersectionType(
+  PickType(BaseForumTopicDto, ['title', 'content'] as const),
+  ForumTopicMediaInputDto,
+) {}

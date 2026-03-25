@@ -1,6 +1,9 @@
 import { BaseForumSectionDto } from '@libs/forum/section'
 import { BaseForumTagDto } from '@libs/forum/tag'
-import { BaseForumTopicDto } from '@libs/forum/topic'
+import {
+  BaseForumTopicDto,
+  ForumTopicWritableFieldsDto,
+} from '@libs/forum/topic'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -17,15 +20,14 @@ export class QueryAppForumTopicPageDto extends IntersectionType(
 
 export class QueryMyForumTopicPageDto extends PartialType(QueryAppForumTopicPageDto) { }
 
-export class CreateAppForumTopicDto extends PickType(BaseForumTopicDto, [
-  'sectionId',
-  'title',
-  'content',
-] as const) { }
+export class CreateAppForumTopicDto extends IntersectionType(
+  PickType(BaseForumTopicDto, ['sectionId'] as const),
+  ForumTopicWritableFieldsDto,
+) { }
 
 export class UpdateAppForumTopicDto extends IntersectionType(
   IdDto,
-  PickType(BaseForumTopicDto, ['title', 'content'] as const),
+  ForumTopicWritableFieldsDto,
 ) { }
 
 export class AppForumSectionBriefDto extends PickType(BaseForumSectionDto, [
@@ -45,6 +47,8 @@ export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'sectionId',
   'userId',
   'title',
+  'images',
+  'videos',
   'isPinned',
   'isFeatured',
   'isLocked',
@@ -113,6 +117,8 @@ export class MyForumTopicItemDto extends PickType(BaseForumTopicDto, [
   'id',
   'sectionId',
   'title',
+  'images',
+  'videos',
   'isPinned',
   'isFeatured',
   'isLocked',

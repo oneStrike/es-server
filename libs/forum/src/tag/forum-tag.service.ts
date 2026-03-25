@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm'
 import type {
   AssignForumTagToTopicInput,
   CreateForumTagInput,
@@ -5,7 +6,6 @@ import type {
   RemoveForumTagFromTopicInput,
   UpdateForumTagInput,
 } from './tag.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   BadRequestException,

@@ -38,6 +38,14 @@ export const forumTopic = pgTable("forum_topic", {
    */
   content: text().notNull(),
   /**
+   * 图片列表
+   */
+  images: varchar({ length: 500 }).array().default(sql`ARRAY[]::varchar[]`).notNull(),
+  /**
+   * 视频列表
+   */
+  videos: varchar({ length: 500 }).array().default(sql`ARRAY[]::varchar[]`).notNull(),
+  /**
    * 是否置顶
    */
   isPinned: boolean().default(false).notNull(),

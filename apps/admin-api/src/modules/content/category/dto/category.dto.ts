@@ -1,6 +1,11 @@
 import { BaseCategoryDto } from '@libs/content/category'
 import { JsonProperty } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  DragReorderDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
 import {
   IntersectionType,
   OmitType,
@@ -11,13 +16,17 @@ import {
 export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
   ...OMIT_BASE_FIELDS,
   'popularity',
+  'isEnabled',
 ] as const) {}
 
-export class UpdateCategoryDto extends IntersectionType(CreateCategoryDto, IdDto) {}
+export class UpdateCategoryDto extends IntersectionType(
+  CreateCategoryDto,
+  IdDto,
+) {}
 
 export class QueryCategoryDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(CreateCategoryDto, ['name', 'isEnabled'] as const)),
+  PartialType(PickType(BaseCategoryDto, ['name', 'isEnabled'] as const)),
 ) {
   @JsonProperty({
     description: '分类关联的内容类型',

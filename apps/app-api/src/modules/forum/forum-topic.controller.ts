@@ -85,6 +85,7 @@ export class ForumTopicController {
       ...target,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
+      userId,
     })
   }
 

@@ -12,6 +12,7 @@ import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
+import { ForumTopicService } from '../forum-topic.service'
 
 /**
  * 论坛主题收藏解析器
@@ -29,6 +30,7 @@ export class ForumTopicFavoriteResolver
     private readonly favoriteService: FavoriteService,
     private readonly messageOutboxService: MessageOutboxService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly forumTopicService: ForumTopicService,
   ) {}
 
   /**
@@ -147,48 +149,15 @@ export class ForumTopicFavoriteResolver
 
   /**
    * 批量获取主题详情
-   * 用于在收藏列表中展示主题的标题等基本信息
+   * 用于在收藏列表中展示与主题分页项一致的详情字段
    * @param targetIds - 主题ID数组
+   * @param userId - 当前用户ID，用于补充点赞/收藏状态
    * @returns 主题ID到主题详情的映射Map
    */
-  async batchGetDetails(targetIds: number[]) {
-    if (targetIds.length === 0) {
-      return new Map()
-    }
-
-    const topics = await this.drizzle.db.query.forumTopic.findMany({
-      where: {
-        id: { in: targetIds },
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        id: true,
-        title: true,
-      },
-      with: {
-        section: {
-          columns: {
-            isEnabled: true,
-            deletedAt: true,
-          },
-        },
-      },
-    })
-
-    const visibleTopics = topics.filter(
-      (topic) => topic.section && !topic.section.deletedAt && topic.section.isEnabled,
-    )
-
-    return new Map(
-      visibleTopics.map((topic) => [
-        topic.id,
-        {
-          id: topic.id,
-          title: topic.title,
-        },
-      ]),
+  async batchGetDetails(targetIds: number[], userId?: number) {
+    return this.forumTopicService.batchGetFavoriteTopicDetails(
+      targetIds,
+      userId,
     )
   }
 }

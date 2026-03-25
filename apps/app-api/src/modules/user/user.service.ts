@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm'
 /**
  * 用户服务
  *
@@ -15,7 +16,6 @@ import type {
   QueryMyPointRecordInput,
   UpdateMyProfileInput,
 } from './user.type'
-import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'

@@ -166,10 +166,10 @@ describe('findPagination option guards', () => {
   })
 })
 
-describe('DrizzleService pagination helpers', () => {
+describe('drizzleService pagination helpers', () => {
   const drizzle = createDrizzleService()
 
-  it('builds pagination bounds without using page-query helpers', () => {
+  it('builds pagination bounds via buildDrizzlePageQuery', () => {
     expect(
       drizzle.buildPaginationBounds({
         pageIndex: 2,
@@ -186,8 +186,7 @@ describe('DrizzleService pagination helpers', () => {
   it('respects maxPageSize when building pagination bounds', () => {
     expect(
       drizzle.buildPaginationBounds(
-        { pageSize: 999 },
-        { maxPageSize: 100 },
+        { pageSize: 999, maxPageSize: 100 },
       ),
     ).toMatchObject({
       pageIndex: 1,
@@ -197,16 +196,29 @@ describe('DrizzleService pagination helpers', () => {
     })
   })
 
-  it('builds validated orderBy SQL for a table', () => {
+  it('builds validated orderBy SQL for a table via buildDrizzlePageQuery', () => {
     const result = drizzle.buildTableOrderBy(
       requestLog,
       { createdAt: 'desc' },
     )
 
-    expect(result.orderBy).toEqual([
-      { createdAt: 'desc' },
-      { id: 'desc' },
-    ])
+    expect(result.orderBy).toEqual({
+      createdAt: 'desc',
+      id: 'desc',
+    })
+    expect(result.orderBySql).toHaveLength(2)
+  })
+
+  it('parses JSON object orderBy input for a table', () => {
+    const result = drizzle.buildTableOrderBy(
+      requestLog,
+      '{"createdAt":"asc"}',
+    )
+
+    expect(result.orderBy).toEqual({
+      createdAt: 'asc',
+      id: 'asc',
+    })
     expect(result.orderBySql).toHaveLength(2)
   })
 
@@ -217,5 +229,27 @@ describe('DrizzleService pagination helpers', () => {
         { missingField: 'desc' },
       ),
     ).toThrow('排序字段 "missingField" 不存在')
+  })
+
+  it('accepts array orderBy input for a table', () => {
+    const result = drizzle.buildTableOrderBy(
+      requestLog,
+      [{ createdAt: 'desc' }],
+    )
+
+    expect(result.orderBy).toEqual([
+      { createdAt: 'desc' },
+      { id: 'desc' },
+    ])
+    expect(result.orderBySql).toHaveLength(2)
+  })
+
+  it('rejects malformed JSON table orderBy input', () => {
+    expect(() =>
+      drizzle.buildTableOrderBy(
+        requestLog,
+        '{bad-json',
+      ),
+    ).toThrow('orderBy 参数格式不合法')
   })
 })
