@@ -78,7 +78,7 @@
 ## 8. 当前实现约束
 
 - 全局 HTTP 前缀是 `/api`，controller 路径中不要重复写 `/api`。
-- `findPagination` 当前兼容 `pageIndex` 0-based 与 1-based 输入；新增代码直接复用 `PageDto` 与 `findPagination`，不要在业务层自行换算页码。
+- `findPagination` 与 `PageDto` 当前统一使用 1-based `pageIndex`；新增代码直接复用共享分页语义，不要在业务层自行换算页码。
 - admin-api 默认受保护，`@Public()` 只能用于认证或明确公开能力。
 - app-api 除 WebSocket 相关能力外，仍按普通 HTTP controller 组织。
 

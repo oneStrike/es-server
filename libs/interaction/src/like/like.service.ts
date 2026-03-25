@@ -258,7 +258,7 @@ export class LikeService {
    * 查询指定用户的点赞记录，支持分页，并关联查询目标详情
    * @param query - 查询参数
    * @param query.targetType - 点赞目标类型
-   * @param query.pageIndex - 页码（默认0）
+   * @param query.pageIndex - 页码（默认1）
    * @param query.pageSize - 每页数量（默认15）
    * @returns 分页点赞记录列表，包含目标详情
    */

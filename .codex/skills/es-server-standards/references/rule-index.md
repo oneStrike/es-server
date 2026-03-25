@@ -14,9 +14,9 @@
 2. `.trae` 下的专项规则文档。
 3. 同一业务域相邻模块的现有实现。
 
-## Known Repo-Specific Inconsistencies
+## Known Repo-Specific Notes
 
-- 分页语义：平台层 `PageDto` 与 `findPagination` 当前兼容 0-based 和 1-based `pageIndex`；不要在业务层再次手工转换页码。
+- 分页语义：平台层 `PageDto` 与 `findPagination` 当前统一使用 1-based `pageIndex`；不要在业务层再次手工转换页码。
 - 历史模块里仍可能存在命名或中英文错误消息不完全统一的情况；新增代码应跟随共享抽象和当前规则，而不是复制旧不一致模式。
 
 ## Editing Heuristics

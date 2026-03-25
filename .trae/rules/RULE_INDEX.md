@@ -19,9 +19,9 @@
 2. `.trae/rules/*` 下与当前改动层匹配的专项规则。
 3. 同一业务域相邻模块的现有实现。
 
-## Known Repo-Specific Inconsistencies
+## Known Repo-Specific Notes
 
-- 分页语义：平台层 `PageDto` 与 `findPagination` 当前兼容 0-based 和 1-based `pageIndex`；不要在业务层再次手工转换页码。
+- 分页语义：平台层 `PageDto` 与 `findPagination` 当前统一使用 1-based `pageIndex`；不要在业务层再次手工转换页码。
 - 历史模块里仍可能存在命名或中英文错误消息不完全统一的情况；新增代码应跟随共享抽象和当前规则，而不是复制旧不一致模式。
 - 仓库内同时存在 `*.type.ts` 与少量既有 `*.types.ts`；新增业务领域类型默认使用 `*.type.ts`，历史基础设施文件按 `TS_TYPE_SPEC.md` 例外处理。
 - 仓库内 `libs` 统一使用命名明确的 public API 入口；不要再从根入口 `@libs/<lib>` 导入业务代码。

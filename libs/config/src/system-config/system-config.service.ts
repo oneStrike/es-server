@@ -278,7 +278,7 @@ export class SystemConfigService implements OnModuleInit {
    * @param page 页码
    * @param pageSize 每页数量
    */
-  async findConfigHistory(page = 0, pageSize = 10) {
+  async findConfigHistory(page = 1, pageSize = 10) {
     const result = await this.drizzle.ext.findPagination(this.systemConfig, {
       pageIndex: page,
       pageSize,

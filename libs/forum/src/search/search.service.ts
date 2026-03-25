@@ -336,7 +336,7 @@ export class ForumSearchService {
         {
           ...searchInput,
           type: ForumSearchTypeEnum.TOPIC,
-          pageIndex: 0,
+          pageIndex: 1,
           pageSize: mergedWindowSize,
         },
         options,
@@ -345,7 +345,7 @@ export class ForumSearchService {
         {
           ...searchInput,
           type: ForumSearchTypeEnum.COMMENT,
-          pageIndex: 0,
+          pageIndex: 1,
           pageSize: mergedWindowSize,
         },
         options,

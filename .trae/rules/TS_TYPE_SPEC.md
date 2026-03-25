@@ -130,7 +130,7 @@ export type UpdateXxxInput = Pick<Xxx, 'id'> &
 ### 5.3 查询类型
 
 - 常规查询类型使用 `QueryXxxInput` 或 `QueryXxxPageInput` 命名。
-- 分页参数统一沿用 `pageIndex`、`pageSize`、`orderBy`，语义与 `PageDto`、`findPagination` 保持一致。
+- 分页参数统一沿用 `pageIndex`、`pageSize`、`orderBy`，语义与 `PageDto`、`findPagination` 保持一致，其中 `pageIndex` 统一为 1-based。
 - 不在业务类型里自造 `page`、`limit`、`offset`、`sortField` 这一套新命名，除非对接外部协议且无法改动。
 - 当某个查询只是对公共分页查询删掉内部字段时，优先使用 `Omit<...>` 复用。
 

@@ -48,7 +48,7 @@ Use this skill whenever work touches `apps/admin-api`, `apps/app-api`, `libs/*`,
 ## Repo-Specific Notes
 
 - Global HTTP prefix is `/api`; controller decorators do not include it.
-- `findPagination` currently accepts both 0-based and 1-based `pageIndex` inputs. Reuse that behavior instead of translating page numbers locally.
+- `findPagination` and `PageDto` now use a shared 1-based `pageIndex` contract. Reuse that behavior instead of translating page numbers locally.
 - `apps/*` are entry layers; reusable domain logic usually belongs in `libs/*`.
 - Define and export Drizzle inferred types close to the corresponding `db/schema` files.
 - For repo libs, import via named public APIs instead of root barrels. Multi-domain libs use `@libs/<lib>/<domain>`, aggregate Nest modules use `@libs/<lib>/module`, and single-domain aggregate exports use `@libs/<lib>/core`. Avoid file-level deep imports except for established platform namespaces such as `@libs/platform/modules/auth`.

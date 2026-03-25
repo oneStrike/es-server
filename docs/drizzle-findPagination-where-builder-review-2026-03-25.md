@@ -14,6 +14,13 @@
   - 结合 Drizzle 官方文档、社区讨论、公开开源样例与本仓库现状，确认 `findPagination` 与 `where-builder` 是否存在问题
   - 重点验证“前端传入 `pageIndex` 从 1 开始”时是否正确
 
+## 0. 后续处理状态更新
+
+- 同日后续决策已采用“分页统一为 1-based `pageIndex`”方案。
+- `db/core/query/page-query.ts` 已改为按 `offset = (pageIndex - 1) * pageSize` 计算。
+- `libs/platform/src/dto/page.dto.ts`、`libs/platform/src/decorators/api-doc.decorator.ts`、`libs/platform/src/config/db.config.ts` 与仓库规则文档已同步到 1-based 契约。
+- `where-builder` 已在后续收敛中废弃删除；本文对应分析保留为历史审查记录。
+
 ## 1. 结论摘要
 
 结论很明确：当前实现存在真实问题，而且不是“风格问题”，而是会影响实际查询结果的行为问题。

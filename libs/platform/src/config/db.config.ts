@@ -21,7 +21,7 @@ export interface DbConfigInterface {
 
 export const DEFAULT_DB_QUERY_CONFIG: DbQueryConfig = {
   pageSize: 15,
-  pageIndex: 0,
+  pageIndex: 1,
   maxListItemLimit: 500,
   orderBy: {
     id: 'desc',

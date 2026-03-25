@@ -1,9 +1,10 @@
+import type { DbQueryConfig, DbQueryOrderBy } from '@libs/platform/config'
 import type { InferSelectModel } from 'drizzle-orm'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
-import type { DbQueryConfig, DbQueryOrderBy } from '@libs/platform/config'
 import type { Db, SQL } from '../core/drizzle.type'
-import { buildDrizzlePageQuery } from '../core/query/page-query'
+import { BadRequestException } from '@nestjs/common'
 import { getTableColumns } from 'drizzle-orm'
+import { buildDrizzlePageQuery } from '../core/query/page-query'
 
 type FindPaginationOrderBy = DbQueryOrderBy | string
 
@@ -55,22 +56,46 @@ export async function findPagination<
   const omittedFields = new Set<string>(omit ?? [])
   const pickedFields = new Set<string>(pick ?? [])
   if (omittedFields.size > 0 && pickedFields.size > 0) {
-    throw new Error('不支持pick和omit同时使用')
+    throw new BadRequestException('不支持 pick 和 omit 同时使用')
   }
   const hasPick = pickedFields.size > 0
   const tableColumns = getTableColumns(table as any) as Record<string, unknown>
+  const invalidPickedFields = [...pickedFields].filter(field => !tableColumns[field])
+  if (invalidPickedFields.length > 0) {
+    throw new BadRequestException(
+      `pick 字段不存在: ${invalidPickedFields.join(', ')}`,
+    )
+  }
+
+  const invalidOmittedFields = [...omittedFields].filter(field => !tableColumns[field])
+  if (invalidOmittedFields.length > 0) {
+    throw new BadRequestException(
+      `omit 字段不存在: ${invalidOmittedFields.join(', ')}`,
+    )
+  }
+
   const selectedColumns = Object.fromEntries(
     Object.entries(tableColumns).filter(([key]) =>
       hasPick ? pickedFields.has(key) : !omittedFields.has(key),
     ),
   )
+  const selectedColumnCount = Object.keys(selectedColumns).length
+  if (hasPick && selectedColumnCount === 0) {
+    throw new BadRequestException('findPagination options.pick has no valid fields')
+  }
+  if (omittedFields.size > 0 && selectedColumnCount === 0) {
+    throw new BadRequestException(
+      'findPagination options.omit removes all selectable fields',
+    )
+  }
+
   const baseQuery =
-    !hasPick && Object.keys(selectedColumns).length === 0
+    !hasPick && omittedFields.size === 0
       ? db.select().from(table as AnyPgTable)
-      : Object.keys(selectedColumns).length > 0
+      : selectedColumnCount > 0
       ? db.select(selectedColumns as any).from(table as AnyPgTable)
       : (() => {
-          throw new Error('findPagination options.pick has no valid fields')
+          throw new BadRequestException('findPagination options.pick has no valid fields')
         })()
   const listQuery = baseQuery
     .where(where)

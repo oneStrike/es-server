@@ -7,6 +7,7 @@ import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import type { SQL } from '../drizzle.type'
 import { DEFAULT_DB_QUERY_CONFIG } from '@libs/platform/config'
 import { jsonParse } from '@libs/platform/utils'
+import { BadRequestException } from '@nestjs/common'
 import { asc, desc, getTableColumns } from 'drizzle-orm'
 
 export interface DrizzlePageQueryInput {
@@ -15,7 +16,9 @@ export interface DrizzlePageQueryInput {
   orderBy?: unknown
 }
 
-export interface DrizzlePageQueryOptions<TTable extends AnyPgTable = AnyPgTable> {
+export interface DrizzlePageQueryOptions<
+  TTable extends AnyPgTable = AnyPgTable,
+> {
   table?: TTable
   defaults?: Partial<DbQueryConfig>
   defaultPageIndex?: number
@@ -49,20 +52,27 @@ function normalizeOrderDirection(value: unknown): 'asc' | 'desc' | undefined {
   }
 
   const normalized = value.toLowerCase()
-  return normalized === 'asc' || normalized === 'desc'
-    ? normalized
-    : undefined
+  return normalized === 'asc' || normalized === 'desc' ? normalized : undefined
 }
 
 function parseOrderBy(
   value: DrizzlePageQueryInput['orderBy'],
-): DbQueryOrderBy | null {
-  if (!value) {
-    return null
+): DbQueryOrderBy | undefined {
+  if (value === undefined || value === null) {
+    return undefined
   }
 
   if (typeof value === 'string') {
-    return jsonParse<DbQueryOrderBy>(value)
+    if (!value.trim()) {
+      return undefined
+    }
+
+    const parsed = jsonParse<DbQueryOrderBy>(value)
+    if (!parsed) {
+      throw new BadRequestException('orderBy 参数格式不合法')
+    }
+
+    return parsed
   }
   if (Array.isArray(value)) {
     return value as DbQueryOrderBy
@@ -71,7 +81,7 @@ function parseOrderBy(
     return value as DbQueryOrderBy
   }
 
-  return null
+  throw new BadRequestException('orderBy 参数格式不合法')
 }
 
 function normalizePageIndex(
@@ -81,13 +91,7 @@ function normalizePageIndex(
   const rawPageIndex = Number.isFinite(Number(value))
     ? Math.floor(Number(value))
     : fallback
-  if (rawPageIndex <= 0) {
-    return 0
-  }
-  if (rawPageIndex === 1) {
-    return 0
-  }
-  return rawPageIndex
+  return Math.max(1, rawPageIndex)
 }
 
 function normalizeOrderBy(
@@ -101,36 +105,70 @@ function normalizeOrderBy(
 
   const records = Array.isArray(parsed) ? parsed : [parsed]
   const normalizedRecords: DbQueryOrderByRecord[] = []
+  if (records.length === 0) {
+    throw new BadRequestException('orderBy 不能为空')
+  }
 
   for (const record of records) {
     if (!record || typeof record !== 'object' || Array.isArray(record)) {
-      continue
+      throw new BadRequestException('orderBy 参数格式不合法')
+    }
+
+    const entries = Object.entries(record)
+    if (entries.length === 0) {
+      throw new BadRequestException('orderBy 不能为空')
     }
 
     const normalizedRecord: DbQueryOrderByRecord = {}
-    for (const [field, direction] of Object.entries(record)) {
+    for (const [field, direction] of entries) {
       if (validColumns && !validColumns[field]) {
-        continue
+        throw new BadRequestException(`排序字段 "${field}" 不存在`)
       }
 
       const normalizedDirection = normalizeOrderDirection(direction)
-      if (normalizedDirection) {
-        normalizedRecord[field] = normalizedDirection
+      if (!normalizedDirection) {
+        throw new BadRequestException(`排序字段 "${field}" 的排序方向无效`)
       }
+
+      normalizedRecord[field] = normalizedDirection
     }
 
-    if (Object.keys(normalizedRecord).length > 0) {
-      normalizedRecords.push(normalizedRecord)
-    }
-  }
-
-  if (normalizedRecords.length === 0) {
-    return undefined
+    normalizedRecords.push(normalizedRecord)
   }
 
   return normalizedRecords.length === 1
     ? normalizedRecords[0]
     : normalizedRecords
+}
+
+function appendStableIdOrderBy(
+  orderBy: DbQueryOrderBy | undefined,
+  validColumns?: Record<string, unknown>,
+): DbQueryOrderBy | undefined {
+  if (!orderBy || !validColumns?.id) {
+    return orderBy
+  }
+
+  const records = Array.isArray(orderBy) ? [...orderBy] : [orderBy]
+  if (records.some((record) => Object.hasOwn(record, 'id'))) {
+    return orderBy
+  }
+
+  let idDirection: 'asc' | 'desc' = 'desc'
+  for (
+    let recordIndex = records.length - 1;
+    recordIndex >= 0;
+    recordIndex -= 1
+  ) {
+    const directions = Object.values(records[recordIndex])
+    const lastDirection = directions.at(-1)
+    if (lastDirection === 'asc' || lastDirection === 'desc') {
+      idDirection = lastDirection
+      break
+    }
+  }
+
+  return [...records, { id: idDirection }]
 }
 
 function buildOrderBySql(
@@ -151,7 +189,9 @@ function buildOrderBySql(
         continue
       }
 
-      orderBySql.push(direction === 'asc' ? asc(column as never) : desc(column as never))
+      orderBySql.push(
+        direction === 'asc' ? asc(column as never) : desc(column as never),
+      )
     }
   }
 
@@ -165,12 +205,14 @@ export function buildDrizzlePageQuery<TTable extends AnyPgTable = AnyPgTable>(
   const resolvedDefaults: DbQueryConfig = {
     ...DEFAULT_DB_QUERY_CONFIG,
     ...options.defaults,
-    pageIndex: options.defaultPageIndex
-      ?? options.defaults?.pageIndex
-      ?? DEFAULT_DB_QUERY_CONFIG.pageIndex,
-    pageSize: options.defaultPageSize
-      ?? options.defaults?.pageSize
-      ?? DEFAULT_DB_QUERY_CONFIG.pageSize,
+    pageIndex:
+      options.defaultPageIndex ??
+      options.defaults?.pageIndex ??
+      DEFAULT_DB_QUERY_CONFIG.pageIndex,
+    pageSize:
+      options.defaultPageSize ??
+      options.defaults?.pageSize ??
+      DEFAULT_DB_QUERY_CONFIG.pageSize,
     orderBy: options.defaults?.orderBy ?? DEFAULT_DB_QUERY_CONFIG.orderBy,
   }
   const pageIndex = normalizePageIndex(
@@ -184,7 +226,8 @@ export function buildDrizzlePageQuery<TTable extends AnyPgTable = AnyPgTable>(
     ? Math.max(1, Math.floor(Number(options.maxPageSize)))
     : resolvedDefaults.maxListItemLimit
   const pageSize = Math.min(Math.max(1, rawPageSize), resolvedMaxPageSize)
-  const offset = pageIndex * pageSize
+  // 对外分页契约统一使用 1-based 页码，数据库 offset 仍然从 0 开始。
+  const offset = (pageIndex - 1) * pageSize
   const validColumns = options.table
     ? (getTableColumns(options.table) as Record<string, unknown>)
     : undefined
@@ -196,6 +239,7 @@ export function buildDrizzlePageQuery<TTable extends AnyPgTable = AnyPgTable>(
   if (!orderBy && validColumns?.id) {
     orderBy = { id: 'desc' }
   }
+  orderBy = appendStableIdOrderBy(orderBy, validColumns)
 
   const orderBySql = buildOrderBySql(orderBy, validColumns)
   const args: DrizzlePageQueryArgs = {
