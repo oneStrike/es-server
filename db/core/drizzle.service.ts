@@ -3,9 +3,6 @@ import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import type {
   Db,
   DrizzleErrorMessages,
-  DrizzleWhere,
-  DrizzleWhereNode,
-  PgTable,
 } from './drizzle.type'
 import type { PostgresError } from './error/postgres-error'
 import type {
@@ -36,7 +33,6 @@ import {
   isUniqueViolation,
 } from './error/error-handler'
 import { buildDrizzlePageQuery } from './query/page-query'
-import { buildDrizzleWhere } from './query/where-builder'
 
 @Injectable()
 export class DrizzleService implements OnApplicationShutdown {
@@ -58,13 +54,6 @@ export class DrizzleService implements OnApplicationShutdown {
 
   get schema(): typeof schema {
     return schema
-  }
-
-  buildWhere<TTable extends PgTable>(
-    table: TTable,
-    node?: DrizzleWhereNode<TTable>,
-  ): DrizzleWhere {
-    return buildDrizzleWhere(table, node)
   }
 
   buildPageQuery<TTable extends AnyPgTable>(

@@ -7,9 +7,9 @@ import type {
   UserLevelInfoResult,
   UserLevelStatisticsResult,
 } from './level-rule.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, ilike, inArray, isNull, sql } from 'drizzle-orm'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 @Injectable()
@@ -73,14 +73,26 @@ export class UserLevelRuleService {
    * @returns 分页的等级规则列表
    */
   async getLevelRulePage(dto: QueryUserLevelRulePageInput) {
+    const conditions: SQL[] = []
+
+    if (dto.isEnabled !== undefined) {
+      conditions.push(eq(this.userLevelRule.isEnabled, dto.isEnabled))
+    }
+    if (dto.business !== undefined) {
+      conditions.push(
+        dto.business === null
+          ? isNull(this.userLevelRule.business)
+          : eq(this.userLevelRule.business, dto.business),
+      )
+    }
+    if (dto.name) {
+      conditions.push(
+        ilike(this.userLevelRule.name, `%${escapeLikePattern(dto.name)}%`),
+      )
+    }
+
     return this.drizzle.ext.findPagination(this.userLevelRule, {
-      where: this.drizzle.buildWhere(this.userLevelRule, {
-        and: {
-          isEnabled: dto.isEnabled,
-          business: dto.business,
-          name: dto.name ? { like: dto.name } : undefined,
-        },
-      }),
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       ...dto,
     })
   }

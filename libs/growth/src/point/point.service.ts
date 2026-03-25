@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, SQL } from '@db/core'
 import type {
   AddUserPointsInput,
   ConsumeUserPointsInput,
@@ -6,7 +6,7 @@ import type {
 } from './point.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gte, sql } from 'drizzle-orm'
+import { and, eq, gte, isNull, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -194,16 +194,35 @@ export class UserPointService {
    * @returns 分页的记录列表
    */
   async getPointRecordPage(dto: QueryUserPointRecordPageInput) {
+    const conditions: SQL[] = [
+      eq(this.growthLedgerRecord.userId, dto.userId),
+      eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
+    ]
+
+    if (dto.ruleId !== undefined) {
+      conditions.push(
+        dto.ruleId === null
+          ? isNull(this.growthLedgerRecord.ruleId)
+          : eq(this.growthLedgerRecord.ruleId, dto.ruleId),
+      )
+    }
+    if (dto.targetType !== undefined) {
+      conditions.push(
+        dto.targetType === null
+          ? isNull(this.growthLedgerRecord.targetType)
+          : eq(this.growthLedgerRecord.targetType, dto.targetType),
+      )
+    }
+    if (dto.targetId !== undefined) {
+      conditions.push(
+        dto.targetId === null
+          ? isNull(this.growthLedgerRecord.targetId)
+          : eq(this.growthLedgerRecord.targetId, dto.targetId),
+      )
+    }
+
     const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
-      where: this.drizzle.buildWhere(this.growthLedgerRecord, {
-        and: {
-          userId: dto.userId,
-          ruleId: dto.ruleId,
-          targetType: dto.targetType,
-          targetId: dto.targetId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-        },
-      }),
+      where: and(...conditions),
       ...dto,
       orderBy: dto.orderBy ?? JSON.stringify([{ id: 'desc' }]),
     })

@@ -70,7 +70,7 @@
 - 只注入 `DrizzleService`，通过 `drizzle.db`、`drizzle.schema`、`drizzle.ext` 工作。
 - 写操作统一使用 `withErrorHandling` 或等价事务封装；需要保证资源存在时调用 `assertAffectedRows`。依赖原始数据库错误做重试/幂等判断的事务路径，按 `drizzle-guidelines.md` 的例外处理。
 - 常规分页统一使用 `drizzle.ext.findPagination`；复合分页按 `drizzle-guidelines.md` 的例外条款处理。
-- 条件构建统一使用 `drizzle.buildWhere(...)` 或 `SQL[] + and(...)`。
+- 条件构建统一使用 `SQL[] + and(...)`；无条件时传 `where: undefined`。
 - 事务必须沿调用链传递，禁止 `tx: any` 或收到事务后不使用；需要保留原始数据库错误码的路径不要被通用事务包装吞掉错误类型。
 - 不新增 Prisma 遗留写法。
 - 原生 SQL 只允许 `sql\`...\`` / `db.execute`；`sql.raw()` 只能注入白名单常量。

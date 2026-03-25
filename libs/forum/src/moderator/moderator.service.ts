@@ -13,7 +13,7 @@ import type {
   QueryForumModeratorInput,
   UpdateForumModeratorInput,
 } from './moderator.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
 import {
@@ -626,23 +626,25 @@ export class ForumModeratorService {
   async getModeratorPage(query: QueryForumModeratorInput) {
     const { nickname, sectionId, ...otherDto } = query
     const conditions: SQL[] = []
-    const baseWhere = this.drizzle.buildWhere(this.forumModerator, {
-      and: {
-        deletedAt: { isNull: true },
-        isEnabled: query.isEnabled,
-        userId: query.userId,
-      },
-    })
 
-    if (baseWhere) {
-      conditions.push(baseWhere)
+    conditions.push(isNull(this.forumModerator.deletedAt))
+    if (query.isEnabled !== undefined) {
+      conditions.push(eq(this.forumModerator.isEnabled, query.isEnabled))
+    }
+    if (query.userId !== undefined) {
+      conditions.push(eq(this.forumModerator.userId, query.userId))
     }
 
     if (nickname) {
       const users = await this.db
         .select({ id: this.appUser.id })
         .from(this.appUser)
-        .where(ilike(this.appUser.nickname, `%${nickname}%`))
+        .where(
+          ilike(
+            this.appUser.nickname,
+            `%${escapeLikePattern(nickname)}%`,
+          ),
+        )
       const userIds = users.map((user) => user.id)
 
       conditions.push(

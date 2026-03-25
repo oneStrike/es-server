@@ -1,6 +1,7 @@
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, ilike, isNull } from 'drizzle-orm'
 import {
   CreateTagInput,
   DeleteTagInput,
@@ -54,12 +55,16 @@ export class WorkTagService {
       pageParams.orderBy = JSON.stringify({ sortOrder: 'desc' })
     }
 
-    const where = this.drizzle.buildWhere(this.workTag, {
-      and: {
-        name: name ? { like: name } : undefined,
-        isEnabled,
-      },
-    })
+    const conditions: SQL[] = []
+
+    if (name) {
+      conditions.push(ilike(this.workTag.name, `%${escapeLikePattern(name)}%`))
+    }
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.workTag.isEnabled, isEnabled))
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined
 
     return this.drizzle.ext.findPagination(this.workTag, {
       where,

@@ -13,7 +13,8 @@ import type {
   UpdateAdminAppUserProfileInput,
   UpdateAdminAppUserStatusInput,
 } from './app-user.type'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserBadgeService } from '@libs/growth/badge'
 import { UserExperienceService } from '@libs/growth/experience'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
@@ -34,7 +35,18 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
+import {
+  and,
+  eq,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  sql,
+} from 'drizzle-orm'
 
 /**
  * APP 用户管理服务
@@ -121,25 +133,63 @@ export class AppUserService {
       lastLoginEndDate,
     )
 
-    const where = this.drizzle.buildWhere(this.appUser, {
-      and: {
-        id,
-        account: account ? { like: account } : undefined,
-        phoneNumber: phoneNumber ? { like: phoneNumber } : undefined,
-        nickname: nickname ? { like: nickname } : undefined,
-        emailAddress: emailAddress ? { like: emailAddress } : undefined,
-        isEnabled,
-        status,
-        levelId,
-        deletedAt:
-          deletedScope === 'deleted'
-            ? { isNotNull: true }
-            : deletedScope === 'all'
-              ? undefined
-              : { isNull: true },
-        lastLoginAt,
-      },
-    })
+    const conditions: SQL[] = []
+
+    if (id !== undefined) {
+      conditions.push(eq(this.appUser.id, id))
+    }
+    if (account) {
+      conditions.push(
+        ilike(this.appUser.account, `%${escapeLikePattern(account)}%`),
+      )
+    }
+    if (phoneNumber) {
+      conditions.push(
+        ilike(
+          this.appUser.phoneNumber,
+          `%${escapeLikePattern(phoneNumber)}%`,
+        ),
+      )
+    }
+    if (nickname) {
+      conditions.push(
+        ilike(this.appUser.nickname, `%${escapeLikePattern(nickname)}%`),
+      )
+    }
+    if (emailAddress) {
+      conditions.push(
+        ilike(
+          this.appUser.emailAddress,
+          `%${escapeLikePattern(emailAddress)}%`,
+        ),
+      )
+    }
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.appUser.isEnabled, isEnabled))
+    }
+    if (status !== undefined) {
+      conditions.push(eq(this.appUser.status, status))
+    }
+    if (levelId !== undefined) {
+      conditions.push(
+        levelId === null
+          ? isNull(this.appUser.levelId)
+          : eq(this.appUser.levelId, levelId),
+      )
+    }
+    if (deletedScope === 'deleted') {
+      conditions.push(isNotNull(this.appUser.deletedAt))
+    } else if (deletedScope !== 'all') {
+      conditions.push(isNull(this.appUser.deletedAt))
+    }
+    if (lastLoginAt?.gte) {
+      conditions.push(gte(this.appUser.lastLoginAt, lastLoginAt.gte))
+    }
+    if (lastLoginAt?.lt) {
+      conditions.push(lt(this.appUser.lastLoginAt, lastLoginAt.lt))
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined
 
     const page = await this.drizzle.ext.findPagination(this.appUser, {
       where,
@@ -662,15 +712,28 @@ export class AppUserService {
     const { userId, name, type, isEnabled, business, eventKey, ...pageQuery } =
       query
 
-    const badgeWhere = this.drizzle.buildWhere(this.userBadge, {
-      and: {
-        name: name ? { like: name } : undefined,
-        type,
-        isEnabled,
-        business,
-        eventKey,
-      },
-    })
+    const badgeConditions: SQL[] = []
+
+    if (name) {
+      badgeConditions.push(
+        ilike(this.userBadge.name, `%${escapeLikePattern(name)}%`),
+      )
+    }
+    if (type !== undefined) {
+      badgeConditions.push(eq(this.userBadge.type, type))
+    }
+    if (isEnabled !== undefined) {
+      badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
+    }
+    if (business !== undefined) {
+      badgeConditions.push(eq(this.userBadge.business, business))
+    }
+    if (eventKey !== undefined) {
+      badgeConditions.push(eq(this.userBadge.eventKey, eventKey))
+    }
+
+    const badgeWhere =
+      badgeConditions.length > 0 ? and(...badgeConditions) : undefined
     const badges = await this.db
       .select({ id: this.userBadge.id })
       .from(this.userBadge)

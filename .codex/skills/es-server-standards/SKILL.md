@@ -41,7 +41,7 @@ Use this skill whenever work touches `apps/admin-api`, `apps/app-api`, `libs/*`,
 
 - Inject `DrizzleService` instead of raw database clients or Prisma leftovers.
 - Wrap writes in `withErrorHandling`; use `assertAffectedRows` when existence matters.
-- Use `drizzle.ext.findPagination` for paging and `drizzle.buildWhere` or `SQL[]` for dynamic conditions.
+- Use `drizzle.ext.findPagination` for paging and `SQL[] + and(...)` for dynamic conditions.
 - Pass `tx` through the entire call chain if a transaction starts.
 - Keep raw SQL parameterized and localized to helper methods.
 

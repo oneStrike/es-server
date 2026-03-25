@@ -1,7 +1,8 @@
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { UserStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import {
@@ -66,13 +67,17 @@ export class UserExperienceService {
    * @returns 分页的规则列表
    */
   async getExperienceRulePage(dto: QueryUserExperienceRulePageInput) {
+    const conditions: SQL[] = []
+
+    if (dto.isEnabled !== undefined) {
+      conditions.push(eq(this.userExperienceRule.isEnabled, dto.isEnabled))
+    }
+    if (dto.type !== undefined) {
+      conditions.push(eq(this.userExperienceRule.type, dto.type))
+    }
+
     return this.drizzle.ext.findPagination(this.userExperienceRule, {
-      where: this.drizzle.buildWhere(this.userExperienceRule, {
-        and: {
-          isEnabled: dto.isEnabled,
-          type: dto.type,
-        },
-      }),
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       ...dto,
     })
   }
@@ -215,14 +220,21 @@ export class UserExperienceService {
    * @returns 分页的记录列表
    */
   async getExperienceRecordPage(dto: QueryUserExperienceRecordPageInput) {
+    const conditions: SQL[] = [
+      eq(this.growthLedgerRecord.userId, dto.userId),
+      eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+    ]
+
+    if (dto.ruleId !== undefined) {
+      conditions.push(
+        dto.ruleId === null
+          ? isNull(this.growthLedgerRecord.ruleId)
+          : eq(this.growthLedgerRecord.ruleId, dto.ruleId),
+      )
+    }
+
     const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
-      where: this.drizzle.buildWhere(this.growthLedgerRecord, {
-        and: {
-          userId: dto.userId,
-          ruleId: dto.ruleId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-        },
-      }),
+      where: and(...conditions),
       ...dto,
       orderBy: dto.orderBy ?? JSON.stringify([{ id: 'desc' }]),
     })

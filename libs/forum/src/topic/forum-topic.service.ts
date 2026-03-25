@@ -1,4 +1,5 @@
 import type { ForumTopic } from '@db/schema'
+import type { SQL } from 'drizzle-orm'
 import type {
   CreateForumTopicInput,
   PublicForumTopicDetailContext,
@@ -12,7 +13,8 @@ import type {
   UpdateForumTopicPinnedInput,
 } from './forum-topic.type'
 import {
-  DrizzleService
+  DrizzleService,
+  escapeLikePattern,
  } from '@db/core'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward'
@@ -40,7 +42,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, isNull } from 'drizzle-orm'
+import { and, eq, ilike, isNull, or } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -387,26 +389,45 @@ export class ForumTopicService {
 
   async getTopics(queryForumTopicDto: QueryForumTopicInput) {
     const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
-    const where = this.drizzle.buildWhere(this.forumTopicTable, {
-      and: {
-        deletedAt: { isNull: true },
-        sectionId,
-        userId,
-        isPinned: otherDto.isPinned,
-        isFeatured: otherDto.isFeatured,
-        isLocked: otherDto.isLocked,
-        isHidden: otherDto.isHidden,
-        auditStatus: otherDto.auditStatus,
-      },
-      ...(keyword
-        ? {
-          or: [
-            ilike(this.forumTopicTable.title, `%${keyword}%`),
-            ilike(this.forumTopicTable.content, `%${keyword}%`),
-          ],
-        }
-        : {}),
-    })
+    const conditions: SQL[] = [isNull(this.forumTopicTable.deletedAt)]
+
+    if (sectionId !== undefined) {
+      conditions.push(eq(this.forumTopicTable.sectionId, sectionId))
+    }
+    if (userId !== undefined) {
+      conditions.push(eq(this.forumTopicTable.userId, userId))
+    }
+    if (otherDto.isPinned !== undefined) {
+      conditions.push(eq(this.forumTopicTable.isPinned, otherDto.isPinned))
+    }
+    if (otherDto.isFeatured !== undefined) {
+      conditions.push(eq(this.forumTopicTable.isFeatured, otherDto.isFeatured))
+    }
+    if (otherDto.isLocked !== undefined) {
+      conditions.push(eq(this.forumTopicTable.isLocked, otherDto.isLocked))
+    }
+    if (otherDto.isHidden !== undefined) {
+      conditions.push(eq(this.forumTopicTable.isHidden, otherDto.isHidden))
+    }
+    if (otherDto.auditStatus !== undefined) {
+      conditions.push(eq(this.forumTopicTable.auditStatus, otherDto.auditStatus))
+    }
+    if (keyword) {
+      conditions.push(
+        or(
+          ilike(
+            this.forumTopicTable.title,
+            `%${escapeLikePattern(keyword)}%`,
+          ),
+          ilike(
+            this.forumTopicTable.content,
+            `%${escapeLikePattern(keyword)}%`,
+          ),
+        )!,
+      )
+    }
+
+    const where = and(...conditions)
 
     return this.drizzle.ext.findPagination(this.forumTopicTable, {
       where,
@@ -431,14 +452,12 @@ export class ForumTopicService {
     )
 
     const page = await this.drizzle.ext.findPagination(this.forumTopicTable, {
-      where: this.drizzle.buildWhere(this.forumTopicTable, {
-        and: {
-          sectionId: query.sectionId,
-          deletedAt: { isNull: true },
-          auditStatus: AuditStatusEnum.APPROVED,
-          isHidden: false,
-        },
-      }),
+      where: and(
+        eq(this.forumTopicTable.sectionId, query.sectionId),
+        isNull(this.forumTopicTable.deletedAt),
+        eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
+        eq(this.forumTopicTable.isHidden, false),
+      ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: [

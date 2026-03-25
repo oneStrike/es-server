@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { SQL } from 'drizzle-orm'
 import type {
   CreateReportInput,
   CreateUserReportInput,
@@ -141,16 +142,23 @@ export class ReportService {
    * @returns 分页举报记录
    */
   async getUserReports(query: ReportListQuery) {
+    const conditions: SQL[] = [eq(this.userReport.reporterId, query.reporterId)]
+
+    if (query.targetType !== undefined) {
+      conditions.push(eq(this.userReport.targetType, query.targetType))
+    }
+    if (query.targetId !== undefined) {
+      conditions.push(eq(this.userReport.targetId, query.targetId))
+    }
+    if (query.reasonType !== undefined) {
+      conditions.push(eq(this.userReport.reasonType, query.reasonType))
+    }
+    if (query.status !== undefined) {
+      conditions.push(eq(this.userReport.status, query.status))
+    }
+
     return this.drizzle.ext.findPagination(this.userReport, {
-      where: this.drizzle.buildWhere(this.userReport, {
-        and: {
-          reporterId: query.reporterId,
-          targetType: query.targetType,
-          targetId: query.targetId,
-          reasonType: query.reasonType,
-          status: query.status,
-        },
-      }),
+      where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {

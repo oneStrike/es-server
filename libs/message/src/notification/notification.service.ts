@@ -1,5 +1,6 @@
 import type { NotificationOutboxPayload } from '../outbox/outbox.type'
 import type { QueryUserNotificationListInput } from './notification.type'
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
@@ -40,13 +41,16 @@ export class MessageNotificationService {
     queryDto: QueryUserNotificationListInput,
   ) {
     const { isRead, type, ...pagination } = queryDto
-    const where = this.drizzle.buildWhere(this.notification, {
-      and: {
-        userId,
-        ...(isRead !== undefined ? { isRead } : {}),
-        ...(type !== undefined ? { type } : {}),
-      },
-    })
+    const conditions: SQL[] = [eq(this.notification.userId, userId)]
+
+    if (isRead !== undefined) {
+      conditions.push(eq(this.notification.isRead, isRead))
+    }
+    if (type !== undefined) {
+      conditions.push(eq(this.notification.type, type))
+    }
+
+    const where = and(...conditions)
     const page = await this.drizzle.ext.findPagination(this.notification, {
       where,
       ...pagination,

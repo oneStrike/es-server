@@ -6,7 +6,8 @@ import type {
   UpdateForumSectionGroupEnabledInput,
   UpdateForumSectionGroupInput,
 } from './section-group.type'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   FollowService,
   FollowTargetTypeEnum,
@@ -60,13 +61,21 @@ export class ForumSectionGroupService {
   }
 
   async getSectionGroupPage(dto: QueryForumSectionGroupInput) {
-    const where = this.drizzle.buildWhere(this.forumSectionGroup, {
-      and: {
-        deletedAt: { isNull: true },
-        isEnabled: dto.isEnabled,
-      },
-      ...(dto.name ? { or: [ilike(this.forumSectionGroup.name, `%${dto.name}%`)] } : {}),
-    })
+    const conditions: SQL[] = [isNull(this.forumSectionGroup.deletedAt)]
+
+    if (dto.isEnabled !== undefined) {
+      conditions.push(eq(this.forumSectionGroup.isEnabled, dto.isEnabled))
+    }
+    if (dto.name) {
+      conditions.push(
+        ilike(
+          this.forumSectionGroup.name,
+          `%${escapeLikePattern(dto.name)}%`,
+        ),
+      )
+    }
+
+    const where = and(...conditions)
 
     return this.drizzle.ext.findPagination(this.forumSectionGroup, {
       where,

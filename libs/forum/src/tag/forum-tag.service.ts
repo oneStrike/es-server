@@ -5,7 +5,8 @@ import type {
   RemoveForumTagFromTopicInput,
   UpdateForumTagInput,
 } from './tag.type'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   BadRequestException,
   Injectable,
@@ -107,12 +108,18 @@ export class ForumTagService {
   async getTags(queryForumTagDto: QueryForumTagInput) {
     const { name, isEnabled } = queryForumTagDto
 
-    const where = this.drizzle.buildWhere(this.forumTag, {
-      and: {
-        isEnabled,
-      },
-      ...(name ? { or: [ilike(this.forumTag.name, `%${name}%`)] } : {}),
-    })
+    const conditions: SQL[] = []
+
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.forumTag.isEnabled, isEnabled))
+    }
+    if (name) {
+      conditions.push(
+        ilike(this.forumTag.name, `%${escapeLikePattern(name)}%`),
+      )
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined
 
     const page = await this.drizzle.ext.findPagination(this.forumTag, {
       where,

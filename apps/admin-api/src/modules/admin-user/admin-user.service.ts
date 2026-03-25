@@ -2,7 +2,8 @@ import type {
   AdminUserChangePasswordInput,
   AdminUserPageQueryInput,
 } from './admin-user.type'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { AdminUser, NewAdminUser } from '@db/schema'
 import { AdminUserRoleEnum } from '@libs/platform/constant'
 import { ScryptService } from '@libs/platform/modules'
@@ -14,7 +15,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { eq } from 'drizzle-orm'
+import { and, eq, ilike } from 'drizzle-orm'
 import { AdminAuthRedisKeys } from '../auth/auth.constant'
 
 /**
@@ -167,14 +168,29 @@ export class AdminUserService {
    */
   async getUsers(queryDto: AdminUserPageQueryInput) {
     const { username, isEnabled, mobile, role, ...pageDto } = queryDto
-    const where = this.drizzle.buildWhere(this.adminUser, {
-      and: {
-        isEnabled,
-        role,
-        username: username ? { like: username } : undefined,
-        mobile: mobile ? { like: mobile } : undefined,
-      },
-    })
+    const conditions: SQL[] = []
+
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.adminUser.isEnabled, isEnabled))
+    }
+    if (role !== undefined) {
+      conditions.push(eq(this.adminUser.role, role))
+    }
+    if (username) {
+      conditions.push(
+        ilike(
+          this.adminUser.username,
+          `%${escapeLikePattern(username)}%`,
+        ),
+      )
+    }
+    if (mobile) {
+      conditions.push(
+        ilike(this.adminUser.mobile, `%${escapeLikePattern(mobile)}%`),
+      )
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined
     const page = await this.drizzle.ext.findPagination(this.adminUser, {
       where,
       ...pageDto,

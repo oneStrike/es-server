@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { SQL } from 'drizzle-orm'
 import type {
   CommentVisibleState,
   CreateCommentInput,
@@ -607,16 +608,12 @@ export class CommentService {
   async getReplies(query: RepliesQuery) {
     const { commentId, pageIndex, pageSize } = query
     const page = await this.drizzle.ext.findPagination(this.userComment, {
-      where: this.drizzle.buildWhere(this.userComment, {
-        and: {
-          actualReplyToId: commentId,
-          auditStatus: AuditStatusEnum.APPROVED,
-          isHidden: false,
-          deletedAt: {
-            isNull: true,
-          },
-        },
-      }),
+      where: and(
+        eq(this.userComment.actualReplyToId, commentId),
+        eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+        eq(this.userComment.isHidden, false),
+        isNull(this.userComment.deletedAt),
+      ),
       pageIndex,
       pageSize,
       orderBy: {
@@ -675,20 +672,14 @@ export class CommentService {
     } = query
     const limit = Math.max(0, Math.min(previewReplyLimit, 10))
     const page = await this.drizzle.ext.findPagination(this.userComment, {
-      where: this.drizzle.buildWhere(this.userComment, {
-        and: {
-          targetType,
-          targetId,
-          replyToId: {
-            isNull: true,
-          },
-          auditStatus: AuditStatusEnum.APPROVED,
-          isHidden: false,
-          deletedAt: {
-            isNull: true,
-          },
-        },
-      }),
+      where: and(
+        eq(this.userComment.targetType, targetType),
+        eq(this.userComment.targetId, targetId),
+        isNull(this.userComment.replyToId),
+        eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+        eq(this.userComment.isHidden, false),
+        isNull(this.userComment.deletedAt),
+      ),
       pageIndex,
       pageSize,
       orderBy: {
@@ -866,18 +857,23 @@ export class CommentService {
    * @returns 分页的评论列表
    */
   async getUserComments(query: UserCommentsQuery, userId: number) {
+    const conditions: SQL[] = [
+      eq(this.userComment.userId, userId),
+      isNull(this.userComment.deletedAt),
+    ]
+
+    if (query.targetType !== undefined) {
+      conditions.push(eq(this.userComment.targetType, query.targetType))
+    }
+    if (query.targetId !== undefined) {
+      conditions.push(eq(this.userComment.targetId, query.targetId))
+    }
+    if (query.auditStatus !== undefined) {
+      conditions.push(eq(this.userComment.auditStatus, query.auditStatus))
+    }
+
     return this.drizzle.ext.findPagination(this.userComment, {
-      where: this.drizzle.buildWhere(this.userComment, {
-        and: {
-          userId,
-          targetType: query.targetType,
-          targetId: query.targetId,
-          auditStatus: query.auditStatus,
-          deletedAt: {
-            isNull: true,
-          },
-        },
-      }),
+      where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {

@@ -4,7 +4,8 @@ import type {
   QueryUserProfileListInput,
   UpdateUserStatusInput,
 } from './profile.type'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
 import {
@@ -105,13 +106,21 @@ export class UserProfileService {
   async queryProfileList(queryDto: QueryUserProfileListInput) {
     const { levelId, status, nickname, ...rest } = queryDto
 
-    const where = this.drizzle.buildWhere(this.appUser, {
-      and: {
-        levelId,
-        status,
-      },
-      ...(nickname ? { or: [ilike(this.appUser.nickname, `%${nickname}%`)] } : {}),
-    })
+    const conditions: SQL[] = []
+
+    if (levelId !== undefined) {
+      conditions.push(eq(this.appUser.levelId, levelId))
+    }
+    if (status !== undefined) {
+      conditions.push(eq(this.appUser.status, status))
+    }
+    if (nickname) {
+      conditions.push(
+        ilike(this.appUser.nickname, `%${escapeLikePattern(nickname)}%`),
+      )
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined
 
     const page = await this.drizzle.ext.findPagination(this.appUser, {
       where,
@@ -244,13 +253,16 @@ export class UserProfileService {
    * @returns 分页的主题列表，包含板块信息和回复数统计
    */
   async getMyTopics(userId: number, query?: { sectionId?: number, pageIndex?: number, pageSize?: number }) {
-    const where = this.drizzle.buildWhere(this.forumTopic, {
-      and: {
-        userId,
-        sectionId: query?.sectionId,
-        deletedAt: { isNull: true },
-      },
-    })
+    const conditions: SQL[] = [
+      eq(this.forumTopic.userId, userId),
+      isNull(this.forumTopic.deletedAt),
+    ]
+
+    if (query?.sectionId !== undefined) {
+      conditions.push(eq(this.forumTopic.sectionId, query.sectionId))
+    }
+
+    const where = and(...conditions)
     const page = await this.drizzle.ext.findPagination(this.forumTopic, {
       where,
       pageIndex: query?.pageIndex,

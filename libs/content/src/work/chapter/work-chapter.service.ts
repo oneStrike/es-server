@@ -1,6 +1,8 @@
 import {
-  DrizzleService
+  DrizzleService,
+  escapeLikePattern,
  } from '@db/core'
+import type { SQL } from 'drizzle-orm'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
@@ -19,7 +21,7 @@ import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, ilike, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
   CreateWorkChapterInput,
@@ -97,18 +99,33 @@ export class WorkChapterService {
    * @returns 分页章节列表
    */
   async getChapterPage(dto: QueryWorkChapterInput) {
-    const where = this.drizzle.buildWhere(this.workChapter, {
-      and: {
-        deletedAt: { isNull: true },
-        workId: dto.workId,
-        isPublished: dto.isPublished,
-        isPreview: dto.isPreview,
-        viewRule: dto.viewRule,
-        canDownload: dto.canDownload,
-        canComment: dto.canComment,
-        title: dto.title ? { like: dto.title } : undefined,
-      },
-    })
+    const conditions: SQL[] = [isNull(this.workChapter.deletedAt)]
+
+    if (dto.workId !== undefined) {
+      conditions.push(eq(this.workChapter.workId, dto.workId))
+    }
+    if (dto.isPublished !== undefined) {
+      conditions.push(eq(this.workChapter.isPublished, dto.isPublished))
+    }
+    if (dto.isPreview !== undefined) {
+      conditions.push(eq(this.workChapter.isPreview, dto.isPreview))
+    }
+    if (dto.viewRule !== undefined) {
+      conditions.push(eq(this.workChapter.viewRule, dto.viewRule))
+    }
+    if (dto.canDownload !== undefined) {
+      conditions.push(eq(this.workChapter.canDownload, dto.canDownload))
+    }
+    if (dto.canComment !== undefined) {
+      conditions.push(eq(this.workChapter.canComment, dto.canComment))
+    }
+    if (dto.title) {
+      conditions.push(
+        ilike(this.workChapter.title, `%${escapeLikePattern(dto.title)}%`),
+      )
+    }
+
+    const where = and(...conditions)
 
     const page = await this.drizzle.ext.findPagination(this.workChapter, {
       where,

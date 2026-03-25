@@ -1,11 +1,11 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { eq, like } from 'drizzle-orm'
+import { and, eq, ilike, inArray } from 'drizzle-orm'
 import {
   CreateDictionaryInput,
   CreateDictionaryItemInput,
@@ -58,10 +58,10 @@ export class LibDictionaryService {
   ) {
     const conditions: SQL[] = []
     if (filters.code) {
-      conditions.push(like(table.code, `%${filters.code}%`))
+      conditions.push(ilike(table.code, `%${escapeLikePattern(filters.code)}%`))
     }
     if (filters.name) {
-      conditions.push(like(table.name, `%${filters.name}%`))
+      conditions.push(ilike(table.name, `%${escapeLikePattern(filters.name)}%`))
     }
     if (filters.isEnabled !== undefined) {
       conditions.push(eq(table.isEnabled, filters.isEnabled))
@@ -115,14 +115,10 @@ export class LibDictionaryService {
    * @returns 分页字典列表
    */
   async findDictionaries(queryDto: DictionaryPageQueryInput) {
+    const conditions = this.buildSearchConditions(this.dictionary, queryDto)
+
     return this.drizzle.ext.findPagination(this.dictionary, {
-      where: this.drizzle.buildWhere(this.dictionary, {
-        and: {
-          isEnabled: queryDto.isEnabled,
-          code: { like: queryDto.code },
-          name: { like: queryDto.name },
-        },
-      }),
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       ...queryDto,
     })
   }
@@ -229,21 +225,15 @@ export class LibDictionaryService {
    */
   async findDictionaryItems(queryDto: DictionaryItemPageQueryInput) {
     const { dictionaryCode } = queryDto
+    const conditions = this.buildSearchConditions(this.dictionaryItem, queryDto)
+    const dictionaryCodes = this.parseDictionaryCodes(dictionaryCode)
+
+    if (dictionaryCodes.length > 0) {
+      conditions.push(inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes))
+    }
 
     return this.drizzle.ext.findPagination(this.dictionaryItem, {
-      where: this.drizzle.buildWhere(
-        this.dictionaryItem,
-        {
-          and: {
-            code: { like: queryDto.code },
-            name: { like: queryDto.name },
-            isEnabled: queryDto.isEnabled,
-            dictionaryCode: {
-              in: this.parseDictionaryCodes(dictionaryCode),
-            },
-          },
-        },
-      ),
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       ...queryDto,
     })
   }

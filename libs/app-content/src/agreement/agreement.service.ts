@@ -1,9 +1,10 @@
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { and, eq, ilike } from 'drizzle-orm'
 import {
   AgreementIdInput,
   AgreementPageQuery,
@@ -159,16 +160,22 @@ export class AgreementService {
    * @returns 分页结果
    */
   async findPage(query: AgreementPageQuery) {
-    const conditions = this.drizzle.buildWhere(this.agreement, {
-      and: {
-        title: { like: query.title },
-        isPublished: query.isPublished,
-        showInAuth: query.showInAuth,
-      },
-    })
+    const conditions: SQL[] = []
+
+    if (query.title) {
+      conditions.push(
+        ilike(this.agreement.title, `%${escapeLikePattern(query.title)}%`),
+      )
+    }
+    if (query.isPublished !== undefined) {
+      conditions.push(eq(this.agreement.isPublished, query.isPublished))
+    }
+    if (query.showInAuth !== undefined) {
+      conditions.push(eq(this.agreement.showInAuth, query.showInAuth))
+    }
 
     return this.drizzle.ext.findPagination(this.agreement, {
-      where: conditions,
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       omit: ['content'],
       ...query,
     })

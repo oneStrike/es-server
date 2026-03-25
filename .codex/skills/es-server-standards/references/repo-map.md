@@ -45,4 +45,4 @@
 - controller 入口：`rg -n "@Controller\\(" apps`
 - Swagger 用法：`rg -n "ApiDoc|ApiPageDoc|@ApiTags" apps libs`
 - DTO 基类：`rg -n "class Base.*Dto|PickType|OmitType|PartialType|IntersectionType" apps libs`
-- Drizzle 典型用法：`rg -n "withErrorHandling|assertAffectedRows|findPagination|buildWhere" apps libs`
+- Drizzle 典型用法：`rg -n "withErrorHandling|assertAffectedRows|findPagination|and\\(|inArray\\(|ilike\\(" apps libs`

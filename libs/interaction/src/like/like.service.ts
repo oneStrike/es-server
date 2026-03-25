@@ -139,12 +139,10 @@ export class LikeService {
     pageSize: number = 20,
   ) {
     const page = await this.drizzle.ext.findPagination(this.userLike, {
-      where: this.drizzle.buildWhere(this.userLike, {
-        and: {
-          targetType,
-          targetId,
-        },
-      }),
+      where: and(
+        eq(this.userLike.targetType, targetType),
+        eq(this.userLike.targetId, targetId),
+      ),
       pageIndex,
       pageSize,
       orderBy: { createdAt: 'desc' },
@@ -266,12 +264,10 @@ export class LikeService {
    */
   async getUserLikes(query: LikeListQuery) {
     const page = await this.drizzle.ext.findPagination(this.userLike, {
-      where: this.drizzle.buildWhere(this.userLike, {
-        and: {
-          targetType: query.targetType,
-          userId: query.userId,
-        },
-      }),
+      where: and(
+        eq(this.userLike.targetType, query.targetType),
+        eq(this.userLike.userId, query.userId),
+      ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: { createdAt: 'desc' },

@@ -4,6 +4,7 @@ import type {
   ReadingHistoryQuery,
   TouchByWorkInput,
 } from './reading-state.type'
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { ContentTypeEnum, WorkTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -207,16 +208,19 @@ export class ReadingStateService {
    */
   async getUserReadingHistory(query: ReadingHistoryQuery) {
     const { workType, userId, workId, pageIndex, pageSize } = query
+    const conditions: SQL[] = [eq(this.userWorkReadingState.userId, userId)]
+
+    if (workId !== undefined) {
+      conditions.push(eq(this.userWorkReadingState.workId, workId))
+    }
+    if (workType !== undefined) {
+      conditions.push(eq(this.userWorkReadingState.workType, workType))
+    }
+
     const page = await this.drizzle.ext.findPagination(
       this.userWorkReadingState,
       {
-        where: this.drizzle.buildWhere(this.userWorkReadingState, {
-          and: {
-            userId,
-            workId,
-            workType,
-          },
-        }),
+        where: and(...conditions),
         orderBy: { lastReadAt: 'desc' },
         pageIndex,
         pageSize,

@@ -1,8 +1,9 @@
 import type { Db } from '@db/core'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
 import {
   AuthorIdInput,
   CreateAuthorInput,
@@ -303,18 +304,27 @@ export class WorkAuthorService {
       ...pageDto
     } = queryAuthorDto
 
-    const baseWhere = this.drizzle.buildWhere(this.workAuthor, {
-      and: {
-        deletedAt: { isNull: true },
-        isEnabled,
-        nationality,
-        gender,
-        isRecommended,
-        name: name ? { like: name } : undefined,
-      },
-    })
+    const conditions: SQL[] = [isNull(this.workAuthor.deletedAt)]
 
-    let where = baseWhere
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.workAuthor.isEnabled, isEnabled))
+    }
+    if (nationality !== undefined) {
+      conditions.push(eq(this.workAuthor.nationality, nationality))
+    }
+    if (gender !== undefined) {
+      conditions.push(eq(this.workAuthor.gender, gender))
+    }
+    if (isRecommended !== undefined) {
+      conditions.push(eq(this.workAuthor.isRecommended, isRecommended))
+    }
+    if (name) {
+      conditions.push(
+        ilike(this.workAuthor.name, `%${escapeLikePattern(name)}%`),
+      )
+    }
+
+    let where: SQL | undefined = and(...conditions)
     if (type && type !== '[]') {
       const values = JSON.parse(type) as number[]
       if (values.length > 0) {

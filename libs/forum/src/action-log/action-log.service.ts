@@ -4,6 +4,8 @@ import type {
 } from './action-log.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
+import type { SQL } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 /**
  * 论坛用户操作日志服务类
@@ -70,15 +72,25 @@ export class ForumUserActionLogService {
    * @returns 操作日志分页结果，包含列表、总数、页码和每页数量
    */
   async getActionLogsByUserId(dto: QueryForumActionLogInput) {
-    const { userId, ...otherDto } = dto
+    const { userId, actionType, targetType, targetId, ...pageDto } = dto
+    const conditions: SQL[] = []
+
+    if (userId !== undefined) {
+      conditions.push(eq(this.forumUserActionLog.userId, userId))
+    }
+    if (actionType !== undefined) {
+      conditions.push(eq(this.forumUserActionLog.actionType, actionType))
+    }
+    if (targetType !== undefined) {
+      conditions.push(eq(this.forumUserActionLog.targetType, targetType))
+    }
+    if (targetId !== undefined) {
+      conditions.push(eq(this.forumUserActionLog.targetId, targetId))
+    }
+
     return this.drizzle.ext.findPagination(this.forumUserActionLog, {
-      where: this.drizzle.buildWhere(this.forumUserActionLog, {
-        and: {
-          userId,
-          ...otherDto,
-        },
-      }),
-      ...otherDto,
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      ...pageDto,
     })
   }
 }

@@ -5,7 +5,7 @@
 
 ## 1. 关键入口与术语
 
-- `DrizzleService`：统一数据库入口，提供 `db`、`schema`、`ext`、`buildWhere`、`withErrorHandling`、`assertAffectedRows`。
+- `DrizzleService`：统一数据库入口，提供 `db`、`schema`、`ext`、`withErrorHandling`、`assertAffectedRows`。
 - `db`：`drizzle.db`，执行查询与事务。
 - `schema`：`drizzle.schema`，表对象唯一来源。
 - `ext`：`drizzle.ext`，项目级扩展，如 `findPagination`、`exists`、`existsActive`、`applyCountDelta`、`softDelete`。
@@ -19,7 +19,7 @@
 4. update/delete 在语义上必须保证资源存在时，必须调用 `drizzle.assertAffectedRows(result, '资源不存在')`；幂等删除等允许 0 行变更的场景除外。
 5. 常规单表、单源分页统一使用 `drizzle.ext.findPagination(...)`；业务代码不得在这类场景重复实现 `offset/limit` 与页码语义。跨来源合并排序、时间线、混合搜索等复合分页允许使用专用 helper 或手工分页，但必须保持现有结果语义，并复用统一的分页入参/返回结构约定。
 6. 分页入参与索引语义沿用 `PageDto` 与 `findPagination` 的当前实现，禁止在业务层额外做 0/1-based 手工换算。
-7. 动态条件统一使用 `SQL[] + and(...)` 或 `drizzle.buildWhere(...)`；无条件时传 `where: undefined`。
+7. 动态条件统一使用 `SQL[] + and(...)`；无条件时传 `where: undefined`。
 8. 表对象必须来自 `drizzle.schema`，禁止在服务内重新声明表结构。
 9. 事务统一使用 `db.transaction(async (tx) => ...)` 或 `drizzle.withTransaction(...)`，并在调用链中显式传递 tx；禁止 `tx: any` 与忽略传入事务。若外层逻辑需要基于原始数据库错误做重试或分支判断，优先直接保留 `db.transaction(...)`，并在外层显式处理错误。
 10. 存在性校验优先使用 `drizzle.ext.exists/existsActive`，避免“先查再判”的重复查询。
@@ -85,11 +85,9 @@ async update(dto: UpdateDto) {
 // 常规分页
 async list(query: QueryDto) {
   return this.drizzle.ext.findPagination(this.someTable, {
-    where: this.drizzle.buildWhere(this.someTable, {
-      and: {
-        name: query.name ? { like: query.name } : undefined,
-      },
-    }),
+    where: query.name
+      ? ilike(this.someTable.name, `%${query.name}%`)
+      : undefined,
     ...query,
   })
 }

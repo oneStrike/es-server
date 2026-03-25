@@ -15,7 +15,8 @@ import type {
   QueryMyPointRecordInput,
   UpdateMyProfileInput,
 } from './user.type'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
@@ -23,7 +24,7 @@ import { UserAssetsService } from '@libs/interaction/user-assets'
 import { MessageInboxService } from '@libs/message/inbox'
 import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, ilike, inArray, sql } from 'drizzle-orm'
 
 @Injectable()
 export class UserService {
@@ -329,15 +330,28 @@ export class UserService {
     await this.userCoreService.ensureUserExists(userId)
 
     const { name, type, isEnabled, business, eventKey, ...pageQuery } = query
-    const badgeWhere = this.drizzle.buildWhere(this.userBadge, {
-      and: {
-        name: name ? { like: name } : undefined,
-        type,
-        isEnabled,
-        business,
-        eventKey,
-      },
-    })
+    const badgeConditions: SQL[] = []
+
+    if (name) {
+      badgeConditions.push(
+        ilike(this.userBadge.name, `%${escapeLikePattern(name)}%`),
+      )
+    }
+    if (type !== undefined) {
+      badgeConditions.push(eq(this.userBadge.type, type))
+    }
+    if (isEnabled !== undefined) {
+      badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
+    }
+    if (business !== undefined) {
+      badgeConditions.push(eq(this.userBadge.business, business))
+    }
+    if (eventKey !== undefined) {
+      badgeConditions.push(eq(this.userBadge.eventKey, eventKey))
+    }
+
+    const badgeWhere =
+      badgeConditions.length > 0 ? and(...badgeConditions) : undefined
     const badges = await this.db
       .select({ id: this.userBadge.id })
       .from(this.userBadge)

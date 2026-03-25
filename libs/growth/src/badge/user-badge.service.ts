@@ -5,13 +5,14 @@ import type {
   UpdateUserBadgeInput,
   UpdateUserBadgeStatusInput,
 } from './badge.type'
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, ilike, inArray, sql } from 'drizzle-orm'
 
 @Injectable()
 export class UserBadgeService {
@@ -102,15 +103,27 @@ export class UserBadgeService {
   }
 
   private buildBadgeWhere(dto: QueryUserBadgePageInput) {
-    return this.drizzle.buildWhere(this.userBadge, {
-      and: {
-        name: dto.name ? { like: dto.name } : undefined,
-        type: dto.type,
-        isEnabled: dto.isEnabled,
-        business: dto.business,
-        eventKey: dto.eventKey,
-      },
-    })
+    const conditions: SQL[] = []
+
+    if (dto.name) {
+      conditions.push(
+        ilike(this.userBadge.name, `%${escapeLikePattern(dto.name)}%`),
+      )
+    }
+    if (dto.type !== undefined) {
+      conditions.push(eq(this.userBadge.type, dto.type))
+    }
+    if (dto.isEnabled !== undefined) {
+      conditions.push(eq(this.userBadge.isEnabled, dto.isEnabled))
+    }
+    if (dto.business !== undefined) {
+      conditions.push(eq(this.userBadge.business, dto.business))
+    }
+    if (dto.eventKey !== undefined) {
+      conditions.push(eq(this.userBadge.eventKey, dto.eventKey))
+    }
+
+    return conditions.length > 0 ? and(...conditions) : undefined
   }
 
   async getBadgeDetail(dto: { id: number }) {

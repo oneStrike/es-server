@@ -1,4 +1,5 @@
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import { FavoriteService } from '@libs/interaction/favorite'
@@ -13,10 +14,29 @@ import { WorkAuthorService } from '../../author'
 import {
   CreateWorkInput,
   QueryWorkInput,
-  QueryWorkTypeInput,
   UpdateWorkInput,
   UpdateWorkStatusInput,
 } from './work.type'
+
+const PAGE_WORK_PICK_FIELDS = [
+  'id',
+  'type',
+  'name',
+  'cover',
+  'popularity',
+  'isRecommended',
+  'isHot',
+  'isNew',
+  'serialStatus',
+  'publisher',
+  'language',
+  'region',
+  'ageRating',
+  'createdAt',
+  'updatedAt',
+  'publishAt',
+  'isPublished',
+] as const
 
 /**
  * 作品详情上下文接口
@@ -50,7 +70,7 @@ export class WorkService {
     private readonly followService: FollowService,
     private readonly browseLogService: BrowseLogService,
     private readonly readingStateService: ReadingStateService,
-  ) { }
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -140,31 +160,31 @@ export class WorkService {
       await Promise.all([
         authorIds.length
           ? this.db.query.workAuthor.findMany({
-            where: {
-              id: { in: authorIds },
-              isEnabled: true,
-              deletedAt: { isNull: true },
-            },
-            columns: { id: true },
-          })
+              where: {
+                id: { in: authorIds },
+                isEnabled: true,
+                deletedAt: { isNull: true },
+              },
+              columns: { id: true },
+            })
           : [],
         categoryIds.length
           ? this.db.query.workCategory.findMany({
-            where: {
-              id: { in: categoryIds },
-              isEnabled: true,
-            },
-            columns: { id: true },
-          })
+              where: {
+                id: { in: categoryIds },
+                isEnabled: true,
+              },
+              columns: { id: true },
+            })
           : [],
         tagIds.length
           ? this.db.query.workTag.findMany({
-            where: {
-              id: { in: tagIds },
-              isEnabled: true,
-            },
-            columns: { id: true },
-          })
+              where: {
+                id: { in: tagIds },
+                isEnabled: true,
+              },
+              columns: { id: true },
+            })
           : [],
       ])
 
@@ -529,56 +549,111 @@ export class WorkService {
    * 按类型分页查询作品的通用方法
    * 支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能
    */
-  async getWorkTypePage(dto: QueryWorkInput) {
-    const { args } = this.drizzle.buildPageQuery(dto)
-    console.log("🚀 ~ WorkService ~ getWorkTypePage ~ args:", args)
-
-    const data = await this.db.query.work.findMany({
-      where: dto,
-      columns: {
-        id: true,
-        name: true,
-        cover: true,
-        isPublished: true,
-        isHot: true,
-        isNew: true,
-        isRecommended: true,
-        recommendWeight: true,
-        viewCount: true,
-        favoriteCount: true,
-        likeCount: true,
-        commentCount: true,
-        downloadCount: true,
-        rating: true,
-        deletedAt: true,
-      },
-      with: {
-        authors: {
-          columns: {
-            id: true,
-            name: true,
-            type: true,
-            avatar: true,
-          },
-        },
-        categories: {
-          columns: {
-            id: true,
-            name: true,
-            icon: true,
-          },
-        },
-        tags: {
-          columns: {
-            id: true,
-            name: true,
-            icon: true,
-          },
-        },
-      },
-      ...args
+  async getWorkTypePage(dto: QueryWorkInput, userId?: number) {
+    const { pageIndex, pageSize, orderBy } = dto
+    const page = await this.drizzle.ext.findPagination(this.work, {
+      where: and(...this.buildWorkPageConditions(dto, { forcePublished: true })),
+      pageIndex,
+      pageSize,
+      orderBy,
+      pick: PAGE_WORK_PICK_FIELDS,
     })
-    return data
+
+    return this.attachWorkRelations(page, userId)
+  }
+
+  /**
+   * 构建作品分页查询条件。
+   * app 侧列表可通过 forcePublished 固定限制为已发布作品；
+   * 管理端列表则沿用传入的 isPublished 过滤语义。
+   */
+  private buildWorkPageConditions(
+    queryWorkDto: QueryWorkInput,
+    options?: { forcePublished?: boolean },
+  ): SQL[] {
+    const { name, publisher, author, tagIds, ...otherDto } = queryWorkDto
+    const normalizedAuthor = author?.trim()
+    const normalizedName = name?.trim()
+    const normalizedPublisher = publisher?.trim()
+    const normalizedLanguage = otherDto.language?.trim()
+    const normalizedRegion = otherDto.region?.trim()
+    const normalizedAgeRating = otherDto.ageRating?.trim()
+
+    const conditions: SQL[] = [isNull(this.work.deletedAt)]
+
+    if (isNotNil(otherDto.type)) {
+      conditions.push(eq(this.work.type, otherDto.type))
+    }
+
+    if (options?.forcePublished) {
+      conditions.push(eq(this.work.isPublished, true))
+    } else if (isNotNil(otherDto.isPublished)) {
+      conditions.push(eq(this.work.isPublished, otherDto.isPublished))
+    }
+
+    if (isNotNil(otherDto.serialStatus)) {
+      conditions.push(eq(this.work.serialStatus, otherDto.serialStatus))
+    }
+    if (normalizedLanguage) {
+      conditions.push(eq(this.work.language, normalizedLanguage))
+    }
+    if (normalizedRegion) {
+      conditions.push(eq(this.work.region, normalizedRegion))
+    }
+    if (normalizedAgeRating) {
+      conditions.push(eq(this.work.ageRating, normalizedAgeRating))
+    }
+    if (isNotNil(otherDto.isRecommended)) {
+      conditions.push(eq(this.work.isRecommended, otherDto.isRecommended))
+    }
+    if (isNotNil(otherDto.isHot)) {
+      conditions.push(eq(this.work.isHot, otherDto.isHot))
+    }
+    if (isNotNil(otherDto.isNew)) {
+      conditions.push(eq(this.work.isNew, otherDto.isNew))
+    }
+    if (normalizedName) {
+      conditions.push(
+        ilike(this.work.name, `%${escapeLikePattern(normalizedName)}%`),
+      )
+    }
+    if (normalizedPublisher) {
+      conditions.push(
+        ilike(
+          this.work.publisher,
+          `%${escapeLikePattern(normalizedPublisher)}%`,
+        ),
+      )
+    }
+
+    if (normalizedAuthor) {
+      conditions.push(sql`
+        exists (
+          select 1
+          from ${this.workAuthorRelation}
+          inner join ${this.workAuthor}
+            on ${this.workAuthor.id} = ${this.workAuthorRelation.authorId}
+          where ${this.workAuthorRelation.workId} = ${this.work.id}
+            and ${ilike(
+              this.workAuthor.name,
+              `%${escapeLikePattern(normalizedAuthor)}%`,
+            )}
+        )
+      `)
+    }
+
+    if (Array.isArray(tagIds) && tagIds.length > 0) {
+      conditions.push(sql`
+        exists (
+          select 1
+          from ${this.workTagRelation}
+          where ${this.workTagRelation.workId} = ${this.work.id}
+            and ${inArray(this.workTagRelation.tagId, tagIds)}
+        )
+      `)
+    }
+
+    return conditions
   }
 
   /**
@@ -622,10 +697,10 @@ export class WorkService {
     const authorFollowStatusMap =
       userId && authorIds.length > 0
         ? await this.followService.checkStatusBatch(
-          FollowTargetTypeEnum.AUTHOR,
-          authorIds,
-          userId,
-        )
+            FollowTargetTypeEnum.AUTHOR,
+            authorIds,
+            userId,
+          )
         : new Map<number, boolean>()
 
     const authorMap = new Map<number, typeof authors>()
@@ -655,10 +730,10 @@ export class WorkService {
           .map((relation) =>
             relation.author
               ? {
-                ...relation.author,
-                isFollowed:
-                  authorFollowStatusMap.get(relation.authorId) ?? false,
-              }
+                  ...relation.author,
+                  isFollowed:
+                    authorFollowStatusMap.get(relation.authorId) ?? false,
+                }
               : undefined,
           )
           .filter(Boolean),
@@ -681,73 +756,16 @@ export class WorkService {
    * - 其他字段（类型、发布状态、连载状态等）支持精确匹配
    */
   async getWorkPage(queryWorkDto: QueryWorkInput, userId?: number) {
-    const { name, publisher, author, tagIds, ...otherDto } = queryWorkDto
-    const normalizedAuthor = author?.trim()
-    const normalizedName = name?.trim()
-    const normalizedPublisher = publisher?.trim()
-    const normalizedLanguage = otherDto.language?.trim()
-    const normalizedRegion = otherDto.region?.trim()
-    const normalizedAgeRating = otherDto.ageRating?.trim()
-    const conditions = [
-      isNull(this.work.deletedAt),
-      otherDto.type ? eq(this.work.type, otherDto.type) : undefined,
-      isNotNil(otherDto.isPublished)
-        ? eq(this.work.isPublished, otherDto.isPublished)
-        : undefined,
-      isNotNil(otherDto.serialStatus)
-        ? eq(this.work.serialStatus, otherDto.serialStatus)
-        : undefined,
-      normalizedLanguage
-        ? eq(this.work.language, normalizedLanguage)
-        : undefined,
-      normalizedRegion ? eq(this.work.region, normalizedRegion) : undefined,
-      normalizedAgeRating
-        ? eq(this.work.ageRating, normalizedAgeRating)
-        : undefined,
-      isNotNil(otherDto.isRecommended)
-        ? eq(this.work.isRecommended, otherDto.isRecommended)
-        : undefined,
-      isNotNil(otherDto.isHot)
-        ? eq(this.work.isHot, otherDto.isHot)
-        : undefined,
-      isNotNil(otherDto.isNew)
-        ? eq(this.work.isNew, otherDto.isNew)
-        : undefined,
-      normalizedName ? ilike(this.work.name, `%${normalizedName}%`) : undefined,
-      normalizedPublisher
-        ? ilike(this.work.publisher, `%${normalizedPublisher}%`)
-        : undefined,
-    ].filter(Boolean)
-
-    if (normalizedAuthor) {
-      conditions.push(sql`
-        exists (
-          select 1
-          from ${this.workAuthorRelation}
-          inner join ${this.workAuthor}
-            on ${this.workAuthor.id} = ${this.workAuthorRelation.authorId}
-          where ${this.workAuthorRelation.workId} = ${this.work.id}
-            and ${ilike(this.workAuthor.name, `%${normalizedAuthor}%`)}
-        )
-      `)
-    }
-
-    if (Array.isArray(tagIds) && tagIds.length > 0) {
-      conditions.push(sql`
-        exists (
-          select 1
-          from ${this.workTagRelation}
-          where ${this.workTagRelation.workId} = ${this.work.id}
-            and ${inArray(this.workTagRelation.tagId, tagIds)}
-        )
-      `)
-    }
+    const { pageIndex, pageSize, orderBy } = queryWorkDto
+    const conditions = this.buildWorkPageConditions(queryWorkDto)
 
     const page = await this.drizzle.ext.findPagination(this.work, {
-      where: and(...(conditions as [any, ...any[]])),
-      ...otherDto,
+      where: and(...conditions),
+      pageIndex,
+      pageSize,
+      orderBy,
     })
-    return this.attachWorkRelations(page as any, userId)
+    return this.attachWorkRelations(page, userId)
   }
 
   /**
@@ -956,10 +974,10 @@ export class WorkService {
         ),
         authorIds.length > 0
           ? this.followService.checkStatusBatch(
-            FollowTargetTypeEnum.AUTHOR,
-            authorIds,
-            userId,
-          )
+              FollowTargetTypeEnum.AUTHOR,
+              authorIds,
+              userId,
+            )
           : Promise.resolve(new Map<number, boolean>()),
       ])
 
@@ -1005,11 +1023,11 @@ export class WorkService {
       lastReadAt: now,
       continueChapter: continueChapter
         ? {
-          id: continueChapter.id,
-          title: continueChapter.title,
-          subtitle: continueChapter.subtitle ?? undefined,
-          sortOrder: continueChapter.sortOrder,
-        }
+            id: continueChapter.id,
+            title: continueChapter.title,
+            subtitle: continueChapter.subtitle ?? undefined,
+            sortOrder: continueChapter.sortOrder,
+          }
         : undefined,
     }
   }

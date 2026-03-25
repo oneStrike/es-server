@@ -5,6 +5,7 @@ import type {
 } from './point.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import type { SQL } from 'drizzle-orm'
 import { and, eq } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 
@@ -35,10 +36,19 @@ export class UserPointRuleService {
   }
 
   async getPointRulePage(queryPointRuleDto: QueryUserPointRulePageInput) {
+    const conditions: SQL[] = []
+
+    if (queryPointRuleDto.type !== undefined) {
+      conditions.push(eq(this.userPointRule.type, queryPointRuleDto.type))
+    }
+    if (queryPointRuleDto.isEnabled !== undefined) {
+      conditions.push(
+        eq(this.userPointRule.isEnabled, queryPointRuleDto.isEnabled),
+      )
+    }
+
     return this.drizzle.ext.findPagination(this.userPointRule, {
-      where: this.drizzle.buildWhere(this.userPointRule, {
-        and: queryPointRuleDto,
-      }),
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       ...queryPointRuleDto,
     })
   }

@@ -5,6 +5,7 @@ import type {
   FollowStatusView,
 } from './follow.type'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -192,13 +193,11 @@ export class FollowService {
     const { targetType, targetId, userId } = input
     const isFollowing = await this.drizzle.ext.exists(
       this.userFollow,
-      this.drizzle.buildWhere(this.userFollow, {
-        and: {
-          targetType,
-          targetId,
-          userId,
-        },
-      }),
+      and(
+        eq(this.userFollow.targetType, targetType),
+        eq(this.userFollow.targetId, targetId),
+        eq(this.userFollow.userId, userId),
+      ),
     )
 
     if (targetType !== FollowTargetTypeEnum.USER) {
@@ -211,13 +210,11 @@ export class FollowService {
 
     const isFollowedByTarget = await this.drizzle.ext.exists(
       this.userFollow,
-      this.drizzle.buildWhere(this.userFollow, {
-        and: {
-          targetType: FollowTargetTypeEnum.USER,
-          targetId: userId,
-          userId: targetId,
-        },
-      }),
+      and(
+        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+        eq(this.userFollow.targetId, userId),
+        eq(this.userFollow.userId, targetId),
+      ),
     )
 
     return {
@@ -228,13 +225,14 @@ export class FollowService {
   }
 
   async getUserFollows(query: FollowListQuery) {
+    const conditions: SQL[] = [eq(this.userFollow.userId, query.userId)]
+
+    if (query.targetType !== undefined) {
+      conditions.push(eq(this.userFollow.targetType, query.targetType))
+    }
+
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
-      where: this.drizzle.buildWhere(this.userFollow, {
-        and: {
-          userId: query.userId,
-          targetType: query.targetType,
-        },
-      }),
+      where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {
@@ -305,12 +303,10 @@ export class FollowService {
     pageSize?: number
   }) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
-      where: this.drizzle.buildWhere(this.userFollow, {
-        and: {
-          userId: query.userId,
-          targetType: FollowTargetTypeEnum.USER,
-        },
-      }),
+      where: and(
+        eq(this.userFollow.userId, query.userId),
+        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+      ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {
@@ -354,12 +350,10 @@ export class FollowService {
     pageSize?: number
   }) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
-      where: this.drizzle.buildWhere(this.userFollow, {
-        and: {
-          targetType: FollowTargetTypeEnum.USER,
-          targetId: query.userId,
-        },
-      }),
+      where: and(
+        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+        eq(this.userFollow.targetId, query.userId),
+      ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {

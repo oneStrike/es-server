@@ -11,7 +11,7 @@ import type {
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from './task.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward'
 import {
   BadRequestException,
@@ -20,7 +20,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
-import { and, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { and, eq, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
@@ -216,16 +216,25 @@ export class TaskService {
    * @returns 分页结果
    */
   async getTaskPage(queryDto: QueryTaskPageInput) {
+    const conditions: SQL[] = [isNull(this.taskTable.deletedAt)]
+
+    if (queryDto.status !== undefined) {
+      conditions.push(eq(this.taskTable.status, queryDto.status))
+    }
+    if (queryDto.type !== undefined) {
+      conditions.push(eq(this.taskTable.type, queryDto.type))
+    }
+    if (queryDto.isEnabled !== undefined) {
+      conditions.push(eq(this.taskTable.isEnabled, queryDto.isEnabled))
+    }
+    if (queryDto.title) {
+      conditions.push(
+        ilike(this.taskTable.title, `%${escapeLikePattern(queryDto.title)}%`),
+      )
+    }
+
     return this.drizzle.ext.findPagination(this.taskTable, {
-      where: this.drizzle.buildWhere(this.taskTable, {
-        and: {
-          status: queryDto.status,
-          type: queryDto.type,
-          isEnabled: queryDto.isEnabled,
-          title: { like: queryDto.title },
-          deletedAt: { isNull: true },
-        },
-      }),
+      where: and(...conditions),
       ...queryDto,
     })
   }
@@ -354,14 +363,19 @@ export class TaskService {
   async getTaskAssignmentPage(queryDto: QueryTaskAssignmentPageInput) {
     const { orderBy } = queryDto
 
-    const whereClause = this.drizzle.buildWhere(this.taskAssignmentTable, {
-      and: {
-        taskId: queryDto.taskId,
-        userId: queryDto.userId,
-        status: queryDto.status,
-        deletedAt: { isNull: true },
-      },
-    })
+    const assignmentConditions: SQL[] = [isNull(this.taskAssignmentTable.deletedAt)]
+
+    if (queryDto.taskId !== undefined) {
+      assignmentConditions.push(eq(this.taskAssignmentTable.taskId, queryDto.taskId))
+    }
+    if (queryDto.userId !== undefined) {
+      assignmentConditions.push(eq(this.taskAssignmentTable.userId, queryDto.userId))
+    }
+    if (queryDto.status !== undefined) {
+      assignmentConditions.push(eq(this.taskAssignmentTable.status, queryDto.status))
+    }
+
+    const whereClause = and(...assignmentConditions)
 
     const result = await this.queryTaskAssignmentPage({
       whereClause,
@@ -424,18 +438,18 @@ export class TaskService {
     const { type, orderBy } = queryDto
 
     // 构建查询条件
-    const assignmentWhere = this.drizzle.buildWhere(this.taskAssignmentTable, {
-      and: {
-        userId,
-        status: queryDto.status,
-        deletedAt: { isNull: true },
-      },
-    })
-    const taskWhere = this.drizzle.buildWhere(this.taskTable, {
-      and: {
-        type,
-      },
-    })
+    const assignmentConditions: SQL[] = [
+      eq(this.taskAssignmentTable.userId, userId),
+      isNull(this.taskAssignmentTable.deletedAt),
+    ]
+
+    if (queryDto.status !== undefined) {
+      assignmentConditions.push(eq(this.taskAssignmentTable.status, queryDto.status))
+    }
+
+    const assignmentWhere = and(...assignmentConditions)
+    const taskWhere =
+      type !== undefined ? eq(this.taskTable.type, type) : undefined
     const whereClause = assignmentWhere && taskWhere
       ? and(assignmentWhere, taskWhere)
       : assignmentWhere ?? taskWhere

@@ -4,7 +4,7 @@ import type {
   CreateForumModeratorApplicationInput,
   QueryForumModeratorApplicationInput,
 } from './moderator-application.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull, SQL } from 'drizzle-orm'
 import {
@@ -282,24 +282,29 @@ export class ForumModeratorApplicationService {
     const { nickname, ...pagination } = query
     const conditions: SQL[] = []
 
-    const baseWhere = this.drizzle.buildWhere(this.forumModeratorApplication, {
-      and: {
-        applicantId: query.applicantId,
-        sectionId: query.sectionId,
-        status: query.status,
-        deletedAt: { isNull: true },
-      },
-    })
-
-    if (baseWhere) {
-      conditions.push(baseWhere)
+    if (query.applicantId !== undefined) {
+      conditions.push(
+        eq(this.forumModeratorApplication.applicantId, query.applicantId),
+      )
     }
+    if (query.sectionId !== undefined) {
+      conditions.push(eq(this.forumModeratorApplication.sectionId, query.sectionId))
+    }
+    if (query.status !== undefined) {
+      conditions.push(eq(this.forumModeratorApplication.status, query.status))
+    }
+    conditions.push(isNull(this.forumModeratorApplication.deletedAt))
 
     if (nickname) {
       const users = await this.db
         .select({ id: this.drizzle.schema.appUser.id })
         .from(this.drizzle.schema.appUser)
-        .where(ilike(this.drizzle.schema.appUser.nickname, `%${nickname}%`))
+        .where(
+          ilike(
+            this.drizzle.schema.appUser.nickname,
+            `%${escapeLikePattern(nickname)}%`,
+          ),
+        )
       const userIds = users.map((item) => item.id)
 
       conditions.push(

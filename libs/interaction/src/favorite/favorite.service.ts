@@ -1,5 +1,6 @@
 import type { UserFavorite } from '@db/schema'
 import type { FavoriteListQuery, FavoriteRecordInput } from './favorite.type'
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -194,13 +195,11 @@ export class FavoriteService {
     const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
       this.userFavorite,
-      this.drizzle.buildWhere(this.userFavorite, {
-        and: {
-          targetType,
-          targetId,
-          userId,
-        },
-      }),
+      and(
+        eq(this.userFavorite.targetType, targetType),
+        eq(this.userFavorite.targetId, targetId),
+        eq(this.userFavorite.userId, userId),
+      ),
     )
   }
 
@@ -214,13 +213,14 @@ export class FavoriteService {
    * @returns 分页收藏列表
    */
   async getUserFavorites(query: FavoriteListQuery) {
+    const conditions: SQL[] = [eq(this.userFavorite.userId, query.userId)]
+
+    if (query.targetType !== undefined) {
+      conditions.push(eq(this.userFavorite.targetType, query.targetType))
+    }
+
     const page = await this.drizzle.ext.findPagination(this.userFavorite, {
-      where: this.drizzle.buildWhere(this.userFavorite, {
-        and: {
-          userId: query.userId,
-          targetType: query.targetType,
-        },
-      }),
+      where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       orderBy: {

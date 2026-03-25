@@ -1,6 +1,7 @@
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, ilike, isNull, sql } from 'drizzle-orm'
 import {
   CategoryIdInput,
   CreateCategoryInput,
@@ -54,12 +55,18 @@ export class WorkCategoryService {
       pageParams.orderBy = JSON.stringify({ sortOrder: 'desc' })
     }
 
-    let where = this.drizzle.buildWhere(this.workCategory, {
-      and: {
-        name: name ? { like: name } : undefined,
-        isEnabled,
-      },
-    })
+    const conditions: SQL[] = []
+
+    if (name) {
+      conditions.push(
+        ilike(this.workCategory.name, `%${escapeLikePattern(name)}%`),
+      )
+    }
+    if (isEnabled !== undefined) {
+      conditions.push(eq(this.workCategory.isEnabled, isEnabled))
+    }
+
+    let where = conditions.length > 0 ? and(...conditions) : undefined
 
     if (contentType?.length && contentType !== '[]') {
       const values = JSON.parse(contentType) as number[]

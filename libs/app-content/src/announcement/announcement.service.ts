@@ -1,7 +1,8 @@
-import { DrizzleService } from '@db/core'
+import type { SQL } from 'drizzle-orm'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm'
 import {
   AnnouncementPageQuery,
   CreateAnnouncementInput,
@@ -97,23 +98,65 @@ export class AppAnnouncementService {
       }
     }
 
-    const where = this.drizzle.buildWhere(
-      this.appAnnouncement,
-      {
-        and: {
-          title: { like: title },
-          publishStartTime: { lte: publishStartTime },
-          publishEndTime: { gte: publishEndTime },
-          enablePlatform: { in: platforms },
-          announcementType: queryAnnouncementDto.announcementType,
-          priorityLevel: queryAnnouncementDto.priorityLevel,
-          isPublished: options?.publishedOnly ? true : queryAnnouncementDto.isPublished,
-          isPinned: queryAnnouncementDto.isPinned,
-          showAsPopup: queryAnnouncementDto.showAsPopup,
-          pageId: queryAnnouncementDto.pageId,
-        },
-      },
-    )
+    const conditions: SQL[] = []
+    const isPublished = options?.publishedOnly
+      ? true
+      : queryAnnouncementDto.isPublished
+
+    if (title) {
+      conditions.push(
+        ilike(
+          this.appAnnouncement.title,
+          `%${escapeLikePattern(title)}%`,
+        ),
+      )
+    }
+    if (publishStartTime !== undefined) {
+      conditions.push(
+        lte(this.appAnnouncement.publishStartTime, publishStartTime),
+      )
+    }
+    if (publishEndTime !== undefined) {
+      conditions.push(
+        gte(this.appAnnouncement.publishEndTime, publishEndTime),
+      )
+    }
+    if (platforms && platforms.length > 0) {
+      const platformArray = sql`ARRAY[${sql.join(
+        platforms.map((item) => sql`${item}`),
+        sql`, `,
+      )}]::integer[]`
+      conditions.push(sql`${this.appAnnouncement.enablePlatform} && ${platformArray}`)
+    }
+    if (queryAnnouncementDto.announcementType !== undefined) {
+      conditions.push(
+        eq(
+          this.appAnnouncement.announcementType,
+          queryAnnouncementDto.announcementType,
+        ),
+      )
+    }
+    if (queryAnnouncementDto.priorityLevel !== undefined) {
+      conditions.push(
+        eq(this.appAnnouncement.priorityLevel, queryAnnouncementDto.priorityLevel),
+      )
+    }
+    if (isPublished !== undefined) {
+      conditions.push(eq(this.appAnnouncement.isPublished, isPublished))
+    }
+    if (queryAnnouncementDto.isPinned !== undefined) {
+      conditions.push(eq(this.appAnnouncement.isPinned, queryAnnouncementDto.isPinned))
+    }
+    if (queryAnnouncementDto.showAsPopup !== undefined) {
+      conditions.push(
+        eq(this.appAnnouncement.showAsPopup, queryAnnouncementDto.showAsPopup),
+      )
+    }
+    if (queryAnnouncementDto.pageId !== undefined) {
+      conditions.push(eq(this.appAnnouncement.pageId, queryAnnouncementDto.pageId))
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined
 
     return this.drizzle.ext.findPagination(this.appAnnouncement, {
       where,
