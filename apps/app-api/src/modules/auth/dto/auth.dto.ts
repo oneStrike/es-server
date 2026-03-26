@@ -110,6 +110,7 @@ export class LoginResponseDto {
     type: TokenDto,
     required: true,
     validation: false,
+    nullable: false,
   })
   tokens!: TokenDto
 
@@ -118,6 +119,7 @@ export class LoginResponseDto {
     required: true,
     type: BaseAppUserDto,
     validation: false,
+    nullable: false,
   })
   user!: BaseAppUserDto
 }

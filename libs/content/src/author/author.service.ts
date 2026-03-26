@@ -368,14 +368,6 @@ export class WorkAuthorService {
   async updateAuthor(updateAuthorDto: UpdateAuthorInput) {
     const { id, ...updateData } = updateAuthorDto
 
-    // 验证作者是否存在
-    const existingAuthor = await this.db.query.workAuthor.findFirst({
-      where: { id, deletedAt: { isNull: true } },
-    })
-    if (!existingAuthor) {
-      throw new BadRequestException('作者不存在')
-    }
-
     // 更新作者信息
     const result = await this.drizzle.withErrorHandling(() =>
       this.db

@@ -2,8 +2,8 @@ import type { DrizzleErrorMessages } from '../drizzle.type'
 import type { PostgresError } from './postgres-error'
 import { HttpException, InternalServerErrorException } from '@nestjs/common'
 import {
-  getPostgresErrorDescriptor,
   getPostgresError,
+  getPostgresErrorDescriptor,
   PostgresDefaultMessages,
   PostgresErrorCode,
 } from './postgres-error'
@@ -37,6 +37,11 @@ export function handleError(
   error: unknown,
   messages?: DrizzleErrorMessages,
 ): never {
+  // 内层已完成 PG -> HTTP 翻译时，外层包装不应再次覆盖消息和状态码。
+  if (error instanceof HttpException) {
+    throw error
+  }
+
   const pgError = getPostgresError(error)
   if (!pgError) {
     throw error
@@ -81,6 +86,7 @@ export async function executeWithErrorHandling<T>(
   try {
     return await fn()
   } catch (error) {
+    console.error(error)
     handleError(error, messages)
   }
 }

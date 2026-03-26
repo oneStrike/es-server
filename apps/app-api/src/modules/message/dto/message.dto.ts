@@ -81,8 +81,9 @@ export class ChatConversationDto extends BaseChatConversationDto {
     type: BaseChatPeerDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  declare peerUser?: BaseChatPeerDto
+  declare peerUser: BaseChatPeerDto
 }
 
 export class ChatConversationMessagesResponseDto {
@@ -137,8 +138,9 @@ export class UserNotificationDto extends BaseUserNotificationDto {
     type: NotificationActorDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  actorUser?: NotificationActorDto
+  actorUser!: NotificationActorDto
 }
 
 export class NotificationUnreadCountDto {
@@ -223,16 +225,18 @@ export class InboxSummaryDto {
     type: InboxNotificationBriefDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  latestNotification?: InboxNotificationBriefDto
+  latestNotification!: InboxNotificationBriefDto
 
   @NestedProperty({
     description: '最新聊天',
     type: InboxChatBriefDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  latestChat?: InboxChatBriefDto
+  latestChat: InboxChatBriefDto
 }
 
 export class InboxTimelineItemDto {

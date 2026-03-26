@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, isNull } from 'drizzle-orm'
+import { and, eq, ilike, isNull, max } from 'drizzle-orm'
 import {
   CreateTagInput,
   DeleteTagInput,
@@ -11,6 +11,10 @@ import {
 } from './tag.type'
 
 @Injectable()
+/**
+ * 作品标签领域服务，负责标签的增删改查、排序调整与启用状态维护。
+ * 对“禁用/删除”这类会影响线上可见性的操作，统一执行关联作品存在性校验。
+ */
 export class WorkTagService {
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -32,18 +36,18 @@ export class WorkTagService {
 
   async createTag(createTagDto: CreateTagInput) {
     if (!createTagDto.sortOrder) {
-      createTagDto.sortOrder = (await this.drizzle.ext.maxOrder(this.workTag)) + 1
+      const [result] = await this.db
+        .select({
+          maxSortOrder: max(this.workTag.sortOrder),
+        })
+        .from(this.workTag)
+
+      createTagDto.sortOrder = (result?.maxSortOrder || 0) + 1
     }
 
     await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .insert(this.workTag)
-          .values({
-            ...createTagDto,
-            popularity: 0,
-          }),
-      { duplicate: 'Tag name already exists' },
+      () => this.db.insert(this.workTag).values(createTagDto),
+      { duplicate: '标签名称已存在' },
     )
     return true
   }
@@ -51,13 +55,9 @@ export class WorkTagService {
   async getTagPage(queryDto: QueryTagInput) {
     const { name, isEnabled, ...pageParams } = queryDto
 
-    if (!pageParams.orderBy) {
-      pageParams.orderBy = JSON.stringify({ sortOrder: 'desc' })
-    }
-
     const conditions: SQL[] = []
 
-    if (name) {
+    if (name?.trim()) {
       conditions.push(ilike(this.workTag.name, `%${escapeLikePattern(name)}%`))
     }
     if (isEnabled !== undefined) {
@@ -69,6 +69,7 @@ export class WorkTagService {
     return this.drizzle.ext.findPagination(this.workTag, {
       where,
       ...pageParams,
+      orderBy: pageParams.orderBy || { sortOrder: 'desc' },
     })
   }
 
@@ -77,7 +78,7 @@ export class WorkTagService {
       where: { id },
     })
     if (!tag) {
-      throw new BadRequestException('Tag not found')
+      throw new BadRequestException('标签不存在')
     }
     return tag
   }
@@ -86,7 +87,7 @@ export class WorkTagService {
     const { id, ...updateData } = updateTagDto
 
     if (updateData.isEnabled === false && (await this.checkTagHasWorks(id))) {
-      throw new BadRequestException('Tag has related works and cannot be disabled')
+      throw new BadRequestException('标签存在关联的作品，不能禁用')
     }
 
     const result = await this.drizzle.withErrorHandling(
@@ -95,9 +96,9 @@ export class WorkTagService {
           .update(this.workTag)
           .set(updateData)
           .where(eq(this.workTag.id, id)),
-      { duplicate: 'Tag name already exists' },
+      { duplicate: '标签名称已存在' },
     )
-    this.drizzle.assertAffectedRows(result, 'Tag not found')
+    this.drizzle.assertAffectedRows(result, '标签不存在')
     return true
   }
 
@@ -110,7 +111,7 @@ export class WorkTagService {
 
   async updateTagStatus(id: number, isEnabled: boolean) {
     if (!isEnabled && (await this.checkTagHasWorks(id))) {
-      throw new BadRequestException('Tag has related works and cannot be disabled')
+      throw new BadRequestException('标签存在关联的作品，不能禁用')
     }
 
     const result = await this.drizzle.withErrorHandling(() =>
@@ -119,38 +120,42 @@ export class WorkTagService {
         .set({ isEnabled })
         .where(eq(this.workTag.id, id)),
     )
-    this.drizzle.assertAffectedRows(result, 'Tag not found')
+    this.drizzle.assertAffectedRows(result, '标签不存在')
     return true
   }
 
   async deleteTagBatch(dto: DeleteTagInput) {
-    if (!(await this.drizzle.ext.exists(this.workTag, eq(this.workTag.id, dto.id)))) {
-      throw new BadRequestException('Tag not found')
+    if (
+      !(await this.drizzle.ext.exists(
+        this.workTag,
+        eq(this.workTag.id, dto.id),
+      ))
+    ) {
+      throw new BadRequestException('标签不存在')
     }
 
     if (await this.checkTagHasWorks(dto.id)) {
-      throw new BadRequestException('Tag has related works and cannot be deleted')
+      throw new BadRequestException('标签存在关联的作品，不能删除')
     }
 
     const rows = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.workTag)
-        .where(eq(this.workTag.id, dto.id)),
+      this.db.delete(this.workTag).where(eq(this.workTag.id, dto.id)),
     )
-    this.drizzle.assertAffectedRows(rows, 'Tag not found')
+    this.drizzle.assertAffectedRows(rows, '标签不存在')
     return true
   }
 
+  /**
+   * 校验标签是否仍关联未软删作品。
+   * 该约束用于阻止标签被禁用或删除后导致线上作品标签语义失真。
+   */
   async checkTagHasWorks(tagId: number) {
     const rows = await this.db
       .select({ workId: this.workTagRelation.workId })
       .from(this.workTagRelation)
       .innerJoin(this.work, eq(this.work.id, this.workTagRelation.workId))
       .where(
-        and(
-          eq(this.workTagRelation.tagId, tagId),
-          isNull(this.work.deletedAt),
-        ),
+        and(eq(this.workTagRelation.tagId, tagId), isNull(this.work.deletedAt)),
       )
       .limit(1)
 

@@ -215,6 +215,7 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
     type: ComicArchiveSummaryDto,
     required: true,
     validation: false,
+    nullable: false,
   })
   summary!: ComicArchiveSummaryDto
 }

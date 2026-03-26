@@ -1,7 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
+import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, isNull, sql } from 'drizzle-orm'
+import { and, arrayOverlaps, eq, ilike, isNull, max } from 'drizzle-orm'
 import {
   CategoryIdInput,
   CreateCategoryInput,
@@ -11,6 +12,12 @@ import {
   UpdateCategoryStatusInput,
 } from './category.type'
 
+/**
+ * 作品分类服务
+ *
+ * 负责分类的 CRUD、排序交换、启用状态管理，以及关联作品检查。
+ * 分类删除或禁用前必须校验无关联作品，防止运营分类下架后影响作品可见性。
+ */
 @Injectable()
 export class WorkCategoryService {
   constructor(private readonly drizzle: DrizzleService) {}
@@ -31,29 +38,34 @@ export class WorkCategoryService {
     return this.drizzle.schema.work
   }
 
+  /**
+   * 创建分类
+   *
+   * 未指定排序时自动追加到末尾；popularity 初始化为 0，由作品关联或外部事件驱动更新。
+   */
   async createCategory(createCategoryInput: CreateCategoryInput) {
     if (!createCategoryInput.sortOrder) {
-      const maxOrder = await this.drizzle.ext.maxOrder(this.workCategory)
-      createCategoryInput.sortOrder = maxOrder + 1
+      const [result] = await this.db
+        .select({ maxOrder: max(this.workCategory.sortOrder) })
+        .from(this.workCategory)
+      createCategoryInput.sortOrder = (result?.maxOrder || 0) + 1
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.workCategory)
-        .values({
-          popularity: 0,
-          ...createCategoryInput,
-        }),
+    await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.workCategory).values(createCategoryInput),
+      { duplicate: '分类名称已存在' },
     )
     return true
   }
 
+  /**
+   * 分页查询分类
+   *
+   * 支持按名称模糊匹配、启用状态筛选、内容类型数组重叠查询。
+   * contentType 使用 PostgreSQL 数组重叠操作符 &&，匹配任意一个指定类型即返回。
+   */
   async getCategoryPage(queryDto: QueryCategoryInput) {
     const { name, isEnabled, contentType, ...pageParams } = queryDto
-
-    if (!pageParams.orderBy) {
-      pageParams.orderBy = JSON.stringify({ sortOrder: 'desc' })
-    }
 
     const conditions: SQL[] = []
 
@@ -68,31 +80,42 @@ export class WorkCategoryService {
 
     let where = conditions.length > 0 ? and(...conditions) : undefined
 
-    if (contentType?.length && contentType !== '[]') {
-      const values = JSON.parse(contentType) as number[]
-      if (values.length > 0) {
-        const typeArray = sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::smallint[]`
-        where = and(where, sql`${this.workCategory.contentType} && ${typeArray}`)
-      }
+    const values = jsonParse(contentType || []) as number[]
+    if (values.length > 0) {
+      where = and(where, arrayOverlaps(this.workCategory.contentType, values))
     }
 
     return this.drizzle.ext.findPagination(this.workCategory, {
       where,
+      orderBy: pageParams.orderBy || { sortOrder: 'desc' },
       ...pageParams,
     })
   }
 
   async getCategoryDetail(input: CategoryIdInput) {
-    return this.db.query.workCategory.findFirst({
+    const category = await this.db.query.workCategory.findFirst({
       where: { id: input.id },
     })
+    if (!category) {
+      throw new BadRequestException('分类不存在')
+    }
+    return category
   }
 
+  /**
+   * 更新分类
+   *
+   * 禁用前校验无关联作品；名称重复抛出 BadRequestException。
+   * @throws BadRequestException 分类存在关联作品时禁用失败，或名称重复
+   */
   async updateCategory(updateCategoryDto: UpdateCategoryInput) {
     const { id, ...updateData } = updateCategoryDto
 
-    if (updateData.isEnabled === false && (await this.checkCategoryHasWorks(id))) {
-      throw new BadRequestException('Category has related works and cannot be disabled')
+    if (
+      updateData.isEnabled === false &&
+      (await this.checkCategoryHasWorks(id))
+    ) {
+      throw new BadRequestException('该分类存在关联作品，不能禁用。')
     }
 
     const result = await this.drizzle.withErrorHandling(
@@ -101,15 +124,21 @@ export class WorkCategoryService {
           .update(this.workCategory)
           .set(updateData)
           .where(eq(this.workCategory.id, id)),
-      { duplicate: 'Category name already exists' },
+      { duplicate: '分类名称已存在' },
     )
     this.drizzle.assertAffectedRows(result, '分类不存在')
     return true
   }
 
+  /**
+   * 更新分类启用状态
+   */
   async updateCategoryStatus(updateStatusDto: UpdateCategoryStatusInput) {
-    if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks(updateStatusDto.id))) {
-      throw new BadRequestException('Category has related works and cannot be disabled')
+    if (
+      !updateStatusDto.isEnabled &&
+      (await this.checkCategoryHasWorks(updateStatusDto.id))
+    ) {
+      throw new BadRequestException('该分类存在关联作品，不能禁用。')
     }
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -121,6 +150,11 @@ export class WorkCategoryService {
     return true
   }
 
+  /**
+   * 交换两个分类的排序值
+   *
+   * 使用 ext.swapField 保证原子性，避免并发问题。
+   */
   async updateCategorySort(updateSortDto: UpdateCategorySortInput) {
     await this.drizzle.ext.swapField(this.workCategory, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
@@ -128,17 +162,32 @@ export class WorkCategoryService {
     return true
   }
 
+  /**
+   * 删除分类
+   *
+   * 删除前校验无关联作品，保证数据完整性。
+   * @throws BadRequestException 分类存在关联作品时删除失败
+   */
   async deleteCategory(input: CategoryIdInput) {
     if (await this.checkCategoryHasWorks(input.id)) {
-      throw new BadRequestException('Category has related works and cannot be deleted')
+      throw new BadRequestException(
+        'Category has related works and cannot be deleted',
+      )
     }
     const result = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.workCategory).where(eq(this.workCategory.id, input.id)),
+      this.db
+        .delete(this.workCategory)
+        .where(eq(this.workCategory.id, input.id)),
     )
     this.drizzle.assertAffectedRows(result, '分类不存在')
     return true
   }
 
+  /**
+   * 检查分类是否存在未软删的关联作品
+   *
+   * 用于删除或禁用分类前的完整性校验。仅统计未软删作品，已软删作品不计入。
+   */
   async checkCategoryHasWorks(categoryId: number) {
     const rows = await this.db
       .select({ workId: this.workCategoryRelation.workId })

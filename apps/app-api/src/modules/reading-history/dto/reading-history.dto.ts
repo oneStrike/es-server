@@ -66,6 +66,7 @@ export class ReadingHistoryWorkDto extends BaseReadingStateDto {
     type: ReadingHistoryWorkSnapshotDto,
     required: true,
     validation: false,
+    nullable: false,
   })
   work!: ReadingHistoryWorkSnapshotDto
 

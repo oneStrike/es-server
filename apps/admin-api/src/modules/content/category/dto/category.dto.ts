@@ -16,7 +16,6 @@ import {
 export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
   ...OMIT_BASE_FIELDS,
   'popularity',
-  'isEnabled',
 ] as const) {}
 
 export class UpdateCategoryDto extends IntersectionType(

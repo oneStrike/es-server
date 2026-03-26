@@ -5,6 +5,7 @@
 - **高复用**：字段优先通过继承与映射类型复用，避免重复定义。
 - **低耦合**：DTO 只负责数据传输、输入校验与文档描述，Service 不直接依赖 apps 层 DTO。
 - **单一事实源**：实体字段与物理约束以 Drizzle Table 为准。
+- **契约优先**：DTO 是应用边界和 OpenAPI 契约，不机械等同于数据库表结构。
 - **类型安全**：领域层优先使用 Drizzle 推导类型与稳定的领域输入类型。
 
 ## 2. 范围与边界
@@ -29,8 +30,10 @@
 
 ### 3.2 `libs/*`：实体基类 DTO（`BaseXxxDto`）
 
-- `BaseXxxDto` 表达实体的全量字段与物理约束，是 DTO 层对 Drizzle Table 的标准映射。
-- 新增或调整 `BaseXxxDto` 时，字段名、类型、可空性、长度、枚举、默认语义必须与对应 Drizzle Table 保持一致。
+- `BaseXxxDto` 是实体相关 API 模型的共享复用起点，优先承载跨场景稳定且可对外暴露的公共字段与物理约束。
+- `BaseXxxDto` 中凡是直接映射自 Drizzle Table 的字段，字段名、类型、可空性、长度、枚举、默认语义必须与对应 Drizzle Table 保持一致。
+- 不要求为了“贴表”把仅服务存储、软删除、内部审计、内部统计或中间流程的字段机械暴露到所有 `BaseXxxDto`。
+- 当某些持久化字段只适合特定响应场景暴露时，优先放到专用 `ResponseDto` 或领域类型中，而不是反向膨胀 `BaseXxxDto`。
 - 基类 DTO 只承载物理约束类校验与基础 Swagger 描述，不承载业务差异规则。
 - 日期时间字段的 Swagger `example` 统一使用 ISO 8601，例如 `2024-01-01T00:00:00.000Z`。
 
@@ -40,6 +43,7 @@
 - 仅当场景需要更严格或不同的校验/文档描述时，才在 apps DTO 中重新声明字段。
 - 不得手动重复定义 `id`、`createdAt`、`updatedAt` 等通用字段。
 - 嵌套响应模型优先从已有领域 DTO 中通过裁剪复用，避免重新逐字段书写。
+- 当某个返回结构不应直接暴露 `BaseXxxDto` 中的全部共享字段时，优先补充专用响应 DTO，而不是为了复用把不合适字段抬升进基类 DTO。
 
 ### 3.4 Service：领域逻辑层
 
@@ -52,7 +56,7 @@
 
 ## 4. 命名规范
 
-- **基类（全量）**：`BaseXxxDto`
+- **基类（共享）**：`BaseXxxDto`
 - **请求**：`CreateXxxDto`、`UpdateXxxDto`、`QueryXxxDto`、`XxxTargetDto`
 - **响应**：`XxxResponseDto`、`XxxItemDto`、`XxxBriefDto`
 - **领域类型文件**：`xxx.type.ts`
@@ -75,18 +79,19 @@
 - 列表项、简要信息、嵌套对象优先从既有领域 DTO 通过 `PickType` 或 `OmitType` 派生。
 - 只有现有基类无法表达目标语义时，才允许局部补充字段。
 - 补充字段时保持最小化新增，避免形成第二套实体定义。
+- 对仅服务内部存储、软删、审计或特定管理端场景的字段，优先放在专用 DTO / 领域类型中，不要为了“全量复用”抬升进所有场景共享的 `BaseXxxDto`。
 - 禁止新增纯别名 DTO，例如 `export class XxxDto extends YyyDto {}` 这类空壳继承。
 - 需要复用现有 DTO 时直接使用原 DTO；仅为避免命名冲突时，使用 `import { YyyDto as XxxSourceDto }` 这类导入别名，而不是再声明一个 class。
 
 ## 6. 放置例外
 
-- 若某实体只被单个应用使用，可将该实体的全量基类 DTO 放在该应用模块目录中维护。
+- 若某实体只被单个应用使用，可将该实体的共享基类 DTO 放在该应用模块目录中维护。
 - 即使放在应用目录中，仍必须遵守本规范中的字段一致性、复用方式与命名要求。
 
 ## 7. 设计与实现流程
 
 1. 先定位对应 Drizzle Table、现有基础 DTO 与模块内 DTO。
-2. 以 Drizzle Table 为准校准 `BaseXxxDto` 的字段与物理约束。
+2. 以 Drizzle Table 为准校准 `BaseXxxDto` 中需要对外复用的共享字段与物理约束，并显式判断哪些字段应留在领域类型或专用响应 DTO 中。
 3. 用映射类型组合出 `Create/Update/Query/Response` 场景 DTO。
 4. 将 Service 方法签名与内部结构收敛为 Drizzle 推导类型或稳定领域类型。
 5. 复核 Swagger、校验器与 DTO 继承链，确保字段描述、可选性与示例值一致。
@@ -95,7 +100,7 @@
 
 - [ ] DTO 优先复用 `libs/platform/src/dto` 中的基础类。
 - [ ] 不存在重复定义的 `id`、`createdAt`、`updatedAt` 等通用字段。
-- [ ] `BaseXxxDto` 与对应 Drizzle Table 的字段、类型、可空性、枚举、长度一致。
+- [ ] `BaseXxxDto` 中直接映射自 Table 的共享字段与对应 Drizzle Table 的字段、类型、可空性、枚举、长度一致；未暴露字段有明确的 API 契约理由。
 - [ ] 日期字段 Swagger 示例统一为 ISO 8601。
 - [ ] apps 层嵌套响应优先通过 `PickType/OmitType` 复用领域 DTO。
 - [ ] 不存在 `export class XxxDto extends YyyDto {}` 这类无新增字段、无新增语义的空壳别名 DTO。

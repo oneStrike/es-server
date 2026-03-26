@@ -117,6 +117,7 @@ export class BadgeUserPageItemDto extends PickType(IdDto, ['id'] as const) {
     description: '用户信息',
     type: BadgeUserInfoDto,
     validation: false,
+    nullable: false,
   })
   user!: BadgeUserInfoDto
 }

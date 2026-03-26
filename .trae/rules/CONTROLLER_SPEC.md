@@ -1,329 +1,56 @@
 # 项目 Controller 规范
 
-适用范围：本仓库所有 `apps/admin-api`、`apps/app-api` 的 Controller、Module、Swagger 暴露层。
-本文件是仓库内唯一 Controller 规范来源。
+适用范围：本仓库所有 `apps/admin-api`、`apps/app-api` 的 Controller、Module 与 Swagger 暴露层。
 
-## 1. 目标与原则
+## 1. 核心原则
 
-- **RPC over HTTP**：接口继续采用 RPC 风格，不做 REST 化改造。
-- **路径表达语义**：路由路径必须直接表达接口功能，禁止含糊命名。
-- **单一正式入口**：同一业务语义只保留一套路由。
-- **低耦合**：Controller 只负责入参接收、权限控制、Swagger 注解与调用 Service。
-- **统一标准**：命名、目录、Swagger、权限口径必须一致。
+- 接口继续采用 RPC over HTTP，不为了“规范化”把现有接口整体改成 REST。
+- Controller 只负责入参接收、上下文装配、权限与审计装饰器、Swagger 注解、调用 service。
+- Controller 不写数据库查询，不承载复杂业务编排，不保留第二套正式业务实现。
+- 默认只保留一套正式入口；若变更会影响已有客户端或引入 breaking change，必须提供 versioning / compat 方案与下线计划。
 
-## 2. 范围与边界
+## 2. 路由规范
 
-### 2.1 覆盖范围
+- `@Controller()` 路径统一写成 `admin/...` 或 `app/...`，不带前导斜杠，不重复写 `/api`。
+- 路径 segment 统一使用 `kebab-case`，禁止 camelCase、PascalCase、下划线和尾部斜杠。
+- 通用动作名统一使用：`page`、`list`、`detail`、`create`、`update`、`delete`、`update-status`、`update-enabled`、`swap-sort-order`、`my/page`。
+- 二级资源与动作型接口统一使用 `noun/action` 形式，例如 `history/list`、`token/refresh`、`password/change`。
+- 自定义动作必须直接表达业务语义；禁止 `detail-by-id`、`detail-by-code`、`rules-page`、`records-page`、`my-page`、`config-update` 这类历史命名。
+- 路径语义必须和返回结果一致：分页接口用 `page`，非分页列表用 `list`，详情接口用 `detail`，统计接口用 `stats`，上传接口用 `upload`。
 
-- `apps/admin-api/src/modules/**`
-- `apps/app-api/src/modules/**`
-- 对应的 Swagger 标签、响应模型、模块目录与 controller 组织方式
+## 3. Swagger 规范
 
-### 2.2 非目标
+- 统一使用 `ApiDoc`、`ApiPageDoc`。
+- 响应模型必须是输出 DTO 或基础类型；禁止把 `CreateXxxDto`、`UpdateXxxDto` 作为输出模型。
+- `ApiPageDoc` 只能用于真实返回分页结构的接口。
+- `@ApiTags` 只用于文档分组，不用于驱动 controller/module 的拆分。
+- tag 层级保持克制：admin-api 最多三级，app-api 最多两级；命名使用稳定业务名词，同一业务域保持一致。
 
-- 不改动领域 Service 的核心业务逻辑。
-- 不在本规范内讨论 DTO 与数据库实现细节。
-- 不为历史路径维护并行的正式暴露层。
+## 4. 返回语义
 
-说明：
+- 纯成功确认类接口优先返回 `boolean` 或使用 `204 No Content`。
+- `create`、需要立即回显新状态的 `update`、需要返回快照的动作型接口，可以返回 `id`、最小成功载荷或资源快照。
+- Service 返回值按领域需求建模；只有应用边界确实只关心成功状态时，才收敛为 `boolean`。
+- 仅在需要返回新数据或依赖返回值继续处理时才使用 Drizzle `returning()`；禁止为“形式统一”无意义返回数据。
 
-- DTO 规范参考 [.trae/rules/DTO_SPEC.md](D:/code/es/es-server/.trae/rules/DTO_SPEC.md)
-- Drizzle 规范参考 [.trae/rules/drizzle-guidelines.md](D:/code/es/es-server/.trae/rules/drizzle-guidelines.md)
+## 5. 权限与审计
 
-## 3. Controller 职责边界
+- admin-api 默认受保护，`@Public()` 只用于认证接口或明确公开能力。
+- app-api 除 WebSocket 相关能力外，仍按普通 HTTP controller 组织。
+- admin 侧变更类接口优先补齐审计装饰器。
 
-### 3.1 Controller 必须负责
+## 6. 兼容与维护
 
-- 接收 `Query`、`Body`、`Param`、`Header`
-- 使用鉴权、审计、上下文类装饰器
-- 调用上层 Service
-- 声明 Swagger 文档
+- breaking change 发生前，先评估是否需要版本化、兼容路由或短期双入口。
+- 兼容入口必须复用同一 service 或共享编排逻辑，不复制第二套业务实现。
+- 正式入口、Swagger 和设计文档必须同步更新。
+- 发现规范与当前稳定契约冲突时，优先记录例外，不静默改坏线上行为。
 
-### 3.2 Controller 禁止负责
+## 7. 验收清单
 
-- 拼装复杂业务逻辑
-- 编写数据库查询
-- 在 Controller 内定义大段业务转换逻辑
-- 为同一能力保留多套正式入口
-
-## 4. 模块与目录规范
-
-### 4.1 模块边界
-
-- 管理端内容域正式入口统一使用 `modules/content/*`。
-- 不新增或恢复 `modules/work/*` 作为正式内容暴露层。
-- 同一资源禁止并存两套正式 controller。
-
-### 4.2 文件组织
-
-- 一个 controller 文件只允许一个 controller 类。
-- 一个 module 文件只负责组装 `imports/controllers/providers/exports`。
-- controller 类名、module 类名必须与当前业务域一致。
-- 正式命名以当前业务域目录为准，禁止继续使用历史别名作为新入口命名。
-
-### 4.3 推荐目录形式
-
-- `apps/admin-api/src/modules/content/comic/*`
-- `apps/admin-api/src/modules/content/novel/*`
-- `apps/admin-api/src/modules/content/author/*`
-- `apps/admin-api/src/modules/content/category/*`
-- `apps/admin-api/src/modules/content/tag/*`
-
-## 5. 路由规范
-
-### 5.1 基础规则
-
-- 路由前缀固定：
-  - admin：`/api/admin/*`
-  - app：`/api/app/*`
-- `@Controller()` 与方法级装饰器禁止前导斜杠。
-- 基础路径禁止尾部斜杠。
-- path segment 一律使用 `kebab-case`。
-- 禁止 camelCase、PascalCase、下划线混用。
-
-### 5.2 通用命名标准
-
-| 场景 | 标准写法 | 示例 |
-| --- | --- | --- |
-| 分页列表 | `page` | `GET /api/admin/task/page` |
-| 非分页列表 | `list` | `GET /api/admin/forum/config/history/list` |
-| 单条详情 | `detail` | `GET /api/admin/content/comic/detail` |
-| 当前用户分页列表 | `my/page` | `GET /api/app/task/my/page` |
-| 创建 | `create` | `POST /api/admin/forum/tags/create` |
-| 更新 | `update` | `POST /api/admin/system/update` |
-| 删除 | `delete` | `POST /api/admin/content/tag/delete` |
-| 状态变更 | `update-status` | `POST /api/admin/content/novel/update-status` |
-| 启用禁用 | `update-enabled` | `POST /api/admin/app-users/update-enabled` |
-| 统计 | `stats` | `GET /api/admin/growth/badges/stats` |
-| 排序交换 | `swap-sort-order` | `POST /api/admin/content/category/swap-sort-order` |
-
-### 5.3 嵌套路由标准
-
-对二级资源，统一使用“资源名 + 标准动作”写法：
-
-- `item/page`
-- `item/list`
-- `item/create`
-- `item/update`
-- `item/delete`
-- `item/update-status`
-- `item/swap-sort-order`
-- `record/page`
-- `record/detail`
-- `history/list`
-- `history/restore`
-- `history/delete`
-
-示例：
-
-- `GET /api/admin/dictionary/item/page`
-- `GET /api/admin/growth/experience-rules/record/page`
-- `GET /api/admin/forum/config/history/list`
-
-### 5.4 当前用户场景标准
-
-- 当前用户资料：`profile`
-- 当前用户资料更新：`profile/update`
-- 当前用户分页集合：`my/page`
-- 当前用户子资源分页：`points/record/page`、`experience/record/page`
-
-### 5.5 特殊查询标准
-
-当“详情”存在多个稳定查询键时，允许使用：
-
-- `detail/<lookup-key>`
-
-示例：
-
-- `GET /api/admin/app-page/detail`
-- `GET /api/admin/app-page/detail/code`
-
-禁止使用：
-
-- `detail-by-id`
-- `detail-by-code`
-
-### 5.6 业务动作型路由
-
-当 CRUD 无法准确表达语义时，允许使用动作型路径，但必须满足：
-
-- 动词准确
-- 路径直接体现功能
-- 优先使用命名空间形式而不是连字符堆叠
-
-推荐动作：
-
-- `grant`
-- `consume`
-- `assign`
-- `revoke`
-- `restore`
-- `reset`
-- `detect`
-- `replace`
-- `upload`
-- `unlock`
-
-推荐命名空间形式：
-
-- `token/refresh`
-- `key/public`
-- `password/change`
-- `password/reset`
-- `password/forgot`
-- `verify-code/send`
-- `permission/check`
-- `monitor/outbox/summary`
-- `monitor/ws/summary`
-
-### 5.7 功能与路径必须匹配
-
-- 返回分页结构的接口，路径必须以 `page` 结尾。
-- 返回列表结构但不分页的接口，路径必须以 `list` 结尾。
-- 返回详情的接口，路径必须含 `detail`。
-- 返回统计结果的接口，路径必须含 `stats`。
-- 上传接口，路径必须含 `upload`。
-- 刷新令牌接口，路径必须含 `refresh`。
-- 公钥接口，路径必须含 `key/public`。
-
-## 6. 禁止写法
-
-禁止出现以下模式：
-
-- `@Controller('/admin/xxx')`
-- `@Get('/page')`
-- `@Post('/create')`
-- `detail-by-id`
-- `detail-by-code`
-- `rules-page`
-- `records-page`
-- `my-page`
-- `config-update`
-- `update-isRecommended`
-- `admin/work/*`
-
-## 7. Swagger 规范
-
-### 7.1 标签规范
-
-`@ApiTags` 用于 Swagger 文档分组，不用于驱动 controller 文件数、module 层级或业务实现拆分。  
-是否拆 controller / module 由职责边界决定，是否拆标签由文档浏览体验决定，两者不要求 1:1 对应。
-
-admin-api 默认使用两级分组；当后台单一业务域下存在复杂且长期稳定的子域树时，允许升级为三级分组，但最大不超过三级。
-
-- `系统管理/*`
-- `APP管理/*`
-- `内容管理/*`
-- `论坛管理/*`
-- `用户成长/*`
-- `认证与账号/*`
-- `任务管理/*`
-- `消息中心/*`
-
-app-api 默认使用一级分组；仅当单一业务域下存在多个稳定子域，且这些子域会长期独立演进时，才使用 `业务/子域` 形式的两级标签，最大不超过两级。
-
-app-api 标签决策顺序：
-
-1. 先用能表达清楚语义的最浅层级；不要因为接口数量增加就机械加深标签层级。
-2. 只有当该层级下已经出现稳定子域，并且这些子域会长期独立演进时，才提升为下一层级。
-3. 子级名称必须是稳定的业务名词，而不是临时动作、实现细节或辅助结构。
-4. 子级命名禁止简单重复父级语义；例如优先使用 `论坛管理/搜索`，而不是 `论坛管理/论坛搜索`。
-5. supporting capability 优先并入最近的主业务子域，不为“筛选项”“附属结构”“仅服务主能力的辅助接口”单独拆 tag。
-6. 同一业务域一旦使用多级标签，前缀与层级必须统一；禁止同域内混用 `论坛`、`论坛/主题`、`论坛/板块` 这类一级/二级并存写法，也禁止在同域内混用二级与三级。
-7. 一个 tag 可以覆盖多个 controller；一个 controller 也不应因为文件拆分而被迫拆成多个 tag。
-
-适合继续使用一级标签的场景：
-
-- `认证`
-- `用户`
-- `任务`
-- `作品`
-- `阅读记录`
-- `评论`
-- `点赞`
-- `收藏`
-- `消息`
-- `下载`
-- `购买`
-- `系统`
-- `举报`
-- `字典`
-
-适合使用二级标签的场景：
-
-- `论坛/*`
-
-admin-api 推荐使用两级标签的场景：
-
-- `系统管理/系统配置`
-- `论坛管理/主题管理`
-- `任务管理/任务配置`
-
-admin-api 允许使用三级标签的场景：
-
-- `内容管理/漫画管理/基础信息`
-- `内容管理/漫画管理/章节管理`
-- `内容管理/漫画管理/章节内容`
-- `内容管理/漫画管理/三方平台解析`
-- `内容管理/漫画管理/章节工具`
-- `内容管理/小说管理/基础信息`
-- `内容管理/小说管理/章节管理`
-- `内容管理/小说管理/章节内容`
-
-forum 域推荐写法：
-
-- `论坛/主题`
-- `论坛/板块`
-  板块分组归入 `论坛/板块`，不单独拆 `论坛/板块分组`
-- `论坛/搜索`
-- `论坛/版主申请`
-
-### 7.2 响应模型规范
-
-- `ApiDoc`、`ApiPageDoc` 必须使用输出 DTO 或基础类型作为响应模型。
-- 禁止用 `CreateXxxDto`、`UpdateXxxDto` 作为输出模型。
-- 当现有领域 DTO 无法准确表达返回结构时，必须在 apps 层补充专用响应 DTO。
-- 使用 `ApiPageDoc` 的接口必须真实返回分页结构。
-
-### 7.3 变更类接口返回规范
-
-- 对 `create`、`update`、`delete`、`update-status`、`update-enabled`、`swap-sort-order` 等增删改接口，除非存在明确业务需求，否则 Controller 统一只返回 `boolean` 状态。
-- 对应的 Service 方法默认也只返回 `boolean` 或 `Promise<boolean>`，禁止为了形式统一额外包装无意义的成功对象。
-- 当写操作只需要判断是否成功时，禁止无意义使用 Drizzle 的 `returning()`；只有确实需要返回新增/更新后的数据，或需要依赖返回值继续完成后续业务处理时才允许使用。
-
-## 8. 权限与审计规范
-
-- admin-api 默认受保护，除认证与明确公开能力外，禁止使用 `@Public()`。
-- 变更类 admin 接口优先补齐审计装饰器。
-- `@Public()` 必须与接口语义相符，不能因为调试方便开放后台接口。
-
-## 9. 维护规则
-
-- 正式路由只保留一套入口，不维护 `compat`、`legacy` controller。
-- 设计文档、Swagger、实际代码必须同步更新。
-- 新增接口前先检查是否已存在同语义路径或同职责 controller。
-
-## 10. 实现检查顺序
-
-1. 先确认资源是否已有正式入口。
-2. 确认接口属于分页、列表、详情、统计还是业务动作。
-3. 选择对应的标准路径与 tag。
-4. 确认输入 DTO、输出 DTO、Swagger 文档匹配。
-5. 确认 admin 接口权限与审计装饰器正确。
-6. 对增删改接口确认是否可以收敛为 `boolean` 返回，并检查 Service 与数据库写操作未引入无意义 `returning()`。
-7. 变更后执行类型检查，并复扫路径语义是否一致。
-
-## 11. 验收清单
-
-- [ ] 不存在 `admin/work/*` 正式路由。
-- [ ] 不存在前导斜杠写法。
-- [ ] 分页接口统一以 `page` 结尾。
-- [ ] 非分页列表统一以 `list` 结尾。
-- [ ] 详情接口统一使用 `detail`。
-- [ ] 当前用户分页集合统一使用 `my/page`。
-- [ ] 统计接口统一使用 `stats`。
-- [ ] Swagger 未使用输入 DTO 作为输出模型。
-- [ ] 增删改接口在无特殊需求时统一返回 `boolean`，对应 Service 方法同步收敛。
-- [ ] 数据写操作未为“仅返回成功状态”而无意义使用 Drizzle `returning()`。
-- [ ] admin 公开接口均经过明确确认。
-- [ ] `apps/admin-api` 与 `apps/app-api` 的类型检查通过。
+- [ ] Controller 保持薄层，只做协议与编排边界。
+- [ ] 路径不含前导斜杠与 `/api`，并使用统一动作名与 `kebab-case`。
+- [ ] Swagger 输出模型使用响应 DTO 或基础类型，没有输入 DTO 反向复用为输出。
+- [ ] 纯成功确认类接口优先 `boolean/204`；需要回显新状态时返回最小必要载荷。
+- [ ] admin 公开接口与变更类接口的权限、审计语义正确。
+- [ ] 涉及 breaking change 或存量客户端时，已提供兼容方案与下线计划。

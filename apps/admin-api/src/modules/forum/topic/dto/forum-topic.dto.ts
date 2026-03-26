@@ -98,16 +98,18 @@ class AdminForumTopicUserDto extends PickType(BaseAppUserDto, [
     required: false,
     type: AdminForumTopicUserCountDto,
     validation: false,
+    nullable: false,
   })
-  counts?: AdminForumTopicUserCountDto
+  counts!: AdminForumTopicUserCountDto
 
   @NestedProperty({
     description: '论坛等级',
     required: false,
     type: AdminForumTopicUserLevelDto,
     validation: false,
+    nullable: false,
   })
-  level?: AdminForumTopicUserLevelDto
+  level!: AdminForumTopicUserLevelDto
 }
 
 export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
@@ -150,6 +152,7 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
     required: true,
     type: AdminForumTopicSectionDto,
     validation: false,
+    nullable: false,
   })
   section!: AdminForumTopicSectionDto
 
@@ -158,6 +161,7 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
     required: true,
     type: AdminForumTopicUserDto,
     validation: false,
+    nullable: false,
   })
   user!: AdminForumTopicUserDto
 }

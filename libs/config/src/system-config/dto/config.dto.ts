@@ -70,8 +70,9 @@ export class AliyunConfigDto {
     description: '短信服务配置',
     type: AliyunSmsConfigDto,
     required: false,
+    nullable: false,
   })
-  sms?: AliyunSmsConfigDto
+  sms!: AliyunSmsConfigDto
 }
 
 // ============================================================================
@@ -189,22 +190,25 @@ export class ContentReviewPolicyDto {
     description: '严重敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
+    nullable: false,
   })
-  severeAction?: ContentReviewActionDto
+  severeAction!: ContentReviewActionDto
 
   @NestedProperty({
     description: '一般敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
+    nullable: false,
   })
-  generalAction?: ContentReviewActionDto
+  generalAction!: ContentReviewActionDto
 
   @NestedProperty({
     description: '轻微敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
+    nullable: false,
   })
-  lightAction?: ContentReviewActionDto
+  lightAction!: ContentReviewActionDto
 
   @BooleanProperty({
     description: '是否记录敏感词命中明细',
@@ -337,15 +341,17 @@ export class UploadConfigDto {
     description: '七牛上传配置',
     type: QiniuUploadConfigDto,
     required: false,
+    nullable: false,
   })
-  qiniu?: QiniuUploadConfigDto
+  qiniu!: QiniuUploadConfigDto
 
   @NestedProperty({
     description: 'Superbed 上传配置',
     type: SuperbedUploadConfigDto,
     required: false,
+    nullable: false,
   })
-  superbed?: SuperbedUploadConfigDto
+  superbed!: SuperbedUploadConfigDto
 }
 
 // ============================================================================
@@ -378,8 +384,9 @@ export class BaseSystemConfigDto extends BaseDto {
       },
     },
     required: false,
+    nullable: false,
   })
-  aliyunConfig?: AliyunConfigDto
+  aliyunConfig!: AliyunConfigDto
 
   @NestedProperty({
     description: '站点配置',
@@ -394,8 +401,9 @@ export class BaseSystemConfigDto extends BaseDto {
       icpNumber: '粤ICP备xxxxxx号',
     },
     required: false,
+    nullable: false,
   })
-  siteConfig?: SiteConfigDto
+  siteConfig!: SiteConfigDto
 
   @NestedProperty({
     description: '维护配置',
@@ -405,8 +413,9 @@ export class BaseSystemConfigDto extends BaseDto {
       maintenanceMessage: '系统维护中，请稍后再试',
     },
     required: false,
+    nullable: false,
   })
-  maintenanceConfig?: MaintenanceConfigDto
+  maintenanceConfig!: MaintenanceConfigDto
 
   @NestedProperty({
     description: '内容审核策略',
@@ -427,8 +436,9 @@ export class BaseSystemConfigDto extends BaseDto {
       recordHits: true,
     },
     required: false,
+    nullable: false,
   })
-  contentReviewPolicy?: ContentReviewPolicyDto
+  contentReviewPolicy!: ContentReviewPolicyDto
 
   @NestedProperty({
     description: '上传配置',
@@ -455,6 +465,7 @@ export class BaseSystemConfigDto extends BaseDto {
       },
     },
     required: false,
+    nullable: false,
   })
-  uploadConfig?: UploadConfigDto
+  uploadConfig!: UploadConfigDto
 }

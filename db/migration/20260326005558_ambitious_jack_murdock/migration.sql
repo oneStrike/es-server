@@ -1,0 +1,1 @@
+ALTER TABLE "work_category" ALTER COLUMN "content_type" SET DATA TYPE smallint[] USING "content_type"::smallint[];

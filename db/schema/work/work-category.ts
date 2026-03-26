@@ -27,7 +27,7 @@ export const workCategory = pgTable("work_category", {
   /**
    * 关联内容类型（如：1漫画、2小说、4插画、8写真）
    */
-  contentType: integer().array(),
+  contentType: smallint().array(),
   /**
    * 排序值（数值越小越靠前）
    */
@@ -64,7 +64,7 @@ export const workCategory = pgTable("work_category", {
     /**
      * 内容类型索引
      */
-    index("work_category_content_type_idx").on(table.contentType),
+    index("work_category_content_type_idx").using("gin", table.contentType),
 ]);
 
 export type WorkCategory = typeof workCategory.$inferSelect;

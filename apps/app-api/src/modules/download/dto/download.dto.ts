@@ -59,6 +59,7 @@ export class DownloadedWorkItemDto {
     description: '作品信息',
     type: DownloadedWorkInfoDto,
     required: true,
+    nullable: false,
   })
   work!: DownloadedWorkInfoDto
 
@@ -101,6 +102,7 @@ export class DownloadedWorkChapterItemDto extends BaseDownloadRecordDto {
     description: '章节信息',
     type: DownloadedChapterInfoDto,
     required: true,
+    nullable: false,
   })
   chapter!: DownloadedChapterInfoDto
 }

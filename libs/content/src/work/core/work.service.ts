@@ -19,6 +19,26 @@ import {
   UpdateWorkStatusInput,
 } from './work.type'
 
+const PAGE_WORK_PICK_FIELDS = [
+  'id',
+  'type',
+  'name',
+  'cover',
+  'popularity',
+  'isRecommended',
+  'isHot',
+  'isNew',
+  'serialStatus',
+  'publisher',
+  'language',
+  'region',
+  'ageRating',
+  'createdAt',
+  'updatedAt',
+  'publishAt',
+  'isPublished',
+] as const
+
 /**
  * 作品详情上下文接口
  * 用于传递用户访问作品详情时的上下文信息
@@ -734,8 +754,8 @@ export class WorkService {
   }
 
   /**
-   * 手工分页查询作品列表。
-   * 在需要定制筛选与排序时，直接复用 Drizzle 基础能力，不依赖 findPagination 扩展。
+   * 作品列表分页。
+   * 先复用共享分页查询 work 主表，再批量补充作者、分类与标签关系。
    */
   private async paginateWorkList(
     dto: QueryWorkInput,
@@ -745,42 +765,27 @@ export class WorkService {
       selectPageFields?: boolean
     },
   ) {
-    const pageQuery = this.drizzle.buildPageQuery(dto, {
-      table: this.work,
-    })
-    const { pageIndex, pageSize, limit, offset, orderBySql } = pageQuery
     const where = and(...this.buildWorkPageConditions(dto, options))
+    if (options?.selectPageFields) {
+      const page = await this.drizzle.ext.findPagination(this.work, {
+        where,
+        pageIndex: dto.pageIndex,
+        pageSize: dto.pageSize,
+        orderBy: dto.orderBy,
+        pick: PAGE_WORK_PICK_FIELDS,
+      })
 
-    const listPromise = options?.selectPageFields
-      ? this.db
-          .select(this.getPageWorkSelectFields())
-          .from(this.work)
-          .where(where)
-          .orderBy(...orderBySql)
-          .limit(limit)
-          .offset(offset)
-      : this.db
-          .select()
-          .from(this.work)
-          .where(where)
-          .orderBy(...orderBySql)
-          .limit(limit)
-          .offset(offset)
+      return this.attachWorkRelations(page, userId)
+    }
 
-    const [list, total] = await Promise.all([
-      listPromise,
-      this.db.$count(this.work, where),
-    ])
+    const page = await this.drizzle.ext.findPagination(this.work, {
+      where,
+      pageIndex: dto.pageIndex,
+      pageSize: dto.pageSize,
+      orderBy: dto.orderBy,
+    })
 
-    return this.attachWorkRelations(
-      {
-        list,
-        total,
-        pageIndex,
-        pageSize,
-      },
-      userId,
-    )
+    return this.attachWorkRelations(page, userId)
   }
 
   /**

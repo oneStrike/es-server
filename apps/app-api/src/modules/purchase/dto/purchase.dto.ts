@@ -59,6 +59,7 @@ export class PurchasedWorkItemDto {
     type: PurchasedWorkInfoDto,
     required: true,
     validation: false,
+    nullable: false,
   })
   work!: PurchasedWorkInfoDto
 
@@ -98,6 +99,7 @@ export class PurchasedWorkChapterItemDto extends BasePurchaseRecordDto {
     type: PurchasedChapterInfoDto,
     required: true,
     validation: false,
+    nullable: false,
   })
   chapter!: PurchasedChapterInfoDto
 }

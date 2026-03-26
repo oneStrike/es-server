@@ -41,8 +41,7 @@ export class AppForumSectionDetailDto extends AppForumSectionListItemDto {
     description: '所属分组',
     required: false,
     type: AppForumSectionGroupBriefDto,
-    validation: false,
-    nullable: false,
+    validation: false
   })
   group?: AppForumSectionGroupBriefDto
 }

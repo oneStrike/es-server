@@ -28,8 +28,9 @@ import {
  *     description: '用户资料',
  *     type: UserProfileDto,
  *     required: true
+    nullable: false,
  *   })
- *   profile: UserProfileDto
+ *   profile!: UserProfileDto
  * }
  * ```
  *

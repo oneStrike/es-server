@@ -77,6 +77,7 @@ export class LoginResponseDto {
     required: true,
     type: AdminUserOmitPwdDto,
     validation: false,
+    nullable: false,
   })
   user!: AdminUserOmitPwdDto
 }
