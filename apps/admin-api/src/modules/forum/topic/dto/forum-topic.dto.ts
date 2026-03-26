@@ -58,6 +58,7 @@ class AdminForumTopicSectionDto extends PickType(BaseForumSectionDto, [
   'name',
   'description',
   'icon',
+  'cover',
   'isEnabled',
   'topicReviewPolicy',
 ] as const) {}

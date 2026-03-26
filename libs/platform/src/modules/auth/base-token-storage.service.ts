@@ -122,6 +122,25 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     )
   }
 
+  async consumeByJti(
+    jti: string,
+    reason: RevokeTokenReasonEnum,
+  ): Promise<boolean> {
+    const affectedRows = await this.updateManyItems(
+      {
+        jti,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      {
+        revokedAt: new Date(),
+        revokeReason: reason,
+      },
+    )
+    await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
+    return affectedRows > 0
+  }
+
   async revokeAllByUserId(userId: number, reason: RevokeTokenReasonEnum) {
     const tokens = await this.findManyItems({
       userId,

@@ -19,6 +19,7 @@ export class AppForumSectionListItemDto extends PickType(BaseForumSectionDto, [
   'name',
   'description',
   'icon',
+  'cover',
   'sortOrder',
   'isEnabled',
   'topicReviewPolicy',

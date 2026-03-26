@@ -266,6 +266,7 @@ export class WorkForumSectionDto extends IntersectionType(
     'name',
     'description',
     'icon',
+    'cover',
     'isEnabled',
     'topicReviewPolicy',
   ]),

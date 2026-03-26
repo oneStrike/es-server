@@ -89,7 +89,8 @@ export class PasswordService {
       .limit(1)
 
     if (!user) {
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
+      // 对外统一返回，避免通过找回密码接口枚举手机号是否存在。
+      return true
     }
 
     if (!user.isEnabled) {

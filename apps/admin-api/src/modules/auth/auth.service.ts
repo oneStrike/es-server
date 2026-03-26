@@ -9,6 +9,7 @@ import { AuthSessionService } from '@libs/identity/core'
 import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthConstants,
+  AuthErrorMessages,
   AuthService as BaseAuthService,
   LoginGuardService,
 } from '@libs/platform/modules/auth'
@@ -161,13 +162,41 @@ export class AuthService {
    * 退出登录
    */
   async logout(body: AdminTokenPairInput) {
-    return this.authSessionService.logout(body)
+    return this.authSessionService.logout(body, { revokeDbTokens: true })
   }
 
   /**
    * 刷新访问令牌
    */
   async refreshToken(body: AdminRefreshTokenInput, req: FastifyRequest) {
-    return this.authSessionService.refreshAndPersist(body.refreshToken, req)
+    const tokens = await this.authSessionService.refreshAndPersist(body.refreshToken, req)
+    const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
+    const userId = Number(payload.sub)
+
+    if (!Number.isFinite(userId) || userId <= 0) {
+      await this.authSessionService.logout(tokens, { revokeDbTokens: true })
+      throw new BadRequestException(AuthErrorMessages.LOGIN_INVALID)
+    }
+
+    const [user] = await this.db
+      .select({
+        id: this.adminUserTable.id,
+        isEnabled: this.adminUserTable.isEnabled,
+      })
+      .from(this.adminUserTable)
+      .where(eq(this.adminUserTable.id, userId))
+      .limit(1)
+
+    if (!user) {
+      await this.authSessionService.logout(tokens, { revokeDbTokens: true })
+      throw new BadRequestException(AuthErrorMessages.LOGIN_INVALID)
+    }
+
+    if (!user.isEnabled) {
+      await this.authSessionService.logout(tokens, { revokeDbTokens: true })
+      throw new BadRequestException('账号已被禁用，请联系管理员。')
+    }
+
+    return tokens
   }
 }

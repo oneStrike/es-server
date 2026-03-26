@@ -465,6 +465,7 @@ export async function seedWorkDomain(db: Db) {
       name: workFixture.name,
       description: `${workFixture.name} 作品专属讨论板块`,
       icon: workFixture.cover,
+      cover: workFixture.cover,
       sortOrder: index + 1,
       isEnabled: true,
       topicReviewPolicy: 1,

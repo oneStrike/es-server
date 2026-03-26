@@ -131,6 +131,7 @@ export class ForumSectionGroupService {
         name: this.forumSection.name,
         description: this.forumSection.description,
         icon: this.forumSection.icon,
+        cover: this.forumSection.cover,
         sortOrder: this.forumSection.sortOrder,
         isEnabled: this.forumSection.isEnabled,
         topicReviewPolicy: this.forumSection.topicReviewPolicy,

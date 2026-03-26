@@ -1,6 +1,7 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth'
 import type { FastifyRequest } from 'fastify'
 import {
+  AuthErrorMessages,
   AuthDefaultValue,
   AuthService as BaseAuthService,
   RevokeTokenReasonEnum,
@@ -10,7 +11,7 @@ import {
   extractUserAgent,
   parseDeviceInfo,
 } from '@libs/platform/utils'
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 
 @Injectable()
 export class AuthSessionService {
@@ -62,10 +63,8 @@ export class AuthSessionService {
 
   async refreshAndPersist(refreshToken: string, req: FastifyRequest) {
     const tokens = await this.baseJwtService.refreshAccessToken(refreshToken, {
-      validateRefreshTokenJti: async (jti) =>
-        this.tokenStorageService.isTokenValid(jti),
-      revokeRefreshTokenJti: async (jti) =>
-        this.tokenStorageService.revokeByJti(
+      consumeRefreshTokenJti: async (jti) =>
+        this.tokenStorageService.consumeByJti(
           jti,
           RevokeTokenReasonEnum.TOKEN_REFRESH,
         ),
@@ -85,9 +84,18 @@ export class AuthSessionService {
 
     if (options?.revokeDbTokens) {
       const [accessPayload, refreshPayload] = await Promise.all([
-        this.baseJwtService.decodeToken(accessToken),
-        this.baseJwtService.decodeToken(refreshToken),
+        this.baseJwtService.verifyToken(accessToken, { ignoreExpiration: true }),
+        this.baseJwtService.verifyToken(refreshToken, { ignoreExpiration: true }),
       ])
+
+      if (
+        !accessPayload?.jti
+        || typeof accessPayload.jti !== 'string'
+        || !refreshPayload?.jti
+        || typeof refreshPayload.jti !== 'string'
+      ) {
+        throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
+      }
 
       await this.tokenStorageService.revokeByJtis(
         [accessPayload.jti, refreshPayload.jti],

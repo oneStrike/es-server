@@ -5,12 +5,12 @@ import type { ForumSection } from '@db/schema'
  * 仅包含写路径真正允许落库的字段。
  */
 export type CreateForumSectionInput = Pick<ForumSection, 'name'> &
+  Pick<ForumSection, 'icon' | 'cover'> &
   Partial<
     Pick<
       ForumSection,
       | 'groupId'
       | 'userLevelRuleId'
-      | 'icon'
       | 'sortOrder'
       | 'isEnabled'
       | 'topicReviewPolicy'
@@ -30,6 +30,7 @@ export type UpdateForumSectionInput = Pick<ForumSection, 'id'> &
       | 'groupId'
       | 'userLevelRuleId'
       | 'icon'
+      | 'cover'
       | 'sortOrder'
       | 'isEnabled'
       | 'topicReviewPolicy'

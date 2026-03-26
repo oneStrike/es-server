@@ -35,7 +35,11 @@ export const forumSection = pgTable("forum_section", {
   /**
    * 板块图标URL
    */
-  icon: varchar({ length: 255 }),
+  icon: varchar({ length: 500 }).notNull(),
+  /**
+   * 板块封面URL
+   */
+  cover: varchar({ length: 500 }).notNull(),
   /**
    * 排序值（数值越小越靠前）
    */

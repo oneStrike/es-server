@@ -250,6 +250,8 @@ export class WorkService {
           .values({
             name: workData.name,
             description: workData.description.slice(0, 500),
+            icon: workData.cover,
+            cover: workData.cover,
             userLevelRuleId: null,
             isEnabled: workData.isPublished ?? true,
           })
@@ -921,6 +923,7 @@ export class WorkService {
         name: true,
         description: true,
         icon: true,
+        cover: true,
         isEnabled: true,
         topicReviewPolicy: true,
         topicCount: true,

@@ -19,6 +19,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor'
 import { AppConfigRegister } from './config/app.config'
 import { appConfigValidationSchema } from './config/validation.config'
 import { AdminModule } from './modules/admin.module'
+import { AdminUserStatusGuard } from './modules/auth/admin-user-status.guard'
 import { AuditModule } from './modules/system/audit/audit.module'
 
 @Module({
@@ -62,6 +63,10 @@ import { AuditModule } from './modules/system/audit/audit.module'
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // JWT 认证守卫
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AdminUserStatusGuard, // 管理端用户状态守卫
     },
     {
       provide: APP_INTERCEPTOR,

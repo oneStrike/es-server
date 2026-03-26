@@ -8,8 +8,7 @@ import { AuthErrorMessages } from './auth.constant'
 import { JwtBlacklistService } from './jwt-blacklist.service'
 
 interface RefreshAccessTokenOptions {
-  validateRefreshTokenJti?: (jti: string) => boolean | Promise<boolean>
-  revokeRefreshTokenJti?: (jti: string) => void | Promise<void>
+  consumeRefreshTokenJti?: (jti: string) => boolean | Promise<boolean>
 }
 
 /**
@@ -66,28 +65,34 @@ export class AuthService {
     refreshToken: string,
     options: RefreshAccessTokenOptions = {},
   ) {
-    const { aud, jti, ...payload } =
-      await this.jwtService.verifyAsync(refreshToken)
+    const {
+      aud,
+      iss: _iss,
+      exp: _exp,
+      iat: _iat,
+      nbf: _nbf,
+      jti,
+      ...payload
+    } = await this.jwtService.verifyAsync(refreshToken)
     if (!jti || typeof jti !== 'string') {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     const isBlacklist = await this.blacklistService.isInBlacklist(jti)
-    const isPersisted = options.validateRefreshTokenJti
-      ? await options.validateRefreshTokenJti(jti)
-      : true
 
     if (
       payload.type !== 'refresh'
       || aud !== this.config.aud
       || isBlacklist
-      || !isPersisted
     ) {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
-    if (options.revokeRefreshTokenJti) {
-      await options.revokeRefreshTokenJti(jti)
+    const isRefreshTokenConsumed = options.consumeRefreshTokenJti
+      ? await options.consumeRefreshTokenJti(jti)
+      : true
+    if (!isRefreshTokenConsumed) {
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     await this.addToBlacklist(refreshToken)
@@ -150,5 +155,15 @@ export class AuthService {
     const payload = parts[1]
     const decoded = Buffer.from(payload, 'base64').toString('utf-8')
     return JSON.parse(decoded)
+  }
+
+  /**
+   * 验签并解析 Token。
+   * 默认校验过期时间；在登出等场景可按需忽略过期限制。
+   */
+  async verifyToken(token: string, options?: { ignoreExpiration?: boolean }) {
+    return this.jwtService.verifyAsync(token, {
+      ignoreExpiration: options?.ignoreExpiration ?? false,
+    })
   }
 }

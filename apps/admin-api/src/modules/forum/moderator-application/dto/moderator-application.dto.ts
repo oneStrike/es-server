@@ -63,6 +63,7 @@ class ForumModeratorApplicationSectionDto extends PickType(BaseForumSectionDto, 
   'name',
   'description',
   'icon',
+  'cover',
 ] as const) {}
 
 export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationDto {

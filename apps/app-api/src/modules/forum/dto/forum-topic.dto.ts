@@ -34,6 +34,7 @@ export class AppForumSectionBriefDto extends PickType(BaseForumSectionDto, [
   'id',
   'name',
   'icon',
+  'cover',
 ] as const) { }
 
 export class AppForumTopicUserBriefDto extends PickType(BaseAppUserDto, [

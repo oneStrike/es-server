@@ -152,6 +152,7 @@ export class ForumModeratorApplicationService {
           name: true,
           description: true,
           icon: true,
+          cover: true,
         },
       }),
     ])

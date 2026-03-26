@@ -48,10 +48,18 @@ export class BaseForumSectionDto extends BaseDto {
   @StringProperty({
     description: '板块图标',
     example: 'https://example.com/icon.png',
-    required: false,
-    maxLength: 255,
+    required: true,
+    maxLength: 500,
   })
-  icon?: string | null
+  icon!: string
+
+  @StringProperty({
+    description: '板块封面',
+    example: 'https://example.com/cover.png',
+    required: true,
+    maxLength: 500,
+  })
+  cover!: string
 
   @NumberProperty({
     description: '排序权重',

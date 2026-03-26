@@ -63,6 +63,7 @@ export class ForumTopicController {
             name: topic.section.name,
             description: topic.section.description,
             icon: topic.section.icon,
+            cover: topic.section.cover,
             isEnabled: topic.section.isEnabled,
             topicReviewPolicy: topic.section.topicReviewPolicy,
           }

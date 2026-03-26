@@ -7,7 +7,7 @@ import { DrizzleService, escapeLikePattern } from '@db/core'
 import { AdminUser, NewAdminUser } from '@db/schema'
 import { AdminUserRoleEnum } from '@libs/platform/constant'
 import { ScryptService } from '@libs/platform/modules'
-import { LoginGuardService } from '@libs/platform/modules/auth'
+import { LoginGuardService, RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
 import {
   BadRequestException,
   Injectable,
@@ -17,6 +17,7 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { and, eq, ilike } from 'drizzle-orm'
 import { AdminAuthRedisKeys } from '../auth/auth.constant'
+import { AdminTokenStorageService } from '../auth/token-storage.service'
 
 /**
  * 管理员用户服务
@@ -33,6 +34,7 @@ export class AdminUserService {
     private readonly scryptService: ScryptService,
     private readonly configService: ConfigService,
     private readonly loginGuardService: LoginGuardService,
+    private readonly tokenStorageService: AdminTokenStorageService,
   ) {}
 
   private get db() {
@@ -249,6 +251,12 @@ export class AdminUserService {
         .where(eq(this.adminUser.id, userId)),
     )
     this.drizzle.assertAffectedRows(result, '用户不存在')
+
+    await this.tokenStorageService.revokeAllByUserId(
+      userId,
+      RevokeTokenReasonEnum.PASSWORD_CHANGE,
+    )
+
     return true
   }
 
@@ -281,18 +289,25 @@ export class AdminUserService {
   async resetPassword(userId: number, id: number) {
     await this.isSuperAdmin(userId)
     // 重置密码为默认密码（Aa@123456）
-    const defaultPassword = await this.scryptService.encryptPassword(
-      this.configService.get<string>('app.defaultPassword')!,
+    const defaultPassword = this.configService.get<string>('app.defaultPassword')!
+    const encryptedPassword = await this.scryptService.encryptPassword(
+      defaultPassword,
     )
     const rows = await this.drizzle.withErrorHandling(async () =>
       this.db
         .update(this.adminUser)
         .set({
-          password: await this.scryptService.encryptPassword(defaultPassword),
+          password: encryptedPassword,
         })
         .where(eq(this.adminUser.id, id)),
     )
     this.drizzle.assertAffectedRows(rows, '用户不存在')
+
+    await this.tokenStorageService.revokeAllByUserId(
+      id,
+      RevokeTokenReasonEnum.PASSWORD_CHANGE,
+    )
+
     return true
   }
 }

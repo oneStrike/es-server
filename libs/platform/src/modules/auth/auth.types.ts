@@ -39,6 +39,13 @@ export interface ITokenStorageService {
 
   revokeByJtis: (jtis: string[], reason: RevokeTokenReasonEnum) => Promise<void> | void
 
+  /**
+   * 原子消费 token：仅当 token 未撤销且未过期时标记为已撤销。
+   * 用于刷新 token 轮换，避免并发请求重复消费同一 refresh token。
+   * @returns true 表示消费成功，false 表示 token 已失效或已被消费
+   */
+  consumeByJti: (jti: string, reason: RevokeTokenReasonEnum) => Promise<boolean>
+
   revokeAllByUserId: (userId: number, reason: RevokeTokenReasonEnum) => Promise<void> | void
 
   findActiveTokensByUserId: (userId: number) => Promise<any[]>

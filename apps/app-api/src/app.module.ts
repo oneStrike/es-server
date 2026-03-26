@@ -52,9 +52,7 @@ import { AppUserStatusGuard } from './modules/auth/app-user-status.guard'
      * 定时任务用于定期清理过期和已撤销的 Token
      */
     ScheduleModule.forRoot(),
-    PlatformModule.forRoot({
-      enableThrottler: false
-    }),
+    PlatformModule.forRoot(),
     JwtAuthModule,
     UserCoreModule,
 

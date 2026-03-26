@@ -184,7 +184,7 @@ export class AuthService {
         return this.register(body, req)
       }
 
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
     }
     if (body.code) {
       if (!user.phoneNumber) {
