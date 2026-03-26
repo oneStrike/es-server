@@ -4,7 +4,7 @@
 
 ### 1.1 背景
 - 当前聊天消息类型定义为 `TEXT=1`、`IMAGE=2`、`SYSTEM=3`。
-- 业务上要新增语音、视频、图标（贴纸）消息。
+- 业务上要新增语音、视频、图标（表情）消息。
 - 你提出 `SYSTEM` 占用 `3` 不合适，并希望系统消息做到“仅服务端可发”。
 
 ### 1.2 结论（建议采用）
@@ -13,9 +13,9 @@
   - `2 IMAGE`
   - `3 AUDIO`
   - `4 VIDEO`
-  - `5 STICKER`（图标/贴纸）
+  - `5 EMOJI`（图标/表情）
   - `99 SYSTEM`（仅服务端可发）
-- 客户端发送入口只允许 `TEXT/IMAGE/AUDIO/VIDEO/STICKER`，拒绝 `SYSTEM`。
+- 客户端发送入口只允许 `TEXT/IMAGE/AUDIO/VIDEO/EMOJI`，拒绝 `SYSTEM`。
 - 系统消息改为服务端内部能力（例如 `sendSystemMessage`），不暴露给客户端传参。
 - 媒体消息采用“上传与发消息分离”：
   - 先拿上传凭证
@@ -34,7 +34,7 @@
 ## 3. 设计目标与非目标
 
 ### 3.1 目标
-- 支持语音、视频、图标（贴纸）消息。
+- 支持语音、视频、图标（表情）消息。
 - 系统消息只能由服务端发送。
 - 与现有 `clientMessageId` 幂等能力兼容。
 - 兼容现有会话未读/已读机制。
@@ -54,7 +54,7 @@
 | IMAGE | 2 | 是 | 图片 |
 | AUDIO | 3 | 是 | 语音 |
 | VIDEO | 4 | 是 | 视频 |
-| STICKER | 5 | 是 | 图标/贴纸 |
+| EMOJI | 5 | 是 | 图标/表情 |
 | SYSTEM | 99 | 否 | 系统消息，服务端内部生成 |
 
 ### 4.2 `chat.send` 建议请求结构（统一）
@@ -86,8 +86,8 @@
   - `payload`: `mediaAssetId`、`durationMs`、`waveform`、`codec`。
 - `VIDEO`
   - `payload`: `mediaAssetId`、`durationMs`、`width`、`height`、`thumbnailUrl`、`playbackUrl`。
-- `STICKER`
-  - `payload`: `stickerId`、`packId`、`url`、`width`、`height`、`alt`。
+- `EMOJI`
+  - `payload`: `emojiId`、`packId`、`url`、`width`、`height`、`alt`。
 - `SYSTEM`
   - `payload`: `templateKey`、`args`、`bizType`、`bizId`、`operatorId`。
 
@@ -96,7 +96,7 @@
 - 当前表结构 `content` 为 `NOT NULL`，建议本期不改字段，保持兼容。
 - 非文本消息约定：
   - 有用户输入文案则存文案
-  - 无文案则由服务端填默认占位（如 `[语音]`、`[视频]`、`[贴纸]`）
+  - 无文案则由服务端填默认占位（如 `[语音]`、`[视频]`、`[表情]`）
 
 ## 5. 仅服务端可发 SYSTEM 的实现策略
 
@@ -180,10 +180,10 @@
 - 短视频可直接 MP4（H.264/AAC）回放。
 - 较大视频建议转 HLS（分片+自适应码率）并生成封面图。
 
-## 11. 图标（贴纸）消息建议
+## 11. 图标（表情）消息建议
 
-- 贴纸独立为 `STICKER` 类型，不与普通图片混用。
-- 贴纸资源建议限制：
+- 表情独立为 `EMOJI` 类型，不与普通图片混用。
+- 表情资源建议限制：
   - 推荐尺寸不超过 512x512
   - 提供缩略图或直接复用主图
 - 客户端展示应“轻交互”，适合时间线快速反馈。
@@ -196,7 +196,7 @@
 - 新增上传凭证接口与媒体资产表。
 
 ### 阶段 B：客户端切换
-- 客户端启用 `AUDIO/VIDEO/STICKER` 发送。
+- 客户端启用 `AUDIO/VIDEO/EMOJI` 发送。
 - `SYSTEM` 从客户端入口彻底禁用。
 - 观测失败率、重试率、转码耗时。
 
@@ -220,7 +220,7 @@
 
 - 是否立即把 `3` 改为 `AUDIO`（需要确认生产是否存在 `SYSTEM=3` 历史数据）。
 - 媒体是否强制转码后才能可见（体验 vs 成本）。
-- 贴纸是否走独立资源包体系（运营能力要求更高）。
+- 表情是否走独立资源包体系（运营能力要求更高）。
 - 视频先 MP4 还是直接 HLS（研发复杂度 vs 播放稳定性）。
 
 ## 15. 互联网最佳实践参考
@@ -240,7 +240,7 @@
   https://socket.io/docs/v4/emitting-events/
   https://socket.io/docs/v4/tutorial/step-8
 
-- Matrix 即时消息规范（`m.image/m.audio/m.video`、本地回显、重试建议、贴纸 `m.sticker`）
+- Matrix 即时消息规范（`m.image/m.audio/m.video`、本地回显、重试建议、含 `m.sticker` 事件可参考）
   https://spec.matrix.org/v1.15/client-server-api/
 
 - 浏览器录音录像能力约束（`getUserMedia` 需 HTTPS/权限；`MediaRecorder` 分片）
