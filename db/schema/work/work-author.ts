@@ -76,7 +76,7 @@ export const workAuthor = pgTable("work_author", {
     /**
      * 作者类型索引
      */
-    index("work_author_type_idx").on(table.type),
+    index("work_author_type_idx").using("gin", table.type),
     /**
      * 启用状态索引
      */

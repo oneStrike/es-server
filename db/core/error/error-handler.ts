@@ -2,8 +2,8 @@ import type { DrizzleErrorMessages } from '../drizzle.type'
 import type { PostgresError } from './postgres-error'
 import { HttpException, InternalServerErrorException } from '@nestjs/common'
 import {
-  getPostgresErrorDescriptor,
   getPostgresError,
+  getPostgresErrorDescriptor,
   PostgresDefaultMessages,
   PostgresErrorCode,
 } from './postgres-error'
@@ -86,6 +86,7 @@ export async function executeWithErrorHandling<T>(
   try {
     return await fn()
   } catch (error) {
+    console.error(error)
     handleError(error, messages)
   }
 }
