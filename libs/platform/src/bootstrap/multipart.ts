@@ -11,6 +11,15 @@ import { ConfigService } from '@nestjs/config'
 
 const EXT_LEADING_DOT_REGEX = /^\./
 
+/**
+ * 配置文件上传与静态文件服务
+ *
+ * 初始化上传目录、注册静态文件服务与 multipart 解析器。
+ * 对文档和压缩包类型强制设置 Content-Disposition 为 attachment，防止浏览器直接渲染或执行。
+ *
+ * @param fastifyAdapter - Fastify 适配器实例
+ * @param app - NestJS 应用实例，用于获取 ConfigService
+ */
 export async function setupMultipart(
   fastifyAdapter: FastifyAdapter,
   app: NestFastifyApplication,
@@ -31,7 +40,6 @@ export async function setupMultipart(
     etag: true,
     cacheControl: true,
     maxAge: '1h',
-    // 闁藉牆顕弬鍥ㄣ€傛稉搴″竾缂傗晛瀵樼猾璇茬€峰鍝勫煑娴犮儵妾禒鑸垫煙瀵繋绗呮潪鏂ょ礉闂勫秳缍?XSS 妞嬪酣娅?
     setHeaders(res: any, filePath: string) {
       try {
         const { document, archive } = uploadConfig.allowExtensions

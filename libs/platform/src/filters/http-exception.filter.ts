@@ -15,30 +15,43 @@ interface ErrorDescriptor {
   message: string
 }
 
+/**
+ * 全局异常过滤器
+ *
+ * 统一捕获并处理所有未处理的异常，转换为标准响应格式。
+ * 支持 HttpException、Postgres 数据库错误、Fastify multipart 错误等，
+ * 并输出结构化日志用于问题排查。
+ */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   constructor(private readonly loggerService: LoggerService) {}
 
   /**
-   * Known framework error mappings.
-   * Database fallback uses the shared descriptor from db/core.
+   * 已知框架错误映射表
+   *
+   * 数据库错误优先使用 db/core 提供的共享描述器，
+   * 此处仅补充 Fastify multipart 相关的业务错误映射。
    */
   private readonly errorDescriptorMap: Record<string, ErrorDescriptor> = {
-    // Fastify multipart errors
     FST_REQ_FILE_TOO_LARGE: {
       status: HttpStatus.PAYLOAD_TOO_LARGE,
-      message: '\u4E0A\u4F20\u6587\u4EF6\u5927\u5C0F\u8D85\u51FA\u7CFB\u7EDF\u9650\u5236',
+      message: '上传文件大小超出系统限制',
     },
     FST_FILES_LIMIT: {
       status: HttpStatus.PAYLOAD_TOO_LARGE,
-      message: '\u4E0A\u4F20\u6587\u4EF6\u6570\u91CF\u8D85\u51FA\u7CFB\u7EDF\u9650\u5236',
+      message: '上传文件数量超出系统限制',
     },
     FST_INVALID_MULTIPART_CONTENT_TYPE: {
       status: HttpStatus.BAD_REQUEST,
-      message: '\u4E0A\u4F20\u6587\u4EF6\u4E0D\u80FD\u4E3A\u7A7A',
+      message: '上传文件不能为空',
     },
   }
 
+  /**
+   * 异常处理入口
+   *
+   * 提取错误信息、记录结构化日志，并返回统一的响应格式。
+   */
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<FastifyReply>()
@@ -80,6 +93,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     })
   }
 
+  /**
+   * 提取异常信息
+   *
+   * 按优先级处理：HttpException > Postgres 错误 > 未知错误。
+   * 对于数据库错误，尽可能提取约束、表名、字段等上下文信息。
+   */
   private extractErrorInfo(exception: unknown): {
     status: number
     message: string | object
@@ -123,7 +142,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: '\u5185\u90E8\u670D\u52A1\u5668\u9519\u8BEF',
+        message: '内部服务器错误',
         code,
         constraint: postgresError.constraint,
         table: postgresError.table,
@@ -134,10 +153,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: '\u5185\u90E8\u670D\u52A1\u5668\u9519\u8BEF',
+      message: '内部服务器错误',
     }
   }
 
+  /**
+   * 提取 Postgres 错误
+   *
+   * 支持直接抛出的数据库错误，以及 HttpException 包装的数据库错误（通过 cause 传递）。
+   */
   private extractPostgresError(exception: unknown) {
     const directError = extractError(exception)
     if (directError) {
@@ -151,6 +175,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return null
   }
 
+  /**
+   * 安全解析请求日志字段
+   *
+   * 解析失败时返回 undefined，避免日志记录本身影响异常处理流程。
+   */
   private safeParse(req: FastifyRequest | undefined) {
     try {
       return req ? parseRequestLogFields(req) : undefined

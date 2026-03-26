@@ -528,8 +528,8 @@
             <input type="text" id="httpBaseUrl" value="http://localhost:8081" placeholder="http://localhost:8081">
         </div>
         <div class="config-item">
-            <label>WebSocket:</label>
-            <input type="text" id="wsUrl" value="ws://localhost:8081/message" placeholder="ws://localhost:8081/message">
+            <label>Socket.IO:</label>
+            <input type="text" id="wsUrl" value="http://localhost:8081/message" placeholder="http://localhost:8081/message">
         </div>
         <button class="btn-default" onclick="quickSetup()">⚡ 快速设置</button>
         <button class="btn-default" onclick="clearAllLogs()">清空日志</button>
@@ -672,8 +672,8 @@
     <script>
         // 存储两个用户的连接状态
         const users = {
-            A: { socket: null, userId: null, conversations: [], currentConv: null, countdown: 0 },
-            B: { socket: null, userId: null, conversations: [], currentConv: null, countdown: 0 }
+            A: { socket: null, userId: null, conversations: [], currentConv: null, countdown: 0, lastReadMessageByConversation: {} },
+            B: { socket: null, userId: null, conversations: [], currentConv: null, countdown: 0, lastReadMessageByConversation: {} }
         };
 
         // 日志功能
@@ -709,9 +709,49 @@
 
         // 获取配置
         function getConfig() {
-            const httpBaseUrl = document.getElementById('httpBaseUrl').value.trim();
-            const wsUrl = document.getElementById('wsUrl').value.trim();
+            const httpBaseUrl = document.getElementById('httpBaseUrl').value.trim().replace(/\/+$/, '');
+            const wsUrl = document.getElementById('wsUrl').value.trim().replace(/\/+$/, '');
             return { httpBaseUrl, wsUrl };
+        }
+
+        function normalizeBearerToken(token) {
+            const value = (token || '').trim();
+            if (value.startsWith('Bearer ')) {
+                return value.slice(7).trim();
+            }
+            return value;
+        }
+
+        async function parseApiResponse(response) {
+            const rawText = await response.text();
+            let body = null;
+            if (rawText) {
+                try {
+                    body = JSON.parse(rawText);
+                } catch {
+                    body = { rawText };
+                }
+            }
+
+            const hasEnvelope = !!(
+                body
+                && typeof body === 'object'
+                && Object.prototype.hasOwnProperty.call(body, 'code')
+                && Object.prototype.hasOwnProperty.call(body, 'data')
+            );
+
+            const code = hasEnvelope ? body.code : response.status;
+            const message = (hasEnvelope ? body.message : body?.message) || response.statusText || '请求失败';
+            const data = hasEnvelope ? body.data : body;
+
+            return {
+                ok: response.ok && (!hasEnvelope || code === 200),
+                status: response.status,
+                code,
+                message,
+                data,
+                raw: body,
+            };
         }
 
         // 解析 Token 获取用户ID
@@ -724,10 +764,46 @@
             }
         }
 
+        function markConversationRead(userLabel, conversationId, messageId) {
+            const user = users[userLabel];
+            if (!user?.socket || !user.socket.connected) {
+                return;
+            }
+
+            const normalizedConversationId = Number(conversationId);
+            const normalizedMessageId = String(messageId || '').trim();
+            if (!normalizedConversationId || !normalizedMessageId) {
+                return;
+            }
+
+            const conversationKey = String(normalizedConversationId);
+            if (user.lastReadMessageByConversation[conversationKey] === normalizedMessageId) {
+                return;
+            }
+            user.lastReadMessageByConversation[conversationKey] = normalizedMessageId;
+
+            const payload = {
+                requestId: `read-${userLabel}-${Date.now()}`,
+                timestamp: Date.now(),
+                payload: {
+                    conversationId: normalizedConversationId,
+                    messageId: normalizedMessageId,
+                },
+            };
+
+            user.socket.emit('chat.read', payload);
+            log(`user${userLabel}`, `用户${userLabel} 标记会话已读`, payload);
+        }
+
         // 发送验证码
         async function sendVerifyCode(userLabel) {
             const { httpBaseUrl } = getConfig();
             const phone = document.getElementById(`phone${userLabel}`).value.trim();
+
+            if (!httpBaseUrl) {
+                alert('请填写 HTTP API 地址');
+                return;
+            }
             
             if (!phone) {
                 alert(`请输入用户${userLabel}的手机号`);
@@ -753,14 +829,14 @@
                     body: JSON.stringify({ phone })
                 });
 
-                const data = await response.json();
+                const result = await parseApiResponse(response);
                 
-                if (response.ok && data === true) {
+                if (result.ok && result.data === true) {
                     log(`user${userLabel}`, `用户${userLabel} 验证码发送成功`);
                     startCountdown(userLabel);
                 } else {
-                    log(`user${userLabel}`, `用户${userLabel} 验证码发送失败`, data);
-                    alert('验证码发送失败: ' + (data.message || '未知错误'));
+                    log(`user${userLabel}`, `用户${userLabel} 验证码发送失败`, result.raw || result);
+                    alert('验证码发送失败: ' + (result.message || '未知错误'));
                     btn.disabled = false;
                     btn.textContent = '发送验证码';
                 }
@@ -794,6 +870,11 @@
             const { httpBaseUrl } = getConfig();
             const phone = document.getElementById(`phone${userLabel}`).value.trim();
             const code = document.getElementById(`code${userLabel}`).value.trim();
+
+            if (!httpBaseUrl) {
+                alert('请填写 HTTP API 地址');
+                return;
+            }
             
             if (!phone || !code) {
                 alert(`请输入用户${userLabel}的手机号和验证码`);
@@ -809,20 +890,21 @@
                     body: JSON.stringify({ phone, code })
                 });
 
-                const data = await response.json();
+                const result = await parseApiResponse(response);
+                const loginData = result.data;
                 
-                if (response.ok && data.tokens) {
-                    log(`user${userLabel}`, `用户${userLabel} 登录成功`, { userId: data.user?.id });
+                if (result.ok && loginData?.tokens) {
+                    log(`user${userLabel}`, `用户${userLabel} 登录成功`, { userId: loginData.user?.id });
                     
                     // 填充 token 和 userId
-                    document.getElementById(`token${userLabel}`).value = data.tokens.accessToken;
-                    document.getElementById(`userId${userLabel}`).value = data.user?.id || '';
+                    document.getElementById(`token${userLabel}`).value = loginData.tokens.accessToken;
+                    document.getElementById(`userId${userLabel}`).value = loginData.user?.id || '';
                     
                     // 自动连接 WebSocket
-                    connectUser(userLabel, data.tokens.accessToken, data.user?.id);
+                    connectUser(userLabel, loginData.tokens.accessToken, loginData.user?.id);
                 } else {
-                    log(`user${userLabel}`, `用户${userLabel} 登录失败`, data);
-                    alert('登录失败: ' + (data.message || '未知错误'));
+                    log(`user${userLabel}`, `用户${userLabel} 登录失败`, result.raw || result);
+                    alert('登录失败: ' + (result.message || '未知错误'));
                 }
             } catch (error) {
                 log(`user${userLabel}`, `用户${userLabel} 登录失败: ${error.message}`, 'error');
@@ -862,9 +944,7 @@
             }
 
             // 移除 Bearer 前缀
-            if (token.startsWith('Bearer ')) {
-                token = token.slice(7);
-            }
+            token = normalizeBearerToken(token);
 
             // 解析用户ID
             const userId = providedUserId || parseUserId(token);
@@ -921,6 +1001,9 @@
                 if (data.code !== 0) {
                     addSystemMessage(userLabel, `发送失败: ${data.message}`);
                 }
+                if (data.code === 0 && typeof data.requestId === 'string' && data.requestId.startsWith(`read-${userLabel}-`)) {
+                    loadConversations(userLabel);
+                }
             });
 
             socket.on('chat.message.new', (data) => {
@@ -929,6 +1012,14 @@
                     const msg = data.message;
                     const isOwn = msg.senderId === users[userLabel].userId;
                     addMessage(userLabel, msg.senderId, msg.content, isOwn, new Date(msg.createdAt));
+
+                    if (
+                        users[userLabel].currentConv?.id === msg.conversationId
+                        && msg.senderId !== users[userLabel].userId
+                        && msg.id
+                    ) {
+                        markConversationRead(userLabel, msg.conversationId, msg.id);
+                    }
                 }
             });
 
@@ -946,6 +1037,7 @@
             users[userLabel].userId = null;
             users[userLabel].conversations = [];
             users[userLabel].currentConv = null;
+            users[userLabel].lastReadMessageByConversation = {};
             document.getElementById(`userId${userLabel}`).value = '';
             updateStatus(userLabel, 'disconnected');
             log(`user${userLabel}`, `用户${userLabel} 已断开`);
@@ -973,23 +1065,24 @@
                 const response = await fetch(`${httpBaseUrl}/api/app/message/chat/direct/open`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'Authorization': `Bearer ${normalizeBearerToken(token)}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ targetUserId: Number(targetUserId) })
                 });
 
-                const data = await response.json();
+                const result = await parseApiResponse(response);
+                const conversation = result.data;
                 
-                if (response.ok) {
-                    log(`user${userLabel}`, `用户${userLabel} 会话创建成功`, data);
-                    users[userLabel].currentConv = data;
-                    selectConversation(userLabel, data);
+                if (result.ok && conversation?.id) {
+                    log(`user${userLabel}`, `用户${userLabel} 会话创建成功`, conversation);
+                    users[userLabel].currentConv = conversation;
+                    selectConversation(userLabel, conversation);
                     loadConversations(userLabel);
                     addSystemMessage(userLabel, `已创建与用户 ${targetUserId} 的会话`);
                 } else {
-                    log(`user${userLabel}`, `用户${userLabel} 创建会话失败`, data);
-                    alert('创建会话失败: ' + (data.message || '未知错误'));
+                    log(`user${userLabel}`, `用户${userLabel} 创建会话失败`, result.raw || result);
+                    alert('创建会话失败: ' + (result.message || '未知错误'));
                 }
             } catch (error) {
                 log(`user${userLabel}`, `用户${userLabel} 请求失败: ${error.message}`, 'error');
@@ -1005,15 +1098,18 @@
             if (!httpBaseUrl || !token) return;
 
             try {
-                const response = await fetch(`${httpBaseUrl}/api/app/message/chat/conversation/list?pageIndex=0&pageSize=20`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const response = await fetch(`${httpBaseUrl}/api/app/message/chat/conversation/page?pageIndex=1&pageSize=20`, {
+                    headers: { 'Authorization': `Bearer ${normalizeBearerToken(token)}` }
                 });
 
-                const data = await response.json();
+                const result = await parseApiResponse(response);
+                const list = result.data?.list;
                 
-                if (response.ok && data.list) {
-                    users[userLabel].conversations = data.list;
+                if (result.ok && Array.isArray(list)) {
+                    users[userLabel].conversations = list;
                     renderConversationList(userLabel);
+                } else if (!result.ok) {
+                    log(`user${userLabel}`, `用户${userLabel} 加载会话失败`, result.raw || result);
                 }
             } catch (error) {
                 log(`user${userLabel}`, `用户${userLabel} 加载会话失败: ${error.message}`, 'error');
@@ -1067,16 +1163,26 @@
             try {
                 const response = await fetch(
                     `${httpBaseUrl}/api/app/message/chat/conversation/messages?conversationId=${conversationId}&limit=20`,
-                    { headers: { 'Authorization': `Bearer ${token}` } }
+                    { headers: { 'Authorization': `Bearer ${normalizeBearerToken(token)}` } }
                 );
 
-                const data = await response.json();
+                const result = await parseApiResponse(response);
+                const list = result.data?.list;
                 
-                if (response.ok && data.list) {
-                    data.list.reverse().forEach(msg => {
+                if (result.ok && Array.isArray(list)) {
+                    if (list.length > 0) {
+                        const newestMessage = list[0];
+                        if (newestMessage?.id) {
+                            markConversationRead(userLabel, conversationId, newestMessage.id);
+                        }
+                    }
+
+                    list.reverse().forEach(msg => {
                         const isOwn = msg.senderId === users[userLabel].userId;
                         addMessage(userLabel, msg.senderId, msg.content, isOwn, new Date(msg.createdAt));
                     });
+                } else if (!result.ok) {
+                    log(`user${userLabel}`, `用户${userLabel} 加载消息失败`, result.raw || result);
                 }
             } catch (error) {
                 log(`user${userLabel}`, `用户${userLabel} 加载消息失败: ${error.message}`, 'error');
@@ -1115,10 +1221,7 @@
 
             user.socket.emit('chat.send', message);
             log(`user${userLabel}`, `用户${userLabel} 发送消息`, message);
-            
-            // 添加到界面
-            addMessage(userLabel, user.userId, content, true);
-            
+
             input.value = '';
         }
 
