@@ -32,16 +32,18 @@ export class WorkCategoryService {
   }
 
   async createCategory(createCategoryInput: CreateCategoryInput) {
+    // 如果没有提供排序值，则获取当前最大排序值并加1
     if (!createCategoryInput.sortOrder) {
       const maxOrder = await this.drizzle.ext.maxOrder(this.workCategory)
       createCategoryInput.sortOrder = maxOrder + 1
     }
 
+    // 插入新的分类数据，并处理可能发生的错误
     await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.workCategory)
         .values({
-          popularity: 0,
+          popularity: 0, // 默认人气值为0
           ...createCategoryInput,
         }),
     )

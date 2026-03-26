@@ -32,7 +32,8 @@ export const DrizzleDbProvider: Provider = {
       schema,
       relations,
       casing: 'snake_case',
-      logger: process.env.NODE_ENV === 'development',
+      // logger: process.env.NODE_ENV === 'development',
+      logger: false,
     }),
   inject: [DRIZZLE_POOL],
 }
