@@ -48,12 +48,12 @@ export class WorkCategoryService {
       const [result] = await this.db
         .select({ maxOrder: max(this.workCategory.sortOrder) })
         .from(this.workCategory)
-      const maxOrder = result?.maxOrder ?? 0
-      createCategoryInput.sortOrder = maxOrder + 1
+      createCategoryInput.sortOrder = (result?.maxOrder || 0) + 1
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.workCategory).values(createCategoryInput),
+    await this.drizzle.withErrorHandling(
+      () => this.db.insert(this.workCategory).values(createCategoryInput),
+      { duplicate: '分类名称已存在' },
     )
     return true
   }
@@ -93,9 +93,13 @@ export class WorkCategoryService {
   }
 
   async getCategoryDetail(input: CategoryIdInput) {
-    return this.db.query.workCategory.findFirst({
+    const category = await this.db.query.workCategory.findFirst({
       where: { id: input.id },
     })
+    if (!category) {
+      throw new BadRequestException('分类不存在')
+    }
+    return category
   }
 
   /**
