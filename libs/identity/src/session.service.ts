@@ -1,8 +1,8 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth'
 import type { FastifyRequest } from 'fastify'
 import {
-  AuthErrorMessages,
   AuthDefaultValue,
+  AuthErrorMessages,
   AuthService as BaseAuthService,
   RevokeTokenReasonEnum,
 } from '@libs/platform/modules/auth'
