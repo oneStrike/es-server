@@ -31,6 +31,7 @@
 - 项目接口风格是 RPC over HTTP，不按 REST 资源路由去重构现有接口。
 - 路径统一写在 `@Controller('admin/...')` 或 `@Controller('app/...')` 中，不带前导斜杠。
 - 方法路径使用语义化动作名：`page`、`list`、`detail`、`create`、`update`、`delete`、`update-status`、`swap-sort-order`、`my/page`。
+- 默认沿用单一路由入口；若改动会影响已有客户端或引入 breaking change，允许使用 Nest versioning、显式兼容路由或双入口过渡，但必须写明适用范围、下线条件与时间窗口。
 - controller 只负责：
   - 入参接收
   - 鉴权/审计/用户上下文装饰器
@@ -43,7 +44,7 @@
 
 - DTO 规范以 `.trae/rules/DTO_SPEC.md` 为准。
 - 通用字段优先复用 `libs/platform/src/dto` 中的 `IdDto`、`IdsDto`、`BaseDto`、`PageDto` 等基础类。
-- 实体级 `BaseXxxDto` 必须和 Drizzle Table 保持字段、类型、可空性、枚举、长度一致。
+- 实体级 `BaseXxxDto` 默认从 Drizzle Table 派生共享字段；已暴露字段需与对应 Table 的字段名、类型、可空性、枚举、长度保持一致，但不要求为了“贴表”机械暴露仅服务存储或内部流程的字段。
 - apps 层 DTO 通过 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 组合生成。
 - Service 方法签名不要直接使用 apps 层 DTO；优先使用 Drizzle 推导类型或模块内 `*.type.ts` 领域类型。
 - 日期时间 Swagger 示例统一使用 ISO 8601。
@@ -101,10 +102,14 @@
 - 根 tsconfig 检查：`pnpm exec tsc -p tsconfig.json --noEmit`
 - admin-api 检查：`pnpm exec tsc -p apps/admin-api/tsconfig.app.json --noEmit`
 - app-api 检查：`pnpm exec tsc -p apps/app-api/tsconfig.app.json --noEmit`
+- 单元/集成测试：`pnpm test`
+- `pnpm test:e2e` 当前在 `package.json` 中指向缺失的 `apps/akaiito-server-nestjs/test/jest-e2e.json`；修复前不作为默认验证命令。
 
 ## 11. 交付要求
 
 - 说明修改影响的层与模块。
 - 如果发现“规范与现状”冲突，明确写出冲突点，而不是默默扩散不一致。
+- 涉及路由、响应结构、DTO 字段增删改时，说明兼容策略，例如是否需要版本化、兼容入口或弃用窗口。
 - 涉及逻辑变更时，同步说明是否修正了相关注释或存在待后续清理的存量注释。
+- 如本次仅完成类型检查、未完成行为测试，需要说明原因与剩余风险。
 - 除非用户明确要求，不顺手做大范围风格迁移或历史代码清理。

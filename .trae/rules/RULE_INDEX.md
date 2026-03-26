@@ -29,10 +29,12 @@
 - 单域/聚合库使用约定的二级入口，例如 `@libs/<lib>/module`、`@libs/<lib>/core`。
 - 除平台层已约定的公开嵌套命名空间（如 `@libs/platform/modules/auth`）外，不要再从 `@libs/<lib>/<domain>/*` deep import。
 - 计数器写路径：用户聚合计数与部分论坛计数已收口到统一 service，但内容域仍存在若干历史手写 delta 路径；新增或收敛时优先复用统一 owner service，并结合 `COUNTER_SPEC.md`、`COUNTER_PATTERNS.md`、`COUNTER_REGISTRY.md` 判断，不要复制散落写法。
+- 验证以类型检查为底线；涉及路由、响应结构、错误语义、事务一致性、计数器修复等行为变更时，优先补充 Jest 行为测试。根脚本 `pnpm test` 当前可用；`pnpm test:e2e` 仍指向缺失配置，修复前不作为默认验证命令。
 
 ## Editing Heuristics
 
 - 同时改 controller、DTO、service 时，先对齐 controller 和 DTO 规则，再收敛 service 签名。
+- 涉及 controller path、响应结构、DTO 字段删除/重命名、分页语义或错误语义时，先判断是否会影响存量客户端；必要时设计 versioning / compat 窗口。
 - 涉及 service 签名、领域输入输出、事务别名或聚合结果时，先对齐 `TS_TYPE_SPEC.md`，再决定类型放置层级。
 - 涉及异常语义、数据库错误翻译、幂等防重、全局错误响应、日志上下文时，先对齐 `ERROR_HANDLING_SPEC.md`，再决定是在业务层、Drizzle 边界还是全局 filter 处理。
 - 涉及点赞数、收藏数、评论数、浏览量、关注数、未读数、聚合读模型等计数字段时，先阅读 `COUNTER_SPEC.md`、`COUNTER_PATTERNS.md`、`COUNTER_REGISTRY.md` 与 `drizzle-guidelines.md`，再决定是增量维护还是按事实重算。

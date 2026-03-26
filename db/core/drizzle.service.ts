@@ -52,50 +52,6 @@ export class DrizzleService implements OnApplicationShutdown {
     return schema
   }
 
-  /**
-   * 独立构建分页边界。
-   * 用于只需要 pageIndex/pageSize/limit/offset 的手工分页场景。
-   */
-  buildPaginationBounds(input: {
-    pageIndex?: number
-    pageSize?: number
-    maxPageSize?: number
-  }) {
-    const pageQuery = this.buildPageQuery(input, {
-      maxPageSize: input.maxPageSize,
-    })
-
-    return {
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
-      limit: pageQuery.limit,
-      offset: pageQuery.offset,
-    }
-  }
-
-  /**
-   * 独立构建表级排序。
-   * 用于需要严格校验字段并生成 Drizzle `orderBySql` 的场景。
-   */
-  buildTableOrderBy<TTable extends AnyPgTable>(
-    table: TTable,
-    orderBy?: unknown,
-  ) {
-    const pageQuery = this.buildPageQuery(
-      {
-        orderBy,
-      },
-      {
-        table,
-      },
-    )
-
-    return {
-      orderBy: pageQuery.orderBy,
-      orderBySql: pageQuery.orderBySql,
-    }
-  }
-
   buildPageQuery<TTable extends AnyPgTable>(
     input?: DrizzlePageQueryInput,
     options?: DrizzlePageQueryOptions<TTable>,

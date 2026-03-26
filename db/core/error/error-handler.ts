@@ -37,6 +37,11 @@ export function handleError(
   error: unknown,
   messages?: DrizzleErrorMessages,
 ): never {
+  // 内层已完成 PG -> HTTP 翻译时，外层包装不应再次覆盖消息和状态码。
+  if (error instanceof HttpException) {
+    throw error
+  }
+
   const pgError = getPostgresError(error)
   if (!pgError) {
     throw error

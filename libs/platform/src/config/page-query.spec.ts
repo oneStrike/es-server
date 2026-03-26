@@ -1,17 +1,8 @@
 import { BadRequestException } from '@nestjs/common'
 import { getTableColumns } from 'drizzle-orm'
-import { DrizzleService } from '../../../../db/core/drizzle.service'
 import { buildDrizzlePageQuery } from '../../../../db/core/query/page-query'
 import { findPagination } from '../../../../db/extensions/findPagination'
 import { requestLog } from '../../../../db/schema/system/request-log'
-
-function createDrizzleService() {
-  return new DrizzleService(
-    {} as any,
-    { end: jest.fn() } as any,
-    { get: jest.fn().mockReturnValue(undefined) } as any,
-  )
-}
 
 describe('buildDrizzlePageQuery', () => {
   it('defaults to the first page with a 1-based pageIndex', () => {
@@ -163,93 +154,5 @@ describe('findPagination option guards', () => {
         omit: Object.keys(getTableColumns(requestLog)) as any,
       }),
     ).rejects.toThrow('findPagination options.omit removes all selectable fields')
-  })
-})
-
-describe('drizzleService pagination helpers', () => {
-  const drizzle = createDrizzleService()
-
-  it('builds pagination bounds via buildDrizzlePageQuery', () => {
-    expect(
-      drizzle.buildPaginationBounds({
-        pageIndex: 2,
-        pageSize: 10,
-      }),
-    ).toEqual({
-      pageIndex: 2,
-      pageSize: 10,
-      limit: 10,
-      offset: 10,
-    })
-  })
-
-  it('respects maxPageSize when building pagination bounds', () => {
-    expect(
-      drizzle.buildPaginationBounds(
-        { pageSize: 999, maxPageSize: 100 },
-      ),
-    ).toMatchObject({
-      pageIndex: 1,
-      pageSize: 100,
-      limit: 100,
-      offset: 0,
-    })
-  })
-
-  it('builds validated orderBy SQL for a table via buildDrizzlePageQuery', () => {
-    const result = drizzle.buildTableOrderBy(
-      requestLog,
-      { createdAt: 'desc' },
-    )
-
-    expect(result.orderBy).toEqual({
-      createdAt: 'desc',
-      id: 'desc',
-    })
-    expect(result.orderBySql).toHaveLength(2)
-  })
-
-  it('parses JSON object orderBy input for a table', () => {
-    const result = drizzle.buildTableOrderBy(
-      requestLog,
-      '{"createdAt":"asc"}',
-    )
-
-    expect(result.orderBy).toEqual({
-      createdAt: 'asc',
-      id: 'asc',
-    })
-    expect(result.orderBySql).toHaveLength(2)
-  })
-
-  it('rejects invalid table orderBy input', () => {
-    expect(() =>
-      drizzle.buildTableOrderBy(
-        requestLog,
-        { missingField: 'desc' },
-      ),
-    ).toThrow('排序字段 "missingField" 不存在')
-  })
-
-  it('accepts array orderBy input for a table', () => {
-    const result = drizzle.buildTableOrderBy(
-      requestLog,
-      [{ createdAt: 'desc' }],
-    )
-
-    expect(result.orderBy).toEqual([
-      { createdAt: 'desc' },
-      { id: 'desc' },
-    ])
-    expect(result.orderBySql).toHaveLength(2)
-  })
-
-  it('rejects malformed JSON table orderBy input', () => {
-    expect(() =>
-      drizzle.buildTableOrderBy(
-        requestLog,
-        '{bad-json',
-      ),
-    ).toThrow('orderBy 参数格式不合法')
   })
 })
