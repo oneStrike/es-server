@@ -1,6 +1,7 @@
 import type {
   ForumAccessUserContext,
   ForumPostingUserContext,
+  ForumSectionAccessState,
   ForumSectionPermissionContext,
 } from './forum-permission.type'
 import { DrizzleService } from '@db/core'
@@ -170,20 +171,62 @@ export class ForumPermissionService {
       | Pick<ForumPostingUserContext, 'experience'>
       | null,
   ) {
-    if (!section.userLevelRuleId || section.requiredExperience === null) {
-      return
+    const accessState = this.resolveSectionAccessState(section, user)
+    if (!accessState.canAccess) {
+      throw new BadRequestException(accessState.accessDeniedReason)
+    }
+  }
+
+  /**
+   * 计算用户对板块的访问状态。
+   * 用于“板块可见但访问受限”场景向前端返回可读提示。
+   */
+  private resolveSectionAccessState(
+    section: Pick<ForumSectionPermissionContext, 'userLevelRuleId' | 'requiredExperience'>,
+    user?:
+      | ForumAccessUserContext
+      | Pick<ForumPostingUserContext, 'experience'>
+      | null,
+  ): ForumSectionAccessState {
+    const requiredExperience =
+      section.userLevelRuleId && section.requiredExperience !== null
+        ? section.requiredExperience
+        : null
+
+    if (requiredExperience === null) {
+      return {
+        canAccess: true,
+        requiredExperience: null,
+      }
     }
 
     if (!user) {
-      throw new BadRequestException('请先登录后访问该板块')
+      return {
+        canAccess: false,
+        requiredExperience,
+        accessDeniedReason: '请先登录后访问该板块',
+      }
     }
 
     if ('isEnabled' in user && !user.isEnabled) {
-      throw new BadRequestException('用户不存在或已被禁用')
+      return {
+        canAccess: false,
+        requiredExperience,
+        accessDeniedReason: '用户不存在或已被禁用',
+      }
     }
 
-    if (user.experience < section.requiredExperience) {
-      throw new BadRequestException('当前板块需要更高等级访问')
+    if (user.experience < requiredExperience) {
+      return {
+        canAccess: false,
+        requiredExperience,
+        accessDeniedReason: '当前板块需要更高等级访问',
+      }
+    }
+
+    return {
+      canAccess: true,
+      requiredExperience,
     }
   }
 
@@ -327,18 +370,65 @@ export class ForumPermissionService {
 
     return sections
       .filter((section) => {
-        const requiredExperience =
-          section.userLevelRule?.requiredExperience ?? null
-        if (!section.userLevelRuleId || requiredExperience === null) {
-          return true
-        }
-
-        if (!user || !user.isEnabled) {
-          return false
-        }
-
-        return user.experience >= requiredExperience
+        const accessState = this.resolveSectionAccessState(
+          {
+            userLevelRuleId: section.userLevelRuleId,
+            requiredExperience: section.userLevelRule?.requiredExperience ?? null,
+          },
+          user,
+        )
+        return accessState.canAccess
       })
       .map((section) => section.id)
+  }
+
+  /**
+   * 批量计算板块访问状态。
+   * 用于列表接口返回板块可见性与访问限制提示。
+   */
+  async getSectionAccessStateMap(sectionIds: number[], userId?: number) {
+    const uniqueSectionIds = [...new Set(sectionIds)]
+    if (uniqueSectionIds.length === 0) {
+      return new Map<number, ForumSectionAccessState>()
+    }
+
+    const [sections, user] = await Promise.all([
+      this.db.query.forumSection.findMany({
+        where: {
+          id: {
+            in: uniqueSectionIds,
+          },
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          id: true,
+          userLevelRuleId: true,
+        },
+        with: {
+          userLevelRule: {
+            columns: {
+              requiredExperience: true,
+            },
+          },
+        },
+      }),
+      userId ? this.getAccessUserContext(userId) : Promise.resolve(null),
+    ])
+
+    const accessMap = new Map<number, ForumSectionAccessState>()
+    for (const section of sections) {
+      accessMap.set(
+        section.id,
+        this.resolveSectionAccessState(
+          {
+            userLevelRuleId: section.userLevelRuleId,
+            requiredExperience: section.userLevelRule?.requiredExperience ?? null,
+          },
+          user,
+        ),
+      )
+    }
+
+    return accessMap
   }
 }

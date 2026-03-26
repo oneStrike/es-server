@@ -19,7 +19,7 @@ export class ForumSectionGroupController {
     isArray: true,
   })
   async getList(@CurrentUser('sub') userId?: number) {
-    return this.forumSectionGroupService.getPublicSectionGroupList({
+    return this.forumSectionGroupService.getVisibleSectionGroupList({
       userId,
     })
   }

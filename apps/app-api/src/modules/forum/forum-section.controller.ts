@@ -29,7 +29,7 @@ export class ForumSectionController {
     @Query() query: QueryAppForumSectionDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    return this.forumSectionService.getPublicSectionList({
+    return this.forumSectionService.getVisibleSectionList({
       ...query,
       userId,
     })
@@ -42,6 +42,6 @@ export class ForumSectionController {
     model: AppForumSectionDetailDto,
   })
   async getDetail(@Query() query: IdDto, @CurrentUser('sub') userId?: number) {
-    return this.forumSectionService.getPublicSectionDetail(query.id, userId)
+    return this.forumSectionService.getVisibleSectionDetail(query.id, userId)
   }
 }

@@ -31,8 +31,8 @@ export interface QueryForumSectionGroupInput {
 }
 
 /**
- * 应用侧查询公开板块分组列表的条件。
- * 仅依赖当前用户上下文过滤可访问板块。
+ * 应用侧查询板块分组可见列表的条件。
+ * 基于当前用户上下文补充分组内板块的访问状态信息。
  */
 export interface QueryPublicForumSectionGroupInput {
   userId?: number

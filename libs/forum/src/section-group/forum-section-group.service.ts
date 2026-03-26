@@ -85,19 +85,12 @@ export class ForumSectionGroupService {
   }
 
   /**
-   * 查询应用侧公开板块分组列表。
-   * 仅返回启用中的分组，并挂载当前用户可访问的启用板块。
+   * 查询应用侧板块分组可见列表。
+   * 仅返回启用中的分组，并挂载启用板块及访问状态信息。
    */
-  async getPublicSectionGroupList(
+  async getVisibleSectionGroupList(
     query: QueryPublicForumSectionGroupInput = {},
   ) {
-    const accessibleSectionIds =
-      await this.forumPermissionService.getAccessibleSectionIds(query.userId)
-
-    if (accessibleSectionIds.length === 0) {
-      return []
-    }
-
     const groups = await this.db
       .select({
         id: this.forumSectionGroup.id,
@@ -146,32 +139,46 @@ export class ForumSectionGroupService {
           inArray(this.forumSection.groupId, groupIds),
           eq(this.forumSection.isEnabled, true),
           isNull(this.forumSection.deletedAt),
-          accessibleSectionIds.length === 1
-            ? eq(this.forumSection.id, accessibleSectionIds[0])
-            : inArray(this.forumSection.id, accessibleSectionIds),
         ),
       )
       .orderBy(asc(this.forumSection.sortOrder), asc(this.forumSection.id))
 
-    const sectionFollowStatusMap =
-      query.userId && sections.length > 0
-        ? await this.followService.checkStatusBatch(
+    const sectionIds = sections.map((section) => section.id)
+    const [sectionAccessStateMap, sectionFollowStatusMap] = await Promise.all([
+      this.forumPermissionService.getSectionAccessStateMap(
+        sectionIds,
+        query.userId,
+      ),
+      query.userId && sectionIds.length > 0
+        ? this.followService.checkStatusBatch(
             FollowTargetTypeEnum.FORUM_SECTION,
-            sections.map((section) => section.id),
+            sectionIds,
             query.userId,
           )
-        : undefined
+        : Promise.resolve(new Map<number, boolean>()),
+    ])
 
     return groups
       .map((group) => ({
         ...group,
         sections: sections
           .filter((section) => section.groupId === group.id)
-          .map((section) => ({
-            ...section,
-            isFollowed:
-              sectionFollowStatusMap?.get(section.id) ?? false,
-          })),
+          .map((section) => {
+            const accessState = sectionAccessStateMap.get(section.id) ?? {
+              canAccess: true,
+              requiredExperience: null,
+            }
+
+            return {
+              ...section,
+              canAccess: accessState.canAccess,
+              requiredExperience: accessState.requiredExperience,
+              accessDeniedReason: accessState.canAccess
+                ? undefined
+                : accessState.accessDeniedReason,
+              isFollowed: sectionFollowStatusMap.get(section.id) ?? false,
+            }
+          }),
       }))
       .filter((group) => group.sections.length > 0)
   }

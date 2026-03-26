@@ -52,8 +52,8 @@ export interface QueryForumSectionInput {
 }
 
 /**
- * 应用侧查询公开板块列表的条件。
- * 支持按分组筛选，并根据当前用户过滤可访问板块。
+ * 应用侧查询板块可见列表的条件。
+ * 支持按分组筛选，并基于当前用户补充访问状态信息。
  */
 export interface QueryPublicForumSectionInput {
   groupId?: number

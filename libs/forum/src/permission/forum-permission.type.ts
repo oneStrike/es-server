@@ -33,3 +33,13 @@ export type ForumAccessUserContext = Pick<
   AppUser,
   'id' | 'isEnabled' | 'experience'
 >
+
+/**
+ * 板块访问状态。
+ * 用于应用侧列表展示“可见但不可访问”时的前端提示。
+ */
+export interface ForumSectionAccessState {
+  canAccess: boolean
+  requiredExperience: number | null
+  accessDeniedReason?: string
+}

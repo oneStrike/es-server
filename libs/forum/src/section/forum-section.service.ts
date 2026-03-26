@@ -22,8 +22,9 @@ import { ForumCounterService } from '../counter'
 import { ForumPermissionService } from '../permission'
 
 /**
- * 论坛板块服务类
- * 提供论坛板块的增删改查等核心业务逻辑
+ * 论坛板块服务。
+ * 负责板块的 CRUD、权限校验、关注状态聚合与计数重建。
+ * 列表返回可见板块及访问状态，主题访问入口再执行强权限校验。
  */
 @Injectable()
 export class ForumSectionService {
@@ -50,6 +51,10 @@ export class ForumSectionService {
     return this.drizzle.schema.userLevelRule
   }
 
+  /**
+   * 分批处理 ID 列表，避免单次操作数据量过大。
+   * 用于全量重建等运维场景，按批次串行推进。
+   */
   private async processIdsInBatches(
     ids: number[],
     batchSize: number,
@@ -62,7 +67,7 @@ export class ForumSectionService {
   }
 
   /**
-   * 判断公开板块挂载的分组是否仍可对外展示。
+   * 判断板块挂载的分组是否可展示。
    * 未分组板块允许直接展示；有分组时要求分组启用且未删除。
    */
   private isAvailablePublicGroup(
@@ -77,24 +82,15 @@ export class ForumSectionService {
   }
 
   /**
-   * 查询当前用户可访问的公开板块列表。
+   * 查询板块可见列表。
    * - 仅返回启用且未删除的板块
    * - 有分组的板块要求分组也处于启用状态
+   * - 列表侧不拦截访问权限，统一返回 canAccess 与限制提示
    * - 默认按分组排序、板块排序输出，便于应用侧直接渲染
    */
-  async getPublicSectionList(query: QueryPublicForumSectionInput = {}) {
-    const accessibleSectionIds =
-      await this.forumPermissionService.getAccessibleSectionIds(query.userId)
-
-    if (accessibleSectionIds.length === 0) {
-      return []
-    }
-
+  async getVisibleSectionList(query: QueryPublicForumSectionInput = {}) {
     const sections = await this.db.query.forumSection.findMany({
       where: {
-        id: {
-          in: accessibleSectionIds,
-        },
         isEnabled: true,
         deletedAt: {
           isNull: true,
@@ -151,35 +147,48 @@ export class ForumSectionService {
       })
       .map(({ group, ...section }) => section)
 
-    if (!query.userId || visibleSections.length === 0) {
-      return visibleSections.map((section) => ({
-        ...section,
-        isFollowed: false,
-      }))
+    if (visibleSections.length === 0) {
+      return []
     }
 
-    const followStatusMap = await this.followService.checkStatusBatch(
-      FollowTargetTypeEnum.FORUM_SECTION,
-      visibleSections.map((section) => section.id),
-      query.userId,
-    )
+    const sectionIds = visibleSections.map((section) => section.id)
+    const [accessStateMap, followStatusMap] = await Promise.all([
+      this.forumPermissionService.getSectionAccessStateMap(
+        sectionIds,
+        query.userId,
+      ),
+      query.userId
+        ? this.followService.checkStatusBatch(
+            FollowTargetTypeEnum.FORUM_SECTION,
+            sectionIds,
+            query.userId,
+          )
+        : Promise.resolve(new Map<number, boolean>()),
+    ])
 
-    return visibleSections.map((section) => ({
-      ...section,
-      isFollowed: followStatusMap.get(section.id) ?? false,
-    }))
+    return visibleSections.map((section) => {
+      const accessState = accessStateMap.get(section.id) ?? {
+        canAccess: true,
+        requiredExperience: null,
+      }
+
+      return {
+        ...section,
+        canAccess: accessState.canAccess,
+        requiredExperience: accessState.requiredExperience,
+        accessDeniedReason: accessState.canAccess
+          ? undefined
+          : accessState.accessDeniedReason,
+        isFollowed: followStatusMap.get(section.id) ?? false,
+      }
+    })
   }
 
   /**
-   * 查询公开板块详情。
-   * 详情访问复用板块权限校验，避免绕过等级限制读取板块信息。
+   * 查询板块可见详情。
+   * 详情侧返回访问状态，由主题列表接口执行强权限校验。
    */
-  async getPublicSectionDetail(id: number, userId?: number) {
-    await this.forumPermissionService.ensureUserCanAccessSection(id, userId, {
-      requireEnabled: true,
-      notFoundMessage: '板块不存在',
-    })
-
+  async getVisibleSectionDetail(id: number, userId?: number) {
     const section = await this.db.query.forumSection.findFirst({
       where: {
         id,
@@ -245,25 +254,37 @@ export class ForumSectionService {
       }
     }
 
-    const followStatus = userId
-      ? await this.followService.checkFollowStatus({
-          targetType: FollowTargetTypeEnum.FORUM_SECTION,
-          targetId: id,
-          userId,
-        })
-      : undefined
+    const [followStatus, accessStateMap] = await Promise.all([
+      userId
+        ? this.followService.checkFollowStatus({
+            targetType: FollowTargetTypeEnum.FORUM_SECTION,
+            targetId: id,
+            userId,
+          })
+        : Promise.resolve(undefined),
+      this.forumPermissionService.getSectionAccessStateMap([id], userId),
+    ])
+
+    const accessState = accessStateMap.get(id) ?? {
+      canAccess: true,
+      requiredExperience: null,
+    }
 
     return {
       ...data,
       group: publicGroup,
+      canAccess: accessState.canAccess,
+      requiredExperience: accessState.requiredExperience,
+      accessDeniedReason: accessState.canAccess
+        ? undefined
+        : accessState.accessDeniedReason,
       isFollowed: followStatus?.isFollowing ?? false,
     }
   }
 
   /**
-   * 计算板块统计信息
-   * @param sectionId 板块ID
-   * @returns 统计信息对象
+   * 基于事实表实时计算板块的主题数与评论数。
+   * 用于 repair 场景校验冗余计数字段准确性，不作为常规查询入口。
    */
   private async calculateStatistics(sectionId: number) {
     const section = await this.db.query.forumSection.findFirst({
@@ -292,9 +313,9 @@ export class ForumSectionService {
   }
 
   /**
-   * 创建论坛板块
-   * @param createSectionDto 创建板块的数据
-   * @returns 创建的板块信息
+   * 创建论坛板块。
+   * - 板块名称全局唯一（未删除范围内）
+   * - 关联分组与等级规则时需校验目标存在性
    */
   async createSection(createSectionDto: CreateForumSectionInput) {
     const { name, groupId, userLevelRuleId, ...sectionData } = createSectionDto
@@ -340,8 +361,7 @@ export class ForumSectionService {
   }
 
   /**
-   * 获取板块列表
-   * @returns 板块列表
+   * 获取板块分组树形结构，用于管理端板块配置页渲染。
    */
   async getSectionTree() {
     return this.db.query.forumSectionGroup.findMany({
@@ -353,9 +373,8 @@ export class ForumSectionService {
   }
 
   /**
-   * 分页查询论坛板块列表
-   * @param queryForumSectionDto 查询条件
-   * @returns 分页的板块列表
+   * 管理端分页查询板块列表。
+   * 支持按名称模糊搜索、分组筛选、启用状态与审核策略筛选。
    */
   async getSectionPage(queryForumSectionDto: QueryForumSectionInput) {
     const { name, groupId, ...otherDto } = queryForumSectionDto
@@ -387,9 +406,7 @@ export class ForumSectionService {
   }
 
   /**
-   * 获取论坛板块详情
-   * @param id 板块ID
-   * @returns 板块详情信息
+   * 管理端获取板块详情，包含关联分组信息。
    */
   async getSectionDetail(id: number) {
     const section = await this.db.query.forumSection.findFirst({
@@ -451,9 +468,10 @@ export class ForumSectionService {
   }
 
   /**
-   * 更新论坛板块
-   * @param updateSectionDto 更新板块的数据
-   * @returns 更新后的板块信息
+   * 更新论坛板块。
+   * - 名称变更时校验全局唯一性
+   * - 分组与等级规则变更时校验目标存在性
+   * - 写后校验受影响行数，确保板块存在
    */
   async updateSection(updateSectionDto: UpdateForumSectionInput) {
     const { id, name, groupId, ...updateData } = updateSectionDto
@@ -527,9 +545,8 @@ export class ForumSectionService {
   }
 
   /**
-   * 软删除论坛板块
-   * @param id 板块ID
-   * @returns 删除结果
+   * 软删除论坛板块。
+   * 存在主题时禁止删除，避免孤立数据。
    */
   async deleteSection(id: number) {
     const section = await this.db.query.forumSection.findFirst({
@@ -559,9 +576,8 @@ export class ForumSectionService {
   }
 
   /**
-   * 更新板块启用状态
-   * @param dto 更新状态数据
-   * @returns 更新结果
+   * 更新板块启用状态。
+   * 写后校验受影响行数，确保板块存在。
    */
   async updateEnabledStatus(dto: UpdateForumSectionEnabledInput) {
     const result = await this.drizzle.withErrorHandling(() =>
@@ -580,9 +596,7 @@ export class ForumSectionService {
   }
 
   /**
-   * 拖拽排序
-   * @param updateSortDto 排序数据
-   * @returns 排序结果
+   * 拖拽排序，交换两个板块的 sortOrder 字段。
    */
   async updateSectionSort(updateSortDto: SwapForumSectionSortInput) {
     return this.drizzle.ext.swapField(this.forumSection, {
