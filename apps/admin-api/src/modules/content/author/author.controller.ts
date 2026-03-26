@@ -72,7 +72,7 @@ export class ContentAuthorController {
   }
 
   /**
-   * 批量更新作者状态
+   * 更新作者状态
    */
   @Post('update-status')
   @ApiDoc({

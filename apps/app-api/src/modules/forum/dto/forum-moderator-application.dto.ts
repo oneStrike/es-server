@@ -64,8 +64,9 @@ export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationD
     required: false,
     type: ForumModeratorApplicationUserDto,
     validation: false,
+    nullable: false,
   })
-  applicant?: ForumModeratorApplicationUserDto
+  applicant!: ForumModeratorApplicationUserDto
 
   @NestedProperty({
     description: '审核人信息',
@@ -80,6 +81,7 @@ export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationD
     required: false,
     type: ForumModeratorApplicationSectionDto,
     validation: false,
+    nullable: false,
   })
-  section?: ForumModeratorApplicationSectionDto
+  section!: ForumModeratorApplicationSectionDto
 }

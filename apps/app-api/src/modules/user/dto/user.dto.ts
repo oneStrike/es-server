@@ -232,16 +232,18 @@ export class UserExperienceStatsDto {
     type: UserLevelSummaryDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  level?: UserLevelSummaryDto
+  level!: UserLevelSummaryDto
 
   @NestedProperty({
     description: '下一等级信息',
     type: UserLevelSummaryDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  nextLevel?: UserLevelSummaryDto
+  nextLevel!: UserLevelSummaryDto
 
   @NumberProperty({
     description: '距离下一等级的经验值差距',
@@ -414,6 +416,7 @@ export class UserCenterProfileDto {
     description: '用户计数',
     type: UserCountDto,
     validation: false,
+    nullable: false,
   })
   counts!: UserCountDto
 }
@@ -459,6 +462,7 @@ export class UserCenterDto {
     description: '用户基本信息',
     type: UserCenterUserDto,
     validation: false,
+    nullable: false,
   })
   user!: UserCenterUserDto
 
@@ -466,6 +470,7 @@ export class UserCenterDto {
     description: '成长信息',
     type: UserCenterGrowthDto,
     validation: false,
+    nullable: false,
   })
   growth!: UserCenterGrowthDto
 
@@ -473,6 +478,7 @@ export class UserCenterDto {
     description: '用户资料',
     type: UserCenterProfileDto,
     validation: false,
+    nullable: false,
   })
   profile!: UserCenterProfileDto
 
@@ -480,6 +486,7 @@ export class UserCenterDto {
     description: '资产统计',
     type: UserAssetsSummaryDto,
     validation: false,
+    nullable: false,
   })
   assets!: UserAssetsSummaryDto
 
@@ -487,6 +494,7 @@ export class UserCenterDto {
     description: '消息统计',
     type: UserCenterMessageDto,
     validation: false,
+    nullable: false,
   })
   message!: UserCenterMessageDto
 }
@@ -499,6 +507,7 @@ export class UserBadgeItemDto extends PickType(BaseDto, ['id', 'createdAt']) {
     description: '徽章详情',
     type: BaseUserBadgeDto,
     validation: false,
+    nullable: false,
   })
   badge!: BaseUserBadgeDto
 }

@@ -105,6 +105,7 @@ export class UserLevelInfoDto {
     description: '等级权限',
     type: UserLevelPermissionsDto,
     validation: false,
+    nullable: false,
   })
   permissions!: UserLevelPermissionsDto
 }

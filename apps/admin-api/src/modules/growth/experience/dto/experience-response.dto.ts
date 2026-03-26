@@ -19,6 +19,7 @@ export class UserExperienceRecordDetailDto extends UserExperienceRecordDto {
     type: ForumAppUserInfoDto,
     required: true,
     validation: false,
+    nullable: false,
   })
   user!: ForumAppUserInfoDto
 }
@@ -45,6 +46,7 @@ export class UserExperienceStatsDto {
     type: UserExperienceLevelDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  level?: UserExperienceLevelDto
+  level!: UserExperienceLevelDto
 }

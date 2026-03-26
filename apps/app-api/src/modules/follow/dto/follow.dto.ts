@@ -6,9 +6,7 @@ import {
   NumberProperty,
 } from '@libs/platform/decorators'
 import { BaseAppUserDto } from '@libs/user/core'
-import {
-  PickType,
-} from '@nestjs/swagger'
+import { PickType } from '@nestjs/swagger'
 import { AppForumSectionListItemDto } from '../../forum/dto/forum-section.dto'
 
 export class FollowTargetDto extends PickType(BaseFollowDto, [
@@ -83,8 +81,9 @@ export class FollowAuthorPageItemDto extends BaseFollowDto {
     type: FollowAuthorBriefDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  author?: FollowAuthorBriefDto
+  author!: FollowAuthorBriefDto
 }
 
 export class FollowSectionPageItemDto extends BaseFollowDto {
@@ -93,8 +92,9 @@ export class FollowSectionPageItemDto extends BaseFollowDto {
     type: AppForumSectionListItemDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  section?: AppForumSectionListItemDto
+  section!: AppForumSectionListItemDto
 }
 
 export class FollowUserPageItemDto extends BaseFollowDto {
@@ -103,8 +103,9 @@ export class FollowUserPageItemDto extends BaseFollowDto {
     type: FollowUserBriefDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  user?: FollowUserBriefDto
+  user!: FollowUserBriefDto
 
   @BooleanProperty({
     description: '当前用户是否已关注该用户',

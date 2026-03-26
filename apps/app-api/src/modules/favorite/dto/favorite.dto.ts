@@ -39,7 +39,7 @@ export class FavoriteTopicInfoDto extends AppForumTopicPageItemDto {
     nullable: false,
     validation: false,
   })
-  user?: FavoriteTopicUserBriefDto
+  user!: FavoriteTopicUserBriefDto
 }
 
 export class FavoriteWorkPageItemDto extends BaseFavoriteDto {
@@ -50,7 +50,7 @@ export class FavoriteWorkPageItemDto extends BaseFavoriteDto {
     nullable: false,
     validation: false,
   })
-  work?: PageWorkDto
+  work!: PageWorkDto
 }
 
 export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
@@ -61,5 +61,5 @@ export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
     nullable: false,
     validation: false,
   })
-  topic?: FavoriteTopicInfoDto
+  topic!: FavoriteTopicInfoDto
 }

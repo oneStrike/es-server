@@ -12,11 +12,7 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export enum AdminAppUserDeletedScopeEnum {
   ACTIVE = 'active',
@@ -85,16 +81,18 @@ export class AdminAppUserExperienceStatsDto {
     type: AdminAppUserLevelDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  level?: AdminAppUserLevelDto
+  level!: AdminAppUserLevelDto
 
   @NestedProperty({
     description: '下一等级信息',
     type: AdminAppUserLevelDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  nextLevel?: AdminAppUserLevelDto
+  nextLevel!: AdminAppUserLevelDto
 
   @NumberProperty({
     description: '距离下一等级的经验差值',
@@ -118,6 +116,7 @@ export class AdminAppUserPageItemDto extends BaseAppUserDto {
     description: '用户计数',
     type: AdminAppUserCountDto,
     validation: false,
+    nullable: false,
   })
   counts!: AdminAppUserCountDto
 }
@@ -128,16 +127,18 @@ export class AdminAppUserDetailDto extends BaseAppUserDto {
     type: AdminAppUserLevelDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  level?: AdminAppUserLevelDto
+  level!: AdminAppUserLevelDto
 
   @NestedProperty({
     description: '用户计数',
     type: AdminAppUserCountDto,
     required: false,
     validation: false,
+    nullable: false,
   })
-  counts?: AdminAppUserCountDto
+  counts!: AdminAppUserCountDto
 
   @NumberProperty({
     description: '已拥有徽章数量',
@@ -150,6 +151,7 @@ export class AdminAppUserDetailDto extends BaseAppUserDto {
     description: '积分统计',
     type: AdminAppUserPointStatsDto,
     validation: false,
+    nullable: false,
   })
   pointStats!: AdminAppUserPointStatsDto
 
@@ -157,6 +159,7 @@ export class AdminAppUserDetailDto extends BaseAppUserDto {
     description: '经验统计',
     type: AdminAppUserExperienceStatsDto,
     validation: false,
+    nullable: false,
   })
   experienceStats!: AdminAppUserExperienceStatsDto
 }
@@ -285,15 +288,18 @@ export class UpdateAdminAppUserStatusDto extends PickType(BaseAppUserDto, [
   banUntil?: Date
 }
 
-export class AdminAppUserPointRecordDto extends PickType(BaseUserPointRecordDto, [
-  'id',
-  'userId',
-  'ruleId',
-  'targetType',
-  'targetId',
-  'remark',
-  'createdAt',
-] as const) {
+export class AdminAppUserPointRecordDto extends PickType(
+  BaseUserPointRecordDto,
+  [
+    'id',
+    'userId',
+    'ruleId',
+    'targetType',
+    'targetId',
+    'remark',
+    'createdAt',
+  ] as const,
+) {
   @NumberProperty({
     description: '积分变化（正数为获得，负数为消费）',
     example: 5,
@@ -321,10 +327,11 @@ export class QueryAdminAppUserPointRecordDto extends IntersectionType(
   IntersectionType(
     PageDto,
     PartialType(
-      PickType(
-        BaseUserPointRecordDto,
-        ['ruleId', 'targetType', 'targetId'] as const,
-      ),
+      PickType(BaseUserPointRecordDto, [
+        'ruleId',
+        'targetType',
+        'targetId',
+      ] as const),
     ),
   ),
 ) {}
@@ -368,10 +375,13 @@ export class QueryAdminAppUserBadgeDto extends IntersectionType(
   IntersectionType(
     PageDto,
     PartialType(
-      PickType(
-        BaseUserBadgeDto,
-        ['name', 'type', 'isEnabled', 'business', 'eventKey'] as const,
-      ),
+      PickType(BaseUserBadgeDto, [
+        'name',
+        'type',
+        'isEnabled',
+        'business',
+        'eventKey',
+      ] as const),
     ),
   ),
 ) {}
@@ -459,11 +469,15 @@ export class AssignAdminAppUserBadgeDto extends UserIdDto {
   badgeId!: number
 }
 
-export class AdminAppUserBadgeItemDto extends PickType(BaseDto, ['id', 'createdAt']) {
+export class AdminAppUserBadgeItemDto extends PickType(BaseDto, [
+  'id',
+  'createdAt',
+]) {
   @NestedProperty({
     description: '徽章信息',
     type: BaseUserBadgeDto,
     validation: false,
+    nullable: false,
   })
   badge!: BaseUserBadgeDto
 }

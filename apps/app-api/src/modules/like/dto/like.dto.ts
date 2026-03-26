@@ -47,5 +47,5 @@ export class LikePageItemDto extends BaseLikeDto {
     nullable: false,
     validation: false,
   })
-  targetDetail?: LikeTargetDetailDto
+  targetDetail!: LikeTargetDetailDto
 }

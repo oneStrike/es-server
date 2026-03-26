@@ -29,6 +29,7 @@ export class AnnouncementDetailDto extends BaseAnnouncementDto {
     required: true,
     type: RelatedPageDto,
     validation: false,
+    nullable: false,
   })
   appPage!: RelatedPageDto
 }

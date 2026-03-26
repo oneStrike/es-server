@@ -100,7 +100,7 @@ export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
     type: CommentUserDto,
     validation: false,
   })
-  user?: CommentUserDto
+  user!: CommentUserDto
 }
 
 export class TargetCommentItemDto extends PickType(BaseCommentDto, [
@@ -119,7 +119,7 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
     type: CommentUserDto,
     validation: false,
   })
-  user?: CommentUserDto
+  user!: CommentUserDto
 
   @BooleanProperty({
     description: '当前用户是否已点赞该评论',

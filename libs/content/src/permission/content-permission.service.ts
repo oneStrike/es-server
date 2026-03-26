@@ -10,7 +10,6 @@ import {
   AccessRuleContext,
   PermissionChapterData,
   UserWithLevel,
-  WorkPermissionData,
 } from './content-permission.types'
 
 /**
@@ -64,9 +63,7 @@ export class ContentPermissionService {
     return this.drizzle.schema.userPurchaseRecord
   }
 
-  private async resolveWorkPermission(
-    workId: number,
-  ): Promise<WorkPermissionData> {
+  private async resolveWorkPermission(workId: number) {
     const work = await this.db.query.work.findFirst({
       where: { id: workId, deletedAt: { isNull: true } },
       columns: {
@@ -186,7 +183,10 @@ export class ContentPermissionService {
     const purchased = await this.db.query.userPurchaseRecord.findFirst({
       where: {
         targetType: {
-          in: [PurchaseTargetTypeEnum.COMIC_CHAPTER, PurchaseTargetTypeEnum.NOVEL_CHAPTER],
+          in: [
+            PurchaseTargetTypeEnum.COMIC_CHAPTER,
+            PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+          ],
         },
         targetId: chapterId,
         userId,
@@ -312,7 +312,10 @@ export class ContentPermissionService {
       hasPermission: true,
       chapter: select
         ? Object.fromEntries(
-            Object.keys(select).map((key) => [key, (chapter as Record<string, unknown>)[key]]),
+            Object.keys(select).map((key) => [
+              key,
+              (chapter as Record<string, unknown>)[key],
+            ]),
           )
         : (chapter as unknown as Record<string, unknown>),
     }
@@ -355,7 +358,9 @@ export class ContentPermissionService {
   async checkChapterDownload(
     userId: number,
     chapterId: number,
-    resolvedPermission?: Awaited<ReturnType<ContentPermissionService['resolveChapterPermission']>>,
+    resolvedPermission?: Awaited<
+      ReturnType<ContentPermissionService['resolveChapterPermission']>
+    >,
   ) {
     const permission =
       resolvedPermission ?? (await this.resolveChapterPermission(chapterId))
