@@ -305,7 +305,12 @@ export async function seedForumActivityDomain(db: Db) {
         .set({
           permissions: [1, 2, 3, 5],
         })
-        .where(eq(forumModeratorSection.id, existingRelation.id))
+        .where(
+          and(
+            eq(forumModeratorSection.moderatorId, moderator.id),
+            eq(forumModeratorSection.sectionId, sectionId),
+          ),
+        )
     }
   }
   console.log('  ✓ 版主管辖板块完成')
@@ -536,4 +541,3 @@ export async function seedForumActivityDomain(db: Db) {
 
   console.log('✅ 论坛业务数据完成')
 }
-

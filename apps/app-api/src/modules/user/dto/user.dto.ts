@@ -502,7 +502,7 @@ export class UserCenterDto {
 /**
  * 用户徽章项 DTO
  */
-export class UserBadgeItemDto extends PickType(BaseDto, ['id', 'createdAt']) {
+export class UserBadgeItemDto extends PickType(BaseDto, ['createdAt'] as const) {
   @NestedProperty({
     description: '徽章详情',
     type: BaseUserBadgeDto,

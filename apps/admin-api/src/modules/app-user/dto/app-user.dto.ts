@@ -470,9 +470,8 @@ export class AssignAdminAppUserBadgeDto extends UserIdDto {
 }
 
 export class AdminAppUserBadgeItemDto extends PickType(BaseDto, [
-  'id',
   'createdAt',
-]) {
+] as const) {
   @NestedProperty({
     description: '徽章信息',
     type: BaseUserBadgeDto,

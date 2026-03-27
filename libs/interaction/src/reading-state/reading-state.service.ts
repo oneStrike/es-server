@@ -221,7 +221,7 @@ export class ReadingStateService {
       this.userWorkReadingState,
       {
         where: and(...conditions),
-        orderBy: { lastReadAt: 'desc' },
+        orderBy: [{ lastReadAt: 'desc' }, { workId: 'asc' }],
         pageIndex,
         pageSize,
       },
@@ -323,17 +323,15 @@ export class ReadingStateService {
   /**
    * 删除单条阅读历史记录
    */
-  async deleteUserReadingHistory(id: number, userId?: number) {
+  async deleteUserReadingHistory(workId: number, userId: number) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userWorkReadingState)
         .where(
-          userId === undefined
-            ? eq(this.userWorkReadingState.id, id)
-            : and(
-                eq(this.userWorkReadingState.id, id),
-                eq(this.userWorkReadingState.userId, userId),
-              ),
+          and(
+            eq(this.userWorkReadingState.userId, userId),
+            eq(this.userWorkReadingState.workId, workId),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '阅读历史不存在')

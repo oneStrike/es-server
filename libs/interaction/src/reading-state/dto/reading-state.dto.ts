@@ -4,13 +4,12 @@ import {
   EnumProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, UserIdDto } from '@libs/platform/dto'
-import { IntersectionType } from '@nestjs/swagger'
+import { UserIdDto } from '@libs/platform/dto'
 
 /**
  * 基础阅读状态 DTO
  */
-export class BaseReadingStateDto extends IntersectionType(BaseDto, UserIdDto) {
+export class BaseReadingStateDto extends UserIdDto {
   @NumberProperty({
     description: '作品ID',
     example: 1,

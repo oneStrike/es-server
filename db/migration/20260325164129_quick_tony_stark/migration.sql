@@ -1,1 +1,0 @@
-ALTER TABLE "admin_user" ALTER COLUMN "password" SET DATA TYPE varchar(500) USING "password"::varchar(500);

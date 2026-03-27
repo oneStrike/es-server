@@ -12,7 +12,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, desc, eq, ilike, inArray, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm'
 
 @Injectable()
 export class UserBadgeService {
@@ -40,7 +40,7 @@ export class UserBadgeService {
 
   private async checkBadgeHasAssignments(badgeId: number) {
     const rows = await this.db
-      .select({ id: this.userBadgeAssignment.id })
+      .select({ badgeId: this.userBadgeAssignment.badgeId })
       .from(this.userBadgeAssignment)
       .where(eq(this.userBadgeAssignment.badgeId, badgeId))
       .limit(1)
@@ -200,7 +200,6 @@ export class UserBadgeService {
 
     return this.db
       .select({
-        id: this.userBadgeAssignment.id,
         userId: this.userBadgeAssignment.userId,
         badgeId: this.userBadgeAssignment.badgeId,
         createdAt: this.userBadgeAssignment.createdAt,
@@ -212,7 +211,10 @@ export class UserBadgeService {
         eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
       )
       .where(where)
-      .orderBy(desc(this.userBadgeAssignment.id))
+      .orderBy(
+        desc(this.userBadgeAssignment.createdAt),
+        asc(this.userBadgeAssignment.badgeId),
+      )
   }
 
   async getBadgeUsers(badgeId: number, dto: QueryUserBadgePageInput) {
@@ -223,7 +225,7 @@ export class UserBadgeService {
 
     const pageQuery = this.drizzle.buildPageQuery(dto, {
       table: this.userBadgeAssignment,
-      defaultOrderBy: { id: 'desc' },
+      defaultOrderBy: [{ createdAt: 'desc' }, { userId: 'asc' }],
     })
 
     const badgeWhere = this.buildBadgeWhere(dto)
@@ -242,7 +244,6 @@ export class UserBadgeService {
 
     const list = await this.db
       .select({
-        id: this.userBadgeAssignment.id,
         userId: this.userBadgeAssignment.userId,
         badgeId: this.userBadgeAssignment.badgeId,
         createdAt: this.userBadgeAssignment.createdAt,

@@ -1,10 +1,10 @@
 import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   ClearReadingHistoryDto,
+  DeleteReadingHistoryDto,
   QueryReadingHistoryDto,
   ReadingHistoryWorkDto,
 } from './dto/reading-history.dto'
@@ -34,8 +34,11 @@ export class ReadingHistoryController {
     summary: '删除单条阅读记录',
     model: Boolean,
   })
-  async delete(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
-    return this.readingStateService.deleteUserReadingHistory(body.id, userId)
+  async delete(
+    @Body() body: DeleteReadingHistoryDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.readingStateService.deleteUserReadingHistory(body.workId, userId)
   }
 
   @Post('clear')

@@ -171,7 +171,7 @@ export class WorkCategoryService {
   async deleteCategory(input: CategoryIdInput) {
     if (await this.checkCategoryHasWorks(input.id)) {
       throw new BadRequestException(
-        'Category has related works and cannot be deleted',
+        '该分类存在关联作品，不能删除。',
       )
     }
     const result = await this.drizzle.withErrorHandling(() =>

@@ -1,0 +1,1 @@
+ALTER TABLE "work" ALTER COLUMN "name" SET DATA TYPE varchar(80) USING "name"::varchar(80);

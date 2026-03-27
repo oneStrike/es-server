@@ -168,7 +168,12 @@ export async function seedMessageDomain(db: Db) {
           conversationId: conversation.id,
           ...fixture,
         })
-        .where(eq(chatConversationMember.id, existing.id))
+        .where(
+          and(
+            eq(chatConversationMember.conversationId, conversation.id),
+            eq(chatConversationMember.userId, fixture.userId),
+          ),
+        )
     }
   }
   console.log('  ✓ 会话成员完成')

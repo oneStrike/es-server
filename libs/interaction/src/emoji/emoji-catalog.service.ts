@@ -14,6 +14,7 @@ import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   and,
+  asc,
   desc,
   eq,
   ilike,
@@ -282,6 +283,7 @@ export class EmojiCatalogService {
   /**
    * 获取用户最近使用的表情列表。
    * - 按最后使用时间倒序、使用次数倒序排列。
+   * - 当时间和次数相同时，按 emojiAssetId 升序稳定决胜。
    * - 只返回当前场景可见且启用的资源。
    * - 结果数量受 EMOJI_RECENT_LIMIT_MAX 限制。
    */
@@ -326,6 +328,7 @@ export class EmojiCatalogService {
       .orderBy(
         desc(this.emojiRecentUsage.lastUsedAt),
         desc(this.emojiRecentUsage.useCount),
+        asc(this.emojiRecentUsage.emojiAssetId),
       )
       .limit(limit)
 
@@ -367,7 +370,7 @@ export class EmojiCatalogService {
     const now = new Date()
     /**
      * 幂等语义：
-     * - 主键冲突时走原子累加 useCount，并刷新 lastUsedAt/updatedAt。
+     * - 主键冲突时走原子累加 useCount，并刷新 lastUsedAt。
      * - 保证同一 userId+scene+emojiAssetId 只有一条聚合记录。
      */
     await this.drizzle.withErrorHandling(() =>
@@ -389,7 +392,6 @@ export class EmojiCatalogService {
           set: {
             useCount: sql`${this.emojiRecentUsage.useCount} + 1`,
             lastUsedAt: now,
-            updatedAt: now,
           },
         }),
     )

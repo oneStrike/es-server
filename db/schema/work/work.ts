@@ -34,7 +34,7 @@ export const work = pgTable("work", {
   /**
    * 作品名称
    */
-  name: varchar({ length: 100 }).notNull(),
+  name: varchar({ length: 80 }).notNull(),
   /**
    * 别名
    */

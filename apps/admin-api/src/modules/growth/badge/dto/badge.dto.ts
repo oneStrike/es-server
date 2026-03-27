@@ -91,7 +91,7 @@ export class BadgeUserInfoDto {
   point!: number
 }
 
-export class BadgeUserPageItemDto extends PickType(IdDto, ['id'] as const) {
+export class BadgeUserPageItemDto {
   @NumberProperty({
     description: '用户ID',
     example: 1,

@@ -42,15 +42,6 @@ export const emojiRecentUsage = pgTable(
      * - 用于最近使用列表排序。
      */
     lastUsedAt: timestamp({ withTimezone: true, precision: 6 }).notNull(),
-    /**
-     * 创建时间（UTC）。
-     */
-    createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
-    /**
-     * 更新时间（UTC）。
-     * - 每次冲突更新时自动刷新。
-     */
-    updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
   },
   (table) => [
     /**

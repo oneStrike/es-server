@@ -2,16 +2,12 @@
  * Auto-converted from legacy schema.
  */
 
-import { index, integer, pgTable, timestamp, unique } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, primaryKey, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * 系统公告阅读记录表 - 记录用户已读的公告
  */
 export const appAnnouncementRead = pgTable("app_announcement_read", {
-  /**
-   * 主键ID
-   */
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 关联的公告ID
    */
@@ -26,21 +22,13 @@ export const appAnnouncementRead = pgTable("app_announcement_read", {
   readAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (table) => [
   /**
-   * 公告与用户唯一约束
+   * 用户与阅读时间索引
    */
-  unique("app_announcement_read_announcement_id_user_id_key").on(table.announcementId, table.userId),
+  index("app_announcement_read_user_id_read_at_idx").on(table.userId, table.readAt.desc()),
   /**
-   * 公告索引
+   * 公告与用户复合主键
    */
-  index("app_announcement_read_announcement_id_idx").on(table.announcementId),
-  /**
-   * 用户索引
-   */
-  index("app_announcement_read_user_id_idx").on(table.userId),
-  /**
-   * 阅读时间索引
-   */
-  index("app_announcement_read_read_at_idx").on(table.readAt),
+  primaryKey({ columns: [table.announcementId, table.userId] }),
 ]);
 
 export type AppAnnouncementRead = typeof appAnnouncementRead.$inferSelect;

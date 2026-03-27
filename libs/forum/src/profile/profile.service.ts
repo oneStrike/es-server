@@ -15,7 +15,7 @@ import {
 } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, inArray, isNull } from 'drizzle-orm'
 
 /**
  * 用户资料服务
@@ -135,18 +135,22 @@ export class UserProfileService {
       ? await this.db
         .select({
           userId: this.userBadgeAssignment.userId,
-          assignmentId: this.userBadgeAssignment.id,
           createdAt: this.userBadgeAssignment.createdAt,
           badge: this.userBadge,
         })
         .from(this.userBadgeAssignment)
         .innerJoin(this.userBadge, eq(this.userBadge.id, this.userBadgeAssignment.badgeId))
         .where(inArray(this.userBadgeAssignment.userId, userIds))
+        .orderBy(
+          asc(this.userBadgeAssignment.userId),
+          desc(this.userBadgeAssignment.createdAt),
+          asc(this.userBadgeAssignment.badgeId),
+        )
       : []
     const badgeMap = new Map<number, any[]>()
     for (const row of badgeRows) {
       const list = badgeMap.get(row.userId) ?? []
-      list.push({ id: row.assignmentId, createdAt: row.createdAt, badge: row.badge })
+      list.push({ createdAt: row.createdAt, badge: row.badge })
       badgeMap.set(row.userId, list)
     }
 
@@ -192,7 +196,6 @@ export class UserProfileService {
       .where(eq(this.appUserCount.userId, userId))
     const userBadges = await this.db
       .select({
-        id: this.userBadgeAssignment.id,
         userId: this.userBadgeAssignment.userId,
         badgeId: this.userBadgeAssignment.badgeId,
         createdAt: this.userBadgeAssignment.createdAt,
@@ -201,6 +204,10 @@ export class UserProfileService {
       .from(this.userBadgeAssignment)
       .innerJoin(this.userBadge, eq(this.userBadge.id, this.userBadgeAssignment.badgeId))
       .where(eq(this.userBadgeAssignment.userId, userId))
+      .orderBy(
+        desc(this.userBadgeAssignment.createdAt),
+        asc(this.userBadgeAssignment.badgeId),
+      )
     return {
       ...this.mapUser(user),
       avatar: user.avatarUrl ?? undefined,

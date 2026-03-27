@@ -375,19 +375,24 @@ export class UserService {
           inArray(this.userBadgeAssignment.badgeId, badgeIds),
         ),
         ...pageQuery,
+        orderBy: pageQuery.orderBy ?? [
+          { createdAt: 'desc' as const },
+          { badgeId: 'asc' as const },
+        ],
       },
     )
     const pageBadgeIds = page.list.map((item) => item.badgeId)
-    const pageBadges = await this.db
-      .select()
-      .from(this.userBadge)
-      .where(inArray(this.userBadge.id, pageBadgeIds))
+    const pageBadges = pageBadgeIds.length
+      ? await this.db
+          .select()
+          .from(this.userBadge)
+          .where(inArray(this.userBadge.id, pageBadgeIds))
+      : []
     const badgeMap = new Map(pageBadges.map((item) => [item.id, item]))
 
     return {
       ...page,
       list: page.list.map((item) => ({
-        id: item.id,
         createdAt: item.createdAt,
         badge: badgeMap.get(item.badgeId),
       })),

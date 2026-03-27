@@ -822,7 +822,12 @@ export async function seedAppActivityDomain(db: Db) {
         .set({
           readAt: addHours(SEED_TIMELINE.seedAt, index),
         })
-        .where(eq(appAnnouncementRead.id, existingRead.id))
+        .where(
+          and(
+            eq(appAnnouncementRead.announcementId, announcement.id),
+            eq(appAnnouncementRead.userId, targetUser.id),
+          ),
+        )
     }
   }
   console.log('  ✓ 公告已读记录完成')
@@ -1296,7 +1301,12 @@ export async function seedAppActivityDomain(db: Db) {
       await db
         .update(userWorkReadingState)
         .set(readingFixture)
-        .where(eq(userWorkReadingState.id, existingState.id))
+        .where(
+          and(
+            eq(userWorkReadingState.userId, readingFixture.userId),
+            eq(userWorkReadingState.workId, readingFixture.workId),
+          ),
+        )
     }
   }
   console.log('  ✓ 阅读状态完成')
@@ -1914,4 +1924,3 @@ export async function seedAppActivityDomain(db: Db) {
 
   console.log('✅ 应用互动数据完成')
 }
-

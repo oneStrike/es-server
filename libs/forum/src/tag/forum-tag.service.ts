@@ -178,7 +178,7 @@ export class ForumTagService {
           isNull(this.forumTopic.deletedAt),
         ),
       )
-      .orderBy(desc(this.forumTopicTag.createdAt))
+      .orderBy(desc(this.forumTopicTag.createdAt), asc(this.forumTopicTag.topicId))
       .limit(10)
 
     return {

@@ -753,7 +753,6 @@ export class MessageChatService {
         userId,
       },
       columns: {
-        id: true,
         leftAt: true,
       },
     })

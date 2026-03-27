@@ -2,16 +2,12 @@
  * Auto-converted from legacy schema.
  */
 
-import { bigint, boolean, index, integer, pgTable, smallint, timestamp, unique } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, pgTable, primaryKey, smallint, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * 聊天会话成员表（仅私聊）
  */
 export const chatConversationMember = pgTable("chat_conversation_member", {
-  /**
-   * 主键ID
-   */
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 会话ID
    */
@@ -50,20 +46,19 @@ export const chatConversationMember = pgTable("chat_conversation_member", {
   unreadCount: integer().default(0).notNull(),
 }, (table) => [
     /**
-     * 同一会话同一用户唯一
-     */
-    unique("chat_conversation_member_conversation_id_user_id_key").on(table.conversationId, table.userId),
-    /**
-     * 会话查询索引
-     */
-    index("chat_conversation_member_conversation_id_idx").on(table.conversationId),
-    /**
      * 最后已读消息索引
      */
     index("chat_conversation_member_last_read_message_id_idx").on(table.lastReadMessageId),
     /**
+     * 用户会话列表索引
+     */
+    index("chat_conversation_member_user_id_joined_at_idx").on(table.userId, table.joinedAt, table.conversationId),
+    /**
      * 未读会话查询索引
-     * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
      */
     index("chat_conversation_member_user_id_unread_count_conversation__idx").on(table.userId, table.unreadCount, table.conversationId),
+    /**
+     * 会话与用户复合主键
+     */
+    primaryKey({ columns: [table.conversationId, table.userId] }),
 ]);

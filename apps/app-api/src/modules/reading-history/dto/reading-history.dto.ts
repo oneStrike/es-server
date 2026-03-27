@@ -21,6 +21,10 @@ export class QueryReadingHistoryDto extends IntersectionType(
   PickType(PartialType(BaseReadingStateDto), ['workId', 'workType']),
 ) {}
 
+export class DeleteReadingHistoryDto extends PickType(BaseReadingStateDto, [
+  'workId',
+] as const) {}
+
 export class ClearReadingHistoryDto {
   @EnumProperty({
     description: '作品类型（1=漫画，2=小说）',

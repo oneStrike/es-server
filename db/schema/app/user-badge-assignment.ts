@@ -2,16 +2,12 @@
  * Auto-converted from legacy schema.
  */
 
-import { index, integer, pgTable, timestamp, unique } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, primaryKey, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * 用户徽章关联表 - 管理用户获得的徽章
  */
 export const userBadgeAssignment = pgTable("user_badge_assignment", {
-  /**
-   * 主键ID
-   */
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 关联的用户ID
    */
@@ -26,19 +22,15 @@ export const userBadgeAssignment = pgTable("user_badge_assignment", {
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (table) => [
   /**
-   * 用户与徽章唯一约束
+   * 徽章与获得时间索引
    */
-  unique("user_badge_assignment_user_id_badge_id_key").on(table.userId, table.badgeId),
+  index("user_badge_assignment_badge_id_created_at_idx").on(table.badgeId, table.createdAt.desc()),
   /**
-   * 用户索引
+   * 用户与获得时间索引
    */
-  index("user_badge_assignment_user_id_idx").on(table.userId),
+  index("user_badge_assignment_user_id_created_at_idx").on(table.userId, table.createdAt.desc()),
   /**
-   * 徽章索引
+   * 用户与徽章复合主键
    */
-  index("user_badge_assignment_badge_id_idx").on(table.badgeId),
-  /**
-   * 创建时间索引
-   */
-  index("user_badge_assignment_created_at_idx").on(table.createdAt),
+  primaryKey({ columns: [table.userId, table.badgeId] }),
 ]);

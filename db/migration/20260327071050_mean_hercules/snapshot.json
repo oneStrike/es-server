@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "0bfd72d9-ce65-4eef-8a98-0ffd1694259c",
+  "id": "3fd94c56-ccf4-43c3-878a-248b685d9637",
   "prevIds": [
-    "091b6259-cb1c-4811-819f-454de3f637bc"
+    "3fdf9ea7-1a50-4e67-89a9-10a86548c135"
   ],
   "ddl": [
     {
@@ -69,6 +69,24 @@
     {
       "isRlsEnabled": false,
       "name": "app_user_token",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "emoji_asset",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "emoji_pack",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "emoji_recent_usage",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1177,28 +1195,6 @@
       "dimensions": 0,
       "default": null,
       "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "app_announcement_read_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "app_announcement_read"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
       "identity": null,
       "name": "announcement_id",
       "entityType": "columns",
@@ -2202,6 +2198,492 @@
       "entityType": "columns",
       "schema": "public",
       "table": "app_user_token"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "emoji_asset_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pack_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "kind",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "shortcode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "varchar(191)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "unicode_sequence",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "varchar(500)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "image_url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "varchar(500)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "static_url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "is_animated",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "category",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "keywords",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "sort_order",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "is_enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "created_by_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "emoji_pack_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "code",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "varchar(100)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "varchar(500)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "varchar(500)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "icon_url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "sort_order",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "is_enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "visible_in_picker",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "ARRAY[1,2,3]",
+      "generated": null,
+      "identity": null,
+      "name": "scene_type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "created_by_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_recent_usage"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scene",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_recent_usage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "emoji_asset_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_recent_usage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "use_count",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_recent_usage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "last_used_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "emoji_recent_usage"
     },
     {
       "type": "integer",
@@ -3456,28 +3938,6 @@
       "dimensions": 0,
       "default": null,
       "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "user_badge_assignment_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "user_badge_assignment"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
       "identity": null,
       "name": "user_id",
       "entityType": "columns",
@@ -3693,6 +4153,19 @@
       "generated": null,
       "identity": null,
       "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "user_comment"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "body_tokens",
       "entityType": "columns",
       "schema": "public",
       "table": "user_comment"
@@ -5111,28 +5584,6 @@
       "dimensions": 0,
       "default": null,
       "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "user_work_reading_state_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "user_work_reading_state"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
       "identity": null,
       "name": "user_id",
       "entityType": "columns",
@@ -5187,32 +5638,6 @@
       "generated": null,
       "identity": null,
       "name": "last_read_chapter_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "user_work_reading_state"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "user_work_reading_state"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
       "table": "user_work_reading_state"
@@ -5667,28 +6092,6 @@
       "dimensions": 0,
       "default": null,
       "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "forum_moderator_section_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "forum_moderator_section"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
       "identity": null,
       "name": "moderator_id",
       "entityType": "columns",
@@ -5717,32 +6120,6 @@
       "generated": null,
       "identity": null,
       "name": "permissions",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "forum_moderator_section"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "forum_moderator_section"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
       "table": "forum_moderator_section"
@@ -5835,14 +6212,27 @@
       "table": "forum_section"
     },
     {
-      "type": "varchar(255)",
+      "type": "varchar(500)",
       "typeSchema": null,
-      "notNull": false,
+      "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
       "name": "icon",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "forum_section"
+    },
+    {
+      "type": "varchar(500)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cover",
       "entityType": "columns",
       "schema": "public",
       "table": "forum_section"
@@ -6343,6 +6733,19 @@
       "table": "forum_topic"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "body_tokens",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "forum_topic"
+    },
+    {
       "type": "varchar(500)",
       "typeSchema": null,
       "notNull": true,
@@ -6601,28 +7004,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "forum_topic"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "forum_topic_tag_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "forum_topic_tag"
     },
     {
       "type": "integer",
@@ -6909,28 +7290,6 @@
       "dimensions": 0,
       "default": null,
       "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "chat_conversation_member_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "chat_conversation_member"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
       "identity": null,
       "name": "conversation_id",
       "entityType": "columns",
@@ -7137,6 +7496,19 @@
       "generated": null,
       "identity": null,
       "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chat_message"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "body_tokens",
       "entityType": "columns",
       "schema": "public",
       "table": "chat_message"
@@ -8575,7 +8947,7 @@
       "table": "work"
     },
     {
-      "type": "varchar(100)",
+      "type": "varchar(80)",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -9240,28 +9612,6 @@
       "dimensions": 0,
       "default": null,
       "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "work_author_relation_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_author_relation"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
       "identity": null,
       "name": "work_id",
       "entityType": "columns",
@@ -9290,32 +9640,6 @@
       "generated": null,
       "identity": null,
       "name": "sort_order",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_author_relation"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_author_relation"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work_author_relation"
@@ -9494,32 +9818,6 @@
       "generated": null,
       "identity": null,
       "name": "sort_order",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_category_relation"
-    },
-    {
-      "type": "timestamp(3)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_category_relation"
-    },
-    {
-      "type": "timestamp(3)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
       "table": "work_category_relation"
@@ -10441,45 +10739,6 @@
       "table": "work_tag_relation"
     },
     {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "sort_order",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_tag_relation"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_tag_relation"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "work_tag_relation"
-    },
-    {
       "nameExplicit": true,
       "columns": [
         {
@@ -10938,51 +11197,16 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "announcement_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "app_announcement_read_announcement_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "app_announcement_read"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "user_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "app_announcement_read_user_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "app_announcement_read"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
+        },
         {
           "value": "read_at",
           "isExpression": false,
-          "asc": true,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -10992,7 +11216,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "app_announcement_read_read_at_idx",
+      "name": "app_announcement_read_user_id_read_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "app_announcement_read"
@@ -11388,6 +11612,363 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "app_user_token"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pack_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sort_order",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_asset_pack_id_sort_order_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pack_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "is_enabled",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sort_order",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_asset_pack_id_is_enabled_deleted_at_sort_order_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "kind",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_asset_kind_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "category",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_asset_category_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_asset_deleted_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "shortcode",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"shortcode\" is not null and \"deleted_at\" is null",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_asset_shortcode_live_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "is_enabled",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_pack_is_enabled_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "sort_order",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_pack_sort_order_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_pack_deleted_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "scene_type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "gin",
+      "concurrently": false,
+      "name": "emoji_pack_scene_type_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "is_enabled",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_pack_is_enabled_deleted_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "is_enabled",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "deleted_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sort_order",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_pack_is_enabled_deleted_at_sort_order_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "scene",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "last_used_at",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_recent_usage_user_id_scene_last_used_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_recent_usage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "emoji_asset_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "emoji_recent_usage_emoji_asset_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "emoji_recent_usage"
     },
     {
       "nameExplicit": true,
@@ -11995,51 +12576,16 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "user_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "user_badge_assignment_user_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "user_badge_assignment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "badge_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "user_badge_assignment_badge_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "user_badge_assignment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
+        },
         {
           "value": "created_at",
           "isExpression": false,
-          "asc": true,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -12049,7 +12595,35 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_badge_assignment_created_at_idx",
+      "name": "user_badge_assignment_badge_id_created_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "user_badge_assignment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "created_at",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "user_badge_assignment_user_id_created_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_badge_assignment"
@@ -13439,7 +14013,7 @@
         {
           "value": "last_read_at",
           "isExpression": false,
-          "asc": true,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -13450,6 +14024,34 @@
       "method": "btree",
       "concurrently": false,
       "name": "user_work_reading_state_user_id_work_type_last_read_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "user_work_reading_state"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "last_read_at",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "user_work_reading_state_user_id_last_read_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_work_reading_state"
@@ -13822,27 +14424,6 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "moderator_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "forum_moderator_section_moderator_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "forum_moderator_section"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "section_id",
           "isExpression": false,
           "asc": true,
@@ -13856,27 +14437,6 @@
       "method": "btree",
       "concurrently": false,
       "name": "forum_moderator_section_section_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "forum_moderator_section"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "created_at",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "forum_moderator_section_created_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "forum_moderator_section"
@@ -14711,51 +15271,16 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "topic_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "forum_topic_tag_topic_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "forum_topic_tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "tag_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "forum_topic_tag_tag_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "forum_topic_tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
+        },
         {
           "value": "created_at",
           "isExpression": false,
-          "asc": true,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -14765,7 +15290,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "forum_topic_tag_created_at_idx",
+      "name": "forum_topic_tag_tag_id_created_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "forum_topic_tag"
@@ -14956,27 +15481,6 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "conversation_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "chat_conversation_member_conversation_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "chat_conversation_member"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "last_read_message_id",
           "isExpression": false,
           "asc": true,
@@ -14990,6 +15494,41 @@
       "method": "btree",
       "concurrently": false,
       "name": "chat_conversation_member_last_read_message_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "chat_conversation_member"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "joined_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "conversation_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "chat_conversation_member_user_id_joined_at_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "chat_conversation_member"
@@ -15925,7 +16464,7 @@
       "isUnique": false,
       "where": null,
       "with": "",
-      "method": "btree",
+      "method": "gin",
       "concurrently": false,
       "name": "work_author_type_idx",
       "entityType": "indexes",
@@ -16125,27 +16664,6 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "work_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "work_author_relation_work_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "work_author_relation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "author_id",
           "isExpression": false,
           "asc": true,
@@ -16159,6 +16677,34 @@
       "method": "btree",
       "concurrently": false,
       "name": "work_author_relation_author_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "work_author_relation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "work_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sort_order",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "work_author_relation_work_id_sort_order_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work_author_relation"
@@ -16219,7 +16765,7 @@
       "isUnique": false,
       "where": null,
       "with": "",
-      "method": "btree",
+      "method": "gin",
       "concurrently": false,
       "name": "work_category_content_type_idx",
       "entityType": "indexes",
@@ -16243,27 +16789,6 @@
       "method": "btree",
       "concurrently": false,
       "name": "work_category_relation_category_id_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "work_category_relation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "sort_order",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "work_category_relation_sort_order_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "work_category_relation"
@@ -16787,74 +17312,93 @@
       "table": "work_tag_relation"
     },
     {
-      "nameExplicit": true,
       "columns": [
-        {
-          "value": "work_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+        "announcement_id",
+        "user_id"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "work_tag_relation_work_id_idx",
-      "entityType": "indexes",
+      "nameExplicit": false,
+      "name": "app_announcement_read_pkey",
+      "entityType": "pks",
       "schema": "public",
-      "table": "work_tag_relation"
+      "table": "app_announcement_read"
     },
     {
-      "nameExplicit": true,
       "columns": [
-        {
-          "value": "sort_order",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+        "user_id",
+        "scene",
+        "emoji_asset_id"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "work_tag_relation_sort_order_idx",
-      "entityType": "indexes",
+      "nameExplicit": false,
+      "name": "emoji_recent_usage_pkey",
+      "entityType": "pks",
       "schema": "public",
-      "table": "work_tag_relation"
+      "table": "emoji_recent_usage"
     },
     {
-      "nameExplicit": true,
       "columns": [
-        {
-          "value": "work_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "sort_order",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
+        "user_id",
+        "badge_id"
       ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "work_tag_relation_work_id_sort_order_idx",
-      "entityType": "indexes",
+      "nameExplicit": false,
+      "name": "user_badge_assignment_pkey",
+      "entityType": "pks",
       "schema": "public",
-      "table": "work_tag_relation"
+      "table": "user_badge_assignment"
+    },
+    {
+      "columns": [
+        "user_id",
+        "work_id"
+      ],
+      "nameExplicit": false,
+      "name": "user_work_reading_state_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "user_work_reading_state"
+    },
+    {
+      "columns": [
+        "moderator_id",
+        "section_id"
+      ],
+      "nameExplicit": false,
+      "name": "forum_moderator_section_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "forum_moderator_section"
+    },
+    {
+      "columns": [
+        "topic_id",
+        "tag_id"
+      ],
+      "nameExplicit": false,
+      "name": "forum_topic_tag_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "forum_topic_tag"
+    },
+    {
+      "columns": [
+        "conversation_id",
+        "user_id"
+      ],
+      "nameExplicit": false,
+      "name": "chat_conversation_member_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "chat_conversation_member"
+    },
+    {
+      "columns": [
+        "work_id",
+        "author_id"
+      ],
+      "nameExplicit": false,
+      "name": "work_author_relation_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "work_author_relation"
     },
     {
       "columns": [
@@ -16933,16 +17477,6 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "app_announcement_read_pkey",
-      "schema": "public",
-      "table": "app_announcement_read",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
       "name": "app_config_pkey",
       "schema": "public",
       "table": "app_config",
@@ -16986,6 +17520,26 @@
       "name": "app_user_token_pkey",
       "schema": "public",
       "table": "app_user_token",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "emoji_asset_pkey",
+      "schema": "public",
+      "table": "emoji_asset",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "emoji_pack_pkey",
+      "schema": "public",
+      "table": "emoji_pack",
       "entityType": "pks"
     },
     {
@@ -17056,16 +17610,6 @@
       "name": "user_badge_pkey",
       "schema": "public",
       "table": "user_badge",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "user_badge_assignment_pkey",
-      "schema": "public",
-      "table": "user_badge_assignment",
       "entityType": "pks"
     },
     {
@@ -17183,16 +17727,6 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "user_work_reading_state_pkey",
-      "schema": "public",
-      "table": "user_work_reading_state",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
       "name": "forum_moderator_pkey",
       "schema": "public",
       "table": "forum_moderator",
@@ -17216,16 +17750,6 @@
       "name": "forum_moderator_application_pkey",
       "schema": "public",
       "table": "forum_moderator_application",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "forum_moderator_section_pkey",
-      "schema": "public",
-      "table": "forum_moderator_section",
       "entityType": "pks"
     },
     {
@@ -17273,16 +17797,6 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "forum_topic_tag_pkey",
-      "schema": "public",
-      "table": "forum_topic_tag",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
       "name": "forum_user_action_log_pkey",
       "schema": "public",
       "table": "forum_user_action_log",
@@ -17296,16 +17810,6 @@
       "name": "chat_conversation_pkey",
       "schema": "public",
       "table": "chat_conversation",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "chat_conversation_member_pkey",
-      "schema": "public",
-      "table": "chat_conversation_member",
       "entityType": "pks"
     },
     {
@@ -17423,16 +17927,6 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "work_author_relation_pkey",
-      "schema": "public",
-      "table": "work_author_relation",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
       "name": "work_category_pkey",
       "schema": "public",
       "table": "work_category",
@@ -17525,18 +18019,6 @@
     {
       "nameExplicit": true,
       "columns": [
-        "announcement_id",
-        "user_id"
-      ],
-      "nullsNotDistinct": false,
-      "name": "app_announcement_read_announcement_id_user_id_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "app_announcement_read"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
         "code"
       ],
       "nullsNotDistinct": false,
@@ -17603,6 +18085,17 @@
     {
       "nameExplicit": true,
       "columns": [
+        "code"
+      ],
+      "nullsNotDistinct": false,
+      "name": "emoji_pack_code_key",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
         "user_id",
         "biz_key"
       ],
@@ -17650,18 +18143,6 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "task_assignment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "badge_id"
-      ],
-      "nullsNotDistinct": false,
-      "name": "user_badge_assignment_user_id_badge_id_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "user_badge_assignment"
     },
     {
       "nameExplicit": true,
@@ -17764,18 +18245,6 @@
     {
       "nameExplicit": true,
       "columns": [
-        "user_id",
-        "work_id"
-      ],
-      "nullsNotDistinct": false,
-      "name": "user_work_reading_state_user_id_work_id_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "user_work_reading_state"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
         "user_id"
       ],
       "nullsNotDistinct": false,
@@ -17795,18 +18264,6 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "forum_moderator_application"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "moderator_id",
-        "section_id"
-      ],
-      "nullsNotDistinct": false,
-      "name": "forum_moderator_section_moderator_id_section_id_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "forum_moderator_section"
     },
     {
       "nameExplicit": true,
@@ -17833,18 +18290,6 @@
     {
       "nameExplicit": true,
       "columns": [
-        "topic_id",
-        "tag_id"
-      ],
-      "nullsNotDistinct": false,
-      "name": "forum_topic_tag_topic_id_tag_id_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "forum_topic_tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
         "biz_key"
       ],
       "nullsNotDistinct": false,
@@ -17852,18 +18297,6 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "chat_conversation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "conversation_id",
-        "user_id"
-      ],
-      "nullsNotDistinct": false,
-      "name": "chat_conversation_member_conversation_id_user_id_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "chat_conversation_member"
     },
     {
       "nameExplicit": true,
@@ -17994,18 +18427,6 @@
     {
       "nameExplicit": true,
       "columns": [
-        "work_id",
-        "author_id"
-      ],
-      "nullsNotDistinct": false,
-      "name": "work_author_relation_work_id_author_id_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "work_author_relation"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
         "name"
       ],
       "nullsNotDistinct": false,
@@ -18057,6 +18478,62 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "work_tag"
+    },
+    {
+      "value": "\"kind\" in (1, 2)",
+      "name": "emoji_asset_kind_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "value": "(\"kind\" <> 1) or (\"unicode_sequence\" is not null)",
+      "name": "emoji_asset_kind_unicode_required_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "value": "(\"kind\" <> 2) or (\"shortcode\" is not null and \"image_url\" is not null)",
+      "name": "emoji_asset_kind_custom_required_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "value": "\"shortcode\" is null or \"shortcode\" ~ '^[a-z0-9_]{2,32}$'",
+      "name": "emoji_asset_shortcode_format_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_asset"
+    },
+    {
+      "value": "\"scene_type\" <@ ARRAY[1,2,3]::smallint[]",
+      "name": "emoji_pack_scene_type_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "value": "cardinality(\"scene_type\") > 0",
+      "name": "emoji_pack_scene_type_non_empty_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_pack"
+    },
+    {
+      "value": "\"scene\" in (1, 2, 3)",
+      "name": "emoji_recent_usage_scene_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_recent_usage"
+    },
+    {
+      "value": "\"use_count\" >= 0",
+      "name": "emoji_recent_usage_use_count_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "emoji_recent_usage"
     },
     {
       "value": "\"view_count\" >= 0",

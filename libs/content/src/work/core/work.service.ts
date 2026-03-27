@@ -810,6 +810,10 @@ export class WorkService {
     const [authors, categories, tags] = await Promise.all([
       this.db.query.workAuthorRelation.findMany({
         where: { workId: { in: workIds } },
+        orderBy: (relation, { asc }) => [
+          asc(relation.sortOrder),
+          asc(relation.authorId),
+        ],
         with: {
           author: {
             columns: { id: true, name: true, type: true, avatar: true },
@@ -818,10 +822,15 @@ export class WorkService {
       }),
       this.db.query.workCategoryRelation.findMany({
         where: { workId: { in: workIds } },
+        orderBy: (relation, { asc }) => [
+          asc(relation.sortOrder),
+          asc(relation.categoryId),
+        ],
         with: { category: { columns: { id: true, name: true, icon: true } } },
       }),
       this.db.query.workTagRelation.findMany({
         where: { workId: { in: workIds } },
+        orderBy: (relation, { asc }) => [asc(relation.tagId)],
         with: { tag: { columns: { id: true, name: true, icon: true } } },
       }),
     ])
