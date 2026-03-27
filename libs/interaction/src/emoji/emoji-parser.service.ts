@@ -1,0 +1,131 @@
+import type { EmojiParseInput, EmojiParseToken } from './emoji.type'
+import { Injectable } from '@nestjs/common'
+import { EmojiCatalogService } from './emoji-catalog.service'
+import { EMOJI_SHORTCODE_REGEX } from './emoji.constant'
+
+const EMOJI_UNICODE_REGEX =
+  /\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*/gu
+
+/**
+ * 将文本解析为普通文本、Unicode 表情和自定义短码三类 token。
+ * - 解析不到的短码保持原文，避免误替换造成内容丢失。
+ */
+@Injectable()
+export class EmojiParserService {
+  constructor(private readonly emojiCatalogService: EmojiCatalogService) {}
+
+  /**
+   * 将文本解析为普通文本、Unicode 表情和自定义短码三类 token。
+   * - 先提取所有短码并批量查询映射，再按顺序生成 token 列表。
+   * - 未命中映射的短码保持原文，避免误替换造成内容丢失。
+   * - 剩余文本段再拆分 Unicode 表情，最后合并连续文本 token。
+   */
+  async parse(input: EmojiParseInput): Promise<EmojiParseToken[]> {
+    const body = input.body || ''
+    if (!body) {
+      return []
+    }
+
+    const shortcodeMatches = body.matchAll(EMOJI_SHORTCODE_REGEX)
+    const shortcodes = Array.from(shortcodeMatches, (match) => match[1])
+    const shortcodeAssetMap =
+      await this.emojiCatalogService.findCustomAssetsByShortcodes(
+        input.scene,
+        shortcodes,
+      )
+
+    const tokens: EmojiParseToken[] = []
+    let cursor = 0
+    const shortcodeRegex = new RegExp(
+      EMOJI_SHORTCODE_REGEX.source,
+      EMOJI_SHORTCODE_REGEX.flags,
+    )
+
+    for (const match of body.matchAll(shortcodeRegex)) {
+      const full = match[0]
+      const shortcode = match[1]
+      const index = match.index ?? 0
+
+      if (index > cursor) {
+        this.pushTextSegment(tokens, body.slice(cursor, index))
+      }
+
+      const asset = shortcodeAssetMap.get(shortcode)
+      if (asset) {
+        tokens.push({
+          type: 'emojiCustom',
+          shortcode: asset.shortcode,
+          packCode: asset.packCode,
+          imageUrl: asset.imageUrl,
+          staticUrl: asset.staticUrl ?? undefined,
+          isAnimated: asset.isAnimated,
+          ariaLabel: asset.ariaLabel,
+        })
+      } else {
+        // 未命中短码映射时按普通文本回写，保持输入内容可逆。
+        this.pushTextToken(tokens, full)
+      }
+
+      cursor = index + full.length
+    }
+
+    if (cursor < body.length) {
+      this.pushTextSegment(tokens, body.slice(cursor))
+    }
+
+    return tokens
+  }
+
+  /**
+   * 将文本段拆分为普通文本和 Unicode 表情 token。
+   * - 使用正则匹配 Unicode 表情符号（Extended_Pictographic）。
+   * - 递归调用 pushTextToken 合并连续的普通文本。
+   */
+  private pushTextSegment(tokens: EmojiParseToken[], segment: string) {
+    if (!segment) {
+      return
+    }
+
+    let cursor = 0
+    for (const match of segment.matchAll(
+      new RegExp(EMOJI_UNICODE_REGEX.source, EMOJI_UNICODE_REGEX.flags),
+    )) {
+      const unicode = match[0]
+      const index = match.index ?? 0
+
+      if (index > cursor) {
+        this.pushTextToken(tokens, segment.slice(cursor, index))
+      }
+
+      tokens.push({
+        type: 'emojiUnicode',
+        unicodeSequence: unicode,
+      })
+      cursor = index + unicode.length
+    }
+
+    if (cursor < segment.length) {
+      this.pushTextToken(tokens, segment.slice(cursor))
+    }
+  }
+
+  /**
+   * 添加普通文本 token。
+   * - 如果最后一个 token 已是文本类型，则合并到该 token。
+   * - 避免生成连续的文本 token，减少结果数组长度。
+   */
+  private pushTextToken(tokens: EmojiParseToken[], text: string) {
+    if (!text) {
+      return
+    }
+    const last = tokens.at(-1)
+    if (last?.type === 'text') {
+      last.text += text
+      return
+    }
+    tokens.push({
+      type: 'text',
+      text,
+    })
+  }
+}

@@ -9,6 +9,7 @@ import { Global, Module } from '@nestjs/common'
 import { BrowseLogModule } from './browse-log/browse-log.module'
 import { CommentModule } from './comment/comment.module'
 import { DownloadModule } from './download/download.module'
+import { EmojiModule } from './emoji/emoji.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { FollowModule } from './follow/follow.module'
 import { LikeModule } from './like/like.module'
@@ -23,6 +24,7 @@ import { UserAssetsModule } from './user-assets/user-assets.module'
     LikeModule,
     FavoriteModule,
     FollowModule,
+    EmojiModule,
     BrowseLogModule,
     ReadingStateModule,
     CommentModule,
@@ -35,6 +37,7 @@ import { UserAssetsModule } from './user-assets/user-assets.module'
     LikeModule,
     FavoriteModule,
     FollowModule,
+    EmojiModule,
     BrowseLogModule,
     ReadingStateModule,
     CommentModule,

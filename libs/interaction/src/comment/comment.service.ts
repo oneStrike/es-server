@@ -25,6 +25,7 @@ import { ConfigReader } from '@libs/system-config'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
+import { EmojiParserService, EmojiSceneEnum } from '../emoji'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
 import { CommentGrowthService } from './comment-growth.service'
@@ -56,6 +57,7 @@ export class CommentService {
     /** 消息发件箱服务，用于发送通知消息 */
     private readonly messageOutboxService: MessageOutboxService,
     private readonly appUserCountService: AppUserCountService,
+    private readonly emojiParserService: EmojiParserService,
     private readonly drizzle: DrizzleService,
   ) { }
 
@@ -321,6 +323,10 @@ export class CommentService {
    */
   async createComment(input: CreateCommentInput) {
     const { userId, targetType, targetId, content } = input
+    const bodyTokens = await this.emojiParserService.parse({
+      body: content,
+      scene: EmojiSceneEnum.COMMENT,
+    })
 
     // 校验用户是否有权限在该目标下评论
     await this.commentPermissionService.ensureCanComment(
@@ -361,6 +367,7 @@ export class CommentService {
                   targetId,
                   userId,
                   content,
+                  bodyTokens: bodyTokens.length ? bodyTokens : null,
                   floor,
                   ...decision,
                 })
@@ -426,6 +433,10 @@ export class CommentService {
    */
   async replyComment(input: ReplyCommentInput) {
     const { userId, content, replyToId } = input
+    const bodyTokens = await this.emojiParserService.parse({
+      body: content,
+      scene: EmojiSceneEnum.COMMENT,
+    })
 
     // 查询被回复的评论
     const replyTo = await this.db.query.userComment.findFirst({
@@ -476,6 +487,7 @@ export class CommentService {
           targetId,
           userId,
           content,
+          bodyTokens: bodyTokens.length ? bodyTokens : null,
           replyToId,
           actualReplyToId,
           ...decision,
@@ -713,6 +725,7 @@ export class CommentService {
         'targetType',
         'targetId',
         'content',
+        'bodyTokens',
         'floor',
         'createdAt',
       ],
@@ -730,6 +743,7 @@ export class CommentService {
       actualReplyToId: number | null
       replyToId: number | null
       content: string
+      bodyTokens: unknown
       createdAt: Date
       totalCount?: number
     }[] = []
@@ -744,6 +758,7 @@ export class CommentService {
           actualReplyToId: this.userComment.actualReplyToId,
           replyToId: this.userComment.replyToId,
           content: this.userComment.content,
+          bodyTokens: this.userComment.bodyTokens,
           createdAt: this.userComment.createdAt,
           rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
             'rn',
@@ -811,6 +826,7 @@ export class CommentService {
         actualReplyToId: number
         replyToId: number | null
         content: string
+        bodyTokens: unknown
         createdAt: Date
       }[]
     >()
@@ -827,6 +843,7 @@ export class CommentService {
         actualReplyToId: reply.actualReplyToId,
         replyToId: reply.replyToId,
         content: reply.content,
+        bodyTokens: reply.bodyTokens,
         createdAt: reply.createdAt,
       })
       previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
@@ -863,6 +880,7 @@ export class CommentService {
             id: reply.id,
             userId: reply.userId,
             content: reply.content,
+            bodyTokens: reply.bodyTokens,
             replyToId: reply.replyToId,
             createdAt: reply.createdAt,
             liked: likedMap.get(reply.id) ?? false,

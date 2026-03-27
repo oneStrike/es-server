@@ -7,6 +7,7 @@ import type {
 } from './chat.type'
 import { DrizzleService } from '@db/core'
 import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
+import { EmojiParserService, EmojiSceneEnum } from '@libs/interaction/emoji'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import {
   and,
@@ -54,6 +55,7 @@ const DIGIT_STRING_REGEX = /^\d+$/
 export class MessageChatService {
   constructor(
     private readonly drizzle: DrizzleService,
+    private readonly emojiParserService: EmojiParserService,
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
     private readonly messageWsMonitorService: MessageWsMonitorService,
@@ -365,11 +367,16 @@ export class MessageChatService {
       messagePayload,
       clientMessageId,
     )
+    const bodyTokens = await this.emojiParserService.parse({
+      body: content,
+      scene: EmojiSceneEnum.CHAT,
+    })
     const result = await this.createMessageWithRetry(
       conversationId,
       userId,
       messageType,
       content,
+      bodyTokens,
       normalizedPayload,
       clientMessageId,
     )
@@ -557,6 +564,7 @@ export class MessageChatService {
    * @param userId - 发送者ID
    * @param messageType - 消息类型
    * @param content - 消息内容
+   * @param bodyTokens - Emoji 解析后的正文 token 列表
    * @param payload - 消息载荷
    * @param clientMessageId - 客户端消息ID（用于幂等）
    * @returns 消息信息、成员状态、是否为新消息
@@ -566,6 +574,7 @@ export class MessageChatService {
     userId: number,
     messageType: number,
     content: string,
+    bodyTokens: unknown[],
     payload?: Record<string, unknown>,
     clientMessageId?: string,
   ) {
@@ -628,6 +637,7 @@ export class MessageChatService {
               clientMessageId,
               messageType,
               content,
+              bodyTokens: bodyTokens.length ? bodyTokens : null,
               payload,
               status: ChatMessageStatusEnum.NORMAL,
             })
@@ -954,6 +964,7 @@ export class MessageChatService {
       clientMessageId: item.clientMessageId ?? undefined,
       messageType: item.messageType,
       content: item.content,
+      bodyTokens: item.bodyTokens ?? undefined,
       payload: item.payload ?? undefined,
       createdAt: item.createdAt,
     }

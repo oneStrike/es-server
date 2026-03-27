@@ -74,6 +74,17 @@ export class BaseChatMessageDto {
   })
   content!: string
 
+  @JsonProperty({
+    description: '消息正文解析 token（EmojiParser 输出）',
+    required: false,
+    validation: false,
+    example: [
+      { type: 'text', text: 'hello ' },
+      { type: 'emojiUnicode', unicodeSequence: '😀' },
+    ],
+  })
+  bodyTokens?: unknown
+
   @StringProperty({
     description: '客户端幂等键',
     example: 'cmsg_9d7a4a0b',

@@ -38,6 +38,11 @@ export const forumTopic = pgTable("forum_topic", {
    */
   content: text().notNull(),
   /**
+   * 正文解析 token 缓存
+   * 存储 EmojiParser 结果，供详情渲染直接使用
+   */
+  bodyTokens: jsonb(),
+  /**
    * 图片列表
    */
   images: varchar({ length: 500 }).array().default(sql`ARRAY[]::varchar[]`).notNull(),

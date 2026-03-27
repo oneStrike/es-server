@@ -30,6 +30,11 @@ export const userComment = pgTable("user_comment", {
    */
   content: text().notNull(),
   /**
+   * 评论正文解析 token 缓存
+   * 用于持久化 EmojiParser 输出，读路径可直接复用
+   */
+  bodyTokens: jsonb(),
+  /**
    * 楼层号
    */
   floor: integer(),

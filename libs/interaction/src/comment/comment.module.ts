@@ -7,6 +7,7 @@
  * - 集成敏感词检测、成长奖励、消息通知等能力
  */
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
+import { EmojiModule } from '@libs/interaction/emoji'
 import { LikeModule } from '@libs/interaction/like'
 import { MessageModule } from '@libs/message/module'
 import { SensitiveWordModule } from '@libs/sensitive-word'
@@ -24,6 +25,7 @@ import { CommentReportResolver } from './resolver/comment-report.resolver'
     SensitiveWordModule,
     SystemConfigModule,
     GrowthLedgerModule,
+    EmojiModule,
     LikeModule,
     MessageModule,
     UserModule,

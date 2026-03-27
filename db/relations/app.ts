@@ -136,6 +136,27 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     }),
     userDownloadRecords: r.many.userDownloadRecord(),
     userPurchaseRecords: r.many.userPurchaseRecord(),
+    emojiRecentUsageRecords: r.many.emojiRecentUsage(),
+  },
+  emojiAsset: {
+    pack: r.one.emojiPack({
+      from: r.emojiAsset.packId,
+      to: r.emojiPack.id,
+    }),
+    recentUsageRecords: r.many.emojiRecentUsage(),
+  },
+  emojiPack: {
+    assets: r.many.emojiAsset(),
+  },
+  emojiRecentUsage: {
+    user: r.one.appUser({
+      from: r.emojiRecentUsage.userId,
+      to: r.appUser.id,
+    }),
+    emojiAsset: r.one.emojiAsset({
+      from: r.emojiRecentUsage.emojiAssetId,
+      to: r.emojiAsset.id,
+    }),
   },
   appUserCount: {
     user: r.one.appUser({

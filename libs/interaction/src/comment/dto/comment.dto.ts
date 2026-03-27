@@ -4,6 +4,7 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -43,6 +44,17 @@ export class BaseCommentDto extends BaseDto {
     maxLength: 2000,
   })
   content!: string
+
+  @JsonProperty({
+    description: '评论正文解析 token（EmojiParser 输出）',
+    required: false,
+    validation: false,
+    example: [
+      { type: 'text', text: 'hello ' },
+      { type: 'emojiCustom', shortcode: 'smile', packCode: 'default', imageUrl: 'https://cdn.example.com/emoji/smile.gif', isAnimated: true },
+    ],
+  })
+  bodyTokens?: unknown | null
 
   @NumberProperty({
     description: '楼层号',

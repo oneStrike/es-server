@@ -5,6 +5,7 @@ import { ChapterContentModule } from './comic/chapter-content/chapter-content.mo
 import { ComicChapterModule } from './comic/chapter/comic-chapter.module'
 import { ComicModule } from './comic/core/comic.module'
 import { ComicThirdPartyModule } from './comic/third-party/third-party.module'
+import { ContentEmojiModule } from './emoji/emoji.module'
 import { NovelModule } from './novel/novel.module'
 import { ContentTagModule } from './tag/tag.module'
 
@@ -15,6 +16,7 @@ import { ContentTagModule } from './tag/tag.module'
     ChapterContentModule,
     ComicThirdPartyModule,
     NovelModule,
+    ContentEmojiModule,
     ContentAuthorModule,
     ContentCategoryModule,
     ContentTagModule,

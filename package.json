@@ -159,6 +159,7 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
+      "^@db(|/.*)$": "<rootDir>/db/$1",
       "^@libs/app-content/(.*)$": "<rootDir>/libs/app-content/src/$1",
       "^@libs/app-config(|/.*)$": "<rootDir>/libs/config/src/app-config/$1",
       "^@libs/config(|/.*)$": "<rootDir>/libs/config/src/$1",

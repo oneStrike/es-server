@@ -37,6 +37,11 @@ export const chatMessage = pgTable("chat_message", {
    */
   content: text().notNull(),
   /**
+   * 正文解析 token 缓存
+   * 持久化 EmojiParser 输出，供消息渲染与回放使用
+   */
+  bodyTokens: jsonb(),
+  /**
    * 扩展载荷
    */
   payload: jsonb(),

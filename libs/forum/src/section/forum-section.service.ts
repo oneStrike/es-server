@@ -597,11 +597,12 @@ export class ForumSectionService {
 
   /**
    * 拖拽排序，交换两个板块的 sortOrder 字段。
+   * 仅允许同一分组内交换；未分组板块之间允许互换。
    */
   async updateSectionSort(updateSortDto: SwapForumSectionSortInput) {
     return this.drizzle.ext.swapField(this.forumSection, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
-      sourceField: 'sortOrder',
+      sourceField: 'groupId',
     })
   }
 }

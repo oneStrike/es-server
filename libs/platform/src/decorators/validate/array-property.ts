@@ -1,12 +1,14 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ArrayPropertyOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils'
+import { getNumberEnumValues, isDevelopment, isNumberEnum } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform, Type } from 'class-transformer'
 import {
   IsArray,
   IsBoolean,
+  IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsObject,
@@ -66,6 +68,10 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
   const validation = options.validation ?? true
 
+  if (options.itemEnum && itemType === 'object') {
+    throw new Error('ArrayProperty: itemEnum 仅支持 string/number/boolean 基础类型数组')
+  }
+
   if (
     options.minLength !== undefined &&
     options.maxLength !== undefined &&
@@ -78,6 +84,25 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
   if (validation) {
     const getItemValidator = () => {
+      if (options.itemEnum) {
+        if (isNumberEnum(options.itemEnum)) {
+          const validValues = getNumberEnumValues(options.itemEnum)
+          return IsIn(validValues, {
+            each: true,
+            message:
+              options.itemErrorMessage
+              || `数组中的元素必须是有效的枚举值: ${validValues.join(', ')}`,
+          })
+        }
+
+        return IsEnum(options.itemEnum, {
+          each: true,
+          message:
+            options.itemErrorMessage
+            || `数组中的元素必须是有效的枚举值: ${Object.values(options.itemEnum).join(', ')}`,
+        })
+      }
+
       switch (itemType) {
         case 'string':
           return IsString({
@@ -258,6 +283,9 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
     }
     if (options.maxLength !== undefined) {
       apiPropertyOptions.maxItems = options.maxLength
+    }
+    if (options.itemEnum) {
+      apiPropertyOptions.enum = options.itemEnum
     }
 
     decorators.push(ApiProperty(apiPropertyOptions))

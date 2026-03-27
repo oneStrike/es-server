@@ -82,6 +82,7 @@ export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
   'id',
   'userId',
   'content',
+  'bodyTokens',
   'replyToId',
   'createdAt',
 ] as const) {
@@ -109,6 +110,7 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
   'targetId',
   'userId',
   'content',
+  'bodyTokens',
   'floor',
   'createdAt',
 ] as const) {

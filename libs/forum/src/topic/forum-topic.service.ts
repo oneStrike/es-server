@@ -24,6 +24,7 @@ import {
   BrowseLogTargetTypeEnum,
 } from '@libs/interaction/browse-log'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
+import { EmojiParserService, EmojiSceneEnum } from '@libs/interaction/emoji'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
@@ -75,6 +76,7 @@ export class ForumTopicService {
     private readonly forumPermissionService: ForumPermissionService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
+    private readonly emojiParserService: EmojiParserService,
   ) { }
 
   private get db() {
@@ -281,11 +283,16 @@ export class ForumTopicService {
       reviewPolicy,
       highestLevel,
     )
+    const bodyTokens = await this.emojiParserService.parse({
+      body: topicData.content,
+      scene: EmojiSceneEnum.FORUM,
+    })
 
     const media = this.normalizeTopicMedia({ images, videos })
 
     const createPayload = {
       ...topicData,
+      bodyTokens: bodyTokens.length ? bodyTokens : null,
       sectionId,
       userId,
       ...media,
@@ -741,6 +748,11 @@ export class ForumTopicService {
       reviewPolicy,
       highestLevel,
     )
+    const nextContent = updateData.content || topic.content
+    const bodyTokens = await this.emojiParserService.parse({
+      body: nextContent,
+      scene: EmojiSceneEnum.FORUM,
+    })
 
     const media = this.normalizeTopicMedia(
       { images, videos },
@@ -753,6 +765,7 @@ export class ForumTopicService {
     const updatePayload = {
       ...updateData,
       ...media,
+      bodyTokens: bodyTokens.length ? bodyTokens : null,
       auditStatus,
       sensitiveWordHits: hits?.length ? hits : null,
       isHidden,

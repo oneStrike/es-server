@@ -12,7 +12,7 @@
 
 ### 2.1 覆盖范围
 
-- `libs/*` 中的领域基类 DTO。
+- `libs/*` 中的领域基类 DTO 与跨场景共享 DTO。
 - `apps/admin-api`、`apps/app-api` 中的请求 DTO、查询 DTO、响应 DTO。
 
 ### 2.2 非目标
@@ -32,6 +32,7 @@
 
 - `BaseXxxDto` 是实体相关 API 模型的共享复用起点，优先承载跨场景稳定且可对外暴露的公共字段与物理约束。
 - `BaseXxxDto` 中凡是直接映射自 Drizzle Table 的字段，字段名、类型、可空性、长度、枚举、默认语义必须与对应 Drizzle Table 保持一致。
+- `libs/*` 层默认只维护 `BaseXxxDto` 与确有跨端复用价值的共享 DTO；禁止把仅 admin/app 场景使用的 `Create/Update/Query/Response` DTO 下沉到 libs。
 - 不要求为了“贴表”把仅服务存储、软删除、内部审计、内部统计或中间流程的字段机械暴露到所有 `BaseXxxDto`。
 - 当某些持久化字段只适合特定响应场景暴露时，优先放到专用 `ResponseDto` 或领域类型中，而不是反向膨胀 `BaseXxxDto`。
 - 基类 DTO 只承载物理约束类校验与基础 Swagger 描述，不承载业务差异规则。
@@ -40,6 +41,7 @@
 ### 3.3 `apps/*`：场景 DTO（`Create/Update/Query/Response`）
 
 - apps 层 DTO 必须基于基础 DTO 或 `BaseXxxDto` 组合，优先使用 `PickType`、`OmitType`、`PartialType`、`IntersectionType`。
+- 所有仅面向应用入口的场景 DTO（`Create/Update/Query/Response`）必须定义在 `apps/admin-api` 或 `apps/app-api`，不得新增到 `libs/*`。
 - 仅当场景需要更严格或不同的校验/文档描述时，才在 apps DTO 中重新声明字段。
 - 不得手动重复定义 `id`、`createdAt`、`updatedAt` 等通用字段。
 - 嵌套响应模型优先从已有领域 DTO 中通过裁剪复用，避免重新逐字段书写。
@@ -49,7 +51,8 @@
 
 - Service 方法签名不直接引用 apps 层 DTO 类型。
 - 入参与返回优先使用 Drizzle 推导类型或基于其派生的领域类型。
-- Service 内部临时结构优先通过 `Pick`、`Omit`、交叉类型等方式从 Drizzle 类型构建，避免重复声明字段。
+- Service 内部临时结构优先通过 `Pick`、`Partial`、`Omit`、交叉类型等方式从 `@db/schema` 实体推导类型构建，避免重复声明字段。
+- 从 `@db/schema` 引入实体类型时必须使用 `import type`，避免引入运行时代码依赖。
 - Drizzle 推导类型必须定义并导出在对应 `db/schema` 表定义文件附近，保持 Schema 与 Type 同步。
 - 当模块内存在多处稳定的自定义领域类型时，使用 `*.type.ts` 集中维护，并通过 `import type` 引用。
 - `*.type.ts` 中每个导出类型都应补充用途说明，至少说明该类型服务的场景与关键字段语义。
@@ -83,6 +86,13 @@
 - 禁止新增纯别名 DTO，例如 `export class XxxDto extends YyyDto {}` 这类空壳继承。
 - 需要复用现有 DTO 时直接使用原 DTO；仅为避免命名冲突时，使用 `import { YyyDto as XxxSourceDto }` 这类导入别名，而不是再声明一个 class。
 
+### 5.4 数组枚举字段规范
+
+- 枚举数组字段统一使用 `ArrayProperty`，并显式传入 `itemEnum`，禁止仅用 `itemType: 'number'` 表达语义。
+- 枚举数组字段的 TypeScript 类型必须写为 `XxxEnum[]`，不得写成裸 `number[]`。
+- 仅当存在额外业务规则（如值组合限制）时，才补充 `itemValidator`；基础值域校验由 `itemEnum` 负责。
+- `example/default` 优先复用常量（如 `...SCENE_VALUES`），避免重复散落字面量。
+
 ## 6. 放置例外
 
 - 若某实体只被单个应用使用，可将该实体的共享基类 DTO 放在该应用模块目录中维护。
@@ -99,12 +109,17 @@
 ## 8. 验收清单
 
 - [ ] DTO 优先复用 `libs/platform/src/dto` 中的基础类。
+- [ ] `libs/*` 中未新增仅 admin/app 场景使用的 `Create/Update/Query/Response` DTO。
+- [ ] `apps/*` 场景 DTO 均定义在应用层目录，未下沉到 `libs/*`。
 - [ ] 不存在重复定义的 `id`、`createdAt`、`updatedAt` 等通用字段。
 - [ ] `BaseXxxDto` 中直接映射自 Table 的共享字段与对应 Drizzle Table 的字段、类型、可空性、枚举、长度一致；未暴露字段有明确的 API 契约理由。
 - [ ] 日期字段 Swagger 示例统一为 ISO 8601。
 - [ ] apps 层嵌套响应优先通过 `PickType/OmitType` 复用领域 DTO。
 - [ ] 不存在 `export class XxxDto extends YyyDto {}` 这类无新增字段、无新增语义的空壳别名 DTO。
 - [ ] Service 方法签名不直接引用 apps 层 DTO。
-- [ ] Service 内部临时结构已优先基于 Drizzle 类型构建。
+- [ ] Service 内部临时结构已优先基于 `@db/schema` 类型并通过 `Pick/Partial/Omit` 构建。
+- [ ] `@db/schema` 类型导入使用 `import type`。
 - [ ] 稳定领域类型已拆分到 `*.type.ts` 并补充清晰注释。
 - [ ] Drizzle 推导类型在对应 `db/schema` 表定义文件附近定义并导出。
+- [ ] 枚举数组字段使用 `ArrayProperty + itemEnum`，字段类型为 `XxxEnum[]`。
+- [ ] 相关改动已通过 `eslint` 与 `type-check`。

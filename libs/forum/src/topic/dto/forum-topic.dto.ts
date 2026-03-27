@@ -4,6 +4,7 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -60,6 +61,17 @@ export class BaseForumTopicDto extends BaseDto {
     required: true,
   })
   content!: string
+
+  @JsonProperty({
+    description: '主题正文解析 token（EmojiParser 输出）',
+    required: false,
+    validation: false,
+    example: [
+      { type: 'text', text: '欢迎来到论坛 ' },
+      { type: 'emojiUnicode', unicodeSequence: '😀' },
+    ],
+  })
+  bodyTokens?: unknown | null
 
   @ArrayProperty({
     description: '主题图片列表',

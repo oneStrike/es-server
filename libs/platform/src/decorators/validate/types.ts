@@ -76,6 +76,8 @@ export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
   minLength?: number
   /** 默认值 */
   default?: T[]
+  /** 数组元素枚举定义（可选，启用后自动进行枚举值校验） */
+  itemEnum?: EnumLike
   /** 数组元素验证器（可选，用于复杂类型验证） */
   itemValidator?: (value: any) => boolean
   /** 数组元素验证失败时的错误消息 */

@@ -1,6 +1,6 @@
 ---
 name: es-server-standards
-description: Repository-specific enforcement workflow for `.trae` standards in this `es-server` monorepo. Use when planning/reviewing/implementing code under `apps/*`, `libs/*`, or `db/*` that must follow controller, comment, DTO, service, type, and Drizzle rules.
+description: "Repository-specific enforcement workflow for `.trae` standards in this `es-server` monorepo. Use when planning/reviewing/implementing code under `apps/*`, `libs/*`, or `db/*` that must follow controller, comment, DTO, service, type, and Drizzle rules."
 ---
 
 # ES Server Standards

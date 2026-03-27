@@ -3,6 +3,7 @@ import { AuthModule } from './auth/auth.module'
 import { CommentModule } from './comment/comment.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { DownloadModule } from './download/download.module'
+import { EmojiModule } from './emoji/emoji.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { FollowModule } from './follow/follow.module'
 import { ForumModule } from './forum/forum.module'
@@ -21,6 +22,7 @@ import { WorkModule } from './work/work.module'
     AuthModule,
     UserModule,
     DictionaryModule,
+    EmojiModule,
     TaskModule,
     WorkModule,
     ForumModule,
