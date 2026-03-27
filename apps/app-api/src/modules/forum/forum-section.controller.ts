@@ -4,12 +4,12 @@ import {
   CurrentUser,
   OptionalAuth,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   AppForumSectionDetailDto,
   AppForumSectionListItemDto,
+  QueryAppForumSectionDetailDto,
   QueryAppForumSectionDto,
 } from './dto/forum-section.dto'
 
@@ -41,7 +41,13 @@ export class ForumSectionController {
     summary: '查询论坛板块详情',
     model: AppForumSectionDetailDto,
   })
-  async getDetail(@Query() query: IdDto, @CurrentUser('sub') userId?: number) {
-    return this.forumSectionService.getVisibleSectionDetail(query.id, userId)
+  async getDetail(
+    @Query() query: QueryAppForumSectionDetailDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.forumSectionService.getVisibleSectionDetail(
+      query.id,
+      userId ?? query.userId,
+    )
   }
 }

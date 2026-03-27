@@ -8,7 +8,9 @@ jest.mock('@db/core', () => ({
 
 jest.mock('@libs/interaction/follow', () => ({
   FollowService: class {},
-  FollowTargetTypeEnum: {},
+  FollowTargetTypeEnum: {
+    FORUM_SECTION: 'FORUM_SECTION',
+  },
 }))
 
 jest.mock('../counter', () => ({
@@ -98,5 +100,84 @@ describe('forum section service', () => {
     const orderBy = options.orderBy(forumSectionGroup, { asc })
 
     expect(orderBy).toHaveLength(2)
+  })
+
+  it('returns workId and follow status for visible section detail', async () => {
+    const { ForumSectionService } = await import('./forum-section.service')
+    const lastPostAt = new Date('2024-01-01T00:00:00.000Z')
+    const findFirst = jest.fn().mockResolvedValue({
+      id: 12,
+      groupId: 3,
+      userLevelRuleId: null,
+      name: '作品讨论',
+      description: '讨论专区',
+      icon: 'https://example.com/icon.png',
+      cover: 'https://example.com/cover.png',
+      sortOrder: 1,
+      isEnabled: true,
+      topicReviewPolicy: 1,
+      topicCount: 10,
+      commentCount: 20,
+      followersCount: 30,
+      lastPostAt,
+      group: {
+        id: 3,
+        name: '作品分组',
+        description: '分组描述',
+        sortOrder: 2,
+        isEnabled: true,
+        deletedAt: null,
+      },
+      work: {
+        id: 88,
+      },
+    })
+    const getSectionAccessStateMap = jest.fn().mockResolvedValue(
+      new Map([
+        [
+          12,
+          {
+            canAccess: true,
+            requiredExperience: null,
+          },
+        ],
+      ]),
+    )
+    const checkFollowStatus = jest.fn().mockResolvedValue({
+      isFollowing: true,
+      isFollowedByTarget: false,
+      isMutualFollow: false,
+    })
+    const service = new ForumSectionService(
+      {
+        db: {
+          query: {
+            forumSection: { findFirst },
+          },
+        },
+        schema: { forumSection },
+      } as any,
+      { getSectionAccessStateMap } as any,
+      { checkFollowStatus } as any,
+      {} as any,
+    )
+
+    const result = await service.getVisibleSectionDetail(12, 99)
+
+    expect(result).toMatchObject({
+      id: 12,
+      workId: 88,
+      isFollowed: true,
+      group: {
+        id: 3,
+        name: '作品分组',
+      },
+    })
+    expect(checkFollowStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetId: 12,
+        userId: 99,
+      }),
+    )
   })
 })

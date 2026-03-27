@@ -260,17 +260,4 @@ class WorkForumSectionExtraDto {
   isFollowed?: boolean
 }
 
-export class WorkForumSectionDto extends IntersectionType(
-  PickType(BaseForumSectionDto, [
-    'id',
-    'name',
-    'description',
-    'icon',
-    'cover',
-    'isEnabled',
-    'topicReviewPolicy',
-  ]),
-  WorkForumSectionExtraDto,
-) {}
-
 export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}

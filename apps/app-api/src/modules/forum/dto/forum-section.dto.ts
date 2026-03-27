@@ -6,10 +6,16 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PartialType, PickType } from '@nestjs/swagger'
+import { IdDto, UserIdDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class QueryAppForumSectionDto extends PartialType(
   PickType(BaseForumSectionDto, ['groupId'] as const),
+) {}
+
+export class QueryAppForumSectionDetailDto extends IntersectionType(
+  IdDto,
+  PartialType(UserIdDto),
 ) {}
 
 export class AppForumSectionGroupBriefDto extends PickType(
@@ -65,11 +71,20 @@ export class AppForumSectionListItemDto extends PickType(BaseForumSectionDto, [
 }
 
 export class AppForumSectionDetailDto extends AppForumSectionListItemDto {
+  @NumberProperty({
+    description: '关联作品ID（为空表示非作品专属板块）',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  workId?: number | null
+
   @NestedProperty({
     description: '所属分组',
     required: false,
     type: AppForumSectionGroupBriefDto,
-    validation: false
+    validation: false,
+    nullable: false,
   })
   group?: AppForumSectionGroupBriefDto
 }

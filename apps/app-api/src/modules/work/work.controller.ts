@@ -90,19 +90,6 @@ export class WorkController {
     })
   }
 
-  @Get('forum-section/detail')
-  @OptionalAuth()
-  @ApiDoc({
-    summary: '查询作品关联板块详情',
-    model: WorkForumSectionDto,
-  })
-  async getWorkForumSection(
-    @Query() query: IdDto,
-    @CurrentUser('sub') userId?: number,
-  ) {
-    return this.workService.getWorkForumSection(query.id, userId)
-  }
-
   @Get('comment/page')
   @Public()
   @ApiPageDoc({

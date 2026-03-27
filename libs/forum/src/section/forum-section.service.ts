@@ -224,6 +224,11 @@ export class ForumSectionService {
             deletedAt: true,
           },
         },
+        work: {
+          columns: {
+            id: true,
+          },
+        },
       },
     })
 
@@ -235,7 +240,7 @@ export class ForumSectionService {
       throw new NotFoundException('板块不存在')
     }
 
-    const { group, ...data } = section
+    const { group, work, ...data } = section
     let publicGroup:
       | {
           id: number
@@ -272,6 +277,7 @@ export class ForumSectionService {
 
     return {
       ...data,
+      workId: work?.id ?? null,
       group: publicGroup,
       canAccess: accessState.canAccess,
       requiredExperience: accessState.requiredExperience,
