@@ -1,12 +1,125 @@
+import { resolveDbQueryConfig } from '@libs/platform/config'
 import { BadRequestException } from '@nestjs/common'
 import { getTableColumns } from 'drizzle-orm'
+import { DrizzleService } from '../../../../db/core/drizzle.service'
+import { buildDrizzleOrderBy } from '../../../../db/core/query/order-by'
 import { buildDrizzlePageQuery } from '../../../../db/core/query/page-query'
 import { findPagination } from '../../../../db/extensions/findPagination'
 import { requestLog } from '../../../../db/schema/system/request-log'
 
+const defaultPageQueryConfig = resolveDbQueryConfig()
+
+function createTestDrizzleService() {
+  const service = Object.create(DrizzleService.prototype) as DrizzleService
+  ;(service as any).queryConfig = defaultPageQueryConfig
+  return service
+}
+
+describe('buildDrizzleOrderBy', () => {
+  it('can be reused by non-pagination queries', () => {
+    const result = buildDrizzleOrderBy(undefined, {
+      table: requestLog,
+      fallbackOrderBy: { createdAt: 'desc' },
+    })
+
+    expect(result.orderBy).toEqual({
+      createdAt: 'desc',
+      id: 'desc',
+    })
+    expect(result.orderBySql).toHaveLength(2)
+  })
+
+  it('adds a stable id sort when sorting by a non-unique field', () => {
+    const orderQuery = buildDrizzleOrderBy(
+      { createdAt: 'desc' },
+      {
+        table: requestLog,
+      },
+    )
+
+    expect(orderQuery.orderBy).toEqual({
+      createdAt: 'desc',
+      id: 'desc',
+    })
+    expect(orderQuery.orderBySql).toHaveLength(2)
+  })
+
+  it('merges array orderBy input into a single RQB v2 orderBy object', () => {
+    const orderQuery = buildDrizzleOrderBy(
+      [{ createdAt: 'asc' }, { id: 'asc' }],
+      {
+        table: requestLog,
+      },
+    )
+
+    expect(orderQuery.orderBy).toEqual({
+      createdAt: 'asc',
+      id: 'asc',
+    })
+    expect(orderQuery.orderBySql).toHaveLength(2)
+  })
+
+  it('memoizes relation orderBy and SQL outputs after first access', () => {
+    const orderQuery = buildDrizzleOrderBy(
+      { createdAt: 'desc' },
+      { table: requestLog },
+    )
+
+    expect(orderQuery.orderBy).toBe(orderQuery.orderBy)
+    expect(orderQuery.orderBySql).toBe(orderQuery.orderBySql)
+  })
+
+  it('rejects malformed orderBy JSON', () => {
+    expect(() =>
+      buildDrizzleOrderBy('{bad-json', { table: requestLog }),
+    ).toThrow(BadRequestException)
+  })
+
+  it('rejects unknown orderBy fields', () => {
+    expect(() =>
+      buildDrizzleOrderBy(
+        { unknownField: 'desc' },
+        { table: requestLog },
+      ),
+    ).toThrow('排序字段 "unknownField" 不存在')
+  })
+
+  it('rejects invalid order directions', () => {
+    expect(() =>
+      buildDrizzleOrderBy(
+        { createdAt: 'sideways' },
+        { table: requestLog },
+      ),
+    ).toThrow('排序字段 "createdAt" 的排序方向无效')
+  })
+
+  it('rejects empty orderBy objects and arrays', () => {
+    expect(() =>
+      buildDrizzleOrderBy({}, { table: requestLog }),
+    ).toThrow('orderBy 不能为空')
+
+    expect(() =>
+      buildDrizzleOrderBy([], { table: requestLog }),
+    ).toThrow('orderBy 不能为空')
+  })
+
+  it('rejects duplicate fields across array orderBy input', () => {
+    expect(() =>
+      buildDrizzleOrderBy(
+        [{ createdAt: 'desc' }, { createdAt: 'asc' }],
+        { table: requestLog },
+      ),
+    ).toThrow('排序字段 "createdAt" 重复')
+  })
+})
+
 describe('buildDrizzlePageQuery', () => {
   it('defaults to the first page with a 1-based pageIndex', () => {
-    const pageQuery = buildDrizzlePageQuery()
+    const pageQuery = buildDrizzlePageQuery({}, {
+      defaultPageIndex: defaultPageQueryConfig.pageIndex,
+      defaultPageSize: defaultPageQueryConfig.pageSize,
+      maxPageSize: defaultPageQueryConfig.maxListItemLimit,
+    })
 
     expect(pageQuery.pageIndex).toBe(1)
     expect(pageQuery.offset).toBe(0)
@@ -14,22 +127,50 @@ describe('buildDrizzlePageQuery', () => {
   })
 
   it('translates 1-based pageIndex values into 0-based offsets', () => {
-    expect(buildDrizzlePageQuery({ pageIndex: 0, pageSize: 10 })).toMatchObject({
+    expect(buildDrizzlePageQuery(
+      { pageIndex: 0, pageSize: 10 },
+      {
+        defaultPageIndex: defaultPageQueryConfig.pageIndex,
+        defaultPageSize: defaultPageQueryConfig.pageSize,
+        maxPageSize: defaultPageQueryConfig.maxListItemLimit,
+      },
+    )).toMatchObject({
       pageIndex: 1,
       offset: 0,
     })
 
-    expect(buildDrizzlePageQuery({ pageIndex: 1, pageSize: 10 })).toMatchObject({
+    expect(buildDrizzlePageQuery(
+      { pageIndex: 1, pageSize: 10 },
+      {
+        defaultPageIndex: defaultPageQueryConfig.pageIndex,
+        defaultPageSize: defaultPageQueryConfig.pageSize,
+        maxPageSize: defaultPageQueryConfig.maxListItemLimit,
+      },
+    )).toMatchObject({
       pageIndex: 1,
       offset: 0,
     })
 
-    expect(buildDrizzlePageQuery({ pageIndex: 2, pageSize: 10 })).toMatchObject({
+    expect(buildDrizzlePageQuery(
+      { pageIndex: 2, pageSize: 10 },
+      {
+        defaultPageIndex: defaultPageQueryConfig.pageIndex,
+        defaultPageSize: defaultPageQueryConfig.pageSize,
+        maxPageSize: defaultPageQueryConfig.maxListItemLimit,
+      },
+    )).toMatchObject({
       pageIndex: 2,
       offset: 10,
     })
 
-    expect(buildDrizzlePageQuery({ pageIndex: '3', pageSize: 10 })).toMatchObject({
+    expect(buildDrizzlePageQuery(
+      { pageIndex: '3', pageSize: 10 },
+      {
+        defaultPageIndex: defaultPageQueryConfig.pageIndex,
+        defaultPageSize: defaultPageQueryConfig.pageSize,
+        maxPageSize: defaultPageQueryConfig.maxListItemLimit,
+      },
+    )).toMatchObject({
       pageIndex: 3,
       offset: 20,
     })
@@ -38,87 +179,44 @@ describe('buildDrizzlePageQuery', () => {
   it('clamps pageSize to the configured maxPageSize', () => {
     const pageQuery = buildDrizzlePageQuery(
       { pageSize: 999 },
-      { maxPageSize: 100 },
+      {
+        defaultPageIndex: defaultPageQueryConfig.pageIndex,
+        defaultPageSize: defaultPageQueryConfig.pageSize,
+        maxPageSize: 100,
+      },
     )
 
     expect(pageQuery.pageSize).toBe(100)
   })
+})
 
-  it('adds a stable id sort when sorting by a non-unique field', () => {
-    const pageQuery = buildDrizzlePageQuery(
-      {
-        orderBy: { createdAt: 'desc' },
-      },
-      {
-        table: requestLog,
-      },
-    )
+describe('drizzle service query helpers', () => {
+  it('reuses repository defaults when building page params', () => {
+    const drizzle = createTestDrizzleService()
 
-    expect(pageQuery.orderBy).toEqual([
-      { createdAt: 'desc' },
-      { id: 'desc' },
-    ])
-    expect(pageQuery.orderBySql).toHaveLength(2)
+    expect(
+      drizzle.buildPage({ pageIndex: '2' }),
+    ).toMatchObject({
+      pageIndex: 2,
+      pageSize: defaultPageQueryConfig.pageSize,
+      limit: defaultPageQueryConfig.pageSize,
+      offset: defaultPageQueryConfig.pageSize,
+    })
   })
 
-  it('preserves an explicit id sort without appending duplicates', () => {
-    const pageQuery = buildDrizzlePageQuery(
-      {
-        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-      },
-      {
-        table: requestLog,
-      },
-    )
+  it('reuses service-level fallback sorting for manual queries', () => {
+    const drizzle = createTestDrizzleService()
 
-    expect(pageQuery.orderBy).toEqual([
-      { createdAt: 'asc' },
-      { id: 'asc' },
-    ])
-    expect(pageQuery.orderBySql).toHaveLength(2)
-  })
+    const order = drizzle.buildOrderBy(undefined, {
+      table: requestLog,
+      fallbackOrderBy: { createdAt: 'desc' },
+    })
 
-  it('rejects malformed orderBy JSON', () => {
-    expect(() =>
-      buildDrizzlePageQuery(
-        { orderBy: '{bad-json' },
-        { table: requestLog },
-      ),
-    ).toThrow(BadRequestException)
-  })
-
-  it('rejects unknown orderBy fields', () => {
-    expect(() =>
-      buildDrizzlePageQuery(
-        { orderBy: { unknownField: 'desc' } },
-        { table: requestLog },
-      ),
-    ).toThrow('排序字段 "unknownField" 不存在')
-  })
-
-  it('rejects invalid order directions', () => {
-    expect(() =>
-      buildDrizzlePageQuery(
-        { orderBy: { createdAt: 'sideways' } },
-        { table: requestLog },
-      ),
-    ).toThrow('排序字段 "createdAt" 的排序方向无效')
-  })
-
-  it('rejects empty orderBy objects and arrays', () => {
-    expect(() =>
-      buildDrizzlePageQuery(
-        { orderBy: {} },
-        { table: requestLog },
-      ),
-    ).toThrow('orderBy 不能为空')
-
-    expect(() =>
-      buildDrizzlePageQuery(
-        { orderBy: [] },
-        { table: requestLog },
-      ),
-    ).toThrow('orderBy 不能为空')
+    expect(order.orderBy).toEqual({
+      createdAt: 'desc',
+      id: 'desc',
+    })
+    expect(order.orderBySql).toHaveLength(2)
   })
 })
 

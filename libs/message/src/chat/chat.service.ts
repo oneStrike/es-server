@@ -1,3 +1,4 @@
+import type { EmojiParseToken } from '@libs/interaction/emoji'
 import type {
   MarkConversationReadInput,
   OpenDirectConversationInput,
@@ -7,7 +8,11 @@ import type {
 } from './chat.type'
 import { DrizzleService } from '@db/core'
 import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
-import { EmojiParserService, EmojiSceneEnum } from '@libs/interaction/emoji'
+import {
+  EmojiCatalogService,
+  EmojiParserService,
+  EmojiSceneEnum,
+} from '@libs/interaction/emoji'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import {
   and,
@@ -56,6 +61,7 @@ export class MessageChatService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly emojiParserService: EmojiParserService,
+    private readonly emojiCatalogService: EmojiCatalogService,
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
     private readonly messageWsMonitorService: MessageWsMonitorService,
@@ -163,7 +169,7 @@ export class MessageChatService {
    * @returns 分页的会话列表
    */
   async getConversationList(userId: number, dto: QueryChatConversationListInput) {
-    const pageQuery = this.drizzle.buildPageQuery(dto, {
+    const page = this.drizzle.buildPage(dto, {
       maxPageSize: 100,
     })
     const [totalRows, conversationRows] = await Promise.all([
@@ -192,16 +198,16 @@ export class MessageChatService {
           ),
         )
         .orderBy(sql`${chatConversation.lastMessageAt} desc nulls last`, desc(chatConversation.id))
-        .offset(pageQuery.offset)
-        .limit(pageQuery.limit),
+        .offset(page.offset)
+        .limit(page.limit),
     ])
 
     if (conversationRows.length === 0) {
       return {
         list: [],
         total: Number(totalRows[0]?.total ?? 0),
-        pageIndex: pageQuery.pageIndex,
-        pageSize: pageQuery.pageSize,
+        pageIndex: page.pageIndex,
+        pageSize: page.pageSize,
       }
     }
 
@@ -271,8 +277,8 @@ export class MessageChatService {
             : undefined,
         )),
       total: Number(totalRows[0]?.total ?? 0),
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 
@@ -555,6 +561,7 @@ export class MessageChatService {
    * 1. 使用 PostgreSQL 咨询锁（pg_advisory_xact_lock）保证消息序列号的并发安全
    * 2. 支持幂等性：通过 clientMessageId 检查是否已发送过相同消息
    * 3. 重试机制：处理并发时的唯一约束冲突（唯一约束冲突）
+   * 4. 文本消息成功落库后，在同一事务中同步最近使用表情聚合记录
    *
    * 并发控制说明：
    * - 咨询锁在事务级别生效，事务结束后自动释放
@@ -574,7 +581,7 @@ export class MessageChatService {
     userId: number,
     messageType: number,
     content: string,
-    bodyTokens: unknown[],
+    bodyTokens: EmojiParseToken[],
     payload?: Record<string, unknown>,
     clientMessageId?: string,
   ) {
@@ -647,6 +654,15 @@ export class MessageChatService {
             throw new NotFoundException('Message not found')
           }
 
+          if (messageType === ChatMessageTypeEnum.TEXT) {
+            const recentUsageItems = this.buildRecentEmojiUsageItems(bodyTokens)
+            await this.emojiCatalogService.recordRecentUsageInTx(tx, {
+              userId,
+              scene: EmojiSceneEnum.CHAT,
+              items: recentUsageItems,
+            })
+          }
+
           const updateConversationResult = await tx
             .update(chatConversation)
             .set({
@@ -711,6 +727,29 @@ export class MessageChatService {
       }
     }
     throw lastError
+  }
+
+  /**
+   * 从消息正文 token 提取最近使用聚合项。
+   * - 仅统计带 emojiAssetId 的 token，忽略普通文本和未托管 Unicode。
+   * - 同一条消息内先按 emojiAssetId 聚合，减少事务中的 upsert 次数。
+   */
+  private buildRecentEmojiUsageItems(bodyTokens: EmojiParseToken[]) {
+    const useCountMap = new Map<number, number>()
+    for (const token of bodyTokens) {
+      if (token.type === 'text' || !token.emojiAssetId) {
+        continue
+      }
+      useCountMap.set(
+        token.emojiAssetId,
+        (useCountMap.get(token.emojiAssetId) ?? 0) + 1,
+      )
+    }
+
+    return Array.from(useCountMap, ([emojiAssetId, useCount]) => ({
+      emojiAssetId,
+      useCount,
+    }))
   }
 
   /**

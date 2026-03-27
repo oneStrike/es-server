@@ -1,5 +1,7 @@
 # Drizzle `findPagination` / `where-builder` 审查报告
 
+> 状态说明（2026-03-27）：本文基于 `buildPageQuery()` 仍存在时的旧实现撰写。当前仓库已完成 `buildPage()` / `buildOrderBy()` 拆分，文中涉及 `buildPageQuery()` 的问题已完成收口；本文件保留为历史评审记录。
+
 - 生成时间：2026-03-25
 - 仓库：`D:\code\es\es-server`
 - 审查范围：

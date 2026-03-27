@@ -11,7 +11,6 @@ export interface DbQueryConfig {
   pageSize: number
   pageIndex: number
   maxListItemLimit: number
-  orderBy: DbQueryOrderBy
 }
 
 export interface DbConfigInterface {
@@ -19,19 +18,20 @@ export interface DbConfigInterface {
   query: DbQueryConfig
 }
 
-export const DEFAULT_DB_QUERY_CONFIG: DbQueryConfig = {
-  pageSize: 15,
-  pageIndex: 1,
-  maxListItemLimit: 500,
-  orderBy: {
-    id: 'desc',
-  },
+export function resolveDbQueryConfig(
+  queryConfig?: Partial<DbQueryConfig>,
+): DbQueryConfig {
+  return {
+    pageSize: queryConfig?.pageSize ?? 15,
+    pageIndex: queryConfig?.pageIndex ?? 1,
+    maxListItemLimit: queryConfig?.maxListItemLimit ?? 500,
+  }
 }
 
 export const DbConfig: DbConfigInterface = {
   // 数据库连接配置
   connection: process.env.DATABASE_URL,
-  query: DEFAULT_DB_QUERY_CONFIG,
+  query: resolveDbQueryConfig(),
 }
 
 export const DbConfigRegister = registerAs(

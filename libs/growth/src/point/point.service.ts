@@ -220,11 +220,15 @@ export class UserPointService {
           : eq(this.growthLedgerRecord.targetId, dto.targetId),
       )
     }
+    // 历史上这里走 JSON 字符串默认排序，现统一收口为字面量对象，减少调用层分支。
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { id: 'desc' as const }
 
     const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
       where: and(...conditions),
       ...dto,
-      orderBy: dto.orderBy ?? JSON.stringify([{ id: 'desc' }]),
+      orderBy,
     })
 
     return {

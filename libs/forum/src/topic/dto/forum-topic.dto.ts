@@ -68,7 +68,7 @@ export class BaseForumTopicDto extends BaseDto {
     validation: false,
     example: [
       { type: 'text', text: '欢迎来到论坛 ' },
-      { type: 'emojiUnicode', unicodeSequence: '😀' },
+      { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
   bodyTokens?: unknown | null

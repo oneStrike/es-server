@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, isNull, max } from 'drizzle-orm'
+import { and, eq, ilike, isNull } from 'drizzle-orm'
 import {
   CreateTagInput,
   DeleteTagInput,
@@ -36,13 +36,10 @@ export class WorkTagService {
 
   async createTag(createTagDto: CreateTagInput) {
     if (!createTagDto.sortOrder) {
-      const [result] = await this.db
-        .select({
-          maxSortOrder: max(this.workTag.sortOrder),
-        })
-        .from(this.workTag)
-
-      createTagDto.sortOrder = (result?.maxSortOrder || 0) + 1
+      createTagDto.sortOrder =
+        (await this.drizzle.ext.maxOrder({
+          column: this.workTag.sortOrder,
+        })) + 1
     }
 
     await this.drizzle.withErrorHandling(
@@ -52,6 +49,10 @@ export class WorkTagService {
     return true
   }
 
+  /**
+   * 分页查询标签。
+   * 未显式传入排序时，默认遵循后台维护的 sortOrder 升序。
+   */
   async getTagPage(queryDto: QueryTagInput) {
     const { name, isEnabled, ...pageParams } = queryDto
 
@@ -65,11 +66,14 @@ export class WorkTagService {
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
+    const orderBy = pageParams.orderBy?.trim()
+      ? pageParams.orderBy
+      : { sortOrder: 'asc' as const }
 
     return this.drizzle.ext.findPagination(this.workTag, {
       where,
       ...pageParams,
-      orderBy: pageParams.orderBy || { sortOrder: 'desc' },
+      orderBy,
     })
   }
 

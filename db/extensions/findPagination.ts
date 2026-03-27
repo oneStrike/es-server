@@ -2,8 +2,10 @@ import type { DbQueryConfig, DbQueryOrderBy } from '@libs/platform/config'
 import type { InferSelectModel } from 'drizzle-orm'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import type { Db, SQL } from '../core/drizzle.type'
+import { resolveDbQueryConfig } from '@libs/platform/config'
 import { BadRequestException } from '@nestjs/common'
 import { getTableColumns } from 'drizzle-orm'
+import { buildDrizzleOrderBy } from '../core/query/order-by'
 import { buildDrizzlePageQuery } from '../core/query/page-query'
 
 type FindPaginationOrderBy = DbQueryOrderBy | string
@@ -29,6 +31,10 @@ type FindPaginationResultItem<
   ? Omit<InferSelectModel<TTable>, TOmit[number]>
   : Pick<InferSelectModel<TTable>, TPick[number]>
 
+/**
+ * 提供单表分页查询的统一实现。
+ * 排序与分页在这里显式组合，避免 page-query 承担业务排序职责，同时保持既有 1-based 分页契约。
+ */
 export async function findPagination<
   TTable extends AnyPgTable,
   TOmit extends readonly (keyof InferSelectModel<TTable> & string)[] = [],
@@ -44,14 +50,14 @@ export async function findPagination<
   pageIndex: number
   pageSize: number
 }> {
+  const resolvedQueryConfig = resolveDbQueryConfig(queryConfig)
   const { where, pageIndex, pageSize, orderBy, omit, pick } = options
-  const pageQuery = buildDrizzlePageQuery(
-    { pageIndex, pageSize, orderBy },
-    {
-      table,
-      defaults: queryConfig,
-    },
-  )
+  const pageQuery = buildDrizzlePageQuery({ pageIndex, pageSize }, {
+    defaultPageIndex: resolvedQueryConfig.pageIndex,
+    defaultPageSize: resolvedQueryConfig.pageSize,
+    maxPageSize: resolvedQueryConfig.maxListItemLimit,
+  })
+  const orderQuery = buildDrizzleOrderBy(orderBy, { table })
 
   const omittedFields = new Set<string>(omit ?? [])
   const pickedFields = new Set<string>(pick ?? [])
@@ -102,8 +108,8 @@ export async function findPagination<
     .limit(pageQuery.limit)
     .offset(pageQuery.offset)
   const [list, countResult] = await Promise.all([
-    pageQuery.orderBySql.length > 0
-      ? listQuery.orderBy(...pageQuery.orderBySql)
+    orderQuery.orderBySql.length > 0
+      ? listQuery.orderBy(...orderQuery.orderBySql)
       : listQuery,
     db.$count(table as AnyPgTable, where),
   ])

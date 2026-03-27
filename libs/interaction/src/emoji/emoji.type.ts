@@ -38,12 +38,21 @@ export interface EmojiRecentListInput extends EmojiCatalogQueryInput {
 }
 
 /**
- * 最近使用上报输入。
- * - 用于写入 userId + scene + emojiAssetId 的复合主键记录
+ * 最近使用聚合项。
+ * - 由上游先按 emojiAssetId 聚合，再写入最近使用表。
  */
-export interface EmojiRecentReportInput extends EmojiCatalogQueryInput {
-  userId: EmojiRecentUsage['userId']
+export interface EmojiRecentUsageItem {
   emojiAssetId: EmojiRecentUsage['emojiAssetId']
+  useCount: EmojiRecentUsage['useCount']
+}
+
+/**
+ * 最近使用批量写入输入。
+ * - 用于在事实写入成功后批量更新 userId + scene + emojiAssetId 聚合记录。
+ */
+export interface RecordEmojiRecentUsageInput extends EmojiCatalogQueryInput {
+  userId: EmojiRecentUsage['userId']
+  items: EmojiRecentUsageItem[]
 }
 
 /**
@@ -167,6 +176,7 @@ export type EmojiRecentItem = EmojiAssetSnapshot &
  * - 提供解析器替换 custom 表情所需的最小字段
  */
 export interface EmojiShortcodeAsset {
+  emojiAssetId: EmojiAsset['id']
   shortcode: NonNullable<EmojiAsset['shortcode']>
   packCode: EmojiPack['code']
   packName: EmojiPack['name']
@@ -174,6 +184,15 @@ export interface EmojiShortcodeAsset {
   staticUrl: EmojiAsset['staticUrl']
   isAnimated: EmojiAsset['isAnimated']
   ariaLabel?: string
+}
+
+/**
+ * Unicode 资源映射结果。
+ * - 用于解析器为 Unicode token 补齐平台托管的 emojiAssetId。
+ */
+export interface EmojiUnicodeAsset {
+  emojiAssetId: EmojiAsset['id']
+  unicodeSequence: NonNullable<EmojiAsset['unicodeSequence']>
 }
 
 /**
@@ -197,9 +216,11 @@ export type EmojiParseToken =
     | {
       type: 'emojiUnicode'
       unicodeSequence: string
+      emojiAssetId?: EmojiAsset['id']
     }
     | {
       type: 'emojiCustom'
+      emojiAssetId: EmojiAsset['id']
       shortcode: string
       packCode: string
       imageUrl: string

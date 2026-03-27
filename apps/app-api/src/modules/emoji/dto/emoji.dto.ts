@@ -153,12 +153,3 @@ export class QueryEmojiRecentDto extends QueryEmojiCatalogDto {
   })
   limit?: number
 }
-
-export class ReportEmojiRecentUseDto extends QueryEmojiCatalogDto {
-  @NumberProperty({
-    description: '表情资源ID',
-    example: 1001,
-    min: 1,
-  })
-  emojiAssetId!: BaseEmojiAssetDto['id']
-}

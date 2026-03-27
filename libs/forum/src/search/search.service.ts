@@ -66,13 +66,13 @@ export class ForumSearchService {
   }
 
   private createEmptyPage(searchInput: ForumSearchInput): ForumSearchPageResult {
-    const pageQuery = this.drizzle.buildPageQuery(searchInput)
+    const page = this.drizzle.buildPage(searchInput)
 
     return {
       list: [],
       total: 0,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 
@@ -328,8 +328,8 @@ export class ForumSearchService {
       return this.searchComments(searchInput, options)
     }
 
-    const pageQuery = this.drizzle.buildPageQuery(searchInput)
-    const mergedWindowSize = pageQuery.offset + pageQuery.pageSize
+    const page = this.drizzle.buildPage(searchInput)
+    const mergedWindowSize = page.offset + page.pageSize
 
     const [topicResults, commentResults] = await Promise.all([
       this.searchTopics(
@@ -354,13 +354,13 @@ export class ForumSearchService {
 
     const mergedList = [...topicResults.list, ...commentResults.list]
       .sort((left, right) => this.compareResults(left, right, searchInput.sort))
-      .slice(pageQuery.offset, pageQuery.offset + pageQuery.pageSize)
+      .slice(page.offset, page.offset + page.pageSize)
 
     return {
       list: mergedList,
       total: topicResults.total + commentResults.total,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 
@@ -439,7 +439,7 @@ export class ForumSearchService {
       return this.createEmptyPage(dto)
     }
 
-    const pageQuery = this.drizzle.buildPageQuery(dto)
+    const page = this.drizzle.buildPage(dto)
     const conditions = [
       eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
       isNull(this.userComment.deletedAt),
@@ -485,8 +485,8 @@ export class ForumSearchService {
         .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
         .where(where)
         .orderBy(...this.getCommentOrderBy(dto.sort))
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset),
+        .limit(page.limit)
+        .offset(page.offset),
       this.db
         .select({
           total: sql<number>`count(*)::int`,
@@ -499,8 +499,8 @@ export class ForumSearchService {
     return {
       list: await this.mapCommentResults(rows, dto.keyword),
       total: totalRows[0]?.total ?? 0,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 }

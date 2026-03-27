@@ -80,7 +80,7 @@ export class BaseChatMessageDto {
     validation: false,
     example: [
       { type: 'text', text: 'hello ' },
-      { type: 'emojiUnicode', unicodeSequence: '😀' },
+      { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
   bodyTokens?: unknown

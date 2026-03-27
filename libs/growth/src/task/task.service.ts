@@ -90,14 +90,12 @@ export class TaskService {
     },
   ) {
     const { whereClause, pageIndex, pageSize, orderBy, includeTaskDetail } = params
-    const pageQuery = this.drizzle.buildPageQuery(
-      { pageIndex, pageSize, orderBy },
-      {
-        table: this.taskAssignmentTable,
-        defaultOrderBy: { id: 'desc' },
-      },
-    )
-    const orderBys = pageQuery.orderBySql
+    const page = this.drizzle.buildPage({ pageIndex, pageSize })
+    const order = this.drizzle.buildOrderBy(orderBy, {
+      table: this.taskAssignmentTable,
+      fallbackOrderBy: { id: 'desc' },
+    })
+    const orderBys = order.orderBySql
 
     const list = includeTaskDetail
       ? await (
@@ -121,8 +119,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageQuery.limit)
-            .offset(pageQuery.offset)
+            .limit(page.limit)
+            .offset(page.offset)
             .orderBy(...orderBys)
           : this.db
             .select({
@@ -143,8 +141,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageQuery.limit)
-            .offset(pageQuery.offset)
+            .limit(page.limit)
+            .offset(page.offset)
       )
       : await (
         orderBys.length > 0
@@ -164,8 +162,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageQuery.limit)
-            .offset(pageQuery.offset)
+            .limit(page.limit)
+            .offset(page.offset)
             .orderBy(...orderBys)
           : this.db
             .select({
@@ -183,8 +181,8 @@ export class TaskService {
               eq(this.taskAssignmentTable.taskId, this.taskTable.id),
             )
             .where(whereClause)
-            .limit(pageQuery.limit)
-            .offset(pageQuery.offset)
+            .limit(page.limit)
+            .offset(page.offset)
       )
 
     const [countResult] = await this.db
@@ -202,8 +200,8 @@ export class TaskService {
         task: item.task,
       })),
       total: Number(countResult?.count ?? 0),
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 

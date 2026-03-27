@@ -91,9 +91,14 @@ export class UserLevelRuleService {
       )
     }
 
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { sortOrder: 'asc' as const }
+
     return this.drizzle.ext.findPagination(this.userLevelRule, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...dto,
+      orderBy,
     })
   }
 
@@ -406,7 +411,7 @@ export class UserLevelRuleService {
       })
       .from(this.userLevelRule)
       .where(eq(this.userLevelRule.isEnabled, true))
-      .orderBy(asc(this.userLevelRule.sortOrder))
+      .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
 
     const [allLevelsCount] = await this.db
       .select({ total: sql<number>`count(*)` })

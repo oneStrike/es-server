@@ -398,7 +398,7 @@ export class UserProfileService {
       .select({ id: this.userLevelRule.id })
       .from(this.userLevelRule)
       .where(eq(this.userLevelRule.isEnabled, true))
-      .orderBy(this.userLevelRule.sortOrder)
+      .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
       .limit(1)
 
     await client

@@ -67,11 +67,15 @@ export class EmojiAssetService {
     if (dto.visibleInPicker !== undefined) {
       conditions.push(eq(this.emojiPack.visibleInPicker, dto.visibleInPicker))
     }
+    // 空字符串排序参数按未传处理，继续回退到表情包管理端的默认人工排序。
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { sortOrder: 'asc' as const, id: 'asc' as const }
 
     return this.drizzle.ext.findPagination(this.emojiPack, {
       where: and(...conditions),
       ...dto,
-      orderBy: dto.orderBy ? undefined : { sortOrder: 'asc', id: 'asc' },
+      orderBy,
     })
   }
 
@@ -105,10 +109,10 @@ export class EmojiAssetService {
     this.validateSceneType(dto.sceneType)
     const sortOrder =
       dto.sortOrder ??
-      (await this.drizzle.ext.maxOrder(
-        this.emojiPack,
-        isNull(this.emojiPack.deletedAt),
-      )) + 1
+      (await this.drizzle.ext.maxOrder({
+        column: this.emojiPack.sortOrder,
+        where: isNull(this.emojiPack.deletedAt),
+      })) + 1
 
     await this.drizzle.withErrorHandling(
       () =>
@@ -296,13 +300,15 @@ export class EmojiAssetService {
         ilike(this.emojiAsset.category, `%${escapeLikePattern(dto.category)}%`),
       )
     }
+    // 资源列表沿用包内人工排序，空字符串排序参数同样按未传处理。
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { sortOrder: 'asc' as const, id: 'asc' as const }
 
     return this.drizzle.ext.findPagination(this.emojiAsset, {
       where: and(...conditions),
       ...dto,
-      orderBy: dto.orderBy
-        ? undefined
-        : { sortOrder: 'asc' as const, id: 'asc' as const },
+      orderBy,
     })
   }
 
@@ -336,13 +342,13 @@ export class EmojiAssetService {
 
     const sortOrder =
       dto.sortOrder ??
-      (await this.drizzle.ext.maxOrder(
-        this.emojiAsset,
-        and(
+      (await this.drizzle.ext.maxOrder({
+        column: this.emojiAsset.sortOrder,
+        where: and(
           eq(this.emojiAsset.packId, dto.packId),
           isNull(this.emojiAsset.deletedAt),
         ),
-      )) + 1
+      })) + 1
 
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.emojiAsset).values({

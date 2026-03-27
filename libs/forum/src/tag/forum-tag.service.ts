@@ -120,11 +120,14 @@ export class ForumTagService {
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
+    const orderBy = queryForumTagDto.orderBy?.trim()
+      ? queryForumTagDto.orderBy
+      : { sortOrder: 'asc' as const }
 
     const page = await this.drizzle.ext.findPagination(this.forumTag, {
       where,
       ...queryForumTagDto,
-      orderBy: { sortOrder: 'asc' as const },
+      orderBy,
     })
     const tagIds = page.list.map((item) => item.id)
     const countRows = tagIds.length
@@ -378,7 +381,7 @@ export class ForumTagService {
       .from(this.forumTopicTag)
       .innerJoin(this.forumTag, eq(this.forumTag.id, this.forumTopicTag.tagId))
       .where(eq(this.forumTopicTag.topicId, topicId))
-      .orderBy(asc(this.forumTag.sortOrder))
+      .orderBy(asc(this.forumTag.sortOrder), asc(this.forumTag.id))
   }
 
   /**
@@ -405,7 +408,7 @@ export class ForumTagService {
       where: {
         isEnabled: true,
       },
-      orderBy: (tag, { asc }) => [asc(tag.sortOrder)],
+      orderBy: (tag, { asc }) => [asc(tag.sortOrder), asc(tag.id)],
     })
   }
 }

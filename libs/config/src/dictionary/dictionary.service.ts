@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, inArray } from 'drizzle-orm'
+import { and, asc, eq, ilike, inArray } from 'drizzle-orm'
 import {
   CreateDictionaryInput,
   CreateDictionaryItemInput,
@@ -255,9 +255,14 @@ export class LibDictionaryService {
       conditions.push(inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes))
     }
 
+    const orderBy = queryDto.orderBy?.trim()
+      ? queryDto.orderBy
+      : { sortOrder: 'asc' as const }
+
     return this.drizzle.ext.findPagination(this.dictionaryItem, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...queryDto,
+      orderBy,
     })
   }
 
@@ -275,7 +280,7 @@ export class LibDictionaryService {
         isEnabled: true,
         dictionaryCode: { in: this.parseDictionaryCodes(dictionaryCode) },
       },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: (item) => [asc(item.sortOrder), asc(item.id)],
     })
   }
 

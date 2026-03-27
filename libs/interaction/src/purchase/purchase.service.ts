@@ -253,7 +253,7 @@ export class PurchaseService {
       startDate,
       endDate,
     } = query
-    const pageQuery = this.drizzle.buildPageQuery({ pageIndex, pageSize })
+    const page = this.drizzle.buildPage({ pageIndex, pageSize })
     const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
@@ -280,7 +280,7 @@ export class PurchaseService {
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
         ORDER BY MAX(upr.created_at) DESC
-        LIMIT ${pageQuery.limit} OFFSET ${pageQuery.offset}
+        LIMIT ${page.limit} OFFSET ${page.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
@@ -319,8 +319,8 @@ export class PurchaseService {
         lastPurchasedAt: row.lastPurchasedAt,
       })),
       total,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 
@@ -338,7 +338,7 @@ export class PurchaseService {
       startDate,
       endDate,
     } = query
-    const pageQuery = this.drizzle.buildPageQuery({ pageIndex, pageSize })
+    const page = this.drizzle.buildPage({ pageIndex, pageSize })
     const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
@@ -378,7 +378,7 @@ export class PurchaseService {
           ${workTypeFilter}
           ${createdAtFilter}
         ORDER BY upr.created_at DESC
-        LIMIT ${pageQuery.limit} OFFSET ${pageQuery.offset}
+        LIMIT ${page.limit} OFFSET ${page.offset}
       `),
       this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
@@ -444,8 +444,8 @@ export class PurchaseService {
         },
       })),
       total,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 }

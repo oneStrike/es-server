@@ -37,11 +37,8 @@ export function createDrizzleExtensions(
         options,
         queryConfig,
       ),
-    maxOrder: async (
-      table: PgTable<TableConfig>,
-      where?: SQL,
-      field?: string,
-    ) => maxOrderExtension(db, table, where, field),
+    maxOrder: async (options: Parameters<typeof maxOrderExtension>[1]) =>
+      maxOrderExtension(db, options),
     softDelete: async (table: PgTable<TableConfig>, where: SQL) =>
       softDeleteExtension(db, table, where),
     softDeleteMany: async (table: PgTable<TableConfig>, where: SQL) =>

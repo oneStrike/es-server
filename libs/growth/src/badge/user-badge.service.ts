@@ -136,10 +136,19 @@ export class UserBadgeService {
     return badge
   }
 
+  /**
+   * 分页查询徽章列表。
+   * 未显式传入排序时，默认遵循后台维护的 sortOrder 升序。
+   */
   async getBadges(dto: QueryUserBadgePageInput) {
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { sortOrder: 'asc' as const }
+
     return this.drizzle.ext.findPagination(this.userBadge, {
       where: this.buildBadgeWhere(dto),
       ...dto,
+      orderBy,
     })
   }
 
@@ -223,9 +232,10 @@ export class UserBadgeService {
       throw new NotFoundException('徽章不存在')
     }
 
-    const pageQuery = this.drizzle.buildPageQuery(dto, {
+    const page = this.drizzle.buildPage(dto)
+    const order = this.drizzle.buildOrderBy(dto.orderBy, {
       table: this.userBadgeAssignment,
-      defaultOrderBy: [{ createdAt: 'desc' }, { userId: 'asc' }],
+      fallbackOrderBy: [{ createdAt: 'desc' }, { userId: 'asc' }],
     })
 
     const badgeWhere = this.buildBadgeWhere(dto)
@@ -263,17 +273,17 @@ export class UserBadgeService {
       .innerJoin(this.appUser, eq(this.appUser.id, this.userBadgeAssignment.userId))
       .leftJoin(this.userLevelRule, eq(this.userLevelRule.id, this.appUser.levelId))
       .where(where)
-      .orderBy(...pageQuery.orderBySql)
-      .limit(pageQuery.limit)
-      .offset(pageQuery.offset)
+      .orderBy(...order.orderBySql)
+      .limit(page.limit)
+      .offset(page.offset)
 
     const total = Number(totalRow?.total ?? 0)
     return {
       list,
       total,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
-      totalPage: Math.ceil(total / pageQuery.pageSize),
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
+      totalPage: Math.ceil(total / page.pageSize),
     }
   }
 

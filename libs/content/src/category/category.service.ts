@@ -2,7 +2,7 @@ import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, arrayOverlaps, eq, ilike, isNull, max } from 'drizzle-orm'
+import { and, arrayOverlaps, eq, ilike, isNull } from 'drizzle-orm'
 import {
   CategoryIdInput,
   CreateCategoryInput,
@@ -45,10 +45,10 @@ export class WorkCategoryService {
    */
   async createCategory(createCategoryInput: CreateCategoryInput) {
     if (!createCategoryInput.sortOrder) {
-      const [result] = await this.db
-        .select({ maxOrder: max(this.workCategory.sortOrder) })
-        .from(this.workCategory)
-      createCategoryInput.sortOrder = (result?.maxOrder || 0) + 1
+      createCategoryInput.sortOrder =
+        (await this.drizzle.ext.maxOrder({
+          column: this.workCategory.sortOrder,
+        })) + 1
     }
 
     await this.drizzle.withErrorHandling(
@@ -63,6 +63,7 @@ export class WorkCategoryService {
    *
    * 支持按名称模糊匹配、启用状态筛选、内容类型数组重叠查询。
    * contentType 使用 PostgreSQL 数组重叠操作符 &&，匹配任意一个指定类型即返回。
+   * 未显式传入排序时，默认遵循后台维护的 sortOrder 升序。
    */
   async getCategoryPage(queryDto: QueryCategoryInput) {
     const { name, isEnabled, contentType, ...pageParams } = queryDto
@@ -85,10 +86,14 @@ export class WorkCategoryService {
       where = and(where, arrayOverlaps(this.workCategory.contentType, values))
     }
 
+    const orderBy = pageParams.orderBy?.trim()
+      ? pageParams.orderBy
+      : { sortOrder: 'asc' as const }
+
     return this.drizzle.ext.findPagination(this.workCategory, {
       where,
-      orderBy: pageParams.orderBy || { sortOrder: 'desc' },
       ...pageParams,
+      orderBy,
     })
   }
 

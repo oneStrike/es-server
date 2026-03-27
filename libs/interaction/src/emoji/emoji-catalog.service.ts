@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   EmojiAssetSnapshot,
@@ -6,12 +7,14 @@ import type {
   EmojiCatalogQueryInput,
   EmojiRecentItem,
   EmojiRecentListInput,
-  EmojiRecentReportInput,
+  EmojiRecentUsageItem,
   EmojiSearchInput,
   EmojiShortcodeAsset,
+  EmojiUnicodeAsset,
+  RecordEmojiRecentUsageInput,
 } from './emoji.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import {
   and,
   asc,
@@ -340,47 +343,34 @@ export class EmojiCatalogService {
   }
 
   /**
-   * 上报表情最近使用记录。
-   * - 前置校验：仅允许上报当前场景可见且启用的表情。
-   * - 幂等语义：同一用户+场景+表情只保留一条记录，冲突时累加 useCount。
-   * @throws BadRequestException 表情不可用（不存在、未启用或当前场景不可见）
+   * 在既有事务中批量写入最近使用记录。
+   * - 调用方需先完成事实写入，确保"消息发送成功才记 recent"的口径。
+   * - 同一 userId+scene+emojiAssetId 只保留一条聚合记录，冲突时原子累加 useCount。
+   * - 会再次校验资产在当前场景下仍然可见，避免脏 token 写入 recent。
    */
-  async reportRecentUse(input: EmojiRecentReportInput): Promise<boolean> {
-    const { emojiAssetId, scene, userId } = input
+  async recordRecentUsageInTx(
+    tx: Db,
+    input: RecordEmojiRecentUsageInput,
+  ): Promise<void> {
+    const { items, scene, userId } = input
+    if (items.length === 0) {
+      return
+    }
 
-    // 前置校验：仅允许上报当前场景可见、且处于启用状态的表情。
-    const target = await this.db
-      .select({ id: this.emojiAsset.id })
-      .from(this.emojiAsset)
-      .innerJoin(this.emojiPack, eq(this.emojiAsset.packId, this.emojiPack.id))
-      .where(
-        and(
-          eq(this.emojiAsset.id, emojiAssetId),
-          this.buildActiveAssetCondition(),
-          this.buildActivePackCondition(scene),
-        ),
-      )
-      .limit(1)
-      .then((rows) => rows[0])
-
-    if (!target) {
-      throw new BadRequestException('表情不可用')
+    const validItems = await this.filterActiveRecentUsageItems(tx, scene, items)
+    if (validItems.length === 0) {
+      return
     }
 
     const now = new Date()
-    /**
-     * 幂等语义：
-     * - 主键冲突时走原子累加 useCount，并刷新 lastUsedAt。
-     * - 保证同一 userId+scene+emojiAssetId 只有一条聚合记录。
-     */
-    await this.drizzle.withErrorHandling(() =>
-      this.db
+    for (const item of validItems) {
+      await tx
         .insert(this.emojiRecentUsage)
         .values({
           userId,
           scene,
-          emojiAssetId,
-          useCount: 1,
+          emojiAssetId: item.emojiAssetId,
+          useCount: item.useCount,
           lastUsedAt: now,
         })
         .onConflictDoUpdate({
@@ -390,13 +380,42 @@ export class EmojiCatalogService {
             this.emojiRecentUsage.emojiAssetId,
           ],
           set: {
-            useCount: sql`${this.emojiRecentUsage.useCount} + 1`,
+            useCount: sql`${this.emojiRecentUsage.useCount} + ${item.useCount}`,
             lastUsedAt: now,
           },
-        }),
-    )
+        })
+    }
+  }
 
-    return true
+  /**
+   * 过滤出当前场景仍可用的最近使用聚合项。
+   * - 只保留启用、未删除、且对 scene 可见的表情资源。
+   * - 同时过滤掉非正数 useCount，避免异常 token 产生脏数据。
+   */
+  private async filterActiveRecentUsageItems(
+    tx: Db,
+    scene: EmojiSceneEnum,
+    items: EmojiRecentUsageItem[],
+  ): Promise<EmojiRecentUsageItem[]> {
+    const sanitizedItems = items.filter((item) => item.useCount > 0)
+    if (sanitizedItems.length === 0) {
+      return []
+    }
+
+    const targetAssetIds = [...new Set(sanitizedItems.map((item) => item.emojiAssetId))]
+    const targets = await tx
+      .select({ id: this.emojiAsset.id })
+      .from(this.emojiAsset)
+      .innerJoin(this.emojiPack, eq(this.emojiAsset.packId, this.emojiPack.id))
+      .where(
+        and(
+          inArray(this.emojiAsset.id, targetAssetIds),
+          this.buildActiveAssetCondition(),
+          this.buildActivePackCondition(scene),
+        ),
+      )
+    const activeIds = new Set(targets.map((item) => item.id))
+    return sanitizedItems.filter((item) => activeIds.has(item.emojiAssetId))
   }
 
   /**
@@ -417,6 +436,7 @@ export class EmojiCatalogService {
 
     const rows = await this.db
       .select({
+        emojiAssetId: this.emojiAsset.id,
         shortcode: this.emojiAsset.shortcode,
         packCode: this.emojiPack.code,
         packName: this.emojiPack.name,
@@ -443,6 +463,7 @@ export class EmojiCatalogService {
         continue
       }
       map.set(row.shortcode, {
+        emojiAssetId: row.emojiAssetId,
         shortcode: row.shortcode,
         packCode: row.packCode,
         packName: row.packName,
@@ -450,6 +471,55 @@ export class EmojiCatalogService {
         staticUrl: row.staticUrl,
         isAnimated: row.isAnimated,
         ariaLabel: `${row.packName}:${row.shortcode}`,
+      })
+    }
+    return map
+  }
+
+  /**
+   * 根据 Unicode 序列批量查询平台托管的 Unicode 表情。
+   * - 用于解析器为 unicode token 补齐 emojiAssetId。
+   * - 若同一序列命中多个可用资源，按包排序和资源排序取首个，保证结果稳定。
+   */
+  async findUnicodeAssetsBySequences(
+    scene: EmojiSceneEnum,
+    unicodeSequences: string[],
+  ): Promise<Map<string, EmojiUnicodeAsset>> {
+    const uniqueUnicodeSequences = [...new Set(unicodeSequences.filter(Boolean))]
+    if (uniqueUnicodeSequences.length === 0) {
+      return new Map()
+    }
+
+    const rows = await this.db
+      .select({
+        emojiAssetId: this.emojiAsset.id,
+        unicodeSequence: this.emojiAsset.unicodeSequence,
+      })
+      .from(this.emojiAsset)
+      .innerJoin(this.emojiPack, eq(this.emojiAsset.packId, this.emojiPack.id))
+      .where(
+        and(
+          this.buildActiveAssetCondition(),
+          this.buildActivePackCondition(scene),
+          eq(this.emojiAsset.kind, EmojiAssetKindEnum.UNICODE),
+          isNotNull(this.emojiAsset.unicodeSequence),
+          inArray(this.emojiAsset.unicodeSequence, uniqueUnicodeSequences),
+        ),
+      )
+      .orderBy(
+        this.emojiPack.sortOrder,
+        this.emojiAsset.sortOrder,
+        this.emojiAsset.id,
+      )
+
+    const map = new Map<string, EmojiUnicodeAsset>()
+    for (const row of rows) {
+      if (!row.unicodeSequence || map.has(row.unicodeSequence)) {
+        continue
+      }
+      map.set(row.unicodeSequence, {
+        emojiAssetId: row.emojiAssetId,
+        unicodeSequence: row.unicodeSequence,
       })
     }
     return map

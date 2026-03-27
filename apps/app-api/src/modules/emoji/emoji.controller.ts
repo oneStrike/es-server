@@ -3,7 +3,7 @@ import {
   EmojiSceneEnum,
 } from '@libs/interaction/emoji'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   EmojiAssetDto,
@@ -12,7 +12,6 @@ import {
   QueryEmojiCatalogDto,
   QueryEmojiRecentDto,
   QueryEmojiSearchDto,
-  ReportEmojiRecentUseDto,
 } from './dto/emoji.dto'
 
 @ApiTags('表情')
@@ -66,22 +65,6 @@ export class EmojiController {
       userId,
       scene: this.resolveScene(query.scene),
       limit: query.limit,
-    })
-  }
-
-  @Post('recent/report-use')
-  @ApiDoc({
-    summary: '上报最近使用表情',
-    model: Boolean,
-  })
-  async reportUse(
-    @Body() body: ReportEmojiRecentUseDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.emojiCatalogService.reportRecentUse({
-      userId,
-      scene: this.resolveScene(body.scene),
-      emojiAssetId: body.emojiAssetId,
     })
   }
 }

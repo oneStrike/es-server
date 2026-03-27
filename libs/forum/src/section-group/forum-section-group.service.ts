@@ -60,6 +60,10 @@ export class ForumSectionGroupService {
     return group
   }
 
+  /**
+   * 管理端分页查询板块分组。
+   * 未显式传入排序时，默认按 sortOrder 升序返回，保持后台拖拽顺序。
+   */
   async getSectionGroupPage(dto: QueryForumSectionGroupInput) {
     const conditions: SQL[] = [isNull(this.forumSectionGroup.deletedAt)]
 
@@ -76,11 +80,15 @@ export class ForumSectionGroupService {
     }
 
     const where = and(...conditions)
+    // 空字符串查询参数视为未传排序，避免把分组默认排序误退回到通用回退。
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { sortOrder: 'asc' as const }
 
     return this.drizzle.ext.findPagination(this.forumSectionGroup, {
       where,
       ...dto,
-      orderBy: dto.orderBy ? undefined : { sortOrder: 'desc' as const },
+      orderBy,
     })
   }
 
@@ -282,7 +290,10 @@ export class ForumSectionGroupService {
           isNull(this.forumSectionGroup.deletedAt),
         ),
       )
-      .orderBy(asc(this.forumSectionGroup.sortOrder))
+      .orderBy(
+        asc(this.forumSectionGroup.sortOrder),
+        asc(this.forumSectionGroup.id),
+      )
     const groupIds = groups.map((group) => group.id)
     const sections = groupIds.length
       ? await this.db
@@ -302,7 +313,7 @@ export class ForumSectionGroupService {
               isNull(this.forumSection.deletedAt),
             ),
           )
-          .orderBy(asc(this.forumSection.sortOrder))
+          .orderBy(asc(this.forumSection.sortOrder), asc(this.forumSection.id))
       : []
 
     return groups.map((group) => ({

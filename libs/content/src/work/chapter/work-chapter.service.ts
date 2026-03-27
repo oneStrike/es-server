@@ -126,10 +126,14 @@ export class WorkChapterService {
     }
 
     const where = and(...conditions)
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : { sortOrder: 'asc' as const }
 
     const page = await this.drizzle.ext.findPagination(this.workChapter, {
       where,
       ...dto,
+      orderBy,
     })
 
     return {

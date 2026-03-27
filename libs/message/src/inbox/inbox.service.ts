@@ -140,10 +140,10 @@ export class MessageInboxService {
    * 合并通知和聊天消息，按时间倒序排列
    */
   async getTimeline(userId: number, dto: QueryInboxTimelineInput) {
-    const pageQuery = this.drizzle.buildPageQuery(dto, {
+    const page = this.drizzle.buildPage(dto, {
       maxPageSize: 100,
     })
-    const fetchTake = pageQuery.offset + pageQuery.pageSize + 20
+    const fetchTake = page.offset + page.pageSize + 20
 
     const [notificationTotal, conversationTotalRows, notifications, conversations] =
       await Promise.all([
@@ -243,12 +243,12 @@ export class MessageInboxService {
 
     return {
       list: timeline.slice(
-        pageQuery.offset,
-        pageQuery.offset + pageQuery.pageSize,
+        page.offset,
+        page.offset + page.pageSize,
       ),
       total: notificationTotal + Number(conversationTotalRows[0]?.total ?? 0),
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 }

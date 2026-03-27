@@ -368,13 +368,14 @@ export class ForumSectionService {
       where: {
         deletedAt: { isNull: true },
       },
-      orderBy: (group, { asc }) => [asc(group.sortOrder)],
+      orderBy: (group, { asc }) => [asc(group.sortOrder), asc(group.id)],
     })
   }
 
   /**
    * 管理端分页查询板块列表。
    * 支持按名称模糊搜索、分组筛选、启用状态与审核策略筛选。
+   * 未显式传入排序时，默认遵循板块手动排序顺序。
    */
   async getSectionPage(queryForumSectionDto: QueryForumSectionInput) {
     const { name, groupId, ...otherDto } = queryForumSectionDto
@@ -398,10 +399,14 @@ export class ForumSectionService {
     }
 
     const where = and(...conditions)
+    const orderBy = otherDto.orderBy?.trim()
+      ? otherDto.orderBy
+      : { sortOrder: 'asc' as const }
 
     return this.drizzle.ext.findPagination(this.forumSection, {
       where,
       ...otherDto,
+      orderBy,
     })
   }
 

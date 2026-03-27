@@ -16,8 +16,9 @@ export class EmojiParserService {
 
   /**
    * 将文本解析为普通文本、Unicode 表情和自定义短码三类 token。
-   * - 先提取所有短码并批量查询映射，再按顺序生成 token 列表。
+   * - 先提取所有短码和 Unicode 序列并批量查询映射，再按顺序生成 token 列表。
    * - 未命中映射的短码保持原文，避免误替换造成内容丢失。
+   * - 命中平台托管资源的 token 会补齐 emojiAssetId，供最近使用统计复用。
    * - 剩余文本段再拆分 Unicode 表情，最后合并连续文本 token。
    */
   async parse(input: EmojiParseInput): Promise<EmojiParseToken[]> {
@@ -26,13 +27,26 @@ export class EmojiParserService {
       return []
     }
 
-    const shortcodeMatches = body.matchAll(EMOJI_SHORTCODE_REGEX)
-    const shortcodes = Array.from(shortcodeMatches, (match) => match[1])
-    const shortcodeAssetMap =
-      await this.emojiCatalogService.findCustomAssetsByShortcodes(
+    const shortcodes = Array.from(
+      body.matchAll(
+        new RegExp(EMOJI_SHORTCODE_REGEX.source, EMOJI_SHORTCODE_REGEX.flags),
+      ),
+      (match) => match[1],
+    )
+    const unicodeSequences = Array.from(
+      body.matchAll(new RegExp(EMOJI_UNICODE_REGEX.source, EMOJI_UNICODE_REGEX.flags)),
+      (match) => match[0],
+    )
+    const [shortcodeAssetMap, unicodeAssetMap] = await Promise.all([
+      this.emojiCatalogService.findCustomAssetsByShortcodes(
         input.scene,
         shortcodes,
-      )
+      ),
+      this.emojiCatalogService.findUnicodeAssetsBySequences(
+        input.scene,
+        unicodeSequences,
+      ),
+    ])
 
     const tokens: EmojiParseToken[] = []
     let cursor = 0
@@ -47,13 +61,14 @@ export class EmojiParserService {
       const index = match.index ?? 0
 
       if (index > cursor) {
-        this.pushTextSegment(tokens, body.slice(cursor, index))
+        this.pushTextSegment(tokens, body.slice(cursor, index), unicodeAssetMap)
       }
 
       const asset = shortcodeAssetMap.get(shortcode)
       if (asset) {
         tokens.push({
           type: 'emojiCustom',
+          emojiAssetId: asset.emojiAssetId,
           shortcode: asset.shortcode,
           packCode: asset.packCode,
           imageUrl: asset.imageUrl,
@@ -70,7 +85,7 @@ export class EmojiParserService {
     }
 
     if (cursor < body.length) {
-      this.pushTextSegment(tokens, body.slice(cursor))
+      this.pushTextSegment(tokens, body.slice(cursor), unicodeAssetMap)
     }
 
     return tokens
@@ -79,9 +94,14 @@ export class EmojiParserService {
   /**
    * 将文本段拆分为普通文本和 Unicode 表情 token。
    * - 使用正则匹配 Unicode 表情符号（Extended_Pictographic）。
+   * - 命中平台托管 Unicode 资源时补齐 emojiAssetId。
    * - 递归调用 pushTextToken 合并连续的普通文本。
    */
-  private pushTextSegment(tokens: EmojiParseToken[], segment: string) {
+  private pushTextSegment(
+    tokens: EmojiParseToken[],
+    segment: string,
+    unicodeAssetMap: Map<string, { emojiAssetId: number }>,
+  ) {
     if (!segment) {
       return
     }
@@ -100,6 +120,7 @@ export class EmojiParserService {
       tokens.push({
         type: 'emojiUnicode',
         unicodeSequence: unicode,
+        emojiAssetId: unicodeAssetMap.get(unicode)?.emojiAssetId,
       })
       cursor = index + unicode.length
     }
