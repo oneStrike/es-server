@@ -2,7 +2,6 @@ import { BaseAuthorDto } from '@libs/content/author'
 import { BaseCategoryDto } from '@libs/content/category'
 import { BaseTagDto } from '@libs/content/tag'
 import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content/work'
-import { BaseForumSectionDto } from '@libs/forum/section'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -217,47 +216,5 @@ export class WorkDetailDto extends IntersectionType(
   WorkWithUserStatusDto,
   WorkReadingStatusFieldsDto,
 ) {}
-
-class WorkForumSectionExtraDto {
-  @NumberProperty({
-    description: '可见主题数',
-    example: 12,
-    required: true,
-    validation: false,
-  })
-  topicCount!: number
-
-  @NumberProperty({
-    description: '可见评论数',
-    example: 58,
-    required: true,
-    validation: false,
-  })
-  commentCount!: number
-
-  @NumberProperty({
-    description: '关注人数',
-    example: 35,
-    required: true,
-    validation: false,
-  })
-  followersCount!: number
-
-  @DateProperty({
-    description: '最后发帖时间',
-    example: '2026-03-16T12:00:00.000Z',
-    required: false,
-    validation: false,
-  })
-  lastPostAt?: Date
-
-  @BooleanProperty({
-    description: '当前用户是否已关注该板块',
-    example: true,
-    required: false,
-    validation: false,
-  })
-  isFollowed?: boolean
-}
 
 export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}

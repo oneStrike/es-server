@@ -19,7 +19,6 @@ import {
   QueryWorkDto,
   QueryWorkTypeDto,
   WorkDetailDto,
-  WorkForumSectionDto,
 } from './dto/work.dto'
 
 @ApiTags('作品')
@@ -66,9 +65,7 @@ export class WorkController {
     summary: '分页查询作品列表',
     model: PageWorkDto,
   })
-  async getWorkPage(
-    @Query() query: QueryWorkDto,
-  ) {
+  async getWorkPage(@Query() query: QueryWorkDto) {
     return this.workService.getWorkTypePage({ ...query, isPublished: true })
   }
 
