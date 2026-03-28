@@ -30,10 +30,12 @@ import { SuperbedUploadProvider } from './superbed-upload.provider'
 import { UPLOAD_CONFIG_PROVIDER, UploadProviderEnum } from './upload.types'
 
 const pump = promisify(pipeline)
+const DEFAULT_UPLOAD_SCENE = 'shared'
 const SCENE_NAME_REGEX = /^[a-z0-9]+$/i
 const PATH_SEGMENT_REGEX = /^[\w.-]+$/
 const LEADING_DOT_REGEX = /^\./
 const TRAILING_EXTENSION_REGEX = /\.[^.]+$/
+const RESERVED_PATH_SEGMENTS = new Set(['.', '..'])
 
 interface MultipartFieldLike {
   type?: unknown
@@ -168,11 +170,15 @@ export class UploadService {
       throw new BadRequestException('不被允许的文件类型')
     }
 
-    const finalName = this.resolveFinalName(ext, options.finalName)
-    const objectKey = this.buildObjectKeyFromSegments(
+    const normalizedObjectKeySegments = this.normalizePathSegments(
       options.objectKeySegments,
-      finalName,
     )
+    if (normalizedObjectKeySegments.length === 0) {
+      throw new BadRequestException('上传路径不合法')
+    }
+
+    const finalName = this.resolveFinalName(ext, options.finalName)
+    const objectKey = posix.join(...normalizedObjectKeySegments, finalName)
     const stats = await fs.stat(options.localPath)
     const preparedFile: PreparedUploadFile = {
       tempPath: options.localPath,
@@ -182,7 +188,7 @@ export class UploadService {
       mimeType: resolvedMime,
       ext,
       fileCategory,
-      scene: options.objectKeySegments[0] ?? 'shared',
+      scene: normalizedObjectKeySegments[0] ?? DEFAULT_UPLOAD_SCENE,
       fileSize: stats.size,
     }
 
@@ -247,6 +253,8 @@ export class UploadService {
   private async uploadPreparedFile(
     preparedFile: PreparedUploadFile,
   ): Promise<UploadResult> {
+    this.assertFileSizeWithinLimit(preparedFile.fileSize)
+
     const systemUploadConfig = this.getSystemUploadConfig()
     const provider = this.resolveProvider(
       systemUploadConfig.provider,
@@ -292,24 +300,15 @@ export class UploadService {
     return posix.join(scene, dateStr, fileCategory, finalName)
   }
 
-  private buildObjectKeyFromSegments(
-    pathSegments: string[],
-    finalName: string,
-  ) {
-    const normalizedSegments = this.normalizePathSegments(pathSegments)
-    if (normalizedSegments.length === 0) {
-      throw new BadRequestException('上传路径不合法')
-    }
-
-    return posix.join(...normalizedSegments, finalName)
-  }
-
   private normalizePathSegments(pathSegments?: string[]) {
     return (pathSegments ?? [])
       .map((segment) => segment.trim())
       .filter(Boolean)
       .map((segment) => {
-        if (!PATH_SEGMENT_REGEX.test(segment)) {
+        if (
+          !PATH_SEGMENT_REGEX.test(segment)
+          || RESERVED_PATH_SEGMENTS.has(segment)
+        ) {
           throw new BadRequestException('上传路径不合法')
         }
         return segment
@@ -327,7 +326,11 @@ export class UploadService {
     }
 
     const nameWithoutExt = trimmedName.replace(TRAILING_EXTENSION_REGEX, '')
-    if (!nameWithoutExt || !PATH_SEGMENT_REGEX.test(nameWithoutExt)) {
+    if (
+      !nameWithoutExt
+      || !PATH_SEGMENT_REGEX.test(nameWithoutExt)
+      || RESERVED_PATH_SEGMENTS.has(nameWithoutExt)
+    ) {
       throw new BadRequestException('上传文件名不合法')
     }
 
@@ -389,9 +392,15 @@ export class UploadService {
   }
 
   private extractScene(sceneField: unknown): string | null {
+    if (sceneField == null) {
+      return DEFAULT_UPLOAD_SCENE
+    }
+
     let scene: string | undefined
 
-    if (
+    if (typeof sceneField === 'string') {
+      scene = sceneField
+    } else if (
       sceneField &&
       typeof sceneField === 'object' &&
       'type' in sceneField &&
@@ -408,11 +417,26 @@ export class UploadService {
       }
     }
 
-    if (!scene || !SCENE_NAME_REGEX.test(scene) || scene.length > 20) {
+    const normalizedScene = scene?.trim()
+    if (
+      !normalizedScene
+      || !SCENE_NAME_REGEX.test(normalizedScene)
+      || normalizedScene.length > 20
+    ) {
       return null
     }
 
-    return scene
+    return normalizedScene
+  }
+
+  /**
+   * 在 provider 执行前统一兜底文件大小限制。
+   * 避免本地二次上传路径绕过 Fastify multipart 的请求级限流。
+   */
+  private assertFileSizeWithinLimit(fileSize: number) {
+    if (fileSize > this.uploadConfig.maxFileSize) {
+      throw new PayloadTooLargeException('文件大小超过限制')
+    }
   }
 
   private async readFirstChunk(

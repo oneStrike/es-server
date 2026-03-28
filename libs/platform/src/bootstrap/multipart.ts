@@ -10,6 +10,44 @@ import fastifyStatic from '@fastify/static'
 import { ConfigService } from '@nestjs/config'
 
 const EXT_LEADING_DOT_REGEX = /^\./
+export const SVG_CONTENT_SECURITY_POLICY
+  = "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
+
+/**
+ * 解析静态文件响应头。
+ * 文档与压缩包统一走下载策略，SVG 继续允许预览，但额外补充最小安全头。
+ */
+export function resolveStaticFileHeaders(
+  filePath: string,
+  uploadConfig: Pick<UploadConfigInterface, 'allowExtensions'>,
+) {
+  try {
+    const ext = extname(filePath)
+      .toLowerCase()
+      .replace(EXT_LEADING_DOT_REGEX, '')
+
+    if (ext === 'svg') {
+      return {
+        'Content-Security-Policy': SVG_CONTENT_SECURITY_POLICY,
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+      }
+    }
+
+    const { document, archive } = uploadConfig.allowExtensions
+    const isDoc = document?.includes(ext)
+    const isArchive = archive?.includes(ext)
+
+    if (isDoc || isArchive) {
+      return {
+        'Content-Disposition': 'attachment',
+        'X-Content-Type-Options': 'nosniff',
+      }
+    }
+  } catch {}
+
+  return {}
+}
 
 /**
  * 配置文件上传与静态文件服务
@@ -41,16 +79,10 @@ export async function setupMultipart(
     cacheControl: true,
     maxAge: '1h',
     setHeaders(res: any, filePath: string) {
-      try {
-        const { document, archive } = uploadConfig.allowExtensions
-        const ext = extname(filePath).toLowerCase().replace(EXT_LEADING_DOT_REGEX, '')
-        const isDoc = document?.includes(ext)
-        const isArchive = archive?.includes(ext)
-        if (isDoc || isArchive) {
-          res.setHeader('Content-Disposition', 'attachment')
-          res.setHeader('X-Content-Type-Options', 'nosniff')
-        }
-      } catch {}
+      const headers = resolveStaticFileHeaders(filePath, uploadConfig)
+      for (const [name, value] of Object.entries(headers)) {
+        res.setHeader(name, value)
+      }
     },
   })
 

@@ -5,7 +5,7 @@ import {
 } from '@libs/content/work'
 import { ApiDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
-import { FileUploadResponseDto } from '@libs/platform/modules/upload'
+import { UploadResponseDto } from '@libs/platform/modules/upload'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
@@ -40,7 +40,7 @@ export class ChapterContentController {
   @Post('upload')
   @ApiDoc({
     summary: '上传章节内容',
-    model: FileUploadResponseDto,
+    model: UploadResponseDto,
   })
   async upload(@Req() req: FastifyRequest, @Query() query: UploadContentDto) {
     return this.comicContentService.addChapterContent(req, query)
