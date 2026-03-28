@@ -1,7 +1,6 @@
 import type { AppUser } from '@db/schema'
 import type { QueryUserBadgePageInput } from '@libs/growth/badge'
 import type { QueryUserExperienceRecordPageInput } from '@libs/growth/experience'
-import type { QueryGrowthLedgerPageInput } from '@libs/growth/growth-ledger'
 import type { QueryUserPointRecordPageInput } from '@libs/growth/point'
 
 /**
@@ -19,6 +18,17 @@ export interface UpdateMyProfileInput {
 }
 
 /**
+ * 换绑当前用户手机号入参。
+ * 要求同时提供旧手机号、新手机号及各自验证码，用于高风险手机号变更操作。
+ */
+export interface ChangeMyPhoneInput {
+  currentPhone: NonNullable<AppUser['phoneNumber']>
+  currentCode: string
+  newPhone: NonNullable<AppUser['phoneNumber']>
+  newCode: string
+}
+
+/**
  * 查询当前用户积分流水入参。
  * 复用成长领域分页筛选字段，由 service 在内部补充 userId。
  */
@@ -31,13 +41,6 @@ export interface QueryMyPointRecordInput
  */
 export interface QueryMyExperienceRecordInput
   extends Omit<QueryUserExperienceRecordPageInput, 'userId'> {}
-
-/**
- * 查询当前用户混合成长流水入参。
- * 复用统一账本分页筛选字段，由 service 在内部补充 userId。
- */
-export interface QueryMyGrowthLedgerRecordInput
-  extends Omit<QueryGrowthLedgerPageInput, 'userId'> {}
 
 /**
  * 查询当前用户徽章列表入参。

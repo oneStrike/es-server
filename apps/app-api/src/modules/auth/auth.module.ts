@@ -49,6 +49,6 @@ import { AppTokenStorageService } from './token-storage.service'
       useClass: AppTokenStorageService,
     },
   ],
-  exports: [AuthService, PasswordService, AppTokenStorageService],
+  exports: [AuthService, PasswordService, AppTokenStorageService, SmsService],
 })
 export class AuthModule { }

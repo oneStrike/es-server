@@ -1,6 +1,5 @@
 import { BaseUserBadgeDto } from '@libs/growth/badge'
 import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
-import { BaseGrowthLedgerRecordDto } from '@libs/growth/growth-ledger'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets'
 import { UserStatusEnum } from '@libs/platform/constant'
@@ -32,27 +31,46 @@ export class UpdateMyProfileDto extends PartialType(
 ) {}
 
 /**
+ * 换绑当前用户手机号 DTO
+ */
+export class ChangeMyPhoneDto {
+  @StringProperty({
+    description: '当前已绑定手机号',
+    example: '13800138000',
+    required: true,
+    maxLength: 20,
+  })
+  currentPhone!: string
+
+  @StringProperty({
+    description: '当前已绑定手机号验证码',
+    example: '123456',
+    required: true,
+  })
+  currentCode!: string
+
+  @StringProperty({
+    description: '新的手机号',
+    example: '13900139000',
+    required: true,
+    maxLength: 20,
+  })
+  newPhone!: string
+
+  @StringProperty({
+    description: '新手机号验证码',
+    example: '123456',
+    required: true,
+  })
+  newCode!: string
+}
+
+/**
  * 查询我的经验记录 DTO
  */
 export class QueryMyExperienceRecordDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
-) {}
-
-/**
- * 查询我的混合成长流水 DTO
- */
-export class QueryMyGrowthLedgerRecordDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseGrowthLedgerRecordDto, [
-      'assetType',
-      'ruleId',
-      'ruleType',
-      'targetType',
-      'targetId',
-    ] as const),
-  ),
 ) {}
 
 /**
@@ -101,23 +119,6 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
   })
   afterExperience!: number
 }
-
-export class UserGrowthLedgerRecordDto extends PickType(BaseGrowthLedgerRecordDto, [
-  'id',
-  'userId',
-  'assetType',
-  'ruleId',
-  'ruleType',
-  'targetType',
-  'targetId',
-  'delta',
-  'beforeValue',
-  'afterValue',
-  'bizKey',
-  'remark',
-  'context',
-  'createdAt',
-] as const) {}
 
 export class UserCountDto extends PickType(BaseAppUserCountDto, [
   'commentCount',
@@ -291,62 +292,6 @@ export class UserExperienceStatsDto {
     validation: false,
   })
   gapToNextLevel?: number
-}
-
-/**
- * 用户成长汇总 DTO
- */
-export class UserGrowthSummaryDto {
-  @NumberProperty({
-    description: '当前积分',
-    example: 120,
-    validation: false,
-  })
-  points!: number
-
-  @NumberProperty({
-    description: '当前经验值',
-    example: 350,
-    validation: false,
-  })
-  experience!: number
-
-  @NumberProperty({
-    description: '当前等级ID',
-    example: 1,
-    required: false,
-    validation: false,
-  })
-  levelId?: number
-
-  @StringProperty({
-    description: '当前等级名称',
-    example: '新手',
-    required: false,
-    validation: false,
-  })
-  levelName?: string
-
-  @NumberProperty({
-    description: '徽章数量',
-    example: 3,
-    validation: false,
-  })
-  badgeCount!: number
-
-  @NumberProperty({
-    description: '今日获得积分',
-    example: 15,
-    validation: false,
-  })
-  todayPointEarned!: number
-
-  @NumberProperty({
-    description: '今日获得经验值',
-    example: 20,
-    validation: false,
-  })
-  todayExperienceEarned!: number
 }
 
 /**

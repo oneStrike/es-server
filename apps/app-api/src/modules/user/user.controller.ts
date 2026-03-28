@@ -2,11 +2,8 @@
  * 用户控制器
  *
  * 提供用户中心相关的 API 接口，包括：
- * - 用户基本信息获取和更新
- * - 用户计数获取
- * - 用户中心汇总信息
- * - 用户状态信息
- * - 用户资产统计
+ * - 用户基本信息与安全设置
+ * - 用户中心汇总与状态信息
  * - 用户成长信息（积分、经验、徽章）
  */
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
@@ -15,18 +12,14 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { QueryMyPointRecordDto, UserPointRecordDto } from './dto/user-point.dto'
 import {
+  ChangeMyPhoneDto,
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
-  QueryMyGrowthLedgerRecordDto,
   UpdateMyProfileDto,
-  UserAssetsSummaryDto,
   UserBadgeItemDto,
   UserCenterDto,
-  UserCountDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
-  UserGrowthLedgerRecordDto,
-  UserGrowthSummaryDto,
   UserPointStatsDto,
   UserStatusSummaryDto,
 } from './dto/user.dto'
@@ -65,15 +58,18 @@ export class UserController {
   }
 
   /**
-   * 获取当前用户计数
+   * 换绑当前用户手机号
    */
-  @Get('counts/stats')
+  @Post('phone/change')
   @ApiDoc({
-    summary: '获取当前用户计数',
-    model: UserCountDto,
+    summary: '换绑当前用户手机号',
+    model: Boolean,
   })
-  async getCounts(@CurrentUser('sub') userId: number) {
-    return this.userService.getUserCounts(userId)
+  async changePhone(
+    @Body() body: ChangeMyPhoneDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.userService.changeMyPhone(userId, body)
   }
 
   /**
@@ -98,30 +94,6 @@ export class UserController {
   })
   async getStatus(@CurrentUser('sub') userId: number) {
     return this.userService.getUserStatus(userId)
-  }
-
-  /**
-   * 获取用户资产统计
-   */
-  @Get('assets/stats')
-  @ApiDoc({
-    summary: '获取用户资产统计',
-    model: UserAssetsSummaryDto,
-  })
-  async getAssetsSummary(@CurrentUser('sub') userId: number) {
-    return this.userService.getUserAssetsSummary(userId)
-  }
-
-  /**
-   * 获取用户成长汇总
-   */
-  @Get('growth/summary')
-  @ApiDoc({
-    summary: '获取用户成长汇总',
-    model: UserGrowthSummaryDto,
-  })
-  async getGrowthSummary(@CurrentUser('sub') userId: number) {
-    return this.userService.getUserGrowthSummary(userId)
   }
 
   /**
@@ -176,21 +148,6 @@ export class UserController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.userService.getUserExperienceRecords(userId, query)
-  }
-
-  /**
-   * 查询用户混合成长流水
-   */
-  @Get('growth/record/page')
-  @ApiPageDoc({
-    summary: '查询用户混合成长流水',
-    model: UserGrowthLedgerRecordDto,
-  })
-  async getGrowthLedgerRecords(
-    @Query() query: QueryMyGrowthLedgerRecordDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.userService.getUserGrowthLedgerRecords(userId, query)
   }
 
   /**

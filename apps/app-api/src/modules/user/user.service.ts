@@ -4,41 +4,39 @@ import type { SQL } from 'drizzle-orm'
  *
  * 提供用户中心相关的业务逻辑，包括：
  * - 用户基本信息的获取和更新
- * - 用户计数的获取
  * - 用户中心汇总信息
  * - 用户状态判断
  * - 用户资产统计（购买、下载、收藏、点赞等）
  * - 用户成长信息（积分、经验、等级、徽章）
  */
 import type {
+  ChangeMyPhoneInput,
   QueryMyBadgeInput,
   QueryMyExperienceRecordInput,
-  QueryMyGrowthLedgerRecordInput,
   QueryMyPointRecordInput,
   UpdateMyProfileInput,
 } from './user.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth/growth-ledger'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
 import { UserAssetsService } from '@libs/interaction/user-assets'
 import { MessageInboxService } from '@libs/message/inbox'
 import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, ilike, inArray, sql } from 'drizzle-orm'
+import { AppAuthErrorMessages } from '../auth/auth.constant'
+import { SmsService } from '../auth/sms.service'
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly userCoreService: UserCoreService,
+    private readonly smsService: SmsService,
     private readonly userAssetsService: UserAssetsService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
-    private readonly growthLedgerService: GrowthLedgerService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
 
@@ -108,11 +106,54 @@ export class UserService {
   }
 
   /**
-   * 获取用户计数
+   * 换绑当前用户手机号。
+   *
+   * 该操作要求用户先校验旧手机号，再校验新手机号，避免高风险账号标识被未授权篡改。
+   * 新手机号占用冲突统一翻译为稳定业务文案，不直接暴露数据库唯一约束错误。
+   *
+   * @param userId 当前用户ID
+   * @param dto 换绑手机号入参
+   * @returns 是否换绑成功
    */
-  async getUserCounts(userId: number) {
-    await this.userCoreService.ensureUserExists(userId)
-    return this.userCoreService.getUserCounts(userId)
+  async changeMyPhone(userId: number, dto: ChangeMyPhoneInput) {
+    const user = await this.userCoreService.ensureUserExists(userId)
+
+    if (!user.phoneNumber) {
+      throw new BadRequestException('当前账号未绑定手机号')
+    }
+    if (dto.currentPhone !== user.phoneNumber) {
+      throw new BadRequestException('当前手机号与已绑定手机号不一致')
+    }
+    if (dto.newPhone === user.phoneNumber) {
+      throw new BadRequestException('新手机号不能与当前手机号相同')
+    }
+
+    await this.smsService.validateVerifyCode({
+      phone: dto.currentPhone,
+      code: dto.currentCode,
+    })
+    await this.smsService.validateVerifyCode({
+      phone: dto.newPhone,
+      code: dto.newCode,
+    })
+
+    try {
+      const result = await this.drizzle.withErrorHandling(() =>
+        this.db
+          .update(this.appUser)
+          .set({
+            phoneNumber: dto.newPhone,
+          })
+          .where(eq(this.appUser.id, userId)),
+      )
+      this.drizzle.assertAffectedRows(result, '用户不存在')
+      return true
+    } catch (error) {
+      if (this.drizzle.isUniqueViolation(error)) {
+        throw new BadRequestException(AppAuthErrorMessages.PHONE_EXISTS)
+      }
+      throw error
+    }
   }
 
   /**
@@ -172,32 +213,6 @@ export class UserService {
   async getUserStatus(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
     return this.userCoreService.buildUserStatus(user)
-  }
-
-  /**
-   * 获取用户成长汇总
-   */
-  async getUserGrowthSummary(userId: number) {
-    const [user, pointStats, experienceStats, badgeCount] = await Promise.all([
-      this.userCoreService.ensureUserExists(userId),
-      this.userPointService.getUserPointStats(userId),
-      this.getUserExperienceStats(userId),
-      this.userCoreService.getBadgeCount(userId),
-    ])
-
-    const level = user.levelId
-      ? await this.userCoreService.getLevelInfo(user.levelId)
-      : undefined
-
-    return {
-      points: user.points,
-      experience: user.experience,
-      levelId: user.levelId ?? undefined,
-      levelName: level?.name ?? undefined,
-      badgeCount,
-      todayPointEarned: pointStats.todayEarned,
-      todayExperienceEarned: experienceStats.todayEarned,
-    }
   }
 
   /**
@@ -319,23 +334,6 @@ export class UserService {
     query: QueryMyExperienceRecordInput,
   ) {
     return this.userExperienceService.getExperienceRecordPage({
-      ...query,
-      userId,
-    })
-  }
-
-  /**
-   * 获取用户混合成长流水
-   *
-   * @param userId 用户ID
-   * @param query 查询条件
-   * @returns 混合成长流水分页数据
-   */
-  async getUserGrowthLedgerRecords(
-    userId: number,
-    query: QueryMyGrowthLedgerRecordInput,
-  ) {
-    return this.growthLedgerService.getGrowthLedgerPage({
       ...query,
       userId,
     })

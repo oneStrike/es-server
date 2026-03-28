@@ -37,7 +37,8 @@ export class SmsService {
   async sendVerifyCode(dto: AppSendVerifyCodeInput) {
     if (
       SmsTemplateCodeEnum.VERIFY_BIND_PHONE === dto.templateCode ||
-      SmsTemplateCodeEnum.RESET_PASSWORD === dto.templateCode
+      SmsTemplateCodeEnum.RESET_PASSWORD === dto.templateCode ||
+      SmsTemplateCodeEnum.BIND_NEW_PHONE === dto.templateCode
     ) {
       const [user] = await this.db
         .select({ id: this.appUser.id })
@@ -46,7 +47,11 @@ export class SmsService {
           and(eq(this.appUser.phoneNumber, dto.phone), isNull(this.appUser.deletedAt)),
         )
         .limit(1)
-      if (!user) {
+      if (
+        SmsTemplateCodeEnum.BIND_NEW_PHONE === dto.templateCode
+          ? user
+          : !user
+      ) {
         // 对外统一返回，避免通过发送验证码接口枚举手机号是否存在。
         return true
       }
