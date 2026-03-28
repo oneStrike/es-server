@@ -877,6 +877,7 @@ export class CommentService {
    * @returns 分页的回复列表，包含用户基本信息
    */
   async getReplies(query: RepliesQuery) {
+    console.log("🚀 ~ CommentService ~ getReplies ~ query:", query)
     const { commentId, pageIndex, pageSize } = query
     const page = await this.drizzle.ext.findPagination(this.userComment, {
       where: and(

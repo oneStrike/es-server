@@ -57,7 +57,11 @@ export class AuditInterceptor implements NestInterceptor {
     try {
       // 从请求中获取用户信息
       const user = request.user
-      const userId = Number(user?.sub)
+      const parsedUserId = Number(user?.sub)
+      const userId
+        = Number.isFinite(parsedUserId) && parsedUserId > 0
+          ? parsedUserId
+          : undefined
       const username = user?.username
       // 构建审计日志内容
       const content = `${metadata.content}${isSuccess ? '成功' : '失败'}`
