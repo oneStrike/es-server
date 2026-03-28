@@ -65,16 +65,19 @@ P2 默认不作为近期前置的重型改造：
 - [P2-C-02 评论审核后台](./task-growth-reward-work-items/p2c/02-comment-moderation-admin.md)
 - [P2-C-03 `CHAT` outbox 域闭环](./task-growth-reward-work-items/p2c/03-chat-outbox-closure.md)
 
-## 5. 推荐执行顺序
+通知域跨任务公共边界详见：
 
-1. 先完成 `P2-A`
-2. 再启动 `P2-B`
-3. 最后按需推进 `P2-C`
+- [通知域契约说明](./notification-domain-contract.md)
 
-注意：
+## 5. 排期引用
 
-- 不建议 `P2-A` 与 `P2-B` 并行启动
-- 不建议把 `P2-C` 和其他重型基础设施改造混成一个任务包
+本文件不再重复维护任务顺序。
+
+P2 内部的优先级、依赖关系、并行关系与推荐波次，统一以：
+
+- [任务执行计划](./task-growth-reward-work-items/execution-plan.md)
+
+为唯一事实源。
 
 ## 6. 阶段验收
 

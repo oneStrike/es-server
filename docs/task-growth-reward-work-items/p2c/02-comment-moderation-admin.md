@@ -10,6 +10,19 @@
 - 支持分页、筛选、审核、隐藏
 - 明确与奖励、通知、任务的联动边界
 
+## 当前代码锚点
+
+- `libs/interaction/src/comment/comment.service.ts`
+- `libs/interaction/src/comment/comment-growth.service.ts`
+- `db/schema/app/user-comment.ts`
+- `libs/message/src/notification/notification.service.ts`
+
+## 非目标
+
+- 不重做评论发布基础能力
+- 不在后台模块里重新定义治理规则本身
+- 不做历史评论批量补审或批量补发奖脚本
+
 ## 主要改动
 
 - 定义评论处理状态流转
@@ -21,10 +34,13 @@
 - 运营可以在后台处理评论审核
 - 评论域不再游离于治理闸门之外
 
-## 执行信息
+## 完成后同步文档
 
-- 优先级：`S3`
-- 硬前置：`P2-C-01`
-- 软前置：`P2-A-03`
-- 直接后置：评论域治理闭环
-- 可并行：`P2-C-03`
+- [领域设计总览](../../task-growth-reward-domain-design.md)
+- [开发排期版](../development-plan.md)
+- [P2-C-01 治理闸门统一](./01-governance-gate-unification.md)
+
+## 排期引用
+
+- 本任务的优先级、依赖关系、并行策略统一以 [执行计划](../execution-plan.md) 为准
+- 若本页与其他文档出现排期描述不一致，以 `execution-plan.md` 为准

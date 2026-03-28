@@ -51,13 +51,15 @@ P1 默认先扩 `task_assignment`，不直接引入新的奖励结算表。
 - [P1-04 账本 DTO 解释力增强](./task-growth-reward-work-items/p1/04-ledger-dto-explainability.md)
 - [P1-05 混合成长账本分页接口](./task-growth-reward-work-items/p1/05-mixed-growth-ledger-page.md)
 
-## 5. 推荐执行顺序
+## 5. 排期引用
 
-1. `P1-01`
-2. `P1-03`
-3. `P1-02`
-4. `P1-04`
-5. `P1-05`
+本文件不再重复维护任务顺序。
+
+P1 内部的优先级、依赖关系、并行关系与推荐波次，统一以：
+
+- [任务执行计划](./task-growth-reward-work-items/execution-plan.md)
+
+为唯一事实源。
 
 ## 6. 阶段验收
 

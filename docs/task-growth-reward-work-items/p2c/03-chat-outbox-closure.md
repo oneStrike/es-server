@@ -10,6 +10,19 @@
 - 明确是否写 delivery
 - 明确 ack 边界
 
+## 当前代码锚点
+
+- `db/schema/message/message-outbox.ts`
+- `libs/message/src/outbox/outbox.worker.ts`
+- `libs/message/src/chat/chat.service.ts`
+- `apps/admin-api/src/modules/message/message-monitor.service.ts`
+
+## 非目标
+
+- 不把聊天 ack 语义并入通知 ack
+- 不让 chat 复用 `user_notification` 作为主读模型
+- 不在本任务里自动扩展整套通知 delivery 语义到 chat 域
+
 ## 主要改动
 
 - 让 `message_outbox` 的 `CHAT` 域不再停留在声明层
@@ -21,10 +34,13 @@
 - `CHAT` 域从“定义存在”变成“链路闭环”
 - 不因为复用 outbox 就把聊天与通知模型混成一层
 
-## 执行信息
+## 完成后同步文档
 
-- 优先级：`S3`
-- 硬前置：`P2-B-03`
-- 软前置：`P2-C-01`
-- 直接后置：chat 域消息闭环
-- 可并行：`P2-C-02`
+- [通知域契约](../../notification-domain-contract.md)
+- [开发排期版](../development-plan.md)
+- [P2-B-03 通知投递结果表](../p2b/03-notification-delivery.md)
+
+## 排期引用
+
+- 本任务的优先级、依赖关系、并行策略统一以 [执行计划](../execution-plan.md) 为准
+- 若本页与其他文档出现排期描述不一致，以 `execution-plan.md` 为准

@@ -6,25 +6,44 @@
 
 ## 范围
 
-- 定义统一治理态
+- 定义统一治理门控语义
 - 明确哪些事件可以进入主链路
 - 收敛主题、评论、举报的治理口径
 
+## 当前代码锚点
+
+- `libs/forum/src/topic/forum-topic.service.ts`
+- `libs/interaction/src/comment/comment.service.ts`
+- `libs/interaction/src/report/report.service.ts`
+- `libs/platform/src/constant/audit.constant.ts`
+- `libs/interaction/src/report/report.constant.ts`
+
+## 非目标
+
+- 不把主题、评论、举报强行改成同一个存储模型或同一个枚举
+- 不重做现有审核后台或举报处理后台
+- 不让待审核内容默认进入公开展示、奖励或通知主链路
+
 ## 主要改动
 
-- 约束只有有效治理态才能进入奖励主链路
+- 用统一门控语义映射各模块自己的状态，而不是要求底层状态值完全相同
+- 约束只有有效治理态才能进入奖励、通知、任务推进主链路
 - 规定待审核内容是否允许进入提醒或待办链路
-- 收口模块间对 `APPROVED / PENDING / REJECTED` 的理解
+- 收口模块间对 `APPROVED / PENDING / REJECTED / RESOLVED` 的业务含义
 
 ## 完成标准
 
 - 审核与裁决不再只是后台字段，而是正式闸门
-- 主题、评论、举报在模型层语义一致
+- 主题、评论、举报在门控层语义一致
+- 后续评论审核、通知边界、chat outbox 闭环可复用同一治理前置
 
-## 执行信息
+## 完成后同步文档
 
-- 优先级：`S2`
-- 硬前置：`P0-01`、`P2-A-01`
-- 软前置：`P0-03`、`P0-04`
-- 直接后置：`P2-C-02`、`P2-C-03`
-- 可并行：`P2-B-04` 仅分析阶段可并行，实施阶段不建议并行
+- [领域设计总览](../../task-growth-reward-domain-design.md)
+- [事件定义专项设计](../../event-registry-special-design.md)
+- 若影响通知域边界，同时同步 [通知域契约](../../notification-domain-contract.md)
+
+## 排期引用
+
+- 本任务的优先级、依赖关系、并行策略统一以 [执行计划](../execution-plan.md) 为准
+- 若本页与其他文档出现排期描述不一致，以 `execution-plan.md` 为准

@@ -15,6 +15,7 @@
 
 - 文件清单只列关键路径，不追求穷举
 - 波次顺序以 [execution-plan.md](./execution-plan.md) 为准
+- 本文不是优先级事实源，不重复维护“最适合直接开工”的排序
 
 ## 2. Wave 1
 
@@ -118,6 +119,8 @@
 - 开工条件：建议先完成 `P0-01`
 - 预计改动模块：`apps/app-api/user`、`apps/admin-api/app-user`、`libs/growth/growth-ledger`
 - 预计影响文件：
+  - `libs/growth/src/point/dto/point-record.dto.ts`
+  - `libs/growth/src/experience/dto/experience-record.dto.ts`
   - `apps/app-api/src/modules/user/dto/user-point.dto.ts`
   - `apps/app-api/src/modules/user/dto/user.dto.ts`
   - `apps/admin-api/src/modules/app-user/dto/app-user.dto.ts`
@@ -238,46 +241,49 @@
 
 ### [P2-B-02 用户通知偏好](./p2b/02-notification-preference.md)
 
-- 开工条件：`P2-B-01`
+- 开工条件：无硬前置，建议先确认通知域契约
 - 预计改动模块：`db/schema/message`、`libs/message/notification`、`apps/app-api/message`
 - 预计影响文件：
   - `db/schema/message/notification-preference.ts` 新文件
   - `apps/app-api/src/modules/message/message.controller.ts`
   - `apps/app-api/src/modules/message/dto/message.dto.ts`
+  - `libs/message/src/notification/notification.constant.ts`
   - `libs/message/src/notification/notification.service.ts`
 - 核心测试点：
   - 获取 / 更新偏好接口可用
   - 关闭偏好后不再投递对应通知
-  - 默认值策略明确且可回归
+  - 第一阶段按 `MessageNotificationTypeEnum` 控制，默认值策略明确且可回归
 
 ### [P2-B-03 通知投递结果表](./p2b/03-notification-delivery.md)
 
-- 开工条件：`P2-B-01`
+- 开工条件：无硬前置，建议先确认通知域契约
 - 预计改动模块：`db/schema/message`、`libs/message/outbox`、`apps/admin-api/message`
 - 预计影响文件：
   - `db/schema/message/notification-delivery.ts` 新文件
   - `libs/message/src/outbox/outbox.worker.ts`
   - `libs/message/src/outbox/outbox.service.ts`
+  - `libs/message/src/notification/notification.service.ts`
   - `apps/admin-api/src/modules/message/message-monitor.service.ts`
   - `apps/admin-api/src/modules/message/dto/message-monitor.dto.ts`
 - 核心测试点：
   - 成功投递会写 delivery
-  - 失败和重试会写明原因与次数
+  - 失败、重试、偏好跳过、自通知跳过、幂等跳过能区分写明
   - 管理端可查看 delivery 结果
 
 ### [P2-B-04 任务提醒与公告边界](./p2b/04-task-reminder-and-announcement-boundary.md)
 
-- 开工条件：`P2-B-01`
+- 开工条件：`P2-B-02`、`P2-B-03`
 - 预计改动模块：`libs/growth/task`、`libs/message`、`libs/app-content/announcement`、`apps/app-api/message`
 - 预计影响文件：
   - `libs/growth/src/task/task.service.ts`
   - `libs/message/src/notification/notification.service.ts`
   - `libs/message/src/inbox/inbox.service.ts`
   - `libs/app-content/src/announcement/announcement.service.ts`
+  - `libs/message/src/notification/notification.constant.ts`
   - `db/schema/app/app-announcement-read.ts`
 - 核心测试点：
   - 三类提醒场景使用稳定幂等键
-  - 重要公告可进入通知或 inbox
+  - 重要公告若进入消息中心，必须物化为 `user_notification`
   - 普通公告继续留在内容域
   - 未读统计不会重复计算
 
@@ -327,14 +333,8 @@
   - 聊天 ack 与通知 ack 边界清楚
   - 若写 delivery，不会误用通知域语义
 
-## 11. 最后建议
+## 11. 维护规则
 
-最适合直接开工的仍然是：
-
-1. `P0-01`
-2. `P0-05`
-3. `P0-02`
-4. `P0-04`
-5. `P0-03`
-
-因为这 5 个任务最直接决定后面所有奖励、治理、事件定义层的正确性基础。
+- 若任务依赖或波次发生变化，只修改 [execution-plan.md](./execution-plan.md)
+- 若改动模块或测试点变化，再同步修改本文
+- 若任务边界变化，优先修改对应 work-item 文件，而不是在本文追加例外说明

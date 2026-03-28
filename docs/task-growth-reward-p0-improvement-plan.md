@@ -43,13 +43,15 @@ P0 不纳入范围：
 - [P0-04 主题审核通过奖励补发](./task-growth-reward-work-items/p0/04-topic-audit-reward-backfill.md)
 - [P0-05 管理端人工补发稳定操作键](./task-growth-reward-work-items/p0/05-admin-manual-adjustment-operation-key.md)
 
-## 4. 推荐执行顺序
+## 4. 排期引用
 
-1. `P0-01`
-2. `P0-02`
-3. `P0-03`
-4. `P0-04`
-5. `P0-05`
+本文件不再重复维护任务顺序。
+
+P0 内部的优先级、依赖关系、并行关系与推荐波次，统一以：
+
+- [任务执行计划](./task-growth-reward-work-items/execution-plan.md)
+
+为唯一事实源。
 
 ## 5. 阶段验收
 
