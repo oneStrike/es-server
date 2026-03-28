@@ -8,7 +8,8 @@ import type {
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
-import { FavoriteService } from '@libs/interaction/favorite'
+import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction/favorite'
+import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
 import {
   UserDefaults,
   UserStatusEnum,
@@ -29,6 +30,8 @@ export class UserProfileService {
     protected readonly pointService: UserPointService,
     /** 收藏服务 */
     protected readonly favoriteService: FavoriteService,
+    /** 点赞服务 */
+    protected readonly likeService: LikeService,
     private readonly appUserCountService: AppUserCountService,
   ) { }
 
@@ -93,6 +96,21 @@ export class UserProfileService {
       updatedAt: user.updatedAt,
       deletedAt: user.deletedAt ?? undefined,
     }
+  }
+
+  /**
+   * 获取论坛主题场景使用的用户简要信息。
+   * 仅返回主题列表展示所需的最小字段，避免公开接口暴露过多资料。
+   */
+  private async getTopicUserBriefById(userId: number) {
+    return this.db.query.appUser.findFirst({
+      where: { id: userId },
+      columns: {
+        id: true,
+        nickname: true,
+        avatarUrl: true,
+      },
+    })
   }
 
   /**
@@ -252,9 +270,9 @@ export class UserProfileService {
   }
 
   /**
-   * 查看我的主题
+   * 查看我的主题，并补充当前用户对这些主题的交互状态、用户简要信息与板块简要信息。
    * @param userId - 用户ID
-   * @returns 分页的主题列表，包含板块信息和回复数统计
+   * @returns 分页的主题列表，包含板块信息、liked/favorited 状态和发帖用户简要信息
    */
   async getMyTopics(userId: number, query?: { sectionId?: number, pageIndex?: number, pageSize?: number }) {
     const conditions: SQL[] = [
@@ -275,6 +293,7 @@ export class UserProfileService {
       pick: [
         'id',
         'sectionId',
+        'userId',
         'title',
         'images',
         'videos',
@@ -295,17 +314,44 @@ export class UserProfileService {
       return page
     }
 
+    const topicIds = page.list.map((item) => item.id)
     const sectionIds = [...new Set(page.list.map((item) => item.sectionId).filter((id) => !!id))]
-    const sections = sectionIds.length
-      ? await this.db
-        .select({ id: this.forumSection.id, name: this.forumSection.name })
-        .from(this.forumSection)
-        .where(and(inArray(this.forumSection.id, sectionIds), isNull(this.forumSection.deletedAt)))
-      : []
+    const [likedMap, favoritedMap, sections, user] = await Promise.all([
+      this.likeService.checkStatusBatch(
+        LikeTargetTypeEnum.FORUM_TOPIC,
+        topicIds,
+        userId,
+      ),
+      this.favoriteService.checkStatusBatch(
+        FavoriteTargetTypeEnum.FORUM_TOPIC,
+        topicIds,
+        userId,
+      ),
+      sectionIds.length
+        ? this.db
+          .select({
+            id: this.forumSection.id,
+            name: this.forumSection.name,
+            icon: this.forumSection.icon,
+            cover: this.forumSection.cover,
+          })
+          .from(this.forumSection)
+          .where(and(inArray(this.forumSection.id, sectionIds), isNull(this.forumSection.deletedAt)))
+        : Promise.resolve<Array<{
+            id: number
+            name: string
+            icon: string | null
+            cover: string | null
+          }>>([]),
+      this.getTopicUserBriefById(userId),
+    ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const list = page.list.map((item) => {
       return {
         ...item,
+        liked: likedMap.get(item.id) ?? false,
+        favorited: favoritedMap.get(item.id) ?? false,
+        user,
         section: item.sectionId ? sectionMap.get(item.sectionId) ?? null : null,
       }
     })

@@ -108,8 +108,8 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
       drizzle-orm:
-        specifier: 1.0.0-beta.17-67b1795
-        version: 1.0.0-beta.17-67b1795(@electric-sql/pglite@0.3.15)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3))
+        specifier: 1.0.0-beta.20
+        version: 1.0.0-beta.20(@electric-sql/pglite@0.3.15)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3))
       fastify:
         specifier: ^5.8.4
         version: 5.8.4
@@ -247,8 +247,8 @@ importers:
         specifier: ^17.3.1
         version: 17.3.1
       drizzle-kit:
-        specifier: 1.0.0-beta.17-67b1795
-        version: 1.0.0-beta.17-67b1795
+        specifier: 1.0.0-beta.20
+        version: 1.0.0-beta.20
       eslint:
         specifier: ^10.1.0
         version: 10.1.0(jiti@2.6.1)
@@ -3433,12 +3433,12 @@ packages:
     resolution: {integrity: sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-beta.17-67b1795:
-    resolution: {integrity: sha512-YW2ngYybhjgErkEd0+JLfu2+2wHUJ5HfTSEt7Q0yU60vwNn7XEKSojPnESwx5FtqdpG7SQHYea23vlDcjd8T1g==}
+  drizzle-kit@1.0.0-beta.20:
+    resolution: {integrity: sha512-qMUBnrOQIU+H32aF80BSn7lT1IQuKmofCypmkrKMuOMqvM0bhz5hjCHim1bLcXUzXYRtTSr6U2pe0MSV79WbAg==}
     hasBin: true
 
-  drizzle-orm@1.0.0-beta.17-67b1795:
-    resolution: {integrity: sha512-QuCubYKl1zgAP4SaNeqiRObfAWSYKRvVVp8s7uQSeOOEbyN6GiuhHaPTxNRoMPazR8/40d+j1rz6N7RUPcA3Jg==}
+  drizzle-orm@1.0.0-beta.20:
+    resolution: {integrity: sha512-7qiuw+Z6yGr+ywt3PS5dP6UCfdymIuFT/ni6GnPGzLhkBIolNBTo4ByMBWTxJ7dW/Ya6d73GtkeuKfcVcriVHA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -9765,14 +9765,15 @@ snapshots:
 
   dotenv@17.3.1: {}
 
-  drizzle-kit@1.0.0-beta.17-67b1795:
+  drizzle-kit@1.0.0-beta.20:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
       esbuild: 0.25.12
+      get-tsconfig: 4.13.7
       jiti: 2.6.1
 
-  drizzle-orm@1.0.0-beta.17-67b1795(@electric-sql/pglite@0.3.15)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3)):
+  drizzle-orm@1.0.0-beta.20(@electric-sql/pglite@0.3.15)(@sinclair/typebox@0.34.48)(@types/mssql@9.1.9(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(valibot@1.2.0(typescript@5.9.3)):
     dependencies:
       '@types/mssql': 9.1.9(@azure/core-client@1.10.1)
       mssql: 11.0.1(@azure/core-client@1.10.1)

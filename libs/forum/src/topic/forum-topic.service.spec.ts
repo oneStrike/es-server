@@ -186,3 +186,221 @@ describe('forum topic audit reward backfill', () => {
     expect(tryRewardByRule).not.toHaveBeenCalled()
   })
 })
+
+describe('forum topic public page payload', () => {
+  it('returns unified relation and interaction fields for each public topic item', async () => {
+    const { ForumTopicService } = await import('./forum-topic.service')
+
+    const ensureUserCanAccessSection = jest.fn().mockResolvedValue(undefined)
+    const findPagination = jest.fn().mockResolvedValue({
+      list: [
+        {
+          id: 101,
+          sectionId: 9,
+          userId: 7,
+          title: '公开主题',
+          images: [],
+          videos: [],
+          isPinned: false,
+          isFeatured: true,
+          isLocked: false,
+          viewCount: 12,
+          commentCount: 3,
+          likeCount: 2,
+          favoriteCount: 1,
+          lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
+          createdAt: new Date('2026-03-28T00:00:00.000Z'),
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        id: 7,
+        nickname: '发帖用户',
+        avatarUrl: 'https://example.com/avatar.png',
+      },
+    ])
+    const findSectionFirst = jest.fn().mockResolvedValue({
+      id: 9,
+      name: '综合讨论',
+      icon: 'section-icon.png',
+      cover: 'section-cover.png',
+    })
+    const likedStatusBatch = jest
+      .fn()
+      .mockResolvedValue(new Map([[101, true]]))
+    const favoritedStatusBatch = jest
+      .fn()
+      .mockResolvedValue(new Map([[101, false]]))
+
+    const service = new ForumTopicService(
+      {
+        db: {
+          query: {
+            appUser: {
+              findMany,
+            },
+            forumSection: {
+              findFirst: findSectionFirst,
+            },
+          },
+        },
+        ext: {
+          findPagination,
+        },
+        schema: {
+          forumTopic: {
+            sectionId: 'sectionId',
+            deletedAt: 'deletedAt',
+            auditStatus: 'auditStatus',
+            isHidden: 'isHidden',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { ensureUserCanAccessSection } as any,
+      { checkStatusBatch: likedStatusBatch } as any,
+      { checkStatusBatch: favoritedStatusBatch } as any,
+      {} as any,
+    )
+
+    const result = await service.getPublicTopics({
+      sectionId: 9,
+      userId: 5,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    expect(ensureUserCanAccessSection).toHaveBeenCalledWith(
+      9,
+      5,
+      { requireEnabled: true },
+    )
+    expect(likedStatusBatch).toHaveBeenCalledWith(3, [101], 5)
+    expect(favoritedStatusBatch).toHaveBeenCalledWith(3, [101], 5)
+    expect(result.list).toEqual([
+      expect.objectContaining({
+        id: 101,
+        liked: true,
+        favorited: false,
+        section: {
+          id: 9,
+          name: '综合讨论',
+          icon: 'section-icon.png',
+          cover: 'section-cover.png',
+        },
+        user: {
+          id: 7,
+          nickname: '发帖用户',
+          avatarUrl: 'https://example.com/avatar.png',
+        },
+      }),
+    ])
+  })
+})
+
+describe('forum topic public detail payload', () => {
+  it('already returns author brief info and interaction status', async () => {
+    const { ForumTopicService } = await import('./forum-topic.service')
+
+    const ensureUserCanAccessSection = jest.fn().mockResolvedValue(undefined)
+    const checkLikeStatus = jest.fn().mockResolvedValue(true)
+    const checkFavoriteStatus = jest.fn().mockResolvedValue(false)
+    const recordBrowseLogSafely = jest.fn().mockResolvedValue(undefined)
+    const findFirst = jest.fn().mockResolvedValue({
+      id: 101,
+      sectionId: 9,
+      userId: 7,
+      title: '详情主题',
+      content: '详情内容',
+      images: [],
+      videos: [],
+      isPinned: false,
+      isFeatured: false,
+      isLocked: false,
+      isHidden: false,
+      auditStatus: AuditStatusEnum.APPROVED,
+      viewCount: 10,
+      likeCount: 2,
+      commentCount: 3,
+      favoriteCount: 1,
+      version: 0,
+      lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
+      createdAt: new Date('2026-03-28T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-29T00:00:00.000Z'),
+      tags: [],
+      user: {
+        id: 7,
+        nickname: '详情作者',
+        avatarUrl: 'https://example.com/avatar.png',
+      },
+    })
+
+    const service = new ForumTopicService(
+      {
+        db: {
+          query: {
+            forumTopic: {
+              findFirst,
+            },
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+      { recordBrowseLogSafely } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { ensureUserCanAccessSection } as any,
+      { checkLikeStatus } as any,
+      { checkFavoriteStatus } as any,
+      {} as any,
+    )
+
+    const result = await service.getPublicTopicById(101, {
+      userId: 5,
+      ipAddress: '127.0.0.1',
+      device: 'device-1',
+    })
+
+    expect(ensureUserCanAccessSection).toHaveBeenCalledWith(
+      9,
+      5,
+      {
+        requireEnabled: true,
+        notFoundMessage: '主题不存在',
+      },
+    )
+    expect(checkLikeStatus).toHaveBeenCalledWith({
+      targetType: 3,
+      targetId: 101,
+      userId: 5,
+    })
+    expect(checkFavoriteStatus).toHaveBeenCalledWith({
+      targetType: 3,
+      targetId: 101,
+      userId: 5,
+    })
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 101,
+        liked: true,
+        favorited: false,
+        user: {
+          id: 7,
+          nickname: '详情作者',
+          avatarUrl: 'https://example.com/avatar.png',
+        },
+      }),
+    )
+  })
+})

@@ -77,6 +77,24 @@ export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
     validation: false,
   })
   favorited!: boolean
+
+  @NestedProperty({
+    description: '发帖用户',
+    required: true,
+    type: AppForumTopicUserBriefDto,
+    validation: false,
+    nullable: false,
+  })
+  user!: AppForumTopicUserBriefDto
+
+  @NestedProperty({
+    description: '所属板块',
+    required: false,
+    type: AppForumSectionBriefDto,
+    validation: false,
+    nullable: false,
+  })
+  section!: AppForumSectionBriefDto
 }
 
 export class ForumTopicTagItemDto extends PickType(BaseForumTagDto, [
@@ -111,34 +129,7 @@ export class QueryForumTopicCommentPageDto extends IntersectionType(
   IdDto,
 ) {}
 
-export class MyForumTopicSectionDto extends PickType(BaseForumSectionDto, [
-  'id',
-  'name',
-] as const) {}
-
-export class MyForumTopicItemDto extends PickType(BaseForumTopicDto, [
-  'id',
-  'sectionId',
-  'title',
-  'images',
-  'videos',
-  'isPinned',
-  'isFeatured',
-  'isLocked',
-  'viewCount',
-  'commentCount',
-  'likeCount',
-  'favoriteCount',
-  'lastCommentAt',
-  'createdAt',
-  'auditStatus',
-] as const) {
-  @NestedProperty({
-    description: '所属板块',
-    required: false,
-    type: MyForumTopicSectionDto,
-    validation: false,
-    nullable: false,
-  })
-  section!: MyForumTopicSectionDto
-}
+export class MyForumTopicItemDto extends IntersectionType(
+  AppForumTopicPageItemDto,
+  PickType(BaseForumTopicDto, ['auditStatus'] as const),
+) {}

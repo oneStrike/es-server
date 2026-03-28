@@ -3,7 +3,6 @@ import {
   BooleanProperty,
   NestedProperty,
 } from '@libs/platform/decorators'
-import { BaseAppUserDto } from '@libs/user/core'
 import {
   PickType,
 } from '@nestjs/swagger'
@@ -25,23 +24,6 @@ export class FavoriteStatusResponseDto {
   isFavorited!: boolean
 }
 
-export class FavoriteTopicUserBriefDto extends PickType(BaseAppUserDto, [
-  'id',
-  'nickname',
-  'avatarUrl',
-] as const) {}
-
-export class FavoriteTopicInfoDto extends AppForumTopicPageItemDto {
-  @NestedProperty({
-    description: '发帖用户（论坛主题类型返回）',
-    type: FavoriteTopicUserBriefDto,
-    required: false,
-    nullable: false,
-    validation: false,
-  })
-  user!: FavoriteTopicUserBriefDto
-}
-
 export class FavoriteWorkPageItemDto extends BaseFavoriteDto {
   @NestedProperty({
     description: '作品详情',
@@ -56,10 +38,10 @@ export class FavoriteWorkPageItemDto extends BaseFavoriteDto {
 export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
   @NestedProperty({
     description: '论坛主题详情',
-    type: FavoriteTopicInfoDto,
+    type: AppForumTopicPageItemDto,
     required: false,
     nullable: false,
     validation: false,
   })
-  topic!: FavoriteTopicInfoDto
+  topic!: AppForumTopicPageItemDto
 }

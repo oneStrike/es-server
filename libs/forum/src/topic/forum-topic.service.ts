@@ -1,4 +1,4 @@
-import type { ForumTopic } from '@db/schema'
+import type { AppUser, ForumTopic } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateForumTopicInput,
@@ -94,6 +94,49 @@ export class ForumTopicService {
 
   get userCommentTable() {
     return this.drizzle.schema.userComment
+  }
+
+  /**
+   * 批量获取主题列表使用的发帖用户简要信息。
+   * 仅查询列表展示所需字段，避免在公开分页中暴露额外资料。
+   */
+  private async getTopicUserBriefMap(userIds: number[]) {
+    const uniqueUserIds = [...new Set(userIds)]
+    if (uniqueUserIds.length === 0) {
+      return new Map<number, Pick<AppUser, 'id' | 'nickname' | 'avatarUrl'>>()
+    }
+
+    const users = await this.db.query.appUser.findMany({
+      where: {
+        id: { in: uniqueUserIds },
+      },
+      columns: {
+        id: true,
+        nickname: true,
+        avatarUrl: true,
+      },
+    })
+
+    return new Map(users.map((user) => [user.id, user]))
+  }
+
+  /**
+   * 获取主题列表使用的板块简要信息。
+   * 仅返回列表展示所需字段，供公开分页等场景复用。
+   */
+  private async getTopicSectionBrief(sectionId: number) {
+    return this.db.query.forumSection.findFirst({
+      where: {
+        id: sectionId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        name: true,
+        icon: true,
+        cover: true,
+      },
+    })
   }
 
   /**
@@ -585,6 +628,7 @@ export class ForumTopicService {
    * - 只返回已审核通过且未隐藏的主题
    * - 排序规则：置顶优先，其次按最后评论时间倒序，再按创建时间倒序
    * - 会校验用户对板块的访问权限
+   * - 会补充每条主题的发帖用户简要信息与所属板块简要信息
    * - 登录用户会返回每条主题的点赞与收藏状态
    */
   async getPublicTopics(query: QueryPublicForumTopicInput) {
@@ -629,19 +673,33 @@ export class ForumTopicService {
       ],
     })
 
-    if (!query.userId || page.list.length === 0) {
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const userIds = page.list.map((item) => item.userId)
+
+    if (!query.userId) {
+      const [section, userMap] = await Promise.all([
+        this.getTopicSectionBrief(query.sectionId),
+        this.getTopicUserBriefMap(userIds),
+      ])
       return {
         ...page,
         list: page.list.map((item) => ({
           ...item,
           liked: false,
           favorited: false,
+          user: userMap.get(item.userId),
+          section,
         })),
       }
     }
 
     const topicIds = page.list.map((item) => item.id)
-    const [likedMap, favoritedMap] = await Promise.all([
+    const [section, userMap, likedMap, favoritedMap] = await Promise.all([
+      this.getTopicSectionBrief(query.sectionId),
+      this.getTopicUserBriefMap(userIds),
       this.likeService.checkStatusBatch(
         LikeTargetTypeEnum.FORUM_TOPIC,
         topicIds,
@@ -660,6 +718,8 @@ export class ForumTopicService {
         ...item,
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
+        user: userMap.get(item.userId),
+        section,
       })),
     }
   }
@@ -700,6 +760,10 @@ export class ForumTopicService {
       with: {
         section: {
           columns: {
+            id: true,
+            name: true,
+            icon: true,
+            cover: true,
             isEnabled: true,
             deletedAt: true,
           },
@@ -761,6 +825,14 @@ export class ForumTopicService {
           createdAt: topic.createdAt,
           liked: likedMap.get(topic.id) ?? false,
           favorited: favoritedMap.get(topic.id) ?? false,
+          section: topic.section
+            ? {
+                id: topic.section.id,
+                name: topic.section.name,
+                icon: topic.section.icon,
+                cover: topic.section.cover,
+              }
+            : undefined,
           user: topic.user ?? undefined,
         },
       ]),
