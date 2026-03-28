@@ -18,89 +18,85 @@
 
 ### 2.1 当前已有模块
 
-从 `apps/web-ele` 的页面和 API 定义看，当前系统已经具备以下能力：
+当前仓库是后端 monorepo，`apps` 目录下只有 `admin-api` 和 `app-api`。因此这份文档里的“当前现状”应以后端 controller、service、schema 为基线，而不是以缺失的 `apps/web-ele` 页面为依据。
 
-- 任务管理
-  - 任务模板管理：`apps/web-ele/src/views/system-manager/tasks`
-  - 任务领取记录：`apps/web-ele/src/views/system-manager/tasks/task-assignment-modal.vue`
-- 用户成长管理
-  - 积分规则：`apps/web-ele/src/views/user-growth/points`
-  - 经验规则：`apps/web-ele/src/views/user-growth/experience`
-  - 等级规则：`apps/web-ele/src/views/user-growth/level-rules`
-  - 徽章管理：`apps/web-ele/src/views/user-growth/badges`
-- 用户运营入口
-  - 手动加积分、扣积分、加经验、发徽章：`apps/web-ele/src/views/user-manager/profile/components/user-operation-modal.vue`
+当前已经明确落地的能力包括：
+
+- 任务域
+  - 任务模板、任务分配、任务进度日志
+  - 管理端任务创建、更新、上下线、领取记录分页
+  - App 端任务领取、进度上报、完成
+- 成长与奖励结算
+  - 积分规则、经验规则、等级规则、徽章定义、用户徽章
+  - 统一成长流水、成长结算审计日志、规则限额槽位
+  - App 端积分/经验统计与记录查询、徽章查询
+  - 管理端人工加积分、扣积分、加经验、发徽章
+- 通知与消息
+  - 用户通知表、消息 outbox、WS 监控
+  - App 端通知分页、未读数、单条已读、全部已读、inbox 摘要、时间线、会话与消息查询
+  - 管理端 outbox / WS 监控摘要 API
+- 公告与广播内容
+  - 公告、公告已读数据表
+  - App 端公告分页
+- 治理与审核
+  - 主题审核、版主申请审核、敏感词管理与统计
+  - 举报数据模型与 App 端创建、我的举报、举报详情
 
 ### 2.2 当前设计中合理的部分
 
 - 任务模板和任务领取记录分开建模，这个方向是正确的
-- 积分、经验、等级、徽章被归类到统一的 `user-growth` 模块，方向也合理
-- 任务实例中已有 `cycleKey`、`taskSnapshot`、`progress`、`status` 等字段，说明已经具备“模板”和“实例”分离意识
+- 积分、经验、等级、徽章、流水被收敛到统一成长域，这个方向也是正确的
+- 任务实例中已有 `cycleKey`、`taskSnapshot`、`progress`、`status`、`version` 等字段，说明已经具备“模板”和“实例”分离意识
+- 成长结算已经统一落到账本服务，具备 `bizKey` 幂等、额度控制、审计日志等基础能力
 
 ### 2.3 当前设计的主要问题
 
-#### 问题 1：成长事件字典已经漂移
+#### 问题 1：成长事件字典还没有升格为统一事件模型
 
-前端当前维护的成长类型常量只覆盖部分事件：
-
-- `apps/web-ele/src/views/user-growth/model/constants.ts`
-
-但后端 DTO 已经支持更多规则类型：
-
-- `apps/web-ele/src/api/types/growth.d.ts`
-- `apps/web-ele/src/api/types/appUsers.d.ts`
+当前统一成长事件枚举实际已经沉淀在后端 `GrowthRuleTypeEnum`，并被多个业务 service 直接复用。
 
 这会导致：
 
-- 前端无法完整配置所有规则类型
-- 用户运营弹窗里也无法完整使用所有可用事件类型
-- 前后端枚举语义失真，后续维护风险持续升高
+- 枚举覆盖范围明显大于当前已接入的真实生产者
+- 任务、通知、治理没有共享统一的事件载荷模型
+- App 与管理端账本展示也没有把事件来源讲清楚
 
-#### 问题 2：任务奖励还不是结构化模型
+#### 问题 2：任务奖励已初步结构化，但奖励模型仍不完整
 
-当前任务的奖励通过 `rewardConfig` 字段承载，且表现为自由文本字符串：
-
-- `apps/web-ele/src/api/types/task.d.ts`
-- `apps/web-ele/src/views/system-manager/tasks/model/shared.ts`
+当前任务的 `rewardConfig` 在数据库里是 `jsonb`，DTO 也按结构化 JSON 暴露，而不是自由文本字符串。
 
 这意味着：
 
-- 奖励内容无法被前端稳定理解
-- 无法校验奖励类型是否合法
-- 无法与积分、经验、徽章等已有实体建立强关联
-- 后续统计、审计、失败重试、幂等控制都不稳定
+- 当前结算服务只识别 `points`、`experience`
+- DTO 示例里已经出现 `badgeCodes`，但实际发奖逻辑还未接入徽章
+- 奖励配置尚未被提升成独立结算模型，缺少统一校验和扩展点
 
-#### 问题 3：任务完成与奖励结算之间没有显式闭环
+#### 问题 3：任务完成与奖励结算缺少任务侧显式闭环
 
-当前任务领取记录只有：
-
-- 进度
-- 状态
-- 周期实例键
-- 任务快照
+当前任务完成后已经会调用统一成长账本发奖，账本通过 `bizKey` 做幂等去重。
 
 但缺少以下关键字段：
 
 - 奖励是否已结算
 - 奖励在什么时间结算
-- 奖励对应哪些流水
-- 是否已经执行过发奖幂等校验
+- 奖励对应哪些流水 ID
+- 奖励失败原因 / 重试信息
 
-这会让“为什么这个任务没发奖”或“是否重复发奖”难以审计。
+这会让任务列表侧难以直接回答“为什么这个任务没发奖”。
 
 #### 问题 4：领域边界有交叉
 
-现在的规则定义在 `user-growth`，但用户实际的积分/经验/徽章查询和人工操作入口又放在 `app-users` 侧。
+当前规则配置、账本结算、App 展示、管理端人工操作分散在 `growth`、`user`、`app-user`、`message` 等多个模块里。
 
 这类布局短期可用，但长期会导致：
 
-- 成长系统和用户管理系统互相借模型
-- 运营入口承担了领域能力
-- API 归属越来越模糊
+- 领域能力和运营入口耦合
+- API 归属不够直观
+- “任务奖励”“规则奖励”“人工补发”三类来源难以在同一口径下展示
 
 #### 问题 5：积分规则与经验规则高度重复
 
-当前积分规则和经验规则几乎是两套镜像结构：
+当前积分规则和经验规则仍是两套镜像表与接口：
 
 - 规则类型
 - 增减值
@@ -114,6 +110,25 @@
 - 字段新增要改两遍
 - 运营配置体验不一致
 - 规则统计能力难统一
+- 用户侧无法自然查看“混合成长账本”
+
+#### 问题 6：治理层还没有真正成为奖励与通知的统一闸门
+
+当前最明显的断点有两个：
+
+- 发帖待审核时不会立即发 `CREATE_TOPIC` 奖励，但后续审核通过也不会补发
+- 举报是在“创建举报”时就发积分/经验，而不是在“举报有效/无效”裁决后再决定奖励
+
+这意味着“审核/举报判定”虽然在概念上很重要，但还没有真正接进任务、奖励、通知三条主链路。
+
+#### 问题 7：管理端人工补发幂等性仍然偏弱
+
+当前后台人工加积分、扣积分、加经验都已经能落账，但业务键仍然是按时间戳动态生成。
+
+这会带来两个直接问题：
+
+- 管理员重试会生成新的 `bizKey`，无法天然命中幂等
+- 后续做补发、回滚、审计复盘时，缺少稳定的业务来源键
 
 ## 3. 目标设计原则
 
@@ -675,21 +690,18 @@ sequenceDiagram
 
 ## 12. 项目全景地图
 
-### 12.1 路由级模块地图
+### 12.1 模块级地图
 
-从 `apps/web-ele/src/router/routes/modules` 看，当前后台已经形成 9 组一级能力。它们并不是同一层级的领域模块，有些是业务域，有些是治理层，有些是观测层，还有一部分只是演示态 UI。
+当前更适合以仓内后端入口模块来画全景图，而不是以前端路由为基线。
 
-| 分组 | 主要模块 | 当前角色 | 与事件/通知/奖励的关系 | 现状判断 |
+| 模块层 | 代表目录 | 当前角色 | 与事件/通知/奖励的关系 | 现状判断 |
 | --- | --- | --- | --- | --- |
-| Dashboard | `analytics`、`workspace` | 门户与工作台 | 更像首页展示，不是领域真源 | 偏展示层 |
-| 内容管理 | 漫画、小说、作者、分类、标签 | 内容主数据后台 | 是大量内容事件的上游生产域，但后台暂未把这些行为事件显式化 | 业务域已落地，事件层未显式化 |
-| 论坛管理 | 帖子、版主、版主申请、板块、话题 | 社区主业务后台 | 是论坛互动事件和审核事件的核心来源 | 业务域较完整 |
-| 用户管理 | 用户信息、会员、签到、任务、积分、经验、等级、徽章 | 用户成长与运营后台 | 是任务、成长、奖励、人工补发的直接操作入口 | 核心，但边界有混用 |
-| 综合管理 | 表情、举报、敏感词、敏感词统计 | 治理与风控后台 | 决定事件是否有效、是否隐藏、是否进入审核 | 治理层部分已落地 |
-| APP 管理 | 公告、协议、页面配置、系统配置 | 客户端内容与配置后台 | 公告属于广播内容通知；页面配置可作为通知跳转目标 | 公告已落地，消息中心未并入 |
-| 系统管理 | 个人中心、系统配置、数据字典、系统用户、系统状态 | 管理后台基础设施 | 提供审核策略、短信配置、站点配置等底座 | 基础层已落地，部分为演示 |
-| 日志管理 | 登录日志、操作日志 | 技术审计后台 | 记录后台操作行为，但不是业务事件流水 | 观测层已落地 |
-| 统计管理 | 漫画统计、小说统计、论坛统计 | 业务统计看板 | 消费业务数据，但不是事件中心本身 | 读模型层 |
+| `apps/app-api` | `task`、`user`、`message`、`report`、`system` | App 端业务入口 | 承接任务、成长账本、通知中心、举报、公告等用户侧能力 | 用户侧接口较完整 |
+| `apps/admin-api` | `task`、`growth`、`app-user`、`forum`、`message`、`system` | 管理端业务入口 | 承接任务配置、规则配置、人工补发、审核治理、消息监控、操作审计 | 运营与治理入口较完整 |
+| `libs/growth` | `task`、`growth-ledger`、`growth-reward`、`point`、`experience`、`badge`、`level-rule` | 成长域核心能力 | 统一结算任务奖励、规则奖励、等级更新、徽章发放 | 是当前奖励与账本主心骨 |
+| `libs/message` | `notification`、`inbox`、`chat`、`outbox`、`monitor` | 通知与消息域能力 | 承接站内通知、消息 outbox、WS 监控、消息中心摘要 | 基础设施已落地，覆盖仍不完整 |
+| `libs/forum` / `libs/interaction` | `topic`、`comment`、`like`、`favorite`、`follow`、`report`、`browse-log` | 业务事件生产域 | 是成长规则、通知、治理层的上游生产者 | 生产者已较多，但事件中心未独立 |
+| `db/schema` | `app/*`、`message/*`、`system/*` | 真实数据模型 | 定义任务、账本、审核、通知、公告、审计等核心表结构 | 是现状梳理的单一事实源 |
 
 ### 12.2 按成熟度分层
 
@@ -697,16 +709,16 @@ sequenceDiagram
 
 | 层级 | 代表模块 | 判断 |
 | --- | --- | --- |
-| 已完整接入 | 公告管理、任务管理、积分规则、经验规则、等级规则、徽章管理、用户运营弹窗、敏感词管理、敏感词统计、帖子审核、版主申请审核、系统配置、审计日志 | 页面、API、DTO、交互闭环基本存在 |
-| 半接入 | 用户个人通知设置、顶部通知铃铛、系统状态页告警、统计页 | 有页面或展示，但业务链路不完整，部分是静态数据 |
-| API-only | 消息 outbox 监控、WS 监控 | DTO 和 API 已经出现，但后台没有路由和页面承接 |
-| 占位/待建设 | 签到管理、举报管理 | 已有路由入口，但页面还是占位 |
+| 已完整接入 | 任务管理、积分规则、经验规则、等级规则、徽章管理、统一账本写入、App 积分/经验/徽章查询、App 通知中心、公告分页、主题审核、版主申请审核、敏感词管理、后台审计、消息监控 API | 接口、服务、表结构闭环基本存在 |
+| 半接入 | 任务奖励状态审计、统一混合账本展示、消息模板、通知偏好、公告已读、聊天 outbox 域 | 底层能力或表结构存在，但用户侧/管理侧契约不完整 |
+| API-only / 内部基础设施 | `growth_audit_log`、`growth_rule_usage_slot`、`message_outbox`、`message_ws_metric` | 更偏底层支撑与观测，暂未形成完整业务管理界面 |
+| 缺口 / 待建设 | 举报管理端处理闭环、评论审核后台、任务提醒、通知模板与多渠道编排 | 概念和部分数据结构已出现，但链路尚未成型 |
 
 这层判断很重要，因为很多“看上去已经有”的能力，其实只是：
 
-- DTO 已经生成了，但 UI 没接
-- 页面已经放出来了，但数据是静态演示
-- 路由已经开了，但业务还没真正实现
+- 底层表和 service 已经存在，但上层展示没接
+- API 已经存在，但业务口径还没有统一
+- 数据结构已经预留，但奖励、通知、审核之间还没有真正串起来
 
 ## 13. 通知与消息系统现状
 
@@ -714,10 +726,9 @@ sequenceDiagram
 
 当前项目里通知相关最完整的模块其实是公告：
 
-- 路由：`apps/web-ele/src/router/routes/modules/app-manager.ts`
-- 页面：`apps/web-ele/src/views/app-manager/announcement/index.vue`
-- API：`apps/web-ele/src/api/core/announcement.ts`
-- DTO：`apps/web-ele/src/api/types/announcement.d.ts`
+- 数据表：`app_announcement`
+- 已读表：`app_announcement_read`
+- App 端接口：`apps/app-api/src/modules/system/system.controller.ts`
 
 它已经具备：
 
@@ -748,19 +759,21 @@ sequenceDiagram
 - 公告模块已经存在，但它属于 `Announcement / Broadcast Content`
 - 它不应该和“用户消息中心”“任务提醒”“站内信投递 outbox”混为一谈
 
-### 13.2 消息中心监控：后端投递基础设施已经露头，但后台没接住
+### 13.2 消息中心监控：后端投递基础设施已经落地，并且管理端已有监控 API
 
-当前代码里已经有两组很明确的消息监控 API：
+当前代码里已经有两组明确的消息监控摘要接口：
 
-- `messageMonitorOutboxSummaryApi`
-- `messageMonitorWsSummaryApi`
+- Outbox 监控摘要
+- WS 监控摘要
 
 对应文件：
 
-- `apps/web-ele/src/api/core/message.ts`
-- `apps/web-ele/src/api/types/message.d.ts`
+- `apps/admin-api/src/modules/message/message.controller.ts`
+- `libs/message/src/monitor/*`
+- `db/schema/message/message-outbox.ts`
+- `db/schema/message/message-ws-metric.ts`
 
-从 DTO 看，后端消息基础设施至少已经考虑过：
+从现有实现看，后端消息基础设施至少已经考虑过：
 
 - outbox 待处理、处理中、失败、重试
 - 最老待处理消息滞留时间
@@ -779,111 +792,74 @@ sequenceDiagram
 - 补偿同步
 - 运维监控
 
-但问题是：
+但当前缺口也很明确：
 
-- 当前后台路由里没有消息中心或消息监控页面
-- `apps/web-ele/src/api/core/index.ts` 已经导出了这些 API，但没有页面消费它们
-- 也没有任何地方展示 outbox 积压、WS 成功率、失败原因
-
-结论：
-
-- 消息基础设施很可能已经在后端出现
-- 但管理端目前还没有“消息中心/通知中心”的管理与观测入口
-
-### 13.3 用户通知偏好：现在只是 UI 壳子
-
-用户个人中心里有一个“新消息提醒”页签：
-
-- 页面：`apps/web-ele/src/views/_core/profile/index.vue`
-- 子页：`apps/web-ele/src/views/_core/profile/notification-setting.vue`
-
-当前只定义了 3 个开关：
-
-- `accountPassword`
-- `systemMessage`
-- `todoTask`
-
-文案分别对应：
-
-- 其他用户的消息以站内信通知
-- 系统消息以站内信通知
-- 待办任务以站内信通知
-
-但这部分存在三个明显问题：
-
-1. 字段命名和业务语义不一致  
-   `accountPassword` 这个字段名看起来像“账户密码”，但描述却是“其他用户的消息通知”。
-
-2. 没有任何 API 调用  
-   搜索结果显示它只是把 schema 传给 `ProfileNotificationSetting` 组件，没有取数、保存、提交。
-
-3. 没有和真实消息链路关联  
-   即使用户切换开关，也不会影响任务、系统消息、社交通知的投递。
+- 这套能力目前更偏监控摘要，而不是完整的通知管理台
+- 缺少通知模板、偏好、投递明细、失败重放等运营级能力
 
 结论：
 
-- 当前“通知偏好设置”是演示型页面，不是实际可用的通知偏好系统
+- 消息基础设施已经在后端出现
+- 管理端已经有监控 API，但还没有统一的通知域管理台
 
-### 13.4 顶部通知铃铛与系统状态告警：目前也是静态演示
+### 13.3 用户通知偏好：当前后端还没有真正落地
 
-`apps/web-ele/src/layouts/basic.vue` 里顶部通知使用的是本地 `ref`：
+当前仓内没有看到通知偏好对应的独立表、controller、service，也没有“按用户偏好决定是否投递通知”的后端链路。
 
-- 初始通知数组直接写在前端
-- 读已读、删除、全部已读都是本地状态处理
-- 没有任何 API
-- 没有未读数接口
-- 没有消息详情接口
+因此这里的真实结论应该是：
 
-`apps/web-ele/src/views/system-manager/server-status/index.vue` 也同样明确写着：
-
-- “系统状态页（静态数据演示）”
-- 告警、服务状态、Notification 服务状态、维护窗口等都来自本地静态常量
-
-所以这两块都不能算真正的通知系统，只能算：
-
-- 后台 UI 组件示意
-- 未来通知中心的视觉原型
-
-### 13.5 短信与外部通道：有配置底座，没有通知编排
-
-系统配置已经提供：
-
-- 阿里云密钥配置
-- 短信服务 Endpoint
-- 短信签名
-- 验证码长度
-- 验证码过期时间
-- 联系邮箱
-
-对应文件：
-
-- `apps/web-ele/src/views/system-manager/system-config/modules/model/shared.ts`
-- `apps/web-ele/src/api/types/system.d.ts`
-
-但当前它更偏：
-
-- 验证码/账号安全类基础配置
-- 站点运营配置
-
-还不是：
-
-- 通知模板配置
-- 渠道路由策略
-- 用户偏好驱动的多通道通知
+1. 偏好模型尚未后端化
+2. 当前通知投递不受用户个性化偏好控制
+3. 后续如果要做通知域，`NotificationPreference` 应该是新增的正式实体，而不是 UI 配置项
 
 结论：
 
-- 通知渠道底座已经有短信入口
-- 但尚未上升为通知域模型
+- 当前“通知偏好设置”能力在后端尚未真正存在
+
+### 13.4 应用端通知中心：已经是真实业务接口，但生产者覆盖仍不完整
+
+当前应用端已经有一整套真实通知与消息接口：
+
+- 站内通知分页、未读数、单条已读、全部已读
+- inbox 摘要、时间线
+- 私聊会话打开、会话列表、消息分页
+
+但当前通知链路还不算完全闭环，主要缺口是：
+
+- 通知生产者目前主要接在评论回复、评论点赞、主题点赞、主题收藏、用户关注等场景
+- `SYSTEM_ANNOUNCEMENT`、`CHAT_MESSAGE` 类型虽然已有枚举，但缺少对称的生产者链路
+- 当前更像“站内通知 + inbox 聚合”，还没有统一模板、路由策略、任务提醒体系
+
+结论：
+
+- App 端消息中心已经不是占位能力
+- 但“统一通知域”还没有完全建起来
+
+### 13.5 外部通道：当前仍以站内通知 / outbox / WS 为主
+
+当前通知基础设施已经包含：
+
+- `message_outbox`
+- `user_notification`
+- WS 监控与 ack 指标
+
+但距离完整多渠道通知域还有明显差距：
+
+- outbox 虽然声明了通知域和聊天域，但 worker 当前只消费通知域
+- 还没有统一的 `NotificationDelivery` 明细表
+- 还没有短信、邮件、Push 的模板与路由编排
+- 公告已读表已经存在，但单用户已读链路还没有完整接到消息域里
+
+结论：
+
+- 当前通知域的主战场还是站内通知
+- 多渠道通知仍属于后续演进项
 
 ## 14. 项目里的事件体系现状
 
-### 14.1 当前唯一成型的“业务事件字典”实际上藏在成长规则里
+### 14.1 当前最成型的“业务事件字典”仍附着在成长规则体系里
 
-目前项目里最像“统一业务事件枚举”的东西，不在任务模块，也不在通知模块，而是在成长规则 DTO 的 `ruleType` 注释里：
-
-- `apps/web-ele/src/api/types/growth.d.ts`
-- `apps/web-ele/src/api/types/appUsers.d.ts`
+目前项目里最像“统一业务事件枚举”的东西，实际已经在后端常量 `GrowthRuleTypeEnum` 里，而不是主要藏在前端 DTO 注释里。
 
 它已经覆盖了非常广的业务面：
 
@@ -898,8 +874,8 @@ sequenceDiagram
 
 这意味着从“领域事实”角度看，项目其实已经默认存在一套业务事件中心，只是现在：
 
-- 这套字典挂在成长规则 DTO 上
-- 前端只维护了部分常量
+- 这套字典目前主要挂在成长域常量和规则体系上
+- 缺少独立的 `EventType` / `EventEnvelope` 模型
 - 任务模块没有显式复用它
 - 通知模块也没有显式复用它
 - 审核/举报/消息中心没有围绕它统一建模
@@ -912,13 +888,13 @@ sequenceDiagram
 
 | 事件来源 | 典型事件 | 当前后台可见模块 | 当前主要消费者 |
 | --- | --- | --- | --- |
-| 论坛域 | 发帖、回复、点赞、收藏、评论、举报、被评论 | 帖子管理、帖子详情、审核、标签、版主申请 | 成长规则、用户统计、审核治理 |
-| 内容域 | 漫画/小说浏览、点赞、收藏、评论、举报、章节阅读/购买/下载/兑换 | 漫画管理、小说管理、统计页 | 事件只体现在 DTO 枚举里，后台没有显式事件管理 |
-| 用户域 | 完善资料、上传头像、关注、被关注、分享、邀请 | 用户详情、关注数量修复、用户运营 | 成长规则和用户成长账户 |
-| 管理员域 | 补发积分、扣减积分、补经验、发徽章、删内容、审内容 | 用户运营、系统管理、日志管理 | 成长记录、审计日志 |
-| 广播内容域 | 发布公告、取消发布、弹窗公告 | 公告管理 | APP 端公告展示 |
-| 治理域 | 敏感词命中、审核通过、审核拒绝、举报处理 | 敏感词管理、敏感词统计、帖子审核、版主申请审核 | 决定业务事件是否有效、是否继续传播 |
-| 技术消息域 | outbox 积压、WS ack、重连、补偿 | 仅 API 合同 | 运维监控，尚无后台页面 |
+| 论坛域 | 发帖、点赞、收藏、评论、被评论、举报 | `forum-topic`、`comment`、`like`、`favorite`、`report` | 成长规则、通知 outbox、审核治理 |
+| 内容域 | 漫画/小说浏览、点赞、收藏、举报 | `browse-log`、`like`、`favorite`、`report` | 成长规则、统计读模型 |
+| 用户域 | 关注、被关注、人工补发积分/经验/徽章 | `follow`、`app-user` | 成长账本、审计日志、用户资产展示 |
+| 任务域 | 领取、进度上报、完成 | `task` | 任务分配、任务奖励结算、App 任务列表 |
+| 广播内容域 | 公告发布、公告展示 | `app-announcement`、`system` | APP 端广播内容展示 |
+| 治理域 | 敏感词命中、主题审核、版主申请审核、举报状态 | `sensitive-word`、`topic audit`、`moderator-application`、`user-report` | 决定业务事件是否有效、是否继续传播 |
+| 技术消息域 | outbox 积压、WS ack、重连、补偿 | `message_outbox`、`message_ws_metric` | 运维监控与投递健康度 |
 
 当前最大的问题不是“没有事件”，而是：
 
@@ -930,12 +906,11 @@ sequenceDiagram
 
 项目里和“事件是否成立”最相关的不是任务模块，而是治理模块：
 
-- 敏感词管理：`apps/web-ele/src/views/forum/sensitive-word/index.vue`
-- 敏感词统计：`apps/web-ele/src/views/forum/sensitive-word-statistics/index.vue`
-- 内容审核策略：`apps/web-ele/src/views/system-manager/system-config/modules/model/shared.ts`
-- 帖子审核：`apps/web-ele/src/views/forum/topic/index.vue`
-- 版主申请审核：`apps/web-ele/src/views/forum/moderator-application/index.vue`
-- 举报管理：`apps/web-ele/src/views/forum/reports/index.vue`（目前占位）
+- 敏感词管理与统计
+- 主题审核
+- 版主申请审核
+- 举报状态模型
+- 评论与主题里的审核状态、隐藏状态
 
 这层的作用不是给奖励，也不是给通知，而是先判定：
 
@@ -957,15 +932,20 @@ sequenceDiagram
 - 治理层是事件链路里的“闸门”
 - 不应该只作为独立后台页面存在
 
+这里需要补充两个当前仓里的真实断点：
+
+- 发帖时如果主题处于待审核状态，不会立即触发 `CREATE_TOPIC` 奖励；但后续审核通过也没有补发逻辑
+- 举报表已经有 `handlerId`、`status`、`handledAt` 等字段，但当前 service 只完成“创建举报”，奖励也是在创建时直接发出
+
 ### 14.4 审计与监控不是业务流水
 
 当前项目还有两套容易被误当成“事件流水”的东西：
 
-1. 审计日志  
-   `apps/web-ele/src/api/core/audit.ts` + `apps/web-ele/src/api/types/audit.d.ts`
+1. 审计日志
+   `sys_request_log`
 
-2. 消息监控摘要  
-   `apps/web-ele/src/api/core/message.ts` + `apps/web-ele/src/api/types/message.d.ts`
+2. 消息监控摘要
+   `message_outbox` / `message_ws_metric` 聚合摘要
 
 它们很重要，但它们分别回答的是不同问题：
 
@@ -1018,23 +998,23 @@ flowchart TD
 
 这张图里最重要的补充有两个：
 
-1. 通知不再是“页面上多一个消息模块”  
+1. 通知不再是“页面上多一个消息模块”
    它应该是事件中心的下游消费者。
 
-2. 治理层前置  
+2. 治理层前置
    不是所有行为都直接进入奖励和通知，很多行为要先过敏感词、审核、举报判定。
 
 ### 15.2 推荐领域边界
 
 | 领域 | 核心职责 | 当前代码里的对应雏形 | 当前缺口 |
 | --- | --- | --- | --- |
-| Event | 统一事件字典、事件载荷、业务来源、目标对象 | `growth.d.ts` 里的 `ruleType` 注释 | 没有独立模块、没有共享常量源 |
-| Governance | 敏感词、审核、举报判定、隐藏策略 | 敏感词管理、系统配置审核策略、帖子审核 | 举报管理仍占位，未回写主链路 |
-| Task | 任务定义、实例、进度、周期、领取模式 | `tasks` 页面和 DTO | 奖励仍是文本，未和结算层解耦 |
-| Reward Settlement | 统一结算奖励、幂等、失败重试 | 只有 `rewardConfig` 雏形 | 还没有成为独立层 |
-| Growth | 积分、经验、等级、徽章、成长流水 | `user-growth`、用户运营 | 规则重复，流水口径分散 |
-| Notification | 模板、偏好、路由、outbox、投递、已读未读 | 公告、消息监控 API、通知设置 UI | 还没有统一通知域 |
-| Observability | 审计、投递监控、统计大盘 | 日志管理、消息监控 DTO、统计页 | 与业务流水边界还没拉开 |
+| Event | 统一事件字典、事件载荷、业务来源、目标对象 | `GrowthRuleTypeEnum`、各业务 service 里的 `bizKey` 与 `ruleType` | 没有独立模块、没有共享 `EventEnvelope`、声明覆盖大于实现覆盖 |
+| Governance | 敏感词、审核、举报判定、隐藏策略 | 敏感词、主题审核、版主申请审核、举报状态表、评论/主题审核状态 | 举报裁决与奖励/通知未闭环，评论审核后台仍缺失 |
+| Task | 任务定义、实例、进度、周期、领取模式 | `task`、`task_assignment`、`task_progress_log`、管理端与 App 端 task controller | 奖励状态字段缺失，进度仍主要靠手工 API 上报 |
+| Reward Settlement | 统一结算奖励、幂等、失败重试 | `growth-ledger`、`growth-reward`、`growth_audit_log`、`growth_rule_usage_slot` | 任务奖励缺少任务侧审计字段，badge task reward 未闭环，管理端人工补发幂等较弱 |
+| Growth | 积分、经验、等级、徽章、成长流水 | point / experience / level-rule / badge / `app_user` 快照 | 规则重复，App 展示仍拆成积分账本和经验账本 |
+| Notification | 模板、偏好、路由、outbox、投递、已读未读 | `user_notification`、`message_outbox`、notification、chat、inbox、monitor | 没有统一模板/偏好/投递明细模型，生产者覆盖不完整 |
+| Observability | 审计、投递监控、统计大盘 | `sys_request_log`、消息监控、`growth_audit_log` | 与业务事件、账本流水、通知投递边界还需继续拉开 |
 
 ### 15.3 通知领域推荐核心实体
 
@@ -1056,9 +1036,9 @@ flowchart TD
 | 类型 | 面向对象 | 生命周期 | 是否需要已读未读 | 当前对应模块 |
 | --- | --- | --- | --- | --- |
 | 公告 `Announcement` | 全体用户或平台范围 | 以发布周期和置顶规则为主 | 通常不强调单用户已读 | 公告管理 |
-| 站内信 `Inbox Message` | 单个用户或用户分组 | 以投递、已读、删除为主 | 强依赖已读未读 | 目前缺失 |
-| 实时消息 `Realtime Event` | 当前在线用户 | 以 WS ack、重连、补偿为主 | 更偏送达确认 | 目前只有监控 DTO |
-| 任务提醒 `Task Reminder` | 符合条件的单个用户 | 通常依赖任务实例状态 | 需要防重复通知 | 目前只有文案，没有链路 |
+| 站内信 `Inbox Message` | 单个用户或用户分组 | 以投递、已读、删除为主 | 强依赖已读未读 | `user_notification` + App 端 notification / inbox API，缺少模板与偏好 |
+| 实时消息 `Realtime Event` | 当前在线用户 | 以 WS ack、重连、补偿为主 | 更偏送达确认 | chat + WS 监控已存在，但 chat outbox 域还未闭环 |
+| 任务提醒 `Task Reminder` | 符合条件的单个用户 | 通常依赖任务实例状态 | 需要防重复通知 | 当前尚无正式链路 |
 
 ## 16. 数据模型补充草案
 
