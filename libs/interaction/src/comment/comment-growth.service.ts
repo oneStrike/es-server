@@ -1,5 +1,10 @@
 import type { Db } from '@db/core'
+import type { EventEnvelope } from '@libs/growth/event-definition'
 import { UserComment } from '@db/schema'
+import {
+  canConsumeEventEnvelopeByConsumer,
+  EventDefinitionConsumerEnum,
+} from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   GrowthAssetTypeEnum,
@@ -13,9 +18,29 @@ export class CommentGrowthService {
 
   async rewardCommentCreated(
     tx: Db,
-    params: Pick<UserComment, 'userId' | 'id' | 'targetType' | 'targetId'> & { occurredAt?: Date },
+    params: Pick<UserComment, 'userId' | 'id' | 'targetType' | 'targetId'> & {
+      occurredAt?: Date
+      eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum>
+    },
   ) {
-    const { userId, id: commentId, targetType, targetId, occurredAt } = params
+    const {
+      userId,
+      id: commentId,
+      targetType,
+      targetId,
+      occurredAt,
+      eventEnvelope,
+    } = params
+    if (
+      eventEnvelope
+      && !canConsumeEventEnvelopeByConsumer(
+        eventEnvelope,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
+      return
+    }
+
     const baseBizKey = `comment:create:${commentId}:user:${userId}`
 
     await this.growthLedgerService.applyByRule(tx, {

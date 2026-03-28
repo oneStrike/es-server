@@ -7,6 +7,7 @@ import { Transform } from 'class-transformer'
 import { IsEnum, IsIn, IsOptional } from 'class-validator'
 
 const DESCRIPTION_HAS_ENUM_MAPPING_REGEX = /[（(][^)=\uFF09\uFF1D]*[=\uFF1D][^)\uFF09]*[）)]/
+const DESCRIPTION_MAPPING_SEGMENT_REGEX = /[（(]([^()（）=＝]*[=＝][^()（）]*)[）)]/g
 const NUMERIC_KEY_REGEX = /^\d+$/
 const ENUM_MAPPING_PAIR_REGEX = /([^\s=＝，,；;、:：()（）]+)\s*[=＝]\s*([^\s=＝，,；;、:：()（）]+)/g
 
@@ -20,42 +21,56 @@ function getEnumItems(enumObj: EnumPropertyOptions['enum']) {
 }
 
 function getDescriptionMappingValues(description: string) {
-  const pairs = [...description.matchAll(ENUM_MAPPING_PAIR_REGEX)]
-  if (pairs.length === 0) {
+  const segments = [...description.matchAll(DESCRIPTION_MAPPING_SEGMENT_REGEX)]
+  if (segments.length === 0) {
     return null
   }
 
-  return pairs.map((pair) => ({
-    left: pair[1].trim(),
-    right: pair[2].trim(),
-  }))
+  return segments
+    .map((segment) => [...segment[1].matchAll(ENUM_MAPPING_PAIR_REGEX)])
+    .filter((pairs) => pairs.length > 0)
+    .map((pairs) => pairs.map((pair) => ({
+      left: pair[1].trim(),
+      right: pair[2].trim(),
+    })))
 }
 
 function validateDescriptionMapping(description: string, enumObj: EnumPropertyOptions['enum']) {
-  const mappings = getDescriptionMappingValues(description)
-  if (!mappings) {
+  const mappingGroups = getDescriptionMappingValues(description)
+  if (!mappingGroups) {
     return
   }
 
   const enumValues = new Set(getEnumItems(enumObj).map(([, value]) => String(value)))
-  const leftValues = new Set(mappings.map((item) => item.left))
-  const rightValues = new Set(mappings.map((item) => item.right))
 
-  const leftIsEnumValues = [...leftValues].every((value) => enumValues.has(value))
-  const rightIsEnumValues = [...rightValues].every((value) => enumValues.has(value))
+  for (const mappings of mappingGroups) {
+    const leftValues = new Set(mappings.map((item) => item.left))
+    const rightValues = new Set(mappings.map((item) => item.right))
+    const leftHasEnumValue = [...leftValues].some((value) => enumValues.has(value))
+    const rightHasEnumValue = [...rightValues].some((value) => enumValues.has(value))
 
-  if (!leftIsEnumValues && !rightIsEnumValues) {
-    throw new Error(`EnumProperty: description 枚举映射与 enum 不匹配: ${description}`)
-  }
-
-  const descriptionEnumValues = leftIsEnumValues ? leftValues : rightValues
-
-  for (const enumValue of enumValues) {
-    if (!descriptionEnumValues.has(enumValue)) {
-      throw new Error(
-        `EnumProperty: description 缺少枚举值 ${enumValue} 的说明: ${description}`,
-      )
+    if (!leftHasEnumValue && !rightHasEnumValue) {
+      continue
     }
+
+    const leftIsEnumValues = [...leftValues].every((value) => enumValues.has(value))
+    const rightIsEnumValues = [...rightValues].every((value) => enumValues.has(value))
+
+    if (!leftIsEnumValues && !rightIsEnumValues) {
+      throw new Error(`EnumProperty: description 枚举映射与 enum 不匹配: ${description}`)
+    }
+
+    const descriptionEnumValues = leftIsEnumValues ? leftValues : rightValues
+
+    for (const enumValue of enumValues) {
+      if (!descriptionEnumValues.has(enumValue)) {
+        throw new Error(
+          `EnumProperty: description 缺少枚举值 ${enumValue} 的说明: ${description}`,
+        )
+      }
+    }
+
+    return
   }
 }
 

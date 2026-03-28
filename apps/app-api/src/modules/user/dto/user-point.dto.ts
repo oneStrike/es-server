@@ -22,9 +22,12 @@ export class UserPointRecordDto extends PickType(BaseUserPointRecordDto, [
   'id',
   'userId',
   'ruleId',
+  'ruleType',
   'targetType',
   'targetId',
+  'bizKey',
   'remark',
+  'context',
   'createdAt',
 ] as const) {
   @NumberProperty({

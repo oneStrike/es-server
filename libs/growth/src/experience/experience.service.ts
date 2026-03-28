@@ -320,10 +320,15 @@ export class UserExperienceService {
     id: number
     userId: number
     ruleId: number | null
+    ruleType?: number | null
+    targetType?: number | null
+    targetId?: number | null
     delta: number
     beforeValue: number
     afterValue: number
+    bizKey?: string
     remark: string | null
+    context?: unknown
     createdAt: Date
     updatedAt?: Date
   }) {
@@ -331,6 +336,11 @@ export class UserExperienceService {
       id: record.id,
       userId: record.userId,
       ruleId: record.ruleId ?? undefined,
+      ruleType: record.ruleType ?? undefined,
+      targetType: record.targetType ?? undefined,
+      targetId: record.targetId ?? undefined,
+      bizKey: record.bizKey ?? '',
+      context: this.growthLedgerService.sanitizePublicContext(record.context),
       experience: record.delta,
       beforeExperience: record.beforeValue,
       afterExperience: record.afterValue,

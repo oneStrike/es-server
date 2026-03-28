@@ -1,6 +1,9 @@
 import { MessageChatService } from '@libs/message/chat'
 import { MessageInboxService } from '@libs/message/inbox'
-import { MessageNotificationService } from '@libs/message/notification'
+import {
+  MessageNotificationPreferenceService,
+  MessageNotificationService,
+} from '@libs/message/notification'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -14,7 +17,9 @@ import {
   OpenDirectConversationDto,
   QueryChatConversationMessagesDto,
   QueryUserNotificationListDto,
+  UpdateUserNotificationPreferencesDto,
   UserNotificationDto,
+  UserNotificationPreferenceListDto,
 } from './dto/message.dto'
 
 @ApiTags('消息')
@@ -22,6 +27,7 @@ import {
 export class MessageController {
   constructor(
     private readonly messageNotificationService: MessageNotificationService,
+    private readonly messageNotificationPreferenceService: MessageNotificationPreferenceService,
     private readonly messageChatService: MessageChatService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
@@ -48,6 +54,38 @@ export class MessageController {
   })
   async unreadCount(@CurrentUser('sub') userId: number) {
     return this.messageNotificationService.getUnreadCount(userId)
+  }
+
+  @Get('notification/preference/list')
+  @ApiDoc({
+    summary: '获取通知偏好列表',
+    model: UserNotificationPreferenceListDto,
+  })
+  async getNotificationPreferences(@CurrentUser('sub') userId: number) {
+    return {
+      list:
+        await this.messageNotificationPreferenceService.getUserNotificationPreferenceList(
+          userId,
+        ),
+    }
+  }
+
+  @Post('notification/preference/update')
+  @ApiDoc({
+    summary: '更新通知偏好',
+    model: UserNotificationPreferenceListDto,
+  })
+  async updateNotificationPreferences(
+    @Body() body: UpdateUserNotificationPreferencesDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return {
+      list:
+        await this.messageNotificationPreferenceService.updateUserNotificationPreferences(
+          userId,
+          body,
+        ),
+    }
   }
 
   @Post('notification/read')

@@ -136,6 +136,7 @@
 以当前仓为例：
 
 - `CREATE_TOPIC` 实际要受审核结果影响
+- `CREATE_COMMENT` 也需要在“审核通过且未隐藏”后才进入用户侧主链路
 - `TOPIC_REPORT` / `COMMENT_REPORT` 是历史上的“提交举报即奖励”语义
 - `REPORT_VALID` / `REPORT_INVALID` 才更接近治理后的正式事件
 - `CREATE_REPLY` 已声明，但当前回复奖励实际仍走 `CREATE_COMMENT`
@@ -175,6 +176,7 @@
 - 可被哪些下游消费
 - 当前接入状态
 - 是否允许用于规则配置
+- 不同 consumer 在 `PENDING / PASSED / REJECTED` 下的可消费边界
 
 ### 6.2 明确不统一的内容
 
@@ -246,6 +248,12 @@
 
 `EventEnvelope` 应该先做成 Type，而不是一开始就落库。
 
+当前仓已完成第一版：
+
+- `libs/growth/src/event-definition/event-envelope.type.ts`
+- 已统一 `code / key / subject / target / operator / occurredAt / governanceStatus / context`
+- 已接入 topic / comment / like / report / task complete 高频链路
+
 推荐先只约束这些稳定字段：
 
 - `code`
@@ -293,6 +301,13 @@
 
 - `libs/growth/src/event-definition/`
 
+当前仓已完成：
+
+- `EventDefinition` type
+- `EventDefinitionMap`
+- `getEventDefinition / listEventDefinitions`
+- “已声明 / 已接入 / 可配置”三种状态表达
+
 建议在这一阶段完成：
 
 - `EventDefinition` type
@@ -304,6 +319,13 @@
 ### 8.3 Phase 2：让 DTO 与文档复用统一定义
 
 这一阶段重点是“停止复制枚举长注释”。
+
+当前状态：
+
+- `EventEnvelope` 已经具备，可继续作为 DTO / 通知 / 治理收口时的最低限度事件语义壳
+- growth / ledger / admin 相关 DTO 已改为引用 `event-definition` 模块里的共享说明常量
+- `canConsumeEventEnvelopeByConsumer(...)` 已按 `GROWTH / TASK / NOTIFICATION / GOVERNANCE` 明确治理消费边界
+- 下一步重点转向通知与治理等后续子域接入，而不是再扩张统一执行中心
 
 建议完成：
 

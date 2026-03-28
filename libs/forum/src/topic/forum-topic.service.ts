@@ -17,6 +17,12 @@ import {
   DrizzleService,
   escapeLikePattern,
 } from '@db/core'
+import {
+  canConsumeEventEnvelopeByConsumer,
+  createDefinedEventEnvelope,
+  EventDefinitionConsumerEnum,
+  EventEnvelopeGovernanceStatusEnum,
+} from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward'
 import {
@@ -55,7 +61,6 @@ import { ForumReviewPolicyEnum } from '../forum.constant'
 import { ForumPermissionService } from '../permission'
 import {
   FORUM_TOPIC_IMAGE_MAX_COUNT,
-  FORUM_TOPIC_MEDIA_URL_MAX_LENGTH,
   FORUM_TOPIC_VIDEO_MAX_COUNT,
 } from './forum-topic.constant'
 
@@ -119,11 +124,6 @@ export class ForumTopicService {
       const normalizedItem = item.trim()
       if (!normalizedItem) {
         continue
-      }
-      if (normalizedItem.length > FORUM_TOPIC_MEDIA_URL_MAX_LENGTH) {
-        throw new BadRequestException(
-          `${options.label}地址长度不能超过 ${FORUM_TOPIC_MEDIA_URL_MAX_LENGTH} 个字符`,
-        )
       }
       if (seen.has(normalizedItem)) {
         continue
@@ -258,6 +258,44 @@ export class ForumTopicService {
   }
 
   /**
+   * 将主题审核状态映射为统一事件治理状态。
+   * 当前 CREATE_TOPIC 事件是否可进入主链路，统一以该状态判断。
+   */
+  private resolveTopicGovernanceStatus(auditStatus: AuditStatusEnum) {
+    switch (auditStatus) {
+      case AuditStatusEnum.APPROVED:
+        return EventEnvelopeGovernanceStatusEnum.PASSED
+      case AuditStatusEnum.PENDING:
+        return EventEnvelopeGovernanceStatusEnum.PENDING
+      case AuditStatusEnum.REJECTED:
+        return EventEnvelopeGovernanceStatusEnum.REJECTED
+      default:
+        throw new Error(`不支持的主题审核状态: ${auditStatus}`)
+    }
+  }
+
+  /**
+   * 构建主题创建事件 envelope。
+   * 统一沉淀 CREATE_TOPIC 的目标、治理态与最小上下文，供奖励补发等链路复用。
+   */
+  private buildCreateTopicEventEnvelope(params: {
+    topicId: number
+    userId: number
+    auditStatus: AuditStatusEnum
+    occurredAt?: Date
+    context?: Record<string, unknown>
+  }) {
+    return createDefinedEventEnvelope({
+      code: GrowthRuleTypeEnum.CREATE_TOPIC,
+      subjectId: params.userId,
+      targetId: params.topicId,
+      occurredAt: params.occurredAt,
+      governanceStatus: this.resolveTopicGovernanceStatus(params.auditStatus),
+      context: params.context,
+    })
+  }
+
+  /**
    * 创建论坛主题。
    * - 敏感词检测与审核策略计算在写入前完成
    * - 计数更新与板块状态同步在同一事务中执行
@@ -329,14 +367,30 @@ export class ForumTopicService {
       afterData: JSON.stringify(topic),
     })
 
-    if (topic.auditStatus !== AuditStatusEnum.PENDING) {
+    const topicCreatedEvent = this.buildCreateTopicEventEnvelope({
+      topicId: topic.id,
+      userId,
+      auditStatus: topic.auditStatus as AuditStatusEnum,
+      occurredAt: topic.createdAt,
+      context: {
+        sectionId,
+        auditStatus: topic.auditStatus,
+      },
+    })
+
+    if (
+      canConsumeEventEnvelopeByConsumer(
+        topicCreatedEvent,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
       await this.userGrowthRewardService.tryRewardByRule({
         userId,
         ruleType: GrowthRuleTypeEnum.CREATE_TOPIC,
         bizKey: `forum:topic:create:${topic.id}:user:${userId}`,
         source: 'forum_topic',
         remark: `create forum topic #${topic.id}`,
-        targetId: topic.id,
+        targetId: topicCreatedEvent.targetId,
       })
     }
 
@@ -1022,6 +1076,52 @@ export class ForumTopicService {
   }
 
   /**
+   * 在主题首次审核通过后补发创建主题奖励。
+   * 继续复用创建时的 bizKey，避免“即时发奖”和“审核补发”双发。
+   */
+  private async rewardApprovedTopicIfNeeded(params: {
+    topicId: number
+    userId: number
+    previousAuditStatus: AuditStatusEnum
+    nextAuditStatus: AuditStatusEnum
+  }) {
+    if (
+      params.previousAuditStatus !== AuditStatusEnum.PENDING
+      || params.nextAuditStatus !== AuditStatusEnum.APPROVED
+    ) {
+      return
+    }
+
+    const topicApprovedEvent = this.buildCreateTopicEventEnvelope({
+      topicId: params.topicId,
+      userId: params.userId,
+      auditStatus: params.nextAuditStatus,
+      context: {
+        previousAuditStatus: params.previousAuditStatus,
+        nextAuditStatus: params.nextAuditStatus,
+      },
+    })
+
+    if (
+      !canConsumeEventEnvelopeByConsumer(
+        topicApprovedEvent,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
+      return
+    }
+
+    await this.userGrowthRewardService.tryRewardByRule({
+      userId: params.userId,
+      ruleType: GrowthRuleTypeEnum.CREATE_TOPIC,
+      bizKey: `forum:topic:create:${params.topicId}:user:${params.userId}`,
+      source: 'forum_topic',
+      remark: `approve forum topic #${params.topicId}`,
+      targetId: topicApprovedEvent.targetId,
+    })
+  }
+
+  /**
    * 更新主题审核状态。
    * 审核状态变更会影响板块可见主题统计，需同步更新板块状态。
    */
@@ -1029,16 +1129,54 @@ export class ForumTopicService {
     updateTopicAuditStatusDto: UpdateForumTopicAuditStatusInput,
   ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
-    return this.updateTopicStatus(
-      id,
-      {
-        auditStatus,
-        auditReason,
+    const currentTopic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id,
+        deletedAt: { isNull: true },
       },
-      {
-        syncSectionVisibility: true,
+      columns: {
+        id: true,
+        sectionId: true,
+        userId: true,
+        auditStatus: true,
       },
+    })
+
+    if (!currentTopic) {
+      throw new NotFoundException('主题不存在')
+    }
+
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const result = await tx
+          .update(this.forumTopicTable)
+          .set({
+            auditStatus,
+            auditReason,
+          })
+          .where(
+            and(
+              eq(this.forumTopicTable.id, id),
+              isNull(this.forumTopicTable.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '主题不存在')
+
+        await this.forumCounterService.syncSectionVisibleState(
+          tx,
+          currentTopic.sectionId,
+        )
+      }),
     )
+
+    await this.rewardApprovedTopicIfNeeded({
+      topicId: currentTopic.id,
+      userId: currentTopic.userId,
+      previousAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
+      nextAuditStatus: auditStatus,
+    })
+
+    return true
   }
 
   /**

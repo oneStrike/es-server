@@ -1,5 +1,6 @@
 import { BaseUserBadgeDto } from '@libs/growth/badge'
 import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
+import { BaseGrowthLedgerRecordDto } from '@libs/growth/growth-ledger'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets'
 import { UserStatusEnum } from '@libs/platform/constant'
@@ -39,6 +40,22 @@ export class QueryMyExperienceRecordDto extends IntersectionType(
 ) {}
 
 /**
+ * 查询我的混合成长流水 DTO
+ */
+export class QueryMyGrowthLedgerRecordDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseGrowthLedgerRecordDto, [
+      'assetType',
+      'ruleId',
+      'ruleType',
+      'targetType',
+      'targetId',
+    ] as const),
+  ),
+) {}
+
+/**
  * 查询我的徽章 DTO
  */
 export class QueryMyBadgeDto extends IntersectionType(
@@ -55,7 +72,12 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
   'id',
   'userId',
   'ruleId',
+  'ruleType',
+  'targetType',
+  'targetId',
+  'bizKey',
   'remark',
+  'context',
   'createdAt',
 ] as const) {
   @NumberProperty({
@@ -79,6 +101,23 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
   })
   afterExperience!: number
 }
+
+export class UserGrowthLedgerRecordDto extends PickType(BaseGrowthLedgerRecordDto, [
+  'id',
+  'userId',
+  'assetType',
+  'ruleId',
+  'ruleType',
+  'targetType',
+  'targetId',
+  'delta',
+  'beforeValue',
+  'afterValue',
+  'bizKey',
+  'remark',
+  'context',
+  'createdAt',
+] as const) {}
 
 export class UserCountDto extends PickType(BaseAppUserCountDto, [
   'commentCount',

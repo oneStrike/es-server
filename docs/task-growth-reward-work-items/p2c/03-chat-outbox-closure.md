@@ -34,6 +34,13 @@
 - `CHAT` 域从“定义存在”变成“链路闭环”
 - 不因为复用 outbox 就把聊天与通知模型混成一层
 
+## 当前状态
+
+- `chat.send` 现已在消息落库事务内写入 `CHAT/MESSAGE_CREATED` outbox 事件
+- 提交后会立即尝试一次 fanout；若即时分发失败，保留 outbox 由 worker 补偿消费
+- worker 复用 chat 域自己的分发逻辑做 `chat.message.new / chat.conversation.update / inbox.summary.update`
+- `CHAT` 域没有接入 `notification_delivery`，chat ack 仍保持为 websocket 请求级确认
+
 ## 完成后同步文档
 
 - [通知域契约](../../notification-domain-contract.md)

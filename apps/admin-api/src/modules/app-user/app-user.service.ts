@@ -7,6 +7,7 @@ import type {
   CreateAdminAppUserInput,
   QueryAdminAppUserBadgeInput,
   QueryAdminAppUserExperienceRecordInput,
+  QueryAdminAppUserGrowthLedgerInput,
   QueryAdminAppUserPageInput,
   QueryAdminAppUserPointRecordInput,
   ResetAdminAppUserPasswordInput,
@@ -17,7 +18,10 @@ import type {
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserBadgeService } from '@libs/growth/badge'
 import { UserExperienceService } from '@libs/growth/experience'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerService,
+} from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
 import {
   AdminUserRoleEnum,
@@ -60,6 +64,7 @@ export class AppUserService {
     private readonly userCoreService: UserCoreService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
+    private readonly growthLedgerService: GrowthLedgerService,
     private readonly userBadgeService: UserBadgeService,
     private readonly appUserCountService: AppUserCountService,
     private readonly rsaService: RsaService,
@@ -574,10 +579,11 @@ export class AppUserService {
 
     return this.userPointService.addPoints({
       ...dto,
-      bizKey: this.buildAuditBizKey(
+      bizKey: this.buildManualOperationBizKey(
         'app-user:points:add',
         adminUserId,
         dto.userId,
+        dto.operationKey,
       ),
       source: 'admin_app_user_module',
     })
@@ -594,10 +600,11 @@ export class AppUserService {
 
     return this.userPointService.consumePoints({
       ...dto,
-      bizKey: this.buildAuditBizKey(
+      bizKey: this.buildManualOperationBizKey(
         'app-user:points:consume',
         adminUserId,
         dto.userId,
+        dto.operationKey,
       ),
       source: 'admin_app_user_module',
     })
@@ -685,6 +692,14 @@ export class AppUserService {
   }
 
   /**
+   * 获取 APP 用户混合成长流水分页
+   */
+  async getAppUserGrowthLedgerRecords(query: QueryAdminAppUserGrowthLedgerInput) {
+    await this.userCoreService.ensureUserExists(query.userId)
+    return this.growthLedgerService.getGrowthLedgerPage(query)
+  }
+
+  /**
    * 手动增加 APP 用户经验
    */
   async addAppUserExperience(
@@ -695,10 +710,11 @@ export class AppUserService {
 
     return this.userExperienceService.addExperience({
       ...dto,
-      bizKey: this.buildAuditBizKey(
+      bizKey: this.buildManualOperationBizKey(
         'app-user:experience:add',
         adminUserId,
         dto.userId,
+        dto.operationKey,
       ),
       source: 'admin_app_user_module',
     })
@@ -853,14 +869,16 @@ export class AppUserService {
   }
 
   /**
-   * 构建后台操作幂等业务键
+   * 构建后台人工操作稳定业务键。
+   * 同一 operationKey 重试时保持 bizKey 不变，用于账本幂等和审计串联。
    */
-  private buildAuditBizKey(
+  private buildManualOperationBizKey(
     action: string,
     adminUserId: number,
     appUserId: number,
+    operationKey: string,
   ) {
-    return `${action}:${adminUserId}:${appUserId}:${Date.now()}`
+    return `${action}:admin:${adminUserId}:user:${appUserId}:operation:${operationKey}`
   }
 
   private normalizeBirthDate(value?: string | Date | null) {

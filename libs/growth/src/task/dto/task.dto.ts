@@ -1,4 +1,5 @@
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
@@ -8,6 +9,8 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
 import {
+  TaskAssignmentRewardResultTypeEnum,
+  TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
@@ -86,8 +89,8 @@ export class BaseTaskDto extends BaseDto {
   targetCount!: number
 
   @JsonProperty({
-    description: '奖励配置',
-    example: { points: 10, experience: 5, badgeCodes: ['newbie'] },
+    description: '奖励配置，当前仅支持 points / experience，且值必须为正整数',
+    example: { points: 10, experience: 5 },
     required: false,
   })
   rewardConfig?: Record<string, unknown> | null
@@ -150,6 +153,21 @@ export class BaseTaskAssignmentDto extends BaseDto {
   })
   status!: TaskAssignmentStatusEnum
 
+  @EnumProperty({
+    description: '奖励结算状态',
+    example: TaskAssignmentRewardStatusEnum.PENDING,
+    enum: TaskAssignmentRewardStatusEnum,
+  })
+  rewardStatus!: TaskAssignmentRewardStatusEnum
+
+  @EnumProperty({
+    description: '奖励结算结果类型',
+    example: TaskAssignmentRewardResultTypeEnum.APPLIED,
+    enum: TaskAssignmentRewardResultTypeEnum,
+    required: false,
+  })
+  rewardResultType?: TaskAssignmentRewardResultTypeEnum | null
+
   @NumberProperty({ description: '当前进度', example: 0 })
   progress!: number
 
@@ -185,6 +203,31 @@ export class BaseTaskAssignmentDto extends BaseDto {
     required: false,
   })
   expiredAt?: Date
+
+  @DateProperty({
+    description: '奖励结算时间',
+    example: '2026-02-13T08:00:01.000Z',
+    required: false,
+  })
+  rewardSettledAt?: Date
+
+  @ArrayProperty({
+    description: '本次奖励关联到账本记录 ID 列表',
+    itemType: 'number',
+    example: [101, 102],
+    required: false,
+    validation: false,
+  })
+  rewardLedgerIds!: number[]
+
+  @StringProperty({
+    description: '上次奖励失败原因',
+    example: '任务奖励发放失败：用户不存在',
+    required: false,
+    maxLength: 500,
+    validation: false,
+  })
+  lastRewardError?: string | null
 
   @JsonProperty({
     description: '任务快照',

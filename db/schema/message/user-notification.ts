@@ -18,7 +18,7 @@ export const userNotification = pgTable("user_notification", {
    */
   userId: integer().notNull(),
   /**
-   * 通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息）
+   * 通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息,7=任务提醒）
    */
   type: smallint().notNull(),
   /**
@@ -103,3 +103,6 @@ export const userNotification = pgTable("user_notification", {
      */
     index("user_notification_user_id_aggregate_key_created_at_idx").on(table.userId, table.aggregateKey, table.createdAt.desc()),
 ]);
+
+export type UserNotification = typeof userNotification.$inferSelect
+export type UserNotificationInsert = typeof userNotification.$inferInsert

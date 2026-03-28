@@ -212,6 +212,7 @@
 - 开工条件：`P2-A-01`
 - 预计改动模块：`libs/growth`、`apps/admin-api`、`docs`
 - 预计影响文件：
+  - `libs/growth/src/event-definition/` 下共享说明常量
   - `libs/growth/src/point/dto/point-rule.dto.ts`
   - `libs/growth/src/point/dto/point-record.dto.ts`
   - `libs/growth/src/experience/dto/experience-rule.dto.ts`
@@ -231,7 +232,8 @@
 - 预计改动模块：`db/schema/message`、`libs/message/notification`、`apps/admin-api/message`
 - 预计影响文件：
   - `db/schema/message/notification-template.ts` 新文件
-  - `db/relations/message.ts`
+  - `db/seed/modules/message/domain.ts`
+  - `libs/message/src/notification/notification-template.service.ts`
   - `libs/message/src/notification/notification.service.ts`
   - `apps/admin-api/src/modules/message/` 下新增模板 controller / dto / service
 - 核心测试点：
@@ -245,6 +247,7 @@
 - 预计改动模块：`db/schema/message`、`libs/message/notification`、`apps/app-api/message`
 - 预计影响文件：
   - `db/schema/message/notification-preference.ts` 新文件
+  - `libs/message/src/notification/notification-preference.service.ts`
   - `apps/app-api/src/modules/message/message.controller.ts`
   - `apps/app-api/src/modules/message/dto/message.dto.ts`
   - `libs/message/src/notification/notification.constant.ts`
@@ -260,9 +263,9 @@
 - 预计改动模块：`db/schema/message`、`libs/message/outbox`、`apps/admin-api/message`
 - 预计影响文件：
   - `db/schema/message/notification-delivery.ts` 新文件
+  - `libs/message/src/notification/notification-delivery.service.ts`
   - `libs/message/src/outbox/outbox.worker.ts`
-  - `libs/message/src/outbox/outbox.service.ts`
-  - `libs/message/src/notification/notification.service.ts`
+  - `apps/admin-api/src/modules/message/message.controller.ts`
   - `apps/admin-api/src/modules/message/message-monitor.service.ts`
   - `apps/admin-api/src/modules/message/dto/message-monitor.dto.ts`
 - 核心测试点：
@@ -276,9 +279,11 @@
 - 预计改动模块：`libs/growth/task`、`libs/message`、`libs/app-content/announcement`、`apps/app-api/message`
 - 预计影响文件：
   - `libs/growth/src/task/task.service.ts`
-  - `libs/message/src/notification/notification.service.ts`
+  - `libs/growth/src/task/task.constant.ts`
+  - `libs/message/src/outbox/outbox.service.ts`
   - `libs/message/src/inbox/inbox.service.ts`
   - `libs/app-content/src/announcement/announcement.service.ts`
+  - `libs/app-content/src/announcement/announcement.constant.ts`
   - `libs/message/src/notification/notification.constant.ts`
   - `db/schema/app/app-announcement-read.ts`
 - 核心测试点：
@@ -286,6 +291,10 @@
   - 重要公告若进入消息中心，必须物化为 `user_notification`
   - 普通公告继续留在内容域
   - 未读统计不会重复计算
+- 当前状态：
+  - 已落地 `TASK_REMINDER`，覆盖新任务可领、任务即将过期、奖励到账三类提醒
+  - 重要公告当前按“高优先级 / 置顶 / 弹窗”规则 fanout 到 `user_notification(type=SYSTEM_ANNOUNCEMENT)`
+  - `inbox` 继续只汇总 `user_notification + chat`，`app_announcement_read` 仍只服务内容域已读
 
 ## 10. Wave 9
 
@@ -303,6 +312,10 @@
   - 主题、评论、举报的治理态口径一致
   - 未通过治理的内容不会错误进入奖励主链路
   - 待审核内容进入通知 / 待办的边界明确
+- 当前状态：
+  - 已新增 consumer-aware governance gate，统一 `GROWTH / TASK / NOTIFICATION / GOVERNANCE` 的可消费边界
+  - `CREATE_COMMENT` 与 `TOPIC_COMMENT` 已进入 `COMMENT_APPROVAL` 门控口径
+  - topic/comment/report 已统一复用该门控规则，举报终态事件允许进入正式结算链路
 
 ### [P2-C-02 评论审核后台](./p2c/02-comment-moderation-admin.md)
 
@@ -317,6 +330,10 @@
   - 评论分页、审核、隐藏可用
   - 审核结果与奖励、通知、任务推进边界一致
   - 已审核评论不会被错误回滚
+- 当前状态：
+  - 已新增管理端 `admin/comment` 模块，提供 `page / detail / update-audit-status / update-hidden`
+  - 评论 `PENDING -> APPROVED` 或 `isHidden: true -> false` 首次变为可见时，会补发 `CREATE_COMMENT` 奖励与回复通知
+  - 评论从可见变为隐藏或拒绝时，会同步回退目标对象的可见评论计数与派生状态
 
 ### [P2-C-03 `CHAT` outbox 域闭环](./p2c/03-chat-outbox-closure.md)
 
@@ -332,6 +349,10 @@
   - `CHAT` 域记录可以被 worker 消费
   - 聊天 ack 与通知 ack 边界清楚
   - 若写 delivery，不会误用通知域语义
+- 当前状态：
+  - `chat.send` 已在消息落库事务内写入 `CHAT/MESSAGE_CREATED` outbox 事件
+  - 提交后会先做一次即时 WS fanout / inbox 摘要同步；若失败则保留 outbox 由 worker 重试
+  - `CHAT` 域当前不写 `notification_delivery`，排障继续看 outbox 状态与 WS 监控
 
 ## 11. 维护规则
 

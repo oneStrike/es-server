@@ -1,12 +1,21 @@
 import type { SQL } from 'drizzle-orm'
 import type { NotificationOutboxPayload } from '../outbox/outbox.type'
-import type { QueryUserNotificationListInput } from './notification.type'
+import type {
+  CreateNotificationFromOutboxOutput,
+  QueryUserNotificationListInput,
+} from './notification.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
+import { MessageNotificationPreferenceService } from './notification-preference.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
-import { MessageNotificationTypeEnum } from './notification.constant'
+import { MessageNotificationTemplateService } from './notification-template.service'
+import {
+  MESSAGE_NOTIFICATION_TYPE_VALUES,
+  MessageNotificationDispatchStatusEnum,
+  MessageNotificationTypeEnum,
+} from './notification.constant'
 
 /**
  * 消息通知服务
@@ -18,6 +27,8 @@ export class MessageNotificationService {
     private readonly drizzle: DrizzleService,
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
+    private readonly messageNotificationPreferenceService: MessageNotificationPreferenceService,
+    private readonly messageNotificationTemplateService: MessageNotificationTemplateService,
   ) {}
 
   private get db() {
@@ -165,7 +176,7 @@ export class MessageNotificationService {
   async createFromOutbox(
     bizKey: string,
     payload: NotificationOutboxPayload,
-  ): Promise<typeof this.notification.$inferSelect | null> {
+  ): Promise<CreateNotificationFromOutboxOutput> {
     const receiverUserId = Number(payload.receiverUserId)
     const actorUserId =
       payload.actorUserId === undefined ? undefined : Number(payload.actorUserId)
@@ -183,10 +194,44 @@ export class MessageNotificationService {
       && Number.isInteger(actorUserId)
       && actorUserId === receiverUserId
     ) {
-      return null
+      return {
+        status: MessageNotificationDispatchStatusEnum.SKIPPED_SELF,
+      }
     }
 
-    // 解析过期时间
+    const preference
+      = await this.messageNotificationPreferenceService.getEffectiveNotificationPreference(
+        receiverUserId,
+        notificationType,
+      )
+    if (!preference.isEnabled) {
+      return {
+        status: MessageNotificationDispatchStatusEnum.SKIPPED_PREFERENCE,
+        preference,
+      }
+    }
+
+    const renderedContent
+      = await this.messageNotificationTemplateService.renderNotificationTemplate({
+        receiverUserId,
+        actorUserId,
+        type: notificationType,
+        targetType: payload.targetType,
+        targetId: payload.targetId,
+        subjectType: payload.subjectType,
+        subjectId: payload.subjectId,
+        title: payload.title,
+        content: payload.content,
+        payload: payload.payload,
+        aggregateKey: payload.aggregateKey,
+        aggregateCount: payload.aggregateCount,
+        expiredAt: payload.expiredAt,
+      })
+
+    /**
+     * 解析过期时间
+     * outbox payload 允许字符串或 Date，这里统一标准化为可入库的 Date
+     */
     let expiredAt: Date | undefined
     if (payload.expiredAt) {
       const value = new Date(payload.expiredAt)
@@ -214,8 +259,8 @@ export class MessageNotificationService {
             payload.subjectId !== undefined
               ? Number(payload.subjectId)
               : undefined,
-          title: payload.title,
-          content: payload.content,
+          title: renderedContent.title,
+          content: renderedContent.content,
           payload:
             payload.payload === undefined
               ? undefined
@@ -234,32 +279,44 @@ export class MessageNotificationService {
     )
     const notification = inserted[0]
     if (!notification) {
-      return null
+      return {
+        status: MessageNotificationDispatchStatusEnum.SKIPPED_DUPLICATE,
+      }
     }
 
     this.messageNotificationRealtimeService.emitNotificationNew(notification)
     await this.emitInboxSummaryUpdate(receiverUserId)
-    return notification
+    return {
+      status: MessageNotificationDispatchStatusEnum.DELIVERED,
+      notification,
+    }
   }
 
-  /** 推送收件箱摘要更新 */
+  /**
+   * 推送收件箱摘要更新
+   * 通知读状态和新通知创建都需要同步刷新首页摘要，避免客户端额外轮询
+   */
   private async emitInboxSummaryUpdate(userId: number) {
     const summary = await this.messageInboxService.getSummary(userId)
     this.messageNotificationRealtimeService.emitInboxSummaryUpdate(userId, summary)
   }
 
+  /**
+   * 解析并校验通知类型
+   * 使用已注册类型值集合判断，避免后续扩展时依赖枚举连续区间
+   */
   private parseRequiredNotificationType(value: unknown) {
     const type = Number(value)
-    if (
-      !Number.isInteger(type)
-      || type < MessageNotificationTypeEnum.COMMENT_REPLY
-      || type > MessageNotificationTypeEnum.CHAT_MESSAGE
-    ) {
+    if (!Number.isInteger(type) || !MESSAGE_NOTIFICATION_TYPE_VALUES.includes(type)) {
       throw new BadRequestException('通知类型非法')
     }
-    return type
+    return type as MessageNotificationTypeEnum
   }
 
+  /**
+   * 解析可选 smallint 字段
+   * 目标类型、主体类型这类上下文字段保持最小校验，不在通知层扩展业务语义
+   */
   private parseOptionalSmallInt(value: unknown, fieldName: string) {
     if (value === undefined || value === null) {
       return undefined

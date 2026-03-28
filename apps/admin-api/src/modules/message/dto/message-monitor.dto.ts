@@ -1,9 +1,17 @@
 import {
+  getMessageNotificationDispatchStatusLabel,
+  getMessageNotificationTypeLabel,
+  MessageNotificationDispatchStatusEnum,
+  MessageNotificationTypeEnum,
+} from '@libs/message/notification'
+import {
   ArrayProperty,
   DateProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto'
+import { IntersectionType } from '@nestjs/swagger'
 
 export class QueryMessageOutboxMonitorDto {
   @NumberProperty({
@@ -275,4 +283,144 @@ export class MessageWsMonitorSummaryDto {
     example: 0.9375,
   })
   resyncSuccessRate!: number
+}
+
+class MessageNotificationDeliveryFilterDto {
+  @StringProperty({
+    description: '业务投递结果（DELIVERED / FAILED / RETRYING / SKIPPED_DUPLICATE / SKIPPED_SELF / SKIPPED_PREFERENCE）',
+    example: MessageNotificationDispatchStatusEnum.FAILED,
+    required: false,
+  })
+  status?: MessageNotificationDispatchStatusEnum
+
+  @NumberProperty({
+    description: '通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息）',
+    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+    required: false,
+  })
+  notificationType?: MessageNotificationTypeEnum
+
+  @NumberProperty({
+    description: '接收用户 ID',
+    example: 1001,
+    required: false,
+  })
+  receiverUserId?: number
+
+  @StringProperty({
+    description: '业务幂等键模糊匹配',
+    example: 'comment:reply:1:to:1001',
+    required: false,
+    maxLength: 180,
+  })
+  bizKey?: string
+
+  @StringProperty({
+    description: 'outbox 事件 ID',
+    example: '10001',
+    required: false,
+    maxLength: 32,
+  })
+  outboxId?: string
+}
+
+export class QueryMessageNotificationDeliveryPageDto extends IntersectionType(
+  PageDto,
+  MessageNotificationDeliveryFilterDto,
+) {}
+
+export class MessageNotificationDeliveryItemDto {
+  @NumberProperty({
+    description: '投递结果 ID',
+    example: 1,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '关联的 outbox 事件 ID',
+    example: '10001',
+  })
+  outboxId!: string
+
+  @StringProperty({
+    description: '业务幂等键',
+    example: 'comment:reply:1:to:1001',
+  })
+  bizKey!: string
+
+  @NumberProperty({
+    description: '通知类型',
+    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+    required: false,
+  })
+  notificationType!: MessageNotificationTypeEnum | null
+
+  @StringProperty({
+    description: '通知类型中文标签',
+    example: getMessageNotificationTypeLabel(
+      MessageNotificationTypeEnum.COMMENT_REPLY,
+    ),
+    required: false,
+  })
+  notificationTypeLabel?: string
+
+  @NumberProperty({
+    description: '接收用户 ID',
+    example: 1001,
+    required: false,
+  })
+  receiverUserId!: number | null
+
+  @NumberProperty({
+    description: '关联的站内通知 ID',
+    example: 88,
+    required: false,
+  })
+  notificationId!: number | null
+
+  @StringProperty({
+    description: '业务投递结果',
+    example: MessageNotificationDispatchStatusEnum.FAILED,
+  })
+  status!: MessageNotificationDispatchStatusEnum
+
+  @StringProperty({
+    description: '业务投递结果中文标签',
+    example: getMessageNotificationDispatchStatusLabel(
+      MessageNotificationDispatchStatusEnum.FAILED,
+    ),
+  })
+  statusLabel!: string
+
+  @NumberProperty({
+    description: '当前重试次数',
+    example: 3,
+  })
+  retryCount!: number
+
+  @StringProperty({
+    description: '最近一次失败原因',
+    example: '通知事件缺少必要字段',
+    required: false,
+    maxLength: 500,
+  })
+  failureReason!: string | null
+
+  @DateProperty({
+    description: '最近一次业务投递尝试时间',
+    example: '2026-03-28T15:34:33.000Z',
+  })
+  lastAttemptAt!: Date
+
+  @DateProperty({
+    description: '创建时间',
+    example: '2026-03-28T15:34:33.000Z',
+  })
+  createdAt!: Date
+
+  @DateProperty({
+    description: '更新时间',
+    example: '2026-03-28T15:35:10.000Z',
+  })
+  updatedAt!: Date
 }

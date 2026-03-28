@@ -137,14 +137,14 @@ const POINT_RULE_FIXTURES = [
     remark: '每日签到奖励',
   },
   {
-    type: 111,
+    type: 300,
     points: 3,
     dailyLimit: 30,
     totalLimit: 0,
     remark: '章节阅读奖励',
   },
   {
-    type: 113,
+    type: 302,
     points: -30,
     dailyLimit: 0,
     totalLimit: 0,
@@ -1345,7 +1345,7 @@ export async function seedAppActivityDomain(db: Db) {
   const [pointPurchaseRule] = await db
     .select()
     .from(userPointRule)
-    .where(eq(userPointRule.type, 113))
+    .where(eq(userPointRule.type, 302))
     .limit(1)
   const [experienceTopicRule] = await db
     .select()
@@ -1361,7 +1361,7 @@ export async function seedAppActivityDomain(db: Db) {
       beforeValue: 120,
       afterValue: 90,
       bizKey: 'purchase:seed:aot:chapter-2',
-      ruleType: 113,
+      ruleType: 302,
       ruleId: pointPurchaseRule?.id ?? null,
       targetType: 2,
       targetId: aotChapterTwo.id,
@@ -1409,7 +1409,7 @@ export async function seedAppActivityDomain(db: Db) {
       bizKey: 'purchase:seed:aot:chapter-2',
       assetType: 'POINTS',
       action: 'CONSUME',
-      ruleType: 113,
+      ruleType: 302,
       decision: 'allow',
       reason: null,
       deltaRequested: -30,
@@ -1453,7 +1453,7 @@ export async function seedAppActivityDomain(db: Db) {
     {
       userId: userA.id,
       assetType: 'POINTS',
-      ruleKey: 'points:113',
+      ruleKey: 'points:302',
       slotType: 'TOTAL',
       slotValue: 'purchase:seed:aot:chapter-2',
     },

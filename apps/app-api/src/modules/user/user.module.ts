@@ -1,4 +1,5 @@
 import { UserExperienceModule } from '@libs/growth/experience'
+import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
 import { UserPointModule } from '@libs/growth/point'
 import { InteractionModule } from '@libs/interaction/module'
 import { MessageModule } from '@libs/message/module'
@@ -12,6 +13,7 @@ import { UserService } from './user.service'
     UserCoreModule,
     UserPointModule,
     UserExperienceModule,
+    GrowthLedgerModule,
     InteractionModule,
     MessageModule,
   ],

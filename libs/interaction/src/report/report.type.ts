@@ -1,5 +1,5 @@
 import type { UserReport } from '@db/schema'
-import type { ReportTargetTypeEnum } from './report.constant'
+import type { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 
 /**
  * 创建举报的服务层入参。
@@ -42,3 +42,45 @@ export type ReportListQuery = Pick<UserReport, 'reporterId'> &
     pageIndex?: number
     pageSize?: number
   }
+
+/**
+ * 举报处理允许进入裁决的最终状态。
+ * 当前仅允许已处理态的有效 / 无效两种结果。
+ */
+export type ReportHandleStatus =
+  | ReportStatusEnum.RESOLVED
+  | ReportStatusEnum.REJECTED
+
+/**
+ * 管理端举报分页查询条件。
+ * 支持按举报主体、目标、原因、处理人与状态筛选。
+ */
+export type QueryAdminReportPageInput = Partial<
+  Pick<
+    UserReport,
+    | 'id'
+    | 'reporterId'
+    | 'handlerId'
+    | 'targetId'
+    | 'sceneType'
+    | 'sceneId'
+    | 'reasonType'
+    | 'status'
+  >
+> & {
+  targetType?: ReportTargetTypeEnum
+  pageIndex?: number
+  pageSize?: number
+  orderBy?: string
+}
+
+/**
+ * 管理端举报处理入参。
+ * 由后台传入处理人、裁决结果与处理备注。
+ */
+export interface HandleReportInput {
+  id: UserReport['id']
+  handlerId: NonNullable<UserReport['handlerId']>
+  status: ReportHandleStatus
+  handlingNote?: UserReport['handlingNote']
+}

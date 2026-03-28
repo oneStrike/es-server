@@ -7,6 +7,7 @@ import type {
   AddUserExperienceInput,
   QueryUserExperienceRecordPageInput,
 } from '@libs/growth/experience'
+import type { QueryGrowthLedgerPageInput } from '@libs/growth/growth-ledger'
 import type {
   AddUserPointsInput,
   ConsumeUserPointsInput,
@@ -111,16 +112,26 @@ export interface QueryAdminAppUserPointRecordInput
   extends QueryUserPointRecordPageInput {}
 
 /**
- * APP 用户手动加积分入参。
- * 复用成长领域发放积分字段，管理端补充 bizKey 与 source。
+ * 管理端人工成长操作稳定键。
+ * 用于把同一次人工补发在请求、审计与账本侧串成同一业务动作。
  */
-export interface AddAdminAppUserPointsInput extends AddUserPointsInput {}
+export interface AdminAppUserManualOperationInput {
+  operationKey: string
+}
+
+/**
+ * APP 用户手动加积分入参。
+ * 复用成长领域发放积分字段，管理端补充 operationKey。
+ */
+export interface AddAdminAppUserPointsInput
+  extends AddUserPointsInput, AdminAppUserManualOperationInput {}
 
 /**
  * APP 用户手动扣积分入参。
- * 复用成长领域扣减积分字段，管理端补充 bizKey 与 source。
+ * 复用成长领域扣减积分字段，管理端补充 operationKey。
  */
-export interface ConsumeAdminAppUserPointsInput extends ConsumeUserPointsInput {}
+export interface ConsumeAdminAppUserPointsInput
+  extends ConsumeUserPointsInput, AdminAppUserManualOperationInput {}
 
 /**
  * APP 用户经验流水分页查询入参。
@@ -130,11 +141,18 @@ export interface QueryAdminAppUserExperienceRecordInput
   extends QueryUserExperienceRecordPageInput {}
 
 /**
+ * APP 用户混合成长流水分页查询入参。
+ * 复用统一账本查询字段，包含目标用户 userId。
+ */
+export interface QueryAdminAppUserGrowthLedgerInput
+  extends QueryGrowthLedgerPageInput {}
+
+/**
  * APP 用户手动加经验入参。
- * 复用成长领域发放经验字段，管理端补充 bizKey 与 source。
+ * 复用成长领域发放经验字段，管理端补充 operationKey。
  */
 export interface AddAdminAppUserExperienceInput
-  extends AddUserExperienceInput {}
+  extends AddUserExperienceInput, AdminAppUserManualOperationInput {}
 
 /**
  * APP 用户徽章分页查询入参。

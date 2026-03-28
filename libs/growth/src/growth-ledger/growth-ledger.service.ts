@@ -3,6 +3,10 @@ import type {
   ApplyDeltaParams,
   ApplyRuleParams,
   GrowthLedgerApplyResult,
+  PublicGrowthLedgerContext,
+  PublicGrowthLedgerContextValue,
+  PublicGrowthLedgerRecord,
+  QueryGrowthLedgerPageInput,
 } from './growth-ledger.types'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -60,6 +64,18 @@ export class GrowthLedgerService {
   private get userPointRule() {
     return this.drizzle.schema.userPointRule
   }
+
+  private readonly publicGrowthLedgerContextKeys = [
+    'actorUserId',
+    'assignmentId',
+    'exchangeId',
+    'followedUserId',
+    'outTradeNo',
+    'paymentMethod',
+    'purchaseId',
+    'targetId',
+    'taskId',
+  ] as const
 
   /**
    * 按规则结算（发放）
@@ -405,6 +421,86 @@ export class GrowthLedgerService {
   }
 
   /**
+   * 将账本 context 裁剪为可公开展示的解释字段。
+   * 只保留少量稳定、业务可读的白名单键，避免把内部调试载荷直接透出。
+   */
+  sanitizePublicContext(
+    context?: unknown | null,
+  ): PublicGrowthLedgerContext | undefined {
+    if (!context || typeof context !== 'object' || Array.isArray(context)) {
+      return undefined
+    }
+
+    const sanitizedEntries = this.publicGrowthLedgerContextKeys
+      .map((key) => {
+        const value = (context as Record<string, unknown>)[key]
+        return this.isPublicContextValue(value) ? [key, value] : null
+      })
+      .filter((entry): entry is [string, PublicGrowthLedgerContextValue] => entry !== null)
+
+    if (sanitizedEntries.length === 0) {
+      return undefined
+    }
+
+    return Object.fromEntries(sanitizedEntries) as PublicGrowthLedgerContext
+  }
+
+  /**
+   * 分页查询混合成长账本时间线。
+   * 统一返回积分/经验流水，按 createdAt desc, id desc 稳定排序。
+   */
+  async getGrowthLedgerPage(dto: QueryGrowthLedgerPageInput) {
+    const conditions = [eq(this.growthLedgerRecord.userId, dto.userId)]
+
+    if (dto.assetType !== undefined) {
+      conditions.push(eq(this.growthLedgerRecord.assetType, dto.assetType))
+    }
+    if (dto.ruleId !== undefined) {
+      conditions.push(
+        dto.ruleId === null
+          ? isNull(this.growthLedgerRecord.ruleId)
+          : eq(this.growthLedgerRecord.ruleId, dto.ruleId),
+      )
+    }
+    if (dto.ruleType !== undefined) {
+      conditions.push(
+        dto.ruleType === null
+          ? isNull(this.growthLedgerRecord.ruleType)
+          : eq(this.growthLedgerRecord.ruleType, dto.ruleType),
+      )
+    }
+    if (dto.targetType !== undefined) {
+      conditions.push(
+        dto.targetType === null
+          ? isNull(this.growthLedgerRecord.targetType)
+          : eq(this.growthLedgerRecord.targetType, dto.targetType),
+      )
+    }
+    if (dto.targetId !== undefined) {
+      conditions.push(
+        dto.targetId === null
+          ? isNull(this.growthLedgerRecord.targetId)
+          : eq(this.growthLedgerRecord.targetId, dto.targetId),
+      )
+    }
+
+    const orderBy = dto.orderBy?.trim()
+      ? dto.orderBy
+      : JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }])
+
+    const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
+      where: and(...conditions),
+      ...dto,
+      orderBy,
+    })
+
+    return {
+      ...page,
+      list: page.list.map((item) => this.toPublicGrowthLedgerRecord(item)),
+    }
+  }
+
+  /**
    * 创建账本记录入口
    *
    * 实现幂等机制：
@@ -494,6 +590,51 @@ export class GrowthLedgerService {
       }
     }
     return false
+  }
+
+  private toPublicGrowthLedgerRecord(record: {
+    id: number
+    userId: number
+    assetType: GrowthAssetTypeEnum
+    ruleId: number | null
+    ruleType: number | null
+    targetType: number | null
+    targetId: number | null
+    delta: number
+    beforeValue: number
+    afterValue: number
+    bizKey: string
+    remark: string | null
+    context?: unknown
+    createdAt: Date
+  }): PublicGrowthLedgerRecord {
+    return {
+      id: record.id,
+      userId: record.userId,
+      assetType: record.assetType,
+      ruleId: record.ruleId ?? undefined,
+      ruleType: record.ruleType ?? undefined,
+      targetType: record.targetType ?? undefined,
+      targetId: record.targetId ?? undefined,
+      delta: record.delta,
+      beforeValue: record.beforeValue,
+      afterValue: record.afterValue,
+      bizKey: record.bizKey,
+      remark: record.remark ?? undefined,
+      context: this.sanitizePublicContext(record.context),
+      createdAt: record.createdAt,
+    }
+  }
+
+  private isPublicContextValue(
+    value: unknown,
+  ): value is PublicGrowthLedgerContextValue {
+    return (
+      value === null
+      || typeof value === 'boolean'
+      || typeof value === 'number'
+      || typeof value === 'string'
+    )
   }
 
   /**

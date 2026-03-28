@@ -57,7 +57,7 @@ export const task = pgTable("task", {
    */
   targetCount: integer().default(1).notNull(),
   /**
-   * 奖励配置
+   * 奖励配置（当前仅支持 points / experience 正整数）
    */
   rewardConfig: jsonb(),
   /**

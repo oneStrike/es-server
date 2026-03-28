@@ -3,11 +3,18 @@ import { Module } from '@nestjs/common'
 import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageMonitorModule } from '../monitor/monitor.module'
 import { MessageNotificationModule } from '../notification/notification.module'
+import { MessageOutboxModule } from '../outbox/outbox.module'
 import { MESSAGE_CHAT_SERVICE_TOKEN } from './chat.constant'
 import { MessageChatService } from './chat.service'
 
 @Module({
-  imports: [MessageNotificationModule, MessageInboxModule, MessageMonitorModule, EmojiModule],
+  imports: [
+    MessageNotificationModule,
+    MessageInboxModule,
+    MessageMonitorModule,
+    MessageOutboxModule,
+    EmojiModule,
+  ],
   providers: [
     MessageChatService,
     {

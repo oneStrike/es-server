@@ -1,3 +1,4 @@
+import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward'
 import type { SQL } from 'drizzle-orm'
 import type {
   ClaimTaskInput,
@@ -12,20 +13,33 @@ import type {
   UpdateTaskStatusInput,
 } from './task.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
+import {
+  createEventEnvelope,
+  EventDefinitionEntityTypeEnum,
+  EventEnvelopeGovernanceStatusEnum,
+} from '@libs/growth/event-definition'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward'
+import { MessageNotificationTypeEnum } from '@libs/message/notification'
+import { MessageOutboxService } from '@libs/message/outbox'
 import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { and, eq, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
+  TASK_AVAILABLE_REMINDER_RECENT_HOURS,
+  TASK_EXPIRING_SOON_REMINDER_HOURS,
+  TaskAssignmentRewardResultTypeEnum,
+  TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
   TaskProgressActionTypeEnum,
+  TaskReminderKindEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
 } from './task.constant'
@@ -33,6 +47,15 @@ import {
 /** 任务实体类型 */
 type Task = typeof import('@db/schema').task.$inferSelect
 /** 任务分配实体类型 */
+type TaskAssignment = typeof import('@db/schema').taskAssignment.$inferSelect
+
+interface TaskRewardConfig {
+  points?: number
+  experience?: number
+}
+
+const TASK_COMPLETE_EVENT_CODE = 'task.complete'
+const TASK_COMPLETE_EVENT_KEY = 'TASK_COMPLETE'
 
 /**
  * 任务服务
@@ -55,9 +78,12 @@ type Task = typeof import('@db/schema').task.$inferSelect
  */
 @Injectable()
 export class TaskService {
+  private readonly logger = new Logger(TaskService.name)
+
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
+    private readonly messageOutboxService: MessageOutboxService,
   ) { }
 
   /** 数据库连接实例 */
@@ -269,11 +295,13 @@ export class TaskService {
   async createTask(dto: CreateTaskInput, adminUserId: number) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
+    const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
 
     await this.drizzle.withErrorHandling(
       () =>
         this.db.insert(this.taskTable).values({
           ...dto,
+          rewardConfig,
           repeatRule: this.parseJsonValue(dto.repeatRule),
           createdById: adminUserId,
           updatedById: adminUserId,
@@ -296,6 +324,7 @@ export class TaskService {
   async updateTask(dto: UpdateTaskInput, adminUserId: number) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
+    const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
 
     const result = await this.drizzle.withErrorHandling(
       () =>
@@ -303,7 +332,7 @@ export class TaskService {
           .update(this.taskTable)
           .set({
             ...dto,
-            rewardConfig: this.parseJsonValue(dto.rewardConfig),
+            rewardConfig,
             repeatRule: this.parseJsonValue(dto.repeatRule),
             updatedById: adminUserId,
           })
@@ -402,6 +431,7 @@ export class TaskService {
   async getAvailableTasks(queryDto: QueryAppTaskInput, userId: number) {
     const { type } = queryDto
     const where = this.buildAvailableWhere(type)
+    const now = new Date()
 
     const result = await this.drizzle.ext.findPagination(this.taskTable, {
       where,
@@ -412,6 +442,7 @@ export class TaskService {
 
     // 为自动领取模式的任务确保分配已创建
     await this.ensureAutoAssignments(userId, result.list)
+    await this.tryNotifyAvailableTasksFromPage(userId, result.list, now)
     return result
   }
 
@@ -535,9 +566,13 @@ export class TaskService {
 
     // 已完成或已过期的分配直接返回
     if (
-      assignment.status === TaskAssignmentStatusEnum.COMPLETED ||
-      assignment.status === TaskAssignmentStatusEnum.EXPIRED
+      assignment.status === TaskAssignmentStatusEnum.COMPLETED
     ) {
+      await this.settleCompletedAssignmentRewardIfNeeded(userId, taskRecord, assignment)
+      return true
+    }
+
+    if (assignment.status === TaskAssignmentStatusEnum.EXPIRED) {
       return true
     }
 
@@ -634,6 +669,7 @@ export class TaskService {
     }
     // 已完成则直接返回
     if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
+      await this.settleCompletedAssignmentRewardIfNeeded(userId, taskRecord, assignment)
       return true
     }
     // 自动完成模式需要进度达标
@@ -713,6 +749,66 @@ export class TaskService {
     )
   }
 
+  /**
+   * 即将过期任务提醒（定时任务）
+   *
+   * 每小时扫描一次未来 24 小时内即将过期且仍未完成的任务分配，
+   * 通过稳定幂等键保证每个 assignment 只提醒一次。
+   */
+  @Cron('0 0 * * * *')
+  async notifyExpiringSoonAssignments() {
+    const now = new Date()
+    const deadline = this.addHours(now, TASK_EXPIRING_SOON_REMINDER_HOURS)
+
+    const assignments = await this.db
+      .select({
+        assignmentId: this.taskAssignmentTable.id,
+        taskId: this.taskAssignmentTable.taskId,
+        userId: this.taskAssignmentTable.userId,
+        cycleKey: this.taskAssignmentTable.cycleKey,
+        expiredAt: this.taskAssignmentTable.expiredAt,
+        title: this.taskTable.title,
+      })
+      .from(this.taskAssignmentTable)
+      .innerJoin(
+        this.taskTable,
+        eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+      )
+      .where(
+        and(
+          isNull(this.taskAssignmentTable.deletedAt),
+          inArray(this.taskAssignmentTable.status, [
+            TaskAssignmentStatusEnum.PENDING,
+            TaskAssignmentStatusEnum.IN_PROGRESS,
+          ]),
+          gte(this.taskAssignmentTable.expiredAt, now),
+          lte(this.taskAssignmentTable.expiredAt, deadline),
+          isNull(this.taskTable.deletedAt),
+        ),
+      )
+
+    if (assignments.length === 0) {
+      return
+    }
+
+    await this.messageOutboxService.enqueueNotificationEvents(
+      assignments
+        .filter((item) => item.expiredAt)
+        .map((item) =>
+          this.buildTaskReminderNotificationEvent({
+            bizKey: this.buildTaskExpiringSoonReminderBizKey(item.assignmentId),
+            receiverUserId: item.userId,
+            taskId: item.taskId,
+            taskTitle: item.title,
+            cycleKey: item.cycleKey,
+            reminderKind: TaskReminderKindEnum.EXPIRING_SOON,
+            assignmentId: item.assignmentId,
+            expiredAt: item.expiredAt ?? undefined,
+          }),
+        ),
+    )
+  }
+
   // ==================== 私有方法 ====================
 
   /**
@@ -753,6 +849,64 @@ export class TaskService {
     } catch {
       throw new BadRequestException('JSON格式错误')
     }
+  }
+
+  /**
+   * 解析并校验任务奖励配置。
+   * 当前只允许 points / experience 两个正整数字段，空对象会被归一化为 null。
+   */
+  private parseTaskRewardConfig(
+    value?: string | Record<string, unknown> | null,
+  ): TaskRewardConfig | null | undefined {
+    if (value === undefined || value === '') {
+      return undefined
+    }
+    if (value === null) {
+      return null
+    }
+
+    const parsed = this.parseJsonValue(value)
+    if (parsed === null) {
+      return null
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new BadRequestException('rewardConfig 必须是 JSON 对象')
+    }
+
+    const record = parsed
+    const unsupportedKeys = Object.keys(record).filter((key) =>
+      !['points', 'experience'].includes(key),
+    )
+    if (unsupportedKeys.length > 0) {
+      throw new BadRequestException(
+        `rewardConfig 暂只支持 points、experience，暂不支持字段：${unsupportedKeys.join(', ')}`,
+      )
+    }
+
+    const rewardConfig: TaskRewardConfig = {}
+    if ('points' in record && record.points !== undefined) {
+      rewardConfig.points = this.parseRewardConfigPositiveInt(
+        record.points,
+        'rewardConfig.points',
+      )
+    }
+    if ('experience' in record && record.experience !== undefined) {
+      rewardConfig.experience = this.parseRewardConfigPositiveInt(
+        record.experience,
+        'rewardConfig.experience',
+      )
+    }
+
+    return Object.keys(rewardConfig).length > 0 ? rewardConfig : null
+  }
+
+  private parseRewardConfigPositiveInt(value: unknown, fieldName: string) {
+    if (!Number.isInteger(value) || Number(value) <= 0) {
+      throw new BadRequestException(
+        `${fieldName} 必须是大于 0 的整数，清空请传 null 或移除该字段`,
+      )
+    }
+    return Number(value)
   }
 
   /**
@@ -983,6 +1137,7 @@ export class TaskService {
    * @param taskRecord.type 任务类型
    * @param taskRecord.rewardConfig 奖励配置
    * @param taskRecord.targetCount 目标数量
+   * @param taskRecord.claimMode 领取模式
    * @param taskRecord.publishEndAt 发布结束时间
    * @param userId 用户ID
    * @param cycleKey 周期标识
@@ -997,6 +1152,7 @@ export class TaskService {
       type: number
       rewardConfig: unknown
       targetCount: number
+      claimMode?: number
       publishEndAt: Date | null
     },
     userId: number,
@@ -1004,9 +1160,10 @@ export class TaskService {
     now: Date,
   ) {
     const taskSnapshot = this.buildTaskSnapshot(taskRecord)
+    let createdAssignment: TaskAssignment | undefined
 
-    return this.drizzle.withTransaction(async (tx) => {
-      const [createdAssignment] = await tx
+    const assignment = await this.drizzle.withTransaction(async (tx) => {
+      const [insertedAssignment] = await tx
         .insert(this.taskAssignmentTable)
         .values({
           taskId: taskRecord.id,
@@ -1022,16 +1179,17 @@ export class TaskService {
         .onConflictDoNothing()
         .returning()
 
-      if (createdAssignment) {
+      if (insertedAssignment) {
+        createdAssignment = insertedAssignment
         await tx.insert(this.taskProgressLogTable).values({
-          assignmentId: createdAssignment.id,
+          assignmentId: insertedAssignment.id,
           userId,
           actionType: TaskProgressActionTypeEnum.CLAIM,
           delta: 0,
           beforeValue: 0,
           afterValue: 0,
         })
-        return createdAssignment
+        return insertedAssignment
       }
 
       const [existing] = await tx
@@ -1052,6 +1210,15 @@ export class TaskService {
 
       throw new NotFoundException('任务分配创建失败')
     })
+
+    if (
+      createdAssignment
+      && taskRecord.claimMode === TaskClaimModeEnum.AUTO
+    ) {
+      await this.tryNotifyAutoAssignedTask(userId, taskRecord, assignment, cycleKey)
+    }
+
+    return assignment
   }
 
   /**
@@ -1187,23 +1354,425 @@ export class TaskService {
    * @param userId 用户ID
    * @param taskRecord 任务信息对象
    * @param taskRecord.id 任务ID
+   * @param taskRecord.title 任务标题
    * @param taskRecord.rewardConfig 奖励配置
    * @param assignment 任务分配信息对象
    * @param assignment.id 分配ID
+   * @param assignment.completedAt 任务完成时间，用于构建统一事件壳的 occurredAt
    */
   private async emitTaskCompleteEvent(
     userId: number,
     taskRecord: {
       id: number
+      title?: string
       rewardConfig: unknown
     },
-    assignment: { id: number },
+    assignment: { id: number, completedAt?: Date | null },
   ) {
-    await this.userGrowthRewardService.tryRewardTaskComplete({
+    const taskCompleteEvent = this.buildTaskCompleteEventEnvelope({
       userId,
       taskId: taskRecord.id,
       assignmentId: assignment.id,
-      rewardConfig: taskRecord.rewardConfig as Record<string, unknown> | null,
+      occurredAt: assignment.completedAt ?? undefined,
+    })
+
+    const rewardResult = await this.userGrowthRewardService.tryRewardTaskComplete({
+      userId,
+      taskId: taskRecord.id,
+      assignmentId: assignment.id,
+      rewardConfig: taskRecord.rewardConfig,
+      eventEnvelope: taskCompleteEvent,
+    })
+
+    await this.syncTaskAssignmentRewardState(assignment.id, rewardResult)
+    await this.tryNotifyTaskRewardGranted(userId, taskRecord, assignment, rewardResult)
+  }
+
+  private async settleCompletedAssignmentRewardIfNeeded(
+    userId: number,
+    taskRecord: {
+      id: number
+      rewardConfig: unknown
+    },
+    assignment: { id: number, rewardStatus?: number | null },
+  ) {
+    if (assignment.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS) {
+      return
+    }
+
+    await this.emitTaskCompleteEvent(userId, taskRecord, assignment)
+  }
+
+  private async syncTaskAssignmentRewardState(
+    assignmentId: number,
+    rewardResult: TaskRewardSettlementResult,
+  ) {
+    try {
+      const updateResult = await this.drizzle.withErrorHandling(() =>
+        this.db
+          .update(this.taskAssignmentTable)
+          .set({
+            rewardStatus: rewardResult.success
+              ? TaskAssignmentRewardStatusEnum.SUCCESS
+              : TaskAssignmentRewardStatusEnum.FAILED,
+            rewardResultType: rewardResult.success
+              ? rewardResult.resultType
+              : TaskAssignmentRewardResultTypeEnum.FAILED,
+            rewardSettledAt: rewardResult.settledAt,
+            rewardLedgerIds: rewardResult.ledgerRecordIds,
+            lastRewardError: rewardResult.success
+              ? null
+              : (rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试'),
+          })
+          .where(eq(this.taskAssignmentTable.id, assignmentId)),
+      )
+
+      this.drizzle.assertAffectedRows(updateResult, '任务分配不存在')
+    } catch (error) {
+      this.logger.warn(
+        `task_reward_state_sync_failed assignmentId=${assignmentId} resultType=${rewardResult.resultType} error=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
+  }
+
+  /**
+   * 尝试发送“新任务可领”提醒
+   *
+   * 当前仅对手动领取任务生效，并限制为最近 24 小时进入可领取状态的任务，
+   * 避免用户首次打开任务页时收到历史积压提醒。
+   */
+  private async tryNotifyAvailableTasksFromPage(
+    userId: number,
+    tasks: Task[],
+    now: Date,
+  ) {
+    const recentBoundary = this.addHours(
+      now,
+      -TASK_AVAILABLE_REMINDER_RECENT_HOURS,
+    )
+    const notifications = tasks
+      .filter((taskRecord) =>
+        taskRecord.claimMode === TaskClaimModeEnum.MANUAL
+        && this.getTaskAvailableReferenceTime(taskRecord).getTime()
+        >= recentBoundary.getTime(),
+      )
+      .map((taskRecord) => {
+        const cycleKey = this.buildCycleKey(taskRecord, now)
+        return this.buildTaskReminderNotificationEvent({
+          bizKey: this.buildTaskAvailableReminderBizKey(
+            taskRecord.id,
+            userId,
+            cycleKey,
+          ),
+          receiverUserId: userId,
+          taskId: taskRecord.id,
+          taskTitle: taskRecord.title,
+          cycleKey,
+          reminderKind: TaskReminderKindEnum.AVAILABLE,
+          claimMode: taskRecord.claimMode,
+        })
+      })
+
+    if (notifications.length === 0) {
+      return
+    }
+
+    try {
+      await this.messageOutboxService.enqueueNotificationEvents(notifications)
+    } catch (error) {
+      this.logger.warn(
+        `task_available_reminder_enqueue_failed userId=${userId} count=${notifications.length} error=${this.stringifyError(error)}`,
+      )
+    }
+  }
+
+  /**
+   * 尝试发送“自动分配的新任务”提醒
+   *
+   * 自动领取任务创建 assignment 后立刻补一条提醒，帮助用户感知任务已进入“我的任务”。
+   */
+  private async tryNotifyAutoAssignedTask(
+    userId: number,
+    taskRecord: {
+      id: number
+      title: string
+      claimMode?: number
+    },
+    assignment: { id: number },
+    cycleKey: string,
+  ) {
+    try {
+      await this.messageOutboxService.enqueueNotificationEvent({
+        eventType: MessageNotificationTypeEnum.TASK_REMINDER,
+        bizKey: this.buildTaskAvailableReminderBizKey(
+          taskRecord.id,
+          userId,
+          cycleKey,
+        ),
+        payload: this.buildTaskReminderNotificationEvent({
+          bizKey: this.buildTaskAvailableReminderBizKey(
+            taskRecord.id,
+            userId,
+            cycleKey,
+          ),
+          receiverUserId: userId,
+          taskId: taskRecord.id,
+          taskTitle: taskRecord.title,
+          cycleKey,
+          reminderKind: TaskReminderKindEnum.AVAILABLE,
+          claimMode: taskRecord.claimMode,
+          assignmentId: assignment.id,
+        }).payload,
+      })
+    } catch (error) {
+      this.logger.warn(
+        `task_auto_assignment_reminder_enqueue_failed userId=${userId} taskId=${taskRecord.id} assignmentId=${assignment.id} error=${this.stringifyError(error)}`,
+      )
+    }
+  }
+
+  /**
+   * 尝试发送“奖励到账”提醒
+   *
+   * 仅当本次任务奖励真实落账时发送；命中幂等、失败或未配置奖励都不会再次提醒。
+   */
+  private async tryNotifyTaskRewardGranted(
+    userId: number,
+    taskRecord: {
+      id: number
+      title?: string
+    },
+    assignment: { id: number },
+    rewardResult: TaskRewardSettlementResult,
+  ) {
+    if (rewardResult.resultType !== TaskAssignmentRewardResultTypeEnum.APPLIED) {
+      return
+    }
+
+    const grantedPoints = this.getAppliedRewardAmount(rewardResult.pointsReward)
+    const grantedExperience = this.getAppliedRewardAmount(
+      rewardResult.experienceReward,
+    )
+    if (grantedPoints <= 0 && grantedExperience <= 0) {
+      return
+    }
+
+    try {
+      await this.messageOutboxService.enqueueNotificationEvent(
+        this.buildTaskReminderNotificationEvent({
+          bizKey: this.buildTaskRewardGrantedReminderBizKey(assignment.id),
+          receiverUserId: userId,
+          taskId: taskRecord.id,
+          taskTitle: taskRecord.title ?? `任务#${taskRecord.id}`,
+          reminderKind: TaskReminderKindEnum.REWARD_GRANTED,
+          assignmentId: assignment.id,
+          points: grantedPoints,
+          experience: grantedExperience,
+          ledgerRecordIds: rewardResult.ledgerRecordIds,
+        }),
+      )
+    } catch (error) {
+      this.logger.warn(
+        `task_reward_reminder_enqueue_failed userId=${userId} taskId=${taskRecord.id} assignmentId=${assignment.id} error=${this.stringifyError(error)}`,
+      )
+    }
+  }
+
+  /**
+   * 计算任务进入可领取状态的参考时间
+   *
+   * 优先使用 publishStartAt；未设置时回退到 createdAt，便于界定“新任务可领”的提醒窗口。
+   */
+  private getTaskAvailableReferenceTime(
+    taskRecord: Pick<Task, 'publishStartAt' | 'createdAt'>,
+  ) {
+    return taskRecord.publishStartAt ?? taskRecord.createdAt
+  }
+
+  /**
+   * 计算真实到账的奖励数量
+   *
+   * 仅统计本次真实落账成功的奖励，幂等命中与未配置奖励都会返回 0。
+   */
+  private getAppliedRewardAmount(reward: TaskRewardSettlementResult['pointsReward']) {
+    if (!reward.success || reward.duplicated || reward.skipped) {
+      return 0
+    }
+    return reward.configuredAmount
+  }
+
+  /**
+   * 构建任务提醒 outbox 事件
+   *
+   * title/content 同时作为 fallback 文案与模板渲染上下文，确保模板缺失时仍可直接投递。
+   */
+  private buildTaskReminderNotificationEvent(params: {
+    bizKey: string
+    receiverUserId: number
+    taskId: number
+    taskTitle: string
+    cycleKey?: string
+    reminderKind: TaskReminderKindEnum
+    claimMode?: number
+    assignmentId?: number
+    expiredAt?: Date
+    points?: number
+    experience?: number
+    ledgerRecordIds?: number[]
+  }) {
+    const message = this.buildTaskReminderMessage(params)
+    return {
+      eventType: MessageNotificationTypeEnum.TASK_REMINDER,
+      bizKey: params.bizKey,
+      payload: {
+        receiverUserId: params.receiverUserId,
+        type: MessageNotificationTypeEnum.TASK_REMINDER,
+        targetId: params.taskId,
+        title: message.title,
+        content: message.content,
+        payload: {
+          title: message.title,
+          content: message.content,
+          reminderKind: params.reminderKind,
+          taskId: params.taskId,
+          taskTitle: params.taskTitle,
+          cycleKey: params.cycleKey,
+          assignmentId: params.assignmentId,
+          expiredAt: params.expiredAt,
+          points: params.points,
+          experience: params.experience,
+          ledgerRecordIds: params.ledgerRecordIds,
+        },
+      },
+    }
+  }
+
+  /**
+   * 构建任务提醒文案
+   * 第一阶段只保留最小可读文案，不把复杂业务判断下沉到模板层。
+   */
+  private buildTaskReminderMessage(params: {
+    taskTitle: string
+    reminderKind: TaskReminderKindEnum
+    claimMode?: number
+    points?: number
+    experience?: number
+  }) {
+    if (params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED) {
+      const rewardParts: string[] = []
+      if (params.points && params.points > 0) {
+        rewardParts.push(`积分 +${params.points}`)
+      }
+      if (params.experience && params.experience > 0) {
+        rewardParts.push(`经验 +${params.experience}`)
+      }
+      return {
+        title: '任务奖励已到账',
+        content: `任务《${params.taskTitle}》奖励已到账${rewardParts.length > 0 ? `：${rewardParts.join('，')}` : ''}`,
+      }
+    }
+
+    if (params.reminderKind === TaskReminderKindEnum.EXPIRING_SOON) {
+      return {
+        title: '任务即将过期',
+        content: `任务《${params.taskTitle}》将在 24 小时内过期，请尽快完成。`,
+      }
+    }
+
+    if (params.claimMode === TaskClaimModeEnum.AUTO) {
+      return {
+        title: '你有新的任务待完成',
+        content: `任务《${params.taskTitle}》已自动加入你的任务列表。`,
+      }
+    }
+
+    return {
+      title: '发现新的可领取任务',
+      content: `任务《${params.taskTitle}》现已可领取。`,
+    }
+  }
+
+  /**
+   * 构建“新任务可领”提醒幂等键
+   * 维度固定为 task + user + cycle，确保重复周期任务每期最多提醒一次。
+   */
+  private buildTaskAvailableReminderBizKey(
+    taskId: number,
+    userId: number,
+    cycleKey: string,
+  ) {
+    return `task:reminder:available:task:${taskId}:cycle:${cycleKey}:user:${userId}`
+  }
+
+  /**
+   * 构建“任务即将过期”提醒幂等键
+   * 维度固定为 assignment，确保单个分配仅提醒一次。
+   */
+  private buildTaskExpiringSoonReminderBizKey(assignmentId: number) {
+    return `task:reminder:expiring:assignment:${assignmentId}`
+  }
+
+  /**
+   * 构建“任务奖励到账”提醒幂等键
+   * 维度固定为 assignment，避免补偿结算时重复通知。
+   */
+  private buildTaskRewardGrantedReminderBizKey(assignmentId: number) {
+    return `task:reminder:reward:assignment:${assignmentId}`
+  }
+
+  /**
+   * 时间加减辅助方法
+   * 支持按小时平移时间，供提醒窗口计算复用。
+   */
+  private addHours(date: Date, hours: number) {
+    const next = new Date(date)
+    next.setHours(next.getHours() + hours)
+    return next
+  }
+
+  /**
+   * 统一序列化提醒链路异常
+   * 仅用于 warning 日志，避免 sidecar 通知失败影响主业务链路。
+   */
+  private stringifyError(error: unknown) {
+    if (error instanceof Error) {
+      return error.message
+    }
+    if (typeof error === 'string') {
+      return error
+    }
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return 'unknown error'
+    }
+  }
+
+  /**
+   * 构建任务完成事件 envelope。
+   * 当前任务域尚未进入统一事件定义表，先使用稳定字符串编码承载最小事件语义。
+   */
+  private buildTaskCompleteEventEnvelope(params: {
+    userId: number
+    taskId: number
+    assignmentId: number
+    occurredAt?: Date
+  }) {
+    return createEventEnvelope({
+      code: TASK_COMPLETE_EVENT_CODE,
+      key: TASK_COMPLETE_EVENT_KEY,
+      subjectType: EventDefinitionEntityTypeEnum.USER,
+      subjectId: params.userId,
+      targetType: EventDefinitionEntityTypeEnum.TASK_ASSIGNMENT,
+      targetId: params.assignmentId,
+      occurredAt: params.occurredAt,
+      governanceStatus: EventEnvelopeGovernanceStatusEnum.NONE,
+      context: {
+        taskId: params.taskId,
+        assignmentId: params.assignmentId,
+      },
     })
   }
 }

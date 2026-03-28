@@ -1,10 +1,13 @@
 import type { Db } from '@db/core'
 import type {
+  CreateChatMessageCreatedOutboxEventInput,
   CreateMessageOutboxEventInput,
   CreateNotificationOutboxEventInput,
 } from './outbox.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
+import { ChatOutboxEventTypeEnum } from '../chat/chat.constant'
 import {
   MessageOutboxDomainEnum,
   MessageOutboxStatusEnum,
@@ -36,6 +39,19 @@ export class MessageOutboxService {
     )
   }
 
+  /**
+   * 批量将消息事件入队
+   * @param dtos 消息事件数据列表
+   */
+  async enqueueEvents(dtos: CreateMessageOutboxEventInput[]) {
+    if (dtos.length === 0) {
+      return
+    }
+    await this.drizzle.withErrorHandling(async () =>
+      this.enqueueEventsInTx(this.db, dtos),
+    )
+  }
+
   async enqueueEventInTx(tx: Db, dto: CreateMessageOutboxEventInput) {
     await tx
       .insert(this.outbox)
@@ -52,12 +68,51 @@ export class MessageOutboxService {
   }
 
   /**
+   * 批量将消息事件入队（事务内）
+   * @param tx 事务实例
+   * @param dtos 消息事件数据列表
+   */
+  async enqueueEventsInTx(tx: Db, dtos: CreateMessageOutboxEventInput[]) {
+    if (dtos.length === 0) {
+      return
+    }
+
+    await tx
+      .insert(this.outbox)
+      .values(
+        dtos.map((dto) => ({
+          domain: dto.domain,
+          eventType: dto.eventType,
+          bizKey: dto.bizKey,
+          payload: dto.payload,
+          status: MessageOutboxStatusEnum.PENDING,
+        })),
+      )
+      .onConflictDoNothing({
+        target: this.outbox.bizKey,
+      })
+  }
+
+  /**
    * 将通知事件入队
    * @param dto 通知事件数据
    */
   async enqueueNotificationEvent(dto: CreateNotificationOutboxEventInput) {
     await this.drizzle.withErrorHandling(async () =>
       this.enqueueNotificationEventInTx(this.db, dto),
+    )
+  }
+
+  /**
+   * 批量将通知事件入队
+   * @param dtos 通知事件数据列表
+   */
+  async enqueueNotificationEvents(dtos: CreateNotificationOutboxEventInput[]) {
+    if (dtos.length === 0) {
+      return
+    }
+    await this.drizzle.withErrorHandling(async () =>
+      this.enqueueNotificationEventsInTx(this.db, dtos),
     )
   }
 
@@ -74,5 +129,77 @@ export class MessageOutboxService {
         payload: dto.payload,
       },
     )
+  }
+
+  /**
+   * 批量将通知事件入队（事务内）
+   * @param tx 事务实例
+   * @param dtos 通知事件数据列表
+   */
+  async enqueueNotificationEventsInTx(
+    tx: Db,
+    dtos: CreateNotificationOutboxEventInput[],
+  ) {
+    if (dtos.length === 0) {
+      return
+    }
+
+    await this.enqueueEventsInTx(
+      tx,
+      dtos.map((dto) => ({
+        domain: MessageOutboxDomainEnum.NOTIFICATION,
+        eventType: dto.eventType,
+        bizKey: dto.bizKey,
+        payload: dto.payload,
+      })),
+    )
+  }
+
+  /**
+   * 将 CHAT 域“消息已创建”事件入队（事务内）。
+   * - 只写最小 payload，消费时回读 chat 事实表，避免把过时未读数快照固化进 outbox
+   */
+  async enqueueChatMessageCreatedEventInTx(
+    tx: Db,
+    dto: CreateChatMessageCreatedOutboxEventInput,
+  ) {
+    await this.enqueueEventInTx(tx, {
+      domain: MessageOutboxDomainEnum.CHAT,
+      eventType: dto.eventType ?? ChatOutboxEventTypeEnum.MESSAGE_CREATED,
+      bizKey: dto.bizKey,
+      payload: dto.payload,
+    })
+  }
+
+  /**
+   * 按业务键尝试标记 outbox 事件为成功。
+   * - 只处理仍处于 PENDING 的事件；若 worker 已先消费完成，则直接返回 false
+   */
+  async markEventSucceededByBizKey(input: {
+    bizKey: string
+    domain?: MessageOutboxDomainEnum
+  }) {
+    return this.drizzle.withErrorHandling(async () => {
+      const processedAt = new Date()
+      const conditions = [
+        eq(this.outbox.bizKey, input.bizKey),
+        eq(this.outbox.status, MessageOutboxStatusEnum.PENDING),
+      ]
+      if (input.domain !== undefined) {
+        conditions.push(eq(this.outbox.domain, input.domain))
+      }
+
+      const result = await this.db
+        .update(this.outbox)
+        .set({
+          status: MessageOutboxStatusEnum.SUCCESS,
+          processedAt,
+          nextRetryAt: null,
+          lastError: null,
+        })
+        .where(and(...conditions))
+
+      return (result.rowCount ?? 0) > 0
+    })
   }
 }

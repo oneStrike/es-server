@@ -4,18 +4,18 @@
  * 功能说明：
  * - 提供内容举报功能
  * - 通过解析器模式支持多种目标类型的举报操作
- * - 集成成长奖励能力
+ * - 集成裁决后的成长奖励能力
  *
  * 依赖模块：
- * - GrowthLedgerModule：成长账本模块，用于发放举报奖励
+ * - UserGrowthRewardModule：成长奖励模块，用于在裁决后发放奖励
  */
-import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
+import { UserGrowthRewardModule } from '@libs/growth/growth-reward'
 import { Module } from '@nestjs/common'
 import { ReportGrowthService } from './report-growth.service'
 import { ReportService } from './report.service'
 
 @Module({
-  imports: [GrowthLedgerModule],
+  imports: [UserGrowthRewardModule],
   providers: [ReportService, ReportGrowthService],
   exports: [ReportService],
 })

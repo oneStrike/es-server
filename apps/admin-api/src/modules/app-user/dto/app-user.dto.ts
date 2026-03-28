@@ -1,6 +1,8 @@
 import { BaseUserBadgeDto } from '@libs/growth/badge'
+import { GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION } from '@libs/growth/event-definition'
 import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { BaseGrowthLedgerRecordDto } from '@libs/growth/growth-ledger'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import { BaseUserPointRecordDto } from '@libs/growth/point'
 import {
@@ -8,6 +10,7 @@ import {
   EnumProperty,
   NestedProperty,
   NumberProperty,
+  RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
@@ -18,6 +21,18 @@ export enum AdminAppUserDeletedScopeEnum {
   ACTIVE = 'active',
   DELETED = 'deleted',
   ALL = 'all',
+}
+
+const ADMIN_APP_USER_OPERATION_KEY_REGEX = /^[\w:-]{8,64}$/
+
+class AdminAppUserManualOperationDto extends UserIdDto {
+  @RegexProperty({
+    description: '人工操作稳定键，用于重试复用同一次补发请求',
+    example: 'manual-growth-20260328-001',
+    regex: ADMIN_APP_USER_OPERATION_KEY_REGEX,
+    message: 'operationKey 只能包含字母、数字、冒号、下划线或短横线，长度为 8-64 位',
+  })
+  operationKey!: string
 }
 
 export class AdminAppUserLevelDto extends PickType(BaseUserLevelRuleDto, [
@@ -294,9 +309,12 @@ export class AdminAppUserPointRecordDto extends PickType(
     'id',
     'userId',
     'ruleId',
+    'ruleType',
     'targetType',
     'targetId',
+    'bizKey',
     'remark',
+    'context',
     'createdAt',
   ] as const,
 ) {
@@ -338,7 +356,18 @@ export class QueryAdminAppUserPointRecordDto extends IntersectionType(
 
 export class AdminAppUserExperienceRecordDto extends PickType(
   BaseUserExperienceRecordDto,
-  ['id', 'userId', 'ruleId', 'remark', 'createdAt'] as const,
+  [
+    'id',
+    'userId',
+    'ruleId',
+    'ruleType',
+    'targetType',
+    'targetId',
+    'bizKey',
+    'remark',
+    'context',
+    'createdAt',
+  ] as const,
 ) {
   @NumberProperty({
     description: '经验值变化',
@@ -370,6 +399,42 @@ export class QueryAdminAppUserExperienceRecordDto extends IntersectionType(
   ),
 ) {}
 
+export class AdminAppUserGrowthLedgerRecordDto extends PickType(
+  BaseGrowthLedgerRecordDto,
+  [
+    'id',
+    'userId',
+    'assetType',
+    'ruleId',
+    'ruleType',
+    'targetType',
+    'targetId',
+    'delta',
+    'beforeValue',
+    'afterValue',
+    'bizKey',
+    'remark',
+    'context',
+    'createdAt',
+  ] as const,
+) {}
+
+export class QueryAdminAppUserGrowthLedgerDto extends IntersectionType(
+  UserIdDto,
+  IntersectionType(
+    PageDto,
+    PartialType(
+      PickType(BaseGrowthLedgerRecordDto, [
+        'assetType',
+        'ruleId',
+        'ruleType',
+        'targetType',
+        'targetId',
+      ] as const),
+    ),
+  ),
+) {}
+
 export class QueryAdminAppUserBadgeDto extends IntersectionType(
   UserIdDto,
   IntersectionType(
@@ -386,10 +451,9 @@ export class QueryAdminAppUserBadgeDto extends IntersectionType(
   ),
 ) {}
 
-export class AddAdminAppUserPointsDto extends UserIdDto {
+export class AddAdminAppUserPointsDto extends AdminAppUserManualOperationDto {
   @EnumProperty({
-    description:
-      '规则类型（论坛：1=发表主题，2=发表回复，3=主题被点赞，4=回复被点赞，5=主题被收藏，6=每日签到，7=管理员操作，8=主题浏览，9=主题举报，10=发表评论，11=评论被点赞，12=评论被举报，16=主题被评论；漫画作品：100=浏览，101=点赞，102=收藏，103=举报，104=评论；小说作品：200=浏览，201=点赞，202=收藏，203=举报，204=评论；漫画章节：300=阅读，301=点赞，302=购买，303=下载，304=兑换，305=举报，306=评论；小说章节：400=阅读，401=点赞，402=购买，403=下载，404=兑换，405=举报，406=评论；徽章与成就：600=获得徽章，601=完善资料，602=上传头像；社交：700=关注用户，701=被关注，702=分享内容，703=邀请用户；举报处理：800=举报有效，801=举报无效）',
+    description: GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION,
     example: GrowthRuleTypeEnum.CREATE_TOPIC,
     enum: GrowthRuleTypeEnum,
   })
@@ -404,7 +468,7 @@ export class AddAdminAppUserPointsDto extends UserIdDto {
   remark?: string
 }
 
-export class ConsumeAdminAppUserPointsDto extends UserIdDto {
+export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto {
   @NumberProperty({
     description: '消费积分数量',
     example: 10,
@@ -442,10 +506,10 @@ export class ConsumeAdminAppUserPointsDto extends UserIdDto {
   remark?: string
 }
 
-export class AddAdminAppUserExperienceDto extends UserIdDto {
+export class AddAdminAppUserExperienceDto
+  extends AdminAppUserManualOperationDto {
   @EnumProperty({
-    description:
-      '规则类型（论坛：1=发表主题，2=发表回复，3=主题被点赞，4=回复被点赞，5=主题被收藏，6=每日签到，7=管理员操作，8=主题浏览，9=主题举报，10=发表评论，11=评论被点赞，12=评论被举报，16=主题被评论；漫画作品：100=浏览，101=点赞，102=收藏，103=举报，104=评论；小说作品：200=浏览，201=点赞，202=收藏，203=举报，204=评论；漫画章节：300=阅读，301=点赞，302=购买，303=下载，304=兑换，305=举报，306=评论；小说章节：400=阅读，401=点赞，402=购买，403=下载，404=兑换，405=举报，406=评论；徽章与成就：600=获得徽章，601=完善资料，602=上传头像；社交：700=关注用户，701=被关注，702=分享内容，703=邀请用户；举报处理：800=举报有效，801=举报无效）',
+    description: GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION,
     example: GrowthRuleTypeEnum.CREATE_TOPIC,
     enum: GrowthRuleTypeEnum,
   })

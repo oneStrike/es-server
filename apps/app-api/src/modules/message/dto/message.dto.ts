@@ -5,6 +5,8 @@ import {
 } from '@libs/message/chat'
 import {
   BaseUserNotificationDto,
+  getMessageNotificationTypeLabel,
+  MessageNotificationPreferenceSourceEnum,
   MessageNotificationTypeEnum,
 } from '@libs/message/notification'
 import {
@@ -150,6 +152,85 @@ export class NotificationUnreadCountDto {
     validation: false,
   })
   count!: number
+}
+
+export class UserNotificationPreferenceItemDto {
+  @EnumProperty({
+    description: '通知类型',
+    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+    enum: MessageNotificationTypeEnum,
+  })
+  notificationType!: MessageNotificationTypeEnum
+
+  @StringProperty({
+    description: '通知类型中文标签',
+    example: getMessageNotificationTypeLabel(
+      MessageNotificationTypeEnum.COMMENT_REPLY,
+    ),
+  })
+  notificationTypeLabel!: string
+
+  @BooleanProperty({
+    description: '当前是否启用',
+    example: true,
+  })
+  isEnabled!: boolean
+
+  @BooleanProperty({
+    description: '该通知类型的默认启用状态',
+    example: true,
+  })
+  defaultEnabled!: boolean
+
+  @EnumProperty({
+    description: '当前状态来源，default=默认策略，explicit=用户显式覆盖',
+    example: MessageNotificationPreferenceSourceEnum.DEFAULT,
+    enum: MessageNotificationPreferenceSourceEnum,
+  })
+  source!: MessageNotificationPreferenceSourceEnum
+
+  @DateProperty({
+    description: '最近一次显式覆盖更新时间',
+    example: '2026-03-28T12:00:00.000Z',
+    required: false,
+  })
+  updatedAt?: Date
+}
+
+export class UserNotificationPreferenceListDto {
+  @ArrayProperty({
+    description: '通知偏好列表',
+    itemClass: UserNotificationPreferenceItemDto,
+    itemType: 'object',
+    validation: false,
+  })
+  list!: UserNotificationPreferenceItemDto[]
+}
+
+export class UpdateUserNotificationPreferenceItemDto {
+  @EnumProperty({
+    description: '通知类型',
+    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+    enum: MessageNotificationTypeEnum,
+  })
+  notificationType!: MessageNotificationTypeEnum
+
+  @BooleanProperty({
+    description: '是否启用该通知类型',
+    example: false,
+  })
+  isEnabled!: boolean
+}
+
+export class UpdateUserNotificationPreferencesDto {
+  @ArrayProperty({
+    description: '通知偏好更新项列表',
+    itemClass: UpdateUserNotificationPreferenceItemDto,
+    itemType: 'object',
+    required: true,
+    minLength: 1,
+  })
+  preferences!: UpdateUserNotificationPreferenceItemDto[]
 }
 
 export class InboxNotificationBriefDto {

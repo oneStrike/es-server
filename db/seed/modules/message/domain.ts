@@ -1,6 +1,10 @@
 import type { Db } from '../../db-client'
 import { and, eq } from 'drizzle-orm'
 import {
+  MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS,
+  MessageNotificationTypeEnum,
+} from '../../../../libs/message/src/notification/notification.constant'
+import {
   appAnnouncement,
   appUser,
   chatConversation,
@@ -8,6 +12,7 @@ import {
   chatMessage,
   messageOutbox,
   messageWsMetric,
+  notificationTemplate,
   userComment,
   userNotification,
 } from '../../../schema'
@@ -15,6 +20,33 @@ import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
 export async function seedMessageDomain(db: Db) {
   console.log('🌱 初始化消息域数据...')
+
+  for (const definition of MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS) {
+    const existing = await db.query.notificationTemplate.findFirst({
+      where: eq(
+        notificationTemplate.notificationType,
+        definition.notificationType,
+      ),
+    })
+    const payload = {
+      notificationType: definition.notificationType,
+      templateKey: definition.templateKey,
+      titleTemplate: definition.defaultTitleTemplate,
+      contentTemplate: definition.defaultContentTemplate,
+      isEnabled: true,
+      remark: `seed default template: ${definition.label}`,
+    }
+
+    if (!existing) {
+      await db.insert(notificationTemplate).values(payload)
+    } else {
+      await db
+        .update(notificationTemplate)
+        .set(payload)
+        .where(eq(notificationTemplate.id, existing.id))
+    }
+  }
+  console.log('  ✓ 通知模板完成')
 
   const userA = await db.query.appUser.findFirst({
     where: eq(appUser.account, SEED_ACCOUNTS.readerA),
@@ -194,7 +226,7 @@ export async function seedMessageDomain(db: Db) {
   const notificationFixtures = [
     {
       userId: userB.id,
-      type: 1,
+      type: MessageNotificationTypeEnum.COMMENT_REPLY,
       bizKey: 'seed:notif:comment-reply:aot',
       actorUserId: userA.id,
       targetType: 4,
@@ -212,7 +244,7 @@ export async function seedMessageDomain(db: Db) {
     },
     {
       userId: userC.id,
-      type: 2,
+      type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
       bizKey: 'seed:notif:system-announcement:2026-spring',
       actorUserId: null,
       targetType: null,
@@ -230,7 +262,7 @@ export async function seedMessageDomain(db: Db) {
     },
     {
       userId: userA.id,
-      type: 3,
+      type: MessageNotificationTypeEnum.CHAT_MESSAGE,
       bizKey: 'seed:notif:chat-message:direct',
       actorUserId: userB.id,
       targetType: 6,

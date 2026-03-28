@@ -3,6 +3,8 @@
  * 定义通知事件的数据结构
  */
 export type {
+  ChatMessageCreatedOutboxPayload,
+  CreateChatMessageCreatedOutboxEventInput as CreateChatMessageCreatedOutboxEventDto,
   CreateMessageOutboxEventInput as CreateMessageOutboxEventDto,
   CreateNotificationOutboxEventInput as CreateNotificationOutboxEventDto,
   NotificationOutboxPayload,

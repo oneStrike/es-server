@@ -13,12 +13,16 @@ import type { SQL } from 'drizzle-orm'
 import type {
   QueryMyBadgeInput,
   QueryMyExperienceRecordInput,
+  QueryMyGrowthLedgerRecordInput,
   QueryMyPointRecordInput,
   UpdateMyProfileInput,
 } from './user.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerService,
+} from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
 import { UserAssetsService } from '@libs/interaction/user-assets'
 import { MessageInboxService } from '@libs/message/inbox'
@@ -34,6 +38,7 @@ export class UserService {
     private readonly userAssetsService: UserAssetsService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
+    private readonly growthLedgerService: GrowthLedgerService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
 
@@ -314,6 +319,23 @@ export class UserService {
     query: QueryMyExperienceRecordInput,
   ) {
     return this.userExperienceService.getExperienceRecordPage({
+      ...query,
+      userId,
+    })
+  }
+
+  /**
+   * 获取用户混合成长流水
+   *
+   * @param userId 用户ID
+   * @param query 查询条件
+   * @returns 混合成长流水分页数据
+   */
+  async getUserGrowthLedgerRecords(
+    userId: number,
+    query: QueryMyGrowthLedgerRecordInput,
+  ) {
+    return this.growthLedgerService.getGrowthLedgerPage({
       ...query,
       userId,
     })

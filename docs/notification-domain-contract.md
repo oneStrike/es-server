@@ -18,6 +18,7 @@
 - `user_notification` 是用户侧“站内通知”唯一读模型
 - 任何希望进入消息中心通知列表的业务消息，都需要物化为 `user_notification`
 - `MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT` 只表示“公告已经进入通知域”，不是公告表本身
+- 待审核、未通过治理或仅处于治理中间态的内容，不进入用户侧通知主链路
 
 ### 2.2 收件箱事实源
 
@@ -32,12 +33,16 @@
 - `app_announcement` 继续承担公告内容发布、展示、上下线管理
 - `app_announcement_read` 只服务公告内容域已读，不直接参与通知未读数
 - 普通公告继续留在内容域，不默认进入通知域
+- 重要公告当前按“高优先级 / 置顶 / 弹窗”命中后，才会由公告服务物化为 `user_notification(type=SYSTEM_ANNOUNCEMENT)`
 
 ### 2.4 chat 域
 
 - chat 与通知可以共用 outbox 底座
 - chat 不复用 `user_notification` 作为主读模型
 - chat 的 ack、未读、会话聚合语义继续由 chat 域自己维护
+- 当前已落地 `CHAT/MESSAGE_CREATED` outbox 事件，用于承接消息落库后的 WS fanout 与 inbox 摘要同步
+- chat 不写 `notification_delivery`；排障继续看 `message_outbox.status` 与 WS 监控指标
+- `chat.send / chat.read` 的 ack 仍是 chat 域自己的请求确认，不与通知投递结果混用
 
 ## 3. 第一阶段通知偏好粒度
 
@@ -49,6 +54,7 @@
 - `USER_FOLLOW`
 - `SYSTEM_ANNOUNCEMENT`
 - `CHAT_MESSAGE`
+- `TASK_REMINDER`
 
 明确不做的事：
 
@@ -59,8 +65,13 @@
 默认策略：
 
 - 采用“显式配置覆盖默认值”
-- 第一阶段默认值按通知类型维护
+- 第一阶段默认值按通知类型维护，当前默认均为启用
 - 若用户没有单独配置，投递层按默认值判断
+
+落地约束：
+
+- `notification_preference` 只保存显式覆盖项，不保存“与默认值相同”的冗余记录
+- `create user_notification` 前必须先合并默认值与显式覆盖，再决定是否抑制
 
 ## 4. delivery 结果语义
 
@@ -81,6 +92,12 @@
 - outbox 记录的是“worker 是否消费了这条待处理事件”
 - 跳过不是失败，必须能被运营侧区分出来
 
+当前已落地的最小实现：
+
+- `notification_delivery` 已作为独立事实表落地
+- 通知 worker 在 `DELIVERED / SKIPPED_* / RETRYING / FAILED` 场景都会写入 delivery
+- 管理端已提供 `admin/message/monitor/delivery/page` 用于按状态、通知类型、接收人、`bizKey`、`outboxId` 排障
+
 ## 5. 模板层职责
 
 模板层是可选渲染层，不是统一执行中心。
@@ -88,8 +105,15 @@
 模板层负责：
 
 - 管理模板 key、启停状态、版本或更新时间
+- 保持 `MessageNotificationTypeEnum -> templateKey` 的一对一稳定映射
 - 根据输入 payload 渲染 title / content
 - 渲染失败时回退到业务方提供的 fallback title / content
+
+第一阶段当前约束：
+
+- 每个 `MessageNotificationTypeEnum` 最多只维护一份站内通知模板
+- 核心站内通知类型通过 seed 初始化默认模板，但业务方 fallback 文案仍然必须保留
+- `SYSTEM_ANNOUNCEMENT` / `TASK_REMINDER` 默认模板直接消费 `payload.title`、`payload.content`
 
 模板层不负责：
 

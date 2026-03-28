@@ -1,19 +1,36 @@
 import type {
+  MessageNotificationDeliveryMonitorQueryInput,
   MessageOutboxMonitorQueryInput,
   MessageWsMonitorQueryInput,
 } from './message-monitor.type'
 import { DrizzleService } from '@db/core'
 import { messageOutbox, messageWsMetric } from '@db/schema'
+import { MessageNotificationDeliveryService } from '@libs/message/notification'
 import { MessageOutboxStatusEnum } from '@libs/message/outbox'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 
 @Injectable()
 export class MessageMonitorService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly messageNotificationDeliveryService: MessageNotificationDeliveryService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
+  }
+
+  /**
+   * 分页查询通知投递结果
+   * 管理端直接复用消息域的 delivery 视图，保持状态语义与筛选口径只有一套事实源
+   */
+  async getNotificationDeliveryPage(
+    query: MessageNotificationDeliveryMonitorQueryInput,
+  ) {
+    return this.messageNotificationDeliveryService.getNotificationDeliveryPage(
+      query,
+    )
   }
 
   async getOutboxMonitorSummary(query: MessageOutboxMonitorQueryInput) {

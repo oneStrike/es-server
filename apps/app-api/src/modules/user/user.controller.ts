@@ -17,6 +17,7 @@ import { QueryMyPointRecordDto, UserPointRecordDto } from './dto/user-point.dto'
 import {
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
+  QueryMyGrowthLedgerRecordDto,
   UpdateMyProfileDto,
   UserAssetsSummaryDto,
   UserBadgeItemDto,
@@ -24,6 +25,7 @@ import {
   UserCountDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
+  UserGrowthLedgerRecordDto,
   UserGrowthSummaryDto,
   UserPointStatsDto,
   UserStatusSummaryDto,
@@ -174,6 +176,21 @@ export class UserController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.userService.getUserExperienceRecords(userId, query)
+  }
+
+  /**
+   * 查询用户混合成长流水
+   */
+  @Get('growth/record/page')
+  @ApiPageDoc({
+    summary: '查询用户混合成长流水',
+    model: UserGrowthLedgerRecordDto,
+  })
+  async getGrowthLedgerRecords(
+    @Query() query: QueryMyGrowthLedgerRecordDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.userService.getUserGrowthLedgerRecords(userId, query)
   }
 
   /**

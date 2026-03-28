@@ -1,3 +1,4 @@
+import type { CreateNotificationFromOutboxResult } from './notification-preference.type'
 import type { MessageNotificationTypeEnum } from './notification.constant'
 
 /**
@@ -10,3 +11,9 @@ export interface QueryUserNotificationListInput {
   isRead?: boolean
   type?: MessageNotificationTypeEnum
 }
+
+/**
+ * 创建通知返回结构
+ * 用于区分真正投递、幂等跳过、自通知跳过和偏好抑制
+ */
+export type CreateNotificationFromOutboxOutput = CreateNotificationFromOutboxResult

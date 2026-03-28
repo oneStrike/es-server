@@ -1,11 +1,19 @@
+import type { EventEnvelope } from '@libs/growth/event-definition'
+import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.types'
+import type {
+  TaskRewardAssetResult,
+  TaskRewardSettlementResult,
+} from './growth-reward.types'
 import { DrizzleService } from '@db/core'
 import { Injectable, Logger } from '@nestjs/common'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
+  GrowthLedgerFailReasonLabel,
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
+import { TaskAssignmentRewardResultTypeEnum } from '../task/task.constant'
 
 interface RewardByRuleParams {
   userId: number
@@ -22,6 +30,7 @@ interface RewardTaskCompleteParams {
   taskId: number
   assignmentId: number
   rewardConfig?: unknown
+  eventEnvelope?: EventEnvelope
 }
 
 /**
@@ -38,19 +47,18 @@ export class UserGrowthRewardService {
     private readonly drizzle: DrizzleService,
   ) {}
 
-  private get db() {
-    return this.drizzle.db
-  }
-
   /**
    * 按规则类型发放奖励
    * 同时发放积分和经验，并根据经验值更新用户等级
    */
   async tryRewardByRule(params: RewardByRuleParams): Promise<void> {
     try {
+      let pointsResult: GrowthLedgerApplyResult | undefined
+      let experienceResult: GrowthLedgerApplyResult | undefined
+
       await this.drizzle.withTransaction(async (tx) => {
         // 发放积分
-        await this.growthLedgerService.applyByRule(tx, {
+        pointsResult = await this.growthLedgerService.applyByRule(tx, {
           userId: params.userId,
           assetType: GrowthAssetTypeEnum.POINTS,
           ruleType: params.ruleType,
@@ -61,7 +69,7 @@ export class UserGrowthRewardService {
         })
 
         // 发放经验
-        await this.growthLedgerService.applyByRule(tx, {
+        experienceResult = await this.growthLedgerService.applyByRule(tx, {
           userId: params.userId,
           assetType: GrowthAssetTypeEnum.EXPERIENCE,
           ruleType: params.ruleType,
@@ -71,6 +79,9 @@ export class UserGrowthRewardService {
           targetId: params.targetId,
         })
       })
+
+      this.logSkippedRuleReward(params, 'POINTS', pointsResult)
+      this.logSkippedRuleReward(params, 'EXPERIENCE', experienceResult)
     } catch (error) {
       this.logger.warn(
         `reward_by_rule_failed userId=${params.userId} ruleType=${params.ruleType} bizKey=${params.bizKey} source=${params.source} error=${
@@ -81,13 +92,40 @@ export class UserGrowthRewardService {
   }
 
   /**
+   * 记录未成功落账的规则奖励结果。
+   * 规则缺失、禁用或命中限额时不会抛异常，需要在这里补齐可观测性。
+   */
+  private logSkippedRuleReward(
+    params: RewardByRuleParams,
+    assetType: 'POINTS' | 'EXPERIENCE',
+    result?: GrowthLedgerApplyResult,
+  ) {
+    if (!result || result.success || result.duplicated) {
+      return
+    }
+
+    this.logger.warn(
+      `reward_by_rule_skipped userId=${params.userId} ruleType=${params.ruleType} bizKey=${params.bizKey} source=${params.source} assetType=${assetType} reason=${
+        result.reason ?? 'unknown'
+      }`,
+    )
+  }
+
+  /**
    * 发放任务完成奖励
    * 根据任务配置直接发放积分和经验
    */
-  async tryRewardTaskComplete(params: RewardTaskCompleteParams): Promise<void> {
+  async tryRewardTaskComplete(
+    params: RewardTaskCompleteParams,
+  ): Promise<TaskRewardSettlementResult> {
+    const settledAt = new Date()
     const reward = this.parseRewardConfig(params.rewardConfig)
     if (reward.points <= 0 && reward.experience <= 0) {
-      return
+      return this.buildTaskRewardSettlementResult({
+        reward,
+        settledAt,
+        resultType: TaskAssignmentRewardResultTypeEnum.APPLIED,
+      })
     }
 
     // 构建业务幂等键
@@ -101,16 +139,16 @@ export class UserGrowthRewardService {
       params.userId,
     ].join(':')
 
-    const context = {
-      taskId: params.taskId,
-      assignmentId: params.assignmentId,
-    }
+    const context = this.buildTaskRewardContext(params)
 
     try {
+      let pointsResult: GrowthLedgerApplyResult | undefined
+      let experienceResult: GrowthLedgerApplyResult | undefined
+
       await this.drizzle.withTransaction(async (tx) => {
         // 发放积分
         if (reward.points > 0) {
-          await this.growthLedgerService.applyDelta(tx, {
+          pointsResult = await this.growthLedgerService.applyDelta(tx, {
             userId: params.userId,
             assetType: GrowthAssetTypeEnum.POINTS,
             action: GrowthLedgerActionEnum.GRANT,
@@ -121,11 +159,17 @@ export class UserGrowthRewardService {
             targetId: params.taskId,
             context,
           })
+
+          this.ensureTaskRewardApplySucceeded(
+            '积分',
+            GrowthAssetTypeEnum.POINTS,
+            pointsResult,
+          )
         }
 
         // 发放经验
         if (reward.experience > 0) {
-          await this.growthLedgerService.applyDelta(tx, {
+          experienceResult = await this.growthLedgerService.applyDelta(tx, {
             userId: params.userId,
             assetType: GrowthAssetTypeEnum.EXPERIENCE,
             action: GrowthLedgerActionEnum.GRANT,
@@ -136,14 +180,177 @@ export class UserGrowthRewardService {
             targetId: params.taskId,
             context,
           })
+
+          this.ensureTaskRewardApplySucceeded(
+            '经验',
+            GrowthAssetTypeEnum.EXPERIENCE,
+            experienceResult,
+          )
         }
+      })
+
+      return this.buildTaskRewardSettlementResult({
+        reward,
+        settledAt,
+        pointsResult,
+        experienceResult,
+        resultType: this.resolveTaskRewardResultType([
+          this.toTaskRewardAssetResult(
+            GrowthAssetTypeEnum.POINTS,
+            reward.points,
+            pointsResult,
+          ),
+          this.toTaskRewardAssetResult(
+            GrowthAssetTypeEnum.EXPERIENCE,
+            reward.experience,
+            experienceResult,
+          ),
+        ]),
       })
     } catch (error) {
       this.logger.warn(
-        `reward_task_complete_failed userId=${params.userId} taskId=${params.taskId} assignmentId=${params.assignmentId} error=${
+        `reward_task_complete_failed userId=${params.userId} taskId=${params.taskId} assignmentId=${params.assignmentId} eventKey=${params.eventEnvelope?.key ?? 'TASK_COMPLETE'} error=${
           error instanceof Error ? error.message : String(error)
         }`,
       )
+
+      return this.buildTaskRewardSettlementResult({
+        reward,
+        settledAt,
+        resultType: TaskAssignmentRewardResultTypeEnum.FAILED,
+        errorMessage:
+          error instanceof Error ? error.message : '任务奖励发放失败，请稍后重试',
+      })
+    }
+  }
+
+  private buildTaskRewardSettlementResult(params: {
+    reward: { points: number, experience: number }
+    settledAt: Date
+    resultType: TaskAssignmentRewardResultTypeEnum
+    pointsResult?: GrowthLedgerApplyResult
+    experienceResult?: GrowthLedgerApplyResult
+    errorMessage?: string
+  }): TaskRewardSettlementResult {
+    const pointsReward = this.toTaskRewardAssetResult(
+      GrowthAssetTypeEnum.POINTS,
+      params.reward.points,
+      params.pointsResult,
+      params.resultType === TaskAssignmentRewardResultTypeEnum.FAILED,
+    )
+    const experienceReward = this.toTaskRewardAssetResult(
+      GrowthAssetTypeEnum.EXPERIENCE,
+      params.reward.experience,
+      params.experienceResult,
+      params.resultType === TaskAssignmentRewardResultTypeEnum.FAILED,
+    )
+
+    const ledgerRecordIds = [pointsReward.recordId, experienceReward.recordId]
+      .filter((id): id is number => typeof id === 'number')
+
+    return {
+      success: params.resultType !== TaskAssignmentRewardResultTypeEnum.FAILED,
+      resultType: params.resultType,
+      settledAt: params.settledAt,
+      ledgerRecordIds,
+      errorMessage: params.errorMessage,
+      pointsReward,
+      experienceReward,
+    }
+  }
+
+  private resolveTaskRewardResultType(
+    results: TaskRewardAssetResult[],
+  ): TaskAssignmentRewardResultTypeEnum {
+    const attemptedResults = results.filter((item) => !item.skipped)
+    if (attemptedResults.length === 0) {
+      return TaskAssignmentRewardResultTypeEnum.APPLIED
+    }
+    if (attemptedResults.every((item) => item.duplicated)) {
+      return TaskAssignmentRewardResultTypeEnum.IDEMPOTENT
+    }
+    return TaskAssignmentRewardResultTypeEnum.APPLIED
+  }
+
+  private toTaskRewardAssetResult(
+    assetType: GrowthAssetTypeEnum.POINTS | GrowthAssetTypeEnum.EXPERIENCE,
+    configuredAmount: number,
+    result?: GrowthLedgerApplyResult,
+    forceFailed = false,
+  ): TaskRewardAssetResult {
+    if (configuredAmount <= 0) {
+      return {
+        assetType,
+        configuredAmount,
+        success: true,
+        duplicated: false,
+        skipped: true,
+        reason: 'not_configured',
+      }
+    }
+
+    if (forceFailed) {
+      return {
+        assetType,
+        configuredAmount,
+        success: false,
+        duplicated: false,
+        skipped: false,
+        reason: result?.reason,
+      }
+    }
+
+    return {
+      assetType,
+      configuredAmount,
+      success: Boolean(result?.success),
+      duplicated: Boolean(result?.duplicated),
+      skipped: false,
+      recordId: result?.recordId,
+      reason: result?.reason,
+    }
+  }
+
+  private ensureTaskRewardApplySucceeded(
+    assetLabel: '积分' | '经验',
+    assetType: GrowthAssetTypeEnum.POINTS | GrowthAssetTypeEnum.EXPERIENCE,
+    result?: GrowthLedgerApplyResult,
+  ) {
+    if (!result || (result.success && !result.duplicated) || result.duplicated) {
+      return
+    }
+
+    throw new Error(this.buildTaskRewardRejectedMessage(assetLabel, assetType, result))
+  }
+
+  private buildTaskRewardRejectedMessage(
+    assetLabel: '积分' | '经验',
+    assetType: GrowthAssetTypeEnum.POINTS | GrowthAssetTypeEnum.EXPERIENCE,
+    result: GrowthLedgerApplyResult,
+  ) {
+    const assetName =
+      assetType === GrowthAssetTypeEnum.POINTS ? 'POINTS' : 'EXPERIENCE'
+
+    return `任务奖励发放失败（${assetLabel}/${assetName}）：${
+      result.reason ? GrowthLedgerFailReasonLabel[result.reason] : '未知原因'
+    }`
+  }
+
+  private buildTaskRewardContext(params: RewardTaskCompleteParams) {
+    const context =
+      this.asRecord(params.eventEnvelope?.context)
+      ?? {
+        taskId: params.taskId,
+        assignmentId: params.assignmentId,
+      }
+
+    return {
+      ...context,
+      taskId: params.taskId,
+      assignmentId: params.assignmentId,
+      eventCode: params.eventEnvelope?.code,
+      eventKey: params.eventEnvelope?.key,
+      governanceStatus: params.eventEnvelope?.governanceStatus,
     }
   }
 

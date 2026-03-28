@@ -1,6 +1,7 @@
 import type { AppUser } from '@db/schema'
 import type { QueryUserBadgePageInput } from '@libs/growth/badge'
 import type { QueryUserExperienceRecordPageInput } from '@libs/growth/experience'
+import type { QueryGrowthLedgerPageInput } from '@libs/growth/growth-ledger'
 import type { QueryUserPointRecordPageInput } from '@libs/growth/point'
 
 /**
@@ -30,6 +31,13 @@ export interface QueryMyPointRecordInput
  */
 export interface QueryMyExperienceRecordInput
   extends Omit<QueryUserExperienceRecordPageInput, 'userId'> {}
+
+/**
+ * 查询当前用户混合成长流水入参。
+ * 复用统一账本分页筛选字段，由 service 在内部补充 userId。
+ */
+export interface QueryMyGrowthLedgerRecordInput
+  extends Omit<QueryGrowthLedgerPageInput, 'userId'> {}
 
 /**
  * 查询当前用户徽章列表入参。

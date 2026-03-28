@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageNotificationModule } from '../notification/notification.module'
 import { MessageOutboxService } from './outbox.service'
 import { MessageOutboxWorker } from './outbox.worker'
@@ -8,7 +9,7 @@ import { MessageOutboxWorker } from './outbox.worker'
  * 实现发件箱模式，确保消息事件的可靠投递
  */
 @Module({
-  imports: [MessageNotificationModule],
+  imports: [MessageNotificationModule, MessageInboxModule],
   providers: [MessageOutboxService, MessageOutboxWorker],
   exports: [MessageOutboxService],
 })

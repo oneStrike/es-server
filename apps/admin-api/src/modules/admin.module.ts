@@ -6,10 +6,12 @@ import { AppConfigModule } from './app-content/config/config.module'
 import { AppPageModule } from './app-content/page/page.module'
 import { AppUserModule } from './app-user/app-user.module'
 import { AuthModule } from './auth/auth.module'
+import { AdminCommentModule } from './comment/comment.module'
 import { ContentModule } from './content/content.module'
 import { ForumModule } from './forum/forum.module'
 import { GrowthModule } from './growth/growth.module'
 import { MessageModule } from './message/message.module'
+import { AdminReportModule } from './report/report.module'
 import { SystemConfigModule } from './system/config/system-config.module'
 import { DictionaryModule } from './system/dictionary/dictionary.module'
 import { UploadModule } from './system/upload/upload.module'
@@ -28,7 +30,9 @@ import { TaskModule } from './task/task.module'
     DictionaryModule,
     AdminAnnouncementModule,
     ContentModule,
+    AdminCommentModule,
     ForumModule,
+    AdminReportModule,
     MessageModule,
     TaskModule,
     GrowthModule,

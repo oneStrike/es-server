@@ -13,7 +13,10 @@ export const userPointRule = pgTable("user_point_rule", {
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
-   * 规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 101=漫画浏览, 102=漫画点赞, 103=漫画收藏, 111=章节阅读, 112=章节点赞, 113=章节购买, 114=章节下载）
+   * 规则类型。
+   * 取值与语义统一以 GrowthRuleTypeEnum 为准；
+   * 举报奖励当前以 REPORT_VALID / REPORT_INVALID 表达裁决结果，*_REPORT 仅保留历史兼容语义；
+   * 章节类编码已统一收敛到 300 / 400 段。
    */
   type: smallint().notNull(),
   /**

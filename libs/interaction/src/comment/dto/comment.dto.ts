@@ -1,4 +1,4 @@
-import { AuditStatusEnum } from '@libs/platform/constant'
+import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -105,13 +105,13 @@ export class BaseCommentDto extends BaseDto {
   })
   auditById?: number | null
 
-  @NumberProperty({
-    description: '审核角色',
-    example: 1,
+  @EnumProperty({
+    description: '审核角色（0=版主, 1=管理员）',
+    enum: AuditRoleEnum,
+    example: AuditRoleEnum.ADMIN,
     required: false,
-    min: 1,
   })
-  auditRole?: number | null
+  auditRole?: AuditRoleEnum | null
 
   @StringProperty({
     description: '审核原因',

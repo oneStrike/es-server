@@ -13,6 +13,7 @@ import {
   AdminAppUserExperienceRecordDto,
   AdminAppUserExperienceStatsDto,
   AdminAppUserFollowCountRepairResultDto,
+  AdminAppUserGrowthLedgerRecordDto,
   AdminAppUserPageItemDto,
   AdminAppUserPointRecordDto,
   AdminAppUserPointStatsDto,
@@ -21,6 +22,7 @@ import {
   CreateAdminAppUserDto,
   QueryAdminAppUserBadgeDto,
   QueryAdminAppUserExperienceRecordDto,
+  QueryAdminAppUserGrowthLedgerDto,
   QueryAdminAppUserPageDto,
   QueryAdminAppUserPointRecordDto,
   ResetAdminAppUserPasswordDto,
@@ -300,6 +302,20 @@ export class AppUserController {
     @Query() query: QueryAdminAppUserExperienceRecordDto,
   ) {
     return this.appUserService.getAppUserExperienceRecords(query)
+  }
+
+  /**
+   * 获取 APP 用户混合成长流水分页
+   */
+  @Get('growth/record/page')
+  @ApiPageDoc({
+    summary: '分页查询 APP 用户混合成长流水',
+    model: AdminAppUserGrowthLedgerRecordDto,
+  })
+  async getAppUserGrowthLedgerRecords(
+    @Query() query: QueryAdminAppUserGrowthLedgerDto,
+  ) {
+    return this.appUserService.getAppUserGrowthLedgerRecords(query)
   }
 
   /**

@@ -1,3 +1,4 @@
+import type { ChatOutboxEventTypeEnum } from '../chat/chat.constant'
 import type {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -43,4 +44,23 @@ export interface CreateNotificationOutboxEventInput {
   eventType: MessageNotificationTypeEnum
   bizKey: string
   payload: NotificationOutboxPayload
+}
+
+/**
+ * CHAT 域“消息已创建” outbox 载荷。
+ * - 只存放最小重放锚点，消费时再从 chat 事实表读取最新状态
+ */
+export interface ChatMessageCreatedOutboxPayload {
+  conversationId: number
+  messageId: string
+}
+
+/**
+ * 创建 CHAT 域“消息已创建” outbox 事件入参。
+ * - 继续复用 outbox 幂等键，不把聊天实时推送和通知 delivery 混成一层
+ */
+export interface CreateChatMessageCreatedOutboxEventInput {
+  bizKey: string
+  payload: ChatMessageCreatedOutboxPayload
+  eventType?: ChatOutboxEventTypeEnum.MESSAGE_CREATED
 }

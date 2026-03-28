@@ -1,4 +1,5 @@
 import type { EmojiParseToken } from '@libs/interaction/emoji'
+import type { ChatMessageCreatedOutboxPayload } from '../outbox/outbox.type'
 import type {
   MarkConversationReadInput,
   OpenDirectConversationInput,
@@ -13,7 +14,12 @@ import {
   EmojiParserService,
   EmojiSceneEnum,
 } from '@libs/interaction/emoji'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common'
 import {
   and,
   asc,
@@ -29,12 +35,15 @@ import {
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
+import { MessageOutboxDomainEnum } from '../outbox/outbox.constant'
+import { MessageOutboxService } from '../outbox/outbox.service'
 import {
   CHAT_MESSAGE_PAGE_LIMIT_DEFAULT,
   CHAT_MESSAGE_PAGE_LIMIT_MAX,
   ChatConversationMemberRoleEnum,
   ChatMessageStatusEnum,
   ChatMessageTypeEnum,
+  ChatOutboxEventTypeEnum,
 } from './chat.constant'
 
 /** 数字字符串正则表达式（模块作用域，避免重复编译） */
@@ -58,6 +67,8 @@ const DIGIT_STRING_REGEX = /^\d+$/
  */
 @Injectable()
 export class MessageChatService {
+  private readonly logger = new Logger(MessageChatService.name)
+
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly emojiParserService: EmojiParserService,
@@ -65,6 +76,7 @@ export class MessageChatService {
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
     private readonly messageWsMonitorService: MessageWsMonitorService,
+    private readonly messageOutboxService: MessageOutboxService,
   ) {}
 
   private get db() {
@@ -388,41 +400,10 @@ export class MessageChatService {
     )
 
     const message = this.toMessageOutput(result.message)
-    if (result.isNew) {
-      const conversationStates = result.memberStates.map((member) => ({
-        userId: member.userId,
-        unreadCount: member.unreadCount,
-        lastReadAt: member.lastReadAt ?? undefined,
-        lastReadMessageId:
-          typeof member.lastReadMessageId === 'bigint'
-            ? member.lastReadMessageId.toString()
-            : undefined,
-      }))
-      await Promise.all(
-        conversationStates.map(async (member) => {
-          this.messageNotificationRealtimeService.emitChatConversationUpdate(
-            member.userId,
-            {
-              conversationId,
-              unreadCount: member.unreadCount,
-              lastReadAt: member.lastReadAt,
-              lastReadMessageId: member.lastReadMessageId,
-              lastMessageId: message.id,
-              lastMessageAt: message.createdAt,
-              lastSenderId: message.senderId,
-              lastMessageContent: message.content,
-            },
-          )
-          this.messageNotificationRealtimeService.emitChatMessageNew(member.userId, {
-            conversationId,
-            message,
-          })
-          const summary = await this.messageInboxService.getSummary(member.userId)
-          this.messageNotificationRealtimeService.emitInboxSummaryUpdate(
-            member.userId,
-            summary,
-          )
-        }),
+    if (result.isNew && result.outboxPayload && result.outboxBizKey) {
+      await this.tryDispatchMessageCreatedOutbox(
+        result.outboxBizKey,
+        result.outboxPayload,
       )
     }
 
@@ -434,6 +415,94 @@ export class MessageChatService {
       createdAt: message.createdAt,
       deduplicated: !result.isNew,
     }
+  }
+
+  /**
+   * 分发 CHAT 域“消息已创建” outbox 事件。
+   * - 由 sendMessage 在提交后做一次即时补偿，worker 失败重试时也会复用同一入口
+   * - 读取当前 chat 事实表而不是信任历史快照，避免旧未读数覆盖新状态
+   */
+  async dispatchMessageCreatedOutboxEvent(
+    payload: ChatMessageCreatedOutboxPayload,
+  ) {
+    const conversationId = this.parsePositiveInteger(
+      payload.conversationId,
+      'conversationId',
+    )
+    const messageId = this.parseBigintId(payload.messageId, 'messageId')
+
+    const [message, memberStates] = await Promise.all([
+      this.db.query.chatMessage.findFirst({
+        where: {
+          id: messageId,
+          conversationId,
+        },
+        columns: {
+          id: true,
+          conversationId: true,
+          messageSeq: true,
+          senderId: true,
+          clientMessageId: true,
+          messageType: true,
+          content: true,
+          bodyTokens: true,
+          payload: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+      this.db.query.chatConversationMember.findMany({
+        where: {
+          conversationId,
+          leftAt: { isNull: true },
+        },
+        columns: {
+          userId: true,
+          unreadCount: true,
+          lastReadAt: true,
+          lastReadMessageId: true,
+        },
+      }),
+    ])
+
+    if (!message) {
+      throw new NotFoundException('Chat outbox message not found')
+    }
+
+    if (message.status !== ChatMessageStatusEnum.NORMAL) {
+      return
+    }
+
+    const messageOutput = this.toMessageOutput(message as typeof chatMessage.$inferSelect)
+    await Promise.all(
+      memberStates.map(async (member) => {
+        this.messageNotificationRealtimeService.emitChatConversationUpdate(
+          member.userId,
+          {
+            conversationId,
+            unreadCount: member.unreadCount,
+            lastReadAt: member.lastReadAt ?? undefined,
+            lastReadMessageId:
+              typeof member.lastReadMessageId === 'bigint'
+                ? member.lastReadMessageId.toString()
+                : undefined,
+            lastMessageId: messageOutput.id,
+            lastMessageAt: messageOutput.createdAt,
+            lastSenderId: messageOutput.senderId,
+            lastMessageContent: messageOutput.content,
+          },
+        )
+        this.messageNotificationRealtimeService.emitChatMessageNew(member.userId, {
+          conversationId,
+          message: messageOutput,
+        })
+        const summary = await this.messageInboxService.getSummary(member.userId)
+        this.messageNotificationRealtimeService.emitInboxSummaryUpdate(
+          member.userId,
+          summary,
+        )
+      }),
+    )
   }
 
   /**
@@ -574,7 +643,7 @@ export class MessageChatService {
    * @param bodyTokens - Emoji 解析后的正文 token 列表
    * @param payload - 消息载荷
    * @param clientMessageId - 客户端消息ID（用于幂等）
-   * @returns 消息信息、成员状态、是否为新消息
+   * @returns 消息信息、是否为新消息，以及可选的 outbox 补偿锚点
    */
   private async createMessageWithRetry(
     conversationId: number,
@@ -584,7 +653,12 @@ export class MessageChatService {
     bodyTokens: EmojiParseToken[],
     payload?: Record<string, unknown>,
     clientMessageId?: string,
-  ) {
+  ): Promise<{
+    message: typeof chatMessage.$inferSelect
+    isNew: boolean
+    outboxBizKey?: string
+    outboxPayload?: ChatMessageCreatedOutboxPayload
+  }> {
     let lastError: unknown
     const maxRetry = 3
 
@@ -624,7 +698,6 @@ export class MessageChatService {
             if (existedMessage) {
               return {
                 message: existedMessage,
-                memberStates: [],
                 isNew: false,
               }
             }
@@ -653,6 +726,12 @@ export class MessageChatService {
           if (!message) {
             throw new NotFoundException('Message not found')
           }
+
+          const outboxPayload = {
+            conversationId,
+            messageId: message.id.toString(),
+          } satisfies ChatMessageCreatedOutboxPayload
+          const outboxBizKey = `chat:message:created:${message.id.toString()}`
 
           if (messageType === ChatMessageTypeEnum.TEXT) {
             const recentUsageItems = this.buildRecentEmojiUsageItems(bodyTokens)
@@ -684,23 +763,17 @@ export class MessageChatService {
               isNull(chatConversationMember.leftAt),
             ))
 
-          const memberStates = await tx.query.chatConversationMember.findMany({
-            where: {
-              conversationId,
-              leftAt: { isNull: true },
-            },
-            columns: {
-              userId: true,
-              unreadCount: true,
-              lastReadAt: true,
-              lastReadMessageId: true,
-            },
+          await this.messageOutboxService.enqueueChatMessageCreatedEventInTx(tx, {
+            bizKey: outboxBizKey,
+            eventType: ChatOutboxEventTypeEnum.MESSAGE_CREATED,
+            payload: outboxPayload,
           })
 
           return {
             message,
-            memberStates,
             isNew: true,
+            outboxBizKey,
+            outboxPayload,
           }
         })
       } catch (error) {
@@ -719,7 +792,6 @@ export class MessageChatService {
           if (existedMessage) {
             return {
               message: existedMessage,
-              memberStates: [],
               isNew: false,
             }
           }
@@ -1009,6 +1081,28 @@ export class MessageChatService {
   }
 
   /**
+   * 提交后尝试即时分发新消息 outbox 事件。
+   * - 即时分发失败不回滚主链路，保留 outbox 待 worker 重试
+   * - 即时分发成功后再尝试将 outbox 标记为 success，避免后续重复 fanout
+   */
+  private async tryDispatchMessageCreatedOutbox(
+    outboxBizKey: string,
+    payload: ChatMessageCreatedOutboxPayload,
+  ) {
+    try {
+      await this.dispatchMessageCreatedOutboxEvent(payload)
+      await this.messageOutboxService.markEventSucceededByBizKey({
+        bizKey: outboxBizKey,
+        domain: MessageOutboxDomainEnum.CHAT,
+      })
+    } catch (error) {
+      this.logger.warn(
+        `dispatch_chat_message_created_failed bizKey=${outboxBizKey} conversationId=${payload.conversationId} messageId=${payload.messageId} reason=${this.stringifyError(error)}`,
+      )
+    }
+  }
+
+  /**
    * 构建私聊会话的业务标识
    *
    * 使用两个用户ID的最小值和最大值组合，确保双向一致性
@@ -1195,5 +1289,19 @@ export class MessageChatService {
 
   private recordResyncSuccessMetric() {
     void this.messageWsMonitorService.recordResyncSuccess().catch(() => {})
+  }
+
+  private stringifyError(error: unknown) {
+    if (error instanceof Error) {
+      return error.message
+    }
+    if (typeof error === 'string') {
+      return error
+    }
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return 'unknown'
+    }
   }
 }

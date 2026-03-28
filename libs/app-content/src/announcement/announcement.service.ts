@@ -1,8 +1,17 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
+import {
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+} from '@libs/message/notification'
+import { MessageOutboxService } from '@libs/message/outbox'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gte, ilike, lte, sql } from 'drizzle-orm'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { and, eq, gte, ilike, isNull, lte, sql } from 'drizzle-orm'
+import {
+  isAnnouncementPublishedNow,
+  shouldAnnouncementEnterNotificationCenter,
+} from './announcement.constant'
 import {
   AnnouncementPageQuery,
   CreateAnnouncementInput,
@@ -17,7 +26,12 @@ import {
  */
 @Injectable()
 export class AppAnnouncementService {
-  constructor(private readonly drizzle: DrizzleService) { }
+  private readonly logger = new Logger(AppAnnouncementService.name)
+
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly messageOutboxService: MessageOutboxService,
+  ) { }
 
   /** 数据库连接实例 */
   private get db() {
@@ -32,6 +46,11 @@ export class AppAnnouncementService {
   /** 页面表 */
   private get appPage() {
     return this.drizzle.schema.appPage
+  }
+
+  /** 应用用户表 */
+  private get appUser() {
+    return this.drizzle.schema.appUser
   }
 
   /**
@@ -59,13 +78,16 @@ export class AppAnnouncementService {
       }
     }
 
-    await this.drizzle.withErrorHandling(() =>
+    const [createdAnnouncement] = await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.appAnnouncement).values({
         ...others,
         pageId: pageId ?? null,
+      }).returning({
+        id: this.appAnnouncement.id,
       }),
     )
 
+    await this.tryFanoutImportantAnnouncementNotification(createdAnnouncement?.id)
     return true
   }
 
@@ -212,6 +234,7 @@ export class AppAnnouncementService {
     )
 
     this.drizzle.assertAffectedRows(result, '公告不存在')
+    await this.tryFanoutImportantAnnouncementNotification(id)
     return true
   }
 
@@ -229,6 +252,7 @@ export class AppAnnouncementService {
     )
 
     this.drizzle.assertAffectedRows(result, '公告不存在')
+    await this.tryFanoutImportantAnnouncementNotification(dto.id)
     return true
   }
 
@@ -247,6 +271,7 @@ export class AppAnnouncementService {
     )
 
     this.drizzle.assertAffectedRows(result, '公告不存在')
+    await this.tryFanoutImportantAnnouncementNotification(id)
     return true
   }
 
@@ -287,5 +312,146 @@ export class AppAnnouncementService {
 
     this.drizzle.assertAffectedRows(result, '公告不存在')
     return true
+  }
+
+  /**
+   * 尝试将重要公告物化为消息域通知
+   *
+   * 仅对“重要且当前已发布”的公告执行 fanout，普通公告继续保留在内容域展示。
+   */
+  private async tryFanoutImportantAnnouncementNotification(announcementId?: number) {
+    if (!announcementId) {
+      return
+    }
+
+    try {
+      const announcement = await this.db.query.appAnnouncement.findFirst({
+        where: { id: announcementId },
+        columns: {
+          id: true,
+          title: true,
+          content: true,
+          summary: true,
+          announcementType: true,
+          priorityLevel: true,
+          isPublished: true,
+          isPinned: true,
+          showAsPopup: true,
+          publishStartTime: true,
+          publishEndTime: true,
+        },
+      })
+      if (!announcement) {
+        return
+      }
+      if (!shouldAnnouncementEnterNotificationCenter(announcement)) {
+        return
+      }
+      if (!isAnnouncementPublishedNow(announcement)) {
+        return
+      }
+
+      const users = await this.db
+        .select({
+          id: this.appUser.id,
+        })
+        .from(this.appUser)
+        .where(
+          and(
+            eq(this.appUser.isEnabled, true),
+            isNull(this.appUser.deletedAt),
+          ),
+        )
+
+      if (users.length === 0) {
+        return
+      }
+
+      const notificationContent = this.buildAnnouncementNotificationContent(
+        announcement.summary,
+        announcement.content,
+      )
+
+      await this.messageOutboxService.enqueueNotificationEvents(
+        users.map((user) =>
+          this.buildAnnouncementNotificationEvent({
+            announcementId: announcement.id,
+            receiverUserId: user.id,
+            title: announcement.title,
+            content: notificationContent,
+            announcementType: announcement.announcementType,
+            priorityLevel: announcement.priorityLevel,
+          }),
+        ),
+      )
+    } catch (error) {
+      this.logger.warn(
+        `important_announcement_notification_enqueue_failed announcementId=${announcementId} error=${this.stringifyError(error)}`,
+      )
+    }
+  }
+
+  /**
+   * 构建公告通知正文
+   * 优先使用摘要，缺失时从正文截取，避免把长公告全文直接塞入通知列表。
+   */
+  private buildAnnouncementNotificationContent(
+    summary?: string | null,
+    content?: string | null,
+  ) {
+    const value = (summary?.trim() || content?.trim() || '你收到一条新的重要公告。')
+    return value.slice(0, 180)
+  }
+
+  /**
+   * 构建公告通知 outbox 事件
+   * 重要公告统一物化为 user_notification(type=SYSTEM_ANNOUNCEMENT)。
+   */
+  private buildAnnouncementNotificationEvent(params: {
+    announcementId: number
+    receiverUserId: number
+    title: string
+    content: string
+    announcementType: number
+    priorityLevel: number
+  }) {
+    return {
+      eventType: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
+      bizKey: `announcement:notify:${params.announcementId}:user:${params.receiverUserId}`,
+      payload: {
+        receiverUserId: params.receiverUserId,
+        type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
+        targetId: params.announcementId,
+        subjectType: MessageNotificationSubjectTypeEnum.SYSTEM,
+        subjectId: params.announcementId,
+        title: params.title,
+        content: params.content,
+        payload: {
+          title: params.title,
+          content: params.content,
+          announcementId: params.announcementId,
+          announcementType: params.announcementType,
+          priorityLevel: params.priorityLevel,
+        },
+      },
+    }
+  }
+
+  /**
+   * 统一序列化公告通知 sidecar 异常
+   * 仅用于 warning 日志，避免日志中出现不可读对象。
+   */
+  private stringifyError(error: unknown) {
+    if (error instanceof Error) {
+      return error.message
+    }
+    if (typeof error === 'string') {
+      return error
+    }
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return 'unknown error'
+    }
   }
 }

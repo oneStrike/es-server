@@ -37,6 +37,12 @@
 - 主题、评论、举报在门控层语义一致
 - 后续评论审核、通知边界、chat outbox 闭环可复用同一治理前置
 
+## 当前状态
+
+- `CREATE_TOPIC / CREATE_COMMENT / REPORT_VALID / REPORT_INVALID` 已进入 consumer-aware governance gate
+- 评论审核后台现已直接复用 `COMMENT_APPROVAL` 门控，评论待审核时不会提前进入奖励 / 通知主链路
+- 评论在后台首次变为可见时，会基于统一门控补发奖励与通知；再次复核不会重复发放
+
 ## 完成后同步文档
 
 - [领域设计总览](../../task-growth-reward-domain-design.md)

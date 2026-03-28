@@ -50,6 +50,15 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
       alias: 'ChatMessageSender',
     }),
   },
+  notificationDelivery: {},
+  notificationPreference: {
+    user: r.one.appUser({
+      from: r.notificationPreference.userId,
+      to: r.appUser.id,
+      alias: 'NotificationPreferenceUser',
+    }),
+  },
+  notificationTemplate: {},
   userNotification: {
     user: r.one.appUser({
       from: r.userNotification.userId,

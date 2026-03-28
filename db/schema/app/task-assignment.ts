@@ -2,6 +2,7 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from "drizzle-orm";
 import { index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
@@ -28,6 +29,14 @@ export const taskAssignment = pgTable("task_assignment", {
    * 分配状态
    */
   status: smallint().notNull(),
+  /**
+   * 奖励结算状态
+   */
+  rewardStatus: smallint().default(0).notNull(),
+  /**
+   * 奖励结算结果类型
+   */
+  rewardResultType: smallint(),
   /**
    * 当前进度
    */
@@ -60,6 +69,18 @@ export const taskAssignment = pgTable("task_assignment", {
    * 过期时间
    */
   expiredAt: timestamp({ withTimezone: true, precision: 6 }),
+  /**
+   * 奖励结算时间
+   */
+  rewardSettledAt: timestamp({ withTimezone: true, precision: 6 }),
+  /**
+   * 本次奖励关联到账本记录ID列表
+   */
+  rewardLedgerIds: integer().array().default(sql`ARRAY[]::integer[]`).notNull(),
+  /**
+   * 上次奖励失败原因
+   */
+  lastRewardError: varchar({ length: 500 }),
   /**
    * 创建时间
    */

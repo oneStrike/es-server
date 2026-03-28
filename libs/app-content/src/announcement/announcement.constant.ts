@@ -27,3 +27,44 @@ export enum AnnouncementPriorityEnum {
   /** 紧急 */
   URGENT = 3,
 }
+
+/**
+ * 判断公告是否应进入通知中心
+ *
+ * 第一阶段按“高优先级/置顶/弹窗”任一命中视为重要公告，
+ * 物化为消息域通知；普通公告仍留在内容域自行展示。
+ */
+export function shouldAnnouncementEnterNotificationCenter(input: {
+  priorityLevel: number
+  isPinned: boolean
+  showAsPopup: boolean
+}) {
+  return input.priorityLevel >= AnnouncementPriorityEnum.HIGH
+    || input.isPinned
+    || input.showAsPopup
+}
+
+/**
+ * 判断公告当前是否处于有效发布窗口
+ *
+ * 仅当已发布且位于发布时间区间内时，才允许进入通知中心。
+ */
+export function isAnnouncementPublishedNow(
+  input: {
+    isPublished: boolean
+    publishStartTime?: Date | null
+    publishEndTime?: Date | null
+  },
+  now = new Date(),
+) {
+  if (!input.isPublished) {
+    return false
+  }
+  if (input.publishStartTime && input.publishStartTime > now) {
+    return false
+  }
+  if (input.publishEndTime && input.publishEndTime < now) {
+    return false
+  }
+  return true
+}

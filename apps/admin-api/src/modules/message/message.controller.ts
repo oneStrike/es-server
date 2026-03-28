@@ -1,9 +1,11 @@
-import { ApiDoc } from '@libs/platform/decorators'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  MessageNotificationDeliveryItemDto,
   MessageOutboxMonitorSummaryDto,
   MessageWsMonitorSummaryDto,
+  QueryMessageNotificationDeliveryPageDto,
   QueryMessageOutboxMonitorDto,
   QueryMessageWsMonitorDto,
 } from './dto/message-monitor.dto'
@@ -13,6 +15,17 @@ import { MessageMonitorService } from './message-monitor.service'
 @Controller('admin/message')
 export class MessageController {
   constructor(private readonly messageMonitorService: MessageMonitorService) {}
+
+  @Get('monitor/delivery/page')
+  @ApiPageDoc({
+    summary: '分页查询通知投递结果',
+    model: MessageNotificationDeliveryItemDto,
+  })
+  async getNotificationDeliveryPage(
+    @Query() query: QueryMessageNotificationDeliveryPageDto,
+  ) {
+    return this.messageMonitorService.getNotificationDeliveryPage(query)
+  }
 
   @Get('monitor/outbox/summary')
   @ApiDoc({

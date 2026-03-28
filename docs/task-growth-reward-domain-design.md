@@ -41,6 +41,7 @@
 - 统一成长流水、成长审计日志、规则限额槽位已存在
 - App 端已提供积分/经验统计与记录查询、徽章查询
 - 管理端已提供人工加积分、扣积分、加经验、发徽章
+- 管理端人工补发已接入稳定 `operationKey`，同一操作重试会复用同一条 `bizKey`
 
 ### 3.3 通知与消息
 
@@ -54,6 +55,9 @@
 - App 端已提供公告分页接口
 - 主题审核、版主申请审核、敏感词管理与统计已存在
 - 举报模型与 App 端创建、我的举报、详情接口已存在
+- 管理端已提供举报分页、详情、处理接口
+- 主题首次 `PENDING -> APPROVED` 会补发 `CREATE_TOPIC`
+- 举报奖励已切到裁决后按 `REPORT_VALID / REPORT_INVALID` 结算
 
 ## 4. 当前设计中合理的部分
 
@@ -64,85 +68,100 @@
 
 ## 5. 当前确认存在的问题
 
-### 5.1 事件定义还不是一等公民
+### 5.1 事件定义已有代码级事实源，但引用层还没完全收口
 
-当前最接近统一事件字典的是 `GrowthRuleTypeEnum`，但它还不是完整的“事件定义层”。
+当前已经在 `libs/growth/src/event-definition/` 落地代码级 `EventDefinitionMap`，并保留 `GrowthRuleTypeEnum` 作为稳定编码层。
 
-当前缺口包括：
+当前这一层已经补齐：
 
-- 只有编码，没有统一元数据
-- 任务、成长、通知、治理没有共享事件定义
-- App 与管理端账本展示也没有把来源解释清楚
+- 统一维护 `label / domain / subjectType / targetType / governanceGate`
+- 统一维护 `consumers / implStatus / isRuleConfigurable`
+- 已提供 `getEventDefinition / listEventDefinitions / listImplementedEventDefinitions / listRuleConfigurableEventDefinitions`
+- 已提供轻量 `EventEnvelope`，并接到 topic / comment / like / report / task complete 高频链路
+- point / experience / growth ledger / admin growth DTO 已统一引用 `event-definition` 模块里的共享说明常量
 
-### 5.2 任务奖励已经结构化，但契约仍然松散
+当前保留的边界是：
+
+- 通知域与后续治理后台文档还没有完全复用同一套定义引用
+- 事件定义虽然已经成为当前主事实源，但下游对 `implStatus / governanceGate` 的自动化消费仍在后续阶段
+
+### 5.2 任务奖励契约已收紧，但能力仍只覆盖 points / experience
 
 当前 `rewardConfig` 已经是 `jsonb`，并不是自由文本字段。
 
-但当前仍有三个问题：
+当前这一层已经完成：
 
-- 当前结算逻辑只识别 `points` 和 `experience`
-- DTO 示例里出现了 `badgeCodes`，会误导运营以为已经支持任务发徽章
-- 后端还没有对 `rewardConfig` 做统一 schema 校验
+- DTO、schema 注释与服务端校验都已统一到 `points / experience`
+- 非法字段、负数、浮点数、0 值配置都会被明确拒绝
 
-### 5.3 任务完成后缺少任务侧结算可见性
+当前保留的边界是：
+
+- 任务奖励能力仍只覆盖 `points / experience`
+- 若未来要支持徽章等复合奖励，仍需要单独扩展正式能力而不是继续复用当前 schema
+
+### 5.3 任务完成后已具备任务侧结算可见性
 
 当前任务完成后已经会发奖，账本层也有幂等保护。
 
-但 `task_assignment` 侧缺少这些信息：
+当前这一层已经补齐：
 
-- 奖励是否已结算
-- 奖励何时结算
-- 对应哪些账本记录
-- 上次失败原因
+- `task_assignment` 已回写 `rewardStatus / rewardResultType`
+- 已记录 `rewardSettledAt / rewardLedgerIds / lastRewardError`
+- 任务奖励服务已返回结构化结果，不再只能靠日志判断是否命中幂等或真实失败
 
-这会导致“账发了没”“为什么没发”只能从流水反推，无法从任务记录直接解释。
+当前保留的边界是：
 
-### 5.4 治理结果还没有真正前置到奖励口径
+- 任务奖励失败后仍缺少独立的后台重试入口
+- 混合成长时间线接口还没补，跨积分/经验统一查看仍要走后续 P1 子项
 
-当前两个断点最明显：
+### 5.4 治理结果还没有统一前置到全部奖励与通知链路
 
-- 主题创建时若进入待审核，不会立即发 `CREATE_TOPIC`；后续审核通过也没有补发链路
-- 举报在创建时立即发奖，而不是在 `RESOLVED / REJECTED` 后按治理结果结算
+P0 已先收住两个最明显的断点：
 
-也就是说，治理层已经存在，但还没有成为奖励与通知主链路的正式闸门。
+- 主题创建时若进入待审核，首次 `PENDING -> APPROVED` 已会补发 `CREATE_TOPIC`
+- 举报已不再“创建即发奖”，而是在 `RESOLVED / REJECTED` 后按治理结果结算
 
-### 5.5 管理端人工补发仍然缺少稳定幂等键
+但治理层仍未成为跨主题、评论、通知、任务推进的统一正式闸门。
 
-当前人工加积分、扣积分、加经验都能落账，但业务键仍按时间戳拼接。
+### 5.5 管理端人工补发已恢复稳定幂等，但回滚体系仍未建设
 
-后果是：
+当前人工加积分、扣积分、加经验都已经要求调用方提交稳定 `operationKey`，并会映射成稳定 `bizKey`。
 
-- 管理员重试会生成新的 `bizKey`
-- 账本唯一约束无法稳定识别“同一操作重试”
-- 后续审计、补发、回滚都很难串起一次人工操作
+当前保留的边界仍然是：
+
+- 暂未引入通用人工回滚框架
+- `operationKey` 已能串起请求、审计与账本，但后续运营工具仍可以围绕它继续增强追踪能力
 
 ### 5.6 通知域底座已存在，但领域闭环还不完整
 
 当前确认缺失的能力包括：
 
-- 用户通知偏好
-- 渠道投递明细
-- 系统公告转消息链路
-- 任务提醒正式链路
-- chat outbox 域消费闭环
+- 暂无本轮新增缺口
 
-当前更准确的判断是：消息域已有后端底座，但还没成为完整的通知领域。
+当前已经补上的能力包括：
 
-### 5.7 规则编码、seed、注释已经出现漂移
+- `notification_template`
+- `notification_preference`
+- `notification_delivery`
+- `CHAT` 域消息创建 outbox 消费闭环
+- 任务提醒第一批链路：新任务可领、任务即将过期、奖励到账
+- 重要公告经消息域物化后进入 `user_notification(type=SYSTEM_ANNOUNCEMENT)`
+- 管理端通知模板 CRUD 与通知投递结果分页排障入口
 
-这是当前最容易被忽略，但很影响长期维护的一类问题。
+当前更准确的判断是：消息域的通知链路和 chat message-created outbox 链路都已形成最小闭环，但 chat 仍继续保留自己的 ack / 未读 / 会话聚合事实源。
 
-已经确认存在以下漂移：
+### 5.7 规则编码主漂移已止住，但注释复制问题仍待定义层收口
 
-- `GrowthRuleTypeEnum` 里章节类事件编码是 `300/302/...`
-- seed 与部分 schema 注释仍保留旧编码 `111/113/...`
-- 多处 DTO 注释手工抄写长枚举说明
+当前已经完成：
 
-这会导致：
+- seed 与 schema 注释里的旧章节编码 `111/113/...` 已收口到 `300/302/...`
+- 举报奖励当前主链路已明确为 `REPORT_VALID / REPORT_INVALID`
+- `*_REPORT` 已只保留为历史兼容语义
 
-- 代码、seed、注释、接口文档不是同一口径
-- 新人很难判断哪份定义才是事实源
-- 后续事件注册表推进前，先要把现有漂移止住
+当前仍然保留的问题是：
+
+- 多处 DTO 仍在手工抄写长枚举说明
+- 事件定义尚未形成唯一元数据事实源，后续仍需要用定义层进一步收口
 
 ## 6. 推荐目标原则
 
@@ -207,6 +226,7 @@
 
 近期应补的是最小闭环，而不是一次性做多渠道通知平台：
 
+- 模板
 - 偏好
 - delivery
 - 任务提醒
@@ -214,33 +234,50 @@
 
 ## 8. 分阶段建议
 
-### 8.1 P0：纠正业务口径与编码漂移
+### 8.1 P0：已完成口径纠偏与幂等止血
 
-只处理已经影响正确性的事情：
+当前这一阶段已完成：
 
 - 主题审核通过补发 `CREATE_TOPIC`
 - 举报改为裁决后发奖
 - 管理端人工补发改为稳定 `operationKey`
 - 对齐 `GrowthRuleTypeEnum`、seed、schema 注释与运营说明
 
-### 8.2 P1：提升可解释性
+### 8.2 P1：已完成任务奖励与账本可解释性
 
-把“任务发奖”和“账本展示”讲清楚：
+当前这一阶段已完成：
 
 - `rewardConfig` schema 与示例收敛
 - `task_assignment` 增补奖励状态字段
+- 任务奖励返回结构化结果
 - App / 管理端账本 DTO 增补 `ruleType / bizKey / context`
 - 提供混合成长账本接口
 
-### 8.3 P2：补定义层与通知最小闭环
+### 8.3 P2：已进入定义层收口与通知最小闭环阶段
 
 前提是 P0 / P1 已经完成。
 
-建议拆开推进：
+当前已经完成：
 
-- 先做代码级 `EventDefinitionMap`
-- 再补通知偏好、delivery、重要公告入通知列表的最小闭环
-- 治理收口、chat outbox 域闭环、评论审核后台放到后续子阶段
+- 代码级 `EventDefinitionMap`
+- “已声明 / 已接入 / 可配置”三种状态表达
+- 事件定义查询 service 与模块导出
+- 轻量 `EventEnvelope` type 与高频 producer 接线
+- DTO 与成长相关文档说明统一引用事件定义层，不再继续复制长枚举注释
+- `notification_template`、管理端模板 CRUD 与通知渲染 fallback 已接入消息域
+- 核心站内通知类型已有稳定 `notificationType -> templateKey` 定义与默认 seed 模板
+- `notification_preference`、App 端偏好 `list/update` 接口与“显式覆盖默认值”策略已接入通知主链路
+- 通知创建阶段已能区分 `DELIVERED / SKIPPED_SELF / SKIPPED_DUPLICATE / SKIPPED_PREFERENCE`
+- `notification_delivery` 已接到 outbox worker，管理端可分页查看 `DELIVERED / FAILED / RETRYING / SKIPPED_*` 业务结果、失败原因与重试次数
+- `TASK_REMINDER` 已接入通知模板/偏好/投递主链路，当前覆盖新任务可领、即将过期、奖励到账三类提醒
+- 重要公告已按“高优先级 / 置顶 / 弹窗”规则物化进通知域，`inbox` 继续只读取 `user_notification + chat`
+- `CREATE_TOPIC / CREATE_COMMENT / REPORT_VALID / REPORT_INVALID` 已按 consumer-aware governance gate 收口，待审核内容不再进入用户侧奖励 / 通知主链路，举报终态事件则允许进入正式结算链路
+- 管理端评论审核后台已补齐 `page/detail/update-audit-status/update-hidden`，并在评论首次变为可见时补发奖励与回复通知；从可见变为隐藏/拒绝时会同步回退目标评论可见计数
+- `chat.send` 已改为同事务写入 `CHAT` outbox，并在提交后做一次即时 fanout；若即时分发失败，worker 会继续基于 outbox 重试，且不写 `notification_delivery`
+
+后续继续拆开推进：
+
+- 暂无新的 P2-C 遗留前置
 
 ### 8.4 P3：可选的重型模型优化
 

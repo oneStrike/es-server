@@ -1,30 +1,45 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
+  AdminCommentsQuery,
+  CommentModerationState,
   CommentVisibleState,
   CreateCommentInput,
   RepliesQuery,
   ReplyCommentInput,
   TargetCommentsQuery,
   TransactionRetryOptions,
+  UpdateCommentAuditStatusInput,
+  UpdateCommentHiddenInput,
   UserCommentsQuery,
   VisibleCommentEffectPayload,
 } from './comment.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
+import {
+  canConsumeEventEnvelopeByConsumer,
+  createDefinedEventEnvelope,
+  EventDefinitionConsumerEnum,
+  EventEnvelopeGovernanceStatusEnum,
+} from '@libs/growth/event-definition'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
 } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
-import { AuditStatusEnum } from '@libs/platform/constant'
+import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
 import { ConfigReader } from '@libs/system-config'
 import { AppUserCountService } from '@libs/user/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import { and, eq, ilike, inArray, isNull, lte, max, sql } from 'drizzle-orm'
 import { EmojiParserService, EmojiSceneEnum } from '../emoji'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
@@ -159,6 +174,56 @@ export class CommentService {
   }
 
   /**
+   * 将评论审核结果映射为统一事件治理状态。
+   * 隐藏或拒绝的评论不进入奖励主链路，待审核评论保留为 pending。
+   */
+  private resolveCommentGovernanceStatus(params: {
+    auditStatus: AuditStatusEnum
+    isHidden: boolean
+  }) {
+    if (params.isHidden || params.auditStatus === AuditStatusEnum.REJECTED) {
+      return EventEnvelopeGovernanceStatusEnum.REJECTED
+    }
+    if (params.auditStatus === AuditStatusEnum.PENDING) {
+      return EventEnvelopeGovernanceStatusEnum.PENDING
+    }
+    return EventEnvelopeGovernanceStatusEnum.PASSED
+  }
+
+  /**
+   * 构建评论创建事件 envelope。
+   * 统一收口 comment create / reply 的目标、治理态和业务上下文。
+   */
+  private buildCommentCreatedEventEnvelope(params: {
+    commentId: number
+    userId: number
+    targetType: CommentTargetTypeEnum
+    targetId: number
+    replyToId?: number | null
+    occurredAt: Date
+    auditStatus: AuditStatusEnum
+    isHidden: boolean
+  }) {
+    return createDefinedEventEnvelope({
+      code: GrowthRuleTypeEnum.CREATE_COMMENT,
+      subjectId: params.userId,
+      targetId: params.commentId,
+      occurredAt: params.occurredAt,
+      governanceStatus: this.resolveCommentGovernanceStatus({
+        auditStatus: params.auditStatus,
+        isHidden: params.isHidden,
+      }),
+      context: {
+        commentTargetType: params.targetType,
+        commentTargetId: params.targetId,
+        replyToId: params.replyToId ?? undefined,
+        auditStatus: params.auditStatus,
+        isHidden: params.isHidden,
+      },
+    })
+  }
+
+  /**
    * 批量查询评论点赞状态。
    *
    * 仅在登录用户场景下查询，匿名访问统一返回空映射，
@@ -199,6 +264,124 @@ export class CommentService {
 
     const resolver = this.getResolver(targetType)
     await resolver.applyCountDelta(tx, targetId, delta)
+  }
+
+  /**
+   * 将治理态快照映射为可见副作用载荷。
+   * 统一复用 comment create / 审核补偿 / 取消隐藏三类链路的最小字段集。
+   */
+  private toVisibleCommentEffectPayload(
+    comment: CommentModerationState,
+  ): VisibleCommentEffectPayload {
+    return {
+      id: comment.id,
+      userId: comment.userId,
+      targetType: comment.targetType,
+      targetId: comment.targetId,
+      replyToId: comment.replyToId,
+      createdAt: comment.createdAt,
+    }
+  }
+
+  /**
+   * 校验评论审核状态更新是否合法。
+   * 已进入终态的评论不允许回滚到待审核，避免后台误操作破坏治理事实。
+   */
+  private ensureCanUpdateCommentAuditStatus(
+    currentStatus: AuditStatusEnum,
+    nextStatus: AuditStatusEnum,
+  ) {
+    if (
+      currentStatus !== AuditStatusEnum.PENDING
+      && nextStatus === AuditStatusEnum.PENDING
+    ) {
+      throw new BadRequestException('已审核评论不能回退为待审核')
+    }
+  }
+
+  /**
+   * 同步评论可见性迁移的副作用。
+   * - 首次变为可见：补评论计数、目标钩子、回复通知，并回传奖励所需事件壳
+   * - 从可见变不可见：回退评论计数与目标派生字段
+   */
+  private async syncCommentVisibilityTransition(
+    tx: Db,
+    params: {
+      current: CommentModerationState
+      nextAuditStatus: AuditStatusEnum
+      nextIsHidden: boolean
+    },
+  ) {
+    const wasVisible = this.isVisible(params.current)
+    const willBeVisible = this.isVisible({
+      auditStatus: params.nextAuditStatus,
+      isHidden: params.nextIsHidden,
+      deletedAt: params.current.deletedAt,
+    })
+
+    if (wasVisible === willBeVisible) {
+      return {
+        rewardComment: null,
+        eventEnvelope: null,
+      }
+    }
+
+    const targetType = params.current.targetType as CommentTargetTypeEnum
+    const resolver = this.getResolver(targetType)
+    const meta = await resolver.resolveMeta(tx, params.current.targetId)
+    const commentPayload = this.toVisibleCommentEffectPayload(params.current)
+
+    if (!willBeVisible) {
+      await this.applyCommentCountDelta(
+        tx,
+        targetType,
+        params.current.targetId,
+        -1,
+      )
+
+      if (resolver.postDeleteCommentHook) {
+        await resolver.postDeleteCommentHook(tx, commentPayload, meta)
+      }
+
+      return {
+        rewardComment: null,
+        eventEnvelope: null,
+      }
+    }
+
+    await this.applyCommentCountDelta(tx, targetType, params.current.targetId, 1)
+
+    if (resolver.postCommentHook) {
+      await resolver.postCommentHook(
+        tx,
+        params.current.targetId,
+        params.current.userId,
+        meta,
+      )
+    }
+
+    const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
+      commentId: params.current.id,
+      userId: params.current.userId,
+      targetType,
+      targetId: params.current.targetId,
+      replyToId: params.current.replyToId,
+      occurredAt: params.current.createdAt,
+      auditStatus: params.nextAuditStatus,
+      isHidden: params.nextIsHidden,
+    })
+
+    await this.compensateVisibleCommentEffects(
+      tx,
+      commentPayload,
+      meta,
+      commentCreatedEvent,
+    )
+
+    return {
+      rewardComment: commentPayload,
+      eventEnvelope: commentCreatedEvent,
+    }
   }
 
   /**
@@ -260,10 +443,20 @@ export class CommentService {
     tx: Db,
     comment: VisibleCommentEffectPayload,
     _meta: CommentTargetMeta,
+    eventEnvelope: ReturnType<CommentService['buildCommentCreatedEventEnvelope']>,
   ) {
     // 移除成长奖励逻辑，由外部 createComment/replyComment 处理，
     // 因为成长奖励需要传 targetId 等，从 payload 取不如直接传。
     // 这里主要处理通知逻辑。
+
+    if (
+      !canConsumeEventEnvelopeByConsumer(
+        eventEnvelope,
+        EventDefinitionConsumerEnum.NOTIFICATION,
+      )
+    ) {
+      return
+    }
 
     // 非回复评论无需发送通知
     if (!comment.replyToId) {
@@ -382,6 +575,17 @@ export class CommentService {
 
               await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
+              const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
+                commentId: newComment.id,
+                userId: newComment.userId,
+                targetType: newComment.targetType as CommentTargetTypeEnum,
+                targetId: newComment.targetId,
+                replyToId: newComment.replyToId,
+                occurredAt: newComment.createdAt,
+                auditStatus: decision.auditStatus,
+                isHidden: decision.isHidden,
+              })
+
               if (this.isVisible({ ...decision, deletedAt: null })) {
                 await this.applyCommentCountDelta(tx, targetType, targetId, 1)
 
@@ -390,12 +594,18 @@ export class CommentService {
                   await resolver.postCommentHook(tx, targetId, userId, meta)
                 }
 
-                await this.compensateVisibleCommentEffects(tx, newComment, meta)
+                await this.compensateVisibleCommentEffects(
+                  tx,
+                  newComment,
+                  meta,
+                  commentCreatedEvent,
+                )
               }
 
               return {
                 comment: newComment,
                 visible: this.isVisible({ ...decision, deletedAt: null }),
+                eventEnvelope: commentCreatedEvent,
               }
             }),
           {
@@ -406,14 +616,19 @@ export class CommentService {
         conflict: '请求冲突，请稍后重试',
       },
     )
-
-    if (created.visible) {
+    if (
+      canConsumeEventEnvelopeByConsumer(
+        created.eventEnvelope,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
       await this.commentGrowthService.rewardCommentCreated(this.db, {
         userId: created.comment.userId,
         id: created.comment.id,
         targetType: created.comment.targetType,
         targetId: created.comment.targetId,
         occurredAt: created.comment.createdAt,
+        eventEnvelope: created.eventEnvelope,
       })
     }
 
@@ -503,6 +718,17 @@ export class CommentService {
 
       await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
+      const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
+        commentId: newComment.id,
+        userId: newComment.userId,
+        targetType: newComment.targetType as CommentTargetTypeEnum,
+        targetId: newComment.targetId,
+        replyToId: newComment.replyToId,
+        occurredAt: newComment.createdAt,
+        auditStatus: decision.auditStatus,
+        isHidden: decision.isHidden,
+      })
+
       if (this.isVisible({ ...decision, deletedAt: null })) {
         await this.applyCommentCountDelta(
           tx,
@@ -516,22 +742,34 @@ export class CommentService {
           await resolver.postCommentHook(tx, targetId, userId, meta)
         }
 
-        await this.compensateVisibleCommentEffects(tx, newComment, meta)
+        await this.compensateVisibleCommentEffects(
+          tx,
+          newComment,
+          meta,
+          commentCreatedEvent,
+        )
       }
 
       return {
         comment: newComment,
         visible: this.isVisible({ ...decision, deletedAt: null }),
+        eventEnvelope: commentCreatedEvent,
       }
     })
 
-    if (created.visible) {
+    if (
+      canConsumeEventEnvelopeByConsumer(
+        created.eventEnvelope,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
       await this.commentGrowthService.rewardCommentCreated(this.db, {
         userId: created.comment.userId,
         id: created.comment.id,
         targetType: created.comment.targetType,
         targetId: created.comment.targetId,
         occurredAt: created.comment.createdAt,
+        eventEnvelope: created.eventEnvelope,
       })
     }
 
@@ -934,5 +1172,300 @@ export class CommentService {
         createdAt: 'desc',
       },
     })
+  }
+
+  /**
+   * 分页查询管理端评论列表。
+   * 支持按评论自身、目标、回复链、审核状态、隐藏状态与关键词筛选。
+   */
+  async getAdminCommentPage(query: AdminCommentsQuery) {
+    const conditions: SQL[] = [isNull(this.userComment.deletedAt)]
+
+    if (query.id !== undefined) {
+      conditions.push(eq(this.userComment.id, query.id))
+    }
+    if (query.userId !== undefined) {
+      conditions.push(eq(this.userComment.userId, query.userId))
+    }
+    if (query.targetType !== undefined) {
+      conditions.push(eq(this.userComment.targetType, query.targetType))
+    }
+    if (query.targetId !== undefined) {
+      conditions.push(eq(this.userComment.targetId, query.targetId))
+    }
+    if (query.replyToId !== undefined) {
+      if (query.replyToId === null) {
+        conditions.push(isNull(this.userComment.replyToId))
+      } else {
+        conditions.push(eq(this.userComment.replyToId, query.replyToId))
+      }
+    }
+    if (query.actualReplyToId !== undefined) {
+      if (query.actualReplyToId === null) {
+        conditions.push(isNull(this.userComment.actualReplyToId))
+      } else {
+        conditions.push(
+          eq(this.userComment.actualReplyToId, query.actualReplyToId),
+        )
+      }
+    }
+    if (query.auditStatus !== undefined) {
+      conditions.push(eq(this.userComment.auditStatus, query.auditStatus))
+    }
+    if (query.isHidden !== undefined) {
+      conditions.push(eq(this.userComment.isHidden, query.isHidden))
+    }
+    if (query.keyword?.trim()) {
+      conditions.push(
+        ilike(
+          this.userComment.content,
+          `%${escapeLikePattern(query.keyword.trim())}%`,
+        ),
+      )
+    }
+
+    const page = await this.drizzle.ext.findPagination(this.userComment, {
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
+      orderBy: [
+        { createdAt: 'desc' as const },
+        { id: 'desc' as const },
+      ],
+    })
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const userIds = [...new Set(page.list.map((item) => item.userId))]
+    const users = userIds.length
+      ? await this.db
+        .select({
+          id: this.appUser.id,
+          nickname: this.appUser.nickname,
+          avatarUrl: this.appUser.avatarUrl,
+          isEnabled: this.appUser.isEnabled,
+          status: this.appUser.status,
+        })
+        .from(this.appUser)
+        .where(inArray(this.appUser.id, userIds))
+      : []
+    const userMap = new Map(users.map((item) => [item.id, item] as const))
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        user: userMap.get(item.userId) ?? undefined,
+      })),
+    }
+  }
+
+  /**
+   * 获取管理端评论详情。
+   * 额外补齐评论作者和被回复评论的基础信息，方便后台审核定位上下文。
+   */
+  async getAdminCommentDetail(commentId: number) {
+    const comment = await this.db.query.userComment.findFirst({
+      where: {
+        id: commentId,
+        deletedAt: { isNull: true },
+      },
+      with: {
+        user: {
+          columns: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+            isEnabled: true,
+            status: true,
+          },
+        },
+        replyTo: {
+          columns: {
+            id: true,
+            userId: true,
+            content: true,
+            replyToId: true,
+            actualReplyToId: true,
+            auditStatus: true,
+            isHidden: true,
+            deletedAt: true,
+            createdAt: true,
+          },
+          with: {
+            user: {
+              columns: {
+                id: true,
+                nickname: true,
+                avatarUrl: true,
+                isEnabled: true,
+                status: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!comment) {
+      throw new NotFoundException('评论不存在')
+    }
+
+    return comment
+  }
+
+  /**
+   * 更新评论审核状态。
+   * 审核通过首次使评论可见时，补发评论奖励与回复通知；
+   * 已进入终态的评论不允许回退为待审核。
+   */
+  async updateCommentAuditStatus(input: UpdateCommentAuditStatusInput) {
+    const current = await this.db.query.userComment.findFirst({
+      where: {
+        id: input.id,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        userId: true,
+        targetType: true,
+        targetId: true,
+        replyToId: true,
+        createdAt: true,
+        auditStatus: true,
+        isHidden: true,
+        deletedAt: true,
+      },
+    })
+
+    if (!current) {
+      throw new NotFoundException('评论不存在')
+    }
+
+    this.ensureCanUpdateCommentAuditStatus(
+      current.auditStatus as AuditStatusEnum,
+      input.auditStatus,
+    )
+
+    const handled = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const auditAt = new Date()
+        const result = await tx
+          .update(this.userComment)
+          .set({
+            auditStatus: input.auditStatus,
+            auditReason: input.auditReason ?? null,
+            auditById: input.auditById,
+            auditRole: input.auditRole ?? AuditRoleEnum.ADMIN,
+            auditAt,
+          })
+          .where(
+            and(
+              eq(this.userComment.id, input.id),
+              isNull(this.userComment.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '评论不存在')
+
+        return this.syncCommentVisibilityTransition(tx, {
+          current: current as CommentModerationState,
+          nextAuditStatus: input.auditStatus,
+          nextIsHidden: current.isHidden,
+        })
+      }),
+    )
+
+    if (
+      handled.eventEnvelope
+      && handled.rewardComment
+      && canConsumeEventEnvelopeByConsumer(
+        handled.eventEnvelope,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
+      await this.commentGrowthService.rewardCommentCreated(this.db, {
+        userId: handled.rewardComment.userId,
+        id: handled.rewardComment.id,
+        targetType: handled.rewardComment.targetType,
+        targetId: handled.rewardComment.targetId,
+        occurredAt: handled.rewardComment.createdAt,
+        eventEnvelope: handled.eventEnvelope,
+      })
+    }
+
+    return true
+  }
+
+  /**
+   * 更新评论隐藏状态。
+   * 仅在可见性真正发生变化时同步评论计数与目标派生字段。
+   */
+  async updateCommentHidden(input: UpdateCommentHiddenInput) {
+    const current = await this.db.query.userComment.findFirst({
+      where: {
+        id: input.id,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        userId: true,
+        targetType: true,
+        targetId: true,
+        replyToId: true,
+        createdAt: true,
+        auditStatus: true,
+        isHidden: true,
+        deletedAt: true,
+      },
+    })
+
+    if (!current) {
+      throw new NotFoundException('评论不存在')
+    }
+
+    const handled = await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const result = await tx
+          .update(this.userComment)
+          .set({
+            isHidden: input.isHidden,
+          })
+          .where(
+            and(
+              eq(this.userComment.id, input.id),
+              isNull(this.userComment.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '评论不存在')
+
+        return this.syncCommentVisibilityTransition(tx, {
+          current: current as CommentModerationState,
+          nextAuditStatus: current.auditStatus as AuditStatusEnum,
+          nextIsHidden: input.isHidden,
+        })
+      }),
+    )
+
+    if (
+      handled.eventEnvelope
+      && handled.rewardComment
+      && canConsumeEventEnvelopeByConsumer(
+        handled.eventEnvelope,
+        EventDefinitionConsumerEnum.GROWTH,
+      )
+    ) {
+      await this.commentGrowthService.rewardCommentCreated(this.db, {
+        userId: handled.rewardComment.userId,
+        id: handled.rewardComment.id,
+        targetType: handled.rewardComment.targetType,
+        targetId: handled.rewardComment.targetId,
+        occurredAt: handled.rewardComment.createdAt,
+        eventEnvelope: handled.eventEnvelope,
+      })
+    }
+
+    return true
   }
 }

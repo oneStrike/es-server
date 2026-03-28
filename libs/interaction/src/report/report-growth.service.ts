@@ -1,79 +1,85 @@
-import { DrizzleService } from '@db/core'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import type { EventEnvelope } from '@libs/growth/event-definition'
 import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth/growth-ledger'
+  canConsumeEventEnvelopeByConsumer,
+  EventDefinitionConsumerEnum,
+} from '@libs/growth/event-definition'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { UserGrowthRewardService } from '@libs/growth/growth-reward'
 import { Injectable, Logger } from '@nestjs/common'
-import { ReportTargetTypeEnum } from './report.constant'
+import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 
 @Injectable()
 export class ReportGrowthService {
   private readonly logger = new Logger(ReportGrowthService.name)
-  private readonly reportGrowthRuleMap: Partial<
-    Record<ReportTargetTypeEnum, GrowthRuleTypeEnum>
-  > = {
-    [ReportTargetTypeEnum.COMIC]: GrowthRuleTypeEnum.COMIC_WORK_REPORT,
-    [ReportTargetTypeEnum.NOVEL]: GrowthRuleTypeEnum.NOVEL_WORK_REPORT,
-    [ReportTargetTypeEnum.COMIC_CHAPTER]:
-      GrowthRuleTypeEnum.COMIC_CHAPTER_REPORT,
-    [ReportTargetTypeEnum.NOVEL_CHAPTER]:
-      GrowthRuleTypeEnum.NOVEL_CHAPTER_REPORT,
-    [ReportTargetTypeEnum.FORUM_TOPIC]: GrowthRuleTypeEnum.TOPIC_REPORT,
-    [ReportTargetTypeEnum.COMMENT]: GrowthRuleTypeEnum.COMMENT_REPORT,
-  }
 
   constructor(
-    private readonly growthLedgerService: GrowthLedgerService,
-    private readonly drizzle: DrizzleService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {}
 
-  private get db() {
-    return this.drizzle.db
-  }
-
-  async rewardReportCreated(params: {
-    reportId: number
-    reporterId: number
-    targetType: ReportTargetTypeEnum
-    targetId: number
+  /**
+   * 按举报裁决结果发放奖励。
+   * 统一使用裁决状态作为正式奖励口径，复用成长域既有 bizKey 幂等保护。
+   */
+  async rewardReportHandled(params: {
+    eventEnvelope: EventEnvelope<GrowthRuleTypeEnum>
   }): Promise<void> {
-    const { reportId, reporterId, targetType, targetId } = params
-    const baseBizKey = `report:${reportId}:user:${reporterId}`
-
-    const ruleType = this.reportGrowthRuleMap[targetType] ?? null
-    if (!ruleType) {
-      return
-    }
-
     try {
-      await this.drizzle.withTransaction(async (tx) => {
-        await this.growthLedgerService.applyByRule(tx, {
-          userId: reporterId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType,
-          bizKey: `${baseBizKey}:POINTS`,
-          remark: `创建举报 #${reportId}`,
-          targetType,
-          targetId,
-        })
+      const { eventEnvelope } = params
+      if (
+        !canConsumeEventEnvelopeByConsumer(
+          eventEnvelope,
+          EventDefinitionConsumerEnum.GROWTH,
+        )
+      ) {
+        return
+      }
 
-        await this.growthLedgerService.applyByRule(tx, {
-          userId: reporterId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          remark: `创建举报 #${reportId}`,
-          targetType,
-          targetId,
-        })
+      const context = this.parseHandledReportContext(eventEnvelope.context)
+
+      await this.userGrowthRewardService.tryRewardByRule({
+        userId: eventEnvelope.subjectId,
+        ruleType: eventEnvelope.code,
+        bizKey: `report:handle:${eventEnvelope.targetId}:status:${context.reportStatus}`,
+        source: 'report_handle',
+        remark:
+          eventEnvelope.code === GrowthRuleTypeEnum.REPORT_VALID
+            ? `举报裁决有效 #${eventEnvelope.targetId}`
+            : `举报裁决无效 #${eventEnvelope.targetId}`,
+        targetType: context.reportedTargetType,
+        targetId: context.reportedTargetId,
       })
     } catch (error) {
       this.logger.warn(
-        `reward_report_created_failed reportId=${reportId} reporterId=${reporterId} targetType=${targetType} targetId=${targetId} ruleType=${ruleType} error=${
+        `reward_report_handled_failed eventCode=${params.eventEnvelope.code} reportId=${params.eventEnvelope.targetId} error=${
           error instanceof Error ? error.message : String(error)
         }`,
       )
+    }
+  }
+
+  private parseHandledReportContext(context: unknown) {
+    const record =
+      context && typeof context === 'object' && !Array.isArray(context)
+        ? (context as Record<string, unknown>)
+        : {}
+
+    const reportStatus = Number(record.reportStatus)
+    const reportedTargetType = Number(record.reportedTargetType)
+    const reportedTargetId = Number(record.reportedTargetId)
+
+    if (
+      !Object.values(ReportStatusEnum).includes(reportStatus)
+      || !Object.values(ReportTargetTypeEnum).includes(reportedTargetType)
+      || !Number.isInteger(reportedTargetId)
+      || reportedTargetId <= 0
+    ) {
+      throw new Error('举报裁决事件上下文缺失或非法')
+    }
+
+    return {
+      reportStatus: reportStatus as ReportStatusEnum,
+      reportedTargetType: reportedTargetType as ReportTargetTypeEnum,
+      reportedTargetId,
     }
   }
 }

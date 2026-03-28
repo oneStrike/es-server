@@ -20,14 +20,17 @@ interface LedgerRecordShape {
   id: number
   userId: number
   ruleId: number | null
+  ruleType?: number | null
   targetType: number | null
   targetId: number | null
   delta: number
   beforeValue: number
   afterValue: number
+  bizKey?: string
   createdAt: Date
   updatedAt?: Date
   remark: string | null
+  context?: unknown
 }
 
 /**
@@ -233,18 +236,7 @@ export class UserPointService {
 
     return {
       ...page,
-      list: page.list.map((item) => ({
-        id: item.id,
-        userId: item.userId,
-        ruleId: item.ruleId ?? undefined,
-        targetType: item.targetType ?? undefined,
-        targetId: item.targetId ?? undefined,
-        points: item.delta,
-        beforePoints: item.beforeValue,
-        afterPoints: item.afterValue,
-        remark: item.remark ?? undefined,
-        createdAt: item.createdAt,
-      })),
+      list: page.list.map((item) => this.toPointRecord(item)),
     }
   }
 
@@ -269,16 +261,7 @@ export class UserPointService {
     }
 
     return {
-      id: record.id,
-      userId: record.userId,
-      ruleId: record.ruleId ?? undefined,
-      targetType: record.targetType ?? undefined,
-      targetId: record.targetId ?? undefined,
-      points: record.delta,
-      beforePoints: record.beforeValue,
-      afterPoints: record.afterValue,
-      remark: record.remark ?? undefined,
-      createdAt: record.createdAt,
+      ...this.toPointRecord(record),
       user: record.user,
     }
   }
@@ -435,5 +418,37 @@ export class UserPointService {
       .sort()
       .join('|')
     return `${prefix}:${serializedPayload}`
+  }
+
+  private toPointRecord(record: {
+    id: number
+    userId: number
+    ruleId: number | null
+    ruleType?: number | null
+    targetType: number | null
+    targetId: number | null
+    delta: number
+    beforeValue: number
+    afterValue: number
+    bizKey?: string
+    remark: string | null
+    context?: unknown
+    createdAt: Date
+  }) {
+    return {
+      id: record.id,
+      userId: record.userId,
+      ruleId: record.ruleId ?? undefined,
+      ruleType: record.ruleType ?? undefined,
+      targetType: record.targetType ?? undefined,
+      targetId: record.targetId ?? undefined,
+      bizKey: record.bizKey ?? '',
+      context: this.growthLedgerService.sanitizePublicContext(record.context),
+      points: record.delta,
+      beforePoints: record.beforeValue,
+      afterPoints: record.afterValue,
+      remark: record.remark ?? undefined,
+      createdAt: record.createdAt,
+    }
   }
 }

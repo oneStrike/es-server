@@ -26,6 +26,12 @@ export enum ChatMessageStatusEnum {
   DELETED = 3,
 }
 
+/** CHAT outbox 事件类型枚举 */
+export enum ChatOutboxEventTypeEnum {
+  /** 新消息已落库，等待补发实时 fanout */
+  MESSAGE_CREATED = 1,
+}
+
 /** 聊天消息分页默认条数 */
 export const CHAT_MESSAGE_PAGE_LIMIT_DEFAULT = 20
 /** 聊天消息分页最大条数 */

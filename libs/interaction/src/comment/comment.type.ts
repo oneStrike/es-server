@@ -1,4 +1,5 @@
 import type { UserComment } from '@db/schema'
+import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import type { CommentTargetTypeEnum } from './comment.constant'
 import type {
   CommentTargetMeta,
@@ -60,6 +61,19 @@ export interface UserCommentsQuery {
 }
 
 /**
+ * 管理端评论分页查询入参。
+ * - 追加评论自身、回复链、隐藏状态与关键词筛选
+ */
+export interface AdminCommentsQuery extends UserCommentsQuery {
+  id?: number
+  userId?: number
+  replyToId?: number | null
+  actualReplyToId?: number | null
+  isHidden?: boolean
+  keyword?: string
+}
+
+/**
  * 目标评论列表查询入参。
  * - 用于作品/主题/章节等目标的一级评论分页
  */
@@ -88,4 +102,42 @@ export type VisibleCommentEffectPayload = Pick<
 export interface VisibleCommentEffectContext {
   comment: VisibleCommentEffectPayload
   meta: CommentTargetMeta
+}
+
+/**
+ * 评论治理状态快照。
+ * - 用于审核/隐藏更新时判断可见性迁移
+ */
+export type CommentModerationState = Pick<
+  UserComment,
+  | 'id'
+  | 'userId'
+  | 'targetType'
+  | 'targetId'
+  | 'replyToId'
+  | 'createdAt'
+  | 'auditStatus'
+  | 'isHidden'
+  | 'deletedAt'
+>
+
+/**
+ * 管理端更新评论审核状态入参。
+ * - 记录审核人和审核角色，避免后台链路丢失治理上下文
+ */
+export interface UpdateCommentAuditStatusInput {
+  id: number
+  auditStatus: AuditStatusEnum
+  auditReason?: string | null
+  auditById: number
+  auditRole?: AuditRoleEnum
+}
+
+/**
+ * 管理端更新评论隐藏状态入参。
+ * - 隐藏与取消隐藏会影响评论可见性及补偿链路
+ */
+export interface UpdateCommentHiddenInput {
+  id: number
+  isHidden: boolean
 }

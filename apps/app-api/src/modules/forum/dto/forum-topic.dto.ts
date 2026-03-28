@@ -16,32 +16,34 @@ import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 export class QueryAppForumTopicPageDto extends IntersectionType(
   PageDto,
   PickType(BaseForumTopicDto, ['sectionId'] as const),
-) { }
+) {}
 
-export class QueryMyForumTopicPageDto extends PartialType(QueryAppForumTopicPageDto) { }
+export class QueryMyForumTopicPageDto extends PartialType(
+  QueryAppForumTopicPageDto,
+) {}
 
 export class CreateAppForumTopicDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['sectionId'] as const),
   ForumTopicWritableFieldsDto,
-) { }
+) {}
 
 export class UpdateAppForumTopicDto extends IntersectionType(
   IdDto,
   ForumTopicWritableFieldsDto,
-) { }
+) {}
 
 export class AppForumSectionBriefDto extends PickType(BaseForumSectionDto, [
   'id',
   'name',
   'icon',
   'cover',
-] as const) { }
+] as const) {}
 
 export class AppForumTopicUserBriefDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
   'avatarUrl',
-] as const) { }
+] as const) {}
 
 export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'id',
@@ -81,7 +83,7 @@ export class ForumTopicTagItemDto extends PickType(BaseForumTagDto, [
   'id',
   'name',
   'icon',
-] as const) { }
+] as const) {}
 
 export class AppForumTopicDetailDto extends IntersectionType(
   BaseForumTopicDto,
@@ -107,12 +109,12 @@ export class AppForumTopicDetailDto extends IntersectionType(
 export class QueryForumTopicCommentPageDto extends IntersectionType(
   PageDto,
   IdDto,
-) { }
+) {}
 
 export class MyForumTopicSectionDto extends PickType(BaseForumSectionDto, [
   'id',
   'name',
-] as const) { }
+] as const) {}
 
 export class MyForumTopicItemDto extends PickType(BaseForumTopicDto, [
   'id',
