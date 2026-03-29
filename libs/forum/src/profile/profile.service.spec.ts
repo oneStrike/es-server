@@ -141,4 +141,135 @@ describe('userProfileService.getMyTopics', () => {
       }),
     ])
   })
+
+  it('maps profile counts with split follow fields only', async () => {
+    const { UserProfileService } = await import('./profile.service')
+
+    const findFirst = jest.fn().mockResolvedValue({
+      id: 7,
+      account: '100001',
+      phoneNumber: null,
+      emailAddress: null,
+      levelId: null,
+      nickname: '测试用户',
+      avatarUrl: null,
+      signature: null,
+      bio: null,
+      isEnabled: true,
+      genderType: 0,
+      birthDate: null,
+      points: 0,
+      experience: 0,
+      status: 1,
+      banReason: null,
+      banUntil: null,
+      lastLoginAt: null,
+      lastLoginIp: null,
+      createdAt: new Date('2026-03-29T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-29T00:00:00.000Z'),
+      deletedAt: null,
+    })
+
+    const countWhere = jest.fn().mockResolvedValue([
+      {
+        userId: 7,
+        commentCount: 3,
+        likeCount: 5,
+        favoriteCount: 2,
+        followingUserCount: 8,
+        followingAuthorCount: 4,
+        followingSectionCount: 1,
+        followersCount: 6,
+        forumTopicCount: 9,
+        commentReceivedLikeCount: 7,
+        forumTopicReceivedLikeCount: 10,
+        forumTopicReceivedFavoriteCount: 11,
+      },
+    ])
+    const badgeOrderBy = jest.fn().mockResolvedValue([])
+    const badgeWhere = jest.fn(() => ({ orderBy: badgeOrderBy }))
+    const badgeInnerJoin = jest.fn(() => ({ where: badgeWhere }))
+
+    const select = jest
+      .fn()
+      .mockReturnValueOnce({
+        from: jest.fn(() => ({ where: countWhere })),
+      })
+      .mockReturnValueOnce({
+        from: jest.fn(() => ({ innerJoin: badgeInnerJoin })),
+      })
+
+    const service = new UserProfileService(
+      {
+        db: {
+          query: {
+            appUser: {
+              findFirst,
+            },
+          },
+          select,
+        },
+        schema: {
+          appUser: {},
+          appUserCount: {
+            userId: 'userId',
+            commentCount: 'commentCount',
+            likeCount: 'likeCount',
+            favoriteCount: 'favoriteCount',
+            followingUserCount: 'followingUserCount',
+            followingAuthorCount: 'followingAuthorCount',
+            followingSectionCount: 'followingSectionCount',
+            followersCount: 'followersCount',
+            forumTopicCount: 'forumTopicCount',
+            commentReceivedLikeCount: 'commentReceivedLikeCount',
+            forumTopicReceivedLikeCount: 'forumTopicReceivedLikeCount',
+            forumTopicReceivedFavoriteCount: 'forumTopicReceivedFavoriteCount',
+          },
+          userBadgeAssignment: {
+            userId: 'userId',
+            badgeId: 'badgeId',
+            createdAt: 'createdAt',
+          },
+          userBadge: {
+            id: 'id',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    )
+
+    const result = await service.getProfile(7)
+
+    expect(result.counts).toEqual({
+      userId: 7,
+      commentCount: 3,
+      likeCount: 5,
+      favoriteCount: 2,
+      followingUserCount: 8,
+      followingAuthorCount: 4,
+      followingSectionCount: 1,
+      followersCount: 6,
+      forumTopicCount: 9,
+      commentReceivedLikeCount: 7,
+      forumTopicReceivedLikeCount: 10,
+      forumTopicReceivedFavoriteCount: 11,
+    })
+    expect(Object.keys(result.counts).sort()).toEqual([
+      'commentCount',
+      'commentReceivedLikeCount',
+      'favoriteCount',
+      'followersCount',
+      'followingAuthorCount',
+      'followingSectionCount',
+      'followingUserCount',
+      'forumTopicCount',
+      'forumTopicReceivedFavoriteCount',
+      'forumTopicReceivedLikeCount',
+      'likeCount',
+      'userId',
+    ])
+  })
 })

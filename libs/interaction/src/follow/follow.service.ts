@@ -145,7 +145,12 @@ export class FollowService {
           throw new BadRequestException('关注失败')
         }
 
-        await this.appUserCountService.updateFollowingCount(tx, userId, 1)
+        await this.appUserCountService.updateFollowingCountByTargetType(
+          tx,
+          userId,
+          targetType,
+          1,
+        )
         await resolver.applyCountDelta(tx, targetId, 1)
 
         if (resolver.postFollowHook) {
@@ -181,7 +186,12 @@ export class FollowService {
         )
       this.drizzle.assertAffectedRows(deleted, '关注记录不存在')
 
-      await this.appUserCountService.updateFollowingCount(tx, userId, -1)
+      await this.appUserCountService.updateFollowingCountByTargetType(
+        tx,
+        userId,
+        targetType,
+        -1,
+      )
       await resolver.applyCountDelta(tx, targetId, -1)
     })
 

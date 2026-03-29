@@ -1,26 +1,36 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 type AppUserCountField =
   | 'commentCount'
   | 'likeCount'
   | 'favoriteCount'
-  | 'followingCount'
+  | 'followingUserCount'
+  | 'followingAuthorCount'
+  | 'followingSectionCount'
   | 'followersCount'
   | 'forumTopicCount'
   | 'commentReceivedLikeCount'
   | 'forumTopicReceivedLikeCount'
   | 'forumTopicReceivedFavoriteCount'
 
+interface UserFollowingCounts {
+  followingUserCount: number
+  followingAuthorCount: number
+  followingSectionCount: number
+}
+
 interface RebuiltAppUserCounts {
   userId: number
   commentCount: number
   likeCount: number
   favoriteCount: number
-  followingCount: number
+  followingUserCount: number
+  followingAuthorCount: number
+  followingSectionCount: number
   followersCount: number
   forumTopicCount: number
   commentReceivedLikeCount: number
@@ -39,6 +49,8 @@ export class AppUserCountService {
    * 与 follow 模块解耦，避免用户域反向依赖 interaction follow 常量。
    */
   private readonly userFollowTargetType = 1
+  private readonly authorFollowTargetType = 2
+  private readonly forumSectionFollowTargetType = 3
   private readonly forumTopicLikeTargetType = 3
   private readonly forumTopicFavoriteTargetType = 3
   private readonly commentLikeTargetType = 6
@@ -73,6 +85,48 @@ export class AppUserCountService {
     return this.drizzle.schema.forumTopic
   }
 
+  private resolveFollowingCountField(
+    targetType: number,
+  ): keyof UserFollowingCounts {
+    switch (targetType) {
+      case this.userFollowTargetType:
+        return 'followingUserCount'
+      case this.authorFollowTargetType:
+        return 'followingAuthorCount'
+      case this.forumSectionFollowTargetType:
+        return 'followingSectionCount'
+      default:
+        throw new BadRequestException(`不支持的关注类型: ${targetType}`)
+    }
+  }
+
+  private async getFollowingCounts(
+    client: Db,
+    userId: number,
+  ): Promise<UserFollowingCounts> {
+    const rows = await client
+      .select({
+        targetType: this.userFollow.targetType,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(this.userFollow)
+      .where(eq(this.userFollow.userId, userId))
+      .groupBy(this.userFollow.targetType)
+
+    const counts: UserFollowingCounts = {
+      followingUserCount: 0,
+      followingAuthorCount: 0,
+      followingSectionCount: 0,
+    }
+
+    for (const row of rows) {
+      const field = this.resolveFollowingCountField(row.targetType)
+      counts[field] = Number(row.count ?? 0)
+    }
+
+    return counts
+  }
+
   /**
    * 获取用户计数
    */
@@ -83,7 +137,9 @@ export class AppUserCountService {
         commentCount: this.appUserCount.commentCount,
         likeCount: this.appUserCount.likeCount,
         favoriteCount: this.appUserCount.favoriteCount,
-        followingCount: this.appUserCount.followingCount,
+        followingUserCount: this.appUserCount.followingUserCount,
+        followingAuthorCount: this.appUserCount.followingAuthorCount,
+        followingSectionCount: this.appUserCount.followingSectionCount,
         followersCount: this.appUserCount.followersCount,
         forumTopicCount: this.appUserCount.forumTopicCount,
         commentReceivedLikeCount: this.appUserCount.commentReceivedLikeCount,
@@ -102,7 +158,9 @@ export class AppUserCountService {
       commentCount: counts?.commentCount ?? 0,
       likeCount: counts?.likeCount ?? 0,
       favoriteCount: counts?.favoriteCount ?? 0,
-      followingCount: counts?.followingCount ?? 0,
+      followingUserCount: counts?.followingUserCount ?? 0,
+      followingAuthorCount: counts?.followingAuthorCount ?? 0,
+      followingSectionCount: counts?.followingSectionCount ?? 0,
       followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
@@ -123,7 +181,9 @@ export class AppUserCountService {
       commentCount: 0,
       likeCount: 0,
       favoriteCount: 0,
-      followingCount: 0,
+      followingUserCount: 0,
+      followingAuthorCount: 0,
+      followingSectionCount: 0,
       followersCount: 0,
       forumTopicCount: 0,
       commentReceivedLikeCount: 0,
@@ -202,14 +262,16 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户发起关注数量
+   * 按关注目标类型更新用户发起关注分项数量
    */
-  async updateFollowingCount(
+  async updateFollowingCountByTargetType(
     tx: Db | undefined,
     userId: number,
+    targetType: number,
     delta: number,
   ) {
-    await this.updateCountField(tx, userId, 'followingCount', delta)
+    const field = this.resolveFollowingCountField(targetType)
+    await this.updateCountField(tx, userId, field, delta)
   }
 
   /**
@@ -225,16 +287,12 @@ export class AppUserCountService {
 
   /**
    * 根据 follow 事实表重建用户关注相关计数。
-   * 仅回填 followingCount / followersCount，不改动其他计数字段。
+   * 仅回填关注分项与 followersCount，不改动其他计数字段。
    */
   async rebuildFollowCounts(tx: Db | undefined, userId: number) {
     const client = tx ?? this.db
-    const [followingRow, followersRow] = await Promise.all([
-      client
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userFollow)
-        .where(eq(this.userFollow.userId, userId))
-        .then((rows) => rows[0]),
+    const [followingCounts, followersRow] = await Promise.all([
+      this.getFollowingCounts(client, userId),
       client
         .select({ count: sql<number>`count(*)::int` })
         .from(this.userFollow)
@@ -247,20 +305,19 @@ export class AppUserCountService {
         .then((rows) => rows[0]),
     ])
 
-    const followingCount = Number(followingRow?.count ?? 0)
     const followersCount = Number(followersRow?.count ?? 0)
     const persist = (executor: Db) =>
       executor
         .insert(this.appUserCount)
         .values({
           userId,
-          followingCount,
+          ...followingCounts,
           followersCount,
         })
         .onConflictDoUpdate({
           target: this.appUserCount.userId,
           set: {
-            followingCount,
+            ...followingCounts,
             followersCount,
             updatedAt: new Date(),
           },
@@ -274,7 +331,7 @@ export class AppUserCountService {
 
     return {
       userId,
-      followingCount,
+      ...followingCounts,
       followersCount,
     }
   }
@@ -292,7 +349,7 @@ export class AppUserCountService {
       commentRow,
       likeRow,
       favoriteRow,
-      followingRow,
+      followingCounts,
       followersRow,
       forumTopicRow,
       commentReceivedLikeRow,
@@ -319,11 +376,7 @@ export class AppUserCountService {
         .from(this.userFavorite)
         .where(eq(this.userFavorite.userId, userId))
         .then((rows) => rows[0]),
-      client
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.userFollow)
-        .where(eq(this.userFollow.userId, userId))
-        .then((rows) => rows[0]),
+      this.getFollowingCounts(client, userId),
       client
         .select({ count: sql<number>`count(*)::int` })
         .from(this.userFollow)
@@ -395,7 +448,9 @@ export class AppUserCountService {
       commentCount: Number(commentRow?.count ?? 0),
       likeCount: Number(likeRow?.count ?? 0),
       favoriteCount: Number(favoriteRow?.count ?? 0),
-      followingCount: Number(followingRow?.count ?? 0),
+      followingUserCount: followingCounts.followingUserCount,
+      followingAuthorCount: followingCounts.followingAuthorCount,
+      followingSectionCount: followingCounts.followingSectionCount,
       followersCount: Number(followersRow?.count ?? 0),
       forumTopicCount: Number(forumTopicRow?.count ?? 0),
       commentReceivedLikeCount: Number(commentReceivedLikeRow?.count ?? 0),

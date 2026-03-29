@@ -24,10 +24,20 @@ export const appUserCount = pgTable(
      */
     favoriteCount: integer().default(0).notNull(),
     /**
-     * 发起关注总数
-     * 当前统一统计所有关注目标
+     * 关注用户总数
+     * 基于 user_follow 事实表中 targetType=1 的记录可重建
      */
-    followingCount: integer().default(0).notNull(),
+    followingUserCount: integer().default(0).notNull(),
+    /**
+     * 关注作者总数
+     * 基于 user_follow 事实表中 targetType=2 的记录可重建
+     */
+    followingAuthorCount: integer().default(0).notNull(),
+    /**
+     * 关注论坛板块总数
+     * 基于 user_follow 事实表中 targetType=3 的记录可重建
+     */
+    followingSectionCount: integer().default(0).notNull(),
     /**
      * 被关注总数
      * 当前仅统计其他用户对本用户的关注

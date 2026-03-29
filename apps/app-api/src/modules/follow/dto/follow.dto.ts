@@ -44,12 +44,28 @@ export class FollowUserBriefDto extends PickType(BaseAppUserDto, [
   'signature',
 ] as const) {
   @NumberProperty({
-    description: '关注数',
+    description: '关注用户数',
     example: 12,
     required: false,
     validation: false,
   })
-  followingCount?: number
+  followingUserCount?: number
+
+  @NumberProperty({
+    description: '关注作者数',
+    example: 6,
+    required: false,
+    validation: false,
+  })
+  followingAuthorCount?: number
+
+  @NumberProperty({
+    description: '关注板块数',
+    example: 4,
+    required: false,
+    validation: false,
+  })
+  followingSectionCount?: number
 
   @NumberProperty({
     description: '粉丝数',

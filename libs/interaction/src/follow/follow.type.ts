@@ -41,7 +41,9 @@ export interface FollowStatusView {
  */
 export interface FollowUserCardView
   extends Pick<AppUser, 'id' | 'nickname' | 'avatarUrl' | 'signature'> {
-  followingCount: number
+  followingUserCount: number
+  followingAuthorCount: number
+  followingSectionCount: number
   followersCount: number
 }
 

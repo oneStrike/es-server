@@ -5,7 +5,7 @@ import {
 
 /**
  * 应用用户计数基类 DTO
- * 对齐 app_user_count 表定义
+ * 对齐 app_user_count 的对外计数字段定义
  */
 export class BaseAppUserCountDto {
   @NumberProperty({
@@ -40,15 +40,31 @@ export class BaseAppUserCountDto {
   favoriteCount!: number
 
   @NumberProperty({
-    description: '发起关注总数',
+    description: '关注用户总数',
     example: 21,
     default: 0,
     validation: false,
   })
-  followingCount!: number
+  followingUserCount!: number
 
   @NumberProperty({
-    description: '粉丝总数',
+    description: '关注作者总数',
+    example: 6,
+    default: 0,
+    validation: false,
+  })
+  followingAuthorCount!: number
+
+  @NumberProperty({
+    description: '关注板块总数',
+    example: 4,
+    default: 0,
+    validation: false,
+  })
+  followingSectionCount!: number
+
+  @NumberProperty({
+    description: '用户粉丝总数',
     example: 34,
     default: 0,
     validation: false,

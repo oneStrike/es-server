@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { AppUser } from '@db/schema'
+import type { AppUser, AppUserCount } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   QueryUserProfileListInput,
@@ -17,6 +17,22 @@ import {
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, ilike, inArray, isNull } from 'drizzle-orm'
+
+type UserCountRow = Pick<
+  AppUserCount,
+  | 'userId'
+  | 'commentCount'
+  | 'likeCount'
+  | 'favoriteCount'
+  | 'followingUserCount'
+  | 'followingAuthorCount'
+  | 'followingSectionCount'
+  | 'followersCount'
+  | 'forumTopicCount'
+  | 'commentReceivedLikeCount'
+  | 'forumTopicReceivedLikeCount'
+  | 'forumTopicReceivedFavoriteCount'
+>
 
 /**
  * 用户资料服务
@@ -69,6 +85,24 @@ export class UserProfileService {
 
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
+  }
+
+  private mapCountRow(counts: UserCountRow | undefined, userId: number) {
+    return {
+      userId,
+      commentCount: counts?.commentCount ?? 0,
+      likeCount: counts?.likeCount ?? 0,
+      favoriteCount: counts?.favoriteCount ?? 0,
+      followingUserCount: counts?.followingUserCount ?? 0,
+      followingAuthorCount: counts?.followingAuthorCount ?? 0,
+      followingSectionCount: counts?.followingSectionCount ?? 0,
+      followersCount: counts?.followersCount ?? 0,
+      forumTopicCount: counts?.forumTopicCount ?? 0,
+      commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
+      forumTopicReceivedLikeCount: counts?.forumTopicReceivedLikeCount ?? 0,
+      forumTopicReceivedFavoriteCount:
+        counts?.forumTopicReceivedFavoriteCount ?? 0,
+    }
   }
 
   private mapUser(user: AppUser) {
@@ -144,9 +178,25 @@ export class UserProfileService {
     const userIds = page.list.map((item) => item.id)
     const counts = userIds.length
       ? await this.db
-        .select()
-        .from(this.appUserCount)
-        .where(inArray(this.appUserCount.userId, userIds))
+          .select({
+            userId: this.appUserCount.userId,
+            commentCount: this.appUserCount.commentCount,
+            likeCount: this.appUserCount.likeCount,
+            favoriteCount: this.appUserCount.favoriteCount,
+            followingUserCount: this.appUserCount.followingUserCount,
+            followingAuthorCount: this.appUserCount.followingAuthorCount,
+            followingSectionCount: this.appUserCount.followingSectionCount,
+            followersCount: this.appUserCount.followersCount,
+            forumTopicCount: this.appUserCount.forumTopicCount,
+            commentReceivedLikeCount:
+              this.appUserCount.commentReceivedLikeCount,
+            forumTopicReceivedLikeCount:
+              this.appUserCount.forumTopicReceivedLikeCount,
+            forumTopicReceivedFavoriteCount:
+              this.appUserCount.forumTopicReceivedFavoriteCount,
+          })
+          .from(this.appUserCount)
+          .where(inArray(this.appUserCount.userId, userIds))
       : []
     const countMap = new Map(counts.map((item) => [item.userId, item]))
     const badgeRows = userIds.length
@@ -176,18 +226,7 @@ export class UserProfileService {
       return {
         ...this.mapUser(item),
         avatar: item.avatarUrl ?? undefined,
-        counts: countMap.get(item.id) ?? {
-          userId: item.id,
-          commentCount: 0,
-          likeCount: 0,
-          favoriteCount: 0,
-          followingCount: 0,
-          followersCount: 0,
-          forumTopicCount: 0,
-          commentReceivedLikeCount: 0,
-          forumTopicReceivedLikeCount: 0,
-          forumTopicReceivedFavoriteCount: 0,
-        },
+        counts: this.mapCountRow(countMap.get(item.id), item.id),
         userBadges: badgeMap.get(item.id) ?? [],
       }
     })
@@ -209,7 +248,22 @@ export class UserProfileService {
       throw new BadRequestException('用户不存在')
     }
     const [counts] = await this.db
-      .select()
+      .select({
+        userId: this.appUserCount.userId,
+        commentCount: this.appUserCount.commentCount,
+        likeCount: this.appUserCount.likeCount,
+        favoriteCount: this.appUserCount.favoriteCount,
+        followingUserCount: this.appUserCount.followingUserCount,
+        followingAuthorCount: this.appUserCount.followingAuthorCount,
+        followingSectionCount: this.appUserCount.followingSectionCount,
+        followersCount: this.appUserCount.followersCount,
+        forumTopicCount: this.appUserCount.forumTopicCount,
+        commentReceivedLikeCount: this.appUserCount.commentReceivedLikeCount,
+        forumTopicReceivedLikeCount:
+          this.appUserCount.forumTopicReceivedLikeCount,
+        forumTopicReceivedFavoriteCount:
+          this.appUserCount.forumTopicReceivedFavoriteCount,
+      })
       .from(this.appUserCount)
       .where(eq(this.appUserCount.userId, userId))
     const userBadges = await this.db
@@ -229,18 +283,7 @@ export class UserProfileService {
     return {
       ...this.mapUser(user),
       avatar: user.avatarUrl ?? undefined,
-      counts: counts ?? {
-        userId,
-        commentCount: 0,
-        likeCount: 0,
-        favoriteCount: 0,
-        followingCount: 0,
-        followersCount: 0,
-        forumTopicCount: 0,
-        commentReceivedLikeCount: 0,
-        forumTopicReceivedLikeCount: 0,
-        forumTopicReceivedFavoriteCount: 0,
-      },
+      counts: this.mapCountRow(counts, userId),
       userBadges,
     }
   }

@@ -125,7 +125,9 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
       ? await this.drizzle.db
           .select({
             userId: this.appUserCount.userId,
-            followingCount: this.appUserCount.followingCount,
+            followingUserCount: this.appUserCount.followingUserCount,
+            followingAuthorCount: this.appUserCount.followingAuthorCount,
+            followingSectionCount: this.appUserCount.followingSectionCount,
             followersCount: this.appUserCount.followersCount,
           })
           .from(this.appUserCount)
@@ -141,7 +143,11 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
           nickname: user.nickname,
           avatarUrl: user.avatarUrl ?? undefined,
           signature: user.signature ?? undefined,
-          followingCount: countMap.get(user.id)?.followingCount ?? 0,
+          followingUserCount: countMap.get(user.id)?.followingUserCount ?? 0,
+          followingAuthorCount:
+            countMap.get(user.id)?.followingAuthorCount ?? 0,
+          followingSectionCount:
+            countMap.get(user.id)?.followingSectionCount ?? 0,
           followersCount: countMap.get(user.id)?.followersCount ?? 0,
         },
       ]),

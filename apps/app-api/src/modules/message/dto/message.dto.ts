@@ -240,10 +240,18 @@ export class InboxNotificationBriefDto {
   @StringProperty({ description: '通知类型', example: '1', validation: false })
   type!: string
 
-  @StringProperty({ description: '通知标题', example: '收到新的评论回复', validation: false })
+  @StringProperty({
+    description: '通知标题',
+    example: '收到新的评论回复',
+    validation: false,
+  })
   title!: string
 
-  @StringProperty({ description: '通知内容', example: '你收到了一条新的评论回复', validation: false })
+  @StringProperty({
+    description: '通知内容',
+    example: '你收到了一条新的评论回复',
+    validation: false,
+  })
   content!: string
 
   @DateProperty({

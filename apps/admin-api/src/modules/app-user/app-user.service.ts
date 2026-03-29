@@ -224,7 +224,9 @@ export class AppUserService {
               commentCount: this.appUserCount.commentCount,
               likeCount: this.appUserCount.likeCount,
               favoriteCount: this.appUserCount.favoriteCount,
-              followingCount: this.appUserCount.followingCount,
+              followingUserCount: this.appUserCount.followingUserCount,
+              followingAuthorCount: this.appUserCount.followingAuthorCount,
+              followingSectionCount: this.appUserCount.followingSectionCount,
               followersCount: this.appUserCount.followersCount,
               forumTopicCount: this.appUserCount.forumTopicCount,
               commentReceivedLikeCount:
@@ -254,7 +256,11 @@ export class AppUserService {
           commentCount: countMap.get(item.id)?.commentCount ?? 0,
           likeCount: countMap.get(item.id)?.likeCount ?? 0,
           favoriteCount: countMap.get(item.id)?.favoriteCount ?? 0,
-          followingCount: countMap.get(item.id)?.followingCount ?? 0,
+          followingUserCount: countMap.get(item.id)?.followingUserCount ?? 0,
+          followingAuthorCount:
+            countMap.get(item.id)?.followingAuthorCount ?? 0,
+          followingSectionCount:
+            countMap.get(item.id)?.followingSectionCount ?? 0,
           followersCount: countMap.get(item.id)?.followersCount ?? 0,
           forumTopicCount: countMap.get(item.id)?.forumTopicCount ?? 0,
           commentReceivedLikeCount:
@@ -520,7 +526,7 @@ export class AppUserService {
 
   /**
    * 重建 APP 用户关注相关计数。
-   * 当前仅回填 followingCount / followersCount。
+   * 当前仅回填关注分项与 followersCount。
    */
   async rebuildAppUserFollowCounts(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
@@ -530,7 +536,7 @@ export class AppUserService {
 
   /**
    * 全量重建 APP 用户关注相关计数。
-   * 当前仅回填 followingCount / followersCount。
+   * 当前仅回填关注分项与 followersCount。
    */
   async rebuildAllAppUserFollowCounts(adminUserId: number, batchSize = 200) {
     await this.ensureSuperAdmin(adminUserId)
