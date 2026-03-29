@@ -26,6 +26,7 @@
 ## 主要改动
 
 - 升级 `postCommentHook(...)`，让 resolver 能拿到可见评论完整载荷
+- 复用 `P1-02` 已补的评论副作用共享字段（如 `content / replyTargetUserId`），不再重复改一套补偿底座
 - 一级评论首次可见时发送 `TOPIC_COMMENT`
 - 回复评论继续走 `COMMENT_REPLY`
 - `TOPIC_COMMENT` 正文优先显示评论摘要，缺失时回退主题标题

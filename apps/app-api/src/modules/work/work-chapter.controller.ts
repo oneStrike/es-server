@@ -65,18 +65,22 @@ export class WorkChapterController {
   }
 
   @Get('comment/page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询章节评论',
     model: TargetCommentItemDto,
   })
-  async getWorkChapterCommentPage(@Query() query: QueryWorkChapterCommentPageDto) {
+  async getWorkChapterCommentPage(
+    @Query() query: QueryWorkChapterCommentPageDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
     const target = await this.workChapterService.getChapterCommentTarget(query.id)
     return this.commentService.getTargetComments({
       ...target,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       previewReplyLimit: 3,
+      userId,
     })
   }
 

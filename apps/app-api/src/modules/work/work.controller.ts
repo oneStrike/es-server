@@ -5,7 +5,6 @@ import {
   ApiPageDoc,
   CurrentUser,
   OptionalAuth,
-  Public,
   RequestMeta,
   RequestMetaResult,
 } from '@libs/platform/decorators'
@@ -88,18 +87,22 @@ export class WorkController {
   }
 
   @Get('comment/page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询作品评论',
     model: TargetCommentItemDto,
   })
-  async getWorkCommentPage(@Query() query: QueryWorkCommentPageDto) {
+  async getWorkCommentPage(
+    @Query() query: QueryWorkCommentPageDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
     const target = await this.workService.getWorkCommentTarget(query.id)
     return this.commentService.getTargetComments({
       ...target,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
       previewReplyLimit: 3,
+      userId,
     })
   }
 }

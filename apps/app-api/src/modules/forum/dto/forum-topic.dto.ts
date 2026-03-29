@@ -45,6 +45,16 @@ export class AppForumTopicUserBriefDto extends PickType(BaseAppUserDto, [
   'avatarUrl',
 ] as const) {}
 
+export class AppForumTopicDetailUserDto extends AppForumTopicUserBriefDto {
+  @BooleanProperty({
+    description: '当前用户是否已关注发帖用户',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isFollowed!: boolean
+}
+
 export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'id',
   'sectionId',
@@ -110,10 +120,10 @@ export class AppForumTopicDetailDto extends IntersectionType(
   @NestedProperty({
     description: '发帖用户',
     required: true,
-    type: AppForumTopicUserBriefDto,
+    type: AppForumTopicDetailUserDto,
     validation: false,
   })
-  user!: AppForumTopicUserBriefDto
+  user!: AppForumTopicDetailUserDto
 
   @ArrayProperty({
     description: '标签',

@@ -22,6 +22,24 @@
 - 业务侧仍然必须提供 fallback `title / content`。
 - `user_notification` 仍然是用户侧通知唯一读模型。
 
+### 1.1 当前范围与后续推广原则
+
+- 本轮实施范围仍聚焦论坛主题点赞、收藏、评论、评论回复四类通知。
+- 这轮方案更适合推广到全通知域的是“通知治理机制”，不是把所有通知都改成同一种标题 / 正文句式。
+- 后续若扩展到 `USER_FOLLOW / SYSTEM_ANNOUNCEMENT / CHAT_MESSAGE / TASK_REMINDER` 等其他通知类型，优先复用以下原则：
+  - 通知类型语义单一，不再让不同业务长期混用同一类型。
+  - 业务侧继续提供 typed payload 与 fallback `title / content`。
+  - composer 统一构造事件，模板层只负责渲染，运行时继续保留 fallback。
+  - 模板保存期继续做占位符校验，减少错误上线后才暴露的概率。
+- 系统公告、任务提醒、聊天消息这类系统 / 会话型通知，可以继续保留更适合自身的文案模型，不要求强行套用“`xxx 对你的主题做了什么`”的论坛互动句式。
+
+### 1.2 本轮交付原则
+
+- 本轮论坛主题通知产品化默认按一个任务包完成：`TOPIC_LIKE`、`TOPIC_FAVORITE`、`TOPIC_COMMENT` 与 `COMMENT_REPLY` 动态化都纳入当前清单。
+- 允许按依赖拆成多个 wave 推进，但不建议只完成其中一部分就按“论坛主题通知产品化已收口”对外宣称完成。
+- `P1-03` 因依赖评论副作用底座，可以晚于 `P1-01 / P1-02` 落地，但仍属于本轮交付范围，不建议拖到后续独立迭代。
+- `COMMENT_REPLY` 本轮只做动态化与展示兜底，不在本任务包里继续拆成“论坛主题回复 / 作品回复 / 章节回复”等域级通知类型；若后续需要域级产品化区分，应另开全通知域任务。
+
 ## 2. 当前代码锚点
 
 - `libs/interaction/src/comment/comment.service.ts`
@@ -126,8 +144,8 @@
   - 去首尾空白
   - 合并换行与连续空白
   - 截断到约 40 到 80 个可读字符
-- 若评论内容或回复内容无法生成可读摘要，则回退为主题标题。
-- 若主题标题也不可用，则回退为当前固定兜底文案。
+- 若 `commentExcerpt` 无法生成可读摘要，则回退为主题标题。
+- 若 `replyExcerpt` 无法生成可读摘要，则优先回退为 `targetDisplayTitle`；若当前评论目标没有可用展示标题，再回退为当前固定兜底文案。
 
 ## 6. 推荐技术方案
 
@@ -167,7 +185,8 @@ export interface CreateNotificationOutboxEventInput {
 
 - 第一阶段把 `eventType` 改为可选
 - 若调用方仍传 `eventType`，则在 service 内校验它必须等于 `payload.type`
-- 第二阶段迁完全部调用方后，再彻底删除 `eventType`
+- 第一阶段由 `MessageOutboxService` 在写库时统一使用 `payload.type` 派生 `message_outbox.eventType`
+- 彻底删除通知 outbox 输入中的 `eventType` 需要同步迁移公告、任务提醒、关注、评论点赞等非论坛调用方，建议拆成独立的通知域全仓清理任务，不放在当前论坛主题任务包内完成
 
 ### 6.3 新增通知 composer，统一构造 fallback 文案与 payload
 
@@ -177,6 +196,7 @@ export interface CreateNotificationOutboxEventInput {
 - 统一补 fallback `title / content`
 - 统一填充 `subjectType / subjectId / payload`
 - 不负责选择接收人、不负责生成业务幂等键
+- 接口风格保持通知域可扩展，不把 composer 设计成只服务论坛主题句式
 
 建议提供如下接口：
 
@@ -250,15 +270,15 @@ export interface CreateNotificationOutboxEventInput {
 
 扩展 `CommentTargetMeta`，新增：
 
-- `targetTitle?: string`
+- `targetDisplayTitle?: string`
 
 论坛主题评论 resolver 的 `resolveMeta(...)` 直接补回：
 
 - `ownerUserId`
 - `sectionId`
-- `targetTitle`
+- `targetDisplayTitle`
 
-这样后续评论通知和回复通知都能拿到主题标题兜底。
+这样论坛主题回复通知可以拿到主题标题兜底。若后续希望让 `COMMENT_REPLY` 在作品 / 章节评论场景下也使用展示标题兜底，可由对应内容域 resolver 按同一字段逐步补齐；本轮论坛主题任务不强制一次性覆盖所有评论目标。
 
 ### 6.6 评论主链路补齐内容摘要与回复目标快照
 
@@ -273,6 +293,8 @@ export interface CreateNotificationOutboxEventInput {
 - `CommentModerationState` 增加 `content`
 - `replyComment(...)` 已查到被回复者时，直接把 `replyTargetUserId` 透传给补偿逻辑
 - 审核补偿、取消隐藏等路径若没有 `replyTargetUserId`，仍保留现有兜底查询
+
+这组字段属于 `P1-02` 与 `P1-03` 共享的评论副作用底座，建议在评论回复动态文案阶段先落地，后续 `TOPIC_COMMENT` 直接复用，避免两条任务线分别改一次评论可见性补偿链路。
 
 ### 6.7 评论 resolver 的 post hook 签名需要升级
 
@@ -302,7 +324,7 @@ postCommentHook?: (
 
 - 仅在 `replyToId` 为空时发送 `TOPIC_COMMENT`
 - 使用 `comment.content` 生成 `commentExcerpt`
-- 使用 `meta.targetTitle` 作为正文兜底
+- 使用 `meta.targetDisplayTitle` 作为正文兜底
 - 保持回复通知继续由 `CommentService.compensateVisibleCommentEffects(...)` 处理
 
 ### 6.8 模板层改成“动态模板 + 业务 fallback”
@@ -341,7 +363,7 @@ postCommentHook?: (
 
 #### 6.9.2 占位符白名单校验
 
-在保存模板时预先校验 `{{...}}` 路径是否合法，至少允许：
+在保存模板时预先校验 `{{...}}` 路径是否合法，至少允许固定根字段：
 
 - `notificationType`
 - `templateKey`
@@ -354,7 +376,12 @@ postCommentHook?: (
 - `aggregateKey`
 - `aggregateCount`
 - `expiredAt`
-- `payload.*`
+
+`payload` 下字段不建议做无限制通配放行，而应按 `notificationType` 对应的 typed payload 做白名单校验，例如：
+
+- `TOPIC_LIKE / TOPIC_FAVORITE` 允许 `payload.actorNickname`、`payload.topicTitle`
+- `TOPIC_COMMENT` 允许 `payload.actorNickname`、`payload.topicTitle`、`payload.commentExcerpt`
+- `COMMENT_REPLY` 允许 `payload.actorNickname`、`payload.replyExcerpt`、`payload.targetDisplayTitle`
 
 这样可把一部分模板错误前移到保存期，而不是等到 worker 消费时才 fallback。
 
@@ -378,6 +405,7 @@ postCommentHook?: (
 - `libs/interaction/src/comment/interfaces/comment-target-resolver.interface.ts`
 - `libs/interaction/src/like/interfaces/like-target-resolver.interface.ts`
 - `libs/interaction/src/favorite/interfaces/favorite-target-resolver.interface.ts`
+- `libs/interaction/src/favorite/favorite.service.ts`
 
 ### 7.3 论坛域
 
@@ -410,6 +438,7 @@ postCommentHook?: (
 - 新增 `MessageNotificationComposerService`
 - 收口 topic like / favorite / comment reply 的 fallback 文案构造
 - 补 `actorNickname / topicTitle / commentExcerpt / replyExcerpt`
+- 同步补齐评论可见副作用共享字段（如 `content / replyTargetUserId`），供 `P1-02` 与 `P1-03` 复用
 
 完成后收益：
 
@@ -476,6 +505,7 @@ postCommentHook?: (
 ## 11. 风险与注意点
 
 - 若只改文案、不拆类型，会继续把主题点赞混进评论点赞、把主题收藏混进通用内容收藏，长期维护风险较高。
+- 若在当前任务包里直接删除通知 outbox 输入中的 `eventType`，会把公告、任务提醒、关注、评论点赞等非论坛通知生产者一起卷入，建议另拆全仓清理任务。
 - `COMMENT_REPLY` 仍是跨内容域的通用通知类型，因此其默认模板应保持“回复你的评论”这种通用表达，不要写成“回复了你的主题评论”。
 - `TOPIC_COMMENT` 只应在一级评论首次可见时发送，回复评论不能重复触发这类通知。
 - 评论与回复摘要必须做截断和空值兜底，避免通知列表过长或出现空正文。

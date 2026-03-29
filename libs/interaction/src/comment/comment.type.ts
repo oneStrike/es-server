@@ -46,6 +46,7 @@ export interface RepliesQuery {
   commentId: number
   pageIndex?: number
   pageSize?: number
+  userId?: number
 }
 
 /**

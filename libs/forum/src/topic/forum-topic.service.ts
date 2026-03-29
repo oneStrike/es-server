@@ -36,6 +36,10 @@ import {
   FavoriteTargetTypeEnum,
 } from '@libs/interaction/favorite'
 import {
+  FollowService,
+  FollowTargetTypeEnum,
+} from '@libs/interaction/follow'
+import {
   LikeService,
   LikeTargetTypeEnum,
 } from '@libs/interaction/like'
@@ -81,6 +85,7 @@ export class ForumTopicService {
     private readonly forumPermissionService: ForumPermissionService,
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
+    private readonly followService: FollowService,
     private readonly emojiParserService: EmojiParserService,
   ) { }
 
@@ -511,8 +516,8 @@ export class ForumTopicService {
   }
 
   /**
-   * 获取公开主题详情，包含当前用户的点赞与收藏状态。
-   * 匿名用户返回固定的 liked/favorited 为 false，保持响应结构稳定。
+   * 获取公开主题详情，包含当前用户的点赞、收藏与关注发帖用户状态。
+   * 匿名用户返回固定状态（liked/favorited/isFollowed 为 false），保持响应结构稳定。
    */
   async getPublicTopicById(
     id: number,
@@ -524,12 +529,16 @@ export class ForumTopicService {
     if (!userId) {
       return {
         ...topic,
+        user: {
+          ...topic.user,
+          isFollowed: false,
+        },
         liked: false,
         favorited: false,
       }
     }
 
-    const [liked, favorited] = await Promise.all([
+    const [liked, favorited, isFollowed] = await Promise.all([
       this.likeService.checkLikeStatus({
         targetType: LikeTargetTypeEnum.FORUM_TOPIC,
         targetId: id,
@@ -540,6 +549,13 @@ export class ForumTopicService {
         targetId: id,
         userId,
       }),
+      userId === topic.userId
+        ? Promise.resolve(false)
+        : this.followService.checkFollowStatus({
+            targetType: FollowTargetTypeEnum.USER,
+            targetId: topic.userId,
+            userId,
+          }).then((result) => result.isFollowing),
     ])
 
     await this.browseLogService.recordBrowseLogSafely(
@@ -557,6 +573,10 @@ export class ForumTopicService {
 
     return {
       ...topic,
+      user: {
+        ...topic.user,
+        isFollowed,
+      },
       viewCount: topic.viewCount + 1,
       liked,
       favorited,

@@ -877,7 +877,7 @@ export class CommentService {
    * @returns 分页的回复列表，包含用户基本信息
    */
   async getReplies(query: RepliesQuery) {
-    const { commentId, pageIndex, pageSize } = query
+    const { commentId, pageIndex, pageSize, userId } = query
     const page = await this.drizzle.ext.findPagination(this.userComment, {
       where: and(
         eq(this.userComment.actualReplyToId, commentId),
@@ -897,17 +897,21 @@ export class CommentService {
     }
 
     const userIds = [...new Set(page.list.map((item) => item.userId))]
-    const users = userIds.length
-      ? await this.db
-        .select({
-          id: this.appUser.id,
-          nickname: this.appUser.nickname,
-          avatarUrl: this.appUser.avatarUrl,
-        })
-        .from(this.appUser)
-        .where(inArray(this.appUser.id, userIds))
-      : []
-    const userMap = new Map(users.map((item) => [item.id, item]))
+    const commentIds = page.list.map((item) => item.id)
+    const [users, likedMap] = await Promise.all([
+      userIds.length
+        ? this.db
+          .select({
+            id: this.appUser.id,
+            nickname: this.appUser.nickname,
+            avatarUrl: this.appUser.avatarUrl,
+          })
+          .from(this.appUser)
+          .where(inArray(this.appUser.id, userIds))
+        : Promise.resolve([]),
+      this.getCommentLikedMap(commentIds, userId),
+    ])
+    const userMap = new Map(users.map((item) => [item.id, item] as const))
 
     return {
       ...page,
@@ -915,6 +919,7 @@ export class CommentService {
         const user = userMap.get(item.userId)
         return {
           ...item,
+          liked: likedMap.get(item.id) ?? false,
           user: user ?? undefined,
         }
       }),
@@ -965,6 +970,7 @@ export class CommentService {
         'content',
         'bodyTokens',
         'floor',
+        'likeCount',
         'createdAt',
       ],
     })
@@ -982,6 +988,7 @@ export class CommentService {
       replyToId: number | null
       content: string
       bodyTokens: unknown
+      likeCount: number
       createdAt: Date
       totalCount?: number
     }[] = []
@@ -997,6 +1004,7 @@ export class CommentService {
           replyToId: this.userComment.replyToId,
           content: this.userComment.content,
           bodyTokens: this.userComment.bodyTokens,
+          likeCount: this.userComment.likeCount,
           createdAt: this.userComment.createdAt,
           rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
             'rn',
@@ -1065,6 +1073,7 @@ export class CommentService {
         replyToId: number | null
         content: string
         bodyTokens: unknown
+        likeCount: number
         createdAt: Date
       }[]
     >()
@@ -1082,6 +1091,7 @@ export class CommentService {
         replyToId: reply.replyToId,
         content: reply.content,
         bodyTokens: reply.bodyTokens,
+        likeCount: reply.likeCount,
         createdAt: reply.createdAt,
       })
       previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
@@ -1120,6 +1130,7 @@ export class CommentService {
             content: reply.content,
             bodyTokens: reply.bodyTokens,
             replyToId: reply.replyToId,
+            likeCount: reply.likeCount,
             createdAt: reply.createdAt,
             liked: likedMap.get(reply.id) ?? false,
             user: userMap.get(reply.userId) ?? undefined,

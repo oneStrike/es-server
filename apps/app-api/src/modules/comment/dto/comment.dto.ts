@@ -78,12 +78,32 @@ export class CommentUserDto extends PickType(BaseAppUserDto, [
   'avatarUrl',
 ] as const) {}
 
+export class CommentReplyItemDto extends BaseCommentDto {
+  @BooleanProperty({
+    description: '当前用户是否已点赞该回复',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @NestedProperty({
+    description: '回复用户',
+    required: false,
+    nullable: false,
+    type: CommentUserDto,
+    validation: false,
+  })
+  user!: CommentUserDto
+}
+
 export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
   'id',
   'userId',
   'content',
   'bodyTokens',
   'replyToId',
+  'likeCount',
   'createdAt',
 ] as const) {
   @BooleanProperty({
@@ -112,6 +132,7 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
   'content',
   'bodyTokens',
   'floor',
+  'likeCount',
   'createdAt',
 ] as const) {
   @NestedProperty({

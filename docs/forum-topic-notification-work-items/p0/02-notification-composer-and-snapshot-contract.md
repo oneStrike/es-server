@@ -15,6 +15,7 @@
 - `libs/message/src/notification/notification.type.ts`
 - `libs/interaction/src/like/interfaces/like-target-resolver.interface.ts`
 - `libs/interaction/src/favorite/interfaces/favorite-target-resolver.interface.ts`
+- `libs/interaction/src/favorite/favorite.service.ts`
 - `libs/interaction/src/comment/interfaces/comment-target-resolver.interface.ts`
 
 ## 非目标
@@ -22,6 +23,7 @@
 - 不在本任务里迁移全部业务通知调用方
 - 不在本任务里修改主题点赞、收藏、评论的最终展示文案
 - 不在本任务里引入模板缓存
+- 不在本任务里一次性补齐所有非论坛评论目标的展示标题；`COMMENT_REPLY` 缺少 `targetDisplayTitle` 时继续允许回退到通用固定文案
 
 ## 主要改动
 
@@ -29,8 +31,9 @@
 - 定义 `TOPIC_LIKE / TOPIC_FAVORITE / TOPIC_COMMENT / COMMENT_REPLY` 的 typed payload
 - 扩展 `LikeTargetMeta` 支持 `ownerUserId / targetTitle`
 - 扩展 favorite resolver 返回值支持 `ownerUserId / targetTitle`
-- 扩展 `CommentTargetMeta` 支持 `targetTitle`
-- 统一 `actorNickname / topicTitle / commentExcerpt / replyExcerpt` 的快照字段口径
+- 扩展 `FavoriteService` 透传 `targetTitle` 给收藏通知后置钩子
+- 扩展 `CommentTargetMeta` 支持 `targetDisplayTitle`
+- 统一 `actorNickname / topicTitle / commentExcerpt / replyExcerpt / targetDisplayTitle` 的快照字段口径
 
 ## 完成标准
 

@@ -3,6 +3,7 @@ import { BrowseLogModule } from '@libs/interaction/browse-log'
 import { CommentModule } from '@libs/interaction/comment'
 import { EmojiModule } from '@libs/interaction/emoji'
 import { FavoriteModule } from '@libs/interaction/favorite'
+import { FollowModule } from '@libs/interaction/follow'
 import { LikeModule } from '@libs/interaction/like'
 import { ReportModule } from '@libs/interaction/report'
 import { MessageModule } from '@libs/message/module'
@@ -32,6 +33,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     CommentModule,
     EmojiModule,
     FavoriteModule,
+    FollowModule,
     LikeModule,
     ReportModule,
     UserModule,

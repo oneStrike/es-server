@@ -4,6 +4,7 @@ import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  CommentReplyItemDto,
   CreateCommentBodyDto,
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
@@ -69,9 +70,12 @@ export class CommentController {
   @Get('reply/page')
   @ApiPageDoc({
     summary: '分页查询评论回复',
-    model: BaseCommentDto,
+    model: CommentReplyItemDto,
   })
-  async replies(@Query() query: QueryCommentRepliesDto) {
-    return this.commentService.getReplies(query)
+  async replies(
+    @Query() query: QueryCommentRepliesDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.commentService.getReplies({ ...query, userId })
   }
 }

@@ -9,12 +9,15 @@
 - 为论坛主题新增独立通知类型
 - 收口通知 outbox 的类型来源
 - 同步 DTO / 偏好 / 模板定义侧的基础类型映射
+- 同步 schema 注释 / Swagger 描述 / seed 示例里的基础类型口径
 
 ## 当前代码锚点
 
 - `libs/message/src/notification/notification.constant.ts`
 - `libs/message/src/outbox/outbox.type.ts`
 - `libs/message/src/outbox/outbox.service.ts`
+- `db/schema/message/user-notification.ts`
+- `db/seed/modules/message/domain.ts`
 - `apps/app-api/src/modules/message/dto/message.dto.ts`
 - `apps/admin-api/src/modules/message/dto/message-template.dto.ts`
 - `apps/admin-api/src/modules/message/dto/message-monitor.dto.ts`
@@ -24,6 +27,7 @@
 - 不在本任务里改动态文案本身
 - 不在本任务里补论坛主题“被评论”通知主链路
 - 不在本任务里做模板缓存或模板校验增强
+- 不在本任务包里彻底删除 `CreateNotificationOutboxEventInput.eventType`；该动作需要单独覆盖公告、任务提醒、关注、评论点赞等非论坛通知调用方
 
 ## 主要改动
 
@@ -32,13 +36,17 @@
 - 新增 `TOPIC_COMMENT`
 - 让通知 outbox 以 `payload.type` 为唯一通知类型事实源
 - 兼容期对 `eventType !== payload.type` 做显式校验
+- 在 `MessageOutboxService` 写库时由 `payload.type` 统一派生 `message_outbox.eventType`
 - 同步通知类型相关 DTO 与枚举展示
+- 同步 schema 注释、Swagger 描述与 seed 示例中的通知类型说明
 
 ## 完成标准
 
 - 论坛主题点赞、收藏、评论具备独立通知类型
-- 业务侧不再需要长期双写 `eventType / payload.type`
+- 论坛主题相关新增 / 改造调用方不再需要继续双写 `eventType / payload.type`
+- 非论坛通知调用方的 `eventType` 删除需求已明确拆出，不与本任务包耦合
 - 偏好、模板、delivery 后续可以围绕新增类型独立收口
+- schema / DTO / seed 示例不再继续传播旧通知类型口径
 
 ## 完成后同步文档
 

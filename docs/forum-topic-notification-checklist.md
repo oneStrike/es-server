@@ -25,8 +25,21 @@
 - payload 快照字段设计
 - composer 与模板缓存方案
 - 分阶段实施建议
+- 当前范围与后续全通知域推广原则
 
 本文不再重复展开设计理由，避免两份文档漂移。
+
+### 2.1 范围边界说明
+
+- 本清单当前只覆盖论坛主题点赞、收藏、评论、评论回复四类通知。
+- 本清单不要求把 `SYSTEM_ANNOUNCEMENT / TASK_REMINDER / CHAT_MESSAGE` 等非论坛通知，强行改成与论坛互动通知相同的标题 / 正文句式。
+- 若后续要把这套方案推广到全通知域，应优先复用“类型语义收口、typed payload、composer、模板渲染、fallback 兜底、保存期校验”这套机制，而不是先统一所有通知 copy。
+
+### 2.2 本轮一起交付的范围
+
+- 本轮默认一次收口四类论坛主题通知：主题点赞、主题收藏、主题被评论、评论收到回复。
+- 允许按依赖拆成多个 phase / wave 推进，但不建议把 `P1-01`、`P1-03` 或 `P2-01` 延后到下一轮再做，否则论坛主题通知产品化口径仍不完整。
+- `COMMENT_REPLY` 本轮继续保持跨内容域通用类型，只升级动态文案与展示兜底；若未来需要区分论坛主题 / 作品 / 章节回复，另开全通知域任务。
 
 ## 3. 实施清单
 
@@ -45,15 +58,18 @@
 - [ ] 更新通知模板定义与类型值列表
 - [ ] 更新通知偏好类型列表与对应单测
 - [ ] 更新通知监控 / DTO / 管理端枚举展示
+- [ ] 同步 schema 注释 / Swagger 描述 / seed 示例中的通知类型口径
 - [ ] 让通知 outbox 以 `payload.type` 作为唯一通知类型事实源
 - [ ] 兼容期对 `eventType !== payload.type` 做显式校验
-- [ ] 迁完调用方后删除通知 outbox 输入中的冗余 `eventType`
+- [ ] 明确 `eventType` 字段删除属于后续全仓清理任务，本包内只完成派生与校验
 
 关键文件：
 
 - `libs/message/src/notification/notification.constant.ts`
 - `libs/message/src/outbox/outbox.type.ts`
 - `libs/message/src/outbox/outbox.service.ts`
+- `db/schema/message/user-notification.ts`
+- `db/seed/modules/message/domain.ts`
 - `apps/app-api/src/modules/message/dto/message.dto.ts`
 - `apps/admin-api/src/modules/message/dto/message-template.dto.ts`
 - `apps/admin-api/src/modules/message/dto/message-monitor.dto.ts`
@@ -74,6 +90,7 @@
 - [ ] 提供 `buildCommentReplyEvent(...)`
 - [ ] 在 composer 层统一构造 fallback `title / content`
 - [ ] 在 composer 层统一写入 typed `payload.payload`
+- [ ] 保持 composer 接口风格可扩展，后续可平滑承接非论坛通知类型
 - [ ] 为 composer 补基础单测
 
 关键文件：
@@ -93,19 +110,21 @@
 
 - [ ] 扩展 `LikeTargetMeta`，支持 `ownerUserId / targetTitle`
 - [ ] 扩展收藏 resolver 返回值，支持 `ownerUserId / targetTitle`
-- [ ] 扩展 `CommentTargetMeta`，支持 `targetTitle`
+- [ ] 扩展 `CommentTargetMeta`，支持 `targetDisplayTitle`
 - [ ] 统一定义论坛主题通知的快照字段结构
 - [ ] 为 `TOPIC_LIKE` 补 `actorNickname / topicTitle`
 - [ ] 为 `TOPIC_FAVORITE` 补 `actorNickname / topicTitle`
 - [ ] 为 `TOPIC_COMMENT` 补 `actorNickname / topicTitle / commentExcerpt`
-- [ ] 为 `COMMENT_REPLY` 补 `actorNickname / replyExcerpt`
+- [ ] 为 `COMMENT_REPLY` 补 `actorNickname / replyExcerpt / targetDisplayTitle?`
 - [ ] 评论与回复摘要统一走标准化与截断逻辑
+- [ ] 收藏链路补 `targetTitle` 透传时同步更新 `favorite.service` 转发逻辑
 
 关键文件：
 
 - `libs/interaction/src/like/interfaces/like-target-resolver.interface.ts`
 - `libs/interaction/src/favorite/interfaces/favorite-target-resolver.interface.ts`
 - `libs/interaction/src/comment/interfaces/comment-target-resolver.interface.ts`
+- `libs/interaction/src/favorite/favorite.service.ts`
 - `libs/message/src/notification/` 下 typed payload 文件
 
 ### 3.4 Phase D：迁移论坛主题点赞与收藏通知
@@ -130,7 +149,32 @@
 - `libs/forum/src/topic/resolver/forum-topic-like.resolver.ts`
 - `libs/forum/src/topic/resolver/forum-topic-favorite.resolver.ts`
 
-### 3.5 Phase E：补齐论坛主题“被评论”通知
+### 3.5 Phase E：升级评论回复通知为动态文案
+
+目标：
+
+- 把现有固定“收到新的评论回复”升级为“谁回复了你的评论 + 回复摘要”
+
+清单：
+
+- [ ] `COMMENT_REPLY` 标题改为 `actorNickname + 回复了你的评论`
+- [ ] `COMMENT_REPLY` 正文改为回复内容摘要
+- [ ] `VisibleCommentEffectPayload` 增加回复摘要所需正文内容
+- [ ] `CommentModerationState` 保留正文内容，供审核补偿 / 取消隐藏复用
+- [ ] `replyComment(...)` 已查到的 `replyTargetUserId` 直接透传给补偿逻辑
+- [ ] 审核补偿场景保留现有兜底查询
+- [ ] 回复摘要为空时回退为 `targetDisplayTitle` 或固定兜底文案
+- [ ] 现有回复通知幂等键保持稳定
+- [ ] 评论回复通知接入 composer
+- [ ] `COMMENT_REPLY` 继续保持跨内容域通用表达，不引入论坛专属模板口径
+
+关键文件：
+
+- `libs/interaction/src/comment/comment.service.ts`
+- `libs/interaction/src/comment/comment.type.ts`
+- `libs/message/src/notification/` 下 composer / type 文件
+
+### 3.6 Phase F：补齐论坛主题“被评论”通知
 
 目标：
 
@@ -139,7 +183,7 @@
 清单：
 
 - [ ] 升级评论 `postCommentHook(...)` 签名，使其能拿到完整可见评论载荷
-- [ ] `VisibleCommentEffectPayload` 增加评论正文内容
+- [ ] 复用 Phase E 已补的评论副作用共享字段，不再重复改一套评论补偿底座
 - [ ] 论坛主题评论 resolver 仅在一级评论场景发送 `TOPIC_COMMENT`
 - [ ] 论坛主题评论通知接入 composer
 - [ ] `TOPIC_COMMENT` 正文优先显示评论摘要
@@ -153,27 +197,6 @@
 - `libs/interaction/src/comment/comment.service.ts`
 - `libs/interaction/src/comment/interfaces/comment-target-resolver.interface.ts`
 - `libs/forum/src/topic/resolver/forum-topic-comment.resolver.ts`
-
-### 3.6 Phase F：升级评论回复通知为动态文案
-
-目标：
-
-- 把现有固定“收到新的评论回复”升级为“谁回复了你的评论 + 回复摘要”
-
-清单：
-
-- [ ] `COMMENT_REPLY` 标题改为 `actorNickname + 回复了你的评论`
-- [ ] `COMMENT_REPLY` 正文改为回复内容摘要
-- [ ] `replyComment(...)` 已查到的 `replyTargetUserId` 直接透传给补偿逻辑
-- [ ] 审核补偿场景保留现有兜底查询
-- [ ] 回复摘要为空时回退为主题标题或固定兜底文案
-- [ ] 现有回复通知幂等键保持稳定
-- [ ] 评论回复通知接入 composer
-
-关键文件：
-
-- `libs/interaction/src/comment/comment.service.ts`
-- `libs/interaction/src/comment/comment.type.ts`
 
 ### 3.7 Phase G：升级模板默认文案与 seed
 
@@ -212,8 +235,9 @@
 - [ ] 在更新模板后失效缓存
 - [ ] 在模板启停切换后失效缓存
 - [ ] 在删除模板后失效缓存
-- [ ] 增加模板占位符白名单校验
-- [ ] 保存非法模板时直接报错
+- [ ] 按 `notificationType` 增加模板占位符白名单校验
+- [ ] 对固定根字段与 typed payload 字段分别校验
+- [ ] 保存包含非法路径或未注册 payload 字段的模板时直接报错
 - [ ] 保留运行时 fallback 兜底
 
 关键文件：
@@ -266,6 +290,7 @@
 - [ ] [notification-domain-contract.md](./notification-domain-contract.md) 已同步新增 `TOPIC_*` 类型边界
 - [ ] 若调整偏好或模板说明，相关接口 / DTO 文档已同步
 - [ ] 新同事只看文档，也能区分“主题被评论”和“评论被回复”两类通知
+- [ ] 文档已明确“可推广的是治理机制，不是统一所有通知句式”
 
 ## 7. 阻塞上线项
 
@@ -275,6 +300,7 @@
 - [ ] 论坛主题收藏仍复用 `CONTENT_FAVORITE`
 - [ ] 论坛主题一级评论仍不会触发“主题被评论”通知
 - [ ] 评论回复通知仍然只有固定文案，没有动态正文
+- [ ] 当前轮次只完成部分论坛主题通知产品化，却按“论坛主题通知改造完成”口径上线
 - [ ] 模板缺失或异常时会导致通知无法落库
 - [ ] 新增通知类型没有基础测试覆盖
 - [ ] App 或管理端仍无法正确识别新增 `TOPIC_*` 类型

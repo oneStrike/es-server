@@ -2,7 +2,7 @@
 
 ## 1. 文档目标
 
-本文只定义通知域的跨任务公共契约，避免 `P2-B-01 ~ P2-B-04` 各自引入不同口径。
+本文只定义通知域的跨任务公共契约，避免不同任务包各自引入不同口径。
 
 它回答 4 个问题：
 
@@ -44,6 +44,13 @@
 - chat 不写 `notification_delivery`；排障继续看 `message_outbox.status` 与 WS 监控指标
 - `chat.send / chat.read` 的 ack 仍是 chat 域自己的请求确认，不与通知投递结果混用
 
+### 2.5 通知 outbox 类型来源
+
+- 通知域 outbox 以 `payload.type` 作为唯一通知类型事实源
+- 兼容期允许调用方继续传 `eventType`，但必须与 `payload.type` 保持一致
+- `message_outbox.eventType` 在写库时由 `payload.type` 派生
+- 彻底删除通知 outbox 输入中的 `eventType` 需要同步迁移公告、任务提醒、关注、评论点赞等非论坛通知调用方，建议拆为独立的全仓清理任务
+
 ## 3. 第一阶段通知偏好粒度
 
 第一阶段只允许按 `MessageNotificationTypeEnum` 控制偏好：
@@ -51,6 +58,9 @@
 - `COMMENT_REPLY`
 - `COMMENT_LIKE`
 - `CONTENT_FAVORITE`
+- `TOPIC_LIKE`
+- `TOPIC_FAVORITE`
+- `TOPIC_COMMENT`
 - `USER_FOLLOW`
 - `SYSTEM_ANNOUNCEMENT`
 - `CHAT_MESSAGE`
@@ -114,6 +124,7 @@
 - 每个 `MessageNotificationTypeEnum` 最多只维护一份站内通知模板
 - 核心站内通知类型通过 seed 初始化默认模板，但业务方 fallback 文案仍然必须保留
 - `SYSTEM_ANNOUNCEMENT` / `TASK_REMINDER` 默认模板直接消费 `payload.title`、`payload.content`
+- `COMMENT_REPLY` 继续保持跨内容域的通用模板表达；`TOPIC_*` 只覆盖论坛主题场景
 
 模板层不负责：
 
@@ -134,6 +145,6 @@
 
 ## 7. 与其他文档的关系
 
-- 排期与依赖：见 `docs/task-growth-reward-work-items/execution-plan.md`
-- 单任务执行细节：见 `docs/task-growth-reward-work-items/p2b/*`
+- 论坛主题通知改造设计：见 `docs/forum-topic-notification-optimization-plan.md`
+- 论坛主题通知执行拆分：见 `docs/forum-topic-notification-work-items/*`
 - 事件定义层：见 `docs/event-registry-special-design.md`
