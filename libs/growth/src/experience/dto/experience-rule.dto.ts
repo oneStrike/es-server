@@ -18,9 +18,10 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   type!: GrowthRuleTypeEnum
 
   @NumberProperty({
-    description: '经验值变化',
+    description: '经验奖励值（正整数）',
     example: 5,
     required: true,
+    min: 1,
   })
   experience!: number
 
@@ -29,6 +30,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
     example: 0,
     required: true,
     default: 0,
+    min: 0,
   })
   dailyLimit!: number
 
@@ -37,6 +39,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
     example: 0,
     required: true,
     default: 0,
+    min: 0,
   })
   totalLimit!: number
 

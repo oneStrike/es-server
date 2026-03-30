@@ -105,7 +105,7 @@ describe('growth reward service task settlement result', () => {
         success: false,
         resultType: TaskAssignmentRewardResultTypeEnum.FAILED,
         ledgerRecordIds: [],
-        errorMessage: '任务奖励发放失败（积分/POINTS）：规则值为零',
+        errorMessage: '任务奖励发放失败（积分/POINTS）：数值必须大于零',
       }),
     )
   })

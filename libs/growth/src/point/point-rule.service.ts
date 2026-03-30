@@ -22,9 +22,7 @@ export class UserPointRuleService {
   }
 
   async createPointRule(dto: CreateUserPointRuleInput) {
-    if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
-      throw new BadRequestException('无效的积分规则类型')
-    }
+    this.validatePointRuleWrite(dto)
 
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.userPointRule).values(dto),
@@ -68,9 +66,7 @@ export class UserPointRuleService {
   }
 
   async updatePointRule(dto: UpdateUserPointRuleInput) {
-    if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
-      throw new BadRequestException('Invalid point rule type')
-    }
+    this.validatePointRuleWrite(dto)
 
     const { id, ...updateData } = dto
 
@@ -100,5 +96,43 @@ export class UserPointRuleService {
       )
       .limit(1)
     return rule
+  }
+
+  /**
+   * 统一校验积分规则写入语义。
+   *
+   * point rule 只承载“发奖规则”，因此 points 必须是正整数，
+   * dailyLimit / totalLimit 只允许非负整数。
+   */
+  private validatePointRuleWrite(
+    dto: Pick<
+      CreateUserPointRuleInput,
+      'type' | 'points' | 'dailyLimit' | 'totalLimit'
+    >,
+  ) {
+    if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
+      throw new BadRequestException('无效的积分规则类型')
+    }
+    this.validatePositiveInteger(dto.points, '积分规则值')
+    this.validateNonNegativeInteger(dto.dailyLimit, '积分规则每日上限')
+    this.validateNonNegativeInteger(dto.totalLimit, '积分规则总上限')
+  }
+
+  /**
+   * 校验必须为正整数的数值字段。
+   */
+  private validatePositiveInteger(value: number, fieldLabel: string) {
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new BadRequestException(`${fieldLabel}必须是大于0的整数`)
+    }
+  }
+
+  /**
+   * 校验必须为非负整数的数值字段。
+   */
+  private validateNonNegativeInteger(value: number, fieldLabel: string) {
+    if (!Number.isInteger(value) || value < 0) {
+      throw new BadRequestException(`${fieldLabel}必须是大于等于0的整数`)
+    }
   }
 }

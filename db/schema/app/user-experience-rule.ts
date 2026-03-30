@@ -20,15 +20,15 @@ export const userExperienceRule = pgTable("user_experience_rule", {
    */
   type: smallint().notNull(),
   /**
-   * 经验值变化
+   * 经验奖励值（正整数）
    */
   experience: integer().notNull(),
   /**
-   * 每日上限（0=无限制）
+   * 每日上限（0=无限制，禁止负值）
    */
   dailyLimit: integer().default(0).notNull(),
   /**
-   * 总上限（0=无限制）
+   * 总上限（0=无限制，禁止负值）
    */
   totalLimit: integer().default(0).notNull(),
   /**

@@ -37,7 +37,7 @@ export const GrowthLedgerFailReasonLabel: Record<
 > = {
   [GrowthLedgerFailReasonEnum.RULE_NOT_FOUND]: '规则不存在',
   [GrowthLedgerFailReasonEnum.RULE_DISABLED]: '规则已禁用',
-  [GrowthLedgerFailReasonEnum.RULE_ZERO]: '规则值为零',
+  [GrowthLedgerFailReasonEnum.RULE_ZERO]: '数值必须大于零',
   [GrowthLedgerFailReasonEnum.DAILY_LIMIT]: '已达每日上限',
   [GrowthLedgerFailReasonEnum.TOTAL_LIMIT]: '已达总上限',
   [GrowthLedgerFailReasonEnum.COOLDOWN]: '冷却中',

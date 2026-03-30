@@ -2,7 +2,7 @@ import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 
 /**
  * 经验规则创建入参。
- * 对应 userExperienceRule 的业务可写字段。
+ * 对应 userExperienceRule 的业务可写字段，experience 必须为正整数。
  */
 export interface CreateUserExperienceRuleInput {
   type: GrowthRuleTypeEnum
@@ -15,7 +15,7 @@ export interface CreateUserExperienceRuleInput {
 
 /**
  * 经验规则更新入参。
- * 包含规则 id 与允许更新的业务字段。
+ * 包含规则 id 与允许更新的业务字段，dailyLimit / totalLimit 允许为 0。
  */
 export interface UpdateUserExperienceRuleInput {
   id: number

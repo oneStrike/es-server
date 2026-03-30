@@ -146,8 +146,8 @@ export class GrowthLedgerService {
     // 获取规则定义的变动值（积分或经验）
     const delta = 'points' in rule ? rule.points : rule.experience
 
-    // 规则值为零，无需处理
-    if (delta === 0) {
+    // 规则发奖值必须为正数；即使入口配置漂移，这里也要兜底拒绝。
+    if (delta <= 0) {
       await this.writeAuditLog(tx, {
         userId,
         bizKey,

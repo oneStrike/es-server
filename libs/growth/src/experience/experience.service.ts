@@ -5,6 +5,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
 import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
+import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
   AddUserExperienceInput,
   CreateUserExperienceRuleInput,
@@ -52,6 +53,7 @@ export class UserExperienceService {
    * @returns 创建的规则信息
    */
   async createExperienceRule(dto: CreateUserExperienceRuleInput) {
+    this.validateExperienceRuleWrite(dto)
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.userExperienceRule).values(dto),
       {
@@ -107,6 +109,7 @@ export class UserExperienceService {
    * @returns 更新后的规则信息
    */
   async updateExperienceRule(dto: UpdateUserExperienceRuleInput) {
+    this.validateExperienceRuleWrite(dto)
     const { id, ...updateData } = dto
     const result = await this.drizzle.withErrorHandling(
       () =>
@@ -354,7 +357,7 @@ export class UserExperienceService {
     const reasonMap: Record<string, string> = {
       rule_not_found: 'Experience rule not found',
       rule_disabled: 'Experience rule is disabled',
-      rule_zero: 'Invalid experience rule config',
+      rule_zero: 'Experience rule value must be greater than 0',
       daily_limit: 'Daily experience limit reached',
       total_limit: 'Total experience limit reached',
     }
@@ -372,5 +375,52 @@ export class UserExperienceService {
       .sort()
       .join('|')
     return `${prefix}:${serializedPayload}`
+  }
+
+  /**
+   * 统一校验经验规则写入语义。
+   *
+   * experience rule 只承载“发奖规则”，因此 experience 必须是正整数，
+   * dailyLimit / totalLimit 只允许非负整数。
+   */
+  private validateExperienceRuleWrite(
+    dto: Pick<
+      UpdateUserExperienceRuleInput,
+      'type' | 'experience' | 'dailyLimit' | 'totalLimit'
+    >,
+  ) {
+    if (
+      dto.type !== undefined
+      && !Object.values(GrowthRuleTypeEnum).includes(dto.type)
+    ) {
+      throw new BadRequestException('经验规则类型无效')
+    }
+    if (dto.experience !== undefined) {
+      this.validatePositiveInteger(dto.experience, '经验规则值')
+    }
+    if (dto.dailyLimit !== undefined) {
+      this.validateNonNegativeInteger(dto.dailyLimit, '经验规则每日上限')
+    }
+    if (dto.totalLimit !== undefined) {
+      this.validateNonNegativeInteger(dto.totalLimit, '经验规则总上限')
+    }
+  }
+
+  /**
+   * 校验必须为正整数的数值字段。
+   */
+  private validatePositiveInteger(value: number, fieldLabel: string) {
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new BadRequestException(`${fieldLabel}必须是大于0的整数`)
+    }
+  }
+
+  /**
+   * 校验必须为非负整数的数值字段。
+   */
+  private validateNonNegativeInteger(value: number, fieldLabel: string) {
+    if (!Number.isInteger(value) || value < 0) {
+      throw new BadRequestException(`${fieldLabel}必须是大于等于0的整数`)
+    }
   }
 }

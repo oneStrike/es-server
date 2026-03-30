@@ -1,4 +1,4 @@
-# Task 模块状态流转整改开发补充
+# Task 与成长奖励整改开发补充
 
 ## 1. 文档目标
 
@@ -32,6 +32,26 @@
   - `DAILY / WEEKLY / MONTHLY` assignment 具备按周期过期的可验证行为
   - 任务奖励与提醒链路不会因补偿或并发重试产生重复结果
 
+### [P0-07 成长规则值语义与校验对齐](./p0/07-growth-rule-semantics-and-validation-alignment.md)
+
+- 开工条件：无硬前置，建议在 `P0-06` 完成后继续推进
+- 预计改动模块：`libs/growth/point`、`libs/growth/experience`、`libs/growth/growth-ledger`
+- 预计影响文件：
+  - `libs/growth/src/point/point-rule.service.ts`
+  - `libs/growth/src/point/dto/point-rule.dto.ts`
+  - `libs/growth/src/experience/experience.service.ts`
+  - `libs/growth/src/experience/dto/experience-rule.dto.ts`
+  - `libs/growth/src/growth-ledger/growth-ledger.service.ts`
+  - `libs/growth/src/growth-ledger/growth-ledger.constant.ts`
+  - `db/schema/app/user-point-rule.ts`
+  - `db/schema/app/user-experience-rule.ts`
+- 核心测试点：
+  - point/experience rule 创建与更新只允许合法 `GrowthRuleTypeEnum`
+  - point/experience rule 的奖励值只允许正整数
+  - `dailyLimit / totalLimit` 不允许负值
+  - `applyByRule()` 遇到 `<= 0` 规则值时稳定拒绝，不再进入余额更新
+  - 现有 task 奖励直发链路不受本轮规则收口误伤
+
 ## 3. 当前实施重点
 
 本轮整改建议按以下顺序推进：
@@ -39,6 +59,7 @@
 1. 先修 `reportProgress()` 与 `completeTask()` 的状态迁移条件
 2. 再修 assignment 过期时间与发布时间窗口校验
 3. 最后补齐并发、周期、完成模式相关自动化测试
+4. 继续收口 point/experience rule 的数值语义与规则类型校验
 
 ## 4. 维护规则
 

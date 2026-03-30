@@ -3,6 +3,49 @@ jest.mock('@db/core', () => ({
 }))
 
 describe('growth ledger public context', () => {
+  it('rejects non-positive rule values before touching user balance', async () => {
+    const { GrowthLedgerService } = await import('./growth-ledger.service')
+    const {
+      GrowthAssetTypeEnum,
+      GrowthLedgerFailReasonEnum,
+    } = await import('./growth-ledger.constant')
+    const { GrowthRuleTypeEnum } = await import('../growth-rule.constant')
+
+    const service = new GrowthLedgerService({} as any)
+
+    jest.spyOn(service as any, 'findRuleByType').mockResolvedValue({
+      id: 1,
+      points: -5,
+      dailyLimit: 0,
+      totalLimit: 0,
+      isEnabled: true,
+    })
+    const writeAuditLog = jest
+      .spyOn(service as any, 'writeAuditLog')
+      .mockResolvedValue(undefined)
+    const incrementUserBalance = jest
+      .spyOn(service as any, 'incrementUserBalance')
+      .mockResolvedValue(0)
+    const createLedgerGate = jest
+      .spyOn(service as any, 'createLedgerGate')
+      .mockResolvedValue({ duplicated: false, recordId: 99 })
+
+    const result = await service.applyByRule({} as any, {
+      userId: 9,
+      assetType: GrowthAssetTypeEnum.POINTS,
+      ruleType: GrowthRuleTypeEnum.CREATE_TOPIC,
+      bizKey: 'point:rule:test',
+    })
+
+    expect(result).toEqual({
+      success: false,
+      reason: GrowthLedgerFailReasonEnum.RULE_ZERO,
+    })
+    expect(writeAuditLog).toHaveBeenCalled()
+    expect(createLedgerGate).not.toHaveBeenCalled()
+    expect(incrementUserBalance).not.toHaveBeenCalled()
+  })
+
   it('keeps only whitelisted primitive explanation fields', async () => {
     const { GrowthLedgerService } = await import('./growth-ledger.service')
 

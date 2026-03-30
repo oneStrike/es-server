@@ -18,9 +18,10 @@ export class BaseUserPointRuleDto extends BaseDto {
   type!: GrowthRuleTypeEnum
 
   @NumberProperty({
-    description: '积分变化（正数为获得，负数为消费）',
+    description: '积分奖励值（正整数）',
     example: 5,
     required: true,
+    min: 1,
   })
   points!: number
 
@@ -29,6 +30,7 @@ export class BaseUserPointRuleDto extends BaseDto {
     example: 0,
     required: true,
     default: 0,
+    min: 0,
   })
   dailyLimit!: number
 
@@ -37,6 +39,7 @@ export class BaseUserPointRuleDto extends BaseDto {
     example: 0,
     required: true,
     default: 0,
+    min: 0,
   })
   totalLimit!: number
 

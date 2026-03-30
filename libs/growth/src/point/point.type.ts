@@ -2,7 +2,7 @@ import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 
 /**
  * 积分规则创建入参。
- * 对应 userPointRule 的可写业务字段。
+ * 对应 userPointRule 的可写业务字段，points 必须为正整数。
  */
 export interface CreateUserPointRuleInput {
   type: GrowthRuleTypeEnum
@@ -15,7 +15,7 @@ export interface CreateUserPointRuleInput {
 
 /**
  * 积分规则更新入参。
- * 包含目标规则 id 与完整可写字段。
+ * 包含目标规则 id 与完整可写字段，dailyLimit / totalLimit 允许为 0。
  */
 export interface UpdateUserPointRuleInput extends CreateUserPointRuleInput {
   id: number

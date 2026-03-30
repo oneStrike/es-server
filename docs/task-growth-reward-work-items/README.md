@@ -1,10 +1,10 @@
-# Task 模块状态流转整改文档集
+# Task 与成长奖励整改文档集
 
-本目录只承载“`task` 模块状态流转整改”的可执行文档，不替代其他历史方案、总览或长期规划文档。
+本目录承载“`task` 模块状态流转整改”与“成长奖励规则语义收口”的可执行文档，不替代其他历史方案、总览或长期规划文档。
 
 使用原则：
 
-1. 本目录只覆盖本轮已确认的 `task` 主链路问题。
+1. 本目录只覆盖本轮已确认的 `task / growth reward` 问题。
 2. 排期、依赖、波次、状态只在 `execution-plan.md` 维护。
 3. `development-plan.md` 只补充执行信息，不重复维护第二套优先级。
 4. `checklists/final-acceptance-checklist.md` 只承接验收，不反向定义新范围。
@@ -23,14 +23,15 @@
 
 1. 先看 [execution-plan.md](./execution-plan.md)
 2. 再看 [development-plan.md](./development-plan.md)
-3. 开工前阅读具体任务单 [06-task-state-flow-and-audit-correction.md](./p0/06-task-state-flow-and-audit-correction.md)
-4. 联调与收尾时使用 [final-acceptance-checklist.md](./checklists/final-acceptance-checklist.md)
+3. 开工前阅读具体任务单 [06-task-state-flow-and-audit-correction.md](./p0/06-task-state-flow-and-audit-correction.md) 与 [07-growth-rule-semantics-and-validation-alignment.md](./p0/07-growth-rule-semantics-and-validation-alignment.md)
+4. 联调与收尾时使用 [final-acceptance-checklist.md](./checklists/final-acceptance-checklist.md) 与 [growth-rule-semantics-and-validation-checklist.md](./checklists/growth-rule-semantics-and-validation-checklist.md)
 
 ## 当前任务
 
 ### P0
 
 - `p0/06-task-state-flow-and-audit-correction.md`
+- `p0/07-growth-rule-semantics-and-validation-alignment.md`
 
 ## 当前问题范围
 
@@ -42,6 +43,9 @@
 - `progress / complete` 对发布时间窗口约束不足
 - `task_assignment` 状态枚举与真实代码路径存在漂移
 - task 主链路自动化测试覆盖不足
+- 积分规则与经验规则的数值语义仍允许出现负数/零值配置漂移
+- 经验规则入口缺少与积分规则一致的 `GrowthRuleTypeEnum` 校验
+- task 奖励目前属于独立直发路径，后续仍需单独决策是否并入规则体系
 
 ## 注意
 

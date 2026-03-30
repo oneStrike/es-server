@@ -20,15 +20,15 @@ export const userPointRule = pgTable("user_point_rule", {
    */
   type: smallint().notNull(),
   /**
-   * 积分变化（正数为获得，负数为扣除）
+   * 积分奖励值（正整数）
    */
   points: integer().notNull(),
   /**
-   * 每日上限（0=无限制）
+   * 每日上限（0=无限制，禁止负值）
    */
   dailyLimit: integer().default(0).notNull(),
   /**
-   * 总上限（0=无限制）
+   * 总上限（0=无限制，禁止负值）
    */
   totalLimit: integer().default(0).notNull(),
   /**
