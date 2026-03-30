@@ -1,4 +1,4 @@
-import type { UserWorkReadingState } from '@db/schema'
+import type { UserWorkReadingStateSelect } from '@db/schema'
 import type {
   ReadingStateChapterSnapshot,
   ReadingStateWorkSnapshot,
@@ -9,8 +9,8 @@ import type {
  * - 以用户ID为主过滤，支持按作品ID/作品类型筛选
  * - 分页参数保持与 PageDto 语义一致
  */
-export type ReadingHistoryQuery = Pick<UserWorkReadingState, 'userId'> &
-  Partial<Pick<UserWorkReadingState, 'workId' | 'workType'>> & {
+export type ReadingHistoryQuery = Pick<UserWorkReadingStateSelect, 'userId'> &
+  Partial<Pick<UserWorkReadingStateSelect, 'workId' | 'workType'>> & {
     pageIndex?: number
     pageSize?: number
   }
@@ -21,17 +21,17 @@ export type ReadingHistoryQuery = Pick<UserWorkReadingState, 'userId'> &
  * - 最近阅读章节与最近阅读时间为可选更新字段
  */
 export type TouchByWorkInput = Pick<
-  UserWorkReadingState,
+  UserWorkReadingStateSelect,
   'userId' | 'workId' | 'workType'
 > &
-Partial<Pick<UserWorkReadingState, 'lastReadChapterId' | 'lastReadAt'>>
+Partial<Pick<UserWorkReadingStateSelect, 'lastReadChapterId' | 'lastReadAt'>>
 
 /**
  * 阅读历史基础行结构。
  * - 对齐 user_work_reading_state 表中的核心历史字段
  */
 export type ReadingHistoryRow = Pick<
-  UserWorkReadingState,
+  UserWorkReadingStateSelect,
   'workId' | 'workType' | 'lastReadAt' | 'lastReadChapterId'
 >
 

@@ -1,4 +1,4 @@
-import type { AppConfig } from '@db/schema'
+import type { AppConfigSelect } from '@db/schema'
 
 /**
  * 更新应用配置入参。
@@ -6,7 +6,7 @@ import type { AppConfig } from '@db/schema'
  */
 export type UpdateAppConfigInput = Partial<
   Pick<
-    AppConfig,
+    AppConfigSelect,
     | 'appName'
     | 'appDesc'
     | 'appLogo'

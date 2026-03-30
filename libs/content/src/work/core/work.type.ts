@@ -1,7 +1,7 @@
-import type { Work } from '@db/schema'
+import type { WorkSelect } from '@db/schema'
 
 export type CreateWorkInput = Pick<
-  Work,
+  WorkSelect,
   | 'type'
   | 'name'
   | 'cover'
@@ -14,7 +14,7 @@ export type CreateWorkInput = Pick<
 > &
 Partial<
     Pick<
-      Work,
+      WorkSelect,
       | 'alias'
       | 'ageRating'
       | 'publisher'
@@ -38,7 +38,7 @@ Partial<
     tagIds: number[]
   }
 
-export type UpdateWorkInput = Pick<Work, 'id'> &
+export type UpdateWorkInput = Pick<WorkSelect, 'id'> &
   Partial<Omit<CreateWorkInput, 'type' | 'authorIds' | 'categoryIds' | 'tagIds'>> & {
     authorIds?: number[]
     categoryIds?: number[]
@@ -73,4 +73,4 @@ export interface QueryWorkTypeInput {
   orderBy?: string
 }
 
-export type UpdateWorkStatusInput = Pick<Work, 'id' | 'isPublished'>
+export type UpdateWorkStatusInput = Pick<WorkSelect, 'id' | 'isPublished'>

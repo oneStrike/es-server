@@ -102,7 +102,7 @@ export const appAgreementLog = pgTable("app_agreement_log", {
   index("app_agreement_log_agreed_at_idx").on(table.agreedAt),
 ]);
 
-export type AppAgreement = typeof appAgreement.$inferSelect;
+export type AppAgreementSelect = typeof appAgreement.$inferSelect;
 export type AppAgreementInsert = typeof appAgreement.$inferInsert;
-export type AppAgreementLog = typeof appAgreementLog.$inferSelect;
+export type AppAgreementLogSelect = typeof appAgreementLog.$inferSelect;
 export type AppAgreementLogInsert = typeof appAgreementLog.$inferInsert;

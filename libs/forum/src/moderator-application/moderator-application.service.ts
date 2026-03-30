@@ -1,4 +1,4 @@
-import type { ForumModeratorApplication } from '@db/schema'
+import type { ForumModeratorApplicationSelect } from '@db/schema'
 import type {
   AuditForumModeratorApplicationInput,
   CreateForumModeratorApplicationInput,
@@ -110,7 +110,7 @@ export class ForumModeratorApplicationService {
   }
 
   private async buildApplicationViews(
-    rows: ForumModeratorApplication[],
+    rows: ForumModeratorApplicationSelect[],
   ) {
     if (rows.length === 0) {
       return []

@@ -210,5 +210,5 @@ export const workChapter = pgTable(
   ],
 )
 
-export type WorkChapter = typeof workChapter.$inferSelect
+export type WorkChapterSelect = typeof workChapter.$inferSelect
 export type WorkChapterInsert = typeof workChapter.$inferInsert

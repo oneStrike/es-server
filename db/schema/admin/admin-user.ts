@@ -78,5 +78,5 @@ export const adminUser = pgTable("admin_user", {
 /**
  * 管理端用户推导类型
  */
-export type AdminUser = typeof adminUser.$inferSelect;
-export type NewAdminUser = typeof adminUser.$inferInsert;
+export type AdminUserSelect = typeof adminUser.$inferSelect;
+export type AdminUserInsert = typeof adminUser.$inferInsert;

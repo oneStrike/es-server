@@ -216,5 +216,5 @@ export const forumTopic = pgTable("forum_topic", {
   index("forum_topic_section_id_last_comment_at_idx").on(table.sectionId, table.lastCommentAt),
 ]);
 
-export type ForumTopic = typeof forumTopic.$inferSelect;
+export type ForumTopicSelect = typeof forumTopic.$inferSelect;
 export type ForumTopicInsert = typeof forumTopic.$inferInsert;

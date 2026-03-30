@@ -1,4 +1,4 @@
-import type { NotificationDelivery } from '@db/schema'
+import type { NotificationDeliverySelect } from '@db/schema'
 import type {
   MessageNotificationDispatchStatusEnum,
   MessageNotificationTypeEnum,
@@ -35,7 +35,7 @@ export interface QueryNotificationDeliveryPageInput {
  * 在表字段基础上补充中文标签，并将 bigint outboxId 映射为字符串以便 API 返回
  */
 export interface NotificationDeliveryPageItem
-  extends Omit<NotificationDelivery, 'outboxId' | 'status'> {
+  extends Omit<NotificationDeliverySelect, 'outboxId' | 'status'> {
   outboxId: string
   status: MessageNotificationDispatchStatusEnum
   notificationTypeLabel?: string

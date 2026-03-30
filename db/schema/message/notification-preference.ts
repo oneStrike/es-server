@@ -67,5 +67,5 @@ export const notificationPreference = pgTable('notification_preference', {
   ),
 ])
 
-export type NotificationPreference = typeof notificationPreference.$inferSelect
+export type NotificationPreferenceSelect = typeof notificationPreference.$inferSelect
 export type NotificationPreferenceInsert = typeof notificationPreference.$inferInsert

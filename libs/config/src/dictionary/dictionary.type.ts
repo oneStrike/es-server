@@ -1,6 +1,6 @@
 import type {
-  Dictionary,
-  DictionaryItem,
+  DictionaryItemSelect,
+  DictionarySelect,
 } from '@db/schema'
 
 /**
@@ -30,37 +30,37 @@ export interface DictionaryItemPageQueryInput extends DictionaryPageQueryInput {
  * - 使用字典实体字段构建
  */
 export type CreateDictionaryInput = Pick<
-  Dictionary,
+  DictionarySelect,
   'name' | 'code'
 > &
-Partial<Pick<Dictionary, 'cover' | 'isEnabled' | 'description'>>
+Partial<Pick<DictionarySelect, 'cover' | 'isEnabled' | 'description'>>
 
 /**
  * 更新字典入参。
  * - 通过ID定位并按需更新字段
  */
-export type UpdateDictionaryInput = Pick<Dictionary, 'id'> &
-  Partial<Pick<Dictionary, 'name' | 'code' | 'cover' | 'isEnabled' | 'description'>>
+export type UpdateDictionaryInput = Pick<DictionarySelect, 'id'> &
+  Partial<Pick<DictionarySelect, 'name' | 'code' | 'cover' | 'isEnabled' | 'description'>>
 
 /**
  * 创建字典项入参。
  * - 使用字典项实体字段构建
  */
 export type CreateDictionaryItemInput = Pick<
-  DictionaryItem,
+  DictionaryItemSelect,
   'dictionaryCode' | 'name' | 'code'
 > &
-Partial<Pick<DictionaryItem, 'sortOrder' | 'cover' | 'isEnabled' | 'description'>>
+Partial<Pick<DictionaryItemSelect, 'sortOrder' | 'cover' | 'isEnabled' | 'description'>>
 
 /**
  * 更新字典项入参。
  * - 通过ID定位并按需更新字段
  */
-export type UpdateDictionaryItemInput = Pick<DictionaryItem, 'id'> &
-  Pick<DictionaryItem, 'dictionaryCode'> &
+export type UpdateDictionaryItemInput = Pick<DictionaryItemSelect, 'id'> &
+  Pick<DictionaryItemSelect, 'dictionaryCode'> &
   Partial<
     Pick<
-      DictionaryItem,
+      DictionaryItemSelect,
       'name' | 'code' | 'sortOrder' | 'cover' | 'isEnabled' | 'description'
     >
   >

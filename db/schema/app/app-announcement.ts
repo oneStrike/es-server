@@ -104,5 +104,5 @@ export const appAnnouncement = pgTable("app_announcement", {
   index("app_announcement_show_as_popup_is_published_idx").on(table.showAsPopup, table.isPublished),
 ]);
 
-export type AppAnnouncement = typeof appAnnouncement.$inferSelect;
+export type AppAnnouncementSelect = typeof appAnnouncement.$inferSelect;
 export type AppAnnouncementInsert = typeof appAnnouncement.$inferInsert;

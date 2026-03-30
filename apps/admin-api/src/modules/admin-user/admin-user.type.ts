@@ -1,4 +1,4 @@
-import type { AdminUser } from '@db/schema'
+import type { AdminUserSelect } from '@db/schema'
 
 /**
  * 管理端用户分页查询入参。
@@ -8,10 +8,10 @@ export interface AdminUserPageQueryInput {
   pageIndex?: number
   pageSize?: number
   orderBy?: string
-  username?: AdminUser['username']
-  mobile?: AdminUser['mobile']
-  isEnabled?: AdminUser['isEnabled']
-  role?: AdminUser['role']
+  username?: AdminUserSelect['username']
+  mobile?: AdminUserSelect['mobile']
+  isEnabled?: AdminUserSelect['isEnabled']
+  role?: AdminUserSelect['role']
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { UserPurchaseRecord } from '@db/schema'
+import type { UserPurchaseRecordSelect } from '@db/schema'
 import type { PurchaseTargetTypeEnum } from './purchase.constant'
 
 /**
@@ -6,7 +6,7 @@ import type { PurchaseTargetTypeEnum } from './purchase.constant'
  * - 用于创建购买记录与扣减积分
  */
 export type PurchaseTargetInput = Pick<
-  UserPurchaseRecord,
+  UserPurchaseRecordSelect,
   'targetType' | 'targetId' | 'userId' | 'paymentMethod'
 > & {
   outTradeNo?: string | null
@@ -17,8 +17,8 @@ export type PurchaseTargetInput = Pick<
  * - 支持状态、目标类型、作品类型与时间区间筛选
  * - 分页参数与 PageDto 语义保持一致
  */
-export type PurchasedWorksQuery = Pick<UserPurchaseRecord, 'userId'> &
-  Partial<Pick<UserPurchaseRecord, 'status' | 'targetType'>> & {
+export type PurchasedWorksQuery = Pick<UserPurchaseRecordSelect, 'userId'> &
+  Partial<Pick<UserPurchaseRecordSelect, 'status' | 'targetType'>> & {
     workType?: number
     pageIndex?: number
     pageSize?: number

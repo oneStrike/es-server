@@ -1,17 +1,17 @@
-import type { ForumTag } from '@db/schema'
+import type { ForumTagSelect } from '@db/schema'
 
 /**
  * 创建论坛标签的领域输入。
  */
-export type CreateForumTagInput = Pick<ForumTag, 'name'> &
-  Partial<Pick<ForumTag, 'icon' | 'description' | 'sortOrder' | 'isEnabled'>>
+export type CreateForumTagInput = Pick<ForumTagSelect, 'name'> &
+  Partial<Pick<ForumTagSelect, 'icon' | 'description' | 'sortOrder' | 'isEnabled'>>
 
 /**
  * 更新论坛标签的领域输入。
  */
-export type UpdateForumTagInput = Pick<ForumTag, 'id'> &
+export type UpdateForumTagInput = Pick<ForumTagSelect, 'id'> &
   Partial<
-    Pick<ForumTag, 'name' | 'icon' | 'description' | 'sortOrder' | 'isEnabled'>
+    Pick<ForumTagSelect, 'name' | 'icon' | 'description' | 'sortOrder' | 'isEnabled'>
   >
 
 /**

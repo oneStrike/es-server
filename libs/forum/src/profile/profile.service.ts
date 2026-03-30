@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { AppUser, AppUserCount } from '@db/schema'
+import type { AppUserCountSelect, AppUserSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   QueryUserProfileListInput,
@@ -19,7 +19,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, ilike, inArray, isNull } from 'drizzle-orm'
 
 type UserCountRow = Pick<
-  AppUserCount,
+  AppUserCountSelect,
   | 'userId'
   | 'commentCount'
   | 'likeCount'
@@ -105,7 +105,7 @@ export class UserProfileService {
     }
   }
 
-  private mapUser(user: AppUser) {
+  private mapUser(user: AppUserSelect) {
     return {
       id: user.id,
       account: user.account,

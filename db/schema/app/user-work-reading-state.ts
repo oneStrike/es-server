@@ -52,5 +52,5 @@ export const userWorkReadingState = pgTable("user_work_reading_state", {
     primaryKey({ columns: [table.userId, table.workId] }),
 ]);
 
-export type UserWorkReadingState = typeof userWorkReadingState.$inferSelect;
+export type UserWorkReadingStateSelect = typeof userWorkReadingState.$inferSelect;
 export type UserWorkReadingStateInsert = typeof userWorkReadingState.$inferInsert;

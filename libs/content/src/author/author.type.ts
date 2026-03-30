@@ -1,13 +1,13 @@
-import type { WorkAuthor } from '@db/schema'
+import type { WorkAuthorSelect } from '@db/schema'
 
 /**
  * 创建作者入参。
  * - 对应作者创建表单的可写字段
  */
-export type CreateAuthorInput = Pick<WorkAuthor, 'name' | 'gender'> &
+export type CreateAuthorInput = Pick<WorkAuthorSelect, 'name' | 'gender'> &
   Partial<
     Pick<
-      WorkAuthor,
+      WorkAuthorSelect,
       'type' | 'avatar' | 'description' | 'nationality' | 'remark'
     >
   >
@@ -16,9 +16,9 @@ export type CreateAuthorInput = Pick<WorkAuthor, 'name' | 'gender'> &
  * 更新作者基础信息入参。
  * - 通过作者ID定位记录并更新基础资料
  */
-export type UpdateAuthorInput = Pick<WorkAuthor, 'id'> &
+export type UpdateAuthorInput = Pick<WorkAuthorSelect, 'id'> &
   Partial<
-    Pick<WorkAuthor, 'name' | 'type' | 'gender' | 'avatar' | 'description' | 'nationality' | 'remark'>
+    Pick<WorkAuthorSelect, 'name' | 'type' | 'gender' | 'avatar' | 'description' | 'nationality' | 'remark'>
   >
 
 /**
@@ -40,16 +40,16 @@ export interface QueryAuthorInput {
  * 更新作者启用状态入参。
  * - 用于上下架作者
  */
-export type UpdateAuthorStatusInput = Pick<WorkAuthor, 'id' | 'isEnabled'>
+export type UpdateAuthorStatusInput = Pick<WorkAuthorSelect, 'id' | 'isEnabled'>
 
 /**
  * 更新作者推荐状态入参。
  * - 用于推荐位管理
  */
-export type UpdateAuthorRecommendedInput = Pick<WorkAuthor, 'id' | 'isRecommended'>
+export type UpdateAuthorRecommendedInput = Pick<WorkAuthorSelect, 'id' | 'isRecommended'>
 
 /**
  * 作者主键入参。
  * - 用于详情、删除等按ID操作
  */
-export type AuthorIdInput = Pick<WorkAuthor, 'id'>
+export type AuthorIdInput = Pick<WorkAuthorSelect, 'id'>

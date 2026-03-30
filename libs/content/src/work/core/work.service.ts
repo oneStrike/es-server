@@ -1,4 +1,4 @@
-import type { Work } from '@db/schema'
+import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log'
@@ -587,7 +587,7 @@ export class WorkService {
    */
   async batchGetPageWorkDetails(
     targetIds: number[],
-    type: Work['type'],
+    type: WorkSelect['type'],
     userId?: number,
   ) {
     if (targetIds.length === 0) {

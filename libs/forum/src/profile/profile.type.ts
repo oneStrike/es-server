@@ -1,4 +1,4 @@
-import type { AppUserCount } from '@db/schema'
+import type { AppUserCountSelect } from '@db/schema'
 import type { UserStatusEnum } from '@libs/platform/constant'
 
 /**
@@ -20,7 +20,7 @@ export interface QueryUserProfileListInput {
  * 更新用户状态的领域输入。
  * 用户状态信息落在 app_user，userId 复用 app_user_count 主键语义。
  */
-export type UpdateUserStatusInput = Pick<AppUserCount, 'userId'> & {
+export type UpdateUserStatusInput = Pick<AppUserCountSelect, 'userId'> & {
   status: UserStatusEnum
   banReason?: string
   banUntil?: Date

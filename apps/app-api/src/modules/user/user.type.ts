@@ -1,4 +1,4 @@
-import type { AppUser } from '@db/schema'
+import type { AppUserSelect } from '@db/schema'
 import type { QueryUserBadgePageInput } from '@libs/growth/badge'
 import type { QueryUserExperienceRecordPageInput } from '@libs/growth/experience'
 import type { QueryUserPointRecordPageInput } from '@libs/growth/point'
@@ -8,13 +8,13 @@ import type { QueryUserPointRecordPageInput } from '@libs/growth/point'
  * 用于用户中心资料维护，字段与 appUser 可写资料字段保持一致。
  */
 export interface UpdateMyProfileInput {
-  nickname?: AppUser['nickname']
-  avatarUrl?: AppUser['avatarUrl']
-  emailAddress?: AppUser['emailAddress']
-  genderType?: AppUser['genderType']
+  nickname?: AppUserSelect['nickname']
+  avatarUrl?: AppUserSelect['avatarUrl']
+  emailAddress?: AppUserSelect['emailAddress']
+  genderType?: AppUserSelect['genderType']
   birthDate?: string | Date | null
-  signature?: AppUser['signature']
-  bio?: AppUser['bio']
+  signature?: AppUserSelect['signature']
+  bio?: AppUserSelect['bio']
 }
 
 /**
@@ -22,9 +22,9 @@ export interface UpdateMyProfileInput {
  * 要求同时提供旧手机号、新手机号及各自验证码，用于高风险手机号变更操作。
  */
 export interface ChangeMyPhoneInput {
-  currentPhone: NonNullable<AppUser['phoneNumber']>
+  currentPhone: NonNullable<AppUserSelect['phoneNumber']>
   currentCode: string
-  newPhone: NonNullable<AppUser['phoneNumber']>
+  newPhone: NonNullable<AppUserSelect['phoneNumber']>
   newCode: string
 }
 

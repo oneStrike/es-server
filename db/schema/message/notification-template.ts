@@ -84,5 +84,5 @@ export const notificationTemplate = pgTable('notification_template', {
   index('notification_template_updated_at_idx').on(table.updatedAt),
 ])
 
-export type NotificationTemplate = typeof notificationTemplate.$inferSelect
+export type NotificationTemplateSelect = typeof notificationTemplate.$inferSelect
 export type NotificationTemplateInsert = typeof notificationTemplate.$inferInsert

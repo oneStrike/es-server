@@ -119,3 +119,6 @@ export const taskAssignment = pgTable("task_assignment", {
    */
   index("task_assignment_deleted_at_idx").on(table.deletedAt),
 ]);
+
+export type TaskAssignmentSelect = typeof taskAssignment.$inferSelect;
+export type TaskAssignmentInsert = typeof taskAssignment.$inferInsert;

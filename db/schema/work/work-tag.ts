@@ -63,5 +63,5 @@ export const workTag = pgTable("work_tag", {
     index("work_tag_is_enabled_idx").on(table.isEnabled),
 ]);
 
-export type WorkTag = typeof workTag.$inferSelect;
+export type WorkTagSelect = typeof workTag.$inferSelect;
 export type WorkTagInsert = typeof workTag.$inferInsert;

@@ -1,4 +1,4 @@
-import type { ForumTopic } from '@db/schema'
+import type { ForumTopicSelect } from '@db/schema'
 import type {
   ForumSearchInput,
   ForumSearchPageResult,
@@ -191,7 +191,7 @@ export class ForumSearchService {
   }
 
   private async mapTopicResults(
-    topics: ForumTopic[],
+    topics: ForumTopicSelect[],
     keyword: string,
   ): Promise<ForumSearchResultItem[]> {
     if (topics.length === 0) {

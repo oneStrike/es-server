@@ -1,4 +1,4 @@
-import type { UserFavorite } from '@db/schema'
+import type { UserFavoriteSelect } from '@db/schema'
 import type { FavoritePageQuery, FavoriteRecordInput } from './favorite.type'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
@@ -113,7 +113,7 @@ export class FavoriteService {
    */
   async favorite(
     input: FavoriteRecordInput,
-  ): Promise<Pick<UserFavorite, 'id'>> {
+  ): Promise<Pick<UserFavoriteSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 

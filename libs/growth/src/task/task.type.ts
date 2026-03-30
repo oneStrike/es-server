@@ -1,24 +1,78 @@
-import type { TaskAssignmentStatusEnum, TaskStatusEnum, TaskTypeEnum } from './task.constant'
+import type { TaskInsert, TaskSelect } from '@db/schema'
+import type {
+  PageQueryInput,
+  PageQueryNoOrderInput,
+  QueryOrderByInput,
+} from '@libs/platform/types'
+import type {
+  TaskAssignmentStatusEnum,
+  TaskClaimModeEnum,
+  TaskCompleteModeEnum,
+  TaskStatusEnum,
+  TaskTypeEnum,
+} from './task.constant'
+
+/**
+ * 任务分页排序入参。
+ * 支持对象/对象数组和 JSON 字符串两种形式。
+ */
+export type TaskQueryOrderByInput = QueryOrderByInput
+
+export interface TaskRewardConfig {
+  points?: number
+  experience?: number
+}
+
+/**
+ * 任务分配快照可序列化字段来源。
+ */
+export type TaskSnapshotSource = Pick<
+  TaskSelect,
+  'id' | 'code' | 'title' | 'type' | 'rewardConfig' | 'targetCount'
+>
+
+/**
+ * 自动分配逻辑所需的任务字段来源。
+ */
+export type AutoAssignmentTaskSource = Pick<
+  TaskSelect,
+  | 'id'
+  | 'code'
+  | 'title'
+  | 'type'
+  | 'rewardConfig'
+  | 'targetCount'
+  | 'claimMode'
+  | 'publishStartAt'
+  | 'publishEndAt'
+  | 'repeatRule'
+>
+
+type CreateTaskInsertFields = Pick<
+  TaskInsert,
+  | 'code'
+  | 'title'
+  | 'description'
+  | 'cover'
+  | 'priority'
+  | 'isEnabled'
+  | 'targetCount'
+  | 'rewardConfig'
+  | 'publishStartAt'
+  | 'publishEndAt'
+  | 'repeatRule'
+>
 
 /**
  * 管理端任务创建入参。
  * - 对应任务配置创建表单
  */
-export interface CreateTaskInput {
-  code: string
-  title: string
-  description?: string
-  cover?: string
+export interface CreateTaskInput extends CreateTaskInsertFields {
   type: TaskTypeEnum
   status: TaskStatusEnum
-  priority: number
-  isEnabled: boolean
-  claimMode: number
-  completeMode: number
-  targetCount: number
+  claimMode: TaskClaimModeEnum
+  completeMode: TaskCompleteModeEnum
   rewardConfig?: Record<string, unknown> | null
-  publishStartAt?: Date
-  publishEndAt?: Date
   repeatRule?: Record<string, unknown> | null
 }
 
@@ -43,45 +97,35 @@ export interface UpdateTaskStatusInput {
 /**
  * 管理端任务分页查询条件。
  */
-export interface QueryTaskPageInput {
+export interface QueryTaskPageInput extends PageQueryNoOrderInput {
   title?: string
   status?: TaskStatusEnum
   type?: TaskTypeEnum
   isEnabled?: boolean
-  pageIndex?: number
-  pageSize?: number
 }
 
 /**
  * 管理端任务分配分页查询条件。
  */
-export interface QueryTaskAssignmentPageInput {
+export interface QueryTaskAssignmentPageInput extends PageQueryInput {
   taskId?: number
   userId?: number
   status?: TaskAssignmentStatusEnum
-  pageIndex?: number
-  pageSize?: number
-  orderBy?: unknown
 }
 
 /**
  * App 端可领取任务查询条件。
  */
-export interface QueryAppTaskInput {
+export interface QueryAppTaskInput extends PageQueryNoOrderInput {
   type?: TaskTypeEnum
-  pageIndex?: number
-  pageSize?: number
 }
 
 /**
  * App 端我的任务查询条件。
  */
-export interface QueryMyTaskInput {
+export interface QueryMyTaskInput extends PageQueryInput {
   status?: TaskAssignmentStatusEnum
   type?: TaskTypeEnum
-  pageIndex?: number
-  pageSize?: number
-  orderBy?: string
 }
 
 /**

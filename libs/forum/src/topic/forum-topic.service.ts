@@ -1,4 +1,4 @@
-import type { AppUser, ForumTopic } from '@db/schema'
+import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateForumTopicInput,
@@ -108,7 +108,7 @@ export class ForumTopicService {
   private async getTopicUserBriefMap(userIds: number[]) {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
-      return new Map<number, Pick<AppUser, 'id' | 'nickname' | 'avatarUrl'>>()
+      return new Map<number, Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>>()
     }
 
     const users = await this.db.query.appUser.findMany({
@@ -195,7 +195,7 @@ export class ForumTopicService {
    */
   private normalizeTopicMedia(
     media: ForumTopicMediaInput,
-    fallback: Pick<ForumTopic, 'images' | 'videos'> = {
+    fallback: Pick<ForumTopicSelect, 'images' | 'videos'> = {
       images: [],
       videos: [],
     },
@@ -867,7 +867,7 @@ export class ForumTopicService {
    * - 记录编辑前后的差异日志
    */
   private async updateTopicWithCurrent(
-    topic: ForumTopic,
+    topic: ForumTopicSelect,
     updateForumTopicDto: UpdateForumTopicInput,
   ) {
     const { id, images, videos, ...updateData } = updateForumTopicDto
@@ -965,7 +965,7 @@ export class ForumTopicService {
    * - 同步更新板块可见状态
    * - 记录删除操作日志
    */
-  private async deleteTopicWithCurrent(topic: ForumTopic) {
+  private async deleteTopicWithCurrent(topic: ForumTopicSelect) {
     const { id } = topic
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {

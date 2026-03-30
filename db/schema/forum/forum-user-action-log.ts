@@ -75,5 +75,5 @@ export const forumUserActionLog = pgTable("forum_user_action_log", {
     index("forum_user_action_log_user_id_created_at_idx").on(table.userId, table.createdAt),
 ]);
 
-export type ForumUserActionLog = typeof forumUserActionLog.$inferSelect;
+export type ForumUserActionLogSelect = typeof forumUserActionLog.$inferSelect;
 export type ForumUserActionLogInsert = typeof forumUserActionLog.$inferInsert;

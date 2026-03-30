@@ -119,5 +119,5 @@ export const workComicArchiveImportTask = pgTable(
   ],
 )
 
-export type WorkComicArchiveImportTask = typeof workComicArchiveImportTask.$inferSelect
+export type WorkComicArchiveImportTaskSelect = typeof workComicArchiveImportTask.$inferSelect
 export type WorkComicArchiveImportTaskInsert = typeof workComicArchiveImportTask.$inferInsert

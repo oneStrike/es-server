@@ -100,14 +100,14 @@ export class BaseTaskDto extends BaseDto {
     example: '2026-02-13T00:00:00.000Z',
     required: false,
   })
-  publishStartAt?: Date
+  publishStartAt?: Date | null
 
   @DateProperty({
     description: '发布结束时间',
     example: '2026-02-28T23:59:59.000Z',
     required: false,
   })
-  publishEndAt?: Date
+  publishEndAt?: Date | null
 
   @JsonProperty({
     description: '周期规则',
@@ -188,34 +188,34 @@ export class BaseTaskAssignmentDto extends BaseDto {
     example: '2026-02-13T00:00:00.000Z',
     required: false,
   })
-  claimedAt?: Date
+  claimedAt?: Date | null
 
   @DateProperty({
     description: '完成时间',
     example: '2026-02-13T08:00:00.000Z',
     required: false,
   })
-  completedAt?: Date
+  completedAt?: Date | null
 
   @DateProperty({
     description: '过期时间',
     example: '2026-02-14T00:00:00.000Z',
     required: false,
   })
-  expiredAt?: Date
+  expiredAt?: Date | null
 
   @DateProperty({
     description: '奖励结算时间',
     example: '2026-02-13T08:00:01.000Z',
     required: false,
   })
-  rewardSettledAt?: Date
+  rewardSettledAt?: Date | null
 
   @ArrayProperty({
     description: '本次奖励关联到账本记录 ID 列表',
     itemType: 'number',
     example: [101, 102],
-    required: false,
+    required: true,
     validation: false,
   })
   rewardLedgerIds!: number[]

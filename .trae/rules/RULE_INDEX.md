@@ -7,6 +7,7 @@
 - `./DTO_SPEC.md`：DTO 分层、复用方式、命名与 Service 边界。
 - `./TS_TYPE_SPEC.md`：TypeScript 领域类型、`db/schema` 推导类型与 `*.type.ts` 约定。
 - `./COMMENT_SPEC.md`：注释密度、注释边界与注释风格。
+- `./WORK_ITEM_DOC_SPEC.md`：方案、排期、任务单与验收清单的生成与维护规范。
 - `./ERROR_HANDLING_SPEC.md`：错误分层、数据库错误映射、幂等与日志要求。
 - `./drizzle-guidelines.md`：Drizzle 入口、事务、分页、原生 SQL 与 Resolver 约束。
 - `./COUNTER_SPEC.md`：计数器硬约束、决策顺序与验收基线。

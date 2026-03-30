@@ -1,20 +1,20 @@
-import type { ForumSectionGroup } from '@db/schema'
+import type { ForumSectionGroupSelect } from '@db/schema'
 
 /**
  * 创建板块分组的领域输入。
  */
-export type CreateForumSectionGroupInput = Pick<ForumSectionGroup, 'name'> &
+export type CreateForumSectionGroupInput = Pick<ForumSectionGroupSelect, 'name'> &
   Partial<
-    Pick<ForumSectionGroup, 'description' | 'sortOrder' | 'isEnabled'>
+    Pick<ForumSectionGroupSelect, 'description' | 'sortOrder' | 'isEnabled'>
   >
 
 /**
  * 更新板块分组的领域输入。
  */
-export type UpdateForumSectionGroupInput = Pick<ForumSectionGroup, 'id'> &
+export type UpdateForumSectionGroupInput = Pick<ForumSectionGroupSelect, 'id'> &
   Partial<
     Pick<
-      ForumSectionGroup,
+      ForumSectionGroupSelect,
       'name' | 'description' | 'sortOrder' | 'isEnabled'
     >
   >

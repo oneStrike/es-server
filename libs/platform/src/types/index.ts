@@ -1,3 +1,4 @@
+import type { DbQueryOrderBy } from '@libs/platform/config'
 /**
  * API类型枚举
  */
@@ -80,3 +81,13 @@ export interface AuthConfigInterface {
   // 策略键（strategyKey）
   strategyKey: string
 }
+
+export type QueryOrderByInput = DbQueryOrderBy | string
+
+export interface PageQueryInput {
+  pageIndex?: number
+  pageSize?: number
+  orderBy?: QueryOrderByInput
+}
+
+export type PageQueryNoOrderInput = Omit<PageQueryInput, 'orderBy'>

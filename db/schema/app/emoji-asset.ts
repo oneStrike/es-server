@@ -171,5 +171,5 @@ export const emojiAsset = pgTable(
   ],
 )
 
-export type EmojiAsset = typeof emojiAsset.$inferSelect
+export type EmojiAssetSelect = typeof emojiAsset.$inferSelect
 export type EmojiAssetInsert = typeof emojiAsset.$inferInsert

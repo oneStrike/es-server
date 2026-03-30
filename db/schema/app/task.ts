@@ -122,3 +122,6 @@ export const task = pgTable("task", {
    */
   index("task_deleted_at_idx").on(table.deletedAt),
 ]);
+
+export type TaskSelect = typeof task.$inferSelect;
+export type TaskInsert = typeof task.$inferInsert;

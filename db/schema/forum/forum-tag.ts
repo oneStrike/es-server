@@ -71,5 +71,5 @@ export const forumTag = pgTable("forum_tag", {
   index("forum_tag_created_at_idx").on(table.createdAt),
 ]);
 
-export type ForumTag = typeof forumTag.$inferSelect;
+export type ForumTagSelect = typeof forumTag.$inferSelect;
 export type ForumTagInsert = typeof forumTag.$inferInsert;

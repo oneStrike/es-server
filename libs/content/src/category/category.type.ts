@@ -1,20 +1,20 @@
-import type { WorkCategory } from '@db/schema'
+import type { WorkCategorySelect } from '@db/schema'
 
 /**
  * 创建分类输入
  *
  * name 为必填字段，其余字段可选。
  */
-export type CreateCategoryInput = Pick<WorkCategory, 'name'> &
-  Partial<Pick<WorkCategory, 'icon' | 'contentType' | 'description' | 'sortOrder' | 'isEnabled'>>
+export type CreateCategoryInput = Pick<WorkCategorySelect, 'name'> &
+  Partial<Pick<WorkCategorySelect, 'icon' | 'contentType' | 'description' | 'sortOrder' | 'isEnabled'>>
 
 /**
  * 更新分类输入
  *
  * 所有可更新字段均为可选，支持部分更新。
  */
-export type UpdateCategoryInput = Pick<WorkCategory, 'id'> &
-  Partial<Pick<WorkCategory, 'name' | 'icon' | 'contentType' | 'description' | 'sortOrder' | 'isEnabled'>>
+export type UpdateCategoryInput = Pick<WorkCategorySelect, 'id'> &
+  Partial<Pick<WorkCategorySelect, 'name' | 'icon' | 'contentType' | 'description' | 'sortOrder' | 'isEnabled'>>
 
 /**
  * 分页查询分类输入
@@ -35,12 +35,12 @@ export interface QueryCategoryInput {
  *
  * 用于详情查询、删除等单 ID 场景。
  */
-export type CategoryIdInput = Pick<WorkCategory, 'id'>
+export type CategoryIdInput = Pick<WorkCategorySelect, 'id'>
 
 /**
  * 更新分类启用状态输入
  */
-export type UpdateCategoryStatusInput = Pick<WorkCategory, 'id' | 'isEnabled'>
+export type UpdateCategoryStatusInput = Pick<WorkCategorySelect, 'id' | 'isEnabled'>
 
 /**
  * 交换分类排序输入

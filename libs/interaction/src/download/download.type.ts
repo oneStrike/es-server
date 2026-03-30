@@ -1,4 +1,4 @@
-import type { UserDownloadRecord } from '@db/schema'
+import type { UserDownloadRecordSelect } from '@db/schema'
 import type { DownloadTargetTypeEnum } from './download.constant'
 
 /**
@@ -6,7 +6,7 @@ import type { DownloadTargetTypeEnum } from './download.constant'
  * - 用于下载、重复下载兜底与状态查询
  */
 export type DownloadTargetInput = Pick<
-  UserDownloadRecord,
+  UserDownloadRecordSelect,
   'targetId' | 'userId'
 > & {
   targetType: DownloadTargetTypeEnum

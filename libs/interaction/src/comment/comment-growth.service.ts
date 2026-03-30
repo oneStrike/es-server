@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition'
-import { UserComment } from '@db/schema'
+import { UserCommentSelect } from '@db/schema'
 import {
   canConsumeEventEnvelopeByConsumer,
   EventDefinitionConsumerEnum,
@@ -18,7 +18,7 @@ export class CommentGrowthService {
 
   async rewardCommentCreated(
     tx: Db,
-    params: Pick<UserComment, 'userId' | 'id' | 'targetType' | 'targetId'> & {
+    params: Pick<UserCommentSelect, 'userId' | 'id' | 'targetType' | 'targetId'> & {
       occurredAt?: Date
       eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum>
     },
@@ -70,7 +70,7 @@ export class CommentGrowthService {
 
   async rewardCommentLiked(
     tx: Db,
-    params: Pick<UserComment, 'id' | 'userId'> & { likerUserId: number },
+    params: Pick<UserCommentSelect, 'id' | 'userId'> & { likerUserId: number },
   ) {
     const { id: commentId, userId: authorUserId, likerUserId } = params
 

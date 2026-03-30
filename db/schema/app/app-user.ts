@@ -120,5 +120,5 @@ export const appUser = pgTable("app_user", {
 /**
  * 应用用户推导类型
  */
-export type AppUser = typeof appUser.$inferSelect;
-export type NewAppUser = typeof appUser.$inferInsert;
+export type AppUserSelect = typeof appUser.$inferSelect;
+export type AppUserInsert = typeof appUser.$inferInsert;

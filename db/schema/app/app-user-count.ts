@@ -75,5 +75,5 @@ export const appUserCount = pgTable(
   () => [],
 )
 
-export type AppUserCount = typeof appUserCount.$inferSelect
-export type NewAppUserCount = typeof appUserCount.$inferInsert
+export type AppUserCountSelect = typeof appUserCount.$inferSelect
+export type AppUserCountInsert = typeof appUserCount.$inferInsert

@@ -1,23 +1,23 @@
-import type { AppPage } from '@db/schema'
+import type { AppPageSelect } from '@db/schema'
 
 /**
  * 创建页面入参。
  * - 对应页面配置必填字段
  */
 export type CreateAppPageInput = Pick<
-  AppPage,
+  AppPageSelect,
   'code' | 'path' | 'name' | 'title' | 'accessLevel' | 'isEnabled'
 > &
-Partial<Pick<AppPage, 'enablePlatform' | 'description'>>
+Partial<Pick<AppPageSelect, 'enablePlatform' | 'description'>>
 
 /**
  * 更新页面入参。
  * - 以页面ID定位并按需更新字段
  */
-export type UpdateAppPageInput = Pick<AppPage, 'id'> &
+export type UpdateAppPageInput = Pick<AppPageSelect, 'id'> &
   Partial<
     Pick<
-      AppPage,
+      AppPageSelect,
       'code' | 'path' | 'name' | 'title' | 'enablePlatform' | 'accessLevel' | 'isEnabled' | 'description'
     >
   >

@@ -1,4 +1,4 @@
-import type { UserLike } from '@db/schema'
+import type { UserLikeSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -7,11 +7,11 @@ import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
 
-type LikeTargetInput = Pick<UserLike, 'targetId'> & {
+type LikeTargetInput = Pick<UserLikeSelect, 'targetId'> & {
   targetType: LikeTargetTypeEnum
 }
 
-type LikeRecordInput = LikeTargetInput & Pick<UserLike, 'userId'>
+type LikeRecordInput = LikeTargetInput & Pick<UserLikeSelect, 'userId'>
 
 type LikeListQuery = Pick<LikeRecordInput, 'userId' | 'targetType'> & {
   pageIndex?: number

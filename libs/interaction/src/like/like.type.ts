@@ -1,11 +1,11 @@
-import type { UserLike } from '@db/schema'
+import type { UserLikeSelect } from '@db/schema'
 import type { LikeTargetTypeEnum } from './like.constant'
 
 /**
  * 点赞目标入参。
  * - 统一约束目标类型与目标ID组合
  */
-export type LikeTargetInput = Pick<UserLike, 'targetId'> & {
+export type LikeTargetInput = Pick<UserLikeSelect, 'targetId'> & {
   targetType: LikeTargetTypeEnum
 }
 
@@ -13,7 +13,7 @@ export type LikeTargetInput = Pick<UserLike, 'targetId'> & {
  * 点赞记录入参。
  * - 在目标入参基础上补齐用户ID
  */
-export type LikeRecordInput = LikeTargetInput & Pick<UserLike, 'userId'>
+export type LikeRecordInput = LikeTargetInput & Pick<UserLikeSelect, 'userId'>
 
 /**
  * 用户点赞列表查询入参。

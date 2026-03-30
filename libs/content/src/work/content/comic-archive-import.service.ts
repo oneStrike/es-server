@@ -1,4 +1,4 @@
-import type { WorkComicArchiveImportTask } from '@db/schema'
+import type { WorkComicArchiveImportTaskSelect } from '@db/schema'
 import type { UploadConfigInterface } from '@libs/platform/config'
 import type { FastifyRequest } from 'fastify'
 import type { Dirent } from 'node:fs'
@@ -880,7 +880,7 @@ export class ComicArchiveImportService {
    * 把数据库行收敛成稳定的领域任务记录。
    * JSONB 字段会做最小归一化，避免脏数据直接透出到接口层。
    */
-  private toTaskRecord(row: WorkComicArchiveImportTask): ComicArchiveTaskRecord {
+  private toTaskRecord(row: WorkComicArchiveImportTaskSelect): ComicArchiveTaskRecord {
     return {
       taskId: row.taskId,
       workId: row.workId,

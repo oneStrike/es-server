@@ -1,4 +1,4 @@
-import type { MessageOutbox } from '@db/schema'
+import type { MessageOutboxSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   NotificationDeliveryPageItem,
@@ -37,7 +37,7 @@ export class MessageNotificationDeliveryService {
    * 采用一条 outbox 事件对应一条 delivery 记录的策略，重试时覆盖最新业务结果
    */
   async upsertDeliveryForOutboxEvent(
-    event: Pick<MessageOutbox, 'id' | 'bizKey' | 'eventType' | 'payload'>,
+    event: Pick<MessageOutboxSelect, 'id' | 'bizKey' | 'eventType' | 'payload'>,
     input: UpsertNotificationDeliveryInput,
   ) {
     const now = input.lastAttemptAt ?? new Date()

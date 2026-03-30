@@ -146,5 +146,5 @@ export const emojiPack = pgTable(
   ],
 )
 
-export type EmojiPack = typeof emojiPack.$inferSelect
+export type EmojiPackSelect = typeof emojiPack.$inferSelect
 export type EmojiPackInsert = typeof emojiPack.$inferInsert

@@ -1,7 +1,7 @@
-import type { WorkChapter } from '@db/schema'
+import type { WorkChapterSelect } from '@db/schema'
 
 export type CreateWorkChapterInput = Pick<
-  WorkChapter,
+  WorkChapterSelect,
   | 'workId'
   | 'workType'
   | 'title'
@@ -15,7 +15,7 @@ export type CreateWorkChapterInput = Pick<
 > &
 Partial<
     Pick<
-      WorkChapter,
+      WorkChapterSelect,
       | 'subtitle'
       | 'cover'
       | 'description'
@@ -26,7 +26,7 @@ Partial<
     >
   >
 
-export type UpdateWorkChapterInput = Pick<WorkChapter, 'id'> &
+export type UpdateWorkChapterInput = Pick<WorkChapterSelect, 'id'> &
   Partial<Omit<CreateWorkChapterInput, 'workId' | 'workType'>>
 
 export interface QueryWorkChapterInput {

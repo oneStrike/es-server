@@ -1,4 +1,4 @@
-import type { EmojiAsset, EmojiPack, EmojiRecentUsage } from '@db/schema'
+import type { EmojiAssetSelect, EmojiPackSelect, EmojiRecentUsageSelect } from '@db/schema'
 import type { EmojiSceneEnum } from './emoji.constant'
 
 /**
@@ -33,7 +33,7 @@ export interface EmojiSearchInput extends EmojiCatalogQueryInput {
  * - 关联用户和场景返回最近使用记录
  */
 export interface EmojiRecentListInput extends EmojiCatalogQueryInput {
-  userId: EmojiRecentUsage['userId']
+  userId: EmojiRecentUsageSelect['userId']
   limit?: number
 }
 
@@ -42,8 +42,8 @@ export interface EmojiRecentListInput extends EmojiCatalogQueryInput {
  * - 由上游先按 emojiAssetId 聚合，再写入最近使用表。
  */
 export interface EmojiRecentUsageItem {
-  emojiAssetId: EmojiRecentUsage['emojiAssetId']
-  useCount: EmojiRecentUsage['useCount']
+  emojiAssetId: EmojiRecentUsageSelect['emojiAssetId']
+  useCount: EmojiRecentUsageSelect['useCount']
 }
 
 /**
@@ -51,7 +51,7 @@ export interface EmojiRecentUsageItem {
  * - 用于在事实写入成功后批量更新 userId + scene + emojiAssetId 聚合记录。
  */
 export interface RecordEmojiRecentUsageInput extends EmojiCatalogQueryInput {
-  userId: EmojiRecentUsage['userId']
+  userId: EmojiRecentUsageSelect['userId']
   items: EmojiRecentUsageItem[]
 }
 
@@ -60,27 +60,27 @@ export interface RecordEmojiRecentUsageInput extends EmojiCatalogQueryInput {
  * - 复用实体字段并支持管理端筛选
  */
 export type QueryEmojiPackPageInput = EmojiPageQueryInput &
-  Partial<Pick<EmojiPack, 'code' | 'name' | 'isEnabled' | 'visibleInPicker'>>
+  Partial<Pick<EmojiPackSelect, 'code' | 'name' | 'isEnabled' | 'visibleInPicker'>>
 
 /**
  * 创建表情包输入。
  * - 复用表字段并保留 sceneType 必填约束
  * - sceneType 使用 EmojiSceneEnum[]，避免裸 number[] 语义不清
  */
-export type CreateEmojiPackInput = Pick<EmojiPack, 'code' | 'name'> & {
+export type CreateEmojiPackInput = Pick<EmojiPackSelect, 'code' | 'name'> & {
   sceneType: EmojiSceneEnum[]
 } & Partial<
-    Pick<EmojiPack, 'description' | 'iconUrl' | 'sortOrder' | 'visibleInPicker'>
+    Pick<EmojiPackSelect, 'description' | 'iconUrl' | 'sortOrder' | 'visibleInPicker'>
   >
 
 /**
  * 更新表情包输入。
  * - 以 id 定位并按需更新字段
  */
-export type UpdateEmojiPackInput = Pick<EmojiPack, 'id'> &
+export type UpdateEmojiPackInput = Pick<EmojiPackSelect, 'id'> &
   Partial<
     Pick<
-      EmojiPack,
+      EmojiPackSelect,
       'code' | 'name' | 'description' | 'iconUrl' | 'sortOrder' | 'visibleInPicker'
     >
   > & {
@@ -92,7 +92,7 @@ export type UpdateEmojiPackInput = Pick<EmojiPack, 'id'> &
  * - 仅允许修改 sceneType
  * - sceneType 单独使用 EmojiSceneEnum[] 约束
  */
-export type UpdateEmojiPackSceneTypeInput = Pick<EmojiPack, 'id'> & {
+export type UpdateEmojiPackSceneTypeInput = Pick<EmojiPackSelect, 'id'> & {
   sceneType: EmojiSceneEnum[]
 }
 
@@ -101,16 +101,16 @@ export type UpdateEmojiPackSceneTypeInput = Pick<EmojiPack, 'id'> & {
  * - 支持按包、类型、状态和文本字段筛选
  */
 export type QueryEmojiAssetPageInput = EmojiPageQueryInput &
-  Partial<Pick<EmojiAsset, 'packId' | 'kind' | 'isEnabled' | 'shortcode' | 'category'>>
+  Partial<Pick<EmojiAssetSelect, 'packId' | 'kind' | 'isEnabled' | 'shortcode' | 'category'>>
 
 /**
  * 创建表情资源输入。
  * - 复用实体字段并保留 packId/kind 必填
  */
-export type CreateEmojiAssetInput = Pick<EmojiAsset, 'packId' | 'kind'> &
+export type CreateEmojiAssetInput = Pick<EmojiAssetSelect, 'packId' | 'kind'> &
   Partial<
     Pick<
-      EmojiAsset,
+      EmojiAssetSelect,
       'shortcode' | 'unicodeSequence' | 'imageUrl' | 'staticUrl' | 'isAnimated' | 'category' | 'keywords' | 'sortOrder'
     >
   >
@@ -119,14 +119,14 @@ export type CreateEmojiAssetInput = Pick<EmojiAsset, 'packId' | 'kind'> &
  * 更新表情资源输入。
  * - 以 id 定位并按需更新字段
  */
-export type UpdateEmojiAssetInput = Pick<EmojiAsset, 'id'> & Partial<CreateEmojiAssetInput>
+export type UpdateEmojiAssetInput = Pick<EmojiAssetSelect, 'id'> & Partial<CreateEmojiAssetInput>
 
 /**
  * 表情资源校验载荷。
  * - 用于 custom / unicode 字段完整性判断
  */
 export type ValidateEmojiAssetPayload = Partial<
-  Pick<EmojiAsset, 'shortcode' | 'unicodeSequence' | 'imageUrl'>
+  Pick<EmojiAssetSelect, 'shortcode' | 'unicodeSequence' | 'imageUrl'>
 >
 
 /**
@@ -134,13 +134,13 @@ export type ValidateEmojiAssetPayload = Partial<
  * - 对应目录/搜索/最近使用查询中的 join 投影
  */
 export type EmojiAssetSnapshotRow = Pick<
-  EmojiAsset,
+  EmojiAssetSelect,
   'id' | 'kind' | 'shortcode' | 'unicodeSequence' | 'imageUrl' | 'staticUrl' | 'isAnimated' | 'category' | 'keywords' | 'packId' | 'sortOrder'
 > & {
-  packCode: EmojiPack['code']
-  packName: EmojiPack['name']
-  packIconUrl: EmojiPack['iconUrl']
-  packSortOrder: EmojiPack['sortOrder']
+  packCode: EmojiPackSelect['code']
+  packName: EmojiPackSelect['name']
+  packIconUrl: EmojiPackSelect['iconUrl']
+  packSortOrder: EmojiPackSelect['sortOrder']
 }
 
 /**
@@ -156,11 +156,11 @@ export type EmojiAssetSnapshot = Omit<EmojiAssetSnapshotRow, 'keywords'> & {
  * - 含表情包基础信息与资源列表
  */
 export interface EmojiCatalogPack {
-  packId: EmojiPack['id']
-  packCode: EmojiPack['code']
-  packName: EmojiPack['name']
-  packIconUrl: EmojiPack['iconUrl']
-  sortOrder: EmojiPack['sortOrder']
+  packId: EmojiPackSelect['id']
+  packCode: EmojiPackSelect['code']
+  packName: EmojiPackSelect['name']
+  packIconUrl: EmojiPackSelect['iconUrl']
+  sortOrder: EmojiPackSelect['sortOrder']
   assets: EmojiAssetSnapshot[]
 }
 
@@ -169,20 +169,20 @@ export interface EmojiCatalogPack {
  * - 在资源快照上补充使用时间和次数
  */
 export type EmojiRecentItem = EmojiAssetSnapshot &
-  Pick<EmojiRecentUsage, 'lastUsedAt' | 'useCount'>
+  Pick<EmojiRecentUsageSelect, 'lastUsedAt' | 'useCount'>
 
 /**
  * 短码映射结果。
  * - 提供解析器替换 custom 表情所需的最小字段
  */
 export interface EmojiShortcodeAsset {
-  emojiAssetId: EmojiAsset['id']
-  shortcode: NonNullable<EmojiAsset['shortcode']>
-  packCode: EmojiPack['code']
-  packName: EmojiPack['name']
-  imageUrl: NonNullable<EmojiAsset['imageUrl']>
-  staticUrl: EmojiAsset['staticUrl']
-  isAnimated: EmojiAsset['isAnimated']
+  emojiAssetId: EmojiAssetSelect['id']
+  shortcode: NonNullable<EmojiAssetSelect['shortcode']>
+  packCode: EmojiPackSelect['code']
+  packName: EmojiPackSelect['name']
+  imageUrl: NonNullable<EmojiAssetSelect['imageUrl']>
+  staticUrl: EmojiAssetSelect['staticUrl']
+  isAnimated: EmojiAssetSelect['isAnimated']
   ariaLabel?: string
 }
 
@@ -191,8 +191,8 @@ export interface EmojiShortcodeAsset {
  * - 用于解析器为 Unicode token 补齐平台托管的 emojiAssetId。
  */
 export interface EmojiUnicodeAsset {
-  emojiAssetId: EmojiAsset['id']
-  unicodeSequence: NonNullable<EmojiAsset['unicodeSequence']>
+  emojiAssetId: EmojiAssetSelect['id']
+  unicodeSequence: NonNullable<EmojiAssetSelect['unicodeSequence']>
 }
 
 /**
@@ -216,11 +216,11 @@ export type EmojiParseToken =
     | {
       type: 'emojiUnicode'
       unicodeSequence: string
-      emojiAssetId?: EmojiAsset['id']
+      emojiAssetId?: EmojiAssetSelect['id']
     }
     | {
       type: 'emojiCustom'
-      emojiAssetId: EmojiAsset['id']
+      emojiAssetId: EmojiAssetSelect['id']
       shortcode: string
       packCode: string
       imageUrl: string

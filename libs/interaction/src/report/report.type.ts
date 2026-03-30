@@ -1,4 +1,4 @@
-import type { UserReport } from '@db/schema'
+import type { UserReportSelect } from '@db/schema'
 import type { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 
 /**
@@ -7,10 +7,10 @@ import type { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
  * - targetType 使用业务枚举保持解析器路由类型安全
  */
 export type CreateReportInput = Pick<
-  UserReport,
+  UserReportSelect,
   'reporterId' | 'targetId' | 'reasonType'
 > &
-Partial<Pick<UserReport, 'description' | 'evidenceUrl'>> & {
+Partial<Pick<UserReportSelect, 'description' | 'evidenceUrl'>> & {
     targetType: ReportTargetTypeEnum
   }
 
@@ -20,8 +20,8 @@ Partial<Pick<UserReport, 'description' | 'evidenceUrl'>> & {
  * - 支持在特定流程下覆盖状态与处理信息
  */
 export type CreateUserReportInput = CreateReportInput &
-  Pick<UserReport, 'sceneType' | 'sceneId'> &
-  Partial<Pick<UserReport, 'commentLevel' | 'status' | 'handlerId' | 'handlingNote'>>
+  Pick<UserReportSelect, 'sceneType' | 'sceneId'> &
+  Partial<Pick<UserReportSelect, 'commentLevel' | 'status' | 'handlerId' | 'handlingNote'>>
 
 /**
  * 创建举报可选项。
@@ -36,8 +36,8 @@ export interface CreateUserReportOptions {
  * - reporterId 用于限定“我的举报”视角
  * - 其余字段为可选筛选条件
  */
-export type ReportListQuery = Pick<UserReport, 'reporterId'> &
-  Partial<Pick<UserReport, 'targetId' | 'reasonType' | 'status'>> & {
+export type ReportListQuery = Pick<UserReportSelect, 'reporterId'> &
+  Partial<Pick<UserReportSelect, 'targetId' | 'reasonType' | 'status'>> & {
     targetType?: ReportTargetTypeEnum
     pageIndex?: number
     pageSize?: number
@@ -57,7 +57,7 @@ export type ReportHandleStatus =
  */
 export type QueryAdminReportPageInput = Partial<
   Pick<
-    UserReport,
+    UserReportSelect,
     | 'id'
     | 'reporterId'
     | 'handlerId'
@@ -79,8 +79,8 @@ export type QueryAdminReportPageInput = Partial<
  * 由后台传入处理人、裁决结果与处理备注。
  */
 export interface HandleReportInput {
-  id: UserReport['id']
-  handlerId: NonNullable<UserReport['handlerId']>
+  id: UserReportSelect['id']
+  handlerId: NonNullable<UserReportSelect['handlerId']>
   status: ReportHandleStatus
-  handlingNote?: UserReport['handlingNote']
+  handlingNote?: UserReportSelect['handlingNote']
 }

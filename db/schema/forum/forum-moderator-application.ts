@@ -92,5 +92,5 @@ export const forumModeratorApplication = pgTable("forum_moderator_application", 
     index("forum_moderator_application_deleted_at_idx").on(table.deletedAt),
 ]);
 
-export type ForumModeratorApplication = typeof forumModeratorApplication.$inferSelect;
+export type ForumModeratorApplicationSelect = typeof forumModeratorApplication.$inferSelect;
 export type ForumModeratorApplicationInsert = typeof forumModeratorApplication.$inferInsert;

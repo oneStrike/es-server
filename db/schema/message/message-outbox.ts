@@ -68,5 +68,5 @@ export const messageOutbox = pgTable("message_outbox", {
     index("message_outbox_domain_status_created_at_idx").on(table.domain, table.status, table.createdAt),
 ]);
 
-export type MessageOutbox = typeof messageOutbox.$inferSelect
+export type MessageOutboxSelect = typeof messageOutbox.$inferSelect
 export type MessageOutboxInsert = typeof messageOutbox.$inferInsert

@@ -1,7 +1,7 @@
 import type {
-  AppUser,
-  ForumSection,
-  UserLevelRule,
+  AppUserSelect,
+  ForumSectionSelect,
+  UserLevelRuleSelect,
 } from '@db/schema'
 
 /**
@@ -9,8 +9,8 @@ import type {
  * 包含用户状态、经验值以及发帖频控所需的等级规则字段。
  */
 export interface ForumPostingUserContext
-  extends Pick<AppUser, 'id' | 'isEnabled' | 'status' | 'experience'> {
-  level: Pick<UserLevelRule, 'dailyTopicLimit' | 'postInterval'> | null
+  extends Pick<AppUserSelect, 'id' | 'isEnabled' | 'status' | 'experience'> {
+  level: Pick<UserLevelRuleSelect, 'dailyTopicLimit' | 'postInterval'> | null
 }
 
 /**
@@ -19,7 +19,7 @@ export interface ForumPostingUserContext
  */
 export interface ForumSectionPermissionContext
   extends Pick<
-    ForumSection,
+    ForumSectionSelect,
     'id' | 'name' | 'isEnabled' | 'topicReviewPolicy' | 'userLevelRuleId'
   > {
   requiredExperience: number | null
@@ -30,7 +30,7 @@ export interface ForumSectionPermissionContext
  * 只关心用户是否可用以及当前经验值。
  */
 export type ForumAccessUserContext = Pick<
-  AppUser,
+  AppUserSelect,
   'id' | 'isEnabled' | 'experience'
 >
 

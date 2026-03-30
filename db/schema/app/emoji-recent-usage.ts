@@ -74,5 +74,5 @@ export const emojiRecentUsage = pgTable(
   ],
 )
 
-export type EmojiRecentUsage = typeof emojiRecentUsage.$inferSelect
+export type EmojiRecentUsageSelect = typeof emojiRecentUsage.$inferSelect
 export type EmojiRecentUsageInsert = typeof emojiRecentUsage.$inferInsert

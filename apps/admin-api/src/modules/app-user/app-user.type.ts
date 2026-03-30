@@ -1,4 +1,4 @@
-import type { AppUser } from '@db/schema'
+import type { AppUserSelect } from '@db/schema'
 import type {
   AssignUserBadgeInput,
   QueryUserBadgePageInput,
@@ -28,14 +28,14 @@ export interface QueryAdminAppUserPageInput {
   pageIndex?: number
   pageSize?: number
   orderBy?: string
-  id?: AppUser['id']
-  account?: AppUser['account']
-  phoneNumber?: AppUser['phoneNumber']
-  nickname?: AppUser['nickname']
-  emailAddress?: AppUser['emailAddress']
-  isEnabled?: AppUser['isEnabled']
-  status?: AppUser['status']
-  levelId?: AppUser['levelId']
+  id?: AppUserSelect['id']
+  account?: AppUserSelect['account']
+  phoneNumber?: AppUserSelect['phoneNumber']
+  nickname?: AppUserSelect['nickname']
+  emailAddress?: AppUserSelect['emailAddress']
+  isEnabled?: AppUserSelect['isEnabled']
+  status?: AppUserSelect['status']
+  levelId?: AppUserSelect['levelId']
   deletedScope?: AdminAppUserDeletedScope
   lastLoginStartDate?: string
   lastLoginEndDate?: string
@@ -46,16 +46,16 @@ export interface QueryAdminAppUserPageInput {
  * 用于管理端创建用户时传递基础资料与前端加密密码。
  */
 export interface CreateAdminAppUserInput {
-  nickname: AppUser['nickname']
-  phoneNumber?: AppUser['phoneNumber']
-  emailAddress?: AppUser['emailAddress']
-  avatarUrl?: AppUser['avatarUrl']
-  genderType?: AppUser['genderType']
+  nickname: AppUserSelect['nickname']
+  phoneNumber?: AppUserSelect['phoneNumber']
+  emailAddress?: AppUserSelect['emailAddress']
+  avatarUrl?: AppUserSelect['avatarUrl']
+  genderType?: AppUserSelect['genderType']
   birthDate?: string | Date | null
-  isEnabled?: AppUser['isEnabled']
-  status?: AppUser['status']
-  signature?: AppUser['signature']
-  bio?: AppUser['bio']
+  isEnabled?: AppUserSelect['isEnabled']
+  status?: AppUserSelect['status']
+  signature?: AppUserSelect['signature']
+  bio?: AppUserSelect['bio']
   password: string
 }
 
@@ -64,15 +64,15 @@ export interface CreateAdminAppUserInput {
  * 仅允许更新管理端资料维护相关字段，并带目标用户 id。
  */
 export interface UpdateAdminAppUserProfileInput {
-  id: AppUser['id']
-  nickname?: AppUser['nickname']
-  avatarUrl?: AppUser['avatarUrl']
-  phoneNumber?: AppUser['phoneNumber']
-  emailAddress?: AppUser['emailAddress']
-  genderType?: AppUser['genderType']
+  id: AppUserSelect['id']
+  nickname?: AppUserSelect['nickname']
+  avatarUrl?: AppUserSelect['avatarUrl']
+  phoneNumber?: AppUserSelect['phoneNumber']
+  emailAddress?: AppUserSelect['emailAddress']
+  genderType?: AppUserSelect['genderType']
   birthDate?: string | Date | null
-  signature?: AppUser['signature']
-  bio?: AppUser['bio']
+  signature?: AppUserSelect['signature']
+  bio?: AppUserSelect['bio']
 }
 
 /**
@@ -80,8 +80,8 @@ export interface UpdateAdminAppUserProfileInput {
  * 用于切换指定用户的 isEnabled 状态。
  */
 export interface UpdateAdminAppUserEnabledInput {
-  id: AppUser['id']
-  isEnabled: AppUser['isEnabled']
+  id: AppUserSelect['id']
+  isEnabled: AppUserSelect['isEnabled']
 }
 
 /**
@@ -89,10 +89,10 @@ export interface UpdateAdminAppUserEnabledInput {
  * 用于禁言、封禁与恢复正常状态等后台操作。
  */
 export interface UpdateAdminAppUserStatusInput {
-  id: AppUser['id']
-  status: AppUser['status']
-  banReason?: AppUser['banReason']
-  banUntil?: AppUser['banUntil']
+  id: AppUserSelect['id']
+  status: AppUserSelect['status']
+  banReason?: AppUserSelect['banReason']
+  banUntil?: AppUserSelect['banUntil']
 }
 
 /**
@@ -100,7 +100,7 @@ export interface UpdateAdminAppUserStatusInput {
  * 用于管理端传入目标用户 id 与前端 RSA 加密后的密码。
  */
 export interface ResetAdminAppUserPasswordInput {
-  id: AppUser['id']
+  id: AppUserSelect['id']
   password: string
 }
 

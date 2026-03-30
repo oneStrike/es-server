@@ -242,5 +242,5 @@ export const work = pgTable("work", {
     index("work_deleted_at_idx").on(table.deletedAt),
 ]);
 
-export type Work = typeof work.$inferSelect;
+export type WorkSelect = typeof work.$inferSelect;
 export type WorkInsert = typeof work.$inferInsert;

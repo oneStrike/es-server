@@ -4,7 +4,7 @@ import type {
   AdminUserPageQueryInput,
 } from './admin-user.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
-import { AdminUser, NewAdminUser } from '@db/schema'
+import { AdminUserInsert, AdminUserSelect } from '@db/schema'
 import { AdminUserRoleEnum } from '@libs/platform/constant'
 import { ScryptService } from '@libs/platform/modules'
 import { LoginGuardService, RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
@@ -61,7 +61,7 @@ export class AdminUserService {
    */
   async updateUserInfo(
     userId: number,
-    updateData: Partial<AdminUser> & { id: number },
+    updateData: Partial<AdminUserSelect> & { id: number },
   ) {
     await this.isSuperAdmin(userId)
     // 查找用户
@@ -103,7 +103,7 @@ export class AdminUserService {
   /**
    * 注册管理员用户
    */
-  async register(operatorId: number, data: NewAdminUser) {
+  async register(operatorId: number, data: AdminUserInsert) {
     await this.isSuperAdmin(operatorId)
     const { username, password, avatar, role, mobile } = data
 

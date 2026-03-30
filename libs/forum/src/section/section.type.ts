@@ -1,14 +1,14 @@
-import type { ForumSection } from '@db/schema'
+import type { ForumSectionSelect } from '@db/schema'
 
 /**
  * 创建论坛板块的领域输入。
  * 仅包含写路径真正允许落库的字段。
  */
-export type CreateForumSectionInput = Pick<ForumSection, 'name'> &
-  Pick<ForumSection, 'icon' | 'cover'> &
+export type CreateForumSectionInput = Pick<ForumSectionSelect, 'name'> &
+  Pick<ForumSectionSelect, 'icon' | 'cover'> &
   Partial<
     Pick<
-      ForumSection,
+      ForumSectionSelect,
       | 'groupId'
       | 'userLevelRuleId'
       | 'sortOrder'
@@ -22,10 +22,10 @@ export type CreateForumSectionInput = Pick<ForumSection, 'name'> &
  * 更新论坛板块的领域输入。
  * 支持部分更新板块基础配置。
  */
-export type UpdateForumSectionInput = Pick<ForumSection, 'id'> &
+export type UpdateForumSectionInput = Pick<ForumSectionSelect, 'id'> &
   Partial<
     Pick<
-      ForumSection,
+      ForumSectionSelect,
       | 'name'
       | 'groupId'
       | 'userLevelRuleId'

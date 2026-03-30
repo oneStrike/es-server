@@ -1,4 +1,4 @@
-import type { UserComment } from '@db/schema'
+import type { UserCommentSelect } from '@db/schema'
 import type { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import type { CommentTargetTypeEnum } from './comment.constant'
 import type {
@@ -18,7 +18,7 @@ export interface TransactionRetryOptions {
  * - 与审核状态、隐藏标记、删除时间保持一致
  */
 export type CommentVisibleState = Pick<
-  UserComment,
+  UserCommentSelect,
   'auditStatus' | 'isHidden' | 'deletedAt'
 >
 
@@ -26,7 +26,7 @@ export type CommentVisibleState = Pick<
  * 创建一级评论入参。
  * - 包含用户、目标与评论内容
  */
-export type CreateCommentInput = Pick<UserComment, 'userId' | 'targetId' | 'content'> & {
+export type CreateCommentInput = Pick<UserCommentSelect, 'userId' | 'targetId' | 'content'> & {
   targetType: CommentTargetTypeEnum
 }
 
@@ -34,7 +34,7 @@ export type CreateCommentInput = Pick<UserComment, 'userId' | 'targetId' | 'cont
  * 创建回复评论入参。
  * - 包含用户、回复目标与评论内容
  */
-export type ReplyCommentInput = Pick<UserComment, 'userId' | 'content'> & {
+export type ReplyCommentInput = Pick<UserCommentSelect, 'userId' | 'content'> & {
   replyToId: number
 }
 
@@ -92,7 +92,7 @@ export interface TargetCommentsQuery {
  * - 用于奖励与通知补偿流程
  */
 export type VisibleCommentEffectPayload = Pick<
-  UserComment,
+  UserCommentSelect,
   | 'id'
   | 'userId'
   | 'targetType'
@@ -118,7 +118,7 @@ export interface VisibleCommentEffectContext {
  * - 用于审核/隐藏更新时判断可见性迁移
  */
 export type CommentModerationState = Pick<
-  UserComment,
+  UserCommentSelect,
   | 'id'
   | 'userId'
   | 'targetType'

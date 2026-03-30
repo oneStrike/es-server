@@ -11,7 +11,6 @@ import {
 import { BaseDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { FORUM_TOPIC_VIDEO_MAX_COUNT } from '../forum-topic.constant'
 
 /**
  * 论坛主题基础 DTO。

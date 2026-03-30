@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { AppUser } from '@db/schema'
+import { AppUserSelect } from '@db/schema'
 import { UserStatusEnum } from '@libs/platform/constant'
 import {
   ForbiddenException,
@@ -35,7 +35,7 @@ export class UserService {
   /**
    * 确保用户存在
    */
-  async ensureUserExists(userId: number): Promise<AppUser> {
+  async ensureUserExists(userId: number): Promise<AppUserSelect> {
     const [user] = await this.db
       .select()
       .from(this.appUser)
@@ -50,7 +50,7 @@ export class UserService {
   /**
    * 获取用户基础信息
    */
-  async findById(userId: number): Promise<AppUser | undefined> {
+  async findById(userId: number): Promise<AppUserSelect | undefined> {
     const [user] = await this.db
       .select()
       .from(this.appUser)
@@ -115,7 +115,7 @@ export class UserService {
   /**
    * 将数据库用户实体映射为安全的对外用户对象
    */
-  mapBaseUser(user: AppUser) {
+  mapBaseUser(user: AppUserSelect) {
     return {
       id: user.id,
       account: user.account,

@@ -1,10 +1,10 @@
-import type { WorkTag } from '@db/schema'
+import type { WorkTagSelect } from '@db/schema'
 
-export type CreateTagInput = Pick<WorkTag, 'name'> &
-  Partial<Pick<WorkTag, 'icon' | 'sortOrder' | 'isEnabled' | 'description'>>
+export type CreateTagInput = Pick<WorkTagSelect, 'name'> &
+  Partial<Pick<WorkTagSelect, 'icon' | 'sortOrder' | 'isEnabled' | 'description'>>
 
-export type UpdateTagInput = Pick<WorkTag, 'id'> &
-  Partial<Pick<WorkTag, 'name' | 'icon' | 'sortOrder' | 'isEnabled' | 'description'>>
+export type UpdateTagInput = Pick<WorkTagSelect, 'id'> &
+  Partial<Pick<WorkTagSelect, 'name' | 'icon' | 'sortOrder' | 'isEnabled' | 'description'>>
 
 export interface QueryTagInput {
   name?: string

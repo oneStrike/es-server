@@ -31,5 +31,5 @@ export const appAnnouncementRead = pgTable("app_announcement_read", {
   primaryKey({ columns: [table.announcementId, table.userId] }),
 ]);
 
-export type AppAnnouncementRead = typeof appAnnouncementRead.$inferSelect;
+export type AppAnnouncementReadSelect = typeof appAnnouncementRead.$inferSelect;
 export type AppAnnouncementReadInsert = typeof appAnnouncementRead.$inferInsert;

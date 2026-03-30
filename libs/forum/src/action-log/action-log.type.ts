@@ -1,16 +1,16 @@
-import type { ForumUserActionLog } from '@db/schema'
+import type { ForumUserActionLogSelect } from '@db/schema'
 
 /**
  * 创建论坛操作日志的领域输入。
  * 用于记录用户对主题/回复的行为轨迹。
  */
 export type CreateForumActionLogInput = Pick<
-  ForumUserActionLog,
+  ForumUserActionLogSelect,
   'userId' | 'actionType' | 'targetType' | 'targetId'
 > &
 Partial<
     Pick<
-      ForumUserActionLog,
+      ForumUserActionLogSelect,
       'beforeData' | 'afterData' | 'ipAddress' | 'userAgent'
     >
   >

@@ -1,6 +1,6 @@
 import type {
-  NotificationTemplate,
   NotificationTemplateInsert,
+  NotificationTemplateSelect,
 } from '@db/schema'
 import type { NotificationOutboxPayload } from '../outbox/outbox.type'
 import type { MessageNotificationTypeEnum } from './notification.constant'
@@ -30,7 +30,7 @@ export type CreateNotificationTemplateInput = Pick<
  * 更新通知模板入参
  * 允许调整通知类型与模板文案；若通知类型变化，模板键会同步重算
  */
-export type UpdateNotificationTemplateInput = Pick<NotificationTemplate, 'id'>
+export type UpdateNotificationTemplateInput = Pick<NotificationTemplateSelect, 'id'>
   & Partial<CreateNotificationTemplateInput>
 
 /**
@@ -38,7 +38,7 @@ export type UpdateNotificationTemplateInput = Pick<NotificationTemplate, 'id'>
  * 用于管理端单独维护模板开关
  */
 export type UpdateNotificationTemplateEnabledInput = Pick<
-  NotificationTemplate,
+  NotificationTemplateSelect,
   'id' | 'isEnabled'
 >
 

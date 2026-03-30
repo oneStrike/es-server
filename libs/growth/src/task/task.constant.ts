@@ -124,6 +124,9 @@ export enum TaskReminderKindEnum {
   REWARD_GRANTED = 'task_reward_granted',
 }
 
+export const TASK_COMPLETE_EVENT_CODE = 'task.complete'
+export const TASK_COMPLETE_EVENT_KEY = 'TASK_COMPLETE'
+
 /** 新任务提醒默认只覆盖最近 24 小时进入可领取状态的任务 */
 export const TASK_AVAILABLE_REMINDER_RECENT_HOURS = 24
 /** 即将过期提醒窗口，默认在过期前 24 小时内触发 */

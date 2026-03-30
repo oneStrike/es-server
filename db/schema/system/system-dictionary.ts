@@ -104,7 +104,7 @@ export const dictionaryItem = pgTable("sys_dictionary_item", {
     index("sys_dictionary_item_sort_order_idx").on(table.sortOrder),
 ]);
 
-export type Dictionary = typeof dictionary.$inferSelect;
+export type DictionarySelect = typeof dictionary.$inferSelect;
 export type DictionaryInsert = typeof dictionary.$inferInsert;
-export type DictionaryItem = typeof dictionaryItem.$inferSelect;
+export type DictionaryItemSelect = typeof dictionaryItem.$inferSelect;
 export type DictionaryItemInsert = typeof dictionaryItem.$inferInsert;

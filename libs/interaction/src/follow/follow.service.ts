@@ -1,4 +1,4 @@
-import type { UserFollow } from '@db/schema'
+import type { UserFollowSelect } from '@db/schema'
 import type {
   FollowPageQuery,
   FollowRecordInput,
@@ -117,7 +117,7 @@ export class FollowService {
     return statusMap
   }
 
-  async follow(input: FollowRecordInput): Promise<Pick<UserFollow, 'id'>> {
+  async follow(input: FollowRecordInput): Promise<Pick<UserFollowSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 

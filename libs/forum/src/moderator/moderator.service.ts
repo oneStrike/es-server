@@ -1,7 +1,7 @@
 import type { Db } from '@db/core'
 import type {
-  ForumModerator,
-  ForumSection,
+  ForumModeratorSelect,
+  ForumSectionSelect,
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
@@ -166,7 +166,7 @@ export class ForumModeratorService {
       sectionIds?: number[]
     },
     options: {
-      current?: Pick<ForumModerator, 'roleType' | 'groupId' | 'permissions'>
+      current?: Pick<ForumModeratorSelect, 'roleType' | 'groupId' | 'permissions'>
       currentSectionIds?: number[]
       isCreate?: boolean
     } = {},
@@ -313,7 +313,7 @@ export class ForumModeratorService {
   }
 
   private buildSectionView(
-    section: Pick<ForumSection, 'id' | 'name'>,
+    section: Pick<ForumSectionSelect, 'id' | 'name'>,
     basePermissions: ForumModeratorPermissionEnum[],
     customPermissions?: Array<number | string | null | undefined> | null,
   ) {
@@ -332,7 +332,7 @@ export class ForumModeratorService {
   }
 
   private async buildModeratorViews(
-    moderators: ForumModerator[],
+    moderators: ForumModeratorSelect[],
   ): Promise<ForumModeratorView[]> {
     if (moderators.length === 0) {
       return []

@@ -1,4 +1,4 @@
-import type { UserPurchaseRecord } from '@db/schema'
+import type { UserPurchaseRecordSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import {
   DrizzleService,
@@ -25,14 +25,14 @@ const PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL = sql.join(
 )
 
 type PurchaseTargetInput = Pick<
-  UserPurchaseRecord,
+  UserPurchaseRecordSelect,
   'targetType' | 'targetId' | 'userId' | 'paymentMethod'
 > & {
   outTradeNo?: string | null
 }
 
-type PurchasedWorksQuery = Pick<UserPurchaseRecord, 'userId'> &
-  Partial<Pick<UserPurchaseRecord, 'status' | 'targetType'>> & {
+type PurchasedWorksQuery = Pick<UserPurchaseRecordSelect, 'userId'> &
+  Partial<Pick<UserPurchaseRecordSelect, 'status' | 'targetType'>> & {
     workType?: number
     pageIndex?: number
     pageSize?: number

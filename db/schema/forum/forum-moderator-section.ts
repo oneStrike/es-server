@@ -32,5 +32,5 @@ export const forumModeratorSection = pgTable("forum_moderator_section", {
     primaryKey({ columns: [table.moderatorId, table.sectionId] }),
 ]);
 
-export type ForumModeratorSection = typeof forumModeratorSection.$inferSelect;
+export type ForumModeratorSectionSelect = typeof forumModeratorSection.$inferSelect;
 export type ForumModeratorSectionInsert = typeof forumModeratorSection.$inferInsert;

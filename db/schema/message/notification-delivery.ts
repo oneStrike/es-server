@@ -106,5 +106,5 @@ export const notificationDelivery = pgTable('notification_delivery', {
   index('notification_delivery_biz_key_idx').on(table.bizKey),
 ])
 
-export type NotificationDelivery = typeof notificationDelivery.$inferSelect
+export type NotificationDeliverySelect = typeof notificationDelivery.$inferSelect
 export type NotificationDeliveryInsert = typeof notificationDelivery.$inferInsert

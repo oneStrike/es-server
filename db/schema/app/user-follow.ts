@@ -66,5 +66,5 @@ export const userFollow = pgTable(
   ],
 )
 
-export type UserFollow = typeof userFollow.$inferSelect
+export type UserFollowSelect = typeof userFollow.$inferSelect
 export type UserFollowInsert = typeof userFollow.$inferInsert

@@ -143,5 +143,5 @@ export const userComment = pgTable("user_comment", {
     index("user_comment_deleted_at_idx").on(table.deletedAt),
 ]);
 
-export type UserComment = typeof userComment.$inferSelect;
+export type UserCommentSelect = typeof userComment.$inferSelect;
 export type UserCommentInsert = typeof userComment.$inferInsert;

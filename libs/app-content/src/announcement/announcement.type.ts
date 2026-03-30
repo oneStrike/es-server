@@ -1,15 +1,15 @@
-import type { AppAnnouncement } from '@db/schema'
+import type { AppAnnouncementSelect } from '@db/schema'
 
 /**
  * 创建公告入参。
  * - 用于新增公告主体信息
  */
 export type CreateAnnouncementInput = Omit<
-  Partial<AppAnnouncement>,
+  Partial<AppAnnouncementSelect>,
   'id' | 'createdAt' | 'updatedAt' | 'isPublished' | 'viewCount'
 > &
 Pick<
-    AppAnnouncement,
+    AppAnnouncementSelect,
     'title' | 'content' | 'announcementType' | 'priorityLevel'
   >
 
@@ -17,8 +17,8 @@ Pick<
  * 更新公告入参。
  * - 以公告ID定位并按需更新字段
  */
-export type UpdateAnnouncementInput = Pick<AppAnnouncement, 'id'> &
-  Omit<Partial<AppAnnouncement>, 'id' | 'createdAt' | 'updatedAt' | 'viewCount'>
+export type UpdateAnnouncementInput = Pick<AppAnnouncementSelect, 'id'> &
+  Omit<Partial<AppAnnouncementSelect>, 'id' | 'createdAt' | 'updatedAt' | 'viewCount'>
 
 /**
  * 公告分页查询入参。
@@ -45,7 +45,7 @@ export interface AnnouncementPageQuery {
  * - 仅用于切换发布状态
  */
 export type UpdateAnnouncementStatusInput = Pick<
-  AppAnnouncement,
+  AppAnnouncementSelect,
   'id' | 'isPublished'
 >
 
@@ -53,4 +53,4 @@ export type UpdateAnnouncementStatusInput = Pick<
  * 公告删除入参。
  * - 用于按公告 id 删除数据
  */
-export type DeleteAnnouncementInput = Pick<AppAnnouncement, 'id'>
+export type DeleteAnnouncementInput = Pick<AppAnnouncementSelect, 'id'>

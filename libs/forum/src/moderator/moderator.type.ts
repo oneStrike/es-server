@@ -1,6 +1,6 @@
 import type {
-  ForumModerator,
-  ForumModeratorSection,
+  ForumModeratorSectionSelect,
+  ForumModeratorSelect,
 } from '@db/schema'
 import type {
   ForumModeratorPermissionEnum,
@@ -12,7 +12,7 @@ import type {
  * 由 controller DTO 映射而来，service 不直接依赖 DTO。
  */
 export type CreateForumModeratorInput = Pick<
-  ForumModerator,
+  ForumModeratorSelect,
   'userId' | 'roleType'
 > & {
   groupId?: number | null
@@ -26,10 +26,10 @@ export type CreateForumModeratorInput = Pick<
  * 更新版主的领域输入。
  * 支持调整角色、权限、分组和板块范围。
  */
-export type UpdateForumModeratorInput = Pick<ForumModerator, 'id'> &
+export type UpdateForumModeratorInput = Pick<ForumModeratorSelect, 'id'> &
   Partial<
     Pick<
-      ForumModerator,
+      ForumModeratorSelect,
       'groupId' | 'roleType' | 'isEnabled' | 'remark'
     >
   > & {
@@ -86,7 +86,7 @@ export interface ForumModeratorGroupView {
  */
 export interface ForumModeratorView
   extends Pick<
-    ForumModerator,
+    ForumModeratorSelect,
     'id' | 'userId' | 'roleType' | 'isEnabled' | 'createdAt' | 'updatedAt'
   > {
   groupId?: number
@@ -103,7 +103,7 @@ export interface ForumModeratorView
  * 版主板块关联的最小行结构。
  */
 export type ForumModeratorSectionScope = Pick<
-  ForumModeratorSection,
+  ForumModeratorSectionSelect,
   'sectionId' | 'permissions'
 >
 

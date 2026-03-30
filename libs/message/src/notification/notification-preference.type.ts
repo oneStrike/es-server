@@ -1,6 +1,6 @@
 import type {
-  NotificationPreference,
-  UserNotification,
+  NotificationPreferenceSelect,
+  UserNotificationSelect,
 } from '@db/schema'
 import type {
   MessageNotificationDispatchStatusEnum,
@@ -45,7 +45,7 @@ export interface UpdateMessageNotificationPreferencesInput {
  */
 export interface CreateNotificationFromOutboxResult {
   status: MessageNotificationDispatchStatusEnum
-  notification?: UserNotification
+  notification?: UserNotificationSelect
   preference?: EffectiveMessageNotificationPreference
 }
 
@@ -54,6 +54,6 @@ export interface CreateNotificationFromOutboxResult {
  * 用于服务内部从数据库记录映射到有效偏好视图，避免直接耦合 Drizzle 行对象
  */
 export type NotificationPreferenceSnapshot = Pick<
-  NotificationPreference,
+  NotificationPreferenceSelect,
   'id' | 'notificationType' | 'isEnabled' | 'updatedAt'
 >

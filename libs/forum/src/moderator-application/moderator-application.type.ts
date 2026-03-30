@@ -1,4 +1,4 @@
-import type { ForumModeratorApplication } from '@db/schema'
+import type { ForumModeratorApplicationSelect } from '@db/schema'
 import type { ForumModeratorPermissionEnum } from '../moderator'
 import type { ForumModeratorApplicationStatusEnum } from './moderator-application.constant'
 
@@ -6,7 +6,7 @@ import type { ForumModeratorApplicationStatusEnum } from './moderator-applicatio
  * 创建版主申请的领域输入。
  */
 export type CreateForumModeratorApplicationInput = Pick<
-  ForumModeratorApplication,
+  ForumModeratorApplicationSelect,
   'sectionId' | 'reason'
 > & {
   remark?: string
@@ -30,7 +30,7 @@ export interface QueryForumModeratorApplicationInput {
  * 审核版主申请的领域输入。
  */
 export type AuditForumModeratorApplicationInput = Pick<
-  ForumModeratorApplication,
+  ForumModeratorApplicationSelect,
   'id'
 > & {
   status: ForumModeratorApplicationStatusEnum

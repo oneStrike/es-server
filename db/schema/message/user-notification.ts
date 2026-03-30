@@ -104,5 +104,5 @@ export const userNotification = pgTable("user_notification", {
     index("user_notification_user_id_aggregate_key_created_at_idx").on(table.userId, table.aggregateKey, table.createdAt.desc()),
 ]);
 
-export type UserNotification = typeof userNotification.$inferSelect
+export type UserNotificationSelect = typeof userNotification.$inferSelect
 export type UserNotificationInsert = typeof userNotification.$inferInsert

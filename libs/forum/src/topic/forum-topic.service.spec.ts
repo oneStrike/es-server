@@ -101,6 +101,7 @@ describe('forum topic audit reward backfill', () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
     )
 
     await expect(
@@ -163,6 +164,7 @@ describe('forum topic audit reward backfill', () => {
       {} as any,
       {} as any,
       { syncSectionVisibleState } as any,
+      {} as any,
       {} as any,
       {} as any,
       {} as any,
@@ -264,6 +266,7 @@ describe('forum topic public page payload', () => {
       { checkStatusBatch: likedStatusBatch } as any,
       { checkStatusBatch: favoritedStatusBatch } as any,
       {} as any,
+      {} as any,
     )
 
     const result = await service.getPublicTopics({
@@ -355,6 +358,7 @@ describe('forum topic public detail payload', () => {
       { ensureUserCanAccessSection } as any,
       { checkLikeStatus } as any,
       { checkFavoriteStatus } as any,
+      {} as any,
       {} as any,
     )
 
