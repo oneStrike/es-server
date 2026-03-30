@@ -2,8 +2,18 @@
  * Auto-converted from legacy schema.
  */
 
-import { sql } from "drizzle-orm";
-import { index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import {
+  check,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  smallint,
+  timestamp,
+  unique,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 任务分配记录
@@ -43,6 +53,7 @@ export const taskAssignment = pgTable("task_assignment", {
   progress: integer().default(0).notNull(),
   /**
    * 目标次数
+   * 来自任务配置快照，必须大于 0
    */
   target: integer().default(1).notNull(),
   /**
@@ -118,6 +129,10 @@ export const taskAssignment = pgTable("task_assignment", {
    * 删除时间索引
    */
   index("task_assignment_deleted_at_idx").on(table.deletedAt),
+  /**
+   * 目标次数必须大于 0
+   */
+  check("task_assignment_target_positive_chk", sql`${table.target} > 0`),
 ]);
 
 export type TaskAssignmentSelect = typeof taskAssignment.$inferSelect;

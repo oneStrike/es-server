@@ -85,7 +85,11 @@ export class BaseTaskDto extends BaseDto {
   })
   completeMode!: TaskCompleteModeEnum
 
-  @NumberProperty({ description: '完成目标次数', example: 1 })
+  @NumberProperty({
+    description: '完成目标次数，必须为大于 0 的整数',
+    example: 1,
+    min: 1,
+  })
   targetCount!: number
 
   @JsonProperty({
@@ -110,8 +114,9 @@ export class BaseTaskDto extends BaseDto {
   publishEndAt?: Date | null
 
   @JsonProperty({
-    description: '周期规则，当前仅识别 type=once/daily/weekly/monthly',
-    example: { type: 'daily' },
+    description:
+      '周期规则，当前仅识别 type=once/daily/weekly/monthly；timezone 可选，使用 IANA 时区标识',
+    example: { type: 'daily', timezone: 'Asia/Shanghai' },
     required: false,
   })
   repeatRule?: Record<string, unknown> | null

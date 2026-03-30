@@ -91,6 +91,20 @@ function createSimpleSelectHarness<T>(rows: T[]) {
   }
 }
 
+function createOrderedSelectHarness<T>(rows: T[]) {
+  const orderBy = jest.fn().mockResolvedValue(rows)
+  const where = jest.fn(() => ({ orderBy }))
+  const from = jest.fn(() => ({ where }))
+  const select = jest.fn(() => ({ from }))
+
+  return {
+    select,
+    from,
+    where,
+    orderBy,
+  }
+}
+
 function createRetryRewardQueryHarness<T>(rows: T[]) {
   const limit = jest.fn().mockResolvedValue(rows)
   const orderBy = jest.fn(() => ({ limit }))
@@ -296,6 +310,34 @@ describe('task service rewardConfig contract', () => {
         9,
       ),
     ).rejects.toThrow('repeatRule.type 仅支持 once、daily、weekly、monthly')
+
+    expect(values).not.toHaveBeenCalled()
+  })
+
+  it('rejects non-positive targetCount before insert', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const values = jest.fn()
+    const insert = jest.fn(() => ({ values }))
+    const service = new TaskService(
+      {
+        db: { insert },
+        schema: { task: {} },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.createTask(
+        {
+          ...baseTask,
+          targetCount: 0,
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('targetCount 必须是大于 0 的整数')
 
     expect(values).not.toHaveBeenCalled()
   })
@@ -998,23 +1040,192 @@ describe('task service main flows', () => {
     expect(update).not.toHaveBeenCalled()
   })
 
+  it('blocks changing publish window when active assignments already exist', async () => {
+    const { TaskService } = await import('./task.service')
+    const selectHarness = createSimpleSelectHarness([{ id: 101 }])
+    const update = jest.fn()
+
+    const service = new TaskService(
+      {
+        db: {
+          query: {
+            task: {
+              findFirst: jest.fn().mockResolvedValue({
+                id: 11,
+                publishStartAt: new Date('2026-04-10T00:00:00.000Z'),
+                publishEndAt: new Date('2026-04-20T00:00:00.000Z'),
+                repeatRule: null,
+                completeMode: TaskCompleteModeEnum.MANUAL,
+              }),
+            },
+          },
+          select: selectHarness.select,
+          update,
+        },
+        schema: {
+          task: {},
+          taskAssignment: {
+            id: 'id',
+            taskId: 'taskId',
+            deletedAt: 'deletedAt',
+            status: 'status',
+          },
+        },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.updateTask(
+        {
+          id: 11,
+          publishEndAt: new Date('2026-04-18T00:00:00.000Z'),
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('存在进行中的任务分配，不能修改发布时间窗口')
+
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('returns only manual tasks that are still claimable in current cycle', async () => {
+    const { TaskService } = await import('./task.service')
+    const taskSelectHarness = createOrderedSelectHarness([
+      {
+        id: 101,
+        createdAt: new Date('2026-03-29T00:00:00.000Z'),
+        updatedAt: new Date('2026-03-29T00:00:00.000Z'),
+        code: 'manual_available',
+        title: '可领取手动任务',
+        description: '尚未领取',
+        cover: null,
+        type: TaskTypeEnum.DAILY,
+        priority: 20,
+        claimMode: TaskClaimModeEnum.MANUAL,
+        completeMode: TaskCompleteModeEnum.MANUAL,
+        targetCount: 1,
+        rewardConfig: { points: 10 },
+        publishStartAt: null,
+        publishEndAt: null,
+        repeatRule: { type: TaskRepeatTypeEnum.DAILY },
+      },
+      {
+        id: 102,
+        createdAt: new Date('2026-03-29T00:00:00.000Z'),
+        updatedAt: new Date('2026-03-29T00:00:00.000Z'),
+        code: 'manual_claimed',
+        title: '已领取手动任务',
+        description: '当前周期已有 assignment',
+        cover: null,
+        type: TaskTypeEnum.DAILY,
+        priority: 10,
+        claimMode: TaskClaimModeEnum.MANUAL,
+        completeMode: TaskCompleteModeEnum.MANUAL,
+        targetCount: 1,
+        rewardConfig: { points: 5 },
+        publishStartAt: null,
+        publishEndAt: null,
+        repeatRule: { type: TaskRepeatTypeEnum.DAILY },
+      },
+      {
+        id: 103,
+        createdAt: new Date('2026-03-29T00:00:00.000Z'),
+        updatedAt: new Date('2026-03-29T00:00:00.000Z'),
+        code: 'auto_task',
+        title: '自动任务',
+        description: '不应出现在可领取页',
+        cover: null,
+        type: TaskTypeEnum.DAILY,
+        priority: 30,
+        claimMode: TaskClaimModeEnum.AUTO,
+        completeMode: TaskCompleteModeEnum.AUTO,
+        targetCount: 1,
+        rewardConfig: { points: 2 },
+        publishStartAt: null,
+        publishEndAt: null,
+        repeatRule: { type: TaskRepeatTypeEnum.DAILY },
+      },
+    ])
+    const assignmentFrom = jest.fn(() => ({
+      where: jest.fn().mockResolvedValue([
+        {
+          taskId: 102,
+          cycleKey: '2026-03-30',
+        },
+      ]),
+    }))
+    const select = jest
+      .fn()
+      .mockImplementationOnce(() => ({ from: taskSelectHarness.from }))
+      .mockImplementationOnce(() => ({ from: assignmentFrom }))
+
+    const service = new TaskService(
+      {
+        db: { select },
+        schema: {
+          task: {
+            priority: 'priority',
+            createdAt: 'createdAt',
+          },
+          taskAssignment: {
+            taskId: 'taskId',
+            cycleKey: 'cycleKey',
+            userId: 'userId',
+            deletedAt: 'deletedAt',
+          },
+        },
+        buildPage: jest.fn(() => ({
+          pageIndex: 1,
+          pageSize: 20,
+          limit: 20,
+          offset: 0,
+        })),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest
+      .spyOn(service as any, 'ensureAutoAssignmentsForUser')
+      .mockResolvedValue(undefined)
+    jest
+      .spyOn(service as any, 'tryNotifyAvailableTasksFromPage')
+      .mockResolvedValue(undefined)
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2026-03-30T10:15:00.000Z'))
+
+    const result = await service.getAvailableTasks(
+      { pageIndex: 1, pageSize: 20 } as any,
+      9,
+    )
+
+    expect(result.list).toHaveLength(1)
+    expect(result.total).toBe(1)
+    expect(result.list[0]).toMatchObject({
+      id: 101,
+      code: 'manual_available',
+      claimMode: TaskClaimModeEnum.MANUAL,
+    })
+  })
+
   it.each([
     [
       'daily',
       { type: TaskRepeatTypeEnum.DAILY },
-      '2026-03-31T00:00:00.000Z',
+      '2026-03-30T16:00:00.000Z',
       '2026-03-30T10:15:00.000Z',
     ],
     [
       'weekly',
       { type: TaskRepeatTypeEnum.WEEKLY },
-      '2026-04-06T00:00:00.000Z',
+      '2026-04-05T16:00:00.000Z',
       '2026-03-30T10:15:00.000Z',
     ],
     [
       'monthly',
       { type: TaskRepeatTypeEnum.MONTHLY },
-      '2026-04-01T00:00:00.000Z',
+      '2026-03-31T16:00:00.000Z',
       '2026-03-30T10:15:00.000Z',
     ],
   ])(

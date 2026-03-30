@@ -26,6 +26,7 @@ export interface TaskRewardConfig {
 
 export interface TaskRepeatRuleConfig {
   type: TaskRepeatTypeEnum
+  timezone?: string
 }
 
 /**

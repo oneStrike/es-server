@@ -2,7 +2,19 @@
  * Auto-converted from legacy schema.
  */
 
-import { boolean, index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  smallint,
+  timestamp,
+  unique,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 任务定义
@@ -54,6 +66,7 @@ export const task = pgTable("task", {
   completeMode: smallint().notNull(),
   /**
    * 目标次数
+   * 必须为大于 0 的整数
    */
   targetCount: integer().default(1).notNull(),
   /**
@@ -121,6 +134,10 @@ export const task = pgTable("task", {
    * 删除时间索引
    */
   index("task_deleted_at_idx").on(table.deletedAt),
+  /**
+   * 目标次数必须大于 0
+   */
+  check("task_target_count_positive_chk", sql`${table.targetCount} > 0`),
 ]);
 
 export type TaskSelect = typeof task.$inferSelect;

@@ -506,7 +506,7 @@ COMMENT ON COLUMN "public"."task"."is_enabled" IS E'是否启用';
 COMMENT ON COLUMN "public"."task"."priority" IS E'任务优先级';
 COMMENT ON COLUMN "public"."task"."claim_mode" IS E'领取方式';
 COMMENT ON COLUMN "public"."task"."complete_mode" IS E'完成方式';
-COMMENT ON COLUMN "public"."task"."target_count" IS E'目标次数';
+COMMENT ON COLUMN "public"."task"."target_count" IS E'目标次数\n必须为大于 0 的整数';
 COMMENT ON COLUMN "public"."task"."reward_config" IS E'奖励配置（当前仅支持 points / experience 正整数）';
 COMMENT ON COLUMN "public"."task"."repeat_rule" IS E'重复规则（当前仅识别 type=once/daily/weekly/monthly）';
 COMMENT ON COLUMN "public"."task"."publish_start_at" IS E'发布开始时间';
@@ -525,7 +525,7 @@ COMMENT ON COLUMN "public"."task_assignment"."status" IS E'分配状态（PENDIN
 COMMENT ON COLUMN "public"."task_assignment"."reward_status" IS E'奖励结算状态';
 COMMENT ON COLUMN "public"."task_assignment"."reward_result_type" IS E'奖励结算结果类型';
 COMMENT ON COLUMN "public"."task_assignment"."progress" IS E'当前进度';
-COMMENT ON COLUMN "public"."task_assignment"."target" IS E'目标次数';
+COMMENT ON COLUMN "public"."task_assignment"."target" IS E'目标次数\n来自任务配置快照，必须大于 0';
 COMMENT ON COLUMN "public"."task_assignment"."task_snapshot" IS E'任务快照';
 COMMENT ON COLUMN "public"."task_assignment"."context" IS E'任务上下文';
 COMMENT ON COLUMN "public"."task_assignment"."version" IS E'版本号';

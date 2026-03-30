@@ -1,6 +1,7 @@
 import type { Db } from '@db/core'
 import type { TaskAssignmentSelect, TaskSelect } from '@db/schema'
 import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward'
+import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
 import type {
   AutoAssignmentTaskSource,
@@ -19,6 +20,7 @@ import type {
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from './task.type'
+import process from 'node:process'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   createEventEnvelope,
@@ -36,7 +38,23 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
-import { and, asc, eq, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import timezone from 'dayjs/plugin/timezone'
+import utc from 'dayjs/plugin/utc'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm'
 import {
   TASK_AVAILABLE_REMINDER_RECENT_HOURS,
   TASK_COMPLETE_EVENT_CODE,
@@ -51,7 +69,12 @@ import {
   TaskReminderKindEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
+  TaskTypeEnum,
 } from './task.constant'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+dayjs.extend(isoWeek)
 
 /**
  * 任务服务
@@ -75,6 +98,8 @@ import {
 @Injectable()
 export class TaskService {
   private readonly logger = new Logger(TaskService.name)
+  private readonly defaultTaskTimezone =
+    this.normalizeTaskTimezone(process.env.TZ) ?? 'Asia/Shanghai'
 
   constructor(
     private readonly drizzle: DrizzleService,
@@ -291,6 +316,7 @@ export class TaskService {
   async createTask(dto: CreateTaskInput, adminUserId: number) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
+    this.ensurePositiveTaskTargetCount(dto.targetCount)
     const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
     const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
 
@@ -329,6 +355,7 @@ export class TaskService {
       throw new NotFoundException('任务不存在')
     }
 
+    this.ensurePositiveTaskTargetCount(dto.targetCount)
     const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
     const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
     const nextPublishStartAt =
@@ -490,21 +517,33 @@ export class TaskService {
    * @returns 分页结果
    */
   async getAvailableTasks(queryDto: QueryAppTaskInput, userId: number) {
-    const { type } = queryDto
-    const where = this.buildAvailableWhere(type)
     const now = new Date()
+    const { type } = queryDto
+    const page = this.drizzle.buildPage(queryDto)
+    const where = this.buildAvailableWhere(type, TaskClaimModeEnum.MANUAL)
+    const tasks = await this.db
+      .select()
+      .from(this.taskTable)
+      .where(where)
+      .orderBy(desc(this.taskTable.priority), desc(this.taskTable.createdAt))
+    const filteredTasks = await this.filterClaimableTasksForUser(
+      tasks.filter(
+        (taskRecord) => taskRecord.claimMode === TaskClaimModeEnum.MANUAL,
+      ),
+      userId,
+      now,
+    )
+    const pagedTasks = filteredTasks.slice(page.offset, page.offset + page.limit)
 
-    const result = await this.drizzle.ext.findPagination(this.taskTable, {
-      where,
-      pageIndex: queryDto.pageIndex,
-      pageSize: queryDto.pageSize,
-      orderBy: JSON.stringify([{ priority: 'desc' }, { createdAt: 'desc' }]),
-    })
+    await this.ensureAutoAssignmentsForUser(userId, now)
+    await this.tryNotifyAvailableTasksFromPage(userId, pagedTasks, now)
 
-    // 为自动领取模式的任务确保分配已创建
-    await this.ensureAutoAssignments(userId, result.list, now)
-    await this.tryNotifyAvailableTasksFromPage(userId, result.list, now)
-    return result
+    return {
+      list: pagedTasks.map((taskRecord) => this.toAppTaskView(taskRecord)),
+      total: filteredTasks.length,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
+    }
   }
 
   /**
@@ -555,7 +594,10 @@ export class TaskService {
       orderBy,
       includeTaskDetail: true,
     })
-    return result
+    return {
+      ...result,
+      list: result.list.map((item) => this.toAppMyTaskView(item)),
+    }
   }
 
   /**
@@ -959,6 +1001,20 @@ export class TaskService {
   }
 
   /**
+   * 校验任务目标次数。
+   *
+   * 任务目标是状态机判定的核心边界，必须始终保持为正整数。
+   */
+  private ensurePositiveTaskTargetCount(value?: number) {
+    if (value === undefined) {
+      return
+    }
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new BadRequestException('targetCount 必须是大于 0 的整数')
+    }
+  }
+
+  /**
    * 解析JSON字符串
    *
    * 将字符串解析为JSON对象，用于处理前端传递的JSON配置。
@@ -1056,8 +1112,24 @@ export class TaskService {
       )
     }
 
+    const rawTimezone = parsed.timezone
+    if (rawTimezone !== undefined && rawTimezone !== null) {
+      if (typeof rawTimezone !== 'string' || rawTimezone.trim() === '') {
+        throw new BadRequestException('repeatRule.timezone 必须是非空字符串')
+      }
+      if (!this.normalizeTaskTimezone(rawTimezone)) {
+        throw new BadRequestException(
+          'repeatRule.timezone 必须是合法的 IANA 时区标识',
+        )
+      }
+    }
+
     return {
       type: type as TaskRepeatTypeEnum,
+      timezone:
+        typeof rawTimezone === 'string' && rawTimezone.trim() !== ''
+          ? rawTimezone.trim()
+          : undefined,
     }
   }
 
@@ -1087,7 +1159,10 @@ export class TaskService {
    * @param type 任务类型（可选）
    * @returns 查询条件
    */
-  private buildAvailableWhere(type?: TaskSelect['type']): SQL | undefined {
+  private buildAvailableWhere(
+    type?: TaskSelect['type'],
+    claimMode?: TaskSelect['claimMode'],
+  ): SQL | undefined {
     const now = new Date()
     // 发布开始时间条件：为空或已到开始时间
     const publishStartCondition = or(
@@ -1114,6 +1189,9 @@ export class TaskService {
     }
     if (type !== undefined) {
       conditions.push(eq(this.taskTable.type, type))
+    }
+    if (claimMode !== undefined) {
+      conditions.push(eq(this.taskTable.claimMode, claimMode))
     }
     return conditions.length > 0 ? and(...conditions) : undefined
   }
@@ -1178,14 +1256,15 @@ export class TaskService {
    */
   private buildCycleKey(taskRecord: Pick<TaskSelect, 'repeatRule'>, now: Date): string {
     const type = this.getTaskRepeatType(taskRecord)
+    const cycleAnchor = this.getTaskCycleAnchor(taskRecord, now)
     if (type === TaskRepeatTypeEnum.DAILY) {
-      return this.formatDate(now)
+      return this.formatDate(cycleAnchor)
     }
     if (type === TaskRepeatTypeEnum.WEEKLY) {
-      return `week-${this.formatDate(this.getWeekStart(now))}`
+      return `week-${this.formatDate(this.getWeekStart(cycleAnchor))}`
     }
     if (type === TaskRepeatTypeEnum.MONTHLY) {
-      return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+      return cycleAnchor.format('YYYY-MM')
     }
     return TaskRepeatTypeEnum.ONCE
   }
@@ -1209,7 +1288,10 @@ export class TaskService {
    * 已有进行中 assignment 时，阻止修改会改写存量任务语义的关键配置。
    */
   private async assertNoActiveAssignmentConfigMutation(
-    taskRecord: Pick<TaskSelect, 'id' | 'repeatRule' | 'completeMode'>,
+    taskRecord: Pick<
+      TaskSelect,
+      'id' | 'repeatRule' | 'completeMode' | 'publishStartAt' | 'publishEndAt'
+    >,
     dto: UpdateTaskInput,
     repeatRule: TaskRepeatRuleConfig | null | undefined,
   ) {
@@ -1223,8 +1305,19 @@ export class TaskService {
     const completeModeChanged =
       dto.completeMode !== undefined
       && dto.completeMode !== taskRecord.completeMode
+    const publishWindowChanged =
+      (dto.publishStartAt !== undefined
+        && !this.isSameNullableDate(
+          dto.publishStartAt ?? null,
+          taskRecord.publishStartAt ?? null,
+        ))
+        || (dto.publishEndAt !== undefined
+          && !this.isSameNullableDate(
+          dto.publishEndAt ?? null,
+          taskRecord.publishEndAt ?? null,
+        ))
 
-    if (!repeatRuleChanged && !completeModeChanged) {
+    if (!repeatRuleChanged && !completeModeChanged && !publishWindowChanged) {
       return
     }
 
@@ -1254,6 +1347,9 @@ export class TaskService {
     if (completeModeChanged) {
       blockedFields.push('完成方式')
     }
+    if (publishWindowChanged) {
+      blockedFields.push('发布时间窗口')
+    }
 
     throw new BadRequestException(
       `存在进行中的任务分配，不能修改${blockedFields.join('和')}`,
@@ -1266,8 +1362,8 @@ export class TaskService {
    * @param date 日期对象
    * @returns 格式化的日期字符串
    */
-  private formatDate(date: Date): string {
-    return date.toISOString().slice(0, 10)
+  private formatDate(date: Dayjs): string {
+    return date.format('YYYY-MM-DD')
   }
 
   /**
@@ -1276,13 +1372,8 @@ export class TaskService {
    * @param date 日期对象
    * @returns 该周周一的日期对象
    */
-  private getWeekStart(date: Date): Date {
-    const base = new Date(
-      Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-    )
-    const day = base.getUTCDay() || 7
-    base.setUTCDate(base.getUTCDate() - day + 1)
-    return base
+  private getWeekStart(date: Dayjs): Dayjs {
+    return date.startOf('day').subtract(date.isoWeekday() - 1, 'day')
   }
 
   /**
@@ -1500,6 +1591,54 @@ export class TaskService {
     }
 
     return assignment
+  }
+
+  /**
+   * 从候选任务中过滤掉当前周期已领取的记录。
+   *
+   * “可领取任务”列表只应展示当前周期尚未生成 assignment 的手动任务。
+   */
+  private async filterClaimableTasksForUser(
+    tasks: TaskSelect[],
+    userId: number,
+    now: Date,
+  ) {
+    if (tasks.length === 0) {
+      return tasks
+    }
+
+    const cycleKeyByTaskId = new Map<number, string>()
+    for (const taskRecord of tasks) {
+      cycleKeyByTaskId.set(taskRecord.id, this.buildCycleKey(taskRecord, now))
+    }
+
+    const taskIds = tasks.map((taskRecord) => taskRecord.id)
+    const cycleKeys = [...new Set(cycleKeyByTaskId.values())]
+    const existingAssignments = await this.db
+      .select({
+        taskId: this.taskAssignmentTable.taskId,
+        cycleKey: this.taskAssignmentTable.cycleKey,
+      })
+      .from(this.taskAssignmentTable)
+      .where(
+        and(
+          eq(this.taskAssignmentTable.userId, userId),
+          isNull(this.taskAssignmentTable.deletedAt),
+          inArray(this.taskAssignmentTable.taskId, taskIds),
+          inArray(this.taskAssignmentTable.cycleKey, cycleKeys),
+        ),
+      )
+
+    const claimedKeys = new Set(
+      existingAssignments.map(
+        (assignment) => `${assignment.taskId}:${assignment.cycleKey}`,
+      ),
+    )
+
+    return tasks.filter((taskRecord) => {
+      const cycleKey = cycleKeyByTaskId.get(taskRecord.id)
+      return !claimedKeys.has(`${taskRecord.id}:${cycleKey}`)
+    })
   }
 
   /**
@@ -1909,6 +2048,86 @@ export class TaskService {
     return taskRecord.publishStartAt ?? taskRecord.createdAt
   }
 
+  private toAppTaskView(taskRecord: Pick<
+    TaskSelect,
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'code'
+    | 'title'
+    | 'description'
+    | 'cover'
+    | 'type'
+    | 'priority'
+    | 'claimMode'
+    | 'completeMode'
+    | 'targetCount'
+    | 'rewardConfig'
+    | 'publishStartAt'
+    | 'publishEndAt'
+    | 'repeatRule'
+  >) {
+    return {
+      id: taskRecord.id,
+      createdAt: taskRecord.createdAt,
+      updatedAt: taskRecord.updatedAt,
+      code: taskRecord.code,
+      title: taskRecord.title,
+      description: taskRecord.description,
+      cover: taskRecord.cover,
+      type: taskRecord.type,
+      priority: taskRecord.priority,
+      claimMode: taskRecord.claimMode,
+      completeMode: taskRecord.completeMode,
+      targetCount: taskRecord.targetCount,
+      rewardConfig: taskRecord.rewardConfig,
+      publishStartAt: taskRecord.publishStartAt,
+      publishEndAt: taskRecord.publishEndAt,
+      repeatRule: taskRecord.repeatRule,
+    }
+  }
+
+  private toAppMyTaskView(
+    item: TaskAssignmentSelect & {
+      task?: {
+        id: number | null
+        title: string | null
+        type: number | null
+        rewardConfig: unknown
+        targetCount?: number | null
+        completeMode?: number | null
+        claimMode?: number | null
+      } | null
+    },
+  ) {
+    return {
+      id: item.id,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      taskId: item.taskId,
+      cycleKey: item.cycleKey,
+      status: item.status,
+      progress: item.progress,
+      target: item.target,
+      claimedAt: item.claimedAt,
+      completedAt: item.completedAt,
+      expiredAt: item.expiredAt,
+      task:
+        item.task && item.task.id !== null
+          ? {
+              id: item.task.id,
+              title: item.task.title ?? '',
+              type: item.task.type ?? TaskTypeEnum.NEWBIE,
+              rewardConfig: item.task.rewardConfig,
+              targetCount: item.task.targetCount ?? item.target,
+              completeMode:
+                item.task.completeMode ?? TaskCompleteModeEnum.MANUAL,
+              claimMode: item.task.claimMode ?? TaskClaimModeEnum.MANUAL,
+            }
+          : null,
+    }
+  }
+
   /**
    * 计算真实到账的奖励数量
    *
@@ -2077,6 +2296,41 @@ export class TaskService {
     return input as Record<string, unknown>
   }
 
+  private normalizeTaskTimezone(timezone?: string | null) {
+    if (!timezone || typeof timezone !== 'string') {
+      return undefined
+    }
+
+    const normalizedTimezone = timezone.trim()
+    if (normalizedTimezone === '') {
+      return undefined
+    }
+
+    try {
+      Intl.DateTimeFormat('zh-CN', {
+        timeZone: normalizedTimezone,
+      })
+      return normalizedTimezone
+    } catch {
+      return undefined
+    }
+  }
+
+  private getTaskRepeatTimezone(taskRecord: Pick<TaskSelect, 'repeatRule'>) {
+    const repeatRule = this.asRecord(taskRecord.repeatRule)
+    return this.normalizeTaskTimezone(
+      typeof repeatRule?.timezone === 'string' ? repeatRule.timezone : undefined,
+    )
+    ?? this.defaultTaskTimezone
+  }
+
+  private getTaskCycleAnchor(
+    taskRecord: Pick<TaskSelect, 'repeatRule'>,
+    now: Date,
+  ) {
+    return dayjs(now).tz(this.getTaskRepeatTimezone(taskRecord))
+  }
+
   /**
    * 统一判断任务是否落在发布时间窗口内。
    *
@@ -2108,6 +2362,16 @@ export class TaskService {
     if (availabilityError) {
       throw new BadRequestException(availabilityError)
     }
+  }
+
+  private isSameNullableDate(left?: Date | null, right?: Date | null) {
+    if (!left && !right) {
+      return true
+    }
+    if (!left || !right) {
+      return false
+    }
+    return left.getTime() === right.getTime()
   }
 
   /**
@@ -2144,29 +2408,15 @@ export class TaskService {
     now: Date,
   ) {
     const repeatType = this.getTaskRepeatType(taskRecord)
+    const cycleAnchor = this.getTaskCycleAnchor(taskRecord, now)
     if (repeatType === TaskRepeatTypeEnum.DAILY) {
-      return new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate() + 1,
-        ),
-      )
+      return cycleAnchor.startOf('day').add(1, 'day').toDate()
     }
     if (repeatType === TaskRepeatTypeEnum.WEEKLY) {
-      const weekStart = this.getWeekStart(now)
-      return new Date(
-        Date.UTC(
-          weekStart.getUTCFullYear(),
-          weekStart.getUTCMonth(),
-          weekStart.getUTCDate() + 7,
-        ),
-      )
+      return this.getWeekStart(cycleAnchor).add(1, 'week').toDate()
     }
     if (repeatType === TaskRepeatTypeEnum.MONTHLY) {
-      return new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-      )
+      return cycleAnchor.startOf('month').add(1, 'month').toDate()
     }
     return undefined
   }

@@ -1,13 +1,13 @@
 import {
-  BaseTaskAssignmentDto,
-  BaseTaskDto,
   TaskService,
 } from '@libs/growth/task'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  AppTaskPageResponseDto,
   ClaimTaskDto,
+  MyTaskPageResponseDto,
   QueryAppTaskDto,
   QueryMyTaskDto,
   TaskCompleteDto,
@@ -22,7 +22,7 @@ export class TaskController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询可领取任务',
-    model: BaseTaskDto,
+    model: AppTaskPageResponseDto,
   })
   async getAvailable(
     @Query() query: QueryAppTaskDto,
@@ -34,7 +34,7 @@ export class TaskController {
   @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的任务',
-    model: BaseTaskAssignmentDto,
+    model: MyTaskPageResponseDto,
   })
   async getMyTasks(
     @Query() query: QueryMyTaskDto,

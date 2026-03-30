@@ -6,6 +6,7 @@ import {
 import {
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
@@ -19,6 +20,58 @@ export class QueryAppTaskDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseTaskDto, ['type'] as const)),
 ) {}
+
+export class AppTaskPageResponseDto extends PickType(BaseTaskDto, [
+  'id',
+  'createdAt',
+  'updatedAt',
+  'code',
+  'title',
+  'description',
+  'cover',
+  'type',
+  'priority',
+  'claimMode',
+  'completeMode',
+  'targetCount',
+  'rewardConfig',
+  'publishStartAt',
+  'publishEndAt',
+  'repeatRule',
+] as const) {}
+
+export class MyTaskRelatedTaskDto extends PickType(BaseTaskDto, [
+  'id',
+  'title',
+  'type',
+  'rewardConfig',
+  'targetCount',
+  'completeMode',
+  'claimMode',
+] as const) {}
+
+export class MyTaskPageResponseDto extends PickType(BaseTaskAssignmentDto, [
+  'id',
+  'createdAt',
+  'updatedAt',
+  'taskId',
+  'cycleKey',
+  'status',
+  'progress',
+  'target',
+  'claimedAt',
+  'completedAt',
+  'expiredAt',
+] as const) {
+  @NestedProperty({
+    description: '任务摘要',
+    required: false,
+    type: MyTaskRelatedTaskDto,
+    validation: false,
+    nullable: true,
+  })
+  task?: MyTaskRelatedTaskDto | null
+}
 
 export class QueryMyTaskDto extends IntersectionType(
   PageDto,
