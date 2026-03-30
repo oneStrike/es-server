@@ -1,0 +1,441 @@
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { getTableColumns, getTableName, getTableUniqueName, isTable } from 'drizzle-orm'
+import { CasingCache } from 'drizzle-orm/casing'
+import { Pool } from 'pg'
+import ts from 'typescript'
+import * as runtimeSchema from '../schema'
+
+const DB_DIR = resolve(__dirname, '..')
+const SCHEMA_DIR = resolve(DB_DIR, 'schema')
+const DEFAULT_OUTPUT_PATH = resolve(DB_DIR, 'comments', 'generated.sql')
+const PG_CASING = new CasingCache('snake_case')
+const WINDOWS_NEWLINE_REGEX = /\r\n/g
+
+type WarningKind =
+  | 'missing-source-table'
+  | 'missing-table-comment'
+  | 'missing-column-comment'
+  | 'orphan-source-column'
+
+interface SourceTableComments {
+  exportName: string
+  filePath: string
+  tableComment: string | null
+  columnComments: Map<string, string>
+}
+
+interface SchemaCommentWarning {
+  kind: WarningKind
+  exportName: string
+  filePath: string
+  message: string
+  columnKey?: string
+}
+
+export interface SchemaCommentsArtifact {
+  outputPath: string
+  sql: string
+  tableCommentCount: number
+  columnCommentCount: number
+  warnings: SchemaCommentWarning[]
+}
+
+interface WriteSchemaCommentsResult {
+  changed: boolean
+  outputPath: string
+}
+
+interface ApplySchemaCommentsResult {
+  appliedStatementCount: number
+  outputPath: string
+}
+
+export interface BuildSchemaCommentsOptions {
+  outputPath?: string
+}
+
+export interface ApplySchemaCommentsOptions extends BuildSchemaCommentsOptions {
+  databaseUrl: string
+}
+
+export function getSchemaCommentsOutputPath(outputPath: string = DEFAULT_OUTPUT_PATH): string {
+  return outputPath
+}
+
+export function buildSchemaCommentsArtifact(
+  options: BuildSchemaCommentsOptions = {},
+): SchemaCommentsArtifact {
+  const outputPath = getSchemaCommentsOutputPath(options.outputPath)
+  const sourceComments = parseSchemaSourceComments()
+  const warnings: SchemaCommentWarning[] = []
+  const statements: string[] = []
+  let tableCommentCount = 0
+  let columnCommentCount = 0
+
+  const runtimeTables = Object.entries(runtimeSchema)
+    .filter((entry): entry is [string, unknown] => isTable(entry[1]))
+    .map(([exportName, table]) => {
+      const tableName = getTableName(table)
+      const uniqueName = getTableUniqueName(table)
+      const schemaName = uniqueName.endsWith(`.${tableName}`)
+        ? uniqueName.slice(0, -tableName.length - 1)
+        : 'public'
+
+      return {
+        exportName,
+        table,
+        tableName,
+        schemaName,
+      }
+    })
+    .sort((left, right) => {
+      const leftName = `${left.schemaName}.${left.tableName}`
+      const rightName = `${right.schemaName}.${right.tableName}`
+      return leftName.localeCompare(rightName)
+    })
+
+  for (const runtimeTable of runtimeTables) {
+    const sourceTable = sourceComments.get(runtimeTable.exportName)
+
+    if (!sourceTable) {
+      warnings.push({
+        kind: 'missing-source-table',
+        exportName: runtimeTable.exportName,
+        filePath: '',
+        message: `未找到 ${runtimeTable.exportName} 对应的 schema 源定义`,
+      })
+      continue
+    }
+
+    const runtimeColumns = getTableColumns(runtimeTable.table)
+    const runtimeColumnKeys = new Set(Object.keys(runtimeColumns))
+
+    if (sourceTable.tableComment) {
+      statements.push(
+        `COMMENT ON TABLE ${quoteQualifiedName(runtimeTable.schemaName, runtimeTable.tableName)} IS ${toPgTextLiteral(sourceTable.tableComment)};`,
+      )
+      tableCommentCount += 1
+    } else {
+      warnings.push({
+        kind: 'missing-table-comment',
+        exportName: runtimeTable.exportName,
+        filePath: sourceTable.filePath,
+        message: `${runtimeTable.exportName} 缺少表注释`,
+      })
+    }
+
+    for (const [columnKey, column] of Object.entries(runtimeColumns)) {
+      const columnComment = sourceTable.columnComments.get(columnKey)
+      const columnName = PG_CASING.getColumnCasing(column)
+
+      if (!columnComment) {
+        warnings.push({
+          kind: 'missing-column-comment',
+          exportName: runtimeTable.exportName,
+          filePath: sourceTable.filePath,
+          columnKey,
+          message: `${runtimeTable.exportName}.${columnKey} 缺少字段注释`,
+        })
+        continue
+      }
+
+      statements.push(
+        `COMMENT ON COLUMN ${quoteQualifiedName(runtimeTable.schemaName, runtimeTable.tableName, columnName)} IS ${toPgTextLiteral(columnComment)};`,
+      )
+      columnCommentCount += 1
+    }
+
+    for (const orphanColumnKey of sourceTable.columnComments.keys()) {
+      if (runtimeColumnKeys.has(orphanColumnKey)) {
+        continue
+      }
+
+      warnings.push({
+        kind: 'orphan-source-column',
+        exportName: runtimeTable.exportName,
+        filePath: sourceTable.filePath,
+        columnKey: orphanColumnKey,
+        message: `${runtimeTable.exportName}.${orphanColumnKey} 在源码中存在注释，但运行时表中未找到对应字段`,
+      })
+    }
+  }
+
+  const sql = [
+    '-- Generated from db/schema JSDoc comments.',
+    '-- Do not edit this file directly.',
+    '-- Run `pnpm db:comments:generate` to refresh.',
+    'BEGIN;',
+    ...statements,
+    'COMMIT;',
+    '',
+  ].join('\n')
+
+  return {
+    outputPath,
+    sql,
+    tableCommentCount,
+    columnCommentCount,
+    warnings,
+  }
+}
+
+export function writeSchemaCommentsFile(
+  artifact: SchemaCommentsArtifact,
+): WriteSchemaCommentsResult {
+  const previousContent = safeReadFile(artifact.outputPath)
+  mkdirSync(dirname(artifact.outputPath), { recursive: true })
+  writeFileSync(artifact.outputPath, artifact.sql, 'utf8')
+
+  return {
+    changed: previousContent !== artifact.sql,
+    outputPath: artifact.outputPath,
+  }
+}
+
+export async function applySchemaComments(
+  options: ApplySchemaCommentsOptions,
+): Promise<ApplySchemaCommentsResult> {
+  const artifact = buildSchemaCommentsArtifact(options)
+  writeSchemaCommentsFile(artifact)
+
+  const pool = new Pool({
+    connectionString: options.databaseUrl,
+  })
+
+  try {
+    await pool.query(artifact.sql)
+  } finally {
+    await pool.end()
+  }
+
+  return {
+    appliedStatementCount: artifact.tableCommentCount + artifact.columnCommentCount,
+    outputPath: artifact.outputPath,
+  }
+}
+
+function parseSchemaSourceComments(): Map<string, SourceTableComments> {
+  const result = new Map<string, SourceTableComments>()
+
+  for (const filePath of listSchemaSourceFiles(SCHEMA_DIR)) {
+    const sourceText = readFileSync(filePath, 'utf8')
+    const sourceFile = ts.createSourceFile(
+      filePath,
+      sourceText,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    )
+
+    sourceFile.forEachChild((node) => {
+      if (!ts.isVariableStatement(node) || !hasExportModifier(node)) {
+        return
+      }
+
+      for (const declaration of node.declarationList.declarations) {
+        if (!ts.isIdentifier(declaration.name) || !declaration.initializer) {
+          continue
+        }
+
+        const columnsDefinition = getPgTableColumnsDefinition(declaration.initializer)
+
+        if (columnsDefinition === undefined) {
+          continue
+        }
+
+        if (columnsDefinition === null) {
+          result.set(declaration.name.text, {
+            exportName: declaration.name.text,
+            filePath,
+            tableComment: getNodeJsDoc(node) ?? getNodeJsDoc(declaration),
+            columnComments: new Map(),
+          })
+          continue
+        }
+
+        const columnComments = new Map<string, string>()
+
+        for (const property of columnsDefinition.properties) {
+          if (!ts.isPropertyAssignment(property)) {
+            continue
+          }
+
+          const propertyName = getPropertyName(property.name)
+
+          if (!propertyName) {
+            continue
+          }
+
+          const propertyComment = getNodeJsDoc(property)
+
+          if (propertyComment) {
+            columnComments.set(propertyName, propertyComment)
+          }
+        }
+
+        result.set(declaration.name.text, {
+          exportName: declaration.name.text,
+          filePath,
+          tableComment: getNodeJsDoc(node) ?? getNodeJsDoc(declaration),
+          columnComments,
+        })
+      }
+    })
+  }
+
+  return result
+}
+
+function listSchemaSourceFiles(directoryPath: string): string[] {
+  const entries = readdirSync(directoryPath, { withFileTypes: true })
+  const files: string[] = []
+
+  for (const entry of entries) {
+    const entryPath = resolve(directoryPath, entry.name)
+
+    if (entry.isDirectory()) {
+      files.push(...listSchemaSourceFiles(entryPath))
+      continue
+    }
+
+    if (entry.isFile() && entry.name.endsWith('.ts')) {
+      files.push(entryPath)
+    }
+  }
+
+  return files.sort((left, right) => left.localeCompare(right))
+}
+
+function hasExportModifier(node: ts.Node): boolean {
+  return Boolean(node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword))
+}
+
+function getPgTableColumnsDefinition(
+  initializer: ts.Expression,
+): ts.ObjectLiteralExpression | null | undefined {
+  if (!ts.isCallExpression(initializer)) {
+    return undefined
+  }
+
+  if (!isPgTableExpression(initializer.expression)) {
+    return undefined
+  }
+
+  const columnsArgument = initializer.arguments[1]
+
+  if (!columnsArgument) {
+    return null
+  }
+
+  if (ts.isObjectLiteralExpression(columnsArgument)) {
+    return columnsArgument
+  }
+
+  if (ts.isArrowFunction(columnsArgument) || ts.isFunctionExpression(columnsArgument)) {
+    const body = columnsArgument.body
+
+    if (ts.isObjectLiteralExpression(body)) {
+      return body
+    }
+
+    if (ts.isParenthesizedExpression(body) && ts.isObjectLiteralExpression(body.expression)) {
+      return body.expression
+    }
+  }
+
+  return null
+}
+
+function isPgTableExpression(expression: ts.LeftHandSideExpression): boolean {
+  if (ts.isIdentifier(expression)) {
+    return expression.text === 'pgTable'
+  }
+
+  if (ts.isPropertyAccessExpression(expression)) {
+    return expression.name.text === 'pgTable'
+  }
+
+  return false
+}
+
+function getPropertyName(name: ts.PropertyName): string | null {
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
+    return name.text
+  }
+
+  return null
+}
+
+function getNodeJsDoc(node: ts.Node): string | null {
+  const jsDocNodes = ts.getJSDocCommentsAndTags(node).filter((entry): entry is ts.JSDoc => ts.isJSDoc(entry))
+
+  if (jsDocNodes.length === 0) {
+    return null
+  }
+
+  const lastDoc = jsDocNodes.at(-1)
+  return normalizeJsDocComment(renderJsDocComment(lastDoc.comment))
+}
+
+function renderJsDocComment(
+  comment: ts.JSDoc['comment'],
+): string {
+  if (typeof comment === 'string') {
+    return comment
+  }
+
+  if (!comment) {
+    return ''
+  }
+
+  return comment
+    .map((part) => {
+      if ('text' in part && typeof part.text === 'string') {
+        return part.text
+      }
+
+      return part.getText()
+    })
+    .join('')
+}
+
+function normalizeJsDocComment(comment: string): string | null {
+  const normalizedLines = comment
+    .replace(WINDOWS_NEWLINE_REGEX, '\n')
+    .split('\n')
+    .map(line => line.trim())
+
+  while (normalizedLines[0] === '') {
+    normalizedLines.shift()
+  }
+
+  while (normalizedLines.at(-1) === '') {
+    normalizedLines.pop()
+  }
+
+  if (normalizedLines.length === 0) {
+    return null
+  }
+
+  return normalizedLines.join('\n')
+}
+
+function safeReadFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, 'utf8')
+  } catch {
+    return null
+  }
+}
+
+function quoteQualifiedName(...parts: string[]): string {
+  return parts.map(part => `"${part.replaceAll('"', '""')}"`).join('.')
+}
+
+function toPgTextLiteral(value: string): string {
+  return `E'${value
+    .replaceAll('\\', '\\\\')
+    .replaceAll('\'', '\'\'')
+    .replaceAll('\n', '\\n')}'`
+}

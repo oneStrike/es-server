@@ -8,6 +8,9 @@ import { boolean, index, integer, pgTable, smallserial, text, timestamp, unique,
  * 数据字典
  */
 export const dictionary = pgTable("sys_dictionary", {
+  /**
+   * 主键ID
+   */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 字典名称
@@ -52,6 +55,9 @@ export const dictionary = pgTable("sys_dictionary", {
  * 数据字典项
  */
 export const dictionaryItem = pgTable("sys_dictionary_item", {
+  /**
+   * 主键ID
+   */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 所属字典编码

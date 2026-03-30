@@ -5,6 +5,7 @@ import process from 'node:process'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { Pool } from 'pg'
+import { applySchemaComments } from './comments/schema-comments'
 
 const MIGRATIONS_SCHEMA = 'public'
 const MIGRATIONS_TABLE = '__drizzle_migrations__'
@@ -419,6 +420,27 @@ async function runMigration() {
         throw seedError
       }
     }
+  }
+
+  const commentStartedAt = Date.now()
+  log('INFO', '开始同步数据库注释')
+
+  try {
+    const result = await applySchemaComments({
+      databaseUrl,
+    })
+
+    log('SUCCESS', '数据库注释同步完成', {
+      cost: formatDuration(Date.now() - commentStartedAt),
+      commentSqlPath: result.outputPath,
+      appliedStatementCount: result.appliedStatementCount,
+    })
+  } catch (error) {
+    log('ERROR', '数据库注释同步失败', {
+      cost: formatDuration(Date.now() - commentStartedAt),
+      error: serializeError(error),
+    })
+    throw error
   }
 
   log('SUCCESS', '数据库迁移流程结束', {
