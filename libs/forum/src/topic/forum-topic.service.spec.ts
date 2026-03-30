@@ -69,9 +69,7 @@ describe('forum topic audit reward backfill', () => {
     const whereUpdate = jest.fn().mockResolvedValue({ rowCount: 1 })
     const set = jest.fn(() => ({ where: whereUpdate }))
     const update = jest.fn(() => ({ set }))
-    const transaction = jest.fn(async (callback) =>
-      callback({ update } as any),
-    )
+    const transaction = jest.fn(async (callback) => callback({ update } as any))
     const withErrorHandling = jest.fn(async (callback) => callback())
 
     const service = new ForumTopicService(
@@ -139,9 +137,7 @@ describe('forum topic audit reward backfill', () => {
     const whereUpdate = jest.fn().mockResolvedValue({ rowCount: 1 })
     const set = jest.fn(() => ({ where: whereUpdate }))
     const update = jest.fn(() => ({ set }))
-    const transaction = jest.fn(async (callback) =>
-      callback({ update } as any),
-    )
+    const transaction = jest.fn(async (callback) => callback({ update } as any))
     const withErrorHandling = jest.fn(async (callback) => callback())
 
     const service = new ForumTopicService(
@@ -229,9 +225,7 @@ describe('forum topic public page payload', () => {
       icon: 'section-icon.png',
       cover: 'section-cover.png',
     })
-    const likedStatusBatch = jest
-      .fn()
-      .mockResolvedValue(new Map([[101, true]]))
+    const likedStatusBatch = jest.fn().mockResolvedValue(new Map([[101, true]]))
     const favoritedStatusBatch = jest
       .fn()
       .mockResolvedValue(new Map([[101, false]]))
@@ -279,11 +273,9 @@ describe('forum topic public page payload', () => {
       pageSize: 20,
     })
 
-    expect(ensureUserCanAccessSection).toHaveBeenCalledWith(
-      9,
-      5,
-      { requireEnabled: true },
-    )
+    expect(ensureUserCanAccessSection).toHaveBeenCalledWith(9, 5, {
+      requireEnabled: true,
+    })
     expect(likedStatusBatch).toHaveBeenCalledWith(3, [101], 5)
     expect(favoritedStatusBatch).toHaveBeenCalledWith(3, [101], 5)
     expect(result.list).toEqual([
@@ -372,14 +364,10 @@ describe('forum topic public detail payload', () => {
       device: 'device-1',
     })
 
-    expect(ensureUserCanAccessSection).toHaveBeenCalledWith(
-      9,
-      5,
-      {
-        requireEnabled: true,
-        notFoundMessage: '主题不存在',
-      },
-    )
+    expect(ensureUserCanAccessSection).toHaveBeenCalledWith(9, 5, {
+      requireEnabled: true,
+      notFoundMessage: '主题不存在',
+    })
     expect(checkLikeStatus).toHaveBeenCalledWith({
       targetType: 3,
       targetId: 101,

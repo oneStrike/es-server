@@ -1,9 +1,15 @@
 import type { Db } from '@db/core'
+import type {
+  CommentTargetMeta,
+  VisibleCommentEffectPayload,
+} from '@libs/interaction/comment'
 import {
   CommentService,
   CommentTargetTypeEnum,
   ICommentTargetResolver,
 } from '@libs/interaction/comment'
+import { MessageNotificationComposerService } from '@libs/message/notification'
+import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
@@ -21,6 +27,8 @@ export class ForumTopicCommentResolver
 
   constructor(
     private readonly commentService: CommentService,
+    private readonly messageOutboxService: MessageOutboxService,
+    private readonly messageNotificationComposerService: MessageNotificationComposerService,
     private readonly forumCounterService: ForumCounterService,
   ) {}
 
@@ -97,7 +105,7 @@ export class ForumTopicCommentResolver
         auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
       },
-      columns: { userId: true, sectionId: true },
+      columns: { userId: true, sectionId: true, title: true },
       with: {
         section: {
           columns: {
@@ -115,21 +123,52 @@ export class ForumTopicCommentResolver
     return {
       ownerUserId: topic.userId,
       sectionId: topic.sectionId,
+      targetDisplayTitle: topic.title,
     }
   }
 
   async postCommentHook(
     tx: Db,
-    targetId: number,
-    _actorUserId: number,
-    meta: { sectionId?: number },
+    comment: VisibleCommentEffectPayload,
+    meta: CommentTargetMeta,
   ) {
     if (!meta.sectionId) {
       throw new BadRequestException('帖子板块信息缺失')
     }
 
-    await this.forumCounterService.syncTopicCommentState(tx, targetId)
+    await this.forumCounterService.syncTopicCommentState(tx, comment.targetId)
     await this.forumCounterService.syncSectionVisibleState(tx, meta.sectionId)
+
+    if (comment.replyToId) {
+      return
+    }
+
+    const receiverUserId = meta.ownerUserId
+    if (!receiverUserId || receiverUserId === comment.userId) {
+      return
+    }
+
+    const actor = await tx.query.appUser.findFirst({
+      where: { id: comment.userId },
+      columns: { nickname: true },
+    })
+
+    await this.messageOutboxService.enqueueNotificationEventInTx(
+      tx,
+      this.messageNotificationComposerService.buildTopicCommentEvent({
+        bizKey: `notify:topic-comment:${comment.targetType}:${comment.targetId}:comment:${comment.id}:receiver:${receiverUserId}`,
+        receiverUserId,
+        actorUserId: comment.userId,
+        targetType: comment.targetType,
+        targetId: comment.targetId,
+        subjectId: comment.id,
+        payload: {
+          actorNickname: actor?.nickname,
+          topicTitle: meta.targetDisplayTitle,
+          commentExcerpt: comment.content,
+        },
+      }),
+    )
   }
 
   async postDeleteCommentHook(
@@ -138,7 +177,7 @@ export class ForumTopicCommentResolver
       userId: number
       targetId: number
     },
-    meta: { sectionId?: number },
+    meta: CommentTargetMeta,
   ) {
     if (!meta.sectionId) {
       throw new BadRequestException('帖子板块信息缺失')

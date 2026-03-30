@@ -37,6 +37,7 @@
   - `apps/admin-api/src/modules/message/dto/message-monitor.dto.ts`
 - 核心测试点：
   - `TOPIC_*` 类型进入通知类型列表
+  - 既有 `COMMENT_REPLY ~ TASK_REMINDER` 编码保持不变，新类型只追加不重排
   - `payload.type` 可正确派生 outbox `eventType`
   - 兼容期 `eventType !== payload.type` 会被拒绝
   - schema 注释 / seed 示例 / 管理端筛选说明同步更新
@@ -51,6 +52,8 @@
 - 预计影响文件：
   - `libs/message/src/notification/` 下新增 composer / payload type 文件
   - `libs/message/src/notification/notification.type.ts`
+  - `libs/message/src/notification/notification.module.ts`
+  - `libs/message/src/notification/index.ts`
   - `libs/interaction/src/like/interfaces/like-target-resolver.interface.ts`
   - `libs/interaction/src/favorite/interfaces/favorite-target-resolver.interface.ts`
   - `libs/interaction/src/favorite/favorite.service.ts`
@@ -60,6 +63,7 @@
   - typed payload 字段口径稳定
   - 论坛主题元数据与展示快照结构明确
   - composer / payload 设计不绑定论坛专属句式，后续可扩展到其他通知类型
+  - composer 已进入 `MessageNotificationModule` 的 `providers / exports`，并可通过 notification 公共导出注入
 
 ## 4. Wave 3
 
@@ -75,6 +79,7 @@
   - 主题点赞改为 `TOPIC_LIKE`
   - 主题收藏改为 `TOPIC_FAVORITE`
   - 正文展示主题标题
+  - 已启用模板环境下仍展示动态标题与主题标题正文
   - 自通知场景继续跳过
 
 ### [P1-02 评论回复动态文案](./p1/02-comment-reply-dynamic-copy.md)
@@ -84,6 +89,8 @@
 - 预计影响文件：
   - `libs/interaction/src/comment/comment.service.ts`
   - `libs/interaction/src/comment/comment.type.ts`
+  - `libs/message/src/notification/notification.constant.ts`
+  - `db/seed/modules/message/domain.ts`
   - `libs/message/src/notification/` 下 composer / type 文件
 - 核心测试点：
   - 回复通知标题改为动态昵称文案
@@ -91,6 +98,7 @@
   - `VisibleCommentEffectPayload / CommentModerationState` 能为审核补偿路径复用回复正文
   - `replyTargetUserId` 透传后不重复查询
   - 回复摘要为空时优先回退 `targetDisplayTitle`，缺失时回退固定兜底文案
+  - `COMMENT_REPLY` 默认模板与 fallback 同步升级，启用模板环境不再继续展示旧静态 copy
   - 审核补偿路径仍可正常兜底
 
 ## 5. Wave 4
@@ -104,28 +112,29 @@
   - `libs/interaction/src/comment/comment.type.ts`
   - `libs/interaction/src/comment/interfaces/comment-target-resolver.interface.ts`
   - `libs/forum/src/topic/resolver/forum-topic-comment.resolver.ts`
-  - `libs/message/src/notification/` 下 composer / type 文件
+  - `libs/message/src/notification/` 下 composer / constant / type 文件
+  - `db/seed/modules/message/domain.ts`
 - 核心测试点：
   - 一级评论首次可见时写入 `TOPIC_COMMENT`
   - 回复评论不会误发 `TOPIC_COMMENT`
   - 正文优先显示评论摘要，兜底为主题标题
   - 审核通过补偿与取消隐藏补偿路径都可复用
   - 复用 `P1-02` 已补的评论副作用载荷，不重复改评论补偿底座
+  - `syncTopicCommentState / syncSectionVisibleState` 现有论坛计数副作用不回归
+  - 启用模板与联调 seed 的环境不会继续展示旧静态 `TOPIC_COMMENT` copy
 
 ## 6. Wave 5
 
-### [P2-01 模板默认文案与 seed 升级](./p2/01-template-default-copy-and-seed.md)
+### [P2-01 主题通知模板默认文案与 seed 升级](./p2/01-template-default-copy-and-seed.md)
 
 - 开工条件：`P0-01`
 - 预计改动模块：`libs/message/notification`、`db/seed/modules/message`
 - 预计影响文件：
-  - `libs/message/src/notification/notification.constant.ts`
   - `libs/message/src/notification/notification-template.service.ts`
   - `db/seed/modules/message/domain.ts`
 - 核心测试点：
-  - `TOPIC_*` 模板定义完整
-  - `COMMENT_REPLY` 默认模板升级为动态快照版
-  - 联调 seed 示例文案与默认模板口径一致
+  - 联调 seed 示例文案与 `TOPIC_* / COMMENT_REPLY` 动态模板口径一致
+  - `P1-01`、`P1-02`、`P1-03` 已完成的动态模板不会被本波回退为旧静态 copy
   - 模板缺失 / 禁用 / 渲染失败时仍 fallback
 
 ### [P2-02 模板缓存与占位符校验](./p2/02-template-cache-and-placeholder-validation.md)

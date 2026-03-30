@@ -5,9 +5,10 @@ import type {
   CreateNotificationOutboxEventInput,
 } from './outbox.type'
 import { DrizzleService } from '@db/core'
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { ChatOutboxEventTypeEnum } from '../chat/chat.constant'
+import { MessageNotificationTypeEnum } from '../notification/notification.constant'
 import {
   MessageOutboxDomainEnum,
   MessageOutboxStatusEnum,
@@ -120,11 +121,12 @@ export class MessageOutboxService {
     tx: Db,
     dto: CreateNotificationOutboxEventInput,
   ) {
+    const eventType = this.normalizeNotificationEventType(dto)
     await this.enqueueEventInTx(
       tx,
       {
         domain: MessageOutboxDomainEnum.NOTIFICATION,
-        eventType: dto.eventType,
+        eventType,
         bizKey: dto.bizKey,
         payload: dto.payload,
       },
@@ -148,7 +150,7 @@ export class MessageOutboxService {
       tx,
       dtos.map((dto) => ({
         domain: MessageOutboxDomainEnum.NOTIFICATION,
-        eventType: dto.eventType,
+        eventType: this.normalizeNotificationEventType(dto),
         bizKey: dto.bizKey,
         payload: dto.payload,
       })),
@@ -201,5 +203,21 @@ export class MessageOutboxService {
 
       return (result.rowCount ?? 0) > 0
     })
+  }
+
+  /**
+   * 归一化通知事件类型
+   * 兼容期允许调用方保留 eventType，但必须与 payload.type 保持一致
+   */
+  private normalizeNotificationEventType(
+    dto: CreateNotificationOutboxEventInput,
+  ): MessageNotificationTypeEnum {
+    const eventType = dto.payload.type
+
+    if (dto.eventType !== undefined && dto.eventType !== eventType) {
+      throw new BadRequestException('通知事件类型与 payload.type 不一致')
+    }
+
+    return eventType
   }
 }

@@ -18,7 +18,7 @@ export const userNotification = pgTable("user_notification", {
    */
   userId: integer().notNull(),
   /**
-   * 通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息,7=任务提醒）
+   * 通知类型（既有编码固定：1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息,7=任务提醒；新增类型仅允许追加：8=主题点赞,9=主题收藏,10=主题评论）
    */
   type: smallint().notNull(),
   /**

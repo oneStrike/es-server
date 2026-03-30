@@ -9,6 +9,8 @@
 - 升级评论 post hook 签名
 - 仅对一级评论发送 `TOPIC_COMMENT`
 - 正文优先显示评论摘要
+- 同步升级 `TOPIC_COMMENT` 默认模板与联调 seed 示例
+- 保留论坛主题现有评论计数与板块可见状态同步副作用
 
 ## 当前代码锚点
 
@@ -16,6 +18,8 @@
 - `libs/interaction/src/comment/comment.type.ts`
 - `libs/interaction/src/comment/interfaces/comment-target-resolver.interface.ts`
 - `libs/forum/src/topic/resolver/forum-topic-comment.resolver.ts`
+- `libs/message/src/notification/notification.constant.ts`
+- `db/seed/modules/message/domain.ts`
 
 ## 非目标
 
@@ -30,6 +34,8 @@
 - 一级评论首次可见时发送 `TOPIC_COMMENT`
 - 回复评论继续走 `COMMENT_REPLY`
 - `TOPIC_COMMENT` 正文优先显示评论摘要，缺失时回退主题标题
+- 同步将 `TOPIC_COMMENT` 默认模板升级为动态快照版，并补一条联调 seed 示例，避免启用模板环境继续命中旧静态 copy
+- `forum-topic-comment.resolver` 继续保留 `syncTopicCommentState / syncSectionVisibleState` 现有副作用
 - 审核通过补偿与取消隐藏补偿路径共享同一逻辑
 
 ## 完成标准
@@ -37,6 +43,8 @@
 - 论坛主题作者在一级评论首次可见时能收到通知
 - 回复评论不会误触发“主题被评论”通知
 - 通知正文对用户可读，不再只有静态兜底文案
+- 即使在模板已启用且带 seed 的环境中，`TOPIC_COMMENT` 也会展示动态文案
+- 主题评论通知改造不会回归论坛主题评论计数与板块可见状态同步
 
 ## 完成后同步文档
 

@@ -1,6 +1,7 @@
 /**
  * 消息通知类型枚举
  * 统一使用 SmallInt 存储
+ * 既有 1~7 编码已冻结，新增类型只允许按追加方式扩展
  */
 export enum MessageNotificationTypeEnum {
   /** 评论回复通知 */
@@ -17,6 +18,12 @@ export enum MessageNotificationTypeEnum {
   CHAT_MESSAGE = 6,
   /** 任务提醒通知 */
   TASK_REMINDER = 7,
+  /** 主题点赞通知 */
+  TOPIC_LIKE = 8,
+  /** 主题收藏通知 */
+  TOPIC_FAVORITE = 9,
+  /** 主题评论通知 */
+  TOPIC_COMMENT = 10,
 }
 
 /**
@@ -48,8 +55,8 @@ export const MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS: readonly MessageNotifica
     templateKey: 'notification.comment-reply',
     label: '评论回复通知',
     defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '收到新的评论回复',
-    defaultContentTemplate: '你收到了一条新的评论回复',
+    defaultTitleTemplate: '{{payload.actorNickname}} 回复了你的评论',
+    defaultContentTemplate: '{{payload.replyExcerpt}}',
   },
   {
     notificationType: MessageNotificationTypeEnum.COMMENT_LIKE,
@@ -98,6 +105,30 @@ export const MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS: readonly MessageNotifica
     defaultPreferenceEnabled: true,
     defaultTitleTemplate: '{{payload.title}}',
     defaultContentTemplate: '{{payload.content}}',
+  },
+  {
+    notificationType: MessageNotificationTypeEnum.TOPIC_LIKE,
+    templateKey: 'notification.topic-like',
+    label: '主题点赞通知',
+    defaultPreferenceEnabled: true,
+    defaultTitleTemplate: '{{payload.actorNickname}} 点赞了你的主题',
+    defaultContentTemplate: '{{payload.topicTitle}}',
+  },
+  {
+    notificationType: MessageNotificationTypeEnum.TOPIC_FAVORITE,
+    templateKey: 'notification.topic-favorite',
+    label: '主题收藏通知',
+    defaultPreferenceEnabled: true,
+    defaultTitleTemplate: '{{payload.actorNickname}} 收藏了你的主题',
+    defaultContentTemplate: '{{payload.topicTitle}}',
+  },
+  {
+    notificationType: MessageNotificationTypeEnum.TOPIC_COMMENT,
+    templateKey: 'notification.topic-comment',
+    label: '主题评论通知',
+    defaultPreferenceEnabled: true,
+    defaultTitleTemplate: '{{payload.actorNickname}} 评论了你的主题',
+    defaultContentTemplate: '{{payload.commentExcerpt}}',
   },
 ] as const
 

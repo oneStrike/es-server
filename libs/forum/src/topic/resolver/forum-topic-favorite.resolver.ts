@@ -4,10 +4,11 @@ import {
  } from '@db/core'
 import {
   FavoriteService,
+  FavoriteTargetContext,
   FavoriteTargetTypeEnum,
   IFavoriteTargetResolver,
 } from '@libs/interaction/favorite'
-import { MessageNotificationTypeEnum } from '@libs/message/notification'
+import { MessageNotificationComposerService } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
@@ -29,6 +30,7 @@ export class ForumTopicFavoriteResolver
     private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly messageNotificationComposerService: MessageNotificationComposerService,
     private readonly forumCounterService: ForumCounterService,
     private readonly forumTopicService: ForumTopicService,
   ) {}
@@ -56,7 +58,7 @@ export class ForumTopicFavoriteResolver
         isHidden: false,
         deletedAt: { isNull: true },
       },
-      columns: { userId: true },
+      columns: { userId: true, title: true },
       with: {
         section: {
           columns: {
@@ -71,7 +73,10 @@ export class ForumTopicFavoriteResolver
       throw new BadRequestException('帖子不存在')
     }
 
-    return { ownerUserId: topic.userId }
+    return {
+      ownerUserId: topic.userId,
+      targetTitle: topic.title,
+    }
   }
 
   /**
@@ -112,39 +117,43 @@ export class ForumTopicFavoriteResolver
 
   /**
    * 收藏后钩子函数
-   * 当用户成功收藏主题后，向主题作者发送通知（收藏者与被收藏者不是同一人时）
+   * 当用户成功收藏主题后，基于 ensureExists 已返回的属主与标题构造主题专属动态通知
    * @param tx - 事务客户端
    * @param targetId - 被收藏的主题ID
    * @param actorUserId - 执行收藏操作的用户ID
-   * @param options - 包含主题所有者用户ID的选项对象
-   * @param options.ownerUserId - 主题所有者用户ID
+   * @param options - 收藏目标上下文，包含主题所有者与展示标题
    */
   async postFavoriteHook(
     tx: Db,
     targetId: number,
     actorUserId: number,
-    options: { ownerUserId?: number },
+    options: FavoriteTargetContext,
   ) {
-    const { ownerUserId: topicOwnerId } = options
+    const { ownerUserId: receiverUserId, targetTitle } = options
 
-    if (topicOwnerId !== undefined && topicOwnerId !== actorUserId) {
-      await this.messageOutboxService.enqueueNotificationEventInTx(
-        tx,
-        {
-          eventType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
-          bizKey: `notify:favorite:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${topicOwnerId}`,
-          payload: {
-            receiverUserId: topicOwnerId,
-            actorUserId,
-            type: MessageNotificationTypeEnum.CONTENT_FAVORITE,
-            targetType: this.targetType,
-            targetId,
-            title: '你的内容被收藏了',
-            content: '有人收藏了你的内容',
-          },
-        },
-      )
+    if (receiverUserId === undefined || receiverUserId === actorUserId) {
+      return
     }
+
+    const actor = await tx.query.appUser.findFirst({
+      where: { id: actorUserId },
+      columns: { nickname: true },
+    })
+
+    await this.messageOutboxService.enqueueNotificationEventInTx(
+      tx,
+      this.messageNotificationComposerService.buildTopicFavoriteEvent({
+        bizKey: `notify:favorite:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${receiverUserId}`,
+        receiverUserId,
+        actorUserId,
+        targetType: this.targetType,
+        targetId,
+        payload: {
+          actorNickname: actor?.nickname?.trim() || '有人',
+          topicTitle: targetTitle?.trim() || '你的主题',
+        },
+      }),
+    )
   }
 
   /**

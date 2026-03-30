@@ -7,6 +7,7 @@
 ## 范围
 
 - 升级 `COMMENT_REPLY` 的 fallback 文案
+- 同步升级 `COMMENT_REPLY` 默认模板
 - 补齐评论回复所需快照字段
 - 减少回复链路的一次重复查询
 - 保持 `COMMENT_REPLY` 的跨内容域通用语义
@@ -16,6 +17,7 @@
 - `libs/interaction/src/comment/comment.service.ts`
 - `libs/interaction/src/comment/comment.type.ts`
 - `libs/message/src/notification/notification.constant.ts`
+- `db/seed/modules/message/domain.ts`
 
 ## 非目标
 
@@ -33,12 +35,14 @@
 - `replyComment(...)` 已查到的被回复用户直接透传给补偿逻辑
 - 审核补偿场景保留现有兜底查询
 - 回复摘要为空时优先回退为 `targetDisplayTitle`，缺失时回退固定兜底文案
+- 同步将 `COMMENT_REPLY` 默认模板升级为动态快照版，避免启用模板环境继续命中旧静态 copy
 
 ## 完成标准
 
 - 回复通知不再只有固定文案
 - 回复通知能表达“是谁回复了你”
 - 回复通知主链路不引入额外漂移字段或不必要的重复查询
+- 即使在模板已启用且已 seed 的环境中，`COMMENT_REPLY` 也会展示动态文案
 - `COMMENT_REPLY` 继续保持跨内容域通用表达，不绑定论坛主题专属口径
 
 ## 完成后同步文档

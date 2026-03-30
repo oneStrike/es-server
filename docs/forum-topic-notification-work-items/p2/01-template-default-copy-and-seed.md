@@ -1,19 +1,17 @@
-# P2-01 模板默认文案与 seed 升级
+# P2-01 主题通知模板默认文案与 seed 升级
 
 ## 目标
 
-让模板层对新增论坛主题通知类型具备开箱即用的动态文案默认值，同时保留业务 fallback。
+收口论坛主题通知的联调 seed 与模板回退验收口径，并保持与已在 `P1-01`、`P1-02`、`P1-03` 落地的动态模板一致。
 
 ## 范围
 
-- 为 `TOPIC_*` 增加模板定义
-- 升级 `COMMENT_REPLY` 默认模板
 - 更新消息域模板 seed
 - 同步联调示例通知文案，避免继续展示旧固定 copy
+- 验证模板缺失、禁用或渲染失败时仍使用业务 fallback
 
 ## 当前代码锚点
 
-- `libs/message/src/notification/notification.constant.ts`
 - `libs/message/src/notification/notification-template.service.ts`
 - `db/seed/modules/message/domain.ts`
 
@@ -22,23 +20,21 @@
 - 不在本任务里做模板缓存
 - 不在本任务里引入多渠道模板编排
 - 不要求“有模板才能发通知”
+- 不重复承担 `COMMENT_REPLY` 默认模板升级；该动作已并入 `P1-02`
+- 不重复承担 `TOPIC_LIKE / TOPIC_FAVORITE` 默认模板升级；该动作已并入 `P1-01`
+- 不重复承担 `TOPIC_COMMENT` 默认模板升级；该动作已并入 `P1-03`
 
 ## 主要改动
 
-- 为 `TOPIC_LIKE` 增加默认模板
-- 为 `TOPIC_FAVORITE` 增加默认模板
-- 为 `TOPIC_COMMENT` 增加默认模板
-- 将 `COMMENT_REPLY` 默认模板升级为动态快照版
 - 更新对应 seed 数据
 - 同步联调 seed 中涉及通知文案的示例数据
 - 保证模板缺失、禁用或渲染失败时仍使用业务 fallback
 
 ## 完成标准
 
-- 新增论坛主题通知类型有稳定默认模板
-- 回复通知默认模板与 fallback 文案口径一致
+- 联调 seed 示例文案与已落地的 `TOPIC_* / COMMENT_REPLY` 动态模板口径一致
 - 模板层继续只负责渲染，不侵入业务主链路判断
-- 模板定义、seed 默认值与联调示例文案口径一致
+- 模板缺失、禁用或渲染失败时仍稳定回退到业务 fallback
 
 ## 完成后同步文档
 

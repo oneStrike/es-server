@@ -7,6 +7,7 @@
 ## 范围
 
 - 为论坛主题新增独立通知类型
+- 冻结既有通知类型编码，新类型只允许追加
 - 收口通知 outbox 的类型来源
 - 同步 DTO / 偏好 / 模板定义侧的基础类型映射
 - 同步 schema 注释 / Swagger 描述 / seed 示例里的基础类型口径
@@ -34,6 +35,7 @@
 - 新增 `TOPIC_LIKE`
 - 新增 `TOPIC_FAVORITE`
 - 新增 `TOPIC_COMMENT`
+- 保持既有 `COMMENT_REPLY ~ TASK_REMINDER` 的 `smallint` 编码不变，新增类型只允许追加在现有值之后
 - 让通知 outbox 以 `payload.type` 为唯一通知类型事实源
 - 兼容期对 `eventType !== payload.type` 做显式校验
 - 在 `MessageOutboxService` 写库时由 `payload.type` 统一派生 `message_outbox.eventType`
@@ -43,6 +45,7 @@
 ## 完成标准
 
 - 论坛主题点赞、收藏、评论具备独立通知类型
+- 历史通知类型的数值语义保持不变，旧 `user_notification` 数据不会因枚举重排被错误解释
 - 论坛主题相关新增 / 改造调用方不再需要继续双写 `eventType / payload.type`
 - 非论坛通知调用方的 `eventType` 删除需求已明确拆出，不与本任务包耦合
 - 偏好、模板、delivery 后续可以围绕新增类型独立收口

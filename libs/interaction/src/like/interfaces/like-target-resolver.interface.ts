@@ -13,6 +13,10 @@ export interface LikeTargetMeta {
   sceneId: number
   /** 评论层级（仅评论类型有效） */
   commentLevel?: CommentLevelEnum
+  /** 目标所有者用户ID（可选，用于通知和自操作保护） */
+  ownerUserId?: number
+  /** 目标展示标题（可选，用于通知展示快照） */
+  targetTitle?: string
 }
 
 /**

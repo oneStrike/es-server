@@ -1,6 +1,15 @@
 import type { Db } from '@db/core'
 import type { FavoriteTargetTypeEnum } from '../favorite.constant'
 
+/**
+ * 收藏目标上下文
+ * 用于在收藏主链路与后置钩子之间透传属主与展示快照
+ */
+export interface FavoriteTargetContext {
+  ownerUserId?: number
+  targetTitle?: string
+}
+
 export interface IFavoriteTargetResolver {
   /**
    * 目标类型标识
@@ -17,7 +26,7 @@ export interface IFavoriteTargetResolver {
   ensureExists: (
     tx: Db,
     targetId: number,
-  ) => Promise<{ ownerUserId?: number }>
+  ) => Promise<FavoriteTargetContext>
 
   /**
    * 更新目标的收藏统计数
@@ -38,7 +47,7 @@ export interface IFavoriteTargetResolver {
     tx: Db,
     targetId: number,
     actorUserId: number,
-    options: { ownerUserId?: number },
+    options: FavoriteTargetContext,
   ) => Promise<void>
 
   /**

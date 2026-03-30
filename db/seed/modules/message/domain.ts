@@ -1,15 +1,18 @@
 import type { Db } from '../../db-client'
 import { and, eq } from 'drizzle-orm'
+import { ChatOutboxEventTypeEnum } from '../../../../libs/message/src/chat/chat.constant'
 import {
   MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS,
   MessageNotificationTypeEnum,
 } from '../../../../libs/message/src/notification/notification.constant'
+import { MessageOutboxDomainEnum } from '../../../../libs/message/src/outbox/outbox.constant'
 import {
   appAnnouncement,
   appUser,
   chatConversation,
   chatConversationMember,
   chatMessage,
+  forumTopic,
   messageOutbox,
   messageWsMetric,
   notificationTemplate,
@@ -222,8 +225,43 @@ export async function seedMessageDomain(db: Db) {
       '而且艾伦和调查兵团的立场差异很早就有预警。',
     ),
   })
+  const commentTopic = rootReply?.targetId
+    ? await db.query.forumTopic.findFirst({
+      where: eq(forumTopic.id, rootReply.targetId),
+      columns: {
+        id: true,
+        userId: true,
+        title: true,
+      },
+    })
+    : null
+  const topicCommentActorNickname = [userA, userB, userC].find(
+    (user) => user.id === rootReply?.userId,
+  )?.nickname ?? '有人'
 
   const notificationFixtures = [
+    {
+      userId: commentTopic?.userId ?? userA.id,
+      type: MessageNotificationTypeEnum.TOPIC_COMMENT,
+      bizKey: 'seed:notif:topic-comment:aot',
+      actorUserId: rootReply?.userId ?? userB.id,
+      targetType: rootReply?.targetType ?? 5,
+      targetId: rootReply?.targetId ?? commentTopic?.id ?? null,
+      subjectType: 1,
+      subjectId: rootReply?.id ?? null,
+      title: `${topicCommentActorNickname} 评论了你的主题`,
+      content: '我觉得第一卷就把未来冲突埋得很深。',
+      payload: {
+        actorNickname: topicCommentActorNickname,
+        topicTitle: commentTopic?.title ?? '进击的巨人：前三卷伏笔整理',
+        commentExcerpt: '我觉得第一卷就把未来冲突埋得很深。',
+      },
+      aggregateKey: 'seed:topic-comment:aot',
+      aggregateCount: 1,
+      isRead: false,
+      readAt: null,
+      expiredAt: null,
+    },
     {
       userId: userB.id,
       type: MessageNotificationTypeEnum.COMMENT_REPLY,
@@ -233,9 +271,13 @@ export async function seedMessageDomain(db: Db) {
       targetId: rootReply?.id ?? null,
       subjectType: 1,
       subjectId: replyComment?.id ?? null,
-      title: '你的评论收到了回复',
-      content: '小光回复了你在《进击的巨人》话题下的评论。',
-      payload: { topic: '进击的巨人：前三卷伏笔整理' },
+      title: '小光 回复了你的评论',
+      content: '而且艾伦和调查兵团的立场差异很早就有预警。',
+      payload: {
+        actorNickname: '小光',
+        replyExcerpt: '而且艾伦和调查兵团的立场差异很早就有预警。',
+        targetDisplayTitle: '进击的巨人：前三卷伏笔整理',
+      },
       aggregateKey: 'seed:comment-reply:aot',
       aggregateCount: 1,
       isRead: false,
@@ -301,11 +343,20 @@ export async function seedMessageDomain(db: Db) {
 
   const outboxFixtures = [
     {
-      domain: 1,
-      eventType: 2,
+      domain: MessageOutboxDomainEnum.NOTIFICATION,
+      eventType: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
       bizKey: 'seed:outbox:notif:2026-spring',
       payload: {
-        notificationBizKey: 'seed:notif:system-announcement:2026-spring',
+        receiverUserId: userC.id,
+        type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
+        title: '春季版本更新公告',
+        content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
+        targetId: announcement?.id ?? null,
+        subjectType: 2,
+        subjectId: announcement?.id ?? null,
+        payload: {
+          announcementId: announcement?.id ?? null,
+        },
       },
       status: 2,
       retryCount: 0,
@@ -314,12 +365,12 @@ export async function seedMessageDomain(db: Db) {
       processedAt: addMinutes(SEED_TIMELINE.seedAt, -8),
     },
     {
-      domain: 2,
-      eventType: 2,
+      domain: MessageOutboxDomainEnum.CHAT,
+      eventType: ChatOutboxEventTypeEnum.MESSAGE_CREATED,
       bizKey: 'seed:outbox:chat:direct',
       payload: {
         conversationId: conversation.id,
-        messageSeq: 3,
+        messageId: messageBySeq.get(3n)?.id?.toString() ?? '',
       },
       status: 2,
       retryCount: 0,

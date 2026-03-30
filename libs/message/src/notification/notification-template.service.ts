@@ -23,6 +23,56 @@ import {
 } from './notification.constant'
 
 const TEMPLATE_PLACEHOLDER_REGEXP = /\{\{\s*([\w.]+)\s*\}\}/g
+const NOTIFICATION_TEMPLATE_CACHE_TTL_MS = 60 * 1000
+const NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST = new Set([
+  'notificationType',
+  'templateKey',
+  'receiverUserId',
+  'actorUserId',
+  'targetType',
+  'targetId',
+  'subjectType',
+  'subjectId',
+  'aggregateKey',
+  'aggregateCount',
+  'expiredAt',
+])
+const NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP = new Map<
+  MessageNotificationTypeEnum,
+  ReadonlySet<string>
+>([
+  [
+    MessageNotificationTypeEnum.COMMENT_REPLY,
+    new Set(['actorNickname', 'replyExcerpt', 'targetDisplayTitle']),
+  ],
+  [MessageNotificationTypeEnum.COMMENT_LIKE, new Set([])],
+  [MessageNotificationTypeEnum.CONTENT_FAVORITE, new Set([])],
+  [MessageNotificationTypeEnum.USER_FOLLOW, new Set([])],
+  [MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT, new Set(['title', 'content', 'announcementId'])],
+  [MessageNotificationTypeEnum.CHAT_MESSAGE, new Set(['conversationId', 'content'])],
+  [MessageNotificationTypeEnum.TASK_REMINDER, new Set(['title', 'content'])],
+  [
+    MessageNotificationTypeEnum.TOPIC_LIKE,
+    new Set(['actorNickname', 'topicTitle']),
+  ],
+  [
+    MessageNotificationTypeEnum.TOPIC_FAVORITE,
+    new Set(['actorNickname', 'topicTitle']),
+  ],
+  [
+    MessageNotificationTypeEnum.TOPIC_COMMENT,
+    new Set(['actorNickname', 'topicTitle', 'commentExcerpt']),
+  ],
+])
+
+interface NotificationTemplateCacheEntry {
+  expiresAt: number
+  template: {
+    id: number
+    titleTemplate: string
+    contentTemplate: string
+  } | null
+}
 
 /**
  * 通知模板服务
@@ -31,6 +81,10 @@ const TEMPLATE_PLACEHOLDER_REGEXP = /\{\{\s*([\w.]+)\s*\}\}/g
 @Injectable()
 export class MessageNotificationTemplateService {
   private readonly logger = new Logger(MessageNotificationTemplateService.name)
+  private readonly templateCache = new Map<
+    MessageNotificationTypeEnum,
+    NotificationTemplateCacheEntry
+  >()
 
   constructor(private readonly drizzle: DrizzleService) {}
 
@@ -98,20 +152,32 @@ export class MessageNotificationTemplateService {
       input.notificationType,
     )
     const templateKey = getMessageNotificationTemplateKey(notificationType)
+    const titleTemplate = this.normalizeTemplateText(
+      input.titleTemplate,
+      '通知标题模板不能为空',
+    )
+    const contentTemplate = this.normalizeTemplateText(
+      input.contentTemplate,
+      '通知正文模板不能为空',
+    )
+    this.ensureTemplatePlaceholdersValid(
+      notificationType,
+      titleTemplate,
+      'titleTemplate',
+    )
+    this.ensureTemplatePlaceholdersValid(
+      notificationType,
+      contentTemplate,
+      'contentTemplate',
+    )
 
     try {
       await this.drizzle.withErrorHandling(() =>
         this.db.insert(this.notificationTemplate).values({
           notificationType,
           templateKey,
-          titleTemplate: this.normalizeTemplateText(
-            input.titleTemplate,
-            '通知标题模板不能为空',
-          ),
-          contentTemplate: this.normalizeTemplateText(
-            input.contentTemplate,
-            '通知正文模板不能为空',
-          ),
+          titleTemplate,
+          contentTemplate,
           isEnabled: input.isEnabled ?? true,
           remark: this.normalizeRemark(input.remark),
         }),
@@ -123,6 +189,7 @@ export class MessageNotificationTemplateService {
       throw error
     }
 
+    this.invalidateTemplateCache(notificationType)
     return true
   }
 
@@ -131,27 +198,46 @@ export class MessageNotificationTemplateService {
    * 若通知类型变化，会同步重算模板键并保持一类通知一份模板的约束
    */
   async updateNotificationTemplate(input: UpdateNotificationTemplateInput) {
-    await this.getNotificationTemplateDetail(input.id)
-
-    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> = {}
-    if (input.notificationType !== undefined) {
-      const notificationType = this.ensureSupportedNotificationType(
-        input.notificationType,
-      )
-      updateData.notificationType = notificationType
-      updateData.templateKey = getMessageNotificationTemplateKey(notificationType)
-    }
-    if (input.titleTemplate !== undefined) {
-      updateData.titleTemplate = this.normalizeTemplateText(
+    const current = await this.getNotificationTemplateDetail(input.id)
+    const currentNotificationType = this.ensureSupportedNotificationType(
+      current.notificationType,
+    )
+    const nextNotificationType = input.notificationType !== undefined
+      ? this.ensureSupportedNotificationType(input.notificationType)
+      : currentNotificationType
+    const nextTitleTemplate = input.titleTemplate !== undefined
+      ? this.normalizeTemplateText(
         input.titleTemplate,
         '通知标题模板不能为空',
       )
-    }
-    if (input.contentTemplate !== undefined) {
-      updateData.contentTemplate = this.normalizeTemplateText(
+      : current.titleTemplate
+    const nextContentTemplate = input.contentTemplate !== undefined
+      ? this.normalizeTemplateText(
         input.contentTemplate,
         '通知正文模板不能为空',
       )
+      : current.contentTemplate
+    this.ensureTemplatePlaceholdersValid(
+      nextNotificationType,
+      nextTitleTemplate,
+      'titleTemplate',
+    )
+    this.ensureTemplatePlaceholdersValid(
+      nextNotificationType,
+      nextContentTemplate,
+      'contentTemplate',
+    )
+
+    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> = {}
+    if (input.notificationType !== undefined) {
+      updateData.notificationType = nextNotificationType
+      updateData.templateKey = getMessageNotificationTemplateKey(nextNotificationType)
+    }
+    if (input.titleTemplate !== undefined) {
+      updateData.titleTemplate = nextTitleTemplate
+    }
+    if (input.contentTemplate !== undefined) {
+      updateData.contentTemplate = nextContentTemplate
     }
     if (input.isEnabled !== undefined) {
       updateData.isEnabled = input.isEnabled
@@ -179,6 +265,8 @@ export class MessageNotificationTemplateService {
       throw error
     }
 
+    this.invalidateTemplateCache(currentNotificationType)
+    this.invalidateTemplateCache(nextNotificationType)
     return true
   }
 
@@ -189,6 +277,10 @@ export class MessageNotificationTemplateService {
   async updateNotificationTemplateEnabled(
     input: UpdateNotificationTemplateEnabledInput,
   ) {
+    const current = await this.getNotificationTemplateDetail(input.id)
+    const notificationType = this.ensureSupportedNotificationType(
+      current.notificationType,
+    )
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.notificationTemplate)
@@ -196,6 +288,7 @@ export class MessageNotificationTemplateService {
         .where(eq(this.notificationTemplate.id, input.id)),
     )
     this.drizzle.assertAffectedRows(result, '通知模板不存在')
+    this.invalidateTemplateCache(notificationType)
     return true
   }
 
@@ -204,12 +297,17 @@ export class MessageNotificationTemplateService {
    * 删除后通知主链路仍会继续使用业务方 fallback 文案发送
    */
   async deleteNotificationTemplate(id: number) {
+    const current = await this.getNotificationTemplateDetail(id)
+    const notificationType = this.ensureSupportedNotificationType(
+      current.notificationType,
+    )
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.notificationTemplate)
         .where(eq(this.notificationTemplate.id, id)),
     )
     this.drizzle.assertAffectedRows(result, '通知模板不存在')
+    this.invalidateTemplateCache(notificationType)
     return true
   }
 
@@ -229,12 +327,7 @@ export class MessageNotificationTemplateService {
       usedTemplate: false,
     } satisfies NotificationTemplateRenderResult
 
-    const template = await this.db.query.notificationTemplate.findFirst({
-      where: {
-        notificationType,
-        isEnabled: true,
-      },
-    })
+    const template = await this.getEnabledNotificationTemplate(notificationType)
     if (!template) {
       return {
         ...fallback,
@@ -357,6 +450,93 @@ export class MessageNotificationTemplateService {
       throw new BadRequestException(errorMessage)
     }
     return normalized
+  }
+
+  /**
+   * 读取启用模板
+   * 优先命中类型级本地缓存，并缓存“不存在模板”结果，避免 worker 链路重复查库。
+   */
+  private async getEnabledNotificationTemplate(
+    notificationType: MessageNotificationTypeEnum,
+  ) {
+    const cached = this.templateCache.get(notificationType)
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.template
+    }
+    if (cached) {
+      this.templateCache.delete(notificationType)
+    }
+
+    const template = await this.db.query.notificationTemplate.findFirst({
+      where: {
+        notificationType,
+        isEnabled: true,
+      },
+      columns: {
+        id: true,
+        titleTemplate: true,
+        contentTemplate: true,
+      },
+    })
+
+    this.templateCache.set(notificationType, {
+      expiresAt: Date.now() + NOTIFICATION_TEMPLATE_CACHE_TTL_MS,
+      template: template ?? null,
+    })
+
+    return template
+  }
+
+  /**
+   * 失效模板缓存
+   * 模板增删改与启停切换成功后立即清理对应类型缓存，避免本地缓存继续返回旧模板。
+   */
+  private invalidateTemplateCache(notificationType: MessageNotificationTypeEnum) {
+    this.templateCache.delete(notificationType)
+  }
+
+  /**
+   * 校验模板占位符
+   * 仅允许固定根字段与通知类型对应的 payload 字段，尽量把模板错误前移到保存期。
+   */
+  private ensureTemplatePlaceholdersValid(
+    notificationType: MessageNotificationTypeEnum,
+    templateText: string,
+    fieldName: 'titleTemplate' | 'contentTemplate',
+  ) {
+    const allowedPayloadFields = NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP.get(
+      notificationType,
+    )
+    if (!allowedPayloadFields) {
+      throw new BadRequestException(`通知类型 ${notificationType} 未注册模板 payload 白名单`)
+    }
+
+    const placeholders = new Set(
+      Array.from(templateText.matchAll(TEMPLATE_PLACEHOLDER_REGEXP), (match) => match[1]),
+    )
+
+    for (const path of placeholders) {
+      if (NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST.has(path)) {
+        continue
+      }
+
+      const segments = path.split('.')
+      if (segments[0] !== 'payload') {
+        throw new BadRequestException(
+          `${fieldName} 存在非法占位符: ${path}`,
+        )
+      }
+      if (segments.length !== 2 || !segments[1]) {
+        throw new BadRequestException(
+          `${fieldName} 仅允许使用 payload 下一级字段: ${path}`,
+        )
+      }
+      if (!allowedPayloadFields.has(segments[1])) {
+        throw new BadRequestException(
+          `${fieldName} 不支持当前通知类型的 payload 字段: ${path}`,
+        )
+      }
+    }
   }
 
   /**

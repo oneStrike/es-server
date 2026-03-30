@@ -47,6 +47,24 @@ describe('message notification preference service', () => {
           source: MessageNotificationPreferenceSourceEnum.EXPLICIT,
           preferenceId: 5,
         }),
+        expect.objectContaining({
+          notificationType: MessageNotificationTypeEnum.TOPIC_LIKE,
+          isEnabled: true,
+          defaultEnabled: true,
+          source: MessageNotificationPreferenceSourceEnum.DEFAULT,
+        }),
+        expect.objectContaining({
+          notificationType: MessageNotificationTypeEnum.TOPIC_FAVORITE,
+          isEnabled: true,
+          defaultEnabled: true,
+          source: MessageNotificationPreferenceSourceEnum.DEFAULT,
+        }),
+        expect.objectContaining({
+          notificationType: MessageNotificationTypeEnum.TOPIC_COMMENT,
+          isEnabled: true,
+          defaultEnabled: true,
+          source: MessageNotificationPreferenceSourceEnum.DEFAULT,
+        }),
       ]),
     )
   })

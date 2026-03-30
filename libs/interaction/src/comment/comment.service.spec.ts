@@ -25,12 +25,7 @@ jest.mock('@libs/message/outbox', () => ({
 }))
 
 jest.mock('@libs/message/notification', () => ({
-  MessageNotificationSubjectTypeEnum: {
-    COMMENT: 'COMMENT',
-  },
-  MessageNotificationTypeEnum: {
-    COMMENT_REPLY: 'COMMENT_REPLY',
-  },
+  MessageNotificationComposerService: class {},
 }))
 
 jest.mock('@libs/sensitive-word', () => ({
@@ -77,6 +72,7 @@ describe('comment admin moderation flow', () => {
       targetType: CommentTargetTypeEnum
       targetId: number
       replyToId?: number | null
+      content: string
       createdAt: Date
       auditStatus: AuditStatusEnum
       isHidden: boolean
@@ -88,14 +84,28 @@ describe('comment admin moderation flow', () => {
     const enqueueNotificationEventInTx = jest
       .fn()
       .mockResolvedValue(undefined)
+    const buildCommentReplyEvent = jest.fn((input) => ({
+      bizKey: input.bizKey,
+      payload: {
+        receiverUserId: input.receiverUserId,
+        actorUserId: input.actorUserId,
+        subjectId: input.subjectId,
+        targetId: input.targetId,
+        payload: input.payload,
+      },
+    }))
     const applyCountDelta = jest.fn().mockResolvedValue(undefined)
-    const resolveMeta = jest.fn().mockResolvedValue({ ownerUserId: 99 })
+    const resolveMeta = jest.fn().mockResolvedValue({
+      ownerUserId: 99,
+      targetDisplayTitle: '进击的巨人：前三卷伏笔整理',
+    })
     const postCommentHook = jest.fn().mockResolvedValue(undefined)
     const postDeleteCommentHook = jest.fn().mockResolvedValue(undefined)
     const assertAffectedRows = jest.fn()
     const withErrorHandling = jest.fn(async (callback) => callback())
     const dbFindFirst = jest.fn().mockResolvedValue(options.currentComment)
     const txFindFirst = jest.fn().mockResolvedValue(options.txReplyTarget ?? null)
+    const txActorFindFirst = jest.fn().mockResolvedValue({ nickname: '小光' })
     const where = jest.fn().mockResolvedValue({ rowCount: 1 })
     const set = jest.fn(() => ({ where }))
     const update = jest.fn(() => ({ set }))
@@ -104,6 +114,9 @@ describe('comment admin moderation flow', () => {
         query: {
           userComment: {
             findFirst: txFindFirst,
+          },
+          appUser: {
+            findFirst: txActorFindFirst,
           },
         },
         update,
@@ -142,6 +155,7 @@ describe('comment admin moderation flow', () => {
       { rewardCommentCreated } as any,
       {} as any,
       { enqueueNotificationEventInTx } as any,
+      { buildCommentReplyEvent } as any,
       {} as any,
       {} as any,
       drizzle as any,
@@ -161,12 +175,14 @@ describe('comment admin moderation flow', () => {
       mocks: {
         rewardCommentCreated,
         enqueueNotificationEventInTx,
+        buildCommentReplyEvent,
         applyCountDelta,
         resolveMeta,
         postCommentHook,
         postDeleteCommentHook,
         dbFindFirst,
         txFindFirst,
+        txActorFindFirst,
         update,
         set,
         where,
@@ -186,6 +202,7 @@ describe('comment admin moderation flow', () => {
         targetType: CommentTargetTypeEnum.COMIC,
         targetId: 901,
         replyToId: 77,
+        content: '而且艾伦和调查兵团的立场差异很早就有预警。',
         createdAt,
         auditStatus: AuditStatusEnum.PENDING,
         isHidden: false,
@@ -213,21 +230,49 @@ describe('comment admin moderation flow', () => {
     )
     expect(mocks.postCommentHook).toHaveBeenCalledWith(
       expect.anything(),
-      901,
-      11,
+      {
+        id: 31,
+        userId: 11,
+        targetType: CommentTargetTypeEnum.COMIC,
+        targetId: 901,
+        replyToId: 77,
+        content: '而且艾伦和调查兵团的立场差异很早就有预警。',
+        createdAt,
+        replyTargetUserId: undefined,
+      },
       expect.objectContaining({ ownerUserId: 99 }),
     )
     expect(mocks.enqueueNotificationEventInTx).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({
-        payload: expect.objectContaining({
+      {
+        bizKey: 'comment:reply:31:to:42',
+        payload: {
           receiverUserId: 42,
           actorUserId: 11,
           subjectId: 31,
           targetId: 901,
-        }),
+          payload: {
+            actorNickname: '小光',
+            replyExcerpt: '而且艾伦和调查兵团的立场差异很早就有预警。',
+            targetDisplayTitle: '进击的巨人：前三卷伏笔整理',
+          },
+        },
+      },
+    )
+    expect(mocks.buildCommentReplyEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        receiverUserId: 42,
+        actorUserId: 11,
+        subjectId: 31,
+        targetId: 901,
+        payload: {
+          actorNickname: '小光',
+          replyExcerpt: '而且艾伦和调查兵团的立场差异很早就有预警。',
+          targetDisplayTitle: '进击的巨人：前三卷伏笔整理',
+        },
       }),
     )
+    expect(mocks.txFindFirst).toHaveBeenCalledTimes(1)
     expect(mocks.rewardCommentCreated).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -256,6 +301,7 @@ describe('comment admin moderation flow', () => {
         targetType: CommentTargetTypeEnum.COMIC,
         targetId: 902,
         replyToId: null,
+        content: '普通评论内容',
         createdAt: new Date('2026-03-29T12:10:00.000Z'),
         auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
@@ -288,6 +334,7 @@ describe('comment admin moderation flow', () => {
         targetType: CommentTargetTypeEnum.COMIC,
         targetId: 903,
         replyToId: null,
+        content: '隐藏前评论内容',
         createdAt,
         auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
@@ -315,7 +362,9 @@ describe('comment admin moderation flow', () => {
         targetType: CommentTargetTypeEnum.COMIC,
         targetId: 903,
         replyToId: null,
+        content: '隐藏前评论内容',
         createdAt,
+        replyTargetUserId: undefined,
       },
       expect.objectContaining({ ownerUserId: 99 }),
     )
@@ -331,6 +380,7 @@ describe('comment admin moderation flow', () => {
         targetType: CommentTargetTypeEnum.COMIC,
         targetId: 904,
         replyToId: null,
+        content: '取消隐藏评论内容',
         createdAt,
         auditStatus: AuditStatusEnum.APPROVED,
         isHidden: true,

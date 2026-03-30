@@ -13,6 +13,8 @@
 ## 当前代码锚点
 
 - `libs/message/src/notification/notification.type.ts`
+- `libs/message/src/notification/notification.module.ts`
+- `libs/message/src/notification/index.ts`
 - `libs/interaction/src/like/interfaces/like-target-resolver.interface.ts`
 - `libs/interaction/src/favorite/interfaces/favorite-target-resolver.interface.ts`
 - `libs/interaction/src/favorite/favorite.service.ts`
@@ -34,12 +36,15 @@
 - 扩展 `FavoriteService` 透传 `targetTitle` 给收藏通知后置钩子
 - 扩展 `CommentTargetMeta` 支持 `targetDisplayTitle`
 - 统一 `actorNickname / topicTitle / commentExcerpt / replyExcerpt / targetDisplayTitle` 的快照字段口径
+- 将 composer 注册到 `MessageNotificationModule` 的 `providers / exports`
+- 在 notification 公共导出入口暴露 composer，保证论坛域与互动域可按公共 API 注入
 
 ## 完成标准
 
 - 后续业务模块可以通过 composer 构造通知事件
 - 展示快照字段有统一契约，不再由各模块随意命名
 - 动态文案所需数据能在业务侧准备好，而不是在模板层临时回查
+- 论坛域与互动域可以通过 notification 公共导出稳定注入 composer，而不是依赖文件级深导入
 
 ## 完成后同步文档
 

@@ -93,8 +93,16 @@ export interface TargetCommentsQuery {
  */
 export type VisibleCommentEffectPayload = Pick<
   UserComment,
-  'id' | 'userId' | 'targetType' | 'targetId' | 'replyToId' | 'createdAt'
->
+  | 'id'
+  | 'userId'
+  | 'targetType'
+  | 'targetId'
+  | 'replyToId'
+  | 'content'
+  | 'createdAt'
+> & {
+  replyTargetUserId?: number
+}
 
 /**
  * 评论副作用补偿上下文。
@@ -116,11 +124,14 @@ export type CommentModerationState = Pick<
   | 'targetType'
   | 'targetId'
   | 'replyToId'
+  | 'content'
   | 'createdAt'
   | 'auditStatus'
   | 'isHidden'
   | 'deletedAt'
->
+> & {
+  replyTargetUserId?: number
+}
 
 /**
  * 管理端更新评论审核状态入参。

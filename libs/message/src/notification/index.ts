@@ -1,5 +1,6 @@
 export * from './dto/notification-template.dto'
 export * from './dto/notification.dto'
+export * from './notification-composer.service'
 export * from './notification-delivery.service'
 export * from './notification-delivery.type'
 export * from './notification-native-websocket.server'

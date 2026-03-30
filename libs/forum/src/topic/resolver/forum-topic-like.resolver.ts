@@ -8,7 +8,7 @@ import {
   LikeTargetMeta,
   LikeTargetTypeEnum,
 } from '@libs/interaction/like'
-import { MessageNotificationTypeEnum } from '@libs/message/notification'
+import { MessageNotificationComposerService } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
@@ -29,6 +29,7 @@ export class ForumTopicLikeResolver
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly messageNotificationComposerService: MessageNotificationComposerService,
     private readonly forumCounterService: ForumCounterService,
   ) {}
 
@@ -56,7 +57,7 @@ export class ForumTopicLikeResolver
         isHidden: false,
         deletedAt: { isNull: true },
       },
-      columns: { id: true },
+      columns: { id: true, userId: true, title: true },
       with: {
         section: {
           columns: {
@@ -74,6 +75,8 @@ export class ForumTopicLikeResolver
     return {
       sceneType: SceneTypeEnum.FORUM_TOPIC,
       sceneId: targetId,
+      ownerUserId: topic.userId,
+      targetTitle: topic.title,
     }
   }
 
@@ -115,45 +118,41 @@ export class ForumTopicLikeResolver
 
   /**
    * 点赞后钩子函数
-   * 当用户成功点赞主题后，向主题作者发送通知（点赞者与被点赞者不是同一人时）
+   * 当用户成功点赞主题后，基于 resolveMeta 已透传的属主与标题构造主题专属动态通知
    * @param tx - 事务客户端
    * @param targetId - 被点赞的主题ID
    * @param actorUserId - 执行点赞操作的用户ID
-   * @param _meta - 点赞目标元数据（本场景未使用）
+   * @param meta - 点赞目标元数据，包含主题属主与展示标题
    */
   async postLikeHook(
     tx: Db,
     targetId: number,
     actorUserId: number,
-    _meta: LikeTargetMeta,
+    meta: LikeTargetMeta,
   ) {
-    const topic = await tx.query.forumTopic.findFirst({
-      where: {
-        id: targetId,
-        deletedAt: { isNull: true },
-      },
-      columns: { userId: true },
-    })
-
-    if (!topic || topic.userId === actorUserId) {
+    const receiverUserId = meta.ownerUserId
+    if (!receiverUserId || receiverUserId === actorUserId) {
       return
     }
 
+    const actor = await tx.query.appUser.findFirst({
+      where: { id: actorUserId },
+      columns: { nickname: true },
+    })
+
     await this.messageOutboxService.enqueueNotificationEventInTx(
       tx,
-      {
-        eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
-        bizKey: `notify:like:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${topic.userId}`,
+      this.messageNotificationComposerService.buildTopicLikeEvent({
+        bizKey: `notify:like:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${receiverUserId}`,
+        receiverUserId,
+        actorUserId,
+        targetType: this.targetType,
+        targetId,
         payload: {
-          receiverUserId: topic.userId,
-          actorUserId,
-          type: MessageNotificationTypeEnum.COMMENT_LIKE,
-          targetType: this.targetType,
-          targetId,
-          title: '你的主题收到点赞',
-          content: '有人点赞了你的主题',
+          actorNickname: actor?.nickname?.trim() || '有人',
+          topicTitle: meta.targetTitle?.trim() || '你的主题',
         },
-      },
+      }),
     )
   }
 

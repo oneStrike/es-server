@@ -23,8 +23,7 @@ import {
 } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import {
-  MessageNotificationSubjectTypeEnum,
-  MessageNotificationTypeEnum,
+  MessageNotificationComposerService,
 } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
@@ -71,6 +70,7 @@ export class CommentService {
     private readonly likeService: LikeService,
     /** 消息发件箱服务，用于发送通知消息 */
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly messageNotificationComposerService: MessageNotificationComposerService,
     private readonly appUserCountService: AppUserCountService,
     private readonly emojiParserService: EmojiParserService,
     private readonly drizzle: DrizzleService,
@@ -279,7 +279,9 @@ export class CommentService {
       targetType: comment.targetType,
       targetId: comment.targetId,
       replyToId: comment.replyToId,
+      content: comment.content,
       createdAt: comment.createdAt,
+      replyTargetUserId: comment.replyTargetUserId,
     }
   }
 
@@ -352,12 +354,7 @@ export class CommentService {
     await this.applyCommentCountDelta(tx, targetType, params.current.targetId, 1)
 
     if (resolver.postCommentHook) {
-      await resolver.postCommentHook(
-        tx,
-        params.current.targetId,
-        params.current.userId,
-        meta,
-      )
+      await resolver.postCommentHook(tx, commentPayload, meta)
     }
 
     const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
@@ -442,7 +439,7 @@ export class CommentService {
   private async compensateVisibleCommentEffects(
     tx: Db,
     comment: VisibleCommentEffectPayload,
-    _meta: CommentTargetMeta,
+    meta: CommentTargetMeta,
     eventEnvelope: ReturnType<CommentService['buildCommentCreatedEventEnvelope']>,
   ) {
     // 移除成长奖励逻辑，由外部 createComment/replyComment 处理，
@@ -464,37 +461,49 @@ export class CommentService {
     }
 
     // 查询被回复的评论，获取被回复者信息
-    const replyTarget = await tx.query.userComment.findFirst({
-      where: {
-        id: comment.replyToId,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        userId: true,
-      },
-    })
+    let replyTargetUserId = comment.replyTargetUserId
+
+    if (replyTargetUserId === undefined) {
+      const replyTarget = await tx.query.userComment.findFirst({
+        where: {
+          id: comment.replyToId,
+          deletedAt: { isNull: true },
+        },
+        columns: {
+          userId: true,
+        },
+      })
+
+      replyTargetUserId = replyTarget?.userId
+    }
 
     // 被回复评论不存在或自己回复自己，无需通知
-    if (!replyTarget || replyTarget.userId === comment.userId) {
+    if (!replyTargetUserId || replyTargetUserId === comment.userId) {
       return
     }
 
+    const actor = await tx.query.appUser.findFirst({
+      where: { id: comment.userId },
+      columns: { nickname: true },
+    })
+
     // 将回复通知加入消息队列
-    await this.messageOutboxService.enqueueNotificationEventInTx(tx, {
-      eventType: MessageNotificationTypeEnum.COMMENT_REPLY,
-      bizKey: `comment:reply:${comment.id}:to:${replyTarget.userId}`,
-      payload: {
-        receiverUserId: replyTarget.userId,
+    await this.messageOutboxService.enqueueNotificationEventInTx(
+      tx,
+      this.messageNotificationComposerService.buildCommentReplyEvent({
+        bizKey: `comment:reply:${comment.id}:to:${replyTargetUserId}`,
+        receiverUserId: replyTargetUserId,
         actorUserId: comment.userId,
-        type: MessageNotificationTypeEnum.COMMENT_REPLY,
         targetType: comment.targetType,
         targetId: comment.targetId,
-        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
         subjectId: comment.id,
-        title: '收到新的评论回复',
-        content: '你收到了一条新的评论回复',
-      },
-    })
+        payload: {
+          actorNickname: actor?.nickname,
+          replyExcerpt: comment.content,
+          targetDisplayTitle: meta.targetDisplayTitle,
+        },
+      }),
+    )
 
     // 如果目标所有者不是评论者，且不是回复评论（回复通知已发），可以发一个被评论通知
     // 但目前业务可能更细化，暂时保留回复通知逻辑。
@@ -570,6 +579,7 @@ export class CommentService {
                   targetType: this.userComment.targetType,
                   targetId: this.userComment.targetId,
                   replyToId: this.userComment.replyToId,
+                  content: this.userComment.content,
                   createdAt: this.userComment.createdAt,
                 })
 
@@ -591,7 +601,7 @@ export class CommentService {
 
                 const meta = await resolver.resolveMeta(tx, targetId)
                 if (resolver.postCommentHook) {
-                  await resolver.postCommentHook(tx, targetId, userId, meta)
+                  await resolver.postCommentHook(tx, newComment, meta)
                 }
 
                 await this.compensateVisibleCommentEffects(
@@ -713,6 +723,7 @@ export class CommentService {
           targetType: this.userComment.targetType,
           targetId: this.userComment.targetId,
           replyToId: this.userComment.replyToId,
+          content: this.userComment.content,
           createdAt: this.userComment.createdAt,
         })
 
@@ -738,13 +749,17 @@ export class CommentService {
         )
 
         const meta = await resolver.resolveMeta(tx, targetId)
+        const visibleCommentPayload = {
+          ...newComment,
+          replyTargetUserId: replyTo.userId,
+        }
         if (resolver.postCommentHook) {
-          await resolver.postCommentHook(tx, targetId, userId, meta)
+          await resolver.postCommentHook(tx, visibleCommentPayload, meta)
         }
 
         await this.compensateVisibleCommentEffects(
           tx,
-          newComment,
+          visibleCommentPayload,
           meta,
           commentCreatedEvent,
         )
@@ -1344,6 +1359,7 @@ export class CommentService {
         targetType: true,
         targetId: true,
         replyToId: true,
+        content: true,
         createdAt: true,
         auditStatus: true,
         isHidden: true,
@@ -1425,6 +1441,7 @@ export class CommentService {
         targetType: true,
         targetId: true,
         replyToId: true,
+        content: true,
         createdAt: true,
         auditStatus: true,
         isHidden: true,

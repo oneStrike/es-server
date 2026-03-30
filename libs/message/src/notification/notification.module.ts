@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config'
 import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageMonitorModule } from '../monitor/monitor.module'
 import { MessageNotificationDeliveryService } from './notification-delivery.service'
+import { MessageNotificationComposerService } from './notification-composer.service'
 import { MessageNativeWebSocketServer } from './notification-native-websocket.server'
 import { MessageNotificationPreferenceService } from './notification-preference.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
@@ -18,6 +19,7 @@ import { MessageNotificationService } from './notification.service'
     MessageWebSocketService,
     MessageNativeWebSocketServer,
     MessageGateway,
+    MessageNotificationComposerService,
     MessageNotificationDeliveryService,
     MessageNotificationRealtimeService,
     MessageNotificationPreferenceService,
@@ -26,6 +28,7 @@ import { MessageNotificationService } from './notification.service'
   ],
   exports: [
     MessageNativeWebSocketServer,
+    MessageNotificationComposerService,
     MessageNotificationDeliveryService,
     MessageNotificationPreferenceService,
     MessageNotificationService,

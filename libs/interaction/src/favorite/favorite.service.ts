@@ -118,7 +118,7 @@ export class FavoriteService {
     const resolver = this.getResolver(targetType)
 
     const record = await this.drizzle.withTransaction(async (tx) => {
-      const { ownerUserId: topicOwnerId } = await resolver.ensureExists(
+      const { ownerUserId, targetTitle } = await resolver.ensureExists(
         tx,
         targetId,
       )
@@ -145,7 +145,8 @@ export class FavoriteService {
 
       if (resolver.postFavoriteHook) {
         await resolver.postFavoriteHook(tx, targetId, userId, {
-          ownerUserId: topicOwnerId,
+          ownerUserId,
+          targetTitle,
         })
       }
       return favoriteRecord

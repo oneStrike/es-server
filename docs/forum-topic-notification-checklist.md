@@ -38,7 +38,7 @@
 ### 2.2 本轮一起交付的范围
 
 - 本轮默认一次收口四类论坛主题通知：主题点赞、主题收藏、主题被评论、评论收到回复。
-- 允许按依赖拆成多个 phase / wave 推进，但不建议把 `P1-01`、`P1-03` 或 `P2-01` 延后到下一轮再做，否则论坛主题通知产品化口径仍不完整。
+- 允许按依赖拆成多个 phase / wave 推进，但不建议把 `P1-01`、`P1-02`、`P1-03` 或 `P2-01` 延后到下一轮再做，否则论坛主题通知产品化口径仍不完整。
 - `COMMENT_REPLY` 本轮继续保持跨内容域通用类型，只升级动态文案与展示兜底；若未来需要区分论坛主题 / 作品 / 章节回复，另开全通知域任务。
 
 ## 3. 实施清单
@@ -55,6 +55,7 @@
 - [ ] 在 `MessageNotificationTypeEnum` 中新增 `TOPIC_LIKE`
 - [ ] 在 `MessageNotificationTypeEnum` 中新增 `TOPIC_FAVORITE`
 - [ ] 在 `MessageNotificationTypeEnum` 中新增 `TOPIC_COMMENT`
+- [ ] 新增通知类型编码只允许追加，保持既有 `COMMENT_REPLY ~ TASK_REMINDER` 数值不变
 - [ ] 更新通知模板定义与类型值列表
 - [ ] 更新通知偏好类型列表与对应单测
 - [ ] 更新通知监控 / DTO / 管理端枚举展示
@@ -91,6 +92,7 @@
 - [ ] 在 composer 层统一构造 fallback `title / content`
 - [ ] 在 composer 层统一写入 typed `payload.payload`
 - [ ] 保持 composer 接口风格可扩展，后续可平滑承接非论坛通知类型
+- [ ] 将 composer 注册到 `MessageNotificationModule` 的 `providers / exports`，并从 notification 公共导出暴露
 - [ ] 为 composer 补基础单测
 
 关键文件：
@@ -159,6 +161,7 @@
 
 - [ ] `COMMENT_REPLY` 标题改为 `actorNickname + 回复了你的评论`
 - [ ] `COMMENT_REPLY` 正文改为回复内容摘要
+- [ ] 同步将 `COMMENT_REPLY` 默认模板升级为动态快照版，保证启用模板环境与 fallback 一致
 - [ ] `VisibleCommentEffectPayload` 增加回复摘要所需正文内容
 - [ ] `CommentModerationState` 保留正文内容，供审核补偿 / 取消隐藏复用
 - [ ] `replyComment(...)` 已查到的 `replyTargetUserId` 直接透传给补偿逻辑
@@ -189,6 +192,7 @@
 - [ ] `TOPIC_COMMENT` 正文优先显示评论摘要
 - [ ] 评论摘要为空时回退为主题标题
 - [ ] 回复评论不会误发 `TOPIC_COMMENT`
+- [ ] `forum-topic-comment.resolver` 继续保留 `syncTopicCommentState / syncSectionVisibleState` 现有副作用
 - [ ] 审核通过补偿与取消隐藏补偿路径都能正确复用该逻辑
 
 关键文件：
@@ -209,7 +213,6 @@
 - [ ] 为 `TOPIC_LIKE` 增加默认模板定义
 - [ ] 为 `TOPIC_FAVORITE` 增加默认模板定义
 - [ ] 为 `TOPIC_COMMENT` 增加默认模板定义
-- [ ] 将 `COMMENT_REPLY` 默认模板升级为动态快照版
 - [ ] 更新通知模板 seed
 - [ ] 明确哪些类型要求业务必须提供 fallback
 - [ ] 保证模板缺失 / 禁用 / 渲染失败时仍可发送 fallback 文案
@@ -273,6 +276,7 @@
 - [ ] 论坛主题点赞主链路未回归
 - [ ] 论坛主题收藏主链路未回归
 - [ ] 论坛主题评论主链路未回归
+- [ ] 论坛主题评论计数与板块可见状态同步未回归
 - [ ] 评论回复主链路未回归
 - [ ] App 通知分页展示未回归
 - [ ] App 通知未读数与已读逻辑未回归

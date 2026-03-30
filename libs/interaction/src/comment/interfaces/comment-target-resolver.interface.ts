@@ -10,6 +10,23 @@ export interface CommentTargetMeta {
   ownerUserId?: number
   /** 论坛主题所属板块ID，仅 forum topic 等场景使用 */
   sectionId?: number
+  /** 目标展示标题，用于回复通知正文兜底等场景 */
+  targetDisplayTitle?: string
+}
+
+/**
+ * 评论目标 hook 载荷。
+ * 统一复用首次可见与删除回退场景下的评论快照字段，避免各 resolver 再维护一套平行参数。
+ */
+export interface CommentTargetHookPayload {
+  id: number
+  userId: number
+  targetType: CommentTargetTypeEnum
+  targetId: number
+  replyToId?: number | null
+  content?: string
+  createdAt: Date
+  replyTargetUserId?: number
 }
 
 /**
@@ -63,17 +80,15 @@ export interface ICommentTargetResolver {
 
   /**
    * 评论成功后钩子（可选）
-   * 在事务内执行，可用于触发自定义后置逻辑
+   * 在事务内执行，可用于触发自定义后置逻辑与一级评论通知
    *
    * @param tx - 事务客户端
-   * @param targetId - 目标ID
-   * @param actorUserId - 执行评论的用户ID
+   * @param comment - 首次变为可见的评论载荷
    * @param meta - 目标元信息
    */
   postCommentHook?: (
     tx: Db,
-    targetId: number,
-    actorUserId: number,
+    comment: CommentTargetHookPayload & { content: string },
     meta: CommentTargetMeta,
   ) => Promise<void>
 
@@ -83,14 +98,7 @@ export interface ICommentTargetResolver {
    */
   postDeleteCommentHook?: (
     tx: Db,
-    comment: {
-      id: number
-      userId: number
-      targetType: CommentTargetTypeEnum
-      targetId: number
-      replyToId?: number | null
-      createdAt: Date
-    },
+    comment: CommentTargetHookPayload,
     meta: CommentTargetMeta,
   ) => Promise<void>
 }

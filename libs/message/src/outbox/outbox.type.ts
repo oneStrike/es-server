@@ -39,9 +39,10 @@ export interface CreateMessageOutboxEventInput {
 /**
  * 创建通知发件箱事件入参。
  * - 用于写入通知领域 outbox 事件
+ * - 兼容期允许继续传 eventType，但真正写库时以 payload.type 为唯一事实源
  */
 export interface CreateNotificationOutboxEventInput {
-  eventType: MessageNotificationTypeEnum
+  eventType?: MessageNotificationTypeEnum
   bizKey: string
   payload: NotificationOutboxPayload
 }
