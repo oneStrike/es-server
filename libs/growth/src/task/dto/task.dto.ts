@@ -110,8 +110,8 @@ export class BaseTaskDto extends BaseDto {
   publishEndAt?: Date | null
 
   @JsonProperty({
-    description: '周期规则',
-    example: { type: 'daily', resetAt: '00:00' },
+    description: '周期规则，当前仅识别 type=once/daily/weekly/monthly',
+    example: { type: 'daily' },
     required: false,
   })
   repeatRule?: Record<string, unknown> | null
@@ -147,8 +147,8 @@ export class BaseTaskAssignmentDto extends BaseDto {
   cycleKey!: string
 
   @EnumProperty({
-    description: '任务状态',
-    example: TaskAssignmentStatusEnum.IN_PROGRESS,
+    description: '任务分配状态，PENDING 表示已领取待开始',
+    example: TaskAssignmentStatusEnum.PENDING,
     enum: TaskAssignmentStatusEnum,
   })
   status!: TaskAssignmentStatusEnum

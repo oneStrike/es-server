@@ -65,8 +65,8 @@ import {
  * 任务生命周期：
  * 1. 任务创建（草稿状态）
  * 2. 任务发布（发布状态）
- * 3. 用户领取任务（创建任务分配）
- * 4. 用户执行任务（进度更新）
+ * 3. 用户领取任务（创建待开始分配）
+ * 4. 用户执行任务（推进进度并进入进行中）
  * 5. 任务完成（触发奖励）
  * 6. 任务过期（自动标记）
  */
@@ -512,8 +512,8 @@ export class TaskService {
    */
   async claimTask(dto: ClaimTaskInput, userId: number) {
     // 检查任务是否可领取
-    const taskRecord = await this.findClaimableTask(dto.taskId)
     const now = new Date()
+    const taskRecord = await this.findClaimableTask(dto.taskId, now)
     // 计算当前周期标识
     const cycleKey = this.buildCycleKey(taskRecord, now)
     // 创建或获取已存在的分配
@@ -525,7 +525,8 @@ export class TaskService {
    * 上报任务进度（应用端）
    *
    * 更新用户任务的执行进度。如果任务为自动领取模式且未领取，
-   * 会自动创建分配。当进度达到目标时自动标记为完成。
+   * 会自动创建分配。仅 AUTO 模式会在达标时自动完成，
+   * MANUAL 模式达标后仍需显式调用 completeTask。
    *
    * 使用乐观锁机制防止并发更新冲突。
    *
@@ -544,8 +545,8 @@ export class TaskService {
       throw new BadRequestException('进度增量必须大于0')
     }
     // 检查任务是否可用
-    const taskRecord = await this.findAvailableTask(dto.taskId)
     const now = new Date()
+    const taskRecord = await this.findAvailableTask(dto.taskId, now)
     const cycleKey = this.buildCycleKey(taskRecord, now)
 
     // 查找现有分配
@@ -580,7 +581,7 @@ export class TaskService {
     }
 
     if (assignment.status === TaskAssignmentStatusEnum.EXPIRED) {
-      return true
+      throw new BadRequestException('任务已过期')
     }
 
     // 计算新进度（不超过目标值）
@@ -588,13 +589,15 @@ export class TaskService {
       assignment.target,
       assignment.progress + dto.delta,
     )
-    // 判断是否完成
-    const nextStatus =
+    // 只有 AUTO 模式会在进度达标时自动完成；其他情况统一保持未完成。
+    const shouldAutoComplete =
+      taskRecord.completeMode === TaskCompleteModeEnum.AUTO &&
       nextProgress >= assignment.target
+    const nextStatus =
+      shouldAutoComplete
         ? TaskAssignmentStatusEnum.COMPLETED
-        : assignment.status
-    const completedAt =
-      nextStatus === TaskAssignmentStatusEnum.COMPLETED ? now : undefined
+        : TaskAssignmentStatusEnum.IN_PROGRESS
+    const completedAt = shouldAutoComplete ? now : undefined
     const context = this.parseJsonValue(dto.context)
 
     // 事务更新：更新分配并记录进度日志
@@ -616,12 +619,16 @@ export class TaskService {
           ),
         )
 
+      if ((updateResult.rowCount ?? 0) === 0) {
+        return 0
+      }
+
       // 记录进度日志
       await tx.insert(this.taskProgressLogTable).values({
         assignmentId: assignment.id,
         userId,
         actionType:
-          nextStatus === TaskAssignmentStatusEnum.COMPLETED
+          shouldAutoComplete
             ? TaskProgressActionTypeEnum.COMPLETE
             : TaskProgressActionTypeEnum.PROGRESS,
         delta: dto.delta,
@@ -642,7 +649,10 @@ export class TaskService {
       assignment.status !== TaskAssignmentStatusEnum.COMPLETED &&
       nextStatus === TaskAssignmentStatusEnum.COMPLETED
     ) {
-      await this.emitTaskCompleteEvent(userId, taskRecord, assignment)
+      await this.emitTaskCompleteEvent(userId, taskRecord, {
+        ...assignment,
+        completedAt: now,
+      })
     }
     return true
   }
@@ -650,8 +660,8 @@ export class TaskService {
   /**
    * 完成任务（应用端）
    *
-   * 手动标记任务为完成状态。仅适用于手动完成模式的任务。
-   * 自动完成模式的任务需要进度达标后才能完成。
+   * 显式将已达标任务标记为完成状态。
+   * MANUAL 模式依赖该接口完成任务，AUTO 模式则作为补偿入口兜底。
    *
    * @param dto 完成参数
    *   - taskId: 任务ID
@@ -661,8 +671,8 @@ export class TaskService {
    * @throws NotFoundException 任务不存在
    */
   async completeTask(dto: TaskCompleteInput, userId: number) {
-    const taskRecord = await this.findAvailableTask(dto.taskId)
     const now = new Date()
+    const taskRecord = await this.findAvailableTask(dto.taskId, now)
     const cycleKey = this.buildCycleKey(taskRecord, now)
 
     const assignment = await this.findAssignmentByUniqueKey(
@@ -683,11 +693,11 @@ export class TaskService {
       )
       return true
     }
-    // 自动完成模式需要进度达标
-    if (
-      taskRecord.completeMode === TaskCompleteModeEnum.AUTO &&
-      assignment.progress < assignment.target
-    ) {
+    if (assignment.status === TaskAssignmentStatusEnum.EXPIRED) {
+      throw new BadRequestException('任务已过期')
+    }
+    // 显式完成只允许达标后的 assignment 进入完成态。
+    if (assignment.progress < assignment.target) {
       throw new BadRequestException('任务进度未达成')
     }
 
@@ -710,6 +720,10 @@ export class TaskService {
           ),
         )
 
+      if ((updateResult.rowCount ?? 0) === 0) {
+        return 0
+      }
+
       await tx.insert(this.taskProgressLogTable).values({
         assignmentId: assignment.id,
         userId,
@@ -727,7 +741,10 @@ export class TaskService {
     }
 
     // 触发完成事件（发放奖励）
-    await this.emitTaskCompleteEvent(userId, taskRecord, assignment)
+    await this.emitTaskCompleteEvent(userId, taskRecord, {
+      ...assignment,
+      completedAt: now,
+    })
     return true
   }
 
@@ -737,27 +754,48 @@ export class TaskService {
    * 过期任务分配检查（定时任务）
    *
    * 每5分钟执行一次，自动将过期的任务分配标记为已过期。
-   * 检查条件：分配状态为待领取或进行中，且过期时间已到。
+   * 检查条件：分配状态为待开始或进行中，且过期时间已到。
    */
   @Cron('0 */5 * * * *')
   async expireAssignments() {
     const now = new Date()
-    await this.drizzle.withErrorHandling(() =>
-      this.db
+    await this.drizzle.withTransaction(async (tx) => {
+      const expiredAssignments = await tx
         .update(this.taskAssignmentTable)
         .set({
           status: TaskAssignmentStatusEnum.EXPIRED,
         })
         .where(
           and(
+            isNull(this.taskAssignmentTable.deletedAt),
             inArray(this.taskAssignmentTable.status, [
               TaskAssignmentStatusEnum.PENDING,
               TaskAssignmentStatusEnum.IN_PROGRESS,
             ]),
             lte(this.taskAssignmentTable.expiredAt, now),
           ),
-        ),
-    )
+        )
+        .returning({
+          assignmentId: this.taskAssignmentTable.id,
+          userId: this.taskAssignmentTable.userId,
+          progress: this.taskAssignmentTable.progress,
+        })
+
+      if (expiredAssignments.length === 0) {
+        return
+      }
+
+      await tx.insert(this.taskProgressLogTable).values(
+        expiredAssignments.map((assignment) => ({
+          assignmentId: assignment.assignmentId,
+          userId: assignment.userId,
+          actionType: TaskProgressActionTypeEnum.EXPIRE,
+          delta: 0,
+          beforeValue: assignment.progress,
+          afterValue: assignment.progress,
+        })),
+      )
+    })
   }
 
   /**
@@ -975,7 +1013,7 @@ export class TaskService {
    * @returns 任务记录
    * @throws NotFoundException 任务不存在
    */
-  private async findAvailableTask(taskId: number) {
+  private async findAvailableTask(taskId: number, now = new Date()) {
     const [taskRecord] = await this.db
       .select()
       .from(this.taskTable)
@@ -992,6 +1030,7 @@ export class TaskService {
     if (!taskRecord) {
       throw new NotFoundException('任务不存在')
     }
+    this.assertTaskInPublishWindow(taskRecord, now)
     return taskRecord
   }
 
@@ -1005,18 +1044,8 @@ export class TaskService {
    * @throws BadRequestException 任务未开始或已结束
    * @throws NotFoundException 任务不存在
    */
-  private async findClaimableTask(taskId: number) {
-    const taskRecord = await this.findAvailableTask(taskId)
-    const now = new Date()
-    // 校验任务是否已开始
-    if (taskRecord.publishStartAt && taskRecord.publishStartAt > now) {
-      throw new BadRequestException('任务未开始')
-    }
-    // 校验任务是否已结束
-    if (taskRecord.publishEndAt && taskRecord.publishEndAt < now) {
-      throw new BadRequestException('任务已结束')
-    }
-    return taskRecord
+  private async findClaimableTask(taskId: number, now = new Date()) {
+    return this.findAvailableTask(taskId, now)
   }
 
   /**
@@ -1034,8 +1063,7 @@ export class TaskService {
    * @returns 周期标识
    */
   private buildCycleKey(taskRecord: Pick<TaskSelect, 'repeatRule'>, now: Date): string {
-    const rule = taskRecord.repeatRule as { type?: string } | null
-    const type = rule?.type ?? TaskRepeatTypeEnum.ONCE
+    const type = this.getTaskRepeatType(taskRecord)
     if (type === TaskRepeatTypeEnum.DAILY) {
       return this.formatDate(now)
     }
@@ -1046,6 +1074,21 @@ export class TaskService {
       return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
     }
     return TaskRepeatTypeEnum.ONCE
+  }
+
+  /**
+   * 解析任务重复类型。
+   *
+   * repeatRule 当前只认 type 字段，缺省时回退到一次性任务。
+   */
+  private getTaskRepeatType(taskRecord: Pick<TaskSelect, 'repeatRule'>) {
+    const rule = taskRecord.repeatRule as { type?: string } | null
+    const type = rule?.type ?? TaskRepeatTypeEnum.ONCE
+    return Object.values(TaskRepeatTypeEnum).includes(
+      type as TaskRepeatTypeEnum,
+    )
+      ? (type as TaskRepeatTypeEnum)
+      : TaskRepeatTypeEnum.ONCE
   }
 
   /**
@@ -1122,6 +1165,7 @@ export class TaskService {
           eq(this.taskAssignmentTable.taskId, taskId),
           eq(this.taskAssignmentTable.userId, userId),
           eq(this.taskAssignmentTable.cycleKey, cycleKey),
+          isNull(this.taskAssignmentTable.deletedAt),
         ),
       )
       .limit(1)
@@ -1143,6 +1187,7 @@ export class TaskService {
    * @param taskRecord.targetCount 目标数量
    * @param taskRecord.claimMode 领取模式
    * @param taskRecord.publishEndAt 发布结束时间
+   * @param taskRecord.repeatRule 重复规则
    * @param userId 用户ID
    * @param cycleKey 周期标识
    * @param now 当前时间
@@ -1165,11 +1210,11 @@ export class TaskService {
           taskId: taskRecord.id,
           userId,
           cycleKey,
-          status: TaskAssignmentStatusEnum.IN_PROGRESS,
+          status: TaskAssignmentStatusEnum.PENDING,
           progress: 0,
           target: taskRecord.targetCount,
           claimedAt: now,
-          expiredAt: taskRecord.publishEndAt ?? undefined,
+          expiredAt: this.buildAssignmentExpiredAt(taskRecord, now),
           taskSnapshot,
         })
         .onConflictDoNothing()
@@ -1196,6 +1241,7 @@ export class TaskService {
             eq(this.taskAssignmentTable.taskId, taskRecord.id),
             eq(this.taskAssignmentTable.userId, userId),
             eq(this.taskAssignmentTable.cycleKey, cycleKey),
+            isNull(this.taskAssignmentTable.deletedAt),
           ),
         )
         .limit(1)
@@ -1324,12 +1370,7 @@ export class TaskService {
       return
     }
     const now = new Date()
-    // 任务未开始
-    if (taskRecord.publishStartAt && taskRecord.publishStartAt > now) {
-      return
-    }
-    // 任务已结束
-    if (taskRecord.publishEndAt && taskRecord.publishEndAt < now) {
+    if (this.getTaskAvailabilityError(taskRecord, now)) {
       return
     }
     // 计算周期并创建分配
@@ -1760,6 +1801,100 @@ export class TaskService {
     } catch {
       return 'unknown error'
     }
+  }
+
+  /**
+   * 统一判断任务是否落在发布时间窗口内。
+   *
+   * 发布时间窗口对 claim / progress / complete 共用，避免不同入口出现边界漂移。
+   */
+  private getTaskAvailabilityError(
+    taskRecord: Pick<TaskSelect, 'publishStartAt' | 'publishEndAt'>,
+    now: Date,
+  ) {
+    if (taskRecord.publishStartAt && taskRecord.publishStartAt > now) {
+      return '任务未开始'
+    }
+    if (taskRecord.publishEndAt && taskRecord.publishEndAt < now) {
+      return '任务已结束'
+    }
+    return undefined
+  }
+
+  /**
+   * 断言任务当前可执行 claim / progress / complete。
+   *
+   * 任务配置存在不代表当前仍处在有效发布窗口，调用方需要在读到任务后立即校验。
+   */
+  private assertTaskInPublishWindow(
+    taskRecord: Pick<TaskSelect, 'publishStartAt' | 'publishEndAt'>,
+    now: Date,
+  ) {
+    const availabilityError = this.getTaskAvailabilityError(taskRecord, now)
+    if (availabilityError) {
+      throw new BadRequestException(availabilityError)
+    }
+  }
+
+  /**
+   * 计算 assignment 的真实过期时间。
+   *
+   * 一次性任务只受 publishEndAt 约束；重复任务则取“当前周期结束时间”和
+   * publishEndAt 中更早的那个，确保旧周期 assignment 能被稳定关闭。
+   */
+  private buildAssignmentExpiredAt(
+    taskRecord: Pick<TaskSelect, 'publishEndAt' | 'repeatRule'>,
+    now: Date,
+  ) {
+    const cycleExpiredAt = this.getCycleExpiredAt(taskRecord, now)
+    const publishEndAt = taskRecord.publishEndAt ?? undefined
+
+    if (!cycleExpiredAt) {
+      return publishEndAt
+    }
+    if (!publishEndAt) {
+      return cycleExpiredAt
+    }
+    return cycleExpiredAt.getTime() <= publishEndAt.getTime()
+      ? cycleExpiredAt
+      : publishEndAt
+  }
+
+  /**
+   * 计算当前周期的结束时间。
+   *
+   * 周期边界统一按 UTC 计算，保持 cycleKey 与 expiredAt 的口径一致。
+   */
+  private getCycleExpiredAt(
+    taskRecord: Pick<TaskSelect, 'repeatRule'>,
+    now: Date,
+  ) {
+    const repeatType = this.getTaskRepeatType(taskRecord)
+    if (repeatType === TaskRepeatTypeEnum.DAILY) {
+      return new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() + 1,
+        ),
+      )
+    }
+    if (repeatType === TaskRepeatTypeEnum.WEEKLY) {
+      const weekStart = this.getWeekStart(now)
+      return new Date(
+        Date.UTC(
+          weekStart.getUTCFullYear(),
+          weekStart.getUTCMonth(),
+          weekStart.getUTCDate() + 7,
+        ),
+      )
+    }
+    if (repeatType === TaskRepeatTypeEnum.MONTHLY) {
+      return new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+      )
+    }
+    return undefined
   }
 
   /**

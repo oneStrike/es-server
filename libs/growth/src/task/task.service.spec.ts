@@ -1,8 +1,11 @@
 import {
   TaskAssignmentRewardResultTypeEnum,
   TaskAssignmentRewardStatusEnum,
+  TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
+  TaskProgressActionTypeEnum,
+  TaskRepeatTypeEnum,
   TaskStatusEnum,
   TaskTypeEnum,
 } from './task.constant'
@@ -31,6 +34,48 @@ jest.mock('@libs/message/notification', () => ({
     TASK_REMINDER: 7,
   },
 }))
+
+function createUpdateTransactionHarness(rowCount: number) {
+  const where = jest.fn().mockResolvedValue({ rowCount })
+  const set = jest.fn(() => ({ where }))
+  const update = jest.fn(() => ({ set }))
+  const logValues = jest.fn().mockResolvedValue(undefined)
+  const insert = jest.fn(() => ({ values: logValues }))
+
+  return {
+    tx: { update, insert },
+    insert,
+    logValues,
+    set,
+    update,
+    where,
+  }
+}
+
+function createExpireTransactionHarness(
+  expiredAssignments: Array<{
+    assignmentId: number
+    userId: number
+    progress: number
+  }>,
+) {
+  const returning = jest.fn().mockResolvedValue(expiredAssignments)
+  const where = jest.fn(() => ({ returning }))
+  const set = jest.fn(() => ({ where }))
+  const update = jest.fn(() => ({ set }))
+  const logValues = jest.fn().mockResolvedValue(undefined)
+  const insert = jest.fn(() => ({ values: logValues }))
+
+  return {
+    tx: { update, insert },
+    insert,
+    logValues,
+    returning,
+    set,
+    update,
+    where,
+  }
+}
 
 describe('task service rewardConfig contract', () => {
   const baseTask = {
@@ -301,6 +346,478 @@ describe('task service rewardConfig contract', () => {
           }),
         }),
       }),
+    ])
+  })
+})
+
+describe('task service main flows', () => {
+  afterEach(() => {
+    jest.useRealTimers()
+    jest.restoreAllMocks()
+  })
+
+  it('keeps manual tasks in progress when reportProgress reaches the target', async () => {
+    const { TaskService } = await import('./task.service')
+    const txHarness = createUpdateTransactionHarness(1)
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {},
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    jest.spyOn(service as any, 'findAvailableTask').mockResolvedValue({
+      id: 11,
+      claimMode: TaskClaimModeEnum.MANUAL,
+      completeMode: TaskCompleteModeEnum.MANUAL,
+      repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+    })
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 21,
+      status: TaskAssignmentStatusEnum.PENDING,
+      progress: 2,
+      target: 3,
+      version: 4,
+      context: { source: 'app' },
+    })
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.reportProgress(
+        {
+          taskId: 11,
+          delta: 1,
+          context: '{"source":"event"}',
+        } as any,
+        9,
+      ),
+    ).resolves.toBe(true)
+
+    expect(txHarness.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        progress: 3,
+        status: TaskAssignmentStatusEnum.IN_PROGRESS,
+        completedAt: undefined,
+        context: { source: 'event' },
+      }),
+    )
+    expect(txHarness.logValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentId: 21,
+        userId: 9,
+        actionType: TaskProgressActionTypeEnum.PROGRESS,
+        beforeValue: 2,
+        afterValue: 3,
+      }),
+    )
+    expect(emitTaskCompleteEvent).not.toHaveBeenCalled()
+  })
+
+  it('auto-completes AUTO tasks on the first reportProgress that reaches the target', async () => {
+    const { TaskService } = await import('./task.service')
+    const txHarness = createUpdateTransactionHarness(1)
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {},
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    jest.spyOn(service as any, 'findAvailableTask').mockResolvedValue({
+      id: 12,
+      claimMode: TaskClaimModeEnum.AUTO,
+      completeMode: TaskCompleteModeEnum.AUTO,
+      repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+    })
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 22,
+      status: TaskAssignmentStatusEnum.IN_PROGRESS,
+      progress: 1,
+      target: 2,
+      version: 5,
+      context: null,
+    })
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.reportProgress({ taskId: 12, delta: 1 } as any, 9),
+    ).resolves.toBe(true)
+
+    expect(txHarness.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        progress: 2,
+        status: TaskAssignmentStatusEnum.COMPLETED,
+      }),
+    )
+    expect(txHarness.logValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentId: 22,
+        actionType: TaskProgressActionTypeEnum.COMPLETE,
+        beforeValue: 1,
+        afterValue: 2,
+      }),
+    )
+    expect(emitTaskCompleteEvent).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({ id: 12 }),
+      expect.objectContaining({ id: 22 }),
+    )
+  })
+
+  it('completes manual tasks only after explicit completeTask', async () => {
+    const { TaskService } = await import('./task.service')
+    const txHarness = createUpdateTransactionHarness(1)
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {},
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    jest.spyOn(service as any, 'findAvailableTask').mockResolvedValue({
+      id: 11,
+      completeMode: TaskCompleteModeEnum.MANUAL,
+      repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+    })
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 21,
+      status: TaskAssignmentStatusEnum.IN_PROGRESS,
+      progress: 3,
+      target: 3,
+      version: 4,
+    })
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.completeTask({ taskId: 11 } as any, 9),
+    ).resolves.toBe(true)
+
+    expect(txHarness.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        progress: 3,
+        status: TaskAssignmentStatusEnum.COMPLETED,
+      }),
+    )
+    expect(txHarness.logValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentId: 21,
+        userId: 9,
+        actionType: TaskProgressActionTypeEnum.COMPLETE,
+        beforeValue: 3,
+        afterValue: 3,
+      }),
+    )
+    expect(emitTaskCompleteEvent).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({ id: 11 }),
+      expect.objectContaining({ id: 21 }),
+    )
+  })
+
+  it('does not write progress logs when reportProgress loses the optimistic lock', async () => {
+    const { TaskService } = await import('./task.service')
+    const txHarness = createUpdateTransactionHarness(0)
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {},
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    jest.spyOn(service as any, 'findAvailableTask').mockResolvedValue({
+      id: 11,
+      claimMode: TaskClaimModeEnum.AUTO,
+      completeMode: TaskCompleteModeEnum.AUTO,
+      repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+    })
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 21,
+      status: TaskAssignmentStatusEnum.IN_PROGRESS,
+      progress: 1,
+      target: 2,
+      version: 4,
+      context: null,
+    })
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.reportProgress({ taskId: 11, delta: 1 } as any, 9),
+    ).rejects.toThrow('任务进度更新冲突，请重试')
+
+    expect(txHarness.logValues).not.toHaveBeenCalled()
+    expect(emitTaskCompleteEvent).not.toHaveBeenCalled()
+  })
+
+  it('does not re-complete already completed assignments on repeated reportProgress', async () => {
+    const { TaskService } = await import('./task.service')
+    const withTransaction = jest.fn()
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {},
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    jest.spyOn(service as any, 'findAvailableTask').mockResolvedValue({
+      id: 13,
+      claimMode: TaskClaimModeEnum.AUTO,
+      completeMode: TaskCompleteModeEnum.AUTO,
+      repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+    })
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 23,
+      status: TaskAssignmentStatusEnum.COMPLETED,
+      progress: 2,
+      target: 2,
+      version: 6,
+      rewardStatus: TaskAssignmentRewardStatusEnum.PENDING,
+    })
+    const settleCompletedAssignmentRewardIfNeeded = jest
+      .spyOn(service as any, 'settleCompletedAssignmentRewardIfNeeded')
+      .mockResolvedValue(undefined)
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.reportProgress({ taskId: 13, delta: 1 } as any, 9),
+    ).resolves.toBe(true)
+
+    expect(settleCompletedAssignmentRewardIfNeeded).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({ id: 13 }),
+      expect.objectContaining({ id: 23 }),
+    )
+    expect(withTransaction).not.toHaveBeenCalled()
+    expect(emitTaskCompleteEvent).not.toHaveBeenCalled()
+  })
+
+  it('does not write completion logs when completeTask loses the optimistic lock', async () => {
+    const { TaskService } = await import('./task.service')
+    const txHarness = createUpdateTransactionHarness(0)
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {},
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    jest.spyOn(service as any, 'findAvailableTask').mockResolvedValue({
+      id: 11,
+      completeMode: TaskCompleteModeEnum.MANUAL,
+      repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+    })
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 21,
+      status: TaskAssignmentStatusEnum.IN_PROGRESS,
+      progress: 3,
+      target: 3,
+      version: 4,
+    })
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.completeTask({ taskId: 11 } as any, 9),
+    ).rejects.toThrow('任务完成状态更新冲突，请重试')
+
+    expect(txHarness.logValues).not.toHaveBeenCalled()
+    expect(emitTaskCompleteEvent).not.toHaveBeenCalled()
+  })
+
+  it('rejects task actions after publishEndAt even before cron expires assignments', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {},
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    expect(() =>
+      (service as any).assertTaskInPublishWindow(
+        {
+          publishStartAt: new Date('2026-03-28T00:00:00.000Z'),
+          publishEndAt: new Date('2026-03-29T00:00:00.000Z'),
+        },
+        new Date('2026-03-29T00:00:01.000Z'),
+      ),
+    ).toThrow('任务已结束')
+  })
+
+  it('rejects task actions before publishStartAt', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {},
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    expect(() =>
+      (service as any).assertTaskInPublishWindow(
+        {
+          publishStartAt: new Date('2026-03-31T00:00:00.000Z'),
+          publishEndAt: new Date('2026-04-30T00:00:00.000Z'),
+        },
+        new Date('2026-03-30T23:59:59.000Z'),
+      ),
+    ).toThrow('任务未开始')
+  })
+
+  it.each([
+    [
+      'daily',
+      { type: TaskRepeatTypeEnum.DAILY },
+      '2026-03-31T00:00:00.000Z',
+      '2026-03-30T10:15:00.000Z',
+    ],
+    [
+      'weekly',
+      { type: TaskRepeatTypeEnum.WEEKLY },
+      '2026-04-06T00:00:00.000Z',
+      '2026-03-30T10:15:00.000Z',
+    ],
+    [
+      'monthly',
+      { type: TaskRepeatTypeEnum.MONTHLY },
+      '2026-04-01T00:00:00.000Z',
+      '2026-03-30T10:15:00.000Z',
+    ],
+  ])(
+    'builds cycle-based expiredAt for %s tasks',
+    async (_label, repeatRule, expectedExpiredAt, nowValue) => {
+      const { TaskService } = await import('./task.service')
+      const service = new TaskService(
+        {
+          db: {},
+          schema: {},
+        } as any,
+        {} as any,
+        {} as any,
+      )
+
+      const expiredAt = (service as any).buildAssignmentExpiredAt(
+        {
+          repeatRule,
+          publishEndAt: null,
+        },
+        new Date(nowValue),
+      )
+
+      expect(expiredAt?.toISOString()).toBe(expectedExpiredAt)
+    },
+  )
+
+  it('writes expire audit logs when cron closes overdue assignments', async () => {
+    const { TaskService } = await import('./task.service')
+    const txHarness = createExpireTransactionHarness([
+      { assignmentId: 21, userId: 9, progress: 2 },
+      { assignmentId: 22, userId: 9, progress: 0 },
+    ])
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: {
+            deletedAt: 'deletedAt',
+            status: 'status',
+            expiredAt: 'expiredAt',
+            id: 'id',
+            userId: 'userId',
+            progress: 'progress',
+          },
+          taskProgressLog: {},
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(service.expireAssignments()).resolves.toBeUndefined()
+
+    expect(txHarness.logValues).toHaveBeenCalledWith([
+      {
+        assignmentId: 21,
+        userId: 9,
+        actionType: TaskProgressActionTypeEnum.EXPIRE,
+        delta: 0,
+        beforeValue: 2,
+        afterValue: 2,
+      },
+      {
+        assignmentId: 22,
+        userId: 9,
+        actionType: TaskProgressActionTypeEnum.EXPIRE,
+        delta: 0,
+        beforeValue: 0,
+        afterValue: 0,
+      },
     ])
   })
 })

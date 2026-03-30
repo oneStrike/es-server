@@ -61,7 +61,7 @@ export const task = pgTable("task", {
    */
   rewardConfig: jsonb(),
   /**
-   * 重复规则
+   * 重复规则（当前仅识别 type=once/daily/weekly/monthly）
    */
   repeatRule: jsonb(),
   /**

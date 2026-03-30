@@ -26,7 +26,7 @@ export const taskAssignment = pgTable("task_assignment", {
    */
   cycleKey: varchar({ length: 32 }).notNull(),
   /**
-   * 分配状态
+   * 分配状态（PENDING=已领取待开始，IN_PROGRESS=进行中）
    */
   status: smallint().notNull(),
   /**

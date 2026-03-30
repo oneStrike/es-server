@@ -1,72 +1,49 @@
-# 任务拆分目录
+# Task 模块状态流转整改文档集
 
-本目录只承载“可执行任务单”，不重复承担领域设计文档、专项设计文档或阶段总览的职责。
+本目录只承载“`task` 模块状态流转整改”的可执行文档，不替代其他历史方案、总览或长期规划文档。
 
 使用原则：
 
-1. 一个文件只描述一个可以独立排期的任务
-2. 排序、依赖、波次只在 `execution-plan.md` 维护一次
-3. `development-plan.md` 只补执行信息，不重复定义优先级
-4. `final-acceptance-checklist.md` 只保留跨任务验收，不再抄写每个任务的完成标准
-5. 没有明确前置收益时，不提前做重型基础设施
+1. 本目录只覆盖本轮已确认的 `task` 主链路问题。
+2. 排期、依赖、波次、状态只在 `execution-plan.md` 维护。
+3. `development-plan.md` 只补充执行信息，不重复维护第二套优先级。
+4. `checklists/final-acceptance-checklist.md` 只承接验收，不反向定义新范围。
+5. 单任务文档必须包含固定章节：`目标 / 范围 / 当前代码锚点 / 非目标 / 主要改动 / 完成标准 / 完成后同步文档 / 排期引用`。
 
 ## 文档分工
 
 | 文档 | 角色 | 负责 | 不负责 |
 | --- | --- | --- | --- |
-| `../task-growth-reward-domain-design.md` | 领域总览 | 当前问题、目标原则、阶段拆分背景 | 具体排期与逐任务验收 |
-| `../event-registry-special-design.md` | 专项设计 | 事件定义层的设计边界与落地方式 | 具体开发波次 |
-| `execution-plan.md` | 唯一排期事实源 | 优先级、依赖、波次、并行原则 | 文件级改动清单 |
-| `development-plan.md` | 开发执行补充 | 开工条件、改动模块、关键文件、测试点 | 重新定义任务顺序 |
-| `p0/*` ~ `p2c/*` | 单任务说明 | 目标、范围、完成标准、代码锚点、非目标 | 阶段总览、跨任务验收 |
-| `final-acceptance-checklist.md` | 跨任务验收 | 迁移、兼容、测试、回归、文档一致性 | 每个任务的细节完成标准 |
+| `execution-plan.md` | 唯一排期事实源 | 优先级、依赖、波次、状态、变更记录 | 具体代码改法 |
+| `development-plan.md` | 开发执行补充 | 开工条件、改动模块、关键文件、测试点 | 重新定义排期 |
+| `p0/*` | 单任务说明 | 目标、范围、非目标、完成标准 | 跨任务验收 |
+| `checklists/final-acceptance-checklist.md` | 跨任务验收 | 验收项、证据位、阻塞上线项、签收结论 | 单任务方案定义 |
 
 ## 推荐阅读顺序
 
 1. 先看 [execution-plan.md](./execution-plan.md)
 2. 再看 [development-plan.md](./development-plan.md)
-3. 若要理解背景，再回看 `../task-growth-reward-domain-design.md`
-4. 若要做事件定义层，再看 `../event-registry-special-design.md`
-5. 开工时进入具体 task 文件
-6. 联调与收尾时使用 [final-acceptance-checklist.md](./final-acceptance-checklist.md)
+3. 开工前阅读具体任务单 [06-task-state-flow-and-audit-correction.md](./p0/06-task-state-flow-and-audit-correction.md)
+4. 联调与收尾时使用 [final-acceptance-checklist.md](./checklists/final-acceptance-checklist.md)
 
-## P0
+## 当前任务
 
-- `p0/01-policy-and-rule-code-alignment.md`
-- `p0/02-admin-report-review-module.md`
-- `p0/03-report-reward-after-judgement.md`
-- `p0/04-topic-audit-reward-backfill.md`
-- `p0/05-admin-manual-adjustment-operation-key.md`
+### P0
 
-## P1
+- `p0/06-task-state-flow-and-audit-correction.md`
 
-- `p1/01-reward-config-contract.md`
-- `p1/02-task-assignment-reward-status.md`
-- `p1/03-growth-reward-result.md`
-- `p1/04-ledger-dto-explainability.md`
-- `p1/05-mixed-growth-ledger-page.md`
+## 当前问题范围
 
-## P2-A
+本轮文档集只覆盖以下已确认问题：
 
-- `p2a/01-event-definition-map.md`
-- `p2a/02-event-envelope.md`
-- `p2a/03-doc-and-dto-alignment.md`
+- `MANUAL` 任务在 `progress` 达标时会直接完成并触发奖励
+- `reportProgress()` 与 `completeTask()` 在乐观锁冲突时仍会写入进度日志
+- 重复任务 assignment 未按周期过期
+- `progress / complete` 对发布时间窗口约束不足
+- `task_assignment` 状态枚举与真实代码路径存在漂移
+- task 主链路自动化测试覆盖不足
 
-## P2-B
+## 注意
 
-- `p2b/01-notification-template.md`
-- `p2b/02-notification-preference.md`
-- `p2b/03-notification-delivery.md`
-- `p2b/04-task-reminder-and-announcement-boundary.md`
-
-## P2-C
-
-- `p2c/01-governance-gate-unification.md`
-- `p2c/02-comment-moderation-admin.md`
-- `p2c/03-chat-outbox-closure.md`
-
-注意：
-
-- 上传服务文档不属于本目录范围
-- `event_type / event_record` 不在当前拆分任务里，后续若真有业务收益再单开专题
-- 通知域边界、偏好粒度、delivery 状态语义统一参考 `../notification-domain-contract.md`
+- 本目录不恢复历史 `task-growth-reward` 全量规划，只重建本轮整改所需的最小合规文档集。
+- 若后续追加新的 task 整改项，应先修改 [execution-plan.md](./execution-plan.md)，再新增对应任务单。

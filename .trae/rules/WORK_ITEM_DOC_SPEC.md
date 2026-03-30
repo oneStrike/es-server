@@ -18,7 +18,7 @@
 - `execution-plan.md`：排期唯一事实源（优先级、依赖、波次、并行策略）；
 - `development-plan.md`：开发执行补充（开工条件、影响模块、测试重点）；
 - `p0/`、`p1/`、`p2/`：分优先级任务单目录；
-- `final-acceptance-checklist.md`：跨任务最终验收、阻塞上线项与签收结论。
+- `checklists/`：清单文档目录，至少包含 `checklists/final-acceptance-checklist.md`。
 
 若任务规模较小，可裁剪目录层级，但仍需保留“排期事实源 + 任务单 + 验收清单”三类核心文档。
 
@@ -36,6 +36,7 @@
 
 - 工作包目录使用业务语义的 `kebab-case`，例如 `forum-topic-notification-work-items`。
 - 任务目录使用 `p0`、`p1`、`p2` 等优先级层级。
+- 清单文档统一放在工作包目录下的 `checklists/`，不得与 `README.md`、`execution-plan.md`、`development-plan.md` 同层混放。
 
 ### 4.2 文件命名
 
@@ -104,7 +105,7 @@
 
 1. 先更新 `execution-plan.md` 的任务排序与依赖；
 2. 再更新对应任务单与开发补充；
-3. 实施完成后更新 `final-acceptance-checklist.md`；
+3. 实施完成后更新 `checklists/final-acceptance-checklist.md`；
 4. 合并前执行文档一致性检查；
 5. 变更涉及规则冲突时，在交付说明中标记冲突点与暂行决策。
 

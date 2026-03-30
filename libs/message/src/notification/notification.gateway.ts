@@ -25,10 +25,10 @@ const MESSAGE_WS_CORS_ORIGINS = (process.env.MESSAGE_WS_CORS_ORIGINS || '')
 
 const MESSAGE_WS_CORS_ORIGIN =
   MESSAGE_WS_CORS_ORIGINS.length > 0
-    ? (MESSAGE_WS_CORS_ORIGINS.includes('*')
-        ? true
-        : MESSAGE_WS_CORS_ORIGINS)
-    : (!!isDevelopment())
+    ? MESSAGE_WS_CORS_ORIGINS.includes('*')
+      ? true
+      : MESSAGE_WS_CORS_ORIGINS
+    : !!isDevelopment()
 
 @Injectable()
 @WebSocketGateway({
@@ -50,7 +50,8 @@ export class MessageGateway
   }
 
   async handleConnection(client: Socket) {
-    const userId = await this.messageWebSocketService.resolveSocketIoUserId(client)
+    const userId =
+      await this.messageWebSocketService.resolveSocketIoUserId(client)
     if (!userId) {
       client.disconnect(true)
       return

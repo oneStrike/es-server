@@ -50,7 +50,7 @@ export enum TaskCompleteModeEnum {
  * 任务分配状态枚举
  */
 export enum TaskAssignmentStatusEnum {
-  /** 待领取 */
+  /** 已领取待开始 */
   PENDING = 0,
   /** 进行中 */
   IN_PROGRESS = 1,
