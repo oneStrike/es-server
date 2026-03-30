@@ -77,6 +77,82 @@ function createExpireTransactionHarness(
   }
 }
 
+function createSimpleSelectHarness<T>(rows: T[]) {
+  const limit = jest.fn().mockResolvedValue(rows)
+  const where = jest.fn(() => ({ limit }))
+  const from = jest.fn(() => ({ where }))
+  const select = jest.fn(() => ({ from }))
+
+  return {
+    select,
+    from,
+    where,
+    limit,
+  }
+}
+
+function createRetryRewardQueryHarness<T>(rows: T[]) {
+  const limit = jest.fn().mockResolvedValue(rows)
+  const orderBy = jest.fn(() => ({ limit }))
+  const where = jest.fn(() => ({ orderBy }))
+  const leftJoin = jest.fn(() => ({ where }))
+  const from = jest.fn(() => ({ leftJoin }))
+  const select = jest.fn(() => ({ from }))
+
+  return {
+    select,
+    from,
+    leftJoin,
+    where,
+    orderBy,
+    limit,
+  }
+}
+
+function createDeleteTransactionHarness(
+  schema: {
+    task: unknown
+    taskAssignment: unknown
+  },
+  expiredAssignments: Array<{
+    assignmentId: number
+    userId: number
+    progress: number
+  }>,
+) {
+  const taskWhere = jest.fn().mockResolvedValue({ rowCount: 1 })
+  const taskSet = jest.fn(() => ({ where: taskWhere }))
+  const assignmentReturning = jest.fn().mockResolvedValue(expiredAssignments)
+  const assignmentWhere = jest.fn(() => ({ returning: assignmentReturning }))
+  const assignmentSet = jest.fn(() => ({ where: assignmentWhere }))
+  const update = jest.fn((table) => {
+    if (table === schema.task) {
+      return { set: taskSet }
+    }
+    if (table === schema.taskAssignment) {
+      return { set: assignmentSet }
+    }
+    throw new Error('unexpected table')
+  })
+  const logValues = jest.fn().mockResolvedValue(undefined)
+  const insert = jest.fn(() => ({ values: logValues }))
+
+  return {
+    tx: {
+      insert,
+      query: {
+        task: {
+          findFirst: jest.fn().mockResolvedValue({ id: 7 }),
+        },
+      },
+      update,
+    },
+    assignmentSet,
+    logValues,
+    taskSet,
+  }
+}
+
 describe('task service rewardConfig contract', () => {
   const baseTask = {
     code: 'newbie_reward_contract',
@@ -192,6 +268,36 @@ describe('task service rewardConfig contract', () => {
         updatedById: 9,
       }),
     )
+  })
+
+  it('rejects invalid repeatRule type before insert', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const values = jest.fn()
+    const insert = jest.fn(() => ({ values }))
+    const service = new TaskService(
+      {
+        db: { insert },
+        schema: { task: {} },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.createTask(
+        {
+          ...baseTask,
+          repeatRule: {
+            type: 'yearly',
+          },
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('repeatRule.type 仅支持 once、daily、weekly、monthly')
+
+    expect(values).not.toHaveBeenCalled()
   })
 
   it('writes reward settlement state back to assignment after completion reward', async () => {
@@ -347,6 +453,65 @@ describe('task service rewardConfig contract', () => {
         }),
       }),
     ])
+  })
+
+  it('retries completed rewards from assignment snapshot instead of current task config', async () => {
+    const { TaskService } = await import('./task.service')
+    const queryHarness = createRetryRewardQueryHarness([
+      {
+        assignmentId: 18,
+        taskId: 7,
+        userId: 9,
+        completedAt: new Date('2026-03-29T12:00:00.000Z'),
+        taskSnapshot: {
+          title: '老标题',
+          rewardConfig: { points: 20, experience: 8 },
+        },
+        title: '新标题',
+        rewardConfig: { points: 1, experience: 1 },
+      },
+    ])
+
+    const service = new TaskService(
+      {
+        db: { select: queryHarness.select },
+        schema: {
+          taskAssignment: {
+            id: 'id',
+            taskId: 'taskId',
+            userId: 'userId',
+            completedAt: 'completedAt',
+            taskSnapshot: 'taskSnapshot',
+            deletedAt: 'deletedAt',
+            status: 'status',
+            rewardStatus: 'rewardStatus',
+          },
+          task: {
+            title: 'title',
+            rewardConfig: 'rewardConfig',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(service.retryCompletedAssignmentRewards()).resolves.toBeUndefined()
+
+    expect(emitTaskCompleteEvent).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({
+        id: 7,
+        title: '老标题',
+        rewardConfig: { points: 20, experience: 8 },
+      }),
+      expect.objectContaining({
+        id: 18,
+      }),
+    )
   })
 })
 
@@ -687,7 +852,15 @@ describe('task service main flows', () => {
     const service = new TaskService(
       {
         db: {},
-        schema: {},
+        schema: {
+          taskAssignment: {
+            userId: 'userId',
+            deletedAt: 'deletedAt',
+          },
+          task: {
+            type: 'type',
+          },
+        },
       } as any,
       {} as any,
       {} as any,
@@ -710,7 +883,15 @@ describe('task service main flows', () => {
     const service = new TaskService(
       {
         db: {},
-        schema: {},
+        schema: {
+          taskAssignment: {
+            userId: 'userId',
+            deletedAt: 'deletedAt',
+          },
+          task: {
+            type: 'type',
+          },
+        },
       } as any,
       {} as any,
       {} as any,
@@ -725,6 +906,96 @@ describe('task service main flows', () => {
         new Date('2026-03-30T23:59:59.000Z'),
       ),
     ).toThrow('任务未开始')
+  })
+
+  it('rejects partial publish-window updates that would invert start and end', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const update = jest.fn()
+    const service = new TaskService(
+      {
+        db: {
+          query: {
+            task: {
+              findFirst: jest.fn().mockResolvedValue({
+                id: 11,
+                publishStartAt: new Date('2026-04-10T00:00:00.000Z'),
+                publishEndAt: new Date('2026-04-20T00:00:00.000Z'),
+                repeatRule: null,
+                completeMode: TaskCompleteModeEnum.MANUAL,
+              }),
+            },
+          },
+          update,
+        },
+        schema: { task: {} },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.updateTask(
+        {
+          id: 11,
+          publishEndAt: new Date('2026-04-01T00:00:00.000Z'),
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('发布开始时间不能晚于结束时间')
+
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('blocks changing completeMode when active assignments already exist', async () => {
+    const { TaskService } = await import('./task.service')
+    const selectHarness = createSimpleSelectHarness([{ id: 101 }])
+    const update = jest.fn()
+
+    const service = new TaskService(
+      {
+        db: {
+          query: {
+            task: {
+              findFirst: jest.fn().mockResolvedValue({
+                id: 11,
+                publishStartAt: null,
+                publishEndAt: null,
+                repeatRule: null,
+                completeMode: TaskCompleteModeEnum.MANUAL,
+              }),
+            },
+          },
+          select: selectHarness.select,
+          update,
+        },
+        schema: {
+          task: {},
+          taskAssignment: {
+            id: 'id',
+            taskId: 'taskId',
+            deletedAt: 'deletedAt',
+            status: 'status',
+          },
+        },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.updateTask(
+        {
+          id: 11,
+          completeMode: TaskCompleteModeEnum.AUTO,
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('存在进行中的任务分配，不能修改完成方式')
+
+    expect(update).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -790,6 +1061,7 @@ describe('task service main flows', () => {
             id: 'id',
             userId: 'userId',
             progress: 'progress',
+            version: 'version',
           },
           taskProgressLog: {},
         },
@@ -819,5 +1091,113 @@ describe('task service main flows', () => {
         afterValue: 0,
       },
     ])
+  })
+
+  it('expires active assignments when deleting a task', async () => {
+    const { TaskService } = await import('./task.service')
+    const schema = {
+      task: {
+        id: 'taskId',
+        deletedAt: 'taskDeletedAt',
+      },
+      taskAssignment: {
+        deletedAt: 'deletedAt',
+        status: 'status',
+        id: 'id',
+        userId: 'userId',
+        progress: 'progress',
+        version: 'version',
+        taskId: 'taskId',
+      },
+      taskProgressLog: {},
+    }
+    const txHarness = createDeleteTransactionHarness(schema, [
+      { assignmentId: 21, userId: 9, progress: 2 },
+    ])
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema,
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(service.deleteTask(7)).resolves.toBe(true)
+
+    expect(txHarness.taskSet).toHaveBeenCalledWith({
+      deletedAt: expect.any(Date),
+    })
+    expect(txHarness.assignmentSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: TaskAssignmentStatusEnum.EXPIRED,
+        expiredAt: expect.any(Date),
+      }),
+    )
+    expect(txHarness.logValues).toHaveBeenCalledWith([
+      {
+        assignmentId: 21,
+        userId: 9,
+        actionType: TaskProgressActionTypeEnum.EXPIRE,
+        delta: 0,
+        beforeValue: 2,
+        afterValue: 2,
+      },
+    ])
+  })
+
+  it('expires overdue assignments before rebuilding auto assignments in my tasks', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: {
+            userId: 'userId',
+            deletedAt: 'deletedAt',
+          },
+          task: {
+            type: 'type',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    const expireDueAssignmentsForUser = jest
+      .spyOn(service as any, 'expireDueAssignmentsForUser')
+      .mockResolvedValue(undefined)
+    const ensureAutoAssignmentsForUser = jest
+      .spyOn(service as any, 'ensureAutoAssignmentsForUser')
+      .mockResolvedValue(undefined)
+    jest.spyOn(service as any, 'queryTaskAssignmentPage').mockResolvedValue({
+      list: [],
+      total: 0,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    await expect(
+      service.getMyTasks({ pageIndex: 1, pageSize: 20 } as any, 9),
+    ).resolves.toMatchObject({
+      list: [],
+      total: 0,
+    })
+
+    expect(expireDueAssignmentsForUser).toHaveBeenCalledWith(
+      9,
+      expect.any(Date),
+    )
+    expect(ensureAutoAssignmentsForUser).toHaveBeenCalledWith(
+      9,
+      expect.any(Date),
+    )
+    expect(expireDueAssignmentsForUser.mock.invocationCallOrder[0]).toBeLessThan(
+      ensureAutoAssignmentsForUser.mock.invocationCallOrder[0],
+    )
   })
 })

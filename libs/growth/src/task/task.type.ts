@@ -8,6 +8,7 @@ import type {
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
+  TaskRepeatTypeEnum,
   TaskStatusEnum,
   TaskTypeEnum,
 } from './task.constant'
@@ -21,6 +22,10 @@ export type TaskQueryOrderByInput = QueryOrderByInput
 export interface TaskRewardConfig {
   points?: number
   experience?: number
+}
+
+export interface TaskRepeatRuleConfig {
+  type: TaskRepeatTypeEnum
 }
 
 /**

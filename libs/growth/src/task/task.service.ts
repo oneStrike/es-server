@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type { TaskAssignmentSelect, TaskSelect } from '@db/schema'
 import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward'
 import type { SQL } from 'drizzle-orm'
@@ -12,6 +13,7 @@ import type {
   TaskCompleteInput,
   TaskProgressInput,
   TaskQueryOrderByInput,
+  TaskRepeatRuleConfig,
   TaskRewardConfig,
   TaskSnapshotSource,
   UpdateTaskInput,
@@ -34,7 +36,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
-import { and, eq, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
   TASK_AVAILABLE_REMINDER_RECENT_HOURS,
   TASK_COMPLETE_EVENT_CODE,
@@ -290,13 +292,14 @@ export class TaskService {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
     const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
+    const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
 
     await this.drizzle.withErrorHandling(
       () =>
         this.db.insert(this.taskTable).values({
           ...dto,
           rewardConfig,
-          repeatRule: this.parseJsonValue(dto.repeatRule),
+          repeatRule,
           createdById: adminUserId,
           updatedById: adminUserId,
         }),
@@ -316,9 +319,36 @@ export class TaskService {
    * @throws BadRequestException 发布时间无效或任务编码已存在
    */
   async updateTask(dto: UpdateTaskInput, adminUserId: number) {
-    // 校验发布时间窗口
-    this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
+    const existingTask = await this.db.query.task.findFirst({
+      where: {
+        id: dto.id,
+        deletedAt: { isNull: true },
+      },
+    })
+    if (!existingTask) {
+      throw new NotFoundException('任务不存在')
+    }
+
     const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
+    const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
+    const nextPublishStartAt =
+      dto.publishStartAt !== undefined
+        ? (dto.publishStartAt ?? null)
+        : existingTask.publishStartAt
+    const nextPublishEndAt =
+      dto.publishEndAt !== undefined
+        ? (dto.publishEndAt ?? null)
+        : existingTask.publishEndAt
+
+    this.ensurePublishWindow(
+      nextPublishStartAt ?? undefined,
+      nextPublishEndAt ?? undefined,
+    )
+    await this.assertNoActiveAssignmentConfigMutation(
+      existingTask,
+      dto,
+      repeatRule,
+    )
 
     const result = await this.drizzle.withErrorHandling(
       () =>
@@ -327,10 +357,15 @@ export class TaskService {
           .set({
             ...dto,
             rewardConfig,
-            repeatRule: this.parseJsonValue(dto.repeatRule),
+            repeatRule,
             updatedById: adminUserId,
           })
-          .where(eq(this.taskTable.id, dto.id)),
+          .where(
+            and(
+              eq(this.taskTable.id, dto.id),
+              isNull(this.taskTable.deletedAt),
+            ),
+          ),
       { duplicate: '任务编码已存在' },
     )
 
@@ -355,7 +390,9 @@ export class TaskService {
           status: dto.status,
           isEnabled: dto.isEnabled,
         })
-        .where(eq(this.taskTable.id, dto.id)),
+        .where(
+          and(eq(this.taskTable.id, dto.id), isNull(this.taskTable.deletedAt)),
+        ),
     )
 
     this.drizzle.assertAffectedRows(result, '任务不存在')
@@ -369,7 +406,29 @@ export class TaskService {
    * @returns 删除结果
    */
   async deleteTask(id: number) {
-    await this.drizzle.ext.softDelete(this.taskTable, eq(this.taskTable.id, id))
+    const now = new Date()
+    await this.drizzle.withTransaction(async (tx) => {
+      const targetTask = await tx.query.task.findFirst({
+        where: {
+          id,
+          deletedAt: { isNull: true },
+        },
+      })
+      if (!targetTask) {
+        throw new BadRequestException('删除失败：数据不存在')
+      }
+
+      await tx
+        .update(this.taskTable)
+        .set({ deletedAt: now })
+        .where(and(eq(this.taskTable.id, id), isNull(this.taskTable.deletedAt)))
+
+      await this.expireAssignmentsByWhere(tx, {
+        now,
+        whereClause: eq(this.taskAssignmentTable.taskId, id),
+        overrideExpiredAt: now,
+      })
+    })
     return true
   }
 
@@ -443,7 +502,7 @@ export class TaskService {
     })
 
     // 为自动领取模式的任务确保分配已创建
-    await this.ensureAutoAssignments(userId, result.list)
+    await this.ensureAutoAssignments(userId, result.list, now)
     await this.tryNotifyAvailableTasksFromPage(userId, result.list, now)
     return result
   }
@@ -464,8 +523,10 @@ export class TaskService {
    * @returns 分页结果，包含分配和任务信息
    */
   async getMyTasks(queryDto: QueryMyTaskInput, userId: number) {
+    const now = new Date()
+    await this.expireDueAssignmentsForUser(userId, now)
     // 确保自动领取的任务都已分配
-    await this.ensureAutoAssignmentsForUser(userId)
+    await this.ensureAutoAssignmentsForUser(userId, now)
     const { type, orderBy } = queryDto
 
     // 构建查询条件
@@ -574,7 +635,7 @@ export class TaskService {
     if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
       await this.settleCompletedAssignmentRewardIfNeeded(
         userId,
-        taskRecord,
+        this.buildTaskRewardTaskRecord(taskRecord.id, taskRecord, assignment),
         assignment,
       )
       return true
@@ -649,10 +710,14 @@ export class TaskService {
       assignment.status !== TaskAssignmentStatusEnum.COMPLETED &&
       nextStatus === TaskAssignmentStatusEnum.COMPLETED
     ) {
-      await this.emitTaskCompleteEvent(userId, taskRecord, {
-        ...assignment,
-        completedAt: now,
-      })
+      await this.emitTaskCompleteEvent(
+        userId,
+        this.buildTaskRewardTaskRecord(taskRecord.id, taskRecord, assignment),
+        {
+          ...assignment,
+          completedAt: now,
+        },
+      )
     }
     return true
   }
@@ -688,7 +753,7 @@ export class TaskService {
     if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
       await this.settleCompletedAssignmentRewardIfNeeded(
         userId,
-        taskRecord,
+        this.buildTaskRewardTaskRecord(taskRecord.id, taskRecord, assignment),
         assignment,
       )
       return true
@@ -741,10 +806,14 @@ export class TaskService {
     }
 
     // 触发完成事件（发放奖励）
-    await this.emitTaskCompleteEvent(userId, taskRecord, {
-      ...assignment,
-      completedAt: now,
-    })
+    await this.emitTaskCompleteEvent(
+      userId,
+      this.buildTaskRewardTaskRecord(taskRecord.id, taskRecord, assignment),
+      {
+        ...assignment,
+        completedAt: now,
+      },
+    )
     return true
   }
 
@@ -759,43 +828,57 @@ export class TaskService {
   @Cron('0 */5 * * * *')
   async expireAssignments() {
     const now = new Date()
-    await this.drizzle.withTransaction(async (tx) => {
-      const expiredAssignments = await tx
-        .update(this.taskAssignmentTable)
-        .set({
-          status: TaskAssignmentStatusEnum.EXPIRED,
-        })
-        .where(
-          and(
-            isNull(this.taskAssignmentTable.deletedAt),
-            inArray(this.taskAssignmentTable.status, [
-              TaskAssignmentStatusEnum.PENDING,
-              TaskAssignmentStatusEnum.IN_PROGRESS,
-            ]),
-            lte(this.taskAssignmentTable.expiredAt, now),
-          ),
-        )
-        .returning({
-          assignmentId: this.taskAssignmentTable.id,
-          userId: this.taskAssignmentTable.userId,
-          progress: this.taskAssignmentTable.progress,
-        })
+    await this.drizzle.withTransaction(async (tx) =>
+      this.expireAssignmentsByWhere(tx, {
+        now,
+        whereClause: lte(this.taskAssignmentTable.expiredAt, now),
+      }),
+    )
+  }
 
-      if (expiredAssignments.length === 0) {
-        return
-      }
-
-      await tx.insert(this.taskProgressLogTable).values(
-        expiredAssignments.map((assignment) => ({
-          assignmentId: assignment.assignmentId,
-          userId: assignment.userId,
-          actionType: TaskProgressActionTypeEnum.EXPIRE,
-          delta: 0,
-          beforeValue: assignment.progress,
-          afterValue: assignment.progress,
-        })),
+  /**
+   * 已完成任务奖励补偿（定时任务）
+   *
+   * 周期性扫描已完成但奖励尚未结算成功的 assignment，基于 assignment 快照重试结算，
+   * 避免任务下线、过期或配置变更后失去补偿入口。
+   */
+  @Cron('30 */5 * * * *')
+  async retryCompletedAssignmentRewards() {
+    const assignments = await this.db
+      .select({
+        assignmentId: this.taskAssignmentTable.id,
+        taskId: this.taskAssignmentTable.taskId,
+        userId: this.taskAssignmentTable.userId,
+        completedAt: this.taskAssignmentTable.completedAt,
+        taskSnapshot: this.taskAssignmentTable.taskSnapshot,
+        title: this.taskTable.title,
+        rewardConfig: this.taskTable.rewardConfig,
+      })
+      .from(this.taskAssignmentTable)
+      .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
+      .where(
+        and(
+          isNull(this.taskAssignmentTable.deletedAt),
+          eq(this.taskAssignmentTable.status, TaskAssignmentStatusEnum.COMPLETED),
+          inArray(this.taskAssignmentTable.rewardStatus, [
+            TaskAssignmentRewardStatusEnum.PENDING,
+            TaskAssignmentRewardStatusEnum.FAILED,
+          ]),
+        ),
       )
-    })
+      .orderBy(asc(this.taskAssignmentTable.id))
+      .limit(100)
+
+    for (const assignment of assignments) {
+      await this.emitTaskCompleteEvent(
+        assignment.userId,
+        this.buildTaskRewardTaskRecord(assignment.taskId, assignment, assignment),
+        {
+          id: assignment.assignmentId,
+          completedAt: assignment.completedAt,
+        },
+      )
+    }
   }
 
   /**
@@ -948,6 +1031,37 @@ export class TaskService {
   }
 
   /**
+   * 解析并校验任务重复规则。
+   * 当前仅支持 type=once/daily/weekly/monthly，传 null 表示清空为一次性任务。
+   */
+  private parseTaskRepeatRule(
+    value?: string | Record<string, unknown> | null,
+  ): TaskRepeatRuleConfig | null | undefined {
+    if (value === undefined || value === '') {
+      return undefined
+    }
+    if (value === null) {
+      return null
+    }
+
+    const parsed = this.parseJsonValue(value)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new BadRequestException('repeatRule 必须是 JSON 对象')
+    }
+
+    const type = parsed.type
+    if (!Object.values(TaskRepeatTypeEnum).includes(type as TaskRepeatTypeEnum)) {
+      throw new BadRequestException(
+        'repeatRule.type 仅支持 once、daily、weekly、monthly',
+      )
+    }
+
+    return {
+      type: type as TaskRepeatTypeEnum,
+    }
+  }
+
+  /**
    * 校验奖励配置中的正整数值。
    *
    * 任务奖励配置要求值为正整数，避免非法数值进入奖励结算路径。
@@ -1092,6 +1206,61 @@ export class TaskService {
   }
 
   /**
+   * 已有进行中 assignment 时，阻止修改会改写存量任务语义的关键配置。
+   */
+  private async assertNoActiveAssignmentConfigMutation(
+    taskRecord: Pick<TaskSelect, 'id' | 'repeatRule' | 'completeMode'>,
+    dto: UpdateTaskInput,
+    repeatRule: TaskRepeatRuleConfig | null | undefined,
+  ) {
+    const nextRepeatType =
+      dto.repeatRule !== undefined
+        ? this.getTaskRepeatType({ repeatRule: repeatRule ?? null })
+        : this.getTaskRepeatType(taskRecord)
+    const repeatRuleChanged =
+      dto.repeatRule !== undefined
+      && nextRepeatType !== this.getTaskRepeatType(taskRecord)
+    const completeModeChanged =
+      dto.completeMode !== undefined
+      && dto.completeMode !== taskRecord.completeMode
+
+    if (!repeatRuleChanged && !completeModeChanged) {
+      return
+    }
+
+    const [activeAssignment] = await this.db
+      .select({ id: this.taskAssignmentTable.id })
+      .from(this.taskAssignmentTable)
+      .where(
+        and(
+          eq(this.taskAssignmentTable.taskId, taskRecord.id),
+          isNull(this.taskAssignmentTable.deletedAt),
+          inArray(this.taskAssignmentTable.status, [
+            TaskAssignmentStatusEnum.PENDING,
+            TaskAssignmentStatusEnum.IN_PROGRESS,
+          ]),
+        ),
+      )
+      .limit(1)
+
+    if (!activeAssignment) {
+      return
+    }
+
+    const blockedFields: string[] = []
+    if (repeatRuleChanged) {
+      blockedFields.push('周期规则')
+    }
+    if (completeModeChanged) {
+      blockedFields.push('完成方式')
+    }
+
+    throw new BadRequestException(
+      `存在进行中的任务分配，不能修改${blockedFields.join('和')}`,
+    )
+  }
+
+  /**
    * 格式化日期为 YYYY-MM-DD 格式
    *
    * @param date 日期对象
@@ -1170,6 +1339,74 @@ export class TaskService {
       )
       .limit(1)
     return assignment
+  }
+
+  /**
+   * 统一关闭命中条件的活跃 assignment，并补写 EXPIRE 审计日志。
+   */
+  private async expireAssignmentsByWhere(
+    db: Db,
+    params: {
+      now: Date
+      whereClause: SQL
+      overrideExpiredAt?: Date
+    },
+  ) {
+    const expiredAssignments = await db
+      .update(this.taskAssignmentTable)
+      .set({
+        status: TaskAssignmentStatusEnum.EXPIRED,
+        expiredAt: params.overrideExpiredAt ?? undefined,
+        version: sql`${this.taskAssignmentTable.version} + 1`,
+      })
+      .where(
+        and(
+          isNull(this.taskAssignmentTable.deletedAt),
+          inArray(this.taskAssignmentTable.status, [
+            TaskAssignmentStatusEnum.PENDING,
+            TaskAssignmentStatusEnum.IN_PROGRESS,
+          ]),
+          params.whereClause,
+        ),
+      )
+      .returning({
+        assignmentId: this.taskAssignmentTable.id,
+        userId: this.taskAssignmentTable.userId,
+        progress: this.taskAssignmentTable.progress,
+      })
+
+    if (expiredAssignments.length === 0) {
+      return 0
+    }
+
+    await db.insert(this.taskProgressLogTable).values(
+      expiredAssignments.map((assignment) => ({
+        assignmentId: assignment.assignmentId,
+        userId: assignment.userId,
+        actionType: TaskProgressActionTypeEnum.EXPIRE,
+        delta: 0,
+        beforeValue: assignment.progress,
+        afterValue: assignment.progress,
+      })),
+    )
+
+    return expiredAssignments.length
+  }
+
+  /**
+   * 用户查询“我的任务”前，先即时收口本用户已过期但尚未被 cron 处理的 assignment。
+   */
+  private async expireDueAssignmentsForUser(userId: number, now: Date) {
+    await this.drizzle.withTransaction(async (tx) =>
+      this.expireAssignmentsByWhere(tx, {
+        now,
+        whereClause:
+          and(
+            eq(this.taskAssignmentTable.userId, userId),
+            lte(this.taskAssignmentTable.expiredAt, now),
+          )!,
+      }),
+    )
   }
 
   /**
@@ -1273,10 +1510,14 @@ export class TaskService {
    * @param userId 用户ID
    * @param tasks 任务列表
    */
-  private async ensureAutoAssignments(userId: number, tasks: TaskSelect[]) {
+  private async ensureAutoAssignments(
+    userId: number,
+    tasks: TaskSelect[],
+    now: Date,
+  ) {
     await Promise.all(
       tasks.map(async (taskRecord) =>
-        this.ensureAutoAssignment(userId, taskRecord.id),
+        this.ensureAutoAssignmentByTask(userId, taskRecord, now),
       ),
     )
   }
@@ -1288,7 +1529,7 @@ export class TaskService {
    *
    * @param userId 用户ID
    */
-  private async ensureAutoAssignmentsForUser(userId: number) {
+  private async ensureAutoAssignmentsForUser(userId: number, now: Date) {
     const where = this.buildAvailableWhere()
     const tasks = await this.db
       .select({
@@ -1308,7 +1549,7 @@ export class TaskService {
 
     await Promise.all(
       tasks.map(async (taskRecord) =>
-        this.ensureAutoAssignmentByTask(userId, taskRecord),
+        this.ensureAutoAssignmentByTask(userId, taskRecord, now),
       ),
     )
   }
@@ -1364,18 +1605,44 @@ export class TaskService {
   private async ensureAutoAssignmentByTask(
     userId: number,
     taskRecord: AutoAssignmentTaskSource,
+    now = new Date(),
   ) {
     // 非自动领取模式跳过
     if (taskRecord.claimMode !== TaskClaimModeEnum.AUTO) {
       return
     }
-    const now = new Date()
     if (this.getTaskAvailabilityError(taskRecord, now)) {
       return
     }
     // 计算周期并创建分配
     const cycleKey = this.buildCycleKey(taskRecord, now)
     await this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
+  }
+
+  /**
+   * 构建任务奖励结算所需的最小任务视图。
+   * 优先使用 assignment 快照，避免 live task 配置变更改写历史结算语义。
+   */
+  private buildTaskRewardTaskRecord(
+    taskId: number,
+    currentTask?: {
+      title?: string | null
+      rewardConfig?: unknown
+    },
+    assignment?: {
+      taskSnapshot?: TaskAssignmentSelect['taskSnapshot']
+    },
+  ) {
+    const snapshot = this.asRecord(assignment?.taskSnapshot)
+
+    return {
+      id: taskId,
+      title:
+        typeof snapshot?.title === 'string'
+          ? snapshot.title
+          : (currentTask?.title ?? undefined),
+      rewardConfig: snapshot?.rewardConfig ?? currentTask?.rewardConfig,
+    }
   }
 
   /**
@@ -1801,6 +2068,13 @@ export class TaskService {
     } catch {
       return 'unknown error'
     }
+  }
+
+  private asRecord(input: unknown): Record<string, unknown> | null {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      return null
+    }
+    return input as Record<string, unknown>
   }
 
   /**
