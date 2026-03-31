@@ -13,6 +13,7 @@ import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   AdvanceAssignmentByEventInput,
   ApplyAssignmentEventProgressInput,
+  AppTaskViewSource,
   AutoAssignmentTaskSource,
   BuildTaskCompleteEventEnvelopeInput,
   CreateOrGetAssignmentOptions,
@@ -20,6 +21,7 @@ import type {
   EnsureTaskObjectiveContractInput,
   ExpireAssignmentsByWhereInput,
   QueryTaskAssignmentPageParams,
+  QueryTaskAssignmentPageResult,
   QueryTaskAssignmentReconciliationPageInput,
   ResolveTaskUserVisibleStatusInput,
   TaskAssignmentEventProgressSummary,
@@ -150,15 +152,62 @@ export abstract class TaskServiceSupport {
     return this.drizzle.schema.messageOutbox
   }
 
+  // ==================== 查询投影与分页 ====================
+
+  /**
+   * 构建 assignment 列表联表查询使用的稳定 task 摘要投影。
+   */
+  protected buildTaskRelationSelection() {
+    return {
+      id: this.taskTable.id,
+      code: this.taskTable.code,
+      title: this.taskTable.title,
+      description: this.taskTable.description,
+      cover: this.taskTable.cover,
+      type: this.taskTable.type,
+      objectiveType: this.taskTable.objectiveType,
+      eventCode: this.taskTable.eventCode,
+      objectiveConfig: this.taskTable.objectiveConfig,
+      rewardConfig: this.taskTable.rewardConfig,
+      targetCount: this.taskTable.targetCount,
+      completeMode: this.taskTable.completeMode,
+      claimMode: this.taskTable.claimMode,
+    }
+  }
+
+  /**
+   * 构建自动分配链路使用的 task 执行态投影。
+   */
+  protected buildAutoAssignmentTaskSelection() {
+    return {
+      id: this.taskTable.id,
+      code: this.taskTable.code,
+      title: this.taskTable.title,
+      description: this.taskTable.description,
+      cover: this.taskTable.cover,
+      type: this.taskTable.type,
+      completeMode: this.taskTable.completeMode,
+      objectiveType: this.taskTable.objectiveType,
+      eventCode: this.taskTable.eventCode,
+      objectiveConfig: this.taskTable.objectiveConfig,
+      rewardConfig: this.taskTable.rewardConfig,
+      targetCount: this.taskTable.targetCount,
+      claimMode: this.taskTable.claimMode,
+      publishStartAt: this.taskTable.publishStartAt,
+      publishEndAt: this.taskTable.publishEndAt,
+      repeatRule: this.taskTable.repeatRule,
+    }
+  }
+
   /**
    * 按条件分页查询任务分配，并固定携带任务摘要字段。
    *
-   * 该方法统一管理排序解析、任务联表投影与总数统计，确保管理端与应用端列表
-   * 查询使用同一份 assignment + live task 摘要合同。
+   * 该方法统一管理排序解析、联表投影与总数统计，确保管理端与应用端列表查询
+   * 复用同一份 assignment + live task 摘要合同。
    */
   protected async queryTaskAssignmentPage(
     params: QueryTaskAssignmentPageParams,
-  ) {
+  ): Promise<QueryTaskAssignmentPageResult> {
     const { assignmentWhereClause, taskWhereClause, pageIndex, pageSize, orderBy } =
       params
     const page = this.drizzle.buildPage({ pageIndex, pageSize })
@@ -179,21 +228,7 @@ export abstract class TaskServiceSupport {
       this.db
         .select({
           assignment: this.taskAssignmentTable,
-          task: {
-            id: this.taskTable.id,
-            code: this.taskTable.code,
-            title: this.taskTable.title,
-            description: this.taskTable.description,
-            cover: this.taskTable.cover,
-            type: this.taskTable.type,
-            objectiveType: this.taskTable.objectiveType,
-            eventCode: this.taskTable.eventCode,
-            objectiveConfig: this.taskTable.objectiveConfig,
-            rewardConfig: this.taskTable.rewardConfig,
-            targetCount: this.taskTable.targetCount,
-            completeMode: this.taskTable.completeMode,
-            claimMode: this.taskTable.claimMode,
-          },
+          task: this.buildTaskRelationSelection(),
         })
         .from(this.taskAssignmentTable)
         .leftJoin(
@@ -252,7 +287,7 @@ export abstract class TaskServiceSupport {
     return countResult?.count ?? 0
   }
 
-  // ==================== 共享规则与底层编排 ====================
+  // ==================== 解析、校验与可用性 ====================
 
   /**
    * 校验发布时间窗口
@@ -628,11 +663,6 @@ export abstract class TaskServiceSupport {
    * - 每日任务：返回日期字符串 'YYYY-MM-DD'
    * - 每周任务：返回周起始日期 'week-YYYY-MM-DD'
    * - 每月任务：返回月份 'YYYY-MM'
-   *
-   * @param taskRecord 任务记录对象
-   * @param taskRecord.repeatRule 重复规则
-   * @param now 当前时间
-   * @returns 周期标识
    */
   protected buildCycleKey(
     taskRecord: Pick<TaskSelect, 'repeatRule'>,
@@ -773,6 +803,8 @@ export abstract class TaskServiceSupport {
     )
   }
 
+  // ==================== 周期与 assignment 编排 ====================
+
   /**
    * 格式化日期为 YYYY-MM-DD 格式
    *
@@ -791,44 +823,6 @@ export abstract class TaskServiceSupport {
    */
   protected getWeekStart(date: Dayjs) {
     return date.startOf('day').subtract(date.isoWeekday() - 1, 'day')
-  }
-
-  /**
-   * 构建任务快照
-   *
-   * 创建任务信息的快照，用于任务分配记录中保存任务状态。
-   * 确保即使任务配置变更，历史分配仍保留当时的任务信息。
-   *
-   * @param taskRecord 任务记录对象
-   * @param taskRecord.id 任务ID
-   * @param taskRecord.code 任务编码
-   * @param taskRecord.title 任务标题
-   * @param taskRecord.type 任务场景类型
-   * @param taskRecord.objectiveType 任务目标类型
-   * @param taskRecord.eventCode 目标事件编码
-   * @param taskRecord.rewardConfig 奖励配置
-   * @param taskRecord.targetCount 目标数量
-   * @returns 任务快照对象
-   */
-  protected buildTaskSnapshot(taskRecord: TaskSnapshotSource) {
-    return {
-      id: taskRecord.id,
-      code: taskRecord.code,
-      title: taskRecord.title,
-      description: taskRecord.description,
-      cover: taskRecord.cover,
-      type: normalizeTaskType(taskRecord.type),
-      claimMode: taskRecord.claimMode,
-      completeMode: taskRecord.completeMode,
-      objectiveType: normalizeTaskObjectiveType(taskRecord.objectiveType),
-      eventCode: taskRecord.eventCode ?? null,
-      objectiveConfig: taskRecord.objectiveConfig ?? null,
-      repeatRule: taskRecord.repeatRule,
-      publishStartAt: taskRecord.publishStartAt,
-      publishEndAt: taskRecord.publishEndAt,
-      rewardConfig: taskRecord.rewardConfig,
-      targetCount: taskRecord.targetCount,
-    }
   }
 
   /**
@@ -930,23 +924,8 @@ export abstract class TaskServiceSupport {
   /**
    * 创建或获取已存在的任务分配
    *
-   * 处理并发领取场景：通过唯一键 + onConflictDoNothing
-   * 保证只创建一条分配记录，并在并发命中时回查已有分配。
-   *
-   * @param taskRecord 任务信息对象
-   * @param taskRecord.id 任务ID
-   * @param taskRecord.code 任务编码
-   * @param taskRecord.title 任务标题
-   * @param taskRecord.type 任务类型
-   * @param taskRecord.rewardConfig 奖励配置
-   * @param taskRecord.targetCount 目标数量
-   * @param taskRecord.claimMode 领取模式
-   * @param taskRecord.publishEndAt 发布结束时间
-   * @param taskRecord.repeatRule 重复规则
-   * @param userId 用户ID
-   * @param cycleKey 周期标识
-   * @param now 当前时间
-   * @returns 任务分配
+   * 通过唯一键 + `onConflictDoNothing()` 处理并发领取，只允许同用户同周期生成一条
+   * assignment；并发命中时回查既有记录并保持调用方拿到稳定结果。
    */
   protected async createOrGetAssignment(
     taskRecord: CreateOrGetAssignmentTaskInput,
@@ -1369,7 +1348,7 @@ export abstract class TaskServiceSupport {
    */
   protected async ensureAutoAssignments(
     userId: number,
-    tasks: TaskSelect[],
+    tasks: AutoAssignmentTaskSource[],
     now: Date,
   ) {
     await Promise.all(
@@ -1389,46 +1368,22 @@ export abstract class TaskServiceSupport {
   protected async ensureAutoAssignmentsForUser(userId: number, now: Date) {
     const where = this.buildAvailableWhere()
     const tasks = await this.db
-      .select({
-        id: this.taskTable.id,
-        code: this.taskTable.code,
-        title: this.taskTable.title,
-        description: this.taskTable.description,
-        cover: this.taskTable.cover,
-        type: this.taskTable.type,
-        completeMode: this.taskTable.completeMode,
-        objectiveType: this.taskTable.objectiveType,
-        eventCode: this.taskTable.eventCode,
-        objectiveConfig: this.taskTable.objectiveConfig,
-        rewardConfig: this.taskTable.rewardConfig,
-        targetCount: this.taskTable.targetCount,
-        claimMode: this.taskTable.claimMode,
-        publishStartAt: this.taskTable.publishStartAt,
-        publishEndAt: this.taskTable.publishEndAt,
-        repeatRule: this.taskTable.repeatRule,
-      })
+      .select(this.buildAutoAssignmentTaskSelection())
       .from(this.taskTable)
       .where(where)
 
-    await Promise.all(
-      tasks.map(async (taskRecord) =>
-        this.ensureAutoAssignmentByTask(userId, taskRecord, now),
-      ),
-    )
+    await this.ensureAutoAssignments(userId, tasks, now)
   }
 
   /**
    * 确保单个任务的自动分配
    *
-   * 根据任务ID查找任务，如果为自动领取模式则创建分配。
-   *
-   * @param userId 用户ID
-   * @param taskId 任务ID
+   * 按任务 ID 读取一份自动领取所需的最小 task 视图，再复用统一分配入口。
    */
   protected async ensureAutoAssignment(userId: number, taskId: number) {
-    // 查找自动领取模式的可用任务
+    const now = new Date()
     const [taskRecord] = await this.db
-      .select()
+      .select(this.buildAutoAssignmentTaskSelection())
       .from(this.taskTable)
       .where(
         and(
@@ -1444,26 +1399,14 @@ export abstract class TaskServiceSupport {
     if (!taskRecord) {
       return
     }
-    await this.ensureAutoAssignmentByTask(userId, taskRecord)
+    await this.ensureAutoAssignmentByTask(userId, taskRecord, now)
   }
 
   /**
    * 根据任务信息确保自动分配
    *
-   * 校验任务的时间窗口和领取模式，创建分配。
-   *
-   * @param userId 用户ID
-   * @param taskRecord 任务信息对象
-   * @param taskRecord.id 任务ID
-   * @param taskRecord.code 任务编码
-   * @param taskRecord.title 任务标题
-   * @param taskRecord.type 任务类型
-   * @param taskRecord.rewardConfig 奖励配置
-   * @param taskRecord.targetCount 目标数量
-   * @param taskRecord.claimMode 领取模式
-   * @param taskRecord.publishStartAt 发布开始时间
-   * @param taskRecord.publishEndAt 发布结束时间
-   * @param taskRecord.repeatRule 重复规则
+   * 该入口只负责领取模式与发布时间窗口校验；真正的 assignment 幂等创建交给
+   * `createOrGetAssignment(...)`。
    */
   protected async ensureAutoAssignmentByTask(
     userId: number,
@@ -1480,6 +1423,34 @@ export abstract class TaskServiceSupport {
     // 计算周期并创建分配
     const cycleKey = this.buildCycleKey(taskRecord, now)
     await this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
+  }
+
+  // ==================== 快照、奖励与通知 ====================
+
+  /**
+   * 构建 assignment 持久化使用的任务快照。
+   *
+   * 快照冻结执行与展示都依赖的关键字段，避免模板变更改写历史 assignment 语义。
+   */
+  protected buildTaskSnapshot(taskRecord: TaskSnapshotSource) {
+    return {
+      id: taskRecord.id,
+      code: taskRecord.code,
+      title: taskRecord.title,
+      description: taskRecord.description,
+      cover: taskRecord.cover,
+      type: normalizeTaskType(taskRecord.type),
+      claimMode: taskRecord.claimMode,
+      completeMode: taskRecord.completeMode,
+      objectiveType: normalizeTaskObjectiveType(taskRecord.objectiveType),
+      eventCode: taskRecord.eventCode ?? null,
+      objectiveConfig: taskRecord.objectiveConfig ?? null,
+      repeatRule: taskRecord.repeatRule,
+      publishStartAt: taskRecord.publishStartAt,
+      publishEndAt: taskRecord.publishEndAt,
+      rewardConfig: taskRecord.rewardConfig,
+      targetCount: taskRecord.targetCount,
+    }
   }
 
   /**
@@ -1511,18 +1482,9 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 触发任务完成事件
+   * 触发任务完成事件并同步奖励副作用。
    *
-   * 任务完成时调用用户成长奖励服务发放奖励。
-   *
-   * @param userId 用户ID
-   * @param taskRecord 任务信息对象
-   * @param taskRecord.id 任务ID
-   * @param taskRecord.title 任务标题
-   * @param taskRecord.rewardConfig 奖励配置
-   * @param assignment 任务分配信息对象
-   * @param assignment.id 分配ID
-   * @param assignment.completedAt 任务完成时间，用于构建统一事件壳的 occurredAt
+   * 该入口统一负责事件壳构建、奖励服务调用、assignment 状态回写与到账提醒。
    */
   protected async emitTaskCompleteEvent(
     userId: number,
@@ -1774,6 +1736,8 @@ export abstract class TaskServiceSupport {
     }
   }
 
+  // ==================== 视图映射与对账查询 ====================
+
   /**
    * 计算任务进入可领取状态的参考时间
    *
@@ -1791,28 +1755,7 @@ export abstract class TaskServiceSupport {
    * 该视图只面向“尚可领取”的任务，因此 visibleStatus 固定为 CLAIMABLE。
    */
   protected toAppTaskView(
-    taskRecord: Pick<
-      TaskSelect,
-      | 'id'
-      | 'createdAt'
-      | 'updatedAt'
-      | 'code'
-      | 'title'
-      | 'description'
-      | 'cover'
-      | 'type'
-      | 'priority'
-      | 'claimMode'
-      | 'completeMode'
-      | 'objectiveType'
-      | 'eventCode'
-      | 'objectiveConfig'
-      | 'targetCount'
-      | 'rewardConfig'
-      | 'publishStartAt'
-      | 'publishEndAt'
-      | 'repeatRule'
-    >,
+    taskRecord: AppTaskViewSource,
   ) {
     return {
       id: taskRecord.id,
@@ -2354,6 +2297,8 @@ export abstract class TaskServiceSupport {
     }
     return result
   }
+
+  // ==================== 通用工具 ====================
 
   /**
    * 判断任务是否配置了真实奖励。

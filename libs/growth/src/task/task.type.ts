@@ -97,6 +97,14 @@ export type AutoAssignmentTaskSource = TaskSnapshotSource
  */
 export type CreateOrGetAssignmentTaskInput = TaskSnapshotSource
 
+/**
+ * App 可领取任务视图所需的任务字段来源。
+ *
+ * 复用快照与自动分配链路的稳定任务字段，再补齐列表展示依赖的审计与排序字段。
+ */
+export type AppTaskViewSource = TaskSnapshotSource &
+  Pick<Task, 'createdAt' | 'updatedAt' | 'priority'>
+
 type CreateTaskInsertFields = Pick<
   TaskInsert,
   | 'code'

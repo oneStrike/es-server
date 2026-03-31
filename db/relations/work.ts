@@ -27,6 +27,10 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       to: r.workTag.id.through(r.workTagRelation.tagId),
     }),
     chapters: r.many.workChapter(),
+    comicArchiveImportTasks: r.many.workComicArchiveImportTask({
+      from: r.work.id,
+      to: r.workComicArchiveImportTask.workId,
+    }),
     userReadingStates: r.many.userWorkReadingState({
       from: r.work.id,
       to: r.userWorkReadingState.workId,
@@ -80,6 +84,12 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       from: r.workChapter.id,
       to: r.userWorkReadingState.lastReadChapterId,
       alias: 'UserWorkReadingStateLastReadChapter',
+    }),
+  },
+  workComicArchiveImportTask: {
+    work: r.one.work({
+      from: r.workComicArchiveImportTask.workId,
+      to: r.work.id,
     }),
   },
   workComic: {

@@ -14,6 +14,11 @@ export const adminRelations = defineRelationsPart(schema, (r) => ({
       to: r.task.updatedById,
       alias: 'TaskUpdatedBy',
     }),
+    updatedAppConfigs: r.many.appConfig({
+      from: r.adminUser.id,
+      to: r.appConfig.updatedById,
+      alias: 'AppConfigUpdater',
+    }),
     updatedSystemConfigs: r.many.systemConfig({
       from: r.adminUser.id,
       to: r.systemConfig.updatedById,

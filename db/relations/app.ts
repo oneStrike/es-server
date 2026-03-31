@@ -30,6 +30,13 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.appUser.id,
     }),
   },
+  appConfig: {
+    updatedBy: r.one.adminUser({
+      from: r.appConfig.updatedById,
+      to: r.adminUser.id,
+      alias: 'AppConfigUpdater',
+    }),
+  },
   appPage: {
     announcements: r.many.appAnnouncement({
       from: r.appPage.id,
@@ -68,6 +75,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.appUser.id,
       to: r.notificationPreference.userId,
       alias: 'NotificationPreferenceUser',
+    }),
+    notificationDeliveries: r.many.notificationDelivery({
+      from: r.appUser.id,
+      to: r.notificationDelivery.receiverUserId,
     }),
     triggeredNotifications: r.many.userNotification({
       from: r.appUser.id,

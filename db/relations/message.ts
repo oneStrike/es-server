@@ -50,7 +50,26 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
       alias: 'ChatMessageSender',
     }),
   },
-  notificationDelivery: {},
+  messageOutbox: {
+    notificationDelivery: r.one.notificationDelivery({
+      from: r.messageOutbox.id,
+      to: r.notificationDelivery.outboxId,
+    }),
+  },
+  notificationDelivery: {
+    outbox: r.one.messageOutbox({
+      from: r.notificationDelivery.outboxId,
+      to: r.messageOutbox.id,
+    }),
+    receiverUser: r.one.appUser({
+      from: r.notificationDelivery.receiverUserId,
+      to: r.appUser.id,
+    }),
+    notification: r.one.userNotification({
+      from: r.notificationDelivery.notificationId,
+      to: r.userNotification.id,
+    }),
+  },
   notificationPreference: {
     user: r.one.appUser({
       from: r.notificationPreference.userId,
@@ -69,6 +88,10 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
       from: r.userNotification.actorUserId,
       to: r.appUser.id,
       alias: 'UserNotificationActor',
+    }),
+    deliveryRecords: r.many.notificationDelivery({
+      from: r.userNotification.id,
+      to: r.notificationDelivery.notificationId,
     }),
   },
 }))
