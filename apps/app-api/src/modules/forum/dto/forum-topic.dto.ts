@@ -8,6 +8,7 @@ import {
   ArrayProperty,
   BooleanProperty,
   NestedProperty,
+  StringProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user/core'
@@ -72,6 +73,14 @@ export class AppForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'lastCommentAt',
   'createdAt',
 ] as const) {
+  @StringProperty({
+    description: '主题简要内容（正文前 60 个字符）',
+    example: '我最近在整理一份入门 TypeScript 的学习路线，先从类型系统开始...',
+    required: true,
+    validation: false,
+  })
+  contentSnippet!: string
+
   @BooleanProperty({
     description: '当前用户是否已点赞',
     example: true,

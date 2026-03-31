@@ -166,6 +166,38 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   user!: AdminForumTopicUserDto
 }
 
+export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
+  'id',
+  'sectionId',
+  'userId',
+  'title',
+  'images',
+  'videos',
+  'isPinned',
+  'isFeatured',
+  'isLocked',
+  'isHidden',
+  'auditStatus',
+  'auditReason',
+  'auditAt',
+  'viewCount',
+  'likeCount',
+  'commentCount',
+  'favoriteCount',
+  'lastCommentAt',
+  'lastCommentUserId',
+  'createdAt',
+  'updatedAt',
+] as const) {
+  @StringProperty({
+    description: '主题简要内容（正文前 60 个字符）',
+    example: '我最近在整理一份入门 TypeScript 的学习路线，先从类型系统开始...',
+    required: true,
+    validation: false,
+  })
+  contentSnippet!: string
+}
+
 export class CreateForumTopicDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['sectionId', 'userId'] as const),
   ForumTopicWritableFieldsDto,

@@ -198,35 +198,156 @@ describe('forum topic audit reward backfill', () => {
   })
 })
 
-describe('forum topic public page payload', () => {
-  it('returns unified relation and interaction fields for each public topic item', async () => {
+describe('forum topic admin page payload', () => {
+  it('returns page items with content snippets instead of full content', async () => {
     const { ForumTopicService } = await import('../forum-topic.service')
 
-    const ensureUserCanAccessSection = jest.fn().mockResolvedValue(undefined)
-    const findPagination = jest.fn().mockResolvedValue({
-      list: [
-        {
-          id: 101,
-          sectionId: 9,
-          userId: 7,
-          title: '公开主题',
-          images: [],
-          videos: [],
-          isPinned: false,
-          isFeatured: true,
-          isLocked: false,
-          viewCount: 12,
-          commentCount: 3,
-          likeCount: 2,
-          favoriteCount: 1,
-          lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
-          createdAt: new Date('2026-03-28T00:00:00.000Z'),
+    const orderBy = jest.fn().mockResolvedValue([
+      {
+        id: 301,
+        sectionId: 9,
+        userId: 7,
+        title: '后台主题',
+        contentSnippet: '这是后台主题的摘要',
+        images: [],
+        videos: [],
+        isPinned: false,
+        isFeatured: true,
+        isLocked: false,
+        isHidden: false,
+        auditStatus: AuditStatusEnum.APPROVED,
+        auditReason: null,
+        auditAt: null,
+        viewCount: 12,
+        likeCount: 2,
+        commentCount: 3,
+        favoriteCount: 1,
+        lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
+        lastCommentUserId: 8,
+        createdAt: new Date('2026-03-28T00:00:00.000Z'),
+        updatedAt: new Date('2026-03-29T00:00:00.000Z'),
+      },
+    ])
+    const offset = jest.fn(() => ({ orderBy }))
+    const limit = jest.fn(() => ({ offset }))
+    const where = jest.fn(() => ({ limit }))
+    const from = jest.fn(() => ({ where }))
+    const select = jest.fn(() => ({ from }))
+    const count = jest.fn().mockResolvedValue(1)
+    const buildPage = jest.fn().mockReturnValue({
+      pageIndex: 1,
+      pageSize: 20,
+      limit: 20,
+      offset: 0,
+    })
+    const buildOrderBy = jest.fn().mockReturnValue({
+      orderBySql: ['topic.id desc'],
+    })
+
+    const service = new ForumTopicService(
+      {
+        db: {
+          select,
+          $count: count,
         },
-      ],
-      total: 1,
+        buildPage,
+        buildOrderBy,
+        schema: {
+          forumTopic: {
+            id: 'id',
+            sectionId: 'sectionId',
+            userId: 'userId',
+            title: 'title',
+            content: 'content',
+            images: 'images',
+            videos: 'videos',
+            isPinned: 'isPinned',
+            isFeatured: 'isFeatured',
+            isLocked: 'isLocked',
+            isHidden: 'isHidden',
+            deletedAt: 'deletedAt',
+            auditStatus: 'auditStatus',
+            auditReason: 'auditReason',
+            auditAt: 'auditAt',
+            viewCount: 'viewCount',
+            likeCount: 'likeCount',
+            commentCount: 'commentCount',
+            favoriteCount: 'favoriteCount',
+            lastCommentAt: 'lastCommentAt',
+            lastCommentUserId: 'lastCommentUserId',
+            createdAt: 'createdAt',
+            updatedAt: 'updatedAt',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    )
+
+    const result = await service.getTopics({
+      sectionId: 9,
+      auditStatus: AuditStatusEnum.APPROVED,
       pageIndex: 1,
       pageSize: 20,
     })
+
+    expect(buildPage).toHaveBeenCalledWith({
+      pageIndex: 1,
+      pageSize: 20,
+    })
+    expect(buildOrderBy).toHaveBeenCalled()
+    expect(count).toHaveBeenCalled()
+    expect(result.list).toEqual([
+      expect.objectContaining({
+        id: 301,
+        title: '后台主题',
+        contentSnippet: '这是后台主题的摘要',
+      }),
+    ])
+    expect(result.list[0]).not.toHaveProperty('content')
+  })
+})
+
+describe('forum topic public page payload', () => {
+  it('returns unified relation, interaction, and snippet fields for each public topic item', async () => {
+    const { ForumTopicService } = await import('../forum-topic.service')
+
+    const ensureUserCanAccessSection = jest.fn().mockResolvedValue(undefined)
+    const orderBy = jest.fn().mockResolvedValue([
+      {
+        id: 101,
+        sectionId: 9,
+        userId: 7,
+        title: '公开主题',
+        contentSnippet: '这是公开主题的摘要',
+        images: [],
+        videos: [],
+        isPinned: false,
+        isFeatured: true,
+        isLocked: false,
+        viewCount: 12,
+        commentCount: 3,
+        likeCount: 2,
+        favoriteCount: 1,
+        lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
+        createdAt: new Date('2026-03-28T00:00:00.000Z'),
+      },
+    ])
+    const offset = jest.fn(() => ({ orderBy }))
+    const limit = jest.fn(() => ({ offset }))
+    const where = jest.fn(() => ({ limit }))
+    const from = jest.fn(() => ({ where }))
+    const select = jest.fn(() => ({ from }))
+    const count = jest.fn().mockResolvedValue(1)
     const findMany = jest.fn().mockResolvedValue([
       {
         id: 7,
@@ -244,6 +365,15 @@ describe('forum topic public page payload', () => {
     const favoritedStatusBatch = jest
       .fn()
       .mockResolvedValue(new Map([[101, false]]))
+    const buildPage = jest.fn().mockReturnValue({
+      pageIndex: 1,
+      pageSize: 20,
+      limit: 20,
+      offset: 0,
+    })
+    const buildOrderBy = jest.fn().mockReturnValue({
+      orderBySql: ['topic.isPinned desc'],
+    })
 
     const service = new ForumTopicService(
       {
@@ -256,16 +386,32 @@ describe('forum topic public page payload', () => {
               findFirst: findSectionFirst,
             },
           },
+          select,
+          $count: count,
         },
-        ext: {
-          findPagination,
-        },
+        buildPage,
+        buildOrderBy,
         schema: {
           forumTopic: {
+            id: 'id',
             sectionId: 'sectionId',
+            userId: 'userId',
+            title: 'title',
+            content: 'content',
+            images: 'images',
+            videos: 'videos',
+            isPinned: 'isPinned',
+            isFeatured: 'isFeatured',
+            isLocked: 'isLocked',
             deletedAt: 'deletedAt',
             auditStatus: 'auditStatus',
             isHidden: 'isHidden',
+            viewCount: 'viewCount',
+            likeCount: 'likeCount',
+            commentCount: 'commentCount',
+            favoriteCount: 'favoriteCount',
+            lastCommentAt: 'lastCommentAt',
+            createdAt: 'createdAt',
           },
         },
       } as any,
@@ -297,6 +443,7 @@ describe('forum topic public page payload', () => {
     expect(result.list).toEqual([
       expect.objectContaining({
         id: 101,
+        contentSnippet: '这是公开主题的摘要',
         liked: true,
         favorited: false,
         section: {

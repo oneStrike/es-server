@@ -54,7 +54,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, isNull, or } from 'drizzle-orm'
+import { and, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -142,6 +142,54 @@ export class ForumTopicService {
         cover: true,
       },
     })
+  }
+
+  /**
+   * 批量获取主题列表使用的板块简要信息。
+   * 可按需限制为当前仍可见的板块，供收藏列表等需要剔除失效板块的场景复用。
+   */
+  private async getTopicSectionBriefMap(
+    sectionIds: number[],
+    options?: {
+      requireEnabled?: boolean
+    },
+  ) {
+    const uniqueSectionIds = [...new Set(sectionIds)]
+    if (uniqueSectionIds.length === 0) {
+      return new Map<
+        number,
+        {
+          id: number
+          name: string
+          icon: string | null
+          cover: string | null
+        }
+      >()
+    }
+
+    const sections = await this.db.query.forumSection.findMany({
+      where: {
+        id: { in: uniqueSectionIds },
+        deletedAt: { isNull: true },
+        ...(options?.requireEnabled ? { isEnabled: true } : {}),
+      },
+      columns: {
+        id: true,
+        name: true,
+        icon: true,
+        cover: true,
+      },
+    })
+
+    return new Map(sections.map((section) => [section.id, section]))
+  }
+
+  /**
+   * 构建主题列表使用的正文摘要 SQL。
+   * 直接在数据库侧截取前 60 个字符，避免列表查询搬运完整正文。
+   */
+  private buildTopicContentSnippetSql() {
+    return sql<string>`left(trim(${this.forumTopicTable.content}), 60)`
   }
 
   /**
@@ -593,6 +641,10 @@ export class ForumTopicService {
     }
   }
 
+  /**
+   * 获取后台主题分页列表。
+   * 后台列表仅返回展示所需字段和正文摘要，避免分页接口直接传输完整正文。
+   */
   async getTopics(queryForumTopicDto: QueryForumTopicInput) {
     const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
     const conditions: SQL[] = [isNull(this.forumTopicTable.deletedAt)]
@@ -634,11 +686,57 @@ export class ForumTopicService {
     }
 
     const where = and(...conditions)
-
-    return this.drizzle.ext.findPagination(this.forumTopicTable, {
-      where,
-      ...otherDto,
+    const page = this.drizzle.buildPage({
+      pageIndex: otherDto.pageIndex,
+      pageSize: otherDto.pageSize,
     })
+    const order = this.drizzle.buildOrderBy(otherDto.orderBy, {
+      table: this.forumTopicTable,
+    })
+
+    const listQuery = this.db
+      .select({
+        id: this.forumTopicTable.id,
+        sectionId: this.forumTopicTable.sectionId,
+        userId: this.forumTopicTable.userId,
+        title: this.forumTopicTable.title,
+        contentSnippet: this.buildTopicContentSnippetSql(),
+        images: this.forumTopicTable.images,
+        videos: this.forumTopicTable.videos,
+        isPinned: this.forumTopicTable.isPinned,
+        isFeatured: this.forumTopicTable.isFeatured,
+        isLocked: this.forumTopicTable.isLocked,
+        isHidden: this.forumTopicTable.isHidden,
+        auditStatus: this.forumTopicTable.auditStatus,
+        auditReason: this.forumTopicTable.auditReason,
+        auditAt: this.forumTopicTable.auditAt,
+        viewCount: this.forumTopicTable.viewCount,
+        likeCount: this.forumTopicTable.likeCount,
+        commentCount: this.forumTopicTable.commentCount,
+        favoriteCount: this.forumTopicTable.favoriteCount,
+        lastCommentAt: this.forumTopicTable.lastCommentAt,
+        lastCommentUserId: this.forumTopicTable.lastCommentUserId,
+        createdAt: this.forumTopicTable.createdAt,
+        updatedAt: this.forumTopicTable.updatedAt,
+      })
+      .from(this.forumTopicTable)
+      .where(where)
+      .limit(page.limit)
+      .offset(page.offset)
+
+    const [list, total] = await Promise.all([
+      order.orderBySql.length > 0
+        ? listQuery.orderBy(...order.orderBySql)
+        : listQuery,
+      this.db.$count(this.forumTopicTable, where),
+    ])
+
+    return {
+      list,
+      total,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
+    }
   }
 
   /**
@@ -658,38 +756,60 @@ export class ForumTopicService {
       },
     )
 
-    const page = await this.drizzle.ext.findPagination(this.forumTopicTable, {
-      where: and(
-        eq(this.forumTopicTable.sectionId, query.sectionId),
-        isNull(this.forumTopicTable.deletedAt),
-        eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
-        eq(this.forumTopicTable.isHidden, false),
-      ),
+    const where = and(
+      eq(this.forumTopicTable.sectionId, query.sectionId),
+      isNull(this.forumTopicTable.deletedAt),
+      eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumTopicTable.isHidden, false),
+    )
+    const pageQuery = this.drizzle.buildPage({
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
-      orderBy: [
+    })
+    const order = this.drizzle.buildOrderBy(undefined, {
+      table: this.forumTopicTable,
+      fallbackOrderBy: [
         { isPinned: 'desc' },
         { lastCommentAt: 'desc' },
         { createdAt: 'desc' },
       ],
-      pick: [
-        'id',
-        'sectionId',
-        'userId',
-        'title',
-        'images',
-        'videos',
-        'isPinned',
-        'isFeatured',
-        'isLocked',
-        'viewCount',
-        'commentCount',
-        'likeCount',
-        'favoriteCount',
-        'lastCommentAt',
-        'createdAt',
-      ],
     })
+    const listQuery = this.db
+      .select({
+        id: this.forumTopicTable.id,
+        sectionId: this.forumTopicTable.sectionId,
+        userId: this.forumTopicTable.userId,
+        title: this.forumTopicTable.title,
+        contentSnippet: this.buildTopicContentSnippetSql(),
+        images: this.forumTopicTable.images,
+        videos: this.forumTopicTable.videos,
+        isPinned: this.forumTopicTable.isPinned,
+        isFeatured: this.forumTopicTable.isFeatured,
+        isLocked: this.forumTopicTable.isLocked,
+        viewCount: this.forumTopicTable.viewCount,
+        commentCount: this.forumTopicTable.commentCount,
+        likeCount: this.forumTopicTable.likeCount,
+        favoriteCount: this.forumTopicTable.favoriteCount,
+        lastCommentAt: this.forumTopicTable.lastCommentAt,
+        createdAt: this.forumTopicTable.createdAt,
+      })
+      .from(this.forumTopicTable)
+      .where(where)
+      .limit(pageQuery.limit)
+      .offset(pageQuery.offset)
+
+    const [list, total] = await Promise.all([
+      order.orderBySql.length > 0
+        ? listQuery.orderBy(...order.orderBySql)
+        : listQuery,
+      this.db.$count(this.forumTopicTable, where),
+    ])
+    const page = {
+      list,
+      total,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
+    }
 
     if (page.list.length === 0) {
       return page
@@ -751,54 +871,44 @@ export class ForumTopicService {
       return new Map<number, unknown>()
     }
 
-    const topics = await this.db.query.forumTopic.findMany({
-      where: {
-        id: { in: targetIds },
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-        deletedAt: { isNull: true },
-      },
-      columns: {
-        id: true,
-        sectionId: true,
-        userId: true,
-        title: true,
-        images: true,
-        videos: true,
-        isPinned: true,
-        isFeatured: true,
-        isLocked: true,
-        viewCount: true,
-        commentCount: true,
-        likeCount: true,
-        favoriteCount: true,
-        lastCommentAt: true,
-        createdAt: true,
-      },
-      with: {
-        section: {
-          columns: {
-            id: true,
-            name: true,
-            icon: true,
-            cover: true,
-            isEnabled: true,
-            deletedAt: true,
-          },
-        },
-        user: {
-          columns: {
-            id: true,
-            nickname: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
+    const topics = await this.db
+      .select({
+        id: this.forumTopicTable.id,
+        sectionId: this.forumTopicTable.sectionId,
+        userId: this.forumTopicTable.userId,
+        title: this.forumTopicTable.title,
+        contentSnippet: this.buildTopicContentSnippetSql(),
+        images: this.forumTopicTable.images,
+        videos: this.forumTopicTable.videos,
+        isPinned: this.forumTopicTable.isPinned,
+        isFeatured: this.forumTopicTable.isFeatured,
+        isLocked: this.forumTopicTable.isLocked,
+        viewCount: this.forumTopicTable.viewCount,
+        commentCount: this.forumTopicTable.commentCount,
+        likeCount: this.forumTopicTable.likeCount,
+        favoriteCount: this.forumTopicTable.favoriteCount,
+        lastCommentAt: this.forumTopicTable.lastCommentAt,
+        createdAt: this.forumTopicTable.createdAt,
+      })
+      .from(this.forumTopicTable)
+      .where(
+        and(
+          inArray(this.forumTopicTable.id, [...new Set(targetIds)]),
+          eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
+          eq(this.forumTopicTable.isHidden, false),
+          isNull(this.forumTopicTable.deletedAt),
+        ),
+      )
 
-    const visibleTopics = topics.filter(
-      (topic) => topic.section && !topic.section.deletedAt && topic.section.isEnabled,
-    )
+    const sectionIds = topics.map((topic) => topic.sectionId)
+    const userIds = topics.map((topic) => topic.userId)
+    const [sectionMap, userMap] = await Promise.all([
+      this.getTopicSectionBriefMap(sectionIds, {
+        requireEnabled: true,
+      }),
+      this.getTopicUserBriefMap(userIds),
+    ])
+    const visibleTopics = topics.filter((topic) => sectionMap.has(topic.sectionId))
 
     if (visibleTopics.length === 0) {
       return new Map()
@@ -830,6 +940,7 @@ export class ForumTopicService {
           sectionId: topic.sectionId,
           userId: topic.userId,
           title: topic.title,
+          contentSnippet: topic.contentSnippet,
           images: topic.images,
           videos: topic.videos,
           isPinned: topic.isPinned,
@@ -843,15 +954,8 @@ export class ForumTopicService {
           createdAt: topic.createdAt,
           liked: likedMap.get(topic.id) ?? false,
           favorited: favoritedMap.get(topic.id) ?? false,
-          section: topic.section
-            ? {
-                id: topic.section.id,
-                name: topic.section.name,
-                icon: topic.section.icon,
-                cover: topic.section.cover,
-              }
-            : undefined,
-          user: topic.user ?? undefined,
+          section: sectionMap.get(topic.sectionId),
+          user: userMap.get(topic.userId),
         },
       ]),
     )

@@ -42,34 +42,36 @@ jest.mock('@libs/user/core', () => ({
 }))
 
 describe('userProfileService.getMyTopics', () => {
-  it('returns unified user interaction fields for self-created topics', async () => {
+  it('returns unified user interaction fields and snippets for self-created topics', async () => {
     const { UserProfileService } = await import('../profile.service')
 
-    const findPagination = jest.fn().mockResolvedValue({
-      list: [
-        {
-          id: 101,
-          userId: 7,
-          sectionId: null,
-          title: '我的主题',
-          images: [],
-          videos: [],
-          isPinned: false,
-          isFeatured: false,
-          isLocked: false,
-          viewCount: 12,
-          commentCount: 3,
-          likeCount: 2,
-          favoriteCount: 1,
-          lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
-          createdAt: new Date('2026-03-28T00:00:00.000Z'),
-          auditStatus: 1,
-        },
-      ],
-      total: 1,
-      pageIndex: 1,
-      pageSize: 20,
-    })
+    const orderBy = jest.fn().mockResolvedValue([
+      {
+        id: 101,
+        userId: 7,
+        sectionId: null,
+        title: '我的主题',
+        contentSnippet: '这是我的主题摘要',
+        images: [],
+        videos: [],
+        isPinned: false,
+        isFeatured: false,
+        isLocked: false,
+        viewCount: 12,
+        commentCount: 3,
+        likeCount: 2,
+        favoriteCount: 1,
+        lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
+        createdAt: new Date('2026-03-28T00:00:00.000Z'),
+        auditStatus: 1,
+      },
+    ])
+    const offset = jest.fn(() => ({ orderBy }))
+    const limit = jest.fn(() => ({ offset }))
+    const where = jest.fn(() => ({ limit }))
+    const from = jest.fn(() => ({ where }))
+    const select = jest.fn(() => ({ from }))
+    const count = jest.fn().mockResolvedValue(1)
     const likedStatusBatch = jest
       .fn()
       .mockResolvedValue(new Map([[101, true]]))
@@ -85,22 +87,45 @@ describe('userProfileService.getMyTopics', () => {
     const service = new UserProfileService(
       {
         db: {
+          select,
+          $count: count,
           query: {
             appUser: {
               findFirst,
             },
           },
         },
-        ext: {
-          findPagination,
-        },
+        buildPage: jest.fn().mockReturnValue({
+          pageIndex: 1,
+          pageSize: 20,
+          limit: 20,
+          offset: 0,
+        }),
+        buildOrderBy: jest.fn().mockReturnValue({
+          orderBySql: ['topic.createdAt desc'],
+        }),
         schema: {
           appUser: {},
           appUserCount: {},
           forumTopic: {
+            id: 'id',
             userId: 'userId',
             deletedAt: 'deletedAt',
             sectionId: 'sectionId',
+            title: 'title',
+            content: 'content',
+            images: 'images',
+            videos: 'videos',
+            isPinned: 'isPinned',
+            isFeatured: 'isFeatured',
+            isLocked: 'isLocked',
+            viewCount: 'viewCount',
+            commentCount: 'commentCount',
+            likeCount: 'likeCount',
+            favoriteCount: 'favoriteCount',
+            lastCommentAt: 'lastCommentAt',
+            createdAt: 'createdAt',
+            auditStatus: 'auditStatus',
           },
           forumSection: {
             id: 'id',
@@ -130,6 +155,7 @@ describe('userProfileService.getMyTopics', () => {
       expect.objectContaining({
         id: 101,
         userId: 7,
+        contentSnippet: '这是我的主题摘要',
         liked: true,
         favorited: false,
         user: {

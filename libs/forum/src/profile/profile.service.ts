@@ -16,7 +16,7 @@ import {
 } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, ilike, inArray, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
 
 type UserCountRow = Pick<
   AppUserCountSelect,
@@ -145,6 +145,14 @@ export class UserProfileService {
         avatarUrl: true,
       },
     })
+  }
+
+  /**
+   * 构建“我的主题”列表使用的正文摘要 SQL。
+   * 直接在数据库侧截取前 60 个字符，避免个人列表读取完整正文。
+   */
+  private buildTopicContentSnippetSql() {
+    return sql<string>`left(trim(${this.forumTopic.content}), 60)`
   }
 
   /**
@@ -317,7 +325,12 @@ export class UserProfileService {
    * @param userId - 用户ID
    * @returns 分页的主题列表，包含板块信息、liked/favorited 状态和发帖用户简要信息
    */
-  async getMyTopics(userId: number, query?: { sectionId?: number, pageIndex?: number, pageSize?: number }) {
+  async getMyTopics(userId: number, query?: {
+    sectionId?: number
+    pageIndex?: number
+    pageSize?: number
+    orderBy?: string
+  }) {
     const conditions: SQL[] = [
       eq(this.forumTopic.userId, userId),
       isNull(this.forumTopic.deletedAt),
@@ -328,30 +341,50 @@ export class UserProfileService {
     }
 
     const where = and(...conditions)
-    const page = await this.drizzle.ext.findPagination(this.forumTopic, {
-      where,
+    const pageQuery = this.drizzle.buildPage({
       pageIndex: query?.pageIndex,
       pageSize: query?.pageSize,
-      orderBy: { createdAt: 'desc' },
-      pick: [
-        'id',
-        'sectionId',
-        'userId',
-        'title',
-        'images',
-        'videos',
-        'isPinned',
-        'isFeatured',
-        'isLocked',
-        'viewCount',
-        'commentCount',
-        'likeCount',
-        'favoriteCount',
-        'lastCommentAt',
-        'createdAt',
-        'auditStatus',
-      ],
     })
+    const order = this.drizzle.buildOrderBy(query?.orderBy, {
+      table: this.forumTopic,
+      fallbackOrderBy: { createdAt: 'desc' },
+    })
+    const listQuery = this.db
+      .select({
+        id: this.forumTopic.id,
+        sectionId: this.forumTopic.sectionId,
+        userId: this.forumTopic.userId,
+        title: this.forumTopic.title,
+        contentSnippet: this.buildTopicContentSnippetSql(),
+        images: this.forumTopic.images,
+        videos: this.forumTopic.videos,
+        isPinned: this.forumTopic.isPinned,
+        isFeatured: this.forumTopic.isFeatured,
+        isLocked: this.forumTopic.isLocked,
+        viewCount: this.forumTopic.viewCount,
+        commentCount: this.forumTopic.commentCount,
+        likeCount: this.forumTopic.likeCount,
+        favoriteCount: this.forumTopic.favoriteCount,
+        lastCommentAt: this.forumTopic.lastCommentAt,
+        createdAt: this.forumTopic.createdAt,
+        auditStatus: this.forumTopic.auditStatus,
+      })
+      .from(this.forumTopic)
+      .where(where)
+      .limit(pageQuery.limit)
+      .offset(pageQuery.offset)
+    const [pageList, total] = await Promise.all([
+      order.orderBySql.length > 0
+        ? listQuery.orderBy(...order.orderBySql)
+        : listQuery,
+      this.db.$count(this.forumTopic, where),
+    ])
+    const page = {
+      list: pageList,
+      total,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
+    }
 
     if (page.list.length === 0) {
       return page

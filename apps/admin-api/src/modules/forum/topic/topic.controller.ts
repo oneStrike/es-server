@@ -1,5 +1,4 @@
 import {
-  BaseForumTopicDto,
   ForumTopicService,
 } from '@libs/forum/topic'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
@@ -8,6 +7,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   AdminForumTopicDetailDto,
+  AdminForumTopicPageItemDto,
   CreateForumTopicDto,
   QueryForumTopicDto,
   UpdateForumTopicAuditStatusDto,
@@ -111,7 +111,7 @@ export class ForumTopicController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询论坛主题列表',
-    model: BaseForumTopicDto,
+    model: AdminForumTopicPageItemDto,
   })
   async getPage(@Query() query: QueryForumTopicDto) {
     return this.forumTopicService.getTopics(query)
