@@ -7,8 +7,8 @@ import {
   EventDefinitionConsumerEnum,
   EventDefinitionService,
 } from '@libs/growth/event-definition'
-import { Injectable } from '@nestjs/common'
-import { TaskService } from '../task/task.service'
+import { TaskEventService } from '@libs/growth/task'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { UserGrowthRewardService } from './growth-reward.service'
 
 /**
@@ -21,7 +21,7 @@ export class GrowthEventBridgeService {
   constructor(
     private readonly eventDefinitionService: EventDefinitionService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
-    private readonly taskService: TaskService,
+    private readonly taskEventService: TaskEventService,
   ) {}
 
   /**
@@ -36,7 +36,9 @@ export class GrowthEventBridgeService {
     )
 
     if (!definition) {
-      throw new Error(`未找到事件定义：${input.eventEnvelope.code}`)
+      throw new BadRequestException(
+        `未找到事件定义：${input.eventEnvelope.code}`,
+      )
     }
 
     const growthBlockedByGovernance = !canConsumeEventEnvelopeByConsumer(
@@ -60,7 +62,7 @@ export class GrowthEventBridgeService {
         )
     const taskHandled = taskEligible
     const taskResult = taskEligible
-      ? await this.taskService.consumeEventProgress({
+      ? await this.taskEventService.consumeEventProgress({
           eventEnvelope: input.eventEnvelope,
           bizKey: input.bizKey,
         })

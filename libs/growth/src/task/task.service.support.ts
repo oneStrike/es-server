@@ -1,8 +1,10 @@
-import type { Db, DrizzleService} from '@db/core'
-import type { TaskAssignmentSelect, TaskSelect } from '@db/schema'
+import type { Db, DrizzleService } from '@db/core'
 import type {
-  MessageNotificationDispatchStatusEnum
-} from '@libs/message/notification';
+  TaskAssignmentInsert,
+  TaskAssignmentSelect,
+  TaskProgressLogInsert,
+  TaskSelect,
+} from '@db/schema'
 import type { MessageOutboxService } from '@libs/message/outbox'
 import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
@@ -10,12 +12,38 @@ import type { UserGrowthRewardService } from '../growth-reward/growth-reward.ser
 import type { TaskRewardSettlementResult } from '../growth-reward/growth-reward.types'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
+  AdvanceAssignmentByEventInput,
+  ApplyAssignmentEventProgressInput,
   AutoAssignmentTaskSource,
+  BuildTaskCompleteEventEnvelopeInput,
+  CreateOrGetAssignmentOptions,
+  CreateOrGetAssignmentTaskInput,
+  EnsureTaskObjectiveContractInput,
+  ExpireAssignmentsByWhereInput,
+  QueryTaskAssignmentPageParams,
   QueryTaskAssignmentReconciliationPageInput,
+  ResolveTaskUserVisibleStatusInput,
+  TaskAssignmentEventProgressSummary,
+  TaskAssignmentRewardReminderSummary,
+  TaskAssignmentWithTaskRow,
+  TaskAutoAssignmentReminderTaskInput,
+  TaskCompleteEventAssignmentInput,
+  TaskCompleteEventTaskInput,
   TaskEventProgressInput,
-  TaskQueryOrderByInput,
+  TaskLatestReminderRow,
+  TaskObjectiveConfig,
+  TaskProgressLogRecordInput,
+  TaskRelationRow,
+  TaskReminderAssignmentInput,
   TaskRepeatRuleConfig,
   TaskRewardConfig,
+  TaskRewardReminderTaskInput,
+  TaskRewardSettlementAssignmentInput,
+  TaskRewardSettlementTaskInput,
+  TaskRewardTaskRecord,
+  TaskRewardTaskRecordBuildAssignmentInput,
+  TaskRewardTaskRecordBuildCurrentTaskInput,
+  TaskRuntimeHealthSummary,
   TaskSnapshotSource,
   UpdateTaskInput,
 } from './task.type'
@@ -25,9 +53,7 @@ import {
   EventDefinitionEntityTypeEnum,
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition'
-import {
-  MessageNotificationTypeEnum,
-} from '@libs/message/notification'
+import { MessageNotificationTypeEnum } from '@libs/message/notification'
 import {
   BadRequestException,
   ConflictException,
@@ -81,47 +107,47 @@ dayjs.extend(isoWeek)
  * 任务域共享支撑类。
  *
  * 收口 task 模块的底层 Drizzle 访问、状态机规则、奖励补偿、通知组装、
- * 视图映射与周期计算，供 `TaskService` 通过分域 operation 复用。
+ * 视图映射与周期计算，供拆分后的 task 子服务和兼容测试适配层复用。
  */
 export abstract class TaskServiceSupport {
-  private readonly logger = new Logger('TaskService')
-  private readonly taskNotificationService = new TaskNotificationService()
-  private readonly defaultTaskTimezone =
+  protected readonly logger = new Logger('TaskService')
+  protected readonly taskNotificationService = new TaskNotificationService()
+  protected readonly defaultTaskTimezone =
     this.normalizeTaskTimezone(process.env.TZ) ?? 'Asia/Shanghai'
 
   constructor(
-    private readonly drizzle: DrizzleService,
-    private readonly userGrowthRewardService: UserGrowthRewardService,
-    private readonly messageOutboxService: MessageOutboxService,
+    protected readonly drizzle: DrizzleService,
+    protected readonly userGrowthRewardService: UserGrowthRewardService,
+    protected readonly messageOutboxService: MessageOutboxService,
   ) {}
 
   /** 数据库连接实例 */
-  private get db() {
+  protected get db() {
     return this.drizzle.db
   }
 
   /** 任务表 */
-  private get taskTable() {
+  protected get taskTable() {
     return this.drizzle.schema.task
   }
 
   /** 任务分配表 */
-  private get taskAssignmentTable() {
+  protected get taskAssignmentTable() {
     return this.drizzle.schema.taskAssignment
   }
 
   /** 任务进度日志表 */
-  private get taskProgressLogTable() {
+  protected get taskProgressLogTable() {
     return this.drizzle.schema.taskProgressLog
   }
 
   /** 通知投递结果表 */
-  private get notificationDeliveryTable() {
+  protected get notificationDeliveryTable() {
     return this.drizzle.schema.notificationDelivery
   }
 
   /** 消息发件箱表 */
-  private get messageOutboxTable() {
+  protected get messageOutboxTable() {
     return this.drizzle.schema.messageOutbox
   }
 
@@ -130,13 +156,7 @@ export abstract class TaskServiceSupport {
    *
    * 该方法统一管理排序解析与总数统计，确保管理端与应用端列表查询语义一致。
    */
-  private async queryTaskAssignmentPage(params: {
-    whereClause: SQL | undefined
-    pageIndex?: number
-    pageSize?: number
-    orderBy?: TaskQueryOrderByInput
-    includeTaskDetail: boolean
-  }) {
+  protected async queryTaskAssignmentPage(params: QueryTaskAssignmentPageParams) {
     const { whereClause, pageIndex, pageSize, orderBy, includeTaskDetail } =
       params
     const page = this.drizzle.buildPage({ pageIndex, pageSize })
@@ -273,7 +293,7 @@ export abstract class TaskServiceSupport {
    * @param endAt 发布结束时间
    * @throws BadRequestException 发布时间无效
    */
-  private ensurePublishWindow(startAt?: Date | null, endAt?: Date | null) {
+  protected ensurePublishWindow(startAt?: Date | null, endAt?: Date | null) {
     if (startAt && endAt && startAt.getTime() > endAt.getTime()) {
       throw new BadRequestException('发布开始时间不能晚于结束时间')
     }
@@ -284,7 +304,7 @@ export abstract class TaskServiceSupport {
    *
    * 任务目标是状态机判定的核心边界，必须始终保持为正整数。
    */
-  private ensurePositiveTaskTargetCount(value?: number) {
+  protected ensurePositiveTaskTargetCount(value?: number) {
     if (value === undefined) {
       return
     }
@@ -302,7 +322,9 @@ export abstract class TaskServiceSupport {
    * @returns 解析后的对象，如果为空则返回undefined
    * @throws BadRequestException JSON格式错误
    */
-  private parseJsonValue(value?: string | Record<string, unknown> | null) {
+  protected parseJsonValue<TObject extends object>(
+    value?: string | TObject | Record<string, unknown> | null,
+  ) {
     if (value === undefined || value === null || value === '') {
       return undefined
     }
@@ -320,8 +342,8 @@ export abstract class TaskServiceSupport {
    * 解析并校验任务奖励配置。
    * 当前只允许 points / experience 两个正整数字段，空对象会被归一化为 null。
    */
-  private parseTaskRewardConfig(
-    value?: string | Record<string, unknown> | null,
+  protected parseTaskRewardConfig(
+    value?: string | TaskRewardConfig | Record<string, unknown> | null,
   ): TaskRewardConfig | null | undefined {
     if (value === undefined || value === '') {
       return undefined
@@ -369,8 +391,8 @@ export abstract class TaskServiceSupport {
    * 解析并校验任务重复规则。
    * 当前仅支持 type=once/daily/weekly/monthly，传 null 表示清空为一次性任务。
    */
-  private parseTaskRepeatRule(
-    value?: string | Record<string, unknown> | null,
+  protected parseTaskRepeatRule(
+    value?: string | TaskRepeatRuleConfig | Record<string, unknown> | null,
   ): TaskRepeatRuleConfig | null | undefined {
     if (value === undefined || value === '') {
       return undefined
@@ -418,9 +440,9 @@ export abstract class TaskServiceSupport {
    * 解析任务目标附加配置。
    * 当前仅允许 JSON 对象或 null。
    */
-  private parseTaskObjectiveConfig(
-    value?: string | Record<string, unknown> | null,
-  ) {
+  protected parseTaskObjectiveConfig(
+    value?: string | TaskObjectiveConfig | Record<string, unknown> | null,
+  ): TaskObjectiveConfig | null | undefined {
     if (value === undefined || value === '') {
       return undefined
     }
@@ -432,13 +454,13 @@ export abstract class TaskServiceSupport {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       throw new BadRequestException('objectiveConfig 必须是 JSON 对象')
     }
-    return parsed
+    return parsed as TaskObjectiveConfig
   }
 
   /**
    * 归一化并校验任务目标类型。
    */
-  private parseTaskObjectiveType(value?: number | null) {
+  protected parseTaskObjectiveType(value?: number | null) {
     if (value === undefined || value === null) {
       return TaskObjectiveTypeEnum.MANUAL
     }
@@ -451,7 +473,7 @@ export abstract class TaskServiceSupport {
   /**
    * 归一化并校验目标事件编码。
    */
-  private parseTaskEventCode(value?: number | string | null) {
+  protected parseTaskEventCode(value?: number | string | null) {
     if (value === undefined || value === '') {
       return undefined
     }
@@ -473,11 +495,9 @@ export abstract class TaskServiceSupport {
   /**
    * 校验任务目标模型合同。
    */
-  private ensureTaskObjectiveContract(params: {
-    objectiveType: TaskObjectiveTypeEnum
-    eventCode?: GrowthRuleTypeEnum | null
-    objectiveConfig?: Record<string, unknown> | null
-  }) {
+  protected ensureTaskObjectiveContract(
+    params: EnsureTaskObjectiveContractInput,
+  ) {
     if (params.objectiveType === TaskObjectiveTypeEnum.MANUAL) {
       if (params.eventCode !== undefined && params.eventCode !== null) {
         throw new BadRequestException(
@@ -505,7 +525,7 @@ export abstract class TaskServiceSupport {
    *
    * 任务奖励配置要求值为正整数，避免非法数值进入奖励结算路径。
    */
-  private parseRewardConfigPositiveInt(value: unknown, fieldName: string) {
+  protected parseRewardConfigPositiveInt(value: unknown, fieldName: string) {
     if (!Number.isInteger(value) || Number(value) <= 0) {
       throw new BadRequestException(
         `${fieldName} 必须是大于 0 的整数，清空请传 null 或移除该字段`,
@@ -526,7 +546,7 @@ export abstract class TaskServiceSupport {
    * @param type 任务场景类型（可选）
    * @returns 查询条件
    */
-  private buildAvailableWhere(
+  protected buildAvailableWhere(
     type?: TaskSelect['type'],
     claimMode?: TaskSelect['claimMode'],
     now = new Date(),
@@ -574,7 +594,7 @@ export abstract class TaskServiceSupport {
    * @returns 任务记录
    * @throws NotFoundException 任务不存在
    */
-  private async findAvailableTask(taskId: number, now = new Date()) {
+  protected async findAvailableTask(taskId: number, now = new Date()) {
     const [taskRecord] = await this.db
       .select()
       .from(this.taskTable)
@@ -605,7 +625,7 @@ export abstract class TaskServiceSupport {
    * @throws BadRequestException 任务未开始或已结束
    * @throws NotFoundException 任务不存在
    */
-  private async findClaimableTask(taskId: number, now = new Date()) {
+  protected async findClaimableTask(taskId: number, now = new Date()) {
     return this.findAvailableTask(taskId, now)
   }
 
@@ -613,7 +633,7 @@ export abstract class TaskServiceSupport {
    * 根据事件编码查找当前可消费的事件型任务。
    * 事件推进仍受发布时间窗口约束，但统一以事件发生时间判断是否命中当前发布实例。
    */
-  private async findEventProgressTasks(
+  protected async findEventProgressTasks(
     eventCode: GrowthRuleTypeEnum,
     occurredAt: Date,
   ) {
@@ -644,7 +664,7 @@ export abstract class TaskServiceSupport {
    * @param now 当前时间
    * @returns 周期标识
    */
-  private buildCycleKey(
+  protected buildCycleKey(
     taskRecord: Pick<TaskSelect, 'repeatRule'>,
     now: Date,
   ): string {
@@ -667,7 +687,7 @@ export abstract class TaskServiceSupport {
    *
    * repeatRule 当前只认 type 字段，缺省时回退到一次性任务。
    */
-  private getTaskRepeatType(taskRecord: Pick<TaskSelect, 'repeatRule'>) {
+  protected getTaskRepeatType(taskRecord: Pick<TaskSelect, 'repeatRule'>) {
     const rule = taskRecord.repeatRule as { type?: string } | null
     const type = rule?.type ?? TaskRepeatTypeEnum.ONCE
     return Object.values(TaskRepeatTypeEnum).includes(
@@ -680,7 +700,7 @@ export abstract class TaskServiceSupport {
   /**
    * 已有进行中 assignment 时，阻止修改会改写存量任务语义的关键配置。
    */
-  private async assertNoActiveAssignmentConfigMutation(
+  protected async assertNoActiveAssignmentConfigMutation(
     taskRecord: Pick<
       TaskSelect,
       | 'id'
@@ -789,7 +809,7 @@ export abstract class TaskServiceSupport {
    * @param date 日期对象
    * @returns 格式化的日期字符串
    */
-  private formatDate(date: Dayjs): string {
+  protected formatDate(date: Dayjs): string {
     return date.format('YYYY-MM-DD')
   }
 
@@ -799,7 +819,7 @@ export abstract class TaskServiceSupport {
    * @param date 日期对象
    * @returns 该周周一的日期对象
    */
-  private getWeekStart(date: Dayjs): Dayjs {
+  protected getWeekStart(date: Dayjs): Dayjs {
     return date.startOf('day').subtract(date.isoWeekday() - 1, 'day')
   }
 
@@ -820,7 +840,7 @@ export abstract class TaskServiceSupport {
    * @param taskRecord.targetCount 目标数量
    * @returns 任务快照对象
    */
-  private buildTaskSnapshot(taskRecord: TaskSnapshotSource) {
+  protected buildTaskSnapshot(taskRecord: TaskSnapshotSource) {
     return {
       id: taskRecord.id,
       code: taskRecord.code,
@@ -851,7 +871,7 @@ export abstract class TaskServiceSupport {
    * @param cycleKey 周期标识
    * @returns 任务分配记录，不存在则返回undefined
    */
-  private async findAssignmentByUniqueKey(
+  protected async findAssignmentByUniqueKey(
     taskId: number,
     userId: number,
     cycleKey: string,
@@ -874,13 +894,9 @@ export abstract class TaskServiceSupport {
   /**
    * 统一关闭命中条件的活跃 assignment，并补写 EXPIRE 审计日志。
    */
-  private async expireAssignmentsByWhere(
+  protected async expireAssignmentsByWhere(
     db: Db,
-    params: {
-      now: Date
-      whereClause: SQL
-      overrideExpiredAt?: Date
-    },
+    params: ExpireAssignmentsByWhereInput,
   ) {
     const expiredAssignments = await db
       .update(this.taskAssignmentTable)
@@ -929,7 +945,7 @@ export abstract class TaskServiceSupport {
   /**
    * 用户查询“我的任务”前，先即时收口本用户已过期但尚未被 cron 处理的 assignment。
    */
-  private async expireDueAssignmentsForUser(userId: number, now: Date) {
+  protected async expireDueAssignmentsForUser(userId: number, now: Date) {
     await this.drizzle.withTransaction(async (tx) =>
       this.expireAssignmentsByWhere(tx, {
         now,
@@ -962,34 +978,31 @@ export abstract class TaskServiceSupport {
    * @param now 当前时间
    * @returns 任务分配
    */
-  private async createOrGetAssignment(
-    taskRecord: TaskSnapshotSource &
-      Pick<TaskSelect, 'claimMode' | 'publishEndAt' | 'repeatRule'>,
+  protected async createOrGetAssignment(
+    taskRecord: CreateOrGetAssignmentTaskInput,
     userId: number,
     cycleKey: string,
     now: Date,
-    options?: {
-      notifyAutoAssignment?: boolean
-      progressSource?: TaskProgressSourceEnum
-    },
+    options?: CreateOrGetAssignmentOptions,
   ) {
     const taskSnapshot = this.buildTaskSnapshot(taskRecord)
     let createdAssignment: TaskAssignmentSelect | undefined
+    const assignmentInsert: TaskAssignmentInsert = {
+      taskId: taskRecord.id,
+      userId,
+      cycleKey,
+      status: TaskAssignmentStatusEnum.PENDING,
+      progress: 0,
+      target: taskRecord.targetCount,
+      claimedAt: now,
+      expiredAt: this.buildAssignmentExpiredAt(taskRecord, now),
+      taskSnapshot,
+    }
 
     const assignment = await this.drizzle.withTransaction(async (tx) => {
       const [insertedAssignment] = await tx
         .insert(this.taskAssignmentTable)
-        .values({
-          taskId: taskRecord.id,
-          userId,
-          cycleKey,
-          status: TaskAssignmentStatusEnum.PENDING,
-          progress: 0,
-          target: taskRecord.targetCount,
-          claimedAt: now,
-          expiredAt: this.buildAssignmentExpiredAt(taskRecord, now),
-          taskSnapshot,
-        })
+        .values(assignmentInsert)
         .onConflictDoNothing()
         .returning()
 
@@ -1049,19 +1062,14 @@ export abstract class TaskServiceSupport {
     return assignment
   }
 
-  private buildTaskProgressLogRecord(params: {
-    assignmentId: number
-    userId: number
-    actionType: TaskProgressActionTypeEnum
-    progressSource: TaskProgressSourceEnum
-    delta: number
-    beforeValue: number
-    afterValue: number
-    context?: unknown
-    eventCode?: GrowthRuleTypeEnum | null
-    eventBizKey?: string | null
-    eventOccurredAt?: Date | null
-  }) {
+  /**
+   * 构建任务进度日志记录。
+   *
+   * 所有 claim/progress/complete/expire 写库都复用同一结构，保证审计字段口径一致。
+   */
+  protected buildTaskProgressLogRecord(
+    params: TaskProgressLogRecordInput,
+  ): TaskProgressLogInsert {
     return {
       assignmentId: params.assignmentId,
       userId: params.userId,
@@ -1077,7 +1085,12 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private buildTaskEventProgressContext(
+  /**
+   * 把业务事件封装成 assignment 可落库的上下文快照。
+   *
+   * 该上下文同时服务幂等排障和后台对账，避免只剩一条抽象 bizKey 无法追溯来源。
+   */
+  protected buildTaskEventProgressContext(
     eventEnvelope: TaskEventProgressInput['eventEnvelope'],
     bizKey: string,
   ) {
@@ -1093,7 +1106,12 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private matchesTaskObjectiveConfig(
+  /**
+   * 判断事件上下文是否满足任务目标附加配置。
+   *
+   * 当前只支持浅层 key/value 精确匹配，保证配置语义稳定且便于排障。
+   */
+  protected matchesTaskObjectiveConfig(
     objectiveConfig: unknown,
     eventContext?: Record<string, unknown>,
   ) {
@@ -1109,13 +1127,14 @@ export abstract class TaskServiceSupport {
     )
   }
 
-  private async advanceAssignmentByEvent(params: {
-    taskRecord: TaskSelect
-    userId: number
-    eventEnvelope: TaskEventProgressInput['eventEnvelope']
-    eventBizKey: string
-    occurredAt: Date
-  }) {
+  /**
+   * 使用事件推进 assignment。
+   *
+   * 该入口统一处理自动领取、事件幂等、完成态补偿和“事件发生早于手动领取”的边界判断。
+   */
+  protected async advanceAssignmentByEvent(
+    params: AdvanceAssignmentByEventInput,
+  ) {
     const cycleKey = this.buildCycleKey(params.taskRecord, params.occurredAt)
     let assignment = await this.findAssignmentByUniqueKey(
       params.taskRecord.id,
@@ -1251,16 +1270,14 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private async applyAssignmentEventProgress(params: {
-    assignment: TaskAssignmentSelect
-    userId: number
-    nextProgress: number
-    nextStatus: TaskAssignmentStatusEnum
-    eventCode: GrowthRuleTypeEnum
-    eventBizKey: string
-    eventOccurredAt: Date
-    context: Record<string, unknown>
-  }) {
+  /**
+   * 在事务内落事件推进事实并更新 assignment。
+   *
+   * 先插入带唯一键的 progress log，再更新 assignment，保证同一 bizKey 只会成功推进一次。
+   */
+  protected async applyAssignmentEventProgress(
+    params: ApplyAssignmentEventProgressInput,
+  ) {
     return this.drizzle.withTransaction(async (tx) => {
       const [insertedLog] = await tx
         .insert(this.taskProgressLogTable)
@@ -1329,7 +1346,7 @@ export abstract class TaskServiceSupport {
    *
    * “可领取任务”列表只应展示当前周期尚未生成 assignment 的手动任务。
    */
-  private async filterClaimableTasksForUser(
+  protected async filterClaimableTasksForUser(
     tasks: TaskSelect[],
     userId: number,
     now: Date,
@@ -1380,7 +1397,7 @@ export abstract class TaskServiceSupport {
    * @param userId 用户ID
    * @param tasks 任务列表
    */
-  private async ensureAutoAssignments(
+  protected async ensureAutoAssignments(
     userId: number,
     tasks: TaskSelect[],
     now: Date,
@@ -1399,7 +1416,7 @@ export abstract class TaskServiceSupport {
    *
    * @param userId 用户ID
    */
-  private async ensureAutoAssignmentsForUser(userId: number, now: Date) {
+  protected async ensureAutoAssignmentsForUser(userId: number, now: Date) {
     const where = this.buildAvailableWhere()
     const tasks = await this.db
       .select({
@@ -1438,7 +1455,7 @@ export abstract class TaskServiceSupport {
    * @param userId 用户ID
    * @param taskId 任务ID
    */
-  private async ensureAutoAssignment(userId: number, taskId: number) {
+  protected async ensureAutoAssignment(userId: number, taskId: number) {
     // 查找自动领取模式的可用任务
     const [taskRecord] = await this.db
       .select()
@@ -1478,7 +1495,7 @@ export abstract class TaskServiceSupport {
    * @param taskRecord.publishEndAt 发布结束时间
    * @param taskRecord.repeatRule 重复规则
    */
-  private async ensureAutoAssignmentByTask(
+  protected async ensureAutoAssignmentByTask(
     userId: number,
     taskRecord: AutoAssignmentTaskSource,
     now = new Date(),
@@ -1499,21 +1516,14 @@ export abstract class TaskServiceSupport {
    * 构建任务奖励结算所需的最小任务视图。
    * 优先使用 assignment 快照，避免 live task 配置变更改写历史结算语义。
    */
-  private buildTaskRewardTaskRecord(
-    taskId: number,
-    currentTask?: {
-      code?: string | null
-      title?: string | null
-      type?: number | null
-      rewardConfig?: unknown
-    },
-    assignment?: {
-      taskSnapshot?: TaskAssignmentSelect['taskSnapshot']
-    },
+  protected buildTaskRewardTaskRecord(
+    taskId: TaskRewardTaskRecord['id'],
+    currentTask?: TaskRewardTaskRecordBuildCurrentTaskInput,
+    assignment?: TaskRewardTaskRecordBuildAssignmentInput,
   ) {
     const snapshot = this.asRecord(assignment?.taskSnapshot)
 
-    return {
+    const taskRecord: TaskRewardTaskRecord = {
       id: taskId,
       code:
         typeof snapshot?.code === 'string'
@@ -1529,6 +1539,8 @@ export abstract class TaskServiceSupport {
           : (currentTask?.type ?? undefined),
       rewardConfig: snapshot?.rewardConfig ?? currentTask?.rewardConfig,
     }
+
+    return taskRecord
   }
 
   /**
@@ -1545,14 +1557,10 @@ export abstract class TaskServiceSupport {
    * @param assignment.id 分配ID
    * @param assignment.completedAt 任务完成时间，用于构建统一事件壳的 occurredAt
    */
-  private async emitTaskCompleteEvent(
+  protected async emitTaskCompleteEvent(
     userId: number,
-    taskRecord: {
-      id: number
-      title?: string
-      rewardConfig: unknown
-    },
-    assignment: { id: number, completedAt?: Date | null },
+    taskRecord: TaskCompleteEventTaskInput,
+    assignment: TaskCompleteEventAssignmentInput,
   ) {
     const taskCompleteEvent = this.buildTaskCompleteEventEnvelope({
       userId,
@@ -1584,16 +1592,10 @@ export abstract class TaskServiceSupport {
    *
    * 仅当分配记录尚未结算成功时才触发结算，避免重复调用奖励服务。
    */
-  private async settleCompletedAssignmentRewardIfNeeded(
+  protected async settleCompletedAssignmentRewardIfNeeded(
     userId: number,
-    taskRecord: {
-      id: number
-      rewardConfig: unknown
-    },
-    assignment: {
-      id: number
-      rewardStatus: TaskAssignmentSelect['rewardStatus']
-    },
+    taskRecord: TaskRewardSettlementTaskInput,
+    assignment: TaskRewardSettlementAssignmentInput,
   ) {
     if (assignment.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS) {
       return
@@ -1607,7 +1609,7 @@ export abstract class TaskServiceSupport {
    *
    * 奖励结算流程属于可降级副作用，写库失败时只记录日志，不阻断主流程。
    */
-  private async syncTaskAssignmentRewardState(
+  protected async syncTaskAssignmentRewardState(
     assignmentId: number,
     rewardResult: TaskRewardSettlementResult,
   ) {
@@ -1647,7 +1649,7 @@ export abstract class TaskServiceSupport {
    * 当前仅对手动领取任务生效，并限制为最近 24 小时进入可领取状态的任务，
    * 避免用户首次打开任务页时收到历史积压提醒。
    */
-  private async tryNotifyAvailableTasksFromPage(
+  protected async tryNotifyAvailableTasksFromPage(
     userId: number,
     tasks: TaskSelect[],
     now: Date,
@@ -1701,16 +1703,10 @@ export abstract class TaskServiceSupport {
    *
    * 自动领取任务创建 assignment 后立刻补一条提醒，帮助用户感知任务已进入“我的任务”。
    */
-  private async tryNotifyAutoAssignedTask(
+  protected async tryNotifyAutoAssignedTask(
     userId: number,
-    taskRecord: {
-      id: number
-      code?: string | null
-      title: string
-      type?: number | null
-      claimMode?: number
-    },
-    assignment: { id: number },
+    taskRecord: TaskAutoAssignmentReminderTaskInput,
+    assignment: TaskReminderAssignmentInput,
     cycleKey: string,
   ) {
     try {
@@ -1745,15 +1741,10 @@ export abstract class TaskServiceSupport {
    *
    * 仅当本次任务奖励真实落账时发送；命中幂等、失败或未配置奖励都不会再次提醒。
    */
-  private async tryNotifyTaskRewardGranted(
+  protected async tryNotifyTaskRewardGranted(
     userId: number,
-    taskRecord: {
-      id: number
-      code?: string | null
-      title?: string
-      type?: number | null
-    },
-    assignment: { id: number },
+    taskRecord: TaskRewardReminderTaskInput,
+    assignment: TaskReminderAssignmentInput,
     rewardResult: TaskRewardSettlementResult,
   ) {
     if (
@@ -1801,13 +1792,18 @@ export abstract class TaskServiceSupport {
    *
    * 优先使用 publishStartAt；未设置时回退到 createdAt，便于界定“新任务可领”的提醒窗口。
    */
-  private getTaskAvailableReferenceTime(
+  protected getTaskAvailableReferenceTime(
     taskRecord: Pick<TaskSelect, 'publishStartAt' | 'createdAt'>,
   ) {
     return taskRecord.publishStartAt ?? taskRecord.createdAt
   }
 
-  private toAppTaskView(
+  /**
+   * 映射 app 可领取任务视图。
+   *
+   * 该视图只面向“尚可领取”的任务，因此 visibleStatus 固定为 CLAIMABLE。
+   */
+  protected toAppTaskView(
     taskRecord: Pick<
       TaskSelect,
       | 'id'
@@ -1855,25 +1851,12 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private toAppMyTaskView(
-    item: TaskAssignmentSelect & {
-      task?: {
-        id: number | null
-        code?: string | null
-        title: string | null
-        description?: string | null
-        cover?: string | null
-        type: number | null
-        objectiveType?: number | null
-        eventCode?: number | null
-        objectiveConfig?: unknown
-        rewardConfig: unknown
-        targetCount?: number | null
-        completeMode?: number | null
-        claimMode?: number | null
-      } | null
-    },
-  ) {
+  /**
+   * 映射 app 我的任务视图。
+   *
+   * 任务摘要优先使用 assignment 快照，保证模板变更后历史实例的展示仍然稳定。
+   */
+  protected toAppMyTaskView(item: TaskAssignmentWithTaskRow) {
     const taskView = this.buildAssignmentTaskView(item)
     return {
       id: item.id,
@@ -1901,19 +1884,12 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private toAdminTaskView(
+  /**
+   * 映射管理端任务视图并补齐运行态摘要。
+   */
+  protected toAdminTaskView(
     taskRecord: TaskSelect,
-    runtimeHealth?: {
-      activeAssignmentCount: number
-      pendingRewardCompensationCount: number
-      latestReminder?: {
-        reminderKind?: string
-        status: MessageNotificationDispatchStatusEnum
-        failureReason?: string | null
-        lastAttemptAt: Date
-        updatedAt: Date
-      }
-    },
+    runtimeHealth?: TaskRuntimeHealthSummary,
   ) {
     return {
       ...this.normalizeTaskTypeRecord(taskRecord),
@@ -1922,27 +1898,12 @@ export abstract class TaskServiceSupport {
         runtimeHealth?.pendingRewardCompensationCount ?? 0,
       latestReminder: runtimeHealth?.latestReminder ?? null,
     }
-  } 
+  }
 
-  private toAdminTaskAssignmentView(
-    item: TaskAssignmentSelect & {
-      task?: {
-        id: number | null
-        code?: string | null
-        title: string | null
-        description?: string | null
-        cover?: string | null
-        type: number | null
-        objectiveType?: number | null
-        eventCode?: number | null
-        objectiveConfig?: unknown
-        rewardConfig: unknown
-        targetCount?: number | null
-        completeMode?: number | null
-        claimMode?: number | null
-      } | null
-    },
-  ) {
+  /**
+   * 映射管理端 assignment 视图。
+   */
+  protected toAdminTaskAssignmentView(item: TaskAssignmentWithTaskRow) {
     const taskView = this.buildAssignmentTaskView(item)
     return {
       ...item,
@@ -1955,7 +1916,10 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private normalizeTaskTypeRecord<T extends { type: number | null }>(
+  /**
+   * 归一化任务主记录里的历史枚举值。
+   */
+  protected normalizeTaskTypeRecord<T extends { type: number | null }>(
     record: T,
   ) {
     return {
@@ -1967,21 +1931,10 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private normalizeTaskRelation(record: {
-    id: number | null
-    code?: string | null
-    title: string | null
-    description?: string | null
-    cover?: string | null
-    type: number | null
-    objectiveType?: number | null
-    eventCode?: number | null
-    objectiveConfig?: unknown
-    rewardConfig: unknown
-    targetCount?: number | null
-    completeMode?: number | null
-    claimMode?: number | null
-  }) {
+  /**
+   * 归一化任务关联对象里的历史枚举值。
+   */
+  protected normalizeTaskRelation(record: TaskRelationRow) {
     return {
       ...record,
       type: normalizeTaskType(record.type),
@@ -1989,25 +1942,12 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private buildAssignmentTaskView(
-    item: TaskAssignmentSelect & {
-      task?: {
-        id: number | null
-        code?: string | null
-        title: string | null
-        description?: string | null
-        cover?: string | null
-        type: number | null
-        objectiveType?: number | null
-        eventCode?: number | null
-        objectiveConfig?: unknown
-        rewardConfig: unknown
-        targetCount?: number | null
-        completeMode?: number | null
-        claimMode?: number | null
-      } | null
-    },
-  ) {
+  /**
+   * 基于 assignment 快照和 live task 构建统一任务摘要。
+   *
+   * 快照字段优先级高于 live task，避免历史任务展示和补偿语义被新配置覆盖。
+   */
+  protected buildAssignmentTaskView(item: TaskAssignmentWithTaskRow) {
     const snapshot = this.asRecord(item.taskSnapshot)
     const liveTask = item.task ? this.normalizeTaskRelation(item.task) : null
     const taskId =
@@ -2062,11 +2002,14 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private resolveTaskUserVisibleStatus(params: {
-    status: TaskAssignmentSelect['status']
-    rewardStatus?: TaskAssignmentSelect['rewardStatus'] | null
-    rewardConfig?: unknown
-  }) {
+  /**
+   * 统一映射用户可见状态。
+   *
+   * app 列表、用户中心和后台对账都复用同一口径，避免不同页面状态含义漂移。
+   */
+  protected resolveTaskUserVisibleStatus(
+    params: ResolveTaskUserVisibleStatusInput,
+  ) {
     if (params.status === TaskAssignmentStatusEnum.EXPIRED) {
       return TaskUserVisibleStatusEnum.EXPIRED
     }
@@ -2087,23 +2030,15 @@ export abstract class TaskServiceSupport {
     return TaskUserVisibleStatusEnum.UNAVAILABLE
   }
 
-  private async getTaskRuntimeHealthMap(taskIds: number[]) {
+  /**
+   * 聚合任务运行态健康信息。
+   *
+   * 管理端任务页需要一次性拿到活跃 assignment 数、待补偿奖励数和最近提醒状态，避免 N+1 查询。
+   */
+  protected async getTaskRuntimeHealthMap(taskIds: number[]) {
     const uniqueTaskIds = [...new Set(taskIds.filter((id) => id > 0))]
     if (uniqueTaskIds.length === 0) {
-      return new Map<
-        number,
-        {
-          activeAssignmentCount: number
-          pendingRewardCompensationCount: number
-          latestReminder?: {
-            reminderKind?: string
-            status: MessageNotificationDispatchStatusEnum
-            failureReason?: string | null
-            lastAttemptAt: Date
-            updatedAt: Date
-          }
-        }
-      >()
+      return new Map<number, TaskRuntimeHealthSummary>()
     }
 
     const [activeRows, rewardPendingRows, reminderRows] = await Promise.all([
@@ -2149,20 +2084,7 @@ export abstract class TaskServiceSupport {
       this.queryLatestTaskReminderRows(uniqueTaskIds),
     ])
 
-    const runtimeMap = new Map<
-      number,
-      {
-        activeAssignmentCount: number
-        pendingRewardCompensationCount: number
-        latestReminder?: {
-          reminderKind?: string
-          status: MessageNotificationDispatchStatusEnum
-          failureReason?: string | null
-          lastAttemptAt: Date
-          updatedAt: Date
-        }
-      }
-    >()
+    const runtimeMap = new Map<number, TaskRuntimeHealthSummary>()
 
     for (const taskId of uniqueTaskIds) {
       runtimeMap.set(taskId, {
@@ -2216,7 +2138,10 @@ export abstract class TaskServiceSupport {
     return runtimeMap
   }
 
-  private async queryLatestTaskReminderRows(taskIds: number[]) {
+  /**
+   * 查询任务维度最近一次提醒投递结果。
+   */
+  protected async queryLatestTaskReminderRows(taskIds: number[]) {
     const taskIdSql = sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'taskId')::int`
     const reminderKindSql = sql<
       string | null
@@ -2250,14 +2175,7 @@ export abstract class TaskServiceSupport {
         desc(this.notificationDeliveryTable.id),
       )
 
-    const latestRows: Array<{
-      taskId: number
-      reminderKind: string | null
-      status: MessageNotificationDispatchStatusEnum
-      failureReason: string | null
-      lastAttemptAt: Date
-      updatedAt: Date
-    }> = []
+    const latestRows: TaskLatestReminderRow[] = []
     const seenTaskIds = new Set<number>()
 
     for (const row of rows) {
@@ -2268,7 +2186,7 @@ export abstract class TaskServiceSupport {
       latestRows.push({
         taskId: row.taskId,
         reminderKind: row.reminderKind,
-        status: row.status as MessageNotificationDispatchStatusEnum,
+        status: row.status as TaskLatestReminderRow['status'],
         failureReason: row.failureReason,
         lastAttemptAt: row.lastAttemptAt,
         updatedAt: row.updatedAt,
@@ -2278,7 +2196,10 @@ export abstract class TaskServiceSupport {
     return latestRows
   }
 
-  private async queryAssignmentIdsByEventFilter(
+  /**
+   * 根据事件过滤条件反查 assignment ID 列表。
+   */
+  protected async queryAssignmentIdsByEventFilter(
     queryDto: Pick<
       QueryTaskAssignmentReconciliationPageInput,
       'eventCode' | 'eventBizKey'
@@ -2308,7 +2229,10 @@ export abstract class TaskServiceSupport {
     return [...new Set(rows.map((item) => item.assignmentId))]
   }
 
-  private async queryAssignmentIdsByRewardReminderFilter(
+  /**
+   * 根据奖励提醒投递状态反查 assignment ID 列表。
+   */
+  protected async queryAssignmentIdsByRewardReminderFilter(
     queryDto: Pick<
       QueryTaskAssignmentReconciliationPageInput,
       'notificationStatus'
@@ -2346,19 +2270,15 @@ export abstract class TaskServiceSupport {
     return [...new Set(rows.map((item) => item.assignmentId).filter(Boolean))]
   }
 
-  private async getAssignmentEventProgressMap(assignmentIds: number[]) {
+  /**
+   * 查询 assignment 最近一次命中的事件摘要。
+   */
+  protected async getAssignmentEventProgressMap(assignmentIds: number[]) {
     const uniqueAssignmentIds = [
       ...new Set(assignmentIds.filter((id) => id > 0)),
     ]
     if (uniqueAssignmentIds.length === 0) {
-      return new Map<
-        number,
-        {
-          eventCode: number | null
-          eventBizKey: string | null
-          eventOccurredAt: Date | null
-        }
-      >()
+      return new Map<number, TaskAssignmentEventProgressSummary>()
     }
 
     const rows = await this.db
@@ -2378,14 +2298,7 @@ export abstract class TaskServiceSupport {
       )
       .orderBy(desc(this.taskProgressLogTable.id))
 
-    const result = new Map<
-      number,
-      {
-        eventCode: number | null
-        eventBizKey: string | null
-        eventOccurredAt: Date | null
-      }
-    >()
+    const result = new Map<number, TaskAssignmentEventProgressSummary>()
     for (const row of rows) {
       if (result.has(row.assignmentId)) {
         continue
@@ -2399,20 +2312,15 @@ export abstract class TaskServiceSupport {
     return result
   }
 
-  private async getAssignmentRewardReminderMap(assignmentIds: number[]) {
+  /**
+   * 查询 assignment 最近一次奖励到账提醒结果。
+   */
+  protected async getAssignmentRewardReminderMap(assignmentIds: number[]) {
     const uniqueAssignmentIds = [
       ...new Set(assignmentIds.filter((id) => id > 0)),
     ]
     if (uniqueAssignmentIds.length === 0) {
-      return new Map<
-        number,
-        {
-          bizKey: string
-          status: MessageNotificationDispatchStatusEnum
-          failureReason: string | null
-          lastAttemptAt: Date
-        }
-      >()
+      return new Map<number, TaskAssignmentRewardReminderSummary>()
     }
 
     const assignmentIdSql = sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'assignmentId')::int`
@@ -2445,22 +2353,14 @@ export abstract class TaskServiceSupport {
       )
       .orderBy(desc(this.notificationDeliveryTable.id))
 
-    const result = new Map<
-      number,
-      {
-        bizKey: string
-        status: MessageNotificationDispatchStatusEnum
-        failureReason: string | null
-        lastAttemptAt: Date
-      }
-    >()
+    const result = new Map<number, TaskAssignmentRewardReminderSummary>()
     for (const row of rows) {
       if (!row.assignmentId || result.has(row.assignmentId)) {
         continue
       }
       result.set(row.assignmentId, {
         bizKey: row.bizKey,
-        status: row.status as MessageNotificationDispatchStatusEnum,
+        status: row.status as TaskAssignmentRewardReminderSummary['status'],
         failureReason: row.failureReason,
         lastAttemptAt: row.lastAttemptAt,
       })
@@ -2468,7 +2368,12 @@ export abstract class TaskServiceSupport {
     return result
   }
 
-  private hasConfiguredTaskReward(rewardConfig: unknown) {
+  /**
+   * 判断任务是否配置了真实奖励。
+   *
+   * 只有 points/experience 任一项大于 0，才认为完成态需要展示奖励结算状态。
+   */
+  protected hasConfiguredTaskReward(rewardConfig: unknown) {
     const rewardRecord = this.asRecord(rewardConfig)
     if (!rewardRecord) {
       return false
@@ -2479,11 +2384,17 @@ export abstract class TaskServiceSupport {
     )
   }
 
-  private readSnapshotString(value: unknown) {
+  /**
+   * 从快照字段读取有效字符串。
+   */
+  protected readSnapshotString(value: unknown) {
     return typeof value === 'string' && value.trim() !== '' ? value : undefined
   }
 
-  private readSnapshotPositiveInt(value: unknown) {
+  /**
+   * 从快照字段读取正整数。
+   */
+  protected readSnapshotPositiveInt(value: unknown) {
     return typeof value === 'number' && Number.isInteger(value) && value > 0
       ? value
       : undefined
@@ -2494,7 +2405,7 @@ export abstract class TaskServiceSupport {
    *
    * 仅统计本次真实落账成功的奖励，幂等命中与未配置奖励都会返回 0。
    */
-  private getAppliedRewardAmount(
+  protected getAppliedRewardAmount(
     reward: TaskRewardSettlementResult['pointsReward'],
   ) {
     if (!reward.success || reward.duplicated || reward.skipped) {
@@ -2507,7 +2418,7 @@ export abstract class TaskServiceSupport {
    * 时间加减辅助方法
    * 支持按小时平移时间，供提醒窗口计算复用。
    */
-  private addHours(date: Date, hours: number) {
+  protected addHours(date: Date, hours: number) {
     const next = new Date(date)
     next.setHours(next.getHours() + hours)
     return next
@@ -2517,7 +2428,7 @@ export abstract class TaskServiceSupport {
    * 统一序列化提醒链路异常
    * 仅用于 warning 日志，避免 sidecar 通知失败影响主业务链路。
    */
-  private stringifyError(error: unknown) {
+  protected stringifyError(error: unknown) {
     if (error instanceof Error) {
       return error.message
     }
@@ -2531,14 +2442,22 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private asRecord(input: unknown): Record<string, unknown> | null {
+  /**
+   * 把弱结构输入收敛成对象记录。
+   */
+  protected asRecord(input: unknown): Record<string, unknown> | null {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       return null
     }
     return input as Record<string, unknown>
   }
 
-  private normalizeTaskTimezone(timezone?: string | null) {
+  /**
+   * 归一化并校验任务时区。
+   *
+   * 仅接受合法 IANA 时区标识，非法值统一回退为 undefined。
+   */
+  protected normalizeTaskTimezone(timezone?: string | null) {
     if (!timezone || typeof timezone !== 'string') {
       return undefined
     }
@@ -2558,7 +2477,10 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private getTaskRepeatTimezone(taskRecord: Pick<TaskSelect, 'repeatRule'>) {
+  /**
+   * 解析周期计算使用的任务时区。
+   */
+  protected getTaskRepeatTimezone(taskRecord: Pick<TaskSelect, 'repeatRule'>) {
     const repeatRule = this.asRecord(taskRecord.repeatRule)
     return (
       this.normalizeTaskTimezone(
@@ -2569,7 +2491,10 @@ export abstract class TaskServiceSupport {
     )
   }
 
-  private getTaskCycleAnchor(
+  /**
+   * 获取任务当前周期的时区锚点。
+   */
+  protected getTaskCycleAnchor(
     taskRecord: Pick<TaskSelect, 'repeatRule'>,
     now: Date,
   ) {
@@ -2581,7 +2506,7 @@ export abstract class TaskServiceSupport {
    *
    * 发布时间窗口对 claim / progress / complete 共用，避免不同入口出现边界漂移。
    */
-  private getTaskAvailabilityError(
+  protected getTaskAvailabilityError(
     taskRecord: Pick<TaskSelect, 'publishStartAt' | 'publishEndAt'>,
     now: Date,
   ) {
@@ -2599,7 +2524,7 @@ export abstract class TaskServiceSupport {
    *
    * 任务配置存在不代表当前仍处在有效发布窗口，调用方需要在读到任务后立即校验。
    */
-  private assertTaskInPublishWindow(
+  protected assertTaskInPublishWindow(
     taskRecord: Pick<TaskSelect, 'publishStartAt' | 'publishEndAt'>,
     now: Date,
   ) {
@@ -2609,7 +2534,10 @@ export abstract class TaskServiceSupport {
     }
   }
 
-  private isSameNullableDate(left?: Date | null, right?: Date | null) {
+  /**
+   * 比较可空时间字段是否语义一致。
+   */
+  protected isSameNullableDate(left?: Date | null, right?: Date | null) {
     if (!left && !right) {
       return true
     }
@@ -2625,7 +2553,7 @@ export abstract class TaskServiceSupport {
    * 一次性任务只受 publishEndAt 约束；重复任务则取“当前周期结束时间”和
    * publishEndAt 中更早的那个，确保旧周期 assignment 能被稳定关闭。
    */
-  private buildAssignmentExpiredAt(
+  protected buildAssignmentExpiredAt(
     taskRecord: Pick<TaskSelect, 'publishEndAt' | 'repeatRule'>,
     now: Date,
   ) {
@@ -2648,7 +2576,7 @@ export abstract class TaskServiceSupport {
    *
    * 周期边界统一按 UTC 计算，保持 cycleKey 与 expiredAt 的口径一致。
    */
-  private getCycleExpiredAt(
+  protected getCycleExpiredAt(
     taskRecord: Pick<TaskSelect, 'repeatRule'>,
     now: Date,
   ) {
@@ -2670,12 +2598,9 @@ export abstract class TaskServiceSupport {
    * 构建任务完成事件 envelope。
    * 当前任务域尚未进入统一事件定义表，先使用稳定字符串编码承载最小事件语义。
    */
-  private buildTaskCompleteEventEnvelope(params: {
-    userId: number
-    taskId: number
-    assignmentId: number
-    occurredAt?: Date
-  }) {
+  protected buildTaskCompleteEventEnvelope(
+    params: BuildTaskCompleteEventEnvelopeInput,
+  ) {
     return createEventEnvelope({
       code: TASK_COMPLETE_EVENT_CODE,
       key: TASK_COMPLETE_EVENT_KEY,

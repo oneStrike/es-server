@@ -16,7 +16,8 @@ import {
  */
 export const taskProgressLog = pgTable('task_progress_log', {
   /**
-   * 主键id
+   * 进度日志主键。
+   * 仅用于时间序对账和排障定位，不参与幂等约束。
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
@@ -25,7 +26,8 @@ export const taskProgressLog = pgTable('task_progress_log', {
    */
   assignmentId: integer().notNull(),
   /**
-   * 用户 ID。
+   * 本次推进归属的用户 ID。
+   * 主要用于审计、筛选和对账视图，不单独决定幂等。
    */
   userId: integer().notNull(),
   /**
@@ -72,7 +74,8 @@ export const taskProgressLog = pgTable('task_progress_log', {
    */
   context: jsonb(),
   /**
-   * 创建时间。
+   * 日志写入时间。
+   * 与 eventOccurredAt 区分开来，后者表示业务事件真实发生时刻。
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (table) => [

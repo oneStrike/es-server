@@ -1,25 +1,18 @@
 import type { CreateNotificationOutboxEventInput } from '@libs/message/outbox'
+import type {
+  TaskAvailableReminderEventInput,
+  TaskExpiringSoonReminderEventInput,
+  TaskReminderNotificationEventInput,
+  TaskReminderNotificationPayload,
+  TaskReminderRewardSummary,
+  TaskRewardGrantedReminderEventInput,
+} from './task.type'
 import { MessageNotificationTypeEnum } from '@libs/message/notification-constant'
 import {
   normalizeTaskType,
   TaskClaimModeEnum,
   TaskReminderKindEnum,
 } from './task.constant'
-
-interface TaskNotificationTaskInfo {
-  id: number
-  code?: string | null
-  title: string
-  type?: number | null
-}
-
-interface TaskReminderBaseParams {
-  bizKey: string
-  receiverUserId: number
-  task: TaskNotificationTaskInfo
-  cycleKey?: string
-  assignmentId?: number
-}
 
 /**
  * 任务通知组装器
@@ -31,9 +24,7 @@ export class TaskNotificationService {
   private readonly payloadVersion = 1
 
   createAvailableReminderEvent(
-    params: TaskReminderBaseParams & {
-      claimMode?: number
-    },
+    params: TaskAvailableReminderEventInput,
   ): CreateNotificationOutboxEventInput {
     return this.buildTaskReminderNotificationEvent({
       ...params,
@@ -43,9 +34,7 @@ export class TaskNotificationService {
   }
 
   createExpiringSoonReminderEvent(
-    params: TaskReminderBaseParams & {
-      expiredAt: Date
-    },
+    params: TaskExpiringSoonReminderEventInput,
   ): CreateNotificationOutboxEventInput {
     return this.buildTaskReminderNotificationEvent({
       ...params,
@@ -55,11 +44,7 @@ export class TaskNotificationService {
   }
 
   createRewardGrantedReminderEvent(
-    params: TaskReminderBaseParams & {
-      points: number
-      experience: number
-      ledgerRecordIds: number[]
-    },
+    params: TaskRewardGrantedReminderEventInput,
   ): CreateNotificationOutboxEventInput {
     return this.buildTaskReminderNotificationEvent({
       ...params,
@@ -82,16 +67,11 @@ export class TaskNotificationService {
     return `task:reminder:reward:assignment:${assignmentId}`
   }
 
-  private buildTaskReminderNotificationEvent(params: TaskReminderBaseParams & {
-    reminderKind: TaskReminderKindEnum
-    claimMode?: number
-    expiredAt?: Date
-    points?: number
-    experience?: number
-    ledgerRecordIds?: number[]
-  }): CreateNotificationOutboxEventInput {
+  private buildTaskReminderNotificationEvent(
+    params: TaskReminderNotificationEventInput,
+  ): CreateNotificationOutboxEventInput {
     const message = this.buildTaskReminderMessage(params)
-    const rewardSummary =
+    const rewardSummary: TaskReminderRewardSummary | undefined =
       params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED
       && ((params.points ?? 0) > 0 || (params.experience ?? 0) > 0)
         ? {
@@ -100,6 +80,26 @@ export class TaskNotificationService {
             ledgerRecordIds: params.ledgerRecordIds ?? [],
           }
         : undefined
+    const payload: TaskReminderNotificationPayload = {
+      payloadVersion: this.payloadVersion,
+      reminderKind: params.reminderKind,
+      taskId: params.task.id,
+      taskCode: params.task.code ?? `task-${params.task.id}`,
+      title: params.task.title,
+      taskTitle: params.task.title,
+      sceneType: normalizeTaskType(params.task.type),
+      cycleKey: params.cycleKey,
+      assignmentId: params.assignmentId,
+      expiredAt: params.expiredAt,
+      actionUrl: this.buildTaskReminderActionUrl(
+        params.reminderKind,
+        params.claimMode,
+      ),
+      rewardSummary,
+      points: params.points,
+      experience: params.experience,
+      ledgerRecordIds: params.ledgerRecordIds,
+    }
 
     return {
       eventType: MessageNotificationTypeEnum.TASK_REMINDER,
@@ -110,37 +110,12 @@ export class TaskNotificationService {
         targetId: params.task.id,
         title: message.title,
         content: message.content,
-        payload: {
-          payloadVersion: this.payloadVersion,
-          reminderKind: params.reminderKind,
-          taskId: params.task.id,
-          taskCode: params.task.code ?? `task-${params.task.id}`,
-          title: params.task.title,
-          taskTitle: params.task.title,
-          sceneType: normalizeTaskType(params.task.type),
-          cycleKey: params.cycleKey,
-          assignmentId: params.assignmentId,
-          expiredAt: params.expiredAt,
-          actionUrl: this.buildTaskReminderActionUrl(
-            params.reminderKind,
-            params.claimMode,
-          ),
-          rewardSummary,
-          points: params.points,
-          experience: params.experience,
-          ledgerRecordIds: params.ledgerRecordIds,
-        },
+        payload,
       },
     }
   }
 
-  private buildTaskReminderMessage(params: {
-    task: TaskNotificationTaskInfo
-    reminderKind: TaskReminderKindEnum
-    claimMode?: number
-    points?: number
-    experience?: number
-  }) {
+  private buildTaskReminderMessage(params: TaskReminderNotificationEventInput) {
     if (params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED) {
       const rewardParts: string[] = []
       if (params.points && params.points > 0) {
@@ -177,7 +152,7 @@ export class TaskNotificationService {
 
   private buildTaskReminderActionUrl(
     reminderKind: TaskReminderKindEnum,
-    claimMode?: number,
+    claimMode?: TaskAvailableReminderEventInput['claimMode'],
   ) {
     if (
       reminderKind === TaskReminderKindEnum.EXPIRING_SOON

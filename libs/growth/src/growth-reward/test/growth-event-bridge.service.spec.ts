@@ -5,7 +5,7 @@ import {
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 
 jest.mock('@libs/growth/task', () => ({
-  TaskService: class {},
+  TaskEventService: class {},
 }))
 
 describe('growth event bridge service', () => {

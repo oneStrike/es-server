@@ -18,7 +18,8 @@ import {
  */
 export const taskAssignment = pgTable('task_assignment', {
   /**
-   * 主键id
+   * assignment 主键。
+   * 仅用于执行态关联和排障定位，不承载业务上的“周期唯一键”语义。
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
@@ -27,7 +28,8 @@ export const taskAssignment = pgTable('task_assignment', {
    */
   taskId: integer().notNull(),
   /**
-   * 用户 ID。
+   * 任务归属用户 ID。
+   * 与 taskId + cycleKey 共同限定“同用户同周期唯一实例”。
    */
   userId: integer().notNull(),
   /**
@@ -104,11 +106,13 @@ export const taskAssignment = pgTable('task_assignment', {
    */
   lastRewardError: varchar({ length: 500 }),
   /**
-   * 创建时间。
+   * assignment 创建时间。
+   * 主要用于审计和列表排序，不等同于 claimedAt。
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
   /**
-   * 更新时间。
+   * assignment 最近更新时间。
+   * 反映最后一次状态推进或奖励同步，不代表事件发生时间。
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
   /**
@@ -118,7 +122,7 @@ export const taskAssignment = pgTable('task_assignment', {
   deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
   /**
-   * 任务、用户与周期唯一约束
+   * 同用户、同任务、同周期唯一约束。
    */
   unique('task_assignment_task_id_user_id_cycle_key_key').on(table.taskId, table.userId, table.cycleKey),
   /**

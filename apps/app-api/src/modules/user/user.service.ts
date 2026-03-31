@@ -20,7 +20,7 @@ import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
-import { TaskService } from '@libs/growth/task'
+import { TaskAssignmentService } from '@libs/growth/task'
 import { UserAssetsService } from '@libs/interaction/user-assets'
 import { MessageInboxService } from '@libs/message/inbox'
 import { UserService as UserCoreService } from '@libs/user/core'
@@ -38,7 +38,7 @@ export class UserService {
     private readonly userAssetsService: UserAssetsService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
-    private readonly taskService: TaskService,
+    private readonly taskAssignmentService: TaskAssignmentService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
 
@@ -169,7 +169,7 @@ export class UserService {
         this.userCoreService.getBadgeCount(userId),
         this.getUserAssetsSummary(userId),
         this.messageInboxService.getSummary(userId),
-        this.taskService.getUserTaskSummary(userId),
+        this.taskAssignmentService.getUserTaskSummary(userId),
       ])
 
     const level = user.levelId

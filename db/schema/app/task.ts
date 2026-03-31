@@ -20,15 +20,18 @@ import {
  */
 export const task = pgTable('task', {
   /**
-   * 主键id
+   * 任务模板主键。
+   * 仅用于内部关联和后台运维，不承载业务语义。
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
-   * 任务编码
+   * 任务稳定编码。
+   * 用于后台配置、灰度排障和外部引用，要求全局唯一。
    */
   code: varchar({ length: 50 }).notNull(),
   /**
-   * 任务标题
+   * 任务标题。
+   * 直接用于 app/admin 展示，变更不会影响历史 assignment 快照。
    */
   title: varchar({ length: 200 }).notNull(),
   /**
@@ -120,11 +123,13 @@ export const task = pgTable('task', {
    */
   updatedById: integer(),
   /**
-   * 创建时间。
+   * 模板创建时间。
+   * 属于后台审计字段，不参与任务可用性判断。
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
   /**
-   * 更新时间。
+   * 模板最近更新时间。
+   * 用于后台审计和排障，不作为任务周期边界。
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
   /**
@@ -134,7 +139,7 @@ export const task = pgTable('task', {
   deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [
   /**
-   * 唯一索引: code
+   * 任务稳定编码唯一约束。
    */
   unique('task_code_key').on(table.code),
   /**

@@ -1,4 +1,9 @@
-import type { Task, TaskInsert } from '@db/schema'
+import type {
+  Task,
+  TaskAssignment,
+  TaskInsert,
+  TaskProgressLogInsert,
+} from '@db/schema'
 import type { EventEnvelope } from '@libs/growth/event-definition'
 import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification'
 import type {
@@ -6,6 +11,7 @@ import type {
   PageQueryNoOrderInput,
   QueryOrderByInput,
 } from '@libs/platform/types'
+import type { SQL } from 'drizzle-orm'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   TaskAssignmentRewardStatusEnum,
@@ -13,6 +19,9 @@ import type {
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
   TaskObjectiveTypeEnum,
+  TaskProgressActionTypeEnum,
+  TaskProgressSourceEnum,
+  TaskReminderKindEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
   TaskTypeEnum,
@@ -77,27 +86,16 @@ export type TaskSnapshotSource = Pick<
 >
 
 /**
- * 自动分配逻辑所需的任务字段来源。
+ * 自动领取 assignment 创建所需的任务字段来源。
+ *
+ * 当前与 `TaskSnapshotSource` 等价，保留语义别名用于区分调用场景。
  */
-export type AutoAssignmentTaskSource = Pick<
-  Task,
-  | 'id'
-  | 'code'
-  | 'title'
-  | 'description'
-  | 'cover'
-  | 'type'
-  | 'completeMode'
-  | 'objectiveType'
-  | 'eventCode'
-  | 'objectiveConfig'
-  | 'rewardConfig'
-  | 'targetCount'
-  | 'claimMode'
-  | 'publishStartAt'
-  | 'publishEndAt'
-  | 'repeatRule'
->
+export type AutoAssignmentTaskSource = TaskSnapshotSource
+
+/**
+ * 创建或复用 assignment 时使用的任务字段来源。
+ */
+export type CreateOrGetAssignmentTaskInput = TaskSnapshotSource
 
 type CreateTaskInsertFields = Pick<
   TaskInsert,
@@ -241,9 +239,353 @@ export interface TaskEventProgressResult {
 }
 
 /**
- * 批量补偿已完成任务奖励的结果摘要。
+ * 创建或复用 assignment 的附加选项。
  */
-export interface RetryCompletedAssignmentRewardsResult {
-  scannedCount: number
-  triggeredCount: number
+export interface CreateOrGetAssignmentOptions {
+  notifyAutoAssignment?: boolean
+  progressSource?: TaskProgressSourceEnum
+}
+
+/**
+ * 任务分配分页共享查询参数。
+ */
+export interface QueryTaskAssignmentPageParams {
+  whereClause: SQL | undefined
+  pageIndex?: PageQueryInput['pageIndex']
+  pageSize?: PageQueryInput['pageSize']
+  orderBy?: TaskQueryOrderByInput
+  includeTaskDetail: boolean
+}
+
+/**
+ * 落任务进度日志时使用的稳定输入。
+ *
+ * 字段定义优先复用 `task_progress_log` schema，行为语义由 task 域枚举补充约束。
+ */
+export interface TaskProgressLogRecordInput {
+  assignmentId: TaskProgressLogInsert['assignmentId']
+  userId: TaskProgressLogInsert['userId']
+  actionType: TaskProgressActionTypeEnum
+  progressSource: TaskProgressSourceEnum
+  delta: TaskProgressLogInsert['delta']
+  beforeValue: TaskProgressLogInsert['beforeValue']
+  afterValue: TaskProgressLogInsert['afterValue']
+  context?: TaskProgressLogInsert['context']
+  eventCode?: GrowthRuleTypeEnum | null
+  eventBizKey?: TaskProgressLogInsert['eventBizKey']
+  eventOccurredAt?: TaskProgressLogInsert['eventOccurredAt']
+}
+
+/**
+ * 校验任务目标模型合同的输入。
+ */
+export interface EnsureTaskObjectiveContractInput {
+  objectiveType: TaskObjectiveTypeEnum
+  eventCode?: GrowthRuleTypeEnum | null
+  objectiveConfig?: Task['objectiveConfig']
+}
+
+/**
+ * 批量收口 assignment 过期状态时使用的共享输入。
+ */
+export interface ExpireAssignmentsByWhereInput {
+  now: Date
+  whereClause: SQL
+  overrideExpiredAt?: TaskAssignment['expiredAt']
+}
+
+/**
+ * 使用业务事件推进 assignment 的输入。
+ */
+export interface AdvanceAssignmentByEventInput {
+  taskRecord: Task
+  userId: TaskAssignment['userId']
+  eventEnvelope: TaskEventProgressInput['eventEnvelope']
+  eventBizKey: string
+  occurredAt: Date
+}
+
+/**
+ * 在事务内应用一次事件推进的输入。
+ */
+export interface ApplyAssignmentEventProgressInput {
+  assignment: TaskAssignment
+  userId: TaskAssignment['userId']
+  nextProgress: TaskAssignment['progress']
+  nextStatus: TaskAssignmentStatusEnum
+  eventCode: GrowthRuleTypeEnum
+  eventBizKey: string
+  eventOccurredAt: Date
+  context: Record<string, unknown>
+}
+
+/**
+ * 统一映射用户可见状态时使用的输入。
+ */
+export interface ResolveTaskUserVisibleStatusInput {
+  status: TaskAssignmentStatusEnum
+  rewardStatus?: TaskAssignmentRewardStatusEnum | null
+  rewardConfig?: unknown
+}
+
+/**
+ * 构建任务完成事件 envelope 的输入。
+ */
+export interface BuildTaskCompleteEventEnvelopeInput {
+  userId: TaskAssignment['userId']
+  taskId: Task['id']
+  assignmentId: TaskAssignment['id']
+  occurredAt?: Date
+}
+
+/**
+ * 联表查询时的任务关联行。
+ *
+ * `null` 表示 left join 未命中 live task，只能回退到 assignment 快照。
+ */
+export interface TaskRelationRow {
+  id: Task['id'] | null
+  code?: Task['code'] | null
+  title: Task['title'] | null
+  description?: Task['description'] | null
+  cover?: Task['cover'] | null
+  type: Task['type'] | null
+  objectiveType?: Task['objectiveType'] | null
+  eventCode?: Task['eventCode'] | null
+  objectiveConfig?: Task['objectiveConfig']
+  rewardConfig: Task['rewardConfig']
+  targetCount?: Task['targetCount'] | null
+  completeMode?: Task['completeMode'] | null
+  claimMode?: Task['claimMode'] | null
+}
+
+/**
+ * 带 live task 关联信息的 assignment 行。
+ */
+export interface TaskAssignmentWithTaskRow extends TaskAssignment {
+  task?: TaskRelationRow | null
+}
+
+/**
+ * 构建奖励结算最小任务视图时使用的 live task 来源。
+ */
+export interface TaskRewardTaskRecordBuildCurrentTaskInput {
+  code?: Task['code'] | null
+  title?: Task['title'] | null
+  type?: Task['type'] | null
+  rewardConfig?: Task['rewardConfig']
+}
+
+/**
+ * 构建奖励结算最小任务视图时使用的 assignment 来源。
+ */
+export type TaskRewardTaskRecordBuildAssignmentInput = Pick<
+  TaskAssignment,
+  'taskSnapshot'
+>
+
+/**
+ * 奖励结算与奖励提醒复用的最小任务视图。
+ */
+export interface TaskRewardTaskRecord {
+  id: Task['id']
+  code?: Task['code'] | null
+  title?: Task['title'] | null
+  type?: Task['type'] | null
+  rewardConfig: Task['rewardConfig'] | undefined
+}
+
+/**
+ * 触发任务完成事件时使用的最小任务视图。
+ */
+export type TaskCompleteEventTaskInput = Pick<
+  TaskRewardTaskRecord,
+  'id' | 'title' | 'rewardConfig'
+>
+
+/**
+ * 触发任务完成事件时使用的最小 assignment 视图。
+ */
+export interface TaskCompleteEventAssignmentInput {
+  id: TaskAssignment['id']
+  completedAt?: TaskAssignment['completedAt']
+}
+
+/**
+ * 按需补发任务奖励时使用的最小任务视图。
+ */
+export type TaskRewardSettlementTaskInput = Pick<
+  TaskRewardTaskRecord,
+  'id' | 'rewardConfig'
+>
+
+/**
+ * 按需补发任务奖励时使用的最小 assignment 视图。
+ */
+export type TaskRewardSettlementAssignmentInput = Pick<
+  TaskAssignment,
+  'id' | 'rewardStatus'
+>
+
+/**
+ * 任务提醒链路复用的最小任务视图。
+ */
+export interface TaskReminderNotificationTaskInfo {
+  id: Task['id']
+  code?: Task['code'] | null
+  title: Task['title']
+  type?: Task['type'] | null
+}
+
+/**
+ * 自动分配提醒复用的最小任务视图。
+ */
+export type TaskAutoAssignmentReminderTaskInput =
+  TaskReminderNotificationTaskInfo & {
+  claimMode?: Task['claimMode']
+}
+
+/**
+ * 奖励到账提醒复用的最小任务视图。
+ */
+export interface TaskRewardReminderTaskInput {
+  id: Task['id']
+  code?: Task['code'] | null
+  title?: Task['title'] | null
+  type?: Task['type'] | null
+}
+
+/**
+ * 任务提醒链路复用的最小 assignment 视图。
+ */
+export type TaskReminderAssignmentInput = Pick<TaskAssignment, 'id'>
+
+/**
+ * 任务提醒事件的共享基础入参。
+ */
+export interface TaskReminderBaseInput {
+  bizKey: string
+  receiverUserId: TaskAssignment['userId']
+  task: TaskReminderNotificationTaskInfo
+  cycleKey?: string
+  assignmentId?: TaskReminderAssignmentInput['id']
+}
+
+/**
+ * “可领取任务”提醒入参。
+ */
+export interface TaskAvailableReminderEventInput extends TaskReminderBaseInput {
+  claimMode?: Task['claimMode']
+}
+
+/**
+ * “即将过期”提醒入参。
+ */
+export interface TaskExpiringSoonReminderEventInput
+  extends TaskReminderBaseInput {
+  expiredAt: NonNullable<TaskAssignment['expiredAt']>
+}
+
+/**
+ * “奖励到账”提醒入参。
+ */
+export interface TaskRewardGrantedReminderEventInput
+  extends TaskReminderBaseInput {
+  points: number
+  experience: number
+  ledgerRecordIds: number[]
+}
+
+/**
+ * 任务提醒内部组装阶段的统一输入。
+ */
+export interface TaskReminderNotificationEventInput
+  extends TaskReminderBaseInput {
+  reminderKind: TaskReminderKindEnum
+  claimMode?: Task['claimMode']
+  expiredAt?: NonNullable<TaskAssignment['expiredAt']>
+  points?: number
+  experience?: number
+  ledgerRecordIds?: number[]
+}
+
+/**
+ * 任务提醒 payload 中的奖励摘要。
+ */
+export interface TaskReminderRewardSummary {
+  points: number
+  experience: number
+  ledgerRecordIds: number[]
+}
+
+/**
+ * 任务提醒 payload 的稳定业务合同。
+ */
+export interface TaskReminderNotificationPayload {
+  payloadVersion: number
+  reminderKind: TaskReminderKindEnum
+  taskId: Task['id']
+  taskCode: string
+  title: string
+  taskTitle: string
+  sceneType: TaskTypeEnum
+  cycleKey?: string
+  assignmentId?: TaskReminderAssignmentInput['id']
+  expiredAt?: NonNullable<TaskAssignment['expiredAt']>
+  actionUrl: '/task/my' | '/task/available'
+  rewardSummary?: TaskReminderRewardSummary
+  points?: number
+  experience?: number
+  ledgerRecordIds?: number[]
+}
+
+/**
+ * 管理端任务运行态中最近一次提醒摘要。
+ */
+export interface TaskRuntimeHealthLatestReminder {
+  reminderKind?: string
+  status: MessageNotificationDispatchStatusEnum
+  failureReason?: string
+  lastAttemptAt: Date
+  updatedAt: Date
+}
+
+/**
+ * 管理端任务页聚合展示的运行态摘要。
+ */
+export interface TaskRuntimeHealthSummary {
+  activeAssignmentCount: number
+  pendingRewardCompensationCount: number
+  latestReminder?: TaskRuntimeHealthLatestReminder
+}
+
+/**
+ * 任务维度最近一次提醒投递结果原始行。
+ */
+export interface TaskLatestReminderRow {
+  taskId: Task['id']
+  reminderKind: string | null
+  status: MessageNotificationDispatchStatusEnum
+  failureReason: string | null
+  lastAttemptAt: Date
+  updatedAt: Date
+}
+
+/**
+ * assignment 最近一次命中的事件摘要。
+ */
+export interface TaskAssignmentEventProgressSummary {
+  eventCode: GrowthRuleTypeEnum | null
+  eventBizKey: TaskProgressLogInsert['eventBizKey']
+  eventOccurredAt: TaskProgressLogInsert['eventOccurredAt']
+}
+
+/**
+ * assignment 最近一次奖励到账提醒摘要。
+ */
+export interface TaskAssignmentRewardReminderSummary {
+  bizKey: string
+  status: MessageNotificationDispatchStatusEnum
+  failureReason: string | null
+  lastAttemptAt: Date
 }
