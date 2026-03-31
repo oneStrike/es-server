@@ -1,3 +1,8 @@
+import type {
+  TaskObjectiveConfig,
+  TaskRepeatRuleConfig,
+  TaskRewardConfig,
+} from '../task.type'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -8,9 +13,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
-import {
-  GrowthRuleTypeEnum,
-} from '../../growth-rule.constant'
+import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import {
   TaskAssignmentRewardResultTypeEnum,
   TaskAssignmentRewardStatusEnum,
@@ -116,14 +119,14 @@ export class BaseTaskDto extends BaseDto {
     example: { points: 10, experience: 5 },
     required: false,
   })
-  rewardConfig?: Record<string, unknown> | null
+  rewardConfig?: TaskRewardConfig | null
 
   @JsonProperty({
     description: '目标附加配置，EVENT_COUNT 任务可用于表达额外过滤条件',
     example: { sectionId: 10 },
     required: false,
   })
-  objectiveConfig?: Record<string, unknown> | null
+  objectiveConfig?: TaskObjectiveConfig | null
 
   @DateProperty({
     description: '发布开始时间',
@@ -145,7 +148,7 @@ export class BaseTaskDto extends BaseDto {
     example: { type: 'daily', timezone: 'Asia/Shanghai' },
     required: false,
   })
-  repeatRule?: Record<string, unknown> | null
+  repeatRule?: TaskRepeatRuleConfig | null
 
   @NumberProperty({ description: '创建人ID', example: 1, required: false })
   createdById?: number

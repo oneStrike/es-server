@@ -1,4 +1,4 @@
-import type { TaskInsert, TaskSelect } from '@db/schema'
+import type { Task, TaskInsert } from '@db/schema'
 import type { EventEnvelope } from '@libs/growth/event-definition'
 import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification'
 import type {
@@ -6,9 +6,7 @@ import type {
   PageQueryNoOrderInput,
   QueryOrderByInput,
 } from '@libs/platform/types'
-import type {
-  GrowthRuleTypeEnum,
-} from '../growth-rule.constant'
+import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
@@ -26,16 +24,31 @@ import type {
  */
 export type TaskQueryOrderByInput = QueryOrderByInput
 
+/**
+ * 任务奖励配置。
+ *
+ * 当前任务域只支持积分和经验两类成长奖励，字段值统一要求为正整数。
+ */
 export interface TaskRewardConfig {
   points?: number
   experience?: number
 }
 
+/**
+ * 任务重复规则。
+ *
+ * `timezone` 仅影响周期切分口径，不改变数据库内时间字段的 UTC 存储方式。
+ */
 export interface TaskRepeatRuleConfig {
   type: TaskRepeatTypeEnum
   timezone?: string
 }
 
+/**
+ * 任务目标附加配置。
+ *
+ * 主要用于 `EVENT_COUNT` 任务对事件上下文做额外筛选。
+ */
 export interface TaskObjectiveConfig {
   [key: string]: unknown
 }
@@ -44,7 +57,7 @@ export interface TaskObjectiveConfig {
  * 任务分配快照可序列化字段来源。
  */
 export type TaskSnapshotSource = Pick<
-  TaskSelect,
+  Task,
   | 'id'
   | 'code'
   | 'title'
@@ -67,7 +80,7 @@ export type TaskSnapshotSource = Pick<
  * 自动分配逻辑所需的任务字段来源。
  */
 export type AutoAssignmentTaskSource = Pick<
-  TaskSelect,
+  Task,
   | 'id'
   | 'code'
   | 'title'
@@ -116,8 +129,8 @@ export interface CreateTaskInput extends CreateTaskInsertFields {
   objectiveType: TaskObjectiveTypeEnum
   eventCode?: GrowthRuleTypeEnum | number | null
   objectiveConfig?: TaskObjectiveConfig | null
-  rewardConfig?: Record<string, unknown> | null
-  repeatRule?: Record<string, unknown> | null
+  rewardConfig?: TaskRewardConfig | Record<string, unknown> | null
+  repeatRule?: TaskRepeatRuleConfig | Record<string, unknown> | null
 }
 
 /**
