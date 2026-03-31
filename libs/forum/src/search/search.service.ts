@@ -65,7 +65,7 @@ export class ForumSearchService {
     return this.searchInternal(searchInput, { publicOnly: true, userId })
   }
 
-  private createEmptyPage(searchInput: ForumSearchInput): ForumSearchPageResult {
+  private createEmptyPage(searchInput: ForumSearchInput) {
     const page = this.drizzle.buildPage(searchInput)
 
     return {

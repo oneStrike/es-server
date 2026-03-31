@@ -8,7 +8,7 @@ import { and, isNull } from 'drizzle-orm'
  * @returns deletedAt 字段引用
  * @throws Error - 当表不包含 deletedAt 字段时抛出
  */
-function getDeletedAtColumn(table: PgTable<TableConfig>): SQLWrapper {
+function getDeletedAtColumn(table: PgTable<TableConfig>) {
   const tableAsRecord = table as unknown as Record<string, SQLWrapper>
   const deletedAtColumn = tableAsRecord.deletedAt
   if (!deletedAtColumn) {

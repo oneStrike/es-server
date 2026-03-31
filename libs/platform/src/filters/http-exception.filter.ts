@@ -99,15 +99,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * 按优先级处理：HttpException > Postgres 错误 > 未知错误。
    * 对于数据库错误，尽可能提取约束、表名、字段等上下文信息。
    */
-  private extractErrorInfo(exception: unknown): {
-    status: number
-    message: string | object
-    code?: string
-    constraint?: string
-    table?: string
-    column?: string
-    detail?: string
-  } {
+  private extractErrorInfo(exception: unknown) {
     const postgresError = this.extractPostgresError(exception)
 
     if (exception instanceof HttpException) {

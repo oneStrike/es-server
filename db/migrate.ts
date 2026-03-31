@@ -44,7 +44,7 @@ function log(level: LogLevel, message: string, details?: Record<string, unknown>
   }
 }
 
-function formatLogValue(value: unknown): string {
+function formatLogValue(value: unknown) {
   if (value === undefined) {
     return 'undefined'
   }
@@ -75,7 +75,7 @@ function formatLogValue(value: unknown): string {
   return String(value)
 }
 
-function formatDuration(ms: number): string {
+function formatDuration(ms: number) {
   if (ms < 1000) {
     return `${ms}ms`
   }
@@ -89,13 +89,13 @@ function formatDuration(ms: number): string {
   return `${minutes}m ${seconds}s`
 }
 
-function getRuntimeLabel(): string {
+function getRuntimeLabel() {
   return process.versions.bun
     ? `bun ${process.versions.bun}`
     : `node ${process.version}`
 }
 
-function serializeError(error: unknown): string {
+function serializeError(error: unknown) {
   if (error instanceof Error) {
     return error.stack ?? `${error.name}: ${error.message}`
   }
@@ -103,7 +103,7 @@ function serializeError(error: unknown): string {
   return String(error)
 }
 
-function readLocalMigrations(migrationsFolder: string): LocalMigrationMeta[] {
+function readLocalMigrations(migrationsFolder: string) {
   if (!existsSync(migrationsFolder)) {
     return []
   }
@@ -122,7 +122,7 @@ function readLocalMigrations(migrationsFolder: string): LocalMigrationMeta[] {
     })
 }
 
-async function getMigrationTableSnapshot(pool: Pool): Promise<MigrationTableSnapshot> {
+async function getMigrationTableSnapshot(pool: Pool) {
   const columnResult = await pool.query<{ column_name: string }>(
     `
       SELECT column_name

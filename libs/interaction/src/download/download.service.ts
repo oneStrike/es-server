@@ -56,7 +56,7 @@ export class DownloadService {
    */
   private getResolver(
     targetType: DownloadTargetTypeEnum,
-  ): IDownloadTargetResolver {
+  ) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException('不支持的下载业务类型')
@@ -64,7 +64,7 @@ export class DownloadService {
     return resolver
   }
 
-  private extractRows<T>(result: unknown): T[] {
+  private extractRows<T>(result: unknown) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }

@@ -46,11 +46,11 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Object.prototype.toString.call(value) === '[object Object]'
 }
 
-function shouldOmitRequestField(key: string): boolean {
+function shouldOmitRequestField(key: string) {
   return OMITTED_REQUEST_FIELDS.has(key.toLowerCase())
 }
 
-function isSensitiveRequestField(key: string): boolean {
+function isSensitiveRequestField(key: string) {
   const normalized = key.toLowerCase()
   return (
     SENSITIVE_REQUEST_FIELDS.has(normalized) ||
@@ -60,7 +60,7 @@ function isSensitiveRequestField(key: string): boolean {
   )
 }
 
-function maskSensitiveValue(value: unknown): unknown {
+function maskSensitiveValue(value: unknown) {
   if (typeof value === 'string') {
     return maskString(value, 2, 2)
   }
@@ -73,7 +73,7 @@ function maskSensitiveValue(value: unknown): unknown {
   return value ?? '[REDACTED]'
 }
 
-function sanitizeRequestValue(value: unknown): unknown {
+function sanitizeRequestValue(value: unknown) {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeRequestValue(item))
   }

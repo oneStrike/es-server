@@ -9,7 +9,7 @@ import { eq } from 'drizzle-orm'
  * @param value2 - 第二个值
  * @returns 临时值
  */
-function generateTemporaryValue(value1: unknown, value2: unknown): unknown {
+function generateTemporaryValue(value1: unknown, value2: unknown) {
   // 数值类型：取较小值减1作为临时值
   if (typeof value1 === 'number' && typeof value2 === 'number') {
     const min = Math.min(value1, value2)

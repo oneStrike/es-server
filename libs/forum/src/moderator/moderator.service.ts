@@ -7,8 +7,6 @@ import type { SQL } from 'drizzle-orm'
 import type {
   AssignForumModeratorSectionInput,
   CreateForumModeratorInput,
-  ForumModeratorSectionScope,
-  ForumModeratorView,
   NormalizedModeratorScope,
   QueryForumModeratorInput,
   UpdateForumModeratorInput,
@@ -57,7 +55,7 @@ export class ForumModeratorService {
 
   private normalizePermissions(
     permissions?: Array<number | string | null | undefined> | null,
-  ): ForumModeratorPermissionEnum[] {
+  ) {
     const normalized = new Set<ForumModeratorPermissionEnum>()
 
     for (const permission of permissions ?? []) {
@@ -148,7 +146,7 @@ export class ForumModeratorService {
 
   private async getModeratorSectionScopes(
     moderatorId: number,
-  ): Promise<ForumModeratorSectionScope[]> {
+  ) {
     return this.db
       .select({
         sectionId: this.forumModeratorSection.sectionId,
@@ -333,7 +331,7 @@ export class ForumModeratorService {
 
   private async buildModeratorViews(
     moderators: ForumModeratorSelect[],
-  ): Promise<ForumModeratorView[]> {
+  ) {
     if (moderators.length === 0) {
       return []
     }

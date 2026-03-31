@@ -215,7 +215,7 @@ export async function applySchemaComments(
   }
 }
 
-function parseSchemaSourceComments(): Map<string, SourceTableComments> {
+function parseSchemaSourceComments() {
   const result = new Map<string, SourceTableComments>()
 
   for (const filePath of listSchemaSourceFiles(SCHEMA_DIR)) {
@@ -287,7 +287,7 @@ function parseSchemaSourceComments(): Map<string, SourceTableComments> {
   return result
 }
 
-function listSchemaSourceFiles(directoryPath: string): string[] {
+function listSchemaSourceFiles(directoryPath: string) {
   const entries = readdirSync(directoryPath, { withFileTypes: true })
   const files: string[] = []
 
@@ -307,13 +307,13 @@ function listSchemaSourceFiles(directoryPath: string): string[] {
   return files.sort((left, right) => left.localeCompare(right))
 }
 
-function hasExportModifier(node: ts.Node): boolean {
+function hasExportModifier(node: ts.Node) {
   return Boolean(node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword))
 }
 
 function getPgTableColumnsDefinition(
   initializer: ts.Expression,
-): ts.ObjectLiteralExpression | null | undefined {
+) {
   if (!ts.isCallExpression(initializer)) {
     return undefined
   }
@@ -347,7 +347,7 @@ function getPgTableColumnsDefinition(
   return null
 }
 
-function isPgTableExpression(expression: ts.LeftHandSideExpression): boolean {
+function isPgTableExpression(expression: ts.LeftHandSideExpression) {
   if (ts.isIdentifier(expression)) {
     return expression.text === 'pgTable'
   }
@@ -359,7 +359,7 @@ function isPgTableExpression(expression: ts.LeftHandSideExpression): boolean {
   return false
 }
 
-function getPropertyName(name: ts.PropertyName): string | null {
+function getPropertyName(name: ts.PropertyName) {
   if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
     return name.text
   }
@@ -367,7 +367,7 @@ function getPropertyName(name: ts.PropertyName): string | null {
   return null
 }
 
-function getNodeJsDoc(node: ts.Node): string | null {
+function getNodeJsDoc(node: ts.Node) {
   const jsDocNodes = ts.getJSDocCommentsAndTags(node).filter((entry): entry is ts.JSDoc => ts.isJSDoc(entry))
 
   if (jsDocNodes.length === 0) {
@@ -380,7 +380,7 @@ function getNodeJsDoc(node: ts.Node): string | null {
 
 function renderJsDocComment(
   comment: ts.JSDoc['comment'],
-): string {
+) {
   if (typeof comment === 'string') {
     return comment
   }
@@ -400,7 +400,7 @@ function renderJsDocComment(
     .join('')
 }
 
-function normalizeJsDocComment(comment: string): string | null {
+function normalizeJsDocComment(comment: string) {
   const normalizedLines = comment
     .replace(WINDOWS_NEWLINE_REGEX, '\n')
     .split('\n')
@@ -421,7 +421,7 @@ function normalizeJsDocComment(comment: string): string | null {
   return normalizedLines.join('\n')
 }
 
-function safeReadFile(filePath: string): string | null {
+function safeReadFile(filePath: string) {
   try {
     return readFileSync(filePath, 'utf8')
   } catch {
@@ -429,11 +429,11 @@ function safeReadFile(filePath: string): string | null {
   }
 }
 
-function quoteQualifiedName(...parts: string[]): string {
+function quoteQualifiedName(...parts: string[]) {
   return parts.map(part => `"${part.replaceAll('"', '""')}"`).join('.')
 }
 
-function toPgTextLiteral(value: string): string {
+function toPgTextLiteral(value: string) {
   return `E'${value
     .replaceAll('\\', '\\\\')
     .replaceAll('\'', '\'\'')

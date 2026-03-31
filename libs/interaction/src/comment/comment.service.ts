@@ -165,7 +165,7 @@ export class CommentService {
    * @param comment.deletedAt 删除时间
    * @returns 是否可见
    */
-  private isVisible(comment: CommentVisibleState): boolean {
+  private isVisible(comment: CommentVisibleState) {
     return (
       comment.auditStatus === AuditStatusEnum.APPROVED &&
       !comment.isHidden &&
@@ -272,7 +272,7 @@ export class CommentService {
    */
   private toVisibleCommentEffectPayload(
     comment: CommentModerationState,
-  ): VisibleCommentEffectPayload {
+  ) {
     return {
       id: comment.id,
       userId: comment.userId,

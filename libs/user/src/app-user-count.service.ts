@@ -87,7 +87,7 @@ export class AppUserCountService {
 
   private resolveFollowingCountField(
     targetType: number,
-  ): keyof UserFollowingCounts {
+  ) {
     switch (targetType) {
       case this.userFollowTargetType:
         return 'followingUserCount'

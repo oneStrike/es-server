@@ -250,11 +250,21 @@ export interface CreateOrGetAssignmentOptions {
  * 任务分配分页共享查询参数。
  */
 export interface QueryTaskAssignmentPageParams {
-  whereClause: SQL | undefined
+  assignmentWhereClause?: SQL
+  taskWhereClause?: SQL
   pageIndex?: PageQueryInput['pageIndex']
   pageSize?: PageQueryInput['pageSize']
   orderBy?: TaskQueryOrderByInput
-  includeTaskDetail: boolean
+}
+
+/**
+ * 任务分配分页查询结果。
+ */
+export interface QueryTaskAssignmentPageResult {
+  list: TaskAssignmentWithTaskRow[]
+  total: number
+  pageIndex: number
+  pageSize: number
 }
 
 /**
@@ -341,22 +351,23 @@ export interface BuildTaskCompleteEventEnvelopeInput {
 /**
  * 联表查询时的任务关联行。
  *
- * `null` 表示 left join 未命中 live task，只能回退到 assignment 快照。
+ * 分页 helper 固定返回同一组任务摘要字段；值为 `null` 表示 left join 未命中
+ * live task，只能回退到 assignment 快照。
  */
 export interface TaskRelationRow {
   id: Task['id'] | null
-  code?: Task['code'] | null
+  code: Task['code'] | null
   title: Task['title'] | null
-  description?: Task['description'] | null
-  cover?: Task['cover'] | null
+  description: Task['description'] | null
+  cover: Task['cover'] | null
   type: Task['type'] | null
-  objectiveType?: Task['objectiveType'] | null
-  eventCode?: Task['eventCode'] | null
-  objectiveConfig?: Task['objectiveConfig']
-  rewardConfig: Task['rewardConfig']
-  targetCount?: Task['targetCount'] | null
-  completeMode?: Task['completeMode'] | null
-  claimMode?: Task['claimMode'] | null
+  objectiveType: Task['objectiveType'] | null
+  eventCode: Task['eventCode'] | null
+  objectiveConfig: Task['objectiveConfig'] | null
+  rewardConfig: Task['rewardConfig'] | null
+  targetCount: Task['targetCount'] | null
+  completeMode: Task['completeMode'] | null
+  claimMode: Task['claimMode'] | null
 }
 
 /**

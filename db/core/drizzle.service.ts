@@ -204,7 +204,7 @@ export class DrizzleService implements OnApplicationShutdown {
   /**
    * 解析仓库级查询默认值，确保分页在未显式传参时仍有稳定回退行为。
    */
-  private resolveQueryConfig(): DbQueryConfig {
+  private resolveQueryConfig() {
     return resolveDbQueryConfig(
       this.configService.get<Partial<DbQueryConfig>>('db.query'),
     )

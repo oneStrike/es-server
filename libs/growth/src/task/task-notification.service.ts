@@ -69,7 +69,7 @@ export class TaskNotificationService {
 
   private buildTaskReminderNotificationEvent(
     params: TaskReminderNotificationEventInput,
-  ): CreateNotificationOutboxEventInput {
+  ) {
     const message = this.buildTaskReminderMessage(params)
     const rewardSummary: TaskReminderRewardSummary | undefined =
       params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED

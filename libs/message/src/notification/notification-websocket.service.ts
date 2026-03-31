@@ -493,7 +493,7 @@ export class MessageWebSocketService {
     return JSON.stringify(payload)
   }
 
-  private mapErrorToAck(error: unknown): Omit<WsAckPayload, 'requestId'> {
+  private mapErrorToAck(error: unknown) {
     if (error instanceof BadRequestException) {
       return {
         code: 40001,

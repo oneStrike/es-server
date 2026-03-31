@@ -120,7 +120,7 @@ export class ContentPermissionService {
   /**
    * 获取用户及其等级信息
    */
-  private async getUserWithLevel(userId: number): Promise<UserWithLevel> {
+  private async getUserWithLevel(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId, deletedAt: { isNull: true } },
       with: {

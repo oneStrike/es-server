@@ -104,7 +104,7 @@ export class ReportService {
    * @returns 对应的目标解析器
    * @throws BadRequestException 当目标类型不支持时抛出异常
    */
-  private getResolver(targetType: ReportTargetTypeEnum): IReportTargetResolver {
+  private getResolver(targetType: ReportTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException('不支持的举报目标类型')

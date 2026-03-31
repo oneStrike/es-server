@@ -62,7 +62,7 @@ export class ReadingStateService {
   /**
    * 获取指定的阅读状态解析器
    */
-  private getResolver(workType: ContentTypeEnum): IReadingStateResolver {
+  private getResolver(workType: ContentTypeEnum) {
     const resolver = this.resolvers.get(workType)
     if (!resolver) {
       throw new BadRequestException('不支持的阅读状态业务类型')

@@ -50,7 +50,7 @@ export class LikeService {
     return [...new Set(targetIds)]
   }
 
-  private resolveErrorCode(error: unknown): string {
+  private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
@@ -74,7 +74,7 @@ export class LikeService {
    * @returns 对应的目标解析器
    * @throws BadRequestException 当目标类型不支持时抛出异常
    */
-  private getResolver(targetType: LikeTargetTypeEnum): ILikeTargetResolver {
+  private getResolver(targetType: LikeTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException('不支持的点赞目标类型')

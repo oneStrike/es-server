@@ -112,16 +112,12 @@ export class TaskExecutionService extends TaskServiceSupport {
       queryDto.type !== undefined
         ? inArray(this.taskTable.type, getTaskTypeFilterValues(queryDto.type))
         : undefined
-    const whereClause =
-      assignmentWhere && taskWhere
-        ? and(assignmentWhere, taskWhere)
-        : (assignmentWhere ?? taskWhere)
     const result = await this.queryTaskAssignmentPage({
-      whereClause,
+      assignmentWhereClause: assignmentWhere,
+      taskWhereClause: taskWhere,
       pageIndex: queryDto.pageIndex,
       pageSize: queryDto.pageSize,
       orderBy: queryDto.orderBy,
-      includeTaskDetail: true,
     })
 
     return {
@@ -514,11 +510,10 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     const result = await this.queryTaskAssignmentPage({
-      whereClause: and(...assignmentConditions),
+      assignmentWhereClause: and(...assignmentConditions),
       pageIndex: queryDto.pageIndex,
       pageSize: queryDto.pageSize,
       orderBy: queryDto.orderBy,
-      includeTaskDetail: true,
     })
 
     return {
@@ -591,11 +586,10 @@ export class TaskExecutionService extends TaskServiceSupport {
     }
 
     const result = await this.queryTaskAssignmentPage({
-      whereClause: and(...assignmentConditions),
+      assignmentWhereClause: and(...assignmentConditions),
       pageIndex: queryDto.pageIndex,
       pageSize: queryDto.pageSize,
       orderBy: queryDto.orderBy,
-      includeTaskDetail: true,
     })
     const assignmentIds = result.list.map((item) => item.id)
     const [eventMap, rewardReminderMap] = await Promise.all([

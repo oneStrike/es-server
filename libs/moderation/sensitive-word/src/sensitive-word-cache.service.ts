@@ -43,7 +43,7 @@ export class SensitiveWordCacheService {
    * @param config - 缓存查询配置
    * @returns 查询结果
    */
-  private async getFromCache<T>(config: CacheQueryConfig<T>): Promise<T[]> {
+  private async getFromCache<T>(config: CacheQueryConfig<T>) {
     let data = await this.cacheManager.get<T[]>(config.cacheKey)
 
     if (!data) {

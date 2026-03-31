@@ -1,5 +1,4 @@
 import type { Db } from '@db/core'
-import type { SQL } from 'drizzle-orm'
 import type {
   EmojiAssetSnapshot,
   EmojiAssetSnapshotRow,
@@ -65,7 +64,7 @@ export class EmojiCatalogService {
    * 构建场景包含条件。
    * - sceneType 为 smallint[]，通过数组包含运算表达单场景可见性。
    */
-  private buildSceneContainsCondition(scene: EmojiSceneEnum): SQL {
+  private buildSceneContainsCondition(scene: EmojiSceneEnum) {
     return sql`${this.emojiPack.sceneType} @> ARRAY[${scene}]::smallint[]`
   }
 
@@ -73,7 +72,7 @@ export class EmojiCatalogService {
    * 构建表情包有效状态条件。
    * - 条件包括：已启用、未删除、当前场景可见。
    */
-  private buildActivePackCondition(scene: EmojiSceneEnum): SQL {
+  private buildActivePackCondition(scene: EmojiSceneEnum) {
     return and(
       eq(this.emojiPack.isEnabled, true),
       isNull(this.emojiPack.deletedAt),
@@ -85,7 +84,7 @@ export class EmojiCatalogService {
    * 构建表情资源有效状态条件。
    * - 条件包括：已启用、未删除。
    */
-  private buildActiveAssetCondition(): SQL {
+  private buildActiveAssetCondition() {
     return and(
       eq(this.emojiAsset.isEnabled, true),
       isNull(this.emojiAsset.deletedAt),
@@ -117,7 +116,7 @@ export class EmojiCatalogService {
    * - 处理类型转换（kind、keywords）。
    * - 合并表情包信息到快照对象。
    */
-  private toAssetSnapshot(row: EmojiAssetSnapshotRow): EmojiAssetSnapshot {
+  private toAssetSnapshot(row: EmojiAssetSnapshotRow) {
     return {
       id: row.id,
       kind: row.kind as EmojiAssetKindEnum,

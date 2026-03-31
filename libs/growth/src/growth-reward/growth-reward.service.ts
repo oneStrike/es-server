@@ -342,7 +342,7 @@ export class UserGrowthRewardService {
 
   private resolveTaskRewardResultType(
     results: TaskRewardAssetResult[],
-  ): TaskAssignmentRewardResultTypeEnum {
+  ) {
     const attemptedResults = results.filter((item) => !item.skipped)
     if (attemptedResults.length === 0) {
       return TaskAssignmentRewardResultTypeEnum.APPLIED
@@ -469,10 +469,7 @@ export class UserGrowthRewardService {
   }
 
   /** 解析奖励配置 */
-  private parseRewardConfig(input: unknown): {
-    points: number
-    experience: number
-  } {
+  private parseRewardConfig(input: unknown) {
     const record = this.asRecord(input)
     if (!record) {
       return { points: 0, experience: 0 }
@@ -484,14 +481,14 @@ export class UserGrowthRewardService {
     }
   }
 
-  private asRecord(input: unknown): Record<string, unknown> | null {
+  private asRecord(input: unknown) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       return null
     }
     return input as Record<string, unknown>
   }
 
-  private readPositiveInt(input: unknown): number {
+  private readPositiveInt(input: unknown) {
     if (typeof input === 'number' && Number.isFinite(input) && input > 0) {
       return Math.floor(input)
     }

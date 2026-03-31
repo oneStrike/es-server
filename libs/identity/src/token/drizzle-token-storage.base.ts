@@ -28,7 +28,7 @@ export abstract class BaseDrizzleTokenStorageService<
 
   protected abstract get tokenTable(): any
 
-  protected async createOne(data: CreateTokenInput): Promise<TEntity> {
+  protected async createOne(data: CreateTokenInput) {
     const rows = await this.drizzle.withErrorHandling(
       () =>
         this.drizzle.db
@@ -50,7 +50,7 @@ export abstract class BaseDrizzleTokenStorageService<
     return rows[0] as TEntity
   }
 
-  protected async createManyItems(data: CreateTokenInput[]): Promise<number> {
+  protected async createManyItems(data: CreateTokenInput[]) {
     const rows = await this.drizzle.withErrorHandling(
       () =>
         this.drizzle.db
@@ -74,7 +74,7 @@ export abstract class BaseDrizzleTokenStorageService<
     return rows.length
   }
 
-  protected async findOneByJti(jti: string): Promise<TEntity | null> {
+  protected async findOneByJti(jti: string) {
     const [token] = await this.drizzle.db
       .select()
       .from(this.tokenTable)

@@ -62,7 +62,7 @@ export function findCombinations(
   const totalSum = allItems.reduce((sum, item) => sum + item, 0)
 
   // 使用回溯算法找出所有可能的组合
-  function backtrack(start: number, current: number[]): void {
+  function backtrack(start: number, current: number[]) {
     // 将当前组合的值添加到结果中
     if (current.length > 0) {
       // 计算当前组合的值（所有项的和）

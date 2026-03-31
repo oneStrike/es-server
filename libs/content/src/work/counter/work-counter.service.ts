@@ -112,7 +112,7 @@ export class WorkCounterService {
     await this.drizzle.withErrorHandling(async () => operation(this.db))
   }
 
-  private rethrowNotFound(error: unknown, message: string): never {
+  private rethrowNotFound(error: unknown, message: string) {
     if (
       error instanceof NotFoundException
       && !error.message.includes('计数不足')

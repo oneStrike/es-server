@@ -738,7 +738,7 @@ export class GrowthLedgerService {
   }
 
   /** 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键 */
-  private formatDateKey(input: Date): string {
+  private formatDateKey(input: Date) {
     const y = input.getFullYear()
     const m = String(input.getMonth() + 1).padStart(2, '0')
     const d = String(input.getDate()).padStart(2, '0')
@@ -778,7 +778,7 @@ export class GrowthLedgerService {
     return rows[0]
   }
 
-  private async deleteLedgerRecordById(tx: Tx, id: number): Promise<void> {
+  private async deleteLedgerRecordById(tx: Tx, id: number) {
     await this.drizzle.withErrorHandling(() =>
       tx
         .delete(this.growthLedgerRecord)

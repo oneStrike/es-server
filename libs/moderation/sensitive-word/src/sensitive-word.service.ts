@@ -145,7 +145,7 @@ export class SensitiveWordService {
    * 获取级别统计
    * @returns 级别统计列表
    */
-  private async getLevelStatistics(): Promise<SensitiveWordLevelStatistics[]> {
+  private async getLevelStatistics() {
     const results = await this.db
       .select({
         level: this.sensitiveWord.level,
@@ -167,7 +167,7 @@ export class SensitiveWordService {
    * 获取类型统计
    * @returns 类型统计列表
    */
-  private async getTypeStatistics(): Promise<SensitiveWordTypeStatistics[]> {
+  private async getTypeStatistics() {
     const results = await this.db
       .select({
         type: this.sensitiveWord.type,
@@ -189,7 +189,7 @@ export class SensitiveWordService {
    * 获取顶部命中统计
    * @returns 命中次数最高的敏感词
    */
-  private async getTopHitStatistics(): Promise<SensitiveWordTopHitStatistics[]> {
+  private async getTopHitStatistics() {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,
@@ -216,7 +216,7 @@ export class SensitiveWordService {
    * 获取最近命中统计
    * @returns 最近命中的敏感词
    */
-  private async getRecentHitStatistics(): Promise<SensitiveWordRecentHitStatistics[]> {
+  private async getRecentHitStatistics() {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,

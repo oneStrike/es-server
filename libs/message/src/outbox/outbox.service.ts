@@ -8,7 +8,6 @@ import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { ChatOutboxEventTypeEnum } from '../chat/chat.constant'
-import { MessageNotificationTypeEnum } from '../notification/notification.constant'
 import {
   MessageOutboxDomainEnum,
   MessageOutboxStatusEnum,
@@ -243,7 +242,7 @@ export class MessageOutboxService {
    */
   private normalizeNotificationEventType(
     dto: CreateNotificationOutboxEventInput,
-  ): MessageNotificationTypeEnum {
+  ) {
     const eventType = dto.payload.type
 
     if (dto.eventType !== undefined && dto.eventType !== eventType) {

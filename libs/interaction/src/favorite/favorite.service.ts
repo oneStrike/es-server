@@ -38,7 +38,7 @@ export class FavoriteService {
     return [...new Set(targetIds)]
   }
 
-  private resolveErrorCode(error: unknown): string {
+  private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
@@ -59,7 +59,7 @@ export class FavoriteService {
    */
   private getResolver(
     targetType: FavoriteTargetTypeEnum,
-  ): IFavoriteTargetResolver {
+  ) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException(`不支持的收藏类型: ${targetType}`)

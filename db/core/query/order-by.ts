@@ -18,7 +18,7 @@ export type DrizzleRelationOrderBy = DbQueryOrderByRecord
 /**
  * 归一化排序方向，避免上层在分页、列表和单条查询场景里各自维护大小写兼容。
  */
-function normalizeOrderDirection(value: unknown): 'asc' | 'desc' | undefined {
+function normalizeOrderDirection(value: unknown) {
   if (value === 'asc' || value === 'desc') {
     return value
   }
@@ -33,7 +33,7 @@ function normalizeOrderDirection(value: unknown): 'asc' | 'desc' | undefined {
 /**
  * 解析外部传入的 orderBy，兼容 query string JSON 和对象两种入口。
  */
-function parseOrderBy(value: unknown): DbQueryOrderBy | undefined {
+function parseOrderBy(value: unknown) {
   if (value === undefined || value === null) {
     return undefined
   }
@@ -152,7 +152,7 @@ function appendStableIdOrderBy(
  */
 function buildRelationOrderBy(
   orderByRecords: DbQueryOrderByRecord[] | undefined,
-): DrizzleRelationOrderBy | undefined {
+) {
   if (!orderByRecords || orderByRecords.length === 0) {
     return undefined
   }

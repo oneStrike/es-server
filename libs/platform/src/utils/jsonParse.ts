@@ -14,7 +14,7 @@ function isObjectLike(
   return typeof value === 'object' && value !== null
 }
 
-function normalizeInputToString(input: unknown): string | null {
+function normalizeInputToString(input: unknown) {
   if (input == null) {
     return null
   } // null 或 undefined

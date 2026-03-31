@@ -42,7 +42,7 @@ export class ForumPermissionService {
    */
   private async getPostingUserContext(
     userId: number,
-  ): Promise<ForumPostingUserContext> {
+  ) {
     const user = await this.db.query.appUser.findFirst({
       where: {
         id: userId,

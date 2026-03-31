@@ -81,7 +81,7 @@ export class ForumCounterService {
     this.drizzle.assertAffectedRows(result, message)
   }
 
-  private rethrowNotFound(error: unknown, message: string): never {
+  private rethrowNotFound(error: unknown, message: string) {
     if (
       error instanceof NotFoundException
       && !error.message.includes('计数不足')

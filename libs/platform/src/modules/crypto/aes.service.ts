@@ -27,7 +27,7 @@ export class AesService {
   /**
    * 获取加密密钥
    */
-  private getSecretKey(): string {
+  private getSecretKey() {
     return this.configService.get<string>('app.secret', this.defaultSecret)
   }
 

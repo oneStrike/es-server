@@ -39,7 +39,7 @@ export class FollowService {
     return [...new Set(targetIds)]
   }
 
-  private resolveErrorCode(error: unknown): string {
+  private resolveErrorCode(error: unknown) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 

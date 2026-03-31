@@ -202,7 +202,7 @@ function resolveEventEnvelopeGovernanceGate(code: EventEnvelopeCode) {
 
 function normalizeEventEnvelopeContext(
   context?: EventEnvelopeContext,
-): EventEnvelopeContext | undefined {
+) {
   if (!context || Object.keys(context).length === 0) {
     return undefined
   }

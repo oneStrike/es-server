@@ -1,9 +1,6 @@
 import type {
-  SensitiveWordLevelStatistics,
   SensitiveWordRecentHitStatistics,
   SensitiveWordStatisticsData,
-  SensitiveWordTopHitStatistics,
-  SensitiveWordTypeStatistics,
 } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
 import { Injectable, Logger } from '@nestjs/common'
@@ -84,7 +81,7 @@ export class SensitiveWordStatisticsService {
    * 获取敏感词总数
    * @returns 敏感词总数
    */
-  private async getTotalWords(): Promise<number> {
+  private async getTotalWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(this.sensitiveWord)
@@ -95,7 +92,7 @@ export class SensitiveWordStatisticsService {
    * 获取启用的敏感词数量
    * @returns 启用的敏感词数量
    */
-  private async getEnabledWords(): Promise<number> {
+  private async getEnabledWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(this.sensitiveWord)
@@ -107,7 +104,7 @@ export class SensitiveWordStatisticsService {
    * 获取禁用的敏感词数量
    * @returns 禁用的敏感词数量
    */
-  private async getDisabledWords(): Promise<number> {
+  private async getDisabledWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(this.sensitiveWord)
@@ -120,7 +117,7 @@ export class SensitiveWordStatisticsService {
    * 统计所有敏感词的命中次数总和
    * @returns 总命中次数
    */
-  private async getTotalHits(): Promise<number> {
+  private async getTotalHits() {
     const [result] = await this.db
       .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
       .from(this.sensitiveWord)
@@ -133,7 +130,7 @@ export class SensitiveWordStatisticsService {
    * @param startDate - 开始时间
    * @returns 命中次数
    */
-  private async getHitsInDateRange(startDate: Date): Promise<number> {
+  private async getHitsInDateRange(startDate: Date) {
     const [result] = await this.db
       .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
       .from(this.sensitiveWord)
@@ -146,7 +143,7 @@ export class SensitiveWordStatisticsService {
    * 统计今日所有敏感词的命中次数总和
    * @returns 今日命中次数
    */
-  private async getTodayHits(): Promise<number> {
+  private async getTodayHits() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return this.getHitsInDateRange(today)
@@ -157,7 +154,7 @@ export class SensitiveWordStatisticsService {
    * 统计最近一周所有敏感词的命中次数总和
    * @returns 最近一周命中次数
    */
-  private async getLastWeekHits(): Promise<number> {
+  private async getLastWeekHits() {
     const lastWeek = new Date()
     lastWeek.setDate(lastWeek.getDate() - 7)
     return this.getHitsInDateRange(lastWeek)
@@ -168,7 +165,7 @@ export class SensitiveWordStatisticsService {
    * 统计最近一月所有敏感词的命中次数总和
    * @returns 最近一月命中次数
    */
-  private async getLastMonthHits(): Promise<number> {
+  private async getLastMonthHits() {
     const lastMonth = new Date()
     lastMonth.setMonth(lastMonth.getMonth() - 1)
     return this.getHitsInDateRange(lastMonth)
@@ -179,7 +176,7 @@ export class SensitiveWordStatisticsService {
    * 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
    * @returns 级别统计列表
    */
-  private async getLevelStatistics(): Promise<SensitiveWordLevelStatistics[]> {
+  private async getLevelStatistics() {
     const results = await this.db
       .select({
         level: this.sensitiveWord.level,
@@ -202,7 +199,7 @@ export class SensitiveWordStatisticsService {
    * 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
    * @returns 类型统计列表
    */
-  private async getTypeStatistics(): Promise<SensitiveWordTypeStatistics[]> {
+  private async getTypeStatistics() {
     const results = await this.db
       .select({
         type: this.sensitiveWord.type,
@@ -225,7 +222,7 @@ export class SensitiveWordStatisticsService {
    * 返回命中次数最高的20个敏感词
    * @returns 热门敏感词列表
    */
-  private async getTopHitWords(): Promise<SensitiveWordTopHitStatistics[]> {
+  private async getTopHitWords() {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,

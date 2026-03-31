@@ -47,7 +47,7 @@ export class SmsService {
    *
    * @returns Dypnsapi20170525 客户端实例
    */
-  private getClient(): Dypnsapi20170525 {
+  private getClient() {
     const aliyunConfig = this.configProvider.getAliyunConfig()
 
     // 校验必要配置
@@ -82,7 +82,7 @@ export class SmsService {
    * @param config.sms.endpoint 短信服务端点（可选）
    * @returns Dypnsapi20170525 客户端实例
    */
-  private createClient(config: SmsAliyunConfig): Dypnsapi20170525 {
+  private createClient(config: SmsAliyunConfig) {
     const credential = new Credential(
       new Config({
         type: 'access_key',

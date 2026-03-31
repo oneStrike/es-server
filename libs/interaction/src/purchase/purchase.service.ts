@@ -82,7 +82,7 @@ export class PurchaseService {
    */
   private getResolver(
     targetType: PurchaseTargetTypeEnum,
-  ): IPurchaseTargetResolver {
+  ) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException('不支持的购买业务类型')
@@ -96,7 +96,7 @@ export class PurchaseService {
     )
   }
 
-  private extractRows<T>(result: unknown): T[] {
+  private extractRows<T>(result: unknown) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }
@@ -104,7 +104,7 @@ export class PurchaseService {
     return Array.isArray(rows) ? (rows as T[]) : []
   }
 
-  private buildPurchaseCreatedAtFilter(startDate?: string, endDate?: string): SQL {
+  private buildPurchaseCreatedAtFilter(startDate?: string, endDate?: string) {
     const filters: SQL[] = []
     const columnRef = sql`upr.created_at`
 

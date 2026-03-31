@@ -1190,7 +1190,7 @@ export class MessageChatService {
    * @returns 解析后的 JSON 对象或 undefined
    * @throws BadRequestException 如果 JSON 格式无效
    */
-  private parseJsonPayload(payload?: string): Record<string, unknown> | undefined {
+  private parseJsonPayload(payload?: string) {
     if (!payload || !payload.trim()) {
       return undefined
     }

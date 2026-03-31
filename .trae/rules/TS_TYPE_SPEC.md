@@ -31,6 +31,7 @@
 - 字段来源明确时优先复用 `Entity['field']`、`Pick<Entity, ...>`、`Omit<Entity, ...>`、`Partial<...>`。
 - `Create/Update` 输入不要暴露只读字段、审计字段、统计字段。
 - 分页查询统一沿用 `pageIndex`、`pageSize`、`orderBy`，其中 `pageIndex` 为 1-based。
+- 方法返回类型遵循“非必要不显式声明”原则，优先依赖 TypeScript 类型推导；仅在公共契约稳定、跨模块可读性或推导不准确时再显式标注返回类型。
 - SQL 投影、聚合结果、原生 SQL 结果必须有显式类型，不用裸 `Record<string, unknown>` 描述稳定结构。
 - 弱结构 JSON 使用 `unknown` 或 `Record<string, unknown>`；禁止 `any`、`as any`、`tx: any`。
 - 时间字段仅在确有跨层转换需求时放宽为 `string | Date`。
@@ -56,4 +57,5 @@
 - [ ] 字段类型优先复用实体字段类型或现有领域类型。
 - [ ] 创建/更新类型未复制整份实体字段，已优先使用 `Pick/Omit/Partial` 组合。
 - [ ] 查询类型沿用 `pageIndex/pageSize/orderBy` 约定。
+- [ ] 方法返回类型默认依赖 TypeScript 推导，仅在必要场景显式标注。
 - [ ] SQL/聚合结果有显式类型，未新增 `any`、`tx: any` 等类型逃逸。

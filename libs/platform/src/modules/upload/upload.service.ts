@@ -195,7 +195,7 @@ export class UploadService {
     return this.uploadPreparedFile(preparedFile)
   }
 
-  private getSystemUploadConfig(): UploadSystemConfig {
+  private getSystemUploadConfig() {
     return (
       this.uploadConfigProvider?.getUploadConfig() ?? {
         provider: UploadProviderEnum.LOCAL,
@@ -252,7 +252,7 @@ export class UploadService {
 
   private async uploadPreparedFile(
     preparedFile: PreparedUploadFile,
-  ): Promise<UploadResult> {
+  ) {
     this.assertFileSizeWithinLimit(preparedFile.fileSize)
 
     const systemUploadConfig = this.getSystemUploadConfig()
@@ -379,7 +379,7 @@ export class UploadService {
     return lookupValue ? String(lookupValue).toLowerCase() : ''
   }
 
-  private getFileCategoryFromExt(ext: string): UploadFileCategory | null {
+  private getFileCategoryFromExt(ext: string) {
     const lowerExt = ext.toLowerCase()
     for (const type of Object.keys(
       this.uploadConfig.allowExtensions,
@@ -391,7 +391,7 @@ export class UploadService {
     return null
   }
 
-  private extractScene(sceneField: unknown): string | null {
+  private extractScene(sceneField: unknown) {
     if (sceneField == null) {
       return DEFAULT_UPLOAD_SCENE
     }
@@ -481,11 +481,11 @@ export class UploadService {
     })
   }
 
-  private toBuffer(chunk: string | NodeBuffer): NodeBuffer {
+  private toBuffer(chunk: string | NodeBuffer) {
     return typeof chunk === 'string' ? NodeBuffer.from(chunk) : chunk
   }
 
-  private async consumeStream(stream: NodeJS.ReadableStream): Promise<void> {
+  private async consumeStream(stream: NodeJS.ReadableStream) {
     return new Promise((resolve) => {
       stream.on('end', resolve)
       stream.on('error', resolve)

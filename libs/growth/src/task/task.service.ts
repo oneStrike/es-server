@@ -12,107 +12,24 @@ import type {
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from './task.type'
-import { DrizzleService } from '@db/core'
-import { MessageOutboxService } from '@libs/message/outbox'
 import { Injectable } from '@nestjs/common'
-import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
 import { TaskDefinitionService } from './task-definition.service'
 import { TaskExecutionService } from './task-execution.service'
 import { TaskRuntimeService } from './task-runtime.service'
-import { TaskServiceSupport } from './task.service.support'
-
-type TaskDefinitionFacade = Pick<
-  TaskDefinitionService,
-  'createTask' | 'updateTask' | 'updateTaskStatus' | 'deleteTask' | 'getTaskPage' | 'getTaskDetail'
->
-
-type TaskExecutionFacade = Pick<
-  TaskExecutionService,
-  | 'getAvailableTasks'
-  | 'getMyTasks'
-  | 'getUserTaskSummary'
-  | 'claimTask'
-  | 'reportProgress'
-  | 'completeTask'
-  | 'consumeEventProgress'
-  | 'getTaskAssignmentPage'
-  | 'getTaskAssignmentReconciliationPage'
-  | 'retryTaskAssignmentReward'
-  | 'retryCompletedAssignmentRewardsBatch'
->
-
-type TaskRuntimeFacade = Pick<
-  TaskRuntimeService,
-  'expireAssignments' | 'retryCompletedAssignmentRewards' | 'notifyExpiringSoonAssignments'
->
 
 /**
  * 任务域正式门面服务。
  *
- * 统一向 controller、用户中心和外部桥接服务暴露 task 域入口，内部按职责委托
- * 给分域 service；手动 `new TaskService(...)` 的单测场景下，会回退到当前实例
- * 绑定的本地实现，避免测试代码必须引入 Nest DI 才能覆盖 task 主链路。
+ * 统一向 controller、用户中心和外部桥接服务暴露 task 域入口，内部只负责
+ * 收口依赖并委托给分域 service，不承载执行细节和底层共享 helper。
  */
 @Injectable()
-export class TaskService extends TaskServiceSupport {
-  private readonly taskDefinitionFacade: TaskDefinitionFacade
-  protected readonly taskExecutionService: TaskExecutionFacade
-  private readonly taskRuntimeFacade: TaskRuntimeFacade
-
+export class TaskService {
   constructor(
-    drizzle: DrizzleService,
-    userGrowthRewardService: UserGrowthRewardService,
-    messageOutboxService: MessageOutboxService,
-    taskDefinitionService?: TaskDefinitionService,
-    taskExecutionService?: TaskExecutionService,
-    taskRuntimeService?: TaskRuntimeService,
-  ) {
-    super(drizzle, userGrowthRewardService, messageOutboxService)
-
-    this.taskDefinitionFacade = taskDefinitionService ?? {
-      createTask: TaskDefinitionService.prototype.createTask.bind(this),
-      updateTask: TaskDefinitionService.prototype.updateTask.bind(this),
-      updateTaskStatus: TaskDefinitionService.prototype.updateTaskStatus.bind(
-        this,
-      ),
-      deleteTask: TaskDefinitionService.prototype.deleteTask.bind(this),
-      getTaskPage: TaskDefinitionService.prototype.getTaskPage.bind(this),
-      getTaskDetail: TaskDefinitionService.prototype.getTaskDetail.bind(this),
-    }
-    this.taskExecutionService = taskExecutionService ?? {
-      getAvailableTasks:
-        TaskExecutionService.prototype.getAvailableTasks.bind(this),
-      getMyTasks: TaskExecutionService.prototype.getMyTasks.bind(this),
-      getUserTaskSummary:
-        TaskExecutionService.prototype.getUserTaskSummary.bind(this),
-      claimTask: TaskExecutionService.prototype.claimTask.bind(this),
-      reportProgress: TaskExecutionService.prototype.reportProgress.bind(this),
-      completeTask: TaskExecutionService.prototype.completeTask.bind(this),
-      consumeEventProgress:
-        TaskExecutionService.prototype.consumeEventProgress.bind(this),
-      getTaskAssignmentPage:
-        TaskExecutionService.prototype.getTaskAssignmentPage.bind(this),
-      getTaskAssignmentReconciliationPage:
-        TaskExecutionService.prototype.getTaskAssignmentReconciliationPage.bind(
-          this,
-        ),
-      retryTaskAssignmentReward:
-        TaskExecutionService.prototype.retryTaskAssignmentReward.bind(this),
-      retryCompletedAssignmentRewardsBatch:
-        TaskExecutionService.prototype.retryCompletedAssignmentRewardsBatch.bind(
-          this,
-        ),
-    }
-    this.taskRuntimeFacade = taskRuntimeService ?? {
-      expireAssignments: TaskRuntimeService.prototype.expireAssignments.bind(
-        this,
-      ),
-      retryCompletedAssignmentRewards:
-        TaskRuntimeService.prototype.retryCompletedAssignmentRewards.bind(this),
-      notifyExpiringSoonAssignments:
-        TaskRuntimeService.prototype.notifyExpiringSoonAssignments.bind(this),
-    }
-  }
+    private readonly taskDefinitionFacade: TaskDefinitionService,
+    protected readonly taskExecutionService: TaskExecutionService,
+    private readonly taskRuntimeFacade: TaskRuntimeService,
+  ) {}
 
   /**
    * 分页查询任务列表（管理端）。

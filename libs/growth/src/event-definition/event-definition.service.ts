@@ -89,7 +89,7 @@ export class EventDefinitionService {
     return true
   }
 
-  private cloneDefinition(definition: EventDefinition): EventDefinition {
+  private cloneDefinition(definition: EventDefinition) {
     return {
       ...definition,
       consumers: [...definition.consumers],

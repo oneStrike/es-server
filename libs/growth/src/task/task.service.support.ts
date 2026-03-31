@@ -2,7 +2,6 @@ import type { Db, DrizzleService } from '@db/core'
 import type {
   TaskAssignmentInsert,
   TaskAssignmentSelect,
-  TaskProgressLogInsert,
   TaskSelect,
 } from '@db/schema'
 import type { MessageOutboxService } from '@libs/message/outbox'
@@ -152,134 +151,105 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 按条件分页查询任务分配，并按需携带任务信息。
+   * 按条件分页查询任务分配，并固定携带任务摘要字段。
    *
-   * 该方法统一管理排序解析与总数统计，确保管理端与应用端列表查询语义一致。
+   * 该方法统一管理排序解析、任务联表投影与总数统计，确保管理端与应用端列表
+   * 查询使用同一份 assignment + live task 摘要合同。
    */
-  protected async queryTaskAssignmentPage(params: QueryTaskAssignmentPageParams) {
-    const { whereClause, pageIndex, pageSize, orderBy, includeTaskDetail } =
+  protected async queryTaskAssignmentPage(
+    params: QueryTaskAssignmentPageParams,
+  ) {
+    const { assignmentWhereClause, taskWhereClause, pageIndex, pageSize, orderBy } =
       params
     const page = this.drizzle.buildPage({ pageIndex, pageSize })
     const order = this.drizzle.buildOrderBy(orderBy, {
       table: this.taskAssignmentTable,
       fallbackOrderBy: { id: 'desc' },
     })
-    const orderBys = order.orderBySql
+    const whereClause =
+      assignmentWhereClause && taskWhereClause
+        ? and(assignmentWhereClause, taskWhereClause)
+        : (assignmentWhereClause ?? taskWhereClause)
+    const [primaryOrderBy, ...secondaryOrderBys] = order.orderBySql as [
+      SQL,
+      ...SQL[],
+    ]
 
-    const list = includeTaskDetail
-      ? await (orderBys.length > 0
-          ? this.db
-              .select({
-                assignment: this.taskAssignmentTable,
-                task: {
-                  id: this.taskTable.id,
-                  title: this.taskTable.title,
-                  type: this.taskTable.type,
-                  objectiveType: this.taskTable.objectiveType,
-                  eventCode: this.taskTable.eventCode,
-                  objectiveConfig: this.taskTable.objectiveConfig,
-                  rewardConfig: this.taskTable.rewardConfig,
-                  targetCount: this.taskTable.targetCount,
-                  completeMode: this.taskTable.completeMode,
-                  claimMode: this.taskTable.claimMode,
-                },
-              })
-              .from(this.taskAssignmentTable)
-              .leftJoin(
-                this.taskTable,
-                eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-              )
-              .where(whereClause)
-              .limit(page.limit)
-              .offset(page.offset)
-              .orderBy(...orderBys)
-          : this.db
-              .select({
-                assignment: this.taskAssignmentTable,
-                task: {
-                  id: this.taskTable.id,
-                  title: this.taskTable.title,
-                  type: this.taskTable.type,
-                  objectiveType: this.taskTable.objectiveType,
-                  eventCode: this.taskTable.eventCode,
-                  objectiveConfig: this.taskTable.objectiveConfig,
-                  rewardConfig: this.taskTable.rewardConfig,
-                  targetCount: this.taskTable.targetCount,
-                  completeMode: this.taskTable.completeMode,
-                  claimMode: this.taskTable.claimMode,
-                },
-              })
-              .from(this.taskAssignmentTable)
-              .leftJoin(
-                this.taskTable,
-                eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-              )
-              .where(whereClause)
-              .limit(page.limit)
-              .offset(page.offset))
-      : await (orderBys.length > 0
-          ? this.db
-              .select({
-                assignment: this.taskAssignmentTable,
-                task: {
-                  id: this.taskTable.id,
-                  title: this.taskTable.title,
-                  type: this.taskTable.type,
-                  objectiveType: this.taskTable.objectiveType,
-                  eventCode: this.taskTable.eventCode,
-                  objectiveConfig: this.taskTable.objectiveConfig,
-                  rewardConfig: this.taskTable.rewardConfig,
-                },
-              })
-              .from(this.taskAssignmentTable)
-              .leftJoin(
-                this.taskTable,
-                eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-              )
-              .where(whereClause)
-              .limit(page.limit)
-              .offset(page.offset)
-              .orderBy(...orderBys)
-          : this.db
-              .select({
-                assignment: this.taskAssignmentTable,
-                task: {
-                  id: this.taskTable.id,
-                  title: this.taskTable.title,
-                  type: this.taskTable.type,
-                  objectiveType: this.taskTable.objectiveType,
-                  eventCode: this.taskTable.eventCode,
-                  objectiveConfig: this.taskTable.objectiveConfig,
-                  rewardConfig: this.taskTable.rewardConfig,
-                },
-              })
-              .from(this.taskAssignmentTable)
-              .leftJoin(
-                this.taskTable,
-                eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-              )
-              .where(whereClause)
-              .limit(page.limit)
-              .offset(page.offset))
-
-    const [countResult] = await this.db
-      .select({ count: sql<number>`count(*)` })
-      .from(this.taskAssignmentTable)
-      .leftJoin(
-        this.taskTable,
-        eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-      )
-      .where(whereClause)
+    const [list, total] = await Promise.all([
+      this.db
+        .select({
+          assignment: this.taskAssignmentTable,
+          task: {
+            id: this.taskTable.id,
+            code: this.taskTable.code,
+            title: this.taskTable.title,
+            description: this.taskTable.description,
+            cover: this.taskTable.cover,
+            type: this.taskTable.type,
+            objectiveType: this.taskTable.objectiveType,
+            eventCode: this.taskTable.eventCode,
+            objectiveConfig: this.taskTable.objectiveConfig,
+            rewardConfig: this.taskTable.rewardConfig,
+            targetCount: this.taskTable.targetCount,
+            completeMode: this.taskTable.completeMode,
+            claimMode: this.taskTable.claimMode,
+          },
+        })
+        .from(this.taskAssignmentTable)
+        .leftJoin(
+          this.taskTable,
+          eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+        )
+        .where(whereClause)
+        .limit(page.limit)
+        .offset(page.offset)
+        .orderBy(primaryOrderBy, ...secondaryOrderBys),
+      this.countTaskAssignmentPage(
+        assignmentWhereClause,
+        taskWhereClause,
+        whereClause,
+      ),
+    ])
 
     return {
       list: list.map((item) => ({
         ...item.assignment,
         task: item.task ? this.normalizeTaskRelation(item.task) : item.task,
       })),
-      total: Number(countResult?.count ?? 0),
+      total,
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
     }
+  }
+
+  /**
+   * 统计任务分配分页总数。
+   *
+   * 仅在 task 侧存在过滤条件时才联表 task，避免普通 assignment 分页在 count
+   * 阶段承担额外 join 成本。
+   */
+  protected async countTaskAssignmentPage(
+    assignmentWhereClause: SQL | undefined,
+    taskWhereClause: SQL | undefined,
+    whereClause: SQL | undefined,
+  ) {
+    if (taskWhereClause) {
+      const [countResult] = await this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.taskAssignmentTable)
+        .leftJoin(
+          this.taskTable,
+          eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+        )
+        .where(whereClause)
+      return countResult?.count ?? 0
+    }
+
+    const [countResult] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(this.taskAssignmentTable)
+      .where(assignmentWhereClause)
+    return countResult?.count ?? 0
   }
 
   // ==================== 共享规则与底层编排 ====================
@@ -344,7 +314,7 @@ export abstract class TaskServiceSupport {
    */
   protected parseTaskRewardConfig(
     value?: string | TaskRewardConfig | Record<string, unknown> | null,
-  ): TaskRewardConfig | null | undefined {
+  ) {
     if (value === undefined || value === '') {
       return undefined
     }
@@ -393,7 +363,7 @@ export abstract class TaskServiceSupport {
    */
   protected parseTaskRepeatRule(
     value?: string | TaskRepeatRuleConfig | Record<string, unknown> | null,
-  ): TaskRepeatRuleConfig | null | undefined {
+  ) {
     if (value === undefined || value === '') {
       return undefined
     }
@@ -442,7 +412,7 @@ export abstract class TaskServiceSupport {
    */
   protected parseTaskObjectiveConfig(
     value?: string | TaskObjectiveConfig | Record<string, unknown> | null,
-  ): TaskObjectiveConfig | null | undefined {
+  ) {
     if (value === undefined || value === '') {
       return undefined
     }
@@ -809,7 +779,7 @@ export abstract class TaskServiceSupport {
    * @param date 日期对象
    * @returns 格式化的日期字符串
    */
-  protected formatDate(date: Dayjs): string {
+  protected formatDate(date: Dayjs) {
     return date.format('YYYY-MM-DD')
   }
 
@@ -819,7 +789,7 @@ export abstract class TaskServiceSupport {
    * @param date 日期对象
    * @returns 该周周一的日期对象
    */
-  protected getWeekStart(date: Dayjs): Dayjs {
+  protected getWeekStart(date: Dayjs) {
     return date.startOf('day').subtract(date.isoWeekday() - 1, 'day')
   }
 
@@ -1069,7 +1039,7 @@ export abstract class TaskServiceSupport {
    */
   protected buildTaskProgressLogRecord(
     params: TaskProgressLogRecordInput,
-  ): TaskProgressLogInsert {
+  ) {
     return {
       assignmentId: params.assignmentId,
       userId: params.userId,
@@ -1522,21 +1492,18 @@ export abstract class TaskServiceSupport {
     assignment?: TaskRewardTaskRecordBuildAssignmentInput,
   ) {
     const snapshot = this.asRecord(assignment?.taskSnapshot)
+    const snapshotCode =
+      typeof snapshot?.code === 'string' ? snapshot.code : undefined
+    const snapshotTitle =
+      typeof snapshot?.title === 'string' ? snapshot.title : undefined
+    const snapshotType =
+      typeof snapshot?.type === 'number' ? snapshot.type : undefined
 
     const taskRecord: TaskRewardTaskRecord = {
       id: taskId,
-      code:
-        typeof snapshot?.code === 'string'
-          ? snapshot.code
-          : (currentTask?.code ?? undefined),
-      title:
-        typeof snapshot?.title === 'string'
-          ? snapshot.title
-          : (currentTask?.title ?? undefined),
-      type:
-        typeof snapshot?.type === 'number'
-          ? snapshot.type
-          : (currentTask?.type ?? undefined),
+      code: snapshotCode ?? currentTask?.code,
+      title: snapshotTitle ?? currentTask?.title,
+      type: snapshotType ?? currentTask?.type,
       rewardConfig: snapshot?.rewardConfig ?? currentTask?.rewardConfig,
     }
 
@@ -1617,19 +1584,7 @@ export abstract class TaskServiceSupport {
       const updateResult = await this.drizzle.withErrorHandling(() =>
         this.db
           .update(this.taskAssignmentTable)
-          .set({
-            rewardStatus: rewardResult.success
-              ? TaskAssignmentRewardStatusEnum.SUCCESS
-              : TaskAssignmentRewardStatusEnum.FAILED,
-            rewardResultType: rewardResult.success
-              ? rewardResult.resultType
-              : TaskAssignmentRewardResultTypeEnum.FAILED,
-            rewardSettledAt: rewardResult.settledAt,
-            rewardLedgerIds: rewardResult.ledgerRecordIds,
-            lastRewardError: rewardResult.success
-              ? null
-              : (rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试'),
-          })
+          .set(this.buildTaskAssignmentRewardStateUpdate(rewardResult))
           .where(eq(this.taskAssignmentTable.id, assignmentId)),
       )
 
@@ -1640,6 +1595,38 @@ export abstract class TaskServiceSupport {
           error instanceof Error ? error.message : String(error)
         }`,
       )
+    }
+  }
+
+  /**
+   * 构建奖励结算回写 assignment 的字段集合。
+   */
+  protected buildTaskAssignmentRewardStateUpdate(
+    rewardResult: TaskRewardSettlementResult,
+  ): Pick<
+    TaskAssignmentSelect,
+    | 'rewardStatus'
+    | 'rewardResultType'
+    | 'rewardSettledAt'
+    | 'rewardLedgerIds'
+    | 'lastRewardError'
+  > {
+    if (rewardResult.success) {
+      return {
+        rewardStatus: TaskAssignmentRewardStatusEnum.SUCCESS,
+        rewardResultType: rewardResult.resultType,
+        rewardSettledAt: rewardResult.settledAt,
+        rewardLedgerIds: rewardResult.ledgerRecordIds,
+        lastRewardError: null,
+      }
+    }
+
+    return {
+      rewardStatus: TaskAssignmentRewardStatusEnum.FAILED,
+      rewardResultType: TaskAssignmentRewardResultTypeEnum.FAILED,
+      rewardSettledAt: rewardResult.settledAt,
+      rewardLedgerIds: rewardResult.ledgerRecordIds,
+      lastRewardError: rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试',
     }
   }
 
@@ -2445,7 +2432,7 @@ export abstract class TaskServiceSupport {
   /**
    * 把弱结构输入收敛成对象记录。
    */
-  protected asRecord(input: unknown): Record<string, unknown> | null {
+  protected asRecord(input: unknown) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       return null
     }

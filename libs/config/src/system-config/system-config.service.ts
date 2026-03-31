@@ -363,11 +363,11 @@ export class SystemConfigService implements OnModuleInit {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
   }
 
-  private cloneConfig<T>(config: T): T {
+  private cloneConfig<T>(config: T) {
     return JSON.parse(JSON.stringify(config)) as T
   }
 
-  private removeNullValues<T>(value: T): T {
+  private removeNullValues<T>(value: T) {
     if (Array.isArray(value)) {
       return value.map(item => this.removeNullValues(item)) as T
     }

@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   getTaskTypeFilterValues,
   normalizeTaskType,
@@ -47,6 +48,50 @@ jest.mock('@libs/message/notification', () => ({
     TASK_REMINDER: 7,
   },
 }))
+
+async function createTaskDefinitionService(
+  drizzle: unknown,
+  userGrowthRewardService: unknown = {},
+  messageOutboxService: unknown = {},
+) {
+  const { TaskDefinitionService } = await import('../task-definition.service')
+
+  return new TaskDefinitionService(
+    drizzle as any,
+    userGrowthRewardService as any,
+    messageOutboxService as any,
+  )
+}
+
+async function createTaskExecutionService(
+  drizzle: unknown,
+  userGrowthRewardService: unknown = {},
+  messageOutboxService: unknown = {},
+) {
+  const { TaskExecutionService } = await import('../task-execution.service')
+
+  return new TaskExecutionService(
+    drizzle as any,
+    userGrowthRewardService as any,
+    messageOutboxService as any,
+  )
+}
+
+async function createTaskRuntimeService(
+  drizzle: unknown,
+  taskExecutionService: unknown,
+  userGrowthRewardService: unknown = {},
+  messageOutboxService: unknown = {},
+) {
+  const { TaskRuntimeService } = await import('../task-runtime.service')
+
+  return new TaskRuntimeService(
+    drizzle as any,
+    userGrowthRewardService as any,
+    messageOutboxService as any,
+    taskExecutionService as any,
+  )
+}
 
 function createUpdateTransactionHarness(rowCount: number) {
   const where = jest.fn().mockResolvedValue({ rowCount })
@@ -163,6 +208,52 @@ function createRetryRewardQueryHarness<T>(rows: T[]) {
   }
 }
 
+function createTaskAssignmentPageQueryHarness<TListItem>(
+  listRows: TListItem[],
+  countRows: Array<{ count: number }>,
+) {
+  let listSelection: Record<string, unknown> | undefined
+  let countSelection: Record<string, unknown> | undefined
+
+  const listOrderBy = jest.fn().mockResolvedValue(listRows)
+  const listOffset = jest.fn(() => ({ orderBy: listOrderBy }))
+  const listLimit = jest.fn(() => ({ offset: listOffset }))
+  const listWhere = jest.fn(() => ({ limit: listLimit }))
+  const listLeftJoin = jest.fn(() => ({ where: listWhere }))
+  const listFrom = jest.fn(() => ({ leftJoin: listLeftJoin }))
+
+  const countWhere = jest.fn().mockResolvedValue(countRows)
+  const countLeftJoin = jest.fn(() => ({ where: countWhere }))
+  const countFrom = jest.fn(() => ({
+    leftJoin: countLeftJoin,
+    where: countWhere,
+  }))
+
+  const select = jest
+    .fn()
+    .mockImplementationOnce((selection: Record<string, unknown>) => {
+      listSelection = selection
+      return { from: listFrom }
+    })
+    .mockImplementationOnce((selection: Record<string, unknown>) => {
+      countSelection = selection
+      return { from: countFrom }
+    })
+
+  return {
+    countFrom,
+    countLeftJoin,
+    countWhere,
+    getCountSelection: () => countSelection,
+    getListSelection: () => listSelection,
+    listFrom,
+    listLeftJoin,
+    listOrderBy,
+    listWhere,
+    select,
+  }
+}
+
 function createDeleteTransactionHarness(
   schema: {
     task: unknown
@@ -222,10 +313,8 @@ describe('task service rewardConfig contract', () => {
   }
 
   it('rejects unsupported rewardConfig keys', async () => {
-    const { TaskService } = await import('../task.service')
-
     const insert = jest.fn()
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -254,11 +343,9 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('rejects non-positive integer reward values', async () => {
-    const { TaskService } = await import('../task.service')
-
     const values = jest.fn()
     const insert = jest.fn(() => ({ values }))
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -285,11 +372,9 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('normalizes valid rewardConfig before insert', async () => {
-    const { TaskService } = await import('../task.service')
-
     const values = jest.fn().mockResolvedValue([{ id: 1 }])
     const insert = jest.fn(() => ({ values }))
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -326,11 +411,9 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('rejects invalid repeatRule type before insert', async () => {
-    const { TaskService } = await import('../task.service')
-
     const values = jest.fn()
     const insert = jest.fn(() => ({ values }))
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -356,11 +439,9 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('rejects EVENT_COUNT tasks without eventCode', async () => {
-    const { TaskService } = await import('../task.service')
-
     const values = jest.fn()
     const insert = jest.fn(() => ({ values }))
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -384,11 +465,9 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('rejects eventCode on MANUAL tasks', async () => {
-    const { TaskService } = await import('../task.service')
-
     const values = jest.fn()
     const insert = jest.fn(() => ({ values }))
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -414,11 +493,9 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('rejects non-positive targetCount before insert', async () => {
-    const { TaskService } = await import('../task.service')
-
     const values = jest.fn()
     const insert = jest.fn(() => ({ values }))
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -442,11 +519,9 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('normalizes objective fields before insert', async () => {
-    const { TaskService } = await import('../task.service')
-
     const values = jest.fn().mockResolvedValue([{ id: 1 }])
     const insert = jest.fn(() => ({ values }))
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: { insert },
         schema: { task: {} },
@@ -480,7 +555,6 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('writes reward settlement state back to assignment after completion reward', async () => {
-    const { TaskService } = await import('../task.service')
     const { MessageNotificationTypeEnum } = await import('@libs/message/notification')
 
     const settledAt = new Date('2026-03-28T12:00:00.000Z')
@@ -511,7 +585,7 @@ describe('task service rewardConfig contract', () => {
       },
     })
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: { update },
         schema: { taskAssignment: { id: 'id' } },
@@ -575,11 +649,59 @@ describe('task service rewardConfig contract', () => {
     )
   })
 
-  it('only enqueues available reminders for recent manual tasks', async () => {
-    const { TaskService } = await import('../task.service')
+  it('writes failed reward settlement state with default error message', async () => {
+    const settledAt = new Date('2026-03-28T12:30:00.000Z')
+    const where = jest.fn().mockResolvedValue({ rowCount: 1 })
+    const set = jest.fn(() => ({ where }))
+    const update = jest.fn(() => ({ set }))
 
+    const service = await createTaskExecutionService(
+      {
+        db: { update },
+        schema: { taskAssignment: { id: 'id' } },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+        assertAffectedRows: jest.fn(),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await (service as any).syncTaskAssignmentRewardState(18, {
+      success: false,
+      resultType: TaskAssignmentRewardResultTypeEnum.FAILED,
+      source: 'task_bonus',
+      bizKey: 'task:reward:18',
+      dedupeResult: 'failed',
+      settledAt,
+      ledgerRecordIds: [],
+      pointsReward: {
+        assetType: 1,
+        configuredAmount: 10,
+        success: false,
+        duplicated: false,
+        skipped: false,
+      },
+      experienceReward: {
+        assetType: 2,
+        configuredAmount: 0,
+        success: false,
+        duplicated: false,
+        skipped: true,
+      },
+    } as any)
+
+    expect(set).toHaveBeenCalledWith({
+      rewardStatus: TaskAssignmentRewardStatusEnum.FAILED,
+      rewardResultType: TaskAssignmentRewardResultTypeEnum.FAILED,
+      rewardSettledAt: settledAt,
+      rewardLedgerIds: [],
+      lastRewardError: '任务奖励发放失败，请稍后重试',
+    })
+  })
+
+  it('only enqueues available reminders for recent manual tasks', async () => {
     const enqueueNotificationEvents = jest.fn().mockResolvedValue(undefined)
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {},
@@ -635,7 +757,6 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('retries completed rewards from assignment snapshot instead of current task config', async () => {
-    const { TaskService } = await import('../task.service')
     const queryHarness = createRetryRewardQueryHarness([
       {
         assignmentId: 18,
@@ -651,7 +772,7 @@ describe('task service rewardConfig contract', () => {
       },
     ])
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: { select: queryHarness.select },
         schema: {
@@ -678,7 +799,12 @@ describe('task service rewardConfig contract', () => {
       .spyOn(service as any, 'emitTaskCompleteEvent')
       .mockResolvedValue(undefined)
 
-    await expect(service.retryCompletedAssignmentRewards()).resolves.toBeUndefined()
+    await expect(
+      service.retryCompletedAssignmentRewardsBatch(),
+    ).resolves.toEqual({
+      scannedCount: 1,
+      triggeredCount: 1,
+    })
 
     expect(emitTaskCompleteEvent).toHaveBeenCalledWith(
       9,
@@ -691,6 +817,41 @@ describe('task service rewardConfig contract', () => {
         id: 18,
       }),
     )
+  })
+
+  it('builds reward task record with snapshot-first fallback', async () => {
+    const service = await createTaskExecutionService(
+      {
+        db: {},
+        schema: {},
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    const result = (service as any).buildTaskRewardTaskRecord(
+      7,
+      {
+        code: 'daily_read_live',
+        title: '每日阅读-live',
+        type: TaskTypeEnum.DAILY,
+        rewardConfig: { points: 1 },
+      },
+      {
+        taskSnapshot: {
+          title: '每日阅读-snapshot',
+          rewardConfig: { points: 5 },
+        },
+      },
+    )
+
+    expect(result).toEqual({
+      id: 7,
+      code: 'daily_read_live',
+      title: '每日阅读-snapshot',
+      type: TaskTypeEnum.DAILY,
+      rewardConfig: { points: 5 },
+    })
   })
 })
 
@@ -710,8 +871,7 @@ describe('task type compatibility', () => {
 
 describe('task snapshot contract', () => {
   it('freezes execution-critical fields in assignment snapshot', async () => {
-    const { TaskService } = await import('../task.service')
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -770,11 +930,10 @@ describe('task service main flows', () => {
   })
 
   it('keeps manual tasks in progress when reportProgress reaches the target', async () => {
-    const { TaskService } = await import('../task.service')
     const txHarness = createUpdateTransactionHarness(1)
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -837,11 +996,10 @@ describe('task service main flows', () => {
   })
 
   it('auto-completes AUTO tasks on the first reportProgress that reaches the target', async () => {
-    const { TaskService } = await import('../task.service')
     const txHarness = createUpdateTransactionHarness(1)
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -898,11 +1056,10 @@ describe('task service main flows', () => {
   })
 
   it('completes manual tasks only after explicit completeTask', async () => {
-    const { TaskService } = await import('../task.service')
     const txHarness = createUpdateTransactionHarness(1)
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -958,11 +1115,10 @@ describe('task service main flows', () => {
   })
 
   it('does not write progress logs when reportProgress loses the optimistic lock', async () => {
-    const { TaskService } = await import('../task.service')
     const txHarness = createUpdateTransactionHarness(0)
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1002,10 +1158,9 @@ describe('task service main flows', () => {
   })
 
   it('does not re-complete already completed assignments on repeated reportProgress', async () => {
-    const { TaskService } = await import('../task.service')
     const withTransaction = jest.fn()
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1053,11 +1208,10 @@ describe('task service main flows', () => {
   })
 
   it('does not write completion logs when completeTask loses the optimistic lock', async () => {
-    const { TaskService } = await import('../task.service')
     const txHarness = createUpdateTransactionHarness(0)
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1095,7 +1249,6 @@ describe('task service main flows', () => {
   })
 
   it('advances EVENT_COUNT tasks from business events and auto-completes at target', async () => {
-    const { TaskService } = await import('../task.service')
     const { GrowthRuleTypeEnum } = await import('../../growth-rule.constant')
     const { EventEnvelopeGovernanceStatusEnum } = await import(
       '../../event-definition/event-envelope.type'
@@ -1103,7 +1256,7 @@ describe('task service main flows', () => {
     const txHarness = createEventProgressTransactionHarness()
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1193,7 +1346,6 @@ describe('task service main flows', () => {
   })
 
   it('does not re-apply duplicate event bizKeys for the same assignment', async () => {
-    const { TaskService } = await import('../task.service')
     const { GrowthRuleTypeEnum } = await import('../../growth-rule.constant')
     const { EventEnvelopeGovernanceStatusEnum } = await import(
       '../../event-definition/event-envelope.type'
@@ -1201,7 +1353,7 @@ describe('task service main flows', () => {
     const txHarness = createEventProgressTransactionHarness({ duplicate: true })
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1266,14 +1418,13 @@ describe('task service main flows', () => {
   })
 
   it('does not backfill pre-claim events for MANUAL EVENT_COUNT tasks', async () => {
-    const { TaskService } = await import('../task.service')
     const { GrowthRuleTypeEnum } = await import('../../growth-rule.constant')
     const { EventEnvelopeGovernanceStatusEnum } = await import(
       '../../event-definition/event-envelope.type'
     )
     const withTransaction = jest.fn()
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1334,9 +1485,7 @@ describe('task service main flows', () => {
   })
 
   it('rejects task actions after publishEndAt even before cron expires assignments', async () => {
-    const { TaskService } = await import('../task.service')
-
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1365,9 +1514,7 @@ describe('task service main flows', () => {
   })
 
   it('rejects task actions before publishStartAt', async () => {
-    const { TaskService } = await import('../task.service')
-
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1396,10 +1543,8 @@ describe('task service main flows', () => {
   })
 
   it('rejects partial publish-window updates that would invert start and end', async () => {
-    const { TaskService } = await import('../task.service')
-
     const update = jest.fn()
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: {
           query: {
@@ -1436,11 +1581,10 @@ describe('task service main flows', () => {
   })
 
   it('blocks changing completeMode when active assignments already exist', async () => {
-    const { TaskService } = await import('../task.service')
     const selectHarness = createSimpleSelectHarness([{ id: 101 }])
     const update = jest.fn()
 
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: {
           query: {
@@ -1486,11 +1630,10 @@ describe('task service main flows', () => {
   })
 
   it('blocks changing publish window when active assignments already exist', async () => {
-    const { TaskService } = await import('../task.service')
     const selectHarness = createSimpleSelectHarness([{ id: 101 }])
     const update = jest.fn()
 
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: {
           query: {
@@ -1536,7 +1679,6 @@ describe('task service main flows', () => {
   })
 
   it('returns only manual tasks that are still claimable in current cycle', async () => {
-    const { TaskService } = await import('../task.service')
     const taskSelectHarness = createOrderedSelectHarness([
       {
         id: 101,
@@ -1606,7 +1748,7 @@ describe('task service main flows', () => {
       .mockImplementationOnce(() => ({ from: taskSelectHarness.from }))
       .mockImplementationOnce(() => ({ from: assignmentFrom }))
 
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: { select },
         schema: {
@@ -1676,8 +1818,7 @@ describe('task service main flows', () => {
   ])(
     'builds cycle-based expiredAt for %s tasks',
     async (_label, repeatRule, expectedExpiredAt, nowValue) => {
-      const { TaskService } = await import('../task.service')
-      const service = new TaskService(
+      const service = await createTaskExecutionService(
         {
           db: {},
           schema: {},
@@ -1699,14 +1840,13 @@ describe('task service main flows', () => {
   )
 
   it('writes expire audit logs when cron closes overdue assignments', async () => {
-    const { TaskService } = await import('../task.service')
     const txHarness = createExpireTransactionHarness([
       { assignmentId: 21, userId: 9, progress: 2 },
       { assignmentId: 22, userId: 9, progress: 0 },
     ])
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskRuntimeService(
       {
         db: {},
         schema: {
@@ -1723,6 +1863,7 @@ describe('task service main flows', () => {
         },
         withTransaction,
       } as any,
+      {} as any,
       {} as any,
       {} as any,
     )
@@ -1760,7 +1901,6 @@ describe('task service main flows', () => {
   })
 
   it('expires active assignments when deleting a task', async () => {
-    const { TaskService } = await import('../task.service')
     const schema = {
       task: {
         id: 'taskId',
@@ -1782,7 +1922,7 @@ describe('task service main flows', () => {
     ])
     const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
 
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: {},
         schema,
@@ -1821,9 +1961,7 @@ describe('task service main flows', () => {
   })
 
   it('expires overdue assignments before rebuilding auto assignments in my tasks', async () => {
-    const { TaskService } = await import('../task.service')
-
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1872,10 +2010,186 @@ describe('task service main flows', () => {
     )
   })
 
-  it('maps my tasks with snapshot fallback and reward pending visible status', async () => {
-    const { TaskService } = await import('../task.service')
+  it('queries assignment pages with a stable task summary and avoids task join in plain count queries', async () => {
+    const queryHarness = createTaskAssignmentPageQueryHarness(
+      [
+        {
+          assignment: {
+            id: 88,
+            taskId: 7,
+          },
+          task: {
+            id: 7,
+            code: 'daily_read',
+            title: '每日阅读',
+            description: '阅读任意章节',
+            cover: 'https://example.com/task.png',
+            type: TaskTypeEnum.DAILY,
+            objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+            eventCode: 300,
+            objectiveConfig: { sectionId: 10 },
+            rewardConfig: { points: 3 },
+            targetCount: 1,
+            completeMode: TaskCompleteModeEnum.AUTO,
+            claimMode: TaskClaimModeEnum.MANUAL,
+          },
+        },
+      ],
+      [{ count: 3 }],
+    )
+    const buildOrderBy = jest.fn().mockReturnValue({
+      orderBy: { id: 'desc' },
+      orderBySql: [sql`task_assignment.id desc`],
+    })
+    const buildPage = jest.fn().mockReturnValue({
+      pageIndex: 2,
+      pageSize: 10,
+      limit: 10,
+      offset: 10,
+    })
+    const service = await createTaskExecutionService(
+      {
+        db: {
+          select: queryHarness.select,
+        },
+        schema: {
+          taskAssignment: {
+            id: 'assignment.id',
+            taskId: 'assignment.taskId',
+          },
+          task: {
+            id: 'task.id',
+            code: 'task.code',
+            title: 'task.title',
+            description: 'task.description',
+            cover: 'task.cover',
+            type: 'task.type',
+            objectiveType: 'task.objectiveType',
+            eventCode: 'task.eventCode',
+            objectiveConfig: 'task.objectiveConfig',
+            rewardConfig: 'task.rewardConfig',
+            targetCount: 'task.targetCount',
+            completeMode: 'task.completeMode',
+            claimMode: 'task.claimMode',
+          },
+        },
+        buildOrderBy,
+        buildPage,
+      } as any,
+      {} as any,
+      {} as any,
+    )
 
-    const service = new TaskService(
+    const result = await (service as any).queryTaskAssignmentPage({
+      assignmentWhereClause: sql`task_assignment.user_id = 9`,
+      pageIndex: 2,
+      pageSize: 10,
+    })
+
+    expect(buildPage).toHaveBeenCalledWith({
+      pageIndex: 2,
+      pageSize: 10,
+    })
+    expect(buildOrderBy).toHaveBeenCalled()
+    expect(queryHarness.countLeftJoin).not.toHaveBeenCalled()
+    expect(queryHarness.listOrderBy).toHaveBeenCalledTimes(1)
+    expect(
+      Object.keys(
+        (queryHarness.getListSelection() as { task: Record<string, unknown> }).task,
+      ),
+    ).toEqual([
+      'id',
+      'code',
+      'title',
+      'description',
+      'cover',
+      'type',
+      'objectiveType',
+      'eventCode',
+      'objectiveConfig',
+      'rewardConfig',
+      'targetCount',
+      'completeMode',
+      'claimMode',
+    ])
+    expect(result).toMatchObject({
+      total: 3,
+      pageIndex: 2,
+      pageSize: 10,
+      list: [
+        {
+          id: 88,
+          taskId: 7,
+          task: {
+            id: 7,
+            code: 'daily_read',
+            title: '每日阅读',
+            description: '阅读任意章节',
+            cover: 'https://example.com/task.png',
+            type: TaskTypeEnum.DAILY,
+            objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+            targetCount: 1,
+            completeMode: TaskCompleteModeEnum.AUTO,
+            claimMode: TaskClaimModeEnum.MANUAL,
+          },
+        },
+      ],
+    })
+  })
+
+  it('joins task in count queries when task-side filters are present', async () => {
+    const queryHarness = createTaskAssignmentPageQueryHarness([], [{ count: 0 }])
+    const service = await createTaskExecutionService(
+      {
+        db: {
+          select: queryHarness.select,
+        },
+        schema: {
+          taskAssignment: {
+            id: 'assignment.id',
+            taskId: 'assignment.taskId',
+          },
+          task: {
+            id: 'task.id',
+            code: 'task.code',
+            title: 'task.title',
+            description: 'task.description',
+            cover: 'task.cover',
+            type: 'task.type',
+            objectiveType: 'task.objectiveType',
+            eventCode: 'task.eventCode',
+            objectiveConfig: 'task.objectiveConfig',
+            rewardConfig: 'task.rewardConfig',
+            targetCount: 'task.targetCount',
+            completeMode: 'task.completeMode',
+            claimMode: 'task.claimMode',
+          },
+        },
+        buildOrderBy: jest.fn().mockReturnValue({
+          orderBy: { id: 'desc' },
+          orderBySql: [sql`task_assignment.id desc`],
+        }),
+        buildPage: jest.fn().mockReturnValue({
+          pageIndex: 1,
+          pageSize: 20,
+          limit: 20,
+          offset: 0,
+        }),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await (service as any).queryTaskAssignmentPage({
+      assignmentWhereClause: sql`task_assignment.user_id = 9`,
+      taskWhereClause: sql`task.type = 3`,
+    })
+
+    expect(queryHarness.countLeftJoin).toHaveBeenCalledTimes(1)
+  })
+
+  it('maps my tasks with snapshot fallback and reward pending visible status', async () => {
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -1957,7 +2271,6 @@ describe('task service main flows', () => {
   })
 
   it('enriches admin task page rows with runtime health summary', async () => {
-    const { TaskService } = await import('../task.service')
     const findPagination = jest.fn().mockResolvedValue({
       list: [
         {
@@ -1992,7 +2305,7 @@ describe('task service main flows', () => {
       pageSize: 20,
     })
 
-    const service = new TaskService(
+    const service = await createTaskDefinitionService(
       {
         db: {},
         schema: { task: { deletedAt: 'deletedAt' } },
@@ -2035,9 +2348,7 @@ describe('task service main flows', () => {
   })
 
   it('maps admin task assignment page rows to unified visible status', async () => {
-    const { TaskService } = await import('../task.service')
-
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -2105,9 +2416,7 @@ describe('task service main flows', () => {
   })
 
   it('builds reconciliation rows with latest event and reward reminder summary', async () => {
-    const { TaskService } = await import('../task.service')
-
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {
@@ -2208,13 +2517,7 @@ describe('task service main flows', () => {
   })
 
   it('retries a single completed assignment reward through task complete event', async () => {
-    const { TaskService } = await import('../task.service')
-
-    const emitTaskCompleteEvent = jest
-      .spyOn(TaskService.prototype as any, 'emitTaskCompleteEvent')
-      .mockResolvedValue(undefined)
-
-    const service = new TaskService(
+    const service = await createTaskExecutionService(
       {
         db: {},
         schema: {},
@@ -2222,6 +2525,9 @@ describe('task service main flows', () => {
       {} as any,
       {} as any,
     )
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
     Object.defineProperty(service as any, 'db', {
       value: {
         query: {
@@ -2261,7 +2567,5 @@ describe('task service main flows', () => {
       }),
       expect.objectContaining({ id: 88 }),
     )
-
-    emitTaskCompleteEvent.mockRestore()
   })
 })

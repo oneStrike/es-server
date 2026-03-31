@@ -36,7 +36,7 @@ export class ForumModeratorApplicationService {
 
   private normalizePermissions(
     permissions?: Array<number | string | null | undefined> | null,
-  ): ForumModeratorPermissionEnum[] {
+  ) {
     const normalized = new Set<ForumModeratorPermissionEnum>()
 
     for (const permission of permissions ?? []) {
