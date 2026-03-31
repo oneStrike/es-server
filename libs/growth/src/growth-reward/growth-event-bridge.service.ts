@@ -7,8 +7,8 @@ import {
   EventDefinitionConsumerEnum,
   EventDefinitionService,
 } from '@libs/growth/event-definition'
-import { TaskService } from '@libs/growth/task'
 import { Injectable } from '@nestjs/common'
+import { TaskService } from '../task/task.service'
 import { UserGrowthRewardService } from './growth-reward.service'
 
 /**

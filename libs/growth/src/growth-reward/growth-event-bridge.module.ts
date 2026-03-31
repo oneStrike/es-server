@@ -1,6 +1,6 @@
-import { TaskModule } from '@libs/growth/task'
 import { Module } from '@nestjs/common'
 import { EventDefinitionModule } from '../event-definition/event-definition.module'
+import { TaskModule } from '../task/task.module'
 import { GrowthEventBridgeService } from './growth-event-bridge.service'
 import { UserGrowthRewardModule } from './growth-reward.module'
 

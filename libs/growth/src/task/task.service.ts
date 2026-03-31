@@ -1,8 +1,8 @@
 import type { Db } from '@db/core'
 import type { TaskAssignmentSelect, TaskSelect } from '@db/schema'
-import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward'
 import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
+import type { TaskRewardSettlementResult } from '../growth-reward/growth-reward.types'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   AutoAssignmentTaskSource,
@@ -34,7 +34,6 @@ import {
   EventDefinitionEntityTypeEnum,
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition'
-import { UserGrowthRewardService } from '@libs/growth/growth-reward'
 import {
   MessageNotificationDispatchStatusEnum,
   MessageNotificationTypeEnum,
@@ -66,6 +65,7 @@ import {
   sql,
 } from 'drizzle-orm'
 import { GROWTH_RULE_TYPE_VALUES } from '../growth-rule.constant'
+import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
 import { TaskNotificationService } from './task-notification.service'
 import {
   getTaskTypeFilterValues,
