@@ -11,6 +11,7 @@ import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerFailReasonLabel,
+  GrowthLedgerSourceEnum,
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
@@ -98,6 +99,7 @@ export class UserPointService {
         assetType: GrowthAssetTypeEnum.POINTS,
         ruleType,
         bizKey,
+        source: addPointsDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE,
         remark,
       })
 
@@ -425,6 +427,7 @@ export class UserPointService {
     userId: number
     ruleId: number | null
     ruleType?: number | null
+    source?: string | null
     targetType: number | null
     targetId: number | null
     delta: number
@@ -440,6 +443,7 @@ export class UserPointService {
       userId: record.userId,
       ruleId: record.ruleId ?? undefined,
       ruleType: record.ruleType ?? undefined,
+      source: record.source ?? undefined,
       targetType: record.targetType ?? undefined,
       targetId: record.targetId ?? undefined,
       bizKey: record.bizKey ?? '',

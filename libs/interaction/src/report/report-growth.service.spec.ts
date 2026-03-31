@@ -2,13 +2,17 @@ import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 
+jest.mock('@libs/growth/growth-reward', () => ({
+  GrowthEventBridgeService: class {},
+}))
+
 describe('report growth service', () => {
   it('rewards invalid report events after final judgement', async () => {
     const { ReportGrowthService } = await import('./report-growth.service')
 
-    const tryRewardByRule = jest.fn().mockResolvedValue(undefined)
+    const dispatchDefinedEvent = jest.fn().mockResolvedValue(undefined)
     const service = new ReportGrowthService({
-      tryRewardByRule,
+      dispatchDefinedEvent,
     } as any)
 
     await expect(
@@ -27,9 +31,12 @@ describe('report growth service', () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(tryRewardByRule).toHaveBeenCalledWith({
-      userId: 9,
-      ruleType: GrowthRuleTypeEnum.REPORT_INVALID,
+    expect(dispatchDefinedEvent).toHaveBeenCalledWith({
+      eventEnvelope: expect.objectContaining({
+        code: GrowthRuleTypeEnum.REPORT_INVALID,
+        subjectId: 9,
+        targetId: 18,
+      }),
       bizKey: 'report:handle:18:status:4',
       source: 'report_handle',
       remark: '举报裁决无效 #18',
@@ -41,9 +48,9 @@ describe('report growth service', () => {
   it('skips non-terminal report events for growth consumer', async () => {
     const { ReportGrowthService } = await import('./report-growth.service')
 
-    const tryRewardByRule = jest.fn().mockResolvedValue(undefined)
+    const dispatchDefinedEvent = jest.fn().mockResolvedValue(undefined)
     const service = new ReportGrowthService({
-      tryRewardByRule,
+      dispatchDefinedEvent,
     } as any)
 
     await expect(
@@ -62,6 +69,6 @@ describe('report growth service', () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(tryRewardByRule).not.toHaveBeenCalled()
+    expect(dispatchDefinedEvent).not.toHaveBeenCalled()
   })
 })

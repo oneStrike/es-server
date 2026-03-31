@@ -94,6 +94,7 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
   'targetType',
   'targetId',
   'bizKey',
+  'source',
   'remark',
   'context',
   'createdAt',
@@ -355,6 +356,39 @@ export class UserCenterGrowthDto {
 }
 
 /**
+ * 用户中心-任务摘要 DTO
+ */
+export class UserCenterTaskDto {
+  @NumberProperty({
+    description: '当前仍可领取的手动任务数',
+    example: 2,
+    validation: false,
+  })
+  claimableCount!: number
+
+  @NumberProperty({
+    description: '已领取待开始的任务数',
+    example: 1,
+    validation: false,
+  })
+  claimedCount!: number
+
+  @NumberProperty({
+    description: '进行中的任务数',
+    example: 3,
+    validation: false,
+  })
+  inProgressCount!: number
+
+  @NumberProperty({
+    description: '已完成但奖励待补偿的任务数',
+    example: 1,
+    validation: false,
+  })
+  rewardPendingCount!: number
+}
+
+/**
  * 用户中心-用户资料 DTO
  */
 export class UserCenterProfileDto {
@@ -483,6 +517,14 @@ export class UserCenterDto {
     nullable: false,
   })
   message!: UserCenterMessageDto
+
+  @NestedProperty({
+    description: '任务摘要',
+    type: UserCenterTaskDto,
+    validation: false,
+    nullable: false,
+  })
+  task!: UserCenterTaskDto
 }
 
 /**

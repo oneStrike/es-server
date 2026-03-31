@@ -85,6 +85,14 @@ export class BaseGrowthLedgerRecordDto extends IdDto {
   bizKey!: string
 
   @StringProperty({
+    description: '账本来源（如 growth_rule、task_bonus、purchase）',
+    example: 'task_bonus',
+    required: true,
+    maxLength: 40,
+  })
+  source!: string
+
+  @StringProperty({
     description: '备注',
     example: '任务完成奖励（积分）',
     required: false,

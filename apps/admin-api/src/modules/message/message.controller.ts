@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { Controller, Get, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   MessageNotificationDeliveryItemDto,
@@ -8,6 +8,7 @@ import {
   QueryMessageNotificationDeliveryPageDto,
   QueryMessageOutboxMonitorDto,
   QueryMessageWsMonitorDto,
+  RetryMessageNotificationDeliveryDto,
 } from './dto/message-monitor.dto'
 import { MessageMonitorService } from './message-monitor.service'
 
@@ -25,6 +26,19 @@ export class MessageController {
     @Query() query: QueryMessageNotificationDeliveryPageDto,
   ) {
     return this.messageMonitorService.getNotificationDeliveryPage(query)
+  }
+
+  @Post('monitor/delivery/retry')
+  @ApiDoc({
+    summary: '按 bizKey 重试失败的通知投递',
+    model: Boolean,
+  })
+  async retryNotificationDelivery(
+    @Body() body: RetryMessageNotificationDeliveryDto,
+  ) {
+    return this.messageMonitorService.retryNotificationDeliveryByBizKey(
+      body.bizKey,
+    )
   }
 
   @Get('monitor/outbox/summary')

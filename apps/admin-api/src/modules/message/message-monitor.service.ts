@@ -6,7 +6,11 @@ import type {
 import { DrizzleService } from '@db/core'
 import { messageOutbox, messageWsMetric } from '@db/schema'
 import { MessageNotificationDeliveryService } from '@libs/message/notification'
-import { MessageOutboxStatusEnum } from '@libs/message/outbox'
+import {
+  MessageOutboxDomainEnum,
+  MessageOutboxService,
+  MessageOutboxStatusEnum,
+} from '@libs/message/outbox'
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 
@@ -15,6 +19,7 @@ export class MessageMonitorService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly messageNotificationDeliveryService: MessageNotificationDeliveryService,
+    private readonly messageOutboxService: MessageOutboxService,
   ) {}
 
   private get db() {
@@ -31,6 +36,20 @@ export class MessageMonitorService {
     return this.messageNotificationDeliveryService.getNotificationDeliveryPage(
       query,
     )
+  }
+
+  /**
+   * 按 bizKey 重试失败的通知 outbox 事件。
+   */
+  async retryNotificationDeliveryByBizKey(bizKey: string) {
+    const normalizedBizKey = bizKey.trim()
+    if (!normalizedBizKey) {
+      return false
+    }
+    return this.messageOutboxService.retryFailedEventByBizKey({
+      bizKey: normalizedBizKey,
+      domain: MessageOutboxDomainEnum.NOTIFICATION,
+    })
   }
 
   async getOutboxMonitorSummary(query: MessageOutboxMonitorQueryInput) {

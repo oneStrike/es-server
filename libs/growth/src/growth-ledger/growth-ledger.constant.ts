@@ -16,6 +16,17 @@ export enum GrowthLedgerActionEnum {
 }
 
 /**
+ * 成长账本来源
+ *
+ * 用于区分基础成长规则奖励与任务 bonus 奖励；
+ * 其他历史/手工来源仍允许沿用字符串来源值。
+ */
+export enum GrowthLedgerSourceEnum {
+  GROWTH_RULE = 'growth_rule',
+  TASK_BONUS = 'task_bonus',
+}
+
+/**
  * 成长结算失败原因
  */
 export enum GrowthLedgerFailReasonEnum {

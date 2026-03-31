@@ -4,7 +4,7 @@ import {
   EventDefinitionConsumerEnum,
 } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { UserGrowthRewardService } from '@libs/growth/growth-reward'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
 import { Injectable, Logger } from '@nestjs/common'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 
@@ -13,7 +13,7 @@ export class ReportGrowthService {
   private readonly logger = new Logger(ReportGrowthService.name)
 
   constructor(
-    private readonly userGrowthRewardService: UserGrowthRewardService,
+    private readonly growthEventBridgeService: GrowthEventBridgeService,
   ) {}
 
   /**
@@ -36,9 +36,8 @@ export class ReportGrowthService {
 
       const context = this.parseHandledReportContext(eventEnvelope.context)
 
-      await this.userGrowthRewardService.tryRewardByRule({
-        userId: eventEnvelope.subjectId,
-        ruleType: eventEnvelope.code,
+      await this.growthEventBridgeService.dispatchDefinedEvent({
+        eventEnvelope,
         bizKey: `report:handle:${eventEnvelope.targetId}:status:${context.reportStatus}`,
         source: 'report_handle',
         remark:

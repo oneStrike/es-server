@@ -28,6 +28,9 @@ export interface QueryNotificationDeliveryPageInput {
   receiverUserId?: number
   bizKey?: string
   outboxId?: string
+  reminderKind?: string
+  taskId?: number
+  assignmentId?: number
 }
 
 /**
@@ -40,4 +43,10 @@ export interface NotificationDeliveryPageItem
   status: MessageNotificationDispatchStatusEnum
   notificationTypeLabel?: string
   statusLabel: string
+  reminderKind?: string
+  taskId?: number
+  assignmentId?: number
+  taskCode?: string
+  sceneType?: number
+  payloadVersion?: number
 }

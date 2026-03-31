@@ -38,6 +38,11 @@ export const growthLedgerRecord = pgTable("growth_ledger_record", {
    */
   bizKey: varchar({ length: 120 }).notNull(),
   /**
+   * 账本来源
+   * 用于区分基础成长规则奖励、任务 bonus 和其他手工/业务来源
+   */
+  source: varchar({ length: 40 }).notNull(),
+  /**
    * 规则类型（可选）
    */
   ruleType: smallint(),

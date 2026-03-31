@@ -5,15 +5,15 @@ import type {
   QueryNotificationDeliveryPageInput,
   UpsertNotificationDeliveryInput,
 } from './notification-delivery.type'
-import type { MessageNotificationTypeEnum } from './notification.constant'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { Injectable } from '@nestjs/common'
-import { and, eq, ilike } from 'drizzle-orm'
+import { and, desc, eq, ilike, sql } from 'drizzle-orm'
 import {
   getMessageNotificationDispatchStatusLabel,
   getMessageNotificationTypeLabel,
   MESSAGE_NOTIFICATION_TYPE_VALUES,
   MessageNotificationDispatchStatusEnum,
+  MessageNotificationTypeEnum,
 } from './notification.constant'
 
 /**
@@ -30,6 +30,10 @@ export class MessageNotificationDeliveryService {
 
   private get notificationDelivery() {
     return this.drizzle.schema.notificationDelivery
+  }
+
+  private get messageOutbox() {
+    return this.drizzle.schema.messageOutbox
   }
 
   /**
@@ -125,20 +129,85 @@ export class MessageNotificationDeliveryService {
         }
       }
     }
+    if (query.reminderKind?.trim()) {
+      conditions.push(
+        eq(
+          this.notificationDelivery.notificationType,
+          MessageNotificationTypeEnum.TASK_REMINDER,
+        ),
+      )
+      conditions.push(
+        sql`${this.messageOutbox.payload} -> 'payload' ->> 'reminderKind' = ${query.reminderKind.trim()}`,
+      )
+    }
+    if (query.taskId !== undefined) {
+      conditions.push(
+        eq(
+          this.notificationDelivery.notificationType,
+          MessageNotificationTypeEnum.TASK_REMINDER,
+        ),
+      )
+      conditions.push(
+        sql`(${this.messageOutbox.payload} -> 'payload' ->> 'taskId')::int = ${query.taskId}`,
+      )
+    }
+    if (query.assignmentId !== undefined) {
+      conditions.push(
+        eq(
+          this.notificationDelivery.notificationType,
+          MessageNotificationTypeEnum.TASK_REMINDER,
+        ),
+      )
+      conditions.push(
+        sql`(${this.messageOutbox.payload} -> 'payload' ->> 'assignmentId')::int = ${query.assignmentId}`,
+      )
+    }
 
-    const page = await this.drizzle.ext.findPagination(this.notificationDelivery, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-      orderBy: [
-        { updatedAt: 'desc' as const },
-        { id: 'desc' as const },
-      ],
-    })
+    const page = this.normalizePage(query)
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+    const [totalRow] = await this.db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(this.notificationDelivery)
+      .leftJoin(
+        this.messageOutbox,
+        eq(this.notificationDelivery.outboxId, this.messageOutbox.id),
+      )
+      .where(whereClause)
+
+    const rows = await this.db
+      .select({
+        id: this.notificationDelivery.id,
+        outboxId: this.notificationDelivery.outboxId,
+        bizKey: this.notificationDelivery.bizKey,
+        notificationType: this.notificationDelivery.notificationType,
+        receiverUserId: this.notificationDelivery.receiverUserId,
+        notificationId: this.notificationDelivery.notificationId,
+        status: this.notificationDelivery.status,
+        retryCount: this.notificationDelivery.retryCount,
+        failureReason: this.notificationDelivery.failureReason,
+        lastAttemptAt: this.notificationDelivery.lastAttemptAt,
+        createdAt: this.notificationDelivery.createdAt,
+        updatedAt: this.notificationDelivery.updatedAt,
+        outboxPayload: this.messageOutbox.payload,
+      })
+      .from(this.notificationDelivery)
+      .leftJoin(
+        this.messageOutbox,
+        eq(this.notificationDelivery.outboxId, this.messageOutbox.id),
+      )
+      .where(whereClause)
+      .orderBy(
+        desc(this.notificationDelivery.updatedAt),
+        desc(this.notificationDelivery.id),
+      )
+      .limit(page.pageSize)
+      .offset(page.offset)
 
     return {
-      ...page,
-      list: page.list.map((item) => this.mapDeliveryPageItem(item)),
+      list: rows.map((item) => this.mapDeliveryPageItem(item)),
+      total: Number(totalRow?.count ?? 0),
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
     }
   }
 
@@ -147,8 +216,12 @@ export class MessageNotificationDeliveryService {
    * 统一完成 bigint ID 序列化与状态/类型中文标签补充
    */
   private mapDeliveryPageItem(
-    item: typeof this.notificationDelivery.$inferSelect,
+    item: typeof this.notificationDelivery.$inferSelect & {
+      outboxPayload?: unknown
+    },
   ): NotificationDeliveryPageItem {
+    const taskReminder = this.parseTaskReminderContext(item.outboxPayload)
+
     return {
       ...item,
       outboxId: item.outboxId.toString(),
@@ -159,6 +232,50 @@ export class MessageNotificationDeliveryService {
           : getMessageNotificationTypeLabel(item.notificationType),
       statusLabel: getMessageNotificationDispatchStatusLabel(
         item.status as MessageNotificationDispatchStatusEnum,
+      ),
+      reminderKind: taskReminder.reminderKind,
+      taskId: taskReminder.taskId,
+      assignmentId: taskReminder.assignmentId,
+      taskCode: taskReminder.taskCode,
+      sceneType: taskReminder.sceneType,
+      payloadVersion: taskReminder.payloadVersion,
+    }
+  }
+
+  private parseTaskReminderContext(payload: unknown) {
+    const root = this.asRecord(payload)
+    const notificationPayload = this.asRecord(root?.payload)
+    const reminderKind =
+      typeof notificationPayload?.reminderKind === 'string'
+        ? notificationPayload.reminderKind
+        : undefined
+
+    if (!reminderKind) {
+      return {
+        reminderKind: undefined,
+        taskId: undefined,
+        assignmentId: undefined,
+        taskCode: undefined,
+        sceneType: undefined,
+        payloadVersion: undefined,
+      }
+    }
+
+    const notificationPayloadRecord = notificationPayload!
+
+    return {
+      reminderKind,
+      taskId: this.parseOptionalPositiveInt(notificationPayloadRecord.taskId),
+      assignmentId: this.parseOptionalPositiveInt(
+        notificationPayloadRecord.assignmentId,
+      ),
+      taskCode:
+        typeof notificationPayloadRecord.taskCode === 'string'
+          ? notificationPayloadRecord.taskCode
+          : undefined,
+      sceneType: this.parseOptionalPositiveInt(notificationPayloadRecord.sceneType),
+      payloadVersion: this.parseOptionalPositiveInt(
+        notificationPayloadRecord.payloadVersion,
       ),
     }
   }
@@ -202,5 +319,37 @@ export class MessageNotificationDeliveryService {
   private normalizeFailureReason(value?: string | null) {
     const normalized = value?.trim()
     return normalized ? normalized.slice(0, 500) : null
+  }
+
+  private normalizePage(query: QueryNotificationDeliveryPageInput) {
+    const pageIndex =
+      Number.isInteger(query.pageIndex) && Number(query.pageIndex) > 0
+        ? Number(query.pageIndex)
+        : 1
+    const pageSize =
+      Number.isInteger(query.pageSize) && Number(query.pageSize) > 0
+        ? Math.min(Number(query.pageSize), 100)
+        : 15
+
+    return {
+      pageIndex,
+      pageSize,
+      offset: (pageIndex - 1) * pageSize,
+    }
+  }
+
+  private asRecord(input: unknown) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      return null
+    }
+    return input as Record<string, unknown>
+  }
+
+  private parseOptionalPositiveInt(value: unknown) {
+    const normalized = Number(value)
+    if (!Number.isInteger(normalized) || normalized <= 0) {
+      return undefined
+    }
+    return normalized
   }
 }

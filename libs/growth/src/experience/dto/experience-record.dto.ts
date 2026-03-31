@@ -62,6 +62,14 @@ export class BaseUserExperienceRecordDto extends IdDto {
   })
   bizKey!: string
 
+  @StringProperty({
+    description: '账本来源（如 growth_rule、task_bonus、purchase）',
+    example: 'growth_rule',
+    required: false,
+    maxLength: 40,
+  })
+  source?: string | null
+
   @EnumProperty({
     description: GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,
     example: GrowthRuleTypeEnum.CREATE_TOPIC,

@@ -1,6 +1,4 @@
 import {
-  BaseTaskAssignmentDto,
-  BaseTaskDto,
   TaskService,
 } from '@libs/growth/task'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
@@ -15,9 +13,16 @@ import {
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  AdminTaskAssignmentPageResponseDto,
+  AdminTaskAssignmentReconciliationPageResponseDto,
+  AdminTaskPageResponseDto,
   CreateTaskDto,
   QueryTaskAssignmentDto,
+  QueryTaskAssignmentReconciliationDto,
   QueryTaskDto,
+  RetryCompletedTaskRewardsDto,
+  RetryCompletedTaskRewardsResponseDto,
+  RetryTaskAssignmentRewardDto,
   UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto'
@@ -72,7 +77,7 @@ export class TaskController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询任务',
-    model: BaseTaskDto,
+    model: AdminTaskPageResponseDto,
   })
   async findPage(@Query() query: QueryTaskDto) {
     return this.taskService.getTaskPage(query)
@@ -81,7 +86,7 @@ export class TaskController {
   @Get('detail')
   @ApiDoc({
     summary: '查询任务详情',
-    model: BaseTaskDto,
+    model: AdminTaskPageResponseDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
     return this.taskService.getTaskDetail(id)
@@ -90,9 +95,38 @@ export class TaskController {
   @Get('assignment/page')
   @ApiPageDoc({
     summary: '分页查询任务领取记录',
-    model: BaseTaskAssignmentDto,
+    model: AdminTaskAssignmentPageResponseDto,
   })
   async findAssignmentPage(@Query() query: QueryTaskAssignmentDto) {
     return this.taskService.getTaskAssignmentPage(query)
+  }
+
+  @Get('assignment/reconciliation/page')
+  @ApiPageDoc({
+    summary: '分页查询任务奖励与通知对账视图',
+    model: AdminTaskAssignmentReconciliationPageResponseDto,
+  })
+  async findAssignmentReconciliationPage(
+    @Query() query: QueryTaskAssignmentReconciliationDto,
+  ) {
+    return this.taskService.getTaskAssignmentReconciliationPage(query)
+  }
+
+  @Post('assignment/retry-reward')
+  @ApiDoc({
+    summary: '重试单条任务奖励结算',
+    model: Boolean,
+  })
+  async retryAssignmentReward(@Body() body: RetryTaskAssignmentRewardDto) {
+    return this.taskService.retryTaskAssignmentReward(body.id)
+  }
+
+  @Post('assignment/retry-reward/batch')
+  @ApiDoc({
+    summary: '批量扫描并重试待补偿任务奖励',
+    model: RetryCompletedTaskRewardsResponseDto,
+  })
+  async retryCompletedRewards(@Body() body: RetryCompletedTaskRewardsDto) {
+    return this.taskService.retryCompletedAssignmentRewardsBatch(body.limit)
   }
 }

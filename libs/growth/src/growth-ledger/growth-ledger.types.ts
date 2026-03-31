@@ -1,4 +1,7 @@
-import type { GrowthAssetTypeEnum, GrowthLedgerFailReasonEnum } from './growth-ledger.constant'
+import type {
+  GrowthAssetTypeEnum,
+  GrowthLedgerFailReasonEnum,
+} from './growth-ledger.constant'
 
 export const PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS = [
   'actorUserId',
@@ -41,6 +44,7 @@ export interface PublicGrowthLedgerRecord {
   id: number
   userId: number
   assetType: GrowthAssetTypeEnum
+  source: string
   ruleId?: number
   ruleType?: number
   targetType?: number
@@ -76,6 +80,7 @@ export interface ApplyRuleParams {
   assetType: GrowthAssetTypeEnum
   ruleType: number
   bizKey: string
+  source?: string
   remark?: string
   targetType?: number
   targetId?: number

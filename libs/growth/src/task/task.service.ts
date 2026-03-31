@@ -3,6 +3,7 @@ import type { TaskAssignmentSelect, TaskSelect } from '@db/schema'
 import type { TaskRewardSettlementResult } from '@libs/growth/growth-reward'
 import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
+import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   AutoAssignmentTaskSource,
   ClaimTaskInput,
@@ -10,8 +11,12 @@ import type {
   QueryAppTaskInput,
   QueryMyTaskInput,
   QueryTaskAssignmentPageInput,
+  QueryTaskAssignmentReconciliationPageInput,
   QueryTaskPageInput,
+  RetryCompletedAssignmentRewardsResult,
   TaskCompleteInput,
+  TaskEventProgressInput,
+  TaskEventProgressResult,
   TaskProgressInput,
   TaskQueryOrderByInput,
   TaskRepeatRuleConfig,
@@ -23,12 +28,17 @@ import type {
 import process from 'node:process'
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
+  canConsumeEventEnvelopeByConsumer,
   createEventEnvelope,
+  EventDefinitionConsumerEnum,
   EventDefinitionEntityTypeEnum,
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition'
 import { UserGrowthRewardService } from '@libs/growth/growth-reward'
-import { MessageNotificationTypeEnum } from '@libs/message/notification'
+import {
+  MessageNotificationDispatchStatusEnum,
+  MessageNotificationTypeEnum,
+} from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
 import {
   BadRequestException,
@@ -55,7 +65,12 @@ import {
   or,
   sql,
 } from 'drizzle-orm'
+import { GROWTH_RULE_TYPE_VALUES } from '../growth-rule.constant'
+import { TaskNotificationService } from './task-notification.service'
 import {
+  getTaskTypeFilterValues,
+  normalizeTaskObjectiveType,
+  normalizeTaskType,
   TASK_AVAILABLE_REMINDER_RECENT_HOURS,
   TASK_COMPLETE_EVENT_CODE,
   TASK_COMPLETE_EVENT_KEY,
@@ -65,11 +80,13 @@ import {
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
+  TaskObjectiveTypeEnum,
   TaskProgressActionTypeEnum,
+  TaskProgressSourceEnum,
   TaskReminderKindEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
-  TaskTypeEnum,
+  TaskUserVisibleStatusEnum,
 } from './task.constant'
 
 dayjs.extend(utc)
@@ -98,6 +115,7 @@ dayjs.extend(isoWeek)
 @Injectable()
 export class TaskService {
   private readonly logger = new Logger(TaskService.name)
+  private readonly taskNotificationService = new TaskNotificationService()
   private readonly defaultTaskTimezone =
     this.normalizeTaskTimezone(process.env.TZ) ?? 'Asia/Shanghai'
 
@@ -125,6 +143,16 @@ export class TaskService {
   /** 任务进度日志表 */
   private get taskProgressLogTable() {
     return this.drizzle.schema.taskProgressLog
+  }
+
+  /** 通知投递结果表 */
+  private get notificationDeliveryTable() {
+    return this.drizzle.schema.notificationDelivery
+  }
+
+  /** 消息发件箱表 */
+  private get messageOutboxTable() {
+    return this.drizzle.schema.messageOutbox
   }
 
   /**
@@ -157,6 +185,9 @@ export class TaskService {
                   id: this.taskTable.id,
                   title: this.taskTable.title,
                   type: this.taskTable.type,
+                  objectiveType: this.taskTable.objectiveType,
+                  eventCode: this.taskTable.eventCode,
+                  objectiveConfig: this.taskTable.objectiveConfig,
                   rewardConfig: this.taskTable.rewardConfig,
                   targetCount: this.taskTable.targetCount,
                   completeMode: this.taskTable.completeMode,
@@ -179,6 +210,9 @@ export class TaskService {
                   id: this.taskTable.id,
                   title: this.taskTable.title,
                   type: this.taskTable.type,
+                  objectiveType: this.taskTable.objectiveType,
+                  eventCode: this.taskTable.eventCode,
+                  objectiveConfig: this.taskTable.objectiveConfig,
                   rewardConfig: this.taskTable.rewardConfig,
                   targetCount: this.taskTable.targetCount,
                   completeMode: this.taskTable.completeMode,
@@ -201,6 +235,9 @@ export class TaskService {
                   id: this.taskTable.id,
                   title: this.taskTable.title,
                   type: this.taskTable.type,
+                  objectiveType: this.taskTable.objectiveType,
+                  eventCode: this.taskTable.eventCode,
+                  objectiveConfig: this.taskTable.objectiveConfig,
                   rewardConfig: this.taskTable.rewardConfig,
                 },
               })
@@ -220,6 +257,9 @@ export class TaskService {
                   id: this.taskTable.id,
                   title: this.taskTable.title,
                   type: this.taskTable.type,
+                  objectiveType: this.taskTable.objectiveType,
+                  eventCode: this.taskTable.eventCode,
+                  objectiveConfig: this.taskTable.objectiveConfig,
                   rewardConfig: this.taskTable.rewardConfig,
                 },
               })
@@ -244,7 +284,7 @@ export class TaskService {
     return {
       list: list.map((item) => ({
         ...item.assignment,
-        task: item.task,
+        task: item.task ? this.normalizeTaskRelation(item.task) : item.task,
       })),
       total: Number(countResult?.count ?? 0),
       pageIndex: page.pageIndex,
@@ -267,7 +307,9 @@ export class TaskService {
       conditions.push(eq(this.taskTable.status, queryDto.status))
     }
     if (queryDto.type !== undefined) {
-      conditions.push(eq(this.taskTable.type, queryDto.type))
+      conditions.push(
+        inArray(this.taskTable.type, getTaskTypeFilterValues(queryDto.type)),
+      )
     }
     if (queryDto.isEnabled !== undefined) {
       conditions.push(eq(this.taskTable.isEnabled, queryDto.isEnabled))
@@ -278,10 +320,19 @@ export class TaskService {
       )
     }
 
-    return this.drizzle.ext.findPagination(this.taskTable, {
+    const result = await this.drizzle.ext.findPagination(this.taskTable, {
       where: and(...conditions),
       ...queryDto,
     })
+    const runtimeHealthMap = await this.getTaskRuntimeHealthMap(
+      result.list.map((item) => item.id),
+    )
+    return {
+      ...result,
+      list: result.list.map((taskRecord) =>
+        this.toAdminTaskView(taskRecord, runtimeHealthMap.get(taskRecord.id)),
+      ),
+    }
   }
 
   /**
@@ -302,7 +353,8 @@ export class TaskService {
     if (!taskRecord) {
       throw new NotFoundException('任务不存在')
     }
-    return taskRecord
+    const runtimeHealthMap = await this.getTaskRuntimeHealthMap([taskRecord.id])
+    return this.toAdminTaskView(taskRecord, runtimeHealthMap.get(taskRecord.id))
   }
 
   /**
@@ -316,7 +368,15 @@ export class TaskService {
   async createTask(dto: CreateTaskInput, adminUserId: number) {
     // 校验发布时间窗口
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
+    const objectiveType = this.parseTaskObjectiveType(dto.objectiveType)
+    const eventCode = this.parseTaskEventCode(dto.eventCode)
+    const objectiveConfig = this.parseTaskObjectiveConfig(dto.objectiveConfig)
     this.ensurePositiveTaskTargetCount(dto.targetCount)
+    this.ensureTaskObjectiveContract({
+      objectiveType,
+      eventCode,
+      objectiveConfig,
+    })
     const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
     const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
 
@@ -324,6 +384,9 @@ export class TaskService {
       () =>
         this.db.insert(this.taskTable).values({
           ...dto,
+          objectiveType,
+          eventCode,
+          objectiveConfig,
           rewardConfig,
           repeatRule,
           createdById: adminUserId,
@@ -355,7 +418,24 @@ export class TaskService {
       throw new NotFoundException('任务不存在')
     }
 
+    const objectiveType =
+      dto.objectiveType !== undefined
+        ? this.parseTaskObjectiveType(dto.objectiveType)
+        : normalizeTaskObjectiveType(existingTask.objectiveType)
+    const eventCode =
+      dto.eventCode !== undefined
+        ? this.parseTaskEventCode(dto.eventCode)
+        : (existingTask.eventCode ?? undefined)
+    const objectiveConfig =
+      dto.objectiveConfig !== undefined
+        ? this.parseTaskObjectiveConfig(dto.objectiveConfig)
+        : (this.asRecord(existingTask.objectiveConfig) ?? existingTask.objectiveConfig ?? undefined)
     this.ensurePositiveTaskTargetCount(dto.targetCount)
+    this.ensureTaskObjectiveContract({
+      objectiveType,
+      eventCode,
+      objectiveConfig: objectiveConfig as Record<string, unknown> | null | undefined,
+    })
     const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
     const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
     const nextPublishStartAt =
@@ -375,6 +455,7 @@ export class TaskService {
       existingTask,
       dto,
       repeatRule,
+      objectiveType,
     )
 
     const result = await this.drizzle.withErrorHandling(
@@ -383,6 +464,9 @@ export class TaskService {
           .update(this.taskTable)
           .set({
             ...dto,
+            objectiveType,
+            eventCode,
+            objectiveConfig,
             rewardConfig,
             repeatRule,
             updatedById: adminUserId,
@@ -497,9 +581,236 @@ export class TaskService {
       pageIndex: queryDto.pageIndex,
       pageSize: queryDto.pageSize,
       orderBy,
-      includeTaskDetail: false,
+      includeTaskDetail: true,
     })
-    return result
+    return {
+      ...result,
+      list: result.list.map((item) => this.toAdminTaskAssignmentView(item)),
+    }
+  }
+
+  /**
+   * 分页查询任务奖励与通知对账视图（管理端）。
+   *
+   * 聚合 assignment、事件推进日志和奖励到账提醒结果，缩短排障时跨表来回翻查的路径。
+   */
+  async getTaskAssignmentReconciliationPage(
+    queryDto: QueryTaskAssignmentReconciliationPageInput,
+  ) {
+    const { orderBy } = queryDto
+    const assignmentConditions: SQL[] = [
+      isNull(this.taskAssignmentTable.deletedAt),
+    ]
+
+    if (queryDto.assignmentId !== undefined) {
+      assignmentConditions.push(
+        eq(this.taskAssignmentTable.id, queryDto.assignmentId),
+      )
+    }
+    if (queryDto.taskId !== undefined) {
+      assignmentConditions.push(
+        eq(this.taskAssignmentTable.taskId, queryDto.taskId),
+      )
+    }
+    if (queryDto.userId !== undefined) {
+      assignmentConditions.push(
+        eq(this.taskAssignmentTable.userId, queryDto.userId),
+      )
+    }
+    if (queryDto.rewardStatus !== undefined) {
+      assignmentConditions.push(
+        eq(this.taskAssignmentTable.rewardStatus, queryDto.rewardStatus),
+      )
+    }
+
+    const eventAssignmentIds = await this.queryAssignmentIdsByEventFilter(
+      queryDto,
+    )
+    if (eventAssignmentIds && eventAssignmentIds.length === 0) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: queryDto.pageIndex ?? 1,
+        pageSize: queryDto.pageSize ?? 15,
+      }
+    }
+    if (eventAssignmentIds) {
+      assignmentConditions.push(inArray(this.taskAssignmentTable.id, eventAssignmentIds))
+    }
+
+    const notificationAssignmentIds =
+      await this.queryAssignmentIdsByRewardReminderFilter(queryDto)
+    if (notificationAssignmentIds && notificationAssignmentIds.length === 0) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: queryDto.pageIndex ?? 1,
+        pageSize: queryDto.pageSize ?? 15,
+      }
+    }
+    if (notificationAssignmentIds) {
+      assignmentConditions.push(
+        inArray(this.taskAssignmentTable.id, notificationAssignmentIds),
+      )
+    }
+
+    const result = await this.queryTaskAssignmentPage({
+      whereClause: and(...assignmentConditions),
+      pageIndex: queryDto.pageIndex,
+      pageSize: queryDto.pageSize,
+      orderBy,
+      includeTaskDetail: true,
+    })
+    const assignmentIds = result.list.map((item) => item.id)
+    const [eventMap, rewardReminderMap] = await Promise.all([
+      this.getAssignmentEventProgressMap(assignmentIds),
+      this.getAssignmentRewardReminderMap(assignmentIds),
+    ])
+
+    return {
+      ...result,
+      list: result.list.map((item) => {
+        const taskView = this.buildAssignmentTaskView(item)
+        const latestEvent = eventMap.get(item.id)
+        const rewardReminder = rewardReminderMap.get(item.id)
+
+        return {
+          id: item.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          taskId: item.taskId,
+          userId: item.userId,
+          cycleKey: item.cycleKey,
+          status: item.status,
+          rewardStatus: item.rewardStatus,
+          rewardResultType: item.rewardResultType,
+          progress: item.progress,
+          target: item.target,
+          claimedAt: item.claimedAt,
+          completedAt: item.completedAt,
+          expiredAt: item.expiredAt,
+          rewardSettledAt: item.rewardSettledAt,
+          rewardLedgerIds: item.rewardLedgerIds,
+          lastRewardError: item.lastRewardError,
+          visibleStatus: this.resolveTaskUserVisibleStatus({
+            status: item.status,
+            rewardStatus: item.rewardStatus,
+            rewardConfig: taskView?.rewardConfig,
+          }),
+          task: taskView,
+          latestEventCode: latestEvent?.eventCode ?? null,
+          latestEventBizKey: latestEvent?.eventBizKey ?? null,
+          latestEventOccurredAt: latestEvent?.eventOccurredAt ?? null,
+          rewardReminder: rewardReminder
+            ? {
+                bizKey: rewardReminder.bizKey,
+                status: rewardReminder.status,
+                failureReason: rewardReminder.failureReason,
+                lastAttemptAt: rewardReminder.lastAttemptAt,
+              }
+            : null,
+        }
+      }),
+    }
+  }
+
+  /**
+   * 手动重试单条已完成任务的奖励结算（管理端）。
+   */
+  async retryTaskAssignmentReward(assignmentId: number) {
+    const assignment = await this.db.query.taskAssignment.findFirst({
+      where: {
+        id: assignmentId,
+        deletedAt: { isNull: true },
+      },
+      with: {
+        task: true,
+      },
+    })
+
+    if (!assignment) {
+      throw new NotFoundException('任务分配不存在')
+    }
+    if (assignment.status !== TaskAssignmentStatusEnum.COMPLETED) {
+      throw new BadRequestException('仅已完成任务允许重试奖励结算')
+    }
+    if (assignment.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS) {
+      throw new BadRequestException('任务奖励已结算成功，无需重试')
+    }
+
+    await this.emitTaskCompleteEvent(
+      assignment.userId,
+      this.buildTaskRewardTaskRecord(
+        assignment.taskId,
+        assignment.task ?? undefined,
+        assignment,
+      ),
+      {
+        id: assignment.id,
+        completedAt: assignment.completedAt,
+      },
+    )
+    return true
+  }
+
+  /**
+   * 批量扫描并重试已完成但奖励未成功的任务分配（管理端 / 定时任务共用）。
+   */
+  async retryCompletedAssignmentRewardsBatch(
+    limit = 100,
+  ): Promise<RetryCompletedAssignmentRewardsResult> {
+    const assignments = await this.db
+      .select({
+        assignmentId: this.taskAssignmentTable.id,
+        taskId: this.taskAssignmentTable.taskId,
+        userId: this.taskAssignmentTable.userId,
+        completedAt: this.taskAssignmentTable.completedAt,
+        taskSnapshot: this.taskAssignmentTable.taskSnapshot,
+        code: this.taskTable.code,
+        title: this.taskTable.title,
+        type: this.taskTable.type,
+        rewardConfig: this.taskTable.rewardConfig,
+      })
+      .from(this.taskAssignmentTable)
+      .leftJoin(
+        this.taskTable,
+        eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+      )
+      .where(
+        and(
+          isNull(this.taskAssignmentTable.deletedAt),
+          eq(
+            this.taskAssignmentTable.status,
+            TaskAssignmentStatusEnum.COMPLETED,
+          ),
+          inArray(this.taskAssignmentTable.rewardStatus, [
+            TaskAssignmentRewardStatusEnum.PENDING,
+            TaskAssignmentRewardStatusEnum.FAILED,
+          ]),
+        ),
+      )
+      .orderBy(asc(this.taskAssignmentTable.id))
+      .limit(Math.max(1, Math.min(limit, 500)))
+
+    for (const assignment of assignments) {
+      await this.emitTaskCompleteEvent(
+        assignment.userId,
+        this.buildTaskRewardTaskRecord(
+          assignment.taskId,
+          assignment,
+          assignment,
+        ),
+        {
+          id: assignment.assignmentId,
+          completedAt: assignment.completedAt,
+        },
+      )
+    }
+
+    return {
+      scannedCount: assignments.length,
+      triggeredCount: assignments.length,
+    }
   }
 
   // ==================== 应用端接口 ====================
@@ -510,7 +821,7 @@ export class TaskService {
    * 查询当前用户可领取的任务，同时自动为自动领取模式的任务创建分配。
    *
    * @param queryDto 查询参数
-   *   - type: 任务类型
+   *   - type: 任务场景类型
    *   - pageIndex: 页码
    *   - pageSize: 每页数量
    * @param userId 当前用户ID
@@ -554,7 +865,7 @@ export class TaskService {
    *
    * @param queryDto 查询参数
    *   - status: 分配状态
-   *   - type: 任务类型
+   *   - type: 任务场景类型
    *   - pageIndex: 页码
    *   - pageSize: 每页数量
    *   - orderBy: 排序条件
@@ -582,7 +893,9 @@ export class TaskService {
 
     const assignmentWhere = and(...assignmentConditions)
     const taskWhere =
-      type !== undefined ? eq(this.taskTable.type, type) : undefined
+      type !== undefined
+        ? inArray(this.taskTable.type, getTaskTypeFilterValues(type))
+        : undefined
     const whereClause =
       assignmentWhere && taskWhere
         ? and(assignmentWhere, taskWhere)
@@ -597,6 +910,81 @@ export class TaskService {
     return {
       ...result,
       list: result.list.map((item) => this.toAppMyTaskView(item)),
+    }
+  }
+
+  /**
+   * 获取用户中心任务摘要。
+   *
+   * 复用任务读模型收口后的语义，确保用户中心与任务页看到的是同一套状态口径。
+   */
+  async getUserTaskSummary(userId: number) {
+    const now = new Date()
+    await this.expireDueAssignmentsForUser(userId, now)
+    await this.ensureAutoAssignmentsForUser(userId, now)
+
+    const manualTasks = await this.db
+      .select()
+      .from(this.taskTable)
+      .where(this.buildAvailableWhere(undefined, TaskClaimModeEnum.MANUAL))
+      .orderBy(desc(this.taskTable.priority), desc(this.taskTable.createdAt))
+
+    const claimableTasks = await this.filterClaimableTasksForUser(
+      manualTasks.filter(
+        (taskRecord) => taskRecord.claimMode === TaskClaimModeEnum.MANUAL,
+      ),
+      userId,
+      now,
+    )
+
+    const [claimedRows, inProgressRows, rewardPendingRows] = await Promise.all([
+      this.db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(this.taskAssignmentTable)
+        .where(
+          and(
+            eq(this.taskAssignmentTable.userId, userId),
+            isNull(this.taskAssignmentTable.deletedAt),
+            eq(this.taskAssignmentTable.status, TaskAssignmentStatusEnum.PENDING),
+          ),
+        ),
+      this.db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(this.taskAssignmentTable)
+        .where(
+          and(
+            eq(this.taskAssignmentTable.userId, userId),
+            isNull(this.taskAssignmentTable.deletedAt),
+            eq(
+              this.taskAssignmentTable.status,
+              TaskAssignmentStatusEnum.IN_PROGRESS,
+            ),
+          ),
+        ),
+      this.db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(this.taskAssignmentTable)
+        .where(
+          and(
+            eq(this.taskAssignmentTable.userId, userId),
+            isNull(this.taskAssignmentTable.deletedAt),
+            eq(
+              this.taskAssignmentTable.status,
+              TaskAssignmentStatusEnum.COMPLETED,
+            ),
+            inArray(this.taskAssignmentTable.rewardStatus, [
+              TaskAssignmentRewardStatusEnum.PENDING,
+              TaskAssignmentRewardStatusEnum.FAILED,
+            ]),
+          ),
+        ),
+    ])
+
+    return {
+      claimableCount: claimableTasks.length,
+      claimedCount: Number(claimedRows[0]?.count ?? 0),
+      inProgressCount: Number(inProgressRows[0]?.count ?? 0),
+      rewardPendingCount: Number(rewardPendingRows[0]?.count ?? 0),
     }
   }
 
@@ -620,7 +1008,9 @@ export class TaskService {
     // 计算当前周期标识
     const cycleKey = this.buildCycleKey(taskRecord, now)
     // 创建或获取已存在的分配
-    await this.createOrGetAssignment(taskRecord, userId, cycleKey, now)
+    await this.createOrGetAssignment(taskRecord, userId, cycleKey, now, {
+      progressSource: TaskProgressSourceEnum.MANUAL,
+    })
     return true
   }
 
@@ -727,18 +1117,21 @@ export class TaskService {
       }
 
       // 记录进度日志
-      await tx.insert(this.taskProgressLogTable).values({
-        assignmentId: assignment.id,
-        userId,
-        actionType:
-          shouldAutoComplete
-            ? TaskProgressActionTypeEnum.COMPLETE
-            : TaskProgressActionTypeEnum.PROGRESS,
-        delta: dto.delta,
-        beforeValue: assignment.progress,
-        afterValue: nextProgress,
-        context,
-      })
+      await tx.insert(this.taskProgressLogTable).values(
+        this.buildTaskProgressLogRecord({
+          assignmentId: assignment.id,
+          userId,
+          actionType:
+            shouldAutoComplete
+              ? TaskProgressActionTypeEnum.COMPLETE
+              : TaskProgressActionTypeEnum.PROGRESS,
+          progressSource: TaskProgressSourceEnum.MANUAL,
+          delta: dto.delta,
+          beforeValue: assignment.progress,
+          afterValue: nextProgress,
+          context,
+        }),
+      )
 
       return updateResult.rowCount ?? 0
     })
@@ -831,14 +1224,17 @@ export class TaskService {
         return 0
       }
 
-      await tx.insert(this.taskProgressLogTable).values({
-        assignmentId: assignment.id,
-        userId,
-        actionType: TaskProgressActionTypeEnum.COMPLETE,
-        delta: 0,
-        beforeValue: assignment.progress,
-        afterValue: finalProgress,
-      })
+      await tx.insert(this.taskProgressLogTable).values(
+        this.buildTaskProgressLogRecord({
+          assignmentId: assignment.id,
+          userId,
+          actionType: TaskProgressActionTypeEnum.COMPLETE,
+          progressSource: TaskProgressSourceEnum.MANUAL,
+          delta: 0,
+          beforeValue: assignment.progress,
+          afterValue: finalProgress,
+        }),
+      )
 
       return updateResult.rowCount ?? 0
     })
@@ -857,6 +1253,73 @@ export class TaskService {
       },
     )
     return true
+  }
+
+  /**
+   * 消费业务事件并推进事件型任务。
+   * 仅处理 `objectiveType=EVENT_COUNT` 的任务，按事件发生时间落周期，并基于 assignment + bizKey 做幂等。
+   */
+  async consumeEventProgress(
+    input: TaskEventProgressInput,
+  ): Promise<TaskEventProgressResult> {
+    const result: TaskEventProgressResult = {
+      matchedTaskIds: [],
+      progressedAssignmentIds: [],
+      completedAssignmentIds: [],
+      duplicateAssignmentIds: [],
+    }
+
+    if (
+      !canConsumeEventEnvelopeByConsumer(
+        input.eventEnvelope,
+        EventDefinitionConsumerEnum.TASK,
+      )
+    ) {
+      return result
+    }
+
+    const occurredAt = input.eventEnvelope.occurredAt ?? new Date()
+    const candidateTasks = await this.findEventProgressTasks(
+      input.eventEnvelope.code,
+      occurredAt,
+    )
+
+    for (const taskRecord of candidateTasks) {
+      if (
+        !this.matchesTaskObjectiveConfig(
+          taskRecord.objectiveConfig,
+          input.eventEnvelope.context,
+        )
+      ) {
+        continue
+      }
+
+      result.matchedTaskIds.push(taskRecord.id)
+      const assignmentResult = await this.advanceAssignmentByEvent({
+        taskRecord,
+        userId: input.eventEnvelope.subjectId,
+        eventEnvelope: input.eventEnvelope,
+        eventBizKey: input.bizKey,
+        occurredAt,
+      })
+
+      if (!assignmentResult.assignmentId) {
+        continue
+      }
+      if (assignmentResult.duplicate) {
+        result.duplicateAssignmentIds.push(assignmentResult.assignmentId)
+        continue
+      }
+      if (assignmentResult.completed) {
+        result.completedAssignmentIds.push(assignmentResult.assignmentId)
+        continue
+      }
+      if (assignmentResult.progressed) {
+        result.progressedAssignmentIds.push(assignmentResult.assignmentId)
+      }
+    }
+
+    return result
   }
 
   // ==================== 定时任务 ====================
@@ -886,41 +1349,7 @@ export class TaskService {
    */
   @Cron('30 */5 * * * *')
   async retryCompletedAssignmentRewards() {
-    const assignments = await this.db
-      .select({
-        assignmentId: this.taskAssignmentTable.id,
-        taskId: this.taskAssignmentTable.taskId,
-        userId: this.taskAssignmentTable.userId,
-        completedAt: this.taskAssignmentTable.completedAt,
-        taskSnapshot: this.taskAssignmentTable.taskSnapshot,
-        title: this.taskTable.title,
-        rewardConfig: this.taskTable.rewardConfig,
-      })
-      .from(this.taskAssignmentTable)
-      .leftJoin(this.taskTable, eq(this.taskAssignmentTable.taskId, this.taskTable.id))
-      .where(
-        and(
-          isNull(this.taskAssignmentTable.deletedAt),
-          eq(this.taskAssignmentTable.status, TaskAssignmentStatusEnum.COMPLETED),
-          inArray(this.taskAssignmentTable.rewardStatus, [
-            TaskAssignmentRewardStatusEnum.PENDING,
-            TaskAssignmentRewardStatusEnum.FAILED,
-          ]),
-        ),
-      )
-      .orderBy(asc(this.taskAssignmentTable.id))
-      .limit(100)
-
-    for (const assignment of assignments) {
-      await this.emitTaskCompleteEvent(
-        assignment.userId,
-        this.buildTaskRewardTaskRecord(assignment.taskId, assignment, assignment),
-        {
-          id: assignment.assignmentId,
-          completedAt: assignment.completedAt,
-        },
-      )
-    }
+    await this.retryCompletedAssignmentRewardsBatch(100)
   }
 
   /**
@@ -941,7 +1370,9 @@ export class TaskService {
         userId: this.taskAssignmentTable.userId,
         cycleKey: this.taskAssignmentTable.cycleKey,
         expiredAt: this.taskAssignmentTable.expiredAt,
+        code: this.taskTable.code,
         title: this.taskTable.title,
+        type: this.taskTable.type,
       })
       .from(this.taskAssignmentTable)
       .innerJoin(
@@ -967,17 +1398,26 @@ export class TaskService {
 
     await this.messageOutboxService.enqueueNotificationEvents(
       assignments
-        .filter((item) => item.expiredAt)
+        .filter(
+          (
+            item,
+          ): item is typeof item & { expiredAt: Date } => Boolean(item.expiredAt),
+        )
         .map((item) =>
-          this.buildTaskReminderNotificationEvent({
-            bizKey: this.buildTaskExpiringSoonReminderBizKey(item.assignmentId),
+          this.taskNotificationService.createExpiringSoonReminderEvent({
+            bizKey: this.taskNotificationService.buildExpiringSoonReminderBizKey(
+              item.assignmentId,
+            ),
             receiverUserId: item.userId,
-            taskId: item.taskId,
-            taskTitle: item.title,
+            task: {
+              id: item.taskId,
+              code: item.code,
+              title: item.title,
+              type: item.type,
+            },
             cycleKey: item.cycleKey,
-            reminderKind: TaskReminderKindEnum.EXPIRING_SOON,
             assignmentId: item.assignmentId,
-            expiredAt: item.expiredAt ?? undefined,
+            expiredAt: item.expiredAt,
           }),
         ),
     )
@@ -1134,6 +1574,89 @@ export class TaskService {
   }
 
   /**
+   * 解析任务目标附加配置。
+   * 当前仅允许 JSON 对象或 null。
+   */
+  private parseTaskObjectiveConfig(
+    value?: string | Record<string, unknown> | null,
+  ) {
+    if (value === undefined || value === '') {
+      return undefined
+    }
+    if (value === null) {
+      return null
+    }
+
+    const parsed = this.parseJsonValue(value)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new BadRequestException('objectiveConfig 必须是 JSON 对象')
+    }
+    return parsed
+  }
+
+  /**
+   * 归一化并校验任务目标类型。
+   */
+  private parseTaskObjectiveType(value?: number | null) {
+    if (value === undefined || value === null) {
+      return TaskObjectiveTypeEnum.MANUAL
+    }
+    if (!Object.values(TaskObjectiveTypeEnum).includes(value)) {
+      throw new BadRequestException('objectiveType 仅支持 MANUAL、EVENT_COUNT')
+    }
+    return value
+  }
+
+  /**
+   * 归一化并校验目标事件编码。
+   */
+  private parseTaskEventCode(value?: number | string | null) {
+    if (value === undefined || value === '') {
+      return undefined
+    }
+    if (value === null) {
+      return null
+    }
+
+    const numericValue =
+      typeof value === 'string' ? Number.parseInt(value, 10) : value
+    if (!Number.isInteger(numericValue)) {
+      throw new BadRequestException('eventCode 必须是合法的事件编码')
+    }
+    if (!GROWTH_RULE_TYPE_VALUES.includes(numericValue as GrowthRuleTypeEnum)) {
+      throw new BadRequestException('eventCode 不是受支持的成长事件编码')
+    }
+    return numericValue as GrowthRuleTypeEnum
+  }
+
+  /**
+   * 校验任务目标模型合同。
+   */
+  private ensureTaskObjectiveContract(params: {
+    objectiveType: TaskObjectiveTypeEnum
+    eventCode?: GrowthRuleTypeEnum | null
+    objectiveConfig?: Record<string, unknown> | null
+  }) {
+    if (params.objectiveType === TaskObjectiveTypeEnum.MANUAL) {
+      if (params.eventCode !== undefined && params.eventCode !== null) {
+        throw new BadRequestException(
+          'MANUAL 任务不能配置 eventCode，请改为 EVENT_COUNT 或清空 eventCode',
+        )
+      }
+      if (params.objectiveConfig !== undefined && params.objectiveConfig !== null) {
+        throw new BadRequestException(
+          'MANUAL 任务不能配置 objectiveConfig，请改为 EVENT_COUNT 或清空 objectiveConfig',
+        )
+      }
+      return
+    }
+
+    if (params.eventCode === undefined || params.eventCode === null) {
+      throw new BadRequestException('EVENT_COUNT 任务必须配置 eventCode')
+    }
+  }
+
+  /**
    * 校验奖励配置中的正整数值。
    *
    * 任务奖励配置要求值为正整数，避免非法数值进入奖励结算路径。
@@ -1156,14 +1679,14 @@ export class TaskService {
    * - 已启用
    * - 在发布时间窗口内
    *
-   * @param type 任务类型（可选）
+   * @param type 任务场景类型（可选）
    * @returns 查询条件
    */
   private buildAvailableWhere(
     type?: TaskSelect['type'],
     claimMode?: TaskSelect['claimMode'],
+    now = new Date(),
   ): SQL | undefined {
-    const now = new Date()
     // 发布开始时间条件：为空或已到开始时间
     const publishStartCondition = or(
       isNull(this.taskTable.publishStartAt),
@@ -1188,7 +1711,9 @@ export class TaskService {
       conditions.push(publishEndCondition)
     }
     if (type !== undefined) {
-      conditions.push(eq(this.taskTable.type, type))
+      conditions.push(
+        inArray(this.taskTable.type, getTaskTypeFilterValues(type)),
+      )
     }
     if (claimMode !== undefined) {
       conditions.push(eq(this.taskTable.claimMode, claimMode))
@@ -1241,6 +1766,27 @@ export class TaskService {
   }
 
   /**
+   * 根据事件编码查找当前可消费的事件型任务。
+   * 事件推进仍受发布时间窗口约束，但统一以事件发生时间判断是否命中当前发布实例。
+   */
+  private async findEventProgressTasks(
+    eventCode: GrowthRuleTypeEnum,
+    occurredAt: Date,
+  ) {
+    const whereClause = and(
+      this.buildAvailableWhere(undefined, undefined, occurredAt),
+      eq(this.taskTable.objectiveType, TaskObjectiveTypeEnum.EVENT_COUNT),
+      eq(this.taskTable.eventCode, eventCode),
+    )
+
+    return this.db
+      .select()
+      .from(this.taskTable)
+      .where(whereClause)
+      .orderBy(desc(this.taskTable.priority), asc(this.taskTable.id))
+  }
+
+  /**
    * 构建任务周期标识
    *
    * 根据任务的重复规则生成当前周期的唯一标识：
@@ -1290,10 +1836,18 @@ export class TaskService {
   private async assertNoActiveAssignmentConfigMutation(
     taskRecord: Pick<
       TaskSelect,
-      'id' | 'repeatRule' | 'completeMode' | 'publishStartAt' | 'publishEndAt'
+      | 'id'
+      | 'repeatRule'
+      | 'completeMode'
+      | 'publishStartAt'
+      | 'publishEndAt'
+      | 'objectiveType'
+      | 'eventCode'
+      | 'objectiveConfig'
     >,
     dto: UpdateTaskInput,
     repeatRule: TaskRepeatRuleConfig | null | undefined,
+    objectiveType: TaskObjectiveTypeEnum,
   ) {
     const nextRepeatType =
       dto.repeatRule !== undefined
@@ -1305,6 +1859,18 @@ export class TaskService {
     const completeModeChanged =
       dto.completeMode !== undefined
       && dto.completeMode !== taskRecord.completeMode
+    const objectiveTypeChanged =
+      dto.objectiveType !== undefined
+      && objectiveType !== normalizeTaskObjectiveType(taskRecord.objectiveType)
+    const eventCodeChanged =
+      dto.eventCode !== undefined
+      && (dto.eventCode ?? null) !== (taskRecord.eventCode ?? null)
+    const objectiveConfigChanged =
+      dto.objectiveConfig !== undefined
+      && JSON.stringify(
+          this.asRecord(dto.objectiveConfig) ?? dto.objectiveConfig ?? null,
+        )
+        !== JSON.stringify(this.asRecord(taskRecord.objectiveConfig) ?? taskRecord.objectiveConfig ?? null)
     const publishWindowChanged =
       (dto.publishStartAt !== undefined
         && !this.isSameNullableDate(
@@ -1317,7 +1883,14 @@ export class TaskService {
           taskRecord.publishEndAt ?? null,
         ))
 
-    if (!repeatRuleChanged && !completeModeChanged && !publishWindowChanged) {
+    if (
+      !repeatRuleChanged
+      && !completeModeChanged
+      && !objectiveTypeChanged
+      && !eventCodeChanged
+      && !objectiveConfigChanged
+      && !publishWindowChanged
+    ) {
       return
     }
 
@@ -1346,6 +1919,9 @@ export class TaskService {
     }
     if (completeModeChanged) {
       blockedFields.push('完成方式')
+    }
+    if (objectiveTypeChanged || eventCodeChanged || objectiveConfigChanged) {
+      blockedFields.push('任务目标')
     }
     if (publishWindowChanged) {
       blockedFields.push('发布时间窗口')
@@ -1386,7 +1962,9 @@ export class TaskService {
    * @param taskRecord.id 任务ID
    * @param taskRecord.code 任务编码
    * @param taskRecord.title 任务标题
-   * @param taskRecord.type 任务类型
+   * @param taskRecord.type 任务场景类型
+   * @param taskRecord.objectiveType 任务目标类型
+   * @param taskRecord.eventCode 目标事件编码
    * @param taskRecord.rewardConfig 奖励配置
    * @param taskRecord.targetCount 目标数量
    * @returns 任务快照对象
@@ -1396,7 +1974,17 @@ export class TaskService {
       id: taskRecord.id,
       code: taskRecord.code,
       title: taskRecord.title,
-      type: taskRecord.type,
+      description: taskRecord.description,
+      cover: taskRecord.cover,
+      type: normalizeTaskType(taskRecord.type),
+      claimMode: taskRecord.claimMode,
+      completeMode: taskRecord.completeMode,
+      objectiveType: normalizeTaskObjectiveType(taskRecord.objectiveType),
+      eventCode: taskRecord.eventCode ?? null,
+      objectiveConfig: taskRecord.objectiveConfig ?? null,
+      repeatRule: taskRecord.repeatRule,
+      publishStartAt: taskRecord.publishStartAt,
+      publishEndAt: taskRecord.publishEndAt,
       rewardConfig: taskRecord.rewardConfig,
       targetCount: taskRecord.targetCount,
     }
@@ -1472,12 +2060,15 @@ export class TaskService {
 
     await db.insert(this.taskProgressLogTable).values(
       expiredAssignments.map((assignment) => ({
-        assignmentId: assignment.assignmentId,
-        userId: assignment.userId,
-        actionType: TaskProgressActionTypeEnum.EXPIRE,
-        delta: 0,
-        beforeValue: assignment.progress,
-        afterValue: assignment.progress,
+        ...this.buildTaskProgressLogRecord({
+          assignmentId: assignment.assignmentId,
+          userId: assignment.userId,
+          actionType: TaskProgressActionTypeEnum.EXPIRE,
+          progressSource: TaskProgressSourceEnum.SYSTEM,
+          delta: 0,
+          beforeValue: assignment.progress,
+          afterValue: assignment.progress,
+        }),
       })),
     )
 
@@ -1527,6 +2118,10 @@ export class TaskService {
     userId: number,
     cycleKey: string,
     now: Date,
+    options?: {
+      notifyAutoAssignment?: boolean
+      progressSource?: TaskProgressSourceEnum
+    },
   ) {
     const taskSnapshot = this.buildTaskSnapshot(taskRecord)
     let createdAssignment: TaskAssignmentSelect | undefined
@@ -1550,14 +2145,21 @@ export class TaskService {
 
       if (insertedAssignment) {
         createdAssignment = insertedAssignment
-        await tx.insert(this.taskProgressLogTable).values({
-          assignmentId: insertedAssignment.id,
-          userId,
-          actionType: TaskProgressActionTypeEnum.CLAIM,
-          delta: 0,
-          beforeValue: 0,
-          afterValue: 0,
-        })
+        await tx.insert(this.taskProgressLogTable).values(
+          this.buildTaskProgressLogRecord({
+            assignmentId: insertedAssignment.id,
+            userId,
+            actionType: TaskProgressActionTypeEnum.CLAIM,
+            progressSource:
+              options?.progressSource
+              ?? (taskRecord.claimMode === TaskClaimModeEnum.AUTO
+                ? TaskProgressSourceEnum.SYSTEM
+                : TaskProgressSourceEnum.MANUAL),
+            delta: 0,
+            beforeValue: 0,
+            afterValue: 0,
+          }),
+        )
         return insertedAssignment
       }
 
@@ -1581,7 +2183,11 @@ export class TaskService {
       throw new NotFoundException('任务分配创建失败')
     })
 
-    if (createdAssignment && taskRecord.claimMode === TaskClaimModeEnum.AUTO) {
+    if (
+      createdAssignment
+      && taskRecord.claimMode === TaskClaimModeEnum.AUTO
+      && options?.notifyAutoAssignment !== false
+    ) {
       await this.tryNotifyAutoAssignedTask(
         userId,
         taskRecord,
@@ -1591,6 +2197,265 @@ export class TaskService {
     }
 
     return assignment
+  }
+
+  private buildTaskProgressLogRecord(params: {
+    assignmentId: number
+    userId: number
+    actionType: TaskProgressActionTypeEnum
+    progressSource: TaskProgressSourceEnum
+    delta: number
+    beforeValue: number
+    afterValue: number
+    context?: unknown
+    eventCode?: GrowthRuleTypeEnum | null
+    eventBizKey?: string | null
+    eventOccurredAt?: Date | null
+  }) {
+    return {
+      assignmentId: params.assignmentId,
+      userId: params.userId,
+      actionType: params.actionType,
+      progressSource: params.progressSource,
+      delta: params.delta,
+      beforeValue: params.beforeValue,
+      afterValue: params.afterValue,
+      eventCode: params.eventCode ?? null,
+      eventBizKey: params.eventBizKey ?? null,
+      eventOccurredAt: params.eventOccurredAt ?? null,
+      context: params.context,
+    }
+  }
+
+  private buildTaskEventProgressContext(
+    eventEnvelope: TaskEventProgressInput['eventEnvelope'],
+    bizKey: string,
+  ) {
+    return {
+      ...(eventEnvelope.context ?? {}),
+      eventCode: eventEnvelope.code,
+      eventKey: eventEnvelope.key,
+      eventBizKey: bizKey,
+      eventSubjectId: eventEnvelope.subjectId,
+      eventOperatorId: eventEnvelope.operatorId,
+      governanceStatus: eventEnvelope.governanceStatus,
+      occurredAt: eventEnvelope.occurredAt.toISOString(),
+    }
+  }
+
+  private matchesTaskObjectiveConfig(
+    objectiveConfig: unknown,
+    eventContext?: Record<string, unknown>,
+  ) {
+    const normalizedObjectiveConfig = this.asRecord(objectiveConfig)
+    if (!normalizedObjectiveConfig) {
+      return true
+    }
+
+    const normalizedEventContext = eventContext ?? {}
+    return Object.entries(normalizedObjectiveConfig).every(([key, value]) =>
+      JSON.stringify(normalizedEventContext[key]) === JSON.stringify(value),
+    )
+  }
+
+  private async advanceAssignmentByEvent(params: {
+    taskRecord: TaskSelect
+    userId: number
+    eventEnvelope: TaskEventProgressInput['eventEnvelope']
+    eventBizKey: string
+    occurredAt: Date
+  }) {
+    const cycleKey = this.buildCycleKey(params.taskRecord, params.occurredAt)
+    let assignment = await this.findAssignmentByUniqueKey(
+      params.taskRecord.id,
+      params.userId,
+      cycleKey,
+    )
+
+    if (!assignment) {
+      if (params.taskRecord.claimMode !== TaskClaimModeEnum.AUTO) {
+        return { assignmentId: undefined, progressed: false, completed: false, duplicate: false }
+      }
+
+      assignment = await this.createOrGetAssignment(
+        params.taskRecord,
+        params.userId,
+        cycleKey,
+        params.occurredAt,
+        {
+          notifyAutoAssignment: false,
+          progressSource: TaskProgressSourceEnum.EVENT,
+        },
+      )
+    }
+
+    if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
+      await this.settleCompletedAssignmentRewardIfNeeded(
+        params.userId,
+        this.buildTaskRewardTaskRecord(params.taskRecord.id, params.taskRecord, assignment),
+        assignment,
+      )
+      return {
+        assignmentId: assignment.id,
+        progressed: false,
+        completed: false,
+        duplicate: false,
+      }
+    }
+
+    if (assignment.status === TaskAssignmentStatusEnum.EXPIRED) {
+      return {
+        assignmentId: assignment.id,
+        progressed: false,
+        completed: false,
+        duplicate: false,
+      }
+    }
+
+    if (
+      params.taskRecord.claimMode === TaskClaimModeEnum.MANUAL
+      && assignment.claimedAt
+      && params.occurredAt.getTime() < assignment.claimedAt.getTime()
+    ) {
+      return {
+        assignmentId: assignment.id,
+        progressed: false,
+        completed: false,
+        duplicate: false,
+      }
+    }
+
+    const nextProgress = Math.min(assignment.target, assignment.progress + 1)
+    const shouldAutoComplete =
+      params.taskRecord.completeMode === TaskCompleteModeEnum.AUTO
+      && nextProgress >= assignment.target
+    if (!shouldAutoComplete && nextProgress <= assignment.progress) {
+      return {
+        assignmentId: assignment.id,
+        progressed: false,
+        completed: false,
+        duplicate: false,
+      }
+    }
+
+    const nextStatus =
+      shouldAutoComplete
+        ? TaskAssignmentStatusEnum.COMPLETED
+        : TaskAssignmentStatusEnum.IN_PROGRESS
+    const eventContext = this.buildTaskEventProgressContext(
+      params.eventEnvelope,
+      params.eventBizKey,
+    )
+    const eventApplied = await this.applyAssignmentEventProgress({
+      assignment,
+      userId: params.userId,
+      nextProgress,
+      nextStatus,
+      eventCode: params.eventEnvelope.code,
+      eventBizKey: params.eventBizKey,
+      eventOccurredAt: params.occurredAt,
+      context: eventContext,
+    })
+
+    if (eventApplied === 'duplicate') {
+      return {
+        assignmentId: assignment.id,
+        progressed: false,
+        completed: false,
+        duplicate: true,
+      }
+    }
+
+    if (
+      assignment.status !== TaskAssignmentStatusEnum.COMPLETED
+      && nextStatus === TaskAssignmentStatusEnum.COMPLETED
+    ) {
+      await this.emitTaskCompleteEvent(
+        params.userId,
+        this.buildTaskRewardTaskRecord(params.taskRecord.id, params.taskRecord, assignment),
+        {
+          ...assignment,
+          completedAt: params.occurredAt,
+        },
+      )
+    }
+
+    return {
+      assignmentId: assignment.id,
+      progressed: nextStatus !== TaskAssignmentStatusEnum.COMPLETED,
+      completed: nextStatus === TaskAssignmentStatusEnum.COMPLETED,
+      duplicate: false,
+    }
+  }
+
+  private async applyAssignmentEventProgress(params: {
+    assignment: TaskAssignmentSelect
+    userId: number
+    nextProgress: number
+    nextStatus: TaskAssignmentStatusEnum
+    eventCode: GrowthRuleTypeEnum
+    eventBizKey: string
+    eventOccurredAt: Date
+    context: Record<string, unknown>
+  }) {
+    return this.drizzle.withTransaction(async (tx) => {
+      const [insertedLog] = await tx
+        .insert(this.taskProgressLogTable)
+        .values(
+          this.buildTaskProgressLogRecord({
+            assignmentId: params.assignment.id,
+            userId: params.userId,
+            actionType:
+              params.nextStatus === TaskAssignmentStatusEnum.COMPLETED
+                ? TaskProgressActionTypeEnum.COMPLETE
+                : TaskProgressActionTypeEnum.PROGRESS,
+            progressSource: TaskProgressSourceEnum.EVENT,
+            delta: Math.max(0, params.nextProgress - params.assignment.progress),
+            beforeValue: params.assignment.progress,
+            afterValue: params.nextProgress,
+            eventCode: params.eventCode,
+            eventBizKey: params.eventBizKey,
+            eventOccurredAt: params.eventOccurredAt,
+            context: params.context,
+          }),
+        )
+        .onConflictDoNothing({
+          target: [
+            this.taskProgressLogTable.assignmentId,
+            this.taskProgressLogTable.eventBizKey,
+          ],
+        })
+        .returning({ id: this.taskProgressLogTable.id })
+
+      if (!insertedLog) {
+        return 'duplicate' as const
+      }
+
+      const updateResult = await tx
+        .update(this.taskAssignmentTable)
+        .set({
+          progress: params.nextProgress,
+          status: params.nextStatus,
+          completedAt:
+            params.nextStatus === TaskAssignmentStatusEnum.COMPLETED
+              ? params.eventOccurredAt
+              : undefined,
+          context: params.context,
+          version: sql`${this.taskAssignmentTable.version} + 1`,
+        })
+        .where(
+          and(
+            eq(this.taskAssignmentTable.id, params.assignment.id),
+            eq(this.taskAssignmentTable.version, params.assignment.version),
+          ),
+        )
+
+      if ((updateResult.rowCount ?? 0) === 0) {
+        throw new ConflictException('任务事件推进冲突，请重试')
+      }
+
+      return 'applied' as const
+    })
   }
 
   /**
@@ -1675,7 +2540,13 @@ export class TaskService {
         id: this.taskTable.id,
         code: this.taskTable.code,
         title: this.taskTable.title,
+        description: this.taskTable.description,
+        cover: this.taskTable.cover,
         type: this.taskTable.type,
+        completeMode: this.taskTable.completeMode,
+        objectiveType: this.taskTable.objectiveType,
+        eventCode: this.taskTable.eventCode,
+        objectiveConfig: this.taskTable.objectiveConfig,
         rewardConfig: this.taskTable.rewardConfig,
         targetCount: this.taskTable.targetCount,
         claimMode: this.taskTable.claimMode,
@@ -1765,7 +2636,9 @@ export class TaskService {
   private buildTaskRewardTaskRecord(
     taskId: number,
     currentTask?: {
+      code?: string | null
       title?: string | null
+      type?: number | null
       rewardConfig?: unknown
     },
     assignment?: {
@@ -1776,10 +2649,18 @@ export class TaskService {
 
     return {
       id: taskId,
+      code:
+        typeof snapshot?.code === 'string'
+          ? snapshot.code
+          : (currentTask?.code ?? undefined),
       title:
         typeof snapshot?.title === 'string'
           ? snapshot.title
           : (currentTask?.title ?? undefined),
+      type:
+        typeof snapshot?.type === 'number'
+          ? snapshot.type
+          : (currentTask?.type ?? undefined),
       rewardConfig: snapshot?.rewardConfig ?? currentTask?.rewardConfig,
     }
   }
@@ -1915,17 +2796,20 @@ export class TaskService {
       )
       .map((taskRecord) => {
         const cycleKey = this.buildCycleKey(taskRecord, now)
-        return this.buildTaskReminderNotificationEvent({
-          bizKey: this.buildTaskAvailableReminderBizKey(
+        return this.taskNotificationService.createAvailableReminderEvent({
+          bizKey: this.taskNotificationService.buildAvailableReminderBizKey(
             taskRecord.id,
             userId,
             cycleKey,
           ),
           receiverUserId: userId,
-          taskId: taskRecord.id,
-          taskTitle: taskRecord.title,
+          task: {
+            id: taskRecord.id,
+            code: taskRecord.code,
+            title: taskRecord.title,
+            type: taskRecord.type,
+          },
           cycleKey,
-          reminderKind: TaskReminderKindEnum.AVAILABLE,
           claimMode: taskRecord.claimMode,
         })
       })
@@ -1952,35 +2836,34 @@ export class TaskService {
     userId: number,
     taskRecord: {
       id: number
+      code?: string | null
       title: string
+      type?: number | null
       claimMode?: number
     },
     assignment: { id: number },
     cycleKey: string,
   ) {
     try {
-      await this.messageOutboxService.enqueueNotificationEvent({
-        eventType: MessageNotificationTypeEnum.TASK_REMINDER,
-        bizKey: this.buildTaskAvailableReminderBizKey(
-          taskRecord.id,
-          userId,
-          cycleKey,
-        ),
-        payload: this.buildTaskReminderNotificationEvent({
-          bizKey: this.buildTaskAvailableReminderBizKey(
+      await this.messageOutboxService.enqueueNotificationEvent(
+        this.taskNotificationService.createAvailableReminderEvent({
+          bizKey: this.taskNotificationService.buildAvailableReminderBizKey(
             taskRecord.id,
             userId,
             cycleKey,
           ),
           receiverUserId: userId,
-          taskId: taskRecord.id,
-          taskTitle: taskRecord.title,
+          task: {
+            id: taskRecord.id,
+            code: taskRecord.code,
+            title: taskRecord.title,
+            type: taskRecord.type,
+          },
           cycleKey,
-          reminderKind: TaskReminderKindEnum.AVAILABLE,
           claimMode: taskRecord.claimMode,
           assignmentId: assignment.id,
-        }).payload,
-      })
+        }),
+      )
     } catch (error) {
       this.logger.warn(
         `task_auto_assignment_reminder_enqueue_failed userId=${userId} taskId=${taskRecord.id} assignmentId=${assignment.id} error=${this.stringifyError(error)}`,
@@ -1997,7 +2880,9 @@ export class TaskService {
     userId: number,
     taskRecord: {
       id: number
+      code?: string | null
       title?: string
+      type?: number | null
     },
     assignment: { id: number },
     rewardResult: TaskRewardSettlementResult,
@@ -2018,12 +2903,17 @@ export class TaskService {
 
     try {
       await this.messageOutboxService.enqueueNotificationEvent(
-        this.buildTaskReminderNotificationEvent({
-          bizKey: this.buildTaskRewardGrantedReminderBizKey(assignment.id),
+        this.taskNotificationService.createRewardGrantedReminderEvent({
+          bizKey: this.taskNotificationService.buildRewardGrantedReminderBizKey(
+            assignment.id,
+          ),
           receiverUserId: userId,
-          taskId: taskRecord.id,
-          taskTitle: taskRecord.title ?? `任务#${taskRecord.id}`,
-          reminderKind: TaskReminderKindEnum.REWARD_GRANTED,
+          task: {
+            id: taskRecord.id,
+            code: taskRecord.code,
+            title: taskRecord.title ?? `任务#${taskRecord.id}`,
+            type: taskRecord.type,
+          },
           assignmentId: assignment.id,
           points: grantedPoints,
           experience: grantedExperience,
@@ -2061,6 +2951,9 @@ export class TaskService {
     | 'priority'
     | 'claimMode'
     | 'completeMode'
+    | 'objectiveType'
+    | 'eventCode'
+    | 'objectiveConfig'
     | 'targetCount'
     | 'rewardConfig'
     | 'publishStartAt'
@@ -2075,15 +2968,19 @@ export class TaskService {
       title: taskRecord.title,
       description: taskRecord.description,
       cover: taskRecord.cover,
-      type: taskRecord.type,
+      type: normalizeTaskType(taskRecord.type),
       priority: taskRecord.priority,
       claimMode: taskRecord.claimMode,
       completeMode: taskRecord.completeMode,
+      objectiveType: normalizeTaskObjectiveType(taskRecord.objectiveType),
+      eventCode: taskRecord.eventCode,
+      objectiveConfig: taskRecord.objectiveConfig,
       targetCount: taskRecord.targetCount,
       rewardConfig: taskRecord.rewardConfig,
       publishStartAt: taskRecord.publishStartAt,
       publishEndAt: taskRecord.publishEndAt,
       repeatRule: taskRecord.repeatRule,
+      visibleStatus: TaskUserVisibleStatusEnum.CLAIMABLE,
     }
   }
 
@@ -2091,8 +2988,14 @@ export class TaskService {
     item: TaskAssignmentSelect & {
       task?: {
         id: number | null
+        code?: string | null
         title: string | null
+        description?: string | null
+        cover?: string | null
         type: number | null
+        objectiveType?: number | null
+        eventCode?: number | null
+        objectiveConfig?: unknown
         rewardConfig: unknown
         targetCount?: number | null
         completeMode?: number | null
@@ -2100,6 +3003,7 @@ export class TaskService {
       } | null
     },
   ) {
+    const taskView = this.buildAssignmentTaskView(item)
     return {
       id: item.id,
       createdAt: item.createdAt,
@@ -2107,25 +3011,582 @@ export class TaskService {
       taskId: item.taskId,
       cycleKey: item.cycleKey,
       status: item.status,
+      rewardStatus: item.rewardStatus,
+      rewardResultType: item.rewardResultType,
       progress: item.progress,
       target: item.target,
       claimedAt: item.claimedAt,
       completedAt: item.completedAt,
       expiredAt: item.expiredAt,
-      task:
-        item.task && item.task.id !== null
-          ? {
-              id: item.task.id,
-              title: item.task.title ?? '',
-              type: item.task.type ?? TaskTypeEnum.NEWBIE,
-              rewardConfig: item.task.rewardConfig,
-              targetCount: item.task.targetCount ?? item.target,
-              completeMode:
-                item.task.completeMode ?? TaskCompleteModeEnum.MANUAL,
-              claimMode: item.task.claimMode ?? TaskClaimModeEnum.MANUAL,
-            }
-          : null,
+      rewardSettledAt: item.rewardSettledAt,
+      rewardLedgerIds: item.rewardLedgerIds,
+      lastRewardError: item.lastRewardError,
+      visibleStatus: this.resolveTaskUserVisibleStatus({
+        status: item.status,
+        rewardStatus: item.rewardStatus,
+        rewardConfig: taskView?.rewardConfig,
+      }),
+      task: taskView,
     }
+  }
+
+  private toAdminTaskView(
+    taskRecord: TaskSelect,
+    runtimeHealth?: {
+      activeAssignmentCount: number
+      pendingRewardCompensationCount: number
+      latestReminder?: {
+        reminderKind?: string
+        status: MessageNotificationDispatchStatusEnum
+        failureReason?: string | null
+        lastAttemptAt: Date
+        updatedAt: Date
+      }
+    },
+  ) {
+    return {
+      ...this.normalizeTaskTypeRecord(taskRecord),
+      activeAssignmentCount: runtimeHealth?.activeAssignmentCount ?? 0,
+      pendingRewardCompensationCount:
+        runtimeHealth?.pendingRewardCompensationCount ?? 0,
+      latestReminder: runtimeHealth?.latestReminder ?? null,
+    }
+  }
+
+  private toAdminTaskAssignmentView(
+    item: TaskAssignmentSelect & {
+      task?: {
+        id: number | null
+        code?: string | null
+        title: string | null
+        description?: string | null
+        cover?: string | null
+        type: number | null
+        objectiveType?: number | null
+        eventCode?: number | null
+        objectiveConfig?: unknown
+        rewardConfig: unknown
+        targetCount?: number | null
+        completeMode?: number | null
+        claimMode?: number | null
+      } | null
+    },
+  ) {
+    const taskView = this.buildAssignmentTaskView(item)
+    return {
+      ...item,
+      visibleStatus: this.resolveTaskUserVisibleStatus({
+        status: item.status,
+        rewardStatus: item.rewardStatus,
+        rewardConfig: taskView?.rewardConfig,
+      }),
+      task: taskView,
+    }
+  }
+
+  private normalizeTaskTypeRecord<T extends { type: number | null }>(record: T) {
+    return {
+      ...record,
+      type: normalizeTaskType(record.type),
+      objectiveType: normalizeTaskObjectiveType(
+        (record as { objectiveType?: number | null }).objectiveType,
+      ),
+    }
+  }
+
+  private normalizeTaskRelation(record: {
+    id: number | null
+    code?: string | null
+    title: string | null
+    description?: string | null
+    cover?: string | null
+    type: number | null
+    objectiveType?: number | null
+    eventCode?: number | null
+    objectiveConfig?: unknown
+    rewardConfig: unknown
+    targetCount?: number | null
+    completeMode?: number | null
+    claimMode?: number | null
+  }) {
+    return {
+      ...record,
+      type: normalizeTaskType(record.type),
+      objectiveType: normalizeTaskObjectiveType(record.objectiveType),
+    }
+  }
+
+  private buildAssignmentTaskView(
+    item: TaskAssignmentSelect & {
+      task?: {
+        id: number | null
+        code?: string | null
+        title: string | null
+        description?: string | null
+        cover?: string | null
+        type: number | null
+        objectiveType?: number | null
+        eventCode?: number | null
+        objectiveConfig?: unknown
+        rewardConfig: unknown
+        targetCount?: number | null
+        completeMode?: number | null
+        claimMode?: number | null
+      } | null
+    },
+  ) {
+    const snapshot = this.asRecord(item.taskSnapshot)
+    const liveTask = item.task ? this.normalizeTaskRelation(item.task) : null
+    const taskId =
+      this.readSnapshotPositiveInt(snapshot?.id)
+      ?? liveTask?.id
+      ?? item.taskId
+
+    if (!taskId) {
+      return null
+    }
+
+    return {
+      id: taskId,
+      code:
+        this.readSnapshotString(snapshot?.code)
+        ?? liveTask?.code
+        ?? `task-${taskId}`,
+      title:
+        this.readSnapshotString(snapshot?.title)
+        ?? liveTask?.title
+        ?? `任务#${taskId}`,
+      description:
+        this.readSnapshotString(snapshot?.description)
+        ?? liveTask?.description
+        ?? null,
+      cover:
+        this.readSnapshotString(snapshot?.cover) ?? liveTask?.cover ?? null,
+      type: normalizeTaskType(
+        this.readSnapshotPositiveInt(snapshot?.type) ?? liveTask?.type,
+      ),
+      objectiveType: normalizeTaskObjectiveType(
+        this.readSnapshotPositiveInt(snapshot?.objectiveType)
+        ?? liveTask?.objectiveType,
+      ),
+      eventCode:
+        this.readSnapshotPositiveInt(snapshot?.eventCode)
+        ?? liveTask?.eventCode
+        ?? null,
+      objectiveConfig:
+        snapshot?.objectiveConfig ?? liveTask?.objectiveConfig ?? null,
+      rewardConfig: snapshot?.rewardConfig ?? liveTask?.rewardConfig ?? null,
+      targetCount:
+        this.readSnapshotPositiveInt(snapshot?.targetCount)
+        ?? liveTask?.targetCount
+        ?? item.target,
+      completeMode:
+        this.readSnapshotPositiveInt(snapshot?.completeMode)
+        ?? liveTask?.completeMode
+        ?? TaskCompleteModeEnum.MANUAL,
+      claimMode:
+        this.readSnapshotPositiveInt(snapshot?.claimMode)
+        ?? liveTask?.claimMode
+        ?? TaskClaimModeEnum.MANUAL,
+    }
+  }
+
+  private resolveTaskUserVisibleStatus(params: {
+    status: TaskAssignmentSelect['status']
+    rewardStatus?: TaskAssignmentSelect['rewardStatus'] | null
+    rewardConfig?: unknown
+  }) {
+    if (params.status === TaskAssignmentStatusEnum.EXPIRED) {
+      return TaskUserVisibleStatusEnum.EXPIRED
+    }
+    if (params.status === TaskAssignmentStatusEnum.IN_PROGRESS) {
+      return TaskUserVisibleStatusEnum.IN_PROGRESS
+    }
+    if (params.status === TaskAssignmentStatusEnum.PENDING) {
+      return TaskUserVisibleStatusEnum.CLAIMED
+    }
+    if (params.status === TaskAssignmentStatusEnum.COMPLETED) {
+      if (!this.hasConfiguredTaskReward(params.rewardConfig)) {
+        return TaskUserVisibleStatusEnum.COMPLETED
+      }
+      return params.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS
+        ? TaskUserVisibleStatusEnum.REWARD_GRANTED
+        : TaskUserVisibleStatusEnum.REWARD_PENDING
+    }
+    return TaskUserVisibleStatusEnum.UNAVAILABLE
+  }
+
+  private async getTaskRuntimeHealthMap(taskIds: number[]) {
+    const uniqueTaskIds = [...new Set(taskIds.filter((id) => id > 0))]
+    if (uniqueTaskIds.length === 0) {
+      return new Map<number, {
+        activeAssignmentCount: number
+        pendingRewardCompensationCount: number
+        latestReminder?: {
+          reminderKind?: string
+          status: MessageNotificationDispatchStatusEnum
+          failureReason?: string | null
+          lastAttemptAt: Date
+          updatedAt: Date
+        }
+      }>()
+    }
+
+    const [activeRows, rewardPendingRows, reminderRows] = await Promise.all([
+      this.db
+        .select({
+          taskId: this.taskAssignmentTable.taskId,
+          count: sql<number>`COUNT(*)::int`,
+        })
+        .from(this.taskAssignmentTable)
+        .where(
+          and(
+            isNull(this.taskAssignmentTable.deletedAt),
+            inArray(this.taskAssignmentTable.taskId, uniqueTaskIds),
+            inArray(this.taskAssignmentTable.status, [
+              TaskAssignmentStatusEnum.PENDING,
+              TaskAssignmentStatusEnum.IN_PROGRESS,
+              TaskAssignmentStatusEnum.COMPLETED,
+            ]),
+          ),
+        )
+        .groupBy(this.taskAssignmentTable.taskId),
+      this.db
+        .select({
+          taskId: this.taskAssignmentTable.taskId,
+          count: sql<number>`COUNT(*)::int`,
+        })
+        .from(this.taskAssignmentTable)
+        .where(
+          and(
+            isNull(this.taskAssignmentTable.deletedAt),
+            inArray(this.taskAssignmentTable.taskId, uniqueTaskIds),
+            eq(
+              this.taskAssignmentTable.status,
+              TaskAssignmentStatusEnum.COMPLETED,
+            ),
+            inArray(this.taskAssignmentTable.rewardStatus, [
+              TaskAssignmentRewardStatusEnum.PENDING,
+              TaskAssignmentRewardStatusEnum.FAILED,
+            ]),
+          ),
+        )
+        .groupBy(this.taskAssignmentTable.taskId),
+      this.queryLatestTaskReminderRows(uniqueTaskIds),
+    ])
+
+    const runtimeMap = new Map<number, {
+      activeAssignmentCount: number
+      pendingRewardCompensationCount: number
+      latestReminder?: {
+        reminderKind?: string
+        status: MessageNotificationDispatchStatusEnum
+        failureReason?: string | null
+        lastAttemptAt: Date
+        updatedAt: Date
+      }
+    }>()
+
+    for (const taskId of uniqueTaskIds) {
+      runtimeMap.set(taskId, {
+        activeAssignmentCount: 0,
+        pendingRewardCompensationCount: 0,
+      })
+    }
+
+    for (const row of activeRows) {
+      const current = runtimeMap.get(row.taskId) ?? {
+        activeAssignmentCount: 0,
+        pendingRewardCompensationCount: 0,
+      }
+      runtimeMap.set(row.taskId, {
+        ...current,
+        activeAssignmentCount: Number(row.count ?? 0),
+      })
+    }
+
+    for (const row of rewardPendingRows) {
+      const current = runtimeMap.get(row.taskId) ?? {
+        activeAssignmentCount: 0,
+        pendingRewardCompensationCount: 0,
+      }
+      runtimeMap.set(row.taskId, {
+        ...current,
+        pendingRewardCompensationCount: Number(row.count ?? 0),
+      })
+    }
+
+    for (const row of reminderRows) {
+      if (!runtimeMap.has(row.taskId)) {
+        continue
+      }
+      const current = runtimeMap.get(row.taskId) ?? {
+        activeAssignmentCount: 0,
+        pendingRewardCompensationCount: 0,
+      }
+      runtimeMap.set(row.taskId, {
+        ...current,
+        latestReminder: {
+          reminderKind: row.reminderKind ?? undefined,
+          status: row.status,
+          failureReason: row.failureReason ?? undefined,
+          lastAttemptAt: row.lastAttemptAt,
+          updatedAt: row.updatedAt,
+        },
+      })
+    }
+
+    return runtimeMap
+  }
+
+  private async queryLatestTaskReminderRows(taskIds: number[]) {
+    const taskIdSql =
+      sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'taskId')::int`
+    const reminderKindSql =
+      sql<string | null>`${this.messageOutboxTable.payload} -> 'payload' ->> 'reminderKind'`
+
+    const rows = await this.db
+      .select({
+        taskId: taskIdSql,
+        reminderKind: reminderKindSql,
+        status: this.notificationDeliveryTable.status,
+        failureReason: this.notificationDeliveryTable.failureReason,
+        lastAttemptAt: this.notificationDeliveryTable.lastAttemptAt,
+        updatedAt: this.notificationDeliveryTable.updatedAt,
+      })
+      .from(this.notificationDeliveryTable)
+      .leftJoin(
+        this.messageOutboxTable,
+        eq(this.notificationDeliveryTable.outboxId, this.messageOutboxTable.id),
+      )
+      .where(
+        and(
+          eq(
+            this.notificationDeliveryTable.notificationType,
+            MessageNotificationTypeEnum.TASK_REMINDER,
+          ),
+          inArray(taskIdSql, taskIds),
+        ),
+      )
+      .orderBy(
+        desc(this.notificationDeliveryTable.updatedAt),
+        desc(this.notificationDeliveryTable.id),
+      )
+
+    const latestRows: Array<{
+      taskId: number
+      reminderKind: string | null
+      status: MessageNotificationDispatchStatusEnum
+      failureReason: string | null
+      lastAttemptAt: Date
+      updatedAt: Date
+    }> = []
+    const seenTaskIds = new Set<number>()
+
+    for (const row of rows) {
+      if (!row.taskId || seenTaskIds.has(row.taskId)) {
+        continue
+      }
+      seenTaskIds.add(row.taskId)
+      latestRows.push({
+        taskId: row.taskId,
+        reminderKind: row.reminderKind,
+        status: row.status as MessageNotificationDispatchStatusEnum,
+        failureReason: row.failureReason,
+        lastAttemptAt: row.lastAttemptAt,
+        updatedAt: row.updatedAt,
+      })
+    }
+
+    return latestRows
+  }
+
+  private async queryAssignmentIdsByEventFilter(
+    queryDto: Pick<
+      QueryTaskAssignmentReconciliationPageInput,
+      'eventCode' | 'eventBizKey'
+    >,
+  ) {
+    if (queryDto.eventCode === undefined && !queryDto.eventBizKey?.trim()) {
+      return undefined
+    }
+
+    const conditions: SQL[] = []
+    if (queryDto.eventCode !== undefined) {
+      conditions.push(eq(this.taskProgressLogTable.eventCode, queryDto.eventCode))
+    }
+    if (queryDto.eventBizKey?.trim()) {
+      conditions.push(eq(this.taskProgressLogTable.eventBizKey, queryDto.eventBizKey.trim()))
+    }
+
+    const rows = await this.db
+      .select({ assignmentId: this.taskProgressLogTable.assignmentId })
+      .from(this.taskProgressLogTable)
+      .where(and(...conditions))
+
+    return [...new Set(rows.map((item) => item.assignmentId))]
+  }
+
+  private async queryAssignmentIdsByRewardReminderFilter(
+    queryDto: Pick<
+      QueryTaskAssignmentReconciliationPageInput,
+      'notificationStatus'
+    >,
+  ) {
+    if (queryDto.notificationStatus === undefined) {
+      return undefined
+    }
+
+    const assignmentIdSql =
+      sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'assignmentId')::int`
+    const reminderKindSql =
+      sql<string | null>`${this.messageOutboxTable.payload} -> 'payload' ->> 'reminderKind'`
+    const rows = await this.db
+      .select({ assignmentId: assignmentIdSql })
+      .from(this.notificationDeliveryTable)
+      .leftJoin(
+        this.messageOutboxTable,
+        eq(this.notificationDeliveryTable.outboxId, this.messageOutboxTable.id),
+      )
+      .where(
+        and(
+          eq(
+            this.notificationDeliveryTable.notificationType,
+            MessageNotificationTypeEnum.TASK_REMINDER,
+          ),
+          eq(this.notificationDeliveryTable.status, queryDto.notificationStatus),
+          eq(reminderKindSql, TaskReminderKindEnum.REWARD_GRANTED),
+        ),
+      )
+
+    return [...new Set(rows.map((item) => item.assignmentId).filter(Boolean))]
+  }
+
+  private async getAssignmentEventProgressMap(assignmentIds: number[]) {
+    const uniqueAssignmentIds = [...new Set(assignmentIds.filter((id) => id > 0))]
+    if (uniqueAssignmentIds.length === 0) {
+      return new Map<number, {
+        eventCode: number | null
+        eventBizKey: string | null
+        eventOccurredAt: Date | null
+      }>()
+    }
+
+    const rows = await this.db
+      .select({
+        assignmentId: this.taskProgressLogTable.assignmentId,
+        eventCode: this.taskProgressLogTable.eventCode,
+        eventBizKey: this.taskProgressLogTable.eventBizKey,
+        eventOccurredAt: this.taskProgressLogTable.eventOccurredAt,
+        id: this.taskProgressLogTable.id,
+      })
+      .from(this.taskProgressLogTable)
+      .where(
+        and(
+          inArray(this.taskProgressLogTable.assignmentId, uniqueAssignmentIds),
+          sql`${this.taskProgressLogTable.eventCode} IS NOT NULL`,
+        ),
+      )
+      .orderBy(desc(this.taskProgressLogTable.id))
+
+    const result = new Map<number, {
+      eventCode: number | null
+      eventBizKey: string | null
+      eventOccurredAt: Date | null
+    }>()
+    for (const row of rows) {
+      if (result.has(row.assignmentId)) {
+        continue
+      }
+      result.set(row.assignmentId, {
+        eventCode: row.eventCode,
+        eventBizKey: row.eventBizKey,
+        eventOccurredAt: row.eventOccurredAt,
+      })
+    }
+    return result
+  }
+
+  private async getAssignmentRewardReminderMap(assignmentIds: number[]) {
+    const uniqueAssignmentIds = [...new Set(assignmentIds.filter((id) => id > 0))]
+    if (uniqueAssignmentIds.length === 0) {
+      return new Map<number, {
+        bizKey: string
+        status: MessageNotificationDispatchStatusEnum
+        failureReason: string | null
+        lastAttemptAt: Date
+      }>()
+    }
+
+    const assignmentIdSql =
+      sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'assignmentId')::int`
+    const reminderKindSql =
+      sql<string | null>`${this.messageOutboxTable.payload} -> 'payload' ->> 'reminderKind'`
+    const rows = await this.db
+      .select({
+        assignmentId: assignmentIdSql,
+        bizKey: this.notificationDeliveryTable.bizKey,
+        status: this.notificationDeliveryTable.status,
+        failureReason: this.notificationDeliveryTable.failureReason,
+        lastAttemptAt: this.notificationDeliveryTable.lastAttemptAt,
+        id: this.notificationDeliveryTable.id,
+      })
+      .from(this.notificationDeliveryTable)
+      .leftJoin(
+        this.messageOutboxTable,
+        eq(this.notificationDeliveryTable.outboxId, this.messageOutboxTable.id),
+      )
+      .where(
+        and(
+          eq(
+            this.notificationDeliveryTable.notificationType,
+            MessageNotificationTypeEnum.TASK_REMINDER,
+          ),
+          inArray(assignmentIdSql, uniqueAssignmentIds),
+          eq(reminderKindSql, TaskReminderKindEnum.REWARD_GRANTED),
+        ),
+      )
+      .orderBy(desc(this.notificationDeliveryTable.id))
+
+    const result = new Map<number, {
+      bizKey: string
+      status: MessageNotificationDispatchStatusEnum
+      failureReason: string | null
+      lastAttemptAt: Date
+    }>()
+    for (const row of rows) {
+      if (!row.assignmentId || result.has(row.assignmentId)) {
+        continue
+      }
+      result.set(row.assignmentId, {
+        bizKey: row.bizKey,
+        status: row.status as MessageNotificationDispatchStatusEnum,
+        failureReason: row.failureReason,
+        lastAttemptAt: row.lastAttemptAt,
+      })
+    }
+    return result
+  }
+
+  private hasConfiguredTaskReward(rewardConfig: unknown) {
+    const rewardRecord = this.asRecord(rewardConfig)
+    if (!rewardRecord) {
+      return false
+    }
+    return (
+      (this.readSnapshotPositiveInt(rewardRecord.points) ?? 0) > 0
+      || (this.readSnapshotPositiveInt(rewardRecord.experience) ?? 0) > 0
+    )
+  }
+
+  private readSnapshotString(value: unknown) {
+    return typeof value === 'string' && value.trim() !== '' ? value : undefined
+  }
+
+  private readSnapshotPositiveInt(value: unknown) {
+    return typeof value === 'number' && Number.isInteger(value) && value > 0
+      ? value
+      : undefined
   }
 
   /**
@@ -2140,125 +3601,6 @@ export class TaskService {
       return 0
     }
     return reward.configuredAmount
-  }
-
-  /**
-   * 构建任务提醒 outbox 事件
-   *
-   * title/content 同时作为 fallback 文案与模板渲染上下文，确保模板缺失时仍可直接投递。
-   */
-  private buildTaskReminderNotificationEvent(params: {
-    bizKey: string
-    receiverUserId: number
-    taskId: number
-    taskTitle: string
-    cycleKey?: string
-    reminderKind: TaskReminderKindEnum
-    claimMode?: number
-    assignmentId?: number
-    expiredAt?: Date
-    points?: number
-    experience?: number
-    ledgerRecordIds?: number[]
-  }) {
-    const message = this.buildTaskReminderMessage(params)
-    return {
-      eventType: MessageNotificationTypeEnum.TASK_REMINDER,
-      bizKey: params.bizKey,
-      payload: {
-        receiverUserId: params.receiverUserId,
-        type: MessageNotificationTypeEnum.TASK_REMINDER,
-        targetId: params.taskId,
-        title: message.title,
-        content: message.content,
-        payload: {
-          title: message.title,
-          content: message.content,
-          reminderKind: params.reminderKind,
-          taskId: params.taskId,
-          taskTitle: params.taskTitle,
-          cycleKey: params.cycleKey,
-          assignmentId: params.assignmentId,
-          expiredAt: params.expiredAt,
-          points: params.points,
-          experience: params.experience,
-          ledgerRecordIds: params.ledgerRecordIds,
-        },
-      },
-    }
-  }
-
-  /**
-   * 构建任务提醒文案
-   * 第一阶段只保留最小可读文案，不把复杂业务判断下沉到模板层。
-   */
-  private buildTaskReminderMessage(params: {
-    taskTitle: string
-    reminderKind: TaskReminderKindEnum
-    claimMode?: number
-    points?: number
-    experience?: number
-  }) {
-    if (params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED) {
-      const rewardParts: string[] = []
-      if (params.points && params.points > 0) {
-        rewardParts.push(`积分 +${params.points}`)
-      }
-      if (params.experience && params.experience > 0) {
-        rewardParts.push(`经验 +${params.experience}`)
-      }
-      return {
-        title: '任务奖励已到账',
-        content: `任务《${params.taskTitle}》奖励已到账${rewardParts.length > 0 ? `：${rewardParts.join('，')}` : ''}`,
-      }
-    }
-
-    if (params.reminderKind === TaskReminderKindEnum.EXPIRING_SOON) {
-      return {
-        title: '任务即将过期',
-        content: `任务《${params.taskTitle}》将在 24 小时内过期，请尽快完成。`,
-      }
-    }
-
-    if (params.claimMode === TaskClaimModeEnum.AUTO) {
-      return {
-        title: '你有新的任务待完成',
-        content: `任务《${params.taskTitle}》已自动加入你的任务列表。`,
-      }
-    }
-
-    return {
-      title: '发现新的可领取任务',
-      content: `任务《${params.taskTitle}》现已可领取。`,
-    }
-  }
-
-  /**
-   * 构建“新任务可领”提醒幂等键
-   * 维度固定为 task + user + cycle，确保重复周期任务每期最多提醒一次。
-   */
-  private buildTaskAvailableReminderBizKey(
-    taskId: number,
-    userId: number,
-    cycleKey: string,
-  ) {
-    return `task:reminder:available:task:${taskId}:cycle:${cycleKey}:user:${userId}`
-  }
-
-  /**
-   * 构建“任务即将过期”提醒幂等键
-   * 维度固定为 assignment，确保单个分配仅提醒一次。
-   */
-  private buildTaskExpiringSoonReminderBizKey(assignmentId: number) {
-    return `task:reminder:expiring:assignment:${assignmentId}`
-  }
-
-  /**
-   * 构建“任务奖励到账”提醒幂等键
-   * 维度固定为 assignment，避免补偿结算时重复通知。
-   */
-  private buildTaskRewardGrantedReminderBizKey(assignmentId: number) {
-    return `task:reminder:reward:assignment:${assignmentId}`
   }
 
   /**

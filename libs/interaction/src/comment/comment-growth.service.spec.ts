@@ -1,13 +1,17 @@
 import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 
+jest.mock('@libs/growth/growth-reward', () => ({
+  GrowthEventBridgeService: class {},
+}))
+
 describe('comment growth service', () => {
   it('skips reward when comment event is still pending moderation', async () => {
     const { CommentGrowthService } = await import('./comment-growth.service')
 
-    const applyByRule = jest.fn().mockResolvedValue(undefined)
+    const dispatchDefinedEvent = jest.fn().mockResolvedValue(undefined)
     const service = new CommentGrowthService({
-      applyByRule,
+      dispatchDefinedEvent,
     } as any)
 
     await expect(
@@ -26,15 +30,15 @@ describe('comment growth service', () => {
       ),
     ).resolves.toBeUndefined()
 
-    expect(applyByRule).not.toHaveBeenCalled()
+    expect(dispatchDefinedEvent).not.toHaveBeenCalled()
   })
 
   it('rewards comment creation after governance passes', async () => {
     const { CommentGrowthService } = await import('./comment-growth.service')
 
-    const applyByRule = jest.fn().mockResolvedValue(undefined)
+    const dispatchDefinedEvent = jest.fn().mockResolvedValue(undefined)
     const service = new CommentGrowthService({
-      applyByRule,
+      dispatchDefinedEvent,
     } as any)
 
     await expect(
@@ -54,14 +58,17 @@ describe('comment growth service', () => {
       ),
     ).resolves.toBeUndefined()
 
-    expect(applyByRule).toHaveBeenCalledTimes(2)
-    expect(applyByRule).toHaveBeenNthCalledWith(
+    expect(dispatchDefinedEvent).toHaveBeenCalledTimes(1)
+    expect(dispatchDefinedEvent).toHaveBeenNthCalledWith(
       1,
-      expect.anything(),
       expect.objectContaining({
-        userId: 9,
-        ruleType: GrowthRuleTypeEnum.CREATE_COMMENT,
-        bizKey: 'comment:create:18:user:9:POINTS',
+        tx: expect.anything(),
+        eventEnvelope: expect.objectContaining({
+          code: GrowthRuleTypeEnum.CREATE_COMMENT,
+          governanceStatus: EventEnvelopeGovernanceStatusEnum.PASSED,
+        }),
+        bizKey: 'comment:create:18:user:9',
+        source: 'comment',
       }),
     )
   })

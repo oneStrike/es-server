@@ -1,9 +1,7 @@
 import { DrizzleService } from '@db/core'
+import { createDefinedEventEnvelope } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth/growth-ledger'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
 import { Injectable, Logger } from '@nestjs/common'
 import { FollowTargetTypeEnum } from './follow.constant'
 
@@ -16,7 +14,7 @@ export class FollowGrowthService {
   private readonly logger = new Logger(FollowGrowthService.name)
 
   constructor(
-    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly growthEventBridgeService: GrowthEventBridgeService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -34,55 +32,43 @@ export class FollowGrowthService {
 
     const actorBizKeyBase = `follow:user:${targetId}:actor:${userId}`
     const targetBizKeyBase = `be-followed:user:${targetId}:actor:${userId}`
+    const followCreatedEvent = createDefinedEventEnvelope({
+      code: GrowthRuleTypeEnum.FOLLOW_USER,
+      subjectId: userId,
+      targetId,
+      operatorId: userId,
+      context: {
+        followedUserId: targetId,
+      },
+    })
+    const beFollowedEvent = createDefinedEventEnvelope({
+      code: GrowthRuleTypeEnum.BE_FOLLOWED,
+      subjectId: targetId,
+      targetId: userId,
+      operatorId: userId,
+      context: {
+        actorUserId: userId,
+        followedUserId: targetId,
+      },
+    })
 
     try {
       await this.drizzle.withTransaction(async (tx) => {
-        await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType: GrowthRuleTypeEnum.FOLLOW_USER,
-          bizKey: `${actorBizKeyBase}:POINTS`,
+        await this.growthEventBridgeService.dispatchDefinedEvent({
+          tx,
+          eventEnvelope: followCreatedEvent,
+          bizKey: actorBizKeyBase,
+          source: 'follow',
           targetType,
-          targetId,
-          context: {
-            followedUserId: targetId,
-          },
         })
 
-        await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType: GrowthRuleTypeEnum.FOLLOW_USER,
-          bizKey: `${actorBizKeyBase}:EXPERIENCE`,
-          targetType,
-          targetId,
-          context: {
-            followedUserId: targetId,
-          },
-        })
-
-        await this.growthLedgerService.applyByRule(tx, {
-          userId: targetId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType: GrowthRuleTypeEnum.BE_FOLLOWED,
-          bizKey: `${targetBizKeyBase}:POINTS`,
+        await this.growthEventBridgeService.dispatchDefinedEvent({
+          tx,
+          eventEnvelope: beFollowedEvent,
+          bizKey: targetBizKeyBase,
+          source: 'follow',
           targetType,
           targetId: userId,
-          context: {
-            actorUserId: userId,
-          },
-        })
-
-        await this.growthLedgerService.applyByRule(tx, {
-          userId: targetId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType: GrowthRuleTypeEnum.BE_FOLLOWED,
-          bizKey: `${targetBizKeyBase}:EXPERIENCE`,
-          targetType,
-          targetId: userId,
-          context: {
-            actorUserId: userId,
-          },
         })
       })
     } catch (error) {

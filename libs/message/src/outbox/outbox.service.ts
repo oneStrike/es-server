@@ -206,6 +206,38 @@ export class MessageOutboxService {
   }
 
   /**
+   * 按业务键重置失败 outbox 事件，供人工补偿重新投递。
+   * 仅允许将 FAILED 事件重置回 PENDING，避免无意回放已成功事件。
+   */
+  async retryFailedEventByBizKey(input: {
+    bizKey: string
+    domain?: MessageOutboxDomainEnum
+  }) {
+    return this.drizzle.withErrorHandling(async () => {
+      const conditions = [
+        eq(this.outbox.bizKey, input.bizKey),
+        eq(this.outbox.status, MessageOutboxStatusEnum.FAILED),
+      ]
+      if (input.domain !== undefined) {
+        conditions.push(eq(this.outbox.domain, input.domain))
+      }
+
+      const result = await this.db
+        .update(this.outbox)
+        .set({
+          status: MessageOutboxStatusEnum.PENDING,
+          retryCount: 0,
+          nextRetryAt: null,
+          processedAt: null,
+          lastError: null,
+        })
+        .where(and(...conditions))
+
+      return (result.rowCount ?? 0) > 0
+    })
+  }
+
+  /**
    * 归一化通知事件类型
    * 兼容期允许调用方保留 eventType，但必须与 payload.type 保持一致
    */

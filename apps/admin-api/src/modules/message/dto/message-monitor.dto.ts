@@ -322,12 +322,44 @@ class MessageNotificationDeliveryFilterDto {
     maxLength: 32,
   })
   outboxId?: string
+
+  @StringProperty({
+    description: '任务提醒子类型（如 task_available / task_expiring_soon / task_reward_granted）',
+    example: 'task_reward_granted',
+    required: false,
+    maxLength: 40,
+  })
+  reminderKind?: string
+
+  @NumberProperty({
+    description: '任务 ID',
+    example: 18,
+    required: false,
+  })
+  taskId?: number
+
+  @NumberProperty({
+    description: '任务分配 ID',
+    example: 88,
+    required: false,
+  })
+  assignmentId?: number
 }
 
 export class QueryMessageNotificationDeliveryPageDto extends IntersectionType(
   PageDto,
   MessageNotificationDeliveryFilterDto,
 ) {}
+
+export class RetryMessageNotificationDeliveryDto {
+  @StringProperty({
+    description: '通知 outbox 业务幂等键',
+    example: 'task:reminder:reward:assignment:88',
+    required: true,
+    maxLength: 180,
+  })
+  bizKey!: string
+}
 
 export class MessageNotificationDeliveryItemDto {
   @NumberProperty({
@@ -405,6 +437,48 @@ export class MessageNotificationDeliveryItemDto {
     maxLength: 500,
   })
   failureReason!: string | null
+
+  @StringProperty({
+    description: '任务提醒子类型',
+    example: 'task_reward_granted',
+    required: false,
+  })
+  reminderKind?: string
+
+  @NumberProperty({
+    description: '任务 ID',
+    example: 18,
+    required: false,
+  })
+  taskId?: number
+
+  @NumberProperty({
+    description: '任务分配 ID',
+    example: 88,
+    required: false,
+  })
+  assignmentId?: number
+
+  @StringProperty({
+    description: '任务编码',
+    example: 'complete_profile',
+    required: false,
+  })
+  taskCode?: string
+
+  @NumberProperty({
+    description: '任务场景类型',
+    example: 2,
+    required: false,
+  })
+  sceneType?: number
+
+  @NumberProperty({
+    description: '任务通知 payload 版本',
+    example: 1,
+    required: false,
+  })
+  payloadVersion?: number
 
   @DateProperty({
     description: '最近一次业务投递尝试时间',

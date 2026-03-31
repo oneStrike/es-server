@@ -1,5 +1,6 @@
 import { UserExperienceModule } from '@libs/growth/experience'
 import { UserPointModule } from '@libs/growth/point'
+import { TaskModule as GrowthTaskModule } from '@libs/growth/task'
 import { InteractionModule } from '@libs/interaction/module'
 import { MessageModule } from '@libs/message/module'
 import { UserModule as UserCoreModule } from '@libs/user/core'
@@ -14,6 +15,7 @@ import { UserService } from './user.service'
     UserCoreModule,
     UserPointModule,
     UserExperienceModule,
+    GrowthTaskModule,
     InteractionModule,
     MessageModule,
   ],

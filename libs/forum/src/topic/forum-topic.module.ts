@@ -1,4 +1,4 @@
-import { UserGrowthRewardModule } from '@libs/growth/growth-reward'
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
 import { BrowseLogModule } from '@libs/interaction/browse-log'
 import { CommentModule } from '@libs/interaction/comment'
 import { EmojiModule } from '@libs/interaction/emoji'
@@ -26,7 +26,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
  */
 @Module({
   imports: [
-    UserGrowthRewardModule,
+    GrowthEventBridgeModule,
     SensitiveWordModule,
     MessageModule,
     BrowseLogModule,

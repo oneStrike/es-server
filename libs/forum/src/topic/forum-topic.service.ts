@@ -24,7 +24,7 @@ import {
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { UserGrowthRewardService } from '@libs/growth/growth-reward'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
@@ -76,7 +76,7 @@ import {
 export class ForumTopicService {
   constructor(
     private readonly drizzle: DrizzleService,
-    private readonly userGrowthRewardService: UserGrowthRewardService,
+    private readonly growthEventBridgeService: GrowthEventBridgeService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly browseLogService: BrowseLogService,
     private readonly forumCounterService: ForumCounterService,
@@ -432,13 +432,11 @@ export class ForumTopicService {
         EventDefinitionConsumerEnum.GROWTH,
       )
     ) {
-      await this.userGrowthRewardService.tryRewardByRule({
-        userId,
-        ruleType: GrowthRuleTypeEnum.CREATE_TOPIC,
+      await this.growthEventBridgeService.dispatchDefinedEvent({
+        eventEnvelope: topicCreatedEvent,
         bizKey: `forum:topic:create:${topic.id}:user:${userId}`,
         source: 'forum_topic',
         remark: `create forum topic #${topic.id}`,
-        targetId: topicCreatedEvent.targetId,
       })
     }
 
@@ -1203,13 +1201,11 @@ export class ForumTopicService {
       return
     }
 
-    await this.userGrowthRewardService.tryRewardByRule({
-      userId: params.userId,
-      ruleType: GrowthRuleTypeEnum.CREATE_TOPIC,
+    await this.growthEventBridgeService.dispatchDefinedEvent({
+      eventEnvelope: topicApprovedEvent,
       bizKey: `forum:topic:create:${params.topicId}:user:${params.userId}`,
       source: 'forum_topic',
       remark: `approve forum topic #${params.topicId}`,
-      targetId: topicApprovedEvent.targetId,
     })
   }
 

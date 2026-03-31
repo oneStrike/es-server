@@ -3,18 +3,18 @@ import type { EventEnvelope } from '@libs/growth/event-definition'
 import { UserCommentSelect } from '@db/schema'
 import {
   canConsumeEventEnvelopeByConsumer,
+  createDefinedEventEnvelope,
   EventDefinitionConsumerEnum,
 } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth/growth-ledger'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()
 export class CommentGrowthService {
-  constructor(private readonly growthLedgerService: GrowthLedgerService) {}
+  constructor(
+    private readonly growthEventBridgeService: GrowthEventBridgeService,
+  ) {}
 
   async rewardCommentCreated(
     tx: Db,
@@ -42,29 +42,25 @@ export class CommentGrowthService {
     }
 
     const baseBizKey = `comment:create:${commentId}:user:${userId}`
-
-    await this.growthLedgerService.applyByRule(tx, {
-      userId,
-      assetType: GrowthAssetTypeEnum.POINTS,
-      ruleType: GrowthRuleTypeEnum.CREATE_COMMENT,
-      bizKey: `${baseBizKey}:POINTS`,
-      remark: `发表评论 #${commentId}`,
-      targetType,
-      targetId,
-      context: { targetId },
+    const fallbackEventEnvelope = createDefinedEventEnvelope({
+      code: GrowthRuleTypeEnum.CREATE_COMMENT,
+      subjectId: userId,
+      targetId: commentId,
       occurredAt,
+      context: {
+        commentTargetType: targetType,
+        commentTargetId: targetId,
+      },
     })
 
-    await this.growthLedgerService.applyByRule(tx, {
-      userId,
-      assetType: GrowthAssetTypeEnum.EXPERIENCE,
-      ruleType: GrowthRuleTypeEnum.CREATE_COMMENT,
-      bizKey: `${baseBizKey}:EXPERIENCE`,
+    await this.growthEventBridgeService.dispatchDefinedEvent({
+      tx,
+      eventEnvelope: eventEnvelope ?? fallbackEventEnvelope,
+      bizKey: baseBizKey,
+      source: 'comment',
       remark: `发表评论 #${commentId}`,
       targetType,
       targetId,
-      context: { targetId },
-      occurredAt,
     })
   }
 
@@ -81,22 +77,22 @@ export class CommentGrowthService {
     const baseBizKey =
       `comment:liked:${commentId}:liker:${likerUserId}:author:${authorUserId}`
 
-    await this.growthLedgerService.applyByRule(tx, {
-      userId: authorUserId,
-      assetType: GrowthAssetTypeEnum.POINTS,
-      ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
-      bizKey: `${baseBizKey}:POINTS`,
-      remark: `评论被点赞 #${commentId}`,
+    const commentLikedEvent = createDefinedEventEnvelope({
+      code: GrowthRuleTypeEnum.COMMENT_LIKED,
+      subjectId: authorUserId,
       targetId: commentId,
+      operatorId: likerUserId,
+      context: {
+        likerUserId,
+      },
     })
 
-    await this.growthLedgerService.applyByRule(tx, {
-      userId: authorUserId,
-      assetType: GrowthAssetTypeEnum.EXPERIENCE,
-      ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
-      bizKey: `${baseBizKey}:EXPERIENCE`,
+    await this.growthEventBridgeService.dispatchDefinedEvent({
+      tx,
+      eventEnvelope: commentLikedEvent,
+      bizKey: baseBizKey,
+      source: 'comment_like',
       remark: `评论被点赞 #${commentId}`,
-      targetId: commentId,
     })
   }
 }

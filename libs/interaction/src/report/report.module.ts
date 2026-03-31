@@ -7,15 +7,15 @@
  * - 集成裁决后的成长奖励能力
  *
  * 依赖模块：
- * - UserGrowthRewardModule：成长奖励模块，用于在裁决后发放奖励
+ * - GrowthEventBridgeModule：成长事件桥接模块，用于统一派发举报裁决事件
  */
-import { UserGrowthRewardModule } from '@libs/growth/growth-reward'
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
 import { Module } from '@nestjs/common'
 import { ReportGrowthService } from './report-growth.service'
 import { ReportService } from './report.service'
 
 @Module({
-  imports: [UserGrowthRewardModule],
+  imports: [GrowthEventBridgeModule],
   providers: [ReportService, ReportGrowthService],
   exports: [ReportService],
 })

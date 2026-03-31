@@ -26,6 +26,7 @@ export class UserPointRecordDto extends PickType(BaseUserPointRecordDto, [
   'targetType',
   'targetId',
   'bizKey',
+  'source',
   'remark',
   'context',
   'createdAt',

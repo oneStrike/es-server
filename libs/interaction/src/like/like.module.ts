@@ -7,16 +7,16 @@
  * - 集成成长奖励能力
  *
  * 依赖模块：
- * - GrowthLedgerModule：成长账本模块，用于发放点赞奖励
+ * - GrowthEventBridgeModule：成长事件桥接模块，用于统一派发点赞事件
  */
-import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
 import { UserModule } from '@libs/user/core'
 import { Module } from '@nestjs/common'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeService } from './like.service'
 
 @Module({
-  imports: [GrowthLedgerModule, UserModule],
+  imports: [GrowthEventBridgeModule, UserModule],
   providers: [LikeService, LikeGrowthService],
   exports: [LikeService],
 })

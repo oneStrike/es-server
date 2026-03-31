@@ -41,7 +41,7 @@ export const task = pgTable("task", {
    */
   cover: varchar({ length: 255 }),
   /**
-   * 任务类型
+   * 任务场景类型
    */
   type: smallint().notNull(),
   /**
@@ -65,10 +65,22 @@ export const task = pgTable("task", {
    */
   completeMode: smallint().notNull(),
   /**
+   * 任务目标类型
+   */
+  objectiveType: smallint().default(1).notNull(),
+  /**
+   * 目标事件编码
+   */
+  eventCode: integer(),
+  /**
    * 目标次数
    * 必须为大于 0 的整数
    */
   targetCount: integer().default(1).notNull(),
+  /**
+   * 目标附加配置
+   */
+  objectiveConfig: jsonb(),
   /**
    * 奖励配置（当前仅支持 points / experience 正整数）
    */
@@ -115,9 +127,17 @@ export const task = pgTable("task", {
    */
   index("task_status_is_enabled_idx").on(table.status, table.isEnabled),
   /**
-   * 任务类型索引
+   * 任务场景类型索引
    */
   index("task_type_idx").on(table.type),
+  /**
+   * 任务目标类型索引
+   */
+  index("task_objective_type_idx").on(table.objectiveType),
+  /**
+   * 目标事件编码索引
+   */
+  index("task_event_code_idx").on(table.eventCode),
   /**
    * 发布开始时间索引
    */

@@ -20,6 +20,7 @@ import { DrizzleService, escapeLikePattern } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
+import { TaskService } from '@libs/growth/task'
 import { UserAssetsService } from '@libs/interaction/user-assets'
 import { MessageInboxService } from '@libs/message/inbox'
 import { UserService as UserCoreService } from '@libs/user/core'
@@ -37,6 +38,7 @@ export class UserService {
     private readonly userAssetsService: UserAssetsService,
     private readonly userPointService: UserPointService,
     private readonly userExperienceService: UserExperienceService,
+    private readonly taskService: TaskService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
 
@@ -160,13 +162,14 @@ export class UserService {
    * 获取用户中心汇总信息
    */
   async getUserCenter(userId: number) {
-    const [user, counts, badgeCount, assets, messageSummary] =
+    const [user, counts, badgeCount, assets, messageSummary, taskSummary] =
       await Promise.all([
         this.userCoreService.ensureUserExists(userId),
         this.userCoreService.getUserCounts(userId),
         this.userCoreService.getBadgeCount(userId),
         this.getUserAssetsSummary(userId),
         this.messageInboxService.getSummary(userId),
+        this.taskService.getUserTaskSummary(userId),
       ])
 
     const level = user.levelId
@@ -204,6 +207,7 @@ export class UserService {
         notificationUnreadCount: messageSummary.notificationUnreadCount,
         totalUnreadCount: messageSummary.totalUnreadCount,
       },
+      task: taskSummary,
     }
   }
 

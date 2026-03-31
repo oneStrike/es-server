@@ -9,11 +9,15 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
 import {
+  GrowthRuleTypeEnum,
+} from '../../growth-rule.constant'
+import {
   TaskAssignmentRewardResultTypeEnum,
   TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
+  TaskObjectiveTypeEnum,
   TaskStatusEnum,
   TaskTypeEnum,
 } from '../task.constant'
@@ -52,8 +56,8 @@ export class BaseTaskDto extends BaseDto {
   cover?: string
 
   @EnumProperty({
-    description: '任务类型',
-    example: TaskTypeEnum.NEWBIE,
+    description: '任务场景类型',
+    example: TaskTypeEnum.ONBOARDING,
     enum: TaskTypeEnum,
   })
   type!: TaskTypeEnum
@@ -85,6 +89,21 @@ export class BaseTaskDto extends BaseDto {
   })
   completeMode!: TaskCompleteModeEnum
 
+  @EnumProperty({
+    description: '任务目标类型',
+    example: TaskObjectiveTypeEnum.MANUAL,
+    enum: TaskObjectiveTypeEnum,
+  })
+  objectiveType!: TaskObjectiveTypeEnum
+
+  @EnumProperty({
+    description: '目标事件编码，EVENT_COUNT 任务必填',
+    example: GrowthRuleTypeEnum.COMIC_CHAPTER_READ,
+    enum: GrowthRuleTypeEnum,
+    required: false,
+  })
+  eventCode?: GrowthRuleTypeEnum | null
+
   @NumberProperty({
     description: '完成目标次数，必须为大于 0 的整数',
     example: 1,
@@ -98,6 +117,13 @@ export class BaseTaskDto extends BaseDto {
     required: false,
   })
   rewardConfig?: Record<string, unknown> | null
+
+  @JsonProperty({
+    description: '目标附加配置，EVENT_COUNT 任务可用于表达额外过滤条件',
+    example: { sectionId: 10 },
+    required: false,
+  })
+  objectiveConfig?: Record<string, unknown> | null
 
   @DateProperty({
     description: '发布开始时间',

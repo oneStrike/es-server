@@ -1,9 +1,7 @@
 import { DrizzleService } from '@db/core'
+import { createDefinedEventEnvelope } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth/growth-ledger'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
 import { Injectable, Logger } from '@nestjs/common'
 import { BrowseLogTargetTypeEnum } from './browse-log.constant'
 
@@ -23,14 +21,10 @@ export class BrowseLogGrowthService {
   }
 
   constructor(
-    /** 成长账本服务 */
-    private readonly growthLedgerService: GrowthLedgerService,
+    /** 成长奖励服务 */
+    private readonly growthEventBridgeService: GrowthEventBridgeService,
     private readonly drizzle: DrizzleService,
   ) {}
-
-  private get db() {
-    return this.drizzle.db
-  }
 
   /**
    * 奖励浏览记录
@@ -51,27 +45,24 @@ export class BrowseLogGrowthService {
     }
 
     const baseBizKey = `view:${targetType}:${targetId}:user:${userId}`
+    const browseRecordedEvent = createDefinedEventEnvelope({
+      code: ruleType,
+      subjectId: userId,
+      targetId,
+      context: {
+        browseTargetType: targetType,
+      },
+    })
 
     try {
       await this.drizzle.withTransaction(async (tx) => {
-        await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType,
-          bizKey: `${baseBizKey}:POINTS`,
+        await this.growthEventBridgeService.dispatchDefinedEvent({
+          tx,
+          eventEnvelope: browseRecordedEvent,
+          bizKey: baseBizKey,
+          source: 'browse_log',
           remark: `浏览目标 #${targetId}`,
           targetType,
-          targetId,
-        })
-
-        await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          remark: `浏览目标 #${targetId}`,
-          targetType,
-          targetId,
         })
       })
     } catch (error) {

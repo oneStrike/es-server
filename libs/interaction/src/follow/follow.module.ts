@@ -1,5 +1,5 @@
 import { WorkAuthorModule } from '@libs/content/author'
-import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
 import { MessageModule } from '@libs/message/module'
 import { UserModule } from '@libs/user/core'
 import { Module } from '@nestjs/common'
@@ -9,7 +9,7 @@ import { AuthorFollowResolver } from './resolver/author-follow.resolver'
 import { UserFollowResolver } from './resolver/user-follow.resolver'
 
 @Module({
-  imports: [MessageModule, GrowthLedgerModule, UserModule, WorkAuthorModule],
+  imports: [MessageModule, GrowthEventBridgeModule, UserModule, WorkAuthorModule],
   providers: [
     FollowService,
     FollowGrowthService,

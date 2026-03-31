@@ -1,13 +1,20 @@
 import type { TaskInsert, TaskSelect } from '@db/schema'
+import type { EventEnvelope } from '@libs/growth/event-definition'
+import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification'
 import type {
   PageQueryInput,
   PageQueryNoOrderInput,
   QueryOrderByInput,
 } from '@libs/platform/types'
 import type {
+  GrowthRuleTypeEnum,
+} from '../growth-rule.constant'
+import type {
+  TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
+  TaskObjectiveTypeEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
   TaskTypeEnum,
@@ -29,12 +36,31 @@ export interface TaskRepeatRuleConfig {
   timezone?: string
 }
 
+export interface TaskObjectiveConfig {
+  [key: string]: unknown
+}
+
 /**
  * 任务分配快照可序列化字段来源。
  */
 export type TaskSnapshotSource = Pick<
   TaskSelect,
-  'id' | 'code' | 'title' | 'type' | 'rewardConfig' | 'targetCount'
+  | 'id'
+  | 'code'
+  | 'title'
+  | 'description'
+  | 'cover'
+  | 'type'
+  | 'claimMode'
+  | 'completeMode'
+  | 'objectiveType'
+  | 'eventCode'
+  | 'objectiveConfig'
+  | 'repeatRule'
+  | 'publishStartAt'
+  | 'publishEndAt'
+  | 'rewardConfig'
+  | 'targetCount'
 >
 
 /**
@@ -45,7 +71,13 @@ export type AutoAssignmentTaskSource = Pick<
   | 'id'
   | 'code'
   | 'title'
+  | 'description'
+  | 'cover'
   | 'type'
+  | 'completeMode'
+  | 'objectiveType'
+  | 'eventCode'
+  | 'objectiveConfig'
   | 'rewardConfig'
   | 'targetCount'
   | 'claimMode'
@@ -62,6 +94,9 @@ type CreateTaskInsertFields = Pick<
   | 'cover'
   | 'priority'
   | 'isEnabled'
+  | 'objectiveType'
+  | 'eventCode'
+  | 'objectiveConfig'
   | 'targetCount'
   | 'rewardConfig'
   | 'publishStartAt'
@@ -78,6 +113,9 @@ export interface CreateTaskInput extends CreateTaskInsertFields {
   status: TaskStatusEnum
   claimMode: TaskClaimModeEnum
   completeMode: TaskCompleteModeEnum
+  objectiveType: TaskObjectiveTypeEnum
+  eventCode?: GrowthRuleTypeEnum | number | null
+  objectiveConfig?: TaskObjectiveConfig | null
   rewardConfig?: Record<string, unknown> | null
   repeatRule?: Record<string, unknown> | null
 }
@@ -120,6 +158,20 @@ export interface QueryTaskAssignmentPageInput extends PageQueryInput {
 }
 
 /**
+ * 管理端任务奖励/通知对账分页查询条件。
+ */
+export interface QueryTaskAssignmentReconciliationPageInput
+  extends PageQueryInput {
+  assignmentId?: number
+  taskId?: number
+  userId?: number
+  eventCode?: GrowthRuleTypeEnum
+  eventBizKey?: string
+  rewardStatus?: TaskAssignmentRewardStatusEnum
+  notificationStatus?: MessageNotificationDispatchStatusEnum
+}
+
+/**
  * App 端可领取任务查询条件。
  */
 export interface QueryAppTaskInput extends PageQueryNoOrderInput {
@@ -155,4 +207,30 @@ export interface TaskProgressInput {
  */
 export interface TaskCompleteInput {
   taskId: number
+}
+
+/**
+ * 任务事件推进入参。
+ */
+export interface TaskEventProgressInput {
+  eventEnvelope: EventEnvelope<GrowthRuleTypeEnum>
+  bizKey: string
+}
+
+/**
+ * 任务事件推进结果。
+ */
+export interface TaskEventProgressResult {
+  matchedTaskIds: number[]
+  progressedAssignmentIds: number[]
+  completedAssignmentIds: number[]
+  duplicateAssignmentIds: number[]
+}
+
+/**
+ * 批量补偿已完成任务奖励的结果摘要。
+ */
+export interface RetryCompletedAssignmentRewardsResult {
+  scannedCount: number
+  triggeredCount: number
 }

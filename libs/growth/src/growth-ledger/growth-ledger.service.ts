@@ -15,6 +15,7 @@ import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerFailReasonEnum,
+  GrowthLedgerSourceEnum,
 } from './growth-ledger.constant'
 
 type Tx = Db
@@ -97,6 +98,7 @@ export class GrowthLedgerService {
       assetType,
       ruleType,
       bizKey,
+      source = GrowthLedgerSourceEnum.GROWTH_RULE,
       remark,
       targetType,
       targetId,
@@ -167,6 +169,7 @@ export class GrowthLedgerService {
       assetType,
       bizKey,
       delta,
+      source,
       ruleType,
       ruleId: rule.id,
       remark,
@@ -339,6 +342,7 @@ export class GrowthLedgerService {
       userId,
       assetType,
       bizKey,
+      source: params.source,
       delta: signedDelta,
       remark,
       targetType,
@@ -516,6 +520,7 @@ export class GrowthLedgerService {
       assetType: GrowthAssetTypeEnum
       bizKey: string
       delta: number
+      source: string
       ruleType?: number
       ruleId?: number
       remark?: string
@@ -596,6 +601,7 @@ export class GrowthLedgerService {
     id: number
     userId: number
     assetType: GrowthAssetTypeEnum
+    source: string
     ruleId: number | null
     ruleType: number | null
     targetType: number | null
@@ -612,6 +618,7 @@ export class GrowthLedgerService {
       id: record.id,
       userId: record.userId,
       assetType: record.assetType,
+      source: record.source,
       ruleId: record.ruleId ?? undefined,
       ruleType: record.ruleType ?? undefined,
       targetType: record.targetType ?? undefined,
@@ -799,6 +806,7 @@ export class GrowthLedgerService {
       assetType: GrowthAssetTypeEnum
       bizKey: string
       delta: number
+      source: string
       ruleType?: number
       ruleId?: number
       remark?: string
@@ -817,6 +825,7 @@ export class GrowthLedgerService {
           beforeValue: 0,
           afterValue: 0,
           bizKey: params.bizKey,
+          source: params.source,
           ruleType: params.ruleType,
           ruleId: params.ruleId,
           targetType: params.targetType,

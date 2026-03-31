@@ -85,6 +85,14 @@ export class BaseUserPointRecordDto extends IdDto {
   bizKey!: string
 
   @StringProperty({
+    description: '账本来源（如 growth_rule、task_bonus、purchase）',
+    example: 'growth_rule',
+    required: false,
+    maxLength: 40,
+  })
+  source?: string | null
+
+  @StringProperty({
     description: '备注',
     example: '发表主题获得积分',
     required: false,

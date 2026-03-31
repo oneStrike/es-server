@@ -8,6 +8,34 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
+function createCountQuery(result: unknown[]) {
+  const where = jest.fn().mockResolvedValue(result)
+  const leftJoin = jest.fn(() => ({ where }))
+  const from = jest.fn(() => ({ leftJoin }))
+
+  return {
+    query: { from },
+    where,
+  }
+}
+
+function createRowsQuery(result: unknown[]) {
+  const offset = jest.fn().mockResolvedValue(result)
+  const limit = jest.fn(() => ({ offset }))
+  const orderBy = jest.fn(() => ({ limit }))
+  const where = jest.fn(() => ({ orderBy }))
+  const leftJoin = jest.fn(() => ({ where }))
+  const from = jest.fn(() => ({ leftJoin }))
+
+  return {
+    query: { from },
+    where,
+    orderBy,
+    limit,
+    offset,
+  }
+}
+
 describe('message notification delivery service', () => {
   it('persists parsed delivery context from outbox event', async () => {
     const { MessageNotificationDeliveryService }
@@ -76,69 +104,115 @@ describe('message notification delivery service', () => {
     expect(withErrorHandling).toHaveBeenCalledTimes(1)
   })
 
-  it('maps delivery page items to api-friendly view fields', async () => {
+  it('maps task reminder delivery rows to api-friendly view fields', async () => {
     const { MessageNotificationDeliveryService }
       = await import('./notification-delivery.service')
 
-    const findPagination = jest.fn().mockResolvedValue({
-      list: [
-        {
-          id: 7,
-          outboxId: 10001n,
-          bizKey: 'comment:reply:1:to:1001',
-          notificationType: MessageNotificationTypeEnum.COMMENT_REPLY,
-          receiverUserId: 1001,
-          notificationId: 88,
-          status: MessageNotificationDispatchStatusEnum.FAILED,
-          retryCount: 3,
-          failureReason: 'payload missing title',
-          lastAttemptAt: new Date('2026-03-28T16:01:00.000Z'),
-          createdAt: new Date('2026-03-28T16:00:00.000Z'),
-          updatedAt: new Date('2026-03-28T16:01:30.000Z'),
+    const countQuery = createCountQuery([{ count: 1 }])
+    const rowsQuery = createRowsQuery([
+      {
+        id: 7,
+        outboxId: 10001n,
+        bizKey: 'task:reminder:reward:assignment:18',
+        notificationType: MessageNotificationTypeEnum.TASK_REMINDER,
+        receiverUserId: 1001,
+        notificationId: 88,
+        status: MessageNotificationDispatchStatusEnum.FAILED,
+        retryCount: 3,
+        failureReason: 'payload missing title',
+        lastAttemptAt: new Date('2026-03-28T16:01:00.000Z'),
+        createdAt: new Date('2026-03-28T16:00:00.000Z'),
+        updatedAt: new Date('2026-03-28T16:01:30.000Z'),
+        outboxPayload: {
+          payload: {
+            reminderKind: 'task_reward_granted',
+            taskId: 7,
+            assignmentId: 18,
+            taskCode: 'complete_profile',
+            sceneType: 4,
+            payloadVersion: 1,
+          },
         },
-      ],
-      total: 1,
-      pageIndex: 1,
-      pageSize: 15,
-    })
+      },
+    ])
+
+    const select = jest
+      .fn()
+      .mockReturnValueOnce(countQuery.query)
+      .mockReturnValueOnce(rowsQuery.query)
 
     const service = new MessageNotificationDeliveryService({
-      ext: { findPagination },
-      schema: { notificationDelivery: {} },
-      db: {},
+      db: { select },
+      schema: {
+        notificationDelivery: {
+          id: 'delivery.id',
+          outboxId: 'delivery.outboxId',
+          bizKey: 'delivery.bizKey',
+          notificationType: 'delivery.notificationType',
+          receiverUserId: 'delivery.receiverUserId',
+          notificationId: 'delivery.notificationId',
+          status: 'delivery.status',
+          retryCount: 'delivery.retryCount',
+          failureReason: 'delivery.failureReason',
+          lastAttemptAt: 'delivery.lastAttemptAt',
+          createdAt: 'delivery.createdAt',
+          updatedAt: 'delivery.updatedAt',
+        },
+        messageOutbox: {
+          id: 'outbox.id',
+          payload: 'outbox.payload',
+        },
+      },
     } as any)
 
     await expect(
       service.getNotificationDeliveryPage({
         pageIndex: 1,
         pageSize: 15,
+        reminderKind: 'task_reward_granted',
+        taskId: 7,
+        assignmentId: 18,
       }),
     ).resolves.toEqual({
       list: [
         expect.objectContaining({
           id: 7,
           outboxId: '10001',
-          notificationTypeLabel: '评论回复通知',
+          notificationType: MessageNotificationTypeEnum.TASK_REMINDER,
+          notificationTypeLabel: '任务提醒',
           status: MessageNotificationDispatchStatusEnum.FAILED,
           statusLabel: '投递失败',
+          reminderKind: 'task_reward_granted',
+          taskId: 7,
+          assignmentId: 18,
+          taskCode: 'complete_profile',
+          sceneType: 4,
+          payloadVersion: 1,
         }),
       ],
       total: 1,
       pageIndex: 1,
       pageSize: 15,
     })
-    expect(findPagination).toHaveBeenCalledTimes(1)
+    expect(select).toHaveBeenCalledTimes(2)
+    expect(countQuery.where).toHaveBeenCalledTimes(1)
+    expect(rowsQuery.where).toHaveBeenCalledTimes(1)
+    expect(rowsQuery.orderBy).toHaveBeenCalledTimes(1)
+    expect(rowsQuery.limit).toHaveBeenCalledWith(15)
+    expect(rowsQuery.offset).toHaveBeenCalledWith(0)
   })
 
   it('returns empty page when outbox id is not a valid bigint', async () => {
     const { MessageNotificationDeliveryService }
       = await import('./notification-delivery.service')
 
-    const findPagination = jest.fn()
+    const select = jest.fn()
     const service = new MessageNotificationDeliveryService({
-      ext: { findPagination },
-      schema: { notificationDelivery: {} },
-      db: {},
+      db: { select },
+      schema: {
+        notificationDelivery: {},
+        messageOutbox: {},
+      },
     } as any)
 
     await expect(
@@ -151,6 +225,6 @@ describe('message notification delivery service', () => {
       pageIndex: 1,
       pageSize: 15,
     })
-    expect(findPagination).not.toHaveBeenCalled()
+    expect(select).not.toHaveBeenCalled()
   })
 })

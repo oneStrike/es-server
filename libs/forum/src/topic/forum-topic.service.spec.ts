@@ -6,6 +6,10 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
+jest.mock('@libs/growth/growth-reward', () => ({
+  GrowthEventBridgeService: class {},
+}))
+
 jest.mock('@libs/interaction/browse-log', () => ({
   BrowseLogService: class {},
   BrowseLogTargetTypeEnum: {
@@ -33,6 +37,13 @@ jest.mock('@libs/interaction/favorite', () => ({
   },
 }))
 
+jest.mock('@libs/interaction/follow', () => ({
+  FollowService: class {},
+  FollowTargetTypeEnum: {
+    USER: 1,
+  },
+}))
+
 jest.mock('@libs/interaction/like', () => ({
   LikeService: class {},
   LikeTargetTypeEnum: {
@@ -56,7 +67,7 @@ describe('forum topic audit reward backfill', () => {
   it('rewards create-topic once when audit changes from pending to approved', async () => {
     const { ForumTopicService } = await import('./forum-topic.service')
 
-    const tryRewardByRule = jest.fn().mockResolvedValue(undefined)
+    const dispatchDefinedEvent = jest.fn().mockResolvedValue(undefined)
     const syncSectionVisibleState = jest.fn().mockResolvedValue(undefined)
     const assertAffectedRows = jest.fn()
     const currentTopic = {
@@ -91,7 +102,7 @@ describe('forum topic audit reward backfill', () => {
         withErrorHandling,
         assertAffectedRows,
       } as any,
-      { tryRewardByRule } as any,
+      { dispatchDefinedEvent } as any,
       {} as any,
       {} as any,
       { syncSectionVisibleState } as any,
@@ -112,20 +123,22 @@ describe('forum topic audit reward backfill', () => {
       } as any),
     ).resolves.toBe(true)
 
-    expect(tryRewardByRule).toHaveBeenCalledWith({
-      userId: 9,
-      ruleType: GrowthRuleTypeEnum.CREATE_TOPIC,
+    expect(dispatchDefinedEvent).toHaveBeenCalledWith({
+      eventEnvelope: expect.objectContaining({
+        code: GrowthRuleTypeEnum.CREATE_TOPIC,
+        subjectId: 9,
+        targetId: 11,
+      }),
       bizKey: 'forum:topic:create:11:user:9',
       source: 'forum_topic',
       remark: 'approve forum topic #11',
-      targetId: 11,
     })
   })
 
   it('does not reward when the topic was already approved before update', async () => {
     const { ForumTopicService } = await import('./forum-topic.service')
 
-    const tryRewardByRule = jest.fn().mockResolvedValue(undefined)
+    const dispatchDefinedEvent = jest.fn().mockResolvedValue(undefined)
     const syncSectionVisibleState = jest.fn().mockResolvedValue(undefined)
     const assertAffectedRows = jest.fn()
     const currentTopic = {
@@ -160,7 +173,7 @@ describe('forum topic audit reward backfill', () => {
         withErrorHandling,
         assertAffectedRows,
       } as any,
-      { tryRewardByRule } as any,
+      { dispatchDefinedEvent } as any,
       {} as any,
       {} as any,
       { syncSectionVisibleState } as any,
@@ -181,7 +194,7 @@ describe('forum topic audit reward backfill', () => {
       } as any),
     ).resolves.toBe(true)
 
-    expect(tryRewardByRule).not.toHaveBeenCalled()
+    expect(dispatchDefinedEvent).not.toHaveBeenCalled()
   })
 })
 
@@ -309,6 +322,7 @@ describe('forum topic public detail payload', () => {
     const ensureUserCanAccessSection = jest.fn().mockResolvedValue(undefined)
     const checkLikeStatus = jest.fn().mockResolvedValue(true)
     const checkFavoriteStatus = jest.fn().mockResolvedValue(false)
+    const checkFollowStatus = jest.fn().mockResolvedValue({ isFollowing: true })
     const recordBrowseLogSafely = jest.fn().mockResolvedValue(undefined)
     const findFirst = jest.fn().mockResolvedValue({
       id: 101,
@@ -358,7 +372,7 @@ describe('forum topic public detail payload', () => {
       { ensureUserCanAccessSection } as any,
       { checkLikeStatus } as any,
       { checkFavoriteStatus } as any,
-      {} as any,
+      { checkFollowStatus } as any,
       {} as any,
     )
 
@@ -382,6 +396,11 @@ describe('forum topic public detail payload', () => {
       targetId: 101,
       userId: 5,
     })
+    expect(checkFollowStatus).toHaveBeenCalledWith({
+      targetType: 1,
+      targetId: 7,
+      userId: 5,
+    })
     expect(result).toEqual(
       expect.objectContaining({
         id: 101,
@@ -391,6 +410,7 @@ describe('forum topic public detail payload', () => {
           id: 7,
           nickname: '详情作者',
           avatarUrl: 'https://example.com/avatar.png',
+          isFollowed: true,
         },
       }),
     )

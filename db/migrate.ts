@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process'
-import { existsSync, readdirSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
 import { drizzle } from 'drizzle-orm/node-postgres'
@@ -11,6 +12,10 @@ const MIGRATIONS_SCHEMA = 'public'
 const MIGRATIONS_TABLE = '__drizzle_migrations__'
 const DB_RECORD_PREVIEW_LIMIT = 10
 const DATABASE_URL_CREDENTIALS_PATTERN = /\/\/[^@]+@/
+const CLOUDY_AMPHIBIAN_MIGRATION_NAME = '20260331053709_cloudy_amphibian'
+const CLOUDY_AMPHIBIAN_DB_HASH = '49f2d3b949bb583ec251fef8eae6d6598ed2b24b6fa95ebc6134d6aa3b30a714'
+const CLOUDY_AMPHIBIAN_LOCAL_HASH = '5180c1454d7de2ebd0e289bf963db904ae9e2be4a240449c35c1d96a135d15c7'
+const LEGACY_GROWTH_LEDGER_SOURCE = 'legacy_migration'
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS'
 
@@ -18,6 +23,7 @@ interface LocalMigrationMeta {
   name: string
   hasMigrationSql: boolean
   hasSnapshot: boolean
+  hash: string | null
 }
 
 interface DbMigrationRecord {
@@ -32,6 +38,13 @@ interface MigrationTableSnapshot {
   exists: boolean
   columns: string[]
   records: DbMigrationRecord[]
+}
+
+interface AppliedMigrationHashDrift {
+  name: string
+  dbHash: string
+  localHash: string
+  appliedAt: string | null
 }
 
 function log(level: LogLevel, message: string, details?: Record<string, unknown>) {
@@ -138,6 +151,11 @@ function readLocalMigrations(migrationsFolder: string): LocalMigrationMeta[] {
         name: entry.name,
         hasMigrationSql: existsSync(join(directoryPath, 'migration.sql')),
         hasSnapshot: existsSync(join(directoryPath, 'snapshot.json')),
+        hash: existsSync(join(directoryPath, 'migration.sql'))
+          ? createHash('sha256')
+              .update(readFileSync(join(directoryPath, 'migration.sql')))
+              .digest('hex')
+          : null,
       }
     })
 }
@@ -264,6 +282,161 @@ function getNewMigrationRecords(
   return afterSnapshot.records.filter(record => !appliedIds.has(record.id))
 }
 
+/**
+ * 已执行 migration 如果被后续手改，Drizzle 仍会按 name 视为“已执行”，
+ * 这里提前对比 hash，避免进入“迁移已完成但结构已漂移”的静默状态。
+ */
+function getAppliedMigrationHashDrifts(
+  localMigrations: LocalMigrationMeta[],
+  snapshot: MigrationTableSnapshot,
+): AppliedMigrationHashDrift[] {
+  if (!snapshot.exists || !snapshot.columns.includes('name')) {
+    return []
+  }
+
+  const localMigrationHashMap = new Map(
+    localMigrations
+      .filter((migration): migration is LocalMigrationMeta & { hash: string } =>
+        migration.hasMigrationSql && Boolean(migration.hash),
+      )
+      .map(migration => [migration.name, migration.hash]),
+  )
+
+  return snapshot.records.flatMap((record) => {
+    if (!record.name) {
+      return []
+    }
+
+    const localHash = localMigrationHashMap.get(record.name)
+
+    if (!localHash || localHash === record.hash) {
+      return []
+    }
+
+    return [{
+      name: record.name,
+      dbHash: record.hash,
+      localHash,
+      appliedAt: record.appliedAt,
+    }]
+  })
+}
+
+function printAppliedMigrationHashDrifts(drifts: AppliedMigrationHashDrift[]) {
+  if (drifts.length === 0) {
+    return
+  }
+
+  log('WARN', '检测到已执行 migration 与本地 migration.sql hash 不一致', {
+    driftCount: drifts.length,
+  })
+
+  for (const drift of drifts) {
+    console.log(
+      `  - name=${drift.name}, appliedAt=${drift.appliedAt ?? 'n/a'}, dbHash=${drift.dbHash}, localHash=${drift.localHash}`,
+    )
+  }
+}
+
+function isKnownCloudyAmphibianSourceDrift(drift: AppliedMigrationHashDrift): boolean {
+  return drift.name === CLOUDY_AMPHIBIAN_MIGRATION_NAME
+    && drift.dbHash === CLOUDY_AMPHIBIAN_DB_HASH
+    && drift.localHash === CLOUDY_AMPHIBIAN_LOCAL_HASH
+}
+
+async function columnExists(
+  pool: Pool,
+  schemaName: string,
+  tableName: string,
+  columnName: string,
+): Promise<boolean> {
+  const result = await pool.query<{ exists: boolean }>(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = $1
+          AND table_name = $2
+          AND column_name = $3
+      ) AS "exists"
+    `,
+    [schemaName, tableName, columnName],
+  )
+
+  return Boolean(result.rows[0]?.exists)
+}
+
+/**
+ * 历史上这条 migration 在已落库后被追加了 growth_ledger_record.source，
+ * 需要按当前 schema 对旧库做一次幂等补齐，避免注释同步与运行时 DTO 再次踩空列。
+ */
+async function repairCloudyAmphibianSourceColumn(pool: Pool): Promise<boolean> {
+  const sourceExists = await columnExists(pool, 'public', 'growth_ledger_record', 'source')
+
+  if (sourceExists) {
+    log('INFO', 'growth_ledger_record.source 已存在，跳过已知 repair')
+    return false
+  }
+
+  const countResult = await pool.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS "count" FROM "public"."growth_ledger_record"',
+  )
+  const existingRowCount = Number(countResult.rows[0]?.count ?? '0')
+
+  log('WARN', '开始执行已知 migration 漂移 repair', {
+    migrationName: CLOUDY_AMPHIBIAN_MIGRATION_NAME,
+    target: 'public.growth_ledger_record.source',
+    existingRowCount,
+    backfillSource: LEGACY_GROWTH_LEDGER_SOURCE,
+  })
+
+  const client = await pool.connect()
+  let backfilledRowCount = 0
+
+  try {
+    await client.query('BEGIN')
+    await client.query(
+      'ALTER TABLE "public"."growth_ledger_record" ADD COLUMN IF NOT EXISTS "source" varchar(40)',
+    )
+    const updateResult = await client.query(
+      'UPDATE "public"."growth_ledger_record" SET "source" = $1 WHERE "source" IS NULL',
+      [LEGACY_GROWTH_LEDGER_SOURCE],
+    )
+    backfilledRowCount = updateResult.rowCount ?? 0
+    await client.query(
+      'ALTER TABLE "public"."growth_ledger_record" ALTER COLUMN "source" SET NOT NULL',
+    )
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+
+  log('SUCCESS', '已知 migration 漂移 repair 完成', {
+    migrationName: CLOUDY_AMPHIBIAN_MIGRATION_NAME,
+    existingRowCount,
+    backfilledRowCount,
+  })
+
+  return true
+}
+
+async function repairKnownMigrationDrifts(
+  pool: Pool,
+  drifts: AppliedMigrationHashDrift[],
+): Promise<Set<string>> {
+  const handled = new Set<string>()
+
+  if (drifts.some(isKnownCloudyAmphibianSourceDrift)) {
+    await repairCloudyAmphibianSourceColumn(pool)
+    handled.add(CLOUDY_AMPHIBIAN_MIGRATION_NAME)
+  }
+
+  return handled
+}
+
 async function runMigration() {
   const startedAt = Date.now()
   log('INFO', '开始执行数据库迁移', {
@@ -365,6 +538,7 @@ async function runMigration() {
 
     const afterSnapshot = await getMigrationTableSnapshot(pool)
     const newRecords = getNewMigrationRecords(beforeSnapshot, afterSnapshot)
+    const appliedHashDrifts = getAppliedMigrationHashDrifts(localMigrations, afterSnapshot)
 
     if (newRecords.length === 0) {
       log('SUCCESS', '数据库迁移完成，未发现新增迁移记录', {
@@ -378,6 +552,19 @@ async function runMigration() {
         appliedCount: afterSnapshot.records.length,
       })
       printDbMigrationRecords('本次新增的 migration 记录', newRecords)
+    }
+
+    printAppliedMigrationHashDrifts(appliedHashDrifts)
+
+    const handledHashDrifts = await repairKnownMigrationDrifts(pool, appliedHashDrifts)
+    const unhandledHashDrifts = appliedHashDrifts.filter(
+      drift => !handledHashDrifts.has(drift.name),
+    )
+
+    if (unhandledHashDrifts.length > 0) {
+      throw new Error(
+        `检测到 ${unhandledHashDrifts.length} 条已执行 migration 的 hash 与本地 migration.sql 不一致，请勿修改已执行 migration 文件；请改为生成新的 migration。`,
+      )
     }
   } catch (error) {
     log('ERROR', '数据库迁移失败', {

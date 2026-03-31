@@ -3,7 +3,10 @@ import { DrizzleService } from '@db/core'
 import { UserStatusEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
-import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerSourceEnum,
+} from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
@@ -193,6 +196,7 @@ export class UserExperienceService {
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
         ruleType,
         bizKey,
+        source: addExperienceDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE,
         remark,
         targetType: addExperienceDto.targetType,
         targetId: addExperienceDto.targetId,
@@ -324,6 +328,7 @@ export class UserExperienceService {
     userId: number
     ruleId: number | null
     ruleType?: number | null
+    source?: string | null
     targetType?: number | null
     targetId?: number | null
     delta: number
@@ -340,6 +345,7 @@ export class UserExperienceService {
       userId: record.userId,
       ruleId: record.ruleId ?? undefined,
       ruleType: record.ruleType ?? undefined,
+      source: record.source ?? undefined,
       targetType: record.targetType ?? undefined,
       targetId: record.targetId ?? undefined,
       bizKey: record.bizKey ?? '',

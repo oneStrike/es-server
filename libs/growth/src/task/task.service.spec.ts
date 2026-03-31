@@ -1,13 +1,18 @@
 import {
+  getTaskTypeFilterValues,
+  normalizeTaskType,
   TaskAssignmentRewardResultTypeEnum,
   TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
+  TaskObjectiveTypeEnum,
   TaskProgressActionTypeEnum,
+  TaskProgressSourceEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
   TaskTypeEnum,
+  TaskUserVisibleStatusEnum,
 } from './task.constant'
 
 jest.mock('@db/core', () => ({
@@ -24,6 +29,14 @@ jest.mock('@libs/message/outbox', () => ({
 }))
 
 jest.mock('@libs/message/notification', () => ({
+  MessageNotificationDispatchStatusEnum: {
+    DELIVERED: 'delivered',
+    FAILED: 'failed',
+    RETRYING: 'retrying',
+    SKIPPED_DUPLICATE: 'skipped_duplicate',
+    SKIPPED_SELF: 'skipped_self',
+    SKIPPED_PREFERENCE: 'skipped_preference',
+  },
   MessageNotificationTypeEnum: {
     COMMENT_REPLY: 1,
     COMMENT_LIKE: 2,
@@ -73,6 +86,33 @@ function createExpireTransactionHarness(
     returning,
     set,
     update,
+    where,
+  }
+}
+
+function createEventProgressTransactionHarness(params?: {
+  duplicate?: boolean
+  rowCount?: number
+}) {
+  const returningLog = jest
+    .fn()
+    .mockResolvedValue(params?.duplicate ? [] : [{ id: 1 }])
+  const onConflictDoNothing = jest.fn(() => ({ returning: returningLog }))
+  const values = jest.fn(() => ({ onConflictDoNothing }))
+  const insert = jest.fn(() => ({ values }))
+  const where = jest
+    .fn()
+    .mockResolvedValue({ rowCount: params?.rowCount ?? 1 })
+  const set = jest.fn(() => ({ where }))
+  const update = jest.fn(() => ({ set }))
+
+  return {
+    tx: { insert, update },
+    insert,
+    onConflictDoNothing,
+    returningLog,
+    set,
+    values,
     where,
   }
 }
@@ -171,12 +211,13 @@ describe('task service rewardConfig contract', () => {
   const baseTask = {
     code: 'newbie_reward_contract',
     title: '完善个人资料',
-    type: TaskTypeEnum.NEWBIE,
+    type: TaskTypeEnum.ONBOARDING,
     status: TaskStatusEnum.DRAFT,
     priority: 10,
     isEnabled: true,
     claimMode: TaskClaimModeEnum.AUTO,
     completeMode: TaskCompleteModeEnum.AUTO,
+    objectiveType: TaskObjectiveTypeEnum.MANUAL,
     targetCount: 1,
   }
 
@@ -314,6 +355,64 @@ describe('task service rewardConfig contract', () => {
     expect(values).not.toHaveBeenCalled()
   })
 
+  it('rejects EVENT_COUNT tasks without eventCode', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const values = jest.fn()
+    const insert = jest.fn(() => ({ values }))
+    const service = new TaskService(
+      {
+        db: { insert },
+        schema: { task: {} },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.createTask(
+        {
+          ...baseTask,
+          objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('EVENT_COUNT 任务必须配置 eventCode')
+
+    expect(values).not.toHaveBeenCalled()
+  })
+
+  it('rejects eventCode on MANUAL tasks', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const values = jest.fn()
+    const insert = jest.fn(() => ({ values }))
+    const service = new TaskService(
+      {
+        db: { insert },
+        schema: { task: {} },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.createTask(
+        {
+          ...baseTask,
+          eventCode: 300,
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow(
+      'MANUAL 任务不能配置 eventCode，请改为 EVENT_COUNT 或清空 eventCode',
+    )
+
+    expect(values).not.toHaveBeenCalled()
+  })
+
   it('rejects non-positive targetCount before insert', async () => {
     const { TaskService } = await import('./task.service')
 
@@ -340,6 +439,44 @@ describe('task service rewardConfig contract', () => {
     ).rejects.toThrow('targetCount 必须是大于 0 的整数')
 
     expect(values).not.toHaveBeenCalled()
+  })
+
+  it('normalizes objective fields before insert', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const values = jest.fn().mockResolvedValue([{ id: 1 }])
+    const insert = jest.fn(() => ({ values }))
+    const service = new TaskService(
+      {
+        db: { insert },
+        schema: { task: {} },
+        withErrorHandling: jest.fn(async (callback) => callback()),
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    await expect(
+      service.createTask(
+        {
+          ...baseTask,
+          objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+          eventCode: '300',
+          objectiveConfig: '{"sectionId":10}',
+        } as any,
+        9,
+      ),
+    ).resolves.toBe(true)
+
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+        eventCode: 300,
+        objectiveConfig: {
+          sectionId: 10,
+        },
+      }),
+    )
   })
 
   it('writes reward settlement state back to assignment after completion reward', async () => {
@@ -554,6 +691,75 @@ describe('task service rewardConfig contract', () => {
         id: 18,
       }),
     )
+  })
+})
+
+describe('task type compatibility', () => {
+  it('normalizes legacy task type values into stable scene types', () => {
+    expect(normalizeTaskType(1)).toBe(TaskTypeEnum.ONBOARDING)
+    expect(normalizeTaskType(3)).toBe(TaskTypeEnum.DAILY)
+    expect(normalizeTaskType(5)).toBe(TaskTypeEnum.CAMPAIGN)
+  })
+
+  it('builds compatible filter values for stable scene queries', () => {
+    expect(getTaskTypeFilterValues(TaskTypeEnum.ONBOARDING)).toEqual([1])
+    expect(getTaskTypeFilterValues(TaskTypeEnum.DAILY)).toEqual([2, 3])
+    expect(getTaskTypeFilterValues(TaskTypeEnum.CAMPAIGN)).toEqual([4, 5])
+  })
+})
+
+describe('task snapshot contract', () => {
+  it('freezes execution-critical fields in assignment snapshot', async () => {
+    const { TaskService } = await import('./task.service')
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: {
+            userId: 'userId',
+            deletedAt: 'deletedAt',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+    )
+
+    const snapshot = (service as any).buildTaskSnapshot({
+      id: 7,
+      code: 'daily_read',
+      title: '每日阅读',
+      description: '每天阅读一章',
+      cover: 'https://example.com/task.png',
+      type: TaskTypeEnum.DAILY,
+      claimMode: TaskClaimModeEnum.MANUAL,
+      completeMode: TaskCompleteModeEnum.AUTO,
+      objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+      eventCode: 300,
+      objectiveConfig: { sectionId: 10 },
+      repeatRule: { type: TaskRepeatTypeEnum.DAILY, timezone: 'Asia/Shanghai' },
+      publishStartAt: new Date('2026-03-28T00:00:00.000Z'),
+      publishEndAt: new Date('2026-03-31T00:00:00.000Z'),
+      rewardConfig: { points: 10, experience: 5 },
+      targetCount: 3,
+    })
+
+    expect(snapshot).toMatchObject({
+      id: 7,
+      code: 'daily_read',
+      title: '每日阅读',
+      description: '每天阅读一章',
+      cover: 'https://example.com/task.png',
+      type: TaskTypeEnum.DAILY,
+      claimMode: TaskClaimModeEnum.MANUAL,
+      completeMode: TaskCompleteModeEnum.AUTO,
+      objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+      eventCode: 300,
+      objectiveConfig: { sectionId: 10 },
+      repeatRule: { type: TaskRepeatTypeEnum.DAILY, timezone: 'Asia/Shanghai' },
+      rewardConfig: { points: 10, experience: 5 },
+      targetCount: 3,
+    })
   })
 })
 
@@ -886,6 +1092,245 @@ describe('task service main flows', () => {
 
     expect(txHarness.logValues).not.toHaveBeenCalled()
     expect(emitTaskCompleteEvent).not.toHaveBeenCalled()
+  })
+
+  it('advances EVENT_COUNT tasks from business events and auto-completes at target', async () => {
+    const { TaskService } = await import('./task.service')
+    const { GrowthRuleTypeEnum } = await import('../growth-rule.constant')
+    const { EventEnvelopeGovernanceStatusEnum } = await import(
+      '../event-definition/event-envelope.type'
+    )
+    const txHarness = createEventProgressTransactionHarness()
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {
+            assignmentId: 'assignmentId',
+            eventBizKey: 'eventBizKey',
+            id: 'id',
+          },
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest.spyOn(service as any, 'findEventProgressTasks').mockResolvedValue([
+      {
+        id: 11,
+        code: 'comment_daily',
+        claimMode: TaskClaimModeEnum.AUTO,
+        completeMode: TaskCompleteModeEnum.AUTO,
+        objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+        eventCode: GrowthRuleTypeEnum.CREATE_COMMENT,
+        objectiveConfig: { sectionId: 10 },
+        repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+      },
+    ])
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 21,
+      status: TaskAssignmentStatusEnum.IN_PROGRESS,
+      progress: 1,
+      target: 2,
+      version: 4,
+      claimedAt: new Date('2026-03-31T08:00:00.000Z'),
+    })
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.consumeEventProgress({
+        bizKey: 'comment:create:18:user:9',
+        eventEnvelope: {
+          code: GrowthRuleTypeEnum.CREATE_COMMENT,
+          key: 'CREATE_COMMENT',
+          subjectType: 'user',
+          subjectId: 9,
+          targetType: 'comment',
+          targetId: 18,
+          operatorId: 9,
+          occurredAt: new Date('2026-03-31T09:00:00.000Z'),
+          governanceStatus: EventEnvelopeGovernanceStatusEnum.PASSED,
+          context: {
+            sectionId: 10,
+          },
+        },
+      }),
+    ).resolves.toEqual({
+      matchedTaskIds: [11],
+      progressedAssignmentIds: [],
+      completedAssignmentIds: [21],
+      duplicateAssignmentIds: [],
+    })
+
+    expect(txHarness.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentId: 21,
+        userId: 9,
+        actionType: TaskProgressActionTypeEnum.COMPLETE,
+        progressSource: TaskProgressSourceEnum.EVENT,
+        eventCode: GrowthRuleTypeEnum.CREATE_COMMENT,
+        eventBizKey: 'comment:create:18:user:9',
+      }),
+    )
+    expect(txHarness.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        progress: 2,
+        status: TaskAssignmentStatusEnum.COMPLETED,
+        completedAt: new Date('2026-03-31T09:00:00.000Z'),
+      }),
+    )
+    expect(emitTaskCompleteEvent).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({ id: 11 }),
+      expect.objectContaining({ id: 21 }),
+    )
+  })
+
+  it('does not re-apply duplicate event bizKeys for the same assignment', async () => {
+    const { TaskService } = await import('./task.service')
+    const { GrowthRuleTypeEnum } = await import('../growth-rule.constant')
+    const { EventEnvelopeGovernanceStatusEnum } = await import(
+      '../event-definition/event-envelope.type'
+    )
+    const txHarness = createEventProgressTransactionHarness({ duplicate: true })
+    const withTransaction = jest.fn(async (callback) => callback(txHarness.tx))
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {
+            assignmentId: 'assignmentId',
+            eventBizKey: 'eventBizKey',
+            id: 'id',
+          },
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest.spyOn(service as any, 'findEventProgressTasks').mockResolvedValue([
+      {
+        id: 11,
+        claimMode: TaskClaimModeEnum.AUTO,
+        completeMode: TaskCompleteModeEnum.AUTO,
+        objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+        eventCode: GrowthRuleTypeEnum.CREATE_COMMENT,
+        objectiveConfig: null,
+        repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+      },
+    ])
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 21,
+      status: TaskAssignmentStatusEnum.IN_PROGRESS,
+      progress: 1,
+      target: 2,
+      version: 4,
+      claimedAt: new Date('2026-03-31T08:00:00.000Z'),
+    })
+    const emitTaskCompleteEvent = jest
+      .spyOn(service as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    await expect(
+      service.consumeEventProgress({
+        bizKey: 'comment:create:18:user:9',
+        eventEnvelope: {
+          code: GrowthRuleTypeEnum.CREATE_COMMENT,
+          key: 'CREATE_COMMENT',
+          subjectType: 'user',
+          subjectId: 9,
+          targetType: 'comment',
+          targetId: 18,
+          occurredAt: new Date('2026-03-31T09:00:00.000Z'),
+          governanceStatus: EventEnvelopeGovernanceStatusEnum.PASSED,
+        },
+      }),
+    ).resolves.toEqual({
+      matchedTaskIds: [11],
+      progressedAssignmentIds: [],
+      completedAssignmentIds: [],
+      duplicateAssignmentIds: [21],
+    })
+
+    expect(txHarness.set).not.toHaveBeenCalled()
+    expect(emitTaskCompleteEvent).not.toHaveBeenCalled()
+  })
+
+  it('does not backfill pre-claim events for MANUAL EVENT_COUNT tasks', async () => {
+    const { TaskService } = await import('./task.service')
+    const { GrowthRuleTypeEnum } = await import('../growth-rule.constant')
+    const { EventEnvelopeGovernanceStatusEnum } = await import(
+      '../event-definition/event-envelope.type'
+    )
+    const withTransaction = jest.fn()
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: { version: 'version', id: 'id' },
+          taskProgressLog: {
+            assignmentId: 'assignmentId',
+            eventBizKey: 'eventBizKey',
+            id: 'id',
+          },
+        },
+        withTransaction,
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest.spyOn(service as any, 'findEventProgressTasks').mockResolvedValue([
+      {
+        id: 11,
+        claimMode: TaskClaimModeEnum.MANUAL,
+        completeMode: TaskCompleteModeEnum.MANUAL,
+        objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+        eventCode: GrowthRuleTypeEnum.CREATE_COMMENT,
+        objectiveConfig: null,
+        repeatRule: { type: TaskRepeatTypeEnum.ONCE },
+      },
+    ])
+    jest.spyOn(service as any, 'findAssignmentByUniqueKey').mockResolvedValue({
+      id: 21,
+      status: TaskAssignmentStatusEnum.PENDING,
+      progress: 0,
+      target: 2,
+      version: 4,
+      claimedAt: new Date('2026-03-31T10:00:00.000Z'),
+    })
+
+    await expect(
+      service.consumeEventProgress({
+        bizKey: 'comment:create:18:user:9',
+        eventEnvelope: {
+          code: GrowthRuleTypeEnum.CREATE_COMMENT,
+          key: 'CREATE_COMMENT',
+          subjectType: 'user',
+          subjectId: 9,
+          targetType: 'comment',
+          targetId: 18,
+          occurredAt: new Date('2026-03-31T09:00:00.000Z'),
+          governanceStatus: EventEnvelopeGovernanceStatusEnum.PASSED,
+        },
+      }),
+    ).resolves.toEqual({
+      matchedTaskIds: [11],
+      progressedAssignmentIds: [],
+      completedAssignmentIds: [],
+      duplicateAssignmentIds: [],
+    })
+
+    expect(withTransaction).not.toHaveBeenCalled()
   })
 
   it('rejects task actions after publishEndAt even before cron expires assignments', async () => {
@@ -1289,17 +1734,27 @@ describe('task service main flows', () => {
         assignmentId: 21,
         userId: 9,
         actionType: TaskProgressActionTypeEnum.EXPIRE,
+        progressSource: TaskProgressSourceEnum.SYSTEM,
         delta: 0,
         beforeValue: 2,
         afterValue: 2,
+        eventCode: null,
+        eventBizKey: null,
+        eventOccurredAt: null,
+        context: undefined,
       },
       {
         assignmentId: 22,
         userId: 9,
         actionType: TaskProgressActionTypeEnum.EXPIRE,
+        progressSource: TaskProgressSourceEnum.SYSTEM,
         delta: 0,
         beforeValue: 0,
         afterValue: 0,
+        eventCode: null,
+        eventBizKey: null,
+        eventOccurredAt: null,
+        context: undefined,
       },
     ])
   })
@@ -1353,9 +1808,14 @@ describe('task service main flows', () => {
         assignmentId: 21,
         userId: 9,
         actionType: TaskProgressActionTypeEnum.EXPIRE,
+        progressSource: TaskProgressSourceEnum.SYSTEM,
         delta: 0,
         beforeValue: 2,
         afterValue: 2,
+        eventCode: null,
+        eventBizKey: null,
+        eventOccurredAt: null,
+        context: undefined,
       },
     ])
   })
@@ -1410,5 +1870,398 @@ describe('task service main flows', () => {
     expect(expireDueAssignmentsForUser.mock.invocationCallOrder[0]).toBeLessThan(
       ensureAutoAssignmentsForUser.mock.invocationCallOrder[0],
     )
+  })
+
+  it('maps my tasks with snapshot fallback and reward pending visible status', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: {
+            userId: 'userId',
+            deletedAt: 'deletedAt',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest
+      .spyOn(service as any, 'expireDueAssignmentsForUser')
+      .mockResolvedValue(undefined)
+    jest
+      .spyOn(service as any, 'ensureAutoAssignmentsForUser')
+      .mockResolvedValue(undefined)
+    jest.spyOn(service as any, 'queryTaskAssignmentPage').mockResolvedValue({
+      list: [
+        {
+          id: 31,
+          createdAt: new Date('2026-03-31T00:00:00.000Z'),
+          updatedAt: new Date('2026-03-31T00:00:00.000Z'),
+          taskId: 7,
+          userId: 9,
+          cycleKey: '2026-03-31',
+          status: TaskAssignmentStatusEnum.COMPLETED,
+          rewardStatus: TaskAssignmentRewardStatusEnum.PENDING,
+          rewardResultType: null,
+          progress: 1,
+          target: 1,
+          version: 1,
+          claimedAt: new Date('2026-03-31T00:00:00.000Z'),
+          completedAt: new Date('2026-03-31T01:00:00.000Z'),
+          expiredAt: null,
+          rewardSettledAt: null,
+          rewardLedgerIds: [],
+          lastRewardError: 'reward pending',
+          taskSnapshot: {
+            id: 7,
+            code: 'complete_profile',
+            title: '完善资料',
+            description: '上传头像并设置昵称',
+            type: TaskTypeEnum.ONBOARDING,
+            objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+            eventCode: 10,
+            rewardConfig: { points: 5 },
+            targetCount: 1,
+            completeMode: TaskCompleteModeEnum.MANUAL,
+            claimMode: TaskClaimModeEnum.MANUAL,
+          },
+          task: null,
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    const result = await service.getMyTasks(
+      { pageIndex: 1, pageSize: 20 } as any,
+      9,
+    )
+
+    expect(result.list[0]).toMatchObject({
+      visibleStatus: TaskUserVisibleStatusEnum.REWARD_PENDING,
+      rewardStatus: TaskAssignmentRewardStatusEnum.PENDING,
+      lastRewardError: 'reward pending',
+      task: {
+        id: 7,
+        code: 'complete_profile',
+        title: '完善资料',
+        description: '上传头像并设置昵称',
+        type: TaskTypeEnum.ONBOARDING,
+        objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+      },
+    })
+  })
+
+  it('enriches admin task page rows with runtime health summary', async () => {
+    const { TaskService } = await import('./task.service')
+    const findPagination = jest.fn().mockResolvedValue({
+      list: [
+        {
+          id: 7,
+          createdAt: new Date('2026-03-31T00:00:00.000Z'),
+          updatedAt: new Date('2026-03-31T00:00:00.000Z'),
+          code: 'daily_read',
+          title: '每日阅读',
+          description: '阅读任意章节',
+          cover: null,
+          type: 3,
+          status: TaskStatusEnum.PUBLISHED,
+          priority: 10,
+          isEnabled: true,
+          claimMode: TaskClaimModeEnum.MANUAL,
+          completeMode: TaskCompleteModeEnum.AUTO,
+          objectiveType: TaskObjectiveTypeEnum.EVENT_COUNT,
+          eventCode: 300,
+          objectiveConfig: null,
+          targetCount: 1,
+          rewardConfig: { points: 3 },
+          publishStartAt: null,
+          publishEndAt: null,
+          repeatRule: { type: TaskRepeatTypeEnum.DAILY },
+          createdById: 1,
+          updatedById: 1,
+          deletedAt: null,
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: { task: { deletedAt: 'deletedAt' } },
+        ext: { findPagination },
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest.spyOn(service as any, 'getTaskRuntimeHealthMap').mockResolvedValue(
+      new Map([
+        [
+          7,
+          {
+            activeAssignmentCount: 12,
+            pendingRewardCompensationCount: 2,
+            latestReminder: {
+              reminderKind: 'task_reward_granted',
+              status: 'delivered',
+              failureReason: null,
+              lastAttemptAt: new Date('2026-03-31T08:00:00.000Z'),
+              updatedAt: new Date('2026-03-31T08:00:01.000Z'),
+            },
+          },
+        ],
+      ]),
+    )
+
+    const result = await service.getTaskPage({ pageIndex: 1, pageSize: 20 } as any)
+
+    expect(result.list[0]).toMatchObject({
+      id: 7,
+      type: TaskTypeEnum.DAILY,
+      activeAssignmentCount: 12,
+      pendingRewardCompensationCount: 2,
+      latestReminder: {
+        reminderKind: 'task_reward_granted',
+        status: 'delivered',
+      },
+    })
+  })
+
+  it('maps admin task assignment page rows to unified visible status', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: {
+            deletedAt: 'deletedAt',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest.spyOn(service as any, 'queryTaskAssignmentPage').mockResolvedValue({
+      list: [
+        {
+          id: 88,
+          createdAt: new Date('2026-03-31T00:00:00.000Z'),
+          updatedAt: new Date('2026-03-31T00:00:00.000Z'),
+          taskId: 7,
+          userId: 9,
+          cycleKey: '2026-03-31',
+          status: TaskAssignmentStatusEnum.COMPLETED,
+          rewardStatus: TaskAssignmentRewardStatusEnum.SUCCESS,
+          rewardResultType: TaskAssignmentRewardResultTypeEnum.APPLIED,
+          progress: 1,
+          target: 1,
+          version: 1,
+          claimedAt: new Date('2026-03-31T00:00:00.000Z'),
+          completedAt: new Date('2026-03-31T01:00:00.000Z'),
+          expiredAt: null,
+          rewardSettledAt: new Date('2026-03-31T01:00:01.000Z'),
+          rewardLedgerIds: [201],
+          lastRewardError: null,
+          taskSnapshot: {
+            id: 7,
+            code: 'daily_read',
+            title: '每日阅读',
+            type: TaskTypeEnum.DAILY,
+            rewardConfig: { points: 3 },
+            targetCount: 1,
+            completeMode: TaskCompleteModeEnum.AUTO,
+            claimMode: TaskClaimModeEnum.MANUAL,
+          },
+          task: null,
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+
+    const result = await service.getTaskAssignmentPage({
+      pageIndex: 1,
+      pageSize: 20,
+    } as any)
+
+    expect(result.list[0]).toMatchObject({
+      id: 88,
+      visibleStatus: TaskUserVisibleStatusEnum.REWARD_GRANTED,
+      task: {
+        id: 7,
+        code: 'daily_read',
+        title: '每日阅读',
+      },
+    })
+  })
+
+  it('builds reconciliation rows with latest event and reward reminder summary', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {
+          taskAssignment: {
+            deletedAt: 'deletedAt',
+          },
+        },
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    jest
+      .spyOn(service as any, 'queryAssignmentIdsByEventFilter')
+      .mockResolvedValue(undefined)
+    jest
+      .spyOn(service as any, 'queryAssignmentIdsByRewardReminderFilter')
+      .mockResolvedValue(undefined)
+    jest.spyOn(service as any, 'queryTaskAssignmentPage').mockResolvedValue({
+      list: [
+        {
+          id: 88,
+          createdAt: new Date('2026-03-31T00:00:00.000Z'),
+          updatedAt: new Date('2026-03-31T00:00:00.000Z'),
+          taskId: 7,
+          userId: 9,
+          cycleKey: '2026-03-31',
+          status: TaskAssignmentStatusEnum.COMPLETED,
+          rewardStatus: TaskAssignmentRewardStatusEnum.FAILED,
+          rewardResultType: TaskAssignmentRewardResultTypeEnum.FAILED,
+          progress: 1,
+          target: 1,
+          version: 1,
+          claimedAt: new Date('2026-03-31T00:00:00.000Z'),
+          completedAt: new Date('2026-03-31T01:00:00.000Z'),
+          expiredAt: null,
+          rewardSettledAt: null,
+          rewardLedgerIds: [],
+          lastRewardError: 'timeout',
+          taskSnapshot: {
+            id: 7,
+            code: 'daily_read',
+            title: '每日阅读',
+            type: TaskTypeEnum.DAILY,
+            rewardConfig: { points: 3 },
+            targetCount: 1,
+          },
+          task: null,
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 20,
+    })
+    jest.spyOn(service as any, 'getAssignmentEventProgressMap').mockResolvedValue(
+      new Map([
+        [
+          88,
+          {
+            eventCode: 10,
+            eventBizKey: 'comment:create:topic:100:user:9',
+            eventOccurredAt: new Date('2026-03-31T00:30:00.000Z'),
+          },
+        ],
+      ]),
+    )
+    jest
+      .spyOn(service as any, 'getAssignmentRewardReminderMap')
+      .mockResolvedValue(
+        new Map([
+          [
+            88,
+            {
+              bizKey: 'task:reminder:reward:assignment:88',
+              status: 'failed',
+              failureReason: 'template missing',
+              lastAttemptAt: new Date('2026-03-31T01:00:01.000Z'),
+            },
+          ],
+        ]),
+      )
+
+    const result = await service.getTaskAssignmentReconciliationPage({
+      pageIndex: 1,
+      pageSize: 20,
+    } as any)
+
+    expect(result.list[0]).toMatchObject({
+      id: 88,
+      visibleStatus: TaskUserVisibleStatusEnum.REWARD_PENDING,
+      latestEventCode: 10,
+      latestEventBizKey: 'comment:create:topic:100:user:9',
+      rewardReminder: {
+        bizKey: 'task:reminder:reward:assignment:88',
+        status: 'failed',
+        failureReason: 'template missing',
+      },
+    })
+  })
+
+  it('retries a single completed assignment reward through task complete event', async () => {
+    const { TaskService } = await import('./task.service')
+
+    const emitTaskCompleteEvent = jest
+      .spyOn(TaskService.prototype as any, 'emitTaskCompleteEvent')
+      .mockResolvedValue(undefined)
+
+    const service = new TaskService(
+      {
+        db: {},
+        schema: {},
+      } as any,
+      {} as any,
+      {} as any,
+    )
+    Object.defineProperty(service as any, 'db', {
+      value: {
+        query: {
+          taskAssignment: {
+            findFirst: jest.fn().mockResolvedValue({
+              id: 88,
+              taskId: 7,
+              userId: 9,
+              status: TaskAssignmentStatusEnum.COMPLETED,
+              rewardStatus: TaskAssignmentRewardStatusEnum.FAILED,
+              completedAt: new Date('2026-03-31T01:00:00.000Z'),
+              taskSnapshot: {
+                id: 7,
+                code: 'daily_read',
+                title: '每日阅读',
+                type: TaskTypeEnum.DAILY,
+                rewardConfig: { points: 3 },
+              },
+              task: {
+                code: 'daily_read',
+                title: '每日阅读',
+                type: TaskTypeEnum.DAILY,
+                rewardConfig: { points: 3 },
+              },
+            }),
+          },
+        },
+      },
+    })
+
+    await expect(service.retryTaskAssignmentReward(88)).resolves.toBe(true)
+    expect(emitTaskCompleteEvent).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({
+        id: 7,
+        rewardConfig: { points: 3 },
+      }),
+      expect.objectContaining({ id: 88 }),
+    )
+
+    emitTaskCompleteEvent.mockRestore()
   })
 })

@@ -150,4 +150,39 @@ describe('message outbox service', () => {
       target: 'bizKey',
     })
   })
+
+  it('resets failed outbox events to pending when retrying by bizKey', async () => {
+    const { MessageOutboxService } = await import('./outbox.service')
+
+    const where = jest.fn().mockResolvedValue({ rowCount: 1 })
+    const set = jest.fn(() => ({ where }))
+    const update = jest.fn(() => ({ set }))
+    const withErrorHandling = jest.fn(async (callback) => callback())
+
+    const service = new MessageOutboxService({
+      db: { update },
+      withErrorHandling,
+      schema: {
+        messageOutbox: {
+          bizKey: 'bizKey',
+          status: 'status',
+        },
+      },
+    } as any)
+
+    await expect(
+      service.retryFailedEventByBizKey({
+        bizKey: 'task:reminder:reward:assignment:88',
+        domain: MessageOutboxDomainEnum.NOTIFICATION,
+      }),
+    ).resolves.toBe(true)
+
+    expect(set).toHaveBeenCalledWith({
+      status: MessageOutboxStatusEnum.PENDING,
+      retryCount: 0,
+      nextRetryAt: null,
+      processedAt: null,
+      lastError: null,
+    })
+  })
 })

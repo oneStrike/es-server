@@ -1,10 +1,7 @@
 import { DrizzleService } from '@db/core'
 import { createDefinedEventEnvelope } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerService,
-} from '@libs/growth/growth-ledger'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
 import { Injectable, Logger } from '@nestjs/common'
 import { LikeTargetTypeEnum } from './like.constant'
 
@@ -41,7 +38,7 @@ export class LikeGrowthService {
   }
 
   constructor(
-    private readonly growthLedgerService: GrowthLedgerService,
+    private readonly growthEventBridgeService: GrowthEventBridgeService,
     private readonly drizzle: DrizzleService,
   ) {}
 
@@ -123,24 +120,13 @@ export class LikeGrowthService {
 
     try {
       await this.drizzle.withTransaction(async (tx) => {
-        await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType: likeCreatedEvent.code,
-          bizKey: `${baseBizKey}:POINTS`,
+        await this.growthEventBridgeService.dispatchDefinedEvent({
+          tx,
+          eventEnvelope: likeCreatedEvent,
+          bizKey: baseBizKey,
+          source: 'like',
           remark: `点赞目标 #${likeCreatedEvent.targetId}`,
           targetType,
-          targetId: likeCreatedEvent.targetId,
-        })
-
-        await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType: likeCreatedEvent.code,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          remark: `点赞目标 #${likeCreatedEvent.targetId}`,
-          targetType,
-          targetId: likeCreatedEvent.targetId,
         })
       })
     } catch (error) {
@@ -180,22 +166,12 @@ export class LikeGrowthService {
 
     try {
       await this.drizzle.withTransaction(async (tx) => {
-        await this.growthLedgerService.applyByRule(tx, {
-          userId: commentLikedEvent.subjectId,
-          assetType: GrowthAssetTypeEnum.POINTS,
-          ruleType: commentLikedEvent.code,
-          bizKey: `${baseBizKey}:POINTS`,
+        await this.growthEventBridgeService.dispatchDefinedEvent({
+          tx,
+          eventEnvelope: commentLikedEvent,
+          bizKey: baseBizKey,
+          source: 'comment_like',
           remark: `评论被点赞 #${commentLikedEvent.targetId}`,
-          targetId: commentLikedEvent.targetId,
-        })
-
-        await this.growthLedgerService.applyByRule(tx, {
-          userId: commentLikedEvent.subjectId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType: commentLikedEvent.code,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          remark: `评论被点赞 #${commentLikedEvent.targetId}`,
-          targetId: commentLikedEvent.targetId,
         })
       })
     } catch (error) {

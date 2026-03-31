@@ -84,6 +84,7 @@ describe('experience service record explainability', () => {
       ruleType: 1,
       targetType: 9,
       targetId: 15,
+      source: 'task_bonus',
       delta: 20,
       beforeValue: 100,
       afterValue: 120,
@@ -103,6 +104,7 @@ describe('experience service record explainability', () => {
         ruleType: 1,
         targetType: 9,
         targetId: 15,
+        source: 'task_bonus',
         bizKey: 'task:complete:15:assignment:88:user:3:EXPERIENCE',
         context: {
           assignmentId: 88,

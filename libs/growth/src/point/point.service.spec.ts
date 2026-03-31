@@ -31,6 +31,7 @@ describe('point service record explainability', () => {
       ruleType: 302,
       targetType: 3,
       targetId: 18,
+      source: 'purchase',
       delta: -20,
       beforeValue: 120,
       afterValue: 100,
@@ -49,6 +50,7 @@ describe('point service record explainability', () => {
         ruleType: 302,
         targetType: 3,
         targetId: 18,
+        source: 'purchase',
         bizKey: 'purchase:1:consume',
         context: {
           exchangeId: 7,
