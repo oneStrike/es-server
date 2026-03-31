@@ -369,12 +369,9 @@ export interface TaskAssignmentWithTaskRow extends TaskAssignment {
 /**
  * 构建奖励结算最小任务视图时使用的 live task 来源。
  */
-export interface TaskRewardTaskRecordBuildCurrentTaskInput {
-  code?: Task['code'] | null
-  title?: Task['title'] | null
-  type?: Task['type'] | null
-  rewardConfig?: Task['rewardConfig']
-}
+export type TaskRewardTaskRecordBuildCurrentTaskInput = Partial<
+  Omit<TaskRewardTaskRecord, 'id'>
+>
 
 /**
  * 构建奖励结算最小任务视图时使用的 assignment 来源。
@@ -428,13 +425,21 @@ export type TaskRewardSettlementAssignmentInput = Pick<
 >
 
 /**
+ * 奖励到账提醒复用的最小任务视图。
+ */
+export type TaskRewardReminderTaskInput = Pick<
+  TaskRewardTaskRecord,
+  'id' | 'code' | 'title' | 'type'
+>
+
+/**
  * 任务提醒链路复用的最小任务视图。
  */
-export interface TaskReminderNotificationTaskInfo {
-  id: Task['id']
-  code?: Task['code'] | null
-  title: Task['title']
-  type?: Task['type'] | null
+export type TaskReminderNotificationTaskInfo = Omit<
+  TaskRewardReminderTaskInput,
+  'title'
+> & {
+  title: NonNullable<Task['title']>
 }
 
 /**
@@ -443,16 +448,6 @@ export interface TaskReminderNotificationTaskInfo {
 export type TaskAutoAssignmentReminderTaskInput =
   TaskReminderNotificationTaskInfo & {
   claimMode?: Task['claimMode']
-}
-
-/**
- * 奖励到账提醒复用的最小任务视图。
- */
-export interface TaskRewardReminderTaskInput {
-  id: Task['id']
-  code?: Task['code'] | null
-  title?: Task['title'] | null
-  type?: Task['type'] | null
 }
 
 /**

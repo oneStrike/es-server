@@ -1,1 +1,0 @@
-ALTER TABLE "app_user_count" DROP COLUMN "following_count";

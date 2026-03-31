@@ -1,2 +1,0 @@
-ALTER TABLE "task" ADD CONSTRAINT "task_target_count_positive_chk" CHECK ("target_count" > 0);--> statement-breakpoint
-ALTER TABLE "task_assignment" ADD CONSTRAINT "task_assignment_target_positive_chk" CHECK ("target" > 0);
