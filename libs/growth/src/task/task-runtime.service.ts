@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { and, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
-import { TaskRewardService } from './task-reward.service'
+import { TaskExecutionService } from './task-execution.service'
 import {
   TASK_EXPIRING_SOON_REMINDER_HOURS,
   TaskAssignmentStatusEnum,
@@ -22,7 +22,7 @@ export class TaskRuntimeService extends TaskServiceSupport {
     drizzle: DrizzleService,
     userGrowthRewardService: UserGrowthRewardService,
     messageOutboxService: MessageOutboxService,
-    private readonly taskRewardService: TaskRewardService,
+    protected readonly taskExecutionService: TaskExecutionService,
   ) {
     super(drizzle, userGrowthRewardService, messageOutboxService)
   }
@@ -48,7 +48,7 @@ export class TaskRuntimeService extends TaskServiceSupport {
    */
   @Cron('30 */5 * * * *')
   async retryCompletedAssignmentRewards() {
-    await this.taskRewardService.retryCompletedAssignmentRewardsBatch(100)
+    await this.taskExecutionService.retryCompletedAssignmentRewardsBatch(100)
   }
 
   /**

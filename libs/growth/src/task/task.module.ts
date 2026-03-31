@@ -1,29 +1,21 @@
 import { MessageOutboxModule } from '@libs/message/outbox'
 import { Module } from '@nestjs/common'
 import { UserGrowthRewardModule } from '../growth-reward/growth-reward.module'
-import { TaskAssignmentService } from './task-assignment.service'
-import { TaskConfigService } from './task-config.service'
-import { TaskEventService } from './task-event.service'
-import { TaskReadService } from './task-read.service'
-import { TaskRewardService } from './task-reward.service'
+import { TaskDefinitionService } from './task-definition.service'
+import { TaskExecutionService } from './task-execution.service'
 import { TaskRuntimeService } from './task-runtime.service'
+import { TaskService } from './task.service'
 
 @Module({
   imports: [UserGrowthRewardModule, MessageOutboxModule],
   providers: [
-    TaskAssignmentService,
-    TaskConfigService,
-    TaskEventService,
-    TaskReadService,
-    TaskRewardService,
+    TaskDefinitionService,
+    TaskExecutionService,
     TaskRuntimeService,
+    TaskService,
   ],
   exports: [
-    TaskAssignmentService,
-    TaskConfigService,
-    TaskEventService,
-    TaskReadService,
-    TaskRewardService,
+    TaskService,
     TaskRuntimeService,
   ],
 })

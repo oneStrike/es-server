@@ -1,5 +1,5 @@
 import {
-  TaskAssignmentService,
+  TaskService,
 } from '@libs/growth/task'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -17,7 +17,7 @@ import {
 @ApiTags('任务')
 @Controller('app/task')
 export class TaskController {
-  constructor(private readonly taskAssignmentService: TaskAssignmentService) {}
+  constructor(private readonly taskService: TaskService) {}
 
   @Get('page')
   @ApiPageDoc({
@@ -28,7 +28,7 @@ export class TaskController {
     @Query() query: QueryAppTaskDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.taskAssignmentService.getAvailableTasks(query, userId)
+    return this.taskService.getAvailableTasks(query, userId)
   }
 
   @Get('my/page')
@@ -40,7 +40,7 @@ export class TaskController {
     @Query() query: QueryMyTaskDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.taskAssignmentService.getMyTasks(query, userId)
+    return this.taskService.getMyTasks(query, userId)
   }
 
   @Post('claim')
@@ -52,7 +52,7 @@ export class TaskController {
     @Body() body: ClaimTaskDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.taskAssignmentService.claimTask(body, userId)
+    return this.taskService.claimTask(body, userId)
   }
 
   @Post('progress')
@@ -64,7 +64,7 @@ export class TaskController {
     @Body() body: TaskProgressDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.taskAssignmentService.reportProgress(body, userId)
+    return this.taskService.reportProgress(body, userId)
   }
 
   @Post('complete')
@@ -76,6 +76,6 @@ export class TaskController {
     @Body() body: TaskCompleteDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.taskAssignmentService.completeTask(body, userId)
+    return this.taskService.completeTask(body, userId)
   }
 }

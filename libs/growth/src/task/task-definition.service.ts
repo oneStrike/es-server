@@ -1,23 +1,28 @@
 import type {
   CreateTaskInput,
+  QueryTaskPageInput,
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from './task.type'
-import { DrizzleService } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
-import { normalizeTaskObjectiveType } from './task.constant'
+import {
+  getTaskTypeFilterValues,
+  normalizeTaskObjectiveType,
+} from './task.constant'
 import { TaskServiceSupport } from './task.service.support'
 
 /**
- * 任务配置服务。
+ * 任务定义服务。
  *
- * 负责任务模板的新增、变更、上下线和软删除，不处理用户执行态查询与事件推进。
+ * 负责任务模板本身的生命周期与定义态读模型，包括模板新增、变更、上下线、
+ * 软删除，以及后台任务列表/详情查询。
  */
 @Injectable()
-export class TaskConfigService extends TaskServiceSupport {
+export class TaskDefinitionService extends TaskServiceSupport {
   constructor(
     drizzle: DrizzleService,
     userGrowthRewardService: UserGrowthRewardService,
@@ -32,10 +37,7 @@ export class TaskConfigService extends TaskServiceSupport {
    * 在写入前统一校验发布时间窗口、目标配置、奖励配置与重复规则，
    * 避免无效模板进入后续 claim / progress / reward 链路。
    */
-  async createTask(
-    dto: CreateTaskInput,
-    adminUserId: number,
-  ) {
+  async createTask(dto: CreateTaskInput, adminUserId: number) {
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
     const objectiveType = this.parseTaskObjectiveType(dto.objectiveType)
     const eventCode = this.parseTaskEventCode(dto.eventCode)
@@ -73,10 +75,7 @@ export class TaskConfigService extends TaskServiceSupport {
    * 已有活跃 assignment 时，只允许做不影响执行语义的字段调整；
    * 一旦涉及周期、目标、完成方式等关键配置，会在这里统一拦截。
    */
-  async updateTask(
-    dto: UpdateTaskInput,
-    adminUserId: number,
-  ) {
+  async updateTask(dto: UpdateTaskInput, adminUserId: number) {
     const existingTask = await this.db.query.task.findFirst({
       where: {
         id: dto.id,
@@ -210,5 +209,64 @@ export class TaskConfigService extends TaskServiceSupport {
       })
     })
     return true
+  }
+
+  /**
+   * 分页查询后台任务列表。
+   *
+   * 任务运行态健康信息会在这里一并补齐，避免管理端为同一页数据反复跨表查询。
+   */
+  async getTaskPage(queryDto: QueryTaskPageInput) {
+    const conditions = [isNull(this.taskTable.deletedAt)]
+
+    if (queryDto.status !== undefined) {
+      conditions.push(eq(this.taskTable.status, queryDto.status))
+    }
+    if (queryDto.type !== undefined) {
+      conditions.push(
+        inArray(this.taskTable.type, getTaskTypeFilterValues(queryDto.type)),
+      )
+    }
+    if (queryDto.isEnabled !== undefined) {
+      conditions.push(eq(this.taskTable.isEnabled, queryDto.isEnabled))
+    }
+    if (queryDto.title) {
+      conditions.push(
+        ilike(this.taskTable.title, `%${escapeLikePattern(queryDto.title)}%`),
+      )
+    }
+
+    const result = await this.drizzle.ext.findPagination(this.taskTable, {
+      where: and(...conditions),
+      ...queryDto,
+    })
+    const runtimeHealthMap = await this.getTaskRuntimeHealthMap(
+      result.list.map((item) => item.id),
+    )
+
+    return {
+      ...result,
+      list: result.list.map((taskRecord) =>
+        this.toAdminTaskView(taskRecord, runtimeHealthMap.get(taskRecord.id)),
+      ),
+    }
+  }
+
+  /**
+   * 获取后台任务详情。
+   */
+  async getTaskDetail(id: number) {
+    const taskRecord = await this.db.query.task.findFirst({
+      where: {
+        id,
+        deletedAt: { isNull: true },
+      },
+    })
+
+    if (!taskRecord) {
+      throw new NotFoundException('任务不存在')
+    }
+    const runtimeHealthMap = await this.getTaskRuntimeHealthMap([taskRecord.id])
+    return this.toAdminTaskView(taskRecord, runtimeHealthMap.get(taskRecord.id))
   }
 }

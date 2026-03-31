@@ -7,7 +7,7 @@ import {
   EventDefinitionConsumerEnum,
   EventDefinitionService,
 } from '@libs/growth/event-definition'
-import { TaskEventService } from '@libs/growth/task'
+import { TaskService } from '@libs/growth/task'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { UserGrowthRewardService } from './growth-reward.service'
 
@@ -21,7 +21,7 @@ export class GrowthEventBridgeService {
   constructor(
     private readonly eventDefinitionService: EventDefinitionService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
-    private readonly taskEventService: TaskEventService,
+    private readonly taskService: TaskService,
   ) {}
 
   /**
@@ -62,7 +62,7 @@ export class GrowthEventBridgeService {
         )
     const taskHandled = taskEligible
     const taskResult = taskEligible
-      ? await this.taskEventService.consumeEventProgress({
+      ? await this.taskService.consumeEventProgress({
           eventEnvelope: input.eventEnvelope,
           bizKey: input.bizKey,
         })

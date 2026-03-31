@@ -1,7 +1,5 @@
 import {
-  TaskConfigService,
-  TaskReadService,
-  TaskRewardService,
+  TaskService,
 } from '@libs/growth/task'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
@@ -32,11 +30,7 @@ import {
 @ApiTags('任务管理/任务配置')
 @Controller('admin/task')
 export class TaskController {
-  constructor(
-    private readonly taskConfigService: TaskConfigService,
-    private readonly taskReadService: TaskReadService,
-    private readonly taskRewardService: TaskRewardService,
-  ) {}
+  constructor(private readonly taskService: TaskService) {}
 
   @Post('create')
   @ApiDoc({
@@ -47,7 +41,7 @@ export class TaskController {
     @Body() body: CreateTaskDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.taskConfigService.createTask(body, userId)
+    return this.taskService.createTask(body, userId)
   }
 
   @Post('update')
@@ -59,7 +53,7 @@ export class TaskController {
     @Body() body: UpdateTaskDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.taskConfigService.updateTask(body, userId)
+    return this.taskService.updateTask(body, userId)
   }
 
   @Post('update-status')
@@ -68,7 +62,7 @@ export class TaskController {
     model: Boolean,
   })
   async updateStatus(@Body() body: UpdateTaskStatusDto) {
-    return this.taskConfigService.updateTaskStatus(body)
+    return this.taskService.updateTaskStatus(body)
   }
 
   @Post('delete')
@@ -77,7 +71,7 @@ export class TaskController {
     model: Boolean,
   })
   async delete(@Body() body: IdDto) {
-    return this.taskConfigService.deleteTask(body.id)
+    return this.taskService.deleteTask(body.id)
   }
 
   @Get('page')
@@ -86,7 +80,7 @@ export class TaskController {
     model: AdminTaskPageResponseDto,
   })
   async findPage(@Query() query: QueryTaskDto) {
-    return this.taskReadService.getTaskPage(query)
+    return this.taskService.getTaskPage(query)
   }
 
   @Get('detail')
@@ -95,7 +89,7 @@ export class TaskController {
     model: AdminTaskPageResponseDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.taskReadService.getTaskDetail(id)
+    return this.taskService.getTaskDetail(id)
   }
 
   @Get('assignment/page')
@@ -104,7 +98,7 @@ export class TaskController {
     model: AdminTaskAssignmentPageResponseDto,
   })
   async findAssignmentPage(@Query() query: QueryTaskAssignmentDto) {
-    return this.taskReadService.getTaskAssignmentPage(query)
+    return this.taskService.getTaskAssignmentPage(query)
   }
 
   @Get('assignment/reconciliation/page')
@@ -115,7 +109,7 @@ export class TaskController {
   async findAssignmentReconciliationPage(
     @Query() query: QueryTaskAssignmentReconciliationDto,
   ) {
-    return this.taskReadService.getTaskAssignmentReconciliationPage(query)
+    return this.taskService.getTaskAssignmentReconciliationPage(query)
   }
 
   @Post('assignment/retry-reward')
@@ -124,7 +118,7 @@ export class TaskController {
     model: Boolean,
   })
   async retryAssignmentReward(@Body() body: RetryTaskAssignmentRewardDto) {
-    return this.taskRewardService.retryTaskAssignmentReward(body.id)
+    return this.taskService.retryTaskAssignmentReward(body.id)
   }
 
   @Post('assignment/retry-reward/batch')
@@ -133,6 +127,6 @@ export class TaskController {
     model: RetryCompletedTaskRewardsResponseDto,
   })
   async retryCompletedRewards(@Body() body: RetryCompletedTaskRewardsDto) {
-    return this.taskRewardService.retryCompletedAssignmentRewardsBatch(body.limit)
+    return this.taskService.retryCompletedAssignmentRewardsBatch(body.limit)
   }
 }
