@@ -4,6 +4,7 @@ import type {
   ApplyRuleParams,
   GrowthLedgerApplyResult,
   PublicGrowthLedgerContext,
+  PublicGrowthLedgerContextKey,
   PublicGrowthLedgerContextValue,
   PublicGrowthLedgerRecord,
   QueryGrowthLedgerPageInput,
@@ -18,6 +19,7 @@ import {
   GrowthLedgerFailReasonEnum,
   GrowthLedgerSourceEnum,
 } from './growth-ledger.constant'
+import { PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS } from './growth-ledger.types'
 
 type Tx = Db
 
@@ -67,17 +69,8 @@ export class GrowthLedgerService {
     return this.drizzle.schema.userPointRule
   }
 
-  private readonly publicGrowthLedgerContextKeys = [
-    'actorUserId',
-    'assignmentId',
-    'exchangeId',
-    'followedUserId',
-    'outTradeNo',
-    'paymentMethod',
-    'purchaseId',
-    'targetId',
-    'taskId',
-  ] as const
+  private readonly publicGrowthLedgerContextKeys:
+    readonly PublicGrowthLedgerContextKey[] = PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS
 
   /**
    * 按规则结算（发放）

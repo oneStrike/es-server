@@ -30,27 +30,47 @@
 ## 主要改动
 
 1. 冻结 `check_in_plan` 契约，建议至少包含：
-   - `planCode`、`planName`、`status`；
+   - `planCode`、`planName`、`status`、`isEnabled`；
    - `timezone`；
    - `cycleType`、`cycleAnchorDate`；
    - `allowMakeupCountPerCycle`；
    - `baseRewardConfig`；
+   - `version`；
    - `publishStartAt`、`publishEndAt`。
 2. 冻结计划生效规则：
    - 一期只允许一个当前有效计划；
    - 计划必须显式发布后才能生效；
-   - 配置变更不得影响已完成周期的历史事实。
+   - 发布时间窗采用左闭右开区间：`publishStartAt <= now < publishEndAt`；
+   - 配置变更不得影响已完成周期的历史事实；
+   - 发布后的关键配置变更采用“升版本 + 新快照”方式处理，不直接改写既有周期和奖励事实；
+   - 新版本不立即打断用户当前周期，而是在“该用户自己的当前周期结束后”才切换到新版本；
+   - 新周期创建时读取当时最新已发布版本，未结束的旧周期继续沿用旧版本快照。
 3. 冻结 `check_in_cycle` 契约，建议至少包含：
    - `userId`、`planId`、`cycleKey`；
    - `cycleStartDate`、`cycleEndDate`；
    - `signedCount`、`makeupUsedCount`；
-   - `currentStreak`、`lastSignedDate`。
-4. 冻结补签规则：
+   - `currentStreak`、`lastSignedDate`；
+   - `planSnapshotVersion`、`planSnapshot`；
+   - `version`。
+4. 冻结周期与日期字段语义：
+   - `cycleAnchorDate`、`cycleStartDate`、`cycleEndDate`、`lastSignedDate` 统一按 `date` 语义设计，不落成 timestamp；
+   - `publishStartAt`、`publishEndAt` 继续使用 timestamp，表达绝对发布时间窗；
+   - `cycleStartDate`、`cycleEndDate` 表达当前周期的闭区间日期边界；
+   - `cycleType` 一期只支持 `daily`、`weekly`、`monthly`；
+   - `daily` 的 `cycleKey` 直接使用 `YYYY-MM-DD`；
+   - `weekly` 的 `cycleKey` 使用 `week-{cycleStartDate}`，周期起点按 `cycleAnchorDate` 对应的星期几切片；
+   - `monthly` 的 `cycleKey` 使用 `month-{cycleStartDate}`，周期起点按 `cycleAnchorDate` 对应的日号切片，若当月不存在该日则回退到当月最后一天。
+5. 冻结 `check_in_cycle` 唯一性与历史冻结方式：
+   - `check_in_cycle` 通过 `(userId, planId, cycleKey)` 唯一约束保证同用户同计划同周期只存在一条周期实例；
+   - `planSnapshotVersion` 记录当前周期实际使用的计划版本；
+   - `planSnapshot` 至少冻结 `cycleType`、`cycleAnchorDate`、`allowMakeupCountPerCycle`、`baseRewardConfig` 等关键字段，供后续补偿与对账复用。
+6. 冻结补签规则：
    - 只能补当前周期内、早于当前自然日、且尚未签到的日期；
    - 不能补未来日期；
    - 不能跨周期补签；
-   - 达到 `allowMakeupCountPerCycle` 后必须拒绝。
-5. 冻结基础奖励配置来源：
+   - 达到 `allowMakeupCountPerCycle` 后必须拒绝；
+   - 用户跨多个周期未参与时，不补建历史空周期，只允许对当前周期内的历史漏签日补签。
+7. 冻结基础奖励配置来源：
    - 基础签到奖励不依赖现存 `DAILY_CHECK_IN` 事件配置；
    - 奖励直接由 `check_in_plan.baseRewardConfig` 管理。
 
@@ -58,8 +78,10 @@
 
 1. 签到计划、周期实例和补签额度的字段模型已冻结。
 2. 周期计算与自然日口径有明确时区规则，不存在歧义。
-3. 每周期补签次数和补签日期合法性有可执行、可测试的规则定义。
-4. 文档已明确基础奖励配置归属在签到计划，而不是规则后台或 task。
+3. 日期型字段已明确按 `date` 语义设计，周期边界算法和 `cycleKey` 生成规则已冻结。
+4. 每周期补签次数和补签日期合法性有可执行、可测试的规则定义。
+5. 文档已明确基础奖励配置归属在签到计划，而不是规则后台或 task。
+6. 历史周期对计划关键配置的快照冻结方式已明确，可直接支撑后续补偿与对账实现。
 
 ## 完成后同步文档
 

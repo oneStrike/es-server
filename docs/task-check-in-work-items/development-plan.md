@@ -75,11 +75,46 @@ flowchart TB
 
 | 表 | 主要职责 | 关键字段建议 |
 | --- | --- | --- |
-| `check_in_plan` | 签到计划配置 | `planCode` `planName` `status` `timezone` `cycleType` `cycleAnchorDate` `allowMakeupCountPerCycle` `baseRewardConfig` `publishStartAt` `publishEndAt` |
-| `check_in_cycle` | 用户周期实例与额度汇总 | `userId` `planId` `cycleKey` `cycleStartDate` `cycleEndDate` `signedCount` `makeupUsedCount` `currentStreak` `lastSignedDate` |
-| `check_in_record` | 每日签到事实 | `userId` `planId` `cycleId` `signDate` `recordType` `rewardStatus` `bizKey` `operatorType` |
-| `check_in_streak_reward_rule` | 连续阈值奖励规则 | `planId` `streakDays` `rewardConfig` `repeatable` `status` |
-| `check_in_streak_reward_grant` | 连续奖励发放事实 | `userId` `planId` `cycleId` `ruleId` `triggerSignDate` `grantStatus` `bizKey` |
+| `check_in_plan` | 签到计划配置 | `planCode` `planName` `status` `isEnabled` `timezone` `cycleType` `cycleAnchorDate` `allowMakeupCountPerCycle` `baseRewardConfig` `version` `publishStartAt` `publishEndAt` |
+| `check_in_cycle` | 用户周期实例与额度汇总 | `userId` `planId` `cycleKey` `cycleStartDate` `cycleEndDate` `signedCount` `makeupUsedCount` `currentStreak` `lastSignedDate` `planSnapshotVersion` `planSnapshot` `version` |
+| `check_in_record` | 每日签到事实 | `userId` `planId` `cycleId` `signDate` `recordType` `rewardStatus` `rewardResultType` `bizKey` `baseRewardLedgerIds` `operatorType` `lastRewardError` `context` |
+| `check_in_streak_reward_rule` | 连续阈值奖励规则 | `planId` `ruleCode` `streakDays` `rewardConfig` `repeatable` `status` `sortOrder` |
+| `check_in_streak_reward_grant` | 连续奖励发放事实 | `userId` `planId` `cycleId` `ruleId` `triggerSignDate` `grantStatus` `grantResultType` `bizKey` `ledgerIds` `lastGrantError` `planSnapshotVersion` `context` |
+
+### 字段合同补充
+
+1. `cycleAnchorDate`、`cycleStartDate`、`cycleEndDate`、`lastSignedDate`、`signDate`、`triggerSignDate` 统一按 `date` 语义设计，不落成 timestamp。
+2. `publishStartAt`、`publishEndAt` 继续使用 timestamp，表达绝对生效窗口。
+3. `check_in_plan.version` 表示计划关键配置版本；`check_in_cycle.planSnapshotVersion` 和 `planSnapshot` 用于冻结历史周期事实。
+4. 计划更新后不立即影响当前进行中的用户周期；每个用户只在自己的下一周期创建时切换到最新已发布版本。
+5. 基础奖励和连续奖励事实都应保存最近一次落账结果、关联 ledger id 与失败原因，避免补偿阶段重新猜测历史状态。
+
+### 周期、索引与幂等合同
+
+1. `cycleType` 一期只支持 `daily`、`weekly`、`monthly`。
+2. `daily` 的 `cycleKey` 直接使用 `YYYY-MM-DD`；`weekly` 使用 `week-{cycleStartDate}`；`monthly` 使用 `month-{cycleStartDate}`。
+3. `check_in_cycle` 通过 `(userId, planId, cycleKey)` 保证同用户同计划同周期唯一。
+4. `check_in_record` 通过 `(userId, planId, signDate)` 保证同用户同计划同签到日唯一。
+5. `check_in_record` 还需通过 `(userId, bizKey)` 保证重复请求与奖励补偿重放幂等。
+6. `check_in_streak_reward_rule` 通过 `(planId, streakDays)` 保证同计划同阈值唯一。
+7. `check_in_streak_reward_grant` 通过 `(userId, bizKey)` 保证补偿与重复触发幂等；`repeatable = true` 时以 `triggerSignDate` 区分同周期内的多次合法触发实例。
+
+### 奖励键与账本补充
+
+1. 签到事实 `bizKey` 采用 `checkin:record:plan:{planId}:cycle:{cycleKey}:user:{userId}:date:{signDate}`。
+2. 基础奖励与连续奖励都先生成稳定基础 key，再按资产后缀派生 `:POINTS` / `:EXPERIENCE`，与现有成长账本风格保持一致。
+3. `GrowthLedgerSourceEnum` 需补齐 `check_in_base_bonus`、`check_in_streak_bonus`，避免对账时只能依赖模糊字符串来源。
+4. 账本与审计上下文至少应可追踪 `planId`、`cycleId`、`recordId`、`grantId`，便于后台补偿和解释链路。
+
+### 状态枚举合同
+
+1. App/Admin 接口中的签到与奖励状态字段统一返回数字枚举，保持与仓库现有模块一致。
+2. `recordType` 使用 `1 = NORMAL`、`2 = MAKEUP`。
+3. `rewardStatus` 和 `grantStatus` 统一使用 `0 = PENDING`、`1 = SUCCESS`、`2 = FAILED`。
+4. `rewardResultType` 和 `grantResultType` 统一使用 `1 = APPLIED`、`2 = IDEMPOTENT`、`3 = FAILED`。
+5. `rewardStatus` / `rewardResultType` 仅描述基础签到奖励；`grantStatus` / `grantResultType` 仅描述连续奖励发放，不混用两条链路状态。
+6. 当 `baseRewardConfig` 为空时，基础奖励链路视为“不适用”；`rewardStatus` / `rewardResultType` 可为 `null`，不进入补偿队列。
+7. `check_in_streak_reward_rule.rewardConfig` 不允许为空；未命中阈值时不创建 `check_in_streak_reward_grant`，避免把“未达标”误当成待发奖励。
 
 ### 服务建议
 
@@ -95,8 +130,14 @@ flowchart TB
 1. 基础签到奖励来自 `check_in_plan.baseRewardConfig`。
 2. 连续签到奖励来自 `check_in_streak_reward_rule.rewardConfig`。
 3. 两类奖励都由签到域直接调用 `GrowthLedgerService.applyDelta()`。
-4. 签到事实写入成功即视为主操作成功；奖励落账失败按补偿副作用处理。
-5. 一期不依赖 `growth_rule` 配置，不依赖 `DAILY_CHECK_IN` 事件广播，不依赖 `task` 奖励追加。
+4. 计划发布时间窗采用左闭右开区间：`publishStartAt <= now < publishEndAt`。
+5. 签到事实写入成功即视为主操作成功；奖励落账失败按补偿副作用处理。
+6. 一期不依赖 `growth_rule` 配置，不依赖 `DAILY_CHECK_IN` 事件广播，不依赖 `task` 奖励追加。
+7. 补签参与当前周期连续天数重算；若首次补齐断点并达到阈值，允许补发对应连续奖励。
+8. 同一连续阈值在同一周期内默认只发放一次；仅当规则显式声明 `repeatable = true` 时，才允许按 `triggerSignDate` 多次触发。
+9. 计划配置更新后，每个用户在自己的当前周期结束前继续沿用旧版本；下一周期创建时才切换到最新已发布版本。
+10. 同一次补签或奖励补算若命中当前周期内多个历史未发阈值，应一次性补发全部命中的未发奖励，而不是只发最高档。
+11. 用户跨多个周期未参与时，不补建历史空周期；重新进入时只创建并运行当前周期，补签也仅允许发生在当前周期内。
 
 ## 接口与展示建议
 
@@ -126,18 +167,24 @@ flowchart TB
 3. 每周期补签次数达到上限后，继续补签必须失败。
 4. 连续奖励不能重复发放，除非规则显式允许重复。
 5. 签到成功但奖励失败时，后续补偿不能重复写签到事实。
+6. 计划关键配置变更后，既有周期、签到事实和连续奖励发放事实仍按历史快照解释。
+7. 日期型字段按 `date` 语义落库与回读，不因 timestamp 偏移出现跨日漂移。
+8. 同次补签/补算命中多个未发阈值时，会一次性补发全部应发奖励。
+9. 用户跨多个周期未参与时，不补建历史空周期，也不允许跨周期补签。
 
 ### 接口与展示
 
 1. 日历视图必须正确展示正常签到、补签、漏签、奖励状态。
 2. Summary 必须返回当前周期进度、剩余补签次数、当前连续天数、下一档奖励。
 3. Admin 详情必须能解释计划配置、奖励规则、周期额度与账本结果。
+4. Admin 对账视图必须能追溯 `planId`、`cycleId`、`recordId`、`grantId` 与对应账本记录。
 
 ### 回归
 
 1. `task` 现有查询、认领、完成链路不受影响。
 2. Growth 现有规则视图不再展示 `DAILY_CHECK_IN` 为可配置事件。
 3. seed 初始化不再产生签到奖励规则脏数据。
+4. 新增签到奖励来源值与账本上下文白名单后，既有积分/经验流水展示能力不回归。
 
 ## 对应任务引用
 
@@ -167,3 +214,5 @@ flowchart TB
 2. 补签与连续奖励的幂等键是否已写入唯一索引约束。
 3. 管理端是否明确提示：一期不依赖 `task`，也不依赖当前 `DAILY_CHECK_IN` 事件配置。
 4. 所有工作项文档中是否已经移除旧的 `P1-02`、事件桥接和任务联动描述。
+5. 计划版本、周期快照与奖励补偿所需的历史冻结字段是否已落到表结构。
+6. 日期型字段是否已明确按 `date` 语义建模，而不是使用 timestamp 代替。

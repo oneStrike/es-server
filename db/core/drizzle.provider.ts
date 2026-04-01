@@ -19,22 +19,9 @@ export const DrizzlePoolProvider: Provider = {
     if (!connectionString) {
       throw new Error('Missing db.connection (DATABASE_URL) configuration')
     }
-    const sessionTimeZone =
-      configService.get<string>('TZ')?.trim() ||
-      process.env.TZ?.trim() ||
-      'Asia/Shanghai'
 
     return new Pool({
       connectionString,
-      // `pg-pool` 会等待 onConnect 返回的 Promise 完成后再交付连接，
-      // 这里必须把会话时区初始化留在获取连接的关键路径上。
-      // eslint-disable-next-line ts/no-misused-promises
-      onConnect: async (client) => {
-        await client.query('SELECT set_config($1, $2, false)', [
-          'TimeZone',
-          sessionTimeZone,
-        ])
-      },
     })
   },
   inject: [ConfigService],

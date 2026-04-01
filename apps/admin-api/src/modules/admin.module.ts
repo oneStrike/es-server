@@ -6,6 +6,7 @@ import { AppConfigModule } from './app-content/config/config.module'
 import { AppPageModule } from './app-content/page/page.module'
 import { AppUserModule } from './app-user/app-user.module'
 import { AuthModule } from './auth/auth.module'
+import { CheckInModule } from './check-in/check-in.module'
 import { AdminCommentModule } from './comment/comment.module'
 import { ContentModule } from './content/content.module'
 import { ForumModule } from './forum/forum.module'
@@ -21,6 +22,7 @@ import { TaskModule } from './task/task.module'
   imports: [
     AuthModule,
     AppUserModule,
+    CheckInModule,
     AdminUserModule,
     UploadModule,
     SystemConfigModule,

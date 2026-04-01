@@ -143,6 +143,16 @@ flowchart LR
 6. `GrowthRuleTypeEnum.DAILY_CHECK_IN = 6` 保留，但不出现在当前可配置事件视图，也不在 seed 中启用对应奖励规则。
 7. 补签只允许补当前周期内、早于当前自然日、且尚未签到的日期；不允许跨周期补签，不允许补未来日期。
 8. 签到成功的判定以“签到事实写入成功”为准；奖励失败属于可补偿副作用，不回滚签到事实。
+9. 计划发布时间窗采用左闭右开区间：`publishStartAt <= now < publishEndAt`。
+10. `cycleAnchorDate`、`cycleStartDate`、`cycleEndDate`、`lastSignedDate`、`signDate`、`triggerSignDate` 统一按 `date` 语义设计；`publishStartAt`、`publishEndAt` 继续使用 timestamp。
+11. 计划关键配置通过 `version + planSnapshotVersion + planSnapshot` 冻结历史事实，避免后续配置变更污染已完成周期、签到记录和奖励补偿。
+12. 基础签到奖励与连续签到奖励都采用稳定基础 `bizKey`，并按资产类型派生 `:POINTS` / `:EXPERIENCE` 账本 key。
+13. 补签参与当前周期连续天数重算；若首次补齐断点并达到阈值，允许按规则补发连续奖励。
+14. 计划配置更新不打断用户当前周期；每个用户在自己的下一周期创建时才切换到最新已发布版本。
+15. 同一次补签或奖励补算若命中当前周期内多个历史未发阈值，则一次性补发全部命中的未发奖励，而不是只发最高档。
+16. 用户跨多个周期未参与时，不补建历史空周期；重新进入时只运行当前周期，补签也仅允许发生在当前周期内。
+17. App/Admin 接口中的签到与奖励状态字段统一返回数字枚举，`recordType`、`rewardStatus`、`rewardResultType`、`grantStatus`、`grantResultType` 的值域需与文档冻结合同保持一致。
+18. 当计划未配置基础签到奖励时，基础奖励链路视为“不适用”，相关状态字段允许为 `null` 且不进入补偿队列；未命中连续阈值时不创建连续奖励发放事实。
 
 ## 当前剩余缺口
 
@@ -151,6 +161,7 @@ flowchart LR
 3. 当前没有签到对账视图，也没有连续奖励补偿入口。
 4. 当前成长账本来源枚举还没有签到基础奖励、连续奖励的专属来源值。
 5. 最终实现仍需补齐单测、接口联调证据、并发幂等验证和上线验收记录。
+6. 当前账本与审计公开上下文还没有 `planId`、`cycleId`、`recordId`、`grantId` 等签到链路专属字段。
 
 ## 维护规则
 

@@ -6,11 +6,16 @@ import type {
 export const PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS = [
   'actorUserId',
   'assignmentId',
+  'cycleId',
   'exchangeId',
   'followedUserId',
+  'grantId',
   'outTradeNo',
   'paymentMethod',
+  'planId',
   'purchaseId',
+  'recordId',
+  'ruleId',
   'targetId',
   'taskId',
 ] as const

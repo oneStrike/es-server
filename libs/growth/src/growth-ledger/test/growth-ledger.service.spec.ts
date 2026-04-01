@@ -68,6 +68,29 @@ describe('growth ledger public context', () => {
     })
   })
 
+  it('keeps newly whitelisted check-in explanation fields', async () => {
+    const { GrowthLedgerService } = await import('../growth-ledger.service')
+
+    const service = new GrowthLedgerService({} as any)
+
+    expect(
+      service.sanitizePublicContext({
+        cycleId: 18,
+        grantId: 22,
+        planId: 7,
+        recordId: 31,
+        ruleId: 5,
+        hidden: { raw: true },
+      } as any),
+    ).toEqual({
+      cycleId: 18,
+      grantId: 22,
+      planId: 7,
+      recordId: 31,
+      ruleId: 5,
+    })
+  })
+
   it('returns undefined when no public fields remain', async () => {
     const { GrowthLedgerService } = await import('../growth-ledger.service')
 

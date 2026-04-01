@@ -133,6 +133,9 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     growthLedgerRecords: r.many.growthLedgerRecord(),
     growthAuditLogs: r.many.growthAuditLog(),
     growthRuleUsageSlots: r.many.growthRuleUsageSlot(),
+    checkInCycles: r.many.checkInCycle(),
+    checkInRecords: r.many.checkInRecord(),
+    checkInStreakRewardGrants: r.many.checkInStreakRewardGrant(),
     taskAssignments: r.many.taskAssignment(),
     taskProgressLogs: r.many.taskProgressLog(),
     userLikes: r.many.userLike(),
@@ -196,6 +199,73 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     user: r.one.appUser({
       from: r.growthRuleUsageSlot.userId,
       to: r.appUser.id,
+    }),
+  },
+  checkInPlan: {
+    cycles: r.many.checkInCycle(),
+    records: r.many.checkInRecord(),
+    streakRules: r.many.checkInStreakRewardRule(),
+    streakGrants: r.many.checkInStreakRewardGrant(),
+    createdBy: r.one.adminUser({
+      from: r.checkInPlan.createdById,
+      to: r.adminUser.id,
+      alias: 'CheckInPlanCreatedBy',
+    }),
+    updatedBy: r.one.adminUser({
+      from: r.checkInPlan.updatedById,
+      to: r.adminUser.id,
+      alias: 'CheckInPlanUpdatedBy',
+    }),
+  },
+  checkInCycle: {
+    user: r.one.appUser({
+      from: r.checkInCycle.userId,
+      to: r.appUser.id,
+    }),
+    plan: r.one.checkInPlan({
+      from: r.checkInCycle.planId,
+      to: r.checkInPlan.id,
+    }),
+    records: r.many.checkInRecord(),
+    streakGrants: r.many.checkInStreakRewardGrant(),
+  },
+  checkInRecord: {
+    user: r.one.appUser({
+      from: r.checkInRecord.userId,
+      to: r.appUser.id,
+    }),
+    plan: r.one.checkInPlan({
+      from: r.checkInRecord.planId,
+      to: r.checkInPlan.id,
+    }),
+    cycle: r.one.checkInCycle({
+      from: r.checkInRecord.cycleId,
+      to: r.checkInCycle.id,
+    }),
+  },
+  checkInStreakRewardRule: {
+    plan: r.one.checkInPlan({
+      from: r.checkInStreakRewardRule.planId,
+      to: r.checkInPlan.id,
+    }),
+    grants: r.many.checkInStreakRewardGrant(),
+  },
+  checkInStreakRewardGrant: {
+    user: r.one.appUser({
+      from: r.checkInStreakRewardGrant.userId,
+      to: r.appUser.id,
+    }),
+    plan: r.one.checkInPlan({
+      from: r.checkInStreakRewardGrant.planId,
+      to: r.checkInPlan.id,
+    }),
+    cycle: r.one.checkInCycle({
+      from: r.checkInStreakRewardGrant.cycleId,
+      to: r.checkInCycle.id,
+    }),
+    rule: r.one.checkInStreakRewardRule({
+      from: r.checkInStreakRewardGrant.ruleId,
+      to: r.checkInStreakRewardRule.id,
     }),
   },
   task: {

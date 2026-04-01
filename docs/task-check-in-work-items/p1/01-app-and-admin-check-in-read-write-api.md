@@ -58,6 +58,14 @@
    - 已超过补签上限；
    - 当前无有效签到计划；
    - 奖励待补偿但签到已成功。
+6. 明确接口状态字段返回约定：
+   - App/Admin 返回值统一使用数字枚举，不额外暴露字符串状态；
+   - `recordType` 返回 `1 = NORMAL`、`2 = MAKEUP`；
+   - `rewardStatus`、`grantStatus` 返回 `0 = PENDING`、`1 = SUCCESS`、`2 = FAILED`；
+   - `rewardResultType`、`grantResultType` 返回 `1 = APPLIED`、`2 = IDEMPOTENT`、`3 = FAILED`；
+   - `rewardStatus` / `rewardResultType` 仅用于基础签到奖励，`grantStatus` / `grantResultType` 仅用于连续奖励发放；
+   - 当计划未配置基础签到奖励时，`rewardStatus` / `rewardResultType` 返回 `null`；
+   - 未命中连续阈值时，不返回对应的 `grant` 事实，而不是返回一个“待发奖励”状态占位。
 
 ## 完成标准
 
@@ -65,6 +73,7 @@
 2. Admin 端可管理签到计划并查看基础奖励、连续奖励与周期配置。
 3. 接口返回结构不依赖 task，也不依赖现存 `DAILY_CHECK_IN` 规则配置。
 4. 错误语义与读模型字段可支持前端页面直接渲染，无需自行猜测业务状态。
+5. 签到与奖励相关状态字段的数字枚举和值域已冻结，前后端不需要各自推断。
 
 ## 完成后同步文档
 

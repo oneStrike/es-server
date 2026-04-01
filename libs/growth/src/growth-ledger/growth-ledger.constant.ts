@@ -24,6 +24,8 @@ export enum GrowthLedgerActionEnum {
 export enum GrowthLedgerSourceEnum {
   GROWTH_RULE = 'growth_rule',
   TASK_BONUS = 'task_bonus',
+  CHECK_IN_BASE_BONUS = 'check_in_base_bonus',
+  CHECK_IN_STREAK_BONUS = 'check_in_streak_bonus',
 }
 
 /**

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
+import { CheckInModule } from './check-in/check-in.module'
 import { CommentModule } from './comment/comment.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { DownloadModule } from './download/download.module'
@@ -21,6 +22,7 @@ import { WorkModule } from './work/work.module'
   imports: [
     AuthModule,
     UserModule,
+    CheckInModule,
     DictionaryModule,
     EmojiModule,
     TaskModule,
