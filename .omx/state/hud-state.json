@@ -1,5 +1,5 @@
 {
-  "last_turn_at": "2026-04-01T08:58:46.052Z",
-  "turn_count": 27,
-  "last_agent_output": "已把签到模块的 `timezone` 字段完整删掉了，不再出现在表结构、服务逻辑、共享类型、Admin DTO 和测试里。现在签到仍然只按部署时区计算自然日，但不再保留这个冗余契约字段。\n\n改动集中在"
+  "last_turn_at": "2026-04-01T10:42:44.238Z",
+  "turn_count": 30,
+  "last_agent_output": "有，至少我看到 2 个比较像“现在价值不高”的字段。\n\n- [P1] `check_in_record.remark` 目前看是死字段。Schema 说它用于“后台修复/补签排障”，见 [check-"
 }

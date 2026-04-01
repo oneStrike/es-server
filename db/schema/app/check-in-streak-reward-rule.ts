@@ -57,11 +57,6 @@ export const checkInStreakRewardRule = pgTable('check_in_streak_reward_rule', {
    */
   status: smallint().default(1).notNull(),
   /**
-   * 排序值。
-   * 仅影响后台展示和阈值列表排序，不参与唯一性判断。
-   */
-  sortOrder: smallint().default(0).notNull(),
-  /**
    * 规则创建时间。
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
@@ -110,10 +105,6 @@ export const checkInStreakRewardRule = pgTable('check_in_streak_reward_rule', {
    * 计划版本必须为正整数。
    */
   check('check_in_streak_rule_plan_version_positive_chk', sql`${table.planVersion} > 0`),
-  /**
-   * 排序值必须为非负整数。
-   */
-  check('check_in_streak_rule_sort_order_non_negative_chk', sql`${table.sortOrder} >= 0`),
 ])
 
 export type CheckInStreakRewardRule = typeof checkInStreakRewardRule.$inferSelect

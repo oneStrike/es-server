@@ -357,13 +357,6 @@ export class BaseCheckInStreakRewardRuleDto extends BaseDto {
   })
   status!: CheckInStreakRewardRuleStatusEnum
 
-  @NumberProperty({
-    description: '排序值',
-    example: 10,
-    min: 0,
-  })
-  sortOrder!: number
-
   @DateProperty({
     description: '删除时间',
     example: '2026-04-01T00:00:00.000Z',

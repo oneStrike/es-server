@@ -233,7 +233,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         )!,
         repeatable: rule.repeatable,
         status: rule.status,
-        sortOrder: rule.sortOrder,
       }))
     const nextRules = this.normalizeStreakRewardRules(
       nextRuleInputs,

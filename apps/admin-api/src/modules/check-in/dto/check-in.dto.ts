@@ -135,7 +135,6 @@ export class AdminCheckInStreakRewardRuleItemDto extends PickType(
     'rewardConfig',
     'repeatable',
     'status',
-    'sortOrder',
   ] as const,
 ) {}
 

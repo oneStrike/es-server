@@ -92,7 +92,6 @@ export class AppCheckInNextRewardDto extends PickType(
     'rewardConfig',
     'repeatable',
     'status',
-    'sortOrder',
   ] as const,
 ) {}
 

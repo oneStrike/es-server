@@ -70,7 +70,6 @@ export interface CheckInStreakRewardRuleCoreView {
   rewardConfig: CheckInRewardConfig
   repeatable: boolean
   status: CheckInStreakRewardRuleStatusEnum
-  sortOrder: number
 }
 
 /**
@@ -176,7 +175,6 @@ export interface CheckInStreakRewardRuleInput {
   rewardConfig: CheckInRewardConfig | Record<string, unknown>
   repeatable?: boolean
   status?: CheckInStreakRewardRuleStatusEnum
-  sortOrder?: number
 }
 
 /**
@@ -473,7 +471,6 @@ export type CreateCheckInStreakRewardRuleInsert = Pick<
   | 'rewardConfig'
   | 'repeatable'
   | 'status'
-  | 'sortOrder'
 >
 
 /**

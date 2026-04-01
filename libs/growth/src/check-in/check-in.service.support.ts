@@ -257,7 +257,6 @@ export abstract class CheckInServiceSupport {
         })!,
         repeatable: rule.repeatable ?? false,
         status: rule.status ?? CheckInStreakRewardRuleStatusEnum.ENABLED,
-        sortOrder: rule.sortOrder ?? rule.streakDays,
       } satisfies CreateCheckInStreakRewardRuleInsert
     })
 
@@ -311,7 +310,6 @@ export abstract class CheckInServiceSupport {
         )!,
         repeatable: rule.repeatable,
         status: rule.status as CheckInStreakRewardRuleStatusEnum,
-        sortOrder: rule.sortOrder,
       })),
     }
   }
@@ -532,7 +530,6 @@ export abstract class CheckInServiceSupport {
         ),
       )
       .orderBy(
-        asc(this.checkInStreakRewardRuleTable.sortOrder),
         asc(this.checkInStreakRewardRuleTable.streakDays),
         asc(this.checkInStreakRewardRuleTable.id),
       )
@@ -838,12 +835,7 @@ export abstract class CheckInServiceSupport {
   ) {
     const nextRule = rules
       .filter(rule => rule.status === CheckInStreakRewardRuleStatusEnum.ENABLED)
-      .sort((left, right) => {
-        if (left.streakDays !== right.streakDays) {
-          return left.streakDays - right.streakDays
-        }
-        return left.sortOrder - right.sortOrder
-      })
+      .sort((left, right) => left.streakDays - right.streakDays)
       .find(rule => rule.streakDays > currentStreak)
 
     return nextRule ? this.toStreakRuleView(nextRule) : undefined
@@ -1132,7 +1124,6 @@ export abstract class CheckInServiceSupport {
       rewardConfig: unknown
       repeatable: boolean
       status: number
-      sortOrder: number
     },
   ) {
     return {
@@ -1145,7 +1136,6 @@ export abstract class CheckInServiceSupport {
       )!,
       repeatable: rule.repeatable,
       status: rule.status as CheckInStreakRewardRuleStatusEnum,
-      sortOrder: rule.sortOrder,
     }
   }
 
@@ -1229,7 +1219,6 @@ export abstract class CheckInServiceSupport {
         ),
         repeatable: rule.repeatable,
         status: rule.status,
-        sortOrder: rule.sortOrder,
       }))
       .sort((left, right) => left.ruleCode.localeCompare(right.ruleCode))
     const nextRuleSignatures = input.nextRules
@@ -1239,7 +1228,6 @@ export abstract class CheckInServiceSupport {
         rewardConfig: rule.rewardConfig,
         repeatable: rule.repeatable,
         status: rule.status,
-        sortOrder: rule.sortOrder,
       }))
       .sort((left, right) => left.ruleCode.localeCompare(right.ruleCode))
 
