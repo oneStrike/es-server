@@ -89,22 +89,6 @@ export class CheckInController {
     return this.checkInService.updatePlanStatus(body, userId)
   }
 
-  @Post('plan/publish')
-  @ApiDoc({
-    summary: '发布签到计划',
-    model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '发布签到计划',
-  })
-  async publishPlan(
-    @Body() body: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.publishPlan(body, userId)
-  }
-
   @Get('reconciliation/page')
   @ApiPageDoc({
     summary: '分页查询签到对账结果',

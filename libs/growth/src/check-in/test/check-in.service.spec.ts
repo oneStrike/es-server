@@ -361,7 +361,6 @@ describe('check-in definition service versioning', () => {
           baseRewardConfig: { points: 10 },
           cycleAnchorDate: '2026-04-01',
           cycleType: CheckInCycleTypeEnum.WEEKLY,
-          isEnabled: true,
           planCode: 'daily-check-in',
           planName: '每日签到',
           status: CheckInPlanStatusEnum.PUBLISHED,
@@ -371,6 +370,33 @@ describe('check-in definition service versioning', () => {
     ).rejects.toThrow('当前已有其他生效中的签到计划')
 
     expect(drizzle.withTransaction).not.toHaveBeenCalled()
+  })
+
+  it('maps legacy published-but-disabled plans to disabled status in detail view', async () => {
+    const service = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
+
+    jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
+      ...currentPlan,
+      isEnabled: false,
+      status: CheckInPlanStatusEnum.PUBLISHED,
+    })
+    jest.spyOn(service as any, 'getPlanRules').mockResolvedValue(currentRules)
+    jest.spyOn(service as any, 'buildPlanSummary').mockResolvedValue({
+      activeCycleCount: 0,
+      pendingRewardCount: 0,
+      ruleCount: 1,
+    })
+
+    const detail = await service.getPlanDetail(1)
+
+    expect(detail).toEqual(
+      expect.objectContaining({
+        status: CheckInPlanStatusEnum.DISABLED,
+      }),
+    )
+    expect(detail).not.toHaveProperty('isEnabled')
   })
 })
 

@@ -5,6 +5,7 @@ import {
   DateProperty,
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -18,6 +19,24 @@ import {
   CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from '../check-in.constant'
+
+export class CheckInRewardConfigDto implements CheckInRewardConfig {
+  @NumberProperty({
+    description: '奖励积分',
+    example: 10,
+    min: 1,
+    required: false,
+  })
+  points?: number
+
+  @NumberProperty({
+    description: '奖励经验值',
+    example: 5,
+    min: 1,
+    required: false,
+  })
+  experience?: number
+}
 
 export class BaseCheckInPlanDto extends BaseDto {
   @StringProperty({
@@ -35,18 +54,11 @@ export class BaseCheckInPlanDto extends BaseDto {
   planName!: string
 
   @EnumProperty({
-    description: '签到计划状态',
+    description: '签到计划状态（草稿、发布、停用、下线）',
     example: CheckInPlanStatusEnum.DRAFT,
     enum: CheckInPlanStatusEnum,
   })
   status!: CheckInPlanStatusEnum
-
-  @BooleanProperty({
-    description: '是否启用',
-    example: true,
-    default: true,
-  })
-  isEnabled!: boolean
 
   @EnumProperty({
     description: '周期类型',
@@ -69,12 +81,14 @@ export class BaseCheckInPlanDto extends BaseDto {
   })
   allowMakeupCountPerCycle!: number
 
-  @JsonProperty({
+  @NestedProperty({
     description: '基础签到奖励配置，未配置时为 null',
+    type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
     required: false,
+    nullable: true,
   })
-  baseRewardConfig?: CheckInRewardConfig | null
+  baseRewardConfig?: CheckInRewardConfigDto | null
 
   @NumberProperty({
     description: '计划版本号',
@@ -335,11 +349,12 @@ export class BaseCheckInStreakRewardRuleDto extends BaseDto {
   })
   streakDays!: number
 
-  @JsonProperty({
+  @NestedProperty({
     description: '连续奖励配置',
+    type: CheckInRewardConfigDto,
     example: { points: 70 } satisfies CheckInRewardConfig,
   })
-  rewardConfig!: CheckInRewardConfig
+  rewardConfig!: CheckInRewardConfigDto
 
   @BooleanProperty({
     description: '是否允许重复领取',

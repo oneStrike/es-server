@@ -160,7 +160,6 @@ type CreateCheckInPlanInsertFields = Pick<
   | 'planCode'
   | 'planName'
   | 'status'
-  | 'isEnabled'
   | 'cycleType'
   | 'cycleAnchorDate'
   | 'allowMakeupCountPerCycle'
@@ -175,7 +174,7 @@ type CreateCheckInPlanInsertFields = Pick<
 export interface CheckInStreakRewardRuleInput {
   ruleCode: string
   streakDays: number
-  rewardConfig: CheckInRewardConfig | Record<string, unknown>
+  rewardConfig: CheckInRewardConfig
   repeatable?: boolean
   status?: CheckInStreakRewardRuleStatusEnum
 }
@@ -186,7 +185,7 @@ export interface CheckInStreakRewardRuleInput {
 export interface CreateCheckInPlanInput extends CreateCheckInPlanInsertFields {
   status: CheckInPlanStatusEnum
   cycleType: CheckInCycleTypeEnum
-  baseRewardConfig?: CheckInRewardConfig | Record<string, unknown> | null
+  baseRewardConfig?: CheckInRewardConfig | null
   streakRewardRules?: CheckInStreakRewardRuleInput[]
 }
 
@@ -203,14 +202,6 @@ export interface UpdateCheckInPlanInput extends Partial<CreateCheckInPlanInput> 
 export interface UpdateCheckInPlanStatusInput {
   id: number
   status?: CheckInPlanStatusEnum
-  isEnabled?: boolean
-}
-
-/**
- * 管理端发布签到计划入参。
- */
-export interface PublishCheckInPlanInput {
-  id: number
 }
 
 /**
@@ -220,7 +211,6 @@ export interface QueryCheckInPlanPageInput extends PageQueryNoOrderInput {
   planCode?: string
   planName?: string
   status?: CheckInPlanStatusEnum
-  isEnabled?: boolean
   orderBy?: string
 }
 
@@ -374,7 +364,6 @@ export type CheckInPlanPageView = CheckInPlanSnapshotSource &
   Pick<
     CheckInPlan,
     | 'status'
-    | 'isEnabled'
     | 'publishStartAt'
     | 'publishEndAt'
     | 'createdAt'

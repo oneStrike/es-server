@@ -48,7 +48,6 @@ class AdminCheckInPlanBaseResponseDto extends PickType(BaseCheckInPlanDto, [
   'planCode',
   'planName',
   'status',
-  'isEnabled',
   'cycleType',
   'cycleAnchorDate',
   'allowMakeupCountPerCycle',
@@ -107,7 +106,7 @@ export class UpdateCheckInPlanDto extends IntersectionType(
 
 export class UpdateCheckInPlanStatusDto extends IntersectionType(
   IdDto,
-  PartialType(PickType(BaseCheckInPlanDto, ['status', 'isEnabled'] as const)),
+  PartialType(PickType(BaseCheckInPlanDto, ['status'] as const)),
 ) {}
 
 export class QueryCheckInPlanDto extends IntersectionType(
@@ -117,7 +116,6 @@ export class QueryCheckInPlanDto extends IntersectionType(
       'planCode',
       'planName',
       'status',
-      'isEnabled',
     ] as const),
   ),
 ) {}

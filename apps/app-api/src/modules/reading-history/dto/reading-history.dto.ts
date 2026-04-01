@@ -1,29 +1,28 @@
-import {
-  BaseWorkChapterDto,
-  BaseWorkDto,
-} from '@libs/content/work'
+import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content/work'
 import { BaseReadingStateDto } from '@libs/interaction/reading-state'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
+  ArrayProperty,
   BooleanProperty,
   EnumProperty,
   NestedProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class QueryReadingHistoryDto extends IntersectionType(
   PageDto,
   PickType(PartialType(BaseReadingStateDto), ['workId', 'workType']),
 ) {}
 
-export class DeleteReadingHistoryDto extends PickType(BaseReadingStateDto, [
-  'workId',
-] as const) {}
+export class DeleteReadingHistoryDto {
+  @ArrayProperty({
+    description: '需要删除的作品id',
+    itemType: 'number',
+    required: true,
+  })
+  workIds: number[]
+}
 
 export class ClearReadingHistoryDto {
   @EnumProperty({

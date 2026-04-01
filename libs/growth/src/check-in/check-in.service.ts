@@ -1,7 +1,6 @@
 import type {
   CreateCheckInPlanInput,
   MakeupCheckInInput,
-  PublishCheckInPlanInput,
   QueryCheckInPlanPageInput,
   QueryCheckInReconciliationPageInput,
   QueryMyCheckInRecordPageInput,
@@ -47,17 +46,12 @@ export class CheckInService {
     return this.checkInDefinitionService.updatePlan(dto, adminUserId)
   }
 
-  /** 更新签到计划启停状态。 */
+  /** 更新签到计划状态。 */
   async updatePlanStatus(
     dto: UpdateCheckInPlanStatusInput,
     adminUserId: number,
   ) {
     return this.checkInDefinitionService.updatePlanStatus(dto, adminUserId)
-  }
-
-  /** 发布指定签到计划。 */
-  async publishPlan(dto: PublishCheckInPlanInput, adminUserId: number) {
-    return this.checkInDefinitionService.publishPlan(dto, adminUserId)
   }
 
   /** 读取 App 侧当前签到摘要。 */

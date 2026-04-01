@@ -1,4 +1,4 @@
-import type { SQL } from 'drizzle-orm'
+import { inArray, SQL } from 'drizzle-orm'
 import type {
   ReadingHistoryIndexedRow,
   ReadingHistoryItem,
@@ -230,10 +230,7 @@ export class ReadingStateService {
     const orderedList: Array<ReadingHistoryItem | undefined> = Array.from({
       length: page.list.length,
     })
-    const typeGroups = new Map<
-      ContentTypeEnum,
-      ReadingHistoryIndexedRow[]
-    >()
+    const typeGroups = new Map<ContentTypeEnum, ReadingHistoryIndexedRow[]>()
 
     for (const [index, item] of page.list.entries()) {
       const type = item.workType as ContentTypeEnum
@@ -262,7 +259,10 @@ export class ReadingStateService {
       const workIds = [...new Set(items.map((i) => i.workId))]
       const works = await resolver.resolveWorkSnapshots(workIds)
       const workMap = new Map(works.map((w) => [w.id, w]))
-      const chapterRefsMap = new Map<number, { workId: number, chapterId: number }>()
+      const chapterRefsMap = new Map<
+        number,
+        { workId: number; chapterId: number }
+      >()
       for (const item of items) {
         if (
           typeof item.lastReadChapterId === 'number' &&
@@ -293,9 +293,9 @@ export class ReadingStateService {
       )
 
       for (const item of items) {
-        const work
-          = workMap.get(item.workId)
-            ?? this.buildFallbackWorkSnapshot(item.workId, item.workType)
+        const work =
+          workMap.get(item.workId) ??
+          this.buildFallbackWorkSnapshot(item.workId, item.workType)
 
         const continueChapter = item.lastReadChapterId
           ? chapterMap.get(item.lastReadChapterId)
@@ -323,14 +323,14 @@ export class ReadingStateService {
   /**
    * 删除单条阅读历史记录
    */
-  async deleteUserReadingHistory(workId: number, userId: number) {
+  async deleteUserReadingHistory(workIds: number[], userId: number) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userWorkReadingState)
         .where(
           and(
             eq(this.userWorkReadingState.userId, userId),
-            eq(this.userWorkReadingState.workId, workId),
+            inArray(this.userWorkReadingState.workId, workIds),
           ),
         ),
     )

@@ -7,6 +7,7 @@ import type {
   CheckInStreakRewardRuleSelect,
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger'
+import type { SQL } from 'drizzle-orm'
 import type {
   CheckInOperatorTypeEnum,
   CheckInRewardResultTypeEnum,
@@ -169,7 +170,7 @@ export abstract class CheckInServiceSupport {
    * 当前仅支持 `points` / `experience` 两类正整数奖励。
    */
   protected parseRewardConfig(
-    value?: CheckInRewardConfig | Record<string, unknown> | null,
+    value?: CheckInRewardConfig | null,
     options: { allowEmpty: boolean } = { allowEmpty: true },
   ) {
     if (value === null || value === undefined) {
@@ -179,10 +180,10 @@ export abstract class CheckInServiceSupport {
       throw new BadRequestException('奖励配置不能为空')
     }
 
-    const record = this.asRecord(value)
-    if (!record) {
+    if (typeof value !== 'object' || Array.isArray(value)) {
       throw new BadRequestException('奖励配置非法')
     }
+    const record = value as Record<string, unknown>
 
     const unsupportedKeys = Object.keys(record).filter(
       (key) => !['points', 'experience'].includes(key),
@@ -217,6 +218,21 @@ export abstract class CheckInServiceSupport {
     }
 
     return normalizedConfig
+  }
+
+  /**
+   * 从存储层 `jsonb` 字段恢复奖励配置对象。
+   *
+   * 数据库存储允许使用 JSON 容器，但领域层继续只消费显式奖励配置对象。
+   */
+  protected parseStoredRewardConfig(
+    value: unknown,
+    options: { allowEmpty: boolean } = { allowEmpty: true },
+  ) {
+    return this.parseRewardConfig(
+      this.asRecord(value) as CheckInRewardConfig | undefined,
+      options,
+    )
   }
 
   /**
@@ -285,20 +301,18 @@ export abstract class CheckInServiceSupport {
       cycleType: this.parseCycleType(plan.cycleType),
       cycleAnchorDate: this.toDateOnlyValue(plan.cycleAnchorDate),
       allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
-      baseRewardConfig: this.parseRewardConfig(
-        this.asRecord(plan.baseRewardConfig) ?? undefined,
-        { allowEmpty: true },
-      ),
+      baseRewardConfig: this.parseStoredRewardConfig(plan.baseRewardConfig, {
+        allowEmpty: true,
+      }),
       version: plan.version,
       streakRewardRules: rules.map((rule) => ({
         id: rule.id,
         planVersion: rule.planVersion,
         ruleCode: rule.ruleCode,
         streakDays: rule.streakDays,
-        rewardConfig: this.parseRewardConfig(
-          this.asRecord(rule.rewardConfig) ?? undefined,
-          { allowEmpty: false },
-        )!,
+        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        })!,
         repeatable: rule.repeatable,
         status: rule.status as CheckInStreakRewardRuleStatusEnum,
       })),
@@ -381,21 +395,74 @@ export abstract class CheckInServiceSupport {
   }
 
   /**
-   * 判断计划在某个绝对时间点是否处于生效态。
+   * 将历史 `isEnabled` 兼容字段折叠为单一计划状态。
    *
-   * 这里统一执行“已发布 + 已启用 + 发布时间窗左闭右开”口径。
+   * 老数据里“已发布但停用”仍以 `status = PUBLISHED + isEnabled = false` 存储，
+   * 这里统一把它解释成新的 `DISABLED` 状态。
    */
-  protected isPlanActiveAt(
-    plan: Pick<
-      CheckInPlanSelect,
-      'status' | 'isEnabled' | 'publishStartAt' | 'publishEndAt'
-    >,
-    now: Date,
+  protected resolvePlanStatus(
+    plan: Pick<CheckInPlanSelect, 'status'> &
+      Partial<Pick<CheckInPlanSelect, 'isEnabled'>>,
   ) {
     if (
-      plan.status !== CheckInPlanStatusEnum.PUBLISHED ||
-      plan.isEnabled !== true
+      plan.status === CheckInPlanStatusEnum.PUBLISHED &&
+      plan.isEnabled === false
     ) {
+      return CheckInPlanStatusEnum.DISABLED
+    }
+    return plan.status as CheckInPlanStatusEnum
+  }
+
+  /**
+   * 把单一计划状态写回数据库状态列，并同步维护历史启停镜像字段。
+   *
+   * 兼容字段只用于平滑迁移，不再参与新的外部契约设计。
+   */
+  protected buildPlanStatusPersistence(status: CheckInPlanStatusEnum) {
+    return {
+      status,
+      isEnabled: status !== CheckInPlanStatusEnum.DISABLED,
+    }
+  }
+
+  /**
+   * 构建管理端计划状态筛选条件，并兼容旧版停用数据。
+   *
+   * 在彻底删除 `isEnabled` 之前，`DISABLED` 需要同时命中新的显式状态值和
+   * 历史 `PUBLISHED + isEnabled = false` 组合。
+   */
+  protected buildPlanStatusCondition(status: CheckInPlanStatusEnum): SQL {
+    if (status === CheckInPlanStatusEnum.DISABLED) {
+      return or(
+        eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.DISABLED),
+        and(
+          eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
+          eq(this.checkInPlanTable.isEnabled, false),
+        ),
+      )!
+    }
+
+    if (status === CheckInPlanStatusEnum.PUBLISHED) {
+      return and(
+        eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
+        eq(this.checkInPlanTable.isEnabled, true),
+      )!
+    }
+
+    return eq(this.checkInPlanTable.status, status)
+  }
+
+  /**
+   * 判断计划在某个绝对时间点是否处于生效态。
+   *
+   * 这里统一执行“状态为已发布 + 发布时间窗左闭右开”口径，并兼容旧版停用数据。
+   */
+  protected isPlanActiveAt(
+    plan: Pick<CheckInPlanSelect, 'status' | 'publishStartAt' | 'publishEndAt'> &
+      Partial<Pick<CheckInPlanSelect, 'isEnabled'>>,
+    now: Date,
+  ) {
+    if (this.resolvePlanStatus(plan) !== CheckInPlanStatusEnum.PUBLISHED) {
       return false
     }
     if (plan.publishStartAt && plan.publishStartAt > now) {
@@ -1124,10 +1191,9 @@ export abstract class CheckInServiceSupport {
       id: rule.id,
       ruleCode: rule.ruleCode,
       streakDays: rule.streakDays,
-      rewardConfig: this.parseRewardConfig(
-        this.asRecord(rule.rewardConfig) ?? undefined,
-        { allowEmpty: false },
-      )!,
+      rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+        allowEmpty: false,
+      })!,
       repeatable: rule.repeatable,
       status: rule.status as CheckInStreakRewardRuleStatusEnum,
     }
@@ -1181,10 +1247,9 @@ export abstract class CheckInServiceSupport {
     }
     if (
       JSON.stringify(
-        this.parseRewardConfig(
-          this.asRecord(input.currentPlan.baseRewardConfig) ?? undefined,
-          { allowEmpty: true },
-        ),
+        this.parseStoredRewardConfig(input.currentPlan.baseRewardConfig, {
+          allowEmpty: true,
+        }),
       ) !== JSON.stringify(input.nextPlan.baseRewardConfig ?? null)
     ) {
       return true
@@ -1206,10 +1271,9 @@ export abstract class CheckInServiceSupport {
       .map((rule) => ({
         ruleCode: rule.ruleCode,
         streakDays: rule.streakDays,
-        rewardConfig: this.parseRewardConfig(
-          this.asRecord(rule.rewardConfig) ?? undefined,
-          { allowEmpty: false },
-        ),
+        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        }),
         repeatable: rule.repeatable,
         status: rule.status,
       }))

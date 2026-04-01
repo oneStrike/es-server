@@ -29,16 +29,19 @@ export class ReadingHistoryController {
     })
   }
 
-  @Post('delete')
+  @Post('batch-delete')
   @ApiDoc({
-    summary: '删除单条阅读记录',
+    summary: '删除阅读记录',
     model: Boolean,
   })
   async delete(
     @Body() body: DeleteReadingHistoryDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.readingStateService.deleteUserReadingHistory(body.workId, userId)
+    return this.readingStateService.deleteUserReadingHistory(
+      body.workIds,
+      userId,
+    )
   }
 
   @Post('clear')

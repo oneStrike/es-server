@@ -38,12 +38,12 @@ export const checkInPlan = pgTable('check_in_plan', {
   planName: varchar({ length: 200 }).notNull(),
   /**
    * 计划状态。
-   * 约束草稿、发布、下线等模板生命周期，不直接表示某个用户当前周期状态。
+   * 作为计划唯一业务状态源，统一承载草稿、发布、停用、下线等生命周期语义。
    */
   status: smallint().default(0).notNull(),
   /**
-   * 是否启用。
-   * 用于后台紧急停用计划，但保留配置与历史审计。
+   * 兼容启停镜像字段。
+   * 仅用于兼容历史“已发布但停用”的旧数据读写，新的业务判断应只依赖 `status`。
    */
   isEnabled: boolean().default(true).notNull(),
   /**
@@ -110,7 +110,7 @@ export const checkInPlan = pgTable('check_in_plan', {
    */
   unique('check_in_plan_plan_code_key').on(table.planCode),
   /**
-   * 状态与启用索引。
+   * 状态与历史启停镜像索引。
    */
   index('check_in_plan_status_is_enabled_idx').on(table.status, table.isEnabled),
   /**

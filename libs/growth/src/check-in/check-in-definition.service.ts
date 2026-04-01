@@ -1,7 +1,6 @@
 import type {
   CheckInStreakRewardRuleInput,
   CreateCheckInPlanInput,
-  PublishCheckInPlanInput,
   QueryCheckInPlanPageInput,
   UpdateCheckInPlanInput,
   UpdateCheckInPlanStatusInput,
@@ -23,7 +22,7 @@ import { CheckInServiceSupport } from './check-in.service.support'
 /**
  * 签到定义服务。
  *
- * 负责任务模板式的配置层能力，包括计划创建、更新、发布与后台读模型。
+ * 负责任务模板式的配置层能力，包括计划创建、更新、状态流转与后台读模型。
  */
 @Injectable()
 export class CheckInDefinitionService extends CheckInServiceSupport {
@@ -49,10 +48,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       conditions.push(ilike(this.checkInPlanTable.planName, planNameKeyword))
     }
     if (query.status !== undefined) {
-      conditions.push(eq(this.checkInPlanTable.status, query.status))
-    }
-    if (query.isEnabled !== undefined) {
-      conditions.push(eq(this.checkInPlanTable.isEnabled, query.isEnabled))
+      conditions.push(this.buildPlanStatusCondition(query.status))
     }
 
     const page = await this.drizzle.ext.findPagination(this.checkInPlanTable, {
@@ -71,10 +67,14 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     return {
       ...page,
-      list: page.list.map((plan, index) => ({
-        ...plan,
-        ...summaries[index],
-      })),
+      list: page.list.map((plan, index) => {
+        const { isEnabled: _legacyIsEnabled, ...planView } = plan
+        return {
+          ...planView,
+          status: this.resolvePlanStatus(plan),
+          ...summaries[index],
+        }
+      }),
     }
   }
 
@@ -85,9 +85,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.getPlanRules(plan.id, plan.version),
       this.buildPlanSummary(plan.id, plan.version),
     ])
+    const { isEnabled: _legacyIsEnabled, ...planView } = plan
 
     return {
-      ...plan,
+      ...planView,
+      status: this.resolvePlanStatus(plan),
       ...summary,
       streakRewardRules: rules.map((rule) => this.toStreakRuleView(rule)),
     }
@@ -120,7 +122,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.isPlanActiveAt(
         {
           status: dto.status,
-          isEnabled: dto.isEnabled ?? true,
           publishStartAt: dto.publishStartAt ?? null,
           publishEndAt: dto.publishEndAt ?? null,
         },
@@ -140,8 +141,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           .values({
             planCode: dto.planCode.trim(),
             planName: dto.planName.trim(),
-            status: dto.status,
-            isEnabled: dto.isEnabled ?? true,
+            ...this.buildPlanStatusPersistence(dto.status),
             cycleType,
             cycleAnchorDate,
             allowMakeupCountPerCycle,
@@ -178,11 +178,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
    */
   async updatePlan(dto: UpdateCheckInPlanInput, adminUserId: number) {
     const currentPlan = await this.getPlanById(dto.id)
+    const currentStatus = this.resolvePlanStatus(currentPlan)
     const nextPlan = {
       planCode: dto.planCode?.trim() ?? currentPlan.planCode,
       planName: dto.planName?.trim() ?? currentPlan.planName,
-      status: dto.status ?? currentPlan.status,
-      isEnabled: dto.isEnabled ?? currentPlan.isEnabled,
+      status: dto.status ?? currentStatus,
       cycleType:
         dto.cycleType !== undefined
           ? this.parseCycleType(dto.cycleType)
@@ -198,10 +198,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       baseRewardConfig:
         dto.baseRewardConfig !== undefined
           ? this.parseRewardConfig(dto.baseRewardConfig, { allowEmpty: true })
-          : this.parseRewardConfig(
-              this.asRecord(currentPlan.baseRewardConfig) ?? undefined,
-              { allowEmpty: true },
-            ),
+          : this.parseStoredRewardConfig(currentPlan.baseRewardConfig, {
+              allowEmpty: true,
+            }),
       publishStartAt:
         dto.publishStartAt !== undefined
           ? (dto.publishStartAt ?? null)
@@ -229,10 +228,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       currentRules.map((rule) => ({
         ruleCode: rule.ruleCode,
         streakDays: rule.streakDays,
-        rewardConfig: this.parseRewardConfig(
-          this.asRecord(rule.rewardConfig) ?? undefined,
-          { allowEmpty: false },
-        )!,
+        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        })!,
         repeatable: rule.repeatable,
         status: rule.status,
       }))
@@ -259,8 +257,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           .set({
             planCode: nextPlan.planCode,
             planName: nextPlan.planName,
-            status: nextPlan.status,
-            isEnabled: nextPlan.isEnabled,
+            ...this.buildPlanStatusPersistence(nextPlan.status),
             cycleType: nextPlan.cycleType,
             cycleAnchorDate: nextPlan.cycleAnchorDate,
             allowMakeupCountPerCycle: nextPlan.allowMakeupCountPerCycle,
@@ -294,22 +291,19 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return true
   }
 
-  /** 更新计划状态与启停开关，并拦截会破坏单生效计划合同的配置。 */
+  /** 更新计划状态，并拦截会破坏单生效计划合同的配置。 */
   async updatePlanStatus(
     dto: UpdateCheckInPlanStatusInput,
     adminUserId: number,
   ) {
     const plan = await this.getPlanById(dto.id)
-    const nextStatus = dto.status ?? plan.status
-    const nextEnabled = dto.isEnabled ?? plan.isEnabled
+    const nextStatus = dto.status ?? this.resolvePlanStatus(plan)
 
     if (
       nextStatus === CheckInPlanStatusEnum.PUBLISHED &&
-      nextEnabled &&
       this.isPlanActiveAt(
         {
           status: nextStatus,
-          isEnabled: nextEnabled,
           publishStartAt: plan.publishStartAt,
           publishEndAt: plan.publishEndAt,
         },
@@ -323,8 +317,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.db
         .update(this.checkInPlanTable)
         .set({
-          status: nextStatus,
-          isEnabled: nextEnabled,
+          ...this.buildPlanStatusPersistence(nextStatus),
           updatedById: adminUserId,
         })
         .where(
@@ -337,33 +330,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     this.drizzle.assertAffectedRows(result, '签到计划不存在')
     return true
-  }
-
-  /** 以“发布且启用”口径快捷发布指定计划。 */
-  async publishPlan(dto: PublishCheckInPlanInput, adminUserId: number) {
-    const plan = await this.getPlanById(dto.id)
-    if (
-      this.isPlanActiveAt(
-        {
-          status: CheckInPlanStatusEnum.PUBLISHED,
-          isEnabled: true,
-          publishStartAt: plan.publishStartAt,
-          publishEndAt: plan.publishEndAt,
-        },
-        new Date(),
-      )
-    ) {
-      await this.assertNoOtherCurrentActivePlan(plan.id)
-    }
-
-    return this.updatePlanStatus(
-      {
-        id: dto.id,
-        status: CheckInPlanStatusEnum.PUBLISHED,
-        isEnabled: true,
-      },
-      adminUserId,
-    )
   }
 
   /** 聚合单个计划在后台列表页展示所需的运行态摘要。 */

@@ -8,6 +8,8 @@ export enum CheckInPlanStatusEnum {
   PUBLISHED = 1,
   /** 已下线 */
   OFFLINE = 2,
+  /** 已停用 */
+  DISABLED = 3,
 }
 
 /**

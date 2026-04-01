@@ -15,10 +15,6 @@ describe('admin CheckInController audit metadata', () => {
       CheckInController.prototype,
       'updatePlanStatus',
     )?.value
-    const publishPlanHandler = Object.getOwnPropertyDescriptor(
-      CheckInController.prototype,
-      'publishPlan',
-    )?.value
     const repairRewardHandler = Object.getOwnPropertyDescriptor(
       CheckInController.prototype,
       'repairReward',
@@ -43,13 +39,6 @@ describe('admin CheckInController audit metadata', () => {
     ).toEqual({
       actionType: AuditActionTypeEnum.UPDATE,
       content: '更新签到计划状态',
-    })
-
-    expect(
-      Reflect.getMetadata('audit', publishPlanHandler),
-    ).toEqual({
-      actionType: AuditActionTypeEnum.UPDATE,
-      content: '发布签到计划',
     })
 
     expect(

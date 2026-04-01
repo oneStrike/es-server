@@ -56,7 +56,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         id: plan.id,
         planCode: plan.planCode,
         planName: plan.planName,
-        status: plan.status,
+        status: this.resolvePlanStatus(plan),
         cycleType: this.parseCycleType(plan.cycleType),
         cycleAnchorDate: this.toDateOnlyValue(plan.cycleAnchorDate),
         allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,

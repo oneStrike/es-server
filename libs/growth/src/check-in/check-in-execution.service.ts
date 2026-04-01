@@ -472,10 +472,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           throw new NotFoundException('连续奖励规则不存在')
         }
 
-        const rewardConfig = this.parseRewardConfig(
-          this.asRecord(rule.rewardConfig) ?? undefined,
-          { allowEmpty: false },
-        )!
+        const rewardConfig = this.parseStoredRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        })!
         const settlement = await this.applyRewardConfig(tx, {
           userId: grant.userId,
           rewardConfig,
