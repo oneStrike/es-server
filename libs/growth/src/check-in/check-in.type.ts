@@ -109,7 +109,7 @@ export type CheckInPlanSummaryView = Pick<
   | 'allowMakeupCountPerCycle'
   | 'baseRewardConfig'
 > &
-  Pick<CheckInPlan, 'status' | 'publishStartAt' | 'publishEndAt'>
+Pick<CheckInPlan, 'status' | 'publishStartAt' | 'publishEndAt'>
 
 /**
  * 签到记录共享的奖励状态字段。

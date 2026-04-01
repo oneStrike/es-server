@@ -85,13 +85,13 @@ export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 } & (
-    | {
+  | {
         /** 数组元素类型 */
         itemType: 'string' | 'number' | 'boolean'
         /** 基础类型不需要 itemClass */
         itemClass?: never
       }
-    | {
+      | {
         /** 数组元素类型，如果传入了 itemClass 可省略，自动推断为 object */
         itemType?: 'object'
         /** 数组元素DTO类型（必传，用于深度校验和API文档） */

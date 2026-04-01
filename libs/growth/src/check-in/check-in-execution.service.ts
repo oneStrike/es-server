@@ -369,7 +369,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number; source: string },
+    context: { actorUserId?: number, source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -450,7 +450,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number; source: string },
+    context: { actorUserId?: number, source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {

@@ -79,14 +79,14 @@ export interface ITokenDelegate<
   createMany: (args: { data: CreateInput[] }) => Promise<any>
   /** 查询单条 */
   findUnique: (args: {
-    where: WhereInput & { jti?: string; id?: number }
+    where: WhereInput & { jti?: string, id?: number }
   }) => Promise<T | null>
   /** 查询多条 */
-  findMany: (args: { where?: WhereInput; [key: string]: any }) => Promise<T[]>
+  findMany: (args: { where?: WhereInput, [key: string]: any }) => Promise<T[]>
   /** 更新单条 */
-  update: (args: { where: WhereInput; data: UpdateInput }) => Promise<T>
+  update: (args: { where: WhereInput, data: UpdateInput }) => Promise<T>
   /** 批量更新 */
-  updateMany: (args: { where: WhereInput; data: UpdateInput }) => Promise<any>
+  updateMany: (args: { where: WhereInput, data: UpdateInput }) => Promise<any>
   /** 批量删除 */
   deleteMany: (args: { where: WhereInput }) => Promise<any>
 }
