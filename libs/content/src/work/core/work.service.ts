@@ -636,8 +636,7 @@ export class WorkService {
       categoryIds,
       tagIds,
       ...otherDto
-    } =
-      queryWorkDto
+    } = queryWorkDto
     const normalizedAuthor = author?.trim()
     const normalizedName = name?.trim()
     const normalizedPublisher = publisher?.trim()

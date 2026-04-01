@@ -1,9 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService, escapeLikePattern } from '@db/core'
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, ilike } from 'drizzle-orm'
 import {
   AgreementIdInput,

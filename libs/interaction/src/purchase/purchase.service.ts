@@ -1,8 +1,6 @@
 import type { UserPurchaseRecordSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import {
-  DrizzleService,
-} from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -11,9 +9,7 @@ import {
 import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
-import {
-  IPurchaseTargetResolver,
-} from './interfaces/purchase-target-resolver.interface'
+import { IPurchaseTargetResolver } from './interfaces/purchase-target-resolver.interface'
 import {
   PURCHASE_WORK_CHAPTER_TARGET_TYPES,
   PurchaseStatusEnum,
@@ -81,9 +77,7 @@ export class PurchaseService {
   /**
    * 获取指定的购买解析器
    */
-  private getResolver(
-    targetType: PurchaseTargetTypeEnum,
-  ) {
+  private getResolver(targetType: PurchaseTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException('不支持的购买业务类型')
@@ -92,9 +86,7 @@ export class PurchaseService {
   }
 
   private isUniqueConstraintError(error: unknown) {
-    return (
-      this.drizzle.isUniqueViolation(error)
-    )
+    return this.drizzle.isUniqueViolation(error)
   }
 
   private extractRows<T>(result: unknown) {
@@ -249,7 +241,10 @@ export class PurchaseService {
       endDate,
     } = query
     const page = this.drizzle.buildPage({ pageIndex, pageSize })
-    const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
+    const createdAtFilter = this.buildPurchaseCreatedAtFilter(
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? sql` AND w.type = ${workType}`
       : sql.empty()
@@ -334,7 +329,10 @@ export class PurchaseService {
       endDate,
     } = query
     const page = this.drizzle.buildPage({ pageIndex, pageSize })
-    const createdAtFilter = this.buildPurchaseCreatedAtFilter(startDate, endDate)
+    const createdAtFilter = this.buildPurchaseCreatedAtFilter(
+      startDate,
+      endDate,
+    )
     const workTypeFilter = workType
       ? sql` AND wc.work_type = ${workType}`
       : sql.empty()

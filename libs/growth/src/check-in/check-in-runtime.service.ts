@@ -41,10 +41,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const cycle = await this.getCurrentCycleView(userId, plan, now)
     const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
     const grantMap = await this.buildGrantMapForRecords(records)
-    const recordViews = records.map(record =>
+    const recordViews = records.map((record) =>
       this.toRecordView(
         record,
-        grantMap.get(`${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`) ?? [],
+        grantMap.get(
+          `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
+        ) ?? [],
       ),
     )
     const latestRecord = recordViews.at(-1)
@@ -76,7 +78,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         currentStreak: cycle.currentStreak,
         lastSignedDate: cycle.lastSignedDate,
       },
-      todaySigned: records.some(record => this.toDateOnlyValue(record.signDate) === today),
+      todaySigned: records.some(
+        (record) => this.toDateOnlyValue(record.signDate) === today,
+      ),
       nextStreakReward:
         this.resolveNextStreakReward(
           cycle.planSnapshot.streakRewardRules,
@@ -98,10 +102,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const cycle = await this.getCurrentCycleView(userId, plan, now)
     const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
     const grantMap = await this.buildGrantMapForRecords(records)
-    const recordViews = records.map(record =>
+    const recordViews = records.map((record) =>
       this.toRecordView(
         record,
-        grantMap.get(`${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`) ?? [],
+        grantMap.get(
+          `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
+        ) ?? [],
       ),
     )
 
@@ -137,19 +143,25 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
     const orderBy = query.orderBy?.trim()
 
-    const page = await this.drizzle.ext.findPagination(this.checkInRecordTable, {
-      where: and(...conditions),
-      ...query,
-      orderBy: orderBy || JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.checkInRecordTable,
+      {
+        where: and(...conditions),
+        ...query,
+        orderBy:
+          orderBy || JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
+      },
+    )
 
     const grantMap = await this.buildGrantMapForRecords(page.list)
     return {
       ...page,
-      list: page.list.map(record =>
+      list: page.list.map((record) =>
         this.toRecordView(
           record,
-          grantMap.get(`${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`) ?? [],
+          grantMap.get(
+            `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
+          ) ?? [],
         ),
       ),
     }
@@ -172,7 +184,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       conditions.push(eq(this.checkInRecordTable.cycleId, query.cycleId))
     }
     if (query.rewardStatus != null) {
-      conditions.push(eq(this.checkInRecordTable.rewardStatus, query.rewardStatus))
+      conditions.push(
+        eq(this.checkInRecordTable.rewardStatus, query.rewardStatus),
+      )
     }
     if (query.grantId !== undefined) {
       conditions.push(
@@ -204,9 +218,18 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
             .from(this.checkInStreakRewardGrantTable)
             .where(
               and(
-                eq(this.checkInStreakRewardGrantTable.cycleId, this.checkInRecordTable.cycleId),
-                eq(this.checkInStreakRewardGrantTable.triggerSignDate, this.checkInRecordTable.signDate),
-                eq(this.checkInStreakRewardGrantTable.grantStatus, query.grantStatus),
+                eq(
+                  this.checkInStreakRewardGrantTable.cycleId,
+                  this.checkInRecordTable.cycleId,
+                ),
+                eq(
+                  this.checkInStreakRewardGrantTable.triggerSignDate,
+                  this.checkInRecordTable.signDate,
+                ),
+                eq(
+                  this.checkInStreakRewardGrantTable.grantStatus,
+                  query.grantStatus,
+                ),
               ),
             ),
         ),
@@ -214,17 +237,20 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
     const orderBy = query.orderBy?.trim()
 
-    const page = await this.drizzle.ext.findPagination(this.checkInRecordTable, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...query,
-      orderBy:
-        orderBy || JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.checkInRecordTable,
+      {
+        where: conditions.length > 0 ? and(...conditions) : undefined,
+        ...query,
+        orderBy:
+          orderBy || JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
+      },
+    )
 
     const grantMap = await this.buildGrantMapForRecords(page.list)
     return {
       ...page,
-      list: page.list.map(record => ({
+      list: page.list.map((record) => ({
         recordId: record.id,
         userId: record.userId,
         planId: record.planId,
@@ -235,7 +261,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         rewardResultType: record.rewardResultType,
         baseRewardLedgerIds: record.baseRewardLedgerIds,
         lastRewardError: record.lastRewardError,
-        grants: grantMap.get(`${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`) ?? [],
+        grants:
+          grantMap.get(
+            `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
+          ) ?? [],
         createdAt: record.createdAt,
       })),
     }

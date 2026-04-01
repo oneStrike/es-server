@@ -39,9 +39,11 @@ export function shouldAnnouncementEnterNotificationCenter(input: {
   isPinned: boolean
   showAsPopup: boolean
 }) {
-  return input.priorityLevel >= AnnouncementPriorityEnum.HIGH
-    || input.isPinned
-    || input.showAsPopup
+  return (
+    input.priorityLevel >= AnnouncementPriorityEnum.HIGH ||
+    input.isPinned ||
+    input.showAsPopup
+  )
 }
 
 /**

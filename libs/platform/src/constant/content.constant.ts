@@ -19,7 +19,7 @@ export enum WorkTypeEnum {
   /** 漫画 */
   COMIC = 1,
   /** 小说 */
-  NOVEL = 2
+  NOVEL = 2,
 }
 
 /**

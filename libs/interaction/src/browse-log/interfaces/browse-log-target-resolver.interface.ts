@@ -15,19 +15,12 @@ export interface IBrowseLogTargetResolver {
    * @param targetId - 目标ID
    * @param delta - 变更量
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void>
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
 
   /**
    * 校验目标是否有效且可以计入浏览日志
    * @param tx - 事务客户端
    * @param targetId - 目标ID
    */
-  ensureTargetValid: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<void>
+  ensureTargetValid: (tx: Db, targetId: number) => Promise<void>
 }

@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   DownloadService,
   DownloadTargetTypeEnum,
@@ -66,11 +64,7 @@ export class WorkComicChapterDownloadResolver
   /**
    * 更新下载计数
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkDownloadCountsByChapter(
       tx,
       targetId,

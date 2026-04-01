@@ -5,13 +5,18 @@ import type { AuditStatusEnum } from '@libs/platform/constant'
  * 论坛主题媒体输入。
  * 使用有序附件列表承载图片与视频，controller 可按需省略字段。
  */
-export type ForumTopicMediaInput = Partial<Pick<ForumTopicSelect, 'images' | 'videos'>>
+export type ForumTopicMediaInput = Partial<
+  Pick<ForumTopicSelect, 'images' | 'videos'>
+>
 
 /**
  * 创建论坛主题的领域输入。
  * 由 controller 侧 DTO 映射而来，service 不直接依赖 DTO。
  */
-export type CreateForumTopicInput = Pick<ForumTopicSelect, 'sectionId' | 'userId'> &
+export type CreateForumTopicInput = Pick<
+  ForumTopicSelect,
+  'sectionId' | 'userId'
+> &
   Pick<ForumTopicSelect, 'title' | 'content'> &
   ForumTopicMediaInput
 
@@ -69,7 +74,10 @@ export type UpdateForumTopicAuditStatusInput = Pick<
 /**
  * 更新主题置顶状态的领域输入。
  */
-export type UpdateForumTopicPinnedInput = Pick<ForumTopicSelect, 'id' | 'isPinned'>
+export type UpdateForumTopicPinnedInput = Pick<
+  ForumTopicSelect,
+  'id' | 'isPinned'
+>
 
 /**
  * 更新主题精华状态的领域输入。
@@ -82,9 +90,15 @@ export type UpdateForumTopicFeaturedInput = Pick<
 /**
  * 更新主题锁定状态的领域输入。
  */
-export type UpdateForumTopicLockedInput = Pick<ForumTopicSelect, 'id' | 'isLocked'>
+export type UpdateForumTopicLockedInput = Pick<
+  ForumTopicSelect,
+  'id' | 'isLocked'
+>
 
 /**
  * 更新主题隐藏状态的领域输入。
  */
-export type UpdateForumTopicHiddenInput = Pick<ForumTopicSelect, 'id' | 'isHidden'>
+export type UpdateForumTopicHiddenInput = Pick<
+  ForumTopicSelect,
+  'id' | 'isHidden'
+>

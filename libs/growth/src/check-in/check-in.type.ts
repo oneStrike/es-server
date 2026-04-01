@@ -86,8 +86,10 @@ export interface CheckInPlanSnapshotRule extends CheckInStreakRewardRuleCoreView
  *
  * 除基础计划字段外，也要冻结当前版本下的连续奖励规则集合。
  */
-export interface CheckInPlanSnapshot
-  extends Omit<CheckInPlanSnapshotSource, 'baseRewardConfig'> {
+export interface CheckInPlanSnapshot extends Omit<
+  CheckInPlanSnapshotSource,
+  'baseRewardConfig'
+> {
   baseRewardConfig?: CheckInRewardConfig | null
   streakRewardRules: CheckInPlanSnapshotRule[]
 }
@@ -106,7 +108,8 @@ export type CheckInPlanSummaryView = Pick<
   | 'cycleAnchorDate'
   | 'allowMakeupCountPerCycle'
   | 'baseRewardConfig'
-> & Pick<CheckInPlan, 'status' | 'publishStartAt' | 'publishEndAt'>
+> &
+  Pick<CheckInPlan, 'status' | 'publishStartAt' | 'publishEndAt'>
 
 /**
  * 签到记录共享的奖励状态字段。
@@ -367,14 +370,20 @@ export interface CheckInActionView extends CheckInRecordRewardStateView {
 /**
  * 管理端签到计划列表视图。
  */
-export type CheckInPlanPageView = CheckInPlanSnapshotSource & Pick<
-  CheckInPlan,
-  'status' | 'isEnabled' | 'publishStartAt' | 'publishEndAt' | 'createdAt' | 'updatedAt'
-> & {
-  ruleCount: number
-  activeCycleCount: number
-  pendingRewardCount: number
-}
+export type CheckInPlanPageView = CheckInPlanSnapshotSource &
+  Pick<
+    CheckInPlan,
+    | 'status'
+    | 'isEnabled'
+    | 'publishStartAt'
+    | 'publishEndAt'
+    | 'createdAt'
+    | 'updatedAt'
+  > & {
+    ruleCount: number
+    activeCycleCount: number
+    pendingRewardCount: number
+  }
 
 /**
  * 管理端签到计划详情视图。

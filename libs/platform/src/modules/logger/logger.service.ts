@@ -30,7 +30,7 @@ export class LoggerService {
    * 构建日志格式化器
    * @returns 包含基础格式和控制台格式的对象
    */
-  buildFormats(): { consoleFmt: any, jsonFmt: any } {
+  buildFormats(): { consoleFmt: any; jsonFmt: any } {
     // 基础格式：添加 Request ID
     const addRequestId = format((info) => {
       const requestId = this.clsService.getId()
@@ -44,14 +44,16 @@ export class LoggerService {
       addRequestId(),
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
-      format.printf(({ timestamp, level, message, context, stack, requestId }) => {
-        const ctx = context ? `[${context}] ` : ''
-        const reqId = requestId ? `[${requestId}] ` : ''
-        const msg =
-          typeof message === 'string' ? message : JSON.stringify(message)
-        const s = stack ? `\n${stack}` : ''
-        return `${timestamp} ${level} ${reqId}${ctx}${msg}${s}`
-      }),
+      format.printf(
+        ({ timestamp, level, message, context, stack, requestId }) => {
+          const ctx = context ? `[${context}] ` : ''
+          const reqId = requestId ? `[${requestId}] ` : ''
+          const msg =
+            typeof message === 'string' ? message : JSON.stringify(message)
+          const s = stack ? `\n${stack}` : ''
+          return `${timestamp} ${level} ${reqId}${ctx}${msg}${s}`
+        },
+      ),
     )
     const consoleFmt = format.combine(format.colorize(), consoleBase)
 

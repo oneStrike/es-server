@@ -1,8 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import {
-  DrizzleService,
-  escapeLikePattern,
- } from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
@@ -13,10 +10,7 @@ import {
   DownloadTargetTypeEnum,
 } from '@libs/interaction/download'
 import { FavoriteService } from '@libs/interaction/favorite'
-import {
-  LikeService,
-  LikeTargetTypeEnum,
-} from '@libs/interaction/like'
+import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
 import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { jsonParse } from '@libs/platform/utils'

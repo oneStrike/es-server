@@ -5,9 +5,14 @@
  * @param visibleEnd 后部保留明文长度
  * @returns 脱敏后的字符串
  */
-export function maskString(str: string, visibleStart = 3, visibleEnd = 3): string {
-  if (!str)
-{ return '' }
+export function maskString(
+  str: string,
+  visibleStart = 3,
+  visibleEnd = 3,
+): string {
+  if (!str) {
+    return ''
+  }
   // 如果字符串太短，不适合按照 Start/End 截取，则全部掩盖，但为了体验返回固定长度的星号
   if (str.length <= visibleStart + visibleEnd) {
     return '******'

@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
@@ -49,19 +47,16 @@ export class WorkComicChapterBrowseLogResolver
    * @param targetId - 目标章节ID
    * @param delta - 变更量
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void> = async (tx, targetId, delta) => {
-    await this.workCounterService.updateWorkChapterViewCount(
-      tx,
-      targetId,
-      this.workType,
-      delta,
-      '漫画章节不存在',
-    )
-  }
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
+    async (tx, targetId, delta) => {
+      await this.workCounterService.updateWorkChapterViewCount(
+        tx,
+        targetId,
+        this.workType,
+        delta,
+        '漫画章节不存在',
+      )
+    }
 
   /**
    * 校验漫画章节是否有效
@@ -70,10 +65,10 @@ export class WorkComicChapterBrowseLogResolver
    * @param targetId - 目标章节ID
    * @throws 当章节不存在时抛出 BadRequestException
    */
-  ensureTargetValid: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<void> = async (tx, targetId) => {
+  ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
+    tx,
+    targetId,
+  ) => {
     const chapter = await tx
       .select({ id: this.workChapter.id })
       .from(this.workChapter)

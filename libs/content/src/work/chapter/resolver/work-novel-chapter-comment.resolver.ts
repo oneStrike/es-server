@@ -1,8 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  workAuthorRelation,
-  workChapter
- } from '@db/schema'
+import { workAuthorRelation, workChapter } from '@db/schema'
 import {
   CommentService,
   CommentTargetTypeEnum,
@@ -49,11 +46,7 @@ export class WorkNovelChapterCommentResolver
    * @param targetId - 目标章节ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     try {
       await this.workCounterService.updateWorkChapterCommentCount(
         tx,

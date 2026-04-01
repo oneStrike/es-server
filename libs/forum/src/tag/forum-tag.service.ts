@@ -12,16 +12,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  ilike,
-  inArray,
-  isNull,
-  sql,
-} from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛标签服务类
@@ -60,7 +51,10 @@ export class ForumTagService {
     const rows = await this.db
       .select({ topicId: this.forumTopicTag.topicId })
       .from(this.forumTopicTag)
-      .innerJoin(this.forumTopic, eq(this.forumTopic.id, this.forumTopicTag.topicId))
+      .innerJoin(
+        this.forumTopic,
+        eq(this.forumTopic.id, this.forumTopicTag.topicId),
+      )
       .where(
         and(
           eq(this.forumTopicTag.tagId, id),
@@ -90,12 +84,10 @@ export class ForumTagService {
     }
 
     await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.forumTag)
-        .values({
-          ...tagData,
-          name,
-        }),
+      this.db.insert(this.forumTag).values({
+        ...tagData,
+        name,
+      }),
     )
     return true
   }
@@ -114,9 +106,7 @@ export class ForumTagService {
       conditions.push(eq(this.forumTag.isEnabled, isEnabled))
     }
     if (name) {
-      conditions.push(
-        ilike(this.forumTag.name, `%${escapeLikePattern(name)}%`),
-      )
+      conditions.push(ilike(this.forumTag.name, `%${escapeLikePattern(name)}%`))
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -140,7 +130,9 @@ export class ForumTagService {
           .where(inArray(this.forumTopicTag.tagId, tagIds))
           .groupBy(this.forumTopicTag.tagId)
       : []
-    const countMap = new Map(countRows.map((row) => [row.tagId, Number(row.count)]))
+    const countMap = new Map(
+      countRows.map((row) => [row.tagId, Number(row.count)]),
+    )
     return {
       ...page,
       list: page.list.map((item) => ({
@@ -174,14 +166,20 @@ export class ForumTagService {
         createdAt: this.forumTopic.createdAt,
       })
       .from(this.forumTopicTag)
-      .innerJoin(this.forumTopic, eq(this.forumTopic.id, this.forumTopicTag.topicId))
+      .innerJoin(
+        this.forumTopic,
+        eq(this.forumTopic.id, this.forumTopicTag.topicId),
+      )
       .where(
         and(
           eq(this.forumTopicTag.tagId, id),
           isNull(this.forumTopic.deletedAt),
         ),
       )
-      .orderBy(desc(this.forumTopicTag.createdAt), asc(this.forumTopicTag.topicId))
+      .orderBy(
+        desc(this.forumTopicTag.createdAt),
+        asc(this.forumTopicTag.topicId),
+      )
       .limit(10)
 
     return {
@@ -207,7 +205,9 @@ export class ForumTagService {
     }
 
     if (name) {
-      const existingTag = await this.db.query.forumTag.findFirst({ where: { name } })
+      const existingTag = await this.db.query.forumTag.findFirst({
+        where: { name },
+      })
 
       if (existingTag && existingTag.id !== id) {
         throw new BadRequestException('该标签名称已存在')
@@ -222,7 +222,7 @@ export class ForumTagService {
       this.db
         .update(this.forumTag)
         .set({ name, ...updateData })
-        .where(eq(this.forumTag.id, id))
+        .where(eq(this.forumTag.id, id)),
     )
     this.drizzle.assertAffectedRows(result, '标签不存在')
     return true
@@ -247,9 +247,7 @@ export class ForumTagService {
     }
 
     const rows = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.forumTag)
-        .where(eq(this.forumTag.id, id))
+      this.db.delete(this.forumTag).where(eq(this.forumTag.id, id)),
     )
     this.drizzle.assertAffectedRows(rows, '标签不存在')
 
@@ -295,12 +293,10 @@ export class ForumTagService {
     // 关联关系与使用次数同步更新
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        await tx
-          .insert(this.forumTopicTag)
-          .values({
-            topicId,
-            tagId,
-          })
+        await tx.insert(this.forumTopicTag).values({
+          topicId,
+          tagId,
+        })
         const rows = await tx
           .update(this.forumTag)
           .set({ useCount: sql`${this.forumTag.useCount} + 1` })

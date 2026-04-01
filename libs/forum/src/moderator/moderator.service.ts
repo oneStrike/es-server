@@ -1,8 +1,5 @@
 import type { Db } from '@db/core'
-import type {
-  ForumModeratorSelect,
-  ForumSectionSelect,
-} from '@db/schema'
+import type { ForumModeratorSelect, ForumSectionSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   AssignForumModeratorSectionInput,
@@ -12,7 +9,11 @@ import type {
   UpdateForumModeratorInput,
 } from './moderator.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
 import {
   ALL_FORUM_MODERATOR_PERMISSIONS,
@@ -144,9 +145,7 @@ export class ForumModeratorService {
     return uniqueSectionIds
   }
 
-  private async getModeratorSectionScopes(
-    moderatorId: number,
-  ) {
+  private async getModeratorSectionScopes(moderatorId: number) {
     return this.db
       .select({
         sectionId: this.forumModeratorSection.sectionId,
@@ -164,13 +163,17 @@ export class ForumModeratorService {
       sectionIds?: number[]
     },
     options: {
-      current?: Pick<ForumModeratorSelect, 'roleType' | 'groupId' | 'permissions'>
+      current?: Pick<
+        ForumModeratorSelect,
+        'roleType' | 'groupId' | 'permissions'
+      >
       currentSectionIds?: number[]
       isCreate?: boolean
     } = {},
   ): Promise<NormalizedModeratorScope> {
-    const roleType = (input.roleType ??
-      options.current?.roleType) as ForumModeratorRoleTypeEnum | undefined
+    const roleType = (input.roleType ?? options.current?.roleType) as
+      | ForumModeratorRoleTypeEnum
+      | undefined
 
     if (
       roleType === undefined ||
@@ -255,7 +258,8 @@ export class ForumModeratorService {
     customPermissions: ForumModeratorPermissionEnum[] = [],
   ) {
     const uniqueSectionIds = await this.ensureSectionIdsExist(sectionIds)
-    const normalizedCustomPermissions = this.normalizePermissions(customPermissions)
+    const normalizedCustomPermissions =
+      this.normalizePermissions(customPermissions)
     const existingScopes = await tx
       .select({ sectionId: this.forumModeratorSection.sectionId })
       .from(this.forumModeratorSection)
@@ -305,7 +309,9 @@ export class ForumModeratorService {
   }
 
   private mergePermissions(
-    ...permissionSets: Array<Array<number | string | null | undefined> | undefined>
+    ...permissionSets: Array<
+      Array<number | string | null | undefined> | undefined
+    >
   ) {
     return this.normalizePermissions(permissionSets.flat())
   }
@@ -315,7 +321,8 @@ export class ForumModeratorService {
     basePermissions: ForumModeratorPermissionEnum[],
     customPermissions?: Array<number | string | null | undefined> | null,
   ) {
-    const normalizedCustomPermissions = this.normalizePermissions(customPermissions)
+    const normalizedCustomPermissions =
+      this.normalizePermissions(customPermissions)
 
     return {
       id: section.id,
@@ -329,14 +336,14 @@ export class ForumModeratorService {
     }
   }
 
-  private async buildModeratorViews(
-    moderators: ForumModeratorSelect[],
-  ) {
+  private async buildModeratorViews(moderators: ForumModeratorSelect[]) {
     if (moderators.length === 0) {
       return []
     }
 
-    const userIds = [...new Set(moderators.map((moderator) => moderator.userId))]
+    const userIds = [
+      ...new Set(moderators.map((moderator) => moderator.userId)),
+    ]
     const groupIds = [
       ...new Set(
         moderators
@@ -368,7 +375,7 @@ export class ForumModeratorService {
                 isNull(this.forumSectionGroup.deletedAt),
               ),
             )
-        : Promise.resolve([] as Array<{ id: number, name: string }>),
+        : Promise.resolve([] as Array<{ id: number; name: string }>),
       this.db
         .select({
           id: this.forumSection.id,
@@ -387,10 +394,11 @@ export class ForumModeratorService {
         .where(inArray(this.forumModeratorSection.moderatorId, moderatorIds)),
     ])
 
-    const userMap = new Map<number, { id: number, nickname: string, avatar: string | null }>(
-      users.map((user) => [user.id, user]),
-    )
-    const groupMap = new Map<number, { id: number, name: string }>(
+    const userMap = new Map<
+      number,
+      { id: number; nickname: string; avatar: string | null }
+    >(users.map((user) => [user.id, user]))
+    const groupMap = new Map<number, { id: number; name: string }>(
       groups.map((group) => [group.id, group]),
     )
     const scopeMap = new Map<number, Array<(typeof scopes)[number]>>()
@@ -402,14 +410,20 @@ export class ForumModeratorService {
     }
 
     return moderators.map((moderator) => {
-      const basePermissions = this.normalizePermissions(moderator.permissions ?? [])
+      const basePermissions = this.normalizePermissions(
+        moderator.permissions ?? [],
+      )
       const user = userMap.get(moderator.userId)
-      const group = moderator.groupId ? groupMap.get(moderator.groupId) : undefined
+      const group = moderator.groupId
+        ? groupMap.get(moderator.groupId)
+        : undefined
       const sectionScopes = scopeMap.get(moderator.id) ?? []
 
       let sections = sectionScopes
         .map((scope) => {
-          const section = allSections.find((item) => item.id === scope.sectionId)
+          const section = allSections.find(
+            (item) => item.id === scope.sectionId,
+          )
           return section
             ? this.buildSectionView(section, basePermissions, scope.permissions)
             : null
@@ -637,12 +651,7 @@ export class ForumModeratorService {
       const users = await this.db
         .select({ id: this.appUser.id })
         .from(this.appUser)
-        .where(
-          ilike(
-            this.appUser.nickname,
-            `%${escapeLikePattern(nickname)}%`,
-          ),
-        )
+        .where(ilike(this.appUser.nickname, `%${escapeLikePattern(nickname)}%`))
       const userIds = users.map((user) => user.id)
 
       conditions.push(
@@ -678,7 +687,10 @@ export class ForumModeratorService {
         if (section.groupId) {
           scopedConditions.push(
             and(
-              eq(this.forumModerator.roleType, ForumModeratorRoleTypeEnum.GROUP),
+              eq(
+                this.forumModerator.roleType,
+                ForumModeratorRoleTypeEnum.GROUP,
+              ),
               eq(this.forumModerator.groupId, section.groupId),
             )!,
           )

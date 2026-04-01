@@ -1,7 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { UploadService } from '@libs/platform/modules'
@@ -100,7 +98,10 @@ export class NovelContentService {
         .update(this.workChapter)
         .set({ content: file.filePath })
         .where(
-          and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)),
+          and(
+            eq(this.workChapter.id, chapterId),
+            isNull(this.workChapter.deletedAt),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
@@ -123,7 +124,10 @@ export class NovelContentService {
         .update(this.workChapter)
         .set({ content: null })
         .where(
-          and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)),
+          and(
+            eq(this.workChapter.id, chapterId),
+            isNull(this.workChapter.deletedAt),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')

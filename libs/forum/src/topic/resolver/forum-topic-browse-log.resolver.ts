@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
@@ -47,13 +45,10 @@ export class ForumTopicBrowseLogResolver
    * @param targetId - 目标帖子ID
    * @param delta - 变更量
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void> = async (tx, targetId, delta) => {
-    await this.forumCounterService.updateTopicViewCount(tx, targetId, delta)
-  }
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
+    async (tx, targetId, delta) => {
+      await this.forumCounterService.updateTopicViewCount(tx, targetId, delta)
+    }
 
   /**
    * 校验帖子是否有效
@@ -62,10 +57,10 @@ export class ForumTopicBrowseLogResolver
    * @param targetId - 目标帖子ID
    * @throws 当帖子不存在时抛出 BadRequestException
    */
-  ensureTargetValid: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<void> = async (tx, targetId) => {
+  ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
+    tx,
+    targetId,
+  ) => {
     const topic = await tx.query.forumTopic.findFirst({
       where: {
         id: targetId,
@@ -84,7 +79,12 @@ export class ForumTopicBrowseLogResolver
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled
+    ) {
       throw new NotFoundException('帖子不存在')
     }
   }

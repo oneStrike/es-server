@@ -67,10 +67,10 @@ export class ReportGrowthService {
     const reportedTargetId = Number(record.reportedTargetId)
 
     if (
-      !Object.values(ReportStatusEnum).includes(reportStatus)
-      || !Object.values(ReportTargetTypeEnum).includes(reportedTargetType)
-      || !Number.isInteger(reportedTargetId)
-      || reportedTargetId <= 0
+      !Object.values(ReportStatusEnum).includes(reportStatus) ||
+      !Object.values(ReportTargetTypeEnum).includes(reportedTargetType) ||
+      !Number.isInteger(reportedTargetId) ||
+      reportedTargetId <= 0
     ) {
       throw new Error('举报裁决事件上下文缺失或非法')
     }

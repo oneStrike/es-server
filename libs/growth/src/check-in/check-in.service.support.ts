@@ -40,18 +40,7 @@ import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gt,
-  gte,
-  isNull,
-  lte,
-  ne,
-  or,
-} from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, isNull, lte, ne, or } from 'drizzle-orm'
 import {
   CheckInCycleTypeEnum,
   CheckInPlanStatusEnum,
@@ -165,9 +154,9 @@ export abstract class CheckInServiceSupport {
   /** 解析并校验签到周期类型。 */
   protected parseCycleType(value?: string | null) {
     if (
-      value === CheckInCycleTypeEnum.DAILY
-      || value === CheckInCycleTypeEnum.WEEKLY
-      || value === CheckInCycleTypeEnum.MONTHLY
+      value === CheckInCycleTypeEnum.DAILY ||
+      value === CheckInCycleTypeEnum.WEEKLY ||
+      value === CheckInCycleTypeEnum.MONTHLY
     ) {
       return value
     }
@@ -196,7 +185,7 @@ export abstract class CheckInServiceSupport {
     }
 
     const unsupportedKeys = Object.keys(record).filter(
-      key => !['points', 'experience'].includes(key),
+      (key) => !['points', 'experience'].includes(key),
     )
     if (unsupportedKeys.length > 0) {
       throw new BadRequestException('奖励配置仅支持 points / experience')
@@ -261,14 +250,16 @@ export abstract class CheckInServiceSupport {
     })
 
     const duplicateRuleCode = this.findDuplicateValue(
-      normalizedRules.map(rule => rule.ruleCode),
+      normalizedRules.map((rule) => rule.ruleCode),
     )
     if (duplicateRuleCode) {
-      throw new BadRequestException(`连续奖励规则编码重复：${duplicateRuleCode}`)
+      throw new BadRequestException(
+        `连续奖励规则编码重复：${duplicateRuleCode}`,
+      )
     }
 
     const duplicateStreakDays = this.findDuplicateValue(
-      normalizedRules.map(rule => String(rule.streakDays)),
+      normalizedRules.map((rule) => String(rule.streakDays)),
     )
     if (duplicateStreakDays) {
       throw new BadRequestException(`连续奖励阈值重复：${duplicateStreakDays}`)
@@ -299,7 +290,7 @@ export abstract class CheckInServiceSupport {
         { allowEmpty: true },
       ),
       version: plan.version,
-      streakRewardRules: rules.map(rule => ({
+      streakRewardRules: rules.map((rule) => ({
         id: rule.id,
         planVersion: rule.planVersion,
         ruleCode: rule.ruleCode,
@@ -402,8 +393,8 @@ export abstract class CheckInServiceSupport {
     now: Date,
   ) {
     if (
-      plan.status !== CheckInPlanStatusEnum.PUBLISHED
-      || plan.isEnabled !== true
+      plan.status !== CheckInPlanStatusEnum.PUBLISHED ||
+      plan.isEnabled !== true
     ) {
       return false
     }
@@ -742,8 +733,8 @@ export abstract class CheckInServiceSupport {
     for (const record of sortedRecords) {
       const signDate = this.toDateOnlyValue(record.signDate)
       if (
-        previousDate
-        && dayjs
+        previousDate &&
+        dayjs
           .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
           .diff(
             dayjs.tz(previousDate, 'YYYY-MM-DD', this.getAppTimeZone()),
@@ -762,7 +753,7 @@ export abstract class CheckInServiceSupport {
     return {
       signedCount: sortedRecords.length,
       makeupUsedCount: sortedRecords.filter(
-        record => record.recordType === CheckInRecordTypeEnum.MAKEUP,
+        (record) => record.recordType === CheckInRecordTypeEnum.MAKEUP,
       ).length,
       currentStreak: latestDate ? streakByDate[latestDate] : 0,
       lastSignedDate: latestDate,
@@ -785,10 +776,11 @@ export abstract class CheckInServiceSupport {
   ) {
     const existingGrantKeys = new Set(
       existingGrants.map(
-        grant => `${grant.ruleId}:${this.toDateOnlyValue(grant.triggerSignDate)}`,
+        (grant) =>
+          `${grant.ruleId}:${this.toDateOnlyValue(grant.triggerSignDate)}`,
       ),
     )
-    const existingRuleIds = new Set(existingGrants.map(grant => grant.ruleId))
+    const existingRuleIds = new Set(existingGrants.map((grant) => grant.ruleId))
     const streakEntries = Object.entries(streakByDate).sort(([left], [right]) =>
       left.localeCompare(right),
     )
@@ -834,9 +826,11 @@ export abstract class CheckInServiceSupport {
     currentStreak: number,
   ) {
     const nextRule = rules
-      .filter(rule => rule.status === CheckInStreakRewardRuleStatusEnum.ENABLED)
+      .filter(
+        (rule) => rule.status === CheckInStreakRewardRuleStatusEnum.ENABLED,
+      )
       .sort((left, right) => left.streakDays - right.streakDays)
-      .find(rule => rule.streakDays > currentStreak)
+      .find((rule) => rule.streakDays > currentStreak)
 
     return nextRule ? this.toStreakRuleView(nextRule) : undefined
   }
@@ -992,7 +986,7 @@ export abstract class CheckInServiceSupport {
       return grantMap
     }
 
-    const predicates = records.map(record =>
+    const predicates = records.map((record) =>
       and(
         eq(this.checkInStreakRewardGrantTable.cycleId, record.cycleId),
         eq(
@@ -1031,7 +1025,9 @@ export abstract class CheckInServiceSupport {
     records: CheckInRecordView[],
     today: CheckInDateOnly,
   ) {
-    const recordMap = new Map(records.map(record => [record.signDate, record]))
+    const recordMap = new Map(
+      records.map((record) => [record.signDate, record]),
+    )
     const days: CheckInCalendarDayView[] = []
     let cursor = dayjs
       .tz(cycle.cycleStartDate, 'YYYY-MM-DD', this.getAppTimeZone())
@@ -1116,16 +1112,14 @@ export abstract class CheckInServiceSupport {
   }
 
   /** 把连续奖励规则映射成对外稳定视图。 */
-  protected toStreakRuleView(
-    rule: {
-      id: number
-      ruleCode: string
-      streakDays: number
-      rewardConfig: unknown
-      repeatable: boolean
-      status: number
-    },
-  ) {
+  protected toStreakRuleView(rule: {
+    id: number
+    ruleCode: string
+    streakDays: number
+    rewardConfig: unknown
+    repeatable: boolean
+    status: number
+  }) {
     return {
       id: rule.id,
       ruleCode: rule.ruleCode,
@@ -1174,14 +1168,14 @@ export abstract class CheckInServiceSupport {
       return true
     }
     if (
-      this.toDateOnlyValue(input.currentPlan.cycleAnchorDate)
-      !== input.nextPlan.cycleAnchorDate
+      this.toDateOnlyValue(input.currentPlan.cycleAnchorDate) !==
+      input.nextPlan.cycleAnchorDate
     ) {
       return true
     }
     if (
-      input.currentPlan.allowMakeupCountPerCycle
-      !== input.nextPlan.allowMakeupCountPerCycle
+      input.currentPlan.allowMakeupCountPerCycle !==
+      input.nextPlan.allowMakeupCountPerCycle
     ) {
       return true
     }
@@ -1191,8 +1185,7 @@ export abstract class CheckInServiceSupport {
           this.asRecord(input.currentPlan.baseRewardConfig) ?? undefined,
           { allowEmpty: true },
         ),
-      )
-      !== JSON.stringify(input.nextPlan.baseRewardConfig ?? null)
+      ) !== JSON.stringify(input.nextPlan.baseRewardConfig ?? null)
     ) {
       return true
     }
@@ -1200,8 +1193,8 @@ export abstract class CheckInServiceSupport {
       !this.isSameNullableDate(
         input.currentPlan.publishStartAt,
         input.nextPlan.publishStartAt,
-      )
-      || !this.isSameNullableDate(
+      ) ||
+      !this.isSameNullableDate(
         input.currentPlan.publishEndAt,
         input.nextPlan.publishEndAt,
       )
@@ -1210,7 +1203,7 @@ export abstract class CheckInServiceSupport {
     }
 
     const currentRuleSignatures = input.currentRules
-      .map(rule => ({
+      .map((rule) => ({
         ruleCode: rule.ruleCode,
         streakDays: rule.streakDays,
         rewardConfig: this.parseRewardConfig(
@@ -1222,7 +1215,7 @@ export abstract class CheckInServiceSupport {
       }))
       .sort((left, right) => left.ruleCode.localeCompare(right.ruleCode))
     const nextRuleSignatures = input.nextRules
-      .map(rule => ({
+      .map((rule) => ({
         ruleCode: rule.ruleCode,
         streakDays: rule.streakDays,
         rewardConfig: rule.rewardConfig,
@@ -1232,8 +1225,8 @@ export abstract class CheckInServiceSupport {
       .sort((left, right) => left.ruleCode.localeCompare(right.ruleCode))
 
     return (
-      JSON.stringify(currentRuleSignatures)
-      !== JSON.stringify(nextRuleSignatures)
+      JSON.stringify(currentRuleSignatures) !==
+      JSON.stringify(nextRuleSignatures)
     )
   }
 

@@ -82,7 +82,7 @@ export class WorkReadingStateResolver
   }
 
   async resolveChapterSnapshots(
-    refs: Array<{ workId: number, chapterId: number }>,
+    refs: Array<{ workId: number; chapterId: number }>,
   ) {
     if (refs.length === 0) {
       return []

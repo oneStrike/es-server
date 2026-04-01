@@ -6,7 +6,7 @@ import type {
   MatchResult,
   SensitiveWordDetectInput,
   SensitiveWordDetectResult,
-SensitiveWordReplaceInput
+  SensitiveWordReplaceInput,
 } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
@@ -67,7 +67,9 @@ export class SensitiveWordDetectService implements OnModuleInit {
     this.automaton.build(wordList)
 
     const fuzzyWordList = words
-      .filter((w) => w.isEnabled && w.word && w.matchMode === MatchModeEnum.FUZZY)
+      .filter(
+        (w) => w.isEnabled && w.word && w.matchMode === MatchModeEnum.FUZZY,
+      )
       .map((w) => w.word)
 
     this.fuzzyMatcher.setWords(fuzzyWordList)
@@ -80,7 +82,9 @@ export class SensitiveWordDetectService implements OnModuleInit {
     })
 
     this.isInitialized = true
-    this.logger.log(`初始化敏感词检测器，共 ${wordList.length} 个敏感词（${fuzzyWordList.length} 个模糊匹配）`)
+    this.logger.log(
+      `初始化敏感词检测器，共 ${wordList.length} 个敏感词（${fuzzyWordList.length} 个模糊匹配）`,
+    )
   }
 
   /**

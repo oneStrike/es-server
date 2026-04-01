@@ -46,7 +46,7 @@ export interface IReadingStateResolver {
     chapterId: number,
   ) => Promise<ReadingStateChapterSnapshot | undefined>
   resolveChapterSnapshots?: (
-    refs: Array<{ workId: number, chapterId: number }>,
+    refs: Array<{ workId: number; chapterId: number }>,
   ) => Promise<
     Array<{
       workId: number
@@ -69,5 +69,5 @@ export interface IReadingStateResolver {
    */
   resolveWorkInfoByChapter: (
     chapterId: number,
-  ) => Promise<{ workId: number, workType: ContentTypeEnum } | undefined>
+  ) => Promise<{ workId: number; workType: ContentTypeEnum } | undefined>
 }

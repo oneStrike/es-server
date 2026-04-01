@@ -1,6 +1,4 @@
-import {
-  BaseAppUserDto,
-} from '@libs/user/core'
+import { BaseAppUserDto } from '@libs/user/core'
 import { PickType } from '@nestjs/swagger'
 
 /**

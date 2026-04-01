@@ -1,7 +1,11 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 type AppUserCountField =
@@ -85,9 +89,7 @@ export class AppUserCountService {
     return this.drizzle.schema.forumTopic
   }
 
-  private resolveFollowingCountField(
-    targetType: number,
-  ) {
+  private resolveFollowingCountField(targetType: number) {
     switch (targetType) {
       case this.userFollowTargetType:
         return 'followingUserCount'
@@ -164,8 +166,7 @@ export class AppUserCountService {
       followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
-      forumTopicReceivedLikeCount:
-        counts?.forumTopicReceivedLikeCount ?? 0,
+      forumTopicReceivedLikeCount: counts?.forumTopicReceivedLikeCount ?? 0,
       forumTopicReceivedFavoriteCount:
         counts?.forumTopicReceivedFavoriteCount ?? 0,
     }
@@ -231,33 +232,21 @@ export class AppUserCountService {
   /**
    * 更新用户的评论数
    */
-  async updateCommentCount(
-    tx: Db | undefined,
-    userId: number,
-    delta: number,
-  ) {
+  async updateCommentCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'commentCount', delta)
   }
 
   /**
    * 更新用户的点赞数
    */
-  async updateLikeCount(
-    tx: Db | undefined,
-    userId: number,
-    delta: number,
-  ) {
+  async updateLikeCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'likeCount', delta)
   }
 
   /**
    * 更新用户的收藏数
    */
-  async updateFavoriteCount(
-    tx: Db | undefined,
-    userId: number,
-    delta: number,
-  ) {
+  async updateFavoriteCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'favoriteCount', delta)
   }
 
@@ -435,10 +424,7 @@ export class AppUserCountService {
           ),
         )
         .where(
-          eq(
-            this.userFavorite.targetType,
-            this.forumTopicFavoriteTargetType,
-          ),
+          eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
         )
         .then((rows) => rows[0]),
     ])

@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   ILikeTargetResolver,
   LikeService,
@@ -68,7 +66,12 @@ export class ForumTopicLikeResolver
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled
+    ) {
       throw new NotFoundException('帖子不存在')
     }
 
@@ -87,11 +90,7 @@ export class ForumTopicLikeResolver
    * @param targetId - 主题ID
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     if (delta === 0) {
       return
     }
@@ -185,7 +184,8 @@ export class ForumTopicLikeResolver
     })
 
     const visibleTopics = topics.filter(
-      (topic) => topic.section && !topic.section.deletedAt && topic.section.isEnabled,
+      (topic) =>
+        topic.section && !topic.section.deletedAt && topic.section.isEnabled,
     )
 
     return new Map(

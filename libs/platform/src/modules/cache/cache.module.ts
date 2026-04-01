@@ -23,13 +23,13 @@ export class CustomCacheModule {
           const { connection, namespace = 0 } = configService.get('redis')
 
           const redisUrl = connection
-          const stores = (
-            isDevelopment()
-              ? new Keyv({
-                  store: new CacheableMemory({ lruSize: 5000 }),
-                })
-              : createKeyv(redisUrl, { namespace })
-          ) as unknown as CacheManagerOptions['stores']
+          const stores = (isDevelopment()
+            ? new Keyv({
+                store: new CacheableMemory({ lruSize: 5000 }),
+              })
+            : createKeyv(redisUrl, {
+                namespace,
+              })) as unknown as CacheManagerOptions['stores']
 
           return {
             ttl: 0,

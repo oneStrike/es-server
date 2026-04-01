@@ -55,9 +55,7 @@ export class DownloadService {
   /**
    * 获取指定的下载解析器
    */
-  private getResolver(
-    targetType: DownloadTargetTypeEnum,
-  ) {
+  private getResolver(targetType: DownloadTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException('不支持的下载业务类型')
@@ -314,7 +312,8 @@ export class DownloadService {
       `),
     ])
     const rows = this.extractRows<DownloadedWorkChapterRow>(rowsResult)
-    const totalRows = this.extractRows<DownloadedWorkChapterTotalRow>(totalRowsResult)
+    const totalRows =
+      this.extractRows<DownloadedWorkChapterTotalRow>(totalRowsResult)
     const total = Number(totalRows[0]?.total ?? 0n)
 
     return {

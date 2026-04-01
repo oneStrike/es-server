@@ -62,15 +62,15 @@ export class UserService {
 
   isMutedStatus(status: number): boolean {
     return (
-      status === UserStatusEnum.MUTED
-      || status === UserStatusEnum.PERMANENT_MUTED
+      status === UserStatusEnum.MUTED ||
+      status === UserStatusEnum.PERMANENT_MUTED
     )
   }
 
   isBannedStatus(status: number): boolean {
     return (
-      status === UserStatusEnum.BANNED
-      || status === UserStatusEnum.PERMANENT_BANNED
+      status === UserStatusEnum.BANNED ||
+      status === UserStatusEnum.PERMANENT_BANNED
     )
   }
 

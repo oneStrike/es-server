@@ -3,9 +3,7 @@ import { registerAs } from '@nestjs/config'
 
 export type DbQueryOrderByRecord = Record<string, 'asc' | 'desc'>
 
-export type DbQueryOrderBy =
-  | DbQueryOrderByRecord
-  | DbQueryOrderByRecord[]
+export type DbQueryOrderBy = DbQueryOrderByRecord | DbQueryOrderByRecord[]
 
 export interface DbQueryConfig {
   pageSize: number

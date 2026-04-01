@@ -58,7 +58,12 @@ export class ForumTopicReportResolver
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled
+    ) {
       throw new NotFoundException('帖子不存在')
     }
 

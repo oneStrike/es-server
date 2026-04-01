@@ -51,7 +51,14 @@ export class BaseCommentDto extends BaseDto {
     validation: false,
     example: [
       { type: 'text', text: 'hello ' },
-      { type: 'emojiCustom', emojiAssetId: 1001, shortcode: 'smile', packCode: 'default', imageUrl: 'https://cdn.example.com/emoji/smile.gif', isAnimated: true },
+      {
+        type: 'emojiCustom',
+        emojiAssetId: 1001,
+        shortcode: 'smile',
+        packCode: 'default',
+        imageUrl: 'https://cdn.example.com/emoji/smile.gif',
+        isAnimated: true,
+      },
     ],
   })
   bodyTokens?: unknown | null

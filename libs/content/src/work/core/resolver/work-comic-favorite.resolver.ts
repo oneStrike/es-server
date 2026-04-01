@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   FavoriteService,
   FavoriteTargetTypeEnum,
@@ -78,11 +76,7 @@ export class WorkComicFavoriteResolver
    * @param targetId - 作品ID
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     try {
       await this.workCounterService.updateWorkFavoriteCount(
         tx,

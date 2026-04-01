@@ -1,4 +1,7 @@
-import type { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
+import type {
+  ForumSearchSortTypeEnum,
+  ForumSearchTypeEnum,
+} from './search.constant'
 
 /**
  * 论坛搜索的领域输入。

@@ -111,14 +111,14 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     const now = new Date()
     const today = this.formatDateOnly(now)
     if (
-      input.recordType === CheckInRecordTypeEnum.NORMAL
-      && input.signDate !== today
+      input.recordType === CheckInRecordTypeEnum.NORMAL &&
+      input.signDate !== today
     ) {
       throw new BadRequestException('签到日期非法')
     }
     if (
-      input.recordType === CheckInRecordTypeEnum.MAKEUP
-      && input.signDate >= today
+      input.recordType === CheckInRecordTypeEnum.MAKEUP &&
+      input.signDate >= today
     ) {
       throw new BadRequestException('补签只能发生在今天之前')
     }
@@ -139,7 +139,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         tx,
       )
       if (existingRecord) {
-        return this.buildActionResultFromExisting(existingRecord, cycle, snapshot)
+        return this.buildActionResultFromExisting(
+          existingRecord,
+          cycle,
+          snapshot,
+        )
       }
 
       const [insertedRecord] = await tx
@@ -170,14 +174,16 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         if (!duplicatedRecord) {
           throw new NotFoundException('签到记录创建失败')
         }
-        return this.buildActionResultFromExisting(duplicatedRecord, cycle, snapshot)
+        return this.buildActionResultFromExisting(
+          duplicatedRecord,
+          cycle,
+          snapshot,
+        )
       }
 
       const records = await this.listCycleRecords(cycle.id, tx)
       const aggregation = this.recomputeCycleAggregation(records)
-      if (
-        aggregation.makeupUsedCount > snapshot.allowMakeupCountPerCycle
-      ) {
+      if (aggregation.makeupUsedCount > snapshot.allowMakeupCountPerCycle) {
         throw new BadRequestException('已超过当前周期补签上限')
       }
 
@@ -212,9 +218,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
               triggerSignDate: candidate.triggerSignDate,
               planSnapshotVersion: cycle.planSnapshotVersion,
               context: {
-                source: input.recordType === CheckInRecordTypeEnum.MAKEUP
-                  ? 'makeup_recompute'
-                  : 'sign_recompute',
+                source:
+                  input.recordType === CheckInRecordTypeEnum.MAKEUP
+                    ? 'makeup_recompute'
+                    : 'sign_recompute',
               },
             }),
           )
@@ -245,7 +252,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     })
 
     if (!action.alreadyExisted) {
-      await this.settleRecordReward(action.recordId, { source: 'record_reward' })
+      await this.settleRecordReward(action.recordId, {
+        source: 'record_reward',
+      })
       for (const grantId of action.triggeredGrantIds) {
         await this.settleGrantReward(grantId, { source: 'streak_reward' })
       }
@@ -360,7 +369,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -413,8 +422,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
       return true
     } catch (error) {
-      const message = error instanceof Error ? error.message : '签到基础奖励发放失败'
-      this.logger.warn(`check_in_record_reward_failed recordId=${recordId} error=${message}`)
+      const message =
+        error instanceof Error ? error.message : '签到基础奖励发放失败'
+      this.logger.warn(
+        `check_in_record_reward_failed recordId=${recordId} error=${message}`,
+      )
 
       await this.drizzle.withErrorHandling(() =>
         this.db
@@ -438,7 +450,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -494,8 +506,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
       return true
     } catch (error) {
-      const message = error instanceof Error ? error.message : '连续奖励发放失败'
-      this.logger.warn(`check_in_streak_grant_reward_failed grantId=${grantId} error=${message}`)
+      const message =
+        error instanceof Error ? error.message : '连续奖励发放失败'
+      this.logger.warn(
+        `check_in_streak_grant_reward_failed grantId=${grantId} error=${message}`,
+      )
 
       await this.drizzle.withErrorHandling(() =>
         this.db
@@ -582,7 +597,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     return {
       ledgerIds: results
-        .map(result => result.recordId)
+        .map((result) => result.recordId)
         .filter((id): id is number => typeof id === 'number'),
       resultType: this.resolveRewardResultType(results),
     }
@@ -590,7 +605,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   /** 只要本次有任一资产真实落账，就把奖励结果视为 APPLIED。 */
   private resolveRewardResultType(results: GrowthLedgerApplyResult[]) {
-    if (results.some(result => result.duplicated !== true)) {
+    if (results.some((result) => result.duplicated !== true)) {
       return CheckInRewardResultTypeEnum.APPLIED
     }
     return CheckInRewardResultTypeEnum.IDEMPOTENT

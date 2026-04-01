@@ -13,10 +13,7 @@ import type {
   UpdateForumTopicLockedInput,
   UpdateForumTopicPinnedInput,
 } from './forum-topic.type'
-import {
-  DrizzleService,
-  escapeLikePattern,
-} from '@db/core'
+import { DrizzleService, escapeLikePattern } from '@db/core'
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
@@ -35,14 +32,8 @@ import {
   FavoriteService,
   FavoriteTargetTypeEnum,
 } from '@libs/interaction/favorite'
-import {
-  FollowService,
-  FollowTargetTypeEnum,
-} from '@libs/interaction/follow'
-import {
-  LikeService,
-  LikeTargetTypeEnum,
-} from '@libs/interaction/like'
+import { FollowService, FollowTargetTypeEnum } from '@libs/interaction/follow'
+import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import {
   SensitiveWordDetectService,
@@ -87,7 +78,7 @@ export class ForumTopicService {
     private readonly favoriteService: FavoriteService,
     private readonly followService: FollowService,
     private readonly emojiParserService: EmojiParserService,
-  ) { }
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -108,7 +99,10 @@ export class ForumTopicService {
   private async getTopicUserBriefMap(userIds: number[]) {
     const uniqueUserIds = [...new Set(userIds)]
     if (uniqueUserIds.length === 0) {
-      return new Map<number, Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>>()
+      return new Map<
+        number,
+        Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>
+      >()
     }
 
     const users = await this.db.query.appUser.findMany({
@@ -597,11 +591,13 @@ export class ForumTopicService {
       }),
       userId === topic.userId
         ? Promise.resolve(false)
-        : this.followService.checkFollowStatus({
-            targetType: FollowTargetTypeEnum.USER,
-            targetId: topic.userId,
-            userId,
-          }).then((result) => result.isFollowing),
+        : this.followService
+            .checkFollowStatus({
+              targetType: FollowTargetTypeEnum.USER,
+              targetId: topic.userId,
+              userId,
+            })
+            .then((result) => result.isFollowing),
     ])
 
     await this.browseLogService.recordBrowseLogSafely(
@@ -668,15 +664,14 @@ export class ForumTopicService {
       conditions.push(eq(this.forumTopicTable.isHidden, otherDto.isHidden))
     }
     if (otherDto.auditStatus !== undefined) {
-      conditions.push(eq(this.forumTopicTable.auditStatus, otherDto.auditStatus))
+      conditions.push(
+        eq(this.forumTopicTable.auditStatus, otherDto.auditStatus),
+      )
     }
     if (keyword) {
       conditions.push(
         or(
-          ilike(
-            this.forumTopicTable.title,
-            `%${escapeLikePattern(keyword)}%`,
-          ),
+          ilike(this.forumTopicTable.title, `%${escapeLikePattern(keyword)}%`),
           ilike(
             this.forumTopicTable.content,
             `%${escapeLikePattern(keyword)}%`,
@@ -908,7 +903,9 @@ export class ForumTopicService {
       }),
       this.getTopicUserBriefMap(userIds),
     ])
-    const visibleTopics = topics.filter((topic) => sectionMap.has(topic.sectionId))
+    const visibleTopics = topics.filter((topic) =>
+      sectionMap.has(topic.sectionId),
+    )
 
     if (visibleTopics.length === 0) {
       return new Map()
@@ -1138,7 +1135,7 @@ export class ForumTopicService {
             commentReceivedLikeCountByUser.set(
               comment.userId,
               (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-              comment.likeCount,
+                comment.likeCount,
             )
           }
         }
@@ -1280,8 +1277,8 @@ export class ForumTopicService {
     nextAuditStatus: AuditStatusEnum
   }) {
     if (
-      params.previousAuditStatus !== AuditStatusEnum.PENDING
-      || params.nextAuditStatus !== AuditStatusEnum.APPROVED
+      params.previousAuditStatus !== AuditStatusEnum.PENDING ||
+      params.nextAuditStatus !== AuditStatusEnum.APPROVED
     ) {
       return
     }

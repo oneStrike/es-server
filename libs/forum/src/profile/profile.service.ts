@@ -8,12 +8,12 @@ import type {
 import { DrizzleService, escapeLikePattern } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
-import { FavoriteService, FavoriteTargetTypeEnum } from '@libs/interaction/favorite'
-import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
 import {
-  UserDefaults,
-  UserStatusEnum,
-} from '@libs/platform/constant'
+  FavoriteService,
+  FavoriteTargetTypeEnum,
+} from '@libs/interaction/favorite'
+import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
+import { UserDefaults, UserStatusEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
@@ -49,7 +49,7 @@ export class UserProfileService {
     /** 点赞服务 */
     protected readonly likeService: LikeService,
     private readonly appUserCountService: AppUserCountService,
-  ) { }
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -209,19 +209,22 @@ export class UserProfileService {
     const countMap = new Map(counts.map((item) => [item.userId, item]))
     const badgeRows = userIds.length
       ? await this.db
-        .select({
-          userId: this.userBadgeAssignment.userId,
-          createdAt: this.userBadgeAssignment.createdAt,
-          badge: this.userBadge,
-        })
-        .from(this.userBadgeAssignment)
-        .innerJoin(this.userBadge, eq(this.userBadge.id, this.userBadgeAssignment.badgeId))
-        .where(inArray(this.userBadgeAssignment.userId, userIds))
-        .orderBy(
-          asc(this.userBadgeAssignment.userId),
-          desc(this.userBadgeAssignment.createdAt),
-          asc(this.userBadgeAssignment.badgeId),
-        )
+          .select({
+            userId: this.userBadgeAssignment.userId,
+            createdAt: this.userBadgeAssignment.createdAt,
+            badge: this.userBadge,
+          })
+          .from(this.userBadgeAssignment)
+          .innerJoin(
+            this.userBadge,
+            eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
+          )
+          .where(inArray(this.userBadgeAssignment.userId, userIds))
+          .orderBy(
+            asc(this.userBadgeAssignment.userId),
+            desc(this.userBadgeAssignment.createdAt),
+            asc(this.userBadgeAssignment.badgeId),
+          )
       : []
     const badgeMap = new Map<number, any[]>()
     for (const row of badgeRows) {
@@ -282,7 +285,10 @@ export class UserProfileService {
         badge: this.userBadge,
       })
       .from(this.userBadgeAssignment)
-      .innerJoin(this.userBadge, eq(this.userBadge.id, this.userBadgeAssignment.badgeId))
+      .innerJoin(
+        this.userBadge,
+        eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
+      )
       .where(eq(this.userBadgeAssignment.userId, userId))
       .orderBy(
         desc(this.userBadgeAssignment.createdAt),
@@ -301,12 +307,12 @@ export class UserProfileService {
    * @param updateDto - 更新参数，包含用户ID、状态和封禁原因
    * @throws Error 用户不存在
    */
-  async updateProfileStatus(
-    updateDto: UpdateUserStatusInput,
-  ): Promise<void> {
+  async updateProfileStatus(updateDto: UpdateUserStatusInput): Promise<void> {
     const { userId, status, banReason, banUntil } = updateDto
 
-    const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId },
+    })
 
     if (!user) {
       throw new BadRequestException('用户不存在')
@@ -325,12 +331,15 @@ export class UserProfileService {
    * @param userId - 用户ID
    * @returns 分页的主题列表，包含板块信息、liked/favorited 状态和发帖用户简要信息
    */
-  async getMyTopics(userId: number, query?: {
-    sectionId?: number
-    pageIndex?: number
-    pageSize?: number
-    orderBy?: string
-  }) {
+  async getMyTopics(
+    userId: number,
+    query?: {
+      sectionId?: number
+      pageIndex?: number
+      pageSize?: number
+      orderBy?: string
+    },
+  ) {
     const conditions: SQL[] = [
       eq(this.forumTopic.userId, userId),
       isNull(this.forumTopic.deletedAt),
@@ -391,7 +400,9 @@ export class UserProfileService {
     }
 
     const topicIds = page.list.map((item) => item.id)
-    const sectionIds = [...new Set(page.list.map((item) => item.sectionId).filter((id) => !!id))]
+    const sectionIds = [
+      ...new Set(page.list.map((item) => item.sectionId).filter((id) => !!id)),
+    ]
     const [likedMap, favoritedMap, sections, user] = await Promise.all([
       this.likeService.checkStatusBatch(
         LikeTargetTypeEnum.FORUM_TOPIC,
@@ -405,20 +416,27 @@ export class UserProfileService {
       ),
       sectionIds.length
         ? this.db
-          .select({
-            id: this.forumSection.id,
-            name: this.forumSection.name,
-            icon: this.forumSection.icon,
-            cover: this.forumSection.cover,
-          })
-          .from(this.forumSection)
-          .where(and(inArray(this.forumSection.id, sectionIds), isNull(this.forumSection.deletedAt)))
-        : Promise.resolve<Array<{
-            id: number
-            name: string
-            icon: string | null
-            cover: string | null
-          }>>([]),
+            .select({
+              id: this.forumSection.id,
+              name: this.forumSection.name,
+              icon: this.forumSection.icon,
+              cover: this.forumSection.cover,
+            })
+            .from(this.forumSection)
+            .where(
+              and(
+                inArray(this.forumSection.id, sectionIds),
+                isNull(this.forumSection.deletedAt),
+              ),
+            )
+        : Promise.resolve<
+            Array<{
+              id: number
+              name: string
+              icon: string | null
+              cover: string | null
+            }>
+          >([]),
       this.getTopicUserBriefById(userId),
     ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
@@ -428,7 +446,9 @@ export class UserProfileService {
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
         user,
-        section: item.sectionId ? sectionMap.get(item.sectionId) ?? null : null,
+        section: item.sectionId
+          ? (sectionMap.get(item.sectionId) ?? null)
+          : null,
       }
     })
     return { ...page, list }
@@ -456,14 +476,14 @@ export class UserProfileService {
     const sectionIds = topics.map((item) => item.sectionId).filter((id) => !!id)
     const sections = sectionIds.length
       ? await this.db
-        .select({ id: this.forumSection.id, name: this.forumSection.name })
-        .from(this.forumSection)
-        .where(inArray(this.forumSection.id, sectionIds))
+          .select({ id: this.forumSection.id, name: this.forumSection.name })
+          .from(this.forumSection)
+          .where(inArray(this.forumSection.id, sectionIds))
       : []
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const topicsWithSection = topics.map((item) => ({
       ...item,
-      section: item.sectionId ? sectionMap.get(item.sectionId) ?? null : null,
+      section: item.sectionId ? (sectionMap.get(item.sectionId) ?? null) : null,
     }))
 
     const topicMap = new Map(topicsWithSection.map((t) => [t.id, t]))
@@ -486,13 +506,16 @@ export class UserProfileService {
    * @returns 分页的积分记录列表
    */
   async getPointRecords(userId: number) {
-    const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
-      where: and(
-        eq(this.growthLedgerRecord.userId, userId),
-        eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
-      ),
-      orderBy: { id: 'desc' },
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.growthLedgerRecord,
+      {
+        where: and(
+          eq(this.growthLedgerRecord.userId, userId),
+          eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
+        ),
+        orderBy: { id: 'desc' },
+      },
+    )
     return {
       ...page,
       list: page.list.map((item) => ({

@@ -41,9 +41,7 @@ export class ForumPermissionService {
   /**
    * 获取发帖所需的用户上下文，包含等级配置中的频控参数。
    */
-  private async getPostingUserContext(
-    userId: number,
-  ) {
+  private async getPostingUserContext(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: {
         id: userId,
@@ -183,7 +181,10 @@ export class ForumPermissionService {
    * 用于“板块可见但访问受限”场景向前端返回可读提示。
    */
   private resolveSectionAccessState(
-    section: Pick<ForumSectionPermissionContext, 'userLevelRuleId' | 'requiredExperience'>,
+    section: Pick<
+      ForumSectionPermissionContext,
+      'userLevelRuleId' | 'requiredExperience'
+    >,
     user?:
       | ForumAccessUserContext
       | Pick<ForumPostingUserContext, 'experience'>
@@ -373,7 +374,8 @@ export class ForumPermissionService {
         const accessState = this.resolveSectionAccessState(
           {
             userLevelRuleId: section.userLevelRuleId,
-            requiredExperience: section.userLevelRule?.requiredExperience ?? null,
+            requiredExperience:
+              section.userLevelRule?.requiredExperience ?? null,
           },
           user,
         )
@@ -422,7 +424,8 @@ export class ForumPermissionService {
         this.resolveSectionAccessState(
           {
             userLevelRuleId: section.userLevelRuleId,
-            requiredExperience: section.userLevelRule?.requiredExperience ?? null,
+            requiredExperience:
+              section.userLevelRule?.requiredExperience ?? null,
           },
           user,
         ),

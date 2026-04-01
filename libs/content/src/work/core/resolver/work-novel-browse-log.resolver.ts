@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
@@ -49,19 +47,16 @@ export class WorkNovelBrowseLogResolver
    * @param targetId - 目标作品ID
    * @param delta - 变更量
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void> = async (tx, targetId, delta) => {
-    await this.workCounterService.updateWorkViewCount(
-      tx,
-      targetId,
-      this.workType,
-      delta,
-      '小说作品不存在',
-    )
-  }
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void> =
+    async (tx, targetId, delta) => {
+      await this.workCounterService.updateWorkViewCount(
+        tx,
+        targetId,
+        this.workType,
+        delta,
+        '小说作品不存在',
+      )
+    }
 
   /**
    * 校验小说作品是否有效
@@ -70,10 +65,10 @@ export class WorkNovelBrowseLogResolver
    * @param targetId - 目标作品ID
    * @throws 当作品不存在时抛出 BadRequestException
    */
-  ensureTargetValid: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<void> = async (tx, targetId) => {
+  ensureTargetValid: (tx: Db, targetId: number) => Promise<void> = async (
+    tx,
+    targetId,
+  ) => {
     const work = await tx
       .select({ id: this.work.id })
       .from(this.work)

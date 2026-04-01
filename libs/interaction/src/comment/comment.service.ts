@@ -22,9 +22,7 @@ import {
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import {
-  MessageNotificationComposerService,
-} from '@libs/message/notification'
+import { MessageNotificationComposerService } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
@@ -74,7 +72,7 @@ export class CommentService {
     private readonly appUserCountService: AppUserCountService,
     private readonly emojiParserService: EmojiParserService,
     private readonly drizzle: DrizzleService,
-  ) { }
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -270,9 +268,7 @@ export class CommentService {
    * 将治理态快照映射为可见副作用载荷。
    * 统一复用 comment create / 审核补偿 / 取消隐藏三类链路的最小字段集。
    */
-  private toVisibleCommentEffectPayload(
-    comment: CommentModerationState,
-  ) {
+  private toVisibleCommentEffectPayload(comment: CommentModerationState) {
     return {
       id: comment.id,
       userId: comment.userId,
@@ -294,8 +290,8 @@ export class CommentService {
     nextStatus: AuditStatusEnum,
   ) {
     if (
-      currentStatus !== AuditStatusEnum.PENDING
-      && nextStatus === AuditStatusEnum.PENDING
+      currentStatus !== AuditStatusEnum.PENDING &&
+      nextStatus === AuditStatusEnum.PENDING
     ) {
       throw new BadRequestException('已审核评论不能回退为待审核')
     }
@@ -351,7 +347,12 @@ export class CommentService {
       }
     }
 
-    await this.applyCommentCountDelta(tx, targetType, params.current.targetId, 1)
+    await this.applyCommentCountDelta(
+      tx,
+      targetType,
+      params.current.targetId,
+      1,
+    )
 
     if (resolver.postCommentHook) {
       await resolver.postCommentHook(tx, commentPayload, meta)
@@ -440,7 +441,9 @@ export class CommentService {
     tx: Db,
     comment: VisibleCommentEffectPayload,
     meta: CommentTargetMeta,
-    eventEnvelope: ReturnType<CommentService['buildCommentCreatedEventEnvelope']>,
+    eventEnvelope: ReturnType<
+      CommentService['buildCommentCreatedEventEnvelope']
+    >,
   ) {
     // 移除成长奖励逻辑，由外部 createComment/replyComment 处理，
     // 因为成长奖励需要传 targetId 等，从 payload 取不如直接传。
@@ -585,16 +588,18 @@ export class CommentService {
 
               await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
-              const commentCreatedEvent = this.buildCommentCreatedEventEnvelope({
-                commentId: newComment.id,
-                userId: newComment.userId,
-                targetType: newComment.targetType as CommentTargetTypeEnum,
-                targetId: newComment.targetId,
-                replyToId: newComment.replyToId,
-                occurredAt: newComment.createdAt,
-                auditStatus: decision.auditStatus,
-                isHidden: decision.isHidden,
-              })
+              const commentCreatedEvent = this.buildCommentCreatedEventEnvelope(
+                {
+                  commentId: newComment.id,
+                  userId: newComment.userId,
+                  targetType: newComment.targetType as CommentTargetTypeEnum,
+                  targetId: newComment.targetId,
+                  replyToId: newComment.replyToId,
+                  occurredAt: newComment.createdAt,
+                  auditStatus: decision.auditStatus,
+                  isHidden: decision.isHidden,
+                },
+              )
 
               if (this.isVisible({ ...decision, deletedAt: null })) {
                 await this.applyCommentCountDelta(tx, targetType, targetId, 1)
@@ -807,14 +812,14 @@ export class CommentService {
       const found = await tx.query.userComment.findFirst({
         where: userId
           ? {
-            id: commentId,
-            userId,
-            deletedAt: { isNull: true },
-          }
+              id: commentId,
+              userId,
+              deletedAt: { isNull: true },
+            }
           : {
-            id: commentId,
-            deletedAt: { isNull: true },
-          },
+              id: commentId,
+              deletedAt: { isNull: true },
+            },
         columns: {
           id: true,
           userId: true,
@@ -916,13 +921,13 @@ export class CommentService {
     const [users, likedMap] = await Promise.all([
       userIds.length
         ? this.db
-          .select({
-            id: this.appUser.id,
-            nickname: this.appUser.nickname,
-            avatarUrl: this.appUser.avatarUrl,
-          })
-          .from(this.appUser)
-          .where(inArray(this.appUser.id, userIds))
+            .select({
+              id: this.appUser.id,
+              nickname: this.appUser.nickname,
+              avatarUrl: this.appUser.avatarUrl,
+            })
+            .from(this.appUser)
+            .where(inArray(this.appUser.id, userIds))
         : Promise.resolve([]),
       this.getCommentLikedMap(commentIds, userId),
     ])
@@ -1118,17 +1123,19 @@ export class CommentService {
         ...previewReplies.map((item) => item.userId),
       ]),
     ]
-    const commentIds = [...new Set([...rootIds, ...previewReplies.map((item) => item.id)])]
+    const commentIds = [
+      ...new Set([...rootIds, ...previewReplies.map((item) => item.id)]),
+    ]
     const [users, likedMap] = await Promise.all([
       userIds.length
         ? this.db
-          .select({
-            id: this.appUser.id,
-            nickname: this.appUser.nickname,
-            avatarUrl: this.appUser.avatarUrl,
-          })
-          .from(this.appUser)
-          .where(inArray(this.appUser.id, userIds))
+            .select({
+              id: this.appUser.id,
+              nickname: this.appUser.nickname,
+              avatarUrl: this.appUser.avatarUrl,
+            })
+            .from(this.appUser)
+            .where(inArray(this.appUser.id, userIds))
         : Promise.resolve([]),
       this.getCommentLikedMap(commentIds, userId),
     ])
@@ -1254,10 +1261,7 @@ export class CommentService {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
-      orderBy: [
-        { createdAt: 'desc' as const },
-        { id: 'desc' as const },
-      ],
+      orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
     })
 
     if (page.list.length === 0) {
@@ -1267,15 +1271,15 @@ export class CommentService {
     const userIds = [...new Set(page.list.map((item) => item.userId))]
     const users = userIds.length
       ? await this.db
-        .select({
-          id: this.appUser.id,
-          nickname: this.appUser.nickname,
-          avatarUrl: this.appUser.avatarUrl,
-          isEnabled: this.appUser.isEnabled,
-          status: this.appUser.status,
-        })
-        .from(this.appUser)
-        .where(inArray(this.appUser.id, userIds))
+          .select({
+            id: this.appUser.id,
+            nickname: this.appUser.nickname,
+            avatarUrl: this.appUser.avatarUrl,
+            isEnabled: this.appUser.isEnabled,
+            status: this.appUser.status,
+          })
+          .from(this.appUser)
+          .where(inArray(this.appUser.id, userIds))
       : []
     const userMap = new Map(users.map((item) => [item.id, item] as const))
 
@@ -1405,9 +1409,9 @@ export class CommentService {
     )
 
     if (
-      handled.eventEnvelope
-      && handled.rewardComment
-      && canConsumeEventEnvelopeByConsumer(
+      handled.eventEnvelope &&
+      handled.rewardComment &&
+      canConsumeEventEnvelopeByConsumer(
         handled.eventEnvelope,
         EventDefinitionConsumerEnum.GROWTH,
       )
@@ -1477,9 +1481,9 @@ export class CommentService {
     )
 
     if (
-      handled.eventEnvelope
-      && handled.rewardComment
-      && canConsumeEventEnvelopeByConsumer(
+      handled.eventEnvelope &&
+      handled.rewardComment &&
+      canConsumeEventEnvelopeByConsumer(
         handled.eventEnvelope,
         EventDefinitionConsumerEnum.GROWTH,
       )

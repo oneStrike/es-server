@@ -36,10 +36,7 @@ export interface IReportTargetResolver {
    * @returns 目标元信息
    * @throws 目标不存在时抛出异常
    */
-  resolveMeta: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<ReportTargetMeta>
+  resolveMeta: (tx: Db, targetId: number) => Promise<ReportTargetMeta>
 
   /**
    * 举报成功后钩子（可选）

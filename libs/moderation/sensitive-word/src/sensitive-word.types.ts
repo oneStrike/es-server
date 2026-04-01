@@ -3,7 +3,7 @@ import type {
   MatchModeEnum,
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
-StatisticsTypeEnum
+  StatisticsTypeEnum,
 } from './sensitive-word-constant'
 
 /** 敏感词实体类型（从数据库查询的结果） */

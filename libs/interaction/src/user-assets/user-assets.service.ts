@@ -66,7 +66,10 @@ export class UserAssetsService {
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
         .from(this.userComment)
         .where(
-          and(eq(this.userComment.userId, userId), isNull(this.userComment.deletedAt)),
+          and(
+            eq(this.userComment.userId, userId),
+            isNull(this.userComment.deletedAt),
+          ),
         ),
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
@@ -105,7 +108,9 @@ export class UserAssetsService {
         ),
       this.db
         .select({
-          total: sql<UserAssetsDistinctWorkCountRow['total']>`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
+          total: sql<
+            UserAssetsDistinctWorkCountRow['total']
+          >`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
         })
         .from(this.userPurchaseRecord)
         .innerJoin(
@@ -123,7 +128,9 @@ export class UserAssetsService {
         ),
       this.db
         .select({
-          total: sql<UserAssetsDistinctWorkCountRow['total']>`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
+          total: sql<
+            UserAssetsDistinctWorkCountRow['total']
+          >`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
         })
         .from(this.userDownloadRecord)
         .innerJoin(

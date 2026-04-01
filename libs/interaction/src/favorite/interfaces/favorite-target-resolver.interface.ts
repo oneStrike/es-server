@@ -23,10 +23,7 @@ export interface IFavoriteTargetResolver {
    * @returns 属主 UserId（如果需要发通知）
    * @throws BadRequestException 如果目标不存在
    */
-  ensureExists: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<FavoriteTargetContext>
+  ensureExists: (tx: Db, targetId: number) => Promise<FavoriteTargetContext>
 
   /**
    * 更新目标的收藏统计数
@@ -34,11 +31,7 @@ export interface IFavoriteTargetResolver {
    * @param targetId 目标 ID
    * @param delta 增量 (+1 或 -1)
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void>
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
 
   /**
    * 收藏成功的后续钩子（在事务内执行，主要用于发送入库消息）

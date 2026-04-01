@@ -38,10 +38,7 @@ export interface ILikeTargetResolver {
    * @returns 目标元信息
    * @throws 目标不存在时抛出异常
    */
-  resolveMeta: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<LikeTargetMeta>
+  resolveMeta: (tx: Db, targetId: number) => Promise<LikeTargetMeta>
 
   /**
    * 更新点赞计数
@@ -50,11 +47,7 @@ export interface ILikeTargetResolver {
    * @param targetId - 目标ID
    * @param delta - 变化量（点赞+1，取消点赞-1）
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void>
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
 
   /**
    * 点赞成功后钩子（可选）

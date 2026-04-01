@@ -57,9 +57,7 @@ export class FavoriteService {
   /**
    * 获取对应的解析器
    */
-  private getResolver(
-    targetType: FavoriteTargetTypeEnum,
-  ) {
+  private getResolver(targetType: FavoriteTargetTypeEnum) {
     const resolver = this.resolvers.get(targetType)
     if (!resolver) {
       throw new BadRequestException(`不支持的收藏类型: ${targetType}`)
@@ -278,10 +276,10 @@ export class FavoriteService {
    * 作品收藏由漫画与小说两种目标类型组成，统一返回 work 字段。
    */
   async getUserWorkFavorites(query: FavoritePageQuery) {
-    const { page, detailMaps } = await this.getFavoritePageByTargetTypes(query, [
-      FavoriteTargetTypeEnum.WORK_COMIC,
-      FavoriteTargetTypeEnum.WORK_NOVEL,
-    ])
+    const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
+      query,
+      [FavoriteTargetTypeEnum.WORK_COMIC, FavoriteTargetTypeEnum.WORK_NOVEL],
+    )
 
     return {
       ...page,
@@ -297,9 +295,10 @@ export class FavoriteService {
    * 主题收藏只返回论坛主题字段，避免与作品结构混杂。
    */
   async getUserTopicFavorites(query: FavoritePageQuery) {
-    const { page, detailMaps } = await this.getFavoritePageByTargetTypes(query, [
-      FavoriteTargetTypeEnum.FORUM_TOPIC,
-    ])
+    const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
+      query,
+      [FavoriteTargetTypeEnum.FORUM_TOPIC],
+    )
 
     return {
       ...page,

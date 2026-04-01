@@ -32,8 +32,7 @@ import {
  * 更新点赞计数、向评论作者发送通知等
  */
 @Injectable()
-export class CommentLikeResolver
-  implements ILikeTargetResolver, OnModuleInit {
+export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
   /** 目标类型：评论 */
   readonly targetType = LikeTargetTypeEnum.COMMENT
 
@@ -102,11 +101,7 @@ export class CommentLikeResolver
    * @param targetId - 评论ID
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     if (delta === 0) {
       return
     }
@@ -157,24 +152,21 @@ export class CommentLikeResolver
       return
     }
 
-    await this.messageOutboxService.enqueueNotificationEventInTx(
-      tx,
-      {
-        eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
-        bizKey: `notify:comment:like:${comment.id}:actor:${actorUserId}:receiver:${comment.userId}`,
-        payload: {
-          receiverUserId: comment.userId,
-          actorUserId,
-          type: MessageNotificationTypeEnum.COMMENT_LIKE,
-          targetType: comment.targetType,
-          targetId: comment.targetId,
-          subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
-          subjectId: comment.id,
-          title: '你的评论收到点赞',
-          content: '有人点赞了你的评论',
-        },
+    await this.messageOutboxService.enqueueNotificationEventInTx(tx, {
+      eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
+      bizKey: `notify:comment:like:${comment.id}:actor:${actorUserId}:receiver:${comment.userId}`,
+      payload: {
+        receiverUserId: comment.userId,
+        actorUserId,
+        type: MessageNotificationTypeEnum.COMMENT_LIKE,
+        targetType: comment.targetType,
+        targetId: comment.targetId,
+        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+        subjectId: comment.id,
+        title: '你的评论收到点赞',
+        content: '有人点赞了你的评论',
       },
-    )
+    })
   }
 
   /**

@@ -90,19 +90,23 @@ function createCheckInDrizzleMock(overrides?: Record<string, unknown>) {
       },
     },
     withErrorHandling: jest.fn(async (callback: () => unknown) => callback()),
-    withTransaction: jest.fn(async (callback: (tx: unknown) => unknown) => callback({})),
+    withTransaction: jest.fn(async (callback: (tx: unknown) => unknown) =>
+      callback({}),
+    ),
     ...overrides,
   }
 }
 
 async function createCheckInDefinitionService(drizzle: unknown) {
-  const { CheckInDefinitionService } = await import('../check-in-definition.service')
+  const { CheckInDefinitionService } =
+    await import('../check-in-definition.service')
 
   return new CheckInDefinitionService(drizzle as any, {} as any)
 }
 
 async function createCheckInExecutionService(drizzle: unknown) {
-  const { CheckInExecutionService } = await import('../check-in-execution.service')
+  const { CheckInExecutionService } =
+    await import('../check-in-execution.service')
 
   return new CheckInExecutionService(drizzle as any, {} as any)
 }
@@ -123,7 +127,9 @@ describe('check-in support contracts', () => {
   })
 
   it('freezes plan snapshot fields and versioned streak rules', async () => {
-    const service = await createCheckInDefinitionService(createCheckInDrizzleMock())
+    const service = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
 
     expect(
       (service as any).buildPlanSnapshot(
@@ -173,7 +179,9 @@ describe('check-in support contracts', () => {
   })
 
   it('resolves all missing thresholds in one recompute and keeps repeatable grants independent', async () => {
-    const service = await createCheckInDefinitionService(createCheckInDrizzleMock())
+    const service = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
 
     expect(
       (service as any).resolveEligibleGrantCandidates(
@@ -283,7 +291,8 @@ describe('check-in definition service versioning', () => {
     const insert = jest.fn(() => ({ values }))
     const drizzle = createCheckInDrizzleMock({
       withTransaction: jest.fn(async (callback: (tx: unknown) => unknown) =>
-        callback({ insert, update })),
+        callback({ insert, update }),
+      ),
     })
 
     const service = await createCheckInDefinitionService(drizzle)
@@ -317,7 +326,8 @@ describe('check-in definition service versioning', () => {
     const insert = jest.fn(() => ({ values }))
     const drizzle = createCheckInDrizzleMock({
       withTransaction: jest.fn(async (callback: (tx: unknown) => unknown) =>
-        callback({ insert, update })),
+        callback({ insert, update }),
+      ),
     })
 
     const service = await createCheckInDefinitionService(drizzle)
@@ -385,21 +395,25 @@ describe('check-in execution response contract', () => {
 
     jest
       .spyOn(service as any, 'buildLatestActionView')
-      .mockImplementation(async (_recordId: number, meta: Record<string, unknown>) => ({
-        alreadyExisted: meta.alreadyExisted,
-        currentStreak: 3,
-        cycleId: 10,
-        recordId: 100,
-        recordType: CheckInRecordTypeEnum.NORMAL,
-        remainingMakeupCount: 1,
-        rewardResultType: null,
-        rewardStatus: null,
-        signDate: '2026-04-01',
-        signedCount: 3,
-        triggeredGrantIds: meta.triggeredGrantIds,
-      }))
+      .mockImplementation(
+        async (_recordId: number, meta: Record<string, unknown>) => ({
+          alreadyExisted: meta.alreadyExisted,
+          currentStreak: 3,
+          cycleId: 10,
+          recordId: 100,
+          recordType: CheckInRecordTypeEnum.NORMAL,
+          remainingMakeupCount: 1,
+          rewardResultType: null,
+          rewardStatus: null,
+          signDate: '2026-04-01',
+          signedCount: 3,
+          triggeredGrantIds: meta.triggeredGrantIds,
+        }),
+      )
     jest.spyOn(service as any, 'formatDateOnly').mockReturnValue('2026-04-01')
-    jest.spyOn(service as any, 'getCurrentActivePlan').mockResolvedValue({ id: 1 })
+    jest
+      .spyOn(service as any, 'getCurrentActivePlan')
+      .mockResolvedValue({ id: 1 })
     const settleRecordReward = jest
       .spyOn(service as any, 'settleRecordReward')
       .mockResolvedValue(true)
@@ -439,21 +453,25 @@ describe('check-in execution response contract', () => {
 
     jest
       .spyOn(service as any, 'buildLatestActionView')
-      .mockImplementation(async (_recordId: number, meta: Record<string, unknown>) => ({
-        alreadyExisted: meta.alreadyExisted,
-        currentStreak: 3,
-        cycleId: 10,
-        recordId: 101,
-        recordType: CheckInRecordTypeEnum.NORMAL,
-        remainingMakeupCount: 1,
-        rewardResultType: null,
-        rewardStatus: null,
-        signDate: '2026-04-01',
-        signedCount: 3,
-        triggeredGrantIds: meta.triggeredGrantIds,
-      }))
+      .mockImplementation(
+        async (_recordId: number, meta: Record<string, unknown>) => ({
+          alreadyExisted: meta.alreadyExisted,
+          currentStreak: 3,
+          cycleId: 10,
+          recordId: 101,
+          recordType: CheckInRecordTypeEnum.NORMAL,
+          remainingMakeupCount: 1,
+          rewardResultType: null,
+          rewardStatus: null,
+          signDate: '2026-04-01',
+          signedCount: 3,
+          triggeredGrantIds: meta.triggeredGrantIds,
+        }),
+      )
     jest.spyOn(service as any, 'formatDateOnly').mockReturnValue('2026-04-01')
-    jest.spyOn(service as any, 'getCurrentActivePlan').mockResolvedValue({ id: 1 })
+    jest
+      .spyOn(service as any, 'getCurrentActivePlan')
+      .mockResolvedValue({ id: 1 })
     const settleRecordReward = jest
       .spyOn(service as any, 'settleRecordReward')
       .mockResolvedValue(true)
@@ -465,7 +483,9 @@ describe('check-in execution response contract', () => {
       alreadyExisted: false,
       triggeredGrantIds: [201, 202],
     })
-    expect(settleRecordReward).toHaveBeenCalledWith(101, { source: 'record_reward' })
+    expect(settleRecordReward).toHaveBeenCalledWith(101, {
+      source: 'record_reward',
+    })
     expect(settleGrantReward).toHaveBeenNthCalledWith(1, 201, {
       source: 'streak_reward',
     })

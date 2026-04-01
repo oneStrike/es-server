@@ -1,7 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { UploadService } from '@libs/platform/modules'
@@ -115,7 +113,10 @@ export class ComicContentService {
         .update(this.workChapter)
         .set({ content: JSON.stringify(contents) })
         .where(
-          and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)),
+          and(
+            eq(this.workChapter.id, chapterId),
+            isNull(this.workChapter.deletedAt),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
@@ -139,7 +140,10 @@ export class ComicContentService {
         .update(this.workChapter)
         .set({ content: JSON.stringify(contents) })
         .where(
-          and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)),
+          and(
+            eq(this.workChapter.id, chapterId),
+            isNull(this.workChapter.deletedAt),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
@@ -164,7 +168,10 @@ export class ComicContentService {
         .update(this.workChapter)
         .set({ content: contents.length > 0 ? JSON.stringify(contents) : null })
         .where(
-          and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)),
+          and(
+            eq(this.workChapter.id, chapterId),
+            isNull(this.workChapter.deletedAt),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
@@ -194,7 +201,10 @@ export class ComicContentService {
         .update(this.workChapter)
         .set({ content: JSON.stringify(contents) })
         .where(
-          and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)),
+          and(
+            eq(this.workChapter.id, chapterId),
+            isNull(this.workChapter.deletedAt),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')
@@ -208,7 +218,10 @@ export class ComicContentService {
         .update(this.workChapter)
         .set({ content: null })
         .where(
-          and(eq(this.workChapter.id, chapterId), isNull(this.workChapter.deletedAt)),
+          and(
+            eq(this.workChapter.id, chapterId),
+            isNull(this.workChapter.deletedAt),
+          ),
         ),
     )
     this.drizzle.assertAffectedRows(result, '章节不存在')

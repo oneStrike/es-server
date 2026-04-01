@@ -22,9 +22,8 @@ export class HealthController {
     const rss = process.memoryUsage().rss
     const memoryHeapStatus = heapUsed < 512 * 1024 * 1024 ? 'up' : 'down'
     const memoryRssStatus = rss < 1024 * 1024 * 1024 ? 'up' : 'down'
-    const overallStatus = memoryHeapStatus === 'up' && memoryRssStatus === 'up'
-      ? 'ok'
-      : 'error'
+    const overallStatus =
+      memoryHeapStatus === 'up' && memoryRssStatus === 'up' ? 'ok' : 'error'
 
     return {
       status: overallStatus,
@@ -58,7 +57,9 @@ export class HealthController {
         this.checkDisk('disk', uploadPath, 0.9),
       ])
       const checks = { ...database, ...cache, ...disk }
-      const status = Object.values(checks).every((item: any) => item.status === 'up')
+      const status = Object.values(checks).every(
+        (item: any) => item.status === 'up',
+      )
         ? 'ok'
         : 'error'
       return {

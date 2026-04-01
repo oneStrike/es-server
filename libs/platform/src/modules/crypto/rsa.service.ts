@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config'
  */
 @Injectable()
 export class RsaService {
-  constructor(private configService: ConfigService) { }
+  constructor(private configService: ConfigService) {}
 
   /**
    * 获取 RSA公钥

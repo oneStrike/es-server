@@ -48,7 +48,10 @@ export class CheckInService {
   }
 
   /** 更新签到计划启停状态。 */
-  async updatePlanStatus(dto: UpdateCheckInPlanStatusInput, adminUserId: number) {
+  async updatePlanStatus(
+    dto: UpdateCheckInPlanStatusInput,
+    adminUserId: number,
+  ) {
     return this.checkInDefinitionService.updatePlanStatus(dto, adminUserId)
   }
 

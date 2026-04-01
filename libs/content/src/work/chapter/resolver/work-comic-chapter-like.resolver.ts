@@ -70,11 +70,7 @@ export class WorkComicChapterLikeResolver
    * @param targetId - 章节ID
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkChapterLikeCount(
       tx,
       targetId,

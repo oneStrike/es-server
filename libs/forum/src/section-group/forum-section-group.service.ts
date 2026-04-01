@@ -8,10 +8,7 @@ import type {
   UpdateForumSectionGroupInput,
 } from './section-group.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
-import {
-  FollowService,
-  FollowTargetTypeEnum,
-} from '@libs/interaction/follow'
+import { FollowService, FollowTargetTypeEnum } from '@libs/interaction/follow'
 import {
   BadRequestException,
   Injectable,
@@ -72,10 +69,7 @@ export class ForumSectionGroupService {
     }
     if (dto.name) {
       conditions.push(
-        ilike(
-          this.forumSectionGroup.name,
-          `%${escapeLikePattern(dto.name)}%`,
-        ),
+        ilike(this.forumSectionGroup.name, `%${escapeLikePattern(dto.name)}%`),
       )
     }
 
@@ -321,9 +315,9 @@ export class ForumSectionGroupService {
       sections: sections
         .filter((section) => section.groupId === group.id)
         .map((section) => ({
-        ...section,
-        _count: { topics: section.topicCount },
-      })),
+          ...section,
+          _count: { topics: section.topicCount },
+        })),
     }))
   }
 }

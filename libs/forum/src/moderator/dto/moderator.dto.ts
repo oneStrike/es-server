@@ -6,10 +6,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import {
-  BaseDto,
-  UserIdDto,
-} from '@libs/platform/dto'
+import { BaseDto, UserIdDto } from '@libs/platform/dto'
 import { IntersectionType } from '@nestjs/swagger'
 import {
   ForumModeratorPermissionEnum,

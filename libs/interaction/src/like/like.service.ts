@@ -282,7 +282,9 @@ export class LikeService {
       return page
     }
 
-    const targetIds = this.uniqueTargetIds(page.list.map((item) => item.targetId))
+    const targetIds = this.uniqueTargetIds(
+      page.list.map((item) => item.targetId),
+    )
     if (targetIds.length === 0) {
       return page
     }

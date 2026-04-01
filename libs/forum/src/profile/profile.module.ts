@@ -10,7 +10,12 @@ import { UserProfileService } from './profile.service'
  * 提供用户资料、积分、经验等管理功能
  */
 @Module({
-  imports: [InteractionModule, UserPointModule, UserLevelRuleModule, UserModule],
+  imports: [
+    InteractionModule,
+    UserPointModule,
+    UserLevelRuleModule,
+    UserModule,
+  ],
   providers: [UserProfileService],
   exports: [UserProfileService],
 })

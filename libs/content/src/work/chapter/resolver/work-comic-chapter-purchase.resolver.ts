@@ -5,7 +5,10 @@ import {
   PurchaseService,
   PurchaseTargetTypeEnum,
 } from '@libs/interaction/purchase'
-import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
+import {
+  ContentTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant'
 import {
   BadRequestException,
   Injectable,
@@ -80,11 +83,7 @@ export class WorkComicChapterPurchaseResolver
   /**
    * 更新购买计数
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkChapterPurchaseCount(
       tx,
       targetId,

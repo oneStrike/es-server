@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   FavoriteService,
   FavoriteTargetContext,
@@ -11,7 +9,12 @@ import {
 import { MessageNotificationComposerService } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { AuditStatusEnum } from '@libs/platform/constant'
-import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 import { ForumTopicService } from '../forum-topic.service'
 
@@ -69,7 +72,12 @@ export class ForumTopicFavoriteResolver
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled
+    ) {
       throw new BadRequestException('帖子不存在')
     }
 
@@ -86,11 +94,7 @@ export class ForumTopicFavoriteResolver
    * @param targetId - 主题ID
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     if (delta === 0) {
       return
     }

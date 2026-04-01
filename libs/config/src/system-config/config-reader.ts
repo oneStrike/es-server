@@ -34,9 +34,7 @@ export class ConfigReader implements OnModuleInit {
   /** 内存中的配置缓存 */
   private config: SystemConfig = DEFAULT_CONFIG
 
-  constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   /** 模块初始化时加载配置到内存 */
   async onModuleInit() {

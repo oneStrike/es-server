@@ -6,15 +6,9 @@ import { AppUserCountService } from '@libs/user/core'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 
-type ForumSectionCountField =
-  | 'topicCount'
-  | 'commentCount'
-  | 'followersCount'
+type ForumSectionCountField = 'topicCount' | 'commentCount' | 'followersCount'
 
-type ForumTopicCountField =
-  | 'viewCount'
-  | 'likeCount'
-  | 'favoriteCount'
+type ForumTopicCountField = 'viewCount' | 'likeCount' | 'favoriteCount'
 
 /**
  * 论坛领域计数服务
@@ -71,7 +65,9 @@ export class ForumCounterService {
 
   private async executeCountUpdate(
     tx: Db | undefined,
-    operation: (client: Db) => Promise<{ rowCount?: number | null } | unknown[]>,
+    operation: (
+      client: Db,
+    ) => Promise<{ rowCount?: number | null } | unknown[]>,
     message: string,
   ) {
     const client = tx ?? this.db
@@ -83,8 +79,8 @@ export class ForumCounterService {
 
   private rethrowNotFound(error: unknown, message: string) {
     if (
-      error instanceof NotFoundException
-      && !error.message.includes('计数不足')
+      error instanceof NotFoundException &&
+      !error.message.includes('计数不足')
     ) {
       throw new NotFoundException(message)
     }
@@ -208,7 +204,11 @@ export class ForumCounterService {
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的主题信息
    */
-  async updateTopicLikeCount(tx: Db | undefined, topicId: number, delta: number) {
+  async updateTopicLikeCount(
+    tx: Db | undefined,
+    topicId: number,
+    delta: number,
+  ) {
     await this.updateTopicCountField(
       tx,
       topicId,
@@ -310,10 +310,7 @@ export class ForumCounterService {
   /**
    * 根据 follow 事实表重建板块关注人数。
    */
-  async rebuildSectionFollowersCount(
-    tx: Db | undefined,
-    sectionId: number,
-  ) {
+  async rebuildSectionFollowersCount(tx: Db | undefined, sectionId: number) {
     const client = tx ?? this.db
     const row = await client
       .select({ count: sql<number>`count(*)::int` })
@@ -347,10 +344,7 @@ export class ForumCounterService {
    * 根据点赞/收藏/浏览事实表重建主题对象计数。
    * commentCount 与最后评论快照由 syncTopicCommentState 负责重算。
    */
-  async rebuildTopicInteractionCounts(
-    tx: Db | undefined,
-    topicId: number,
-  ) {
+  async rebuildTopicInteractionCounts(tx: Db | undefined, topicId: number) {
     const client = tx ?? this.db
     const [likeCount, favoriteCount, viewCount] = await Promise.all([
       client.$count(
@@ -590,11 +584,7 @@ export class ForumCounterService {
   ) {
     await Promise.all([
       this.updateTopicFavoriteCount(tx, topicId, delta),
-      this.updateUserForumTopicReceivedFavoriteCount(
-        tx,
-        authorUserId,
-        delta,
-      ),
+      this.updateUserForumTopicReceivedFavoriteCount(tx, authorUserId, delta),
     ])
   }
 

@@ -63,9 +63,9 @@ export function isNumberEnum(
  * @param enumObject 枚举对象
  * @returns 数字枚举值数组（仅包含正向映射的数字值）
  */
-export function getNumberEnumValues<T extends Record<string | number, string | number>>(
-  enumObject: T,
-): number[] {
+export function getNumberEnumValues<
+  T extends Record<string | number, string | number>,
+>(enumObject: T): number[] {
   return Object.values(enumObject).filter(
     (value): value is number => typeof value === 'number',
   )

@@ -15,16 +15,10 @@ export interface IPurchaseTargetResolver {
    * @param targetId - 目标 ID
    * @returns 价格等必要信息
    */
-  ensurePurchaseable: (
-    targetId: number,
-  ) => Promise<{ price: number }>
+  ensurePurchaseable: (targetId: number) => Promise<{ price: number }>
 
   /**
    * 更新目标的购买统计数
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void>
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
 }

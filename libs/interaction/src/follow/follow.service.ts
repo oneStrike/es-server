@@ -19,7 +19,10 @@ import { FollowTargetTypeEnum } from './follow.constant'
 @Injectable()
 export class FollowService {
   private readonly logger = new Logger(FollowService.name)
-  private readonly resolvers = new Map<FollowTargetTypeEnum, IFollowTargetResolver>()
+  private readonly resolvers = new Map<
+    FollowTargetTypeEnum,
+    IFollowTargetResolver
+  >()
 
   constructor(
     private readonly followGrowthService: FollowGrowthService,
@@ -117,50 +120,50 @@ export class FollowService {
     return statusMap
   }
 
-  async follow(input: FollowRecordInput): Promise<Pick<UserFollowSelect, 'id'>> {
+  async follow(
+    input: FollowRecordInput,
+  ): Promise<Pick<UserFollowSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
-    const record = await this.drizzle.withTransaction(
-      async (tx) => {
-        const { ownerUserId } = await resolver.ensureExists(tx, targetId, userId)
-        const rows = await this.drizzle.withErrorHandling(
-          () =>
-            tx
-              .insert(this.userFollow)
-              .values({
-                targetType,
-                targetId,
-                userId,
-              })
-              .returning({
-                id: this.userFollow.id,
-              }),
-          {
-            duplicate: '无法重复关注',
-          },
-        )
-        const followRecord = rows[0]
-        if (!followRecord) {
-          throw new BadRequestException('关注失败')
-        }
+    const record = await this.drizzle.withTransaction(async (tx) => {
+      const { ownerUserId } = await resolver.ensureExists(tx, targetId, userId)
+      const rows = await this.drizzle.withErrorHandling(
+        () =>
+          tx
+            .insert(this.userFollow)
+            .values({
+              targetType,
+              targetId,
+              userId,
+            })
+            .returning({
+              id: this.userFollow.id,
+            }),
+        {
+          duplicate: '无法重复关注',
+        },
+      )
+      const followRecord = rows[0]
+      if (!followRecord) {
+        throw new BadRequestException('关注失败')
+      }
 
-        await this.appUserCountService.updateFollowingCountByTargetType(
-          tx,
-          userId,
-          targetType,
-          1,
-        )
-        await resolver.applyCountDelta(tx, targetId, 1)
+      await this.appUserCountService.updateFollowingCountByTargetType(
+        tx,
+        userId,
+        targetType,
+        1,
+      )
+      await resolver.applyCountDelta(tx, targetId, 1)
 
-        if (resolver.postFollowHook) {
-          await resolver.postFollowHook(tx, targetId, userId, {
-            ownerUserId,
-          })
-        }
-        return followRecord
-      },
-    )
+      if (resolver.postFollowHook) {
+        await resolver.postFollowHook(tx, targetId, userId, {
+          ownerUserId,
+        })
+      }
+      return followRecord
+    })
 
     await this.followGrowthService.rewardFollowCreated(
       targetType,
@@ -260,7 +263,9 @@ export class FollowService {
       }
     }
 
-    const targetIds = this.uniqueTargetIds(page.list.map((item) => item.targetId))
+    const targetIds = this.uniqueTargetIds(
+      page.list.map((item) => item.targetId),
+    )
     const resolver = this.getResolver(targetType)
     if (!resolver.batchGetDetails || targetIds.length === 0) {
       return {

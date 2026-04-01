@@ -39,7 +39,11 @@ import {
 export function StringProperty(options: StringPropertyOptions) {
   const validation = options.validation ?? true
 
-  if (options.minLength && options.maxLength && options.minLength > options.maxLength) {
+  if (
+    options.minLength &&
+    options.maxLength &&
+    options.minLength > options.maxLength
+  ) {
     throw new Error('StringProperty: minLength 不能大于 maxLength')
   }
 
@@ -58,7 +62,8 @@ export function StringProperty(options: StringPropertyOptions) {
             minSymbols: 1,
           },
           {
-            message: '密码必须包含至少8个字符，包括大写字母、小写字母和特殊符号',
+            message:
+              '密码必须包含至少8个字符，包括大写字母、小写字母和特殊符号',
           },
         ),
       )

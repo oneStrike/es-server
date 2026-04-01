@@ -1,7 +1,4 @@
-import type {
-  CheckInPlanSnapshot,
-  CheckInRewardConfig,
-} from '../check-in.type'
+import type { CheckInPlanSnapshot, CheckInRewardConfig } from '../check-in.type'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -256,7 +253,8 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @StringProperty({
     description: '签到事实业务幂等键',
-    example: 'checkin:record:plan:1:cycle:week-2026-03-30:user:9:date:2026-04-01',
+    example:
+      'checkin:record:plan:1:cycle:week-2026-03-30:user:9:date:2026-04-01',
     maxLength: 180,
     validation: false,
   })

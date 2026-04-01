@@ -47,11 +47,7 @@ export class WorkNovelCommentResolver
    * @param targetId - 目标作品ID
    * @param delta - 变更量（+1 增加，-1 减少）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     try {
       await this.workCounterService.updateWorkCommentCount(
         tx,

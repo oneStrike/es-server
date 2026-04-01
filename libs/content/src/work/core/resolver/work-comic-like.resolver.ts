@@ -1,7 +1,5 @@
 import type { Db } from '@db/core'
-import {
-  DrizzleService
- } from '@db/core'
+import { DrizzleService } from '@db/core'
 import {
   ILikeTargetResolver,
   LikeService,
@@ -76,11 +74,7 @@ export class WorkComicLikeResolver
    * @param targetId - 作品ID
    * @param delta - 计数变化量（+1 表示点赞，-1 表示取消点赞）
    */
-  async applyCountDelta(
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) {
+  async applyCountDelta(tx: Db, targetId: number, delta: number) {
     await this.workCounterService.updateWorkLikeCount(
       tx,
       targetId,

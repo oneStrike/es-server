@@ -41,7 +41,11 @@ import { IsNumber, IsOptional, Max, Min } from 'class-validator'
 export function NumberProperty(options: NumberPropertyOptions) {
   const validation = options.validation ?? true
 
-  if (options.min !== undefined && options.max !== undefined && options.min > options.max) {
+  if (
+    options.min !== undefined &&
+    options.max !== undefined &&
+    options.min > options.max
+  ) {
     throw new Error('NumberProperty: min 不能大于 max')
   }
 

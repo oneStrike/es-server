@@ -18,10 +18,7 @@ export interface IDownloadTargetResolver {
    * @returns 下载内容 (如章节内容字符串)
    * @throws BadRequestException 如果目标不存在或不可下载
    */
-  ensureDownloadable: (
-    tx: Db,
-    targetId: number,
-  ) => Promise<string>
+  ensureDownloadable: (tx: Db, targetId: number) => Promise<string>
 
   /**
    * 更新目标的下载统计数
@@ -29,9 +26,5 @@ export interface IDownloadTargetResolver {
    * @param targetId - 目标 ID
    * @param delta - 增量 (+1)
    */
-  applyCountDelta: (
-    tx: Db,
-    targetId: number,
-    delta: number,
-  ) => Promise<void>
+  applyCountDelta: (tx: Db, targetId: number, delta: number) => Promise<void>
 }

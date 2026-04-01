@@ -147,26 +147,14 @@ export class BrowseLogService {
 
     if (options.deferPostProcess) {
       void runPostProcess().catch((error) => {
-        this.logPostProcessFailure(
-          targetType,
-          targetId,
-          userId,
-          true,
-          error,
-        )
+        this.logPostProcessFailure(targetType, targetId, userId, true, error)
       })
       return
     }
     try {
       await runPostProcess()
     } catch (error) {
-      this.logPostProcessFailure(
-        targetType,
-        targetId,
-        userId,
-        false,
-        error,
-      )
+      this.logPostProcessFailure(targetType, targetId, userId, false, error)
       throw error
     }
   }

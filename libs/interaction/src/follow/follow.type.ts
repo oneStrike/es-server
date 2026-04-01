@@ -13,7 +13,8 @@ export type FollowTargetInput = Pick<UserFollowSelect, 'targetId'> & {
  * 关注记录入参。
  * - 在目标入参基础上补齐发起关注的用户 ID
  */
-export type FollowRecordInput = FollowTargetInput & Pick<UserFollowSelect, 'userId'>
+export type FollowRecordInput = FollowTargetInput &
+  Pick<UserFollowSelect, 'userId'>
 
 /**
  * 用户关注分页查询入参。
@@ -39,8 +40,10 @@ export interface FollowStatusView {
  * 用户卡片视图。
  * - 用于关注列表、粉丝列表等轻量用户展示
  */
-export interface FollowUserCardView
-  extends Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl' | 'signature'> {
+export interface FollowUserCardView extends Pick<
+  AppUserSelect,
+  'id' | 'nickname' | 'avatarUrl' | 'signature'
+> {
   followingUserCount: number
   followingAuthorCount: number
   followingSectionCount: number
@@ -52,7 +55,11 @@ export interface FollowUserCardView
  * - 复用 user_follow 事实表字段，并补充用户详情与关系状态
  */
 export interface FollowUserPageItemView
-  extends Pick<UserFollowSelect, 'id' | 'userId' | 'targetType' | 'targetId' | 'createdAt'>,
+  extends
+    Pick<
+      UserFollowSelect,
+      'id' | 'userId' | 'targetType' | 'targetId' | 'createdAt'
+    >,
     FollowStatusView {
   user?: FollowUserCardView
 }

@@ -13,15 +13,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common'
-import {
-  and,
-  eq,
-  gte,
-  ilike,
-  inArray,
-  isNull,
-  sql,
-} from 'drizzle-orm'
+import { and, eq, gte, ilike, inArray, isNull, sql } from 'drizzle-orm'
 import {
   CheckInPlanStatusEnum,
   CheckInRewardStatusEnum,
@@ -72,7 +64,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     })
 
     const summaries = await Promise.all(
-      page.list.map(async plan => this.buildPlanSummary(plan.id, plan.version)),
+      page.list.map(async (plan) =>
+        this.buildPlanSummary(plan.id, plan.version),
+      ),
     )
 
     return {
@@ -95,7 +89,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return {
       ...plan,
       ...summary,
-      streakRewardRules: rules.map(rule => this.toStreakRuleView(rule)),
+      streakRewardRules: rules.map((rule) => this.toStreakRuleView(rule)),
     }
   }
 
@@ -106,11 +100,14 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
    */
   async createPlan(dto: CreateCheckInPlanInput, adminUserId: number) {
     const cycleType = this.parseCycleType(dto.cycleType)
-    const cycleAnchorDate = this.parseDateOnly(dto.cycleAnchorDate, '周期锚点日期')
+    const cycleAnchorDate = this.parseDateOnly(
+      dto.cycleAnchorDate,
+      '周期锚点日期',
+    )
     const allowMakeupCountPerCycle = dto.allowMakeupCountPerCycle ?? 0
     if (
-      !Number.isInteger(allowMakeupCountPerCycle)
-      || allowMakeupCountPerCycle < 0
+      !Number.isInteger(allowMakeupCountPerCycle) ||
+      allowMakeupCountPerCycle < 0
     ) {
       throw new BadRequestException('每周期补签次数必须为非负整数')
     }
@@ -163,7 +160,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           plan.version,
         )
         if (streakRewardRules.length > 0) {
-          await tx.insert(this.checkInStreakRewardRuleTable).values(streakRewardRules)
+          await tx
+            .insert(this.checkInStreakRewardRuleTable)
+            .values(streakRewardRules)
         }
       },
       { duplicate: '签到计划编码已存在' },
@@ -200,9 +199,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         dto.baseRewardConfig !== undefined
           ? this.parseRewardConfig(dto.baseRewardConfig, { allowEmpty: true })
           : this.parseRewardConfig(
-            this.asRecord(currentPlan.baseRewardConfig) ?? undefined,
-            { allowEmpty: true },
-          ),
+              this.asRecord(currentPlan.baseRewardConfig) ?? undefined,
+              { allowEmpty: true },
+            ),
       publishStartAt:
         dto.publishStartAt !== undefined
           ? (dto.publishStartAt ?? null)
@@ -214,17 +213,20 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
 
     if (
-      !Number.isInteger(nextPlan.allowMakeupCountPerCycle)
-      || nextPlan.allowMakeupCountPerCycle < 0
+      !Number.isInteger(nextPlan.allowMakeupCountPerCycle) ||
+      nextPlan.allowMakeupCountPerCycle < 0
     ) {
       throw new BadRequestException('每周期补签次数必须为非负整数')
     }
     this.ensurePublishWindow(nextPlan.publishStartAt, nextPlan.publishEndAt)
 
-    const currentRules = await this.getPlanRules(currentPlan.id, currentPlan.version)
+    const currentRules = await this.getPlanRules(
+      currentPlan.id,
+      currentPlan.version,
+    )
     const nextRuleInputs: CheckInStreakRewardRuleInput[] =
-      dto.streakRewardRules
-      ?? currentRules.map(rule => ({
+      dto.streakRewardRules ??
+      currentRules.map((rule) => ({
         ruleCode: rule.ruleCode,
         streakDays: rule.streakDays,
         rewardConfig: this.parseRewardConfig(
@@ -279,7 +281,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
         if (shouldBumpVersion && nextRules.length > 0) {
           await tx.insert(this.checkInStreakRewardRuleTable).values(
-            nextRules.map(rule => ({
+            nextRules.map((rule) => ({
               ...rule,
               planVersion: nextVersion,
             })),
@@ -302,9 +304,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     const nextEnabled = dto.isEnabled ?? plan.isEnabled
 
     if (
-      nextStatus === CheckInPlanStatusEnum.PUBLISHED
-      && nextEnabled
-      && this.isPlanActiveAt(
+      nextStatus === CheckInPlanStatusEnum.PUBLISHED &&
+      nextEnabled &&
+      this.isPlanActiveAt(
         {
           status: nextStatus,
           isEnabled: nextEnabled,
@@ -418,8 +420,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       ruleCount: Number(ruleRow[0]?.count ?? 0),
       activeCycleCount: Number(activeCycleRow[0]?.count ?? 0),
       pendingRewardCount:
-        Number(pendingRecordRow[0]?.count ?? 0)
-        + Number(pendingGrantRow[0]?.count ?? 0),
+        Number(pendingRecordRow[0]?.count ?? 0) +
+        Number(pendingGrantRow[0]?.count ?? 0),
     }
   }
 }

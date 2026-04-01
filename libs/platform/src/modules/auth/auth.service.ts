@@ -80,11 +80,7 @@ export class AuthService {
 
     const isBlacklist = await this.blacklistService.isInBlacklist(jti)
 
-    if (
-      payload.type !== 'refresh'
-      || aud !== this.config.aud
-      || isBlacklist
-    ) {
+    if (payload.type !== 'refresh' || aud !== this.config.aud || isBlacklist) {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
