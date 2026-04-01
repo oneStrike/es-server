@@ -1,0 +1,1 @@
+ALTER TABLE "check_in_plan" DROP COLUMN "timezone";

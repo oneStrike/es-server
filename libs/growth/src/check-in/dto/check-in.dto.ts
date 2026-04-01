@@ -51,13 +51,6 @@ export class BaseCheckInPlanDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @StringProperty({
-    description: '计划展示时区',
-    example: 'Asia/Shanghai',
-    maxLength: 100,
-  })
-  timezone!: string
-
   @EnumProperty({
     description: '周期类型',
     example: CheckInCycleTypeEnum.WEEKLY,
@@ -203,7 +196,6 @@ export class BaseCheckInCycleDto extends BaseDto {
       id: 1,
       planCode: 'daily-check-in',
       planName: '每日签到',
-      timezone: 'Asia/Shanghai',
       cycleType: CheckInCycleTypeEnum.WEEKLY,
       cycleAnchorDate: '2026-04-01',
       allowMakeupCountPerCycle: 2,

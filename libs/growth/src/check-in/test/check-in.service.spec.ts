@@ -60,7 +60,6 @@ function createCheckInDrizzleMock(overrides?: Record<string, unknown>) {
         publishEndAt: 'check_in_plan.publish_end_at',
         publishStartAt: 'check_in_plan.publish_start_at',
         status: 'check_in_plan.status',
-        timezone: 'check_in_plan.timezone',
         updatedAt: 'check_in_plan.updated_at',
         updatedById: 'check_in_plan.updated_by_id',
         version: 'check_in_plan.version',
@@ -137,7 +136,6 @@ describe('check-in support contracts', () => {
           id: 1,
           planCode: 'daily-check-in',
           planName: '每日签到',
-          timezone: 'Asia/Shanghai',
           version: 2,
         },
         [
@@ -173,7 +171,6 @@ describe('check-in support contracts', () => {
           streakDays: 3,
         },
       ],
-      timezone: 'Asia/Shanghai',
       version: 2,
     })
   })
@@ -270,7 +267,6 @@ describe('check-in definition service versioning', () => {
     publishEndAt: null,
     publishStartAt: null,
     status: CheckInPlanStatusEnum.DRAFT,
-    timezone: 'Asia/Shanghai',
     version: 1,
   }
   const currentRules = [
@@ -366,7 +362,6 @@ describe('check-in definition service versioning', () => {
           planCode: 'daily-check-in',
           planName: '每日签到',
           status: CheckInPlanStatusEnum.PUBLISHED,
-          timezone: 'Asia/Shanghai',
         } as any,
         9,
       ),

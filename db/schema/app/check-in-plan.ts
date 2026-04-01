@@ -47,11 +47,6 @@ export const checkInPlan = pgTable('check_in_plan', {
    */
   isEnabled: boolean().default(true).notNull(),
   /**
-   * 计划展示时区。
-   * 一期仍保留字段用于契约兼容与展示，但运行时自然日口径以部署时区为准。
-   */
-  timezone: varchar({ length: 100 }).notNull(),
-  /**
    * 周期类型。
    * 一期只允许 `daily`、`weekly`、`monthly` 三类稳定值。
    */

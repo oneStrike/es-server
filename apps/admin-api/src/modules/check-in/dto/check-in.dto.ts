@@ -49,7 +49,6 @@ class AdminCheckInPlanBaseResponseDto extends PickType(BaseCheckInPlanDto, [
   'planName',
   'status',
   'isEnabled',
-  'timezone',
   'cycleType',
   'cycleAnchorDate',
   'allowMakeupCountPerCycle',

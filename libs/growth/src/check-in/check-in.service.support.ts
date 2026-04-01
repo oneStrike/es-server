@@ -162,22 +162,6 @@ export abstract class CheckInServiceSupport {
     }
   }
 
-  /**
-   * 校验计划时区是否与当前部署口径一致。
-   *
-   * 一期保留 `timezone` 字段做契约兼容，但不允许配置与部署时区不一致的值。
-   */
-  protected ensurePlanTimezone(timezone?: string | null) {
-    const appTimeZone = this.getAppTimeZone()
-    const normalizedTimezone = timezone?.trim() || appTimeZone
-    if (normalizedTimezone !== appTimeZone) {
-      throw new BadRequestException(
-        `当前部署仅支持使用系统时区 ${appTimeZone}`,
-      )
-    }
-    return normalizedTimezone
-  }
-
   /** 解析并校验签到周期类型。 */
   protected parseCycleType(value?: string | null) {
     if (
@@ -308,7 +292,6 @@ export abstract class CheckInServiceSupport {
       id: plan.id,
       planCode: plan.planCode,
       planName: plan.planName,
-      timezone: plan.timezone,
       cycleType: this.parseCycleType(plan.cycleType),
       cycleAnchorDate: this.toDateOnlyValue(plan.cycleAnchorDate),
       allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
@@ -1187,7 +1170,6 @@ export abstract class CheckInServiceSupport {
   protected shouldBumpPlanVersion(input: {
     currentPlan: CheckInPlanSelect
     nextPlan: {
-      timezone: string
       cycleType: CheckInCycleTypeEnum
       cycleAnchorDate: CheckInDateOnly
       allowMakeupCountPerCycle: number
@@ -1198,9 +1180,6 @@ export abstract class CheckInServiceSupport {
     currentRules: CheckInStreakRewardRuleSelect[]
     nextRules: CreateCheckInStreakRewardRuleInsert[]
   }) {
-    if (input.currentPlan.timezone !== input.nextPlan.timezone) {
-      return true
-    }
     if (input.currentPlan.cycleType !== input.nextPlan.cycleType) {
       return true
     }

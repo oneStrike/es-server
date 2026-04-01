@@ -105,7 +105,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
    * 会在写入前校验补签额度、发布时间窗以及“当前只允许一个生效计划”的运营约束。
    */
   async createPlan(dto: CreateCheckInPlanInput, adminUserId: number) {
-    const timezone = this.ensurePlanTimezone(dto.timezone)
     const cycleType = this.parseCycleType(dto.cycleType)
     const cycleAnchorDate = this.parseDateOnly(dto.cycleAnchorDate, '周期锚点日期')
     const allowMakeupCountPerCycle = dto.allowMakeupCountPerCycle ?? 0
@@ -146,7 +145,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             planName: dto.planName.trim(),
             status: dto.status,
             isEnabled: dto.isEnabled ?? true,
-            timezone,
             cycleType,
             cycleAnchorDate,
             allowMakeupCountPerCycle,
@@ -186,10 +184,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       planName: dto.planName?.trim() ?? currentPlan.planName,
       status: dto.status ?? currentPlan.status,
       isEnabled: dto.isEnabled ?? currentPlan.isEnabled,
-      timezone:
-        dto.timezone !== undefined
-          ? this.ensurePlanTimezone(dto.timezone)
-          : currentPlan.timezone,
       cycleType:
         dto.cycleType !== undefined
           ? this.parseCycleType(dto.cycleType)
@@ -266,7 +260,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             planName: nextPlan.planName,
             status: nextPlan.status,
             isEnabled: nextPlan.isEnabled,
-            timezone: nextPlan.timezone,
             cycleType: nextPlan.cycleType,
             cycleAnchorDate: nextPlan.cycleAnchorDate,
             allowMakeupCountPerCycle: nextPlan.allowMakeupCountPerCycle,
