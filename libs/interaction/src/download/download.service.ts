@@ -9,6 +9,7 @@ import type {
   DownloadTargetInput,
 } from './download.type'
 import { DrizzleService } from '@db/core'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
@@ -78,20 +79,14 @@ export class DownloadService {
   ): SQL {
     const filters: SQL[] = []
     const columnRef = sql`udr.created_at`
+    const dateRange = buildDateOnlyRangeInAppTimeZone(startDate, endDate)
 
-    if (startDate) {
-      const start = new Date(startDate)
-      if (!Number.isNaN(start.getTime())) {
-        filters.push(sql`${columnRef} >= ${start}`)
-      }
+    if (dateRange?.gte) {
+      filters.push(sql`${columnRef} >= ${dateRange.gte}`)
     }
 
-    if (endDate) {
-      const end = new Date(endDate)
-      if (!Number.isNaN(end.getTime())) {
-        end.setDate(end.getDate() + 1)
-        filters.push(sql`${columnRef} < ${end}`)
-      }
+    if (dateRange?.lt) {
+      filters.push(sql`${columnRef} < ${dateRange.lt}`)
     }
 
     if (filters.length === 0) {

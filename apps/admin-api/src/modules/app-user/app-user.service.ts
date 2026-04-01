@@ -30,6 +30,11 @@ import {
 } from '@libs/platform/constant'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import {
+  buildDateOnlyRangeInAppTimeZone,
+  formatDateOnlyInAppTimeZone,
+  startOfTodayInAppTimeZone,
+} from '@libs/platform/utils'
+import {
   AppUserCountService,
   UserService as UserCoreService,
 } from '@libs/user/core'
@@ -622,8 +627,7 @@ export class AppUserService {
   async getAppUserExperienceStats(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = startOfTodayInAppTimeZone()
 
     const [todayEarnedRows, level, nextLevelRows] = await Promise.all([
       this.db
@@ -852,26 +856,7 @@ export class AppUserService {
    * 构建日期范围查询条件
    */
   private buildDateRange(startDate?: string, endDate?: string) {
-    if (!startDate && !endDate) {
-      return undefined
-    }
-
-    const dateRange: Record<string, Date> = {}
-    if (startDate) {
-      const start = new Date(startDate)
-      if (!Number.isNaN(start.getTime())) {
-        dateRange.gte = start
-      }
-    }
-    if (endDate) {
-      const end = new Date(endDate)
-      if (!Number.isNaN(end.getTime())) {
-        end.setDate(end.getDate() + 1)
-        dateRange.lt = end
-      }
-    }
-
-    return Object.keys(dateRange).length > 0 ? dateRange : undefined
+    return buildDateOnlyRangeInAppTimeZone(startDate, endDate)
   }
 
   /**
@@ -897,7 +882,7 @@ export class AppUserService {
     if (typeof value === 'string') {
       return value
     }
-    return value.toISOString().slice(0, 10)
+    return formatDateOnlyInAppTimeZone(value)
   }
 
   private async generateUniqueAccount() {

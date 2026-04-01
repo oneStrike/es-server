@@ -9,6 +9,7 @@ import type {
   QueryGrowthLedgerPageInput,
 } from './growth-ledger.types'
 import { DrizzleService } from '@db/core'
+import { formatDateKeyInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import {
@@ -739,10 +740,7 @@ export class GrowthLedgerService {
 
   /** 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键 */
   private formatDateKey(input: Date) {
-    const y = input.getFullYear()
-    const m = String(input.getMonth() + 1).padStart(2, '0')
-    const d = String(input.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
+    return formatDateKeyInAppTimeZone(input)
   }
 
   private async findRuleByType(

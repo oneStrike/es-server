@@ -6,6 +6,7 @@ import type {
 } from './forum-permission.type'
 import { DrizzleService } from '@db/core'
 import { UserStatusEnum } from '@libs/platform/constant'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, gte } from 'drizzle-orm'
 
@@ -244,8 +245,7 @@ export class ForumPermissionService {
     }
 
     if (level.dailyTopicLimit > 0) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+      const today = startOfTodayInAppTimeZone()
 
       const usedToday = await this.db.$count(
         this.forumTopic,

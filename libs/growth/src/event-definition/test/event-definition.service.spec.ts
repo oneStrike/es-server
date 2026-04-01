@@ -63,6 +63,7 @@ describe('event definition service', () => {
     expect(configurableCodes).toContain(GrowthRuleTypeEnum.REPORT_INVALID)
     expect(configurableCodes).not.toContain(GrowthRuleTypeEnum.ADMIN)
     expect(configurableCodes).not.toContain(GrowthRuleTypeEnum.COMMENT_REPORT)
+    expect(configurableCodes).not.toContain(GrowthRuleTypeEnum.DAILY_CHECK_IN)
   })
 
   it('supports governance and consumer filters together', async () => {

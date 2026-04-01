@@ -1,6 +1,7 @@
 import { DrizzleService } from '@db/core'
 import { UserLevelRuleSelect } from '@db/schema'
 import { AuditStatusEnum, UserStatusEnum } from '@libs/platform/constant'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, gte } from 'drizzle-orm'
 import { CommentTargetTypeEnum } from './comment.constant'
@@ -123,8 +124,7 @@ export class CommentPermissionService {
     }
 
     if (level.dailyReplyCommentLimit > 0) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+      const today = startOfTodayInAppTimeZone()
 
       const usedToday = await this.db.$count(
         this.drizzle.schema.userComment,

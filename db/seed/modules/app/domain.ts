@@ -130,13 +130,6 @@ const POINT_RULE_FIXTURES = [
   },
   { type: 2, points: 5, dailyLimit: 50, totalLimit: 0, remark: '发表回复奖励' },
   {
-    type: 6,
-    points: 10,
-    dailyLimit: 10,
-    totalLimit: 0,
-    remark: '每日签到奖励',
-  },
-  {
     type: 300,
     points: 3,
     dailyLimit: 30,
@@ -168,12 +161,6 @@ const EXPERIENCE_RULE_FIXTURES = [
     remark: '回复经验奖励',
   },
   {
-    type: 6,
-    experience: 5,
-    dailyLimit: 5,
-    totalLimit: 0,
-    remark: '签到经验奖励',
-  },
 ] as const
 
 const USER_FIXTURES = [

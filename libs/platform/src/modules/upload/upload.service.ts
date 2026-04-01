@@ -13,6 +13,7 @@ import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, extname, join, posix } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
+import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
 import {
   BadRequestException,
   Inject,
@@ -291,11 +292,7 @@ export class UploadService {
       return posix.join(scene, ...normalizedSegments, finalName)
     }
 
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const dateStr = `${year}-${month}-${day}`
+    const dateStr = formatDateOnlyInAppTimeZone(new Date())
 
     return posix.join(scene, dateStr, fileCategory, finalName)
   }

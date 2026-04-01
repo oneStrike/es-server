@@ -8,6 +8,7 @@ import type {
   UserLevelStatisticsResult,
 } from './level-rule.type'
 import { DrizzleService, escapeLikePattern } from '@db/core'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, ilike, inArray, isNull, sql } from 'drizzle-orm'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
@@ -277,8 +278,7 @@ export class UserLevelRuleService {
     }
 
     const level = user.level
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = startOfTodayInAppTimeZone()
 
     let limit = 0
     let used = 0

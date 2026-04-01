@@ -1,6 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { UserStatusEnum } from '@libs/platform/constant'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
 import {
@@ -299,8 +300,7 @@ export class UserExperienceService {
       throw new BadRequestException('用户不存在')
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = startOfTodayInAppTimeZone()
 
     const [todayEarned] = await this.db
       .select({

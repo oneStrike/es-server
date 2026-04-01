@@ -5,6 +5,7 @@ import type {
   QueryUserPointRecordPageInput,
 } from './point.type'
 import { DrizzleService } from '@db/core'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, sql } from 'drizzle-orm'
 import {
@@ -283,8 +284,7 @@ export class UserPointService {
       throw new BadRequestException('用户不存在')
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = startOfTodayInAppTimeZone()
 
     const [todayStats] = await this.db
       .select({

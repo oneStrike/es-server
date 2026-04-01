@@ -23,6 +23,10 @@ import { UserPointService } from '@libs/growth/point'
 import { TaskService } from '@libs/growth/task'
 import { UserAssetsService } from '@libs/interaction/user-assets'
 import { MessageInboxService } from '@libs/message/inbox'
+import {
+  formatDateOnlyInAppTimeZone,
+  startOfTodayInAppTimeZone,
+} from '@libs/platform/utils'
 import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, ilike, inArray, sql } from 'drizzle-orm'
@@ -92,7 +96,7 @@ export class UserService {
             signature: dto.signature,
             bio: dto.bio,
             birthDate: dto.birthDate
-              ? new Date(dto.birthDate).toISOString().slice(0, 10)
+              ? formatDateOnlyInAppTimeZone(dto.birthDate)
               : undefined,
           })
           .where(eq(this.appUser.id, userId)),
@@ -253,8 +257,7 @@ export class UserService {
     const user = await this.userCoreService.ensureUserExists(userId)
 
     // 获取今日开始时间
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = startOfTodayInAppTimeZone()
 
     const [todayEarnedRows, levelRows, nextLevelRows] = await Promise.all([
       this.db

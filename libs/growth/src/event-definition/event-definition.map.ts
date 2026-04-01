@@ -119,14 +119,14 @@ export const EVENT_DEFINITION_MAP = {
   [GrowthRuleTypeEnum.DAILY_CHECK_IN]: createEventDefinition(
     GrowthRuleTypeEnum.DAILY_CHECK_IN,
     {
-      label: '每日签到',
+      label: '每日签到（预留）',
       domain: EventDefinitionDomainEnum.ENGAGEMENT,
       subjectType: EventDefinitionEntityTypeEnum.USER,
       targetType: EventDefinitionEntityTypeEnum.CHECK_IN,
       governanceGate: EventDefinitionGovernanceGateEnum.NONE,
-      consumers: GROWTH_TASK,
+      consumers: GROWTH_ONLY,
       implStatus: EventDefinitionImplStatusEnum.DECLARED,
-      isRuleConfigurable: true,
+      isRuleConfigurable: false,
     },
   ),
   [GrowthRuleTypeEnum.ADMIN]: createEventDefinition(GrowthRuleTypeEnum.ADMIN, {

@@ -3,6 +3,11 @@ import type {
   SensitiveWordStatisticsData,
 } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
+import {
+  startOfTodayInAppTimeZone,
+  subtractDaysInAppTimeZone,
+  subtractMonthsInAppTimeZone,
+} from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
 import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
 import {
@@ -144,8 +149,7 @@ export class SensitiveWordStatisticsService {
    * @returns 今日命中次数
    */
   private async getTodayHits() {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = startOfTodayInAppTimeZone()
     return this.getHitsInDateRange(today)
   }
 
@@ -155,8 +159,7 @@ export class SensitiveWordStatisticsService {
    * @returns 最近一周命中次数
    */
   private async getLastWeekHits() {
-    const lastWeek = new Date()
-    lastWeek.setDate(lastWeek.getDate() - 7)
+    const lastWeek = subtractDaysInAppTimeZone(7)
     return this.getHitsInDateRange(lastWeek)
   }
 
@@ -166,8 +169,7 @@ export class SensitiveWordStatisticsService {
    * @returns 最近一月命中次数
    */
   private async getLastMonthHits() {
-    const lastMonth = new Date()
-    lastMonth.setMonth(lastMonth.getMonth() - 1)
+    const lastMonth = subtractMonthsInAppTimeZone(1)
     return this.getHitsInDateRange(lastMonth)
   }
 

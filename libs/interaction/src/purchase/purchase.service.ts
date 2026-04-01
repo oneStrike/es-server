@@ -8,6 +8,7 @@ import {
   GrowthLedgerActionEnum,
   GrowthLedgerService,
 } from '@libs/growth/growth-ledger'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import {
@@ -107,20 +108,14 @@ export class PurchaseService {
   private buildPurchaseCreatedAtFilter(startDate?: string, endDate?: string) {
     const filters: SQL[] = []
     const columnRef = sql`upr.created_at`
+    const dateRange = buildDateOnlyRangeInAppTimeZone(startDate, endDate)
 
-    if (startDate) {
-      const start = new Date(startDate)
-      if (!Number.isNaN(start.getTime())) {
-        filters.push(sql`${columnRef} >= ${start}`)
-      }
+    if (dateRange?.gte) {
+      filters.push(sql`${columnRef} >= ${dateRange.gte}`)
     }
 
-    if (endDate) {
-      const end = new Date(endDate)
-      if (!Number.isNaN(end.getTime())) {
-        end.setDate(end.getDate() + 1)
-        filters.push(sql`${columnRef} < ${end}`)
-      }
+    if (dateRange?.lt) {
+      filters.push(sql`${columnRef} < ${dateRange.lt}`)
     }
 
     if (filters.length === 0) {
