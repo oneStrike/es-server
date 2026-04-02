@@ -4,10 +4,10 @@ import type {
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from './task.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
 import {
   getTaskTypeFilterValues,
@@ -232,7 +232,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
     }
     if (queryDto.title) {
       conditions.push(
-        ilike(this.taskTable.title, `%${escapeLikePattern(queryDto.title)}%`),
+        buildILikeCondition(this.taskTable.title, queryDto.title)!,
       )
     }
 

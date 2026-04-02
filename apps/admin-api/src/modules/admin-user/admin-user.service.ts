@@ -3,7 +3,7 @@ import type {
   AdminUserChangePasswordInput,
   AdminUserPageQueryInput,
 } from './admin-user.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { AdminUserInsert, AdminUserSelect } from '@db/schema'
 import { AdminUserRoleEnum } from '@libs/platform/constant'
 import { ScryptService } from '@libs/platform/modules'
@@ -15,7 +15,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { and, eq, ilike } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { AdminAuthRedisKeys } from '../auth/auth.constant'
 import { AdminTokenStorageService } from '../auth/token-storage.service'
 
@@ -180,15 +180,12 @@ export class AdminUserService {
     }
     if (username) {
       conditions.push(
-        ilike(
-          this.adminUser.username,
-          `%${escapeLikePattern(username)}%`,
-        ),
+        buildILikeCondition(this.adminUser.username, username)!,
       )
     }
     if (mobile) {
       conditions.push(
-        ilike(this.adminUser.mobile, `%${escapeLikePattern(mobile)}%`),
+        buildILikeCondition(this.adminUser.mobile, mobile)!,
       )
     }
 

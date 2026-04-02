@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BrowseLogService,
   BrowseLogTargetTypeEnum,
@@ -15,7 +15,7 @@ import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
   CreateWorkChapterInput,
@@ -115,7 +115,7 @@ export class WorkChapterService {
     }
     if (dto.title) {
       conditions.push(
-        ilike(this.workChapter.title, `%${escapeLikePattern(dto.title)}%`),
+        buildILikeCondition(this.workChapter.title, dto.title)!,
       )
     }
 

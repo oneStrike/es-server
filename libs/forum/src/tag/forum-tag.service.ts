@@ -6,13 +6,13 @@ import type {
   RemoveForumTagFromTopicInput,
   UpdateForumTagInput,
 } from './tag.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, asc, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 /**
  * 论坛标签服务类
@@ -106,7 +106,7 @@ export class ForumTagService {
       conditions.push(eq(this.forumTag.isEnabled, isEnabled))
     }
     if (name) {
-      conditions.push(ilike(this.forumTag.name, `%${escapeLikePattern(name)}%`))
+      conditions.push(buildILikeCondition(this.forumTag.name, name)!)
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined

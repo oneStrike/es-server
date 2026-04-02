@@ -14,7 +14,6 @@ import type {
   CheckInStreakRewardRuleInput,
   CreateCheckInStreakRewardRuleInsert,
 } from './check-in.type'
-import { escapeLikePattern } from '@db/core'
 import {
   formatDateOnlyInAppTimeZone,
   getAppTimeZone,
@@ -116,15 +115,6 @@ export abstract class CheckInServiceSupport {
       return undefined
     }
     return value as Record<string, unknown>
-  }
-
-  /** 构建带转义的模糊查询关键词。 */
-  protected buildLikeKeyword(keyword?: string) {
-    const trimmed = keyword?.trim()
-    if (!trimmed) {
-      return undefined
-    }
-    return `%${escapeLikePattern(trimmed)}%`
   }
 
   /** 校验计划日期范围：结束日期不能早于开始日期。 */

@@ -8,13 +8,13 @@ import type {
   QueryForumModeratorInput,
   UpdateForumModeratorInput,
 } from './moderator.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
+import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import {
   ALL_FORUM_MODERATOR_PERMISSIONS,
   FORUM_MODERATOR_PERMISSION_LABELS,
@@ -651,7 +651,7 @@ export class ForumModeratorService {
       const users = await this.db
         .select({ id: this.appUser.id })
         .from(this.appUser)
-        .where(ilike(this.appUser.nickname, `%${escapeLikePattern(nickname)}%`))
+        .where(buildILikeCondition(this.appUser.nickname, nickname))
       const userIds = users.map((user) => user.id)
 
       conditions.push(

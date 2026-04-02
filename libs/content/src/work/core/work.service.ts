@@ -1,6 +1,6 @@
 import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import { FavoriteService } from '@libs/interaction/favorite'
@@ -10,7 +10,7 @@ import { ReadingStateService } from '@libs/interaction/reading-state'
 import { ContentTypeEnum } from '@libs/platform/constant'
 import { isNotNil } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { WorkAuthorService } from '../../author'
 import {
   CreateWorkInput,
@@ -679,15 +679,12 @@ export class WorkService {
     }
     if (normalizedName) {
       conditions.push(
-        ilike(this.work.name, `%${escapeLikePattern(normalizedName)}%`),
+        buildILikeCondition(this.work.name, normalizedName)!,
       )
     }
     if (normalizedPublisher) {
       conditions.push(
-        ilike(
-          this.work.publisher,
-          `%${escapeLikePattern(normalizedPublisher)}%`,
-        ),
+        buildILikeCondition(this.work.publisher, normalizedPublisher)!,
       )
     }
 
@@ -702,10 +699,7 @@ export class WorkService {
 
       if (normalizedAuthor) {
         authorConditions.push(
-          ilike(
-            this.workAuthor.name,
-            `%${escapeLikePattern(normalizedAuthor)}%`,
-          ),
+          buildILikeCondition(this.workAuthor.name, normalizedAuthor)!,
         )
         conditions.push(sql`
           exists (

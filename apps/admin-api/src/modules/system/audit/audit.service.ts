@@ -4,10 +4,10 @@ import type {
   CreateRequestLogInput,
   CreateRequestLogSimpleInput,
 } from './audit.type'
-import { DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, ilike, or } from 'drizzle-orm'
+import { and, eq, or } from 'drizzle-orm'
 import { AuditActionTypeEnum } from './audit.constant'
 import {
   getAuditActionTypeLabel,
@@ -112,11 +112,11 @@ export class AuditService {
 
     const whereParts = [
       userId ? eq(this.requestLog.userId, userId) : undefined,
-      username ? ilike(this.requestLog.username, `%${username}%`) : undefined,
+      buildILikeCondition(this.requestLog.username, username),
       apiType ? eq(this.requestLog.apiType, apiType) : undefined,
       ip ? eq(this.requestLog.ip, ip) : undefined,
       method ? eq(this.requestLog.method, method) : undefined,
-      path ? ilike(this.requestLog.path, `%${path}%`) : undefined,
+      buildILikeCondition(this.requestLog.path, path),
       actionTypeSearchTerms.length > 0
         ? or(
             ...actionTypeSearchTerms.map((term) =>

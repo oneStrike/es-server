@@ -5,9 +5,9 @@ import type {
   QueryNotificationDeliveryPageInput,
   UpsertNotificationDeliveryInput,
 } from './notification-delivery.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
-import { and, desc, eq, ilike, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import {
   getMessageNotificationDispatchStatusLabel,
   getMessageNotificationTypeLabel,
@@ -109,10 +109,7 @@ export class MessageNotificationDeliveryService {
     }
     if (query.bizKey?.trim()) {
       conditions.push(
-        ilike(
-          this.notificationDelivery.bizKey,
-          `%${escapeLikePattern(query.bizKey.trim())}%`,
-        ),
+        buildILikeCondition(this.notificationDelivery.bizKey, query.bizKey)!,
       )
     }
     if (query.outboxId?.trim()) {

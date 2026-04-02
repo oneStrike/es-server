@@ -7,10 +7,10 @@ import type {
   UserLevelInfoResult,
   UserLevelStatisticsResult,
 } from './level-rule.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 @Injectable()
@@ -88,7 +88,7 @@ export class UserLevelRuleService {
     }
     if (dto.name) {
       conditions.push(
-        ilike(this.userLevelRule.name, `%${escapeLikePattern(dto.name)}%`),
+        buildILikeCondition(this.userLevelRule.name, dto.name)!,
       )
     }
 

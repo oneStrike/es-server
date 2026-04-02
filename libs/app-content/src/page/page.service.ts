@@ -1,11 +1,11 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, inArray } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import {
   AppPageQueryInput,
   BatchDeleteAppPageInput,
@@ -61,7 +61,7 @@ export class AppPageService {
 
     // 名称模糊查询
     if (name) {
-      conditions.push(ilike(this.appPage.name, `%${name}%`))
+      conditions.push(buildILikeCondition(this.appPage.name, name)!)
     }
 
     // 编码等值查询

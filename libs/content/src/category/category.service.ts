@@ -1,8 +1,8 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, arrayOverlaps, eq, ilike, isNull } from 'drizzle-orm'
+import { and, arrayOverlaps, eq, isNull } from 'drizzle-orm'
 import {
   CategoryIdInput,
   CreateCategoryInput,
@@ -72,7 +72,7 @@ export class WorkCategoryService {
 
     if (name) {
       conditions.push(
-        ilike(this.workCategory.name, `%${escapeLikePattern(name)}%`),
+        buildILikeCondition(this.workCategory.name, name)!,
       )
     }
     if (isEnabled !== undefined) {

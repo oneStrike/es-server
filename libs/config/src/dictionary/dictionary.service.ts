@@ -1,11 +1,11 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, asc, eq, ilike, inArray } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import {
   CreateDictionaryInput,
   CreateDictionaryItemInput,
@@ -58,10 +58,10 @@ export class LibDictionaryService {
   ) {
     const conditions: SQL[] = []
     if (filters.code) {
-      conditions.push(ilike(table.code, `%${escapeLikePattern(filters.code)}%`))
+      conditions.push(buildILikeCondition(table.code, filters.code)!)
     }
     if (filters.name) {
-      conditions.push(ilike(table.name, `%${escapeLikePattern(filters.name)}%`))
+      conditions.push(buildILikeCondition(table.name, filters.name)!)
     }
     if (filters.isEnabled !== undefined) {
       conditions.push(eq(table.isEnabled, filters.isEnabled))

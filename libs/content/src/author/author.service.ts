@@ -1,9 +1,9 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   AuthorIdInput,
   CreateAuthorInput,
@@ -320,7 +320,7 @@ export class WorkAuthorService {
     }
     if (name) {
       conditions.push(
-        ilike(this.workAuthor.name, `%${escapeLikePattern(name)}%`),
+        buildILikeCondition(this.workAuthor.name, name)!,
       )
     }
 

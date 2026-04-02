@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, ilike } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import {
   AgreementIdInput,
   AgreementPageQuery,
@@ -161,7 +161,7 @@ export class AgreementService {
 
     if (query.title) {
       conditions.push(
-        ilike(this.agreement.title, `%${escapeLikePattern(query.title)}%`),
+        buildILikeCondition(this.agreement.title, query.title)!,
       )
     }
     if (query.isPublished !== undefined) {

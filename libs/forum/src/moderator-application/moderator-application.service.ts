@@ -4,9 +4,9 @@ import type {
   CreateForumModeratorApplicationInput,
   QueryForumModeratorApplicationInput,
 } from './moderator-application.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull, SQL } from 'drizzle-orm'
+import { and, eq, inArray, isNull, SQL } from 'drizzle-orm'
 import {
   ALL_FORUM_MODERATOR_PERMISSIONS,
   FORUM_MODERATOR_PERMISSION_LABELS,
@@ -301,10 +301,7 @@ export class ForumModeratorApplicationService {
         .select({ id: this.drizzle.schema.appUser.id })
         .from(this.drizzle.schema.appUser)
         .where(
-          ilike(
-            this.drizzle.schema.appUser.nickname,
-            `%${escapeLikePattern(nickname)}%`,
-          ),
+          buildILikeCondition(this.drizzle.schema.appUser.nickname, nickname),
         )
       const userIds = users.map((item) => item.id)
 

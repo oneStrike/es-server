@@ -11,7 +11,7 @@ import type {
   UpdateSensitiveWordInput,
   UpdateSensitiveWordStatusInput,
 } from './sensitive-word.types'
-import { DrizzleService } from '@db/core'
+import { buildLikePattern, DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
@@ -53,7 +53,7 @@ export class SensitiveWordService {
     // 构建查询条件
     const conditions: SQL[] = []
     if (dto.word) {
-      conditions.push(like(this.sensitiveWord.word, `%${dto.word}%`))
+      conditions.push(like(this.sensitiveWord.word, buildLikePattern(dto.word)!))
     }
 
     ;['isEnabled', 'level', 'type', 'matchMode'].forEach((key) => {

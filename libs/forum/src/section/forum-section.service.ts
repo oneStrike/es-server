@@ -7,7 +7,7 @@ import type {
   UpdateForumSectionEnabledInput,
   UpdateForumSectionInput,
 } from './section.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   FollowService,
   FollowTargetTypeEnum,
@@ -17,7 +17,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { ForumCounterService } from '../counter'
 import { ForumPermissionService } from '../permission'
 
@@ -400,7 +400,7 @@ export class ForumSectionService {
     }
     if (name) {
       conditions.push(
-        ilike(this.forumSection.name, `%${escapeLikePattern(name)}%`),
+        buildILikeCondition(this.forumSection.name, name)!,
       )
     }
 

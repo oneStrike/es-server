@@ -13,7 +13,7 @@ import type {
   UpdateForumTopicLockedInput,
   UpdateForumTopicPinnedInput,
 } from './forum-topic.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildLikePattern, DrizzleService } from '@db/core'
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
@@ -669,13 +669,11 @@ export class ForumTopicService {
       )
     }
     if (keyword) {
+      const keywordLike = buildLikePattern(keyword)!
       conditions.push(
         or(
-          ilike(this.forumTopicTable.title, `%${escapeLikePattern(keyword)}%`),
-          ilike(
-            this.forumTopicTable.content,
-            `%${escapeLikePattern(keyword)}%`,
-          ),
+          ilike(this.forumTopicTable.title, keywordLike),
+          ilike(this.forumTopicTable.content, keywordLike),
         )!,
       )
     }

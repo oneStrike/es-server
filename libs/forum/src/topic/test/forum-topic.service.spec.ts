@@ -2,6 +2,12 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth'
 import { AuditStatusEnum } from '@libs/platform/constant'
 
 jest.mock('@db/core', () => ({
+  buildILikeCondition: jest.fn((_column: unknown, value?: string) =>
+    value ? { type: 'ilike', value } : undefined,
+  ),
+  buildLikePattern: jest.fn((value?: string) =>
+    value?.trim() ? `%${value.trim()}%` : undefined,
+  ),
   DrizzleService: class {},
   escapeLikePattern: (value: string) => value,
 }))

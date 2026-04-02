@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, ilike, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import {
   CreateTagInput,
   DeleteTagInput,
@@ -59,7 +59,7 @@ export class WorkTagService {
     const conditions: SQL[] = []
 
     if (name?.trim()) {
-      conditions.push(ilike(this.workTag.name, `%${escapeLikePattern(name)}%`))
+      conditions.push(buildILikeCondition(this.workTag.name, name)!)
     }
     if (isEnabled !== undefined) {
       conditions.push(eq(this.workTag.isEnabled, isEnabled))

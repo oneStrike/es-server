@@ -5,7 +5,7 @@ import type {
   QueryUserProfileListInput,
   UpdateUserStatusInput,
 } from './profile.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
 import {
@@ -16,7 +16,7 @@ import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
 import { UserDefaults, UserStatusEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 type UserCountRow = Pick<
   AppUserCountSelect,
@@ -173,7 +173,7 @@ export class UserProfileService {
     }
     if (nickname) {
       conditions.push(
-        ilike(this.appUser.nickname, `%${escapeLikePattern(nickname)}%`),
+        buildILikeCondition(this.appUser.nickname, nickname)!,
       )
     }
 

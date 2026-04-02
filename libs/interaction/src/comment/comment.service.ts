@@ -14,7 +14,7 @@ import type {
   UserCommentsQuery,
   VisibleCommentEffectPayload,
 } from './comment.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   canConsumeEventEnvelopeByConsumer,
   createDefinedEventEnvelope,
@@ -36,7 +36,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, inArray, isNull, lte, max, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
 import { EmojiParserService, EmojiSceneEnum } from '../emoji'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
@@ -1250,10 +1250,7 @@ export class CommentService {
     }
     if (query.keyword?.trim()) {
       conditions.push(
-        ilike(
-          this.userComment.content,
-          `%${escapeLikePattern(query.keyword.trim())}%`,
-        ),
+        buildILikeCondition(this.userComment.content, query.keyword)!,
       )
     }
 

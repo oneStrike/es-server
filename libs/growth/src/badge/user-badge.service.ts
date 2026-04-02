@@ -6,13 +6,13 @@ import type {
   UpdateUserBadgeInput,
   UpdateUserBadgeStatusInput,
 } from './badge.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
 @Injectable()
 export class UserBadgeService {
@@ -107,7 +107,7 @@ export class UserBadgeService {
 
     if (dto.name) {
       conditions.push(
-        ilike(this.userBadge.name, `%${escapeLikePattern(dto.name)}%`),
+        buildILikeCondition(this.userBadge.name, dto.name)!,
       )
     }
     if (dto.type !== undefined) {

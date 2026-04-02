@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
@@ -7,7 +7,7 @@ import {
 import { MessageOutboxService } from '@libs/message/outbox'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, eq, gte, ilike, isNull, lte, sql } from 'drizzle-orm'
+import { and, eq, gte, isNull, lte, sql } from 'drizzle-orm'
 import {
   isAnnouncementPublishedNow,
   shouldAnnouncementEnterNotificationCenter,
@@ -127,10 +127,7 @@ export class AppAnnouncementService {
 
     if (title) {
       conditions.push(
-        ilike(
-          this.appAnnouncement.title,
-          `%${escapeLikePattern(title)}%`,
-        ),
+        buildILikeCondition(this.appAnnouncement.title, title)!,
       )
     }
     if (publishStartTime !== undefined) {

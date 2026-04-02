@@ -4,7 +4,7 @@ import type {
   ForumSearchPageResult,
   ForumSearchResultItem,
 } from './search.type'
-import { DrizzleService } from '@db/core'
+import { buildLikePattern, DrizzleService } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
@@ -382,11 +382,12 @@ export class ForumSearchService {
       return this.createEmptyPage(dto)
     }
 
+    const keywordLike = buildLikePattern(dto.keyword)!
     const conditions = [
       isNull(this.forumTopic.deletedAt),
       or(
-        ilike(this.forumTopic.title, `%${dto.keyword}%`),
-        ilike(this.forumTopic.content, `%${dto.keyword}%`),
+        ilike(this.forumTopic.title, keywordLike),
+        ilike(this.forumTopic.content, keywordLike),
       ),
       options.publicOnly
         ? eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED)
@@ -440,10 +441,11 @@ export class ForumSearchService {
     }
 
     const page = this.drizzle.buildPage(dto)
+    const keywordLike = buildLikePattern(dto.keyword)!
     const conditions = [
       eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
       isNull(this.userComment.deletedAt),
-      ilike(this.userComment.content, `%${dto.keyword}%`),
+      ilike(this.userComment.content, keywordLike),
       eq(this.userComment.targetId, this.forumTopic.id),
       isNull(this.forumTopic.deletedAt),
       options.publicOnly

@@ -12,7 +12,7 @@ import type {
   EmojiUnicodeAsset,
   RecordEmojiRecentUsageInput,
 } from './emoji.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildLikePattern, DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import {
   and,
@@ -234,8 +234,7 @@ export class EmojiCatalogService {
     }
 
     const limit = this.normalizeSearchLimit(input.limit)
-    const escapedKeyword = escapeLikePattern(keyword)
-    const keywordLike = `%${escapedKeyword}%`
+    const keywordLike = buildLikePattern(keyword)!
 
     const searchCondition = or(
       ilike(this.emojiAsset.shortcode, keywordLike),

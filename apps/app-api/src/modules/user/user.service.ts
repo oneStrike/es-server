@@ -16,7 +16,7 @@ import type {
   QueryMyPointRecordInput,
   UpdateMyProfileInput,
 } from './user.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
@@ -29,7 +29,7 @@ import {
 } from '@libs/platform/utils'
 import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, ilike, inArray, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'
 import { SmsService } from '../auth/sms.service'
 
@@ -361,7 +361,7 @@ export class UserService {
 
     if (name) {
       badgeConditions.push(
-        ilike(this.userBadge.name, `%${escapeLikePattern(name)}%`),
+        buildILikeCondition(this.userBadge.name, name)!,
       )
     }
     if (type !== undefined) {

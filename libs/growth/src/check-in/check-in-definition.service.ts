@@ -5,14 +5,14 @@ import type {
   UpdateCheckInPlanInput,
   UpdateCheckInPlanStatusInput,
 } from './check-in.type'
-import { DrizzleService } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger'
 import {
   BadRequestException,
   ConflictException,
   Injectable,
 } from '@nestjs/common'
-import { and, eq, gte, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
 import {
   CheckInPlanStatusEnum,
   CheckInRewardStatusEnum,
@@ -37,18 +37,13 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
    * 分页读取签到计划列表，并补齐规则数、活跃周期数和待补偿奖励数摘要。
    */
   async getPlanPage(query: QueryCheckInPlanPageInput) {
-    const conditions = [isNull(this.checkInPlanTable.deletedAt)]
-    const planCodeKeyword = this.buildLikeKeyword(query.planCode)
-    const planNameKeyword = this.buildLikeKeyword(query.planName)
-
-    if (planCodeKeyword) {
-      conditions.push(ilike(this.checkInPlanTable.planCode, planCodeKeyword))
-    }
-    if (planNameKeyword) {
-      conditions.push(ilike(this.checkInPlanTable.planName, planNameKeyword))
-    }
+    const conditions = [
+      isNull(this.checkInPlanTable.deletedAt),
+      buildILikeCondition(this.checkInPlanTable.planCode, query.planCode),
+      buildILikeCondition(this.checkInPlanTable.planName, query.planName),
+    ]
     if (query.status !== undefined) {
-      conditions.push(this.buildPlanStatusCondition(query.status))
+      conditions.push(eq(this.checkInPlanTable.status, query.status))
     }
 
     const page = await this.drizzle.ext.findPagination(this.checkInPlanTable, {
@@ -56,7 +51,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       ...query,
       orderBy: query.orderBy?.trim()
         ? query.orderBy
-        : JSON.stringify([{ updatedAt: 'desc' }, { id: 'desc' }]),
+        : { updatedAt: 'desc', id: 'desc' },
     })
 
     const summaries = await Promise.all(
@@ -190,8 +185,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           : this.toDateOnlyValue(currentPlan.startDate),
       endDate:
         dto.endDate !== undefined
-          ? (dto.endDate ? this.parseDateOnly(dto.endDate, '计划结束日期') : null)
-          : (this.toDateOnlyValue(currentPlan.endDate) || null),
+          ? dto.endDate
+            ? this.parseDateOnly(dto.endDate, '计划结束日期')
+            : null
+          : this.toDateOnlyValue(currentPlan.endDate) || null,
       allowMakeupCountPerCycle:
         dto.allowMakeupCountPerCycle !== undefined
           ? dto.allowMakeupCountPerCycle

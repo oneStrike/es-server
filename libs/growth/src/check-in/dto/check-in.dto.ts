@@ -221,13 +221,22 @@ export class BaseCheckInCycleDto extends BaseDto {
 }
 
 export class BaseCheckInRecordDto extends BaseDto {
-  @NumberProperty({ description: '用户ID', example: 10001 })
+  @NumberProperty({
+    description: '用户ID',
+    example: 10001,
+  })
   userId!: number
 
-  @NumberProperty({ description: '签到计划ID', example: 1 })
+  @NumberProperty({
+    description: '签到计划ID',
+    example: 1,
+  })
   planId!: number
 
-  @NumberProperty({ description: '周期实例ID', example: 12 })
+  @NumberProperty({
+    description: '周期实例ID',
+    example: 12,
+  })
   cycleId!: number
 
   @StringProperty({

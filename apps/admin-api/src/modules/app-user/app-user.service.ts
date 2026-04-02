@@ -15,7 +15,7 @@ import type {
   UpdateAdminAppUserProfileInput,
   UpdateAdminAppUserStatusInput,
 } from './app-user.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { UserBadgeService } from '@libs/growth/badge'
 import { UserExperienceService } from '@libs/growth/experience'
 import {
@@ -50,7 +50,6 @@ import {
   eq,
   gt,
   gte,
-  ilike,
   inArray,
   isNotNull,
   isNull,
@@ -151,28 +150,22 @@ export class AppUserService {
     }
     if (account) {
       conditions.push(
-        ilike(this.appUser.account, `%${escapeLikePattern(account)}%`),
+        buildILikeCondition(this.appUser.account, account)!,
       )
     }
     if (phoneNumber) {
       conditions.push(
-        ilike(
-          this.appUser.phoneNumber,
-          `%${escapeLikePattern(phoneNumber)}%`,
-        ),
+        buildILikeCondition(this.appUser.phoneNumber, phoneNumber)!,
       )
     }
     if (nickname) {
       conditions.push(
-        ilike(this.appUser.nickname, `%${escapeLikePattern(nickname)}%`),
+        buildILikeCondition(this.appUser.nickname, nickname)!,
       )
     }
     if (emailAddress) {
       conditions.push(
-        ilike(
-          this.appUser.emailAddress,
-          `%${escapeLikePattern(emailAddress)}%`,
-        ),
+        buildILikeCondition(this.appUser.emailAddress, emailAddress)!,
       )
     }
     if (isEnabled !== undefined) {
@@ -743,7 +736,7 @@ export class AppUserService {
 
     if (name) {
       badgeConditions.push(
-        ilike(this.userBadge.name, `%${escapeLikePattern(name)}%`),
+        buildILikeCondition(this.userBadge.name, name)!,
       )
     }
     if (type !== undefined) {

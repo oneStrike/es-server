@@ -9,13 +9,13 @@ import type {
   UpdateEmojiPackSceneTypeInput,
   ValidateEmojiAssetPayload,
 } from './emoji.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, eq, ilike, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import {
   EmojiAssetKindEnum as AssetKind,
   EmojiSceneEnum,
@@ -53,12 +53,12 @@ export class EmojiAssetService {
 
     if (dto.code) {
       conditions.push(
-        ilike(this.emojiPack.code, `%${escapeLikePattern(dto.code)}%`),
+        buildILikeCondition(this.emojiPack.code, dto.code)!,
       )
     }
     if (dto.name) {
       conditions.push(
-        ilike(this.emojiPack.name, `%${escapeLikePattern(dto.name)}%`),
+        buildILikeCondition(this.emojiPack.name, dto.name)!,
       )
     }
     if (dto.isEnabled !== undefined) {
@@ -289,15 +289,12 @@ export class EmojiAssetService {
     }
     if (dto.shortcode) {
       conditions.push(
-        ilike(
-          this.emojiAsset.shortcode,
-          `%${escapeLikePattern(dto.shortcode)}%`,
-        ),
+        buildILikeCondition(this.emojiAsset.shortcode, dto.shortcode)!,
       )
     }
     if (dto.category) {
       conditions.push(
-        ilike(this.emojiAsset.category, `%${escapeLikePattern(dto.category)}%`),
+        buildILikeCondition(this.emojiAsset.category, dto.category)!,
       )
     }
     // 资源列表沿用包内人工排序，空字符串排序参数同样按未传处理。

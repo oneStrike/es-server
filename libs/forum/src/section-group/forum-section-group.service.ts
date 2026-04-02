@@ -7,14 +7,14 @@ import type {
   UpdateForumSectionGroupEnabledInput,
   UpdateForumSectionGroupInput,
 } from './section-group.type'
-import { DrizzleService, escapeLikePattern } from '@db/core'
+import { buildILikeCondition, DrizzleService } from '@db/core'
 import { FollowService, FollowTargetTypeEnum } from '@libs/interaction/follow'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { and, asc, eq, ilike, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission'
 
 @Injectable()
@@ -69,7 +69,7 @@ export class ForumSectionGroupService {
     }
     if (dto.name) {
       conditions.push(
-        ilike(this.forumSectionGroup.name, `%${escapeLikePattern(dto.name)}%`),
+        buildILikeCondition(this.forumSectionGroup.name, dto.name)!,
       )
     }
 
