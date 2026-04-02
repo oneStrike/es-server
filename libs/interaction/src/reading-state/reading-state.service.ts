@@ -1,4 +1,3 @@
-import { inArray, SQL } from 'drizzle-orm'
 import type {
   ReadingHistoryIndexedRow,
   ReadingHistoryItem,
@@ -8,7 +7,8 @@ import type {
 import { DrizzleService } from '@db/core'
 import { ContentTypeEnum, WorkTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray, SQL } from 'drizzle-orm'
+
 import {
   IReadingStateResolver,
   ReadingStateWorkSnapshot,
@@ -261,7 +261,7 @@ export class ReadingStateService {
       const workMap = new Map(works.map((w) => [w.id, w]))
       const chapterRefsMap = new Map<
         number,
-        { workId: number; chapterId: number }
+        { workId: number, chapterId: number }
       >()
       for (const item of items) {
         if (

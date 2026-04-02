@@ -1,11 +1,19 @@
 import type { Db } from '@db/core'
-import type { CheckInRecordSelect } from '@db/schema'
+import type {
+  CheckInPlanSelect,
+  CheckInRecordSelect,
+  CheckInStreakRewardGrantSelect,
+} from '@db/schema'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger'
 import type {
   CheckInActionView,
+  CheckInCycleAggregation,
   CheckInDateOnly,
   CheckInPlanSnapshot,
   CheckInRewardConfig,
+  CreateCheckInCycleInput,
+  CreateCheckInGrantInput,
+  CreateCheckInRecordInput,
   MakeupCheckInInput,
   RepairCheckInRewardInput,
 } from './check-in.type'
@@ -21,13 +29,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { eq, sql } from 'drizzle-orm'
+import dayjs from 'dayjs'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
   CheckInRewardStatusEnum,
+  CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
@@ -190,10 +200,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       await tx
         .update(this.checkInCycleTable)
         .set({
-          signedCount: aggregation.signedCount,
-          makeupUsedCount: aggregation.makeupUsedCount,
           currentStreak: aggregation.currentStreak,
           lastSignedDate: aggregation.lastSignedDate ?? null,
+          makeupUsedCount: aggregation.makeupUsedCount,
+          signedCount: aggregation.signedCount,
           version: sql`${this.checkInCycleTable.version} + 1`,
         })
         .where(eq(this.checkInCycleTable.id, cycle.id))
@@ -264,6 +274,351 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       alreadyExisted: action.alreadyExisted,
       triggeredGrantIds: action.triggeredGrantIds,
     })
+  }
+
+  /**
+   * 创建或复用当前周期实例。
+   *
+   * 执行链路必须在同一事务内冻结快照、复用并发下已创建的周期，并返回唯一周期记录。
+   */
+  private async createOrGetCycle(
+    tx: Db,
+    plan: CheckInPlanSelect,
+    userId: number,
+    now: Date,
+  ) {
+    const today = this.formatDateOnly(now)
+    const existingCycle = await this.findCycleContainingDate(
+      userId,
+      plan.id,
+      today,
+      tx,
+    )
+    if (existingCycle) {
+      return existingCycle
+    }
+
+    const frame = this.buildCycleFrame(plan, now)
+    const rules = await this.getPlanRules(plan.id, plan.version, tx)
+    const planSnapshot = this.buildPlanSnapshot(plan, rules)
+    const cycleInsert: CreateCheckInCycleInput = {
+      userId,
+      planId: plan.id,
+      cycleKey: frame.cycleKey,
+      cycleStartDate: frame.cycleStartDate,
+      cycleEndDate: frame.cycleEndDate,
+      signedCount: 0,
+      makeupUsedCount: 0,
+      currentStreak: 0,
+      lastSignedDate: null,
+      planSnapshotVersion: plan.version,
+      planSnapshot,
+    }
+
+    const [createdCycle] = await tx
+      .insert(this.checkInCycleTable)
+      .values(cycleInsert)
+      .onConflictDoNothing()
+      .returning()
+
+    if (createdCycle) {
+      return createdCycle
+    }
+
+    const [cycle] = await tx
+      .select()
+      .from(this.checkInCycleTable)
+      .where(
+        and(
+          eq(this.checkInCycleTable.userId, userId),
+          eq(this.checkInCycleTable.planId, plan.id),
+          eq(this.checkInCycleTable.cycleKey, frame.cycleKey),
+        ),
+      )
+      .limit(1)
+
+    if (!cycle) {
+      throw new NotFoundException('签到周期创建失败')
+    }
+
+    return cycle
+  }
+
+  /** 按用户、计划、签到日读取唯一签到事实。 */
+  private async findRecordByUniqueKey(
+    userId: number,
+    planId: number,
+    signDate: CheckInDateOnly,
+    db: Db = this.db,
+  ) {
+    const [record] = await db
+      .select()
+      .from(this.checkInRecordTable)
+      .where(
+        and(
+          eq(this.checkInRecordTable.userId, userId),
+          eq(this.checkInRecordTable.planId, planId),
+          eq(this.checkInRecordTable.signDate, signDate),
+        ),
+      )
+      .limit(1)
+
+    return record
+  }
+
+  /** 按周期读取连续奖励发放事实。 */
+  private async listCycleGrants(cycleId: number, db: Db = this.db) {
+    return db
+      .select()
+      .from(this.checkInStreakRewardGrantTable)
+      .where(eq(this.checkInStreakRewardGrantTable.cycleId, cycleId))
+      .orderBy(
+        asc(this.checkInStreakRewardGrantTable.triggerSignDate),
+        asc(this.checkInStreakRewardGrantTable.id),
+      )
+  }
+
+  /**
+   * 基于当前周期全部签到事实重算聚合摘要。
+   *
+   * 补签会重新排列历史日期，因此连续签到、已签天数和补签已用次数都必须全量重算。
+   */
+  private recomputeCycleAggregation(
+    records: Pick<CheckInRecordSelect, 'signDate' | 'recordType'>[],
+  ): CheckInCycleAggregation {
+    const streakByDate: Record<CheckInDateOnly, number> = {}
+    let previousDate: string | undefined
+    let latestDate: string | undefined
+    let streak = 0
+
+    const sortedRecords = [...records].sort((left, right) =>
+      this.toDateOnlyValue(left.signDate).localeCompare(
+        this.toDateOnlyValue(right.signDate),
+      ),
+    )
+
+    for (const record of sortedRecords) {
+      const signDate = this.toDateOnlyValue(record.signDate)
+      if (
+        previousDate &&
+        dayjs
+          .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
+          .diff(
+            dayjs.tz(previousDate, 'YYYY-MM-DD', this.getAppTimeZone()),
+            'day',
+          ) === 1
+      ) {
+        streak += 1
+      } else {
+        streak = 1
+      }
+      streakByDate[signDate] = streak
+      previousDate = signDate
+      latestDate = signDate
+    }
+
+    return {
+      signedCount: sortedRecords.length,
+      makeupUsedCount: sortedRecords.filter(
+        (record) => record.recordType === CheckInRecordTypeEnum.MAKEUP,
+      ).length,
+      currentStreak: latestDate ? streakByDate[latestDate] : 0,
+      lastSignedDate: latestDate,
+      streakByDate,
+    }
+  }
+
+  /**
+   * 根据重算后的连续天数识别本次应创建的连续奖励发放事实。
+   *
+   * 非重复奖励在单周期内最多发一次；重复奖励按 `triggerSignDate` 维度去重。
+   */
+  private resolveEligibleGrantCandidates(
+    rules: CheckInPlanSnapshot['streakRewardRules'],
+    streakByDate: Record<CheckInDateOnly, number>,
+    existingGrants: Pick<
+      CheckInStreakRewardGrantSelect,
+      'ruleId' | 'triggerSignDate'
+    >[],
+  ) {
+    const existingGrantKeys = new Set(
+      existingGrants.map(
+        (grant) =>
+          `${grant.ruleId}:${this.toDateOnlyValue(grant.triggerSignDate)}`,
+      ),
+    )
+    const existingRuleIds = new Set(existingGrants.map((grant) => grant.ruleId))
+    const streakEntries = Object.entries(streakByDate).sort(([left], [right]) =>
+      left.localeCompare(right),
+    )
+
+    const candidates: Array<{
+      rule: CheckInPlanSnapshot['streakRewardRules'][number]
+      triggerSignDate: CheckInDateOnly
+    }> = []
+
+    for (const rule of rules) {
+      if (rule.status !== CheckInStreakRewardRuleStatusEnum.ENABLED) {
+        continue
+      }
+
+      const triggerDates = streakEntries
+        .filter(([, streak]) => streak === rule.streakDays)
+        .map(([date]) => date)
+      if (triggerDates.length === 0) {
+        continue
+      }
+
+      if (!rule.repeatable) {
+        if (existingRuleIds.has(rule.id)) {
+          continue
+        }
+        candidates.push({ rule, triggerSignDate: triggerDates[0] })
+        continue
+      }
+
+      for (const triggerSignDate of triggerDates) {
+        const grantKey = `${rule.id}:${triggerSignDate}`
+        if (!existingGrantKeys.has(grantKey)) {
+          candidates.push({ rule, triggerSignDate })
+        }
+      }
+    }
+
+    return candidates
+  }
+
+  /** 构建签到事实幂等键。 */
+  private buildRecordBizKey(
+    planId: number,
+    cycleKey: string,
+    userId: number,
+    signDate: CheckInDateOnly,
+  ) {
+    return [
+      'checkin',
+      'record',
+      'plan',
+      planId,
+      'cycle',
+      cycleKey,
+      'user',
+      userId,
+      'date',
+      signDate,
+    ].join(':')
+  }
+
+  /** 构建连续奖励发放事实幂等键。 */
+  private buildGrantFactBizKey(
+    planId: number,
+    cycleId: number,
+    ruleId: number,
+    userId: number,
+    triggerSignDate: CheckInDateOnly,
+  ) {
+    return [
+      'checkin',
+      'grant',
+      'plan',
+      planId,
+      'cycle',
+      cycleId,
+      'rule',
+      ruleId,
+      'user',
+      userId,
+      'date',
+      triggerSignDate,
+    ].join(':')
+  }
+
+  /** 构建基础签到奖励账本业务键前缀。 */
+  private buildBaseRewardBizKey(recordId: number, userId: number) {
+    return ['checkin', 'base', 'record', recordId, 'user', userId].join(':')
+  }
+
+  /** 构建连续奖励账本业务键前缀。 */
+  private buildStreakRewardBizKey(
+    grantId: number,
+    ruleId: number,
+    userId: number,
+  ) {
+    return [
+      'checkin',
+      'streak',
+      'grant',
+      grantId,
+      'rule',
+      ruleId,
+      'user',
+      userId,
+    ].join(':')
+  }
+
+  /**
+   * 构建签到事实写表载荷。
+   *
+   * 没有基础奖励时，这里会直接把奖励状态置空，明确表达“无奖励而非待结算”。
+   */
+  private buildRecordInsert(input: {
+    userId: number
+    planId: number
+    cycleId: number
+    cycleKey: string
+    signDate: CheckInDateOnly
+    recordType: CheckInRecordTypeEnum
+    operatorType: CheckInOperatorTypeEnum
+    rewardApplicable: boolean
+    context?: Record<string, unknown>
+  }): CreateCheckInRecordInput {
+    return {
+      userId: input.userId,
+      planId: input.planId,
+      cycleId: input.cycleId,
+      signDate: input.signDate,
+      recordType: input.recordType,
+      rewardStatus: input.rewardApplicable
+        ? CheckInRewardStatusEnum.PENDING
+        : null,
+      bizKey: this.buildRecordBizKey(
+        input.planId,
+        input.cycleKey,
+        input.userId,
+        input.signDate,
+      ),
+      operatorType: input.operatorType,
+      context: input.context,
+    }
+  }
+
+  /** 构建连续奖励发放事实写表载荷。 */
+  private buildGrantInsert(input: {
+    userId: number
+    planId: number
+    cycleId: number
+    ruleId: number
+    triggerSignDate: CheckInDateOnly
+    planSnapshotVersion: number
+    context?: Record<string, unknown>
+  }): CreateCheckInGrantInput {
+    return {
+      userId: input.userId,
+      planId: input.planId,
+      cycleId: input.cycleId,
+      ruleId: input.ruleId,
+      triggerSignDate: input.triggerSignDate,
+      grantStatus: CheckInRewardStatusEnum.PENDING,
+      bizKey: this.buildGrantFactBizKey(
+        input.planId,
+        input.cycleId,
+        input.ruleId,
+        input.userId,
+        input.triggerSignDate,
+      ),
+      planSnapshotVersion: input.planSnapshotVersion,
+      context: input.context,
+    }
   }
 
   /** 校验补签日期必须位于当前周期内，且满足“早于今天且计划允许补签”的合同。 */

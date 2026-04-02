@@ -375,7 +375,7 @@ export class ForumModeratorService {
                 isNull(this.forumSectionGroup.deletedAt),
               ),
             )
-        : Promise.resolve([] as Array<{ id: number; name: string }>),
+        : Promise.resolve([] as Array<{ id: number, name: string }>),
       this.db
         .select({
           id: this.forumSection.id,
@@ -396,9 +396,9 @@ export class ForumModeratorService {
 
     const userMap = new Map<
       number,
-      { id: number; nickname: string; avatar: string | null }
+      { id: number, nickname: string, avatar: string | null }
     >(users.map((user) => [user.id, user]))
-    const groupMap = new Map<number, { id: number; name: string }>(
+    const groupMap = new Map<number, { id: number, name: string }>(
       groups.map((group) => [group.id, group]),
     )
     const scopeMap = new Map<number, Array<(typeof scopes)[number]>>()

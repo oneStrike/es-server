@@ -1,4 +1,3 @@
-export * from './check-in-runtime.service'
 export * from './check-in.constant'
 export * from './check-in.module'
 export * from './check-in.service'

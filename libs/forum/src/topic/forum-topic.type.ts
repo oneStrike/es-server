@@ -17,8 +17,8 @@ export type CreateForumTopicInput = Pick<
   ForumTopicSelect,
   'sectionId' | 'userId'
 > &
-  Pick<ForumTopicSelect, 'title' | 'content'> &
-  ForumTopicMediaInput
+Pick<ForumTopicSelect, 'title' | 'content'> &
+ForumTopicMediaInput
 
 /**
  * 更新论坛主题正文的领域输入。

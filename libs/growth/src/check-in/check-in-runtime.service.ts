@@ -1,12 +1,30 @@
+import type {
+  CheckInPlanSelect,
+  CheckInRecordSelect,
+  CheckInStreakRewardGrantSelect,
+} from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
+  CheckInCalendarDayView,
+  CheckInDateOnly,
+  CheckInGrantView,
+  CheckInPlanSnapshot,
+  CheckInRecordView,
+  CheckInVirtualCycleView,
   QueryCheckInReconciliationPageInput,
   QueryMyCheckInRecordPageInput,
 } from './check-in.type'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger'
 import { Injectable } from '@nestjs/common'
-import { and, eq, exists, gte, lte } from 'drizzle-orm'
+import dayjs from 'dayjs'
+import { and, asc, eq, exists, gte, lte, or } from 'drizzle-orm'
+import {
+  CheckInRecordTypeEnum,
+  CheckInRewardResultTypeEnum,
+  CheckInRewardStatusEnum,
+  CheckInStreakRewardRuleStatusEnum,
+} from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
 /**
@@ -266,6 +284,202 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
           ) ?? [],
         createdAt: record.createdAt,
       })),
+    }
+  }
+
+  /**
+   * 获取当前周期读模型。
+   *
+   * 若数据库中尚未落周期实例，则返回基于当前计划版本推导出的虚拟周期视图。
+   */
+  private async getCurrentCycleView(
+    userId: number,
+    plan: CheckInPlanSelect,
+    now: Date,
+  ) {
+    const today = this.formatDateOnly(now)
+    const cycle = await this.findCycleContainingDate(userId, plan.id, today)
+    if (cycle) {
+      return {
+        id: cycle.id,
+        cycleKey: cycle.cycleKey,
+        cycleStartDate: this.toDateOnlyValue(cycle.cycleStartDate),
+        cycleEndDate: this.toDateOnlyValue(cycle.cycleEndDate),
+        signedCount: cycle.signedCount,
+        makeupUsedCount: cycle.makeupUsedCount,
+        currentStreak: cycle.currentStreak,
+        lastSignedDate: cycle.lastSignedDate
+          ? this.toDateOnlyValue(cycle.lastSignedDate)
+          : undefined,
+        planSnapshotVersion: cycle.planSnapshotVersion,
+        planSnapshot: this.getCycleSnapshot(cycle),
+      }
+    }
+
+    const frame = this.buildCycleFrame(plan, now)
+    const rules = await this.getPlanRules(plan.id, plan.version)
+    return {
+      cycleKey: frame.cycleKey,
+      cycleStartDate: frame.cycleStartDate,
+      cycleEndDate: frame.cycleEndDate,
+      signedCount: 0,
+      makeupUsedCount: 0,
+      currentStreak: 0,
+      planSnapshotVersion: plan.version,
+      planSnapshot: this.buildPlanSnapshot(plan, rules),
+    }
+  }
+
+  /** 解析下一档可见的连续奖励。 */
+  private resolveNextStreakReward(
+    rules: CheckInPlanSnapshot['streakRewardRules'],
+    currentStreak: number,
+  ) {
+    const nextRule = rules
+      .filter(
+        (rule) => rule.status === CheckInStreakRewardRuleStatusEnum.ENABLED,
+      )
+      .sort((left, right) => left.streakDays - right.streakDays)
+      .find((rule) => rule.streakDays > currentStreak)
+
+    return nextRule ? this.toStreakRuleView(nextRule) : undefined
+  }
+
+  /**
+   * 批量查询签到记录关联的连续奖励发放列表。
+   *
+   * 这里按 `(cycleId, signDate)` 聚合返回，避免逐条 N+1 查询。
+   */
+  private async buildGrantMapForRecords(
+    records: Pick<CheckInRecordSelect, 'cycleId' | 'signDate'>[],
+  ) {
+    const grantMap = new Map<string, CheckInGrantView[]>()
+    if (records.length === 0) {
+      return grantMap
+    }
+
+    const predicates = records.map((record) =>
+      and(
+        eq(this.checkInStreakRewardGrantTable.cycleId, record.cycleId),
+        eq(
+          this.checkInStreakRewardGrantTable.triggerSignDate,
+          this.toDateOnlyValue(record.signDate),
+        ),
+      ),
+    )
+
+    const grants = await this.db
+      .select()
+      .from(this.checkInStreakRewardGrantTable)
+      .where(predicates.length === 1 ? predicates[0] : or(...predicates))
+      .orderBy(
+        asc(this.checkInStreakRewardGrantTable.triggerSignDate),
+        asc(this.checkInStreakRewardGrantTable.id),
+      )
+
+    for (const grant of grants) {
+      const key = `${grant.cycleId}:${this.toDateOnlyValue(grant.triggerSignDate)}`
+      const current = grantMap.get(key) ?? []
+      current.push(this.toGrantView(grant))
+      grantMap.set(key, current)
+    }
+
+    return grantMap
+  }
+
+  /**
+   * 构建当前周期日历视图。
+   *
+   * 即使某天没有签到事实，也要返回占位项供前端明确区分未来日和漏签日。
+   */
+  private buildCalendarDays(
+    cycle: Pick<CheckInVirtualCycleView, 'cycleStartDate' | 'cycleEndDate'>,
+    records: CheckInRecordView[],
+    today: CheckInDateOnly,
+  ) {
+    const recordMap = new Map(
+      records.map((record) => [record.signDate, record]),
+    )
+    const days: CheckInCalendarDayView[] = []
+    let cursor = dayjs
+      .tz(cycle.cycleStartDate, 'YYYY-MM-DD', this.getAppTimeZone())
+      .startOf('day')
+    const end = dayjs
+      .tz(cycle.cycleEndDate, 'YYYY-MM-DD', this.getAppTimeZone())
+      .startOf('day')
+
+    while (cursor.isSame(end) || cursor.isBefore(end)) {
+      const signDate = cursor.format('YYYY-MM-DD')
+      const record = recordMap.get(signDate)
+      days.push({
+        signDate,
+        isToday: signDate === today,
+        isFuture: signDate > today,
+        isSigned: Boolean(record),
+        recordType: record?.recordType,
+        rewardStatus: record?.rewardStatus,
+        rewardResultType: record?.rewardResultType,
+        grantCount: record?.grants.length ?? 0,
+      })
+      cursor = cursor.add(1, 'day')
+    }
+
+    return days
+  }
+
+  /** 把签到事实映射成稳定读模型。 */
+  private toRecordView(
+    record: Pick<
+      CheckInRecordSelect,
+      | 'id'
+      | 'signDate'
+      | 'recordType'
+      | 'rewardStatus'
+      | 'rewardResultType'
+      | 'baseRewardLedgerIds'
+      | 'lastRewardError'
+      | 'rewardSettledAt'
+      | 'createdAt'
+    >,
+    grants: CheckInGrantView[] = [],
+  ): CheckInRecordView {
+    return {
+      id: record.id,
+      signDate: this.toDateOnlyValue(record.signDate),
+      recordType: record.recordType as CheckInRecordTypeEnum,
+      rewardStatus: record.rewardStatus as CheckInRewardStatusEnum | null,
+      rewardResultType:
+        record.rewardResultType as CheckInRewardResultTypeEnum | null,
+      baseRewardLedgerIds: record.baseRewardLedgerIds,
+      lastRewardError: record.lastRewardError,
+      rewardSettledAt: record.rewardSettledAt,
+      grants,
+      createdAt: record.createdAt,
+    }
+  }
+
+  /** 把连续奖励发放事实映射成稳定读模型。 */
+  private toGrantView(
+    grant: Pick<
+      CheckInStreakRewardGrantSelect,
+      | 'id'
+      | 'ruleId'
+      | 'triggerSignDate'
+      | 'grantStatus'
+      | 'grantResultType'
+      | 'ledgerIds'
+      | 'lastGrantError'
+    >,
+  ): CheckInGrantView {
+    return {
+      id: grant.id,
+      ruleId: grant.ruleId,
+      triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
+      grantStatus: grant.grantStatus as CheckInRewardStatusEnum,
+      grantResultType:
+        grant.grantResultType as CheckInRewardResultTypeEnum | null,
+      ledgerIds: grant.ledgerIds,
+      lastGrantError: grant.lastGrantError,
     }
   }
 }

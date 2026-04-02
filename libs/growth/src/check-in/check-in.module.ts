@@ -13,6 +13,6 @@ import { CheckInService } from './check-in.service'
     CheckInRuntimeService,
     CheckInService,
   ],
-  exports: [CheckInService, CheckInRuntimeService],
+  exports: [CheckInService],
 })
 export class CheckInModule {}

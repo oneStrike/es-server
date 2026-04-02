@@ -14,9 +14,10 @@ import { CheckInExecutionService } from './check-in-execution.service'
 import { CheckInRuntimeService } from './check-in-runtime.service'
 
 /**
- * 签到域正式门面服务。
+ * 签到域对外应用门面服务。
  *
- * 统一向 app/admin controller 暴露签到配置、执行与运行态查询入口。
+ * 统一向 app/admin controller 暴露签到模块公开用例，内部继续委托给
+ * definition / execution / runtime 子服务，不承载底层查询与执行细节。
  */
 @Injectable()
 export class CheckInService {

@@ -1135,7 +1135,7 @@ export class ForumTopicService {
             commentReceivedLikeCountByUser.set(
               comment.userId,
               (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-                comment.likeCount,
+              comment.likeCount,
             )
           }
         }

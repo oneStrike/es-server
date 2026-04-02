@@ -5,6 +5,7 @@ import {
   checkInStreakRewardGrant,
   checkInStreakRewardRule,
 } from '@db/schema'
+import { MODULE_METADATA } from '@nestjs/common/constants'
 import { getTableConfig } from 'drizzle-orm/pg-core'
 import {
   CheckInCycleTypeEnum,
@@ -26,6 +27,7 @@ jest.mock('@libs/growth/growth-ledger', () => ({
   GrowthLedgerActionEnum: {
     GRANT: 1,
   },
+  GrowthLedgerModule: class {},
   GrowthLedgerService: class {},
   GrowthLedgerSourceEnum: {
     CHECK_IN_BASE_BONUS: 'check_in_base_bonus',
@@ -117,6 +119,54 @@ async function createCheckInExecutionService(drizzle: unknown) {
   return new CheckInExecutionService(drizzle as any, {} as any)
 }
 
+async function createCheckInRuntimeService(drizzle: unknown) {
+  const { CheckInRuntimeService } = await import('../check-in-runtime.service')
+
+  return new CheckInRuntimeService(drizzle as any, {} as any)
+}
+
+describe('check-in public boundary', () => {
+  it('exports only the facade service from CheckInModule', async () => {
+    const { CheckInModule } = await import('../check-in.module')
+    const { CheckInRuntimeService } = await import('../check-in-runtime.service')
+    const { CheckInService } = await import('../check-in.service')
+
+    const exportsMetadata =
+      Reflect.getMetadata(MODULE_METADATA.EXPORTS, CheckInModule) ?? []
+
+    expect(exportsMetadata).toContain(CheckInService)
+    expect(exportsMetadata).not.toContain(CheckInRuntimeService)
+  })
+
+  it('does not re-export CheckInRuntimeService from the public barrel', async () => {
+    const publicApi = await import('../index')
+
+    expect(publicApi.CheckInService).toBeDefined()
+    expect('CheckInRuntimeService' in publicApi).toBe(false)
+  })
+
+  it('keeps execution and runtime helpers out of CheckInDefinitionService', async () => {
+    const definitionService = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
+    const executionService = await createCheckInExecutionService(
+      createCheckInDrizzleMock(),
+    )
+    const runtimeService = await createCheckInRuntimeService(
+      createCheckInDrizzleMock(),
+    )
+
+    expect('resolveEligibleGrantCandidates' in (definitionService as any)).toBe(
+      false,
+    )
+    expect('buildGrantMapForRecords' in (definitionService as any)).toBe(false)
+    expect('resolveEligibleGrantCandidates' in (executionService as any)).toBe(
+      true,
+    )
+    expect('buildGrantMapForRecords' in (runtimeService as any)).toBe(true)
+  })
+})
+
 describe('check-in support contracts', () => {
   const previousTimeZone = process.env.TZ
 
@@ -207,7 +257,7 @@ describe('check-in support contracts', () => {
   })
 
   it('resolves all missing thresholds in one recompute and keeps repeatable grants independent', async () => {
-    const service = await createCheckInDefinitionService(
+    const service = await createCheckInExecutionService(
       createCheckInDrizzleMock(),
     )
 
