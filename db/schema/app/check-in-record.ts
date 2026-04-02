@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  check,
   date,
   index,
   integer,
@@ -126,6 +127,57 @@ export const checkInRecord = pgTable('check_in_record', {
    * 奖励状态索引。
    */
   index('check_in_record_reward_status_idx').on(table.rewardStatus),
+  /**
+   * 签到类型必须落在受支持枚举内。
+   */
+  check(
+    'check_in_record_record_type_valid_chk',
+    sql`${table.recordType} in (1, 2)`,
+  ),
+  /**
+   * 基础奖励状态必须落在受支持枚举内或为空。
+   */
+  check(
+    'check_in_record_reward_status_valid_chk',
+    sql`${table.rewardStatus} is null or ${table.rewardStatus} in (0, 1, 2)`,
+  ),
+  /**
+   * 基础奖励结果类型必须落在受支持枚举内或为空。
+   */
+  check(
+    'check_in_record_reward_result_type_valid_chk',
+    sql`${table.rewardResultType} is null or ${table.rewardResultType} in (1, 2, 3)`,
+  ),
+  /**
+   * 操作来源必须落在受支持枚举内。
+   */
+  check(
+    'check_in_record_operator_type_valid_chk',
+    sql`${table.operatorType} in (1, 2, 3)`,
+  ),
+  /**
+   * 基础奖励状态、结果类型和落定时间必须保持一致。
+   */
+  check(
+    'check_in_record_reward_state_consistent_chk',
+    sql`(
+      ${table.rewardStatus} is null
+      and ${table.rewardResultType} is null
+      and ${table.rewardSettledAt} is null
+    ) or (
+      ${table.rewardStatus} = 0
+      and ${table.rewardResultType} is null
+      and ${table.rewardSettledAt} is null
+    ) or (
+      ${table.rewardStatus} = 1
+      and ${table.rewardResultType} in (1, 2)
+      and ${table.rewardSettledAt} is not null
+    ) or (
+      ${table.rewardStatus} = 2
+      and ${table.rewardResultType} = 3
+      and ${table.rewardSettledAt} is not null
+    )`,
+  ),
 ])
 
 export type CheckInRecord = typeof checkInRecord.$inferSelect

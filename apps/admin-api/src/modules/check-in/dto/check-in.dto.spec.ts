@@ -15,8 +15,8 @@ describe('admin check-in dto reward config contract', () => {
     const dto = plainToInstance(CreateCheckInPlanDto, {
       allowMakeupCountPerCycle: 1,
       baseRewardConfig: { experience: 5, points: 10 },
-      cycleAnchorDate: '2026-04-01',
       cycleType: CheckInCycleTypeEnum.WEEKLY,
+      startDate: '2026-04-01',
       planCode: 'daily-check-in',
       planName: '每日签到',
       status: CheckInPlanStatusEnum.DRAFT,
@@ -29,8 +29,8 @@ describe('admin check-in dto reward config contract', () => {
     const dto = plainToInstance(CreateCheckInPlanDto, {
       allowMakeupCountPerCycle: 1,
       baseRewardConfig: '{"points":10,"experience":5}',
-      cycleAnchorDate: '2026-04-01',
       cycleType: CheckInCycleTypeEnum.WEEKLY,
+      startDate: '2026-04-01',
       planCode: 'daily-check-in',
       planName: '每日签到',
       status: CheckInPlanStatusEnum.DRAFT,

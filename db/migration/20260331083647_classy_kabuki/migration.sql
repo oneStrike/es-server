@@ -1,1 +1,0 @@
-ALTER TABLE "growth_ledger_record" ALTER COLUMN "source" SET NOT NULL;

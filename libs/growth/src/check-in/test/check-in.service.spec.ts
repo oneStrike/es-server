@@ -1,4 +1,12 @@
 import {
+  checkInCycle,
+  checkInPlan,
+  checkInRecord,
+  checkInStreakRewardGrant,
+  checkInStreakRewardRule,
+} from '@db/schema'
+import { getTableConfig } from 'drizzle-orm/pg-core'
+import {
   CheckInCycleTypeEnum,
   CheckInPlanStatusEnum,
   CheckInRecordTypeEnum,
@@ -50,15 +58,13 @@ function createCheckInDrizzleMock(overrides?: Record<string, unknown>) {
       checkInPlan: {
         allowMakeupCountPerCycle: 'check_in_plan.allow_makeup_count_per_cycle',
         baseRewardConfig: 'check_in_plan.base_reward_config',
-        cycleAnchorDate: 'check_in_plan.cycle_anchor_date',
         cycleType: 'check_in_plan.cycle_type',
         deletedAt: 'check_in_plan.deleted_at',
+        endDate: 'check_in_plan.end_date',
         id: 'check_in_plan.id',
-        isEnabled: 'check_in_plan.is_enabled',
         planCode: 'check_in_plan.plan_code',
         planName: 'check_in_plan.plan_name',
-        publishEndAt: 'check_in_plan.publish_end_at',
-        publishStartAt: 'check_in_plan.publish_start_at',
+        startDate: 'check_in_plan.start_date',
         status: 'check_in_plan.status',
         updatedAt: 'check_in_plan.updated_at',
         updatedById: 'check_in_plan.updated_by_id',
@@ -136,11 +142,12 @@ describe('check-in support contracts', () => {
         {
           allowMakeupCountPerCycle: 2,
           baseRewardConfig: { points: 10 },
-          cycleAnchorDate: '2026-04-01',
           cycleType: CheckInCycleTypeEnum.WEEKLY,
+          endDate: '2026-05-31',
           id: 1,
           planCode: 'daily-check-in',
           planName: '每日签到',
+          startDate: '2026-04-01',
           version: 2,
         },
         [
@@ -158,11 +165,12 @@ describe('check-in support contracts', () => {
     ).toEqual({
       allowMakeupCountPerCycle: 2,
       baseRewardConfig: { points: 10 },
-      cycleAnchorDate: '2026-04-01',
       cycleType: CheckInCycleTypeEnum.WEEKLY,
+      endDate: '2026-05-31',
       id: 1,
       planCode: 'daily-check-in',
       planName: '每日签到',
+      startDate: '2026-04-01',
       streakRewardRules: [
         {
           id: 11,
@@ -175,6 +183,26 @@ describe('check-in support contracts', () => {
         },
       ],
       version: 2,
+    })
+  })
+
+  it('builds weekly cycles as rolling seven-day windows from startDate', async () => {
+    const service = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
+
+    expect(
+      (service as any).buildCycleFrame(
+        {
+          cycleType: CheckInCycleTypeEnum.WEEKLY,
+          startDate: '2026-04-01',
+        },
+        new Date('2026-04-10T12:00:00.000Z'),
+      ),
+    ).toEqual({
+      cycleEndDate: '2026-04-14',
+      cycleKey: 'week-2026-04-08',
+      cycleStartDate: '2026-04-08',
     })
   })
 
@@ -260,14 +288,12 @@ describe('check-in definition service versioning', () => {
   const currentPlan = {
     allowMakeupCountPerCycle: 1,
     baseRewardConfig: { points: 10 },
-    cycleAnchorDate: '2026-04-01',
     cycleType: CheckInCycleTypeEnum.WEEKLY,
+    endDate: null,
     id: 1,
-    isEnabled: true,
     planCode: 'daily-check-in',
     planName: '每日签到',
-    publishEndAt: null,
-    publishStartAt: null,
+    startDate: '2026-04-01',
     status: CheckInPlanStatusEnum.DRAFT,
     version: 1,
   }
@@ -359,10 +385,11 @@ describe('check-in definition service versioning', () => {
         {
           allowMakeupCountPerCycle: 1,
           baseRewardConfig: { points: 10 },
-          cycleAnchorDate: '2026-04-01',
           cycleType: CheckInCycleTypeEnum.WEEKLY,
+          endDate: null,
           planCode: 'daily-check-in',
           planName: '每日签到',
+          startDate: '2026-04-01',
           status: CheckInPlanStatusEnum.PUBLISHED,
         } as any,
         9,
@@ -372,15 +399,14 @@ describe('check-in definition service versioning', () => {
     expect(drizzle.withTransaction).not.toHaveBeenCalled()
   })
 
-  it('maps legacy published-but-disabled plans to disabled status in detail view', async () => {
+  it('returns persisted status directly in detail view', async () => {
     const service = await createCheckInDefinitionService(
       createCheckInDrizzleMock(),
     )
 
     jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
       ...currentPlan,
-      isEnabled: false,
-      status: CheckInPlanStatusEnum.PUBLISHED,
+      status: CheckInPlanStatusEnum.DISABLED,
     })
     jest.spyOn(service as any, 'getPlanRules').mockResolvedValue(currentRules)
     jest.spyOn(service as any, 'buildPlanSummary').mockResolvedValue({
@@ -396,7 +422,59 @@ describe('check-in definition service versioning', () => {
         status: CheckInPlanStatusEnum.DISABLED,
       }),
     )
-    expect(detail).not.toHaveProperty('isEnabled')
+  })
+
+  it('persists plan status as a single status field', async () => {
+    const service = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
+
+    expect(
+      (service as any).buildPlanStatusPersistence(
+        CheckInPlanStatusEnum.DISABLED,
+      ),
+    ).toEqual({
+      status: CheckInPlanStatusEnum.DISABLED,
+    })
+  })
+
+  it('treats plan start and end dates as inclusive active boundaries', async () => {
+    const service = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
+
+    expect(
+      (service as any).isPlanActiveAt(
+        {
+          endDate: '2026-04-02',
+          startDate: '2026-04-01',
+          status: CheckInPlanStatusEnum.PUBLISHED,
+        },
+        new Date('2026-04-02T12:00:00.000Z'),
+      ),
+    ).toBe(true)
+
+    expect(
+      (service as any).isPlanActiveAt(
+        {
+          endDate: '2026-04-02',
+          startDate: '2026-04-03',
+          status: CheckInPlanStatusEnum.PUBLISHED,
+        },
+        new Date('2026-04-02T12:00:00.000Z'),
+      ),
+    ).toBe(false)
+
+    expect(
+      (service as any).isPlanActiveAt(
+        {
+          endDate: '2026-04-01',
+          startDate: '2026-03-20',
+          status: CheckInPlanStatusEnum.PUBLISHED,
+        },
+        new Date('2026-04-02T12:00:00.000Z'),
+      ),
+    ).toBe(false)
   })
 })
 
@@ -518,5 +596,56 @@ describe('check-in execution response contract', () => {
     expect(settleGrantReward).toHaveBeenNthCalledWith(2, 202, {
       source: 'streak_reward',
     })
+  })
+})
+
+describe('check-in schema constraints', () => {
+  it('declares strict plan and cycle check constraints', () => {
+    expect(getTableConfig(checkInPlan).checks.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'check_in_plan_status_valid_chk',
+        'check_in_plan_cycle_type_valid_chk',
+      ]),
+    )
+
+    expect(getTableConfig(checkInCycle).checks.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'check_in_cycle_version_non_negative_chk',
+        'check_in_cycle_last_signed_date_in_cycle_chk',
+        'check_in_cycle_current_streak_not_gt_signed_count_chk',
+        'check_in_cycle_makeup_used_count_not_gt_signed_count_chk',
+        'check_in_cycle_signed_count_not_gt_cycle_days_chk',
+      ]),
+    )
+  })
+
+  it('declares strict record, grant, and rule check constraints', () => {
+    expect(getTableConfig(checkInRecord).checks.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        'check_in_record_record_type_valid_chk',
+        'check_in_record_reward_status_valid_chk',
+        'check_in_record_reward_result_type_valid_chk',
+        'check_in_record_operator_type_valid_chk',
+        'check_in_record_reward_state_consistent_chk',
+      ]),
+    )
+
+    expect(
+      getTableConfig(checkInStreakRewardGrant).checks.map(({ name }) => name),
+    ).toEqual(
+      expect.arrayContaining([
+        'check_in_streak_grant_status_valid_chk',
+        'check_in_streak_grant_result_type_valid_chk',
+        'check_in_streak_grant_state_consistent_chk',
+      ]),
+    )
+
+    expect(
+      getTableConfig(checkInStreakRewardRule).checks.map(({ name }) => name),
+    ).toEqual(
+      expect.arrayContaining([
+        'check_in_streak_rule_status_valid_chk',
+      ]),
+    )
   })
 })

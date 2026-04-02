@@ -49,12 +49,11 @@ class AdminCheckInPlanBaseResponseDto extends PickType(BaseCheckInPlanDto, [
   'planName',
   'status',
   'cycleType',
-  'cycleAnchorDate',
+  'startDate',
   'allowMakeupCountPerCycle',
   'baseRewardConfig',
   'version',
-  'publishStartAt',
-  'publishEndAt',
+  'endDate',
 ] as const) {}
 
 class AdminCheckInReconciliationRecordBaseDto extends PickType(

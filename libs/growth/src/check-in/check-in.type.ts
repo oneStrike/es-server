@@ -52,7 +52,8 @@ export type CheckInPlanSnapshotSource = Pick<
   | 'planCode'
   | 'planName'
   | 'cycleType'
-  | 'cycleAnchorDate'
+  | 'startDate'
+  | 'endDate'
   | 'allowMakeupCountPerCycle'
   | 'baseRewardConfig'
   | 'version'
@@ -105,11 +106,12 @@ export type CheckInPlanSummaryView = Pick<
   | 'planCode'
   | 'planName'
   | 'cycleType'
-  | 'cycleAnchorDate'
+  | 'startDate'
+  | 'endDate'
   | 'allowMakeupCountPerCycle'
   | 'baseRewardConfig'
 > &
-Pick<CheckInPlan, 'status' | 'publishStartAt' | 'publishEndAt'>
+Pick<CheckInPlan, 'status'>
 
 /**
  * 签到记录共享的奖励状态字段。
@@ -161,11 +163,10 @@ type CreateCheckInPlanInsertFields = Pick<
   | 'planName'
   | 'status'
   | 'cycleType'
-  | 'cycleAnchorDate'
+  | 'startDate'
+  | 'endDate'
   | 'allowMakeupCountPerCycle'
   | 'baseRewardConfig'
-  | 'publishStartAt'
-  | 'publishEndAt'
 >
 
 /**
@@ -364,8 +365,6 @@ export type CheckInPlanPageView = CheckInPlanSnapshotSource &
   Pick<
     CheckInPlan,
     | 'status'
-    | 'publishStartAt'
-    | 'publishEndAt'
     | 'createdAt'
     | 'updatedAt'
   > & {

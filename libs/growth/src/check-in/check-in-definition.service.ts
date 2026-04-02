@@ -68,9 +68,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return {
       ...page,
       list: page.list.map((plan, index) => {
-        const { isEnabled: _legacyIsEnabled, ...planView } = plan
         return {
-          ...planView,
+          ...plan,
           status: this.resolvePlanStatus(plan),
           ...summaries[index],
         }
@@ -85,10 +84,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.getPlanRules(plan.id, plan.version),
       this.buildPlanSummary(plan.id, plan.version),
     ])
-    const { isEnabled: _legacyIsEnabled, ...planView } = plan
 
     return {
-      ...planView,
+      ...plan,
       status: this.resolvePlanStatus(plan),
       ...summary,
       streakRewardRules: rules.map((rule) => this.toStreakRuleView(rule)),
@@ -98,14 +96,14 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /**
    * 创建签到计划。
    *
-   * 会在写入前校验补签额度、发布时间窗以及“当前只允许一个生效计划”的运营约束。
+   * 会在写入前校验补签额度、计划起止日期以及“当前只允许一个生效计划”的运营约束。
    */
   async createPlan(dto: CreateCheckInPlanInput, adminUserId: number) {
     const cycleType = this.parseCycleType(dto.cycleType)
-    const cycleAnchorDate = this.parseDateOnly(
-      dto.cycleAnchorDate,
-      '周期锚点日期',
-    )
+    const startDate = this.parseDateOnly(dto.startDate, '计划开始日期')
+    const endDate = dto.endDate
+      ? this.parseDateOnly(dto.endDate, '计划结束日期')
+      : null
     const allowMakeupCountPerCycle = dto.allowMakeupCountPerCycle ?? 0
     if (
       !Number.isInteger(allowMakeupCountPerCycle) ||
@@ -113,7 +111,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     ) {
       throw new BadRequestException('每周期补签次数必须为非负整数')
     }
-    this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
+    this.ensurePlanDateRange(startDate, endDate)
     const baseRewardConfig = this.parseRewardConfig(dto.baseRewardConfig, {
       allowEmpty: true,
     })
@@ -122,8 +120,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.isPlanActiveAt(
         {
           status: dto.status,
-          publishStartAt: dto.publishStartAt ?? null,
-          publishEndAt: dto.publishEndAt ?? null,
+          startDate,
+          endDate,
         },
         now,
       )
@@ -143,12 +141,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             planName: dto.planName.trim(),
             ...this.buildPlanStatusPersistence(dto.status),
             cycleType,
-            cycleAnchorDate,
+            startDate,
+            endDate,
             allowMakeupCountPerCycle,
             baseRewardConfig,
             version: 1,
-            publishStartAt: dto.publishStartAt,
-            publishEndAt: dto.publishEndAt,
             createdById: adminUserId,
             updatedById: adminUserId,
           })
@@ -187,10 +184,14 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         dto.cycleType !== undefined
           ? this.parseCycleType(dto.cycleType)
           : this.parseCycleType(currentPlan.cycleType),
-      cycleAnchorDate:
-        dto.cycleAnchorDate !== undefined
-          ? this.parseDateOnly(dto.cycleAnchorDate, '周期锚点日期')
-          : this.toDateOnlyValue(currentPlan.cycleAnchorDate),
+      startDate:
+        dto.startDate !== undefined
+          ? this.parseDateOnly(dto.startDate, '计划开始日期')
+          : this.toDateOnlyValue(currentPlan.startDate),
+      endDate:
+        dto.endDate !== undefined
+          ? (dto.endDate ? this.parseDateOnly(dto.endDate, '计划结束日期') : null)
+          : (this.toDateOnlyValue(currentPlan.endDate) || null),
       allowMakeupCountPerCycle:
         dto.allowMakeupCountPerCycle !== undefined
           ? dto.allowMakeupCountPerCycle
@@ -201,14 +202,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           : this.parseStoredRewardConfig(currentPlan.baseRewardConfig, {
               allowEmpty: true,
             }),
-      publishStartAt:
-        dto.publishStartAt !== undefined
-          ? (dto.publishStartAt ?? null)
-          : currentPlan.publishStartAt,
-      publishEndAt:
-        dto.publishEndAt !== undefined
-          ? (dto.publishEndAt ?? null)
-          : currentPlan.publishEndAt,
     }
 
     if (
@@ -217,7 +210,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     ) {
       throw new BadRequestException('每周期补签次数必须为非负整数')
     }
-    this.ensurePublishWindow(nextPlan.publishStartAt, nextPlan.publishEndAt)
+    this.ensurePlanDateRange(nextPlan.startDate, nextPlan.endDate)
 
     const currentRules = await this.getPlanRules(
       currentPlan.id,
@@ -259,11 +252,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             planName: nextPlan.planName,
             ...this.buildPlanStatusPersistence(nextPlan.status),
             cycleType: nextPlan.cycleType,
-            cycleAnchorDate: nextPlan.cycleAnchorDate,
+            startDate: nextPlan.startDate,
+            endDate: nextPlan.endDate,
             allowMakeupCountPerCycle: nextPlan.allowMakeupCountPerCycle,
             baseRewardConfig: nextPlan.baseRewardConfig,
-            publishStartAt: nextPlan.publishStartAt,
-            publishEndAt: nextPlan.publishEndAt,
             version: nextVersion,
             updatedById: adminUserId,
           })
@@ -304,8 +296,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.isPlanActiveAt(
         {
           status: nextStatus,
-          publishStartAt: plan.publishStartAt,
-          publishEndAt: plan.publishEndAt,
+          startDate: plan.startDate,
+          endDate: plan.endDate,
         },
         new Date(),
       )

@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm'
 import {
-  boolean,
   check,
   date,
   index,
@@ -42,20 +41,15 @@ export const checkInPlan = pgTable('check_in_plan', {
    */
   status: smallint().default(0).notNull(),
   /**
-   * 兼容启停镜像字段。
-   * 仅用于兼容历史“已发布但停用”的旧数据读写，新的业务判断应只依赖 `status`。
-   */
-  isEnabled: boolean().default(true).notNull(),
-  /**
    * 周期类型。
    * 一期只允许 `daily`、`weekly`、`monthly` 三类稳定值。
    */
   cycleType: varchar({ length: 16 }).notNull(),
   /**
-   * 周期锚点日期。
-   * 使用 `date` 语义冻结计划切周期口径，不落成 timestamp。
+   * 计划开始日期。
+   * 计划从当天开始生效，同时作为周期切片的统一起点。
    */
-  cycleAnchorDate: date().notNull(),
+  startDate: date().notNull(),
   /**
    * 每周期可补签次数。
    * 只限制当前周期内的补签额度，必须为非负整数。
@@ -72,15 +66,10 @@ export const checkInPlan = pgTable('check_in_plan', {
    */
   version: integer().default(1).notNull(),
   /**
-   * 发布时间窗开始时间。
-   * 采用左闭右开口径中的左边界，`null` 表示不限制开始时间。
+   * 计划结束日期。
+   * `null` 表示长期有效；非空时计划在该自然日结束后失效。
    */
-  publishStartAt: timestamp({ withTimezone: true, precision: 6 }),
-  /**
-   * 发布时间窗结束时间。
-   * 采用左闭右开口径中的右边界，`null` 表示不限制结束时间。
-   */
-  publishEndAt: timestamp({ withTimezone: true, precision: 6 }),
+  endDate: date(),
   /**
    * 创建人 ID。
    * 仅用于后台审计，允许历史数据为空。
@@ -110,17 +99,17 @@ export const checkInPlan = pgTable('check_in_plan', {
    */
   unique('check_in_plan_plan_code_key').on(table.planCode),
   /**
-   * 状态与历史启停镜像索引。
+   * 状态索引。
    */
-  index('check_in_plan_status_is_enabled_idx').on(table.status, table.isEnabled),
+  index('check_in_plan_status_idx').on(table.status),
   /**
-   * 发布时间窗开始索引。
+   * 计划开始日期索引。
    */
-  index('check_in_plan_publish_start_at_idx').on(table.publishStartAt),
+  index('check_in_plan_start_date_idx').on(table.startDate),
   /**
-   * 发布时间窗结束索引。
+   * 计划结束日期索引。
    */
-  index('check_in_plan_publish_end_at_idx').on(table.publishEndAt),
+  index('check_in_plan_end_date_idx').on(table.endDate),
   /**
    * 删除时间索引。
    */
@@ -133,9 +122,30 @@ export const checkInPlan = pgTable('check_in_plan', {
     sql`${table.allowMakeupCountPerCycle} >= 0`,
   ),
   /**
+   * 计划状态必须落在受支持枚举内。
+   */
+  check(
+    'check_in_plan_status_valid_chk',
+    sql`${table.status} in (0, 1, 2, 3)`,
+  ),
+  /**
+   * 周期类型必须落在受支持枚举内。
+   */
+  check(
+    'check_in_plan_cycle_type_valid_chk',
+    sql`${table.cycleType} in ('daily', 'weekly', 'monthly')`,
+  ),
+  /**
    * 计划版本必须为正整数。
    */
   check('check_in_plan_version_positive_chk', sql`${table.version} > 0`),
+  /**
+   * 计划结束日期不得早于开始日期。
+   */
+  check(
+    'check_in_plan_date_range_valid_chk',
+    sql`${table.endDate} is null or ${table.endDate} >= ${table.startDate}`,
+  ),
 ])
 
 export type CheckInPlan = typeof checkInPlan.$inferSelect

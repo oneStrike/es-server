@@ -101,11 +101,10 @@ export class AppCheckInSummaryPlanDto extends PickType(BaseCheckInPlanDto, [
   'planName',
   'status',
   'cycleType',
-  'cycleAnchorDate',
+  'startDate',
   'allowMakeupCountPerCycle',
   'baseRewardConfig',
-  'publishStartAt',
-  'publishEndAt',
+  'endDate',
 ] as const) {}
 
 export class AppCheckInSummaryCycleDto extends IntersectionType(

@@ -117,6 +117,39 @@ export const checkInStreakRewardGrant = pgTable('check_in_streak_reward_grant', 
    */
   index('check_in_streak_grant_status_idx').on(table.grantStatus),
   /**
+   * 发放状态必须落在受支持枚举内。
+   */
+  check(
+    'check_in_streak_grant_status_valid_chk',
+    sql`${table.grantStatus} in (0, 1, 2)`,
+  ),
+  /**
+   * 发放结果类型必须落在受支持枚举内或为空。
+   */
+  check(
+    'check_in_streak_grant_result_type_valid_chk',
+    sql`${table.grantResultType} is null or ${table.grantResultType} in (1, 2, 3)`,
+  ),
+  /**
+   * 发放状态、结果类型和落定时间必须保持一致。
+   */
+  check(
+    'check_in_streak_grant_state_consistent_chk',
+    sql`(
+      ${table.grantStatus} = 0
+      and ${table.grantResultType} is null
+      and ${table.grantSettledAt} is null
+    ) or (
+      ${table.grantStatus} = 1
+      and ${table.grantResultType} in (1, 2)
+      and ${table.grantSettledAt} is not null
+    ) or (
+      ${table.grantStatus} = 2
+      and ${table.grantResultType} = 3
+      and ${table.grantSettledAt} is not null
+    )`,
+  ),
+  /**
    * 快照版本必须为正整数。
    */
   check(

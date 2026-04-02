@@ -105,6 +105,13 @@ export const checkInStreakRewardRule = pgTable('check_in_streak_reward_rule', {
    * 计划版本必须为正整数。
    */
   check('check_in_streak_rule_plan_version_positive_chk', sql`${table.planVersion} > 0`),
+  /**
+   * 规则状态必须落在受支持枚举内。
+   */
+  check(
+    'check_in_streak_rule_status_valid_chk',
+    sql`${table.status} in (0, 1)`,
+  ),
 ])
 
 export type CheckInStreakRewardRule = typeof checkInStreakRewardRule.$inferSelect

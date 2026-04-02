@@ -38,10 +38,9 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import dayjs from 'dayjs'
-import isoWeek from 'dayjs/plugin/isoWeek'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { and, asc, desc, eq, gt, gte, isNull, lte, ne, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, isNull, lte, ne, or } from 'drizzle-orm'
 import {
   CheckInCycleTypeEnum,
   CheckInPlanStatusEnum,
@@ -52,7 +51,6 @@ import {
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
-dayjs.extend(isoWeek)
 
 /**
  * 签到域共享 support 基类。
@@ -142,13 +140,13 @@ export abstract class CheckInServiceSupport {
     return `%${escapeLikePattern(trimmed)}%`
   }
 
-  /** 校验发布时间窗满足左闭右开前提：开始时间必须早于结束时间。 */
-  protected ensurePublishWindow(
-    publishStartAt?: Date | null,
-    publishEndAt?: Date | null,
+  /** 校验计划日期范围：结束日期不能早于开始日期。 */
+  protected ensurePlanDateRange(
+    startDate: string,
+    endDate?: string | null,
   ) {
-    if (publishStartAt && publishEndAt && publishStartAt >= publishEndAt) {
-      throw new BadRequestException('发布时间窗非法')
+    if (endDate && endDate < startDate) {
+      throw new BadRequestException('计划日期范围非法')
     }
   }
 
@@ -299,7 +297,8 @@ export abstract class CheckInServiceSupport {
       planCode: plan.planCode,
       planName: plan.planName,
       cycleType: this.parseCycleType(plan.cycleType),
-      cycleAnchorDate: this.toDateOnlyValue(plan.cycleAnchorDate),
+      startDate: this.toDateOnlyValue(plan.startDate),
+      endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
       allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
       baseRewardConfig: this.parseStoredRewardConfig(plan.baseRewardConfig, {
         allowEmpty: true,
@@ -335,18 +334,18 @@ export abstract class CheckInServiceSupport {
   /**
    * 计算给定时间点所属的周期边界。
    *
-   * 周切片使用锚点周几，月切片使用锚点日，所有结果都基于部署时区自然日生成。
+   * 日/周/月都从计划开始日期向后推导，所有结果都基于部署时区自然日生成。
    */
   protected buildCycleFrame(
-    plan: Pick<CheckInPlanSelect, 'cycleType' | 'cycleAnchorDate'>,
+    plan: Pick<CheckInPlanSelect, 'cycleType' | 'startDate'>,
     now: Date,
   ) {
     const targetDate = dayjs
       .tz(this.formatDateOnly(now), 'YYYY-MM-DD', this.getAppTimeZone())
       .startOf('day')
-    const anchorDate = dayjs
+    const startDate = dayjs
       .tz(
-        this.toDateOnlyValue(plan.cycleAnchorDate),
+        this.toDateOnlyValue(plan.startDate),
         'YYYY-MM-DD',
         this.getAppTimeZone(),
       )
@@ -363,9 +362,8 @@ export abstract class CheckInServiceSupport {
     }
 
     if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
-      const anchorWeekday = anchorDate.isoWeekday()
-      const offset = (targetDate.isoWeekday() - anchorWeekday + 7) % 7
-      const cycleStart = targetDate.subtract(offset, 'day')
+      const cycleIndex = Math.floor(targetDate.diff(startDate, 'day') / 7)
+      const cycleStart = startDate.add(cycleIndex * 7, 'day')
       const cycleEnd = cycleStart.add(6, 'day')
       return {
         cycleKey: `week-${cycleStart.format('YYYY-MM-DD')}`,
@@ -374,7 +372,7 @@ export abstract class CheckInServiceSupport {
       }
     }
 
-    const anchorDay = anchorDate.date()
+    const anchorDay = startDate.date()
     const buildMonthAnchor = (base: typeof targetDate) =>
       base
         .startOf('month')
@@ -394,81 +392,40 @@ export abstract class CheckInServiceSupport {
     }
   }
 
-  /**
-   * 将历史 `isEnabled` 兼容字段折叠为单一计划状态。
-   *
-   * 老数据里“已发布但停用”仍以 `status = PUBLISHED + isEnabled = false` 存储，
-   * 这里统一把它解释成新的 `DISABLED` 状态。
-   */
-  protected resolvePlanStatus(
-    plan: Pick<CheckInPlanSelect, 'status'> &
-      Partial<Pick<CheckInPlanSelect, 'isEnabled'>>,
-  ) {
-    if (
-      plan.status === CheckInPlanStatusEnum.PUBLISHED &&
-      plan.isEnabled === false
-    ) {
-      return CheckInPlanStatusEnum.DISABLED
-    }
+  /** 统一把数据库中的计划状态收口为签到域状态枚举。 */
+  protected resolvePlanStatus(plan: Pick<CheckInPlanSelect, 'status'>) {
     return plan.status as CheckInPlanStatusEnum
   }
 
-  /**
-   * 把单一计划状态写回数据库状态列，并同步维护历史启停镜像字段。
-   *
-   * 兼容字段只用于平滑迁移，不再参与新的外部契约设计。
-   */
+  /** 把单一计划状态写回数据库状态列。 */
   protected buildPlanStatusPersistence(status: CheckInPlanStatusEnum) {
     return {
       status,
-      isEnabled: status !== CheckInPlanStatusEnum.DISABLED,
     }
   }
 
-  /**
-   * 构建管理端计划状态筛选条件，并兼容旧版停用数据。
-   *
-   * 在彻底删除 `isEnabled` 之前，`DISABLED` 需要同时命中新的显式状态值和
-   * 历史 `PUBLISHED + isEnabled = false` 组合。
-   */
+  /** 构建管理端计划状态筛选条件。 */
   protected buildPlanStatusCondition(status: CheckInPlanStatusEnum): SQL {
-    if (status === CheckInPlanStatusEnum.DISABLED) {
-      return or(
-        eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.DISABLED),
-        and(
-          eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
-          eq(this.checkInPlanTable.isEnabled, false),
-        ),
-      )!
-    }
-
-    if (status === CheckInPlanStatusEnum.PUBLISHED) {
-      return and(
-        eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
-        eq(this.checkInPlanTable.isEnabled, true),
-      )!
-    }
-
     return eq(this.checkInPlanTable.status, status)
   }
 
   /**
-   * 判断计划在某个绝对时间点是否处于生效态。
+   * 判断计划在某个自然日是否处于生效态。
    *
-   * 这里统一执行“状态为已发布 + 发布时间窗左闭右开”口径，并兼容旧版停用数据。
+   * 这里统一执行“状态为已发布 + 开始/结束日期都按自然日包含边界”口径。
    */
   protected isPlanActiveAt(
-    plan: Pick<CheckInPlanSelect, 'status' | 'publishStartAt' | 'publishEndAt'> &
-      Partial<Pick<CheckInPlanSelect, 'isEnabled'>>,
+    plan: Pick<CheckInPlanSelect, 'status' | 'startDate' | 'endDate'>,
     now: Date,
   ) {
     if (this.resolvePlanStatus(plan) !== CheckInPlanStatusEnum.PUBLISHED) {
       return false
     }
-    if (plan.publishStartAt && plan.publishStartAt > now) {
+    const today = this.formatDateOnly(now)
+    if (plan.startDate > today) {
       return false
     }
-    if (plan.publishEndAt && plan.publishEndAt <= now) {
+    if (plan.endDate && plan.endDate < today) {
       return false
     }
     return true
@@ -482,6 +439,7 @@ export abstract class CheckInServiceSupport {
    * 若命中多条有效计划，说明运营配置已破坏单计划生效合同，这里直接抛冲突异常。
    */
   protected async findCurrentActivePlan(now = new Date(), db: Db = this.db) {
+    const today = this.formatDateOnly(now)
     const plans = await db
       .select()
       .from(this.checkInPlanTable)
@@ -489,14 +447,10 @@ export abstract class CheckInServiceSupport {
         and(
           isNull(this.checkInPlanTable.deletedAt),
           eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
-          eq(this.checkInPlanTable.isEnabled, true),
+          lte(this.checkInPlanTable.startDate, today),
           or(
-            isNull(this.checkInPlanTable.publishStartAt),
-            lte(this.checkInPlanTable.publishStartAt, now),
-          ),
-          or(
-            isNull(this.checkInPlanTable.publishEndAt),
-            gt(this.checkInPlanTable.publishEndAt, now),
+            isNull(this.checkInPlanTable.endDate),
+            gte(this.checkInPlanTable.endDate, today),
           ),
         ),
       )
@@ -526,6 +480,7 @@ export abstract class CheckInServiceSupport {
     planId: number,
     now = new Date(),
   ) {
+    const today = this.formatDateOnly(now)
     const [otherPlan] = await this.db
       .select({ id: this.checkInPlanTable.id })
       .from(this.checkInPlanTable)
@@ -534,14 +489,10 @@ export abstract class CheckInServiceSupport {
           isNull(this.checkInPlanTable.deletedAt),
           ne(this.checkInPlanTable.id, planId),
           eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
-          eq(this.checkInPlanTable.isEnabled, true),
+          lte(this.checkInPlanTable.startDate, today),
           or(
-            isNull(this.checkInPlanTable.publishStartAt),
-            lte(this.checkInPlanTable.publishStartAt, now),
-          ),
-          or(
-            isNull(this.checkInPlanTable.publishEndAt),
-            gt(this.checkInPlanTable.publishEndAt, now),
+            isNull(this.checkInPlanTable.endDate),
+            gte(this.checkInPlanTable.endDate, today),
           ),
         ),
       )
@@ -1201,15 +1152,15 @@ export abstract class CheckInServiceSupport {
 
   // ==================== 版本与基础工具 ====================
 
-  /** 比较两个可空时间值是否完全一致。 */
-  protected isSameNullableDate(left?: Date | null, right?: Date | null) {
+  /** 比较两个可空日期值是否完全一致。 */
+  protected isSameNullableDate(left?: string | null, right?: string | null) {
     if (!left && !right) {
       return true
     }
     if (!left || !right) {
       return false
     }
-    return left.getTime() === right.getTime()
+    return left === right
   }
 
   /**
@@ -1221,11 +1172,10 @@ export abstract class CheckInServiceSupport {
     currentPlan: CheckInPlanSelect
     nextPlan: {
       cycleType: CheckInCycleTypeEnum
-      cycleAnchorDate: CheckInDateOnly
+      startDate: CheckInDateOnly
+      endDate?: CheckInDateOnly | null
       allowMakeupCountPerCycle: number
       baseRewardConfig?: CheckInRewardConfig | null
-      publishStartAt?: Date | null
-      publishEndAt?: Date | null
     }
     currentRules: CheckInStreakRewardRuleSelect[]
     nextRules: CreateCheckInStreakRewardRuleInsert[]
@@ -1233,10 +1183,7 @@ export abstract class CheckInServiceSupport {
     if (input.currentPlan.cycleType !== input.nextPlan.cycleType) {
       return true
     }
-    if (
-      this.toDateOnlyValue(input.currentPlan.cycleAnchorDate) !==
-      input.nextPlan.cycleAnchorDate
-    ) {
+    if (this.toDateOnlyValue(input.currentPlan.startDate) !== input.nextPlan.startDate) {
       return true
     }
     if (
@@ -1256,12 +1203,8 @@ export abstract class CheckInServiceSupport {
     }
     if (
       !this.isSameNullableDate(
-        input.currentPlan.publishStartAt,
-        input.nextPlan.publishStartAt,
-      ) ||
-      !this.isSameNullableDate(
-        input.currentPlan.publishEndAt,
-        input.nextPlan.publishEndAt,
+        input.currentPlan.endDate,
+        input.nextPlan.endDate,
       )
     ) {
       return true

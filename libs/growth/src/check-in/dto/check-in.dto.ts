@@ -68,11 +68,11 @@ export class BaseCheckInPlanDto extends BaseDto {
   cycleType!: CheckInCycleTypeEnum
 
   @StringProperty({
-    description: '周期锚点日期（date 语义）',
+    description: '计划开始日期（date 语义，同时作为周期切片起点）',
     example: '2026-04-01',
     type: 'ISO8601',
   })
-  cycleAnchorDate!: string
+  startDate!: string
 
   @NumberProperty({
     description: '每周期允许补签次数',
@@ -97,19 +97,13 @@ export class BaseCheckInPlanDto extends BaseDto {
   })
   version!: number
 
-  @DateProperty({
-    description: '发布时间开始时间',
-    example: '2026-04-01T00:00:00.000Z',
+  @StringProperty({
+    description: '计划结束日期（date 语义，未配置时长期有效）',
+    example: '2026-05-01',
     required: false,
+    type: 'ISO8601',
   })
-  publishStartAt?: Date | null
-
-  @DateProperty({
-    description: '发布时间结束时间',
-    example: '2026-05-01T00:00:00.000Z',
-    required: false,
-  })
-  publishEndAt?: Date | null
+  endDate?: string | null
 
   @NumberProperty({
     description: '创建人ID',
@@ -208,7 +202,8 @@ export class BaseCheckInCycleDto extends BaseDto {
       planCode: 'daily-check-in',
       planName: '每日签到',
       cycleType: CheckInCycleTypeEnum.WEEKLY,
-      cycleAnchorDate: '2026-04-01',
+      startDate: '2026-04-01',
+      endDate: '2026-05-31',
       allowMakeupCountPerCycle: 2,
       version: 1,
       streakRewardRules: [],

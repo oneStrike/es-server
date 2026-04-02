@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "56ce923b-6c25-4b41-a705-dbaed90ed119",
+  "id": "de9e539e-1c70-4205-aaa2-81a8d206d7da",
   "prevIds": [
-    "cc322997-5c36-41be-bcec-be5d6d29c7dc"
+    "cffb6dad-8cee-400c-876b-8378fbea07e9"
   ],
   "ddl": [
     {
@@ -2539,32 +2539,6 @@
       "table": "check_in_plan"
     },
     {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "true",
-      "generated": null,
-      "identity": null,
-      "name": "is_enabled",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_plan"
-    },
-    {
-      "type": "varchar(100)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "timezone",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_plan"
-    },
-    {
       "type": "varchar(16)",
       "typeSchema": null,
       "notNull": true,
@@ -2585,7 +2559,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "cycle_anchor_date",
+      "name": "start_date",
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_plan"
@@ -2630,27 +2604,14 @@
       "table": "check_in_plan"
     },
     {
-      "type": "timestamp(6) with time zone",
+      "type": "date",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "publish_start_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_plan"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "publish_end_at",
+      "name": "end_date",
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_plan"
@@ -3276,19 +3237,6 @@
       "generated": null,
       "identity": null,
       "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "smallint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "sort_order",
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_streak_reward_rule"
@@ -13372,13 +13320,6 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
-        },
-        {
-          "value": "is_enabled",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
         }
       ],
       "isUnique": false,
@@ -13386,7 +13327,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "check_in_plan_status_is_enabled_idx",
+      "name": "check_in_plan_status_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "check_in_plan"
@@ -13395,7 +13336,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "publish_start_at",
+          "value": "start_date",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -13407,7 +13348,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "check_in_plan_publish_start_at_idx",
+      "name": "check_in_plan_start_date_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "check_in_plan"
@@ -13416,7 +13357,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "publish_end_at",
+          "value": "end_date",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -13428,7 +13369,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "check_in_plan_publish_end_at_idx",
+      "name": "check_in_plan_end_date_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "check_in_plan"
@@ -21119,6 +21060,41 @@
       "table": "check_in_cycle"
     },
     {
+      "value": "\"version\" >= 0",
+      "name": "check_in_cycle_version_non_negative_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_cycle"
+    },
+    {
+      "value": "\"last_signed_date\" is null or (\"last_signed_date\" >= \"cycle_start_date\" and \"last_signed_date\" <= \"cycle_end_date\")",
+      "name": "check_in_cycle_last_signed_date_in_cycle_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_cycle"
+    },
+    {
+      "value": "\"current_streak\" <= \"signed_count\"",
+      "name": "check_in_cycle_current_streak_not_gt_signed_count_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_cycle"
+    },
+    {
+      "value": "\"makeup_used_count\" <= \"signed_count\"",
+      "name": "check_in_cycle_makeup_used_count_not_gt_signed_count_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_cycle"
+    },
+    {
+      "value": "\"signed_count\" <= (\"cycle_end_date\" - \"cycle_start_date\" + 1)",
+      "name": "check_in_cycle_signed_count_not_gt_cycle_days_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_cycle"
+    },
+    {
       "value": "\"plan_snapshot_version\" > 0",
       "name": "check_in_cycle_snapshot_version_positive_chk",
       "entityType": "checks",
@@ -21140,11 +21116,88 @@
       "table": "check_in_plan"
     },
     {
+      "value": "\"status\" in (0, 1, 2, 3)",
+      "name": "check_in_plan_status_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_plan"
+    },
+    {
+      "value": "\"cycle_type\" in ('daily', 'weekly', 'monthly')",
+      "name": "check_in_plan_cycle_type_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_plan"
+    },
+    {
       "value": "\"version\" > 0",
       "name": "check_in_plan_version_positive_chk",
       "entityType": "checks",
       "schema": "public",
       "table": "check_in_plan"
+    },
+    {
+      "value": "\"end_date\" is null or \"end_date\" >= \"start_date\"",
+      "name": "check_in_plan_date_range_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_plan"
+    },
+    {
+      "value": "\"record_type\" in (1, 2)",
+      "name": "check_in_record_record_type_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_record"
+    },
+    {
+      "value": "\"reward_status\" is null or \"reward_status\" in (0, 1, 2)",
+      "name": "check_in_record_reward_status_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_record"
+    },
+    {
+      "value": "\"reward_result_type\" is null or \"reward_result_type\" in (1, 2, 3)",
+      "name": "check_in_record_reward_result_type_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_record"
+    },
+    {
+      "value": "\"operator_type\" in (1, 2, 3)",
+      "name": "check_in_record_operator_type_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_record"
+    },
+    {
+      "value": "(\n      \"reward_status\" is null\n      and \"reward_result_type\" is null\n      and \"reward_settled_at\" is null\n    ) or (\n      \"reward_status\" = 0\n      and \"reward_result_type\" is null\n      and \"reward_settled_at\" is null\n    ) or (\n      \"reward_status\" = 1\n      and \"reward_result_type\" in (1, 2)\n      and \"reward_settled_at\" is not null\n    ) or (\n      \"reward_status\" = 2\n      and \"reward_result_type\" = 3\n      and \"reward_settled_at\" is not null\n    )",
+      "name": "check_in_record_reward_state_consistent_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_record"
+    },
+    {
+      "value": "\"grant_status\" in (0, 1, 2)",
+      "name": "check_in_streak_grant_status_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_streak_reward_grant"
+    },
+    {
+      "value": "\"grant_result_type\" is null or \"grant_result_type\" in (1, 2, 3)",
+      "name": "check_in_streak_grant_result_type_valid_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_streak_reward_grant"
+    },
+    {
+      "value": "(\n      \"grant_status\" = 0\n      and \"grant_result_type\" is null\n      and \"grant_settled_at\" is null\n    ) or (\n      \"grant_status\" = 1\n      and \"grant_result_type\" in (1, 2)\n      and \"grant_settled_at\" is not null\n    ) or (\n      \"grant_status\" = 2\n      and \"grant_result_type\" = 3\n      and \"grant_settled_at\" is not null\n    )",
+      "name": "check_in_streak_grant_state_consistent_chk",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "check_in_streak_reward_grant"
     },
     {
       "value": "\"plan_snapshot_version\" > 0",
@@ -21168,8 +21221,8 @@
       "table": "check_in_streak_reward_rule"
     },
     {
-      "value": "\"sort_order\" >= 0",
-      "name": "check_in_streak_rule_sort_order_non_negative_chk",
+      "value": "\"status\" in (0, 1)",
+      "name": "check_in_streak_rule_status_valid_chk",
       "entityType": "checks",
       "schema": "public",
       "table": "check_in_streak_reward_rule"

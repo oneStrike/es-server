@@ -70,7 +70,7 @@ export const checkInCycle = pgTable('check_in_cycle', {
   planSnapshotVersion: integer().notNull(),
   /**
    * 周期快照。
-   * 至少冻结周期类型、周期锚点、补签额度和基础奖励配置等关键字段。
+   * 至少冻结周期类型、计划起止日期、补签额度和基础奖励配置等关键字段。
    */
   planSnapshot: jsonb().notNull(),
   /**
@@ -124,6 +124,38 @@ export const checkInCycle = pgTable('check_in_cycle', {
   check(
     'check_in_cycle_current_streak_non_negative_chk',
     sql`${table.currentStreak} >= 0`,
+  ),
+  /**
+   * 周期版本必须为非负整数。
+   */
+  check('check_in_cycle_version_non_negative_chk', sql`${table.version} >= 0`),
+  /**
+   * 最近签到日必须落在当前周期内。
+   */
+  check(
+    'check_in_cycle_last_signed_date_in_cycle_chk',
+    sql`${table.lastSignedDate} is null or (${table.lastSignedDate} >= ${table.cycleStartDate} and ${table.lastSignedDate} <= ${table.cycleEndDate})`,
+  ),
+  /**
+   * 连续签到天数不得超过已签天数。
+   */
+  check(
+    'check_in_cycle_current_streak_not_gt_signed_count_chk',
+    sql`${table.currentStreak} <= ${table.signedCount}`,
+  ),
+  /**
+   * 已用补签次数不得超过已签天数。
+   */
+  check(
+    'check_in_cycle_makeup_used_count_not_gt_signed_count_chk',
+    sql`${table.makeupUsedCount} <= ${table.signedCount}`,
+  ),
+  /**
+   * 已签天数不得超过周期总天数。
+   */
+  check(
+    'check_in_cycle_signed_count_not_gt_cycle_days_chk',
+    sql`${table.signedCount} <= (${table.cycleEndDate} - ${table.cycleStartDate} + 1)`,
   ),
   /**
    * 周期快照版本必须为正整数。
