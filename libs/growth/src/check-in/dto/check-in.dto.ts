@@ -41,14 +41,14 @@ export class CheckInRewardConfigDto implements CheckInRewardConfig {
 export class BaseCheckInPlanDto extends BaseDto {
   @StringProperty({
     description: '签到计划编码',
-    example: 'daily-check-in',
+    example: 'growth-check-in',
     maxLength: 50,
   })
   planCode!: string
 
   @StringProperty({
     description: '签到计划名称',
-    example: '每日签到',
+    example: '成长签到',
     maxLength: 200,
   })
   planName!: string
@@ -199,8 +199,8 @@ export class BaseCheckInCycleDto extends BaseDto {
     description: '周期快照',
     example: {
       id: 1,
-      planCode: 'daily-check-in',
-      planName: '每日签到',
+      planCode: 'growth-check-in',
+      planName: '成长签到',
       cycleType: CheckInCycleTypeEnum.WEEKLY,
       startDate: '2026-04-01',
       endDate: '2026-05-31',

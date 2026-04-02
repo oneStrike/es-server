@@ -42,7 +42,7 @@ export const checkInPlan = pgTable('check_in_plan', {
   status: smallint().default(0).notNull(),
   /**
    * 周期类型。
-   * 一期只允许 `daily`、`weekly`、`monthly` 三类稳定值。
+   * 一期只允许 `weekly`、`monthly` 两类稳定值。
    */
   cycleType: varchar({ length: 16 }).notNull(),
   /**
@@ -133,7 +133,7 @@ export const checkInPlan = pgTable('check_in_plan', {
    */
   check(
     'check_in_plan_cycle_type_valid_chk',
-    sql`${table.cycleType} in ('daily', 'weekly', 'monthly')`,
+    sql`${table.cycleType} in ('weekly', 'monthly')`,
   ),
   /**
    * 计划版本必须为正整数。

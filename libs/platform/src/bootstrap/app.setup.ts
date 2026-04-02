@@ -29,12 +29,12 @@ export async function setupApp(
 
   app.setGlobalPrefix(config.globalApiPrefix)
 
-  // if (isDevelopment()) {
-  //   app.enableCors({
-  //     origin: true,
-  //     credentials: true,
-  //   })
-  // }
+  if (isDevelopment()) {
+    app.enableCors({
+      origin: true,
+      credentials: true,
+    })
+  }
 
   fastifyAdapter.getInstance().get('/favicon.ico', async (_req, reply) => {
     reply.type('image/x-icon').code(204).send()

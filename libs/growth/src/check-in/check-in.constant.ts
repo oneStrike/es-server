@@ -16,8 +16,6 @@ export enum CheckInPlanStatusEnum {
  * 签到周期类型枚举。
  */
 export enum CheckInCycleTypeEnum {
-  /** 每日一期 */
-  DAILY = 'daily',
   /** 按周切周期 */
   WEEKLY = 'weekly',
   /** 按月切周期 */

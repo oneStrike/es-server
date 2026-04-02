@@ -182,6 +182,23 @@ describe('check-in support contracts', () => {
     process.env.TZ = previousTimeZone
   })
 
+  it('exposes weekly and monthly only as cycle types', () => {
+    expect(Object.values(CheckInCycleTypeEnum)).toEqual([
+      CheckInCycleTypeEnum.WEEKLY,
+      CheckInCycleTypeEnum.MONTHLY,
+    ])
+  })
+
+  it('rejects daily as an invalid cycle type', async () => {
+    const service = await createCheckInDefinitionService(
+      createCheckInDrizzleMock(),
+    )
+
+    expect(() => (service as any).parseCycleType('daily')).toThrow(
+      '周期类型非法',
+    )
+  })
+
   it('freezes plan snapshot fields and versioned streak rules', async () => {
     const service = await createCheckInDefinitionService(
       createCheckInDrizzleMock(),
@@ -195,8 +212,8 @@ describe('check-in support contracts', () => {
           cycleType: CheckInCycleTypeEnum.WEEKLY,
           endDate: '2026-05-31',
           id: 1,
-          planCode: 'daily-check-in',
-          planName: '每日签到',
+          planCode: 'growth-check-in',
+          planName: '成长签到',
           startDate: '2026-04-01',
           version: 2,
         },
@@ -218,8 +235,8 @@ describe('check-in support contracts', () => {
       cycleType: CheckInCycleTypeEnum.WEEKLY,
       endDate: '2026-05-31',
       id: 1,
-      planCode: 'daily-check-in',
-      planName: '每日签到',
+      planCode: 'growth-check-in',
+      planName: '成长签到',
       startDate: '2026-04-01',
       streakRewardRules: [
         {
@@ -341,8 +358,8 @@ describe('check-in definition service versioning', () => {
     cycleType: CheckInCycleTypeEnum.WEEKLY,
     endDate: null,
     id: 1,
-    planCode: 'daily-check-in',
-    planName: '每日签到',
+    planCode: 'growth-check-in',
+    planName: '成长签到',
     startDate: '2026-04-01',
     status: CheckInPlanStatusEnum.DRAFT,
     version: 1,
@@ -410,11 +427,11 @@ describe('check-in definition service versioning', () => {
     jest.spyOn(service as any, 'getPlanById').mockResolvedValue(currentPlan)
     jest.spyOn(service as any, 'getPlanRules').mockResolvedValue(currentRules)
 
-    await service.updatePlan({ id: 1, planName: '每日签到（新版文案）' }, 9)
+    await service.updatePlan({ id: 1, planName: '成长签到（新版文案）' }, 9)
 
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({
-        planName: '每日签到（新版文案）',
+        planName: '成长签到（新版文案）',
         version: 1,
       }),
     )
@@ -437,8 +454,8 @@ describe('check-in definition service versioning', () => {
           baseRewardConfig: { points: 10 },
           cycleType: CheckInCycleTypeEnum.WEEKLY,
           endDate: null,
-          planCode: 'daily-check-in',
-          planName: '每日签到',
+          planCode: 'growth-check-in',
+          planName: '成长签到',
           startDate: '2026-04-01',
           status: CheckInPlanStatusEnum.PUBLISHED,
         } as any,

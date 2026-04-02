@@ -17,8 +17,8 @@ describe('admin check-in dto reward config contract', () => {
       baseRewardConfig: { experience: 5, points: 10 },
       cycleType: CheckInCycleTypeEnum.WEEKLY,
       startDate: '2026-04-01',
-      planCode: 'daily-check-in',
-      planName: '每日签到',
+      planCode: 'growth-check-in',
+      planName: '成长签到',
       status: CheckInPlanStatusEnum.DRAFT,
     })
 
@@ -31,8 +31,8 @@ describe('admin check-in dto reward config contract', () => {
       baseRewardConfig: '{"points":10,"experience":5}',
       cycleType: CheckInCycleTypeEnum.WEEKLY,
       startDate: '2026-04-01',
-      planCode: 'daily-check-in',
-      planName: '每日签到',
+      planCode: 'growth-check-in',
+      planName: '成长签到',
       status: CheckInPlanStatusEnum.DRAFT,
     })
 
@@ -58,6 +58,26 @@ describe('admin check-in dto reward config contract', () => {
       expect.arrayContaining([
         expect.objectContaining({
           property: 'rewardConfig',
+        }),
+      ]),
+    )
+  })
+
+  it('rejects daily as a removed cycle type', () => {
+    const dto = plainToInstance(CreateCheckInPlanDto, {
+      allowMakeupCountPerCycle: 1,
+      baseRewardConfig: { experience: 5, points: 10 },
+      cycleType: 'daily',
+      startDate: '2026-04-01',
+      planCode: 'check-in-weekly',
+      planName: '每周签到',
+      status: CheckInPlanStatusEnum.DRAFT,
+    })
+
+    expect(validateSync(dto)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          property: 'cycleType',
         }),
       ]),
     )

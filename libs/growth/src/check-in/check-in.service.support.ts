@@ -140,7 +140,6 @@ export abstract class CheckInServiceSupport {
   /** 解析并校验签到周期类型。 */
   protected parseCycleType(value?: string | null) {
     if (
-      value === CheckInCycleTypeEnum.DAILY ||
       value === CheckInCycleTypeEnum.WEEKLY ||
       value === CheckInCycleTypeEnum.MONTHLY
     ) {
@@ -321,7 +320,7 @@ export abstract class CheckInServiceSupport {
   /**
    * 计算给定时间点所属的周期边界。
    *
-   * 日/周/月都从计划开始日期向后推导，所有结果都基于部署时区自然日生成。
+   * 周/月都从计划开始日期向后推导，所有结果都基于部署时区自然日生成。
    */
   protected buildCycleFrame(
     plan: Pick<CheckInPlanSelect, 'cycleType' | 'startDate'>,
@@ -338,15 +337,6 @@ export abstract class CheckInServiceSupport {
       )
       .startOf('day')
     const cycleType = this.parseCycleType(plan.cycleType)
-
-    if (cycleType === CheckInCycleTypeEnum.DAILY) {
-      const dateKey = targetDate.format('YYYY-MM-DD')
-      return {
-        cycleKey: dateKey,
-        cycleStartDate: dateKey,
-        cycleEndDate: dateKey,
-      }
-    }
 
     if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
       const cycleIndex = Math.floor(targetDate.diff(startDate, 'day') / 7)
