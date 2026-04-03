@@ -3,7 +3,7 @@ import type { NumberPropertyOptions } from './types'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsNumber, IsOptional, Max, Min } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 数字属性装饰器
@@ -38,7 +38,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
  * @returns 装饰器函数
  */
 export function NumberProperty(options: NumberPropertyOptions) {
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   if (
     options.min !== undefined &&
@@ -101,7 +102,7 @@ export function NumberProperty(options: NumberPropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => {
+    ...buildContractPropertyDecorators(options, () => {
       const apiPropertyOptions: ApiPropertyOptions = {
         description: options.description,
         example: options.example,

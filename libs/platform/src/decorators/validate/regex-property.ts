@@ -2,7 +2,7 @@ import type { RegexPropertyOptions } from './types'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsOptional, IsString, Matches } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 正则表达式属性装饰器
@@ -37,7 +37,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
  * @returns 装饰器函数
  */
 export function RegexProperty(options: RegexPropertyOptions) {
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   const decorators: any[] = []
 
@@ -76,7 +77,7 @@ export function RegexProperty(options: RegexPropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => ({
+    ...buildContractPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,

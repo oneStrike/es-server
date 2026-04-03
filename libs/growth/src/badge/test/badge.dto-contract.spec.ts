@@ -1,5 +1,18 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import * as badge from '@libs/growth/badge'
+import { DECORATORS } from '@nestjs/swagger/dist/constants'
+
+function readSwaggerMetadata(target: object, propertyKey: string) {
+  return {
+    propertyKeys:
+      Reflect.getMetadata(DECORATORS.API_MODEL_PROPERTIES_ARRAY, target) ?? [],
+    propertyMetadata: Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      target,
+      propertyKey,
+    ),
+  }
+}
 
 describe('badge dto contract exports', () => {
   it('exports badge scene DTO contracts from libs', () => {
@@ -12,9 +25,12 @@ describe('badge dto contract exports', () => {
         CreateUserBadgeDto: expect.any(Function),
         QueryBadgeUserPageDto: expect.any(Function),
         QueryUserBadgeDto: expect.any(Function),
+        QueryUserBadgePublicDto: expect.any(Function),
         UpdateUserBadgeDto: expect.any(Function),
         UpdateUserBadgeStatusDto: expect.any(Function),
         UserBadgeItemDto: expect.any(Function),
+        UserBadgePublicInfoDto: expect.any(Function),
+        UserBadgePublicItemDto: expect.any(Function),
         UserBadgeStatisticsDto: expect.any(Function),
       }),
     )
@@ -39,5 +55,45 @@ describe('badge dto contract exports', () => {
     expect(
       existsSync('libs/growth/src/badge/badge.type.ts'),
     ).toBe(false)
+  })
+
+  it.each([
+    {
+      dto: badge.QueryUserBadgePublicDto,
+      propertyKey: 'business',
+    },
+    {
+      dto: badge.QueryUserBadgePublicDto,
+      propertyKey: 'eventKey',
+    },
+    {
+      dto: badge.UserBadgePublicInfoDto,
+      propertyKey: 'business',
+    },
+    {
+      dto: badge.UserBadgePublicInfoDto,
+      propertyKey: 'eventKey',
+    },
+  ])(
+    'keeps $propertyKey out of app badge public contract on $dto.name',
+    ({ dto, propertyKey }) => {
+      const { propertyKeys, propertyMetadata } = readSwaggerMetadata(
+        dto.prototype,
+        propertyKey,
+      )
+
+      expect(propertyKeys).not.toContain(`:${propertyKey}`)
+      expect(propertyMetadata).toBeUndefined()
+    },
+  )
+
+  it('makes app user badge DTO aliases point to public badge contracts', () => {
+    const source = readFileSync(
+      'apps/app-api/src/modules/user/dto/user.dto.ts',
+      'utf8',
+    )
+
+    expect(source).toContain('QueryUserBadgePublicDto as QueryMyBadgeDto')
+    expect(source).toContain('UserBadgePublicItemDto as UserBadgeItemDto')
   })
 })

@@ -7,7 +7,7 @@ import {
   IsObject,
   IsOptional,
 } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 嵌套对象属性装饰器
@@ -37,7 +37,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
  * @returns 装饰器函数
  */
 export function NestedProperty(options: NestedPropertyOptions) {
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   const decorators: any[] = []
 
@@ -54,7 +55,7 @@ export function NestedProperty(options: NestedPropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => {
+    ...buildContractPropertyDecorators(options, () => {
       const apiPropertyOptions: ApiPropertyOptions = {
         description: options.description,
         required: options.required ?? true,

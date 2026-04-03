@@ -10,7 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 字符串属性装饰器
@@ -36,7 +36,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
  * @returns 装饰器函数
  */
 export function StringProperty(options: StringPropertyOptions) {
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   if (
     options.minLength &&
@@ -115,7 +116,7 @@ export function StringProperty(options: StringPropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => {
+    ...buildContractPropertyDecorators(options, () => {
       const apiPropertyOptions: ApiPropertyOptions = {
         description: options.description,
         example: options.example,

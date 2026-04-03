@@ -1,3 +1,4 @@
+import type { ArgumentMetadata } from '@nestjs/common'
 import {
   ArrayProperty,
   BitmaskProperty,
@@ -10,6 +11,7 @@ import {
   RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
+import { ValidationPipe } from '@nestjs/common'
 import { DECORATORS } from '@nestjs/swagger/dist/constants'
 import 'reflect-metadata'
 
@@ -53,7 +55,20 @@ function readSwaggerMetadata(createDecorator: () => PropertyDecorator) {
   }
 }
 
-describe('validate decorators swagger metadata', () => {
+class ContractFilterDto {
+  @StringProperty({
+    description: '可见字段',
+  })
+  visible!: string
+
+  @StringProperty({
+    description: '内部字段',
+    contract: false,
+  })
+  hidden?: string
+}
+
+describe('validate decorators contract metadata', () => {
   const originalNodeEnv = process.env.NODE_ENV
 
   beforeEach(() => {
@@ -70,7 +85,7 @@ describe('validate decorators swagger metadata', () => {
       createDecorator: () =>
         StringProperty({
           description: '字符串字段',
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -78,7 +93,7 @@ describe('validate decorators swagger metadata', () => {
       createDecorator: () =>
         NumberProperty({
           description: '数字字段',
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -87,7 +102,7 @@ describe('validate decorators swagger metadata', () => {
         ArrayProperty({
           description: '数组字段',
           itemType: 'string',
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -95,7 +110,7 @@ describe('validate decorators swagger metadata', () => {
       createDecorator: () =>
         BooleanProperty({
           description: '布尔字段',
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -103,7 +118,7 @@ describe('validate decorators swagger metadata', () => {
       createDecorator: () =>
         DateProperty({
           description: '日期字段',
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -111,7 +126,7 @@ describe('validate decorators swagger metadata', () => {
       createDecorator: () =>
         JsonProperty({
           description: 'JSON字段',
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -120,7 +135,7 @@ describe('validate decorators swagger metadata', () => {
         RegexProperty({
           description: '正则字段',
           regex: /^test$/,
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -129,7 +144,7 @@ describe('validate decorators swagger metadata', () => {
         EnumProperty({
           description: '枚举字段',
           enum: TestEnum,
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -138,7 +153,7 @@ describe('validate decorators swagger metadata', () => {
         BitmaskProperty({
           description: '位掩码字段',
           enum: TestBitmaskEnum,
-          swagger: false,
+          contract: false,
         }),
     },
     {
@@ -147,10 +162,10 @@ describe('validate decorators swagger metadata', () => {
         NestedProperty({
           description: '嵌套字段',
           type: NestedDto,
-          swagger: false,
+          contract: false,
         }),
     },
-  ])('skips swagger metadata when swagger is false for $name', ({
+  ])('skips swagger metadata when contract is false for $name', ({
     createDecorator,
   }) => {
     const { propertyKeys, propertyMetadata } = readSwaggerMetadata(
@@ -173,5 +188,27 @@ describe('validate decorators swagger metadata', () => {
       description: '默认展示字段',
       required: true,
     })
+  })
+
+  it('filters contract=false fields from request payload without throwing', async () => {
+    const pipe = new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    })
+
+    const result = await pipe.transform(
+      {
+        hidden: 'secret',
+        visible: ' visible ',
+      },
+      {
+        metatype: ContractFilterDto,
+        type: 'body',
+      } as ArgumentMetadata,
+    )
+
+    expect(result).toBeInstanceOf(ContractFilterDto)
+    expect(result.visible).toBe('visible')
+    expect(Object.hasOwn(result, 'hidden')).toBe(false)
   })
 })

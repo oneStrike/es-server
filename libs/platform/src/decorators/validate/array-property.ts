@@ -18,7 +18,7 @@ import {
   ValidateBy,
   ValidateNested,
 } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 数组属性装饰器
@@ -66,7 +66,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
 export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
   const itemType = options.itemClass ? 'object' : options.itemType
 
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   if (options.itemEnum && itemType === 'object') {
     throw new Error('ArrayProperty: itemEnum 仅支持 string/number/boolean 基础类型数组')
@@ -253,7 +254,7 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => {
+    ...buildContractPropertyDecorators(options, () => {
       const getApiType = () => {
         switch (itemType) {
           case 'string':

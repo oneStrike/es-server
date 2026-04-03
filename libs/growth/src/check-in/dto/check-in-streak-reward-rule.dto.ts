@@ -1,6 +1,7 @@
 import type { CheckInRewardConfig } from '../check-in.type'
 import {
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NestedProperty,
   NumberProperty,
@@ -57,6 +58,14 @@ export class BaseCheckInStreakRewardRuleDto extends BaseDto {
     enum: CheckInStreakRewardRuleStatusEnum,
   })
   status!: CheckInStreakRewardRuleStatusEnum
+
+  @DateProperty({
+    description: '软删除时间；仅后台内部审计使用。',
+    example: '2026-05-01T00:00:00.000Z',
+    required: false,
+    contract: false,
+  })
+  deletedAt?: Date | null
 }
 
 export class CreateCheckInStreakRewardRuleDto extends OmitType(

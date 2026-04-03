@@ -7,7 +7,6 @@ import type {
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CheckInDateOnly,
   CheckInPlanSnapshot,
   CheckInPlanSnapshotSource,
   CheckInRewardConfig,
@@ -519,7 +518,7 @@ export abstract class CheckInServiceSupport {
   protected async findCycleContainingDate(
     userId: number,
     planId: number,
-    targetDate: CheckInDateOnly,
+    targetDate: string,
     db: Db = this.db,
   ) {
     const [cycle] = await db
@@ -598,8 +597,8 @@ export abstract class CheckInServiceSupport {
     currentPlan: CheckInPlanSelect
     nextPlan: {
       cycleType: CheckInCycleTypeEnum
-      startDate: CheckInDateOnly
-      endDate?: CheckInDateOnly | null
+      startDate: string
+      endDate?: string | null
       allowMakeupCountPerCycle: number
       baseRewardConfig?: CheckInRewardConfig | null
     }

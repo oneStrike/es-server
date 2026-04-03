@@ -7,7 +7,6 @@ import type {
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger'
 import type {
   CheckInCycleAggregation,
-  CheckInDateOnly,
   CheckInPlanSnapshot,
   CheckInRewardConfig,
   CreateCheckInCycleInput,
@@ -115,7 +114,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async performSign(input: {
     userId: number
-    signDate: CheckInDateOnly
+    signDate: string
     recordType: CheckInRecordTypeEnum
     operatorType: CheckInOperatorTypeEnum
     context?: Record<string, unknown>
@@ -350,7 +349,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   private async findRecordByUniqueKey(
     userId: number,
     planId: number,
-    signDate: CheckInDateOnly,
+    signDate: string,
     db: Db = this.db,
   ) {
     const [record] = await db
@@ -388,7 +387,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   private recomputeCycleAggregation(
     records: Pick<CheckInRecordSelect, 'signDate' | 'recordType'>[],
   ): CheckInCycleAggregation {
-    const streakByDate: Record<CheckInDateOnly, number> = {}
+    const streakByDate: Record<string, number> = {}
     let previousDate: string | undefined
     let latestDate: string | undefined
     let streak = 0
@@ -437,7 +436,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private resolveEligibleGrantCandidates(
     rules: CheckInPlanSnapshot['streakRewardRules'],
-    streakByDate: Record<CheckInDateOnly, number>,
+    streakByDate: Record<string, number>,
     existingGrants: Pick<
       CheckInStreakRewardGrantSelect,
       'ruleId' | 'triggerSignDate'
@@ -456,7 +455,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     const candidates: Array<{
       rule: CheckInPlanSnapshot['streakRewardRules'][number]
-      triggerSignDate: CheckInDateOnly
+      triggerSignDate: string
     }> = []
 
     for (const rule of rules) {
@@ -495,7 +494,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     planId: number,
     cycleKey: string,
     userId: number,
-    signDate: CheckInDateOnly,
+    signDate: string,
   ) {
     return [
       'checkin',
@@ -517,7 +516,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     cycleId: number,
     ruleId: number,
     userId: number,
-    triggerSignDate: CheckInDateOnly,
+    triggerSignDate: string,
   ) {
     return [
       'checkin',
@@ -568,7 +567,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     planId: number
     cycleId: number
     cycleKey: string
-    signDate: CheckInDateOnly
+    signDate: string
     recordType: CheckInRecordTypeEnum
     operatorType: CheckInOperatorTypeEnum
     rewardApplicable: boolean
@@ -600,7 +599,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     planId: number
     cycleId: number
     ruleId: number
-    triggerSignDate: CheckInDateOnly
+    triggerSignDate: string
     planSnapshotVersion: number
     context?: Record<string, unknown>
   }): CreateCheckInGrantInput {
@@ -625,8 +624,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   /** 校验补签日期必须位于当前周期内，且满足“早于今天且计划允许补签”的合同。 */
   private assertMakeupAllowed(
-    signDate: CheckInDateOnly,
-    today: CheckInDateOnly,
+    signDate: string,
+    today: string,
     cycle: {
       cycleStartDate: string | Date
       cycleEndDate: string | Date

@@ -1,5 +1,22 @@
 import { existsSync, readFileSync } from 'node:fs'
 import * as checkIn from '@libs/growth/check-in'
+import { DECORATORS } from '@nestjs/swagger/dist/constants'
+
+function readSwaggerMetadata(target: object, propertyKey: string) {
+  return {
+    propertyKeys:
+      Reflect.getMetadata(DECORATORS.API_MODEL_PROPERTIES_ARRAY, target) ?? [],
+    propertyMetadata: Reflect.getMetadata(
+      DECORATORS.API_MODEL_PROPERTIES,
+      target,
+      propertyKey,
+    ),
+  }
+}
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
 
 describe('check-in dto contract exports', () => {
   it('exports admin-side check-in DTO contracts from libs', () => {
@@ -79,8 +96,55 @@ describe('check-in dto contract exports', () => {
 
     expect(source).toContain('export interface CheckInPlanSnapshot')
     expect(source).toContain('export type CreateCheckInCycleInput = Pick<')
+    expect(source).not.toContain('export type CheckInQueryOrderByInput =')
+    expect(source).not.toContain('export type CheckInDateOnly =')
     expect(source).not.toContain('export type CreateCheckInPlanInput =')
     expect(source).not.toContain('export type CheckInActionView =')
     expect(source).not.toContain('export type CheckInGrantView =')
   })
+
+  it.each([
+    {
+      filePath: 'libs/growth/src/check-in/dto/check-in-plan.dto.ts',
+      dto: checkIn.BaseCheckInPlanDto,
+      propertyKey: 'deletedAt',
+      decorator: 'DateProperty',
+    },
+    {
+      filePath: 'libs/growth/src/check-in/dto/check-in-record.dto.ts',
+      dto: checkIn.BaseCheckInRecordDto,
+      propertyKey: 'bizKey',
+      decorator: 'StringProperty',
+    },
+    {
+      filePath: 'libs/growth/src/check-in/dto/check-in-streak-reward-rule.dto.ts',
+      dto: checkIn.BaseCheckInStreakRewardRuleDto,
+      propertyKey: 'deletedAt',
+      decorator: 'DateProperty',
+    },
+    {
+      filePath: 'libs/growth/src/check-in/dto/check-in-streak-reward-grant.dto.ts',
+      dto: checkIn.BaseCheckInStreakRewardGrantDto,
+      propertyKey: 'bizKey',
+      decorator: 'StringProperty',
+    },
+  ])(
+    'marks internal field $propertyKey as out-of-contract on $dto.name',
+    ({ filePath, dto, propertyKey, decorator }) => {
+      const source = readFileSync(filePath, 'utf8')
+      const propertyPattern = new RegExp(
+        `@${decorator}\\([\\s\\S]*?contract:\\s*false[\\s\\S]*?\\)\\s*${escapeRegex(propertyKey)}[!?]?:`,
+      )
+
+      expect(source).toMatch(propertyPattern)
+
+      const { propertyKeys, propertyMetadata } = readSwaggerMetadata(
+        dto.prototype,
+        propertyKey,
+      )
+
+      expect(propertyKeys).not.toContain(`:${propertyKey}`)
+      expect(propertyMetadata).toBeUndefined()
+    },
+  )
 })

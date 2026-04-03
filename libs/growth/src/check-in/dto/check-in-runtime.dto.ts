@@ -62,6 +62,7 @@ class CheckInReconciliationRecordBaseDto extends OmitType(
   BaseCheckInRecordDto,
   [
     'id',
+    'bizKey',
     'updatedAt',
     'operatorType',
     'remark',
@@ -94,6 +95,7 @@ export class QueryCheckInReconciliationDto extends IntersectionType(
 ) {}
 
 export class CheckInRecordItemDto extends OmitType(BaseCheckInRecordDto, [
+  'bizKey',
   'updatedAt',
   'userId',
   'planId',

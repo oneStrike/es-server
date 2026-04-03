@@ -1,5 +1,11 @@
 import type { CheckInRewardConfig } from '../check-in.type'
-import { EnumProperty, NestedProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  DateProperty,
+  EnumProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
 import { CheckInCycleTypeEnum, CheckInPlanStatusEnum } from '../check-in.constant'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
@@ -72,4 +78,12 @@ export class BaseCheckInPlanDto extends BaseDto {
     type: 'ISO8601',
   })
   endDate?: string | null
+
+  @DateProperty({
+    description: '软删除时间；仅内部审计与排障使用。',
+    example: '2026-05-01T00:00:00.000Z',
+    required: false,
+    contract: false,
+  })
+  deletedAt?: Date | null
 }

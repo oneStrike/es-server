@@ -50,6 +50,14 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   })
   grantResultType?: CheckInRewardResultTypeEnum | null
 
+  @StringProperty({
+    description: '业务幂等键；仅内部补偿、重试与排障使用。',
+    example: 'checkin:grant:plan:1:rule:5:user:9:date:2026-04-03',
+    maxLength: 200,
+    contract: false,
+  })
+  bizKey!: string
+
   @ArrayProperty({
     description: '连续奖励账本记录 ID 列表。',
     itemType: 'number',

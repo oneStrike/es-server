@@ -11,7 +11,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 import { NumberEnumLike } from './types'
 
 /**
@@ -124,7 +124,8 @@ export function BitmaskProperty(options: BitmaskPropertyOptions) {
     throw new Error('BitmaskProperty: 枚举对象不能为空')
   }
 
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   const decorators: any[] = []
 
@@ -172,7 +173,7 @@ export function BitmaskProperty(options: BitmaskPropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => {
+    ...buildContractPropertyDecorators(options, () => {
       if (!isNumberEnum(options.enum)) {
         throw new Error('BitmaskProperty: 枚举对象必须为数字枚举')
       }

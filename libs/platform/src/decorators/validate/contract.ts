@@ -4,16 +4,16 @@ import { isDevelopment } from '@libs/platform/utils'
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger'
 
 /**
- * 统一处理 DTO 字段的 Swagger 装饰器输出。
+ * 统一处理 DTO 字段是否属于对外 HTTP 契约。
  *
- * 当字段显式关闭 Swagger 文档时，保留 ApiHideProperty 以兼容未来可能启用的 Swagger 插件；
- * 其他情况继续沿用仓库现有行为，仅在开发环境写入 ApiProperty 元数据。
+ * `contract=false` 时，这个字段不会进入 Swagger 文档；
+ * 请求阶段的静默过滤由各属性装饰器跳过 class-validator 元数据配合全局 whitelist 完成。
  */
-export function buildSwaggerPropertyDecorators(
-  options: Pick<BaseValidateOptions, 'swagger'>,
+export function buildContractPropertyDecorators(
+  options: Pick<BaseValidateOptions, 'contract'>,
   createApiPropertyOptions: () => ApiPropertyOptions,
 ): PropertyDecorator[] {
-  if (options.swagger === false) {
+  if (options.contract === false) {
     return [ApiHideProperty()]
   }
 

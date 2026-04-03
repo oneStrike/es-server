@@ -29,6 +29,7 @@
 - Service 公开方法签名与 DTO 1:1，不维护平行镜像 interface。
 - Query 方法签名与 Query DTO 1:1，禁止“DTO 多字段、方法少字段”或反向偏差。
 - 仅当结构不属于 HTTP 契约时，才在 `*.type.ts` 新增对象类型；Service 内部非 DTO 结构统一在 `*.type.ts` 收敛。
+- 禁止为基础类型、平台基础类型或仅换名不增义的类型新增别名，例如 `type XxxDate = string`、`type XxxOrderBy = QueryOrderByInput`；直接使用原类型。
 - 字段来源明确时优先复用 `Entity['field']`、`Pick<Entity, ...>`、`Omit<Entity, ...>`、`Partial<...>`。
 - `Create/Update` 内部类型不要暴露只读字段、审计字段、统计字段。
 - 分页查询统一沿用 `pageIndex`、`pageSize`、`orderBy`，其中 `pageIndex` 为 1-based。
@@ -54,6 +55,7 @@
 - [ ] Service 公开方法签名与 DTO 契约 1:1。
 - [ ] Query 方法签名与 Query DTO 1:1。
 - [ ] 未新增与 DTO 同构的重复 `Input/View` 类型，直接使用 DTO。
+- [ ] 未新增对基础类型、平台基础类型或仅换名不增义类型的语义空转别名。
 - [ ] 新增 Service 内部业务类型优先使用 `*.type.ts`。
 - [ ] 字段类型优先复用实体字段类型或既有类型组合。
 - [ ] 查询类型沿用 `pageIndex/pageSize/orderBy` 约定。

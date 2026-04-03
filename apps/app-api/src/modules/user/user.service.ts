@@ -29,7 +29,7 @@ import {
 } from '@libs/platform/utils'
 import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'
 import { SmsService } from '../auth/sms.service'
 
@@ -356,7 +356,7 @@ export class UserService {
   async getUserBadges(userId: number, query: QueryMyBadgeInput) {
     await this.userCoreService.ensureUserExists(userId)
 
-    const { name, type, isEnabled, business, eventKey, ...pageQuery } = query
+    const { name, type, isEnabled, ...pageQuery } = query
     const badgeConditions: SQL[] = []
 
     if (name) {
@@ -369,20 +369,6 @@ export class UserService {
     }
     if (isEnabled !== undefined) {
       badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
-    }
-    if (business !== undefined) {
-      badgeConditions.push(
-        business === null
-          ? isNull(this.userBadge.business)
-          : eq(this.userBadge.business, business),
-      )
-    }
-    if (eventKey !== undefined) {
-      badgeConditions.push(
-        eventKey === null
-          ? isNull(this.userBadge.eventKey)
-          : eq(this.userBadge.eventKey, eventKey),
-      )
     }
 
     const badgeWhere =
@@ -423,14 +409,34 @@ export class UserService {
           .from(this.userBadge)
           .where(inArray(this.userBadge.id, pageBadgeIds))
       : []
-    const badgeMap = new Map(pageBadges.map((item) => [item.id, item]))
+    const badgeMap = new Map(
+      pageBadges.map((item) => [
+        item.id,
+        {
+          id: item.id,
+          name: item.name,
+          description: item.description ?? undefined,
+          icon: item.icon ?? undefined,
+          type: item.type,
+          isEnabled: item.isEnabled,
+        },
+      ]),
+    )
 
     return {
       ...page,
-      list: page.list.map((item) => ({
-        createdAt: item.createdAt,
-        badge: badgeMap.get(item.badgeId),
-      })),
+      list: page.list.map((item) => {
+        const badge = badgeMap.get(item.badgeId)
+
+        if (!badge) {
+          throw new BadRequestException('徽章不存在')
+        }
+
+        return {
+          createdAt: item.createdAt,
+          badge,
+        }
+      }),
     }
   }
 

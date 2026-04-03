@@ -5,7 +5,6 @@ import type {
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CheckInDateOnly,
   CheckInPlanSnapshot,
   CheckInVirtualCycleView,
 } from './check-in.type'
@@ -397,7 +396,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   private buildCalendarDays(
     cycle: Pick<CheckInVirtualCycleView, 'cycleStartDate' | 'cycleEndDate'>,
     records: CheckInRecordItemDto[],
-    today: CheckInDateOnly,
+    today: string,
   ) {
     const recordMap = new Map(
       records.map((record) => [record.signDate, record]),

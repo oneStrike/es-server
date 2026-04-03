@@ -1,5 +1,5 @@
 import type { AppUserSelect } from '@db/schema'
-import type { QueryUserBadgeDto } from '@libs/growth/badge'
+import type { QueryUserBadgePublicDto } from '@libs/growth/badge'
 import type { QueryUserExperienceRecordPageInput } from '@libs/growth/experience'
 import type { QueryUserPointRecordPageInput } from '@libs/growth/point'
 
@@ -46,4 +46,4 @@ export interface QueryMyExperienceRecordInput
  * 查询当前用户徽章列表入参。
  * 复用成长领域徽章分页筛选字段，不下沉 apps DTO 到 service。
  */
-export interface QueryMyBadgeInput extends QueryUserBadgeDto {}
+export interface QueryMyBadgeInput extends QueryUserBadgePublicDto {}

@@ -8,21 +8,8 @@ import type {
   CheckInStreakRewardRuleInsert,
 } from '@db/schema'
 import type {
-  QueryOrderByInput,
-} from '@libs/platform/types'
-import type {
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
-
-/**
- * 签到分页排序入参。
- */
-export type CheckInQueryOrderByInput = QueryOrderByInput
-
-/**
- * `date` 语义字段统一使用 `YYYY-MM-DD` 字符串承载。
- */
-export type CheckInDateOnly = string
 
 /**
  * 签到奖励配置。
@@ -111,8 +98,8 @@ Pick<CheckInPlan, 'status'>
  */
 export interface CheckInCycleWindowView {
   cycleKey: string
-  cycleStartDate: CheckInDateOnly
-  cycleEndDate: CheckInDateOnly
+  cycleStartDate: string
+  cycleEndDate: string
 }
 
 /**
@@ -124,7 +111,7 @@ export interface CheckInCycleProgressView {
   signedCount: number
   makeupUsedCount: number
   currentStreak: number
-  lastSignedDate?: CheckInDateOnly
+  lastSignedDate?: string
 }
 
 /**
@@ -143,8 +130,8 @@ export interface CheckInSummaryCycleView
  */
 export interface CheckInCycleFrame {
   cycleKey: string
-  cycleStartDate: CheckInDateOnly
-  cycleEndDate: CheckInDateOnly
+  cycleStartDate: string
+  cycleEndDate: string
 }
 
 /**
@@ -154,8 +141,8 @@ export interface CheckInCycleAggregation {
   signedCount: number
   makeupUsedCount: number
   currentStreak: number
-  lastSignedDate?: CheckInDateOnly
-  streakByDate: Record<CheckInDateOnly, number>
+  lastSignedDate?: string
+  streakByDate: Record<string, number>
 }
 
 /**

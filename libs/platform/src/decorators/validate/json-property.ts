@@ -2,7 +2,7 @@ import type { JsonPropertyOptions } from './types'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsJSON, IsOptional } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * JSON属性装饰器
@@ -34,7 +34,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
  * @returns 装饰器函数
  */
 export function JsonProperty(options: JsonPropertyOptions) {
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   const decorators: any[] = []
 
@@ -76,7 +77,7 @@ export function JsonProperty(options: JsonPropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => ({
+    ...buildContractPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,

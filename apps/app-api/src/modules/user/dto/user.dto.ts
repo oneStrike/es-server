@@ -15,8 +15,8 @@ import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export {
-  QueryUserBadgeDto as QueryMyBadgeDto,
-  UserBadgeItemDto,
+  QueryUserBadgePublicDto as QueryMyBadgeDto,
+  UserBadgePublicItemDto as UserBadgeItemDto,
 } from '@libs/growth/badge'
 
 /**

@@ -52,6 +52,15 @@ export class QueryUserBadgeDto extends IntersectionType(
   QueryUserBadgeFiltersDto,
 ) {}
 
+class QueryUserBadgePublicFiltersDto extends PartialType(
+  PickType(BaseUserBadgeDto, ['name', 'type', 'isEnabled'] as const),
+) {}
+
+export class QueryUserBadgePublicDto extends IntersectionType(
+  UserBadgePageDto,
+  QueryUserBadgePublicFiltersDto,
+) {}
+
 export class AssignUserBadgeDto extends PickType(BaseUserBadgeAssignmentDto, [
   'badgeId',
   'userId',
@@ -118,6 +127,28 @@ export class UserBadgeItemDto extends PickType(BaseUserBadgeAssignmentDto, [
     nullable: false,
   })
   badge!: BaseUserBadgeDto
+}
+
+export class UserBadgePublicInfoDto extends PickType(BaseUserBadgeDto, [
+  'id',
+  'name',
+  'description',
+  'icon',
+  'type',
+  'isEnabled',
+] as const) {}
+
+export class UserBadgePublicItemDto extends PickType(
+  BaseUserBadgeAssignmentDto,
+  ['createdAt'] as const,
+) {
+  @NestedProperty({
+    description: '徽章详情',
+    type: UserBadgePublicInfoDto,
+    validation: false,
+    nullable: false,
+  })
+  badge!: UserBadgePublicInfoDto
 }
 
 export class UserBadgeTypeDistributionItemDto {

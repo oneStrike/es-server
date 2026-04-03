@@ -2,7 +2,7 @@ import type { DatePropertyOptions } from './types'
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsDate, IsOptional } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 日期属性装饰器
@@ -34,7 +34,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
  * @returns 装饰器函数
  */
 export function DateProperty(options: DatePropertyOptions) {
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
 
   const decorators: any[] = []
 
@@ -78,7 +79,7 @@ export function DateProperty(options: DatePropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => ({
+    ...buildContractPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,

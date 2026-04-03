@@ -115,6 +115,8 @@
 - 列表项、简要信息、嵌套对象优先从既有 DTO 裁剪复用。
 - 只在现有 DTO 无法表达目标语义时补充字段。
 - app 侧公开响应默认最小暴露面，不泄露内部审计或运营内部字段。
+- `bizKey`、`deletedAt` 以及同类内部幂等/软删字段若仍需保留在 DTO 中，必须显式标记 `contract: false`，避免进入对外 Swagger / 请求契约。
+- 若字段需要在后台场景保留、但不能暴露给 app/public 场景，不要在共享基类 DTO 上直接复用该字段；应拆分 `Public` / `Detail` / `Audit` 等具名场景 DTO，分别收敛暴露面。
 - `bizKey`、`deletedAt` 以及同类内部幂等/软删字段默认不得返回给前端；若极少数后台场景确需返回，必须在 PR 中说明原因。
 
 ### 5.5 数组枚举字段规范
@@ -161,6 +163,7 @@
 - [ ] 非 HTTP 结构使用 `*.type.ts`，未错误 DTO 化。
 - [ ] `@db/schema` 类型导入使用 `import type`。
 - [ ] 枚举字段 `description` 已写清业务语义，并使用实际枚举值作为描述符说明各枚举值含义。
-- [ ] `bizKey`、`deletedAt` 等内部字段未暴露给前端响应 DTO。
+- [ ] `bizKey`、`deletedAt` 等内部字段若保留在 DTO 中，已显式标记 `contract: false`。
+- [ ] app/public DTO 未复用会泄露后台内部字段的共享模型，必要时已拆分公开场景 DTO。
 - [ ] 日期字段 Swagger 示例为 ISO 8601。
 - [ ] 相关改动已通过 `eslint` 与 `type-check`。

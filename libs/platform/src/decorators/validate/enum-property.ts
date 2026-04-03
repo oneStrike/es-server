@@ -6,7 +6,7 @@ import {
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsEnum, IsIn, IsOptional } from 'class-validator'
-import { buildSwaggerPropertyDecorators } from './swagger'
+import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 枚举属性装饰器
@@ -52,7 +52,8 @@ import { buildSwaggerPropertyDecorators } from './swagger'
  * @returns 装饰器函数
  */
 export function EnumProperty(options: EnumPropertyOptions) {
-  const validation = options.validation ?? true
+  const inContract = options.contract ?? true
+  const validation = inContract && (options.validation ?? true)
   const isNumEnum = isNumberEnum(options.enum)
 
   const decorators: any[] = []
@@ -119,7 +120,7 @@ export function EnumProperty(options: EnumPropertyOptions) {
   }
 
   decorators.push(
-    ...buildSwaggerPropertyDecorators(options, () => ({
+    ...buildContractPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,
