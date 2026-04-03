@@ -45,10 +45,10 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 ### DTO
 
 - Make entity base DTOs mirror Drizzle tables exactly.
-- Build app DTOs with mapped types before manually redeclaring fields.
-- Keep service signatures on Drizzle/domain types, not app DTOs.
+- Build scene DTOs in `libs/*` with mapped types before manually redeclaring fields.
+- Keep service public signatures 1:1 with `libs/*` DTO contracts.
 - Reuse `IdDto`, `IdsDto`, `BaseDto`, `PageDto` before adding new common shapes.
-- Keep scenario DTOs in `apps/*`; avoid moving app-specific `Create/Update/Query/Response` DTOs into `libs/*`.
+- Keep scenario DTOs (`Create/Update/Query/Response`) in `libs/*`; avoid duplicating the same contract in `apps/*`.
 - For enum arrays, use `ArrayProperty + itemEnum`, and type fields as `XxxEnum[]`.
 
 ### Drizzle / Service / Resolver
@@ -64,8 +64,8 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 
 - Reuse entity fields via `Pick/Omit/Partial` from `@db/schema` inferred types.
 - Use `import type` for type-only imports.
-- Put stable domain types in `*.type.ts` near the owning module.
-- Do not leak apps DTO types into service/resolver signatures.
+- Put non-DTO internal domain types in `*.type.ts` near the owning module.
+- Do not keep mirrored `Input/View` types when they are isomorphic to DTOs; prefer direct DTO usage or type aliases.
 
 ## Validation Baseline
 

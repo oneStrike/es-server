@@ -6,6 +6,7 @@
 
 - 接口继续采用 RPC over HTTP，不为了“规范化”把现有接口整体改成 REST。
 - Controller 只负责入参接收、上下文装配、权限与审计装饰器、Swagger 注解、调用 service。
+- Controller 入参 DTO 与响应 DTO 统一从 `libs/*` 复用；`apps/*` 不重复定义同构 DTO。
 - Controller 不写数据库查询，不承载复杂业务编排，不保留第二套正式业务实现。
 - 默认只保留一套正式入口；若变更会影响已有客户端或引入 breaking change，必须提供 versioning / compat 方案与下线计划。
 
@@ -49,6 +50,7 @@
 ## 7. 验收清单
 
 - [ ] Controller 保持薄层，只做协议与编排边界。
+- [ ] Controller 使用 `libs/*` DTO 作为入参与输出契约，未在 `apps/*` 重复定义同构 DTO。
 - [ ] 路径不含前导斜杠与 `/api`，并使用统一动作名与 `kebab-case`。
 - [ ] Swagger 输出模型使用响应 DTO 或基础类型，没有输入 DTO 反向复用为输出。
 - [ ] 纯成功确认类接口优先 `boolean/204`；需要回显新状态时返回最小必要载荷。

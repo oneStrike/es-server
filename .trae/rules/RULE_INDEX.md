@@ -32,6 +32,8 @@
 ## Usage Notes
 
 - 分页语义：`PageDto` 与 `findPagination` 当前统一使用 1-based `pageIndex`。
+- DTO 契约：场景 DTO（`Create/Update/Query/Response`）统一定义在 `libs/*`，`apps/*` 仅消费；Service 公开方法入参与出参与 DTO 保持 1:1。
+- 查询契约：每个 Query DTO 必须与对应查询方法入参 1:1 对齐。
 - 类型文件：新增业务领域类型默认使用 `*.type.ts`；历史基础设施文件保留 `*.types.ts` 例外。
 - 导入路径：`libs` 统一走 public API 入口，不再从 `@libs/<lib>/<domain>/*` deep import。
 - 行为验证：类型检查是底线；涉及路由、响应结构、错误语义、事务一致性、计数器修复等变更时，优先补充 Jest 行为测试。`pnpm test` 当前可用；`pnpm test:e2e` 仍指向缺失配置，修复前不作为默认验证命令。
