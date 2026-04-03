@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import * as checkIn from '@libs/growth/check-in'
 
 describe('check-in dto contract exports', () => {
@@ -69,5 +69,18 @@ describe('check-in dto contract exports', () => {
     expect(
       existsSync('libs/growth/src/check-in/dto/check-in-scene.dto.ts'),
     ).toBe(false)
+  })
+
+  it('keeps internal check-in types but removes mirrored dto aliases', () => {
+    const source = readFileSync(
+      'libs/growth/src/check-in/check-in.type.ts',
+      'utf8',
+    )
+
+    expect(source).toContain('export interface CheckInPlanSnapshot')
+    expect(source).toContain('export type CreateCheckInCycleInput = Pick<')
+    expect(source).not.toContain('export type CreateCheckInPlanInput =')
+    expect(source).not.toContain('export type CheckInActionView =')
+    expect(source).not.toContain('export type CheckInGrantView =')
   })
 })

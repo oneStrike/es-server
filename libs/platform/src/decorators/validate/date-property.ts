@@ -1,10 +1,8 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { DatePropertyOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import { IsDate, IsOptional } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * 日期属性装饰器
@@ -79,8 +77,8 @@ export function DateProperty(options: DatePropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    const apiPropertyOptions: ApiPropertyOptions = {
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,
@@ -88,9 +86,8 @@ export function DateProperty(options: DatePropertyOptions) {
       nullable: !(options.required ?? true),
       type: Date,
       format: 'date-time',
-    }
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+    })),
+  )
 
   return applyDecorators(...decorators)
 }

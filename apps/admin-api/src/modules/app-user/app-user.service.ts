@@ -746,10 +746,18 @@ export class AppUserService {
       badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
     }
     if (business !== undefined) {
-      badgeConditions.push(eq(this.userBadge.business, business))
+      badgeConditions.push(
+        business === null
+          ? isNull(this.userBadge.business)
+          : eq(this.userBadge.business, business),
+      )
     }
     if (eventKey !== undefined) {
-      badgeConditions.push(eq(this.userBadge.eventKey, eventKey))
+      badgeConditions.push(
+        eventKey === null
+          ? isNull(this.userBadge.eventKey)
+          : eq(this.userBadge.eventKey, eventKey),
+      )
     }
 
     const badgeWhere =

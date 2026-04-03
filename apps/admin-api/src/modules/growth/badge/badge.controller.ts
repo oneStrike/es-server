@@ -1,20 +1,19 @@
 import {
+  AssignUserBadgeDto,
+  BadgeUserPageItemDto,
   BaseUserBadgeDto,
+  CreateUserBadgeDto,
+  QueryBadgeUserPageDto,
+  QueryUserBadgeDto,
+  UpdateUserBadgeDto,
+  UpdateUserBadgeStatusDto,
   UserBadgeService,
+  UserBadgeStatisticsDto,
 } from '@libs/growth/badge'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  AssignUserBadgeDto,
-  BadgeUserPageItemDto,
-  CreateUserBadgeDto,
-  QueryUserBadgeDto,
-  UpdateUserBadgeDto,
-  UpdateUserBadgeStatusDto,
-  UserBadgeStatisticsDto,
-} from './dto/badge.dto'
 
 /**
  * 用户徽章管理控制器
@@ -104,11 +103,8 @@ export class UserBadgeController {
     summary: '获取拥有某个用户徽章的用户列表',
     model: BadgeUserPageItemDto,
   })
-  async getBadgeUsers(
-    @Query('badgeId') badgeId: number,
-    @Query() query: QueryUserBadgeDto,
-  ) {
-    return this.userBadgeService.getBadgeUsers(badgeId, query)
+  async getBadgeUsers(@Query() query: QueryBadgeUserPageDto) {
+    return this.userBadgeService.getBadgeUsers(query)
   }
 
   @Get('stats')

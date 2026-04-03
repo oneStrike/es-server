@@ -13,34 +13,6 @@ import type {
 import type {
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
-import type {
-  CheckInPlanDetailResponseDto,
-  CheckInPlanPageItemDto,
-  CreateCheckInPlanDto,
-  QueryCheckInPlanDto,
-  UpdateCheckInPlanDto,
-  UpdateCheckInPlanStatusDto,
-} from './dto/check-in-definition.dto'
-import type {
-  CheckInActionResponseDto,
-  MakeupCheckInDto,
-  RepairCheckInRewardDto,
-  RepairCheckInRewardResponseDto,
-} from './dto/check-in-execution.dto'
-import type {
-  CheckInCalendarDayDto,
-  CheckInCalendarResponseDto,
-  CheckInReconciliationItemDto,
-  CheckInRecordItemDto,
-  CheckInSummaryResponseDto,
-  QueryCheckInReconciliationDto,
-  QueryMyCheckInRecordDto,
-} from './dto/check-in-runtime.dto'
-import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
-import type {
-  CheckInStreakRewardRuleItemDto,
-  CreateCheckInStreakRewardRuleDto,
-} from './dto/check-in-streak-reward-rule.dto'
 
 /**
  * 签到分页排序入参。
@@ -167,51 +139,6 @@ export interface CheckInSummaryCycleView
 }
 
 /**
- * 管理端连续奖励规则写入入参。
- */
-export type CheckInStreakRewardRuleInput = CreateCheckInStreakRewardRuleDto
-
-/**
- * 管理端签到计划创建入参。
- */
-export type CreateCheckInPlanInput = CreateCheckInPlanDto
-
-/**
- * 管理端签到计划更新入参。
- */
-export type UpdateCheckInPlanInput = UpdateCheckInPlanDto
-
-/**
- * 管理端签到计划状态更新入参。
- */
-export type UpdateCheckInPlanStatusInput = UpdateCheckInPlanStatusDto
-
-/**
- * 管理端签到计划分页查询条件。
- */
-export type QueryCheckInPlanPageInput = QueryCheckInPlanDto
-
-/**
- * App 端签到记录分页查询条件。
- */
-export type QueryMyCheckInRecordPageInput = QueryMyCheckInRecordDto
-
-/**
- * 管理端签到对账分页查询条件。
- */
-export type QueryCheckInReconciliationPageInput = QueryCheckInReconciliationDto
-
-/**
- * App 端补签入参。
- */
-export type MakeupCheckInInput = MakeupCheckInDto
-
-/**
- * 管理端补偿入参。
- */
-export type RepairCheckInRewardInput = RepairCheckInRewardDto
-
-/**
  * 周期边界计算结果。
  */
 export interface CheckInCycleFrame {
@@ -230,61 +157,6 @@ export interface CheckInCycleAggregation {
   lastSignedDate?: CheckInDateOnly
   streakByDate: Record<CheckInDateOnly, number>
 }
-
-/**
- * App 端返回的连续奖励简要视图。
- */
-export type CheckInStreakRewardRuleView = CheckInStreakRewardRuleItemDto
-
-/**
- * 签到记录关联的连续奖励视图。
- */
-export type CheckInGrantView = CheckInGrantItemDto
-
-/**
- * 签到记录视图。
- */
-export type CheckInRecordView = CheckInRecordItemDto
-
-/**
- * 签到日历单日视图。
- */
-export type CheckInCalendarDayView = CheckInCalendarDayDto
-
-/**
- * App 端签到摘要视图。
- */
-export type CheckInSummaryView = CheckInSummaryResponseDto
-
-/**
- * App 端签到日历视图。
- */
-export type CheckInCalendarView = CheckInCalendarResponseDto
-
-/**
- * 签到动作返回视图。
- */
-export type CheckInActionView = CheckInActionResponseDto
-
-/**
- * 管理端签到计划列表视图。
- */
-export type CheckInPlanPageView = CheckInPlanPageItemDto
-
-/**
- * 管理端签到计划详情视图。
- */
-export type CheckInPlanDetailView = CheckInPlanDetailResponseDto
-
-/**
- * 管理端签到对账视图。
- */
-export type CheckInReconciliationView = CheckInReconciliationItemDto
-
-/**
- * 管理端补偿结果视图。
- */
-export type RepairCheckInRewardView = RepairCheckInRewardResponseDto
 
 /**
  * 周期创建入参。

@@ -10,7 +10,10 @@ import { getTableConfig } from 'drizzle-orm/pg-core'
 import {
   CheckInCycleTypeEnum,
   CheckInPlanStatusEnum,
+  CheckInRepairTargetTypeEnum,
   CheckInRecordTypeEnum,
+  CheckInRewardResultTypeEnum,
+  CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from '../check-in.constant'
 
@@ -669,6 +672,493 @@ describe('check-in execution response contract', () => {
     expect(settleGrantReward).toHaveBeenNthCalledWith(2, 202, {
       source: 'streak_reward',
     })
+  })
+})
+
+describe('check-in runtime public behavior', () => {
+  const previousTimeZone = process.env.TZ
+
+  beforeAll(() => {
+    process.env.TZ = 'Asia/Shanghai'
+  })
+
+  afterAll(() => {
+    if (previousTimeZone === undefined) {
+      delete process.env.TZ
+      return
+    }
+    process.env.TZ = previousTimeZone
+  })
+
+  it('returns empty summary when no active plan exists', async () => {
+    const service = await createCheckInRuntimeService(createCheckInDrizzleMock())
+
+    jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue(null)
+
+    await expect(service.getSummary(9)).resolves.toEqual({
+      plan: null,
+      cycle: null,
+      todaySigned: false,
+      nextStreakReward: null,
+      latestRecord: null,
+    })
+  })
+
+  it('builds summary from active cycle snapshot and latest record', async () => {
+    const service = await createCheckInRuntimeService(createCheckInDrizzleMock())
+    const latestGrant = {
+      id: 201,
+      ruleId: 31,
+      triggerSignDate: '2026-04-03',
+      grantStatus: CheckInRewardStatusEnum.SUCCESS,
+      grantResultType: CheckInRewardResultTypeEnum.APPLIED,
+      ledgerIds: [701],
+      lastGrantError: null,
+    }
+
+    jest.spyOn(service as any, 'formatDateOnly').mockReturnValue('2026-04-03')
+    jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue({
+      id: 1,
+      planCode: 'growth-check-in',
+      planName: '成长签到',
+      status: CheckInPlanStatusEnum.PUBLISHED,
+      cycleType: CheckInCycleTypeEnum.WEEKLY,
+      startDate: '2026-04-01',
+      endDate: null,
+      allowMakeupCountPerCycle: 2,
+    })
+    jest.spyOn(service as any, 'getCurrentCycleView').mockResolvedValue({
+      id: 10,
+      cycleKey: 'week-2026-04-01',
+      cycleStartDate: '2026-04-01',
+      cycleEndDate: '2026-04-07',
+      signedCount: 2,
+      makeupUsedCount: 1,
+      currentStreak: 2,
+      lastSignedDate: '2026-04-03',
+      planSnapshotVersion: 1,
+      planSnapshot: {
+        allowMakeupCountPerCycle: 2,
+        baseRewardConfig: { points: 10 },
+        streakRewardRules: [
+          {
+            id: 31,
+            planVersion: 1,
+            repeatable: false,
+            rewardConfig: { points: 30 },
+            ruleCode: 'streak-3',
+            status: CheckInStreakRewardRuleStatusEnum.ENABLED,
+            streakDays: 3,
+          },
+        ],
+      },
+    })
+    jest.spyOn(service as any, 'listCycleRecords').mockResolvedValue([
+      {
+        id: 101,
+        cycleId: 10,
+        signDate: '2026-04-03',
+        recordType: CheckInRecordTypeEnum.NORMAL,
+        rewardStatus: CheckInRewardStatusEnum.SUCCESS,
+        rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
+        baseRewardLedgerIds: [501],
+        lastRewardError: null,
+        rewardSettledAt: new Date('2026-04-03T00:00:00.000Z'),
+        createdAt: new Date('2026-04-03T00:00:00.000Z'),
+      },
+    ])
+    jest.spyOn(service as any, 'buildGrantMapForRecords').mockResolvedValue(
+      new Map([['10:2026-04-03', [latestGrant]]]),
+    )
+
+    await expect(service.getSummary(9)).resolves.toEqual(
+      expect.objectContaining({
+        plan: expect.objectContaining({
+          id: 1,
+          planCode: 'growth-check-in',
+          baseRewardConfig: { points: 10 },
+        }),
+        cycle: expect.objectContaining({
+          id: 10,
+          signedCount: 2,
+          remainingMakeupCount: 1,
+          currentStreak: 2,
+        }),
+        todaySigned: true,
+        nextStreakReward: expect.objectContaining({
+          id: 31,
+          streakDays: 3,
+        }),
+        latestRecord: expect.objectContaining({
+          id: 101,
+          signDate: '2026-04-03',
+          grants: [latestGrant],
+        }),
+      }),
+    )
+  })
+
+  it('builds calendar placeholders for unsigned and future dates in the current cycle', async () => {
+    const service = await createCheckInRuntimeService(createCheckInDrizzleMock())
+
+    jest.spyOn(service as any, 'formatDateOnly').mockReturnValue('2026-04-02')
+    jest.spyOn(service as any, 'getAppTimeZone').mockReturnValue('Asia/Shanghai')
+    jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue({
+      id: 1,
+    })
+    jest.spyOn(service as any, 'getCurrentCycleView').mockResolvedValue({
+      id: 10,
+      cycleKey: 'week-2026-04-01',
+      cycleStartDate: '2026-04-01',
+      cycleEndDate: '2026-04-03',
+      signedCount: 1,
+      makeupUsedCount: 0,
+      currentStreak: 1,
+      planSnapshotVersion: 1,
+      planSnapshot: {
+        allowMakeupCountPerCycle: 1,
+        baseRewardConfig: null,
+        streakRewardRules: [],
+      },
+    })
+    jest.spyOn(service as any, 'listCycleRecords').mockResolvedValue([
+      {
+        id: 101,
+        cycleId: 10,
+        signDate: '2026-04-02',
+        recordType: CheckInRecordTypeEnum.NORMAL,
+        rewardStatus: CheckInRewardStatusEnum.SUCCESS,
+        rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
+        baseRewardLedgerIds: [],
+        lastRewardError: null,
+        rewardSettledAt: new Date('2026-04-02T00:00:00.000Z'),
+        createdAt: new Date('2026-04-02T00:00:00.000Z'),
+      },
+    ])
+    jest.spyOn(service as any, 'buildGrantMapForRecords').mockResolvedValue(
+      new Map(),
+    )
+
+    await expect(service.getCalendar(9)).resolves.toEqual({
+      planId: 1,
+      cycleId: 10,
+      cycleKey: 'week-2026-04-01',
+      cycleStartDate: '2026-04-01',
+      cycleEndDate: '2026-04-03',
+      days: [
+        {
+          signDate: '2026-04-01',
+          isToday: false,
+          isFuture: false,
+          isSigned: false,
+          recordType: undefined,
+          rewardStatus: undefined,
+          rewardResultType: undefined,
+          grantCount: 0,
+        },
+        {
+          signDate: '2026-04-02',
+          isToday: true,
+          isFuture: false,
+          isSigned: true,
+          recordType: CheckInRecordTypeEnum.NORMAL,
+          rewardStatus: CheckInRewardStatusEnum.SUCCESS,
+          rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
+          grantCount: 0,
+        },
+        {
+          signDate: '2026-04-03',
+          isToday: false,
+          isFuture: true,
+          isSigned: false,
+          recordType: undefined,
+          rewardStatus: undefined,
+          rewardResultType: undefined,
+          grantCount: 0,
+        },
+      ],
+    })
+  })
+
+  it('uses stable default ordering and attaches grant views in my record pages', async () => {
+    const drizzle = createCheckInDrizzleMock({
+      ext: {
+        findPagination: jest.fn().mockResolvedValue({
+          list: [
+            {
+              id: 101,
+              cycleId: 10,
+              signDate: '2026-04-03',
+              recordType: CheckInRecordTypeEnum.NORMAL,
+              rewardStatus: CheckInRewardStatusEnum.SUCCESS,
+              rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
+              baseRewardLedgerIds: [501],
+              lastRewardError: null,
+              rewardSettledAt: new Date('2026-04-03T00:00:00.000Z'),
+              createdAt: new Date('2026-04-03T00:00:00.000Z'),
+            },
+          ],
+          pageIndex: 1,
+          pageSize: 20,
+          total: 1,
+        }),
+      },
+    })
+    const service = await createCheckInRuntimeService(drizzle)
+    const grant = {
+      id: 201,
+      ruleId: 31,
+      triggerSignDate: '2026-04-03',
+      grantStatus: CheckInRewardStatusEnum.SUCCESS,
+      grantResultType: CheckInRewardResultTypeEnum.APPLIED,
+      ledgerIds: [701],
+      lastGrantError: null,
+    }
+
+    jest.spyOn(service as any, 'buildGrantMapForRecords').mockResolvedValue(
+      new Map([['10:2026-04-03', [grant]]]),
+    )
+
+    const page = await service.getMyRecords(
+      { pageIndex: 1, pageSize: 20 } as any,
+      9,
+    )
+
+    expect(drizzle.ext.findPagination).toHaveBeenCalledWith(
+      drizzle.schema.checkInRecord,
+      expect.objectContaining({
+        orderBy: JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
+      }),
+    )
+    expect(page.list).toEqual([
+      expect.objectContaining({
+        id: 101,
+        signDate: '2026-04-03',
+        grants: [grant],
+      }),
+    ])
+  })
+
+  it('uses stable default ordering and maps reconciliation rows with grants', async () => {
+    const drizzle = createCheckInDrizzleMock({
+      ext: {
+        findPagination: jest.fn().mockResolvedValue({
+          list: [
+            {
+              id: 101,
+              userId: 9,
+              planId: 1,
+              cycleId: 10,
+              signDate: '2026-04-03',
+              recordType: CheckInRecordTypeEnum.NORMAL,
+              rewardStatus: CheckInRewardStatusEnum.FAILED,
+              rewardResultType: CheckInRewardResultTypeEnum.FAILED,
+              baseRewardLedgerIds: [],
+              lastRewardError: '签到基础奖励发放失败',
+              createdAt: new Date('2026-04-03T00:00:00.000Z'),
+            },
+          ],
+          pageIndex: 1,
+          pageSize: 20,
+          total: 1,
+        }),
+      },
+    })
+    const service = await createCheckInRuntimeService(drizzle)
+    const grant = {
+      id: 201,
+      ruleId: 31,
+      triggerSignDate: '2026-04-03',
+      grantStatus: CheckInRewardStatusEnum.PENDING,
+      grantResultType: null,
+      ledgerIds: [],
+      lastGrantError: null,
+    }
+
+    jest.spyOn(service as any, 'buildGrantMapForRecords').mockResolvedValue(
+      new Map([['10:2026-04-03', [grant]]]),
+    )
+
+    const page = await service.getReconciliationPage({
+      pageIndex: 1,
+      pageSize: 20,
+    } as any)
+
+    expect(drizzle.ext.findPagination).toHaveBeenCalledWith(
+      drizzle.schema.checkInRecord,
+      expect.objectContaining({
+        orderBy: JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
+      }),
+    )
+    expect(page.list).toEqual([
+      expect.objectContaining({
+        recordId: 101,
+        userId: 9,
+        planId: 1,
+        cycleId: 10,
+        signDate: '2026-04-03',
+        grants: [grant],
+      }),
+    ])
+  })
+})
+
+describe('check-in execution public behavior', () => {
+  it('rejects makeup on today before querying the current active plan', async () => {
+    const service = await createCheckInExecutionService(createCheckInDrizzleMock())
+    const getCurrentActivePlan = jest.spyOn(
+      service as any,
+      'getCurrentActivePlan',
+    )
+
+    jest.spyOn(service as any, 'parseDateOnly').mockReturnValue('2026-04-03')
+    jest.spyOn(service as any, 'formatDateOnly').mockReturnValue('2026-04-03')
+
+    await expect(service.makeup({ signDate: '2026-04-03' } as any, 9)).rejects
+      .toThrow('补签只能发生在今天之前')
+    expect(getCurrentActivePlan).not.toHaveBeenCalled()
+  })
+
+  it('routes record reward repair through record settlement with actor context', async () => {
+    const service = await createCheckInExecutionService(createCheckInDrizzleMock())
+    const settleRecordReward = jest
+      .spyOn(service as any, 'settleRecordReward')
+      .mockResolvedValue(true)
+
+    await expect(
+      service.repairReward(
+        {
+          targetType: CheckInRepairTargetTypeEnum.RECORD_REWARD,
+          recordId: 101,
+        } as any,
+        9,
+      ),
+    ).resolves.toEqual({
+      targetType: CheckInRepairTargetTypeEnum.RECORD_REWARD,
+      recordId: 101,
+      success: true,
+    })
+    expect(settleRecordReward).toHaveBeenCalledWith(101, {
+      actorUserId: 9,
+      source: 'admin_repair',
+    })
+  })
+
+  it('routes streak reward repair through grant settlement with actor context', async () => {
+    const service = await createCheckInExecutionService(createCheckInDrizzleMock())
+    const settleGrantReward = jest
+      .spyOn(service as any, 'settleGrantReward')
+      .mockResolvedValue(true)
+
+    await expect(
+      service.repairReward(
+        {
+          targetType: CheckInRepairTargetTypeEnum.STREAK_GRANT,
+          grantId: 201,
+        } as any,
+        9,
+      ),
+    ).resolves.toEqual({
+      targetType: CheckInRepairTargetTypeEnum.STREAK_GRANT,
+      grantId: 201,
+      success: true,
+    })
+    expect(settleGrantReward).toHaveBeenCalledWith(201, {
+      actorUserId: 9,
+      source: 'admin_repair',
+    })
+  })
+
+  it('validates reward repair target ids before entering settlement', async () => {
+    const service = await createCheckInExecutionService(createCheckInDrizzleMock())
+
+    await expect(
+      service.repairReward(
+        {
+          targetType: CheckInRepairTargetTypeEnum.RECORD_REWARD,
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('recordId 不能为空')
+
+    await expect(
+      service.repairReward(
+        {
+          targetType: CheckInRepairTargetTypeEnum.STREAK_GRANT,
+        } as any,
+        9,
+      ),
+    ).rejects.toThrow('grantId 不能为空')
+  })
+
+  it('guards makeup dates against cycle boundary and unsupported plans', async () => {
+    const service = await createCheckInExecutionService(createCheckInDrizzleMock())
+
+    expect(() =>
+      (service as any).assertMakeupAllowed(
+        '2026-03-31',
+        '2026-04-03',
+        {
+          cycleStartDate: '2026-04-01',
+          cycleEndDate: '2026-04-07',
+        },
+        {
+          allowMakeupCountPerCycle: 1,
+        },
+      ),
+    ).toThrow('补签日期不在当前周期内')
+
+    expect(() =>
+      (service as any).assertMakeupAllowed(
+        '2026-04-02',
+        '2026-04-03',
+        {
+          cycleStartDate: '2026-04-01',
+          cycleEndDate: '2026-04-07',
+        },
+        {
+          allowMakeupCountPerCycle: 0,
+        },
+      ),
+    ).toThrow('当前计划不支持补签')
+  })
+
+  it('keeps reward status empty when building a non-reward sign record', async () => {
+    const service = await createCheckInExecutionService(createCheckInDrizzleMock())
+
+    expect(
+      (service as any).buildRecordInsert({
+        userId: 9,
+        planId: 1,
+        cycleId: 10,
+        cycleKey: 'week-2026-04-01',
+        signDate: '2026-04-03',
+        recordType: CheckInRecordTypeEnum.NORMAL,
+        operatorType: 1,
+        rewardApplicable: false,
+        context: { source: 'app_sign' },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        userId: 9,
+        planId: 1,
+        cycleId: 10,
+        signDate: '2026-04-03',
+        rewardStatus: null,
+        bizKey: 'checkin:record:plan:1:cycle:week-2026-04-01:user:9:date:2026-04-03',
+      }),
+    )
+  })
+
+  it('treats all-duplicated ledger writes as idempotent reward results', async () => {
+    const service = await createCheckInExecutionService(createCheckInDrizzleMock())
+
+    expect(
+      (service as any).resolveRewardResultType([
+        { duplicated: true },
+        { duplicated: true },
+      ]),
+    ).toBe(CheckInRewardResultTypeEnum.IDEMPOTENT)
   })
 })
 

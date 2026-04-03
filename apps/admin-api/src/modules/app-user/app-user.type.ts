@@ -1,7 +1,7 @@
 import type { AppUserSelect } from '@db/schema'
 import type {
-  AssignUserBadgeInput,
-  QueryUserBadgePageInput,
+  AssignUserBadgeDto,
+  QueryUserBadgeDto,
 } from '@libs/growth/badge'
 import type {
   AddUserExperienceInput,
@@ -159,7 +159,7 @@ export interface AddAdminAppUserExperienceInput
  * 复用成长领域徽章分页筛选字段，并附带目标用户 userId。
  */
 export interface QueryAdminAppUserBadgeInput
-  extends QueryUserBadgePageInput {
+  extends QueryUserBadgeDto {
   userId: number
 }
 
@@ -167,4 +167,4 @@ export interface QueryAdminAppUserBadgeInput
  * APP 用户徽章授予或撤销入参。
  * 复用成长领域徽章指派字段，不直接下沉 DTO。
  */
-export interface AssignAdminAppUserBadgeInput extends AssignUserBadgeInput {}
+export interface AssignAdminAppUserBadgeInput extends AssignUserBadgeDto {}

@@ -3,6 +3,7 @@
 ## Core Rules
 
 - `../../AGENTS.md`：项目级最小约束、验证命令与交付要求。
+- `./TEST_SPEC.md`：测试分层、目录放置、命名、Mock 策略与验证命令。
 - `./CONTROLLER_SPEC.md`：Controller 路由、Swagger、权限、兼容与返回语义。
 - `./DTO_SPEC.md`：DTO 分层、复用方式、命名与 Service 边界。
 - `./TS_TYPE_SPEC.md`：TypeScript 领域类型、`db/schema` 推导类型与 `*.type.ts` 约定。

@@ -1,4 +1,4 @@
-import { BaseUserBadgeDto } from '@libs/growth/badge'
+import { QueryUserBadgeDto } from '@libs/growth/badge'
 import { GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION } from '@libs/growth/event-definition'
 import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth'
@@ -13,9 +13,14 @@ import {
   RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { PageDto, UserIdDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+
+export {
+  UserBadgeItemDto as AdminAppUserBadgeItemDto,
+  AssignUserBadgeDto as AssignAdminAppUserBadgeDto,
+} from '@libs/growth/badge'
 
 export enum AdminAppUserDeletedScopeEnum {
   ACTIVE = 'active',
@@ -447,18 +452,7 @@ export class QueryAdminAppUserGrowthLedgerDto extends IntersectionType(
 
 export class QueryAdminAppUserBadgeDto extends IntersectionType(
   UserIdDto,
-  IntersectionType(
-    PageDto,
-    PartialType(
-      PickType(BaseUserBadgeDto, [
-        'name',
-        'type',
-        'isEnabled',
-        'business',
-        'eventKey',
-      ] as const),
-    ),
-  ),
+  QueryUserBadgeDto,
 ) {}
 
 export class AddAdminAppUserPointsDto extends AdminAppUserManualOperationDto {
@@ -532,27 +526,6 @@ export class AddAdminAppUserExperienceDto
     maxLength: 500,
   })
   remark?: string
-}
-
-export class AssignAdminAppUserBadgeDto extends UserIdDto {
-  @NumberProperty({
-    description: '徽章ID',
-    example: 1,
-    required: true,
-  })
-  badgeId!: number
-}
-
-export class AdminAppUserBadgeItemDto extends PickType(BaseDto, [
-  'createdAt',
-] as const) {
-  @NestedProperty({
-    description: '徽章信息',
-    type: BaseUserBadgeDto,
-    validation: false,
-    nullable: false,
-  })
-  badge!: BaseUserBadgeDto
 }
 
 export class AdminAppUserBadgeOperationResultDto extends UserIdDto {

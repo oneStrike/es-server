@@ -1,8 +1,7 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ArrayPropertyOptions } from './types'
-import { getNumberEnumValues, isDevelopment, isNumberEnum } from '@libs/platform/utils'
+import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform, Type } from 'class-transformer'
 import {
   IsArray,
@@ -19,6 +18,7 @@ import {
   ValidateBy,
   ValidateNested,
 } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * 数组属性装饰器
@@ -252,44 +252,46 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
     }
   }
 
-  if (isDevelopment()) {
-    const getApiType = () => {
-      switch (itemType) {
-        case 'string':
-          return String
-        case 'number':
-          return Number
-        case 'boolean':
-          return Boolean
-        case 'object':
-          return Object
-        default:
-          return String
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => {
+      const getApiType = () => {
+        switch (itemType) {
+          case 'string':
+            return String
+          case 'number':
+            return Number
+          case 'boolean':
+            return Boolean
+          case 'object':
+            return Object
+          default:
+            return String
+        }
       }
-    }
 
-    const apiPropertyOptions: ApiPropertyOptions = {
-      description: options.description,
-      example: options.example,
-      required: options.required ?? true,
-      default: options.default,
-      nullable: !(options.required ?? true),
-      type: options.itemClass ?? getApiType(),
-      isArray: true,
-    }
+      const apiPropertyOptions: ApiPropertyOptions = {
+        description: options.description,
+        example: options.example,
+        required: options.required ?? true,
+        default: options.default,
+        nullable: !(options.required ?? true),
+        type: options.itemClass ?? getApiType(),
+        isArray: true,
+      }
 
-    if (options.minLength !== undefined) {
-      apiPropertyOptions.minItems = options.minLength
-    }
-    if (options.maxLength !== undefined) {
-      apiPropertyOptions.maxItems = options.maxLength
-    }
-    if (options.itemEnum) {
-      apiPropertyOptions.enum = options.itemEnum
-    }
+      if (options.minLength !== undefined) {
+        apiPropertyOptions.minItems = options.minLength
+      }
+      if (options.maxLength !== undefined) {
+        apiPropertyOptions.maxItems = options.maxLength
+      }
+      if (options.itemEnum) {
+        apiPropertyOptions.enum = options.itemEnum
+      }
 
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+      return apiPropertyOptions
+    }),
+  )
 
   return applyDecorators(...decorators)
 }

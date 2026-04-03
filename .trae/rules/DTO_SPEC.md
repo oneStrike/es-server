@@ -8,7 +8,7 @@
 - **单一事实源**：实体字段与物理约束以 Drizzle Table 为准。
 - **按表拆文件**：实体基类 DTO 按 Drizzle Table 拆分，一个 schema 表对应一个 DTO 文件，不把多个表的基类 DTO 混放在同一个文件里。
 - **契约优先**：DTO 是 API 契约，不机械等同数据库表结构。
-- **类型最小化**：与 DTO 同构的 `Input/View` 类型应删除；若保留语义名，只允许类型别名。
+- **类型最小化**：与 DTO 同构的 `Input/View` 类型应删除，直接使用 DTO。
 
 ## 2. 范围与边界
 
@@ -55,7 +55,7 @@
 
 - `*.type.ts` 只用于 DTO 难以表达或不应暴露到 HTTP 的内部结构。
 - 典型场景：聚合结果、快照结构、事务上下文、数据库投影、事件载荷、通用泛型工具。
-- 若结构与 DTO 同构，优先直接使用 DTO；若必须保留语义名，仅允许 `type XxxInput = XxxDto` 形式别名。
+- 若结构与 DTO 同构，直接使用 DTO；不要再新增或保留 `type XxxInput = XxxDto`、`type XxxView = XxxDto` 这类镜像别名。
 
 ### 3.5 `apps/*`：入口装配层
 
@@ -77,7 +77,7 @@
 - **场景 DTO**：`CreateXxxDto`、`UpdateXxxDto`、`QueryXxxDto`、`XxxResponseDto`、`XxxItemDto`、`XxxDetailDto`
 - **实体基类 DTO 文件**：`xxx.dto.ts`，并与对应 schema 表一一对应
 - **领域类型文件**：`xxx.type.ts`
-- **内部类型别名（可选）**：`type QueryXxxInput = QueryXxxDto`
+- **内部领域类型**：仅在非 HTTP 结构下定义 `XxxContext`、`XxxPayload`、`XxxSnapshot`、`XxxAggregation`、`XxxRow`、`XxxResult`
 - 禁止新增 `AdminXxxDto`、`AppXxxDto` 这类客户端前缀命名；若出现语义差异，直接体现在业务语义名上。
 
 ## 5. 复用与收敛规则
@@ -149,7 +149,7 @@
 - [ ] 场景 DTO（`Create/Update/Query/Response`）定义在 `libs/*`，`apps/*` 无同构重复定义。
 - [ ] Service 公开方法入参与出参与 DTO 1:1（字段、可选性、类型一致）。
 - [ ] Query DTO 与查询方法签名 1:1，无平台分叉同构 DTO。
-- [ ] 与 DTO 同构的 `Input/View` 类型已删除或收敛为类型别名。
+- [ ] 与 DTO 同构的 `Input/View` 类型已删除，并直接使用 DTO。
 - [ ] `BaseXxxDto` 中映射字段与 Drizzle Table 一致。
 - [ ] 每张 schema 表的基类 DTO 单独放在对应 DTO 文件中，未把多张表 DTO 混放在同一文件。
 - [ ] 无手动重复定义通用字段（`id`、`createdAt`、`updatedAt` 等）。

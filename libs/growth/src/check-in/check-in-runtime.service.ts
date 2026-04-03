@@ -5,17 +5,17 @@ import type {
 } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CheckInCalendarDayView,
   CheckInDateOnly,
-  CheckInGrantView,
   CheckInPlanSnapshot,
-  CheckInRecordView,
   CheckInVirtualCycleView,
 } from './check-in.type'
 import type {
+  CheckInCalendarDayDto,
+  CheckInRecordItemDto,
   QueryCheckInReconciliationDto,
   QueryMyCheckInRecordDto,
 } from './dto/check-in-runtime.dto'
+import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger'
 import { Injectable } from '@nestjs/common'
@@ -355,7 +355,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   private async buildGrantMapForRecords(
     records: Pick<CheckInRecordSelect, 'cycleId' | 'signDate'>[],
   ) {
-    const grantMap = new Map<string, CheckInGrantView[]>()
+    const grantMap = new Map<string, CheckInGrantItemDto[]>()
     if (records.length === 0) {
       return grantMap
     }
@@ -396,13 +396,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
    */
   private buildCalendarDays(
     cycle: Pick<CheckInVirtualCycleView, 'cycleStartDate' | 'cycleEndDate'>,
-    records: CheckInRecordView[],
+    records: CheckInRecordItemDto[],
     today: CheckInDateOnly,
   ) {
     const recordMap = new Map(
       records.map((record) => [record.signDate, record]),
     )
-    const days: CheckInCalendarDayView[] = []
+    const days: CheckInCalendarDayDto[] = []
     let cursor = dayjs
       .tz(cycle.cycleStartDate, 'YYYY-MM-DD', this.getAppTimeZone())
       .startOf('day')
@@ -443,8 +443,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       | 'rewardSettledAt'
       | 'createdAt'
     >,
-    grants: CheckInGrantView[] = [],
-  ): CheckInRecordView {
+    grants: CheckInGrantItemDto[] = [],
+  ): CheckInRecordItemDto {
     return {
       id: record.id,
       signDate: this.toDateOnlyValue(record.signDate),
@@ -472,7 +472,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       | 'ledgerIds'
       | 'lastGrantError'
     >,
-  ): CheckInGrantView {
+  ): CheckInGrantItemDto {
     return {
       id: grant.id,
       ruleId: grant.ruleId,

@@ -1,4 +1,3 @@
-import { BaseUserBadgeDto } from '@libs/growth/badge'
 import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets'
@@ -11,9 +10,14 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+
+export {
+  QueryUserBadgeDto as QueryMyBadgeDto,
+  UserBadgeItemDto,
+} from '@libs/growth/badge'
 
 /**
  * 更新用户资料 DTO
@@ -71,19 +75,6 @@ export class ChangeMyPhoneDto {
 export class QueryMyExperienceRecordDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
-) {}
-
-/**
- * 查询我的徽章 DTO
- */
-export class QueryMyBadgeDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(
-      BaseUserBadgeDto,
-      ['name', 'type', 'isEnabled', 'business', 'eventKey'] as const,
-    ),
-  ),
 ) {}
 
 export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDto, [
@@ -525,17 +516,4 @@ export class UserCenterDto {
     nullable: false,
   })
   task!: UserCenterTaskDto
-}
-
-/**
- * 用户徽章项 DTO
- */
-export class UserBadgeItemDto extends PickType(BaseDto, ['createdAt'] as const) {
-  @NestedProperty({
-    description: '徽章详情',
-    type: BaseUserBadgeDto,
-    validation: false,
-    nullable: false,
-  })
-  badge!: BaseUserBadgeDto
 }

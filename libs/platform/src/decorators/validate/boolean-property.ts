@@ -1,10 +1,8 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { BooleanPropertyOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import { IsBoolean, IsOptional } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * 布尔属性装饰器
@@ -80,17 +78,16 @@ export function BooleanProperty(options: BooleanPropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    const apiPropertyOptions: ApiPropertyOptions = {
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,
       default: options.default,
       nullable: !(options.required ?? true),
       type: Boolean,
-    }
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+    })),
+  )
 
   return applyDecorators(...decorators)
 }

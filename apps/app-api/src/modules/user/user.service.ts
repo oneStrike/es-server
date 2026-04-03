@@ -29,7 +29,7 @@ import {
 } from '@libs/platform/utils'
 import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'
 import { SmsService } from '../auth/sms.service'
 
@@ -371,10 +371,18 @@ export class UserService {
       badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
     }
     if (business !== undefined) {
-      badgeConditions.push(eq(this.userBadge.business, business))
+      badgeConditions.push(
+        business === null
+          ? isNull(this.userBadge.business)
+          : eq(this.userBadge.business, business),
+      )
     }
     if (eventKey !== undefined) {
-      badgeConditions.push(eq(this.userBadge.eventKey, eventKey))
+      badgeConditions.push(
+        eventKey === null
+          ? isNull(this.userBadge.eventKey)
+          : eq(this.userBadge.eventKey, eventKey),
+      )
     }
 
     const badgeWhere =

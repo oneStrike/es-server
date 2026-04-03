@@ -1,8 +1,7 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { BitmaskPropertyOptions } from './types'
-import { isDevelopment, isNumberEnum } from '@libs/platform/utils'
+import { isNumberEnum } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import {
   IsNumber,
@@ -12,6 +11,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 import { NumberEnumLike } from './types'
 
 /**
@@ -171,29 +171,31 @@ export function BitmaskProperty(options: BitmaskPropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    if (!isNumberEnum(options.enum)) {
-      throw new Error('BitmaskProperty: 枚举对象必须为数字枚举')
-    }
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => {
+      if (!isNumberEnum(options.enum)) {
+        throw new Error('BitmaskProperty: 枚举对象必须为数字枚举')
+      }
 
-    const enumValues = Object.values(options.enum).filter(
-      (value): value is number => typeof value === 'number',
-    )
-    const maxValue = enumValues.reduce((acc, value) => acc | value, 0)
+      const enumValues = Object.values(options.enum).filter(
+        (value): value is number => typeof value === 'number',
+      )
+      const maxValue = enumValues.reduce((acc, value) => acc | value, 0)
 
-    const apiPropertyOptions: ApiPropertyOptions = {
-      description: options.description,
-      example: options.example,
-      required: options.required ?? true,
-      default: options.default,
-      nullable: !(options.required ?? true),
-      type: Number,
-      minimum: 0,
-      maximum: maxValue,
-    }
+      const apiPropertyOptions: ApiPropertyOptions = {
+        description: options.description,
+        example: options.example,
+        required: options.required ?? true,
+        default: options.default,
+        nullable: !(options.required ?? true),
+        type: Number,
+        minimum: 0,
+        maximum: maxValue,
+      }
 
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+      return apiPropertyOptions
+    }),
+  )
 
   return applyDecorators(...decorators)
 }

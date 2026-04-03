@@ -1,10 +1,9 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { NumberPropertyOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import { IsNumber, IsOptional, Max, Min } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * 数字属性装饰器
@@ -101,24 +100,27 @@ export function NumberProperty(options: NumberPropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    const apiPropertyOptions: ApiPropertyOptions = {
-      description: options.description,
-      example: options.example,
-      required: options.required ?? true,
-      default: options.default,
-      nullable: !(options.required ?? true),
-      type: Number,
-    }
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => {
+      const apiPropertyOptions: ApiPropertyOptions = {
+        description: options.description,
+        example: options.example,
+        required: options.required ?? true,
+        default: options.default,
+        nullable: !(options.required ?? true),
+        type: Number,
+      }
 
-    if (options.min !== undefined) {
-      apiPropertyOptions.minimum = options.min
-    }
-    if (options.max !== undefined) {
-      apiPropertyOptions.maximum = options.max
-    }
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+      if (options.min !== undefined) {
+        apiPropertyOptions.minimum = options.min
+      }
+      if (options.max !== undefined) {
+        apiPropertyOptions.maximum = options.max
+      }
+
+      return apiPropertyOptions
+    }),
+  )
 
   return applyDecorators(...decorators)
 }

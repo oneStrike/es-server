@@ -6,7 +6,6 @@ import type {
 } from '@db/schema'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger'
 import type {
-  CheckInActionView,
   CheckInCycleAggregation,
   CheckInDateOnly,
   CheckInPlanSnapshot,
@@ -16,6 +15,7 @@ import type {
   CreateCheckInRecordInput,
 } from './check-in.type'
 import type {
+  CheckInActionResponseDto,
   MakeupCheckInDto,
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
@@ -260,7 +260,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         ),
         triggeredGrantIds,
         alreadyExisted: false,
-      } satisfies CheckInActionView
+      } satisfies CheckInActionResponseDto
     })
 
     if (!action.alreadyExisted) {
@@ -679,7 +679,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   /** 基于最新记录和周期摘要回填前端动作返回视图。 */
   private async buildLatestActionView(
     recordId: number,
-    actionMeta: Pick<CheckInActionView, 'alreadyExisted' | 'triggeredGrantIds'>,
+    actionMeta: Pick<CheckInActionResponseDto, 'alreadyExisted' | 'triggeredGrantIds'>,
   ) {
     const [record] = await this.db
       .select()
@@ -716,7 +716,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       ),
       triggeredGrantIds: actionMeta.triggeredGrantIds,
       alreadyExisted: actionMeta.alreadyExisted,
-    } satisfies CheckInActionView
+    } satisfies CheckInActionResponseDto
   }
 
   /**

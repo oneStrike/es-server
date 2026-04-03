@@ -11,9 +11,9 @@ import type {
   CheckInPlanSnapshot,
   CheckInPlanSnapshotSource,
   CheckInRewardConfig,
-  CheckInStreakRewardRuleInput,
   CreateCheckInStreakRewardRuleInsert,
 } from './check-in.type'
+import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import {
   formatDateOnlyInAppTimeZone,
   getAppTimeZone,
@@ -213,7 +213,7 @@ export abstract class CheckInServiceSupport {
    * 归一化连续签到奖励规则输入，并提前拦截重复阈值和重复编码。
    */
   protected normalizeStreakRewardRules(
-    rules: CheckInStreakRewardRuleInput[] | undefined,
+    rules: CreateCheckInStreakRewardRuleDto[] | undefined,
     planId: number,
     planVersion: number,
   ) {

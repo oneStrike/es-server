@@ -1,14 +1,13 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { NestedPropertyOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Type } from 'class-transformer'
 import {
   ValidateNested as CVValidateNested,
   IsObject,
   IsOptional,
 } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * 嵌套对象属性装饰器
@@ -54,29 +53,31 @@ export function NestedProperty(options: NestedPropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    const apiPropertyOptions: ApiPropertyOptions = {
-      description: options.description,
-      required: options.required ?? true,
-      type: options.type,
-    }
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => {
+      const apiPropertyOptions: ApiPropertyOptions = {
+        description: options.description,
+        required: options.required ?? true,
+        type: options.type,
+      }
 
-    if (options.example) {
-      apiPropertyOptions.example = options.example
-    }
+      if (options.example) {
+        apiPropertyOptions.example = options.example
+      }
 
-    if (options.default !== undefined) {
-      apiPropertyOptions.default = options.default
-    }
+      if (options.default !== undefined) {
+        apiPropertyOptions.default = options.default
+      }
 
-    if (options.nullable !== undefined) {
-      apiPropertyOptions.nullable = options.nullable
-    } else if (!(options.required ?? true)) {
-      apiPropertyOptions.nullable = true
-    }
+      if (options.nullable !== undefined) {
+        apiPropertyOptions.nullable = options.nullable
+      } else if (!(options.required ?? true)) {
+        apiPropertyOptions.nullable = true
+      }
 
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+      return apiPropertyOptions
+    }),
+  )
 
   return applyDecorators(...decorators)
 }

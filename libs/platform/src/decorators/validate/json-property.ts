@@ -1,10 +1,8 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { JsonPropertyOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import { IsJSON, IsOptional } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * JSON属性装饰器
@@ -77,8 +75,8 @@ export function JsonProperty(options: JsonPropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    const apiPropertyOptions: ApiPropertyOptions = {
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,
@@ -86,9 +84,8 @@ export function JsonProperty(options: JsonPropertyOptions) {
       nullable: !(options.required ?? true),
       type: String,
       format: 'json',
-    }
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+    })),
+  )
 
   return applyDecorators(...decorators)
 }

@@ -1,13 +1,11 @@
 import type { IdDto } from '@libs/platform/dto'
 import type {
-  CheckInStreakRewardRuleInput,
-} from './check-in.type'
-import type {
   CreateCheckInPlanDto,
   QueryCheckInPlanDto,
   UpdateCheckInPlanDto,
   UpdateCheckInPlanStatusDto,
 } from './dto/check-in-definition.dto'
+import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger'
 import {
@@ -216,7 +214,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       currentPlan.id,
       currentPlan.version,
     )
-    const nextRuleInputs: CheckInStreakRewardRuleInput[] =
+    const nextRuleInputs: CreateCheckInStreakRewardRuleDto[] =
       dto.streakRewardRules ??
       currentRules.map((rule) => ({
         ruleCode: rule.ruleCode,

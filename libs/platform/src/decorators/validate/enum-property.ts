@@ -1,14 +1,12 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { EnumPropertyOptions } from './types'
 import {
   getNumberEnumValues,
-  isDevelopment,
   isNumberEnum,
 } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import { IsEnum, IsIn, IsOptional } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * 枚举属性装饰器
@@ -120,17 +118,16 @@ export function EnumProperty(options: EnumPropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    const apiPropertyOptions: ApiPropertyOptions = {
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
       required: options.required ?? true,
       default: options.default,
       nullable: !(options.required ?? true),
       enum: options.enum,
-    }
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+    })),
+  )
 
   return applyDecorators(...decorators)
 }

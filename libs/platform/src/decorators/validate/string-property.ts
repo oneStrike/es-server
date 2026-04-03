@@ -1,8 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { StringPropertyOptions } from './types'
-import { isDevelopment } from '@libs/platform/utils'
 import { applyDecorators } from '@nestjs/common'
-import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import {
   IsISO8601,
@@ -12,6 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator'
+import { buildSwaggerPropertyDecorators } from './swagger'
 
 /**
  * 字符串属性装饰器
@@ -115,23 +114,25 @@ export function StringProperty(options: StringPropertyOptions) {
     }
   }
 
-  if (isDevelopment()) {
-    const apiPropertyOptions: ApiPropertyOptions = {
-      description: options.description,
-      example: options.example,
-      required: options.required ?? true,
-      default: options.default,
-      nullable: !(options.required ?? true),
-      type: String,
-    }
+  decorators.push(
+    ...buildSwaggerPropertyDecorators(options, () => {
+      const apiPropertyOptions: ApiPropertyOptions = {
+        description: options.description,
+        example: options.example,
+        required: options.required ?? true,
+        default: options.default,
+        nullable: !(options.required ?? true),
+        type: String,
+      }
 
-    if (options.minLength !== undefined || options.maxLength !== undefined) {
-      apiPropertyOptions.minLength = options.minLength
-      apiPropertyOptions.maxLength = options.maxLength
-    }
+      if (options.minLength !== undefined || options.maxLength !== undefined) {
+        apiPropertyOptions.minLength = options.minLength
+        apiPropertyOptions.maxLength = options.maxLength
+      }
 
-    decorators.push(ApiProperty(apiPropertyOptions))
-  }
+      return apiPropertyOptions
+    }),
+  )
 
   return applyDecorators(...decorators)
 }

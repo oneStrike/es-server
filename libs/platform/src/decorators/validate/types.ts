@@ -8,6 +8,8 @@ export interface BaseValidateOptions {
   description: string
   /** 是否必填，默认为true */
   required?: boolean
+  /** 是否生成 Swagger 文档，默认为 true。设置为 false 时隐藏该字段文档 */
+  swagger?: boolean
   /** 自定义转换函数 */
   transform?: (params: TransformFnParams) => any
 }
