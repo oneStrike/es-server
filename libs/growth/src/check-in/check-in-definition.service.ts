@@ -1,10 +1,13 @@
+import type { IdDto } from '@libs/platform/dto'
 import type {
   CheckInStreakRewardRuleInput,
-  CreateCheckInPlanInput,
-  QueryCheckInPlanPageInput,
-  UpdateCheckInPlanInput,
-  UpdateCheckInPlanStatusInput,
 } from './check-in.type'
+import type {
+  CreateCheckInPlanDto,
+  QueryCheckInPlanDto,
+  UpdateCheckInPlanDto,
+  UpdateCheckInPlanStatusDto,
+} from './dto/check-in-definition.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger'
 import {
@@ -36,7 +39,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /**
    * 分页读取签到计划列表，并补齐规则数、活跃周期数和待补偿奖励数摘要。
    */
-  async getPlanPage(query: QueryCheckInPlanPageInput) {
+  async getPlanPage(query: QueryCheckInPlanDto) {
     const conditions = [
       isNull(this.checkInPlanTable.deletedAt),
       buildILikeCondition(this.checkInPlanTable.planCode, query.planCode),
@@ -73,8 +76,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   /** 读取单个签到计划详情及当前版本规则快照。 */
-  async getPlanDetail(id: number) {
-    const plan = await this.getPlanById(id)
+  async getPlanDetail(query: IdDto) {
+    const plan = await this.getPlanById(query.id)
     const [rules, summary] = await Promise.all([
       this.getPlanRules(plan.id, plan.version),
       this.buildPlanSummary(plan.id, plan.version),
@@ -93,7 +96,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
    *
    * 会在写入前校验补签额度、计划起止日期以及“当前只允许一个生效计划”的运营约束。
    */
-  async createPlan(dto: CreateCheckInPlanInput, adminUserId: number) {
+  async createPlan(dto: CreateCheckInPlanDto, adminUserId: number) {
     const cycleType = this.parseCycleType(dto.cycleType)
     const startDate = this.parseDateOnly(dto.startDate, '计划开始日期')
     const endDate = dto.endDate
@@ -168,7 +171,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
    *
    * 当改动会影响周期解释、补签规则或奖励语义时，自动递增版本并写入新版本规则。
    */
-  async updatePlan(dto: UpdateCheckInPlanInput, adminUserId: number) {
+  async updatePlan(dto: UpdateCheckInPlanDto, adminUserId: number) {
     const currentPlan = await this.getPlanById(dto.id)
     const currentStatus = this.resolvePlanStatus(currentPlan)
     const nextPlan = {
@@ -282,7 +285,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   /** 更新计划状态，并拦截会破坏单生效计划合同的配置。 */
   async updatePlanStatus(
-    dto: UpdateCheckInPlanStatusInput,
+    dto: UpdateCheckInPlanStatusDto,
     adminUserId: number,
   ) {
     const plan = await this.getPlanById(dto.id)

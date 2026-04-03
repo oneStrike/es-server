@@ -1,7 +1,6 @@
 import type {
   CheckInCycleInsert,
   CheckInPlan,
-  CheckInPlanInsert,
   CheckInRecordInsert,
   CheckInStreakRewardGrant,
   CheckInStreakRewardGrantInsert,
@@ -9,19 +8,39 @@ import type {
   CheckInStreakRewardRuleInsert,
 } from '@db/schema'
 import type {
-  PageQueryInput,
-  PageQueryNoOrderInput,
   QueryOrderByInput,
 } from '@libs/platform/types'
 import type {
-  CheckInCycleTypeEnum,
-  CheckInPlanStatusEnum,
-  CheckInRecordTypeEnum,
-  CheckInRepairTargetTypeEnum,
-  CheckInRewardResultTypeEnum,
-  CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
+import type {
+  CheckInPlanDetailResponseDto,
+  CheckInPlanPageItemDto,
+  CreateCheckInPlanDto,
+  QueryCheckInPlanDto,
+  UpdateCheckInPlanDto,
+  UpdateCheckInPlanStatusDto,
+} from './dto/check-in-definition.dto'
+import type {
+  CheckInActionResponseDto,
+  MakeupCheckInDto,
+  RepairCheckInRewardDto,
+  RepairCheckInRewardResponseDto,
+} from './dto/check-in-execution.dto'
+import type {
+  CheckInCalendarDayDto,
+  CheckInCalendarResponseDto,
+  CheckInReconciliationItemDto,
+  CheckInRecordItemDto,
+  CheckInSummaryResponseDto,
+  QueryCheckInReconciliationDto,
+  QueryMyCheckInRecordDto,
+} from './dto/check-in-runtime.dto'
+import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
+import type {
+  CheckInStreakRewardRuleItemDto,
+  CreateCheckInStreakRewardRuleDto,
+} from './dto/check-in-streak-reward-rule.dto'
 
 /**
  * 签到分页排序入参。
@@ -114,16 +133,6 @@ export type CheckInPlanSummaryView = Pick<
 Pick<CheckInPlan, 'status'>
 
 /**
- * 签到记录共享的奖励状态字段。
- *
- * 基础奖励相关读模型统一使用这组字段，避免动作返回、记录页和对账页各写一份。
- */
-export interface CheckInRecordRewardStateView {
-  rewardStatus?: CheckInRewardStatusEnum | null
-  rewardResultType?: CheckInRewardResultTypeEnum | null
-}
-
-/**
  * 周期窗口字段。
  *
  * 供周期边界计算、摘要和日历视图复用相同的日期区间结构。
@@ -157,102 +166,50 @@ export interface CheckInSummaryCycleView
   remainingMakeupCount: number
 }
 
-type CreateCheckInPlanInsertFields = Pick<
-  CheckInPlanInsert,
-  | 'planCode'
-  | 'planName'
-  | 'status'
-  | 'cycleType'
-  | 'startDate'
-  | 'endDate'
-  | 'allowMakeupCountPerCycle'
-  | 'baseRewardConfig'
->
-
 /**
  * 管理端连续奖励规则写入入参。
  */
-export interface CheckInStreakRewardRuleInput {
-  ruleCode: string
-  streakDays: number
-  rewardConfig: CheckInRewardConfig
-  repeatable?: boolean
-  status?: CheckInStreakRewardRuleStatusEnum
-}
+export type CheckInStreakRewardRuleInput = CreateCheckInStreakRewardRuleDto
 
 /**
  * 管理端签到计划创建入参。
  */
-export interface CreateCheckInPlanInput extends CreateCheckInPlanInsertFields {
-  status: CheckInPlanStatusEnum
-  cycleType: CheckInCycleTypeEnum
-  baseRewardConfig?: CheckInRewardConfig | null
-  streakRewardRules?: CheckInStreakRewardRuleInput[]
-}
+export type CreateCheckInPlanInput = CreateCheckInPlanDto
 
 /**
  * 管理端签到计划更新入参。
  */
-export interface UpdateCheckInPlanInput extends Partial<CreateCheckInPlanInput> {
-  id: number
-}
+export type UpdateCheckInPlanInput = UpdateCheckInPlanDto
 
 /**
  * 管理端签到计划状态更新入参。
  */
-export interface UpdateCheckInPlanStatusInput {
-  id: number
-  status?: CheckInPlanStatusEnum
-}
+export type UpdateCheckInPlanStatusInput = UpdateCheckInPlanStatusDto
 
 /**
  * 管理端签到计划分页查询条件。
  */
-export interface QueryCheckInPlanPageInput extends PageQueryNoOrderInput {
-  planCode?: string
-  planName?: string
-  status?: CheckInPlanStatusEnum
-  orderBy?: string
-}
+export type QueryCheckInPlanPageInput = QueryCheckInPlanDto
 
 /**
  * App 端签到记录分页查询条件。
  */
-export interface QueryMyCheckInRecordPageInput extends PageQueryInput {
-  startDate?: string
-  endDate?: string
-  orderBy?: string
-}
+export type QueryMyCheckInRecordPageInput = QueryMyCheckInRecordDto
 
 /**
  * 管理端签到对账分页查询条件。
  */
-export interface QueryCheckInReconciliationPageInput extends PageQueryInput {
-  planId?: number
-  userId?: number
-  cycleId?: number
-  recordId?: number
-  grantId?: number
-  rewardStatus?: CheckInRewardStatusEnum | null
-  grantStatus?: CheckInRewardStatusEnum | null
-  orderBy?: string
-}
+export type QueryCheckInReconciliationPageInput = QueryCheckInReconciliationDto
 
 /**
  * App 端补签入参。
  */
-export interface MakeupCheckInInput {
-  signDate: CheckInDateOnly
-}
+export type MakeupCheckInInput = MakeupCheckInDto
 
 /**
  * 管理端补偿入参。
  */
-export interface RepairCheckInRewardInput {
-  targetType: CheckInRepairTargetTypeEnum
-  recordId?: number
-  grantId?: number
-}
+export type RepairCheckInRewardInput = RepairCheckInRewardDto
 
 /**
  * 周期边界计算结果。
@@ -277,134 +234,57 @@ export interface CheckInCycleAggregation {
 /**
  * App 端返回的连续奖励简要视图。
  */
-export type CheckInStreakRewardRuleView = CheckInStreakRewardRuleCoreView
+export type CheckInStreakRewardRuleView = CheckInStreakRewardRuleItemDto
 
 /**
  * 签到记录关联的连续奖励视图。
  */
-export interface CheckInGrantView {
-  id: number
-  ruleId: number
-  triggerSignDate: CheckInDateOnly
-  grantStatus: CheckInRewardStatusEnum
-  grantResultType?: CheckInRewardResultTypeEnum | null
-  ledgerIds: number[]
-  lastGrantError?: string | null
-}
+export type CheckInGrantView = CheckInGrantItemDto
 
 /**
  * 签到记录视图。
  */
-export interface CheckInRecordView extends CheckInRecordRewardStateView {
-  id: number
-  signDate: CheckInDateOnly
-  recordType: CheckInRecordTypeEnum
-  baseRewardLedgerIds: number[]
-  lastRewardError?: string | null
-  rewardSettledAt?: Date | null
-  grants: CheckInGrantView[]
-  createdAt: Date
-}
+export type CheckInRecordView = CheckInRecordItemDto
 
 /**
  * 签到日历单日视图。
  */
-export interface CheckInCalendarDayView {
-  signDate: CheckInDateOnly
-  isToday: boolean
-  isFuture: boolean
-  isSigned: boolean
-  recordType?: CheckInRecordTypeEnum
-  rewardStatus?: CheckInRewardStatusEnum | null
-  rewardResultType?: CheckInRewardResultTypeEnum | null
-  grantCount: number
-}
+export type CheckInCalendarDayView = CheckInCalendarDayDto
 
 /**
  * App 端签到摘要视图。
  */
-export interface CheckInSummaryView {
-  plan?: CheckInPlanSummaryView | null
-  cycle?: CheckInSummaryCycleView | null
-  todaySigned: boolean
-  nextStreakReward?: CheckInStreakRewardRuleView | null
-  latestRecord?: CheckInRecordView | null
-}
+export type CheckInSummaryView = CheckInSummaryResponseDto
 
 /**
  * App 端签到日历视图。
  */
-export interface CheckInCalendarView {
-  planId?: CheckInPlanSummaryView['id']
-  cycleId?: CheckInSummaryCycleView['id']
-  cycleKey?: CheckInCycleWindowView['cycleKey']
-  cycleStartDate?: CheckInCycleWindowView['cycleStartDate']
-  cycleEndDate?: CheckInCycleWindowView['cycleEndDate']
-  days: CheckInCalendarDayView[]
-}
+export type CheckInCalendarView = CheckInCalendarResponseDto
 
 /**
  * 签到动作返回视图。
  */
-export interface CheckInActionView extends CheckInRecordRewardStateView {
-  recordId: number
-  cycleId: number
-  signDate: CheckInDateOnly
-  recordType: CheckInRecordTypeEnum
-  currentStreak: number
-  signedCount: number
-  remainingMakeupCount: number
-  triggeredGrantIds: number[]
-  alreadyExisted: boolean
-}
+export type CheckInActionView = CheckInActionResponseDto
 
 /**
  * 管理端签到计划列表视图。
  */
-export type CheckInPlanPageView = CheckInPlanSnapshotSource &
-  Pick<
-    CheckInPlan,
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt'
-  > & {
-    ruleCount: number
-    activeCycleCount: number
-    pendingRewardCount: number
-  }
+export type CheckInPlanPageView = CheckInPlanPageItemDto
 
 /**
  * 管理端签到计划详情视图。
  */
-export interface CheckInPlanDetailView extends CheckInPlanPageView {
-  streakRewardRules: CheckInStreakRewardRuleView[]
-}
+export type CheckInPlanDetailView = CheckInPlanDetailResponseDto
 
 /**
  * 管理端签到对账视图。
  */
-export interface CheckInReconciliationView extends CheckInRecordRewardStateView {
-  recordId: number
-  userId: number
-  planId: number
-  cycleId: number
-  signDate: CheckInDateOnly
-  recordType: CheckInRecordTypeEnum
-  baseRewardLedgerIds: number[]
-  lastRewardError?: string | null
-  grants: CheckInGrantView[]
-  createdAt: Date
-}
+export type CheckInReconciliationView = CheckInReconciliationItemDto
 
 /**
  * 管理端补偿结果视图。
  */
-export interface RepairCheckInRewardView {
-  targetType: CheckInRepairTargetTypeEnum
-  recordId?: number
-  grantId?: number
-  success: boolean
-}
+export type RepairCheckInRewardView = RepairCheckInRewardResponseDto
 
 /**
  * 周期创建入参。

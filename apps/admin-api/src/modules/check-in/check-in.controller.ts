@@ -1,14 +1,8 @@
-import { CheckInService } from '@libs/growth/check-in'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../common/decorators/audit.decorator'
-import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import {
-  AdminCheckInPlanDetailResponseDto,
-  AdminCheckInPlanPageResponseDto,
-  AdminCheckInReconciliationPageResponseDto,
+  CheckInPlanDetailResponseDto,
+  CheckInPlanPageItemDto,
+  CheckInReconciliationItemDto,
+  CheckInService,
   CreateCheckInPlanDto,
   QueryCheckInPlanDto,
   QueryCheckInReconciliationDto,
@@ -16,7 +10,13 @@ import {
   RepairCheckInRewardResponseDto,
   UpdateCheckInPlanDto,
   UpdateCheckInPlanStatusDto,
-} from './dto/check-in.dto'
+} from '@libs/growth/check-in'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 
 @ApiTags('签到管理/签到计划')
 @Controller('admin/check-in')
@@ -26,7 +26,7 @@ export class CheckInController {
   @Get('plan/page')
   @ApiPageDoc({
     summary: '分页查询签到计划',
-    model: AdminCheckInPlanPageResponseDto,
+    model: CheckInPlanPageItemDto,
   })
   async getPlanPage(@Query() query: QueryCheckInPlanDto) {
     return this.checkInService.getPlanPage(query)
@@ -35,10 +35,10 @@ export class CheckInController {
   @Get('plan/detail')
   @ApiDoc({
     summary: '查询签到计划详情',
-    model: AdminCheckInPlanDetailResponseDto,
+    model: CheckInPlanDetailResponseDto,
   })
   async getPlanDetail(@Query() query: IdDto) {
-    return this.checkInService.getPlanDetail(query.id)
+    return this.checkInService.getPlanDetail(query)
   }
 
   @Post('plan/create')
@@ -92,7 +92,7 @@ export class CheckInController {
   @Get('reconciliation/page')
   @ApiPageDoc({
     summary: '分页查询签到对账结果',
-    model: AdminCheckInReconciliationPageResponseDto,
+    model: CheckInReconciliationItemDto,
   })
   async getReconciliationPage(@Query() query: QueryCheckInReconciliationDto) {
     return this.checkInService.getReconciliationPage(query)

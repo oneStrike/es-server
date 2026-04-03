@@ -2,13 +2,11 @@ import {
   CheckInCycleTypeEnum,
   CheckInPlanStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
+  CreateCheckInPlanDto,
+  CreateCheckInStreakRewardRuleDto,
 } from '@libs/growth/check-in'
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
-import {
-  CreateCheckInPlanDto,
-  CreateCheckInStreakRewardRuleDto,
-} from './check-in.dto'
 
 describe('admin check-in dto reward config contract', () => {
   it('accepts object-based base reward config', () => {

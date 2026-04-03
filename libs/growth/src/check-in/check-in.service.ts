@@ -1,13 +1,18 @@
+import type { IdDto } from '@libs/platform/dto'
 import type {
-  CreateCheckInPlanInput,
-  MakeupCheckInInput,
-  QueryCheckInPlanPageInput,
-  QueryCheckInReconciliationPageInput,
-  QueryMyCheckInRecordPageInput,
-  RepairCheckInRewardInput,
-  UpdateCheckInPlanInput,
-  UpdateCheckInPlanStatusInput,
-} from './check-in.type'
+  CreateCheckInPlanDto,
+  QueryCheckInPlanDto,
+  UpdateCheckInPlanDto,
+  UpdateCheckInPlanStatusDto,
+} from './dto/check-in-definition.dto'
+import type {
+  MakeupCheckInDto,
+  RepairCheckInRewardDto,
+} from './dto/check-in-execution.dto'
+import type {
+  QueryCheckInReconciliationDto,
+  QueryMyCheckInRecordDto,
+} from './dto/check-in-runtime.dto'
 import { Injectable } from '@nestjs/common'
 import { CheckInDefinitionService } from './check-in-definition.service'
 import { CheckInExecutionService } from './check-in-execution.service'
@@ -28,28 +33,28 @@ export class CheckInService {
   ) {}
 
   /** 读取管理端签到计划分页。 */
-  async getPlanPage(query: QueryCheckInPlanPageInput) {
+  async getPlanPage(query: QueryCheckInPlanDto) {
     return this.checkInDefinitionService.getPlanPage(query)
   }
 
   /** 读取管理端签到计划详情。 */
-  async getPlanDetail(id: number) {
-    return this.checkInDefinitionService.getPlanDetail(id)
+  async getPlanDetail(query: IdDto) {
+    return this.checkInDefinitionService.getPlanDetail(query)
   }
 
   /** 创建新的签到计划定义。 */
-  async createPlan(dto: CreateCheckInPlanInput, adminUserId: number) {
+  async createPlan(dto: CreateCheckInPlanDto, adminUserId: number) {
     return this.checkInDefinitionService.createPlan(dto, adminUserId)
   }
 
   /** 更新签到计划及其版本化规则。 */
-  async updatePlan(dto: UpdateCheckInPlanInput, adminUserId: number) {
+  async updatePlan(dto: UpdateCheckInPlanDto, adminUserId: number) {
     return this.checkInDefinitionService.updatePlan(dto, adminUserId)
   }
 
   /** 更新签到计划状态。 */
   async updatePlanStatus(
-    dto: UpdateCheckInPlanStatusInput,
+    dto: UpdateCheckInPlanStatusDto,
     adminUserId: number,
   ) {
     return this.checkInDefinitionService.updatePlanStatus(dto, adminUserId)
@@ -66,7 +71,7 @@ export class CheckInService {
   }
 
   /** 分页读取当前用户的签到记录。 */
-  async getMyRecords(query: QueryMyCheckInRecordPageInput, userId: number) {
+  async getMyRecords(query: QueryMyCheckInRecordDto, userId: number) {
     return this.checkInRuntimeService.getMyRecords(query, userId)
   }
 
@@ -76,17 +81,17 @@ export class CheckInService {
   }
 
   /** 执行补签。 */
-  async makeup(dto: MakeupCheckInInput, userId: number) {
+  async makeup(dto: MakeupCheckInDto, userId: number) {
     return this.checkInExecutionService.makeup(dto, userId)
   }
 
   /** 读取管理端奖励对账分页。 */
-  async getReconciliationPage(query: QueryCheckInReconciliationPageInput) {
+  async getReconciliationPage(query: QueryCheckInReconciliationDto) {
     return this.checkInRuntimeService.getReconciliationPage(query)
   }
 
   /** 触发签到奖励补偿。 */
-  async repairReward(dto: RepairCheckInRewardInput, adminUserId: number) {
+  async repairReward(dto: RepairCheckInRewardDto, adminUserId: number) {
     return this.checkInExecutionService.repairReward(dto, adminUserId)
   }
 }

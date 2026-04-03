@@ -14,9 +14,11 @@ import type {
   CreateCheckInCycleInput,
   CreateCheckInGrantInput,
   CreateCheckInRecordInput,
-  MakeupCheckInInput,
-  RepairCheckInRewardInput,
 } from './check-in.type'
+import type {
+  MakeupCheckInDto,
+  RepairCheckInRewardDto,
+} from './dto/check-in-execution.dto'
 import { DrizzleService } from '@db/core'
 import {
   GrowthAssetTypeEnum,
@@ -67,7 +69,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   }
 
   /** 发起补签，统一走签到主链路并切换为补签语义。 */
-  async makeup(dto: MakeupCheckInInput, userId: number) {
+  async makeup(dto: MakeupCheckInDto, userId: number) {
     return this.performSign({
       userId,
       signDate: this.parseDateOnly(dto.signDate, '补签日期'),
@@ -78,7 +80,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   }
 
   /** 按目标类型触发基础奖励或连续奖励补偿。 */
-  async repairReward(dto: RepairCheckInRewardInput, adminUserId: number) {
+  async repairReward(dto: RepairCheckInRewardDto, adminUserId: number) {
     if (dto.targetType === CheckInRepairTargetTypeEnum.RECORD_REWARD) {
       if (!dto.recordId) {
         throw new BadRequestException('recordId 不能为空')

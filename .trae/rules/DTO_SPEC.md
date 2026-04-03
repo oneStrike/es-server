@@ -6,6 +6,7 @@
 - **一比一契约**：Controller 与 Service 的公开方法入参、出参与 DTO 保持 1:1（字段、可选性、类型一致）。
 - **低耦合**：`apps/*` 负责入口编排与路由，不维护第二套 DTO 契约。
 - **单一事实源**：实体字段与物理约束以 Drizzle Table 为准。
+- **按表拆文件**：实体基类 DTO 按 Drizzle Table 拆分，一个 schema 表对应一个 DTO 文件，不把多个表的基类 DTO 混放在同一个文件里。
 - **契约优先**：DTO 是 API 契约，不机械等同数据库表结构。
 - **类型最小化**：与 DTO 同构的 `Input/View` 类型应删除；若保留语义名，只允许类型别名。
 
@@ -36,6 +37,8 @@
 
 - `BaseXxxDto` 是实体相关模型的共享复用起点，只承载跨场景稳定字段。
 - 直接映射自 Drizzle Table 的字段，字段名、类型、可空性、长度、枚举、默认语义必须一致。
+- 一个 Drizzle Table 对应一个 DTO 文件；文件名与表语义一一对应，例如 `check-in-plan.dto.ts`、`check-in-record.dto.ts`。
+- 单个 DTO 文件只放同一张表的基类 DTO、该表直接关联的字段片段 DTO，以及确有必要的少量 helper；禁止把多张表的 `BaseXxxDto` 聚合到一个“大 DTO 文件”中。
 - `BaseXxxDto` 不是表的完整镜像；仅内部字段（软删、内部审计、中间态）不强制外露。
 - 日期时间字段的 Swagger `example` 统一使用 ISO 8601（例如 `2024-01-01T00:00:00.000Z`）。
 
@@ -44,6 +47,7 @@
 - 业务场景 DTO 统一定义在 `libs/*`，由 admin/app 入口共同复用。
 - 优先通过 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 组合，避免字段复制。
 - 同一业务语义只维护一份 DTO；禁止按平台复制两份同构 DTO。
+- 场景 DTO 命名与拆分尽量向 Service 公开用例靠拢，不以 `Admin` / `App` 前缀区分客户端。
 - 出现语义分叉时，按业务语义拆分 DTO 与方法（例如 `QueryXxxAuditDto`、`QueryXxxPublicDto`），而不是在同一 DTO 中堆叠平台特化字段。
 - 禁止新增纯别名 DTO（`export class XxxDto extends YyyDto {}`）。
 
@@ -71,8 +75,10 @@
 - **实体基类 DTO**：`BaseXxxDto`
 - **共享字段片段 DTO**：`XxxWritableFieldsDto`、`XxxStatusFieldsDto`、`XxxMetaDto`
 - **场景 DTO**：`CreateXxxDto`、`UpdateXxxDto`、`QueryXxxDto`、`XxxResponseDto`、`XxxItemDto`、`XxxDetailDto`
+- **实体基类 DTO 文件**：`xxx.dto.ts`，并与对应 schema 表一一对应
 - **领域类型文件**：`xxx.type.ts`
 - **内部类型别名（可选）**：`type QueryXxxInput = QueryXxxDto`
+- 禁止新增 `AdminXxxDto`、`AppXxxDto` 这类客户端前缀命名；若出现语义差异，直接体现在业务语义名上。
 
 ## 5. 复用与收敛规则
 
@@ -87,6 +93,15 @@
 
 - 仅在校验、可选性、文档语义确有差异时覆盖字段。
 - 未变化字段必须复用，禁止复制整类字段定义。
+- 优先从 `BaseXxxDto`、已有场景 DTO 或共享字段片段 DTO 中 `Pick/Omit/Partial/Intersection`，尽量不要重新手写同一批字段。
+- `PickType` 与 `OmitType` 二选一时，默认统计需要显式列出的字段数量，哪个字段更少就使用哪个；避免为了“正向表达”而罗列大段字段名。
+- 若 `PickType` 与 `OmitType` 需要列出的字段数相同，可选择语义更清晰的一侧；若实际没有裁剪字段，就不要再额外包一层 `PickType/OmitType` helper。
+- 同一业务域内，只要同名字段或同一组字段在两个及以上 DTO 中出现，就应优先抽成共享字段片段 DTO，或直接复用已有 DTO 字段；不允许在多个场景 DTO 文件里各自维护一份本地 helper class。
+- 请求 DTO 与响应 DTO 之间只要字段语义一致，也视为可复用字段；不能因为一个用于入参、一个用于出参，就重新手写同样的字段定义。
+- 只有在字段名不同、校验规则不同、可选性不同且无法通过 mapped types 表达时，才允许重新声明；重新声明时需要在代码评审中说明原因。
+- 同一个 mapped helper 只要在两个及以上文件重复出现，例如 `OmitType(PageDto, ...)`、`PartialType(XxxIdDto)` 这类组合，也应提取为共享字段片段 DTO，而不是在每个场景文件里重复声明。
+- `IntersectionType` 支持传递多个参数；组合三个及以上 DTO 时，必须写成 `IntersectionType(A, B, C)` 这类单层调用，不允许通过嵌套 `IntersectionType(IntersectionType(A, B), C)` 叠加。
+- 多层嵌套会增加阅读和 Swagger 元数据调试成本；若交叉组合已经难以理解，应优先提取具名中间 DTO，而不是继续嵌套 type helper。
 
 ### 5.3 何时使用 `type/interface` 而不是 DTO
 
@@ -100,12 +115,20 @@
 - 列表项、简要信息、嵌套对象优先从既有 DTO 裁剪复用。
 - 只在现有 DTO 无法表达目标语义时补充字段。
 - app 侧公开响应默认最小暴露面，不泄露内部审计或运营内部字段。
+- `bizKey`、`deletedAt` 以及同类内部幂等/软删字段默认不得返回给前端；若极少数后台场景确需返回，必须在 PR 中说明原因。
 
 ### 5.5 数组枚举字段规范
 
 - 枚举数组字段统一使用 `ArrayProperty`，并显式传入 `itemEnum`。
 - 枚举数组字段 TypeScript 类型必须为 `XxxEnum[]`，不得写成裸 `number[]`。
 - `example/default` 优先复用常量，避免散落字面量。
+
+### 5.6 枚举文档规范
+
+- 所有枚举字段的 `description` 需要写清楚该字段表达的业务语义，并使用“实际枚举值=业务含义”作为描述符。
+- 描述符左侧必须是接口真实接收/返回的数据值，例如 `0=草稿；1=已发布`、`weekly=按周切分签到周期`；不使用 `DRAFT`、`PUBLISHED` 这类枚举成员名作为描述符。
+- 不允许只写“状态”“类型”这类空泛描述；至少要补足枚举值含义、边界和使用场景。
+- 推荐格式为“字段语义（值A=含义A；值B=含义B）”；若某个值有额外约束，可直接跟在该值说明后。
 
 ## 6. 放置例外
 
@@ -115,10 +138,11 @@
 ## 7. 设计与实现流程
 
 1. 先定位对应 Drizzle Table、已有 DTO 与 `*.type.ts`。
-2. 判断目标结构是否属于 HTTP 契约；属于则在 `libs/*` 定义或复用 DTO。
-3. 对齐 Controller/Service 公开方法签名，确保与 DTO 1:1。
-4. 仅在 DTO 不适用时补充 `*.type.ts` 内部类型。
-5. 复核 Swagger、校验器、可选性与示例值一致性。
+2. 先判断该结构应落在哪个 schema 对应的 DTO 文件中；若跨表组合，再决定是否提取共享字段片段 DTO 或场景 DTO。
+3. 判断目标结构是否属于 HTTP 契约；属于则在 `libs/*` 定义或复用 DTO。
+4. 对齐 Controller/Service 公开方法签名，确保与 DTO 1:1，且命名与 Service 用例语义一致。
+5. 仅在 DTO 不适用时补充 `*.type.ts` 内部类型。
+6. 复核 Swagger、校验器、可选性、示例值、枚举说明与前端暴露面一致性。
 
 ## 8. 验收清单
 
@@ -127,8 +151,16 @@
 - [ ] Query DTO 与查询方法签名 1:1，无平台分叉同构 DTO。
 - [ ] 与 DTO 同构的 `Input/View` 类型已删除或收敛为类型别名。
 - [ ] `BaseXxxDto` 中映射字段与 Drizzle Table 一致。
+- [ ] 每张 schema 表的基类 DTO 单独放在对应 DTO 文件中，未把多张表 DTO 混放在同一文件。
 - [ ] 无手动重复定义通用字段（`id`、`createdAt`、`updatedAt` 等）。
+- [ ] 场景 DTO 未使用 `Admin` / `App` 前缀做人为客户端拆分，而是按业务语义或 Service 用例命名。
+- [ ] 响应 DTO 已尽量通过字段复用收敛，未大段重新定义已有字段。
+- [ ] `PickType` / `OmitType` 已按“显式列出字段更少”的原则选型，未为了表达习惯罗列大段字段名。
+- [ ] 跨场景重复字段已抽为共享字段片段 DTO，未在多个场景 DTO 文件中重复定义本地 helper class。
+- [ ] `IntersectionType` 组合为单层调用，未出现可展开为多参数的嵌套 `IntersectionType`。
 - [ ] 非 HTTP 结构使用 `*.type.ts`，未错误 DTO 化。
 - [ ] `@db/schema` 类型导入使用 `import type`。
+- [ ] 枚举字段 `description` 已写清业务语义，并使用实际枚举值作为描述符说明各枚举值含义。
+- [ ] `bizKey`、`deletedAt` 等内部字段未暴露给前端响应 DTO。
 - [ ] 日期字段 Swagger 示例为 ISO 8601。
 - [ ] 相关改动已通过 `eslint` 与 `type-check`。

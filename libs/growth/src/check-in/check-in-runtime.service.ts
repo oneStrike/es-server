@@ -11,9 +11,11 @@ import type {
   CheckInPlanSnapshot,
   CheckInRecordView,
   CheckInVirtualCycleView,
-  QueryCheckInReconciliationPageInput,
-  QueryMyCheckInRecordPageInput,
 } from './check-in.type'
+import type {
+  QueryCheckInReconciliationDto,
+  QueryMyCheckInRecordDto,
+} from './dto/check-in-runtime.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger'
 import { Injectable } from '@nestjs/common'
@@ -139,7 +141,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   /** 分页读取当前用户签到记录，并批量拼装同日触发的连续奖励列表。 */
-  async getMyRecords(query: QueryMyCheckInRecordPageInput, userId: number) {
+  async getMyRecords(query: QueryMyCheckInRecordDto, userId: number) {
     const conditions: SQL[] = [eq(this.checkInRecordTable.userId, userId)]
 
     if (query.startDate) {
@@ -185,7 +187,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   /** 分页读取签到奖励对账结果，并按记录维度挂载连续奖励发放列表。 */
-  async getReconciliationPage(query: QueryCheckInReconciliationPageInput) {
+  async getReconciliationPage(query: QueryCheckInReconciliationDto) {
     const conditions: SQL[] = []
 
     if (query.recordId !== undefined) {

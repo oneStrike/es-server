@@ -488,7 +488,7 @@ describe('check-in definition service versioning', () => {
       ruleCount: 1,
     })
 
-    const detail = await service.getPlanDetail(1)
+    const detail = await service.getPlanDetail({ id: 1 })
 
     expect(detail).toEqual(
       expect.objectContaining({
