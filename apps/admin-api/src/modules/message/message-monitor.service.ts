@@ -1,8 +1,8 @@
 import type {
-  MessageNotificationDeliveryMonitorQueryInput,
-  MessageOutboxMonitorQueryInput,
-  MessageWsMonitorQueryInput,
-} from './message-monitor.type'
+  QueryMessageOutboxMonitorDto,
+  QueryMessageWsMonitorDto,
+} from '@libs/message/monitor'
+import type { QueryNotificationDeliveryPageDto } from '@libs/message/notification'
 import { DrizzleService } from '@db/core'
 import { messageOutbox, messageWsMetric } from '@db/schema'
 import { MessageNotificationDeliveryService } from '@libs/message/notification'
@@ -31,7 +31,7 @@ export class MessageMonitorService {
    * 管理端直接复用消息域的 delivery 视图，保持状态语义与筛选口径只有一套事实源
    */
   async getNotificationDeliveryPage(
-    query: MessageNotificationDeliveryMonitorQueryInput,
+    query: QueryNotificationDeliveryPageDto,
   ) {
     return this.messageNotificationDeliveryService.getNotificationDeliveryPage(
       query,
@@ -52,7 +52,7 @@ export class MessageMonitorService {
     })
   }
 
-  async getOutboxMonitorSummary(query: MessageOutboxMonitorQueryInput) {
+  async getOutboxMonitorSummary(query: QueryMessageOutboxMonitorDto) {
     const now = new Date()
     const windowHours = this.normalizeWindowHours(query.windowHours)
     const topErrorsLimit = this.normalizeTopErrorsLimit(query.topErrorsLimit)
@@ -132,7 +132,7 @@ export class MessageMonitorService {
     }
   }
 
-  async getWsMonitorSummary(query: MessageWsMonitorQueryInput) {
+  async getWsMonitorSummary(query: QueryMessageWsMonitorDto) {
     const now = new Date()
     const windowHours = this.normalizeWindowHours(query.windowHours)
     const windowStartAt = new Date(now.getTime() - windowHours * 60 * 60 * 1000)

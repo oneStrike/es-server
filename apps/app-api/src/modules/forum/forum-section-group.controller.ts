@@ -1,8 +1,10 @@
-import { ForumSectionGroupService } from '@libs/forum/section-group'
+import {
+  ForumSectionGroupService,
+  PublicForumSectionGroupListItemDto,
+} from '@libs/forum/section-group'
 import { ApiDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AppForumSectionGroupListItemDto } from './dto/forum-section-group.dto'
 
 @ApiTags('论坛/板块')
 @Controller('app/forum/section-groups')
@@ -15,7 +17,7 @@ export class ForumSectionGroupController {
   @OptionalAuth()
   @ApiDoc({
     summary: '查询论坛板块分组列表',
-    model: AppForumSectionGroupListItemDto,
+    model: PublicForumSectionGroupListItemDto,
     isArray: true,
   })
   async getList(@CurrentUser('sub') userId?: number) {

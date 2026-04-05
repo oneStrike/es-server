@@ -11,4 +11,5 @@ export interface WorkChapterDetailContext {
   userId?: number
   ipAddress?: string
   device?: string
+  bypassVisibilityCheck?: boolean
 }

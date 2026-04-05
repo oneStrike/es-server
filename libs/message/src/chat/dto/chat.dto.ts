@@ -1,7 +1,10 @@
 import {
+  ArrayProperty,
+  BooleanProperty,
   DateProperty,
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -213,6 +216,7 @@ export class BaseChatConversationDto {
     description: '业务键',
     example: 'direct:10001:10002',
     maxLength: 100,
+    contract: false,
   })
   bizKey!: string
 
@@ -266,4 +270,46 @@ export class BaseChatConversationDto {
   lastReadMessageId?: string
 
   peerUser?: BaseChatPeerDto
+}
+
+/**
+ * 会话 DTO。
+ */
+export class ChatConversationDto extends BaseChatConversationDto {
+  @NestedProperty({
+    description: '对端用户',
+    type: BaseChatPeerDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  declare peerUser: BaseChatPeerDto
+}
+
+/**
+ * 会话消息分页响应 DTO。
+ */
+export class ChatConversationMessagesResponseDto {
+  @ArrayProperty({
+    description: '消息列表',
+    itemClass: BaseChatMessageDto,
+    itemType: 'object',
+    validation: false,
+  })
+  list!: BaseChatMessageDto[]
+
+  @StringProperty({
+    description: '下一页游标',
+    example: '120',
+    required: false,
+    validation: false,
+  })
+  nextCursor?: string | null
+
+  @BooleanProperty({
+    description: '是否还有更多消息',
+    example: true,
+    validation: false,
+  })
+  hasMore!: boolean
 }

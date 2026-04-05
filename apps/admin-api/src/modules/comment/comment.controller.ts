@@ -1,4 +1,6 @@
 import {
+  AdminCommentDetailDto,
+  AdminCommentPageItemDto,
   CommentService,
   QueryAdminCommentPageDto,
   UpdateAdminCommentAuditStatusDto,
@@ -15,10 +17,6 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
-import {
-  AdminCommentDetailDto,
-  AdminCommentPageItemDto,
-} from './dto/comment.dto'
 
 @ApiTags('内容治理/评论处理')
 @Controller('admin/comment')

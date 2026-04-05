@@ -4,11 +4,13 @@ import type {
   FuzzyMatchResult,
   MatchedWord,
   MatchResult,
-  SensitiveWordDetectInput,
   SensitiveWordDetectResult,
-  SensitiveWordReplaceInput,
 } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import {
+  SensitiveWordDetectDto,
+  SensitiveWordReplaceDto,
+} from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import { MatchModeEnum } from './sensitive-word-constant'
 import { ACAutomaton } from './utils/ac-automaton'
@@ -102,7 +104,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param dto 检测参数，包含文本与匹配模式
    * @returns 匹配的敏感词列表
    */
-  getMatchedWords(dto: SensitiveWordDetectInput): SensitiveWordDetectResult {
+  getMatchedWords(dto: SensitiveWordDetectDto): SensitiveWordDetectResult {
     const { content, matchMode = MatchModeEnum.EXACT } = dto
 
     if (!this.isInitialized || !content) {
@@ -151,7 +153,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param dto - 检测请求对象
    * @returns 检测结果，包含最高敏感词级别和匹配的敏感词列表
    */
-  detect(dto: SensitiveWordDetectInput) {
+  detect(dto: SensitiveWordDetectDto) {
     const result = this.getMatchedWords(dto)
 
     return {
@@ -165,7 +167,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param dto - 检测请求对象
    * @returns 敏感词最高等级，如果没有敏感词则返回 undefined
    */
-  getHighestSensitiveWordLevel(dto: SensitiveWordDetectInput) {
+  getHighestSensitiveWordLevel(dto: SensitiveWordDetectDto) {
     if (!this.isInitialized || !dto.content) {
       return undefined
     }
@@ -180,7 +182,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param dto - 替换请求对象
    * @returns 替换后的文本
    */
-  replaceSensitiveWords(dto: SensitiveWordReplaceInput) {
+  replaceSensitiveWords(dto: SensitiveWordReplaceDto) {
     if (!this.isInitialized || !dto.content) {
       return dto.content
     }

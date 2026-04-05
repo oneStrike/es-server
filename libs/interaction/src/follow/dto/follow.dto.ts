@@ -1,9 +1,14 @@
+import { BaseAuthorDto } from '@libs/content/author'
+import { PublicForumSectionListItemDto } from '@libs/forum/section'
 import {
+  BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { FollowTargetTypeEnum } from '../follow.constant'
 
@@ -50,3 +55,152 @@ export class FollowPageCommandDto extends IntersectionType(
   FollowPageQueryDto,
   PickType(BaseFollowDto, ['userId'] as const),
 ) {}
+
+/**
+ * 关注状态 DTO。
+ */
+export class FollowStatusResponseDto {
+  @BooleanProperty({
+    description: '当前用户是否已关注目标',
+    example: true,
+    validation: false,
+  })
+  isFollowing!: boolean
+
+  @BooleanProperty({
+    description: '目标用户是否已关注当前用户，仅用户目标有意义',
+    example: true,
+    validation: false,
+  })
+  isFollowedByTarget!: boolean
+
+  @BooleanProperty({
+    description: '是否互相关注',
+    example: true,
+    validation: false,
+  })
+  isMutualFollow!: boolean
+}
+
+/**
+ * 关注用户摘要 DTO。
+ */
+export class FollowUserBriefDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+  'signature',
+] as const) {
+  @NumberProperty({
+    description: '关注用户数',
+    example: 12,
+    required: false,
+    validation: false,
+  })
+  followingUserCount?: number
+
+  @NumberProperty({
+    description: '关注作者数',
+    example: 6,
+    required: false,
+    validation: false,
+  })
+  followingAuthorCount?: number
+
+  @NumberProperty({
+    description: '关注板块数',
+    example: 4,
+    required: false,
+    validation: false,
+  })
+  followingSectionCount?: number
+
+  @NumberProperty({
+    description: '粉丝数',
+    example: 34,
+    required: false,
+    validation: false,
+  })
+  followersCount?: number
+}
+
+/**
+ * 关注作者摘要 DTO。
+ */
+export class FollowAuthorBriefDto extends PickType(BaseAuthorDto, [
+  'id',
+  'name',
+  'avatar',
+  'type',
+  'followersCount',
+] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已关注该作者',
+    example: true,
+    validation: false,
+  })
+  isFollowed!: boolean
+}
+
+/**
+ * 关注作者分页项 DTO。
+ */
+export class FollowAuthorPageItemDto extends BaseFollowDto {
+  @NestedProperty({
+    description: '作者信息',
+    type: FollowAuthorBriefDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  author!: FollowAuthorBriefDto
+}
+
+/**
+ * 关注板块分页项 DTO。
+ */
+export class FollowSectionPageItemDto extends BaseFollowDto {
+  @NestedProperty({
+    description: '板块信息',
+    type: PublicForumSectionListItemDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  section!: PublicForumSectionListItemDto
+}
+
+/**
+ * 关注用户分页项 DTO。
+ */
+export class FollowUserPageItemDto extends BaseFollowDto {
+  @NestedProperty({
+    description: '用户简要信息',
+    type: FollowUserBriefDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  user!: FollowUserBriefDto
+
+  @BooleanProperty({
+    description: '当前用户是否已关注该用户',
+    example: true,
+    validation: false,
+  })
+  isFollowing!: boolean
+
+  @BooleanProperty({
+    description: '该用户是否已关注当前用户',
+    example: true,
+    validation: false,
+  })
+  isFollowedByTarget!: boolean
+
+  @BooleanProperty({
+    description: '是否互相关注',
+    example: true,
+    validation: false,
+  })
+  isMutualFollow!: boolean
+}

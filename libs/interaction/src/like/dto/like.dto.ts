@@ -1,12 +1,17 @@
+import { BaseWorkDto } from '@libs/content/work'
+import { BaseForumTopicDto } from '@libs/forum/topic'
 import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
 import {
+  BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
 import {
   IntersectionType,
+  PartialType,
   PickType,
 } from '@nestjs/swagger'
 import { LikeTargetTypeEnum } from '../like.constant'
@@ -76,3 +81,51 @@ export class LikePageQueryDto extends IntersectionType(
   PageDto,
   PickType(BaseLikeDto, ['targetType'] as const),
 ) {}
+
+/**
+ * 点赞状态 DTO。
+ */
+export class LikeStatusResponseDto {
+  @BooleanProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isLiked!: boolean
+}
+
+class LikeWorkTargetDetailDto extends PartialType(
+  PickType(BaseWorkDto, ['name', 'cover'] as const),
+) {}
+
+class LikeTopicTargetDetailDto extends PartialType(
+  PickType(BaseForumTopicDto, ['title', 'images', 'videos'] as const),
+) {}
+
+class LikeTargetPartialDetailDto extends IntersectionType(
+  LikeWorkTargetDetailDto,
+  LikeTopicTargetDetailDto,
+) {}
+
+/**
+ * 点赞目标摘要 DTO。
+ */
+export class LikeTargetDetailDto extends IntersectionType(
+  PickType(BaseWorkDto, ['id'] as const),
+  LikeTargetPartialDetailDto,
+) {}
+
+/**
+ * 点赞分页项 DTO。
+ */
+export class LikePageItemDto extends BaseLikeDto {
+  @NestedProperty({
+    description: '目标简要信息（作品返回 name/cover，论坛主题返回 title/images/videos）',
+    type: LikeTargetDetailDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  targetDetail!: LikeTargetDetailDto
+}

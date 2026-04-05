@@ -1,6 +1,7 @@
 import {
   BaseWorkDto,
   CreateWorkDto,
+  PageWorkDto,
   QueryWorkDto,
   UpdateWorkDto,
   UpdateWorkHotDto,
@@ -16,9 +17,6 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../../system/audit/audit.constant'
-import {
-  PageWorkDto,
-} from './dto/comic.dto'
 
 @ApiTags('内容管理/漫画管理/基础信息')
 @Controller('admin/content/comic')

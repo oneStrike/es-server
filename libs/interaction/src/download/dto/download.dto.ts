@@ -1,7 +1,4 @@
-import {
-  BaseWorkChapterDto,
-  BaseWorkDto,
-} from '@libs/content/work'
+import { BaseWorkChapterDto, BaseWorkDto } from '@libs/content/work'
 import { WorkTypeEnum } from '@libs/platform/constant'
 import {
   DateProperty,
@@ -10,10 +7,7 @@ import {
   NumberProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { DownloadTargetTypeEnum } from '../download.constant'
 
 /**

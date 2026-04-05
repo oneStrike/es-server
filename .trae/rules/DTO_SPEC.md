@@ -7,6 +7,7 @@
 - **低耦合**：`apps/*` 负责入口编排与路由，不维护第二套 DTO 契约。
 - **单一事实源**：实体字段与物理约束以 Drizzle Table 为准。
 - **按表拆文件**：实体基类 DTO 按 Drizzle Table 拆分，一个 schema 表对应一个 DTO 文件，不把多个表的基类 DTO 混放在同一个文件里。
+- **文件维度收口**：DTO 文件维度默认按 schema / table 收口，不新增 `*.public.dto.ts` 这类仅按前端暴露面拆出的文件。
 - **契约优先**：DTO 是 API 契约，不机械等同数据库表结构。
 - **类型最小化**：与 DTO 同构的 `Input/View` 类型应删除，直接使用 DTO。
 
@@ -39,6 +40,7 @@
 - 直接映射自 Drizzle Table 的字段，字段名、类型、可空性、长度、枚举、默认语义必须一致。
 - 一个 Drizzle Table 对应一个 DTO 文件；文件名与表语义一一对应，例如 `check-in-plan.dto.ts`、`check-in-record.dto.ts`。
 - 单个 DTO 文件只放同一张表的基类 DTO、该表直接关联的字段片段 DTO，以及确有必要的少量 helper；禁止把多张表的 `BaseXxxDto` 聚合到一个“大 DTO 文件”中。
+- 只要仍属于同一张表的契约收敛，场景 DTO 也优先并回对应 `xxx.dto.ts` 文件；不要额外拆成 `xxx-public.dto.ts`、`xxx-app.dto.ts` 这类文件。
 - `BaseXxxDto` 不是表的完整镜像；仅内部字段（软删、内部审计、中间态）不强制外露。
 - 日期时间字段的 Swagger `example` 统一使用 ISO 8601（例如 `2024-01-01T00:00:00.000Z`）。
 
@@ -49,6 +51,7 @@
 - 同一业务语义只维护一份 DTO；禁止按平台复制两份同构 DTO。
 - 场景 DTO 命名与拆分尽量向 Service 公开用例靠拢，不以 `Admin` / `App` 前缀区分客户端。
 - 出现语义分叉时，按业务语义拆分 DTO 与方法（例如 `QueryXxxAuditDto`、`QueryXxxPublicDto`），而不是在同一 DTO 中堆叠平台特化字段。
+- 场景 DTO 默认放在对应 schema 的 `xxx.dto.ts` 文件内；禁止为了公开暴露面单独新增 `*.public.dto.ts` 文件。
 - 禁止新增纯别名 DTO（`export class XxxDto extends YyyDto {}`）。
 
 ### 3.4 `libs/*/*.type.ts`：内部领域类型
@@ -61,7 +64,6 @@
 
 - `apps/*` 不新增同构场景 DTO，统一导入 `libs/*` DTO。
 - Controller 负责参数接收、上下文装配、权限与审计装饰器、调用 service。
-- 仅在迁移窗口允许临时 DTO；必须标注迁移说明与清理计划。
 
 ### 3.6 Service：领域逻辑层
 
@@ -76,6 +78,7 @@
 - **共享字段片段 DTO**：`XxxWritableFieldsDto`、`XxxStatusFieldsDto`、`XxxMetaDto`
 - **场景 DTO**：`CreateXxxDto`、`UpdateXxxDto`、`QueryXxxDto`、`XxxResponseDto`、`XxxItemDto`、`XxxDetailDto`
 - **实体基类 DTO 文件**：`xxx.dto.ts`，并与对应 schema 表一一对应
+- **场景 DTO 文件放置**：默认与对应 schema 的 `xxx.dto.ts` 同文件维护，不新增 `xxx-public.dto.ts`、`xxx-app.dto.ts` 等端侧命名文件
 - **领域类型文件**：`xxx.type.ts`
 - **内部领域类型**：仅在非 HTTP 结构下定义 `XxxContext`、`XxxPayload`、`XxxSnapshot`、`XxxAggregation`、`XxxRow`、`XxxResult`
 - 禁止新增 `AdminXxxDto`、`AppXxxDto` 这类客户端前缀命名；若出现语义差异，直接体现在业务语义名上。
@@ -115,8 +118,9 @@
 - 列表项、简要信息、嵌套对象优先从既有 DTO 裁剪复用。
 - 只在现有 DTO 无法表达目标语义时补充字段。
 - app 侧公开响应默认最小暴露面，不泄露内部审计或运营内部字段。
+- 所有自定义校验装饰器均支持 `contract: false`；字段若明确不应进入前端 Swagger / 请求契约，默认优先通过字段级 `contract: false` 排除，而不是新增一份公开 DTO 文件。
 - `bizKey`、`deletedAt` 以及同类内部幂等/软删字段若仍需保留在 DTO 中，必须显式标记 `contract: false`，避免进入对外 Swagger / 请求契约。
-- 若字段需要在后台场景保留、但不能暴露给 app/public 场景，不要在共享基类 DTO 上直接复用该字段；应拆分 `Public` / `Detail` / `Audit` 等具名场景 DTO，分别收敛暴露面。
+- 若字段需要在后台场景保留、但不能暴露给 app/public 场景，优先在同一个 schema DTO 文件内通过具名场景 DTO 或 service 显式映射收敛暴露面；不要新增独立 `*.public.dto.ts` 文件。
 - `bizKey`、`deletedAt` 以及同类内部幂等/软删字段默认不得返回给前端；若极少数后台场景确需返回，必须在 PR 中说明原因。
 
 ### 5.5 数组枚举字段规范
@@ -140,11 +144,12 @@
 ## 7. 设计与实现流程
 
 1. 先定位对应 Drizzle Table、已有 DTO 与 `*.type.ts`。
-2. 先判断该结构应落在哪个 schema 对应的 DTO 文件中；若跨表组合，再决定是否提取共享字段片段 DTO 或场景 DTO。
-3. 判断目标结构是否属于 HTTP 契约；属于则在 `libs/*` 定义或复用 DTO。
-4. 对齐 Controller/Service 公开方法签名，确保与 DTO 1:1，且命名与 Service 用例语义一致。
-5. 仅在 DTO 不适用时补充 `*.type.ts` 内部类型。
-6. 复核 Swagger、校验器、可选性、示例值、枚举说明与前端暴露面一致性。
+2. 先判断该结构应落在哪个 schema 对应的 DTO 文件中；默认并回该 `xxx.dto.ts` 文件，不单独新建 `*.public.dto.ts`。
+3. 若字段只是内部字段不应进入前端契约，优先判断是否可直接使用 `contract: false` 排除。
+4. 判断目标结构是否属于 HTTP 契约；属于则在 `libs/*` 定义或复用 DTO。
+5. 对齐 Controller/Service 公开方法签名，确保与 DTO 1:1，且命名与 Service 用例语义一致。
+6. 仅在 DTO 不适用时补充 `*.type.ts` 内部类型。
+7. 复核 Swagger、校验器、可选性、示例值、枚举说明与前端暴露面一致性。
 
 ## 8. 验收清单
 
@@ -154,6 +159,7 @@
 - [ ] 与 DTO 同构的 `Input/View` 类型已删除，并直接使用 DTO。
 - [ ] `BaseXxxDto` 中映射字段与 Drizzle Table 一致。
 - [ ] 每张 schema 表的基类 DTO 单独放在对应 DTO 文件中，未把多张表 DTO 混放在同一文件。
+- [ ] 未新增 `*.public.dto.ts`、`*.app.dto.ts` 等按端侧暴露面拆出的 DTO 文件；同表场景 DTO 已收敛在对应 `xxx.dto.ts` 内。
 - [ ] 无手动重复定义通用字段（`id`、`createdAt`、`updatedAt` 等）。
 - [ ] 场景 DTO 未使用 `Admin` / `App` 前缀做人为客户端拆分，而是按业务语义或 Service 用例命名。
 - [ ] 响应 DTO 已尽量通过字段复用收敛，未大段重新定义已有字段。
@@ -163,7 +169,8 @@
 - [ ] 非 HTTP 结构使用 `*.type.ts`，未错误 DTO 化。
 - [ ] `@db/schema` 类型导入使用 `import type`。
 - [ ] 枚举字段 `description` 已写清业务语义，并使用实际枚举值作为描述符说明各枚举值含义。
+- [ ] 明确不应进入前端契约的字段，已优先评估并使用 `contract: false` 收口。
 - [ ] `bizKey`、`deletedAt` 等内部字段若保留在 DTO 中，已显式标记 `contract: false`。
-- [ ] app/public DTO 未复用会泄露后台内部字段的共享模型，必要时已拆分公开场景 DTO。
+- [ ] app/public DTO 未复用会泄露后台内部字段的共享模型，必要时已在同文件场景 DTO 或 service 显式映射中收敛暴露面。
 - [ ] 日期字段 Swagger 示例为 ISO 8601。
 - [ ] 相关改动已通过 `eslint` 与 `type-check`。

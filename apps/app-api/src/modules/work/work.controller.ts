@@ -1,10 +1,12 @@
 import {
+  PageWorkDto,
   QueryWorkCommentPageDto,
   QueryWorkDto,
   QueryWorkTypeDto,
+  WorkDetailDto,
   WorkService,
 } from '@libs/content/work'
-import { CommentService } from '@libs/interaction/comment'
+import { CommentService, TargetCommentItemDto } from '@libs/interaction/comment'
 import {
   ApiDoc,
   ApiPageDoc,
@@ -16,11 +18,6 @@ import {
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { TargetCommentItemDto } from '../comment/dto/comment.dto'
-import {
-  PageWorkDto,
-  WorkDetailDto,
-} from './dto/work.dto'
 
 @ApiTags('作品')
 @Controller('app/work')

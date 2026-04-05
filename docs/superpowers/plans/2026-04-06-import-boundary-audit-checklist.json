@@ -1,0 +1,5593 @@
+{
+  "summary": {
+    "scannedSourceFiles": 671,
+    "totalEntrypoints": 74,
+    "mixedEntrypoints": 46,
+    "domainRootMixed": 44,
+    "singleSubentryMixed": 2,
+    "totalImportUsages": 302
+  },
+  "mixedEntrypoints": [
+    {
+      "specifier": "@libs/app-content/agreement",
+      "entryType": "domain-root",
+      "file": "libs/app-content/src/agreement/index.ts",
+      "categories": [
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./agreement.module",
+          "category": "module"
+        },
+        {
+          "src": "./agreement.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/agreement.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-content/agreement/agreement.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AgreementListItemDto,\r\n  AgreementService,\r\n  BaseAgreementDto,\r\n  CreateAgreementDto,\r\n  QueryAgreementDto,\r\n  UpdateAgreementDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AgreementListItemDto",
+            "AgreementService",
+            "BaseAgreementDto",
+            "CreateAgreementDto",
+            "QueryAgreementDto",
+            "UpdateAgreementDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-content/agreement/agreement.module.ts",
+          "kind": "module",
+          "clause": "{ AgreementModule as LibAgreementModule }",
+          "isTypeOnly": false,
+          "names": [
+            "AgreementModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/system/system.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AgreementListItemDto,\r\n  AgreementService,\r\n  BaseAgreementDto,\r\n  QueryPublishedAgreementDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AgreementListItemDto",
+            "AgreementService",
+            "BaseAgreementDto",
+            "QueryPublishedAgreementDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/system/system.module.ts",
+          "kind": "module",
+          "clause": "{ AgreementModule }",
+          "isTypeOnly": false,
+          "names": [
+            "AgreementModule"
+          ],
+          "suggestedTarget": "module"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/app-content/announcement",
+      "entryType": "domain-root",
+      "file": "libs/app-content/src/announcement/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./announcement.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./announcement.module",
+          "category": "module"
+        },
+        {
+          "src": "./announcement.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/announcement.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-content/announcement/announcement.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AnnouncementDetailDto,\r\n  AppAnnouncementService,\r\n  BaseAnnouncementDto,\r\n  CreateAnnouncementDto,\r\n  QueryAnnouncementDto,\r\n  UpdateAnnouncementDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AnnouncementDetailDto",
+            "AppAnnouncementService",
+            "BaseAnnouncementDto",
+            "CreateAnnouncementDto",
+            "QueryAnnouncementDto",
+            "UpdateAnnouncementDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-content/announcement/announcement.module.ts",
+          "kind": "module",
+          "clause": "{ AppAnnouncementModule }",
+          "isTypeOnly": false,
+          "names": [
+            "AppAnnouncementModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/system/system.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AppAnnouncementService,\r\n  BaseAnnouncementDto,\r\n  QueryAnnouncementDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AppAnnouncementService",
+            "BaseAnnouncementDto",
+            "QueryAnnouncementDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/system/system.module.ts",
+          "kind": "module",
+          "clause": "{ AppAnnouncementModule }",
+          "isTypeOnly": false,
+          "names": [
+            "AppAnnouncementModule"
+          ],
+          "suggestedTarget": "module"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/app-content/page",
+      "entryType": "domain-root",
+      "file": "libs/app-content/src/page/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/page.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./page.module",
+          "category": "module"
+        },
+        {
+          "src": "./page.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-content/page/page.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AppPageService,\r\n  BaseAppPageDto,\r\n  CreateAppPageDto,\r\n  QueryAppPageDto,\r\n  QueryPageByCodeDto,\r\n  UpdateAppPageDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AppPageService",
+            "BaseAppPageDto",
+            "CreateAppPageDto",
+            "QueryAppPageDto",
+            "QueryPageByCodeDto",
+            "UpdateAppPageDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-content/page/page.module.ts",
+          "kind": "module",
+          "clause": "{ AppPageModule as AppPageModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "AppPageModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/system/system.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AppPageService,\r\n  BaseAppPageDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AppPageService",
+            "BaseAppPageDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/system/system.module.ts",
+          "kind": "module",
+          "clause": "{ AppPageModule }",
+          "isTypeOnly": false,
+          "names": [
+            "AppPageModule"
+          ],
+          "suggestedTarget": "module"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/config/app-config",
+      "entryType": "domain-root",
+      "file": "libs/config/src/app-config/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./config.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./config.module",
+          "category": "module"
+        },
+        {
+          "src": "./config.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/config.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/config/dictionary",
+      "entryType": "domain-root",
+      "file": "libs/config/src/dictionary/index.ts",
+      "categories": [
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dictionary.module",
+          "category": "module"
+        },
+        {
+          "src": "./dictionary.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/dictionary.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/config/system-config",
+      "entryType": "domain-root",
+      "file": "libs/config/src/system-config/index.ts",
+      "categories": [
+        "other",
+        "dto",
+        "constant",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./config-reader",
+          "category": "other"
+        },
+        {
+          "src": "./dto/config.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./system-config.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./system-config.module",
+          "category": "module"
+        },
+        {
+          "src": "./system-config.service",
+          "category": "service"
+        }
+      ],
+      "usages": [],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/content/author",
+      "entryType": "domain-root",
+      "file": "libs/content/src/author/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./author.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./author.module",
+          "category": "module"
+        },
+        {
+          "src": "./author.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/author.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/content/author/author.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AuthorFollowCountRepairResultDto,\r\n  AuthorPageResponseDto,\r\n  AuthorWorkCountRepairResultDto,\r\n  BaseAuthorDto,\r\n  CreateAuthorDto,\r\n  QueryAuthorDto,\r\n  UpdateAuthorDto,\r\n  UpdateAuthorRecommendedDto,\r\n  UpdateAuthorStatusDto,\r\n  WorkAuthorService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AuthorFollowCountRepairResultDto",
+            "AuthorPageResponseDto",
+            "AuthorWorkCountRepairResultDto",
+            "BaseAuthorDto",
+            "CreateAuthorDto",
+            "QueryAuthorDto",
+            "UpdateAuthorDto",
+            "UpdateAuthorRecommendedDto",
+            "UpdateAuthorStatusDto",
+            "WorkAuthorService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/content/author/author.module.ts",
+          "kind": "module",
+          "clause": "{ WorkAuthorModule as WorkAuthorModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "WorkAuthorModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/core/dto/work.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAuthorDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAuthorDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/follow/dto/follow.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAuthorDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAuthorDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/follow/follow.module.ts",
+          "kind": "module",
+          "clause": "{ WorkAuthorModule }",
+          "isTypeOnly": false,
+          "names": [
+            "WorkAuthorModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/follow/resolver/author-follow.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ WorkAuthorService }",
+          "isTypeOnly": false,
+          "names": [
+            "WorkAuthorService"
+          ],
+          "suggestedTarget": "core"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/content/category",
+      "entryType": "domain-root",
+      "file": "libs/content/src/category/index.ts",
+      "categories": [
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./category.module",
+          "category": "module"
+        },
+        {
+          "src": "./category.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/category.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/content/category/category.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseCategoryDto,\r\n  CreateCategoryDto,\r\n  QueryCategoryDto,\r\n  UpdateCategoryDto,\r\n  UpdateCategorySortDto,\r\n  UpdateCategoryStatusDto,\r\n  WorkCategoryService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseCategoryDto",
+            "CreateCategoryDto",
+            "QueryCategoryDto",
+            "UpdateCategoryDto",
+            "UpdateCategorySortDto",
+            "UpdateCategoryStatusDto",
+            "WorkCategoryService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/content/category/category.module.ts",
+          "kind": "module",
+          "clause": "{ WorkCategoryModule as WorkCategoryModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "WorkCategoryModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/core/dto/work.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseCategoryDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseCategoryDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/content/permission",
+      "entryType": "domain-root",
+      "file": "libs/content/src/permission/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "other"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./content-permission.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./content-permission.module",
+          "category": "module"
+        },
+        {
+          "src": "./content-permission.service",
+          "category": "service"
+        },
+        {
+          "src": "./content-permission.types",
+          "category": "other"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "libs/interaction/src/download/download.module.ts",
+          "kind": "module",
+          "clause": "{ ContentPermissionModule }",
+          "isTypeOnly": false,
+          "names": [
+            "ContentPermissionModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/purchase/purchase.module.ts",
+          "kind": "module",
+          "clause": "{ ContentPermissionModule }",
+          "isTypeOnly": false,
+          "names": [
+            "ContentPermissionModule"
+          ],
+          "suggestedTarget": "module"
+        }
+      ],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/content/tag",
+      "entryType": "domain-root",
+      "file": "libs/content/src/tag/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/tag.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./tag.module",
+          "category": "module"
+        },
+        {
+          "src": "./tag.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/content/tag/tag.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseTagDto,\r\n  CreateTagDto,\r\n  QueryTagDto,\r\n  UpdateTagDto,\r\n  UpdateTagSortDto,\r\n  WorkTagService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseTagDto",
+            "CreateTagDto",
+            "QueryTagDto",
+            "UpdateTagDto",
+            "UpdateTagSortDto",
+            "WorkTagService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/content/tag/tag.module.ts",
+          "kind": "module",
+          "clause": "{ WorkTagModule as WorkTagModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "WorkTagModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/core/dto/work.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseTagDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseTagDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/forum/moderator",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/moderator/index.ts",
+      "categories": [
+        "dto",
+        "constant",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/moderator.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./moderator.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./moderator.module",
+          "category": "module"
+        },
+        {
+          "src": "./moderator.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/forum/moderator/moderator.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AssignForumModeratorSectionDto,\r\n  CreateForumModeratorDto,\r\n  ForumModeratorDto,\r\n  ForumModeratorService,\r\n  QueryForumModeratorDto,\r\n  UpdateForumModeratorDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AssignForumModeratorSectionDto",
+            "CreateForumModeratorDto",
+            "ForumModeratorDto",
+            "ForumModeratorService",
+            "QueryForumModeratorDto",
+            "UpdateForumModeratorDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/forum/moderator/moderator.module.ts",
+          "kind": "module",
+          "clause": "{ ForumModeratorModule as ModeratorModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumModeratorModule"
+          ],
+          "suggestedTarget": "module"
+        }
+      ],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/forum/moderator-application",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/moderator-application/index.ts",
+      "categories": [
+        "dto",
+        "constant",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/moderator-application.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./moderator-application.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./moderator-application.module",
+          "category": "module"
+        },
+        {
+          "src": "./moderator-application.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/forum/moderator-application/moderator-application.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  AuditForumModeratorApplicationDto,\r\n  ForumModeratorApplicationDto,\r\n  ForumModeratorApplicationService,\r\n  QueryForumModeratorApplicationDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AuditForumModeratorApplicationDto",
+            "ForumModeratorApplicationDto",
+            "ForumModeratorApplicationService",
+            "QueryForumModeratorApplicationDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/forum/moderator-application/moderator-application.module.ts",
+          "kind": "module",
+          "clause": "{ ForumModeratorApplicationModule as ForumModeratorApplicationModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumModeratorApplicationModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum-moderator-application.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  CreateForumModeratorApplicationDto,\r\n  ForumModeratorApplicationDto,\r\n  ForumModeratorApplicationService,\r\n  QueryForumModeratorApplicationDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CreateForumModeratorApplicationDto",
+            "ForumModeratorApplicationDto",
+            "ForumModeratorApplicationService",
+            "QueryForumModeratorApplicationDto"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/forum/profile",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/profile/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/profile.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./profile.module",
+          "category": "module"
+        },
+        {
+          "src": "./profile.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ UserProfileService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserProfileService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum-topic.controller.ts",
+          "kind": "controller",
+          "clause": "{ UserProfileService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserProfileService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/experience/dto/experience-record.dto.ts",
+          "kind": "dto",
+          "clause": "{ ForumAppUserInfoDto }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumAppUserInfoDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/forum/search",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/search/index.ts",
+      "categories": [
+        "dto",
+        "constant",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/search.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./search.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./search.module",
+          "category": "module"
+        },
+        {
+          "src": "./search.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/forum/search/search.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  ForumSearchDto,\n  ForumSearchResultDto,\n  ForumSearchService,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ForumSearchDto",
+            "ForumSearchResultDto",
+            "ForumSearchService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/forum/search/search.module.ts",
+          "kind": "module",
+          "clause": "{ ForumSearchModule as ForumSearchModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumSearchModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum-search.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  ForumSearchDto,\r\n  ForumSearchResultDto,\r\n  ForumSearchService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ForumSearchDto",
+            "ForumSearchResultDto",
+            "ForumSearchService"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/forum/section",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/section/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/forum-section.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./forum-section.module",
+          "category": "module"
+        },
+        {
+          "src": "./forum-section.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/forum/section/forum-section.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseForumSectionDto,\r\n  CreateForumSectionDto,\r\n  ForumSectionFollowCountRepairResultDto,\r\n  ForumSectionService,\r\n  QueryForumSectionDto,\r\n  SwapForumSectionSortDto,\r\n  UpdateForumSectionDto,\r\n  UpdateForumSectionEnabledDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseForumSectionDto",
+            "CreateForumSectionDto",
+            "ForumSectionFollowCountRepairResultDto",
+            "ForumSectionService",
+            "QueryForumSectionDto",
+            "SwapForumSectionSortDto",
+            "UpdateForumSectionDto",
+            "UpdateForumSectionEnabledDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/forum/section/forum-section.module.ts",
+          "kind": "module",
+          "clause": "{ ForumSectionModule as ForumSectionModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumSectionModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum-section.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  ForumSectionService,\n  PublicForumSectionDetailDto,\n  PublicForumSectionListItemDto,\n  QueryPublicForumSectionDetailDto,\n  QueryPublicForumSectionDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ForumSectionService",
+            "PublicForumSectionDetailDto",
+            "PublicForumSectionListItemDto",
+            "QueryPublicForumSectionDetailDto",
+            "QueryPublicForumSectionDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/moderator-application/dto/moderator-application.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseForumSectionDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseForumSectionDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/section-group/dto/forum-section-group.dto.ts",
+          "kind": "dto",
+          "clause": "{ PublicForumSectionListItemDto }",
+          "isTypeOnly": false,
+          "names": [
+            "PublicForumSectionListItemDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/topic/dto/forum-topic.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseForumSectionDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseForumSectionDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/follow/dto/follow.dto.ts",
+          "kind": "dto",
+          "clause": "{ PublicForumSectionListItemDto }",
+          "isTypeOnly": false,
+          "names": [
+            "PublicForumSectionListItemDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/forum/section-group",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/section-group/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/forum-section-group.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./forum-section-group.module",
+          "category": "module"
+        },
+        {
+          "src": "./forum-section-group.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/forum/section-group/forum-section-group.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseForumSectionGroupDto,\r\n  CreateForumSectionGroupDto,\r\n  ForumSectionGroupService,\r\n  QueryForumSectionGroupDto,\r\n  SwapForumSectionGroupSortDto,\r\n  UpdateForumSectionGroupDto,\r\n  UpdateForumSectionGroupEnabledDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseForumSectionGroupDto",
+            "CreateForumSectionGroupDto",
+            "ForumSectionGroupService",
+            "QueryForumSectionGroupDto",
+            "SwapForumSectionGroupSortDto",
+            "UpdateForumSectionGroupDto",
+            "UpdateForumSectionGroupEnabledDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/forum/section-group/forum-section-group.module.ts",
+          "kind": "module",
+          "clause": "{ ForumSectionGroupModule as ForumSectionGroupModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumSectionGroupModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum-section-group.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  ForumSectionGroupService,\n  PublicForumSectionGroupListItemDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ForumSectionGroupService",
+            "PublicForumSectionGroupListItemDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/section/dto/forum-section.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseForumSectionGroupDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseForumSectionGroupDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/forum/tag",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/tag/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/forum-tag.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./forum-tag.module",
+          "category": "module"
+        },
+        {
+          "src": "./forum-tag.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/forum/tag/forum-tag.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AssignForumTagToTopicDto,\n  BaseForumTagDto,\n  CreateForumTagDto,\n  ForumTagDetailResponseDto,\n  ForumTagService,\n  QueryForumTagDto,\n  UpdateForumTagDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AssignForumTagToTopicDto",
+            "BaseForumTagDto",
+            "CreateForumTagDto",
+            "ForumTagDetailResponseDto",
+            "ForumTagService",
+            "QueryForumTagDto",
+            "UpdateForumTagDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/forum/tag/forum-tag.module.ts",
+          "kind": "module",
+          "clause": "{ ForumTagModule as ForumTagModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumTagModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/dto/forum-topic.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseForumTagDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseForumTagDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/forum/topic",
+      "entryType": "domain-root",
+      "file": "libs/forum/src/topic/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/forum-topic.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./forum-topic.module",
+          "category": "module"
+        },
+        {
+          "src": "./forum-topic.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/forum/topic/topic.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AdminForumTopicDetailDto,\n  AdminForumTopicPageItemDto,\n  CreateForumTopicDto,\n  ForumTopicService,\n  QueryForumTopicDto,\n  UpdateForumTopicAuditStatusDto,\n  UpdateForumTopicDto,\n  UpdateForumTopicFeaturedDto,\r\n  UpdateForumTopicHiddenDto,\r\n  UpdateForumTopicLockedDto,\r\n  UpdateForumTopicPinnedDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AdminForumTopicDetailDto",
+            "AdminForumTopicPageItemDto",
+            "CreateForumTopicDto",
+            "ForumTopicService",
+            "QueryForumTopicDto",
+            "UpdateForumTopicAuditStatusDto",
+            "UpdateForumTopicDto",
+            "UpdateForumTopicFeaturedDto",
+            "UpdateForumTopicHiddenDto",
+            "UpdateForumTopicLockedDto",
+            "UpdateForumTopicPinnedDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/forum/topic/topic.module.ts",
+          "kind": "module",
+          "clause": "{ ForumTopicModule as ForumTopicModuleLib }",
+          "isTypeOnly": false,
+          "names": [
+            "ForumTopicModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum-topic.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  CreateUserForumTopicDto,\n  ForumTopicService,\n  MyForumTopicItemDto,\n  PublicForumTopicDetailDto,\n  PublicForumTopicPageItemDto,\n  QueryForumTopicCommentPageDto,\n  QueryMyForumTopicDto,\n  QueryPublicForumTopicDto,\n  UpdateForumTopicDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CreateUserForumTopicDto",
+            "ForumTopicService",
+            "MyForumTopicItemDto",
+            "PublicForumTopicDetailDto",
+            "PublicForumTopicPageItemDto",
+            "QueryForumTopicCommentPageDto",
+            "QueryMyForumTopicDto",
+            "QueryPublicForumTopicDto",
+            "UpdateForumTopicDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/interaction/src/favorite/dto/favorite.dto.ts",
+          "kind": "dto",
+          "clause": "{ PublicForumTopicPageItemDto }",
+          "isTypeOnly": false,
+          "names": [
+            "PublicForumTopicPageItemDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/like/dto/like.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseForumTopicDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseForumTopicDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/growth/badge",
+      "entryType": "domain-root",
+      "file": "libs/growth/src/badge/index.ts",
+      "categories": [
+        "dto",
+        "constant",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/user-badge-assignment.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/user-badge-management.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/user-badge.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./user-badge.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./user-badge.module",
+          "category": "module"
+        },
+        {
+          "src": "./user-badge.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.module.ts",
+          "kind": "module",
+          "clause": "{ UserBadgeModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserBadgeModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.service.ts",
+          "kind": "service",
+          "clause": "{ UserBadgeService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserBadgeService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/growth/badge/badge.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AssignUserBadgeDto,\n  BadgeUserPageItemDto,\n  BaseUserBadgeDto,\n  CreateUserBadgeDto,\n  QueryBadgeUserPageDto,\n  QueryUserBadgeDto,\n  UpdateUserBadgeDto,\n  UpdateUserBadgeStatusDto,\n  UserBadgeService,\n  UserBadgeStatisticsDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AssignUserBadgeDto",
+            "BadgeUserPageItemDto",
+            "BaseUserBadgeDto",
+            "CreateUserBadgeDto",
+            "QueryBadgeUserPageDto",
+            "QueryUserBadgeDto",
+            "UpdateUserBadgeDto",
+            "UpdateUserBadgeStatusDto",
+            "UserBadgeService",
+            "UserBadgeStatisticsDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/growth/badge/badge.module.ts",
+          "kind": "module",
+          "clause": "{ UserBadgeModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserBadgeModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/user/src/dto/admin-app-user.dto.ts",
+          "kind": "dto",
+          "clause": "{ QueryUserBadgeDto }",
+          "isTypeOnly": false,
+          "names": [
+            "QueryUserBadgeDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/growth/check-in",
+      "entryType": "domain-root",
+      "file": "libs/growth/src/check-in/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./check-in.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./check-in.module",
+          "category": "module"
+        },
+        {
+          "src": "./check-in.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/check-in-cycle.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-definition.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-execution.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-fragment.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-plan.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-record.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-reward-config.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-runtime.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-streak-reward-grant.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/check-in-streak-reward-rule.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/check-in/check-in.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  CheckInPlanDetailResponseDto,\n  CheckInPlanPageItemDto,\n  CheckInReconciliationItemDto,\n  CheckInService,\n  CreateCheckInPlanDto,\n  QueryCheckInPlanDto,\n  QueryCheckInReconciliationDto,\n  RepairCheckInRewardDto,\n  RepairCheckInRewardResponseDto,\n  UpdateCheckInPlanDto,\n  UpdateCheckInPlanStatusDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CheckInPlanDetailResponseDto",
+            "CheckInPlanPageItemDto",
+            "CheckInReconciliationItemDto",
+            "CheckInService",
+            "CreateCheckInPlanDto",
+            "QueryCheckInPlanDto",
+            "QueryCheckInReconciliationDto",
+            "RepairCheckInRewardDto",
+            "RepairCheckInRewardResponseDto",
+            "UpdateCheckInPlanDto",
+            "UpdateCheckInPlanStatusDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/check-in/check-in.module.ts",
+          "kind": "module",
+          "clause": "{ CheckInModule as LibCheckInModule }",
+          "isTypeOnly": false,
+          "names": [
+            "CheckInModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/check-in/check-in.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  CheckInActionResponseDto,\n  CheckInCalendarResponseDto,\n  CheckInRecordItemDto,\n  CheckInService,\n  CheckInSummaryResponseDto,\n  MakeupCheckInDto,\n  QueryMyCheckInRecordDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CheckInActionResponseDto",
+            "CheckInCalendarResponseDto",
+            "CheckInRecordItemDto",
+            "CheckInService",
+            "CheckInSummaryResponseDto",
+            "MakeupCheckInDto",
+            "QueryMyCheckInRecordDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/check-in/check-in.module.ts",
+          "kind": "module",
+          "clause": "{ CheckInModule as LibCheckInModule }",
+          "isTypeOnly": false,
+          "names": [
+            "CheckInModule"
+          ],
+          "suggestedTarget": "module"
+        }
+      ],
+      "priority": "P2"
+    },
+    {
+      "specifier": "@libs/growth/experience",
+      "entryType": "domain-root",
+      "file": "libs/growth/src/experience/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/experience-record.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/experience-rule.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./experience.module",
+          "category": "module"
+        },
+        {
+          "src": "./experience.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.module.ts",
+          "kind": "module",
+          "clause": "{ UserExperienceModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserExperienceModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.service.ts",
+          "kind": "service",
+          "clause": "{ UserExperienceService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserExperienceService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/growth/experience/experience.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AddUserExperienceDto,\n  BaseUserExperienceRuleDto,\n  CreateUserExperienceRuleDto,\n  QueryUserExperienceRecordDto,\n  QueryUserExperienceRuleDto,\n  UpdateUserExperienceRuleDto,\n  UserExperienceRecordDetailDto,\n  UserExperienceRecordDto,\n  UserExperienceService,\n  UserExperienceStatsDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AddUserExperienceDto",
+            "BaseUserExperienceRuleDto",
+            "CreateUserExperienceRuleDto",
+            "QueryUserExperienceRecordDto",
+            "QueryUserExperienceRuleDto",
+            "UpdateUserExperienceRuleDto",
+            "UserExperienceRecordDetailDto",
+            "UserExperienceRecordDto",
+            "UserExperienceService",
+            "UserExperienceStatsDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/growth/experience/experience.module.ts",
+          "kind": "module",
+          "clause": "{ UserExperienceModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserExperienceModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.module.ts",
+          "kind": "module",
+          "clause": "{ UserExperienceModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserExperienceModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{ UserExperienceService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserExperienceService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/forum.module.ts",
+          "kind": "module",
+          "clause": "{ UserExperienceModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserExperienceModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/user/src/dto/admin-app-user.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserExperienceRecordDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserExperienceRecordDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/user/src/dto/user-self.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserExperienceRecordDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserExperienceRecordDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/growth/growth-ledger",
+      "entryType": "domain-root",
+      "file": "libs/growth/src/growth-ledger/index.ts",
+      "categories": [
+        "dto",
+        "constant",
+        "other",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/growth-ledger-record.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./growth-ledger.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./growth-ledger.internal",
+          "category": "other"
+        },
+        {
+          "src": "./growth-ledger.module",
+          "category": "module"
+        },
+        {
+          "src": "./growth-ledger.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.module.ts",
+          "kind": "module",
+          "clause": "{ GrowthLedgerModule }",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthLedgerModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  GrowthAssetTypeEnum,\r\n  GrowthLedgerService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthAssetTypeEnum",
+            "GrowthLedgerService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{ GrowthAssetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthAssetTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.service.ts",
+          "kind": "service",
+          "clause": "{ GrowthAssetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthAssetTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/growth/src/check-in/check-in-definition.service.ts",
+          "kind": "service",
+          "clause": "{ GrowthLedgerService }",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthLedgerService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/check-in/check-in-execution.service.ts",
+          "kind": "service",
+          "clause": "{ GrowthLedgerApplyResult }",
+          "isTypeOnly": true,
+          "names": [
+            "GrowthLedgerApplyResult"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/check-in/check-in-execution.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  GrowthAssetTypeEnum,\r\n  GrowthLedgerActionEnum,\r\n  GrowthLedgerService,\r\n  GrowthLedgerSourceEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthAssetTypeEnum",
+            "GrowthLedgerActionEnum",
+            "GrowthLedgerService",
+            "GrowthLedgerSourceEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/growth/src/check-in/check-in-runtime.service.ts",
+          "kind": "service",
+          "clause": "{ GrowthLedgerService }",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthLedgerService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/check-in/check-in.module.ts",
+          "kind": "module",
+          "clause": "{ GrowthLedgerModule }",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthLedgerModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/growth/src/check-in/check-in.service.support.ts",
+          "kind": "other",
+          "clause": "{ GrowthLedgerService }",
+          "isTypeOnly": true,
+          "names": [
+            "GrowthLedgerService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/purchase/purchase.module.ts",
+          "kind": "module",
+          "clause": "{ GrowthLedgerModule }",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthLedgerModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/purchase/purchase.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  GrowthAssetTypeEnum,\r\n  GrowthLedgerActionEnum,\r\n  GrowthLedgerService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "GrowthAssetTypeEnum",
+            "GrowthLedgerActionEnum",
+            "GrowthLedgerService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/user/src/dto/admin-app-user.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseGrowthLedgerRecordDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseGrowthLedgerRecordDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/growth/level-rule",
+      "entryType": "domain-root",
+      "file": "libs/growth/src/level-rule/index.ts",
+      "categories": [
+        "dto",
+        "constant",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/level-rule.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./level-rule.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./level-rule.module",
+          "category": "module"
+        },
+        {
+          "src": "./level-rule.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/growth/level-rule/level-rule.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseUserLevelRuleDto,\r\n  CheckUserLevelPermissionDto,\r\n  CreateUserLevelRuleDto,\r\n  QueryUserLevelRuleDto,\r\n  UpdateUserLevelRuleDto,\r\n  UserLevelInfoDto,\r\n  UserLevelPermissionResultDto,\r\n  UserLevelRuleService,\r\n  UserLevelStatisticsDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserLevelRuleDto",
+            "CheckUserLevelPermissionDto",
+            "CreateUserLevelRuleDto",
+            "QueryUserLevelRuleDto",
+            "UpdateUserLevelRuleDto",
+            "UserLevelInfoDto",
+            "UserLevelPermissionResultDto",
+            "UserLevelRuleService",
+            "UserLevelStatisticsDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/growth/level-rule/level-rule.module.ts",
+          "kind": "module",
+          "clause": "{ UserLevelRuleModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserLevelRuleModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/forum.module.ts",
+          "kind": "module",
+          "clause": "{ UserLevelRuleModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserLevelRuleModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.module.ts",
+          "kind": "module",
+          "clause": "{ UserLevelRuleModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserLevelRuleModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/dto/forum-topic.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserLevelRuleDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserLevelRuleDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/growth/src/experience/dto/experience-record.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserLevelRuleDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserLevelRuleDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/user/src/dto/admin-app-user.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserLevelRuleDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserLevelRuleDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/user/src/dto/user-self.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserLevelRuleDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserLevelRuleDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/growth/point",
+      "entryType": "domain-root",
+      "file": "libs/growth/src/point/index.ts",
+      "categories": [
+        "dto",
+        "service",
+        "module"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/point-record.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/point-rule.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./point-rule.service",
+          "category": "service"
+        },
+        {
+          "src": "./point.module",
+          "category": "module"
+        },
+        {
+          "src": "./point.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.module.ts",
+          "kind": "module",
+          "clause": "{ UserPointModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.service.ts",
+          "kind": "service",
+          "clause": "{ UserPointService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/growth/point/point.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseUserPointRuleDto,\r\n  CreateUserPointRuleDto,\r\n  QueryUserPointRuleDto,\r\n  UpdateUserPointRuleDto,\r\n  UserPointRuleService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserPointRuleDto",
+            "CreateUserPointRuleDto",
+            "QueryUserPointRuleDto",
+            "UpdateUserPointRuleDto",
+            "UserPointRuleService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/growth/point/point.module.ts",
+          "kind": "module",
+          "clause": "{ UserPointModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.module.ts",
+          "kind": "module",
+          "clause": "{ UserPointModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{ UserPointService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/content/src/work/work.module.ts",
+          "kind": "module",
+          "clause": "{ UserPointModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/forum.module.ts",
+          "kind": "module",
+          "clause": "{ UserPointModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.module.ts",
+          "kind": "module",
+          "clause": "{ UserPointModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.service.ts",
+          "kind": "service",
+          "clause": "{ UserPointService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserPointService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/user/src/dto/admin-app-user.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserPointRecordDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserPointRecordDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/user/src/dto/user-self.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserPointRecordDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserPointRecordDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/growth/task",
+      "entryType": "domain-root",
+      "file": "libs/growth/src/task/index.ts",
+      "categories": [
+        "dto",
+        "service",
+        "constant",
+        "module"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/task.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./task-runtime.service",
+          "category": "service"
+        },
+        {
+          "src": "./task.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./task.module",
+          "category": "module"
+        },
+        {
+          "src": "./task.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/growth/growth.service.ts",
+          "kind": "service",
+          "clause": "{\n  normalizeTaskType,\n  TaskObjectiveTypeEnum,\n  TaskStatusEnum,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "normalizeTaskType",
+            "TaskObjectiveTypeEnum",
+            "TaskStatusEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/task/task.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AdminTaskAssignmentPageResponseDto,\n  AdminTaskAssignmentReconciliationPageResponseDto,\n  AdminTaskPageResponseDto,\n  CreateTaskDto,\n  QueryTaskAssignmentDto,\n  QueryTaskAssignmentReconciliationDto,\n  QueryTaskDto,\n  RetryCompletedTaskRewardsDto,\n  RetryCompletedTaskRewardsResponseDto,\n  RetryTaskAssignmentRewardDto,\n  TaskService,\n  UpdateTaskDto,\n  UpdateTaskStatusDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AdminTaskAssignmentPageResponseDto",
+            "AdminTaskAssignmentReconciliationPageResponseDto",
+            "AdminTaskPageResponseDto",
+            "CreateTaskDto",
+            "QueryTaskAssignmentDto",
+            "QueryTaskAssignmentReconciliationDto",
+            "QueryTaskDto",
+            "RetryCompletedTaskRewardsDto",
+            "RetryCompletedTaskRewardsResponseDto",
+            "RetryTaskAssignmentRewardDto",
+            "TaskService",
+            "UpdateTaskDto",
+            "UpdateTaskStatusDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/task/task.module.ts",
+          "kind": "module",
+          "clause": "{ TaskModule as LibTaskModule }",
+          "isTypeOnly": false,
+          "names": [
+            "TaskModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/task/task.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AvailableTaskPageItemDto,\n  ClaimTaskDto,\n  MyTaskPageItemDto,\n  QueryAvailableTaskDto,\n  QueryMyTaskDto,\n  TaskCompleteDto,\n  TaskProgressDto,\n  TaskService,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AvailableTaskPageItemDto",
+            "ClaimTaskDto",
+            "MyTaskPageItemDto",
+            "QueryAvailableTaskDto",
+            "QueryMyTaskDto",
+            "TaskCompleteDto",
+            "TaskProgressDto",
+            "TaskService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/task/task.module.ts",
+          "kind": "module",
+          "clause": "{ TaskModule as LibTaskModule }",
+          "isTypeOnly": false,
+          "names": [
+            "TaskModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.module.ts",
+          "kind": "module",
+          "clause": "{ TaskModule as GrowthTaskModule }",
+          "isTypeOnly": false,
+          "names": [
+            "TaskModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{ TaskService }",
+          "isTypeOnly": false,
+          "names": [
+            "TaskService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/growth-reward/growth-event-bridge.service.ts",
+          "kind": "service",
+          "clause": "{ TaskService }",
+          "isTypeOnly": false,
+          "names": [
+            "TaskService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/growth/dto/growth.dto.ts",
+          "kind": "dto",
+          "clause": "{ TaskTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "TaskTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/identity/core",
+      "entryType": "domain-root",
+      "file": "libs/identity/src/core/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service",
+        "other"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "../dto/admin-auth.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/admin-user.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../identity.module",
+          "category": "module"
+        },
+        {
+          "src": "../session.service",
+          "category": "service"
+        },
+        {
+          "src": "../token/drizzle-token-storage.base",
+          "category": "other"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/admin-user/admin-user.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  BaseAdminUserDto,\n  ChangePasswordDto,\n  UpdateUserDto,\n  UserPageDto,\n  UserRegisterDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAdminUserDto",
+            "ChangePasswordDto",
+            "UpdateUserDto",
+            "UserPageDto",
+            "UserRegisterDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/admin-user/admin-user.service.ts",
+          "kind": "service",
+          "clause": "{\n  ChangePasswordDto,\n  UpdateUserDto,\n  UserPageDto,\n  UserRegisterDto,\n}",
+          "isTypeOnly": true,
+          "names": [
+            "ChangePasswordDto",
+            "UpdateUserDto",
+            "UserPageDto",
+            "UserRegisterDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.controller.ts",
+          "kind": "controller",
+          "clause": "{ LoginResponseDto, UserLoginDto }",
+          "isTypeOnly": false,
+          "names": [
+            "LoginResponseDto",
+            "UserLoginDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.module.ts",
+          "kind": "module",
+          "clause": "{ IdentityModule }",
+          "isTypeOnly": false,
+          "names": [
+            "IdentityModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ UserLoginDto }",
+          "isTypeOnly": true,
+          "names": [
+            "UserLoginDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ AuthSessionService }",
+          "isTypeOnly": false,
+          "names": [
+            "AuthSessionService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/token-storage.service.ts",
+          "kind": "service",
+          "clause": "{ BaseDrizzleTokenStorageService }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseDrizzleTokenStorageService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.module.ts",
+          "kind": "module",
+          "clause": "{ IdentityModule }",
+          "isTypeOnly": false,
+          "names": [
+            "IdentityModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ AuthSessionService }",
+          "isTypeOnly": false,
+          "names": [
+            "AuthSessionService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/token-storage.service.ts",
+          "kind": "service",
+          "clause": "{ BaseDrizzleTokenStorageService }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseDrizzleTokenStorageService"
+          ],
+          "suggestedTarget": "core"
+        }
+      ],
+      "priority": "P0"
+    },
+    {
+      "specifier": "@libs/identity/core",
+      "entryType": "single-subentry",
+      "file": "libs/identity/src/core/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service",
+        "other"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "../dto/admin-auth.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/admin-user.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../identity.module",
+          "category": "module"
+        },
+        {
+          "src": "../session.service",
+          "category": "service"
+        },
+        {
+          "src": "../token/drizzle-token-storage.base",
+          "category": "other"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/admin-user/admin-user.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  BaseAdminUserDto,\n  ChangePasswordDto,\n  UpdateUserDto,\n  UserPageDto,\n  UserRegisterDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAdminUserDto",
+            "ChangePasswordDto",
+            "UpdateUserDto",
+            "UserPageDto",
+            "UserRegisterDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/admin-user/admin-user.service.ts",
+          "kind": "service",
+          "clause": "{\n  ChangePasswordDto,\n  UpdateUserDto,\n  UserPageDto,\n  UserRegisterDto,\n}",
+          "isTypeOnly": true,
+          "names": [
+            "ChangePasswordDto",
+            "UpdateUserDto",
+            "UserPageDto",
+            "UserRegisterDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.controller.ts",
+          "kind": "controller",
+          "clause": "{ LoginResponseDto, UserLoginDto }",
+          "isTypeOnly": false,
+          "names": [
+            "LoginResponseDto",
+            "UserLoginDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.module.ts",
+          "kind": "module",
+          "clause": "{ IdentityModule }",
+          "isTypeOnly": false,
+          "names": [
+            "IdentityModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ UserLoginDto }",
+          "isTypeOnly": true,
+          "names": [
+            "UserLoginDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ AuthSessionService }",
+          "isTypeOnly": false,
+          "names": [
+            "AuthSessionService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/auth/token-storage.service.ts",
+          "kind": "service",
+          "clause": "{ BaseDrizzleTokenStorageService }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseDrizzleTokenStorageService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.module.ts",
+          "kind": "module",
+          "clause": "{ IdentityModule }",
+          "isTypeOnly": false,
+          "names": [
+            "IdentityModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ AuthSessionService }",
+          "isTypeOnly": false,
+          "names": [
+            "AuthSessionService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/token-storage.service.ts",
+          "kind": "service",
+          "clause": "{ BaseDrizzleTokenStorageService }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseDrizzleTokenStorageService"
+          ],
+          "suggestedTarget": "core"
+        }
+      ],
+      "priority": "P0"
+    },
+    {
+      "specifier": "@libs/interaction/browse-log",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/browse-log/index.ts",
+      "categories": [
+        "service",
+        "constant",
+        "module",
+        "dto",
+        "interface"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./browse-log-growth.service",
+          "category": "service"
+        },
+        {
+          "src": "./browse-log-interaction.service",
+          "category": "service"
+        },
+        {
+          "src": "./browse-log-permission.service",
+          "category": "service"
+        },
+        {
+          "src": "./browse-log.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./browse-log.module",
+          "category": "module"
+        },
+        {
+          "src": "./browse-log.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/user-browse-log.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./interfaces/browse-log-target-resolver.interface",
+          "category": "interface"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-comic-chapter-browse-log.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  BrowseLogService,\r\n  BrowseLogTargetTypeEnum,\r\n  IBrowseLogTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService",
+            "BrowseLogTargetTypeEnum",
+            "IBrowseLogTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-novel-chapter-browse-log.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  BrowseLogService,\r\n  BrowseLogTargetTypeEnum,\r\n  IBrowseLogTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService",
+            "BrowseLogTargetTypeEnum",
+            "IBrowseLogTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/work-chapter.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  BrowseLogService,\r\n  BrowseLogTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService",
+            "BrowseLogTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-comic-browse-log.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  BrowseLogService,\r\n  BrowseLogTargetTypeEnum,\r\n  IBrowseLogTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService",
+            "BrowseLogTargetTypeEnum",
+            "IBrowseLogTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-novel-browse-log.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  BrowseLogService,\r\n  BrowseLogTargetTypeEnum,\r\n  IBrowseLogTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService",
+            "BrowseLogTargetTypeEnum",
+            "IBrowseLogTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/work.service.ts",
+          "kind": "service",
+          "clause": "{ BrowseLogService }",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ BrowseLogModule }",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  BrowseLogService,\r\n  BrowseLogTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService",
+            "BrowseLogTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-browse-log.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  BrowseLogService,\r\n  BrowseLogTargetTypeEnum,\r\n  IBrowseLogTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BrowseLogService",
+            "BrowseLogTargetTypeEnum",
+            "IBrowseLogTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/interaction/comment",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/comment/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "other",
+        "dto",
+        "interface"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./comment.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./comment.module",
+          "category": "module"
+        },
+        {
+          "src": "./comment.service",
+          "category": "service"
+        },
+        {
+          "src": "./comment.type",
+          "category": "other"
+        },
+        {
+          "src": "./dto/comment.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./interfaces/comment-target-resolver.interface",
+          "category": "interface"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/comment/comment.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AdminCommentDetailDto,\n  AdminCommentPageItemDto,\n  CommentService,\n  QueryAdminCommentPageDto,\n  UpdateAdminCommentAuditStatusDto,\n  UpdateAdminCommentHiddenDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AdminCommentDetailDto",
+            "AdminCommentPageItemDto",
+            "CommentService",
+            "QueryAdminCommentPageDto",
+            "UpdateAdminCommentAuditStatusDto",
+            "UpdateAdminCommentHiddenDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/comment/comment.module.ts",
+          "kind": "module",
+          "clause": "{ CommentModule as InteractionCommentModule }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/comment/comment.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  BaseCommentDto,\n  CommentReplyItemDto,\n  CommentService,\n  CreateCommentBodyDto,\n  QueryCommentRepliesDto,\n  QueryMyCommentPageDto,\n  ReplyCommentBodyDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseCommentDto",
+            "CommentReplyItemDto",
+            "CommentService",
+            "CreateCommentBodyDto",
+            "QueryCommentRepliesDto",
+            "QueryMyCommentPageDto",
+            "ReplyCommentBodyDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/comment/comment.module.ts",
+          "kind": "module",
+          "clause": "{ CommentModule as CommentCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum-topic.controller.ts",
+          "kind": "controller",
+          "clause": "{ CommentService, TargetCommentItemDto }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "TargetCommentItemDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/forum/forum.module.ts",
+          "kind": "module",
+          "clause": "{ CommentModule as CommentCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/work/work-chapter.controller.ts",
+          "kind": "controller",
+          "clause": "{ CommentService, TargetCommentItemDto }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "TargetCommentItemDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/work/work.controller.ts",
+          "kind": "controller",
+          "clause": "{ CommentService, TargetCommentItemDto }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "TargetCommentItemDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/work/work.module.ts",
+          "kind": "module",
+          "clause": "{ CommentModule as CommentCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-comic-chapter-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  CommentService,\r\n  CommentTargetTypeEnum,\r\n  ICommentTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "CommentTargetTypeEnum",
+            "ICommentTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-novel-chapter-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  CommentService,\r\n  CommentTargetTypeEnum,\r\n  ICommentTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "CommentTargetTypeEnum",
+            "ICommentTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/work-chapter.service.ts",
+          "kind": "service",
+          "clause": "{ CommentTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentTargetTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-comic-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  CommentService,\r\n  CommentTargetTypeEnum,\r\n  ICommentTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "CommentTargetTypeEnum",
+            "ICommentTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-novel-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  CommentService,\r\n  CommentTargetTypeEnum,\r\n  ICommentTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "CommentTargetTypeEnum",
+            "ICommentTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/work.service.ts",
+          "kind": "service",
+          "clause": "{ CommentTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentTargetTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/search/search.service.ts",
+          "kind": "service",
+          "clause": "{ CommentTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentTargetTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ CommentModule }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{ CommentTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "CommentTargetTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  CommentTargetMeta,\r\n  VisibleCommentEffectPayload,\r\n}",
+          "isTypeOnly": true,
+          "names": [
+            "CommentTargetMeta",
+            "VisibleCommentEffectPayload"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  CommentService,\r\n  CommentTargetTypeEnum,\r\n  ICommentTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "CommentService",
+            "CommentTargetTypeEnum",
+            "ICommentTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/interaction/download",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/download/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "dto",
+        "interface"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./download.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./download.module",
+          "category": "module"
+        },
+        {
+          "src": "./download.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/download.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./interfaces/download-target-resolver.interface",
+          "category": "interface"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/download/download.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  DownloadedWorkChapterItemDto,\r\n  DownloadedWorkItemDto,\r\n  DownloadService,\r\n  DownloadTargetDto,\r\n  QueryDownloadedWorkChapterDto,\r\n  QueryDownloadedWorkDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "DownloadedWorkChapterItemDto",
+            "DownloadedWorkItemDto",
+            "DownloadService",
+            "DownloadTargetDto",
+            "QueryDownloadedWorkChapterDto",
+            "QueryDownloadedWorkDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/download/download.module.ts",
+          "kind": "module",
+          "clause": "{ DownloadModule as DownloadCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "DownloadModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-comic-chapter-download.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  DownloadService,\r\n  DownloadTargetTypeEnum,\r\n  IDownloadTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "DownloadService",
+            "DownloadTargetTypeEnum",
+            "IDownloadTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-novel-chapter-download.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  DownloadService,\r\n  DownloadTargetTypeEnum,\r\n  IDownloadTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "DownloadService",
+            "DownloadTargetTypeEnum",
+            "IDownloadTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/work-chapter.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  DownloadService,\r\n  DownloadTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "DownloadService",
+            "DownloadTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P0"
+    },
+    {
+      "specifier": "@libs/interaction/emoji",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/emoji/index.ts",
+      "categories": [
+        "dto",
+        "service",
+        "constant",
+        "module",
+        "other"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/emoji.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./emoji-asset.service",
+          "category": "service"
+        },
+        {
+          "src": "./emoji-catalog.service",
+          "category": "service"
+        },
+        {
+          "src": "./emoji-parser.service",
+          "category": "service"
+        },
+        {
+          "src": "./emoji.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./emoji.module",
+          "category": "module"
+        },
+        {
+          "src": "./emoji.type",
+          "category": "other"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/content/emoji/emoji-asset.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseEmojiAssetDto,\r\n  CreateEmojiAssetDto,\r\n  EmojiAssetService,\r\n  QueryEmojiAssetDto,\r\n  UpdateEmojiAssetDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseEmojiAssetDto",
+            "CreateEmojiAssetDto",
+            "EmojiAssetService",
+            "QueryEmojiAssetDto",
+            "UpdateEmojiAssetDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/content/emoji/emoji-pack.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseEmojiPackDto,\r\n  CreateEmojiPackDto,\r\n  EmojiAssetService,\r\n  QueryEmojiPackDto,\r\n  UpdateEmojiPackDto,\r\n  UpdateEmojiPackSceneTypeDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseEmojiPackDto",
+            "CreateEmojiPackDto",
+            "EmojiAssetService",
+            "QueryEmojiPackDto",
+            "UpdateEmojiPackDto",
+            "UpdateEmojiPackSceneTypeDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/content/emoji/emoji.module.ts",
+          "kind": "module",
+          "clause": "{ EmojiModule as LibEmojiModule }",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/emoji/emoji.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  EmojiAssetDto,\n  EmojiCatalogPackDto,\n  EmojiCatalogService,\n  EmojiRecentItemDto,\n  EmojiSceneEnum,\n  QueryEmojiCatalogDto,\n  QueryEmojiRecentDto,\n  QueryEmojiSearchDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiAssetDto",
+            "EmojiCatalogPackDto",
+            "EmojiCatalogService",
+            "EmojiRecentItemDto",
+            "EmojiSceneEnum",
+            "QueryEmojiCatalogDto",
+            "QueryEmojiRecentDto",
+            "QueryEmojiSearchDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/emoji/emoji.module.ts",
+          "kind": "module",
+          "clause": "{ EmojiModule as LibEmojiModule }",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ EmojiModule }",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{ EmojiParserService, EmojiSceneEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiParserService",
+            "EmojiSceneEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.module.ts",
+          "kind": "module",
+          "clause": "{ EmojiModule }",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/message/src/chat/chat.module.ts",
+          "kind": "module",
+          "clause": "{ EmojiModule }",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/message/src/chat/chat.service.ts",
+          "kind": "service",
+          "clause": "{ EmojiParseToken }",
+          "isTypeOnly": true,
+          "names": [
+            "EmojiParseToken"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/message/src/chat/chat.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  EmojiCatalogService,\r\n  EmojiParserService,\r\n  EmojiSceneEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "EmojiCatalogService",
+            "EmojiParserService",
+            "EmojiSceneEnum"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/interaction/favorite",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/favorite/index.ts",
+      "categories": [
+        "dto",
+        "service",
+        "constant",
+        "module",
+        "interface"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/favorite.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./favorite-growth.service",
+          "category": "service"
+        },
+        {
+          "src": "./favorite.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./favorite.module",
+          "category": "module"
+        },
+        {
+          "src": "./favorite.service",
+          "category": "service"
+        },
+        {
+          "src": "./interfaces/favorite-target-resolver.interface",
+          "category": "interface"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/favorite/favorite.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  FavoritePageQueryDto,\n  FavoriteService,\n  FavoriteStatusResponseDto,\n  FavoriteTargetDto,\n  FavoriteTopicPageItemDto,\n  FavoriteWorkPageItemDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FavoritePageQueryDto",
+            "FavoriteService",
+            "FavoriteStatusResponseDto",
+            "FavoriteTargetDto",
+            "FavoriteTopicPageItemDto",
+            "FavoriteWorkPageItemDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/favorite/favorite.module.ts",
+          "kind": "module",
+          "clause": "{ FavoriteModule as FavoriteCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/work-chapter.service.ts",
+          "kind": "service",
+          "clause": "{ FavoriteService }",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-comic-favorite.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  FavoriteService,\r\n  FavoriteTargetTypeEnum,\r\n  IFavoriteTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteService",
+            "FavoriteTargetTypeEnum",
+            "IFavoriteTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-novel-favorite.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  FavoriteService,\r\n  FavoriteTargetTypeEnum,\r\n  IFavoriteTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteService",
+            "FavoriteTargetTypeEnum",
+            "IFavoriteTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/work.service.ts",
+          "kind": "service",
+          "clause": "{ FavoriteService }",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  FavoriteService,\r\n  FavoriteTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteService",
+            "FavoriteTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ FavoriteModule }",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  FavoriteService,\r\n  FavoriteTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteService",
+            "FavoriteTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-favorite.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  FavoriteService,\r\n  FavoriteTargetContext,\r\n  FavoriteTargetTypeEnum,\r\n  IFavoriteTargetResolver,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FavoriteService",
+            "FavoriteTargetContext",
+            "FavoriteTargetTypeEnum",
+            "IFavoriteTargetResolver"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/interaction/follow",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/follow/index.ts",
+      "categories": [
+        "dto",
+        "service",
+        "constant",
+        "module",
+        "interface"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/follow.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./follow-growth.service",
+          "category": "service"
+        },
+        {
+          "src": "./follow.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./follow.module",
+          "category": "module"
+        },
+        {
+          "src": "./follow.service",
+          "category": "service"
+        },
+        {
+          "src": "./interfaces/follow-target-resolver.interface",
+          "category": "interface"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/follow/follow.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  FollowAuthorPageItemDto,\n  FollowPageQueryDto,\n  FollowSectionPageItemDto,\n  FollowService,\n  FollowStatusResponseDto,\n  FollowTargetDto,\n  FollowUserPageItemDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FollowAuthorPageItemDto",
+            "FollowPageQueryDto",
+            "FollowSectionPageItemDto",
+            "FollowService",
+            "FollowStatusResponseDto",
+            "FollowTargetDto",
+            "FollowUserPageItemDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/follow/follow.module.ts",
+          "kind": "module",
+          "clause": "{ FollowModule as FollowCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "FollowModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/core/work.service.ts",
+          "kind": "service",
+          "clause": "{ FollowService, FollowTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "FollowService",
+            "FollowTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/section-group/forum-section-group.service.ts",
+          "kind": "service",
+          "clause": "{ FollowService, FollowTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "FollowService",
+            "FollowTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/section/forum-section.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  FollowService,\r\n  FollowTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FollowService",
+            "FollowTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/section/resolver/forum-section-follow.resolver.ts",
+          "kind": "resolver",
+          "clause": "{IFollowTargetResolver}",
+          "isTypeOnly": true,
+          "names": [
+            "IFollowTargetResolver"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/section/resolver/forum-section-follow.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  FollowService,\r\n  FollowTargetTypeEnum\r\n\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "FollowService",
+            "FollowTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ FollowModule }",
+          "isTypeOnly": false,
+          "names": [
+            "FollowModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{ FollowService, FollowTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "FollowService",
+            "FollowTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/interaction/like",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/like/index.ts",
+      "categories": [
+        "dto",
+        "interface",
+        "service",
+        "constant",
+        "module"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/like.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./interfaces/like-target-resolver.interface",
+          "category": "interface"
+        },
+        {
+          "src": "./like-growth.service",
+          "category": "service"
+        },
+        {
+          "src": "./like.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./like.module",
+          "category": "module"
+        },
+        {
+          "src": "./like.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/like/like.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  LikePageItemDto,\n  LikePageQueryDto,\n  LikeService,\n  LikeStatusResponseDto,\n  LikeTargetDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "LikePageItemDto",
+            "LikePageQueryDto",
+            "LikeService",
+            "LikeStatusResponseDto",
+            "LikeTargetDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/like/like.module.ts",
+          "kind": "module",
+          "clause": "{ LikeModule as LikeCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "LikeModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-comic-chapter-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  ILikeTargetResolver,\r\n  LikeService,\r\n  LikeTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ILikeTargetResolver",
+            "LikeService",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-novel-chapter-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  ILikeTargetResolver,\r\n  LikeService,\r\n  LikeTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ILikeTargetResolver",
+            "LikeService",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/work-chapter.service.ts",
+          "kind": "service",
+          "clause": "{ LikeService, LikeTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "LikeService",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-comic-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  ILikeTargetResolver,\r\n  LikeService,\r\n  LikeTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ILikeTargetResolver",
+            "LikeService",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-novel-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  ILikeTargetResolver,\r\n  LikeService,\r\n  LikeTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ILikeTargetResolver",
+            "LikeService",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/work.service.ts",
+          "kind": "service",
+          "clause": "{ LikeService }",
+          "isTypeOnly": false,
+          "names": [
+            "LikeService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.service.ts",
+          "kind": "service",
+          "clause": "{ LikeService, LikeTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "LikeService",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ LikeModule }",
+          "isTypeOnly": false,
+          "names": [
+            "LikeModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{ LikeService, LikeTargetTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "LikeService",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  ILikeTargetResolver,\r\n  LikeService,\r\n  LikeTargetMeta,\r\n  LikeTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ILikeTargetResolver",
+            "LikeService",
+            "LikeTargetMeta",
+            "LikeTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.module.ts",
+          "kind": "module",
+          "clause": "{ LikeModule }",
+          "isTypeOnly": false,
+          "names": [
+            "LikeModule"
+          ],
+          "suggestedTarget": "module"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/interaction/purchase",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/purchase/index.ts",
+      "categories": [
+        "dto",
+        "interface",
+        "constant",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/purchase.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./interfaces/purchase-target-resolver.interface",
+          "category": "interface"
+        },
+        {
+          "src": "./purchase.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./purchase.module",
+          "category": "module"
+        },
+        {
+          "src": "./purchase.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/purchase/purchase.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  PurchasedWorkChapterItemDto,\r\n  PurchasedWorkItemDto,\r\n  PurchaseService,\r\n  PurchaseTargetBodyDto,\r\n  QueryPurchasedWorkChapterDto,\r\n  QueryPurchasedWorkDto,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "PurchasedWorkChapterItemDto",
+            "PurchasedWorkItemDto",
+            "PurchaseService",
+            "PurchaseTargetBodyDto",
+            "QueryPurchasedWorkChapterDto",
+            "QueryPurchasedWorkDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/purchase/purchase.module.ts",
+          "kind": "module",
+          "clause": "{ PurchaseModule as PurchaseCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "PurchaseModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-comic-chapter-purchase.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IPurchaseTargetResolver,\r\n  PurchaseService,\r\n  PurchaseTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IPurchaseTargetResolver",
+            "PurchaseService",
+            "PurchaseTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-novel-chapter-purchase.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IPurchaseTargetResolver,\r\n  PurchaseService,\r\n  PurchaseTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IPurchaseTargetResolver",
+            "PurchaseService",
+            "PurchaseTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P0"
+    },
+    {
+      "specifier": "@libs/interaction/purchase-contract",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/purchase-contract/index.ts",
+      "categories": [
+        "interface",
+        "constant"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "../purchase/interfaces/purchase-target-resolver.interface",
+          "category": "interface"
+        },
+        {
+          "src": "../purchase/purchase.constant",
+          "category": "constant"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "libs/content/src/permission/content-permission.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  PurchaseStatusEnum,\r\n  PurchaseTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "PurchaseStatusEnum",
+            "PurchaseTargetTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/interaction/reading-state",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/reading-state/index.ts",
+      "categories": [
+        "dto",
+        "interface",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/reading-state.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./interfaces/reading-state-resolver.interface",
+          "category": "interface"
+        },
+        {
+          "src": "./reading-state.module",
+          "category": "module"
+        },
+        {
+          "src": "./reading-state.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/reading-history/reading-history.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  ClearReadingHistoryDto,\r\n  DeleteReadingHistoryDto,\r\n  QueryReadingHistoryDto,\r\n  ReadingHistoryWorkDto,\r\n  ReadingStateService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ClearReadingHistoryDto",
+            "DeleteReadingHistoryDto",
+            "QueryReadingHistoryDto",
+            "ReadingHistoryWorkDto",
+            "ReadingStateService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/reading-history/reading-history.module.ts",
+          "kind": "module",
+          "clause": "{ ReadingStateModule }",
+          "isTypeOnly": false,
+          "names": [
+            "ReadingStateModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/work-chapter.service.ts",
+          "kind": "service",
+          "clause": "{ ReadingStateService }",
+          "isTypeOnly": false,
+          "names": [
+            "ReadingStateService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/content/src/work/content/comic-content.service.ts",
+          "kind": "service",
+          "clause": "{ ReadingStateService }",
+          "isTypeOnly": false,
+          "names": [
+            "ReadingStateService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/content/src/work/content/novel-content.service.ts",
+          "kind": "service",
+          "clause": "{ ReadingStateService }",
+          "isTypeOnly": false,
+          "names": [
+            "ReadingStateService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-reading-state.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IReadingStateResolver,\r\n  ReadingStateService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IReadingStateResolver",
+            "ReadingStateService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/content/src/work/core/work.service.ts",
+          "kind": "service",
+          "clause": "{ ReadingStateService }",
+          "isTypeOnly": false,
+          "names": [
+            "ReadingStateService"
+          ],
+          "suggestedTarget": "core"
+        }
+      ],
+      "priority": "P0"
+    },
+    {
+      "specifier": "@libs/interaction/report",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/report/index.ts",
+      "categories": [
+        "dto",
+        "interface",
+        "service",
+        "constant",
+        "module"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/report.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./interfaces/report-target-resolver.interface",
+          "category": "interface"
+        },
+        {
+          "src": "./report-growth.service",
+          "category": "service"
+        },
+        {
+          "src": "./report.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./report.module",
+          "category": "module"
+        },
+        {
+          "src": "./report.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/report/report.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseReportDto,\r\n  HandleAdminReportDto,\r\n  QueryAdminReportPageDto,\r\n  ReportService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseReportDto",
+            "HandleAdminReportDto",
+            "QueryAdminReportPageDto",
+            "ReportService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/report/report.module.ts",
+          "kind": "module",
+          "clause": "{ ReportModule as InteractionReportModule }",
+          "isTypeOnly": false,
+          "names": [
+            "ReportModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/report/report.controller.ts",
+          "kind": "controller",
+          "clause": "{\r\n  BaseReportDto,\r\n  CreateReportBodyDto,\r\n  QueryMyReportPageDto,\r\n  ReportService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseReportDto",
+            "CreateReportBodyDto",
+            "QueryMyReportPageDto",
+            "ReportService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/report/report.module.ts",
+          "kind": "module",
+          "clause": "{ ReportModule as ReportCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "ReportModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-comic-chapter-report.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IReportTargetResolver,\r\n  ReportService,\r\n  ReportTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IReportTargetResolver",
+            "ReportService",
+            "ReportTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/chapter/resolver/work-novel-chapter-report.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IReportTargetResolver,\r\n  ReportService,\r\n  ReportTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IReportTargetResolver",
+            "ReportService",
+            "ReportTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-comic-report.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IReportTargetResolver,\r\n  ReportService,\r\n  ReportTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IReportTargetResolver",
+            "ReportService",
+            "ReportTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/core/resolver/work-novel-report.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IReportTargetResolver,\r\n  ReportService,\r\n  ReportTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IReportTargetResolver",
+            "ReportService",
+            "ReportTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/content/src/work/work.module.ts",
+          "kind": "module",
+          "clause": "{ ReportModule }",
+          "isTypeOnly": false,
+          "names": [
+            "ReportModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ ReportModule }",
+          "isTypeOnly": false,
+          "names": [
+            "ReportModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-report.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  IReportTargetResolver,\r\n  ReportService,\r\n  ReportTargetTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "IReportTargetResolver",
+            "ReportService",
+            "ReportTargetTypeEnum"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/interaction/user-assets",
+      "entryType": "domain-root",
+      "file": "libs/interaction/src/user-assets/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/user-assets.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./user-assets.module",
+          "category": "module"
+        },
+        {
+          "src": "./user-assets.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{ UserAssetsService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserAssetsService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/user/src/dto/user-self.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseUserAssetsSummaryDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseUserAssetsSummaryDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/message/chat",
+      "entryType": "domain-root",
+      "file": "libs/message/src/chat/index.ts",
+      "categories": [
+        "constant",
+        "module",
+        "service",
+        "dto"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./chat.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./chat.module",
+          "category": "module"
+        },
+        {
+          "src": "./chat.service",
+          "category": "service"
+        },
+        {
+          "src": "./dto/chat.dto",
+          "category": "dto"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/message/message.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  ChatConversationDto,\n  ChatConversationMessagesResponseDto,\n  MessageChatService,\n  OpenDirectConversationDto,\n  QueryChatConversationListDto,\n  QueryChatConversationMessagesDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ChatConversationDto",
+            "ChatConversationMessagesResponseDto",
+            "MessageChatService",
+            "OpenDirectConversationDto",
+            "QueryChatConversationListDto",
+            "QueryChatConversationMessagesDto"
+          ],
+          "suggestedTarget": "split"
+        }
+      ],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/message/inbox",
+      "entryType": "domain-root",
+      "file": "libs/message/src/inbox/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/inbox.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./inbox.module",
+          "category": "module"
+        },
+        {
+          "src": "./inbox.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/app-api/src/modules/message/message.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  InboxSummaryDto,\n  InboxTimelineItemDto,\n  MessageInboxService,\n  QueryInboxTimelineDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "InboxSummaryDto",
+            "InboxTimelineItemDto",
+            "MessageInboxService",
+            "QueryInboxTimelineDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{ MessageInboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageInboxService"
+          ],
+          "suggestedTarget": "core"
+        }
+      ],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/message/monitor",
+      "entryType": "domain-root",
+      "file": "libs/message/src/monitor/index.ts",
+      "categories": [
+        "dto",
+        "module",
+        "service"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/message-monitor.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./monitor.module",
+          "category": "module"
+        },
+        {
+          "src": "./ws-monitor.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/message/message-monitor.service.ts",
+          "kind": "service",
+          "clause": "{\n  QueryMessageOutboxMonitorDto,\n  QueryMessageWsMonitorDto,\n}",
+          "isTypeOnly": true,
+          "names": [
+            "QueryMessageOutboxMonitorDto",
+            "QueryMessageWsMonitorDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  MessageNotificationDeliveryItemDto,\n  MessageOutboxMonitorSummaryDto,\n  MessageWsMonitorSummaryDto,\n  QueryMessageOutboxMonitorDto,\n  QueryMessageWsMonitorDto,\n  RetryMessageNotificationDeliveryDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationDeliveryItemDto",
+            "MessageOutboxMonitorSummaryDto",
+            "MessageWsMonitorSummaryDto",
+            "QueryMessageOutboxMonitorDto",
+            "QueryMessageWsMonitorDto",
+            "RetryMessageNotificationDeliveryDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P3"
+    },
+    {
+      "specifier": "@libs/message/notification",
+      "entryType": "domain-root",
+      "file": "libs/message/src/notification/index.ts",
+      "categories": [
+        "dto",
+        "service",
+        "other",
+        "constant",
+        "module"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/notification-template.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./dto/notification.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./notification-composer.service",
+          "category": "service"
+        },
+        {
+          "src": "./notification-delivery.service",
+          "category": "service"
+        },
+        {
+          "src": "./notification-native-websocket.server",
+          "category": "other"
+        },
+        {
+          "src": "./notification-preference.service",
+          "category": "service"
+        },
+        {
+          "src": "./notification-realtime.service",
+          "category": "service"
+        },
+        {
+          "src": "./notification-template.service",
+          "category": "service"
+        },
+        {
+          "src": "./notification-websocket.service",
+          "category": "service"
+        },
+        {
+          "src": "./notification.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./notification.gateway",
+          "category": "other"
+        },
+        {
+          "src": "./notification.module",
+          "category": "module"
+        },
+        {
+          "src": "./notification.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/message/message-monitor.service.ts",
+          "kind": "service",
+          "clause": "{ QueryNotificationDeliveryPageDto }",
+          "isTypeOnly": true,
+          "names": [
+            "QueryNotificationDeliveryPageDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message-monitor.service.ts",
+          "kind": "service",
+          "clause": "{ MessageNotificationDeliveryService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationDeliveryService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message-template.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AdminMessageNotificationTemplateDto,\n  CreateNotificationTemplateDto,\n  QueryNotificationTemplatePageDto,\n  UpdateNotificationTemplateDto,\n  UpdateNotificationTemplateEnabledDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AdminMessageNotificationTemplateDto",
+            "CreateNotificationTemplateDto",
+            "QueryNotificationTemplatePageDto",
+            "UpdateNotificationTemplateDto",
+            "UpdateNotificationTemplateEnabledDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message-template.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  CreateNotificationTemplateDto,\r\n  QueryNotificationTemplatePageDto,\r\n  UpdateNotificationTemplateDto,\r\n  UpdateNotificationTemplateEnabledDto,\r\n}",
+          "isTypeOnly": true,
+          "names": [
+            "CreateNotificationTemplateDto",
+            "QueryNotificationTemplatePageDto",
+            "UpdateNotificationTemplateDto",
+            "UpdateNotificationTemplateEnabledDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message-template.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  getMessageNotificationTypeLabel,\r\n  MessageNotificationTemplateService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "getMessageNotificationTypeLabel",
+            "MessageNotificationTemplateService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message.controller.ts",
+          "kind": "controller",
+          "clause": "{ QueryNotificationDeliveryPageDto }",
+          "isTypeOnly": false,
+          "names": [
+            "QueryNotificationDeliveryPageDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message.module.ts",
+          "kind": "module",
+          "clause": "{\r\n  MessageNotificationDeliveryService,\r\n  MessageNotificationTemplateService,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationDeliveryService",
+            "MessageNotificationTemplateService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/main.ts",
+          "kind": "other",
+          "clause": "{ MessageNativeWebSocketServer }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNativeWebSocketServer"
+          ],
+          "suggestedTarget": "manual"
+        },
+        {
+          "importer": "apps/app-api/src/modules/message/message.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  MessageNotificationPreferenceService,\n  MessageNotificationService,\n  NotificationUnreadCountDto,\n  QueryUserNotificationListDto,\n  UpdateUserNotificationPreferencesDto,\n  UserNotificationDto,\n  UserNotificationPreferenceListDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationPreferenceService",
+            "MessageNotificationService",
+            "NotificationUnreadCountDto",
+            "QueryUserNotificationListDto",
+            "UpdateUserNotificationPreferencesDto",
+            "UserNotificationDto",
+            "UserNotificationPreferenceListDto"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/app-content/src/announcement/announcement.service.ts",
+          "kind": "service",
+          "clause": "{\r\n  MessageNotificationSubjectTypeEnum,\r\n  MessageNotificationTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationSubjectTypeEnum",
+            "MessageNotificationTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageNotificationComposerService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationComposerService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-favorite.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageNotificationComposerService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationComposerService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageNotificationComposerService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationComposerService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/task/dto/task.dto.ts",
+          "kind": "dto",
+          "clause": "{ MessageNotificationDispatchStatusEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationDispatchStatusEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/growth/src/task/task.service.support.ts",
+          "kind": "other",
+          "clause": "{ MessageNotificationTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/growth/src/task/task.type.ts",
+          "kind": "type",
+          "clause": "{ MessageNotificationDispatchStatusEnum }",
+          "isTypeOnly": true,
+          "names": [
+            "MessageNotificationDispatchStatusEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.service.ts",
+          "kind": "service",
+          "clause": "{ MessageNotificationComposerService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationComposerService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/comment/resolver/comment-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{\r\n  MessageNotificationSubjectTypeEnum,\r\n  MessageNotificationTypeEnum,\r\n}",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationSubjectTypeEnum",
+            "MessageNotificationTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/follow/resolver/user-follow.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageNotificationTypeEnum }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageNotificationTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/message/src/monitor/dto/message-monitor.dto.ts",
+          "kind": "dto",
+          "clause": "{\n  getMessageNotificationDispatchStatusLabel,\n  getMessageNotificationTypeLabel,\n  MessageNotificationDispatchStatusEnum,\n  MessageNotificationTypeEnum,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "getMessageNotificationDispatchStatusLabel",
+            "getMessageNotificationTypeLabel",
+            "MessageNotificationDispatchStatusEnum",
+            "MessageNotificationTypeEnum"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/message/outbox",
+      "entryType": "domain-root",
+      "file": "libs/message/src/outbox/index.ts",
+      "categories": [
+        "dto",
+        "constant",
+        "module",
+        "service",
+        "other"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "./dto/outbox-event.dto",
+          "category": "dto"
+        },
+        {
+          "src": "./outbox.constant",
+          "category": "constant"
+        },
+        {
+          "src": "./outbox.module",
+          "category": "module"
+        },
+        {
+          "src": "./outbox.service",
+          "category": "service"
+        },
+        {
+          "src": "./outbox.worker",
+          "category": "other"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/message/message-monitor.service.ts",
+          "kind": "service",
+          "clause": "{\n  MessageOutboxDomainEnum,\n  MessageOutboxService,\n  MessageOutboxStatusEnum,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxDomainEnum",
+            "MessageOutboxService",
+            "MessageOutboxStatusEnum"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/message/message.module.ts",
+          "kind": "module",
+          "clause": "{ MessageOutboxModule }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/app-content/src/announcement/announcement.module.ts",
+          "kind": "module",
+          "clause": "{ MessageOutboxModule }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/app-content/src/announcement/announcement.service.ts",
+          "kind": "service",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-comment.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-favorite.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/resolver/forum-topic-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/task/task-definition.service.ts",
+          "kind": "service",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/task/task-execution.service.ts",
+          "kind": "service",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/task/task-notification.service.ts",
+          "kind": "service",
+          "clause": "{ CreateNotificationOutboxEventDto }",
+          "isTypeOnly": true,
+          "names": [
+            "CreateNotificationOutboxEventDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/growth/src/task/task-runtime.service.ts",
+          "kind": "service",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/growth/src/task/task.module.ts",
+          "kind": "module",
+          "clause": "{ MessageOutboxModule }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/growth/src/task/task.service.support.ts",
+          "kind": "other",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": true,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.service.ts",
+          "kind": "service",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/comment/resolver/comment-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/follow/resolver/user-follow.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ MessageOutboxService }",
+          "isTypeOnly": false,
+          "names": [
+            "MessageOutboxService"
+          ],
+          "suggestedTarget": "core"
+        }
+      ],
+      "priority": "P1"
+    },
+    {
+      "specifier": "@libs/user/core",
+      "entryType": "domain-root",
+      "file": "libs/user/src/core/index.ts",
+      "categories": [
+        "service",
+        "dto",
+        "module"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "../app-user-count.service",
+          "category": "service"
+        },
+        {
+          "src": "../dto/admin-app-user.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/base-app-user-count.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/base-app-user.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/user-self.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../user.module",
+          "category": "module"
+        },
+        {
+          "src": "../user.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AddAdminAppUserExperienceDto,\n  AddAdminAppUserPointsDto,\n  AdminAppUserBadgeItemDto,\n  AdminAppUserDetailDto,\n  AdminAppUserExperienceRecordDto,\n  AdminAppUserExperienceStatsDto,\n  AdminAppUserFollowCountRepairResultDto,\n  AdminAppUserGrowthLedgerRecordDto,\n  AdminAppUserPageItemDto,\n  AdminAppUserPointRecordDto,\n  AdminAppUserPointStatsDto,\n  AssignAdminAppUserBadgeDto,\n  ConsumeAdminAppUserPointsDto,\n  CreateAdminAppUserDto,\n  QueryAdminAppUserBadgeDto,\n  QueryAdminAppUserExperienceRecordDto,\n  QueryAdminAppUserGrowthLedgerDto,\n  QueryAdminAppUserPageDto,\n  QueryAdminAppUserPointRecordDto,\n  ResetAdminAppUserPasswordDto,\n  UpdateAdminAppUserEnabledDto,\n  UpdateAdminAppUserProfileDto,\n  UpdateAdminAppUserStatusDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AddAdminAppUserExperienceDto",
+            "AddAdminAppUserPointsDto",
+            "AdminAppUserBadgeItemDto",
+            "AdminAppUserDetailDto",
+            "AdminAppUserExperienceRecordDto",
+            "AdminAppUserExperienceStatsDto",
+            "AdminAppUserFollowCountRepairResultDto",
+            "AdminAppUserGrowthLedgerRecordDto",
+            "AdminAppUserPageItemDto",
+            "AdminAppUserPointRecordDto",
+            "AdminAppUserPointStatsDto",
+            "AssignAdminAppUserBadgeDto",
+            "ConsumeAdminAppUserPointsDto",
+            "CreateAdminAppUserDto",
+            "QueryAdminAppUserBadgeDto",
+            "QueryAdminAppUserExperienceRecordDto",
+            "QueryAdminAppUserGrowthLedgerDto",
+            "QueryAdminAppUserPageDto",
+            "QueryAdminAppUserPointRecordDto",
+            "ResetAdminAppUserPasswordDto",
+            "UpdateAdminAppUserEnabledDto",
+            "UpdateAdminAppUserProfileDto",
+            "UpdateAdminAppUserStatusDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.service.ts",
+          "kind": "service",
+          "clause": "{\n  AddAdminAppUserExperienceDto,\n  AddAdminAppUserPointsDto,\n  AppUserCountService,\n  AssignAdminAppUserBadgeDto,\n  ConsumeAdminAppUserPointsDto,\n  CreateAdminAppUserDto,\n  QueryAdminAppUserBadgeDto,\n  QueryAdminAppUserExperienceRecordDto,\n  QueryAdminAppUserGrowthLedgerDto,\n  QueryAdminAppUserPageDto,\n  QueryAdminAppUserPointRecordDto,\n  ResetAdminAppUserPasswordDto,\n  UpdateAdminAppUserEnabledDto,\n  UpdateAdminAppUserProfileDto,\n  UpdateAdminAppUserStatusDto,\n  UserService as UserCoreService,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AddAdminAppUserExperienceDto",
+            "AddAdminAppUserPointsDto",
+            "AppUserCountService",
+            "AssignAdminAppUserBadgeDto",
+            "ConsumeAdminAppUserPointsDto",
+            "CreateAdminAppUserDto",
+            "QueryAdminAppUserBadgeDto",
+            "QueryAdminAppUserExperienceRecordDto",
+            "QueryAdminAppUserGrowthLedgerDto",
+            "QueryAdminAppUserPageDto",
+            "QueryAdminAppUserPointRecordDto",
+            "ResetAdminAppUserPasswordDto",
+            "UpdateAdminAppUserEnabledDto",
+            "UpdateAdminAppUserProfileDto",
+            "UpdateAdminAppUserStatusDto",
+            "UserService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/app.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/app-user-status.guard.ts",
+          "kind": "guard",
+          "clause": "{ UserService as UserCoreService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ UserService as UserCoreService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/password.service.ts",
+          "kind": "service",
+          "clause": "{ UserService as UserCoreService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  BaseAppUserDto,\n  ChangeMyPhoneDto,\n  QueryMyBadgeDto,\n  QueryMyExperienceRecordDto,\n  QueryMyPointRecordDto,\n  UpdateMyProfileDto,\n  UserBadgeItemDto,\n  UserCenterDto,\n  UserExperienceRecordDto,\n  UserExperienceStatsDto,\n  UserPointRecordDto,\n  UserPointStatsDto,\n  UserStatusSummaryDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto",
+            "ChangeMyPhoneDto",
+            "QueryMyBadgeDto",
+            "QueryMyExperienceRecordDto",
+            "QueryMyPointRecordDto",
+            "UpdateMyProfileDto",
+            "UserBadgeItemDto",
+            "UserCenterDto",
+            "UserExperienceRecordDto",
+            "UserExperienceStatsDto",
+            "UserPointRecordDto",
+            "UserPointStatsDto",
+            "UserStatusSummaryDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{\n  ChangeMyPhoneDto,\n  QueryMyBadgeDto,\n  QueryMyExperienceRecordDto,\n  QueryMyPointRecordDto,\n  UpdateMyProfileDto,\n  UserService as UserCoreService,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ChangeMyPhoneDto",
+            "QueryMyBadgeDto",
+            "QueryMyExperienceRecordDto",
+            "QueryMyPointRecordDto",
+            "UpdateMyProfileDto",
+            "UserService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/counter/forum-counter.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/counter/forum-counter.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/moderator-application/dto/moderator-application.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/profile/dto/profile.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/dto/forum-topic.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserCountDto, BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserCountDto",
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/comment/dto/comment.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/comment/resolver/comment-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/favorite/favorite.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/favorite/favorite.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/follow/dto/follow.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/follow/follow.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/follow/follow.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/follow/resolver/user-follow.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/like/like.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/like/like.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/platform/src/modules/auth/dto/auth-scene.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P0"
+    },
+    {
+      "specifier": "@libs/user/core",
+      "entryType": "single-subentry",
+      "file": "libs/user/src/core/index.ts",
+      "categories": [
+        "service",
+        "dto",
+        "module"
+      ],
+      "mixed": true,
+      "exports": [
+        {
+          "src": "../app-user-count.service",
+          "category": "service"
+        },
+        {
+          "src": "../dto/admin-app-user.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/base-app-user-count.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/base-app-user.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../dto/user-self.dto",
+          "category": "dto"
+        },
+        {
+          "src": "../user.module",
+          "category": "module"
+        },
+        {
+          "src": "../user.service",
+          "category": "service"
+        }
+      ],
+      "usages": [
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  AddAdminAppUserExperienceDto,\n  AddAdminAppUserPointsDto,\n  AdminAppUserBadgeItemDto,\n  AdminAppUserDetailDto,\n  AdminAppUserExperienceRecordDto,\n  AdminAppUserExperienceStatsDto,\n  AdminAppUserFollowCountRepairResultDto,\n  AdminAppUserGrowthLedgerRecordDto,\n  AdminAppUserPageItemDto,\n  AdminAppUserPointRecordDto,\n  AdminAppUserPointStatsDto,\n  AssignAdminAppUserBadgeDto,\n  ConsumeAdminAppUserPointsDto,\n  CreateAdminAppUserDto,\n  QueryAdminAppUserBadgeDto,\n  QueryAdminAppUserExperienceRecordDto,\n  QueryAdminAppUserGrowthLedgerDto,\n  QueryAdminAppUserPageDto,\n  QueryAdminAppUserPointRecordDto,\n  ResetAdminAppUserPasswordDto,\n  UpdateAdminAppUserEnabledDto,\n  UpdateAdminAppUserProfileDto,\n  UpdateAdminAppUserStatusDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AddAdminAppUserExperienceDto",
+            "AddAdminAppUserPointsDto",
+            "AdminAppUserBadgeItemDto",
+            "AdminAppUserDetailDto",
+            "AdminAppUserExperienceRecordDto",
+            "AdminAppUserExperienceStatsDto",
+            "AdminAppUserFollowCountRepairResultDto",
+            "AdminAppUserGrowthLedgerRecordDto",
+            "AdminAppUserPageItemDto",
+            "AdminAppUserPointRecordDto",
+            "AdminAppUserPointStatsDto",
+            "AssignAdminAppUserBadgeDto",
+            "ConsumeAdminAppUserPointsDto",
+            "CreateAdminAppUserDto",
+            "QueryAdminAppUserBadgeDto",
+            "QueryAdminAppUserExperienceRecordDto",
+            "QueryAdminAppUserGrowthLedgerDto",
+            "QueryAdminAppUserPageDto",
+            "QueryAdminAppUserPointRecordDto",
+            "ResetAdminAppUserPasswordDto",
+            "UpdateAdminAppUserEnabledDto",
+            "UpdateAdminAppUserProfileDto",
+            "UpdateAdminAppUserStatusDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/admin-api/src/modules/app-user/app-user.service.ts",
+          "kind": "service",
+          "clause": "{\n  AddAdminAppUserExperienceDto,\n  AddAdminAppUserPointsDto,\n  AppUserCountService,\n  AssignAdminAppUserBadgeDto,\n  ConsumeAdminAppUserPointsDto,\n  CreateAdminAppUserDto,\n  QueryAdminAppUserBadgeDto,\n  QueryAdminAppUserExperienceRecordDto,\n  QueryAdminAppUserGrowthLedgerDto,\n  QueryAdminAppUserPageDto,\n  QueryAdminAppUserPointRecordDto,\n  ResetAdminAppUserPasswordDto,\n  UpdateAdminAppUserEnabledDto,\n  UpdateAdminAppUserProfileDto,\n  UpdateAdminAppUserStatusDto,\n  UserService as UserCoreService,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "AddAdminAppUserExperienceDto",
+            "AddAdminAppUserPointsDto",
+            "AppUserCountService",
+            "AssignAdminAppUserBadgeDto",
+            "ConsumeAdminAppUserPointsDto",
+            "CreateAdminAppUserDto",
+            "QueryAdminAppUserBadgeDto",
+            "QueryAdminAppUserExperienceRecordDto",
+            "QueryAdminAppUserGrowthLedgerDto",
+            "QueryAdminAppUserPageDto",
+            "QueryAdminAppUserPointRecordDto",
+            "ResetAdminAppUserPasswordDto",
+            "UpdateAdminAppUserEnabledDto",
+            "UpdateAdminAppUserProfileDto",
+            "UpdateAdminAppUserStatusDto",
+            "UserService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "apps/app-api/src/app.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/app-user-status.guard.ts",
+          "kind": "guard",
+          "clause": "{ UserService as UserCoreService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/auth.service.ts",
+          "kind": "service",
+          "clause": "{ UserService as UserCoreService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/auth/password.service.ts",
+          "kind": "service",
+          "clause": "{ UserService as UserCoreService }",
+          "isTypeOnly": false,
+          "names": [
+            "UserService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.controller.ts",
+          "kind": "controller",
+          "clause": "{\n  BaseAppUserDto,\n  ChangeMyPhoneDto,\n  QueryMyBadgeDto,\n  QueryMyExperienceRecordDto,\n  QueryMyPointRecordDto,\n  UpdateMyProfileDto,\n  UserBadgeItemDto,\n  UserCenterDto,\n  UserExperienceRecordDto,\n  UserExperienceStatsDto,\n  UserPointRecordDto,\n  UserPointStatsDto,\n  UserStatusSummaryDto,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto",
+            "ChangeMyPhoneDto",
+            "QueryMyBadgeDto",
+            "QueryMyExperienceRecordDto",
+            "QueryMyPointRecordDto",
+            "UpdateMyProfileDto",
+            "UserBadgeItemDto",
+            "UserCenterDto",
+            "UserExperienceRecordDto",
+            "UserExperienceStatsDto",
+            "UserPointRecordDto",
+            "UserPointStatsDto",
+            "UserStatusSummaryDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule as UserCoreModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "apps/app-api/src/modules/user/user.service.ts",
+          "kind": "service",
+          "clause": "{\n  ChangeMyPhoneDto,\n  QueryMyBadgeDto,\n  QueryMyExperienceRecordDto,\n  QueryMyPointRecordDto,\n  UpdateMyProfileDto,\n  UserService as UserCoreService,\n}",
+          "isTypeOnly": false,
+          "names": [
+            "ChangeMyPhoneDto",
+            "QueryMyBadgeDto",
+            "QueryMyExperienceRecordDto",
+            "QueryMyPointRecordDto",
+            "UpdateMyProfileDto",
+            "UserService"
+          ],
+          "suggestedTarget": "split"
+        },
+        {
+          "importer": "libs/forum/src/counter/forum-counter.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/counter/forum-counter.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/moderator-application/dto/moderator-application.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/profile/dto/profile.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/profile/profile.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/forum/src/topic/dto/forum-topic.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserCountDto, BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserCountDto",
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/forum/src/topic/forum-topic.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/comment/comment.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/comment/dto/comment.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/comment/resolver/comment-like.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/favorite/favorite.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/favorite/favorite.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/follow/dto/follow.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        },
+        {
+          "importer": "libs/interaction/src/follow/follow.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/follow/follow.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/follow/resolver/user-follow.resolver.ts",
+          "kind": "resolver",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/interaction/src/like/like.module.ts",
+          "kind": "module",
+          "clause": "{ UserModule }",
+          "isTypeOnly": false,
+          "names": [
+            "UserModule"
+          ],
+          "suggestedTarget": "module"
+        },
+        {
+          "importer": "libs/interaction/src/like/like.service.ts",
+          "kind": "service",
+          "clause": "{ AppUserCountService }",
+          "isTypeOnly": false,
+          "names": [
+            "AppUserCountService"
+          ],
+          "suggestedTarget": "core"
+        },
+        {
+          "importer": "libs/platform/src/modules/auth/dto/auth-scene.dto.ts",
+          "kind": "dto",
+          "clause": "{ BaseAppUserDto }",
+          "isTypeOnly": false,
+          "names": [
+            "BaseAppUserDto"
+          ],
+          "suggestedTarget": "contracts"
+        }
+      ],
+      "priority": "P0"
+    }
+  ]
+}

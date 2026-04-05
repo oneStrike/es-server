@@ -1,9 +1,13 @@
 import {
+  AdminTaskAssignmentPageResponseDto,
+  AdminTaskAssignmentReconciliationPageResponseDto,
+  AdminTaskPageResponseDto,
   CreateTaskDto,
   QueryTaskAssignmentDto,
   QueryTaskAssignmentReconciliationDto,
   QueryTaskDto,
   RetryCompletedTaskRewardsDto,
+  RetryCompletedTaskRewardsResponseDto,
   RetryTaskAssignmentRewardDto,
   TaskService,
   UpdateTaskDto,
@@ -22,12 +26,6 @@ import {
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
-import {
-  AdminTaskAssignmentPageResponseDto,
-  AdminTaskAssignmentReconciliationPageResponseDto,
-  AdminTaskPageResponseDto,
-  RetryCompletedTaskRewardsResponseDto,
-} from './dto/task.dto'
 
 @ApiTags('任务管理/任务配置')
 @Controller('admin/task')

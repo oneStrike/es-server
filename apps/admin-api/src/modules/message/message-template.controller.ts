@@ -1,4 +1,5 @@
 import {
+  AdminMessageNotificationTemplateDto,
   CreateNotificationTemplateDto,
   QueryNotificationTemplatePageDto,
   UpdateNotificationTemplateDto,
@@ -10,9 +11,6 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
-import {
-  AdminMessageNotificationTemplateDto,
-} from './dto/message-template.dto'
 import { MessageTemplateService } from './message-template.service'
 
 /**

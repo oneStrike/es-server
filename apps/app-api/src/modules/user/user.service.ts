@@ -9,13 +9,6 @@ import type { SQL } from 'drizzle-orm'
  * - 用户资产统计（购买、下载、收藏、点赞等）
  * - 用户成长信息（积分、经验、等级、徽章）
  */
-import type {
-  ChangeMyPhoneInput,
-  QueryMyBadgeInput,
-  QueryMyExperienceRecordInput,
-  QueryMyPointRecordInput,
-  UpdateMyProfileInput,
-} from './user.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { UserExperienceService } from '@libs/growth/experience'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
@@ -27,7 +20,14 @@ import {
   formatDateOnlyInAppTimeZone,
   startOfTodayInAppTimeZone,
 } from '@libs/platform/utils'
-import { UserService as UserCoreService } from '@libs/user/core'
+import {
+  ChangeMyPhoneDto,
+  QueryMyBadgeDto,
+  QueryMyExperienceRecordDto,
+  QueryMyPointRecordDto,
+  UpdateMyProfileDto,
+  UserService as UserCoreService,
+} from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'
@@ -81,7 +81,7 @@ export class UserService {
   /**
    * 更新用户资料
    */
-  async updateUserProfile(userId: number, dto: UpdateMyProfileInput) {
+  async updateUserProfile(userId: number, dto: UpdateMyProfileDto) {
     await this.userCoreService.ensureUserExists(userId)
 
     try {
@@ -121,7 +121,7 @@ export class UserService {
    * @param dto 换绑手机号入参
    * @returns 是否换绑成功
    */
-  async changeMyPhone(userId: number, dto: ChangeMyPhoneInput) {
+  async changeMyPhone(userId: number, dto: ChangeMyPhoneDto) {
     const user = await this.userCoreService.ensureUserExists(userId)
 
     if (!user.phoneNumber) {
@@ -240,7 +240,7 @@ export class UserService {
    * @param query 查询条件
    * @returns 积分记录分页数据
    */
-  async getUserPointRecords(userId: number, query: QueryMyPointRecordInput) {
+  async getUserPointRecords(userId: number, query: QueryMyPointRecordDto) {
     return this.userPointService.getPointRecordPage({
       ...query,
       userId,
@@ -338,7 +338,7 @@ export class UserService {
    */
   async getUserExperienceRecords(
     userId: number,
-    query: QueryMyExperienceRecordInput,
+    query: QueryMyExperienceRecordDto,
   ) {
     return this.userExperienceService.getExperienceRecordPage({
       ...query,
@@ -353,7 +353,7 @@ export class UserService {
    * @param query 查询条件
    * @returns 徽章列表分页数据
    */
-  async getUserBadges(userId: number, query: QueryMyBadgeInput) {
+  async getUserBadges(userId: number, query: QueryMyBadgeDto) {
     await this.userCoreService.ensureUserExists(userId)
 
     const { name, type, isEnabled, ...pageQuery } = query

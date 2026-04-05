@@ -1,5 +1,6 @@
 import { WorkViewPermissionEnum } from '@libs/platform/constant'
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
@@ -169,6 +170,7 @@ export class BaseWorkChapterDto extends BaseDto {
     example: '2024-01-01T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
@@ -209,4 +211,115 @@ export class UpdateWorkChapterDto extends IntersectionType(
   IdDto,
 ) {}
 
-export class QueryWorkChapterCommentPageDto extends IntersectionType(PageDto, IdDto) {}
+export class QueryWorkChapterCommentPageDto extends IntersectionType(
+  PageDto,
+  IdDto,
+) {}
+
+/**
+ * 作品章节分页项 DTO。
+ */
+export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
+  'id',
+  'isPreview',
+  'cover',
+  'title',
+  'subtitle',
+  'canComment',
+  'sortOrder',
+  'viewRule',
+  'canDownload',
+  'price',
+  'requiredViewLevelId',
+  'publishAt',
+  'createdAt',
+  'updatedAt',
+  'isPublished',
+] as const) {}
+
+class ChapterUserStatusFieldsDto {
+  @BooleanProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @BooleanProperty({
+    description: '是否已购买',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  purchased!: boolean
+
+  @BooleanProperty({
+    description: '是否已下载',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  downloaded!: boolean
+}
+
+class WorkChapterDetailBodyDto extends PickType(BaseWorkChapterDto, [
+  'id',
+  'workId',
+  'workType',
+  'title',
+  'subtitle',
+  'cover',
+  'description',
+  'sortOrder',
+  'isPublished',
+  'isPreview',
+  'publishAt',
+  'viewRule',
+  'requiredViewLevelId',
+  'price',
+  'canDownload',
+  'canComment',
+  'content',
+  'wordCount',
+  'viewCount',
+  'likeCount',
+  'commentCount',
+  'purchaseCount',
+  'downloadCount',
+  'createdAt',
+  'updatedAt',
+] as const) {}
+
+/**
+ * 漫画章节内容 DTO。
+ */
+export class ComicChapterContentDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkChapterDto, ['title', 'subtitle'] as const),
+) {
+  @ArrayProperty({
+    description: '章节图片内容',
+    itemType: 'string',
+    required: true,
+    validation: false,
+  })
+  content!: string[]
+}
+
+/**
+ * 小说章节内容 DTO。
+ */
+export class NovelChapterContentDto extends IntersectionType(
+  IdDto,
+  OmitType(ComicChapterContentDto, ['content'] as const),
+  PickType(BaseWorkChapterDto, ['content'] as const),
+) {}
+
+/**
+ * 作品章节详情 DTO。
+ */
+export class WorkChapterDetailWithUserStatusDto extends IntersectionType(
+  WorkChapterDetailBodyDto,
+  ChapterUserStatusFieldsDto,
+) {}

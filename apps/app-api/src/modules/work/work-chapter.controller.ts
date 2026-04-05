@@ -1,11 +1,15 @@
 import {
+  ComicChapterContentDto,
   ComicContentService,
+  NovelChapterContentDto,
   NovelContentService,
+  PageWorkChapterDto,
   QueryWorkChapterCommentPageDto,
   QueryWorkChapterDto,
+  WorkChapterDetailWithUserStatusDto,
   WorkChapterService,
 } from '@libs/content/work'
-import { CommentService } from '@libs/interaction/comment'
+import { CommentService, TargetCommentItemDto } from '@libs/interaction/comment'
 import {
   ApiDoc,
   ApiPageDoc,
@@ -18,13 +22,6 @@ import {
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { TargetCommentItemDto } from '../comment/dto/comment.dto'
-import {
-  ComicChapterContentDto,
-  NovelChapterContentDto,
-  PageWorkChapterDto,
-  WorkChapterDetailWithUserStatusDto,
-} from './dto/work-chapter.dto'
 
 @ApiTags('作品')
 @Controller('app/work/chapter')

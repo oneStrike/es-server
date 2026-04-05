@@ -56,7 +56,9 @@ describe('dictionary service sort order', () => {
       schema: { dictionaryItem },
     } as any)
 
-    await service.findAllDictionaryItems('work-language')
+    await service.findAllDictionaryItems({
+      dictionaryCode: 'work-language',
+    })
 
     const options = findMany.mock.calls[0][0]
     const orderBy = options.orderBy(dictionaryItem, { asc })

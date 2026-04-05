@@ -6,6 +6,7 @@
 - `../../../.trae/rules/CONTROLLER_SPEC.md`: 路由命名、目录结构、Swagger、权限与审计规范。
 - `../../../.trae/rules/COMMENT_SPEC.md`: 注释边界、注释密度与注释写法规范。
 - `../../../.trae/rules/DTO_SPEC.md`: DTO 分层、复用方式、命名规则、Service 类型边界。
+- `../../../.trae/rules/IMPORT_BOUNDARY_SPEC.md`: 公共入口分层、跨域导入边界、循环依赖防线与迁移策略。
 - `../../../.trae/rules/TS_TYPE_SPEC.md`: TypeScript 领域类型、`db/schema` 推导类型、`*.type.ts` 放置与命名规范。
 - `../../../.trae/rules/drizzle-guidelines.md`: Drizzle 入口、事务、分页、原生 SQL、Resolver 与 schema 注释规范。
 - `../../../.trae/rules/ERROR_HANDLING_SPEC.md`: Service/Resolver 错误分层、数据库错误映射、幂等与日志规范。

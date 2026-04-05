@@ -33,10 +33,17 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     return this.drizzle.schema.appUserCount
   }
 
+  /**
+   * 在模块初始化时注册用户关注解析器。
+   */
   onModuleInit() {
     this.followService.registerResolver(this)
   }
 
+  /**
+   * 校验被关注用户是否存在且不是自己。
+   * 返回 ownerUserId 供后续通知链路直接复用。
+   */
   async ensureExists(tx: Db, targetId: number, actorUserId: number) {
     if (targetId === actorUserId) {
       throw new BadRequestException('不能关注自己')
@@ -58,6 +65,10 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     return { ownerUserId: targetId }
   }
 
+  /**
+   * 回填用户粉丝计数。
+   * 当目标用户不存在时直接报错，避免脏数据静默跳过。
+   */
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
     const user = await tx.query.appUser.findFirst({
       where: {
@@ -74,6 +85,10 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     await this.appUserCountService.updateFollowersCount(tx, targetId, delta)
   }
 
+  /**
+   * 在关注成功后写入通知 outbox 事件。
+   * 同一用户关注自己不会生成通知。
+   */
   async postFollowHook(
     tx: Db,
     targetId: number,
@@ -103,6 +118,10 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     )
   }
 
+  /**
+   * 批量查询被关注用户的展示信息与计数字段。
+   * 返回值以 targetId 为键，供分页列表直接拼装展示。
+   */
   async batchGetDetails(targetIds: number[]) {
     if (targetIds.length === 0) {
       return new Map()

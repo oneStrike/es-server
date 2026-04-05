@@ -567,5 +567,8 @@ describe('forum topic public detail payload', () => {
         },
       }),
     )
+    expect(result).not.toHaveProperty('isHidden')
+    expect(result).not.toHaveProperty('auditStatus')
+    expect(result).not.toHaveProperty('version')
   })
 })

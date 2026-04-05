@@ -1,4 +1,4 @@
-import type { QueryGrowthRuleEventPageInput } from './growth.type'
+import type { QueryGrowthRuleEventPageDto } from '@libs/growth/growth'
 import { DrizzleService } from '@db/core'
 import {
   EventDefinitionConsumerEnum,
@@ -41,7 +41,7 @@ export class GrowthService {
    *
    * 该视图只负责“读模型解释力”，不改动积分/经验底层表结构。
    */
-  async getGrowthRuleEventPage(query: QueryGrowthRuleEventPageInput) {
+  async getGrowthRuleEventPage(query: QueryGrowthRuleEventPageDto) {
     const definitions = this.eventDefinitionService
       .listRuleConfigurableEventDefinitions()
       .filter((item) => {

@@ -1,18 +1,16 @@
 import {
+  FollowAuthorPageItemDto,
   FollowPageQueryDto,
+  FollowSectionPageItemDto,
   FollowService,
+  FollowStatusResponseDto,
   FollowTargetDto,
+  FollowUserPageItemDto,
 } from '@libs/interaction/follow'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  FollowAuthorPageItemDto,
-  FollowSectionPageItemDto,
-  FollowStatusResponseDto,
-  FollowUserPageItemDto,
-} from './dto/follow.dto'
 
 @ApiTags('关注')
 @Controller('app/follow')

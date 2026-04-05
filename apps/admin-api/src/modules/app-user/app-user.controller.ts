@@ -1,10 +1,5 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto, UserIdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../common/decorators/audit.decorator'
-import { AuditActionTypeEnum } from '../system/audit/audit.constant'
-import { AppUserService } from './app-user.service'
 import {
   AddAdminAppUserExperienceDto,
   AddAdminAppUserPointsDto,
@@ -29,7 +24,12 @@ import {
   UpdateAdminAppUserEnabledDto,
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
-} from './dto/app-user.dto'
+} from '@libs/user/core'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../system/audit/audit.constant'
+import { AppUserService } from './app-user.service'
 
 /**
  * APP 用户管理控制器

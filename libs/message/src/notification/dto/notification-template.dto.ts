@@ -7,7 +7,10 @@ import {
 } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { MessageNotificationTypeEnum } from '../notification.constant'
+import {
+  getMessageNotificationTypeLabel,
+  MessageNotificationTypeEnum,
+} from '../notification.constant'
 
 /**
  * 通知模板基础 DTO
@@ -109,3 +112,13 @@ export class UpdateNotificationTemplateEnabledDto extends IntersectionType(
   IdDto,
   PickType(BaseMessageNotificationTemplateDto, ['isEnabled'] as const),
 ) {}
+
+export class AdminMessageNotificationTemplateDto extends BaseMessageNotificationTemplateDto {
+  @StringProperty({
+    description: '通知类型中文标签',
+    example: getMessageNotificationTypeLabel(
+      MessageNotificationTypeEnum.COMMENT_REPLY,
+    ),
+  })
+  notificationTypeLabel!: string
+}

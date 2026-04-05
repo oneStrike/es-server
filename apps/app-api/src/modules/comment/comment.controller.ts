@@ -1,5 +1,6 @@
 import {
   BaseCommentDto,
+  CommentReplyItemDto,
   CommentService,
   CreateCommentBodyDto,
   QueryCommentRepliesDto,
@@ -10,9 +11,6 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  CommentReplyItemDto,
-} from './dto/comment.dto'
 
 @ApiTags('评论')
 @Controller('app/comment')

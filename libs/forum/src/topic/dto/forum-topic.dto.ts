@@ -1,3 +1,6 @@
+import { BaseForumSectionDto } from '@libs/forum/section'
+import { BaseForumTagDto } from '@libs/forum/tag'
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
@@ -5,11 +8,13 @@ import {
   DateProperty,
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word'
+import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
@@ -287,6 +292,140 @@ export class QueryMyForumTopicDto extends PartialType(
   QueryPublicForumTopicDto,
 ) {}
 
+export class ForumTopicSectionBriefDto extends PickType(BaseForumSectionDto, [
+  'id',
+  'name',
+  'icon',
+  'cover',
+] as const) {}
+
+export class ForumTopicUserBriefDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+] as const) {}
+
+export class PublicForumTopicDetailUserDto extends ForumTopicUserBriefDto {
+  @BooleanProperty({
+    description: '当前用户是否已关注发帖用户',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  isFollowed!: boolean
+}
+
+export class PublicForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
+  'id',
+  'sectionId',
+  'userId',
+  'title',
+  'images',
+  'videos',
+  'isPinned',
+  'isFeatured',
+  'isLocked',
+  'viewCount',
+  'commentCount',
+  'likeCount',
+  'favoriteCount',
+  'lastCommentAt',
+  'createdAt',
+] as const) {
+  @StringProperty({
+    description: '主题简要内容（正文前 60 个字符）',
+    example: '我最近在整理一份入门 TypeScript 的学习路线，先从类型系统开始...',
+    required: true,
+    validation: false,
+  })
+  contentSnippet!: string
+
+  @BooleanProperty({
+    description: '当前用户是否已点赞',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @BooleanProperty({
+    description: '当前用户是否已收藏',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  favorited!: boolean
+
+  @NestedProperty({
+    description: '发帖用户',
+    required: true,
+    type: ForumTopicUserBriefDto,
+    validation: false,
+    nullable: false,
+  })
+  user!: ForumTopicUserBriefDto
+
+  @NestedProperty({
+    description: '所属板块',
+    required: false,
+    type: ForumTopicSectionBriefDto,
+    validation: false,
+    nullable: false,
+  })
+  section!: ForumTopicSectionBriefDto
+}
+
+export class ForumTopicTagItemDto extends PickType(BaseForumTagDto, [
+  'id',
+  'name',
+  'icon',
+] as const) {}
+
+export class PublicForumTopicDetailDto extends IntersectionType(
+  PickType(BaseForumTopicDto, [
+    'id',
+    'sectionId',
+    'userId',
+    'title',
+    'content',
+    'bodyTokens',
+    'images',
+    'videos',
+    'isPinned',
+    'isFeatured',
+    'isLocked',
+    'viewCount',
+    'commentCount',
+    'likeCount',
+    'favoriteCount',
+    'lastCommentAt',
+    'createdAt',
+    'updatedAt',
+  ] as const),
+  PickType(PublicForumTopicPageItemDto, ['liked', 'favorited'] as const),
+) {
+  @NestedProperty({
+    description: '发帖用户',
+    required: true,
+    type: PublicForumTopicDetailUserDto,
+    validation: false,
+  })
+  user!: PublicForumTopicDetailUserDto
+
+  @ArrayProperty({
+    description: '标签',
+    required: true,
+    validation: false,
+    itemClass: ForumTopicTagItemDto,
+  })
+  tags!: ForumTopicTagItemDto[]
+}
+
+export class MyForumTopicItemDto extends IntersectionType(
+  PublicForumTopicPageItemDto,
+  PickType(BaseForumTopicDto, ['auditStatus'] as const),
+) {}
+
 export class QueryForumTopicCommentPageDto extends IntersectionType(
   PageDto,
   IdDto,
@@ -316,3 +455,182 @@ export class UpdateForumTopicHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isHidden'] as const),
 ) {}
+
+class AdminForumTopicTagRelationDto {
+  @NumberProperty({
+    description: '关联ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  id!: number
+
+  @NumberProperty({
+    description: '主题ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  topicId!: number
+
+  @NumberProperty({
+    description: '标签ID',
+    example: 2,
+    required: true,
+    validation: false,
+  })
+  tagId!: number
+
+  @DateProperty({
+    description: '创建时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: true,
+    validation: false,
+  })
+  createdAt!: Date
+}
+
+class AdminForumTopicSectionDto extends PickType(BaseForumSectionDto, [
+  'id',
+  'name',
+  'description',
+  'icon',
+  'cover',
+  'isEnabled',
+  'topicReviewPolicy',
+] as const) {}
+
+class AdminForumTopicUserCountDto extends PickType(BaseAppUserCountDto, [
+  'commentCount',
+  'likeCount',
+  'favoriteCount',
+  'forumTopicCount',
+  'commentReceivedLikeCount',
+  'forumTopicReceivedLikeCount',
+  'forumTopicReceivedFavoriteCount',
+] as const) {}
+
+class AdminForumTopicUserLevelDto extends PickType(BaseUserLevelRuleDto, [
+  'id',
+  'name',
+  'icon',
+  'sortOrder',
+] as const) {}
+
+class AdminForumTopicUserDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+  'signature',
+  'bio',
+  'isEnabled',
+  'points',
+  'levelId',
+  'status',
+  'banReason',
+  'banUntil',
+] as const) {
+  @NestedProperty({
+    description: '用户计数',
+    required: false,
+    type: AdminForumTopicUserCountDto,
+    validation: false,
+    nullable: false,
+  })
+  counts!: AdminForumTopicUserCountDto
+
+  @NestedProperty({
+    description: '论坛等级',
+    required: false,
+    type: AdminForumTopicUserLevelDto,
+    validation: false,
+    nullable: false,
+  })
+  level!: AdminForumTopicUserLevelDto
+}
+
+export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
+  'id',
+  'sectionId',
+  'userId',
+  'title',
+  'content',
+  'images',
+  'videos',
+  'isPinned',
+  'isFeatured',
+  'isLocked',
+  'isHidden',
+  'auditStatus',
+  'auditReason',
+  'auditAt',
+  'viewCount',
+  'likeCount',
+  'commentCount',
+  'favoriteCount',
+  'version',
+  'sensitiveWordHits',
+  'lastCommentAt',
+  'lastCommentUserId',
+  'createdAt',
+  'updatedAt',
+] as const) {
+  @ArrayProperty({
+    description: '主题标签关联',
+    itemClass: AdminForumTopicTagRelationDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  topicTags!: AdminForumTopicTagRelationDto[]
+
+  @NestedProperty({
+    description: '所属板块',
+    required: true,
+    type: AdminForumTopicSectionDto,
+    validation: false,
+    nullable: false,
+  })
+  section!: AdminForumTopicSectionDto
+
+  @NestedProperty({
+    description: '发帖用户',
+    required: true,
+    type: AdminForumTopicUserDto,
+    validation: false,
+    nullable: false,
+  })
+  user!: AdminForumTopicUserDto
+}
+
+export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
+  'id',
+  'sectionId',
+  'userId',
+  'title',
+  'images',
+  'videos',
+  'isPinned',
+  'isFeatured',
+  'isLocked',
+  'isHidden',
+  'auditStatus',
+  'auditReason',
+  'auditAt',
+  'viewCount',
+  'likeCount',
+  'commentCount',
+  'favoriteCount',
+  'lastCommentAt',
+  'lastCommentUserId',
+  'createdAt',
+  'updatedAt',
+] as const) {
+  @StringProperty({
+    description: '主题简要内容（正文前 60 个字符）',
+    example: '我最近在整理一份入门 TypeScript 的学习路线，先从类型系统开始...',
+    required: true,
+    validation: false,
+  })
+  contentSnippet!: string
+}

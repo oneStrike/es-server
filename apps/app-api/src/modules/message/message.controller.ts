@@ -1,29 +1,30 @@
 import {
+  ChatConversationDto,
+  ChatConversationMessagesResponseDto,
   MessageChatService,
   OpenDirectConversationDto,
   QueryChatConversationListDto,
   QueryChatConversationMessagesDto,
 } from '@libs/message/chat'
-import { MessageInboxService, QueryInboxTimelineDto } from '@libs/message/inbox'
+import {
+  InboxSummaryDto,
+  InboxTimelineItemDto,
+  MessageInboxService,
+  QueryInboxTimelineDto,
+} from '@libs/message/inbox'
 import {
   MessageNotificationPreferenceService,
   MessageNotificationService,
+  NotificationUnreadCountDto,
   QueryUserNotificationListDto,
   UpdateUserNotificationPreferencesDto,
+  UserNotificationDto,
+  UserNotificationPreferenceListDto,
 } from '@libs/message/notification'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  ChatConversationDto,
-  ChatConversationMessagesResponseDto,
-  InboxSummaryDto,
-  InboxTimelineItemDto,
-  NotificationUnreadCountDto,
-  UserNotificationDto,
-  UserNotificationPreferenceListDto,
-} from './dto/message.dto'
 
 @ApiTags('消息')
 @Controller('app/message')

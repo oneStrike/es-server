@@ -47,6 +47,7 @@ import { ForumReviewPolicyEnum } from '../forum.constant'
 import { ForumPermissionService } from '../permission'
 import {
   CreateForumTopicDto,
+  PublicForumTopicDetailDto,
   QueryForumTopicDto,
   QueryPublicForumTopicDto,
   UpdateForumTopicAuditStatusDto,
@@ -554,7 +555,64 @@ export class ForumTopicService {
         notFoundMessage: '主题不存在',
       },
     )
+
+    if (!topic.user) {
+      throw new NotFoundException('主题作者不存在')
+    }
+
     return topic
+  }
+
+  /**
+   * 构建公开主题详情响应。
+   * 显式裁剪 app/public 可见字段，避免把审核、治理等后台字段直接透传到外部契约。
+   */
+  private buildPublicTopicDetail(
+    topic: Awaited<ReturnType<ForumTopicService['getVisiblePublicTopic']>>,
+    interaction: {
+      liked: boolean
+      favorited: boolean
+      isFollowed: boolean
+      viewCount: number
+    },
+  ): PublicForumTopicDetailDto {
+    if (!topic.user) {
+      throw new NotFoundException('主题作者不存在')
+    }
+
+    return {
+      id: topic.id,
+      sectionId: topic.sectionId,
+      userId: topic.userId,
+      title: topic.title,
+      content: topic.content,
+      bodyTokens: topic.bodyTokens,
+      images: topic.images,
+      videos: topic.videos,
+      isPinned: topic.isPinned,
+      isFeatured: topic.isFeatured,
+      isLocked: topic.isLocked,
+      viewCount: interaction.viewCount,
+      commentCount: topic.commentCount,
+      likeCount: topic.likeCount,
+      favoriteCount: topic.favoriteCount,
+      lastCommentAt: topic.lastCommentAt ?? undefined,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
+      liked: interaction.liked,
+      favorited: interaction.favorited,
+      user: {
+        id: topic.user.id,
+        nickname: topic.user.nickname,
+        avatarUrl: topic.user.avatarUrl ?? undefined,
+        isFollowed: interaction.isFollowed,
+      },
+      tags: topic.tags.map((tag) => ({
+        id: tag.id,
+        name: tag.name,
+        icon: tag.icon ?? undefined,
+      })),
+    }
   }
 
   /**
@@ -564,20 +622,17 @@ export class ForumTopicService {
   async getPublicTopicById(
     id: number,
     context: PublicForumTopicDetailContext = {},
-  ) {
+  ): Promise<PublicForumTopicDetailDto> {
     const { userId, ipAddress, device } = context
     const topic = await this.getVisiblePublicTopic(id, userId)
 
     if (!userId) {
-      return {
-        ...topic,
-        user: {
-          ...topic.user,
-          isFollowed: false,
-        },
+      return this.buildPublicTopicDetail(topic, {
         liked: false,
         favorited: false,
-      }
+        isFollowed: false,
+        viewCount: topic.viewCount,
+      })
     }
 
     const [liked, favorited, isFollowed] = await Promise.all([
@@ -615,16 +670,12 @@ export class ForumTopicService {
       },
     )
 
-    return {
-      ...topic,
-      user: {
-        ...topic.user,
-        isFollowed,
-      },
-      viewCount: topic.viewCount + 1,
+    return this.buildPublicTopicDetail(topic, {
       liked,
       favorited,
-    }
+      isFollowed,
+      viewCount: topic.viewCount + 1,
+    })
   }
 
   /**

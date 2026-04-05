@@ -1,5 +1,7 @@
 export * from '../app-user-count.service'
+export * from '../dto/admin-app-user.dto'
 export * from '../dto/base-app-user-count.dto'
 export * from '../dto/base-app-user.dto'
+export * from '../dto/user-self.dto'
 export * from '../user.module'
 export * from '../user.service'

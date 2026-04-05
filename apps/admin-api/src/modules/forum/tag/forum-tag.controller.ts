@@ -2,6 +2,7 @@ import {
   AssignForumTagToTopicDto,
   BaseForumTagDto,
   CreateForumTagDto,
+  ForumTagDetailResponseDto,
   ForumTagService,
   QueryForumTagDto,
   UpdateForumTagDto,
@@ -12,7 +13,6 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
-import { ForumTagDetailResponseDto } from './dto/forum-tag-response.dto'
 
 @Controller('admin/forum/tags')
 @ApiTags('论坛管理/标签管理')

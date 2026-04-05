@@ -1,9 +1,5 @@
+import type { UserLoginDto } from '@libs/identity/core'
 import type { FastifyRequest } from 'fastify'
-import type {
-  AdminLoginInput,
-  AdminRefreshTokenInput,
-  AdminTokenPairInput,
-} from './auth.type'
 import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity/core'
 import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
@@ -12,6 +8,8 @@ import {
   AuthErrorMessages,
   AuthService as BaseAuthService,
   LoginGuardService,
+  RefreshTokenDto,
+  TokenDto,
 } from '@libs/platform/modules/auth'
 import {
   extractIpAddress,
@@ -54,7 +52,7 @@ export class AuthService {
   /**
    * 登录
    */
-  async login(body: AdminLoginInput, req: FastifyRequest) {
+  async login(body: UserLoginDto, req: FastifyRequest) {
     // 检查用户输入的验证码
     if (!body.captcha) {
       throw new BadRequestException('请输入验证码')
@@ -161,14 +159,14 @@ export class AuthService {
   /**
    * 退出登录
    */
-  async logout(body: AdminTokenPairInput) {
+  async logout(body: TokenDto) {
     return this.authSessionService.logout(body, { revokeDbTokens: true })
   }
 
   /**
    * 刷新访问令牌
    */
-  async refreshToken(body: AdminRefreshTokenInput, req: FastifyRequest) {
+  async refreshToken(body: RefreshTokenDto, req: FastifyRequest) {
     const tokens = await this.authSessionService.refreshAndPersist(body.refreshToken, req)
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
     const userId = Number(payload.sub)

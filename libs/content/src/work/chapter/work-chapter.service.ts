@@ -69,6 +69,40 @@ export class WorkChapterService {
   }
 
   /**
+   * 构建 app/public 章节详情响应。
+   * 明确裁剪 remark、删除标记和后台挂载对象，避免公开接口直接暴露内部字段。
+   */
+  private buildPublicChapterDetail(chapter: Record<string, any>) {
+    return {
+      id: chapter.id,
+      workId: chapter.workId,
+      workType: chapter.workType,
+      title: chapter.title,
+      subtitle: chapter.subtitle,
+      cover: chapter.cover,
+      description: chapter.description,
+      sortOrder: chapter.sortOrder,
+      isPublished: chapter.isPublished,
+      isPreview: chapter.isPreview,
+      publishAt: chapter.publishAt,
+      viewRule: chapter.viewRule,
+      requiredViewLevelId: chapter.requiredViewLevelId,
+      price: chapter.price,
+      canDownload: chapter.canDownload,
+      canComment: chapter.canComment,
+      content: chapter.content,
+      wordCount: chapter.wordCount,
+      viewCount: chapter.viewCount,
+      likeCount: chapter.likeCount,
+      commentCount: chapter.commentCount,
+      purchaseCount: chapter.purchaseCount,
+      downloadCount: chapter.downloadCount,
+      createdAt: chapter.createdAt,
+      updatedAt: chapter.updatedAt,
+    }
+  }
+
+  /**
    * 创建章节
    * @param createDto - 创建章节参数，包含 workId、章节号等信息
    * @returns 新创建的章节
@@ -216,7 +250,7 @@ export class WorkChapterService {
    * @throws BadRequestException 章节不存在
    */
   async getChapterDetail(id: number, context: WorkChapterDetailContext = {}) {
-    const { userId, ipAddress, device } = context
+    const { userId, ipAddress, device, bypassVisibilityCheck = false } = context
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id, deletedAt: { isNull: true } },
       with: {
@@ -241,13 +275,27 @@ export class WorkChapterService {
       throw new BadRequestException('章节不存在')
     }
 
+    const parsedContent
+      = chapter.workType === ContentTypeEnum.COMIC
+        ? (jsonParse(chapter.content, []) as unknown as string)
+        : chapter.content
+
     // 未登录用户直接返回基础信息
     if (!userId) {
-      chapter.content =
-        chapter.workType === ContentTypeEnum.COMIC
-          ? (jsonParse(chapter.content, []) as unknown as string)
-          : chapter.content
-      return chapter
+      if (bypassVisibilityCheck) {
+        chapter.content = parsedContent
+        return chapter
+      }
+
+      return {
+        ...this.buildPublicChapterDetail({
+          ...chapter,
+          content: parsedContent,
+        }),
+        liked: false,
+        downloaded: false,
+        purchased: false,
+      }
     }
 
     const downloadTargetType =
@@ -302,13 +350,21 @@ export class WorkChapterService {
       lastReadChapterId: id,
     })
 
-    return {
+    const detail = {
       ...chapter,
-      content:
-        chapter.workType === ContentTypeEnum.COMIC
-          ? (jsonParse(chapter.content, []) as unknown as string)
-          : chapter.content,
+      content: parsedContent,
       viewCount: chapter.viewCount + 1,
+      liked,
+      downloaded,
+      purchased,
+    }
+
+    if (bypassVisibilityCheck) {
+      return detail
+    }
+
+    return {
+      ...this.buildPublicChapterDetail(detail),
       liked,
       downloaded,
       purchased,

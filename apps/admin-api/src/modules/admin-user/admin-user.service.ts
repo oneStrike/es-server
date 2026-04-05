@@ -1,10 +1,11 @@
-import type { SQL } from 'drizzle-orm'
 import type {
-  AdminUserChangePasswordInput,
-  AdminUserPageQueryInput,
-} from './admin-user.type'
+  ChangePasswordDto,
+  UpdateUserDto,
+  UserPageDto,
+  UserRegisterDto,
+} from '@libs/identity/core'
+import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { AdminUserInsert, AdminUserSelect } from '@db/schema'
 import { AdminUserRoleEnum } from '@libs/platform/constant'
 import { ScryptService } from '@libs/platform/modules'
 import { LoginGuardService, RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
@@ -61,7 +62,7 @@ export class AdminUserService {
    */
   async updateUserInfo(
     userId: number,
-    updateData: Partial<AdminUserSelect> & { id: number },
+    updateData: UpdateUserDto,
   ) {
     await this.isSuperAdmin(userId)
     // 查找用户
@@ -100,12 +101,16 @@ export class AdminUserService {
     return true
   }
 
-  /**
-   * 注册管理员用户
-   */
-  async register(operatorId: number, data: AdminUserInsert) {
+   /**
+    * 注册管理员用户
+    */
+  async register(operatorId: number, data: UserRegisterDto) {
     await this.isSuperAdmin(operatorId)
-    const { username, password, avatar, role, mobile } = data
+    const { username, password, avatar, role, mobile, confirmPassword } = data
+
+    if (password !== confirmPassword) {
+      throw new BadRequestException('两次输入的密码不一致')
+    }
 
     // 检查用户名是否已存在
     const [usernameExists] = await this.db
@@ -168,7 +173,7 @@ export class AdminUserService {
   /**
    * 获取用户列表（分页）
    */
-  async getUsers(queryDto: AdminUserPageQueryInput) {
+  async getUsers(queryDto: UserPageDto) {
     const { username, isEnabled, mobile, role, ...pageDto } = queryDto
     const conditions: SQL[] = []
 
@@ -205,7 +210,7 @@ export class AdminUserService {
    */
   async changePassword(
     userId: number,
-    changePasswordDto: AdminUserChangePasswordInput,
+    changePasswordDto: ChangePasswordDto,
   ) {
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto
 

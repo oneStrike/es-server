@@ -1,13 +1,13 @@
-import { LikeService } from '@libs/interaction/like'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   LikePageItemDto,
   LikePageQueryDto,
+  LikeService,
   LikeStatusResponseDto,
   LikeTargetDto,
-} from './dto/like.dto'
+} from '@libs/interaction/like'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('点赞')
 @Controller('app/like')

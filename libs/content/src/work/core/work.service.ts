@@ -155,6 +155,58 @@ export class WorkService {
   }
 
   /**
+   * 构建 app/public 作品详情响应。
+   * 公开场景显式裁剪运营内部字段，避免基础表字段变更后意外外泄。
+   */
+  private buildPublicWorkDetail(params: {
+    work: Record<string, any>
+    authors: Array<Record<string, any>>
+    categories: Array<Record<string, any>>
+    tags: Array<Record<string, any>>
+  }) {
+    const { work, authors, categories, tags } = params
+    return {
+      id: work.id,
+      name: work.name,
+      type: work.type,
+      cover: work.cover,
+      popularity: work.popularity,
+      isRecommended: work.isRecommended,
+      isHot: work.isHot,
+      isNew: work.isNew,
+      serialStatus: work.serialStatus,
+      publisher: work.publisher,
+      language: work.language,
+      region: work.region,
+      ageRating: work.ageRating,
+      createdAt: work.createdAt,
+      updatedAt: work.updatedAt,
+      publishAt: work.publishAt,
+      isPublished: work.isPublished,
+      alias: work.alias,
+      description: work.description,
+      originalSource: work.originalSource,
+      copyright: work.copyright,
+      disclaimer: work.disclaimer,
+      lastUpdated: work.lastUpdated,
+      viewRule: work.viewRule,
+      requiredViewLevelId: work.requiredViewLevelId,
+      forumSectionId: work.forumSectionId,
+      chapterPrice: work.chapterPrice,
+      canComment: work.canComment,
+      viewCount: work.viewCount,
+      favoriteCount: work.favoriteCount,
+      likeCount: work.likeCount,
+      commentCount: work.commentCount,
+      downloadCount: work.downloadCount,
+      rating: work.rating,
+      authors,
+      categories,
+      tags,
+    }
+  }
+
+  /**
    * 验证作品和用户是否存在
    * @param id 作品ID
    * @param userId 用户ID
@@ -1009,14 +1061,29 @@ export class WorkService {
       ...author,
       isFollowed: false,
     }))
+    const publicWorkDetail = this.buildPublicWorkDetail({
+      work: workData,
+      authors: workAuthors,
+      categories,
+      tags,
+    })
 
     // 为匿名用户保持稳定的响应结构，使应用可以重用相同的DTO而无需条件解析
     if (!userId) {
+      if (bypassVisibilityCheck) {
+        return {
+          ...workData,
+          authors: workAuthors,
+          categories,
+          tags,
+          liked: false,
+          favorited: false,
+          viewed: false,
+        }
+      }
+
       return {
-        ...workData,
-        authors: workAuthors,
-        categories,
-        tags,
+        ...publicWorkDetail,
         liked: false,
         favorited: false,
         viewed: false,
@@ -1078,16 +1145,43 @@ export class WorkService {
       lastReadChapterId: continueChapter?.id,
     })
 
+    const resolvedAuthors = authors.map((author) => ({
+      ...author,
+      isFollowed: authorFollowStatusMap.get(author.id) ?? false,
+    }))
+
+    if (bypassVisibilityCheck) {
+      return {
+        ...workData,
+        authors: resolvedAuthors,
+        categories,
+        tags,
+        viewCount: workData.viewCount + 1,
+        liked,
+        favorited,
+        viewed: true,
+        lastReadAt: now,
+        continueChapter: continueChapter
+          ? {
+              id: continueChapter.id,
+              title: continueChapter.title,
+              subtitle: continueChapter.subtitle ?? undefined,
+              sortOrder: continueChapter.sortOrder,
+            }
+          : undefined,
+      }
+    }
+
     return {
-      ...workData,
-      authors: authors.map((author) => ({
-        ...author,
-        isFollowed: authorFollowStatusMap.get(author.id) ?? false,
-      })),
-      categories,
-      tags,
-      // 立即反映刚记录的浏览，使当前响应与持久化的计数器更新保持一致
-      viewCount: workData.viewCount + 1,
+      ...this.buildPublicWorkDetail({
+        work: {
+          ...workData,
+          viewCount: workData.viewCount + 1,
+        },
+        authors: resolvedAuthors,
+        categories,
+        tags,
+      }),
       liked,
       favorited,
       viewed: true,

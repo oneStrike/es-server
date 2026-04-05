@@ -1,8 +1,8 @@
 import type {
-  ChapterContentComicRequestInput,
-  DetailComicRequestInput,
-  SearchComicRequestInput,
-} from './third-party.type'
+  ChapterContentComicRequestDto,
+  DetailComicRequestDto,
+  SearchComicRequestDto,
+} from '@libs/content/work'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { CopyService } from './libs/copy.service'
 
@@ -15,7 +15,7 @@ export class ComicThirdPartyService {
    * @param searchDto 搜索参数
    * @returns 搜索结果
    */
-  async searchComic(searchDto: SearchComicRequestInput) {
+  async searchComic(searchDto: SearchComicRequestDto) {
     const { platform } = searchDto
 
     // 验证平台是否支持
@@ -35,7 +35,7 @@ export class ComicThirdPartyService {
    * @param searchDto 搜索参数
    * @returns 漫画详情
    */
-  async detail(searchDto: DetailComicRequestInput) {
+  async detail(searchDto: DetailComicRequestDto) {
     return this[searchDto.platform].detail(searchDto)
   }
 
@@ -44,7 +44,7 @@ export class ComicThirdPartyService {
    * @param searchDto 搜索参数
    * @returns 漫画章节
    */
-  async chapter(searchDto: DetailComicRequestInput) {
+  async chapter(searchDto: DetailComicRequestDto) {
     return this[searchDto.platform].chapter(searchDto)
   }
 
@@ -53,7 +53,7 @@ export class ComicThirdPartyService {
    * @param searchDto 搜索参数
    * @returns 漫画章节内容
    */
-  async content(searchDto: ChapterContentComicRequestInput) {
+  async content(searchDto: ChapterContentComicRequestDto) {
     return this[searchDto.platform].content(searchDto)
   }
 }

@@ -4,12 +4,15 @@ import {
   DateProperty,
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
 import {
+  getMessageNotificationTypeLabel,
   MessageNotificationDispatchStatusEnum,
+  MessageNotificationPreferenceSourceEnum,
   MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
 } from '../notification.constant'
@@ -41,6 +44,7 @@ export class BaseUserNotificationDto {
     description: '业务幂等键',
     example: 'comment:reply:123:to:10001',
     maxLength: 160,
+    contract: false,
   })
   bizKey!: string
 
@@ -244,4 +248,113 @@ export class QueryNotificationDeliveryPageDto extends PageDto {
     required: false,
   })
   assignmentId?: number
+}
+
+/**
+ * 通知触发用户 DTO。
+ */
+export class NotificationActorDto {
+  @NumberProperty({ description: '用户ID', example: 1, validation: false })
+  id!: number
+
+  @StringProperty({
+    description: '昵称',
+    example: '测试用户',
+    required: false,
+    validation: false,
+  })
+  nickname?: string
+
+  @StringProperty({
+    description: '头像地址',
+    example: 'https://example.com/avatar.png',
+    required: false,
+    validation: false,
+  })
+  avatarUrl?: string
+}
+
+/**
+ * 用户通知 DTO。
+ */
+export class UserNotificationDto extends BaseUserNotificationDto {
+  @NestedProperty({
+    description: '触发用户信息',
+    type: NotificationActorDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  actorUser!: NotificationActorDto
+}
+
+/**
+ * 未读通知数 DTO。
+ */
+export class NotificationUnreadCountDto {
+  @NumberProperty({
+    description: '未读通知数量',
+    example: 3,
+    validation: false,
+  })
+  count!: number
+}
+
+/**
+ * 用户通知偏好项 DTO。
+ */
+export class UserNotificationPreferenceItemDto {
+  @EnumProperty({
+    description: '通知类型',
+    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+    enum: MessageNotificationTypeEnum,
+  })
+  notificationType!: MessageNotificationTypeEnum
+
+  @StringProperty({
+    description: '通知类型中文标签',
+    example: getMessageNotificationTypeLabel(
+      MessageNotificationTypeEnum.COMMENT_REPLY,
+    ),
+  })
+  notificationTypeLabel!: string
+
+  @BooleanProperty({
+    description: '当前是否启用',
+    example: true,
+  })
+  isEnabled!: boolean
+
+  @BooleanProperty({
+    description: '该通知类型的默认启用状态',
+    example: true,
+  })
+  defaultEnabled!: boolean
+
+  @EnumProperty({
+    description: '当前状态来源，default=默认策略，explicit=用户显式覆盖',
+    example: MessageNotificationPreferenceSourceEnum.DEFAULT,
+    enum: MessageNotificationPreferenceSourceEnum,
+  })
+  source!: MessageNotificationPreferenceSourceEnum
+
+  @DateProperty({
+    description: '最近一次显式覆盖更新时间',
+    example: '2026-03-28T12:00:00.000Z',
+    required: false,
+  })
+  updatedAt?: Date
+}
+
+/**
+ * 用户通知偏好列表 DTO。
+ */
+export class UserNotificationPreferenceListDto {
+  @ArrayProperty({
+    description: '通知偏好列表',
+    itemClass: UserNotificationPreferenceItemDto,
+    itemType: 'object',
+    validation: false,
+  })
+  list!: UserNotificationPreferenceItemDto[]
 }

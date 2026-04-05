@@ -1,7 +1,9 @@
+import { BaseForumSectionGroupDto } from '@libs/forum/section-group'
 import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -11,6 +13,7 @@ import {
   IdDto,
   OMIT_BASE_FIELDS,
   PageDto,
+  UserIdDto,
 } from '@libs/platform/dto'
 import {
   IntersectionType,
@@ -155,6 +158,7 @@ export class BaseForumSectionDto extends BaseDto {
     example: '2024-01-01T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
@@ -215,3 +219,91 @@ export class ForumSectionFollowCountRepairResultDto extends IntersectionType(
   IdDto,
   PickType(BaseForumSectionDto, ['followersCount'] as const),
 ) {}
+
+/**
+ * 查询公开板块详情 DTO。
+ */
+export class QueryPublicForumSectionDetailDto extends IntersectionType(
+  IdDto,
+  PartialType(UserIdDto),
+) {}
+
+/**
+ * 公开板块分组摘要 DTO。
+ */
+export class ForumSectionGroupBriefDto extends PickType(
+  BaseForumSectionGroupDto,
+  ['id', 'name', 'description', 'sortOrder'] as const,
+) {}
+
+/**
+ * 公开板块列表项 DTO。
+ */
+export class PublicForumSectionListItemDto extends PickType(BaseForumSectionDto, [
+  'id',
+  'groupId',
+  'userLevelRuleId',
+  'name',
+  'description',
+  'icon',
+  'cover',
+  'sortOrder',
+  'isEnabled',
+  'topicReviewPolicy',
+  'topicCount',
+  'commentCount',
+  'followersCount',
+  'lastPostAt',
+] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已关注该板块',
+    example: true,
+    validation: false,
+  })
+  isFollowed!: boolean
+
+  @BooleanProperty({
+    description: '当前用户是否可访问该板块主题',
+    example: false,
+    validation: false,
+  })
+  canAccess!: boolean
+
+  @NumberProperty({
+    description: '访问该板块需要的经验值（为空表示无等级限制）',
+    example: 1200,
+    required: false,
+    validation: false,
+  })
+  requiredExperience?: number | null
+
+  @StringProperty({
+    description: '无法访问时的提示信息',
+    example: '请先登录后访问该板块',
+    required: false,
+    validation: false,
+  })
+  accessDeniedReason?: string
+}
+
+/**
+ * 公开板块详情 DTO。
+ */
+export class PublicForumSectionDetailDto extends PublicForumSectionListItemDto {
+  @NumberProperty({
+    description: '关联作品ID（为空表示非作品专属板块）',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  workId?: number | null
+
+  @NestedProperty({
+    description: '所属分组',
+    required: false,
+    type: ForumSectionGroupBriefDto,
+    validation: false,
+    nullable: false,
+  })
+  group?: ForumSectionGroupBriefDto
+}

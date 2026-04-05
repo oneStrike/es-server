@@ -7,22 +7,23 @@
  * - 用户成长信息（积分、经验、徽章）
  */
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { BaseAppUserDto } from '@libs/user/core'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { QueryMyPointRecordDto, UserPointRecordDto } from './dto/user-point.dto'
 import {
+  BaseAppUserDto,
   ChangeMyPhoneDto,
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
+  QueryMyPointRecordDto,
   UpdateMyProfileDto,
   UserBadgeItemDto,
   UserCenterDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
+  UserPointRecordDto,
   UserPointStatsDto,
   UserStatusSummaryDto,
-} from './dto/user.dto'
+} from '@libs/user/core'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 import { UserService } from './user.service'
 
 @ApiTags('用户')

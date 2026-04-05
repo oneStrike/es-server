@@ -1,5 +1,7 @@
 import {
+  ArrayProperty,
   BooleanProperty,
+  DateProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -103,4 +105,31 @@ export class AssignForumTagToTopicDto {
     min: 1,
   })
   tagId!: number
+}
+
+export class ForumTagTopicSummaryDto extends IdDto {
+  @StringProperty({
+    description: '主题标题',
+    example: '如何学习 TypeScript？',
+    validation: false,
+  })
+  title!: string
+
+  @DateProperty({
+    description: '创建时间',
+    example: '2024-01-01T00:00:00.000Z',
+    validation: false,
+  })
+  createdAt!: Date
+}
+
+export class ForumTagDetailResponseDto extends BaseForumTagDto {
+  @ArrayProperty({
+    description: '最近使用该标签的主题列表',
+    itemClass: ForumTagTopicSummaryDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  topics!: ForumTagTopicSummaryDto[]
 }

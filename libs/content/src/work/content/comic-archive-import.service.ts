@@ -9,9 +9,6 @@ import type {
   ComicArchiveSummaryView,
   ComicArchiveTaskRecord,
   ComicArchiveTaskView,
-  ConfirmComicArchiveImportInput,
-  GetComicArchiveTaskDetailInput,
-  PreviewComicArchiveInput,
 } from './comic-archive-import.type'
 import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, dirname, extname, join } from 'node:path'
@@ -38,6 +35,12 @@ import {
   ComicArchivePreviewModeEnum,
   ComicArchiveTaskStatusEnum,
 } from './comic-archive-import.type'
+import {
+  ComicArchiveTaskIdDto,
+  ComicArchiveTaskResponseDto,
+  ConfirmComicArchiveDto,
+  PreviewComicArchiveDto,
+} from './dto/content.dto'
 
 const ARCHIVE_EXTENSION = '.zip'
 const ARCHIVE_TASK_TTL_MS = 24 * 60 * 60 * 1000
@@ -92,8 +95,8 @@ export class ComicArchiveImportService {
    */
   async previewArchive(
     req: FastifyRequest,
-    input: PreviewComicArchiveInput,
-  ): Promise<ComicArchiveTaskView> {
+    input: PreviewComicArchiveDto,
+  ): Promise<ComicArchiveTaskResponseDto> {
     await this.assertWorkExists(input.workId)
 
     const archiveFile = await req.file()
@@ -174,7 +177,7 @@ export class ComicArchiveImportService {
    * 确认漫画压缩包导入任务。
    * 用户确认后仅把草稿任务推进到 pending，由后台 worker 执行正式导入。
    */
-  async confirmArchive(input: ConfirmComicArchiveImportInput) {
+  async confirmArchive(input: ConfirmComicArchiveDto) {
     const draftRecord = await this.readTaskRecord(input.taskId)
     const record = await this.assertDraftTaskAvailable(draftRecord)
 
@@ -199,7 +202,7 @@ export class ComicArchiveImportService {
    * 查询漫画压缩包导入任务详情。
    * 前端可用该接口轮询预解析草稿和后台导入执行状态。
    */
-  async getArchiveDetail(input: GetComicArchiveTaskDetailInput) {
+  async getArchiveDetail(input: ComicArchiveTaskIdDto) {
     const record = await this.readTaskRecord(input.taskId)
     const latestRecord = await this.refreshExpiredDraftTask(record)
     return this.toTaskView(latestRecord)
@@ -326,7 +329,7 @@ export class ComicArchiveImportService {
   }
 
   private async buildPreviewResult(
-    input: PreviewComicArchiveInput,
+    input: PreviewComicArchiveDto,
     archiveName: string,
     extractDir: string,
     chapters: Array<{
@@ -433,7 +436,7 @@ export class ComicArchiveImportService {
   }
 
   private async buildSingleChapterPreview(
-    input: PreviewComicArchiveInput,
+    input: PreviewComicArchiveDto,
     archiveName: string,
     extractDir: string,
     rootEntries: Dirent[],

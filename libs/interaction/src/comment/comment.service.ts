@@ -912,6 +912,18 @@ export class CommentService {
       orderBy: {
         createdAt: 'desc',
       },
+      pick: [
+        'id',
+        'targetType',
+        'targetId',
+        'userId',
+        'content',
+        'bodyTokens',
+        'floor',
+        'replyToId',
+        'likeCount',
+        'createdAt',
+      ],
     })
 
     if (page.list.length === 0) {

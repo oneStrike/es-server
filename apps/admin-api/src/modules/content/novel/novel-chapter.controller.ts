@@ -45,7 +45,9 @@ export class NovelChapterController {
     model: IdDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.workChapterService.getChapterDetail(query.id)
+    return this.workChapterService.getChapterDetail(query.id, {
+      bypassVisibilityCheck: true,
+    })
   }
 
   @Post('update')

@@ -1,10 +1,10 @@
-import { ApiPageDoc } from '@libs/platform/decorators'
-import { Controller, Get, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   GrowthRuleEventPageItemDto,
   QueryGrowthRuleEventPageDto,
-} from './dto/growth.dto'
+} from '@libs/growth/growth'
+import { ApiPageDoc } from '@libs/platform/decorators'
+import { Controller, Get, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 import { GrowthService } from './growth.service'
 
 @ApiTags('用户成长/规则聚合视图')

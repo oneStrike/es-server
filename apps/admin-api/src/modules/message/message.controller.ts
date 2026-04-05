@@ -1,7 +1,3 @@
-import { QueryNotificationDeliveryPageDto } from '@libs/message/notification'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   MessageNotificationDeliveryItemDto,
   MessageOutboxMonitorSummaryDto,
@@ -9,7 +5,11 @@ import {
   QueryMessageOutboxMonitorDto,
   QueryMessageWsMonitorDto,
   RetryMessageNotificationDeliveryDto,
-} from './dto/message-monitor.dto'
+} from '@libs/message/monitor'
+import { QueryNotificationDeliveryPageDto } from '@libs/message/notification'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 import { MessageMonitorService } from './message-monitor.service'
 
 @ApiTags('消息中心/监控')

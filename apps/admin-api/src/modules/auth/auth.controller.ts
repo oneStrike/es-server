@@ -1,18 +1,13 @@
 import type { FastifyRequest } from 'fastify'
+import { LoginResponseDto, UserLoginDto } from '@libs/identity/core'
 import { ApiDoc, Public } from '@libs/platform/decorators'
 import { CaptchaDto, RsaService } from '@libs/platform/modules'
+import { RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AuthService } from './auth.service'
-import {
-  LoginResponseDto,
-  RefreshTokenDto,
-  RsaPublicKeyDto,
-  TokenDto,
-  UserLoginDto,
-} from './dto/auth.dto'
 
 /**
  * 管理端认证控制器

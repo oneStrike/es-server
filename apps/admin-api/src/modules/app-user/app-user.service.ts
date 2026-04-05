@@ -1,20 +1,4 @@
 import type { SQL } from 'drizzle-orm'
-import type {
-  AddAdminAppUserExperienceInput,
-  AddAdminAppUserPointsInput,
-  AssignAdminAppUserBadgeInput,
-  ConsumeAdminAppUserPointsInput,
-  CreateAdminAppUserInput,
-  QueryAdminAppUserBadgeInput,
-  QueryAdminAppUserExperienceRecordInput,
-  QueryAdminAppUserGrowthLedgerInput,
-  QueryAdminAppUserPageInput,
-  QueryAdminAppUserPointRecordInput,
-  ResetAdminAppUserPasswordInput,
-  UpdateAdminAppUserEnabledInput,
-  UpdateAdminAppUserProfileInput,
-  UpdateAdminAppUserStatusInput,
-} from './app-user.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { UserBadgeService } from '@libs/growth/badge'
 import { UserExperienceService } from '@libs/growth/experience'
@@ -35,7 +19,21 @@ import {
   startOfTodayInAppTimeZone,
 } from '@libs/platform/utils'
 import {
+  AddAdminAppUserExperienceDto,
+  AddAdminAppUserPointsDto,
   AppUserCountService,
+  AssignAdminAppUserBadgeDto,
+  ConsumeAdminAppUserPointsDto,
+  CreateAdminAppUserDto,
+  QueryAdminAppUserBadgeDto,
+  QueryAdminAppUserExperienceRecordDto,
+  QueryAdminAppUserGrowthLedgerDto,
+  QueryAdminAppUserPageDto,
+  QueryAdminAppUserPointRecordDto,
+  ResetAdminAppUserPasswordDto,
+  UpdateAdminAppUserEnabledDto,
+  UpdateAdminAppUserProfileDto,
+  UpdateAdminAppUserStatusDto,
   UserService as UserCoreService,
 } from '@libs/user/core'
 import {
@@ -121,7 +119,7 @@ export class AppUserService {
   /**
    * 获取 APP 用户分页列表
    */
-  async getAppUserPage(query: QueryAdminAppUserPageInput) {
+  async getAppUserPage(query: QueryAdminAppUserPageDto) {
     const {
       id,
       account,
@@ -305,7 +303,7 @@ export class AppUserService {
     }
   }
 
-  async createAppUser(adminUserId: number, dto: CreateAdminAppUserInput) {
+  async createAppUser(adminUserId: number, dto: CreateAdminAppUserDto) {
     await this.ensureSuperAdmin(adminUserId)
     const account = await this.generateUniqueAccount()
     const hashedPassword = await this.scryptService.encryptPassword(
@@ -361,7 +359,7 @@ export class AppUserService {
    */
   async updateAppUserProfile(
     adminUserId: number,
-    dto: UpdateAdminAppUserProfileInput,
+    dto: UpdateAdminAppUserProfileDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
@@ -417,7 +415,7 @@ export class AppUserService {
    */
   async updateAppUserEnabled(
     adminUserId: number,
-    dto: UpdateAdminAppUserEnabledInput,
+    dto: UpdateAdminAppUserEnabledDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
@@ -439,7 +437,7 @@ export class AppUserService {
    */
   async updateAppUserStatus(
     adminUserId: number,
-    dto: UpdateAdminAppUserStatusInput,
+    dto: UpdateAdminAppUserStatusDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
@@ -505,7 +503,7 @@ export class AppUserService {
 
   async resetAppUserPassword(
     adminUserId: number,
-    dto: ResetAdminAppUserPasswordInput,
+    dto: ResetAdminAppUserPasswordDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
@@ -567,7 +565,7 @@ export class AppUserService {
   /**
    * 获取 APP 用户积分记录分页
    */
-  async getAppUserPointRecords(query: QueryAdminAppUserPointRecordInput) {
+  async getAppUserPointRecords(query: QueryAdminAppUserPointRecordDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userPointService.getPointRecordPage(query)
   }
@@ -577,7 +575,7 @@ export class AppUserService {
    */
   async addAppUserPoints(
     adminUserId: number,
-    dto: AddAdminAppUserPointsInput,
+    dto: AddAdminAppUserPointsDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
 
@@ -598,7 +596,7 @@ export class AppUserService {
    */
   async consumeAppUserPoints(
     adminUserId: number,
-    dto: ConsumeAdminAppUserPointsInput,
+    dto: ConsumeAdminAppUserPointsDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
 
@@ -688,7 +686,7 @@ export class AppUserService {
    * 获取 APP 用户经验记录分页
    */
   async getAppUserExperienceRecords(
-    query: QueryAdminAppUserExperienceRecordInput,
+    query: QueryAdminAppUserExperienceRecordDto,
   ) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userExperienceService.getExperienceRecordPage(query)
@@ -697,7 +695,7 @@ export class AppUserService {
   /**
    * 获取 APP 用户混合成长流水分页
    */
-  async getAppUserGrowthLedgerRecords(query: QueryAdminAppUserGrowthLedgerInput) {
+  async getAppUserGrowthLedgerRecords(query: QueryAdminAppUserGrowthLedgerDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.growthLedgerService.getGrowthLedgerPage(query)
   }
@@ -707,7 +705,7 @@ export class AppUserService {
    */
   async addAppUserExperience(
     adminUserId: number,
-    dto: AddAdminAppUserExperienceInput,
+    dto: AddAdminAppUserExperienceDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
 
@@ -726,7 +724,7 @@ export class AppUserService {
   /**
    * 获取 APP 用户徽章分页
    */
-  async getAppUserBadges(query: QueryAdminAppUserBadgeInput) {
+  async getAppUserBadges(query: QueryAdminAppUserBadgeDto) {
     await this.userCoreService.ensureUserExists(query.userId)
 
     const { userId, name, type, isEnabled, business, eventKey, ...pageQuery } =
@@ -813,7 +811,7 @@ export class AppUserService {
    */
   async assignAppUserBadge(
     adminUserId: number,
-    dto: AssignAdminAppUserBadgeInput,
+    dto: AssignAdminAppUserBadgeDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
 
@@ -826,7 +824,7 @@ export class AppUserService {
    */
   async revokeAppUserBadge(
     adminUserId: number,
-    dto: AssignAdminAppUserBadgeInput,
+    dto: AssignAdminAppUserBadgeDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
 

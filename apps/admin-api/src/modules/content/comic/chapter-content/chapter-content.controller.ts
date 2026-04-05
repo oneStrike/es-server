@@ -1,23 +1,21 @@
 import type { FastifyRequest } from 'fastify'
 import {
   ComicArchiveImportService,
-  ComicContentService,
-} from '@libs/content/work'
-import { ApiDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { UploadResponseDto } from '@libs/platform/modules/upload'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import {
   ComicArchiveTaskIdDto,
   ComicArchiveTaskResponseDto,
+  ComicContentService,
   ConfirmComicArchiveDto,
   DeleteComicContentDto,
   MoveComicContentDto,
   PreviewComicArchiveDto,
   UpdateComicContentDto,
   UploadContentDto,
-} from './dto/chapter-content.dto'
+} from '@libs/content/work'
+import { ApiDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { UploadResponseDto } from '@libs/platform/modules/upload'
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('内容管理/漫画管理/章节内容')
 @Controller('admin/content/comic/chapter-content')

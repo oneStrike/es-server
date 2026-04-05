@@ -1,15 +1,17 @@
 import type { FastifyRequest } from 'fastify'
-import type { AppLoginInput, AppTokenPairInput } from './auth.type'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile'
 import { AuthSessionService } from '@libs/identity/core'
-import { GenderEnum } from '@libs/platform/constant'
+import { GenderEnum, UserStatusEnum } from '@libs/platform/constant'
 import { RsaService, ScryptService } from '@libs/platform/modules'
 import {
   AuthConstants,
   AuthDefaultValue,
   AuthService as BaseAuthService,
+  LoginDto,
   LoginGuardService,
+  RefreshTokenDto,
+  TokenDto,
 } from '@libs/platform/modules/auth'
 import { extractIpAddress } from '@libs/platform/utils'
 import { UserService as UserCoreService } from '@libs/user/core'
@@ -80,7 +82,7 @@ export class AuthService {
   /**
    * 用户注册
    */
-  async register(body: AppLoginInput, req: FastifyRequest) {
+  async register(body: LoginDto, req: FastifyRequest) {
     if (!body.phone) {
       throw new BadRequestException(
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
@@ -88,10 +90,10 @@ export class AuthService {
     }
 
     if (body.code) {
-      // await this.smsService.validateVerifyCode({
-      //   phone: body.phone,
-      //   code: body.code,
-      // })
+      await this.smsService.validateVerifyCode({
+        phone: body.phone,
+        code: body.code,
+      })
     }
 
     const hashedPassword = await this.scryptService.encryptPassword(
@@ -118,6 +120,15 @@ export class AuthService {
             nickname: this.appUserTable.nickname,
             password: this.appUserTable.password,
             phoneNumber: this.appUserTable.phoneNumber,
+            avatarUrl: this.appUserTable.avatarUrl,
+            emailAddress: this.appUserTable.emailAddress,
+            genderType: this.appUserTable.genderType,
+            birthDate: this.appUserTable.birthDate,
+            signature: this.appUserTable.signature,
+            bio: this.appUserTable.bio,
+            points: this.appUserTable.points,
+            experience: this.appUserTable.experience,
+            status: this.appUserTable.status,
             isEnabled: this.appUserTable.isEnabled,
           })
 
@@ -132,7 +143,7 @@ export class AuthService {
   /**
    * 用户登录
    */
-  async login(body: AppLoginInput, req: FastifyRequest) {
+  async login(body: LoginDto, req: FastifyRequest) {
     if (!body.phone && !body.account) {
       throw new BadRequestException(
         AppAuthErrorMessages.PHONE_OR_ACCOUNT_REQUIRED,
@@ -197,10 +208,10 @@ export class AuthService {
         throw new BadRequestException(AppAuthErrorMessages.PHONE_MISMATCH)
       }
 
-      // await this.smsService.validateVerifyCode({
-      //   phone: user.phone,
-      //   code: body.code,
-      // })
+      await this.smsService.validateVerifyCode({
+        phone: user.phoneNumber,
+        code: body.code,
+      })
     } else {
       await this.loginGuardService.checkLock(
         AppAuthRedisKeys.LOGIN_LOCK(user.id),
@@ -253,15 +264,18 @@ export class AuthService {
   /**
    * 用户退出登录
    */
-  async logout(dto: AppTokenPairInput) {
+  async logout(dto: TokenDto) {
     return this.authSessionService.logout(dto, { revokeDbTokens: true })
   }
 
   /**
    * 刷新令牌
    */
-  async refreshToken(refreshToken: string, req: FastifyRequest) {
-    const tokens = await this.authSessionService.refreshAndPersist(refreshToken, req)
+  async refreshToken(dto: RefreshTokenDto, req: FastifyRequest) {
+    const tokens = await this.authSessionService.refreshAndPersist(
+      dto.refreshToken,
+      req,
+    )
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
     const user = await this.userCoreService.findById(Number(payload.sub))
 
@@ -303,9 +317,21 @@ export class AuthService {
    * 脱敏返回用户信息
    */
   private sanitizeUser(user: any) {
-    const { password, ...rest } = user
     return {
-      ...rest,
+      id: user.id,
+      account: user.account,
+      phoneNumber: user.phoneNumber ?? undefined,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl ?? undefined,
+      emailAddress: user.emailAddress ?? undefined,
+      genderType: user.genderType ?? GenderEnum.UNKNOWN,
+      birthDate: user.birthDate ?? undefined,
+      signature: user.signature ?? undefined,
+      bio: user.bio ?? undefined,
+      points: user.points ?? 0,
+      experience: user.experience ?? 0,
+      status: user.status ?? UserStatusEnum.NORMAL,
+      isEnabled: user.isEnabled,
     }
   }
 }

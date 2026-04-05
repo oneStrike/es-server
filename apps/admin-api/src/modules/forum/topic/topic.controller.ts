@@ -1,4 +1,6 @@
 import {
+  AdminForumTopicDetailDto,
+  AdminForumTopicPageItemDto,
   CreateForumTopicDto,
   ForumTopicService,
   QueryForumTopicDto,
@@ -15,10 +17,6 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
-import {
-  AdminForumTopicDetailDto,
-  AdminForumTopicPageItemDto,
-} from './dto/forum-topic.dto'
 
 @ApiTags('论坛管理/主题管理')
 @Controller('admin/forum/topic')

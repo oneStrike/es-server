@@ -1,19 +1,21 @@
 import type { SQL } from 'drizzle-orm'
 import type {
-  CreateSensitiveWordInput,
-  QuerySensitiveWordPageInput,
   SensitiveWordLevelStatistics,
   SensitiveWordRecentHitStatistics,
-  SensitiveWordStatisticsQueryInput,
   SensitiveWordStatisticsResponse,
   SensitiveWordTopHitStatistics,
   SensitiveWordTypeStatistics,
-  UpdateSensitiveWordInput,
-  UpdateSensitiveWordStatusInput,
 } from './sensitive-word.types'
 import { buildLikePattern, DrizzleService } from '@db/core'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
+import {
+  CreateSensitiveWordDto,
+  QuerySensitiveWordDto,
+  SensitiveWordStatisticsQueryDto,
+  UpdateSensitiveWordDto,
+} from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import {
   SensitiveWordLevelNames,
@@ -49,7 +51,7 @@ export class SensitiveWordService {
    * @param dto 查询条件
    * @returns 分页结果
    */
-  async getSensitiveWordPage(dto: QuerySensitiveWordPageInput) {
+  async getSensitiveWordPage(dto: QuerySensitiveWordDto) {
     // 构建查询条件
     const conditions: SQL[] = []
     if (dto.word) {
@@ -73,7 +75,7 @@ export class SensitiveWordService {
    * @param dto 创建参数
    * @returns 新建敏感词
    */
-  async createSensitiveWord(dto: CreateSensitiveWordInput) {
+  async createSensitiveWord(dto: CreateSensitiveWordDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.sensitiveWord)
@@ -90,7 +92,7 @@ export class SensitiveWordService {
    * @param dto 更新参数
    * @returns 更新后的敏感词
    */
-  async updateSensitiveWord(dto: UpdateSensitiveWordInput) {
+  async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
     const { id, ...updateData } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -127,7 +129,7 @@ export class SensitiveWordService {
    * @param dto 状态更新参数
    * @returns 更新结果
    */
-  async updateSensitiveWordStatus(dto: UpdateSensitiveWordStatusInput) {
+  async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.sensitiveWord)
@@ -245,7 +247,7 @@ export class SensitiveWordService {
    * @returns 统计结果
    */
   async getStatistics(
-    dto: SensitiveWordStatisticsQueryInput,
+    dto: SensitiveWordStatisticsQueryDto,
   ): Promise<SensitiveWordStatisticsResponse> {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 

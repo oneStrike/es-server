@@ -5,10 +5,12 @@ import {
   DateProperty,
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/core'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CommentTargetTypeEnum } from '../comment.constant'
 
@@ -288,3 +290,233 @@ export class UpdateAdminCommentHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseCommentDto, ['isHidden'] as const),
 ) {}
+
+/**
+ * 评论用户精简信息 DTO。
+ */
+export class CommentUserDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+] as const) {}
+
+/**
+ * 评论回复分页项 DTO。
+ */
+export class CommentReplyItemDto extends PickType(BaseCommentDto, [
+  'id',
+  'targetType',
+  'targetId',
+  'userId',
+  'content',
+  'bodyTokens',
+  'floor',
+  'replyToId',
+  'likeCount',
+  'createdAt',
+] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已点赞该回复',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @NestedProperty({
+    description: '回复用户',
+    required: false,
+    nullable: false,
+    type: CommentUserDto,
+    validation: false,
+  })
+  user!: CommentUserDto
+}
+
+/**
+ * 一级评论下的回复预览 DTO。
+ */
+export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
+  'id',
+  'userId',
+  'content',
+  'bodyTokens',
+  'replyToId',
+  'likeCount',
+  'createdAt',
+] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已点赞该回复',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @NestedProperty({
+    description: '回复用户',
+    required: false,
+    nullable: false,
+    type: CommentUserDto,
+    validation: false,
+  })
+  user!: CommentUserDto
+}
+
+/**
+ * 目标评论分页项 DTO。
+ */
+export class TargetCommentItemDto extends PickType(BaseCommentDto, [
+  'id',
+  'targetType',
+  'targetId',
+  'userId',
+  'content',
+  'bodyTokens',
+  'floor',
+  'likeCount',
+  'createdAt',
+] as const) {
+  @NestedProperty({
+    description: '评论用户',
+    required: false,
+    nullable: false,
+    type: CommentUserDto,
+    validation: false,
+  })
+  user!: CommentUserDto
+
+  @BooleanProperty({
+    description: '当前用户是否已点赞该评论',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @NumberProperty({
+    description: '楼中楼回复总数',
+    required: true,
+    validation: false,
+    example: 12,
+  })
+  replyCount!: number
+
+  @ArrayProperty({
+    description: '楼中楼预览（最多3条）',
+    itemClass: CommentPreviewReplyDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  previewReplies!: CommentPreviewReplyDto[]
+
+  @BooleanProperty({
+    description: '是否还有更多楼中楼回复',
+    required: true,
+    validation: false,
+    example: true,
+  })
+  hasMoreReplies!: boolean
+}
+
+export class AdminCommentUserDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+  'isEnabled',
+  'status',
+] as const) {}
+
+export class AdminCommentReplyTargetDto extends PickType(BaseCommentDto, [
+  'id',
+  'userId',
+  'content',
+  'replyToId',
+  'actualReplyToId',
+  'auditStatus',
+  'isHidden',
+  'deletedAt',
+  'createdAt',
+] as const) {
+  @NestedProperty({
+    description: '被回复评论的作者信息',
+    required: false,
+    nullable: false,
+    type: AdminCommentUserDto,
+    validation: false,
+  })
+  user!: AdminCommentUserDto
+}
+
+export class AdminCommentPageItemDto extends PickType(BaseCommentDto, [
+  'id',
+  'targetType',
+  'targetId',
+  'userId',
+  'content',
+  'bodyTokens',
+  'floor',
+  'replyToId',
+  'actualReplyToId',
+  'isHidden',
+  'auditStatus',
+  'auditById',
+  'auditRole',
+  'auditReason',
+  'auditAt',
+  'likeCount',
+  'sensitiveWordHits',
+  'createdAt',
+  'updatedAt',
+] as const) {
+  @NestedProperty({
+    description: '评论作者信息',
+    required: false,
+    nullable: false,
+    type: AdminCommentUserDto,
+    validation: false,
+  })
+  user!: AdminCommentUserDto
+}
+
+export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
+  'id',
+  'targetType',
+  'targetId',
+  'userId',
+  'content',
+  'bodyTokens',
+  'floor',
+  'replyToId',
+  'actualReplyToId',
+  'isHidden',
+  'auditStatus',
+  'auditById',
+  'auditRole',
+  'auditReason',
+  'auditAt',
+  'likeCount',
+  'sensitiveWordHits',
+  'createdAt',
+  'updatedAt',
+  'deletedAt',
+] as const) {
+  @NestedProperty({
+    description: '评论作者信息',
+    required: false,
+    nullable: false,
+    type: AdminCommentUserDto,
+    validation: false,
+  })
+  user!: AdminCommentUserDto
+
+  @NestedProperty({
+    description: '被回复评论简要信息',
+    required: false,
+    nullable: false,
+    type: AdminCommentReplyTargetDto,
+    validation: false,
+  })
+  replyTo!: AdminCommentReplyTargetDto
+}

@@ -1,10 +1,10 @@
-import type {
-  AppChangePasswordInput,
-  AppForgotPasswordInput,
-} from './auth.type'
 import { DrizzleService } from '@db/core'
 import { RsaService, ScryptService } from '@libs/platform/modules'
-import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth'
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  RevokeTokenReasonEnum,
+} from '@libs/platform/modules/auth'
 import { UserService as UserCoreService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
@@ -68,12 +68,14 @@ export class PasswordService {
 
   /**
    * 找回密码
-   * @param body - 找回密码数据，包含账号和新密码
+   * 校验短信验证码后更新手机号绑定账号的密码，并撤销旧会话。
+   *
+   * @param body - 找回密码数据，包含手机号、验证码和新密码
    * @returns 找回结果
    * @throws {BadRequestException} 账号不存在
    */
-  async forgotPassword(body: AppForgotPasswordInput) {
-    const { phone, password } = body
+  async forgotPassword(body: ForgotPasswordDto) {
+    const { phone, code, password } = body
     const [user] = await this.db
       .select({
         id: this.appUser.id,
@@ -99,8 +101,7 @@ export class PasswordService {
 
     this.userCoreService.ensureAppUserNotBanned(user)
 
-    // TODO
-    // await this.smsService.validateVerifyCode({ phone, code })
+    await this.smsService.validateVerifyCode({ phone, code })
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
     const rows = await this.drizzle.withErrorHandling(() =>
@@ -129,7 +130,7 @@ export class PasswordService {
    * @param body - 修改密码数据
    * @returns 修改结果
    */
-  async changePassword(userId: number, body: AppChangePasswordInput) {
+  async changePassword(userId: number, body: ChangePasswordDto) {
     const [user] = await this.db
       .select({ id: this.appUser.id, password: this.appUser.password })
       .from(this.appUser)

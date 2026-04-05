@@ -1,6 +1,5 @@
 import type {
   SensitiveWordRecentHitStatistics,
-  SensitiveWordStatisticsData,
 } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
 import {
@@ -10,6 +9,7 @@ import {
 } from '@libs/platform/utils'
 import { Injectable, Logger } from '@nestjs/common'
 import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
+import { SensitiveWordStatisticsDataDto } from './dto/sensitive-word.dto'
 import {
   SensitiveWordLevelNames,
   SensitiveWordTypeNames,
@@ -40,7 +40,7 @@ export class SensitiveWordStatisticsService {
    * 包含所有维度的统计信息
    * @returns 完整的统计数据
    */
-  async getStatistics(): Promise<SensitiveWordStatisticsData> {
+  async getStatistics(): Promise<SensitiveWordStatisticsDataDto> {
     const [
       totalWords,
       enabledWords,

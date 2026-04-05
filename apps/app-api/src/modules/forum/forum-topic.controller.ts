@@ -2,12 +2,15 @@ import { UserProfileService } from '@libs/forum/profile'
 import {
   CreateUserForumTopicDto,
   ForumTopicService,
+  MyForumTopicItemDto,
+  PublicForumTopicDetailDto,
+  PublicForumTopicPageItemDto,
   QueryForumTopicCommentPageDto,
   QueryMyForumTopicDto,
   QueryPublicForumTopicDto,
   UpdateForumTopicDto,
 } from '@libs/forum/topic'
-import { CommentService } from '@libs/interaction/comment'
+import { CommentService, TargetCommentItemDto } from '@libs/interaction/comment'
 import {
   ApiDoc,
   ApiPageDoc,
@@ -19,12 +22,6 @@ import {
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { TargetCommentItemDto } from '../comment/dto/comment.dto'
-import {
-  AppForumTopicDetailDto,
-  AppForumTopicPageItemDto,
-  MyForumTopicItemDto,
-} from './dto/forum-topic.dto'
 
 @ApiTags('论坛/主题')
 @Controller('app/forum/topic')
@@ -39,7 +36,7 @@ export class ForumTopicController {
   @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询论坛主题',
-    model: AppForumTopicPageItemDto,
+    model: PublicForumTopicPageItemDto,
   })
   async getPage(
     @Query() query: QueryPublicForumTopicDto,
@@ -55,7 +52,7 @@ export class ForumTopicController {
   @OptionalAuth()
   @ApiDoc({
     summary: '获取论坛主题详情',
-    model: AppForumTopicDetailDto,
+    model: PublicForumTopicDetailDto,
   })
   async getDetail(
     @Query() query: IdDto,

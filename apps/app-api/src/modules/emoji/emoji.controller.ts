@@ -1,5 +1,8 @@
 import {
+  EmojiAssetDto,
+  EmojiCatalogPackDto,
   EmojiCatalogService,
+  EmojiRecentItemDto,
   EmojiSceneEnum,
   QueryEmojiCatalogDto,
   QueryEmojiRecentDto,
@@ -8,11 +11,6 @@ import {
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  EmojiAssetDto,
-  EmojiCatalogPackDto,
-  EmojiRecentItemDto,
-} from './dto/emoji.dto'
 
 @ApiTags('表情')
 @Controller('app/emoji')

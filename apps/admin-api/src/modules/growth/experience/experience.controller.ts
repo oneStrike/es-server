@@ -5,8 +5,10 @@ import {
   QueryUserExperienceRecordDto,
   QueryUserExperienceRuleDto,
   UpdateUserExperienceRuleDto,
+  UserExperienceRecordDetailDto,
   UserExperienceRecordDto,
   UserExperienceService,
+  UserExperienceStatsDto,
 } from '@libs/growth/experience'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
@@ -14,11 +16,6 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
-import {
-  UserExperienceRecordDetailDto,
-  UserExperienceStatsDto,
-} from './dto/experience-response.dto'
-
 /**
  * 用户经验规则管理控制器
  * 提供经验规则的创建、更新、删除、查询等管理接口

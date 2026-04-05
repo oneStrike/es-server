@@ -1,7 +1,10 @@
+import { ForumAppUserInfoDto } from '@libs/forum/profile'
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import {
   DateProperty,
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -197,4 +200,48 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
     validation: false,
   })
   afterExperience!: number
+}
+
+export class UserExperienceLevelDto extends PickType(BaseUserLevelRuleDto, [
+  'id',
+  'name',
+  'requiredExperience',
+] as const) {}
+
+export class UserExperienceRecordDetailDto extends UserExperienceRecordDto {
+  @NestedProperty({
+    description: '经验所属用户',
+    type: ForumAppUserInfoDto,
+    required: true,
+    validation: false,
+    nullable: false,
+  })
+  user!: ForumAppUserInfoDto
+}
+
+export class UserExperienceStatsDto {
+  @NumberProperty({
+    description: '当前经验值',
+    example: 1280,
+    required: true,
+    validation: false,
+  })
+  currentExperience!: number
+
+  @NumberProperty({
+    description: '今日获得经验值',
+    example: 80,
+    required: true,
+    validation: false,
+  })
+  todayEarned!: number
+
+  @NestedProperty({
+    description: '当前等级信息',
+    type: UserExperienceLevelDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  level!: UserExperienceLevelDto
 }

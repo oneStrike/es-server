@@ -1,9 +1,13 @@
+import { BaseAuthorDto } from '@libs/content/author'
+import { BaseCategoryDto } from '@libs/content/category'
+import { BaseTagDto } from '@libs/content/tag'
 import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -14,6 +18,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { BaseWorkChapterDto } from '../../chapter/dto/work-chapter.dto'
 import { WorkSerialStatusEnum } from '../work.constant'
 
 export class BaseWorkDto extends BaseDto {
@@ -245,6 +250,7 @@ export class BaseWorkDto extends BaseDto {
     example: '2024-01-01T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
@@ -357,3 +363,174 @@ export class UpdateWorkNewDto extends IntersectionType(
 ) {}
 
 export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}
+
+class AuthorInfoDto extends PickType(BaseAuthorDto, [
+  'id',
+  'name',
+  'type',
+  'avatar',
+] as const) {
+  @BooleanProperty({
+    description: '当前用户是否已关注该作者',
+    example: true,
+    required: false,
+    validation: false,
+  })
+  isFollowed?: boolean
+}
+
+class CategoryInfoDto extends PickType(BaseCategoryDto, [
+  'id',
+  'name',
+  'icon',
+] as const) {}
+
+class TagInfoDto extends PickType(BaseTagDto, ['id', 'name', 'icon'] as const) {}
+
+/**
+ * 作品分页项 DTO。
+ */
+export class PageWorkDto extends PickType(BaseWorkDto, [
+  'id',
+  'name',
+  'type',
+  'cover',
+  'popularity',
+  'isRecommended',
+  'isHot',
+  'isNew',
+  'serialStatus',
+  'publisher',
+  'language',
+  'region',
+  'ageRating',
+  'createdAt',
+  'updatedAt',
+  'publishAt',
+  'isPublished',
+] as const) {
+  @ArrayProperty({
+    description: '作者列表',
+    itemClass: AuthorInfoDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  authors!: AuthorInfoDto[]
+
+  @ArrayProperty({
+    description: '分类列表',
+    itemClass: CategoryInfoDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  categories!: CategoryInfoDto[]
+
+  @ArrayProperty({
+    description: '标签列表',
+    itemClass: TagInfoDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  tags!: TagInfoDto[]
+}
+
+/**
+ * 当前用户和作品的交互状态 DTO。
+ */
+export class WorkUserStatusFieldsDto {
+  @BooleanProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  liked!: boolean
+
+  @BooleanProperty({
+    description: '是否已收藏',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  favorited!: boolean
+
+  @BooleanProperty({
+    description: '是否已浏览',
+    example: true,
+    required: true,
+    validation: false,
+  })
+  viewed!: boolean
+}
+
+/**
+ * 继续阅读章节 DTO。
+ */
+export class ContinueReadingChapterDto extends PickType(BaseWorkChapterDto, [
+  'id',
+  'title',
+  'subtitle',
+  'sortOrder',
+] as const) {}
+
+/**
+ * 阅读状态 DTO。
+ */
+export class WorkReadingStatusFieldsDto {
+  @DateProperty({
+    description: '最近阅读时间',
+    example: '2026-03-09T10:00:00.000Z',
+    required: false,
+    validation: false,
+  })
+  lastReadAt?: Date
+
+  @NestedProperty({
+    description: '继续阅读章节',
+    required: false,
+    type: ContinueReadingChapterDto,
+    validation: false,
+  })
+  continueChapter?: ContinueReadingChapterDto
+}
+
+class WorkDetailExtraDto extends PickType(BaseWorkDto, [
+  'alias',
+  'description',
+  'originalSource',
+  'copyright',
+  'disclaimer',
+  'lastUpdated',
+  'viewRule',
+  'requiredViewLevelId',
+  'forumSectionId',
+  'chapterPrice',
+  'canComment',
+  'viewCount',
+  'favoriteCount',
+  'likeCount',
+  'commentCount',
+  'downloadCount',
+  'rating',
+] as const) {}
+
+class WorkDetailBodyDto extends IntersectionType(PageWorkDto, WorkDetailExtraDto) {}
+
+/**
+ * 作品详情 DTO。
+ */
+export class WorkWithUserStatusDto extends IntersectionType(
+  WorkDetailBodyDto,
+  WorkUserStatusFieldsDto,
+) {}
+
+/**
+ * 带阅读状态的作品详情 DTO。
+ */
+export class WorkDetailDto extends IntersectionType(
+  WorkWithUserStatusDto,
+  WorkReadingStatusFieldsDto,
+) {}

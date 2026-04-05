@@ -8,11 +8,11 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
-  DeleteComicContentInput,
-  MoveComicContentInput,
-  UpdateComicContentInput,
-  UploadContentInput,
-} from './content.type'
+  DeleteComicContentDto,
+  MoveComicContentDto,
+  UpdateComicContentDto,
+  UploadContentDto,
+} from './dto/content.dto'
 
 @Injectable()
 export class ComicContentService {
@@ -81,7 +81,7 @@ export class ComicContentService {
     return this.getChapterContentsInternal(chapterId)
   }
 
-  async addChapterContent(req: FastifyRequest, query: UploadContentInput) {
+  async addChapterContent(req: FastifyRequest, query: UploadContentDto) {
     const chapterId = query.chapterId
 
     if (
@@ -124,7 +124,7 @@ export class ComicContentService {
     return file
   }
 
-  async updateChapterContent(body: UpdateComicContentInput) {
+  async updateChapterContent(body: UpdateComicContentDto) {
     const { chapterId, index, content } = body
 
     const contents: string[] = await this.getChapterContentsInternal(chapterId)
@@ -151,7 +151,7 @@ export class ComicContentService {
     return true
   }
 
-  async deleteChapterContent(dto: DeleteComicContentInput) {
+  async deleteChapterContent(dto: DeleteComicContentDto) {
     const { chapterId, index } = dto
 
     const contents: string[] = await this.getChapterContentsInternal(chapterId)
@@ -179,7 +179,7 @@ export class ComicContentService {
     return true
   }
 
-  async moveChapterContent(body: MoveComicContentInput) {
+  async moveChapterContent(body: MoveComicContentDto) {
     const { chapterId, fromIndex, toIndex } = body
 
     const contents: string[] = await this.getChapterContentsInternal(chapterId)

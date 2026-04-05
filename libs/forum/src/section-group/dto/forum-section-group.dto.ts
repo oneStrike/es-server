@@ -1,4 +1,6 @@
+import { PublicForumSectionListItemDto } from '@libs/forum/section'
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   NumberProperty,
@@ -106,3 +108,20 @@ export class SwapForumSectionGroupSortDto extends PickType(DragReorderDto, [
   'dragId',
   'targetId',
 ] as const) {}
+
+/**
+ * 公开板块分组列表项 DTO。
+ */
+export class PublicForumSectionGroupListItemDto extends PickType(
+  BaseForumSectionGroupDto,
+  ['id', 'name', 'description', 'sortOrder', 'isEnabled'] as const,
+) {
+  @ArrayProperty({
+    description: '分组下的板块列表',
+    itemClass: PublicForumSectionListItemDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
+  sections!: PublicForumSectionListItemDto[]
+}

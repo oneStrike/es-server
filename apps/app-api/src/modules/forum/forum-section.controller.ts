@@ -1,4 +1,10 @@
-import { ForumSectionService } from '@libs/forum/section'
+import {
+  ForumSectionService,
+  PublicForumSectionDetailDto,
+  PublicForumSectionListItemDto,
+  QueryPublicForumSectionDetailDto,
+  QueryPublicForumSectionDto,
+} from '@libs/forum/section'
 import {
   ApiDoc,
   CurrentUser,
@@ -6,12 +12,6 @@ import {
 } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  AppForumSectionDetailDto,
-  AppForumSectionListItemDto,
-  QueryAppForumSectionDetailDto,
-  QueryAppForumSectionDto,
-} from './dto/forum-section.dto'
 
 @ApiTags('论坛/板块')
 @Controller('app/forum/sections')
@@ -22,11 +22,11 @@ export class ForumSectionController {
   @OptionalAuth()
   @ApiDoc({
     summary: '查询论坛板块列表',
-    model: AppForumSectionListItemDto,
+    model: PublicForumSectionListItemDto,
     isArray: true,
   })
   async getList(
-    @Query() query: QueryAppForumSectionDto,
+    @Query() query: QueryPublicForumSectionDto,
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumSectionService.getVisibleSectionList({
@@ -39,10 +39,10 @@ export class ForumSectionController {
   @OptionalAuth()
   @ApiDoc({
     summary: '查询论坛板块详情',
-    model: AppForumSectionDetailDto,
+    model: PublicForumSectionDetailDto,
   })
   async getDetail(
-    @Query() query: QueryAppForumSectionDetailDto,
+    @Query() query: QueryPublicForumSectionDetailDto,
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumSectionService.getVisibleSectionDetail(

@@ -1,17 +1,15 @@
 import {
   FavoritePageQueryDto,
   FavoriteService,
+  FavoriteStatusResponseDto,
   FavoriteTargetDto,
+  FavoriteTopicPageItemDto,
+  FavoriteWorkPageItemDto,
 } from '@libs/interaction/favorite'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  FavoriteStatusResponseDto,
-  FavoriteTopicPageItemDto,
-  FavoriteWorkPageItemDto,
-} from './dto/favorite.dto'
 
 @ApiTags('收藏')
 @Controller('app/favorite')

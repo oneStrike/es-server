@@ -1,9 +1,9 @@
-import type { FastifyRequest } from 'fastify'
 import type {
-  AuditPageQueryInput,
-  CreateRequestLogInput,
-  CreateRequestLogSimpleInput,
-} from './audit.type'
+  AuditPageRequestDto,
+  CreateRequestLogDto,
+  CreateRequestLogSimpleDto,
+} from '@libs/platform/modules/audit'
+import type { FastifyRequest } from 'fastify'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
@@ -34,7 +34,7 @@ export class AuditService {
   /**
    * 创建请求日志
    */
-  async createRequestLog(createDto: CreateRequestLogInput, req: FastifyRequest) {
+  async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
     const normalizedActionType = normalizeAuditActionType(createDto.actionType)
 
     // 处理JSON字段的转换
@@ -61,7 +61,7 @@ export class AuditService {
    */
   private async createSuccessRequestLog(
     actionType: AuditActionTypeEnum,
-    createDto: CreateRequestLogSimpleInput,
+    createDto: CreateRequestLogSimpleDto,
     req: FastifyRequest,
   ) {
     return this.createRequestLog(
@@ -94,7 +94,7 @@ export class AuditService {
    * @param queryDto 分页查询参数
    * @returns 分页结果
    */
-  async getAuditPage(queryDto: AuditPageQueryInput) {
+  async getAuditPage(queryDto: AuditPageRequestDto) {
     const {
       userId,
       username,

@@ -1,9 +1,6 @@
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 import { RsaService, SendVerifyCodeDto } from '@libs/platform/modules'
-import { Body, Controller, Get, Post, Req } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { AuthService } from './auth.service'
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
@@ -12,7 +9,10 @@ import {
   RefreshTokenDto,
   RsaPublicKeyDto,
   TokenDto,
-} from './dto/auth.dto'
+} from '@libs/platform/modules/auth'
+import { Body, Controller, Get, Post, Req } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { AuthService } from './auth.service'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 
@@ -81,7 +81,7 @@ export class AuthController {
     @Body() body: RefreshTokenDto,
     @Req() req: FastifyRequest,
   ) {
-    return this.authService.refreshToken(body.refreshToken, req)
+    return this.authService.refreshToken(body, req)
   }
 
   @Post('password/forgot')

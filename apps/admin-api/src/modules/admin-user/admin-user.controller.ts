@@ -1,3 +1,10 @@
+import {
+  BaseAdminUserDto,
+  ChangePasswordDto,
+  UpdateUserDto,
+  UserPageDto,
+  UserRegisterDto,
+} from '@libs/identity/core'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -5,13 +12,6 @@ import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AdminUserService } from './admin-user.service'
-import {
-  BaseAdminUserDto,
-  ChangePasswordDto,
-  UpdateUserDto,
-  UserPageDto,
-  UserRegisterDto,
-} from './dto/admin-user.dto'
 
 /**
  * 管理端用户控制器

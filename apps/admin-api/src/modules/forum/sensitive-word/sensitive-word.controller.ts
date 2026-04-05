@@ -2,31 +2,25 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import {
   BaseSensitiveWordDto,
-  SensitiveWordDetectService,
-  SensitiveWordService,
-  SensitiveWordStatisticsService,
-} from '@libs/sensitive-word'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import {
+  CreateSensitiveWordDto,
+  QuerySensitiveWordDto,
   SensitiveWordCountResponseDto,
   SensitiveWordDetectDto,
   SensitiveWordDetectResponseDto,
+  SensitiveWordDetectService,
   SensitiveWordDetectStatusResponseDto,
   SensitiveWordHighestLevelResponseDto,
   SensitiveWordReplaceDto,
   SensitiveWordReplaceResponseDto,
-} from './dto/sensitive-word-detect.dto'
-import {
+  SensitiveWordService,
   SensitiveWordStatisticsDataDto,
   SensitiveWordStatisticsQueryDto,
   SensitiveWordStatisticsResponseDto,
-} from './dto/sensitive-word-statistics.dto'
-import {
-  CreateSensitiveWordDto,
-  QuerySensitiveWordDto,
+  SensitiveWordStatisticsService,
   UpdateSensitiveWordDto,
-} from './dto/sensitive-word.dto'
+} from '@libs/sensitive-word'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 /**
  * 敏感词管理控制器

@@ -1,6 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { Controller, Get, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   ChapterContentComicRequestDto,
   DetailComicRequestDto,
@@ -10,7 +7,10 @@ import {
   THIRD_PARTY_COMIC_CHAPTER_CONTENT_SCHEMA,
   THIRD_PARTY_COMIC_CHAPTER_SCHEMA,
   THIRD_PARTY_COMIC_DETAIL_SCHEMA,
-} from './dto/third-party.dto'
+} from '@libs/content/work'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { Controller, Get, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 import { ComicThirdPartyService } from './third-party-service'
 import { COMIC_THIRD_PARTY_PLATFORMS } from './third-party.constant'
 
