@@ -1,11 +1,11 @@
 import { ForumAppUserInfoDto } from '@libs/forum/profile'
+import { UserExperienceRecordDto } from '@libs/growth/experience'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import {
   NestedProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
 import { PickType } from '@nestjs/swagger'
-import { UserExperienceRecordDto } from './experience.dto'
 
 export class UserExperienceLevelDto extends PickType(BaseUserLevelRuleDto, [
   'id',

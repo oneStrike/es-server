@@ -1,16 +1,16 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
-import type {
-  CheckUserLevelPermissionInput,
-  CreateUserLevelRuleInput,
-  QueryUserLevelRulePageInput,
-  UpdateUserLevelRuleInput,
-  UserLevelInfoResult,
-  UserLevelStatisticsResult,
-} from './level-rule.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
+import {
+  CheckUserLevelPermissionDto,
+  CreateUserLevelRuleDto,
+  QueryUserLevelRuleDto,
+  UpdateUserLevelRuleDto,
+  UserLevelInfoDto,
+  UserLevelStatisticsDto,
+} from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 @Injectable()
@@ -25,30 +25,37 @@ export class UserLevelRuleService {
 
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 用户表。 */
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  /** 等级规则表。 */
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
 
+  /** 主题表。 */
   get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
+  /** 回复/评论表。 */
   get forumReply() {
     return this.drizzle.schema.userComment
   }
 
+  /** 点赞事实表。 */
   get userLike() {
     return this.drizzle.schema.userLike
   }
 
+  /** 收藏事实表。 */
   get userFavorite() {
     return this.drizzle.schema.userFavorite
   }
@@ -58,7 +65,7 @@ export class UserLevelRuleService {
    * @param dto 等级规则数据
    * @returns 创建的等级规则
    */
-  async createLevelRule(dto: CreateUserLevelRuleInput) {
+  async createLevelRule(dto: CreateUserLevelRuleDto) {
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.userLevelRule).values(dto),
       {
@@ -73,7 +80,7 @@ export class UserLevelRuleService {
    * @param dto 查询参数
    * @returns 分页的等级规则列表
    */
-  async getLevelRulePage(dto: QueryUserLevelRulePageInput) {
+  async getLevelRulePage(dto: QueryUserLevelRuleDto) {
     const conditions: SQL[] = []
 
     if (dto.isEnabled !== undefined) {
@@ -123,7 +130,7 @@ export class UserLevelRuleService {
    * @param updateLevelRuleDto 更新数据
    * @returns 更新后的等级规则
    */
-  async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleInput) {
+  async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
     const result = await this.drizzle.withErrorHandling(
       () =>
@@ -176,7 +183,11 @@ export class UserLevelRuleService {
    * @param userId 用户ID
    * @returns 用户等级信息，包括当前等级、进度、权限等
    */
-  async getUserLevelInfo(userId: number): Promise<UserLevelInfoResult> {
+  /**
+   * 获取用户等级信息。
+   * 同时计算到下一等级的进度百分比，供前台和后台直接展示当前升级进度。
+   */
+  async getUserLevelInfo(userId: number): Promise<UserLevelInfoDto> {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
       with: {
@@ -244,6 +255,10 @@ export class UserLevelRuleService {
     return this.getHighestLevelRuleByExperienceInTx(this.db, experience)
   }
 
+  /**
+   * 在指定事务中按经验值反查当前应命中的最高等级。
+   * 供账本、升级和修复链路复用，避免不同上下文复制相同排序逻辑。
+   */
   async getHighestLevelRuleByExperienceInTx(tx: Db, experience: number) {
     return tx.query.userLevelRule.findFirst({
       where: {
@@ -259,7 +274,7 @@ export class UserLevelRuleService {
    * @param dto 等级权限检查DTO
    * @returns 权限检查结果
    */
-  async checkLevelPermission(dto: CheckUserLevelPermissionInput) {
+  async checkLevelPermission(dto: CheckUserLevelPermissionDto) {
     const { userId, permissionType } = dto
 
     const user = await this.db.query.appUser.findFirst({
@@ -403,7 +418,7 @@ export class UserLevelRuleService {
    * 获取等级统计信息
    * @returns 等级统计数据
    */
-  async getLevelStatistics(): Promise<UserLevelStatisticsResult> {
+  async getLevelStatistics(): Promise<UserLevelStatisticsDto> {
     const levels = await this.db
       .select({
         id: this.userLevelRule.id,
@@ -444,6 +459,10 @@ export class UserLevelRuleService {
     }
   }
 
+  /**
+   * 对任意事实表执行 count(*) 聚合。
+   * 等级权限校验和统计概览都通过该方法复用统一计数逻辑。
+   */
   private async countByCondition(
     table: PgTable<TableConfig>,
     where: SQL | undefined,

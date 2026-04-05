@@ -1,13 +1,15 @@
 import type {
   EffectiveMessageNotificationPreference,
   NotificationPreferenceSnapshot,
-  UpdateMessageNotificationPreferenceItemInput,
-  UpdateMessageNotificationPreferencesInput,
 } from './notification-preference.type'
 import type { MessageNotificationTypeEnum } from './notification.constant'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
+import {
+  UpdateUserNotificationPreferenceItemDto,
+  UpdateUserNotificationPreferencesDto,
+} from './dto/notification.dto'
 import {
   getMessageNotificationDefaultPreferenceEnabled,
   getMessageNotificationTemplateDefinition,
@@ -24,10 +26,12 @@ import {
 export class MessageNotificationPreferenceService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** notification_preference 表访问入口。 */
   private get notificationPreference() {
     return this.drizzle.schema.notificationPreference
   }
@@ -58,7 +62,7 @@ export class MessageNotificationPreferenceService {
    */
   async updateUserNotificationPreferences(
     userId: number,
-    input: UpdateMessageNotificationPreferencesInput,
+    input: UpdateUserNotificationPreferencesDto,
   ) {
     const preferences = this.normalizeUpdatePreferences(input.preferences)
 
@@ -155,13 +159,13 @@ export class MessageNotificationPreferenceService {
    * 拒绝空数组、重复通知类型和未注册类型，避免显式覆盖配置被歧义写入
    */
   private normalizeUpdatePreferences(
-    preferences: UpdateMessageNotificationPreferenceItemInput[],
+    preferences: UpdateUserNotificationPreferenceItemDto[],
   ) {
     if (!Array.isArray(preferences) || preferences.length === 0) {
       throw new BadRequestException('preferences 不能为空')
     }
 
-    const normalized: UpdateMessageNotificationPreferenceItemInput[] = []
+    const normalized: UpdateUserNotificationPreferenceItemDto[] = []
     const seenTypes = new Set<number>()
 
     for (const preference of preferences) {

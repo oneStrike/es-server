@@ -1,13 +1,17 @@
 import type {
   ReadingHistoryIndexedRow,
   ReadingHistoryItem,
-  ReadingHistoryQuery,
-  TouchByWorkInput,
 } from './reading-state.type'
 import { DrizzleService } from '@db/core'
-import { ContentTypeEnum, WorkTypeEnum } from '@libs/platform/constant'
+import { ContentTypeEnum } from '@libs/platform/constant'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray, SQL } from 'drizzle-orm'
+import {
+  ClearReadingHistoryCommandDto,
+  DeleteReadingHistoryCommandDto,
+  QueryReadingHistoryCommandDto,
+  TouchReadingStateByWorkDto,
+} from './dto/reading-state.dto'
 
 import {
   IReadingStateResolver,
@@ -109,7 +113,7 @@ export class ReadingStateService {
   /**
    * 更新阅读状态（按作品）
    */
-  async touchByWork(params: TouchByWorkInput) {
+  async touchByWork(params: TouchReadingStateByWorkDto) {
     const {
       userId,
       workId,
@@ -151,7 +155,7 @@ export class ReadingStateService {
   /**
    * 安全地更新阅读状态（按作品）
    */
-  async touchByWorkSafely(params: TouchByWorkInput) {
+  async touchByWorkSafely(params: TouchReadingStateByWorkDto) {
     try {
       await this.touchByWork(params)
     } catch (error) {
@@ -206,7 +210,7 @@ export class ReadingStateService {
   /**
    * 获取用户的阅读历史列表
    */
-  async getUserReadingHistory(query: ReadingHistoryQuery) {
+  async getUserReadingHistory(query: QueryReadingHistoryCommandDto) {
     const { workType, userId, workId, pageIndex, pageSize } = query
     const conditions: SQL[] = [eq(this.userWorkReadingState.userId, userId)]
 
@@ -323,14 +327,14 @@ export class ReadingStateService {
   /**
    * 删除单条阅读历史记录
    */
-  async deleteUserReadingHistory(workIds: number[], userId: number) {
+  async deleteUserReadingHistory(input: DeleteReadingHistoryCommandDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userWorkReadingState)
         .where(
           and(
-            eq(this.userWorkReadingState.userId, userId),
-            inArray(this.userWorkReadingState.workId, workIds),
+            eq(this.userWorkReadingState.userId, input.userId),
+            inArray(this.userWorkReadingState.workId, input.workIds),
           ),
         ),
     )
@@ -340,16 +344,16 @@ export class ReadingStateService {
   /**
    * 清空用户的阅读历史
    */
-  async clearUserReadingHistory(userId: number, workType?: WorkTypeEnum) {
+  async clearUserReadingHistory(input: ClearReadingHistoryCommandDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userWorkReadingState)
         .where(
-          workType === undefined
-            ? eq(this.userWorkReadingState.userId, userId)
+          input.workType === undefined
+            ? eq(this.userWorkReadingState.userId, input.userId)
             : and(
-                eq(this.userWorkReadingState.userId, userId),
-                eq(this.userWorkReadingState.workType, workType),
+                eq(this.userWorkReadingState.userId, input.userId),
+                eq(this.userWorkReadingState.workType, input.workType),
               ),
         ),
     )

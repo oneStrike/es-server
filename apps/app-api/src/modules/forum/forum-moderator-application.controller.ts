@@ -1,13 +1,13 @@
-import { ForumModeratorApplicationService } from '@libs/forum/moderator-application'
+import {
+  CreateForumModeratorApplicationDto,
+  ForumModeratorApplicationDto,
+  ForumModeratorApplicationService,
+  QueryForumModeratorApplicationDto,
+} from '@libs/forum/moderator-application'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  CreateForumModeratorApplicationDto,
-  ForumModeratorApplicationDto,
-  QueryForumModeratorApplicationDto,
-} from './dto/forum-moderator-application.dto'
 
 @ApiTags('论坛/版主申请')
 @Controller('app/forum/moderator-application')

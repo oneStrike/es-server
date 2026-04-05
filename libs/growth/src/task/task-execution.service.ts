@@ -1,13 +1,6 @@
 import type {
-  ClaimTaskInput,
-  QueryAppTaskInput,
-  QueryMyTaskInput,
-  QueryTaskAssignmentPageInput,
-  QueryTaskAssignmentReconciliationPageInput,
-  TaskCompleteInput,
   TaskEventProgressInput,
   TaskEventProgressResult,
-  TaskProgressInput,
 } from './task.type'
 import { DrizzleService } from '@db/core'
 import {
@@ -23,6 +16,15 @@ import {
 } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
+import {
+  ClaimTaskDto,
+  QueryAvailableTaskDto,
+  QueryMyTaskDto,
+  QueryTaskAssignmentDto,
+  QueryTaskAssignmentReconciliationDto,
+  TaskCompleteDto,
+  TaskProgressDto,
+} from './dto/task.dto'
 import {
   getTaskTypeFilterValues,
   TaskAssignmentRewardStatusEnum,
@@ -56,7 +58,7 @@ export class TaskExecutionService extends TaskServiceSupport {
    * 该查询只返回手动领取任务；自动领取任务会在读链路中补齐 assignment，
    * 但不会混入可领取列表的返回结果。
    */
-  async getAvailableTasks(queryDto: QueryAppTaskInput, userId: number) {
+  async getAvailableTasks(queryDto: QueryAvailableTaskDto, userId: number) {
     const now = new Date()
     const page = this.drizzle.buildPage(queryDto)
     const tasks = await this.db
@@ -91,7 +93,7 @@ export class TaskExecutionService extends TaskServiceSupport {
    * 在返回列表前，会先关闭已过期 assignment 并补齐自动领取任务，
    * 确保用户端看到的是当前周期下的稳定状态。
    */
-  async getMyTasks(queryDto: QueryMyTaskInput, userId: number) {
+  async getMyTasks(queryDto: QueryMyTaskDto, userId: number) {
     const now = new Date()
     await this.expireDueAssignmentsForUser(userId, now)
     await this.ensureAutoAssignmentsForUser(userId, now)
@@ -207,7 +209,7 @@ export class TaskExecutionService extends TaskServiceSupport {
    * 同一用户、同一任务、同一周期内最多只会创建一条 assignment；
    * 幂等命中时直接复用已有记录，不重复写入领取日志。
    */
-  async claimTask(dto: ClaimTaskInput, userId: number) {
+  async claimTask(dto: ClaimTaskDto, userId: number) {
     const now = new Date()
     const taskRecord = await this.findClaimableTask(dto.taskId, now)
     const cycleKey = this.buildCycleKey(taskRecord, now)
@@ -224,7 +226,7 @@ export class TaskExecutionService extends TaskServiceSupport {
    * 该链路使用 assignment 版本号做乐观锁，避免高并发下的进度覆盖。
    * 已完成 assignment 会走奖励补偿分支，不再重复推进。
    */
-  async reportProgress(dto: TaskProgressInput, userId: number) {
+  async reportProgress(dto: TaskProgressDto, userId: number) {
     if (dto.delta <= 0) {
       throw new BadRequestException('进度增量必须大于0')
     }
@@ -341,7 +343,7 @@ export class TaskExecutionService extends TaskServiceSupport {
    *
    * 仅允许已达标 assignment 进入完成态；若已完成则只补偿奖励，不重复写状态。
    */
-  async completeTask(dto: TaskCompleteInput, userId: number) {
+  async completeTask(dto: TaskCompleteDto, userId: number) {
     const now = new Date()
     const taskRecord = await this.findAvailableTask(dto.taskId, now)
     const cycleKey = this.buildCycleKey(taskRecord, now)
@@ -490,7 +492,7 @@ export class TaskExecutionService extends TaskServiceSupport {
   /**
    * 分页查询后台 assignment 列表。
    */
-  async getTaskAssignmentPage(queryDto: QueryTaskAssignmentPageInput) {
+  async getTaskAssignmentPage(queryDto: QueryTaskAssignmentDto) {
     const assignmentConditions = [isNull(this.taskAssignmentTable.deletedAt)]
 
     if (queryDto.taskId !== undefined) {
@@ -528,7 +530,7 @@ export class TaskExecutionService extends TaskServiceSupport {
    * 该接口把 assignment、事件推进日志和奖励提醒状态聚合成单页结果，减少排障时的跨表切换。
    */
   async getTaskAssignmentReconciliationPage(
-    queryDto: QueryTaskAssignmentReconciliationPageInput,
+    queryDto: QueryTaskAssignmentReconciliationDto,
   ) {
     const assignmentConditions = [isNull(this.taskAssignmentTable.deletedAt)]
 

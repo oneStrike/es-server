@@ -1,14 +1,14 @@
-import type {
-  CreateTaskInput,
-  QueryTaskPageInput,
-  UpdateTaskInput,
-  UpdateTaskStatusInput,
-} from './task.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
+import {
+  CreateTaskDto,
+  QueryTaskDto,
+  UpdateTaskDto,
+  UpdateTaskStatusDto,
+} from './dto/task.dto'
 import {
   getTaskTypeFilterValues,
   normalizeTaskObjectiveType,
@@ -37,7 +37,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
    * 在写入前统一校验发布时间窗口、目标配置、奖励配置与重复规则，
    * 避免无效模板进入后续 claim / progress / reward 链路。
    */
-  async createTask(dto: CreateTaskInput, adminUserId: number) {
+  async createTask(dto: CreateTaskDto, adminUserId: number) {
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
     const objectiveType = this.parseTaskObjectiveType(dto.objectiveType)
     const eventCode = this.parseTaskEventCode(dto.eventCode)
@@ -75,7 +75,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
    * 已有活跃 assignment 时，只允许做不影响执行语义的字段调整；
    * 一旦涉及周期、目标、完成方式等关键配置，会在这里统一拦截。
    */
-  async updateTask(dto: UpdateTaskInput, adminUserId: number) {
+  async updateTask(dto: UpdateTaskDto, adminUserId: number) {
     const existingTask = await this.db.query.task.findFirst({
       where: {
         id: dto.id,
@@ -162,7 +162,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
    *
    * 该接口只处理后台快速开关，不承担复杂配置变更校验。
    */
-  async updateTaskStatus(dto: UpdateTaskStatusInput) {
+  async updateTaskStatus(dto: UpdateTaskStatusDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.taskTable)
@@ -216,7 +216,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
    *
    * 任务运行态健康信息会在这里一并补齐，避免管理端为同一页数据反复跨表查询。
    */
-  async getTaskPage(queryDto: QueryTaskPageInput) {
+  async getTaskPage(queryDto: QueryTaskDto) {
     const conditions = [isNull(this.taskTable.deletedAt)]
 
     if (queryDto.status !== undefined) {

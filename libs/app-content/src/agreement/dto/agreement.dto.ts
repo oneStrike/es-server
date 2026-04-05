@@ -3,10 +3,21 @@ import {
   DateProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
- * 协议基础DTO
+ * 协议基础 DTO
  */
 export class BaseAgreementDto extends BaseDto {
   @StringProperty({
@@ -61,5 +72,31 @@ export class BaseAgreementDto extends BaseDto {
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  publishedAt?: Date
+  publishedAt?: Date | null
 }
+
+export class CreateAgreementDto extends OmitType(BaseAgreementDto, [
+  ...OMIT_BASE_FIELDS,
+  'isPublished',
+  'publishedAt',
+] as const) {}
+
+export class UpdateAgreementDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateAgreementDto),
+) {}
+
+export class QueryAgreementDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseAgreementDto, ['title', 'isPublished', 'showInAuth'] as const),
+  ),
+) {}
+
+export class QueryPublishedAgreementDto extends PartialType(
+  PickType(BaseAgreementDto, ['showInAuth'] as const),
+) {}
+
+export class AgreementListItemDto extends OmitType(BaseAgreementDto, [
+  'content',
+] as const) {}

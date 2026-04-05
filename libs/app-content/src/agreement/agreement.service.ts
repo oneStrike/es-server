@@ -1,20 +1,19 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
-  AgreementIdInput,
-  AgreementPageQuery,
-  CreateAgreementInput,
-  PublishedAgreementQuery,
-  UpdateAgreementInput,
-  UpdateAgreementPublishStatusInput,
-} from './agreement.type'
+  CreateAgreementDto,
+  QueryAgreementDto,
+  QueryPublishedAgreementDto,
+  UpdateAgreementDto,
+} from './dto/agreement.dto'
 
 /**
  * 协议服务
  *
- * 负责协议的创建、查询、更新与删除
+ * 负责协议写入、发布状态切换和对外读取
  */
 @Injectable()
 export class AgreementService {
@@ -31,13 +30,10 @@ export class AgreementService {
   }
 
   /**
-   * 创建协议
-   *
-   * @param dto 创建协议的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException 当协议标题和版本已存在时
+   * 创建协议草稿。
+   * 标题和版本命中唯一约束时，统一交给 `withErrorHandling` 转换为业务异常。
    */
-  async create(dto: CreateAgreementInput) {
+  async create(dto: CreateAgreementDto) {
     await this.drizzle.withErrorHandling(
       () =>
         this.db.insert(this.agreement).values({
@@ -53,27 +49,16 @@ export class AgreementService {
   }
 
   /**
-   * 更新协议
-   *
-   * @param dto 更新协议的数据传输对象
-   * @returns 是否成功
-   * @throws NotFoundException 当协议不存在时
-   * @throws BadRequestException 当标题和版本冲突时
+   * 更新协议主体字段，不在此入口处理发布状态切换。
+   * 发布动作统一走 `updatePublishStatus`，避免同一语义分散在两个入口里。
    */
-  async update(dto: UpdateAgreementInput) {
+  async update(dto: UpdateAgreementDto) {
     const { id, ...updateData } = dto
-    const data: Record<string, unknown> = { ...updateData }
-
-    // 发布时设置发布时间
-    if (dto.isPublished === true) {
-      data.publishedAt = new Date()
-    }
-
     const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.agreement)
-          .set(data)
+          .set(updateData)
           .where(eq(this.agreement.id, id)),
       { duplicate: '协议标题和版本已存在' },
     )
@@ -83,13 +68,10 @@ export class AgreementService {
   }
 
   /**
-   * 更新协议发布状态
-   *
-   * @param dto 更新发布状态的数据传输对象
-   * @returns 是否成功
-   * @throws NotFoundException 当协议不存在时
+   * 切换协议发布状态。
+   * 发布时补写 `publishedAt`，取消发布时保留历史发布时间用于追溯。
    */
-  async updatePublishStatus(dto: UpdateAgreementPublishStatusInput) {
+  async updatePublishStatus(dto: UpdatePublishedStatusDto) {
     const updateData = dto.isPublished
       ? { isPublished: true, publishedAt: new Date() }
       : { isPublished: false }
@@ -106,13 +88,9 @@ export class AgreementService {
   }
 
   /**
-   * 下线协议
-   *
-   * @param dto 删除参数
-   * @returns 是否成功
-   * @throws NotFoundException 当协议不存在时
+   * 通过 `isPublished=false` 逻辑下线协议，不执行物理删除。
    */
-  async delete(dto: AgreementIdInput) {
+  async delete(dto: IdDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.agreement)
@@ -125,14 +103,11 @@ export class AgreementService {
   }
 
   /**
-   * 根据ID查询协议
-   *
-   * @param dto 查询参数
-   * @returns 协议详情
-   * @throws NotFoundException 当协议不存在时
+   * 按主键查询协议详情。
+   * `publishedOnly=true` 时只允许返回已发布版本，用于 app/public 侧公开读取。
    */
   async findOne(
-    dto: AgreementIdInput,
+    dto: IdDto,
     options?: {
       publishedOnly?: boolean
     },
@@ -151,12 +126,9 @@ export class AgreementService {
   }
 
   /**
-   * 分页查询协议列表
-   *
-   * @param query 查询条件
-   * @returns 分页结果
+   * 组合标题与发布状态筛选条件，并在分页结果中省略正文内容。
    */
-  async findPage(query: AgreementPageQuery) {
+  async findPage(query: QueryAgreementDto) {
     const conditions: SQL[] = []
 
     if (query.title) {
@@ -179,12 +151,10 @@ export class AgreementService {
   }
 
   /**
-   * 查询所有最新发布的协议
-   *
-   * @param dto 查询条件
-   * @returns 协议列表
+   * 查询公开可见的最新协议列表。
+   * 该接口按发布时间倒序返回，并省略正文，供登录注册等轻量场景使用。
    */
-  async getAllLatest(dto: PublishedAgreementQuery) {
+  async getAllLatest(dto: QueryPublishedAgreementDto) {
     return this.db.query.appAgreement.findMany({
       where: {
         isPublished: true,

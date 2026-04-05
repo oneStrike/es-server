@@ -1,10 +1,5 @@
-import { BaseWorkDto, WorkService } from '@libs/content/work'
-import { WorkTypeEnum } from '@libs/platform/constant'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
+  BaseWorkDto,
   CreateWorkDto,
   QueryWorkDto,
   UpdateWorkDto,
@@ -12,7 +7,15 @@ import {
   UpdateWorkNewDto,
   UpdateWorkRecommendedDto,
   UpdateWorkStatusDto,
-} from './dto/novel.dto'
+  WorkService,
+} from '@libs/content/work'
+import { WorkTypeEnum } from '@libs/platform/constant'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @ApiTags('内容管理/小说管理/基础信息')
 @Controller('admin/content/novel')
@@ -24,6 +27,7 @@ export class NovelController {
     summary: '创建小说',
     model: Boolean,
   })
+  @Audit({ actionType: AuditActionTypeEnum.CREATE, content: '创建小说' })
   async create(@Body() body: CreateWorkDto) {
     return this.workService.createWork({ ...body, type: WorkTypeEnum.NOVEL })
   }
@@ -53,6 +57,7 @@ export class NovelController {
     summary: '更新小说信息',
     model: Boolean,
   })
+  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新小说信息' })
   async update(@Body() body: UpdateWorkDto) {
     return this.workService.updateWork(body)
   }
@@ -62,6 +67,7 @@ export class NovelController {
     summary: '更新小说发布状态',
     model: Boolean,
   })
+  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新小说发布状态' })
   async updateStatus(@Body() body: UpdateWorkStatusDto) {
     return this.workService.updateStatus(body)
   }
@@ -71,6 +77,7 @@ export class NovelController {
     summary: '更新小说推荐状态',
     model: Boolean,
   })
+  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新小说推荐状态' })
   async updateRecommended(@Body() body: UpdateWorkRecommendedDto) {
     return this.workService.updateWorkFlags(body.id, {
       isRecommended: body.isRecommended,
@@ -82,6 +89,7 @@ export class NovelController {
     summary: '更新小说热门状态',
     model: Boolean,
   })
+  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新小说热门状态' })
   async updateHot(@Body() body: UpdateWorkHotDto) {
     return this.workService.updateWorkFlags(body.id, {
       isHot: body.isHot,
@@ -93,6 +101,7 @@ export class NovelController {
     summary: '更新小说新作状态',
     model: Boolean,
   })
+  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新小说新作状态' })
   async updateNew(@Body() body: UpdateWorkNewDto) {
     return this.workService.updateWorkFlags(body.id, {
       isNew: body.isNew,
@@ -104,6 +113,7 @@ export class NovelController {
     summary: '软删除小说',
     model: Boolean,
   })
+  @Audit({ actionType: AuditActionTypeEnum.DELETE, content: '软删除小说' })
   async delete(@Body() body: IdDto) {
     return this.workService.deleteWork(body.id)
   }

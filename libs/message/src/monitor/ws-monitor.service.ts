@@ -16,18 +16,28 @@ interface MessageWsMetricDelta {
 export class MessageWsMonitorService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** WebSocket 指标桶表。 */
   private get metric() {
     return this.drizzle.schema.messageWsMetric
   }
 
+  /**
+   * 记录一次 WS 请求下发。
+   * 该计数用于观察单位时间内的消息分发压力。
+   */
   async recordRequest() {
     await this.applyDelta({ requestCount: 1 })
   }
 
+  /**
+   * 记录一次 ACK 结果。
+   * 成功与失败计数分开累加，延迟会被规整成非负整数毫秒后写入总和桶。
+   */
   async recordAck(code: number, latencyMs: number) {
     const normalizedLatencyMs = Math.max(0, Math.floor(Number(latencyMs) || 0))
     await this.applyDelta({
@@ -37,18 +47,31 @@ export class MessageWsMonitorService {
     })
   }
 
+  /**
+   * 记录一次连接重连。
+   */
   async recordReconnect() {
     await this.applyDelta({ reconnectCount: 1 })
   }
 
+  /**
+   * 记录一次重同步触发。
+   */
   async recordResyncTriggered() {
     await this.applyDelta({ resyncTriggerCount: 1 })
   }
 
+  /**
+   * 记录一次重同步成功。
+   */
   async recordResyncSuccess() {
     await this.applyDelta({ resyncSuccessCount: 1 })
   }
 
+  /**
+   * 把监控增量写入当前分钟桶。
+   * 先尝试更新已有桶，未命中时再插入并通过冲突更新兜底，避免并发下丢统计。
+   */
   private async applyDelta(delta: MessageWsMetricDelta) {
     const bucketAt = this.getCurrentBucketAt()
     await this.drizzle.withErrorHandling(async () => {
@@ -97,6 +120,10 @@ export class MessageWsMonitorService {
     })
   }
 
+  /**
+   * 计算当前指标桶时间。
+   * 所有监控数据按分钟聚合，因此秒和毫秒统一归零。
+   */
   private getCurrentBucketAt() {
     const now = new Date()
     now.setSeconds(0, 0)

@@ -1,17 +1,19 @@
 import {
   BaseForumSectionDto,
-  ForumSectionService,
-} from '@libs/forum/section'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import {
   CreateForumSectionDto,
   ForumSectionFollowCountRepairResultDto,
+  ForumSectionService,
   QueryForumSectionDto,
+  SwapForumSectionSortDto,
   UpdateForumSectionDto,
-} from './dto/forum-section.dto'
+  UpdateForumSectionEnabledDto,
+} from '@libs/forum/section'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @Controller('admin/forum/sections')
 @ApiTags('论坛管理/板块管理')
@@ -49,6 +51,10 @@ export class ForumSectionController {
     summary: '添加板块',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '添加板块',
+  })
   async createSection(@Body() dto: CreateForumSectionDto) {
     return this.forumSectionService.createSection(dto)
   }
@@ -57,6 +63,10 @@ export class ForumSectionController {
   @ApiDoc({
     summary: '更新板块',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新板块',
   })
   async updateSection(@Body() dto: UpdateForumSectionDto) {
     return this.forumSectionService.updateSection(dto)
@@ -67,6 +77,10 @@ export class ForumSectionController {
     summary: '删除板块',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除板块',
+  })
   async deleteSection(@Body() dto: IdDto) {
     return this.forumSectionService.deleteSection(dto.id)
   }
@@ -76,7 +90,11 @@ export class ForumSectionController {
     summary: '更新板块启用状态',
     model: Boolean,
   })
-  async updateEnabledStatus(@Body() dto: UpdateEnabledStatusDto) {
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新板块启用状态',
+  })
+  async updateEnabledStatus(@Body() dto: UpdateForumSectionEnabledDto) {
     return this.forumSectionService.updateEnabledStatus(dto)
   }
 
@@ -84,6 +102,10 @@ export class ForumSectionController {
   @ApiDoc({
     summary: '重建板块关注计数',
     model: ForumSectionFollowCountRepairResultDto,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '重建板块关注计数',
   })
   async rebuildFollowCount(@Body() dto: IdDto) {
     return this.forumSectionService.rebuildSectionFollowersCount(dto.id)
@@ -94,6 +116,10 @@ export class ForumSectionController {
     summary: '全量重建板块关注计数',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '全量重建板块关注计数',
+  })
   async rebuildFollowCountAll() {
     return this.forumSectionService.rebuildAllSectionFollowersCount()
   }
@@ -103,7 +129,11 @@ export class ForumSectionController {
     summary: '交换板块排序顺序',
     model: Boolean,
   })
-  async swapSortOrder(@Body() dto: DragReorderDto) {
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '交换板块排序顺序',
+  })
+  async swapSortOrder(@Body() dto: SwapForumSectionSortDto) {
     return this.forumSectionService.updateSectionSort(dto)
   }
 }

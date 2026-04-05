@@ -1,4 +1,4 @@
-import type { QueryNotificationDeliveryPageInput } from '@libs/message/notification'
+import type { QueryNotificationDeliveryPageDto } from '@libs/message/notification'
 
 /**
  * Outbox 监控查询入参。
@@ -21,4 +21,4 @@ export interface MessageWsMonitorQueryInput {
  * 通知投递结果分页查询入参。
  * 管理端直接复用消息域 delivery 查询字段，避免在应用层复制第二套筛选口径。
  */
-export type MessageNotificationDeliveryMonitorQueryInput = QueryNotificationDeliveryPageInput
+export type MessageNotificationDeliveryMonitorQueryInput = QueryNotificationDeliveryPageDto

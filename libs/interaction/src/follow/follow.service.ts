@@ -1,14 +1,13 @@
 import type { UserFollowSelect } from '@db/schema'
-import type {
-  FollowPageQuery,
-  FollowRecordInput,
-  FollowStatusView,
-} from './follow.type'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
+import {
+  FollowPageCommandDto,
+  FollowRecordDto,
+} from './dto/follow.dto'
 import { FollowGrowthService } from './follow-growth.service'
 import { FollowTargetTypeEnum } from './follow.constant'
 
@@ -121,7 +120,7 @@ export class FollowService {
   }
 
   async follow(
-    input: FollowRecordInput,
+    input: FollowRecordDto,
   ): Promise<Pick<UserFollowSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -173,7 +172,7 @@ export class FollowService {
     return { id: record.id }
   }
 
-  async unfollow(input: FollowRecordInput) {
+  async unfollow(input: FollowRecordDto) {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -201,7 +200,11 @@ export class FollowService {
     return true
   }
 
-  async checkFollowStatus(input: FollowRecordInput): Promise<FollowStatusView> {
+  async checkFollowStatus(input: FollowRecordDto): Promise<{
+    isFollowing: boolean
+    isFollowedByTarget: boolean
+    isMutualFollow: boolean
+  }> {
     const { targetType, targetId, userId } = input
     const isFollowing = await this.drizzle.ext.exists(
       this.userFollow,
@@ -241,7 +244,7 @@ export class FollowService {
    * 该方法只负责分页与详情聚合，不直接决定对外字段命名。
    */
   private async getFollowPageByTargetType(
-    query: FollowPageQuery,
+    query: FollowPageCommandDto,
     targetType: FollowTargetTypeEnum,
   ) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
@@ -302,7 +305,7 @@ export class FollowService {
   /**
    * 分页查询当前用户关注的作者。
    */
-  async getUserAuthorFollows(query: FollowPageQuery) {
+  async getUserAuthorFollows(query: FollowPageCommandDto) {
     const { page, detailMap } = await this.getFollowPageByTargetType(
       query,
       FollowTargetTypeEnum.AUTHOR,
@@ -330,7 +333,7 @@ export class FollowService {
   /**
    * 分页查询当前用户关注的论坛板块。
    */
-  async getUserSectionFollows(query: FollowPageQuery) {
+  async getUserSectionFollows(query: FollowPageCommandDto) {
     const { page, detailMap } = await this.getFollowPageByTargetType(
       query,
       FollowTargetTypeEnum.FORUM_SECTION,
@@ -355,7 +358,7 @@ export class FollowService {
     }
   }
 
-  async getMyFollowingUserPage(query: FollowPageQuery) {
+  async getMyFollowingUserPage(query: FollowPageCommandDto) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
       where: and(
         eq(this.userFollow.userId, query.userId),
@@ -398,7 +401,7 @@ export class FollowService {
     }
   }
 
-  async getMyFollowerUserPage(query: FollowPageQuery) {
+  async getMyFollowerUserPage(query: FollowPageCommandDto) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
       where: and(
         eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),

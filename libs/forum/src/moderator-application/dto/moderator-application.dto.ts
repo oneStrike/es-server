@@ -1,14 +1,24 @@
-import type { ForumModeratorPermissionEnum } from '../../moderator'
+import { BaseForumSectionDto } from '@libs/forum/section'
 import {
   ArrayProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/core'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  ForumModeratorPermissionEnum,
+} from '../../moderator'
 import { ForumModeratorApplicationStatusEnum } from '../moderator-application.constant'
 
+/**
+ * 版主申请基础 DTO。
+ * 严格对应 forum_moderator_application 表对外暴露的稳定字段。
+ */
 export class BaseForumModeratorApplicationDto extends BaseDto {
   @NumberProperty({
     description: '申请人用户ID',
@@ -35,7 +45,7 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   auditById?: number | null
 
   @EnumProperty({
-    description: '申请状态',
+    description: '申请状态（0=待审核；1=已通过；2=已拒绝）',
     example: ForumModeratorApplicationStatusEnum.PENDING,
     enum: ForumModeratorApplicationStatusEnum,
     required: true,
@@ -43,12 +53,13 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   status!: ForumModeratorApplicationStatusEnum
 
   @ArrayProperty({
-    description: '申请权限列表',
+    description: '申请权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
     itemType: 'number',
+    itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 5],
     required: false,
   })
-  permissions?: ForumModeratorPermissionEnum[]
+  permissions?: ForumModeratorPermissionEnum[] | null
 
   @StringProperty({
     description: '申请理由',
@@ -82,9 +93,105 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   auditAt?: Date | null
 
   @DateProperty({
-    description: '删除时间',
+    description: '删除时间；仅内部审计与排障使用。',
     example: '2026-03-19T12:00:00.000Z',
     required: false,
+    contract: false,
   })
   deletedAt?: Date | null
+}
+
+export class CreateForumModeratorApplicationDto extends PickType(
+  BaseForumModeratorApplicationDto,
+  ['sectionId', 'permissions', 'reason', 'remark'] as const,
+) {}
+
+export class QueryForumModeratorApplicationDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseForumModeratorApplicationDto, [
+      'applicantId',
+      'sectionId',
+      'status',
+    ] as const),
+  ),
+) {
+  @StringProperty({
+    description: '申请人昵称关键词',
+    example: '张三',
+    required: false,
+  })
+  nickname?: string
+}
+
+export class AuditForumModeratorApplicationDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumModeratorApplicationDto, ['status'] as const),
+) {
+  @StringProperty({
+    description: '审核意见',
+    example: '审核通过',
+    required: false,
+    maxLength: 500,
+  })
+  auditReason?: string
+
+  @StringProperty({
+    description: '备注',
+    example: '安排试用期观察',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string
+}
+
+class ForumModeratorApplicationUserDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+] as const) {}
+
+class ForumModeratorApplicationSectionDto extends PickType(BaseForumSectionDto, [
+  'id',
+  'name',
+  'description',
+  'icon',
+  'cover',
+] as const) {}
+
+export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationDto {
+  @ArrayProperty({
+    description: '权限名称列表',
+    itemType: 'string',
+    example: ['置顶', '加精', '审核'],
+    required: true,
+    validation: false,
+  })
+  permissionNames!: string[]
+
+  @NestedProperty({
+    description: '申请人信息',
+    required: false,
+    type: ForumModeratorApplicationUserDto,
+    validation: false,
+    nullable: false,
+  })
+  applicant!: ForumModeratorApplicationUserDto
+
+  @NestedProperty({
+    description: '审核人信息',
+    required: false,
+    type: ForumModeratorApplicationUserDto,
+    validation: false,
+  })
+  auditor?: ForumModeratorApplicationUserDto
+
+  @NestedProperty({
+    description: '板块信息',
+    required: false,
+    type: ForumModeratorApplicationSectionDto,
+    validation: false,
+    nullable: false,
+  })
+  section!: ForumModeratorApplicationSectionDto
 }

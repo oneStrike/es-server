@@ -1,8 +1,8 @@
 import type {
-  CreateNotificationTemplateInput,
-  QueryNotificationTemplatePageInput,
-  UpdateNotificationTemplateEnabledInput,
-  UpdateNotificationTemplateInput,
+  CreateNotificationTemplateDto,
+  QueryNotificationTemplatePageDto,
+  UpdateNotificationTemplateDto,
+  UpdateNotificationTemplateEnabledDto,
 } from '@libs/message/notification'
 import {
   getMessageNotificationTypeLabel,
@@ -24,7 +24,7 @@ export class MessageTemplateService {
    * 获取通知模板分页
    * 在表字段基础上补充通知类型中文标签，方便管理端直接展示
    */
-  async getNotificationTemplatePage(query: QueryNotificationTemplatePageInput) {
+  async getNotificationTemplatePage(query: QueryNotificationTemplatePageDto) {
     const page
       = await this.messageNotificationTemplateService.getNotificationTemplatePage(
         query,
@@ -52,7 +52,7 @@ export class MessageTemplateService {
    * 创建通知模板
    * 模板键由底层服务根据通知类型稳定推导
    */
-  async createNotificationTemplate(input: CreateNotificationTemplateInput) {
+  async createNotificationTemplate(input: CreateNotificationTemplateDto) {
     return this.messageNotificationTemplateService.createNotificationTemplate(
       input,
     )
@@ -62,7 +62,7 @@ export class MessageTemplateService {
    * 更新通知模板
    * 管理端仅透传可编辑字段，实际约束由消息域模板服务统一执行
    */
-  async updateNotificationTemplate(input: UpdateNotificationTemplateInput) {
+  async updateNotificationTemplate(input: UpdateNotificationTemplateDto) {
     return this.messageNotificationTemplateService.updateNotificationTemplate(
       input,
     )
@@ -73,7 +73,7 @@ export class MessageTemplateService {
    * 供运营快速停用异常模板，而不需要改动正文配置
    */
   async updateNotificationTemplateEnabled(
-    input: UpdateNotificationTemplateEnabledInput,
+    input: UpdateNotificationTemplateEnabledDto,
   ) {
     return this.messageNotificationTemplateService.updateNotificationTemplateEnabled(
       input,

@@ -3,7 +3,18 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
  * 论坛标签基础 DTO。
@@ -59,4 +70,37 @@ export class BaseForumTagDto extends BaseDto {
     default: 0,
   })
   sortOrder!: number
+}
+
+export class CreateForumTagDto extends OmitType(BaseForumTagDto, [
+  ...OMIT_BASE_FIELDS,
+  'useCount',
+] as const) {}
+
+export class UpdateForumTagDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateForumTagDto),
+) {}
+
+export class QueryForumTagDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseForumTagDto, ['name', 'isEnabled'] as const)),
+) {}
+
+export class AssignForumTagToTopicDto {
+  @NumberProperty({
+    description: '主题 ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  topicId!: number
+
+  @NumberProperty({
+    description: '标签 ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  tagId!: number
 }

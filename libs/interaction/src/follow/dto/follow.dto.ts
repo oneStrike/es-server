@@ -3,8 +3,8 @@ import {
   EnumProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
-import { IdDto, UserIdDto } from '@libs/platform/dto'
-import { IntersectionType } from '@nestjs/swagger'
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { FollowTargetTypeEnum } from '../follow.constant'
 
 /**
@@ -33,3 +33,20 @@ export class BaseFollowDto extends IntersectionType(IdDto, UserIdDto) {
   })
   createdAt!: Date
 }
+
+export class FollowTargetDto extends PickType(BaseFollowDto, [
+  'targetId',
+  'targetType',
+] as const) {}
+
+export class FollowRecordDto extends IntersectionType(
+  FollowTargetDto,
+  PickType(BaseFollowDto, ['userId'] as const),
+) {}
+
+export class FollowPageQueryDto extends PageDto {}
+
+export class FollowPageCommandDto extends IntersectionType(
+  FollowPageQueryDto,
+  PickType(BaseFollowDto, ['userId'] as const),
+) {}

@@ -1,7 +1,6 @@
 import type { NotificationDeliverySelect } from '@db/schema'
 import type {
   MessageNotificationDispatchStatusEnum,
-  MessageNotificationTypeEnum,
 } from './notification.constant'
 
 /**
@@ -14,23 +13,6 @@ export interface UpsertNotificationDeliveryInput {
   notificationId?: number
   failureReason?: string | null
   lastAttemptAt?: Date
-}
-
-/**
- * 通知投递结果分页查询入参
- * 供管理端按结果、通知类型、接收用户和业务键排障筛选
- */
-export interface QueryNotificationDeliveryPageInput {
-  pageIndex?: number
-  pageSize?: number
-  status?: MessageNotificationDispatchStatusEnum
-  notificationType?: MessageNotificationTypeEnum
-  receiverUserId?: number
-  bizKey?: string
-  outboxId?: string
-  reminderKind?: string
-  taskId?: number
-  assignmentId?: number
 }
 
 /**

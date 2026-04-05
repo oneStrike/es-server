@@ -1,9 +1,12 @@
 import type { UserFavoriteSelect } from '@db/schema'
-import type { FavoritePageQuery, FavoriteRecordInput } from './favorite.type'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
+import {
+  FavoritePageCommandDto,
+  FavoriteRecordDto,
+} from './dto/favorite.dto'
 import { FavoriteGrowthService } from './favorite-growth.service'
 import { FavoriteTargetTypeEnum } from './favorite.constant'
 import { IFavoriteTargetResolver } from './interfaces/favorite-target-resolver.interface'
@@ -110,7 +113,7 @@ export class FavoriteService {
    * @param input 收藏参数
    */
   async favorite(
-    input: FavoriteRecordInput,
+    input: FavoriteRecordDto,
   ): Promise<Pick<UserFavoriteSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
@@ -163,7 +166,7 @@ export class FavoriteService {
    * 取消收藏
    * @param input 取消收藏参数
    */
-  async unfavorite(input: FavoriteRecordInput) {
+  async unfavorite(input: FavoriteRecordDto) {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -189,7 +192,7 @@ export class FavoriteService {
    * @param input 查询参数
    * @returns 是否已收藏
    */
-  async checkFavoriteStatus(input: FavoriteRecordInput): Promise<boolean> {
+  async checkFavoriteStatus(input: FavoriteRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
       this.userFavorite,
@@ -206,7 +209,7 @@ export class FavoriteService {
    * 该方法只负责基础分页，不直接拼装对外响应结构。
    */
   private async getFavoritePageByTargetTypes(
-    query: FavoritePageQuery,
+    query: FavoritePageCommandDto,
     targetTypes: FavoriteTargetTypeEnum[],
   ) {
     const page = await this.drizzle.ext.findPagination(this.userFavorite, {
@@ -275,7 +278,7 @@ export class FavoriteService {
    * 分页查询用户收藏的作品。
    * 作品收藏由漫画与小说两种目标类型组成，统一返回 work 字段。
    */
-  async getUserWorkFavorites(query: FavoritePageQuery) {
+  async getUserWorkFavorites(query: FavoritePageCommandDto) {
     const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
       query,
       [FavoriteTargetTypeEnum.WORK_COMIC, FavoriteTargetTypeEnum.WORK_NOVEL],
@@ -294,7 +297,7 @@ export class FavoriteService {
    * 分页查询用户收藏的论坛主题。
    * 主题收藏只返回论坛主题字段，避免与作品结构混杂。
    */
-  async getUserTopicFavorites(query: FavoritePageQuery) {
+  async getUserTopicFavorites(query: FavoritePageCommandDto) {
     const { page, detailMaps } = await this.getFavoritePageByTargetTypes(
       query,
       [FavoriteTargetTypeEnum.FORUM_TOPIC],

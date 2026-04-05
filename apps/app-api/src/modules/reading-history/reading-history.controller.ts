@@ -1,13 +1,13 @@
-import { ReadingStateService } from '@libs/interaction/reading-state'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   ClearReadingHistoryDto,
   DeleteReadingHistoryDto,
   QueryReadingHistoryDto,
   ReadingHistoryWorkDto,
-} from './dto/reading-history.dto'
+  ReadingStateService,
+} from '@libs/interaction/reading-state'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('阅读记录')
 @Controller('app/reading-history')
@@ -39,8 +39,10 @@ export class ReadingHistoryController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.readingStateService.deleteUserReadingHistory(
-      body.workIds,
-      userId,
+      {
+        ...body,
+        userId,
+      },
     )
   }
 
@@ -54,8 +56,10 @@ export class ReadingHistoryController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.readingStateService.clearUserReadingHistory(
-      userId,
-      body.workType,
+      {
+        ...body,
+        userId,
+      },
     )
   }
 }

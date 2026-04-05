@@ -1,4 +1,4 @@
-import type { CreateNotificationOutboxEventInput } from '@libs/message/outbox'
+import type { CreateNotificationOutboxEventDto } from '@libs/message/outbox'
 import type {
   TaskAvailableReminderEventInput,
   TaskExpiringSoonReminderEventInput,
@@ -25,7 +25,7 @@ export class TaskNotificationService {
 
   createAvailableReminderEvent(
     params: TaskAvailableReminderEventInput,
-  ): CreateNotificationOutboxEventInput {
+  ): CreateNotificationOutboxEventDto {
     return this.buildTaskReminderNotificationEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.AVAILABLE,
@@ -35,7 +35,7 @@ export class TaskNotificationService {
 
   createExpiringSoonReminderEvent(
     params: TaskExpiringSoonReminderEventInput,
-  ): CreateNotificationOutboxEventInput {
+  ): CreateNotificationOutboxEventDto {
     return this.buildTaskReminderNotificationEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.EXPIRING_SOON,
@@ -45,7 +45,7 @@ export class TaskNotificationService {
 
   createRewardGrantedReminderEvent(
     params: TaskRewardGrantedReminderEventInput,
-  ): CreateNotificationOutboxEventInput {
+  ): CreateNotificationOutboxEventDto {
     return this.buildTaskReminderNotificationEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.REWARD_GRANTED,

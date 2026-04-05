@@ -4,7 +4,12 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
@@ -83,3 +88,50 @@ export class BaseForumActionLogDto extends IdDto {
   })
   createdAt!: Date
 }
+
+export class CreateForumActionLogDto extends PickType(BaseForumActionLogDto, [
+  'userId',
+  'actionType',
+  'targetType',
+  'targetId',
+] as const) {
+  @StringProperty({
+    description: '操作前数据',
+    example: '{"title":"旧标题"}',
+    required: false,
+  })
+  beforeData?: string
+
+  @StringProperty({
+    description: '操作后数据',
+    example: '{"title":"新标题"}',
+    required: false,
+  })
+  afterData?: string
+
+  @StringProperty({
+    description: '操作 IP 地址',
+    example: '127.0.0.1',
+    required: false,
+  })
+  ipAddress?: string
+
+  @StringProperty({
+    description: '用户代理',
+    example: 'Mozilla/5.0',
+    required: false,
+  })
+  userAgent?: string
+}
+
+export class QueryForumActionLogDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseForumActionLogDto, [
+      'userId',
+      'targetId',
+      'actionType',
+      'targetType',
+    ] as const),
+  ),
+) {}

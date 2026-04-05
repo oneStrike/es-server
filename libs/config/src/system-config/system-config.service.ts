@@ -1,7 +1,6 @@
 import type { Cache } from 'cache-manager'
 import type {
   ConfigAllowedTemplate,
-  UpdateSystemConfigInput,
 } from './system-config.type'
 import { DrizzleService } from '@db/core'
 import { AesService, RsaService } from '@libs/platform/modules'
@@ -10,6 +9,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
 import { desc } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
+import { UpdateSystemConfigDto } from './dto/config.dto'
 import {
   CACHE_KEY,
   CACHE_TTL,
@@ -97,11 +97,9 @@ export class SystemConfigService implements OnModuleInit {
    * 3. 掩码忽略：前端传回的掩码值（****）会被忽略，保留原值
    * 4. 缓存刷新：更新后自动刷新缓存并通知 ConfigReader
    *
-   * @param dto 配置数据（结构化入参）
-   * @param userId 用户 ID（预留参数）
-   * @returns 是否成功
+   * 管理端只允许更新 DTO 明确定义的顶层配置节点；未知字段会在进入该方法前被 whitelist 过滤。
    */
-  async updateConfig(dto: UpdateSystemConfigInput, userId: number) {
+  async updateConfig(dto: UpdateSystemConfigDto, userId: number) {
     const currentConfig = this.cloneConfig(this.configReader.get())
     const nextConfig = this.cloneConfig(currentConfig)
 
@@ -114,7 +112,7 @@ export class SystemConfigService implements OnModuleInit {
         | ConfigAllowedTemplate
         | undefined
       const filteredInput = this.filterAllowedFields(
-        dto[key as keyof UpdateSystemConfigInput],
+        dto[key as keyof UpdateSystemConfigDto],
         allowedTemplate ?? {},
       )
       const meta = CONFIG_SECURITY_META[key]
@@ -158,10 +156,8 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   /**
-   * 过滤字段，只保留允许的字段
-   * @param input 输入对象
-   * @param allowedFields 允许的字段模板（从 DEFAULT_CONFIG 获取）
-   * @returns 过滤后的对象
+   * 递归过滤输入对象，只保留 DEFAULT_CONFIG 白名单中存在的字段。
+   * 这样即使前端绕过 DTO 传入额外节点，也不会写入持久化快照。
    */
   private filterAllowedFields(
     input: unknown,
@@ -193,6 +189,7 @@ export class SystemConfigService implements OnModuleInit {
 
   /**
    * 处理敏感字段（掩码回填 + 加密）
+   * 前端回传掩码值时保留原密文，回传明文或 RSA 密文时统一转成 AES 密文存储。
    */
   private async processSensitiveFields(
     input: Record<string, unknown>,
@@ -230,7 +227,8 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   /**
-   * 刷新缓存并通知 ConfigReader
+   * 刷新缓存并通知 ConfigReader 重新装载。
+   * 缓存内始终保存合并默认值且已解密的配置快照，供业务模块同步读取。
    */
   private async refreshCache(config: any) {
     const mergedConfig = this.mergeWithDefaults(config)
@@ -244,8 +242,8 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   /**
-   * 初始化时加载配置到缓存
-   * 读取最新一条配置记录
+   * 模块初始化时预热缓存。
+   * 若数据库中还没有配置记录，会先写入一条默认快照，保证读取侧永远能拿到完整配置。
    */
   private async initCache() {
     const config = await this.findLatestConfig()
@@ -261,7 +259,7 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   /**
-   * 获取最新的配置记录
+   * 读取最新一条系统配置快照。
    */
   private async findLatestConfig() {
     const configs = await this.db
@@ -274,9 +272,8 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   /**
-   * 获取配置历史列表（分页）
-   * @param page 页码
-   * @param pageSize 每页数量
+   * 获取配置历史分页。
+   * 历史页保留原始快照，供后台追溯每次配置变更的落库结果。
    */
   async findConfigHistory(page = 1, pageSize = 10) {
     const result = await this.drizzle.ext.findPagination(this.systemConfig, {
@@ -296,7 +293,8 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   /**
-   * 解密配置中的敏感字段
+   * 解密快照中的敏感字段。
+   * 解密失败时保留原值，避免单个字段损坏导致整份配置不可读。
    */
   private async decryptSensitiveFields(config: Record<string, any>) {
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
@@ -320,6 +318,9 @@ export class SystemConfigService implements OnModuleInit {
     }
   }
 
+  /**
+   * 将持久化快照与默认配置合并，补齐缺失节点。
+   */
   private mergeWithDefaults(config: Record<string, unknown>) {
     return this.deepMerge(
       this.cloneConfig(DEFAULT_CONFIG) as Record<string, unknown>,
@@ -327,6 +328,9 @@ export class SystemConfigService implements OnModuleInit {
     )
   }
 
+  /**
+   * 组装落库快照，只持久化允许存储的顶层配置块和更新人。
+   */
   private buildPersistedSnapshot(
     config: Record<string, unknown>,
     userId?: number,
@@ -341,6 +345,9 @@ export class SystemConfigService implements OnModuleInit {
     }
   }
 
+  /**
+   * 递归合并对象，`undefined` 不覆盖目标值。
+   */
   private deepMerge(
     target: Record<string, any>,
     source: Record<string, any>,
@@ -359,14 +366,23 @@ export class SystemConfigService implements OnModuleInit {
     return target
   }
 
+  /**
+   * 判断值是否为可递归处理的普通对象。
+   */
   private isPlainObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
   }
 
+  /**
+   * 通过 JSON 序列化复制配置对象，避免原地修改缓存快照。
+   */
   private cloneConfig<T>(config: T) {
     return JSON.parse(JSON.stringify(config)) as T
   }
 
+  /**
+   * 递归移除对象中的 `null` 值，避免数据库里的空值覆盖默认配置。
+   */
   private removeNullValues<T>(value: T) {
     if (Array.isArray(value)) {
       return value.map(item => this.removeNullValues(item)) as T
@@ -388,6 +404,9 @@ export class SystemConfigService implements OnModuleInit {
     return value
   }
 
+  /**
+   * 按路径读取对象值，路径格式为 `a.b.c`。
+   */
   private getValueByPath(target: Record<string, any> | null, path: string) {
     if (!target) {
       return undefined
@@ -398,6 +417,9 @@ export class SystemConfigService implements OnModuleInit {
       .reduce<any>((current, segment) => current?.[segment], target)
   }
 
+  /**
+   * 按路径写入对象值，缺失的中间节点会自动补成空对象。
+   */
   private setValueByPath(
     target: Record<string, any>,
     path: string,
@@ -421,6 +443,9 @@ export class SystemConfigService implements OnModuleInit {
     current[lastSegment] = value
   }
 
+  /**
+   * 判断对象上是否存在指定路径。
+   */
   private hasPath(target: Record<string, any>, path: string) {
     const segments = path.split('.')
     let current: any = target

@@ -1,22 +1,14 @@
-import type { UserLikeSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
+import {
+  LikePageQueryDto,
+  LikeRecordDto,
+} from './dto/like.dto'
 import { ILikeTargetResolver } from './interfaces/like-target-resolver.interface'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeTargetTypeEnum } from './like.constant'
-
-type LikeTargetInput = Pick<UserLikeSelect, 'targetId'> & {
-  targetType: LikeTargetTypeEnum
-}
-
-type LikeRecordInput = LikeTargetInput & Pick<UserLikeSelect, 'userId'>
-
-type LikeListQuery = Pick<LikeRecordInput, 'userId' | 'targetType'> & {
-  pageIndex?: number
-  pageSize?: number
-}
 
 /**
  * 点赞服务
@@ -169,7 +161,7 @@ export class LikeService {
    * @param input.userId - 用户ID
    * @throws BadRequestException 当已点赞或目标不存在时抛出异常
    */
-  async like(input: LikeRecordInput): Promise<void> {
+  async like(input: LikeRecordDto): Promise<void> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -211,7 +203,7 @@ export class LikeService {
    * @param input.userId - 用户ID
    * @throws BadRequestException 当点赞记录不存在时抛出异常
    */
-  async unlike(input: LikeRecordInput) {
+  async unlike(input: LikeRecordDto) {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -241,7 +233,7 @@ export class LikeService {
    * @param input.userId - 用户ID
    * @returns 是否已点赞（true表示已点赞）
    */
-  async checkLikeStatus(input: LikeRecordInput): Promise<boolean> {
+  async checkLikeStatus(input: LikeRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
       this.userLike,
@@ -262,7 +254,7 @@ export class LikeService {
    * @param query.pageSize - 每页数量（默认15）
    * @returns 分页点赞记录列表，包含目标详情
    */
-  async getUserLikes(query: LikeListQuery) {
+  async getUserLikes(query: LikePageQueryDto & Pick<LikeRecordDto, 'userId'>) {
     const page = await this.drizzle.ext.findPagination(this.userLike, {
       where: and(
         eq(this.userLike.targetType, query.targetType),

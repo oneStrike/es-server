@@ -1,7 +1,7 @@
 import type { AppUserSelect } from '@db/schema'
 import type { QueryUserBadgePublicDto } from '@libs/growth/badge'
-import type { QueryUserExperienceRecordPageInput } from '@libs/growth/experience'
-import type { QueryUserPointRecordPageInput } from '@libs/growth/point'
+import type { QueryUserExperienceRecordDto } from '@libs/growth/experience'
+import type { QueryUserPointRecordDto } from '@libs/growth/point'
 
 /**
  * 更新当前用户资料入参。
@@ -33,14 +33,14 @@ export interface ChangeMyPhoneInput {
  * 复用成长领域分页筛选字段，由 service 在内部补充 userId。
  */
 export interface QueryMyPointRecordInput
-  extends Omit<QueryUserPointRecordPageInput, 'userId'> {}
+  extends Omit<QueryUserPointRecordDto, 'userId'> {}
 
 /**
  * 查询当前用户经验流水入参。
  * 复用成长领域分页筛选字段，由 service 在内部补充 userId。
  */
 export interface QueryMyExperienceRecordInput
-  extends Omit<QueryUserExperienceRecordPageInput, 'userId'> {}
+  extends Omit<QueryUserExperienceRecordDto, 'userId'> {}
 
 /**
  * 查询当前用户徽章列表入参。

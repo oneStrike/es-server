@@ -1,9 +1,9 @@
 import type { Db } from '@db/core'
 import type {
-  CreateChatMessageCreatedOutboxEventInput,
-  CreateMessageOutboxEventInput,
-  CreateNotificationOutboxEventInput,
-} from './outbox.type'
+  CreateChatMessageCreatedOutboxEventDto,
+  CreateMessageOutboxEventDto,
+  CreateNotificationOutboxEventDto,
+} from './dto/outbox-event.dto'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
@@ -14,17 +14,19 @@ import {
 } from './outbox.constant'
 
 /**
- * 消息发件箱服务
- * 提供消息事件的入队功能，实现发件箱模式
+ * 消息发件箱服务。
+ * 统一负责各业务域 outbox 事件入队、通知事件规范化以及补偿重试所需的状态切换。
  */
 @Injectable()
 export class MessageOutboxService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** message_outbox 表访问入口。 */
   private get outbox() {
     return this.drizzle.schema.messageOutbox
   }
@@ -33,7 +35,7 @@ export class MessageOutboxService {
    * 将消息事件入队
    * @param dto 消息事件数据
    */
-  async enqueueEvent(dto: CreateMessageOutboxEventInput) {
+  async enqueueEvent(dto: CreateMessageOutboxEventDto) {
     return this.drizzle.withErrorHandling(async () =>
       this.enqueueEventInTx(this.db, dto),
     )
@@ -43,7 +45,7 @@ export class MessageOutboxService {
    * 批量将消息事件入队
    * @param dtos 消息事件数据列表
    */
-  async enqueueEvents(dtos: CreateMessageOutboxEventInput[]) {
+  async enqueueEvents(dtos: CreateMessageOutboxEventDto[]) {
     if (dtos.length === 0) {
       return
     }
@@ -52,7 +54,11 @@ export class MessageOutboxService {
     )
   }
 
-  async enqueueEventInTx(tx: Db, dto: CreateMessageOutboxEventInput) {
+  /**
+   * 在既有事务中写入单条 outbox 事件。
+   * 使用 bizKey 做幂等去重，允许业务写路径安全重试而不会重复插入同一事件。
+   */
+  async enqueueEventInTx(tx: Db, dto: CreateMessageOutboxEventDto) {
     await tx
       .insert(this.outbox)
       .values({
@@ -72,7 +78,7 @@ export class MessageOutboxService {
    * @param tx 事务实例
    * @param dtos 消息事件数据列表
    */
-  async enqueueEventsInTx(tx: Db, dtos: CreateMessageOutboxEventInput[]) {
+  async enqueueEventsInTx(tx: Db, dtos: CreateMessageOutboxEventDto[]) {
     if (dtos.length === 0) {
       return
     }
@@ -97,7 +103,7 @@ export class MessageOutboxService {
    * 将通知事件入队
    * @param dto 通知事件数据
    */
-  async enqueueNotificationEvent(dto: CreateNotificationOutboxEventInput) {
+  async enqueueNotificationEvent(dto: CreateNotificationOutboxEventDto) {
     await this.drizzle.withErrorHandling(async () =>
       this.enqueueNotificationEventInTx(this.db, dto),
     )
@@ -107,7 +113,7 @@ export class MessageOutboxService {
    * 批量将通知事件入队
    * @param dtos 通知事件数据列表
    */
-  async enqueueNotificationEvents(dtos: CreateNotificationOutboxEventInput[]) {
+  async enqueueNotificationEvents(dtos: CreateNotificationOutboxEventDto[]) {
     if (dtos.length === 0) {
       return
     }
@@ -116,9 +122,13 @@ export class MessageOutboxService {
     )
   }
 
+  /**
+   * 在既有事务中写入单条通知 outbox 事件。
+   * 事件类型以 payload.type 为最终事实源，兼容期仍会校验传入 eventType 是否一致。
+   */
   async enqueueNotificationEventInTx(
     tx: Db,
-    dto: CreateNotificationOutboxEventInput,
+    dto: CreateNotificationOutboxEventDto,
   ) {
     const eventType = this.normalizeNotificationEventType(dto)
     await this.enqueueEventInTx(
@@ -139,7 +149,7 @@ export class MessageOutboxService {
    */
   async enqueueNotificationEventsInTx(
     tx: Db,
-    dtos: CreateNotificationOutboxEventInput[],
+    dtos: CreateNotificationOutboxEventDto[],
   ) {
     if (dtos.length === 0) {
       return
@@ -162,7 +172,7 @@ export class MessageOutboxService {
    */
   async enqueueChatMessageCreatedEventInTx(
     tx: Db,
-    dto: CreateChatMessageCreatedOutboxEventInput,
+    dto: CreateChatMessageCreatedOutboxEventDto,
   ) {
     await this.enqueueEventInTx(tx, {
       domain: MessageOutboxDomainEnum.CHAT,
@@ -241,7 +251,7 @@ export class MessageOutboxService {
    * 兼容期允许调用方保留 eventType，但必须与 payload.type 保持一致
    */
   private normalizeNotificationEventType(
-    dto: CreateNotificationOutboxEventInput,
+    dto: CreateNotificationOutboxEventDto,
   ) {
     const eventType = dto.payload.type
 

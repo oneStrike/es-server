@@ -5,7 +5,19 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  DragReorderDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { ForumReviewPolicyEnum } from '../../forum.constant'
 
 /**
@@ -146,3 +158,60 @@ export class BaseForumSectionDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+export class CreateForumSectionDto extends OmitType(
+  BaseForumSectionDto,
+  [
+    ...OMIT_BASE_FIELDS,
+    'lastTopicId',
+    'topicCount',
+    'commentCount',
+    'lastPostAt',
+    'deletedAt',
+  ] as const,
+) {}
+
+export class UpdateForumSectionDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateForumSectionDto),
+) {}
+
+export class QueryForumSectionDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseForumSectionDto, [
+      'name',
+      'isEnabled',
+      'topicReviewPolicy',
+      'groupId',
+    ] as const),
+  ),
+) {}
+
+export class QueryPublicForumSectionDto extends PickType(
+  PartialType(BaseForumSectionDto),
+  ['groupId'] as const,
+) {
+  @NumberProperty({
+    description: '当前用户 ID（用于补充访问状态）',
+    example: 1,
+    required: false,
+    contract: false,
+  })
+  userId?: number
+}
+
+export class UpdateForumSectionEnabledDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumSectionDto, ['isEnabled'] as const),
+) {}
+
+export class SwapForumSectionSortDto extends PickType(DragReorderDto, [
+  'dragId',
+  'targetId',
+] as const) {}
+
+export class ForumSectionFollowCountRepairResultDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumSectionDto, ['followersCount'] as const),
+) {}

@@ -1,17 +1,8 @@
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CreateForumTopicInput,
   ForumTopicMediaInput,
   PublicForumTopicDetailContext,
-  QueryForumTopicInput,
-  QueryPublicForumTopicInput,
-  UpdateForumTopicAuditStatusInput,
-  UpdateForumTopicFeaturedInput,
-  UpdateForumTopicHiddenInput,
-  UpdateForumTopicInput,
-  UpdateForumTopicLockedInput,
-  UpdateForumTopicPinnedInput,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
 import {
@@ -54,6 +45,17 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumReviewPolicyEnum } from '../forum.constant'
 import { ForumPermissionService } from '../permission'
+import {
+  CreateForumTopicDto,
+  QueryForumTopicDto,
+  QueryPublicForumTopicDto,
+  UpdateForumTopicAuditStatusDto,
+  UpdateForumTopicDto,
+  UpdateForumTopicFeaturedDto,
+  UpdateForumTopicHiddenDto,
+  UpdateForumTopicLockedDto,
+  UpdateForumTopicPinnedDto,
+} from './dto/forum-topic.dto'
 import {
   FORUM_TOPIC_IMAGE_MAX_COUNT,
   FORUM_TOPIC_VIDEO_MAX_COUNT,
@@ -392,7 +394,7 @@ export class ForumTopicService {
    * - 审核通过时触发成长奖励事件
    * - 写入后记录操作日志
    */
-  async createForumTopic(createTopicDto: CreateForumTopicInput) {
+  async createForumTopic(createTopicDto: CreateForumTopicDto) {
     const { sectionId, userId, images, videos, ...topicData } = createTopicDto
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
@@ -641,7 +643,7 @@ export class ForumTopicService {
    * 获取后台主题分页列表。
    * 后台列表仅返回展示所需字段和正文摘要，避免分页接口直接传输完整正文。
    */
-  async getTopics(queryForumTopicDto: QueryForumTopicInput) {
+  async getTopics(queryForumTopicDto: QueryForumTopicDto) {
     const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
     const conditions: SQL[] = [isNull(this.forumTopicTable.deletedAt)]
 
@@ -740,7 +742,7 @@ export class ForumTopicService {
    * - 会补充每条主题的发帖用户简要信息与所属板块简要信息
    * - 登录用户会返回每条主题的点赞与收藏状态
    */
-  async getPublicTopics(query: QueryPublicForumTopicInput) {
+  async getPublicTopics(query: QueryPublicForumTopicDto & { userId?: number }) {
     await this.forumPermissionService.ensureUserCanAccessSection(
       query.sectionId,
       query.userId,
@@ -965,7 +967,7 @@ export class ForumTopicService {
    */
   private async updateTopicWithCurrent(
     topic: ForumTopicSelect,
-    updateForumTopicDto: UpdateForumTopicInput,
+    updateForumTopicDto: UpdateForumTopicDto,
   ) {
     const { id, images, videos, ...updateData } = updateForumTopicDto
 
@@ -1050,7 +1052,7 @@ export class ForumTopicService {
     return true
   }
 
-  async updateTopic(updateForumTopicDto: UpdateForumTopicInput) {
+  async updateTopic(updateForumTopicDto: UpdateForumTopicDto) {
     const topic = await this.getActiveTopicOrThrow(updateForumTopicDto.id)
     return this.updateTopicWithCurrent(topic, updateForumTopicDto)
   }
@@ -1228,21 +1230,21 @@ export class ForumTopicService {
     )
   }
 
-  async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedInput) {
+  async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedDto) {
     return this.updateTopicStatus(updateTopicPinnedDto.id, {
       isPinned: updateTopicPinnedDto.isPinned,
     })
   }
 
   async updateTopicFeatured(
-    updateTopicFeaturedDto: UpdateForumTopicFeaturedInput,
+    updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
   ) {
     return this.updateTopicStatus(updateTopicFeaturedDto.id, {
       isFeatured: updateTopicFeaturedDto.isFeatured,
     })
   }
 
-  async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedInput) {
+  async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedDto) {
     return this.updateTopicStatus(updateTopicLockedDto.id, {
       isLocked: updateTopicLockedDto.isLocked,
     })
@@ -1252,7 +1254,7 @@ export class ForumTopicService {
    * 更新主题隐藏状态。
    * 隐藏状态变更会影响板块可见主题统计，需同步更新板块状态。
    */
-  async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenInput) {
+  async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenDto) {
     return this.updateTopicStatus(
       updateTopicHiddenDto.id,
       {
@@ -1313,7 +1315,7 @@ export class ForumTopicService {
    * 审核状态变更会影响板块可见主题统计，需同步更新板块状态。
    */
   async updateTopicAuditStatus(
-    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusInput,
+    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
   ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
     const currentTopic = await this.db.query.forumTopic.findFirst({
@@ -1370,7 +1372,7 @@ export class ForumTopicService {
    * 用户编辑自己的主题。
    * 校验主题所有权后调用通用更新方法。
    */
-  async updateUserTopic(userId: number, input: UpdateForumTopicInput) {
+  async updateUserTopic(userId: number, input: UpdateForumTopicDto) {
     const topic = await this.getActiveTopicOrThrow(input.id)
 
     if (topic.userId !== userId) {

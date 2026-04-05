@@ -1,15 +1,16 @@
 import {
-  ForumSearchSortTypeEnum,
-  ForumSearchTypeEnum,
-} from '@libs/forum/search'
-import {
   DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
+import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant'
 
+/**
+ * 论坛搜索查询 DTO。
+ * 供 app/public 与后台复用同一套搜索参数契约。
+ */
 export class ForumSearchDto extends PageDto {
   @StringProperty({
     description: '搜索关键词',
@@ -21,7 +22,7 @@ export class ForumSearchDto extends PageDto {
   keyword!: string
 
   @EnumProperty({
-    description: '搜索类型',
+    description: '搜索类型（all=全部；topic=主题；comment=评论）',
     example: ForumSearchTypeEnum.ALL,
     required: false,
     enum: ForumSearchTypeEnum,
@@ -32,6 +33,7 @@ export class ForumSearchDto extends PageDto {
     description: '板块ID',
     example: 1,
     required: false,
+    min: 1,
   })
   sectionId?: number
 
@@ -39,11 +41,12 @@ export class ForumSearchDto extends PageDto {
     description: '标签ID',
     example: 1,
     required: false,
+    min: 1,
   })
   tagId?: number
 
   @EnumProperty({
-    description: '排序类型',
+    description: '排序类型（relevance=相关度；latest=最新；hot=最热）',
     example: ForumSearchSortTypeEnum.RELEVANCE,
     required: false,
     enum: ForumSearchSortTypeEnum,
@@ -51,9 +54,13 @@ export class ForumSearchDto extends PageDto {
   sort?: ForumSearchSortTypeEnum
 }
 
+/**
+ * 论坛搜索结果项 DTO。
+ * 统一承载主题和评论搜索结果，便于分页接口直接复用。
+ */
 export class ForumSearchResultDto {
   @EnumProperty({
-    description: '结果类型',
+    description: '结果类型（topic=主题；comment=评论）',
     example: ForumSearchTypeEnum.TOPIC,
     enum: ForumSearchTypeEnum,
     validation: false,
@@ -119,7 +126,7 @@ export class ForumSearchResultDto {
   userAvatarUrl?: string
 
   @NumberProperty({
-    description: '评论ID',
+    description: '评论ID；仅评论搜索结果返回。',
     example: 1,
     required: false,
     validation: false,
@@ -127,7 +134,7 @@ export class ForumSearchResultDto {
   commentId?: number
 
   @StringProperty({
-    description: '评论内容摘要',
+    description: '评论内容摘要；仅评论搜索结果返回。',
     example: '这是评论内容',
     required: false,
     validation: false,

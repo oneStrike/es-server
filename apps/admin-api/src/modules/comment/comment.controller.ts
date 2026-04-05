@@ -1,4 +1,9 @@
-import { CommentService } from '@libs/interaction/comment'
+import {
+  CommentService,
+  QueryAdminCommentPageDto,
+  UpdateAdminCommentAuditStatusDto,
+  UpdateAdminCommentHiddenDto,
+} from '@libs/interaction/comment'
 import { AuditRoleEnum } from '@libs/platform/constant'
 import {
   ApiDoc,
@@ -13,9 +18,6 @@ import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import {
   AdminCommentDetailDto,
   AdminCommentPageItemDto,
-  QueryAdminCommentPageDto,
-  UpdateAdminCommentAuditStatusDto,
-  UpdateAdminCommentHiddenDto,
 } from './dto/comment.dto'
 
 @ApiTags('内容治理/评论处理')

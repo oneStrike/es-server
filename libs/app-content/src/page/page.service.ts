@@ -1,22 +1,19 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { IdDto, IdsDto } from '@libs/platform/dto'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import {
-  AppPageQueryInput,
-  BatchDeleteAppPageInput,
-  CreateAppPageInput,
-  UpdateAppPageInput,
-} from './page.type'
+  CreateAppPageDto,
+  QueryAppPageDto,
+  QueryPageByCodeDto,
+  UpdateAppPageDto,
+} from './dto/page.dto'
 
 /**
  * 应用页面服务
  *
- * 负责页面配置的创建、查询与更新
+ * 负责页面配置写入、分页检索和启停管理
  */
 @Injectable()
 export class AppPageService {
@@ -33,13 +30,10 @@ export class AppPageService {
   }
 
   /**
-   * 创建页面
-   *
-   * @param createPageDto 创建页面的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException 当页面编码或路径已存在时
+   * 创建页面配置。
+   * 页面 `code` 和 `path` 命中唯一约束时统一转成业务异常，避免泄露底层数据库错误。
    */
-  async createPage(createPageDto: CreateAppPageInput) {
+  async createPage(createPageDto: CreateAppPageDto) {
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.appPage).values(createPageDto),
       { duplicate: '页面编码或路径已存在' },
@@ -48,12 +42,10 @@ export class AppPageService {
   }
 
   /**
-   * 分页查询页面列表
-   *
-   * @param queryPageDto 查询条件
-   * @returns 分页结果
+   * 根据名称、编码、权限和平台等条件查询页面分页。
+   * `enablePlatform` 保持 JSON 字符串输入，兼容 query 参数的序列化方式。
    */
-  async findPage(queryPageDto: AppPageQueryInput) {
+  async findPage(queryPageDto: QueryAppPageDto) {
     const { name, code, accessLevel, isEnabled, enablePlatform, ...other } =
       queryPageDto
 
@@ -96,9 +88,7 @@ export class AppPageService {
   }
 
   /**
-   * 查询所有启用的页面
-   *
-   * @returns 启用状态的页面列表
+   * 查询所有已启用页面，供 app/public 侧一次性拉取静态页面配置。
    */
   async findActivePages() {
     return this.db.query.appPage.findMany({
@@ -107,15 +97,11 @@ export class AppPageService {
   }
 
   /**
-   * 根据ID查询页面详情
-   *
-   * @param id 页面ID
-   * @returns 页面详情
-   * @throws NotFoundException 当页面不存在时
+   * 按主键查询页面详情，未命中时抛出 `NotFoundException`。
    */
-  async findById(id: number) {
+  async findById(dto: IdDto) {
     const page = await this.db.query.appPage.findFirst({
-      where: { id },
+      where: { id: dto.id },
     })
 
     if (!page) {
@@ -125,15 +111,11 @@ export class AppPageService {
   }
 
   /**
-   * 根据编码查询页面详情
-   *
-   * @param code 页面编码
-   * @returns 页面详情
-   * @throws NotFoundException 当页面不存在时
+   * 按页面编码查询详情，适用于需要通过业务编码定位页面的后台入口。
    */
-  async findByCode(code: string) {
+  async findByCode(dto: QueryPageByCodeDto) {
     const page = await this.db.query.appPage.findFirst({
-      where: { code },
+      where: { code: dto.code },
     })
 
     if (!page) {
@@ -143,13 +125,10 @@ export class AppPageService {
   }
 
   /**
-   * 更新页面
-   *
-   * @param updatePageDto 更新页面的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException 当页面不存在或编码/路径冲突时
+   * 更新页面配置主体字段。
+   * 主键不存在或命中唯一约束时，分别转换为明确的业务异常。
    */
-  async updatePage(updatePageDto: UpdateAppPageInput) {
+  async updatePage(updatePageDto: UpdateAppPageDto) {
     const { id, ...updateData } = updatePageDto
 
     const result = await this.drizzle.withErrorHandling(
@@ -166,12 +145,10 @@ export class AppPageService {
   }
 
   /**
-   * 批量下线页面
-   *
-   * @param dto 删除数据
-   * @returns 是否成功
+   * 批量下线页面。
+   * 该操作只更新启用状态，保留页面记录用于后续审计和恢复。
    */
-  async batchDelete(dto: BatchDeleteAppPageInput) {
+  async batchDelete(dto: IdsDto) {
     const { ids } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db

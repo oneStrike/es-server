@@ -1,13 +1,7 @@
 import type { Db } from '@db/core'
 import type { ForumModeratorSelect, ForumSectionSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type {
-  AssignForumModeratorSectionInput,
-  CreateForumModeratorInput,
-  NormalizedModeratorScope,
-  QueryForumModeratorInput,
-  UpdateForumModeratorInput,
-} from './moderator.type'
+import type { NormalizedModeratorScope } from './moderator.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   BadRequestException,
@@ -16,6 +10,12 @@ import {
 } from '@nestjs/common'
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import {
+  AssignForumModeratorSectionDto,
+  CreateForumModeratorDto,
+  QueryForumModeratorDto,
+  UpdateForumModeratorDto,
+} from './dto/moderator.dto'
+import {
   ALL_FORUM_MODERATOR_PERMISSIONS,
   FORUM_MODERATOR_PERMISSION_LABELS,
   ForumModeratorPermissionEnum,
@@ -23,37 +23,47 @@ import {
 } from './moderator.constant'
 
 /**
- * 论坛版主服务类
- * 提供论坛版主的增删改查、板块分配、权限管理等核心业务逻辑
+ * 论坛版主服务。
+ * 负责版主角色归一化、板块作用域同步，以及后台管理所需的详情与分页视图装配。
  */
 @Injectable()
 export class ForumModeratorService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** forum_moderator 表访问入口。 */
   private get forumModerator() {
     return this.drizzle.schema.forumModerator
   }
 
+  /** forum_moderator_section 表访问入口。 */
   private get forumModeratorSection() {
     return this.drizzle.schema.forumModeratorSection
   }
 
+  /** forum_section 表访问入口。 */
   private get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
+  /** forum_section_group 表访问入口。 */
   private get forumSectionGroup() {
     return this.drizzle.schema.forumSectionGroup
   }
 
+  /** app_user 表访问入口。 */
   private get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  /**
+   * 归一化权限数组。
+   * 仅保留仓库定义的合法权限值，并按系统标准顺序返回，避免写库时出现脏枚举或乱序数组。
+   */
   private normalizePermissions(
     permissions?: Array<number | string | null | undefined> | null,
   ) {
@@ -80,12 +90,20 @@ export class ForumModeratorService {
     )
   }
 
+  /**
+   * 将权限值映射为后台展示文案。
+   * 该映射仅用于返回管理端视图，不参与任何鉴权判断。
+   */
   private getPermissionNames(permissions: ForumModeratorPermissionEnum[]) {
     return permissions.map(
       (permission) => FORUM_MODERATOR_PERMISSION_LABELS[permission],
     )
   }
 
+  /**
+   * 校验目标用户存在且未软删除。
+   * 创建版主前提前失败，避免事务内才发现脏 userId。
+   */
   private async ensureUserExists(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: {
@@ -100,6 +118,10 @@ export class ForumModeratorService {
     }
   }
 
+  /**
+   * 校验版主分组存在。
+   * 仅分组版主路径允许写入 groupId，因此在角色归一化阶段完成该约束。
+   */
   private async ensureGroupExists(groupId: number) {
     const group = await this.db.query.forumSectionGroup.findFirst({
       where: {
@@ -114,6 +136,10 @@ export class ForumModeratorService {
     }
   }
 
+  /**
+   * 校验并去重板块 ID 列表。
+   * 返回值会保留调用方传入顺序，缺失板块会一次性汇总为业务异常。
+   */
   private async ensureSectionIdsExist(sectionIds: number[]) {
     const uniqueSectionIds = [...new Set(sectionIds)]
 
@@ -145,6 +171,10 @@ export class ForumModeratorService {
     return uniqueSectionIds
   }
 
+  /**
+   * 查询版主当前绑定的板块作用域。
+   * update/assign 路径都依赖该快照来决定增量清理与补写策略。
+   */
   private async getModeratorSectionScopes(moderatorId: number) {
     return this.db
       .select({
@@ -155,11 +185,15 @@ export class ForumModeratorService {
       .where(eq(this.forumModeratorSection.moderatorId, moderatorId))
   }
 
+  /**
+   * 将不同入口传入的角色、分组、权限和板块范围归一化为统一落库结构。
+   * 这里集中处理角色切换约束，避免 create/update/审核通过等写路径出现分叉规则。
+   */
   private async normalizeScope(
     input: {
       roleType?: number
       groupId?: number | null
-      permissions?: Array<number | string | null | undefined>
+      permissions?: Array<number | string | null | undefined> | null
       sectionIds?: number[]
     },
     options: {
@@ -245,17 +279,25 @@ export class ForumModeratorService {
     }
   }
 
+  /**
+   * 清空版主的板块绑定范围。
+   * 当角色切换为超级版主或分组版主时，必须同步移除遗留 section 作用域。
+   */
   private async clearModeratorSections(tx: Db, moderatorId: number) {
     await tx
       .delete(this.forumModeratorSection)
       .where(eq(this.forumModeratorSection.moderatorId, moderatorId))
   }
 
+  /**
+   * 同步板块版主的板块绑定与自定义权限。
+   * 该方法会在事务内执行增删改，保证 forum_moderator 与 forum_moderator_section 不出现半成功状态。
+   */
   private async syncModeratorSections(
     tx: Db,
     moderatorId: number,
     sectionIds: number[],
-    customPermissions: ForumModeratorPermissionEnum[] = [],
+    customPermissions?: ForumModeratorPermissionEnum[] | null,
   ) {
     const uniqueSectionIds = await this.ensureSectionIdsExist(sectionIds)
     const normalizedCustomPermissions =
@@ -308,6 +350,10 @@ export class ForumModeratorService {
     )
   }
 
+  /**
+   * 合并多份权限集合并重新按标准顺序归一化。
+   * 用于构造板块最终生效权限，避免重复值影响前端展示。
+   */
   private mergePermissions(
     ...permissionSets: Array<
       Array<number | string | null | undefined> | undefined
@@ -316,6 +362,10 @@ export class ForumModeratorService {
     return this.normalizePermissions(permissionSets.flat())
   }
 
+  /**
+   * 将板块与版主权限拼装为后台可读视图。
+   * 自定义权限为空时显式标记 inheritFromParent，便于前端区分继承和覆写状态。
+   */
   private buildSectionView(
     section: Pick<ForumSectionSelect, 'id' | 'name'>,
     basePermissions: ForumModeratorPermissionEnum[],
@@ -336,6 +386,10 @@ export class ForumModeratorService {
     }
   }
 
+  /**
+   * 批量装配版主管理端视图。
+   * 查询用户、分组与板块作用域后一次性拼装，避免 controller 层再做二次聚合。
+   */
   private async buildModeratorViews(moderators: ForumModeratorSelect[]) {
     if (moderators.length === 0) {
       return []
@@ -464,6 +518,10 @@ export class ForumModeratorService {
     })
   }
 
+  /**
+   * 查询单个版主详情。
+   * 缺失记录直接抛出 not-found，避免前端误把空详情当成可编辑对象。
+   */
   async getModeratorDetail(id: number) {
     const moderator = await this.db.query.forumModerator.findFirst({
       where: {
@@ -481,11 +539,10 @@ export class ForumModeratorService {
   }
 
   /**
-   * 添加版主
-   * @param input 创建参数
-   * @returns 创建结果
+   * 创建版主。
+   * 同一用户只允许存在一条有效版主记录；若命中已软删除旧记录，则在事务内复活并重建作用域。
    */
-  async createModerator(input: CreateForumModeratorInput) {
+  async createModerator(input: CreateForumModeratorDto) {
     await this.ensureUserExists(input.userId)
 
     const existing = await this.db.query.forumModerator.findFirst({
@@ -564,9 +621,8 @@ export class ForumModeratorService {
   }
 
   /**
-   * 移除版主
-   * @param id 版主ID
-   * @returns 移除结果
+   * 软删除版主。
+   * 删除时会同步清空板块作用域，避免残留 forum_moderator_section 记录继续生效。
    */
   async removeModerator(id: number) {
     const moderator = await this.db.query.forumModerator.findFirst({
@@ -599,11 +655,10 @@ export class ForumModeratorService {
   }
 
   /**
-   * 分配版主管理的板块
-   * @param input 分配参数
-   * @returns 分配结果
+   * 调整板块版主管理的板块范围。
+   * 仅 section 版主允许调用该路径，分组/超级版主的范围由角色本身隐式决定。
    */
-  async assignModeratorSection(input: AssignForumModeratorSectionInput) {
+  async assignModeratorSection(input: AssignForumModeratorSectionDto) {
     const moderator = await this.db.query.forumModerator.findFirst({
       where: { id: input.moderatorId, deletedAt: { isNull: true } },
     })
@@ -631,11 +686,10 @@ export class ForumModeratorService {
   }
 
   /**
-   * 查看版主列表
-   * @param query 查询参数
-   * @returns 版主列表
+   * 分页查询版主列表。
+   * sectionId 过滤会同时匹配超级版主、分组版主和显式绑定该板块的板块版主。
    */
-  async getModeratorPage(query: QueryForumModeratorInput) {
+  async getModeratorPage(query: QueryForumModeratorDto) {
     const { nickname, sectionId, ...otherDto } = query
     const conditions: SQL[] = []
 
@@ -721,11 +775,10 @@ export class ForumModeratorService {
   }
 
   /**
-   * 更新版主信息
-   * @param input 更新参数
-   * @returns 更新结果
+   * 更新版主信息。
+   * 角色切换会触发作用域重算，并在同一事务内同步清理或重建板块绑定。
    */
-  async updateModerator(input: UpdateForumModeratorInput) {
+  async updateModerator(input: UpdateForumModeratorDto) {
     const moderator = await this.db.query.forumModerator.findFirst({
       where: { id: input.id, deletedAt: { isNull: true } },
     })

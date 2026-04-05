@@ -1,30 +1,30 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
+  DragReorderDto,
+  IdDto,
+  UpdateEnabledStatusDto,
+} from '@libs/platform/dto'
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import {
-  CreateDictionaryInput,
-  CreateDictionaryItemInput,
-  DictionaryDragReorderInput,
-  DictionaryItemPageQueryInput,
-  DictionaryPageQueryInput,
-  UpdateDictionaryEnabledInput,
-  UpdateDictionaryInput,
-  UpdateDictionaryItemInput,
-} from './dictionary.type'
+  CreateDictionaryDto,
+  CreateDictionaryItemDto,
+  QueryAllDictionaryItemDto,
+  QueryDictionaryDto,
+  QueryDictionaryItemDto,
+  UpdateDictionaryDto,
+  UpdateDictionaryItemDto,
+} from './dto/dictionary.dto'
 
 /**
  * 字典服务
  *
- * 提供字典和字典项的完整管理功能，包括：
- * - 字典的增删改查、状态管理
- * - 字典项的增删改查、状态管理、拖拽排序
- *
- * @class LibDictionaryService
+ * 负责字典与字典项的查询、写入、状态切换和排序维护。
  */
 @Injectable()
 export class LibDictionaryService {
@@ -46,15 +46,12 @@ export class LibDictionaryService {
   }
 
   /**
-   * 构建通用搜索条件
-   *
-   * @param table - 数据表（字典表或字典项表）
-   * @param filters - 查询过滤条件
-   * @returns SQL 条件数组
+   * 根据分页查询 DTO 组装通用筛选条件。
+   * 字典与字典项列表都复用同一套名称、编码、启用状态过滤逻辑，避免两处条件分叉。
    */
   private buildSearchConditions(
     table: typeof this.dictionary | typeof this.dictionaryItem,
-    filters: DictionaryPageQueryInput,
+    filters: QueryDictionaryDto | QueryDictionaryItemDto,
   ) {
     const conditions: SQL[] = []
     if (filters.code) {
@@ -70,13 +67,8 @@ export class LibDictionaryService {
   }
 
   /**
-   * 解析字典编码字符串
-   *
-   * 将逗号分隔的字典编码字符串转换为数组
-   *
-   * @param dictionaryCode - 字典编码字符串，多个编码用逗号分隔
-   * @returns 字典编码数组
-   * @throws BadRequestException - 当编码为空时抛出
+   * 解析逗号分隔的字典编码列表。
+   * app/public 侧允许一次查询多个字典编码；若最终没有有效编码，直接按业务异常处理。
    */
   private parseDictionaryCodes(dictionaryCode?: string) {
     const codes = (dictionaryCode ?? '')
@@ -92,10 +84,7 @@ export class LibDictionaryService {
   }
 
   /**
-   * 断言字典存在
-   *
-   * @param dictionaryCode - 字典编码
-   * @throws BadRequestException - 当字典不存在时抛出
+   * 断言目标字典编码存在，避免字典项写入到悬空父级。
    */
   private async assertDictionaryExists(dictionaryCode: string) {
     const data = await this.db.query.dictionary.findFirst({
@@ -109,12 +98,9 @@ export class LibDictionaryService {
   }
 
   /**
-   * 分页查询字典列表
-   *
-   * @param queryDto - 查询条件数据传输对象
-   * @returns 分页字典列表
+   * 分页查询字典列表。
    */
-  async findDictionaries(queryDto: DictionaryPageQueryInput) {
+  async findDictionaries(queryDto: QueryDictionaryDto) {
     const conditions = this.buildSearchConditions(this.dictionary, queryDto)
 
     return this.drizzle.ext.findPagination(this.dictionary, {
@@ -124,15 +110,11 @@ export class LibDictionaryService {
   }
 
   /**
-   * 根据 ID 查询字典
-   *
-   * @param id - 字典 ID
-   * @returns 字典信息
-   * @throws NotFoundException - 当字典不存在时抛出
+   * 按主键查询字典详情，未命中时抛出 `NotFoundException`。
    */
-  async findDictionaryById(id: number) {
+  async findDictionaryById(dto: IdDto) {
     const data = await this.db.query.dictionary.findFirst({
-      where: { id },
+      where: { id: dto.id },
     })
     if (!data) {
       throw new NotFoundException('字典不存在')
@@ -141,13 +123,10 @@ export class LibDictionaryService {
   }
 
   /**
-   * 创建字典
-   *
-   * @param dto - 创建字典的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException - 当字典编码或名称已存在时抛出
+   * 创建字典。
+   * 未显式传入 `isEnabled` 时默认启用，唯一约束异常统一由 `withErrorHandling` 转换。
    */
-  async createDictionary(dto: CreateDictionaryInput) {
+  async createDictionary(dto: CreateDictionaryDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.dictionary).values({
         ...dto,
@@ -158,13 +137,10 @@ export class LibDictionaryService {
   }
 
   /**
-   * 更新字典
-   *
-   * @param dto - 更新字典的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException - 当字典不存在或编码/名称冲突时抛出
+   * 更新字典主体字段。
+   * 当字典编码发生变更时，会在同一事务内同步刷新所有子项的 `dictionaryCode`，避免父子关系失联。
    */
-  async updateDictionary(dto: UpdateDictionaryInput) {
+  async updateDictionary(dto: UpdateDictionaryDto) {
     const { id, code, ...otherUpdateData } = dto
 
     await this.drizzle.withTransaction(async (tx) => {
@@ -200,13 +176,9 @@ export class LibDictionaryService {
   }
 
   /**
-   * 更新字典启用状态
-   *
-   * @param dto - 更新状态的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException - 当字典不存在时抛出
+   * 切换字典启用状态。
    */
-  async updateDictionaryStatus(dto: UpdateDictionaryEnabledInput) {
+  async updateDictionaryStatus(dto: UpdateEnabledStatusDto) {
     const data = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionary)
@@ -218,14 +190,11 @@ export class LibDictionaryService {
   }
 
   /**
-   * 删除字典
-   *
-   * @param id - 字典 ID
-   * @returns 是否成功
-   * @throws BadRequestException - 当字典不存在或仍有关联字典项时抛出
+   * 删除字典。
+   * 若仍存在关联字典项则拒绝删除，避免破坏字典项的父级语义。
    */
-  async deleteDictionary(id: number) {
-    const dictionary = await this.findDictionaryById(id)
+  async deleteDictionary(dto: IdDto) {
+    const dictionary = await this.findDictionaryById(dto)
     const hasItems = await this.db.query.dictionaryItem.findFirst({
       where: { dictionaryCode: dictionary.code },
     })
@@ -234,19 +203,17 @@ export class LibDictionaryService {
     }
 
     const data = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionary).where(eq(this.dictionary.id, id)),
+      this.db.delete(this.dictionary).where(eq(this.dictionary.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(data, '字典不存在')
     return true
   }
 
   /**
-   * 分页查询字典项列表
-   *
-   * @param queryDto - 查询条件数据传输对象
-   * @returns 分页字典项列表
+   * 分页查询字典项列表。
+   * `dictionaryCode` 支持逗号分隔的多值筛选，默认按 `sortOrder asc` 返回。
    */
-  async findDictionaryItems(queryDto: DictionaryItemPageQueryInput) {
+  async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
     const { dictionaryCode } = queryDto
     const conditions = this.buildSearchConditions(this.dictionaryItem, queryDto)
     const dictionaryCodes = this.parseDictionaryCodes(dictionaryCode)
@@ -267,55 +234,51 @@ export class LibDictionaryService {
   }
 
   /**
-   * 根据字典编码查询所有启用的字典项
-   *
-   * 支持多个字典编码，用逗号分隔
-   *
-   * @param dictionaryCode - 字典编码，多个用逗号分隔
-   * @returns 字典项列表（按排序字段升序）
+   * 查询所有启用的字典项列表。
+   * 该入口供 app/public 场景使用，只返回启用项并按排序字段升序排列。
    */
-  async findAllDictionaryItems(dictionaryCode: string) {
+  async findAllDictionaryItems(dto: QueryAllDictionaryItemDto) {
     return this.db.query.dictionaryItem.findMany({
       where: {
         isEnabled: true,
-        dictionaryCode: { in: this.parseDictionaryCodes(dictionaryCode) },
+        dictionaryCode: { in: this.parseDictionaryCodes(dto.dictionaryCode) },
       },
       orderBy: (item) => [asc(item.sortOrder), asc(item.id)],
     })
   }
 
   /**
-   * 创建字典项
-   *
-   * @param dto - 创建字典项的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException - 当同一字典下编码或名称已存在时抛出
+   * 创建字典项。
+   * 写入前先校验父级字典存在，避免出现悬空 `dictionaryCode`。
    */
-  async createDictionaryItem(dto: CreateDictionaryItemInput) {
+  async createDictionaryItem(dto: CreateDictionaryItemDto) {
     await this.assertDictionaryExists(dto.dictionaryCode)
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.dictionaryItem).values({
         ...dto,
         isEnabled: dto.isEnabled ?? true,
+        sortOrder: dto.sortOrder ?? undefined,
       }),
     )
     return true
   }
 
   /**
-   * 更新字典项
-   *
-   * @param dto - 更新字典项的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException - 当字典项不存在或编码/名称冲突时抛出
+   * 更新字典项主体字段。
+   * 若请求中带了新的 `dictionaryCode`，会先校验目标字典存在。
    */
-  async updateDictionaryItem(dto: UpdateDictionaryItemInput) {
-    await this.assertDictionaryExists(dto.dictionaryCode)
-    const { id, ...data } = dto
+  async updateDictionaryItem(dto: UpdateDictionaryItemDto) {
+    if (dto.dictionaryCode) {
+      await this.assertDictionaryExists(dto.dictionaryCode)
+    }
+    const { id, sortOrder, ...data } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionaryItem)
-        .set(data)
+        .set({
+          ...data,
+          sortOrder: sortOrder ?? undefined,
+        })
         .where(eq(this.dictionaryItem.id, id)),
     )
 
@@ -325,13 +288,9 @@ export class LibDictionaryService {
   }
 
   /**
-   * 更新字典项启用状态
-   *
-   * @param dto - 更新状态的数据传输对象
-   * @returns 是否成功
-   * @throws BadRequestException - 当字典项不存在时抛出
+   * 切换字典项启用状态。
    */
-  async updateDictionaryItemStatus(dto: UpdateDictionaryEnabledInput) {
+  async updateDictionaryItemStatus(dto: UpdateEnabledStatusDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionaryItem)
@@ -344,14 +303,10 @@ export class LibDictionaryService {
   }
 
   /**
-   * 更新字典项排序（拖拽排序）
-   *
-   * 通过交换两条记录的 sortOrder 字段值实现拖拽排序
-   *
-   * @param dto - 拖拽排序的数据传输对象
-   * @returns 排序是否成功
+   * 交换两条字典项的排序位置。
+   * 排序操作要求两条记录属于同一 `dictionaryCode`，由 `swapField` 在底层完成约束校验。
    */
-  async updateDictionaryItemSort(dto: DictionaryDragReorderInput) {
+  async updateDictionaryItemSort(dto: DragReorderDto) {
     return this.drizzle.ext.swapField(this.dictionaryItem, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
       sourceField: 'dictionaryCode',
@@ -359,15 +314,11 @@ export class LibDictionaryService {
   }
 
   /**
-   * 删除字典项
-   *
-   * @param id - 字典项 ID
-   * @returns 是否成功
-   * @throws BadRequestException - 当字典项不存在时抛出
+   * 删除字典项。
    */
-  async deleteDictionaryItem(id: number) {
+  async deleteDictionaryItem(dto: IdDto) {
     const result = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionaryItem).where(eq(this.dictionaryItem.id, id)),
+      this.db.delete(this.dictionaryItem).where(eq(this.dictionaryItem.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(result, '字典项不存在')
     return true

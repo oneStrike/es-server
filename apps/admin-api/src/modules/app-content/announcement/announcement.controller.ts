@@ -1,16 +1,17 @@
-import { AppAnnouncementService } from '@libs/app-content/announcement'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   AnnouncementDetailDto,
-  AnnouncementPageResponseDto,
+  AppAnnouncementService,
+  BaseAnnouncementDto,
   CreateAnnouncementDto,
   QueryAnnouncementDto,
   UpdateAnnouncementDto,
-  UpdateAnnouncementStatusDto,
-} from './dto/announcement.dto'
+} from '@libs/app-content/announcement'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 系统公告管理控制器
@@ -28,6 +29,10 @@ export class AppAnnouncementController {
     summary: '创建公告',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建公告',
+  })
   async create(@Body() body: CreateAnnouncementDto) {
     return this.libAppAnnouncementService.createAnnouncement(body)
   }
@@ -35,7 +40,7 @@ export class AppAnnouncementController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询公告列表',
-    model: AnnouncementPageResponseDto,
+    model: BaseAnnouncementDto,
   })
   async getPage(@Query() query: QueryAnnouncementDto) {
     return this.libAppAnnouncementService.findAnnouncementPage(query)
@@ -47,13 +52,17 @@ export class AppAnnouncementController {
     model: AnnouncementDetailDto,
   })
   async findOne(@Query() query: IdDto) {
-    return this.libAppAnnouncementService.findAnnouncementDetail(query.id)
+    return this.libAppAnnouncementService.findAnnouncementDetail(query)
   }
 
   @Post('update')
   @ApiDoc({
     summary: '更新公告',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新公告',
   })
   async update(@Body() body: UpdateAnnouncementDto) {
     return this.libAppAnnouncementService.updateAnnouncement(body)
@@ -64,7 +73,11 @@ export class AppAnnouncementController {
     summary: '更新公告状态',
     model: Boolean,
   })
-  async updateStatus(@Body() body: UpdateAnnouncementStatusDto) {
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新公告状态',
+  })
+  async updateStatus(@Body() body: UpdatePublishedStatusDto) {
     return this.libAppAnnouncementService.updateAnnouncementStatus(body)
   }
 
@@ -72,6 +85,10 @@ export class AppAnnouncementController {
   @ApiDoc({
     summary: '下线公告',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '下线公告',
   })
   async remove(@Body() body: IdDto) {
     return this.libAppAnnouncementService.deleteAnnouncement(body)

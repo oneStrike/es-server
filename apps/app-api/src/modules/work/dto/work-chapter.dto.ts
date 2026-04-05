@@ -3,13 +3,8 @@ import {
   ArrayProperty,
   BooleanProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IdDto } from '@libs/platform/dto'
+import { IntersectionType, OmitType, PickType } from '@nestjs/swagger'
 
 export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'id',
@@ -28,18 +23,6 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'updatedAt',
   'isPublished',
 ]) {}
-
-export class QueryWorkChapterDto extends IntersectionType(
-  IntersectionType(PageDto, PickType(BaseWorkChapterDto, ['workId'])),
-  PickType(PartialType(BaseWorkChapterDto), [
-    'title',
-    'isPublished',
-    'isPreview',
-    'viewRule',
-    'canDownload',
-    'canComment',
-  ]),
-) {}
 
 class ChapterUserStatusFieldsDto {
   @BooleanProperty({ description: '是否已点赞', example: true, required: true, validation: false })
@@ -71,5 +54,3 @@ export class WorkChapterDetailWithUserStatusDto extends IntersectionType(
   ChapterUserStatusFieldsDto,
   PickType(ComicChapterContentDto, ['content']),
 ) {}
-
-export class QueryWorkChapterCommentPageDto extends IntersectionType(PageDto, IdDto) {}

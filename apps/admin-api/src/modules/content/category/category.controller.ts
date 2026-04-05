@@ -1,15 +1,18 @@
-import { BaseCategoryDto, WorkCategoryService } from '@libs/content/category'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
+  BaseCategoryDto,
   CreateCategoryDto,
   QueryCategoryDto,
   UpdateCategoryDto,
   UpdateCategorySortDto,
   UpdateCategoryStatusDto,
-} from './dto/category.dto'
+  WorkCategoryService,
+} from '@libs/content/category'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 分类管理控制器
@@ -27,6 +30,10 @@ export class ContentCategoryController {
   @ApiDoc({
     summary: '创建分类',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建分类',
   })
   async create(@Body() body: CreateCategoryDto) {
     return this.categoryService.createCategory(body)
@@ -64,6 +71,10 @@ export class ContentCategoryController {
     summary: '更新分类信息',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新分类信息',
+  })
   async update(@Body() body: UpdateCategoryDto) {
     return this.categoryService.updateCategory(body)
   }
@@ -75,6 +86,10 @@ export class ContentCategoryController {
   @ApiDoc({
     summary: '更新分类状态',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新分类状态',
   })
   async updateStatus(@Body() body: UpdateCategoryStatusDto) {
     return this.categoryService.updateCategoryStatus(body)
@@ -88,6 +103,10 @@ export class ContentCategoryController {
     summary: '删除分类',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除分类',
+  })
   async deleteBatch(@Body() body: IdDto) {
     return this.categoryService.deleteCategory(body)
   }
@@ -99,6 +118,10 @@ export class ContentCategoryController {
   @ApiDoc({
     summary: '分类交换排序',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '分类交换排序',
   })
   async categoryOrder(@Body() body: UpdateCategorySortDto) {
     return this.categoryService.updateCategorySort(body)

@@ -18,64 +18,6 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
-
-export class OpenDirectConversationDto {
-  @NumberProperty({
-    description: '目标用户ID',
-    example: 10002,
-  })
-  targetUserId!: number
-}
-
-export class QueryChatConversationMessagesDto {
-  @NumberProperty({
-    description: '会话ID',
-    example: 1,
-  })
-  conversationId!: number
-
-  @StringProperty({
-    description: '分页游标，使用上一页最小 messageSeq',
-    example: '120',
-    required: false,
-  })
-  cursor?: string
-
-  @StringProperty({
-    description: '补偿游标，获取 messageSeq > afterSeq 的消息',
-    example: '120',
-    required: false,
-  })
-  afterSeq?: string
-
-  @NumberProperty({
-    description: '分页大小',
-    example: 20,
-    required: false,
-    min: 1,
-    max: 100,
-    default: 20,
-  })
-  limit?: number
-}
-
-export class QueryUserNotificationListDto extends PageDto {
-  @BooleanProperty({
-    description: '是否已读',
-    required: false,
-    example: false,
-  })
-  isRead?: boolean
-
-  @EnumProperty({
-    description: '通知类型',
-    required: false,
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
-  })
-  type?: MessageNotificationTypeEnum
-}
 
 export class ChatConversationDto extends BaseChatConversationDto {
   @NestedProperty({
@@ -205,32 +147,6 @@ export class UserNotificationPreferenceListDto {
     validation: false,
   })
   list!: UserNotificationPreferenceItemDto[]
-}
-
-export class UpdateUserNotificationPreferenceItemDto {
-  @EnumProperty({
-    description: '通知类型',
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
-  })
-  notificationType!: MessageNotificationTypeEnum
-
-  @BooleanProperty({
-    description: '是否启用该通知类型',
-    example: false,
-  })
-  isEnabled!: boolean
-}
-
-export class UpdateUserNotificationPreferencesDto {
-  @ArrayProperty({
-    description: '通知偏好更新项列表',
-    itemClass: UpdateUserNotificationPreferenceItemDto,
-    itemType: 'object',
-    required: true,
-    minLength: 1,
-  })
-  preferences!: UpdateUserNotificationPreferenceItemDto[]
 }
 
 export class InboxNotificationBriefDto {

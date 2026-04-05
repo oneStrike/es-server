@@ -4,14 +4,26 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { AuthorTypeEnum } from '../author.constant'
 
 /**
- * 作者基础DTO
+ * 作者基础 DTO
  */
 export class BaseAuthorDto extends BaseDto {
   @StringProperty({
@@ -23,12 +35,12 @@ export class BaseAuthorDto extends BaseDto {
   name!: string
 
   @StringProperty({
-    description: '作者头像URL',
+    description: '作者头像 URL',
     example: 'https://example.com/avatar.jpg',
     required: false,
     maxLength: 500,
   })
-  avatar?: string
+  avatar?: string | null
 
   @StringProperty({
     description: '作者描述',
@@ -36,10 +48,10 @@ export class BaseAuthorDto extends BaseDto {
     required: false,
     maxLength: 1000,
   })
-  description?: string
+  description?: string | null
 
   @BooleanProperty({
-    description: '启用状态（true: 启用, false: 禁用）',
+    description: '启用状态（true=启用；false=禁用）',
     example: true,
     required: true,
     default: true,
@@ -47,12 +59,13 @@ export class BaseAuthorDto extends BaseDto {
   isEnabled!: boolean
 
   @ArrayProperty({
-    description: '作者角色类型，1 => 漫画家 2 => 小说家',
+    description: '作者角色类型（1=漫画家；2=轻小说作者）',
     example: [AuthorTypeEnum.NOVEL],
     required: false,
     itemType: 'number',
+    itemEnum: AuthorTypeEnum,
   })
-  type?: number[] | null
+  type?: AuthorTypeEnum[] | null
 
   @StringProperty({
     description: '国籍',
@@ -60,10 +73,10 @@ export class BaseAuthorDto extends BaseDto {
     required: false,
     maxLength: 50,
   })
-  nationality?: string
+  nationality?: string | null
 
   @EnumProperty({
-    description: '性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）',
+    description: '性别（0=未知；1=男性；2=女性；3=其他）',
     example: GenderEnum.MALE,
     required: true,
     enum: GenderEnum,
@@ -77,7 +90,7 @@ export class BaseAuthorDto extends BaseDto {
     required: false,
     maxLength: 1000,
   })
-  remark?: string
+  remark?: string | null
 
   @NumberProperty({
     description: '作品数量（冗余字段，用于提升查询性能）',
@@ -113,3 +126,61 @@ export class BaseAuthorDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
+  ...OMIT_BASE_FIELDS,
+  'workCount',
+  'isEnabled',
+  'isRecommended',
+  'followersCount',
+] as const) {}
+
+export class UpdateAuthorDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateAuthorDto),
+) {}
+
+export class QueryAuthorDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseAuthorDto, [
+      'name',
+      'isEnabled',
+      'nationality',
+      'gender',
+      'isRecommended',
+    ] as const),
+  ),
+) {
+  @JsonProperty({
+    description: '作者角色类型筛选 JSON 字符串，例如 [1,2]',
+    example: '[1,2]',
+    required: false,
+  })
+  type?: string
+}
+
+export class UpdateAuthorRecommendedDto extends IntersectionType(
+  PickType(BaseAuthorDto, ['isRecommended'] as const),
+  IdDto,
+) {}
+
+export class UpdateAuthorStatusDto extends IntersectionType(
+  PickType(BaseAuthorDto, ['isEnabled'] as const),
+  IdDto,
+) {}
+
+export class AuthorFollowCountRepairResultDto extends IntersectionType(
+  IdDto,
+  PickType(BaseAuthorDto, ['followersCount'] as const),
+) {}
+
+export class AuthorWorkCountRepairResultDto extends IntersectionType(
+  IdDto,
+  PickType(BaseAuthorDto, ['workCount'] as const),
+) {}
+
+export class AuthorPageResponseDto extends OmitType(BaseAuthorDto, [
+  'remark',
+  'description',
+] as const) {}

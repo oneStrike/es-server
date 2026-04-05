@@ -1,17 +1,15 @@
 import {
   BaseEmojiPackDto,
+  CreateEmojiPackDto,
   EmojiAssetService,
+  QueryEmojiPackDto,
+  UpdateEmojiPackDto,
+  UpdateEmojiPackSceneTypeDto,
 } from '@libs/interaction/emoji'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  CreateEmojiPackDto,
-  QueryEmojiPackDto,
-  UpdateEmojiPackDto,
-  UpdateEmojiPackSceneTypeDto,
-} from './dto/emoji.dto'
 
 @ApiTags('内容管理/表情管理')
 @Controller('admin/content/emoji-pack')

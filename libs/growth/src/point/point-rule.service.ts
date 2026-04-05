@@ -1,27 +1,33 @@
 import type { SQL } from 'drizzle-orm'
-import type {
-  CreateUserPointRuleInput,
-  QueryUserPointRulePageInput,
-  UpdateUserPointRuleInput,
-} from './point.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
+import {
+  CreateUserPointRuleDto,
+  QueryUserPointRuleDto,
+  UpdateUserPointRuleDto,
+} from './dto/point-rule.dto'
 
 @Injectable()
 export class UserPointRuleService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 积分规则表。 */
   get userPointRule() {
     return this.drizzle.schema.userPointRule
   }
 
-  async createPointRule(dto: CreateUserPointRuleInput) {
+  /**
+   * 创建积分规则。
+   * 写入前统一校验业务语义，重复 rule type 通过 `withErrorHandling` 转换为稳定业务异常。
+   */
+  async createPointRule(dto: CreateUserPointRuleDto) {
     this.validatePointRuleWrite(dto)
 
     await this.drizzle.withErrorHandling(
@@ -33,7 +39,11 @@ export class UserPointRuleService {
     return true
   }
 
-  async getPointRulePage(queryPointRuleDto: QueryUserPointRulePageInput) {
+  /**
+   * 分页查询积分规则。
+   * 支持按 rule type 与启用状态筛选，未命中筛选条件时返回全部规则。
+   */
+  async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {
     const conditions: SQL[] = []
 
     if (queryPointRuleDto.type !== undefined) {
@@ -51,6 +61,10 @@ export class UserPointRuleService {
     })
   }
 
+  /**
+   * 获取积分规则详情。
+   * 未命中时抛出业务异常，避免后台把空结果误当成可编辑规则。
+   */
   async getPointRuleDetail(id: number) {
     const [rule] = await this.db
       .select()
@@ -65,7 +79,11 @@ export class UserPointRuleService {
     return rule
   }
 
-  async updatePointRule(dto: UpdateUserPointRuleInput) {
+  /**
+   * 更新积分规则。
+   * 更新前复用同一套业务校验；若命中重复 rule type，则返回稳定业务提示而非数据库异常。
+   */
+  async updatePointRule(dto: UpdateUserPointRuleDto) {
     this.validatePointRuleWrite(dto)
 
     const { id, ...updateData } = dto
@@ -84,6 +102,10 @@ export class UserPointRuleService {
     return true
   }
 
+  /**
+   * 按规则类型获取已启用的积分规则。
+   * 供积分发放主链路使用，只返回启用中的单条匹配规则。
+   */
   async getEnabledRuleByType(ruleType: GrowthRuleTypeEnum) {
     const [rule] = await this.db
       .select()
@@ -106,16 +128,25 @@ export class UserPointRuleService {
    */
   private validatePointRuleWrite(
     dto: Pick<
-      CreateUserPointRuleInput,
+      CreateUserPointRuleDto | UpdateUserPointRuleDto,
       'type' | 'points' | 'dailyLimit' | 'totalLimit'
     >,
   ) {
-    if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
+    if (
+      dto.type !== undefined
+      && !Object.values(GrowthRuleTypeEnum).includes(dto.type)
+    ) {
       throw new BadRequestException('无效的积分规则类型')
     }
-    this.validatePositiveInteger(dto.points, '积分规则值')
-    this.validateNonNegativeInteger(dto.dailyLimit, '积分规则每日上限')
-    this.validateNonNegativeInteger(dto.totalLimit, '积分规则总上限')
+    if (dto.points !== undefined) {
+      this.validatePositiveInteger(dto.points, '积分规则值')
+    }
+    if (dto.dailyLimit !== undefined) {
+      this.validateNonNegativeInteger(dto.dailyLimit, '积分规则每日上限')
+    }
+    if (dto.totalLimit !== undefined) {
+      this.validateNonNegativeInteger(dto.totalLimit, '积分规则总上限')
+    }
   }
 
   /**

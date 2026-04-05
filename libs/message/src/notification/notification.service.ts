@@ -1,13 +1,11 @@
 import type { SQL } from 'drizzle-orm'
 import type { NotificationOutboxPayload } from '../outbox/outbox.type'
-import type {
-  CreateNotificationFromOutboxOutput,
-  QueryUserNotificationListInput,
-} from './notification.type'
+import type { CreateNotificationFromOutboxOutput } from './notification.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
+import { QueryUserNotificationListDto } from './dto/notification.dto'
 import { MessageNotificationPreferenceService } from './notification-preference.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
 import { MessageNotificationTemplateService } from './notification-template.service'
@@ -31,14 +29,17 @@ export class MessageNotificationService {
     private readonly messageNotificationTemplateService: MessageNotificationTemplateService,
   ) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** user_notification 表访问入口。 */
   private get notification() {
     return this.drizzle.schema.userNotification
   }
 
+  /** app_user 表访问入口，用于补齐通知触发者简要信息。 */
   private get appUser() {
     return this.drizzle.schema.appUser
   }
@@ -47,10 +48,7 @@ export class MessageNotificationService {
    * 查询用户通知列表
    * 支持按已读状态和类型筛选
    */
-  async queryUserNotificationList(
-    userId: number,
-    queryDto: QueryUserNotificationListInput,
-  ) {
+  async queryUserNotificationList(userId: number, queryDto: QueryUserNotificationListDto) {
     const { isRead, type, ...pagination } = queryDto
     const conditions: SQL[] = [eq(this.notification.userId, userId)]
 

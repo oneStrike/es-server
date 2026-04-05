@@ -7,19 +7,19 @@ import type {
   PublicGrowthLedgerContextKey,
   PublicGrowthLedgerContextValue,
   PublicGrowthLedgerRecord,
-  QueryGrowthLedgerPageInput,
-} from './growth-ledger.types'
+} from './growth-ledger.internal'
 import { DrizzleService } from '@db/core'
 import { formatDateKeyInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
+import { QueryGrowthLedgerPageDto } from './dto/growth-ledger-record.dto'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerFailReasonEnum,
   GrowthLedgerSourceEnum,
 } from './growth-ledger.constant'
-import { PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS } from './growth-ledger.types'
+import { PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS } from './growth-ledger.internal'
 
 type Tx = Db
 
@@ -447,7 +447,7 @@ export class GrowthLedgerService {
    * 分页查询混合成长账本时间线。
    * 统一返回积分/经验流水，按 createdAt desc, id desc 稳定排序。
    */
-  async getGrowthLedgerPage(dto: QueryGrowthLedgerPageInput) {
+  async getGrowthLedgerPage(dto: QueryGrowthLedgerPageDto) {
     const conditions = [eq(this.growthLedgerRecord.userId, dto.userId)]
 
     if (dto.assetType !== undefined) {

@@ -8,7 +8,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
@@ -239,4 +239,80 @@ export class BaseForumTopicDto extends BaseDto {
 export class ForumTopicWritableFieldsDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['title', 'content'] as const),
   PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
+) {}
+
+export class CreateForumTopicDto extends IntersectionType(
+  PickType(BaseForumTopicDto, ['sectionId', 'userId'] as const),
+  ForumTopicWritableFieldsDto,
+) {}
+
+export class CreateUserForumTopicDto extends IntersectionType(
+  PickType(BaseForumTopicDto, ['sectionId'] as const),
+  ForumTopicWritableFieldsDto,
+) {}
+
+export class UpdateForumTopicDto extends IntersectionType(
+  IdDto,
+  ForumTopicWritableFieldsDto,
+) {}
+
+export class QueryForumTopicDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseForumTopicDto, [
+      'sectionId',
+      'userId',
+      'isPinned',
+      'isFeatured',
+      'isLocked',
+      'isHidden',
+      'auditStatus',
+    ] as const),
+  ),
+) {
+  @StringProperty({
+    description: '关键词搜索（标题或内容）',
+    example: 'TypeScript',
+    required: false,
+  })
+  keyword?: string
+}
+
+export class QueryPublicForumTopicDto extends IntersectionType(
+  PageDto,
+  PickType(BaseForumTopicDto, ['sectionId'] as const),
+) {}
+
+export class QueryMyForumTopicDto extends PartialType(
+  QueryPublicForumTopicDto,
+) {}
+
+export class QueryForumTopicCommentPageDto extends IntersectionType(
+  PageDto,
+  IdDto,
+) {}
+
+export class UpdateForumTopicAuditStatusDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['auditStatus', 'auditReason'] as const),
+) {}
+
+export class UpdateForumTopicPinnedDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isPinned'] as const),
+) {}
+
+export class UpdateForumTopicFeaturedDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isFeatured'] as const),
+) {}
+
+export class UpdateForumTopicLockedDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isLocked'] as const),
+) {}
+
+export class UpdateForumTopicHiddenDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumTopicDto, ['isHidden'] as const),
 ) {}

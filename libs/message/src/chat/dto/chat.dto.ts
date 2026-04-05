@@ -5,9 +5,103 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
+import { PageDto } from '@libs/platform/dto'
 import {
   ChatMessageTypeEnum,
 } from '../chat.constant'
+
+export class OpenDirectConversationDto {
+  @NumberProperty({
+    description: '目标用户 ID',
+    example: 10002,
+  })
+  targetUserId!: number
+}
+
+export class QueryChatConversationListDto extends PageDto {}
+
+export class QueryChatConversationMessagesDto {
+  @NumberProperty({
+    description: '会话 ID',
+    example: 1,
+  })
+  conversationId!: number
+
+  @StringProperty({
+    description: '分页游标，使用上一页最小 messageSeq',
+    example: '120',
+    required: false,
+  })
+  cursor?: string
+
+  @StringProperty({
+    description: '补偿游标，获取 messageSeq > afterSeq 的消息',
+    example: '120',
+    required: false,
+  })
+  afterSeq?: string
+
+  @NumberProperty({
+    description: '分页大小',
+    example: 20,
+    required: false,
+    min: 1,
+    max: 100,
+    default: 20,
+  })
+  limit?: number
+}
+
+export class SendChatMessageDto {
+  @NumberProperty({
+    description: '会话 ID',
+    example: 1,
+  })
+  conversationId!: number
+
+  @EnumProperty({
+    description: '消息类型（1=文本；2=图片；3=系统）',
+    example: ChatMessageTypeEnum.TEXT,
+    enum: ChatMessageTypeEnum,
+  })
+  messageType!: ChatMessageTypeEnum
+
+  @StringProperty({
+    description: '消息内容',
+    example: 'hello',
+    maxLength: 5000,
+  })
+  content!: string
+
+  @StringProperty({
+    description: '客户端幂等键',
+    example: 'cmsg_9d7a4a0b',
+    required: false,
+    maxLength: 64,
+  })
+  clientMessageId?: string
+
+  @JsonProperty({
+    description: '扩展载荷',
+    example: '{"image":"https://example.com/a.png"}',
+    required: false,
+  })
+  payload?: string
+}
+
+export class MarkConversationReadDto {
+  @NumberProperty({
+    description: '会话 ID',
+    example: 1,
+  })
+  conversationId!: number
+
+  @StringProperty({
+    description: '已读消息 ID（BigInt 字符串）',
+    example: '123456789',
+  })
+  messageId!: string
+}
 
 /** 聊天对方用户基础信息 */
 export class BaseChatPeerDto {

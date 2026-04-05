@@ -4,7 +4,13 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
  * 论坛板块分组基础 DTO。
@@ -25,7 +31,7 @@ export class BaseForumSectionGroupDto extends BaseDto {
     required: false,
     maxLength: 500,
   })
-  description?: string
+  description?: string | null
 
   @NumberProperty({
     description: '排序权重',
@@ -54,10 +60,49 @@ export class BaseForumSectionGroupDto extends BaseDto {
   maxModerators!: number
 
   @DateProperty({
-    description: '删除时间',
+    description: '删除时间；仅内部审计与排障使用。',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
-    validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
+
+export class CreateForumSectionGroupDto extends OmitType(
+  BaseForumSectionGroupDto,
+  [...OMIT_BASE_FIELDS, 'deletedAt'] as const,
+) {}
+
+export class UpdateForumSectionGroupDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateForumSectionGroupDto),
+) {}
+
+export class QueryForumSectionGroupDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseForumSectionGroupDto, ['name', 'isEnabled'] as const),
+  ),
+) {}
+
+export class QueryVisibleForumSectionGroupCommandDto {
+  @NumberProperty({
+    description: '当前用户ID；为空表示匿名访问，仅用于拼装权限与关注状态。',
+    example: 1,
+    required: false,
+    min: 1,
+    contract: false,
+    validation: false,
+  })
+  userId?: number
+}
+
+export class UpdateForumSectionGroupEnabledDto extends IntersectionType(
+  IdDto,
+  PickType(BaseForumSectionGroupDto, ['isEnabled'] as const),
+) {}
+
+export class SwapForumSectionGroupSortDto extends PickType(DragReorderDto, [
+  'dragId',
+  'targetId',
+] as const) {}

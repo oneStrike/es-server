@@ -2,10 +2,23 @@ import { ContentTypeEnum } from '@libs/platform/constant'
 import {
   ArrayProperty,
   BooleanProperty,
+  JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  DragReorderDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
  * 分类基础 DTO
@@ -20,12 +33,12 @@ export class BaseCategoryDto extends BaseDto {
   name!: string
 
   @StringProperty({
-    description: '分类图标URL',
+    description: '分类图标 URL',
     example: 'https://example.com/icon.png',
     required: false,
     maxLength: 255,
   })
-  icon?: string
+  icon?: string | null
 
   @NumberProperty({
     description: '人气值',
@@ -55,18 +68,51 @@ export class BaseCategoryDto extends BaseDto {
   isEnabled!: boolean
 
   @ArrayProperty({
-    description: '分类关联的内容类型',
+    description: '分类关联的内容类型（1=漫画；2=小说；3=帖子）',
     example: [ContentTypeEnum.COMIC],
     required: false,
     itemType: 'number',
+    itemEnum: ContentTypeEnum,
   })
-  contentType?: number[]
+  contentType?: ContentTypeEnum[] | null
 
   @StringProperty({
-    description: '分类的描述 （可选）',
+    description: '分类描述',
     example: '科幻类分类',
     required: false,
     maxLength: 200,
   })
-  description?: string
+  description?: string | null
 }
+
+export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
+  ...OMIT_BASE_FIELDS,
+  'popularity',
+] as const) {}
+
+export class UpdateCategoryDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateCategoryDto),
+) {}
+
+export class QueryCategoryDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseCategoryDto, ['name', 'isEnabled'] as const)),
+) {
+  @JsonProperty({
+    description: '分类关联的内容类型 JSON 字符串，例如 [1,2]',
+    example: '[1,2]',
+    required: false,
+  })
+  contentType?: string
+}
+
+export class UpdateCategoryStatusDto extends IntersectionType(
+  PickType(BaseCategoryDto, ['isEnabled'] as const),
+  IdDto,
+) {}
+
+export class UpdateCategorySortDto extends PickType(DragReorderDto, [
+  'dragId',
+  'targetId',
+] as const) {}

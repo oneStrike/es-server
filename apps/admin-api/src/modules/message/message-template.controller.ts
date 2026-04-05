@@ -1,3 +1,9 @@
+import {
+  CreateNotificationTemplateDto,
+  QueryNotificationTemplatePageDto,
+  UpdateNotificationTemplateDto,
+  UpdateNotificationTemplateEnabledDto,
+} from '@libs/message/notification'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -6,10 +12,6 @@ import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import {
   AdminMessageNotificationTemplateDto,
-  CreateAdminMessageNotificationTemplateDto,
-  QueryAdminMessageNotificationTemplateDto,
-  UpdateAdminMessageNotificationTemplateDto,
-  UpdateAdminMessageNotificationTemplateEnabledDto,
 } from './dto/message-template.dto'
 import { MessageTemplateService } from './message-template.service'
 
@@ -31,7 +33,7 @@ export class MessageTemplateController {
     model: AdminMessageNotificationTemplateDto,
   })
   async getNotificationTemplatePage(
-    @Query() query: QueryAdminMessageNotificationTemplateDto,
+    @Query() query: QueryNotificationTemplatePageDto,
   ) {
     return this.messageTemplateService.getNotificationTemplatePage(query)
   }
@@ -61,7 +63,7 @@ export class MessageTemplateController {
     content: '创建通知模板',
   })
   async createNotificationTemplate(
-    @Body() body: CreateAdminMessageNotificationTemplateDto,
+    @Body() body: CreateNotificationTemplateDto,
   ) {
     return this.messageTemplateService.createNotificationTemplate(body)
   }
@@ -79,7 +81,7 @@ export class MessageTemplateController {
     content: '更新通知模板',
   })
   async updateNotificationTemplate(
-    @Body() body: UpdateAdminMessageNotificationTemplateDto,
+    @Body() body: UpdateNotificationTemplateDto,
   ) {
     return this.messageTemplateService.updateNotificationTemplate(body)
   }
@@ -97,7 +99,7 @@ export class MessageTemplateController {
     content: '更新通知模板启用状态',
   })
   async updateNotificationTemplateEnabled(
-    @Body() body: UpdateAdminMessageNotificationTemplateEnabledDto,
+    @Body() body: UpdateNotificationTemplateEnabledDto,
   ) {
     return this.messageTemplateService.updateNotificationTemplateEnabled(body)
   }

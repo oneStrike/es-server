@@ -43,26 +43,35 @@ export interface ChapterAccessResult<T = object> {
 export class ContentPermissionService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 用户表。 */
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  /** 作品表。 */
   get work() {
     return this.drizzle.schema.work
   }
 
+  /** 章节表。 */
   get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
+  /** 购买记录表。 */
   get userPurchaseRecord() {
     return this.drizzle.schema.userPurchaseRecord
   }
 
+  /**
+   * 解析作品级访问权限。
+   * 仅读取未软删除作品的权限快照，缺失时直接抛出业务异常，避免下游在空对象上继续推导权限。
+   */
   private async resolveWorkPermission(workId: number) {
     const work = await this.db.query.work.findFirst({
       where: { id: workId, deletedAt: { isNull: true } },
@@ -84,6 +93,10 @@ export class ContentPermissionService {
     return work
   }
 
+  /**
+   * 解析章节级访问权限摘要。
+   * 章节权限可能继承作品配置，因此这里会统一返回“已展开”的访问规则给下载、阅读等调用方复用。
+   */
   async resolveChapterPermission(chapterId: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId, deletedAt: { isNull: true } },
@@ -119,6 +132,7 @@ export class ContentPermissionService {
 
   /**
    * 获取用户及其等级信息
+   * 会员权限校验依赖等级快照，因此这里统一拉取用户与 level 关联，避免多处重复查询。
    */
   private async getUserWithLevel(userId: number) {
     const user = await this.db.query.appUser.findFirst({
@@ -135,6 +149,10 @@ export class ContentPermissionService {
     return user
   }
 
+  /**
+   * 校验用户存在。
+   * 登录态入口会先通过该方法兜底，避免后续权限错误被误判成会员不足或未购买。
+   */
   private async validateUserExists(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId, deletedAt: { isNull: true } },
@@ -178,6 +196,7 @@ export class ContentPermissionService {
 
   /**
    * 检查用户是否已成功购买指定章节
+   * 仅成功支付的记录视为已购买，失败或关闭状态不会放行章节访问。
    */
   async validateChapterPurchasePermission(userId: number, chapterId: number) {
     const purchased = await this.db.query.userPurchaseRecord.findFirst({
@@ -196,6 +215,10 @@ export class ContentPermissionService {
     return !!purchased
   }
 
+  /**
+   * 根据展开后的规则执行访问校验。
+   * 该方法是作品访问、章节访问和下载校验的统一判定入口，负责把登录、会员和购买逻辑收敛到一处。
+   */
   private async checkAccessPermission(
     userId: number,
     {
@@ -354,6 +377,7 @@ export class ContentPermissionService {
 
   /**
    * 检查章节下载权限
+   * 下载开关通过后仍需复用同一套访问规则，避免出现“可下载但不可阅读”的权限分叉。
    */
   async checkChapterDownload(
     userId: number,

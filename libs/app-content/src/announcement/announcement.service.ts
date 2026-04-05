@@ -5,6 +5,7 @@ import {
   MessageNotificationTypeEnum,
 } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, sql } from 'drizzle-orm'
@@ -13,16 +14,14 @@ import {
   shouldAnnouncementEnterNotificationCenter,
 } from './announcement.constant'
 import {
-  AnnouncementPageQuery,
-  CreateAnnouncementInput,
-  DeleteAnnouncementInput,
-  UpdateAnnouncementInput,
-  UpdateAnnouncementStatusInput,
-} from './announcement.type'
+  CreateAnnouncementDto,
+  QueryAnnouncementDto,
+  UpdateAnnouncementDto,
+} from './dto/announcement.dto'
 
 /**
  * 系统公告服务
- * 负责公告的创建、查询与更新
+ * 负责公告写入、分页查询和重要公告通知 fanout
  */
 @Injectable()
 export class AppAnnouncementService {
@@ -54,11 +53,10 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 创建公告
-   * @param createAnnouncementDto 创建数据
-   * @returns 是否成功
+   * 创建公告并在写入成功后尝试 fanout 重要公告通知。
+   * 写入前会校验发布时间区间和关联页面，通知 sidecar 失败只记录 warning，不回滚主流程。
    */
-  async createAnnouncement(createAnnouncementDto: CreateAnnouncementInput) {
+  async createAnnouncement(createAnnouncementDto: CreateAnnouncementDto) {
     assertValidTimeRange(
       createAnnouncementDto.publishStartTime,
       createAnnouncementDto.publishEndTime,
@@ -92,12 +90,11 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 分页查询公告
-   * @param queryAnnouncementDto 查询条件
-   * @returns 分页结果
+   * 根据查询 DTO 构造动态筛选条件并返回分页结果。
+   * `enablePlatform` 保持 JSON 字符串入参，兼容 query 参数只能传字符串的入口约束。
    */
   async findAnnouncementPage(
-    queryAnnouncementDto: AnnouncementPageQuery,
+    queryAnnouncementDto: QueryAnnouncementDto,
     options?: {
       publishedOnly?: boolean
     },
@@ -130,12 +127,12 @@ export class AppAnnouncementService {
         buildILikeCondition(this.appAnnouncement.title, title)!,
       )
     }
-    if (publishStartTime !== undefined) {
+    if (publishStartTime != null) {
       conditions.push(
         lte(this.appAnnouncement.publishStartTime, publishStartTime),
       )
     }
-    if (publishEndTime !== undefined) {
+    if (publishEndTime != null) {
       conditions.push(
         gte(this.appAnnouncement.publishEndTime, publishEndTime),
       )
@@ -171,7 +168,7 @@ export class AppAnnouncementService {
         eq(this.appAnnouncement.showAsPopup, queryAnnouncementDto.showAsPopup),
       )
     }
-    if (queryAnnouncementDto.pageId !== undefined) {
+    if (queryAnnouncementDto.pageId != null) {
       conditions.push(eq(this.appAnnouncement.pageId, queryAnnouncementDto.pageId))
     }
 
@@ -184,11 +181,10 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 更新公告
-   * @param updateAnnouncementDto 更新数据
-   * @returns 是否成功
+   * 按公告 id 更新主体字段，并在成功后重新评估是否需要 fanout 通知。
+   * 若请求显式变更 `pageId`，会先校验目标页面是否存在。
    */
-  async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementInput) {
+  async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementDto) {
     const { id, pageId, ...updateData } = updateAnnouncementDto
 
     assertValidTimeRange(
@@ -236,11 +232,9 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 更新公告状态
-   * @param dto 更新状态数据
-   * @returns 是否成功
+   * 切换公告发布状态，并在成功后重新评估通知 sidecar。
    */
-  async updateAnnouncementStatus(dto: UpdateAnnouncementStatusInput) {
+  async updateAnnouncementStatus(dto: UpdatePublishedStatusDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appAnnouncement)
@@ -254,11 +248,9 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 下线公告
-   * @param dto 删除数据
-   * @returns 是否成功
+   * 通过 `isPublished=false` 逻辑下线公告，不执行物理删除。
    */
-  async deleteAnnouncement(dto: DeleteAnnouncementInput) {
+  async deleteAnnouncement(dto: IdDto) {
     const { id } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
@@ -273,13 +265,11 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 获取公告详情
-   * @param id 公告ID
-   * @returns 公告详情
+   * 查询公告详情并补齐关联页面快照，未命中时返回 `undefined`。
    */
-  async findAnnouncementDetail(id: number) {
+  async findAnnouncementDetail(dto: IdDto) {
     return this.db.query.appAnnouncement.findFirst({
-      where: { id },
+      where: { id: dto.id },
       with: {
         appPage: {
           columns: {
@@ -294,17 +284,16 @@ export class AppAnnouncementService {
   }
 
   /**
-   * 增加浏览量
-   * @param id 公告ID
+   * 以原子自增方式累加浏览量，避免并发读改写覆盖。
    */
-  async incrementViewCount(id: number) {
+  async incrementViewCount(dto: IdDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appAnnouncement)
         .set({
           viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
         })
-        .where(eq(this.appAnnouncement.id, id)),
+        .where(eq(this.appAnnouncement.id, dto.id)),
     )
 
     this.drizzle.assertAffectedRows(result, '公告不存在')
@@ -390,7 +379,7 @@ export class AppAnnouncementService {
 
   /**
    * 构建公告通知正文
-   * 优先使用摘要，缺失时从正文截取，避免把长公告全文直接塞入通知列表。
+   * 优先使用摘要，缺失时回退正文截断，避免把长公告全文直接塞入通知列表。
    */
   private buildAnnouncementNotificationContent(
     summary?: string | null,

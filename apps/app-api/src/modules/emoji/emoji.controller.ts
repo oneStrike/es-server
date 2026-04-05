@@ -1,6 +1,9 @@
 import {
   EmojiCatalogService,
   EmojiSceneEnum,
+  QueryEmojiCatalogDto,
+  QueryEmojiRecentDto,
+  QueryEmojiSearchDto,
 } from '@libs/interaction/emoji'
 import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
@@ -9,9 +12,6 @@ import {
   EmojiAssetDto,
   EmojiCatalogPackDto,
   EmojiRecentItemDto,
-  QueryEmojiCatalogDto,
-  QueryEmojiRecentDto,
-  QueryEmojiSearchDto,
 } from './dto/emoji.dto'
 
 @ApiTags('表情')

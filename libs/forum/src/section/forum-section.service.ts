@@ -1,12 +1,4 @@
 import type { SQL } from 'drizzle-orm'
-import type {
-  CreateForumSectionInput,
-  QueryForumSectionInput,
-  QueryPublicForumSectionInput,
-  SwapForumSectionSortInput,
-  UpdateForumSectionEnabledInput,
-  UpdateForumSectionInput,
-} from './section.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import {
   FollowService,
@@ -20,6 +12,14 @@ import {
 import { and, eq, isNull } from 'drizzle-orm'
 import { ForumCounterService } from '../counter'
 import { ForumPermissionService } from '../permission'
+import {
+  CreateForumSectionDto,
+  QueryForumSectionDto,
+  QueryPublicForumSectionDto,
+  SwapForumSectionSortDto,
+  UpdateForumSectionDto,
+  UpdateForumSectionEnabledDto,
+} from './dto/forum-section.dto'
 
 /**
  * 论坛板块服务。
@@ -88,7 +88,7 @@ export class ForumSectionService {
    * - 列表侧不拦截访问权限，统一返回 canAccess 与限制提示
    * - 默认按分组排序、板块排序输出，便于应用侧直接渲染
    */
-  async getVisibleSectionList(query: QueryPublicForumSectionInput = {}) {
+  async getVisibleSectionList(query: QueryPublicForumSectionDto = {}) {
     const sections = await this.db.query.forumSection.findMany({
       where: {
         isEnabled: true,
@@ -323,7 +323,7 @@ export class ForumSectionService {
    * - 板块名称全局唯一（未删除范围内）
    * - 关联分组与等级规则时需校验目标存在性
    */
-  async createSection(createSectionDto: CreateForumSectionInput) {
+  async createSection(createSectionDto: CreateForumSectionDto) {
     const { name, groupId, userLevelRuleId, ...sectionData } = createSectionDto
 
     const existed = await this.db.query.forumSection.findFirst({
@@ -383,7 +383,7 @@ export class ForumSectionService {
    * 支持按名称模糊搜索、分组筛选、启用状态与审核策略筛选。
    * 未显式传入排序时，默认遵循板块手动排序顺序。
    */
-  async getSectionPage(queryForumSectionDto: QueryForumSectionInput) {
+  async getSectionPage(queryForumSectionDto: QueryForumSectionDto) {
     const { name, groupId, ...otherDto } = queryForumSectionDto
     const conditions: SQL[] = [isNull(this.forumSection.deletedAt)]
 
@@ -484,7 +484,7 @@ export class ForumSectionService {
    * - 分组与等级规则变更时校验目标存在性
    * - 写后校验受影响行数，确保板块存在
    */
-  async updateSection(updateSectionDto: UpdateForumSectionInput) {
+  async updateSection(updateSectionDto: UpdateForumSectionDto) {
     const { id, name, groupId, ...updateData } = updateSectionDto
 
     const existingSection = await this.db.query.forumSection.findFirst({
@@ -590,7 +590,7 @@ export class ForumSectionService {
    * 更新板块启用状态。
    * 写后校验受影响行数，确保板块存在。
    */
-  async updateEnabledStatus(dto: UpdateForumSectionEnabledInput) {
+  async updateEnabledStatus(dto: UpdateForumSectionEnabledDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumSection)
@@ -610,7 +610,7 @@ export class ForumSectionService {
    * 拖拽排序，交换两个板块的 sortOrder 字段。
    * 仅允许同一分组内交换；未分组板块之间允许互换。
    */
-  async updateSectionSort(updateSortDto: SwapForumSectionSortInput) {
+  async updateSectionSort(updateSortDto: SwapForumSectionSortDto) {
     return this.drizzle.ext.swapField(this.forumSection, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
       sourceField: 'groupId',

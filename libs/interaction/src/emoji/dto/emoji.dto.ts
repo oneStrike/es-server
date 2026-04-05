@@ -7,7 +7,13 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import {
   EMOJI_SCENE_VALUES,
   EmojiAssetKindEnum,
@@ -105,6 +111,35 @@ export class BaseEmojiPackDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+export class CreateEmojiPackDto extends OmitType(BaseEmojiPackDto, [
+  ...OMIT_BASE_FIELDS,
+  'createdById',
+  'updatedById',
+  'deletedAt',
+] as const) {}
+
+export class UpdateEmojiPackDto extends IntersectionType(
+  PartialType(CreateEmojiPackDto),
+  IdDto,
+) {}
+
+export class UpdateEmojiPackSceneTypeDto extends IntersectionType(
+  IdDto,
+  PickType(BaseEmojiPackDto, ['sceneType'] as const),
+) {}
+
+export class QueryEmojiPackDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseEmojiPackDto, [
+      'code',
+      'name',
+      'isEnabled',
+      'visibleInPicker',
+    ] as const),
+  ),
+) {}
 
 /**
  * 表情资源基础 DTO。
@@ -218,4 +253,72 @@ export class BaseEmojiAssetDto extends BaseDto {
     validation: false,
   })
   deletedAt?: Date | null
+}
+
+export class CreateEmojiAssetDto extends OmitType(BaseEmojiAssetDto, [
+  ...OMIT_BASE_FIELDS,
+  'createdById',
+  'updatedById',
+  'deletedAt',
+] as const) {}
+
+export class UpdateEmojiAssetDto extends IntersectionType(
+  PartialType(CreateEmojiAssetDto),
+  IdDto,
+) {}
+
+export class QueryEmojiAssetDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseEmojiAssetDto, [
+      'packId',
+      'kind',
+      'isEnabled',
+      'shortcode',
+      'category',
+    ] as const),
+  ),
+) {}
+
+export class QueryEmojiCatalogDto {
+  @EnumProperty({
+    description: '场景（1=聊天；2=评论；3=论坛主题）',
+    enum: EmojiSceneEnum,
+    example: EmojiSceneEnum.CHAT,
+    required: false,
+    default: EmojiSceneEnum.CHAT,
+  })
+  scene?: EmojiSceneEnum
+}
+
+export class QueryEmojiSearchDto extends QueryEmojiCatalogDto {
+  @StringProperty({
+    description: '搜索关键词',
+    example: 'smile',
+    minLength: 1,
+    maxLength: 50,
+  })
+  q!: string
+
+  @NumberProperty({
+    description: '返回条数，默认30，最大100',
+    example: 30,
+    required: false,
+    default: 30,
+    min: 1,
+    max: 100,
+  })
+  limit?: number
+}
+
+export class QueryEmojiRecentDto extends QueryEmojiCatalogDto {
+  @NumberProperty({
+    description: '返回条数，默认20，最大50',
+    example: 20,
+    required: false,
+    default: 20,
+    min: 1,
+    max: 50,
+  })
+  limit?: number
 }

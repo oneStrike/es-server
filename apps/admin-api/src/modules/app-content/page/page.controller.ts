@@ -1,26 +1,23 @@
 import {
   AppPageService,
   BaseAppPageDto,
+  CreateAppPageDto,
+  QueryAppPageDto,
+  QueryPageByCodeDto,
+  UpdateAppPageDto,
 } from '@libs/app-content/page'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdsDto } from '@libs/platform/dto'
+import { IdDto, IdsDto } from '@libs/platform/dto'
 import {
   Body,
   Controller,
   Get,
-  ParseIntPipe,
   Post,
   Query,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
-import {
-  AppPageResponseDto,
-  CreateAppPageDto,
-  QueryAppPageDto,
-  UpdateAppPageDto,
-} from './dto/page.dto'
 
 /**
  * APP页面配置管理控制器
@@ -38,6 +35,10 @@ export class AppPageController {
     summary: '创建页面配置',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建页面配置',
+  })
   async create(@Body() body: CreateAppPageDto) {
     return this.libAppPageService.createPage(body)
   }
@@ -45,7 +46,7 @@ export class AppPageController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
-    model: AppPageResponseDto,
+    model: BaseAppPageDto,
   })
   async findPage(@Query() query: QueryAppPageDto) {
     return this.libAppPageService.findPage(query)
@@ -56,8 +57,8 @@ export class AppPageController {
     summary: '根据ID查询页面配置详情',
     model: BaseAppPageDto,
   })
-  async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.libAppPageService.findById(id)
+  async findDetail(@Query() query: IdDto) {
+    return this.libAppPageService.findById(query)
   }
 
   @Get('detail/code')
@@ -65,8 +66,8 @@ export class AppPageController {
     summary: '根据页面编码查询页面配置详情',
     model: BaseAppPageDto,
   })
-  async findByCode(@Query('code') code: string) {
-    return this.libAppPageService.findByCode(code)
+  async findByCode(@Query() query: QueryPageByCodeDto) {
+    return this.libAppPageService.findByCode(query)
   }
 
   @Post('update')
@@ -86,6 +87,10 @@ export class AppPageController {
   @ApiDoc({
     summary: '批量下线页面配置',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '批量下线页面配置',
   })
   async batchDelete(@Body() body: IdsDto) {
     return this.libAppPageService.batchDelete(body)

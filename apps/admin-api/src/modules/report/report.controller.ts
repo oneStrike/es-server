@@ -1,11 +1,15 @@
-import { BaseReportDto, ReportService } from '@libs/interaction/report'
+import {
+  BaseReportDto,
+  HandleAdminReportDto,
+  QueryAdminReportPageDto,
+  ReportService,
+} from '@libs/interaction/report'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
-import { HandleAdminReportDto, QueryAdminReportPageDto } from './dto/report.dto'
 
 @ApiTags('内容治理/举报处理')
 @Controller('admin/report')

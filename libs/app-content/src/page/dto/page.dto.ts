@@ -3,13 +3,25 @@ import {
   ArrayProperty,
   BooleanProperty,
   EnumProperty,
+  JsonProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { PageRuleEnum } from '../page.constant'
 
 /**
- * 页面配置基础字段DTO
+ * 页面配置基础字段 DTO
  */
 export class BaseAppPageDto extends BaseDto {
   @StringProperty({
@@ -21,7 +33,7 @@ export class BaseAppPageDto extends BaseDto {
   code!: string
 
   @StringProperty({
-    description: '页面路径（URL路径）',
+    description: '页面路径（URL 路径）',
     example: '/home',
     required: true,
     maxLength: 300,
@@ -45,15 +57,16 @@ export class BaseAppPageDto extends BaseDto {
   title!: string
 
   @ArrayProperty({
-    description: '启用的平台',
+    description: '启用的平台（1=H5；2=App；3=小程序）',
     example: [EnablePlatformEnum.APP],
     required: false,
     itemType: 'number',
+    itemEnum: EnablePlatformEnum,
   })
   enablePlatform?: EnablePlatformEnum[] | null
 
   @EnumProperty({
-    description: '页面权限级别',
+    description: '页面权限级别（0=游客；1=登录；2=会员；3=高级会员）',
     example: PageRuleEnum.GUEST,
     required: true,
     enum: PageRuleEnum,
@@ -75,5 +88,37 @@ export class BaseAppPageDto extends BaseDto {
     required: false,
     maxLength: 500,
   })
-  description?: string
+  description?: string | null
 }
+
+export class CreateAppPageDto extends OmitType(BaseAppPageDto, [
+  ...OMIT_BASE_FIELDS,
+] as const) {}
+
+export class UpdateAppPageDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateAppPageDto),
+) {}
+
+export class QueryAppPageDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseAppPageDto, [
+      'name',
+      'code',
+      'accessLevel',
+      'isEnabled',
+    ] as const),
+  ),
+) {
+  @JsonProperty({
+    description: '启用平台筛选 JSON 字符串，例如 [1,2]',
+    example: '[1,2]',
+    required: false,
+  })
+  enablePlatform?: string
+}
+
+export class QueryPageByCodeDto extends PickType(BaseAppPageDto, [
+  'code',
+] as const) {}

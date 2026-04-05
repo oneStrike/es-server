@@ -1,26 +1,24 @@
 import {
   BaseUserLevelRuleDto,
-  UserLevelRuleService,
-} from '@libs/growth/level-rule'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import {
   CheckUserLevelPermissionDto,
   CreateUserLevelRuleDto,
   QueryUserLevelRuleDto,
   UpdateUserLevelRuleDto,
   UserLevelInfoDto,
   UserLevelPermissionResultDto,
+  UserLevelRuleService,
   UserLevelStatisticsDto,
-} from './dto/level-rule.dto'
+} from '@libs/growth/level-rule'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 用户等级规则管理控制器
- * 提供等级规则的创建、更新、删除、查询等管理接口
- *
- * @class LevelRuleController
+ * 提供等级规则的创建、更新、删除、查询等管理接口。
  */
 @Controller('admin/growth/level-rules')
 @ApiTags('用户成长/等级规则管理')
@@ -50,6 +48,10 @@ export class LevelRuleController {
     summary: '创建用户等级规则',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建用户等级规则',
+  })
   async createLevelRule(@Body() dto: CreateUserLevelRuleDto) {
     return this.levelRuleService.createLevelRule(dto)
   }
@@ -59,6 +61,10 @@ export class LevelRuleController {
     summary: '更新用户等级规则',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新用户等级规则',
+  })
   async updateLevelRule(@Body() dto: UpdateUserLevelRuleDto) {
     return this.levelRuleService.updateLevelRule(dto)
   }
@@ -67,6 +73,10 @@ export class LevelRuleController {
   @ApiDoc({
     summary: '删除用户等级规则',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除用户等级规则',
   })
   async deleteLevelRule(@Body() dto: IdDto) {
     return this.levelRuleService.deleteLevelRule(dto.id)
@@ -85,6 +95,10 @@ export class LevelRuleController {
   @ApiDoc({
     summary: '检查用户等级权限配置',
     model: UserLevelPermissionResultDto,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '检查用户等级权限配置',
   })
   async checkLevelPermission(@Body() dto: CheckUserLevelPermissionDto) {
     return this.levelRuleService.checkLevelPermission(dto)

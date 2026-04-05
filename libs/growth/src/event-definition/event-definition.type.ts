@@ -107,7 +107,7 @@ export type EventDefinitionMap = Record<GrowthRuleTypeEnum, EventDefinition>
  * 事件定义列表查询条件。
  * 当前重点支持已实现、可配置与下游复用筛选。
  */
-export interface ListEventDefinitionsInput {
+export interface ListEventDefinitionFilters {
   domain?: EventDefinitionDomainEnum
   governanceGate?: EventDefinitionGovernanceGateEnum
   consumer?: EventDefinitionConsumerEnum

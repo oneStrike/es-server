@@ -3,17 +3,19 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 
 /**
- * JWT榛戝悕鍗曟湇鍔?
+ * JWT 黑名单服务。
+ * 负责把已撤销 token 的 jti 写入缓存，并在校验链路中快速判断 token 是否失效。
  */
 @Injectable()
 export class JwtBlacklistService {
-  // 榛戝悕鍗曠紦瀛樺墠缂€
+  // 黑名单缓存前缀，避免与其它缓存键冲突。
   private readonly BLACKLIST_PREFIX = 'jwt:blacklist:'
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   /**
-   * 灏嗕护鐗屾坊鍔犲埌榛戝悕鍗?
+   * 将 jti 写入黑名单。
+   * 过期时间沿用 token 剩余 TTL，确保缓存条目与 token 生命周期一致回收。
    */
   async addBlacklist(jti: string, expiresInMs: number): Promise<void> {
     if (!Number.isFinite(expiresInMs) || expiresInMs <= 0) {
@@ -27,7 +29,8 @@ export class JwtBlacklistService {
   }
 
   /**
-   * 妫€鏌ヤ护鐗屾槸鍚﹀湪榛戝悕鍗曚腑
+   * 判断 jti 是否已在黑名单中。
+   * 这里不回落数据库，只以缓存为事实源，保持认证链路查询开销最小。
    */
   async isInBlacklist(jti: string): Promise<boolean> {
     const result = await this.cacheManager.get(this.BLACKLIST_PREFIX + jti)
@@ -35,7 +38,8 @@ export class JwtBlacklistService {
   }
 
   /**
-   * 浠庨粦鍚嶅崟涓Щ闄や护鐗?
+   * 从黑名单中移除 jti。
+   * 仅供测试或人工补偿场景使用，正常业务链路不应主动解封已撤销 token。
    */
   async removeFromBlacklist(jti: string): Promise<void> {
     await this.cacheManager.del(this.BLACKLIST_PREFIX + jti)

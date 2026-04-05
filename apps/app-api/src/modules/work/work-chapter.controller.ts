@@ -1,6 +1,8 @@
 import {
   ComicContentService,
   NovelContentService,
+  QueryWorkChapterCommentPageDto,
+  QueryWorkChapterDto,
   WorkChapterService,
 } from '@libs/content/work'
 import { CommentService } from '@libs/interaction/comment'
@@ -21,8 +23,6 @@ import {
   ComicChapterContentDto,
   NovelChapterContentDto,
   PageWorkChapterDto,
-  QueryWorkChapterCommentPageDto,
-  QueryWorkChapterDto,
   WorkChapterDetailWithUserStatusDto,
 } from './dto/work-chapter.dto'
 

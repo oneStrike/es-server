@@ -9,11 +9,6 @@ import { BaseAppUserDto } from '@libs/user/core'
 import { PickType } from '@nestjs/swagger'
 import { AppForumSectionListItemDto } from '../../forum/dto/forum-section.dto'
 
-export class FollowTargetDto extends PickType(BaseFollowDto, [
-  'targetId',
-  'targetType',
-] as const) {}
-
 export class FollowStatusResponseDto {
   @BooleanProperty({
     description: '当前用户是否已关注目标',

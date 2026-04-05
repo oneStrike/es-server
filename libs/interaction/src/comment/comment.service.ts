@@ -1,17 +1,9 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
-  AdminCommentsQuery,
   CommentModerationState,
   CommentVisibleState,
-  CreateCommentInput,
-  RepliesQuery,
-  ReplyCommentInput,
-  TargetCommentsQuery,
   TransactionRetryOptions,
-  UpdateCommentAuditStatusInput,
-  UpdateCommentHiddenInput,
-  UserCommentsQuery,
   VisibleCommentEffectPayload,
 } from './comment.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
@@ -43,6 +35,16 @@ import { LikeService } from '../like/like.service'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentTargetTypeEnum } from './comment.constant'
+import {
+  CreateCommentBodyDto,
+  QueryAdminCommentPageDto,
+  QueryCommentRepliesDto,
+  QueryMyCommentPageDto,
+  QueryTargetCommentsDto,
+  ReplyCommentBodyDto,
+  UpdateAdminCommentAuditStatusDto,
+  UpdateAdminCommentHiddenDto,
+} from './dto/comment.dto'
 import {
   CommentTargetMeta,
   ICommentTargetResolver,
@@ -526,7 +528,7 @@ export class CommentService {
    * @returns 新创建的评论ID
    * @throws BadRequestException - 当权限不足或请求冲突时抛出
    */
-  async createComment(input: CreateCommentInput) {
+  async createComment(input: CreateCommentBodyDto & { userId: number }) {
     const { userId, targetType, targetId, content } = input
     const bodyTokens = await this.emojiParserService.parse({
       body: content,
@@ -661,7 +663,7 @@ export class CommentService {
    * @returns 新创建的回复ID
    * @throws BadRequestException - 当被回复的评论不存在时抛出
    */
-  async replyComment(input: ReplyCommentInput) {
+  async replyComment(input: ReplyCommentBodyDto & { userId: number }) {
     const { userId, content, replyToId } = input
     const bodyTokens = await this.emojiParserService.parse({
       body: content,
@@ -896,7 +898,7 @@ export class CommentService {
    * @param query - 查询参数，包含一级评论ID和分页信息
    * @returns 分页的回复列表，包含用户基本信息
    */
-  async getReplies(query: RepliesQuery) {
+  async getReplies(query: QueryCommentRepliesDto & { userId?: number }) {
     const { commentId, pageIndex, pageSize, userId } = query
     const page = await this.drizzle.ext.findPagination(this.userComment, {
       where: and(
@@ -958,7 +960,7 @@ export class CommentService {
    * @param query - 查询参数，包含目标类型、目标ID、分页信息、回复预览数量限制
    * @returns 分页的评论列表，每条评论包含用户信息、回复计数、回复预览
    */
-  async getTargetComments(query: TargetCommentsQuery) {
+  async getTargetComments(query: QueryTargetCommentsDto) {
     const {
       targetType,
       targetId,
@@ -1181,7 +1183,7 @@ export class CommentService {
    * @param userId - 用户ID
    * @returns 分页的评论列表
    */
-  async getUserComments(query: UserCommentsQuery, userId: number) {
+  async getUserComments(query: QueryMyCommentPageDto, userId: number) {
     const conditions: SQL[] = [
       eq(this.userComment.userId, userId),
       isNull(this.userComment.deletedAt),
@@ -1211,7 +1213,7 @@ export class CommentService {
    * 分页查询管理端评论列表。
    * 支持按评论自身、目标、回复链、审核状态、隐藏状态与关键词筛选。
    */
-  async getAdminCommentPage(query: AdminCommentsQuery) {
+  async getAdminCommentPage(query: QueryAdminCommentPageDto) {
     const conditions: SQL[] = [isNull(this.userComment.deletedAt)]
 
     if (query.id !== undefined) {
@@ -1348,7 +1350,9 @@ export class CommentService {
    * 审核通过首次使评论可见时，补发评论奖励与回复通知；
    * 已进入终态的评论不允许回退为待审核。
    */
-  async updateCommentAuditStatus(input: UpdateCommentAuditStatusInput) {
+  async updateCommentAuditStatus(
+    input: UpdateAdminCommentAuditStatusDto & { auditById: number, auditRole?: AuditRoleEnum },
+  ) {
     const current = await this.db.query.userComment.findFirst({
       where: {
         id: input.id,
@@ -1430,7 +1434,7 @@ export class CommentService {
    * 更新评论隐藏状态。
    * 仅在可见性真正发生变化时同步评论计数与目标派生字段。
    */
-  async updateCommentHidden(input: UpdateCommentHiddenInput) {
+  async updateCommentHidden(input: UpdateAdminCommentHiddenDto) {
     const current = await this.db.query.userComment.findFirst({
       where: {
         id: input.id,

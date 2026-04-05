@@ -3,8 +3,8 @@ import {
   EnumProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
-import { IdDto, UserIdDto } from '@libs/platform/dto'
-import { IntersectionType } from '@nestjs/swagger'
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 /**
@@ -33,3 +33,20 @@ export class BaseFavoriteDto extends IntersectionType(IdDto, UserIdDto) {
   })
   createdAt!: Date
 }
+
+export class FavoriteTargetDto extends PickType(BaseFavoriteDto, [
+  'targetId',
+  'targetType',
+] as const) {}
+
+export class FavoriteRecordDto extends IntersectionType(
+  FavoriteTargetDto,
+  PickType(BaseFavoriteDto, ['userId'] as const),
+) {}
+
+export class FavoritePageQueryDto extends PageDto {}
+
+export class FavoritePageCommandDto extends IntersectionType(
+  FavoritePageQueryDto,
+  PickType(BaseFavoriteDto, ['userId'] as const),
+) {}

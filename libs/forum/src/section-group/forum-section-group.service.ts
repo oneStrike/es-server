@@ -1,12 +1,4 @@
 import type { SQL } from 'drizzle-orm'
-import type {
-  CreateForumSectionGroupInput,
-  QueryForumSectionGroupInput,
-  QueryPublicForumSectionGroupInput,
-  SwapForumSectionGroupSortInput,
-  UpdateForumSectionGroupEnabledInput,
-  UpdateForumSectionGroupInput,
-} from './section-group.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { FollowService, FollowTargetTypeEnum } from '@libs/interaction/follow'
 import {
@@ -16,7 +8,19 @@ import {
 } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission'
+import {
+  CreateForumSectionGroupDto,
+  QueryForumSectionGroupDto,
+  QueryVisibleForumSectionGroupCommandDto,
+  SwapForumSectionGroupSortDto,
+  UpdateForumSectionGroupDto,
+  UpdateForumSectionGroupEnabledDto,
+} from './dto/forum-section-group.dto'
 
+/**
+ * 论坛板块分组服务。
+ * 负责后台分组维护、应用侧可见分组装配以及排序/启停等写路径约束。
+ */
 @Injectable()
 export class ForumSectionGroupService {
   constructor(
@@ -25,19 +29,26 @@ export class ForumSectionGroupService {
     private readonly followService: FollowService,
   ) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 板块分组表。 */
   get forumSectionGroup() {
     return this.drizzle.schema.forumSectionGroup
   }
 
+  /** 板块表。 */
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
-  async createSectionGroup(dto: CreateForumSectionGroupInput) {
+  /**
+   * 创建板块分组。
+   * 分组名称全局唯一，重复名称通过 `withErrorHandling` 转换成稳定业务异常。
+   */
+  async createSectionGroup(dto: CreateForumSectionGroupDto) {
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.forumSectionGroup).values(dto),
       { duplicate: '板块分组名称已存在' },
@@ -45,6 +56,10 @@ export class ForumSectionGroupService {
     return true
   }
 
+  /**
+   * 查询单个板块分组详情。
+   * 仅返回未软删除记录，缺失时抛出稳定的 not-found 异常。
+   */
   async getSectionGroupById(id: number) {
     const group = await this.db.query.forumSectionGroup.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -61,7 +76,7 @@ export class ForumSectionGroupService {
    * 管理端分页查询板块分组。
    * 未显式传入排序时，默认按 sortOrder 升序返回，保持后台拖拽顺序。
    */
-  async getSectionGroupPage(dto: QueryForumSectionGroupInput) {
+  async getSectionGroupPage(dto: QueryForumSectionGroupDto) {
     const conditions: SQL[] = [isNull(this.forumSectionGroup.deletedAt)]
 
     if (dto.isEnabled !== undefined) {
@@ -91,7 +106,7 @@ export class ForumSectionGroupService {
    * 仅返回启用中的分组，并挂载启用板块及访问状态信息。
    */
   async getVisibleSectionGroupList(
-    query: QueryPublicForumSectionGroupInput = {},
+    query: QueryVisibleForumSectionGroupCommandDto = {},
   ) {
     const groups = await this.db
       .select({
@@ -185,8 +200,12 @@ export class ForumSectionGroupService {
       .filter((group) => group.sections.length > 0)
   }
 
+  /**
+   * 更新板块分组。
+   * 写后校验受影响行数，确保分组存在且未被软删除。
+   */
   async updateSectionGroup(
-    updateSectionGroupDto: UpdateForumSectionGroupInput,
+    updateSectionGroupDto: UpdateForumSectionGroupDto,
   ) {
     const { id, ...updateData } = updateSectionGroupDto
     const result = await this.drizzle.withErrorHandling(
@@ -206,6 +225,10 @@ export class ForumSectionGroupService {
     return true
   }
 
+  /**
+   * 软删除板块分组。
+   * 删除前会阻止仍挂有板块的分组被移除，避免产生悬空的板块归属关系。
+   */
   async deleteSectionGroup(id: number) {
     const group = await this.db.query.forumSectionGroup.findFirst({
       where: { id, deletedAt: { isNull: true } },
@@ -240,14 +263,22 @@ export class ForumSectionGroupService {
     return true
   }
 
-  async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortInput) {
+  /**
+   * 交换板块分组排序顺序。
+   * 仅交换拖拽目标的排序值，不改动其它字段。
+   */
+  async swapSectionGroupSortOrder(dto: SwapForumSectionGroupSortDto) {
     return this.drizzle.ext.swapField(this.forumSectionGroup, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
     })
   }
 
+  /**
+   * 更新板块分组启用状态。
+   * 写路径只允许修改启用位，并对软删除记录保持不可见。
+   */
   async updateSectionGroupEnabled(
-    updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledInput,
+    updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledDto,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
     const result = await this.drizzle.withErrorHandling(() =>
@@ -265,6 +296,10 @@ export class ForumSectionGroupService {
     return true
   }
 
+  /**
+   * 获取全部启用中的板块分组及其启用板块。
+   * 该接口供后台配置页一次性读取树形结构，不返回已删除或未启用节点。
+   */
   async getAllEnabledGroups() {
     const groups = await this.db
       .select({

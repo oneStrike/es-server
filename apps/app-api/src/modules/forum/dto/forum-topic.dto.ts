@@ -2,7 +2,6 @@ import { BaseForumSectionDto } from '@libs/forum/section'
 import { BaseForumTagDto } from '@libs/forum/tag'
 import {
   BaseForumTopicDto,
-  ForumTopicWritableFieldsDto,
 } from '@libs/forum/topic'
 import {
   ArrayProperty,
@@ -10,28 +9,8 @@ import {
   NestedProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user/core'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-
-export class QueryAppForumTopicPageDto extends IntersectionType(
-  PageDto,
-  PickType(BaseForumTopicDto, ['sectionId'] as const),
-) {}
-
-export class QueryMyForumTopicPageDto extends PartialType(
-  QueryAppForumTopicPageDto,
-) {}
-
-export class CreateAppForumTopicDto extends IntersectionType(
-  PickType(BaseForumTopicDto, ['sectionId'] as const),
-  ForumTopicWritableFieldsDto,
-) {}
-
-export class UpdateAppForumTopicDto extends IntersectionType(
-  IdDto,
-  ForumTopicWritableFieldsDto,
-) {}
+import { IntersectionType, PickType } from '@nestjs/swagger'
 
 export class AppForumSectionBriefDto extends PickType(BaseForumSectionDto, [
   'id',
@@ -142,11 +121,6 @@ export class AppForumTopicDetailDto extends IntersectionType(
   })
   tags!: ForumTopicTagItemDto[]
 }
-
-export class QueryForumTopicCommentPageDto extends IntersectionType(
-  PageDto,
-  IdDto,
-) {}
 
 export class MyForumTopicItemDto extends IntersectionType(
   AppForumTopicPageItemDto,

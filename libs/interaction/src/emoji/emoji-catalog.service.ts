@@ -3,11 +3,8 @@ import type {
   EmojiAssetSnapshot,
   EmojiAssetSnapshotRow,
   EmojiCatalogPack,
-  EmojiCatalogQueryInput,
   EmojiRecentItem,
-  EmojiRecentListInput,
   EmojiRecentUsageItem,
-  EmojiSearchInput,
   EmojiShortcodeAsset,
   EmojiUnicodeAsset,
   RecordEmojiRecentUsageInput,
@@ -26,6 +23,11 @@ import {
   or,
   sql,
 } from 'drizzle-orm'
+import {
+  QueryEmojiCatalogDto,
+  QueryEmojiRecentDto,
+  QueryEmojiSearchDto,
+} from './dto/emoji.dto'
 import {
   EMOJI_RECENT_LIMIT_DEFAULT,
   EMOJI_RECENT_LIMIT_MAX,
@@ -142,9 +144,9 @@ export class EmojiCatalogService {
    * - 结果按表情包排序值、资源排序值组织。
    */
   async listCatalog(
-    input: EmojiCatalogQueryInput,
+    input: QueryEmojiCatalogDto,
   ): Promise<EmojiCatalogPack[]> {
-    const { scene } = input
+    const scene = input.scene ?? EmojiSceneEnum.CHAT
 
     const packs = await this.db
       .select({
@@ -226,8 +228,8 @@ export class EmojiCatalogService {
    * - 只返回当前场景可见且启用的资源。
    * - 结果数量受 EMOJI_SEARCH_LIMIT_MAX 限制。
    */
-  async search(input: EmojiSearchInput): Promise<EmojiAssetSnapshot[]> {
-    const { scene } = input
+  async search(input: QueryEmojiSearchDto): Promise<EmojiAssetSnapshot[]> {
+    const scene = input.scene ?? EmojiSceneEnum.CHAT
     const keyword = input.q.trim()
     if (!keyword) {
       return []
@@ -288,8 +290,11 @@ export class EmojiCatalogService {
    * - 只返回当前场景可见且启用的资源。
    * - 结果数量受 EMOJI_RECENT_LIMIT_MAX 限制。
    */
-  async listRecent(input: EmojiRecentListInput): Promise<EmojiRecentItem[]> {
-    const { scene, userId } = input
+  async listRecent(
+    input: QueryEmojiRecentDto & { userId: number },
+  ): Promise<EmojiRecentItem[]> {
+    const scene = input.scene ?? EmojiSceneEnum.CHAT
+    const { userId } = input
     const limit = this.normalizeRecentLimit(input.limit)
 
     const rows = await this.db

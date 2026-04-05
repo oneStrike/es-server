@@ -1,9 +1,15 @@
 import { AppConfigService, BaseAppConfigDto } from '@libs/app-config'
 import {
+  AgreementListItemDto,
   AgreementService,
   BaseAgreementDto,
+  QueryPublishedAgreementDto,
 } from '@libs/app-content/agreement'
-import { AppAnnouncementService } from '@libs/app-content/announcement'
+import {
+  AppAnnouncementService,
+  BaseAnnouncementDto,
+  QueryAnnouncementDto,
+} from '@libs/app-content/announcement'
 import {
   AppPageService,
   BaseAppPageDto,
@@ -12,12 +18,6 @@ import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  AnnouncementPageResponseDto,
-  ListOrPageAgreementResponseDto,
-  QueryAnnouncementDto,
-  QueryPublishedAgreementDto,
-} from './dto/system-content.dto'
 
 /**
  * 系统模块控制器
@@ -59,7 +59,7 @@ export class SystemController {
   @Get('announcement/page')
   @ApiPageDoc({
     summary: '系统公告',
-    model: AnnouncementPageResponseDto,
+    model: BaseAnnouncementDto,
   })
   @Public()
   async getAnnouncementPage(@Query() query: QueryAnnouncementDto) {
@@ -71,7 +71,7 @@ export class SystemController {
   @Get('agreement/list')
   @ApiDoc({
     summary: '协议列表',
-    model: ListOrPageAgreementResponseDto,
+    model: AgreementListItemDto,
     isArray: true,
   })
   @Public()

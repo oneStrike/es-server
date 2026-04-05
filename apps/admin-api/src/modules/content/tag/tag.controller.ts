@@ -1,13 +1,17 @@
-import { BaseTagDto, WorkTagService } from '@libs/content/tag'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
+  BaseTagDto,
   CreateTagDto,
   QueryTagDto,
   UpdateTagDto,
-} from './dto/tag.dto'
+  UpdateTagSortDto,
+  WorkTagService,
+} from '@libs/content/tag'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 标签管理控制器
@@ -25,6 +29,10 @@ export class ContentTagController {
   @ApiDoc({
     summary: '创建标签',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建标签',
   })
   async create(@Body() body: CreateTagDto) {
     return this.tagService.createTag(body)
@@ -51,7 +59,7 @@ export class ContentTagController {
     model: BaseTagDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.tagService.getTagDetail(query.id)
+    return this.tagService.getTagDetail(query)
   }
 
   /**
@@ -61,6 +69,10 @@ export class ContentTagController {
   @ApiDoc({
     summary: '更新标签信息',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新标签信息',
   })
   async update(@Body() body: UpdateTagDto) {
     return this.tagService.updateTag(body)
@@ -74,8 +86,12 @@ export class ContentTagController {
     summary: '更新标签状态',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新标签状态',
+  })
   async updateStatus(@Body() body: UpdateEnabledStatusDto) {
-    return this.tagService.updateTagStatus(body.id, body.isEnabled)
+    return this.tagService.updateTagStatus(body)
   }
 
   /**
@@ -85,6 +101,10 @@ export class ContentTagController {
   @ApiDoc({
     summary: '删除标签',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除标签',
   })
   async deleteBatch(@Body() body: IdDto) {
     return this.tagService.deleteTagBatch(body)
@@ -98,7 +118,11 @@ export class ContentTagController {
     summary: '标签交换排序',
     model: Boolean,
   })
-  async tagOrder(@Body() body: DragReorderDto) {
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '标签交换排序',
+  })
+  async tagOrder(@Body() body: UpdateTagSortDto) {
     return this.tagService.updateTagSort(body)
   }
 }

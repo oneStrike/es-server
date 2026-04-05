@@ -1,7 +1,5 @@
 import type { SendSmsVerifyCodeResponseBody } from '@alicloud/dypnsapi20170525'
 import type {
-  CheckVerifyCodeInput,
-  SendVerifyCodeInput,
   SmsAliyunConfig,
   SmsConfigProvider,
 } from './sms.types'
@@ -10,6 +8,7 @@ import Dypnsapi20170525, * as $Dypnsapi20170525 from '@alicloud/dypnsapi20170525
 import * as $OpenApi from '@alicloud/openapi-client'
 import * as $Util from '@alicloud/tea-util'
 import { Inject, Injectable, Logger } from '@nestjs/common'
+import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
 import { SmsErrorMap, SmsErrorMessages, SmsTemplateCodeEnum } from './sms.constant'
 import { SMS_CONFIG_PROVIDER } from './sms.types'
 
@@ -106,7 +105,7 @@ export class SmsService {
    * @param dto 校验请求参数
    * @returns 校验是否通过
    */
-  async checkVerifyCode(dto: CheckVerifyCodeInput): Promise<boolean> {
+  async checkVerifyCode(dto: CheckVerifyCodeDto): Promise<boolean> {
     const { phone, code } = dto
 
     const client = this.getClient()
@@ -142,7 +141,7 @@ export class SmsService {
    * @param dto 发送请求参数
    * @returns 发送是否成功
    */
-  async sendVerifyCode(dto: SendVerifyCodeInput): Promise<boolean> {
+  async sendVerifyCode(dto: SendVerifyCodeDto): Promise<boolean> {
     const { phone, templateCode } = dto
 
     try {

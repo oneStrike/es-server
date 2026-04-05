@@ -1,13 +1,5 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
-import type {
-  CreateReportInput,
-  CreateUserReportInput,
-  CreateUserReportOptions,
-  HandleReportInput,
-  QueryAdminReportPageInput,
-  ReportListQuery,
-} from './report.type'
 import { DrizzleService } from '@db/core'
 import {
   createDefinedEventEnvelope,
@@ -20,9 +12,32 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
+import {
+  CreateReportCommandDto,
+  HandleAdminReportCommandDto,
+  QueryAdminReportPageDto,
+  QueryMyReportPageCommandDto,
+} from './dto/report.dto'
 import { IReportTargetResolver } from './interfaces/report-target-resolver.interface'
 import { ReportGrowthService } from './report-growth.service'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
+
+type CreateUserReportPayload = CreateReportCommandDto &
+  Pick<
+    {
+      sceneType: number
+      sceneId: number
+      commentLevel?: number | null
+      status?: ReportStatusEnum
+      handlerId?: number | null
+      handlingNote?: string | null
+    },
+    'sceneType' | 'sceneId' | 'commentLevel' | 'status' | 'handlerId' | 'handlingNote'
+  >
+
+interface CreateUserReportOptions {
+  duplicateMessage?: string
+}
 
 /**
  * 举报服务
@@ -120,7 +135,7 @@ export class ReportService {
    * @returns 创建的举报记录
    */
   async createReport(
-    dto: CreateReportInput,
+    dto: CreateReportCommandDto,
     options: CreateUserReportOptions = {},
   ) {
     const {
@@ -175,7 +190,7 @@ export class ReportService {
    * @param query - 举报列表查询条件
    * @returns 分页举报记录
    */
-  async getUserReports(query: ReportListQuery) {
+  async getUserReports(query: QueryMyReportPageCommandDto) {
     const conditions: SQL[] = [eq(this.userReport.reporterId, query.reporterId)]
 
     if (query.targetType !== undefined) {
@@ -230,7 +245,7 @@ export class ReportService {
    * 获取管理端举报分页列表。
    * 管理端视角不再限制举报人，可按目标、原因、处理人和状态筛选。
    */
-  async getAdminReportPage(query: QueryAdminReportPageInput) {
+  async getAdminReportPage(query: QueryAdminReportPageDto) {
     const conditions: SQL[] = []
 
     if (query.id !== undefined) {
@@ -299,7 +314,7 @@ export class ReportService {
    * 处理举报。
    * 只允许 PENDING / PROCESSING 进入 RESOLVED / REJECTED，并在裁决后触发奖励结算。
    */
-  async handleReport(input: HandleReportInput) {
+  async handleReport(input: HandleAdminReportCommandDto) {
     const handledReport = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const current = await tx.query.userReport.findFirst({
@@ -367,7 +382,7 @@ export class ReportService {
    */
   private async createUserReport(
     tx: Db,
-    dto: CreateUserReportInput,
+    dto: CreateUserReportPayload,
     options: CreateUserReportOptions = {},
   ) {
     const { status, ...otherDto } = dto

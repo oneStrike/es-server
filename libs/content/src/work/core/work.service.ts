@@ -13,11 +13,11 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { WorkAuthorService } from '../../author'
 import {
-  CreateWorkInput,
-  QueryWorkInput,
-  UpdateWorkInput,
-  UpdateWorkStatusInput,
-} from './work.type'
+  CreateWorkDto,
+  QueryWorkDto,
+  UpdateWorkDto,
+  UpdateWorkStatusDto,
+} from './dto/work.dto'
 
 const PAGE_WORK_PICK_FIELDS = [
   'id',
@@ -73,50 +73,65 @@ export class WorkService {
     private readonly readingStateService: ReadingStateService,
   ) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** work 表访问入口。 */
   get work() {
     return this.drizzle.schema.work
   }
 
+  /** work_chapter 表访问入口。 */
   get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
+  /** app_user 表访问入口。 */
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  /** forum_section 表访问入口。 */
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
+  /** work_author 表访问入口。 */
   get workAuthor() {
     return this.drizzle.schema.workAuthor
   }
 
+  /** work_category 表访问入口。 */
   get workCategory() {
     return this.drizzle.schema.workCategory
   }
 
+  /** work_tag 表访问入口。 */
   get workTag() {
     return this.drizzle.schema.workTag
   }
 
+  /** work_author_relation 表访问入口。 */
   get workAuthorRelation() {
     return this.drizzle.schema.workAuthorRelation
   }
 
+  /** work_category_relation 表访问入口。 */
   get workCategoryRelation() {
     return this.drizzle.schema.workCategoryRelation
   }
 
+  /** work_tag_relation 表访问入口。 */
   get workTagRelation() {
     return this.drizzle.schema.workTagRelation
   }
 
+  /**
+   * 构建作品列表页的最小字段投影。
+   * 列表查询统一复用这一组 select 字段，避免不同分页接口出现字段面不一致。
+   */
   private getPageWorkSelectFields() {
     return {
       id: this.work.id,
@@ -237,7 +252,7 @@ export class WorkService {
    * @returns 创建的作品信息
    * @throws BadRequestException 当作品名称重复或关联项无效时抛出异常
    */
-  async createWork(createWorkDto: CreateWorkInput) {
+  async createWork(createWorkDto: CreateWorkDto) {
     const { authorIds, categoryIds, tagIds, ...workData } = createWorkDto
     const normalizedWorkData = {
       ...workData,
@@ -338,7 +353,7 @@ export class WorkService {
    * @returns 更新后的作品信息
    * @throws BadRequestException 当作品不存在、名称重复或关联项无效时抛出异常
    */
-  async updateWork(updateWorkDto: UpdateWorkInput) {
+  async updateWork(updateWorkDto: UpdateWorkDto) {
     const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
     const normalizedUpdateData = {
       ...updateData,
@@ -516,7 +531,7 @@ export class WorkService {
    * @returns 更新结果
    * @throws BadRequestException 当作品不存在时抛出异常
    */
-  async updateStatus(body: UpdateWorkStatusInput) {
+  async updateStatus(body: UpdateWorkStatusDto) {
     const work = await this.db.query.work.findFirst({
       where: { id: body.id, deletedAt: { isNull: true } },
       columns: {
@@ -574,7 +589,7 @@ export class WorkService {
    * 按类型分页查询作品的通用方法
    * 支持热门、新作、推荐等标志位过滤，返回精简字段列表以优化列表页性能
    */
-  async getWorkTypePage(dto: QueryWorkInput, userId?: number) {
+  async getWorkTypePage(dto: QueryWorkDto, userId?: number) {
     return this.paginateWorkList(dto, userId, {
       forcePublished: true,
       selectPageFields: true,
@@ -625,7 +640,7 @@ export class WorkService {
    * 管理端列表则沿用传入的 isPublished 过滤语义。
    */
   private buildWorkPageConditions(
-    queryWorkDto: QueryWorkInput,
+    queryWorkDto: QueryWorkDto,
     options?: { forcePublished?: boolean },
   ): SQL[] {
     const {
@@ -751,7 +766,7 @@ export class WorkService {
    * 先复用共享分页查询 work 主表，再批量补充作者、分类与标签关系。
    */
   private async paginateWorkList(
-    dto: QueryWorkInput,
+    dto: QueryWorkDto,
     userId?: number,
     options?: {
       forcePublished?: boolean
@@ -889,7 +904,7 @@ export class WorkService {
    * - 分类、标签支持按 ID 列表筛选
    * - 其他字段（类型、发布状态、连载状态等）支持精确匹配
    */
-  async getWorkPage(dto: QueryWorkInput, userId?: number) {
+  async getWorkPage(dto: QueryWorkDto, userId?: number) {
     return this.paginateWorkList(dto, userId)
   }
 

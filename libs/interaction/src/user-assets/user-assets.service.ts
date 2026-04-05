@@ -2,7 +2,6 @@ import type {
   UserAssetsCountRow,
   UserAssetsDistinctWorkCountRow,
   UserAssetsSummary,
-  UserAssetsSummaryQueryInput,
 } from './user-assets.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
@@ -50,7 +49,7 @@ export class UserAssetsService {
   }
 
   async getUserAssetsSummary(
-    userId: UserAssetsSummaryQueryInput['userId'],
+    userId: number,
   ): Promise<UserAssetsSummary> {
     const [
       commentCount,

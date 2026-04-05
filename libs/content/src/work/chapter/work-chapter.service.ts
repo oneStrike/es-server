@@ -18,10 +18,12 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { ContentPermissionService } from '../../permission'
 import {
-  CreateWorkChapterInput,
-  QueryWorkChapterInput,
+  CreateWorkChapterDto,
+  QueryWorkChapterDto,
+  UpdateWorkChapterDto,
+} from './dto/work-chapter.dto'
+import {
   SwapWorkChapterNumbersInput,
-  UpdateWorkChapterInput,
   WorkChapterDetailContext,
 } from './work-chapter.type'
 
@@ -41,22 +43,27 @@ export class WorkChapterService {
     private readonly readingStateService: ReadingStateService,
   ) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** work_chapter 表访问入口。 */
   get workChapter() {
     return this.drizzle.schema.workChapter
   }
 
+  /** work 表访问入口。 */
   get work() {
     return this.drizzle.schema.work
   }
 
+  /** app_user 表访问入口。 */
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  /** user_level_rule 表访问入口。 */
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
@@ -68,7 +75,7 @@ export class WorkChapterService {
    * @throws BadRequestException 关联的作品不存在
    * @throws BadRequestException 该作品下章节号已存在（唯一约束冲突）
    */
-  async createChapter(createDto: CreateWorkChapterInput) {
+  async createChapter(createDto: CreateWorkChapterDto) {
     const { workId } = createDto
 
     if (
@@ -92,7 +99,7 @@ export class WorkChapterService {
    * @param dto - 查询参数，支持按 workId、title 筛选
    * @returns 分页章节列表
    */
-  async getChapterPage(dto: QueryWorkChapterInput) {
+  async getChapterPage(dto: QueryWorkChapterDto) {
     const conditions: SQL[] = [isNull(this.workChapter.deletedAt)]
 
     if (dto.workId !== undefined) {
@@ -395,7 +402,7 @@ export class WorkChapterService {
    * @throws BadRequestException 该作品下章节号已存在（唯一约束冲突）
    * @throws BadRequestException 章节不存在
    */
-  async updateChapter(dto: UpdateWorkChapterInput) {
+  async updateChapter(dto: UpdateWorkChapterDto) {
     const { id, ...updateData } = dto
     const { requiredViewLevelId } = updateData
 

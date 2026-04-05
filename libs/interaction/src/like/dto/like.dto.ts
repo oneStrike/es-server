@@ -4,8 +4,11 @@ import {
   EnumProperty,
   NumberProperty,
 } from '@libs/platform/decorators'
-import { IdDto, UserIdDto } from '@libs/platform/dto'
-import { IntersectionType } from '@nestjs/swagger'
+import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  PickType,
+} from '@nestjs/swagger'
 import { LikeTargetTypeEnum } from '../like.constant'
 
 /**
@@ -58,3 +61,18 @@ export class BaseLikeDto extends IntersectionType(IdDto, UserIdDto) {
   })
   createdAt!: Date
 }
+
+export class LikeTargetDto extends PickType(BaseLikeDto, [
+  'targetId',
+  'targetType',
+] as const) {}
+
+export class LikeRecordDto extends IntersectionType(
+  LikeTargetDto,
+  PickType(BaseLikeDto, ['userId'] as const),
+) {}
+
+export class LikePageQueryDto extends IntersectionType(
+  PageDto,
+  PickType(BaseLikeDto, ['targetType'] as const),
+) {}

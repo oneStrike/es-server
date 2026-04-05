@@ -5,7 +5,12 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
@@ -113,4 +118,95 @@ export class BaseUserPointRecordDto extends IdDto {
     required: true,
   })
   createdAt!: Date
+
+  @DateProperty({
+    description: '更新时间',
+    example: '2026-03-19T12:00:00.000Z',
+    required: false,
+  })
+  updatedAt?: Date
+}
+
+export class QueryUserPointRecordDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseUserPointRecordDto, ['ruleId', 'targetType', 'targetId'] as const),
+  ),
+) {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+}
+
+export class AddUserPointsDto {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+
+  @EnumProperty({
+    description: GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,
+    example: GrowthRuleTypeEnum.CREATE_TOPIC,
+    enum: GrowthRuleTypeEnum,
+  })
+  ruleType!: GrowthRuleTypeEnum
+
+  @StringProperty({
+    description: '备注',
+    example: '管理员发放积分',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string
+}
+
+export class ConsumeUserPointsDto {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+
+  @NumberProperty({
+    description: '扣减积分值',
+    example: 20,
+    required: true,
+    min: 1,
+  })
+  points!: number
+
+  @NumberProperty({
+    description: '目标类型',
+    example: 3,
+    required: false,
+  })
+  targetType?: number
+
+  @NumberProperty({
+    description: '目标 ID',
+    example: 1,
+    required: false,
+  })
+  targetId?: number
+
+  @NumberProperty({
+    description: '兑换记录 ID',
+    example: 1,
+    required: false,
+  })
+  exchangeId?: number
+
+  @StringProperty({
+    description: '备注',
+    example: '管理员扣减积分',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string
 }

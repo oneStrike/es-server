@@ -11,93 +11,9 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
 import {
-  IntersectionType,
-  OmitType,
-  PartialType,
   PickType,
 } from '@nestjs/swagger'
-
-export class CreateTaskDto extends OmitType(BaseTaskDto, [
-  ...OMIT_BASE_FIELDS,
-  'createdById',
-  'updatedById',
-  'deletedAt',
-] as const) {}
-
-export class UpdateTaskDto extends IntersectionType(
-  PartialType(CreateTaskDto),
-  IdDto,
-) {}
-
-export class UpdateTaskStatusDto extends IntersectionType(
-  IdDto,
-  PartialType(PickType(BaseTaskDto, ['status', 'isEnabled'] as const)),
-) {}
-
-export class QueryTaskDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseTaskDto, ['title', 'status', 'type', 'isEnabled'] as const),
-  ),
-) {}
-
-export class QueryTaskAssignmentDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseTaskAssignmentDto, ['taskId', 'userId', 'status'] as const),
-  ),
-) {}
-
-export class QueryTaskAssignmentReconciliationDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseTaskAssignmentDto, ['taskId', 'userId', 'rewardStatus'] as const),
-  ),
-) {
-  @NumberProperty({
-    description: '任务分配 ID',
-    example: 88,
-    required: false,
-  })
-  assignmentId?: number
-
-  @NumberProperty({
-    description: '事件编码',
-    example: 10,
-    required: false,
-  })
-  eventCode?: number
-
-  @StringProperty({
-    description: '事件推进幂等键',
-    example: 'comment:create:topic:100:user:9',
-    required: false,
-    maxLength: 180,
-  })
-  eventBizKey?: string
-
-  @EnumProperty({
-    description: '奖励到账提醒投递状态',
-    example: MessageNotificationDispatchStatusEnum.DELIVERED,
-    enum: MessageNotificationDispatchStatusEnum,
-    required: false,
-  })
-  notificationStatus?: MessageNotificationDispatchStatusEnum
-}
-
-export class RetryTaskAssignmentRewardDto extends IdDto {}
-
-export class RetryCompletedTaskRewardsDto {
-  @NumberProperty({
-    description: '本次最多扫描的 assignment 数量',
-    example: 100,
-    required: false,
-    min: 1,
-  })
-  limit?: number
-}
 
 export class AdminTaskReminderSummaryDto {
   @StringProperty({

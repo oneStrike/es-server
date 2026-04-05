@@ -31,38 +31,50 @@ export class ForumCounterService {
     private readonly appUserCountService: AppUserCountService,
   ) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 板块表。 */
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
+  /** 主题表。 */
   get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
+  /** 关注事实表。 */
   private get userFollow() {
     return this.drizzle.schema.userFollow
   }
 
+  /** 点赞事实表。 */
   private get userLike() {
     return this.drizzle.schema.userLike
   }
 
+  /** 收藏事实表。 */
   private get userFavorite() {
     return this.drizzle.schema.userFavorite
   }
 
+  /** 浏览事实表。 */
   private get userBrowseLog() {
     return this.drizzle.schema.userBrowseLog
   }
 
+  /** 评论事实表。 */
   private get userComment() {
     return this.drizzle.schema.userComment
   }
 
+  /**
+   * 在事务上下文或默认错误处理上下文中执行计数落库。
+   * 统一收口“受影响行数为 0”时的异常语义，避免不同重建入口各自处理不存在场景。
+   */
   private async executeCountUpdate(
     tx: Db | undefined,
     operation: (
@@ -87,6 +99,10 @@ export class ForumCounterService {
     throw error
   }
 
+  /**
+   * 更新板块级冗余计数字段。
+   * 当 delta 为 0 时直接跳过，避免写入无意义更新；板块不存在时会转换成调用方可识别的业务异常。
+   */
   private async updateSectionCountField(
     tx: Db | undefined,
     sectionId: number,
@@ -121,6 +137,10 @@ export class ForumCounterService {
     }
   }
 
+  /**
+   * 更新主题级冗余计数字段。
+   * 点赞、收藏、浏览等对象计数统一走这里，避免多条写路径各自手写 delta SQL。
+   */
   private async updateTopicCountField(
     tx: Db | undefined,
     topicId: number,
@@ -241,6 +261,7 @@ export class ForumCounterService {
 
   /**
    * 更新主题浏览数量
+   * 浏览计数允许异步补偿，因此这里仅做幂等增量更新，不附带额外业务判断。
    */
   async updateTopicViewCount(
     tx: Db | undefined,
@@ -292,6 +313,7 @@ export class ForumCounterService {
 
   /**
    * 更新板块关注人数
+   * 供 follow 域写路径调用，统一维护板块的冗余关注人数。
    */
   async updateSectionFollowersCount(
     tx: Db | undefined,
@@ -530,7 +552,8 @@ export class ForumCounterService {
 
   /**
    * 批量更新主题相关的所有计数
-   * 包括版块主题数、用户论坛主题数
+   * 包括板块主题数、用户论坛主题数。
+   * 主题创建/删除等复合写路径统一通过该入口推进，避免跨模块调用顺序不一致。
    * @param tx - 事务对象
    * @param sectionId - 版块ID
    * @param userId - 用户ID
@@ -550,7 +573,8 @@ export class ForumCounterService {
 
   /**
    * 批量更新主题点赞相关的所有计数
-   * 包括主题点赞数、主题作者收到的论坛点赞数
+   * 包括主题点赞数、主题作者收到的论坛点赞数。
+   * 该入口保证对象计数和用户收到计数在同一调用点推进，降低写路径遗漏风险。
    * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param authorUserId - 主题作者的用户ID
@@ -570,7 +594,8 @@ export class ForumCounterService {
 
   /**
    * 批量更新主题收藏相关的所有计数
-   * 包括主题收藏数、主题作者收到的论坛收藏数
+   * 包括主题收藏数、主题作者收到的论坛收藏数。
+   * 收藏写路径通过同一入口并发更新对象计数和用户计数，保持统计口径一致。
    * @param tx - 事务对象
    * @param topicId - 主题ID
    * @param authorUserId - 主题作者的用户ID
@@ -588,6 +613,10 @@ export class ForumCounterService {
     ])
   }
 
+  /**
+   * 获取主题的最小识别信息。
+   * 供外部写路径在不读取整条主题记录的前提下拿到作者和板块归属。
+   */
   async getTopicInfo(topicId: number) {
     return this.db.query.forumTopic.findFirst({
       where: { id: topicId },

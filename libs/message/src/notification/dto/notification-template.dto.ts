@@ -5,6 +5,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
+import { IdDto, PageDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { MessageNotificationTypeEnum } from '../notification.constant'
 
 /**
@@ -72,3 +74,38 @@ export class BaseMessageNotificationTemplateDto {
   })
   updatedAt!: Date
 }
+
+class MessageNotificationTemplateMutableDto extends PickType(
+  BaseMessageNotificationTemplateDto,
+  ['notificationType', 'titleTemplate', 'contentTemplate'] as const,
+) {}
+
+class MessageNotificationTemplateOptionalConfigDto extends PartialType(
+  PickType(BaseMessageNotificationTemplateDto, ['isEnabled', 'remark'] as const),
+) {}
+
+export class QueryNotificationTemplatePageDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseMessageNotificationTemplateDto, [
+      'notificationType',
+      'templateKey',
+      'isEnabled',
+    ] as const),
+  ),
+) {}
+
+export class CreateNotificationTemplateDto extends IntersectionType(
+  MessageNotificationTemplateMutableDto,
+  MessageNotificationTemplateOptionalConfigDto,
+) {}
+
+export class UpdateNotificationTemplateDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateNotificationTemplateDto),
+) {}
+
+export class UpdateNotificationTemplateEnabledDto extends IntersectionType(
+  IdDto,
+  PickType(BaseMessageNotificationTemplateDto, ['isEnabled'] as const),
+) {}

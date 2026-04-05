@@ -1,12 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import type {
-  CreateNotificationTemplateInput,
   NotificationTemplateRenderContext,
   NotificationTemplateRenderResult,
-  QueryNotificationTemplatePageInput,
   RenderNotificationTemplateInput,
-  UpdateNotificationTemplateEnabledInput,
-  UpdateNotificationTemplateInput,
 } from './notification-template.type'
 import { DrizzleService } from '@db/core'
 import {
@@ -16,6 +12,12 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
+import {
+  CreateNotificationTemplateDto,
+  QueryNotificationTemplatePageDto,
+  UpdateNotificationTemplateDto,
+  UpdateNotificationTemplateEnabledDto,
+} from './dto/notification-template.dto'
 import {
   getMessageNotificationTemplateDefinition,
   getMessageNotificationTemplateKey,
@@ -88,10 +90,12 @@ export class MessageNotificationTemplateService {
 
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** notification_template 表访问入口。 */
   private get notificationTemplate() {
     return this.drizzle.schema.notificationTemplate
   }
@@ -100,7 +104,7 @@ export class MessageNotificationTemplateService {
    * 分页查询通知模板
    * 当前仅支持按通知类型、模板键和启用状态筛选
    */
-  async getNotificationTemplatePage(query: QueryNotificationTemplatePageInput) {
+  async getNotificationTemplatePage(query: QueryNotificationTemplatePageDto) {
     const conditions: SQL[] = []
 
     if (query.notificationType !== undefined) {
@@ -147,7 +151,7 @@ export class MessageNotificationTemplateService {
    * 创建通知模板
    * 模板键始终由通知类型推导，避免管理端写入漂移键值
    */
-  async createNotificationTemplate(input: CreateNotificationTemplateInput) {
+  async createNotificationTemplate(input: CreateNotificationTemplateDto) {
     const notificationType = this.ensureSupportedNotificationType(
       input.notificationType,
     )
@@ -197,7 +201,7 @@ export class MessageNotificationTemplateService {
    * 更新通知模板
    * 若通知类型变化，会同步重算模板键并保持一类通知一份模板的约束
    */
-  async updateNotificationTemplate(input: UpdateNotificationTemplateInput) {
+  async updateNotificationTemplate(input: UpdateNotificationTemplateDto) {
     const current = await this.getNotificationTemplateDetail(input.id)
     const currentNotificationType = this.ensureSupportedNotificationType(
       current.notificationType,
@@ -275,7 +279,7 @@ export class MessageNotificationTemplateService {
    * 单独拆出开关接口，方便运营不改文案时直接停用模板
    */
   async updateNotificationTemplateEnabled(
-    input: UpdateNotificationTemplateEnabledInput,
+    input: UpdateNotificationTemplateEnabledDto,
   ) {
     const current = await this.getNotificationTemplateDetail(input.id)
     const notificationType = this.ensureSupportedNotificationType(

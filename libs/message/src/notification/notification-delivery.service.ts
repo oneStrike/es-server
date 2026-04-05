@@ -2,12 +2,12 @@ import type { MessageOutboxSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   NotificationDeliveryPageItem,
-  QueryNotificationDeliveryPageInput,
   UpsertNotificationDeliveryInput,
 } from './notification-delivery.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, sql } from 'drizzle-orm'
+import { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import {
   getMessageNotificationDispatchStatusLabel,
   getMessageNotificationTypeLabel,
@@ -24,14 +24,17 @@ import {
 export class MessageNotificationDeliveryService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** notification_delivery 表访问入口。 */
   private get notificationDelivery() {
     return this.drizzle.schema.notificationDelivery
   }
 
+  /** message_outbox 表访问入口，用于补充提醒 payload 上下文。 */
   private get messageOutbox() {
     return this.drizzle.schema.messageOutbox
   }
@@ -85,7 +88,7 @@ export class MessageNotificationDeliveryService {
    * 当前仅提供最小排障能力，按最新更新时间倒序返回业务结果
    */
   async getNotificationDeliveryPage(
-    query: QueryNotificationDeliveryPageInput,
+    query: QueryNotificationDeliveryPageDto,
   ): Promise<{
     list: NotificationDeliveryPageItem[]
     total: number
@@ -318,7 +321,7 @@ export class MessageNotificationDeliveryService {
     return normalized ? normalized.slice(0, 500) : null
   }
 
-  private normalizePage(query: QueryNotificationDeliveryPageInput) {
+  private normalizePage(query: QueryNotificationDeliveryPageDto) {
     const pageIndex =
       Number.isInteger(query.pageIndex) && Number(query.pageIndex) > 0
         ? Number(query.pageIndex)

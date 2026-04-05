@@ -1,14 +1,6 @@
 import {
-  ForumTopicService,
-} from '@libs/forum/topic'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import {
-  AdminForumTopicDetailDto,
-  AdminForumTopicPageItemDto,
   CreateForumTopicDto,
+  ForumTopicService,
   QueryForumTopicDto,
   UpdateForumTopicAuditStatusDto,
   UpdateForumTopicDto,
@@ -16,6 +8,16 @@ import {
   UpdateForumTopicHiddenDto,
   UpdateForumTopicLockedDto,
   UpdateForumTopicPinnedDto,
+} from '@libs/forum/topic'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
+import {
+  AdminForumTopicDetailDto,
+  AdminForumTopicPageItemDto,
 } from './dto/forum-topic.dto'
 
 @ApiTags('论坛管理/主题管理')
@@ -136,6 +138,10 @@ export class ForumTopicController {
     summary: '创建论坛主题',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建论坛主题',
+  })
   async create(@Body() body: CreateForumTopicDto) {
     return this.forumTopicService.createForumTopic(body)
   }
@@ -144,6 +150,10 @@ export class ForumTopicController {
   @ApiDoc({
     summary: '更新论坛主题',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新论坛主题',
   })
   async update(@Body() body: UpdateForumTopicDto) {
     return this.forumTopicService.updateTopic(body)
@@ -154,6 +164,10 @@ export class ForumTopicController {
     summary: '删除论坛主题',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除论坛主题',
+  })
   async delete(@Body() body: IdDto) {
     return this.forumTopicService.deleteTopic(body.id)
   }
@@ -162,6 +176,10 @@ export class ForumTopicController {
   @ApiDoc({
     summary: '更新主题置顶状态',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新主题置顶状态',
   })
   async updatePinned(@Body() body: UpdateForumTopicPinnedDto) {
     return this.forumTopicService.updateTopicPinned(body)
@@ -172,6 +190,10 @@ export class ForumTopicController {
     summary: '更新主题精华状态',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新主题精华状态',
+  })
   async updateFeatured(@Body() body: UpdateForumTopicFeaturedDto) {
     return this.forumTopicService.updateTopicFeatured(body)
   }
@@ -180,6 +202,10 @@ export class ForumTopicController {
   @ApiDoc({
     summary: '更新主题锁定状态',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新主题锁定状态',
   })
   async updateLocked(@Body() body: UpdateForumTopicLockedDto) {
     return this.forumTopicService.updateTopicLocked(body)
@@ -190,6 +216,10 @@ export class ForumTopicController {
     summary: '更新主题隐藏状态',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新主题隐藏状态',
+  })
   async updateHidden(@Body() body: UpdateForumTopicHiddenDto) {
     return this.forumTopicService.updateTopicHidden(body)
   }
@@ -198,6 +228,10 @@ export class ForumTopicController {
   @ApiDoc({
     summary: '更新主题审核状态',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新主题审核状态',
   })
   async updateAuditStatus(@Body() body: UpdateForumTopicAuditStatusDto) {
     return this.forumTopicService.updateTopicAuditStatus(body)

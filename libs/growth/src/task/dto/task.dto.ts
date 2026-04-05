@@ -3,6 +3,7 @@ import type {
   TaskRepeatRuleConfig,
   TaskRewardConfig,
 } from '../task.type'
+import { MessageNotificationDispatchStatusEnum } from '@libs/message/notification'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -12,7 +13,13 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import {
   TaskAssignmentRewardResultTypeEnum,
@@ -284,4 +291,125 @@ export class BaseTaskAssignmentDto extends BaseDto {
     validation: false,
   })
   deletedAt?: Date | null
+}
+
+export class CreateTaskDto extends OmitType(BaseTaskDto, [
+  ...OMIT_BASE_FIELDS,
+  'createdById',
+  'updatedById',
+  'deletedAt',
+] as const) {}
+
+export class UpdateTaskDto extends IntersectionType(
+  PartialType(CreateTaskDto),
+  IdDto,
+) {}
+
+export class UpdateTaskStatusDto extends IntersectionType(
+  IdDto,
+  PartialType(PickType(BaseTaskDto, ['status', 'isEnabled'] as const)),
+) {}
+
+export class QueryTaskDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseTaskDto, ['title', 'status', 'type', 'isEnabled'] as const),
+  ),
+) {}
+
+export class QueryTaskAssignmentDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseTaskAssignmentDto, ['taskId', 'userId', 'status'] as const),
+  ),
+) {}
+
+export class QueryTaskAssignmentReconciliationDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseTaskAssignmentDto, ['taskId', 'userId', 'rewardStatus'] as const),
+  ),
+) {
+  @NumberProperty({
+    description: '任务分配 ID',
+    example: 88,
+    required: false,
+  })
+  assignmentId?: number
+
+  @NumberProperty({
+    description: '事件编码',
+    example: 10,
+    required: false,
+  })
+  eventCode?: number
+
+  @StringProperty({
+    description: '事件推进幂等键',
+    example: 'comment:create:topic:100:user:9',
+    required: false,
+    maxLength: 180,
+  })
+  eventBizKey?: string
+
+  @EnumProperty({
+    description: '奖励到账提醒投递状态',
+    example: MessageNotificationDispatchStatusEnum.DELIVERED,
+    enum: MessageNotificationDispatchStatusEnum,
+    required: false,
+  })
+  notificationStatus?: MessageNotificationDispatchStatusEnum
+}
+
+export class QueryAvailableTaskDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseTaskDto, ['type'] as const)),
+) {}
+
+export class QueryMyTaskDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseTaskAssignmentDto, ['status'] as const)),
+) {
+  @EnumProperty({
+    description: '任务场景类型',
+    example: TaskTypeEnum.DAILY,
+    required: false,
+    enum: TaskTypeEnum,
+  })
+  type?: TaskTypeEnum
+}
+
+export class ClaimTaskDto extends PickType(BaseTaskAssignmentDto, [
+  'taskId',
+] as const) {}
+
+export class TaskProgressDto {
+  @NumberProperty({ description: '任务ID', example: 1 })
+  taskId!: number
+
+  @NumberProperty({ description: '进度增量', example: 1 })
+  delta!: number
+
+  @JsonProperty({
+    description: '变更上下文',
+    example: '{"action":"post_comment"}',
+    required: false,
+  })
+  context?: string
+}
+
+export class TaskCompleteDto extends PickType(BaseTaskAssignmentDto, [
+  'taskId',
+] as const) {}
+
+export class RetryTaskAssignmentRewardDto extends IdDto {}
+
+export class RetryCompletedTaskRewardsDto {
+  @NumberProperty({
+    description: '本次最多扫描的 assignment 数量',
+    example: 100,
+    required: false,
+    min: 1,
+  })
+  limit?: number
 }

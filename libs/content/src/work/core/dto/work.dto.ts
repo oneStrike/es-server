@@ -1,12 +1,19 @@
 import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { WorkSerialStatusEnum } from '../work.constant'
 
 export class BaseWorkDto extends BaseDto {
@@ -241,3 +248,112 @@ export class BaseWorkDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+export class CreateWorkDto extends OmitType(BaseWorkDto, [
+  ...OMIT_BASE_FIELDS,
+  'popularity',
+  'viewCount',
+  'favoriteCount',
+  'likeCount',
+  'commentCount',
+  'downloadCount',
+  'forumSectionId',
+  'deletedAt',
+] as const) {
+  @ArrayProperty({
+    description: '作者ID列表',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
+  authorIds!: number[]
+
+  @ArrayProperty({
+    description: '分类ID列表',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
+  categoryIds!: number[]
+
+  @ArrayProperty({
+    description: '标签ID列表',
+    itemType: 'number',
+    example: [1],
+    required: true,
+  })
+  tagIds!: number[]
+}
+
+export class QueryWorkDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseWorkDto, [
+      'name',
+      'publisher',
+      'isPublished',
+      'serialStatus',
+      'language',
+      'region',
+      'ageRating',
+      'isRecommended',
+      'isHot',
+      'isNew',
+      'type',
+    ] as const),
+  ),
+) {
+  @StringProperty({ description: '作者名称', example: '村上', required: false })
+  author?: string
+
+  @NumberProperty({ description: '作者ID', example: 1, required: false })
+  authorId?: number
+
+  @ArrayProperty({
+    description: '分类ID列表',
+    itemType: 'number',
+    example: [1],
+    required: false,
+  })
+  categoryIds?: number[]
+
+  @ArrayProperty({
+    description: '标签ID列表',
+    itemType: 'number',
+    example: [1],
+    required: false,
+  })
+  tagIds?: number[]
+}
+
+export class QueryWorkTypeDto extends IntersectionType(
+  PageDto,
+  PickType(BaseWorkDto, ['type'] as const),
+) {}
+
+export class UpdateWorkDto extends IntersectionType(
+  PartialType(CreateWorkDto),
+  IdDto,
+) {}
+
+export class UpdateWorkStatusDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkDto, ['isPublished'] as const),
+) {}
+
+export class UpdateWorkRecommendedDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkDto, ['isRecommended'] as const),
+) {}
+
+export class UpdateWorkHotDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkDto, ['isHot'] as const),
+) {}
+
+export class UpdateWorkNewDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkDto, ['isNew'] as const),
+) {}
+
+export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}

@@ -2,11 +2,11 @@ import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { desc, eq } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'
-import { UpdateAppConfigInput } from './config.type'
+import { UpdateAppConfigDto } from './dto/config.dto'
 
 /**
  * 应用配置服务
- * 提供应用配置的创建、查询、更新等功能
+ * 负责读取当前生效的应用配置，并维护唯一一条可编辑配置记录
  */
 @Injectable()
 export class AppConfigService {
@@ -23,8 +23,8 @@ export class AppConfigService {
   }
 
   /**
-   * 获取最新应用配置
-   * @returns 最新版本的应用配置
+   * 获取当前生效配置。
+   * 若数据库中尚未存在配置记录，会先落一条默认配置并返回，避免上层处理“未初始化”分支。
    */
   async findActiveConfig() {
     const configs = await this.db
@@ -46,11 +46,10 @@ export class AppConfigService {
   }
 
   /**
-   * 更新应用配置
-   * @param updateConfigDto 更新数据
-   * @returns 是否成功
+   * 更新最新一条配置记录。
+   * 该模块约定只维护一条可编辑配置，因此不会暴露按 id 更新的入口；若记录缺失，直接视为初始化异常。
    */
-  async updateConfig(updateConfigDto: UpdateAppConfigInput) {
+  async updateConfig(updateConfigDto: UpdateAppConfigDto) {
     const configs = await this.db
       .select()
       .from(this.appConfig)

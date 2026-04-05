@@ -1,9 +1,4 @@
 import type { Db, SQL } from '@db/core'
-import type {
-  AddUserPointsInput,
-  ConsumeUserPointsInput,
-  QueryUserPointRecordPageInput,
-} from './point.type'
 import { DrizzleService } from '@db/core'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -16,6 +11,11 @@ import {
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
+import {
+  AddUserPointsDto,
+  ConsumeUserPointsDto,
+  QueryUserPointRecordDto,
+} from './dto/point-record.dto'
 import { UserPointRuleService } from './point-rule.service'
 
 interface LedgerRecordShape {
@@ -47,14 +47,17 @@ export class UserPointService {
     private readonly growthLedgerService: GrowthLedgerService,
   ) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 统一成长账本表。 */
   private get growthLedgerRecord() {
     return this.drizzle.schema.growthLedgerRecord
   }
 
+  /** 用户表。 */
   get appUser() {
     return this.drizzle.schema.appUser
   }
@@ -65,7 +68,7 @@ export class UserPointService {
    * @returns 增加积分的结果
    */
   async addPoints(
-    addPointsDto: AddUserPointsInput & { bizKey?: string, source?: string },
+    addPointsDto: AddUserPointsDto & { bizKey?: string, source?: string },
   ) {
     const { userId, ruleType, remark } = addPointsDto
 
@@ -127,7 +130,7 @@ export class UserPointService {
    * @returns 消费积分的结果
    */
   async consumePoints(
-    consumePointsDto: ConsumeUserPointsInput & {
+    consumePointsDto: ConsumeUserPointsDto & {
       bizKey?: string
       source?: string
     },
@@ -139,7 +142,7 @@ export class UserPointService {
 
   async consumePointsInTx(
     tx: Db,
-    consumePointsDto: ConsumeUserPointsInput & {
+    consumePointsDto: ConsumeUserPointsDto & {
       bizKey?: string
       source?: string
     },
@@ -147,6 +150,10 @@ export class UserPointService {
     const { userId, points, remark, targetType, targetId, exchangeId } =
       consumePointsDto
 
+    /**
+     * 在既有事务中执行积分扣减。
+     * 扣减结果必须立即回查账本记录，确保事务内后续流程拿到的是已落库的稳定快照。
+     */
     const applyConsume = async (trx: Db) => {
       const bizKey =
         consumePointsDto.bizKey ??
@@ -199,7 +206,7 @@ export class UserPointService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getPointRecordPage(dto: QueryUserPointRecordPageInput) {
+  async getPointRecordPage(dto: QueryUserPointRecordDto) {
     const conditions: SQL[] = [
       eq(this.growthLedgerRecord.userId, dto.userId),
       eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.POINTS),
@@ -358,6 +365,10 @@ export class UserPointService {
     return result
   }
 
+  /**
+   * 根据账本记录 ID 回查积分流水。
+   * 用于在发放 / 扣减成功后确认记录已落库，避免下游继续处理不存在的 recordId。
+   */
   private async findLedgerRecordById(
     tx: Db,
     id: number,
@@ -410,6 +421,10 @@ export class UserPointService {
     })
   }
 
+  /**
+   * 构建稳定业务键。
+   * 相同业务上下文会生成相同 bizKey，用于积分流水幂等和管理端操作串联。
+   */
   private buildStableBizKey(
     prefix: string,
     payload: Record<string, unknown>,
@@ -422,6 +437,10 @@ export class UserPointService {
     return `${prefix}:${serializedPayload}`
   }
 
+  /**
+   * 将账本记录映射为积分记录响应结构。
+   * 该映射统一收敛 points / beforePoints / afterPoints 字段命名，避免调用方各自转换。
+   */
   private toPointRecord(record: {
     id: number
     userId: number

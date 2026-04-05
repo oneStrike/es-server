@@ -1,5 +1,5 @@
 export * from './dto/growth-ledger-record.dto'
 export * from './growth-ledger.constant'
+export * from './growth-ledger.internal'
 export * from './growth-ledger.module'
 export * from './growth-ledger.service'
-export * from './growth-ledger.types'

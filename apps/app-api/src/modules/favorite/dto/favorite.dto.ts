@@ -1,18 +1,12 @@
-import { BaseFavoriteDto } from '@libs/interaction/favorite'
+import {
+  BaseFavoriteDto,
+} from '@libs/interaction/favorite'
 import {
   BooleanProperty,
   NestedProperty,
 } from '@libs/platform/decorators'
-import {
-  PickType,
-} from '@nestjs/swagger'
 import { AppForumTopicPageItemDto } from '../../forum/dto/forum-topic.dto'
 import { PageWorkDto } from '../../work/dto/work.dto'
-
-export class FavoriteTargetDto extends PickType(BaseFavoriteDto, [
-  'targetId',
-  'targetType',
-]) {}
 
 export class FavoriteStatusResponseDto {
   @BooleanProperty({

@@ -8,6 +8,7 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto } from '@libs/platform/dto'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
+import { PartialType, PickType } from '@nestjs/swagger'
 
 // ============================================================================
 // 阿里云配置
@@ -70,9 +71,9 @@ export class AliyunConfigDto {
     description: '短信服务配置',
     type: AliyunSmsConfigDto,
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  sms!: AliyunSmsConfigDto
+  sms?: AliyunSmsConfigDto | null
 }
 
 // ============================================================================
@@ -190,25 +191,25 @@ export class ContentReviewPolicyDto {
     description: '严重敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  severeAction!: ContentReviewActionDto
+  severeAction?: ContentReviewActionDto | null
 
   @NestedProperty({
     description: '一般敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  generalAction!: ContentReviewActionDto
+  generalAction?: ContentReviewActionDto | null
 
   @NestedProperty({
     description: '轻微敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  lightAction!: ContentReviewActionDto
+  lightAction?: ContentReviewActionDto | null
 
   @BooleanProperty({
     description: '是否记录敏感词命中明细',
@@ -341,17 +342,17 @@ export class UploadConfigDto {
     description: '七牛上传配置',
     type: QiniuUploadConfigDto,
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  qiniu!: QiniuUploadConfigDto
+  qiniu?: QiniuUploadConfigDto | null
 
   @NestedProperty({
     description: 'Superbed 上传配置',
     type: SuperbedUploadConfigDto,
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  superbed!: SuperbedUploadConfigDto
+  superbed?: SuperbedUploadConfigDto | null
 }
 
 // ============================================================================
@@ -364,11 +365,11 @@ export class UploadConfigDto {
  */
 export class BaseSystemConfigDto extends BaseDto {
   @NumberProperty({
-    description: '最后修改人ID',
+    description: '最后修改人 ID',
     example: 1,
     required: false,
   })
-  updatedById?: number
+  updatedById?: number | null
 
   @NestedProperty({
     description: '阿里云配置',
@@ -384,9 +385,9 @@ export class BaseSystemConfigDto extends BaseDto {
       },
     },
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  aliyunConfig!: AliyunConfigDto
+  aliyunConfig?: AliyunConfigDto | null
 
   @NestedProperty({
     description: '站点配置',
@@ -401,9 +402,9 @@ export class BaseSystemConfigDto extends BaseDto {
       icpNumber: '粤ICP备xxxxxx号',
     },
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  siteConfig!: SiteConfigDto
+  siteConfig?: SiteConfigDto | null
 
   @NestedProperty({
     description: '维护配置',
@@ -413,9 +414,9 @@ export class BaseSystemConfigDto extends BaseDto {
       maintenanceMessage: '系统维护中，请稍后再试',
     },
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  maintenanceConfig!: MaintenanceConfigDto
+  maintenanceConfig?: MaintenanceConfigDto | null
 
   @NestedProperty({
     description: '内容审核策略',
@@ -436,9 +437,9 @@ export class BaseSystemConfigDto extends BaseDto {
       recordHits: true,
     },
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  contentReviewPolicy!: ContentReviewPolicyDto
+  contentReviewPolicy?: ContentReviewPolicyDto | null
 
   @NestedProperty({
     description: '上传配置',
@@ -465,7 +466,17 @@ export class BaseSystemConfigDto extends BaseDto {
       },
     },
     required: false,
-    nullable: false,
+    nullable: true,
   })
-  uploadConfig!: UploadConfigDto
+  uploadConfig?: UploadConfigDto | null
 }
+
+export class UpdateSystemConfigDto extends PartialType(
+  PickType(BaseSystemConfigDto, [
+    'aliyunConfig',
+    'siteConfig',
+    'maintenanceConfig',
+    'contentReviewPolicy',
+    'uploadConfig',
+  ] as const),
+) {}

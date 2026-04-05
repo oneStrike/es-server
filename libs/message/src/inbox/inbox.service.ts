@@ -1,7 +1,7 @@
-import type { QueryInboxTimelineInput } from './inbox.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
+import { QueryInboxTimelineDto } from './dto/inbox.dto'
 
 /**
  * 消息收件箱服务
@@ -139,7 +139,7 @@ export class MessageInboxService {
    * 获取用户收件箱时间线
    * 合并通知和聊天消息，按时间倒序排列
    */
-  async getTimeline(userId: number, dto: QueryInboxTimelineInput) {
+  async getTimeline(userId: number, dto: QueryInboxTimelineDto) {
     const page = this.drizzle.buildPage(dto, {
       maxPageSize: 100,
     })

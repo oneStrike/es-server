@@ -1,11 +1,11 @@
 import type { SQL } from 'drizzle-orm'
-import type {
-  CreateForumActionLogInput,
-  QueryForumActionLogInput,
-} from './action-log.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
+import {
+  CreateForumActionLogDto,
+  QueryForumActionLogDto,
+} from './dto/action-log.dto'
 
 /**
  * 论坛用户操作日志服务类
@@ -28,7 +28,7 @@ export class ForumUserActionLogService {
    * @param dto - 操作日志选项对象
    * @returns 创建的操作日志记录
    */
-  async createActionLog(dto: CreateForumActionLogInput) {
+  async createActionLog(dto: CreateForumActionLogDto) {
     const {
       userId,
       actionType,
@@ -71,7 +71,7 @@ export class ForumUserActionLogService {
    * @param dto - 查询选项对象
    * @returns 操作日志分页结果，包含列表、总数、页码和每页数量
    */
-  async getActionLogsByUserId(dto: QueryForumActionLogInput) {
+  async getActionLogsByUserId(dto: QueryForumActionLogDto) {
     const { userId, actionType, targetType, targetId, ...pageDto } = dto
     const conditions: SQL[] = []
 

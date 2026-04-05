@@ -8,7 +8,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CommentTargetTypeEnum } from '../comment.constant'
 
 export class BaseCommentDto extends BaseDto {
@@ -152,9 +153,138 @@ export class BaseCommentDto extends BaseDto {
   sensitiveWordHits?: unknown | null
 
   @DateProperty({
-    description: '删除时间',
+    description: '删除时间；仅内部审计与排障使用。',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
+
+export class CommentIdDto {
+  @NumberProperty({
+    description: '评论 ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  commentId!: number
+}
+
+export class CommentTargetDto {
+  @NumberProperty({
+    description: '目标 ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  targetId!: number
+
+  @EnumProperty({
+    description: '评论目标类型',
+    enum: CommentTargetTypeEnum,
+    example: CommentTargetTypeEnum.COMIC,
+    required: true,
+  })
+  targetType!: CommentTargetTypeEnum
+}
+
+export class ReplyTargetDto {
+  @NumberProperty({
+    description: '回复的评论 ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  replyToId!: number
+}
+
+export class CreateCommentBodyDto extends IntersectionType(
+  CommentTargetDto,
+  PickType(BaseCommentDto, ['content'] as const),
+) {}
+
+export class ReplyCommentBodyDto extends IntersectionType(
+  ReplyTargetDto,
+  PickType(BaseCommentDto, ['content'] as const),
+) {}
+
+export class QueryMyCommentPageDto extends IntersectionType(
+  PageDto,
+  PartialType(CommentTargetDto),
+  PickType(PartialType(BaseCommentDto), ['auditStatus'] as const),
+) {}
+
+export class QueryCommentRepliesDto extends IntersectionType(
+  PageDto,
+  CommentIdDto,
+) {}
+
+export class QueryTargetCommentsDto extends IntersectionType(
+  PageDto,
+  CommentTargetDto,
+) {
+  @NumberProperty({
+    description: '预览回复数量上限',
+    example: 3,
+    required: false,
+    min: 0,
+    contract: false,
+    validation: false,
+  })
+  previewReplyLimit?: number
+
+  @NumberProperty({
+    description: '当前用户ID；为空表示匿名访问，仅用于补充点赞状态。',
+    example: 1,
+    required: false,
+    min: 1,
+    contract: false,
+    validation: false,
+  })
+  userId?: number
+}
+
+export class QueryAdminCommentPageDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseCommentDto, [
+      'id',
+      'userId',
+      'targetType',
+      'targetId',
+      'replyToId',
+      'actualReplyToId',
+      'auditStatus',
+      'isHidden',
+    ] as const),
+  ),
+) {
+  @StringProperty({
+    description: '关键词搜索（评论内容）',
+    example: '写得很棒',
+    required: false,
+    maxLength: 200,
+  })
+  keyword?: string
+}
+
+export class UpdateAdminCommentAuditStatusDto extends IntersectionType(
+  IdDto,
+  PickType(BaseCommentDto, ['auditStatus', 'auditReason'] as const),
+) {
+  @NumberProperty({
+    description: '审核人ID；由后台上下文注入。',
+    example: 1,
+    required: false,
+    min: 1,
+    contract: false,
+    validation: false,
+  })
+  auditById?: number
+}
+
+export class UpdateAdminCommentHiddenDto extends IntersectionType(
+  IdDto,
+  PickType(BaseCommentDto, ['isHidden'] as const),
+) {}

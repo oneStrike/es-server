@@ -1,18 +1,20 @@
 import type {
-  ClaimTaskInput,
-  CreateTaskInput,
-  QueryAppTaskInput,
-  QueryMyTaskInput,
-  QueryTaskAssignmentPageInput,
-  QueryTaskAssignmentReconciliationPageInput,
-  QueryTaskPageInput,
-  TaskCompleteInput,
   TaskEventProgressInput,
-  TaskProgressInput,
-  UpdateTaskInput,
-  UpdateTaskStatusInput,
 } from './task.type'
 import { Injectable } from '@nestjs/common'
+import {
+  ClaimTaskDto,
+  CreateTaskDto,
+  QueryAvailableTaskDto,
+  QueryMyTaskDto,
+  QueryTaskAssignmentDto,
+  QueryTaskAssignmentReconciliationDto,
+  QueryTaskDto,
+  TaskCompleteDto,
+  TaskProgressDto,
+  UpdateTaskDto,
+  UpdateTaskStatusDto,
+} from './dto/task.dto'
 import { TaskDefinitionService } from './task-definition.service'
 import { TaskExecutionService } from './task-execution.service'
 import { TaskRuntimeService } from './task-runtime.service'
@@ -34,7 +36,7 @@ export class TaskService {
   /**
    * 分页查询任务列表（管理端）。
    */
-  async getTaskPage(queryDto: QueryTaskPageInput) {
+  async getTaskPage(queryDto: QueryTaskDto) {
     return this.taskDefinitionFacade.getTaskPage(queryDto)
   }
 
@@ -48,21 +50,21 @@ export class TaskService {
   /**
    * 创建任务（管理端）。
    */
-  async createTask(dto: CreateTaskInput, adminUserId: number) {
+  async createTask(dto: CreateTaskDto, adminUserId: number) {
     return this.taskDefinitionFacade.createTask(dto, adminUserId)
   }
 
   /**
    * 更新任务（管理端）。
    */
-  async updateTask(dto: UpdateTaskInput, adminUserId: number) {
+  async updateTask(dto: UpdateTaskDto, adminUserId: number) {
     return this.taskDefinitionFacade.updateTask(dto, adminUserId)
   }
 
   /**
    * 更新任务状态（管理端）。
    */
-  async updateTaskStatus(dto: UpdateTaskStatusInput) {
+  async updateTaskStatus(dto: UpdateTaskStatusDto) {
     return this.taskDefinitionFacade.updateTaskStatus(dto)
   }
 
@@ -76,7 +78,7 @@ export class TaskService {
   /**
    * 分页查询任务分配列表（管理端）。
    */
-  async getTaskAssignmentPage(queryDto: QueryTaskAssignmentPageInput) {
+  async getTaskAssignmentPage(queryDto: QueryTaskAssignmentDto) {
     return this.taskExecutionService.getTaskAssignmentPage(queryDto)
   }
 
@@ -84,7 +86,7 @@ export class TaskService {
    * 分页查询任务奖励与通知对账视图（管理端）。
    */
   async getTaskAssignmentReconciliationPage(
-    queryDto: QueryTaskAssignmentReconciliationPageInput,
+    queryDto: QueryTaskAssignmentReconciliationDto,
   ) {
     return this.taskExecutionService.getTaskAssignmentReconciliationPage(queryDto)
   }
@@ -106,14 +108,14 @@ export class TaskService {
   /**
    * 获取可领取任务列表（应用端）。
    */
-  async getAvailableTasks(queryDto: QueryAppTaskInput, userId: number) {
+  async getAvailableTasks(queryDto: QueryAvailableTaskDto, userId: number) {
     return this.taskExecutionService.getAvailableTasks(queryDto, userId)
   }
 
   /**
    * 获取我的任务列表（应用端）。
    */
-  async getMyTasks(queryDto: QueryMyTaskInput, userId: number) {
+  async getMyTasks(queryDto: QueryMyTaskDto, userId: number) {
     return this.taskExecutionService.getMyTasks(queryDto, userId)
   }
 
@@ -127,21 +129,21 @@ export class TaskService {
   /**
    * 领取任务（应用端）。
    */
-  async claimTask(dto: ClaimTaskInput, userId: number) {
+  async claimTask(dto: ClaimTaskDto, userId: number) {
     return this.taskExecutionService.claimTask(dto, userId)
   }
 
   /**
    * 上报任务进度（应用端）。
    */
-  async reportProgress(dto: TaskProgressInput, userId: number) {
+  async reportProgress(dto: TaskProgressDto, userId: number) {
     return this.taskExecutionService.reportProgress(dto, userId)
   }
 
   /**
    * 完成任务（应用端）。
    */
-  async completeTask(dto: TaskCompleteInput, userId: number) {
+  async completeTask(dto: TaskCompleteDto, userId: number) {
     return this.taskExecutionService.completeTask(dto, userId)
   }
 

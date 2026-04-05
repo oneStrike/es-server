@@ -6,7 +6,7 @@ import type {
   GrowthLedgerFailReasonEnum,
   GrowthLedgerSourceEnum,
 } from '../growth-ledger/growth-ledger.constant'
-import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.types'
+import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.internal'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   TaskAssignmentRewardResultTypeEnum,
@@ -55,7 +55,7 @@ export interface GrowthRuleRewardSettlementResult {
   experienceResult?: GrowthLedgerApplyResult
 }
 
-export interface DispatchDefinedGrowthEventInput {
+export interface DispatchDefinedGrowthEventPayload {
   eventEnvelope: EventEnvelope<GrowthRuleTypeEnum>
   bizKey: string
   source: string

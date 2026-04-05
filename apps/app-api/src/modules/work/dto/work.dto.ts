@@ -7,11 +7,8 @@ import {
   BooleanProperty,
   DateProperty,
   NestedProperty,
-  NumberProperty,
-  StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 
 class AuthorInfoDto extends PickType(BaseAuthorDto, [
   'id',
@@ -82,52 +79,6 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   })
   tags!: TagInfoDto[]
 }
-
-export class QueryWorkDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseWorkDto, [
-      'name',
-      'publisher',
-      'isPublished',
-      'serialStatus',
-      'language',
-      'region',
-      'ageRating',
-      'isRecommended',
-      'isHot',
-      'isNew',
-      'type',
-    ]),
-  ),
-) {
-  @StringProperty({ description: '作者名称', example: '村上', required: false })
-  author?: string
-
-  @NumberProperty({ description: '作者ID', example: 1, required: false })
-  authorId?: number
-
-  @ArrayProperty({
-    description: '分类ID列表',
-    itemType: 'number',
-    example: [1],
-    required: false,
-  })
-  categoryIds?: number[]
-
-  @ArrayProperty({
-    description: '标签ID列表',
-    itemType: 'number',
-    example: [1],
-    required: false,
-  })
-  tagIds?: number[]
-}
-
-export class QueryWorkTypeDto extends IntersectionType(
-  PageDto,
-  PickType(BaseWorkDto, ['type']),
-) {}
 
 export class WorkUserStatusFieldsDto {
   @BooleanProperty({
@@ -216,5 +167,3 @@ export class WorkDetailDto extends IntersectionType(
   WorkWithUserStatusDto,
   WorkReadingStatusFieldsDto,
 ) {}
-
-export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}

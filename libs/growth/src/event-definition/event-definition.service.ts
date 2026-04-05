@@ -1,7 +1,7 @@
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
   EventDefinition,
-  ListEventDefinitionsInput,
+  ListEventDefinitionFilters,
 } from './event-definition.type'
 import { Injectable } from '@nestjs/common'
 import { EVENT_DEFINITION_MAP, EVENT_DEFINITIONS } from './event-definition.map'
@@ -29,7 +29,7 @@ export class EventDefinitionService {
    * 统一支持业务域、治理闸门、消费者、实现态与可配置性筛选。
    */
   listEventDefinitions(
-    filters: ListEventDefinitionsInput = {},
+    filters: ListEventDefinitionFilters = {},
   ): EventDefinition[] {
     return EVENT_DEFINITIONS.filter((definition) =>
       this.matchesFilters(definition, filters),
@@ -53,7 +53,7 @@ export class EventDefinitionService {
 
   private matchesFilters(
     definition: EventDefinition,
-    filters: ListEventDefinitionsInput,
+    filters: ListEventDefinitionFilters,
   ) {
     if (filters.domain && definition.domain !== filters.domain) {
       return false

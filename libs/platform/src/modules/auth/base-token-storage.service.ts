@@ -16,28 +16,36 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
 {
   constructor(@Inject(CACHE_MANAGER) protected readonly cacheManager: Cache) {}
 
+  /** 创建单条 token 记录，具体落库由子类实现。 */
   protected abstract createOne(data: CreateTokenInput): Promise<T>
 
+  /** 批量创建 token 记录，返回写入条数。 */
   protected abstract createManyItems(data: CreateTokenInput[]): Promise<number>
 
+  /** 按 jti 查询单条 token 记录。 */
   protected abstract findOneByJti(jti: string): Promise<T | null>
 
+  /** 按条件批量更新 token 记录。 */
   protected abstract updateManyItems(
     where: Record<string, unknown>,
     data: Record<string, unknown>,
   ): Promise<number>
 
+  /** 按条件批量查询 token 记录。 */
   protected abstract findManyItems(
     where: Record<string, unknown>,
     options?: Record<string, unknown>,
   ): Promise<T[]>
 
+  /** 按条件批量删除 token 记录。 */
   protected abstract deleteManyItems(where: Record<string, unknown>): Promise<number>
 
+  /** 计算 token 距离过期的剩余毫秒数，供缓存 TTL 复用。 */
   private getTokenTtlMs(expiresAt: Date) {
     return Math.max(0, Math.floor(expiresAt.getTime() - Date.now()))
   }
 
+  /** 创建单条 token 并同步写入缓存命中标记。 */
   async createToken(data: CreateTokenInput) {
     const result = await this.createOne(data)
     const ttlMs = this.getTokenTtlMs(data.expiresAt)
@@ -47,6 +55,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     return result
   }
 
+  /** 批量创建 token 并为每条记录建立缓存命中标记。 */
   async createTokens(tokens: CreateTokenInput[]) {
     const result = await this.createManyItems(tokens)
     await Promise.all(
@@ -60,10 +69,15 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     return result
   }
 
+  /** 按 jti 查询 token。 */
   async findByJti(jti: string) {
     return this.findOneByJti(jti)
   }
 
+  /**
+   * 判断 token 当前是否有效。
+   * 先读缓存，再回落数据库；无效结果会写入短期缓存，避免频繁命中数据库。
+   */
   async isTokenValid(jti: string): Promise<boolean> {
     const cached = await this.cacheManager.get(`token:${jti}`)
     if (cached !== null && cached !== undefined) {
@@ -96,6 +110,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     return false
   }
 
+  /** 按 jti 撤销单条 token，并立即写入无效缓存。 */
   async revokeByJti(jti: string, reason: RevokeTokenReasonEnum) {
     await this.updateManyItems(
       { jti },
@@ -107,6 +122,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     await this.cacheManager.set(`token:${jti}`, 'invalid', INVALID_TOKEN_CACHE_TTL_MS)
   }
 
+  /** 批量撤销多条 token，并同步写入无效缓存。 */
   async revokeByJtis(jtis: string[], reason: RevokeTokenReasonEnum) {
     await this.updateManyItems(
       { jti: { in: jtis } },
@@ -122,6 +138,10 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     )
   }
 
+  /**
+   * 原子消费 refresh token。
+   * 仅未撤销且未过期的记录可被成功消费，返回值用于上层判断是否允许继续刷新。
+   */
   async consumeByJti(
     jti: string,
     reason: RevokeTokenReasonEnum,
@@ -141,6 +161,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     return affectedRows > 0
   }
 
+  /** 撤销指定用户的全部有效 token。 */
   async revokeAllByUserId(userId: number, reason: RevokeTokenReasonEnum) {
     const tokens = await this.findManyItems({
       userId,
@@ -169,6 +190,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     )
   }
 
+  /** 查询指定用户当前仍有效的 token 列表。 */
   async findActiveTokensByUserId(userId: number) {
     return this.findManyItems({
       userId,
@@ -177,6 +199,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     })
   }
 
+  /** 将已过期但尚未标记撤销的 token 批量回收。 */
   async cleanupExpiredTokens() {
     return this.updateManyItems(
       {
@@ -190,6 +213,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
     )
   }
 
+  /** 删除保留期之前的已撤销 token 记录。 */
   async deleteOldRevokedTokens(retentionDays: number = 30) {
     const date = new Date()
     date.setDate(date.getDate() - retentionDays)

@@ -1,5 +1,13 @@
 import {
+  CreateTaskDto,
+  QueryTaskAssignmentDto,
+  QueryTaskAssignmentReconciliationDto,
+  QueryTaskDto,
+  RetryCompletedTaskRewardsDto,
+  RetryTaskAssignmentRewardDto,
   TaskService,
+  UpdateTaskDto,
+  UpdateTaskStatusDto,
 } from '@libs/growth/task'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
@@ -12,19 +20,13 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import {
   AdminTaskAssignmentPageResponseDto,
   AdminTaskAssignmentReconciliationPageResponseDto,
   AdminTaskPageResponseDto,
-  CreateTaskDto,
-  QueryTaskAssignmentDto,
-  QueryTaskAssignmentReconciliationDto,
-  QueryTaskDto,
-  RetryCompletedTaskRewardsDto,
   RetryCompletedTaskRewardsResponseDto,
-  RetryTaskAssignmentRewardDto,
-  UpdateTaskDto,
-  UpdateTaskStatusDto,
 } from './dto/task.dto'
 
 @ApiTags('任务管理/任务配置')
@@ -36,6 +38,10 @@ export class TaskController {
   @ApiDoc({
     summary: '创建任务',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建任务',
   })
   async create(
     @Body() body: CreateTaskDto,
@@ -49,6 +55,10 @@ export class TaskController {
     summary: '更新任务',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新任务',
+  })
   async update(
     @Body() body: UpdateTaskDto,
     @CurrentUser('sub') userId: number,
@@ -61,6 +71,10 @@ export class TaskController {
     summary: '更新任务状态',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新任务状态',
+  })
   async updateStatus(@Body() body: UpdateTaskStatusDto) {
     return this.taskService.updateTaskStatus(body)
   }
@@ -69,6 +83,10 @@ export class TaskController {
   @ApiDoc({
     summary: '删除任务',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除任务',
   })
   async delete(@Body() body: IdDto) {
     return this.taskService.deleteTask(body.id)
@@ -117,6 +135,10 @@ export class TaskController {
     summary: '重试单条任务奖励结算',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '重试单条任务奖励结算',
+  })
   async retryAssignmentReward(@Body() body: RetryTaskAssignmentRewardDto) {
     return this.taskService.retryTaskAssignmentReward(body.id)
   }
@@ -125,6 +147,10 @@ export class TaskController {
   @ApiDoc({
     summary: '批量扫描并重试待补偿任务奖励',
     model: RetryCompletedTaskRewardsResponseDto,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '批量扫描并重试待补偿任务奖励',
   })
   async retryCompletedRewards(@Body() body: RetryCompletedTaskRewardsDto) {
     return this.taskService.retryCompletedAssignmentRewardsBatch(body.limit)

@@ -4,7 +4,18 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RULE_DTO_DESCRIPTION } from '../../event-definition'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
@@ -59,3 +70,20 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   remark?: string
 }
+
+export class CreateUserExperienceRuleDto extends OmitType(
+  BaseUserExperienceRuleDto,
+  OMIT_BASE_FIELDS,
+) {}
+
+export class UpdateUserExperienceRuleDto extends IntersectionType(
+  IdDto,
+  PartialType(CreateUserExperienceRuleDto),
+) {}
+
+export class QueryUserExperienceRuleDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseUserExperienceRuleDto, ['type', 'isEnabled'] as const),
+  ),
+) {}

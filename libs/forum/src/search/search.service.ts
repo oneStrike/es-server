@@ -1,20 +1,16 @@
 import type { ForumTopicSelect } from '@db/schema'
-import type {
-  ForumSearchInput,
-  ForumSearchPageResult,
-  ForumSearchResultItem,
-} from './search.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment'
 import { AuditStatusEnum } from '@libs/platform/constant'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { ForumPermissionService } from '../permission'
+import { ForumSearchDto, ForumSearchResultDto } from './dto/search.dto'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 
 /**
- * 论坛搜索服务类
- * 支持主题与评论的关键词检索及混合搜索
+ * 论坛搜索服务。
+ * 统一承载主题、评论和混合搜索逻辑，并在 public 模式下叠加板块可见性与审核过滤。
  */
 @Injectable()
 export class ForumSearchService {
@@ -23,49 +19,65 @@ export class ForumSearchService {
     private readonly forumPermissionService: ForumPermissionService,
   ) {}
 
+  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
-  /**
-   * 获取主题模型
-   */
+  /** forum_topic 表访问入口。 */
   get forumTopic() {
     return this.drizzle.schema.forumTopic
   }
 
-  /**
-   * 获取评论模型
-   */
+  /** user_comment 表访问入口。 */
   get userComment() {
     return this.drizzle.schema.userComment
   }
 
+  /** forum_topic_tag 表访问入口。 */
   get forumTopicTag() {
     return this.drizzle.schema.forumTopicTag
   }
 
+  /** forum_section 表访问入口。 */
   get forumSection() {
     return this.drizzle.schema.forumSection
   }
 
+  /** app_user 表访问入口。 */
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
-  async search(searchInput: ForumSearchInput) {
+  /**
+   * 兼容旧入口的后台搜索代理。
+   * 当前直接复用管理端搜索逻辑，避免在调用侧维护第二套接口。
+   */
+  async search(searchInput: ForumSearchDto) {
     return this.searchAdmin(searchInput)
   }
 
-  async searchAdmin(searchInput: ForumSearchInput) {
+  /**
+   * 管理端搜索。
+   * 不做公开可见性过滤，返回后台可检索的主题和评论。
+   */
+  async searchAdmin(searchInput: ForumSearchDto) {
     return this.searchInternal(searchInput, { publicOnly: false })
   }
 
-  async searchPublic(searchInput: ForumSearchInput, userId?: number) {
+  /**
+   * 应用侧公开搜索。
+   * 会按当前用户权限收窄板块范围，并过滤未通过审核或已隐藏内容。
+   */
+  async searchPublic(searchInput: ForumSearchDto, userId?: number) {
     return this.searchInternal(searchInput, { publicOnly: true, userId })
   }
 
-  private createEmptyPage(searchInput: ForumSearchInput) {
+  /**
+   * 创建空分页结果。
+   * 当板块范围或标签过滤提前确定无结果时，保持分页元数据稳定返回。
+   */
+  private createEmptyPage(searchInput: ForumSearchDto) {
     const page = this.drizzle.buildPage(searchInput)
 
     return {
@@ -76,6 +88,10 @@ export class ForumSearchService {
     }
   }
 
+  /**
+   * 生成关键词摘要。
+   * 优先截取命中片段附近内容，未命中时退回前缀截断，避免返回整段正文。
+   */
   private buildSnippet(content: string, keyword: string, size = 120) {
     const normalizedContent = content.trim()
     if (!normalizedContent) {
@@ -95,6 +111,10 @@ export class ForumSearchService {
     return normalizedContent.slice(start, end)
   }
 
+  /**
+   * 根据排序模式生成主题排序规则。
+   * hot 模式按互动指标聚合回退到发布时间，其它模式统一按最新时间倒序。
+   */
   private getTopicOrderBy(sort?: ForumSearchSortTypeEnum) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
       return [
@@ -110,6 +130,10 @@ export class ForumSearchService {
     >
   }
 
+  /**
+   * 根据排序模式生成评论排序规则。
+   * 评论热度优先看点赞数，再以发布时间兜底。
+   */
   private getCommentOrderBy(sort?: ForumSearchSortTypeEnum) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
       return [
@@ -121,9 +145,13 @@ export class ForumSearchService {
     return [desc(this.userComment.createdAt)]
   }
 
+  /**
+   * 合并搜索结果时的统一排序比较器。
+   * hot 模式使用主题互动热度，非 hot 模式则统一按时间和主键倒序稳定排序。
+   */
   private compareResults(
-    left: ForumSearchResultItem,
-    right: ForumSearchResultItem,
+    left: ForumSearchResultDto,
+    right: ForumSearchResultDto,
     sort?: ForumSearchSortTypeEnum,
   ) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
@@ -156,6 +184,10 @@ export class ForumSearchService {
     return right.topicId - left.topicId
   }
 
+  /**
+   * 解析当前查询可访问的板块范围。
+   * publicOnly 模式会调用权限服务校验显式 sectionId，或回退为当前用户可访问板块集合。
+   */
   private async resolveSectionScope(
     sectionId: number | undefined,
     options: {
@@ -181,6 +213,10 @@ export class ForumSearchService {
     return this.forumPermissionService.getAccessibleSectionIds(options.userId)
   }
 
+  /**
+   * 解析标签对应的主题 ID 集合。
+   * 空集合会在上层被快速短路，避免继续执行无意义的全文筛选。
+   */
   private async getTopicIdsByTag(tagId: number) {
     const topicIds = await this.db
       .select({ topicId: this.forumTopicTag.topicId })
@@ -190,10 +226,14 @@ export class ForumSearchService {
     return [...new Set(topicIds.map((item) => item.topicId))]
   }
 
+  /**
+   * 将主题查询结果映射为统一搜索结果 DTO。
+   * 这里会补齐板块名、用户昵称和正文摘要，供分页接口直接返回。
+   */
   private async mapTopicResults(
     topics: ForumTopicSelect[],
     keyword: string,
-  ): Promise<ForumSearchResultItem[]> {
+  ): Promise<ForumSearchResultDto[]> {
     if (topics.length === 0) {
       return []
     }
@@ -244,6 +284,10 @@ export class ForumSearchService {
     })
   }
 
+  /**
+   * 将评论查询结果映射为统一搜索结果 DTO。
+   * 评论结果保留 commentId 和评论摘要，主题维度指标仍复用所属主题的聚合字段。
+   */
   private async mapCommentResults(
     comments: Array<{
       commentId: number
@@ -259,7 +303,7 @@ export class ForumSearchService {
       favoriteCount: number
     }>,
     keyword: string,
-  ): Promise<ForumSearchResultItem[]> {
+  ): Promise<ForumSearchResultDto[]> {
     if (comments.length === 0) {
       return []
     }
@@ -311,13 +355,17 @@ export class ForumSearchService {
     })
   }
 
+  /**
+   * 搜索分发主入口。
+   * all 模式会分别拉取主题与评论窗口后合并排序，保持分页层看到的是统一结果流。
+   */
   private async searchInternal(
-    searchInput: ForumSearchInput,
+    searchInput: ForumSearchDto,
     options: {
       publicOnly: boolean
       userId?: number
     },
-  ): Promise<ForumSearchPageResult> {
+  ) {
     const type = searchInput.type ?? ForumSearchTypeEnum.ALL
 
     if (type === ForumSearchTypeEnum.TOPIC) {
@@ -365,18 +413,16 @@ export class ForumSearchService {
   }
 
   /**
-   * 搜索
-   * 根据搜索类型分发至主题/评论搜索，或合并结果
-   * @param dto 搜索参数
-   * @returns 搜索结果
+   * 搜索主题。
+   * public 模式下会叠加审核与隐藏过滤，并支持按标签缩小结果集。
    */
   private async searchTopics(
-    dto: ForumSearchInput,
+    dto: ForumSearchDto,
     options: {
       publicOnly: boolean
       userId?: number
     },
-  ): Promise<ForumSearchPageResult> {
+  ) {
     const sectionIds = await this.resolveSectionScope(dto.sectionId, options)
     if (sectionIds && sectionIds.length === 0) {
       return this.createEmptyPage(dto)
@@ -418,18 +464,16 @@ export class ForumSearchService {
   }
 
   /**
-   * 搜索评论
-   * 支持按关键词与排序方式筛选
-   * @param dto 搜索参数
-   * @returns 评论搜索结果
+   * 搜索评论。
+   * 评论搜索通过 join 主题表继承板块、审核和标签过滤条件，保证结果和主题搜索口径一致。
    */
   private async searchComments(
-    dto: ForumSearchInput,
+    dto: ForumSearchDto,
     options: {
       publicOnly: boolean
       userId?: number
     },
-  ): Promise<ForumSearchPageResult> {
+  ) {
     const sectionIds = await this.resolveSectionScope(dto.sectionId, options)
     if (sectionIds && sectionIds.length === 0) {
       return this.createEmptyPage(dto)

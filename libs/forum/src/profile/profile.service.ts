@@ -1,10 +1,6 @@
 import type { Db } from '@db/core'
 import type { AppUserCountSelect, AppUserSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
-import type {
-  QueryUserProfileListInput,
-  UpdateUserStatusInput,
-} from './profile.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
 import { UserPointService } from '@libs/growth/point'
@@ -17,6 +13,10 @@ import { UserDefaults, UserStatusEnum } from '@libs/platform/constant'
 import { AppUserCountService } from '@libs/user/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import {
+  QueryUserProfileListDto,
+  UpdateUserStatusDto,
+} from './dto/profile.dto'
 
 type UserCountRow = Pick<
   AppUserCountSelect,
@@ -160,13 +160,17 @@ export class UserProfileService {
    * @param queryDto - 查询参数，包含用户ID、昵称、状态等过滤条件
    * @returns 分页的用户资料列表，包含用户信息和徽章信息
    */
-  async queryProfileList(queryDto: QueryUserProfileListInput) {
+  async queryProfileList(queryDto: QueryUserProfileListDto) {
     const { levelId, status, nickname, ...rest } = queryDto
 
     const conditions: SQL[] = []
 
     if (levelId !== undefined) {
-      conditions.push(eq(this.appUser.levelId, levelId))
+      conditions.push(
+        levelId === null
+          ? isNull(this.appUser.levelId)
+          : eq(this.appUser.levelId, levelId),
+      )
     }
     if (status !== undefined) {
       conditions.push(eq(this.appUser.status, status))
@@ -307,8 +311,8 @@ export class UserProfileService {
    * @param updateDto - 更新参数，包含用户ID、状态和封禁原因
    * @throws Error 用户不存在
    */
-  async updateProfileStatus(updateDto: UpdateUserStatusInput): Promise<void> {
-    const { userId, status, banReason, banUntil } = updateDto
+  async updateProfileStatus(updateDto: UpdateUserStatusDto): Promise<void> {
+    const { id: userId, status, banReason, banUntil } = updateDto
 
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },

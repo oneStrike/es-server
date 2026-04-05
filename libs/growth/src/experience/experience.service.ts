@@ -11,12 +11,15 @@ import {
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
-  AddUserExperienceInput,
-  CreateUserExperienceRuleInput,
-  QueryUserExperienceRecordPageInput,
-  QueryUserExperienceRulePageInput,
-  UpdateUserExperienceRuleInput,
-} from './experience.type'
+  AddUserExperienceDto,
+  QueryUserExperienceRecordDto,
+  UserExperienceRecordDto,
+} from './dto/experience-record.dto'
+import {
+  CreateUserExperienceRuleDto,
+  QueryUserExperienceRuleDto,
+  UpdateUserExperienceRuleDto,
+} from './dto/experience-rule.dto'
 
 /**
  * 经验服务类
@@ -56,7 +59,7 @@ export class UserExperienceService {
    * @param dto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createExperienceRule(dto: CreateUserExperienceRuleInput) {
+  async createExperienceRule(dto: CreateUserExperienceRuleDto) {
     this.validateExperienceRuleWrite(dto)
     await this.drizzle.withErrorHandling(
       () => this.db.insert(this.userExperienceRule).values(dto),
@@ -72,7 +75,7 @@ export class UserExperienceService {
    * @param dto 查询条件
    * @returns 分页的规则列表
    */
-  async getExperienceRulePage(dto: QueryUserExperienceRulePageInput) {
+  async getExperienceRulePage(dto: QueryUserExperienceRuleDto) {
     const conditions: SQL[] = []
 
     if (dto.isEnabled !== undefined) {
@@ -112,7 +115,7 @@ export class UserExperienceService {
    * @param dto 更新规则的数据
    * @returns 更新后的规则信息
    */
-  async updateExperienceRule(dto: UpdateUserExperienceRuleInput) {
+  async updateExperienceRule(dto: UpdateUserExperienceRuleDto) {
     this.validateExperienceRuleWrite(dto)
     const { id, ...updateData } = dto
     const result = await this.drizzle.withErrorHandling(
@@ -160,7 +163,7 @@ export class UserExperienceService {
    * @returns 增加经验的结果
    */
   async addExperience(
-    addExperienceDto: AddUserExperienceInput & {
+    addExperienceDto: AddUserExperienceDto & {
       bizKey?: string
       source?: string
       targetType?: number
@@ -227,7 +230,7 @@ export class UserExperienceService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getExperienceRecordPage(dto: QueryUserExperienceRecordPageInput) {
+  async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
     const conditions: SQL[] = [
       eq(this.growthLedgerRecord.userId, dto.userId),
       eq(this.growthLedgerRecord.assetType, GrowthAssetTypeEnum.EXPERIENCE),
@@ -339,7 +342,7 @@ export class UserExperienceService {
     context?: unknown
     createdAt: Date
     updatedAt?: Date
-  }) {
+  }): UserExperienceRecordDto {
     return {
       id: record.id,
       userId: record.userId,
@@ -391,7 +394,7 @@ export class UserExperienceService {
    */
   private validateExperienceRuleWrite(
     dto: Pick<
-      UpdateUserExperienceRuleInput,
+      UpdateUserExperienceRuleDto,
       'type' | 'experience' | 'dailyLimit' | 'totalLimit'
     >,
   ) {

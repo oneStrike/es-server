@@ -1,16 +1,16 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { IdDto } from '@libs/platform/dto'
 import { jsonParse } from '@libs/platform/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, arrayOverlaps, eq, isNull } from 'drizzle-orm'
 import {
-  CategoryIdInput,
-  CreateCategoryInput,
-  QueryCategoryInput,
-  UpdateCategoryInput,
-  UpdateCategorySortInput,
-  UpdateCategoryStatusInput,
-} from './category.type'
+  CreateCategoryDto,
+  QueryCategoryDto,
+  UpdateCategoryDto,
+  UpdateCategorySortDto,
+  UpdateCategoryStatusDto,
+} from './dto/category.dto'
 
 /**
  * 作品分类服务
@@ -22,18 +22,22 @@ import {
 export class WorkCategoryService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 分类表。 */
   get workCategory() {
     return this.drizzle.schema.workCategory
   }
 
+  /** 分类-作品关联表。 */
   get workCategoryRelation() {
     return this.drizzle.schema.workCategoryRelation
   }
 
+  /** 作品表。 */
   get work() {
     return this.drizzle.schema.work
   }
@@ -43,7 +47,7 @@ export class WorkCategoryService {
    *
    * 未指定排序时自动追加到末尾；popularity 初始化为 0，由作品关联或外部事件驱动更新。
    */
-  async createCategory(createCategoryInput: CreateCategoryInput) {
+  async createCategory(createCategoryInput: CreateCategoryDto) {
     if (!createCategoryInput.sortOrder) {
       createCategoryInput.sortOrder =
         (await this.drizzle.ext.maxOrder({
@@ -65,7 +69,7 @@ export class WorkCategoryService {
    * contentType 使用 PostgreSQL 数组重叠操作符 &&，匹配任意一个指定类型即返回。
    * 未显式传入排序时，默认遵循后台维护的 sortOrder 升序。
    */
-  async getCategoryPage(queryDto: QueryCategoryInput) {
+  async getCategoryPage(queryDto: QueryCategoryDto) {
     const { name, isEnabled, contentType, ...pageParams } = queryDto
 
     const conditions: SQL[] = []
@@ -97,7 +101,11 @@ export class WorkCategoryService {
     })
   }
 
-  async getCategoryDetail(input: CategoryIdInput) {
+  /**
+   * 获取分类详情。
+   * 未命中时抛出业务异常，避免上层误把空结果当成可编辑分类。
+   */
+  async getCategoryDetail(input: IdDto) {
     const category = await this.db.query.workCategory.findFirst({
       where: { id: input.id },
     })
@@ -113,7 +121,7 @@ export class WorkCategoryService {
    * 禁用前校验无关联作品；名称重复抛出 BadRequestException。
    * @throws BadRequestException 分类存在关联作品时禁用失败，或名称重复
    */
-  async updateCategory(updateCategoryDto: UpdateCategoryInput) {
+  async updateCategory(updateCategoryDto: UpdateCategoryDto) {
     const { id, ...updateData } = updateCategoryDto
 
     if (
@@ -136,9 +144,10 @@ export class WorkCategoryService {
   }
 
   /**
-   * 更新分类启用状态
+   * 更新分类启用状态。
+   * 禁用前同样要校验没有未删除作品关联，避免通过状态入口绕过完整性约束。
    */
-  async updateCategoryStatus(updateStatusDto: UpdateCategoryStatusInput) {
+  async updateCategoryStatus(updateStatusDto: UpdateCategoryStatusDto) {
     if (
       !updateStatusDto.isEnabled &&
       (await this.checkCategoryHasWorks(updateStatusDto.id))
@@ -160,7 +169,7 @@ export class WorkCategoryService {
    *
    * 使用 ext.swapField 保证原子性，避免并发问题。
    */
-  async updateCategorySort(updateSortDto: UpdateCategorySortInput) {
+  async updateCategorySort(updateSortDto: UpdateCategorySortDto) {
     await this.drizzle.ext.swapField(this.workCategory, {
       where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
@@ -173,7 +182,7 @@ export class WorkCategoryService {
    * 删除前校验无关联作品，保证数据完整性。
    * @throws BadRequestException 分类存在关联作品时删除失败
    */
-  async deleteCategory(input: CategoryIdInput) {
+  async deleteCategory(input: IdDto) {
     if (await this.checkCategoryHasWorks(input.id)) {
       throw new BadRequestException(
         '该分类存在关联作品，不能删除。',
@@ -193,7 +202,7 @@ export class WorkCategoryService {
    *
    * 用于删除或禁用分类前的完整性校验。仅统计未软删作品，已软删作品不计入。
    */
-  async checkCategoryHasWorks(categoryId: number) {
+  private async checkCategoryHasWorks(categoryId: number) {
     const rows = await this.db
       .select({ workId: this.workCategoryRelation.workId })
       .from(this.workCategoryRelation)

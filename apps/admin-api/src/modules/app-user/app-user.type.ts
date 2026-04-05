@@ -4,14 +4,14 @@ import type {
   QueryUserBadgeDto,
 } from '@libs/growth/badge'
 import type {
-  AddUserExperienceInput,
-  QueryUserExperienceRecordPageInput,
+  AddUserExperienceDto,
+  QueryUserExperienceRecordDto,
 } from '@libs/growth/experience'
-import type { QueryGrowthLedgerPageInput } from '@libs/growth/growth-ledger'
+import type { QueryGrowthLedgerPageDto } from '@libs/growth/growth-ledger'
 import type {
-  AddUserPointsInput,
-  ConsumeUserPointsInput,
-  QueryUserPointRecordPageInput,
+  AddUserPointsDto,
+  ConsumeUserPointsDto,
+  QueryUserPointRecordDto,
 } from '@libs/growth/point'
 
 /**
@@ -109,7 +109,7 @@ export interface ResetAdminAppUserPasswordInput {
  * 复用成长领域查询字段，包含目标用户 userId。
  */
 export interface QueryAdminAppUserPointRecordInput
-  extends QueryUserPointRecordPageInput {}
+  extends QueryUserPointRecordDto {}
 
 /**
  * 管理端人工成长操作稳定键。
@@ -124,35 +124,35 @@ export interface AdminAppUserManualOperationInput {
  * 复用成长领域发放积分字段，管理端补充 operationKey。
  */
 export interface AddAdminAppUserPointsInput
-  extends AddUserPointsInput, AdminAppUserManualOperationInput {}
+  extends AddUserPointsDto, AdminAppUserManualOperationInput {}
 
 /**
  * APP 用户手动扣积分入参。
  * 复用成长领域扣减积分字段，管理端补充 operationKey。
  */
 export interface ConsumeAdminAppUserPointsInput
-  extends ConsumeUserPointsInput, AdminAppUserManualOperationInput {}
+  extends ConsumeUserPointsDto, AdminAppUserManualOperationInput {}
 
 /**
  * APP 用户经验流水分页查询入参。
  * 复用成长领域查询字段，包含目标用户 userId。
  */
 export interface QueryAdminAppUserExperienceRecordInput
-  extends QueryUserExperienceRecordPageInput {}
+  extends QueryUserExperienceRecordDto {}
 
 /**
  * APP 用户混合成长流水分页查询入参。
  * 复用统一账本查询字段，包含目标用户 userId。
  */
 export interface QueryAdminAppUserGrowthLedgerInput
-  extends QueryGrowthLedgerPageInput {}
+  extends QueryGrowthLedgerPageDto {}
 
 /**
  * APP 用户手动加经验入参。
  * 复用成长领域发放经验字段，管理端补充 operationKey。
  */
 export interface AddAdminAppUserExperienceInput
-  extends AddUserExperienceInput, AdminAppUserManualOperationInput {}
+  extends AddUserExperienceDto, AdminAppUserManualOperationInput {}
 
 /**
  * APP 用户徽章分页查询入参。

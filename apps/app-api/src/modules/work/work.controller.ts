@@ -1,4 +1,9 @@
-import { WorkService } from '@libs/content/work'
+import {
+  QueryWorkCommentPageDto,
+  QueryWorkDto,
+  QueryWorkTypeDto,
+  WorkService,
+} from '@libs/content/work'
 import { CommentService } from '@libs/interaction/comment'
 import {
   ApiDoc,
@@ -14,9 +19,6 @@ import { ApiTags } from '@nestjs/swagger'
 import { TargetCommentItemDto } from '../comment/dto/comment.dto'
 import {
   PageWorkDto,
-  QueryWorkCommentPageDto,
-  QueryWorkDto,
-  QueryWorkTypeDto,
   WorkDetailDto,
 } from './dto/work.dto'
 

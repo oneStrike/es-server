@@ -1,11 +1,18 @@
-import { MessageChatService } from '@libs/message/chat'
-import { MessageInboxService } from '@libs/message/inbox'
+import {
+  MessageChatService,
+  OpenDirectConversationDto,
+  QueryChatConversationListDto,
+  QueryChatConversationMessagesDto,
+} from '@libs/message/chat'
+import { MessageInboxService, QueryInboxTimelineDto } from '@libs/message/inbox'
 import {
   MessageNotificationPreferenceService,
   MessageNotificationService,
+  QueryUserNotificationListDto,
+  UpdateUserNotificationPreferencesDto,
 } from '@libs/message/notification'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
@@ -14,10 +21,6 @@ import {
   InboxSummaryDto,
   InboxTimelineItemDto,
   NotificationUnreadCountDto,
-  OpenDirectConversationDto,
-  QueryChatConversationMessagesDto,
-  QueryUserNotificationListDto,
-  UpdateUserNotificationPreferencesDto,
   UserNotificationDto,
   UserNotificationPreferenceListDto,
 } from './dto/message.dto'
@@ -124,7 +127,7 @@ export class MessageController {
     model: ChatConversationDto,
   })
   async conversationList(
-    @Query() query: PageDto,
+    @Query() query: QueryChatConversationListDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageChatService.getConversationList(userId, query)
@@ -157,7 +160,7 @@ export class MessageController {
     model: InboxTimelineItemDto,
   })
   async inboxTimeline(
-    @Query() query: PageDto,
+    @Query() query: QueryInboxTimelineDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageInboxService.getTimeline(userId, query)

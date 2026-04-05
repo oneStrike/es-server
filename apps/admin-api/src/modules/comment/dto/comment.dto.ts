@@ -1,13 +1,9 @@
 import { BaseCommentDto } from '@libs/interaction/comment'
 import {
   NestedProperty,
-  StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user/core'
 import {
-  IntersectionType,
-  PartialType,
   PickType,
 } from '@nestjs/swagger'
 
@@ -111,37 +107,3 @@ export class AdminCommentDetailDto extends PickType(BaseCommentDto, [
   })
   replyTo!: AdminCommentReplyTargetDto
 }
-
-export class QueryAdminCommentPageDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(AdminCommentPageItemDto, [
-      'id',
-      'userId',
-      'targetType',
-      'targetId',
-      'replyToId',
-      'actualReplyToId',
-      'auditStatus',
-      'isHidden',
-    ] as const),
-  ),
-) {
-  @StringProperty({
-    description: '关键词搜索（评论内容）',
-    example: '写得很棒',
-    required: false,
-    maxLength: 200,
-  })
-  keyword?: string
-}
-
-export class UpdateAdminCommentAuditStatusDto extends IntersectionType(
-  IdDto,
-  PickType(BaseCommentDto, ['auditStatus', 'auditReason'] as const),
-) {}
-
-export class UpdateAdminCommentHiddenDto extends IntersectionType(
-  IdDto,
-  PickType(BaseCommentDto, ['isHidden'] as const),
-) {}

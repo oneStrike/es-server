@@ -1,5 +1,12 @@
 import { UserProfileService } from '@libs/forum/profile'
-import { ForumTopicService } from '@libs/forum/topic'
+import {
+  CreateUserForumTopicDto,
+  ForumTopicService,
+  QueryForumTopicCommentPageDto,
+  QueryMyForumTopicDto,
+  QueryPublicForumTopicDto,
+  UpdateForumTopicDto,
+} from '@libs/forum/topic'
 import { CommentService } from '@libs/interaction/comment'
 import {
   ApiDoc,
@@ -16,12 +23,7 @@ import { TargetCommentItemDto } from '../comment/dto/comment.dto'
 import {
   AppForumTopicDetailDto,
   AppForumTopicPageItemDto,
-  CreateAppForumTopicDto,
   MyForumTopicItemDto,
-  QueryAppForumTopicPageDto,
-  QueryForumTopicCommentPageDto,
-  QueryMyForumTopicPageDto,
-  UpdateAppForumTopicDto,
 } from './dto/forum-topic.dto'
 
 @ApiTags('论坛/主题')
@@ -40,7 +42,7 @@ export class ForumTopicController {
     model: AppForumTopicPageItemDto,
   })
   async getPage(
-    @Query() query: QueryAppForumTopicPageDto,
+    @Query() query: QueryPublicForumTopicDto,
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumTopicService.getPublicTopics({
@@ -95,7 +97,7 @@ export class ForumTopicController {
     model: MyForumTopicItemDto,
   })
   async getMyTopicPage(
-    @Query() query: QueryMyForumTopicPageDto,
+    @Query() query: QueryMyForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.userProfileService.getMyTopics(userId, query)
@@ -107,7 +109,7 @@ export class ForumTopicController {
     model: Boolean,
   })
   async create(
-    @Body() body: CreateAppForumTopicDto,
+    @Body() body: CreateUserForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.forumTopicService.createForumTopic({
@@ -122,7 +124,7 @@ export class ForumTopicController {
     model: Boolean,
   })
   async update(
-    @Body() body: UpdateAppForumTopicDto,
+    @Body() body: UpdateForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.forumTopicService.updateUserTopic(userId, body)

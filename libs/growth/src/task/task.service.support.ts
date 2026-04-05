@@ -11,6 +11,10 @@ import type { UserGrowthRewardService } from '../growth-reward/growth-reward.ser
 import type { TaskRewardSettlementResult } from '../growth-reward/growth-reward.types'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
+  QueryTaskAssignmentReconciliationDto,
+  UpdateTaskDto,
+} from './dto/task.dto'
+import type {
   AdvanceAssignmentByEventInput,
   ApplyAssignmentEventProgressInput,
   AppTaskViewSource,
@@ -22,7 +26,6 @@ import type {
   ExpireAssignmentsByWhereInput,
   QueryTaskAssignmentPageParams,
   QueryTaskAssignmentPageResult,
-  QueryTaskAssignmentReconciliationPageInput,
   ResolveTaskUserVisibleStatusInput,
   TaskAssignmentEventProgressSummary,
   TaskAssignmentRewardReminderSummary,
@@ -46,7 +49,6 @@ import type {
   TaskRewardTaskRecordBuildCurrentTaskInput,
   TaskRuntimeHealthSummary,
   TaskSnapshotSource,
-  UpdateTaskInput,
 } from './task.type'
 import process from 'node:process'
 import {
@@ -712,7 +714,7 @@ export abstract class TaskServiceSupport {
       | 'eventCode'
       | 'objectiveConfig'
     >,
-    dto: UpdateTaskInput,
+    dto: UpdateTaskDto,
     repeatRule: TaskRepeatRuleConfig | null | undefined,
     objectiveType: TaskObjectiveTypeEnum,
   ) {
@@ -2131,7 +2133,7 @@ export abstract class TaskServiceSupport {
    */
   protected async queryAssignmentIdsByEventFilter(
     queryDto: Pick<
-      QueryTaskAssignmentReconciliationPageInput,
+      QueryTaskAssignmentReconciliationDto,
       'eventCode' | 'eventBizKey'
     >,
   ) {
@@ -2164,7 +2166,7 @@ export abstract class TaskServiceSupport {
    */
   protected async queryAssignmentIdsByRewardReminderFilter(
     queryDto: Pick<
-      QueryTaskAssignmentReconciliationPageInput,
+      QueryTaskAssignmentReconciliationDto,
       'notificationStatus'
     >,
   ) {

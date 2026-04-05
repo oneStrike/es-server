@@ -20,26 +20,35 @@ import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 export class UserBadgeService {
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 徽章定义表。 */
   get userBadge() {
     return this.drizzle.schema.userBadge
   }
 
+  /** 用户徽章分发表。 */
   get userBadgeAssignment() {
     return this.drizzle.schema.userBadgeAssignment
   }
 
+  /** 用户表。 */
   get appUser() {
     return this.drizzle.schema.appUser
   }
 
+  /** 等级规则表。 */
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
   }
 
+  /**
+   * 检查徽章是否已经被分配给任意用户。
+   * 用于删除或禁用前的完整性校验，避免把已生效的徽章定义直接下线。
+   */
   private async checkBadgeHasAssignments(badgeId: number) {
     const rows = await this.db
       .select({ badgeId: this.userBadgeAssignment.badgeId })
@@ -50,6 +59,10 @@ export class UserBadgeService {
     return rows.length > 0
   }
 
+  /**
+   * 创建徽章定义。
+   * 唯一约束和其他写入异常统一交给 `withErrorHandling`，避免泄露底层数据库错误。
+   */
   async createBadge(dto: CreateUserBadgeDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.userBadge).values(dto),
@@ -57,6 +70,10 @@ export class UserBadgeService {
     return true
   }
 
+  /**
+   * 更新徽章主体字段。
+   * 若请求显式禁用徽章，会先校验该徽章尚未分配给任何用户。
+   */
   async updateBadge(dto: UpdateUserBadgeDto) {
     const { id, ...updateData } = dto
 
@@ -74,6 +91,10 @@ export class UserBadgeService {
     return true
   }
 
+  /**
+   * 删除徽章定义。
+   * 已被分配的徽章禁止删除，避免历史用户数据出现悬空引用。
+   */
   async deleteBadge(dto: IdDto) {
     if (await this.checkBadgeHasAssignments(dto.id)) {
       throw new BadRequestException('徽章已被分配，无法删除')
@@ -89,6 +110,10 @@ export class UserBadgeService {
     return true
   }
 
+  /**
+   * 切换徽章启用状态。
+   * 禁用校验与编辑入口保持一致，避免通过状态接口绕过分配关系约束。
+   */
   async updateBadgeStatus(dto: UpdateUserBadgeStatusDto) {
     if (!dto.isEnabled && (await this.checkBadgeHasAssignments(dto.id))) {
       throw new BadRequestException('徽章已被分配，无法禁用')
@@ -104,6 +129,10 @@ export class UserBadgeService {
     return true
   }
 
+  /**
+   * 根据查询 DTO 组装徽章筛选条件。
+   * `business` 与 `eventKey` 允许显式传 `null` 表达“筛选空值”，因此这里需要区分未传与传空。
+   */
   private buildBadgeWhere(dto: QueryUserBadgeDto) {
     const conditions: SQL[] = []
 
@@ -136,6 +165,10 @@ export class UserBadgeService {
     return conditions.length > 0 ? and(...conditions) : undefined
   }
 
+  /**
+   * 获取徽章详情。
+   * 未命中时抛出 `NotFoundException`，供后台详情页和编辑页复用。
+   */
   async getBadgeDetail(dto: IdDto) {
     const badge = await this.db.query.userBadge.findFirst({ where: { id: dto.id } })
 
@@ -162,6 +195,10 @@ export class UserBadgeService {
     })
   }
 
+  /**
+   * 给用户分配徽章。
+   * 写入前会同时校验用户和徽章存在；重复分配按业务异常返回，不允许静默覆盖。
+   */
   async assignBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
@@ -190,6 +227,10 @@ export class UserBadgeService {
     return true
   }
 
+  /**
+   * 撤销用户徽章。
+   * 仅删除指定用户与指定徽章的分配关系，不影响徽章定义本身。
+   */
   async revokeBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
@@ -207,6 +248,10 @@ export class UserBadgeService {
     return true
   }
 
+  /**
+   * 获取指定用户拥有的徽章列表。
+   * 列表按分配时间倒序返回，便于后台优先查看最近发放的徽章。
+   */
   async getUserBadges(userId: number, dto: QueryUserBadgeDto) {
     const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
     if (!user) {
@@ -236,6 +281,10 @@ export class UserBadgeService {
       )
   }
 
+  /**
+   * 分页查询某个徽章对应的用户列表。
+   * 结果补充用户等级和积分信息，供后台查看徽章发放范围。
+   */
   async getBadgeUsers(dto: QueryBadgeUserPageDto) {
     const { badgeId } = dto
     const badge = await this.db.query.userBadge.findFirst({ where: { id: badgeId } })
@@ -295,6 +344,10 @@ export class UserBadgeService {
     }
   }
 
+  /**
+   * 统计徽章总量、启用量、分配量和热门徽章。
+   * 该接口服务于后台看板，因此会额外查询热门徽章详情并拼装返回。
+   */
   async getBadgeStatistics() {
     const [totalBadgesRow, enabledCountRow, totalAssignmentsRow, typeCounts, topBadges] =
       await Promise.all([

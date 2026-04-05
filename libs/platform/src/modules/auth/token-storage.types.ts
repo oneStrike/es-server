@@ -53,12 +53,6 @@ export interface CreateTokenInput {
 }
 
 /**
- * 兼容旧命名的 Token 创建类型。
- * 保留别名以避免外部导入立即断裂。
- */
-export type CreateTokenDto = CreateTokenInput
-
-/**
  * Token Delegate 接口抽象
  * 适配 AdminUserToken 和 AppUserToken
  *

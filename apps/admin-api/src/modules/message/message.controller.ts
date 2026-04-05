@@ -1,3 +1,4 @@
+import { QueryNotificationDeliveryPageDto } from '@libs/message/notification'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -5,7 +6,6 @@ import {
   MessageNotificationDeliveryItemDto,
   MessageOutboxMonitorSummaryDto,
   MessageWsMonitorSummaryDto,
-  QueryMessageNotificationDeliveryPageDto,
   QueryMessageOutboxMonitorDto,
   QueryMessageWsMonitorDto,
   RetryMessageNotificationDeliveryDto,
@@ -23,7 +23,7 @@ export class MessageController {
     model: MessageNotificationDeliveryItemDto,
   })
   async getNotificationDeliveryPage(
-    @Query() query: QueryMessageNotificationDeliveryPageDto,
+    @Query() query: QueryNotificationDeliveryPageDto,
   ) {
     return this.messageMonitorService.getNotificationDeliveryPage(query)
   }

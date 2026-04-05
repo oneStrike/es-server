@@ -1,5 +1,5 @@
 import type {
-  DispatchDefinedGrowthEventInput,
+  DispatchDefinedGrowthEventPayload,
   DispatchDefinedGrowthEventResult,
 } from './growth-reward.types'
 import {
@@ -29,7 +29,7 @@ export class GrowthEventBridgeService {
    * producer 统一提供稳定 envelope 与 bizKey，桥接层负责判断 consumer 可消费性，并发放基础奖励。
    */
   async dispatchDefinedEvent(
-    input: DispatchDefinedGrowthEventInput,
+    input: DispatchDefinedGrowthEventPayload,
   ): Promise<DispatchDefinedGrowthEventResult> {
     const definition = this.eventDefinitionService.getEventDefinition(
       input.eventEnvelope.code,
@@ -107,7 +107,7 @@ export class GrowthEventBridgeService {
     }
   }
 
-  private buildEventRewardContext(input: DispatchDefinedGrowthEventInput) {
+  private buildEventRewardContext(input: DispatchDefinedGrowthEventPayload) {
     return {
       ...(input.eventEnvelope.context ?? {}),
       ...(input.context ?? {}),

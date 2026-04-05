@@ -6,7 +6,13 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 export class BaseWorkChapterDto extends BaseDto {
   @NumberProperty({ description: '作品ID', example: 1, required: true })
@@ -166,3 +172,41 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   deletedAt?: Date | null
 }
+
+export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
+  ...OMIT_BASE_FIELDS,
+  'viewCount',
+  'likeCount',
+  'commentCount',
+  'purchaseCount',
+  'downloadCount',
+  'wordCount',
+  'deletedAt',
+] as const) {
+  @BooleanProperty({
+    description: '发布状态',
+    example: false,
+    required: false,
+    default: false,
+  })
+  isPublished!: boolean
+}
+
+export class QueryWorkChapterDto extends IntersectionType(
+  IntersectionType(PageDto, PickType(BaseWorkChapterDto, ['workId'] as const)),
+  PickType(PartialType(BaseWorkChapterDto), [
+    'title',
+    'isPublished',
+    'isPreview',
+    'viewRule',
+    'canDownload',
+    'canComment',
+  ] as const),
+) {}
+
+export class UpdateWorkChapterDto extends IntersectionType(
+  PartialType(CreateWorkChapterDto),
+  IdDto,
+) {}
+
+export class QueryWorkChapterCommentPageDto extends IntersectionType(PageDto, IdDto) {}

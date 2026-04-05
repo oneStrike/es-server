@@ -1,7 +1,6 @@
 import { BaseForumSectionDto } from '@libs/forum/section'
 import {
   BaseForumTopicDto,
-  ForumTopicWritableFieldsDto,
 } from '@libs/forum/topic'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
 import {
@@ -11,11 +10,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
 import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
 import {
-  IntersectionType,
-  PartialType,
   PickType,
 } from '@nestjs/swagger'
 
@@ -197,60 +193,3 @@ export class AdminForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   })
   contentSnippet!: string
 }
-
-export class CreateForumTopicDto extends IntersectionType(
-  PickType(BaseForumTopicDto, ['sectionId', 'userId'] as const),
-  ForumTopicWritableFieldsDto,
-) {}
-
-export class UpdateForumTopicDto extends IntersectionType(
-  IdDto,
-  ForumTopicWritableFieldsDto,
-) {}
-
-export class QueryForumTopicDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(BaseForumTopicDto, [
-      'sectionId',
-      'userId',
-      'isPinned',
-      'isFeatured',
-      'isLocked',
-      'isHidden',
-      'auditStatus',
-    ] as const),
-  ),
-) {
-  @StringProperty({
-    description: '关键词搜索（标题或内容）',
-    example: 'TypeScript',
-    required: false,
-  })
-  keyword?: string
-}
-
-export class UpdateForumTopicAuditStatusDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['auditStatus', 'auditReason'] as const),
-) {}
-
-export class UpdateForumTopicPinnedDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isPinned'] as const),
-) {}
-
-export class UpdateForumTopicFeaturedDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isFeatured'] as const),
-) {}
-
-export class UpdateForumTopicLockedDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isLocked'] as const),
-) {}
-
-export class UpdateForumTopicHiddenDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumTopicDto, ['isHidden'] as const),
-) {}

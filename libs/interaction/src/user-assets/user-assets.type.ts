@@ -1,11 +1,3 @@
-import type { UserCommentSelect } from '@db/schema'
-
-/**
- * 用户资产汇总查询入参。
- * - 使用用户ID作为唯一查询条件
- */
-export type UserAssetsSummaryQueryInput = Pick<UserCommentSelect, 'userId'>
-
 /**
  * 聚合计数查询返回结构。
  * - 用于 count(*)::int 结果映射

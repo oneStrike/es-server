@@ -5,7 +5,12 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import { GrowthAssetTypeEnum } from '../growth-ledger.constant'
@@ -114,3 +119,17 @@ export class BaseGrowthLedgerRecordDto extends IdDto {
   })
   createdAt!: Date
 }
+
+export class QueryGrowthLedgerPageDto extends IntersectionType(
+  PageDto,
+  PickType(BaseGrowthLedgerRecordDto, ['userId'] as const),
+  PartialType(
+    PickType(BaseGrowthLedgerRecordDto, [
+      'assetType',
+      'ruleId',
+      'ruleType',
+      'targetType',
+      'targetId',
+    ] as const),
+  ),
+) {}

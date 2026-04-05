@@ -1,12 +1,5 @@
 import type { SQL } from 'drizzle-orm'
 import type {
-  CreateEmojiAssetInput,
-  CreateEmojiPackInput,
-  QueryEmojiAssetPageInput,
-  QueryEmojiPackPageInput,
-  UpdateEmojiAssetInput,
-  UpdateEmojiPackInput,
-  UpdateEmojiPackSceneTypeInput,
   ValidateEmojiAssetPayload,
 } from './emoji.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
@@ -16,6 +9,15 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
+import {
+  CreateEmojiAssetDto,
+  CreateEmojiPackDto,
+  QueryEmojiAssetDto,
+  QueryEmojiPackDto,
+  UpdateEmojiAssetDto,
+  UpdateEmojiPackDto,
+  UpdateEmojiPackSceneTypeDto,
+} from './dto/emoji.dto'
 import {
   EmojiAssetKindEnum as AssetKind,
   EmojiSceneEnum,
@@ -48,7 +50,7 @@ export class EmojiAssetService {
    * - 默认按 sortOrder 升序、id 升序排列。
    * - 自动排除已软删除的记录。
    */
-  async getPackPage(dto: QueryEmojiPackPageInput) {
+  async getPackPage(dto: QueryEmojiPackDto) {
     const conditions: SQL[] = [isNull(this.emojiPack.deletedAt)]
 
     if (dto.code) {
@@ -105,7 +107,7 @@ export class EmojiAssetService {
    * @throws BadRequestException sceneType 校验失败
    * @throws ConflictException 表情包编码已存在（由 withErrorHandling 转换）
    */
-  async createPack(dto: CreateEmojiPackInput, adminUserId: number) {
+  async createPack(dto: CreateEmojiPackDto, adminUserId: number) {
     this.validateSceneType(dto.sceneType)
     const sortOrder =
       dto.sortOrder ??
@@ -139,7 +141,7 @@ export class EmojiAssetService {
    * @throws NotFoundException 表情包不存在或已删除
    * @throws ConflictException 表情包编码已存在（由 withErrorHandling 转换）
    */
-  async updatePack(dto: UpdateEmojiPackInput, adminUserId: number) {
+  async updatePack(dto: UpdateEmojiPackDto, adminUserId: number) {
     if (dto.sceneType) {
       this.validateSceneType(dto.sceneType)
     }
@@ -195,7 +197,7 @@ export class EmojiAssetService {
    * @throws NotFoundException 表情包不存在或已删除
    */
   async updatePackSceneType(
-    dto: UpdateEmojiPackSceneTypeInput,
+    dto: UpdateEmojiPackSceneTypeDto,
     adminUserId: number,
   ) {
     this.validateSceneType(dto.sceneType)
@@ -275,7 +277,7 @@ export class EmojiAssetService {
    * - 默认按 sortOrder 升序、id 升序排列。
    * - 自动排除已软删除的记录。
    */
-  async getAssetPage(dto: QueryEmojiAssetPageInput) {
+  async getAssetPage(dto: QueryEmojiAssetDto) {
     const conditions: SQL[] = [isNull(this.emojiAsset.deletedAt)]
 
     if (dto.packId !== undefined) {
@@ -333,7 +335,7 @@ export class EmojiAssetService {
    * - 根据 kind 校验必填字段：CUSTOM 需 shortcode+imageUrl，UNICODE 需 unicodeSequence。
    * @throws BadRequestException 表情包不存在或字段校验失败
    */
-  async createAsset(dto: CreateEmojiAssetInput, adminUserId: number) {
+  async createAsset(dto: CreateEmojiAssetDto, adminUserId: number) {
     await this.ensurePackExists(dto.packId)
     this.validateAssetPayload(dto.kind, dto)
 
@@ -367,7 +369,7 @@ export class EmojiAssetService {
    * @throws NotFoundException 表情资源不存在或已删除
    * @throws BadRequestException 目标表情包不存在或字段校验失败
    */
-  async updateAsset(dto: UpdateEmojiAssetInput, adminUserId: number) {
+  async updateAsset(dto: UpdateEmojiAssetDto, adminUserId: number) {
     if (dto.packId !== undefined) {
       await this.ensurePackExists(dto.packId)
     }
@@ -478,7 +480,7 @@ export class EmojiAssetService {
    * @throws BadRequestException 字段不满足类型要求
    */
   private validateAssetPayload(
-    kind: CreateEmojiAssetInput['kind'],
+    kind: CreateEmojiAssetDto['kind'],
     payload: ValidateEmojiAssetPayload,
   ) {
     if (kind === AssetKind.CUSTOM) {

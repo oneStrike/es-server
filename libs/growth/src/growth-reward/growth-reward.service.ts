@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition'
-import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.types'
+import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.internal'
 import type {
   GrowthRuleRewardSettlementResult,
   TaskRewardAssetResult,

@@ -1,13 +1,15 @@
-import { ForumModeratorApplicationService } from '@libs/forum/moderator-application'
+import {
+  AuditForumModeratorApplicationDto,
+  ForumModeratorApplicationDto,
+  ForumModeratorApplicationService,
+  QueryForumModeratorApplicationDto,
+} from '@libs/forum/moderator-application'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import {
-  AuditForumModeratorApplicationDto,
-  ForumModeratorApplicationDto,
-  QueryForumModeratorApplicationDto,
-} from './dto/moderator-application.dto'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @ApiTags('论坛管理/版主申请')
 @Controller('admin/forum/moderator-application')
@@ -39,6 +41,10 @@ export class ForumModeratorApplicationController {
     summary: '审核版主申请',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '审核版主申请',
+  })
   async audit(
     @Body() body: AuditForumModeratorApplicationDto,
     @CurrentUser('sub') userId: number,
@@ -50,6 +56,10 @@ export class ForumModeratorApplicationController {
   @ApiDoc({
     summary: '删除版主申请',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除版主申请',
   })
   async delete(@Body() body: IdDto) {
     return this.forumModeratorApplicationService.deleteApplication(body.id)

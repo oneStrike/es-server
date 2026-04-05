@@ -5,7 +5,12 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { IdDto, PageDto } from '@libs/platform/dto'
+import {
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION } from '../../event-definition'
 import { GrowthAssetTypeEnum } from '../../growth-ledger/growth-ledger.constant'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
@@ -113,4 +118,83 @@ export class BaseUserExperienceRecordDto extends IdDto {
     required: true,
   })
   createdAt!: Date
+
+  @DateProperty({
+    description: '更新时间',
+    example: '2026-03-19T12:00:00.000Z',
+    required: false,
+  })
+  updatedAt?: Date
+}
+
+export class QueryUserExperienceRecordDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
+) {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+}
+
+export class AddUserExperienceDto {
+  @NumberProperty({
+    description: '用户 ID',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+
+  @EnumProperty({
+    description: GROWTH_RULE_TYPE_RECORD_DTO_DESCRIPTION,
+    example: GrowthRuleTypeEnum.CREATE_TOPIC,
+    enum: GrowthRuleTypeEnum,
+  })
+  ruleType!: GrowthRuleTypeEnum
+
+  @StringProperty({
+    description: '备注',
+    example: '管理员发放经验',
+    required: false,
+    maxLength: 500,
+  })
+  remark?: string
+}
+
+export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDto, [
+  'id',
+  'userId',
+  'ruleId',
+  'ruleType',
+  'source',
+  'targetType',
+  'targetId',
+  'bizKey',
+  'remark',
+  'context',
+  'createdAt',
+  'updatedAt',
+] as const) {
+  @NumberProperty({
+    description: '经验值变化',
+    example: 5,
+    validation: false,
+  })
+  experience!: number
+
+  @NumberProperty({
+    description: '变化前经验值',
+    example: 100,
+    validation: false,
+  })
+  beforeExperience!: number
+
+  @NumberProperty({
+    description: '变化后经验值',
+    example: 105,
+    validation: false,
+  })
+  afterExperience!: number
 }

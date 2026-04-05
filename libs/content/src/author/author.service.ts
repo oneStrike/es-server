@@ -2,20 +2,22 @@ import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
+import { IdDto } from '@libs/platform/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
-  AuthorIdInput,
-  CreateAuthorInput,
-  QueryAuthorInput,
-  UpdateAuthorInput,
-  UpdateAuthorRecommendedInput,
-  UpdateAuthorStatusInput,
-} from './author.type'
+  AuthorFollowCountRepairResultDto,
+  AuthorWorkCountRepairResultDto,
+  CreateAuthorDto,
+  QueryAuthorDto,
+  UpdateAuthorDto,
+  UpdateAuthorRecommendedDto,
+  UpdateAuthorStatusDto,
+} from './dto/author.dto'
 
 /**
  * 作者服务类
- * 提供作者的增删改查等核心业务逻辑
+ * 负责作者资料维护，以及粉丝数、作品数等冗余计数修复能力
  */
 @Injectable()
 export class WorkAuthorService {
@@ -27,26 +29,34 @@ export class WorkAuthorService {
 
   constructor(private readonly drizzle: DrizzleService) {}
 
+  /** 数据库连接实例。 */
   private get db() {
     return this.drizzle.db
   }
 
+  /** 作者表。 */
   get workAuthor() {
     return this.drizzle.schema.workAuthor
   }
 
+  /** 关注关系表。 */
   private get userFollow() {
     return this.drizzle.schema.userFollow
   }
 
+  /** 作品表。 */
   private get work() {
     return this.drizzle.schema.work
   }
 
+  /** 作者-作品关联表。 */
   private get workAuthorRelation() {
     return this.drizzle.schema.workAuthorRelation
   }
 
+  /**
+   * 按批次处理作者 ID，避免全量重建时单次并发过高。
+   */
   private async processIdsInBatches(
     ids: number[],
     batchSize: number,
@@ -59,8 +69,8 @@ export class WorkAuthorService {
   }
 
   /**
-   * 更新作者粉丝数
-   * 用于关注模块维护作者的冗余计数字段
+   * 按增量更新作者粉丝数。
+   * 该方法供关注域写路径调用；若未传事务，则在独立错误处理上下文中执行。
    */
   async updateAuthorFollowersCount(
     tx: Db | undefined,
@@ -114,6 +124,7 @@ export class WorkAuthorService {
 
   /**
    * 根据 follow 事实表重建作者粉丝数。
+   * 重建时只统计当前存在的关注关系，并要求作者记录未被软删除。
    */
   async rebuildAuthorFollowersCount(tx: Db | undefined, authorId: number) {
     const client = tx ?? this.db
@@ -211,8 +222,10 @@ export class WorkAuthorService {
    * 在非事务上下文中重建作者粉丝数。
    * 用于管理端修复入口与离线运维场景。
    */
-  async rebuildAuthorFollowersCountById(authorId: number) {
-    const result = await this.rebuildAuthorFollowersCount(undefined, authorId)
+  async rebuildAuthorFollowersCountById(
+    input: IdDto,
+  ): Promise<AuthorFollowCountRepairResultDto> {
+    const result = await this.rebuildAuthorFollowersCount(undefined, input.id)
     return {
       id: result.authorId,
       followersCount: result.followersCount,
@@ -246,8 +259,10 @@ export class WorkAuthorService {
    * 在非事务上下文中重建作者作品数。
    * 用于管理端修复入口与离线运维场景。
    */
-  async rebuildAuthorWorkCountById(authorId: number) {
-    const result = await this.rebuildAuthorWorkCount(undefined, authorId)
+  async rebuildAuthorWorkCountById(
+    input: IdDto,
+  ): Promise<AuthorWorkCountRepairResultDto> {
+    const result = await this.rebuildAuthorWorkCount(undefined, input.id)
     return {
       id: result.authorId,
       workCount: result.workCount,
@@ -277,11 +292,10 @@ export class WorkAuthorService {
   }
 
   /**
-   * 创建作者
-   * @param createAuthorInput 创建作者的数据
-   * @returns 创建的作者信息
+   * 创建作者。
+   * 默认值交给数据库字段默认语义处理，唯一约束和其他写入异常统一走 `withErrorHandling`。
    */
-  async createAuthor(createAuthorInput: CreateAuthorInput) {
+  async createAuthor(createAuthorInput: CreateAuthorDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db.insert(this.workAuthor).values(createAuthorInput),
     )
@@ -289,11 +303,10 @@ export class WorkAuthorService {
   }
 
   /**
-   * 分页查询作者列表
-   * @param queryAuthorDto 查询条件
-   * @returns 分页作者列表
+   * 分页查询作者列表。
+   * `type` 以 JSON 字符串形式传入，兼容 query 参数的序列化方式；分页结果默认隐藏后台备注和长描述。
    */
-  async getAuthorPage(queryAuthorDto: QueryAuthorInput) {
+  async getAuthorPage(queryAuthorDto: QueryAuthorDto) {
     const {
       name,
       isEnabled,
@@ -309,7 +322,7 @@ export class WorkAuthorService {
     if (isEnabled !== undefined) {
       conditions.push(eq(this.workAuthor.isEnabled, isEnabled))
     }
-    if (nationality !== undefined) {
+    if (nationality != null) {
       conditions.push(eq(this.workAuthor.nationality, nationality))
     }
     if (gender !== undefined) {
@@ -344,11 +357,10 @@ export class WorkAuthorService {
   }
 
   /**
-   * 获取作者详情
-   * @param input 作者ID
-   * @returns 作者详情信息
+   * 获取作者详情。
+   * 仅返回未软删除的作者记录，未命中时按业务异常处理。
    */
-  async getAuthorDetail(input: AuthorIdInput) {
+  async getAuthorDetail(input: IdDto) {
     const author = await this.db.query.workAuthor.findFirst({
       where: { id: input.id, deletedAt: { isNull: true } },
     })
@@ -361,14 +373,12 @@ export class WorkAuthorService {
   }
 
   /**
-   * 更新作者信息
-   * @param updateAuthorDto 更新作者的数据
-   * @returns 更新后的作者信息
+   * 更新作者基础资料。
+   * 该入口不处理粉丝数、作品数等冗余字段重建，只负责编辑侧可写字段。
    */
-  async updateAuthor(updateAuthorDto: UpdateAuthorInput) {
+  async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
     const { id, ...updateData } = updateAuthorDto
 
-    // 更新作者信息
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
@@ -381,7 +391,10 @@ export class WorkAuthorService {
     return true
   }
 
-  async updateAuthorStatus(input: UpdateAuthorStatusInput) {
+  /**
+   * 切换作者启用状态。
+   */
+  async updateAuthorStatus(input: UpdateAuthorStatusDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
@@ -397,7 +410,11 @@ export class WorkAuthorService {
     return true
   }
 
-  async updateAuthorRecommended(input: UpdateAuthorRecommendedInput) {
+  /**
+   * 切换作者推荐状态。
+   * 推荐位只影响前台展示，不改变启用状态和其他资料字段。
+   */
+  async updateAuthorRecommended(input: UpdateAuthorRecommendedDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
@@ -415,11 +432,9 @@ export class WorkAuthorService {
 
   /**
    * 软删除作者
-   * @param input 作者ID
-   * @returns 删除结果
+   * 删除前会校验作者存在且没有任何未删除作品关联，避免内容域出现悬空作者引用。
    */
-  async deleteAuthor(input: AuthorIdInput) {
-    // 验证作者是否存在
+  async deleteAuthor(input: IdDto) {
     const existingAuthor = await this.db.query.workAuthor.findFirst({
       where: { id: input.id, deletedAt: { isNull: true } },
     })

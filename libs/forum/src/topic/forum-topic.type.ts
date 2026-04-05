@@ -1,5 +1,4 @@
 import type { ForumTopicSelect } from '@db/schema'
-import type { AuditStatusEnum } from '@libs/platform/constant'
 
 /**
  * 论坛主题媒体输入。
@@ -9,96 +8,8 @@ export type ForumTopicMediaInput = Partial<
   Pick<ForumTopicSelect, 'images' | 'videos'>
 >
 
-/**
- * 创建论坛主题的领域输入。
- * 由 controller 侧 DTO 映射而来，service 不直接依赖 DTO。
- */
-export type CreateForumTopicInput = Pick<
-  ForumTopicSelect,
-  'sectionId' | 'userId'
-> &
-Pick<ForumTopicSelect, 'title' | 'content'> &
-ForumTopicMediaInput
-
-/**
- * 更新论坛主题正文的领域输入。
- * 仅允许修改标题、内容与媒体列表，不允许迁移板块或变更发帖人。
- */
-export type UpdateForumTopicInput = Pick<ForumTopicSelect, 'id'> &
-  Pick<ForumTopicSelect, 'title' | 'content'> &
-  ForumTopicMediaInput
-
-/**
- * 后台分页查询论坛主题的条件。
- */
-export interface QueryForumTopicInput {
-  keyword?: string
-  sectionId?: number
-  userId?: number
-  isPinned?: boolean
-  isFeatured?: boolean
-  isLocked?: boolean
-  isHidden?: boolean
-  auditStatus?: AuditStatusEnum
-  pageIndex?: number
-  pageSize?: number
-  orderBy?: string
-}
-
-/**
- * app 侧分页查询公开主题的条件。
- */
-export interface QueryPublicForumTopicInput {
-  sectionId: number
-  userId?: number
-  pageIndex?: number
-  pageSize?: number
-}
-
 export interface PublicForumTopicDetailContext {
   userId?: number
   ipAddress?: string
   device?: string
 }
-
-/**
- * 更新主题审核状态的领域输入。
- */
-export type UpdateForumTopicAuditStatusInput = Pick<
-  ForumTopicSelect,
-  'id' | 'auditStatus'
-> & {
-  auditReason?: string
-}
-
-/**
- * 更新主题置顶状态的领域输入。
- */
-export type UpdateForumTopicPinnedInput = Pick<
-  ForumTopicSelect,
-  'id' | 'isPinned'
->
-
-/**
- * 更新主题精华状态的领域输入。
- */
-export type UpdateForumTopicFeaturedInput = Pick<
-  ForumTopicSelect,
-  'id' | 'isFeatured'
->
-
-/**
- * 更新主题锁定状态的领域输入。
- */
-export type UpdateForumTopicLockedInput = Pick<
-  ForumTopicSelect,
-  'id' | 'isLocked'
->
-
-/**
- * 更新主题隐藏状态的领域输入。
- */
-export type UpdateForumTopicHiddenInput = Pick<
-  ForumTopicSelect,
-  'id' | 'isHidden'
->

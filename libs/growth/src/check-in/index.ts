@@ -1,7 +1,6 @@
 export * from './check-in.constant'
 export * from './check-in.module'
 export * from './check-in.service'
-export * from './check-in.type'
 export * from './dto/check-in-cycle.dto'
 export * from './dto/check-in-definition.dto'
 export * from './dto/check-in-execution.dto'

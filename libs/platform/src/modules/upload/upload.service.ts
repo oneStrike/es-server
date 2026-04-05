@@ -43,6 +43,10 @@ interface MultipartFieldLike {
   value?: unknown
 }
 
+/**
+ * 上传服务。
+ * 统一处理 multipart 上传、本地文件二次上传以及 provider 选择，保证文件校验与落库口径一致。
+ */
 @Injectable()
 export class UploadService {
   private readonly uploadConfig: UploadConfigInterface
@@ -196,6 +200,10 @@ export class UploadService {
     return this.uploadPreparedFile(preparedFile)
   }
 
+  /**
+   * 读取当前系统上传配置。
+   * 当未注入动态配置提供器时回退到本地 provider，避免后台初始化阶段直接失效。
+   */
   private getSystemUploadConfig() {
     return (
       this.uploadConfigProvider?.getUploadConfig() ?? {
@@ -219,6 +227,7 @@ export class UploadService {
     )
   }
 
+  /** 根据系统配置选择实际上传 provider。 */
   private async uploadByProvider(
     provider: UploadProviderEnum,
     file: PreparedUploadFile,
@@ -232,9 +241,13 @@ export class UploadService {
       case UploadProviderEnum.LOCAL:
       default:
         return this.localUploadProvider.upload(file)
-    }
+      }
   }
 
+  /**
+   * 解析最终使用的 provider。
+   * superbed 对非图片资源可按配置回退到本地存储，避免不支持的资源类型直接失败。
+   */
   private resolveProvider(
     provider: UploadProviderEnum,
     fileCategory: UploadFileCategory,
@@ -251,6 +264,10 @@ export class UploadService {
     return provider
   }
 
+  /**
+   * 执行统一上传流程并映射为标准响应结构。
+   * 所有 provider 成功后都在这里收口返回字段，避免控制器感知底层差异。
+   */
   private async uploadPreparedFile(
     preparedFile: PreparedUploadFile,
   ) {
@@ -280,6 +297,7 @@ export class UploadService {
     }
   }
 
+  /** 构建最终 objectKey，未显式传路径时按日期和文件分类自动分桶。 */
   private buildObjectKey(
     scene: string,
     fileCategory: UploadFileCategory,
@@ -297,6 +315,7 @@ export class UploadService {
     return posix.join(scene, dateStr, fileCategory, finalName)
   }
 
+  /** 规范化并校验上传路径片段，阻止非法路径段和目录穿越。 */
   private normalizePathSegments(pathSegments?: string[]) {
     return (pathSegments ?? [])
       .map((segment) => segment.trim())
@@ -312,6 +331,7 @@ export class UploadService {
       })
   }
 
+  /** 解析最终文件名；若调用方未指定则自动生成 UUID 文件名。 */
   private resolveFinalName(ext: string, finalName?: string) {
     if (!finalName) {
       return `${uuidv4()}.${ext}`
@@ -334,6 +354,10 @@ export class UploadService {
     return `${nameWithoutExt}.${ext}`
   }
 
+  /**
+   * 解析文件扩展名、MIME 和业务分类。
+   * 优先信任探测结果，再回退到原始文件名和请求头信息，避免仅凭客户端声明放行。
+   */
   private resolveFileType(
     detectedExt: string | undefined,
     detectedMime: string | undefined,
@@ -371,11 +395,13 @@ export class UploadService {
     }
   }
 
+  /** 根据扩展名查找标准 MIME。 */
   private lookupMimeByExt(ext: string) {
     const lookupValue = mime.lookup(ext)
     return lookupValue ? String(lookupValue).toLowerCase() : ''
   }
 
+  /** 根据扩展名解析仓库内定义的文件分类。 */
   private getFileCategoryFromExt(ext: string) {
     const lowerExt = ext.toLowerCase()
     for (const type of Object.keys(
@@ -388,6 +414,10 @@ export class UploadService {
     return null
   }
 
+  /**
+   * 从 multipart 字段中提取上传场景。
+   * 非法场景会返回 null，由上层统一转换为业务异常。
+   */
   private extractScene(sceneField: unknown) {
     if (sceneField == null) {
       return DEFAULT_UPLOAD_SCENE
@@ -436,6 +466,7 @@ export class UploadService {
     }
   }
 
+  /** 读取流的首个数据块，供 MIME 探测复用，同时尽量不消费后续正文。 */
   private async readFirstChunk(
     stream: NodeJS.ReadableStream & {
       read: (size?: number) => NodeBuffer | null
@@ -478,10 +509,12 @@ export class UploadService {
     })
   }
 
+  /** 将字符串或 Buffer 输入统一转换为 Buffer。 */
   private toBuffer(chunk: string | NodeBuffer) {
     return typeof chunk === 'string' ? NodeBuffer.from(chunk) : chunk
   }
 
+  /** 吞掉剩余流数据，避免提前失败时残留未消费流占用连接。 */
   private async consumeStream(stream: NodeJS.ReadableStream) {
     return new Promise((resolve) => {
       stream.on('end', resolve)

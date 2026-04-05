@@ -5,16 +5,13 @@ import {
   BooleanProperty,
   NestedProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
 import {
   IntersectionType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
 
-export class LikeTargetDto extends PickType(BaseLikeDto, ['targetId', 'targetType']) {}
-
-export class LikePageQueryDto extends IntersectionType(PageDto, PickType(BaseLikeDto, ['targetType'])) {}
+export { LikePageQueryDto, LikeTargetDto } from '@libs/interaction/like'
 
 export class LikeStatusResponseDto {
   @BooleanProperty({

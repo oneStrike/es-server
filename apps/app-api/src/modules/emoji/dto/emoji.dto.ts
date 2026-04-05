@@ -1,12 +1,10 @@
 import {
   BaseEmojiAssetDto,
   BaseEmojiPackDto,
-  EmojiSceneEnum,
 } from '@libs/interaction/emoji'
 import {
   ArrayProperty,
   DateProperty,
-  EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
@@ -109,47 +107,4 @@ export class EmojiRecentItemDto extends EmojiAssetDto {
     validation: false,
   })
   useCount!: number
-}
-
-export class QueryEmojiCatalogDto {
-  @EnumProperty({
-    description: '场景（1=chat,2=comment,3=forum）',
-    enum: EmojiSceneEnum,
-    example: EmojiSceneEnum.CHAT,
-    required: false,
-    default: EmojiSceneEnum.CHAT,
-  })
-  scene?: EmojiSceneEnum
-}
-
-export class QueryEmojiSearchDto extends QueryEmojiCatalogDto {
-  @StringProperty({
-    description: '搜索关键词',
-    example: 'smile',
-    minLength: 1,
-    maxLength: 50,
-  })
-  q!: string
-
-  @NumberProperty({
-    description: '返回条数，默认30，最大100',
-    example: 30,
-    required: false,
-    default: 30,
-    min: 1,
-    max: 100,
-  })
-  limit?: number
-}
-
-export class QueryEmojiRecentDto extends QueryEmojiCatalogDto {
-  @NumberProperty({
-    description: '返回条数，默认20，最大50',
-    example: 20,
-    required: false,
-    default: 20,
-    min: 1,
-    max: 50,
-  })
-  limit?: number
 }

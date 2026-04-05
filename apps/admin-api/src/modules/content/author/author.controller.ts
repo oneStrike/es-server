@@ -1,18 +1,21 @@
-import { BaseAuthorDto, WorkAuthorService } from '@libs/content/author'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   AuthorFollowCountRepairResultDto,
   AuthorPageResponseDto,
   AuthorWorkCountRepairResultDto,
+  BaseAuthorDto,
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,
   UpdateAuthorRecommendedDto,
   UpdateAuthorStatusDto,
-} from './dto/author.dto'
+  WorkAuthorService,
+} from '@libs/content/author'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
+import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 作者管理控制器
@@ -30,6 +33,10 @@ export class ContentAuthorController {
   @ApiDoc({
     summary: '创建作者',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.CREATE,
+    content: '创建作者',
   })
   async create(@Body() body: CreateAuthorDto) {
     return this.authorService.createAuthor(body)
@@ -67,6 +74,10 @@ export class ContentAuthorController {
     summary: '更新作者信息',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新作者信息',
+  })
   async update(@Body() body: UpdateAuthorDto) {
     return this.authorService.updateAuthor(body)
   }
@@ -78,6 +89,10 @@ export class ContentAuthorController {
   @ApiDoc({
     summary: '更新作者状态',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新作者状态',
   })
   async updateStatus(@Body() body: UpdateAuthorStatusDto) {
     return this.authorService.updateAuthorStatus(body)
@@ -91,6 +106,10 @@ export class ContentAuthorController {
     summary: '更新作者推荐状态',
     model: Boolean,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '更新作者推荐状态',
+  })
   async updateRecommended(@Body() body: UpdateAuthorRecommendedDto) {
     return this.authorService.updateAuthorRecommended(body)
   }
@@ -100,14 +119,22 @@ export class ContentAuthorController {
     summary: '重建作者关注计数',
     model: AuthorFollowCountRepairResultDto,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '重建作者关注计数',
+  })
   async rebuildFollowCount(@Body() body: IdDto) {
-    return this.authorService.rebuildAuthorFollowersCountById(body.id)
+    return this.authorService.rebuildAuthorFollowersCountById(body)
   }
 
   @Post('rebuild-follow-count-all')
   @ApiDoc({
     summary: '全量重建作者关注计数',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '全量重建作者关注计数',
   })
   async rebuildFollowCountAll() {
     return this.authorService.rebuildAllAuthorFollowersCount()
@@ -118,14 +145,22 @@ export class ContentAuthorController {
     summary: '重建作者作品计数',
     model: AuthorWorkCountRepairResultDto,
   })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '重建作者作品计数',
+  })
   async rebuildWorkCount(@Body() body: IdDto) {
-    return this.authorService.rebuildAuthorWorkCountById(body.id)
+    return this.authorService.rebuildAuthorWorkCountById(body)
   }
 
   @Post('rebuild-work-count-all')
   @ApiDoc({
     summary: '全量重建作者作品计数',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '全量重建作者作品计数',
   })
   async rebuildWorkCountAll() {
     return this.authorService.rebuildAllAuthorWorkCount()
@@ -138,6 +173,10 @@ export class ContentAuthorController {
   @ApiDoc({
     summary: '删除作者',
     model: Boolean,
+  })
+  @Audit({
+    actionType: AuditActionTypeEnum.DELETE,
+    content: '删除作者',
   })
   async delete(@Body() body: IdDto) {
     return this.authorService.deleteAuthor(body)

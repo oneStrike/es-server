@@ -1,4 +1,9 @@
 import {
+  ClaimTaskDto,
+  QueryAvailableTaskDto,
+  QueryMyTaskDto,
+  TaskCompleteDto,
+  TaskProgressDto,
   TaskService,
 } from '@libs/growth/task'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
@@ -6,12 +11,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   AppTaskPageResponseDto,
-  ClaimTaskDto,
   MyTaskPageResponseDto,
-  QueryAppTaskDto,
-  QueryMyTaskDto,
-  TaskCompleteDto,
-  TaskProgressDto,
 } from './dto/task.dto'
 
 @ApiTags('任务')
@@ -25,7 +25,7 @@ export class TaskController {
     model: AppTaskPageResponseDto,
   })
   async getAvailable(
-    @Query() query: QueryAppTaskDto,
+    @Query() query: QueryAvailableTaskDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.taskService.getAvailableTasks(query, userId)

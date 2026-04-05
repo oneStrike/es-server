@@ -1,4 +1,8 @@
-import { ForumSearchService } from '@libs/forum/search'
+import {
+  ForumSearchDto,
+  ForumSearchResultDto,
+  ForumSearchService,
+} from '@libs/forum/search'
 import {
   ApiPageDoc,
   CurrentUser,
@@ -6,7 +10,6 @@ import {
 } from '@libs/platform/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ForumSearchDto, ForumSearchResultDto } from './dto/forum-search.dto'
 
 @ApiTags('论坛/搜索')
 @Controller('app/forum/search')

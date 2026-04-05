@@ -1,39 +1,18 @@
-import type { UserWorkReadingStateSelect } from '@db/schema'
 import type {
   ReadingStateChapterSnapshot,
   ReadingStateWorkSnapshot,
 } from './interfaces/reading-state-resolver.interface'
 
 /**
- * 阅读历史分页查询条件。
- * - 以用户ID为主过滤，支持按作品ID/作品类型筛选
- * - 分页参数保持与 PageDto 语义一致
- */
-export type ReadingHistoryQuery = Pick<UserWorkReadingStateSelect, 'userId'> &
-  Partial<Pick<UserWorkReadingStateSelect, 'workId' | 'workType'>> & {
-    pageIndex?: number
-    pageSize?: number
-  }
-
-/**
- * 按作品更新阅读状态的入参。
- * - 必填用户与作品定位字段
- * - 最近阅读章节与最近阅读时间为可选更新字段
- */
-export type TouchByWorkInput = Pick<
-  UserWorkReadingStateSelect,
-  'userId' | 'workId' | 'workType'
-> &
-Partial<Pick<UserWorkReadingStateSelect, 'lastReadChapterId' | 'lastReadAt'>>
-
-/**
  * 阅读历史基础行结构。
  * - 对齐 user_work_reading_state 表中的核心历史字段
  */
-export type ReadingHistoryRow = Pick<
-  UserWorkReadingStateSelect,
-  'workId' | 'workType' | 'lastReadAt' | 'lastReadChapterId'
->
+export interface ReadingHistoryRow {
+  workId: number
+  workType: number
+  lastReadAt: Date
+  lastReadChapterId: number | null
+}
 
 /**
  * 阅读历史分组处理中间结构。
