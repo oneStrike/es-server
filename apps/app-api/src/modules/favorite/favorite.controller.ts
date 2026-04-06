@@ -1,8 +1,9 @@
-import { FavoritePageQueryDto, FavoriteStatusResponseDto, FavoriteTargetDto, FavoriteTopicPageItemDto, FavoriteWorkPageItemDto } from '@libs/interaction/favorite/dto/favorite.dto';
+import { FavoriteStatusResponseDto, FavoriteTargetDto, FavoriteTopicPageItemDto, FavoriteWorkPageItemDto } from '@libs/interaction/favorite/dto/favorite.dto';
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -65,7 +66,7 @@ export class FavoriteController {
     model: FavoriteWorkPageItemDto,
   })
   async workPage(
-    @Query() query: FavoritePageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.favoriteService.getUserWorkFavorites({
@@ -80,7 +81,7 @@ export class FavoriteController {
     model: FavoriteTopicPageItemDto,
   })
   async topicPage(
-    @Query() query: FavoritePageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.favoriteService.getUserTopicFavorites({

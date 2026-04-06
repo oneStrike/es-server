@@ -1,4 +1,4 @@
-import { AdminTaskAssignmentPageResponseDto, AdminTaskAssignmentReconciliationPageResponseDto, AdminTaskPageResponseDto, CreateTaskDto, QueryTaskAssignmentDto, QueryTaskAssignmentReconciliationDto, QueryTaskDto, RetryCompletedTaskRewardsDto, RetryCompletedTaskRewardsResponseDto, RetryTaskAssignmentRewardDto, UpdateTaskDto, UpdateTaskStatusDto } from '@libs/growth/task/dto/task.dto';
+import { AdminTaskAssignmentPageResponseDto, AdminTaskAssignmentReconciliationPageResponseDto, AdminTaskPageResponseDto, CreateTaskDto, QueryTaskAssignmentDto, QueryTaskAssignmentReconciliationDto, QueryTaskDto, RetryCompletedTaskRewardsDto, RetryCompletedTaskRewardsResponseDto, UpdateTaskDto, UpdateTaskStatusDto } from '@libs/growth/task/dto/task.dto';
 import { TaskService } from '@libs/growth/task/task.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
@@ -125,7 +125,7 @@ export class TaskController {
     actionType: AuditActionTypeEnum.UPDATE,
     content: '重试单条任务奖励结算',
   })
-  async retryAssignmentReward(@Body() body: RetryTaskAssignmentRewardDto) {
+  async retryAssignmentReward(@Body() body: IdDto) {
     return this.taskService.retryTaskAssignmentReward(body.id)
   }
 

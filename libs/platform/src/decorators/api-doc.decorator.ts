@@ -1,5 +1,4 @@
 import type { Type } from '@nestjs/common'
-import type { ApiDocOptions } from './api-doc.types'
 import { applyDecorators } from '@nestjs/common'
 import {
   ApiExtraModels,
@@ -7,7 +6,21 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger'
-import { SetResponseDtoMetadata } from './response-dto.decorator'
+
+/**
+ * API 文档装饰器配置
+ * 用于统一 Swagger 元数据
+ *
+ * @template TModel 返回模型类型
+ */
+export interface ApiDocOptions<TModel> {
+  /** 接口摘要 */
+  summary: string
+  /** 返回模型 */
+  model?: Type<TModel> | Record<string, any>
+  /** 是否返回数组 */
+  isArray?: boolean
+}
 
 // 工具函数：判断是否是类
 function isClass(model: any): model is Type<unknown> {
@@ -71,13 +84,6 @@ export function ApiDoc<TModel extends Type<any>>(
         items: dataSchema,
       }
     }
-
-    decorators.push(
-      SetResponseDtoMetadata({
-        model,
-        isArray: Boolean(isArray),
-      }),
-    )
   }
   decorators.push(
     ApiResponse({
@@ -121,13 +127,6 @@ export function ApiPageDoc<TModel extends Type<any>>(
     } else {
       dataSchema = model
     }
-
-    decorators.push(
-      SetResponseDtoMetadata({
-        model,
-        isPage: true,
-      }),
-    )
   }
 
   decorators.push(

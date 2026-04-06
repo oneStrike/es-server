@@ -2,7 +2,6 @@ import { ArrayProperty } from '@libs/platform/decorators/validate/array-property
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,
@@ -76,14 +75,6 @@ class OptionalCheckInCycleWindowDto extends PartialType(
     'cycleEndDate',
   ] as const),
 ) {}
-
-export class QueryMyCheckInRecordDto extends PickType(PageDto, [
-  'pageIndex',
-  'pageSize',
-  'orderBy',
-  'startDate',
-  'endDate',
-] as const) {}
 
 export class QueryCheckInReconciliationDto extends IntersectionType(
   CheckInPageNoDateDto,

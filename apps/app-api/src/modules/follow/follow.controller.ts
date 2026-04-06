@@ -1,8 +1,9 @@
-import { FollowAuthorPageItemDto, FollowPageQueryDto, FollowSectionPageItemDto, FollowStatusResponseDto, FollowTargetDto, FollowUserPageItemDto } from '@libs/interaction/follow/dto/follow.dto';
+import { FollowAuthorPageItemDto, FollowSectionPageItemDto, FollowStatusResponseDto, FollowTargetDto, FollowUserPageItemDto } from '@libs/interaction/follow/dto/follow.dto';
 import { FollowService } from '@libs/interaction/follow/follow.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -62,7 +63,7 @@ export class FollowController {
     model: FollowAuthorPageItemDto,
   })
   async authorPage(
-    @Query() query: FollowPageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.followService.getUserAuthorFollows({
@@ -77,7 +78,7 @@ export class FollowController {
     model: FollowSectionPageItemDto,
   })
   async sectionPage(
-    @Query() query: FollowPageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.followService.getUserSectionFollows({
@@ -92,7 +93,7 @@ export class FollowController {
     model: FollowUserPageItemDto,
   })
   async myFollowing(
-    @Query() query: FollowPageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.followService.getMyFollowingUserPage({
@@ -107,7 +108,7 @@ export class FollowController {
     model: FollowUserPageItemDto,
   })
   async myFollower(
-    @Query() query: FollowPageQueryDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.followService.getMyFollowerUserPage({

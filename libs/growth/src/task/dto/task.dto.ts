@@ -403,8 +403,6 @@ export class TaskCompleteDto extends PickType(BaseTaskAssignmentDto, [
   'taskId',
 ] as const) {}
 
-export class RetryTaskAssignmentRewardDto extends IdDto {}
-
 export class RetryCompletedTaskRewardsDto {
   @NumberProperty({
     description: '本次最多扫描的 assignment 数量',

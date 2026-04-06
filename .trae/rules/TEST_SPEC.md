@@ -6,7 +6,7 @@
 
 - 行为优先：优先验证对外行为、错误语义、状态流转与数据契约，不为凑覆盖率测试临时实现细节。
 - 分层验证：根据改动所在层选择最小但有效的测试层级，避免所有问题都堆到 E2E。
-- 仓库对齐：测试目录、命名、Mock 方式、验证命令应与现有 `apps/*`、`libs/*` 写法保持一致。
+- 仓库对齐：测试目录、命名、Mock 方式、验证命令应与本规范保持一致；若仓库中存在旧位置或旧命名，触碰相关模块时优先顺手收敛到当前规范。
 - 风险优先：事务、分页、时间语义、幂等、快照冻结、奖励结算、计数器同步等高风险逻辑必须有测试。
 - 证据优先：声称“已修复”“已兼容”“已防回归”时，必须给出对应测试或可复核的验证输出。
 
@@ -71,10 +71,11 @@
 ### 3.1 文件放置
 
 - `libs` 领域服务测试：放在相邻 `test/` 目录，例如 `libs/growth/src/task/test/task.service.spec.ts`。
-- `apps` Controller 测试：放在 Controller 同目录，例如 `apps/app-api/src/modules/check-in/check-in.controller.spec.ts`。
-- `apps` DTO 契约测试：放在模块内 `dto/` 目录，例如 `apps/admin-api/src/modules/check-in/dto/check-in.dto.spec.ts`。
+- `apps` 模块测试：默认放在模块内专门的 `test/` 目录，覆盖 Controller、Service、Guard、模块契约等，例如 `apps/app-api/src/modules/auth/test/auth.controller.spec.ts`、`apps/app-api/src/modules/auth/test/auth.service.spec.ts`。
+- `apps` DTO 契约测试：优先放在模块 `test/` 目录，文件名明确体现 DTO 契约主题，例如 `apps/admin-api/src/modules/check-in/test/check-in.dto-contract.spec.ts`；仅当模块已有稳定 `dto/test/` 结构且继续沿用更清晰时，才保留在 `dto/test/`。
 - 平台工具测试：放在相邻 `test/` 目录，例如 `libs/platform/src/utils/test/time.spec.ts`。
 - 数据库 schema 契约测试：优先放在对应领域测试文件中，围绕表约束名和状态一致性做断言。
+- 历史遗留的同级 `*.spec.ts` 可以暂时保留，但新增测试与被迁移测试默认收口到 `test/` 目录，不再继续扩散同级放置模式。
 
 ### 3.2 命名规则
 
@@ -240,4 +241,3 @@ pnpm test:e2e
 - [ ] 目标测试命令已运行并通过。
 - [ ] 涉及公共契约或跨模块改动时，已运行 `pnpm type-check` 与必要范围的 `pnpm test`。
 - [ ] 如存在未覆盖风险，已在交付说明中明确记录。
-

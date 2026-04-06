@@ -3,6 +3,7 @@ import type {
   CheckInRecordSelect,
   CheckInStreakRewardGrantSelect,
 } from '@db/schema'
+import type { PageDto } from '@libs/platform/dto/page.dto';
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInPlanSnapshot,
@@ -12,7 +13,6 @@ import type {
   CheckInCalendarDayDto,
   CheckInRecordItemDto,
   QueryCheckInReconciliationDto,
-  QueryMyCheckInRecordDto,
 } from './dto/check-in-runtime.dto'
 import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
 import { DrizzleService } from '@db/core'
@@ -140,7 +140,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   }
 
   /** 分页读取当前用户签到记录，并批量拼装同日触发的连续奖励列表。 */
-  async getMyRecords(query: QueryMyCheckInRecordDto, userId: number) {
+  async getMyRecords(query: PageDto, userId: number) {
     const conditions: SQL[] = [eq(this.checkInRecordTable.userId, userId)]
 
     if (query.startDate) {

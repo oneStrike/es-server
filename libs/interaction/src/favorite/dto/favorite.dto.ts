@@ -47,10 +47,8 @@ export class FavoriteRecordDto extends IntersectionType(
   PickType(BaseFavoriteDto, ['userId'] as const),
 ) {}
 
-export class FavoritePageQueryDto extends PageDto {}
-
 export class FavoritePageCommandDto extends IntersectionType(
-  FavoritePageQueryDto,
+  PageDto,
   PickType(BaseFavoriteDto, ['userId'] as const),
 ) {}
 

@@ -1,6 +1,6 @@
 import { MessageChatService } from '@libs/message/chat/chat.service';
-import { ChatConversationDto, ChatConversationMessagesResponseDto, OpenDirectConversationDto, QueryChatConversationListDto, QueryChatConversationMessagesDto } from '@libs/message/chat/dto/chat.dto';
-import { InboxSummaryDto, InboxTimelineItemDto, QueryInboxTimelineDto } from '@libs/message/inbox/dto/inbox.dto';
+import { ChatConversationDto, ChatConversationMessagesResponseDto, OpenDirectConversationDto, QueryChatConversationMessagesDto } from '@libs/message/chat/dto/chat.dto';
+import { InboxSummaryDto, InboxTimelineItemDto } from '@libs/message/inbox/dto/inbox.dto';
 import { MessageInboxService } from '@libs/message/inbox/inbox.service';
 import { NotificationUnreadCountDto, QueryUserNotificationListDto, UpdateUserNotificationPreferencesDto, UserNotificationDto, UserNotificationPreferenceListDto } from '@libs/message/notification/dto/notification.dto';
 import { MessageNotificationPreferenceService } from '@libs/message/notification/notification-preference.service';
@@ -8,6 +8,7 @@ import { MessageNotificationService } from '@libs/message/notification/notificat
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -113,7 +114,7 @@ export class MessageController {
     model: ChatConversationDto,
   })
   async conversationList(
-    @Query() query: QueryChatConversationListDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageChatService.getConversationList(userId, query)
@@ -146,7 +147,7 @@ export class MessageController {
     model: InboxTimelineItemDto,
   })
   async inboxTimeline(
-    @Query() query: QueryInboxTimelineDto,
+    @Query() query: PageDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageInboxService.getTimeline(userId, query)

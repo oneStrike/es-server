@@ -66,7 +66,6 @@ describe('check-in dto contract exports', () => {
         CheckInSummaryPlanDto: expect.any(Function),
         CheckInSummaryResponseDto: expect.any(Function),
         MakeupCheckInDto: expect.any(Function),
-        QueryMyCheckInRecordDto: expect.any(Function),
       }),
     )
   })

@@ -10,8 +10,8 @@ import {
   RsaPublicKeyDto,
   TokenDto,
 } from '@libs/platform/modules/auth'
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
-import { SendVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
+import { RsaService } from '@libs/platform/modules/crypto'
+import { SendVerifyCodeDto } from '@libs/platform/modules/sms'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'

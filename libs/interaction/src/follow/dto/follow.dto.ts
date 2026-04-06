@@ -48,10 +48,8 @@ export class FollowRecordDto extends IntersectionType(
   PickType(BaseFollowDto, ['userId'] as const),
 ) {}
 
-export class FollowPageQueryDto extends PageDto {}
-
 export class FollowPageCommandDto extends IntersectionType(
-  FollowPageQueryDto,
+  PageDto,
   PickType(BaseFollowDto, ['userId'] as const),
 ) {}
 

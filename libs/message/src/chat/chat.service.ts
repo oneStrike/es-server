@@ -1,4 +1,5 @@
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type';
+import type { PageDto } from '@libs/platform/dto/page.dto';
 import type { ChatMessageCreatedOutboxPayload } from '../outbox/outbox.type'
 import { DrizzleService } from '@db/core'
 import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
@@ -39,7 +40,6 @@ import {
 import {
   MarkConversationReadDto,
   OpenDirectConversationDto,
-  QueryChatConversationListDto,
   QueryChatConversationMessagesDto,
   SendChatMessageDto,
 } from './dto/chat.dto'
@@ -178,7 +178,7 @@ export class MessageChatService {
    * @param dto - 分页查询参数
    * @returns 分页的会话列表
    */
-  async getConversationList(userId: number, dto: QueryChatConversationListDto) {
+  async getConversationList(userId: number, dto: PageDto) {
     const page = this.drizzle.buildPage(dto, {
       maxPageSize: 100,
     })

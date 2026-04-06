@@ -1,4 +1,5 @@
 import type { IdDto } from '@libs/platform/dto/base.dto';
+import type { PageDto } from '@libs/platform/dto/page.dto';
 import type {
   CreateCheckInPlanDto,
   QueryCheckInPlanDto,
@@ -11,7 +12,6 @@ import type {
 } from './dto/check-in-execution.dto'
 import type {
   QueryCheckInReconciliationDto,
-  QueryMyCheckInRecordDto,
 } from './dto/check-in-runtime.dto'
 import { Injectable } from '@nestjs/common'
 import { CheckInDefinitionService } from './check-in-definition.service'
@@ -71,7 +71,7 @@ export class CheckInService {
   }
 
   /** 分页读取当前用户的签到记录。 */
-  async getMyRecords(query: QueryMyCheckInRecordDto, userId: number) {
+  async getMyRecords(query: PageDto, userId: number) {
     return this.checkInRuntimeService.getMyRecords(query, userId)
   }
 
