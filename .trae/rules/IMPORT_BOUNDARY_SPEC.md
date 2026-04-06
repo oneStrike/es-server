@@ -5,7 +5,7 @@
 ## 1. 核心原则
 
 - 全仓统一使用文件直连导入；业务域不再依赖 `index.ts`、`dto/index.ts`、`core/index.ts`、`module/index.ts`、`module.ts`、`contracts.ts` 等聚合或转发入口。
-- `libs/platform` 作为基础设施层，允许在目录级建立 public API：`libs/platform/src/**/index.ts` 可作为受控统一导出入口，但不允许恢复根级 `@libs/platform` 总出口，也不允许恢复 `@libs/platform/module` 这类历史兼容入口。
+- `libs/platform` 作为基础设施层，允许在目录级建立 public API：`libs/platform/src/**/index.ts` 可作为受控统一导出入口，但不允许恢复根级 `@libs/platform` 总出口，也不允许恢复 `@libs/platform/module`、`@libs/platform/modules` 这类历史或宽聚合入口。
 - DTO 契约与运行时实现仍然分层，但分层通过“文件归属”表达，不通过 barrel 表达。
 - DTO 文件只能依赖 cycle-safe 的 DTO 文件、稳定常量或纯类型；不能间接拉起 Service、Module 或其他运行时对象。
 - Service、Resolver、Module、Controller 直接依赖各自所需的具体文件，不通过中间入口“顺手带出”其他符号。
@@ -37,7 +37,7 @@
   - `contracts.ts`
   - `base.ts`（若它只是转发多个 DTO）
 - 禁止为了缩短路径而新增“公共出口文件”
-- 唯一例外是 `libs/platform/src/**/index.ts` 形式的目录级 public API；它们只对 `platform` 生效，可以 re-export 同目录 owner 文件或更细一层的 `platform` 子目录 public API，但不能把业务域重新聚合成新的 mega barrel。
+- 唯一例外是 `libs/platform/src/**/index.ts` 形式的目录级 public API；它们只对 `platform` 生效，可以 re-export 同目录 owner 文件或更细一层的 `platform` 子目录 public API，但不能把业务域重新聚合成新的 mega barrel，也不能回退成 `libs/platform/src/modules/index.ts` 这类宽聚合入口。
 - 禁止跨域导入目录语义路径，必须直达具体文件
 
 ### 2.3 允许的共享抽象
@@ -75,7 +75,7 @@
 - 若只需要 `Module`，直接导入 `*.module.ts`；不要再经由 `module/index.ts` 或 `module.ts`。
 - 若只需要 `Service`、常量、helper、type，也必须导入具体拥有者文件。
 - 若依赖 `platform` 基础设施能力，允许使用 `@libs/platform/<folder>`、`@libs/platform/<folder>/<subfolder>` 这类目录级 public API，例如 `@libs/platform/config`、`@libs/platform/decorators`、`@libs/platform/dto`、`@libs/platform/utils`、`@libs/platform/modules/auth`。
-- `platform` 目录级导入遵循“越小越好”原则：优先 `@libs/platform/modules/auth`，其次才是 `@libs/platform/modules` 这类更宽的聚合入口。
+- `platform` 目录级导入遵循“越小越好”原则：优先 `@libs/platform/modules/auth` 这类子目录入口；不再保留 `@libs/platform/modules` 这类更宽的聚合入口。
 
 ### 3.3 App 装配层
 
@@ -116,7 +116,7 @@
   - `@libs/user`
   - `@libs/user/dto`
 - 除 `libs/platform/src/**/index.ts` 对应的 `platform` 目录级 public API 外，其他 `@libs/platform/<dir>` 目录级入口若解析到转发文件，也一律禁止。
-- `@libs/platform` 根级入口与 `@libs/platform/module` 历史兼容入口一律禁止。
+- `@libs/platform` 根级入口、`@libs/platform/module` 历史兼容入口，以及 `@libs/platform/modules` 这类宽聚合入口一律禁止。
 - 任何文件级转发入口，例如：
   - `*/index`
   - `*/module`

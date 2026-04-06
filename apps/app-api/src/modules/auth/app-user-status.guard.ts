@@ -1,7 +1,7 @@
 import { DrizzleService } from '@db/core'
-import { IS_PUBLIC_KEY } from '@libs/platform/decorators/public.decorator';
-import { AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant';
-import { UserService as UserCoreService } from '@libs/user/user.service';
+import { IS_PUBLIC_KEY } from '@libs/platform/decorators/public.decorator'
+import { AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant'
+import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
   BadRequestException,
   CanActivate,
@@ -20,7 +20,7 @@ export class AppUserStatusGuard implements CanActivate {
     private readonly userCoreService: UserCoreService,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  async canActivate(context: ExecutionContext) {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),

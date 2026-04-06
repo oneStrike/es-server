@@ -35,6 +35,7 @@ function isAllowedForwardingFile(absPath: string) {
     && !rel.includes('/test/')
     && rel !== 'libs/platform/src/index.ts'
     && rel !== 'libs/platform/src/module/index.ts'
+    && rel !== 'libs/platform/src/modules/index.ts'
 }
 
 function isLibForwardingFile(absPath: string) {
@@ -213,7 +214,7 @@ async function main() {
     }
   }
 
-  console.error('Allowed platform public forwarders: libs/platform/src/**/index.ts (except root, module, and test directories)')
+  console.error('Allowed platform public forwarders: libs/platform/src/**/index.ts (except root, module, modules, and test directories)')
   process.exit(1)
 }
 

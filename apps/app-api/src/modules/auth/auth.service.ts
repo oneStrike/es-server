@@ -1,16 +1,26 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
-import { UserProfileService } from '@libs/forum/profile/profile.service';
-import { AuthSessionService } from '@libs/identity/session.service';
-import { GenderEnum, UserStatusEnum } from '@libs/platform/constant/user.constant';
-import { AuthConstants, AuthDefaultValue } from '@libs/platform/modules/auth/auth.constant';
-import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service';
-import { LoginDto, RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
-import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service';
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
-import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
-import { extractIpAddress } from '@libs/platform/utils/requestParse';
-import { UserService as UserCoreService } from '@libs/user/user.service';
+import { UserProfileService } from '@libs/forum/profile/profile.service'
+import { AuthSessionService } from '@libs/identity/session.service'
+import {
+  GenderEnum,
+  UserStatusEnum,
+} from '@libs/platform/constant/user.constant'
+import {
+  AuthConstants,
+  AuthDefaultValue,
+} from '@libs/platform/modules/auth/auth.constant'
+import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
+import {
+  LoginDto,
+  RefreshTokenDto,
+  TokenDto,
+} from '@libs/platform/modules/auth/dto/auth-scene.dto'
+import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { extractIpAddress } from '@libs/platform/utils/requestParse'
+import { UserService as UserCoreService } from '@libs/user/user.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
 import { AppAuthErrorMessages, AppAuthRedisKeys } from './auth.constant'
@@ -191,7 +201,9 @@ export class AuthService {
         return this.register(body, req)
       }
 
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
+      throw new BadRequestException(
+        AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR,
+      )
     }
     if (body.code) {
       if (!user.phoneNumber) {

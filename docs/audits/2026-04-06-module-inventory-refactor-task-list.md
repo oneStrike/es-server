@@ -25,7 +25,7 @@
 ## 当前目标口径
 
 - 除 `libs/platform` 目录级 public API 外，DTO、Module、Service、constant、type 全部直连 owner 文件
-- 不再保留 `index.ts`、`dto/index.ts`、`core/index.ts`、`module/index.ts`、`module.ts` 这类转发文件；`libs/platform` 允许在各目录下保留 `index.ts` 作为统一导出
+- 不再保留 `index.ts`、`dto/index.ts`、`core/index.ts`、`module/index.ts`、`module.ts` 这类转发文件；`libs/platform` 允许在各目录下保留 `index.ts` 作为统一导出，但不恢复 `src/modules/index.ts` 这类宽聚合入口
 - `*.module.ts`、`*.service.ts`、`*.resolver.ts`、`*.controller.ts`、`*.dto.ts` 统一直连具体文件
 - 真正的 Nest 聚合模块本体可以保留，例如：
   - `apps/admin-api/src/app.module.ts`
@@ -75,7 +75,7 @@
   - `forum/topic.module -> comment|favorite|follow|like|report`
   - `interaction/comment|favorite|follow|like -> user.module`
   - `apps/* -> libs/*/module barrel -> 聚合模块 -> 子域 mixed barrel`
-- `apps/*|libs/* -> @libs/platform/<folder> -> platform 目录级公共 API（允许存在，但要防止恢复根级 mega barrel）`
+- `apps/*|libs/* -> @libs/platform/<folder> -> platform 目录级公共 API（允许存在，但要防止恢复根级 mega barrel 或 `@libs/platform/modules` 宽入口）`
   - `apps/*|libs/* -> @libs/user/index|dto -> user barrel -> dto/base`
   - `apps/*|libs/* -> @libs/identity/core|@libs/sensitive-word -> mixed barrel`
 
@@ -515,7 +515,6 @@
 
 当前代码锚点
 
-- `libs/platform/src/modules/index.ts`
 - `libs/platform/src/config/index.ts`
 - `libs/platform/src/filters/index.ts`
 - `libs/platform/src/module/index.ts`
@@ -531,7 +530,7 @@
 
 主要改动
 
-- 把 `platform` 的公共导入口统一收敛到目录级 `index.ts`，例如 `@libs/platform/config`、`@libs/platform/dto`、`@libs/platform/utils`、`@libs/platform/modules/auth`
+- 把 `platform` 的公共导入口统一收敛到目录级 `index.ts`，例如 `@libs/platform/config`、`@libs/platform/dto`、`@libs/platform/utils`、`@libs/platform/modules/auth`，但不再保留 `@libs/platform/modules`
 - 回收 `@libs/user/index`、`@libs/user/dto`、`@libs/identity/core`、`@libs/sensitive-word` 等非平台公共入口
 - 把 DTO、module、service、constant、type、decorator、filter、utility 等调用统一改成直连 owner 文件
 - 删除对应 `index.ts`、`dto/index.ts`、`base.ts`、`module/index.ts` 等转发文件；`platform` 仅保留目录级 `index.ts` public API
@@ -539,8 +538,8 @@
 完成标准
 
 - `user / identity / moderation` 域不再保留仍被代码消费的 barrel。
-- `platform` 域允许 `@libs/platform/<folder>`、`@libs/platform/<folder>/<subfolder>` 这类目录级 public API，但不恢复 `@libs/platform` 根级入口与 `@libs/platform/module` 历史入口。
-- 不再存在任何解析到非平台转发文件的目录级 alias 导入；`platform` 仅允许命中 `libs/platform/src/**/index.ts`。
+- `platform` 域允许 `@libs/platform/<folder>`、`@libs/platform/<folder>/<subfolder>` 这类目录级 public API，但不恢复 `@libs/platform` 根级入口、`@libs/platform/module` 历史入口与 `@libs/platform/modules` 宽入口。
+- 不再存在任何解析到非平台转发文件的目录级 alias 导入；`platform` 仅允许命中 `libs/platform/src/**/index.ts`，且排除 `libs/platform/src/modules/index.ts`。
 - 类型检查、目标测试、目标启动验证通过。
 
 完成后同步文档
@@ -623,7 +622,7 @@
   - 运行时文件必须直连 owner 文件
   - 禁止新增未获批准的 `index.ts`、`dto/index.ts`、`module/index.ts`、`module.ts`、`base.ts` 等转发文件
   - 禁止任何会解析到转发文件的目录级 alias 导入，而不只是 `@libs/**/module`、`@libs/**/dto`
-  - `platform` 仅允许 `libs/platform/src/**/index.ts` 形式的目录级 public API
+  - `platform` 仅允许 `libs/platform/src/**/index.ts` 形式的目录级 public API，但排除 `libs/platform/src/modules/index.ts`
 
 完成标准
 
