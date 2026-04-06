@@ -1,14 +1,17 @@
+import type { ITokenStorageService } from '@libs/platform/modules/auth/auth.types'
 import { DrizzleService } from '@db/core'
-import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
-import { ChangePasswordDto, ForgotPasswordDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
-import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
-import { UserService as UserCoreService } from '@libs/user/user.service';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant'
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+} from '@libs/platform/modules/auth/dto/auth-scene.dto'
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { UserService as UserCoreService } from '@libs/user/user.service'
+import { BadRequestException, Inject, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
 import { SmsService } from './sms.service'
-import { AppTokenStorageService } from './token-storage.service'
 
 /**
  * 密码服务类
@@ -21,7 +24,8 @@ export class PasswordService {
     private readonly rsaService: RsaService,
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
-    private readonly tokenStorageService: AppTokenStorageService,
+    @Inject('ITokenStorageService')
+    private readonly tokenStorageService: ITokenStorageService,
     private readonly userCoreService: UserCoreService,
   ) {}
 
@@ -181,21 +185,5 @@ export class PasswordService {
     )
 
     return true
-  }
-
-  /**
-   * 根据手机号查找用户
-   * @param phone - 手机号
-   * @returns 用户对象或 null
-   */
-  private async findUserByPhone(phone: string) {
-    const [user] = await this.db
-      .select()
-      .from(this.appUser)
-      .where(
-        and(eq(this.appUser.phoneNumber, phone), isNull(this.appUser.deletedAt)),
-      )
-      .limit(1)
-    return user ?? null
   }
 }

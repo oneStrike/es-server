@@ -23,7 +23,7 @@ jest.mock('@libs/platform/modules/crypto/scrypt.service', () => ({
   ScryptService: class {}
 }))
 
-jest.mock('@libs/user/core', () => ({
+jest.mock('@libs/user/user.service', () => ({
   UserService: class {},
 }))
 

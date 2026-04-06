@@ -1,3 +1,5 @@
+import type { Db } from '@db/core'
+import type { AppUserSelect } from '@db/schema'
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
@@ -21,11 +23,18 @@ import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 import { extractIpAddress } from '@libs/platform/utils/requestParse'
 import { UserService as UserCoreService } from '@libs/user/user.service'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
 import { AppAuthErrorMessages, AppAuthRedisKeys } from './auth.constant'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
+
+const APP_USER_ACCOUNT_UNIQUE_CONSTRAINT = 'app_user_account_key'
+const APP_USER_ACCOUNT_MAX_RETRIES = 5
 
 /**
  * 认证服务
@@ -70,19 +79,21 @@ export class AuthService {
   /**
    * 生成唯一账号
    */
-  async generateUniqueAccount() {
-    const randomAccount = Math.floor(100000 + Math.random() * 900000)
-    const [existingUser] = await this.db
-      .select({ id: this.appUserTable.id })
-      .from(this.appUserTable)
-      .where(eq(this.appUserTable.account, String(randomAccount)))
-      .limit(1)
+  async generateUniqueAccount(tx: Db) {
+    for (let attempt = 0; attempt < APP_USER_ACCOUNT_MAX_RETRIES; attempt += 1) {
+      const randomAccount = Math.floor(100000 + Math.random() * 900000)
+      const [existingUser] = await tx
+        .select({ id: this.appUserTable.id })
+        .from(this.appUserTable)
+        .where(eq(this.appUserTable.account, String(randomAccount)))
+        .limit(1)
 
-    if (existingUser) {
-      return this.generateUniqueAccount()
+      if (!existingUser) {
+        return randomAccount
+      }
     }
 
-    return randomAccount
+    throw new ConflictException(AppAuthErrorMessages.REGISTER_RETRY_FAILED)
   }
 
   /**
@@ -106,42 +117,7 @@ export class AuthService {
       this.passwordService.generateSecureRandomPassword(),
     )
 
-    const user = await this.drizzle.withErrorHandling(async () =>
-      this.drizzle.db.transaction(async (tx) => {
-        const uid = await this.generateUniqueAccount()
-
-        const [newUser] = await tx
-          .insert(this.appUserTable)
-          .values({
-            account: String(uid),
-            nickname: `用户${uid}`,
-            password: hashedPassword,
-            phoneNumber: body.phone,
-            genderType: GenderEnum.UNKNOWN,
-            isEnabled: true,
-          })
-          .returning({
-            id: this.appUserTable.id,
-            account: this.appUserTable.account,
-            nickname: this.appUserTable.nickname,
-            password: this.appUserTable.password,
-            phoneNumber: this.appUserTable.phoneNumber,
-            avatarUrl: this.appUserTable.avatarUrl,
-            emailAddress: this.appUserTable.emailAddress,
-            genderType: this.appUserTable.genderType,
-            birthDate: this.appUserTable.birthDate,
-            signature: this.appUserTable.signature,
-            bio: this.appUserTable.bio,
-            points: this.appUserTable.points,
-            experience: this.appUserTable.experience,
-            status: this.appUserTable.status,
-            isEnabled: this.appUserTable.isEnabled,
-          })
-
-        await this.profileService.initUserProfile(tx, newUser.id)
-        return newUser
-      }),
-    )
+    const user = await this.createRegisteredUser(body.phone, hashedPassword)
 
     return this.handleLoginSuccess(user, req)
   }
@@ -225,22 +201,20 @@ export class AuthService {
         AppAuthRedisKeys.LOGIN_LOCK(user.id),
       )
 
-      const password = this.rsaService.decryptWith(body.password!)
+      let password = ''
+      try {
+        password = this.rsaService.decryptWith(body.password!)
+      } catch {
+        await this.recordPasswordLoginFailure(user.id)
+      }
+
       const isPasswordValid = await this.scryptService.verifyPassword(
         password,
         user.password,
       )
 
       if (!isPasswordValid) {
-        await this.loginGuardService.recordFail(
-          AppAuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
-          AppAuthRedisKeys.LOGIN_LOCK(user.id),
-          {
-            maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
-            failTtl: AuthConstants.LOGIN_FAIL_TTL,
-            lockTtl: AuthConstants.ACCOUNT_LOCK_TTL,
-          },
-        )
+        await this.recordPasswordLoginFailure(user.id)
       }
 
       await this.loginGuardService.clearHistory(
@@ -305,7 +279,7 @@ export class AuthService {
   /**
    * 登录成功后的统一处理
    */
-  private async handleLoginSuccess(user: any, req: FastifyRequest) {
+  private async handleLoginSuccess(user: AppUserSelect, req: FastifyRequest) {
     await this.updateUserLoginInfo(user.id, req)
 
     const tokens = await this.baseJwtService.generateTokens({
@@ -324,7 +298,7 @@ export class AuthService {
   /**
    * 脱敏返回用户信息
    */
-  private sanitizeUser(user: any) {
+  private sanitizeUser(user: AppUserSelect) {
     return {
       id: user.id,
       account: user.account,
@@ -341,5 +315,79 @@ export class AuthService {
       status: user.status ?? UserStatusEnum.NORMAL,
       isEnabled: user.isEnabled,
     }
+  }
+
+  private async createRegisteredUser(
+    phone: string,
+    hashedPassword: string,
+  ): Promise<AppUserSelect> {
+    let lastError: unknown = new ConflictException(
+      AppAuthErrorMessages.REGISTER_RETRY_FAILED,
+    )
+
+    for (let attempt = 0; attempt < APP_USER_ACCOUNT_MAX_RETRIES; attempt += 1) {
+      try {
+        return await this.drizzle.db.transaction(async (tx) => {
+          const uid = await this.generateUniqueAccount(tx)
+
+          const [newUser] = await tx
+            .insert(this.appUserTable)
+            .values({
+              account: String(uid),
+              nickname: `用户${uid}`,
+              password: hashedPassword,
+              phoneNumber: phone,
+              genderType: GenderEnum.UNKNOWN,
+              isEnabled: true,
+            })
+            .returning()
+
+          await this.profileService.initUserProfile(tx, newUser.id)
+          return newUser
+        })
+      } catch (error) {
+        lastError = error
+
+        if (!this.isAccountUniqueViolation(error)) {
+          this.drizzle.handleError(error)
+        }
+
+        if (attempt >= APP_USER_ACCOUNT_MAX_RETRIES - 1) {
+          throw new ConflictException(
+            AppAuthErrorMessages.REGISTER_RETRY_FAILED,
+            {
+              cause: error,
+            },
+          )
+        }
+      }
+    }
+
+    throw lastError
+  }
+
+  private isAccountUniqueViolation(error: unknown) {
+    if (!this.drizzle.isUniqueViolation(error)) {
+      return false
+    }
+
+    return (
+      this.drizzle.extractError(error)?.constraint
+      === APP_USER_ACCOUNT_UNIQUE_CONSTRAINT
+    )
+  }
+
+  private async recordPasswordLoginFailure(userId: number): Promise<never> {
+    await this.loginGuardService.recordFail(
+      AppAuthRedisKeys.LOGIN_FAIL_COUNT(userId),
+      AppAuthRedisKeys.LOGIN_LOCK(userId),
+      {
+        maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
+        failTtl: AuthConstants.LOGIN_FAIL_TTL,
+        lockTtl: AuthConstants.ACCOUNT_LOCK_TTL,
+      },
+    )
+
+    throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
   }
 }

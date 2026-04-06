@@ -7,6 +7,7 @@ export const AppAuthErrorMessages = {
   ACCOUNT_DISABLED: '账号已被禁用，请联系管理员',
   ACCOUNT_BANNED: '账号已被封禁',
   ACCOUNT_NOT_FOUND: '账号不存在',
+  REGISTER_RETRY_FAILED: '注册失败，请重试',
   PHONE_EXISTS: '手机号已注册',
   EMAIL_EXISTS: '邮箱已注册',
   DEFAULT_LEVEL_NOT_FOUND: '系统配置错误：找不到默认论坛等级',

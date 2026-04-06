@@ -88,3 +88,9 @@ export const appUserToken = pgTable("app_user_token", {
    */
   index("app_user_token_user_id_token_type_idx").on(table.userId, table.tokenType),
 ]);
+
+/**
+ * 应用用户令牌推导类型
+ */
+export type AppUserTokenSelect = typeof appUserToken.$inferSelect;
+export type AppUserTokenInsert = typeof appUserToken.$inferInsert;
