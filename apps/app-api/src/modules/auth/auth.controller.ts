@@ -12,6 +12,7 @@ import {
 } from '@libs/platform/modules/auth'
 import { RsaService } from '@libs/platform/modules/crypto'
 import { SendVerifyCodeDto } from '@libs/platform/modules/sms'
+import { extractClientRequestContext } from '@libs/platform/utils'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
@@ -59,7 +60,7 @@ export class AuthController {
   })
   @Public()
   async login(@Body() body: LoginDto, @Req() req: FastifyRequest) {
-    return this.authService.login(body, req)
+    return this.authService.login(body, extractClientRequestContext(req))
   }
 
   @Post('logout')
@@ -83,7 +84,10 @@ export class AuthController {
     @Body() body: RefreshTokenDto,
     @Req() req: FastifyRequest,
   ) {
-    return this.authService.refreshToken(body, req)
+    return this.authService.refreshToken(
+      body,
+      extractClientRequestContext(req),
+    )
   }
 
   @Post('password/forgot')

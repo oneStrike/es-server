@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
-import type { FastifyRequest } from 'fastify'
+import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
 import { AuthSessionService } from '@libs/identity/session.service'
@@ -21,7 +21,6 @@ import {
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
-import { extractIpAddress } from '@libs/platform/utils/requestParse'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
   BadRequestException,
@@ -99,7 +98,7 @@ export class AuthService {
   /**
    * 用户注册
    */
-  async register(body: LoginDto, req: FastifyRequest) {
+  async register(body: LoginDto, clientContext: SessionClientContext) {
     if (!body.phone) {
       throw new BadRequestException(
         AppAuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
@@ -119,13 +118,13 @@ export class AuthService {
 
     const user = await this.createRegisteredUser(body.phone, hashedPassword)
 
-    return this.handleLoginSuccess(user, req)
+    return this.handleLoginSuccess(user, clientContext)
   }
 
   /**
    * 用户登录
    */
-  async login(body: LoginDto, req: FastifyRequest) {
+  async login(body: LoginDto, clientContext: SessionClientContext) {
     if (!body.phone && !body.account) {
       throw new BadRequestException(
         AppAuthErrorMessages.PHONE_OR_ACCOUNT_REQUIRED,
@@ -174,7 +173,7 @@ export class AuthService {
 
     if (!user) {
       if (body.code) {
-        return this.register(body, req)
+        return this.register(body, clientContext)
       }
 
       throw new BadRequestException(
@@ -224,20 +223,23 @@ export class AuthService {
 
     this.ensureSessionAllowed(user)
 
-    return this.handleLoginSuccess(user, req)
+    return this.handleLoginSuccess(user, clientContext)
   }
 
   /**
    * 更新最后登录信息
    */
-  private async updateUserLoginInfo(userId: number, req: FastifyRequest) {
+  private async updateUserLoginInfo(
+    userId: number,
+    clientContext: SessionClientContext,
+  ) {
     await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUserTable)
         .set({
           lastLoginAt: new Date(),
           lastLoginIp:
-            extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
+            clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
         })
         .where(eq(this.appUserTable.id, userId)),
     )
@@ -253,10 +255,13 @@ export class AuthService {
   /**
    * 刷新令牌
    */
-  async refreshToken(dto: RefreshTokenDto, req: FastifyRequest) {
+  async refreshToken(
+    dto: RefreshTokenDto,
+    clientContext: SessionClientContext,
+  ) {
     const tokens = await this.authSessionService.refreshAndPersist(
       dto.refreshToken,
-      req,
+      clientContext,
     )
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
     const user = await this.userCoreService.findById(Number(payload.sub))
@@ -279,15 +284,18 @@ export class AuthService {
   /**
    * 登录成功后的统一处理
    */
-  private async handleLoginSuccess(user: AppUserSelect, req: FastifyRequest) {
-    await this.updateUserLoginInfo(user.id, req)
+  private async handleLoginSuccess(
+    user: AppUserSelect,
+    clientContext: SessionClientContext,
+  ) {
+    await this.updateUserLoginInfo(user.id, clientContext)
 
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),
       phone: user.phoneNumber,
     })
 
-    await this.authSessionService.persistTokens(user.id, tokens, req)
+    await this.authSessionService.persistTokens(user.id, tokens, clientContext)
 
     return {
       user: this.sanitizeUser(user),

@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { extractError, getPostgresErrorDescriptor } from '@db/core'
 import { LoggerService } from '@libs/platform/modules/logger'
-import { parseRequestLogFields } from '@libs/platform/utils'
+import { buildRequestLogFields } from '@libs/platform/utils'
 import {
   ArgumentsHost,
   Catch,
@@ -174,7 +174,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private safeParse(req: FastifyRequest | undefined) {
     try {
-      return req ? parseRequestLogFields(req) : undefined
+      return req ? buildRequestLogFields(req) : undefined
     } catch {
       return undefined
     }

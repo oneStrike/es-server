@@ -1,3 +1,4 @@
+import type { FastifyRequest } from 'fastify'
 import { PageWorkDto, QueryWorkCommentPageDto, QueryWorkDto, QueryWorkTypeDto, WorkDetailDto } from '@libs/content/work/core/dto/work.dto';
 import { WorkService } from '@libs/content/work/core/work.service';
 import { CommentService } from '@libs/interaction/comment/comment.service';
@@ -5,9 +6,9 @@ import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
-import { RequestMeta, RequestMetaResult } from '@libs/platform/decorators/request-meta.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
-import { Controller, Get, Query } from '@nestjs/common'
+import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
+import { Controller, Get, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('作品')
@@ -67,12 +68,15 @@ export class WorkController {
   async getWorkDetail(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
-    @RequestMeta() meta: RequestMetaResult,
+    @Req() req: FastifyRequest,
   ) {
+    const requestContext = extractRequestContext(req)
+
     return this.workService.getWorkDetail(query.id, {
       userId,
-      ipAddress: meta.ip,
-      device: meta.deviceId,
+      ipAddress: requestContext.ip,
+      device: serializeDeviceInfo(requestContext.deviceInfo),
+      userAgent: requestContext.userAgent,
     })
   }
 

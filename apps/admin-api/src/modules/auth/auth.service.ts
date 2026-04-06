@@ -1,5 +1,5 @@
 import type { UserLoginDto } from '@libs/identity/dto/admin-auth.dto';
-import type { FastifyRequest } from 'fastify'
+import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
 import { AuthSessionService } from '@libs/identity/session.service';
 import { AuthConstants, AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant';
@@ -10,7 +10,6 @@ import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service';
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
 import { isProduction } from '@libs/platform/utils/env';
-import { extractIpAddress } from '@libs/platform/utils/requestParse';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
@@ -48,7 +47,7 @@ export class AuthService {
   /**
    * 登录
    */
-  async login(body: UserLoginDto, req: FastifyRequest) {
+  async login(body: UserLoginDto, clientContext: SessionClientContext) {
     // 检查用户输入的验证码
     if (!body.captcha) {
       throw new BadRequestException('请输入验证码')
@@ -131,7 +130,7 @@ export class AuthService {
         .update(this.adminUserTable)
         .set({
           lastLoginAt: new Date(),
-          lastLoginIp: extractIpAddress(req) || 'unknown',
+          lastLoginIp: clientContext.ip || 'unknown',
         })
         .where(eq(this.adminUserTable.id, user.id)),
     )
@@ -141,7 +140,7 @@ export class AuthService {
       username: user.username,
     })
 
-    await this.authSessionService.persistTokens(user.id, tokens, req)
+    await this.authSessionService.persistTokens(user.id, tokens, clientContext)
 
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
@@ -162,8 +161,14 @@ export class AuthService {
   /**
    * 刷新访问令牌
    */
-  async refreshToken(body: RefreshTokenDto, req: FastifyRequest) {
-    const tokens = await this.authSessionService.refreshAndPersist(body.refreshToken, req)
+  async refreshToken(
+    body: RefreshTokenDto,
+    clientContext: SessionClientContext,
+  ) {
+    const tokens = await this.authSessionService.refreshAndPersist(
+      body.refreshToken,
+      clientContext,
+    )
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
     const userId = Number(payload.sub)
 

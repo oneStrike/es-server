@@ -1,10 +1,12 @@
 import type { FastifyRequest } from 'fastify'
 import type {
+  ClientRequestContext,
   DeviceInfo,
   ParsedRequestData,
+  RequestContext,
   RequestParams,
 } from './request-parse.types'
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant';
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant'
 import { maskString } from './mask'
 
 // 浏览器检测正则表达式（模块作用域，避免重复编译）
@@ -105,34 +107,31 @@ function sanitizeRequestValue(value: unknown) {
  * @returns IP 地址字符串，如果无法获取则返回 undefined
  */
 export function extractIpAddress(req: FastifyRequest): string | undefined {
-  try {
-    // 处理代理转发的 IP
-    const forwardedFor = req.headers['x-forwarded-for']
-    if (forwardedFor) {
-      const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor
-      const firstIp = ips.split(',')[0]?.trim()
-      if (firstIp) {
-        return firstIp
-      }
+  const forwardedFor = req.headers['x-forwarded-for']
+  const forwardedForValue = Array.isArray(forwardedFor)
+    ? forwardedFor[0]
+    : forwardedFor
+  if (typeof forwardedForValue === 'string') {
+    const firstIp = forwardedForValue.split(',')[0]?.trim()
+    if (firstIp) {
+      return firstIp
     }
-
-    // 处理真实 IP
-    const realIp = req.headers['x-real-ip']
-    if (realIp && typeof realIp === 'string') {
-      return realIp.trim()
-    }
-
-    // Fastify 内置 IP
-    if (req.ip) {
-      return req.ip
-    }
-
-    // Socket 远程地址
-    return req.socket?.remoteAddress
-  } catch (error) {
-    console.warn('提取IP地址失败:', error)
-    return undefined
   }
+
+  const realIp = req.headers['x-real-ip']
+  const realIpValue = Array.isArray(realIp) ? realIp[0] : realIp
+  if (typeof realIpValue === 'string') {
+    const normalizedRealIp = realIpValue.trim()
+    if (normalizedRealIp) {
+      return normalizedRealIp
+    }
+  }
+
+  if (req.ip) {
+    return req.ip
+  }
+
+  return req.socket?.remoteAddress
 }
 
 /**
@@ -155,13 +154,7 @@ export function extractHttpMethod(req: FastifyRequest): HttpMethodEnum {
  * @returns 请求路径字符串
  */
 export function extractRequestPath(req: FastifyRequest): string {
-  try {
-    // 使用 url 获取请求路径
-    return req.url || '/'
-  } catch (error) {
-    console.warn('提取请求路径失败:', error)
-    return '/'
-  }
+  return req.url || '/'
 }
 
 /**
@@ -174,41 +167,33 @@ export function extractRequestPath(req: FastifyRequest): string {
 export function extractRequestParams(
   req: FastifyRequest,
 ): RequestParams | undefined {
-  try {
-    const params: RequestParams = {}
-    let hasParams = false
+  const params: RequestParams = {}
+  let hasParams = false
 
-    // 提取 body 参数
-    if (req.body && typeof req.body === 'object') {
-      params.body = sanitizeRequestValue(req.body)
-      hasParams = true
-    }
-
-    // 提取 query 参数
-    if (
-      req.query &&
-      typeof req.query === 'object' &&
-      Object.keys(req.query).length > 0
-    ) {
-      params.query = sanitizeRequestValue(req.query) as Record<string, unknown>
-      hasParams = true
-    }
-
-    // 提取 params 参数
-    if (
-      req.params &&
-      typeof req.params === 'object' &&
-      Object.keys(req.params).length > 0
-    ) {
-      params.params = sanitizeRequestValue(req.params) as Record<string, unknown>
-      hasParams = true
-    }
-
-    return hasParams ? params : undefined
-  } catch (error) {
-    console.warn('提取请求参数失败:', error)
-    return undefined
+  if (req.body && typeof req.body === 'object') {
+    params.body = sanitizeRequestValue(req.body)
+    hasParams = true
   }
+
+  if (
+    req.query &&
+    typeof req.query === 'object' &&
+    Object.keys(req.query).length > 0
+  ) {
+    params.query = sanitizeRequestValue(req.query) as Record<string, unknown>
+    hasParams = true
+  }
+
+  if (
+    req.params &&
+    typeof req.params === 'object' &&
+    Object.keys(req.params).length > 0
+  ) {
+    params.params = sanitizeRequestValue(req.params) as Record<string, unknown>
+    hasParams = true
+  }
+
+  return hasParams ? params : undefined
 }
 
 /**
@@ -218,13 +203,9 @@ export function extractRequestParams(
  * @returns User-Agent 字符串，如果不存在则返回 undefined
  */
 export function extractUserAgent(req: FastifyRequest): string | undefined {
-  try {
-    const userAgent = req.headers['user-agent']
-    return typeof userAgent === 'string' ? userAgent.trim() : undefined
-  } catch (error) {
-    console.warn('提取用户代理失败:', error)
-    return undefined
-  }
+  const userAgent = req.headers['user-agent']
+  const userAgentValue = Array.isArray(userAgent) ? userAgent[0] : userAgent
+  return typeof userAgentValue === 'string' ? userAgentValue.trim() : undefined
 }
 
 /**
@@ -232,77 +213,82 @@ export function extractUserAgent(req: FastifyRequest): string | undefined {
  * 使用高效的正则匹配，时间复杂度 O(1)
  *
  * @param userAgent - User-Agent 字符串
- * @returns 设备信息对象的 JSON 字符串，如果解析失败则返回 undefined
+ * @returns 设备信息对象，如果解析失败则返回 undefined
  */
-export function parseDeviceInfo(userAgent?: string): string | undefined {
+export function parseDeviceInfo(userAgent?: string): DeviceInfo | undefined {
   if (!userAgent) {
     return undefined
   }
 
-  try {
-    const device: DeviceInfo = {}
+  const deviceInfo: DeviceInfo = {}
 
-    // 浏览器检测（按优先级排序）
-    let match = userAgent.match(CHROME_REGEX)
+  let match = userAgent.match(CHROME_REGEX)
+  if (match) {
+    deviceInfo.browser = 'Chrome'
+    deviceInfo.version = match[1]
+  } else {
+    match = userAgent.match(FIREFOX_REGEX)
     if (match) {
-      device.browser = 'Chrome'
-      device.version = match[1]
-    } else {
-      match = userAgent.match(FIREFOX_REGEX)
+      deviceInfo.browser = 'Firefox'
+      deviceInfo.version = match[1]
+    } else if (
+      SAFARI_CHECK_REGEX.test(userAgent) &&
+      !CHROME_CHECK_REGEX.test(userAgent)
+    ) {
+      match = userAgent.match(SAFARI_REGEX)
+      deviceInfo.browser = 'Safari'
       if (match) {
-        device.browser = 'Firefox'
-        device.version = match[1]
-      } else if (
-        SAFARI_CHECK_REGEX.test(userAgent) &&
-        !CHROME_CHECK_REGEX.test(userAgent)
-      ) {
-        match = userAgent.match(SAFARI_REGEX)
-        device.browser = 'Safari'
-        if (match) {
-          device.version = match[1]
-        }
+        deviceInfo.version = match[1]
+      }
+    } else {
+      match = userAgent.match(EDGE_REGEX)
+      if (match) {
+        deviceInfo.browser = 'Edge'
+        deviceInfo.version = match[1]
       } else {
-        match = userAgent.match(EDGE_REGEX)
+        match = userAgent.match(OPERA_REGEX)
         if (match) {
-          device.browser = 'Edge'
-          device.version = match[1]
-        } else {
-          match = userAgent.match(OPERA_REGEX)
-          if (match) {
-            device.browser = 'Opera'
-            device.version = match[1]
-          }
+          deviceInfo.browser = 'Opera'
+          deviceInfo.version = match[1]
         }
       }
     }
-
-    // 操作系统检测
-    if (WINDOWS_REGEX.test(userAgent)) {
-      device.os = 'Windows'
-    } else if (MACOS_REGEX.test(userAgent)) {
-      device.os = 'macOS'
-    } else if (LINUX_REGEX.test(userAgent)) {
-      device.os = 'Linux'
-    } else if (ANDROID_REGEX.test(userAgent)) {
-      device.os = 'Android'
-    } else if (IOS_REGEX.test(userAgent)) {
-      device.os = 'iOS'
-    }
-
-    // 设备类型检测
-    if (MOBILE_REGEX.test(userAgent)) {
-      device.device = 'Mobile'
-    } else if (TABLET_REGEX.test(userAgent)) {
-      device.device = 'Tablet'
-    } else {
-      device.device = 'Desktop'
-    }
-
-    return Object.keys(device).length > 0 ? JSON.stringify(device) : undefined
-  } catch (error) {
-    console.warn('解析设备信息失败:', error)
-    return undefined
   }
+
+  if (WINDOWS_REGEX.test(userAgent)) {
+    deviceInfo.os = 'Windows'
+  } else if (MACOS_REGEX.test(userAgent)) {
+    deviceInfo.os = 'macOS'
+  } else if (LINUX_REGEX.test(userAgent)) {
+    deviceInfo.os = 'Linux'
+  } else if (ANDROID_REGEX.test(userAgent)) {
+    deviceInfo.os = 'Android'
+  } else if (IOS_REGEX.test(userAgent)) {
+    deviceInfo.os = 'iOS'
+  }
+
+  if (MOBILE_REGEX.test(userAgent)) {
+    deviceInfo.device = 'Mobile'
+  } else if (TABLET_REGEX.test(userAgent)) {
+    deviceInfo.device = 'Tablet'
+  } else {
+    deviceInfo.device = 'Desktop'
+  }
+
+  return Object.keys(deviceInfo).length > 0 ? deviceInfo : undefined
+}
+
+/**
+ * 将结构化设备信息序列化为字符串
+ * 用于兼容仍使用字符串字段存储设备信息的历史业务表
+ *
+ * @param deviceInfo - 结构化设备信息
+ * @returns 设备信息字符串
+ */
+export function serializeDeviceInfo(
+  deviceInfo?: DeviceInfo,
+): string | undefined {
+  return deviceInfo ? JSON.stringify(deviceInfo) : undefined
 }
 
 /**
@@ -317,72 +303,109 @@ export function extractApiType(path: string): ApiTypeEnum | undefined {
     return undefined
   }
 
-  try {
-    const normalizedPath = path.toLowerCase()
+  const normalizedPath = path.toLowerCase()
 
-    // 按优先级匹配路径前缀
-    if (
-      normalizedPath.startsWith('/api/admin/') ||
-      normalizedPath.includes('/admin/')
-    ) {
-      return ApiTypeEnum.ADMIN
-    }
-    if (
-      normalizedPath.startsWith('/api/app/') ||
-      normalizedPath.includes('/app/')
-    ) {
-      return ApiTypeEnum.APP
-    }
-    if (
-      normalizedPath.startsWith('/api/system/') ||
-      normalizedPath.includes('/system/')
-    ) {
-      return ApiTypeEnum.SYSTEM
-    }
-    if (
-      normalizedPath.startsWith('/api/public/') ||
-      normalizedPath.includes('/public/')
-    ) {
-      return ApiTypeEnum.PUBLIC
-    }
-
-    return undefined
-  } catch (error) {
-    console.warn('提取API类型失败:', error)
-    return undefined
+  if (
+    normalizedPath.startsWith('/api/admin/') ||
+    normalizedPath.includes('/admin/')
+  ) {
+    return ApiTypeEnum.ADMIN
   }
+  if (
+    normalizedPath.startsWith('/api/app/') ||
+    normalizedPath.includes('/app/')
+  ) {
+    return ApiTypeEnum.APP
+  }
+  if (
+    normalizedPath.startsWith('/api/system/') ||
+    normalizedPath.includes('/system/')
+  ) {
+    return ApiTypeEnum.SYSTEM
+  }
+  if (
+    normalizedPath.startsWith('/api/public/') ||
+    normalizedPath.includes('/public/')
+  ) {
+    return ApiTypeEnum.PUBLIC
+  }
+
+  return undefined
 }
 
 /**
- * 从 FastifyRequest 中提取所有可解析的请求日志字段
- * 一次性提取所有字段，避免重复遍历，时间复杂度 O(n)
+ * 从 FastifyRequest 中提取统一请求上下文
+ * 供 controller、service、filter 共享请求元信息，避免多处重复拼装
  *
  * @param req - Fastify 请求对象
- * @returns 解析后的请求数据对象
+ * @returns 统一请求上下文
  * @throws 当 req 参数为 null 或 undefined 时抛出错误
  */
-export function parseRequestLogFields(req: FastifyRequest): ParsedRequestData {
+export function extractRequestContext(req: FastifyRequest): RequestContext {
   if (!req) {
     throw new Error('请求对象是必需的')
   }
 
-  try {
-    const path = extractRequestPath(req)
-    const userAgent = extractUserAgent(req)
+  const path = extractRequestPath(req)
+  const userAgent = extractUserAgent(req)
 
-    return {
-      ip: extractIpAddress(req),
-      method: extractHttpMethod(req),
-      path,
-      params: extractRequestParams(req),
-      userAgent,
-      device: parseDeviceInfo(userAgent),
-      apiType: extractApiType(path),
-    }
-  } catch (error) {
-    console.error('解析请求日志字段失败:', error)
-    throw new Error(
-      `Request parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    )
+  return {
+    ip: extractIpAddress(req),
+    method: extractHttpMethod(req),
+    path,
+    params: extractRequestParams(req),
+    userAgent,
+    deviceInfo: parseDeviceInfo(userAgent),
+    apiType: extractApiType(path),
+  }
+}
+
+/**
+ * 从 FastifyRequest 中提取客户端请求上下文
+ * 只保留业务链路真正需要的客户端来源信息，避免下游继续依赖完整请求对象
+ *
+ * @param req - Fastify 请求对象
+ * @returns 客户端请求上下文
+ */
+export function extractClientRequestContext(
+  req: FastifyRequest,
+): ClientRequestContext {
+  const requestContext = extractRequestContext(req)
+
+  return {
+    ip: requestContext.ip,
+    userAgent: requestContext.userAgent,
+    deviceInfo: requestContext.deviceInfo,
+  }
+}
+
+function isFastifyRequest(
+  value: FastifyRequest | RequestContext,
+): value is FastifyRequest {
+  return 'headers' in value && 'url' in value
+}
+
+/**
+ * 构建请求日志字段
+ * 统一将请求上下文映射为审计日志和异常日志所需的持久化字段
+ *
+ * @param input - FastifyRequest 或已解析的请求上下文
+ * @returns 请求日志字段
+ */
+export function buildRequestLogFields(
+  input: FastifyRequest | RequestContext,
+): ParsedRequestData {
+  const requestContext = isFastifyRequest(input)
+    ? extractRequestContext(input)
+    : input
+
+  return {
+    ip: requestContext.ip,
+    method: requestContext.method,
+    path: requestContext.path,
+    params: requestContext.params,
+    userAgent: requestContext.userAgent,
+    device: requestContext.deviceInfo,
+    apiType: requestContext.apiType,
   }
 }

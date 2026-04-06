@@ -1,8 +1,7 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth/auth.types';
-import type { FastifyRequest } from 'fastify'
+import type { SessionClientContext } from './session.type'
 import { AuthDefaultValue, AuthErrorMessages, RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service';
-import { extractIpAddress, extractUserAgent, parseDeviceInfo } from '@libs/platform/utils/requestParse';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 
 @Injectable()
@@ -16,7 +15,7 @@ export class AuthSessionService {
   async persistTokens(
     userId: number,
     tokens: { accessToken: string, refreshToken: string },
-    req: FastifyRequest,
+    clientContext: SessionClientContext,
   ) {
     const [accessPayload, refreshPayload] = await Promise.all([
       this.baseJwtService.decodeToken(tokens.accessToken),
@@ -24,12 +23,9 @@ export class AuthSessionService {
     ])
 
     const ipAddress =
-      extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN
-    const userAgent = extractUserAgent(req) || req.headers['user-agent']
-    const deviceInfoStr = parseDeviceInfo(
-      typeof userAgent === 'string' ? userAgent : undefined,
-    )
-    const deviceInfo = deviceInfoStr ? JSON.parse(deviceInfoStr) : undefined
+      clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN
+    const userAgent = clientContext.userAgent
+    const deviceInfo = clientContext.deviceInfo
 
     await this.tokenStorageService.createTokens([
       {
@@ -39,7 +35,7 @@ export class AuthSessionService {
         expiresAt: new Date(accessPayload.exp * 1000),
         deviceInfo,
         ipAddress,
-        userAgent: typeof userAgent === 'string' ? userAgent : undefined,
+        userAgent,
       },
       {
         userId,
@@ -48,12 +44,15 @@ export class AuthSessionService {
         expiresAt: new Date(refreshPayload.exp * 1000),
         deviceInfo,
         ipAddress,
-        userAgent: typeof userAgent === 'string' ? userAgent : undefined,
+        userAgent,
       },
     ])
   }
 
-  async refreshAndPersist(refreshToken: string, req: FastifyRequest) {
+  async refreshAndPersist(
+    refreshToken: string,
+    clientContext: SessionClientContext,
+  ) {
     const tokens = await this.baseJwtService.refreshAccessToken(refreshToken, {
       consumeRefreshTokenJti: async (jti) =>
         this.tokenStorageService.consumeByJti(
@@ -64,7 +63,7 @@ export class AuthSessionService {
 
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
     const userId = Number(payload.sub)
-    await this.persistTokens(userId, tokens, req)
+    await this.persistTokens(userId, tokens, clientContext)
     return tokens
   }
 

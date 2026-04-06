@@ -1,3 +1,4 @@
+import type { FastifyRequest } from 'fastify'
 import { UserProfileService } from '@libs/forum/profile/profile.service';
 import { CreateUserForumTopicDto, MyForumTopicItemDto, PublicForumTopicDetailDto, PublicForumTopicPageItemDto, QueryForumTopicCommentPageDto, QueryMyForumTopicDto, QueryPublicForumTopicDto, UpdateForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto';
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
@@ -6,9 +7,9 @@ import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
-import { RequestMeta, RequestMetaResult } from '@libs/platform/decorators/request-meta.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('论坛/主题')
@@ -44,13 +45,15 @@ export class ForumTopicController {
   })
   async getDetail(
     @Query() query: IdDto,
+    @Req() req: FastifyRequest,
     @CurrentUser('sub') userId?: number,
-    @RequestMeta() meta?: RequestMetaResult,
   ) {
+    const requestContext = extractRequestContext(req)
+
     return this.forumTopicService.getPublicTopicById(query.id, {
       userId,
-      ipAddress: meta?.ip,
-      device: meta?.deviceId,
+      ipAddress: requestContext.ip,
+      device: serializeDeviceInfo(requestContext.deviceInfo),
     })
   }
 

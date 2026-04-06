@@ -24,7 +24,7 @@ export interface ITokenEntity {
   /** 创建时间 */
   createdAt: Date
   /** 设备信息 */
-  deviceInfo?: any
+  deviceInfo?: unknown
   /** IP 地址 */
   ipAddress?: string | null
   /** User-Agent */
@@ -44,8 +44,8 @@ export interface CreateTokenInput {
   tokenType: TokenType
   /** 过期时间 */
   expiresAt: Date
-  /** 设备信息（序列化） */
-  deviceInfo?: string
+  /** 设备信息（结构化 JSON） */
+  deviceInfo?: unknown
   /** IP 地址 */
   ipAddress?: string
   /** User-Agent */

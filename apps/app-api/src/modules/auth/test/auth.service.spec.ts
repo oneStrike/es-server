@@ -1,4 +1,4 @@
-import type { FastifyRequest } from 'fastify'
+import type { SessionClientContext } from '@libs/identity/session.type'
 import { BadRequestException } from '@nestjs/common'
 import { AppAuthErrorMessages } from '../auth.constant'
 
@@ -34,10 +34,6 @@ jest.mock('@libs/platform/modules/crypto/rsa.service', () => ({
 
 jest.mock('@libs/platform/modules/crypto/scrypt.service', () => ({
   ScryptService: class {},
-}))
-
-jest.mock('@libs/platform/utils/requestParse', () => ({
-  extractIpAddress: jest.fn(() => '203.0.113.10'),
 }))
 
 jest.mock('@libs/forum/profile/profile.service', () => ({
@@ -85,6 +81,10 @@ function createUpdateHarness(result: unknown = undefined) {
     where,
   }
 }
+
+const defaultClientContext = {
+  ip: '203.0.113.10',
+} satisfies SessionClientContext
 
 function createAppUserTableMock() {
   return {
@@ -275,7 +275,7 @@ describe('auth service registration flow', () => {
           phone: '13800138000',
           code: '123456',
         },
-        {} as FastifyRequest,
+        defaultClientContext,
       ),
     ).rejects.toThrow(AppAuthErrorMessages.VERIFY_CODE_CHECK_FAILED)
 
@@ -341,7 +341,7 @@ describe('auth service registration flow', () => {
         {
           phone: '13800138000',
         },
-        {} as FastifyRequest,
+        defaultClientContext,
       ),
     ).resolves.toEqual({
       user: expect.objectContaining({
@@ -374,7 +374,7 @@ describe('auth service registration flow', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
       },
-      {} as FastifyRequest,
+      defaultClientContext,
     )
     expect(drizzle.handleError).not.toHaveBeenCalled()
   })
@@ -407,7 +407,7 @@ describe('auth service login flow', () => {
           phone: '13800138000',
           code: '123456',
         },
-        {} as FastifyRequest,
+        defaultClientContext,
       ),
     ).rejects.toThrow(AppAuthErrorMessages.VERIFY_CODE_CHECK_FAILED)
 
@@ -456,7 +456,7 @@ describe('auth service login flow', () => {
           account: '100007',
           password: 'bad-ciphertext',
         },
-        {} as FastifyRequest,
+        defaultClientContext,
       ),
     ).rejects.toThrow('账号或密码错误，还剩 4 次机会')
 

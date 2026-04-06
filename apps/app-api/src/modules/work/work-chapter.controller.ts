@@ -1,3 +1,4 @@
+import type { FastifyRequest } from 'fastify'
 import { ComicChapterContentDto, NovelChapterContentDto, PageWorkChapterDto, QueryWorkChapterCommentPageDto, QueryWorkChapterDto, WorkChapterDetailWithUserStatusDto } from '@libs/content/work/chapter/dto/work-chapter.dto';
 import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service';
 import { ComicContentService } from '@libs/content/work/content/comic-content.service';
@@ -7,9 +8,9 @@ import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { OptionalAuth, Public } from '@libs/platform/decorators/public.decorator';
-import { RequestMeta, RequestMetaResult } from '@libs/platform/decorators/request-meta.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
-import { Controller, Get, Query } from '@nestjs/common'
+import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
+import { Controller, Get, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('作品')
@@ -41,12 +42,14 @@ export class WorkChapterController {
   async getWorkChapterDetail(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
-    @RequestMeta() meta: RequestMetaResult,
+    @Req() req: FastifyRequest,
   ) {
+    const requestContext = extractRequestContext(req)
+
     return this.workChapterService.getChapterDetail(query.id, {
       userId,
-      ipAddress: meta.ip,
-      device: meta.deviceId,
+      ipAddress: requestContext.ip,
+      device: serializeDeviceInfo(requestContext.deviceInfo),
     })
   }
 
@@ -79,12 +82,14 @@ export class WorkChapterController {
   async getPreviousWorkChapterDetail(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
-    @RequestMeta() meta: RequestMetaResult,
+    @Req() req: FastifyRequest,
   ) {
+    const requestContext = extractRequestContext(req)
+
     return this.workChapterService.getPreviousChapterDetail(query.id, {
       userId,
-      ipAddress: meta.ip,
-      device: meta.deviceId,
+      ipAddress: requestContext.ip,
+      device: serializeDeviceInfo(requestContext.deviceInfo),
     })
   }
 
@@ -97,12 +102,14 @@ export class WorkChapterController {
   async getNextWorkChapterDetail(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
-    @RequestMeta() meta: RequestMetaResult,
+    @Req() req: FastifyRequest,
   ) {
+    const requestContext = extractRequestContext(req)
+
     return this.workChapterService.getNextChapterDetail(query.id, {
       userId,
-      ipAddress: meta.ip,
-      device: meta.deviceId,
+      ipAddress: requestContext.ip,
+      device: serializeDeviceInfo(requestContext.deviceInfo),
     })
   }
 

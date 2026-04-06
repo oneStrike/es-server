@@ -1,7 +1,7 @@
 import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto/audit.dto';
 import type { FastifyRequest } from 'fastify'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { parseRequestLogFields } from '@libs/platform/utils/requestParse';
+import { buildRequestLogFields } from '@libs/platform/utils';
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, or } from 'drizzle-orm'
 import { AuditActionTypeEnum } from './audit.constant'
@@ -37,7 +37,7 @@ export class AuditService {
     const data = {
       ...createDto,
       actionType: normalizedActionType ?? undefined,
-      ...parseRequestLogFields(req),
+      ...buildRequestLogFields(req),
     } as any
     const [created] = await this.drizzle.withErrorHandling(() =>
       this.db
