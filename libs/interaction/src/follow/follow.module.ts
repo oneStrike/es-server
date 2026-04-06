@@ -1,7 +1,7 @@
 import { WorkAuthorModule } from '@libs/content/author'
 import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
 import { MessageModule } from '@libs/message/module'
-import { UserModule } from '@libs/user/core'
+import { UserModule } from '@libs/user/index'
 import { Module } from '@nestjs/common'
 import { FollowGrowthService } from './follow-growth.service'
 import { FollowService } from './follow.service'

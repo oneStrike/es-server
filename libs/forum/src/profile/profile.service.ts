@@ -10,7 +10,7 @@ import {
 } from '@libs/interaction/favorite'
 import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
 import { UserDefaults, UserStatusEnum } from '@libs/platform/constant'
-import { AppUserCountService } from '@libs/user/core'
+import { AppUserCountService } from '@libs/user/index'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {

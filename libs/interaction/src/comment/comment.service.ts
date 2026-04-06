@@ -22,7 +22,7 @@ import {
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
 import { ConfigReader } from '@libs/system-config'
-import { AppUserCountService } from '@libs/user/core'
+import { AppUserCountService } from '@libs/user/index'
 import {
   BadRequestException,
   Injectable,

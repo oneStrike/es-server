@@ -30,7 +30,7 @@ import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { AppUserCountService } from '@libs/user/core'
+import { AppUserCountService } from '@libs/user/index'
 import {
   BadRequestException,
   Injectable,

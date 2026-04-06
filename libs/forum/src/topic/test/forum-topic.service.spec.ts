@@ -65,7 +65,7 @@ jest.mock('@libs/sensitive-word', () => ({
   },
 }))
 
-jest.mock('@libs/user/core', () => ({
+jest.mock('@libs/user', () => ({
   AppUserCountService: class {},
 }))
 

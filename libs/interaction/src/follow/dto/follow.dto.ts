@@ -8,7 +8,7 @@ import {
   NumberProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
-import { BaseAppUserDto } from '@libs/user/core'
+import { BaseAppUserDto } from '@libs/user/index'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { FollowTargetTypeEnum } from '../follow.constant'
 

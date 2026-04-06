@@ -1,5 +1,5 @@
+import type { AppUserSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
-import { AppUserSelect } from '@db/schema'
 import { UserStatusEnum } from '@libs/platform/constant'
 import { formatDateTimeInAppTimeZone } from '@libs/platform/utils'
 import {
@@ -10,6 +10,11 @@ import {
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
 
+/**
+ * 用户域共享服务。
+ * 负责收敛 app_user 的存在性校验、状态语义和对外字段映射，
+ * 避免 app/admin 两侧各自维护一套用户基础规则。
+ */
 @Injectable()
 export class UserService {
   constructor(
@@ -60,6 +65,10 @@ export class UserService {
     return user
   }
 
+  /**
+   * 判断状态码是否属于禁言态。
+   * 禁言态会限制发帖和回复，但不阻断登录。
+   */
   isMutedStatus(status: number): boolean {
     return (
       status === UserStatusEnum.MUTED ||
@@ -67,6 +76,10 @@ export class UserService {
     )
   }
 
+  /**
+   * 判断状态码是否属于封禁态。
+   * 封禁态会直接阻断登录，并驱动统一的封禁提示文案。
+   */
   isBannedStatus(status: number): boolean {
     return (
       status === UserStatusEnum.BANNED ||
@@ -74,10 +87,18 @@ export class UserService {
     )
   }
 
+  /**
+   * 将限制结束时间格式化为 app 时区文案。
+   * 统一由核心服务处理，避免不同入口拼出不一致的时间字符串。
+   */
   private formatRestrictionUntil(date: Date) {
     return formatDateTimeInAppTimeZone(date)
   }
 
+  /**
+   * 生成封禁态访问提示文案。
+   * 该文案会复用到登录、鉴权守卫和密码校验等入口，要求原因与解封时间口径一致。
+   */
   buildBanAccessMessage(user: {
     banReason: string | null
     banUntil: Date | null
@@ -97,6 +118,10 @@ export class UserService {
     return parts.join('，')
   }
 
+  /**
+   * 校验当前用户是否处于封禁态。
+   * 若命中封禁，直接抛出稳定业务异常，避免上层入口各自实现封禁分支。
+   */
   ensureAppUserNotBanned(user: {
     status: number
     banReason: string | null
@@ -108,7 +133,8 @@ export class UserService {
   }
 
   /**
-   * 将数据库用户实体映射为安全的对外用户对象
+   * 将数据库用户实体映射为安全的对外用户对象。
+   * 运行时明确排除 deletedAt 等内部审计字段，避免响应泄露只靠 Swagger 隐藏兜底。
    */
   mapBaseUser(user: AppUserSelect) {
     return {
@@ -133,12 +159,12 @@ export class UserService {
       lastLoginIp: user.lastLoginIp ?? undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      deletedAt: user.deletedAt ?? undefined,
     }
   }
 
   /**
-   * 构建用户状态信息
+   * 构建用户状态摘要。
+   * 统一收敛登录、发帖、回复、点赞、收藏和关注能力的判定口径。
    */
   buildUserStatus(user: {
     isEnabled: boolean

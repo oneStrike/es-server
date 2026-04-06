@@ -1,6 +1,12 @@
-import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
+import {
+  BaseUserExperienceRecordDto,
+  QueryUserExperienceRecordDto,
+} from '@libs/growth/experience'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
-import { BaseUserPointRecordDto } from '@libs/growth/point'
+import {
+  BaseUserPointRecordDto,
+  QueryUserPointRecordDto,
+} from '@libs/growth/point'
 import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets'
 import { UserStatusEnum } from '@libs/platform/constant'
 import {
@@ -11,8 +17,7 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { OmitType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
 import { BaseAppUserDto } from './base-app-user.dto'
 
@@ -74,31 +79,20 @@ export class ChangeMyPhoneDto {
 /**
  * 查询我的积分记录 DTO。
  */
-export class QueryMyPointRecordDto extends IntersectionType(
-  PageDto,
-  PartialType(
-    PickType(
-      BaseUserPointRecordDto,
-      ['ruleId', 'targetType', 'targetId'] as const,
-    ),
-  ),
-) {}
+export class QueryMyPointRecordDto extends OmitType(QueryUserPointRecordDto, [
+  'userId',
+] as const) {}
 
 /**
  * 用户积分记录 DTO。
  */
-export class UserPointRecordDto extends PickType(BaseUserPointRecordDto, [
-  'id',
-  'userId',
-  'ruleId',
-  'ruleType',
-  'targetType',
-  'targetId',
+export class UserPointRecordDto extends OmitType(BaseUserPointRecordDto, [
+  'assetType',
+  'delta',
+  'beforeValue',
+  'afterValue',
   'bizKey',
-  'source',
-  'remark',
-  'context',
-  'createdAt',
+  'updatedAt',
 ] as const) {
   @NumberProperty({
     description: '积分变化（正数为获得，负数为消费）',
@@ -125,27 +119,25 @@ export class UserPointRecordDto extends PickType(BaseUserPointRecordDto, [
 /**
  * 查询我的经验记录 DTO。
  */
-export class QueryMyExperienceRecordDto extends IntersectionType(
-  PageDto,
-  PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
+export class QueryMyExperienceRecordDto extends OmitType(
+  QueryUserExperienceRecordDto,
+  ['userId'] as const,
 ) {}
 
 /**
  * 用户经验记录 DTO。
  */
-export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDto, [
-  'id',
-  'userId',
-  'ruleId',
-  'ruleType',
-  'targetType',
-  'targetId',
-  'bizKey',
-  'source',
-  'remark',
-  'context',
-  'createdAt',
-] as const) {
+export class UserExperienceRecordDto extends OmitType(
+  BaseUserExperienceRecordDto,
+  [
+    'assetType',
+    'delta',
+    'beforeValue',
+    'afterValue',
+    'bizKey',
+    'updatedAt',
+  ] as const,
+) {
   @NumberProperty({
     description: '经验值变化',
     example: 5,
@@ -171,18 +163,10 @@ export class UserExperienceRecordDto extends PickType(BaseUserExperienceRecordDt
 /**
  * 用户计数 DTO。
  */
-export class UserCountDto extends PickType(BaseAppUserCountDto, [
-  'commentCount',
-  'likeCount',
-  'favoriteCount',
-  'followingUserCount',
-  'followingAuthorCount',
-  'followingSectionCount',
-  'followersCount',
-  'forumTopicCount',
-  'commentReceivedLikeCount',
-  'forumTopicReceivedLikeCount',
-  'forumTopicReceivedFavoriteCount',
+export class UserCountDto extends OmitType(BaseAppUserCountDto, [
+  'userId',
+  'createdAt',
+  'updatedAt',
 ] as const) {}
 
 /**
@@ -505,20 +489,6 @@ export class UserCenterMessageDto {
 }
 
 /**
- * 用户资产统计 DTO。
- */
-export class UserAssetsSummaryDto extends PickType(BaseUserAssetsSummaryDto, [
-  'purchasedWorkCount',
-  'purchasedChapterCount',
-  'downloadedWorkCount',
-  'downloadedChapterCount',
-  'favoriteCount',
-  'likeCount',
-  'viewCount',
-  'commentCount',
-] as const) {}
-
-/**
  * 用户中心汇总 DTO。
  */
 export class UserCenterDto {
@@ -548,11 +518,11 @@ export class UserCenterDto {
 
   @NestedProperty({
     description: '资产统计',
-    type: UserAssetsSummaryDto,
+    type: BaseUserAssetsSummaryDto,
     validation: false,
     nullable: false,
   })
-  assets!: UserAssetsSummaryDto
+  assets!: BaseUserAssetsSummaryDto
 
   @NestedProperty({
     description: '消息统计',

@@ -159,6 +159,7 @@ export class BaseAppUserDto extends BaseDto {
     description: '删除时间（软删除）',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
+    contract: false,
     validation: false,
   })
   deletedAt?: Date | null

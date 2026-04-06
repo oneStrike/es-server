@@ -7,7 +7,7 @@ import {
 } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
 import { CommentLevelEnum } from '@libs/platform/constant'
-import { AppUserCountService } from '@libs/user/core'
+import { AppUserCountService } from '@libs/user/index'
 import {
   BadRequestException,
   Injectable,

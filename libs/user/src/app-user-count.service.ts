@@ -1,4 +1,9 @@
 import type { Db } from '@db/core'
+import type {
+  AppUserCountField,
+  AppUserFollowingCountAggregation,
+  RebuiltAppUserCountResult,
+} from './app-user-count.type'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
 import {
@@ -7,40 +12,6 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-
-type AppUserCountField =
-  | 'commentCount'
-  | 'likeCount'
-  | 'favoriteCount'
-  | 'followingUserCount'
-  | 'followingAuthorCount'
-  | 'followingSectionCount'
-  | 'followersCount'
-  | 'forumTopicCount'
-  | 'commentReceivedLikeCount'
-  | 'forumTopicReceivedLikeCount'
-  | 'forumTopicReceivedFavoriteCount'
-
-interface UserFollowingCounts {
-  followingUserCount: number
-  followingAuthorCount: number
-  followingSectionCount: number
-}
-
-interface RebuiltAppUserCounts {
-  userId: number
-  commentCount: number
-  likeCount: number
-  favoriteCount: number
-  followingUserCount: number
-  followingAuthorCount: number
-  followingSectionCount: number
-  followersCount: number
-  forumTopicCount: number
-  commentReceivedLikeCount: number
-  forumTopicReceivedLikeCount: number
-  forumTopicReceivedFavoriteCount: number
-}
 
 /**
  * 应用用户计数服务
@@ -89,6 +60,10 @@ export class AppUserCountService {
     return this.drizzle.schema.forumTopic
   }
 
+  /**
+   * 将 follow 表 targetType 映射为 app_user_count 的具体分项字段。
+   * 若出现未知类型，直接抛出业务异常，避免把计数写进错误字段。
+   */
   private resolveFollowingCountField(targetType: number) {
     switch (targetType) {
       case this.userFollowTargetType:
@@ -102,10 +77,14 @@ export class AppUserCountService {
     }
   }
 
+  /**
+   * 基于 follow 事实表聚合用户主动关注出去的分项数量。
+   * 这里只统计 following 维度，不包含 followersCount。
+   */
   private async getFollowingCounts(
     client: Db,
     userId: number,
-  ): Promise<UserFollowingCounts> {
+  ): Promise<AppUserFollowingCountAggregation> {
     const rows = await client
       .select({
         targetType: this.userFollow.targetType,
@@ -115,7 +94,7 @@ export class AppUserCountService {
       .where(eq(this.userFollow.userId, userId))
       .groupBy(this.userFollow.targetType)
 
-    const counts: UserFollowingCounts = {
+    const counts: AppUserFollowingCountAggregation = {
       followingUserCount: 0,
       followingAuthorCount: 0,
       followingSectionCount: 0,
@@ -130,7 +109,8 @@ export class AppUserCountService {
   }
 
   /**
-   * 获取用户计数
+   * 读取用户聚合计数读模型。
+   * 若计数记录尚未初始化，统一返回 0，保证上层始终拿到稳定结构。
    */
   async getUserCounts(userId: number) {
     const counts = await this.db
@@ -173,7 +153,8 @@ export class AppUserCountService {
   }
 
   /**
-   * 初始化用户计数
+   * 初始化用户聚合计数读模型。
+   * 新建用户时统一写入 0 值，避免后续增减路径反复补记录。
    */
   async initUserCounts(tx: Db | undefined, userId: number) {
     const client = tx ?? this.db
@@ -194,7 +175,8 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户计数字段
+   * 原子更新单个计数字段。
+   * 统一处理 delta=0 短路、事务透传，以及“目标不存在/计数不足”的异常翻译。
    */
   private async updateCountField(
     tx: Db | undefined,
@@ -230,21 +212,21 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户的评论数
+   * 更新用户评论数。
    */
   async updateCommentCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'commentCount', delta)
   }
 
   /**
-   * 更新用户的点赞数
+   * 更新用户点赞数。
    */
   async updateLikeCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'likeCount', delta)
   }
 
   /**
-   * 更新用户的收藏数
+   * 更新用户收藏数。
    */
   async updateFavoriteCount(tx: Db | undefined, userId: number, delta: number) {
     await this.updateCountField(tx, userId, 'favoriteCount', delta)
@@ -264,7 +246,7 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户粉丝数量
+   * 更新用户粉丝数量。
    */
   async updateFollowersCount(
     tx: Db | undefined,
@@ -332,7 +314,7 @@ export class AppUserCountService {
   async rebuildUserCounts(
     tx: Db | undefined,
     userId: number,
-  ): Promise<RebuiltAppUserCounts> {
+  ): Promise<RebuiltAppUserCountResult> {
     const client = tx ?? this.db
     const [
       commentRow,
@@ -429,7 +411,7 @@ export class AppUserCountService {
         .then((rows) => rows[0]),
     ])
 
-    const rebuiltCounts: RebuiltAppUserCounts = {
+    const rebuiltCounts: RebuiltAppUserCountResult = {
       userId,
       commentCount: Number(commentRow?.count ?? 0),
       likeCount: Number(likeRow?.count ?? 0),
@@ -470,7 +452,7 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户的论坛主题数
+   * 更新用户论坛主题数。
    */
   async updateForumTopicCount(
     tx: Db | undefined,
@@ -481,7 +463,7 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户评论收到的点赞数
+   * 更新用户评论收到的点赞数。
    */
   async updateCommentReceivedLikeCount(
     tx: Db | undefined,
@@ -492,7 +474,7 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户论坛主题收到的点赞数
+   * 更新用户论坛主题收到的点赞数。
    */
   async updateForumTopicReceivedLikeCount(
     tx: Db | undefined,
@@ -508,7 +490,7 @@ export class AppUserCountService {
   }
 
   /**
-   * 更新用户论坛主题收到的收藏数
+   * 更新用户论坛主题收到的收藏数。
    */
   async updateForumTopicReceivedFavoriteCount(
     tx: Db | undefined,

@@ -27,7 +27,7 @@ import {
   QueryMyPointRecordDto,
   UpdateMyProfileDto,
   UserService as UserCoreService,
-} from '@libs/user/core'
+} from '@libs/user/index'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'

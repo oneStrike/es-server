@@ -10,7 +10,7 @@
  * - GrowthEventBridgeModule：成长事件桥接模块，用于统一派发点赞事件
  */
 import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
-import { UserModule } from '@libs/user/core'
+import { UserModule } from '@libs/user/index'
 import { Module } from '@nestjs/common'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeService } from './like.service'

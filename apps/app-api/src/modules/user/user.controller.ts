@@ -21,7 +21,7 @@ import {
   UserPointRecordDto,
   UserPointStatsDto,
   UserStatusSummaryDto,
-} from '@libs/user/core'
+} from '@libs/user/index'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UserService } from './user.service'

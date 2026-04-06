@@ -3,7 +3,7 @@ import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver
 import { DrizzleService } from '@db/core'
 import { MessageNotificationTypeEnum } from '@libs/message/notification'
 import { MessageOutboxService } from '@libs/message/outbox'
-import { AppUserCountService } from '@libs/user/core'
+import { AppUserCountService } from '@libs/user/index'
 import {
   BadRequestException,
   Injectable,

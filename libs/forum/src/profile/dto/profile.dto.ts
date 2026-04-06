@@ -5,7 +5,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
-import { BaseAppUserDto } from '@libs/user/core'
+import { BaseAppUserDto } from '@libs/user/index'
 import {
   IntersectionType,
   PartialType,

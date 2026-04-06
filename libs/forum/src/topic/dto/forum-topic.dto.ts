@@ -14,7 +14,7 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word'
-import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/core'
+import { BaseAppUserCountDto, BaseAppUserDto } from '@libs/user/index'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**

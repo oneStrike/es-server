@@ -45,7 +45,7 @@ jest.mock('@libs/system-config', () => ({
   ConfigReader: class {},
 }))
 
-jest.mock('@libs/user/core', () => ({
+jest.mock('@libs/user', () => ({
   AppUserCountService: class {},
 }))
 

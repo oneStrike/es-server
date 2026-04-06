@@ -1,9 +1,14 @@
+import {
+  AssignUserBadgeDto,
+  UserBadgeItemDto,
+} from '@libs/growth/badge'
+import { QueryUserExperienceRecordDto } from '@libs/growth/experience'
+import { QueryUserPointRecordDto } from '@libs/growth/point'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto, UserIdDto } from '@libs/platform/dto'
 import {
   AddAdminAppUserExperienceDto,
   AddAdminAppUserPointsDto,
-  AdminAppUserBadgeItemDto,
   AdminAppUserDetailDto,
   AdminAppUserExperienceRecordDto,
   AdminAppUserExperienceStatsDto,
@@ -12,19 +17,16 @@ import {
   AdminAppUserPageItemDto,
   AdminAppUserPointRecordDto,
   AdminAppUserPointStatsDto,
-  AssignAdminAppUserBadgeDto,
   ConsumeAdminAppUserPointsDto,
   CreateAdminAppUserDto,
   QueryAdminAppUserBadgeDto,
-  QueryAdminAppUserExperienceRecordDto,
   QueryAdminAppUserGrowthLedgerDto,
   QueryAdminAppUserPageDto,
-  QueryAdminAppUserPointRecordDto,
   ResetAdminAppUserPasswordDto,
   UpdateAdminAppUserEnabledDto,
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
-} from '@libs/user/core'
+} from '@libs/user/index'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
@@ -234,9 +236,7 @@ export class AppUserController {
     summary: '分页查询 APP 用户积分记录',
     model: AdminAppUserPointRecordDto,
   })
-  async getAppUserPointRecords(
-    @Query() query: QueryAdminAppUserPointRecordDto,
-  ) {
+  async getAppUserPointRecords(@Query() query: QueryUserPointRecordDto) {
     return this.appUserService.getAppUserPointRecords(query)
   }
 
@@ -299,7 +299,7 @@ export class AppUserController {
     model: AdminAppUserExperienceRecordDto,
   })
   async getAppUserExperienceRecords(
-    @Query() query: QueryAdminAppUserExperienceRecordDto,
+    @Query() query: QueryUserExperienceRecordDto,
   ) {
     return this.appUserService.getAppUserExperienceRecords(query)
   }
@@ -343,7 +343,7 @@ export class AppUserController {
   @Get('badges/page')
   @ApiPageDoc({
     summary: '分页查询 APP 用户徽章',
-    model: AdminAppUserBadgeItemDto,
+    model: UserBadgeItemDto,
   })
   async getAppUserBadges(@Query() query: QueryAdminAppUserBadgeDto) {
     return this.appUserService.getAppUserBadges(query)
@@ -362,7 +362,7 @@ export class AppUserController {
     content: '为 APP 用户分配徽章',
   })
   async assignAppUserBadge(
-    @Body() body: AssignAdminAppUserBadgeDto,
+    @Body() body: AssignUserBadgeDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.appUserService.assignAppUserBadge(userId, body)
@@ -381,7 +381,7 @@ export class AppUserController {
     content: '撤销 APP 用户徽章',
   })
   async revokeAppUserBadge(
-    @Body() body: AssignAdminAppUserBadgeDto,
+    @Body() body: AssignUserBadgeDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.appUserService.revokeAppUserBadge(userId, body)

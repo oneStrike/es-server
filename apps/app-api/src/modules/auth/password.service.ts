@@ -5,7 +5,7 @@ import {
   ForgotPasswordDto,
   RevokeTokenReasonEnum,
 } from '@libs/platform/modules/auth'
-import { UserService as UserCoreService } from '@libs/user/core'
+import { UserService as UserCoreService } from '@libs/user/index'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'

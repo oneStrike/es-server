@@ -195,7 +195,8 @@ export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
 }
 
 export class QueryWorkChapterDto extends IntersectionType(
-  IntersectionType(PageDto, PickType(BaseWorkChapterDto, ['workId'] as const)),
+  PageDto,
+  PickType(BaseWorkChapterDto, ['workId'] as const),
   PickType(PartialType(BaseWorkChapterDto), [
     'title',
     'isPublished',

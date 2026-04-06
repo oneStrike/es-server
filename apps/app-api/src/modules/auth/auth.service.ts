@@ -14,7 +14,7 @@ import {
   TokenDto,
 } from '@libs/platform/modules/auth'
 import { extractIpAddress } from '@libs/platform/utils'
-import { UserService as UserCoreService } from '@libs/user/core'
+import { UserService as UserCoreService } from '@libs/user/index'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
 import { AppAuthErrorMessages, AppAuthRedisKeys } from './auth.constant'

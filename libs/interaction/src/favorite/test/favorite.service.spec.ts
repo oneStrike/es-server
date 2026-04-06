@@ -4,7 +4,7 @@ jest.mock('@db/core', () => ({
   DrizzleService: class {},
 }))
 
-jest.mock('@libs/user/core', () => ({
+jest.mock('@libs/user', () => ({
   AppUserCountService: class {},
 }))
 

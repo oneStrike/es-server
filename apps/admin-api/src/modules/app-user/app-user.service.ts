@@ -1,12 +1,18 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { UserBadgeService } from '@libs/growth/badge'
-import { UserExperienceService } from '@libs/growth/experience'
+import { AssignUserBadgeDto, UserBadgeService } from '@libs/growth/badge'
+import {
+  QueryUserExperienceRecordDto,
+  UserExperienceService,
+} from '@libs/growth/experience'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/growth/growth-ledger'
-import { UserPointService } from '@libs/growth/point'
+import {
+  QueryUserPointRecordDto,
+  UserPointService,
+} from '@libs/growth/point'
 import {
   AdminUserRoleEnum,
   GenderEnum,
@@ -22,20 +28,18 @@ import {
   AddAdminAppUserExperienceDto,
   AddAdminAppUserPointsDto,
   AppUserCountService,
-  AssignAdminAppUserBadgeDto,
+  AppUserDeletedScopeEnum,
   ConsumeAdminAppUserPointsDto,
   CreateAdminAppUserDto,
   QueryAdminAppUserBadgeDto,
-  QueryAdminAppUserExperienceRecordDto,
   QueryAdminAppUserGrowthLedgerDto,
   QueryAdminAppUserPageDto,
-  QueryAdminAppUserPointRecordDto,
   ResetAdminAppUserPasswordDto,
   UpdateAdminAppUserEnabledDto,
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
   UserService as UserCoreService,
-} from '@libs/user/core'
+} from '@libs/user/index'
 import {
   BadRequestException,
   Injectable,
@@ -179,9 +183,9 @@ export class AppUserService {
           : eq(this.appUser.levelId, levelId),
       )
     }
-    if (deletedScope === 'deleted') {
+    if (deletedScope === AppUserDeletedScopeEnum.DELETED) {
       conditions.push(isNotNull(this.appUser.deletedAt))
-    } else if (deletedScope !== 'all') {
+    } else if (deletedScope !== AppUserDeletedScopeEnum.ALL) {
       conditions.push(isNull(this.appUser.deletedAt))
     }
     if (lastLoginAt?.gte) {
@@ -565,7 +569,7 @@ export class AppUserService {
   /**
    * 获取 APP 用户积分记录分页
    */
-  async getAppUserPointRecords(query: QueryAdminAppUserPointRecordDto) {
+  async getAppUserPointRecords(query: QueryUserPointRecordDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userPointService.getPointRecordPage(query)
   }
@@ -686,7 +690,7 @@ export class AppUserService {
    * 获取 APP 用户经验记录分页
    */
   async getAppUserExperienceRecords(
-    query: QueryAdminAppUserExperienceRecordDto,
+    query: QueryUserExperienceRecordDto,
   ) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userExperienceService.getExperienceRecordPage(query)
@@ -811,7 +815,7 @@ export class AppUserService {
    */
   async assignAppUserBadge(
     adminUserId: number,
-    dto: AssignAdminAppUserBadgeDto,
+    dto: AssignUserBadgeDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
 
@@ -824,7 +828,7 @@ export class AppUserService {
    */
   async revokeAppUserBadge(
     adminUserId: number,
-    dto: AssignAdminAppUserBadgeDto,
+    dto: AssignUserBadgeDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
 

@@ -43,7 +43,7 @@ jest.mock('@libs/platform/constant', () => ({
   },
 }))
 
-jest.mock('@libs/user/core', () => ({
+jest.mock('@libs/user', () => ({
   AppUserCountService: class {},
 }))
 

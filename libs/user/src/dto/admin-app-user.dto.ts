@@ -14,29 +14,26 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto, UserIdDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
+import {
+  APP_USER_MANUAL_OPERATION_KEY_REGEX,
+  AppUserDeletedScopeEnum,
+} from '../app-user.constant'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
 import { BaseAppUserDto } from './base-app-user.dto'
-
-export {
-  UserBadgeItemDto as AdminAppUserBadgeItemDto,
-  AssignUserBadgeDto as AssignAdminAppUserBadgeDto,
-} from '@libs/growth/badge'
-
-export enum AdminAppUserDeletedScopeEnum {
-  ACTIVE = 'active',
-  DELETED = 'deleted',
-  ALL = 'all',
-}
-
-const ADMIN_APP_USER_OPERATION_KEY_REGEX = /^[\w:-]{8,64}$/
 
 class AdminAppUserManualOperationDto extends UserIdDto {
   @RegexProperty({
     description: '人工操作稳定键，用于重试复用同一次补发请求',
     example: 'manual-growth-20260328-001',
-    regex: ADMIN_APP_USER_OPERATION_KEY_REGEX,
-    message: 'operationKey 只能包含字母、数字、冒号、下划线或短横线，长度为 8-64 位',
+    regex: APP_USER_MANUAL_OPERATION_KEY_REGEX,
+    message:
+      'operationKey 只能包含字母、数字、冒号、下划线或短横线，长度为 8-64 位',
   })
   operationKey!: string
 }
@@ -47,18 +44,10 @@ export class AdminAppUserLevelDto extends PickType(BaseUserLevelRuleDto, [
   'requiredExperience',
 ] as const) {}
 
-export class AdminAppUserCountDto extends PickType(BaseAppUserCountDto, [
-  'commentCount',
-  'likeCount',
-  'favoriteCount',
-  'followingUserCount',
-  'followingAuthorCount',
-  'followingSectionCount',
-  'followersCount',
-  'forumTopicCount',
-  'commentReceivedLikeCount',
-  'forumTopicReceivedLikeCount',
-  'forumTopicReceivedFavoriteCount',
+export class AdminAppUserCountDto extends OmitType(BaseAppUserCountDto, [
+  'userId',
+  'createdAt',
+  'updatedAt',
 ] as const) {}
 
 export class AdminAppUserPointStatsDto {
@@ -203,13 +192,13 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
   PageDto,
 ) {
   @EnumProperty({
-    description: '删除态筛选（active=未删除，deleted=已删除，all=全部）',
-    enum: AdminAppUserDeletedScopeEnum,
-    example: AdminAppUserDeletedScopeEnum.ACTIVE,
+    description: '删除态筛选（0=未删除；1=已删除；2=全部）',
+    enum: AppUserDeletedScopeEnum,
+    example: AppUserDeletedScopeEnum.ACTIVE,
     required: false,
-    default: AdminAppUserDeletedScopeEnum.ACTIVE,
+    default: AppUserDeletedScopeEnum.ACTIVE,
   })
-  deletedScope?: AdminAppUserDeletedScopeEnum
+  deletedScope?: AppUserDeletedScopeEnum
 
   @StringProperty({
     description: '最后登录开始时间',
@@ -230,15 +219,12 @@ export class QueryAdminAppUserPageDto extends IntersectionType(
 
 export class AdminAppUserFollowCountRepairResultDto extends IntersectionType(
   UserIdDto,
-  PickType(
-    AdminAppUserCountDto,
-    [
-      'followingUserCount',
-      'followingAuthorCount',
-      'followingSectionCount',
-      'followersCount',
-    ] as const,
-  ),
+  PickType(AdminAppUserCountDto, [
+    'followingUserCount',
+    'followingAuthorCount',
+    'followingSectionCount',
+    'followersCount',
+  ] as const),
 ) {}
 
 export class CreateAdminAppUserDto extends IntersectionType(
@@ -319,19 +305,16 @@ export class UpdateAdminAppUserStatusDto extends PickType(BaseAppUserDto, [
   banUntil?: Date
 }
 
-export class AdminAppUserPointRecordDto extends PickType(
+export class AdminAppUserPointRecordDto extends OmitType(
   BaseUserPointRecordDto,
   [
-    'id',
-    'userId',
-    'ruleId',
-    'ruleType',
-    'targetType',
-    'targetId',
+    'assetType',
+    'delta',
+    'beforeValue',
+    'afterValue',
     'bizKey',
-    'remark',
-    'context',
-    'createdAt',
+    'source',
+    'updatedAt',
   ] as const,
 ) {
   @NumberProperty({
@@ -356,33 +339,16 @@ export class AdminAppUserPointRecordDto extends PickType(
   afterPoints!: number
 }
 
-export class QueryAdminAppUserPointRecordDto extends IntersectionType(
-  UserIdDto,
-  IntersectionType(
-    PageDto,
-    PartialType(
-      PickType(BaseUserPointRecordDto, [
-        'ruleId',
-        'targetType',
-        'targetId',
-      ] as const),
-    ),
-  ),
-) {}
-
-export class AdminAppUserExperienceRecordDto extends PickType(
+export class AdminAppUserExperienceRecordDto extends OmitType(
   BaseUserExperienceRecordDto,
   [
-    'id',
-    'userId',
-    'ruleId',
-    'ruleType',
-    'targetType',
-    'targetId',
+    'assetType',
+    'delta',
+    'beforeValue',
+    'afterValue',
     'bizKey',
-    'remark',
-    'context',
-    'createdAt',
+    'source',
+    'updatedAt',
   ] as const,
 ) {
   @NumberProperty({
@@ -407,47 +373,22 @@ export class AdminAppUserExperienceRecordDto extends PickType(
   afterExperience!: number
 }
 
-export class QueryAdminAppUserExperienceRecordDto extends IntersectionType(
-  UserIdDto,
-  IntersectionType(
-    PageDto,
-    PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'] as const)),
-  ),
-) {}
-
-export class AdminAppUserGrowthLedgerRecordDto extends PickType(
+export class AdminAppUserGrowthLedgerRecordDto extends OmitType(
   BaseGrowthLedgerRecordDto,
-  [
-    'id',
-    'userId',
-    'assetType',
-    'ruleId',
-    'ruleType',
-    'targetType',
-    'targetId',
-    'delta',
-    'beforeValue',
-    'afterValue',
-    'bizKey',
-    'remark',
-    'context',
-    'createdAt',
-  ] as const,
+  ['bizKey', 'source'] as const,
 ) {}
 
 export class QueryAdminAppUserGrowthLedgerDto extends IntersectionType(
   UserIdDto,
-  IntersectionType(
-    PageDto,
-    PartialType(
-      PickType(BaseGrowthLedgerRecordDto, [
-        'assetType',
-        'ruleId',
-        'ruleType',
-        'targetType',
-        'targetId',
-      ] as const),
-    ),
+  PageDto,
+  PartialType(
+    PickType(BaseGrowthLedgerRecordDto, [
+      'assetType',
+      'ruleId',
+      'ruleType',
+      'targetType',
+      'targetId',
+    ] as const),
   ),
 ) {}
 
@@ -511,8 +452,7 @@ export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto
   remark?: string
 }
 
-export class AddAdminAppUserExperienceDto
-  extends AdminAppUserManualOperationDto {
+export class AddAdminAppUserExperienceDto extends AdminAppUserManualOperationDto {
   @EnumProperty({
     description: GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION,
     example: GrowthRuleTypeEnum.CREATE_TOPIC,

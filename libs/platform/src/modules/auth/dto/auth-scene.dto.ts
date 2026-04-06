@@ -1,9 +1,6 @@
-import {
-  NestedProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
+import { NestedProperty, StringProperty } from '@libs/platform/decorators'
 import { CheckVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
-import { BaseAppUserDto } from '@libs/user/core'
+import { BaseAppUserDto } from '@libs/user/index'
 import {
   IntersectionType,
   OmitType,
@@ -46,7 +43,9 @@ export class TokenDto {
 /**
  * 刷新令牌入参 DTO。
  */
-export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken'] as const) {}
+export class RefreshTokenDto extends OmitType(TokenDto, [
+  'accessToken',
+] as const) {}
 
 /**
  * 登录成功后返回的用户快照 DTO。

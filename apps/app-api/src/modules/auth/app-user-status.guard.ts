@@ -1,7 +1,7 @@
 import { DrizzleService } from '@db/core'
 import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
 import { AuthErrorMessages } from '@libs/platform/modules/auth'
-import { UserService as UserCoreService } from '@libs/user/core'
+import { UserService as UserCoreService } from '@libs/user/index'
 import {
   BadRequestException,
   CanActivate,
