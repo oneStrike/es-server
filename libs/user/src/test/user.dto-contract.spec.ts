@@ -19,14 +19,25 @@ function readSwaggerMetadata(target: object, propertyKey: string) {
 }
 
 describe('user dto contract exports', () => {
-  it('exports user dto entry points from libs/index.ts', () => {
-    const indexSource = readFileSync('libs/user/src/index.ts', 'utf8')
+  it('keeps user dto contracts on owner files instead of user barrel exports', () => {
+    const selfSource = readFileSync('libs/user/src/dto/user-self.dto.ts', 'utf8')
+    const adminSource = readFileSync(
+      'libs/user/src/dto/admin-app-user.dto.ts',
+      'utf8',
+    )
 
-    expect(indexSource).toContain("export * from './dto/base-app-user.dto'")
-    expect(indexSource).toContain("export * from './dto/base-app-user-count.dto'")
-    expect(indexSource).toContain("export * from './dto/user-self.dto'")
-    expect(indexSource).toContain("export * from './dto/admin-app-user.dto'")
-    expect(indexSource).toContain("export * from './app-user.constant'")
+    expect(selfSource).toContain(
+      "import { BaseAppUserCountDto } from './base-app-user-count.dto'",
+    )
+    expect(selfSource).toContain(
+      "import { BaseAppUserDto } from './base-app-user.dto'",
+    )
+    expect(adminSource).toContain(
+      "import { BaseAppUserCountDto } from './base-app-user-count.dto'",
+    )
+    expect(adminSource).toContain(
+      "import { BaseAppUserDto } from './base-app-user.dto'",
+    )
   })
 
   it.each([
@@ -79,7 +90,7 @@ describe('user dto contract exports', () => {
       'export class QueryMyPointRecordDto extends OmitType(QueryUserPointRecordDto, [',
     )
     expect(selfSource).toContain(
-      "import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets'",
+      "import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto'",
     )
     expect(selfSource).not.toContain('export class UserAssetsSummaryDto')
     expect(adminSource).toContain("'bizKey'")

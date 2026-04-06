@@ -27,15 +27,15 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/growth/growth-reward', () => ({
-  UserGrowthRewardService: class {},
+jest.mock('@libs/growth/growth-reward/growth-reward.service', () => ({
+  UserGrowthRewardService: class {}
 }))
 
-jest.mock('@libs/message/outbox', () => ({
-  MessageOutboxService: class {},
+jest.mock('@libs/message/outbox/outbox.service', () => ({
+  MessageOutboxService: class {}
 }))
 
-jest.mock('@libs/message/notification', () => ({
+jest.mock('@libs/message/notification/notification.constant', () => ({
   MessageNotificationDispatchStatusEnum: {
     DELIVERED: 'delivered',
     FAILED: 'failed',
@@ -52,7 +52,7 @@ jest.mock('@libs/message/notification', () => ({
     SYSTEM_ANNOUNCEMENT: 5,
     CHAT_MESSAGE: 6,
     TASK_REMINDER: 7,
-  },
+  }
 }))
 
 async function createTaskDefinitionService(
@@ -561,7 +561,7 @@ describe('task service rewardConfig contract', () => {
   })
 
   it('writes reward settlement state back to assignment after completion reward', async () => {
-    const { MessageNotificationTypeEnum } = await import('@libs/message/notification')
+    const { MessageNotificationTypeEnum } = await import('@libs/message/notification/notification.constant')
 
     const settledAt = new Date('2026-03-28T12:00:00.000Z')
     const where = jest.fn().mockResolvedValue({ rowCount: 1 })

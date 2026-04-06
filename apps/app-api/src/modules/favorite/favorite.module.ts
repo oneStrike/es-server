@@ -1,4 +1,4 @@
-import { FavoriteModule as FavoriteCoreModule } from '@libs/interaction/favorite'
+import { FavoriteModule as FavoriteCoreModule } from '@libs/interaction/favorite/favorite.module';
 import { Module } from '@nestjs/common'
 import { FavoriteController } from './favorite.controller'
 

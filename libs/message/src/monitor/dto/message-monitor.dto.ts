@@ -1,15 +1,8 @@
-import {
-  getMessageNotificationDispatchStatusLabel,
-  getMessageNotificationTypeLabel,
-  MessageNotificationDispatchStatusEnum,
-  MessageNotificationTypeEnum,
-} from '@libs/message/notification'
-import {
-  ArrayProperty,
-  DateProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
+import { getMessageNotificationDispatchStatusLabel, getMessageNotificationTypeLabel, MessageNotificationDispatchStatusEnum, MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 
 export class QueryMessageOutboxMonitorDto {
   @NumberProperty({

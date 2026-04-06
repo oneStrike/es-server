@@ -1,19 +1,18 @@
-import { QueryUserBadgeDto } from '@libs/growth/badge'
-import { GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION } from '@libs/growth/event-definition'
-import { BaseUserExperienceRecordDto } from '@libs/growth/experience'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { BaseGrowthLedgerRecordDto } from '@libs/growth/growth-ledger'
-import { BaseUserLevelRuleDto } from '@libs/growth/level-rule'
-import { BaseUserPointRecordDto } from '@libs/growth/point'
-import {
-  DateProperty,
-  EnumProperty,
-  NestedProperty,
-  NumberProperty,
-  RegexProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { PageDto, UserIdDto } from '@libs/platform/dto'
+import { QueryUserBadgeDto } from '@libs/growth/badge/dto/user-badge-management.dto';
+import { GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION } from '@libs/growth/event-definition/event-definition.doc';
+import { BaseUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto';
+import { BaseGrowthLedgerRecordDto } from '@libs/growth/growth-ledger/dto/growth-ledger-record.dto';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto';
+import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+            import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+            import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+            import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+            import { RegexProperty } from '@libs/platform/decorators/validate/regex-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { UserIdDto } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

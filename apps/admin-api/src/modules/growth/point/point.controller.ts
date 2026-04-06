@@ -1,12 +1,7 @@
-import {
-  BaseUserPointRuleDto,
-  CreateUserPointRuleDto,
-  QueryUserPointRuleDto,
-  UpdateUserPointRuleDto,
-  UserPointRuleService,
-} from '@libs/growth/point'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { BaseUserPointRuleDto, CreateUserPointRuleDto, QueryUserPointRuleDto, UpdateUserPointRuleDto } from '@libs/growth/point/dto/point-rule.dto';
+import { UserPointRuleService } from '@libs/growth/point/point-rule.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

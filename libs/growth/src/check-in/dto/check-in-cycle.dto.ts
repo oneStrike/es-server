@@ -1,10 +1,8 @@
 import type { CheckInPlanSnapshot } from '../check-in.type'
-import {
-  JsonProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto } from '@libs/platform/dto/base.dto';
 import { CheckInCycleTypeEnum } from '../check-in.constant'
 
 export class BaseCheckInCycleDto extends BaseDto {

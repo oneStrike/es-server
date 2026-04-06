@@ -1,14 +1,11 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import {
-  FavoriteService,
-  FavoriteTargetContext,
-  FavoriteTargetTypeEnum,
-  IFavoriteTargetResolver,
-} from '@libs/interaction/favorite'
-import { MessageNotificationComposerService } from '@libs/message/notification'
-import { MessageOutboxService } from '@libs/message/outbox'
-import { AuditStatusEnum } from '@libs/platform/constant'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
+import { FavoriteTargetContext, IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface';
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 import {
   BadRequestException,
   Injectable,

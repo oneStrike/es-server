@@ -1,17 +1,16 @@
-import { BaseAuthorDto } from '@libs/content/author'
-import { BaseCategoryDto } from '@libs/content/category'
-import { BaseTagDto } from '@libs/content/tag'
-import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant'
-import {
-  ArrayProperty,
-  BooleanProperty,
-  DateProperty,
-  EnumProperty,
-  NestedProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { BaseAuthorDto } from '@libs/content/author/dto/author.dto';
+import { BaseCategoryDto } from '@libs/content/category/dto/category.dto';
+import { BaseTagDto } from '@libs/content/tag/dto/tag.dto';
+import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

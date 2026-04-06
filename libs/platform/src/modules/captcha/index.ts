@@ -1,3 +1,3 @@
 export * from './captcha.service'
-
-export * from './dto/captcha.dto'
+export * from './captcha.types'
+export * from './dto'

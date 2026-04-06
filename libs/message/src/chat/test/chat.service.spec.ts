@@ -5,12 +5,18 @@ jest.mock('@db/core', () => ({
   DrizzleService: class {},
 }))
 
-jest.mock('@libs/interaction/emoji', () => ({
-  EmojiCatalogService: class {},
-  EmojiParserService: class {},
+jest.mock('@libs/interaction/emoji/emoji-catalog.service', () => ({
+  EmojiCatalogService: class {}
+}))
+
+jest.mock('@libs/interaction/emoji/emoji-parser.service', () => ({
+  EmojiParserService: class {}
+}))
+
+jest.mock('@libs/interaction/emoji/emoji.constant', () => ({
   EmojiSceneEnum: {
     CHAT: 'CHAT',
-  },
+  }
 }))
 
 describe('message chat service outbox flow', () => {

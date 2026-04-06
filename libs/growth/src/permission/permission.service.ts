@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { WorkViewPermissionEnum } from '@libs/platform/constant'
+import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 /**

@@ -1,21 +1,8 @@
-import {
-  BaseDictionaryDto,
-  BaseDictionaryItemDto,
-  CreateDictionaryDto,
-  CreateDictionaryItemDto,
-  LibDictionaryService,
-  QueryAllDictionaryItemDto,
-  QueryDictionaryDto,
-  QueryDictionaryItemDto,
-  UpdateDictionaryDto,
-  UpdateDictionaryItemDto,
-} from '@libs/dictionary'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import {
-  DragReorderDto,
-  IdDto,
-  UpdateEnabledStatusDto,
-} from '@libs/platform/dto'
+import { LibDictionaryService } from '@libs/dictionary/dictionary.service';
+import { BaseDictionaryDto, BaseDictionaryItemDto, CreateDictionaryDto, CreateDictionaryItemDto, QueryAllDictionaryItemDto, QueryDictionaryDto, QueryDictionaryItemDto, UpdateDictionaryDto, UpdateDictionaryItemDto } from '@libs/dictionary/dto/dictionary.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

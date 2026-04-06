@@ -1,5 +1,5 @@
-import { AuthConfig } from '@libs/platform/config'
-import { IS_OPTIONAL_AUTH_KEY, IS_PUBLIC_KEY } from '@libs/platform/decorators'
+import { AuthConfig } from '@libs/platform/config/auth.config';
+import { IS_OPTIONAL_AUTH_KEY, IS_PUBLIC_KEY } from '@libs/platform/decorators/public.decorator';
 import {
   CanActivate,
   ExecutionContext,

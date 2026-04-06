@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { extractError, getPostgresErrorDescriptor } from '@db/core'
-import { LoggerService } from '@libs/platform/modules'
+import { LoggerService } from '@libs/platform/modules/logger'
 import { parseRequestLogFields } from '@libs/platform/utils'
 import {
   ArgumentsHost,

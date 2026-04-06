@@ -1,14 +1,7 @@
-import {
-  BaseForumSectionGroupDto,
-  CreateForumSectionGroupDto,
-  ForumSectionGroupService,
-  QueryForumSectionGroupDto,
-  SwapForumSectionGroupSortDto,
-  UpdateForumSectionGroupDto,
-  UpdateForumSectionGroupEnabledDto,
-} from '@libs/forum/section-group'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { BaseForumSectionGroupDto, CreateForumSectionGroupDto, QueryForumSectionGroupDto, SwapForumSectionGroupSortDto, UpdateForumSectionGroupDto, UpdateForumSectionGroupEnabledDto } from '@libs/forum/section-group/dto/forum-section-group.dto';
+import { ForumSectionGroupService } from '@libs/forum/section-group/forum-section-group.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

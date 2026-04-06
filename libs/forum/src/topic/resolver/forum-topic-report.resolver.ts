@@ -1,10 +1,9 @@
 import type { Db } from '@db/core'
-import {
-  IReportTargetResolver,
-  ReportService,
-  ReportTargetTypeEnum,
-} from '@libs/interaction/report'
-import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
+import { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.interface';
+import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant';
+import { ReportService } from '@libs/interaction/report/report.service';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 
 /**

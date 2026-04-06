@@ -1,19 +1,13 @@
-import { GenderEnum } from '@libs/platform/constant'
-import {
-  ArrayProperty,
-  BooleanProperty,
-  DateProperty,
-  EnumProperty,
-  JsonProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import {
-  BaseDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { GenderEnum } from '@libs/platform/constant/user.constant';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

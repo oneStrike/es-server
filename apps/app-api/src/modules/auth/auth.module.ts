@@ -1,9 +1,14 @@
-import { ForumModule } from '@libs/forum/module'
-import { IdentityModule } from '@libs/identity/core'
-import { CaptchaService, RsaService, ScryptService, SmsModule } from '@libs/platform/modules'
-import { AuthCronService, AuthStrategy, JwtAuthModule } from '@libs/platform/modules/auth'
-import { SystemConfigModule } from '@libs/system-config'
-import { UserModule as UserCoreModule } from '@libs/user/index'
+import { ForumModule } from '@libs/forum/forum.module';
+import { IdentityModule } from '@libs/identity/identity.module';
+import { AuthCronService } from '@libs/platform/modules/auth/auth-cron.service';
+import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module';
+import { AuthStrategy } from '@libs/platform/modules/auth/auth.strategy';
+import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service';
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
+import { SmsModule } from '@libs/platform/modules/sms/sms.module';
+import { SystemConfigModule } from '@libs/system-config/system-config.module';
+import { UserModule as UserCoreModule } from '@libs/user/user.module';
 import { Module } from '@nestjs/common'
 import { AppUserStatusGuard } from './app-user-status.guard'
 import { AuthController } from './auth.controller'

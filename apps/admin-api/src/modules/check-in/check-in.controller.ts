@@ -1,18 +1,10 @@
-import {
-  CheckInPlanDetailResponseDto,
-  CheckInPlanPageItemDto,
-  CheckInReconciliationItemDto,
-  CheckInService,
-  CreateCheckInPlanDto,
-  QueryCheckInPlanDto,
-  QueryCheckInReconciliationDto,
-  RepairCheckInRewardDto,
-  RepairCheckInRewardResponseDto,
-  UpdateCheckInPlanDto,
-  UpdateCheckInPlanStatusDto,
-} from '@libs/growth/check-in'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { CheckInService } from '@libs/growth/check-in/check-in.service';
+import { CheckInPlanDetailResponseDto, CheckInPlanPageItemDto, CreateCheckInPlanDto, QueryCheckInPlanDto, UpdateCheckInPlanDto, UpdateCheckInPlanStatusDto } from '@libs/growth/check-in/dto/check-in-definition.dto';
+import { RepairCheckInRewardDto, RepairCheckInRewardResponseDto } from '@libs/growth/check-in/dto/check-in-execution.dto';
+import { CheckInReconciliationItemDto, QueryCheckInReconciliationDto } from '@libs/growth/check-in/dto/check-in-runtime.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

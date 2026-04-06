@@ -11,13 +11,16 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/interaction/follow', () => ({
-  FollowService: class {},
-  FollowTargetTypeEnum: {},
+jest.mock('@libs/interaction/follow/follow.service', () => ({
+  FollowService: class {}
 }))
 
-jest.mock('../../permission', () => ({
-  ForumPermissionService: class {},
+jest.mock('@libs/interaction/follow/follow.constant', () => ({
+  FollowTargetTypeEnum: {}
+}))
+
+jest.mock('../../permission/forum-permission.service', () => ({
+  ForumPermissionService: class {}
 }))
 
 function createEmptyPage() {

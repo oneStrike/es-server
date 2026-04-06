@@ -1,11 +1,9 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import {
-  ILikeTargetResolver,
-  LikeService,
-  LikeTargetTypeEnum,
-} from '@libs/interaction/like'
-import { SceneTypeEnum } from '@libs/platform/constant'
+import { ILikeTargetResolver } from '@libs/interaction/like/interfaces/like-target-resolver.interface';
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
+import { LikeService } from '@libs/interaction/like/like.service';
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { WorkCounterService } from '../../counter/work-counter.service'
 

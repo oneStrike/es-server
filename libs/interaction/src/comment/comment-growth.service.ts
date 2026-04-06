@@ -1,13 +1,10 @@
 import type { Db } from '@db/core'
-import type { EventEnvelope } from '@libs/growth/event-definition'
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import { UserCommentSelect } from '@db/schema'
-import {
-  canConsumeEventEnvelopeByConsumer,
-  createDefinedEventEnvelope,
-  EventDefinitionConsumerEnum,
-} from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
+import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 import { Injectable } from '@nestjs/common'
 
 @Injectable()

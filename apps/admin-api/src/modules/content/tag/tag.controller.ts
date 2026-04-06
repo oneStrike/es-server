@@ -1,13 +1,7 @@
-import {
-  BaseTagDto,
-  CreateTagDto,
-  QueryTagDto,
-  UpdateTagDto,
-  UpdateTagSortDto,
-  WorkTagService,
-} from '@libs/content/tag'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { BaseTagDto, CreateTagDto, QueryTagDto, UpdateTagDto, UpdateTagSortDto } from '@libs/content/tag/dto/tag.dto';
+import { WorkTagService } from '@libs/content/tag/tag.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

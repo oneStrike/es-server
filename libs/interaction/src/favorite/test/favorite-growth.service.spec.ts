@@ -1,8 +1,8 @@
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
-jest.mock('@libs/growth/growth-reward', () => ({
-  GrowthEventBridgeService: class {},
+jest.mock('@libs/growth/growth-reward/growth-event-bridge.service', () => ({
+  GrowthEventBridgeService: class {}
 }))
 
 describe('favorite growth service', () => {

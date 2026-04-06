@@ -1,11 +1,7 @@
-import {
-  LikePageItemDto,
-  LikePageQueryDto,
-  LikeService,
-  LikeStatusResponseDto,
-  LikeTargetDto,
-} from '@libs/interaction/like'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { LikePageItemDto, LikePageQueryDto, LikeStatusResponseDto, LikeTargetDto } from '@libs/interaction/like/dto/like.dto';
+import { LikeService } from '@libs/interaction/like/like.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

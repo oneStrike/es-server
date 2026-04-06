@@ -1,5 +1,5 @@
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { AdminUserRoleEnum } from '@libs/platform/constant'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import { AdminUserRoleEnum } from '@libs/platform/constant/user.constant';
 
 jest.mock('@db/core', () => ({
   buildILikeCondition: jest.fn((_column: unknown, value?: string) =>
@@ -12,29 +12,35 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/growth/badge', () => ({
-  UserBadgeService: class {},
+jest.mock('@libs/growth/badge/user-badge.service', () => ({
+  UserBadgeService: class {}
 }))
 
-jest.mock('@libs/growth/experience', () => ({
-  UserExperienceService: class {},
+jest.mock('@libs/growth/experience/experience.service', () => ({
+  UserExperienceService: class {}
 }))
 
-jest.mock('@libs/growth/growth-ledger', () => ({
+jest.mock('@libs/growth/growth-ledger/growth-ledger.constant', () => ({
   GrowthAssetTypeEnum: {
     POINTS: 1,
     EXPERIENCE: 2,
-  },
-  GrowthLedgerService: class {},
+  }
 }))
 
-jest.mock('@libs/growth/point', () => ({
-  UserPointService: class {},
+jest.mock('@libs/growth/growth-ledger/growth-ledger.service', () => ({
+  GrowthLedgerService: class {}
 }))
 
-jest.mock('@libs/platform/modules', () => ({
-  RsaService: class {},
-  ScryptService: class {},
+jest.mock('@libs/growth/point/point.service', () => ({
+  UserPointService: class {}
+}))
+
+jest.mock('@libs/platform/modules/crypto/rsa.service', () => ({
+  RsaService: class {}
+}))
+
+jest.mock('@libs/platform/modules/crypto/scrypt.service', () => ({
+  ScryptService: class {}
 }))
 
 jest.mock('@libs/user/core', () => ({

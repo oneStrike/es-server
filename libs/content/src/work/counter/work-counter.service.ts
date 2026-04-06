@@ -1,10 +1,8 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import {
-  AuditStatusEnum,
-  ContentTypeEnum,
-} from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 

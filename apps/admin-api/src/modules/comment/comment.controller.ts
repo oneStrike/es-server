@@ -1,18 +1,9 @@
-import {
-  AdminCommentDetailDto,
-  AdminCommentPageItemDto,
-  CommentService,
-  QueryAdminCommentPageDto,
-  UpdateAdminCommentAuditStatusDto,
-  UpdateAdminCommentHiddenDto,
-} from '@libs/interaction/comment'
-import { AuditRoleEnum } from '@libs/platform/constant'
-import {
-  ApiDoc,
-  ApiPageDoc,
-  CurrentUser,
-} from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { CommentService } from '@libs/interaction/comment/comment.service';
+import { AdminCommentDetailDto, AdminCommentPageItemDto, QueryAdminCommentPageDto, UpdateAdminCommentAuditStatusDto, UpdateAdminCommentHiddenDto } from '@libs/interaction/comment/dto/comment.dto';
+import { AuditRoleEnum } from '@libs/platform/constant/audit.constant';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

@@ -7,7 +7,7 @@ import type {
   SensitiveWordTypeStatistics,
 } from './sensitive-word.types'
 import { buildLikePattern, DrizzleService } from '@db/core'
-import { UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
 import {

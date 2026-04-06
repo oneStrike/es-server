@@ -1,7 +1,7 @@
 import { statfs } from 'node:fs/promises'
 import * as process from 'node:process'
-import { Public } from '@libs/platform/decorators'
-import { getEnv } from '@libs/platform/utils'
+import { Public } from '@libs/platform/decorators/public.decorator';
+import { getEnv } from '@libs/platform/utils/env';
 import { Controller, Get, HttpCode } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'

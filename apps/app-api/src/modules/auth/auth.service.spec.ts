@@ -3,11 +3,14 @@ import { BadRequestException } from '@nestjs/common'
 import { AppAuthErrorMessages } from './auth.constant'
 import { AuthService } from './auth.service'
 
-jest.mock('@libs/platform/modules/auth', () => ({
+jest.mock('@libs/platform/modules/auth/auth.helpers', () => ({
   createAuthRedisKeys: jest.fn(() => ({
     LOGIN_LOCK: (userId: number) => `app:login-lock:${userId}`,
     LOGIN_FAIL_COUNT: (userId: number) => `app:login-fail:${userId}`,
-  })),
+  }))
+}))
+
+jest.mock('@libs/platform/modules/auth/auth.constant', () => ({
   AuthConstants: {
     LOGIN_MAX_ATTEMPTS: 5,
     LOGIN_FAIL_TTL: 300,
@@ -15,22 +18,31 @@ jest.mock('@libs/platform/modules/auth', () => ({
   },
   AuthDefaultValue: {
     IP_ADDRESS_UNKNOWN: 'unknown',
-  },
-  AuthService: class {},
-  LoginGuardService: class {},
+  }
 }))
 
-jest.mock('@libs/platform/modules', () => ({
-  RsaService: class {},
-  ScryptService: class {},
+jest.mock('@libs/platform/modules/auth/auth.service', () => ({
+  AuthService: class {}
 }))
 
-jest.mock('@libs/forum/profile', () => ({
-  UserProfileService: class {},
+jest.mock('@libs/platform/modules/auth/login-guard.service', () => ({
+  LoginGuardService: class {}
 }))
 
-jest.mock('@libs/identity/core', () => ({
-  AuthSessionService: class {},
+jest.mock('@libs/platform/modules/crypto/rsa.service', () => ({
+  RsaService: class {}
+}))
+
+jest.mock('@libs/platform/modules/crypto/scrypt.service', () => ({
+  ScryptService: class {}
+}))
+
+jest.mock('@libs/forum/profile/profile.service', () => ({
+  UserProfileService: class {}
+}))
+
+jest.mock('@libs/identity/session.service', () => ({
+  AuthSessionService: class {}
 }))
 
 jest.mock('@libs/user/core', () => ({

@@ -1,10 +1,8 @@
-import {
-  DateProperty,
-  NestedProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { PageDto } from '@libs/platform/dto/page.dto';
 
 export class QueryInboxTimelineDto extends PageDto {}
 

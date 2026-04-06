@@ -1,5 +1,6 @@
-import { EnumProperty, NumberProperty } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import { OmitType, PartialType } from '@nestjs/swagger'
 import { CheckInRepairTargetTypeEnum } from '../check-in.constant'
 

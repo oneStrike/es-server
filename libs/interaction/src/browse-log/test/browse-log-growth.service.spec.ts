@@ -1,8 +1,8 @@
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 import { BrowseLogTargetTypeEnum } from '../browse-log.constant'
 
-jest.mock('@libs/growth/growth-reward', () => ({
-  GrowthEventBridgeService: class {},
+jest.mock('@libs/growth/growth-reward/growth-event-bridge.service', () => ({
+  GrowthEventBridgeService: class {}
 }))
 
 describe('browse log growth service', () => {

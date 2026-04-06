@@ -1,4 +1,4 @@
-import { MessageOutboxModule } from '@libs/message/outbox'
+import { MessageOutboxModule } from '@libs/message/outbox/outbox.module';
 import { Module } from '@nestjs/common'
 import { UserGrowthRewardModule } from '../growth-reward/growth-reward.module'
 import { TaskDefinitionService } from './task-definition.service'

@@ -1,25 +1,14 @@
-import {
-  ComicChapterContentDto,
-  ComicContentService,
-  NovelChapterContentDto,
-  NovelContentService,
-  PageWorkChapterDto,
-  QueryWorkChapterCommentPageDto,
-  QueryWorkChapterDto,
-  WorkChapterDetailWithUserStatusDto,
-  WorkChapterService,
-} from '@libs/content/work'
-import { CommentService, TargetCommentItemDto } from '@libs/interaction/comment'
-import {
-  ApiDoc,
-  ApiPageDoc,
-  CurrentUser,
-  OptionalAuth,
-  Public,
-  RequestMeta,
-  RequestMetaResult,
-} from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { ComicChapterContentDto, NovelChapterContentDto, PageWorkChapterDto, QueryWorkChapterCommentPageDto, QueryWorkChapterDto, WorkChapterDetailWithUserStatusDto } from '@libs/content/work/chapter/dto/work-chapter.dto';
+import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service';
+import { ComicContentService } from '@libs/content/work/content/comic-content.service';
+import { NovelContentService } from '@libs/content/work/content/novel-content.service';
+import { CommentService } from '@libs/interaction/comment/comment.service';
+import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { OptionalAuth, Public } from '@libs/platform/decorators/public.decorator';
+import { RequestMeta, RequestMetaResult } from '@libs/platform/decorators/request-meta.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

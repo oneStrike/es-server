@@ -1,17 +1,15 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  FollowService,
-  FollowTargetTypeEnum,
-} from '@libs/interaction/follow'
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
+import { FollowService } from '@libs/interaction/follow/follow.service';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ForumCounterService } from '../counter'
-import { ForumPermissionService } from '../permission'
+import { ForumCounterService } from '../counter/forum-counter.service';
+import { ForumPermissionService } from '../permission/forum-permission.service';
 import {
   CreateForumSectionDto,
   QueryForumSectionDto,

@@ -1,7 +1,7 @@
-import { InteractionModule } from '@libs/interaction/module'
+import { InteractionModule } from '@libs/interaction/interaction.module';
 import { Module } from '@nestjs/common'
-import { ForumCounterModule } from '../counter'
-import { ForumPermissionModule } from '../permission'
+import { ForumCounterModule } from '../counter/forum-counter.module';
+import { ForumPermissionModule } from '../permission/forum-permission.module';
 import { ForumSectionService } from './forum-section.service'
 import { ForumSectionFollowResolver } from './resolver/forum-section-follow.resolver'
 

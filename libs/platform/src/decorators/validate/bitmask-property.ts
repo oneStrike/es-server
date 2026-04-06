@@ -1,6 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { BitmaskPropertyOptions } from './types'
-import { isNumberEnum } from '@libs/platform/utils'
+import { isNumberEnum } from '@libs/platform/utils/is';
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import {

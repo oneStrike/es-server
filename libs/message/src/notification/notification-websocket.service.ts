@@ -10,7 +10,7 @@ import type {
   WsSendPayload,
 } from './notification-websocket.types'
 import process from 'node:process'
-import { isDevelopment } from '@libs/platform/utils'
+import { isDevelopment } from '@libs/platform/utils/env';
 import {
   BadRequestException,
   Injectable,

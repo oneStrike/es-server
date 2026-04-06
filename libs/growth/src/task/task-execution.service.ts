@@ -3,11 +3,9 @@ import type {
   TaskEventProgressResult,
 } from './task.type'
 import { DrizzleService } from '@db/core'
-import {
-  canConsumeEventEnvelopeByConsumer,
-  EventDefinitionConsumerEnum,
-} from '@libs/growth/event-definition'
-import { MessageOutboxService } from '@libs/message/outbox'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
+import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
 import {
   BadRequestException,
   ConflictException,

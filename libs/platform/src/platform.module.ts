@@ -3,7 +3,7 @@ import type { Type } from '@nestjs/common/interfaces/type.interface'
 import type { ValidationError } from 'class-validator'
 import type { PlatformModuleOptions } from './platform.module.types'
 import { DrizzleModule } from '@db/core'
-import { LoggerModule } from '@libs/platform/modules'
+import { LoggerModule } from '@libs/platform/modules/logger'
 import {
   BadRequestException,
   DynamicModule,
@@ -14,9 +14,9 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { ClsModule } from 'nestjs-cls'
 import { v4 as uuidv4 } from 'uuid'
-import { TransformInterceptor } from './interceptors'
-import { CustomCacheModule } from './modules/cache'
-import { HealthModule } from './modules/health'
+import { TransformInterceptor } from './interceptors/transform.interceptor'
+import { CustomCacheModule } from './modules/cache/cache.module'
+import { HealthModule } from './modules/health/health.module'
 
 function flattenValidationErrors(
   errors: ValidationError[],

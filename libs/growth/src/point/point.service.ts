@@ -1,6 +1,6 @@
 import type { Db, SQL } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, sql } from 'drizzle-orm'
 import {

@@ -5,32 +5,25 @@ import type {
   PublicForumTopicDetailContext,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
-import {
-  canConsumeEventEnvelopeByConsumer,
-  createDefinedEventEnvelope,
-  EventDefinitionConsumerEnum,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
-import {
-  BrowseLogService,
-  BrowseLogTargetTypeEnum,
-} from '@libs/interaction/browse-log'
-import { CommentTargetTypeEnum } from '@libs/interaction/comment'
-import { EmojiParserService, EmojiSceneEnum } from '@libs/interaction/emoji'
-import {
-  FavoriteService,
-  FavoriteTargetTypeEnum,
-} from '@libs/interaction/favorite'
-import { FollowService, FollowTargetTypeEnum } from '@libs/interaction/follow'
-import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
-import { AuditStatusEnum } from '@libs/platform/constant'
-import {
-  SensitiveWordDetectService,
-  SensitiveWordLevelEnum,
-} from '@libs/sensitive-word'
-import { AppUserCountService } from '@libs/user/index'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
+import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant';
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
+import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service';
+import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant';
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
+import { FollowService } from '@libs/interaction/follow/follow.service';
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
+import { LikeService } from '@libs/interaction/like/like.service';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant';
+import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
+import { AppUserCountService } from '@libs/user/app-user-count.service';
 import {
   BadRequestException,
   Injectable,
@@ -44,7 +37,7 @@ import {
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumReviewPolicyEnum } from '../forum.constant'
-import { ForumPermissionService } from '../permission'
+import { ForumPermissionService } from '../permission/forum-permission.service';
 import {
   CreateForumTopicDto,
   PublicForumTopicDetailDto,

@@ -1,4 +1,4 @@
-import { UserBadgeModule } from '@libs/growth/badge'
+import { UserBadgeModule } from '@libs/growth/badge/user-badge.module';
 import { Module } from '@nestjs/common'
 import { UserBadgeController } from './badge.controller'
 

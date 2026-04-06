@@ -2,19 +2,22 @@ import { CommentTargetTypeEnum } from '../../../../../interaction/src/comment/co
 import { MessageNotificationComposerService } from '../../../../../message/src/notification/notification-composer.service'
 import { MessageNotificationTypeEnum } from '../../../../../message/src/notification/notification.constant'
 
-jest.mock('@libs/interaction/comment', () => ({
-  CommentService: class {},
+jest.mock('@libs/interaction/comment/comment.service', () => ({
+  CommentService: class {}
+}))
+
+jest.mock('@libs/interaction/comment/comment.constant', () => ({
   CommentTargetTypeEnum: {
     FORUM_TOPIC: CommentTargetTypeEnum.FORUM_TOPIC,
-  },
+  }
 }))
 
-jest.mock('@libs/message/notification', () => ({
-  MessageNotificationComposerService: class {},
+jest.mock('@libs/message/notification/notification-composer.service', () => ({
+  MessageNotificationComposerService: class {}
 }))
 
-jest.mock('@libs/message/outbox', () => ({
-  MessageOutboxService: class {},
+jest.mock('@libs/message/outbox/outbox.service', () => ({
+  MessageOutboxService: class {}
 }))
 
 describe('forum topic comment resolver', () => {

@@ -1,6 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {

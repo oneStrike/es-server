@@ -1,4 +1,4 @@
-import { SystemConfigModule as LibSystemConfigModule } from '@libs/system-config'
+import { SystemConfigModule as LibSystemConfigModule } from '@libs/system-config/system-config.module';
 import { Module } from '@nestjs/common'
 import { SystemConfigController } from './system-config.controller'
 

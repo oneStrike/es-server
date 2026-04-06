@@ -1,17 +1,11 @@
-import { EnablePlatformEnum } from '@libs/platform/constant'
-import {
-  ArrayProperty,
-  BooleanProperty,
-  EnumProperty,
-  JsonProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import {
-  BaseDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { EnablePlatformEnum } from '@libs/platform/constant/base.constant';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

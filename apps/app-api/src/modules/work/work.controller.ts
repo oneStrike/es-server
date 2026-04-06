@@ -1,21 +1,12 @@
-import {
-  PageWorkDto,
-  QueryWorkCommentPageDto,
-  QueryWorkDto,
-  QueryWorkTypeDto,
-  WorkDetailDto,
-  WorkService,
-} from '@libs/content/work'
-import { CommentService, TargetCommentItemDto } from '@libs/interaction/comment'
-import {
-  ApiDoc,
-  ApiPageDoc,
-  CurrentUser,
-  OptionalAuth,
-  RequestMeta,
-  RequestMetaResult,
-} from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { PageWorkDto, QueryWorkCommentPageDto, QueryWorkDto, QueryWorkTypeDto, WorkDetailDto } from '@libs/content/work/core/dto/work.dto';
+import { WorkService } from '@libs/content/work/core/work.service';
+import { CommentService } from '@libs/interaction/comment/comment.service';
+import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
+import { RequestMeta, RequestMetaResult } from '@libs/platform/decorators/request-meta.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

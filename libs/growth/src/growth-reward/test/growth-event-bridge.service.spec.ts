@@ -1,11 +1,9 @@
-import {
-  EventDefinitionConsumerEnum,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
+import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 
-jest.mock('@libs/growth/task', () => ({
-  TaskService: class {},
+jest.mock('@libs/growth/task/task.service', () => ({
+  TaskService: class {}
 }))
 
 describe('growth event bridge service', () => {

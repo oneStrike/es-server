@@ -1,16 +1,10 @@
-import type {
-  QueryMessageOutboxMonitorDto,
-  QueryMessageWsMonitorDto,
-} from '@libs/message/monitor'
-import type { QueryNotificationDeliveryPageDto } from '@libs/message/notification'
+import type { QueryMessageOutboxMonitorDto, QueryMessageWsMonitorDto } from '@libs/message/monitor/dto/message-monitor.dto';
+import type { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto';
 import { DrizzleService } from '@db/core'
 import { messageOutbox, messageWsMetric } from '@db/schema'
-import { MessageNotificationDeliveryService } from '@libs/message/notification'
-import {
-  MessageOutboxDomainEnum,
-  MessageOutboxService,
-  MessageOutboxStatusEnum,
-} from '@libs/message/outbox'
+import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service';
+import { MessageOutboxDomainEnum, MessageOutboxStatusEnum } from '@libs/message/outbox/outbox.constant';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
 import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 

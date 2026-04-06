@@ -1,9 +1,7 @@
-import { ApiDoc, CurrentUser } from '@libs/platform/decorators'
-import {
-  BaseSystemConfigDto,
-  SystemConfigService,
-  UpdateSystemConfigDto,
-} from '@libs/system-config'
+import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { BaseSystemConfigDto, UpdateSystemConfigDto } from '@libs/system-config/dto/config.dto';
+import { SystemConfigService } from '@libs/system-config/system-config.service';
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

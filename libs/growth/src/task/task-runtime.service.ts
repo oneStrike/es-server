@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { MessageOutboxService } from '@libs/message/outbox'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
 import { Injectable } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { and, eq, gte, inArray, isNull, lte } from 'drizzle-orm'

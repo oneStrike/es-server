@@ -1,13 +1,7 @@
-import {
-  AppPageService,
-  BaseAppPageDto,
-  CreateAppPageDto,
-  QueryAppPageDto,
-  QueryPageByCodeDto,
-  UpdateAppPageDto,
-} from '@libs/app-content/page'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, IdsDto } from '@libs/platform/dto'
+import { BaseAppPageDto, CreateAppPageDto, QueryAppPageDto, QueryPageByCodeDto, UpdateAppPageDto } from '@libs/app-content/page/dto/page.dto';
+import { AppPageService } from '@libs/app-content/page/page.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto, IdsDto } from '@libs/platform/dto/base.dto';
 import {
   Body,
   Controller,

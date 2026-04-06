@@ -4,7 +4,7 @@ import type {
   ParsedRequestData,
   RequestParams,
 } from './request-parse.types'
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant'
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant';
 import { maskString } from './mask'
 
 // 浏览器检测正则表达式（模块作用域，避免重复编译）

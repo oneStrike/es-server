@@ -1,4 +1,4 @@
-import { ForumSectionModule as ForumSectionModuleLib } from '@libs/forum/section'
+import { ForumSectionModule as ForumSectionModuleLib } from '@libs/forum/section/forum-section.module';
 import { Module } from '@nestjs/common'
 import { ForumSectionController } from './forum-section.controller'
 

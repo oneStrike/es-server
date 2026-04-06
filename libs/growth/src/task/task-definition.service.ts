@@ -1,5 +1,5 @@
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { MessageOutboxService } from '@libs/message/outbox'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'

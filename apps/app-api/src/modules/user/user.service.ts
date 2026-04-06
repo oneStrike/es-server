@@ -10,24 +10,15 @@ import type { SQL } from 'drizzle-orm'
  * - 用户成长信息（积分、经验、等级、徽章）
  */
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { UserExperienceService } from '@libs/growth/experience'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
-import { UserPointService } from '@libs/growth/point'
-import { TaskService } from '@libs/growth/task'
-import { UserAssetsService } from '@libs/interaction/user-assets'
-import { MessageInboxService } from '@libs/message/inbox'
-import {
-  formatDateOnlyInAppTimeZone,
-  startOfTodayInAppTimeZone,
-} from '@libs/platform/utils'
-import {
-  ChangeMyPhoneDto,
-  QueryMyBadgeDto,
-  QueryMyExperienceRecordDto,
-  QueryMyPointRecordDto,
-  UpdateMyProfileDto,
-  UserService as UserCoreService,
-} from '@libs/user/index'
+import { UserExperienceService } from '@libs/growth/experience/experience.service';
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
+import { UserPointService } from '@libs/growth/point/point.service';
+import { TaskService } from '@libs/growth/task/task.service';
+import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.service';
+import { MessageInboxService } from '@libs/message/inbox/inbox.service';
+import { formatDateOnlyInAppTimeZone, startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
+import { ChangeMyPhoneDto, QueryMyBadgeDto, QueryMyExperienceRecordDto, QueryMyPointRecordDto, UpdateMyProfileDto } from '@libs/user/dto/user-self.dto';
+import { UserService as UserCoreService } from '@libs/user/user.service';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'

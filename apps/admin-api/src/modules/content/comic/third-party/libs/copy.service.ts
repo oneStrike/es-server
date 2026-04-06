@@ -1,8 +1,4 @@
-import type {
-  ChapterContentComicRequestDto,
-  DetailComicRequestDto,
-  SearchComicRequestDto,
-} from '@libs/content/work'
+import type { ChapterContentComicRequestDto, DetailComicRequestDto, SearchComicRequestDto } from '@libs/content/work/content/dto/content.dto';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 

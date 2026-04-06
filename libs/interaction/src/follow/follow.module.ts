@@ -1,7 +1,7 @@
-import { WorkAuthorModule } from '@libs/content/author'
-import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
-import { MessageModule } from '@libs/message/module'
-import { UserModule } from '@libs/user/index'
+import { WorkAuthorModule } from '@libs/content/author/author.module';
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module';
+import { MessageModule } from '@libs/message/message.module';
+import { UserModule } from '@libs/user/user.module';
 import { Module } from '@nestjs/common'
 import { FollowGrowthService } from './follow-growth.service'
 import { FollowService } from './follow.service'

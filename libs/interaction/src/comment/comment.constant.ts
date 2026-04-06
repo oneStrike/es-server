@@ -1,4 +1,4 @@
-import { SceneTypeEnum } from '@libs/platform/constant'
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
 
 /**
  * 评论目标类型枚举

@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { AppUserCountService } from '@libs/user/index'
+import { AppUserCountService } from '@libs/user/app-user-count.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray } from 'drizzle-orm'
 import {

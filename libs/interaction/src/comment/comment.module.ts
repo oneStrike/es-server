@@ -1,18 +1,10 @@
-/**
- * 评论模块
- *
- * 功能说明：
- * - 提供评论的创建、回复、删除、查询等功能
- * - 通过解析器模式支持评论的点赞、举报操作
- * - 集成敏感词检测、成长奖励、消息通知等能力
- */
-import { GrowthEventBridgeModule } from '@libs/growth/growth-reward'
-import { EmojiModule } from '@libs/interaction/emoji'
-import { LikeModule } from '@libs/interaction/like'
-import { MessageModule } from '@libs/message/module'
-import { SensitiveWordModule } from '@libs/sensitive-word'
-import { SystemConfigModule } from '@libs/system-config'
-import { UserModule } from '@libs/user/index'
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module';
+import { EmojiModule } from '@libs/interaction/emoji/emoji.module';
+import { LikeModule } from '@libs/interaction/like/like.module';
+import { MessageModule } from '@libs/message/message.module';
+import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module';
+import { SystemConfigModule } from '@libs/system-config/system-config.module';
+import { UserModule } from '@libs/user/user.module';
 import { Module } from '@nestjs/common'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'

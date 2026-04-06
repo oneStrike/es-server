@@ -1,17 +1,7 @@
-import {
-  AuthorFollowCountRepairResultDto,
-  AuthorPageResponseDto,
-  AuthorWorkCountRepairResultDto,
-  BaseAuthorDto,
-  CreateAuthorDto,
-  QueryAuthorDto,
-  UpdateAuthorDto,
-  UpdateAuthorRecommendedDto,
-  UpdateAuthorStatusDto,
-  WorkAuthorService,
-} from '@libs/content/author'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { WorkAuthorService } from '@libs/content/author/author.service';
+import { AuthorFollowCountRepairResultDto, AuthorPageResponseDto, AuthorWorkCountRepairResultDto, BaseAuthorDto, CreateAuthorDto, QueryAuthorDto, UpdateAuthorDto, UpdateAuthorRecommendedDto, UpdateAuthorStatusDto } from '@libs/content/author/dto/author.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

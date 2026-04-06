@@ -1,10 +1,8 @@
-import {
-  ArrayProperty,
-  BooleanProperty,
-  NestedProperty,
-  NumberProperty,
-} from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

@@ -1,14 +1,12 @@
-import {
-  ArrayProperty,
-  BooleanProperty,
-  DateProperty,
-  EnumProperty,
-  JsonProperty,
-  NestedProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   ChatMessageTypeEnum,
 } from '../chat.constant'

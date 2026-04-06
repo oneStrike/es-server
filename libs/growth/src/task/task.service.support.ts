@@ -4,7 +4,7 @@ import type {
   TaskAssignmentSelect,
   TaskSelect,
 } from '@db/schema'
-import type { MessageOutboxService } from '@libs/message/outbox'
+import type { MessageOutboxService } from '@libs/message/outbox/outbox.service';
 import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
 import type { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
@@ -51,12 +51,9 @@ import type {
   TaskSnapshotSource,
 } from './task.type'
 import process from 'node:process'
-import {
-  createEventEnvelope,
-  EventDefinitionEntityTypeEnum,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition'
-import { MessageNotificationTypeEnum } from '@libs/message/notification'
+import { EventDefinitionEntityTypeEnum } from '@libs/growth/event-definition/event-definition.type';
+import { createEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
+import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
 import {
   BadRequestException,
   ConflictException,

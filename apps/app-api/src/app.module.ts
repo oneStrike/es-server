@@ -6,13 +6,13 @@ import {
   LoggerConfigRegister,
   RedisConfigRegister,
   RsaConfigRegister,
-  UploadConfigRegister
+  UploadConfigRegister,
 } from '@libs/platform/config'
 import { HttpExceptionFilter } from '@libs/platform/filters'
-import { PlatformModule } from '@libs/platform/module'
-import { JwtAuthGuard, JwtAuthModule } from '@libs/platform/modules'
-import { getEnv } from '@libs/platform/utils'
-import { UserModule as UserCoreModule } from '@libs/user/index'
+import { JwtAuthGuard, JwtAuthModule } from '@libs/platform/modules/auth'
+import { PlatformModule } from '@libs/platform/platform.module'
+import { getEnv } from '@libs/platform/utils/env'
+import { UserModule as UserCoreModule } from '@libs/user/user.module'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD } from '@nestjs/core'
@@ -74,4 +74,4 @@ import { AppUserStatusGuard } from './modules/auth/app-user-status.guard'
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

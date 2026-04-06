@@ -1,6 +1,6 @@
 import type { Cache } from 'cache-manager'
 import { DrizzleService } from '@db/core'
-import { isDevelopment, isProduction } from '@libs/platform/utils'
+import { isDevelopment, isProduction } from '@libs/platform/utils/env';
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import { sql } from 'drizzle-orm'

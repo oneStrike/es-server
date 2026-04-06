@@ -1,7 +1,4 @@
-/**
- * 管理端认证模块常量
- */
-import { createAuthRedisKeys } from '@libs/platform/modules/auth'
+import { createAuthRedisKeys } from '@libs/platform/modules/auth/auth.helpers';
 
 export enum AdminAuthCacheKeys {
   /** 登录验证码 Key 前缀 */

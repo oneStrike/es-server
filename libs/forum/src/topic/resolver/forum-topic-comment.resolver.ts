@@ -1,16 +1,12 @@
 import type { Db } from '@db/core'
-import type {
-  CommentTargetMeta,
-  VisibleCommentEffectPayload,
-} from '@libs/interaction/comment'
-import {
-  CommentService,
-  CommentTargetTypeEnum,
-  ICommentTargetResolver,
-} from '@libs/interaction/comment'
-import { MessageNotificationComposerService } from '@libs/message/notification'
-import { MessageOutboxService } from '@libs/message/outbox'
-import { AuditStatusEnum } from '@libs/platform/constant'
+import type { VisibleCommentEffectPayload } from '@libs/interaction/comment/comment.type';
+import type { CommentTargetMeta } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface';
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
+import { CommentService } from '@libs/interaction/comment/comment.service';
+import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface';
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 

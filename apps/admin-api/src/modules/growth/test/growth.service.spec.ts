@@ -1,16 +1,11 @@
-import {
-  EventDefinitionConsumerEnum,
-  EventDefinitionDomainEnum,
-  EventDefinitionGovernanceGateEnum,
-  EventDefinitionImplStatusEnum,
-} from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { EventDefinitionConsumerEnum, EventDefinitionDomainEnum, EventDefinitionGovernanceGateEnum, EventDefinitionImplStatusEnum } from '@libs/growth/event-definition/event-definition.type';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 
 jest.mock('@db/core', () => ({
   DrizzleService: class {},
 }))
 
-jest.mock('@libs/growth/task', () => ({
+jest.mock('@libs/growth/task/task.constant', () => ({
   TaskObjectiveTypeEnum: {
     MANUAL: 1,
     EVENT_COUNT: 2,
@@ -33,7 +28,7 @@ jest.mock('@libs/growth/task', () => ({
       return 4
     }
     return value ?? 1
-  },
+  }
 }))
 
 describe('growth service', () => {

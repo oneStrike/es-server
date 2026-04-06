@@ -1,6 +1,7 @@
-import { NestedProperty, StringProperty } from '@libs/platform/decorators'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { CheckVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto'
-import { BaseAppUserDto } from '@libs/user/index'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
 import {
   IntersectionType,
   OmitType,

@@ -1,13 +1,9 @@
-import {
-  BaseEmojiPackDto,
-  CreateEmojiPackDto,
-  EmojiAssetService,
-  QueryEmojiPackDto,
-  UpdateEmojiPackDto,
-  UpdateEmojiPackSceneTypeDto,
-} from '@libs/interaction/emoji'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
+import { BaseEmojiPackDto, CreateEmojiPackDto, QueryEmojiPackDto, UpdateEmojiPackDto, UpdateEmojiPackSceneTypeDto } from '@libs/interaction/emoji/dto/emoji.dto';
+import { EmojiAssetService } from '@libs/interaction/emoji/emoji-asset.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

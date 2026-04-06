@@ -1,10 +1,8 @@
-import type { EventEnvelope } from '@libs/growth/event-definition'
-import {
-  canConsumeEventEnvelopeByConsumer,
-  EventDefinitionConsumerEnum,
-} from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { GrowthEventBridgeService } from '@libs/growth/growth-reward'
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
+import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type';
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 import { Injectable, Logger } from '@nestjs/common'
 import { ReportStatusEnum, ReportTargetTypeEnum } from './report.constant'
 

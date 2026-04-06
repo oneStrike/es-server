@@ -1,8 +1,8 @@
-import { UserBadgeModule } from '@libs/growth/badge'
-import { UserExperienceModule } from '@libs/growth/experience'
-import { GrowthLedgerModule } from '@libs/growth/growth-ledger'
-import { UserPointModule } from '@libs/growth/point'
-import { UserModule as UserCoreModule } from '@libs/user/index'
+import { UserBadgeModule } from '@libs/growth/badge/user-badge.module';
+import { UserExperienceModule } from '@libs/growth/experience/experience.module';
+import { GrowthLedgerModule } from '@libs/growth/growth-ledger/growth-ledger.module';
+import { UserPointModule } from '@libs/growth/point/point.module';
+import { UserModule as UserCoreModule } from '@libs/user/user.module';
 import { Module } from '@nestjs/common'
 import { AppUserController } from './app-user.controller'
 import { AppUserService } from './app-user.service'

@@ -10,8 +10,8 @@ import { getTableConfig } from 'drizzle-orm/pg-core'
 import {
   CheckInCycleTypeEnum,
   CheckInPlanStatusEnum,
-  CheckInRepairTargetTypeEnum,
   CheckInRecordTypeEnum,
+  CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
   CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
@@ -28,7 +28,7 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/growth/growth-ledger', () => ({
+jest.mock('@libs/growth/growth-ledger/growth-ledger.constant', () => ({
   GrowthAssetTypeEnum: {
     EXPERIENCE: 2,
     POINTS: 1,
@@ -36,12 +36,18 @@ jest.mock('@libs/growth/growth-ledger', () => ({
   GrowthLedgerActionEnum: {
     GRANT: 1,
   },
-  GrowthLedgerModule: class {},
-  GrowthLedgerService: class {},
   GrowthLedgerSourceEnum: {
     CHECK_IN_BASE_BONUS: 'check_in_base_bonus',
     CHECK_IN_STREAK_BONUS: 'check_in_streak_bonus',
-  },
+  }
+}))
+
+jest.mock('@libs/growth/growth-ledger/growth-ledger.module', () => ({
+  GrowthLedgerModule: class {}
+}))
+
+jest.mock('@libs/growth/growth-ledger/growth-ledger.service', () => ({
+  GrowthLedgerService: class {}
 }))
 
 function createCheckInDrizzleMock(overrides?: Record<string, unknown>) {
@@ -147,11 +153,11 @@ describe('check-in public boundary', () => {
     expect(exportsMetadata).not.toContain(CheckInRuntimeService)
   })
 
-  it('does not re-export CheckInRuntimeService from the public barrel', async () => {
-    const publicApi = await import('../index')
+  it('removes the legacy public barrel next to check-in services', async () => {
+    const { existsSync } = await import('node:fs')
+    const { join } = await import('node:path')
 
-    expect(publicApi.CheckInService).toBeDefined()
-    expect('CheckInRuntimeService' in publicApi).toBe(false)
+    expect(existsSync(join(__dirname, '..', 'index.ts'))).toBe(false)
   })
 
   it('keeps execution and runtime helpers out of CheckInDefinitionService', async () => {
@@ -1014,8 +1020,7 @@ describe('check-in execution public behavior', () => {
     jest.spyOn(service as any, 'parseDateOnly').mockReturnValue('2026-04-03')
     jest.spyOn(service as any, 'formatDateOnly').mockReturnValue('2026-04-03')
 
-    await expect(service.makeup({ signDate: '2026-04-03' } as any, 9)).rejects
-      .toThrow('补签只能发生在今天之前')
+    await expect(service.makeup({ signDate: '2026-04-03' } as any, 9)).rejects.toThrow('补签只能发生在今天之前')
     expect(getCurrentActivePlan).not.toHaveBeenCalled()
   })
 

@@ -1,8 +1,8 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import { AuditStatusEnum } from '@libs/platform/constant'
-import { AppUserCountService } from '@libs/user/index'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import { AppUserCountService } from '@libs/user/app-user-count.service';
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 

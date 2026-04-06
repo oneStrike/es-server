@@ -1,12 +1,7 @@
-import {
-  DownloadedWorkChapterItemDto,
-  DownloadedWorkItemDto,
-  DownloadService,
-  DownloadTargetDto,
-  QueryDownloadedWorkChapterDto,
-  QueryDownloadedWorkDto,
-} from '@libs/interaction/download'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { DownloadService } from '@libs/interaction/download/download.service';
+import { DownloadedWorkChapterItemDto, DownloadedWorkItemDto, DownloadTargetDto, QueryDownloadedWorkChapterDto, QueryDownloadedWorkDto } from '@libs/interaction/download/dto/download.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

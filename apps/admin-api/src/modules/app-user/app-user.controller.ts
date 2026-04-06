@@ -1,32 +1,10 @@
-import {
-  AssignUserBadgeDto,
-  UserBadgeItemDto,
-} from '@libs/growth/badge'
-import { QueryUserExperienceRecordDto } from '@libs/growth/experience'
-import { QueryUserPointRecordDto } from '@libs/growth/point'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto, UserIdDto } from '@libs/platform/dto'
-import {
-  AddAdminAppUserExperienceDto,
-  AddAdminAppUserPointsDto,
-  AdminAppUserDetailDto,
-  AdminAppUserExperienceRecordDto,
-  AdminAppUserExperienceStatsDto,
-  AdminAppUserFollowCountRepairResultDto,
-  AdminAppUserGrowthLedgerRecordDto,
-  AdminAppUserPageItemDto,
-  AdminAppUserPointRecordDto,
-  AdminAppUserPointStatsDto,
-  ConsumeAdminAppUserPointsDto,
-  CreateAdminAppUserDto,
-  QueryAdminAppUserBadgeDto,
-  QueryAdminAppUserGrowthLedgerDto,
-  QueryAdminAppUserPageDto,
-  ResetAdminAppUserPasswordDto,
-  UpdateAdminAppUserEnabledDto,
-  UpdateAdminAppUserProfileDto,
-  UpdateAdminAppUserStatusDto,
-} from '@libs/user/index'
+import { AssignUserBadgeDto, UserBadgeItemDto } from '@libs/growth/badge/dto/user-badge-management.dto';
+import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto';
+import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto';
+import { AddAdminAppUserExperienceDto, AddAdminAppUserPointsDto, AdminAppUserDetailDto, AdminAppUserExperienceRecordDto, AdminAppUserExperienceStatsDto, AdminAppUserFollowCountRepairResultDto, AdminAppUserGrowthLedgerRecordDto, AdminAppUserPageItemDto, AdminAppUserPointRecordDto, AdminAppUserPointStatsDto, ConsumeAdminAppUserPointsDto, CreateAdminAppUserDto, QueryAdminAppUserBadgeDto, QueryAdminAppUserGrowthLedgerDto, QueryAdminAppUserPageDto, ResetAdminAppUserPasswordDto, UpdateAdminAppUserEnabledDto, UpdateAdminAppUserProfileDto, UpdateAdminAppUserStatusDto } from '@libs/user/dto/admin-app-user.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

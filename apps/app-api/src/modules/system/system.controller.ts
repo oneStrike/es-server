@@ -1,21 +1,14 @@
-import { AppConfigService, BaseAppConfigDto } from '@libs/app-config'
-import {
-  AgreementListItemDto,
-  AgreementService,
-  BaseAgreementDto,
-  QueryPublishedAgreementDto,
-} from '@libs/app-content/agreement'
-import {
-  AppAnnouncementService,
-  BaseAnnouncementDto,
-  QueryAnnouncementDto,
-} from '@libs/app-content/announcement'
-import {
-  AppPageService,
-  BaseAppPageDto,
-} from '@libs/app-content/page'
-import { ApiDoc, ApiPageDoc, Public } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { AppConfigService } from '@libs/app-config/config.service';
+import { BaseAppConfigDto } from '@libs/app-config/dto/config.dto';
+import { AgreementService } from '@libs/app-content/agreement/agreement.service';
+import { AgreementListItemDto, BaseAgreementDto, QueryPublishedAgreementDto } from '@libs/app-content/agreement/dto/agreement.dto';
+import { AppAnnouncementService } from '@libs/app-content/announcement/announcement.service';
+import { BaseAnnouncementDto, QueryAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto';
+import { BaseAppPageDto } from '@libs/app-content/page/dto/page.dto';
+import { AppPageService } from '@libs/app-content/page/page.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { Public } from '@libs/platform/decorators/public.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

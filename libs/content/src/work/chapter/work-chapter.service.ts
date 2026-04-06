@@ -1,22 +1,19 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  BrowseLogService,
-  BrowseLogTargetTypeEnum,
-} from '@libs/interaction/browse-log'
-import { CommentTargetTypeEnum } from '@libs/interaction/comment'
-import {
-  DownloadService,
-  DownloadTargetTypeEnum,
-} from '@libs/interaction/download'
-import { FavoriteService } from '@libs/interaction/favorite'
-import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
-import { ReadingStateService } from '@libs/interaction/reading-state'
-import { ContentTypeEnum } from '@libs/platform/constant'
-import { jsonParse } from '@libs/platform/utils'
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant';
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
+import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant';
+import { DownloadService } from '@libs/interaction/download/download.service';
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
+import { LikeService } from '@libs/interaction/like/like.service';
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
+import { jsonParse } from '@libs/platform/utils/jsonParse';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ContentPermissionService } from '../../permission'
+import { ContentPermissionService } from '../../permission/content-permission.service';
 import {
   CreateWorkChapterDto,
   QueryWorkChapterDto,

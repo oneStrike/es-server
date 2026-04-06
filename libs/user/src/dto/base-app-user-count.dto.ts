@@ -1,7 +1,5 @@
-import {
-  DateProperty,
-  NumberProperty,
-} from '@libs/platform/decorators'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 
 /**
  * 应用用户计数基类 DTO

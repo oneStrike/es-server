@@ -1,5 +1,5 @@
-import { UploadModule as BaseUploadModule } from '@libs/platform/modules'
-import { SystemConfigModule as LibSystemConfigModule } from '@libs/system-config'
+import { UploadModule as BaseUploadModule } from '@libs/platform/modules/upload/upload.module';
+import { SystemConfigModule as LibSystemConfigModule } from '@libs/system-config/system-config.module';
 import { Module } from '@nestjs/common'
 import { UploadController } from './upload.controller'
 

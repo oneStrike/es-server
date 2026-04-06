@@ -1,4 +1,4 @@
-import { NumberProperty } from '@libs/platform/decorators'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 
 export class BaseUserAssetsSummaryDto {
   @NumberProperty({

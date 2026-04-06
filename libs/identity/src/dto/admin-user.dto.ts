@@ -1,11 +1,10 @@
-import { AdminUserRoleEnum } from '@libs/platform/constant'
-import {
-  BooleanProperty,
-  DateProperty,
-  EnumProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { AdminUserRoleEnum } from '@libs/platform/constant/user.constant';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**

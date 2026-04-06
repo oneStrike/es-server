@@ -2,12 +2,10 @@ import type {
   DispatchDefinedGrowthEventPayload,
   DispatchDefinedGrowthEventResult,
 } from './growth-reward.types'
-import {
-  canConsumeEventEnvelopeByConsumer,
-  EventDefinitionConsumerEnum,
-  EventDefinitionService,
-} from '@libs/growth/event-definition'
-import { TaskService } from '@libs/growth/task'
+import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service';
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
+import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type';
+import { TaskService } from '@libs/growth/task/task.service';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { UserGrowthRewardService } from './growth-reward.service'
 

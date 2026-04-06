@@ -1,11 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  MessageNotificationSubjectTypeEnum,
-  MessageNotificationTypeEnum,
-} from '@libs/message/notification'
-import { MessageOutboxService } from '@libs/message/outbox'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { MessageNotificationSubjectTypeEnum, MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, sql } from 'drizzle-orm'

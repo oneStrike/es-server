@@ -1,11 +1,10 @@
-import {
-  ArrayProperty,
-  EnumProperty,
-  NestedProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

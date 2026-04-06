@@ -1,5 +1,0 @@
-export * from './growth-event-bridge.module'
-export * from './growth-event-bridge.service'
-export * from './growth-reward.module'
-export * from './growth-reward.service'
-export * from './growth-reward.types'

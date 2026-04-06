@@ -1,28 +1,13 @@
-import {
-  ChatConversationDto,
-  ChatConversationMessagesResponseDto,
-  MessageChatService,
-  OpenDirectConversationDto,
-  QueryChatConversationListDto,
-  QueryChatConversationMessagesDto,
-} from '@libs/message/chat'
-import {
-  InboxSummaryDto,
-  InboxTimelineItemDto,
-  MessageInboxService,
-  QueryInboxTimelineDto,
-} from '@libs/message/inbox'
-import {
-  MessageNotificationPreferenceService,
-  MessageNotificationService,
-  NotificationUnreadCountDto,
-  QueryUserNotificationListDto,
-  UpdateUserNotificationPreferencesDto,
-  UserNotificationDto,
-  UserNotificationPreferenceListDto,
-} from '@libs/message/notification'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { MessageChatService } from '@libs/message/chat/chat.service';
+import { ChatConversationDto, ChatConversationMessagesResponseDto, OpenDirectConversationDto, QueryChatConversationListDto, QueryChatConversationMessagesDto } from '@libs/message/chat/dto/chat.dto';
+import { InboxSummaryDto, InboxTimelineItemDto, QueryInboxTimelineDto } from '@libs/message/inbox/dto/inbox.dto';
+import { MessageInboxService } from '@libs/message/inbox/inbox.service';
+import { NotificationUnreadCountDto, QueryUserNotificationListDto, UpdateUserNotificationPreferencesDto, UserNotificationDto, UserNotificationPreferenceListDto } from '@libs/message/notification/dto/notification.dto';
+import { MessageNotificationPreferenceService } from '@libs/message/notification/notification-preference.service';
+import { MessageNotificationService } from '@libs/message/notification/notification.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

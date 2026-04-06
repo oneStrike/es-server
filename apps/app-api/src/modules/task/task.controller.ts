@@ -1,14 +1,7 @@
-import {
-  AvailableTaskPageItemDto,
-  ClaimTaskDto,
-  MyTaskPageItemDto,
-  QueryAvailableTaskDto,
-  QueryMyTaskDto,
-  TaskCompleteDto,
-  TaskProgressDto,
-  TaskService,
-} from '@libs/growth/task'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { AvailableTaskPageItemDto, ClaimTaskDto, MyTaskPageItemDto, QueryAvailableTaskDto, QueryMyTaskDto, TaskCompleteDto, TaskProgressDto } from '@libs/growth/task/dto/task.dto';
+import { TaskService } from '@libs/growth/task/task.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

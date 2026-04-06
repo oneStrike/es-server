@@ -9,7 +9,7 @@ import type {
   PublicGrowthLedgerRecord,
 } from './growth-ledger.internal'
 import { DrizzleService } from '@db/core'
-import { formatDateKeyInAppTimeZone } from '@libs/platform/utils'
+import { formatDateKeyInAppTimeZone } from '@libs/platform/utils/time';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { QueryGrowthLedgerPageDto } from './dto/growth-ledger-record.dto'

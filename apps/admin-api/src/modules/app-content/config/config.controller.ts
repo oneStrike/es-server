@@ -1,9 +1,6 @@
-import {
-  AppConfigService,
-  BaseAppConfigDto,
-  UpdateAppConfigDto,
-} from '@libs/app-config'
-import { ApiDoc } from '@libs/platform/decorators'
+import { AppConfigService } from '@libs/app-config/config.service';
+import { BaseAppConfigDto, UpdateAppConfigDto } from '@libs/app-config/dto/config.dto';
+import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

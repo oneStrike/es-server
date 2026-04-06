@@ -4,7 +4,7 @@ import type {
   CheckInPlanSelect,
   CheckInStreakRewardRuleSelect,
 } from '@db/schema'
-import type { GrowthLedgerService } from '@libs/growth/growth-ledger'
+import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInPlanSnapshot,
@@ -13,11 +13,7 @@ import type {
   CreateCheckInStreakRewardRuleInsert,
 } from './check-in.type'
 import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
-import {
-  formatDateOnlyInAppTimeZone,
-  getAppTimeZone,
-  parseDateOnlyInAppTimeZone,
-} from '@libs/platform/utils'
+import { formatDateOnlyInAppTimeZone, getAppTimeZone, parseDateOnlyInAppTimeZone } from '@libs/platform/utils/time';
 import {
   BadRequestException,
   ConflictException,

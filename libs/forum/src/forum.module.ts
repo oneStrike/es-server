@@ -1,19 +1,19 @@
-import { UserExperienceModule } from '@libs/growth/experience'
-import { UserLevelRuleModule } from '@libs/growth/level-rule'
-import { UserPointModule } from '@libs/growth/point'
-import { InteractionModule } from '@libs/interaction/module'
-import { SensitiveWordModule } from '@libs/sensitive-word'
+import { UserExperienceModule } from '@libs/growth/experience/experience.module';
+import { UserLevelRuleModule } from '@libs/growth/level-rule/level-rule.module';
+import { UserPointModule } from '@libs/growth/point/point.module';
+import { InteractionModule } from '@libs/interaction/interaction.module';
+import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module';
 import { Module } from '@nestjs/common'
-import { ForumCounterModule } from './counter'
-import { ForumModeratorModule } from './moderator'
-import { ForumModeratorApplicationModule } from './moderator-application'
-import { ForumPermissionModule } from './permission'
-import { UserProfileModule } from './profile'
-import { ForumSearchModule } from './search'
-import { ForumSectionModule } from './section'
-import { ForumSectionGroupModule } from './section-group'
-import { ForumTagModule } from './tag'
-import { ForumTopicModule } from './topic'
+import { ForumCounterModule } from './counter/forum-counter.module';
+import { ForumModeratorApplicationModule } from './moderator-application/moderator-application.module';
+import { ForumModeratorModule } from './moderator/moderator.module';
+import { ForumPermissionModule } from './permission/forum-permission.module';
+import { UserProfileModule } from './profile/profile.module';
+import { ForumSearchModule } from './search/search.module';
+import { ForumSectionGroupModule } from './section-group/forum-section-group.module';
+import { ForumSectionModule } from './section/forum-section.module';
+import { ForumTagModule } from './tag/forum-tag.module';
+import { ForumTopicModule } from './topic/forum-topic.module';
 
 /**
  * 论坛模块

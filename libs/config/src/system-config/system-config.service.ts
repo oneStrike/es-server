@@ -3,8 +3,9 @@ import type {
   ConfigAllowedTemplate,
 } from './system-config.type'
 import { DrizzleService } from '@db/core'
-import { AesService, RsaService } from '@libs/platform/modules'
-import { isMasked, maskString } from '@libs/platform/utils'
+import { AesService } from '@libs/platform/modules/crypto/aes.service';
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
+import { isMasked, maskString } from '@libs/platform/utils/mask';
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
 import { desc } from 'drizzle-orm'

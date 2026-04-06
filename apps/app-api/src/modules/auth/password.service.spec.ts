@@ -2,19 +2,25 @@ import { BadRequestException } from '@nestjs/common'
 import { AppAuthErrorMessages } from './auth.constant'
 import { PasswordService } from './password.service'
 
-jest.mock('@libs/platform/modules/auth', () => ({
+jest.mock('@libs/platform/modules/auth/auth.helpers', () => ({
   createAuthRedisKeys: jest.fn(() => ({
     LOGIN_LOCK: (userId: number) => `app:login-lock:${userId}`,
     LOGIN_FAIL_COUNT: (userId: number) => `app:login-fail:${userId}`,
-  })),
-  RevokeTokenReasonEnum: {
-    PASSWORD_CHANGE: 'PASSWORD_CHANGE',
-  },
+  }))
 }))
 
-jest.mock('@libs/platform/modules', () => ({
-  RsaService: class {},
-  ScryptService: class {},
+jest.mock('@libs/platform/modules/auth/auth.constant', () => ({
+  RevokeTokenReasonEnum: {
+    PASSWORD_CHANGE: 'PASSWORD_CHANGE',
+  }
+}))
+
+jest.mock('@libs/platform/modules/crypto/rsa.service', () => ({
+  RsaService: class {}
+}))
+
+jest.mock('@libs/platform/modules/crypto/scrypt.service', () => ({
+  ScryptService: class {}
 }))
 
 jest.mock('@libs/user/core', () => ({

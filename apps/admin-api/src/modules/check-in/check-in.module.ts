@@ -1,4 +1,4 @@
-import { CheckInModule as LibCheckInModule } from '@libs/growth/check-in'
+import { CheckInModule as LibCheckInModule } from '@libs/growth/check-in/check-in.module';
 import { Module } from '@nestjs/common'
 import { CheckInController } from './check-in.controller'
 

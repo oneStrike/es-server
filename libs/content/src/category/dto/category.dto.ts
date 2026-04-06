@@ -1,18 +1,12 @@
-import { ContentTypeEnum } from '@libs/platform/constant'
-import {
-  ArrayProperty,
-  BooleanProperty,
-  JsonProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import {
-  BaseDto,
-  DragReorderDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

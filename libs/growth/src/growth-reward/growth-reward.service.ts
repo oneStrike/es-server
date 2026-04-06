@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { EventEnvelope } from '@libs/growth/event-definition'
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.internal'
 import type {
   GrowthRuleRewardSettlementResult,

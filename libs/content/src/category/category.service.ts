@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { IdDto } from '@libs/platform/dto'
-import { jsonParse } from '@libs/platform/utils'
+import { IdDto } from '@libs/platform/dto/base.dto';
+import { jsonParse } from '@libs/platform/utils/jsonParse';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, arrayOverlaps, eq, isNull } from 'drizzle-orm'
 import {

@@ -1,11 +1,7 @@
-import type {
-  AuditPageRequestDto,
-  CreateRequestLogDto,
-  CreateRequestLogSimpleDto,
-} from '@libs/platform/modules/audit'
+import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto/audit.dto';
 import type { FastifyRequest } from 'fastify'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { parseRequestLogFields } from '@libs/platform/utils'
+import { parseRequestLogFields } from '@libs/platform/utils/requestParse';
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, or } from 'drizzle-orm'
 import { AuditActionTypeEnum } from './audit.constant'

@@ -1,27 +1,7 @@
-/**
- * 用户控制器
- *
- * 提供用户中心相关的 API 接口，包括：
- * - 用户基本信息与安全设置
- * - 用户中心汇总与状态信息
- * - 用户成长信息（积分、经验、徽章）
- */
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import {
-  BaseAppUserDto,
-  ChangeMyPhoneDto,
-  QueryMyBadgeDto,
-  QueryMyExperienceRecordDto,
-  QueryMyPointRecordDto,
-  UpdateMyProfileDto,
-  UserBadgeItemDto,
-  UserCenterDto,
-  UserExperienceRecordDto,
-  UserExperienceStatsDto,
-  UserPointRecordDto,
-  UserPointStatsDto,
-  UserStatusSummaryDto,
-} from '@libs/user/index'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
+import { ChangeMyPhoneDto, QueryMyBadgeDto, QueryMyExperienceRecordDto, QueryMyPointRecordDto, UpdateMyProfileDto, UserBadgeItemDto, UserCenterDto, UserExperienceRecordDto, UserExperienceStatsDto, UserPointRecordDto, UserPointStatsDto, UserStatusSummaryDto } from '@libs/user/dto/user-self.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UserService } from './user.service'

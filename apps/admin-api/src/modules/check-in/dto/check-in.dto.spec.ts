@@ -1,10 +1,6 @@
-import {
-  CheckInCycleTypeEnum,
-  CheckInPlanStatusEnum,
-  CheckInStreakRewardRuleStatusEnum,
-  CreateCheckInPlanDto,
-  CreateCheckInStreakRewardRuleDto,
-} from '@libs/growth/check-in'
+import { CheckInCycleTypeEnum, CheckInPlanStatusEnum, CheckInStreakRewardRuleStatusEnum } from '@libs/growth/check-in/check-in.constant';
+import { CreateCheckInPlanDto } from '@libs/growth/check-in/dto/check-in-definition.dto';
+import { CreateCheckInStreakRewardRuleDto } from '@libs/growth/check-in/dto/check-in-streak-reward-rule.dto';
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
 

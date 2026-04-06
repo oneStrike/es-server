@@ -1,15 +1,8 @@
-import type { QueryGrowthRuleEventPageDto } from '@libs/growth/growth'
+import type { QueryGrowthRuleEventPageDto } from '@libs/growth/growth/dto/growth.dto';
 import { DrizzleService } from '@db/core'
-import {
-  EventDefinitionConsumerEnum,
-  EventDefinitionImplStatusEnum,
-  EventDefinitionService,
-} from '@libs/growth/event-definition'
-import {
-  normalizeTaskType,
-  TaskObjectiveTypeEnum,
-  TaskStatusEnum,
-} from '@libs/growth/task'
+import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service';
+import { EventDefinitionConsumerEnum, EventDefinitionImplStatusEnum } from '@libs/growth/event-definition/event-definition.type';
+import { normalizeTaskType, TaskObjectiveTypeEnum, TaskStatusEnum } from '@libs/growth/task/task.constant';
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 

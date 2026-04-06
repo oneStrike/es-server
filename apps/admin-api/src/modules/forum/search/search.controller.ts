@@ -1,9 +1,6 @@
-import {
-  ForumSearchDto,
-  ForumSearchResultDto,
-  ForumSearchService,
-} from '@libs/forum/search'
-import { ApiPageDoc } from '@libs/platform/decorators'
+import { ForumSearchDto, ForumSearchResultDto } from '@libs/forum/search/dto/search.dto';
+import { ForumSearchService } from '@libs/forum/search/search.service';
+import { ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

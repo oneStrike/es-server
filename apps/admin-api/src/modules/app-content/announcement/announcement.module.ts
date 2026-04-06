@@ -1,4 +1,4 @@
-import { AppAnnouncementModule } from '@libs/app-content/announcement'
+import { AppAnnouncementModule } from '@libs/app-content/announcement/announcement.module';
 import { Module } from '@nestjs/common'
 import { AppAnnouncementController } from './announcement.controller'
 

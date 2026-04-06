@@ -1,10 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  DragReorderDto,
-  IdDto,
-  UpdateEnabledStatusDto,
-} from '@libs/platform/dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
 import {
   BadRequestException,
   Injectable,

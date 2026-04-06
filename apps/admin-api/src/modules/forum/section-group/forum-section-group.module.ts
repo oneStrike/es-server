@@ -1,4 +1,4 @@
-import { ForumSectionGroupModule as ForumSectionGroupModuleLib } from '@libs/forum/section-group'
+import { ForumSectionGroupModule as ForumSectionGroupModuleLib } from '@libs/forum/section-group/forum-section-group.module';
 import { Module } from '@nestjs/common'
 import { ForumSectionGroupController } from './forum-section-group.controller'
 

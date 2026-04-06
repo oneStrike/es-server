@@ -9,38 +9,44 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/growth/growth-ledger', () => ({
+jest.mock('@libs/growth/growth-ledger/growth-ledger.constant', () => ({
   GrowthAssetTypeEnum: {
     POINTS: 1,
-  },
+  }
 }))
 
-jest.mock('@libs/growth/point', () => ({
-  UserPointService: class {},
+jest.mock('@libs/growth/point/point.service', () => ({
+  UserPointService: class {}
 }))
 
-jest.mock('@libs/interaction/favorite', () => ({
-  FavoriteService: class {},
+jest.mock('@libs/interaction/favorite/favorite.service', () => ({
+  FavoriteService: class {}
+}))
+
+jest.mock('@libs/interaction/favorite/favorite.constant', () => ({
   FavoriteTargetTypeEnum: {
     FORUM_TOPIC: 3,
-  },
+  }
 }))
 
-jest.mock('@libs/interaction/like', () => ({
-  LikeService: class {},
+jest.mock('@libs/interaction/like/like.service', () => ({
+  LikeService: class {}
+}))
+
+jest.mock('@libs/interaction/like/like.constant', () => ({
   LikeTargetTypeEnum: {
     FORUM_TOPIC: 3,
-  },
+  }
 }))
 
-jest.mock('@libs/platform/constant', () => ({
+jest.mock('@libs/platform/constant/user.constant', () => ({
   UserDefaults: {
     INITIAL_POINTS: 0,
     INITIAL_EXPERIENCE: 0,
   },
   UserStatusEnum: {
     NORMAL: 1,
-  },
+  }
 }))
 
 jest.mock('@libs/user', () => ({

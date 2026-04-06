@@ -1,4 +1,0 @@
-export * from '../work.module'
-export * from './dto/work.dto'
-export * from './work.constant'
-export * from './work.service'

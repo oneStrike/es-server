@@ -9,11 +9,11 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/message/outbox', () => ({
-  MessageOutboxService: class {},
+jest.mock('@libs/message/outbox/outbox.service', () => ({
+  MessageOutboxService: class {}
 }))
 
-jest.mock('@libs/message/notification', () => ({
+jest.mock('@libs/message/notification/notification.constant', () => ({
   MessageNotificationTypeEnum: {
     COMMENT_REPLY: 1,
     COMMENT_LIKE: 2,
@@ -25,14 +25,14 @@ jest.mock('@libs/message/notification', () => ({
   },
   MessageNotificationSubjectTypeEnum: {
     SYSTEM: 4,
-  },
+  }
 }))
 
 describe('app announcement service', () => {
   it('fanouts important published announcement into notification outbox', async () => {
     const { AppAnnouncementService } = await import('../announcement.service')
     const { AnnouncementPriorityEnum } = await import('../announcement.constant')
-    const { MessageNotificationTypeEnum } = await import('@libs/message/notification')
+    const { MessageNotificationTypeEnum } = await import('@libs/message/notification/notification.constant')
 
     const returning = jest.fn().mockResolvedValue([{ id: 88 }])
     const values = jest.fn(() => ({ returning }))

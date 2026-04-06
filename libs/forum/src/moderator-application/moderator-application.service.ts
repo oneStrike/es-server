@@ -2,12 +2,8 @@ import type { ForumModeratorApplicationSelect } from '@db/schema'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, inArray, isNull, SQL } from 'drizzle-orm'
-import {
-  ALL_FORUM_MODERATOR_PERMISSIONS,
-  FORUM_MODERATOR_PERMISSION_LABELS,
-  ForumModeratorPermissionEnum,
-  ForumModeratorService,
-} from '../moderator'
+import { ALL_FORUM_MODERATOR_PERMISSIONS, FORUM_MODERATOR_PERMISSION_LABELS, ForumModeratorPermissionEnum } from '../moderator/moderator.constant';
+import { ForumModeratorService } from '../moderator/moderator.service';
 import {
   AuditForumModeratorApplicationDto,
   CreateForumModeratorApplicationDto,

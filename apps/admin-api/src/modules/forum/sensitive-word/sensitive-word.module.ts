@@ -1,4 +1,4 @@
-import { SensitiveWordModule as SensitiveWordModuleLib } from '@libs/sensitive-word'
+import { SensitiveWordModule as SensitiveWordModuleLib } from '@libs/sensitive-word/sensitive-word.module';
 import { Module } from '@nestjs/common'
 import { SensitiveWordController } from './sensitive-word.controller'
 

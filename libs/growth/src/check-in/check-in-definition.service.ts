@@ -1,4 +1,4 @@
-import type { IdDto } from '@libs/platform/dto'
+import type { IdDto } from '@libs/platform/dto/base.dto';
 import type {
   CreateCheckInPlanDto,
   QueryCheckInPlanDto,
@@ -7,7 +7,7 @@ import type {
 } from './dto/check-in-definition.dto'
 import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { GrowthLedgerService } from '@libs/growth/growth-ledger'
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
 import {
   BadRequestException,
   ConflictException,

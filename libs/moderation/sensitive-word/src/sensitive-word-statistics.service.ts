@@ -2,11 +2,7 @@ import type {
   SensitiveWordRecentHitStatistics,
 } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
-import {
-  startOfTodayInAppTimeZone,
-  subtractDaysInAppTimeZone,
-  subtractMonthsInAppTimeZone,
-} from '@libs/platform/utils'
+import { startOfTodayInAppTimeZone, subtractDaysInAppTimeZone, subtractMonthsInAppTimeZone } from '@libs/platform/utils/time';
 import { Injectable, Logger } from '@nestjs/common'
 import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
 import { SensitiveWordStatisticsDataDto } from './dto/sensitive-word.dto'

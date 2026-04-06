@@ -3,8 +3,8 @@ import type {
   TaskAssignment,
   TaskProgressLogInsert,
 } from '@db/schema'
-import type { EventEnvelope } from '@libs/growth/event-definition'
-import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification'
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
+import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant';
 import type {
   PageQueryInput,
   QueryOrderByInput,

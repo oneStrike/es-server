@@ -16,7 +16,7 @@ import type {
 } from './dto/check-in-runtime.dto'
 import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
 import { DrizzleService } from '@db/core'
-import { GrowthLedgerService } from '@libs/growth/growth-ledger'
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
 import { and, asc, eq, exists, gte, lte, or } from 'drizzle-orm'

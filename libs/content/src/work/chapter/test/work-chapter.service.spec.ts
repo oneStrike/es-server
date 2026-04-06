@@ -11,39 +11,48 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/interaction/browse-log', () => ({
-  BrowseLogService: class {},
-  BrowseLogTargetTypeEnum: {},
+jest.mock('@libs/interaction/browse-log/browse-log.service', () => ({
+  BrowseLogService: class {}
 }))
 
-jest.mock('@libs/interaction/comment', () => ({
-  CommentTargetTypeEnum: {},
+jest.mock('@libs/interaction/browse-log/browse-log.constant', () => ({
+  BrowseLogTargetTypeEnum: {}
 }))
 
-jest.mock('@libs/interaction/download', () => ({
-  DownloadService: class {},
-  DownloadTargetTypeEnum: {},
+jest.mock('@libs/interaction/comment/comment.constant', () => ({
+  CommentTargetTypeEnum: {}
 }))
 
-jest.mock('@libs/interaction/favorite', () => ({
-  FavoriteService: class {},
+jest.mock('@libs/interaction/download/download.service', () => ({
+  DownloadService: class {}
 }))
 
-jest.mock('@libs/interaction/like', () => ({
-  LikeService: class {},
-  LikeTargetTypeEnum: {},
+jest.mock('@libs/interaction/download/download.constant', () => ({
+  DownloadTargetTypeEnum: {}
 }))
 
-jest.mock('@libs/interaction/reading-state', () => ({
-  ReadingStateService: class {},
+jest.mock('@libs/interaction/favorite/favorite.service', () => ({
+  FavoriteService: class {}
 }))
 
-jest.mock('@libs/platform/constant', () => ({
-  ContentTypeEnum: {},
+jest.mock('@libs/interaction/like/like.service', () => ({
+  LikeService: class {}
 }))
 
-jest.mock('../../../permission', () => ({
-  ContentPermissionService: class {},
+jest.mock('@libs/interaction/like/like.constant', () => ({
+  LikeTargetTypeEnum: {}
+}))
+
+jest.mock('@libs/interaction/reading-state/reading-state.service', () => ({
+  ReadingStateService: class {}
+}))
+
+jest.mock('@libs/platform/constant/content.constant', () => ({
+  ContentTypeEnum: {}
+}))
+
+jest.mock('../../../permission/content-permission.service', () => ({
+  ContentPermissionService: class {}
 }))
 
 describe('work chapter service', () => {

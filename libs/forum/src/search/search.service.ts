@@ -1,10 +1,10 @@
 import type { ForumTopicSelect } from '@db/schema'
 import { buildLikePattern, DrizzleService } from '@db/core'
-import { CommentTargetTypeEnum } from '@libs/interaction/comment'
-import { AuditStatusEnum } from '@libs/platform/constant'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
-import { ForumPermissionService } from '../permission'
+import { ForumPermissionService } from '../permission/forum-permission.service';
 import { ForumSearchDto, ForumSearchResultDto } from './dto/search.dto'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 

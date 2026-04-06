@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { UserStatusEnum } from '@libs/platform/constant'
+import { UserStatusEnum } from '@libs/platform/constant/user.constant';
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 /**

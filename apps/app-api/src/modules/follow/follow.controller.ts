@@ -1,14 +1,8 @@
-import {
-  FollowAuthorPageItemDto,
-  FollowPageQueryDto,
-  FollowSectionPageItemDto,
-  FollowService,
-  FollowStatusResponseDto,
-  FollowTargetDto,
-  FollowUserPageItemDto,
-} from '@libs/interaction/follow'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { FollowAuthorPageItemDto, FollowPageQueryDto, FollowSectionPageItemDto, FollowStatusResponseDto, FollowTargetDto, FollowUserPageItemDto } from '@libs/interaction/follow/dto/follow.dto';
+import { FollowService } from '@libs/interaction/follow/follow.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

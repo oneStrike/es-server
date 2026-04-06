@@ -1,10 +1,7 @@
-import type {
-  CreateTokenInput,
-  ITokenEntity,
-} from '@libs/platform/modules/auth'
+import type { CreateTokenInput, ITokenEntity } from '@libs/platform/modules/auth/token-storage.types';
 import type { Cache } from 'cache-manager'
 import { DrizzleService } from '@db/core'
-import { BaseTokenStorageService } from '@libs/platform/modules/auth'
+import { BaseTokenStorageService } from '@libs/platform/modules/auth/base-token-storage.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject } from '@nestjs/common'
 import { and, eq, gt, inArray, isNotNull, isNull, lt } from 'drizzle-orm'

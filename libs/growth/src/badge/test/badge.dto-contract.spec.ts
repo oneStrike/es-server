@@ -1,6 +1,14 @@
 import { existsSync, readFileSync } from 'node:fs'
-import * as badge from '@libs/growth/badge'
+import * as badgeAssignmentDto from '@libs/growth/badge/dto/user-badge-assignment.dto'
+import * as badgeManagementDto from '@libs/growth/badge/dto/user-badge-management.dto'
+import * as badgeBaseDto from '@libs/growth/badge/dto/user-badge.dto'
 import { DECORATORS } from '@nestjs/swagger/dist/constants'
+
+const badge = {
+  ...badgeAssignmentDto,
+  ...badgeManagementDto,
+  ...badgeBaseDto,
+}
 
 function readSwaggerMetadata(target: object, propertyKey: string) {
   return {
@@ -15,7 +23,7 @@ function readSwaggerMetadata(target: object, propertyKey: string) {
 }
 
 describe('badge dto contract exports', () => {
-  it('exports badge scene DTO contracts from libs', () => {
+  it('exports badge scene DTO contracts from owner dto files', () => {
     expect(badge).toEqual(
       expect.objectContaining({
         AssignUserBadgeDto: expect.any(Function),

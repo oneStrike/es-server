@@ -1,4 +1,4 @@
-import type { IdDto } from '@libs/platform/dto'
+import type { IdDto } from '@libs/platform/dto/base.dto';
 import type {
   CreateCheckInPlanDto,
   QueryCheckInPlanDto,

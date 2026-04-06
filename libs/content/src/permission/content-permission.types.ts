@@ -1,5 +1,5 @@
 import type { appUser, work, workChapter } from '@db/schema'
-import type { WorkViewPermissionEnum } from '@libs/platform/constant'
+import type { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
 
 /**
  * 携带等级快照的用户结构。

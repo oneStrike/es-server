@@ -1,13 +1,11 @@
 import type { CheckInRewardConfig } from '../check-in.type'
-import {
-  BooleanProperty,
-  DateProperty,
-  EnumProperty,
-  NestedProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
 import { OmitType } from '@nestjs/swagger'
 import { CheckInStreakRewardRuleStatusEnum } from '../check-in.constant'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'

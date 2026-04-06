@@ -1,5 +1,6 @@
-import { ArrayProperty, NumberProperty } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import {
   IntersectionType,
   OmitType,

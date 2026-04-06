@@ -1,12 +1,10 @@
-import type { EmojiParseToken } from '@libs/interaction/emoji'
+import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type';
 import type { ChatMessageCreatedOutboxPayload } from '../outbox/outbox.type'
 import { DrizzleService } from '@db/core'
 import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
-import {
-  EmojiCatalogService,
-  EmojiParserService,
-  EmojiSceneEnum,
-} from '@libs/interaction/emoji'
+import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service';
+import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service';
+import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant';
 import {
   BadRequestException,
   Injectable,

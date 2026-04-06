@@ -1,8 +1,8 @@
-import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 
-jest.mock('@libs/growth/growth-reward', () => ({
-  GrowthEventBridgeService: class {},
+jest.mock('@libs/growth/growth-reward/growth-event-bridge.service', () => ({
+  GrowthEventBridgeService: class {}
 }))
 
 describe('comment growth service', () => {

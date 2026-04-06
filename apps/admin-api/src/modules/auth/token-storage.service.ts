@@ -1,6 +1,6 @@
 import type { Cache } from 'cache-manager'
 import { DrizzleService } from '@db/core'
-import { BaseDrizzleTokenStorageService } from '@libs/identity/core'
+import { BaseDrizzleTokenStorageService } from '@libs/identity/token/drizzle-token-storage.base';
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 

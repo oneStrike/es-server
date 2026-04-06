@@ -1,13 +1,6 @@
-import {
-  MessageNotificationDeliveryItemDto,
-  MessageOutboxMonitorSummaryDto,
-  MessageWsMonitorSummaryDto,
-  QueryMessageOutboxMonitorDto,
-  QueryMessageWsMonitorDto,
-  RetryMessageNotificationDeliveryDto,
-} from '@libs/message/monitor'
-import { QueryNotificationDeliveryPageDto } from '@libs/message/notification'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { MessageNotificationDeliveryItemDto, MessageOutboxMonitorSummaryDto, MessageWsMonitorSummaryDto, QueryMessageOutboxMonitorDto, QueryMessageWsMonitorDto, RetryMessageNotificationDeliveryDto } from '@libs/message/monitor/dto/message-monitor.dto';
+import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { MessageMonitorService } from './message-monitor.service'

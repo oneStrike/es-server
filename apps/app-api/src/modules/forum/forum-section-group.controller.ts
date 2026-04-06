@@ -1,8 +1,8 @@
-import {
-  ForumSectionGroupService,
-  PublicForumSectionGroupListItemDto,
-} from '@libs/forum/section-group'
-import { ApiDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
+import { PublicForumSectionGroupListItemDto } from '@libs/forum/section-group/dto/forum-section-group.dto';
+import { ForumSectionGroupService } from '@libs/forum/section-group/forum-section-group.service';
+import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

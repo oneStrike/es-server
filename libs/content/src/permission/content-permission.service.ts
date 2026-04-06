@@ -1,9 +1,6 @@
 import { DrizzleService } from '@db/core'
-import {
-  PurchaseStatusEnum,
-  PurchaseTargetTypeEnum,
-} from '@libs/interaction/purchase-contract'
-import { WorkViewPermissionEnum } from '@libs/platform/constant'
+import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.constant';
+import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { PERMISSION_ERROR_MESSAGE } from './content-permission.constant'
 import {

@@ -4,7 +4,7 @@ import type {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
 import fastifyHelmet from '@fastify/helmet'
-import { isDevelopment } from '@libs/platform/utils'
+import { isDevelopment } from '@libs/platform/utils/env';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { setupCompression } from './compression'
 import { setupMultipart } from './multipart'

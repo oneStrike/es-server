@@ -1,4 +1,4 @@
-import { TaskModule as LibTaskModule } from '@libs/growth/task'
+import { TaskModule as LibTaskModule } from '@libs/growth/task/task.module';
 import { Module } from '@nestjs/common'
 import { TaskController } from './task.controller'
 

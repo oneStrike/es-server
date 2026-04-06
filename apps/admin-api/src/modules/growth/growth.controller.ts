@@ -1,8 +1,5 @@
-import {
-  GrowthRuleEventPageItemDto,
-  QueryGrowthRuleEventPageDto,
-} from '@libs/growth/growth'
-import { ApiPageDoc } from '@libs/platform/decorators'
+import { GrowthRuleEventPageItemDto, QueryGrowthRuleEventPageDto } from '@libs/growth/growth/dto/growth.dto';
+import { ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { GrowthService } from './growth.service'

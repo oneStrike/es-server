@@ -1,17 +1,18 @@
 import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { BrowseLogService } from '@libs/interaction/browse-log'
-import { CommentTargetTypeEnum } from '@libs/interaction/comment'
-import { FavoriteService } from '@libs/interaction/favorite'
-import { FollowService, FollowTargetTypeEnum } from '@libs/interaction/follow'
-import { LikeService } from '@libs/interaction/like'
-import { ReadingStateService } from '@libs/interaction/reading-state'
-import { ContentTypeEnum } from '@libs/platform/constant'
-import { isNotNil } from '@libs/platform/utils'
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
+import { FollowService } from '@libs/interaction/follow/follow.service';
+import { LikeService } from '@libs/interaction/like/like.service';
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
+import { isNotNil } from '@libs/platform/utils/is';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { WorkAuthorService } from '../../author'
+import { WorkAuthorService } from '../../author/author.service';
 import {
   CreateWorkDto,
   QueryWorkDto,

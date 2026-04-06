@@ -1,13 +1,7 @@
-import {
-  AssignForumModeratorSectionDto,
-  CreateForumModeratorDto,
-  ForumModeratorDto,
-  ForumModeratorService,
-  QueryForumModeratorDto,
-  UpdateForumModeratorDto,
-} from '@libs/forum/moderator'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { AssignForumModeratorSectionDto, CreateForumModeratorDto, ForumModeratorDto, QueryForumModeratorDto, UpdateForumModeratorDto } from '@libs/forum/moderator/dto/moderator.dto';
+import { ForumModeratorService } from '@libs/forum/moderator/moderator.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

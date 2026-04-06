@@ -1,4 +1,4 @@
-import { UserExperienceModule } from '@libs/growth/experience'
+import { UserExperienceModule } from '@libs/growth/experience/experience.module';
 import { Module } from '@nestjs/common'
 import { ExperienceController } from './experience.controller'
 

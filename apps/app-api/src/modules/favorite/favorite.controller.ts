@@ -1,13 +1,8 @@
-import {
-  FavoritePageQueryDto,
-  FavoriteService,
-  FavoriteStatusResponseDto,
-  FavoriteTargetDto,
-  FavoriteTopicPageItemDto,
-  FavoriteWorkPageItemDto,
-} from '@libs/interaction/favorite'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { FavoritePageQueryDto, FavoriteStatusResponseDto, FavoriteTargetDto, FavoriteTopicPageItemDto, FavoriteWorkPageItemDto } from '@libs/interaction/favorite/dto/favorite.dto';
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

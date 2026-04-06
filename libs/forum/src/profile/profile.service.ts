@@ -2,15 +2,14 @@ import type { Db } from '@db/core'
 import type { AppUserCountSelect, AppUserSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger'
-import { UserPointService } from '@libs/growth/point'
-import {
-  FavoriteService,
-  FavoriteTargetTypeEnum,
-} from '@libs/interaction/favorite'
-import { LikeService, LikeTargetTypeEnum } from '@libs/interaction/like'
-import { UserDefaults, UserStatusEnum } from '@libs/platform/constant'
-import { AppUserCountService } from '@libs/user/index'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
+import { UserPointService } from '@libs/growth/point/point.service';
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
+import { LikeService } from '@libs/interaction/like/like.service';
+import { UserDefaults, UserStatusEnum } from '@libs/platform/constant/user.constant';
+import { AppUserCountService } from '@libs/user/app-user-count.service';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {

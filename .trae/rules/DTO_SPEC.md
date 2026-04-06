@@ -47,12 +47,15 @@
 ### 3.3 `libs/*`：场景 DTO（`Create/Update/Query/Response`）
 
 - 业务场景 DTO 统一定义在 `libs/*`，由 admin/app 入口共同复用。
+- DTO 不再通过业务域 `dto/index.ts` 或其他 barrel 对外聚合导出；跨域消费 DTO 时，统一从 DTO 所在具体文件直接导入。
+- `libs/platform` 属于例外，基础 DTO 允许通过 `@libs/platform/dto` 这类目录级 public API 导入。
 - 优先通过 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 组合，避免字段复制。
 - 同一业务语义只维护一份 DTO；禁止按平台复制两份同构 DTO。
 - 场景 DTO 命名与拆分尽量向 Service 公开用例靠拢，不以 `Admin` / `App` 前缀区分客户端。
 - 出现语义分叉时，按业务语义拆分 DTO 与方法（例如 `QueryXxxAuditDto`、`QueryXxxPublicDto`），而不是在同一 DTO 中堆叠平台特化字段。
 - 场景 DTO 默认放在对应 schema 的 `xxx.dto.ts` 文件内；禁止为了公开暴露面单独新增 `*.public.dto.ts` 文件。
 - 禁止新增纯别名 DTO（`export class XxxDto extends YyyDto {}`）。
+- 禁止为了导出业务域 DTO 新增 `index.ts`、`base.ts` 等转发文件；共享 DTO 应直接落在 owner 文件中，`libs/platform/dto` 属于平台目录级 public API 例外。
 
 ### 3.4 `libs/*/*.type.ts`：内部领域类型
 
@@ -97,6 +100,7 @@
 - 仅在校验、可选性、文档语义确有差异时覆盖字段。
 - 未变化字段必须复用，禁止复制整类字段定义。
 - 优先从 `BaseXxxDto`、已有场景 DTO 或共享字段片段 DTO 中 `Pick/Omit/Partial/Intersection`，尽量不要重新手写同一批字段。
+- `PickType`、`OmitType`、`PartialType`、`IntersectionType` 的基类必须来自同域 DTO 文件、跨域具体 DTO 文件，或 `libs/platform/dto` 这类平台目录级 public API；不得从业务域 `index.ts`、`base.ts` 或 runtime 文件间接获取。
 - `PickType` 与 `OmitType` 二选一时，默认统计需要显式列出的字段数量，哪个字段更少就使用哪个；避免为了“正向表达”而罗列大段字段名。
 - 若 `PickType` 与 `OmitType` 需要列出的字段数相同，可选择语义更清晰的一侧；若实际没有裁剪字段，就不要再额外包一层 `PickType/OmitType` helper。
 - 同一业务域内，只要同名字段或同一组字段在两个及以上 DTO 中出现，就应优先抽成共享字段片段 DTO，或直接复用已有 DTO 字段；不允许在多个场景 DTO 文件里各自维护一份本地 helper class。
@@ -154,6 +158,8 @@
 ## 8. 验收清单
 
 - [ ] 场景 DTO（`Create/Update/Query/Response`）定义在 `libs/*`，`apps/*` 无同构重复定义。
+- [ ] 跨域调用统一从 DTO 所在具体文件导入，或从 `libs/platform/dto` 这样的平台目录级 public API 导入；未通过业务域 `dto/index.ts` 或其他 barrel 聚合。
+- [ ] 未为业务域 DTO 复用新增 `index.ts`、`base.ts` 或其他仅转发导出的文件；`libs/platform/dto` 属于平台目录级 public API 例外。
 - [ ] Service 公开方法入参与出参与 DTO 1:1（字段、可选性、类型一致）。
 - [ ] Query DTO 与查询方法签名 1:1，无平台分叉同构 DTO。
 - [ ] 与 DTO 同构的 `Input/View` 类型已删除，并直接使用 DTO。
@@ -164,6 +170,7 @@
 - [ ] 场景 DTO 未使用 `Admin` / `App` 前缀做人为客户端拆分，而是按业务语义或 Service 用例命名。
 - [ ] 响应 DTO 已尽量通过字段复用收敛，未大段重新定义已有字段。
 - [ ] `PickType` / `OmitType` 已按“显式列出字段更少”的原则选型，未为了表达习惯罗列大段字段名。
+- [ ] 所有 mapped type 基类来源均为具体 DTO 文件，或 `libs/platform/dto` 这类平台目录级 public API，未经由业务域 barrel 或 runtime 文件间接导入。
 - [ ] 跨场景重复字段已抽为共享字段片段 DTO，未在多个场景 DTO 文件中重复定义本地 helper class。
 - [ ] `IntersectionType` 组合为单层调用，未出现可展开为多参数的嵌套 `IntersectionType`。
 - [ ] 非 HTTP 结构使用 `*.type.ts`，未错误 DTO 化。

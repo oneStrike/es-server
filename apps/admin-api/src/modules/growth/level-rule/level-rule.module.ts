@@ -1,4 +1,4 @@
-import { UserLevelRuleModule } from '@libs/growth/level-rule'
+import { UserLevelRuleModule } from '@libs/growth/level-rule/level-rule.module';
 import { Module } from '@nestjs/common'
 import { LevelRuleController } from './level-rule.controller'
 

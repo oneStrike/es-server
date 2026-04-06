@@ -1,11 +1,11 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
-import { ReadingStateService } from '@libs/interaction/reading-state'
-import { ContentTypeEnum } from '@libs/platform/constant'
-import { UploadService } from '@libs/platform/modules'
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
+import { UploadService } from '@libs/platform/modules/upload/upload.service';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ContentPermissionService } from '../../permission'
+import { ContentPermissionService } from '../../permission/content-permission.service';
 import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()

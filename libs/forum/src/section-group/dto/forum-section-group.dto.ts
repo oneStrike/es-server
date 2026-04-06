@@ -1,12 +1,12 @@
-import { PublicForumSectionListItemDto } from '@libs/forum/section'
-import {
-  ArrayProperty,
-  BooleanProperty,
-  DateProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto, DragReorderDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+import { PublicForumSectionListItemDto } from '@libs/forum/section/dto/forum-section.dto';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,

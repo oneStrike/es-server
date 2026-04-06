@@ -1,13 +1,7 @@
-import {
-  AgreementListItemDto,
-  AgreementService,
-  BaseAgreementDto,
-  CreateAgreementDto,
-  QueryAgreementDto,
-  UpdateAgreementDto,
-} from '@libs/app-content/agreement'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { AgreementService } from '@libs/app-content/agreement/agreement.service';
+import { AgreementListItemDto, BaseAgreementDto, CreateAgreementDto, QueryAgreementDto, UpdateAgreementDto } from '@libs/app-content/agreement/dto/agreement.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

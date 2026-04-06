@@ -1,6 +1,6 @@
-import { InteractionModule } from '@libs/interaction/module'
+import { InteractionModule } from '@libs/interaction/interaction.module';
 import { Module } from '@nestjs/common'
-import { ForumPermissionModule } from '../permission'
+import { ForumPermissionModule } from '../permission/forum-permission.module';
 import { ForumSectionGroupService } from './forum-section-group.service'
 
 /**

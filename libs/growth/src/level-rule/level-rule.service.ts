@@ -1,6 +1,6 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
 import {

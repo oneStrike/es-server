@@ -2,14 +2,14 @@ jest.mock('@db/core', () => ({
   DrizzleService: class {},
 }))
 
-jest.mock('@libs/message/outbox', () => ({
+jest.mock('@libs/message/outbox/outbox.constant', () => ({
   MessageOutboxDomainEnum: {
     NOTIFICATION: 1,
-  },
+  }
 }))
 
-jest.mock('@libs/message/notification', () => ({
-  MessageNotificationDeliveryService: class {},
+jest.mock('@libs/message/notification/notification-delivery.service', () => ({
+  MessageNotificationDeliveryService: class {}
 }))
 
 describe('message monitor service', () => {

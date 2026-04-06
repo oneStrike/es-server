@@ -1,14 +1,12 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import {
-  ILikeTargetResolver,
-  LikeService,
-  LikeTargetMeta,
-  LikeTargetTypeEnum,
-} from '@libs/interaction/like'
-import { MessageNotificationComposerService } from '@libs/message/notification'
-import { MessageOutboxService } from '@libs/message/outbox'
-import { AuditStatusEnum, SceneTypeEnum } from '@libs/platform/constant'
+import { ILikeTargetResolver, LikeTargetMeta } from '@libs/interaction/like/interfaces/like-target-resolver.interface';
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
+import { LikeService } from '@libs/interaction/like/like.service';
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 

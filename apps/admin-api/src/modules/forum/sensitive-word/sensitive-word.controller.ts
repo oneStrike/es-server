@@ -1,24 +1,9 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto'
-import {
-  BaseSensitiveWordDto,
-  CreateSensitiveWordDto,
-  QuerySensitiveWordDto,
-  SensitiveWordCountResponseDto,
-  SensitiveWordDetectDto,
-  SensitiveWordDetectResponseDto,
-  SensitiveWordDetectService,
-  SensitiveWordDetectStatusResponseDto,
-  SensitiveWordHighestLevelResponseDto,
-  SensitiveWordReplaceDto,
-  SensitiveWordReplaceResponseDto,
-  SensitiveWordService,
-  SensitiveWordStatisticsDataDto,
-  SensitiveWordStatisticsQueryDto,
-  SensitiveWordStatisticsResponseDto,
-  SensitiveWordStatisticsService,
-  UpdateSensitiveWordDto,
-} from '@libs/sensitive-word'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
+import { BaseSensitiveWordDto, CreateSensitiveWordDto, QuerySensitiveWordDto, SensitiveWordCountResponseDto, SensitiveWordDetectDto, SensitiveWordDetectResponseDto, SensitiveWordDetectStatusResponseDto, SensitiveWordHighestLevelResponseDto, SensitiveWordReplaceDto, SensitiveWordReplaceResponseDto, SensitiveWordStatisticsDataDto, SensitiveWordStatisticsQueryDto, SensitiveWordStatisticsResponseDto, UpdateSensitiveWordDto } from '@libs/sensitive-word/dto/sensitive-word.dto';
+import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
+import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service';
+import { SensitiveWordService } from '@libs/sensitive-word/sensitive-word.service';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

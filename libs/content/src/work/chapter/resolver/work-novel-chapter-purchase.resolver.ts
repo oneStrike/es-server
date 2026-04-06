@@ -1,14 +1,9 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import {
-  IPurchaseTargetResolver,
-  PurchaseService,
-  PurchaseTargetTypeEnum,
-} from '@libs/interaction/purchase'
-import {
-  ContentTypeEnum,
-  WorkViewPermissionEnum,
-} from '@libs/platform/constant'
+import { IPurchaseTargetResolver } from '@libs/interaction/purchase/interfaces/purchase-target-resolver.interface';
+import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.constant';
+import { PurchaseService } from '@libs/interaction/purchase/purchase.service';
+import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
 import {
   BadRequestException,
   Injectable,

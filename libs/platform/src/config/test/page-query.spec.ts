@@ -1,4 +1,4 @@
-import { resolveDbQueryConfig } from '@libs/platform/config'
+import { resolveDbQueryConfig } from '@libs/platform/config/db.config';
 import { BadRequestException } from '@nestjs/common'
 import { getTableColumns } from 'drizzle-orm'
 import { DrizzleService } from '../../../../../db/core/drizzle.service'

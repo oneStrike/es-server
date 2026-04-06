@@ -1,16 +1,8 @@
-import type { ITokenStorageService } from '@libs/platform/modules/auth'
+import type { ITokenStorageService } from '@libs/platform/modules/auth/auth.types';
 import type { FastifyRequest } from 'fastify'
-import {
-  AuthDefaultValue,
-  AuthErrorMessages,
-  AuthService as BaseAuthService,
-  RevokeTokenReasonEnum,
-} from '@libs/platform/modules/auth'
-import {
-  extractIpAddress,
-  extractUserAgent,
-  parseDeviceInfo,
-} from '@libs/platform/utils'
+import { AuthDefaultValue, AuthErrorMessages, RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
+import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service';
+import { extractIpAddress, extractUserAgent, parseDeviceInfo } from '@libs/platform/utils/requestParse';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 
 @Injectable()

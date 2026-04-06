@@ -1,12 +1,10 @@
-import {
-  ArrayProperty,
-  DateProperty,
-  EnumProperty,
-  JsonProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto } from '@libs/platform/dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto } from '@libs/platform/dto/base.dto';
 import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,

@@ -1,11 +1,8 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import {
-  createDefinedEventEnvelope,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
+import { createDefinedEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 import {
   BadRequestException,
   Injectable,

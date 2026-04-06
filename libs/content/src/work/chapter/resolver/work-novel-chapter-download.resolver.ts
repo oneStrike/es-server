@@ -1,10 +1,8 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import {
-  DownloadService,
-  DownloadTargetTypeEnum,
-  IDownloadTargetResolver,
-} from '@libs/interaction/download'
+import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant';
+import { DownloadService } from '@libs/interaction/download/download.service';
+import { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.interface';
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { WorkCounterService } from '../../counter/work-counter.service'
 

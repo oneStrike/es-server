@@ -1,11 +1,9 @@
 import { DrizzleService } from '@db/core'
-import { RsaService, ScryptService } from '@libs/platform/modules'
-import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  RevokeTokenReasonEnum,
-} from '@libs/platform/modules/auth'
-import { UserService as UserCoreService } from '@libs/user/index'
+import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
+import { ChangePasswordDto, ForgotPasswordDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
+import { UserService as UserCoreService } from '@libs/user/user.service';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'

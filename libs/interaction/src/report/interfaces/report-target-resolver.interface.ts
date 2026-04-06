@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant'
+import type { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
 import type { ReportTargetTypeEnum } from '../report.constant'
 
 /**

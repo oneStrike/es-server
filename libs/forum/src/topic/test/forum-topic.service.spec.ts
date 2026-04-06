@@ -1,5 +1,5 @@
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { AuditStatusEnum } from '@libs/platform/constant'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 
 jest.mock('@db/core', () => ({
   buildILikeCondition: jest.fn((_column: unknown, value?: string) =>
@@ -12,57 +12,75 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/growth/growth-reward', () => ({
-  GrowthEventBridgeService: class {},
+jest.mock('@libs/growth/growth-reward/growth-event-bridge.service', () => ({
+  GrowthEventBridgeService: class {}
 }))
 
-jest.mock('@libs/interaction/browse-log', () => ({
-  BrowseLogService: class {},
+jest.mock('@libs/interaction/browse-log/browse-log.service', () => ({
+  BrowseLogService: class {}
+}))
+
+jest.mock('@libs/interaction/browse-log/browse-log.constant', () => ({
   BrowseLogTargetTypeEnum: {
     FORUM_TOPIC: 3,
-  },
+  }
 }))
 
-jest.mock('@libs/interaction/comment', () => ({
+jest.mock('@libs/interaction/comment/comment.constant', () => ({
   CommentTargetTypeEnum: {
     FORUM_TOPIC: 3,
-  },
+  }
 }))
 
-jest.mock('@libs/interaction/emoji', () => ({
-  EmojiParserService: class {},
+jest.mock('@libs/interaction/emoji/emoji-parser.service', () => ({
+  EmojiParserService: class {}
+}))
+
+jest.mock('@libs/interaction/emoji/emoji.constant', () => ({
   EmojiSceneEnum: {
     FORUM: 'FORUM',
-  },
+  }
 }))
 
-jest.mock('@libs/interaction/favorite', () => ({
-  FavoriteService: class {},
+jest.mock('@libs/interaction/favorite/favorite.service', () => ({
+  FavoriteService: class {}
+}))
+
+jest.mock('@libs/interaction/favorite/favorite.constant', () => ({
   FavoriteTargetTypeEnum: {
     FORUM_TOPIC: 3,
-  },
+  }
 }))
 
-jest.mock('@libs/interaction/follow', () => ({
-  FollowService: class {},
+jest.mock('@libs/interaction/follow/follow.service', () => ({
+  FollowService: class {}
+}))
+
+jest.mock('@libs/interaction/follow/follow.constant', () => ({
   FollowTargetTypeEnum: {
     USER: 1,
-  },
+  }
 }))
 
-jest.mock('@libs/interaction/like', () => ({
-  LikeService: class {},
+jest.mock('@libs/interaction/like/like.service', () => ({
+  LikeService: class {}
+}))
+
+jest.mock('@libs/interaction/like/like.constant', () => ({
   LikeTargetTypeEnum: {
     FORUM_TOPIC: 3,
-  },
+  }
 }))
 
-jest.mock('@libs/sensitive-word', () => ({
-  SensitiveWordDetectService: class {},
+jest.mock('@libs/sensitive-word/sensitive-word-detect.service', () => ({
+  SensitiveWordDetectService: class {}
+}))
+
+jest.mock('@libs/sensitive-word/sensitive-word-constant', () => ({
   SensitiveWordLevelEnum: {
     GENERAL: 2,
     SEVERE: 3,
-  },
+  }
 }))
 
 jest.mock('@libs/user', () => ({

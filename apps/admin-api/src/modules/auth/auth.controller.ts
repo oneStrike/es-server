@@ -1,8 +1,10 @@
 import type { FastifyRequest } from 'fastify'
-import { LoginResponseDto, UserLoginDto } from '@libs/identity/core'
-import { ApiDoc, Public } from '@libs/platform/decorators'
-import { CaptchaDto, RsaService } from '@libs/platform/modules'
-import { RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth'
+import { LoginResponseDto, UserLoginDto } from '@libs/identity/dto/admin-auth.dto';
+import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { Public } from '@libs/platform/decorators/public.decorator';
+import { RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
+import { CaptchaDto } from '@libs/platform/modules/captcha/dto/captcha.dto';
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

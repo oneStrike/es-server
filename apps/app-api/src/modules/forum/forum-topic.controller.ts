@@ -1,25 +1,13 @@
-import { UserProfileService } from '@libs/forum/profile'
-import {
-  CreateUserForumTopicDto,
-  ForumTopicService,
-  MyForumTopicItemDto,
-  PublicForumTopicDetailDto,
-  PublicForumTopicPageItemDto,
-  QueryForumTopicCommentPageDto,
-  QueryMyForumTopicDto,
-  QueryPublicForumTopicDto,
-  UpdateForumTopicDto,
-} from '@libs/forum/topic'
-import { CommentService, TargetCommentItemDto } from '@libs/interaction/comment'
-import {
-  ApiDoc,
-  ApiPageDoc,
-  CurrentUser,
-  OptionalAuth,
-  RequestMeta,
-  RequestMetaResult,
-} from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { UserProfileService } from '@libs/forum/profile/profile.service';
+import { CreateUserForumTopicDto, MyForumTopicItemDto, PublicForumTopicDetailDto, PublicForumTopicPageItemDto, QueryForumTopicCommentPageDto, QueryMyForumTopicDto, QueryPublicForumTopicDto, UpdateForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto';
+import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
+import { CommentService } from '@libs/interaction/comment/comment.service';
+import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
+import { RequestMeta, RequestMetaResult } from '@libs/platform/decorators/request-meta.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

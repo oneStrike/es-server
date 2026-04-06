@@ -6,19 +6,22 @@ jest.mock('@db/core', () => ({
   DrizzleService: class {},
 }))
 
-jest.mock('@libs/interaction/favorite', () => ({
-  FavoriteService: class {},
+jest.mock('@libs/interaction/favorite/favorite.service', () => ({
+  FavoriteService: class {}
+}))
+
+jest.mock('@libs/interaction/favorite/favorite.constant', () => ({
   FavoriteTargetTypeEnum: {
     FORUM_TOPIC: FavoriteTargetTypeEnum.FORUM_TOPIC,
-  },
+  }
 }))
 
-jest.mock('@libs/message/notification', () => ({
-  MessageNotificationComposerService: class {},
+jest.mock('@libs/message/notification/notification-composer.service', () => ({
+  MessageNotificationComposerService: class {}
 }))
 
-jest.mock('@libs/message/outbox', () => ({
-  MessageOutboxService: class {},
+jest.mock('@libs/message/outbox/outbox.service', () => ({
+  MessageOutboxService: class {}
 }))
 
 jest.mock('../../forum-topic.service', () => ({

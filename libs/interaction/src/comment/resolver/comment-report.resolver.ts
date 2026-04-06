@@ -1,16 +1,14 @@
 import type { Db } from '@db/core'
-import { CommentLevelEnum } from '@libs/platform/constant'
+import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common'
-import {
-  IReportTargetResolver,
-  ReportService,
-  ReportTargetTypeEnum,
-} from '../../report'
+import { IReportTargetResolver } from '../../report/interfaces/report-target-resolver.interface';
+import { ReportTargetTypeEnum } from '../../report/report.constant';
+import { ReportService } from '../../report/report.service';
 import {
   CommentTargetTypeEnum,
   mapCommentTargetTypeToSceneType,

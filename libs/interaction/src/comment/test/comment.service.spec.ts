@@ -1,7 +1,5 @@
-import {
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition'
-import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
+import { EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
+import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 import { CommentTargetTypeEnum } from '../comment.constant'
 
 jest.mock('@db/core', () => ({
@@ -15,36 +13,42 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('../../emoji', () => ({
-  EmojiParserService: class {},
+jest.mock('../../emoji/emoji-parser.service', () => ({
+  EmojiParserService: class {}
+}))
+
+jest.mock('../../emoji/emoji.constant', () => ({
   EmojiSceneEnum: {
     COMMENT: 'COMMENT',
-  },
+  }
 }))
 
 jest.mock('../../like/like.service', () => ({
   LikeService: class {},
 }))
 
-jest.mock('@libs/message/outbox', () => ({
-  MessageOutboxService: class {},
+jest.mock('@libs/message/outbox/outbox.service', () => ({
+  MessageOutboxService: class {}
 }))
 
-jest.mock('@libs/message/notification', () => ({
-  MessageNotificationComposerService: class {},
+jest.mock('@libs/message/notification/notification-composer.service', () => ({
+  MessageNotificationComposerService: class {}
 }))
 
-jest.mock('@libs/sensitive-word', () => ({
-  SensitiveWordDetectService: class {},
+jest.mock('@libs/sensitive-word/sensitive-word-detect.service', () => ({
+  SensitiveWordDetectService: class {}
+}))
+
+jest.mock('@libs/sensitive-word/sensitive-word-constant', () => ({
   SensitiveWordLevelEnum: {
     LIGHT: 1,
     GENERAL: 2,
     SEVERE: 3,
-  },
+  }
 }))
 
-jest.mock('@libs/system-config', () => ({
-  ConfigReader: class {},
+jest.mock('@libs/system-config/config-reader', () => ({
+  ConfigReader: class {}
 }))
 
 jest.mock('@libs/user', () => ({

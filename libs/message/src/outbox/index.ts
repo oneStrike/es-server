@@ -1,5 +1,0 @@
-export * from './dto/outbox-event.dto'
-export * from './outbox.constant'
-export * from './outbox.module'
-export * from './outbox.service'
-export * from './outbox.worker'

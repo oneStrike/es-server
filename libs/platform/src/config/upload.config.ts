@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from 'node:path'
 import process from 'node:process'
-import { parseBytes } from '@libs/platform/utils'
+import { parseBytes } from '@libs/platform/utils/bytes';
 import { registerAs } from '@nestjs/config'
 import mime from 'mime-types'
 

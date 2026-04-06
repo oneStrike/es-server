@@ -1,18 +1,7 @@
-import {
-  AdminForumTopicDetailDto,
-  AdminForumTopicPageItemDto,
-  CreateForumTopicDto,
-  ForumTopicService,
-  QueryForumTopicDto,
-  UpdateForumTopicAuditStatusDto,
-  UpdateForumTopicDto,
-  UpdateForumTopicFeaturedDto,
-  UpdateForumTopicHiddenDto,
-  UpdateForumTopicLockedDto,
-  UpdateForumTopicPinnedDto,
-} from '@libs/forum/topic'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { AdminForumTopicDetailDto, AdminForumTopicPageItemDto, CreateForumTopicDto, QueryForumTopicDto, UpdateForumTopicAuditStatusDto, UpdateForumTopicDto, UpdateForumTopicFeaturedDto, UpdateForumTopicHiddenDto, UpdateForumTopicLockedDto, UpdateForumTopicPinnedDto } from '@libs/forum/topic/dto/forum-topic.dto';
+import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

@@ -1,9 +1,7 @@
-import {
-  NestedProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { CaptchaDto } from '@libs/platform/modules'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto'
+import { CaptchaDto } from '@libs/platform/modules/captcha/dto/captcha.dto';
 import { OmitType } from '@nestjs/swagger'
 import { BaseAdminUserDto } from './admin-user.dto'
 

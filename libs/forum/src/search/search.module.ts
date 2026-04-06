@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { ForumPermissionModule } from '../permission'
+import { ForumPermissionModule } from '../permission/forum-permission.module';
 import { ForumSearchService } from './search.service'
 
 /**

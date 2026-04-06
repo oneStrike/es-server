@@ -1,4 +1,4 @@
-import { LibDictionaryModule } from '@libs/dictionary'
+import { LibDictionaryModule } from '@libs/dictionary/dictionary.module';
 import { Module } from '@nestjs/common'
 import { DictionaryController } from './dictionary.controller'
 

@@ -1,9 +1,9 @@
-import { UserExperienceModule } from '@libs/growth/experience'
-import { UserPointModule } from '@libs/growth/point'
-import { TaskModule as GrowthTaskModule } from '@libs/growth/task'
-import { InteractionModule } from '@libs/interaction/module'
-import { MessageModule } from '@libs/message/module'
-import { UserModule as UserCoreModule } from '@libs/user/index'
+import { UserExperienceModule } from '@libs/growth/experience/experience.module';
+import { UserPointModule } from '@libs/growth/point/point.module';
+import { TaskModule as GrowthTaskModule } from '@libs/growth/task/task.module';
+import { InteractionModule } from '@libs/interaction/interaction.module';
+import { MessageModule } from '@libs/message/message.module';
+import { UserModule as UserCoreModule } from '@libs/user/user.module';
 import { Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module'
 import { UserController } from './user.controller'

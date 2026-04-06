@@ -1,14 +1,8 @@
-import {
-  BaseCommentDto,
-  CommentReplyItemDto,
-  CommentService,
-  CreateCommentBodyDto,
-  QueryCommentRepliesDto,
-  QueryMyCommentPageDto,
-  ReplyCommentBodyDto,
-} from '@libs/interaction/comment'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { CommentService } from '@libs/interaction/comment/comment.service';
+import { BaseCommentDto, CommentReplyItemDto, CreateCommentBodyDto, QueryCommentRepliesDto, QueryMyCommentPageDto, ReplyCommentBodyDto } from '@libs/interaction/comment/dto/comment.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

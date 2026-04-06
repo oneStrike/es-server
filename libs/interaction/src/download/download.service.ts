@@ -1,6 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import {

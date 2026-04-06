@@ -4,7 +4,7 @@ import type {
   CheckInRecordSelect,
   CheckInStreakRewardGrantSelect,
 } from '@db/schema'
-import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger'
+import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal';
 import type {
   CheckInCycleAggregation,
   CheckInPlanSnapshot,
@@ -19,12 +19,8 @@ import type {
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
 import { DrizzleService } from '@db/core'
-import {
-  GrowthAssetTypeEnum,
-  GrowthLedgerActionEnum,
-  GrowthLedgerService,
-  GrowthLedgerSourceEnum,
-} from '@libs/growth/growth-ledger'
+import { GrowthAssetTypeEnum, GrowthLedgerActionEnum, GrowthLedgerSourceEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
 import {
   BadRequestException,
   Injectable,

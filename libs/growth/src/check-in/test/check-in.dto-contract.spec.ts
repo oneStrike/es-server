@@ -1,6 +1,22 @@
 import { existsSync, readFileSync } from 'node:fs'
-import * as checkIn from '@libs/growth/check-in'
+import * as checkInDefinitionDto from '@libs/growth/check-in/dto/check-in-definition.dto'
+import * as checkInExecutionDto from '@libs/growth/check-in/dto/check-in-execution.dto'
+import * as checkInPlanDto from '@libs/growth/check-in/dto/check-in-plan.dto'
+import * as checkInRecordDto from '@libs/growth/check-in/dto/check-in-record.dto'
+import * as checkInRuntimeDto from '@libs/growth/check-in/dto/check-in-runtime.dto'
+import * as checkInGrantDto from '@libs/growth/check-in/dto/check-in-streak-reward-grant.dto'
+import * as checkInRuleDto from '@libs/growth/check-in/dto/check-in-streak-reward-rule.dto'
 import { DECORATORS } from '@nestjs/swagger/dist/constants'
+
+const checkIn = {
+  ...checkInDefinitionDto,
+  ...checkInExecutionDto,
+  ...checkInPlanDto,
+  ...checkInRecordDto,
+  ...checkInRuntimeDto,
+  ...checkInGrantDto,
+  ...checkInRuleDto,
+}
 
 function readSwaggerMetadata(target: object, propertyKey: string) {
   return {
@@ -19,7 +35,7 @@ function escapeRegex(value: string) {
 }
 
 describe('check-in dto contract exports', () => {
-  it('exports admin-side check-in DTO contracts from libs', () => {
+  it('exports admin-side check-in DTO contracts from owner dto files', () => {
     expect(checkIn).toEqual(
       expect.objectContaining({
         CheckInGrantItemDto: expect.any(Function),
@@ -39,7 +55,7 @@ describe('check-in dto contract exports', () => {
     )
   })
 
-  it('exports app-side check-in DTO contracts from libs', () => {
+  it('exports app-side check-in DTO contracts from owner dto files', () => {
     expect(checkIn).toEqual(
       expect.objectContaining({
         CheckInActionResponseDto: expect.any(Function),

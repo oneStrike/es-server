@@ -12,19 +12,22 @@ jest.mock('@db/core', () => ({
   escapeLikePattern: (value: string) => value,
 }))
 
-jest.mock('@libs/interaction/follow', () => ({
-  FollowService: class {},
+jest.mock('@libs/interaction/follow/follow.service', () => ({
+  FollowService: class {}
+}))
+
+jest.mock('@libs/interaction/follow/follow.constant', () => ({
   FollowTargetTypeEnum: {
     FORUM_SECTION: 'FORUM_SECTION',
-  },
+  }
 }))
 
-jest.mock('../../counter', () => ({
-  ForumCounterService: class {},
+jest.mock('../../counter/forum-counter.service', () => ({
+  ForumCounterService: class {}
 }))
 
-jest.mock('../../permission', () => ({
-  ForumPermissionService: class {},
+jest.mock('../../permission/forum-permission.service', () => ({
+  ForumPermissionService: class {}
 }))
 
 describe('forum section service', () => {

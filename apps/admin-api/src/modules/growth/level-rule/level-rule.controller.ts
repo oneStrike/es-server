@@ -1,16 +1,7 @@
-import {
-  BaseUserLevelRuleDto,
-  CheckUserLevelPermissionDto,
-  CreateUserLevelRuleDto,
-  QueryUserLevelRuleDto,
-  UpdateUserLevelRuleDto,
-  UserLevelInfoDto,
-  UserLevelPermissionResultDto,
-  UserLevelRuleService,
-  UserLevelStatisticsDto,
-} from '@libs/growth/level-rule'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { BaseUserLevelRuleDto, CheckUserLevelPermissionDto, CreateUserLevelRuleDto, QueryUserLevelRuleDto, UpdateUserLevelRuleDto, UserLevelInfoDto, UserLevelPermissionResultDto, UserLevelStatisticsDto } from '@libs/growth/level-rule/dto/level-rule.dto';
+import { UserLevelRuleService } from '@libs/growth/level-rule/level-rule.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

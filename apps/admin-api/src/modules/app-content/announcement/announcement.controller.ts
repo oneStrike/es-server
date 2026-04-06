@@ -1,13 +1,7 @@
-import {
-  AnnouncementDetailDto,
-  AppAnnouncementService,
-  BaseAnnouncementDto,
-  CreateAnnouncementDto,
-  QueryAnnouncementDto,
-  UpdateAnnouncementDto,
-} from '@libs/app-content/announcement'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto'
+import { AppAnnouncementService } from '@libs/app-content/announcement/announcement.service';
+import { AnnouncementDetailDto, BaseAnnouncementDto, CreateAnnouncementDto, QueryAnnouncementDto, UpdateAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

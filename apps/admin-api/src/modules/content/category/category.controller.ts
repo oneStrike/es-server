@@ -1,14 +1,7 @@
-import {
-  BaseCategoryDto,
-  CreateCategoryDto,
-  QueryCategoryDto,
-  UpdateCategoryDto,
-  UpdateCategorySortDto,
-  UpdateCategoryStatusDto,
-  WorkCategoryService,
-} from '@libs/content/category'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { WorkCategoryService } from '@libs/content/category/category.service';
+import { BaseCategoryDto, CreateCategoryDto, QueryCategoryDto, UpdateCategoryDto, UpdateCategorySortDto, UpdateCategoryStatusDto } from '@libs/content/category/dto/category.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

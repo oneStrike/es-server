@@ -1,20 +1,16 @@
-import type { UserLoginDto } from '@libs/identity/core'
+import type { UserLoginDto } from '@libs/identity/dto/admin-auth.dto';
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
-import { AuthSessionService } from '@libs/identity/core'
-import { CaptchaService, RsaService, ScryptService } from '@libs/platform/modules'
-import {
-  AuthConstants,
-  AuthErrorMessages,
-  AuthService as BaseAuthService,
-  LoginGuardService,
-  RefreshTokenDto,
-  TokenDto,
-} from '@libs/platform/modules/auth'
-import {
-  extractIpAddress,
-  isProduction,
-} from '@libs/platform/utils'
+import { AuthSessionService } from '@libs/identity/session.service';
+import { AuthConstants, AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant';
+import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service';
+import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
+import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service';
+import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service';
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
+import { isProduction } from '@libs/platform/utils/env';
+import { extractIpAddress } from '@libs/platform/utils/requestParse';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'

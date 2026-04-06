@@ -1,4 +1,4 @@
-import { UploadConfig } from '@libs/platform/config'
+import { UploadConfig } from '@libs/platform/config/upload.config';
 import {
   resolveStaticFileHeaders,
   SVG_CONTENT_SECURITY_POLICY,

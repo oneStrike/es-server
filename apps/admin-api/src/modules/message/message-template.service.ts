@@ -1,13 +1,6 @@
-import type {
-  CreateNotificationTemplateDto,
-  QueryNotificationTemplatePageDto,
-  UpdateNotificationTemplateDto,
-  UpdateNotificationTemplateEnabledDto,
-} from '@libs/message/notification'
-import {
-  getMessageNotificationTypeLabel,
-  MessageNotificationTemplateService,
-} from '@libs/message/notification'
+import type { CreateNotificationTemplateDto, QueryNotificationTemplatePageDto, UpdateNotificationTemplateDto, UpdateNotificationTemplateEnabledDto } from '@libs/message/notification/dto/notification-template.dto';
+import { MessageNotificationTemplateService } from '@libs/message/notification/notification-template.service';
+import { getMessageNotificationTypeLabel } from '@libs/message/notification/notification.constant';
 import { Injectable } from '@nestjs/common'
 
 /**

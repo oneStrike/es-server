@@ -1,4 +1,4 @@
-import { EmojiModule } from '@libs/interaction/emoji'
+import { EmojiModule } from '@libs/interaction/emoji/emoji.module';
 import { Module } from '@nestjs/common'
 import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageMonitorModule } from '../monitor/monitor.module'

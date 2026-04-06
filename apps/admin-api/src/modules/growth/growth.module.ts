@@ -1,4 +1,4 @@
-import { EventDefinitionModule } from '@libs/growth/event-definition'
+import { EventDefinitionModule } from '@libs/growth/event-definition/event-definition.module';
 import { Module } from '@nestjs/common'
 import { BadgeModule } from './badge/badge.module'
 import { ExperienceModule } from './experience/experience.module'

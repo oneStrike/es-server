@@ -1,4 +1,4 @@
-import type { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant'
+import type { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant';
 
 /**
  * 设备信息接口

@@ -1,4 +1,4 @@
-import type { UploadConfigInterface } from '@libs/platform/config'
+import type { UploadConfigInterface } from '@libs/platform/config/upload.types';
 import type { FastifyRequest } from 'fastify'
 import type {
   PreparedUploadFile,
@@ -13,7 +13,7 @@ import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, extname, join, posix } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
-import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils'
+import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils/time';
 import {
   BadRequestException,
   Inject,

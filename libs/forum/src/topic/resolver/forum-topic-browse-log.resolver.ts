@@ -1,11 +1,9 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import {
-  BrowseLogService,
-  BrowseLogTargetTypeEnum,
-  IBrowseLogTargetResolver,
-} from '@libs/interaction/browse-log'
-import { AuditStatusEnum } from '@libs/platform/constant'
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant';
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
+import { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.interface';
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 

@@ -1,6 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ArrayPropertyOptions } from './types'
-import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils'
+import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils/is';
 import { applyDecorators } from '@nestjs/common'
 import { Transform, Type } from 'class-transformer'
 import {

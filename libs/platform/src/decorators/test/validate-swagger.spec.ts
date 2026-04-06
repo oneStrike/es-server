@@ -1,16 +1,14 @@
 import type { ArgumentMetadata } from '@nestjs/common'
-import {
-  ArrayProperty,
-  BitmaskProperty,
-  BooleanProperty,
-  DateProperty,
-  EnumProperty,
-  JsonProperty,
-  NestedProperty,
-  NumberProperty,
-  RegexProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { BitmaskProperty } from '@libs/platform/decorators/validate/bitmask-property';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { RegexProperty } from '@libs/platform/decorators/validate/regex-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { ValidationPipe } from '@nestjs/common'
 import { DECORATORS } from '@nestjs/swagger/dist/constants'
 import 'reflect-metadata'

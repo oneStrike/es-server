@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { isProduction } from '@libs/platform/utils'
+import { isProduction } from '@libs/platform/utils/env';
 import { registerAs } from '@nestjs/config'
 
 const {

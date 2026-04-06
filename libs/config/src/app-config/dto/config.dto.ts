@@ -1,9 +1,7 @@
-import {
-  BooleanProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
 import { OmitType } from '@nestjs/swagger'
 
 /**

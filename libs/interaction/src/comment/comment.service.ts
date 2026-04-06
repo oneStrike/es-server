@@ -7,29 +7,24 @@ import type {
   VisibleCommentEffectPayload,
 } from './comment.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  canConsumeEventEnvelopeByConsumer,
-  createDefinedEventEnvelope,
-  EventDefinitionConsumerEnum,
-  EventEnvelopeGovernanceStatusEnum,
-} from '@libs/growth/event-definition'
-import { GrowthRuleTypeEnum } from '@libs/growth/growth'
-import { MessageNotificationComposerService } from '@libs/message/notification'
-import { MessageOutboxService } from '@libs/message/outbox'
-import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
-import {
-  SensitiveWordDetectService,
-  SensitiveWordLevelEnum,
-} from '@libs/sensitive-word'
-import { ConfigReader } from '@libs/system-config'
-import { AppUserCountService } from '@libs/user/index'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
+import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant';
+import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
+import { ConfigReader } from '@libs/system-config/config-reader';
+import { AppUserCountService } from '@libs/user/app-user-count.service';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
-import { EmojiParserService, EmojiSceneEnum } from '../emoji'
+import { EmojiParserService } from '../emoji/emoji-parser.service';
+import { EmojiSceneEnum } from '../emoji/emoji.constant';
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
 import { CommentGrowthService } from './comment-growth.service'

@@ -1,4 +1,4 @@
-import type { UploadConfigInterface } from '@libs/platform/config'
+import type { UploadConfigInterface } from '@libs/platform/config/upload.types';
 import type {
   FastifyAdapter,
   NestFastifyApplication,

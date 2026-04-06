@@ -1,4 +1,5 @@
-import { EnumProperty, StringProperty } from '@libs/platform/decorators'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { PickType } from '@nestjs/swagger'
 import { SmsTemplateCodeEnum } from '../sms.constant'
 

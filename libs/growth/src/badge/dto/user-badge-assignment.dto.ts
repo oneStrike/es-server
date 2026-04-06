@@ -1,4 +1,5 @@
-import { DateProperty, NumberProperty } from '@libs/platform/decorators'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 
 export class BaseUserBadgeAssignmentDto {
   @NumberProperty({

@@ -1,18 +1,15 @@
-import { BaseForumSectionDto } from '@libs/forum/section'
-import {
-  ArrayProperty,
-  DateProperty,
-  EnumProperty,
-  NestedProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
-import { BaseAppUserDto } from '@libs/user/index'
+import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import {
-  ForumModeratorPermissionEnum,
-} from '../../moderator'
+import { ForumModeratorPermissionEnum } from '../../moderator/moderator.constant';
 import { ForumModeratorApplicationStatusEnum } from '../moderator-application.constant'
 
 /**

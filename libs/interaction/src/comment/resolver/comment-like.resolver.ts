@@ -1,13 +1,10 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
-import {
-  MessageNotificationSubjectTypeEnum,
-  MessageNotificationTypeEnum,
-} from '@libs/message/notification'
-import { MessageOutboxService } from '@libs/message/outbox'
-import { CommentLevelEnum } from '@libs/platform/constant'
-import { AppUserCountService } from '@libs/user/index'
+import { MessageNotificationSubjectTypeEnum, MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant';
+import { AppUserCountService } from '@libs/user/app-user-count.service';
 import {
   BadRequestException,
   Injectable,

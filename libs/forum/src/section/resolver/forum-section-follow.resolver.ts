@@ -1,18 +1,15 @@
 import type { Db } from '@db/core'
-import type {IFollowTargetResolver} from '@libs/interaction/follow';
+import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.interface';
 import { DrizzleService } from '@db/core'
-import {
-  FollowService,
-  FollowTargetTypeEnum
-
-} from '@libs/interaction/follow'
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
+import { FollowService } from '@libs/interaction/follow/follow.service';
 import {
   BadRequestException,
   Injectable,
   OnModuleInit,
 } from '@nestjs/common'
-import { ForumCounterService } from '../../counter'
-import { ForumPermissionService } from '../../permission'
+import { ForumCounterService } from '../../counter/forum-counter.service';
+import { ForumPermissionService } from '../../permission/forum-permission.service';
 
 /**
  * 论坛板块关注解析器

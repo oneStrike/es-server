@@ -1,12 +1,11 @@
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant'
-import {
-  BooleanProperty,
-  EnumProperty,
-  JsonProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import { BaseDto, PageDto } from '@libs/platform/dto'
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { AuditActionTypeEnum } from '../audit.constant'
 

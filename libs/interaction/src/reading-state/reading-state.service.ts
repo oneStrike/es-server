@@ -3,7 +3,7 @@ import type {
   ReadingHistoryItem,
 } from './reading-state.type'
 import { DrizzleService } from '@db/core'
-import { ContentTypeEnum } from '@libs/platform/constant'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, inArray, SQL } from 'drizzle-orm'
 import {

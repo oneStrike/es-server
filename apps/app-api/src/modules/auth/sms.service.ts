@@ -1,10 +1,7 @@
 import { DrizzleService } from '@db/core'
-import {
-  CheckVerifyCodeDto,
-  SmsService as LibSmsService,
-  SendVerifyCodeDto,
-  SmsTemplateCodeEnum,
-} from '@libs/platform/modules'
+import { CheckVerifyCodeDto, SendVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto';
+import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant';
+import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'

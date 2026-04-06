@@ -1,10 +1,8 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import {
-  FavoriteService,
-  FavoriteTargetTypeEnum,
-  IFavoriteTargetResolver,
-} from '@libs/interaction/favorite'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
+import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface';
 import {
   BadRequestException,
   Injectable,

@@ -1,5 +1,5 @@
 import type { WorkComicArchiveImportTaskSelect } from '@db/schema'
-import type { UploadConfigInterface } from '@libs/platform/config'
+import type { UploadConfigInterface } from '@libs/platform/config/upload.types';
 import type { FastifyRequest } from 'fastify'
 import type { Dirent } from 'node:fs'
 import type {
@@ -16,8 +16,8 @@ import { pipeline } from 'node:stream/promises'
 import {
   DrizzleService,
 } from '@db/core'
-import { UploadService } from '@libs/platform/modules'
-import { jsonParse } from '@libs/platform/utils'
+import { UploadService } from '@libs/platform/modules/upload/upload.service';
+import { jsonParse } from '@libs/platform/utils/jsonParse';
 import {
   BadRequestException,
   Injectable,

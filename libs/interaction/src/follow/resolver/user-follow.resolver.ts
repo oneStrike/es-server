@@ -1,9 +1,9 @@
 import type { Db } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { MessageNotificationTypeEnum } from '@libs/message/notification'
-import { MessageOutboxService } from '@libs/message/outbox'
-import { AppUserCountService } from '@libs/user/index'
+import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { AppUserCountService } from '@libs/user/app-user-count.service';
 import {
   BadRequestException,
   Injectable,

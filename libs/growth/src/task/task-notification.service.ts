@@ -1,4 +1,4 @@
-import type { CreateNotificationOutboxEventDto } from '@libs/message/outbox'
+import type { CreateNotificationOutboxEventDto } from '@libs/message/outbox/dto/outbox-event.dto';
 import type {
   TaskAvailableReminderEventInput,
   TaskExpiringSoonReminderEventInput,

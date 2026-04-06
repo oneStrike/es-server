@@ -1,7 +1,7 @@
-import { UserLevelRuleModule } from '@libs/growth/level-rule'
-import { UserPointModule } from '@libs/growth/point'
-import { InteractionModule } from '@libs/interaction/module'
-import { UserModule } from '@libs/user/index'
+import { UserLevelRuleModule } from '@libs/growth/level-rule/level-rule.module';
+import { UserPointModule } from '@libs/growth/point/point.module';
+import { InteractionModule } from '@libs/interaction/interaction.module';
+import { UserModule } from '@libs/user/user.module';
 import { Module } from '@nestjs/common'
 import { UserProfileService } from './profile.service'
 

@@ -1,4 +1,4 @@
-import { SceneTypeEnum } from '@libs/platform/constant'
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
 import { LikeTargetTypeEnum } from '../../../../../interaction/src/like/like.constant'
 import { MessageNotificationComposerService } from '../../../../../message/src/notification/notification-composer.service'
 import { MessageNotificationTypeEnum } from '../../../../../message/src/notification/notification.constant'
@@ -7,19 +7,22 @@ jest.mock('@db/core', () => ({
   DrizzleService: class {},
 }))
 
-jest.mock('@libs/interaction/like', () => ({
-  LikeService: class {},
+jest.mock('@libs/interaction/like/like.service', () => ({
+  LikeService: class {}
+}))
+
+jest.mock('@libs/interaction/like/like.constant', () => ({
   LikeTargetTypeEnum: {
     FORUM_TOPIC: LikeTargetTypeEnum.FORUM_TOPIC,
-  },
+  }
 }))
 
-jest.mock('@libs/message/notification', () => ({
-  MessageNotificationComposerService: class {},
+jest.mock('@libs/message/notification/notification-composer.service', () => ({
+  MessageNotificationComposerService: class {}
 }))
 
-jest.mock('@libs/message/outbox', () => ({
-  MessageOutboxService: class {},
+jest.mock('@libs/message/outbox/outbox.service', () => ({
+  MessageOutboxService: class {}
 }))
 
 describe('forum topic like resolver', () => {

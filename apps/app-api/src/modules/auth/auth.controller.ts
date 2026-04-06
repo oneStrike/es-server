@@ -1,15 +1,10 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc, CurrentUser, Public } from '@libs/platform/decorators'
-import { RsaService, SendVerifyCodeDto } from '@libs/platform/modules'
-import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  LoginDto,
-  LoginResponseDto,
-  RefreshTokenDto,
-  RsaPublicKeyDto,
-  TokenDto,
-} from '@libs/platform/modules/auth'
+import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { Public } from '@libs/platform/decorators/public.decorator';
+import { ChangePasswordDto, ForgotPasswordDto, LoginDto, LoginResponseDto, RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
+import { SendVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto';
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'

@@ -1,17 +1,8 @@
-import {
-  AddUserExperienceDto,
-  BaseUserExperienceRuleDto,
-  CreateUserExperienceRuleDto,
-  QueryUserExperienceRecordDto,
-  QueryUserExperienceRuleDto,
-  UpdateUserExperienceRuleDto,
-  UserExperienceRecordDetailDto,
-  UserExperienceRecordDto,
-  UserExperienceService,
-  UserExperienceStatsDto,
-} from '@libs/growth/experience'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { AddUserExperienceDto, QueryUserExperienceRecordDto, UserExperienceRecordDetailDto, UserExperienceRecordDto, UserExperienceStatsDto } from '@libs/growth/experience/dto/experience-record.dto';
+import { BaseUserExperienceRuleDto, CreateUserExperienceRuleDto, QueryUserExperienceRuleDto, UpdateUserExperienceRuleDto } from '@libs/growth/experience/dto/experience-rule.dto';
+import { UserExperienceService } from '@libs/growth/experience/experience.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

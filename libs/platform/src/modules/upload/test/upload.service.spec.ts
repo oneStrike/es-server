@@ -1,11 +1,11 @@
-import type { UploadConfigInterface } from '@libs/platform/config'
+import type { UploadConfigInterface } from '@libs/platform/config/upload.types';
 import type { PreparedUploadFile } from '../upload.types'
 import { Buffer } from 'node:buffer'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
-import { UploadConfig } from '@libs/platform/config'
+import { UploadConfig } from '@libs/platform/config/upload.config';
 import {
   BadRequestException,
   PayloadTooLargeException,

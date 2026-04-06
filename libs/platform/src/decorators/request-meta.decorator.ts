@@ -1,5 +1,5 @@
 import type { ExecutionContext } from '@nestjs/common'
-import { extractIpAddress, parseDeviceInfo } from '@libs/platform/utils'
+import { extractIpAddress, parseDeviceInfo } from '@libs/platform/utils/requestParse';
 import { createParamDecorator } from '@nestjs/common'
 
 /**

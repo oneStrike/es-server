@@ -1,22 +1,16 @@
-import {
-  BooleanProperty,
-  EnumProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
-import {
-  BaseDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/platform/dto'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
+import { PageDto } from '@libs/platform/dto/page.dto';
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { GROWTH_RULE_TYPE_RULE_DTO_DESCRIPTION } from '../../event-definition'
+import { GROWTH_RULE_TYPE_RULE_DTO_DESCRIPTION } from '../../event-definition/event-definition.doc';
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
 export class BaseUserPointRuleDto extends BaseDto {

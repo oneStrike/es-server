@@ -1,4 +1,4 @@
-import { StringProperty } from '@libs/platform/decorators'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 
 export class CaptchaDto {
   @StringProperty({

@@ -1,14 +1,7 @@
-import {
-  AssignForumTagToTopicDto,
-  BaseForumTagDto,
-  CreateForumTagDto,
-  ForumTagDetailResponseDto,
-  ForumTagService,
-  QueryForumTagDto,
-  UpdateForumTagDto,
-} from '@libs/forum/tag'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
-import { IdDto } from '@libs/platform/dto'
+import { AssignForumTagToTopicDto, BaseForumTagDto, CreateForumTagDto, ForumTagDetailResponseDto, QueryForumTagDto, UpdateForumTagDto } from '@libs/forum/tag/dto/forum-tag.dto';
+import { ForumTagService } from '@libs/forum/tag/forum-tag.service';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'

@@ -1,8 +1,5 @@
 import type { EnumPropertyOptions } from './types'
-import {
-  getNumberEnumValues,
-  isNumberEnum,
-} from '@libs/platform/utils'
+import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils/is';
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
 import { IsEnum, IsIn, IsOptional } from 'class-validator'
