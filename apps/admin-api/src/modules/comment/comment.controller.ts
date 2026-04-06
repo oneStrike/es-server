@@ -6,7 +6,7 @@ import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 
 @ApiTags('内容治理/评论处理')
@@ -33,13 +33,12 @@ export class CommentController {
   }
 
   @Post('update-audit-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新评论审核状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新评论审核状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateAuditStatus(
     @Body() body: UpdateAdminCommentAuditStatusDto,
@@ -53,13 +52,12 @@ export class CommentController {
   }
 
   @Post('update-hidden')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新评论隐藏状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新评论隐藏状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateHidden(@Body() body: UpdateAdminCommentHiddenDto) {
     return this.commentService.updateCommentHidden(body)

@@ -1,11 +1,13 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { BaseSensitiveWordDto, CreateSensitiveWordDto, QuerySensitiveWordDto, SensitiveWordCountResponseDto, SensitiveWordDetectDto, SensitiveWordDetectResponseDto, SensitiveWordDetectStatusResponseDto, SensitiveWordHighestLevelResponseDto, SensitiveWordReplaceDto, SensitiveWordReplaceResponseDto, SensitiveWordStatisticsDataDto, SensitiveWordStatisticsQueryDto, SensitiveWordStatisticsResponseDto, UpdateSensitiveWordDto } from '@libs/sensitive-word/dto/sensitive-word.dto';
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service';
 import { SensitiveWordService } from '@libs/sensitive-word/sensitive-word.service';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
  * 敏感词管理控制器
@@ -40,9 +42,12 @@ export class SensitiveWordController {
    * @returns 创建的敏感词信息
    */
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建敏感词',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createSensitiveWord(@Body() body: CreateSensitiveWordDto) {
     return this.sensitiveWordService.createSensitiveWord(body)
@@ -54,9 +59,12 @@ export class SensitiveWordController {
    * @returns 更新后的敏感词信息
    */
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新敏感词',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateSensitiveWord(@Body() body: UpdateSensitiveWordDto) {
     return this.sensitiveWordService.updateSensitiveWord(body)
@@ -68,9 +76,12 @@ export class SensitiveWordController {
    * @returns 删除结果
    */
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除敏感词',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteSensitiveWord(@Body() body: IdDto) {
     return this.sensitiveWordService.deleteSensitiveWord(body)
@@ -82,9 +93,12 @@ export class SensitiveWordController {
    * @returns 更新结果
    */
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新敏感词状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateSensitiveWordStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.sensitiveWordService.updateSensitiveWordStatus(body)

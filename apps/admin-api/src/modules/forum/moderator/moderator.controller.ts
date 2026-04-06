@@ -1,10 +1,10 @@
 import { AssignForumModeratorSectionDto, CreateForumModeratorDto, ForumModeratorDto, QueryForumModeratorDto, UpdateForumModeratorDto } from '@libs/forum/moderator/dto/moderator.dto';
 import { ForumModeratorService } from '@libs/forum/moderator/moderator.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @Controller('admin/forum/moderators')
@@ -22,52 +22,48 @@ export class ModeratorController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '添加版主',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '添加版主',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createModerator(@Body() dto: CreateForumModeratorDto) {
     return this.forumModeratorService.createModerator(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新版主信息',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新版主信息',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateModerator(@Body() dto: UpdateForumModeratorDto) {
     return this.forumModeratorService.updateModerator(dto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '移除版主',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '移除版主',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteModerator(@Body() dto: IdDto) {
     return this.forumModeratorService.removeModerator(dto.id)
   }
 
   @Post('assign-section')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '分配版主管理的板块',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '分配版主管理的板块',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async assignModeratorSection(@Body() dto: AssignForumModeratorSectionDto) {
     return this.forumModeratorService.assignModeratorSection(dto)

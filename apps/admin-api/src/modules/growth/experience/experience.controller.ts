@@ -5,7 +5,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 /**
  * 用户经验规则管理控制器
@@ -37,52 +37,48 @@ export class ExperienceController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建用户经验规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建用户经验规则',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createExperienceRule(@Body() dto: CreateUserExperienceRuleDto) {
     return this.experienceService.createExperienceRule(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新用户经验规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新用户经验规则',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateExperienceRule(@Body() dto: UpdateUserExperienceRuleDto) {
     return this.experienceService.updateExperienceRule(dto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除用户经验规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除用户经验规则',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteExperienceRule(@Body() dto: IdDto) {
     return this.experienceService.deleteExperienceRule(dto.id)
   }
 
   @Post('grant')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '增加用户经验',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '增加用户经验',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async grantExperience(@Body() dto: AddUserExperienceDto) {
     return this.experienceService.addExperience(dto)

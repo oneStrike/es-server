@@ -3,8 +3,10 @@ import { BaseUserBadgeDto } from '@libs/growth/badge/dto/user-badge.dto';
 import { UserBadgeService } from '@libs/growth/badge/user-badge.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
  * 用户徽章管理控制器
@@ -36,54 +38,72 @@ export class UserBadgeController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建用户徽章',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createBadge(@Body() dto: CreateUserBadgeDto) {
     return this.userBadgeService.createBadge(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新用户徽章',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateBadge(@Body() dto: UpdateUserBadgeDto) {
     return this.userBadgeService.updateBadge(dto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除用户徽章',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteBadge(@Body() dto: IdDto) {
     return this.userBadgeService.deleteBadge(dto)
   }
 
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新用户徽章状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateBadgeStatus(@Body() dto: UpdateUserBadgeStatusDto) {
     return this.userBadgeService.updateBadgeStatus(dto)
   }
 
   @Post('assign')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '为用户分配用户徽章',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async assignBadge(@Body() dto: AssignUserBadgeDto) {
     return this.userBadgeService.assignBadge(dto)
   }
 
   @Post('revoke')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '撤销用户徽章',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async revokeBadge(@Body() dto: AssignUserBadgeDto) {
     return this.userBadgeService.revokeBadge(dto)

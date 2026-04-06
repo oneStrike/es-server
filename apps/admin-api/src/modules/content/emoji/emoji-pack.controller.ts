@@ -4,8 +4,10 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/表情管理')
 @Controller('admin/content/emoji-pack')
@@ -31,9 +33,12 @@ export class EmojiPackController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建表情包',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async create(
     @Body() body: CreateEmojiPackDto,
@@ -43,9 +48,12 @@ export class EmojiPackController {
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新表情包',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(
     @Body() body: UpdateEmojiPackDto,
@@ -55,18 +63,24 @@ export class EmojiPackController {
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除表情包',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() body: IdDto) {
     return this.emojiAssetService.deletePack(body.id)
   }
 
   @Post('update-enabled')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新表情包启用状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateEnabled(
     @Body() body: UpdateEnabledStatusDto,
@@ -80,18 +94,24 @@ export class EmojiPackController {
   }
 
   @Post('swap-sort-order')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '交换表情包排序',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async swapSortOrder(@Body() body: DragReorderDto) {
     return this.emojiAssetService.swapPackSortOrder(body.dragId, body.targetId)
   }
 
   @Post('update-scene-type')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新表情包场景类型',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateSceneType(
     @Body() body: UpdateEmojiPackSceneTypeDto,

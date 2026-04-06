@@ -4,9 +4,11 @@ import { ComicContentService } from '@libs/content/work/content/comic-content.se
 import { ComicArchiveTaskIdDto, ComicArchiveTaskResponseDto, ConfirmComicArchiveDto, DeleteComicContentDto, MoveComicContentDto, PreviewComicArchiveDto, UpdateComicContentDto, UploadContentDto } from '@libs/content/work/content/dto/content.dto';
 import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/漫画管理/章节内容')
 @Controller('admin/content/comic/chapter-content')
@@ -27,54 +29,72 @@ export class ChapterContentController {
   }
 
   @Post('upload')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '上传章节内容',
     model: UploadResponseDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPLOAD,
+    },
   })
   async upload(@Req() req: FastifyRequest, @Query() query: UploadContentDto) {
     return this.comicContentService.addChapterContent(req, query)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新章节内容',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(@Body() body: UpdateComicContentDto) {
     return this.comicContentService.updateChapterContent(body)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除章节内容',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() body: DeleteComicContentDto) {
     return this.comicContentService.deleteChapterContent(body)
   }
 
   @Post('move')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '移动章节内容',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async move(@Body() body: MoveComicContentDto) {
     return this.comicContentService.moveChapterContent(body)
   }
 
   @Post('clear')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '清空章节内容',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async clear(@Body() body: IdDto) {
     return this.comicContentService.clearChapterContents(body.id)
   }
 
   @Post('archive/preview')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '预解析漫画压缩包',
     model: ComicArchiveTaskResponseDto,
+    audit: {
+      actionType: AuditActionTypeEnum.IMPORT,
+    },
   })
   async archivePreview(
     @Req() req: FastifyRequest,
@@ -84,9 +104,12 @@ export class ChapterContentController {
   }
 
   @Post('archive/confirm')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '确认漫画压缩包导入',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.IMPORT,
+    },
   })
   async archiveConfirm(@Body() body: ConfirmComicArchiveDto) {
     return this.comicArchiveImportService.confirmArchive(body)

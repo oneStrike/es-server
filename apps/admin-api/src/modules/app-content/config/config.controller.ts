@@ -3,7 +3,7 @@ import { BaseAppConfigDto, UpdateAppConfigDto } from '@libs/app-config/dto/confi
 import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
@@ -27,13 +27,12 @@ export class AppConfigController {
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新应用配置',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新应用配置',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(@Body() body: UpdateAppConfigDto) {
     return this.appConfigService.updateConfig(body)

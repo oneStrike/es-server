@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 
 @ApiTags('任务管理/任务配置')
@@ -21,13 +21,12 @@ export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建任务',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建任务',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async create(
     @Body() body: CreateTaskDto,
@@ -37,13 +36,12 @@ export class TaskController {
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新任务',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新任务',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(
     @Body() body: UpdateTaskDto,
@@ -53,26 +51,24 @@ export class TaskController {
   }
 
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新任务状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新任务状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateStatus(@Body() body: UpdateTaskStatusDto) {
     return this.taskService.updateTaskStatus(body)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除任务',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除任务',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() body: IdDto) {
     return this.taskService.deleteTask(body.id)
@@ -117,26 +113,24 @@ export class TaskController {
   }
 
   @Post('assignment/retry-reward')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '重试单条任务奖励结算',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '重试单条任务奖励结算',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async retryAssignmentReward(@Body() body: IdDto) {
     return this.taskService.retryTaskAssignmentReward(body.id)
   }
 
   @Post('assignment/retry-reward/batch')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '批量扫描并重试待补偿任务奖励',
     model: RetryCompletedTaskRewardsResponseDto,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '批量扫描并重试待补偿任务奖励',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async retryCompletedRewards(@Body() body: RetryCompletedTaskRewardsDto) {
     return this.taskService.retryCompletedAssignmentRewardsBatch(body.limit)

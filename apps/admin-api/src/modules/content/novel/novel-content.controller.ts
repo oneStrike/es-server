@@ -3,9 +3,11 @@ import { UploadContentDto } from '@libs/content/work/content/dto/content.dto';
 import { NovelContentService } from '@libs/content/work/content/novel-content.service';
 import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/小说管理/章节内容')
 @Controller('admin/content/novel/chapter-content')
@@ -22,18 +24,24 @@ export class NovelContentController {
   }
 
   @Post('upload')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '上传章节文件',
     model: UploadResponseDto,
+    audit: {
+      actionType: AuditActionTypeEnum.UPLOAD,
+    },
   })
   async upload(@Req() req: FastifyRequest, @Query() query: UploadContentDto) {
     return this.novelContentService.uploadChapterContent(req, query)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除章节文件',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() body: IdDto) {
     return this.novelContentService.deleteChapterContent(body.id)

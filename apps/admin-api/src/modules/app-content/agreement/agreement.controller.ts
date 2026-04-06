@@ -4,6 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
@@ -19,39 +20,36 @@ export class AgreementController {
   constructor(private readonly agreementService: AgreementService) {}
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建协议',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建协议',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async create(@Body() dto: CreateAgreementDto) {
     return this.agreementService.create(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新协议',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新协议',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(@Body() dto: UpdateAgreementDto) {
     return this.agreementService.update(dto)
   }
 
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新协议状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新协议状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateStatus(@Body() dto: UpdatePublishedStatusDto) {
     return this.agreementService.updatePublishStatus(dto)

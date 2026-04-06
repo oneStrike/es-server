@@ -1,17 +1,17 @@
-import { BaseAppPageDto, CreateAppPageDto, QueryAppPageDto, QueryPageByCodeDto, UpdateAppPageDto } from '@libs/app-content/page/dto/page.dto';
-import { AppPageService } from '@libs/app-content/page/page.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { IdDto, IdsDto } from '@libs/platform/dto/base.dto';
 import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-} from '@nestjs/common'
+  BaseAppPageDto,
+  CreateAppPageDto,
+  QueryAppPageDto,
+  QueryPageByCodeDto,
+  UpdateAppPageDto,
+} from '@libs/app-content/page/dto/page.dto'
+import { AppPageService } from '@libs/app-content/page/page.service'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
+import { IdDto, IdsDto } from '@libs/platform/dto'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
-import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**
  * APP页面配置管理控制器
@@ -25,13 +25,12 @@ export class AppPageController {
   constructor(private readonly libAppPageService: AppPageService) {}
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建页面配置',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建页面配置',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async create(@Body() body: CreateAppPageDto) {
     return this.libAppPageService.createPage(body)
@@ -65,26 +64,24 @@ export class AppPageController {
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新页面配置',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新页面配置',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(@Body() body: UpdateAppPageDto) {
     return this.libAppPageService.updatePage(body)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '批量下线页面配置',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '批量下线页面配置',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async batchDelete(@Body() body: IdsDto) {
     return this.libAppPageService.batchDelete(body)

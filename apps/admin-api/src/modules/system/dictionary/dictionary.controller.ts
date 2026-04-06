@@ -5,6 +5,7 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../audit/audit.constant'
 
@@ -32,52 +33,48 @@ export class DictionaryController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建字典',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建字典',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async create(@Body() createDictionaryDto: CreateDictionaryDto) {
     return this.libDictionaryService.createDictionary(createDictionaryDto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新字典',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新字典',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(@Body() updateDictionaryDto: UpdateDictionaryDto) {
     return this.libDictionaryService.updateDictionary(updateDictionaryDto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除字典',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除字典',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() query: IdDto) {
     return this.libDictionaryService.deleteDictionary(query)
   }
 
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新字典状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新字典状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateStatus(@Body() query: UpdateEnabledStatusDto) {
     return this.libDictionaryService.updateDictionaryStatus(query)
@@ -102,13 +99,12 @@ export class DictionaryController {
   }
 
   @Post('item/create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建字典项',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建字典项',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createItem(@Body() createDictionaryItemDto: CreateDictionaryItemDto) {
     return this.libDictionaryService.createDictionaryItem(
@@ -117,13 +113,12 @@ export class DictionaryController {
   }
 
   @Post('item/update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新字典项',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新字典项',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateItem(@Body() updateDictionaryItemDto: UpdateDictionaryItemDto) {
     return this.libDictionaryService.updateDictionaryItem(
@@ -145,13 +140,12 @@ export class DictionaryController {
   }
 
   @Post('item/delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除字典项',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除字典项',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteItem(@Body() query: IdDto) {
     return this.libDictionaryService.deleteDictionaryItem(query)

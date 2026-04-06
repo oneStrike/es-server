@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "ad189d2a-745d-4a18-b064-67ff5d899839",
+  "id": "695f119d-c9da-4988-98a5-1bfd7869f239",
   "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
+    "ad189d2a-745d-4a18-b064-67ff5d899839"
   ],
   "ddl": [
     {
@@ -1163,7 +1163,7 @@
       "typeSchema": null,
       "notNull": false,
       "dimensions": 1,
-      "default": null,
+      "default": "ARRAY[1,2,3]",
       "generated": null,
       "identity": null,
       "name": "enable_platform",
@@ -1584,7 +1584,7 @@
       "typeSchema": null,
       "notNull": false,
       "dimensions": 1,
-      "default": null,
+      "default": "ARRAY[1,2,3]",
       "generated": null,
       "identity": null,
       "name": "enable_platform",
@@ -21123,7 +21123,7 @@
       "table": "check_in_plan"
     },
     {
-      "value": "\"cycle_type\" in ('daily', 'weekly', 'monthly')",
+      "value": "\"cycle_type\" in ('weekly', 'monthly')",
       "name": "check_in_plan_cycle_type_valid_chk",
       "entityType": "checks",
       "schema": "public",

@@ -4,7 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
@@ -20,13 +20,12 @@ export class ContentAuthorController {
    * 创建作者
    */
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建作者',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建作者',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async create(@Body() body: CreateAuthorDto) {
     return this.authorService.createAuthor(body)
@@ -60,13 +59,12 @@ export class ContentAuthorController {
    * 更新作者信息
    */
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新作者信息',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新作者信息',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(@Body() body: UpdateAuthorDto) {
     return this.authorService.updateAuthor(body)
@@ -76,13 +74,12 @@ export class ContentAuthorController {
    * 更新作者状态
    */
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新作者状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新作者状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateStatus(@Body() body: UpdateAuthorStatusDto) {
     return this.authorService.updateAuthorStatus(body)
@@ -92,65 +89,60 @@ export class ContentAuthorController {
    * 批量更新作者推荐状态
    */
   @Post('update-recommended')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新作者推荐状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新作者推荐状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateRecommended(@Body() body: UpdateAuthorRecommendedDto) {
     return this.authorService.updateAuthorRecommended(body)
   }
 
   @Post('rebuild-follow-count')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '重建作者关注计数',
     model: AuthorFollowCountRepairResultDto,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '重建作者关注计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildFollowCount(@Body() body: IdDto) {
     return this.authorService.rebuildAuthorFollowersCountById(body)
   }
 
   @Post('rebuild-follow-count-all')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '全量重建作者关注计数',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '全量重建作者关注计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildFollowCountAll() {
     return this.authorService.rebuildAllAuthorFollowersCount()
   }
 
   @Post('rebuild-work-count')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '重建作者作品计数',
     model: AuthorWorkCountRepairResultDto,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '重建作者作品计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildWorkCount(@Body() body: IdDto) {
     return this.authorService.rebuildAuthorWorkCountById(body)
   }
 
   @Post('rebuild-work-count-all')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '全量重建作者作品计数',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '全量重建作者作品计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildWorkCountAll() {
     return this.authorService.rebuildAllAuthorWorkCount()
@@ -160,13 +152,12 @@ export class ContentAuthorController {
    * 删除作者
    */
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除作者',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除作者',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() body: IdDto) {
     return this.authorService.deleteAuthor(body)

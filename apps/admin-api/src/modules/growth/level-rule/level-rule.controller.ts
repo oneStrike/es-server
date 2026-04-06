@@ -4,7 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
@@ -35,39 +35,36 @@ export class LevelRuleController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建用户等级规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建用户等级规则',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createLevelRule(@Body() dto: CreateUserLevelRuleDto) {
     return this.levelRuleService.createLevelRule(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新用户等级规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新用户等级规则',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateLevelRule(@Body() dto: UpdateUserLevelRuleDto) {
     return this.levelRuleService.updateLevelRule(dto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除用户等级规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除用户等级规则',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteLevelRule(@Body() dto: IdDto) {
     return this.levelRuleService.deleteLevelRule(dto.id)
@@ -83,13 +80,12 @@ export class LevelRuleController {
   }
 
   @Post('permission/check')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '检查用户等级权限配置',
     model: UserLevelPermissionResultDto,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '检查用户等级权限配置',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async checkLevelPermission(@Body() dto: CheckUserLevelPermissionDto) {
     return this.levelRuleService.checkLevelPermission(dto)

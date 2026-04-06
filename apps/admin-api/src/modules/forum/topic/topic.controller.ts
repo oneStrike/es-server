@@ -4,7 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @ApiTags('论坛管理/主题管理')
@@ -121,104 +121,96 @@ export class ForumTopicController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建论坛主题',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建论坛主题',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async create(@Body() body: CreateForumTopicDto) {
     return this.forumTopicService.createForumTopic(body)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新论坛主题',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新论坛主题',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async update(@Body() body: UpdateForumTopicDto) {
     return this.forumTopicService.updateTopic(body)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除论坛主题',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除论坛主题',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() body: IdDto) {
     return this.forumTopicService.deleteTopic(body.id)
   }
 
   @Post('update-pinned')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新主题置顶状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新主题置顶状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updatePinned(@Body() body: UpdateForumTopicPinnedDto) {
     return this.forumTopicService.updateTopicPinned(body)
   }
 
   @Post('update-featured')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新主题精华状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新主题精华状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateFeatured(@Body() body: UpdateForumTopicFeaturedDto) {
     return this.forumTopicService.updateTopicFeatured(body)
   }
 
   @Post('update-locked')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新主题锁定状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新主题锁定状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateLocked(@Body() body: UpdateForumTopicLockedDto) {
     return this.forumTopicService.updateTopicLocked(body)
   }
 
   @Post('update-hidden')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新主题隐藏状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新主题隐藏状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateHidden(@Body() body: UpdateForumTopicHiddenDto) {
     return this.forumTopicService.updateTopicHidden(body)
   }
 
   @Post('update-audit-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新主题审核状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新主题审核状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateAuditStatus(@Body() body: UpdateForumTopicAuditStatusDto) {
     return this.forumTopicService.updateTopicAuditStatus(body)

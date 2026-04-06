@@ -4,7 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @Controller('admin/forum/sections')
@@ -39,91 +39,84 @@ export class ForumSectionController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '添加板块',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '添加板块',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createSection(@Body() dto: CreateForumSectionDto) {
     return this.forumSectionService.createSection(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新板块',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新板块',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateSection(@Body() dto: UpdateForumSectionDto) {
     return this.forumSectionService.updateSection(dto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除板块',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除板块',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteSection(@Body() dto: IdDto) {
     return this.forumSectionService.deleteSection(dto.id)
   }
 
   @Post('update-enabled')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新板块启用状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新板块启用状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateEnabledStatus(@Body() dto: UpdateForumSectionEnabledDto) {
     return this.forumSectionService.updateEnabledStatus(dto)
   }
 
   @Post('rebuild-follow-count')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '重建板块关注计数',
     model: ForumSectionFollowCountRepairResultDto,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '重建板块关注计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildFollowCount(@Body() dto: IdDto) {
     return this.forumSectionService.rebuildSectionFollowersCount(dto.id)
   }
 
   @Post('rebuild-follow-count-all')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '全量重建板块关注计数',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '全量重建板块关注计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildFollowCountAll() {
     return this.forumSectionService.rebuildAllSectionFollowersCount()
   }
 
   @Post('swap-sort-order')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '交换板块排序顺序',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '交换板块排序顺序',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async swapSortOrder(@Body() dto: SwapForumSectionSortDto) {
     return this.forumSectionService.updateSectionSort(dto)

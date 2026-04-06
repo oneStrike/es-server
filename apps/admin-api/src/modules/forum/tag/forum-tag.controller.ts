@@ -4,7 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @Controller('admin/forum/tags')
@@ -61,65 +61,60 @@ export class ForumTagController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '添加标签',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '添加标签',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createTag(@Body() dto: CreateForumTagDto) {
     return this.forumTagService.createTag(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新标签',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新标签',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateTag(@Body() dto: UpdateForumTagDto) {
     return this.forumTagService.updateTag(dto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除标签',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除标签',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteTag(@Body() dto: IdDto) {
     return this.forumTagService.deleteTag(dto.id)
   }
 
   @Post('assign-topic')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '为主题分配标签',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '为主题分配标签',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async assignTagToTopic(@Body() dto: AssignForumTagToTopicDto) {
     return this.forumTagService.assignTagToTopic(dto)
   }
 
   @Post('unassign-topic')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '从主题移除标签',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '从主题移除标签',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async removeTagFromTopic(@Body() dto: AssignForumTagToTopicDto) {
     return this.forumTagService.removeTagFromTopic(dto)

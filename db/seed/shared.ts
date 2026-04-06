@@ -3,7 +3,7 @@ export const SEED_PASSWORD_HASH =
 
 export const SEED_ADMIN_USERNAME = 'admin'
 
-export const SEED_PLATFORM_ALL = [1, 2]
+export const SEED_PLATFORM_ALL = [1, 2, 3]
 
 export const SEED_ACCOUNTS = {
   readerA: 'seed_reader_001',

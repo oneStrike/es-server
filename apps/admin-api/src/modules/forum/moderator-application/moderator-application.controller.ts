@@ -5,7 +5,7 @@ import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @ApiTags('论坛管理/版主申请')
@@ -34,13 +34,12 @@ export class ForumModeratorApplicationController {
   }
 
   @Post('audit')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '审核版主申请',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '审核版主申请',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async audit(
     @Body() body: AuditForumModeratorApplicationDto,
@@ -50,13 +49,12 @@ export class ForumModeratorApplicationController {
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除版主申请',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除版主申请',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async delete(@Body() body: IdDto) {
     return this.forumModeratorApplicationService.deleteApplication(body.id)

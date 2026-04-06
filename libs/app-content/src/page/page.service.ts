@@ -1,8 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { IdDto, IdsDto } from '@libs/platform/dto/base.dto';
+import { IdDto, IdsDto } from '@libs/platform/dto/base.dto'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, arrayOverlaps, eq, inArray } from 'drizzle-orm'
 import {
   CreateAppPageDto,
   QueryAppPageDto,
@@ -44,6 +44,7 @@ export class AppPageService {
   /**
    * 根据名称、编码、权限和平台等条件查询页面分页。
    * `enablePlatform` 保持 JSON 字符串输入，兼容 query 参数的序列化方式。
+   * 平台过滤使用 PostgreSQL 数组重叠操作符 `&&`，匹配任意一个命中平台即可返回。
    */
   async findPage(queryPageDto: QueryAppPageDto) {
     const { name, code, accessLevel, isEnabled, enablePlatform, ...other } =
@@ -77,7 +78,7 @@ export class AppPageService {
         Number(item),
       )
       if (platforms.length > 0) {
-        conditions.push(inArray(this.appPage.enablePlatform, platforms))
+        conditions.push(arrayOverlaps(this.appPage.enablePlatform, platforms))
       }
     }
 

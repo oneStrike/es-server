@@ -7,7 +7,7 @@ import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto';
 import { AddAdminAppUserExperienceDto, AddAdminAppUserPointsDto, AdminAppUserDetailDto, AdminAppUserExperienceRecordDto, AdminAppUserExperienceStatsDto, AdminAppUserFollowCountRepairResultDto, AdminAppUserGrowthLedgerRecordDto, AdminAppUserPageItemDto, AdminAppUserPointRecordDto, AdminAppUserPointStatsDto, ConsumeAdminAppUserPointsDto, CreateAdminAppUserDto, QueryAdminAppUserBadgeDto, QueryAdminAppUserGrowthLedgerDto, QueryAdminAppUserPageDto, ResetAdminAppUserPasswordDto, UpdateAdminAppUserEnabledDto, UpdateAdminAppUserProfileDto, UpdateAdminAppUserStatusDto } from '@libs/user/dto/admin-app-user.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AppUserService } from './app-user.service'
 
@@ -45,13 +45,12 @@ export class AppUserController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '新建 APP 用户',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '新建 APP 用户',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createAppUser(
     @Body() body: CreateAdminAppUserDto,
@@ -64,13 +63,12 @@ export class AppUserController {
    * 更新 APP 用户资料
    */
   @Post('profile/update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新 APP 用户资料',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新 APP 用户资料',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateAppUserProfile(
     @Body() body: UpdateAdminAppUserProfileDto,
@@ -83,13 +81,12 @@ export class AppUserController {
    * 更新 APP 用户启用状态
    */
   @Post('update-enabled')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新 APP 用户启用状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新 APP 用户启用状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateAppUserEnabled(
     @Body() body: UpdateAdminAppUserEnabledDto,
@@ -102,13 +99,12 @@ export class AppUserController {
    * 更新 APP 用户状态
    */
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新 APP 用户状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新 APP 用户状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateAppUserStatus(
     @Body() body: UpdateAdminAppUserStatusDto,
@@ -118,13 +114,12 @@ export class AppUserController {
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除 APP 用户',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除 APP 用户',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteAppUser(
     @Body() body: IdDto,
@@ -134,13 +129,12 @@ export class AppUserController {
   }
 
   @Post('restore')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '恢复 APP 用户',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '恢复 APP 用户',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async restoreAppUser(
     @Body() body: IdDto,
@@ -150,13 +144,12 @@ export class AppUserController {
   }
 
   @Post('rebuild-follow-count')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '重建 APP 用户关注计数',
     model: AdminAppUserFollowCountRepairResultDto,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '重建 APP 用户关注计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildFollowCount(
     @Body() body: UserIdDto,
@@ -166,26 +159,24 @@ export class AppUserController {
   }
 
   @Post('rebuild-follow-count-all')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '全量重建 APP 用户关注计数',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '全量重建 APP 用户关注计数',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async rebuildFollowCountAll(@CurrentUser('sub') userId: number) {
     return this.appUserService.rebuildAllAppUserFollowCounts(userId)
   }
 
   @Post('password/reset')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '重置 APP 用户密码',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '重置 APP 用户密码',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async resetAppUserPassword(
     @Body() body: ResetAdminAppUserPasswordDto,
@@ -222,13 +213,12 @@ export class AppUserController {
    * 手动增加 APP 用户积分
    */
   @Post('points/grant')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '手动增加 APP 用户积分',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '手动增加 APP 用户积分',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async addAppUserPoints(
     @Body() body: AddAdminAppUserPointsDto,
@@ -241,13 +231,12 @@ export class AppUserController {
    * 手动扣减 APP 用户积分
    */
   @Post('points/consume')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '手动扣减 APP 用户积分',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '手动扣减 APP 用户积分',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async consumeAppUserPoints(
     @Body() body: ConsumeAdminAppUserPointsDto,
@@ -300,13 +289,12 @@ export class AppUserController {
    * 手动增加 APP 用户经验
    */
   @Post('experience/grant')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '手动增加 APP 用户经验',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '手动增加 APP 用户经验',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async addAppUserExperience(
     @Body() body: AddAdminAppUserExperienceDto,
@@ -331,13 +319,12 @@ export class AppUserController {
    * 为 APP 用户分配徽章
    */
   @Post('badges/assign')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '为 APP 用户分配徽章',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '为 APP 用户分配徽章',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async assignAppUserBadge(
     @Body() body: AssignUserBadgeDto,
@@ -350,13 +337,12 @@ export class AppUserController {
    * 撤销 APP 用户徽章
    */
   @Post('badges/revoke')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '撤销 APP 用户徽章',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '撤销 APP 用户徽章',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async revokeAppUserBadge(
     @Body() body: AssignUserBadgeDto,

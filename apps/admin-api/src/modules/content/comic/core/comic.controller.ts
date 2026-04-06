@@ -5,7 +5,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../../system/audit/audit.constant'
 
 @ApiTags('内容管理/漫画管理/基础信息')
@@ -14,11 +14,13 @@ export class ComicController {
   constructor(private readonly workService: WorkService) { }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建漫画',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.CREATE, content: '创建漫画' })
   async create(@Body() body: CreateWorkDto) {
     return this.workService.createWork({ ...body, type: WorkTypeEnum.COMIC })
   }
@@ -44,31 +46,37 @@ export class ComicController {
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新漫画信息',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新漫画信息' })
   async update(@Body() body: UpdateWorkDto) {
     return this.workService.updateWork(body)
   }
 
   @Post('update-status')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新漫画发布状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新漫画发布状态' })
   async updateStatus(@Body() body: UpdateWorkStatusDto) {
     return this.workService.updateStatus(body)
   }
 
   @Post('update-recommended')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新漫画推荐状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新漫画推荐状态' })
   async updateRecommended(@Body() body: UpdateWorkRecommendedDto) {
     return this.workService.updateWorkFlags(body.id, {
       isRecommended: body.isRecommended,
@@ -76,11 +84,13 @@ export class ComicController {
   }
 
   @Post('update-hot')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新漫画热门状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新漫画热门状态' })
   async updateHot(@Body() body: UpdateWorkHotDto) {
     return this.workService.updateWorkFlags(body.id, {
       isHot: body.isHot,
@@ -88,11 +98,13 @@ export class ComicController {
   }
 
   @Post('update-new')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新漫画新作状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新漫画新作状态' })
   async updateNew(@Body() body: UpdateWorkNewDto) {
     return this.workService.updateWorkFlags(body.id, {
       isNew: body.isNew,
@@ -100,11 +112,13 @@ export class ComicController {
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '软删除漫画',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.DELETE, content: '软删除漫画' })
   async delete(@Body() body: IdDto) {
     return this.workService.deleteWork(body.id)
   }

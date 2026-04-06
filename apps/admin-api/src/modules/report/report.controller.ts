@@ -5,7 +5,7 @@ import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 
 @ApiTags('内容治理/举报处理')
@@ -32,13 +32,12 @@ export class ReportController {
   }
 
   @Post('handle')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '处理举报',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '处理举报',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async handle(
     @Body() body: HandleAdminReportDto,

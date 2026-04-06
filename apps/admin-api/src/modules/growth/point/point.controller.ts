@@ -4,7 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
@@ -37,26 +37,24 @@ export class PointController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建积分规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建积分规则',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createPointRule(@Body() dto: CreateUserPointRuleDto) {
     return this.userPointRuleService.createPointRule(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新积分规则',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新积分规则',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updatePointRule(@Body() dto: UpdateUserPointRuleDto) {
     return this.userPointRuleService.updatePointRule(dto)

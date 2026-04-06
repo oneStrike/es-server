@@ -4,7 +4,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @Controller('admin/forum/section-groups')
@@ -33,65 +33,60 @@ export class ForumSectionGroupController {
   }
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '添加板块组',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '添加板块组',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createSectionGroup(@Body() dto: CreateForumSectionGroupDto) {
     return this.forumSectionGroupService.createSectionGroup(dto)
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新板块组',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新板块组',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateSectionGroup(@Body() dto: UpdateForumSectionGroupDto) {
     return this.forumSectionGroupService.updateSectionGroup(dto)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除板块组',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除板块组',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteSectionGroup(@Body() dto: IdDto) {
     return this.forumSectionGroupService.deleteSectionGroup(dto.id)
   }
 
   @Post('update-enabled')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新板块组启用状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新板块组启用状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateEnabledStatus(@Body() dto: UpdateForumSectionGroupEnabledDto) {
     return this.forumSectionGroupService.updateSectionGroupEnabled(dto)
   }
 
   @Post('swap-sort-order')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '交换板块组排序顺序',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '交换板块组排序顺序',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async swapSortOrder(@Body() dto: SwapForumSectionGroupSortDto) {
     return this.forumSectionGroupService.swapSectionGroupSortOrder(dto)

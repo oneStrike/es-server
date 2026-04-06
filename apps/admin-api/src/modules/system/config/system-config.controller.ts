@@ -4,7 +4,7 @@ import { BaseSystemConfigDto, UpdateSystemConfigDto } from '@libs/system-config/
 import { SystemConfigService } from '@libs/system-config/system-config.service';
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../audit/audit.constant'
 
 /**
@@ -26,13 +26,12 @@ export class SystemConfigController {
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新系统配置',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新系统配置',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateConfig(
     @Body() dto: UpdateSystemConfigDto,

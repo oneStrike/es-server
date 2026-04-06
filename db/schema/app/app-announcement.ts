@@ -2,6 +2,7 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from "drizzle-orm";
 import { boolean, index, integer, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
@@ -53,9 +54,9 @@ export const appAnnouncement = pgTable("app_announcement", {
    */
   popupBackgroundImage: varchar({ length: 200 }),
   /**
-   * 启用的平台列表
+   * 启用的平台列表（1=H5, 2=App, 3=小程序；默认值为全部平台）
    */
-  enablePlatform: integer().array(),
+  enablePlatform: integer().array().default(sql`ARRAY[1,2,3]::integer[]`),
   /**
    * 发布开始时间
    */

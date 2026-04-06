@@ -1,3 +1,5 @@
+import { PgDialect } from 'drizzle-orm/pg-core'
+
 jest.mock('@db/core', () => ({
   buildILikeCondition: jest.fn((_column: unknown, value?: string) =>
     value ? { type: 'ilike', value } : undefined,
@@ -28,7 +30,19 @@ jest.mock('@libs/message/notification/notification.constant', () => ({
   }
 }))
 
+const dialect = new PgDialect()
+
 describe('app announcement service', () => {
+  it('defaults enablePlatform to all supported platforms', async () => {
+    const { appAnnouncement } = await import('@db/schema/app/app-announcement')
+
+    expect(appAnnouncement.enablePlatform.hasDefault).toBe(true)
+    expect(appAnnouncement.enablePlatform.notNull).toBe(false)
+    expect(
+      dialect.sqlToQuery(appAnnouncement.enablePlatform.default as any).sql,
+    ).toBe('ARRAY[1,2,3]::integer[]')
+  })
+
   it('fanouts important published announcement into notification outbox', async () => {
     const { AppAnnouncementService } = await import('../announcement.service')
     const { AnnouncementPriorityEnum } = await import('../announcement.constant')

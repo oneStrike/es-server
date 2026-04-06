@@ -2,6 +2,7 @@
  * Auto-converted from legacy schema.
  */
 
+import { sql } from "drizzle-orm";
 import { boolean, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
@@ -33,7 +34,7 @@ export const appPage = pgTable("app_page", {
    */
   description: varchar({ length: 500 }),
   /**
-   * 访问级别（0=公开, 1=登录用户, 2=会员, 9=管理员）
+   * 访问级别（0=游客, 1=登录, 2=会员, 3=高级会员）
    */
   accessLevel: smallint().default(0).notNull(),
   /**
@@ -41,9 +42,9 @@ export const appPage = pgTable("app_page", {
    */
   isEnabled: boolean().default(true).notNull(),
   /**
-   * 启用的平台列表
+   * 启用的平台列表（1=H5, 2=App, 3=小程序；默认值为全部平台）
    */
-  enablePlatform: integer().array(),
+  enablePlatform: integer().array().default(sql`ARRAY[1,2,3]::integer[]`),
   /**
    * 创建时间
    */

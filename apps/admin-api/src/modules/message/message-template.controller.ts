@@ -3,7 +3,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { Audit } from '../../common/decorators/audit.decorator'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { MessageTemplateService } from './message-template.service'
 
@@ -46,13 +46,12 @@ export class MessageTemplateController {
    * 创建通知模板
    */
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建通知模板',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.CREATE,
-    content: '创建通知模板',
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async createNotificationTemplate(
     @Body() body: CreateNotificationTemplateDto,
@@ -64,13 +63,12 @@ export class MessageTemplateController {
    * 更新通知模板
    */
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新通知模板',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新通知模板',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateNotificationTemplate(
     @Body() body: UpdateNotificationTemplateDto,
@@ -82,13 +80,12 @@ export class MessageTemplateController {
    * 更新通知模板启用状态
    */
   @Post('update-enabled')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新通知模板启用状态',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.UPDATE,
-    content: '更新通知模板启用状态',
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateNotificationTemplateEnabled(
     @Body() body: UpdateNotificationTemplateEnabledDto,
@@ -100,13 +97,12 @@ export class MessageTemplateController {
    * 删除通知模板
    */
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除通知模板',
     model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除通知模板',
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
   async deleteNotificationTemplate(@Body() body: IdDto) {
     return this.messageTemplateService.deleteNotificationTemplate(body.id)

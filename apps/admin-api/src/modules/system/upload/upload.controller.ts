@@ -1,9 +1,10 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto';
 import { UploadService } from '@libs/platform/modules/upload/upload.service';
 import { Controller, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('系统管理/文件上传')
 @Controller('admin/upload')
@@ -11,10 +12,13 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('file/upload')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '上传文件',
     model: UploadResponseDto,
     isArray: false,
+    audit: {
+      actionType: AuditActionTypeEnum.UPLOAD,
+    },
   })
   async uploadFile(@Req() req: FastifyRequest) {
     return this.uploadService.uploadFile(req)

@@ -4,6 +4,7 @@ import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AdminUserService } from './admin-user.service'
@@ -21,9 +22,12 @@ export class AdminUserController {
    * 用户注册接口
    */
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '用户注册',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
   async register(
     @Body() body: UserRegisterDto,
@@ -36,9 +40,12 @@ export class AdminUserController {
    * 更新用户信息接口
    */
   @Post('profile/update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新用户信息',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async updateUserInfo(
     @Body() body: UpdateUserDto,
@@ -106,9 +113,12 @@ export class AdminUserController {
    * 重置用户密码为默认密码接口
    */
   @Post('password/reset')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '重置用户密码为默认密码',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async resetPassword(
     @Body() query: IdDto,
@@ -121,9 +131,12 @@ export class AdminUserController {
    * 解锁指定用户的锁定状态接口
    */
   @Post('unlock')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '解锁指定用户的锁定状态',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
   async unlockUser(@Body() query: IdDto) {
     return this.adminUserService.unlockUser(query.id)

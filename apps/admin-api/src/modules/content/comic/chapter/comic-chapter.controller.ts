@@ -6,6 +6,7 @@ import { IdDto } from '@libs/platform/dto/base.dto';
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../../common/decorators/audit.decorator'
 import { AuditActionTypeEnum } from '../../../system/audit/audit.constant'
 
@@ -15,11 +16,13 @@ export class ComicChapterController {
   constructor(private readonly workChapterService: WorkChapterService) {}
 
   @Post('create')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '创建漫画章节',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.CREATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.CREATE, content: '创建漫画章节' })
   async create(@Body() body: CreateWorkChapterDto) {
     return this.workChapterService.createChapter({
       ...body,
@@ -48,21 +51,25 @@ export class ComicChapterController {
   }
 
   @Post('update')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '更新漫画章节',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '更新漫画章节' })
   async update(@Body() body: UpdateWorkChapterDto) {
     return this.workChapterService.updateChapter(body)
   }
 
   @Post('delete')
-  @ApiDoc({
+  @ApiAuditDoc({
     summary: '删除漫画章节',
     model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.DELETE,
+    },
   })
-  @Audit({ actionType: AuditActionTypeEnum.DELETE, content: '删除漫画章节' })
   async delete(@Body() query: IdDto) {
     return this.workChapterService.deleteChapter(query.id)
   }
