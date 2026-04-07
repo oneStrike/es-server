@@ -25,6 +25,7 @@
 - `libs/platform/src/utils/requestParse.ts`
 - `libs/platform/src/utils/request-parse.types.ts`
 - 视实现方式可能波及 `libs/platform/src/utils/index.ts`
+- `libs/platform/src/config/validation.config.ts`
 
 ### 登录态与审计
 
@@ -55,6 +56,12 @@
 - `libs/forum/src/topic/forum-topic.service.ts`
 - `libs/forum/src/topic/forum-topic.type.ts`
 
+### 管理端 xdb 管理与热切换
+
+- `apps/admin-api/src/modules/system/ip2region/*`
+- `apps/admin-api/src/modules/admin.module.ts`
+- `.env.example`
+
 ## 统一实现约束
 
 - 原始 `FastifyRequest` 只允许停留在 controller、interceptor、filter 这类 HTTP 边界。
@@ -64,6 +71,7 @@
 - 不做历史数据回填，不在读路径按现存 IP 反查补算属地；旧记录缺少 `geo*` 字段时按空值处理。
 - app 端接口只返回当前确认需要的属地字段，不顺带开放后台筛选能力。
 - 后台若因现有查询实现或共享 DTO 复用而被动返回只读属地字段，不视为范围扩散；但不新增属地筛选、排序和统计。
+- 管理端 `xdb` 上传能力只服务接收上传请求的当前进程热切换，不在本轮处理跨 API 进程或跨实例同步。
 
 ## 接口契约影响
 
@@ -93,6 +101,9 @@
 - `pnpm type-check`
 - `pnpm db:comments:check`
 - 变更文件的 `eslint`
+- admin 端 `ip2region` 上传接口与状态接口返回检查
+- 合法 / 非法 `xdb` 上传后的热切换与失败回退检查
+- 服务重启后 `active` 目录加载行为检查
 - app 端论坛主题列表 / 详情 / 我的主题接口返回字段检查
 - app 端评论我的列表 / 回复列表 / 论坛主题评论列表返回字段检查
 - app 端作品评论 / 章节评论列表返回字段检查
@@ -109,3 +120,4 @@
 - `P0-03` 与 `P1-01` 都会改 `libs/forum/src/topic/forum-topic.service.ts`，需避免并行写冲突。
 - 评论属地按全站评论能力收口，会波及论坛、作品、章节等多个 app 端评论入口，容易出现“schema 已加字段但接口漏返回”的契约漂移。
 - 若 `ip2region` 数据文件路径设计不稳定，后续本地、CI、部署环境可能出现路径差异。
+- 若 `admin-api` 与 `app-api` 以独立进程运行，管理端上传后的“立即生效”默认只覆盖当前进程，需要在交付说明中明确这一部署边界。

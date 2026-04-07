@@ -1,894 +1,173 @@
-import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
-import { AssignUserBadgeDto } from '@libs/growth/badge/dto/user-badge-management.dto'
-import { UserBadgeService } from '@libs/growth/badge/user-badge.service'
-import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
-import { UserExperienceService } from '@libs/growth/experience/experience.service'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
-import { UserPointService } from '@libs/growth/point/point.service'
-import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
-import { GenderEnum } from '@libs/platform/constant/profile.constant'
-import { RsaService, ScryptService } from '@libs/platform/modules/crypto'
-
-import {
-  buildDateOnlyRangeInAppTimeZone,
-  formatDateOnlyInAppTimeZone,
-  startOfTodayInAppTimeZone,
-} from '@libs/platform/utils'
-import { AppUserCountService } from '@libs/user/app-user-count.service'
-import {
-  AppUserDeletedScopeEnum,
-  UserStatusEnum,
-} from '@libs/user/app-user.constant'
-import {
-  AddAdminAppUserExperienceDto,
-  AddAdminAppUserPointsDto,
-  ConsumeAdminAppUserPointsDto,
-  CreateAdminAppUserDto,
-  QueryAdminAppUserBadgeDto,
-  QueryAdminAppUserGrowthLedgerDto,
-  QueryAdminAppUserPageDto,
-  ResetAdminAppUserPasswordDto,
-  UpdateAdminAppUserEnabledDto,
-  UpdateAdminAppUserProfileDto,
-  UpdateAdminAppUserStatusDto,
-} from '@libs/user/dto/admin-app-user.dto'
-import { UserService as UserCoreService } from '@libs/user/user.service'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common'
-import {
-  and,
-  asc,
-  eq,
-  gt,
-  gte,
-  inArray,
-  isNotNull,
-  isNull,
-  lt,
-  sql,
-} from 'drizzle-orm'
+import { Injectable } from '@nestjs/common'
+import { AppUserCommandService } from './app-user-command.service'
+import { AppUserGrowthService } from './app-user-growth.service'
+import { AppUserQueryService } from './app-user-query.service'
 
 /**
- * APP 用户管理服务
- * 负责管理端 APP 用户的查询、资料维护、状态维护与成长资产管理
+ * APP 用户模块门面服务。
+ *
+ * 统一向 controller 暴露模块公开用例，内部委托给 query / command / growth
+ * 子服务，避免单个 service 同时承担目录查询、账号维护和成长资产编排。
  */
 @Injectable()
 export class AppUserService {
   constructor(
-    private readonly drizzle: DrizzleService,
-    private readonly userCoreService: UserCoreService,
-    private readonly userPointService: UserPointService,
-    private readonly userExperienceService: UserExperienceService,
-    private readonly growthLedgerService: GrowthLedgerService,
-    private readonly userBadgeService: UserBadgeService,
-    private readonly appUserCountService: AppUserCountService,
-    private readonly rsaService: RsaService,
-    private readonly scryptService: ScryptService,
+    private readonly appUserQueryService: AppUserQueryService,
+    private readonly appUserCommandService: AppUserCommandService,
+    private readonly appUserGrowthService: AppUserGrowthService,
   ) {}
 
-  private get db() {
-    return this.drizzle.db
+  /** 获取 APP 用户分页列表。 */
+  async getAppUserPage(query: Parameters<AppUserQueryService['getAppUserPage']>[0]) {
+    return this.appUserQueryService.getAppUserPage(query)
   }
 
-  private get appUser() {
-    return this.drizzle.schema.appUser
-  }
-
-  private get adminUser() {
-    return this.drizzle.schema.adminUser
-  }
-
-  private get appUserCount() {
-    return this.drizzle.schema.appUserCount
-  }
-
-  private get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
-  }
-
-  private get growthLedgerRecord() {
-    return this.drizzle.schema.growthLedgerRecord
-  }
-
-  private get userBadgeAssignment() {
-    return this.drizzle.schema.userBadgeAssignment
-  }
-
-  private get userBadge() {
-    return this.drizzle.schema.userBadge
-  }
-
-  private async processIdsInBatches(
-    ids: number[],
-    batchSize: number,
-    handler: (batchIds: number[]) => Promise<void>,
-  ) {
-    for (let index = 0; index < ids.length; index += batchSize) {
-      const batchIds = ids.slice(index, index + batchSize)
-      await handler(batchIds)
-    }
-  }
-
-  /**
-   * 获取 APP 用户分页列表
-   */
-  async getAppUserPage(query: QueryAdminAppUserPageDto) {
-    const {
-      id,
-      account,
-      phoneNumber,
-      nickname,
-      emailAddress,
-      isEnabled,
-      status,
-      levelId,
-      deletedScope,
-      lastLoginStartDate,
-      lastLoginEndDate,
-      pageIndex,
-      pageSize,
-    } = query
-
-    const lastLoginAt = this.buildDateRange(
-      lastLoginStartDate,
-      lastLoginEndDate,
-    )
-
-    const conditions: SQL[] = []
-
-    if (id !== undefined) {
-      conditions.push(eq(this.appUser.id, id))
-    }
-    if (account) {
-      conditions.push(buildILikeCondition(this.appUser.account, account)!)
-    }
-    if (phoneNumber) {
-      conditions.push(
-        buildILikeCondition(this.appUser.phoneNumber, phoneNumber)!,
-      )
-    }
-    if (nickname) {
-      conditions.push(buildILikeCondition(this.appUser.nickname, nickname)!)
-    }
-    if (emailAddress) {
-      conditions.push(
-        buildILikeCondition(this.appUser.emailAddress, emailAddress)!,
-      )
-    }
-    if (isEnabled !== undefined) {
-      conditions.push(eq(this.appUser.isEnabled, isEnabled))
-    }
-    if (status !== undefined) {
-      conditions.push(eq(this.appUser.status, status))
-    }
-    if (levelId !== undefined) {
-      conditions.push(
-        levelId === null
-          ? isNull(this.appUser.levelId)
-          : eq(this.appUser.levelId, levelId),
-      )
-    }
-    if (deletedScope === AppUserDeletedScopeEnum.DELETED) {
-      conditions.push(isNotNull(this.appUser.deletedAt))
-    } else if (deletedScope !== AppUserDeletedScopeEnum.ALL) {
-      conditions.push(isNull(this.appUser.deletedAt))
-    }
-    if (lastLoginAt?.gte) {
-      conditions.push(gte(this.appUser.lastLoginAt, lastLoginAt.gte))
-    }
-    if (lastLoginAt?.lt) {
-      conditions.push(lt(this.appUser.lastLoginAt, lastLoginAt.lt))
-    }
-
-    const where = conditions.length > 0 ? and(...conditions) : undefined
-
-    const page = await this.drizzle.ext.findPagination(this.appUser, {
-      where,
-      pageIndex,
-      pageSize,
-    })
-
-    const levelIds = [
-      ...new Set(page.list.map((item) => item.levelId).filter(Boolean)),
-    ]
-    const userIds = page.list.map((item) => item.id)
-    const [levelRows, countRows] = await Promise.all([
-      levelIds.length > 0
-        ? this.db
-            .select({
-              id: this.userLevelRule.id,
-              name: this.userLevelRule.name,
-            })
-            .from(this.userLevelRule)
-            .where(inArray(this.userLevelRule.id, levelIds as number[]))
-        : [],
-      userIds.length > 0
-        ? this.db
-            .select({
-              userId: this.appUserCount.userId,
-              commentCount: this.appUserCount.commentCount,
-              likeCount: this.appUserCount.likeCount,
-              favoriteCount: this.appUserCount.favoriteCount,
-              followingUserCount: this.appUserCount.followingUserCount,
-              followingAuthorCount: this.appUserCount.followingAuthorCount,
-              followingSectionCount: this.appUserCount.followingSectionCount,
-              followersCount: this.appUserCount.followersCount,
-              forumTopicCount: this.appUserCount.forumTopicCount,
-              commentReceivedLikeCount:
-                this.appUserCount.commentReceivedLikeCount,
-              forumTopicReceivedLikeCount:
-                this.appUserCount.forumTopicReceivedLikeCount,
-              forumTopicReceivedFavoriteCount:
-                this.appUserCount.forumTopicReceivedFavoriteCount,
-            })
-            .from(this.appUserCount)
-            .where(inArray(this.appUserCount.userId, userIds))
-        : [],
-    ])
-    const levelMap = new Map(
-      levelRows.map((item) => [item.id, item.name] as const),
-    )
-    const countMap = new Map(
-      countRows.map((item) => [item.userId, item] as const),
-    )
-
-    return {
-      ...page,
-      list: page.list.map((item) => ({
-        ...this.userCoreService.mapBaseUser(item),
-        levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
-        counts: {
-          commentCount: countMap.get(item.id)?.commentCount ?? 0,
-          likeCount: countMap.get(item.id)?.likeCount ?? 0,
-          favoriteCount: countMap.get(item.id)?.favoriteCount ?? 0,
-          followingUserCount: countMap.get(item.id)?.followingUserCount ?? 0,
-          followingAuthorCount:
-            countMap.get(item.id)?.followingAuthorCount ?? 0,
-          followingSectionCount:
-            countMap.get(item.id)?.followingSectionCount ?? 0,
-          followersCount: countMap.get(item.id)?.followersCount ?? 0,
-          forumTopicCount: countMap.get(item.id)?.forumTopicCount ?? 0,
-          commentReceivedLikeCount:
-            countMap.get(item.id)?.commentReceivedLikeCount ?? 0,
-          forumTopicReceivedLikeCount:
-            countMap.get(item.id)?.forumTopicReceivedLikeCount ?? 0,
-          forumTopicReceivedFavoriteCount:
-            countMap.get(item.id)?.forumTopicReceivedFavoriteCount ?? 0,
-        },
-      })),
-    }
-  }
-
-  /**
-   * 获取 APP 用户详情
-   */
+  /** 获取 APP 用户详情。 */
   async getAppUserDetail(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
-
-    const [level, counts, badgeCount, pointStats, experienceStats] =
-      await Promise.all([
-        user.levelId
-          ? this.userCoreService.getLevelInfo(user.levelId)
-          : undefined,
-        this.userCoreService.getUserCounts(userId),
-        this.userCoreService.getBadgeCount(userId),
-        this.userPointService.getUserPointStats(userId),
-        this.getAppUserExperienceStats(userId),
-      ])
-
-    return {
-      ...this.userCoreService.mapBaseUser(user),
-      level: level
-        ? {
-            id: level.id,
-            name: level.name,
-            requiredExperience: level.requiredExperience,
-          }
-        : undefined,
-      counts,
-      badgeCount,
-      pointStats,
-      experienceStats,
-    }
+    return this.appUserQueryService.getAppUserDetail(userId)
   }
 
-  async createAppUser(adminUserId: number, dto: CreateAdminAppUserDto) {
-    await this.ensureSuperAdmin(adminUserId)
-    const account = await this.generateUniqueAccount()
-    const hashedPassword = await this.scryptService.encryptPassword(
-      dto.password,
-    )
-
-    try {
-      await this.drizzle.withErrorHandling(async () =>
-        this.db.transaction(async (tx) => {
-          const [defaultLevel] = await tx
-            .select({ id: this.userLevelRule.id })
-            .from(this.userLevelRule)
-            .where(eq(this.userLevelRule.isEnabled, true))
-            .orderBy(
-              asc(this.userLevelRule.sortOrder),
-              asc(this.userLevelRule.id),
-            )
-            .limit(1)
-
-          const [created] = await tx
-            .insert(this.appUser)
-            .values({
-              account: String(account),
-              nickname: dto.nickname,
-              password: hashedPassword,
-              phoneNumber: dto.phoneNumber,
-              emailAddress: dto.emailAddress,
-              avatarUrl: dto.avatarUrl,
-              signature: dto.signature,
-              bio: dto.bio,
-              genderType: dto.genderType ?? GenderEnum.UNKNOWN,
-              birthDate: this.normalizeBirthDate(dto.birthDate),
-              isEnabled: dto.isEnabled ?? true,
-              status: dto.status ?? UserStatusEnum.NORMAL,
-              points: 0,
-              experience: 0,
-              levelId: defaultLevel?.id ?? null,
-            })
-            .returning({ id: this.appUser.id })
-
-          await this.appUserCountService.initUserCounts(tx, created.id)
-        }),
-      )
-    } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('手机号或邮箱已存在')
-      }
-      throw error
-    }
-
-    return true
+  /** 新建 APP 用户。 */
+  async createAppUser(
+    adminUserId: number,
+    dto: Parameters<AppUserCommandService['createAppUser']>[1],
+  ) {
+    return this.appUserCommandService.createAppUser(adminUserId, dto)
   }
 
-  /**
-   * 更新 APP 用户基础资料
-   */
+  /** 更新 APP 用户基础资料。 */
   async updateAppUserProfile(
     adminUserId: number,
-    dto: UpdateAdminAppUserProfileDto,
+    dto: Parameters<AppUserCommandService['updateAppUserProfile']>[1],
   ) {
-    await this.ensureSuperAdmin(adminUserId)
-    await this.userCoreService.ensureUserExists(dto.id)
-
-    const userData: Record<string, unknown> = {}
-    if (dto.nickname !== undefined) {
-      userData.nickname = dto.nickname
-    }
-    if (dto.avatarUrl !== undefined) {
-      userData.avatarUrl = dto.avatarUrl
-    }
-    if (dto.phoneNumber !== undefined) {
-      userData.phoneNumber = dto.phoneNumber
-    }
-    if (dto.emailAddress !== undefined) {
-      userData.emailAddress = dto.emailAddress
-    }
-    if (dto.genderType !== undefined) {
-      userData.genderType = dto.genderType
-    }
-    if (dto.birthDate !== undefined) {
-      userData.birthDate = this.normalizeBirthDate(dto.birthDate)
-    }
-    if (dto.signature !== undefined) {
-      userData.signature = dto.signature
-    }
-    if (dto.bio !== undefined) {
-      userData.bio = dto.bio
-    }
-
-    try {
-      if (Object.keys(userData).length > 0) {
-        await this.drizzle.withErrorHandling(
-          () =>
-            this.db
-              .update(this.appUser)
-              .set(userData)
-              .where(eq(this.appUser.id, dto.id)),
-          { notFound: '用户不存在' },
-        )
-      }
-    } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('手机号或邮箱已存在')
-      }
-      throw error
-    }
-
-    return true
+    return this.appUserCommandService.updateAppUserProfile(adminUserId, dto)
   }
 
-  /**
-   * 更新 APP 用户账号启用状态
-   */
+  /** 更新 APP 用户账号启用状态。 */
   async updateAppUserEnabled(
     adminUserId: number,
-    dto: UpdateAdminAppUserEnabledDto,
+    dto: Parameters<AppUserCommandService['updateAppUserEnabled']>[1],
   ) {
-    await this.ensureSuperAdmin(adminUserId)
-    await this.userCoreService.ensureUserExists(dto.id)
-
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appUser)
-          .set({
-            isEnabled: dto.isEnabled,
-          })
-          .where(eq(this.appUser.id, dto.id)),
-      { notFound: '用户不存在' },
-    )
-    return true
+    return this.appUserCommandService.updateAppUserEnabled(adminUserId, dto)
   }
 
-  /**
-   * 更新 APP 用户状态
-   */
+  /** 更新 APP 用户状态。 */
   async updateAppUserStatus(
     adminUserId: number,
-    dto: UpdateAdminAppUserStatusDto,
+    dto: Parameters<AppUserCommandService['updateAppUserStatus']>[1],
   ) {
-    await this.ensureSuperAdmin(adminUserId)
-    await this.userCoreService.ensureUserExists(dto.id)
-
-    const isNormal = dto.status === UserStatusEnum.NORMAL
-    const isTimed =
-      dto.status === UserStatusEnum.MUTED ||
-      dto.status === UserStatusEnum.BANNED
-    const isPermanent =
-      dto.status === UserStatusEnum.PERMANENT_MUTED ||
-      dto.status === UserStatusEnum.PERMANENT_BANNED
-    if (!isNormal && !dto.banReason?.trim()) {
-      throw new BadRequestException('禁言或封禁必须填写原因')
-    }
-    if (isTimed && !dto.banUntil) {
-      throw new BadRequestException('临时禁言或封禁必须填写截止时间')
-    }
-    if (isTimed && dto.banUntil && dto.banUntil <= new Date()) {
-      throw new BadRequestException('截止时间必须晚于当前时间')
-    }
-
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appUser)
-          .set({
-            status: dto.status,
-            banReason: isNormal ? null : dto.banReason?.trim(),
-            banUntil: isNormal || isPermanent ? null : dto.banUntil,
-          })
-          .where(eq(this.appUser.id, dto.id)),
-      { notFound: '用户不存在' },
-    )
-    return true
+    return this.appUserCommandService.updateAppUserStatus(adminUserId, dto)
   }
 
+  /** 软删除 APP 用户。 */
   async deleteAppUser(adminUserId: number, userId: number) {
-    await this.ensureSuperAdmin(adminUserId)
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appUser)
-          .set({ deletedAt: new Date() })
-          .where(
-            and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)),
-          ),
-      { notFound: '用户不存在' },
-    )
-    return true
+    return this.appUserCommandService.deleteAppUser(adminUserId, userId)
   }
 
+  /** 恢复已软删除的 APP 用户。 */
   async restoreAppUser(adminUserId: number, userId: number) {
-    await this.ensureSuperAdmin(adminUserId)
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appUser)
-          .set({ deletedAt: null })
-          .where(
-            and(eq(this.appUser.id, userId), isNotNull(this.appUser.deletedAt)),
-          ),
-      { notFound: '用户不存在或未删除' },
-    )
-    return true
+    return this.appUserCommandService.restoreAppUser(adminUserId, userId)
   }
 
+  /** 重置 APP 用户密码。 */
   async resetAppUserPassword(
     adminUserId: number,
-    dto: ResetAdminAppUserPasswordDto,
+    dto: Parameters<AppUserCommandService['resetAppUserPassword']>[1],
   ) {
-    await this.ensureSuperAdmin(adminUserId)
-    await this.userCoreService.ensureUserExists(dto.id)
-    const plainPassword = this.rsaService.decryptWith(dto.password)
-    const encryptedPassword =
-      await this.scryptService.encryptPassword(plainPassword)
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.appUser)
-          .set({ password: encryptedPassword })
-          .where(
-            and(eq(this.appUser.id, dto.id), isNull(this.appUser.deletedAt)),
-          ),
-      { notFound: '用户不存在' },
-    )
-    return true
+    return this.appUserCommandService.resetAppUserPassword(adminUserId, dto)
   }
 
-  /**
-   * 重建 APP 用户关注相关计数。
-   * 当前仅回填关注分项与 followersCount。
-   */
+  /** 重建单个 APP 用户关注计数。 */
   async rebuildAppUserFollowCounts(adminUserId: number, userId: number) {
-    await this.ensureSuperAdmin(adminUserId)
-    await this.userCoreService.ensureUserExists(userId)
-    return this.appUserCountService.rebuildFollowCounts(undefined, userId)
+    return this.appUserCommandService.rebuildAppUserFollowCounts(
+      adminUserId,
+      userId,
+    )
   }
 
-  /**
-   * 全量重建 APP 用户关注相关计数。
-   * 当前仅回填关注分项与 followersCount。
-   */
+  /** 全量重建 APP 用户关注计数。 */
   async rebuildAllAppUserFollowCounts(adminUserId: number, batchSize = 200) {
-    await this.ensureSuperAdmin(adminUserId)
-    const userIds = await this.db
-      .select({ id: this.appUser.id })
-      .from(this.appUser)
-      .where(isNull(this.appUser.deletedAt))
-      .orderBy(this.appUser.id)
-      .then((rows) => rows.map((row) => row.id))
-
-    await this.processIdsInBatches(userIds, batchSize, async (ids) => {
-      await Promise.all(
-        ids.map(async (userId) =>
-          this.appUserCountService.rebuildFollowCounts(undefined, userId),
-        ),
-      )
-    })
-
-    return true
+    return this.appUserCommandService.rebuildAllAppUserFollowCounts(
+      adminUserId,
+      batchSize,
+    )
   }
 
-  /**
-   * 获取 APP 用户积分统计
-   */
+  /** 获取 APP 用户积分统计。 */
   async getAppUserPointStats(userId: number) {
-    await this.userCoreService.ensureUserExists(userId)
-    return this.userPointService.getUserPointStats(userId)
+    return this.appUserGrowthService.getAppUserPointStats(userId)
   }
 
-  /**
-   * 获取 APP 用户积分记录分页
-   */
-  async getAppUserPointRecords(query: QueryUserPointRecordDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
-    return this.userPointService.getPointRecordPage(query)
+  /** 获取 APP 用户积分记录分页。 */
+  async getAppUserPointRecords(
+    query: Parameters<AppUserGrowthService['getAppUserPointRecords']>[0],
+  ) {
+    return this.appUserGrowthService.getAppUserPointRecords(query)
   }
 
-  /**
-   * 手动增加 APP 用户积分
-   */
-  async addAppUserPoints(adminUserId: number, dto: AddAdminAppUserPointsDto) {
-    await this.ensureSuperAdmin(adminUserId)
-
-    return this.userPointService.addPoints({
-      ...dto,
-      bizKey: this.buildManualOperationBizKey(
-        'app-user:points:add',
-        adminUserId,
-        dto.userId,
-        dto.operationKey,
-      ),
-      source: 'admin_app_user_module',
-    })
+  /** 手动增加 APP 用户积分。 */
+  async addAppUserPoints(
+    adminUserId: number,
+    dto: Parameters<AppUserGrowthService['addAppUserPoints']>[1],
+  ) {
+    return this.appUserGrowthService.addAppUserPoints(adminUserId, dto)
   }
 
-  /**
-   * 手动扣减 APP 用户积分
-   */
+  /** 手动扣减 APP 用户积分。 */
   async consumeAppUserPoints(
     adminUserId: number,
-    dto: ConsumeAdminAppUserPointsDto,
+    dto: Parameters<AppUserGrowthService['consumeAppUserPoints']>[1],
   ) {
-    await this.ensureSuperAdmin(adminUserId)
-
-    return this.userPointService.consumePoints({
-      ...dto,
-      bizKey: this.buildManualOperationBizKey(
-        'app-user:points:consume',
-        adminUserId,
-        dto.userId,
-        dto.operationKey,
-      ),
-      source: 'admin_app_user_module',
-    })
+    return this.appUserGrowthService.consumeAppUserPoints(adminUserId, dto)
   }
 
-  /**
-   * 获取 APP 用户经验统计
-   */
+  /** 获取 APP 用户经验统计。 */
   async getAppUserExperienceStats(userId: number) {
-    const user = await this.userCoreService.ensureUserExists(userId)
-
-    const today = startOfTodayInAppTimeZone()
-
-    const [todayEarnedRows, level, nextLevelRows] = await Promise.all([
-      this.db
-        .select({
-          sum: sql<number>`COALESCE(SUM(${this.growthLedgerRecord.delta}), 0)::int`,
-        })
-        .from(this.growthLedgerRecord)
-        .where(
-          and(
-            eq(this.growthLedgerRecord.userId, userId),
-            eq(
-              this.growthLedgerRecord.assetType,
-              GrowthAssetTypeEnum.EXPERIENCE,
-            ),
-            gt(this.growthLedgerRecord.delta, 0),
-            gte(this.growthLedgerRecord.createdAt, today),
-          ),
-        ),
-      user.levelId
-        ? this.userCoreService.getLevelInfo(user.levelId)
-        : undefined,
-      this.db
-        .select({
-          id: this.userLevelRule.id,
-          name: this.userLevelRule.name,
-          requiredExperience: this.userLevelRule.requiredExperience,
-        })
-        .from(this.userLevelRule)
-        .where(
-          and(
-            eq(this.userLevelRule.isEnabled, true),
-            gt(this.userLevelRule.requiredExperience, user.experience),
-          ),
-        )
-        .orderBy(this.userLevelRule.requiredExperience)
-        .limit(1),
-    ])
-    const todayEarned = Number(todayEarnedRows[0]?.sum ?? 0)
-    const nextLevel = nextLevelRows[0]
-
-    return {
-      currentExperience: user.experience,
-      todayEarned,
-      level: level
-        ? {
-            id: level.id,
-            name: level.name,
-            requiredExperience: level.requiredExperience,
-          }
-        : undefined,
-      nextLevel: nextLevel
-        ? {
-            id: nextLevel.id,
-            name: nextLevel.name,
-            requiredExperience: nextLevel.requiredExperience,
-          }
-        : undefined,
-      gapToNextLevel: nextLevel
-        ? Math.max(nextLevel.requiredExperience - user.experience, 0)
-        : undefined,
-    }
+    return this.appUserGrowthService.getAppUserExperienceStats(userId)
   }
 
-  /**
-   * 获取 APP 用户经验记录分页
-   */
-  async getAppUserExperienceRecords(query: QueryUserExperienceRecordDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
-    return this.userExperienceService.getExperienceRecordPage(query)
+  /** 获取 APP 用户经验记录分页。 */
+  async getAppUserExperienceRecords(
+    query: Parameters<AppUserGrowthService['getAppUserExperienceRecords']>[0],
+  ) {
+    return this.appUserGrowthService.getAppUserExperienceRecords(query)
   }
 
-  /**
-   * 获取 APP 用户混合成长流水分页
-   */
-  async getAppUserGrowthLedgerRecords(query: QueryAdminAppUserGrowthLedgerDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
-    return this.growthLedgerService.getGrowthLedgerPage(query)
+  /** 获取 APP 用户混合成长流水分页。 */
+  async getAppUserGrowthLedgerRecords(
+    query: Parameters<AppUserGrowthService['getAppUserGrowthLedgerRecords']>[0],
+  ) {
+    return this.appUserGrowthService.getAppUserGrowthLedgerRecords(query)
   }
 
-  /**
-   * 手动增加 APP 用户经验
-   */
+  /** 手动增加 APP 用户经验。 */
   async addAppUserExperience(
     adminUserId: number,
-    dto: AddAdminAppUserExperienceDto,
+    dto: Parameters<AppUserGrowthService['addAppUserExperience']>[1],
   ) {
-    await this.ensureSuperAdmin(adminUserId)
-
-    return this.userExperienceService.addExperience({
-      ...dto,
-      bizKey: this.buildManualOperationBizKey(
-        'app-user:experience:add',
-        adminUserId,
-        dto.userId,
-        dto.operationKey,
-      ),
-      source: 'admin_app_user_module',
-    })
+    return this.appUserGrowthService.addAppUserExperience(adminUserId, dto)
   }
 
-  /**
-   * 获取 APP 用户徽章分页
-   */
-  async getAppUserBadges(query: QueryAdminAppUserBadgeDto) {
-    await this.userCoreService.ensureUserExists(query.userId)
-
-    const { userId, name, type, isEnabled, business, eventKey, ...pageQuery } =
-      query
-
-    const badgeConditions: SQL[] = []
-
-    if (name) {
-      badgeConditions.push(buildILikeCondition(this.userBadge.name, name)!)
-    }
-    if (type !== undefined) {
-      badgeConditions.push(eq(this.userBadge.type, type))
-    }
-    if (isEnabled !== undefined) {
-      badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
-    }
-    if (business !== undefined) {
-      badgeConditions.push(
-        business === null
-          ? isNull(this.userBadge.business)
-          : eq(this.userBadge.business, business),
-      )
-    }
-    if (eventKey !== undefined) {
-      badgeConditions.push(
-        eventKey === null
-          ? isNull(this.userBadge.eventKey)
-          : eq(this.userBadge.eventKey, eventKey),
-      )
-    }
-
-    const badgeWhere =
-      badgeConditions.length > 0 ? and(...badgeConditions) : undefined
-    const badges = await this.db
-      .select({ id: this.userBadge.id })
-      .from(this.userBadge)
-      .where(badgeWhere)
-    const badgeIds = badges.map((item) => item.id)
-    if (badgeIds.length === 0) {
-      return {
-        list: [],
-        total: 0,
-        pageIndex: pageQuery.pageIndex,
-        pageSize: pageQuery.pageSize,
-        totalPages: 0,
-      }
-    }
-    const page = await this.drizzle.ext.findPagination(
-      this.userBadgeAssignment,
-      {
-        where: and(
-          eq(this.userBadgeAssignment.userId, userId),
-          inArray(this.userBadgeAssignment.badgeId, badgeIds),
-        ),
-        ...pageQuery,
-        orderBy: pageQuery.orderBy ?? [
-          { createdAt: 'desc' as const },
-          { badgeId: 'asc' as const },
-        ],
-      },
-    )
-    const pageBadgeIds = page.list.map((item) => item.badgeId)
-    const pageBadges = pageBadgeIds.length
-      ? await this.db
-          .select()
-          .from(this.userBadge)
-          .where(inArray(this.userBadge.id, pageBadgeIds))
-      : []
-    const badgeMap = new Map(pageBadges.map((item) => [item.id, item]))
-
-    return {
-      ...page,
-      list: page.list.map((item) => ({
-        createdAt: item.createdAt,
-        badge: badgeMap.get(item.badgeId),
-      })),
-    }
+  /** 获取 APP 用户徽章分页。 */
+  async getAppUserBadges(
+    query: Parameters<AppUserGrowthService['getAppUserBadges']>[0],
+  ) {
+    return this.appUserGrowthService.getAppUserBadges(query)
   }
 
-  /**
-   * 为 APP 用户分配徽章
-   */
-  async assignAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
-    await this.ensureSuperAdmin(adminUserId)
-
-    await this.userBadgeService.assignBadge(dto)
-    return true
-  }
-
-  /**
-   * 撤销 APP 用户徽章
-   */
-  async revokeAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
-    await this.ensureSuperAdmin(adminUserId)
-
-    await this.userBadgeService.revokeBadge(dto)
-    return true
-  }
-
-  /**
-   * 校验当前管理端用户是否为超级管理员
-   */
-  private async ensureSuperAdmin(adminUserId: number) {
-    const [adminUser] = await this.db
-      .select({ role: this.adminUser.role })
-      .from(this.adminUser)
-      .where(eq(this.adminUser.id, adminUserId))
-      .limit(1)
-
-    if (!adminUser) {
-      throw new NotFoundException('管理端用户不存在')
-    }
-
-    if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
-      throw new UnauthorizedException('权限不足')
-    }
-  }
-
-  /**
-   * 构建日期范围查询条件
-   */
-  private buildDateRange(startDate?: string, endDate?: string) {
-    return buildDateOnlyRangeInAppTimeZone(startDate, endDate)
-  }
-
-  /**
-   * 构建后台人工操作稳定业务键。
-   * 同一 operationKey 重试时保持 bizKey 不变，用于账本幂等和审计串联。
-   */
-  private buildManualOperationBizKey(
-    action: string,
+  /** 为 APP 用户分配徽章。 */
+  async assignAppUserBadge(
     adminUserId: number,
-    appUserId: number,
-    operationKey: string,
+    dto: Parameters<AppUserGrowthService['assignAppUserBadge']>[1],
   ) {
-    return `${action}:admin:${adminUserId}:user:${appUserId}:operation:${operationKey}`
+    return this.appUserGrowthService.assignAppUserBadge(adminUserId, dto)
   }
 
-  private normalizeBirthDate(value?: string | Date | null) {
-    if (value === undefined) {
-      return undefined
-    }
-    if (value === null || value === '') {
-      return null
-    }
-    if (typeof value === 'string') {
-      return value
-    }
-    return formatDateOnlyInAppTimeZone(value)
-  }
-
-  private async generateUniqueAccount() {
-    const randomAccount = Math.floor(100000 + Math.random() * 900000)
-    const [existingUser] = await this.db
-      .select({ id: this.appUser.id })
-      .from(this.appUser)
-      .where(eq(this.appUser.account, String(randomAccount)))
-      .limit(1)
-
-    if (existingUser) {
-      return this.generateUniqueAccount()
-    }
-    return randomAccount
+  /** 撤销 APP 用户徽章。 */
+  async revokeAppUserBadge(
+    adminUserId: number,
+    dto: Parameters<AppUserGrowthService['revokeAppUserBadge']>[1],
+  ) {
+    return this.appUserGrowthService.revokeAppUserBadge(adminUserId, dto)
   }
 }

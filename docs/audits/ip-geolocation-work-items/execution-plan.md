@@ -32,15 +32,18 @@
 | 任务 | 状态 | 硬前置 | 软前置 | 直接后置 | 摘要 | 任务单 |
 | --- | --- | --- | --- | --- | --- | --- |
 | P1-01 | pending | P0-01 | P0-03 | 无 | 打通论坛操作日志属地写入 | [01-forum-action-log-geolocation-write-path.md](./p1/01-forum-action-log-geolocation-write-path.md) |
+| P1-02 | pending | P0-01 | 无 | 无 | 打通管理端 xdb 上传与当前进程热切换 | [02-admin-ip2region-hot-reload-management.md](./p1/02-admin-ip2region-hot-reload-management.md) |
 
 ## 任务依赖补充说明
 
 - `P0-01` 负责唯一的数据模型、schema 字段和 Geo 平台能力，后续任务不得各自定义第二套属地结构。
 - `P0-02` 与 `P0-03` 可并行，但都必须复用 `P0-01` 提供的统一 Geo 上下文与字段写法。
 - `P1-01` 涉及 `libs/forum/src/topic/forum-topic.service.ts`，与 `P0-03` 共享写集，默认在 `P0-03` 稳定后串行推进。
+- `P1-02` 依赖 `P0-01` 提供的 Geo owner 与 `xdb` 路径约定，默认可与 `P1-01` 并行；若后续需要跨进程立即生效，需另立任务处理广播重载。
 
 ## 状态变更记录
 
 | 日期 | 任务 | 变更前 | 变更后 | 记录 | 备注 |
 | --- | --- | --- | --- | --- | --- |
 | 2026-04-06 | 全部任务 | 无 | pending | 初始化工作包文档集 | 当前仅完成排期建档，未开始实现 |
+| 2026-04-07 | P1-02 | 无 | pending | 新增管理端 xdb 上传与热切换任务 | 当前仅完成任务建档，未开始实现 |

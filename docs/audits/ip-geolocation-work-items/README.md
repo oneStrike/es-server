@@ -43,6 +43,7 @@
   - `db/schema/forum/forum-user-action-log.ts`
 - 目标链路：
   - Geo 平台能力封装
+  - 管理端 `xdb` 上传与当前进程热切换
   - auth 登录态持久化
   - 审计请求日志
   - 论坛主题创建与 app 端列表 / 详情返回
@@ -54,6 +55,8 @@
 - `db/schema/app/app-agreement.ts`
 - `db/schema/app/user-browse-log.ts`
 - 商业版 `ip2region` 字段建模
+- 跨 API 进程 / 跨实例广播重载
+- `ip2region_v6.xdb` 管理能力
 - 历史数据回填与读路径补算属地
 - 后台审计日志页面、论坛操作日志页面的属地筛选能力
 - 新增 app 端评论 detail 路由
