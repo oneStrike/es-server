@@ -1,4 +1,4 @@
-import { UserStatusEnum } from '@libs/platform/constant/user.constant';
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';

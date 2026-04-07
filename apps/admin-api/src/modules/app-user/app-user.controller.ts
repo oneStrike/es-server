@@ -1,14 +1,36 @@
-import { AssignUserBadgeDto, UserBadgeItemDto } from '@libs/growth/badge/dto/user-badge-management.dto';
-import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto';
-import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto';
-import { AddAdminAppUserExperienceDto, AddAdminAppUserPointsDto, AdminAppUserDetailDto, AdminAppUserExperienceRecordDto, AdminAppUserExperienceStatsDto, AdminAppUserFollowCountRepairResultDto, AdminAppUserGrowthLedgerRecordDto, AdminAppUserPageItemDto, AdminAppUserPointRecordDto, AdminAppUserPointStatsDto, ConsumeAdminAppUserPointsDto, CreateAdminAppUserDto, QueryAdminAppUserBadgeDto, QueryAdminAppUserGrowthLedgerDto, QueryAdminAppUserPageDto, ResetAdminAppUserPasswordDto, UpdateAdminAppUserEnabledDto, UpdateAdminAppUserProfileDto, UpdateAdminAppUserStatusDto } from '@libs/user/dto/admin-app-user.dto';
+import {
+  AssignUserBadgeDto,
+  UserBadgeItemDto,
+} from '@libs/growth/badge/dto/user-badge-management.dto'
+import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
+import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto, UserIdDto } from '@libs/platform/dto'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
+import {
+  AddAdminAppUserExperienceDto,
+  AddAdminAppUserPointsDto,
+  AdminAppUserDetailDto,
+  AdminAppUserExperienceRecordDto,
+  AdminAppUserExperienceStatsDto,
+  AdminAppUserFollowCountRepairResultDto,
+  AdminAppUserGrowthLedgerRecordDto,
+  AdminAppUserPageItemDto,
+  AdminAppUserPointRecordDto,
+  AdminAppUserPointStatsDto,
+  ConsumeAdminAppUserPointsDto,
+  CreateAdminAppUserDto,
+  QueryAdminAppUserBadgeDto,
+  QueryAdminAppUserGrowthLedgerDto,
+  QueryAdminAppUserPageDto,
+  ResetAdminAppUserPasswordDto,
+  UpdateAdminAppUserEnabledDto,
+  UpdateAdminAppUserProfileDto,
+  UpdateAdminAppUserStatusDto,
+} from '@libs/user/dto/admin-app-user.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AppUserService } from './app-user.service'
 
 /**
@@ -121,10 +143,7 @@ export class AppUserController {
       actionType: AuditActionTypeEnum.DELETE,
     },
   })
-  async deleteAppUser(
-    @Body() body: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
+  async deleteAppUser(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
     return this.appUserService.deleteAppUser(userId, body.id)
   }
 

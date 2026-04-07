@@ -1,4 +1,32 @@
 /**
+ * APP 用户默认值常量。
+ * 用于注册与资料初始化阶段的稳定默认口径。
+ */
+export const UserDefaults = {
+  /** 初始积分 */
+  INITIAL_POINTS: 0,
+  /** 初始经验值 */
+  INITIAL_EXPERIENCE: 0,
+}
+
+/**
+ * APP 用户状态枚举。
+ * 收敛登录、发帖、评论等能力判断所依赖的统一状态语义。
+ */
+export enum UserStatusEnum {
+  /** 正常 */
+  NORMAL = 1,
+  /** 禁言 */
+  MUTED = 2,
+  /** 永久禁言 */
+  PERMANENT_MUTED = 3,
+  /** 封禁 */
+  BANNED = 4,
+  /** 永久封禁 */
+  PERMANENT_BANNED = 5,
+}
+
+/**
  * APP 用户删除态筛选范围。
  * 用于后台分页列表在未删除、已删除与全部之间切换。
  */

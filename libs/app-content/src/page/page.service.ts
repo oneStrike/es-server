@@ -1,7 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { EnablePlatformEnum } from '@libs/platform/constant/base.constant'
 import { IdDto, IdsDto } from '@libs/platform/dto/base.dto'
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { and, arrayOverlaps, eq, inArray } from 'drizzle-orm'
 import {
   CreateAppPageDto,
@@ -9,6 +10,12 @@ import {
   QueryPageByCodeDto,
   UpdateAppPageDto,
 } from './dto/page.dto'
+
+const ENABLE_PLATFORM_VALUES = new Set<number>(
+  Object.values(EnablePlatformEnum).filter(
+    (value): value is number => typeof value === 'number',
+  ),
+)
 
 /**
  * 应用页面服务
@@ -51,6 +58,7 @@ export class AppPageService {
       queryPageDto
 
     const conditions: SQL[] = []
+    const platforms = this.parseEnablePlatforms(enablePlatform)
 
     // 名称模糊查询
     if (name) {
@@ -73,13 +81,8 @@ export class AppPageService {
     }
 
     // 平台筛选
-    if (enablePlatform && enablePlatform !== '[]') {
-      const platforms = JSON.parse(enablePlatform).map((item: string) =>
-        Number(item),
-      )
-      if (platforms.length > 0) {
-        conditions.push(arrayOverlaps(this.appPage.enablePlatform, platforms))
-      }
+    if (platforms && platforms.length > 0) {
+      conditions.push(arrayOverlaps(this.appPage.enablePlatform, platforms))
     }
 
     return this.drizzle.ext.findPagination(this.appPage, {
@@ -158,5 +161,38 @@ export class AppPageService {
         .set({ isEnabled: false })
         .where(inArray(this.appPage.id, ids)), { notFound: '页面不存在' },)
     return true
+  }
+
+  /**
+   * 解析页面平台筛选参数。
+   * 仅接受平台枚举值数组，避免合法 JSON 在 service 层被误判成 500。
+   */
+  private parseEnablePlatforms(enablePlatform?: string) {
+    if (!enablePlatform || enablePlatform === '[]') {
+      return undefined
+    }
+
+    let parsedValue: unknown
+    try {
+      parsedValue = JSON.parse(enablePlatform)
+    } catch {
+      throw new BadRequestException('启用平台筛选必须是合法 JSON 数组')
+    }
+
+    if (!Array.isArray(parsedValue)) {
+      throw new BadRequestException('启用平台筛选必须是平台枚举值数组')
+    }
+
+    const platforms = parsedValue.map((item) => Number(item))
+    if (
+      platforms.some(
+        (item) =>
+          !Number.isInteger(item) || !ENABLE_PLATFORM_VALUES.has(item),
+      )
+    ) {
+      throw new BadRequestException('启用平台筛选必须是平台枚举值数组')
+    }
+
+    return platforms.length > 0 ? [...new Set(platforms)] : undefined
   }
 }

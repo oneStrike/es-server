@@ -1,4 +1,4 @@
-# 项目 Controller 规范
++# 项目 Controller 规范
 
 适用范围：本仓库所有 `apps/admin-api`、`apps/app-api` 的 Controller、Module 与 Swagger 暴露层。
 

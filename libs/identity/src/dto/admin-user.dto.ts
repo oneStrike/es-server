@@ -1,4 +1,4 @@
-import { AdminUserRoleEnum } from '@libs/platform/constant/user.constant';
+import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';

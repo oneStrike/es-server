@@ -1,6 +1,6 @@
 import type { AppUserSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
-import { UserStatusEnum } from '@libs/platform/constant/user.constant';
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { formatDateTimeInAppTimeZone } from '@libs/platform/utils/time';
 import {
   ForbiddenException,

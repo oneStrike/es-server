@@ -1,21 +1,41 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { AssignUserBadgeDto } from '@libs/growth/badge/dto/user-badge-management.dto';
-import { UserBadgeService } from '@libs/growth/badge/user-badge.service';
-import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto';
-import { UserExperienceService } from '@libs/growth/experience/experience.service';
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
-import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto';
-import { UserPointService } from '@libs/growth/point/point.service';
-import { AdminUserRoleEnum, GenderEnum, UserStatusEnum } from '@libs/platform/constant/user.constant';
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
-import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
-import { buildDateOnlyRangeInAppTimeZone, formatDateOnlyInAppTimeZone, startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
-import { AppUserCountService } from '@libs/user/app-user-count.service';
-import { AppUserDeletedScopeEnum } from '@libs/user/app-user.constant';
-import { AddAdminAppUserExperienceDto, AddAdminAppUserPointsDto, ConsumeAdminAppUserPointsDto, CreateAdminAppUserDto, QueryAdminAppUserBadgeDto, QueryAdminAppUserGrowthLedgerDto, QueryAdminAppUserPageDto, ResetAdminAppUserPasswordDto, UpdateAdminAppUserEnabledDto, UpdateAdminAppUserProfileDto, UpdateAdminAppUserStatusDto } from '@libs/user/dto/admin-app-user.dto';
-import { UserService as UserCoreService } from '@libs/user/user.service';
+import { AssignUserBadgeDto } from '@libs/growth/badge/dto/user-badge-management.dto'
+import { UserBadgeService } from '@libs/growth/badge/user-badge.service'
+import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
+import { UserExperienceService } from '@libs/growth/experience/experience.service'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
+import { UserPointService } from '@libs/growth/point/point.service'
+import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
+import { GenderEnum } from '@libs/platform/constant/profile.constant'
+import { RsaService, ScryptService } from '@libs/platform/modules/crypto'
+
+import {
+  buildDateOnlyRangeInAppTimeZone,
+  formatDateOnlyInAppTimeZone,
+  startOfTodayInAppTimeZone,
+} from '@libs/platform/utils'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
+import {
+  AppUserDeletedScopeEnum,
+  UserStatusEnum,
+} from '@libs/user/app-user.constant'
+import {
+  AddAdminAppUserExperienceDto,
+  AddAdminAppUserPointsDto,
+  ConsumeAdminAppUserPointsDto,
+  CreateAdminAppUserDto,
+  QueryAdminAppUserBadgeDto,
+  QueryAdminAppUserGrowthLedgerDto,
+  QueryAdminAppUserPageDto,
+  ResetAdminAppUserPasswordDto,
+  UpdateAdminAppUserEnabledDto,
+  UpdateAdminAppUserProfileDto,
+  UpdateAdminAppUserStatusDto,
+} from '@libs/user/dto/admin-app-user.dto'
+import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
   BadRequestException,
   Injectable,
@@ -127,9 +147,7 @@ export class AppUserService {
       conditions.push(eq(this.appUser.id, id))
     }
     if (account) {
-      conditions.push(
-        buildILikeCondition(this.appUser.account, account)!,
-      )
+      conditions.push(buildILikeCondition(this.appUser.account, account)!)
     }
     if (phoneNumber) {
       conditions.push(
@@ -137,9 +155,7 @@ export class AppUserService {
       )
     }
     if (nickname) {
-      conditions.push(
-        buildILikeCondition(this.appUser.nickname, nickname)!,
-      )
+      conditions.push(buildILikeCondition(this.appUser.nickname, nickname)!)
     }
     if (emailAddress) {
       conditions.push(
@@ -297,7 +313,10 @@ export class AppUserService {
             .select({ id: this.userLevelRule.id })
             .from(this.userLevelRule)
             .where(eq(this.userLevelRule.isEnabled, true))
-            .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
+            .orderBy(
+              asc(this.userLevelRule.sortOrder),
+              asc(this.userLevelRule.id),
+            )
             .limit(1)
 
           const [created] = await tx
@@ -372,11 +391,14 @@ export class AppUserService {
 
     try {
       if (Object.keys(userData).length > 0) {
-        await this.drizzle.withErrorHandling(() =>
-          this.db
-            .update(this.appUser)
-            .set(userData)
-            .where(eq(this.appUser.id, dto.id)), { notFound: '用户不存在' },)
+        await this.drizzle.withErrorHandling(
+          () =>
+            this.db
+              .update(this.appUser)
+              .set(userData)
+              .where(eq(this.appUser.id, dto.id)),
+          { notFound: '用户不存在' },
+        )
       }
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
@@ -398,13 +420,16 @@ export class AppUserService {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({
-          isEnabled: dto.isEnabled,
-        })
-        .where(eq(this.appUser.id, dto.id)), { notFound: '用户不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appUser)
+          .set({
+            isEnabled: dto.isEnabled,
+          })
+          .where(eq(this.appUser.id, dto.id)),
+      { notFound: '用户不存在' },
+    )
     return true
   }
 
@@ -435,39 +460,48 @@ export class AppUserService {
       throw new BadRequestException('截止时间必须晚于当前时间')
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({
-          status: dto.status,
-          banReason: isNormal ? null : dto.banReason?.trim(),
-          banUntil: isNormal || isPermanent ? null : dto.banUntil,
-        })
-        .where(eq(this.appUser.id, dto.id)), { notFound: '用户不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appUser)
+          .set({
+            status: dto.status,
+            banReason: isNormal ? null : dto.banReason?.trim(),
+            banUntil: isNormal || isPermanent ? null : dto.banUntil,
+          })
+          .where(eq(this.appUser.id, dto.id)),
+      { notFound: '用户不存在' },
+    )
     return true
   }
 
   async deleteAppUser(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)),
-        ), { notFound: '用户不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appUser)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)),
+          ),
+      { notFound: '用户不存在' },
+    )
     return true
   }
 
   async restoreAppUser(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({ deletedAt: null })
-        .where(
-          and(eq(this.appUser.id, userId), isNotNull(this.appUser.deletedAt)),
-        ), { notFound: '用户不存在或未删除' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appUser)
+          .set({ deletedAt: null })
+          .where(
+            and(eq(this.appUser.id, userId), isNotNull(this.appUser.deletedAt)),
+          ),
+      { notFound: '用户不存在或未删除' },
+    )
     return true
   }
 
@@ -480,11 +514,16 @@ export class AppUserService {
     const plainPassword = this.rsaService.decryptWith(dto.password)
     const encryptedPassword =
       await this.scryptService.encryptPassword(plainPassword)
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({ password: encryptedPassword })
-        .where(and(eq(this.appUser.id, dto.id), isNull(this.appUser.deletedAt))), { notFound: '用户不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appUser)
+          .set({ password: encryptedPassword })
+          .where(
+            and(eq(this.appUser.id, dto.id), isNull(this.appUser.deletedAt)),
+          ),
+      { notFound: '用户不存在' },
+    )
     return true
   }
 
@@ -541,10 +580,7 @@ export class AppUserService {
   /**
    * 手动增加 APP 用户积分
    */
-  async addAppUserPoints(
-    adminUserId: number,
-    dto: AddAdminAppUserPointsDto,
-  ) {
+  async addAppUserPoints(adminUserId: number, dto: AddAdminAppUserPointsDto) {
     await this.ensureSuperAdmin(adminUserId)
 
     return this.userPointService.addPoints({
@@ -653,9 +689,7 @@ export class AppUserService {
   /**
    * 获取 APP 用户经验记录分页
    */
-  async getAppUserExperienceRecords(
-    query: QueryUserExperienceRecordDto,
-  ) {
+  async getAppUserExperienceRecords(query: QueryUserExperienceRecordDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.userExperienceService.getExperienceRecordPage(query)
   }
@@ -701,9 +735,7 @@ export class AppUserService {
     const badgeConditions: SQL[] = []
 
     if (name) {
-      badgeConditions.push(
-        buildILikeCondition(this.userBadge.name, name)!,
-      )
+      badgeConditions.push(buildILikeCondition(this.userBadge.name, name)!)
     }
     if (type !== undefined) {
       badgeConditions.push(eq(this.userBadge.type, type))
@@ -777,10 +809,7 @@ export class AppUserService {
   /**
    * 为 APP 用户分配徽章
    */
-  async assignAppUserBadge(
-    adminUserId: number,
-    dto: AssignUserBadgeDto,
-  ) {
+  async assignAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
     await this.ensureSuperAdmin(adminUserId)
 
     await this.userBadgeService.assignBadge(dto)
@@ -790,10 +819,7 @@ export class AppUserService {
   /**
    * 撤销 APP 用户徽章
    */
-  async revokeAppUserBadge(
-    adminUserId: number,
-    dto: AssignUserBadgeDto,
-  ) {
+  async revokeAppUserBadge(adminUserId: number, dto: AssignUserBadgeDto) {
     await this.ensureSuperAdmin(adminUserId)
 
     await this.userBadgeService.revokeBadge(dto)

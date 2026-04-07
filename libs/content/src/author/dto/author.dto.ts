@@ -1,4 +1,4 @@
-import { GenderEnum } from '@libs/platform/constant/user.constant'
+import { GenderEnum } from '@libs/platform/constant/profile.constant'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property'

@@ -1,7 +1,7 @@
 import type { ChangePasswordDto, UpdateUserDto, UserPageDto, UserRegisterDto } from '@libs/identity/dto/admin-user.dto';
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { AdminUserRoleEnum } from '@libs/platform/constant/user.constant';
+import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service';
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';

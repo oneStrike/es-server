@@ -24,7 +24,8 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 4. Inspect sibling modules and shared abstractions with `rg` before introducing a new pattern.
 5. Implement with existing platform helpers and public APIs; avoid deep imports.
 6. Run validation with the narrowest useful commands from `references/repo-map.md`.
-7. Report any rule conflict explicitly in delivery notes; do not silently spread inconsistent legacy patterns.
+7. If verification requires temporary `*.spec.ts`, scripts, or probes, delete them before delivery unless the user explicitly asks to keep them.
+8. Report any rule conflict explicitly in delivery notes; do not silently spread inconsistent legacy patterns.
 
 ## Layer Checklists
 
@@ -72,7 +73,7 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 - Type-check is required: `pnpm type-check`.
 - Run targeted compile checks for touched app(s) when needed.
 - Run `eslint` on touched files when rule-sensitive layers change (controller/DTO/type/schema/service).
-- Add or update tests when behavior/contract/error semantics change.
+- Add or update tests when behavior/contract/error semantics change; if the repo convention for this workspace only allows temporary verification files, remove those files after the validation evidence has been captured.
 
 ## Repo Notes
 

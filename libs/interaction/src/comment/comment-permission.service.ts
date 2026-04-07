@@ -1,7 +1,7 @@
 import { DrizzleService } from '@db/core'
 import { UserLevelRuleSelect } from '@db/schema'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { UserStatusEnum } from '@libs/platform/constant/user.constant';
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, gte } from 'drizzle-orm'

@@ -54,7 +54,8 @@ export class AppPageController {
     return this.libAppPageService.findById(query)
   }
 
-  @Get('detail/code')
+  // 兼容历史 `detail/code` 路由，同时提供更符合规范的 `code/detail` 入口。
+  @Get('code/detail')
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
     model: BaseAppPageDto,

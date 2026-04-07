@@ -4,10 +4,7 @@ import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
 import { AuthSessionService } from '@libs/identity/session.service'
-import {
-  GenderEnum,
-  UserStatusEnum,
-} from '@libs/platform/constant/user.constant'
+import { GenderEnum } from '@libs/platform/constant/profile.constant'
 import {
   AuthConstants,
   AuthDefaultValue,
@@ -21,6 +18,7 @@ import {
 import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
   BadRequestException,
