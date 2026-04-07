@@ -2,8 +2,7 @@ import { NestedProperty } from '@libs/platform/decorators/validate/nested-proper
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto'
 import { CaptchaDto } from '@libs/platform/modules/captcha/dto/captcha.dto';
-import { OmitType } from '@nestjs/swagger'
-import { BaseAdminUserDto } from './admin-user.dto'
+import { AdminUserResponseDto } from './admin-user.dto'
 
 /**
  * 管理端登录入参 DTO。
@@ -28,13 +27,6 @@ export class UserLoginDto extends CaptchaDto {
 }
 
 /**
- * 登录态返回的管理员用户快照 DTO。
- */
-export class AdminUserOmitPwdDto extends OmitType(BaseAdminUserDto, [
-  'password',
-] as const) {}
-
-/**
  * 管理端登录响应 DTO。
  */
 export class LoginResponseDto {
@@ -50,9 +42,9 @@ export class LoginResponseDto {
   @NestedProperty({
     description: '用户信息',
     required: true,
-    type: AdminUserOmitPwdDto,
+    type: AdminUserResponseDto,
     validation: false,
     nullable: false,
   })
-  user!: AdminUserOmitPwdDto
+  user!: AdminUserResponseDto
 }

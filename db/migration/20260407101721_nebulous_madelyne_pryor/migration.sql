@@ -1,0 +1,1 @@
+ALTER TABLE "admin_user" ADD CONSTRAINT "admin_user_mobile_key" UNIQUE("mobile");

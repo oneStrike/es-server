@@ -1,12 +1,18 @@
-import { AgreementService } from '@libs/app-content/agreement/agreement.service';
-import { AgreementListItemDto, BaseAgreementDto, CreateAgreementDto, QueryAgreementDto, UpdateAgreementDto } from '@libs/app-content/agreement/dto/agreement.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
+import { AgreementService } from '@libs/app-content/agreement/agreement.service'
+import {
+  AgreementListItemDto,
+  BaseAgreementDto,
+  CreateAgreementDto,
+  QueryAgreementDto,
+  UpdateAgreementDto,
+} from '@libs/app-content/agreement/dto/agreement.dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../common/decorators/audit.decorator'
-import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 协议管理控制器

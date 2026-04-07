@@ -5,7 +5,7 @@ import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { BaseDto } from '@libs/platform/dto/base.dto';
 import { PageDto } from '@libs/platform/dto/page.dto';
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
  * 管理端用户基础 DTO。
@@ -77,6 +77,14 @@ export class BaseAdminUserDto extends BaseDto {
   })
   lastLoginIp?: string
 }
+
+/**
+ * 管理员账号输出 DTO。
+ * 收敛后台读取场景可见字段，避免把 password 暴露进 Swagger 响应模型。
+ */
+export class AdminUserResponseDto extends OmitType(BaseAdminUserDto, [
+  'password',
+] as const) {}
 
 /**
  * 创建管理员账号 DTO。

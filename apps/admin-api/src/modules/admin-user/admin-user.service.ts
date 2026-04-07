@@ -7,6 +7,7 @@ import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.servi
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -38,6 +39,10 @@ export class AdminUserService {
     return this.drizzle.db
   }
 
+  /**
+   * 校验当前操作人是否为超级管理员。
+   * 角色不足属于已登录但无权限的场景，需要返回 Forbidden 语义。
+   */
   async isSuperAdmin(userId: number) {
     const [adminUser] = await this.db
       .select({ role: this.adminUser.role })
@@ -49,7 +54,7 @@ export class AdminUserService {
     }
 
     if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
-      throw new UnauthorizedException('权限不足')
+      throw new ForbiddenException('权限不足')
     }
   }
 
@@ -61,9 +66,13 @@ export class AdminUserService {
     updateData: UpdateUserDto,
   ) {
     await this.isSuperAdmin(userId)
-    // 查找用户
+    // 先读取当前快照，避免把同一账号自己的用户名或手机号误判成冲突。
     const [user] = await this.db
-      .select({ id: this.adminUser.id, username: this.adminUser.username })
+      .select({
+        id: this.adminUser.id,
+        username: this.adminUser.username,
+        mobile: this.adminUser.mobile,
+      })
       .from(this.adminUser)
       .where(eq(this.adminUser.id, updateData.id))
       .limit(1)
@@ -84,7 +93,17 @@ export class AdminUserService {
       }
     }
 
-    // 返回更新后的用户信息（不包含密码）
+    if (updateData.mobile && updateData.mobile !== user.mobile) {
+      const [existingUser] = await this.db
+        .select({ id: this.adminUser.id })
+        .from(this.adminUser)
+        .where(eq(this.adminUser.mobile, updateData.mobile))
+        .limit(1)
+
+      if (existingUser?.id) {
+        throw new BadRequestException('手机号已存在')
+      }
+    }
 
     const { id: _id, ...data } = updateData
     const result = await this.drizzle.withErrorHandling(() =>
@@ -259,10 +278,12 @@ export class AdminUserService {
   }
 
   /**
-   * 解锁用户
+   * 解锁指定管理员账号的登录锁定状态。
+   * 该能力会直接修改登录保护状态，只允许超级管理员操作。
    */
-  async unlockUser(userId: number) {
-    // 检查用户是否存在
+  async unlockUser(operatorId: number, userId: number) {
+    await this.isSuperAdmin(operatorId)
+
     const [user] = await this.db
       .select({ id: this.adminUser.id })
       .from(this.adminUser)

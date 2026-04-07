@@ -1,4 +1,4 @@
-import { BaseAdminUserDto, ChangePasswordDto, UpdateUserDto, UserPageDto, UserRegisterDto } from '@libs/identity/dto/admin-user.dto';
+import { AdminUserResponseDto, ChangePasswordDto, UpdateUserDto, UserPageDto, UserRegisterDto } from '@libs/identity/dto/admin-user.dto';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
@@ -60,7 +60,7 @@ export class AdminUserController {
   @Get('profile')
   @ApiDoc({
     summary: '获取当前用户信息',
-    model: BaseAdminUserDto,
+    model: AdminUserResponseDto,
   })
   async getUserInfo(@CurrentUser('sub') userId: number) {
     return this.adminUserService.getUserInfo(userId)
@@ -72,7 +72,7 @@ export class AdminUserController {
   @Get('detail')
   @ApiDoc({
     summary: '根据ID获取用户信息',
-    model: BaseAdminUserDto,
+    model: AdminUserResponseDto,
   })
   async getUserById(@Query() query: IdDto) {
     return this.adminUserService.getUserInfo(query.id)
@@ -84,7 +84,7 @@ export class AdminUserController {
   @Get('page')
   @ApiPageDoc({
     summary: '获取管理端用户分页列表',
-    model: BaseAdminUserDto,
+    model: AdminUserResponseDto,
   })
   async getUsers(@Query() query: UserPageDto) {
     return this.adminUserService.getUsers(query)
@@ -109,7 +109,7 @@ export class AdminUserController {
     return this.adminUserService.changePassword(userId, body)
   }
 
-  /*
+  /**
    * 重置用户密码为默认密码接口
    */
   @Post('password/reset')
@@ -138,7 +138,10 @@ export class AdminUserController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async unlockUser(@Body() query: IdDto) {
-    return this.adminUserService.unlockUser(query.id)
+  async unlockUser(
+    @Body() query: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.adminUserService.unlockUser(userId, query.id)
   }
 }

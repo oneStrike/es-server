@@ -79,7 +79,7 @@ export class CreateAgreementDto extends OmitType(BaseAgreementDto, [
 
 export class UpdateAgreementDto extends IntersectionType(
   IdDto,
-  PartialType(CreateAgreementDto),
+  CreateAgreementDto,
 ) {}
 
 export class QueryAgreementDto extends IntersectionType(

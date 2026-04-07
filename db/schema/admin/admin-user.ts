@@ -21,7 +21,7 @@ export const adminUser = pgTable("admin_user", {
    */
   password: varchar({ length: 500 }).notNull(),
   /**
-   * 手机号码
+   * 手机号码；为空表示未绑定，非空时在管理端账号内必须唯一
    */
   mobile: varchar({ length: 11 }),
   /**
@@ -57,6 +57,10 @@ export const adminUser = pgTable("admin_user", {
      * 唯一索引: username
      */
     unique("admin_user_username_key").on(table.username),
+    /**
+     * 唯一索引: mobile（仅约束非空值）
+     */
+    unique("admin_user_mobile_key").on(table.mobile),
     /**
      * 启用状态索引
      */

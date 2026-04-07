@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
   CreateAgreementDto,
@@ -30,6 +30,62 @@ export class AgreementService {
   }
 
   /**
+   * 读取协议最小生命周期状态。
+   * 统一给更新、下线等入口复用，避免各处分散判断“是否已发布”。
+   */
+  private async findAgreementLifecycle(id: number) {
+    const agreement = await this.db.query.appAgreement.findFirst({
+      where: { id },
+      columns: {
+        id: true,
+        isPublished: true,
+      },
+    })
+
+    if (!agreement) {
+      throw new NotFoundException('协议不存在')
+    }
+
+    return agreement
+  }
+
+  /**
+   * 从公开协议列表中按标题收敛到最新发布版本。
+   * 当同一标题存在多个历史发布版本时，只保留发布时间最新的一条。
+   */
+  private pickLatestPublishedAgreements<
+    T extends {
+      id: number
+      title: string
+      publishedAt?: Date | null
+    },
+  >(
+    agreements: T[],
+  ) {
+    const seenTitles = new Set<string>()
+
+    return [...agreements]
+      .sort((left, right) => {
+        const publishedAtDiff =
+          (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0)
+
+        if (publishedAtDiff !== 0) {
+          return publishedAtDiff
+        }
+
+        return right.id - left.id
+      })
+      .filter((agreement) => {
+        if (seenTitles.has(agreement.title)) {
+          return false
+        }
+
+        seenTitles.add(agreement.title)
+        return true
+      })
+  }
+
+  /**
    * 创建协议草稿。
    * 标题和版本命中唯一约束时，统一交给 `withErrorHandling` 转换为业务异常。
    */
@@ -54,6 +110,11 @@ export class AgreementService {
    */
   async update(dto: UpdateAgreementDto) {
     const { id, ...updateData } = dto
+    const agreement = await this.findAgreementLifecycle(id)
+    if (agreement.isPublished) {
+      throw new BadRequestException('已发布协议不允许直接修改，请新建版本后发布')
+    }
+
     const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -88,9 +149,15 @@ export class AgreementService {
   }
 
   /**
-   * 通过 `isPublished=false` 逻辑下线协议，不执行物理删除。
+   * 通过 `isPublished=false` 逻辑下线已发布协议，不执行物理删除。
+   * 草稿仍保留在编辑流程中，不允许通过“下线”入口伪装成删除成功。
    */
   async delete(dto: IdDto) {
+    const agreement = await this.findAgreementLifecycle(dto.id)
+    if (!agreement.isPublished) {
+      throw new BadRequestException('未发布协议不允许下线')
+    }
+
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.agreement)
@@ -152,10 +219,10 @@ export class AgreementService {
 
   /**
    * 查询公开可见的最新协议列表。
-   * 该接口按发布时间倒序返回，并省略正文，供登录注册等轻量场景使用。
+   * 该接口按标题收敛为最新发布版本，并省略正文，供登录注册等轻量场景使用。
    */
   async getAllLatest(dto: QueryPublishedAgreementDto) {
-    return this.db.query.appAgreement.findMany({
+    const agreements = await this.db.query.appAgreement.findMany({
       where: {
         isPublished: true,
         showInAuth: dto.showInAuth,
@@ -165,5 +232,7 @@ export class AgreementService {
       },
       columns: { content: false },
     })
+
+    return this.pickLatestPublishedAgreements(agreements)
   }
 }
