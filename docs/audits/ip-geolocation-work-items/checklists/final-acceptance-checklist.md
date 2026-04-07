@@ -21,7 +21,7 @@
 
 - [ ] app 端论坛主题 `page`、`detail`、`my/page` 返回归属地字段。
   - 证据：
-- [ ] app 端评论 `my/page`、`reply/page`、目标评论列表返回归属地字段。
+- [ ] app 端评论 `my/page`、`reply/page` 以及复用目标评论列表能力的现有接口（论坛主题、作品、章节）返回归属地字段。
   - 证据：
 - [ ] 后台审计日志页面未新增属地筛选条件。
   - 证据：
@@ -38,6 +38,8 @@
 
 - [ ] `pnpm db:generate` 已完成，迁移文件由规范流程生成。
   - 证据：
+- [ ] `db/comments/generated.sql` 已同步更新，`pnpm db:comments:check` 通过。
+  - 证据：
 - [ ] `geoSource` 在所有落库样例中固定为 `ip2region`。
   - 证据：
 - [ ] 属地字段为空时的语义已验证为“未能解析或未提供 IP”，不存在空字符串污染。
@@ -48,6 +50,8 @@
 ## 验证命令与输出
 
 - [ ] `pnpm type-check`
+  - 输出：
+- [ ] `pnpm db:comments:check`
   - 输出：
 - [ ] 变更文件 `eslint`
   - 输出：

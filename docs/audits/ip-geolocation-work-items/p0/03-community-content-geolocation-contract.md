@@ -9,14 +9,16 @@
 
 - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
 - `apps/app-api/src/modules/comment/comment.controller.ts`
+- `apps/app-api/src/modules/work/work.controller.ts`
+- `apps/app-api/src/modules/work/work-chapter.controller.ts`
 - `apps/admin-api/src/modules/forum/topic/topic.controller.ts`
 - `libs/forum/src/topic/forum-topic.service.ts`
 - `libs/forum/src/topic/forum-topic.type.ts`
 - `libs/forum/src/topic/dto/forum-topic.dto.ts`
 - `libs/forum/src/profile/profile.service.ts`
 - `libs/interaction/src/comment/comment.service.ts`
-- `libs/interaction/src/comment/comment.dto.ts`
-- 视实现方式可能新增 `libs/interaction/src/comment/comment.type.ts`
+- `libs/interaction/src/comment/dto/comment.dto.ts`
+- `libs/interaction/src/comment/comment.type.ts`
 
 ## 当前代码锚点
 
@@ -29,6 +31,10 @@
 - 评论创建 / 回复当前只透传 `userId` 与 DTO：
   - `apps/app-api/src/modules/comment/comment.controller.ts`
   - `libs/interaction/src/comment/comment.service.ts`
+- `TargetCommentItemDto` 当前不仅用于论坛主题评论分页，也被作品、章节评论分页复用：
+  - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
+  - `apps/app-api/src/modules/work/work.controller.ts`
+  - `apps/app-api/src/modules/work/work-chapter.controller.ts`
 - 论坛主题 app 端现有返回 DTO：
   - `PublicForumTopicPageItemDto`
   - `PublicForumTopicDetailDto`
@@ -40,7 +46,7 @@
 
 ## 非目标
 
-- 不新增 app 端评论 detail 路由。
+- 不新增 app 端全站评论 detail 路由。
 - 不改造浏览日志的属地写入。
 - 不新增后台论坛主题或后台评论页面的属地筛选能力。
 - 不回填历史主题 / 评论记录，也不在读取时按旧 IP 补算属地。
@@ -61,26 +67,28 @@
   - 公共分页 `page`
   - 详情 `detail`
   - 我的主题 `my/page`
-- 评论返回口径覆盖：
+- 评论属地按全站评论能力收口，返回口径覆盖：
   - 我的评论 `my/page`
   - 回复分页 `reply/page`
-  - 论坛主题评论分页中复用的目标评论列表
+  - `app/forum/topic/comment/page`
+  - `app/work/comment/page`
+  - `app/work/chapter/comment/page`
 
 ## 完成标准
 
 - 新创建的论坛主题记录写入统一属地字段。
 - 新创建的评论与回复记录写入统一属地字段。
 - app 端论坛主题现有列表 / 详情接口返回归属地字段，且 DTO 契约一致。
-- app 端评论现有列表接口返回归属地字段，且 DTO 契约一致。
+- app 端全站评论能力相关现有接口返回归属地字段，且 DTO 契约一致。
 - 不新增新的评论 detail 接口，也不改变既有分页语义与排序语义。
 - 历史主题 / 评论记录允许保持 `geo*` 空值，不要求回填。
 
 ## 完成后同步文档
 
-- 更新 [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md) 中 `P0-03` 的状态。
-- 更新 [development-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/development-plan.md) 中的 app 契约影响描述。
-- 在 [final-acceptance-checklist.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/checklists/final-acceptance-checklist.md) 补充论坛主题与评论接口返回证据。
+- 更新 [execution-plan.md](../execution-plan.md) 中 `P0-03` 的状态。
+- 更新 [development-plan.md](../development-plan.md) 中的 app 契约影响描述。
+- 在 [final-acceptance-checklist.md](../checklists/final-acceptance-checklist.md) 补充论坛主题与评论接口返回证据。
 
 ## 排期引用
 
-- 排期、波次、依赖与状态以 [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md) 中的 `P0-03` 为唯一事实源。
+- 排期、波次、依赖与状态以 [execution-plan.md](../execution-plan.md) 中的 `P0-03` 为唯一事实源。

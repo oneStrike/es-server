@@ -213,6 +213,51 @@ export class BaseForumTopicDto extends BaseDto {
   })
   sensitiveWordHits?: BaseSensitiveWordHitDto[]
 
+  @StringProperty({
+    description: '发帖时解析到的国家/地区',
+    example: '中国',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoCountry?: string
+
+  @StringProperty({
+    description: '发帖时解析到的省份/州',
+    example: '广东省',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoProvince?: string
+
+  @StringProperty({
+    description: '发帖时解析到的城市',
+    example: '深圳市',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoCity?: string
+
+  @StringProperty({
+    description: '发帖时解析到的网络运营商',
+    example: '电信',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoIsp?: string
+
+  @StringProperty({
+    description: '属地解析来源',
+    example: 'ip2region',
+    required: false,
+    maxLength: 50,
+    validation: false,
+  })
+  geoSource?: string
+
   @DateProperty({
     description: '最后评论时间',
     example: '2024-01-01T00:00:00.000Z',
@@ -230,9 +275,10 @@ export class BaseForumTopicDto extends BaseDto {
 
   @DateProperty({
     description: '删除时间',
-    example: '2024-01-01T00:00:00.000Z',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
@@ -320,6 +366,11 @@ export class PublicForumTopicPageItemDto extends PickType(BaseForumTopicDto, [
   'sectionId',
   'userId',
   'title',
+  'geoCountry',
+  'geoProvince',
+  'geoCity',
+  'geoIsp',
+  'geoSource',
   'images',
   'videos',
   'isPinned',
@@ -389,6 +440,11 @@ export class PublicForumTopicDetailDto extends IntersectionType(
     'title',
     'content',
     'bodyTokens',
+    'geoCountry',
+    'geoProvince',
+    'geoCity',
+    'geoIsp',
+    'geoSource',
     'images',
     'videos',
     'isPinned',

@@ -58,9 +58,10 @@ export class BaseCheckInStreakRewardRuleDto extends BaseDto {
   status!: CheckInStreakRewardRuleStatusEnum
 
   @DateProperty({
-    description: '软删除时间；仅后台内部审计使用。',
-    example: '2026-05-01T00:00:00.000Z',
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
+    validation: false,
     contract: false,
   })
   deletedAt?: Date | null

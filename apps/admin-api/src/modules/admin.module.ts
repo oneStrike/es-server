@@ -1,3 +1,4 @@
+import { GeoModule } from '@libs/platform/modules/geo'
 import { Module } from '@nestjs/common'
 import { AdminUserModule } from './admin-user/admin-user.module'
 import { AgreementModule } from './app-content/agreement/agreement.module'
@@ -20,6 +21,7 @@ import { TaskModule } from './task/task.module'
 
 @Module({
   imports: [
+    GeoModule,
     AuthModule,
     AppUserModule,
     CheckInModule,

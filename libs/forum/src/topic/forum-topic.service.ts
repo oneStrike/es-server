@@ -1,6 +1,7 @@
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
+  ForumTopicClientContext,
   ForumTopicMediaInput,
   PublicForumTopicDetailContext,
 } from './forum-topic.type'
@@ -388,7 +389,10 @@ export class ForumTopicService {
    * - 审核通过时触发成长奖励事件
    * - 写入后记录操作日志
    */
-  async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  async createForumTopic(
+    createTopicDto: CreateForumTopicDto,
+    context: ForumTopicClientContext = {},
+  ) {
     const { sectionId, userId, images, videos, ...topicData } = createTopicDto
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
@@ -419,6 +423,11 @@ export class ForumTopicService {
       bodyTokens: bodyTokens.length ? bodyTokens : null,
       sectionId,
       userId,
+      geoCountry: context.geoCountry ?? undefined,
+      geoProvince: context.geoProvince ?? undefined,
+      geoCity: context.geoCity ?? undefined,
+      geoIsp: context.geoIsp ?? undefined,
+      geoSource: context.geoSource ?? undefined,
       ...media,
       auditStatus,
       sensitiveWordHits: hits?.length ? hits : undefined,
@@ -451,6 +460,13 @@ export class ForumTopicService {
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
       targetId: topic.id,
       afterData: JSON.stringify(topic),
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      geoCountry: context.geoCountry ?? undefined,
+      geoProvince: context.geoProvince ?? undefined,
+      geoCity: context.geoCity ?? undefined,
+      geoIsp: context.geoIsp ?? undefined,
+      geoSource: context.geoSource ?? undefined,
     })
 
     const topicCreatedEvent = this.buildCreateTopicEventEnvelope({
@@ -580,6 +596,11 @@ export class ForumTopicService {
       title: topic.title,
       content: topic.content,
       bodyTokens: topic.bodyTokens,
+      geoCountry: topic.geoCountry ?? undefined,
+      geoProvince: topic.geoProvince ?? undefined,
+      geoCity: topic.geoCity ?? undefined,
+      geoIsp: topic.geoIsp ?? undefined,
+      geoSource: topic.geoSource ?? undefined,
       images: topic.images,
       videos: topic.videos,
       isPinned: topic.isPinned,
@@ -740,6 +761,11 @@ export class ForumTopicService {
         userId: this.forumTopicTable.userId,
         title: this.forumTopicTable.title,
         contentSnippet: this.buildTopicContentSnippetSql(),
+        geoCountry: this.forumTopicTable.geoCountry,
+        geoProvince: this.forumTopicTable.geoProvince,
+        geoCity: this.forumTopicTable.geoCity,
+        geoIsp: this.forumTopicTable.geoIsp,
+        geoSource: this.forumTopicTable.geoSource,
         images: this.forumTopicTable.images,
         videos: this.forumTopicTable.videos,
         isPinned: this.forumTopicTable.isPinned,
@@ -820,6 +846,11 @@ export class ForumTopicService {
         userId: this.forumTopicTable.userId,
         title: this.forumTopicTable.title,
         contentSnippet: this.buildTopicContentSnippetSql(),
+        geoCountry: this.forumTopicTable.geoCountry,
+        geoProvince: this.forumTopicTable.geoProvince,
+        geoCity: this.forumTopicTable.geoCity,
+        geoIsp: this.forumTopicTable.geoIsp,
+        geoSource: this.forumTopicTable.geoSource,
         images: this.forumTopicTable.images,
         videos: this.forumTopicTable.videos,
         isPinned: this.forumTopicTable.isPinned,
@@ -865,6 +896,11 @@ export class ForumTopicService {
         ...page,
         list: page.list.map((item) => ({
           ...item,
+          geoCountry: item.geoCountry ?? undefined,
+          geoProvince: item.geoProvince ?? undefined,
+          geoCity: item.geoCity ?? undefined,
+          geoIsp: item.geoIsp ?? undefined,
+          geoSource: item.geoSource ?? undefined,
           liked: false,
           favorited: false,
           user: userMap.get(item.userId),
@@ -893,6 +929,11 @@ export class ForumTopicService {
       ...page,
       list: page.list.map((item) => ({
         ...item,
+        geoCountry: item.geoCountry ?? undefined,
+        geoProvince: item.geoProvince ?? undefined,
+        geoCity: item.geoCity ?? undefined,
+        geoIsp: item.geoIsp ?? undefined,
+        geoSource: item.geoSource ?? undefined,
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
         user: userMap.get(item.userId),
@@ -1012,6 +1053,7 @@ export class ForumTopicService {
   private async updateTopicWithCurrent(
     topic: ForumTopicSelect,
     updateForumTopicDto: UpdateForumTopicDto,
+    context: ForumTopicClientContext = {},
   ) {
     const { id, images, videos, ...updateData } = updateForumTopicDto
 
@@ -1091,14 +1133,24 @@ export class ForumTopicService {
       targetId: id,
       beforeData: JSON.stringify(topic),
       afterData: JSON.stringify(updatedTopic),
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      geoCountry: context.geoCountry ?? undefined,
+      geoProvince: context.geoProvince ?? undefined,
+      geoCity: context.geoCity ?? undefined,
+      geoIsp: context.geoIsp ?? undefined,
+      geoSource: context.geoSource ?? undefined,
     })
 
     return true
   }
 
-  async updateTopic(updateForumTopicDto: UpdateForumTopicDto) {
+  async updateTopic(
+    updateForumTopicDto: UpdateForumTopicDto,
+    context: ForumTopicClientContext = {},
+  ) {
     const topic = await this.getActiveTopicOrThrow(updateForumTopicDto.id)
-    return this.updateTopicWithCurrent(topic, updateForumTopicDto)
+    return this.updateTopicWithCurrent(topic, updateForumTopicDto, context)
   }
 
   /**
@@ -1108,7 +1160,10 @@ export class ForumTopicService {
    * - 同步更新板块可见状态
    * - 记录删除操作日志
    */
-  private async deleteTopicWithCurrent(topic: ForumTopicSelect) {
+  private async deleteTopicWithCurrent(
+    topic: ForumTopicSelect,
+    context: ForumTopicClientContext = {},
+  ) {
     const { id } = topic
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
@@ -1219,14 +1274,21 @@ export class ForumTopicService {
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
       targetId: id,
       beforeData: JSON.stringify(topic),
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      geoCountry: context.geoCountry ?? undefined,
+      geoProvince: context.geoProvince ?? undefined,
+      geoCity: context.geoCity ?? undefined,
+      geoIsp: context.geoIsp ?? undefined,
+      geoSource: context.geoSource ?? undefined,
     })
 
     return true
   }
 
-  async deleteTopic(id: number) {
+  async deleteTopic(id: number, context: ForumTopicClientContext = {}) {
     const topic = await this.getActiveTopicOrThrow(id)
-    return this.deleteTopicWithCurrent(topic)
+    return this.deleteTopicWithCurrent(topic, context)
   }
 
   /**
@@ -1416,27 +1478,35 @@ export class ForumTopicService {
    * 用户编辑自己的主题。
    * 校验主题所有权后调用通用更新方法。
    */
-  async updateUserTopic(userId: number, input: UpdateForumTopicDto) {
+  async updateUserTopic(
+    userId: number,
+    input: UpdateForumTopicDto,
+    context: ForumTopicClientContext = {},
+  ) {
     const topic = await this.getActiveTopicOrThrow(input.id)
 
     if (topic.userId !== userId) {
       throw new BadRequestException('无权修改该主题')
     }
 
-    return this.updateTopicWithCurrent(topic, input)
+    return this.updateTopicWithCurrent(topic, input, context)
   }
 
   /**
    * 用户删除自己的主题。
    * 校验主题所有权后调用通用删除方法。
    */
-  async deleteUserTopic(userId: number, id: number) {
+  async deleteUserTopic(
+    userId: number,
+    id: number,
+    context: ForumTopicClientContext = {},
+  ) {
     const topic = await this.getActiveTopicOrThrow(id)
 
     if (topic.userId !== userId) {
       throw new BadRequestException('无权删除该主题')
     }
 
-    return this.deleteTopicWithCurrent(topic)
+    return this.deleteTopicWithCurrent(topic, context)
   }
 }

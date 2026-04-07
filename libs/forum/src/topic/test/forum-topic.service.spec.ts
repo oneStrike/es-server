@@ -83,7 +83,7 @@ jest.mock('@libs/sensitive-word/sensitive-word-constant', () => ({
   }
 }))
 
-jest.mock('@libs/user', () => ({
+jest.mock('@libs/user/app-user-count.service', () => ({
   AppUserCountService: class {},
 }))
 
@@ -353,6 +353,11 @@ describe('forum topic public page payload', () => {
         userId: 7,
         title: '公开主题',
         contentSnippet: '这是公开主题的摘要',
+        geoCountry: '中国',
+        geoProvince: '广东省',
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        geoSource: 'ip2region',
         images: [],
         videos: [],
         isPinned: false,
@@ -470,6 +475,11 @@ describe('forum topic public page payload', () => {
         contentSnippet: '这是公开主题的摘要',
         liked: true,
         favorited: false,
+        geoCountry: '中国',
+        geoProvince: '广东省',
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        geoSource: 'ip2region',
         section: {
           id: 9,
           name: '综合讨论',
@@ -512,6 +522,11 @@ describe('forum topic public detail payload', () => {
       likeCount: 2,
       commentCount: 3,
       favoriteCount: 1,
+      geoCountry: '中国',
+      geoProvince: '广东省',
+      geoCity: '深圳市',
+      geoIsp: '电信',
+      geoSource: 'ip2region',
       version: 0,
       lastCommentAt: new Date('2026-03-29T00:00:00.000Z'),
       createdAt: new Date('2026-03-28T00:00:00.000Z'),
@@ -577,6 +592,11 @@ describe('forum topic public detail payload', () => {
         id: 101,
         liked: true,
         favorited: false,
+        geoCountry: '中国',
+        geoProvince: '广东省',
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        geoSource: 'ip2region',
         user: {
           id: 7,
           nickname: '详情作者',

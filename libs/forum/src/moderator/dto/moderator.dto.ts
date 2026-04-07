@@ -40,7 +40,8 @@ export class BaseForumModeratorDto extends IntersectionType(BaseDto, UserIdDto) 
   roleType!: ForumModeratorRoleTypeEnum
 
   @ArrayProperty({
-    description: '版主权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
+    description:
+      '版主权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
     itemType: 'number',
     itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4, 5, 6],
@@ -65,9 +66,10 @@ export class BaseForumModeratorDto extends IntersectionType(BaseDto, UserIdDto) 
   remark?: string | null
 
   @DateProperty({
-    description: '删除时间；仅内部审计与排障使用。',
-    example: '2026-03-19T12:00:00.000Z',
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
+    validation: false,
     contract: false,
   })
   deletedAt?: Date | null

@@ -38,6 +38,11 @@ export class ForumUserActionLogService {
       afterData,
       ipAddress,
       userAgent,
+      geoCountry,
+      geoProvince,
+      geoCity,
+      geoIsp,
+      geoSource,
     } = dto
 
     const data = await this.drizzle.withErrorHandling(() =>
@@ -60,6 +65,11 @@ export class ForumUserActionLogService {
             : null,
           ipAddress,
           userAgent,
+          geoCountry,
+          geoProvince,
+          geoCity,
+          geoIsp,
+          geoSource,
         })
         .returning(),
     )

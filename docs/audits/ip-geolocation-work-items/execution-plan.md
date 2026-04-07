@@ -18,20 +18,20 @@
 
 | 任务 | 状态 | 依赖 | 可并行 | 直接后置 | 摘要 | 任务单 |
 | --- | --- | --- | --- | --- | --- | --- |
-| P0-01 | pending | 无 | 无 | P0-02、P0-03 | 收口 schema 与 Geo 平台基础能力 | [01-schema-and-geo-foundation.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/p0/01-schema-and-geo-foundation.md) |
+| P0-01 | pending | 无 | 无 | P0-02、P0-03 | 收口 schema 与 Geo 平台基础能力 | [01-schema-and-geo-foundation.md](./p0/01-schema-and-geo-foundation.md) |
 
 ### Wave 2
 
 | 任务 | 状态 | 硬前置 | 可并行 | 直接后置 | 摘要 | 任务单 |
 | --- | --- | --- | --- | --- | --- | --- |
-| P0-02 | pending | P0-01 | P0-03 | 无 | 打通登录态与审计属地写入 | [02-auth-and-audit-geolocation-write-path.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/p0/02-auth-and-audit-geolocation-write-path.md) |
-| P0-03 | pending | P0-01 | P0-02 | P1-01 | 打通社区内容落库与 app 端返回契约 | [03-community-content-geolocation-contract.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/p0/03-community-content-geolocation-contract.md) |
+| P0-02 | pending | P0-01 | P0-03 | 无 | 打通登录态与审计属地写入 | [02-auth-and-audit-geolocation-write-path.md](./p0/02-auth-and-audit-geolocation-write-path.md) |
+| P0-03 | pending | P0-01 | P0-02 | P1-01 | 打通社区内容落库与 app 端返回契约 | [03-community-content-geolocation-contract.md](./p0/03-community-content-geolocation-contract.md) |
 
 ### Wave 3
 
 | 任务 | 状态 | 硬前置 | 软前置 | 直接后置 | 摘要 | 任务单 |
 | --- | --- | --- | --- | --- | --- | --- |
-| P1-01 | pending | P0-01 | P0-03 | 无 | 打通论坛操作日志属地写入 | [01-forum-action-log-geolocation-write-path.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/p1/01-forum-action-log-geolocation-write-path.md) |
+| P1-01 | pending | P0-01 | P0-03 | 无 | 打通论坛操作日志属地写入 | [01-forum-action-log-geolocation-write-path.md](./p1/01-forum-action-log-geolocation-write-path.md) |
 
 ## 任务依赖补充说明
 

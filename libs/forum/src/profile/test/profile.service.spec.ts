@@ -49,7 +49,7 @@ jest.mock('@libs/platform/constant/user.constant', () => ({
   }
 }))
 
-jest.mock('@libs/user', () => ({
+jest.mock('@libs/user/app-user-count.service', () => ({
   AppUserCountService: class {},
 }))
 
@@ -64,6 +64,11 @@ describe('userProfileService.getMyTopics', () => {
         sectionId: null,
         title: '我的主题',
         contentSnippet: '这是我的主题摘要',
+        geoCountry: '中国',
+        geoProvince: '广东省',
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        geoSource: 'ip2region',
         images: [],
         videos: [],
         isPinned: false,
@@ -170,6 +175,11 @@ describe('userProfileService.getMyTopics', () => {
         contentSnippet: '这是我的主题摘要',
         liked: true,
         favorited: false,
+        geoCountry: '中国',
+        geoProvince: '广东省',
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        geoSource: 'ip2region',
         user: {
           id: 7,
           nickname: '测试作者',

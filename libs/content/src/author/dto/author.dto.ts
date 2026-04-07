@@ -1,13 +1,13 @@
-import { GenderEnum } from '@libs/platform/constant/user.constant';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { GenderEnum } from '@libs/platform/constant/user.constant'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -114,9 +114,10 @@ export class BaseAuthorDto extends BaseDto {
 
   @DateProperty({
     description: '删除时间',
-    example: '2024-01-01T00:00:00.000Z',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }

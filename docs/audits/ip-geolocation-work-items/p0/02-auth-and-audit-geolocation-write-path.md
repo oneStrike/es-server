@@ -55,9 +55,9 @@
 
 ## 完成后同步文档
 
-- 更新 [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md) 中 `P0-02` 的状态。
-- 更新 [final-acceptance-checklist.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/checklists/final-acceptance-checklist.md) 中登录态与审计日志证据位。
+- 更新 [execution-plan.md](../execution-plan.md) 中 `P0-02` 的状态。
+- 更新 [final-acceptance-checklist.md](../checklists/final-acceptance-checklist.md) 中登录态与审计日志证据位。
 
 ## 排期引用
 
-- 排期、波次、依赖与状态以 [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md) 中的 `P0-02` 为唯一事实源。
+- 排期、波次、依赖与状态以 [execution-plan.md](../execution-plan.md) 中的 `P0-02` 为唯一事实源。

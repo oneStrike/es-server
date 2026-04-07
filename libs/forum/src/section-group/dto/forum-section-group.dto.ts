@@ -62,9 +62,10 @@ export class BaseForumSectionGroupDto extends BaseDto {
   maxModerators!: number
 
   @DateProperty({
-    description: '删除时间；仅内部审计与排障使用。',
-    example: '2024-01-01T00:00:00.000Z',
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
+    validation: false,
     contract: false,
   })
   deletedAt?: Date | null

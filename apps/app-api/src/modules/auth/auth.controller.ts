@@ -11,8 +11,8 @@ import {
   TokenDto,
 } from '@libs/platform/modules/auth'
 import { RsaService } from '@libs/platform/modules/crypto'
+import { GeoService } from '@libs/platform/modules/geo'
 import { SendVerifyCodeDto } from '@libs/platform/modules/sms'
-import { extractClientRequestContext } from '@libs/platform/utils'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
@@ -27,6 +27,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly smsService: SmsService,
     private readonly passwordService: PasswordService,
+    private readonly geoService: GeoService,
   ) {}
 
   @Post('verify-code/send')
@@ -60,7 +61,10 @@ export class AuthController {
   })
   @Public()
   async login(@Body() body: LoginDto, @Req() req: FastifyRequest) {
-    return this.authService.login(body, extractClientRequestContext(req))
+    return this.authService.login(
+      body,
+      await this.geoService.buildClientRequestContext(req),
+    )
   }
 
   @Post('logout')
@@ -86,7 +90,7 @@ export class AuthController {
   ) {
     return this.authService.refreshToken(
       body,
-      extractClientRequestContext(req),
+      await this.geoService.buildClientRequestContext(req),
     )
   }
 

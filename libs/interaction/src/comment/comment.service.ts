@@ -3,6 +3,7 @@ import type { SQL } from 'drizzle-orm'
 import type {
   CommentModerationState,
   CommentVisibleState,
+  CommentWriteContext,
   TransactionRetryOptions,
   VisibleCommentEffectPayload,
 } from './comment.type'
@@ -523,7 +524,10 @@ export class CommentService {
    * @returns 新创建的评论ID
    * @throws BadRequestException - 当权限不足或请求冲突时抛出
    */
-  async createComment(input: CreateCommentBodyDto & { userId: number }) {
+  async createComment(
+    input: CreateCommentBodyDto & { userId: number },
+    context: CommentWriteContext = {},
+  ) {
     const { userId, targetType, targetId, content } = input
     const bodyTokens = await this.emojiParserService.parse({
       body: content,
@@ -572,6 +576,11 @@ export class CommentService {
                   bodyTokens: bodyTokens.length ? bodyTokens : null,
                   floor,
                   ...decision,
+                  geoCountry: context.geoCountry,
+                  geoProvince: context.geoProvince,
+                  geoCity: context.geoCity,
+                  geoIsp: context.geoIsp,
+                  geoSource: context.geoSource,
                 })
                 .returning({
                   id: this.userComment.id,
@@ -658,7 +667,10 @@ export class CommentService {
    * @returns 新创建的回复ID
    * @throws BadRequestException - 当被回复的评论不存在时抛出
    */
-  async replyComment(input: ReplyCommentBodyDto & { userId: number }) {
+  async replyComment(
+    input: ReplyCommentBodyDto & { userId: number },
+    context: CommentWriteContext = {},
+  ) {
     const { userId, content, replyToId } = input
     const bodyTokens = await this.emojiParserService.parse({
       body: content,
@@ -718,6 +730,11 @@ export class CommentService {
           replyToId,
           actualReplyToId,
           ...decision,
+          geoCountry: context.geoCountry,
+          geoProvince: context.geoProvince,
+          geoCity: context.geoCity,
+          geoIsp: context.geoIsp,
+          geoSource: context.geoSource,
         })
         .returning({
           id: this.userComment.id,
@@ -917,6 +934,11 @@ export class CommentService {
         'floor',
         'replyToId',
         'likeCount',
+        'geoCountry',
+        'geoProvince',
+        'geoCity',
+        'geoIsp',
+        'geoSource',
         'createdAt',
       ],
     })
@@ -1000,6 +1022,11 @@ export class CommentService {
         'bodyTokens',
         'floor',
         'likeCount',
+        'geoCountry',
+        'geoProvince',
+        'geoCity',
+        'geoIsp',
+        'geoSource',
         'createdAt',
       ],
     })
@@ -1018,6 +1045,11 @@ export class CommentService {
       content: string
       bodyTokens: unknown
       likeCount: number
+      geoCountry: string | null
+      geoProvince: string | null
+      geoCity: string | null
+      geoIsp: string | null
+      geoSource: string | null
       createdAt: Date
       totalCount?: number
     }[] = []
@@ -1034,6 +1066,11 @@ export class CommentService {
           content: this.userComment.content,
           bodyTokens: this.userComment.bodyTokens,
           likeCount: this.userComment.likeCount,
+          geoCountry: this.userComment.geoCountry,
+          geoProvince: this.userComment.geoProvince,
+          geoCity: this.userComment.geoCity,
+          geoIsp: this.userComment.geoIsp,
+          geoSource: this.userComment.geoSource,
           createdAt: this.userComment.createdAt,
           rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
             'rn',
@@ -1103,6 +1140,11 @@ export class CommentService {
         content: string
         bodyTokens: unknown
         likeCount: number
+        geoCountry?: string
+        geoProvince?: string
+        geoCity?: string
+        geoIsp?: string
+        geoSource?: string
         createdAt: Date
       }[]
     >()
@@ -1121,6 +1163,11 @@ export class CommentService {
         content: reply.content,
         bodyTokens: reply.bodyTokens,
         likeCount: reply.likeCount,
+        geoCountry: reply.geoCountry ?? undefined,
+        geoProvince: reply.geoProvince ?? undefined,
+        geoCity: reply.geoCity ?? undefined,
+        geoIsp: reply.geoIsp ?? undefined,
+        geoSource: reply.geoSource ?? undefined,
         createdAt: reply.createdAt,
       })
       previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
@@ -1162,6 +1209,11 @@ export class CommentService {
             bodyTokens: reply.bodyTokens,
             replyToId: reply.replyToId,
             likeCount: reply.likeCount,
+            geoCountry: reply.geoCountry,
+            geoProvince: reply.geoProvince,
+            geoCity: reply.geoCity,
+            geoIsp: reply.geoIsp,
+            geoSource: reply.geoSource,
             createdAt: reply.createdAt,
             liked: likedMap.get(reply.id) ?? false,
             user: userMap.get(reply.userId) ?? undefined,
@@ -1170,6 +1222,11 @@ export class CommentService {
 
         return {
           ...item,
+          geoCountry: item.geoCountry ?? undefined,
+          geoProvince: item.geoProvince ?? undefined,
+          geoCity: item.geoCity ?? undefined,
+          geoIsp: item.geoIsp ?? undefined,
+          geoSource: item.geoSource ?? undefined,
           liked: likedMap.get(item.id) ?? false,
           user: userMap.get(item.userId) ?? undefined,
           replyCount,

@@ -1,3 +1,4 @@
+import type { ForumTopicClientContext } from '@libs/forum/topic/forum-topic.type';
 import type { FastifyRequest } from 'fastify'
 import { UserProfileService } from '@libs/forum/profile/profile.service';
 import { CreateUserForumTopicDto, MyForumTopicItemDto, PublicForumTopicDetailDto, PublicForumTopicPageItemDto, QueryForumTopicCommentPageDto, QueryMyForumTopicDto, QueryPublicForumTopicDto, UpdateForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto';
@@ -8,6 +9,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { GeoService } from '@libs/platform/modules/geo';
 import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -19,7 +21,24 @@ export class ForumTopicController {
     private readonly forumTopicService: ForumTopicService,
     private readonly userProfileService: UserProfileService,
     private readonly commentService: CommentService,
+    private readonly geoService: GeoService,
   ) { }
+
+  private async buildTopicClientContext(
+    req: FastifyRequest,
+  ): Promise<ForumTopicClientContext> {
+    const clientContext = await this.geoService.buildClientRequestContext(req)
+
+    return {
+      ipAddress: clientContext.ip,
+      userAgent: clientContext.userAgent,
+      geoCountry: clientContext.geoCountry,
+      geoProvince: clientContext.geoProvince,
+      geoCity: clientContext.geoCity,
+      geoIsp: clientContext.geoIsp,
+      geoSource: clientContext.geoSource,
+    }
+  }
 
   @Get('page')
   @OptionalAuth()
@@ -99,11 +118,12 @@ export class ForumTopicController {
   async create(
     @Body() body: CreateUserForumTopicDto,
     @CurrentUser('sub') userId: number,
+    @Req() req: FastifyRequest,
   ) {
     return this.forumTopicService.createForumTopic({
       ...body,
       userId,
-    })
+    }, await this.buildTopicClientContext(req))
   }
 
   @Post('update')
@@ -114,8 +134,13 @@ export class ForumTopicController {
   async update(
     @Body() body: UpdateForumTopicDto,
     @CurrentUser('sub') userId: number,
+    @Req() req: FastifyRequest,
   ) {
-    return this.forumTopicService.updateUserTopic(userId, body)
+    return this.forumTopicService.updateUserTopic(
+      userId,
+      body,
+      await this.buildTopicClientContext(req),
+    )
   }
 
   @Post('delete')
@@ -123,7 +148,15 @@ export class ForumTopicController {
     summary: '删除我的论坛主题',
     model: Boolean,
   })
-  async delete(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
-    return this.forumTopicService.deleteUserTopic(userId, body.id)
+  async delete(
+    @Body() body: IdDto,
+    @CurrentUser('sub') userId: number,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.forumTopicService.deleteUserTopic(
+      userId,
+      body.id,
+      await this.buildTopicClientContext(req),
+    )
   }
 }

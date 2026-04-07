@@ -1,3 +1,5 @@
+import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
+
 /**
  * Token 类型定义
  * 统一管理 Token 类型字面量
@@ -8,7 +10,7 @@ export type TokenType = 'ACCESS' | 'REFRESH'
  * Token 实体接口
  * 定义 Token 数据的标准结构
  */
-export interface ITokenEntity {
+export interface ITokenEntity extends GeoSnapshot {
   /** 主键 */
   id: number
   /** JWT ID */
@@ -35,7 +37,7 @@ export interface ITokenEntity {
  * 创建 Token 入参。
  * 用于持久化 access/refresh token 的核心字段。
  */
-export interface CreateTokenInput {
+export interface CreateTokenInput extends GeoSnapshot {
   /** 用户 ID */
   userId: number
   /** JWT ID */

@@ -91,6 +91,31 @@ export const forumTopic = pgTable("forum_topic", {
    */
   sensitiveWordHits: jsonb(),
   /**
+   * 发帖时解析到的国家/地区
+   * 仅记录新写入主题的属地快照，无法解析或历史记录时为空
+   */
+  geoCountry: varchar({ length: 100 }),
+  /**
+   * 发帖时解析到的省份/州
+   * 仅记录新写入主题的属地快照，无法解析或历史记录时为空
+   */
+  geoProvince: varchar({ length: 100 }),
+  /**
+   * 发帖时解析到的城市
+   * 仅记录新写入主题的属地快照，无法解析或历史记录时为空
+   */
+  geoCity: varchar({ length: 100 }),
+  /**
+   * 发帖时解析到的网络运营商
+   * 仅记录新写入主题的属地快照，无法解析或历史记录时为空
+   */
+  geoIsp: varchar({ length: 100 }),
+  /**
+   * 属地解析来源
+   * 当前固定为 ip2region；历史记录或未补齐属地快照时为空
+   */
+  geoSource: varchar({ length: 50 }),
+  /**
    * 浏览数
    */
   viewCount: integer().default(0).notNull(),

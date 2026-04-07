@@ -33,6 +33,11 @@ export abstract class BaseDrizzleTokenStorageService<
             deviceInfo: data.deviceInfo as any,
             ipAddress: data.ipAddress,
             userAgent: data.userAgent,
+            geoCountry: data.geoCountry,
+            geoProvince: data.geoProvince,
+            geoCity: data.geoCity,
+            geoIsp: data.geoIsp,
+            geoSource: data.geoSource,
           })
           .returning(),
       {
@@ -56,6 +61,11 @@ export abstract class BaseDrizzleTokenStorageService<
               deviceInfo: token.deviceInfo as any,
               ipAddress: token.ipAddress,
               userAgent: token.userAgent,
+              geoCountry: token.geoCountry,
+              geoProvince: token.geoProvince,
+              geoCity: token.geoCity,
+              geoIsp: token.geoIsp,
+              geoSource: token.geoSource,
             })),
           )
           .returning({ id: this.tokenTable.id }),

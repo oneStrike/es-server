@@ -107,6 +107,7 @@ export class BaseEmojiPackDto extends BaseDto {
     example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
@@ -250,6 +251,7 @@ export class BaseEmojiAssetDto extends BaseDto {
     example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }

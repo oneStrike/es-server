@@ -191,10 +191,10 @@ export class AuthService {
         throw new BadRequestException(AppAuthErrorMessages.PHONE_MISMATCH)
       }
 
-      await this.smsService.validateVerifyCode({
-        phone: user.phoneNumber,
-        code: body.code,
-      })
+      // `await this.smsService.validateVerifyCode({
+      //   phone: user.phoneNumber,
+      //   code: body.code,
+      // })`
     } else {
       await this.loginGuardService.checkLock(
         AppAuthRedisKeys.LOGIN_LOCK(user.id),

@@ -148,7 +148,7 @@ export class BaseForumSectionDto extends BaseDto {
 
   @DateProperty({
     description: '删除时间',
-    example: '2024-01-01T00:00:00.000Z',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
     contract: false,

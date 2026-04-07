@@ -3,16 +3,16 @@
 ## 文档职责
 
 - 本目录承载 `ip2region` 开源版接入的工作包文档集。
-- 排期、依赖、状态仅在 [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md) 维护。
+- 排期、依赖、状态仅在 [execution-plan.md](./execution-plan.md) 维护。
 - 单任务文档只描述本任务的目标、范围、改动和完成标准，不维护第二套排序。
-- 验收结论与证据统一沉淀到 [final-acceptance-checklist.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/checklists/final-acceptance-checklist.md)。
+- 验收结论与证据统一沉淀到 [final-acceptance-checklist.md](./checklists/final-acceptance-checklist.md)。
 
 ## 阅读顺序
 
-1. [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md)
-2. [development-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/development-plan.md)
+1. [execution-plan.md](./execution-plan.md)
+2. [development-plan.md](./development-plan.md)
 3. `p0/`、`p1/` 目录下的单任务文档
-4. [final-acceptance-checklist.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/checklists/final-acceptance-checklist.md)
+4. [final-acceptance-checklist.md](./checklists/final-acceptance-checklist.md)
 
 ## 已确认业务口径
 
@@ -27,7 +27,8 @@
 - `geoSource` 固定写死为 `ip2region`。
 - 本轮只覆盖新写入数据，不兼容历史数据。
 - 不做历史数据回填，不在读路径按现存 IP 反查补算属地；旧记录缺少 `geo*` 字段时按空值处理。
-- 评论与论坛主题需要在 app 端列表接口与详情接口中返回归属地字段。
+- 论坛主题需要在 app 端现有列表接口与详情接口中返回归属地字段。
+- 评论属地按全站评论能力收口：凡复用评论列表、回复列表、目标评论列表 DTO 的 app 端现有接口，本轮统一返回归属地字段。
 - 后台审计日志页面、论坛操作日志页面本轮不开放属地筛选条件。
 - 后台若因现有查询实现或共享 DTO 复用而被动返回只读属地字段，不视为范围扩散；本轮仍不新增基于属地的查询、排序或业务判断。
 
@@ -45,8 +46,8 @@
   - auth 登录态持久化
   - 审计请求日志
   - 论坛主题创建与 app 端列表 / 详情返回
-  - 评论创建 / 回复与 app 端列表返回
-  - 论坛操作日志写入
+  - 评论创建 / 回复与全站 app 端评论能力返回
+  - 论坛主题相关操作日志写入
 
 ## 非本轮范围
 
@@ -59,6 +60,6 @@
 
 ## 目录说明
 
-- [p0](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/p0)：高优先级任务单
-- [p1](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/p1)：次优先级任务单
-- [checklists](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/checklists)：验收清单与证据记录
+- [p0](./p0)：高优先级任务单
+- [p1](./p1)：次优先级任务单
+- [checklists](./checklists)：验收清单与证据记录

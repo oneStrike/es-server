@@ -1,15 +1,20 @@
+import type { FastifyRequest } from 'fastify'
 import { CommentService } from '@libs/interaction/comment/comment.service';
 import { BaseCommentDto, CommentReplyItemDto, CreateCommentBodyDto, QueryCommentRepliesDto, QueryMyCommentPageDto, ReplyCommentBodyDto } from '@libs/interaction/comment/dto/comment.dto';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { GeoService } from '@libs/platform/modules/geo';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('评论')
 @Controller('app/comment')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly geoService: GeoService,
+  ) {}
 
   @Post('post')
   @ApiDoc({
@@ -19,11 +24,12 @@ export class CommentController {
   async postComment(
     @Body() body: CreateCommentBodyDto,
     @CurrentUser('sub') userId: number,
+    @Req() req: FastifyRequest,
   ) {
     return this.commentService.createComment({
       ...body,
       userId,
-    })
+    }, await this.geoService.buildClientRequestContext(req))
   }
 
   @Post('reply')
@@ -34,11 +40,12 @@ export class CommentController {
   async replyComment(
     @Body() body: ReplyCommentBodyDto,
     @CurrentUser('sub') userId: number,
+    @Req() req: FastifyRequest,
   ) {
     return this.commentService.replyComment({
       ...body,
       userId,
-    })
+    }, await this.geoService.buildClientRequestContext(req))
   }
 
   @Post('delete')

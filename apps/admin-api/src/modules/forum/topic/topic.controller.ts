@@ -1,8 +1,11 @@
+import type { ForumTopicClientContext } from '@libs/forum/topic/forum-topic.type';
+import type { FastifyRequest } from 'fastify'
 import { AdminForumTopicDetailDto, AdminForumTopicPageItemDto, CreateForumTopicDto, QueryForumTopicDto, UpdateForumTopicAuditStatusDto, UpdateForumTopicDto, UpdateForumTopicFeaturedDto, UpdateForumTopicHiddenDto, UpdateForumTopicLockedDto, UpdateForumTopicPinnedDto } from '@libs/forum/topic/dto/forum-topic.dto';
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { GeoService } from '@libs/platform/modules/geo';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
@@ -10,7 +13,26 @@ import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 @ApiTags('论坛管理/主题管理')
 @Controller('admin/forum/topic')
 export class ForumTopicController {
-  constructor(private readonly forumTopicService: ForumTopicService) {}
+  constructor(
+    private readonly forumTopicService: ForumTopicService,
+    private readonly geoService: GeoService,
+  ) {}
+
+  private async buildTopicClientContext(
+    req: FastifyRequest,
+  ): Promise<ForumTopicClientContext> {
+    const clientContext = await this.geoService.buildClientRequestContext(req)
+
+    return {
+      ipAddress: clientContext.ip,
+      userAgent: clientContext.userAgent,
+      geoCountry: clientContext.geoCountry,
+      geoProvince: clientContext.geoProvince,
+      geoCity: clientContext.geoCity,
+      geoIsp: clientContext.geoIsp,
+      geoSource: clientContext.geoSource,
+    }
+  }
 
   private mapTopicDetail(topic: Record<string, any>) {
     return {
@@ -128,8 +150,11 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.CREATE,
     },
   })
-  async create(@Body() body: CreateForumTopicDto) {
-    return this.forumTopicService.createForumTopic(body)
+  async create(@Body() body: CreateForumTopicDto, @Req() req: FastifyRequest) {
+    return this.forumTopicService.createForumTopic(
+      body,
+      await this.buildTopicClientContext(req),
+    )
   }
 
   @Post('update')
@@ -140,8 +165,11 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async update(@Body() body: UpdateForumTopicDto) {
-    return this.forumTopicService.updateTopic(body)
+  async update(@Body() body: UpdateForumTopicDto, @Req() req: FastifyRequest) {
+    return this.forumTopicService.updateTopic(
+      body,
+      await this.buildTopicClientContext(req),
+    )
   }
 
   @Post('delete')
@@ -152,8 +180,11 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.DELETE,
     },
   })
-  async delete(@Body() body: IdDto) {
-    return this.forumTopicService.deleteTopic(body.id)
+  async delete(@Body() body: IdDto, @Req() req: FastifyRequest) {
+    return this.forumTopicService.deleteTopic(
+      body.id,
+      await this.buildTopicClientContext(req),
+    )
   }
 
   @Post('update-pinned')

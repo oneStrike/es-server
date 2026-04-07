@@ -407,5 +407,10 @@ export function buildRequestLogFields(
     userAgent: requestContext.userAgent,
     device: requestContext.deviceInfo,
     apiType: requestContext.apiType,
+    geoCountry: requestContext.geoCountry,
+    geoProvince: requestContext.geoProvince,
+    geoCity: requestContext.geoCity,
+    geoIsp: requestContext.geoIsp,
+    geoSource: requestContext.geoSource,
   }
 }

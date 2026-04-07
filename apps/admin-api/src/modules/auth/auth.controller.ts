@@ -5,7 +5,7 @@ import { Public } from '@libs/platform/decorators/public.decorator';
 import { RefreshTokenDto, RsaPublicKeyDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
 import { CaptchaDto } from '@libs/platform/modules/captcha/dto/captcha.dto';
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
-import { extractClientRequestContext } from '@libs/platform/utils';
+import { GeoService } from '@libs/platform/modules/geo';
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'
@@ -22,6 +22,7 @@ export class AuthController {
   constructor(
     private readonly rsaService: RsaService,
     private readonly authService: AuthService,
+    private readonly geoService: GeoService,
   ) {}
 
   /**
@@ -51,7 +52,10 @@ export class AuthController {
     content: '用户登录',
   })
   async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
-    return this.authService.login(body, extractClientRequestContext(req))
+    return this.authService.login(
+      body,
+      await this.geoService.buildClientRequestContext(req),
+    )
   }
 
   /**
@@ -87,7 +91,7 @@ export class AuthController {
   async refreshToken(@Body() body: RefreshTokenDto, @Req() req: FastifyRequest) {
     return this.authService.refreshToken(
       body,
-      extractClientRequestContext(req),
+      await this.geoService.buildClientRequestContext(req),
     )
   }
 

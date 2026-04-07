@@ -26,6 +26,11 @@ export class AuthSessionService {
       clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN
     const userAgent = clientContext.userAgent
     const deviceInfo = clientContext.deviceInfo
+    const geoCountry = clientContext.geoCountry
+    const geoProvince = clientContext.geoProvince
+    const geoCity = clientContext.geoCity
+    const geoIsp = clientContext.geoIsp
+    const geoSource = clientContext.geoSource
 
     await this.tokenStorageService.createTokens([
       {
@@ -36,6 +41,11 @@ export class AuthSessionService {
         deviceInfo,
         ipAddress,
         userAgent,
+        geoCountry,
+        geoProvince,
+        geoCity,
+        geoIsp,
+        geoSource,
       },
       {
         userId,
@@ -45,6 +55,11 @@ export class AuthSessionService {
         deviceInfo,
         ipAddress,
         userAgent,
+        geoCountry,
+        geoProvince,
+        geoCity,
+        geoIsp,
+        geoSource,
       },
     ])
   }

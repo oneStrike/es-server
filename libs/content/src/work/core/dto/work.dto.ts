@@ -1,16 +1,19 @@
-import { BaseAuthorDto } from '@libs/content/author/dto/author.dto';
-import { BaseCategoryDto } from '@libs/content/category/dto/category.dto';
-import { BaseTagDto } from '@libs/content/tag/dto/tag.dto';
-import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
+import { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
+import { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
+import {
+  WorkTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant/content.constant'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -246,7 +249,7 @@ export class BaseWorkDto extends BaseDto {
 
   @DateProperty({
     description: '删除时间',
-    example: '2024-01-01T00:00:00.000Z',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
     contract: false,
@@ -384,7 +387,11 @@ class CategoryInfoDto extends PickType(BaseCategoryDto, [
   'icon',
 ] as const) {}
 
-class TagInfoDto extends PickType(BaseTagDto, ['id', 'name', 'icon'] as const) {}
+class TagInfoDto extends PickType(BaseTagDto, [
+  'id',
+  'name',
+  'icon',
+] as const) {}
 
 /**
  * 作品分页项 DTO。
@@ -516,7 +523,10 @@ class WorkDetailExtraDto extends PickType(BaseWorkDto, [
   'rating',
 ] as const) {}
 
-class WorkDetailBodyDto extends IntersectionType(PageWorkDto, WorkDetailExtraDto) {}
+class WorkDetailBodyDto extends IntersectionType(
+  PageWorkDto,
+  WorkDetailExtraDto,
+) {}
 
 /**
  * 作品详情 DTO。

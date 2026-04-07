@@ -1,4 +1,5 @@
 import type { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant';
+import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
 
 /**
  * 设备信息接口
@@ -30,7 +31,7 @@ export interface RequestParams {
  * 统一请求上下文接口
  * 汇总请求链路中最常复用的元信息，供 controller、service、filter 共享
  */
-export interface RequestContext {
+export interface RequestContext extends GeoSnapshot {
   /** 客户端 IP */
   ip?: string
   /** HTTP 方法 */
@@ -51,7 +52,7 @@ export interface RequestContext {
  * 客户端请求上下文接口
  * auth、浏览记录等场景只关心客户端来源信息时，统一透传这一最小子集
  */
-export interface ClientRequestContext {
+export interface ClientRequestContext extends GeoSnapshot {
   /** 客户端 IP */
   ip?: string
   /** User-Agent */
@@ -63,7 +64,7 @@ export interface ClientRequestContext {
 /**
  * 请求日志字段提取结果接口
  */
-export interface ParsedRequestData {
+export interface ParsedRequestData extends GeoSnapshot {
   /** 客户端 IP */
   ip?: string
   /** HTTP 方法 */

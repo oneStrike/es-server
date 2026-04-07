@@ -166,9 +166,10 @@ export class BaseTaskDto extends BaseDto {
 
   @DateProperty({
     description: '删除时间',
-    example: '2026-02-28T23:59:59.000Z',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }
@@ -287,9 +288,10 @@ export class BaseTaskAssignmentDto extends BaseDto {
 
   @DateProperty({
     description: '删除时间',
-    example: '2026-02-14T00:00:00.000Z',
+    example: '2026-03-27T00:00:00.000Z',
     required: false,
     validation: false,
+    contract: false,
   })
   deletedAt?: Date | null
 }

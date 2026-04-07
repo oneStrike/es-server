@@ -1,4 +1,5 @@
 import type { UserCommentSelect } from '@db/schema'
+import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
 import type {
   CommentTargetMeta,
 } from './interfaces/comment-target-resolver.interface'
@@ -45,6 +46,12 @@ export interface VisibleCommentEffectContext {
   comment: VisibleCommentEffectPayload
   meta: CommentTargetMeta
 }
+
+/**
+ * 评论写入链路使用的属地上下文。
+ * 评论表只持久化属地快照，不复用 HTTP 层的完整请求对象。
+ */
+export interface CommentWriteContext extends GeoSnapshot {}
 
 /**
  * 评论治理状态快照。

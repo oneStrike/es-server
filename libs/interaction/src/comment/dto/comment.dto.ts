@@ -153,10 +153,56 @@ export class BaseCommentDto extends BaseDto {
   })
   sensitiveWordHits?: unknown | null
 
-  @DateProperty({
-    description: '删除时间；仅内部审计与排障使用。',
-    example: '2024-01-01T00:00:00.000Z',
+  @StringProperty({
+    description: '评论提交时解析到的国家/地区',
+    example: '中国',
     required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoCountry?: string
+
+  @StringProperty({
+    description: '评论提交时解析到的省份/州',
+    example: '广东省',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoProvince?: string
+
+  @StringProperty({
+    description: '评论提交时解析到的城市',
+    example: '深圳市',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoCity?: string
+
+  @StringProperty({
+    description: '评论提交时解析到的网络运营商',
+    example: '电信',
+    required: false,
+    maxLength: 100,
+    validation: false,
+  })
+  geoIsp?: string
+
+  @StringProperty({
+    description: '属地解析来源',
+    example: 'ip2region',
+    required: false,
+    maxLength: 50,
+    validation: false,
+  })
+  geoSource?: string
+
+  @DateProperty({
+    description: '删除时间',
+    example: '2026-03-27T00:00:00.000Z',
+    required: false,
+    validation: false,
     contract: false,
   })
   deletedAt?: Date | null
@@ -312,6 +358,11 @@ export class CommentReplyItemDto extends PickType(BaseCommentDto, [
   'floor',
   'replyToId',
   'likeCount',
+  'geoCountry',
+  'geoProvince',
+  'geoCity',
+  'geoIsp',
+  'geoSource',
   'createdAt',
 ] as const) {
   @BooleanProperty({
@@ -342,6 +393,11 @@ export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
   'bodyTokens',
   'replyToId',
   'likeCount',
+  'geoCountry',
+  'geoProvince',
+  'geoCity',
+  'geoIsp',
+  'geoSource',
   'createdAt',
 ] as const) {
   @BooleanProperty({
@@ -374,6 +430,11 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
   'bodyTokens',
   'floor',
   'likeCount',
+  'geoCountry',
+  'geoProvince',
+  'geoCity',
+  'geoIsp',
+  'geoSource',
   'createdAt',
 ] as const) {
   @NestedProperty({

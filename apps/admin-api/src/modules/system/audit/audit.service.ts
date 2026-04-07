@@ -1,6 +1,7 @@
 import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto/audit.dto';
 import type { FastifyRequest } from 'fastify'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { GeoService } from '@libs/platform/modules/geo';
 import { buildRequestLogFields } from '@libs/platform/utils';
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, or } from 'drizzle-orm'
@@ -21,7 +22,10 @@ export class AuditService {
     return this.drizzle.schema.requestLog
   }
 
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly drizzle: DrizzleService,
+    private readonly geoService: GeoService,
+  ) {}
 
   private get db() {
     return this.drizzle.db
@@ -32,12 +36,13 @@ export class AuditService {
    */
   async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
     const normalizedActionType = normalizeAuditActionType(createDto.actionType)
+    const requestContext = await this.geoService.buildRequestContext(req)
 
     // 处理JSON字段的转换
     const data = {
       ...createDto,
       actionType: normalizedActionType ?? undefined,
-      ...buildRequestLogFields(req),
+      ...buildRequestLogFields(requestContext),
     } as any
     const [created] = await this.drizzle.withErrorHandling(() =>
       this.db

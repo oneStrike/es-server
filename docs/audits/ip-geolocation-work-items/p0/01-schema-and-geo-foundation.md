@@ -17,6 +17,7 @@
 - `libs/platform/src/utils/requestParse.ts`
 - `libs/platform/src/utils/request-parse.types.ts`
 - `libs/platform/src/utils/index.ts`
+- `db/comments/generated.sql`
 - `package.json`
 
 ## 当前代码锚点
@@ -56,6 +57,7 @@
   - Geo 结果类型
   - `ip2region` 查询封装
   - 组装客户端属地上下文的公共入口
+- 目标 schema 新增字段后同步更新 `db/comments/generated.sql`，保证注释产物与表定义一致。
 - 明确 Geo 上下文与请求上下文的边界，避免把异步 Geo 查询回塞到纯同步 request parse helper。
 
 ## 完成标准
@@ -63,15 +65,16 @@
 - `6` 张目标表的 schema 字段命名、可空语义和注释完全一致。
 - Geo 结果结构在平台层只有一套 owner 定义，不存在业务域自定义重复类型。
 - `geoSource` 在平台层固定输出 `ip2region`。
+- `db/comments/generated.sql` 已同步更新，`pnpm db:comments:check` 可通过。
 - 历史记录无需兼容改造；旧记录 `geo*` 为空值的语义已明确。
 - `pnpm db:generate` 的前置修改已准备完成，等待用户执行生成迁移。
 
 ## 完成后同步文档
 
-- 更新 [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md) 中 `P0-01` 的状态。
-- 更新 [development-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/development-plan.md) 中的实际 Geo owner 路径与数据文件路径。
-- 在 [final-acceptance-checklist.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/checklists/final-acceptance-checklist.md) 记录 schema 与迁移证据。
+- 更新 [execution-plan.md](../execution-plan.md) 中 `P0-01` 的状态。
+- 更新 [development-plan.md](../development-plan.md) 中的实际 Geo owner 路径与数据文件路径。
+- 在 [final-acceptance-checklist.md](../checklists/final-acceptance-checklist.md) 记录 schema 与迁移证据。
 
 ## 排期引用
 
-- 排期、波次、依赖与状态以 [execution-plan.md](/E:/Code/es/es-server/docs/audits/ip-geolocation-work-items/execution-plan.md) 中的 `P0-01` 为唯一事实源。
+- 排期、波次、依赖与状态以 [execution-plan.md](../execution-plan.md) 中的 `P0-01` 为唯一事实源。

@@ -368,6 +368,11 @@ export class UserProfileService {
         userId: this.forumTopic.userId,
         title: this.forumTopic.title,
         contentSnippet: this.buildTopicContentSnippetSql(),
+        geoCountry: this.forumTopic.geoCountry,
+        geoProvince: this.forumTopic.geoProvince,
+        geoCity: this.forumTopic.geoCity,
+        geoIsp: this.forumTopic.geoIsp,
+        geoSource: this.forumTopic.geoSource,
         images: this.forumTopic.images,
         videos: this.forumTopic.videos,
         isPinned: this.forumTopic.isPinned,
@@ -446,6 +451,11 @@ export class UserProfileService {
     const list = page.list.map((item) => {
       return {
         ...item,
+        geoCountry: item.geoCountry ?? undefined,
+        geoProvince: item.geoProvince ?? undefined,
+        geoCity: item.geoCity ?? undefined,
+        geoIsp: item.geoIsp ?? undefined,
+        geoSource: item.geoSource ?? undefined,
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
         user,

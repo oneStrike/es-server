@@ -122,6 +122,9 @@ importers:
       form-data:
         specifier: ^4.0.5
         version: 4.0.5
+      ip2region.js:
+        specifier: 3.1.8
+        version: 3.1.8
       joi:
         specifier: ^18.1.1
         version: 18.1.1
@@ -4360,6 +4363,9 @@ packages:
   interpret@3.1.1:
     resolution: {integrity: sha512-6xwYfHbajpoF0xLW+iwLkhwgvLoZDfjYfoFNu8ftMoXINzwuymNLd9u/KmwtdT2GbR+/Cz66otEGEVVUHX9QLQ==}
     engines: {node: '>=10.13.0'}
+
+  ip2region.js@3.1.8:
+    resolution: {integrity: sha512-USvUDme5Gyh0qs21Xpjb7QAXN5eRFDe5ZNtPVk3Ns2wYOc5eLIC57zPXZYBbN9kvA2yK0dBpJImArf1ekobSNA==}
 
   ipaddr.js@2.3.0:
     resolution: {integrity: sha512-Zv/pA+ciVFbCSBBjGfaKUya/CcGmUHzTydLMaTwrUUEM2DIEO3iZvueGxmacvmN50fGpGVKeTXpb2LcYQxeVdg==}
@@ -10791,6 +10797,8 @@ snapshots:
       kind-of: 6.0.3
 
   interpret@3.1.1: {}
+
+  ip2region.js@3.1.8: {}
 
   ipaddr.js@2.3.0: {}
 
