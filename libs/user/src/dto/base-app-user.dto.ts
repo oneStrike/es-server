@@ -1,13 +1,13 @@
 import {
   GenderEnum,
 } from '@libs/platform/constant/profile.constant'
-import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto } from '@libs/platform/dto/base.dto'
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 
 /**
  * 应用用户对外基类 DTO

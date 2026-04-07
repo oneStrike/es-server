@@ -1,9 +1,9 @@
-import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { PageDto } from '@libs/platform/dto/page.dto';
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
 import {
   IntersectionType,

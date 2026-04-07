@@ -8,8 +8,8 @@ import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.cons
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
 import { LikeService } from '@libs/interaction/like/like.service';
-import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
 import { AppUserCountService } from '@libs/user/app-user-count.service';
+import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {

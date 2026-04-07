@@ -2,13 +2,13 @@ import { BaseUserExperienceRecordDto, QueryUserExperienceRecordDto } from '@libs
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto';
 import { BaseUserPointRecordDto, QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto';
 import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto';
-import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { OmitType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
 import { BaseAppUserDto } from './base-app-user.dto'
