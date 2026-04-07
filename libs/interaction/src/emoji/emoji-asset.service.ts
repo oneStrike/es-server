@@ -147,7 +147,7 @@ export class EmojiAssetService {
     }
 
     const { id, ...updateData } = dto
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.emojiPack)
@@ -158,10 +158,11 @@ export class EmojiAssetService {
           .where(
             and(eq(this.emojiPack.id, id), isNull(this.emojiPack.deletedAt)),
           ),
-      { duplicate: '表情包编码已存在' },
+      {
+        duplicate: '表情包编码已存在',
+        notFound: '表情包不存在',
+      },
     )
-
-    this.drizzle.assertAffectedRows(result, '表情包不存在')
     return true
   }
 
@@ -175,7 +176,7 @@ export class EmojiAssetService {
     isEnabled: boolean,
     adminUserId?: number,
   ) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.emojiPack)
         .set({
@@ -184,9 +185,7 @@ export class EmojiAssetService {
         })
         .where(
           and(eq(this.emojiPack.id, id), isNull(this.emojiPack.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '表情包不存在')
+        ), { notFound: '表情包不存在' },)
     return true
   }
 
@@ -201,7 +200,7 @@ export class EmojiAssetService {
     adminUserId: number,
   ) {
     this.validateSceneType(dto.sceneType)
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.emojiPack)
         .set({
@@ -210,9 +209,7 @@ export class EmojiAssetService {
         })
         .where(
           and(eq(this.emojiPack.id, dto.id), isNull(this.emojiPack.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '表情包不存在')
+        ), { notFound: '表情包不存在' },)
     return true
   }
 
@@ -260,15 +257,13 @@ export class EmojiAssetService {
       throw new BadRequestException('该表情包下还有表情资源，无法删除')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.emojiPack)
         .set({ deletedAt: new Date() })
         .where(
           and(eq(this.emojiPack.id, id), isNull(this.emojiPack.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '表情包不存在')
+        ), { notFound: '表情包不存在' },)
     return true
   }
 
@@ -388,7 +383,7 @@ export class EmojiAssetService {
     })
 
     const { id, ...updateData } = dto
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.emojiAsset)
         .set({
@@ -397,9 +392,7 @@ export class EmojiAssetService {
         })
         .where(
           and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '表情资源不存在')
+        ), { notFound: '表情资源不存在' },)
     return true
   }
 
@@ -413,7 +406,7 @@ export class EmojiAssetService {
     isEnabled: boolean,
     adminUserId?: number,
   ) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.emojiAsset)
         .set({
@@ -422,9 +415,7 @@ export class EmojiAssetService {
         })
         .where(
           and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '表情资源不存在')
+        ), { notFound: '表情资源不存在' },)
     return true
   }
 
@@ -445,15 +436,13 @@ export class EmojiAssetService {
    * @throws NotFoundException 表情资源不存在或已删除
    */
   async deleteAsset(id: number) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.emojiAsset)
         .set({ deletedAt: new Date() })
         .where(
           and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '表情资源不存在')
+        ), { notFound: '表情资源不存在' },)
     return true
   }
 

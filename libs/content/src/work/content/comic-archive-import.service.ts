@@ -313,7 +313,7 @@ export class ComicArchiveImportService {
       contents.push(uploadedFile.filePath)
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: JSON.stringify(contents) })
@@ -321,9 +321,7 @@ export class ComicArchiveImportService {
           eq(this.workChapter.id, matchedItem.chapterId),
           eq(this.workChapter.workId, record.workId),
           isNull(this.workChapter.deletedAt),
-        )),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        )), { notFound: '章节不存在' },)
 
     return contents
   }

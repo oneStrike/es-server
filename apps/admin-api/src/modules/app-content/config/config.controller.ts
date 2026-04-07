@@ -1,6 +1,7 @@
 import { AppConfigService } from '@libs/app-config/config.service';
 import { BaseAppConfigDto, UpdateAppConfigDto } from '@libs/app-config/dto/config.dto';
 import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
@@ -34,7 +35,10 @@ export class AppConfigController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async update(@Body() body: UpdateAppConfigDto) {
-    return this.appConfigService.updateConfig(body)
+  async update(
+    @Body() body: UpdateAppConfigDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.appConfigService.updateConfig(body, userId)
   }
 }

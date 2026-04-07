@@ -1,8 +1,11 @@
+import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { desc, eq } from 'drizzle-orm'
+import { Injectable } from '@nestjs/common'
+import { desc, eq, sql } from 'drizzle-orm'
 import { DEFAULT_APP_CONFIG } from './config.constant'
 import { UpdateAppConfigDto } from './dto/config.dto'
+
+const APP_CONFIG_INIT_LOCK_KEY = 1_048_001
 
 /**
  * 应用配置服务
@@ -27,48 +30,71 @@ export class AppConfigService {
    * 若数据库中尚未存在配置记录，会先落一条默认配置并返回，避免上层处理“未初始化”分支。
    */
   async findActiveConfig() {
-    const configs = await this.db
-      .select()
-      .from(this.appConfig)
-      .orderBy(desc(this.appConfig.id))
-      .limit(1)
-
-    const config = configs[0]
-
-    if (!config) {
-      const [newConfig] = await this.db
-        .insert(this.appConfig)
-        .values(DEFAULT_APP_CONFIG)
-        .returning()
-      return newConfig
+    const config = await this.findLatestConfig()
+    if (config) {
+      return config
     }
-    return config
+
+    return this.ensureActiveConfig()
   }
 
   /**
    * 更新最新一条配置记录。
-   * 该模块约定只维护一条可编辑配置，因此不会暴露按 id 更新的入口；若记录缺失，直接视为初始化异常。
+   * 该模块约定只维护一条可编辑配置，因此不会暴露按 id 更新的入口。
+   * 若首次写入发生在空表状态，会先初始化默认配置，再在同一逻辑链路内更新目标字段。
    */
-  async updateConfig(updateConfigDto: UpdateAppConfigDto) {
-    const configs = await this.db
+  async updateConfig(updateConfigDto: UpdateAppConfigDto, userId: number) {
+    const existingConfig = await this.findActiveConfig()
+
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appConfig)
+          .set({
+            ...updateConfigDto,
+            updatedById: userId,
+          })
+          .where(eq(this.appConfig.id, existingConfig.id)),
+      {
+        notFound: '应用配置不存在',
+      },
+    )
+
+    return true
+  }
+
+  /**
+   * 读取当前最新一条配置记录。
+   * 所有公开读写入口都基于这条记录工作，保持“单例配置”的稳定语义。
+   */
+  private async findLatestConfig(db: Db = this.db) {
+    const configs = await db
       .select()
       .from(this.appConfig)
       .orderBy(desc(this.appConfig.id))
       .limit(1)
 
-    const existingConfig = configs[0]
+    return configs[0] ?? null
+  }
 
-    if (!existingConfig) {
-      throw new BadRequestException('应用配置不存在')
-    }
+  /**
+   * 空表初始化时使用事务级 advisory lock 收口并发竞争，避免首访并发插入多条默认配置。
+   */
+  private async ensureActiveConfig() {
+    return this.drizzle.withTransaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${APP_CONFIG_INIT_LOCK_KEY})`)
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appConfig)
-        .set(updateConfigDto)
-        .where(eq(this.appConfig.id, existingConfig.id)),
-    )
+      const existingConfig = await this.findLatestConfig(tx)
+      if (existingConfig) {
+        return existingConfig
+      }
 
-    return true
+      const [newConfig] = await tx
+        .insert(this.appConfig)
+        .values(DEFAULT_APP_CONFIG)
+        .returning()
+
+      return newConfig
+    })
   }
 }

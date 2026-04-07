@@ -6,7 +6,7 @@ import type {
 } from './dto/outbox-event.dto'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { ChatOutboxEventTypeEnum } from '../chat/chat.constant'
 import {
   MessageOutboxDomainEnum,
@@ -123,6 +123,19 @@ export class MessageOutboxService {
   }
 
   /**
+   * 按业务键覆盖式写入通知事件。
+   * 用于公告这类“当前状态快照”通知，新的 payload 会覆盖旧事件并重新触发消费。
+   */
+  async replaceNotificationEvents(dtos: CreateNotificationOutboxEventDto[]) {
+    if (dtos.length === 0) {
+      return
+    }
+    await this.drizzle.withErrorHandling(async () =>
+      this.replaceNotificationEventsInTx(this.db, dtos),
+    )
+  }
+
+  /**
    * 在既有事务中写入单条通知 outbox 事件。
    * 事件类型以 payload.type 为最终事实源，兼容期仍会校验传入 eventType 是否一致。
    */
@@ -162,8 +175,46 @@ export class MessageOutboxService {
         eventType: this.normalizeNotificationEventType(dto),
         bizKey: dto.bizKey,
         payload: dto.payload,
-      })),
+        })),
     )
+  }
+
+  /**
+   * 按业务键覆盖式写入通知事件（事务内）。
+   * 旧事件若已处理完成，也会被最新 payload 重置为待处理，确保最终状态收敛到最新快照。
+   */
+  async replaceNotificationEventsInTx(
+    tx: Db,
+    dtos: CreateNotificationOutboxEventDto[],
+  ) {
+    if (dtos.length === 0) {
+      return
+    }
+
+    await tx
+      .insert(this.outbox)
+      .values(
+        dtos.map((dto) => ({
+          domain: MessageOutboxDomainEnum.NOTIFICATION,
+          eventType: this.normalizeNotificationEventType(dto),
+          bizKey: dto.bizKey,
+          payload: dto.payload,
+          status: MessageOutboxStatusEnum.PENDING,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: this.outbox.bizKey,
+        set: {
+          domain: MessageOutboxDomainEnum.NOTIFICATION,
+          eventType: sql.raw('excluded."eventType"'),
+          payload: sql.raw('excluded."payload"'),
+          status: MessageOutboxStatusEnum.PENDING,
+          retryCount: 0,
+          nextRetryAt: null,
+          lastError: null,
+          processedAt: null,
+        },
+      })
   }
 
   /**

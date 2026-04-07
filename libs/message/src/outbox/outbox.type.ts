@@ -6,6 +6,12 @@ import type {
 import type { MessageOutboxDomainEnum } from './outbox.constant'
 
 /**
+ * 通知同步动作。
+ * 用于把“当前状态型”通知按稳定 bizKey 做替换或删除。
+ */
+export type NotificationSyncAction = 'UPSERT' | 'DELETE'
+
+/**
  * 通知发件箱载荷。
  * - 用于构造通知消息事件的业务内容与聚合信息
  */
@@ -23,6 +29,7 @@ export interface NotificationOutboxPayload {
   aggregateKey?: string
   aggregateCount?: number
   expiredAt?: Date | string
+  syncAction?: NotificationSyncAction
 }
 
 /**

@@ -81,13 +81,11 @@ export class UserBadgeService {
       throw new BadRequestException('徽章已被分配，无法禁用')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.userBadge)
         .set(updateData)
-        .where(eq(this.userBadge.id, id)),
-    )
-    this.drizzle.assertAffectedRows(result, '徽章不存在')
+        .where(eq(this.userBadge.id, id)), { notFound: '徽章不存在' },)
     return true
   }
 
@@ -100,13 +98,10 @@ export class UserBadgeService {
       throw new BadRequestException('徽章已被分配，无法删除')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userBadge)
-        .where(eq(this.userBadge.id, dto.id)),
-    )
-
-    this.drizzle.assertAffectedRows(result, '徽章不存在')
+        .where(eq(this.userBadge.id, dto.id)), { notFound: '徽章不存在' },)
     return true
   }
 
@@ -119,13 +114,11 @@ export class UserBadgeService {
       throw new BadRequestException('徽章已被分配，无法禁用')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.userBadge)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.userBadge.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '徽章不存在')
+        .where(eq(this.userBadge.id, dto.id)), { notFound: '徽章不存在' },)
     return true
   }
 
@@ -234,7 +227,7 @@ export class UserBadgeService {
   async revokeBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userBadgeAssignment)
         .where(
@@ -242,9 +235,7 @@ export class UserBadgeService {
             eq(this.userBadgeAssignment.userId, userId),
             eq(this.userBadgeAssignment.badgeId, badgeId),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '用户徽章记录不存在')
+        ), { notFound: '用户徽章记录不存在' },)
     return true
   }
 

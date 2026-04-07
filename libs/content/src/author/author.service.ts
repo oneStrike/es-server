@@ -379,15 +379,13 @@ export class WorkAuthorService {
   async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
     const { id, ...updateData } = updateAuthorDto
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
         .set(updateData)
         .where(
           and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '作者不存在')
+        ), { notFound: '作者不存在' },)
     return true
   }
 
@@ -395,7 +393,7 @@ export class WorkAuthorService {
    * 切换作者启用状态。
    */
   async updateAuthorStatus(input: UpdateAuthorStatusDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
         .set({ isEnabled: input.isEnabled })
@@ -404,9 +402,7 @@ export class WorkAuthorService {
             eq(this.workAuthor.id, input.id),
             isNull(this.workAuthor.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '作者不存在')
+        ), { notFound: '作者不存在' },)
     return true
   }
 
@@ -415,7 +411,7 @@ export class WorkAuthorService {
    * 推荐位只影响前台展示，不改变启用状态和其他资料字段。
    */
   async updateAuthorRecommended(input: UpdateAuthorRecommendedDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
         .set({ isRecommended: input.isRecommended })
@@ -424,9 +420,7 @@ export class WorkAuthorService {
             eq(this.workAuthor.id, input.id),
             isNull(this.workAuthor.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '作者不存在')
+        ), { notFound: '作者不存在' },)
     return true
   }
 
@@ -461,7 +455,7 @@ export class WorkAuthorService {
       )
     }
 
-    const deleted = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workAuthor)
         .set({ deletedAt: new Date() })
@@ -470,9 +464,7 @@ export class WorkAuthorService {
             eq(this.workAuthor.id, input.id),
             isNull(this.workAuthor.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(deleted, '作者不存在')
+        ), { notFound: '作者不存在' },)
     return true
   }
 }

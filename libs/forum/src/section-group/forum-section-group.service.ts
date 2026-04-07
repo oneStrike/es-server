@@ -209,7 +209,7 @@ export class ForumSectionGroupService {
     updateSectionGroupDto: UpdateForumSectionGroupDto,
   ) {
     const { id, ...updateData } = updateSectionGroupDto
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.forumSectionGroup)
@@ -220,9 +220,11 @@ export class ForumSectionGroupService {
               isNull(this.forumSectionGroup.deletedAt),
             ),
           ),
-      { duplicate: '板块分组名称已存在' },
+      {
+        duplicate: '板块分组名称已存在',
+        notFound: '板块分组不存在',
+      },
     )
-    this.drizzle.assertAffectedRows(result, '板块分组不存在')
     return true
   }
 
@@ -249,7 +251,7 @@ export class ForumSectionGroupService {
       throw new BadRequestException('该分组下还有板块，无法删除')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumSectionGroup)
         .set({ deletedAt: new Date() })
@@ -258,9 +260,7 @@ export class ForumSectionGroupService {
             eq(this.forumSectionGroup.id, id),
             isNull(this.forumSectionGroup.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '板块分组不存在')
+        ), { notFound: '板块分组不存在' },)
     return true
   }
 
@@ -282,7 +282,7 @@ export class ForumSectionGroupService {
     updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledDto,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumSectionGroup)
         .set({ isEnabled })
@@ -291,9 +291,7 @@ export class ForumSectionGroupService {
             eq(this.forumSectionGroup.id, id),
             isNull(this.forumSectionGroup.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '板块分组不存在')
+        ), { notFound: '板块分组不存在' },)
     return true
   }
 

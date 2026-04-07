@@ -176,13 +176,11 @@ export class LibDictionaryService {
    * 切换字典启用状态。
    */
   async updateDictionaryStatus(dto: UpdateEnabledStatusDto) {
-    const data = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionary)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.dictionary.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(data, '字典不存在')
+        .where(eq(this.dictionary.id, dto.id)), { notFound: '字典不存在' },)
     return true
   }
 
@@ -199,10 +197,8 @@ export class LibDictionaryService {
       throw new BadRequestException('该字典还有关联字典项，无法删除')
     }
 
-    const data = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionary).where(eq(this.dictionary.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(data, '字典不存在')
+    await this.drizzle.withErrorHandling(() =>
+      this.db.delete(this.dictionary).where(eq(this.dictionary.id, dto.id)), { notFound: '字典不存在' },)
     return true
   }
 
@@ -269,18 +265,14 @@ export class LibDictionaryService {
       await this.assertDictionaryExists(dto.dictionaryCode)
     }
     const { id, sortOrder, ...data } = dto
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionaryItem)
         .set({
           ...data,
           sortOrder: sortOrder ?? undefined,
         })
-        .where(eq(this.dictionaryItem.id, id)),
-    )
-
-    this.drizzle.assertAffectedRows(result, '字典项不存在')
-
+        .where(eq(this.dictionaryItem.id, id)), { notFound: '字典项不存在' },)
     return true
   }
 
@@ -288,14 +280,11 @@ export class LibDictionaryService {
    * 切换字典项启用状态。
    */
   async updateDictionaryItemStatus(dto: UpdateEnabledStatusDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.dictionaryItem)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.dictionaryItem.id, dto.id)),
-    )
-
-    this.drizzle.assertAffectedRows(result, '字典项不存在')
+        .where(eq(this.dictionaryItem.id, dto.id)), { notFound: '字典项不存在' },)
     return true
   }
 
@@ -314,10 +303,8 @@ export class LibDictionaryService {
    * 删除字典项。
    */
   async deleteDictionaryItem(dto: IdDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionaryItem).where(eq(this.dictionaryItem.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '字典项不存在')
+    await this.drizzle.withErrorHandling(() =>
+      this.db.delete(this.dictionaryItem).where(eq(this.dictionaryItem.id, dto.id)), { notFound: '字典项不存在' },)
     return true
   }
 }

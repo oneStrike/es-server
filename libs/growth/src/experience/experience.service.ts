@@ -118,7 +118,7 @@ export class UserExperienceService {
   async updateExperienceRule(dto: UpdateUserExperienceRuleDto) {
     this.validateExperienceRuleWrite(dto)
     const { id, ...updateData } = dto
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.userExperienceRule)
@@ -126,9 +126,9 @@ export class UserExperienceService {
           .where(eq(this.userExperienceRule.id, id)),
       {
         duplicate: 'Experience rule type already exists',
+        notFound: '经验规则不存在',
       },
     )
-    this.drizzle.assertAffectedRows(result, '经验规则不存在')
     return true
   }
 
@@ -148,12 +148,10 @@ export class UserExperienceService {
       throw new BadRequestException('经验规则不存在')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userExperienceRule)
-        .where(eq(this.userExperienceRule.id, id)),
-    )
-    this.drizzle.assertAffectedRows(result, '经验规则不存在')
+        .where(eq(this.userExperienceRule.id, id)), { notFound: '经验规则不存在' },)
     return true
   }
 

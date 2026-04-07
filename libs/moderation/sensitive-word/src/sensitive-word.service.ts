@@ -94,13 +94,11 @@ export class SensitiveWordService {
    */
   async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
     const { id, ...updateData } = dto
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.sensitiveWord)
         .set(updateData)
-        .where(eq(this.sensitiveWord.id, id)),
-    )
-    this.drizzle.assertAffectedRows(result, `ID【${id}】数据不存在`)
+        .where(eq(this.sensitiveWord.id, id)), { notFound: `ID【${id}】数据不存在` },)
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
@@ -112,12 +110,10 @@ export class SensitiveWordService {
    * @returns 删除结果
    */
   async deleteSensitiveWord(dto: { id: number }) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.sensitiveWord)
-        .where(eq(this.sensitiveWord.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(result, `ID【${dto.id}】数据不存在`)
+        .where(eq(this.sensitiveWord.id, dto.id)), { notFound: `ID【${dto.id}】数据不存在` },)
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()
@@ -130,13 +126,11 @@ export class SensitiveWordService {
    * @returns 更新结果
    */
   async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.sensitiveWord)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.sensitiveWord.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(result, `ID【${dto.id}】数据不存在`)
+        .where(eq(this.sensitiveWord.id, dto.id)), { notFound: `ID【${dto.id}】数据不存在` },)
 
     await this.cacheService.invalidateAll()
     await this.detectService.reloadWords()

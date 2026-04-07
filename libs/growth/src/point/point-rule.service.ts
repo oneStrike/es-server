@@ -88,7 +88,7 @@ export class UserPointRuleService {
 
     const { id, ...updateData } = dto
 
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.userPointRule)
@@ -96,9 +96,9 @@ export class UserPointRuleService {
           .where(eq(this.userPointRule.id, id)),
       {
         duplicate: 'Rule type already exists',
+        notFound: 'Point rule not found',
       },
     )
-    this.drizzle.assertAffectedRows(result, 'Point rule not found')
     return true
   }
 

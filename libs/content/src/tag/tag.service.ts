@@ -106,15 +106,17 @@ export class WorkTagService {
   async updateTag(updateTagDto: UpdateTagDto) {
     const { id, ...updateData } = updateTagDto
 
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.workTag)
           .set(updateData)
           .where(eq(this.workTag.id, id)),
-      { duplicate: '标签名称已存在' },
+      {
+        duplicate: '标签名称已存在',
+        notFound: '标签不存在',
+      },
     )
-    this.drizzle.assertAffectedRows(result, '标签不存在')
     return true
   }
 
@@ -138,13 +140,11 @@ export class WorkTagService {
       throw new BadRequestException('标签存在关联的作品，不能禁用')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workTag)
         .set({ isEnabled: input.isEnabled })
-        .where(eq(this.workTag.id, input.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '标签不存在')
+        .where(eq(this.workTag.id, input.id)), { notFound: '标签不存在' },)
     return true
   }
 
@@ -166,10 +166,8 @@ export class WorkTagService {
       throw new BadRequestException('标签存在关联的作品，不能删除')
     }
 
-    const rows = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.workTag).where(eq(this.workTag.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(rows, '标签不存在')
+    await this.drizzle.withErrorHandling(() =>
+      this.db.delete(this.workTag).where(eq(this.workTag.id, dto.id)), { notFound: '标签不存在' },)
     return true
   }
 

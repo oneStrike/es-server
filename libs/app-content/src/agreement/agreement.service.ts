@@ -1,7 +1,11 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
   CreateAgreementDto,
@@ -67,7 +71,8 @@ export class AgreementService {
     return [...agreements]
       .sort((left, right) => {
         const publishedAtDiff =
-          (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0)
+          (right.publishedAt?.getTime() ?? 0) -
+          (left.publishedAt?.getTime() ?? 0)
 
         if (publishedAtDiff !== 0) {
           return publishedAtDiff
@@ -112,60 +117,44 @@ export class AgreementService {
     const { id, ...updateData } = dto
     const agreement = await this.findAgreementLifecycle(id)
     if (agreement.isPublished) {
-      throw new BadRequestException('已发布协议不允许直接修改，请新建版本后发布')
+      throw new BadRequestException(
+        '已发布协议不允许直接修改，请新建版本后发布',
+      )
     }
 
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.agreement)
           .set(updateData)
           .where(eq(this.agreement.id, id)),
-      { duplicate: '协议标题和版本已存在' },
+      {
+        duplicate: '协议标题和版本已存在',
+        notFound: '协议不存在',
+      },
     )
-
-    this.drizzle.assertAffectedRows(result, '协议不存在')
     return true
   }
 
   /**
    * 切换协议发布状态。
-   * 发布时补写 `publishedAt`，取消发布时保留历史发布时间用于追溯。
+   * 发布时补写 `publishedAt`，下线统一通过 `update-status(false)` 完成。
    */
   async updatePublishStatus(dto: UpdatePublishedStatusDto) {
+    const agreement = await this.findAgreementLifecycle(dto.id)
+    if (!dto.isPublished && !agreement.isPublished) {
+      throw new BadRequestException('未发布协议不允许下线')
+    }
+
     const updateData = dto.isPublished
       ? { isPublished: true, publishedAt: new Date() }
       : { isPublished: false }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.agreement)
         .set(updateData)
-        .where(eq(this.agreement.id, dto.id)),
-    )
-
-    this.drizzle.assertAffectedRows(result, '协议不存在')
-    return true
-  }
-
-  /**
-   * 通过 `isPublished=false` 逻辑下线已发布协议，不执行物理删除。
-   * 草稿仍保留在编辑流程中，不允许通过“下线”入口伪装成删除成功。
-   */
-  async delete(dto: IdDto) {
-    const agreement = await this.findAgreementLifecycle(dto.id)
-    if (!agreement.isPublished) {
-      throw new BadRequestException('未发布协议不允许下线')
-    }
-
-    const result = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.agreement)
-        .set({ isPublished: false })
-        .where(eq(this.agreement.id, dto.id)),
-    )
-
-    this.drizzle.assertAffectedRows(result, '协议不存在')
+        .where(eq(this.agreement.id, dto.id)), { notFound: '协议不存在' },)
     return true
   }
 
@@ -199,9 +188,7 @@ export class AgreementService {
     const conditions: SQL[] = []
 
     if (query.title) {
-      conditions.push(
-        buildILikeCondition(this.agreement.title, query.title)!,
-      )
+      conditions.push(buildILikeCondition(this.agreement.title, query.title)!)
     }
     if (query.isPublished !== undefined) {
       conditions.push(eq(this.agreement.isPublished, query.isPublished))

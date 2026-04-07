@@ -15,4 +15,7 @@ export interface DrizzleErrorMessages {
   notNull?: string
   check?: string
   conflict?: string
+  notFound?: string
 }
+
+export type DrizzleMutationResult = { rowCount?: number | null } | unknown[]

@@ -106,13 +106,11 @@ export class AdminUserService {
     }
 
     const { id: _id, ...data } = updateData
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.adminUser)
         .set(data)
-        .where(eq(this.adminUser.id, updateData.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '用户不存在')
+        .where(eq(this.adminUser.id, updateData.id)), { notFound: '用户不存在' },)
     return true
   }
 
@@ -259,15 +257,13 @@ export class AdminUserService {
     }
 
     // 更新密码
-    const result = await this.drizzle.withErrorHandling(async () =>
+    await this.drizzle.withErrorHandling(async () =>
       this.db
         .update(this.adminUser)
         .set({
           password: await this.scryptService.encryptPassword(newPassword),
         })
-        .where(eq(this.adminUser.id, userId)),
-    )
-    this.drizzle.assertAffectedRows(result, '用户不存在')
+        .where(eq(this.adminUser.id, userId)), { notFound: '用户不存在' },)
 
     await this.tokenStorageService.revokeAllByUserId(
       userId,
@@ -312,15 +308,13 @@ export class AdminUserService {
     const encryptedPassword = await this.scryptService.encryptPassword(
       defaultPassword,
     )
-    const rows = await this.drizzle.withErrorHandling(async () =>
+    await this.drizzle.withErrorHandling(async () =>
       this.db
         .update(this.adminUser)
         .set({
           password: encryptedPassword,
         })
-        .where(eq(this.adminUser.id, id)),
-    )
-    this.drizzle.assertAffectedRows(rows, '用户不存在')
+        .where(eq(this.adminUser.id, id)), { notFound: '用户不存在' },)
 
     await this.tokenStorageService.revokeAllByUserId(
       id,

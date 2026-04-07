@@ -131,7 +131,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
       objectiveType,
     )
 
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.taskTable)
@@ -150,10 +150,11 @@ export class TaskDefinitionService extends TaskServiceSupport {
               isNull(this.taskTable.deletedAt),
             ),
           ),
-      { duplicate: '任务编码已存在' },
+      {
+        duplicate: '任务编码已存在',
+        notFound: '任务不存在',
+      },
     )
-
-    this.drizzle.assertAffectedRows(result, '任务不存在')
     return true
   }
 
@@ -163,7 +164,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
    * 该接口只处理后台快速开关，不承担复杂配置变更校验。
    */
   async updateTaskStatus(dto: UpdateTaskStatusDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.taskTable)
         .set({
@@ -172,10 +173,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
         })
         .where(
           and(eq(this.taskTable.id, dto.id), isNull(this.taskTable.deletedAt)),
-        ),
-    )
-
-    this.drizzle.assertAffectedRows(result, '任务不存在')
+        ), { notFound: '任务不存在' },)
     return true
   }
 

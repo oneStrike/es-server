@@ -131,15 +131,17 @@ export class WorkCategoryService {
       throw new BadRequestException('该分类存在关联作品，不能禁用。')
     }
 
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.workCategory)
           .set(updateData)
           .where(eq(this.workCategory.id, id)),
-      { duplicate: '分类名称已存在' },
+      {
+        duplicate: '分类名称已存在',
+        notFound: '分类不存在',
+      },
     )
-    this.drizzle.assertAffectedRows(result, '分类不存在')
     return true
   }
 
@@ -154,13 +156,11 @@ export class WorkCategoryService {
     ) {
       throw new BadRequestException('该分类存在关联作品，不能禁用。')
     }
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workCategory)
         .set({ isEnabled: updateStatusDto.isEnabled })
-        .where(eq(this.workCategory.id, updateStatusDto.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '分类不存在')
+        .where(eq(this.workCategory.id, updateStatusDto.id)), { notFound: '分类不存在' },)
     return true
   }
 
@@ -188,12 +188,10 @@ export class WorkCategoryService {
         '该分类存在关联作品，不能删除。',
       )
     }
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.workCategory)
-        .where(eq(this.workCategory.id, input.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '分类不存在')
+        .where(eq(this.workCategory.id, input.id)), { notFound: '分类不存在' },)
     return true
   }
 

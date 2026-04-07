@@ -1,6 +1,10 @@
 import type { DbQueryConfig } from '@libs/platform/config'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
-import type { Db, DrizzleErrorMessages } from './drizzle.type'
+import type {
+  Db,
+  DrizzleErrorMessages,
+  DrizzleMutationResult,
+} from './drizzle.type'
 import type { PostgresError } from './error/postgres-error'
 import type { DrizzleOrderByOptions } from './query/order-by'
 import type {
@@ -71,12 +75,9 @@ export class DrizzleService implements OnApplicationShutdown {
     options: Partial<DrizzlePageQueryOptions> = {},
   ) {
     return buildDrizzlePageQuery(input, {
-      defaultPageIndex:
-        options.defaultPageIndex ?? this.queryConfig.pageIndex,
-      defaultPageSize:
-        options.defaultPageSize ?? this.queryConfig.pageSize,
-      maxPageSize:
-        options.maxPageSize ?? this.queryConfig.maxListItemLimit,
+      defaultPageIndex: options.defaultPageIndex ?? this.queryConfig.pageIndex,
+      defaultPageSize: options.defaultPageSize ?? this.queryConfig.pageSize,
+      maxPageSize: options.maxPageSize ?? this.queryConfig.maxListItemLimit,
     })
   }
 
@@ -152,10 +153,7 @@ export class DrizzleService implements OnApplicationShutdown {
   /**
    * 断言 update/delete 或查询结果确实命中了记录，避免业务层忽略 0 行变更。
    */
-  assertAffectedRows(
-    result: { rowCount?: number | null } | unknown[],
-    message = '记录不存在',
-  ): void {
+  assertAffectedRows(result: DrizzleMutationResult, message = '记录不存在') {
     if (Array.isArray(result)) {
       if (result.length === 0) {
         throw new NotFoundException(message)
@@ -170,12 +168,17 @@ export class DrizzleService implements OnApplicationShutdown {
 
   /**
    * 在非事务场景下复用统一的数据库异常处理策略。
+   * 当显式传入 `notFound` 时，额外收口“0 行变更/空 returning” 的资源不存在语义。
    */
   async withErrorHandling<T>(
     fn: () => Promise<T>,
     messages?: DrizzleErrorMessages,
   ): Promise<T> {
-    return this.executeWithErrorHandling(fn, messages)
+    const result = await this.executeWithErrorHandling(fn, messages)
+    if (messages?.notFound) {
+      this.assertAffectedRows(result as DrizzleMutationResult, messages.notFound)
+    }
+    return result
   }
 
   /**

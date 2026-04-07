@@ -303,7 +303,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       await this.assertNoOtherCurrentActivePlan(plan.id)
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.checkInPlanTable)
         .set({
@@ -315,10 +315,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             eq(this.checkInPlanTable.id, dto.id),
             isNull(this.checkInPlanTable.deletedAt),
           ),
-        ),
-    )
-
-    this.drizzle.assertAffectedRows(result, '签到计划不存在')
+        ), { notFound: '签到计划不存在' },)
     return true
   }
 

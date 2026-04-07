@@ -328,7 +328,7 @@ export class ReadingStateService {
    * 删除单条阅读历史记录
    */
   async deleteUserReadingHistory(input: DeleteReadingHistoryCommandDto) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userWorkReadingState)
         .where(
@@ -336,9 +336,7 @@ export class ReadingStateService {
             eq(this.userWorkReadingState.userId, input.userId),
             inArray(this.userWorkReadingState.workId, input.workIds),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '阅读历史不存在')
+        ), { notFound: '阅读历史不存在' },)
   }
 
   /**

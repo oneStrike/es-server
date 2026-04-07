@@ -76,7 +76,7 @@ export class UserService {
     await this.userCoreService.ensureUserExists(userId)
 
     try {
-      const result = await this.drizzle.withErrorHandling(() =>
+      await this.drizzle.withErrorHandling(() =>
         this.db
           .update(this.appUser)
           .set({
@@ -90,9 +90,7 @@ export class UserService {
               ? formatDateOnlyInAppTimeZone(dto.birthDate)
               : undefined,
           })
-          .where(eq(this.appUser.id, userId)),
-      )
-      this.drizzle.assertAffectedRows(result, '用户不存在')
+          .where(eq(this.appUser.id, userId)), { notFound: '用户不存在' },)
       return true
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
@@ -135,15 +133,13 @@ export class UserService {
     })
 
     try {
-      const result = await this.drizzle.withErrorHandling(() =>
+      await this.drizzle.withErrorHandling(() =>
         this.db
           .update(this.appUser)
           .set({
             phoneNumber: dto.newPhone,
           })
-          .where(eq(this.appUser.id, userId)),
-      )
-      this.drizzle.assertAffectedRows(result, '用户不存在')
+          .where(eq(this.appUser.id, userId)), { notFound: '用户不存在' },)
       return true
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {

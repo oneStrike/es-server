@@ -217,13 +217,11 @@ export class ForumTagService {
       throw new BadRequestException('该标签已被使用，无法禁用')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumTag)
         .set({ name, ...updateData })
-        .where(eq(this.forumTag.id, id)),
-    )
-    this.drizzle.assertAffectedRows(result, '标签不存在')
+        .where(eq(this.forumTag.id, id)), { notFound: '标签不存在' },)
     return true
   }
 
@@ -245,10 +243,8 @@ export class ForumTagService {
       throw new BadRequestException('该标签已被使用，无法删除')
     }
 
-    const rows = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.forumTag).where(eq(this.forumTag.id, id)),
-    )
-    this.drizzle.assertAffectedRows(rows, '标签不存在')
+    await this.drizzle.withErrorHandling(() =>
+      this.db.delete(this.forumTag).where(eq(this.forumTag.id, id)), { notFound: '标签不存在' },)
 
     return true
   }

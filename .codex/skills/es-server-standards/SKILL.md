@@ -54,7 +54,7 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 ### Drizzle / Service / Resolver
 
 - Inject `DrizzleService` instead of raw database clients or Prisma leftovers.
-- Wrap writes in `withErrorHandling`; use `assertAffectedRows` when existence matters.
+- Wrap writes in `withErrorHandling`; prefer `withErrorHandling(..., { notFound: '...' })` for non-transaction writes where existence matters, and keep `assertAffectedRows` for transaction/internal paths that do not directly use `withErrorHandling`.
 - Use `drizzle.ext.findPagination` for paging and `SQL[] + and(...)` for dynamic conditions.
 - Pass `tx` through the entire call chain if a transaction starts.
 - Keep raw SQL parameterized and localized to helper methods.

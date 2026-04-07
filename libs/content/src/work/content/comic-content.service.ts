@@ -108,7 +108,7 @@ export class ComicContentService {
 
     contents.push(file.filePath)
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: JSON.stringify(contents) })
@@ -117,9 +117,7 @@ export class ComicContentService {
             eq(this.workChapter.id, chapterId),
             isNull(this.workChapter.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
 
     return file
   }
@@ -135,7 +133,7 @@ export class ComicContentService {
 
     contents[index] = content
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: JSON.stringify(contents) })
@@ -144,9 +142,7 @@ export class ComicContentService {
             eq(this.workChapter.id, chapterId),
             isNull(this.workChapter.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
 
     return true
   }
@@ -163,7 +159,7 @@ export class ComicContentService {
     index.sort((a, b) => b - a)
     index.forEach((i) => contents.splice(i, 1))
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: contents.length > 0 ? JSON.stringify(contents) : null })
@@ -172,9 +168,7 @@ export class ComicContentService {
             eq(this.workChapter.id, chapterId),
             isNull(this.workChapter.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
 
     return true
   }
@@ -196,7 +190,7 @@ export class ComicContentService {
     const [movedContent] = contents.splice(fromIndex, 1)
     contents.splice(toIndex, 0, movedContent)
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: JSON.stringify(contents) })
@@ -205,15 +199,13 @@ export class ComicContentService {
             eq(this.workChapter.id, chapterId),
             isNull(this.workChapter.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
 
     return true
   }
 
   async clearChapterContents(chapterId: number) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: null })
@@ -222,9 +214,7 @@ export class ComicContentService {
             eq(this.workChapter.id, chapterId),
             isNull(this.workChapter.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
 
     return true
   }

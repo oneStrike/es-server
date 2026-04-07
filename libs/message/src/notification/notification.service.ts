@@ -1,5 +1,8 @@
 import type { SQL } from 'drizzle-orm'
-import type { NotificationOutboxPayload } from '../outbox/outbox.type'
+import type {
+  NotificationOutboxPayload,
+  NotificationSyncAction,
+} from '../outbox/outbox.type'
 import type { CreateNotificationFromOutboxOutput } from './notification.type'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -113,7 +116,7 @@ export class MessageNotificationService {
    */
   async markRead(userId: number, id: number) {
     const now = new Date()
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.notification)
         .set({
@@ -124,9 +127,7 @@ export class MessageNotificationService {
           eq(this.notification.id, id),
           eq(this.notification.userId, userId),
           eq(this.notification.isRead, false),
-        ))
-    )
-    this.drizzle.assertAffectedRows(result, '通知不存在或已读')
+        )), { notFound: '通知不存在或已读' },)
 
     this.messageNotificationRealtimeService.emitNotificationReadSync(userId, {
       id,
@@ -183,6 +184,10 @@ export class MessageNotificationService {
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       throw new BadRequestException('通知接收用户ID非法')
     }
+    const syncAction = this.parseOptionalSyncAction(payload.syncAction)
+    if (syncAction === 'DELETE') {
+      return this.deleteSyncedNotification(receiverUserId, bizKey)
+    }
     if (!payload.title || !payload.content) {
       throw new BadRequestException('通知事件缺少必要字段')
     }
@@ -238,6 +243,21 @@ export class MessageNotificationService {
       }
     }
 
+    if (syncAction === 'UPSERT') {
+      return this.replaceNotificationByBizKey({
+        bizKey,
+        receiverUserId,
+        actorUserId,
+        notificationType,
+        payload,
+        renderedContent: {
+          title: renderedContent.title,
+          content: renderedContent.content,
+        },
+        expiredAt,
+      })
+    }
+
     const inserted = await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.notification)
@@ -291,6 +311,102 @@ export class MessageNotificationService {
   }
 
   /**
+   * 按稳定业务键替换通知。
+   * 先删除旧通知，再插入最新快照，确保公告更新后用户侧只保留当前版本。
+   */
+  private async replaceNotificationByBizKey(input: {
+    bizKey: string
+    receiverUserId: number
+    actorUserId?: number
+    notificationType: MessageNotificationTypeEnum
+    payload: NotificationOutboxPayload
+    renderedContent: {
+      title: string
+      content: string
+    }
+    expiredAt?: Date
+  }): Promise<CreateNotificationFromOutboxOutput> {
+    const inserted = await this.drizzle.withTransaction(async (tx) => {
+      await tx
+        .delete(this.notification)
+        .where(and(
+          eq(this.notification.userId, input.receiverUserId),
+          eq(this.notification.bizKey, input.bizKey),
+        ))
+
+      return tx
+        .insert(this.notification)
+        .values({
+          userId: input.receiverUserId,
+          type: input.notificationType,
+          bizKey: input.bizKey,
+          actorUserId:
+            input.actorUserId !== undefined && Number.isInteger(input.actorUserId)
+              ? input.actorUserId
+              : undefined,
+          targetType: this.parseOptionalSmallInt(input.payload.targetType, 'targetType'),
+          targetId:
+            input.payload.targetId !== undefined
+              ? Number(input.payload.targetId)
+              : undefined,
+          subjectType: this.parseOptionalSmallInt(input.payload.subjectType, 'subjectType'),
+          subjectId:
+            input.payload.subjectId !== undefined
+              ? Number(input.payload.subjectId)
+              : undefined,
+          title: input.renderedContent.title,
+          content: input.renderedContent.content,
+          payload:
+            input.payload.payload === undefined
+              ? undefined
+              : input.payload.payload,
+          aggregateKey: input.payload.aggregateKey,
+          aggregateCount:
+            input.payload.aggregateCount && input.payload.aggregateCount > 0
+              ? input.payload.aggregateCount
+              : 1,
+          expiredAt: input.expiredAt,
+        })
+        .returning()
+    })
+
+    const notification = inserted[0]
+    if (!notification) {
+      throw new Error('通知替换失败')
+    }
+
+    this.messageNotificationRealtimeService.emitNotificationNew(notification)
+    await this.emitInboxSummaryUpdate(input.receiverUserId)
+    return {
+      status: MessageNotificationDispatchStatusEnum.DELIVERED,
+      notification,
+    }
+  }
+
+  /**
+   * 删除同步型通知。
+   * 用于公告下线或失效后清理同 bizKey 的历史通知，避免用户继续看到过期内容。
+   */
+  private async deleteSyncedNotification(
+    receiverUserId: number,
+    bizKey: string,
+  ): Promise<CreateNotificationFromOutboxOutput> {
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .delete(this.notification)
+        .where(and(
+          eq(this.notification.userId, receiverUserId),
+          eq(this.notification.bizKey, bizKey),
+        ))
+    )
+
+    await this.emitInboxSummaryUpdate(receiverUserId)
+    return {
+      status: MessageNotificationDispatchStatusEnum.DELIVERED,
+    }
+  }
+
+  /**
    * 推送收件箱摘要更新
    * 通知读状态和新通知创建都需要同步刷新首页摘要，避免客户端额外轮询
    */
@@ -324,5 +440,19 @@ export class MessageNotificationService {
       throw new BadRequestException(`${fieldName} must be a valid smallint`)
     }
     return normalized
+  }
+
+  /**
+   * 解析通知同步动作。
+   * 未传时保持旧的“只插入不替换”语义；非法值直接拦成 400。
+   */
+  private parseOptionalSyncAction(value: unknown) {
+    if (value === undefined || value === null) {
+      return undefined
+    }
+    if (value === 'UPSERT' || value === 'DELETE') {
+      return value as NotificationSyncAction
+    }
+    throw new BadRequestException('通知同步动作非法')
   }
 }

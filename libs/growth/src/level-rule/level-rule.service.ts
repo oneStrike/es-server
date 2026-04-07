@@ -132,7 +132,7 @@ export class UserLevelRuleService {
    */
   async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.userLevelRule)
@@ -140,9 +140,9 @@ export class UserLevelRuleService {
           .where(eq(this.userLevelRule.id, id)),
       {
         duplicate: 'Level rule already exists',
+        notFound: '等级规则不存在',
       },
     )
-    this.drizzle.assertAffectedRows(result, '等级规则不存在')
     return true
   }
 
@@ -169,12 +169,10 @@ export class UserLevelRuleService {
       throw new BadRequestException('该等级规则下还有用户，无法删除')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.userLevelRule)
-        .where(eq(this.userLevelRule.id, id)),
-    )
-    this.drizzle.assertAffectedRows(result, '等级规则不存在')
+        .where(eq(this.userLevelRule.id, id)), { notFound: '等级规则不存在' },)
     return true
   }
 

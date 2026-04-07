@@ -132,16 +132,17 @@ export class AppPageService {
   async updatePage(updatePageDto: UpdateAppPageDto) {
     const { id, ...updateData } = updatePageDto
 
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.appPage)
           .set(updateData)
           .where(eq(this.appPage.id, id)),
-      { duplicate: '页面编码或路径已存在' },
+      {
+        duplicate: '页面编码或路径已存在',
+        notFound: '页面不存在',
+      },
     )
-
-    this.drizzle.assertAffectedRows(result, '页面不存在')
     return true
   }
 
@@ -151,14 +152,11 @@ export class AppPageService {
    */
   async batchDelete(dto: IdsDto) {
     const { ids } = dto
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appPage)
         .set({ isEnabled: false })
-        .where(inArray(this.appPage.id, ids)),
-    )
-
-    this.drizzle.assertAffectedRows(result, '页面不存在')
+        .where(inArray(this.appPage.id, ids)), { notFound: '页面不存在' },)
     return true
   }
 }

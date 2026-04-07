@@ -11,7 +11,8 @@
 
 - 表对象必须来自 `drizzle.schema`，禁止在 service 内重新声明表结构。
 - 写操作统一通过 `drizzle.withErrorHandling(...)` 或等价事务封装；依赖原始 PostgreSQL 错误码做重试、幂等或冲突分支的路径除外。
-- 语义上必须保证资源存在的 update/delete，写后必须调用 `drizzle.assertAffectedRows(...)`；幂等删除等允许 0 行变更的场景除外。
+- 非事务写路径若语义上必须保证资源存在的 update/delete，优先使用 `drizzle.withErrorHandling(..., { notFound: '...' })` 一次性收口异常语义；幂等删除等允许 0 行变更的场景除外。
+- 事务内、计数器 helper、或其他不直接经过 `withErrorHandling(...)` 的写路径，继续在写后调用 `drizzle.assertAffectedRows(...)`。
 - 事务统一使用 `db.transaction(async (tx) => ...)` 或等价封装，并沿调用链显式透传；禁止 `tx: any` 和接收事务后仍偷偷使用默认 `db`。
 
 ## 3. 查询与分页
@@ -67,7 +68,7 @@
 ## 9. 验收清单
 
 - [ ] 代码中不存在 Prisma 风格入口、`tx: any` 或忽略传入事务的写法。
-- [ ] 写操作统一经过 `withErrorHandling` 或等价事务封装；必须保证资源存在的路径使用了 `assertAffectedRows`。
+- [ ] 写操作统一经过 `withErrorHandling` 或等价事务封装；必须保证资源存在的非事务写路径优先使用 `withErrorHandling(..., { notFound })`，其余路径使用 `assertAffectedRows`。
 - [ ] 常规分页走 `ext.findPagination`，复合分页没有顺手改坏既有语义。
 - [ ] 原生 SQL 已参数化并下沉到 helper/私有方法，没有用户输入进入 `sql.raw()`。
 - [ ] 计数或其他增减写路径使用原子更新，并和事实写入保持事务一致。

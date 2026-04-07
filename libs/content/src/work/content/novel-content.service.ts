@@ -93,7 +93,7 @@ export class NovelContentService {
       chapterId.toString(),
     ])
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: file.filePath })
@@ -102,9 +102,7 @@ export class NovelContentService {
             eq(this.workChapter.id, chapterId),
             isNull(this.workChapter.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
 
     return file
   }
@@ -119,7 +117,7 @@ export class NovelContentService {
       throw new BadRequestException('章节不存在')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ content: null })
@@ -128,9 +126,7 @@ export class NovelContentService {
             eq(this.workChapter.id, chapterId),
             isNull(this.workChapter.deletedAt),
           ),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
 
     return true
   }

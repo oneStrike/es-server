@@ -469,7 +469,7 @@ export class WorkChapterService {
       throw new BadRequestException('指定的阅读会员等级不存在')
     }
 
-    const result = await this.drizzle.withErrorHandling(
+    await this.drizzle.withErrorHandling(
       () =>
         this.db
           .update(this.workChapter)
@@ -480,9 +480,11 @@ export class WorkChapterService {
               isNull(this.workChapter.deletedAt),
             ),
           ),
-      { duplicate: '该作品下章节号已存在' },
+      {
+        duplicate: '该作品下章节号已存在',
+        notFound: '章节不存在',
+      },
     )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
     return true
   }
 
@@ -493,15 +495,13 @@ export class WorkChapterService {
    * @throws BadRequestException 章节不存在
    */
   async deleteChapter(id: number) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.workChapter)
         .set({ deletedAt: new Date() })
         .where(
           and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(result, '章节不存在')
+        ), { notFound: '章节不存在' },)
     return true
   }
 

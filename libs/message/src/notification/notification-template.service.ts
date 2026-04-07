@@ -255,13 +255,11 @@ export class MessageNotificationTemplateService {
     }
 
     try {
-      const result = await this.drizzle.withErrorHandling(() =>
+      await this.drizzle.withErrorHandling(() =>
         this.db
           .update(this.notificationTemplate)
           .set(updateData)
-          .where(eq(this.notificationTemplate.id, input.id)),
-      )
-      this.drizzle.assertAffectedRows(result, '通知模板不存在')
+          .where(eq(this.notificationTemplate.id, input.id)), { notFound: '通知模板不存在' },)
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
         throw new BadRequestException('该通知类型的模板已存在')
@@ -285,13 +283,11 @@ export class MessageNotificationTemplateService {
     const notificationType = this.ensureSupportedNotificationType(
       current.notificationType,
     )
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.notificationTemplate)
         .set({ isEnabled: input.isEnabled })
-        .where(eq(this.notificationTemplate.id, input.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '通知模板不存在')
+        .where(eq(this.notificationTemplate.id, input.id)), { notFound: '通知模板不存在' },)
     this.invalidateTemplateCache(notificationType)
     return true
   }
@@ -305,12 +301,10 @@ export class MessageNotificationTemplateService {
     const notificationType = this.ensureSupportedNotificationType(
       current.notificationType,
     )
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .delete(this.notificationTemplate)
-        .where(eq(this.notificationTemplate.id, id)),
-    )
-    this.drizzle.assertAffectedRows(result, '通知模板不存在')
+        .where(eq(this.notificationTemplate.id, id)), { notFound: '通知模板不存在' },)
     this.invalidateTemplateCache(notificationType)
     return true
   }

@@ -12,11 +12,10 @@ import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { Audit } from '../../../common/decorators/audit.decorator'
 
 /**
  * 协议管理控制器
- * 提供协议的创建、更新、删除、查询等管理接口
+ * 提供协议的创建、更新、发布状态切换和查询接口
  *
  * @class AgreementController
  */
@@ -51,7 +50,7 @@ export class AgreementController {
 
   @Post('update-status')
   @ApiAuditDoc({
-    summary: '更新协议状态',
+    summary: '更新协议发布状态',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
@@ -59,19 +58,6 @@ export class AgreementController {
   })
   async updateStatus(@Body() dto: UpdatePublishedStatusDto) {
     return this.agreementService.updatePublishStatus(dto)
-  }
-
-  @Post('delete')
-  @ApiDoc({
-    summary: '下线协议',
-    model: Boolean,
-  })
-  @Audit({
-    actionType: AuditActionTypeEnum.DELETE,
-    content: '删除协议',
-  })
-  async delete(@Body() dto: IdDto) {
-    return this.agreementService.delete(dto)
   }
 
   @Get('page')

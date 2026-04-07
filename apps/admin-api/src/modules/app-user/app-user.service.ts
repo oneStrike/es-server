@@ -372,13 +372,11 @@ export class AppUserService {
 
     try {
       if (Object.keys(userData).length > 0) {
-        const result = await this.drizzle.withErrorHandling(() =>
+        await this.drizzle.withErrorHandling(() =>
           this.db
             .update(this.appUser)
             .set(userData)
-            .where(eq(this.appUser.id, dto.id)),
-        )
-        this.drizzle.assertAffectedRows(result, '用户不存在')
+            .where(eq(this.appUser.id, dto.id)), { notFound: '用户不存在' },)
       }
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
@@ -400,15 +398,13 @@ export class AppUserService {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.id)
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({
           isEnabled: dto.isEnabled,
         })
-        .where(eq(this.appUser.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '用户不存在')
+        .where(eq(this.appUser.id, dto.id)), { notFound: '用户不存在' },)
     return true
   }
 
@@ -439,7 +435,7 @@ export class AppUserService {
       throw new BadRequestException('截止时间必须晚于当前时间')
     }
 
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({
@@ -447,37 +443,31 @@ export class AppUserService {
           banReason: isNormal ? null : dto.banReason?.trim(),
           banUntil: isNormal || isPermanent ? null : dto.banUntil,
         })
-        .where(eq(this.appUser.id, dto.id)),
-    )
-    this.drizzle.assertAffectedRows(result, '用户不存在')
+        .where(eq(this.appUser.id, dto.id)), { notFound: '用户不存在' },)
     return true
   }
 
   async deleteAppUser(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
-    const rows = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({ deletedAt: new Date() })
         .where(
           and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(rows, '用户不存在')
+        ), { notFound: '用户不存在' },)
     return true
   }
 
   async restoreAppUser(adminUserId: number, userId: number) {
     await this.ensureSuperAdmin(adminUserId)
-    const rows = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({ deletedAt: null })
         .where(
           and(eq(this.appUser.id, userId), isNotNull(this.appUser.deletedAt)),
-        ),
-    )
-    this.drizzle.assertAffectedRows(rows, '用户不存在或未删除')
+        ), { notFound: '用户不存在或未删除' },)
     return true
   }
 
@@ -490,13 +480,11 @@ export class AppUserService {
     const plainPassword = this.rsaService.decryptWith(dto.password)
     const encryptedPassword =
       await this.scryptService.encryptPassword(plainPassword)
-    const rows = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.appUser)
         .set({ password: encryptedPassword })
-        .where(and(eq(this.appUser.id, dto.id), isNull(this.appUser.deletedAt))),
-    )
-    this.drizzle.assertAffectedRows(rows, '用户不存在')
+        .where(and(eq(this.appUser.id, dto.id), isNull(this.appUser.deletedAt))), { notFound: '用户不存在' },)
     return true
   }
 

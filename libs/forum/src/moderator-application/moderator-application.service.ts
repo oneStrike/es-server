@@ -438,7 +438,7 @@ export class ForumModeratorApplicationService {
    * 仅对未软删除记录生效，并通过受影响行数统一抛出缺失异常。
    */
   async deleteApplication(id: number) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumModeratorApplication)
         .set({
@@ -449,9 +449,7 @@ export class ForumModeratorApplicationService {
             eq(this.forumModeratorApplication.id, id),
             isNull(this.forumModeratorApplication.deletedAt),
           ),
-        )
-    )
-    this.drizzle.assertAffectedRows(result, '版主申请不存在')
+        ), { notFound: '版主申请不存在' },)
     return true
   }
 
@@ -460,7 +458,7 @@ export class ForumModeratorApplicationService {
    * 删除条件会同时绑定 applicantId，防止用户删除他人申请单。
    */
   async deleteMyApplication(userId: number, id: number) {
-    const result = await this.drizzle.withErrorHandling(() =>
+    await this.drizzle.withErrorHandling(() =>
       this.db
         .update(this.forumModeratorApplication)
         .set({
@@ -472,9 +470,7 @@ export class ForumModeratorApplicationService {
             eq(this.forumModeratorApplication.applicantId, userId),
             isNull(this.forumModeratorApplication.deletedAt),
           ),
-        )
-    )
-    this.drizzle.assertAffectedRows(result, '版主申请不存在')
+        ), { notFound: '版主申请不存在' },)
     return true
   }
 }

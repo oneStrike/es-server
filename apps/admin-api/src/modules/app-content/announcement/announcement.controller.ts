@@ -8,10 +8,10 @@ import {
 } from '@libs/app-content/announcement/dto/announcement.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 系统公告管理控制器

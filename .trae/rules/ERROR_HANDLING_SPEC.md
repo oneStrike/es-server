@@ -45,8 +45,9 @@
 ### 3.4 Drizzle 边界
 
 - 所有常规写操作统一通过 `DrizzleService.withErrorHandling(...)` 或等价封装进入数据库。
-- 需要保证资源存在的更新/删除，写后必须调用 `assertAffectedRows(...)`。
-- `withErrorHandling(...)` 只负责把 PostgreSQL 错误分类成稳定的 HTTP 语义，不负责业务定制文案以外的复杂分支判断。
+- 非事务写路径若需要保证资源存在的更新/删除，优先通过 `withErrorHandling(..., { notFound: '...' })` 收口“0 行变更/空 returning”的 `NotFoundException` 语义。
+- 事务内或未直接经过 `withErrorHandling(...)` 的写路径，继续在写后调用 `assertAffectedRows(...)`。
+- `withErrorHandling(...)` 负责 PostgreSQL 错误分类，并在显式传入 `notFound` 时顺带收口资源不存在语义；更复杂的业务分支判断仍留在 service。
 - 依赖原始 PostgreSQL 错误码做重试、幂等回退或冲突分支的路径，不要先经过会丢失原始错误类型的通用包装。
 
 ### 3.5 全局异常过滤器
@@ -72,7 +73,7 @@
 
 ### 4.3 业务翻译规则
 
-- 若写操作对应明确业务含义，可在 `withErrorHandling(..., { duplicate: '...' })` 中覆盖默认文案。
+- 若写操作对应明确业务含义，可在 `withErrorHandling(..., { duplicate: '...', notFound: '...' })` 中覆盖默认文案并收口资源不存在语义。
 - 若业务层需要区分不同唯一约束，应在 service 捕获后基于约束或场景重新抛出明确业务异常。
 - 不要把数据库默认文案当作最终用户文案依赖。
 
