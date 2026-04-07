@@ -36,7 +36,7 @@ describe('favorite service', () => {
       } as any,
       {
         schema: {
-          userFavorite: {
+          appUserFavorite: {
             id: 'id',
           },
         },

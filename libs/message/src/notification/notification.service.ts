@@ -34,9 +34,9 @@ export class MessageNotificationService {
     return this.drizzle.db
   }
 
-  /** user_notification 表访问入口。 */
+  /** app_user_notification 表访问入口。 */
   private get notification() {
-    return this.drizzle.schema.userNotification
+    return this.drizzle.schema.appUserNotification
   }
 
   /** app_user 表访问入口，用于补齐通知触发者简要信息。 */

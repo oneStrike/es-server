@@ -60,9 +60,9 @@ export class WorkChapterService {
     return this.drizzle.schema.appUser
   }
 
-  /** user_level_rule 表访问入口。 */
-  get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  /** app_user_level_rule 表访问入口。 */
+  get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
   /**
@@ -462,8 +462,8 @@ export class WorkChapterService {
     if (
       requiredViewLevelId &&
       !(await this.drizzle.ext.exists(
-        this.userLevelRule,
-        eq(this.userLevelRule.id, requiredViewLevelId),
+        this.appUserLevelRule,
+        eq(this.appUserLevelRule.id, requiredViewLevelId),
       ))
     ) {
       throw new BadRequestException('指定的阅读会员等级不存在')

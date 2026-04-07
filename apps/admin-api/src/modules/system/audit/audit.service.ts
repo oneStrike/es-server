@@ -18,8 +18,8 @@ import {
  */
 @Injectable()
 export class AuditService {
-  get requestLog() {
-    return this.drizzle.schema.requestLog
+  get systemRequestLog() {
+    return this.drizzle.schema.systemRequestLog
   }
 
   constructor(
@@ -46,9 +46,9 @@ export class AuditService {
     } as any
     const [created] = await this.drizzle.withErrorHandling(() =>
       this.db
-        .insert(this.requestLog)
+        .insert(this.systemRequestLog)
         .values(data)
-        .returning({ id: this.requestLog.id }),
+        .returning({ id: this.systemRequestLog.id }),
     )
     return created
   }
@@ -77,17 +77,17 @@ export class AuditService {
    * @returns 请求日志详情
    */
   async getRequestLogById(id: number) {
-    const [requestLog] = await this.db
+    const [systemRequestLog] = await this.db
       .select()
-      .from(this.requestLog)
-      .where(eq(this.requestLog.id, id))
+      .from(this.systemRequestLog)
+      .where(eq(this.systemRequestLog.id, id))
       .limit(1)
 
-    if (!requestLog) {
+    if (!systemRequestLog) {
       throw new NotFoundException('请求日志不存在')
     }
 
-    return this.decorateRequestLog(requestLog)
+    return this.decorateRequestLog(systemRequestLog)
   }
 
   /**
@@ -112,40 +112,40 @@ export class AuditService {
       : []
 
     const whereParts = [
-      userId ? eq(this.requestLog.userId, userId) : undefined,
-      buildILikeCondition(this.requestLog.username, username),
-      apiType ? eq(this.requestLog.apiType, apiType) : undefined,
-      ip ? eq(this.requestLog.ip, ip) : undefined,
-      method ? eq(this.requestLog.method, method) : undefined,
-      buildILikeCondition(this.requestLog.path, path),
+      userId ? eq(this.systemRequestLog.userId, userId) : undefined,
+      buildILikeCondition(this.systemRequestLog.username, username),
+      apiType ? eq(this.systemRequestLog.apiType, apiType) : undefined,
+      ip ? eq(this.systemRequestLog.ip, ip) : undefined,
+      method ? eq(this.systemRequestLog.method, method) : undefined,
+      buildILikeCondition(this.systemRequestLog.path, path),
       actionTypeSearchTerms.length > 0
         ? or(
             ...actionTypeSearchTerms.map((term) =>
-              eq(this.requestLog.actionType, term),
+              eq(this.systemRequestLog.actionType, term),
             ),
           )
         : undefined,
-      isSuccess !== undefined ? eq(this.requestLog.isSuccess, isSuccess) : undefined,
+      isSuccess !== undefined ? eq(this.systemRequestLog.isSuccess, isSuccess) : undefined,
     ].filter(Boolean)
 
-    const page = await this.drizzle.ext.findPagination(this.requestLog, {
+    const page = await this.drizzle.ext.findPagination(this.systemRequestLog, {
       where: whereParts.length > 0 ? and(...whereParts) : undefined,
       ...pageOptions,
     })
 
     return {
       ...page,
-      list: page.list.map((requestLog) => this.decorateRequestLog(requestLog)),
+      list: page.list.map((systemRequestLog) => this.decorateRequestLog(systemRequestLog)),
     }
   }
 
   private decorateRequestLog<T extends { actionType: string | null }>(
-    requestLog: T,
+    systemRequestLog: T,
   ) {
     return {
-      ...requestLog,
-      actionType: normalizeAuditActionType(requestLog.actionType),
-      actionTypeLabel: getAuditActionTypeLabel(requestLog.actionType),
+      ...systemRequestLog,
+      actionType: normalizeAuditActionType(systemRequestLog.actionType),
+      actionTypeLabel: getAuditActionTypeLabel(systemRequestLog.actionType),
     }
   }
 }

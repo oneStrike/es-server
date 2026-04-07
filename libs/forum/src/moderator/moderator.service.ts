@@ -40,9 +40,9 @@ export class ForumModeratorService {
     return this.drizzle.schema.forumModerator
   }
 
-  /** forum_moderator_section 表访问入口。 */
-  private get forumModeratorSection() {
-    return this.drizzle.schema.forumModeratorSection
+  /** forum_moderator_section_relation 表访问入口。 */
+  private get forumModeratorSectionRelation() {
+    return this.drizzle.schema.forumModeratorSectionRelation
   }
 
   /** forum_section 表访问入口。 */
@@ -178,11 +178,11 @@ export class ForumModeratorService {
   private async getModeratorSectionScopes(moderatorId: number) {
     return this.db
       .select({
-        sectionId: this.forumModeratorSection.sectionId,
-        permissions: this.forumModeratorSection.permissions,
+        sectionId: this.forumModeratorSectionRelation.sectionId,
+        permissions: this.forumModeratorSectionRelation.permissions,
       })
-      .from(this.forumModeratorSection)
-      .where(eq(this.forumModeratorSection.moderatorId, moderatorId))
+      .from(this.forumModeratorSectionRelation)
+      .where(eq(this.forumModeratorSectionRelation.moderatorId, moderatorId))
   }
 
   /**
@@ -285,13 +285,13 @@ export class ForumModeratorService {
    */
   private async clearModeratorSections(tx: Db, moderatorId: number) {
     await tx
-      .delete(this.forumModeratorSection)
-      .where(eq(this.forumModeratorSection.moderatorId, moderatorId))
+      .delete(this.forumModeratorSectionRelation)
+      .where(eq(this.forumModeratorSectionRelation.moderatorId, moderatorId))
   }
 
   /**
    * 同步板块版主的板块绑定与自定义权限。
-   * 该方法会在事务内执行增删改，保证 forum_moderator 与 forum_moderator_section 不出现半成功状态。
+   * 该方法会在事务内执行增删改，保证 forum_moderator 与 forum_moderator_section_relation 不出现半成功状态。
    */
   private async syncModeratorSections(
     tx: Db,
@@ -303,9 +303,9 @@ export class ForumModeratorService {
     const normalizedCustomPermissions =
       this.normalizePermissions(customPermissions)
     const existingScopes = await tx
-      .select({ sectionId: this.forumModeratorSection.sectionId })
-      .from(this.forumModeratorSection)
-      .where(eq(this.forumModeratorSection.moderatorId, moderatorId))
+      .select({ sectionId: this.forumModeratorSectionRelation.sectionId })
+      .from(this.forumModeratorSectionRelation)
+      .where(eq(this.forumModeratorSectionRelation.moderatorId, moderatorId))
 
     const existingSectionIds = existingScopes.map((item) => item.sectionId)
     const removedSectionIds = existingSectionIds.filter(
@@ -314,11 +314,11 @@ export class ForumModeratorService {
 
     if (removedSectionIds.length > 0) {
       await tx
-        .delete(this.forumModeratorSection)
+        .delete(this.forumModeratorSectionRelation)
         .where(
           and(
-            eq(this.forumModeratorSection.moderatorId, moderatorId),
-            inArray(this.forumModeratorSection.sectionId, removedSectionIds),
+            eq(this.forumModeratorSectionRelation.moderatorId, moderatorId),
+            inArray(this.forumModeratorSectionRelation.sectionId, removedSectionIds),
           ),
         )
     }
@@ -331,7 +331,7 @@ export class ForumModeratorService {
     await Promise.all(
       uniqueSectionIds.map((sectionId) =>
         tx
-          .insert(this.forumModeratorSection)
+          .insert(this.forumModeratorSectionRelation)
           .values({
             moderatorId,
             sectionId,
@@ -339,8 +339,8 @@ export class ForumModeratorService {
           })
           .onConflictDoUpdate({
             target: [
-              this.forumModeratorSection.moderatorId,
-              this.forumModeratorSection.sectionId,
+              this.forumModeratorSectionRelation.moderatorId,
+              this.forumModeratorSectionRelation.sectionId,
             ],
             set: {
               permissions: normalizedCustomPermissions,
@@ -440,12 +440,12 @@ export class ForumModeratorService {
         .where(isNull(this.forumSection.deletedAt)),
       this.db
         .select({
-          moderatorId: this.forumModeratorSection.moderatorId,
-          sectionId: this.forumModeratorSection.sectionId,
-          permissions: this.forumModeratorSection.permissions,
+          moderatorId: this.forumModeratorSectionRelation.moderatorId,
+          sectionId: this.forumModeratorSectionRelation.sectionId,
+          permissions: this.forumModeratorSectionRelation.permissions,
         })
-        .from(this.forumModeratorSection)
-        .where(inArray(this.forumModeratorSection.moderatorId, moderatorIds)),
+        .from(this.forumModeratorSectionRelation)
+        .where(inArray(this.forumModeratorSectionRelation.moderatorId, moderatorIds)),
     ])
 
     const userMap = new Map<
@@ -622,7 +622,7 @@ export class ForumModeratorService {
 
   /**
    * 软删除版主。
-   * 删除时会同步清空板块作用域，避免残留 forum_moderator_section 记录继续生效。
+   * 删除时会同步清空板块作用域，避免残留 forum_moderator_section_relation 记录继续生效。
    */
   async removeModerator(id: number) {
     const moderator = await this.db.query.forumModerator.findFirst({
@@ -731,9 +731,9 @@ export class ForumModeratorService {
         conditions.push(eq(this.forumModerator.id, -1))
       } else {
         const sectionModeratorIds = await this.db
-          .select({ moderatorId: this.forumModeratorSection.moderatorId })
-          .from(this.forumModeratorSection)
-          .where(eq(this.forumModeratorSection.sectionId, sectionId))
+          .select({ moderatorId: this.forumModeratorSectionRelation.moderatorId })
+          .from(this.forumModeratorSectionRelation)
+          .where(eq(this.forumModeratorSectionRelation.sectionId, sectionId))
         const scopedConditions: SQL[] = [
           eq(this.forumModerator.roleType, ForumModeratorRoleTypeEnum.SUPER),
         ]

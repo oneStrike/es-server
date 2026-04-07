@@ -46,7 +46,7 @@ export class CommentReportResolver
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
-    const comment = await tx.query.userComment.findFirst({
+    const comment = await tx.query.appUserComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: {
         id: true,

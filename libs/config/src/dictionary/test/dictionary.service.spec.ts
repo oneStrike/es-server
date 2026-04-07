@@ -1,4 +1,4 @@
-import { dictionaryItem } from '@db/schema'
+import { systemDictionaryItem } from '@db/schema'
 import { asc } from 'drizzle-orm'
 
 jest.mock('@db/core', () => ({
@@ -28,7 +28,7 @@ describe('dictionary service sort order', () => {
     const findPagination = jest.fn().mockResolvedValue(createEmptyPage())
     const service = new LibDictionaryService({
       ext: { findPagination },
-      schema: { dictionaryItem },
+      schema: { systemDictionaryItem },
     } as any)
 
     await service.findDictionaryItems({
@@ -37,7 +37,7 @@ describe('dictionary service sort order', () => {
     } as any)
 
     expect(findPagination).toHaveBeenCalledWith(
-      dictionaryItem,
+      systemDictionaryItem,
       expect.objectContaining({
         orderBy: { sortOrder: 'asc' },
       }),
@@ -50,10 +50,10 @@ describe('dictionary service sort order', () => {
     const service = new LibDictionaryService({
       db: {
         query: {
-          dictionaryItem: { findMany },
+          systemDictionaryItem: { findMany },
         },
       },
-      schema: { dictionaryItem },
+      schema: { systemDictionaryItem },
     } as any)
 
     await service.findAllDictionaryItems({
@@ -61,7 +61,7 @@ describe('dictionary service sort order', () => {
     })
 
     const options = findMany.mock.calls[0][0]
-    const orderBy = options.orderBy(dictionaryItem, { asc })
+    const orderBy = options.orderBy(systemDictionaryItem, { asc })
 
     expect(orderBy).toHaveLength(2)
   })

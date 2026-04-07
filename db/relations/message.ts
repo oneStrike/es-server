@@ -65,32 +65,32 @@ export const messageRelations = defineRelationsPart(schema, (r) => ({
       from: r.notificationDelivery.receiverUserId,
       to: r.appUser.id,
     }),
-    notification: r.one.userNotification({
+    notification: r.one.appUserNotification({
       from: r.notificationDelivery.notificationId,
-      to: r.userNotification.id,
+      to: r.appUserNotification.id,
     }),
   },
-  notificationPreference: {
+  appUserNotificationPreference: {
     user: r.one.appUser({
-      from: r.notificationPreference.userId,
+      from: r.appUserNotificationPreference.userId,
       to: r.appUser.id,
-      alias: 'NotificationPreferenceUser',
+      alias: 'AppUserNotificationPreferenceUser',
     }),
   },
   notificationTemplate: {},
-  userNotification: {
+  appUserNotification: {
     user: r.one.appUser({
-      from: r.userNotification.userId,
+      from: r.appUserNotification.userId,
       to: r.appUser.id,
-      alias: 'UserNotificationReceiver',
+      alias: 'AppUserNotificationReceiver',
     }),
     actorUser: r.one.appUser({
-      from: r.userNotification.actorUserId,
+      from: r.appUserNotification.actorUserId,
       to: r.appUser.id,
-      alias: 'UserNotificationActor',
+      alias: 'AppUserNotificationActor',
     }),
     deliveryRecords: r.many.notificationDelivery({
-      from: r.userNotification.id,
+      from: r.appUserNotification.id,
       to: r.notificationDelivery.notificationId,
     }),
   },

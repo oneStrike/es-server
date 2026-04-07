@@ -2,17 +2,17 @@ import type { Db } from '../../db-client'
 import { and, eq, isNull } from 'drizzle-orm'
 import {
   appUser,
+  appUserLevelRule,
   forumModerator,
   forumModeratorActionLog,
   forumModeratorApplication,
-  forumModeratorSection,
+  forumModeratorSectionRelation,
   forumSection,
   forumSectionGroup,
   forumTag,
   forumTopic,
-  forumTopicTag,
+  forumTopicTagRelation,
   forumUserActionLog,
-  userLevelRule,
   work,
 } from '../../../schema'
 import { SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
@@ -155,8 +155,8 @@ export async function seedForumReferenceDomain(db: Db) {
   }
   console.log('  ✓ 板块分组完成')
 
-  const basicLevel = await db.query.userLevelRule.findFirst({
-    where: eq(userLevelRule.name, BASIC_LEVEL_NAME),
+  const basicLevel = await db.query.appUserLevelRule.findFirst({
+    where: eq(appUserLevelRule.name, BASIC_LEVEL_NAME),
   })
 
   for (const sectionFixture of SECTION_FIXTURES) {
@@ -286,29 +286,29 @@ export async function seedForumActivityDomain(db: Db) {
     discussionSection?.id,
     aotWork?.forumSectionId,
   ].filter((value): value is number => Boolean(value))) {
-    const existingRelation = await db.query.forumModeratorSection.findFirst({
+    const existingRelation = await db.query.forumModeratorSectionRelation.findFirst({
       where: and(
-        eq(forumModeratorSection.moderatorId, moderator.id),
-        eq(forumModeratorSection.sectionId, sectionId),
+        eq(forumModeratorSectionRelation.moderatorId, moderator.id),
+        eq(forumModeratorSectionRelation.sectionId, sectionId),
       ),
     })
 
     if (!existingRelation) {
-      await db.insert(forumModeratorSection).values({
+      await db.insert(forumModeratorSectionRelation).values({
         moderatorId: moderator.id,
         sectionId,
         permissions: [1, 2, 3, 5],
       })
     } else {
       await db
-        .update(forumModeratorSection)
+        .update(forumModeratorSectionRelation)
         .set({
           permissions: [1, 2, 3, 5],
         })
         .where(
           and(
-            eq(forumModeratorSection.moderatorId, moderator.id),
-            eq(forumModeratorSection.sectionId, sectionId),
+            eq(forumModeratorSectionRelation.moderatorId, moderator.id),
+            eq(forumModeratorSectionRelation.sectionId, sectionId),
           ),
         )
     }
@@ -415,15 +415,15 @@ export async function seedForumActivityDomain(db: Db) {
         continue
       }
 
-      const existingTopicTag = await db.query.forumTopicTag.findFirst({
+      const existingTopicTag = await db.query.forumTopicTagRelation.findFirst({
         where: and(
-          eq(forumTopicTag.topicId, currentTopic.id),
-          eq(forumTopicTag.tagId, tag.id),
+          eq(forumTopicTagRelation.topicId, currentTopic.id),
+          eq(forumTopicTagRelation.tagId, tag.id),
         ),
       })
 
       if (!existingTopicTag) {
-        await db.insert(forumTopicTag).values({
+        await db.insert(forumTopicTagRelation).values({
           topicId: currentTopic.id,
           tagId: tag.id,
         })
@@ -486,8 +486,8 @@ export async function seedForumActivityDomain(db: Db) {
 
   const tags = await db.query.forumTag.findMany()
   for (const tag of tags) {
-    const relations = await db.query.forumTopicTag.findMany({
-      where: eq(forumTopicTag.tagId, tag.id),
+    const relations = await db.query.forumTopicTagRelation.findMany({
+      where: eq(forumTopicTagRelation.tagId, tag.id),
     })
 
     await db

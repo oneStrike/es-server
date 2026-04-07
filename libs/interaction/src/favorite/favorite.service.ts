@@ -1,4 +1,4 @@
-import type { UserFavoriteSelect } from '@db/schema'
+import type { AppUserFavoriteSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -33,8 +33,8 @@ export class FavoriteService {
     return this.drizzle.db
   }
 
-  private get userFavorite() {
-    return this.drizzle.schema.userFavorite
+  private get appUserFavorite() {
+    return this.drizzle.schema.appUserFavorite
   }
 
   private uniqueTargetIds(targetIds: number[]) {
@@ -87,14 +87,14 @@ export class FavoriteService {
 
     const favorites = await this.db
       .select({
-        targetId: this.userFavorite.targetId,
+        targetId: this.appUserFavorite.targetId,
       })
-      .from(this.userFavorite)
+      .from(this.appUserFavorite)
       .where(
         and(
-          eq(this.userFavorite.targetType, targetType),
-          inArray(this.userFavorite.targetId, uniqueTargetIds),
-          eq(this.userFavorite.userId, userId),
+          eq(this.appUserFavorite.targetType, targetType),
+          inArray(this.appUserFavorite.targetId, uniqueTargetIds),
+          eq(this.appUserFavorite.userId, userId),
         ),
       )
 
@@ -114,7 +114,7 @@ export class FavoriteService {
    */
   async favorite(
     input: FavoriteRecordDto,
-  ): Promise<Pick<UserFavoriteSelect, 'id'>> {
+  ): Promise<Pick<AppUserFavoriteSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -126,14 +126,14 @@ export class FavoriteService {
       const rows = await this.drizzle.withErrorHandling(
         () =>
           tx
-            .insert(this.userFavorite)
+            .insert(this.appUserFavorite)
             .values({
               targetType,
               targetId,
               userId,
             })
             .returning({
-              id: this.userFavorite.id,
+              id: this.appUserFavorite.id,
             }),
         {
           duplicate: '无法重复收藏',
@@ -172,12 +172,12 @@ export class FavoriteService {
 
     await this.drizzle.withTransaction(async (tx) => {
       const deleted = await tx
-        .delete(this.userFavorite)
+        .delete(this.appUserFavorite)
         .where(
           and(
-            eq(this.userFavorite.targetType, targetType),
-            eq(this.userFavorite.targetId, targetId),
-            eq(this.userFavorite.userId, userId),
+            eq(this.appUserFavorite.targetType, targetType),
+            eq(this.appUserFavorite.targetId, targetId),
+            eq(this.appUserFavorite.userId, userId),
           ),
         )
       this.drizzle.assertAffectedRows(deleted, '收藏记录或用户不存在')
@@ -195,11 +195,11 @@ export class FavoriteService {
   async checkFavoriteStatus(input: FavoriteRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
-      this.userFavorite,
+      this.appUserFavorite,
       and(
-        eq(this.userFavorite.targetType, targetType),
-        eq(this.userFavorite.targetId, targetId),
-        eq(this.userFavorite.userId, userId),
+        eq(this.appUserFavorite.targetType, targetType),
+        eq(this.appUserFavorite.targetId, targetId),
+        eq(this.appUserFavorite.userId, userId),
       ),
     )
   }
@@ -212,10 +212,10 @@ export class FavoriteService {
     query: FavoritePageCommandDto,
     targetTypes: FavoriteTargetTypeEnum[],
   ) {
-    const page = await this.drizzle.ext.findPagination(this.userFavorite, {
+    const page = await this.drizzle.ext.findPagination(this.appUserFavorite, {
       where: and(
-        eq(this.userFavorite.userId, query.userId),
-        inArray(this.userFavorite.targetType, targetTypes),
+        eq(this.appUserFavorite.userId, query.userId),
+        inArray(this.appUserFavorite.targetType, targetTypes),
       ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,

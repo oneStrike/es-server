@@ -32,8 +32,8 @@ export class DownloadService {
     return this.drizzle.db
   }
 
-  private get userDownloadRecord() {
-    return this.drizzle.schema.userDownloadRecord
+  private get appUserDownloadRecord() {
+    return this.drizzle.schema.appUserDownloadRecord
   }
 
   /**
@@ -105,14 +105,14 @@ export class DownloadService {
 
       // 通过唯一键保证下载记录幂等，避免重复计数
       const inserted = await tx
-        .insert(this.userDownloadRecord)
+        .insert(this.appUserDownloadRecord)
         .values({
           targetType,
           targetId,
           userId,
         })
         .onConflictDoNothing()
-        .returning({ id: this.userDownloadRecord.id })
+        .returning({ id: this.appUserDownloadRecord.id })
 
       if (inserted.length > 0) {
         await resolver.applyCountDelta(tx, targetId, 1)
@@ -133,7 +133,7 @@ export class DownloadService {
    * 检查下载状态
    */
   async checkDownloadStatus(input: DownloadTargetCommandDto) {
-    const record = await this.db.query.userDownloadRecord.findFirst({
+    const record = await this.db.query.appUserDownloadRecord.findFirst({
       where: input,
       columns: {
         id: true,
@@ -158,14 +158,14 @@ export class DownloadService {
 
     const downloads = await this.db
       .select({
-        targetId: this.userDownloadRecord.targetId,
+        targetId: this.appUserDownloadRecord.targetId,
       })
-      .from(this.userDownloadRecord)
+      .from(this.appUserDownloadRecord)
       .where(
         and(
-          eq(this.userDownloadRecord.targetType, targetType),
-          inArray(this.userDownloadRecord.targetId, uniqueTargetIds),
-          eq(this.userDownloadRecord.userId, userId),
+          eq(this.appUserDownloadRecord.targetType, targetType),
+          inArray(this.appUserDownloadRecord.targetId, uniqueTargetIds),
+          eq(this.appUserDownloadRecord.userId, userId),
         ),
       )
 
@@ -203,7 +203,7 @@ export class DownloadService {
           w.cover AS "workCover",
           COUNT(*)::bigint AS "downloadedChapterCount",
           MAX(udr.created_at) AS "lastDownloadedAt"
-        FROM user_download_record udr
+        FROM app_user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
@@ -216,7 +216,7 @@ export class DownloadService {
       `),
       this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
-        FROM user_download_record udr
+        FROM app_user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
@@ -291,7 +291,7 @@ export class DownloadService {
           wc.sort_order AS "chapterSortOrder",
           wc.is_published AS "chapterIsPublished",
           wc.publish_at AS "chapterPublishAt"
-        FROM user_download_record udr
+        FROM app_user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
@@ -304,7 +304,7 @@ export class DownloadService {
       `),
       this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
-        FROM user_download_record udr
+        FROM app_user_download_record udr
         INNER JOIN work_chapter wc ON wc.id = udr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}

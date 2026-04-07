@@ -1,4 +1,4 @@
-import type { UserFollowSelect } from '@db/schema'
+import type { AppUserFollowSelect } from '@db/schema'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service';
@@ -33,8 +33,8 @@ export class FollowService {
     return this.drizzle.db
   }
 
-  private get userFollow() {
-    return this.drizzle.schema.userFollow
+  private get appUserFollow() {
+    return this.drizzle.schema.appUserFollow
   }
 
   private uniqueTargetIds(targetIds: number[]) {
@@ -73,13 +73,13 @@ export class FollowService {
 
     const uniqueTargetIds = this.uniqueTargetIds(targetIds)
     const follows = await this.db
-      .select({ targetId: this.userFollow.targetId })
-      .from(this.userFollow)
+      .select({ targetId: this.appUserFollow.targetId })
+      .from(this.appUserFollow)
       .where(
         and(
-          eq(this.userFollow.targetType, targetType),
-          inArray(this.userFollow.targetId, uniqueTargetIds),
-          eq(this.userFollow.userId, userId),
+          eq(this.appUserFollow.targetType, targetType),
+          inArray(this.appUserFollow.targetId, uniqueTargetIds),
+          eq(this.appUserFollow.userId, userId),
         ),
       )
 
@@ -101,13 +101,13 @@ export class FollowService {
 
     const uniqueTargetIds = this.uniqueTargetIds(targetUserIds)
     const follows = await this.db
-      .select({ userId: this.userFollow.userId })
-      .from(this.userFollow)
+      .select({ userId: this.appUserFollow.userId })
+      .from(this.appUserFollow)
       .where(
         and(
-          eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
-          eq(this.userFollow.targetId, currentUserId),
-          inArray(this.userFollow.userId, uniqueTargetIds),
+          eq(this.appUserFollow.targetType, FollowTargetTypeEnum.USER),
+          eq(this.appUserFollow.targetId, currentUserId),
+          inArray(this.appUserFollow.userId, uniqueTargetIds),
         ),
       )
 
@@ -121,7 +121,7 @@ export class FollowService {
 
   async follow(
     input: FollowRecordDto,
-  ): Promise<Pick<UserFollowSelect, 'id'>> {
+  ): Promise<Pick<AppUserFollowSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -130,14 +130,14 @@ export class FollowService {
       const rows = await this.drizzle.withErrorHandling(
         () =>
           tx
-            .insert(this.userFollow)
+            .insert(this.appUserFollow)
             .values({
               targetType,
               targetId,
               userId,
             })
             .returning({
-              id: this.userFollow.id,
+              id: this.appUserFollow.id,
             }),
         {
           duplicate: '无法重复关注',
@@ -178,12 +178,12 @@ export class FollowService {
 
     await this.drizzle.withTransaction(async (tx) => {
       const deleted = await tx
-        .delete(this.userFollow)
+        .delete(this.appUserFollow)
         .where(
           and(
-            eq(this.userFollow.targetType, targetType),
-            eq(this.userFollow.targetId, targetId),
-            eq(this.userFollow.userId, userId),
+            eq(this.appUserFollow.targetType, targetType),
+            eq(this.appUserFollow.targetId, targetId),
+            eq(this.appUserFollow.userId, userId),
           ),
         )
       this.drizzle.assertAffectedRows(deleted, '关注记录不存在')
@@ -207,11 +207,11 @@ export class FollowService {
   }> {
     const { targetType, targetId, userId } = input
     const isFollowing = await this.drizzle.ext.exists(
-      this.userFollow,
+      this.appUserFollow,
       and(
-        eq(this.userFollow.targetType, targetType),
-        eq(this.userFollow.targetId, targetId),
-        eq(this.userFollow.userId, userId),
+        eq(this.appUserFollow.targetType, targetType),
+        eq(this.appUserFollow.targetId, targetId),
+        eq(this.appUserFollow.userId, userId),
       ),
     )
 
@@ -224,11 +224,11 @@ export class FollowService {
     }
 
     const isFollowedByTarget = await this.drizzle.ext.exists(
-      this.userFollow,
+      this.appUserFollow,
       and(
-        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
-        eq(this.userFollow.targetId, userId),
-        eq(this.userFollow.userId, targetId),
+        eq(this.appUserFollow.targetType, FollowTargetTypeEnum.USER),
+        eq(this.appUserFollow.targetId, userId),
+        eq(this.appUserFollow.userId, targetId),
       ),
     )
 
@@ -247,10 +247,10 @@ export class FollowService {
     query: FollowPageCommandDto,
     targetType: FollowTargetTypeEnum,
   ) {
-    const page = await this.drizzle.ext.findPagination(this.userFollow, {
+    const page = await this.drizzle.ext.findPagination(this.appUserFollow, {
       where: and(
-        eq(this.userFollow.userId, query.userId),
-        eq(this.userFollow.targetType, targetType),
+        eq(this.appUserFollow.userId, query.userId),
+        eq(this.appUserFollow.targetType, targetType),
       ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -359,10 +359,10 @@ export class FollowService {
   }
 
   async getMyFollowingUserPage(query: FollowPageCommandDto) {
-    const page = await this.drizzle.ext.findPagination(this.userFollow, {
+    const page = await this.drizzle.ext.findPagination(this.appUserFollow, {
       where: and(
-        eq(this.userFollow.userId, query.userId),
-        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
+        eq(this.appUserFollow.userId, query.userId),
+        eq(this.appUserFollow.targetType, FollowTargetTypeEnum.USER),
       ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -402,10 +402,10 @@ export class FollowService {
   }
 
   async getMyFollowerUserPage(query: FollowPageCommandDto) {
-    const page = await this.drizzle.ext.findPagination(this.userFollow, {
+    const page = await this.drizzle.ext.findPagination(this.appUserFollow, {
       where: and(
-        eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),
-        eq(this.userFollow.targetId, query.userId),
+        eq(this.appUserFollow.targetType, FollowTargetTypeEnum.USER),
+        eq(this.appUserFollow.targetId, query.userId),
       ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,

@@ -1,4 +1,4 @@
-import type { ForumModeratorSectionSelect } from '@db/schema'
+import type { ForumModeratorSectionRelationSelect } from '@db/schema'
 import type {
   ForumModeratorPermissionEnum,
   ForumModeratorRoleTypeEnum,
@@ -9,7 +9,7 @@ import type {
  * 仅用于写路径同步版主-板块作用域。
  */
 export type ForumModeratorSectionScope = Pick<
-  ForumModeratorSectionSelect,
+  ForumModeratorSectionRelationSelect,
   'sectionId' | 'permissions'
 >
 

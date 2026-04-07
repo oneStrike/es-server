@@ -2,7 +2,7 @@ import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
 
 /**
  * 评论目标类型枚举
- * 定义所有支持评论的目标类型，并映射到数据库 user_comment 表的 target_type 字段
+ * 定义所有支持评论的目标类型，并映射到数据库 app_user_comment 表的 target_type 字段
  */
 export enum CommentTargetTypeEnum {
   /** 漫画作品 */

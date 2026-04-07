@@ -1,7 +1,7 @@
 import type { Cache } from 'cache-manager'
 import type { CacheQueryConfig } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
-import { sensitiveWord } from '@db/schema'
+import { systemSensitiveWord } from '@db/schema'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
@@ -11,7 +11,7 @@ import {
 } from './sensitive-word-cache.constant'
 
 /** 敏感词实体类型 */
-type SensitiveWord = typeof sensitiveWord.$inferSelect
+type SensitiveWord = typeof systemSensitiveWord.$inferSelect
 
 /**
  * 敏感词缓存服务
@@ -33,8 +33,8 @@ export class SensitiveWordCacheService {
   }
 
   /** 敏感词表 */
-  private get sensitiveWord() {
-    return this.drizzle.schema.sensitiveWord
+  private get systemSensitiveWord() {
+    return this.drizzle.schema.systemSensitiveWord
   }
 
   /**
@@ -71,8 +71,8 @@ export class SensitiveWordCacheService {
       queryFn: async () =>
         this.db
           .select()
-          .from(this.sensitiveWord)
-          .where(eq(this.sensitiveWord.isEnabled, true)),
+          .from(this.systemSensitiveWord)
+          .where(eq(this.systemSensitiveWord.isEnabled, true)),
     })
   }
 
@@ -89,11 +89,11 @@ export class SensitiveWordCacheService {
       queryFn: async () =>
         this.db
           .select()
-          .from(this.sensitiveWord)
+          .from(this.systemSensitiveWord)
           .where(
             and(
-              eq(this.sensitiveWord.isEnabled, true),
-              eq(this.sensitiveWord.level, level),
+              eq(this.systemSensitiveWord.isEnabled, true),
+              eq(this.systemSensitiveWord.level, level),
             ),
           ),
     })
@@ -112,11 +112,11 @@ export class SensitiveWordCacheService {
       queryFn: async () =>
         this.db
           .select()
-          .from(this.sensitiveWord)
+          .from(this.systemSensitiveWord)
           .where(
             and(
-              eq(this.sensitiveWord.isEnabled, true),
-              eq(this.sensitiveWord.type, type),
+              eq(this.systemSensitiveWord.isEnabled, true),
+              eq(this.systemSensitiveWord.type, type),
             ),
           ),
     })
@@ -136,11 +136,11 @@ export class SensitiveWordCacheService {
       queryFn: async () =>
         this.db
           .select()
-          .from(this.sensitiveWord)
+          .from(this.systemSensitiveWord)
           .where(
             and(
-              eq(this.sensitiveWord.isEnabled, true),
-              eq(this.sensitiveWord.matchMode, matchMode),
+              eq(this.systemSensitiveWord.isEnabled, true),
+              eq(this.systemSensitiveWord.matchMode, matchMode),
             ),
           ),
     })

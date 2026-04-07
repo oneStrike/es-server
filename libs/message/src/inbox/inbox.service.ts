@@ -16,7 +16,7 @@ export class MessageInboxService {
   }
 
   private get notification() {
-    return this.drizzle.schema.userNotification
+    return this.drizzle.schema.appUserNotification
   }
 
   private get conversation() {
@@ -55,7 +55,7 @@ export class MessageInboxService {
           eq(this.conversationMember.userId, userId),
           isNull(this.conversationMember.leftAt),
         )),
-      this.db.query.userNotification.findFirst({
+      this.db.query.appUserNotification.findFirst({
         where: {
           userId,
         },
@@ -162,7 +162,7 @@ export class MessageInboxService {
             ),
           )
           .where(isNotNull(this.conversation.lastMessageAt)),
-        this.db.query.userNotification.findMany({
+        this.db.query.appUserNotification.findMany({
           where: {
             userId,
           },

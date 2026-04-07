@@ -31,9 +31,9 @@ export class MessageNotificationPreferenceService {
     return this.drizzle.db
   }
 
-  /** notification_preference 表访问入口。 */
-  private get notificationPreference() {
-    return this.drizzle.schema.notificationPreference
+  /** app_app_user_notification_preference 表访问入口。 */
+  private get appUserNotificationPreference() {
+    return this.drizzle.schema.appUserNotificationPreference
   }
 
   /**
@@ -41,7 +41,7 @@ export class MessageNotificationPreferenceService {
    * 返回全量通知类型的有效状态，而不是只返回数据库里存在的显式覆盖项
    */
   async getUserNotificationPreferenceList(userId: number) {
-    const preferences = await this.db.query.notificationPreference.findMany({
+    const preferences = await this.db.query.appUserNotificationPreference.findMany({
       where: { userId },
     })
     const preferenceMap = new Map(
@@ -74,11 +74,11 @@ export class MessageNotificationPreferenceService {
           )
           if (preference.isEnabled === defaultEnabled) {
             await tx
-              .delete(this.notificationPreference)
+              .delete(this.appUserNotificationPreference)
               .where(and(
-                eq(this.notificationPreference.userId, userId),
+                eq(this.appUserNotificationPreference.userId, userId),
                 eq(
-                  this.notificationPreference.notificationType,
+                  this.appUserNotificationPreference.notificationType,
                   preference.notificationType,
                 ),
               ))
@@ -86,7 +86,7 @@ export class MessageNotificationPreferenceService {
           }
 
           await tx
-            .insert(this.notificationPreference)
+            .insert(this.appUserNotificationPreference)
             .values({
               userId,
               notificationType: preference.notificationType,
@@ -94,8 +94,8 @@ export class MessageNotificationPreferenceService {
             })
             .onConflictDoUpdate({
               target: [
-                this.notificationPreference.userId,
-                this.notificationPreference.notificationType,
+                this.appUserNotificationPreference.userId,
+                this.appUserNotificationPreference.notificationType,
               ],
               set: {
                 isEnabled: preference.isEnabled,
@@ -111,14 +111,14 @@ export class MessageNotificationPreferenceService {
 
   /**
    * 获取单个通知类型的有效偏好
-   * 通知主链路在创建 user_notification 前会调用此方法做抑制判断
+   * 通知主链路在创建 app_user_notification 前会调用此方法做抑制判断
    */
   async getEffectiveNotificationPreference(
     userId: number,
     notificationType: MessageNotificationTypeEnum,
   ) {
     this.ensureSupportedNotificationType(notificationType)
-    const preference = await this.db.query.notificationPreference.findFirst({
+    const preference = await this.db.query.appUserNotificationPreference.findFirst({
       where: {
         userId,
         notificationType,

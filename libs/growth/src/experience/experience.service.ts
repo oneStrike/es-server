@@ -43,8 +43,8 @@ export class UserExperienceService {
   /**
    * 获取经验规则数据库访问器
    */
-  get userExperienceRule() {
-    return this.drizzle.schema.userExperienceRule
+  get appUserExperienceRule() {
+    return this.drizzle.schema.appUserExperienceRule
   }
 
   /**
@@ -62,7 +62,7 @@ export class UserExperienceService {
   async createExperienceRule(dto: CreateUserExperienceRuleDto) {
     this.validateExperienceRuleWrite(dto)
     await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userExperienceRule).values(dto),
+      () => this.db.insert(this.appUserExperienceRule).values(dto),
       {
         duplicate: 'Experience rule type already exists',
       },
@@ -79,13 +79,13 @@ export class UserExperienceService {
     const conditions: SQL[] = []
 
     if (dto.isEnabled !== undefined) {
-      conditions.push(eq(this.userExperienceRule.isEnabled, dto.isEnabled))
+      conditions.push(eq(this.appUserExperienceRule.isEnabled, dto.isEnabled))
     }
     if (dto.type !== undefined) {
-      conditions.push(eq(this.userExperienceRule.type, dto.type))
+      conditions.push(eq(this.appUserExperienceRule.type, dto.type))
     }
 
-    return this.drizzle.ext.findPagination(this.userExperienceRule, {
+    return this.drizzle.ext.findPagination(this.appUserExperienceRule, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...dto,
     })
@@ -99,8 +99,8 @@ export class UserExperienceService {
   async getExperienceRuleDetail(id: number) {
     const [rule] = await this.db
       .select()
-      .from(this.userExperienceRule)
-      .where(eq(this.userExperienceRule.id, id))
+      .from(this.appUserExperienceRule)
+      .where(eq(this.appUserExperienceRule.id, id))
       .limit(1)
 
     if (!rule) {
@@ -121,9 +121,9 @@ export class UserExperienceService {
     const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
-          .update(this.userExperienceRule)
+          .update(this.appUserExperienceRule)
           .set(updateData)
-          .where(eq(this.userExperienceRule.id, id)),
+          .where(eq(this.appUserExperienceRule.id, id)),
       {
         duplicate: 'Experience rule type already exists',
       },
@@ -139,9 +139,9 @@ export class UserExperienceService {
    */
   async deleteExperienceRule(id: number) {
     const [rule] = await this.db
-      .select({ id: this.userExperienceRule.id })
-      .from(this.userExperienceRule)
-      .where(eq(this.userExperienceRule.id, id))
+      .select({ id: this.appUserExperienceRule.id })
+      .from(this.appUserExperienceRule)
+      .where(eq(this.appUserExperienceRule.id, id))
       .limit(1)
 
     if (!rule) {
@@ -150,8 +150,8 @@ export class UserExperienceService {
 
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .delete(this.userExperienceRule)
-        .where(eq(this.userExperienceRule.id, id)),
+        .delete(this.appUserExperienceRule)
+        .where(eq(this.appUserExperienceRule.id, id)),
     )
     this.drizzle.assertAffectedRows(result, '经验规则不存在')
     return true

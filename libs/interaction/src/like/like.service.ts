@@ -34,8 +34,8 @@ export class LikeService {
     return this.drizzle.db
   }
 
-  private get userLike() {
-    return this.drizzle.schema.userLike
+  private get appUserLike() {
+    return this.drizzle.schema.appUserLike
   }
 
   private uniqueTargetIds(targetIds: number[]) {
@@ -94,14 +94,14 @@ export class LikeService {
 
     const likes = await this.db
       .select({
-        targetId: this.userLike.targetId,
+        targetId: this.appUserLike.targetId,
       })
-      .from(this.userLike)
+      .from(this.appUserLike)
       .where(
         and(
-          eq(this.userLike.targetType, targetType),
-          inArray(this.userLike.targetId, uniqueTargetIds),
-          eq(this.userLike.userId, userId),
+          eq(this.appUserLike.targetType, targetType),
+          inArray(this.appUserLike.targetId, uniqueTargetIds),
+          eq(this.appUserLike.userId, userId),
         ),
       )
 
@@ -130,10 +130,10 @@ export class LikeService {
     pageIndex: number = 1,
     pageSize: number = 20,
   ) {
-    const page = await this.drizzle.ext.findPagination(this.userLike, {
+    const page = await this.drizzle.ext.findPagination(this.appUserLike, {
       where: and(
-        eq(this.userLike.targetType, targetType),
-        eq(this.userLike.targetId, targetId),
+        eq(this.appUserLike.targetType, targetType),
+        eq(this.appUserLike.targetId, targetId),
       ),
       pageIndex,
       pageSize,
@@ -170,7 +170,7 @@ export class LikeService {
 
       await this.drizzle.withErrorHandling(
         () =>
-          tx.insert(this.userLike).values({
+          tx.insert(this.appUserLike).values({
             targetType,
             targetId,
             sceneType: targetMeta.sceneType,
@@ -209,12 +209,12 @@ export class LikeService {
 
     await this.drizzle.withTransaction(async (tx) => {
       const deleted = await tx
-        .delete(this.userLike)
+        .delete(this.appUserLike)
         .where(
           and(
-            eq(this.userLike.targetType, targetType),
-            eq(this.userLike.targetId, targetId),
-            eq(this.userLike.userId, userId),
+            eq(this.appUserLike.targetType, targetType),
+            eq(this.appUserLike.targetId, targetId),
+            eq(this.appUserLike.userId, userId),
           ),
         )
       this.drizzle.assertAffectedRows(deleted, '点赞记录不存在')
@@ -236,11 +236,11 @@ export class LikeService {
   async checkLikeStatus(input: LikeRecordDto): Promise<boolean> {
     const { targetType, targetId, userId } = input
     return this.drizzle.ext.exists(
-      this.userLike,
+      this.appUserLike,
       and(
-        eq(this.userLike.targetType, targetType),
-        eq(this.userLike.targetId, targetId),
-        eq(this.userLike.userId, userId),
+        eq(this.appUserLike.targetType, targetType),
+        eq(this.appUserLike.targetId, targetId),
+        eq(this.appUserLike.userId, userId),
       ),
     )
   }
@@ -255,10 +255,10 @@ export class LikeService {
    * @returns 分页点赞记录列表，包含目标详情
    */
   async getUserLikes(query: LikePageQueryDto & Pick<LikeRecordDto, 'userId'>) {
-    const page = await this.drizzle.ext.findPagination(this.userLike, {
+    const page = await this.drizzle.ext.findPagination(this.appUserLike, {
       where: and(
-        eq(this.userLike.targetType, query.targetType),
-        eq(this.userLike.userId, query.userId),
+        eq(this.appUserLike.targetType, query.targetType),
+        eq(this.appUserLike.userId, query.userId),
       ),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,

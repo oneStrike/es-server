@@ -9,10 +9,10 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumSectionGroup.id,
     }),
     actionLogs: r.many.forumModeratorActionLog(),
-    moderatorSections: r.many.forumModeratorSection(),
+    moderatorSections: r.many.forumModeratorSectionRelation(),
     moderatedSections: r.many.forumSection({
-      from: r.forumModerator.id.through(r.forumModeratorSection.moderatorId),
-      to: r.forumSection.id.through(r.forumModeratorSection.sectionId),
+      from: r.forumModerator.id.through(r.forumModeratorSectionRelation.moderatorId),
+      to: r.forumSection.id.through(r.forumModeratorSectionRelation.sectionId),
     }),
   },
   forumModeratorActionLog: {
@@ -37,13 +37,13 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumSection.id,
     }),
   },
-  forumModeratorSection: {
+  forumModeratorSectionRelation: {
     moderator: r.one.forumModerator({
-      from: r.forumModeratorSection.moderatorId,
+      from: r.forumModeratorSectionRelation.moderatorId,
       to: r.forumModerator.id,
     }),
     section: r.one.forumSection({
-      from: r.forumModeratorSection.sectionId,
+      from: r.forumModeratorSectionRelation.sectionId,
       to: r.forumSection.id,
     }),
   },
@@ -52,9 +52,9 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       from: r.forumSection.groupId,
       to: r.forumSectionGroup.id,
     }),
-    userLevelRule: r.one.userLevelRule({
+    appUserLevelRule: r.one.appUserLevelRule({
       from: r.forumSection.userLevelRuleId,
-      to: r.userLevelRule.id,
+      to: r.appUserLevelRule.id,
     }),
     lastTopic: r.one.forumTopic({
       from: r.forumSection.lastTopicId,
@@ -62,10 +62,10 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       alias: 'LastTopic',
     }),
     topics: r.many.forumTopic(),
-    moderatorSections: r.many.forumModeratorSection(),
+    moderatorSections: r.many.forumModeratorSectionRelation(),
     moderators: r.many.forumModerator({
-      from: r.forumSection.id.through(r.forumModeratorSection.sectionId),
-      to: r.forumModerator.id.through(r.forumModeratorSection.moderatorId),
+      from: r.forumSection.id.through(r.forumModeratorSectionRelation.sectionId),
+      to: r.forumModerator.id.through(r.forumModeratorSectionRelation.moderatorId),
     }),
     applications: r.many.forumModeratorApplication(),
     work: r.one.work({
@@ -78,10 +78,10 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
     moderators: r.many.forumModerator(),
   },
   forumTag: {
-    topicTags: r.many.forumTopicTag(),
+    topicTags: r.many.forumTopicTagRelation(),
     topics: r.many.forumTopic({
-      from: r.forumTag.id.through(r.forumTopicTag.tagId),
-      to: r.forumTopic.id.through(r.forumTopicTag.topicId),
+      from: r.forumTag.id.through(r.forumTopicTagRelation.tagId),
+      to: r.forumTopic.id.through(r.forumTopicTagRelation.topicId),
     }),
   },
   forumTopic: {
@@ -104,16 +104,16 @@ export const forumRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumSection.lastTopicId,
       alias: 'LastTopic',
     }),
-    topicTags: r.many.forumTopicTag(),
+    topicTags: r.many.forumTopicTagRelation(),
     tags: r.many.forumTag({
-      from: r.forumTopic.id.through(r.forumTopicTag.topicId),
-      to: r.forumTag.id.through(r.forumTopicTag.tagId),
+      from: r.forumTopic.id.through(r.forumTopicTagRelation.topicId),
+      to: r.forumTag.id.through(r.forumTopicTagRelation.tagId),
     }),
   },
-  forumTopicTag: {
-    tag: r.one.forumTag({ from: r.forumTopicTag.tagId, to: r.forumTag.id }),
+  forumTopicTagRelation: {
+    tag: r.one.forumTag({ from: r.forumTopicTagRelation.tagId, to: r.forumTag.id }),
     topic: r.one.forumTopic({
-      from: r.forumTopicTag.topicId,
+      from: r.forumTopicTagRelation.topicId,
       to: r.forumTopic.id,
     }),
   },

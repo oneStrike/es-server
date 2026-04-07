@@ -10,7 +10,7 @@ import { index, integer, pgTable, smallint, timestamp, varchar } from "drizzle-o
  * 用于浏览历史查询、热度统计、推荐算法等
  * 支持用户删除浏览记录
  */
-export const userBrowseLog = pgTable("user_browse_log", {
+export const appUserBrowseLog = pgTable("app_user_browse_log", {
   /**
    * 主键ID（自增）
    */
@@ -58,24 +58,24 @@ export const userBrowseLog = pgTable("user_browse_log", {
   /**
    * 目标类型与目标ID联合索引，用于查询某目标的浏览记录
    */
-  index("user_browse_log_target_type_target_id_idx").on(table.targetType, table.targetId),
+  index("app_user_browse_log_target_type_target_id_idx").on(table.targetType, table.targetId),
   /**
    * 用户ID索引，用于查询某用户的浏览历史
    */
-  index("user_browse_log_user_id_idx").on(table.userId),
+  index("app_user_browse_log_user_id_idx").on(table.userId),
   /**
    * 浏览时间索引，用于按时间排序和清理过期数据
    */
-  index("user_browse_log_viewed_at_idx").on(table.viewedAt),
+  index("app_user_browse_log_viewed_at_idx").on(table.viewedAt),
   /**
    * 目标与用户联合索引，用于查询某用户对某目标的浏览记录
    */
-  index("user_browse_log_target_type_target_id_user_id_idx").on(table.targetType, table.targetId, table.userId),
+  index("app_user_browse_log_target_type_target_id_user_id_idx").on(table.targetType, table.targetId, table.userId),
   /**
    * 用户与浏览时间联合索引，用于查询用户浏览历史并按时间排序
    */
-  index("user_browse_log_user_id_viewed_at_idx").on(table.userId, table.viewedAt),
+  index("app_user_browse_log_user_id_viewed_at_idx").on(table.userId, table.viewedAt),
 ]);
 
-export type UserBrowseLogSelect = typeof userBrowseLog.$inferSelect;
-export type UserBrowseLogInsert = typeof userBrowseLog.$inferInsert;
+export type AppUserBrowseLogSelect = typeof appUserBrowseLog.$inferSelect;
+export type AppUserBrowseLogInsert = typeof appUserBrowseLog.$inferInsert;

@@ -42,21 +42,21 @@ export class ForumTagService {
   /**
    * 获取主题标签关联的 数据模型
    */
-  get forumTopicTag() {
-    return this.drizzle.schema.forumTopicTag
+  get forumTopicTagRelation() {
+    return this.drizzle.schema.forumTopicTagRelation
   }
 
   private async checkTagHasTopics(id: number) {
     const rows = await this.db
-      .select({ topicId: this.forumTopicTag.topicId })
-      .from(this.forumTopicTag)
+      .select({ topicId: this.forumTopicTagRelation.topicId })
+      .from(this.forumTopicTagRelation)
       .innerJoin(
         this.forumTopic,
-        eq(this.forumTopic.id, this.forumTopicTag.topicId),
+        eq(this.forumTopic.id, this.forumTopicTagRelation.topicId),
       )
       .where(
         and(
-          eq(this.forumTopicTag.tagId, id),
+          eq(this.forumTopicTagRelation.tagId, id),
           isNull(this.forumTopic.deletedAt),
         ),
       )
@@ -122,12 +122,12 @@ export class ForumTagService {
     const countRows = tagIds.length
       ? await this.db
           .select({
-            tagId: this.forumTopicTag.tagId,
+            tagId: this.forumTopicTagRelation.tagId,
             count: sql<number>`count(*)`,
           })
-          .from(this.forumTopicTag)
-          .where(inArray(this.forumTopicTag.tagId, tagIds))
-          .groupBy(this.forumTopicTag.tagId)
+          .from(this.forumTopicTagRelation)
+          .where(inArray(this.forumTopicTagRelation.tagId, tagIds))
+          .groupBy(this.forumTopicTagRelation.tagId)
       : []
     const countMap = new Map(
       countRows.map((row) => [row.tagId, Number(row.count)]),
@@ -164,20 +164,20 @@ export class ForumTagService {
         title: this.forumTopic.title,
         createdAt: this.forumTopic.createdAt,
       })
-      .from(this.forumTopicTag)
+      .from(this.forumTopicTagRelation)
       .innerJoin(
         this.forumTopic,
-        eq(this.forumTopic.id, this.forumTopicTag.topicId),
+        eq(this.forumTopic.id, this.forumTopicTagRelation.topicId),
       )
       .where(
         and(
-          eq(this.forumTopicTag.tagId, id),
+          eq(this.forumTopicTagRelation.tagId, id),
           isNull(this.forumTopic.deletedAt),
         ),
       )
       .orderBy(
-        desc(this.forumTopicTag.createdAt),
-        asc(this.forumTopicTag.topicId),
+        desc(this.forumTopicTagRelation.createdAt),
+        asc(this.forumTopicTagRelation.topicId),
       )
       .limit(10)
 
@@ -281,7 +281,7 @@ export class ForumTagService {
       throw new BadRequestException('该标签未启用')
     }
 
-    const existingRelation = await this.db.query.forumTopicTag.findFirst({
+    const existingRelation = await this.db.query.forumTopicTagRelation.findFirst({
       where: { topicId, tagId },
     })
 
@@ -292,7 +292,7 @@ export class ForumTagService {
     // 关联关系与使用次数同步更新
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        await tx.insert(this.forumTopicTag).values({
+        await tx.insert(this.forumTopicTagRelation).values({
           topicId,
           tagId,
         })
@@ -317,7 +317,7 @@ export class ForumTagService {
   ) {
     const { topicId, tagId } = removeTagFromTopicDto
 
-    const topicTag = await this.db.query.forumTopicTag.findFirst({
+    const topicTag = await this.db.query.forumTopicTagRelation.findFirst({
       where: { topicId, tagId },
     })
 
@@ -329,11 +329,11 @@ export class ForumTagService {
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         await tx
-          .delete(this.forumTopicTag)
+          .delete(this.forumTopicTagRelation)
           .where(
             and(
-              eq(this.forumTopicTag.topicId, topicId),
-              eq(this.forumTopicTag.tagId, tagId),
+              eq(this.forumTopicTagRelation.topicId, topicId),
+              eq(this.forumTopicTagRelation.tagId, tagId),
             ),
           )
         const rows = await tx
@@ -373,9 +373,9 @@ export class ForumTagService {
         createdAt: this.forumTag.createdAt,
         updatedAt: this.forumTag.updatedAt,
       })
-      .from(this.forumTopicTag)
-      .innerJoin(this.forumTag, eq(this.forumTag.id, this.forumTopicTag.tagId))
-      .where(eq(this.forumTopicTag.topicId, topicId))
+      .from(this.forumTopicTagRelation)
+      .innerJoin(this.forumTag, eq(this.forumTag.id, this.forumTopicTagRelation.tagId))
+      .where(eq(this.forumTopicTagRelation.topicId, topicId))
       .orderBy(asc(this.forumTag.sortOrder), asc(this.forumTag.id))
   }
 

@@ -31,13 +31,13 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
       from: r.work.id,
       to: r.workComicArchiveImportTask.workId,
     }),
-    userReadingStates: r.many.userWorkReadingState({
+    userReadingStates: r.many.appUserWorkReadingState({
       from: r.work.id,
-      to: r.userWorkReadingState.workId,
+      to: r.appUserWorkReadingState.workId,
     }),
-    requiredViewLevel: r.one.userLevelRule({
+    requiredViewLevel: r.one.appUserLevelRule({
       from: r.work.requiredViewLevelId,
-      to: r.userLevelRule.id,
+      to: r.appUserLevelRule.id,
       alias: 'WorkViewLevel',
     }),
     forumSection: r.one.forumSection({
@@ -75,15 +75,15 @@ export const workRelations = defineRelationsPart(schema, (r) => ({
   },
   workChapter: {
     work: r.one.work({ from: r.workChapter.workId, to: r.work.id }),
-    requiredViewLevel: r.one.userLevelRule({
+    requiredViewLevel: r.one.appUserLevelRule({
       from: r.workChapter.requiredViewLevelId,
-      to: r.userLevelRule.id,
+      to: r.appUserLevelRule.id,
       alias: 'ChapterReadLevel',
     }),
-    readingStates: r.many.userWorkReadingState({
+    readingStates: r.many.appUserWorkReadingState({
       from: r.workChapter.id,
-      to: r.userWorkReadingState.lastReadChapterId,
-      alias: 'UserWorkReadingStateLastReadChapter',
+      to: r.appUserWorkReadingState.lastReadChapterId,
+      alias: 'AppUserWorkReadingStateLastReadChapter',
     }),
   },
   workComicArchiveImportTask: {

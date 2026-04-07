@@ -8,7 +8,7 @@ import { index, integer, pgTable, smallint, timestamp, unique } from "drizzle-or
  * 用户点赞记录表
  * 统一存储作品、章节、论坛主题、评论的点赞行为
  */
-export const userLike = pgTable("user_like", {
+export const appUserLike = pgTable("app_user_like", {
   /**
    * 主键 ID
    */
@@ -50,24 +50,24 @@ export const userLike = pgTable("user_like", {
     /**
      * 同一用户对同一目标只允许点赞一次
      */
-    unique("user_like_target_type_target_id_user_id_key").on(table.targetType, table.targetId, table.userId),
+    unique("app_user_like_target_type_target_id_user_id_key").on(table.targetType, table.targetId, table.userId),
     /**
      * 直接目标查询索引
      */
-    index("user_like_target_type_target_id_idx").on(table.targetType, table.targetId),
+    index("app_user_like_target_type_target_id_idx").on(table.targetType, table.targetId),
     /**
      * 场景维度统计索引
      */
-    index("user_like_scene_type_scene_id_idx").on(table.sceneType, table.sceneId),
+    index("app_user_like_scene_type_scene_id_idx").on(table.sceneType, table.sceneId),
     /**
      * 用户场景查询索引
      */
-    index("user_like_user_id_scene_type_created_at_idx").on(table.userId, table.sceneType, table.createdAt),
+    index("app_user_like_user_id_scene_type_created_at_idx").on(table.userId, table.sceneType, table.createdAt),
     /**
      * 创建时间索引
      */
-    index("user_like_created_at_idx").on(table.createdAt),
+    index("app_user_like_created_at_idx").on(table.createdAt),
 ]);
 
-export type UserLikeSelect = typeof userLike.$inferSelect;
-export type UserLikeInsert = typeof userLike.$inferInsert;
+export type AppUserLikeSelect = typeof appUserLike.$inferSelect;
+export type AppUserLikeInsert = typeof appUserLike.$inferInsert;

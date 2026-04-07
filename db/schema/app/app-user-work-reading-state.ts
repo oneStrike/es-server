@@ -8,7 +8,7 @@ import { index, integer, pgTable, primaryKey, smallint, timestamp } from "drizzl
  * 用户作品阅读状态表
  * 用于保存用户对作品（漫画/小说）的阅读进度状态
  */
-export const userWorkReadingState = pgTable("user_work_reading_state", {
+export const appUserWorkReadingState = pgTable("app_user_work_reading_state", {
   /**
    * 用户 ID
    */
@@ -33,24 +33,24 @@ export const userWorkReadingState = pgTable("user_work_reading_state", {
     /**
      * 用户按类型查看最近阅读作品时使用
      */
-    index("user_work_reading_state_user_id_work_type_last_read_at_idx").on(table.userId, table.workType, table.lastReadAt.desc()),
+    index("app_user_work_reading_state_user_id_work_type_last_read_at_idx").on(table.userId, table.workType, table.lastReadAt.desc()),
     /**
      * 用户最近阅读列表索引
      */
-    index("user_work_reading_state_user_id_last_read_at_idx").on(table.userId, table.lastReadAt.desc()),
+    index("app_user_work_reading_state_user_id_last_read_at_idx").on(table.userId, table.lastReadAt.desc()),
     /**
      * 作品维度查询阅读状态时使用
      */
-    index("user_work_reading_state_work_id_idx").on(table.workId),
+    index("app_user_work_reading_state_work_id_idx").on(table.workId),
     /**
      * 继续阅读关联章节查询时使用
      */
-    index("user_work_reading_state_last_read_chapter_id_idx").on(table.lastReadChapterId),
+    index("app_user_work_reading_state_last_read_chapter_id_idx").on(table.lastReadChapterId),
     /**
      * 用户与作品复合主键
      */
     primaryKey({ columns: [table.userId, table.workId] }),
 ]);
 
-export type UserWorkReadingStateSelect = typeof userWorkReadingState.$inferSelect;
-export type UserWorkReadingStateInsert = typeof userWorkReadingState.$inferInsert;
+export type AppUserWorkReadingStateSelect = typeof appUserWorkReadingState.$inferSelect;
+export type AppUserWorkReadingStateInsert = typeof appUserWorkReadingState.$inferInsert;

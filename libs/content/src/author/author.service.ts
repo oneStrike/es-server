@@ -40,8 +40,8 @@ export class WorkAuthorService {
   }
 
   /** 关注关系表。 */
-  private get userFollow() {
-    return this.drizzle.schema.userFollow
+  private get appUserFollow() {
+    return this.drizzle.schema.appUserFollow
   }
 
   /** 作品表。 */
@@ -130,11 +130,11 @@ export class WorkAuthorService {
     const client = tx ?? this.db
     const row = await client
       .select({ count: sql<number>`count(*)::int` })
-      .from(this.userFollow)
+      .from(this.appUserFollow)
       .where(
         and(
-          eq(this.userFollow.targetType, this.authorFollowTargetType),
-          eq(this.userFollow.targetId, authorId),
+          eq(this.appUserFollow.targetType, this.authorFollowTargetType),
+          eq(this.appUserFollow.targetId, authorId),
         ),
       )
       .then((rows) => rows[0])

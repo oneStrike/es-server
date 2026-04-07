@@ -86,7 +86,7 @@ export class ForumTopicService {
   }
 
   get userCommentTable() {
-    return this.drizzle.schema.userComment
+    return this.drizzle.schema.appUserComment
   }
 
   /**
@@ -1167,7 +1167,7 @@ export class ForumTopicService {
     const { id } = topic
     await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const commentRows = await tx.query.userComment.findMany({
+        const commentRows = await tx.query.appUserComment.findMany({
           where: {
             targetType: CommentTargetTypeEnum.FORUM_TOPIC,
             targetId: id,

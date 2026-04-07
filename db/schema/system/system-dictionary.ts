@@ -7,7 +7,7 @@ import { boolean, index, integer, pgTable, smallserial, text, timestamp, unique,
 /**
  * 数据字典
  */
-export const dictionary = pgTable("sys_dictionary", {
+export const systemDictionary = pgTable("system_dictionary", {
   /**
    * 主键ID
    */
@@ -44,17 +44,17 @@ export const dictionary = pgTable("sys_dictionary", {
     /**
      * 唯一索引: name
      */
-    unique("sys_dictionary_name_key").on(table.name),
+    unique("system_dictionary_name_key").on(table.name),
     /**
      * 唯一索引: code
      */
-    unique("sys_dictionary_code_key").on(table.code),
+    unique("system_dictionary_code_key").on(table.code),
 ]);
 
 /**
  * 数据字典项
  */
-export const dictionaryItem = pgTable("sys_dictionary_item", {
+export const systemDictionaryItem = pgTable("system_dictionary_item", {
   /**
    * 主键ID
    */
@@ -99,18 +99,18 @@ export const dictionaryItem = pgTable("sys_dictionary_item", {
     /**
      * 字典编码与项编码唯一约束
      */
-    unique("sys_dictionary_item_dictionary_code_code_key").on(table.dictionaryCode, table.code),
+    unique("system_dictionary_item_dictionary_code_code_key").on(table.dictionaryCode, table.code),
     /**
      * 字典编码索引
      */
-    index("sys_dictionary_item_dictionary_code_idx").on(table.dictionaryCode),
+    index("system_dictionary_item_dictionary_code_idx").on(table.dictionaryCode),
     /**
      * 排序索引
      */
-    index("sys_dictionary_item_sort_order_idx").on(table.sortOrder),
+    index("system_dictionary_item_sort_order_idx").on(table.sortOrder),
 ]);
 
-export type DictionarySelect = typeof dictionary.$inferSelect;
-export type DictionaryInsert = typeof dictionary.$inferInsert;
-export type DictionaryItemSelect = typeof dictionaryItem.$inferSelect;
-export type DictionaryItemInsert = typeof dictionaryItem.$inferInsert;
+export type SystemDictionarySelect = typeof systemDictionary.$inferSelect;
+export type SystemDictionaryInsert = typeof systemDictionary.$inferInsert;
+export type SystemDictionaryItemSelect = typeof systemDictionaryItem.$inferSelect;
+export type SystemDictionaryItemInsert = typeof systemDictionaryItem.$inferInsert;

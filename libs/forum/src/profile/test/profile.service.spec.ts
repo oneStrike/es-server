@@ -150,9 +150,9 @@ describe('userProfileService.getMyTopics', () => {
             deletedAt: 'deletedAt',
           },
           growthLedgerRecord: {},
-          userBadge: {},
-          userBadgeAssignment: {},
-          userLevelRule: {},
+          appBadge: {},
+          appUserBadgeAssignment: {},
+          appUserLevelRule: {},
         },
       } as any,
       {} as any,
@@ -273,12 +273,12 @@ describe('userProfileService.getMyTopics', () => {
             forumTopicReceivedLikeCount: 'forumTopicReceivedLikeCount',
             forumTopicReceivedFavoriteCount: 'forumTopicReceivedFavoriteCount',
           },
-          userBadgeAssignment: {
+          appUserBadgeAssignment: {
             userId: 'userId',
             badgeId: 'badgeId',
             createdAt: 'createdAt',
           },
-          userBadge: {
+          appBadge: {
             id: 'id',
           },
         },

@@ -76,8 +76,8 @@ export class CommentService {
     return this.drizzle.db
   }
 
-  private get userComment() {
-    return this.drizzle.schema.userComment
+  private get appUserComment() {
+    return this.drizzle.schema.appUserComment
   }
 
   private get appUser() {
@@ -465,7 +465,7 @@ export class CommentService {
     let replyTargetUserId = comment.replyTargetUserId
 
     if (replyTargetUserId === undefined) {
-      const replyTarget = await tx.query.userComment.findFirst({
+      const replyTarget = await tx.query.appUserComment.findFirst({
         where: {
           id: comment.replyToId,
           deletedAt: { isNull: true },
@@ -554,20 +554,20 @@ export class CommentService {
 
               const [floorResult] = await tx
                 .select({
-                  floor: max(this.userComment.floor),
+                  floor: max(this.appUserComment.floor),
                 })
-                .from(this.userComment)
+                .from(this.appUserComment)
                 .where(
                   and(
-                    eq(this.userComment.targetType, targetType),
-                    eq(this.userComment.targetId, targetId),
-                    isNull(this.userComment.replyToId),
+                    eq(this.appUserComment.targetType, targetType),
+                    eq(this.appUserComment.targetId, targetId),
+                    isNull(this.appUserComment.replyToId),
                   ),
                 )
               const floor = (Number(floorResult?.floor ?? 0) || 0) + 1
 
               const [newComment] = await tx
-                .insert(this.userComment)
+                .insert(this.appUserComment)
                 .values({
                   targetType,
                   targetId,
@@ -583,13 +583,13 @@ export class CommentService {
                   geoSource: context.geoSource,
                 })
                 .returning({
-                  id: this.userComment.id,
-                  userId: this.userComment.userId,
-                  targetType: this.userComment.targetType,
-                  targetId: this.userComment.targetId,
-                  replyToId: this.userComment.replyToId,
-                  content: this.userComment.content,
-                  createdAt: this.userComment.createdAt,
+                  id: this.appUserComment.id,
+                  userId: this.appUserComment.userId,
+                  targetType: this.appUserComment.targetType,
+                  targetId: this.appUserComment.targetId,
+                  replyToId: this.appUserComment.replyToId,
+                  content: this.appUserComment.content,
+                  createdAt: this.appUserComment.createdAt,
                 })
 
               await this.appUserCountService.updateCommentCount(tx, userId, 1)
@@ -678,7 +678,7 @@ export class CommentService {
     })
 
     // 查询被回复的评论
-    const replyTo = await this.db.query.userComment.findFirst({
+    const replyTo = await this.db.query.appUserComment.findFirst({
       where: { id: replyToId },
       columns: {
         id: true,
@@ -720,7 +720,7 @@ export class CommentService {
       await resolver.ensureCanComment(tx, targetId)
 
       const [newComment] = await tx
-        .insert(this.userComment)
+        .insert(this.appUserComment)
         .values({
           targetType,
           targetId,
@@ -737,13 +737,13 @@ export class CommentService {
           geoSource: context.geoSource,
         })
         .returning({
-          id: this.userComment.id,
-          userId: this.userComment.userId,
-          targetType: this.userComment.targetType,
-          targetId: this.userComment.targetId,
-          replyToId: this.userComment.replyToId,
-          content: this.userComment.content,
-          createdAt: this.userComment.createdAt,
+          id: this.appUserComment.id,
+          userId: this.appUserComment.userId,
+          targetType: this.appUserComment.targetType,
+          targetId: this.appUserComment.targetId,
+          replyToId: this.appUserComment.replyToId,
+          content: this.appUserComment.content,
+          createdAt: this.appUserComment.createdAt,
         })
 
       await this.appUserCountService.updateCommentCount(tx, userId, 1)
@@ -823,7 +823,7 @@ export class CommentService {
    */
   async deleteComment(commentId: number, userId?: number) {
     return this.drizzle.withTransaction(async (tx) => {
-      const found = await tx.query.userComment.findFirst({
+      const found = await tx.query.appUserComment.findFirst({
         where: userId
           ? {
               id: commentId,
@@ -851,11 +851,11 @@ export class CommentService {
       }
 
       await tx
-        .update(this.userComment)
+        .update(this.appUserComment)
         .set({
           deletedAt: new Date(),
         })
-        .where(eq(this.userComment.id, found.id))
+        .where(eq(this.appUserComment.id, found.id))
 
       await this.appUserCountService.updateCommentCount(tx, found.userId, -1)
       if (found.likeCount > 0) {
@@ -912,12 +912,12 @@ export class CommentService {
    */
   async getReplies(query: QueryCommentRepliesDto & { userId?: number }) {
     const { commentId, pageIndex, pageSize, userId } = query
-    const page = await this.drizzle.ext.findPagination(this.userComment, {
+    const page = await this.drizzle.ext.findPagination(this.appUserComment, {
       where: and(
-        eq(this.userComment.actualReplyToId, commentId),
-        eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-        eq(this.userComment.isHidden, false),
-        isNull(this.userComment.deletedAt),
+        eq(this.appUserComment.actualReplyToId, commentId),
+        eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED),
+        eq(this.appUserComment.isHidden, false),
+        isNull(this.appUserComment.deletedAt),
       ),
       pageIndex,
       pageSize,
@@ -999,14 +999,14 @@ export class CommentService {
       userId,
     } = query
     const limit = Math.max(0, Math.min(previewReplyLimit, 10))
-    const page = await this.drizzle.ext.findPagination(this.userComment, {
+    const page = await this.drizzle.ext.findPagination(this.appUserComment, {
       where: and(
-        eq(this.userComment.targetType, targetType),
-        eq(this.userComment.targetId, targetId),
-        isNull(this.userComment.replyToId),
-        eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-        eq(this.userComment.isHidden, false),
-        isNull(this.userComment.deletedAt),
+        eq(this.appUserComment.targetType, targetType),
+        eq(this.appUserComment.targetId, targetId),
+        isNull(this.appUserComment.replyToId),
+        eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED),
+        eq(this.appUserComment.isHidden, false),
+        isNull(this.appUserComment.deletedAt),
       ),
       pageIndex,
       pageSize,
@@ -1059,34 +1059,34 @@ export class CommentService {
       // 合并计数与预览查询：使用窗口函数同时获取前 N 条回复和总回复数
       const subquery = this.db
         .select({
-          id: this.userComment.id,
-          userId: this.userComment.userId,
-          actualReplyToId: this.userComment.actualReplyToId,
-          replyToId: this.userComment.replyToId,
-          content: this.userComment.content,
-          bodyTokens: this.userComment.bodyTokens,
-          likeCount: this.userComment.likeCount,
-          geoCountry: this.userComment.geoCountry,
-          geoProvince: this.userComment.geoProvince,
-          geoCity: this.userComment.geoCity,
-          geoIsp: this.userComment.geoIsp,
-          geoSource: this.userComment.geoSource,
-          createdAt: this.userComment.createdAt,
-          rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
+          id: this.appUserComment.id,
+          userId: this.appUserComment.userId,
+          actualReplyToId: this.appUserComment.actualReplyToId,
+          replyToId: this.appUserComment.replyToId,
+          content: this.appUserComment.content,
+          bodyTokens: this.appUserComment.bodyTokens,
+          likeCount: this.appUserComment.likeCount,
+          geoCountry: this.appUserComment.geoCountry,
+          geoProvince: this.appUserComment.geoProvince,
+          geoCity: this.appUserComment.geoCity,
+          geoIsp: this.appUserComment.geoIsp,
+          geoSource: this.appUserComment.geoSource,
+          createdAt: this.appUserComment.createdAt,
+          rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.appUserComment.actualReplyToId} ORDER BY ${this.appUserComment.createdAt} ASC)`.as(
             'rn',
           ),
           totalCount:
-            sql<number>`COUNT(*) OVER (PARTITION BY ${this.userComment.actualReplyToId})`.as(
+            sql<number>`COUNT(*) OVER (PARTITION BY ${this.appUserComment.actualReplyToId})`.as(
               'totalCount',
             ),
         })
-        .from(this.userComment)
+        .from(this.appUserComment)
         .where(
           and(
-            inArray(this.userComment.actualReplyToId, rootIds),
-            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-            eq(this.userComment.isHidden, false),
-            isNull(this.userComment.deletedAt),
+            inArray(this.appUserComment.actualReplyToId, rootIds),
+            eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED),
+            eq(this.appUserComment.isHidden, false),
+            isNull(this.appUserComment.deletedAt),
           ),
         )
         .as('t')
@@ -1109,19 +1109,19 @@ export class CommentService {
       // 如果不需要预览，则只查询总计数
       const replyCountRows = await this.db
         .select({
-          rootId: this.userComment.actualReplyToId,
+          rootId: this.appUserComment.actualReplyToId,
           count: sql<number>`count(*)`,
         })
-        .from(this.userComment)
+        .from(this.appUserComment)
         .where(
           and(
-            inArray(this.userComment.actualReplyToId, rootIds),
-            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-            eq(this.userComment.isHidden, false),
-            isNull(this.userComment.deletedAt),
+            inArray(this.appUserComment.actualReplyToId, rootIds),
+            eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED),
+            eq(this.appUserComment.isHidden, false),
+            isNull(this.appUserComment.deletedAt),
           ),
         )
-        .groupBy(this.userComment.actualReplyToId)
+        .groupBy(this.appUserComment.actualReplyToId)
 
       for (const row of replyCountRows) {
         if (row.rootId !== null) {
@@ -1249,21 +1249,21 @@ export class CommentService {
    */
   async getUserComments(query: QueryMyCommentPageDto, userId: number) {
     const conditions: SQL[] = [
-      eq(this.userComment.userId, userId),
-      isNull(this.userComment.deletedAt),
+      eq(this.appUserComment.userId, userId),
+      isNull(this.appUserComment.deletedAt),
     ]
 
     if (query.targetType !== undefined) {
-      conditions.push(eq(this.userComment.targetType, query.targetType))
+      conditions.push(eq(this.appUserComment.targetType, query.targetType))
     }
     if (query.targetId !== undefined) {
-      conditions.push(eq(this.userComment.targetId, query.targetId))
+      conditions.push(eq(this.appUserComment.targetId, query.targetId))
     }
     if (query.auditStatus !== undefined) {
-      conditions.push(eq(this.userComment.auditStatus, query.auditStatus))
+      conditions.push(eq(this.appUserComment.auditStatus, query.auditStatus))
     }
 
-    return this.drizzle.ext.findPagination(this.userComment, {
+    return this.drizzle.ext.findPagination(this.appUserComment, {
       where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -1278,49 +1278,49 @@ export class CommentService {
    * 支持按评论自身、目标、回复链、审核状态、隐藏状态与关键词筛选。
    */
   async getAdminCommentPage(query: QueryAdminCommentPageDto) {
-    const conditions: SQL[] = [isNull(this.userComment.deletedAt)]
+    const conditions: SQL[] = [isNull(this.appUserComment.deletedAt)]
 
     if (query.id !== undefined) {
-      conditions.push(eq(this.userComment.id, query.id))
+      conditions.push(eq(this.appUserComment.id, query.id))
     }
     if (query.userId !== undefined) {
-      conditions.push(eq(this.userComment.userId, query.userId))
+      conditions.push(eq(this.appUserComment.userId, query.userId))
     }
     if (query.targetType !== undefined) {
-      conditions.push(eq(this.userComment.targetType, query.targetType))
+      conditions.push(eq(this.appUserComment.targetType, query.targetType))
     }
     if (query.targetId !== undefined) {
-      conditions.push(eq(this.userComment.targetId, query.targetId))
+      conditions.push(eq(this.appUserComment.targetId, query.targetId))
     }
     if (query.replyToId !== undefined) {
       if (query.replyToId === null) {
-        conditions.push(isNull(this.userComment.replyToId))
+        conditions.push(isNull(this.appUserComment.replyToId))
       } else {
-        conditions.push(eq(this.userComment.replyToId, query.replyToId))
+        conditions.push(eq(this.appUserComment.replyToId, query.replyToId))
       }
     }
     if (query.actualReplyToId !== undefined) {
       if (query.actualReplyToId === null) {
-        conditions.push(isNull(this.userComment.actualReplyToId))
+        conditions.push(isNull(this.appUserComment.actualReplyToId))
       } else {
         conditions.push(
-          eq(this.userComment.actualReplyToId, query.actualReplyToId),
+          eq(this.appUserComment.actualReplyToId, query.actualReplyToId),
         )
       }
     }
     if (query.auditStatus !== undefined) {
-      conditions.push(eq(this.userComment.auditStatus, query.auditStatus))
+      conditions.push(eq(this.appUserComment.auditStatus, query.auditStatus))
     }
     if (query.isHidden !== undefined) {
-      conditions.push(eq(this.userComment.isHidden, query.isHidden))
+      conditions.push(eq(this.appUserComment.isHidden, query.isHidden))
     }
     if (query.keyword?.trim()) {
       conditions.push(
-        buildILikeCondition(this.userComment.content, query.keyword)!,
+        buildILikeCondition(this.appUserComment.content, query.keyword)!,
       )
     }
 
-    const page = await this.drizzle.ext.findPagination(this.userComment, {
+    const page = await this.drizzle.ext.findPagination(this.appUserComment, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -1360,7 +1360,7 @@ export class CommentService {
    * 额外补齐评论作者和被回复评论的基础信息，方便后台审核定位上下文。
    */
   async getAdminCommentDetail(commentId: number) {
-    const comment = await this.db.query.userComment.findFirst({
+    const comment = await this.db.query.appUserComment.findFirst({
       where: {
         id: commentId,
         deletedAt: { isNull: true },
@@ -1417,7 +1417,7 @@ export class CommentService {
   async updateCommentAuditStatus(
     input: UpdateAdminCommentAuditStatusDto & { auditById: number, auditRole?: AuditRoleEnum },
   ) {
-    const current = await this.db.query.userComment.findFirst({
+    const current = await this.db.query.appUserComment.findFirst({
       where: {
         id: input.id,
         deletedAt: { isNull: true },
@@ -1449,7 +1449,7 @@ export class CommentService {
       this.db.transaction(async (tx) => {
         const auditAt = new Date()
         const result = await tx
-          .update(this.userComment)
+          .update(this.appUserComment)
           .set({
             auditStatus: input.auditStatus,
             auditReason: input.auditReason ?? null,
@@ -1459,8 +1459,8 @@ export class CommentService {
           })
           .where(
             and(
-              eq(this.userComment.id, input.id),
-              isNull(this.userComment.deletedAt),
+              eq(this.appUserComment.id, input.id),
+              isNull(this.appUserComment.deletedAt),
             ),
           )
         this.drizzle.assertAffectedRows(result, '评论不存在')
@@ -1499,7 +1499,7 @@ export class CommentService {
    * 仅在可见性真正发生变化时同步评论计数与目标派生字段。
    */
   async updateCommentHidden(input: UpdateAdminCommentHiddenDto) {
-    const current = await this.db.query.userComment.findFirst({
+    const current = await this.db.query.appUserComment.findFirst({
       where: {
         id: input.id,
         deletedAt: { isNull: true },
@@ -1525,14 +1525,14 @@ export class CommentService {
     const handled = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const result = await tx
-          .update(this.userComment)
+          .update(this.appUserComment)
           .set({
             isHidden: input.isHidden,
           })
           .where(
             and(
-              eq(this.userComment.id, input.id),
-              isNull(this.userComment.deletedAt),
+              eq(this.appUserComment.id, input.id),
+              isNull(this.appUserComment.deletedAt),
             ),
           )
         this.drizzle.assertAffectedRows(result, '评论不存在')

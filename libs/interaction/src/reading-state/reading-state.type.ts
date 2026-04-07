@@ -5,7 +5,7 @@ import type {
 
 /**
  * 阅读历史基础行结构。
- * - 对齐 user_work_reading_state 表中的核心历史字段
+ * - 对齐 app_user_work_reading_state 表中的核心历史字段
  */
 export interface ReadingHistoryRow {
   workId: number

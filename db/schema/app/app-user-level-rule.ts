@@ -7,7 +7,7 @@ import { boolean, index, integer, numeric, pgTable, smallint, timestamp, unique,
 /**
  * 用户等级规则表 - 定义用户等级规则，包括等级名称、所需经验、等级权益等
  */
-export const userLevelRule = pgTable("user_level_rule", {
+export const appUserLevelRule = pgTable("app_user_level_rule", {
   /**
    * 主键ID
    */
@@ -96,12 +96,12 @@ export const userLevelRule = pgTable("user_level_rule", {
     /**
      * 唯一索引: name
      */
-    unique("user_level_rule_name_key").on(table.name),
+    unique("app_user_level_rule_name_key").on(table.name),
     /**
      * 启用与排序索引
      */
-    index("user_level_rule_is_enabled_sort_order_idx").on(table.isEnabled, table.sortOrder),
+    index("app_user_level_rule_is_enabled_sort_order_idx").on(table.isEnabled, table.sortOrder),
 ]);
 
-export type UserLevelRuleSelect = typeof userLevelRule.$inferSelect;
-export type UserLevelRuleInsert = typeof userLevelRule.$inferInsert;
+export type AppUserLevelRuleSelect = typeof appUserLevelRule.$inferSelect;
+export type AppUserLevelRuleInsert = typeof appUserLevelRule.$inferInsert;

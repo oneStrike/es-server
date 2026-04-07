@@ -7,7 +7,7 @@ import { boolean, index, integer, pgTable, smallint, timestamp, unique, varchar 
 /**
  * 用户积分规则表 - 定义积分获取和消费规则，包括发帖、回复、点赞、签到等
  */
-export const userPointRule = pgTable("user_point_rule", {
+export const appUserPointRule = pgTable("app_user_point_rule", {
   /**
    * 主键ID
    */
@@ -51,17 +51,17 @@ export const userPointRule = pgTable("user_point_rule", {
     /**
      * 唯一索引: type
      */
-    unique("user_point_rule_type_key").on(table.type),
+    unique("app_user_point_rule_type_key").on(table.type),
     /**
      * 类型索引
      */
-    index("user_point_rule_type_idx").on(table.type),
+    index("app_user_point_rule_type_idx").on(table.type),
     /**
      * 启用状态索引
      */
-    index("user_point_rule_is_enabled_idx").on(table.isEnabled),
+    index("app_user_point_rule_is_enabled_idx").on(table.isEnabled),
     /**
      * 创建时间索引
      */
-    index("user_point_rule_created_at_idx").on(table.createdAt),
+    index("app_user_point_rule_created_at_idx").on(table.createdAt),
 ]);

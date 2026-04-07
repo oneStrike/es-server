@@ -7,7 +7,7 @@ import { boolean, index, integer, pgTable, smallint, timestamp, varchar } from "
 /**
  * 用户徽章表 - 存储通用用户徽章信息
  */
-export const userBadge = pgTable("user_badge", {
+export const appBadge = pgTable("app_badge", {
   /**
    * 主键ID
    */
@@ -56,21 +56,21 @@ export const userBadge = pgTable("user_badge", {
     /**
      * 类型索引
      */
-    index("user_badge_type_idx").on(table.type),
+    index("app_badge_type_idx").on(table.type),
     /**
      * 业务域与事件键索引
      */
-    index("user_badge_business_event_key_idx").on(table.business, table.eventKey),
+    index("app_badge_business_event_key_idx").on(table.business, table.eventKey),
     /**
      * 排序索引
      */
-    index("user_badge_sort_order_idx").on(table.sortOrder),
+    index("app_badge_sort_order_idx").on(table.sortOrder),
     /**
      * 启用状态索引
      */
-    index("user_badge_is_enabled_idx").on(table.isEnabled),
+    index("app_badge_is_enabled_idx").on(table.isEnabled),
     /**
      * 创建时间索引
      */
-    index("user_badge_created_at_idx").on(table.createdAt),
+    index("app_badge_created_at_idx").on(table.createdAt),
 ]);

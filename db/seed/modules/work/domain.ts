@@ -1,9 +1,9 @@
 import type { Db } from '../../db-client'
 import { and, eq, isNull } from 'drizzle-orm'
 import {
+  appUserLevelRule,
   forumSection,
   forumSectionGroup,
-  userLevelRule,
   work,
   workAuthor,
   workAuthorRelation,
@@ -447,8 +447,8 @@ export async function seedWorkDomain(db: Db) {
       isNull(forumSectionGroup.deletedAt),
     ),
   })
-  const advancedLevel = await db.query.userLevelRule.findFirst({
-    where: eq(userLevelRule.name, ADVANCED_LEVEL_NAME),
+  const advancedLevel = await db.query.appUserLevelRule.findFirst({
+    where: eq(appUserLevelRule.name, ADVANCED_LEVEL_NAME),
   })
 
   for (const [index, workFixture] of WORK_FIXTURES.entries()) {

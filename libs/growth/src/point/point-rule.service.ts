@@ -19,8 +19,8 @@ export class UserPointRuleService {
   }
 
   /** 积分规则表。 */
-  get userPointRule() {
-    return this.drizzle.schema.userPointRule
+  get appUserPointRule() {
+    return this.drizzle.schema.appUserPointRule
   }
 
   /**
@@ -31,7 +31,7 @@ export class UserPointRuleService {
     this.validatePointRuleWrite(dto)
 
     await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userPointRule).values(dto),
+      () => this.db.insert(this.appUserPointRule).values(dto),
       {
         duplicate: '积分规则类型已存在',
       },
@@ -47,15 +47,15 @@ export class UserPointRuleService {
     const conditions: SQL[] = []
 
     if (queryPointRuleDto.type !== undefined) {
-      conditions.push(eq(this.userPointRule.type, queryPointRuleDto.type))
+      conditions.push(eq(this.appUserPointRule.type, queryPointRuleDto.type))
     }
     if (queryPointRuleDto.isEnabled !== undefined) {
       conditions.push(
-        eq(this.userPointRule.isEnabled, queryPointRuleDto.isEnabled),
+        eq(this.appUserPointRule.isEnabled, queryPointRuleDto.isEnabled),
       )
     }
 
-    return this.drizzle.ext.findPagination(this.userPointRule, {
+    return this.drizzle.ext.findPagination(this.appUserPointRule, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...queryPointRuleDto,
     })
@@ -68,8 +68,8 @@ export class UserPointRuleService {
   async getPointRuleDetail(id: number) {
     const [rule] = await this.db
       .select()
-      .from(this.userPointRule)
-      .where(eq(this.userPointRule.id, id))
+      .from(this.appUserPointRule)
+      .where(eq(this.appUserPointRule.id, id))
       .limit(1)
 
     if (!rule) {
@@ -91,9 +91,9 @@ export class UserPointRuleService {
     const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
-          .update(this.userPointRule)
+          .update(this.appUserPointRule)
           .set(updateData)
-          .where(eq(this.userPointRule.id, id)),
+          .where(eq(this.appUserPointRule.id, id)),
       {
         duplicate: 'Rule type already exists',
       },
@@ -109,11 +109,11 @@ export class UserPointRuleService {
   async getEnabledRuleByType(ruleType: GrowthRuleTypeEnum) {
     const [rule] = await this.db
       .select()
-      .from(this.userPointRule)
+      .from(this.appUserPointRule)
       .where(
         and(
-          eq(this.userPointRule.type, ruleType),
-          eq(this.userPointRule.isEnabled, true),
+          eq(this.appUserPointRule.type, ruleType),
+          eq(this.appUserPointRule.isEnabled, true),
         ),
       )
       .limit(1)

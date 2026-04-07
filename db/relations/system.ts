@@ -2,13 +2,13 @@ import { defineRelationsPart } from 'drizzle-orm'
 import * as schema from '../schema/index'
 
 export const systemRelations = defineRelationsPart(schema, r => ({
-  dictionary: {
-    dictionaryItems: r.many.dictionaryItem(),
+  systemDictionary: {
+    dictionaryItems: r.many.systemDictionaryItem(),
   },
-  dictionaryItem: {
-    parentDictionary: r.one.dictionary({
-      from: r.dictionaryItem.dictionaryCode,
-      to: r.dictionary.code,
+  systemDictionaryItem: {
+    parentDictionary: r.one.systemDictionary({
+      from: r.systemDictionaryItem.dictionaryCode,
+      to: r.systemDictionary.code,
     }),
   },
   systemConfig: {

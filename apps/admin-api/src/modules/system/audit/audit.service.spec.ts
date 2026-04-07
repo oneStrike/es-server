@@ -27,7 +27,7 @@ describe('audit service geo write path', () => {
     const service = new AuditService(
       {
         schema: {
-          requestLog: {
+          systemRequestLog: {
             id: 'id',
           },
         },

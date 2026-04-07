@@ -47,28 +47,28 @@ export class ForumCounterService {
   }
 
   /** 关注事实表。 */
-  private get userFollow() {
-    return this.drizzle.schema.userFollow
+  private get appUserFollow() {
+    return this.drizzle.schema.appUserFollow
   }
 
   /** 点赞事实表。 */
-  private get userLike() {
-    return this.drizzle.schema.userLike
+  private get appUserLike() {
+    return this.drizzle.schema.appUserLike
   }
 
   /** 收藏事实表。 */
-  private get userFavorite() {
-    return this.drizzle.schema.userFavorite
+  private get appUserFavorite() {
+    return this.drizzle.schema.appUserFavorite
   }
 
   /** 浏览事实表。 */
-  private get userBrowseLog() {
-    return this.drizzle.schema.userBrowseLog
+  private get appUserBrowseLog() {
+    return this.drizzle.schema.appUserBrowseLog
   }
 
   /** 评论事实表。 */
-  private get userComment() {
-    return this.drizzle.schema.userComment
+  private get appUserComment() {
+    return this.drizzle.schema.appUserComment
   }
 
   /**
@@ -336,11 +336,11 @@ export class ForumCounterService {
     const client = tx ?? this.db
     const row = await client
       .select({ count: sql<number>`count(*)::int` })
-      .from(this.userFollow)
+      .from(this.appUserFollow)
       .where(
         and(
-          eq(this.userFollow.targetType, this.forumSectionFollowTargetType),
-          eq(this.userFollow.targetId, sectionId),
+          eq(this.appUserFollow.targetType, this.forumSectionFollowTargetType),
+          eq(this.appUserFollow.targetId, sectionId),
         ),
       )
       .then((rows) => rows[0])
@@ -370,24 +370,24 @@ export class ForumCounterService {
     const client = tx ?? this.db
     const [likeCount, favoriteCount, viewCount] = await Promise.all([
       client.$count(
-        this.userLike,
+        this.appUserLike,
         and(
-          eq(this.userLike.targetType, this.forumTopicLikeTargetType),
-          eq(this.userLike.targetId, topicId),
+          eq(this.appUserLike.targetType, this.forumTopicLikeTargetType),
+          eq(this.appUserLike.targetId, topicId),
         ),
       ),
       client.$count(
-        this.userFavorite,
+        this.appUserFavorite,
         and(
-          eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
-          eq(this.userFavorite.targetId, topicId),
+          eq(this.appUserFavorite.targetType, this.forumTopicFavoriteTargetType),
+          eq(this.appUserFavorite.targetId, topicId),
         ),
       ),
       client.$count(
-        this.userBrowseLog,
+        this.appUserBrowseLog,
         and(
-          eq(this.userBrowseLog.targetType, this.forumTopicBrowseTargetType),
-          eq(this.userBrowseLog.targetId, topicId),
+          eq(this.appUserBrowseLog.targetType, this.forumTopicBrowseTargetType),
+          eq(this.appUserBrowseLog.targetId, topicId),
         ),
       ),
     ])
@@ -426,11 +426,11 @@ export class ForumCounterService {
   async syncTopicCommentState(tx: Db | undefined, topicId: number) {
     const client = tx ?? this.db
     const visibleCommentWhere = and(
-      eq(this.userComment.targetType, this.forumTopicCommentTargetType),
-      eq(this.userComment.targetId, topicId),
-      eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-      eq(this.userComment.isHidden, false),
-      isNull(this.userComment.deletedAt),
+      eq(this.appUserComment.targetType, this.forumTopicCommentTargetType),
+      eq(this.appUserComment.targetId, topicId),
+      eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.appUserComment.isHidden, false),
+      isNull(this.appUserComment.deletedAt),
     )
 
     const [commentSummaryRows, latestCommentRows] = await Promise.all([
@@ -438,16 +438,16 @@ export class ForumCounterService {
         .select({
           commentCount: sql<number>`count(*)::int`,
         })
-        .from(this.userComment)
+        .from(this.appUserComment)
         .where(visibleCommentWhere),
       client
         .select({
-          userId: this.userComment.userId,
-          createdAt: this.userComment.createdAt,
+          userId: this.appUserComment.userId,
+          createdAt: this.appUserComment.createdAt,
         })
-        .from(this.userComment)
+        .from(this.appUserComment)
         .where(visibleCommentWhere)
-        .orderBy(desc(this.userComment.createdAt), desc(this.userComment.id))
+        .orderBy(desc(this.appUserComment.createdAt), desc(this.appUserComment.id))
         .limit(1),
     ])
 

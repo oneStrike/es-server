@@ -46,7 +46,7 @@ export class ForumSectionService {
   }
 
   get forumLevelRule() {
-    return this.drizzle.schema.userLevelRule
+    return this.drizzle.schema.appUserLevelRule
   }
 
   /**
@@ -342,7 +342,7 @@ export class ForumSectionService {
       }
     }
     if (userLevelRuleId) {
-      const levelRule = await this.db.query.userLevelRule.findFirst({
+      const levelRule = await this.db.query.appUserLevelRule.findFirst({
         where: { id: userLevelRuleId },
         columns: { id: true },
       })
@@ -517,7 +517,7 @@ export class ForumSectionService {
       if (updateData.userLevelRuleId === null) {
         updatePayload.userLevelRuleId = null
       } else {
-      const levelRule = await this.db.query.userLevelRule.findFirst({
+      const levelRule = await this.db.query.appUserLevelRule.findFirst({
         where: { id: updateData.userLevelRuleId },
         columns: { id: true },
       })

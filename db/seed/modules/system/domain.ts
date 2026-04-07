@@ -3,11 +3,11 @@ import { and, desc, eq } from 'drizzle-orm'
 import {
   adminUser,
   appUser,
-  dictionary,
-  dictionaryItem,
-  requestLog,
-  sensitiveWord,
   systemConfig,
+  systemDictionary,
+  systemDictionaryItem,
+  systemRequestLog,
+  systemSensitiveWord,
 } from '../../../schema'
 import {
   DICTIONARY_CODES,
@@ -123,7 +123,7 @@ export async function seedSystemReferenceData(db: Db) {
   console.log('🌱 初始化系统参考数据...')
 
   for (const dictFixture of DICTIONARY_FIXTURES) {
-    const existingDictionary = await db.query.dictionary.findFirst({
+    const existingDictionary = await db.query.systemDictionary.findFirst({
       where: (table, { eq }) => eq(table.code, dictFixture.code),
     })
 
@@ -131,7 +131,7 @@ export async function seedSystemReferenceData(db: Db) {
 
     if (!currentDictionary) {
       ;[currentDictionary] = await db
-        .insert(dictionary)
+        .insert(systemDictionary)
         .values({
           name: dictFixture.name,
           code: dictFixture.code,
@@ -142,27 +142,27 @@ export async function seedSystemReferenceData(db: Db) {
       console.log(`  ✓ 字典创建: ${dictFixture.name}`)
     } else {
       ;[currentDictionary] = await db
-        .update(dictionary)
+        .update(systemDictionary)
         .set({
           name: dictFixture.name,
           description: dictFixture.description,
           isEnabled: true,
         })
-        .where(eq(dictionary.id, currentDictionary.id))
+        .where(eq(systemDictionary.id, currentDictionary.id))
         .returning()
       console.log(`  ↺ 字典更新: ${dictFixture.name}`)
     }
 
     for (const itemFixture of dictFixture.items) {
-      const existingItem = await db.query.dictionaryItem.findFirst({
+      const existingItem = await db.query.systemDictionaryItem.findFirst({
         where: and(
-          eq(dictionaryItem.dictionaryCode, dictFixture.code),
-          eq(dictionaryItem.code, itemFixture.code),
+          eq(systemDictionaryItem.dictionaryCode, dictFixture.code),
+          eq(systemDictionaryItem.code, itemFixture.code),
         ),
       })
 
       if (!existingItem) {
-        await db.insert(dictionaryItem).values({
+        await db.insert(systemDictionaryItem).values({
           dictionaryCode: dictFixture.code,
           name: itemFixture.name,
           code: itemFixture.code,
@@ -172,14 +172,14 @@ export async function seedSystemReferenceData(db: Db) {
         })
       } else {
         await db
-          .update(dictionaryItem)
+          .update(systemDictionaryItem)
           .set({
             name: itemFixture.name,
             sortOrder: itemFixture.sortOrder,
             isEnabled: true,
             description: `${dictFixture.name} seed 项`,
           })
-          .where(eq(dictionaryItem.id, existingItem.id))
+          .where(eq(systemDictionaryItem.id, existingItem.id))
       }
     }
   }
@@ -243,25 +243,25 @@ export async function seedSystemOperationalData(db: Db) {
   for (const wordFixture of SENSITIVE_WORD_FIXTURES) {
     const [existingWord] = await db
       .select()
-      .from(sensitiveWord)
-      .where(eq(sensitiveWord.word, wordFixture.word))
+      .from(systemSensitiveWord)
+      .where(eq(systemSensitiveWord.word, wordFixture.word))
       .limit(1)
 
     if (!existingWord) {
-      await db.insert(sensitiveWord).values({
+      await db.insert(systemSensitiveWord).values({
         ...wordFixture,
         createdBy: admin?.id,
         updatedBy: admin?.id,
       })
     } else {
       await db
-        .update(sensitiveWord)
+        .update(systemSensitiveWord)
         .set({
           ...wordFixture,
           createdBy: admin?.id,
           updatedBy: admin?.id,
         })
-        .where(eq(sensitiveWord.id, existingWord.id))
+        .where(eq(systemSensitiveWord.id, existingWord.id))
     }
   }
   console.log('  ✓ 敏感词完成')
@@ -302,23 +302,23 @@ export async function seedSystemOperationalData(db: Db) {
   for (const logFixture of requestFixtures) {
     const [existingLog] = await db
       .select()
-      .from(requestLog)
+      .from(systemRequestLog)
       .where(
         and(
-          eq(requestLog.method, logFixture.method),
-          eq(requestLog.path, logFixture.path),
-          eq(requestLog.actionType, logFixture.actionType),
+          eq(systemRequestLog.method, logFixture.method),
+          eq(systemRequestLog.path, logFixture.path),
+          eq(systemRequestLog.actionType, logFixture.actionType),
         ),
       )
       .limit(1)
 
     if (!existingLog) {
-      await db.insert(requestLog).values(logFixture)
+      await db.insert(systemRequestLog).values(logFixture)
     } else {
       await db
-        .update(requestLog)
+        .update(systemRequestLog)
         .set(logFixture)
-        .where(eq(requestLog.id, existingLog.id))
+        .where(eq(systemRequestLog.id, existingLog.id))
     }
   }
   console.log('  ✓ 请求日志完成')

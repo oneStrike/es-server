@@ -5,7 +5,7 @@ import { DrizzleService } from '../../../../../db/core/drizzle.service'
 import { buildDrizzleOrderBy } from '../../../../../db/core/query/order-by'
 import { buildDrizzlePageQuery } from '../../../../../db/core/query/page-query'
 import { findPagination } from '../../../../../db/extensions/findPagination'
-import { requestLog } from '../../../../../db/schema/system/request-log'
+import { systemRequestLog } from '../../../../../db/schema/system/system-request-log'
 
 const defaultPageQueryConfig = resolveDbQueryConfig()
 
@@ -18,7 +18,7 @@ function createTestDrizzleService() {
 describe('buildDrizzleOrderBy', () => {
   it('can be reused by non-pagination queries', () => {
     const result = buildDrizzleOrderBy(undefined, {
-      table: requestLog,
+      table: systemRequestLog,
       fallbackOrderBy: { createdAt: 'desc' },
     })
 
@@ -33,7 +33,7 @@ describe('buildDrizzleOrderBy', () => {
     const orderQuery = buildDrizzleOrderBy(
       { createdAt: 'desc' },
       {
-        table: requestLog,
+        table: systemRequestLog,
       },
     )
 
@@ -48,7 +48,7 @@ describe('buildDrizzleOrderBy', () => {
     const orderQuery = buildDrizzleOrderBy(
       [{ createdAt: 'asc' }, { id: 'asc' }],
       {
-        table: requestLog,
+        table: systemRequestLog,
       },
     )
 
@@ -62,7 +62,7 @@ describe('buildDrizzleOrderBy', () => {
   it('memoizes relation orderBy and SQL outputs after first access', () => {
     const orderQuery = buildDrizzleOrderBy(
       { createdAt: 'desc' },
-      { table: requestLog },
+      { table: systemRequestLog },
     )
 
     expect(orderQuery.orderBy).toBe(orderQuery.orderBy)
@@ -71,7 +71,7 @@ describe('buildDrizzleOrderBy', () => {
 
   it('rejects malformed orderBy JSON', () => {
     expect(() =>
-      buildDrizzleOrderBy('{bad-json', { table: requestLog }),
+      buildDrizzleOrderBy('{bad-json', { table: systemRequestLog }),
     ).toThrow(BadRequestException)
   })
 
@@ -79,7 +79,7 @@ describe('buildDrizzleOrderBy', () => {
     expect(() =>
       buildDrizzleOrderBy(
         { unknownField: 'desc' },
-        { table: requestLog },
+        { table: systemRequestLog },
       ),
     ).toThrow('排序字段 "unknownField" 不存在')
   })
@@ -88,18 +88,18 @@ describe('buildDrizzleOrderBy', () => {
     expect(() =>
       buildDrizzleOrderBy(
         { createdAt: 'sideways' },
-        { table: requestLog },
+        { table: systemRequestLog },
       ),
     ).toThrow('排序字段 "createdAt" 的排序方向无效')
   })
 
   it('rejects empty orderBy objects and arrays', () => {
     expect(() =>
-      buildDrizzleOrderBy({}, { table: requestLog }),
+      buildDrizzleOrderBy({}, { table: systemRequestLog }),
     ).toThrow('orderBy 不能为空')
 
     expect(() =>
-      buildDrizzleOrderBy([], { table: requestLog }),
+      buildDrizzleOrderBy([], { table: systemRequestLog }),
     ).toThrow('orderBy 不能为空')
   })
 
@@ -107,7 +107,7 @@ describe('buildDrizzleOrderBy', () => {
     expect(() =>
       buildDrizzleOrderBy(
         [{ createdAt: 'desc' }, { createdAt: 'asc' }],
-        { table: requestLog },
+        { table: systemRequestLog },
       ),
     ).toThrow('排序字段 "createdAt" 重复')
   })
@@ -208,7 +208,7 @@ describe('drizzle service query helpers', () => {
     const drizzle = createTestDrizzleService()
 
     const order = drizzle.buildOrderBy(undefined, {
-      table: requestLog,
+      table: systemRequestLog,
       fallbackOrderBy: { createdAt: 'desc' },
     })
 
@@ -223,7 +223,7 @@ describe('drizzle service query helpers', () => {
 describe('findPagination option guards', () => {
   it('rejects using pick and omit together', async () => {
     await expect(
-      findPagination({} as any, requestLog, {
+      findPagination({} as any, systemRequestLog, {
         pick: ['id'] as const,
         omit: ['createdAt'] as const,
       }),
@@ -232,7 +232,7 @@ describe('findPagination option guards', () => {
 
   it('rejects pick fields that do not exist', async () => {
     await expect(
-      findPagination({} as any, requestLog, {
+      findPagination({} as any, systemRequestLog, {
         pick: ['missingField'] as any,
       }),
     ).rejects.toThrow('pick 字段不存在: missingField')
@@ -240,7 +240,7 @@ describe('findPagination option guards', () => {
 
   it('rejects omit fields that do not exist', async () => {
     await expect(
-      findPagination({} as any, requestLog, {
+      findPagination({} as any, systemRequestLog, {
         omit: ['missingField'] as any,
       }),
     ).rejects.toThrow('omit 字段不存在: missingField')
@@ -248,8 +248,8 @@ describe('findPagination option guards', () => {
 
   it('rejects omit when it removes all selectable fields', async () => {
     await expect(
-      findPagination({} as any, requestLog, {
-        omit: Object.keys(getTableColumns(requestLog)) as any,
+      findPagination({} as any, systemRequestLog, {
+        omit: Object.keys(getTableColumns(systemRequestLog)) as any,
       }),
     ).rejects.toThrow('findPagination options.omit removes all selectable fields')
   })

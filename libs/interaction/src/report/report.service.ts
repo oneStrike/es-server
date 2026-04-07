@@ -58,8 +58,8 @@ export class ReportService {
     return this.drizzle.db
   }
 
-  private get userReport() {
-    return this.drizzle.schema.userReport
+  private get appUserReport() {
+    return this.drizzle.schema.appUserReport
   }
 
   /**
@@ -188,22 +188,22 @@ export class ReportService {
    * @returns 分页举报记录
    */
   async getUserReports(query: QueryMyReportPageCommandDto) {
-    const conditions: SQL[] = [eq(this.userReport.reporterId, query.reporterId)]
+    const conditions: SQL[] = [eq(this.appUserReport.reporterId, query.reporterId)]
 
     if (query.targetType !== undefined) {
-      conditions.push(eq(this.userReport.targetType, query.targetType))
+      conditions.push(eq(this.appUserReport.targetType, query.targetType))
     }
     if (query.targetId !== undefined) {
-      conditions.push(eq(this.userReport.targetId, query.targetId))
+      conditions.push(eq(this.appUserReport.targetId, query.targetId))
     }
     if (query.reasonType !== undefined) {
-      conditions.push(eq(this.userReport.reasonType, query.reasonType))
+      conditions.push(eq(this.appUserReport.reasonType, query.reasonType))
     }
     if (query.status !== undefined) {
-      conditions.push(eq(this.userReport.status, query.status))
+      conditions.push(eq(this.appUserReport.status, query.status))
     }
 
-    return this.drizzle.ext.findPagination(this.userReport, {
+    return this.drizzle.ext.findPagination(this.appUserReport, {
       where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -222,11 +222,11 @@ export class ReportService {
   async getReportDetail(reportId: number, reporterId: number) {
     const [report] = await this.db
       .select()
-      .from(this.userReport)
+      .from(this.appUserReport)
       .where(
         and(
-          eq(this.userReport.id, reportId),
-          eq(this.userReport.reporterId, reporterId),
+          eq(this.appUserReport.id, reportId),
+          eq(this.appUserReport.reporterId, reporterId),
         ),
       )
       .limit(1)
@@ -246,42 +246,42 @@ export class ReportService {
     const conditions: SQL[] = []
 
     if (query.id !== undefined) {
-      conditions.push(eq(this.userReport.id, query.id))
+      conditions.push(eq(this.appUserReport.id, query.id))
     }
     if (query.reporterId !== undefined) {
-      conditions.push(eq(this.userReport.reporterId, query.reporterId))
+      conditions.push(eq(this.appUserReport.reporterId, query.reporterId))
     }
     if (query.handlerId !== undefined) {
       conditions.push(
         query.handlerId === null
-          ? isNull(this.userReport.handlerId)
-          : eq(this.userReport.handlerId, query.handlerId),
+          ? isNull(this.appUserReport.handlerId)
+          : eq(this.appUserReport.handlerId, query.handlerId),
       )
     }
     if (query.targetType !== undefined) {
-      conditions.push(eq(this.userReport.targetType, query.targetType))
+      conditions.push(eq(this.appUserReport.targetType, query.targetType))
     }
     if (query.targetId !== undefined) {
-      conditions.push(eq(this.userReport.targetId, query.targetId))
+      conditions.push(eq(this.appUserReport.targetId, query.targetId))
     }
     if (query.sceneType !== undefined) {
-      conditions.push(eq(this.userReport.sceneType, query.sceneType))
+      conditions.push(eq(this.appUserReport.sceneType, query.sceneType))
     }
     if (query.sceneId !== undefined) {
-      conditions.push(eq(this.userReport.sceneId, query.sceneId))
+      conditions.push(eq(this.appUserReport.sceneId, query.sceneId))
     }
     if (query.reasonType !== undefined) {
-      conditions.push(eq(this.userReport.reasonType, query.reasonType))
+      conditions.push(eq(this.appUserReport.reasonType, query.reasonType))
     }
     if (query.status !== undefined) {
-      conditions.push(eq(this.userReport.status, query.status))
+      conditions.push(eq(this.appUserReport.status, query.status))
     }
 
     const orderBy = query.orderBy?.trim()
       ? query.orderBy
       : { createdAt: 'desc' as const, id: 'desc' as const }
 
-    return this.drizzle.ext.findPagination(this.userReport, {
+    return this.drizzle.ext.findPagination(this.appUserReport, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -296,8 +296,8 @@ export class ReportService {
   async getAdminReportDetail(reportId: number) {
     const [report] = await this.db
       .select()
-      .from(this.userReport)
-      .where(eq(this.userReport.id, reportId))
+      .from(this.appUserReport)
+      .where(eq(this.appUserReport.id, reportId))
       .limit(1)
 
     if (!report) {
@@ -314,7 +314,7 @@ export class ReportService {
   async handleReport(input: HandleAdminReportCommandDto) {
     const handledReport = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const current = await tx.query.userReport.findFirst({
+        const current = await tx.query.appUserReport.findFirst({
           where: { id: input.id },
           columns: {
             id: true,
@@ -333,7 +333,7 @@ export class ReportService {
         this.ensureCanHandleReportStatus(current.status, input.status)
 
         const [updated] = await tx
-          .update(this.userReport)
+          .update(this.appUserReport)
           .set({
             status: input.status,
             handlerId: input.handlerId,
@@ -341,7 +341,7 @@ export class ReportService {
             handlingNote:
               input.handlingNote?.trim() || current.handlingNote || null,
           })
-          .where(eq(this.userReport.id, input.id))
+          .where(eq(this.appUserReport.id, input.id))
           .returning()
 
         if (!updated) {
@@ -386,7 +386,7 @@ export class ReportService {
     const rows = await this.drizzle.withErrorHandling(
       () =>
         tx
-          .insert(this.userReport)
+          .insert(this.appUserReport)
           .values({
             ...otherDto,
             status: status ?? ReportStatusEnum.PENDING,

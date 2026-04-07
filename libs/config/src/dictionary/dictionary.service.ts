@@ -33,13 +33,13 @@ export class LibDictionaryService {
   }
 
   /** 字典表 */
-  private get dictionary() {
-    return this.drizzle.schema.dictionary
+  private get systemDictionary() {
+    return this.drizzle.schema.systemDictionary
   }
 
   /** 字典项表 */
-  private get dictionaryItem() {
-    return this.drizzle.schema.dictionaryItem
+  private get systemDictionaryItem() {
+    return this.drizzle.schema.systemDictionaryItem
   }
 
   /**
@@ -47,7 +47,7 @@ export class LibDictionaryService {
    * 字典与字典项列表都复用同一套名称、编码、启用状态过滤逻辑，避免两处条件分叉。
    */
   private buildSearchConditions(
-    table: typeof this.dictionary | typeof this.dictionaryItem,
+    table: typeof this.systemDictionary | typeof this.systemDictionaryItem,
     filters: QueryDictionaryDto | QueryDictionaryItemDto,
   ) {
     const conditions: SQL[] = []
@@ -84,7 +84,7 @@ export class LibDictionaryService {
    * 断言目标字典编码存在，避免字典项写入到悬空父级。
    */
   private async assertDictionaryExists(dictionaryCode: string) {
-    const data = await this.db.query.dictionary.findFirst({
+    const data = await this.db.query.systemDictionary.findFirst({
       where: { code: dictionaryCode },
       columns: { id: true },
     })
@@ -98,9 +98,9 @@ export class LibDictionaryService {
    * 分页查询字典列表。
    */
   async findDictionaries(queryDto: QueryDictionaryDto) {
-    const conditions = this.buildSearchConditions(this.dictionary, queryDto)
+    const conditions = this.buildSearchConditions(this.systemDictionary, queryDto)
 
-    return this.drizzle.ext.findPagination(this.dictionary, {
+    return this.drizzle.ext.findPagination(this.systemDictionary, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...queryDto,
     })
@@ -110,7 +110,7 @@ export class LibDictionaryService {
    * 按主键查询字典详情，未命中时抛出 `NotFoundException`。
    */
   async findDictionaryById(dto: IdDto) {
-    const data = await this.db.query.dictionary.findFirst({
+    const data = await this.db.query.systemDictionary.findFirst({
       where: { id: dto.id },
     })
     if (!data) {
@@ -125,7 +125,7 @@ export class LibDictionaryService {
    */
   async createDictionary(dto: CreateDictionaryDto) {
     await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.dictionary).values({
+      this.db.insert(this.systemDictionary).values({
         ...dto,
         isEnabled: dto.isEnabled ?? true,
       }),
@@ -141,7 +141,7 @@ export class LibDictionaryService {
     const { id, code, ...otherUpdateData } = dto
 
     await this.drizzle.withTransaction(async (tx) => {
-      const currentDictionary = await tx.query.dictionary.findFirst({
+      const currentDictionary = await tx.query.systemDictionary.findFirst({
         where: { id },
         columns: { code: true },
       })
@@ -154,18 +154,18 @@ export class LibDictionaryService {
         ? otherUpdateData
         : { ...otherUpdateData, code }
       const result = await tx
-        .update(this.dictionary)
+        .update(this.systemDictionary)
         .set(updateData)
-        .where(eq(this.dictionary.id, id))
+        .where(eq(this.systemDictionary.id, id))
 
       this.drizzle.assertAffectedRows(result, '字典不存在')
 
       // 字典编码变更时，同步刷新子项绑定编码，避免父子关系失联。
       if (code && code !== currentDictionary.code) {
         await tx
-          .update(this.dictionaryItem)
+          .update(this.systemDictionaryItem)
           .set({ dictionaryCode: code })
-          .where(eq(this.dictionaryItem.dictionaryCode, currentDictionary.code))
+          .where(eq(this.systemDictionaryItem.dictionaryCode, currentDictionary.code))
       }
     })
 
@@ -178,9 +178,9 @@ export class LibDictionaryService {
   async updateDictionaryStatus(dto: UpdateEnabledStatusDto) {
     const data = await this.drizzle.withErrorHandling(() =>
       this.db
-        .update(this.dictionary)
+        .update(this.systemDictionary)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.dictionary.id, dto.id)),
+        .where(eq(this.systemDictionary.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(data, '字典不存在')
     return true
@@ -191,16 +191,16 @@ export class LibDictionaryService {
    * 若仍存在关联字典项则拒绝删除，避免破坏字典项的父级语义。
    */
   async deleteDictionary(dto: IdDto) {
-    const dictionary = await this.findDictionaryById(dto)
-    const hasItems = await this.db.query.dictionaryItem.findFirst({
-      where: { dictionaryCode: dictionary.code },
+    const currentDictionary = await this.findDictionaryById(dto)
+    const hasItems = await this.db.query.systemDictionaryItem.findFirst({
+      where: { dictionaryCode: currentDictionary.code },
     })
     if (hasItems) {
       throw new BadRequestException('该字典还有关联字典项，无法删除')
     }
 
     const data = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionary).where(eq(this.dictionary.id, dto.id)),
+      this.db.delete(this.systemDictionary).where(eq(this.systemDictionary.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(data, '字典不存在')
     return true
@@ -212,18 +212,18 @@ export class LibDictionaryService {
    */
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
     const { dictionaryCode } = queryDto
-    const conditions = this.buildSearchConditions(this.dictionaryItem, queryDto)
+    const conditions = this.buildSearchConditions(this.systemDictionaryItem, queryDto)
     const dictionaryCodes = this.parseDictionaryCodes(dictionaryCode)
 
     if (dictionaryCodes.length > 0) {
-      conditions.push(inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes))
+      conditions.push(inArray(this.systemDictionaryItem.dictionaryCode, dictionaryCodes))
     }
 
     const orderBy = queryDto.orderBy?.trim()
       ? queryDto.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.dictionaryItem, {
+    return this.drizzle.ext.findPagination(this.systemDictionaryItem, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...queryDto,
       orderBy,
@@ -235,7 +235,7 @@ export class LibDictionaryService {
    * 该入口供 app/public 场景使用，只返回启用项并按排序字段升序排列。
    */
   async findAllDictionaryItems(dto: QueryAllDictionaryItemDto) {
-    return this.db.query.dictionaryItem.findMany({
+    return this.db.query.systemDictionaryItem.findMany({
       where: {
         isEnabled: true,
         dictionaryCode: { in: this.parseDictionaryCodes(dto.dictionaryCode) },
@@ -251,7 +251,7 @@ export class LibDictionaryService {
   async createDictionaryItem(dto: CreateDictionaryItemDto) {
     await this.assertDictionaryExists(dto.dictionaryCode)
     await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.dictionaryItem).values({
+      this.db.insert(this.systemDictionaryItem).values({
         ...dto,
         isEnabled: dto.isEnabled ?? true,
         sortOrder: dto.sortOrder ?? undefined,
@@ -271,12 +271,12 @@ export class LibDictionaryService {
     const { id, sortOrder, ...data } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .update(this.dictionaryItem)
+        .update(this.systemDictionaryItem)
         .set({
           ...data,
           sortOrder: sortOrder ?? undefined,
         })
-        .where(eq(this.dictionaryItem.id, id)),
+        .where(eq(this.systemDictionaryItem.id, id)),
     )
 
     this.drizzle.assertAffectedRows(result, '字典项不存在')
@@ -290,9 +290,9 @@ export class LibDictionaryService {
   async updateDictionaryItemStatus(dto: UpdateEnabledStatusDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .update(this.dictionaryItem)
+        .update(this.systemDictionaryItem)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.dictionaryItem.id, dto.id)),
+        .where(eq(this.systemDictionaryItem.id, dto.id)),
     )
 
     this.drizzle.assertAffectedRows(result, '字典项不存在')
@@ -304,7 +304,7 @@ export class LibDictionaryService {
    * 排序操作要求两条记录属于同一 `dictionaryCode`，由 `swapField` 在底层完成约束校验。
    */
   async updateDictionaryItemSort(dto: DragReorderDto) {
-    return this.drizzle.ext.swapField(this.dictionaryItem, {
+    return this.drizzle.ext.swapField(this.systemDictionaryItem, {
       where: [{ id: dto.dragId }, { id: dto.targetId }],
       sourceField: 'dictionaryCode',
     })
@@ -315,7 +315,7 @@ export class LibDictionaryService {
    */
   async deleteDictionaryItem(dto: IdDto) {
     const result = await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionaryItem).where(eq(this.dictionaryItem.id, dto.id)),
+      this.db.delete(this.systemDictionaryItem).where(eq(this.systemDictionaryItem.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(result, '字典项不存在')
     return true

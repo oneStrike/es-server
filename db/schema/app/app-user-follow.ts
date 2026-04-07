@@ -4,8 +4,8 @@ import { index, integer, pgTable, smallint, timestamp, unique } from 'drizzle-or
  * 用户关注事实表
  * 统一记录用户对用户、作者、论坛板块等目标的单向关注关系
  */
-export const userFollow = pgTable(
-  'user_follow',
+export const appUserFollow = pgTable(
+  'app_user_follow',
   {
     /**
      * 主键 ID
@@ -35,7 +35,7 @@ export const userFollow = pgTable(
     /**
      * 同一用户对同一目标只能关注一次
      */
-    unique('user_follow_target_type_target_id_user_id_key').on(
+    unique('app_user_follow_target_type_target_id_user_id_key').on(
       table.targetType,
       table.targetId,
       table.userId,
@@ -43,7 +43,7 @@ export const userFollow = pgTable(
     /**
      * 用户关注列表索引
      */
-    index('user_follow_user_id_target_type_created_at_idx').on(
+    index('app_user_follow_user_id_target_type_created_at_idx').on(
       table.userId,
       table.targetType,
       table.createdAt,
@@ -51,7 +51,7 @@ export const userFollow = pgTable(
     /**
      * 目标粉丝列表索引
      */
-    index('user_follow_target_type_target_id_created_at_idx').on(
+    index('app_user_follow_target_type_target_id_created_at_idx').on(
       table.targetType,
       table.targetId,
       table.createdAt,
@@ -59,12 +59,12 @@ export const userFollow = pgTable(
     /**
      * 目标存在性/状态查询索引
      */
-    index('user_follow_target_type_target_id_idx').on(
+    index('app_user_follow_target_type_target_id_idx').on(
       table.targetType,
       table.targetId,
     ),
   ],
 )
 
-export type UserFollowSelect = typeof userFollow.$inferSelect
-export type UserFollowInsert = typeof userFollow.$inferInsert
+export type AppUserFollowSelect = typeof appUserFollow.$inferSelect
+export type AppUserFollowInsert = typeof appUserFollow.$inferInsert

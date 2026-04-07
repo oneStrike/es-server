@@ -45,16 +45,16 @@ export class UserService {
     return this.drizzle.schema.appUser
   }
 
-  private get userBadgeAssignment() {
-    return this.drizzle.schema.userBadgeAssignment
+  private get appUserBadgeAssignment() {
+    return this.drizzle.schema.appUserBadgeAssignment
   }
 
-  private get userBadge() {
-    return this.drizzle.schema.userBadge
+  private get appBadge() {
+    return this.drizzle.schema.appBadge
   }
 
-  private get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  private get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
   private get growthLedgerRecord() {
@@ -270,27 +270,27 @@ export class UserService {
       user.levelId
         ? this.db
             .select({
-              id: this.userLevelRule.id,
-              name: this.userLevelRule.name,
-              requiredExperience: this.userLevelRule.requiredExperience,
+              id: this.appUserLevelRule.id,
+              name: this.appUserLevelRule.name,
+              requiredExperience: this.appUserLevelRule.requiredExperience,
             })
-            .from(this.userLevelRule)
-            .where(eq(this.userLevelRule.id, user.levelId))
+            .from(this.appUserLevelRule)
+            .where(eq(this.appUserLevelRule.id, user.levelId))
         : [],
       this.db
         .select({
-          id: this.userLevelRule.id,
-          name: this.userLevelRule.name,
-          requiredExperience: this.userLevelRule.requiredExperience,
+          id: this.appUserLevelRule.id,
+          name: this.appUserLevelRule.name,
+          requiredExperience: this.appUserLevelRule.requiredExperience,
         })
-        .from(this.userLevelRule)
+        .from(this.appUserLevelRule)
         .where(
           and(
-            eq(this.userLevelRule.isEnabled, true),
-            gt(this.userLevelRule.requiredExperience, user.experience),
+            eq(this.appUserLevelRule.isEnabled, true),
+            gt(this.appUserLevelRule.requiredExperience, user.experience),
           ),
         )
-        .orderBy(this.userLevelRule.requiredExperience)
+        .orderBy(this.appUserLevelRule.requiredExperience)
         .limit(1),
     ])
     const todayEarned = Number(todayEarnedRows[0]?.sum ?? 0)
@@ -352,21 +352,21 @@ export class UserService {
 
     if (name) {
       badgeConditions.push(
-        buildILikeCondition(this.userBadge.name, name)!,
+        buildILikeCondition(this.appBadge.name, name)!,
       )
     }
     if (type !== undefined) {
-      badgeConditions.push(eq(this.userBadge.type, type))
+      badgeConditions.push(eq(this.appBadge.type, type))
     }
     if (isEnabled !== undefined) {
-      badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
+      badgeConditions.push(eq(this.appBadge.isEnabled, isEnabled))
     }
 
     const badgeWhere =
       badgeConditions.length > 0 ? and(...badgeConditions) : undefined
     const badges = await this.db
-      .select({ id: this.userBadge.id })
-      .from(this.userBadge)
+      .select({ id: this.appBadge.id })
+      .from(this.appBadge)
       .where(badgeWhere)
     const badgeIds = badges.map((item) => item.id)
     if (badgeIds.length === 0) {
@@ -380,11 +380,11 @@ export class UserService {
     }
 
     const page = await this.drizzle.ext.findPagination(
-      this.userBadgeAssignment,
+      this.appUserBadgeAssignment,
       {
         where: and(
-          eq(this.userBadgeAssignment.userId, userId),
-          inArray(this.userBadgeAssignment.badgeId, badgeIds),
+          eq(this.appUserBadgeAssignment.userId, userId),
+          inArray(this.appUserBadgeAssignment.badgeId, badgeIds),
         ),
         ...pageQuery,
         orderBy: pageQuery.orderBy ?? [
@@ -397,8 +397,8 @@ export class UserService {
     const pageBadges = pageBadgeIds.length
       ? await this.db
           .select()
-          .from(this.userBadge)
-          .where(inArray(this.userBadge.id, pageBadgeIds))
+          .from(this.appBadge)
+          .where(inArray(this.appBadge.id, pageBadgeIds))
       : []
     const badgeMap = new Map(
       pageBadges.map((item) => [

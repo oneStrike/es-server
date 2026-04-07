@@ -16,7 +16,7 @@ import {
  * 通知偏好表
  * 只记录用户对站内通知类型的显式覆盖配置；未写入的类型继续回退到默认策略
  */
-export const notificationPreference = pgTable('notification_preference', {
+export const appUserNotificationPreference = pgTable('app_user_notification_preference', {
   /**
    * 主键 ID
    */
@@ -49,23 +49,23 @@ export const notificationPreference = pgTable('notification_preference', {
    * 用户+通知类型唯一约束
    * 保证显式覆盖配置在同一维度最多只有一条
    */
-  unique('notification_preference_user_id_notification_type_key').on(
+  unique('app_user_notification_preference_user_id_notification_type_key').on(
     table.userId,
     table.notificationType,
   ),
   /**
    * 用户维度查询索引
    */
-  index('notification_preference_user_id_idx').on(table.userId),
+  index('app_user_notification_preference_user_id_idx').on(table.userId),
   /**
    * 用户+启用状态索引
    * 便于后续排查某用户的关闭项，不改变当前默认策略口径
    */
-  index('notification_preference_user_id_is_enabled_idx').on(
+  index('app_user_notification_preference_user_id_is_enabled_idx').on(
     table.userId,
     table.isEnabled,
   ),
 ])
 
-export type NotificationPreferenceSelect = typeof notificationPreference.$inferSelect
-export type NotificationPreferenceInsert = typeof notificationPreference.$inferInsert
+export type AppUserNotificationPreferenceSelect = typeof appUserNotificationPreference.$inferSelect
+export type AppUserNotificationPreferenceInsert = typeof appUserNotificationPreference.$inferInsert

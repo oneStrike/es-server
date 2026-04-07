@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { UserLevelRuleSelect } from '@db/schema'
+import { AppUserLevelRuleSelect } from '@db/schema'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 import { UserStatusEnum } from '@libs/platform/constant/user.constant';
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
@@ -91,7 +91,7 @@ export class CommentPermissionService {
             userLevelRuleId: true,
           },
           with: {
-            userLevelRule: {
+            appUserLevelRule: {
               columns: {
                 requiredExperience: true,
               },
@@ -105,7 +105,7 @@ export class CommentPermissionService {
       throw new BadRequestException('帖子不存在')
     }
 
-    const requiredExperience = topic.section.userLevelRule?.requiredExperience
+    const requiredExperience = topic.section.appUserLevelRule?.requiredExperience
     if (
       topic.section.userLevelRuleId &&
       requiredExperience !== undefined &&
@@ -118,7 +118,7 @@ export class CommentPermissionService {
 
   private async ensureUserLevelRateLimit(
     userId: number,
-    level: Pick<UserLevelRuleSelect, 'dailyReplyCommentLimit' | 'postInterval'> | null,
+    level: Pick<AppUserLevelRuleSelect, 'dailyReplyCommentLimit' | 'postInterval'> | null,
   ): Promise<void> {
     if (!level) {
       return
@@ -128,10 +128,10 @@ export class CommentPermissionService {
       const today = startOfTodayInAppTimeZone()
 
       const usedToday = await this.db.$count(
-        this.drizzle.schema.userComment,
+        this.drizzle.schema.appUserComment,
         and(
-          eq(this.drizzle.schema.userComment.userId, userId),
-          gte(this.drizzle.schema.userComment.createdAt, today),
+          eq(this.drizzle.schema.appUserComment.userId, userId),
+          gte(this.drizzle.schema.appUserComment.createdAt, today),
         ),
       )
 
@@ -151,10 +151,10 @@ export class CommentPermissionService {
           .orderBy(desc(this.drizzle.schema.forumTopic.createdAt))
           .limit(1),
         this.db
-          .select({ createdAt: this.drizzle.schema.userComment.createdAt })
-          .from(this.drizzle.schema.userComment)
-          .where(eq(this.drizzle.schema.userComment.userId, userId))
-          .orderBy(desc(this.drizzle.schema.userComment.createdAt))
+          .select({ createdAt: this.drizzle.schema.appUserComment.createdAt })
+          .from(this.drizzle.schema.appUserComment)
+          .where(eq(this.drizzle.schema.appUserComment.userId, userId))
+          .orderBy(desc(this.drizzle.schema.appUserComment.createdAt))
           .limit(1),
       ])
 

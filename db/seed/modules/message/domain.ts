@@ -9,6 +9,8 @@ import { MessageOutboxDomainEnum } from '../../../../libs/message/src/outbox/out
 import {
   appAnnouncement,
   appUser,
+  appUserComment,
+  appUserNotification,
   chatConversation,
   chatConversationMember,
   chatMessage,
@@ -16,8 +18,6 @@ import {
   messageOutbox,
   messageWsMetric,
   notificationTemplate,
-  userComment,
-  userNotification,
 } from '../../../schema'
 import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
@@ -216,12 +216,12 @@ export async function seedMessageDomain(db: Db) {
   const announcement = await db.query.appAnnouncement.findFirst({
     where: eq(appAnnouncement.title, '2026 春季版本更新'),
   })
-  const rootReply = await db.query.userComment.findFirst({
-    where: eq(userComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
+  const rootReply = await db.query.appUserComment.findFirst({
+    where: eq(appUserComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
   })
-  const replyComment = await db.query.userComment.findFirst({
+  const replyComment = await db.query.appUserComment.findFirst({
     where: eq(
-      userComment.content,
+      appUserComment.content,
       '而且艾伦和调查兵团的立场差异很早就有预警。',
     ),
   })
@@ -323,20 +323,20 @@ export async function seedMessageDomain(db: Db) {
   ] as const
 
   for (const fixture of notificationFixtures) {
-    const existing = await db.query.userNotification.findFirst({
+    const existing = await db.query.appUserNotification.findFirst({
       where: and(
-        eq(userNotification.userId, fixture.userId),
-        eq(userNotification.bizKey, fixture.bizKey),
+        eq(appUserNotification.userId, fixture.userId),
+        eq(appUserNotification.bizKey, fixture.bizKey),
       ),
     })
 
     if (!existing) {
-      await db.insert(userNotification).values(fixture)
+      await db.insert(appUserNotification).values(fixture)
     } else {
       await db
-        .update(userNotification)
+        .update(appUserNotification)
         .set(fixture)
-        .where(eq(userNotification.id, existing.id))
+        .where(eq(appUserNotification.id, existing.id))
     }
   }
   console.log('  ✓ 站内通知完成')

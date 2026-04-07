@@ -24,8 +24,8 @@ export class UserPermissionService {
   /**
    * 获取 UserLevelRule 模型访问器
    */
-  get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
   /**
@@ -97,7 +97,7 @@ export class UserPermissionService {
 
       // 如果指定了最低等级要求，验证用户等级是否满足
       if (requiredViewLevelId) {
-        const requiredLevel = await this.db.query.userLevelRule.findFirst({
+        const requiredLevel = await this.db.query.appUserLevelRule.findFirst({
           where: { id: requiredViewLevelId },
         })
 

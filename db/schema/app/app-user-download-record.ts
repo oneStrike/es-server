@@ -9,7 +9,7 @@ import { index, integer, pgTable, smallint, timestamp, unique } from "drizzle-or
  * 记录用户对作品、章节等内容的下载操作
  * 支持下载计数统计和用户下载历史查询
  */
-export const userDownloadRecord = pgTable("user_download_record", {
+export const appUserDownloadRecord = pgTable("app_user_download_record", {
   /**
    * 主键ID（自增）
    */
@@ -35,20 +35,20 @@ export const userDownloadRecord = pgTable("user_download_record", {
    * 唯一约束：同一用户对同一章节只能有一条下载记录
    * 确保下载操作幂等，避免重复计数
    */
-  unique("user_download_record_target_type_target_id_user_id_key").on(table.targetType, table.targetId, table.userId),
+  unique("app_user_download_record_target_type_target_id_user_id_key").on(table.targetType, table.targetId, table.userId),
   /**
    * 目标类型与目标ID联合索引
    */
-  index("user_download_record_target_type_target_id_idx").on(table.targetType, table.targetId),
+  index("app_user_download_record_target_type_target_id_idx").on(table.targetType, table.targetId),
   /**
    * 用户ID索引
    */
-  index("user_download_record_user_id_idx").on(table.userId),
+  index("app_user_download_record_user_id_idx").on(table.userId),
   /**
    * 创建时间索引
    */
-  index("user_download_record_created_at_idx").on(table.createdAt),
+  index("app_user_download_record_created_at_idx").on(table.createdAt),
 ]);
 
-export type UserDownloadRecordSelect = typeof userDownloadRecord.$inferSelect;
-export type UserDownloadRecordInsert = typeof userDownloadRecord.$inferInsert;
+export type AppUserDownloadRecordSelect = typeof appUserDownloadRecord.$inferSelect;
+export type AppUserDownloadRecordInsert = typeof appUserDownloadRecord.$inferInsert;

@@ -1,4 +1,4 @@
-import type { sensitiveWord } from '@db/schema'
+import type { systemSensitiveWord } from '@db/schema'
 import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import type {
   FuzzyMatchResult,
@@ -26,7 +26,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   private readonly logger = new Logger(SensitiveWordCacheService.name)
   private automaton: ACAutomaton
   private fuzzyMatcher: FuzzyMatcher
-  private wordMap: Map<string, typeof sensitiveWord.$inferSelect>
+  private wordMap: Map<string, typeof systemSensitiveWord.$inferSelect>
   private isInitialized: boolean
 
   /**
@@ -54,7 +54,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * 初始化敏感词检测器
    * @param words - 敏感词列表
    */
-  initialize(words: Array<typeof sensitiveWord.$inferSelect>) {
+  initialize(words: Array<typeof systemSensitiveWord.$inferSelect>) {
     if (!words || words.length === 0) {
       this.automaton.clear()
       this.wordMap.clear()

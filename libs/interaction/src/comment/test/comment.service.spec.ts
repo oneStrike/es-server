@@ -122,7 +122,7 @@ describe('comment admin moderation flow', () => {
     const transaction = jest.fn(async (callback) =>
       callback({
         query: {
-          userComment: {
+          appUserComment: {
             findFirst: txFindFirst,
           },
           appUser: {
@@ -136,14 +136,14 @@ describe('comment admin moderation flow', () => {
     const drizzle = {
       db: {
         query: {
-          userComment: {
+          appUserComment: {
             findFirst: dbFindFirst,
           },
         },
         transaction,
       },
       schema: {
-        userComment: commentTable,
+        appUserComment: commentTable,
         appUser: {
           id: 'id',
           nickname: 'nickname',

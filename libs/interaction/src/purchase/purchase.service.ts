@@ -39,8 +39,8 @@ export class PurchaseService {
     return this.drizzle.db
   }
 
-  private get userPurchaseRecord() {
-    return this.drizzle.schema.userPurchaseRecord
+  private get appUserPurchaseRecord() {
+    return this.drizzle.schema.appUserPurchaseRecord
   }
 
   /**
@@ -125,7 +125,7 @@ export class PurchaseService {
     try {
       return await this.db.transaction(async (tx) => {
         const [record] = await tx
-          .insert(this.userPurchaseRecord)
+          .insert(this.appUserPurchaseRecord)
           .values({
             targetType,
             targetId,
@@ -239,7 +239,7 @@ export class PurchaseService {
           w.cover AS "workCover",
           COUNT(*)::bigint AS "purchasedChapterCount",
           MAX(upr.created_at) AS "lastPurchasedAt"
-        FROM user_purchase_record upr
+        FROM app_user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
@@ -255,7 +255,7 @@ export class PurchaseService {
       `),
       this.db.execute(sql`
         SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
-        FROM user_purchase_record upr
+        FROM app_user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
@@ -340,7 +340,7 @@ export class PurchaseService {
           wc.sort_order AS "chapterSortOrder",
           wc.is_published AS "chapterIsPublished",
           wc.publish_at AS "chapterPublishAt"
-        FROM user_purchase_record upr
+        FROM app_user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}
@@ -356,7 +356,7 @@ export class PurchaseService {
       `),
       this.db.execute(sql`
         SELECT COUNT(*)::bigint AS "total"
-        FROM user_purchase_record upr
+        FROM app_user_purchase_record upr
         INNER JOIN work_chapter wc ON wc.id = upr.target_id
         INNER JOIN work w ON w.id = wc.work_id
         WHERE upr.user_id = ${userId}

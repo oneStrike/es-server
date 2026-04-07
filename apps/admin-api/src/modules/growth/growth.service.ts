@@ -17,12 +17,12 @@ export class GrowthService {
     return this.drizzle.db
   }
 
-  private get userPointRule() {
-    return this.drizzle.schema.userPointRule
+  private get appUserPointRule() {
+    return this.drizzle.schema.appUserPointRule
   }
 
-  private get userExperienceRule() {
-    return this.drizzle.schema.userExperienceRule
+  private get appUserExperienceRule() {
+    return this.drizzle.schema.appUserExperienceRule
   }
 
   private get taskTable() {
@@ -143,8 +143,8 @@ export class GrowthService {
     }
     return this.db
       .select()
-      .from(this.userPointRule)
-      .where(inArray(this.userPointRule.type, ruleTypes))
+      .from(this.appUserPointRule)
+      .where(inArray(this.appUserPointRule.type, ruleTypes))
   }
 
   private async queryExperienceRules(ruleTypes: number[]) {
@@ -153,8 +153,8 @@ export class GrowthService {
     }
     return this.db
       .select()
-      .from(this.userExperienceRule)
-      .where(inArray(this.userExperienceRule.type, ruleTypes))
+      .from(this.appUserExperienceRule)
+      .where(inArray(this.appUserExperienceRule.type, ruleTypes))
   }
 
   private async queryEventTasks(ruleTypes: number[]) {

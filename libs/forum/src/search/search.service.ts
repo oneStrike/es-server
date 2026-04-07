@@ -29,14 +29,14 @@ export class ForumSearchService {
     return this.drizzle.schema.forumTopic
   }
 
-  /** user_comment 表访问入口。 */
-  get userComment() {
-    return this.drizzle.schema.userComment
+  /** app_user_comment 表访问入口。 */
+  get appUserComment() {
+    return this.drizzle.schema.appUserComment
   }
 
-  /** forum_topic_tag 表访问入口。 */
-  get forumTopicTag() {
-    return this.drizzle.schema.forumTopicTag
+  /** forum_topic_tag_relation 表访问入口。 */
+  get forumTopicTagRelation() {
+    return this.drizzle.schema.forumTopicTagRelation
   }
 
   /** forum_section 表访问入口。 */
@@ -137,12 +137,12 @@ export class ForumSearchService {
   private getCommentOrderBy(sort?: ForumSearchSortTypeEnum) {
     if (sort === ForumSearchSortTypeEnum.HOT) {
       return [
-        desc(this.userComment.likeCount),
-        desc(this.userComment.createdAt),
+        desc(this.appUserComment.likeCount),
+        desc(this.appUserComment.createdAt),
       ]
     }
 
-    return [desc(this.userComment.createdAt)]
+    return [desc(this.appUserComment.createdAt)]
   }
 
   /**
@@ -219,9 +219,9 @@ export class ForumSearchService {
    */
   private async getTopicIdsByTag(tagId: number) {
     const topicIds = await this.db
-      .select({ topicId: this.forumTopicTag.topicId })
-      .from(this.forumTopicTag)
-      .where(eq(this.forumTopicTag.tagId, tagId))
+      .select({ topicId: this.forumTopicTagRelation.topicId })
+      .from(this.forumTopicTagRelation)
+      .where(eq(this.forumTopicTagRelation.tagId, tagId))
 
     return [...new Set(topicIds.map((item) => item.topicId))]
   }
@@ -487,15 +487,15 @@ export class ForumSearchService {
     const page = this.drizzle.buildPage(dto)
     const keywordLike = buildLikePattern(dto.keyword)!
     const conditions = [
-      eq(this.userComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
-      isNull(this.userComment.deletedAt),
-      ilike(this.userComment.content, keywordLike),
-      eq(this.userComment.targetId, this.forumTopic.id),
+      eq(this.appUserComment.targetType, CommentTargetTypeEnum.FORUM_TOPIC),
+      isNull(this.appUserComment.deletedAt),
+      ilike(this.appUserComment.content, keywordLike),
+      eq(this.appUserComment.targetId, this.forumTopic.id),
       isNull(this.forumTopic.deletedAt),
       options.publicOnly
-        ? eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED)
+        ? eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED)
         : undefined,
-      options.publicOnly ? eq(this.userComment.isHidden, false) : undefined,
+      options.publicOnly ? eq(this.appUserComment.isHidden, false) : undefined,
       options.publicOnly
         ? eq(this.forumTopic.auditStatus, AuditStatusEnum.APPROVED)
         : undefined,
@@ -515,20 +515,20 @@ export class ForumSearchService {
     const [rows, totalRows] = await Promise.all([
       this.db
         .select({
-          commentId: this.userComment.id,
+          commentId: this.appUserComment.id,
           topicId: this.forumTopic.id,
           topicTitle: this.forumTopic.title,
           sectionId: this.forumTopic.sectionId,
-          userId: this.userComment.userId,
-          commentContent: this.userComment.content,
-          createdAt: this.userComment.createdAt,
+          userId: this.appUserComment.userId,
+          commentContent: this.appUserComment.content,
+          createdAt: this.appUserComment.createdAt,
           commentCount: this.forumTopic.commentCount,
           viewCount: this.forumTopic.viewCount,
-          likeCount: this.userComment.likeCount,
+          likeCount: this.appUserComment.likeCount,
           favoriteCount: this.forumTopic.favoriteCount,
         })
-        .from(this.userComment)
-        .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
+        .from(this.appUserComment)
+        .innerJoin(this.forumTopic, eq(this.appUserComment.targetId, this.forumTopic.id))
         .where(where)
         .orderBy(...this.getCommentOrderBy(dto.sort))
         .limit(page.limit)
@@ -537,8 +537,8 @@ export class ForumSearchService {
         .select({
           total: sql<number>`count(*)::int`,
         })
-        .from(this.userComment)
-        .innerJoin(this.forumTopic, eq(this.userComment.targetId, this.forumTopic.id))
+        .from(this.appUserComment)
+        .innerJoin(this.forumTopic, eq(this.appUserComment.targetId, this.forumTopic.id))
         .where(where),
     ])
 

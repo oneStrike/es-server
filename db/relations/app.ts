@@ -46,9 +46,9 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   },
   appUser: {
     agreementLogs: r.many.appAgreementLog(),
-    level: r.one.userLevelRule({
+    level: r.one.appUserLevelRule({
       from: r.appUser.levelId,
-      to: r.userLevelRule.id,
+      to: r.appUserLevelRule.id,
     }),
     counts: r.one.appUserCount({
       from: r.appUser.id,
@@ -66,24 +66,24 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.forumTopic.lastCommentUserId,
       alias: 'UserLastCommentTopics',
     }),
-    receivedNotifications: r.many.userNotification({
+    receivedNotifications: r.many.appUserNotification({
       from: r.appUser.id,
-      to: r.userNotification.userId,
-      alias: 'UserNotificationReceiver',
+      to: r.appUserNotification.userId,
+      alias: 'AppUserNotificationReceiver',
     }),
-    notificationPreferences: r.many.notificationPreference({
+    notificationPreferences: r.many.appUserNotificationPreference({
       from: r.appUser.id,
-      to: r.notificationPreference.userId,
-      alias: 'NotificationPreferenceUser',
+      to: r.appUserNotificationPreference.userId,
+      alias: 'AppUserNotificationPreferenceUser',
     }),
     notificationDeliveries: r.many.notificationDelivery({
       from: r.appUser.id,
       to: r.notificationDelivery.receiverUserId,
     }),
-    triggeredNotifications: r.many.userNotification({
+    triggeredNotifications: r.many.appUserNotification({
       from: r.appUser.id,
-      to: r.userNotification.actorUserId,
-      alias: 'UserNotificationActor',
+      to: r.appUserNotification.actorUserId,
+      alias: 'AppUserNotificationActor',
     }),
     chatConversationMembers: r.many.chatConversationMember({
       from: r.appUser.id,
@@ -125,10 +125,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.appUser.id,
       to: r.forumUserActionLog.userId,
     }),
-    badgeAssignments: r.many.userBadgeAssignment(),
-    badges: r.many.userBadge({
-      from: r.appUser.id.through(r.userBadgeAssignment.userId),
-      to: r.userBadge.id.through(r.userBadgeAssignment.badgeId),
+    badgeAssignments: r.many.appUserBadgeAssignment(),
+    badges: r.many.appBadge({
+      from: r.appUser.id.through(r.appUserBadgeAssignment.userId),
+      to: r.appBadge.id.through(r.appUserBadgeAssignment.badgeId),
     }),
     growthLedgerRecords: r.many.growthLedgerRecord(),
     growthAuditLogs: r.many.growthAuditLog(),
@@ -138,23 +138,23 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     checkInStreakRewardGrants: r.many.checkInStreakRewardGrant(),
     taskAssignments: r.many.taskAssignment(),
     taskProgressLogs: r.many.taskProgressLog(),
-    userLikes: r.many.userLike(),
-    userFavorites: r.many.userFavorite(),
-    browseLogs: r.many.userBrowseLog(),
-    workReadingStates: r.many.userWorkReadingState(),
-    userComments: r.many.userComment(),
-    userReports: r.many.userReport({
+    userLikes: r.many.appUserLike(),
+    userFavorites: r.many.appUserFavorite(),
+    browseLogs: r.many.appUserBrowseLog(),
+    workReadingStates: r.many.appUserWorkReadingState(),
+    userComments: r.many.appUserComment(),
+    userReports: r.many.appUserReport({
       from: r.appUser.id,
-      to: r.userReport.reporterId,
-      alias: 'UserReportReporter',
+      to: r.appUserReport.reporterId,
+      alias: 'AppUserReportReporter',
     }),
-    handledUserReports: r.many.userReport({
+    handledUserReports: r.many.appUserReport({
       from: r.appUser.id,
-      to: r.userReport.handlerId,
-      alias: 'UserReportHandler',
+      to: r.appUserReport.handlerId,
+      alias: 'AppUserReportHandler',
     }),
-    userDownloadRecords: r.many.userDownloadRecord(),
-    userPurchaseRecords: r.many.userPurchaseRecord(),
+    userDownloadRecords: r.many.appUserDownloadRecord(),
+    userPurchaseRecords: r.many.appUserPurchaseRecord(),
     emojiRecentUsageRecords: r.many.emojiRecentUsage(),
   },
   emojiAsset: {
@@ -293,106 +293,106 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     }),
     user: r.one.appUser({ from: r.taskProgressLog.userId, to: r.appUser.id }),
   },
-  userBadge: {
-    assignments: r.many.userBadgeAssignment(),
+  appBadge: {
+    assignments: r.many.appUserBadgeAssignment(),
     users: r.many.appUser({
-      from: r.userBadge.id.through(r.userBadgeAssignment.badgeId),
-      to: r.appUser.id.through(r.userBadgeAssignment.userId),
+      from: r.appBadge.id.through(r.appUserBadgeAssignment.badgeId),
+      to: r.appUser.id.through(r.appUserBadgeAssignment.userId),
     }),
   },
-  userBadgeAssignment: {
-    badge: r.one.userBadge({
-      from: r.userBadgeAssignment.badgeId,
-      to: r.userBadge.id,
+  appUserBadgeAssignment: {
+    badge: r.one.appBadge({
+      from: r.appUserBadgeAssignment.badgeId,
+      to: r.appBadge.id,
     }),
     user: r.one.appUser({
-      from: r.userBadgeAssignment.userId,
+      from: r.appUserBadgeAssignment.userId,
       to: r.appUser.id,
     }),
   },
-  userBrowseLog: {
-    user: r.one.appUser({ from: r.userBrowseLog.userId, to: r.appUser.id }),
+  appUserBrowseLog: {
+    user: r.one.appUser({ from: r.appUserBrowseLog.userId, to: r.appUser.id }),
   },
-  userComment: {
-    user: r.one.appUser({ from: r.userComment.userId, to: r.appUser.id }),
-    replyTo: r.one.userComment({
-      from: r.userComment.replyToId,
-      to: r.userComment.id,
+  appUserComment: {
+    user: r.one.appUser({ from: r.appUserComment.userId, to: r.appUser.id }),
+    replyTo: r.one.appUserComment({
+      from: r.appUserComment.replyToId,
+      to: r.appUserComment.id,
       alias: 'CommentReply',
     }),
-    replies: r.many.userComment({
-      from: r.userComment.id,
-      to: r.userComment.replyToId,
+    replies: r.many.appUserComment({
+      from: r.appUserComment.id,
+      to: r.appUserComment.replyToId,
       alias: 'CommentReply',
     }),
-    actualReplyTo: r.one.userComment({
-      from: r.userComment.actualReplyToId,
-      to: r.userComment.id,
+    actualReplyTo: r.one.appUserComment({
+      from: r.appUserComment.actualReplyToId,
+      to: r.appUserComment.id,
       alias: 'CommentActualReply',
     }),
-    actualReplies: r.many.userComment({
-      from: r.userComment.id,
-      to: r.userComment.actualReplyToId,
+    actualReplies: r.many.appUserComment({
+      from: r.appUserComment.id,
+      to: r.appUserComment.actualReplyToId,
       alias: 'CommentActualReply',
     }),
   },
-  userDownloadRecord: {
+  appUserDownloadRecord: {
     user: r.one.appUser({
-      from: r.userDownloadRecord.userId,
+      from: r.appUserDownloadRecord.userId,
       to: r.appUser.id,
     }),
   },
-  userFavorite: {
-    user: r.one.appUser({ from: r.userFavorite.userId, to: r.appUser.id }),
+  appUserFavorite: {
+    user: r.one.appUser({ from: r.appUserFavorite.userId, to: r.appUser.id }),
   },
-  userLevelRule: {
+  appUserLevelRule: {
     users: r.many.appUser(),
     sections: r.many.forumSection({
-      from: r.userLevelRule.id,
+      from: r.appUserLevelRule.id,
       to: r.forumSection.userLevelRuleId,
     }),
     chaptersAsReadLevel: r.many.workChapter({
-      from: r.userLevelRule.id,
+      from: r.appUserLevelRule.id,
       to: r.workChapter.requiredViewLevelId,
       alias: 'ChapterReadLevel',
     }),
     worksAsViewLevel: r.many.work({
-      from: r.userLevelRule.id,
+      from: r.appUserLevelRule.id,
       to: r.work.requiredViewLevelId,
       alias: 'WorkViewLevel',
     }),
   },
-  userLike: {
-    user: r.one.appUser({ from: r.userLike.userId, to: r.appUser.id }),
+  appUserLike: {
+    user: r.one.appUser({ from: r.appUserLike.userId, to: r.appUser.id }),
   },
-  userPurchaseRecord: {
+  appUserPurchaseRecord: {
     user: r.one.appUser({
-      from: r.userPurchaseRecord.userId,
+      from: r.appUserPurchaseRecord.userId,
       to: r.appUser.id,
     }),
   },
-  userReport: {
+  appUserReport: {
     reporter: r.one.appUser({
-      from: r.userReport.reporterId,
+      from: r.appUserReport.reporterId,
       to: r.appUser.id,
-      alias: 'UserReportReporter',
+      alias: 'AppUserReportReporter',
     }),
     handler: r.one.appUser({
-      from: r.userReport.handlerId,
+      from: r.appUserReport.handlerId,
       to: r.appUser.id,
-      alias: 'UserReportHandler',
+      alias: 'AppUserReportHandler',
     }),
   },
-  userWorkReadingState: {
+  appUserWorkReadingState: {
     user: r.one.appUser({
-      from: r.userWorkReadingState.userId,
+      from: r.appUserWorkReadingState.userId,
       to: r.appUser.id,
     }),
-    work: r.one.work({ from: r.userWorkReadingState.workId, to: r.work.id }),
+    work: r.one.work({ from: r.appUserWorkReadingState.workId, to: r.work.id }),
     lastReadChapter: r.one.workChapter({
-      from: r.userWorkReadingState.lastReadChapterId,
+      from: r.appUserWorkReadingState.lastReadChapterId,
       to: r.workChapter.id,
-      alias: 'UserWorkReadingStateLastReadChapter',
+      alias: 'AppUserWorkReadingStateLastReadChapter',
     }),
   },
 }))

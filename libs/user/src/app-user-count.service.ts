@@ -40,20 +40,20 @@ export class AppUserCountService {
     return this.drizzle.schema.appUserCount
   }
 
-  private get userFollow() {
-    return this.drizzle.schema.userFollow
+  private get appUserFollow() {
+    return this.drizzle.schema.appUserFollow
   }
 
-  private get userLike() {
-    return this.drizzle.schema.userLike
+  private get appUserLike() {
+    return this.drizzle.schema.appUserLike
   }
 
-  private get userFavorite() {
-    return this.drizzle.schema.userFavorite
+  private get appUserFavorite() {
+    return this.drizzle.schema.appUserFavorite
   }
 
-  private get userComment() {
-    return this.drizzle.schema.userComment
+  private get appUserComment() {
+    return this.drizzle.schema.appUserComment
   }
 
   private get forumTopic() {
@@ -87,12 +87,12 @@ export class AppUserCountService {
   ): Promise<AppUserFollowingCountAggregation> {
     const rows = await client
       .select({
-        targetType: this.userFollow.targetType,
+        targetType: this.appUserFollow.targetType,
         count: sql<number>`count(*)::int`,
       })
-      .from(this.userFollow)
-      .where(eq(this.userFollow.userId, userId))
-      .groupBy(this.userFollow.targetType)
+      .from(this.appUserFollow)
+      .where(eq(this.appUserFollow.userId, userId))
+      .groupBy(this.appUserFollow.targetType)
 
     const counts: AppUserFollowingCountAggregation = {
       followingUserCount: 0,
@@ -266,11 +266,11 @@ export class AppUserCountService {
       this.getFollowingCounts(client, userId),
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userFollow)
+        .from(this.appUserFollow)
         .where(
           and(
-            eq(this.userFollow.targetType, this.userFollowTargetType),
-            eq(this.userFollow.targetId, userId),
+            eq(this.appUserFollow.targetType, this.userFollowTargetType),
+            eq(this.appUserFollow.targetId, userId),
           ),
         )
         .then((rows) => rows[0]),
@@ -329,32 +329,32 @@ export class AppUserCountService {
     ] = await Promise.all([
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userComment)
+        .from(this.appUserComment)
         .where(
           and(
-            eq(this.userComment.userId, userId),
-            isNull(this.userComment.deletedAt),
+            eq(this.appUserComment.userId, userId),
+            isNull(this.appUserComment.deletedAt),
           ),
         )
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userLike)
-        .where(eq(this.userLike.userId, userId))
+        .from(this.appUserLike)
+        .where(eq(this.appUserLike.userId, userId))
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userFavorite)
-        .where(eq(this.userFavorite.userId, userId))
+        .from(this.appUserFavorite)
+        .where(eq(this.appUserFavorite.userId, userId))
         .then((rows) => rows[0]),
       this.getFollowingCounts(client, userId),
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userFollow)
+        .from(this.appUserFollow)
         .where(
           and(
-            eq(this.userFollow.targetType, this.userFollowTargetType),
-            eq(this.userFollow.targetId, userId),
+            eq(this.appUserFollow.targetType, this.userFollowTargetType),
+            eq(this.appUserFollow.targetId, userId),
           ),
         )
         .then((rows) => rows[0]),
@@ -370,43 +370,43 @@ export class AppUserCountService {
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userLike)
+        .from(this.appUserLike)
         .innerJoin(
-          this.userComment,
+          this.appUserComment,
           and(
-            eq(this.userComment.id, this.userLike.targetId),
-            eq(this.userComment.userId, userId),
-            isNull(this.userComment.deletedAt),
+            eq(this.appUserComment.id, this.appUserLike.targetId),
+            eq(this.appUserComment.userId, userId),
+            isNull(this.appUserComment.deletedAt),
           ),
         )
-        .where(eq(this.userLike.targetType, this.commentLikeTargetType))
+        .where(eq(this.appUserLike.targetType, this.commentLikeTargetType))
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userLike)
+        .from(this.appUserLike)
         .innerJoin(
           this.forumTopic,
           and(
-            eq(this.forumTopic.id, this.userLike.targetId),
+            eq(this.forumTopic.id, this.appUserLike.targetId),
             eq(this.forumTopic.userId, userId),
             isNull(this.forumTopic.deletedAt),
           ),
         )
-        .where(eq(this.userLike.targetType, this.forumTopicLikeTargetType))
+        .where(eq(this.appUserLike.targetType, this.forumTopicLikeTargetType))
         .then((rows) => rows[0]),
       client
         .select({ count: sql<number>`count(*)::int` })
-        .from(this.userFavorite)
+        .from(this.appUserFavorite)
         .innerJoin(
           this.forumTopic,
           and(
-            eq(this.forumTopic.id, this.userFavorite.targetId),
+            eq(this.forumTopic.id, this.appUserFavorite.targetId),
             eq(this.forumTopic.userId, userId),
             isNull(this.forumTopic.deletedAt),
           ),
         )
         .where(
-          eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
+          eq(this.appUserFavorite.targetType, this.forumTopicFavoriteTargetType),
         )
         .then((rows) => rows[0]),
     ])

@@ -11,7 +11,7 @@ describe('point rule service validation', () => {
     const service = new UserPointRuleService(
       {
         db: { insert },
-        schema: { userPointRule: {} },
+        schema: { appUserPointRule: {} },
         withErrorHandling: jest.fn(async (callback) => callback()),
       } as any,
     )
@@ -37,7 +37,7 @@ describe('point rule service validation', () => {
     const service = new UserPointRuleService(
       {
         db: { update },
-        schema: { userPointRule: {} },
+        schema: { appUserPointRule: {} },
         withErrorHandling: jest.fn(async (callback) => callback()),
       } as any,
     )

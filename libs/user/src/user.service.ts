@@ -30,12 +30,12 @@ export class UserService {
     return this.drizzle.schema.appUser
   }
 
-  private get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  private get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
-  private get userBadgeAssignment() {
-    return this.drizzle.schema.userBadgeAssignment
+  private get appUserBadgeAssignment() {
+    return this.drizzle.schema.appUserBadgeAssignment
   }
 
   /**
@@ -211,8 +211,8 @@ export class UserService {
   async getBadgeCount(userId: number): Promise<number> {
     const [rows] = await this.db
       .select({ count: sql<number>`count(*)::int` })
-      .from(this.userBadgeAssignment)
-      .where(eq(this.userBadgeAssignment.userId, userId))
+      .from(this.appUserBadgeAssignment)
+      .where(eq(this.appUserBadgeAssignment.userId, userId))
     return Number(rows?.count ?? 0)
   }
 
@@ -222,12 +222,12 @@ export class UserService {
   async getLevelInfo(levelId: number) {
     const [level] = await this.db
       .select({
-        id: this.userLevelRule.id,
-        name: this.userLevelRule.name,
-        requiredExperience: this.userLevelRule.requiredExperience,
+        id: this.appUserLevelRule.id,
+        name: this.appUserLevelRule.name,
+        requiredExperience: this.appUserLevelRule.requiredExperience,
       })
-      .from(this.userLevelRule)
-      .where(eq(this.userLevelRule.id, levelId))
+      .from(this.appUserLevelRule)
+      .where(eq(this.appUserLevelRule.id, levelId))
       .limit(1)
     return level
   }

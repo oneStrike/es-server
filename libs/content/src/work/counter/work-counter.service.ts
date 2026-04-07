@@ -74,28 +74,28 @@ export class WorkCounterService {
     return this.drizzle.schema.workChapter
   }
 
-  private get userLike() {
-    return this.drizzle.schema.userLike
+  private get appUserLike() {
+    return this.drizzle.schema.appUserLike
   }
 
-  private get userFavorite() {
-    return this.drizzle.schema.userFavorite
+  private get appUserFavorite() {
+    return this.drizzle.schema.appUserFavorite
   }
 
-  private get userBrowseLog() {
-    return this.drizzle.schema.userBrowseLog
+  private get appUserBrowseLog() {
+    return this.drizzle.schema.appUserBrowseLog
   }
 
-  private get userComment() {
-    return this.drizzle.schema.userComment
+  private get appUserComment() {
+    return this.drizzle.schema.appUserComment
   }
 
-  private get userPurchaseRecord() {
-    return this.drizzle.schema.userPurchaseRecord
+  private get appUserPurchaseRecord() {
+    return this.drizzle.schema.appUserPurchaseRecord
   }
 
-  private get userDownloadRecord() {
-    return this.drizzle.schema.userDownloadRecord
+  private get appUserDownloadRecord() {
+    return this.drizzle.schema.appUserDownloadRecord
   }
 
   private async runCountUpdate(
@@ -526,52 +526,52 @@ export class WorkCounterService {
     const [likeCount, favoriteCount, viewCount, commentCount, downloadRow] =
       await Promise.all([
         client.$count(
-          this.userLike,
+          this.appUserLike,
           and(
-            eq(this.userLike.targetType, likeTargetType),
-            eq(this.userLike.targetId, workId),
+            eq(this.appUserLike.targetType, likeTargetType),
+            eq(this.appUserLike.targetId, workId),
           ),
         ),
         client.$count(
-          this.userFavorite,
+          this.appUserFavorite,
           and(
-            eq(this.userFavorite.targetType, favoriteTargetType),
-            eq(this.userFavorite.targetId, workId),
+            eq(this.appUserFavorite.targetType, favoriteTargetType),
+            eq(this.appUserFavorite.targetId, workId),
           ),
         ),
         client.$count(
-          this.userBrowseLog,
+          this.appUserBrowseLog,
           and(
-            eq(this.userBrowseLog.targetType, browseTargetType),
-            eq(this.userBrowseLog.targetId, workId),
+            eq(this.appUserBrowseLog.targetType, browseTargetType),
+            eq(this.appUserBrowseLog.targetId, workId),
           ),
         ),
         client.$count(
-          this.userComment,
+          this.appUserComment,
           and(
-            eq(this.userComment.targetType, commentTargetType),
-            eq(this.userComment.targetId, workId),
-            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-            eq(this.userComment.isHidden, false),
-            isNull(this.userComment.deletedAt),
+            eq(this.appUserComment.targetType, commentTargetType),
+            eq(this.appUserComment.targetId, workId),
+            eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED),
+            eq(this.appUserComment.isHidden, false),
+            isNull(this.appUserComment.deletedAt),
           ),
         ),
         client
           .select({
             count: sql<number>`count(*)::int`,
           })
-          .from(this.userDownloadRecord)
+          .from(this.appUserDownloadRecord)
           .innerJoin(
             this.workChapter,
             and(
-              eq(this.workChapter.id, this.userDownloadRecord.targetId),
+              eq(this.workChapter.id, this.appUserDownloadRecord.targetId),
               eq(this.workChapter.workId, workId),
               eq(this.workChapter.workType, workType),
               isNull(this.workChapter.deletedAt),
             ),
           )
           .where(
-            eq(this.userDownloadRecord.targetType, downloadTargetType),
+            eq(this.appUserDownloadRecord.targetType, downloadTargetType),
           )
           .then((rows) => rows[0]),
       ])
@@ -629,42 +629,42 @@ export class WorkCounterService {
     const [likeCount, viewCount, commentCount, purchaseCount, downloadCount] =
       await Promise.all([
         client.$count(
-          this.userLike,
+          this.appUserLike,
           and(
-            eq(this.userLike.targetType, likeTargetType),
-            eq(this.userLike.targetId, chapterId),
+            eq(this.appUserLike.targetType, likeTargetType),
+            eq(this.appUserLike.targetId, chapterId),
           ),
         ),
         client.$count(
-          this.userBrowseLog,
+          this.appUserBrowseLog,
           and(
-            eq(this.userBrowseLog.targetType, browseTargetType),
-            eq(this.userBrowseLog.targetId, chapterId),
+            eq(this.appUserBrowseLog.targetType, browseTargetType),
+            eq(this.appUserBrowseLog.targetId, chapterId),
           ),
         ),
         client.$count(
-          this.userComment,
+          this.appUserComment,
           and(
-            eq(this.userComment.targetType, commentTargetType),
-            eq(this.userComment.targetId, chapterId),
-            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-            eq(this.userComment.isHidden, false),
-            isNull(this.userComment.deletedAt),
+            eq(this.appUserComment.targetType, commentTargetType),
+            eq(this.appUserComment.targetId, chapterId),
+            eq(this.appUserComment.auditStatus, AuditStatusEnum.APPROVED),
+            eq(this.appUserComment.isHidden, false),
+            isNull(this.appUserComment.deletedAt),
           ),
         ),
         client.$count(
-          this.userPurchaseRecord,
+          this.appUserPurchaseRecord,
           and(
-            eq(this.userPurchaseRecord.targetType, purchaseTargetType),
-            eq(this.userPurchaseRecord.targetId, chapterId),
-            eq(this.userPurchaseRecord.status, this.purchaseSuccessStatus),
+            eq(this.appUserPurchaseRecord.targetType, purchaseTargetType),
+            eq(this.appUserPurchaseRecord.targetId, chapterId),
+            eq(this.appUserPurchaseRecord.status, this.purchaseSuccessStatus),
           ),
         ),
         client.$count(
-          this.userDownloadRecord,
+          this.appUserDownloadRecord,
           and(
-            eq(this.userDownloadRecord.targetType, downloadTargetType),
-            eq(this.userDownloadRecord.targetId, chapterId),
+            eq(this.appUserDownloadRecord.targetType, downloadTargetType),
+            eq(this.appUserDownloadRecord.targetId, chapterId),
           ),
         ),
       ])

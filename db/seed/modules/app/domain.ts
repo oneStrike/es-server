@@ -6,11 +6,24 @@ import {
   appAgreementLog,
   appAnnouncement,
   appAnnouncementRead,
+  appBadge,
   appConfig,
   appPage,
   appUser,
+  appUserBadgeAssignment,
+  appUserBrowseLog,
+  appUserComment,
   appUserCount,
+  appUserDownloadRecord,
+  appUserExperienceRule,
+  appUserFavorite,
+  appUserLevelRule,
+  appUserLike,
+  appUserPointRule,
+  appUserPurchaseRecord,
+  appUserReport,
   appUserToken,
+  appUserWorkReadingState,
   forumSection,
   forumTopic,
   forumUserActionLog,
@@ -20,19 +33,6 @@ import {
   task,
   taskAssignment,
   taskProgressLog,
-  userBadge,
-  userBadgeAssignment,
-  userBrowseLog,
-  userComment,
-  userDownloadRecord,
-  userExperienceRule,
-  userFavorite,
-  userLevelRule,
-  userLike,
-  userPointRule,
-  userPurchaseRecord,
-  userReport,
-  userWorkReadingState,
   work,
   workChapter,
 } from '../../../schema'
@@ -160,7 +160,6 @@ const EXPERIENCE_RULE_FIXTURES = [
     totalLimit: 0,
     remark: '回复经验奖励',
   },
-  {
 ] as const
 
 const USER_FIXTURES = [
@@ -366,23 +365,23 @@ export async function seedAppCoreDomain(db: Db) {
   })
 
   for (const levelFixture of LEVEL_FIXTURES) {
-    const existing = await db.query.userLevelRule.findFirst({
-      where: eq(userLevelRule.name, levelFixture.name),
+    const existing = await db.query.appUserLevelRule.findFirst({
+      where: eq(appUserLevelRule.name, levelFixture.name),
     })
 
     if (!existing) {
-      await db.insert(userLevelRule).values({
+      await db.insert(appUserLevelRule).values({
         ...levelFixture,
         isEnabled: true,
       })
     } else {
       await db
-        .update(userLevelRule)
+        .update(appUserLevelRule)
         .set({
           ...levelFixture,
           isEnabled: true,
         })
-        .where(eq(userLevelRule.id, existing.id))
+        .where(eq(appUserLevelRule.id, existing.id))
     }
   }
   console.log('  ✓ 等级规则完成')
@@ -390,23 +389,23 @@ export async function seedAppCoreDomain(db: Db) {
   for (const ruleFixture of POINT_RULE_FIXTURES) {
     const [existing] = await db
       .select()
-      .from(userPointRule)
-      .where(eq(userPointRule.type, ruleFixture.type))
+      .from(appUserPointRule)
+      .where(eq(appUserPointRule.type, ruleFixture.type))
       .limit(1)
 
     if (!existing) {
-      await db.insert(userPointRule).values({
+      await db.insert(appUserPointRule).values({
         ...ruleFixture,
         isEnabled: true,
       })
     } else {
       await db
-        .update(userPointRule)
+        .update(appUserPointRule)
         .set({
           ...ruleFixture,
           isEnabled: true,
         })
-        .where(eq(userPointRule.id, existing.id))
+        .where(eq(appUserPointRule.id, existing.id))
     }
   }
   console.log('  ✓ 积分规则完成')
@@ -414,45 +413,45 @@ export async function seedAppCoreDomain(db: Db) {
   for (const ruleFixture of EXPERIENCE_RULE_FIXTURES) {
     const [existing] = await db
       .select()
-      .from(userExperienceRule)
-      .where(eq(userExperienceRule.type, ruleFixture.type))
+      .from(appUserExperienceRule)
+      .where(eq(appUserExperienceRule.type, ruleFixture.type))
       .limit(1)
 
     if (!existing) {
-      await db.insert(userExperienceRule).values({
+      await db.insert(appUserExperienceRule).values({
         ...ruleFixture,
         isEnabled: true,
       })
     } else {
       await db
-        .update(userExperienceRule)
+        .update(appUserExperienceRule)
         .set({
           ...ruleFixture,
           isEnabled: true,
         })
-        .where(eq(userExperienceRule.id, existing.id))
+        .where(eq(appUserExperienceRule.id, existing.id))
     }
   }
   console.log('  ✓ 经验规则完成')
 
   for (const badgeFixture of BADGE_FIXTURES) {
-    const existing = await db.query.userBadge.findFirst({
-      where: eq(userBadge.name, badgeFixture.name),
+    const existing = await db.query.appBadge.findFirst({
+      where: eq(appBadge.name, badgeFixture.name),
     })
 
     if (!existing) {
-      await db.insert(userBadge).values({
+      await db.insert(appBadge).values({
         ...badgeFixture,
         isEnabled: true,
       })
     } else {
       await db
-        .update(userBadge)
+        .update(appBadge)
         .set({
           ...badgeFixture,
           isEnabled: true,
         })
-        .where(eq(userBadge.id, existing.id))
+        .where(eq(appBadge.id, existing.id))
     }
   }
   console.log('  ✓ 徽章完成')
@@ -481,7 +480,7 @@ export async function seedAppCoreDomain(db: Db) {
   }
   console.log('  ✓ 页面完成')
 
-  const levelRules = await db.query.userLevelRule.findMany()
+  const levelRules = await db.query.appUserLevelRule.findMany()
   const levelIdByName = new Map<string, number>(
     levelRules.map((item) => [item.name, item.id]),
   )
@@ -819,13 +818,13 @@ export async function seedAppActivityDomain(db: Db) {
   }
   console.log('  ✓ 公告已读记录完成')
 
-  const existingWorkComment = await db.query.userComment.findFirst({
+  const existingWorkComment = await db.query.appUserComment.findFirst({
     where: and(
-      eq(userComment.targetType, 1),
-      eq(userComment.targetId, aotWork.id),
-      eq(userComment.userId, userB.id),
+      eq(appUserComment.targetType, 1),
+      eq(appUserComment.targetId, aotWork.id),
+      eq(appUserComment.userId, userB.id),
       eq(
-        userComment.content,
+        appUserComment.content,
         '墙内外的信息差在这部作品里几乎从第一话就埋下了。',
       ),
     ),
@@ -851,23 +850,23 @@ export async function seedAppActivityDomain(db: Db) {
 
   if (!workComment) {
     ;[workComment] = await db
-      .insert(userComment)
+      .insert(appUserComment)
       .values(workCommentPayload)
       .returning()
   } else {
     ;[workComment] = await db
-      .update(userComment)
+      .update(appUserComment)
       .set(workCommentPayload)
-      .where(eq(userComment.id, workComment.id))
+      .where(eq(appUserComment.id, workComment.id))
       .returning()
   }
 
-  const existingChapterComment = await db.query.userComment.findFirst({
+  const existingChapterComment = await db.query.appUserComment.findFirst({
     where: and(
-      eq(userComment.targetType, 2),
-      eq(userComment.targetId, aotChapterTwo.id),
-      eq(userComment.userId, userA.id),
-      eq(userComment.content, '第二话的节奏明显收紧，购买后继续读的体验很顺。'),
+      eq(appUserComment.targetType, 2),
+      eq(appUserComment.targetId, aotChapterTwo.id),
+      eq(appUserComment.userId, userA.id),
+      eq(appUserComment.content, '第二话的节奏明显收紧，购买后继续读的体验很顺。'),
     ),
   })
 
@@ -891,23 +890,23 @@ export async function seedAppActivityDomain(db: Db) {
 
   if (!chapterComment) {
     ;[chapterComment] = await db
-      .insert(userComment)
+      .insert(appUserComment)
       .values(chapterCommentPayload)
       .returning()
   } else {
     ;[chapterComment] = await db
-      .update(userComment)
+      .update(appUserComment)
       .set(chapterCommentPayload)
-      .where(eq(userComment.id, chapterComment.id))
+      .where(eq(appUserComment.id, chapterComment.id))
       .returning()
   }
 
-  const existingForumRootComment = await db.query.userComment.findFirst({
+  const existingForumRootComment = await db.query.appUserComment.findFirst({
     where: and(
-      eq(userComment.targetType, 3),
-      eq(userComment.targetId, aotTopic.id),
-      eq(userComment.userId, userB.id),
-      eq(userComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
+      eq(appUserComment.targetType, 3),
+      eq(appUserComment.targetId, aotTopic.id),
+      eq(appUserComment.userId, userB.id),
+      eq(appUserComment.content, '我觉得第一卷就把未来冲突埋得很深。'),
     ),
   })
 
@@ -931,23 +930,23 @@ export async function seedAppActivityDomain(db: Db) {
 
   if (!forumRootComment) {
     ;[forumRootComment] = await db
-      .insert(userComment)
+      .insert(appUserComment)
       .values(forumRootCommentPayload)
       .returning()
   } else {
     ;[forumRootComment] = await db
-      .update(userComment)
+      .update(appUserComment)
       .set(forumRootCommentPayload)
-      .where(eq(userComment.id, forumRootComment.id))
+      .where(eq(appUserComment.id, forumRootComment.id))
       .returning()
   }
 
-  const existingForumComment = await db.query.userComment.findFirst({
+  const existingForumComment = await db.query.appUserComment.findFirst({
     where: and(
-      eq(userComment.targetType, 3),
-      eq(userComment.targetId, aotTopic.id),
-      eq(userComment.userId, userA.id),
-      eq(userComment.content, '而且艾伦和调查兵团的立场差异很早就有预警。'),
+      eq(appUserComment.targetType, 3),
+      eq(appUserComment.targetId, aotTopic.id),
+      eq(appUserComment.userId, userA.id),
+      eq(appUserComment.content, '而且艾伦和调查兵团的立场差异很早就有预警。'),
     ),
   })
 
@@ -971,20 +970,20 @@ export async function seedAppActivityDomain(db: Db) {
   }
 
   if (!existingForumComment) {
-    await db.insert(userComment).values(forumCommentPayload)
+    await db.insert(appUserComment).values(forumCommentPayload)
   } else {
     await db
-      .update(userComment)
+      .update(appUserComment)
       .set(forumCommentPayload)
-      .where(eq(userComment.id, existingForumComment.id))
+      .where(eq(appUserComment.id, existingForumComment.id))
   }
   console.log('  ✓ 论坛评论完成')
 
-  const forumTopicComments = await db.query.userComment.findMany({
+  const forumTopicComments = await db.query.appUserComment.findMany({
     where: and(
-      eq(userComment.targetType, 3),
-      eq(userComment.targetId, aotTopic.id),
-      isNull(userComment.deletedAt),
+      eq(appUserComment.targetType, 3),
+      eq(appUserComment.targetId, aotTopic.id),
+      isNull(appUserComment.deletedAt),
     ),
   })
 
@@ -1048,16 +1047,16 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const likeFixture of likeFixtures) {
-    const existingLike = await db.query.userLike.findFirst({
+    const existingLike = await db.query.appUserLike.findFirst({
       where: and(
-        eq(userLike.targetType, likeFixture.targetType),
-        eq(userLike.targetId, likeFixture.targetId),
-        eq(userLike.userId, likeFixture.userId),
+        eq(appUserLike.targetType, likeFixture.targetType),
+        eq(appUserLike.targetId, likeFixture.targetId),
+        eq(appUserLike.userId, likeFixture.userId),
       ),
     })
 
     if (!existingLike) {
-      await db.insert(userLike).values(likeFixture)
+      await db.insert(appUserLike).values(likeFixture)
     }
   }
   console.log('  ✓ 点赞记录完成')
@@ -1081,16 +1080,16 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const favoriteFixture of favoriteFixtures) {
-    const existingFavorite = await db.query.userFavorite.findFirst({
+    const existingFavorite = await db.query.appUserFavorite.findFirst({
       where: and(
-        eq(userFavorite.targetType, favoriteFixture.targetType),
-        eq(userFavorite.targetId, favoriteFixture.targetId),
-        eq(userFavorite.userId, favoriteFixture.userId),
+        eq(appUserFavorite.targetType, favoriteFixture.targetType),
+        eq(appUserFavorite.targetId, favoriteFixture.targetId),
+        eq(appUserFavorite.userId, favoriteFixture.userId),
       ),
     })
 
     if (!existingFavorite) {
-      await db.insert(userFavorite).values(favoriteFixture)
+      await db.insert(appUserFavorite).values(favoriteFixture)
     }
   }
   console.log('  ✓ 收藏记录完成')
@@ -1111,21 +1110,21 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const downloadFixture of downloadFixtures) {
-    const existingDownload = await db.query.userDownloadRecord.findFirst({
+    const existingDownload = await db.query.appUserDownloadRecord.findFirst({
       where: and(
-        eq(userDownloadRecord.targetType, downloadFixture.targetType),
-        eq(userDownloadRecord.targetId, downloadFixture.targetId),
-        eq(userDownloadRecord.userId, downloadFixture.userId),
+        eq(appUserDownloadRecord.targetType, downloadFixture.targetType),
+        eq(appUserDownloadRecord.targetId, downloadFixture.targetId),
+        eq(appUserDownloadRecord.userId, downloadFixture.userId),
       ),
     })
 
     if (!existingDownload) {
-      await db.insert(userDownloadRecord).values(downloadFixture)
+      await db.insert(appUserDownloadRecord).values(downloadFixture)
     } else {
       await db
-        .update(userDownloadRecord)
+        .update(appUserDownloadRecord)
         .set(downloadFixture)
-        .where(eq(userDownloadRecord.id, existingDownload.id))
+        .where(eq(appUserDownloadRecord.id, existingDownload.id))
     }
   }
   console.log('  ✓ 下载记录完成')
@@ -1156,22 +1155,22 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const purchaseFixture of purchaseFixtures) {
-    const existingPurchase = await db.query.userPurchaseRecord.findFirst({
+    const existingPurchase = await db.query.appUserPurchaseRecord.findFirst({
       where: and(
-        eq(userPurchaseRecord.userId, purchaseFixture.userId),
-        eq(userPurchaseRecord.targetType, purchaseFixture.targetType),
-        eq(userPurchaseRecord.targetId, purchaseFixture.targetId),
-        eq(userPurchaseRecord.status, purchaseFixture.status),
+        eq(appUserPurchaseRecord.userId, purchaseFixture.userId),
+        eq(appUserPurchaseRecord.targetType, purchaseFixture.targetType),
+        eq(appUserPurchaseRecord.targetId, purchaseFixture.targetId),
+        eq(appUserPurchaseRecord.status, purchaseFixture.status),
       ),
     })
 
     if (!existingPurchase) {
-      await db.insert(userPurchaseRecord).values(purchaseFixture)
+      await db.insert(appUserPurchaseRecord).values(purchaseFixture)
     } else {
       await db
-        .update(userPurchaseRecord)
+        .update(appUserPurchaseRecord)
         .set(purchaseFixture)
-        .where(eq(userPurchaseRecord.id, existingPurchase.id))
+        .where(eq(appUserPurchaseRecord.id, existingPurchase.id))
     }
   }
   console.log('  ✓ 购买记录完成')
@@ -1207,21 +1206,21 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const browseFixture of browseFixtures) {
-    const existingBrowse = await db.query.userBrowseLog.findFirst({
+    const existingBrowse = await db.query.appUserBrowseLog.findFirst({
       where: and(
-        eq(userBrowseLog.targetType, browseFixture.targetType),
-        eq(userBrowseLog.targetId, browseFixture.targetId),
-        eq(userBrowseLog.userId, browseFixture.userId),
+        eq(appUserBrowseLog.targetType, browseFixture.targetType),
+        eq(appUserBrowseLog.targetId, browseFixture.targetId),
+        eq(appUserBrowseLog.userId, browseFixture.userId),
       ),
     })
 
     if (!existingBrowse) {
-      await db.insert(userBrowseLog).values(browseFixture)
+      await db.insert(appUserBrowseLog).values(browseFixture)
     } else {
       await db
-        .update(userBrowseLog)
+        .update(appUserBrowseLog)
         .set(browseFixture)
-        .where(eq(userBrowseLog.id, existingBrowse.id))
+        .where(eq(appUserBrowseLog.id, existingBrowse.id))
     }
   }
   console.log('  ✓ 浏览记录完成')
@@ -1239,21 +1238,21 @@ export async function seedAppActivityDomain(db: Db) {
     status: 1,
   }
 
-  const existingReport = await db.query.userReport.findFirst({
+  const existingReport = await db.query.appUserReport.findFirst({
     where: and(
-      eq(userReport.reporterId, reportFixture.reporterId),
-      eq(userReport.targetType, reportFixture.targetType),
-      eq(userReport.targetId, reportFixture.targetId),
+      eq(appUserReport.reporterId, reportFixture.reporterId),
+      eq(appUserReport.targetType, reportFixture.targetType),
+      eq(appUserReport.targetId, reportFixture.targetId),
     ),
   })
 
   if (!existingReport) {
-    await db.insert(userReport).values(reportFixture)
+    await db.insert(appUserReport).values(reportFixture)
   } else {
     await db
-      .update(userReport)
+      .update(appUserReport)
       .set(reportFixture)
-      .where(eq(userReport.id, existingReport.id))
+      .where(eq(appUserReport.id, existingReport.id))
   }
   console.log('  ✓ 举报记录完成')
 
@@ -1275,30 +1274,30 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const readingFixture of readingFixtures) {
-    const existingState = await db.query.userWorkReadingState.findFirst({
+    const existingState = await db.query.appUserWorkReadingState.findFirst({
       where: and(
-        eq(userWorkReadingState.userId, readingFixture.userId),
-        eq(userWorkReadingState.workId, readingFixture.workId),
+        eq(appUserWorkReadingState.userId, readingFixture.userId),
+        eq(appUserWorkReadingState.workId, readingFixture.workId),
       ),
     })
 
     if (!existingState) {
-      await db.insert(userWorkReadingState).values(readingFixture)
+      await db.insert(appUserWorkReadingState).values(readingFixture)
     } else {
       await db
-        .update(userWorkReadingState)
+        .update(appUserWorkReadingState)
         .set(readingFixture)
         .where(
           and(
-            eq(userWorkReadingState.userId, readingFixture.userId),
-            eq(userWorkReadingState.workId, readingFixture.workId),
+            eq(appUserWorkReadingState.userId, readingFixture.userId),
+            eq(appUserWorkReadingState.workId, readingFixture.workId),
           ),
         )
     }
   }
   console.log('  ✓ 阅读状态完成')
 
-  const badges = await db.query.userBadge.findMany()
+  const badges = await db.query.appBadge.findMany()
   const badgeByName = new Map<string, (typeof badges)[number]>(
     badges.map((item) => [item.name, item]),
   )
@@ -1313,15 +1312,15 @@ export async function seedAppActivityDomain(db: Db) {
       continue
     }
 
-    const existingAssignment = await db.query.userBadgeAssignment.findFirst({
+    const existingAssignment = await db.query.appUserBadgeAssignment.findFirst({
       where: and(
-        eq(userBadgeAssignment.userId, assignment.userId),
-        eq(userBadgeAssignment.badgeId, badge.id),
+        eq(appUserBadgeAssignment.userId, assignment.userId),
+        eq(appUserBadgeAssignment.badgeId, badge.id),
       ),
     })
 
     if (!existingAssignment) {
-      await db.insert(userBadgeAssignment).values({
+      await db.insert(appUserBadgeAssignment).values({
         userId: assignment.userId,
         badgeId: badge.id,
       })
@@ -1331,13 +1330,13 @@ export async function seedAppActivityDomain(db: Db) {
 
   const [pointPurchaseRule] = await db
     .select()
-    .from(userPointRule)
-    .where(eq(userPointRule.type, 302))
+    .from(appUserPointRule)
+    .where(eq(appUserPointRule.type, 302))
     .limit(1)
   const [experienceTopicRule] = await db
     .select()
-    .from(userExperienceRule)
-    .where(eq(userExperienceRule.type, 1))
+    .from(appUserExperienceRule)
+    .where(eq(appUserExperienceRule.type, 1))
     .limit(1)
 
   const ledgerFixtures = [
@@ -1626,11 +1625,11 @@ export async function seedAppActivityDomain(db: Db) {
 
   const touchedTopics = [aotTopic, whiteNightTopic]
   for (const topicItem of touchedTopics) {
-    const topicComments = await db.query.userComment.findMany({
+    const topicComments = await db.query.appUserComment.findMany({
       where: and(
-        eq(userComment.targetType, 3),
-        eq(userComment.targetId, topicItem.id),
-        isNull(userComment.deletedAt),
+        eq(appUserComment.targetType, 3),
+        eq(appUserComment.targetId, topicItem.id),
+        isNull(appUserComment.deletedAt),
       ),
     })
     const latestComment = [...topicComments]
@@ -1639,16 +1638,16 @@ export async function seedAppActivityDomain(db: Db) {
           (a.createdAt?.getTime?.() ?? 0) - (b.createdAt?.getTime?.() ?? 0),
       )
       .at(-1)
-    const topicLikes = await db.query.userLike.findMany({
+    const topicLikes = await db.query.appUserLike.findMany({
       where: and(
-        eq(userLike.targetType, 3),
-        eq(userLike.targetId, topicItem.id),
+        eq(appUserLike.targetType, 3),
+        eq(appUserLike.targetId, topicItem.id),
       ),
     })
-    const topicFavorites = await db.query.userFavorite.findMany({
+    const topicFavorites = await db.query.appUserFavorite.findMany({
       where: and(
-        eq(userFavorite.targetType, 3),
-        eq(userFavorite.targetId, topicItem.id),
+        eq(appUserFavorite.targetType, 3),
+        eq(appUserFavorite.targetId, topicItem.id),
       ),
     })
 
@@ -1726,29 +1725,29 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const target of workTargets) {
-    const likes = await db.query.userLike.findMany({
+    const likes = await db.query.appUserLike.findMany({
       where: and(
-        eq(userLike.targetType, target.likeTargetType),
-        eq(userLike.targetId, target.row.id),
+        eq(appUserLike.targetType, target.likeTargetType),
+        eq(appUserLike.targetId, target.row.id),
       ),
     })
-    const favorites = await db.query.userFavorite.findMany({
+    const favorites = await db.query.appUserFavorite.findMany({
       where: and(
-        eq(userFavorite.targetType, target.favoriteTargetType),
-        eq(userFavorite.targetId, target.row.id),
+        eq(appUserFavorite.targetType, target.favoriteTargetType),
+        eq(appUserFavorite.targetId, target.row.id),
       ),
     })
-    const comments = await db.query.userComment.findMany({
+    const comments = await db.query.appUserComment.findMany({
       where: and(
-        eq(userComment.targetType, target.contentType),
-        eq(userComment.targetId, target.row.id),
-        isNull(userComment.deletedAt),
+        eq(appUserComment.targetType, target.contentType),
+        eq(appUserComment.targetId, target.row.id),
+        isNull(appUserComment.deletedAt),
       ),
     })
-    const browseLogs = await db.query.userBrowseLog.findMany({
+    const browseLogs = await db.query.appUserBrowseLog.findMany({
       where: and(
-        eq(userBrowseLog.targetType, target.browseTargetType),
-        eq(userBrowseLog.targetId, target.row.id),
+        eq(appUserBrowseLog.targetType, target.browseTargetType),
+        eq(appUserBrowseLog.targetId, target.row.id),
       ),
     })
     const chapters = await db.query.workChapter.findMany({
@@ -1790,36 +1789,36 @@ export async function seedAppActivityDomain(db: Db) {
   ] as const
 
   for (const target of chapterTargets) {
-    const likes = await db.query.userLike.findMany({
+    const likes = await db.query.appUserLike.findMany({
       where: and(
-        eq(userLike.targetType, target.likeTargetType),
-        eq(userLike.targetId, target.row.id),
+        eq(appUserLike.targetType, target.likeTargetType),
+        eq(appUserLike.targetId, target.row.id),
       ),
     })
-    const comments = await db.query.userComment.findMany({
+    const comments = await db.query.appUserComment.findMany({
       where: and(
-        eq(userComment.targetType, target.commentTargetType),
-        eq(userComment.targetId, target.row.id),
-        isNull(userComment.deletedAt),
+        eq(appUserComment.targetType, target.commentTargetType),
+        eq(appUserComment.targetId, target.row.id),
+        isNull(appUserComment.deletedAt),
       ),
     })
-    const browseLogs = await db.query.userBrowseLog.findMany({
+    const browseLogs = await db.query.appUserBrowseLog.findMany({
       where: and(
-        eq(userBrowseLog.targetType, target.browseTargetType),
-        eq(userBrowseLog.targetId, target.row.id),
+        eq(appUserBrowseLog.targetType, target.browseTargetType),
+        eq(appUserBrowseLog.targetId, target.row.id),
       ),
     })
-    const downloads = await db.query.userDownloadRecord.findMany({
+    const downloads = await db.query.appUserDownloadRecord.findMany({
       where: and(
-        eq(userDownloadRecord.targetType, target.downloadTargetType),
-        eq(userDownloadRecord.targetId, target.row.id),
+        eq(appUserDownloadRecord.targetType, target.downloadTargetType),
+        eq(appUserDownloadRecord.targetId, target.row.id),
       ),
     })
-    const purchases = await db.query.userPurchaseRecord.findMany({
+    const purchases = await db.query.appUserPurchaseRecord.findMany({
       where: and(
-        eq(userPurchaseRecord.targetType, target.purchaseTargetType),
-        eq(userPurchaseRecord.targetId, target.row.id),
-        eq(userPurchaseRecord.status, 2),
+        eq(appUserPurchaseRecord.targetType, target.purchaseTargetType),
+        eq(appUserPurchaseRecord.targetId, target.row.id),
+        eq(appUserPurchaseRecord.status, 2),
       ),
     })
 
@@ -1841,17 +1840,17 @@ export async function seedAppActivityDomain(db: Db) {
   })
 
   for (const user of appUsers) {
-    const comments = await db.query.userComment.findMany({
+    const comments = await db.query.appUserComment.findMany({
       where: and(
-        eq(userComment.userId, user.id),
-        isNull(userComment.deletedAt),
+        eq(appUserComment.userId, user.id),
+        isNull(appUserComment.deletedAt),
       ),
     })
-    const likes = await db.query.userLike.findMany({
-      where: eq(userLike.userId, user.id),
+    const likes = await db.query.appUserLike.findMany({
+      where: eq(appUserLike.userId, user.id),
     })
-    const favorites = await db.query.userFavorite.findMany({
-      where: eq(userFavorite.userId, user.id),
+    const favorites = await db.query.appUserFavorite.findMany({
+      where: eq(appUserFavorite.userId, user.id),
     })
     const topics = await db.query.forumTopic.findMany({
       where: and(eq(forumTopic.userId, user.id), isNull(forumTopic.deletedAt)),
@@ -1861,26 +1860,26 @@ export async function seedAppActivityDomain(db: Db) {
     const topicIds = topics.map((item) => item.id)
 
     const commentReceivedLikes = commentIds.length
-      ? await db.query.userLike.findMany({
+      ? await db.query.appUserLike.findMany({
           where: and(
-            eq(userLike.targetType, 4),
-            inArray(userLike.targetId, commentIds),
+            eq(appUserLike.targetType, 4),
+            inArray(appUserLike.targetId, commentIds),
           ),
         })
       : []
     const topicReceivedLikes = topicIds.length
-      ? await db.query.userLike.findMany({
+      ? await db.query.appUserLike.findMany({
           where: and(
-            eq(userLike.targetType, 3),
-            inArray(userLike.targetId, topicIds),
+            eq(appUserLike.targetType, 3),
+            inArray(appUserLike.targetId, topicIds),
           ),
         })
       : []
     const topicReceivedFavorites = topicIds.length
-      ? await db.query.userFavorite.findMany({
+      ? await db.query.appUserFavorite.findMany({
           where: and(
-            eq(userFavorite.targetType, 3),
-            inArray(userFavorite.targetId, topicIds),
+            eq(appUserFavorite.targetType, 3),
+            inArray(appUserFavorite.targetId, topicIds),
           ),
         })
       : []

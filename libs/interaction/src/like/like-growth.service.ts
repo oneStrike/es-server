@@ -148,7 +148,7 @@ export class LikeGrowthService {
     commentId: number,
     likerUserId: number,
   ): Promise<void> {
-    const comment = await this.db.query.userComment.findFirst({
+    const comment = await this.db.query.appUserComment.findFirst({
       where: { id: commentId, deletedAt: { isNull: true } },
       columns: { userId: true },
     })

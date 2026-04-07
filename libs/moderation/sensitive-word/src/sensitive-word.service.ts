@@ -42,8 +42,8 @@ export class SensitiveWordService {
   }
 
   /** 敏感词表 */
-  private get sensitiveWord() {
-    return this.drizzle.schema.sensitiveWord
+  private get systemSensitiveWord() {
+    return this.drizzle.schema.systemSensitiveWord
   }
 
   /**
@@ -55,16 +55,16 @@ export class SensitiveWordService {
     // 构建查询条件
     const conditions: SQL[] = []
     if (dto.word) {
-      conditions.push(like(this.sensitiveWord.word, buildLikePattern(dto.word)!))
+      conditions.push(like(this.systemSensitiveWord.word, buildLikePattern(dto.word)!))
     }
 
     ;['isEnabled', 'level', 'type', 'matchMode'].forEach((key) => {
       if (dto[key] !== undefined) {
-        conditions.push(eq(this.sensitiveWord[key], dto[key]))
+        conditions.push(eq(this.systemSensitiveWord[key], dto[key]))
       }
     })
 
-    return this.drizzle.ext.findPagination(this.sensitiveWord, {
+    return this.drizzle.ext.findPagination(this.systemSensitiveWord, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...dto,
     })
@@ -78,7 +78,7 @@ export class SensitiveWordService {
   async createSensitiveWord(dto: CreateSensitiveWordDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db
-        .insert(this.sensitiveWord)
+        .insert(this.systemSensitiveWord)
         .values(dto),
     )
 
@@ -96,9 +96,9 @@ export class SensitiveWordService {
     const { id, ...updateData } = dto
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .update(this.sensitiveWord)
+        .update(this.systemSensitiveWord)
         .set(updateData)
-        .where(eq(this.sensitiveWord.id, id)),
+        .where(eq(this.systemSensitiveWord.id, id)),
     )
     this.drizzle.assertAffectedRows(result, `ID【${id}】数据不存在`)
 
@@ -114,8 +114,8 @@ export class SensitiveWordService {
   async deleteSensitiveWord(dto: { id: number }) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .delete(this.sensitiveWord)
-        .where(eq(this.sensitiveWord.id, dto.id)),
+        .delete(this.systemSensitiveWord)
+        .where(eq(this.systemSensitiveWord.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(result, `ID【${dto.id}】数据不存在`)
 
@@ -132,9 +132,9 @@ export class SensitiveWordService {
   async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .update(this.sensitiveWord)
+        .update(this.systemSensitiveWord)
         .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.sensitiveWord.id, dto.id)),
+        .where(eq(this.systemSensitiveWord.id, dto.id)),
     )
     this.drizzle.assertAffectedRows(result, `ID【${dto.id}】数据不存在`)
 
@@ -150,12 +150,12 @@ export class SensitiveWordService {
   private async getLevelStatistics() {
     const results = await this.db
       .select({
-        level: this.sensitiveWord.level,
+        level: this.systemSensitiveWord.level,
         count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+        hitCount: sql<number>`sum(${this.systemSensitiveWord.hitCount})`,
       })
-      .from(this.sensitiveWord)
-      .groupBy(this.sensitiveWord.level)
+      .from(this.systemSensitiveWord)
+      .groupBy(this.systemSensitiveWord.level)
 
     return results.map((result) => ({
       level: result.level,
@@ -172,12 +172,12 @@ export class SensitiveWordService {
   private async getTypeStatistics() {
     const results = await this.db
       .select({
-        type: this.sensitiveWord.type,
+        type: this.systemSensitiveWord.type,
         count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+        hitCount: sql<number>`sum(${this.systemSensitiveWord.hitCount})`,
       })
-      .from(this.sensitiveWord)
-      .groupBy(this.sensitiveWord.type)
+      .from(this.systemSensitiveWord)
+      .groupBy(this.systemSensitiveWord.type)
 
     return results.map((result) => ({
       type: result.type,
@@ -194,15 +194,15 @@ export class SensitiveWordService {
   private async getTopHitStatistics() {
     const results = await this.db
       .select({
-        word: this.sensitiveWord.word,
-        hitCount: this.sensitiveWord.hitCount,
-        level: this.sensitiveWord.level,
-        type: this.sensitiveWord.type,
-        lastHitAt: this.sensitiveWord.lastHitAt,
+        word: this.systemSensitiveWord.word,
+        hitCount: this.systemSensitiveWord.hitCount,
+        level: this.systemSensitiveWord.level,
+        type: this.systemSensitiveWord.type,
+        lastHitAt: this.systemSensitiveWord.lastHitAt,
       })
-      .from(this.sensitiveWord)
-      .where(gt(this.sensitiveWord.hitCount, 0))
-      .orderBy(desc(this.sensitiveWord.hitCount))
+      .from(this.systemSensitiveWord)
+      .where(gt(this.systemSensitiveWord.hitCount, 0))
+      .orderBy(desc(this.systemSensitiveWord.hitCount))
       .limit(20)
 
     return results.map((result) => ({
@@ -221,15 +221,15 @@ export class SensitiveWordService {
   private async getRecentHitStatistics() {
     const results = await this.db
       .select({
-        word: this.sensitiveWord.word,
-        hitCount: this.sensitiveWord.hitCount,
-        level: this.sensitiveWord.level,
-        type: this.sensitiveWord.type,
-        lastHitAt: this.sensitiveWord.lastHitAt,
+        word: this.systemSensitiveWord.word,
+        hitCount: this.systemSensitiveWord.hitCount,
+        level: this.systemSensitiveWord.level,
+        type: this.systemSensitiveWord.type,
+        lastHitAt: this.systemSensitiveWord.lastHitAt,
       })
-      .from(this.sensitiveWord)
-      .where(isNotNull(this.sensitiveWord.lastHitAt))
-      .orderBy(desc(this.sensitiveWord.lastHitAt))
+      .from(this.systemSensitiveWord)
+      .where(isNotNull(this.systemSensitiveWord.lastHitAt))
+      .orderBy(desc(this.systemSensitiveWord.lastHitAt))
       .limit(20)
 
     return results.map((result) => ({

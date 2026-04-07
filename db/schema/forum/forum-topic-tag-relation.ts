@@ -7,7 +7,7 @@ import { index, integer, pgTable, primaryKey, timestamp } from "drizzle-orm/pg-c
 /**
  * 论坛主题标签关联表 - 管理主题与标签的多对多关系
  */
-export const forumTopicTag = pgTable("forum_topic_tag", {
+export const forumTopicTagRelation = pgTable("forum_topic_tag_relation", {
   /**
    * 关联的主题ID
    */
@@ -24,7 +24,7 @@ export const forumTopicTag = pgTable("forum_topic_tag", {
     /**
      * 标签与创建时间索引
      */
-    index("forum_topic_tag_tag_id_created_at_idx").on(table.tagId, table.createdAt.desc()),
+    index("forum_topic_tag_relation_tag_id_created_at_idx").on(table.tagId, table.createdAt.desc()),
     /**
      * 主题与标签复合主键
      */

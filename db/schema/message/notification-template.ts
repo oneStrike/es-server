@@ -34,12 +34,12 @@ export const notificationTemplate = pgTable('notification_template', {
   notificationType: smallint().notNull(),
   /**
    * 标题模板
-   * 渲染后需满足 user_notification.title 的长度约束
+   * 渲染后需满足 app_user_notification.title 的长度约束
    */
   titleTemplate: varchar({ length: 200 }).notNull(),
   /**
    * 正文模板
-   * 渲染后需满足 user_notification.content 的长度约束
+   * 渲染后需满足 app_user_notification.content 的长度约束
    */
   contentTemplate: varchar({ length: 1000 }).notNull(),
   /**

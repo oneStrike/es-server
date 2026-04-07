@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
-import { UserCommentSelect } from '@db/schema'
+import { AppUserCommentSelect } from '@db/schema'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
 import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
@@ -15,7 +15,7 @@ export class CommentGrowthService {
 
   async rewardCommentCreated(
     tx: Db,
-    params: Pick<UserCommentSelect, 'userId' | 'id' | 'targetType' | 'targetId'> & {
+    params: Pick<AppUserCommentSelect, 'userId' | 'id' | 'targetType' | 'targetId'> & {
       occurredAt?: Date
       eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum>
     },
@@ -63,7 +63,7 @@ export class CommentGrowthService {
 
   async rewardCommentLiked(
     tx: Db,
-    params: Pick<UserCommentSelect, 'id' | 'userId'> & { likerUserId: number },
+    params: Pick<AppUserCommentSelect, 'id' | 'userId'> & { likerUserId: number },
   ) {
     const { id: commentId, userId: authorUserId, likerUserId } = params
 

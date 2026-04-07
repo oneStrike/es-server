@@ -388,7 +388,7 @@ export class AppAnnouncementService {
 
   /**
    * 构建公告通知 outbox 事件
-   * 重要公告统一物化为 user_notification(type=SYSTEM_ANNOUNCEMENT)。
+   * 重要公告统一物化为 app_user_notification(type=SYSTEM_ANNOUNCEMENT)。
    */
   private buildAnnouncementNotificationEvent(params: {
     announcementId: number

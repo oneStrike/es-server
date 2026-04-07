@@ -15,7 +15,7 @@ describe('message notification preference service', () => {
     const service = new MessageNotificationPreferenceService({
       db: {
         query: {
-          notificationPreference: {
+          appUserNotificationPreference: {
             findMany: jest.fn().mockResolvedValue([
               {
                 id: 5,
@@ -97,13 +97,13 @@ describe('message notification preference service', () => {
       db: {
         transaction,
         query: {
-          notificationPreference: {
+          appUserNotificationPreference: {
             findMany,
           },
         },
       },
       schema: {
-        notificationPreference: {
+        appUserNotificationPreference: {
           userId: 'userId',
           notificationType: 'notificationType',
         },

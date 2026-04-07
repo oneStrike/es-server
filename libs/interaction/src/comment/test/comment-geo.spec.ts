@@ -131,7 +131,7 @@ describe('comment geo contract', () => {
         findPagination,
       },
       schema: {
-        userComment: {
+        appUserComment: {
           id: 'id',
           actualReplyToId: 'actualReplyToId',
           auditStatus: 'auditStatus',
@@ -221,7 +221,7 @@ describe('comment geo contract', () => {
       withErrorHandling: jest.fn(async (callback) => callback()),
       isSerializationFailure: jest.fn().mockReturnValue(false),
       schema: {
-        userComment: {
+        appUserComment: {
           id: 'id',
           userId: 'userId',
           targetType: 'targetType',
@@ -280,7 +280,7 @@ describe('comment geo contract', () => {
     const service = await createCommentService({
       db: {
         query: {
-          userComment: {
+          appUserComment: {
             findFirst: jest.fn().mockResolvedValue({
               id: 77,
               targetType: CommentTargetTypeEnum.COMIC,
@@ -299,7 +299,7 @@ describe('comment geo contract', () => {
         }),
       ),
       schema: {
-        userComment: {
+        appUserComment: {
           id: 'id',
           userId: 'userId',
           targetType: 'targetType',

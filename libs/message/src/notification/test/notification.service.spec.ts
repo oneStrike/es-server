@@ -44,7 +44,7 @@ describe('message notification service', () => {
       {
         db: { insert },
         schema: {
-          userNotification: {
+          appUserNotification: {
             userId: 'userId',
             bizKey: 'bizKey',
           },
@@ -149,7 +149,7 @@ describe('message notification service', () => {
       {
         db: { insert },
         schema: {
-          userNotification: {},
+          appUserNotification: {},
         },
       } as any,
       {} as any,

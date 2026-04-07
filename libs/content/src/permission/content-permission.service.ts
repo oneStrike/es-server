@@ -61,8 +61,8 @@ export class ContentPermissionService {
   }
 
   /** 购买记录表。 */
-  get userPurchaseRecord() {
-    return this.drizzle.schema.userPurchaseRecord
+  get appUserPurchaseRecord() {
+    return this.drizzle.schema.appUserPurchaseRecord
   }
 
   /**
@@ -196,7 +196,7 @@ export class ContentPermissionService {
    * 仅成功支付的记录视为已购买，失败或关闭状态不会放行章节访问。
    */
   async validateChapterPurchasePermission(userId: number, chapterId: number) {
-    const purchased = await this.db.query.userPurchaseRecord.findFirst({
+    const purchased = await this.db.query.appUserPurchaseRecord.findFirst({
       where: {
         targetType: {
           in: [

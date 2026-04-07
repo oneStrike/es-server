@@ -69,20 +69,20 @@ export class AppUserService {
     return this.drizzle.schema.appUserCount
   }
 
-  private get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  private get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
   private get growthLedgerRecord() {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  private get userBadgeAssignment() {
-    return this.drizzle.schema.userBadgeAssignment
+  private get appUserBadgeAssignment() {
+    return this.drizzle.schema.appUserBadgeAssignment
   }
 
-  private get userBadge() {
-    return this.drizzle.schema.userBadge
+  private get appBadge() {
+    return this.drizzle.schema.appBadge
   }
 
   private async processIdsInBatches(
@@ -187,11 +187,11 @@ export class AppUserService {
       levelIds.length > 0
         ? this.db
             .select({
-              id: this.userLevelRule.id,
-              name: this.userLevelRule.name,
+              id: this.appUserLevelRule.id,
+              name: this.appUserLevelRule.name,
             })
-            .from(this.userLevelRule)
-            .where(inArray(this.userLevelRule.id, levelIds as number[]))
+            .from(this.appUserLevelRule)
+            .where(inArray(this.appUserLevelRule.id, levelIds as number[]))
         : [],
       userIds.length > 0
         ? this.db
@@ -294,10 +294,10 @@ export class AppUserService {
       await this.drizzle.withErrorHandling(async () =>
         this.db.transaction(async (tx) => {
           const [defaultLevel] = await tx
-            .select({ id: this.userLevelRule.id })
-            .from(this.userLevelRule)
-            .where(eq(this.userLevelRule.isEnabled, true))
-            .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
+            .select({ id: this.appUserLevelRule.id })
+            .from(this.appUserLevelRule)
+            .where(eq(this.appUserLevelRule.isEnabled, true))
+            .orderBy(asc(this.appUserLevelRule.sortOrder), asc(this.appUserLevelRule.id))
             .limit(1)
 
           const [created] = await tx
@@ -622,18 +622,18 @@ export class AppUserService {
         : undefined,
       this.db
         .select({
-          id: this.userLevelRule.id,
-          name: this.userLevelRule.name,
-          requiredExperience: this.userLevelRule.requiredExperience,
+          id: this.appUserLevelRule.id,
+          name: this.appUserLevelRule.name,
+          requiredExperience: this.appUserLevelRule.requiredExperience,
         })
-        .from(this.userLevelRule)
+        .from(this.appUserLevelRule)
         .where(
           and(
-            eq(this.userLevelRule.isEnabled, true),
-            gt(this.userLevelRule.requiredExperience, user.experience),
+            eq(this.appUserLevelRule.isEnabled, true),
+            gt(this.appUserLevelRule.requiredExperience, user.experience),
           ),
         )
-        .orderBy(this.userLevelRule.requiredExperience)
+        .orderBy(this.appUserLevelRule.requiredExperience)
         .limit(1),
     ])
     const todayEarned = Number(todayEarnedRows[0]?.sum ?? 0)
@@ -714,35 +714,35 @@ export class AppUserService {
 
     if (name) {
       badgeConditions.push(
-        buildILikeCondition(this.userBadge.name, name)!,
+        buildILikeCondition(this.appBadge.name, name)!,
       )
     }
     if (type !== undefined) {
-      badgeConditions.push(eq(this.userBadge.type, type))
+      badgeConditions.push(eq(this.appBadge.type, type))
     }
     if (isEnabled !== undefined) {
-      badgeConditions.push(eq(this.userBadge.isEnabled, isEnabled))
+      badgeConditions.push(eq(this.appBadge.isEnabled, isEnabled))
     }
     if (business !== undefined) {
       badgeConditions.push(
         business === null
-          ? isNull(this.userBadge.business)
-          : eq(this.userBadge.business, business),
+          ? isNull(this.appBadge.business)
+          : eq(this.appBadge.business, business),
       )
     }
     if (eventKey !== undefined) {
       badgeConditions.push(
         eventKey === null
-          ? isNull(this.userBadge.eventKey)
-          : eq(this.userBadge.eventKey, eventKey),
+          ? isNull(this.appBadge.eventKey)
+          : eq(this.appBadge.eventKey, eventKey),
       )
     }
 
     const badgeWhere =
       badgeConditions.length > 0 ? and(...badgeConditions) : undefined
     const badges = await this.db
-      .select({ id: this.userBadge.id })
-      .from(this.userBadge)
+      .select({ id: this.appBadge.id })
+      .from(this.appBadge)
       .where(badgeWhere)
     const badgeIds = badges.map((item) => item.id)
     if (badgeIds.length === 0) {
@@ -755,11 +755,11 @@ export class AppUserService {
       }
     }
     const page = await this.drizzle.ext.findPagination(
-      this.userBadgeAssignment,
+      this.appUserBadgeAssignment,
       {
         where: and(
-          eq(this.userBadgeAssignment.userId, userId),
-          inArray(this.userBadgeAssignment.badgeId, badgeIds),
+          eq(this.appUserBadgeAssignment.userId, userId),
+          inArray(this.appUserBadgeAssignment.badgeId, badgeIds),
         ),
         ...pageQuery,
         orderBy: pageQuery.orderBy ?? [
@@ -772,8 +772,8 @@ export class AppUserService {
     const pageBadges = pageBadgeIds.length
       ? await this.db
           .select()
-          .from(this.userBadge)
-          .where(inArray(this.userBadge.id, pageBadgeIds))
+          .from(this.appBadge)
+          .where(inArray(this.appBadge.id, pageBadgeIds))
       : []
     const badgeMap = new Map(pageBadges.map((item) => [item.id, item]))
 

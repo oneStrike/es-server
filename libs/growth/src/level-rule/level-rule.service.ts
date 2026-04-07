@@ -36,8 +36,8 @@ export class UserLevelRuleService {
   }
 
   /** 等级规则表。 */
-  get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
   /** 主题表。 */
@@ -47,17 +47,17 @@ export class UserLevelRuleService {
 
   /** 回复/评论表。 */
   get forumReply() {
-    return this.drizzle.schema.userComment
+    return this.drizzle.schema.appUserComment
   }
 
   /** 点赞事实表。 */
-  get userLike() {
-    return this.drizzle.schema.userLike
+  get appUserLike() {
+    return this.drizzle.schema.appUserLike
   }
 
   /** 收藏事实表。 */
-  get userFavorite() {
-    return this.drizzle.schema.userFavorite
+  get appUserFavorite() {
+    return this.drizzle.schema.appUserFavorite
   }
 
   /**
@@ -67,7 +67,7 @@ export class UserLevelRuleService {
    */
   async createLevelRule(dto: CreateUserLevelRuleDto) {
     await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userLevelRule).values(dto),
+      () => this.db.insert(this.appUserLevelRule).values(dto),
       {
         duplicate: '经验规则已经存在',
       },
@@ -84,18 +84,18 @@ export class UserLevelRuleService {
     const conditions: SQL[] = []
 
     if (dto.isEnabled !== undefined) {
-      conditions.push(eq(this.userLevelRule.isEnabled, dto.isEnabled))
+      conditions.push(eq(this.appUserLevelRule.isEnabled, dto.isEnabled))
     }
     if (dto.business !== undefined) {
       conditions.push(
         dto.business === null
-          ? isNull(this.userLevelRule.business)
-          : eq(this.userLevelRule.business, dto.business),
+          ? isNull(this.appUserLevelRule.business)
+          : eq(this.appUserLevelRule.business, dto.business),
       )
     }
     if (dto.name) {
       conditions.push(
-        buildILikeCondition(this.userLevelRule.name, dto.name)!,
+        buildILikeCondition(this.appUserLevelRule.name, dto.name)!,
       )
     }
 
@@ -103,7 +103,7 @@ export class UserLevelRuleService {
       ? dto.orderBy
       : { sortOrder: 'asc' as const }
 
-    return this.drizzle.ext.findPagination(this.userLevelRule, {
+    return this.drizzle.ext.findPagination(this.appUserLevelRule, {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       ...dto,
       orderBy,
@@ -116,7 +116,7 @@ export class UserLevelRuleService {
    * @returns 等级规则详情
    */
   async getLevelRuleDetail(id: number) {
-    const rule = await this.db.query.userLevelRule.findFirst({
+    const rule = await this.db.query.appUserLevelRule.findFirst({
       where: { id },
     })
     if (!rule) {
@@ -135,9 +135,9 @@ export class UserLevelRuleService {
     const result = await this.drizzle.withErrorHandling(
       () =>
         this.db
-          .update(this.userLevelRule)
+          .update(this.appUserLevelRule)
           .set(updateData)
-          .where(eq(this.userLevelRule.id, id)),
+          .where(eq(this.appUserLevelRule.id, id)),
       {
         duplicate: 'Level rule already exists',
       },
@@ -152,7 +152,7 @@ export class UserLevelRuleService {
    * @returns 删除结果
    */
   async deleteLevelRule(id: number) {
-    const rule = await this.db.query.userLevelRule.findFirst({
+    const rule = await this.db.query.appUserLevelRule.findFirst({
       where: { id },
       columns: { id: true },
     })
@@ -171,8 +171,8 @@ export class UserLevelRuleService {
 
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .delete(this.userLevelRule)
-        .where(eq(this.userLevelRule.id, id)),
+        .delete(this.appUserLevelRule)
+        .where(eq(this.appUserLevelRule.id, id)),
     )
     this.drizzle.assertAffectedRows(result, '等级规则不存在')
     return true
@@ -205,14 +205,14 @@ export class UserLevelRuleService {
 
     const [nextLevelRule] = await this.db
       .select()
-      .from(this.userLevelRule)
+      .from(this.appUserLevelRule)
       .where(
         and(
-          eq(this.userLevelRule.isEnabled, true),
-          gt(this.userLevelRule.requiredExperience, user.experience),
+          eq(this.appUserLevelRule.isEnabled, true),
+          gt(this.appUserLevelRule.requiredExperience, user.experience),
         ),
       )
-      .orderBy(asc(this.userLevelRule.requiredExperience))
+      .orderBy(asc(this.appUserLevelRule.requiredExperience))
       .limit(1)
 
     let progressPercentage = 0
@@ -260,7 +260,7 @@ export class UserLevelRuleService {
    * 供账本、升级和修复链路复用，避免不同上下文复制相同排序逻辑。
    */
   async getHighestLevelRuleByExperienceInTx(tx: Db, experience: number) {
-    return tx.query.userLevelRule.findFirst({
+    return tx.query.appUserLevelRule.findFirst({
       where: {
         isEnabled: true,
         requiredExperience: { lte: experience },
@@ -372,14 +372,14 @@ export class UserLevelRuleService {
         limit = level.dailyLikeLimit
         if (limit > 0) {
           used = await this.countByCondition(
-            this.userLike,
+            this.appUserLike,
             and(
-              eq(this.userLike.userId, userId),
-              inArray(this.userLike.targetType, [
+              eq(this.appUserLike.userId, userId),
+              inArray(this.appUserLike.targetType, [
                 this.forumTopicLikeTargetType,
                 this.commentLikeTargetType,
               ]),
-              gte(this.userLike.createdAt, today),
+              gte(this.appUserLike.createdAt, today),
             ),
           )
           hasPermission = used < limit
@@ -390,11 +390,11 @@ export class UserLevelRuleService {
         limit = level.dailyFavoriteLimit
         if (limit > 0) {
           used = await this.countByCondition(
-            this.userFavorite,
+            this.appUserFavorite,
             and(
-              eq(this.userFavorite.userId, userId),
-              eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
-              gte(this.userFavorite.createdAt, today),
+              eq(this.appUserFavorite.userId, userId),
+              eq(this.appUserFavorite.targetType, this.forumTopicFavoriteTargetType),
+              gte(this.appUserFavorite.createdAt, today),
             ),
           )
           hasPermission = used < limit
@@ -421,16 +421,16 @@ export class UserLevelRuleService {
   async getLevelStatistics(): Promise<UserLevelStatisticsDto> {
     const levels = await this.db
       .select({
-        id: this.userLevelRule.id,
-        name: this.userLevelRule.name,
+        id: this.appUserLevelRule.id,
+        name: this.appUserLevelRule.name,
       })
-      .from(this.userLevelRule)
-      .where(eq(this.userLevelRule.isEnabled, true))
-      .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
+      .from(this.appUserLevelRule)
+      .where(eq(this.appUserLevelRule.isEnabled, true))
+      .orderBy(asc(this.appUserLevelRule.sortOrder), asc(this.appUserLevelRule.id))
 
     const [allLevelsCount] = await this.db
       .select({ total: sql<number>`count(*)` })
-      .from(this.userLevelRule)
+      .from(this.appUserLevelRule)
 
     const levelIds = levels.map((item) => item.id)
     const distributionRows = levelIds.length > 0

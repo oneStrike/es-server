@@ -29,8 +29,8 @@ export class ReadingStateService {
     return this.drizzle.db
   }
 
-  private get userWorkReadingState() {
-    return this.drizzle.schema.userWorkReadingState
+  private get appUserWorkReadingState() {
+    return this.drizzle.schema.appUserWorkReadingState
   }
 
   private get workChapter() {
@@ -84,7 +84,7 @@ export class ReadingStateService {
   ) {
     const resolver = this.getResolver(workType)
 
-    const state = await this.db.query.userWorkReadingState.findFirst({
+    const state = await this.db.query.appUserWorkReadingState.findFirst({
       where: {
         userId,
         workId,
@@ -127,7 +127,7 @@ export class ReadingStateService {
 
     const rows = await this.drizzle.withErrorHandling(() =>
       this.db
-        .insert(this.userWorkReadingState)
+        .insert(this.appUserWorkReadingState)
         .values({
           userId,
           workId,
@@ -137,8 +137,8 @@ export class ReadingStateService {
         })
         .onConflictDoUpdate({
           target: [
-            this.userWorkReadingState.userId,
-            this.userWorkReadingState.workId,
+            this.appUserWorkReadingState.userId,
+            this.appUserWorkReadingState.workId,
           ],
           set: {
             workType,
@@ -212,17 +212,17 @@ export class ReadingStateService {
    */
   async getUserReadingHistory(query: QueryReadingHistoryCommandDto) {
     const { workType, userId, workId, pageIndex, pageSize } = query
-    const conditions: SQL[] = [eq(this.userWorkReadingState.userId, userId)]
+    const conditions: SQL[] = [eq(this.appUserWorkReadingState.userId, userId)]
 
     if (workId !== undefined) {
-      conditions.push(eq(this.userWorkReadingState.workId, workId))
+      conditions.push(eq(this.appUserWorkReadingState.workId, workId))
     }
     if (workType !== undefined) {
-      conditions.push(eq(this.userWorkReadingState.workType, workType))
+      conditions.push(eq(this.appUserWorkReadingState.workType, workType))
     }
 
     const page = await this.drizzle.ext.findPagination(
-      this.userWorkReadingState,
+      this.appUserWorkReadingState,
       {
         where: and(...conditions),
         orderBy: [{ lastReadAt: 'desc' }, { workId: 'asc' }],
@@ -330,11 +330,11 @@ export class ReadingStateService {
   async deleteUserReadingHistory(input: DeleteReadingHistoryCommandDto) {
     const result = await this.drizzle.withErrorHandling(() =>
       this.db
-        .delete(this.userWorkReadingState)
+        .delete(this.appUserWorkReadingState)
         .where(
           and(
-            eq(this.userWorkReadingState.userId, input.userId),
-            inArray(this.userWorkReadingState.workId, input.workIds),
+            eq(this.appUserWorkReadingState.userId, input.userId),
+            inArray(this.appUserWorkReadingState.workId, input.workIds),
           ),
         ),
     )
@@ -347,13 +347,13 @@ export class ReadingStateService {
   async clearUserReadingHistory(input: ClearReadingHistoryCommandDto) {
     await this.drizzle.withErrorHandling(() =>
       this.db
-        .delete(this.userWorkReadingState)
+        .delete(this.appUserWorkReadingState)
         .where(
           input.workType === undefined
-            ? eq(this.userWorkReadingState.userId, input.userId)
+            ? eq(this.appUserWorkReadingState.userId, input.userId)
             : and(
-                eq(this.userWorkReadingState.userId, input.userId),
-                eq(this.userWorkReadingState.workType, input.workType),
+                eq(this.appUserWorkReadingState.userId, input.userId),
+                eq(this.appUserWorkReadingState.workType, input.workType),
               ),
         ),
     )

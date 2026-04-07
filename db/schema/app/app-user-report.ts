@@ -8,7 +8,7 @@ import { index, integer, pgTable, smallint, timestamp, unique, varchar } from "d
  * 用户举报记录表
  * 统一存储作品、章节、论坛主题、评论、用户的举报行为
  */
-export const userReport = pgTable("user_report", {
+export const appUserReport = pgTable("app_user_report", {
   /**
    * 主键 ID
    */
@@ -84,32 +84,32 @@ export const userReport = pgTable("user_report", {
     /**
      * 同一用户对同一目标只允许举报一次
      */
-    unique("user_report_reporter_id_target_type_target_id_key").on(table.reporterId, table.targetType, table.targetId),
+    unique("app_user_report_reporter_id_target_type_target_id_key").on(table.reporterId, table.targetType, table.targetId),
     /**
      * 直接目标查询索引
      */
-    index("user_report_target_type_target_id_idx").on(table.targetType, table.targetId),
+    index("app_user_report_target_type_target_id_idx").on(table.targetType, table.targetId),
     /**
      * 场景状态查询索引
      */
-    index("user_report_scene_type_scene_id_status_idx").on(table.sceneType, table.sceneId, table.status),
+    index("app_user_report_scene_type_scene_id_status_idx").on(table.sceneType, table.sceneId, table.status),
     /**
      * 场景时间统计索引
      */
-    index("user_report_scene_type_status_created_at_idx").on(table.sceneType, table.status, table.createdAt),
+    index("app_user_report_scene_type_status_created_at_idx").on(table.sceneType, table.status, table.createdAt),
     /**
      * 原因统计索引
      */
-    index("user_report_reason_type_status_created_at_idx").on(table.reasonType, table.status, table.createdAt),
+    index("app_user_report_reason_type_status_created_at_idx").on(table.reasonType, table.status, table.createdAt),
     /**
      * 处理维度查询索引
      */
-    index("user_report_handler_id_status_handled_at_idx").on(table.handlerId, table.status, table.handledAt),
+    index("app_user_report_handler_id_status_handled_at_idx").on(table.handlerId, table.status, table.handledAt),
     /**
      * 创建时间索引
      */
-    index("user_report_created_at_idx").on(table.createdAt),
+    index("app_user_report_created_at_idx").on(table.createdAt),
 ]);
 
-export type UserReportSelect = typeof userReport.$inferSelect;
-export type UserReportInsert = typeof userReport.$inferInsert;
+export type AppUserReportSelect = typeof appUserReport.$inferSelect;
+export type AppUserReportInsert = typeof appUserReport.$inferInsert;

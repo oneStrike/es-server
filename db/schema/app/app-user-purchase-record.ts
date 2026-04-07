@@ -18,8 +18,8 @@ import {
  * 记录用户对作品、章节等内容的购买操作
  * 支持购买历史查询和消费统计
  */
-export const userPurchaseRecord = pgTable(
-  'user_purchase_record',
+export const appUserPurchaseRecord = pgTable(
+  'app_user_purchase_record',
   {
     /**
      * 主键ID（自增）
@@ -70,32 +70,32 @@ export const userPurchaseRecord = pgTable(
     /**
      * 唯一约束：同一用户对同一目标只允许存在一条成功购买记录
      */
-    uniqueIndex('user_purchase_record_success_unique_idx')
+    uniqueIndex('app_user_purchase_record_success_unique_idx')
       .on(table.targetType, table.targetId, table.userId)
       .where(sql`${table.status} = 1`),
     /**
      * 目标类型与目标ID联合索引
      */
-    index('user_purchase_record_target_type_target_id_idx').on(
+    index('app_user_purchase_record_target_type_target_id_idx').on(
       table.targetType,
       table.targetId,
     ),
     /**
      * 用户ID索引
      */
-    index('user_purchase_record_user_id_idx').on(table.userId),
+    index('app_user_purchase_record_user_id_idx').on(table.userId),
     /**
      * 购买状态索引
      */
-    index('user_purchase_record_status_idx').on(table.status),
+    index('app_user_purchase_record_status_idx').on(table.status),
     /**
      * 创建时间索引
      */
-    index('user_purchase_record_created_at_idx').on(table.createdAt),
+    index('app_user_purchase_record_created_at_idx').on(table.createdAt),
     /**
      * 用户状态类型时间联合索引
      */
-    index('user_purchase_record_user_id_status_target_type_created_at__idx').on(
+    index('app_user_purchase_record_user_id_status_target_type_created_at__idx').on(
       table.userId,
       table.status,
       table.targetType,
@@ -105,5 +105,5 @@ export const userPurchaseRecord = pgTable(
   ],
 )
 
-export type UserPurchaseRecordSelect = typeof userPurchaseRecord.$inferSelect
-export type UserPurchaseRecordInsert = typeof userPurchaseRecord.$inferInsert
+export type AppUserPurchaseRecordSelect = typeof appUserPurchaseRecord.$inferSelect
+export type AppUserPurchaseRecordInsert = typeof appUserPurchaseRecord.$inferInsert

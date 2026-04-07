@@ -20,28 +20,28 @@ export class UserAssetsService {
     return this.drizzle.db
   }
 
-  private get userComment() {
-    return this.drizzle.schema.userComment
+  private get appUserComment() {
+    return this.drizzle.schema.appUserComment
   }
 
-  private get userLike() {
-    return this.drizzle.schema.userLike
+  private get appUserLike() {
+    return this.drizzle.schema.appUserLike
   }
 
-  private get userFavorite() {
-    return this.drizzle.schema.userFavorite
+  private get appUserFavorite() {
+    return this.drizzle.schema.appUserFavorite
   }
 
-  private get userBrowseLog() {
-    return this.drizzle.schema.userBrowseLog
+  private get appUserBrowseLog() {
+    return this.drizzle.schema.appUserBrowseLog
   }
 
-  private get userPurchaseRecord() {
-    return this.drizzle.schema.userPurchaseRecord
+  private get appUserPurchaseRecord() {
+    return this.drizzle.schema.appUserPurchaseRecord
   }
 
-  private get userDownloadRecord() {
-    return this.drizzle.schema.userDownloadRecord
+  private get appUserDownloadRecord() {
+    return this.drizzle.schema.appUserDownloadRecord
   }
 
   private get workChapter() {
@@ -63,44 +63,44 @@ export class UserAssetsService {
     ] = await Promise.all([
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
-        .from(this.userComment)
+        .from(this.appUserComment)
         .where(
           and(
-            eq(this.userComment.userId, userId),
-            isNull(this.userComment.deletedAt),
+            eq(this.appUserComment.userId, userId),
+            isNull(this.appUserComment.deletedAt),
           ),
         ),
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
-        .from(this.userLike)
-        .where(eq(this.userLike.userId, userId)),
+        .from(this.appUserLike)
+        .where(eq(this.appUserLike.userId, userId)),
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
-        .from(this.userFavorite)
-        .where(eq(this.userFavorite.userId, userId)),
+        .from(this.appUserFavorite)
+        .where(eq(this.appUserFavorite.userId, userId)),
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
-        .from(this.userBrowseLog)
-        .where(eq(this.userBrowseLog.userId, userId)),
+        .from(this.appUserBrowseLog)
+        .where(eq(this.appUserBrowseLog.userId, userId)),
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
-        .from(this.userPurchaseRecord)
+        .from(this.appUserPurchaseRecord)
         .where(
           and(
-            eq(this.userPurchaseRecord.userId, userId),
-            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
-            inArray(this.userPurchaseRecord.targetType, [
+            eq(this.appUserPurchaseRecord.userId, userId),
+            eq(this.appUserPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
+            inArray(this.appUserPurchaseRecord.targetType, [
               ...PURCHASE_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),
         ),
       this.db
         .select({ count: sql<UserAssetsCountRow['count']>`count(*)::int` })
-        .from(this.userDownloadRecord)
+        .from(this.appUserDownloadRecord)
         .where(
           and(
-            eq(this.userDownloadRecord.userId, userId),
-            inArray(this.userDownloadRecord.targetType, [
+            eq(this.appUserDownloadRecord.userId, userId),
+            inArray(this.appUserDownloadRecord.targetType, [
               ...DOWNLOAD_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),
@@ -111,16 +111,16 @@ export class UserAssetsService {
             UserAssetsDistinctWorkCountRow['total']
           >`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
         })
-        .from(this.userPurchaseRecord)
+        .from(this.appUserPurchaseRecord)
         .innerJoin(
           this.workChapter,
-          eq(this.workChapter.id, this.userPurchaseRecord.targetId),
+          eq(this.workChapter.id, this.appUserPurchaseRecord.targetId),
         )
         .where(
           and(
-            eq(this.userPurchaseRecord.userId, userId),
-            eq(this.userPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
-            inArray(this.userPurchaseRecord.targetType, [
+            eq(this.appUserPurchaseRecord.userId, userId),
+            eq(this.appUserPurchaseRecord.status, PurchaseStatusEnum.SUCCESS),
+            inArray(this.appUserPurchaseRecord.targetType, [
               ...PURCHASE_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),
@@ -131,15 +131,15 @@ export class UserAssetsService {
             UserAssetsDistinctWorkCountRow['total']
           >`COUNT(DISTINCT ${this.workChapter.workId})::bigint`,
         })
-        .from(this.userDownloadRecord)
+        .from(this.appUserDownloadRecord)
         .innerJoin(
           this.workChapter,
-          eq(this.workChapter.id, this.userDownloadRecord.targetId),
+          eq(this.workChapter.id, this.appUserDownloadRecord.targetId),
         )
         .where(
           and(
-            eq(this.userDownloadRecord.userId, userId),
-            inArray(this.userDownloadRecord.targetType, [
+            eq(this.appUserDownloadRecord.userId, userId),
+            inArray(this.appUserDownloadRecord.targetType, [
               ...DOWNLOAD_WORK_CHAPTER_TARGET_TYPES,
             ]),
           ),

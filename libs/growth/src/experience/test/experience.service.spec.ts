@@ -15,7 +15,7 @@ describe('experience service rule validation', () => {
       {} as any,
       {
         db: { insert },
-        schema: { userExperienceRule: {} },
+        schema: { appUserExperienceRule: {} },
         withErrorHandling: jest.fn(async (callback) => callback()),
       } as any,
     )
@@ -41,7 +41,7 @@ describe('experience service rule validation', () => {
       {} as any,
       {
         db: { update },
-        schema: { userExperienceRule: {} },
+        schema: { appUserExperienceRule: {} },
         withErrorHandling: jest.fn(async (callback) => callback()),
       } as any,
     )

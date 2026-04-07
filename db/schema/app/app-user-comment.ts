@@ -8,7 +8,7 @@ import { boolean, index, integer, jsonb, pgTable, smallint, text, timestamp, var
  * 用户评论表
  * 统一存储作品评论、章节评论和论坛回复
  */
-export const userComment = pgTable("user_comment", {
+export const appUserComment = pgTable("app_user_comment", {
   /**
    * 主键ID
    */
@@ -119,54 +119,54 @@ export const userComment = pgTable("user_comment", {
     /**
      * 目标维度时间索引
      */
-    index("user_comment_target_type_target_id_created_at_idx").on(table.targetType, table.targetId, table.createdAt),
+    index("app_user_comment_target_type_target_id_created_at_idx").on(table.targetType, table.targetId, table.createdAt),
     /**
      * 楼层查询索引
      */
-    index("user_comment_target_type_target_id_reply_to_id_floor_idx").on(table.targetType, table.targetId, table.replyToId, table.floor),
+    index("app_user_comment_target_type_target_id_reply_to_id_floor_idx").on(table.targetType, table.targetId, table.replyToId, table.floor),
     /**
      * 可见评论索引
      * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
      */
-    index("user_comment_target_type_target_id_audit_status_is_hidden_d_idx").on(table.targetType, table.targetId, table.auditStatus, table.isHidden, table.deletedAt),
+    index("app_user_comment_target_type_target_id_audit_status_is_hidden_d_idx").on(table.targetType, table.targetId, table.auditStatus, table.isHidden, table.deletedAt),
     /**
      * 回复分页索引
      * 注意：PostgreSQL 索引名最大 63 字符，此名称已被自动截断
      */
-    index("user_comment_actual_reply_to_id_audit_status_is_hidden_dele_idx").on(table.actualReplyToId, table.auditStatus, table.isHidden, table.deletedAt, table.createdAt),
+    index("app_user_comment_actual_reply_to_id_audit_status_is_hidden_dele_idx").on(table.actualReplyToId, table.auditStatus, table.isHidden, table.deletedAt, table.createdAt),
     /**
      * 目标删除时间索引
      */
-    index("user_comment_target_type_target_id_deleted_at_created_at_idx").on(table.targetType, table.targetId, table.deletedAt, table.createdAt),
+    index("app_user_comment_target_type_target_id_deleted_at_created_at_idx").on(table.targetType, table.targetId, table.deletedAt, table.createdAt),
     /**
      * 用户索引
      */
-    index("user_comment_user_id_idx").on(table.userId),
+    index("app_user_comment_user_id_idx").on(table.userId),
     /**
      * 创建时间索引
      */
-    index("user_comment_created_at_idx").on(table.createdAt),
+    index("app_user_comment_created_at_idx").on(table.createdAt),
     /**
      * 审核状态索引
      */
-    index("user_comment_audit_status_idx").on(table.auditStatus),
+    index("app_user_comment_audit_status_idx").on(table.auditStatus),
     /**
      * 隐藏状态索引
      */
-    index("user_comment_is_hidden_idx").on(table.isHidden),
+    index("app_user_comment_is_hidden_idx").on(table.isHidden),
     /**
      * 回复目标索引
      */
-    index("user_comment_reply_to_id_idx").on(table.replyToId),
+    index("app_user_comment_reply_to_id_idx").on(table.replyToId),
     /**
      * 实际回复目标索引
      */
-    index("user_comment_actual_reply_to_id_idx").on(table.actualReplyToId),
+    index("app_user_comment_actual_reply_to_id_idx").on(table.actualReplyToId),
     /**
      * 删除时间索引
      */
-    index("user_comment_deleted_at_idx").on(table.deletedAt),
+    index("app_user_comment_deleted_at_idx").on(table.deletedAt),
 ]);
 
-export type UserCommentSelect = typeof userComment.$inferSelect;
-export type UserCommentInsert = typeof userComment.$inferInsert;
+export type AppUserCommentSelect = typeof appUserComment.$inferSelect;
+export type AppUserCommentInsert = typeof appUserComment.$inferInsert;

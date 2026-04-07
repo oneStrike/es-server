@@ -1,4 +1,4 @@
-import type { UserCommentSelect } from '@db/schema'
+import type { AppUserCommentSelect } from '@db/schema'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
 import type {
   CommentTargetMeta,
@@ -17,7 +17,7 @@ export interface TransactionRetryOptions {
  * - 与审核状态、隐藏标记、删除时间保持一致
  */
 export type CommentVisibleState = Pick<
-  UserCommentSelect,
+  AppUserCommentSelect,
   'auditStatus' | 'isHidden' | 'deletedAt'
 >
 
@@ -26,7 +26,7 @@ export type CommentVisibleState = Pick<
  * - 用于奖励与通知补偿流程
  */
 export type VisibleCommentEffectPayload = Pick<
-  UserCommentSelect,
+  AppUserCommentSelect,
   | 'id'
   | 'userId'
   | 'targetType'
@@ -58,7 +58,7 @@ export interface CommentWriteContext extends GeoSnapshot {}
  * - 用于审核/隐藏更新时判断可见性迁移
  */
 export type CommentModerationState = Pick<
-  UserCommentSelect,
+  AppUserCommentSelect,
   | 'id'
   | 'userId'
   | 'targetType'

@@ -8,7 +8,7 @@ import { boolean, index, integer, jsonb, pgTable, smallint, timestamp, unique, v
  * 用户通知表
  * 统一承载站内通知（回复/点赞/收藏/关注/系统消息）
  */
-export const userNotification = pgTable("user_notification", {
+export const appUserNotification = pgTable("app_user_notification", {
   /**
    * 主键ID
    */
@@ -85,24 +85,24 @@ export const userNotification = pgTable("user_notification", {
     /**
      * 唯一约束：接收人维度幂等
      */
-    unique("user_notification_user_id_biz_key_key").on(table.userId, table.bizKey),
+    unique("app_user_notification_user_id_biz_key_key").on(table.userId, table.bizKey),
     /**
      * 列表查询索引：按已读状态分组分页
      */
-    index("user_notification_user_id_is_read_created_at_idx").on(table.userId, table.isRead, table.createdAt.desc()),
+    index("app_user_notification_user_id_is_read_created_at_idx").on(table.userId, table.isRead, table.createdAt.desc()),
     /**
      * 列表查询索引：按时间分页
      */
-    index("user_notification_user_id_created_at_idx").on(table.userId, table.createdAt.desc()),
+    index("app_user_notification_user_id_created_at_idx").on(table.userId, table.createdAt.desc()),
     /**
      * 类型筛选索引
      */
-    index("user_notification_type_created_at_idx").on(table.type, table.createdAt.desc()),
+    index("app_user_notification_type_created_at_idx").on(table.type, table.createdAt.desc()),
     /**
      * 聚合查询索引
      */
-    index("user_notification_user_id_aggregate_key_created_at_idx").on(table.userId, table.aggregateKey, table.createdAt.desc()),
+    index("app_user_notification_user_id_aggregate_key_created_at_idx").on(table.userId, table.aggregateKey, table.createdAt.desc()),
 ]);
 
-export type UserNotificationSelect = typeof userNotification.$inferSelect
-export type UserNotificationInsert = typeof userNotification.$inferInsert
+export type AppUserNotificationSelect = typeof appUserNotification.$inferSelect
+export type AppUserNotificationInsert = typeof appUserNotification.$inferInsert

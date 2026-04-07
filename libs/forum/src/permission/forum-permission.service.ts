@@ -34,8 +34,8 @@ export class ForumPermissionService {
     return this.drizzle.schema.forumTopic
   }
 
-  private get userComment() {
-    return this.drizzle.schema.userComment
+  private get appUserComment() {
+    return this.drizzle.schema.appUserComment
   }
 
   /**
@@ -113,7 +113,7 @@ export class ForumPermissionService {
         userLevelRuleId: true,
       },
       with: {
-        userLevelRule: {
+        appUserLevelRule: {
           columns: {
             requiredExperience: true,
           },
@@ -133,7 +133,7 @@ export class ForumPermissionService {
 
     return {
       ...section,
-      requiredExperience: section.userLevelRule?.requiredExperience ?? null,
+      requiredExperience: section.appUserLevelRule?.requiredExperience ?? null,
     }
   }
 
@@ -272,10 +272,10 @@ export class ForumPermissionService {
           .orderBy(desc(this.forumTopic.createdAt))
           .limit(1),
         this.db
-          .select({ createdAt: this.userComment.createdAt })
-          .from(this.userComment)
-          .where(eq(this.userComment.userId, userId))
-          .orderBy(desc(this.userComment.createdAt))
+          .select({ createdAt: this.appUserComment.createdAt })
+          .from(this.appUserComment)
+          .where(eq(this.appUserComment.userId, userId))
+          .orderBy(desc(this.appUserComment.createdAt))
           .limit(1),
       ])
 
@@ -359,7 +359,7 @@ export class ForumPermissionService {
           userLevelRuleId: true,
         },
         with: {
-          userLevelRule: {
+          appUserLevelRule: {
             columns: {
               requiredExperience: true,
             },
@@ -375,7 +375,7 @@ export class ForumPermissionService {
           {
             userLevelRuleId: section.userLevelRuleId,
             requiredExperience:
-              section.userLevelRule?.requiredExperience ?? null,
+              section.appUserLevelRule?.requiredExperience ?? null,
           },
           user,
         )
@@ -407,7 +407,7 @@ export class ForumPermissionService {
           userLevelRuleId: true,
         },
         with: {
-          userLevelRule: {
+          appUserLevelRule: {
             columns: {
               requiredExperience: true,
             },
@@ -425,7 +425,7 @@ export class ForumPermissionService {
           {
             userLevelRuleId: section.userLevelRuleId,
             requiredExperience:
-              section.userLevelRule?.requiredExperience ?? null,
+              section.appUserLevelRule?.requiredExperience ?? null,
           },
           user,
         ),

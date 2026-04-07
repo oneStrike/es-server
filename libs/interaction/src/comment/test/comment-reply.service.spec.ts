@@ -151,13 +151,13 @@ describe('comment reply notification flow', () => {
       {
         db: {
           query: {
-            userComment: {
+            appUserComment: {
               findFirst: dbReplyToFindFirst,
             },
           },
         },
         schema: {
-          userComment: {
+          appUserComment: {
             id: 'id',
             userId: 'userId',
             targetType: 'targetType',
@@ -173,7 +173,7 @@ describe('comment reply notification flow', () => {
         withTransaction: jest.fn(async (callback) =>
           callback({
             query: {
-              userComment: {
+              appUserComment: {
                 findFirst: txReplyTargetFindFirst,
               },
               appUser: {

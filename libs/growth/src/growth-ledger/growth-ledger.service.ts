@@ -57,16 +57,16 @@ export class GrowthLedgerService {
     return this.drizzle.schema.growthRuleUsageSlot
   }
 
-  private get userExperienceRule() {
-    return this.drizzle.schema.userExperienceRule
+  private get appUserExperienceRule() {
+    return this.drizzle.schema.appUserExperienceRule
   }
 
-  private get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  private get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
-  private get userPointRule() {
-    return this.drizzle.schema.userPointRule
+  private get appUserPointRule() {
+    return this.drizzle.schema.appUserPointRule
   }
 
   private readonly publicGrowthLedgerContextKeys:
@@ -101,7 +101,7 @@ export class GrowthLedgerService {
     } = params
 
     // 规则读取：按资产类型分别走对应规则表
-    // POINTS -> userPointRule, EXPERIENCE -> userExperienceRule
+    // POINTS -> appUserPointRule, EXPERIENCE -> appUserExperienceRule
     const rule = await this.findRuleByType(tx, assetType, ruleType)
     // 规则不存在
     if (!rule) {
@@ -744,27 +744,27 @@ export class GrowthLedgerService {
     if (assetType === GrowthAssetTypeEnum.POINTS) {
       const rows = await tx
         .select({
-          id: this.userPointRule.id,
-          points: this.userPointRule.points,
-          dailyLimit: this.userPointRule.dailyLimit,
-          totalLimit: this.userPointRule.totalLimit,
-          isEnabled: this.userPointRule.isEnabled,
+          id: this.appUserPointRule.id,
+          points: this.appUserPointRule.points,
+          dailyLimit: this.appUserPointRule.dailyLimit,
+          totalLimit: this.appUserPointRule.totalLimit,
+          isEnabled: this.appUserPointRule.isEnabled,
         })
-        .from(this.userPointRule)
-        .where(eq(this.userPointRule.type, ruleType))
+        .from(this.appUserPointRule)
+        .where(eq(this.appUserPointRule.type, ruleType))
         .limit(1)
       return rows[0]
     }
     const rows = await tx
       .select({
-        id: this.userExperienceRule.id,
-        experience: this.userExperienceRule.experience,
-        dailyLimit: this.userExperienceRule.dailyLimit,
-        totalLimit: this.userExperienceRule.totalLimit,
-        isEnabled: this.userExperienceRule.isEnabled,
+        id: this.appUserExperienceRule.id,
+        experience: this.appUserExperienceRule.experience,
+        dailyLimit: this.appUserExperienceRule.dailyLimit,
+        totalLimit: this.appUserExperienceRule.totalLimit,
+        isEnabled: this.appUserExperienceRule.isEnabled,
       })
-      .from(this.userExperienceRule)
-      .where(eq(this.userExperienceRule.type, ruleType))
+      .from(this.appUserExperienceRule)
+      .where(eq(this.appUserExperienceRule.type, ruleType))
       .limit(1)
     return rows[0]
   }
@@ -959,16 +959,16 @@ export class GrowthLedgerService {
   private async findTargetLevelRule(tx: Tx, experience: number) {
     const rows = await tx
       .select({
-        id: this.userLevelRule.id,
+        id: this.appUserLevelRule.id,
       })
-      .from(this.userLevelRule)
+      .from(this.appUserLevelRule)
       .where(
         and(
-          eq(this.userLevelRule.isEnabled, true),
-          lte(this.userLevelRule.requiredExperience, experience),
+          eq(this.appUserLevelRule.isEnabled, true),
+          lte(this.appUserLevelRule.requiredExperience, experience),
         ),
       )
-      .orderBy(sql`${this.userLevelRule.requiredExperience} desc`)
+      .orderBy(sql`${this.appUserLevelRule.requiredExperience} desc`)
       .limit(1)
     return rows[0]
   }

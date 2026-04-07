@@ -1,4 +1,4 @@
-import type { sensitiveWord } from '@db/schema'
+import type { systemSensitiveWord } from '@db/schema'
 import type {
   MatchModeEnum,
   SensitiveWordLevelEnum,
@@ -7,7 +7,7 @@ import type {
 } from './sensitive-word-constant'
 
 /** 敏感词实体类型（从数据库查询的结果） */
-export type SensitiveWord = typeof sensitiveWord.$inferSelect
+export type SensitiveWord = typeof systemSensitiveWord.$inferSelect
 
 /**
  * 命中敏感词结果

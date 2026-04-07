@@ -7,7 +7,7 @@ import { boolean, index, integer, pgTable, smallint, timestamp, unique, varchar 
 /**
  * 通用敏感词表 - 存储敏感词信息，用于内容过滤和审核
  */
-export const sensitiveWord = pgTable("sensitive_word", {
+export const systemSensitiveWord = pgTable("system_sensitive_word", {
   /**
    * 主键ID
    */
@@ -72,29 +72,29 @@ export const sensitiveWord = pgTable("sensitive_word", {
     /**
      * 唯一索引: word
      */
-    unique("sensitive_word_word_key").on(table.word),
+    unique("system_sensitive_word_word_key").on(table.word),
     /**
      * 敏感词索引
      */
-    index("sensitive_word_word_idx").on(table.word),
+    index("system_sensitive_word_word_idx").on(table.word),
     /**
      * 类型索引
      */
-    index("sensitive_word_type_idx").on(table.type),
+    index("system_sensitive_word_type_idx").on(table.type),
     /**
      * 级别索引
      */
-    index("sensitive_word_level_idx").on(table.level),
+    index("system_sensitive_word_level_idx").on(table.level),
     /**
      * 启用状态索引
      */
-    index("sensitive_word_is_enabled_idx").on(table.isEnabled),
+    index("system_sensitive_word_is_enabled_idx").on(table.isEnabled),
     /**
      * 匹配模式索引
      */
-    index("sensitive_word_match_mode_idx").on(table.matchMode),
+    index("system_sensitive_word_match_mode_idx").on(table.matchMode),
     /**
      * 创建时间索引
      */
-    index("sensitive_word_created_at_idx").on(table.createdAt),
+    index("system_sensitive_word_created_at_idx").on(table.createdAt),
 ]);

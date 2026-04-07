@@ -7,7 +7,7 @@ import { boolean, index, integer, jsonb, pgTable, text, timestamp, varchar } fro
 /**
  * 请求日志
  */
-export const requestLog = pgTable("sys_request_log", {
+export const systemRequestLog = pgTable("system_request_log", {
   /**
    * 主键id
    */
@@ -97,17 +97,17 @@ export const requestLog = pgTable("sys_request_log", {
     /**
      * 创建时间索引
      */
-    index("sys_request_log_created_at_idx").on(table.createdAt),
+    index("system_request_log_created_at_idx").on(table.createdAt),
     /**
      * 用户ID索引
      */
-    index("sys_request_log_user_id_idx").on(table.userId),
+    index("system_request_log_user_id_idx").on(table.userId),
     /**
      * 用户名索引
      */
-    index("sys_request_log_username_idx").on(table.username),
+    index("system_request_log_username_idx").on(table.username),
     /**
      * 请求结果索引
      */
-    index("sys_request_log_is_success_idx").on(table.isSuccess),
+    index("system_request_log_is_success_idx").on(table.isSuccess),
 ]);

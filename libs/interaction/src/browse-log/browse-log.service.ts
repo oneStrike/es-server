@@ -22,8 +22,8 @@ export class BrowseLogService {
     return this.drizzle.db
   }
 
-  private get userBrowseLog() {
-    return this.drizzle.schema.userBrowseLog
+  private get appUserBrowseLog() {
+    return this.drizzle.schema.appUserBrowseLog
   }
 
   /** 目标类型到解析器的映射表 */
@@ -122,7 +122,7 @@ export class BrowseLogService {
           await resolver.ensureTargetValid(tx, targetId)
         }
 
-        await tx.insert(this.userBrowseLog).values({
+        await tx.insert(this.appUserBrowseLog).values({
           targetType,
           targetId,
           userId,

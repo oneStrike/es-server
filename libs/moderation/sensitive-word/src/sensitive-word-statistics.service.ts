@@ -27,8 +27,8 @@ export class SensitiveWordStatisticsService {
   }
 
   /** 敏感词表 */
-  private get sensitiveWord() {
-    return this.drizzle.schema.sensitiveWord
+  private get systemSensitiveWord() {
+    return this.drizzle.schema.systemSensitiveWord
   }
 
   /**
@@ -85,7 +85,7 @@ export class SensitiveWordStatisticsService {
   private async getTotalWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
-      .from(this.sensitiveWord)
+      .from(this.systemSensitiveWord)
     return Number(result?.count ?? 0)
   }
 
@@ -96,8 +96,8 @@ export class SensitiveWordStatisticsService {
   private async getEnabledWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
-      .from(this.sensitiveWord)
-      .where(eq(this.sensitiveWord.isEnabled, true))
+      .from(this.systemSensitiveWord)
+      .where(eq(this.systemSensitiveWord.isEnabled, true))
     return Number(result?.count ?? 0)
   }
 
@@ -108,8 +108,8 @@ export class SensitiveWordStatisticsService {
   private async getDisabledWords() {
     const [result] = await this.db
       .select({ count: sql<number>`count(*)` })
-      .from(this.sensitiveWord)
-      .where(eq(this.sensitiveWord.isEnabled, false))
+      .from(this.systemSensitiveWord)
+      .where(eq(this.systemSensitiveWord.isEnabled, false))
     return Number(result?.count ?? 0)
   }
 
@@ -120,8 +120,8 @@ export class SensitiveWordStatisticsService {
    */
   private async getTotalHits() {
     const [result] = await this.db
-      .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
-      .from(this.sensitiveWord)
+      .select({ sum: sql<number>`sum(${this.systemSensitiveWord.hitCount})` })
+      .from(this.systemSensitiveWord)
     return Number(result?.sum ?? 0)
   }
 
@@ -133,9 +133,9 @@ export class SensitiveWordStatisticsService {
    */
   private async getHitsInDateRange(startDate: Date) {
     const [result] = await this.db
-      .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
-      .from(this.sensitiveWord)
-      .where(gte(this.sensitiveWord.lastHitAt, startDate))
+      .select({ sum: sql<number>`sum(${this.systemSensitiveWord.hitCount})` })
+      .from(this.systemSensitiveWord)
+      .where(gte(this.systemSensitiveWord.lastHitAt, startDate))
     return Number(result?.sum ?? 0)
   }
 
@@ -177,12 +177,12 @@ export class SensitiveWordStatisticsService {
   private async getLevelStatistics() {
     const results = await this.db
       .select({
-        level: this.sensitiveWord.level,
+        level: this.systemSensitiveWord.level,
         count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+        hitCount: sql<number>`sum(${this.systemSensitiveWord.hitCount})`,
       })
-      .from(this.sensitiveWord)
-      .groupBy(this.sensitiveWord.level)
+      .from(this.systemSensitiveWord)
+      .groupBy(this.systemSensitiveWord.level)
 
     return results.map((result) => ({
       level: result.level,
@@ -200,12 +200,12 @@ export class SensitiveWordStatisticsService {
   private async getTypeStatistics() {
     const results = await this.db
       .select({
-        type: this.sensitiveWord.type,
+        type: this.systemSensitiveWord.type,
         count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
+        hitCount: sql<number>`sum(${this.systemSensitiveWord.hitCount})`,
       })
-      .from(this.sensitiveWord)
-      .groupBy(this.sensitiveWord.type)
+      .from(this.systemSensitiveWord)
+      .groupBy(this.systemSensitiveWord.type)
 
     return results.map((result) => ({
       type: result.type,
@@ -223,15 +223,15 @@ export class SensitiveWordStatisticsService {
   private async getTopHitWords() {
     const results = await this.db
       .select({
-        word: this.sensitiveWord.word,
-        hitCount: this.sensitiveWord.hitCount,
-        level: this.sensitiveWord.level,
-        type: this.sensitiveWord.type,
-        lastHitAt: this.sensitiveWord.lastHitAt,
+        word: this.systemSensitiveWord.word,
+        hitCount: this.systemSensitiveWord.hitCount,
+        level: this.systemSensitiveWord.level,
+        type: this.systemSensitiveWord.type,
+        lastHitAt: this.systemSensitiveWord.lastHitAt,
       })
-      .from(this.sensitiveWord)
-      .where(gt(this.sensitiveWord.hitCount, 0))
-      .orderBy(desc(this.sensitiveWord.hitCount))
+      .from(this.systemSensitiveWord)
+      .where(gt(this.systemSensitiveWord.hitCount, 0))
+      .orderBy(desc(this.systemSensitiveWord.hitCount))
       .limit(20)
 
     return results.map((result) => ({
@@ -253,15 +253,15 @@ export class SensitiveWordStatisticsService {
   > {
     const results = await this.db
       .select({
-        word: this.sensitiveWord.word,
-        hitCount: this.sensitiveWord.hitCount,
-        level: this.sensitiveWord.level,
-        type: this.sensitiveWord.type,
-        lastHitAt: this.sensitiveWord.lastHitAt,
+        word: this.systemSensitiveWord.word,
+        hitCount: this.systemSensitiveWord.hitCount,
+        level: this.systemSensitiveWord.level,
+        type: this.systemSensitiveWord.type,
+        lastHitAt: this.systemSensitiveWord.lastHitAt,
       })
-      .from(this.sensitiveWord)
-      .where(isNotNull(this.sensitiveWord.lastHitAt))
-      .orderBy(desc(this.sensitiveWord.lastHitAt))
+      .from(this.systemSensitiveWord)
+      .where(isNotNull(this.systemSensitiveWord.lastHitAt))
+      .orderBy(desc(this.systemSensitiveWord.lastHitAt))
       .limit(20)
 
     return results.map((result) => ({
@@ -282,12 +282,12 @@ export class SensitiveWordStatisticsService {
     try {
       await this.drizzle.withErrorHandling(() =>
         this.db
-          .update(this.sensitiveWord)
+          .update(this.systemSensitiveWord)
           .set({
-            hitCount: sql`${this.sensitiveWord.hitCount} + 1`,
+            hitCount: sql`${this.systemSensitiveWord.hitCount} + 1`,
             lastHitAt: new Date(),
           })
-          .where(eq(this.sensitiveWord.word, word)),
+          .where(eq(this.systemSensitiveWord.word, word)),
       )
     } catch (error) {
       this.logger.error(`更新敏感词命中次数失败: ${word}`, error)

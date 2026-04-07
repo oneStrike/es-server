@@ -33,7 +33,7 @@ describe('report service handling flow', () => {
     const transaction = jest.fn(async (callback) =>
       callback({
         query: {
-          userReport: { findFirst },
+          appUserReport: { findFirst },
         },
         update,
       } as any),
@@ -44,7 +44,7 @@ describe('report service handling flow', () => {
       { rewardReportHandled } as any,
       {
         db: { transaction },
-        schema: { userReport: { id: 'id' } },
+        schema: { appUserReport: { id: 'id' } },
         withErrorHandling,
       } as any,
     )
@@ -90,7 +90,7 @@ describe('report service handling flow', () => {
     const transaction = jest.fn(async (callback) =>
       callback({
         query: {
-          userReport: { findFirst },
+          appUserReport: { findFirst },
         },
         update: jest.fn(),
       } as any),
@@ -101,7 +101,7 @@ describe('report service handling flow', () => {
       { rewardReportHandled } as any,
       {
         db: { transaction },
-        schema: { userReport: { id: 'id' } },
+        schema: { appUserReport: { id: 'id' } },
         withErrorHandling,
       } as any,
     )

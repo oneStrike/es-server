@@ -7,7 +7,7 @@ import { index, integer, pgTable, primaryKey, timestamp } from "drizzle-orm/pg-c
 /**
  * 用户徽章关联表 - 管理用户获得的徽章
  */
-export const userBadgeAssignment = pgTable("user_badge_assignment", {
+export const appUserBadgeAssignment = pgTable("app_user_badge_assignment", {
   /**
    * 关联的用户ID
    */
@@ -24,11 +24,11 @@ export const userBadgeAssignment = pgTable("user_badge_assignment", {
   /**
    * 徽章与获得时间索引
    */
-  index("user_badge_assignment_badge_id_created_at_idx").on(table.badgeId, table.createdAt.desc()),
+  index("app_user_badge_assignment_badge_id_created_at_idx").on(table.badgeId, table.createdAt.desc()),
   /**
    * 用户与获得时间索引
    */
-  index("user_badge_assignment_user_id_created_at_idx").on(table.userId, table.createdAt.desc()),
+  index("app_user_badge_assignment_user_id_created_at_idx").on(table.userId, table.createdAt.desc()),
   /**
    * 用户与徽章复合主键
    */

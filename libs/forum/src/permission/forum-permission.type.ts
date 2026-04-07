@@ -1,7 +1,7 @@
 import type {
+  AppUserLevelRuleSelect,
   AppUserSelect,
   ForumSectionSelect,
-  UserLevelRuleSelect,
 } from '@db/schema'
 
 /**
@@ -10,7 +10,7 @@ import type {
  */
 export interface ForumPostingUserContext
   extends Pick<AppUserSelect, 'id' | 'isEnabled' | 'status' | 'experience'> {
-  level: Pick<UserLevelRuleSelect, 'dailyTopicLimit' | 'postInterval'> | null
+  level: Pick<AppUserLevelRuleSelect, 'dailyTopicLimit' | 'postInterval'> | null
 }
 
 /**

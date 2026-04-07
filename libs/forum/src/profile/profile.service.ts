@@ -74,16 +74,16 @@ export class UserProfileService {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  get userBadge() {
-    return this.drizzle.schema.userBadge
+  get appBadge() {
+    return this.drizzle.schema.appBadge
   }
 
-  get userBadgeAssignment() {
-    return this.drizzle.schema.userBadgeAssignment
+  get appUserBadgeAssignment() {
+    return this.drizzle.schema.appUserBadgeAssignment
   }
 
-  get userLevelRule() {
-    return this.drizzle.schema.userLevelRule
+  get appUserLevelRule() {
+    return this.drizzle.schema.appUserLevelRule
   }
 
   private mapCountRow(counts: UserCountRow | undefined, userId: number) {
@@ -213,20 +213,20 @@ export class UserProfileService {
     const badgeRows = userIds.length
       ? await this.db
           .select({
-            userId: this.userBadgeAssignment.userId,
-            createdAt: this.userBadgeAssignment.createdAt,
-            badge: this.userBadge,
+            userId: this.appUserBadgeAssignment.userId,
+            createdAt: this.appUserBadgeAssignment.createdAt,
+            badge: this.appBadge,
           })
-          .from(this.userBadgeAssignment)
+          .from(this.appUserBadgeAssignment)
           .innerJoin(
-            this.userBadge,
-            eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
+            this.appBadge,
+            eq(this.appBadge.id, this.appUserBadgeAssignment.badgeId),
           )
-          .where(inArray(this.userBadgeAssignment.userId, userIds))
+          .where(inArray(this.appUserBadgeAssignment.userId, userIds))
           .orderBy(
-            asc(this.userBadgeAssignment.userId),
-            desc(this.userBadgeAssignment.createdAt),
-            asc(this.userBadgeAssignment.badgeId),
+            asc(this.appUserBadgeAssignment.userId),
+            desc(this.appUserBadgeAssignment.createdAt),
+            asc(this.appUserBadgeAssignment.badgeId),
           )
       : []
     const badgeMap = new Map<number, any[]>()
@@ -282,20 +282,20 @@ export class UserProfileService {
       .where(eq(this.appUserCount.userId, userId))
     const userBadges = await this.db
       .select({
-        userId: this.userBadgeAssignment.userId,
-        badgeId: this.userBadgeAssignment.badgeId,
-        createdAt: this.userBadgeAssignment.createdAt,
-        badge: this.userBadge,
+        userId: this.appUserBadgeAssignment.userId,
+        badgeId: this.appUserBadgeAssignment.badgeId,
+        createdAt: this.appUserBadgeAssignment.createdAt,
+        badge: this.appBadge,
       })
-      .from(this.userBadgeAssignment)
+      .from(this.appUserBadgeAssignment)
       .innerJoin(
-        this.userBadge,
-        eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
+        this.appBadge,
+        eq(this.appBadge.id, this.appUserBadgeAssignment.badgeId),
       )
-      .where(eq(this.userBadgeAssignment.userId, userId))
+      .where(eq(this.appUserBadgeAssignment.userId, userId))
       .orderBy(
-        desc(this.userBadgeAssignment.createdAt),
-        asc(this.userBadgeAssignment.badgeId),
+        desc(this.appUserBadgeAssignment.createdAt),
+        asc(this.appUserBadgeAssignment.badgeId),
       )
     return {
       ...this.mapUser(user),
@@ -553,10 +553,10 @@ export class UserProfileService {
   async initUserProfile(tx: Db | undefined, userId: number) {
     const client = tx ?? this.db
     const [defaultLevel] = await client
-      .select({ id: this.userLevelRule.id })
-      .from(this.userLevelRule)
-      .where(eq(this.userLevelRule.isEnabled, true))
-      .orderBy(asc(this.userLevelRule.sortOrder), asc(this.userLevelRule.id))
+      .select({ id: this.appUserLevelRule.id })
+      .from(this.appUserLevelRule)
+      .where(eq(this.appUserLevelRule.isEnabled, true))
+      .orderBy(asc(this.appUserLevelRule.sortOrder), asc(this.appUserLevelRule.id))
       .limit(1)
 
     await client

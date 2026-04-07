@@ -7,7 +7,7 @@ import { index, integer, jsonb, pgTable, timestamp } from "drizzle-orm/pg-core";
 /**
  * 系统配置
  */
-export const systemConfig = pgTable("sys_config", {
+export const systemConfig = pgTable("system_config", {
   /**
    * 主键id
    */
@@ -48,11 +48,11 @@ export const systemConfig = pgTable("sys_config", {
     /**
      * 更新人索引
      */
-    index("sys_config_updated_by_id_idx").on(table.updatedById),
+    index("system_config_updated_by_id_idx").on(table.updatedById),
     /**
      * 创建时间降序索引（用于快速查询最新配置）
      */
-    index("sys_config_created_at_idx").on(table.createdAt.desc()),
+    index("system_config_created_at_idx").on(table.createdAt.desc()),
 ]);
 
 export type SystemConfigSelect = typeof systemConfig.$inferSelect;

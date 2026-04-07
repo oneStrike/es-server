@@ -1123,8 +1123,8 @@ export class WorkService {
     const continueChapter = readingState?.continueChapter
 
     // 历史记录和阅读状态服务于不同目的：
-    // - user_browse_log 保持只追加的浏览轨迹和计数器
-    // - user_work_reading_state 保持最新快照以快速读取详情
+    // - app_user_browse_log 保持只追加的浏览轨迹和计数器
+    // - app_user_work_reading_state 保持最新快照以快速读取详情
     await this.browseLogService.recordBrowseLogSafely(
       work.type,
       id,

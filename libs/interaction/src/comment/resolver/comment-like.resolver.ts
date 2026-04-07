@@ -1,6 +1,6 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { appUser, userComment } from '@db/schema'
+import { appUser, appUserComment } from '@db/schema'
 import { MessageNotificationSubjectTypeEnum, MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
 import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
 import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant';
@@ -58,7 +58,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
-    const comment = await tx.query.userComment.findFirst({
+    const comment = await tx.query.appUserComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: {
         id: true,
@@ -104,12 +104,12 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
     }
 
     const updated = await tx
-      .update(userComment)
+      .update(appUserComment)
       .set({
-        likeCount: sql`${userComment.likeCount} + ${delta}`,
+        likeCount: sql`${appUserComment.likeCount} + ${delta}`,
       })
-      .where(and(eq(userComment.id, targetId), isNull(userComment.deletedAt)))
-      .returning({ id: userComment.id, userId: userComment.userId })
+      .where(and(eq(appUserComment.id, targetId), isNull(appUserComment.deletedAt)))
+      .returning({ id: appUserComment.id, userId: appUserComment.userId })
     if (!updated[0]) {
       throw new NotFoundException('评论不存在')
     }
@@ -135,7 +135,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
     actorUserId: number,
     _meta: LikeTargetMeta,
   ) {
-    const comment = await tx.query.userComment.findFirst({
+    const comment = await tx.query.appUserComment.findFirst({
       where: { id: targetId, deletedAt: { isNull: true } },
       columns: {
         id: true,
@@ -179,17 +179,17 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
 
     const comments = await this.drizzle.db
       .select({
-        id: userComment.id,
-        floor: userComment.floor,
-        content: userComment.content,
-        createdAt: userComment.createdAt,
+        id: appUserComment.id,
+        floor: appUserComment.floor,
+        content: appUserComment.content,
+        createdAt: appUserComment.createdAt,
         userId: appUser.id,
         userNickname: appUser.nickname,
       })
-      .from(userComment)
-      .leftJoin(appUser, eq(userComment.userId, appUser.id))
+      .from(appUserComment)
+      .leftJoin(appUser, eq(appUserComment.userId, appUser.id))
       .where(
-        and(inArray(userComment.id, targetIds), isNull(userComment.deletedAt)),
+        and(inArray(appUserComment.id, targetIds), isNull(appUserComment.deletedAt)),
       )
 
     return new Map(

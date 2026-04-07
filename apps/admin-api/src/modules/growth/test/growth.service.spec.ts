@@ -89,8 +89,8 @@ describe('growth service', () => {
           limit: 20,
         })),
         schema: {
-          userPointRule: { type: 'point.type' },
-          userExperienceRule: { type: 'experience.type' },
+          appUserPointRule: { type: 'point.type' },
+          appUserExperienceRule: { type: 'experience.type' },
           task: {
             id: 'task.id',
             type: 'task.type',
