@@ -25,10 +25,10 @@ function normalizeGeoSegment(value?: string) {
 
 /**
  * 解析 ip2region 返回的 region 文本。
- * 开源版通常返回 `国家|区域|省份|城市|运营商`，其中区域位当前轮次不落库。
+ * `ip2region_v4.xdb` 当前返回 `国家|省份|城市|运营商|国家代码`，末位国家代码不落库。
  */
 export function parseIpRegionText(regionText?: string): GeoLookupResult {
-  const [country, _region, province, city, isp] = (regionText ?? '')
+  const [country, province, city, isp] = (regionText ?? '')
     .split('|')
     .map((segment) => normalizeGeoSegment(segment))
 

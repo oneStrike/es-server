@@ -320,7 +320,10 @@ export class GeoService implements OnModuleDestroy {
     }
 
     try {
-      return parseIpRegionText(this.searcher.search(normalizedIp))
+      // ip2region.js 运行时返回 Promise<string>，但内置类型仍声明为 string，
+      // 这里统一包一层 Promise.resolve，兼容实际运行时与错误类型定义。
+      const regionText = await Promise.resolve(this.searcher.search(normalizedIp))
+      return parseIpRegionText(regionText)
     } catch {
       return emptyGeo
     }

@@ -95,4 +95,28 @@ describe('geoService', () => {
     })
     expect(closeSearcherA).not.toHaveBeenCalled()
   })
+
+  it('resolveByIp 会等待异步查询结果并映射为统一属地字段', async () => {
+    newWithBufferMock.mockReturnValue({
+      search: jest.fn().mockResolvedValue('中国|广东省|深圳市|电信|CN'),
+      close: jest.fn(),
+    })
+
+    const service = new GeoService()
+
+    await service.reloadFromFile('D:/geo/active.xdb', {
+      source: 'managed-active',
+      fileName: 'active.xdb',
+      fileSize: 12,
+      activatedAt: new Date('2026-04-08T12:00:00.000Z'),
+    })
+
+    await expect(service.resolveByIp('113.118.113.77')).resolves.toEqual({
+      geoCountry: '中国',
+      geoProvince: '广东省',
+      geoCity: '深圳市',
+      geoIsp: '电信',
+      geoSource: 'ip2region',
+    })
+  })
 })
