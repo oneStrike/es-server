@@ -41,12 +41,14 @@
 
 - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
 - `apps/app-api/src/modules/comment/comment.controller.ts`
+- `apps/app-api/src/modules/favorite/favorite.controller.ts`
 - `apps/app-api/src/modules/work/work.controller.ts`
 - `apps/app-api/src/modules/work/work-chapter.controller.ts`
 - `apps/admin-api/src/modules/forum/topic/topic.controller.ts`
 - `libs/forum/src/topic/*`
 - `libs/forum/src/profile/profile.service.ts`
 - `libs/interaction/src/comment/*`
+- `libs/interaction/src/favorite/dto/favorite.dto.ts`
 
 ### 论坛操作日志
 
@@ -77,10 +79,11 @@
 
 ### 论坛主题
 
-- app 端现有列表接口与详情接口需要补充属地字段返回：
+- app 端现有列表接口、详情接口，以及复用 `PublicForumTopicPageItemDto` 的现有接口需要补充属地字段返回：
   - `page`
   - `detail`
   - `my/page`
+  - `app/favorite/topic/page`
 
 ### 评论
 
@@ -105,11 +108,13 @@
 - 合法 / 非法 `xdb` 上传后的热切换与失败回退检查
 - 服务重启后 `active` 目录加载行为检查
 - app 端论坛主题列表 / 详情 / 我的主题接口返回字段检查
+- app 端收藏主题分页返回字段检查
 - app 端评论我的列表 / 回复列表 / 论坛主题评论列表返回字段检查
 - app 端作品评论 / 章节评论列表返回字段检查
 - 登录态 token 落库样例检查
 - 请求审计日志、论坛操作日志落库样例检查
 - ForumTopic 公开列表 / 详情 / 我的主题组装测试需要补齐 `geo*` 字段断言。
+- ForumTopic 收藏主题分页组装测试需要补齐 `geo*` 字段断言，避免共享 DTO 已扩展但收藏查询投影漏补。
 - Comment 列表 / 回复 / 目标评论测试需要补齐 `geo*` 字段断言，并覆盖论坛、作品、章节等复用入口。
 - auth session / token storage 写入测试需要补齐 `geo*` 字段断言。
 - 审计日志 / 论坛操作日志写入测试需要补齐 `geo*` 字段断言。
@@ -118,6 +123,7 @@
 ## 风险提示
 
 - `P0-03` 与 `P1-01` 都会改 `libs/forum/src/topic/forum-topic.service.ts`，需避免并行写冲突。
+- 论坛主题属地字段会通过 `PublicForumTopicPageItemDto` 复用到收藏主题分页，容易出现主题公共分页已补字段、收藏分页查询投影仍漏补的契约漂移。
 - 评论属地按全站评论能力收口，会波及论坛、作品、章节等多个 app 端评论入口，容易出现“schema 已加字段但接口漏返回”的契约漂移。
-- 若 `ip2region` 数据文件路径设计不稳定，后续本地、CI、部署环境可能出现路径差异。
+- 若在 `P0-01` 阶段提前固化运行时 `xdb` 存储布局，`P1-02` 的 `tmp / versions / active` 设计会产生 owner 冲突；当前应仅由 `P0-01` 负责默认加载入口。
 - 若 `admin-api` 与 `app-api` 以独立进程运行，管理端上传后的“立即生效”默认只覆盖当前进程，需要在交付说明中明确这一部署边界。

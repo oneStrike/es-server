@@ -2,9 +2,14 @@ import type { ClientRequestContext } from '@libs/platform/utils/request-parse.ty
 import type { OnModuleDestroy } from '@nestjs/common'
 import type { FastifyRequest } from 'fastify'
 import type { Searcher } from 'ip2region.js'
-import type { GeoLookupResult } from './geo.types'
-import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import type {
+  GeoLookupResult,
+  GeoManagedActiveMetadata,
+  GeoReloadFileInfo,
+  GeoRuntimeStatus,
+} from './geo.types'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { basename, resolve } from 'node:path'
 import process from 'node:process'
 import { extractClientRequestContext, extractIpAddress, extractRequestContext } from '@libs/platform/utils/requestParse'
 import { Injectable } from '@nestjs/common'
@@ -36,12 +41,190 @@ export class GeoService implements OnModuleDestroy {
   private searcher?: Searcher
   private initializePromise?: Promise<void>
   private unavailable = false
+  private activeStatus?: GeoRuntimeStatus
 
-  private resolveDatabasePath() {
-    const configuredPath = process.env.IP2REGION_XDB_PATH?.trim()
-    return configuredPath || DEFAULT_IP2REGION_DB_PATH
+  /**
+   * 获取 ip2region 托管目录。
+   * 未配置时返回 undefined，保留旧的单文件加载模式。
+   */
+  private getManagedStorageDir() {
+    const configuredDir = process.env.IP2REGION_DATA_DIR?.trim()
+    return configuredDir || undefined
   }
 
+  /**
+   * 读取 active 目录元信息。
+   * 元信息损坏时降级为 undefined，避免状态文件问题拖垮主链路。
+   */
+  private readManagedActiveMetadata():
+    | { storageDir: string, metadata: GeoManagedActiveMetadata }
+    | undefined {
+    const storageDir = this.getManagedStorageDir()
+    if (!storageDir) {
+      return undefined
+    }
+
+    const metadataPath = resolve(storageDir, 'active', 'metadata.json')
+    if (!existsSync(metadataPath)) {
+      return undefined
+    }
+
+    try {
+      const metadata = JSON.parse(
+        readFileSync(metadataPath, 'utf8'),
+      ) as GeoManagedActiveMetadata
+
+      if (!metadata.activeFileName) {
+        return undefined
+      }
+
+      return {
+        storageDir,
+        metadata,
+      }
+    } catch {
+      return undefined
+    }
+  }
+
+  /**
+   * 解析 active 目录中的当前生效文件。
+   * 优先读取 metadata.json，缺失时退回到 active 目录中的最新 `.xdb` 文件。
+   */
+  private resolveManagedActiveStatus(): GeoRuntimeStatus | undefined {
+    const metadataResult = this.readManagedActiveMetadata()
+    if (metadataResult) {
+      const { storageDir, metadata } = metadataResult
+      const filePath = resolve(storageDir, 'active', metadata.activeFileName)
+
+      if (existsSync(filePath)) {
+        return {
+          ready: true,
+          source: 'managed-active',
+          filePath,
+          fileName: metadata.activeFileName,
+          fileSize: metadata.fileSize ?? statSync(filePath).size,
+          activatedAt: metadata.activatedAt
+            ? new Date(metadata.activatedAt)
+            : statSync(filePath).mtime,
+          storageDir,
+        }
+      }
+    }
+
+    const storageDir = this.getManagedStorageDir()
+    if (!storageDir) {
+      return undefined
+    }
+
+    const activeDir = resolve(storageDir, 'active')
+    if (!existsSync(activeDir)) {
+      return undefined
+    }
+
+    const activeFileName = readdirSync(activeDir)
+      .filter((fileName) => fileName.toLowerCase().endsWith('.xdb'))
+      .sort()
+      .at(-1)
+
+    if (!activeFileName) {
+      return undefined
+    }
+
+    const filePath = resolve(activeDir, activeFileName)
+    const fileStat = statSync(filePath)
+
+    return {
+      ready: true,
+      source: 'managed-active',
+      filePath,
+      fileName: activeFileName,
+      fileSize: fileStat.size,
+      activatedAt: fileStat.mtime,
+      storageDir,
+    }
+  }
+
+  /**
+   * 解析当前应加载的属地库状态。
+   * 按优先级依次尝试托管 active 文件、显式配置路径和仓库内默认库。
+   */
+  private resolvePreferredStatus(): GeoRuntimeStatus {
+    const managedStatus = this.resolveManagedActiveStatus()
+    if (managedStatus) {
+      return managedStatus
+    }
+
+    const storageDir = this.getManagedStorageDir()
+    const configuredPath = process.env.IP2REGION_XDB_PATH?.trim()
+    if (configuredPath && existsSync(configuredPath)) {
+      const fileStat = statSync(configuredPath)
+      return {
+        ready: true,
+        source: 'configured-path',
+        filePath: configuredPath,
+        fileName: basename(configuredPath),
+        fileSize: fileStat.size,
+        activatedAt: fileStat.mtime,
+        storageDir,
+      }
+    }
+
+    if (existsSync(DEFAULT_IP2REGION_DB_PATH)) {
+      const fileStat = statSync(DEFAULT_IP2REGION_DB_PATH)
+      return {
+        ready: true,
+        source: 'default-path',
+        filePath: DEFAULT_IP2REGION_DB_PATH,
+        fileName: basename(DEFAULT_IP2REGION_DB_PATH),
+        fileSize: fileStat.size,
+        activatedAt: fileStat.mtime,
+        storageDir,
+      }
+    }
+
+    return {
+      ready: false,
+      source: 'unavailable',
+      storageDir,
+    }
+  }
+
+  /**
+   * 根据文件路径构建查询器。
+   * 查询器创建失败时抛出原始异常，由上层决定是否回退。
+   */
+  private createSearcherFromFile(dbPath: string) {
+    ip2regionWithVerify.verifyFromFile(dbPath)
+    const dbContent = loadContentFromFile(dbPath)
+    return newWithBuffer(IPv4, dbContent)
+  }
+
+  /**
+   * 基于给定文件路径生成运行状态。
+   * 热切换场景优先使用调用方已知的元信息，避免额外依赖磁盘 stat。
+   */
+  private buildStatusFromFile(
+    filePath: string,
+    info: GeoReloadFileInfo = {},
+  ): GeoRuntimeStatus {
+    const fileStat = existsSync(filePath) ? statSync(filePath) : undefined
+
+    return {
+      ready: true,
+      source: info.source ?? 'configured-path',
+      filePath,
+      fileName: info.fileName ?? basename(filePath),
+      fileSize: info.fileSize ?? fileStat?.size,
+      activatedAt: info.activatedAt ?? fileStat?.mtime,
+      storageDir: this.getManagedStorageDir(),
+    }
+  }
+
+  /**
+   * 确保当前进程已加载查询器。
+   * 首次加载按优先级解析当前生效库；加载失败时保留降级为空属地的语义。
+   */
   private async ensureSearcher() {
     if (this.searcher || this.unavailable) {
       return
@@ -49,22 +232,74 @@ export class GeoService implements OnModuleDestroy {
 
     if (!this.initializePromise) {
       this.initializePromise = Promise.resolve().then(() => {
-        const dbPath = this.resolveDatabasePath()
+        const preferredStatus = this.resolvePreferredStatus()
+        const dbPath = preferredStatus.filePath
         if (!dbPath || !existsSync(dbPath)) {
           this.unavailable = true
+          this.activeStatus = preferredStatus
           return
         }
 
-        ip2regionWithVerify.verifyFromFile(dbPath)
-        const dbContent = loadContentFromFile(dbPath)
-        this.searcher = newWithBuffer(IPv4, dbContent)
+        this.searcher = this.createSearcherFromFile(dbPath)
+        this.unavailable = false
+        this.activeStatus = preferredStatus
       }).catch(() => {
         this.unavailable = true
         this.searcher = undefined
+        this.activeStatus = {
+          ...this.resolvePreferredStatus(),
+          ready: false,
+        }
       })
     }
 
     await this.initializePromise
+  }
+
+  /**
+   * 获取当前进程的属地库运行状态。
+   * 未触发查询前也可返回当前应加载的候选文件与来源，便于后台管理页排障。
+   */
+  async getRuntimeStatus(): Promise<GeoRuntimeStatus> {
+    if (this.activeStatus) {
+      return {
+        ...this.activeStatus,
+        storageDir: this.getManagedStorageDir(),
+      }
+    }
+
+    return this.resolvePreferredStatus()
+  }
+
+  /**
+   * 使用指定 `.xdb` 文件热切换当前进程查询器。
+   * 仅在新查询器创建成功后才替换旧实例，确保失败时仍保留在线查询能力。
+   */
+  async reloadFromFile(
+    filePath: string,
+    info: GeoReloadFileInfo = {},
+  ): Promise<GeoRuntimeStatus> {
+    const nextSearcher = this.createSearcherFromFile(filePath)
+    const previousSearcher = this.searcher
+    const nextStatus = this.buildStatusFromFile(filePath, info)
+
+    this.searcher = nextSearcher
+    this.initializePromise = undefined
+    this.unavailable = false
+    this.activeStatus = nextStatus
+
+    previousSearcher?.close()
+
+    return nextStatus
+  }
+
+  /**
+   * 校验指定 `.xdb` 文件是否可被当前进程加载。
+   * 仅用于预检上传文件结构，不会修改当前在线查询器。
+   */
+  async validateFile(filePath: string): Promise<void> {
+    const searcher = this.createSearcherFromFile(filePath)
+    searcher.close()
   }
 
   /**

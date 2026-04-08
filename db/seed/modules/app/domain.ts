@@ -160,7 +160,6 @@ const EXPERIENCE_RULE_FIXTURES = [
     totalLimit: 0,
     remark: '回复经验奖励',
   },
-  {
 ] as const
 
 const USER_FIXTURES = [

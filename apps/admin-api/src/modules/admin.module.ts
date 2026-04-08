@@ -16,6 +16,7 @@ import { MessageModule } from './message/message.module'
 import { AdminReportModule } from './report/report.module'
 import { SystemConfigModule } from './system/config/system-config.module'
 import { DictionaryModule } from './system/dictionary/dictionary.module'
+import { Ip2regionModule } from './system/ip2region/ip2region.module'
 import { UploadModule } from './system/upload/upload.module'
 import { TaskModule } from './task/task.module'
 
@@ -27,6 +28,7 @@ import { TaskModule } from './task/task.module'
     CheckInModule,
     AdminUserModule,
     UploadModule,
+    Ip2regionModule,
     SystemConfigModule,
     AppPageModule,
     AppConfigModule,

@@ -18,16 +18,16 @@
 - `libs/platform/src/modules/audit/dto/audit.dto.ts`
 - 视实现方式可能波及 `libs/platform/src/utils/requestParse.ts`
 
-## 当前代码锚点
+## 现状锚点（2026-04-08）
 
-- auth controller 已能透传最小客户端上下文：
+- auth controller 当前通过 `GeoService.buildClientRequestContext(req)` 透传最小客户端上下文与属地快照：
   - `apps/app-api/src/modules/auth/auth.controller.ts`
   - `apps/admin-api/src/modules/auth/auth.controller.ts`
-- session 持久化当前只消费 `ip/userAgent/deviceInfo`：
+- session 持久化当前已消费 `ip / userAgent / deviceInfo / geo*`：
   - `libs/identity/src/session.service.ts`
-- token storage 基础写入当前只落 `deviceInfo/ipAddress/userAgent`：
+- token storage 基础写入当前已落 `deviceInfo / ipAddress / userAgent / geo*`：
   - `libs/identity/src/token/drizzle-token-storage.base.ts`
-- 审计日志当前通过 `buildRequestLogFields(req)` 落 `ip/userAgent/device`：
+- 审计日志当前通过 `GeoService.buildRequestContext(req)` 配合 `buildRequestLogFields(...)` 落 `ip / userAgent / device / geo*`：
   - `apps/admin-api/src/modules/system/audit/audit.service.ts`
 
 ## 非目标
@@ -51,6 +51,7 @@
 - 审计请求日志记录包含统一属地字段。
 - `geoSource` 在上述链路中固定为 `ip2region`。
 - `libs/identity` 仍只接收已解析的客户端上下文，不新增 `FastifyRequest` 依赖回流。
+- 相关 token storage / session / audit 自动化测试至少补齐 `geo*` 字段断言，或在验收清单中明确留痕其缺口。
 - 历史 token / request log 记录允许保持 `geo*` 空值，不要求补写。
 
 ## 完成后同步文档

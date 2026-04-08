@@ -12,6 +12,7 @@
 - `./WORK_ITEM_DOC_SPEC.md`：方案、排期、任务单与验收清单的生成与维护规范。
 - `./ERROR_HANDLING_SPEC.md`：错误分层、数据库错误映射、幂等与日志要求。
 - `./drizzle-guidelines.md`：Drizzle 入口、事务、分页、原生 SQL 与 Resolver 约束。
+- `./TABLE_NAMING_SPEC.md`：数据库表名前缀、后缀、关系表与兼容性命名规则。
 - `./COUNTER_SPEC.md`：计数器硬约束、决策顺序与验收基线。
 
 ## Reference Docs

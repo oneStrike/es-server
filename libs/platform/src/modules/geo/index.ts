@@ -1,3 +1,4 @@
+export * from './geo.dto'
 export * from './geo.helpers'
 export * from './geo.module'
 export * from './geo.service'

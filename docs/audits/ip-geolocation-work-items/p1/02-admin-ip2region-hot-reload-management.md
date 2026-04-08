@@ -13,18 +13,20 @@
 - `libs/platform/src/config/validation.config.ts`
 - `.env.example`
 
-## 当前代码锚点
+## 现状锚点（2026-04-08）
 
-- `GeoService` 当前只在进程内懒加载一次查询器，不支持运行时重载：
+- `GeoService` 当前已支持运行时状态输出、文件预检与当前进程热切换：
   - `libs/platform/src/modules/geo/geo.service.ts`
-- `GeoModule` 当前仅暴露查询能力，没有状态查询或管理接口：
+- 当前 `GeoService` 已支持优先读取 `active` 目录中的生效文件，并兼容 `IP2REGION_XDB_PATH` 与仓库默认单文件入口：
+  - `libs/platform/src/modules/geo/geo.service.ts`
+- `GeoModule` 当前已对后台管理模块暴露查询、状态与热切换能力：
   - `libs/platform/src/modules/geo/geo.module.ts`
   - `libs/platform/src/modules/geo/index.ts`
-- admin 端当前只有通用文件上传接口，不适合承载运行时 `xdb` 资产：
-  - `apps/admin-api/src/modules/system/upload/upload.controller.ts`
-  - `libs/platform/src/modules/upload/upload.service.ts`
-  - `libs/platform/src/config/upload.config.ts`
-- 当前环境变量校验中未定义 `ip2region` 专用存储目录：
+- admin 端当前已新增专用 `ip2region` 管理模块与接口：
+  - `apps/admin-api/src/modules/system/ip2region/ip2region.controller.ts`
+  - `apps/admin-api/src/modules/system/ip2region/ip2region.service.ts`
+  - `apps/admin-api/src/modules/system/ip2region/ip2region.module.ts`
+- 当前环境变量校验与示例文件已定义 `IP2REGION_DATA_DIR` / `IP2REGION_XDB_PATH`：
   - `libs/platform/src/config/validation.config.ts`
   - `.env.example`
 
@@ -41,6 +43,7 @@
 - 新增 admin 专用 `ip2region` 管理模块与接口：
   - `POST /admin/system/ip2region/upload`
   - `GET /admin/system/ip2region/status`
+- 本任务独占运行时 `xdb` 目录布局约定（`tmp / versions / active`）；`P0-01` 只负责默认加载入口，不在前置任务提前固化该管理结构。
 - 为 `GeoService` 增加受控热切换能力：
   - 校验上传文件名、扩展名、大小与 `xdb` 结构
   - 基于新文件创建查询器

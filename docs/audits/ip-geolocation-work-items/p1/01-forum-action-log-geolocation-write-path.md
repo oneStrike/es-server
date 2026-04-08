@@ -14,17 +14,17 @@
 - `libs/forum/src/topic/forum-topic.service.ts`
 - `libs/forum/src/topic/forum-topic.type.ts`
 
-## 当前代码锚点
+## 现状锚点（2026-04-08）
 
 - 论坛操作日志当前只有主题服务在写：
   - `libs/forum/src/topic/forum-topic.service.ts`
   - `libs/forum/src/action-log/action-log.service.ts`
-- 论坛主题 create / update / delete 对应 controller 当前都未接收 `req`，无法在边界层组装写入上下文：
+- 论坛主题 create / update / delete 对应 controller 当前都已接收 `req`，并在边界层组装统一客户端写入上下文：
   - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
   - `apps/admin-api/src/modules/forum/topic/topic.controller.ts`
-- `CreateForumActionLogDto` 当前只包含 `ipAddress` 和 `userAgent`，未包含属地字段：
+- `CreateForumActionLogDto` 当前已包含 `ipAddress / userAgent / geo*` 字段：
   - `libs/forum/src/action-log/dto/action-log.dto.ts`
-- `forum-topic.service.ts` 当前 create / update / delete 写日志时都没有统一的客户端写入上下文参数：
+- `forum-topic.service.ts` 当前 create / update / delete 写日志时都已补传统一客户端写入上下文：
   - `libs/forum/src/topic/forum-topic.service.ts`
 - 当前仓库未发现评论侧复用 `forum_user_action_log` 的调用点。
 
@@ -47,6 +47,7 @@
 - 论坛主题 create / update / delete 相关操作写入的 `forum_user_action_log` 记录包含统一属地字段。
 - `geoSource` 在论坛操作日志链路中固定为 `ip2region`。
 - 论坛操作日志页面不新增属地筛选参数，也不改变既有查询结果结构。
+- 相关 service 写入测试或落库验收样例需要覆盖 create / update / delete 三条日志链路，并对 `geo*` 字段留痕。
 
 ## 完成后同步文档
 

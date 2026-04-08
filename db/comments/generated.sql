@@ -6,7 +6,7 @@ COMMENT ON TABLE "public"."admin_user" IS E'管理端用户';
 COMMENT ON COLUMN "public"."admin_user"."id" IS E'主键id';
 COMMENT ON COLUMN "public"."admin_user"."username" IS E'账号';
 COMMENT ON COLUMN "public"."admin_user"."password" IS E'密码';
-COMMENT ON COLUMN "public"."admin_user"."mobile" IS E'手机号码';
+COMMENT ON COLUMN "public"."admin_user"."mobile" IS E'手机号码；为空表示未绑定，非空时在管理端账号内必须唯一';
 COMMENT ON COLUMN "public"."admin_user"."avatar" IS E'头像';
 COMMENT ON COLUMN "public"."admin_user"."role" IS E'账号角色';
 COMMENT ON COLUMN "public"."admin_user"."is_enabled" IS E'是否启用账号';

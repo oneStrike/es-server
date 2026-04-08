@@ -32,4 +32,8 @@ export const environmentValidationSchema = Joi.object({
   UPLOAD_TMP_DIR: Joi.string().default('./uploads/tmp'),
   UPLOAD_LOCAL_URL_PREFIX: Joi.string().default('/files'),
   UPLOAD_MAX_FILE_SIZE: Joi.string().default('100MB'),
+
+  // ip2region 配置
+  IP2REGION_XDB_PATH: Joi.string().optional(),
+  IP2REGION_DATA_DIR: Joi.string().default('./uploads/ip2region'),
 })

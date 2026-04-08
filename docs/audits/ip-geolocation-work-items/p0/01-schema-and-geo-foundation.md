@@ -20,19 +20,23 @@
 - `db/comments/generated.sql`
 - `package.json`
 
-## 当前代码锚点
+## 现状锚点（2026-04-08）
 
 - 当前请求解析统一入口：`libs/platform/src/utils/requestParse.ts`
 - 当前客户端上下文类型：`libs/platform/src/utils/request-parse.types.ts`
-- 当前 token 表已经有 `deviceInfo/ipAddress/userAgent`：
-  - `db/schema/app/app-user-token.ts`
-  - `db/schema/admin/admin-user-token.ts`
-- 当前请求审计表已具备 `ip/userAgent/device`：
-  - `db/schema/system/request-log.ts`
-- 当前论坛主题、评论、操作日志表尚未具备属地字段：
+- 当前 `6` 张目标表均已具备统一 `geo*` 字段与注释：
   - `db/schema/forum/forum-topic.ts`
   - `db/schema/app/user-comment.ts`
+  - `db/schema/app/app-user-token.ts`
+  - `db/schema/admin/admin-user-token.ts`
+  - `db/schema/system/request-log.ts`
   - `db/schema/forum/forum-user-action-log.ts`
+- 当前 Geo owner 已收口在 `libs/platform/src/modules/geo/`，统一提供：
+  - Geo 结果类型
+  - `geoSource = ip2region` 常量
+  - `ip2region` 查询封装
+  - 请求上下文属地补齐入口
+- 当前默认离线库路径为 `db/resources/ip2region/ip2region_v4.xdb`，并允许通过 `IP2REGION_XDB_PATH` 覆写；运行时 `tmp / versions / active` 目录布局仍由 `P1-02` owner。
 
 ## 非目标
 
@@ -52,7 +56,7 @@
   - `geoSource`
 - 为 `geoSource` 明确固定语义，落库值统一为 `ip2region`。
 - 统一属地字段的可空语义，仅要求新写入记录尽力写入；旧记录保持空值。
-- 引入 `ip2region.js` 依赖，并确定离线数据文件的仓库路径和加载方式。
+- 引入 `ip2region.js` 依赖，并确定默认离线数据文件路径与加载方式；运行时上传目录和热切换存储布局留给 `P1-02` 统一收口。
 - 在 `libs/platform/src/modules/geo/` 下新增统一 Geo 能力 owner：
   - Geo 结果类型
   - `ip2region` 查询封装
@@ -67,6 +71,7 @@
 - `geoSource` 在平台层固定输出 `ip2region`。
 - `db/comments/generated.sql` 已同步更新，`pnpm db:comments:check` 可通过。
 - 历史记录无需兼容改造；旧记录 `geo*` 为空值的语义已明确。
+- 默认单文件 `xdb` 加载入口已明确，不在本任务中提前固化 `tmp / versions / active` 运行时管理布局。
 - `pnpm db:generate` 的前置修改已准备完成，等待用户执行生成迁移。
 
 ## 完成后同步文档

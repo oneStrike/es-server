@@ -23,7 +23,7 @@
 
 ## 契约与回归验收
 
-- [ ] app 端论坛主题 `page`、`detail`、`my/page` 返回归属地字段。
+- [ ] app 端论坛主题 `page`、`detail`、`my/page`，以及复用 `PublicForumTopicPageItemDto` 的现有接口（如 `app/favorite/topic/page`）返回归属地字段。
   - 证据：
 - [ ] app 端评论 `my/page`、`reply/page` 以及复用目标评论列表能力的现有接口（论坛主题、作品、章节）返回归属地字段。
   - 证据：

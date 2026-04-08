@@ -3,12 +3,13 @@
 ## 目标
 
 - 让论坛主题、评论在写入时持久化统一属地快照。
-- 让 app 端论坛主题与评论的现有列表 / 详情接口返回归属地字段。
+- 让 app 端论坛主题与评论的现有列表 / 详情接口，以及复用相关返回 DTO 的现有接口返回归属地字段。
 
 ## 范围
 
 - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
 - `apps/app-api/src/modules/comment/comment.controller.ts`
+- `apps/app-api/src/modules/favorite/favorite.controller.ts`
 - `apps/app-api/src/modules/work/work.controller.ts`
 - `apps/app-api/src/modules/work/work-chapter.controller.ts`
 - `apps/admin-api/src/modules/forum/topic/topic.controller.ts`
@@ -19,22 +20,27 @@
 - `libs/interaction/src/comment/comment.service.ts`
 - `libs/interaction/src/comment/dto/comment.dto.ts`
 - `libs/interaction/src/comment/comment.type.ts`
+- `libs/interaction/src/favorite/dto/favorite.dto.ts`
 
-## 当前代码锚点
+## 现状锚点（2026-04-08）
 
 - app 端论坛主题详情当前只把 `ipAddress/device` 用于浏览日志，不参与主题创建落库：
   - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
-- app 端论坛主题创建当前未接收 `req`：
+- app / admin 端论坛主题 create / update / delete 当前都已接收 `req`，并在 controller 边界组装 `ForumTopicClientContext`：
   - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
-- admin 端论坛主题创建也未接收 `req`：
   - `apps/admin-api/src/modules/forum/topic/topic.controller.ts`
-- 评论创建 / 回复当前只透传 `userId` 与 DTO：
+- 评论创建 / 回复当前已透传客户端属地上下文：
   - `apps/app-api/src/modules/comment/comment.controller.ts`
   - `libs/interaction/src/comment/comment.service.ts`
 - `TargetCommentItemDto` 当前不仅用于论坛主题评论分页，也被作品、章节评论分页复用：
   - `apps/app-api/src/modules/forum/forum-topic.controller.ts`
   - `apps/app-api/src/modules/work/work.controller.ts`
   - `apps/app-api/src/modules/work/work-chapter.controller.ts`
+- `PublicForumTopicPageItemDto` 当前除论坛主题公共分页 / 我的主题外，还被收藏主题分页嵌套复用：
+  - `apps/app-api/src/modules/favorite/favorite.controller.ts`
+  - `libs/interaction/src/favorite/dto/favorite.dto.ts`
+- 收藏主题分页当前已补齐与 `PublicForumTopicPageItemDto` 对齐的 `geo*` 查询投影与组装字段：
+  - `libs/forum/src/topic/forum-topic.service.ts`
 - 论坛主题 app 端现有返回 DTO：
   - `PublicForumTopicPageItemDto`
   - `PublicForumTopicDetailDto`
@@ -67,6 +73,7 @@
   - 公共分页 `page`
   - 详情 `detail`
   - 我的主题 `my/page`
+  - 收藏主题 `app/favorite/topic/page`（复用 `PublicForumTopicPageItemDto`）
 - 评论属地按全站评论能力收口，返回口径覆盖：
   - 我的评论 `my/page`
   - 回复分页 `reply/page`
@@ -78,8 +85,9 @@
 
 - 新创建的论坛主题记录写入统一属地字段。
 - 新创建的评论与回复记录写入统一属地字段。
-- app 端论坛主题现有列表 / 详情接口返回归属地字段，且 DTO 契约一致。
+- app 端论坛主题现有列表 / 详情接口，以及复用 `PublicForumTopicPageItemDto` 的现有接口返回归属地字段，且 DTO 契约一致。
 - app 端全站评论能力相关现有接口返回归属地字段，且 DTO 契约一致。
+- 论坛主题收藏分页相关查询投影与组装逻辑已对齐 `PublicForumTopicPageItemDto` 的 `geo*` 字段，避免共享 DTO 扩展后出现漏字段。
 - 不新增新的评论 detail 接口，也不改变既有分页语义与排序语义。
 - 历史主题 / 评论记录允许保持 `geo*` 空值，不要求回填。
 
