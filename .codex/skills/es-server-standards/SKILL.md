@@ -22,9 +22,9 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
    - drizzle: `../../../.trae/rules/drizzle-guidelines.md`
 3. If service change touches counters, also read `../../../.trae/rules/COUNTER_SPEC.md`.
 4. Inspect sibling modules and shared abstractions with `rg` before introducing a new pattern.
-5. Implement with existing platform helpers and public APIs; avoid deep imports.
+5. Implement with existing platform helpers and owner files; follow `IMPORT_BOUNDARY_SPEC.md` instead of inventing new barrels or directory-level shortcuts.
 6. Run validation with the narrowest useful commands from `references/repo-map.md`.
-7. If verification requires temporary `*.spec.ts`, scripts, or probes, delete them before delivery unless the user explicitly asks to keep them.
+7. If verification requires temporary scripts or probes, delete them before delivery; committed repo `*.spec.ts` are long-lived assets unless they were created purely as throwaway verification files.
 8. Report any rule conflict explicitly in delivery notes; do not silently spread inconsistent legacy patterns.
 
 ## Layer Checklists
@@ -81,7 +81,7 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 - `findPagination` and `PageDto` now use a shared 1-based `pageIndex` contract. Reuse that behavior instead of translating page numbers locally.
 - `apps/*` are entry layers; reusable domain logic usually belongs in `libs/*`.
 - Define and export Drizzle inferred types close to the corresponding `db/schema` files.
-- For repo libs, import via named public APIs instead of root barrels. Multi-domain libs use `@libs/<lib>/<domain>`, aggregate Nest modules use `@libs/<lib>/module`, and single-domain aggregate exports use `@libs/<lib>/core`. Avoid file-level deep imports except for established platform namespaces such as `@libs/platform/modules/auth`.
+- For repo libs, import concrete owner files instead of root barrels or directory-level shortcuts. Cross-domain imports use alias + file path, same-domain imports prefer relative paths, and only `libs/platform` keeps constrained directory-level public APIs such as `@libs/platform/dto` or `@libs/platform/modules/auth`.
 
 ## References
 

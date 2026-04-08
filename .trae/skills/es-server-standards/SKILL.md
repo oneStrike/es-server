@@ -1,6 +1,6 @@
 ---
 name: es-server-standards
-description: "Repository-specific enforcement workflow for `.trae` standards in this `es-server` monorepo. Use when planning/reviewing/implementing code under `apps/*`, `libs/*`, or `db/*` that must follow controller, comment, DTO, service, type, and Drizzle rules."
+description: 'Repository-specific enforcement workflow for `.trae` standards in this `es-server` monorepo. Use when planning/reviewing/implementing code under `apps/*`, `libs/*`, or `db/*` that must follow controller, comment, DTO, service, type, and Drizzle rules.'
 ---
 
 # ES Server Standards
@@ -22,9 +22,10 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
    - drizzle: `../../../.trae/rules/drizzle-guidelines.md`
 3. If service change touches counters, also read `../../../.trae/rules/COUNTER_SPEC.md`.
 4. Inspect sibling modules and shared abstractions with `rg` before introducing a new pattern.
-5. Implement with existing platform helpers and public APIs; avoid deep imports.
-6. Run validation with the narrowest useful commands from `references/repo-map.md`.
-7. Report any rule conflict explicitly in delivery notes; do not silently spread inconsistent legacy patterns.
+5. Implement with existing platform helpers and owner files; follow `IMPORT_BOUNDARY_SPEC.md` instead of inventing new barrels or directory-level shortcuts.
+6. Run validation with the narrowest useful commands from `../../../.codex/skills/es-server-standards/references/repo-map.md`.
+7. If verification requires temporary scripts or probes, delete them before delivery; committed repo `*.spec.ts` are long-lived assets unless they were created purely as throwaway verification files.
+8. Report any rule conflict explicitly in delivery notes; do not silently spread inconsistent legacy patterns.
 
 ## Layer Checklists
 
@@ -45,10 +46,10 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 ### DTO
 
 - Make entity base DTOs mirror Drizzle tables exactly.
-- Build app DTOs with mapped types before manually redeclaring fields.
-- Keep service signatures on Drizzle/domain types, not app DTOs.
+- Build scene DTOs in `libs/*` with mapped types before manually redeclaring fields.
+- Keep service public signatures 1:1 with `libs/*` DTO contracts.
 - Reuse `IdDto`, `IdsDto`, `BaseDto`, `PageDto` before adding new common shapes.
-- Keep scenario DTOs in `apps/*`; avoid moving app-specific `Create/Update/Query/Response` DTOs into `libs/*`.
+- Keep scenario DTOs (`Create/Update/Query/Response`) in `libs/*`; avoid duplicating the same contract in `apps/*`.
 - For enum arrays, use `ArrayProperty + itemEnum`, and type fields as `XxxEnum[]`.
 
 ### Drizzle / Service / Resolver
@@ -64,15 +65,15 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 
 - Reuse entity fields via `Pick/Omit/Partial` from `@db/schema` inferred types.
 - Use `import type` for type-only imports.
-- Put stable domain types in `*.type.ts` near the owning module.
-- Do not leak apps DTO types into service/resolver signatures.
+- Put non-DTO internal domain types in `*.type.ts` near the owning module.
+- Do not keep mirrored `Input/View` types when they are isomorphic to DTOs; prefer direct DTO usage or type aliases.
 
 ## Validation Baseline
 
 - Type-check is required: `pnpm type-check`.
 - Run targeted compile checks for touched app(s) when needed.
 - Run `eslint` on touched files when rule-sensitive layers change (controller/DTO/type/schema/service).
-- Add or update tests when behavior/contract/error semantics change.
+- Add or update tests when behavior/contract/error semantics change; keep committed repo tests unless a file is explicitly temporary verification scaffolding.
 
 ## Repo Notes
 
@@ -80,9 +81,9 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 - `findPagination` and `PageDto` now use a shared 1-based `pageIndex` contract. Reuse that behavior instead of translating page numbers locally.
 - `apps/*` are entry layers; reusable domain logic usually belongs in `libs/*`.
 - Define and export Drizzle inferred types close to the corresponding `db/schema` files.
-- For repo libs, import via named public APIs instead of root barrels. Multi-domain libs use `@libs/<lib>/<domain>`, aggregate Nest modules use `@libs/<lib>/module`, and single-domain aggregate exports use `@libs/<lib>/core`. Avoid file-level deep imports except for established platform namespaces such as `@libs/platform/modules/auth`.
+- For repo libs, import concrete owner files instead of root barrels or directory-level shortcuts. Cross-domain imports use alias + file path, same-domain imports prefer relative paths, and only `libs/platform` keeps constrained directory-level public APIs such as `@libs/platform/dto` or `@libs/platform/modules/auth`.
 
 ## References
 
-- Read `references/repo-map.md` for directory map, aliases, and validation commands.
-- Read `references/rule-index.md` for quick rule lookup and known repo-specific inconsistencies.
+- Read `../../../.codex/skills/es-server-standards/references/repo-map.md` for directory map, aliases, and validation commands.
+- Read `../../../.codex/skills/es-server-standards/references/rule-index.md` for quick rule lookup and known repo-specific inconsistencies.
