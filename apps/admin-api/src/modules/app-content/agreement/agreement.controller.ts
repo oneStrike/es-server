@@ -8,9 +8,9 @@ import {
 } from '@libs/app-content/agreement/dto/agreement.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**

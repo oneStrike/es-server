@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { catchError, Observable, tap } from 'rxjs'
-import { AuditActionTypeEnum } from '../../modules/system/audit/audit.constant'
 import { AuditService } from '../../modules/system/audit/audit.service'
+import { AuditActionTypeEnum } from '../audit/audit-action.constant'
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {

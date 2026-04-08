@@ -8,8 +8,8 @@ import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
 import { GeoService } from '@libs/platform/modules/geo';
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../common/audit/audit-action.constant'
 import { Audit } from '../../common/decorators/audit.decorator'
-import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 import { AuthService } from './auth.service'
 
 /**

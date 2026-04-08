@@ -4,7 +4,7 @@ import { basename, join, resolve } from 'node:path'
 import process from 'node:process'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
-import { GeoService, Ip2regionRuntimeStatusDto } from '@libs/platform/modules/geo'
+import { GeoService } from '@libs/platform/modules/geo'
 import { LoggerService } from '@libs/platform/modules/logger'
 import {
   BadRequestException,
@@ -47,7 +47,7 @@ export class Ip2regionService {
    * 读取当前 ip2region 运行状态。
    * 在 GeoService 基础状态上补充当前是否正在热切换。
    */
-  async getStatus(): Promise<Ip2regionRuntimeStatusDto> {
+  async getStatus() {
     return {
       ...(await this.geoService.getRuntimeStatus()),
       reloading: this.reloading,
@@ -58,10 +58,7 @@ export class Ip2regionService {
    * 上传并激活新的 ip2region 库。
    * 仅允许一个热切换流程并发执行，避免当前进程查询器状态被覆盖。
    */
-  async uploadAndActivate(
-    req: FastifyRequest,
-    operatorUserId?: number,
-  ): Promise<Ip2regionRuntimeStatusDto> {
+  async uploadAndActivate(req: FastifyRequest, operatorUserId?: number) {
     if (this.reloading) {
       throw new ConflictException('当前正在切换 IP 属地库，请稍后重试')
     }
@@ -153,8 +150,8 @@ export class Ip2regionService {
    * 使用绝对路径，避免本地、CI 和部署环境的相对路径歧义。
    */
   private resolveStorageRoot() {
-    const configuredDir = process.env.IP2REGION_DATA_DIR?.trim()
-      || './uploads/ip2region'
+    const configuredDir =
+      process.env.IP2REGION_DATA_DIR?.trim() || './uploads/ip2region'
     return resolve(process.cwd(), configuredDir)
   }
 
@@ -233,17 +230,23 @@ export class Ip2regionService {
    * 清理旧的 active 库文件。
    * 当前只保留最近一次生效的 `.xdb` 与 metadata.json`，历史版本统一放在 versions 目录。
    */
-  private async cleanupOldActiveFiles(activeDir: string, currentFileName: string) {
+  private async cleanupOldActiveFiles(
+    activeDir: string,
+    currentFileName: string,
+  ) {
     const fileNames = await fs.readdir(activeDir)
     await Promise.all(
       fileNames
-        .filter((fileName) =>
-          fileName !== ACTIVE_METADATA_FILE
-          && fileName !== currentFileName
-          && fileName.toLowerCase().endsWith('.xdb'),
+        .filter(
+          (fileName) =>
+            fileName !== ACTIVE_METADATA_FILE &&
+            fileName !== currentFileName &&
+            fileName.toLowerCase().endsWith('.xdb'),
         )
         .map(async (fileName) =>
-          fs.rm(join(activeDir, fileName), { force: true }).catch(() => undefined),
+          fs
+            .rm(join(activeDir, fileName), { force: true })
+            .catch(() => undefined),
         ),
     )
   }

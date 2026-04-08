@@ -1,9 +1,16 @@
-import { CheckInService } from '@libs/growth/check-in/check-in.service';
-import { CheckInActionResponseDto, MakeupCheckInDto } from '@libs/growth/check-in/dto/check-in-execution.dto';
-import { CheckInCalendarResponseDto, CheckInRecordItemDto, CheckInSummaryResponseDto } from '@libs/growth/check-in/dto/check-in-runtime.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { CheckInService } from '@libs/growth/check-in/check-in.service'
+import {
+  CheckInActionResponseDto,
+  MakeupCheckInDto,
+} from '@libs/growth/check-in/dto/check-in-execution.dto'
+import {
+  CheckInCalendarResponseDto,
+  CheckInRecordItemDto,
+  CheckInSummaryResponseDto,
+} from '@libs/growth/check-in/dto/check-in-runtime.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { PageDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

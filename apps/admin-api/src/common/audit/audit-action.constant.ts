@@ -1,5 +1,5 @@
 /**
- * 常用操作类型。
+ * 管理后台审计常用操作类型。
  */
 export enum AuditActionTypeEnum {
   LOGIN = 'LOGIN',
@@ -13,8 +13,8 @@ export enum AuditActionTypeEnum {
   IMPORT = 'IMPORT',
 }
 
-export const AuditActionTypeLabels: Readonly<Record<AuditActionTypeEnum, string>> =
-  {
+export const AuditActionTypeLabels: Readonly<Record<AuditActionTypeEnum, string>>
+  = {
     [AuditActionTypeEnum.LOGIN]: '用户登录',
     [AuditActionTypeEnum.LOGOUT]: '用户登出',
     [AuditActionTypeEnum.CREATE]: '创建数据',

@@ -5,9 +5,9 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../common/decorators/audit.decorator'
-import { AuditActionTypeEnum } from '../audit/audit.constant'
 
 @ApiTags('系统管理/字典管理')
 @Controller('admin/dictionary')

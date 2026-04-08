@@ -5,8 +5,8 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../../../system/audit/audit.constant'
 
 @ApiTags('内容管理/漫画管理/基础信息')
 @Controller('admin/content/comic')

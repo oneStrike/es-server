@@ -4,8 +4,8 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @Controller('admin/forum/sections')
 @ApiTags('论坛管理/板块管理')

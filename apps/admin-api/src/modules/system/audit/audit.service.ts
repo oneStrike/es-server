@@ -1,11 +1,15 @@
-import type { AuditPageRequestDto, CreateRequestLogDto, CreateRequestLogSimpleDto } from '@libs/platform/modules/audit/dto/audit.dto';
 import type { FastifyRequest } from 'fastify'
+import type {
+  AuditPageRequestDto,
+  CreateRequestLogDto,
+  CreateRequestLogSimpleDto,
+} from './dto/audit.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { GeoService } from '@libs/platform/modules/geo';
-import { buildRequestLogFields } from '@libs/platform/utils';
+import { GeoService } from '@libs/platform/modules/geo'
+import { buildRequestLogFields } from '@libs/platform/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { and, eq, or } from 'drizzle-orm'
-import { AuditActionTypeEnum } from './audit.constant'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import {
   getAuditActionTypeLabel,
   normalizeAuditActionType,
@@ -125,7 +129,9 @@ export class AuditService {
             ),
           )
         : undefined,
-      isSuccess !== undefined ? eq(this.requestLog.isSuccess, isSuccess) : undefined,
+      isSuccess !== undefined
+        ? eq(this.requestLog.isSuccess, isSuccess)
+        : undefined,
     ].filter(Boolean)
 
     const page = await this.drizzle.ext.findPagination(this.requestLog, {

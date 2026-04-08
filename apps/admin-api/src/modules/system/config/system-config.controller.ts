@@ -4,8 +4,8 @@ import { BaseSystemConfigDto, UpdateSystemConfigDto } from '@libs/system-config/
 import { SystemConfigService } from '@libs/system-config/system-config.service';
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../audit/audit.constant'
 
 /**
  * 系统配置管理控制器

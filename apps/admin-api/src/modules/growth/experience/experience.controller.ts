@@ -5,8 +5,8 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 /**
  * 用户经验规则管理控制器
  * 提供经验规则的创建、更新、删除、查询等管理接口

@@ -4,9 +4,9 @@ import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/表情管理')

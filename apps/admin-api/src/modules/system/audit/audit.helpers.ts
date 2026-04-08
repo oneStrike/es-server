@@ -1,4 +1,4 @@
-import { AuditActionTypeEnum, AuditActionTypeLabels } from './audit.constant'
+import { AuditActionTypeEnum, AuditActionTypeLabels } from '../../../common/audit/audit-action.constant'
 
 const AUDIT_ACTION_TYPES = new Set<AuditActionTypeEnum>(
   Object.values(AuditActionTypeEnum) as AuditActionTypeEnum[],

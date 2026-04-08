@@ -6,9 +6,9 @@ import { IdDto } from '@libs/platform/dto/base.dto';
 import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 import { Audit } from '../../../../common/decorators/audit.decorator'
-import { AuditActionTypeEnum } from '../../../system/audit/audit.constant'
 
 @ApiTags('内容管理/漫画管理/章节管理')
 @Controller('admin/content/comic/chapter')

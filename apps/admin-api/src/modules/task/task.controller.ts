@@ -12,8 +12,8 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../system/audit/audit.constant'
 
 @ApiTags('任务管理/任务配置')
 @Controller('admin/task')

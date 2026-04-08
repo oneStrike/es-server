@@ -8,9 +8,9 @@ import {
 import { AppPageService } from '@libs/app-content/page/page.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators'
 import { IdDto, IdsDto } from '@libs/platform/dto'
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**

@@ -6,25 +6,29 @@ import type {
   PublicForumTopicDetailContext,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
-import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
-import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
-import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
-import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant';
-import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
-import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
-import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service';
-import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant';
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
-import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
-import { FollowService } from '@libs/interaction/follow/follow.service';
-import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
-import { LikeService } from '@libs/interaction/like/like.service';
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant';
-import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
-import { AppUserCountService } from '@libs/user/app-user-count.service';
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
+import {
+  canConsumeEventEnvelopeByConsumer,
+  createDefinedEventEnvelope,
+  EventEnvelopeGovernanceStatusEnum,
+} from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
+import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
+import { FollowService } from '@libs/interaction/follow/follow.service'
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
+import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
   BadRequestException,
   Injectable,
@@ -38,7 +42,7 @@ import {
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumReviewPolicyEnum } from '../forum.constant'
-import { ForumPermissionService } from '../permission/forum-permission.service';
+import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   CreateForumTopicDto,
   PublicForumTopicDetailDto,
@@ -600,7 +604,6 @@ export class ForumTopicService {
       geoProvince: topic.geoProvince ?? undefined,
       geoCity: topic.geoCity ?? undefined,
       geoIsp: topic.geoIsp ?? undefined,
-      geoSource: topic.geoSource ?? undefined,
       images: topic.images,
       videos: topic.videos,
       isPinned: topic.isPinned,
@@ -765,7 +768,6 @@ export class ForumTopicService {
         geoProvince: this.forumTopicTable.geoProvince,
         geoCity: this.forumTopicTable.geoCity,
         geoIsp: this.forumTopicTable.geoIsp,
-        geoSource: this.forumTopicTable.geoSource,
         images: this.forumTopicTable.images,
         videos: this.forumTopicTable.videos,
         isPinned: this.forumTopicTable.isPinned,
@@ -850,7 +852,6 @@ export class ForumTopicService {
         geoProvince: this.forumTopicTable.geoProvince,
         geoCity: this.forumTopicTable.geoCity,
         geoIsp: this.forumTopicTable.geoIsp,
-        geoSource: this.forumTopicTable.geoSource,
         images: this.forumTopicTable.images,
         videos: this.forumTopicTable.videos,
         isPinned: this.forumTopicTable.isPinned,
@@ -900,7 +901,6 @@ export class ForumTopicService {
           geoProvince: item.geoProvince ?? undefined,
           geoCity: item.geoCity ?? undefined,
           geoIsp: item.geoIsp ?? undefined,
-          geoSource: item.geoSource ?? undefined,
           liked: false,
           favorited: false,
           user: userMap.get(item.userId),
@@ -933,7 +933,6 @@ export class ForumTopicService {
         geoProvince: item.geoProvince ?? undefined,
         geoCity: item.geoCity ?? undefined,
         geoIsp: item.geoIsp ?? undefined,
-        geoSource: item.geoSource ?? undefined,
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
         user: userMap.get(item.userId),
@@ -962,7 +961,6 @@ export class ForumTopicService {
         geoProvince: this.forumTopicTable.geoProvince,
         geoCity: this.forumTopicTable.geoCity,
         geoIsp: this.forumTopicTable.geoIsp,
-        geoSource: this.forumTopicTable.geoSource,
         images: this.forumTopicTable.images,
         videos: this.forumTopicTable.videos,
         isPinned: this.forumTopicTable.isPinned,
@@ -1032,7 +1030,6 @@ export class ForumTopicService {
           geoProvince: topic.geoProvince ?? undefined,
           geoCity: topic.geoCity ?? undefined,
           geoIsp: topic.geoIsp ?? undefined,
-          geoSource: topic.geoSource ?? undefined,
           images: topic.images,
           videos: topic.videos,
           isPinned: topic.isPinned,

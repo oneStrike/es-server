@@ -45,7 +45,7 @@ describe('forumTopicService', () => {
     )
   })
 
-  it('收藏主题分页详情会带出 PublicForumTopicPageItemDto 需要的 geo 字段', async () => {
+  it('收藏主题分页详情不会返回 geoSource', async () => {
     selectWhereMock.mockResolvedValue([
       {
         id: 11,
@@ -74,22 +74,81 @@ describe('forumTopicService', () => {
 
     jest
       .spyOn(service as any, 'getTopicSectionBriefMap')
-      .mockResolvedValue(new Map([[7, { id: 7, name: '默认板块', icon: null, cover: null }]]))
+      .mockResolvedValue(
+        new Map([[7, { id: 7, name: '默认板块', icon: null, cover: null }]]),
+      )
     jest
       .spyOn(service as any, 'getTopicUserBriefMap')
-      .mockResolvedValue(new Map([[3, { id: 3, nickname: '测试用户', avatarUrl: null }]]))
+      .mockResolvedValue(
+        new Map([[3, { id: 3, nickname: '测试用户', avatarUrl: null }]]),
+      )
 
     const result = await service.batchGetFavoriteTopicDetails([11], 99)
 
-    expect(result.get(11)).toEqual(expect.objectContaining({
-      id: 11,
-      geoCountry: '中国',
-      geoProvince: undefined,
-      geoCity: '深圳市',
-      geoIsp: '电信',
-      geoSource: 'ip2region',
-      liked: true,
-      favorited: false,
-    }))
+    expect(result.get(11)).toEqual(
+      expect.objectContaining({
+        id: 11,
+        geoCountry: '中国',
+        geoProvince: undefined,
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        liked: true,
+        favorited: false,
+      }),
+    )
+    expect(result.get(11)).not.toHaveProperty('geoSource')
+  })
+
+  it('公开主题详情不会返回 geoSource', () => {
+    const result = (service as any).buildPublicTopicDetail(
+      {
+        id: 11,
+        sectionId: 7,
+        userId: 3,
+        title: '带属地的主题',
+        content: '正文内容',
+        bodyTokens: null,
+        geoCountry: '中国',
+        geoProvince: null,
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        geoSource: 'ip2region',
+        images: [],
+        videos: [],
+        isPinned: false,
+        isFeatured: true,
+        isLocked: false,
+        commentCount: 5,
+        likeCount: 8,
+        favoriteCount: 4,
+        lastCommentAt: new Date('2026-04-08T00:00:00.000Z'),
+        createdAt: new Date('2026-04-07T00:00:00.000Z'),
+        updatedAt: new Date('2026-04-08T00:00:00.000Z'),
+        user: {
+          id: 3,
+          nickname: '测试用户',
+          avatarUrl: null,
+        },
+        tags: [],
+      },
+      {
+        liked: true,
+        favorited: false,
+        isFollowed: false,
+        viewCount: 12,
+      },
+    )
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 11,
+        geoCountry: '中国',
+        geoProvince: undefined,
+        geoCity: '深圳市',
+        geoIsp: '电信',
+        viewCount: 12,
+      }),
+    )
+    expect(result).not.toHaveProperty('geoSource')
   })
 })

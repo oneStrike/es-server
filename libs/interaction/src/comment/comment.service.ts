@@ -8,24 +8,31 @@ import type {
   VisibleCommentEffectPayload,
 } from './comment.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
-import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
-import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant';
-import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
-import { ConfigReader } from '@libs/system-config/config-reader';
-import { AppUserCountService } from '@libs/user/app-user-count.service';
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
+import {
+  canConsumeEventEnvelopeByConsumer,
+  createDefinedEventEnvelope,
+  EventEnvelopeGovernanceStatusEnum,
+} from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+} from '@libs/platform/constant/audit.constant'
+import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
+import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { ConfigReader } from '@libs/system-config/config-reader'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
 import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
-import { EmojiParserService } from '../emoji/emoji-parser.service';
-import { EmojiSceneEnum } from '../emoji/emoji.constant';
+import { EmojiParserService } from '../emoji/emoji-parser.service'
+import { EmojiSceneEnum } from '../emoji/emoji.constant'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
 import { CommentGrowthService } from './comment-growth.service'
@@ -235,6 +242,12 @@ export class CommentService {
       commentIds,
       userId,
     )
+  }
+
+  private omitGeoSource<T>(item: T): Omit<T, 'geoSource'> {
+    const nextItem = { ...item } as T & { geoSource?: unknown }
+    delete nextItem.geoSource
+    return nextItem
   }
 
   /**
@@ -938,7 +951,6 @@ export class CommentService {
         'geoProvince',
         'geoCity',
         'geoIsp',
-        'geoSource',
         'createdAt',
       ],
     })
@@ -969,7 +981,7 @@ export class CommentService {
       list: page.list.map((item) => {
         const user = userMap.get(item.userId)
         return {
-          ...item,
+          ...this.omitGeoSource(item),
           liked: likedMap.get(item.id) ?? false,
           user: user ?? undefined,
         }
@@ -1026,7 +1038,6 @@ export class CommentService {
         'geoProvince',
         'geoCity',
         'geoIsp',
-        'geoSource',
         'createdAt',
       ],
     })
@@ -1049,7 +1060,6 @@ export class CommentService {
       geoProvince: string | null
       geoCity: string | null
       geoIsp: string | null
-      geoSource: string | null
       createdAt: Date
       totalCount?: number
     }[] = []
@@ -1070,7 +1080,6 @@ export class CommentService {
           geoProvince: this.userComment.geoProvince,
           geoCity: this.userComment.geoCity,
           geoIsp: this.userComment.geoIsp,
-          geoSource: this.userComment.geoSource,
           createdAt: this.userComment.createdAt,
           rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
             'rn',
@@ -1144,7 +1153,6 @@ export class CommentService {
         geoProvince?: string
         geoCity?: string
         geoIsp?: string
-        geoSource?: string
         createdAt: Date
       }[]
     >()
@@ -1167,7 +1175,6 @@ export class CommentService {
         geoProvince: reply.geoProvince ?? undefined,
         geoCity: reply.geoCity ?? undefined,
         geoIsp: reply.geoIsp ?? undefined,
-        geoSource: reply.geoSource ?? undefined,
         createdAt: reply.createdAt,
       })
       previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
@@ -1213,7 +1220,6 @@ export class CommentService {
             geoProvince: reply.geoProvince,
             geoCity: reply.geoCity,
             geoIsp: reply.geoIsp,
-            geoSource: reply.geoSource,
             createdAt: reply.createdAt,
             liked: likedMap.get(reply.id) ?? false,
             user: userMap.get(reply.userId) ?? undefined,
@@ -1226,7 +1232,6 @@ export class CommentService {
           geoProvince: item.geoProvince ?? undefined,
           geoCity: item.geoCity ?? undefined,
           geoIsp: item.geoIsp ?? undefined,
-          geoSource: item.geoSource ?? undefined,
           liked: likedMap.get(item.id) ?? false,
           user: userMap.get(item.userId) ?? undefined,
           replyCount,
@@ -1263,7 +1268,7 @@ export class CommentService {
       conditions.push(eq(this.userComment.auditStatus, query.auditStatus))
     }
 
-    return this.drizzle.ext.findPagination(this.userComment, {
+    const page = await this.drizzle.ext.findPagination(this.userComment, {
       where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
@@ -1271,6 +1276,11 @@ export class CommentService {
         createdAt: 'desc',
       },
     })
+
+    return {
+      ...page,
+      list: page.list.map((item) => this.omitGeoSource(item)),
+    }
   }
 
   /**
@@ -1348,10 +1358,12 @@ export class CommentService {
 
     return {
       ...page,
-      list: page.list.map((item) => ({
-        ...item,
-        user: userMap.get(item.userId) ?? undefined,
-      })),
+      list: page.list.map((item) => {
+        return {
+          ...this.omitGeoSource(item),
+          user: userMap.get(item.userId) ?? undefined,
+        }
+      }),
     }
   }
 
@@ -1406,7 +1418,7 @@ export class CommentService {
       throw new NotFoundException('评论不存在')
     }
 
-    return comment
+    return this.omitGeoSource(comment)
   }
 
   /**
@@ -1415,7 +1427,10 @@ export class CommentService {
    * 已进入终态的评论不允许回退为待审核。
    */
   async updateCommentAuditStatus(
-    input: UpdateAdminCommentAuditStatusDto & { auditById: number, auditRole?: AuditRoleEnum },
+    input: UpdateAdminCommentAuditStatusDto & {
+      auditById: number
+      auditRole?: AuditRoleEnum
+    },
   ) {
     const current = await this.db.query.userComment.findFirst({
       where: {

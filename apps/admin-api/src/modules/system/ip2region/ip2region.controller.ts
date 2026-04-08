@@ -4,8 +4,8 @@ import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
 import { Ip2regionRuntimeStatusDto } from '@libs/platform/modules/geo'
 import { Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../audit/audit.constant'
 import { Ip2regionService } from './ip2region.service'
 
 @ApiTags('系统管理/IP 属地库')
@@ -30,10 +30,7 @@ export class Ip2regionController {
       actionType: AuditActionTypeEnum.UPLOAD,
     },
   })
-  async upload(
-    @Req() req: FastifyRequest,
-    @CurrentUser('sub') userId: number,
-  ) {
+  async upload(@Req() req: FastifyRequest, @CurrentUser('sub') userId: number) {
     return this.ip2regionService.uploadAndActivate(req, userId)
   }
 }

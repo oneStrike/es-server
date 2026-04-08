@@ -87,8 +87,3 @@ export enum CheckInRepairTargetTypeEnum {
   /** 连续签到奖励 */
   STREAK_GRANT = 2,
 }
-
-/**
- * 默认对账批量扫描上限。
- */
-export const CHECK_IN_DEFAULT_REPAIR_SCAN_LIMIT = 100

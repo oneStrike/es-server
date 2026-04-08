@@ -2,20 +2,17 @@ import type { Db } from '@db/core'
 import type { AppUserCountSelect, AppUserSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
-import { UserPointService } from '@libs/growth/point/point.service';
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
-import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
-import { LikeService } from '@libs/interaction/like/like.service';
-import { AppUserCountService } from '@libs/user/app-user-count.service';
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { UserPointService } from '@libs/growth/point/point.service'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
-import {
-  QueryUserProfileListDto,
-  UpdateUserStatusDto,
-} from './dto/profile.dto'
+import { QueryUserProfileListDto, UpdateUserStatusDto } from './dto/profile.dto'
 
 type UserCountRow = Pick<
   AppUserCountSelect,
@@ -175,9 +172,7 @@ export class UserProfileService {
       conditions.push(eq(this.appUser.status, status))
     }
     if (nickname) {
-      conditions.push(
-        buildILikeCondition(this.appUser.nickname, nickname)!,
-      )
+      conditions.push(buildILikeCondition(this.appUser.nickname, nickname)!)
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -372,7 +367,6 @@ export class UserProfileService {
         geoProvince: this.forumTopic.geoProvince,
         geoCity: this.forumTopic.geoCity,
         geoIsp: this.forumTopic.geoIsp,
-        geoSource: this.forumTopic.geoSource,
         images: this.forumTopic.images,
         videos: this.forumTopic.videos,
         isPinned: this.forumTopic.isPinned,
@@ -455,7 +449,6 @@ export class UserProfileService {
         geoProvince: item.geoProvince ?? undefined,
         geoCity: item.geoCity ?? undefined,
         geoIsp: item.geoIsp ?? undefined,
-        geoSource: item.geoSource ?? undefined,
         liked: likedMap.get(item.id) ?? false,
         favorited: favoritedMap.get(item.id) ?? false,
         user,

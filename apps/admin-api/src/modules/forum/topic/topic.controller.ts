@@ -7,8 +7,8 @@ import { IdDto } from '@libs/platform/dto/base.dto';
 import { GeoService } from '@libs/platform/modules/geo';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
-import { AuditActionTypeEnum } from '../../system/audit/audit.constant'
 
 @ApiTags('论坛管理/主题管理')
 @Controller('admin/forum/topic')

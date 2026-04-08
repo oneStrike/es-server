@@ -1,4 +1,4 @@
-import type { AuditActionTypeEnum } from '../../modules/system/audit/audit.constant'
+import type { AuditActionTypeEnum } from '../audit/audit-action.constant'
 
 /**
  * 审计日志装饰器元数据

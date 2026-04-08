@@ -1,9 +1,9 @@
 import { MessageNotificationDeliveryItemDto, MessageOutboxMonitorSummaryDto, MessageWsMonitorSummaryDto, QueryMessageOutboxMonitorDto, QueryMessageWsMonitorDto, RetryMessageNotificationDeliveryDto } from '@libs/message/monitor/dto/message-monitor.dto';
 import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { AuditActionTypeEnum } from '@libs/platform/modules/audit'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { AuditActionTypeEnum } from '../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { MessageMonitorService } from './message-monitor.service'
 
