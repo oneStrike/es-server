@@ -1,12 +1,9 @@
-import type { CheckInRewardConfig } from '../check-in.type'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { BaseDto } from '@libs/platform/dto/base.dto';
 import { CheckInCycleTypeEnum, CheckInPlanStatusEnum } from '../check-in.constant'
-import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 export class BaseCheckInPlanDto extends BaseDto {
   @StringProperty({
@@ -40,7 +37,7 @@ export class BaseCheckInPlanDto extends BaseDto {
   cycleType!: CheckInCycleTypeEnum
 
   @StringProperty({
-    description: '计划开始日期（date 语义，同时作为周期切片起点）。',
+    description: '计划开始日期（date 语义，同时作为计划生效窗口起点）。',
     example: '2026-04-01',
     type: 'ISO8601',
   })
@@ -52,15 +49,6 @@ export class BaseCheckInPlanDto extends BaseDto {
     min: 0,
   })
   allowMakeupCountPerCycle!: number
-
-  @NestedProperty({
-    description: '基础签到奖励配置；为空表示该计划没有基础奖励。',
-    type: CheckInRewardConfigDto,
-    example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
-    required: false,
-    nullable: true,
-  })
-  baseRewardConfig?: CheckInRewardConfigDto | null
 
   @NumberProperty({
     description: '计划版本号；影响周期快照冻结与规则版本切换。',

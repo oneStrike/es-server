@@ -7,6 +7,10 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import {
+  CheckInDailyRewardRuleItemDto,
+  CreateCheckInDailyRewardRuleDto,
+} from './check-in-daily-reward-rule.dto'
 import { CheckInPageNoDateDto } from './check-in-fragment.dto'
 import { BaseCheckInPlanDto } from './check-in-plan.dto'
 import {
@@ -20,6 +24,14 @@ export class CreateCheckInPlanDto extends OmitType(BaseCheckInPlanDto, [
   'updatedAt',
   'version',
 ] as const) {
+  @ArrayProperty({
+    description: '按日基础奖励规则列表。',
+    itemClass: CreateCheckInDailyRewardRuleDto,
+    itemType: 'object',
+    required: false,
+  })
+  dailyRewardRules?: CreateCheckInDailyRewardRuleDto[]
+
   @ArrayProperty({
     description: '连续签到奖励规则列表。',
     itemClass: CreateCheckInStreakRewardRuleDto,
@@ -74,6 +86,14 @@ export class CheckInPlanPageItemDto extends BaseCheckInPlanDto {
 }
 
 export class CheckInPlanDetailResponseDto extends CheckInPlanPageItemDto {
+  @ArrayProperty({
+    description: '当前版本按日基础奖励规则列表。',
+    itemClass: CheckInDailyRewardRuleItemDto,
+    itemType: 'object',
+    validation: false,
+  })
+  dailyRewardRules!: CheckInDailyRewardRuleItemDto[]
+
   @ArrayProperty({
     description: '当前版本连续奖励规则列表。',
     itemClass: CheckInStreakRewardRuleItemDto,

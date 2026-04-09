@@ -18,6 +18,7 @@ import {
 } from './check-in-fragment.dto'
 import { BaseCheckInPlanDto } from './check-in-plan.dto'
 import { BaseCheckInRecordDto } from './check-in-record.dto'
+import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 import { CheckInGrantItemDto } from './check-in-streak-reward-grant.dto'
 import { CheckInStreakRewardRuleItemDto } from './check-in-streak-reward-rule.dto'
 
@@ -40,6 +41,7 @@ class OptionalCheckInRecordStateDto extends PartialType(
     'recordType',
     'rewardStatus',
     'rewardResultType',
+    'rewardDayIndex',
   ] as const),
 ) {}
 
@@ -171,6 +173,29 @@ export class CheckInCalendarDayDto extends IntersectionType(
   PickType(BaseCheckInRecordDto, ['signDate'] as const),
   OptionalCheckInRecordStateDto,
 ) {
+  @NumberProperty({
+    description: '该自然日在当前周期中的奖励天序号。',
+    example: 3,
+    validation: false,
+  })
+  dayIndex!: number
+
+  @BooleanProperty({
+    description: '该日期是否位于当前计划生效窗口内。',
+    example: true,
+    validation: false,
+  })
+  inPlanWindow!: boolean
+
+  @NestedProperty({
+    description: '该自然日计划基础奖励；为空表示当天没有基础奖励。',
+    type: CheckInRewardConfigDto,
+    required: false,
+    nullable: true,
+    validation: false,
+  })
+  planRewardConfig?: CheckInRewardConfigDto | null
+
   @BooleanProperty({
     description: '是否为今天。',
     example: true,

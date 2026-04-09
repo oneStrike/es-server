@@ -80,7 +80,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         startDate: this.toDateOnlyValue(plan.startDate),
         endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
         allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
-        baseRewardConfig: cycle.planSnapshot.baseRewardConfig ?? null,
       },
       cycle: {
         id: cycle.id,
@@ -277,6 +276,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         recordType: record.recordType,
         rewardStatus: record.rewardStatus,
         rewardResultType: record.rewardResultType,
+        rewardDayIndex: record.rewardDayIndex,
+        resolvedRewardConfig: this.parseStoredRewardConfig(
+          record.resolvedRewardConfig,
+          {
+            allowEmpty: true,
+          },
+        ),
         baseRewardLedgerIds: record.baseRewardLedgerIds,
         lastRewardError: record.lastRewardError,
         grants:
@@ -318,7 +324,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
 
     const frame = this.buildCycleFrame(plan, now)
-    const rules = await this.getPlanRules(plan.id, plan.version)
+    const [dailyRules, streakRules] = await Promise.all([
+      this.getPlanDailyRewardRules(plan.id, plan.version),
+      this.getPlanRules(plan.id, plan.version),
+    ])
     return {
       cycleKey: frame.cycleKey,
       cycleStartDate: frame.cycleStartDate,
@@ -327,7 +336,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       makeupUsedCount: 0,
       currentStreak: 0,
       planSnapshotVersion: plan.version,
-      planSnapshot: this.buildPlanSnapshot(plan, rules),
+      planSnapshot: this.buildPlanSnapshot(plan, streakRules, dailyRules),
     }
   }
 
@@ -394,7 +403,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
    * 即使某天没有签到事实，也要返回占位项供前端明确区分未来日和漏签日。
    */
   private buildCalendarDays(
-    cycle: Pick<CheckInVirtualCycleView, 'cycleStartDate' | 'cycleEndDate'>,
+    cycle: Pick<
+      CheckInVirtualCycleView,
+      'cycleStartDate' | 'cycleEndDate' | 'planSnapshot'
+    >,
     records: CheckInRecordItemDto[],
     today: string,
   ) {
@@ -412,8 +424,15 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     while (cursor.isSame(end) || cursor.isBefore(end)) {
       const signDate = cursor.format('YYYY-MM-DD')
       const record = recordMap.get(signDate)
+      const rewardResolution = this.resolveSnapshotRewardForDate(
+        cycle.planSnapshot,
+        signDate,
+      )
       days.push({
         signDate,
+        dayIndex: this.resolveRewardDayIndex(cycle.planSnapshot.cycleType, signDate),
+        inPlanWindow: true,
+        planRewardConfig: rewardResolution.rewardConfig,
         isToday: signDate === today,
         isFuture: signDate > today,
         isSigned: Boolean(record),
@@ -437,6 +456,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       | 'recordType'
       | 'rewardStatus'
       | 'rewardResultType'
+      | 'rewardDayIndex'
+      | 'resolvedRewardConfig'
       | 'baseRewardLedgerIds'
       | 'lastRewardError'
       | 'rewardSettledAt'
@@ -451,6 +472,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       rewardStatus: record.rewardStatus as CheckInRewardStatusEnum | null,
       rewardResultType:
         record.rewardResultType as CheckInRewardResultTypeEnum | null,
+      rewardDayIndex: record.rewardDayIndex,
+      resolvedRewardConfig: this.parseStoredRewardConfig(
+        record.resolvedRewardConfig,
+        {
+          allowEmpty: true,
+        },
+      ),
       baseRewardLedgerIds: record.baseRewardLedgerIds,
       lastRewardError: record.lastRewardError,
       rewardSettledAt: record.rewardSettledAt,

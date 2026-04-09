@@ -1,7 +1,9 @@
+import type { CheckInRewardConfig } from '../check-in.type'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { BaseDto } from '@libs/platform/dto/base.dto';
@@ -11,6 +13,7 @@ import {
   CheckInRewardResultTypeEnum,
   CheckInRewardStatusEnum,
 } from '../check-in.constant'
+import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 export class BaseCheckInRecordDto extends BaseDto {
   @NumberProperty({
@@ -62,6 +65,24 @@ export class BaseCheckInRecordDto extends BaseDto {
     required: false,
   })
   rewardResultType?: CheckInRewardResultTypeEnum | null
+
+  @NumberProperty({
+    description: '本次基础奖励命中的奖励天序号。',
+    example: 3,
+    required: false,
+    validation: false,
+  })
+  rewardDayIndex?: number | null
+
+  @NestedProperty({
+    description: '本次基础奖励解析结果快照；为空表示该签到事实没有基础奖励。',
+    type: CheckInRewardConfigDto,
+    example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
+    required: false,
+    nullable: true,
+    validation: false,
+  })
+  resolvedRewardConfig?: CheckInRewardConfigDto | null
 
   @StringProperty({
     description: '业务幂等键；仅内部补偿、重试与排障使用。',

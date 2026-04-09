@@ -70,7 +70,7 @@ export const checkInCycle = pgTable('check_in_cycle', {
   planSnapshotVersion: integer().notNull(),
   /**
    * 周期快照。
-   * 至少冻结周期类型、计划起止日期、补签额度和基础奖励配置等关键字段。
+   * 至少冻结周期类型、计划起止日期、补签额度、按日奖励规则和连续奖励规则等关键字段。
    */
   planSnapshot: jsonb().notNull(),
   /**

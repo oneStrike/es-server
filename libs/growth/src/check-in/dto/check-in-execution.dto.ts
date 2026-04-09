@@ -17,6 +17,8 @@ class CheckInActionBaseDto extends IntersectionType(
     'recordType',
     'rewardStatus',
     'rewardResultType',
+    'rewardDayIndex',
+    'resolvedRewardConfig',
   ] as const),
   PickType(BaseCheckInCycleDto, ['currentStreak', 'signedCount'] as const),
 ) {}

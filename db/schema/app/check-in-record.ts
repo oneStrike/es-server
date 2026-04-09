@@ -56,6 +56,16 @@ export const checkInRecord = pgTable('check_in_record', {
    */
   rewardResultType: smallint(),
   /**
+   * 本次基础奖励命中的奖励天序号。
+   * `null` 表示该签到事实没有基础奖励，非空时必须和 `resolvedRewardConfig` 成对出现。
+   */
+  rewardDayIndex: integer(),
+  /**
+   * 本次基础奖励解析结果快照。
+   * 冻结签到当日实际结算的奖励配置，便于后续对账、补偿和历史展示。
+   */
+  resolvedRewardConfig: jsonb(),
+  /**
    * 业务幂等键。
    * 用于重复提交、补偿重放和账本幂等收口。
    */
@@ -149,6 +159,13 @@ export const checkInRecord = pgTable('check_in_record', {
     sql`${table.rewardResultType} is null or ${table.rewardResultType} in (1, 2, 3)`,
   ),
   /**
+   * 奖励天序号必须为 1..31 的正整数或为空。
+   */
+  check(
+    'check_in_record_reward_day_index_valid_chk',
+    sql`${table.rewardDayIndex} is null or (${table.rewardDayIndex} >= 1 and ${table.rewardDayIndex} <= 31)`,
+  ),
+  /**
    * 操作来源必须落在受支持枚举内。
    */
   check(
@@ -176,6 +193,21 @@ export const checkInRecord = pgTable('check_in_record', {
       ${table.rewardStatus} = 2
       and ${table.rewardResultType} = 3
       and ${table.rewardSettledAt} is not null
+    )`,
+  ),
+  /**
+   * 奖励解析快照与奖励状态必须保持一致。
+   */
+  check(
+    'check_in_record_reward_resolution_consistent_chk',
+    sql`(
+      ${table.rewardStatus} is null
+      and ${table.rewardDayIndex} is null
+      and ${table.resolvedRewardConfig} is null
+    ) or (
+      ${table.rewardStatus} in (0, 1, 2)
+      and ${table.rewardDayIndex} is not null
+      and ${table.resolvedRewardConfig} is not null
     )`,
   ),
 ])

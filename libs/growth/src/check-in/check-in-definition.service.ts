@@ -1,4 +1,5 @@
 import type { IdDto } from '@libs/platform/dto/base.dto';
+import type { CreateCheckInDailyRewardRuleDto } from './dto/check-in-daily-reward-rule.dto'
 import type {
   CreateCheckInPlanDto,
   QueryCheckInPlanDto,
@@ -13,7 +14,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common'
-import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import {
   CheckInPlanStatusEnum,
   CheckInRewardStatusEnum,
@@ -76,7 +77,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /** 读取单个签到计划详情及当前版本规则快照。 */
   async getPlanDetail(query: IdDto) {
     const plan = await this.getPlanById(query.id)
-    const [rules, summary] = await Promise.all([
+    const [dailyRules, streakRules, summary] = await Promise.all([
+      this.getPlanDailyRewardRules(plan.id, plan.version),
       this.getPlanRules(plan.id, plan.version),
       this.buildPlanSummary(plan.id, plan.version),
     ])
@@ -85,7 +87,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       ...plan,
       status: this.resolvePlanStatus(plan),
       ...summary,
-      streakRewardRules: rules.map((rule) => this.toStreakRuleView(rule)),
+      dailyRewardRules: dailyRules.map((rule) => this.toDailyRewardRuleView(rule)),
+      streakRewardRules: streakRules.map((rule) => this.toStreakRuleView(rule)),
     }
   }
 
@@ -108,24 +111,14 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       throw new BadRequestException('每周期补签次数必须为非负整数')
     }
     this.ensurePlanDateRange(startDate, endDate)
-    const baseRewardConfig = this.parseRewardConfig(dto.baseRewardConfig, {
-      allowEmpty: true,
-    })
+    this.ensurePlanBoundaryAligned(cycleType, startDate, endDate)
     const now = new Date()
-    if (
-      this.isPlanActiveAt(
-        {
-          status: dto.status,
-          startDate,
-          endDate,
-        },
-        now,
-      )
-    ) {
-      const activePlan = await this.findCurrentActivePlan(now)
-      if (activePlan) {
-        throw new ConflictException('当前已有其他生效中的签到计划')
-      }
+    if (dto.status === CheckInPlanStatusEnum.PUBLISHED) {
+      await this.assertPublishedPlanWindowAvailable({
+        startDate,
+        endDate,
+      })
+      await this.assertNoImmediateSwitch(startDate, now)
     }
 
     await this.drizzle.withTransaction(
@@ -140,12 +133,23 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             startDate,
             endDate,
             allowMakeupCountPerCycle,
-            baseRewardConfig,
             version: 1,
             createdById: adminUserId,
             updatedById: adminUserId,
           })
           .returning()
+
+        const dailyRewardRules = this.normalizeDailyRewardRules(
+          dto.dailyRewardRules,
+          plan.id,
+          plan.version,
+          cycleType,
+        )
+        if (dailyRewardRules.length > 0) {
+          await tx
+            .insert(this.checkInDailyRewardRuleTable)
+            .values(dailyRewardRules)
+        }
 
         const streakRewardRules = this.normalizeStreakRewardRules(
           dto.streakRewardRules,
@@ -194,12 +198,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         dto.allowMakeupCountPerCycle !== undefined
           ? dto.allowMakeupCountPerCycle
           : currentPlan.allowMakeupCountPerCycle,
-      baseRewardConfig:
-        dto.baseRewardConfig !== undefined
-          ? this.parseRewardConfig(dto.baseRewardConfig, { allowEmpty: true })
-          : this.parseStoredRewardConfig(currentPlan.baseRewardConfig, {
-              allowEmpty: true,
-            }),
     }
 
     if (
@@ -209,10 +207,42 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       throw new BadRequestException('每周期补签次数必须为非负整数')
     }
     this.ensurePlanDateRange(nextPlan.startDate, nextPlan.endDate)
+    this.ensurePlanBoundaryAligned(
+      nextPlan.cycleType,
+      nextPlan.startDate,
+      nextPlan.endDate,
+    )
 
+    if (nextPlan.status === CheckInPlanStatusEnum.PUBLISHED) {
+      await this.assertPublishedPlanWindowAvailable({
+        planId: currentPlan.id,
+        startDate: nextPlan.startDate,
+        endDate: nextPlan.endDate,
+      })
+      await this.assertNoImmediateSwitch(nextPlan.startDate, new Date(), currentPlan.id)
+    }
+
+    const currentDailyRules = await this.getPlanDailyRewardRules(
+      currentPlan.id,
+      currentPlan.version,
+    )
     const currentRules = await this.getPlanRules(
       currentPlan.id,
       currentPlan.version,
+    )
+    const nextDailyRuleInputs: CreateCheckInDailyRewardRuleDto[] =
+      dto.dailyRewardRules ??
+      currentDailyRules.map((rule) => ({
+        dayIndex: rule.dayIndex,
+        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        })!,
+      }))
+    const nextDailyRules = this.normalizeDailyRewardRules(
+      nextDailyRuleInputs,
+      currentPlan.id,
+      currentPlan.version,
+      nextPlan.cycleType,
     )
     const nextRuleInputs: CreateCheckInStreakRewardRuleDto[] =
       dto.streakRewardRules ??
@@ -234,6 +264,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     const shouldBumpVersion = this.shouldBumpPlanVersion({
       currentPlan,
       nextPlan,
+      currentDailyRules,
+      nextDailyRules,
       currentRules,
       nextRules,
     })
@@ -253,7 +285,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             startDate: nextPlan.startDate,
             endDate: nextPlan.endDate,
             allowMakeupCountPerCycle: nextPlan.allowMakeupCountPerCycle,
-            baseRewardConfig: nextPlan.baseRewardConfig,
             version: nextVersion,
             updatedById: adminUserId,
           })
@@ -265,6 +296,15 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           )
 
         this.drizzle.assertAffectedRows(result, '签到计划不存在')
+
+        if (shouldBumpVersion && nextDailyRules.length > 0) {
+          await tx.insert(this.checkInDailyRewardRuleTable).values(
+            nextDailyRules.map((rule) => ({
+              ...rule,
+              planVersion: nextVersion,
+            })),
+          )
+        }
 
         if (shouldBumpVersion && nextRules.length > 0) {
           await tx.insert(this.checkInStreakRewardRuleTable).values(
@@ -289,18 +329,17 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     const plan = await this.getPlanById(dto.id)
     const nextStatus = dto.status ?? this.resolvePlanStatus(plan)
 
-    if (
-      nextStatus === CheckInPlanStatusEnum.PUBLISHED &&
-      this.isPlanActiveAt(
-        {
-          status: nextStatus,
-          startDate: plan.startDate,
-          endDate: plan.endDate,
-        },
+    if (nextStatus === CheckInPlanStatusEnum.PUBLISHED) {
+      await this.assertPublishedPlanWindowAvailable({
+        planId: plan.id,
+        startDate: this.toDateOnlyValue(plan.startDate),
+        endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
+      })
+      await this.assertNoImmediateSwitch(
+        this.toDateOnlyValue(plan.startDate),
         new Date(),
+        plan.id,
       )
-    ) {
-      await this.assertNoOtherCurrentActivePlan(plan.id)
     }
 
     await this.drizzle.withErrorHandling(() =>
@@ -310,13 +349,66 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           ...this.buildPlanStatusPersistence(nextStatus),
           updatedById: adminUserId,
         })
-        .where(
+      .where(
           and(
             eq(this.checkInPlanTable.id, dto.id),
             isNull(this.checkInPlanTable.deletedAt),
           ),
         ), { notFound: '签到计划不存在' },)
     return true
+  }
+
+  /** 断言已发布计划窗口之间不存在重叠。 */
+  private async assertPublishedPlanWindowAvailable(input: {
+    planId?: number
+    startDate: string
+    endDate?: string | null
+  }) {
+    const conditions = [
+      isNull(this.checkInPlanTable.deletedAt),
+      eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
+      lte(this.checkInPlanTable.startDate, input.endDate ?? '9999-12-31'),
+      or(
+        isNull(this.checkInPlanTable.endDate),
+        gte(this.checkInPlanTable.endDate, input.startDate),
+      ),
+    ]
+
+    if (input.planId !== undefined) {
+      conditions.push(ne(this.checkInPlanTable.id, input.planId))
+    }
+
+    const [conflictedPlan] = await this.db
+      .select({ id: this.checkInPlanTable.id })
+      .from(this.checkInPlanTable)
+      .where(and(...conditions))
+      .limit(1)
+
+    if (conflictedPlan) {
+      throw new ConflictException('已发布签到计划窗口不能重叠')
+    }
+  }
+
+  /** 断言新计划不会在当前自然周期内立即切换生效。 */
+  private async assertNoImmediateSwitch(
+    startDate: string,
+    now: Date,
+    currentPlanId?: number,
+  ) {
+    const activePlan = currentPlanId
+      ? await this.findCurrentActivePlan(now)
+      : await this.findCurrentActivePlan(now)
+    if (!activePlan) {
+      return
+    }
+    if (currentPlanId && activePlan.id === currentPlanId) {
+      return
+    }
+
+    const currentCycle = this.buildCycleFrame(activePlan, now)
+    if (startDate <= currentCycle.cycleEndDate) {
+      throw new ConflictException('当前周期内不允许立即切换签到计划')
+    }
   }
 
   /** 聚合单个计划在后台列表页展示所需的运行态摘要。 */

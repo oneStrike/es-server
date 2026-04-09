@@ -1,5 +1,7 @@
 import type {
   CheckInCycleInsert,
+  CheckInDailyRewardRule,
+  CheckInDailyRewardRuleInsert,
   CheckInPlan,
   CheckInRecordInsert,
   CheckInStreakRewardGrant,
@@ -8,6 +10,7 @@ import type {
   CheckInStreakRewardRuleInsert,
 } from '@db/schema'
 import type {
+  CheckInCycleTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 
@@ -33,9 +36,29 @@ export type CheckInPlanSnapshotSource = Pick<
   | 'startDate'
   | 'endDate'
   | 'allowMakeupCountPerCycle'
-  | 'baseRewardConfig'
   | 'version'
 >
+
+/**
+ * 按日奖励规则稳定公共字段。
+ *
+ * 供管理端详情、周期快照和执行链路共享相同的奖励解释结构。
+ */
+export interface CheckInDailyRewardRuleCoreView {
+  id: number
+  dayIndex: number
+  rewardConfig: CheckInRewardConfig
+}
+
+/**
+ * 周期快照中的按日奖励规则。
+ *
+ * 冻结到周期快照中，保证奖励补偿与历史对账都使用签到当时的解释结果。
+ */
+export interface CheckInPlanSnapshotDailyRewardRule
+  extends CheckInDailyRewardRuleCoreView {
+  planVersion: number
+}
 
 /**
  * 连续奖励规则稳定公共字段。
@@ -65,11 +88,10 @@ export interface CheckInPlanSnapshotRule extends CheckInStreakRewardRuleCoreView
  *
  * 除基础计划字段外，也要冻结当前版本下的连续奖励规则集合。
  */
-export interface CheckInPlanSnapshot extends Omit<
-  CheckInPlanSnapshotSource,
-  'baseRewardConfig'
-> {
-  baseRewardConfig?: CheckInRewardConfig | null
+export interface CheckInPlanSnapshot
+  extends Omit<CheckInPlanSnapshotSource, 'cycleType'> {
+  cycleType: CheckInCycleTypeEnum
+  dailyRewardRules: CheckInPlanSnapshotDailyRewardRule[]
   streakRewardRules: CheckInPlanSnapshotRule[]
 }
 
@@ -87,7 +109,6 @@ export type CheckInPlanSummaryView = Pick<
   | 'startDate'
   | 'endDate'
   | 'allowMakeupCountPerCycle'
-  | 'baseRewardConfig'
 > &
 Pick<CheckInPlan, 'status'>
 
@@ -174,6 +195,8 @@ export type CreateCheckInRecordInput = Pick<
   | 'signDate'
   | 'recordType'
   | 'rewardStatus'
+  | 'rewardDayIndex'
+  | 'resolvedRewardConfig'
   | 'bizKey'
   | 'operatorType'
   | 'context'
@@ -208,6 +231,24 @@ export type CreateCheckInStreakRewardRuleInsert = Pick<
   | 'repeatable'
   | 'status'
 >
+
+/**
+ * 按日奖励规则写入来源。
+ */
+export type CreateCheckInDailyRewardRuleInsert = Pick<
+  CheckInDailyRewardRuleInsert,
+  | 'planId'
+  | 'planVersion'
+  | 'dayIndex'
+  | 'rewardConfig'
+>
+
+/**
+ * 按日奖励规则与计划的拼接行。
+ */
+export interface CheckInDailyRewardRuleRow {
+  rule: CheckInDailyRewardRule
+}
 
 /**
  * 发放事实与规则的拼接行。

@@ -1,0 +1,215 @@
+import * as schema from '@db/schema'
+import { GrowthAssetTypeEnum, GrowthLedgerActionEnum, GrowthLedgerSourceEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { CheckInExecutionService } from '../check-in-execution.service'
+import {
+  CheckInOperatorTypeEnum,
+  CheckInRecordTypeEnum,
+  CheckInRewardResultTypeEnum,
+  CheckInRewardStatusEnum,
+} from '../check-in.constant'
+
+describe('check-in execution service', () => {
+  it('构建签到记录写表载荷时会冻结奖励解析结果', () => {
+    const service = new CheckInExecutionService(
+      {
+        db: {},
+        schema,
+      } as any,
+      {} as any,
+    )
+
+    const payload = (service as any).buildRecordInsert({
+      userId: 9,
+      planId: 1,
+      cycleId: 2,
+      cycleKey: 'week-2026-04-06',
+      signDate: '2026-04-08',
+      recordType: CheckInRecordTypeEnum.NORMAL,
+      operatorType: CheckInOperatorTypeEnum.USER,
+      rewardApplicable: true,
+      rewardDayIndex: 3,
+      resolvedRewardConfig: { points: 30 },
+      context: { source: 'app_sign' },
+    })
+
+    expect(payload).toMatchObject({
+      userId: 9,
+      planId: 1,
+      cycleId: 2,
+      signDate: '2026-04-08',
+      recordType: CheckInRecordTypeEnum.NORMAL,
+      rewardStatus: CheckInRewardStatusEnum.PENDING,
+      rewardDayIndex: 3,
+      resolvedRewardConfig: { points: 30 },
+      operatorType: CheckInOperatorTypeEnum.USER,
+      context: { source: 'app_sign' },
+    })
+  })
+
+  it('补偿基础奖励时会优先使用签到记录冻结的奖励快照', async () => {
+    const applyDeltaMock = jest.fn().mockResolvedValue({
+      success: true,
+      duplicated: false,
+      recordId: 501,
+    })
+    const record = {
+      id: 100,
+      userId: 9,
+      planId: 1,
+      cycleId: 2,
+      resolvedRewardConfig: { points: 30 },
+    }
+    const cycle = {
+      id: 2,
+      planSnapshot: {
+        dailyRewardRules: [
+          {
+            id: 21,
+            planVersion: 1,
+            dayIndex: 3,
+            rewardConfig: { points: 999 },
+          },
+        ],
+      },
+    }
+
+    const tx = {
+      select: jest.fn(() => ({
+        from: jest.fn((table: unknown) => ({
+          where: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue(
+              table === schema.checkInRecord ? [record] : [cycle],
+            ),
+          })),
+        })),
+      })),
+      update: jest.fn(() => ({
+        set: jest.fn(() => ({
+          where: jest.fn().mockResolvedValue({ rowCount: 1 }),
+        })),
+      })),
+    }
+
+    const drizzle = {
+      db: {
+        update: jest.fn(() => ({
+          set: jest.fn(() => ({
+            where: jest.fn().mockResolvedValue({ rowCount: 1 }),
+          })),
+        })),
+      },
+      schema,
+      withTransaction: jest.fn(async (fn: (input: typeof tx) => Promise<unknown>) => fn(tx)),
+      withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+    }
+
+    const service = new CheckInExecutionService(
+      drizzle as any,
+      {
+        applyDelta: applyDeltaMock,
+      } as any,
+    )
+
+    await (service as any).settleRecordReward(100, {
+      source: 'record_reward',
+    })
+
+    expect(applyDeltaMock).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        assetType: GrowthAssetTypeEnum.POINTS,
+        action: GrowthLedgerActionEnum.GRANT,
+        amount: 30,
+        source: GrowthLedgerSourceEnum.CHECK_IN_BASE_BONUS,
+      }),
+    )
+  })
+
+  it('动作返回视图会回填奖励天序号与冻结奖励配置', async () => {
+    const record = {
+      id: 100,
+      cycleId: 2,
+      signDate: '2026-04-08',
+      recordType: CheckInRecordTypeEnum.NORMAL,
+      rewardStatus: CheckInRewardStatusEnum.SUCCESS,
+      rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
+      rewardDayIndex: 3,
+      resolvedRewardConfig: { points: 30 },
+    }
+    const cycle = {
+      id: 2,
+      currentStreak: 3,
+      signedCount: 3,
+      makeupUsedCount: 0,
+      planSnapshot: {
+        allowMakeupCountPerCycle: 2,
+        cycleType: 'monthly',
+        dailyRewardRules: [],
+        streakRewardRules: [],
+      },
+    }
+    let callIndex = 0
+    const drizzle = {
+      db: {
+        select: jest.fn(() => ({
+          from: jest.fn(() => ({
+            where: jest.fn(() => ({
+              limit: jest.fn().mockImplementation(async () => {
+                callIndex += 1
+                return callIndex === 1 ? [record] : [cycle]
+              }),
+            })),
+          })),
+        })),
+      },
+      schema,
+    }
+
+    const service = new CheckInExecutionService(drizzle as any, {} as any)
+
+    const result = await (service as any).buildLatestActionView(100, {
+      alreadyExisted: false,
+      triggeredGrantIds: [201],
+    })
+
+    expect(result).toMatchObject({
+      recordId: 100,
+      cycleId: 2,
+      rewardDayIndex: 3,
+      resolvedRewardConfig: { points: 30 },
+      triggeredGrantIds: [201],
+      alreadyExisted: false,
+    })
+  })
+
+  it('repairReward 会把基础奖励补偿请求分派给签到记录补偿链路', async () => {
+    const service = new CheckInExecutionService(
+      {
+        db: {},
+        schema,
+      } as any,
+      {} as any,
+    )
+    const settleRecordRewardSpy = jest
+      .spyOn(service as any, 'settleRecordReward')
+      .mockResolvedValue(true)
+
+    const result = await service.repairReward(
+      {
+        targetType: 1,
+        recordId: 100,
+      } as any,
+      99,
+    )
+
+    expect(settleRecordRewardSpy).toHaveBeenCalledWith(100, {
+      actorUserId: 99,
+      source: 'admin_repair',
+    })
+    expect(result).toEqual({
+      targetType: 1,
+      recordId: 100,
+      success: true,
+    })
+  })
+})

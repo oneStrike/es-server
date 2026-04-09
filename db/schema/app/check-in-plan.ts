@@ -4,7 +4,6 @@ import {
   date,
   index,
   integer,
-  jsonb,
   pgTable,
   smallint,
   timestamp,
@@ -47,7 +46,7 @@ export const checkInPlan = pgTable('check_in_plan', {
   cycleType: varchar({ length: 16 }).notNull(),
   /**
    * 计划开始日期。
-   * 计划从当天开始生效，同时作为周期切片的统一起点。
+   * 表示计划生效窗口起点，不再充当周期滚动锚点。
    */
   startDate: date().notNull(),
   /**
@@ -55,11 +54,6 @@ export const checkInPlan = pgTable('check_in_plan', {
    * 只限制当前周期内的补签额度，必须为非负整数。
    */
   allowMakeupCountPerCycle: integer().default(0).notNull(),
-  /**
-   * 基础签到奖励配置。
-   * 当前只支持 `points` / `experience` 正整数，`null` 表示该计划没有基础奖励。
-   */
-  baseRewardConfig: jsonb(),
   /**
    * 计划版本号。
    * 关键配置变更后递增，新周期会冻结当前版本到 `check_in_cycle`。
