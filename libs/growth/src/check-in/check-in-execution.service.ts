@@ -4,7 +4,7 @@ import type {
   CheckInRecordSelect,
   CheckInStreakRewardGrantSelect,
 } from '@db/schema'
-import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal';
+import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
 import type {
   CheckInCycleAggregation,
   CheckInPlanSnapshot,
@@ -19,8 +19,12 @@ import type {
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
 import { DrizzleService } from '@db/core'
-import { GrowthAssetTypeEnum, GrowthLedgerActionEnum, GrowthLedgerSourceEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerActionEnum,
+  GrowthLedgerSourceEnum,
+} from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import {
   BadRequestException,
   Injectable,
@@ -694,7 +698,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   /** 基于最新记录和周期摘要回填前端动作返回视图。 */
   private async buildLatestActionView(
     recordId: number,
-    actionMeta: Pick<CheckInActionResponseDto, 'alreadyExisted' | 'triggeredGrantIds'>,
+    actionMeta: Pick<
+      CheckInActionResponseDto,
+      'alreadyExisted' | 'triggeredGrantIds'
+    >,
   ) {
     const [record] = await this.db
       .select()
@@ -748,7 +755,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -833,7 +840,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
