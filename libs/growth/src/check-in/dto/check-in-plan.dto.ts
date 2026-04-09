@@ -1,11 +1,14 @@
 import type { CheckInRewardConfig } from '../check-in.type'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto } from '@libs/platform/dto/base.dto';
-import { CheckInCycleTypeEnum, CheckInPlanStatusEnum } from '../check-in.constant'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto } from '@libs/platform/dto/base.dto'
+import {
+  CheckInCycleTypeEnum,
+  CheckInPlanStatusEnum,
+} from '../check-in.constant'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 export class BaseCheckInPlanDto extends BaseDto {
@@ -58,7 +61,6 @@ export class BaseCheckInPlanDto extends BaseDto {
     type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
     required: false,
-    nullable: true,
   })
   baseRewardConfig?: CheckInRewardConfigDto | null
 
