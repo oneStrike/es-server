@@ -36,7 +36,7 @@ export class CheckInController {
   @Post('plan/create')
   @ApiAuditDoc({
     summary: '创建签到计划',
-    model: Boolean,
+    model: IdDto,
     audit: {
       actionType: AuditActionTypeEnum.CREATE,
     },

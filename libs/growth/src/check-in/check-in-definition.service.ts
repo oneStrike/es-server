@@ -1,4 +1,4 @@
-import type { IdDto } from '@libs/platform/dto/base.dto';
+import type { IdDto } from '@libs/platform/dto/base.dto'
 import type {
   CreateCheckInPlanDto,
   QueryCheckInPlanDto,
@@ -7,7 +7,7 @@ import type {
 } from './dto/check-in-definition.dto'
 import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import {
   BadRequestException,
   ConflictException,
@@ -128,7 +128,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       }
     }
 
-    await this.drizzle.withTransaction(
+    const plan = await this.drizzle.withTransaction(
       async (tx) => {
         const [plan] = await tx
           .insert(this.checkInPlanTable)
@@ -157,11 +157,12 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             .insert(this.checkInStreakRewardRuleTable)
             .values(streakRewardRules)
         }
+        return plan
       },
       { duplicate: '签到计划编码已存在' },
     )
 
-    return true
+    return { id: plan.id }
   }
 
   /**
@@ -282,10 +283,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   /** 更新计划状态，并拦截会破坏单生效计划合同的配置。 */
-  async updatePlanStatus(
-    dto: UpdateCheckInPlanStatusDto,
-    adminUserId: number,
-  ) {
+  async updatePlanStatus(dto: UpdateCheckInPlanStatusDto, adminUserId: number) {
     const plan = await this.getPlanById(dto.id)
     const nextStatus = dto.status ?? this.resolvePlanStatus(plan)
 
@@ -303,19 +301,22 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       await this.assertNoOtherCurrentActivePlan(plan.id)
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.checkInPlanTable)
-        .set({
-          ...this.buildPlanStatusPersistence(nextStatus),
-          updatedById: adminUserId,
-        })
-        .where(
-          and(
-            eq(this.checkInPlanTable.id, dto.id),
-            isNull(this.checkInPlanTable.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.checkInPlanTable)
+          .set({
+            ...this.buildPlanStatusPersistence(nextStatus),
+            updatedById: adminUserId,
+          })
+          .where(
+            and(
+              eq(this.checkInPlanTable.id, dto.id),
+              isNull(this.checkInPlanTable.deletedAt),
+            ),
           ),
-        ), { notFound: '签到计划不存在' },)
+      { notFound: '签到计划不存在' },
+    )
     return true
   }
 
