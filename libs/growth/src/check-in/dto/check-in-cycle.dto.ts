@@ -74,7 +74,7 @@ export class BaseCheckInCycleDto extends BaseDto {
   planSnapshotVersion!: number
 
   @JsonProperty({
-    description: '周期快照；冻结了当前周期实际解释所使用的计划、按日奖励规则与连续奖励规则。',
+    description: '周期快照；冻结了当前周期实际解释所使用的计划、具体日期奖励规则、周期模式奖励规则与连续奖励规则。',
     example: {
       id: 1,
       planCode: 'growth-check-in',
@@ -85,7 +85,8 @@ export class BaseCheckInCycleDto extends BaseDto {
       allowMakeupCountPerCycle: 2,
       baseRewardConfig: null,
       version: 1,
-      dailyRewardRules: [],
+      dateRewardRules: [],
+      patternRewardRules: [],
       streakRewardRules: [],
     } satisfies CheckInPlanSnapshot,
     validation: false,

@@ -41,7 +41,6 @@ class OptionalCheckInRecordStateDto extends PartialType(
     'recordType',
     'rewardStatus',
     'rewardResultType',
-    'rewardDayIndex',
   ] as const),
 ) {}
 
@@ -174,7 +173,7 @@ export class CheckInCalendarDayDto extends IntersectionType(
   OptionalCheckInRecordStateDto,
 ) {
   @NumberProperty({
-    description: '该自然日在当前周期中的奖励天序号。',
+    description: '该自然日在当前周期中的展示序号。',
     example: 3,
     validation: false,
   })
@@ -188,7 +187,7 @@ export class CheckInCalendarDayDto extends IntersectionType(
   inPlanWindow!: boolean
 
   @NestedProperty({
-    description: '该自然日计划基础奖励；若当天未配置按日奖励则回退计划默认基础奖励，为空表示当天没有基础奖励。',
+    description: '该自然日计划基础奖励；若当天未命中具体日期和周期模式奖励则回退计划默认基础奖励，为空表示当天没有基础奖励。',
     type: CheckInRewardConfigDto,
     required: false,
     nullable: true,

@@ -1,0 +1,1 @@
+ALTER TABLE "app_agreement" ALTER COLUMN "title" SET DATA TYPE varchar(200) USING "title"::varchar(200);

@@ -37,6 +37,7 @@ import {
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
+  CheckInRewardSourceTypeEnum,
   CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
@@ -172,9 +173,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             signDate: input.signDate,
             recordType: input.recordType,
             operatorType: input.operatorType,
-            rewardApplicable: Boolean(rewardResolution.rewardConfig),
-            rewardDayIndex: rewardResolution.rewardDayIndex,
-            resolvedRewardConfig: rewardResolution.rewardConfig,
+            rewardApplicable: Boolean(rewardResolution.resolvedRewardConfig),
+            resolvedRewardSourceType:
+              rewardResolution.resolvedRewardSourceType,
+            resolvedRewardRuleId: rewardResolution.resolvedRewardRuleId,
+            resolvedRewardConfig: rewardResolution.resolvedRewardConfig,
             context: input.context,
           }),
         )
@@ -306,11 +309,17 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
 
     const frame = this.buildCycleFrame(plan, now)
-    const [dailyRules, streakRules] = await Promise.all([
-      this.getPlanDailyRewardRules(plan.id, plan.version, tx),
+    const [dateRules, patternRules, streakRules] = await Promise.all([
+      this.getPlanDateRewardRules(plan.id, plan.version, tx),
+      this.getPlanPatternRewardRules(plan.id, plan.version, tx),
       this.getPlanRules(plan.id, plan.version, tx),
     ])
-    const planSnapshot = this.buildPlanSnapshot(plan, streakRules, dailyRules)
+    const planSnapshot = this.buildPlanSnapshot(
+      plan,
+      streakRules,
+      dateRules,
+      patternRules,
+    )
     const cycleInsert: CreateCheckInCycleInput = {
       userId,
       planId: plan.id,
@@ -580,7 +589,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     recordType: CheckInRecordTypeEnum
     operatorType: CheckInOperatorTypeEnum
     rewardApplicable: boolean
-    rewardDayIndex?: number | null
+    resolvedRewardSourceType?: CreateCheckInRecordInput['resolvedRewardSourceType']
+    resolvedRewardRuleId?: number | null
     resolvedRewardConfig?: CheckInRewardConfig | null
     context?: Record<string, unknown>
   }): CreateCheckInRecordInput {
@@ -593,7 +603,12 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       rewardStatus: input.rewardApplicable
         ? CheckInRewardStatusEnum.PENDING
         : null,
-      rewardDayIndex: input.rewardDayIndex ?? null,
+      resolvedRewardSourceType: input.rewardApplicable
+        ? input.resolvedRewardSourceType ?? null
+        : null,
+      resolvedRewardRuleId: input.rewardApplicable
+        ? input.resolvedRewardRuleId ?? null
+        : null,
       resolvedRewardConfig: input.resolvedRewardConfig ?? null,
       bizKey: this.buildRecordBizKey(
         input.planId,
@@ -677,7 +692,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       recordType: record.recordType,
       rewardStatus: record.rewardStatus,
       rewardResultType: record.rewardResultType,
-      rewardDayIndex: record.rewardDayIndex,
+      resolvedRewardSourceType:
+        record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
+      resolvedRewardRuleId: record.resolvedRewardRuleId,
       resolvedRewardConfig: this.parseStoredRewardConfig(
         record.resolvedRewardConfig,
         {
@@ -730,7 +747,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       recordType: record.recordType,
       rewardStatus: record.rewardStatus,
       rewardResultType: record.rewardResultType,
-      rewardDayIndex: record.rewardDayIndex,
+      resolvedRewardSourceType:
+        record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
+      resolvedRewardRuleId: record.resolvedRewardRuleId,
       resolvedRewardConfig: this.parseStoredRewardConfig(
         record.resolvedRewardConfig,
         {

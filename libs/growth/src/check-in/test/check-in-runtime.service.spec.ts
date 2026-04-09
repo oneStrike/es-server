@@ -4,6 +4,7 @@ import {
   CheckInCycleTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRewardResultTypeEnum,
+  CheckInRewardSourceTypeEnum,
   CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from '../check-in.constant'
@@ -55,14 +56,15 @@ describe('check-in runtime service', () => {
         cycleType: CheckInCycleTypeEnum.MONTHLY,
         allowMakeupCountPerCycle: 2,
         baseRewardConfig: { points: 5 },
-        dailyRewardRules: [
+        dateRewardRules: [
           {
             id: 1,
             planVersion: 1,
-            dayIndex: 9,
+            rewardDate: '2026-04-09',
             rewardConfig: { points: 90 },
           },
         ],
+        patternRewardRules: [],
         streakRewardRules: [
           {
             id: 2,
@@ -83,7 +85,8 @@ describe('check-in runtime service', () => {
         recordType: CheckInRecordTypeEnum.NORMAL,
         rewardStatus: CheckInRewardStatusEnum.SUCCESS,
         rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
-        rewardDayIndex: 9,
+        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
+        resolvedRewardRuleId: 1,
         resolvedRewardConfig: { points: 90 },
         baseRewardLedgerIds: [901],
         lastRewardError: null,
@@ -108,14 +111,15 @@ describe('check-in runtime service', () => {
     })
     expect(result.latestRecord).toMatchObject({
       signDate: '2026-04-09',
-      rewardDayIndex: 9,
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
+      resolvedRewardRuleId: 1,
       resolvedRewardConfig: { points: 90 },
     })
     expect(result.todaySigned).toBe(true)
   })
 
-  it('calendar 会返回自然日 dayIndex 与当日计划奖励', async () => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-04-03T12:00:00.000Z'))
+  it('calendar 会返回展示序号与当日计划奖励', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-30T12:00:00.000Z'))
 
     jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue({
       id: 1,
@@ -123,22 +127,26 @@ describe('check-in runtime service', () => {
     jest.spyOn(service as any, 'getCurrentCycleView').mockResolvedValue({
       id: 10,
       cycleKey: 'month-2026-04-01',
-      cycleStartDate: '2026-04-01',
-      cycleEndDate: '2026-04-03',
+      cycleStartDate: '2026-04-28',
+      cycleEndDate: '2026-04-30',
       planSnapshot: {
         cycleType: CheckInCycleTypeEnum.MONTHLY,
         baseRewardConfig: { points: 5 },
-        dailyRewardRules: [
+        dateRewardRules: [
           {
             id: 1,
             planVersion: 1,
-            dayIndex: 1,
+            rewardDate: '2026-04-28',
             rewardConfig: { points: 10 },
           },
+        ],
+        patternRewardRules: [
           {
             id: 2,
             planVersion: 1,
-            dayIndex: 3,
+            patternType: 'MONTH_LAST_DAY',
+            weekday: null,
+            monthDay: null,
             rewardConfig: { experience: 30 },
           },
         ],
@@ -147,16 +155,17 @@ describe('check-in runtime service', () => {
     jest.spyOn(service as any, 'listCycleRecords').mockResolvedValue([
       {
         id: 100,
-        signDate: '2026-04-03',
+        signDate: '2026-04-30',
         recordType: CheckInRecordTypeEnum.NORMAL,
         rewardStatus: CheckInRewardStatusEnum.SUCCESS,
         rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
-        rewardDayIndex: 3,
+        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
+        resolvedRewardRuleId: 2,
         resolvedRewardConfig: { experience: 30 },
         baseRewardLedgerIds: [901],
         lastRewardError: null,
-        rewardSettledAt: new Date('2026-04-03T12:01:00.000Z'),
-        createdAt: new Date('2026-04-03T12:00:00.000Z'),
+        rewardSettledAt: new Date('2026-04-30T12:01:00.000Z'),
+        createdAt: new Date('2026-04-30T12:00:00.000Z'),
       },
     ])
     jest.spyOn(service as any, 'buildGrantMapForRecords').mockResolvedValue(new Map())
@@ -165,22 +174,22 @@ describe('check-in runtime service', () => {
 
     expect(result.days).toHaveLength(3)
     expect(result.days[0]).toMatchObject({
-      signDate: '2026-04-01',
-      dayIndex: 1,
+      signDate: '2026-04-28',
+      dayIndex: 28,
       inPlanWindow: true,
       planRewardConfig: { points: 10 },
       isSigned: false,
     })
     expect(result.days[1]).toMatchObject({
-      signDate: '2026-04-02',
-      dayIndex: 2,
+      signDate: '2026-04-29',
+      dayIndex: 29,
       inPlanWindow: true,
       planRewardConfig: { points: 5 },
       isSigned: false,
     })
     expect(result.days[2]).toMatchObject({
-      signDate: '2026-04-03',
-      dayIndex: 3,
+      signDate: '2026-04-30',
+      dayIndex: 30,
       inPlanWindow: true,
       planRewardConfig: { experience: 30 },
       isSigned: true,
@@ -189,7 +198,7 @@ describe('check-in runtime service', () => {
     })
   })
 
-  it('reconciliation page 会回显奖励天序号与冻结奖励配置', async () => {
+  it('reconciliation page 会回显奖励来源、规则 ID 与冻结奖励配置', async () => {
     drizzle.ext.findPagination.mockResolvedValue({
       list: [
         {
@@ -201,7 +210,8 @@ describe('check-in runtime service', () => {
           recordType: CheckInRecordTypeEnum.NORMAL,
           rewardStatus: CheckInRewardStatusEnum.SUCCESS,
           rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
-          rewardDayIndex: 3,
+          resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
+          resolvedRewardRuleId: 23,
           resolvedRewardConfig: { experience: 30 },
           baseRewardLedgerIds: [901],
           lastRewardError: null,
@@ -222,7 +232,8 @@ describe('check-in runtime service', () => {
     expect(result.list).toEqual([
       expect.objectContaining({
         recordId: 100,
-        rewardDayIndex: 3,
+        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
+        resolvedRewardRuleId: 23,
         resolvedRewardConfig: { experience: 30 },
       }),
     ])

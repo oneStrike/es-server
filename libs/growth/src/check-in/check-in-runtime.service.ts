@@ -277,7 +277,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         recordType: record.recordType,
         rewardStatus: record.rewardStatus,
         rewardResultType: record.rewardResultType,
-        rewardDayIndex: record.rewardDayIndex,
+        resolvedRewardSourceType: record.resolvedRewardSourceType,
+        resolvedRewardRuleId: record.resolvedRewardRuleId,
         resolvedRewardConfig: this.parseStoredRewardConfig(
           record.resolvedRewardConfig,
           {
@@ -325,8 +326,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
 
     const frame = this.buildCycleFrame(plan, now)
-    const [dailyRules, streakRules] = await Promise.all([
-      this.getPlanDailyRewardRules(plan.id, plan.version),
+    const [dateRules, patternRules, streakRules] = await Promise.all([
+      this.getPlanDateRewardRules(plan.id, plan.version),
+      this.getPlanPatternRewardRules(plan.id, plan.version),
       this.getPlanRules(plan.id, plan.version),
     ])
     return {
@@ -337,7 +339,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       makeupUsedCount: 0,
       currentStreak: 0,
       planSnapshotVersion: plan.version,
-      planSnapshot: this.buildPlanSnapshot(plan, streakRules, dailyRules),
+      planSnapshot: this.buildPlanSnapshot(
+        plan,
+        streakRules,
+        dateRules,
+        patternRules,
+      ),
     }
   }
 
@@ -433,7 +440,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         signDate,
         dayIndex: this.resolveRewardDayIndex(cycle.planSnapshot.cycleType, signDate),
         inPlanWindow: true,
-        planRewardConfig: rewardResolution.rewardConfig,
+        planRewardConfig: rewardResolution.resolvedRewardConfig,
         isToday: signDate === today,
         isFuture: signDate > today,
         isSigned: Boolean(record),
@@ -457,7 +464,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       | 'recordType'
       | 'rewardStatus'
       | 'rewardResultType'
-      | 'rewardDayIndex'
+      | 'resolvedRewardSourceType'
+      | 'resolvedRewardRuleId'
       | 'resolvedRewardConfig'
       | 'baseRewardLedgerIds'
       | 'lastRewardError'
@@ -473,7 +481,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       rewardStatus: record.rewardStatus as CheckInRewardStatusEnum | null,
       rewardResultType:
         record.rewardResultType as CheckInRewardResultTypeEnum | null,
-      rewardDayIndex: record.rewardDayIndex,
+      resolvedRewardSourceType:
+        record.resolvedRewardSourceType as CheckInRecordItemDto['resolvedRewardSourceType'],
+      resolvedRewardRuleId: record.resolvedRewardRuleId,
       resolvedRewardConfig: this.parseStoredRewardConfig(
         record.resolvedRewardConfig,
         {

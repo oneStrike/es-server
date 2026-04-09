@@ -11,6 +11,7 @@ import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRewardResultTypeEnum,
+  CheckInRewardSourceTypeEnum,
   CheckInRewardStatusEnum,
 } from '../check-in.constant'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
@@ -66,16 +67,26 @@ export class BaseCheckInRecordDto extends BaseDto {
   })
   rewardResultType?: CheckInRewardResultTypeEnum | null
 
+  @EnumProperty({
+    description:
+      '本次基础奖励解析来源（BASE_REWARD=计划默认基础奖励；DATE_RULE=具体日期奖励规则；PATTERN_RULE=周期模式奖励规则）。',
+    example: CheckInRewardSourceTypeEnum.DATE_RULE,
+    enum: CheckInRewardSourceTypeEnum,
+    required: false,
+    validation: false,
+  })
+  resolvedRewardSourceType?: CheckInRewardSourceTypeEnum | null
+
   @NumberProperty({
-    description: '本次基础奖励对应的奖励天序号；命中按日奖励和回退默认基础奖励时都会回写当天序号。',
+    description: '本次基础奖励命中的规则 ID；命中默认基础奖励时为空。',
     example: 3,
     required: false,
     validation: false,
   })
-  rewardDayIndex?: number | null
+  resolvedRewardRuleId?: number | null
 
   @NestedProperty({
-    description: '本次基础奖励解析结果快照；来源可能是按日奖励或计划默认基础奖励，为空表示该签到事实没有基础奖励。',
+    description: '本次基础奖励解析结果快照；来源可能是具体日期奖励、周期模式奖励或计划默认基础奖励，为空表示该签到事实没有基础奖励。',
     type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
     required: false,

@@ -1,15 +1,20 @@
 import * as schema from '@db/schema'
-import { GrowthAssetTypeEnum, GrowthLedgerActionEnum, GrowthLedgerSourceEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerActionEnum,
+  GrowthLedgerSourceEnum,
+} from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { CheckInExecutionService } from '../check-in-execution.service'
 import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRewardResultTypeEnum,
+  CheckInRewardSourceTypeEnum,
   CheckInRewardStatusEnum,
 } from '../check-in.constant'
 
 describe('check-in execution service', () => {
-  it('构建签到记录写表载荷时会冻结奖励解析结果', () => {
+  it('构建签到记录写表载荷时会冻结奖励来源、规则 ID 与解析结果', () => {
     const service = new CheckInExecutionService(
       {
         db: {},
@@ -27,7 +32,8 @@ describe('check-in execution service', () => {
       recordType: CheckInRecordTypeEnum.NORMAL,
       operatorType: CheckInOperatorTypeEnum.USER,
       rewardApplicable: true,
-      rewardDayIndex: 3,
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
+      resolvedRewardRuleId: 23,
       resolvedRewardConfig: { points: 30 },
       context: { source: 'app_sign' },
     })
@@ -39,7 +45,8 @@ describe('check-in execution service', () => {
       signDate: '2026-04-08',
       recordType: CheckInRecordTypeEnum.NORMAL,
       rewardStatus: CheckInRewardStatusEnum.PENDING,
-      rewardDayIndex: 3,
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
+      resolvedRewardRuleId: 23,
       resolvedRewardConfig: { points: 30 },
       operatorType: CheckInOperatorTypeEnum.USER,
       context: { source: 'app_sign' },
@@ -62,14 +69,15 @@ describe('check-in execution service', () => {
     const cycle = {
       id: 2,
       planSnapshot: {
-        dailyRewardRules: [
+        dateRewardRules: [
           {
             id: 21,
             planVersion: 1,
-            dayIndex: 3,
+            rewardDate: '2026-04-08',
             rewardConfig: { points: 999 },
           },
         ],
+        patternRewardRules: [],
       },
     }
 
@@ -99,7 +107,9 @@ describe('check-in execution service', () => {
         })),
       },
       schema,
-      withTransaction: jest.fn(async (fn: (input: typeof tx) => Promise<unknown>) => fn(tx)),
+      withTransaction: jest.fn(
+        async (fn: (input: typeof tx) => Promise<unknown>) => fn(tx),
+      ),
       withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
     }
 
@@ -125,7 +135,7 @@ describe('check-in execution service', () => {
     )
   })
 
-  it('动作返回视图会回填奖励天序号与冻结奖励配置', async () => {
+  it('动作返回视图会回填冻结奖励来源、规则 ID 与奖励配置', async () => {
     const record = {
       id: 100,
       cycleId: 2,
@@ -133,7 +143,8 @@ describe('check-in execution service', () => {
       recordType: CheckInRecordTypeEnum.NORMAL,
       rewardStatus: CheckInRewardStatusEnum.SUCCESS,
       rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
-      rewardDayIndex: 3,
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
+      resolvedRewardRuleId: 21,
       resolvedRewardConfig: { points: 30 },
     }
     const cycle = {
@@ -144,7 +155,8 @@ describe('check-in execution service', () => {
       planSnapshot: {
         allowMakeupCountPerCycle: 2,
         cycleType: 'monthly',
-        dailyRewardRules: [],
+        dateRewardRules: [],
+        patternRewardRules: [],
         streakRewardRules: [],
       },
     }
@@ -175,7 +187,8 @@ describe('check-in execution service', () => {
     expect(result).toMatchObject({
       recordId: 100,
       cycleId: 2,
-      rewardDayIndex: 3,
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
+      resolvedRewardRuleId: 21,
       resolvedRewardConfig: { points: 30 },
       triggeredGrantIds: [201],
       alreadyExisted: false,

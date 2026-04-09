@@ -18,6 +18,7 @@ import {
 import { and, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import {
   CheckInPlanStatusEnum,
+  CheckInPatternRewardRuleTypeEnum,
   CheckInRewardStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
@@ -84,8 +85,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /** 读取单个签到计划详情及当前版本规则快照。 */
   async getPlanDetail(query: IdDto) {
     const plan = await this.getPlanById(query.id)
-    const [dailyRules, streakRules, summary] = await Promise.all([
-      this.getPlanDailyRewardRules(plan.id, plan.version),
+    const [dateRules, patternRules, streakRules, summary] = await Promise.all([
+      this.getPlanDateRewardRules(plan.id, plan.version),
+      this.getPlanPatternRewardRules(plan.id, plan.version),
       this.getPlanRules(plan.id, plan.version),
       this.buildPlanSummary(plan.id, plan.version),
     ])
@@ -97,8 +99,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       }),
       status: this.resolvePlanStatus(plan),
       ...summary,
-      dailyRewardRules: dailyRules.map((rule) =>
-        this.toDailyRewardRuleView(rule),
+      dateRewardRules: dateRules.map((rule) =>
+        this.toDateRewardRuleView(rule),
+      ),
+      patternRewardRules: patternRules.map((rule) =>
+        this.toPatternRewardRuleView(rule),
       ),
       streakRewardRules: streakRules.map((rule) => this.toStreakRuleView(rule)),
     }
@@ -227,7 +232,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       )
     }
 
-    const currentDailyRules = await this.getPlanDailyRewardRules(
+    const currentDateRules = await this.getPlanDateRewardRules(
+      currentPlan.id,
+      currentPlan.version,
+    )
+    const currentPatternRules = await this.getPlanPatternRewardRules(
       currentPlan.id,
       currentPlan.version,
     )
@@ -235,8 +244,15 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       currentPlan.id,
       currentPlan.version,
     )
-    const nextDailyRules = this.buildDailyRewardRuleDrafts(
-      currentDailyRules,
+    const nextDateRules = this.buildDateRewardRuleDrafts(
+      currentDateRules,
+      currentPlan.id,
+      currentPlan.version,
+      nextPlan.startDate,
+      nextPlan.endDate,
+    )
+    const nextPatternRules = this.buildPatternRewardRuleDrafts(
+      currentPatternRules,
       currentPlan.id,
       currentPlan.version,
       nextPlan.cycleType,
@@ -250,8 +266,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     const shouldBumpVersion = this.shouldBumpPlanVersion({
       currentPlan,
       nextPlan,
-      currentDailyRules,
-      nextDailyRules,
+      currentDateRules,
+      nextDateRules,
+      currentPatternRules,
+      nextPatternRules,
       currentRules,
       nextRules,
     })
@@ -284,9 +302,18 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
         this.drizzle.assertAffectedRows(result, '签到计划不存在')
 
-        if (shouldBumpVersion && nextDailyRules.length > 0) {
-          await tx.insert(this.checkInDailyRewardRuleTable).values(
-            nextDailyRules.map((rule) => ({
+        if (shouldBumpVersion && nextDateRules.length > 0) {
+          await tx.insert(this.checkInDateRewardRuleTable).values(
+            nextDateRules.map((rule) => ({
+              ...rule,
+              planVersion: nextVersion,
+            })),
+          )
+        }
+
+        if (shouldBumpVersion && nextPatternRules.length > 0) {
+          await tx.insert(this.checkInPatternRewardRuleTable).values(
+            nextPatternRules.map((rule) => ({
               ...rule,
               planVersion: nextVersion,
             })),
@@ -356,8 +383,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /**
    * 应用计划奖励配置。
    *
-   * 奖励配置统一维护默认基础奖励、按日奖励和连续奖励。任一部分变更都会复制未显式
-   * 修改的现有规则到新版本，保证历史周期继续使用旧解释。
+   * 奖励配置统一维护默认基础奖励、具体日期奖励、周期模式奖励和连续奖励。任一部分
+   * 变更都会复制未显式修改的现有规则到新版本，保证历史周期继续使用旧解释。
    */
   private async applyPlanRewardConfig(
     dto: CreateCheckInPlanRewardConfigDto | UpdateCheckInPlanRewardConfigDto,
@@ -365,7 +392,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     mode: 'create' | 'update',
   ) {
     const currentPlan = await this.getPlanById(dto.id)
-    const currentDailyRules = await this.getPlanDailyRewardRules(
+    const currentDateRules = await this.getPlanDateRewardRules(
+      currentPlan.id,
+      currentPlan.version,
+    )
+    const currentPatternRules = await this.getPlanPatternRewardRules(
       currentPlan.id,
       currentPlan.version,
     )
@@ -379,7 +410,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     )
     const hasCurrentConfig =
       currentBaseRewardConfig !== null ||
-      currentDailyRules.length > 0 ||
+      currentDateRules.length > 0 ||
+      currentPatternRules.length > 0 ||
       currentRules.length > 0
 
     if (mode === 'create' && hasCurrentConfig) {
@@ -396,16 +428,32 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             allowEmpty: true,
           })
         : currentBaseRewardConfig
-    const nextDailyRules =
-      dto.dailyRewardRules !== undefined
-        ? this.normalizeDailyRewardRules(
-            dto.dailyRewardRules,
+    const nextDateRules =
+      dto.dateRewardRules !== undefined
+        ? this.normalizeDateRewardRules(
+            dto.dateRewardRules,
+            currentPlan.id,
+            currentPlan.version,
+            this.toDateOnlyValue(currentPlan.startDate),
+            this.toDateOnlyValue(currentPlan.endDate) || null,
+          )
+        : this.buildDateRewardRuleDrafts(
+            currentDateRules,
+            currentPlan.id,
+            currentPlan.version,
+            this.toDateOnlyValue(currentPlan.startDate),
+            this.toDateOnlyValue(currentPlan.endDate) || null,
+          )
+    const nextPatternRules =
+      dto.patternRewardRules !== undefined
+        ? this.normalizePatternRewardRules(
+            dto.patternRewardRules,
             currentPlan.id,
             currentPlan.version,
             cycleType,
           )
-        : this.buildDailyRewardRuleDrafts(
-            currentDailyRules,
+        : this.buildPatternRewardRuleDrafts(
+            currentPatternRules,
             currentPlan.id,
             currentPlan.version,
             cycleType,
@@ -425,7 +473,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     if (
       nextBaseRewardConfig === null &&
-      nextDailyRules.length === 0 &&
+      nextDateRules.length === 0 &&
+      nextPatternRules.length === 0 &&
       nextRules.length === 0
     ) {
       throw new BadRequestException('奖励配置不能为空')
@@ -440,8 +489,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         allowMakeupCountPerCycle: currentPlan.allowMakeupCountPerCycle,
         baseRewardConfig: nextBaseRewardConfig,
       },
-      currentDailyRules,
-      nextDailyRules,
+      currentDateRules,
+      nextDateRules,
+      currentPatternRules,
+      nextPatternRules,
       currentRules,
       nextRules,
     })
@@ -466,9 +517,18 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
       this.drizzle.assertAffectedRows(result, '签到计划不存在')
 
-      if (shouldBumpVersion && nextDailyRules.length > 0) {
-        await tx.insert(this.checkInDailyRewardRuleTable).values(
-          nextDailyRules.map((rule) => ({
+      if (shouldBumpVersion && nextDateRules.length > 0) {
+        await tx.insert(this.checkInDateRewardRuleTable).values(
+          nextDateRules.map((rule) => ({
+            ...rule,
+            planVersion: nextVersion,
+          })),
+        )
+      }
+
+      if (shouldBumpVersion && nextPatternRules.length > 0) {
+        await tx.insert(this.checkInPatternRewardRuleTable).values(
+          nextPatternRules.map((rule) => ({
             ...rule,
             planVersion: nextVersion,
           })),
@@ -488,18 +548,44 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return true
   }
 
-  /** 把当前版本的按日奖励规则重建为下一版本可复用的写表载荷。 */
-  private buildDailyRewardRuleDrafts(
+  /** 把当前版本的具体日期奖励规则重建为下一版本可复用的写表载荷。 */
+  private buildDateRewardRuleDrafts(
     rules: Awaited<
-      ReturnType<CheckInDefinitionService['getPlanDailyRewardRules']>
+      ReturnType<CheckInDefinitionService['getPlanDateRewardRules']>
+    >,
+    planId: number,
+    planVersion: number,
+    startDate: string,
+    endDate?: string | null,
+  ) {
+    return this.normalizeDateRewardRules(
+      rules.map((rule) => ({
+        rewardDate: this.toDateOnlyValue(rule.rewardDate),
+        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        })!,
+      })),
+      planId,
+      planVersion,
+      startDate,
+      endDate,
+    )
+  }
+
+  /** 把当前版本的周期模式奖励规则重建为下一版本可复用的写表载荷。 */
+  private buildPatternRewardRuleDrafts(
+    rules: Awaited<
+      ReturnType<CheckInDefinitionService['getPlanPatternRewardRules']>
     >,
     planId: number,
     planVersion: number,
     cycleType: ReturnType<CheckInDefinitionService['parseCycleType']>,
   ) {
-    return this.normalizeDailyRewardRules(
+    return this.normalizePatternRewardRules(
       rules.map((rule) => ({
-        dayIndex: rule.dayIndex,
+        patternType: rule.patternType as CheckInPatternRewardRuleTypeEnum,
+        weekday: rule.weekday,
+        monthDay: rule.monthDay,
         rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
           allowEmpty: false,
         })!,

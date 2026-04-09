@@ -1,7 +1,9 @@
 import type {
   CheckInCycleInsert,
-  CheckInDailyRewardRule,
-  CheckInDailyRewardRuleInsert,
+  CheckInDateRewardRule,
+  CheckInDateRewardRuleInsert,
+  CheckInPatternRewardRule,
+  CheckInPatternRewardRuleInsert,
   CheckInPlan,
   CheckInRecordInsert,
   CheckInStreakRewardGrant,
@@ -11,6 +13,8 @@ import type {
 } from '@db/schema'
 import type {
   CheckInCycleTypeEnum,
+  CheckInPatternRewardRuleTypeEnum,
+  CheckInRewardSourceTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 
@@ -41,23 +45,46 @@ export type CheckInPlanSnapshotSource = Pick<
 >
 
 /**
- * 按日奖励规则稳定公共字段。
+ * 具体日期奖励规则稳定公共字段。
  *
- * 供管理端详情、周期快照和执行链路共享相同的奖励解释结构。
+ * 供管理端详情、周期快照和执行链路共享同一组解释结构。
  */
-export interface CheckInDailyRewardRuleCoreView {
+export interface CheckInDateRewardRuleCoreView {
   id: number
-  dayIndex: number
+  rewardDate: string
   rewardConfig: CheckInRewardConfig
 }
 
 /**
- * 周期快照中的按日奖励规则。
+ * 周期快照中的具体日期奖励规则。
  *
  * 冻结到周期快照中，保证奖励补偿与历史对账都使用签到当时的解释结果。
  */
-export interface CheckInPlanSnapshotDailyRewardRule
-  extends CheckInDailyRewardRuleCoreView {
+export interface CheckInPlanSnapshotDateRewardRule
+  extends CheckInDateRewardRuleCoreView {
+  planVersion: number
+}
+
+/**
+ * 周期模式奖励规则稳定公共字段。
+ *
+ * 供管理端详情、周期快照和执行链路共享同一组解释结构。
+ */
+export interface CheckInPatternRewardRuleCoreView {
+  id: number
+  patternType: CheckInPatternRewardRuleTypeEnum
+  weekday: number | null
+  monthDay: number | null
+  rewardConfig: CheckInRewardConfig
+}
+
+/**
+ * 周期快照中的周期模式奖励规则。
+ *
+ * 冻结到周期快照中，保证历史签到继续按原规则解释。
+ */
+export interface CheckInPlanSnapshotPatternRewardRule
+  extends CheckInPatternRewardRuleCoreView {
   planVersion: number
 }
 
@@ -87,13 +114,14 @@ export interface CheckInPlanSnapshotRule extends CheckInStreakRewardRuleCoreView
 /**
  * 周期快照。
  *
- * 除基础计划字段外，也要冻结当前版本下的连续奖励规则集合。
+ * 除基础计划字段外，也要冻结当前版本下的具体日期奖励、周期模式奖励和连续奖励规则集合。
  */
 export interface CheckInPlanSnapshot
   extends Omit<CheckInPlanSnapshotSource, 'cycleType'> {
   cycleType: CheckInCycleTypeEnum
   baseRewardConfig: CheckInRewardConfig | null
-  dailyRewardRules: CheckInPlanSnapshotDailyRewardRule[]
+  dateRewardRules: CheckInPlanSnapshotDateRewardRule[]
+  patternRewardRules: CheckInPlanSnapshotPatternRewardRule[]
   streakRewardRules: CheckInPlanSnapshotRule[]
 }
 
@@ -198,7 +226,8 @@ export type CreateCheckInRecordInput = Pick<
   | 'signDate'
   | 'recordType'
   | 'rewardStatus'
-  | 'rewardDayIndex'
+  | 'resolvedRewardSourceType'
+  | 'resolvedRewardRuleId'
   | 'resolvedRewardConfig'
   | 'bizKey'
   | 'operatorType'
@@ -236,21 +265,41 @@ export type CreateCheckInStreakRewardRuleInsert = Pick<
 >
 
 /**
- * 按日奖励规则写入来源。
+ * 具体日期奖励规则写入来源。
  */
-export type CreateCheckInDailyRewardRuleInsert = Pick<
-  CheckInDailyRewardRuleInsert,
+export type CreateCheckInDateRewardRuleInsert = Pick<
+  CheckInDateRewardRuleInsert,
   | 'planId'
   | 'planVersion'
-  | 'dayIndex'
+  | 'rewardDate'
   | 'rewardConfig'
 >
 
 /**
- * 按日奖励规则与计划的拼接行。
+ * 周期模式奖励规则写入来源。
  */
-export interface CheckInDailyRewardRuleRow {
-  rule: CheckInDailyRewardRule
+export type CreateCheckInPatternRewardRuleInsert = Pick<
+  CheckInPatternRewardRuleInsert,
+  | 'planId'
+  | 'planVersion'
+  | 'patternType'
+  | 'weekday'
+  | 'monthDay'
+  | 'rewardConfig'
+>
+
+/**
+ * 具体日期奖励规则与计划的拼接行。
+ */
+export interface CheckInDateRewardRuleRow {
+  rule: CheckInDateRewardRule
+}
+
+/**
+ * 周期模式奖励规则与计划的拼接行。
+ */
+export interface CheckInPatternRewardRuleRow {
+  rule: CheckInPatternRewardRule
 }
 
 /**
@@ -259,6 +308,15 @@ export interface CheckInDailyRewardRuleRow {
 export interface CheckInGrantWithRuleRow {
   grant: CheckInStreakRewardGrant
   rule?: CheckInStreakRewardRule | null
+}
+
+/**
+ * 当前签到日命中的基础奖励解析结果。
+ */
+export interface CheckInResolvedReward {
+  resolvedRewardSourceType: CheckInRewardSourceTypeEnum | null
+  resolvedRewardRuleId: number | null
+  resolvedRewardConfig: CheckInRewardConfig | null
 }
 
 /**

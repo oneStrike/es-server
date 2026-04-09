@@ -56,14 +56,18 @@ export const checkInRecord = pgTable('check_in_record', {
    */
   rewardResultType: smallint(),
   /**
-   * 本次基础奖励对应的奖励天序号。
-   * 命中按日奖励和回退默认基础奖励时都会回写当天自然日序号。
-   * `null` 表示该签到事实没有基础奖励，非空时必须和 `resolvedRewardConfig` 成对出现。
+   * 本次基础奖励解析来源。
+   * 使用字符串枚举表达命中的奖励层级，`BASE_REWARD` 不再依赖具体规则行。
    */
-  rewardDayIndex: integer(),
+  resolvedRewardSourceType: varchar({ length: 32 }),
+  /**
+   * 本次基础奖励命中的规则 ID。
+   * 与 `resolvedRewardSourceType` 组合解释的软引用；命中默认基础奖励时为空。
+   */
+  resolvedRewardRuleId: integer(),
   /**
    * 本次基础奖励解析结果快照。
-   * 冻结签到当日实际结算的奖励配置，来源可能是按日奖励或计划默认基础奖励。
+   * 冻结签到当日实际结算的奖励配置，来源可能是具体日期规则、周期模式规则或计划默认基础奖励。
    */
   resolvedRewardConfig: jsonb(),
   /**
@@ -160,18 +164,18 @@ export const checkInRecord = pgTable('check_in_record', {
     sql`${table.rewardResultType} is null or ${table.rewardResultType} in (1, 2, 3)`,
   ),
   /**
-   * 奖励天序号必须为 1..31 的正整数或为空。
-   */
-  check(
-    'check_in_record_reward_day_index_valid_chk',
-    sql`${table.rewardDayIndex} is null or (${table.rewardDayIndex} >= 1 and ${table.rewardDayIndex} <= 31)`,
-  ),
-  /**
    * 操作来源必须落在受支持枚举内。
    */
   check(
     'check_in_record_operator_type_valid_chk',
     sql`${table.operatorType} in (1, 2, 3)`,
+  ),
+  /**
+   * 奖励解析来源必须落在受支持枚举内或为空。
+   */
+  check(
+    'check_in_record_reward_source_type_valid_chk',
+    sql`${table.resolvedRewardSourceType} is null or ${table.resolvedRewardSourceType} in ('BASE_REWARD', 'DATE_RULE', 'PATTERN_RULE')`,
   ),
   /**
    * 基础奖励状态、结果类型和落定时间必须保持一致。
@@ -203,11 +207,16 @@ export const checkInRecord = pgTable('check_in_record', {
     'check_in_record_reward_resolution_consistent_chk',
     sql`(
       ${table.rewardStatus} is null
-      and ${table.rewardDayIndex} is null
+      and ${table.resolvedRewardSourceType} is null
+      and ${table.resolvedRewardRuleId} is null
       and ${table.resolvedRewardConfig} is null
     ) or (
       ${table.rewardStatus} in (0, 1, 2)
-      and ${table.rewardDayIndex} is not null
+      and ${table.resolvedRewardSourceType} in ('BASE_REWARD', 'DATE_RULE', 'PATTERN_RULE')
+      and (
+        (${table.resolvedRewardSourceType} = 'BASE_REWARD' and ${table.resolvedRewardRuleId} is null)
+        or (${table.resolvedRewardSourceType} in ('DATE_RULE', 'PATTERN_RULE') and ${table.resolvedRewardRuleId} is not null)
+      )
       and ${table.resolvedRewardConfig} is not null
     )`,
   ),

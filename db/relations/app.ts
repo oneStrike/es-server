@@ -203,7 +203,8 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   },
   checkInPlan: {
     cycles: r.many.checkInCycle(),
-    dailyRewardRules: r.many.checkInDailyRewardRule(),
+    dateRewardRules: r.many.checkInDateRewardRule(),
+    patternRewardRules: r.many.checkInPatternRewardRule(),
     records: r.many.checkInRecord(),
     streakRules: r.many.checkInStreakRewardRule(),
     streakGrants: r.many.checkInStreakRewardGrant(),
@@ -244,9 +245,15 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.checkInCycle.id,
     }),
   },
-  checkInDailyRewardRule: {
+  checkInDateRewardRule: {
     plan: r.one.checkInPlan({
-      from: r.checkInDailyRewardRule.planId,
+      from: r.checkInDateRewardRule.planId,
+      to: r.checkInPlan.id,
+    }),
+  },
+  checkInPatternRewardRule: {
+    plan: r.one.checkInPlan({
+      from: r.checkInPatternRewardRule.planId,
       to: r.checkInPlan.id,
     }),
   },

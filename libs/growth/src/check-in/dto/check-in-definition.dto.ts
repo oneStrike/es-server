@@ -9,11 +9,15 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
-  CheckInDailyRewardRuleItemDto,
-  CreateCheckInDailyRewardRuleDto,
-} from './check-in-daily-reward-rule.dto'
+  CheckInDateRewardRuleItemDto,
+  CreateCheckInDateRewardRuleDto,
+} from './check-in-date-reward-rule.dto'
 import { CheckInPageNoDateDto } from './check-in-fragment.dto'
 import { BaseCheckInPlanDto } from './check-in-plan.dto'
+import {
+  CheckInPatternRewardRuleItemDto,
+  CreateCheckInPatternRewardRuleDto,
+} from './check-in-pattern-reward-rule.dto'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 import {
   CheckInStreakRewardRuleItemDto,
@@ -35,7 +39,7 @@ export class UpdateCheckInPlanDto extends IntersectionType(
 
 class CheckInPlanRewardConfigFieldsDto {
   @NestedProperty({
-    description: '计划默认基础奖励配置；当天未配置按日奖励时回退到该配置。',
+    description: '计划默认基础奖励配置；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
     type: CheckInRewardConfigDto,
     required: false,
     nullable: true,
@@ -43,12 +47,20 @@ class CheckInPlanRewardConfigFieldsDto {
   baseRewardConfig?: CheckInRewardConfigDto | null
 
   @ArrayProperty({
-    description: '按日基础奖励规则列表。',
-    itemClass: CreateCheckInDailyRewardRuleDto,
+    description: '具体日期奖励规则列表。',
+    itemClass: CreateCheckInDateRewardRuleDto,
     itemType: 'object',
     required: false,
   })
-  dailyRewardRules?: CreateCheckInDailyRewardRuleDto[]
+  dateRewardRules?: CreateCheckInDateRewardRuleDto[]
+
+  @ArrayProperty({
+    description: '周期模式奖励规则列表。',
+    itemClass: CreateCheckInPatternRewardRuleDto,
+    itemType: 'object',
+    required: false,
+  })
+  patternRewardRules?: CreateCheckInPatternRewardRuleDto[]
 
   @ArrayProperty({
     description: '连续签到奖励规则列表。',
@@ -106,12 +118,20 @@ export class CheckInPlanPageItemDto extends BaseCheckInPlanDto {
 
 export class CheckInPlanDetailResponseDto extends CheckInPlanPageItemDto {
   @ArrayProperty({
-    description: '当前版本按日基础奖励规则列表。',
-    itemClass: CheckInDailyRewardRuleItemDto,
+    description: '当前版本具体日期奖励规则列表。',
+    itemClass: CheckInDateRewardRuleItemDto,
     itemType: 'object',
     validation: false,
   })
-  dailyRewardRules!: CheckInDailyRewardRuleItemDto[]
+  dateRewardRules!: CheckInDateRewardRuleItemDto[]
+
+  @ArrayProperty({
+    description: '当前版本周期模式奖励规则列表。',
+    itemClass: CheckInPatternRewardRuleItemDto,
+    itemType: 'object',
+    validation: false,
+  })
+  patternRewardRules!: CheckInPatternRewardRuleItemDto[]
 
   @ArrayProperty({
     description: '当前版本连续奖励规则列表。',

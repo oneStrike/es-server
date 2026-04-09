@@ -1,11 +1,12 @@
 import type { CheckInRewardConfig } from '../check-in.type'
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
 import { OmitType } from '@nestjs/swagger'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
-export class BaseCheckInDailyRewardRuleDto extends BaseDto {
+export class BaseCheckInDateRewardRuleDto extends BaseDto {
   @NumberProperty({ description: '签到计划 ID。', example: 1 })
   planId!: number
 
@@ -16,28 +17,27 @@ export class BaseCheckInDailyRewardRuleDto extends BaseDto {
   })
   planVersion!: number
 
-  @NumberProperty({
-    description: '奖励天序号。',
-    example: 3,
-    min: 1,
-    max: 31,
+  @StringProperty({
+    description: '命中的具体自然日。',
+    example: '2026-04-30',
+    type: 'ISO8601',
   })
-  dayIndex!: number
+  rewardDate!: string
 
   @NestedProperty({
-    description: '当天基础奖励配置。',
+    description: '该自然日命中的基础奖励配置。',
     type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
   })
   rewardConfig!: CheckInRewardConfigDto
 }
 
-export class CreateCheckInDailyRewardRuleDto extends OmitType(
-  BaseCheckInDailyRewardRuleDto,
+export class CreateCheckInDateRewardRuleDto extends OmitType(
+  BaseCheckInDateRewardRuleDto,
   [...OMIT_BASE_FIELDS, 'planId', 'planVersion'] as const,
 ) {}
 
-export class CheckInDailyRewardRuleItemDto extends OmitType(
-  BaseCheckInDailyRewardRuleDto,
+export class CheckInDateRewardRuleItemDto extends OmitType(
+  BaseCheckInDateRewardRuleDto,
   ['createdAt', 'updatedAt', 'planId', 'planVersion'] as const,
 ) {}

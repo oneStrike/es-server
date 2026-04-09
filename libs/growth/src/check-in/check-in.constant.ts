@@ -23,6 +23,18 @@ export enum CheckInCycleTypeEnum {
 }
 
 /**
+ * 周期模式奖励规则类型枚举。
+ */
+export enum CheckInPatternRewardRuleTypeEnum {
+  /** 每周固定星期几 */
+  WEEKDAY = 'WEEKDAY',
+  /** 每月固定几号 */
+  MONTH_DAY = 'MONTH_DAY',
+  /** 每月最后一天 */
+  MONTH_LAST_DAY = 'MONTH_LAST_DAY',
+}
+
+/**
  * 签到事实类型枚举。
  */
 export enum CheckInRecordTypeEnum {
@@ -54,6 +66,18 @@ export enum CheckInRewardResultTypeEnum {
   IDEMPOTENT = 2,
   /** 本次处理失败 */
   FAILED = 3,
+}
+
+/**
+ * 基础奖励解析来源枚举。
+ */
+export enum CheckInRewardSourceTypeEnum {
+  /** 命中计划默认基础奖励 */
+  BASE_REWARD = 'BASE_REWARD',
+  /** 命中具体日期奖励规则 */
+  DATE_RULE = 'DATE_RULE',
+  /** 命中周期模式奖励规则 */
+  PATTERN_RULE = 'PATTERN_RULE',
 }
 
 /**
