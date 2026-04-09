@@ -1,3 +1,0 @@
-ALTER TABLE "app_announcement" ALTER COLUMN "enable_platform" SET DEFAULT ARRAY[1,2,3]::integer[];--> statement-breakpoint
-ALTER TABLE "app_page" ALTER COLUMN "enable_platform" SET DEFAULT ARRAY[1,2,3]::integer[];--> statement-breakpoint
-ALTER TABLE "check_in_plan" DROP CONSTRAINT "check_in_plan_cycle_type_valid_chk", ADD CONSTRAINT "check_in_plan_cycle_type_valid_chk" CHECK ("cycle_type" in ('weekly', 'monthly'));

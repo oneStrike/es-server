@@ -1,17 +1,21 @@
 import type { Db, DrizzleService } from '@db/core'
 import type {
   CheckInCycleSelect,
+  CheckInDailyRewardRuleSelect,
   CheckInPlanSelect,
   CheckInStreakRewardRuleSelect,
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
 import type { SQL } from 'drizzle-orm'
 import type {
+  CheckInDailyRewardRuleCoreView,
   CheckInPlanSnapshot,
   CheckInPlanSnapshotSource,
   CheckInRewardConfig,
+  CreateCheckInDailyRewardRuleInsert,
   CreateCheckInStreakRewardRuleInsert,
 } from './check-in.type'
+import type { CreateCheckInDailyRewardRuleDto } from './dto/check-in-daily-reward-rule.dto'
 import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
 import { formatDateOnlyInAppTimeZone, getAppTimeZone, parseDateOnlyInAppTimeZone } from '@libs/platform/utils/time';
 import {
@@ -60,6 +64,11 @@ export abstract class CheckInServiceSupport {
   /** 签到周期表。 */
   protected get checkInCycleTable() {
     return this.drizzle.schema.checkInCycle
+  }
+
+  /** 签到按日奖励规则表。 */
+  protected get checkInDailyRewardRuleTable() {
+    return this.drizzle.schema.checkInDailyRewardRule
   }
 
   /** 签到事实表。 */
@@ -205,6 +214,49 @@ export abstract class CheckInServiceSupport {
   }
 
   /**
+   * 归一化按日奖励规则输入，并提前拦截越界天序号与重复配置。
+   */
+  protected normalizeDailyRewardRules(
+    rules: CreateCheckInDailyRewardRuleDto[] | undefined,
+    planId: number,
+    planVersion: number,
+    cycleType: CheckInCycleTypeEnum,
+  ) {
+    const maxDayIndex =
+      cycleType === CheckInCycleTypeEnum.WEEKLY ? 7 : 31
+    const normalizedRules = (rules ?? []).map((rule) => {
+      if (!Number.isInteger(rule.dayIndex) || rule.dayIndex <= 0) {
+        throw new BadRequestException('按日奖励天序号必须为正整数')
+      }
+      if (rule.dayIndex > maxDayIndex) {
+        throw new BadRequestException(
+          cycleType === CheckInCycleTypeEnum.WEEKLY
+            ? '周计划奖励天序号必须在 1..7 之间'
+            : '月计划奖励天序号必须在 1..31 之间',
+        )
+      }
+
+      return {
+        planId,
+        planVersion,
+        dayIndex: rule.dayIndex,
+        rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        })!,
+      } satisfies CreateCheckInDailyRewardRuleInsert
+    })
+
+    const duplicateDayIndex = this.findDuplicateValue(
+      normalizedRules.map((rule) => String(rule.dayIndex)),
+    )
+    if (duplicateDayIndex) {
+      throw new BadRequestException(`按日奖励天序号重复：${duplicateDayIndex}`)
+    }
+
+    return normalizedRules.sort((left, right) => left.dayIndex - right.dayIndex)
+  }
+
+  /**
    * 归一化连续签到奖励规则输入，并提前拦截重复阈值和重复编码。
    */
   protected normalizeStreakRewardRules(
@@ -261,7 +313,8 @@ export abstract class CheckInServiceSupport {
    */
   protected buildPlanSnapshot(
     plan: CheckInPlanSnapshotSource,
-    rules: CheckInStreakRewardRuleSelect[],
+    streakRules: CheckInStreakRewardRuleSelect[],
+    dailyRules: CheckInDailyRewardRuleSelect[],
   ) {
     return {
       id: plan.id,
@@ -275,7 +328,17 @@ export abstract class CheckInServiceSupport {
         allowEmpty: true,
       }),
       version: plan.version,
-      streakRewardRules: rules.map((rule) => ({
+      dailyRewardRules: dailyRules
+        .map((rule) => ({
+          id: rule.id,
+          planVersion: rule.planVersion,
+          dayIndex: rule.dayIndex,
+          rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+            allowEmpty: false,
+          })!,
+        }))
+        .sort((left, right) => left.dayIndex - right.dayIndex),
+      streakRewardRules: streakRules.map((rule) => ({
         id: rule.id,
         planVersion: rule.planVersion,
         ruleCode: rule.ruleCode,
@@ -305,7 +368,7 @@ export abstract class CheckInServiceSupport {
   /**
    * 计算给定时间点所属的周期边界。
    *
-   * 周/月都从计划开始日期向后推导，所有结果都基于部署时区自然日生成。
+   * 周/月都按真实自然周 / 月生成，所有结果都基于部署时区自然日计算。
    */
   protected buildCycleFrame(
     plan: Pick<CheckInPlanSelect, 'cycleType' | 'startDate'>,
@@ -314,18 +377,12 @@ export abstract class CheckInServiceSupport {
     const targetDate = dayjs
       .tz(this.formatDateOnly(now), 'YYYY-MM-DD', this.getAppTimeZone())
       .startOf('day')
-    const startDate = dayjs
-      .tz(
-        this.toDateOnlyValue(plan.startDate),
-        'YYYY-MM-DD',
-        this.getAppTimeZone(),
-      )
-      .startOf('day')
     const cycleType = this.parseCycleType(plan.cycleType)
 
     if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
-      const cycleIndex = Math.floor(targetDate.diff(startDate, 'day') / 7)
-      const cycleStart = startDate.add(cycleIndex * 7, 'day')
+      const weekday = targetDate.day()
+      const offset = weekday === 0 ? 6 : weekday - 1
+      const cycleStart = targetDate.subtract(offset, 'day')
       const cycleEnd = cycleStart.add(6, 'day')
       return {
         cycleKey: `week-${cycleStart.format('YYYY-MM-DD')}`,
@@ -334,19 +391,8 @@ export abstract class CheckInServiceSupport {
       }
     }
 
-    const anchorDay = startDate.date()
-    const buildMonthAnchor = (base: typeof targetDate) =>
-      base
-        .startOf('month')
-        .date(Math.min(anchorDay, base.daysInMonth()))
-        .startOf('day')
-
-    let cycleStart = buildMonthAnchor(targetDate)
-    if (targetDate.date() < cycleStart.date()) {
-      cycleStart = buildMonthAnchor(targetDate.subtract(1, 'month'))
-    }
-    const nextCycleStart = buildMonthAnchor(cycleStart.add(1, 'month'))
-    const cycleEnd = nextCycleStart.subtract(1, 'day')
+    const cycleStart = targetDate.startOf('month')
+    const cycleEnd = targetDate.endOf('month').startOf('day')
     return {
       cycleKey: `month-${cycleStart.format('YYYY-MM-DD')}`,
       cycleStartDate: cycleStart.format('YYYY-MM-DD'),
@@ -506,6 +552,27 @@ export abstract class CheckInServiceSupport {
       )
   }
 
+  /** 获取指定计划版本下的按日奖励规则列表。 */
+  protected async getPlanDailyRewardRules(
+    planId: number,
+    planVersion: number,
+    db: Db = this.db,
+  ) {
+    return db
+      .select()
+      .from(this.checkInDailyRewardRuleTable)
+      .where(
+        and(
+          eq(this.checkInDailyRewardRuleTable.planId, planId),
+          eq(this.checkInDailyRewardRuleTable.planVersion, planVersion),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInDailyRewardRuleTable.dayIndex),
+        asc(this.checkInDailyRewardRuleTable.id),
+      )
+  }
+
   /**
    * 查找覆盖某个自然日的周期实例。
    *
@@ -571,6 +638,86 @@ export abstract class CheckInServiceSupport {
     }
   }
 
+  /** 把按日奖励规则映射成对外稳定视图。 */
+  protected toDailyRewardRuleView(rule: {
+    id: number
+    dayIndex: number
+    rewardConfig: unknown
+  }): CheckInDailyRewardRuleCoreView {
+    return {
+      id: rule.id,
+      dayIndex: rule.dayIndex,
+      rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+        allowEmpty: false,
+      })!,
+    }
+  }
+
+  /** 校验计划日期边界必须与自然周期边界对齐。 */
+  protected ensurePlanBoundaryAligned(
+    cycleType: CheckInCycleTypeEnum,
+    startDate: string,
+    endDate?: string | null,
+  ) {
+    const start = dayjs.tz(startDate, 'YYYY-MM-DD', this.getAppTimeZone())
+    if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
+      if (start.day() !== 1) {
+        throw new BadRequestException('周计划开始日期必须对齐周一')
+      }
+      if (endDate) {
+        const end = dayjs.tz(endDate, 'YYYY-MM-DD', this.getAppTimeZone())
+        if (end.day() !== 0) {
+          throw new BadRequestException('周计划结束日期必须对齐周日')
+        }
+      }
+      return
+    }
+
+    if (start.date() !== 1) {
+      throw new BadRequestException('月计划开始日期必须对齐月初')
+    }
+    if (endDate) {
+      const end = dayjs.tz(endDate, 'YYYY-MM-DD', this.getAppTimeZone())
+      if (end.date() !== end.daysInMonth()) {
+        throw new BadRequestException('月计划结束日期必须对齐月末')
+      }
+    }
+  }
+
+  /** 解析指定自然日对应的奖励天序号。 */
+  protected resolveRewardDayIndex(
+    cycleType: CheckInCycleTypeEnum,
+    signDate: string,
+  ) {
+    const date = dayjs.tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
+    if (cycleType === CheckInCycleTypeEnum.MONTHLY) {
+      return date.date()
+    }
+
+    const weekday = date.day()
+    return weekday === 0 ? 7 : weekday
+  }
+
+  /** 基于快照解析指定签到日期的按日奖励配置。 */
+  protected resolveSnapshotRewardForDate(
+    snapshot: Pick<
+      CheckInPlanSnapshot,
+      'cycleType' | 'baseRewardConfig' | 'dailyRewardRules'
+    >,
+    signDate: string,
+  ) {
+    const dayIndex = this.resolveRewardDayIndex(snapshot.cycleType, signDate)
+    const rule = snapshot.dailyRewardRules.find(
+      (item) => item.dayIndex === dayIndex,
+    )
+    const rewardConfig = rule?.rewardConfig ?? snapshot.baseRewardConfig ?? null
+
+    return {
+      rewardDayIndex: rewardConfig ? dayIndex : null,
+      rewardConfig,
+    }
+  }
+
   // ==================== 版本与基础工具 ====================
 
   /** 比较两个可空日期值是否完全一致。 */
@@ -598,6 +745,8 @@ export abstract class CheckInServiceSupport {
       allowMakeupCountPerCycle: number
       baseRewardConfig?: CheckInRewardConfig | null
     }
+    currentDailyRules: CheckInDailyRewardRuleSelect[]
+    nextDailyRules: CreateCheckInDailyRewardRuleInsert[]
     currentRules: CheckInStreakRewardRuleSelect[]
     nextRules: CreateCheckInStreakRewardRuleInsert[]
   }) {
@@ -627,6 +776,27 @@ export abstract class CheckInServiceSupport {
         input.currentPlan.endDate,
         input.nextPlan.endDate,
       )
+    ) {
+      return true
+    }
+
+    const currentDailyRuleSignatures = input.currentDailyRules
+      .map((rule) => ({
+        dayIndex: rule.dayIndex,
+        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
+          allowEmpty: false,
+        }),
+      }))
+      .sort((left, right) => left.dayIndex - right.dayIndex)
+    const nextDailyRuleSignatures = input.nextDailyRules
+      .map((rule) => ({
+        dayIndex: rule.dayIndex,
+        rewardConfig: rule.rewardConfig,
+      }))
+      .sort((left, right) => left.dayIndex - right.dayIndex)
+    if (
+      JSON.stringify(currentDailyRuleSignatures) !==
+      JSON.stringify(nextDailyRuleSignatures)
     ) {
       return true
     }

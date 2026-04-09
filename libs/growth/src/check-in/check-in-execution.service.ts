@@ -4,7 +4,7 @@ import type {
   CheckInRecordSelect,
   CheckInStreakRewardGrantSelect,
 } from '@db/schema'
-import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal';
+import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
 import type {
   CheckInCycleAggregation,
   CheckInPlanSnapshot,
@@ -19,8 +19,12 @@ import type {
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
 import { DrizzleService } from '@db/core'
-import { GrowthAssetTypeEnum, GrowthLedgerActionEnum, GrowthLedgerSourceEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerActionEnum,
+  GrowthLedgerSourceEnum,
+} from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import {
   BadRequestException,
   Injectable,
@@ -138,6 +142,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
         this.assertMakeupAllowed(input.signDate, today, cycle, snapshot)
       }
+      const rewardResolution = this.resolveSnapshotRewardForDate(
+        snapshot,
+        input.signDate,
+      )
 
       const existingRecord = await this.findRecordByUniqueKey(
         input.userId,
@@ -164,7 +172,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             signDate: input.signDate,
             recordType: input.recordType,
             operatorType: input.operatorType,
-            rewardApplicable: Boolean(snapshot.baseRewardConfig),
+            rewardApplicable: Boolean(rewardResolution.rewardConfig),
+            rewardDayIndex: rewardResolution.rewardDayIndex,
+            resolvedRewardConfig: rewardResolution.rewardConfig,
             context: input.context,
           }),
         )
@@ -296,8 +306,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
 
     const frame = this.buildCycleFrame(plan, now)
-    const rules = await this.getPlanRules(plan.id, plan.version, tx)
-    const planSnapshot = this.buildPlanSnapshot(plan, rules)
+    const [dailyRules, streakRules] = await Promise.all([
+      this.getPlanDailyRewardRules(plan.id, plan.version, tx),
+      this.getPlanRules(plan.id, plan.version, tx),
+    ])
+    const planSnapshot = this.buildPlanSnapshot(plan, streakRules, dailyRules)
     const cycleInsert: CreateCheckInCycleInput = {
       userId,
       planId: plan.id,
@@ -567,6 +580,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     recordType: CheckInRecordTypeEnum
     operatorType: CheckInOperatorTypeEnum
     rewardApplicable: boolean
+    rewardDayIndex?: number | null
+    resolvedRewardConfig?: CheckInRewardConfig | null
     context?: Record<string, unknown>
   }): CreateCheckInRecordInput {
     return {
@@ -578,6 +593,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       rewardStatus: input.rewardApplicable
         ? CheckInRewardStatusEnum.PENDING
         : null,
+      rewardDayIndex: input.rewardDayIndex ?? null,
+      resolvedRewardConfig: input.resolvedRewardConfig ?? null,
       bizKey: this.buildRecordBizKey(
         input.planId,
         input.cycleKey,
@@ -660,6 +677,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       recordType: record.recordType,
       rewardStatus: record.rewardStatus,
       rewardResultType: record.rewardResultType,
+      rewardDayIndex: record.rewardDayIndex,
+      resolvedRewardConfig: this.parseStoredRewardConfig(
+        record.resolvedRewardConfig,
+        {
+          allowEmpty: true,
+        },
+      ),
       currentStreak: cycle.currentStreak,
       signedCount: cycle.signedCount,
       remainingMakeupCount: Math.max(
@@ -674,7 +698,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   /** 基于最新记录和周期摘要回填前端动作返回视图。 */
   private async buildLatestActionView(
     recordId: number,
-    actionMeta: Pick<CheckInActionResponseDto, 'alreadyExisted' | 'triggeredGrantIds'>,
+    actionMeta: Pick<
+      CheckInActionResponseDto,
+      'alreadyExisted' | 'triggeredGrantIds'
+    >,
   ) {
     const [record] = await this.db
       .select()
@@ -703,6 +730,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       recordType: record.recordType,
       rewardStatus: record.rewardStatus,
       rewardResultType: record.rewardResultType,
+      rewardDayIndex: record.rewardDayIndex,
+      resolvedRewardConfig: this.parseStoredRewardConfig(
+        record.resolvedRewardConfig,
+        {
+          allowEmpty: true,
+        },
+      ),
       currentStreak: cycle.currentStreak,
       signedCount: cycle.signedCount,
       remainingMakeupCount: Math.max(
@@ -743,8 +777,12 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           throw new NotFoundException('签到周期不存在')
         }
 
-        const snapshot = this.getCycleSnapshot(cycle)
-        const rewardConfig = snapshot.baseRewardConfig
+        const rewardConfig = this.parseStoredRewardConfig(
+          record.resolvedRewardConfig,
+          {
+            allowEmpty: true,
+          },
+        )
         if (!rewardConfig) {
           return
         }

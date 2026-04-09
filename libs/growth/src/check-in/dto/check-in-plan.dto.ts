@@ -40,7 +40,7 @@ export class BaseCheckInPlanDto extends BaseDto {
   cycleType!: CheckInCycleTypeEnum
 
   @StringProperty({
-    description: '计划开始日期（date 语义，同时作为周期切片起点）。',
+    description: '计划开始日期（date 语义，同时作为计划生效窗口起点）。',
     example: '2026-04-01',
     type: 'ISO8601',
   })
@@ -54,7 +54,7 @@ export class BaseCheckInPlanDto extends BaseDto {
   allowMakeupCountPerCycle!: number
 
   @NestedProperty({
-    description: '基础签到奖励配置；为空表示该计划没有基础奖励。',
+    description: '计划默认基础奖励配置；当天未配置按日奖励时回退到该配置。',
     type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
     required: false,
