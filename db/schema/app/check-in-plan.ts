@@ -4,6 +4,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   smallint,
   timestamp,
@@ -54,6 +55,11 @@ export const checkInPlan = pgTable('check_in_plan', {
    * 只限制当前周期内的补签额度，必须为非负整数。
    */
   allowMakeupCountPerCycle: integer().default(0).notNull(),
+  /**
+   * 计划默认基础奖励配置。
+   * 当前只支持 `points` / `experience` 正整数；当天未配置按日奖励时回退到此配置。
+   */
+  baseRewardConfig: jsonb(),
   /**
    * 计划版本号。
    * 关键配置变更后递增，新周期会冻结当前版本到 `check_in_cycle`。

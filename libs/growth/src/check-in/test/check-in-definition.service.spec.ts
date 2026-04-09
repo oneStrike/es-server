@@ -69,7 +69,7 @@ describe('check-in definition service', () => {
     service = new CheckInDefinitionService(drizzle, {} as any)
   })
 
-  it('创建计划时会按 dayIndex 排序写入按日奖励规则且不再落旧 baseRewardConfig', async () => {
+  it('创建计划时会写入默认基础奖励，并按 dayIndex 排序写入按日奖励规则', async () => {
     await service.createPlan(
       {
         planCode: 'growth-check-in',
@@ -79,6 +79,9 @@ describe('check-in definition service', () => {
         startDate: '2026-04-01',
         endDate: '2026-04-30',
         allowMakeupCountPerCycle: 2,
+        baseRewardConfig: {
+          points: 5,
+        },
         dailyRewardRules: [
           {
             dayIndex: 3,
@@ -101,12 +104,12 @@ describe('check-in definition service', () => {
         startDate: '2026-04-01',
         endDate: '2026-04-30',
         allowMakeupCountPerCycle: 2,
+        baseRewardConfig: { points: 5 },
         version: 1,
         createdById: 99,
         updatedById: 99,
       }),
     )
-    expect(planInsertValuesMock.mock.calls[0][0]).not.toHaveProperty('baseRewardConfig')
     expect(dailyRuleInsertValuesMock).toHaveBeenCalledWith([
       {
         planId: 11,

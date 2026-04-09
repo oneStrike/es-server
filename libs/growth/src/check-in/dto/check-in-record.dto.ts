@@ -67,7 +67,7 @@ export class BaseCheckInRecordDto extends BaseDto {
   rewardResultType?: CheckInRewardResultTypeEnum | null
 
   @NumberProperty({
-    description: '本次基础奖励命中的奖励天序号。',
+    description: '本次基础奖励对应的奖励天序号；命中按日奖励和回退默认基础奖励时都会回写当天序号。',
     example: 3,
     required: false,
     validation: false,
@@ -75,7 +75,7 @@ export class BaseCheckInRecordDto extends BaseDto {
   rewardDayIndex?: number | null
 
   @NestedProperty({
-    description: '本次基础奖励解析结果快照；为空表示该签到事实没有基础奖励。',
+    description: '本次基础奖励解析结果快照；来源可能是按日奖励或计划默认基础奖励，为空表示该签到事实没有基础奖励。',
     type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
     required: false,

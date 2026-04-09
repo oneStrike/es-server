@@ -12,8 +12,8 @@ import {
 /**
  * 签到按日奖励规则。
  *
- * 每条规则定义某个计划版本在指定 `dayIndex` 上的基础奖励配置，用于替代旧的
- * 统一 `baseRewardConfig`，并作为周期快照冻结的唯一事实源。
+ * 每条规则定义某个计划版本在指定 `dayIndex` 上的基础奖励配置。
+ * 当指定自然日命中规则时优先使用该配置，否则回退到计划默认基础奖励。
  */
 export const checkInDailyRewardRule = pgTable('check_in_daily_reward_rule', {
   /**

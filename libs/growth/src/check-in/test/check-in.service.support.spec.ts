@@ -33,6 +33,13 @@ class CheckInServiceSupportHarness extends CheckInServiceSupport {
       ...args,
     )
   }
+
+  callShouldBumpPlanVersion(...args: unknown[]) {
+    return (CheckInServiceSupport.prototype as any).shouldBumpPlanVersion.call(
+      this,
+      ...args,
+    )
+  }
 }
 
 describe('check-in service support daily reward foundation', () => {
@@ -84,7 +91,7 @@ describe('check-in service support daily reward foundation', () => {
     ).toThrow(new BadRequestException('按日奖励天序号重复：2'))
   })
 
-  it('构建周期快照时会冻结按日奖励规则而不是旧 baseRewardConfig', () => {
+  it('构建周期快照时会同时冻结默认基础奖励与按日奖励规则', () => {
     const snapshot = service.callBuildPlanSnapshot(
       {
         id: 1,
@@ -134,6 +141,7 @@ describe('check-in service support daily reward foundation', () => {
       startDate: '2026-04-01',
       endDate: '2026-05-31',
       allowMakeupCountPerCycle: 2,
+      baseRewardConfig: { points: 10 },
       version: 3,
       dailyRewardRules: [
         {
@@ -161,7 +169,6 @@ describe('check-in service support daily reward foundation', () => {
         },
       ],
     })
-    expect(snapshot).not.toHaveProperty('baseRewardConfig')
   })
 
   it('自然周周期会固定按周一到周日切片', () => {
@@ -180,10 +187,11 @@ describe('check-in service support daily reward foundation', () => {
     })
   })
 
-  it('会按自然日解析签到奖励对应的 dayIndex 与奖励配置', () => {
+  it('会按自然日优先解析按日奖励，未配置时回退默认基础奖励', () => {
     const result = service.callResolveSnapshotRewardForDate(
       {
         cycleType: CheckInCycleTypeEnum.MONTHLY,
+        baseRewardConfig: { points: 5 },
         dailyRewardRules: [
           {
             id: 21,
@@ -200,5 +208,51 @@ describe('check-in service support daily reward foundation', () => {
       rewardDayIndex: 3,
       rewardConfig: { points: 30 },
     })
+
+    const fallbackResult = service.callResolveSnapshotRewardForDate(
+      {
+        cycleType: CheckInCycleTypeEnum.MONTHLY,
+        baseRewardConfig: { points: 5 },
+        dailyRewardRules: [
+          {
+            id: 21,
+            planVersion: 3,
+            dayIndex: 3,
+            rewardConfig: { points: 30 },
+          },
+        ],
+      },
+      '2026-04-04',
+    )
+
+    expect(fallbackResult).toEqual({
+      rewardDayIndex: 4,
+      rewardConfig: { points: 5 },
+    })
+  })
+
+  it('默认基础奖励变更会触发计划版本递增', () => {
+    const result = service.callShouldBumpPlanVersion({
+      currentPlan: {
+        cycleType: CheckInCycleTypeEnum.MONTHLY,
+        startDate: '2026-04-01',
+        endDate: '2026-04-30',
+        allowMakeupCountPerCycle: 2,
+        baseRewardConfig: { points: 5 },
+      },
+      nextPlan: {
+        cycleType: CheckInCycleTypeEnum.MONTHLY,
+        startDate: '2026-04-01',
+        endDate: '2026-04-30',
+        allowMakeupCountPerCycle: 2,
+        baseRewardConfig: { points: 10 },
+      },
+      currentDailyRules: [],
+      nextDailyRules: [],
+      currentRules: [],
+      nextRules: [],
+    })
+
+    expect(result).toBe(true)
   })
 })

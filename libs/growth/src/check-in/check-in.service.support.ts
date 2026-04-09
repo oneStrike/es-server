@@ -324,6 +324,9 @@ export abstract class CheckInServiceSupport {
       startDate: this.toDateOnlyValue(plan.startDate),
       endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
       allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
+      baseRewardConfig: this.parseStoredRewardConfig(plan.baseRewardConfig, {
+        allowEmpty: true,
+      }),
       version: plan.version,
       dailyRewardRules: dailyRules
         .map((rule) => ({
@@ -697,17 +700,21 @@ export abstract class CheckInServiceSupport {
 
   /** 基于快照解析指定签到日期的按日奖励配置。 */
   protected resolveSnapshotRewardForDate(
-    snapshot: Pick<CheckInPlanSnapshot, 'cycleType' | 'dailyRewardRules'>,
+    snapshot: Pick<
+      CheckInPlanSnapshot,
+      'cycleType' | 'baseRewardConfig' | 'dailyRewardRules'
+    >,
     signDate: string,
   ) {
     const dayIndex = this.resolveRewardDayIndex(snapshot.cycleType, signDate)
     const rule = snapshot.dailyRewardRules.find(
       (item) => item.dayIndex === dayIndex,
     )
+    const rewardConfig = rule?.rewardConfig ?? snapshot.baseRewardConfig ?? null
 
     return {
-      rewardDayIndex: rule ? dayIndex : null,
-      rewardConfig: rule?.rewardConfig ?? null,
+      rewardDayIndex: rewardConfig ? dayIndex : null,
+      rewardConfig,
     }
   }
 
@@ -736,6 +743,7 @@ export abstract class CheckInServiceSupport {
       startDate: string
       endDate?: string | null
       allowMakeupCountPerCycle: number
+      baseRewardConfig?: CheckInRewardConfig | null
     }
     currentDailyRules: CheckInDailyRewardRuleSelect[]
     nextDailyRules: CreateCheckInDailyRewardRuleInsert[]
@@ -751,6 +759,15 @@ export abstract class CheckInServiceSupport {
     if (
       input.currentPlan.allowMakeupCountPerCycle !==
       input.nextPlan.allowMakeupCountPerCycle
+    ) {
+      return true
+    }
+    if (
+      JSON.stringify(
+        this.parseStoredRewardConfig(input.currentPlan.baseRewardConfig, {
+          allowEmpty: true,
+        }),
+      ) !== JSON.stringify(input.nextPlan.baseRewardConfig ?? null)
     ) {
       return true
     }

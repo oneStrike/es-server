@@ -32,6 +32,10 @@ interface MigrationTableSnapshot {
   records: DbMigrationRecord[]
 }
 
+function hasRunnableLocalMigrations(localMigrations: LocalMigrationMeta[]) {
+  return localMigrations.some(migration => migration.hasMigrationSql)
+}
+
 function log(level: LogLevel, message: string, details?: Record<string, unknown>) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`)
 
@@ -213,13 +217,6 @@ async function runMigration() {
     pid: process.pid,
     cwd: process.cwd(),
   })
-
-  if (!process.env.DATABASE_URL) {
-    log('ERROR', 'DATABASE_URL 环境变量未设置')
-    throw new Error('DATABASE_URL 环境变量未设置')
-  }
-
-  const databaseUrl = process.env.DATABASE_URL
   const migrationsFolder = resolve(__dirname, 'migration')
   // Seed 仍沿用当前基于 cwd 的定位方式，避免改变现有脚本的执行契约。
   const seedTsPath = join(process.cwd(), 'db', 'seed', 'index.ts')
@@ -237,6 +234,20 @@ async function runMigration() {
       invalidMigrationDirectories: invalidLocalMigrations.map(migration => migration.name),
     })
   }
+
+  if (!hasRunnableLocalMigrations(localMigrations)) {
+    log('SUCCESS', '未检测到本地 migration 文件，跳过数据库迁移流程', {
+      totalCost: formatDuration(Date.now() - startedAt),
+    })
+    return
+  }
+
+  if (!process.env.DATABASE_URL) {
+    log('ERROR', 'DATABASE_URL 环境变量未设置')
+    throw new Error('DATABASE_URL 环境变量未设置')
+  }
+
+  const databaseUrl = process.env.DATABASE_URL
 
   const pool = new Pool({
     connectionString: databaseUrl,
@@ -376,6 +387,14 @@ async function runMigration() {
   })
 }
 
-runMigration().catch(() => {
-  process.exitCode = 1
-})
+if (require.main === module) {
+  runMigration().catch(() => {
+    process.exitCode = 1
+  })
+}
+
+export {
+  hasRunnableLocalMigrations,
+  readLocalMigrations,
+  runMigration,
+}

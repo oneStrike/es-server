@@ -67,6 +67,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       list: page.list.map((plan, index) => {
         return {
           ...plan,
+          baseRewardConfig: this.parseStoredRewardConfig(plan.baseRewardConfig, {
+            allowEmpty: true,
+          }),
           status: this.resolvePlanStatus(plan),
           ...summaries[index],
         }
@@ -85,6 +88,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     return {
       ...plan,
+      baseRewardConfig: this.parseStoredRewardConfig(plan.baseRewardConfig, {
+        allowEmpty: true,
+      }),
       status: this.resolvePlanStatus(plan),
       ...summary,
       dailyRewardRules: dailyRules.map((rule) => this.toDailyRewardRuleView(rule)),
@@ -110,6 +116,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     ) {
       throw new BadRequestException('每周期补签次数必须为非负整数')
     }
+    const baseRewardConfig = this.parseRewardConfig(dto.baseRewardConfig, {
+      allowEmpty: true,
+    })
     this.ensurePlanDateRange(startDate, endDate)
     this.ensurePlanBoundaryAligned(cycleType, startDate, endDate)
     const now = new Date()
@@ -133,6 +142,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             startDate,
             endDate,
             allowMakeupCountPerCycle,
+            baseRewardConfig,
             version: 1,
             createdById: adminUserId,
             updatedById: adminUserId,
@@ -198,6 +208,14 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         dto.allowMakeupCountPerCycle !== undefined
           ? dto.allowMakeupCountPerCycle
           : currentPlan.allowMakeupCountPerCycle,
+      baseRewardConfig:
+        dto.baseRewardConfig !== undefined
+          ? this.parseRewardConfig(dto.baseRewardConfig, {
+              allowEmpty: true,
+            })
+          : this.parseStoredRewardConfig(currentPlan.baseRewardConfig, {
+              allowEmpty: true,
+            }),
     }
 
     if (
@@ -285,6 +303,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             startDate: nextPlan.startDate,
             endDate: nextPlan.endDate,
             allowMakeupCountPerCycle: nextPlan.allowMakeupCountPerCycle,
+            baseRewardConfig: nextPlan.baseRewardConfig,
             version: nextVersion,
             updatedById: adminUserId,
           })

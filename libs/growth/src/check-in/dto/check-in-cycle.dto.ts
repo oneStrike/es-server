@@ -83,6 +83,7 @@ export class BaseCheckInCycleDto extends BaseDto {
       startDate: '2026-04-01',
       endDate: '2026-05-31',
       allowMakeupCountPerCycle: 2,
+      baseRewardConfig: null,
       version: 1,
       dailyRewardRules: [],
       streakRewardRules: [],

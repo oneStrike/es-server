@@ -36,6 +36,7 @@ export type CheckInPlanSnapshotSource = Pick<
   | 'startDate'
   | 'endDate'
   | 'allowMakeupCountPerCycle'
+  | 'baseRewardConfig'
   | 'version'
 >
 
@@ -91,6 +92,7 @@ export interface CheckInPlanSnapshotRule extends CheckInStreakRewardRuleCoreView
 export interface CheckInPlanSnapshot
   extends Omit<CheckInPlanSnapshotSource, 'cycleType'> {
   cycleType: CheckInCycleTypeEnum
+  baseRewardConfig: CheckInRewardConfig | null
   dailyRewardRules: CheckInPlanSnapshotDailyRewardRule[]
   streakRewardRules: CheckInPlanSnapshotRule[]
 }
@@ -109,6 +111,7 @@ export type CheckInPlanSummaryView = Pick<
   | 'startDate'
   | 'endDate'
   | 'allowMakeupCountPerCycle'
+  | 'baseRewardConfig'
 > &
 Pick<CheckInPlan, 'status'>
 

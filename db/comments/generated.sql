@@ -205,7 +205,7 @@ COMMENT ON COLUMN "public"."check_in_cycle"."plan_snapshot" IS E'周期快照。
 COMMENT ON COLUMN "public"."check_in_cycle"."version" IS E'周期乐观锁版本号。\n用于并发签到与补签时避免聚合摘要互相覆盖。';
 COMMENT ON COLUMN "public"."check_in_cycle"."created_at" IS E'周期创建时间。';
 COMMENT ON COLUMN "public"."check_in_cycle"."updated_at" IS E'周期最近更新时间。';
-COMMENT ON TABLE "public"."check_in_daily_reward_rule" IS E'签到按日奖励规则。\n\n每条规则定义某个计划版本在指定 `dayIndex` 上的基础奖励配置，用于替代旧的\n统一 `baseRewardConfig`，并作为周期快照冻结的唯一事实源。';
+COMMENT ON TABLE "public"."check_in_daily_reward_rule" IS E'签到按日奖励规则。\n\n每条规则定义某个计划版本在指定 `dayIndex` 上的基础奖励配置。\n当指定自然日命中规则时优先使用该配置，否则回退到计划默认基础奖励。';
 COMMENT ON COLUMN "public"."check_in_daily_reward_rule"."id" IS E'按日奖励规则主键。';
 COMMENT ON COLUMN "public"."check_in_daily_reward_rule"."plan_id" IS E'归属计划 ID。';
 COMMENT ON COLUMN "public"."check_in_daily_reward_rule"."plan_version" IS E'归属计划版本号。\n计划关键配置变更后通过新版本规则冻结，避免污染历史周期解释。';
@@ -221,6 +221,7 @@ COMMENT ON COLUMN "public"."check_in_plan"."status" IS E'计划状态。\n作为
 COMMENT ON COLUMN "public"."check_in_plan"."cycle_type" IS E'周期类型。\n一期只允许 `weekly`、`monthly` 两类稳定值。';
 COMMENT ON COLUMN "public"."check_in_plan"."start_date" IS E'计划开始日期。\n表示计划生效窗口起点，不再充当周期滚动锚点。';
 COMMENT ON COLUMN "public"."check_in_plan"."allow_makeup_count_per_cycle" IS E'每周期可补签次数。\n只限制当前周期内的补签额度，必须为非负整数。';
+COMMENT ON COLUMN "public"."check_in_plan"."base_reward_config" IS E'计划默认基础奖励配置。\n当前只支持 `points` / `experience` 正整数；当天未配置按日奖励时回退到此配置。';
 COMMENT ON COLUMN "public"."check_in_plan"."version" IS E'计划版本号。\n关键配置变更后递增，新周期会冻结当前版本到 `check_in_cycle`。';
 COMMENT ON COLUMN "public"."check_in_plan"."end_date" IS E'计划结束日期。\n`null` 表示长期有效；非空时计划在该自然日结束后失效。';
 COMMENT ON COLUMN "public"."check_in_plan"."created_by_id" IS E'创建人 ID。\n仅用于后台审计，允许历史数据为空。';
@@ -237,8 +238,8 @@ COMMENT ON COLUMN "public"."check_in_record"."sign_date" IS E'签到自然日。
 COMMENT ON COLUMN "public"."check_in_record"."record_type" IS E'签到类型。\n区分正常签到与补签，用于日历展示与补签额度统计。';
 COMMENT ON COLUMN "public"."check_in_record"."reward_status" IS E'基础签到奖励状态。\n仅描述基础奖励，不覆盖连续奖励发放状态；没有基础奖励时允许为 `null`。';
 COMMENT ON COLUMN "public"."check_in_record"."reward_result_type" IS E'基础签到奖励结果类型。\n用于区分真实落账、幂等命中与失败；没有基础奖励时允许为 `null`。';
-COMMENT ON COLUMN "public"."check_in_record"."reward_day_index" IS E'本次基础奖励命中的奖励天序号。\n`null` 表示该签到事实没有基础奖励，非空时必须和 `resolvedRewardConfig` 成对出现。';
-COMMENT ON COLUMN "public"."check_in_record"."resolved_reward_config" IS E'本次基础奖励解析结果快照。\n冻结签到当日实际结算的奖励配置，便于后续对账、补偿和历史展示。';
+COMMENT ON COLUMN "public"."check_in_record"."reward_day_index" IS E'本次基础奖励对应的奖励天序号。\n命中按日奖励和回退默认基础奖励时都会回写当天自然日序号。\n`null` 表示该签到事实没有基础奖励，非空时必须和 `resolvedRewardConfig` 成对出现。';
+COMMENT ON COLUMN "public"."check_in_record"."resolved_reward_config" IS E'本次基础奖励解析结果快照。\n冻结签到当日实际结算的奖励配置，来源可能是按日奖励或计划默认基础奖励。';
 COMMENT ON COLUMN "public"."check_in_record"."biz_key" IS E'业务幂等键。\n用于重复提交、补偿重放和账本幂等收口。';
 COMMENT ON COLUMN "public"."check_in_record"."base_reward_ledger_ids" IS E'基础奖励对应到账本记录 ID 列表。\n幂等命中或无基础奖励时通常为空数组。';
 COMMENT ON COLUMN "public"."check_in_record"."operator_type" IS E'操作来源类型。\n用于区分用户主动签到、后台修复或系统补偿等来源。';

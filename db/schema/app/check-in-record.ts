@@ -56,13 +56,14 @@ export const checkInRecord = pgTable('check_in_record', {
    */
   rewardResultType: smallint(),
   /**
-   * 本次基础奖励命中的奖励天序号。
+   * 本次基础奖励对应的奖励天序号。
+   * 命中按日奖励和回退默认基础奖励时都会回写当天自然日序号。
    * `null` 表示该签到事实没有基础奖励，非空时必须和 `resolvedRewardConfig` 成对出现。
    */
   rewardDayIndex: integer(),
   /**
    * 本次基础奖励解析结果快照。
-   * 冻结签到当日实际结算的奖励配置，便于后续对账、补偿和历史展示。
+   * 冻结签到当日实际结算的奖励配置，来源可能是按日奖励或计划默认基础奖励。
    */
   resolvedRewardConfig: jsonb(),
   /**

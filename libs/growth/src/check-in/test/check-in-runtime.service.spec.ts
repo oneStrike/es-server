@@ -40,6 +40,7 @@ describe('check-in runtime service', () => {
       startDate: '2026-04-01',
       endDate: '2026-04-30',
       allowMakeupCountPerCycle: 2,
+      baseRewardConfig: { points: 5 },
     })
     jest.spyOn(service as any, 'getCurrentCycleView').mockResolvedValue({
       id: 10,
@@ -53,6 +54,7 @@ describe('check-in runtime service', () => {
       planSnapshot: {
         cycleType: CheckInCycleTypeEnum.MONTHLY,
         allowMakeupCountPerCycle: 2,
+        baseRewardConfig: { points: 5 },
         dailyRewardRules: [
           {
             id: 1,
@@ -102,6 +104,7 @@ describe('check-in runtime service', () => {
       startDate: '2026-04-01',
       endDate: '2026-04-30',
       allowMakeupCountPerCycle: 2,
+      baseRewardConfig: { points: 5 },
     })
     expect(result.latestRecord).toMatchObject({
       signDate: '2026-04-09',
@@ -124,6 +127,7 @@ describe('check-in runtime service', () => {
       cycleEndDate: '2026-04-03',
       planSnapshot: {
         cycleType: CheckInCycleTypeEnum.MONTHLY,
+        baseRewardConfig: { points: 5 },
         dailyRewardRules: [
           {
             id: 1,
@@ -171,7 +175,7 @@ describe('check-in runtime service', () => {
       signDate: '2026-04-02',
       dayIndex: 2,
       inPlanWindow: true,
-      planRewardConfig: null,
+      planRewardConfig: { points: 5 },
       isSigned: false,
     })
     expect(result.days[2]).toMatchObject({

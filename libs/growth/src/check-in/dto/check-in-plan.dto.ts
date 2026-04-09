@@ -1,9 +1,12 @@
+import type { CheckInRewardConfig } from '../check-in.type'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { BaseDto } from '@libs/platform/dto/base.dto';
 import { CheckInCycleTypeEnum, CheckInPlanStatusEnum } from '../check-in.constant'
+import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 export class BaseCheckInPlanDto extends BaseDto {
   @StringProperty({
@@ -49,6 +52,15 @@ export class BaseCheckInPlanDto extends BaseDto {
     min: 0,
   })
   allowMakeupCountPerCycle!: number
+
+  @NestedProperty({
+    description: '计划默认基础奖励配置；当天未配置按日奖励时回退到该配置。',
+    type: CheckInRewardConfigDto,
+    example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
+    required: false,
+    nullable: true,
+  })
+  baseRewardConfig?: CheckInRewardConfigDto | null
 
   @NumberProperty({
     description: '计划版本号；影响周期快照冻结与规则版本切换。',
