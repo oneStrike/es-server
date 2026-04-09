@@ -15,7 +15,7 @@ export const appAgreement = pgTable("app_agreement", {
   /**
    * 协议标题
    */
-  title: varchar({ length: 200 }).notNull(),
+  title: varchar({ length: 100 }).notNull(),
   /**
    * 协议内容 (HTML/Markdown)
    */
