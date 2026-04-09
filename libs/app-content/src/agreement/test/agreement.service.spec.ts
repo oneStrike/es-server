@@ -57,7 +57,6 @@ describe('agreement service', () => {
     const where = jest.fn().mockResolvedValue(result)
     const set = jest.fn(() => ({ where }))
     const update = jest.fn(() => ({ set }))
-    const assertAffectedRows = jest.fn()
     const withErrorHandling = jest.fn(async (callback) => callback())
 
     const service = new AgreementService({
@@ -76,7 +75,6 @@ describe('agreement service', () => {
         appAgreement: { id: 'id' },
       },
       withErrorHandling,
-      assertAffectedRows,
     } as any)
 
     await expect(
@@ -88,7 +86,13 @@ describe('agreement service', () => {
 
     expect(withErrorHandling).toHaveBeenCalledTimes(1)
     expect(update).toHaveBeenCalledTimes(1)
-    expect(assertAffectedRows).toHaveBeenCalledWith(result, '协议不存在')
+    expect(withErrorHandling).toHaveBeenCalledWith(
+      expect.any(Function),
+      {
+        duplicate: '协议标题和版本已存在',
+        notFound: '协议不存在',
+      },
+    )
   })
 
   it('rejects unpublishing an unpublished agreement draft', async () => {
