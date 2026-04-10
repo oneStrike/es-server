@@ -272,8 +272,8 @@
 
 范围
 
-- `.trae/rules/IMPORT_BOUNDARY_SPEC.md`
-- `.trae/rules/DTO_SPEC.md`
+- `.trae/rules/PROJECT_RULES.md`
+- `.trae/rules/PROJECT_RULES.md`
 - 本文档
 
 当前代码锚点
@@ -607,8 +607,8 @@
 
 当前代码锚点
 
-- `.trae/rules/IMPORT_BOUNDARY_SPEC.md`
-- `.trae/rules/DTO_SPEC.md`
+- `.trae/rules/PROJECT_RULES.md`
+- `.trae/rules/PROJECT_RULES.md`
 - `docs/audits/2026-04-06-module-inventory-refactor-task-list.md`
 
 非目标

@@ -12,10 +12,10 @@ description: Use when implementing, refactoring, or reviewing a business module 
 
 ## 进入工作前必读
 
-- Controller 规则：`../../../.trae/rules/CONTROLLER_SPEC.md`
-- DTO 规则：`../../../.trae/rules/DTO_SPEC.md`
-- 注释规则：`../../../.trae/rules/COMMENT_SPEC.md`
-- TypeScript 类型规则：`../../../.trae/rules/TS_TYPE_SPEC.md`
+- Controller 规则：`../../../.trae/rules/PROJECT_RULES.md`
+- DTO 规则：`../../../.trae/rules/PROJECT_RULES.md`
+- 注释规则：`../../../.trae/rules/PROJECT_RULES.md`
+- TypeScript 类型规则：`../../../.trae/rules/PROJECT_RULES.md`
 - NestJS 约束：`../NestJS/SKILL.md`
 - Drizzle 参考：`../lb-drizzle-skill/SKILL.md`
 

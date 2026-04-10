@@ -10,7 +10,7 @@
 
 关联文档：
 
-- 规范基线：`../../.trae/rules/TABLE_NAMING_SPEC.md`
+- 规范基线：`../../.trae/rules/PROJECT_RULES.md`
 - 存量分档：`./table-naming-audit.md`
 
 ## 1. 先看结论

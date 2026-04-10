@@ -5,7 +5,7 @@
 审计基线：
 
 - 现有表定义：`db/schema/*`
-- 命名规范：`../../.trae/rules/TABLE_NAMING_SPEC.md`
+- 命名规范：`../../.trae/rules/PROJECT_RULES.md`
 
 ## 1. 审计结论
 
@@ -216,7 +216,7 @@
 
 ### 6.1 立即执行
 
-- 新表命名统一遵循 `../../.trae/rules/TABLE_NAMING_SPEC.md`
+- 新表命名统一遵循 `../../.trae/rules/PROJECT_RULES.md`
 - 评审时显式检查 `app_user*` 与 `user_*` 的边界
 - 禁止新增新的关系表后缀同义词，例如 `_mapping`、`_link`、`_bind`
 

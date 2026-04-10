@@ -8,21 +8,16 @@ description: 'Repository-specific enforcement workflow for `.trae` standards in 
 ## Overview
 
 Use this skill whenever work touches `apps/admin-api`, `apps/app-api`, `libs/*`, or `db/*`.
-Treat `.trae/rules/*` as first-class constraints and align implementation to rule documents instead of generic NestJS habits.
+Treat `.trae/rules/PROJECT_RULES.md` as the single source of truth and align implementation to it instead of generic NestJS habits.
 
 ## Workflow
 
 1. Identify touched layers first: controller, comment/docs, DTO, service/resolver, type file, schema/Drizzle.
-2. Read matching rule docs before editing:
-   - controller: `../../../.trae/rules/CONTROLLER_SPEC.md`
-   - comment: `../../../.trae/rules/COMMENT_SPEC.md`
-   - dto: `../../../.trae/rules/DTO_SPEC.md`
-   - service: `../../../.trae/rules/drizzle-guidelines.md` and `../../../.trae/rules/ERROR_HANDLING_SPEC.md`
-   - type: `../../../.trae/rules/TS_TYPE_SPEC.md`
-   - drizzle: `../../../.trae/rules/drizzle-guidelines.md`
-3. If service change touches counters, also read `../../../.trae/rules/COUNTER_SPEC.md`.
+2. Read the rule document before editing:
+   - source of truth: `../../../.trae/rules/PROJECT_RULES.md`
+3. If service change touches counters, confirm the counter section in `PROJECT_RULES.md` is satisfied.
 4. Inspect sibling modules and shared abstractions with `rg` before introducing a new pattern.
-5. Implement with existing platform helpers and owner files; follow `IMPORT_BOUNDARY_SPEC.md` instead of inventing new barrels or directory-level shortcuts.
+5. Implement with existing platform helpers and owner files; follow the import boundary rules in `PROJECT_RULES.md` instead of inventing new barrels or directory-level shortcuts.
 6. Run validation with the narrowest useful commands from `../../../.codex/skills/es-server-standards/references/repo-map.md`.
 7. If verification requires temporary scripts or probes, delete them before delivery; committed repo `*.spec.ts` are long-lived assets unless they were created purely as throwaway verification files.
 8. Report any rule conflict explicitly in delivery notes; do not silently spread inconsistent legacy patterns.
@@ -38,7 +33,7 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 
 ### Comment (Code Comments)
 
-- Follow `COMMENT_SPEC.md`: explain rationale, constraints, side effects, risk.
+- Follow the comment rules in `PROJECT_RULES.md`: explain rationale, constraints, side effects, risk.
 - Do not duplicate Swagger/validator/DTO obvious semantics in controller and DTO comments.
 - For service/resolver comments, focus on transaction boundaries, idempotency, retry/compensation, and failure semantics.
 - For `db/schema` comments, follow Drizzle guideline section about field comments when schema changes are involved.
@@ -59,7 +54,7 @@ Treat `.trae/rules/*` as first-class constraints and align implementation to rul
 - Use `drizzle.ext.findPagination` for paging and `SQL[] + and(...)` for dynamic conditions.
 - Pass `tx` through the entire call chain if a transaction starts.
 - Keep raw SQL parameterized and localized to helper methods.
-- Keep error semantics aligned with `ERROR_HANDLING_SPEC.md` (layered responsibility, clear business exceptions, degradable side effects).
+- Keep error semantics aligned with `PROJECT_RULES.md` (layered responsibility, clear business exceptions, degradable side effects).
 
 ### Type
 

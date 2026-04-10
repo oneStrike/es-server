@@ -9,7 +9,7 @@
 - `libs/*`：共享业务模块、平台能力与 DTO 契约。
 - `db/*`：Drizzle schema、数据库核心能力、扩展与 seed。
 - `docs/*`：审计、任务单和说明性文档。
-- `.trae/rules/*`：仓库级规范事实源。
+- `.trae/rules/PROJECT_RULES.md`：仓库级规范入口。
 
 ## 初始化
 
@@ -57,8 +57,8 @@ pnpm publish-api:app
 
 ## 规范入口
 
-- 项目级最小约束：[AGENTS.md](./AGENTS.md)
-- 规则索引：[.trae/rules/RULE_INDEX.md](./.trae/rules/RULE_INDEX.md)
-- 仓库地图：[.codex/skills/es-server-standards/references/repo-map.md](./.codex/skills/es-server-standards/references/repo-map.md)
+- 项目级最小约束：`AGENTS.md`
+- 单一规范事实源：`.trae/rules/PROJECT_RULES.md`
+- 仓库地图：`.codex/skills/es-server-standards/references/repo-map.md`
 
 规则发生冲突时，优先保护当前稳定运行的共享抽象与对外契约，再在交付说明中记录冲突点与暂行决策。
