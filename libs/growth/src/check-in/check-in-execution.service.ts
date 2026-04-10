@@ -7,8 +7,8 @@ import type {
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
 import type {
   CheckInCycleAggregation,
-  CheckInPlanSnapshot,
   CheckInRewardConfig,
+  CheckInRewardDefinition,
   CreateCheckInCycleInput,
   CreateCheckInGrantInput,
   CreateCheckInRecordInput,
@@ -145,7 +145,20 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
 
     const plan = await this.getCurrentActivePlan(now)
-    const action = await this.performSignWithRetry(plan, input, now, today)
+    const rewardDefinition =
+      this.getPlanRewardDefinition(plan, { allowEmpty: true }) ?? {
+        baseRewardConfig: null,
+        dateRewardRules: [],
+        patternRewardRules: [],
+        streakRewardRules: [],
+      }
+    const action = await this.performSignWithRetry(
+      plan,
+      rewardDefinition,
+      input,
+      now,
+      today,
+    )
 
     if (!action.alreadyExisted) {
       await this.settleRecordReward(action.recordId, {
@@ -170,6 +183,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async performSignWithRetry(
     plan: CheckInPlanSelect,
+    rewardDefinition: CheckInRewardDefinition,
     input: {
       userId: number
       signDate: string
@@ -180,6 +194,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     now: Date,
     today: string,
   ) {
+    const cycleType = this.parseCycleType(plan.cycleType)
     for (
       let attempt = 0;
       attempt < CHECK_IN_CYCLE_WRITE_RETRY_LIMIT;
@@ -188,13 +203,18 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       try {
         return await this.drizzle.withTransaction(async (tx) => {
           const cycle = await this.createOrGetCycle(tx, plan, input.userId, now)
-          const snapshot = this.getCycleSnapshot(cycle)
 
           if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
-            this.assertMakeupAllowed(input.signDate, today, cycle, snapshot)
+            this.assertMakeupAllowed(
+              input.signDate,
+              today,
+              cycle,
+              plan.allowMakeupCountPerCycle,
+            )
           }
-          const rewardResolution = this.resolveSnapshotRewardForDate(
-            snapshot,
+          const rewardResolution = this.resolveRewardForDate(
+            cycleType,
+            rewardDefinition,
             input.signDate,
           )
 
@@ -208,7 +228,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             return this.buildActionResultFromExisting(
               existingRecord,
               cycle,
-              snapshot,
+              plan.allowMakeupCountPerCycle,
             )
           }
 
@@ -226,7 +246,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                 rewardApplicable: Boolean(rewardResolution.resolvedRewardConfig),
                 resolvedRewardSourceType:
                   rewardResolution.resolvedRewardSourceType,
-                resolvedRewardRuleId: rewardResolution.resolvedRewardRuleId,
+                resolvedRewardRuleKey: rewardResolution.resolvedRewardRuleKey,
                 resolvedRewardConfig: rewardResolution.resolvedRewardConfig,
                 context: input.context,
               }),
@@ -247,13 +267,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             return this.buildActionResultFromExisting(
               duplicatedRecord,
               cycle,
-              snapshot,
+              plan.allowMakeupCountPerCycle,
             )
           }
 
           const records = await this.listCycleRecords(cycle.id, tx)
           const aggregation = this.recomputeCycleAggregation(records)
-          if (aggregation.makeupUsedCount > snapshot.allowMakeupCountPerCycle) {
+          if (aggregation.makeupUsedCount > plan.allowMakeupCountPerCycle) {
             throw new BadRequestException('已超过当前周期补签上限')
           }
 
@@ -279,7 +299,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
           const existingGrants = await this.listCycleGrants(cycle.id, tx)
           const candidates = this.resolveEligibleGrantCandidates(
-            snapshot.streakRewardRules,
+            rewardDefinition.streakRewardRules,
             aggregation.streakByDate,
             existingGrants,
           )
@@ -293,9 +313,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                   userId: input.userId,
                   planId: plan.id,
                   cycleId: cycle.id,
-                  ruleId: candidate.rule.id,
                   triggerSignDate: candidate.triggerSignDate,
-                  planSnapshotVersion: cycle.planSnapshotVersion,
+                  ruleCode: candidate.rule.ruleCode,
+                  streakDays: candidate.rule.streakDays,
+                  rewardConfig: candidate.rule.rewardConfig,
+                  repeatable: candidate.rule.repeatable,
                   context: {
                     source:
                       input.recordType === CheckInRecordTypeEnum.MAKEUP
@@ -322,7 +344,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             currentStreak: aggregation.currentStreak,
             signedCount: aggregation.signedCount,
             remainingMakeupCount: Math.max(
-              snapshot.allowMakeupCountPerCycle - aggregation.makeupUsedCount,
+              plan.allowMakeupCountPerCycle - aggregation.makeupUsedCount,
               0,
             ),
             triggeredGrantIds,
@@ -350,7 +372,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   /**
    * 创建或复用当前周期实例。
    *
-   * 执行链路必须在同一事务内冻结快照、复用并发下已创建的周期，并返回唯一周期记录。
+   * 执行链路必须在同一事务内复用并发下已创建的周期，并返回唯一周期记录。
    */
   private async createOrGetCycle(
     tx: Db,
@@ -370,17 +392,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
 
     const frame = this.buildCycleFrame(plan, now)
-    const [dateRules, patternRules, streakRules] = await Promise.all([
-      this.getPlanDateRewardRules(plan.id, plan.version, tx),
-      this.getPlanPatternRewardRules(plan.id, plan.version, tx),
-      this.getPlanRules(plan.id, plan.version, tx),
-    ])
-    const planSnapshot = this.buildPlanSnapshot(
-      plan,
-      streakRules,
-      dateRules,
-      patternRules,
-    )
     const cycleInsert: CreateCheckInCycleInput = {
       userId,
       planId: plan.id,
@@ -391,8 +402,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       makeupUsedCount: 0,
       currentStreak: 0,
       lastSignedDate: null,
-      planSnapshotVersion: plan.version,
-      planSnapshot,
     }
 
     const [createdCycle] = await tx
@@ -514,26 +523,28 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    * 非重复奖励在单周期内最多发一次；重复奖励按 `triggerSignDate` 维度去重。
    */
   private resolveEligibleGrantCandidates(
-    rules: CheckInPlanSnapshot['streakRewardRules'],
+    rules: CheckInRewardDefinition['streakRewardRules'],
     streakByDate: Record<string, number>,
     existingGrants: Pick<
       CheckInStreakRewardGrantSelect,
-      'ruleId' | 'triggerSignDate'
+      'ruleCode' | 'triggerSignDate'
     >[],
   ) {
     const existingGrantKeys = new Set(
       existingGrants.map(
         (grant) =>
-          `${grant.ruleId}:${this.toDateOnlyValue(grant.triggerSignDate)}`,
+          `${grant.ruleCode}:${this.toDateOnlyValue(grant.triggerSignDate)}`,
       ),
     )
-    const existingRuleIds = new Set(existingGrants.map((grant) => grant.ruleId))
+    const existingRuleCodes = new Set(
+      existingGrants.map((grant) => grant.ruleCode),
+    )
     const streakEntries = Object.entries(streakByDate).sort(([left], [right]) =>
       left.localeCompare(right),
     )
 
     const candidates: Array<{
-      rule: CheckInPlanSnapshot['streakRewardRules'][number]
+      rule: CheckInRewardDefinition['streakRewardRules'][number]
       triggerSignDate: string
     }> = []
 
@@ -550,7 +561,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       }
 
       if (!rule.repeatable) {
-        if (existingRuleIds.has(rule.id)) {
+        if (existingRuleCodes.has(rule.ruleCode)) {
           continue
         }
         candidates.push({ rule, triggerSignDate: triggerDates[0] })
@@ -558,7 +569,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       }
 
       for (const triggerSignDate of triggerDates) {
-        const grantKey = `${rule.id}:${triggerSignDate}`
+        const grantKey = `${rule.ruleCode}:${triggerSignDate}`
         if (!existingGrantKeys.has(grantKey)) {
           candidates.push({ rule, triggerSignDate })
         }
@@ -593,7 +604,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   private buildGrantFactBizKey(
     planId: number,
     cycleId: number,
-    ruleId: number,
+    ruleCode: string,
     userId: number,
     triggerSignDate: string,
   ) {
@@ -605,7 +616,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       'cycle',
       cycleId,
       'rule',
-      ruleId,
+      ruleCode,
       'user',
       userId,
       'date',
@@ -621,7 +632,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   /** 构建连续奖励账本业务键前缀。 */
   private buildStreakRewardBizKey(
     grantId: number,
-    ruleId: number,
+    ruleCode: string,
     userId: number,
   ) {
     return [
@@ -630,7 +641,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       'grant',
       grantId,
       'rule',
-      ruleId,
+      ruleCode,
       'user',
       userId,
     ].join(':')
@@ -651,7 +662,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     operatorType: CheckInOperatorTypeEnum
     rewardApplicable: boolean
     resolvedRewardSourceType?: CreateCheckInRecordInput['resolvedRewardSourceType']
-    resolvedRewardRuleId?: number | null
+    resolvedRewardRuleKey?: string | null
     resolvedRewardConfig?: CheckInRewardConfig | null
     context?: Record<string, unknown>
   }): CreateCheckInRecordInput {
@@ -667,8 +678,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       resolvedRewardSourceType: input.rewardApplicable
         ? input.resolvedRewardSourceType ?? null
         : null,
-      resolvedRewardRuleId: input.rewardApplicable
-        ? input.resolvedRewardRuleId ?? null
+      resolvedRewardRuleKey: input.rewardApplicable
+        ? input.resolvedRewardRuleKey ?? null
         : null,
       resolvedRewardConfig: input.resolvedRewardConfig ?? null,
       bizKey: this.buildRecordBizKey(
@@ -687,26 +698,30 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     userId: number
     planId: number
     cycleId: number
-    ruleId: number
     triggerSignDate: string
-    planSnapshotVersion: number
+    ruleCode: string
+    streakDays: number
+    rewardConfig: CheckInRewardConfig
+    repeatable: boolean
     context?: Record<string, unknown>
   }): CreateCheckInGrantInput {
     return {
       userId: input.userId,
       planId: input.planId,
       cycleId: input.cycleId,
-      ruleId: input.ruleId,
       triggerSignDate: input.triggerSignDate,
       grantStatus: CheckInRewardStatusEnum.PENDING,
       bizKey: this.buildGrantFactBizKey(
         input.planId,
         input.cycleId,
-        input.ruleId,
+        input.ruleCode,
         input.userId,
         input.triggerSignDate,
       ),
-      planSnapshotVersion: input.planSnapshotVersion,
+      ruleCode: input.ruleCode,
+      streakDays: input.streakDays,
+      rewardConfig: input.rewardConfig,
+      repeatable: input.repeatable,
       context: input.context,
     }
   }
@@ -719,7 +734,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       cycleStartDate: string | Date
       cycleEndDate: string | Date
     },
-    snapshot: CheckInPlanSnapshot,
+    allowMakeupCountPerCycle: number,
   ) {
     const cycleStartDate = this.toDateOnlyValue(cycle.cycleStartDate)
     const cycleEndDate = this.toDateOnlyValue(cycle.cycleEndDate)
@@ -730,7 +745,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     if (signDate >= today) {
       throw new BadRequestException('补签日期必须早于今天')
     }
-    if (snapshot.allowMakeupCountPerCycle <= 0) {
+    if (allowMakeupCountPerCycle <= 0) {
       throw new BadRequestException('当前计划不支持补签')
     }
   }
@@ -744,7 +759,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       makeupUsedCount: number
       currentStreak: number
     },
-    snapshot: CheckInPlanSnapshot,
+    allowMakeupCountPerCycle: number,
   ) {
     return {
       recordId: record.id,
@@ -755,7 +770,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       rewardResultType: record.rewardResultType,
       resolvedRewardSourceType:
         record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
-      resolvedRewardRuleId: record.resolvedRewardRuleId,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
       resolvedRewardConfig: this.parseStoredRewardConfig(
         record.resolvedRewardConfig,
         {
@@ -765,7 +780,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       currentStreak: cycle.currentStreak,
       signedCount: cycle.signedCount,
       remainingMakeupCount: Math.max(
-        snapshot.allowMakeupCountPerCycle - cycle.makeupUsedCount,
+        allowMakeupCountPerCycle - cycle.makeupUsedCount,
         0,
       ),
       triggeredGrantIds: [],
@@ -799,7 +814,14 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       throw new NotFoundException('签到周期不存在')
     }
 
-    const snapshot = this.getCycleSnapshot(cycle)
+    const [plan] = await this.db
+      .select()
+      .from(this.checkInPlanTable)
+      .where(eq(this.checkInPlanTable.id, record.planId))
+      .limit(1)
+    if (!plan) {
+      throw new NotFoundException('签到计划不存在')
+    }
 
     return {
       recordId: record.id,
@@ -810,7 +832,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       rewardResultType: record.rewardResultType,
       resolvedRewardSourceType:
         record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
-      resolvedRewardRuleId: record.resolvedRewardRuleId,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
       resolvedRewardConfig: this.parseStoredRewardConfig(
         record.resolvedRewardConfig,
         {
@@ -820,7 +842,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       currentStreak: cycle.currentStreak,
       signedCount: cycle.signedCount,
       remainingMakeupCount: Math.max(
-        snapshot.allowMakeupCountPerCycle - cycle.makeupUsedCount,
+        plan.allowMakeupCountPerCycle - cycle.makeupUsedCount,
         0,
       ),
       triggeredGrantIds: actionMeta.triggeredGrantIds,
@@ -835,7 +857,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -846,15 +868,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           .limit(1)
         if (!record) {
           throw new NotFoundException('签到记录不存在')
-        }
-
-        const [cycle] = await tx
-          .select()
-          .from(this.checkInCycleTable)
-          .where(eq(this.checkInCycleTable.id, record.cycleId))
-          .limit(1)
-        if (!cycle) {
-          throw new NotFoundException('签到周期不存在')
         }
 
         const rewardConfig = this.parseStoredRewardConfig(
@@ -924,7 +937,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -937,16 +950,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           throw new NotFoundException('连续奖励发放事实不存在')
         }
 
-        const [rule] = await tx
-          .select()
-          .from(this.checkInStreakRewardRuleTable)
-          .where(eq(this.checkInStreakRewardRuleTable.id, grant.ruleId))
-          .limit(1)
-        if (!rule) {
-          throw new NotFoundException('连续奖励规则不存在')
-        }
-
-        const rewardConfig = this.parseStoredRewardConfig(rule.rewardConfig, {
+        const rewardConfig = this.parseStoredRewardConfig(grant.rewardConfig, {
           allowEmpty: false,
         })!
         const settlement = await this.applyRewardConfig(tx, {
@@ -954,14 +958,14 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           rewardConfig,
           baseBizKey: this.buildStreakRewardBizKey(
             grant.id,
-            grant.ruleId,
+            grant.ruleCode,
             grant.userId,
           ),
           source: GrowthLedgerSourceEnum.CHECK_IN_STREAK_BONUS,
           planId: grant.planId,
           cycleId: grant.cycleId,
           grantId: grant.id,
-          ruleId: grant.ruleId,
+          ruleCode: grant.ruleCode,
           actorUserId: context.actorUserId,
         })
 
@@ -1016,7 +1020,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       cycleId: number
       recordId?: number
       grantId?: number
-      ruleId?: number
+      ruleCode?: string
       actorUserId?: number
     },
   ) {
@@ -1038,7 +1042,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             cycleId: input.cycleId,
             recordId: input.recordId,
             grantId: input.grantId,
-            ruleId: input.ruleId,
+            ruleCode: input.ruleCode,
           },
         }),
       )
@@ -1060,7 +1064,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             cycleId: input.cycleId,
             recordId: input.recordId,
             grantId: input.grantId,
-            ruleId: input.ruleId,
+            ruleCode: input.ruleCode,
           },
         }),
       )

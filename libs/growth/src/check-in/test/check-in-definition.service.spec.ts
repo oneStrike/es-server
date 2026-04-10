@@ -19,9 +19,6 @@ describe('check-in definition service', () => {
   let planInsertReturningMock: jest.Mock
   let planUpdateSetMock: jest.Mock
   let planUpdateWhereMock: jest.Mock
-  let dateRuleInsertValuesMock: jest.Mock
-  let patternRuleInsertValuesMock: jest.Mock
-  let streakRuleInsertValuesMock: jest.Mock
 
   beforeEach(() => {
     dbSelectLimitMock = jest.fn().mockResolvedValue([])
@@ -30,7 +27,6 @@ describe('check-in definition service', () => {
     planInsertReturningMock = jest.fn().mockResolvedValue([
       {
         id: 11,
-        version: 1,
       },
     ])
     planInsertValuesMock = jest.fn(() => ({
@@ -40,9 +36,6 @@ describe('check-in definition service', () => {
     planUpdateSetMock = jest.fn(() => ({
       where: planUpdateWhereMock,
     }))
-    dateRuleInsertValuesMock = jest.fn().mockResolvedValue(undefined)
-    patternRuleInsertValuesMock = jest.fn().mockResolvedValue(undefined)
-    streakRuleInsertValuesMock = jest.fn().mockResolvedValue(undefined)
 
     const tx = {
       execute: txExecuteMock,
@@ -57,21 +50,6 @@ describe('check-in definition service', () => {
         if (table === schema.checkInPlan) {
           return {
             values: planInsertValuesMock,
-          }
-        }
-        if (table === schema.checkInDateRewardRule) {
-          return {
-            values: dateRuleInsertValuesMock,
-          }
-        }
-        if (table === schema.checkInPatternRewardRule) {
-          return {
-            values: patternRuleInsertValuesMock,
-          }
-        }
-        if (table === schema.checkInStreakRewardRule) {
-          return {
-            values: streakRuleInsertValuesMock,
           }
         }
 
@@ -115,7 +93,7 @@ describe('check-in definition service', () => {
     service = new CheckInDefinitionService(drizzle, {} as any)
   })
 
-  it('创建计划时只写入基础信息，不直接落奖励配置', async () => {
+  it('创建计划时只写入基础信息，不直接落奖励配置定义', async () => {
     const result = await service.createPlan(
       {
         planCode: 'growth-check-in',
@@ -137,16 +115,12 @@ describe('check-in definition service', () => {
         startDate: '2026-04-01',
         endDate: '2026-04-30',
         allowMakeupCountPerCycle: 2,
-        baseRewardConfig: null,
-        version: 1,
+        rewardDefinition: null,
         createdById: 99,
         updatedById: 99,
       }),
     )
     expect(result).toEqual({ id: 11 })
-    expect(dateRuleInsertValuesMock).not.toHaveBeenCalled()
-    expect(patternRuleInsertValuesMock).not.toHaveBeenCalled()
-    expect(streakRuleInsertValuesMock).not.toHaveBeenCalled()
   })
 
   it('发布计划创建时会在事务内加咨询锁后再校验生效窗口', async () => {
@@ -229,21 +203,16 @@ describe('check-in definition service', () => {
     ).rejects.toThrow('当前周期内不允许立即切换签到计划')
   })
 
-  it('创建奖励配置时会递增版本并同时写入日期奖励、模式奖励与连续奖励规则', async () => {
+  it('创建奖励配置时会直接写入 rewardDefinition', async () => {
     jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
       id: 11,
-      version: 1,
       cycleType: CheckInCycleTypeEnum.MONTHLY,
       startDate: '2026-04-01',
       endDate: '2026-04-30',
       allowMakeupCountPerCycle: 2,
-      baseRewardConfig: null,
+      rewardDefinition: null,
     })
-    jest.spyOn(service as any, 'getPlanDateRewardRules').mockResolvedValue([])
-    jest
-      .spyOn(service as any, 'getPlanPatternRewardRules')
-      .mockResolvedValue([])
-    jest.spyOn(service as any, 'getPlanRules').mockResolvedValue([])
+    txSelectLimitMock.mockResolvedValue([])
 
     await service.createPlanRewardConfig(
       {
@@ -283,102 +252,82 @@ describe('check-in definition service', () => {
       99,
     )
 
-    expect(planUpdateSetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(planUpdateSetMock).toHaveBeenCalledWith({
+      rewardDefinition: {
         baseRewardConfig: { points: 5 },
-        version: 2,
-        updatedById: 99,
-      }),
-    )
-    expect(dateRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 2,
-        rewardDate: '2026-04-01',
-        rewardConfig: { points: 10 },
+        dateRewardRules: [
+          {
+            rewardDate: '2026-04-01',
+            rewardConfig: { points: 10 },
+          },
+          {
+            rewardDate: '2026-04-03',
+            rewardConfig: { experience: 30 },
+          },
+        ],
+        patternRewardRules: [
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+            weekday: null,
+            monthDay: 15,
+            rewardConfig: { experience: 15 },
+          },
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+            weekday: null,
+            monthDay: null,
+            rewardConfig: { points: 30 },
+          },
+        ],
+        streakRewardRules: [
+          {
+            ruleCode: 'streak-7',
+            streakDays: 7,
+            rewardConfig: { points: 70 },
+            repeatable: false,
+            status: 1,
+          },
+        ],
       },
-      {
-        planId: 11,
-        planVersion: 2,
-        rewardDate: '2026-04-03',
-        rewardConfig: { experience: 30 },
-      },
-    ])
-    expect(patternRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 2,
-        patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
-        weekday: null,
-        monthDay: 15,
-        rewardConfig: { experience: 15 },
-      },
-      {
-        planId: 11,
-        planVersion: 2,
-        patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
-        weekday: null,
-        monthDay: null,
-        rewardConfig: { points: 30 },
-      },
-    ])
-    expect(streakRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 2,
-        ruleCode: 'streak-7',
-        streakDays: 7,
-        rewardConfig: { points: 70 },
-        repeatable: false,
-        status: 1,
-      },
-    ])
+      updatedById: 99,
+    })
   })
 
-  it('更新奖励配置时会把未显式传入的日期奖励和模式奖励复制到新版本', async () => {
+  it('更新奖励配置时会覆盖当前 rewardDefinition', async () => {
     jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
       id: 11,
-      version: 2,
       cycleType: CheckInCycleTypeEnum.MONTHLY,
       startDate: '2026-04-01',
       endDate: '2026-04-30',
       allowMakeupCountPerCycle: 2,
-      baseRewardConfig: { points: 5 },
+      rewardDefinition: {
+        baseRewardConfig: { points: 5 },
+        dateRewardRules: [
+          {
+            rewardDate: '2026-04-01',
+            rewardConfig: { points: 10 },
+          },
+        ],
+        patternRewardRules: [
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+            weekday: null,
+            monthDay: 15,
+            rewardConfig: { experience: 15 },
+          },
+        ],
+        streakRewardRules: [
+          {
+            ruleCode: 'streak-3',
+            streakDays: 3,
+            rewardConfig: { points: 30 },
+            repeatable: false,
+            status: 1,
+          },
+        ],
+      },
     })
-    jest.spyOn(service as any, 'getPlanDateRewardRules').mockResolvedValue([
-      {
-        id: 21,
-        planId: 11,
-        planVersion: 2,
-        rewardDate: '2026-04-01',
-        rewardConfig: { points: 10 },
-      },
-    ])
-    jest
-      .spyOn(service as any, 'getPlanPatternRewardRules')
-      .mockResolvedValue([
-        {
-          id: 22,
-          planId: 11,
-          planVersion: 2,
-          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
-          weekday: null,
-          monthDay: 15,
-          rewardConfig: { experience: 15 },
-        },
-      ])
-    jest.spyOn(service as any, 'getPlanRules').mockResolvedValue([
-      {
-        id: 31,
-        planId: 11,
-        planVersion: 2,
-        ruleCode: 'streak-3',
-        streakDays: 3,
-        rewardConfig: { points: 30 },
-        repeatable: false,
-        status: 1,
-      },
-    ])
+    txSelectLimitMock.mockResolvedValue([])
 
     await service.updatePlanRewardConfig(
       {
@@ -396,90 +345,81 @@ describe('check-in definition service', () => {
       99,
     )
 
-    expect(planUpdateSetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        version: 3,
-        updatedById: 99,
-      }),
-    )
-    expect(dateRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 3,
-        rewardDate: '2026-04-01',
-        rewardConfig: { points: 10 },
+    expect(planUpdateSetMock).toHaveBeenCalledWith({
+      rewardDefinition: {
+        baseRewardConfig: { points: 5 },
+        dateRewardRules: [
+          {
+            rewardDate: '2026-04-01',
+            rewardConfig: { points: 10 },
+          },
+        ],
+        patternRewardRules: [
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+            weekday: null,
+            monthDay: 15,
+            rewardConfig: { experience: 15 },
+          },
+        ],
+        streakRewardRules: [
+          {
+            ruleCode: 'streak-7',
+            streakDays: 7,
+            rewardConfig: { points: 70 },
+            repeatable: false,
+            status: 1,
+          },
+        ],
       },
-    ])
-    expect(patternRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 3,
-        patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
-        weekday: null,
-        monthDay: 15,
-        rewardConfig: { experience: 15 },
-      },
-    ])
-    expect(streakRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 3,
-        ruleCode: 'streak-7',
-        streakDays: 7,
-        rewardConfig: { points: 70 },
-        repeatable: false,
-        status: 1,
-      },
-    ])
+      updatedById: 99,
+    })
   })
 
-  it('更新计划基础信息时会把当前奖励配置完整复制到新版本', async () => {
+  it('计划已产生签到记录后不允许创建奖励配置', async () => {
+    jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
+      id: 11,
+      cycleType: CheckInCycleTypeEnum.MONTHLY,
+      startDate: '2026-04-01',
+      endDate: '2026-04-30',
+      allowMakeupCountPerCycle: 2,
+      rewardDefinition: null,
+    })
+    txSelectLimitMock.mockResolvedValue([{ id: 201 }])
+
+    await expect(
+      service.createPlanRewardConfig(
+        {
+          id: 11,
+          baseRewardConfig: { points: 5 },
+        },
+        99,
+      ),
+    ).rejects.toThrow('计划已产生签到数据，不允许修改奖励配置')
+  })
+
+  it('更新计划基础信息时直接更新当前计划，不再切版本', async () => {
     jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
       id: 11,
       planCode: 'growth-check-in',
       planName: '成长签到',
       status: CheckInPlanStatusEnum.DRAFT,
-      version: 2,
       cycleType: CheckInCycleTypeEnum.MONTHLY,
       startDate: '2026-04-01',
       endDate: '2026-04-30',
       allowMakeupCountPerCycle: 2,
-      baseRewardConfig: { points: 5 },
+      rewardDefinition: {
+        baseRewardConfig: { points: 5 },
+        dateRewardRules: [
+          {
+            rewardDate: '2026-04-01',
+            rewardConfig: { points: 10 },
+          },
+        ],
+        patternRewardRules: [],
+        streakRewardRules: [],
+      },
     })
-    jest.spyOn(service as any, 'getPlanDateRewardRules').mockResolvedValue([
-      {
-        id: 21,
-        planId: 11,
-        planVersion: 2,
-        rewardDate: '2026-04-01',
-        rewardConfig: { points: 10 },
-      },
-    ])
-    jest
-      .spyOn(service as any, 'getPlanPatternRewardRules')
-      .mockResolvedValue([
-        {
-          id: 22,
-          planId: 11,
-          planVersion: 2,
-          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
-          weekday: null,
-          monthDay: null,
-          rewardConfig: { points: 30 },
-        },
-      ])
-    jest.spyOn(service as any, 'getPlanRules').mockResolvedValue([
-      {
-        id: 31,
-        planId: 11,
-        planVersion: 2,
-        ruleCode: 'streak-3',
-        streakDays: 3,
-        rewardConfig: { points: 30 },
-        repeatable: false,
-        status: 1,
-      },
-    ])
 
     await service.updatePlan(
       {
@@ -492,40 +432,20 @@ describe('check-in definition service', () => {
     expect(planUpdateSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
         allowMakeupCountPerCycle: 3,
-        baseRewardConfig: { points: 5 },
-        version: 3,
+        rewardDefinition: {
+          baseRewardConfig: { points: 5 },
+          dateRewardRules: [
+            {
+              rewardDate: '2026-04-01',
+              rewardConfig: { points: 10 },
+            },
+          ],
+          patternRewardRules: [],
+          streakRewardRules: [],
+        },
         updatedById: 99,
       }),
     )
-    expect(dateRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 3,
-        rewardDate: '2026-04-01',
-        rewardConfig: { points: 10 },
-      },
-    ])
-    expect(patternRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 3,
-        patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
-        weekday: null,
-        monthDay: null,
-        rewardConfig: { points: 30 },
-      },
-    ])
-    expect(streakRuleInsertValuesMock).toHaveBeenCalledWith([
-      {
-        planId: 11,
-        planVersion: 3,
-        ruleCode: 'streak-3',
-        streakDays: 3,
-        rewardConfig: { points: 30 },
-        repeatable: false,
-        status: 1,
-      },
-    ])
   })
 
   it('发布计划状态更新时会在事务内加咨询锁', async () => {

@@ -19,7 +19,6 @@ import {
 import { and, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import {
   CheckInPlanStatusEnum,
-  CheckInPatternRewardRuleTypeEnum,
   CheckInRewardStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
@@ -63,21 +62,23 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     const summaries = await Promise.all(
       page.list.map(async (plan) =>
-        this.buildPlanSummary(plan.id, plan.version),
+        this.buildPlanSummary(
+          plan.id,
+          this.getPlanRewardDefinition(plan, { allowEmpty: true }),
+        ),
       ),
     )
 
     return {
       ...page,
       list: page.list.map((plan, index) => {
+        const rewardDefinition = this.getPlanRewardDefinition(plan, {
+          allowEmpty: true,
+        })
+        const { rewardDefinition: _rewardDefinition, ...rest } = plan
         return {
-          ...plan,
-          baseRewardConfig: this.parseStoredRewardConfig(
-            plan.baseRewardConfig,
-            {
-              allowEmpty: true,
-            },
-          ),
+          ...rest,
+          baseRewardConfig: rewardDefinition?.baseRewardConfig ?? null,
           status: this.resolvePlanStatus(plan),
           ...summaries[index],
         }
@@ -85,30 +86,29 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
   }
 
-  /** 读取单个签到计划详情及当前版本规则快照。 */
+  /** 读取单个签到计划详情及当前奖励定义。 */
   async getPlanDetail(query: IdDto) {
     const plan = await this.getPlanById(query.id)
-    const [dateRules, patternRules, streakRules, summary] = await Promise.all([
-      this.getPlanDateRewardRules(plan.id, plan.version),
-      this.getPlanPatternRewardRules(plan.id, plan.version),
-      this.getPlanRules(plan.id, plan.version),
-      this.buildPlanSummary(plan.id, plan.version),
-    ])
+    const rewardDefinition = this.getPlanRewardDefinition(plan, {
+      allowEmpty: true,
+    })
+    const summary = await this.buildPlanSummary(plan.id, rewardDefinition)
+    const { rewardDefinition: _rewardDefinition, ...rest } = plan
 
     return {
-      ...plan,
-      baseRewardConfig: this.parseStoredRewardConfig(plan.baseRewardConfig, {
-        allowEmpty: true,
-      }),
+      ...rest,
+      baseRewardConfig: rewardDefinition?.baseRewardConfig ?? null,
       status: this.resolvePlanStatus(plan),
       ...summary,
-      dateRewardRules: dateRules.map((rule) =>
+      dateRewardRules: (rewardDefinition?.dateRewardRules ?? []).map((rule) =>
         this.toDateRewardRuleView(rule),
       ),
-      patternRewardRules: patternRules.map((rule) =>
-        this.toPatternRewardRuleView(rule),
+      patternRewardRules: (rewardDefinition?.patternRewardRules ?? []).map(
+        (rule) => this.toPatternRewardRuleView(rule),
       ),
-      streakRewardRules: streakRules.map((rule) => this.toStreakRuleView(rule)),
+      streakRewardRules: (rewardDefinition?.streakRewardRules ?? []).map((rule) =>
+        this.toStreakRuleView(rule),
+      ),
     }
   }
 
@@ -159,8 +159,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             startDate,
             endDate,
             allowMakeupCountPerCycle,
-            baseRewardConfig: null,
-            version: 1,
+            rewardDefinition: null,
             createdById: adminUserId,
             updatedById: adminUserId,
           })
@@ -172,7 +171,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     )
   }
 
-  /** 创建计划奖励配置，并在变更时切到新版本。 */
+  /** 创建计划奖励配置。 */
   async createPlanRewardConfig(
     dto: CreateCheckInPlanRewardConfigDto,
     adminUserId: number,
@@ -183,7 +182,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /**
    * 更新签到计划。
    *
-   * 当改动会影响周期解释、补签规则或奖励语义时，自动递增版本并写入新版本规则。
+   * 基础字段直接覆盖当前计划；奖励定义继续沿用当前生效值。
    */
   async updatePlan(dto: UpdateCheckInPlanDto, adminUserId: number) {
     await this.drizzle.withTransaction(
@@ -192,6 +191,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
         const currentPlan = await this.getPlanById(dto.id, tx)
         const currentStatus = this.resolvePlanStatus(currentPlan)
+        const currentRewardDefinition = this.getPlanRewardDefinition(currentPlan, {
+          allowEmpty: true,
+        })
         const nextPlan = {
           planCode: dto.planCode?.trim() ?? currentPlan.planCode,
           planName: dto.planName?.trim() ?? currentPlan.planName,
@@ -214,12 +216,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             dto.allowMakeupCountPerCycle !== undefined
               ? dto.allowMakeupCountPerCycle
               : currentPlan.allowMakeupCountPerCycle,
-          baseRewardConfig: this.parseStoredRewardConfig(
-            currentPlan.baseRewardConfig,
-            {
-              allowEmpty: true,
-            },
-          ),
         }
 
         if (
@@ -252,53 +248,17 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           )
         }
 
-        const currentDateRules = await this.getPlanDateRewardRules(
-          currentPlan.id,
-          currentPlan.version,
-          tx,
-        )
-        const currentPatternRules = await this.getPlanPatternRewardRules(
-          currentPlan.id,
-          currentPlan.version,
-          tx,
-        )
-        const currentRules = await this.getPlanRules(
-          currentPlan.id,
-          currentPlan.version,
-          tx,
-        )
-        const nextDateRules = this.buildDateRewardRuleDrafts(
-          currentDateRules,
-          currentPlan.id,
-          currentPlan.version,
-          nextPlan.startDate,
-          nextPlan.endDate,
-        )
-        const nextPatternRules = this.buildPatternRewardRuleDrafts(
-          currentPatternRules,
-          currentPlan.id,
-          currentPlan.version,
-          nextPlan.cycleType,
-        )
-        const nextRules = this.buildStreakRewardRuleDrafts(
-          currentRules,
-          currentPlan.id,
-          currentPlan.version,
-        )
-
-        const shouldBumpVersion = this.shouldBumpPlanVersion({
-          currentPlan,
-          nextPlan,
-          currentDateRules,
-          nextDateRules,
-          currentPatternRules,
-          nextPatternRules,
-          currentRules,
-          nextRules,
-        })
-        const nextVersion = shouldBumpVersion
-          ? currentPlan.version + 1
-          : currentPlan.version
+        const normalizedRewardDefinition = currentRewardDefinition
+          ? this.buildRewardDefinition({
+              cycleType: nextPlan.cycleType,
+              startDate: nextPlan.startDate,
+              endDate: nextPlan.endDate,
+              baseRewardConfig: currentRewardDefinition.baseRewardConfig,
+              dateRewardRules: currentRewardDefinition.dateRewardRules,
+              patternRewardRules: currentRewardDefinition.patternRewardRules,
+              streakRewardRules: currentRewardDefinition.streakRewardRules,
+            })
+          : null
 
         const result = await tx
           .update(this.checkInPlanTable)
@@ -310,8 +270,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             startDate: nextPlan.startDate,
             endDate: nextPlan.endDate,
             allowMakeupCountPerCycle: nextPlan.allowMakeupCountPerCycle,
-            baseRewardConfig: nextPlan.baseRewardConfig,
-            version: nextVersion,
+            rewardDefinition: normalizedRewardDefinition,
             updatedById: adminUserId,
           })
           .where(
@@ -322,33 +281,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           )
 
         this.drizzle.assertAffectedRows(result, '签到计划不存在')
-
-        if (shouldBumpVersion && nextDateRules.length > 0) {
-          await tx.insert(this.checkInDateRewardRuleTable).values(
-            nextDateRules.map((rule) => ({
-              ...rule,
-              planVersion: nextVersion,
-            })),
-          )
-        }
-
-        if (shouldBumpVersion && nextPatternRules.length > 0) {
-          await tx.insert(this.checkInPatternRewardRuleTable).values(
-            nextPatternRules.map((rule) => ({
-              ...rule,
-              planVersion: nextVersion,
-            })),
-          )
-        }
-
-        if (shouldBumpVersion && nextRules.length > 0) {
-          await tx.insert(this.checkInStreakRewardRuleTable).values(
-            nextRules.map((rule) => ({
-              ...rule,
-              planVersion: nextVersion,
-            })),
-          )
-        }
       },
       { duplicate: '签到计划编码已存在' },
     )
@@ -356,7 +288,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     return true
   }
 
-  /** 更新计划奖励配置，并继续复制未显式修改的现有奖励规则。 */
+  /** 更新计划奖励配置。 */
   async updatePlanRewardConfig(
     dto: UpdateCheckInPlanRewardConfigDto,
     adminUserId: number,
@@ -391,16 +323,16 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
       const result = await tx
         .update(this.checkInPlanTable)
-          .set({
-            ...this.buildPlanStatusPersistence(nextStatus),
-            updatedById: adminUserId,
-          })
-          .where(
-            and(
-              eq(this.checkInPlanTable.id, dto.id),
-              isNull(this.checkInPlanTable.deletedAt),
-            ),
-          )
+        .set({
+          ...this.buildPlanStatusPersistence(nextStatus),
+          updatedById: adminUserId,
+        })
+        .where(
+          and(
+            eq(this.checkInPlanTable.id, dto.id),
+            isNull(this.checkInPlanTable.deletedAt),
+          ),
+        )
 
       this.drizzle.assertAffectedRows(result, '签到计划不存在')
     })
@@ -420,8 +352,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   /**
    * 应用计划奖励配置。
    *
-   * 奖励配置统一维护默认基础奖励、具体日期奖励、周期模式奖励和连续奖励。任一部分
-   * 变更都会复制未显式修改的现有规则到新版本，保证历史周期继续使用旧解释。
+   * 奖励配置统一维护默认基础奖励、具体日期奖励、周期模式奖励和连续奖励；
+   * 一旦计划已产生签到事实，配置立即锁定，不允许继续修改。
    */
   private async applyPlanRewardConfig(
     dto: CreateCheckInPlanRewardConfigDto | UpdateCheckInPlanRewardConfigDto,
@@ -432,30 +364,12 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       await this.acquirePlanMutationLock(tx)
 
       const currentPlan = await this.getPlanById(dto.id, tx)
-      const currentDateRules = await this.getPlanDateRewardRules(
-        currentPlan.id,
-        currentPlan.version,
-        tx,
-      )
-      const currentPatternRules = await this.getPlanPatternRewardRules(
-        currentPlan.id,
-        currentPlan.version,
-        tx,
-      )
-      const currentRules = await this.getPlanRules(
-        currentPlan.id,
-        currentPlan.version,
-        tx,
-      )
-      const currentBaseRewardConfig = this.parseStoredRewardConfig(
-        currentPlan.baseRewardConfig,
-        { allowEmpty: true },
-      )
-      const hasCurrentConfig =
-        currentBaseRewardConfig !== null ||
-        currentDateRules.length > 0 ||
-        currentPatternRules.length > 0 ||
-        currentRules.length > 0
+      await this.assertPlanRewardConfigMutable(currentPlan.id, tx)
+
+      const currentRewardDefinition = this.getPlanRewardDefinition(currentPlan, {
+        allowEmpty: true,
+      })
+      const hasCurrentConfig = currentRewardDefinition !== null
 
       if (mode === 'create' && hasCurrentConfig) {
         throw new ConflictException('签到计划奖励配置已存在')
@@ -465,89 +379,41 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       }
 
       const cycleType = this.parseCycleType(currentPlan.cycleType)
-      const nextBaseRewardConfig =
-        dto.baseRewardConfig !== undefined
-          ? this.parseRewardConfig(dto.baseRewardConfig, {
-              allowEmpty: true,
-            })
-          : currentBaseRewardConfig
-      const nextDateRules =
-        dto.dateRewardRules !== undefined
-          ? this.normalizeDateRewardRules(
-              dto.dateRewardRules,
-              currentPlan.id,
-              currentPlan.version,
-              this.toDateOnlyValue(currentPlan.startDate),
-              this.toDateOnlyValue(currentPlan.endDate) || null,
-            )
-          : this.buildDateRewardRuleDrafts(
-              currentDateRules,
-              currentPlan.id,
-              currentPlan.version,
-              this.toDateOnlyValue(currentPlan.startDate),
-              this.toDateOnlyValue(currentPlan.endDate) || null,
-            )
-      const nextPatternRules =
-        dto.patternRewardRules !== undefined
-          ? this.normalizePatternRewardRules(
-              dto.patternRewardRules,
-              currentPlan.id,
-              currentPlan.version,
-              cycleType,
-            )
-          : this.buildPatternRewardRuleDrafts(
-              currentPatternRules,
-              currentPlan.id,
-              currentPlan.version,
-              cycleType,
-            )
-      const nextRules =
-        dto.streakRewardRules !== undefined
-          ? this.normalizeStreakRewardRules(
-              dto.streakRewardRules,
-              currentPlan.id,
-              currentPlan.version,
-            )
-          : this.buildStreakRewardRuleDrafts(
-              currentRules,
-              currentPlan.id,
-              currentPlan.version,
-            )
+      const nextRewardDefinition = this.buildRewardDefinition({
+        cycleType,
+        startDate: this.toDateOnlyValue(currentPlan.startDate),
+        endDate: this.toDateOnlyValue(currentPlan.endDate) || null,
+        baseRewardConfig:
+          dto.baseRewardConfig !== undefined
+            ? dto.baseRewardConfig
+            : currentRewardDefinition?.baseRewardConfig ?? null,
+        dateRewardRules:
+          dto.dateRewardRules !== undefined
+            ? dto.dateRewardRules
+            : currentRewardDefinition?.dateRewardRules ?? [],
+        patternRewardRules:
+          dto.patternRewardRules !== undefined
+            ? dto.patternRewardRules
+            : currentRewardDefinition?.patternRewardRules ?? [],
+        streakRewardRules:
+          dto.streakRewardRules !== undefined
+            ? dto.streakRewardRules
+            : currentRewardDefinition?.streakRewardRules ?? [],
+      })
 
       if (
-        nextBaseRewardConfig === null &&
-        nextDateRules.length === 0 &&
-        nextPatternRules.length === 0 &&
-        nextRules.length === 0
+        nextRewardDefinition.baseRewardConfig === null &&
+        nextRewardDefinition.dateRewardRules.length === 0 &&
+        nextRewardDefinition.patternRewardRules.length === 0 &&
+        nextRewardDefinition.streakRewardRules.length === 0
       ) {
         throw new BadRequestException('奖励配置不能为空')
       }
 
-      const shouldBumpVersion = this.shouldBumpPlanVersion({
-        currentPlan,
-        nextPlan: {
-          cycleType,
-          startDate: this.toDateOnlyValue(currentPlan.startDate),
-          endDate: this.toDateOnlyValue(currentPlan.endDate) || null,
-          allowMakeupCountPerCycle: currentPlan.allowMakeupCountPerCycle,
-          baseRewardConfig: nextBaseRewardConfig,
-        },
-        currentDateRules,
-        nextDateRules,
-        currentPatternRules,
-        nextPatternRules,
-        currentRules,
-        nextRules,
-      })
-      const nextVersion = shouldBumpVersion
-        ? currentPlan.version + 1
-        : currentPlan.version
-
       const result = await tx
         .update(this.checkInPlanTable)
         .set({
-          baseRewardConfig: nextBaseRewardConfig,
-          version: nextVersion,
+          rewardDefinition: nextRewardDefinition,
           updatedById: adminUserId,
         })
         .where(
@@ -558,113 +424,33 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         )
 
       this.drizzle.assertAffectedRows(result, '签到计划不存在')
-
-      if (shouldBumpVersion && nextDateRules.length > 0) {
-        await tx.insert(this.checkInDateRewardRuleTable).values(
-          nextDateRules.map((rule) => ({
-            ...rule,
-            planVersion: nextVersion,
-          })),
-        )
-      }
-
-      if (shouldBumpVersion && nextPatternRules.length > 0) {
-        await tx.insert(this.checkInPatternRewardRuleTable).values(
-          nextPatternRules.map((rule) => ({
-            ...rule,
-            planVersion: nextVersion,
-          })),
-        )
-      }
-
-      if (shouldBumpVersion && nextRules.length > 0) {
-        await tx.insert(this.checkInStreakRewardRuleTable).values(
-          nextRules.map((rule) => ({
-            ...rule,
-            planVersion: nextVersion,
-          })),
-        )
-      }
     })
 
     return true
   }
 
-  /** 把当前版本的具体日期奖励规则重建为下一版本可复用的写表载荷。 */
-  private buildDateRewardRuleDrafts(
-    rules: Awaited<
-      ReturnType<CheckInDefinitionService['getPlanDateRewardRules']>
-    >,
-    planId: number,
-    planVersion: number,
-    startDate: string,
-    endDate?: string | null,
-  ) {
-    return this.normalizeDateRewardRules(
-      rules.map((rule) => ({
-        rewardDate: this.toDateOnlyValue(rule.rewardDate),
-        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-          allowEmpty: false,
-        })!,
-      })),
-      planId,
-      planVersion,
-      startDate,
-      endDate,
-    )
-  }
+  /** 断言指定计划尚未产生签到记录，仍允许修改奖励配置。 */
+  private async assertPlanRewardConfigMutable(planId: number, db: Db = this.db) {
+    const [record] = await db
+      .select({ id: this.checkInRecordTable.id })
+      .from(this.checkInRecordTable)
+      .where(eq(this.checkInRecordTable.planId, planId))
+      .limit(1)
 
-  /** 把当前版本的周期模式奖励规则重建为下一版本可复用的写表载荷。 */
-  private buildPatternRewardRuleDrafts(
-    rules: Awaited<
-      ReturnType<CheckInDefinitionService['getPlanPatternRewardRules']>
-    >,
-    planId: number,
-    planVersion: number,
-    cycleType: ReturnType<CheckInDefinitionService['parseCycleType']>,
-  ) {
-    return this.normalizePatternRewardRules(
-      rules.map((rule) => ({
-        patternType: rule.patternType as CheckInPatternRewardRuleTypeEnum,
-        weekday: rule.weekday,
-        monthDay: rule.monthDay,
-        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-          allowEmpty: false,
-        })!,
-      })),
-      planId,
-      planVersion,
-      cycleType,
-    )
-  }
-
-  /** 把当前版本的连续奖励规则重建为下一版本可复用的写表载荷。 */
-  private buildStreakRewardRuleDrafts(
-    rules: Awaited<ReturnType<CheckInDefinitionService['getPlanRules']>>,
-    planId: number,
-    planVersion: number,
-  ) {
-    return this.normalizeStreakRewardRules(
-      rules.map((rule) => ({
-        ruleCode: rule.ruleCode,
-        streakDays: rule.streakDays,
-        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-          allowEmpty: false,
-        })!,
-        repeatable: rule.repeatable,
-        status: rule.status,
-      })),
-      planId,
-      planVersion,
-    )
+    if (record) {
+      throw new ConflictException('计划已产生签到数据，不允许修改奖励配置')
+    }
   }
 
   /** 断言已发布计划窗口之间不存在重叠。 */
-  private async assertPublishedPlanWindowAvailable(input: {
-    planId?: number
-    startDate: string
-    endDate?: string | null
-  }, db: Db = this.db) {
+  private async assertPublishedPlanWindowAvailable(
+    input: {
+      planId?: number
+      startDate: string
+      endDate?: string | null
+    },
+    db: Db = this.db,
+  ) {
     const conditions = [
       isNull(this.checkInPlanTable.deletedAt),
       eq(this.checkInPlanTable.status, CheckInPlanStatusEnum.PUBLISHED),
@@ -712,57 +498,49 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
   }
 
   /** 聚合单个计划在后台列表页展示所需的运行态摘要。 */
-  private async buildPlanSummary(planId: number, planVersion: number) {
+  private async buildPlanSummary(
+    planId: number,
+    rewardDefinition: ReturnType<CheckInDefinitionService['getPlanRewardDefinition']>,
+  ) {
     const today = this.formatDateOnly(new Date())
-    const [ruleRow, activeCycleRow, pendingRecordRow, pendingGrantRow] =
-      await Promise.all([
-        this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(this.checkInStreakRewardRuleTable)
-          .where(
-            and(
-              eq(this.checkInStreakRewardRuleTable.planId, planId),
-              eq(this.checkInStreakRewardRuleTable.planVersion, planVersion),
-              isNull(this.checkInStreakRewardRuleTable.deletedAt),
-            ),
+    const [activeCycleRow, pendingRecordRow, pendingGrantRow] = await Promise.all([
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.checkInCycleTable)
+        .where(
+          and(
+            eq(this.checkInCycleTable.planId, planId),
+            gte(this.checkInCycleTable.cycleEndDate, today),
           ),
-        this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(this.checkInCycleTable)
-          .where(
-            and(
-              eq(this.checkInCycleTable.planId, planId),
-              gte(this.checkInCycleTable.cycleEndDate, today),
-            ),
+        ),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.checkInRecordTable)
+        .where(
+          and(
+            eq(this.checkInRecordTable.planId, planId),
+            inArray(this.checkInRecordTable.rewardStatus, [
+              CheckInRewardStatusEnum.PENDING,
+              CheckInRewardStatusEnum.FAILED,
+            ]),
           ),
-        this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(this.checkInRecordTable)
-          .where(
-            and(
-              eq(this.checkInRecordTable.planId, planId),
-              inArray(this.checkInRecordTable.rewardStatus, [
-                CheckInRewardStatusEnum.PENDING,
-                CheckInRewardStatusEnum.FAILED,
-              ]),
-            ),
+        ),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(this.checkInStreakRewardGrantTable)
+        .where(
+          and(
+            eq(this.checkInStreakRewardGrantTable.planId, planId),
+            inArray(this.checkInStreakRewardGrantTable.grantStatus, [
+              CheckInRewardStatusEnum.PENDING,
+              CheckInRewardStatusEnum.FAILED,
+            ]),
           ),
-        this.db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(this.checkInStreakRewardGrantTable)
-          .where(
-            and(
-              eq(this.checkInStreakRewardGrantTable.planId, planId),
-              inArray(this.checkInStreakRewardGrantTable.grantStatus, [
-                CheckInRewardStatusEnum.PENDING,
-                CheckInRewardStatusEnum.FAILED,
-              ]),
-            ),
-          ),
-      ])
+        ),
+    ])
 
     return {
-      ruleCount: Number(ruleRow[0]?.count ?? 0),
+      ruleCount: rewardDefinition?.streakRewardRules.length ?? 0,
       activeCycleCount: Number(activeCycleRow[0]?.count ?? 0),
       pendingRewardCount:
         Number(pendingRecordRow[0]?.count ?? 0) +

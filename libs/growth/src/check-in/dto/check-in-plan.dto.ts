@@ -64,13 +64,6 @@ export class BaseCheckInPlanDto extends BaseDto {
   })
   baseRewardConfig?: CheckInRewardConfigDto | null
 
-  @NumberProperty({
-    description: '计划版本号；影响周期快照冻结与规则版本切换。',
-    example: 1,
-    validation: false,
-  })
-  version!: number
-
   @StringProperty({
     description: '计划结束日期（date 语义）；为空表示长期有效。',
     example: '2026-05-01',

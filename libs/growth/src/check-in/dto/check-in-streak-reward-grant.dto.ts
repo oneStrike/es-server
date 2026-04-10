@@ -1,15 +1,19 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto } from '@libs/platform/dto/base.dto';
+import type { CheckInRewardConfig } from '../check-in.type'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto } from '@libs/platform/dto/base.dto'
 import { PickType } from '@nestjs/swagger'
 import {
   CheckInRewardResultTypeEnum,
   CheckInRewardStatusEnum,
 } from '../check-in.constant'
+import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   @NumberProperty({ description: '用户 ID。', example: 10001 })
@@ -21,8 +25,26 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   @NumberProperty({ description: '周期实例 ID。', example: 12 })
   cycleId!: number
 
-  @NumberProperty({ description: '连续奖励规则 ID。', example: 5 })
-  ruleId!: number
+  @StringProperty({ description: '连续奖励规则编码。', example: 'streak-7' })
+  ruleCode!: string
+
+  @NumberProperty({ description: '连续签到阈值天数。', example: 7 })
+  streakDays!: number
+
+  @NestedProperty({
+    description: '连续奖励配置快照。',
+    type: CheckInRewardConfigDto,
+    example: { points: 70 } satisfies CheckInRewardConfig,
+    validation: false,
+  })
+  rewardConfig!: CheckInRewardConfigDto
+
+  @BooleanProperty({
+    description: '是否允许重复发放。',
+    example: false,
+    validation: false,
+  })
+  repeatable!: boolean
 
   @StringProperty({
     description: '触发连续奖励的签到日期（date 语义）。',
@@ -50,7 +72,7 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
 
   @StringProperty({
     description: '业务幂等键；仅内部补偿、重试与排障使用。',
-    example: 'checkin:grant:plan:1:rule:5:user:9:date:2026-04-03',
+    example: 'checkin:grant:plan:1:cycle:12:rule:streak-7:user:9:date:2026-04-03',
     maxLength: 200,
     contract: false,
   })
@@ -73,13 +95,6 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   })
   lastGrantError?: string | null
 
-  @NumberProperty({
-    description: '发放事实对应的计划快照版本。',
-    example: 1,
-    validation: false,
-  })
-  planSnapshotVersion!: number
-
   @JsonProperty({
     description: '连续奖励上下文；用于保存命中来源或排障信息。',
     example: { triggeredByRecordId: 10 },
@@ -101,7 +116,9 @@ export class CheckInGrantItemDto extends PickType(
   BaseCheckInStreakRewardGrantDto,
   [
     'id',
-    'ruleId',
+    'ruleCode',
+    'streakDays',
+    'rewardConfig',
     'triggerSignDate',
     'grantStatus',
     'grantResultType',

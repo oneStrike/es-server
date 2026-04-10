@@ -3,10 +3,10 @@ import type {
   CheckInRecordSelect,
   CheckInStreakRewardGrantSelect,
 } from '@db/schema'
-import type { PageDto } from '@libs/platform/dto/page.dto';
+import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CheckInPlanSnapshot,
+  CheckInRewardDefinition,
   CheckInVirtualCycleView,
 } from './check-in.type'
 import type {
@@ -16,11 +16,12 @@ import type {
 } from './dto/check-in-runtime.dto'
 import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
 import { DrizzleService } from '@db/core'
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
 import { and, asc, eq, exists, gte, lte, or } from 'drizzle-orm'
 import {
+  CheckInCycleTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRewardResultTypeEnum,
   CheckInRewardStatusEnum,
@@ -80,7 +81,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         startDate: this.toDateOnlyValue(plan.startDate),
         endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
         allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
-        baseRewardConfig: cycle.planSnapshot.baseRewardConfig ?? null,
+        baseRewardConfig: cycle.rewardDefinition.baseRewardConfig,
       },
       cycle: {
         id: cycle.id,
@@ -90,7 +91,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         signedCount: cycle.signedCount,
         makeupUsedCount: cycle.makeupUsedCount,
         remainingMakeupCount: Math.max(
-          cycle.planSnapshot.allowMakeupCountPerCycle - cycle.makeupUsedCount,
+          plan.allowMakeupCountPerCycle - cycle.makeupUsedCount,
           0,
         ),
         currentStreak: cycle.currentStreak,
@@ -101,7 +102,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       ),
       nextStreakReward:
         this.resolveNextStreakReward(
-          cycle.planSnapshot.streakRewardRules,
+          cycle.rewardDefinition.streakRewardRules,
           cycle.currentStreak,
         ) ?? null,
       latestRecord: latestRecord ?? null,
@@ -111,12 +112,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   /** 读取当前周期签到日历，并为未签到日期补齐占位视图。 */
   async getCalendar(userId: number) {
     const now = new Date()
-    const today = this.formatDateOnly(now)
     const plan = await this.findCurrentActivePlan(now)
     if (!plan) {
       return { days: [] }
     }
 
+    const today = this.formatDateOnly(now)
     const cycle = await this.getCurrentCycleView(userId, plan, now)
     const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
     const grantMap = await this.buildGrantMapForRecords(records)
@@ -135,7 +136,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       cycleKey: cycle.cycleKey,
       cycleStartDate: cycle.cycleStartDate,
       cycleEndDate: cycle.cycleEndDate,
-      days: this.buildCalendarDays(cycle, recordViews, today),
+      days: this.buildCalendarDays(
+        cycle,
+        this.parseCycleType(plan.cycleType),
+        recordViews,
+        today,
+      ),
     }
   }
 
@@ -278,7 +284,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         rewardStatus: record.rewardStatus,
         rewardResultType: record.rewardResultType,
         resolvedRewardSourceType: record.resolvedRewardSourceType,
-        resolvedRewardRuleId: record.resolvedRewardRuleId,
+        resolvedRewardRuleKey: record.resolvedRewardRuleKey,
         resolvedRewardConfig: this.parseStoredRewardConfig(
           record.resolvedRewardConfig,
           {
@@ -299,13 +305,20 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   /**
    * 获取当前周期读模型。
    *
-   * 若数据库中尚未落周期实例，则返回基于当前计划版本推导出的虚拟周期视图。
+   * 若数据库中尚未落周期实例，则返回基于当前计划推导出的虚拟周期视图。
    */
   private async getCurrentCycleView(
     userId: number,
     plan: CheckInPlanSelect,
     now: Date,
   ) {
+    const rewardDefinition =
+      this.getPlanRewardDefinition(plan, { allowEmpty: true }) ?? {
+        baseRewardConfig: null,
+        dateRewardRules: [],
+        patternRewardRules: [],
+        streakRewardRules: [],
+      }
     const today = this.formatDateOnly(now)
     const cycle = await this.findCycleContainingDate(userId, plan.id, today)
     if (cycle) {
@@ -320,17 +333,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         lastSignedDate: cycle.lastSignedDate
           ? this.toDateOnlyValue(cycle.lastSignedDate)
           : undefined,
-        planSnapshotVersion: cycle.planSnapshotVersion,
-        planSnapshot: this.getCycleSnapshot(cycle),
+        rewardDefinition,
       }
     }
 
     const frame = this.buildCycleFrame(plan, now)
-    const [dateRules, patternRules, streakRules] = await Promise.all([
-      this.getPlanDateRewardRules(plan.id, plan.version),
-      this.getPlanPatternRewardRules(plan.id, plan.version),
-      this.getPlanRules(plan.id, plan.version),
-    ])
     return {
       cycleKey: frame.cycleKey,
       cycleStartDate: frame.cycleStartDate,
@@ -338,19 +345,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       signedCount: 0,
       makeupUsedCount: 0,
       currentStreak: 0,
-      planSnapshotVersion: plan.version,
-      planSnapshot: this.buildPlanSnapshot(
-        plan,
-        streakRules,
-        dateRules,
-        patternRules,
-      ),
+      rewardDefinition,
     }
   }
 
   /** 解析下一档可见的连续奖励。 */
   private resolveNextStreakReward(
-    rules: CheckInPlanSnapshot['streakRewardRules'],
+    rules: CheckInRewardDefinition['streakRewardRules'],
     currentStreak: number,
   ) {
     const nextRule = rules
@@ -413,8 +414,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   private buildCalendarDays(
     cycle: Pick<
       CheckInVirtualCycleView,
-      'cycleStartDate' | 'cycleEndDate' | 'planSnapshot'
+      'cycleStartDate' | 'cycleEndDate' | 'rewardDefinition'
     >,
+    cycleType: CheckInCycleTypeEnum,
     records: CheckInRecordItemDto[],
     today: string,
   ) {
@@ -432,13 +434,14 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     while (cursor.isSame(end) || cursor.isBefore(end)) {
       const signDate = cursor.format('YYYY-MM-DD')
       const record = recordMap.get(signDate)
-      const rewardResolution = this.resolveSnapshotRewardForDate(
-        cycle.planSnapshot,
+      const rewardResolution = this.resolveRewardForDate(
+        cycleType,
+        cycle.rewardDefinition,
         signDate,
       )
       days.push({
         signDate,
-        dayIndex: this.resolveRewardDayIndex(cycle.planSnapshot.cycleType, signDate),
+        dayIndex: this.resolveRewardDayIndex(cycleType, signDate),
         inPlanWindow: true,
         planRewardConfig: rewardResolution.resolvedRewardConfig,
         isToday: signDate === today,
@@ -465,7 +468,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       | 'rewardStatus'
       | 'rewardResultType'
       | 'resolvedRewardSourceType'
-      | 'resolvedRewardRuleId'
+      | 'resolvedRewardRuleKey'
       | 'resolvedRewardConfig'
       | 'baseRewardLedgerIds'
       | 'lastRewardError'
@@ -483,7 +486,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         record.rewardResultType as CheckInRewardResultTypeEnum | null,
       resolvedRewardSourceType:
         record.resolvedRewardSourceType as CheckInRecordItemDto['resolvedRewardSourceType'],
-      resolvedRewardRuleId: record.resolvedRewardRuleId,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
       resolvedRewardConfig: this.parseStoredRewardConfig(
         record.resolvedRewardConfig,
         {
@@ -503,7 +506,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     grant: Pick<
       CheckInStreakRewardGrantSelect,
       | 'id'
-      | 'ruleId'
+      | 'ruleCode'
+      | 'streakDays'
+      | 'rewardConfig'
       | 'triggerSignDate'
       | 'grantStatus'
       | 'grantResultType'
@@ -513,7 +518,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   ): CheckInGrantItemDto {
     return {
       id: grant.id,
-      ruleId: grant.ruleId,
+      ruleCode: grant.ruleCode,
+      streakDays: grant.streakDays,
+      rewardConfig: this.parseStoredRewardConfig(grant.rewardConfig, {
+        allowEmpty: false,
+      })!,
       triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
       grantStatus: grant.grantStatus as CheckInRewardStatusEnum,
       grantResultType:

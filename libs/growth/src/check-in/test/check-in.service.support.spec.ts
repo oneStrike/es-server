@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common'
 import {
   CheckInCycleTypeEnum,
+  CheckInPatternRewardRuleTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from '../check-in.constant'
 import { CheckInServiceSupport } from '../check-in.service.support'
@@ -23,20 +24,16 @@ class CheckInServiceSupportHarness extends CheckInServiceSupport {
     return getSupportMethod('normalizePatternRewardRules').call(this, ...args)
   }
 
-  callBuildPlanSnapshot(...args: unknown[]) {
-    return getSupportMethod('buildPlanSnapshot').call(this, ...args)
+  callBuildRewardDefinition(...args: unknown[]) {
+    return getSupportMethod('buildRewardDefinition').call(this, ...args)
   }
 
   callBuildCycleFrame(...args: unknown[]) {
     return getSupportMethod('buildCycleFrame').call(this, ...args)
   }
 
-  callResolveSnapshotRewardForDate(...args: unknown[]) {
-    return getSupportMethod('resolveSnapshotRewardForDate').call(this, ...args)
-  }
-
-  callShouldBumpPlanVersion(...args: unknown[]) {
-    return getSupportMethod('shouldBumpPlanVersion').call(this, ...args)
+  callResolveRewardForDate(...args: unknown[]) {
+    return getSupportMethod('resolveRewardForDate').call(this, ...args)
   }
 }
 
@@ -62,8 +59,6 @@ describe('check-in service support reward rules', () => {
             rewardConfig: { points: 10 },
           },
         ],
-        1,
-        3,
         '2026-04-01',
         '2026-04-30',
       ),
@@ -75,17 +70,15 @@ describe('check-in service support reward rules', () => {
       service.callNormalizePatternRewardRules(
         [
           {
-            patternType: 'MONTH_LAST_DAY',
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
             rewardConfig: { points: 88 },
           },
           {
-            patternType: 'MONTH_DAY',
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
             monthDay: 31,
             rewardConfig: { experience: 31 },
           },
         ],
-        1,
-        3,
         CheckInCycleTypeEnum.MONTHLY,
       ),
     ).toThrow(
@@ -95,23 +88,26 @@ describe('check-in service support reward rules', () => {
     )
   })
 
-  it('构建周期快照时会同时冻结具体日期规则、周期模式规则与默认基础奖励', () => {
-    const snapshot = service.callBuildPlanSnapshot(
-      {
-        id: 1,
-        planCode: 'growth-check-in',
-        planName: '成长签到',
-        cycleType: CheckInCycleTypeEnum.MONTHLY,
-        startDate: '2026-04-01',
-        endDate: '2026-05-31',
-        allowMakeupCountPerCycle: 2,
-        baseRewardConfig: { points: 10 },
-        version: 3,
-      },
-      [
+  it('构建奖励定义时会统一收口默认奖励、具体日期规则、周期模式规则和连续奖励规则', () => {
+    const rewardDefinition = service.callBuildRewardDefinition({
+      cycleType: CheckInCycleTypeEnum.MONTHLY,
+      startDate: '2026-04-01',
+      endDate: '2026-05-31',
+      baseRewardConfig: { points: 10 },
+      dateRewardRules: [
         {
-          id: 31,
-          planVersion: 3,
+          rewardDate: '2026-04-30',
+          rewardConfig: { experience: 300 },
+        },
+      ],
+      patternRewardRules: [
+        {
+          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+          rewardConfig: { points: 30 },
+        },
+      ],
+      streakRewardRules: [
+        {
           ruleCode: 'streak-7',
           streakDays: 7,
           rewardConfig: { points: 70 },
@@ -119,51 +115,19 @@ describe('check-in service support reward rules', () => {
           status: CheckInStreakRewardRuleStatusEnum.ENABLED,
         },
       ],
-      [
-        {
-          id: 22,
-          planId: 1,
-          planVersion: 3,
-          rewardDate: '2026-04-30',
-          rewardConfig: { experience: 300 },
-        },
-      ],
-      [
-        {
-          id: 21,
-          planId: 1,
-          planVersion: 3,
-          patternType: 'MONTH_LAST_DAY',
-          weekday: null,
-          monthDay: null,
-          rewardConfig: { points: 30 },
-        },
-      ],
-    )
+    })
 
-    expect(snapshot).toEqual({
-      id: 1,
-      planCode: 'growth-check-in',
-      planName: '成长签到',
-      cycleType: CheckInCycleTypeEnum.MONTHLY,
-      startDate: '2026-04-01',
-      endDate: '2026-05-31',
-      allowMakeupCountPerCycle: 2,
+    expect(rewardDefinition).toEqual({
       baseRewardConfig: { points: 10 },
-      version: 3,
       dateRewardRules: [
         {
-          id: 22,
-          planVersion: 3,
           rewardDate: '2026-04-30',
           rewardConfig: { experience: 300 },
         },
       ],
       patternRewardRules: [
         {
-          id: 21,
-          planVersion: 3,
-          patternType: 'MONTH_LAST_DAY',
+          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
           weekday: null,
           monthDay: null,
           rewardConfig: { points: 30 },
@@ -171,8 +135,6 @@ describe('check-in service support reward rules', () => {
       ],
       streakRewardRules: [
         {
-          id: 31,
-          planVersion: 3,
           ruleCode: 'streak-7',
           streakDays: 7,
           rewardConfig: { points: 70 },
@@ -183,32 +145,26 @@ describe('check-in service support reward rules', () => {
     })
   })
 
-  it('会按具体日期规则 > 周期模式规则 > 默认奖励顺序解析', () => {
-    const dateHit = service.callResolveSnapshotRewardForDate(
+  it('会按具体日期规则 > 周期模式规则 > 默认奖励顺序解析，并返回稳定规则键', () => {
+    const dateHit = service.callResolveRewardForDate(
+      CheckInCycleTypeEnum.MONTHLY,
       {
-        cycleType: CheckInCycleTypeEnum.MONTHLY,
         baseRewardConfig: { points: 5 },
         dateRewardRules: [
           {
-            id: 21,
-            planVersion: 3,
             rewardDate: '2026-04-30',
             rewardConfig: { points: 300 },
           },
         ],
         patternRewardRules: [
           {
-            id: 22,
-            planVersion: 3,
-            patternType: 'MONTH_LAST_DAY',
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
             weekday: null,
             monthDay: null,
             rewardConfig: { points: 30 },
           },
           {
-            id: 23,
-            planVersion: 3,
-            patternType: 'MONTH_DAY',
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
             weekday: null,
             monthDay: 15,
             rewardConfig: { experience: 15 },
@@ -220,20 +176,18 @@ describe('check-in service support reward rules', () => {
 
     expect(dateHit).toEqual({
       resolvedRewardSourceType: 'DATE_RULE',
-      resolvedRewardRuleId: 21,
+      resolvedRewardRuleKey: 'DATE:2026-04-30',
       resolvedRewardConfig: { points: 300 },
     })
 
-    const patternHit = service.callResolveSnapshotRewardForDate(
+    const patternHit = service.callResolveRewardForDate(
+      CheckInCycleTypeEnum.MONTHLY,
       {
-        cycleType: CheckInCycleTypeEnum.MONTHLY,
         baseRewardConfig: { points: 5 },
         dateRewardRules: [],
         patternRewardRules: [
           {
-            id: 23,
-            planVersion: 3,
-            patternType: 'MONTH_DAY',
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
             weekday: null,
             monthDay: 15,
             rewardConfig: { experience: 15 },
@@ -245,13 +199,13 @@ describe('check-in service support reward rules', () => {
 
     expect(patternHit).toEqual({
       resolvedRewardSourceType: 'PATTERN_RULE',
-      resolvedRewardRuleId: 23,
+      resolvedRewardRuleKey: 'MONTH_DAY:15',
       resolvedRewardConfig: { experience: 15 },
     })
 
-    const fallbackHit = service.callResolveSnapshotRewardForDate(
+    const fallbackHit = service.callResolveRewardForDate(
+      CheckInCycleTypeEnum.MONTHLY,
       {
-        cycleType: CheckInCycleTypeEnum.MONTHLY,
         baseRewardConfig: { points: 5 },
         dateRewardRules: [],
         patternRewardRules: [],
@@ -261,42 +215,8 @@ describe('check-in service support reward rules', () => {
 
     expect(fallbackHit).toEqual({
       resolvedRewardSourceType: 'BASE_REWARD',
-      resolvedRewardRuleId: null,
+      resolvedRewardRuleKey: null,
       resolvedRewardConfig: { points: 5 },
     })
-  })
-
-  it('具体日期规则变更会触发计划版本递增', () => {
-    const result = service.callShouldBumpPlanVersion({
-      currentPlan: {
-        cycleType: CheckInCycleTypeEnum.MONTHLY,
-        startDate: '2026-04-01',
-        endDate: '2026-04-30',
-        allowMakeupCountPerCycle: 2,
-        baseRewardConfig: { points: 5 },
-      },
-      nextPlan: {
-        cycleType: CheckInCycleTypeEnum.MONTHLY,
-        startDate: '2026-04-01',
-        endDate: '2026-04-30',
-        allowMakeupCountPerCycle: 2,
-        baseRewardConfig: { points: 5 },
-      },
-      currentDateRules: [],
-      nextDateRules: [
-        {
-          planId: 1,
-          planVersion: 1,
-          rewardDate: '2026-04-03',
-          rewardConfig: { points: 10 },
-        },
-      ],
-      currentPatternRules: [],
-      nextPatternRules: [],
-      currentRules: [],
-      nextRules: [],
-    })
-
-    expect(result).toBe(true)
   })
 })

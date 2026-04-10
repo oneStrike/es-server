@@ -1,23 +1,14 @@
 import type { Db, DrizzleService } from '@db/core'
-import type {
-  CheckInCycleSelect,
-  CheckInDateRewardRuleSelect,
-  CheckInPatternRewardRuleSelect,
-  CheckInPlanSelect,
-  CheckInStreakRewardRuleSelect,
-} from '@db/schema'
+import type { CheckInPlanSelect } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CheckInDateRewardRuleCoreView,
-  CheckInPlanSnapshot,
-  CheckInPlanSnapshotSource,
-  CheckInPatternRewardRuleCoreView,
+  CheckInDateRewardRuleView,
+  CheckInPatternRewardRuleView,
   CheckInRewardConfig,
+  CheckInRewardDefinition,
   CheckInResolvedReward,
-  CreateCheckInDateRewardRuleInsert,
-  CreateCheckInPatternRewardRuleInsert,
-  CreateCheckInStreakRewardRuleInsert,
+  CheckInStreakRewardRuleView,
 } from './check-in.type'
 import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
 import type { CreateCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
@@ -51,7 +42,7 @@ dayjs.extend(timezone)
 /**
  * 签到域共享 support 基类。
  *
- * 统一收口签到计划校验、周期切片、幂等键生成、视图映射与底层 Drizzle 访问，
+ * 统一收口签到计划校验、周期切片、奖励定义解析、幂等键生成与底层 Drizzle 访问，
  * 供 definition/runtime/execution 三个子服务复用同一套规则。
  */
 export abstract class CheckInServiceSupport {
@@ -77,24 +68,9 @@ export abstract class CheckInServiceSupport {
     return this.drizzle.schema.checkInCycle
   }
 
-  /** 签到具体日期奖励规则表。 */
-  protected get checkInDateRewardRuleTable() {
-    return this.drizzle.schema.checkInDateRewardRule
-  }
-
-  /** 签到周期模式奖励规则表。 */
-  protected get checkInPatternRewardRuleTable() {
-    return this.drizzle.schema.checkInPatternRewardRule
-  }
-
   /** 签到事实表。 */
   protected get checkInRecordTable() {
     return this.drizzle.schema.checkInRecord
-  }
-
-  /** 连续奖励规则表。 */
-  protected get checkInStreakRewardRuleTable() {
-    return this.drizzle.schema.checkInStreakRewardRule
   }
 
   /** 连续奖励发放事实表。 */
@@ -128,7 +104,7 @@ export abstract class CheckInServiceSupport {
   /**
    * 将未知 JSON 值安全收敛成对象记录。
    *
-   * 数组和原始值统一视为无效结构，避免快照或奖励配置误判。
+   * 数组和原始值统一视为无效结构，避免奖励定义误判。
    */
   protected asRecord(value: unknown) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -233,9 +209,7 @@ export abstract class CheckInServiceSupport {
    * 归一化具体日期奖励规则输入，并提前拦截计划窗口外和重复日期配置。
    */
   protected normalizeDateRewardRules(
-    rules: CreateCheckInDateRewardRuleDto[] | undefined,
-    planId: number,
-    planVersion: number,
+    rules: CreateCheckInDateRewardRuleDto[] | CheckInDateRewardRuleView[] | undefined,
     startDate: string,
     endDate?: string | null,
   ) {
@@ -246,13 +220,11 @@ export abstract class CheckInServiceSupport {
       }
 
       return {
-        planId,
-        planVersion,
         rewardDate,
         rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
           allowEmpty: false,
         })!,
-      } satisfies CreateCheckInDateRewardRuleInsert
+      } satisfies CheckInDateRewardRuleView
     })
 
     const duplicateRewardDate = this.findDuplicateValue(
@@ -271,9 +243,10 @@ export abstract class CheckInServiceSupport {
    * 归一化周期模式奖励规则输入，并在配置阶段阻断同日双命中的冲突。
    */
   protected normalizePatternRewardRules(
-    rules: CreateCheckInPatternRewardRuleDto[] | undefined,
-    planId: number,
-    planVersion: number,
+    rules:
+      | CreateCheckInPatternRewardRuleDto[]
+      | CheckInPatternRewardRuleView[]
+      | undefined,
     cycleType: CheckInCycleTypeEnum,
   ) {
     const normalizedRules = (rules ?? []).map((rule) => {
@@ -339,15 +312,13 @@ export abstract class CheckInServiceSupport {
       }
 
       return {
-        planId,
-        planVersion,
         patternType,
         weekday,
         monthDay,
         rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
           allowEmpty: false,
         })!,
-      } satisfies CreateCheckInPatternRewardRuleInsert
+      } satisfies CheckInPatternRewardRuleView
     })
 
     if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
@@ -363,7 +334,8 @@ export abstract class CheckInServiceSupport {
       const duplicateMonthDay = this.findDuplicateValue(
         normalizedRules
           .filter(
-            (rule) => rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+            (rule) =>
+              rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
           )
           .map((rule) => String(rule.monthDay)),
       )
@@ -374,7 +346,8 @@ export abstract class CheckInServiceSupport {
       }
 
       const monthLastDayRule = normalizedRules.find(
-        (rule) => rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+        (rule) =>
+          rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
       )
       if (
         monthLastDayRule &&
@@ -400,9 +373,10 @@ export abstract class CheckInServiceSupport {
    * 归一化连续签到奖励规则输入，并提前拦截重复阈值和重复编码。
    */
   protected normalizeStreakRewardRules(
-    rules: CreateCheckInStreakRewardRuleDto[] | undefined,
-    planId: number,
-    planVersion: number,
+    rules:
+      | CreateCheckInStreakRewardRuleDto[]
+      | CheckInStreakRewardRuleView[]
+      | undefined,
   ) {
     const normalizedRules = (rules ?? []).map((rule) => {
       const ruleCode = rule.ruleCode.trim()
@@ -414,8 +388,6 @@ export abstract class CheckInServiceSupport {
       }
 
       return {
-        planId,
-        planVersion,
         ruleCode,
         streakDays: rule.streakDays,
         rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
@@ -423,7 +395,7 @@ export abstract class CheckInServiceSupport {
         })!,
         repeatable: rule.repeatable ?? false,
         status: rule.status ?? CheckInStreakRewardRuleStatusEnum.ENABLED,
-      } satisfies CreateCheckInStreakRewardRuleInsert
+      } satisfies CheckInStreakRewardRuleView
     })
 
     const duplicateRuleCode = this.findDuplicateValue(
@@ -442,80 +414,231 @@ export abstract class CheckInServiceSupport {
       throw new BadRequestException(`连续奖励阈值重复：${duplicateStreakDays}`)
     }
 
-    return normalizedRules
+    return normalizedRules.sort((left, right) => {
+      const streakDiff = left.streakDays - right.streakDays
+      return streakDiff !== 0
+        ? streakDiff
+        : left.ruleCode.localeCompare(right.ruleCode)
+    })
   }
 
-  /**
-   * 构建周期级计划快照。
-   *
-   * 快照会冻结当前计划版本下的关键基础字段、具体日期奖励、周期模式奖励和连续奖励，
-   * 保证用户在本周期内继续按旧版本解释。
-   */
-  protected buildPlanSnapshot(
-    plan: CheckInPlanSnapshotSource,
-    streakRules: CheckInStreakRewardRuleSelect[],
-    dateRules: CheckInDateRewardRuleSelect[],
-    patternRules: CheckInPatternRewardRuleSelect[],
+  /** 解析并归一化存储在计划上的奖励定义。 */
+  protected getPlanRewardDefinition(
+    plan: Pick<
+      CheckInPlanSelect,
+      'cycleType' | 'startDate' | 'endDate' | 'rewardDefinition'
+    >,
+    options: { allowEmpty: boolean } = { allowEmpty: true },
   ) {
+    const record = this.asRecord(plan.rewardDefinition)
+    if (!record) {
+      if (options.allowEmpty) {
+        return null
+      }
+      throw new BadRequestException('奖励配置不能为空')
+    }
+
+    const startDate = this.toDateOnlyValue(plan.startDate)
+    const endDate = this.toDateOnlyValue(plan.endDate) || null
+    const cycleType = this.parseCycleType(plan.cycleType)
+
     return {
-      id: plan.id,
-      planCode: plan.planCode,
-      planName: plan.planName,
-      cycleType: this.parseCycleType(plan.cycleType),
-      startDate: this.toDateOnlyValue(plan.startDate),
-      endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
-      allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
-      baseRewardConfig: this.parseStoredRewardConfig(plan.baseRewardConfig, {
+      baseRewardConfig: this.parseRewardConfig(
+        this.asRecord(record.baseRewardConfig) as CheckInRewardConfig | undefined,
+        { allowEmpty: true },
+      ),
+      dateRewardRules: this.normalizeDateRewardRules(
+        Array.isArray(record.dateRewardRules)
+          ? (record.dateRewardRules as CheckInDateRewardRuleView[])
+          : [],
+        startDate,
+        endDate,
+      ),
+      patternRewardRules: this.normalizePatternRewardRules(
+        Array.isArray(record.patternRewardRules)
+          ? (record.patternRewardRules as CheckInPatternRewardRuleView[])
+          : [],
+        cycleType,
+      ),
+      streakRewardRules: this.normalizeStreakRewardRules(
+        Array.isArray(record.streakRewardRules)
+          ? (record.streakRewardRules as CheckInStreakRewardRuleView[])
+          : [],
+      ),
+    } satisfies CheckInRewardDefinition
+  }
+
+  /** 构建规范化后的奖励定义对象。 */
+  protected buildRewardDefinition(input: {
+    cycleType: CheckInCycleTypeEnum
+    startDate: string
+    endDate?: string | null
+    baseRewardConfig?: CheckInRewardConfig | null
+    dateRewardRules?: CreateCheckInDateRewardRuleDto[] | CheckInDateRewardRuleView[]
+    patternRewardRules?:
+      | CreateCheckInPatternRewardRuleDto[]
+      | CheckInPatternRewardRuleView[]
+    streakRewardRules?:
+      | CreateCheckInStreakRewardRuleDto[]
+      | CheckInStreakRewardRuleView[]
+  }) {
+    return {
+      baseRewardConfig: this.parseRewardConfig(input.baseRewardConfig, {
         allowEmpty: true,
       }),
-      version: plan.version,
-      dateRewardRules: dateRules
-        .map((rule) => ({
-          id: rule.id,
-          planVersion: rule.planVersion,
-          rewardDate: this.toDateOnlyValue(rule.rewardDate),
-          rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-            allowEmpty: false,
-          })!,
-        }))
-        .sort((left, right) => left.rewardDate.localeCompare(right.rewardDate)),
-      patternRewardRules: patternRules
-        .map((rule) => ({
-          id: rule.id,
-          planVersion: rule.planVersion,
-          patternType: rule.patternType as CheckInPatternRewardRuleTypeEnum,
-          weekday: rule.weekday,
-          monthDay: rule.monthDay,
-          rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-            allowEmpty: false,
-          })!,
-        }))
-        .sort((left, right) => this.comparePatternRewardRules(left, right)),
-      streakRewardRules: streakRules.map((rule) => ({
-        id: rule.id,
-        planVersion: rule.planVersion,
-        ruleCode: rule.ruleCode,
-        streakDays: rule.streakDays,
-        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-          allowEmpty: false,
-        })!,
-        repeatable: rule.repeatable,
-        status: rule.status as CheckInStreakRewardRuleStatusEnum,
-      })),
+      dateRewardRules: this.normalizeDateRewardRules(
+        input.dateRewardRules,
+        input.startDate,
+        input.endDate ?? null,
+      ),
+      patternRewardRules: this.normalizePatternRewardRules(
+        input.patternRewardRules,
+        input.cycleType,
+      ),
+      streakRewardRules: this.normalizeStreakRewardRules(input.streakRewardRules),
+    } satisfies CheckInRewardDefinition
+  }
+
+  /** 把连续奖励规则映射成对外稳定视图。 */
+  protected toStreakRuleView(rule: CheckInStreakRewardRuleView) {
+    return {
+      ruleCode: rule.ruleCode,
+      streakDays: rule.streakDays,
+      rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+        allowEmpty: false,
+      })!,
+      repeatable: rule.repeatable,
+      status: rule.status,
     }
   }
 
-  /**
-   * 从周期记录中恢复稳定的计划快照。
-   *
-   * 若快照缺失，说明历史事实已损坏，需要直接阻断执行链路。
-   */
-  protected getCycleSnapshot(cycle: Pick<CheckInCycleSelect, 'planSnapshot'>) {
-    const snapshot = this.asRecord(cycle.planSnapshot)
-    if (!snapshot) {
-      throw new BadRequestException('周期快照缺失')
+  /** 把具体日期奖励规则映射成对外稳定视图。 */
+  protected toDateRewardRuleView(
+    rule: CheckInDateRewardRuleView,
+  ): CheckInDateRewardRuleView {
+    return {
+      rewardDate: this.toDateOnlyValue(rule.rewardDate),
+      rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+        allowEmpty: false,
+      })!,
     }
-    return snapshot as unknown as CheckInPlanSnapshot
+  }
+
+  /** 把周期模式奖励规则映射成对外稳定视图。 */
+  protected toPatternRewardRuleView(
+    rule: CheckInPatternRewardRuleView,
+  ): CheckInPatternRewardRuleView {
+    return {
+      patternType: rule.patternType,
+      weekday: rule.weekday,
+      monthDay: rule.monthDay,
+      rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+        allowEmpty: false,
+      })!,
+    }
+  }
+
+  /** 校验计划日期边界必须与自然周期边界对齐。 */
+  protected ensurePlanBoundaryAligned(
+    cycleType: CheckInCycleTypeEnum,
+    startDate: string,
+    endDate?: string | null,
+  ) {
+    const start = dayjs.tz(startDate, 'YYYY-MM-DD', this.getAppTimeZone())
+    if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
+      if (start.day() !== 1) {
+        throw new BadRequestException('周计划开始日期必须对齐周一')
+      }
+      if (endDate) {
+        const end = dayjs.tz(endDate, 'YYYY-MM-DD', this.getAppTimeZone())
+        if (end.day() !== 0) {
+          throw new BadRequestException('周计划结束日期必须对齐周日')
+        }
+      }
+      return
+    }
+
+    if (start.date() !== 1) {
+      throw new BadRequestException('月计划开始日期必须对齐月初')
+    }
+    if (endDate) {
+      const end = dayjs.tz(endDate, 'YYYY-MM-DD', this.getAppTimeZone())
+      if (end.date() !== end.daysInMonth()) {
+        throw new BadRequestException('月计划结束日期必须对齐月末')
+      }
+    }
+  }
+
+  /** 解析指定自然日对应的奖励天序号。 */
+  protected resolveRewardDayIndex(
+    cycleType: CheckInCycleTypeEnum,
+    signDate: string,
+  ) {
+    const date = dayjs.tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
+    if (cycleType === CheckInCycleTypeEnum.MONTHLY) {
+      return date.date()
+    }
+
+    const weekday = date.day()
+    return weekday === 0 ? 7 : weekday
+  }
+
+  /**
+   * 基于当前计划奖励定义解析指定签到日期的基础奖励配置。
+   *
+   * 解析顺序固定为：具体日期奖励 > 周期模式奖励 > 默认基础奖励。
+   */
+  protected resolveRewardForDate(
+    cycleType: CheckInCycleTypeEnum,
+    rewardDefinition: Pick<
+      CheckInRewardDefinition,
+      'baseRewardConfig' | 'dateRewardRules' | 'patternRewardRules'
+    >,
+    signDate: string,
+  ): CheckInResolvedReward {
+    const dateRule = rewardDefinition.dateRewardRules.find(
+      (item) => item.rewardDate === signDate,
+    )
+    if (dateRule) {
+      return {
+        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
+        resolvedRewardRuleKey: `DATE:${dateRule.rewardDate}`,
+        resolvedRewardConfig: dateRule.rewardConfig,
+      }
+    }
+
+    const patternRule = rewardDefinition.patternRewardRules.find((item) =>
+      this.matchesPatternRewardRule(cycleType, item, signDate),
+    )
+    if (patternRule) {
+      return {
+        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
+        resolvedRewardRuleKey: this.buildPatternRuleKey(patternRule),
+        resolvedRewardConfig: patternRule.rewardConfig,
+      }
+    }
+
+    if (rewardDefinition.baseRewardConfig) {
+      return {
+        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.BASE_REWARD,
+        resolvedRewardRuleKey: null,
+        resolvedRewardConfig: rewardDefinition.baseRewardConfig,
+      }
+    }
+
+    return {
+      resolvedRewardSourceType: null,
+      resolvedRewardRuleKey: null,
+      resolvedRewardConfig: null,
+    }
+  }
+
+  /** 统一把数据库/视图中的日期字段收口为签到域 `date` 字符串。 */
+  protected toDateOnlyValue(value: string | Date | null | undefined) {
+    if (!value) {
+      return ''
+    }
+    return typeof value === 'string' ? value : this.formatDateOnly(value)
   }
 
   /**
@@ -560,9 +683,7 @@ export abstract class CheckInServiceSupport {
 
   /** 把单一计划状态写回数据库状态列。 */
   protected buildPlanStatusPersistence(status: CheckInPlanStatusEnum) {
-    return {
-      status,
-    }
+    return { status }
   }
 
   /** 构建管理端计划状态筛选条件。 */
@@ -683,72 +804,6 @@ export abstract class CheckInServiceSupport {
     return plan
   }
 
-  /** 获取指定计划版本下的连续奖励规则列表。 */
-  protected async getPlanRules(
-    planId: number,
-    planVersion: number,
-    db: Db = this.db,
-  ) {
-    return db
-      .select()
-      .from(this.checkInStreakRewardRuleTable)
-      .where(
-        and(
-          eq(this.checkInStreakRewardRuleTable.planId, planId),
-          eq(this.checkInStreakRewardRuleTable.planVersion, planVersion),
-          isNull(this.checkInStreakRewardRuleTable.deletedAt),
-        ),
-      )
-      .orderBy(
-        asc(this.checkInStreakRewardRuleTable.streakDays),
-        asc(this.checkInStreakRewardRuleTable.id),
-      )
-  }
-
-  /** 获取指定计划版本下的具体日期奖励规则列表。 */
-  protected async getPlanDateRewardRules(
-    planId: number,
-    planVersion: number,
-    db: Db = this.db,
-  ) {
-    return db
-      .select()
-      .from(this.checkInDateRewardRuleTable)
-      .where(
-        and(
-          eq(this.checkInDateRewardRuleTable.planId, planId),
-          eq(this.checkInDateRewardRuleTable.planVersion, planVersion),
-        ),
-      )
-      .orderBy(
-        asc(this.checkInDateRewardRuleTable.rewardDate),
-        asc(this.checkInDateRewardRuleTable.id),
-      )
-  }
-
-  /** 获取指定计划版本下的周期模式奖励规则列表。 */
-  protected async getPlanPatternRewardRules(
-    planId: number,
-    planVersion: number,
-    db: Db = this.db,
-  ) {
-    return db
-      .select()
-      .from(this.checkInPatternRewardRuleTable)
-      .where(
-        and(
-          eq(this.checkInPatternRewardRuleTable.planId, planId),
-          eq(this.checkInPatternRewardRuleTable.planVersion, planVersion),
-        ),
-      )
-      .orderBy(
-        asc(this.checkInPatternRewardRuleTable.patternType),
-        asc(this.checkInPatternRewardRuleTable.weekday),
-        asc(this.checkInPatternRewardRuleTable.monthDay),
-        asc(this.checkInPatternRewardRuleTable.id),
-      )
-  }
-
   /**
    * 查找覆盖某个自然日的周期实例。
    *
@@ -793,307 +848,14 @@ export abstract class CheckInServiceSupport {
       )
   }
 
-  /** 把连续奖励规则映射成对外稳定视图。 */
-  protected toStreakRuleView(rule: {
-    id: number
-    ruleCode: string
-    streakDays: number
-    rewardConfig: unknown
-    repeatable: boolean
-    status: number
-  }) {
-    return {
-      id: rule.id,
-      ruleCode: rule.ruleCode,
-      streakDays: rule.streakDays,
-      rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-        allowEmpty: false,
-      })!,
-      repeatable: rule.repeatable,
-      status: rule.status as CheckInStreakRewardRuleStatusEnum,
-    }
-  }
-
-  /** 把具体日期奖励规则映射成对外稳定视图。 */
-  protected toDateRewardRuleView(rule: {
-    id: number
-    rewardDate: string | Date
-    rewardConfig: unknown
-  }): CheckInDateRewardRuleCoreView {
-    return {
-      id: rule.id,
-      rewardDate: this.toDateOnlyValue(rule.rewardDate),
-      rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-        allowEmpty: false,
-      })!,
-    }
-  }
-
-  /** 把周期模式奖励规则映射成对外稳定视图。 */
-  protected toPatternRewardRuleView(rule: {
-    id: number
-    patternType: string
-    weekday: number | null
-    monthDay: number | null
-    rewardConfig: unknown
-  }): CheckInPatternRewardRuleCoreView {
-    return {
-      id: rule.id,
-      patternType: rule.patternType as CheckInPatternRewardRuleTypeEnum,
-      weekday: rule.weekday,
-      monthDay: rule.monthDay,
-      rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-        allowEmpty: false,
-      })!,
-    }
-  }
-
-  /** 校验计划日期边界必须与自然周期边界对齐。 */
-  protected ensurePlanBoundaryAligned(
-    cycleType: CheckInCycleTypeEnum,
-    startDate: string,
-    endDate?: string | null,
-  ) {
-    const start = dayjs.tz(startDate, 'YYYY-MM-DD', this.getAppTimeZone())
-    if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
-      if (start.day() !== 1) {
-        throw new BadRequestException('周计划开始日期必须对齐周一')
-      }
-      if (endDate) {
-        const end = dayjs.tz(endDate, 'YYYY-MM-DD', this.getAppTimeZone())
-        if (end.day() !== 0) {
-          throw new BadRequestException('周计划结束日期必须对齐周日')
-        }
-      }
-      return
-    }
-
-    if (start.date() !== 1) {
-      throw new BadRequestException('月计划开始日期必须对齐月初')
-    }
-    if (endDate) {
-      const end = dayjs.tz(endDate, 'YYYY-MM-DD', this.getAppTimeZone())
-      if (end.date() !== end.daysInMonth()) {
-        throw new BadRequestException('月计划结束日期必须对齐月末')
-      }
-    }
-  }
-
-  /** 解析指定自然日对应的奖励天序号。 */
-  protected resolveRewardDayIndex(
-    cycleType: CheckInCycleTypeEnum,
-    signDate: string,
-  ) {
-    const date = dayjs.tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
-    if (cycleType === CheckInCycleTypeEnum.MONTHLY) {
-      return date.date()
-    }
-
-    const weekday = date.day()
-    return weekday === 0 ? 7 : weekday
-  }
-
-  /** 基于快照解析指定签到日期的基础奖励配置。 */
-  protected resolveSnapshotRewardForDate(
-    snapshot: Pick<
-      CheckInPlanSnapshot,
-      | 'cycleType'
-      | 'baseRewardConfig'
-      | 'dateRewardRules'
-      | 'patternRewardRules'
-    >,
-    signDate: string,
-  ): CheckInResolvedReward {
-    const dateRule = snapshot.dateRewardRules.find(
-      (item) => item.rewardDate === signDate,
-    )
-    if (dateRule) {
-      return {
-        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
-        resolvedRewardRuleId: dateRule.id,
-        resolvedRewardConfig: dateRule.rewardConfig,
-      }
-    }
-
-    const patternRule = snapshot.patternRewardRules.find((item) =>
-      this.matchesPatternRewardRule(snapshot.cycleType, item, signDate),
-    )
-    if (patternRule) {
-      return {
-        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
-        resolvedRewardRuleId: patternRule.id,
-        resolvedRewardConfig: patternRule.rewardConfig,
-      }
-    }
-
-    if (snapshot.baseRewardConfig) {
-      return {
-        resolvedRewardSourceType: CheckInRewardSourceTypeEnum.BASE_REWARD,
-        resolvedRewardRuleId: null,
-        resolvedRewardConfig: snapshot.baseRewardConfig,
-      }
-    }
-
-    return {
-      resolvedRewardSourceType: null,
-      resolvedRewardRuleId: null,
-      resolvedRewardConfig: null,
-    }
-  }
-
-  // ==================== 版本与基础工具 ====================
-
-  /** 比较两个可空日期值是否完全一致。 */
-  protected isSameNullableDate(left?: string | null, right?: string | null) {
-    if (!left && !right) {
-      return true
-    }
-    if (!left || !right) {
-      return false
-    }
-    return left === right
-  }
-
-  /**
-   * 判断计划更新是否需要切到新版本。
-   *
-   * 只要配置变更会影响周期、补签或奖励解释，就必须递增 `plan.version`。
-   */
-  protected shouldBumpPlanVersion(input: {
-    currentPlan: CheckInPlanSelect
-    nextPlan: {
-      cycleType: CheckInCycleTypeEnum
-      startDate: string
-      endDate?: string | null
-      allowMakeupCountPerCycle: number
-      baseRewardConfig?: CheckInRewardConfig | null
-    }
-    currentDateRules: CheckInDateRewardRuleSelect[]
-    nextDateRules: CreateCheckInDateRewardRuleInsert[]
-    currentPatternRules: CheckInPatternRewardRuleSelect[]
-    nextPatternRules: CreateCheckInPatternRewardRuleInsert[]
-    currentRules: CheckInStreakRewardRuleSelect[]
-    nextRules: CreateCheckInStreakRewardRuleInsert[]
-  }) {
-    if (input.currentPlan.cycleType !== input.nextPlan.cycleType) {
-      return true
-    }
-    if (this.toDateOnlyValue(input.currentPlan.startDate) !== input.nextPlan.startDate) {
-      return true
-    }
-    if (
-      input.currentPlan.allowMakeupCountPerCycle !==
-      input.nextPlan.allowMakeupCountPerCycle
-    ) {
-      return true
-    }
-    if (
-      JSON.stringify(
-        this.parseStoredRewardConfig(input.currentPlan.baseRewardConfig, {
-          allowEmpty: true,
-        }),
-      ) !== JSON.stringify(input.nextPlan.baseRewardConfig ?? null)
-    ) {
-      return true
-    }
-    if (
-      !this.isSameNullableDate(
-        input.currentPlan.endDate,
-        input.nextPlan.endDate,
-      )
-    ) {
-      return true
-    }
-
-    const currentDateRuleSignatures = input.currentDateRules
-      .map((rule) => ({
-        rewardDate: this.toDateOnlyValue(rule.rewardDate),
-        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-          allowEmpty: false,
-        }),
-      }))
-      .sort((left, right) => left.rewardDate.localeCompare(right.rewardDate))
-    const nextDateRuleSignatures = input.nextDateRules
-      .map((rule) => ({
-        rewardDate: rule.rewardDate,
-        rewardConfig: rule.rewardConfig,
-      }))
-      .sort((left, right) => left.rewardDate.localeCompare(right.rewardDate))
-    if (
-      JSON.stringify(currentDateRuleSignatures) !==
-      JSON.stringify(nextDateRuleSignatures)
-    ) {
-      return true
-    }
-
-    const currentPatternRuleSignatures = input.currentPatternRules
-      .map((rule) => ({
-        patternType: rule.patternType,
-        weekday: rule.weekday,
-        monthDay: rule.monthDay,
-        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-          allowEmpty: false,
-        }),
-      }))
-      .sort((left, right) => this.comparePatternRewardRules(left, right))
-    const nextPatternRuleSignatures = input.nextPatternRules
-      .map((rule) => ({
-        patternType: rule.patternType,
-        weekday: rule.weekday,
-        monthDay: rule.monthDay,
-        rewardConfig: rule.rewardConfig,
-      }))
-      .sort((left, right) => this.comparePatternRewardRules(left, right))
-    if (
-      JSON.stringify(currentPatternRuleSignatures) !==
-      JSON.stringify(nextPatternRuleSignatures)
-    ) {
-      return true
-    }
-
-    const currentRuleSignatures = input.currentRules
-      .map((rule) => ({
-        ruleCode: rule.ruleCode,
-        streakDays: rule.streakDays,
-        rewardConfig: this.parseStoredRewardConfig(rule.rewardConfig, {
-          allowEmpty: false,
-        }),
-        repeatable: rule.repeatable,
-        status: rule.status,
-      }))
-      .sort((left, right) => left.ruleCode.localeCompare(right.ruleCode))
-    const nextRuleSignatures = input.nextRules
-      .map((rule) => ({
-        ruleCode: rule.ruleCode,
-        streakDays: rule.streakDays,
-        rewardConfig: rule.rewardConfig,
-        repeatable: rule.repeatable,
-        status: rule.status,
-      }))
-      .sort((left, right) => left.ruleCode.localeCompare(right.ruleCode))
-
-    return (
-      JSON.stringify(currentRuleSignatures) !==
-      JSON.stringify(nextRuleSignatures)
-    )
-  }
-
-  /** 统一把数据库/视图中的日期字段收口为签到域 `date` 字符串。 */
-  protected toDateOnlyValue(value: string | Date | null | undefined) {
-    if (!value) {
-      return ''
-    }
-    return typeof value === 'string' ? value : this.formatDateOnly(value)
-  }
-
   /** 比较周期模式奖励规则的稳定排序。 */
   private comparePatternRewardRules(
     left: Pick<
-      CreateCheckInPatternRewardRuleInsert,
+      CheckInPatternRewardRuleView,
       'patternType' | 'weekday' | 'monthDay'
     >,
     right: Pick<
-      CreateCheckInPatternRewardRuleInsert,
+      CheckInPatternRewardRuleView,
       'patternType' | 'weekday' | 'monthDay'
     >,
   ) {
@@ -1114,7 +876,7 @@ export abstract class CheckInServiceSupport {
   private matchesPatternRewardRule(
     cycleType: CheckInCycleTypeEnum,
     rule: Pick<
-      CheckInPlanSnapshot['patternRewardRules'][number],
+      CheckInPatternRewardRuleView,
       'patternType' | 'weekday' | 'monthDay'
     >,
     signDate: string,
@@ -1141,6 +903,17 @@ export abstract class CheckInServiceSupport {
     }
 
     return false
+  }
+
+  /** 构建周期模式奖励规则稳定键。 */
+  private buildPatternRuleKey(rule: Pick<CheckInPatternRewardRuleView, 'patternType' | 'weekday' | 'monthDay'>) {
+    if (rule.patternType === CheckInPatternRewardRuleTypeEnum.WEEKDAY) {
+      return `WEEKDAY:${rule.weekday}`
+    }
+    if (rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY) {
+      return `MONTH_DAY:${rule.monthDay}`
+    }
+    return 'MONTH_LAST_DAY'
   }
 
   /** 查找数组中的第一个重复值。 */

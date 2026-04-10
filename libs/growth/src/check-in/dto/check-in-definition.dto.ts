@@ -28,7 +28,6 @@ export class CreateCheckInPlanDto extends OmitType(BaseCheckInPlanDto, [
   'id',
   'createdAt',
   'updatedAt',
-  'version',
   'baseRewardConfig',
 ] as const) {}
 

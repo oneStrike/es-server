@@ -77,13 +77,14 @@ export class BaseCheckInRecordDto extends BaseDto {
   })
   resolvedRewardSourceType?: CheckInRewardSourceTypeEnum | null
 
-  @NumberProperty({
-    description: '本次基础奖励命中的规则 ID；命中默认基础奖励时为空。',
-    example: 3,
+  @StringProperty({
+    description:
+      '本次基础奖励命中的规则键；命中默认基础奖励时为空。DATE:YYYY-MM-DD / WEEKDAY:n / MONTH_DAY:n / MONTH_LAST_DAY。',
+    example: 'DATE:2026-04-03',
     required: false,
     validation: false,
   })
-  resolvedRewardRuleId?: number | null
+  resolvedRewardRuleKey?: string | null
 
   @NestedProperty({
     description: '本次基础奖励解析结果快照；来源可能是具体日期奖励、周期模式奖励或计划默认基础奖励，为空表示该签到事实没有基础奖励。',

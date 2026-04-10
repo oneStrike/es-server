@@ -203,10 +203,7 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   },
   checkInPlan: {
     cycles: r.many.checkInCycle(),
-    dateRewardRules: r.many.checkInDateRewardRule(),
-    patternRewardRules: r.many.checkInPatternRewardRule(),
     records: r.many.checkInRecord(),
-    streakRules: r.many.checkInStreakRewardRule(),
     streakGrants: r.many.checkInStreakRewardGrant(),
     createdBy: r.one.adminUser({
       from: r.checkInPlan.createdById,
@@ -245,25 +242,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.checkInCycle.id,
     }),
   },
-  checkInDateRewardRule: {
-    plan: r.one.checkInPlan({
-      from: r.checkInDateRewardRule.planId,
-      to: r.checkInPlan.id,
-    }),
-  },
-  checkInPatternRewardRule: {
-    plan: r.one.checkInPlan({
-      from: r.checkInPatternRewardRule.planId,
-      to: r.checkInPlan.id,
-    }),
-  },
-  checkInStreakRewardRule: {
-    plan: r.one.checkInPlan({
-      from: r.checkInStreakRewardRule.planId,
-      to: r.checkInPlan.id,
-    }),
-    grants: r.many.checkInStreakRewardGrant(),
-  },
   checkInStreakRewardGrant: {
     user: r.one.appUser({
       from: r.checkInStreakRewardGrant.userId,
@@ -276,10 +254,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     cycle: r.one.checkInCycle({
       from: r.checkInStreakRewardGrant.cycleId,
       to: r.checkInCycle.id,
-    }),
-    rule: r.one.checkInStreakRewardRule({
-      from: r.checkInStreakRewardGrant.ruleId,
-      to: r.checkInStreakRewardRule.id,
     }),
   },
   task: {

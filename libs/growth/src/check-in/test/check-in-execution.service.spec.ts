@@ -17,7 +17,7 @@ import {
 } from '../check-in.constant'
 
 describe('check-in execution service', () => {
-  it('构建签到记录写表载荷时会冻结奖励来源、规则 ID 与解析结果', () => {
+  it('构建签到记录写表载荷时会冻结奖励来源、规则键与解析结果', () => {
     const service = new CheckInExecutionService(
       {
         db: {},
@@ -36,7 +36,7 @@ describe('check-in execution service', () => {
       operatorType: CheckInOperatorTypeEnum.USER,
       rewardApplicable: true,
       resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
-      resolvedRewardRuleId: 23,
+      resolvedRewardRuleKey: 'MONTH_DAY:8',
       resolvedRewardConfig: { points: 30 },
       context: { source: 'app_sign' },
     })
@@ -49,10 +49,45 @@ describe('check-in execution service', () => {
       recordType: CheckInRecordTypeEnum.NORMAL,
       rewardStatus: CheckInRewardStatusEnum.PENDING,
       resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
-      resolvedRewardRuleId: 23,
+      resolvedRewardRuleKey: 'MONTH_DAY:8',
       resolvedRewardConfig: { points: 30 },
       operatorType: CheckInOperatorTypeEnum.USER,
       context: { source: 'app_sign' },
+    })
+  })
+
+  it('构建连续奖励发放事实时会冻结规则快照', () => {
+    const service = new CheckInExecutionService(
+      {
+        db: {},
+        schema,
+      } as any,
+      {} as any,
+    )
+
+    const payload = (service as any).buildGrantInsert({
+      userId: 9,
+      planId: 1,
+      cycleId: 2,
+      triggerSignDate: '2026-04-08',
+      ruleCode: 'streak-7',
+      streakDays: 7,
+      rewardConfig: { points: 70 },
+      repeatable: false,
+      context: { source: 'sign_recompute' },
+    })
+
+    expect(payload).toMatchObject({
+      userId: 9,
+      planId: 1,
+      cycleId: 2,
+      triggerSignDate: '2026-04-08',
+      grantStatus: CheckInRewardStatusEnum.PENDING,
+      ruleCode: 'streak-7',
+      streakDays: 7,
+      rewardConfig: { points: 70 },
+      repeatable: false,
+      context: { source: 'sign_recompute' },
     })
   })
 
@@ -69,28 +104,12 @@ describe('check-in execution service', () => {
       cycleId: 2,
       resolvedRewardConfig: { points: 30 },
     }
-    const cycle = {
-      id: 2,
-      planSnapshot: {
-        dateRewardRules: [
-          {
-            id: 21,
-            planVersion: 1,
-            rewardDate: '2026-04-08',
-            rewardConfig: { points: 999 },
-          },
-        ],
-        patternRewardRules: [],
-      },
-    }
 
     const tx = {
       select: jest.fn(() => ({
-        from: jest.fn((table: unknown) => ({
+        from: jest.fn(() => ({
           where: jest.fn(() => ({
-            limit: jest.fn().mockResolvedValue(
-              table === schema.checkInRecord ? [record] : [cycle],
-            ),
+            limit: jest.fn().mockResolvedValue([record]),
           })),
         })),
       })),
@@ -138,7 +157,7 @@ describe('check-in execution service', () => {
     )
   })
 
-  it('动作返回视图会回填冻结奖励来源、规则 ID 与奖励配置', async () => {
+  it('动作返回视图会回填冻结奖励来源、规则键与奖励配置', async () => {
     const record = {
       id: 100,
       cycleId: 2,
@@ -147,7 +166,7 @@ describe('check-in execution service', () => {
       rewardStatus: CheckInRewardStatusEnum.SUCCESS,
       rewardResultType: CheckInRewardResultTypeEnum.APPLIED,
       resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
-      resolvedRewardRuleId: 21,
+      resolvedRewardRuleKey: 'DATE:2026-04-08',
       resolvedRewardConfig: { points: 30 },
     }
     const cycle = {
@@ -155,9 +174,15 @@ describe('check-in execution service', () => {
       currentStreak: 3,
       signedCount: 3,
       makeupUsedCount: 0,
-      planSnapshot: {
-        allowMakeupCountPerCycle: 2,
-        cycleType: 'monthly',
+    }
+    const plan = {
+      id: 1,
+      cycleType: CheckInCycleTypeEnum.MONTHLY,
+      startDate: '2026-04-01',
+      endDate: '2026-04-30',
+      allowMakeupCountPerCycle: 2,
+      rewardDefinition: {
+        baseRewardConfig: { points: 5 },
         dateRewardRules: [],
         patternRewardRules: [],
         streakRewardRules: [],
@@ -171,7 +196,13 @@ describe('check-in execution service', () => {
             where: jest.fn(() => ({
               limit: jest.fn().mockImplementation(async () => {
                 callIndex += 1
-                return callIndex === 1 ? [record] : [cycle]
+                if (callIndex === 1) {
+                  return [record]
+                }
+                if (callIndex === 2) {
+                  return [cycle]
+                }
+                return [plan]
               }),
             })),
           })),
@@ -191,7 +222,7 @@ describe('check-in execution service', () => {
       recordId: 100,
       cycleId: 2,
       resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
-      resolvedRewardRuleId: 21,
+      resolvedRewardRuleKey: 'DATE:2026-04-08',
       resolvedRewardConfig: { points: 30 },
       triggeredGrantIds: [201],
       alreadyExisted: false,
@@ -374,21 +405,26 @@ describe('check-in execution service', () => {
     const service = new CheckInExecutionService(drizzle as any, {} as any)
     jest.spyOn(service as any, 'getCurrentActivePlan').mockResolvedValue({
       id: 1,
-      version: 1,
-    })
-    jest.spyOn(service as any, 'createOrGetCycle').mockResolvedValue({
-      id: 2,
-      cycleKey: 'week-2026-04-06',
-      planSnapshotVersion: 1,
-      version: 0,
-      planSnapshot: {
-        cycleType: CheckInCycleTypeEnum.WEEKLY,
-        allowMakeupCountPerCycle: 2,
+      cycleType: CheckInCycleTypeEnum.WEEKLY,
+      startDate: '2026-04-06',
+      endDate: '2026-04-12',
+      allowMakeupCountPerCycle: 2,
+      rewardDefinition: {
         baseRewardConfig: null,
         dateRewardRules: [],
         patternRewardRules: [],
         streakRewardRules: [],
       },
+    })
+    jest.spyOn(service as any, 'createOrGetCycle').mockResolvedValue({
+      id: 2,
+      cycleKey: 'week-2026-04-06',
+      cycleStartDate: '2026-04-06',
+      cycleEndDate: '2026-04-12',
+      version: 0,
+      signedCount: 0,
+      makeupUsedCount: 0,
+      currentStreak: 0,
     })
     jest.spyOn(service as any, 'findRecordByUniqueKey').mockResolvedValue(undefined)
     jest.spyOn(service as any, 'listCycleRecords').mockResolvedValue([
@@ -411,7 +447,7 @@ describe('check-in execution service', () => {
       rewardStatus: null,
       rewardResultType: null,
       resolvedRewardSourceType: null,
-      resolvedRewardRuleId: null,
+      resolvedRewardRuleKey: null,
       resolvedRewardConfig: null,
       currentStreak: 1,
       signedCount: 1,

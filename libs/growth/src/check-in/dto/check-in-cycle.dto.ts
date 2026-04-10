@@ -1,9 +1,6 @@
-import type { CheckInPlanSnapshot } from '../check-in.type'
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { BaseDto } from '@libs/platform/dto/base.dto';
-import { CheckInCycleTypeEnum } from '../check-in.constant'
 
 export class BaseCheckInCycleDto extends BaseDto {
   @NumberProperty({ description: '用户 ID。', example: 10001 })
@@ -65,33 +62,6 @@ export class BaseCheckInCycleDto extends BaseDto {
     validation: false,
   })
   lastSignedDate?: string | null
-
-  @NumberProperty({
-    description: '周期快照版本号。',
-    example: 1,
-    validation: false,
-  })
-  planSnapshotVersion!: number
-
-  @JsonProperty({
-    description: '周期快照；冻结了当前周期实际解释所使用的计划、具体日期奖励规则、周期模式奖励规则与连续奖励规则。',
-    example: {
-      id: 1,
-      planCode: 'growth-check-in',
-      planName: '成长签到',
-      cycleType: CheckInCycleTypeEnum.WEEKLY,
-      startDate: '2026-04-01',
-      endDate: '2026-05-31',
-      allowMakeupCountPerCycle: 2,
-      baseRewardConfig: null,
-      version: 1,
-      dateRewardRules: [],
-      patternRewardRules: [],
-      streakRewardRules: [],
-    } satisfies CheckInPlanSnapshot,
-    validation: false,
-  })
-  planSnapshot!: CheckInPlanSnapshot
 
   @NumberProperty({
     description: '周期聚合版本号；用于并发更新控制。',

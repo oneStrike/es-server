@@ -1,26 +1,13 @@
 import type { CheckInRewardConfig } from '../check-in.type'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { OmitType } from '@nestjs/swagger'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { CheckInStreakRewardRuleStatusEnum } from '../check-in.constant'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
-export class BaseCheckInStreakRewardRuleDto extends BaseDto {
-  @NumberProperty({ description: '签到计划 ID。', example: 1 })
-  planId!: number
-
-  @NumberProperty({
-    description: '归属计划版本号。',
-    example: 1,
-    validation: false,
-  })
-  planVersion!: number
-
+class CheckInStreakRewardRuleFieldsDto {
   @StringProperty({
     description: '规则编码。',
     example: 'streak-7',
@@ -56,23 +43,8 @@ export class BaseCheckInStreakRewardRuleDto extends BaseDto {
     enum: CheckInStreakRewardRuleStatusEnum,
   })
   status!: CheckInStreakRewardRuleStatusEnum
-
-  @DateProperty({
-    description: '删除时间',
-    example: '2026-03-27T00:00:00.000Z',
-    required: false,
-    validation: false,
-    contract: false,
-  })
-  deletedAt?: Date | null
 }
 
-export class CreateCheckInStreakRewardRuleDto extends OmitType(
-  BaseCheckInStreakRewardRuleDto,
-  [...OMIT_BASE_FIELDS, 'planId', 'planVersion'] as const,
-) {}
+export class CreateCheckInStreakRewardRuleDto extends CheckInStreakRewardRuleFieldsDto {}
 
-export class CheckInStreakRewardRuleItemDto extends OmitType(
-  BaseCheckInStreakRewardRuleDto,
-  ['createdAt', 'updatedAt', 'planId', 'planVersion'] as const,
-) {}
+export class CheckInStreakRewardRuleItemDto extends CheckInStreakRewardRuleFieldsDto {}

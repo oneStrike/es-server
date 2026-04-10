@@ -105,7 +105,6 @@ export class CheckInRecordItemDto extends OmitType(BaseCheckInRecordDto, [
 export class CheckInSummaryPlanDto extends OmitType(BaseCheckInPlanDto, [
   'createdAt',
   'updatedAt',
-  'version',
 ] as const) {}
 
 export class CheckInSummaryCycleDto extends IntersectionType(
