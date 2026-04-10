@@ -24,18 +24,6 @@ import {
   CreateCheckInStreakRewardRuleDto,
 } from './check-in-streak-reward-rule.dto'
 
-export class CreateCheckInPlanDto extends OmitType(BaseCheckInPlanDto, [
-  'id',
-  'createdAt',
-  'updatedAt',
-  'baseRewardConfig',
-] as const) {}
-
-export class UpdateCheckInPlanDto extends IntersectionType(
-  PartialType(CreateCheckInPlanDto),
-  IdDto,
-) {}
-
 class CheckInPlanRewardConfigFieldsDto {
   @NestedProperty({
     description: '计划默认基础奖励配置；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
@@ -67,14 +55,19 @@ class CheckInPlanRewardConfigFieldsDto {
   streakRewardRules?: CreateCheckInStreakRewardRuleDto[]
 }
 
-export class CreateCheckInPlanRewardConfigDto extends IntersectionType(
-  IdDto,
-  CheckInPlanRewardConfigFieldsDto,
+export class CreateCheckInPlanDto extends IntersectionType(
+  OmitType(BaseCheckInPlanDto, [
+    'id',
+    'createdAt',
+    'updatedAt',
+    'baseRewardConfig',
+  ] as const),
+  PartialType(CheckInPlanRewardConfigFieldsDto),
 ) {}
 
-export class UpdateCheckInPlanRewardConfigDto extends IntersectionType(
+export class UpdateCheckInPlanDto extends IntersectionType(
   IdDto,
-  PartialType(CheckInPlanRewardConfigFieldsDto),
+  PartialType(CreateCheckInPlanDto),
 ) {}
 
 export class UpdateCheckInPlanStatusDto extends IntersectionType(

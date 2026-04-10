@@ -2,10 +2,8 @@ import type { IdDto } from '@libs/platform/dto/base.dto'
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type {
   CreateCheckInPlanDto,
-  CreateCheckInPlanRewardConfigDto,
   QueryCheckInPlanDto,
   UpdateCheckInPlanDto,
-  UpdateCheckInPlanRewardConfigDto,
   UpdateCheckInPlanStatusDto,
 } from './dto/check-in-definition.dto'
 import type {
@@ -47,31 +45,9 @@ export class CheckInService {
     return this.checkInDefinitionService.createPlan(dto, adminUserId)
   }
 
-  /** 创建计划奖励配置。 */
-  async createPlanRewardConfig(
-    dto: CreateCheckInPlanRewardConfigDto,
-    adminUserId: number,
-  ) {
-    return this.checkInDefinitionService.createPlanRewardConfig(
-      dto,
-      adminUserId,
-    )
-  }
-
   /** 更新签到计划及其版本化规则。 */
   async updatePlan(dto: UpdateCheckInPlanDto, adminUserId: number) {
     return this.checkInDefinitionService.updatePlan(dto, adminUserId)
-  }
-
-  /** 更新计划奖励配置。 */
-  async updatePlanRewardConfig(
-    dto: UpdateCheckInPlanRewardConfigDto,
-    adminUserId: number,
-  ) {
-    return this.checkInDefinitionService.updatePlanRewardConfig(
-      dto,
-      adminUserId,
-    )
   }
 
   /** 更新签到计划状态。 */

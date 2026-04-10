@@ -3,10 +3,8 @@ import {
   CheckInPlanDetailResponseDto,
   CheckInPlanPageItemDto,
   CreateCheckInPlanDto,
-  CreateCheckInPlanRewardConfigDto,
   QueryCheckInPlanDto,
   UpdateCheckInPlanDto,
-  UpdateCheckInPlanRewardConfigDto,
   UpdateCheckInPlanStatusDto,
 } from '@libs/growth/check-in/dto/check-in-definition.dto'
 import {
@@ -63,21 +61,6 @@ export class CheckInController {
     return this.checkInService.createPlan(body, userId)
   }
 
-  @Post('plan/reward-config/create')
-  @ApiAuditDoc({
-    summary: '创建计划奖励配置',
-    model: Boolean,
-    audit: {
-      actionType: AuditActionTypeEnum.CREATE,
-    },
-  })
-  async createPlanRewardConfig(
-    @Body() body: CreateCheckInPlanRewardConfigDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.createPlanRewardConfig(body, userId)
-  }
-
   @Post('plan/update')
   @ApiAuditDoc({
     summary: '更新签到计划',
@@ -91,21 +74,6 @@ export class CheckInController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.checkInService.updatePlan(body, userId)
-  }
-
-  @Post('plan/reward-config/update')
-  @ApiAuditDoc({
-    summary: '更新计划奖励配置',
-    model: Boolean,
-    audit: {
-      actionType: AuditActionTypeEnum.UPDATE,
-    },
-  })
-  async updatePlanRewardConfig(
-    @Body() body: UpdateCheckInPlanRewardConfigDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.updatePlanRewardConfig(body, userId)
   }
 
   @Post('plan/update-status')

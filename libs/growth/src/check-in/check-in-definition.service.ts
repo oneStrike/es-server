@@ -2,20 +2,13 @@ import type { IdDto } from '@libs/platform/dto/base.dto'
 import type { Db } from '@db/core'
 import type {
   CreateCheckInPlanDto,
-  CreateCheckInPlanRewardConfigDto,
   QueryCheckInPlanDto,
   UpdateCheckInPlanDto,
-  UpdateCheckInPlanRewardConfigDto,
   UpdateCheckInPlanStatusDto,
 } from './dto/check-in-definition.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common'
 import { and, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import {
   CheckInPlanStatusEnum,
@@ -132,6 +125,16 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     }
     this.ensurePlanDateRange(startDate, endDate)
     this.ensurePlanBoundaryAligned(cycleType, startDate, endDate)
+    const rewardDefinition = this.buildNextRewardDefinition({
+      cycleType,
+      startDate,
+      endDate,
+      rewardDefinition: null,
+      baseRewardConfig: dto.baseRewardConfig,
+      dateRewardRules: dto.dateRewardRules,
+      patternRewardRules: dto.patternRewardRules,
+      streakRewardRules: dto.streakRewardRules,
+    })
 
     return this.drizzle.withTransaction(
       async (tx) => {
@@ -159,7 +162,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
             startDate,
             endDate,
             allowMakeupCountPerCycle,
-            rewardDefinition: null,
+            rewardDefinition,
             createdById: adminUserId,
             updatedById: adminUserId,
           })
@@ -171,18 +174,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     )
   }
 
-  /** 创建计划奖励配置。 */
-  async createPlanRewardConfig(
-    dto: CreateCheckInPlanRewardConfigDto,
-    adminUserId: number,
-  ) {
-    return this.applyPlanRewardConfig(dto, adminUserId, 'create')
-  }
-
   /**
    * 更新签到计划。
    *
-   * 基础字段直接覆盖当前计划；奖励定义继续沿用当前生效值。
+   * 基础字段直接覆盖当前计划；奖励定义作为计划定义的一部分统一通过该接口维护。
    */
   async updatePlan(dto: UpdateCheckInPlanDto, adminUserId: number) {
     await this.drizzle.withTransaction(
@@ -194,6 +189,11 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         const currentRewardDefinition = this.getPlanRewardDefinition(currentPlan, {
           allowEmpty: true,
         })
+        const shouldUpdateRewardDefinition =
+          dto.baseRewardConfig !== undefined ||
+          dto.dateRewardRules !== undefined ||
+          dto.patternRewardRules !== undefined ||
+          dto.streakRewardRules !== undefined
         const nextPlan = {
           planCode: dto.planCode?.trim() ?? currentPlan.planCode,
           planName: dto.planName?.trim() ?? currentPlan.planName,
@@ -230,6 +230,9 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           nextPlan.startDate,
           nextPlan.endDate,
         )
+        if (shouldUpdateRewardDefinition) {
+          await this.assertPlanRewardConfigMutable(currentPlan.id, tx)
+        }
 
         if (nextPlan.status === CheckInPlanStatusEnum.PUBLISHED) {
           await this.assertPublishedPlanWindowAvailable(
@@ -248,17 +251,16 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           )
         }
 
-        const normalizedRewardDefinition = currentRewardDefinition
-          ? this.buildRewardDefinition({
-              cycleType: nextPlan.cycleType,
-              startDate: nextPlan.startDate,
-              endDate: nextPlan.endDate,
-              baseRewardConfig: currentRewardDefinition.baseRewardConfig,
-              dateRewardRules: currentRewardDefinition.dateRewardRules,
-              patternRewardRules: currentRewardDefinition.patternRewardRules,
-              streakRewardRules: currentRewardDefinition.streakRewardRules,
-            })
-          : null
+        const normalizedRewardDefinition = this.buildNextRewardDefinition({
+          cycleType: nextPlan.cycleType,
+          startDate: nextPlan.startDate,
+          endDate: nextPlan.endDate,
+          rewardDefinition: currentRewardDefinition,
+          baseRewardConfig: dto.baseRewardConfig,
+          dateRewardRules: dto.dateRewardRules,
+          patternRewardRules: dto.patternRewardRules,
+          streakRewardRules: dto.streakRewardRules,
+        })
 
         const result = await tx
           .update(this.checkInPlanTable)
@@ -286,14 +288,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     )
 
     return true
-  }
-
-  /** 更新计划奖励配置。 */
-  async updatePlanRewardConfig(
-    dto: UpdateCheckInPlanRewardConfigDto,
-    adminUserId: number,
-  ) {
-    return this.applyPlanRewardConfig(dto, adminUserId, 'update')
   }
 
   /** 更新计划状态，并拦截会破坏单生效计划合同的配置。 */
@@ -349,85 +343,6 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     await tx.execute(sql`SELECT pg_advisory_xact_lock(${CHECK_IN_PLAN_MUTATION_LOCK_KEY})`)
   }
 
-  /**
-   * 应用计划奖励配置。
-   *
-   * 奖励配置统一维护默认基础奖励、具体日期奖励、周期模式奖励和连续奖励；
-   * 一旦计划已产生签到事实，配置立即锁定，不允许继续修改。
-   */
-  private async applyPlanRewardConfig(
-    dto: CreateCheckInPlanRewardConfigDto | UpdateCheckInPlanRewardConfigDto,
-    adminUserId: number,
-    mode: 'create' | 'update',
-  ) {
-    await this.drizzle.withTransaction(async (tx) => {
-      await this.acquirePlanMutationLock(tx)
-
-      const currentPlan = await this.getPlanById(dto.id, tx)
-      await this.assertPlanRewardConfigMutable(currentPlan.id, tx)
-
-      const currentRewardDefinition = this.getPlanRewardDefinition(currentPlan, {
-        allowEmpty: true,
-      })
-      const hasCurrentConfig = currentRewardDefinition !== null
-
-      if (mode === 'create' && hasCurrentConfig) {
-        throw new ConflictException('签到计划奖励配置已存在')
-      }
-      if (mode === 'update' && !hasCurrentConfig) {
-        throw new NotFoundException('签到计划奖励配置不存在')
-      }
-
-      const cycleType = this.parseCycleType(currentPlan.cycleType)
-      const nextRewardDefinition = this.buildRewardDefinition({
-        cycleType,
-        startDate: this.toDateOnlyValue(currentPlan.startDate),
-        endDate: this.toDateOnlyValue(currentPlan.endDate) || null,
-        baseRewardConfig:
-          dto.baseRewardConfig !== undefined
-            ? dto.baseRewardConfig
-            : currentRewardDefinition?.baseRewardConfig ?? null,
-        dateRewardRules:
-          dto.dateRewardRules !== undefined
-            ? dto.dateRewardRules
-            : currentRewardDefinition?.dateRewardRules ?? [],
-        patternRewardRules:
-          dto.patternRewardRules !== undefined
-            ? dto.patternRewardRules
-            : currentRewardDefinition?.patternRewardRules ?? [],
-        streakRewardRules:
-          dto.streakRewardRules !== undefined
-            ? dto.streakRewardRules
-            : currentRewardDefinition?.streakRewardRules ?? [],
-      })
-
-      if (
-        nextRewardDefinition.baseRewardConfig === null &&
-        nextRewardDefinition.dateRewardRules.length === 0 &&
-        nextRewardDefinition.patternRewardRules.length === 0 &&
-        nextRewardDefinition.streakRewardRules.length === 0
-      ) {
-        throw new BadRequestException('奖励配置不能为空')
-      }
-
-      const result = await tx
-        .update(this.checkInPlanTable)
-        .set({
-          rewardDefinition: nextRewardDefinition,
-          updatedById: adminUserId,
-        })
-        .where(
-          and(
-            eq(this.checkInPlanTable.id, dto.id),
-            isNull(this.checkInPlanTable.deletedAt),
-          ),
-        )
-
-      this.drizzle.assertAffectedRows(result, '签到计划不存在')
-    })
-
-    return true
-  }
 
   /** 断言指定计划尚未产生签到记录，仍允许修改奖励配置。 */
   private async assertPlanRewardConfigMutable(planId: number, db: Db = this.db) {
@@ -440,6 +355,60 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     if (record) {
       throw new ConflictException('计划已产生签到数据，不允许修改奖励配置')
     }
+  }
+
+  /** 按“计划定义包含奖励定义”的口径构建下一版奖励配置。 */
+  private buildNextRewardDefinition(input: {
+    cycleType: ReturnType<CheckInDefinitionService['parseCycleType']>
+    startDate: string
+    endDate?: string | null
+    rewardDefinition: ReturnType<CheckInDefinitionService['getPlanRewardDefinition']>
+    baseRewardConfig?: CreateCheckInPlanDto['baseRewardConfig']
+    dateRewardRules?: CreateCheckInPlanDto['dateRewardRules']
+    patternRewardRules?: CreateCheckInPlanDto['patternRewardRules']
+    streakRewardRules?: CreateCheckInPlanDto['streakRewardRules']
+  }) {
+    const hasRewardFieldInput =
+      input.baseRewardConfig !== undefined ||
+      input.dateRewardRules !== undefined ||
+      input.patternRewardRules !== undefined ||
+      input.streakRewardRules !== undefined
+
+    const nextRewardDefinition = this.buildRewardDefinition({
+      cycleType: input.cycleType,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      baseRewardConfig:
+        input.baseRewardConfig !== undefined
+          ? input.baseRewardConfig
+          : input.rewardDefinition?.baseRewardConfig ?? null,
+      dateRewardRules:
+        input.dateRewardRules !== undefined
+          ? input.dateRewardRules
+          : input.rewardDefinition?.dateRewardRules ?? [],
+      patternRewardRules:
+        input.patternRewardRules !== undefined
+          ? input.patternRewardRules
+          : input.rewardDefinition?.patternRewardRules ?? [],
+      streakRewardRules:
+        input.streakRewardRules !== undefined
+          ? input.streakRewardRules
+          : input.rewardDefinition?.streakRewardRules ?? [],
+    })
+
+    if (
+      nextRewardDefinition.baseRewardConfig === null &&
+      nextRewardDefinition.dateRewardRules.length === 0 &&
+      nextRewardDefinition.patternRewardRules.length === 0 &&
+      nextRewardDefinition.streakRewardRules.length === 0
+    ) {
+      if (input.rewardDefinition === null && !hasRewardFieldInput) {
+        return null
+      }
+      throw new BadRequestException('奖励配置不能为空')
+    }
+
+    return nextRewardDefinition
   }
 
   /** 断言已发布计划窗口之间不存在重叠。 */
