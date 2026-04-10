@@ -1,6 +1,7 @@
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto';
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
@@ -49,11 +50,10 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   })
   status!: ForumModeratorApplicationStatusEnum
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description:
       '申请权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    itemType: 'number',
-    itemEnum: ForumModeratorPermissionEnum,
+    enum: ForumModeratorPermissionEnum,
     example: [1, 2, 5],
     required: false,
   })

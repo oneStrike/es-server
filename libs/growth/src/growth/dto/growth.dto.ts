@@ -2,6 +2,7 @@ import { EventDefinitionDomainEnum, EventDefinitionGovernanceGateEnum, EventDefi
 import { TaskTypeEnum } from '@libs/growth/task/task.constant';
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
@@ -132,10 +133,9 @@ export class GrowthRuleTaskBindingSummaryDto {
   })
   enabledTaskCount!: number
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description: '关联任务场景类型列表',
-    itemType: 'number',
-    itemEnum: TaskTypeEnum,
+    enum: TaskTypeEnum,
     required: true,
     validation: false,
     example: [TaskTypeEnum.DAILY, TaskTypeEnum.CAMPAIGN],

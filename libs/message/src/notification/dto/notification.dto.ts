@@ -180,7 +180,6 @@ export class UpdateUserNotificationPreferencesDto {
   @ArrayProperty({
     description: '通知偏好更新项列表',
     itemClass: UpdateUserNotificationPreferenceItemDto,
-    itemType: 'object',
     required: true,
     minLength: 1,
   })
@@ -351,7 +350,6 @@ export class UserNotificationPreferenceListDto {
   @ArrayProperty({
     description: '通知偏好列表',
     itemClass: UserNotificationPreferenceItemDto,
-    itemType: 'object',
     validation: false,
   })
   list!: UserNotificationPreferenceItemDto[]

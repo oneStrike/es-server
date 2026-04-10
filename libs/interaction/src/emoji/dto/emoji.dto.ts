@@ -1,6 +1,7 @@
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
@@ -77,10 +78,9 @@ export class BaseEmojiPackDto extends BaseDto {
   })
   visibleInPicker!: boolean
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description: '场景类型（1=聊天,2=评论,3=论坛主题）',
-    itemType: 'number',
-    itemEnum: EmojiSceneEnum,
+    enum: EmojiSceneEnum,
     example: [...EMOJI_SCENE_VALUES],
     default: [...EMOJI_SCENE_VALUES],
   })

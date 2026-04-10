@@ -192,7 +192,6 @@ export class UserBadgeStatisticsDto {
   @ArrayProperty({
     description: '类型分布',
     itemClass: UserBadgeTypeDistributionItemDto,
-    itemType: 'object',
     validation: false,
   })
   typeDistribution!: UserBadgeTypeDistributionItemDto[]
@@ -200,7 +199,6 @@ export class UserBadgeStatisticsDto {
   @ArrayProperty({
     description: '热门徽章',
     itemClass: UserBadgeTopBadgeItemDto,
-    itemType: 'object',
     validation: false,
   })
   topBadges!: UserBadgeTopBadgeItemDto[]

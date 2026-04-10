@@ -1,24 +1,106 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ArrayPropertyOptions } from './types'
-import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils/is';
 import { applyDecorators } from '@nestjs/common'
 import { Transform, Type } from 'class-transformer'
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  ArrayNotEmpty,
   IsArray,
   IsBoolean,
-  IsEnum,
-  IsIn,
-  IsNotEmpty,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
-  MaxLength,
-  MinLength,
   ValidateBy,
   ValidateNested,
 } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
+
+type PrimitiveArrayItemType = 'string' | 'number' | 'boolean'
+
+interface PrimitiveArrayHelpers {
+  apiType: StringConstructor | NumberConstructor | BooleanConstructor
+  itemValidator: PropertyDecorator
+  normalizeItem: (item: unknown) => unknown
+}
+
+function resolvePrimitiveItemType(
+  options: ArrayPropertyOptions,
+): PrimitiveArrayItemType {
+  if (options.itemType === undefined) {
+    throw new Error('ArrayProperty: 基础类型数组必须提供 itemType')
+  }
+
+  return options.itemType
+}
+
+function createPrimitiveArrayHelpers(
+  itemType: PrimitiveArrayItemType,
+  options: ArrayPropertyOptions,
+): PrimitiveArrayHelpers {
+  const itemErrorMessage = options.itemErrorMessage
+
+  const helpersByType: Record<PrimitiveArrayItemType, PrimitiveArrayHelpers> = {
+    string: {
+      apiType: String,
+      itemValidator: IsString({
+        each: true,
+        message: itemErrorMessage || '数组中的每个元素都必须是字符串类型',
+      }),
+      normalizeItem: item =>
+        typeof item === 'string' ? item : String(item),
+    },
+    number: {
+      apiType: Number,
+      itemValidator: IsNumber(
+        {},
+        {
+          each: true,
+          message: itemErrorMessage || '数组中的每个元素都必须是数字类型',
+        },
+      ),
+      normalizeItem: (item) => {
+        if (typeof item !== 'string') {
+          return item
+        }
+
+        const trimmedItem = item.trim()
+        if (trimmedItem === '') {
+          return item
+        }
+
+        const numValue = Number(trimmedItem)
+        return Number.isNaN(numValue) ? item : numValue
+      },
+    },
+    boolean: {
+      apiType: Boolean,
+      itemValidator: IsBoolean({
+        each: true,
+        message: itemErrorMessage || '数组中的每个元素都必须是布尔类型',
+      }),
+      normalizeItem: (item) => {
+        if (typeof item !== 'string') {
+          return item
+        }
+
+        const lowerItem = item.toLowerCase().trim()
+        if (lowerItem === 'true' || lowerItem === '1') {
+          return true
+        }
+
+        if (lowerItem === 'false' || lowerItem === '0') {
+          return false
+        }
+
+        return item
+      },
+    },
+  }
+
+  return helpersByType[itemType]
+}
 
 /**
  * 数组属性装饰器
@@ -50,13 +132,13 @@ import { buildContractPropertyDecorators } from './contract'
  *
  *   @ArrayProperty({
  *     description: '配置对象列表',
- *     itemType: 'object',
+ *     itemClass: OrderConfigDto,
  *     example: [{ key: 'value' }],
  *     itemValidator: (value) => typeof value === 'object' && value !== null,
  *     itemErrorMessage: '数组中的每个元素都必须是有效的对象',
  *     required: true
  *   })
- *   configs: object[]
+ *   configs: OrderConfigDto[]
  * }
  * ```
  *
@@ -64,13 +146,18 @@ import { buildContractPropertyDecorators } from './contract'
  * @returns 装饰器函数
  */
 export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
-  const itemType = options.itemClass ? 'object' : options.itemType
-
   const inContract = options.contract ?? true
   const validation = inContract && (options.validation ?? true)
+  const required = options.required ?? true
+  const hasItemClass = Boolean(options.itemClass)
+  const primitiveHelpers = hasItemClass
+    ? undefined
+    : createPrimitiveArrayHelpers(resolvePrimitiveItemType(options), options)
 
-  if (options.itemEnum && itemType === 'object') {
-    throw new Error('ArrayProperty: itemEnum 仅支持 string/number/boolean 基础类型数组')
+  if ((options as { itemType?: string }).itemType === 'object') {
+    throw new Error(
+      'ArrayProperty: 对象数组必须通过 itemClass 定义，不支持 itemType: object',
+    )
   }
 
   if (
@@ -81,70 +168,21 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
     throw new Error('ArrayProperty: minLength 不能大于 maxLength')
   }
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
-    const getItemValidator = () => {
-      if (options.itemEnum) {
-        if (isNumberEnum(options.itemEnum)) {
-          const validValues = getNumberEnumValues(options.itemEnum)
-          return IsIn(validValues, {
-            each: true,
-            message:
-              options.itemErrorMessage
-              || `数组中的元素必须是有效的枚举值: ${validValues.join(', ')}`,
-          })
-        }
-
-        return IsEnum(options.itemEnum, {
-          each: true,
-          message:
-            options.itemErrorMessage
-            || `数组中的元素必须是有效的枚举值: ${Object.values(options.itemEnum).join(', ')}`,
-        })
-      }
-
-      switch (itemType) {
-        case 'string':
-          return IsString({
-            each: true,
-            message:
-              options.itemErrorMessage || '数组中的每个元素都必须是字符串类型',
-          })
-        case 'number':
-          return IsNumber(
-            {},
-            {
-              each: true,
-              message:
-                options.itemErrorMessage || '数组中的每个元素都必须是数字类型',
-            },
-          )
-        case 'boolean':
-          return IsBoolean({
-            each: true,
-            message:
-              options.itemErrorMessage || '数组中的每个元素都必须是布尔类型',
-          })
-        case 'object':
-          return IsObject({
+    decorators.push(
+      IsArray({ message: '必须是数组类型' }),
+      primitiveHelpers
+        ? primitiveHelpers.itemValidator
+        : IsObject({
             each: true,
             message:
               options.itemErrorMessage || '数组中的每个元素都必须是对象类型',
-          })
-        default:
-          return IsString({
-            each: true,
-            message:
-              (options as any).itemErrorMessage ||
-              '数组中的每个元素都必须是字符串类型',
-          })
-      }
-    }
+          }),
+    )
 
-    decorators.push(IsArray({ message: '必须是数组类型' }), getItemValidator())
-
-    if (itemType === 'object' && options.itemClass) {
+    if (hasItemClass && options.itemClass) {
       decorators.push(
         ValidateNested({ each: true }),
         Type(() => options.itemClass as any),
@@ -169,13 +207,13 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
       )
     }
 
-    if (options.required ?? true) {
-      decorators.push(IsNotEmpty({ message: '数组不能为空' }))
+    if (required) {
+      decorators.push(ArrayNotEmpty({ message: '数组不能为空' }))
     }
 
     if (options.maxLength !== undefined) {
       decorators.push(
-        MaxLength(options.maxLength, {
+        ArrayMaxSize(options.maxLength, {
           message: `数组长度不能超过${options.maxLength}个元素`,
         }),
       )
@@ -183,13 +221,13 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
     if (options.minLength !== undefined) {
       decorators.push(
-        MinLength(options.minLength, {
+        ArrayMinSize(options.minLength, {
           message: `数组长度不能少于${options.minLength}个元素`,
         }),
       )
     }
 
-    if (!(options.required ?? true)) {
+    if (!required) {
       decorators.push(IsOptional())
     }
 
@@ -204,43 +242,19 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
         if (Array.isArray(value)) {
           return value.map((item) => {
-            switch (itemType) {
-              case 'number':
-                if (typeof item === 'string') {
-                  const trimmedItem = item.trim()
-                  if (trimmedItem === '') {
-                    return item
-                  }
-                  const numValue = Number(trimmedItem)
-                  return Number.isNaN(numValue) ? item : numValue
-                }
-                return item
-              case 'boolean':
-                if (typeof item === 'string') {
-                  const lowerItem = item.toLowerCase().trim()
-                  if (lowerItem === 'true' || lowerItem === '1') {
-                    return true
-                  }
-                  if (lowerItem === 'false' || lowerItem === '0') {
-                    return false
-                  }
+            if (!primitiveHelpers) {
+              if (typeof item === 'string') {
+                try {
+                  return JSON.parse(item)
+                } catch {
                   return item
                 }
-                return item
-              case 'string':
-                return typeof item === 'string' ? item : String(item)
-              case 'object':
-                if (typeof item === 'string') {
-                  try {
-                    return JSON.parse(item)
-                  } catch {
-                    return item
-                  }
-                }
-                return item
-              default:
-                return item
+              }
+
+              return item
             }
+
+            return primitiveHelpers.normalizeItem(item)
           })
         }
 
@@ -255,28 +269,13 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
 
   decorators.push(
     ...buildContractPropertyDecorators(options, () => {
-      const getApiType = () => {
-        switch (itemType) {
-          case 'string':
-            return String
-          case 'number':
-            return Number
-          case 'boolean':
-            return Boolean
-          case 'object':
-            return Object
-          default:
-            return String
-        }
-      }
-
       const apiPropertyOptions: ApiPropertyOptions = {
         description: options.description,
         example: options.example,
-        required: options.required ?? true,
+        required,
         default: options.default,
-        nullable: !(options.required ?? true),
-        type: options.itemClass ?? getApiType(),
+        nullable: false,
+        type: options.itemClass ?? primitiveHelpers?.apiType ?? Object,
         isArray: true,
       }
 
@@ -285,9 +284,6 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
       }
       if (options.maxLength !== undefined) {
         apiPropertyOptions.maxItems = options.maxLength
-      }
-      if (options.itemEnum) {
-        apiPropertyOptions.enum = options.itemEnum
       }
 
       return apiPropertyOptions

@@ -173,7 +173,6 @@ export class MessageOutboxMonitorSummaryDto {
 
   @ArrayProperty({
     description: '按域+状态的分布',
-    itemType: 'object',
     itemClass: MessageOutboxDomainStatusItemDto,
     required: false,
     default: [],
@@ -182,7 +181,6 @@ export class MessageOutboxMonitorSummaryDto {
 
   @ArrayProperty({
     description: '失败错误分布 TopN',
-    itemType: 'object',
     itemClass: MessageOutboxErrorItemDto,
     required: false,
     default: [],

@@ -1,7 +1,12 @@
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import type { GeoRuntimeSource } from '../geo.types'
+import {
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+import { GEO_RUNTIME_SOURCE } from '../geo.types'
 
 /**
  * ip2region 运行状态 DTO。
@@ -24,13 +29,15 @@ export class Ip2regionRuntimeStatusDto {
   })
   reloading!: boolean
 
-  @StringProperty({
-    description: '当前生效库来源',
-    example: 'managed-active',
+  @EnumProperty({
+    description:
+      '当前生效库来源（managed-active=托管 active 目录；configured-path=环境变量显式路径；default-path=仓库默认路径；unavailable=当前无可用属地库）',
+    enum: GEO_RUNTIME_SOURCE,
+    example: GEO_RUNTIME_SOURCE.MANAGED_ACTIVE,
     required: true,
     validation: false,
   })
-  source!: string
+  source!: GeoRuntimeSource
 
   @StringProperty({
     description: '当前生效文件名',
@@ -42,7 +49,8 @@ export class Ip2regionRuntimeStatusDto {
 
   @StringProperty({
     description: '当前生效文件绝对路径',
-    example: 'D:/code/es/es-server/uploads/ip2region/active/20260408-120000-ip2region_v4.xdb',
+    example:
+      'D:/code/es/es-server/uploads/ip2region/active/20260408-120000-ip2region_v4.xdb',
     required: false,
     validation: false,
   })

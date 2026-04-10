@@ -418,7 +418,6 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   @ArrayProperty({
     description: '作者列表',
     itemClass: AuthorInfoDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })
@@ -427,7 +426,6 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   @ArrayProperty({
     description: '分类列表',
     itemClass: CategoryInfoDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })
@@ -436,7 +434,6 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   @ArrayProperty({
     description: '标签列表',
     itemClass: TagInfoDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })

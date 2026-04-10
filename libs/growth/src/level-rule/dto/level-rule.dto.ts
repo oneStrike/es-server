@@ -314,7 +314,6 @@ export class UserLevelStatisticsDto {
   @ArrayProperty({
     description: '等级分布',
     itemClass: UserLevelDistributionItemDto,
-    itemType: 'object',
     validation: false,
   })
   levelDistribution!: UserLevelDistributionItemDto[]

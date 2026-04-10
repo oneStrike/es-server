@@ -1,4 +1,3 @@
-import { BaseForumSectionGroupDto } from '@libs/forum/section-group/dto/forum-section-group.dto';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
@@ -224,10 +223,36 @@ export class QueryPublicForumSectionDetailDto extends IntersectionType(
 /**
  * 公开板块分组摘要 DTO。
  */
-export class ForumSectionGroupBriefDto extends PickType(
-  BaseForumSectionGroupDto,
-  ['id', 'name', 'description', 'sortOrder'] as const,
-) {}
+export class ForumSectionGroupBriefDto {
+  @NumberProperty({
+    description: '分组 ID',
+    example: 1,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '分组名称',
+    example: '技术讨论',
+    validation: false,
+  })
+  name!: string
+
+  @StringProperty({
+    description: '分组描述',
+    example: '包含所有技术相关的板块',
+    required: false,
+    validation: false,
+  })
+  description?: string | null
+
+  @NumberProperty({
+    description: '排序权重',
+    example: 0,
+    validation: false,
+  })
+  sortOrder!: number
+}
 
 /**
  * 公开板块列表项 DTO。

@@ -120,7 +120,6 @@ export class PublicForumSectionGroupListItemDto extends PickType(
   @ArrayProperty({
     description: '分组下的板块列表',
     itemClass: PublicForumSectionListItemDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })

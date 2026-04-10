@@ -1,10 +1,13 @@
 import type { FastifyRequest } from 'fastify'
 import { createWriteStream, promises as fs } from 'node:fs'
-import { basename, join, resolve } from 'node:path'
-import process from 'node:process'
+import { basename, join } from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
-import { GeoService } from '@libs/platform/modules/geo'
+import {
+  GEO_RUNTIME_SOURCE,
+  GeoService,
+  resolveGeoManagedStorageDir,
+} from '@libs/platform/modules/geo'
 import { LoggerService } from '@libs/platform/modules/logger'
 import {
   BadRequestException,
@@ -101,7 +104,7 @@ export class Ip2regionService {
       await fs.copyFile(tempPath, versionPath)
       await fs.copyFile(tempPath, activePath)
       const runtimeStatus = await this.geoService.reloadFromFile(activePath, {
-        source: 'managed-active',
+        source: GEO_RUNTIME_SOURCE.MANAGED_ACTIVE,
         fileName: stampedFileName,
         fileSize: fileStat.size,
         activatedAt,
@@ -147,12 +150,10 @@ export class Ip2regionService {
 
   /**
    * 获取 ip2region 专用存储根目录。
-   * 使用绝对路径，避免本地、CI 和部署环境的相对路径歧义。
+   * 复用 GeoService 的目录解析，避免上传链路与运行时恢复链路出现双份默认值。
    */
   private resolveStorageRoot() {
-    const configuredDir =
-      process.env.IP2REGION_DATA_DIR?.trim() || './uploads/ip2region'
-    return resolve(process.cwd(), configuredDir)
+    return resolveGeoManagedStorageDir()
   }
 
   /**

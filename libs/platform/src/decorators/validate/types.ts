@@ -78,8 +78,6 @@ export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
   minLength?: number
   /** 默认值 */
   default?: T[]
-  /** 数组元素枚举定义（可选，启用后自动进行枚举值校验） */
-  itemEnum?: EnumLike
   /** 数组元素验证器（可选，用于复杂类型验证） */
   itemValidator?: (value: any) => boolean
   /** 数组元素验证失败时的错误消息 */
@@ -94,12 +92,30 @@ export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
         itemClass?: never
       }
       | {
-        /** 数组元素类型，如果传入了 itemClass 可省略，自动推断为 object */
-        itemType?: 'object'
         /** 数组元素DTO类型（必传，用于深度校验和API文档） */
         itemClass: new (...args: any[]) => any
+        /** 对象数组不再通过 itemType 指定 */
+        itemType?: never
       }
   )
+
+/**
+ * 枚举数组属性选项
+ */
+export interface EnumArrayPropertyOptions extends BaseValidateOptions {
+  /** 示例值 */
+  example?: any[]
+  /** 数组最大长度 */
+  maxLength?: number
+  /** 数组最小长度 */
+  minLength?: number
+  /** 默认值 */
+  default?: any[]
+  /** 枚举对象，支持字符串和数字枚举 */
+  enum: EnumLike
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
+}
 
 /**
  * 日期属性选项
@@ -176,16 +192,6 @@ export interface RegexPropertyOptions extends BaseValidateOptions {
 export type EnumLike = Record<string | number, string | number>
 
 /**
- * 数字枚举类型定义
- * 专门用于位掩码验证，支持TypeScript数字枚举的双向映射
- * 允许字符串键映射到数字值，数字键映射到字符串值（反向映射）
- */
-export type NumberEnumLike =
-  | Record<string, number>
-  | Record<number, string>
-  | (Record<string, number> & Record<number, string>)
-
-/**
  * 枚举属性选项
  */
 export interface EnumPropertyOptions extends BaseValidateOptions {
@@ -199,16 +205,3 @@ export interface EnumPropertyOptions extends BaseValidateOptions {
   validation?: boolean
 }
 
-/**
- * 位掩码属性选项
- */
-export interface BitmaskPropertyOptions extends BaseValidateOptions {
-  /** 示例值 */
-  example?: number
-  /** 枚举对象，必须为数字枚举 */
-  enum: NumberEnumLike
-  /** 默认值 */
-  default?: number
-  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
-  validation?: boolean
-}

@@ -1,8 +1,8 @@
 // 导出验证装饰器
 export * from './validate/array-property'
-export * from './validate/bitmask-property'
 export * from './validate/boolean-property'
 export * from './validate/date-property'
+export * from './validate/enum-array-property'
 export * from './validate/enum-property'
 export * from './validate/json-property'
 export * from './validate/nested-property'

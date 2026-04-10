@@ -1,6 +1,7 @@
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
@@ -39,11 +40,10 @@ export class BaseForumModeratorDto extends IntersectionType(BaseDto, UserIdDto) 
   })
   roleType!: ForumModeratorRoleTypeEnum
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description:
       '版主权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    itemType: 'number',
-    itemEnum: ForumModeratorPermissionEnum,
+    enum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4, 5, 6],
     required: false,
   })
@@ -175,20 +175,18 @@ export class ForumModeratorSectionItemDto {
   })
   inheritFromParent!: boolean
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description: '板块自定义权限（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    itemType: 'number',
-    itemEnum: ForumModeratorPermissionEnum,
+    enum: ForumModeratorPermissionEnum,
     example: [1, 2],
     required: true,
     validation: false,
   })
   customPermissions!: ForumModeratorPermissionEnum[]
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description: '板块最终生效权限（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    itemType: 'number',
-    itemEnum: ForumModeratorPermissionEnum,
+    enum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4],
     required: true,
     validation: false,
@@ -197,10 +195,9 @@ export class ForumModeratorSectionItemDto {
 }
 
 export class ForumModeratorDto extends BaseForumModeratorDto {
-  @ArrayProperty({
+  @EnumArrayProperty({
     description: '权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    itemType: 'number',
-    itemEnum: ForumModeratorPermissionEnum,
+    enum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4, 5, 6],
     required: true,
     validation: false,
@@ -243,7 +240,6 @@ export class ForumModeratorDto extends BaseForumModeratorDto {
   @ArrayProperty({
     description: '管理的板块列表',
     itemClass: ForumModeratorSectionItemDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })

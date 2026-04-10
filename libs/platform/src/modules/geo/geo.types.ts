@@ -7,6 +7,17 @@ export const GEO_SOURCE = 'ip2region' as const
 export type GeoSource = typeof GEO_SOURCE
 
 /**
+ * 当前进程正在使用的属地库来源常量。
+ * 统一给运行状态、DTO 文档和管理端展示复用，避免字面量分叉。
+ */
+export const GEO_RUNTIME_SOURCE = {
+  MANAGED_ACTIVE: 'managed-active',
+  CONFIGURED_PATH: 'configured-path',
+  DEFAULT_PATH: 'default-path',
+  UNAVAILABLE: 'unavailable',
+} as const
+
+/**
  * 统一属地快照。
  * 所有写入链路与对外 DTO 统一复用这一组固定字段。
  */
@@ -28,10 +39,7 @@ export type GeoLookupResult = GeoSnapshot
  * 当前进程正在使用的属地库来源。
  */
 export type GeoRuntimeSource =
-  | 'managed-active'
-  | 'configured-path'
-  | 'default-path'
-  | 'unavailable'
+  (typeof GEO_RUNTIME_SOURCE)[keyof typeof GEO_RUNTIME_SOURCE]
 
 /**
  * active 目录中的当前生效库元信息。
@@ -60,7 +68,7 @@ export interface GeoRuntimeStatus {
  * 热切换时写入当前运行状态所需的最小元信息。
  */
 export interface GeoReloadFileInfo {
-  source?: Exclude<GeoRuntimeSource, 'unavailable'>
+  source?: Exclude<GeoRuntimeSource, typeof GEO_RUNTIME_SOURCE.UNAVAILABLE>
   fileName?: string
   fileSize?: number
   activatedAt?: Date

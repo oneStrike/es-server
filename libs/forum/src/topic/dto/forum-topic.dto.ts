@@ -210,7 +210,6 @@ export class BaseForumTopicDto extends BaseDto {
   @ArrayProperty({
     description: '敏感词命中记录',
     itemClass: BaseSensitiveWordHitDto,
-    itemType: 'object',
     required: false,
     validation: false,
   })
@@ -636,7 +635,6 @@ export class AdminForumTopicDetailDto extends PickType(BaseForumTopicDto, [
   @ArrayProperty({
     description: '主题标签关联',
     itemClass: AdminForumTopicTagRelationDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })

@@ -1,9 +1,13 @@
 import type { EnumPropertyOptions } from './types'
-import { getNumberEnumValues, isNumberEnum } from '@libs/platform/utils/is';
 import { applyDecorators } from '@nestjs/common'
 import { Transform } from 'class-transformer'
-import { IsEnum, IsIn, IsOptional } from 'class-validator'
+import { IsOptional } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
+import {
+  createEnumValueValidator,
+  normalizeEnumPropertyValue,
+  resolveEnumValidationArtifacts,
+} from './enum-shared'
 
 /**
  * 枚举属性装饰器
@@ -51,30 +55,17 @@ import { buildContractPropertyDecorators } from './contract'
 export function EnumProperty(options: EnumPropertyOptions) {
   const inContract = options.contract ?? true
   const validation = inContract && (options.validation ?? true)
-  const isNumEnum = isNumberEnum(options.enum)
+  const required = options.required ?? true
+  const enumArtifacts = resolveEnumValidationArtifacts(options.enum)
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
-    // 对于数字枚举，使用 IsIn 替代 IsEnum，避免双向映射问题
-    // TypeScript 数字枚举会生成反向映射（如 1 -> 'CREATE_TOPIC'），
-    // IsEnum 会把反向映射的字符串也当作有效值，这是我们不想要的
-    if (isNumEnum) {
-      const validValues = getNumberEnumValues(options.enum)
-      decorators.push(
-        IsIn(validValues, {
-          message: `必须是有效的枚举值: ${validValues.join(', ')}`,
-        }),
-      )
-    } else {
-      decorators.push(
-        IsEnum(options.enum, {
-          message: `必须是有效的枚举值: ${Object.values(options.enum).join(', ')}`,
-        }),
-      )
-    }
+    decorators.push(createEnumValueValidator(options.enum, enumArtifacts, {
+      message: `必须是有效的枚举值: ${enumArtifacts.validValues.join(', ')}`,
+    }))
 
-    if (!(options.required ?? true)) {
+    if (!required) {
       decorators.push(IsOptional())
     }
 
@@ -91,23 +82,7 @@ export function EnumProperty(options: EnumPropertyOptions) {
           return value
         }
 
-        if (isNumEnum && typeof value === 'string') {
-          const trimmedValue = value.trim()
-          if (trimmedValue === '') {
-            return undefined
-          }
-          const numValue = Number(trimmedValue)
-          const validValues = getNumberEnumValues(options.enum)
-          if (!Number.isNaN(numValue) && validValues.includes(numValue)) {
-            return numValue
-          }
-        }
-
-        if (typeof value === 'string') {
-          return value.trim()
-        }
-
-        return value
+        return normalizeEnumPropertyValue(value, enumArtifacts)
       }),
     )
 
@@ -120,9 +95,9 @@ export function EnumProperty(options: EnumPropertyOptions) {
     ...buildContractPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
-      required: options.required ?? true,
+      required,
       default: options.default,
-      nullable: !(options.required ?? true),
+      nullable: !required,
       enum: options.enum,
     })),
   )

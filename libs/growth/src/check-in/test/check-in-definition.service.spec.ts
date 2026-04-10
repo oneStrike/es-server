@@ -1,4 +1,5 @@
 import * as schema from '@db/schema'
+import { PgDialect } from 'drizzle-orm/pg-core'
 import { CheckInDefinitionService } from '../check-in-definition.service'
 import {
   CheckInCycleTypeEnum,
@@ -7,9 +8,13 @@ import {
 } from '../check-in.constant'
 
 describe('check-in definition service', () => {
+  const dialect = new PgDialect()
+
   let service: CheckInDefinitionService
   let drizzle: any
   let dbSelectLimitMock: jest.Mock
+  let txSelectLimitMock: jest.Mock
+  let txExecuteMock: jest.Mock
   let planInsertValuesMock: jest.Mock
   let planInsertReturningMock: jest.Mock
   let planUpdateSetMock: jest.Mock
@@ -20,6 +25,8 @@ describe('check-in definition service', () => {
 
   beforeEach(() => {
     dbSelectLimitMock = jest.fn().mockResolvedValue([])
+    txSelectLimitMock = jest.fn().mockResolvedValue([])
+    txExecuteMock = jest.fn().mockResolvedValue(undefined)
     planInsertReturningMock = jest.fn().mockResolvedValue([
       {
         id: 11,
@@ -38,6 +45,14 @@ describe('check-in definition service', () => {
     streakRuleInsertValuesMock = jest.fn().mockResolvedValue(undefined)
 
     const tx = {
+      execute: txExecuteMock,
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: txSelectLimitMock,
+          })),
+        })),
+      })),
       insert: jest.fn((table: unknown) => {
         if (table === schema.checkInPlan) {
           return {
@@ -82,6 +97,9 @@ describe('check-in definition service', () => {
             })),
           })),
         })),
+        update: jest.fn(() => ({
+          set: planUpdateSetMock,
+        })),
       },
       ext: {
         findPagination: jest.fn(),
@@ -98,7 +116,7 @@ describe('check-in definition service', () => {
   })
 
   it('创建计划时只写入基础信息，不直接落奖励配置', async () => {
-    await service.createPlan(
+    const result = await service.createPlan(
       {
         planCode: 'growth-check-in',
         planName: '成长签到',
@@ -125,9 +143,31 @@ describe('check-in definition service', () => {
         updatedById: 99,
       }),
     )
+    expect(result).toEqual({ id: 11 })
     expect(dateRuleInsertValuesMock).not.toHaveBeenCalled()
     expect(patternRuleInsertValuesMock).not.toHaveBeenCalled()
     expect(streakRuleInsertValuesMock).not.toHaveBeenCalled()
+  })
+
+  it('发布计划创建时会在事务内加咨询锁后再校验生效窗口', async () => {
+    jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue(null)
+
+    await service.createPlan(
+      {
+        planCode: 'growth-check-in',
+        planName: '成长签到',
+        status: CheckInPlanStatusEnum.PUBLISHED,
+        cycleType: CheckInCycleTypeEnum.MONTHLY,
+        startDate: '2026-04-01',
+        endDate: '2026-04-30',
+        allowMakeupCountPerCycle: 2,
+      },
+      99,
+    )
+
+    expect(txExecuteMock).toHaveBeenCalledTimes(1)
+    const rendered = dialect.sqlToQuery(txExecuteMock.mock.calls[0][0]).sql
+    expect(rendered).toContain('pg_advisory_xact_lock')
   })
 
   it('周计划创建时会拦截未对齐周一的开始日期', async () => {
@@ -147,7 +187,8 @@ describe('check-in definition service', () => {
   })
 
   it('已发布计划创建时会拦截与其他已发布窗口重叠的时间段', async () => {
-    dbSelectLimitMock.mockResolvedValueOnce([{ id: 99 }])
+    txSelectLimitMock.mockResolvedValueOnce([{ id: 99 }])
+    jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue(null)
 
     await expect(
       service.createPlan(
@@ -485,5 +526,28 @@ describe('check-in definition service', () => {
         status: 1,
       },
     ])
+  })
+
+  it('发布计划状态更新时会在事务内加咨询锁', async () => {
+    jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
+      id: 11,
+      status: CheckInPlanStatusEnum.DRAFT,
+      startDate: '2026-04-01',
+      endDate: '2026-04-30',
+    })
+    jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue(null)
+
+    await service.updatePlanStatus(
+      {
+        id: 11,
+        status: CheckInPlanStatusEnum.PUBLISHED,
+      },
+      99,
+    )
+
+    expect(drizzle.withTransaction).toHaveBeenCalledTimes(1)
+    expect(txExecuteMock).toHaveBeenCalledTimes(1)
+    const rendered = dialect.sqlToQuery(txExecuteMock.mock.calls[0][0]).sql
+    expect(rendered).toContain('pg_advisory_xact_lock')
   })
 })

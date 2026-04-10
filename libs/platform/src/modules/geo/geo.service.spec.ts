@@ -17,11 +17,50 @@ jest.mock('ip2region.js', () => ({
 
 describe('geoService', () => {
   const previousDataDir = process.env.IP2REGION_DATA_DIR
+  const previousCwd = process.cwd()
 
   afterEach(async () => {
     process.env.IP2REGION_DATA_DIR = previousDataDir
     delete process.env.IP2REGION_XDB_PATH
+    process.chdir(previousCwd)
     jest.clearAllMocks()
+  })
+
+  it('未配置 IP2REGION_DATA_DIR 时仍会从默认托管目录恢复 active 库', async () => {
+    const workspaceDir = await mkdtemp(join(tmpdir(), 'geo-default-storage-'))
+    const activeDir = join(workspaceDir, 'uploads', 'ip2region', 'active')
+    const activeFileName = '20260409-120000-ip2region_v4.xdb'
+    const activeFilePath = join(activeDir, activeFileName)
+    const activatedAt = '2026-04-09T12:00:00.000Z'
+
+    delete process.env.IP2REGION_DATA_DIR
+    process.chdir(workspaceDir)
+
+    await mkdir(activeDir, { recursive: true })
+    await writeFile(activeFilePath, 'test')
+    await writeFile(
+      join(activeDir, 'metadata.json'),
+      JSON.stringify({
+        activeFileName,
+        originalFileName: 'ip2region_v4.xdb',
+        activatedAt,
+        fileSize: 4,
+      }),
+    )
+
+    const service = new GeoService()
+
+    await expect(service.getRuntimeStatus()).resolves.toMatchObject({
+      ready: true,
+      source: 'managed-active',
+      fileName: activeFileName,
+      filePath: activeFilePath,
+      fileSize: 4,
+      storageDir: join(workspaceDir, 'uploads', 'ip2region'),
+    })
+
+    process.chdir(previousCwd)
+    await rm(workspaceDir, { recursive: true, force: true })
   })
 
   it('状态查询会优先识别 active 目录中的当前生效库', async () => {

@@ -62,7 +62,7 @@ export function NestedProperty(options: NestedPropertyOptions) {
         type: options.type,
       }
 
-      if (options.example) {
+      if (options.example !== undefined) {
         apiPropertyOptions.example = options.example
       }
 
@@ -73,7 +73,7 @@ export function NestedProperty(options: NestedPropertyOptions) {
       if (options.nullable !== undefined) {
         apiPropertyOptions.nullable = options.nullable
       } else {
-        apiPropertyOptions.nullable = !options.required
+        apiPropertyOptions.nullable = false
       }
 
       return apiPropertyOptions

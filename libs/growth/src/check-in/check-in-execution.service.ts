@@ -27,6 +27,7 @@ import {
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
@@ -42,6 +43,14 @@ import {
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
+
+const CHECK_IN_CYCLE_WRITE_RETRY_LIMIT = 3
+
+class CheckInCycleVersionConflictError extends Error {
+  constructor() {
+    super('check-in cycle version conflict')
+  }
+}
 
 /**
  * 签到执行服务。
@@ -136,140 +145,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
 
     const plan = await this.getCurrentActivePlan(now)
-    const action = await this.drizzle.withTransaction(async (tx) => {
-      const cycle = await this.createOrGetCycle(tx, plan, input.userId, now)
-      const snapshot = this.getCycleSnapshot(cycle)
-
-      if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
-        this.assertMakeupAllowed(input.signDate, today, cycle, snapshot)
-      }
-      const rewardResolution = this.resolveSnapshotRewardForDate(
-        snapshot,
-        input.signDate,
-      )
-
-      const existingRecord = await this.findRecordByUniqueKey(
-        input.userId,
-        plan.id,
-        input.signDate,
-        tx,
-      )
-      if (existingRecord) {
-        return this.buildActionResultFromExisting(
-          existingRecord,
-          cycle,
-          snapshot,
-        )
-      }
-
-      const [insertedRecord] = await tx
-        .insert(this.checkInRecordTable)
-        .values(
-          this.buildRecordInsert({
-            userId: input.userId,
-            planId: plan.id,
-            cycleId: cycle.id,
-            cycleKey: cycle.cycleKey,
-            signDate: input.signDate,
-            recordType: input.recordType,
-            operatorType: input.operatorType,
-            rewardApplicable: Boolean(rewardResolution.resolvedRewardConfig),
-            resolvedRewardSourceType:
-              rewardResolution.resolvedRewardSourceType,
-            resolvedRewardRuleId: rewardResolution.resolvedRewardRuleId,
-            resolvedRewardConfig: rewardResolution.resolvedRewardConfig,
-            context: input.context,
-          }),
-        )
-        .onConflictDoNothing()
-        .returning()
-
-      if (!insertedRecord) {
-        const duplicatedRecord = await this.findRecordByUniqueKey(
-          input.userId,
-          plan.id,
-          input.signDate,
-          tx,
-        )
-        if (!duplicatedRecord) {
-          throw new NotFoundException('签到记录创建失败')
-        }
-        return this.buildActionResultFromExisting(
-          duplicatedRecord,
-          cycle,
-          snapshot,
-        )
-      }
-
-      const records = await this.listCycleRecords(cycle.id, tx)
-      const aggregation = this.recomputeCycleAggregation(records)
-      if (aggregation.makeupUsedCount > snapshot.allowMakeupCountPerCycle) {
-        throw new BadRequestException('已超过当前周期补签上限')
-      }
-
-      await tx
-        .update(this.checkInCycleTable)
-        .set({
-          currentStreak: aggregation.currentStreak,
-          lastSignedDate: aggregation.lastSignedDate ?? null,
-          makeupUsedCount: aggregation.makeupUsedCount,
-          signedCount: aggregation.signedCount,
-          version: sql`${this.checkInCycleTable.version} + 1`,
-        })
-        .where(eq(this.checkInCycleTable.id, cycle.id))
-
-      const existingGrants = await this.listCycleGrants(cycle.id, tx)
-      const candidates = this.resolveEligibleGrantCandidates(
-        snapshot.streakRewardRules,
-        aggregation.streakByDate,
-        existingGrants,
-      )
-
-      const triggeredGrantIds: number[] = []
-      for (const candidate of candidates) {
-        const [grant] = await tx
-          .insert(this.checkInStreakRewardGrantTable)
-          .values(
-            this.buildGrantInsert({
-              userId: input.userId,
-              planId: plan.id,
-              cycleId: cycle.id,
-              ruleId: candidate.rule.id,
-              triggerSignDate: candidate.triggerSignDate,
-              planSnapshotVersion: cycle.planSnapshotVersion,
-              context: {
-                source:
-                  input.recordType === CheckInRecordTypeEnum.MAKEUP
-                    ? 'makeup_recompute'
-                    : 'sign_recompute',
-              },
-            }),
-          )
-          .onConflictDoNothing()
-          .returning()
-
-        if (grant) {
-          triggeredGrantIds.push(grant.id)
-        }
-      }
-
-      return {
-        recordId: insertedRecord.id,
-        cycleId: cycle.id,
-        signDate: input.signDate,
-        recordType: insertedRecord.recordType,
-        rewardStatus: insertedRecord.rewardStatus,
-        rewardResultType: insertedRecord.rewardResultType,
-        currentStreak: aggregation.currentStreak,
-        signedCount: aggregation.signedCount,
-        remainingMakeupCount: Math.max(
-          snapshot.allowMakeupCountPerCycle - aggregation.makeupUsedCount,
-          0,
-        ),
-        triggeredGrantIds,
-        alreadyExisted: false,
-      } satisfies CheckInActionResponseDto
-    })
+    const action = await this.performSignWithRetry(plan, input, now, today)
 
     if (!action.alreadyExisted) {
       await this.settleRecordReward(action.recordId, {
@@ -284,6 +160,191 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       alreadyExisted: action.alreadyExisted,
       triggeredGrantIds: action.triggeredGrantIds,
     })
+  }
+
+  /**
+   * 对周期聚合回写使用版本冲突重试。
+   *
+   * 同一周期内不同签到日可能并发进入，因此在 `check_in_cycle.version` 冲突时重跑整笔事务，
+   * 重新读取周期事实并按最新聚合结果回写摘要。
+   */
+  private async performSignWithRetry(
+    plan: CheckInPlanSelect,
+    input: {
+      userId: number
+      signDate: string
+      recordType: CheckInRecordTypeEnum
+      operatorType: CheckInOperatorTypeEnum
+      context?: Record<string, unknown>
+    },
+    now: Date,
+    today: string,
+  ) {
+    for (
+      let attempt = 0;
+      attempt < CHECK_IN_CYCLE_WRITE_RETRY_LIMIT;
+      attempt++
+    ) {
+      try {
+        return await this.drizzle.withTransaction(async (tx) => {
+          const cycle = await this.createOrGetCycle(tx, plan, input.userId, now)
+          const snapshot = this.getCycleSnapshot(cycle)
+
+          if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
+            this.assertMakeupAllowed(input.signDate, today, cycle, snapshot)
+          }
+          const rewardResolution = this.resolveSnapshotRewardForDate(
+            snapshot,
+            input.signDate,
+          )
+
+          const existingRecord = await this.findRecordByUniqueKey(
+            input.userId,
+            plan.id,
+            input.signDate,
+            tx,
+          )
+          if (existingRecord) {
+            return this.buildActionResultFromExisting(
+              existingRecord,
+              cycle,
+              snapshot,
+            )
+          }
+
+          const [insertedRecord] = await tx
+            .insert(this.checkInRecordTable)
+            .values(
+              this.buildRecordInsert({
+                userId: input.userId,
+                planId: plan.id,
+                cycleId: cycle.id,
+                cycleKey: cycle.cycleKey,
+                signDate: input.signDate,
+                recordType: input.recordType,
+                operatorType: input.operatorType,
+                rewardApplicable: Boolean(rewardResolution.resolvedRewardConfig),
+                resolvedRewardSourceType:
+                  rewardResolution.resolvedRewardSourceType,
+                resolvedRewardRuleId: rewardResolution.resolvedRewardRuleId,
+                resolvedRewardConfig: rewardResolution.resolvedRewardConfig,
+                context: input.context,
+              }),
+            )
+            .onConflictDoNothing()
+            .returning()
+
+          if (!insertedRecord) {
+            const duplicatedRecord = await this.findRecordByUniqueKey(
+              input.userId,
+              plan.id,
+              input.signDate,
+              tx,
+            )
+            if (!duplicatedRecord) {
+              throw new NotFoundException('签到记录创建失败')
+            }
+            return this.buildActionResultFromExisting(
+              duplicatedRecord,
+              cycle,
+              snapshot,
+            )
+          }
+
+          const records = await this.listCycleRecords(cycle.id, tx)
+          const aggregation = this.recomputeCycleAggregation(records)
+          if (aggregation.makeupUsedCount > snapshot.allowMakeupCountPerCycle) {
+            throw new BadRequestException('已超过当前周期补签上限')
+          }
+
+          const cycleUpdateResult = await tx
+            .update(this.checkInCycleTable)
+            .set({
+              currentStreak: aggregation.currentStreak,
+              lastSignedDate: aggregation.lastSignedDate ?? null,
+              makeupUsedCount: aggregation.makeupUsedCount,
+              signedCount: aggregation.signedCount,
+              version: sql`${this.checkInCycleTable.version} + 1`,
+            })
+            .where(
+              and(
+                eq(this.checkInCycleTable.id, cycle.id),
+                eq(this.checkInCycleTable.version, cycle.version),
+              ),
+            )
+
+          if (cycleUpdateResult.rowCount === 0) {
+            throw new CheckInCycleVersionConflictError()
+          }
+
+          const existingGrants = await this.listCycleGrants(cycle.id, tx)
+          const candidates = this.resolveEligibleGrantCandidates(
+            snapshot.streakRewardRules,
+            aggregation.streakByDate,
+            existingGrants,
+          )
+
+          const triggeredGrantIds: number[] = []
+          for (const candidate of candidates) {
+            const [grant] = await tx
+              .insert(this.checkInStreakRewardGrantTable)
+              .values(
+                this.buildGrantInsert({
+                  userId: input.userId,
+                  planId: plan.id,
+                  cycleId: cycle.id,
+                  ruleId: candidate.rule.id,
+                  triggerSignDate: candidate.triggerSignDate,
+                  planSnapshotVersion: cycle.planSnapshotVersion,
+                  context: {
+                    source:
+                      input.recordType === CheckInRecordTypeEnum.MAKEUP
+                        ? 'makeup_recompute'
+                        : 'sign_recompute',
+                  },
+                }),
+              )
+              .onConflictDoNothing()
+              .returning()
+
+            if (grant) {
+              triggeredGrantIds.push(grant.id)
+            }
+          }
+
+          return {
+            recordId: insertedRecord.id,
+            cycleId: cycle.id,
+            signDate: input.signDate,
+            recordType: insertedRecord.recordType,
+            rewardStatus: insertedRecord.rewardStatus,
+            rewardResultType: insertedRecord.rewardResultType,
+            currentStreak: aggregation.currentStreak,
+            signedCount: aggregation.signedCount,
+            remainingMakeupCount: Math.max(
+              snapshot.allowMakeupCountPerCycle - aggregation.makeupUsedCount,
+              0,
+            ),
+            triggeredGrantIds,
+            alreadyExisted: false,
+          } satisfies CheckInActionResponseDto
+        })
+      } catch (error) {
+        if (
+          error instanceof CheckInCycleVersionConflictError &&
+          attempt < CHECK_IN_CYCLE_WRITE_RETRY_LIMIT - 1
+        ) {
+          continue
+        }
+
+        if (error instanceof CheckInCycleVersionConflictError) {
+          throw new ConflictException('签到周期并发冲突，请稍后重试')
+        }
+        throw error
+      }
+    }
+
+    throw new ConflictException('签到周期并发冲突，请稍后重试')
   }
 
   /**
@@ -831,6 +892,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
       return true
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error
+      }
+
       const message =
         error instanceof Error ? error.message : '签到基础奖励发放失败'
       this.logger.warn(
@@ -914,6 +979,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
       return true
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error
+      }
+
       const message =
         error instanceof Error ? error.message : '连续奖励发放失败'
       this.logger.warn(

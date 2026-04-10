@@ -1,6 +1,7 @@
 import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
 import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
@@ -61,12 +62,11 @@ export class BaseCategoryDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description: '分类关联的内容类型（1=漫画；2=小说；3=帖子）',
     example: [ContentTypeEnum.COMIC],
     required: false,
-    itemType: 'number',
-    itemEnum: ContentTypeEnum,
+    enum: ContentTypeEnum,
   })
   contentType?: ContentTypeEnum[] | null
 

@@ -121,7 +121,6 @@ export class ForumTagDetailResponseDto extends BaseForumTagDto {
   @ArrayProperty({
     description: '最近使用该标签的主题列表',
     itemClass: ForumTagTopicSummaryDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })

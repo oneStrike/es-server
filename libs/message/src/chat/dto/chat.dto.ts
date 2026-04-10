@@ -288,7 +288,6 @@ export class ChatConversationMessagesResponseDto {
   @ArrayProperty({
     description: '消息列表',
     itemClass: BaseChatMessageDto,
-    itemType: 'object',
     validation: false,
   })
   list!: BaseChatMessageDto[]

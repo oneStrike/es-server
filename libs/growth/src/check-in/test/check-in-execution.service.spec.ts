@@ -4,10 +4,13 @@ import {
   GrowthLedgerActionEnum,
   GrowthLedgerSourceEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { NotFoundException } from '@nestjs/common'
 import { CheckInExecutionService } from '../check-in-execution.service'
 import {
+  CheckInCycleTypeEnum,
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
+  CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
   CheckInRewardSourceTypeEnum,
   CheckInRewardStatusEnum,
@@ -224,5 +227,201 @@ describe('check-in execution service', () => {
       recordId: 100,
       success: true,
     })
+  })
+
+  it('repairReward 遇到不存在的签到记录时会保留 404 语义', async () => {
+    const tx = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue([]),
+          })),
+        })),
+      })),
+    }
+
+    const service = new CheckInExecutionService(
+      {
+        db: {
+          update: jest.fn(() => ({
+            set: jest.fn(() => ({
+              where: jest.fn().mockResolvedValue({ rowCount: 0 }),
+            })),
+          })),
+        },
+        schema,
+        withTransaction: jest.fn(
+          async (fn: (input: typeof tx) => Promise<unknown>) => fn(tx),
+        ),
+        withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+      } as any,
+      {} as any,
+    )
+
+    await expect(
+      service.repairReward(
+        {
+          targetType: CheckInRepairTargetTypeEnum.RECORD_REWARD,
+          recordId: 404,
+        } as any,
+        99,
+      ),
+    ).rejects.toThrow(new NotFoundException('签到记录不存在'))
+  })
+
+  it('repairReward 遇到不存在的连续奖励发放事实时会保留 404 语义', async () => {
+    const tx = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue([]),
+          })),
+        })),
+      })),
+    }
+
+    const service = new CheckInExecutionService(
+      {
+        db: {
+          update: jest.fn(() => ({
+            set: jest.fn(() => ({
+              where: jest.fn().mockResolvedValue({ rowCount: 0 }),
+            })),
+          })),
+        },
+        schema,
+        withTransaction: jest.fn(
+          async (fn: (input: typeof tx) => Promise<unknown>) => fn(tx),
+        ),
+        withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+      } as any,
+      {} as any,
+    )
+
+    await expect(
+      service.repairReward(
+        {
+          targetType: CheckInRepairTargetTypeEnum.STREAK_GRANT,
+          grantId: 405,
+        } as any,
+        99,
+      ),
+    ).rejects.toThrow(new NotFoundException('连续奖励发放事实不存在'))
+  })
+
+  it('周期聚合版本冲突时会重试签到事务', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-10T12:00:00.000Z'))
+
+    let attempt = 0
+    const drizzle = {
+      db: {},
+      schema,
+      withTransaction: jest.fn(async (fn: (tx: any) => Promise<unknown>) => {
+        attempt += 1
+        const currentAttempt = attempt
+        const tx = {
+          insert: jest.fn((table: unknown) => {
+            if (table === schema.checkInRecord) {
+              return {
+                values: jest.fn(() => ({
+                  onConflictDoNothing: jest.fn(() => ({
+                    returning: jest.fn().mockResolvedValue([
+                      {
+                        id: 100 + currentAttempt,
+                        recordType: CheckInRecordTypeEnum.NORMAL,
+                        rewardStatus: null,
+                        rewardResultType: null,
+                      },
+                    ]),
+                  })),
+                })),
+              }
+            }
+
+            if (table === schema.checkInStreakRewardGrant) {
+              return {
+                values: jest.fn(() => ({
+                  onConflictDoNothing: jest.fn(() => ({
+                    returning: jest.fn().mockResolvedValue([]),
+                  })),
+                })),
+              }
+            }
+
+            throw new Error('unexpected insert target')
+          }),
+          update: jest.fn((table: unknown) => {
+            if (table === schema.checkInCycle) {
+              return {
+                set: jest.fn(() => ({
+                  where: jest
+                    .fn()
+                    .mockResolvedValue(
+                      currentAttempt === 1 ? { rowCount: 0 } : { rowCount: 1 },
+                    ),
+                })),
+              }
+            }
+
+            throw new Error('unexpected update target')
+          }),
+        }
+
+        return fn(tx)
+      }),
+    }
+
+    const service = new CheckInExecutionService(drizzle as any, {} as any)
+    jest.spyOn(service as any, 'getCurrentActivePlan').mockResolvedValue({
+      id: 1,
+      version: 1,
+    })
+    jest.spyOn(service as any, 'createOrGetCycle').mockResolvedValue({
+      id: 2,
+      cycleKey: 'week-2026-04-06',
+      planSnapshotVersion: 1,
+      version: 0,
+      planSnapshot: {
+        cycleType: CheckInCycleTypeEnum.WEEKLY,
+        allowMakeupCountPerCycle: 2,
+        baseRewardConfig: null,
+        dateRewardRules: [],
+        patternRewardRules: [],
+        streakRewardRules: [],
+      },
+    })
+    jest.spyOn(service as any, 'findRecordByUniqueKey').mockResolvedValue(undefined)
+    jest.spyOn(service as any, 'listCycleRecords').mockResolvedValue([
+      {
+        signDate: '2026-04-10',
+        recordType: CheckInRecordTypeEnum.NORMAL,
+      },
+    ])
+    jest.spyOn(service as any, 'listCycleGrants').mockResolvedValue([])
+    jest
+      .spyOn(service as any, 'resolveEligibleGrantCandidates')
+      .mockReturnValue([])
+    jest.spyOn(service as any, 'settleRecordReward').mockResolvedValue(true)
+    jest.spyOn(service as any, 'settleGrantReward').mockResolvedValue(true)
+    jest.spyOn(service as any, 'buildLatestActionView').mockResolvedValue({
+      recordId: 102,
+      cycleId: 2,
+      signDate: '2026-04-10',
+      recordType: CheckInRecordTypeEnum.NORMAL,
+      rewardStatus: null,
+      rewardResultType: null,
+      resolvedRewardSourceType: null,
+      resolvedRewardRuleId: null,
+      resolvedRewardConfig: null,
+      currentStreak: 1,
+      signedCount: 1,
+      remainingMakeupCount: 2,
+      triggeredGrantIds: [],
+      alreadyExisted: false,
+    })
+
+    await service.signToday(9)
+
+    expect(drizzle.withTransaction).toHaveBeenCalledTimes(2)
   })
 })

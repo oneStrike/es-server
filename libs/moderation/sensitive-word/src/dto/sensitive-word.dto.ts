@@ -234,7 +234,6 @@ export class SensitiveWordDetectResponseDto {
   @ArrayProperty({
     description: '命中的敏感词列表',
     itemClass: BaseSensitiveWordHitDto,
-    itemType: 'object',
     validation: false,
   })
   hits!: BaseSensitiveWordHitDto[]
@@ -410,7 +409,6 @@ export class SensitiveWordStatisticsResponseDto {
   @ArrayProperty({
     description: '统计结果',
     itemClass: Object,
-    itemType: 'object',
     validation: false,
   })
   data!: Array<
@@ -445,7 +443,6 @@ export class SensitiveWordStatisticsDataDto {
   @ArrayProperty({
     description: '级别统计',
     itemClass: SensitiveWordLevelStatisticsDto,
-    itemType: 'object',
     validation: false,
   })
   levelStatistics!: SensitiveWordLevelStatisticsDto[]
@@ -453,7 +450,6 @@ export class SensitiveWordStatisticsDataDto {
   @ArrayProperty({
     description: '类型统计',
     itemClass: SensitiveWordTypeStatisticsDto,
-    itemType: 'object',
     validation: false,
   })
   typeStatistics!: SensitiveWordTypeStatisticsDto[]
@@ -461,7 +457,6 @@ export class SensitiveWordStatisticsDataDto {
   @ArrayProperty({
     description: '热门命中词',
     itemClass: SensitiveWordTopHitStatisticsDto,
-    itemType: 'object',
     validation: false,
   })
   topHitWords!: SensitiveWordTopHitStatisticsDto[]
@@ -469,7 +464,6 @@ export class SensitiveWordStatisticsDataDto {
   @ArrayProperty({
     description: '最近命中词',
     itemClass: SensitiveWordTopHitStatisticsDto,
-    itemType: 'object',
     validation: false,
   })
   recentHitWords!: SensitiveWordTopHitStatisticsDto[]

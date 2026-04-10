@@ -97,7 +97,6 @@ export class CheckInRecordItemDto extends OmitType(BaseCheckInRecordDto, [
   @ArrayProperty({
     description: '该签到日期触发的连续奖励列表。',
     itemClass: CheckInGrantItemDto,
-    itemType: 'object',
     validation: false,
   })
   grants!: CheckInGrantItemDto[]
@@ -244,7 +243,6 @@ class CheckInCalendarContextDto {
   @ArrayProperty({
     description: '当前周期日历。',
     itemClass: CheckInCalendarDayDto,
-    itemType: 'object',
     validation: false,
   })
   days!: CheckInCalendarDayDto[]
@@ -262,7 +260,6 @@ export class CheckInReconciliationItemDto extends IntersectionType(
   @ArrayProperty({
     description: '关联的连续奖励发放列表。',
     itemClass: CheckInGrantItemDto,
-    itemType: 'object',
     validation: false,
   })
   grants!: CheckInGrantItemDto[]

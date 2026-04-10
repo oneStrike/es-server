@@ -1,6 +1,7 @@
 import { EnablePlatformEnum } from '@libs/platform/constant/base.constant';
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
@@ -50,12 +51,11 @@ export class BaseAppPageDto extends BaseDto {
   })
   title!: string
 
-  @ArrayProperty({
+  @EnumArrayProperty({
     description: '启用的平台（1=H5；2=App；3=小程序）',
     example: [EnablePlatformEnum.APP],
     required: false,
-    itemType: 'number',
-    itemEnum: EnablePlatformEnum,
+    enum: EnablePlatformEnum,
   })
   enablePlatform?: EnablePlatformEnum[] | null
 

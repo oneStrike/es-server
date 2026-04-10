@@ -49,7 +49,6 @@ class CheckInPlanRewardConfigFieldsDto {
   @ArrayProperty({
     description: '具体日期奖励规则列表。',
     itemClass: CreateCheckInDateRewardRuleDto,
-    itemType: 'object',
     required: false,
   })
   dateRewardRules?: CreateCheckInDateRewardRuleDto[]
@@ -57,7 +56,6 @@ class CheckInPlanRewardConfigFieldsDto {
   @ArrayProperty({
     description: '周期模式奖励规则列表。',
     itemClass: CreateCheckInPatternRewardRuleDto,
-    itemType: 'object',
     required: false,
   })
   patternRewardRules?: CreateCheckInPatternRewardRuleDto[]
@@ -65,7 +63,6 @@ class CheckInPlanRewardConfigFieldsDto {
   @ArrayProperty({
     description: '连续签到奖励规则列表。',
     itemClass: CreateCheckInStreakRewardRuleDto,
-    itemType: 'object',
     required: false,
   })
   streakRewardRules?: CreateCheckInStreakRewardRuleDto[]
@@ -120,7 +117,6 @@ export class CheckInPlanDetailResponseDto extends CheckInPlanPageItemDto {
   @ArrayProperty({
     description: '当前版本具体日期奖励规则列表。',
     itemClass: CheckInDateRewardRuleItemDto,
-    itemType: 'object',
     validation: false,
   })
   dateRewardRules!: CheckInDateRewardRuleItemDto[]
@@ -128,7 +124,6 @@ export class CheckInPlanDetailResponseDto extends CheckInPlanPageItemDto {
   @ArrayProperty({
     description: '当前版本周期模式奖励规则列表。',
     itemClass: CheckInPatternRewardRuleItemDto,
-    itemType: 'object',
     validation: false,
   })
   patternRewardRules!: CheckInPatternRewardRuleItemDto[]
@@ -136,7 +131,6 @@ export class CheckInPlanDetailResponseDto extends CheckInPlanPageItemDto {
   @ArrayProperty({
     description: '当前版本连续奖励规则列表。',
     itemClass: CheckInStreakRewardRuleItemDto,
-    itemType: 'object',
     validation: false,
   })
   streakRewardRules!: CheckInStreakRewardRuleItemDto[]

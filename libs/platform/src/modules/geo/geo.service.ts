@@ -7,23 +7,40 @@ import type {
   GeoManagedActiveMetadata,
   GeoReloadFileInfo,
   GeoRuntimeStatus,
+  GeoSnapshot,
 } from './geo.types'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 import process from 'node:process'
-import { extractClientRequestContext, extractIpAddress, extractRequestContext } from '@libs/platform/utils/requestParse'
+import {
+  extractClientRequestContext,
+  extractIpAddress,
+  extractRequestContext,
+} from '@libs/platform/utils/requestParse'
 import { Injectable } from '@nestjs/common'
 import * as ip2region from 'ip2region.js'
-import { mergeGeoClientContext, parseIpRegionText } from './geo.helpers'
+import { GEO_RUNTIME_SOURCE, GEO_SOURCE } from './geo.types'
 
 const DEFAULT_IP2REGION_DB_PATH = resolve(
   process.cwd(),
   'db/resources/ip2region/ip2region_v4.xdb',
 )
+const DEFAULT_IP2REGION_MANAGED_STORAGE_DIR = './uploads/ip2region'
 const { IPv4, loadContentFromFile, newWithBuffer } = ip2region
 const ip2regionWithVerify = ip2region as typeof ip2region & {
   verifyFromFile: (dbPath: string) => void
 }
+const EMPTY_GEO_TOKENS = new Set([
+  '',
+  '0',
+  'null',
+  'undefined',
+  '内网IP',
+  'unknown',
+  '未知',
+  'local',
+  'localhost',
+])
 
 function normalizeLookupIp(ip?: string) {
   const normalized = ip?.trim()
@@ -36,6 +53,60 @@ function normalizeLookupIp(ip?: string) {
     : normalized
 }
 
+function normalizeGeoSegment(value?: string) {
+  const normalized = value?.trim()
+  if (!normalized) {
+    return undefined
+  }
+
+  return EMPTY_GEO_TOKENS.has(normalized) ? undefined : normalized
+}
+
+/**
+ * 解析 ip2region 托管目录。
+ * 未配置环境变量时回退到管理端上传默认目录，确保热切换后的 active 库在进程重启后仍可恢复。
+ */
+export function resolveGeoManagedStorageDir(
+  configuredDir = process.env.IP2REGION_DATA_DIR?.trim(),
+) {
+  return resolve(
+    process.cwd(),
+    configuredDir || DEFAULT_IP2REGION_MANAGED_STORAGE_DIR,
+  )
+}
+
+/**
+ * 解析 ip2region 返回的 region 文本。
+ * `ip2region_v4.xdb` 当前返回 `国家|省份|城市|运营商|国家代码`，末位国家代码不落库。
+ */
+function parseIpRegionText(regionText?: string) {
+  const [country, province, city, isp] = (regionText ?? '')
+    .split('|')
+    .map((segment) => normalizeGeoSegment(segment))
+
+  return {
+    geoCountry: country,
+    geoProvince: province,
+    geoCity: city,
+    geoIsp: isp,
+    geoSource: GEO_SOURCE,
+  }
+}
+
+/**
+ * 将属地快照合并进客户端上下文。
+ * 保持原有 `ip/userAgent/deviceInfo` 结构不变，只补充统一属地字段。
+ */
+function mergeGeoClientContext(
+  context: ClientRequestContext,
+  geo: GeoSnapshot,
+) {
+  return {
+    ...context,
+    ...geo,
+  }
+}
+
 @Injectable()
 export class GeoService implements OnModuleDestroy {
   private searcher?: Searcher
@@ -45,20 +116,17 @@ export class GeoService implements OnModuleDestroy {
 
   /**
    * 获取 ip2region 托管目录。
-   * 未配置时返回 undefined，保留旧的单文件加载模式。
+   * 未配置时回退到管理端默认上传目录，保持运行时与后台管理目录解析一致。
    */
   private getManagedStorageDir() {
-    const configuredDir = process.env.IP2REGION_DATA_DIR?.trim()
-    return configuredDir || undefined
+    return resolveGeoManagedStorageDir()
   }
 
   /**
    * 读取 active 目录元信息。
    * 元信息损坏时降级为 undefined，避免状态文件问题拖垮主链路。
    */
-  private readManagedActiveMetadata():
-    | { storageDir: string, metadata: GeoManagedActiveMetadata }
-    | undefined {
+  private readManagedActiveMetadata() {
     const storageDir = this.getManagedStorageDir()
     if (!storageDir) {
       return undefined
@@ -91,7 +159,7 @@ export class GeoService implements OnModuleDestroy {
    * 解析 active 目录中的当前生效文件。
    * 优先读取 metadata.json，缺失时退回到 active 目录中的最新 `.xdb` 文件。
    */
-  private resolveManagedActiveStatus(): GeoRuntimeStatus | undefined {
+  private resolveManagedActiveStatus() {
     const metadataResult = this.readManagedActiveMetadata()
     if (metadataResult) {
       const { storageDir, metadata } = metadataResult
@@ -100,7 +168,7 @@ export class GeoService implements OnModuleDestroy {
       if (existsSync(filePath)) {
         return {
           ready: true,
-          source: 'managed-active',
+          source: GEO_RUNTIME_SOURCE.MANAGED_ACTIVE,
           filePath,
           fileName: metadata.activeFileName,
           fileSize: metadata.fileSize ?? statSync(filePath).size,
@@ -136,7 +204,7 @@ export class GeoService implements OnModuleDestroy {
 
     return {
       ready: true,
-      source: 'managed-active',
+      source: GEO_RUNTIME_SOURCE.MANAGED_ACTIVE,
       filePath,
       fileName: activeFileName,
       fileSize: fileStat.size,
@@ -149,7 +217,7 @@ export class GeoService implements OnModuleDestroy {
    * 解析当前应加载的属地库状态。
    * 按优先级依次尝试托管 active 文件、显式配置路径和仓库内默认库。
    */
-  private resolvePreferredStatus(): GeoRuntimeStatus {
+  private resolvePreferredStatus() {
     const managedStatus = this.resolveManagedActiveStatus()
     if (managedStatus) {
       return managedStatus
@@ -161,7 +229,7 @@ export class GeoService implements OnModuleDestroy {
       const fileStat = statSync(configuredPath)
       return {
         ready: true,
-        source: 'configured-path',
+        source: GEO_RUNTIME_SOURCE.CONFIGURED_PATH,
         filePath: configuredPath,
         fileName: basename(configuredPath),
         fileSize: fileStat.size,
@@ -174,7 +242,7 @@ export class GeoService implements OnModuleDestroy {
       const fileStat = statSync(DEFAULT_IP2REGION_DB_PATH)
       return {
         ready: true,
-        source: 'default-path',
+        source: GEO_RUNTIME_SOURCE.DEFAULT_PATH,
         filePath: DEFAULT_IP2REGION_DB_PATH,
         fileName: basename(DEFAULT_IP2REGION_DB_PATH),
         fileSize: fileStat.size,
@@ -185,7 +253,7 @@ export class GeoService implements OnModuleDestroy {
 
     return {
       ready: false,
-      source: 'unavailable',
+      source: GEO_RUNTIME_SOURCE.UNAVAILABLE,
       storageDir,
     }
   }
@@ -207,12 +275,12 @@ export class GeoService implements OnModuleDestroy {
   private buildStatusFromFile(
     filePath: string,
     info: GeoReloadFileInfo = {},
-  ): GeoRuntimeStatus {
+  ) {
     const fileStat = existsSync(filePath) ? statSync(filePath) : undefined
 
     return {
       ready: true,
-      source: info.source ?? 'configured-path',
+      source: info.source ?? GEO_RUNTIME_SOURCE.CONFIGURED_PATH,
       filePath,
       fileName: info.fileName ?? basename(filePath),
       fileSize: info.fileSize ?? fileStat?.size,
@@ -231,26 +299,28 @@ export class GeoService implements OnModuleDestroy {
     }
 
     if (!this.initializePromise) {
-      this.initializePromise = Promise.resolve().then(() => {
-        const preferredStatus = this.resolvePreferredStatus()
-        const dbPath = preferredStatus.filePath
-        if (!dbPath || !existsSync(dbPath)) {
-          this.unavailable = true
-          this.activeStatus = preferredStatus
-          return
-        }
+      this.initializePromise = Promise.resolve()
+        .then(() => {
+          const preferredStatus = this.resolvePreferredStatus()
+          const dbPath = preferredStatus.filePath
+          if (!dbPath || !existsSync(dbPath)) {
+            this.unavailable = true
+            this.activeStatus = preferredStatus
+            return
+          }
 
-        this.searcher = this.createSearcherFromFile(dbPath)
-        this.unavailable = false
-        this.activeStatus = preferredStatus
-      }).catch(() => {
-        this.unavailable = true
-        this.searcher = undefined
-        this.activeStatus = {
-          ...this.resolvePreferredStatus(),
-          ready: false,
-        }
-      })
+          this.searcher = this.createSearcherFromFile(dbPath)
+          this.unavailable = false
+          this.activeStatus = preferredStatus
+        })
+        .catch(() => {
+          this.unavailable = true
+          this.searcher = undefined
+          this.activeStatus = {
+            ...this.resolvePreferredStatus(),
+            ready: false,
+          }
+        })
     }
 
     await this.initializePromise
@@ -322,7 +392,9 @@ export class GeoService implements OnModuleDestroy {
     try {
       // ip2region.js 运行时返回 Promise<string>，但内置类型仍声明为 string，
       // 这里统一包一层 Promise.resolve，兼容实际运行时与错误类型定义。
-      const regionText = await Promise.resolve(this.searcher.search(normalizedIp))
+      const regionText = await Promise.resolve(
+        this.searcher.search(normalizedIp),
+      )
       return parseIpRegionText(regionText)
     } catch {
       return emptyGeo

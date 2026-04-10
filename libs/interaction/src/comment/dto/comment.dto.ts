@@ -466,7 +466,6 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
   @ArrayProperty({
     description: '楼中楼预览（最多3条）',
     itemClass: CommentPreviewReplyDto,
-    itemType: 'object',
     required: true,
     validation: false,
   })

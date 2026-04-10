@@ -36,13 +36,14 @@ import { buildContractPropertyDecorators } from './contract'
 export function BooleanProperty(options: BooleanPropertyOptions) {
   const inContract = options.contract ?? true
   const validation = inContract && (options.validation ?? true)
+  const required = options.required ?? true
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
     decorators.push(IsBoolean({ message: '必须是布尔类型' }))
 
-    if (!(options.required ?? true)) {
+    if (!required) {
       decorators.push(IsOptional())
     }
 
@@ -67,7 +68,15 @@ export function BooleanProperty(options: BooleanPropertyOptions) {
         }
 
         if (typeof value === 'number') {
-          return value !== 0
+          if (value === 1) {
+            return true
+          }
+
+          if (value === 0) {
+            return false
+          }
+
+          return value
         }
 
         return value
@@ -83,9 +92,9 @@ export function BooleanProperty(options: BooleanPropertyOptions) {
     ...buildContractPropertyDecorators(options, () => ({
       description: options.description,
       example: options.example,
-      required: options.required ?? true,
+      required,
       default: options.default,
-      nullable: !(options.required ?? true),
+      nullable: !required,
       type: Boolean,
     })),
   )
