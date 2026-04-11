@@ -1,9 +1,15 @@
-import { FavoriteStatusResponseDto, FavoriteTargetDto, FavoriteTopicPageItemDto, FavoriteWorkPageItemDto } from '@libs/interaction/favorite/dto/favorite.dto';
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import {
+  FavoriteStatusResponseDto,
+  FavoriteTargetDto,
+  FavoriteTopicPageItemDto,
+  FavoriteWorkPageItemDto,
+  QueryUserFavoriteDto,
+} from '@libs/interaction/favorite/dto/favorite.dto'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -62,31 +68,31 @@ export class FavoriteController {
 
   @Get('work/page')
   @ApiPageDoc({
-    summary: '分页查询我收藏的作品',
+    summary: '分页查询用户收藏的作品',
     model: FavoriteWorkPageItemDto,
   })
   async workPage(
-    @Query() query: PageDto,
+    @Query() query: QueryUserFavoriteDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.favoriteService.getUserWorkFavorites({
       ...query,
-      userId,
+      userId: query.userId || userId,
     })
   }
 
   @Get('topic/page')
   @ApiPageDoc({
-    summary: '分页查询我收藏的论坛主题',
+    summary: '分页查询用户收藏的论坛主题',
     model: FavoriteTopicPageItemDto,
   })
   async topicPage(
-    @Query() query: PageDto,
+    @Query() query: QueryUserFavoriteDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.favoriteService.getUserTopicFavorites({
       ...query,
-      userId,
+      userId: query.userId || userId,
     })
   }
 }

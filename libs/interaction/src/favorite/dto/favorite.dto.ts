@@ -1,13 +1,13 @@
-import { PageWorkDto } from '@libs/content/work/core/dto/work.dto';
-import { PublicForumTopicPageItemDto } from '@libs/forum/topic/dto/forum-topic.dto';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
-import { IntersectionType, PickType } from '@nestjs/swagger'
+import { PageWorkDto } from '@libs/content/work/core/dto/work.dto'
+import { PublicForumTopicPageItemDto } from '@libs/forum/topic/dto/forum-topic.dto'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FavoriteTargetTypeEnum } from '../favorite.constant'
 
 /**
@@ -92,3 +92,8 @@ export class FavoriteTopicPageItemDto extends BaseFavoriteDto {
   })
   topic!: PublicForumTopicPageItemDto
 }
+
+export class QueryUserFavoriteDto extends IntersectionType(
+  PartialType(UserIdDto),
+  PageDto,
+) {}

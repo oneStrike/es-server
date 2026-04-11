@@ -1,7 +1,22 @@
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
-import { ChangeMyPhoneDto, QueryMyBadgeDto, QueryMyExperienceRecordDto, QueryMyPointRecordDto, UpdateMyProfileDto, UserBadgeItemDto, UserCenterDto, UserExperienceRecordDto, UserExperienceStatsDto, UserPointRecordDto, UserPointStatsDto, UserStatusSummaryDto } from '@libs/user/dto/user-self.dto';
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { UserIdDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
+import {
+  ChangeMyPhoneDto,
+  QueryMyBadgeDto,
+  QueryMyExperienceRecordDto,
+  QueryMyPointRecordDto,
+  QueryUserCenterDto,
+  UpdateMyProfileDto,
+  UserBadgeItemDto,
+  UserCenterDto,
+  UserExperienceRecordDto,
+  UserExperienceStatsDto,
+  UserPointRecordDto,
+  UserPointStatsDto,
+  UserStatusSummaryDto,
+} from '@libs/user/dto/user-self.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UserService } from './user.service'
@@ -61,8 +76,11 @@ export class UserController {
     summary: '获取用户中心汇总信息',
     model: UserCenterDto,
   })
-  async getCenter(@CurrentUser('sub') userId: number) {
-    return this.userService.getUserCenter(userId)
+  async getCenter(
+    @CurrentUser('sub') userId: number,
+    @Query() query: QueryUserCenterDto,
+  ) {
+    return this.userService.getUserCenter(query.userId || userId)
   }
 
   /**

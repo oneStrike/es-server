@@ -1,16 +1,28 @@
-import type { ForumTopicClientContext } from '@libs/forum/topic/forum-topic.type';
+import type { ForumTopicClientContext } from '@libs/forum/topic/forum-topic.type'
 import type { FastifyRequest } from 'fastify'
-import { UserProfileService } from '@libs/forum/profile/profile.service';
-import { CreateUserForumTopicDto, MyForumTopicItemDto, PublicForumTopicDetailDto, PublicForumTopicPageItemDto, QueryForumTopicCommentPageDto, QueryMyForumTopicDto, QueryPublicForumTopicDto, UpdateForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto';
-import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
-import { CommentService } from '@libs/interaction/comment/comment.service';
-import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { GeoService } from '@libs/platform/modules/geo';
-import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
+import { UserProfileService } from '@libs/forum/profile/profile.service'
+import {
+  CreateUserForumTopicDto,
+  MyForumTopicItemDto,
+  PublicForumTopicDetailDto,
+  PublicForumTopicPageItemDto,
+  QueryForumTopicCommentPageDto,
+  QueryUserForumTopicDto,
+  QueryPublicForumTopicDto,
+  UpdateForumTopicDto,
+} from '@libs/forum/topic/dto/forum-topic.dto'
+import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
+import { CommentService } from '@libs/interaction/comment/comment.service'
+import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { OptionalAuth } from '@libs/platform/decorators/public.decorator'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { GeoService } from '@libs/platform/modules/geo'
+import {
+  extractRequestContext,
+  serializeDeviceInfo,
+} from '@libs/platform/utils'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -22,7 +34,7 @@ export class ForumTopicController {
     private readonly userProfileService: UserProfileService,
     private readonly commentService: CommentService,
     private readonly geoService: GeoService,
-  ) { }
+  ) {}
 
   private async buildTopicClientContext(
     req: FastifyRequest,
@@ -100,14 +112,14 @@ export class ForumTopicController {
 
   @Get('my/page')
   @ApiPageDoc({
-    summary: '分页查询我发布的主题',
+    summary: '分页查询用户发布的主题',
     model: MyForumTopicItemDto,
   })
   async getMyTopicPage(
-    @Query() query: QueryMyForumTopicDto,
+    @Query() query: QueryUserForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.userProfileService.getMyTopics(userId, query)
+    return this.userProfileService.getMyTopics(query.userId || userId, query)
   }
 
   @Post('create')
@@ -120,10 +132,13 @@ export class ForumTopicController {
     @CurrentUser('sub') userId: number,
     @Req() req: FastifyRequest,
   ) {
-    return this.forumTopicService.createForumTopic({
-      ...body,
-      userId,
-    }, await this.buildTopicClientContext(req))
+    return this.forumTopicService.createForumTopic(
+      {
+        ...body,
+        userId,
+      },
+      await this.buildTopicClientContext(req),
+    )
   }
 
   @Post('update')

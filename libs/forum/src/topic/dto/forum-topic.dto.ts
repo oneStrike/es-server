@@ -13,7 +13,7 @@ import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { BaseDto, IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
@@ -337,8 +337,9 @@ export class QueryPublicForumTopicDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['sectionId'] as const),
 ) {}
 
-export class QueryMyForumTopicDto extends PartialType(
-  QueryPublicForumTopicDto,
+export class QueryUserForumTopicDto extends IntersectionType(
+  PartialType(UserIdDto),
+  PickType(BaseForumTopicDto, ['sectionId'] as const),
 ) {}
 
 export class ForumTopicSectionBriefDto extends PickType(BaseForumSectionDto, [
