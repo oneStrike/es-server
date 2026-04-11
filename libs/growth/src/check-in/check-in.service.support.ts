@@ -240,7 +240,7 @@ export abstract class CheckInServiceSupport {
   }
 
   /**
-   * 归一化周期模式奖励规则输入，并在配置阶段阻断同日双命中的冲突。
+   * 归一化周期模式奖励规则输入，并在配置阶段阻断重复规则。
    */
   protected normalizePatternRewardRules(
     rules:
@@ -345,23 +345,6 @@ export abstract class CheckInServiceSupport {
         )
       }
 
-      const monthLastDayRule = normalizedRules.find(
-        (rule) =>
-          rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
-      )
-      if (
-        monthLastDayRule &&
-        normalizedRules.some(
-          (rule) =>
-            rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
-            rule.monthDay !== null &&
-            [29, 30, 31].includes(rule.monthDay),
-        )
-      ) {
-        throw new BadRequestException(
-          'MONTH_LAST_DAY 不能与 MONTH_DAY=29/30/31 同时配置',
-        )
-      }
     }
 
     return normalizedRules.sort((left, right) =>
@@ -593,6 +576,7 @@ export abstract class CheckInServiceSupport {
    * 基于当前计划奖励定义解析指定签到日期的基础奖励配置。
    *
    * 解析顺序固定为：具体日期奖励 > 周期模式奖励 > 默认基础奖励。
+   * 月计划内若同日同时命中 MONTH_LAST_DAY 与 MONTH_DAY，则 MONTH_LAST_DAY 优先。
    */
   protected resolveRewardForDate(
     cycleType: CheckInCycleTypeEnum,
@@ -613,8 +597,10 @@ export abstract class CheckInServiceSupport {
       }
     }
 
-    const patternRule = rewardDefinition.patternRewardRules.find((item) =>
-      this.matchesPatternRewardRule(cycleType, item, signDate),
+    const patternRule = this.resolvePatternRewardRuleByPriority(
+      cycleType,
+      rewardDefinition.patternRewardRules,
+      signDate,
     )
     if (patternRule) {
       return {
@@ -876,6 +862,36 @@ export abstract class CheckInServiceSupport {
     }
 
     return (left.monthDay ?? 0) - (right.monthDay ?? 0)
+  }
+
+  /**
+   * 按固定优先级解析周期模式奖励规则，避免同一自然日多规则同时命中时出现歧义。
+   */
+  private resolvePatternRewardRuleByPriority(
+    cycleType: CheckInCycleTypeEnum,
+    rules: CheckInPatternRewardRuleView[],
+    signDate: string,
+  ) {
+    if (cycleType === CheckInCycleTypeEnum.MONTHLY) {
+      const monthLastDayRule = rules.find(
+        (rule) =>
+          rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
+          this.matchesPatternRewardRule(cycleType, rule, signDate),
+      )
+      if (monthLastDayRule) {
+        return monthLastDayRule
+      }
+
+      return rules.find(
+        (rule) =>
+          rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
+          this.matchesPatternRewardRule(cycleType, rule, signDate),
+      )
+    }
+
+    return rules.find((rule) =>
+      this.matchesPatternRewardRule(cycleType, rule, signDate),
+    )
   }
 
   /** 判断指定自然日是否命中某条周期模式奖励规则。 */

@@ -228,6 +228,61 @@ describe('check-in definition service', () => {
     ).rejects.toThrow('当前周期内不允许立即切换签到计划')
   })
 
+  it('更新计划时允许 MONTH_LAST_DAY 与 MONTH_DAY=31 共存', async () => {
+    jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
+      id: 11,
+      planCode: 'growth-check-in',
+      planName: '成长签到',
+      status: CheckInPlanStatusEnum.DRAFT,
+      cycleType: CheckInCycleTypeEnum.MONTHLY,
+      startDate: '2026-04-01',
+      endDate: '2026-04-30',
+      allowMakeupCountPerCycle: 2,
+      rewardDefinition: null,
+    })
+    txSelectLimitMock.mockResolvedValue([])
+
+    await service.updatePlan(
+      {
+        id: 11,
+        patternRewardRules: [
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+            rewardConfig: { points: 30 },
+          },
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+            monthDay: 31,
+            rewardConfig: { experience: 31 },
+          },
+        ],
+      },
+      99,
+    )
+
+    expect(planUpdateSetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rewardDefinition: expect.objectContaining({
+          patternRewardRules: expect.arrayContaining([
+            {
+              patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+              weekday: null,
+              monthDay: null,
+              rewardConfig: { points: 30 },
+            },
+            {
+              patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+              weekday: null,
+              monthDay: 31,
+              rewardConfig: { experience: 31 },
+            },
+          ]),
+        }),
+        updatedById: 99,
+      }),
+    )
+  })
+
   it('更新计划时会覆盖当前 rewardDefinition', async () => {
     jest.spyOn(service as any, 'getPlanById').mockResolvedValue({
       id: 11,

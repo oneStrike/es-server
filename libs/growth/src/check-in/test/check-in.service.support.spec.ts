@@ -65,26 +65,38 @@ describe('check-in service support reward rules', () => {
     ).toThrow(new BadRequestException('具体日期奖励必须落在计划窗口内'))
   })
 
-  it('会拦截月计划里 MONTH_LAST_DAY 与 MONTH_DAY=31 的冲突配置', () => {
-    expect(() =>
-      service.callNormalizePatternRewardRules(
-        [
-          {
-            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
-            rewardConfig: { points: 88 },
-          },
-          {
-            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
-            monthDay: 31,
-            rewardConfig: { experience: 31 },
-          },
-        ],
-        CheckInCycleTypeEnum.MONTHLY,
-      ),
-    ).toThrow(
-      new BadRequestException(
-        'MONTH_LAST_DAY 不能与 MONTH_DAY=29/30/31 同时配置',
-      ),
+  it('允许月计划里 MONTH_LAST_DAY 与 MONTH_DAY=31 共存', () => {
+    const normalizedRules = service.callNormalizePatternRewardRules(
+      [
+        {
+          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+          rewardConfig: { points: 88 },
+        },
+        {
+          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+          monthDay: 31,
+          rewardConfig: { experience: 31 },
+        },
+      ],
+      CheckInCycleTypeEnum.MONTHLY,
+    )
+
+    expect(normalizedRules).toHaveLength(2)
+    expect(normalizedRules).toEqual(
+      expect.arrayContaining([
+        {
+          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+          weekday: null,
+          monthDay: null,
+          rewardConfig: { points: 88 },
+        },
+        {
+          patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+          weekday: null,
+          monthDay: 31,
+          rewardConfig: { experience: 31 },
+        },
+      ]),
     )
   })
 
@@ -145,7 +157,7 @@ describe('check-in service support reward rules', () => {
     })
   })
 
-  it('会按具体日期规则 > 周期模式规则 > 默认奖励顺序解析，并返回稳定规则键', () => {
+  it('会按具体日期规则 > 月底模式 > 月固定日期模式 > 默认奖励顺序解析，并返回稳定规则键', () => {
     const dateHit = service.callResolveRewardForDate(
       CheckInCycleTypeEnum.MONTHLY,
       {
@@ -180,12 +192,47 @@ describe('check-in service support reward rules', () => {
       resolvedRewardConfig: { points: 300 },
     })
 
+    const monthLastDayHit = service.callResolveRewardForDate(
+      CheckInCycleTypeEnum.MONTHLY,
+      {
+        baseRewardConfig: { points: 5 },
+        dateRewardRules: [],
+        patternRewardRules: [
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+            weekday: null,
+            monthDay: null,
+            rewardConfig: { points: 30 },
+          },
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+            weekday: null,
+            monthDay: 30,
+            rewardConfig: { experience: 15 },
+          },
+        ],
+      },
+      '2026-04-30',
+    )
+
+    expect(monthLastDayHit).toEqual({
+      resolvedRewardSourceType: 'PATTERN_RULE',
+      resolvedRewardRuleKey: 'MONTH_LAST_DAY',
+      resolvedRewardConfig: { points: 30 },
+    })
+
     const patternHit = service.callResolveRewardForDate(
       CheckInCycleTypeEnum.MONTHLY,
       {
         baseRewardConfig: { points: 5 },
         dateRewardRules: [],
         patternRewardRules: [
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+            weekday: null,
+            monthDay: null,
+            rewardConfig: { points: 30 },
+          },
           {
             patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
             weekday: null,

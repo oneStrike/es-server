@@ -41,7 +41,8 @@ class CheckInPlanRewardConfigFieldsDto {
   dateRewardRules?: CreateCheckInDateRewardRuleDto[]
 
   @ArrayProperty({
-    description: '周期模式奖励规则列表。',
+    description:
+      '周期模式奖励规则列表；月计划同日同时命中时按 MONTH_LAST_DAY 优先于 MONTH_DAY 解析。',
     itemClass: CreateCheckInPatternRewardRuleDto,
     required: false,
   })
