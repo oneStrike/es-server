@@ -10,17 +10,25 @@ import type {
   WsSendPayload,
 } from './notification-websocket.types'
 import process from 'node:process'
-import { isDevelopment } from '@libs/platform/utils/env';
+import {
+  getPlatformErrorCode,
+  PlatformErrorCode,
+} from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { isDevelopment } from '@libs/platform/utils/env'
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
-  NotFoundException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
-import { ChatMessageTypeEnum, MESSAGE_CHAT_SERVICE_TOKEN } from '../chat/chat.constant'
+import {
+  ChatMessageTypeEnum,
+  MESSAGE_CHAT_SERVICE_TOKEN,
+} from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 
 const DIGIT_STRING_REGEX = /^\d+$/
@@ -190,7 +198,9 @@ export class MessageWebSocketService {
       try {
         client.send(message)
       } catch (error) {
-        this.logger.warn(`Failed to push native WS event: ${this.stringifyError(error)}`)
+        this.logger.warn(
+          `Failed to push native WS event: ${this.stringifyError(error)}`,
+        )
         this.unregisterNativeClient(userId, client)
       }
     }
@@ -243,8 +253,9 @@ export class MessageWebSocketService {
     }
 
     try {
-      const clientMessageId
-        = typeof payload.clientMessageId === 'string' && payload.clientMessageId.trim()
+      const clientMessageId =
+        typeof payload.clientMessageId === 'string' &&
+        payload.clientMessageId.trim()
           ? payload.clientMessageId.trim()
           : undefined
       const result = await this.getMessageChatService().sendMessage(userId, {
@@ -314,10 +325,10 @@ export class MessageWebSocketService {
 
     const payload = body?.payload
     if (
-      !payload
-      || !this.isPositiveInteger(payload.conversationId)
-      || typeof payload.messageId !== 'string'
-      || !DIGIT_STRING_REGEX.test(payload.messageId.trim())
+      !payload ||
+      !this.isPositiveInteger(payload.conversationId) ||
+      typeof payload.messageId !== 'string' ||
+      !DIGIT_STRING_REGEX.test(payload.messageId.trim())
     ) {
       return this.finishAck(
         {
@@ -330,10 +341,13 @@ export class MessageWebSocketService {
     }
 
     try {
-      const result = await this.getMessageChatService().markConversationRead(userId, {
-        conversationId: payload.conversationId,
-        messageId: payload.messageId.trim(),
-      })
+      const result = await this.getMessageChatService().markConversationRead(
+        userId,
+        {
+          conversationId: payload.conversationId,
+          messageId: payload.messageId.trim(),
+        },
+      )
 
       return this.finishAck(
         {
@@ -481,8 +495,8 @@ export class MessageWebSocketService {
    */
   private getQueryToken(request: IncomingMessage) {
     try {
-      const host
-        = typeof request.headers.host === 'string' && request.headers.host.trim()
+      const host =
+        typeof request.headers.host === 'string' && request.headers.host.trim()
           ? request.headers.host
           : 'localhost'
       const url = new URL(request.url ?? '/', `http://${host}`)
@@ -528,9 +542,9 @@ export class MessageWebSocketService {
    */
   private isValidMessageType(value: unknown) {
     return (
-      value === ChatMessageTypeEnum.TEXT
-      || value === ChatMessageTypeEnum.IMAGE
-      || value === ChatMessageTypeEnum.SYSTEM
+      value === ChatMessageTypeEnum.TEXT ||
+      value === ChatMessageTypeEnum.IMAGE ||
+      value === ChatMessageTypeEnum.SYSTEM
     )
   }
 
@@ -549,22 +563,18 @@ export class MessageWebSocketService {
       return false
     }
     if (
-      payload.clientMessageId !== undefined
-      && (
-        typeof payload.clientMessageId !== 'string'
-        || !payload.clientMessageId.trim()
-        || payload.clientMessageId.trim().length > 64
-      )
+      payload.clientMessageId !== undefined &&
+      (typeof payload.clientMessageId !== 'string' ||
+        !payload.clientMessageId.trim() ||
+        payload.clientMessageId.trim().length > 64)
     ) {
       return false
     }
     if (
-      payload.payload !== undefined
-      && (
-        typeof payload.payload !== 'object'
-        || payload.payload === null
-        || Array.isArray(payload.payload)
-      )
+      payload.payload !== undefined &&
+      (typeof payload.payload !== 'object' ||
+        payload.payload === null ||
+        Array.isArray(payload.payload))
     ) {
       return false
     }
@@ -580,11 +590,11 @@ export class MessageWebSocketService {
     }
 
     if (
-      typeof payload !== 'object'
-      || payload === null
-      || Array.isArray(payload)
+      typeof payload !== 'object' ||
+      payload === null ||
+      Array.isArray(payload)
     ) {
-      throw new BadRequestException('payload must be a JSON object')
+      throw new BadRequestException('payload 必须是 JSON 对象')
     }
 
     return JSON.stringify(payload)
@@ -594,17 +604,17 @@ export class MessageWebSocketService {
    * 把领域异常映射为 websocket ack 错误码。
    */
   private mapErrorToAck(error: unknown) {
-    if (error instanceof BadRequestException) {
+    if (error instanceof BusinessException) {
       return {
-        code: 40001,
-        message: this.getErrorMessage(error, 'Bad request'),
+        code: error.code,
+        message: error.message,
       }
     }
 
-    if (error instanceof NotFoundException) {
-      const message = this.getErrorMessage(error, 'Resource not found')
+    if (error instanceof HttpException) {
+      const message = this.getErrorMessage(error, 'Bad request')
       return {
-        code: message.toLowerCase().includes('message') ? 40402 : 40401,
+        code: getPlatformErrorCode(error.getStatus()),
         message,
       }
     }
@@ -614,7 +624,7 @@ export class MessageWebSocketService {
       error instanceof Error ? error.stack : String(error),
     )
     return {
-      code: 50001,
+      code: PlatformErrorCode.INTERNAL_SERVER_ERROR,
       message: 'Internal server error',
     }
   }
@@ -631,9 +641,9 @@ export class MessageWebSocketService {
       return response
     }
     if (
-      typeof response === 'object'
-      && response !== null
-      && 'message' in response
+      typeof response === 'object' &&
+      response !== null &&
+      'message' in response
     ) {
       const message = (response as { message?: unknown }).message
       if (typeof message === 'string' && message.trim()) {
@@ -654,7 +664,9 @@ export class MessageWebSocketService {
    */
   private recordRequestMetric() {
     void this.messageWsMonitorService.recordRequest().catch((error) => {
-      this.logger.warn(`Failed to record WS request metric: ${this.stringifyError(error)}`)
+      this.logger.warn(
+        `Failed to record WS request metric: ${this.stringifyError(error)}`,
+      )
     })
   }
 
@@ -662,9 +674,13 @@ export class MessageWebSocketService {
    * 记录 websocket ack 结果与延迟指标。
    */
   private recordAckMetric(code: number, latencyMs: number) {
-    void this.messageWsMonitorService.recordAck(code, latencyMs).catch((error) => {
-      this.logger.warn(`Failed to record WS ack metric: ${this.stringifyError(error)}`)
-    })
+    void this.messageWsMonitorService
+      .recordAck(code, latencyMs)
+      .catch((error) => {
+        this.logger.warn(
+          `Failed to record WS ack metric: ${this.stringifyError(error)}`,
+        )
+      })
   }
 
   /**
@@ -672,7 +688,9 @@ export class MessageWebSocketService {
    */
   private recordReconnectMetric() {
     void this.messageWsMonitorService.recordReconnect().catch((error) => {
-      this.logger.warn(`Failed to record WS reconnect metric: ${this.stringifyError(error)}`)
+      this.logger.warn(
+        `Failed to record WS reconnect metric: ${this.stringifyError(error)}`,
+      )
     })
   }
 

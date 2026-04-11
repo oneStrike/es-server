@@ -1,14 +1,11 @@
 import type { Db } from '@db/core'
-import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
-import { IReportTargetResolver } from '../../report/interfaces/report-target-resolver.interface';
-import { ReportTargetTypeEnum } from '../../report/report.constant';
-import { ReportService } from '../../report/report.service';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { IReportTargetResolver } from '../../report/interfaces/report-target-resolver.interface'
+import { ReportTargetTypeEnum } from '../../report/report.constant'
+import { ReportService } from '../../report/report.service'
 import {
   CommentTargetTypeEnum,
   mapCommentTargetTypeToSceneType,
@@ -42,7 +39,7 @@ export class CommentReportResolver
    * @param tx - 事务客户端
    * @param targetId - 评论ID
    * @returns 包含场景类型、场景ID、评论层级和评论作者的元数据对象
-   * @throws NotFoundException 当评论不存在时抛出异常
+   * @throws BusinessException 当评论不存在时抛出异常
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
@@ -58,7 +55,10 @@ export class CommentReportResolver
     })
 
     if (!comment) {
-      throw new NotFoundException('评论不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
     }
 
     const sceneType = mapCommentTargetTypeToSceneType(

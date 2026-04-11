@@ -1,9 +1,11 @@
 import type { Db } from '@db/core'
-import { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.interface';
-import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant';
-import { ReportService } from '@libs/interaction/report/report.service';
-import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.interface'
+import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
+import { ReportService } from '@libs/interaction/report/report.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 
 /**
  * 漫画作品举报解析器
@@ -32,7 +34,7 @@ export class WorkComicReportResolver
    * @param tx - 事务客户端
    * @param targetId - 作品ID
    * @returns 包含场景类型和场景ID的元数据对象
-   * @throws NotFoundException 当作品不存在时抛出异常
+   * @throws BusinessException 当作品不存在时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
     const work = await tx.query.work.findFirst({
@@ -46,7 +48,10 @@ export class WorkComicReportResolver
     })
 
     if (!work) {
-      throw new NotFoundException('漫画作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '漫画作品不存在',
+      )
     }
 
     return {

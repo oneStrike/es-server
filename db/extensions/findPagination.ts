@@ -3,7 +3,7 @@ import type { InferSelectModel } from 'drizzle-orm'
 import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import type { Db, SQL } from '../core/drizzle.type'
 import { resolveDbQueryConfig } from '@libs/platform/config'
-import { BadRequestException } from '@nestjs/common'
+import { InternalServerErrorException } from '@nestjs/common'
 import { getTableColumns } from 'drizzle-orm'
 import { buildDrizzleOrderBy } from '../core/query/order-by'
 import { buildDrizzlePageQuery } from '../core/query/page-query'
@@ -52,30 +52,37 @@ export async function findPagination<
 }> {
   const resolvedQueryConfig = resolveDbQueryConfig(queryConfig)
   const { where, pageIndex, pageSize, orderBy, omit, pick } = options
-  const pageQuery = buildDrizzlePageQuery({ pageIndex, pageSize }, {
-    defaultPageIndex: resolvedQueryConfig.pageIndex,
-    defaultPageSize: resolvedQueryConfig.pageSize,
-    maxPageSize: resolvedQueryConfig.maxListItemLimit,
-  })
+  const pageQuery = buildDrizzlePageQuery(
+    { pageIndex, pageSize },
+    {
+      defaultPageIndex: resolvedQueryConfig.pageIndex,
+      defaultPageSize: resolvedQueryConfig.pageSize,
+      maxPageSize: resolvedQueryConfig.maxListItemLimit,
+    },
+  )
   const orderQuery = buildDrizzleOrderBy(orderBy, { table })
 
   const omittedFields = new Set<string>(omit ?? [])
   const pickedFields = new Set<string>(pick ?? [])
   if (omittedFields.size > 0 && pickedFields.size > 0) {
-    throw new BadRequestException('不支持 pick 和 omit 同时使用')
+    throw new InternalServerErrorException('不支持 pick 和 omit 同时使用')
   }
   const hasPick = pickedFields.size > 0
   const tableColumns = getTableColumns(table as any) as Record<string, unknown>
-  const invalidPickedFields = [...pickedFields].filter(field => !tableColumns[field])
+  const invalidPickedFields = [...pickedFields].filter(
+    (field) => !tableColumns[field],
+  )
   if (invalidPickedFields.length > 0) {
-    throw new BadRequestException(
+    throw new InternalServerErrorException(
       `pick 字段不存在: ${invalidPickedFields.join(', ')}`,
     )
   }
 
-  const invalidOmittedFields = [...omittedFields].filter(field => !tableColumns[field])
+  const invalidOmittedFields = [...omittedFields].filter(
+    (field) => !tableColumns[field],
+  )
   if (invalidOmittedFields.length > 0) {
-    throw new BadRequestException(
+    throw new InternalServerErrorException(
       `omit 字段不存在: ${invalidOmittedFields.join(', ')}`,
     )
   }
@@ -87,11 +94,13 @@ export async function findPagination<
   )
   const selectedColumnCount = Object.keys(selectedColumns).length
   if (hasPick && selectedColumnCount === 0) {
-    throw new BadRequestException('findPagination options.pick has no valid fields')
+    throw new InternalServerErrorException(
+      'pick 未指定任何有效字段',
+    )
   }
   if (omittedFields.size > 0 && selectedColumnCount === 0) {
-    throw new BadRequestException(
-      'findPagination options.omit removes all selectable fields',
+    throw new InternalServerErrorException(
+      'omit 排除了所有可选字段',
     )
   }
 
@@ -99,10 +108,12 @@ export async function findPagination<
     !hasPick && omittedFields.size === 0
       ? db.select().from(table as AnyPgTable)
       : selectedColumnCount > 0
-      ? db.select(selectedColumns as any).from(table as AnyPgTable)
-      : (() => {
-          throw new BadRequestException('findPagination options.pick has no valid fields')
-        })()
+        ? db.select(selectedColumns as any).from(table as AnyPgTable)
+        : (() => {
+            throw new InternalServerErrorException(
+              'pick 未指定任何有效字段',
+            )
+          })()
   const listQuery = baseQuery
     .where(where)
     .limit(pageQuery.limit)

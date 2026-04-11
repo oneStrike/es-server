@@ -5,9 +5,11 @@ import type {
   CreateRequestLogSimpleDto,
 } from './dto/audit.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { GeoService } from '@libs/platform/modules/geo'
 import { buildRequestLogFields } from '@libs/platform/utils'
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { and, eq, or } from 'drizzle-orm'
 import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import {
@@ -88,7 +90,10 @@ export class AuditService {
       .limit(1)
 
     if (!requestLog) {
-      throw new NotFoundException('请求日志不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '请求日志不存在',
+      )
     }
 
     return this.decorateRequestLog(requestLog)

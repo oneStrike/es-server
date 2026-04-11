@@ -1,4 +1,6 @@
 import { DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
@@ -26,7 +28,10 @@ export class BrowseLogPermissionService {
     })
 
     if (!user || !user.isEnabled) {
-      throw new BadRequestException('用户不存在或已禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在或已禁用',
+      )
     }
 
     if (
@@ -37,7 +42,10 @@ export class BrowseLogPermissionService {
         UserStatusEnum.PERMANENT_BANNED,
       ].includes(user.status)
     ) {
-      throw new BadRequestException('用户被禁言或封禁，无法浏览')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '用户被禁言或封禁，无法浏览',
+      )
     }
   }
 

@@ -1,4 +1,4 @@
-import type { UploadConfigInterface } from '@libs/platform/config/upload.types';
+import type { UploadConfigInterface } from '@libs/platform/config/upload.types'
 import type { FastifyRequest } from 'fastify'
 import type {
   PreparedUploadFile,
@@ -13,11 +13,12 @@ import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, extname, join, posix } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
-import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils/time';
+import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils/time'
 import {
   BadRequestException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   Optional,
   PayloadTooLargeException,
 } from '@nestjs/common'
@@ -143,7 +144,7 @@ export class UploadService {
       ) {
         throw error
       }
-      throw new BadRequestException('上传文件失败')
+      throw new InternalServerErrorException('上传文件失败')
     } finally {
       await fs.rm(tempPath, { force: true }).catch(() => undefined)
     }
@@ -241,7 +242,7 @@ export class UploadService {
       case UploadProviderEnum.LOCAL:
       default:
         return this.localUploadProvider.upload(file)
-      }
+    }
   }
 
   /**
@@ -268,9 +269,7 @@ export class UploadService {
    * 执行统一上传流程并映射为标准响应结构。
    * 所有 provider 成功后都在这里收口返回字段，避免控制器感知底层差异。
    */
-  private async uploadPreparedFile(
-    preparedFile: PreparedUploadFile,
-  ) {
+  private async uploadPreparedFile(preparedFile: PreparedUploadFile) {
     this.assertFileSizeWithinLimit(preparedFile.fileSize)
 
     const systemUploadConfig = this.getSystemUploadConfig()
@@ -322,8 +321,8 @@ export class UploadService {
       .filter(Boolean)
       .map((segment) => {
         if (
-          !PATH_SEGMENT_REGEX.test(segment)
-          || RESERVED_PATH_SEGMENTS.has(segment)
+          !PATH_SEGMENT_REGEX.test(segment) ||
+          RESERVED_PATH_SEGMENTS.has(segment)
         ) {
           throw new BadRequestException('上传路径不合法')
         }
@@ -344,9 +343,9 @@ export class UploadService {
 
     const nameWithoutExt = trimmedName.replace(TRAILING_EXTENSION_REGEX, '')
     if (
-      !nameWithoutExt
-      || !PATH_SEGMENT_REGEX.test(nameWithoutExt)
-      || RESERVED_PATH_SEGMENTS.has(nameWithoutExt)
+      !nameWithoutExt ||
+      !PATH_SEGMENT_REGEX.test(nameWithoutExt) ||
+      RESERVED_PATH_SEGMENTS.has(nameWithoutExt)
     ) {
       throw new BadRequestException('上传文件名不合法')
     }
@@ -446,9 +445,9 @@ export class UploadService {
 
     const normalizedScene = scene?.trim()
     if (
-      !normalizedScene
-      || !SCENE_NAME_REGEX.test(normalizedScene)
-      || normalizedScene.length > 20
+      !normalizedScene ||
+      !SCENE_NAME_REGEX.test(normalizedScene) ||
+      normalizedScene.length > 20
     ) {
       return null
     }

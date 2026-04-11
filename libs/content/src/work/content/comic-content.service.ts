@@ -1,12 +1,14 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
-import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
-import { UploadService } from '@libs/platform/modules/upload/upload.service';
-import { jsonParse } from '@libs/platform/utils/jsonParse';
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { UploadService } from '@libs/platform/modules/upload/upload.service'
+import { jsonParse } from '@libs/platform/utils/jsonParse'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ContentPermissionService } from '../../permission/content-permission.service';
+import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   DeleteComicContentDto,
   MoveComicContentDto,
@@ -94,7 +96,10 @@ export class ComicContentService {
         ),
       ))
     ) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
     const file = await this.uploadService.uploadFile(req, [
@@ -108,16 +113,19 @@ export class ComicContentService {
 
     contents.push(file.filePath)
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: JSON.stringify(contents) })
-        .where(
-          and(
-            eq(this.workChapter.id, chapterId),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content: JSON.stringify(contents) })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
           ),
-        ), { notFound: '章节不存在' },)
+      { notFound: '章节不存在' },
+    )
 
     return file
   }
@@ -133,16 +141,19 @@ export class ComicContentService {
 
     contents[index] = content
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: JSON.stringify(contents) })
-        .where(
-          and(
-            eq(this.workChapter.id, chapterId),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content: JSON.stringify(contents) })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
           ),
-        ), { notFound: '章节不存在' },)
+      { notFound: '章节不存在' },
+    )
 
     return true
   }
@@ -153,22 +164,30 @@ export class ComicContentService {
     const contents: string[] = await this.getChapterContentsInternal(chapterId)
 
     if (index.some((i) => i < 0 || i >= contents.length)) {
-      throw new BadRequestException('删除的内容不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '删除的内容不存在',
+      )
     }
 
     index.sort((a, b) => b - a)
     index.forEach((i) => contents.splice(i, 1))
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: contents.length > 0 ? JSON.stringify(contents) : null })
-        .where(
-          and(
-            eq(this.workChapter.id, chapterId),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({
+            content: contents.length > 0 ? JSON.stringify(contents) : null,
+          })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
           ),
-        ), { notFound: '章节不存在' },)
+      { notFound: '章节不存在' },
+    )
 
     return true
   }
@@ -190,31 +209,37 @@ export class ComicContentService {
     const [movedContent] = contents.splice(fromIndex, 1)
     contents.splice(toIndex, 0, movedContent)
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: JSON.stringify(contents) })
-        .where(
-          and(
-            eq(this.workChapter.id, chapterId),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content: JSON.stringify(contents) })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
           ),
-        ), { notFound: '章节不存在' },)
+      { notFound: '章节不存在' },
+    )
 
     return true
   }
 
   async clearChapterContents(chapterId: number) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: null })
-        .where(
-          and(
-            eq(this.workChapter.id, chapterId),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content: null })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
           ),
-        ), { notFound: '章节不存在' },)
+      { notFound: '章节不存在' },
+    )
 
     return true
   }
@@ -231,7 +256,10 @@ export class ComicContentService {
       },
     })
     if (!chapter) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
     return this.parseContent(chapter?.content)

@@ -4,7 +4,7 @@ import type {
   TaskAssignmentSelect,
   TaskSelect,
 } from '@db/schema'
-import type { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import type { MessageOutboxService } from '@libs/message/outbox/outbox.service'
 import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
 import type { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
@@ -51,15 +51,15 @@ import type {
   TaskSnapshotSource,
 } from './task.type'
 import process from 'node:process'
-import { EventDefinitionEntityTypeEnum } from '@libs/growth/event-definition/event-definition.type';
-import { createEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
-import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
+import { EventDefinitionEntityTypeEnum } from '@libs/growth/event-definition/event-definition.type'
 import {
-  BadRequestException,
-  ConflictException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common'
+  createEventEnvelope,
+  EventEnvelopeGovernanceStatusEnum,
+} from '@libs/growth/event-definition/event-envelope.type'
+import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Logger } from '@nestjs/common'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import timezone from 'dayjs/plugin/timezone'
@@ -207,8 +207,13 @@ export abstract class TaskServiceSupport {
   protected async queryTaskAssignmentPage(
     params: QueryTaskAssignmentPageParams,
   ): Promise<QueryTaskAssignmentPageResult> {
-    const { assignmentWhereClause, taskWhereClause, pageIndex, pageSize, orderBy } =
-      params
+    const {
+      assignmentWhereClause,
+      taskWhereClause,
+      pageIndex,
+      pageSize,
+      orderBy,
+    } = params
     const page = this.drizzle.buildPage({ pageIndex, pageSize })
     const order = this.drizzle.buildOrderBy(orderBy, {
       table: this.taskAssignmentTable,
@@ -596,7 +601,7 @@ export abstract class TaskServiceSupport {
    *
    * @param taskId 任务ID
    * @returns 任务记录
-   * @throws NotFoundException 任务不存在
+   * @throws BusinessException 任务不存在
    */
   protected async findAvailableTask(taskId: number, now = new Date()) {
     const [taskRecord] = await this.db
@@ -613,7 +618,10 @@ export abstract class TaskServiceSupport {
       .limit(1)
 
     if (!taskRecord) {
-      throw new NotFoundException('任务不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务不存在',
+      )
     }
     this.assertTaskInPublishWindow(taskRecord, now)
     return taskRecord
@@ -626,8 +634,8 @@ export abstract class TaskServiceSupport {
    *
    * @param taskId 任务ID
    * @returns 任务记录
-   * @throws BadRequestException 任务未开始或已结束
-   * @throws NotFoundException 任务不存在
+   * @throws BusinessException 任务未开始或已结束
+   * @throws BusinessException 任务不存在
    */
   protected async findClaimableTask(taskId: number, now = new Date()) {
     return this.findAvailableTask(taskId, now)
@@ -797,7 +805,8 @@ export abstract class TaskServiceSupport {
       blockedFields.push('发布时间窗口')
     }
 
-    throw new BadRequestException(
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
       `存在进行中的任务分配，不能修改${blockedFields.join('和')}`,
     )
   }
@@ -991,7 +1000,10 @@ export abstract class TaskServiceSupport {
         return existing
       }
 
-      throw new NotFoundException('任务分配创建失败')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务分配创建失败',
+      )
     })
 
     if (
@@ -1015,9 +1027,7 @@ export abstract class TaskServiceSupport {
    *
    * 所有 claim/progress/complete/expire 写库都复用同一结构，保证审计字段口径一致。
    */
-  protected buildTaskProgressLogRecord(
-    params: TaskProgressLogRecordInput,
-  ) {
+  protected buildTaskProgressLogRecord(params: TaskProgressLogRecordInput) {
     return {
       assignmentId: params.assignmentId,
       userId: params.userId,
@@ -1282,7 +1292,10 @@ export abstract class TaskServiceSupport {
         )
 
       if ((updateResult.rowCount ?? 0) === 0) {
-        throw new ConflictException('任务事件推进冲突，请重试')
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '任务事件推进冲突，请重试',
+        )
       }
 
       return 'applied' as const
@@ -1587,7 +1600,8 @@ export abstract class TaskServiceSupport {
       rewardResultType: TaskAssignmentRewardResultTypeEnum.FAILED,
       rewardSettledAt: rewardResult.settledAt,
       rewardLedgerIds: rewardResult.ledgerRecordIds,
-      lastRewardError: rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试',
+      lastRewardError:
+        rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试',
     }
   }
 
@@ -1753,9 +1767,7 @@ export abstract class TaskServiceSupport {
    *
    * 该视图只面向“尚可领取”的任务，因此 visibleStatus 固定为 CLAIMABLE。
    */
-  protected toAppTaskView(
-    taskRecord: AppTaskViewSource,
-  ) {
+  protected toAppTaskView(taskRecord: AppTaskViewSource) {
     return {
       id: taskRecord.id,
       createdAt: taskRecord.createdAt,
@@ -2162,10 +2174,7 @@ export abstract class TaskServiceSupport {
    * 根据奖励提醒投递状态反查 assignment ID 列表。
    */
   protected async queryAssignmentIdsByRewardReminderFilter(
-    queryDto: Pick<
-      QueryTaskAssignmentReconciliationDto,
-      'notificationStatus'
-    >,
+    queryDto: Pick<QueryTaskAssignmentReconciliationDto, 'notificationStatus'>,
   ) {
     if (queryDto.notificationStatus === undefined) {
       return undefined
@@ -2461,7 +2470,10 @@ export abstract class TaskServiceSupport {
   ) {
     const availabilityError = this.getTaskAvailabilityError(taskRecord, now)
     if (availabilityError) {
-      throw new BadRequestException(availabilityError)
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        availabilityError,
+      )
     }
   }
 

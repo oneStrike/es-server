@@ -8,6 +8,8 @@ import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.cons
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { UserDefaults, UserStatusEnum } from '@libs/user/app-user.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -254,7 +256,10 @@ export class UserProfileService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
     const [counts] = await this.db
       .select({
@@ -313,7 +318,10 @@ export class UserProfileService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     await this.drizzle.withErrorHandling(() =>

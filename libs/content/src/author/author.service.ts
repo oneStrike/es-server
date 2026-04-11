@@ -2,8 +2,10 @@ import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   AuthorFollowCountRepairResultDto,
@@ -332,9 +334,7 @@ export class WorkAuthorService {
       conditions.push(eq(this.workAuthor.isRecommended, isRecommended))
     }
     if (name) {
-      conditions.push(
-        buildILikeCondition(this.workAuthor.name, name)!,
-      )
+      conditions.push(buildILikeCondition(this.workAuthor.name, name)!)
     }
 
     let where: SQL | undefined = and(...conditions)
@@ -366,7 +366,10 @@ export class WorkAuthorService {
     })
 
     if (!author) {
-      throw new BadRequestException('作者不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作者不存在',
+      )
     }
 
     return author
@@ -379,13 +382,16 @@ export class WorkAuthorService {
   async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
     const { id, ...updateData } = updateAuthorDto
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workAuthor)
-        .set(updateData)
-        .where(
-          and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)),
-        ), { notFound: '作者不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workAuthor)
+          .set(updateData)
+          .where(
+            and(eq(this.workAuthor.id, id), isNull(this.workAuthor.deletedAt)),
+          ),
+      { notFound: '作者不存在' },
+    )
     return true
   }
 
@@ -393,16 +399,19 @@ export class WorkAuthorService {
    * 切换作者启用状态。
    */
   async updateAuthorStatus(input: UpdateAuthorStatusDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workAuthor)
-        .set({ isEnabled: input.isEnabled })
-        .where(
-          and(
-            eq(this.workAuthor.id, input.id),
-            isNull(this.workAuthor.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workAuthor)
+          .set({ isEnabled: input.isEnabled })
+          .where(
+            and(
+              eq(this.workAuthor.id, input.id),
+              isNull(this.workAuthor.deletedAt),
+            ),
           ),
-        ), { notFound: '作者不存在' },)
+      { notFound: '作者不存在' },
+    )
     return true
   }
 
@@ -411,16 +420,19 @@ export class WorkAuthorService {
    * 推荐位只影响前台展示，不改变启用状态和其他资料字段。
    */
   async updateAuthorRecommended(input: UpdateAuthorRecommendedDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workAuthor)
-        .set({ isRecommended: input.isRecommended })
-        .where(
-          and(
-            eq(this.workAuthor.id, input.id),
-            isNull(this.workAuthor.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workAuthor)
+          .set({ isRecommended: input.isRecommended })
+          .where(
+            and(
+              eq(this.workAuthor.id, input.id),
+              isNull(this.workAuthor.deletedAt),
+            ),
           ),
-        ), { notFound: '作者不存在' },)
+      { notFound: '作者不存在' },
+    )
     return true
   }
 
@@ -433,7 +445,10 @@ export class WorkAuthorService {
       where: { id: input.id, deletedAt: { isNull: true } },
     })
     if (!existingAuthor) {
-      throw new BadRequestException('作者不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作者不存在',
+      )
     }
     const linkedWorkRow = await this.db
       .select({ count: sql<number>`count(*)::int` })
@@ -450,21 +465,25 @@ export class WorkAuthorService {
 
     const linkedWorkCount = Number(linkedWorkRow?.count ?? 0)
     if (linkedWorkCount > 0) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         `该作者还有 ${linkedWorkCount} 个关联作品，无法删除`,
       )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workAuthor)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            eq(this.workAuthor.id, input.id),
-            isNull(this.workAuthor.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workAuthor)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(this.workAuthor.id, input.id),
+              isNull(this.workAuthor.deletedAt),
+            ),
           ),
-        ), { notFound: '作者不存在' },)
+      { notFound: '作者不存在' },
+    )
     return true
   }
 }

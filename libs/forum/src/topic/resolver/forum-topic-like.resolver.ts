@@ -1,13 +1,18 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { ILikeTargetResolver, LikeTargetMeta } from '@libs/interaction/like/interfaces/like-target-resolver.interface';
-import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
-import { LikeService } from '@libs/interaction/like/like.service';
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import {
+  ILikeTargetResolver,
+  LikeTargetMeta,
+} from '@libs/interaction/like/interfaces/like-target-resolver.interface'
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 
 /**
@@ -43,7 +48,7 @@ export class ForumTopicLikeResolver
    * @param tx - 事务客户端
    * @param targetId - 主题ID
    * @returns 包含场景类型和场景ID的元数据对象
-   * @throws NotFoundException 当主题不存在时抛出异常
+   * @throws BusinessException 当主题不存在时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
@@ -70,7 +75,10 @@ export class ForumTopicLikeResolver
       topic.section.deletedAt ||
       !topic.section.isEnabled
     ) {
-      throw new NotFoundException('帖子不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     return {
@@ -102,7 +110,10 @@ export class ForumTopicLikeResolver
     })
 
     if (!topic) {
-      throw new NotFoundException('帖子不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     await this.forumCounterService.updateTopicLikeRelatedCounts(

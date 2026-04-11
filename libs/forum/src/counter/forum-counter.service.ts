@@ -1,9 +1,11 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { AppUserCountService } from '@libs/user/app-user-count.service';
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
+import { Injectable } from '@nestjs/common'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 
 type ForumSectionCountField = 'topicCount' | 'commentCount' | 'followersCount'
@@ -91,10 +93,11 @@ export class ForumCounterService {
 
   private rethrowNotFound(error: unknown, message: string) {
     if (
-      error instanceof NotFoundException &&
+      error instanceof BusinessException &&
+      error.code === BusinessErrorCode.RESOURCE_NOT_FOUND &&
       !error.message.includes('计数不足')
     ) {
-      throw new NotFoundException(message)
+      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message)
     }
     throw error
   }

@@ -1,7 +1,9 @@
 import type { Db, SQL } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { and, eq, gte, isNull, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
@@ -77,20 +79,26 @@ export class UserPointService {
       columns: { id: true },
     })
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     const rule = await this.pointRuleService.getEnabledRuleByType(ruleType)
     if (!rule) {
-      throw new BadRequestException('积分规则不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '积分规则不存在',
+      )
     }
     if (rule.points <= 0) {
-      throw new BadRequestException('积分规则配置错误')
+      throw new InternalServerErrorException('积分规则配置错误')
     }
 
     const bizKey =
-      addPointsDto.bizKey
-      ?? this.buildStableBizKey('point:rule', {
+      addPointsDto.bizKey ??
+      this.buildStableBizKey('point:rule', {
         userId,
         ruleType,
         remark,
@@ -108,16 +116,12 @@ export class UserPointService {
       })
 
       if (!result.success && !result.duplicated) {
-        throw new BadRequestException(
-          result.reason
-            ? GrowthLedgerFailReasonLabel[result.reason]
-            : '积分发放失败',
-        )
+        this.throwPointGrantFailure(result.reason)
       }
 
       const recordId = result.recordId
       if (!recordId) {
-        throw new BadRequestException('积分发放失败')
+        throw new InternalServerErrorException('积分发放失败')
       }
       await this.findLedgerRecordById(tx, recordId)
     })
@@ -182,16 +186,12 @@ export class UserPointService {
       })
 
       if (!result.success && !result.duplicated) {
-        throw new BadRequestException(
-          result.reason === 'insufficient_balance'
-            ? '积分不足'
-            : '积分扣减失败',
-        )
+        this.throwPointConsumeFailure(result.reason)
       }
 
       const recordId = result.recordId
       if (!recordId) {
-        throw new BadRequestException('积分扣减失败')
+        throw new InternalServerErrorException('积分扣减失败')
       }
 
       await this.findLedgerRecordById(trx, recordId)
@@ -199,6 +199,69 @@ export class UserPointService {
     }
 
     return applyConsume(tx)
+  }
+
+  /** 按成长账本拒绝原因映射积分发放失败语义。 */
+  private throwPointGrantFailure(
+    reason?: keyof typeof GrowthLedgerFailReasonLabel,
+  ): never {
+    if (!reason) {
+      throw new InternalServerErrorException('积分发放失败')
+    }
+
+    if (reason === 'rule_not_found') {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        GrowthLedgerFailReasonLabel[reason],
+      )
+    }
+
+    if (
+      reason === 'daily_limit' ||
+      reason === 'total_limit' ||
+      reason === 'insufficient_balance'
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.QUOTA_NOT_ENOUGH,
+        GrowthLedgerFailReasonLabel[reason],
+      )
+    }
+
+    if (reason === 'rule_disabled' || reason === 'cooldown') {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        GrowthLedgerFailReasonLabel[reason],
+      )
+    }
+
+    throw new InternalServerErrorException(
+      GrowthLedgerFailReasonLabel[reason] || '积分发放失败',
+    )
+  }
+
+  /** 按成长账本拒绝原因映射积分扣减失败语义。 */
+  private throwPointConsumeFailure(
+    reason?: keyof typeof GrowthLedgerFailReasonLabel,
+  ): never {
+    if (reason === 'insufficient_balance') {
+      throw new BusinessException(
+        BusinessErrorCode.QUOTA_NOT_ENOUGH,
+        '积分不足',
+      )
+    }
+
+    if (
+      reason === 'daily_limit' ||
+      reason === 'total_limit' ||
+      reason === 'cooldown'
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        GrowthLedgerFailReasonLabel[reason],
+      )
+    }
+
+    throw new InternalServerErrorException('积分扣减失败')
   }
 
   /**
@@ -234,15 +297,16 @@ export class UserPointService {
       )
     }
     // 历史上这里走 JSON 字符串默认排序，现统一收口为字面量对象，减少调用层分支。
-    const orderBy = dto.orderBy?.trim()
-      ? dto.orderBy
-      : { id: 'desc' as const }
+    const orderBy = dto.orderBy?.trim() ? dto.orderBy : { id: 'desc' as const }
 
-    const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
-      where: and(...conditions),
-      ...dto,
-      orderBy,
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.growthLedgerRecord,
+      {
+        where: and(...conditions),
+        ...dto,
+        orderBy,
+      },
+    )
 
     return {
       ...page,
@@ -267,7 +331,10 @@ export class UserPointService {
     })
 
     if (!record) {
-      throw new BadRequestException('积分记录不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '积分记录不存在',
+      )
     }
 
     return {
@@ -288,7 +355,10 @@ export class UserPointService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     const today = startOfTodayInAppTimeZone()
@@ -347,7 +417,8 @@ export class UserPointService {
       })
 
       if (!ledger.success && !ledger.duplicated) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.QUOTA_NOT_ENOUGH,
           ledger.reason === 'insufficient_balance'
             ? '积分不足'
             : '积分同步失败',
@@ -389,7 +460,10 @@ export class UserPointService {
       },
     })
     if (!record) {
-      throw new BadRequestException('积分记录不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '积分记录不存在',
+      )
     }
     return record
   }
@@ -425,10 +499,7 @@ export class UserPointService {
    * 构建稳定业务键。
    * 相同业务上下文会生成相同 bizKey，用于积分流水幂等和管理端操作串联。
    */
-  private buildStableBizKey(
-    prefix: string,
-    payload: Record<string, unknown>,
-  ) {
+  private buildStableBizKey(prefix: string, payload: Record<string, unknown>) {
     const serializedPayload = Object.entries(payload)
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => `${key}=${String(value)}`)

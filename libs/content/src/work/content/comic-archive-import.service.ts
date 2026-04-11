@@ -1,5 +1,5 @@
 import type { WorkComicArchiveImportTaskSelect } from '@db/schema'
-import type { UploadConfigInterface } from '@libs/platform/config/upload.types';
+import type { UploadConfigInterface } from '@libs/platform/config/upload.types'
 import type { FastifyRequest } from 'fastify'
 import type { Dirent } from 'node:fs'
 import type {
@@ -13,16 +13,16 @@ import type {
 import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, dirname, extname, join } from 'node:path'
 import { pipeline } from 'node:stream/promises'
-import {
-  DrizzleService,
-} from '@db/core'
-import { UploadService } from '@libs/platform/modules/upload/upload.service';
-import { jsonParse } from '@libs/platform/utils/jsonParse';
+import { DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { UploadService } from '@libs/platform/modules/upload/upload.service'
+import { jsonParse } from '@libs/platform/utils/jsonParse'
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
-  NotFoundException,
   PayloadTooLargeException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -164,12 +164,18 @@ export class ComicArchiveImportService {
       await this.createTaskRecord(record)
       return this.toTaskView(record)
     } catch (error) {
-      await fs.rm(taskDir, { recursive: true, force: true }).catch(() => undefined)
+      await fs
+        .rm(taskDir, { recursive: true, force: true })
+        .catch(() => undefined)
 
-      if (error instanceof BadRequestException || error instanceof PayloadTooLargeException) {
+      if (
+        error instanceof BusinessException ||
+        error instanceof BadRequestException ||
+        error instanceof PayloadTooLargeException
+      ) {
         throw error
       }
-      throw new BadRequestException('压缩包预解析失败')
+      throw new InternalServerErrorException('压缩包预解析失败')
     }
   }
 
@@ -186,8 +192,12 @@ export class ComicArchiveImportService {
       throw new BadRequestException('请至少确认一个可导入章节')
     }
 
-    const matchedChapterIds = new Set(record.matchedItems.map(item => item.chapterId))
-    if (confirmedChapterIds.some(chapterId => !matchedChapterIds.has(chapterId))) {
+    const matchedChapterIds = new Set(
+      record.matchedItems.map((item) => item.chapterId),
+    )
+    if (
+      confirmedChapterIds.some((chapterId) => !matchedChapterIds.has(chapterId))
+    ) {
       throw new BadRequestException('存在未通过预解析确认的章节')
     }
 
@@ -231,7 +241,9 @@ export class ComicArchiveImportService {
 
     try {
       for (const chapterId of record.confirmedChapterIds) {
-        const matchedItem = record.matchedItems.find(item => item.chapterId === chapterId)
+        const matchedItem = record.matchedItems.find(
+          (item) => item.chapterId === chapterId,
+        )
         if (!matchedItem) {
           continue
         }
@@ -287,7 +299,9 @@ export class ComicArchiveImportService {
       record.updatedAt = record.finishedAt
       record.lastError = message
       await this.safeUpdateTaskRecord(record)
-      this.logger.error(`comic_archive_process_failed taskId=${record.taskId} error=${message}`)
+      this.logger.error(
+        `comic_archive_process_failed taskId=${record.taskId} error=${message}`,
+      )
     }
   }
 
@@ -313,15 +327,20 @@ export class ComicArchiveImportService {
       contents.push(uploadedFile.filePath)
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: JSON.stringify(contents) })
-        .where(and(
-          eq(this.workChapter.id, matchedItem.chapterId),
-          eq(this.workChapter.workId, record.workId),
-          isNull(this.workChapter.deletedAt),
-        )), { notFound: '章节不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content: JSON.stringify(contents) })
+          .where(
+            and(
+              eq(this.workChapter.id, matchedItem.chapterId),
+              eq(this.workChapter.workId, record.workId),
+              isNull(this.workChapter.deletedAt),
+            ),
+          ),
+      { notFound: '章节不存在' },
+    )
 
     return contents
   }
@@ -336,15 +355,16 @@ export class ComicArchiveImportService {
       content: string | null
     }>,
   ) {
-    const chapterMap = new Map(chapters.map(chapter => [chapter.id, chapter]))
+    const chapterMap = new Map(chapters.map((chapter) => [chapter.id, chapter]))
     const rootEntries = await fs.readdir(extractDir, { withFileTypes: true })
     const visibleRootEntries = rootEntries.filter(
-      entry => !this.shouldAutoIgnoreName(entry.name),
+      (entry) => !this.shouldAutoIgnoreName(entry.name),
     )
-    const rootDirs = visibleRootEntries.filter(entry => entry.isDirectory())
-    const mode = rootDirs.length > 0
-      ? ComicArchivePreviewModeEnum.MULTI_CHAPTER
-      : ComicArchivePreviewModeEnum.SINGLE_CHAPTER
+    const rootDirs = visibleRootEntries.filter((entry) => entry.isDirectory())
+    const mode =
+      rootDirs.length > 0
+        ? ComicArchivePreviewModeEnum.MULTI_CHAPTER
+        : ComicArchivePreviewModeEnum.SINGLE_CHAPTER
 
     if (mode === ComicArchivePreviewModeEnum.MULTI_CHAPTER) {
       return this.buildMultiChapterPreview(extractDir, rootEntries, chapterMap)
@@ -362,13 +382,16 @@ export class ComicArchiveImportService {
   private async buildMultiChapterPreview(
     extractDir: string,
     rootEntries: Dirent[],
-    chapterMap: Map<number, { id: number, title: string, content: string | null }>,
+    chapterMap: Map<
+      number,
+      { id: number, title: string, content: string | null }
+    >,
   ) {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
     const ignoredItems: ComicArchiveIgnoredItemView[] = []
 
     const visibleRootEntries = rootEntries.filter(
-      entry => !this.shouldAutoIgnoreName(entry.name),
+      (entry) => !this.shouldAutoIgnoreName(entry.name),
     )
 
     for (const entry of visibleRootEntries) {
@@ -438,12 +461,15 @@ export class ComicArchiveImportService {
     archiveName: string,
     extractDir: string,
     rootEntries: Dirent[],
-    chapterMap: Map<number, { id: number, title: string, content: string | null }>,
+    chapterMap: Map<
+      number,
+      { id: number, title: string, content: string | null }
+    >,
   ) {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
     const ignoredItems: ComicArchiveIgnoredItemView[] = []
     const visibleRootEntries = rootEntries.filter(
-      entry => !this.shouldAutoIgnoreName(entry.name),
+      (entry) => !this.shouldAutoIgnoreName(entry.name),
     )
 
     for (const entry of visibleRootEntries) {
@@ -457,8 +483,8 @@ export class ComicArchiveImportService {
     }
 
     const imagePaths = visibleRootEntries
-      .filter(entry => entry.isFile() && this.isAllowedImageFile(entry.name))
-      .map(entry => join(extractDir, entry.name))
+      .filter((entry) => entry.isFile() && this.isAllowedImageFile(entry.name))
+      .map((entry) => join(extractDir, entry.name))
       .sort((left, right) =>
         basename(left).localeCompare(basename(right), undefined, {
           numeric: true,
@@ -506,9 +532,7 @@ export class ComicArchiveImportService {
       }
     }
 
-    matchedItems.push(
-      this.buildMatchedItem(archiveName, chapter, imagePaths),
-    )
+    matchedItems.push(this.buildMatchedItem(archiveName, chapter, imagePaths))
 
     return {
       mode: ComicArchivePreviewModeEnum.SINGLE_CHAPTER,
@@ -524,7 +548,7 @@ export class ComicArchiveImportService {
     dirName: string,
   ) {
     const imagePaths = entries
-      .filter(entry => !this.shouldAutoIgnoreName(entry.name))
+      .filter((entry) => !this.shouldAutoIgnoreName(entry.name))
       .flatMap((entry) => {
         if (entry.isDirectory()) {
           ignoredItems.push({
@@ -615,7 +639,10 @@ export class ComicArchiveImportService {
   private shouldAutoIgnoreArchivePath(entryPath: string) {
     return entryPath
       .split('/')
-      .some(segment => AUTO_IGNORED_ENTRY_NAMES.has(segment) || segment.startsWith('.'))
+      .some(
+        (segment) =>
+          AUTO_IGNORED_ENTRY_NAMES.has(segment) || segment.startsWith('.'),
+      )
   }
 
   private normalizeArchiveSegments(entryPath: string) {
@@ -625,10 +652,10 @@ export class ComicArchiveImportService {
 
     const segments = entryPath
       .split('/')
-      .map(segment => segment.trim())
+      .map((segment) => segment.trim())
       .filter(Boolean)
 
-    if (segments.some(segment => segment === '.' || segment === '..')) {
+    if (segments.some((segment) => segment === '.' || segment === '..')) {
       throw new BadRequestException('压缩包路径不合法')
     }
 
@@ -672,18 +699,27 @@ export class ComicArchiveImportService {
         and(eq(this.work.id, workId), isNull(this.work.deletedAt)),
       ))
     ) {
-      throw new BadRequestException('作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作品不存在',
+      )
     }
   }
 
   private async assertDraftTaskAvailable(record: ComicArchiveTaskRecord) {
     const latestRecord = await this.refreshExpiredDraftTask(record)
     if (latestRecord.status === ComicArchiveTaskStatusEnum.EXPIRED) {
-      throw new BadRequestException('预解析任务已过期，请重新上传压缩包')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '预解析任务已过期，请重新上传压缩包',
+      )
     }
 
     if (latestRecord.status !== ComicArchiveTaskStatusEnum.DRAFT) {
-      throw new BadRequestException('当前任务状态不允许确认导入')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '当前任务状态不允许确认导入',
+      )
     }
 
     return latestRecord
@@ -691,8 +727,8 @@ export class ComicArchiveImportService {
 
   private async refreshExpiredDraftTask(record: ComicArchiveTaskRecord) {
     if (
-      record.status !== ComicArchiveTaskStatusEnum.DRAFT
-      || record.expiresAt.getTime() > Date.now()
+      record.status !== ComicArchiveTaskStatusEnum.DRAFT ||
+      record.expiresAt.getTime() > Date.now()
     ) {
       return record
     }
@@ -711,7 +747,9 @@ export class ComicArchiveImportService {
       status: record.status,
       requireConfirm: record.requireConfirm,
       summary: record.summary,
-      matchedItems: record.matchedItems.map(({ imagePaths: _imagePaths, ...item }) => item),
+      matchedItems: record.matchedItems.map(
+        ({ imagePaths: _imagePaths, ...item }) => item,
+      ),
       ignoredItems: record.ignoredItems,
       resultItems: record.resultItems,
       startedAt: record.startedAt,
@@ -723,7 +761,9 @@ export class ComicArchiveImportService {
 
   private async cleanupTasks() {
     const now = new Date()
-    const retentionCutoff = new Date(now.getTime() - ARCHIVE_TASK_CLEANUP_RETENTION_MS)
+    const retentionCutoff = new Date(
+      now.getTime() - ARCHIVE_TASK_CLEANUP_RETENTION_MS,
+    )
 
     await this.drizzle.withErrorHandling(() =>
       this.db
@@ -732,10 +772,15 @@ export class ComicArchiveImportService {
           status: ComicArchiveTaskStatusEnum.EXPIRED,
           updatedAt: now,
         })
-        .where(and(
-          eq(this.workComicArchiveImportTask.status, ComicArchiveTaskStatusEnum.DRAFT),
-          lte(this.workComicArchiveImportTask.expiresAt, now),
-        )),
+        .where(
+          and(
+            eq(
+              this.workComicArchiveImportTask.status,
+              ComicArchiveTaskStatusEnum.DRAFT,
+            ),
+            lte(this.workComicArchiveImportTask.expiresAt, now),
+          ),
+        ),
     )
 
     const rows = await this.db
@@ -743,16 +788,22 @@ export class ComicArchiveImportService {
         taskId: this.workComicArchiveImportTask.taskId,
       })
       .from(this.workComicArchiveImportTask)
-      .where(and(
-        inArray(this.workComicArchiveImportTask.status, [...TERMINAL_TASK_STATUSES]),
-        lt(this.workComicArchiveImportTask.updatedAt, retentionCutoff),
-      ))
+      .where(
+        and(
+          inArray(this.workComicArchiveImportTask.status, [
+            ...TERMINAL_TASK_STATUSES,
+          ]),
+          lt(this.workComicArchiveImportTask.updatedAt, retentionCutoff),
+        ),
+      )
 
     for (const row of rows) {
-      await fs.rm(this.getTaskDir(row.taskId), {
-        recursive: true,
-        force: true,
-      }).catch(() => undefined)
+      await fs
+        .rm(this.getTaskDir(row.taskId), {
+          recursive: true,
+          force: true,
+        })
+        .catch(() => undefined)
     }
   }
 
@@ -774,7 +825,12 @@ export class ComicArchiveImportService {
         taskId: this.workComicArchiveImportTask.taskId,
       })
       .from(this.workComicArchiveImportTask)
-      .where(eq(this.workComicArchiveImportTask.status, ComicArchiveTaskStatusEnum.PENDING))
+      .where(
+        eq(
+          this.workComicArchiveImportTask.status,
+          ComicArchiveTaskStatusEnum.PENDING,
+        ),
+      )
       .orderBy(asc(this.workComicArchiveImportTask.createdAt))
       .limit(1)
 
@@ -794,10 +850,15 @@ export class ComicArchiveImportService {
           lastError: null,
           updatedAt: now,
         })
-        .where(and(
-          eq(this.workComicArchiveImportTask.taskId, pendingTask.taskId),
-          eq(this.workComicArchiveImportTask.status, ComicArchiveTaskStatusEnum.PENDING),
-        ))
+        .where(
+          and(
+            eq(this.workComicArchiveImportTask.taskId, pendingTask.taskId),
+            eq(
+              this.workComicArchiveImportTask.status,
+              ComicArchiveTaskStatusEnum.PENDING,
+            ),
+          ),
+        )
         .returning(),
     )
 
@@ -821,7 +882,10 @@ export class ComicArchiveImportService {
   private async readTaskRecord(taskId: string) {
     const record = await this.tryReadTaskRecord(taskId)
     if (!record) {
-      throw new NotFoundException('导入任务不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '导入任务不存在',
+      )
     }
     return record
   }
@@ -851,7 +915,9 @@ export class ComicArchiveImportService {
       await this.updateTaskRecord(record)
     } catch (error) {
       const message = this.stringifyError(error)
-      this.logger.error(`comic_archive_update_failed taskId=${record.taskId} error=${message}`)
+      this.logger.error(
+        `comic_archive_update_failed taskId=${record.taskId} error=${message}`,
+      )
     }
   }
 
@@ -881,7 +947,9 @@ export class ComicArchiveImportService {
    * 把数据库行收敛成稳定的领域任务记录。
    * JSONB 字段会做最小归一化，避免脏数据直接透出到接口层。
    */
-  private toTaskRecord(row: WorkComicArchiveImportTaskSelect): ComicArchiveTaskRecord {
+  private toTaskRecord(
+    row: WorkComicArchiveImportTaskSelect,
+  ): ComicArchiveTaskRecord {
     return {
       taskId: row.taskId,
       workId: row.workId,
@@ -895,7 +963,9 @@ export class ComicArchiveImportService {
       matchedItems: this.normalizeMatchedItems(row.matchedItems),
       ignoredItems: this.normalizeIgnoredItems(row.ignoredItems),
       resultItems: this.normalizeResultItems(row.resultItems),
-      confirmedChapterIds: this.normalizeConfirmedChapterIds(row.confirmedChapterIds),
+      confirmedChapterIds: this.normalizeConfirmedChapterIds(
+        row.confirmedChapterIds,
+      ),
       startedAt: row.startedAt,
       finishedAt: row.finishedAt,
       expiresAt: row.expiresAt,
@@ -929,7 +999,9 @@ export class ComicArchiveImportService {
     })
   }
 
-  private normalizeMatchedItems(value: unknown): ComicArchiveMatchedItemRecord[] {
+  private normalizeMatchedItems(
+    value: unknown,
+  ): ComicArchiveMatchedItemRecord[] {
     if (!Array.isArray(value)) {
       return []
     }
@@ -974,37 +1046,45 @@ export class ComicArchiveImportService {
     }
 
     return value
-      .map(item => this.asNumber(item))
-      .filter(chapterId => chapterId > 0)
+      .map((item) => this.asNumber(item))
+      .filter((chapterId) => chapterId > 0)
   }
 
   private normalizeTaskStatus(value: unknown) {
-    return Object.values(ComicArchiveTaskStatusEnum).includes(value as ComicArchiveTaskStatusEnum)
-      ? value as ComicArchiveTaskStatusEnum
+    return Object.values(ComicArchiveTaskStatusEnum).includes(
+      value as ComicArchiveTaskStatusEnum,
+    )
+      ? (value as ComicArchiveTaskStatusEnum)
       : ComicArchiveTaskStatusEnum.DRAFT
   }
 
   private normalizePreviewMode(value: unknown) {
-    return Object.values(ComicArchivePreviewModeEnum).includes(value as ComicArchivePreviewModeEnum)
-      ? value as ComicArchivePreviewModeEnum
+    return Object.values(ComicArchivePreviewModeEnum).includes(
+      value as ComicArchivePreviewModeEnum,
+    )
+      ? (value as ComicArchivePreviewModeEnum)
       : ComicArchivePreviewModeEnum.SINGLE_CHAPTER
   }
 
   private normalizeImportItemStatus(value: unknown) {
-    return Object.values(ComicArchiveImportItemStatusEnum).includes(value as ComicArchiveImportItemStatusEnum)
-      ? value as ComicArchiveImportItemStatusEnum
+    return Object.values(ComicArchiveImportItemStatusEnum).includes(
+      value as ComicArchiveImportItemStatusEnum,
+    )
+      ? (value as ComicArchiveImportItemStatusEnum)
       : ComicArchiveImportItemStatusEnum.FAILED
   }
 
   private normalizeIgnoreReason(value: unknown) {
-    return Object.values(ComicArchiveIgnoreReasonEnum).includes(value as ComicArchiveIgnoreReasonEnum)
-      ? value as ComicArchiveIgnoreReasonEnum
+    return Object.values(ComicArchiveIgnoreReasonEnum).includes(
+      value as ComicArchiveIgnoreReasonEnum,
+    )
+      ? (value as ComicArchiveIgnoreReasonEnum)
       : ComicArchiveIgnoreReasonEnum.INVALID_IMAGE_FILE
   }
 
   private asObject(value: unknown) {
     return typeof value === 'object' && value !== null
-      ? value as Record<string, unknown>
+      ? (value as Record<string, unknown>)
       : null
   }
 
@@ -1013,9 +1093,7 @@ export class ComicArchiveImportService {
   }
 
   private asNumber(value: unknown) {
-    return typeof value === 'number' && Number.isFinite(value)
-      ? value
-      : 0
+    return typeof value === 'number' && Number.isFinite(value) ? value : 0
   }
 
   private asBoolean(value: unknown) {

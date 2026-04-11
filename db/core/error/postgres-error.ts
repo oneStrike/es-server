@@ -1,3 +1,5 @@
+import { BusinessErrorCode, PlatformErrorCode } from '@libs/platform/constant'
+
 /**
  * PostgreSQL 错误码常量
  * @see https://www.postgresql.org/docs/current/errcodes-appendix.html
@@ -23,14 +25,6 @@ export const PostgresDefaultMessages: Record<string, string> = {
   [PostgresErrorCode.SERIALIZATION_FAILURE]: '操作冲突，请重试',
 }
 
-/** 默认 HTTP 状态码 */
-export const PostgresHttpStatus: Record<string, number> = {
-  [PostgresErrorCode.UNIQUE_VIOLATION]: 409,
-  [PostgresErrorCode.NOT_NULL_VIOLATION]: 400,
-  [PostgresErrorCode.CHECK_VIOLATION]: 400,
-  [PostgresErrorCode.SERIALIZATION_FAILURE]: 409,
-}
-
 /** PostgreSQL 错误信息接口 */
 export interface PostgresError {
   code: string
@@ -44,6 +38,10 @@ export interface PostgresError {
 export interface PostgresErrorDescriptor {
   message: string
   status: number
+}
+
+export interface PostgresErrorResponseDescriptor extends PostgresErrorDescriptor {
+  responseCode: number
 }
 
 /**
@@ -95,14 +93,42 @@ export function getPostgresErrorDescriptor(
   code: string,
 ): PostgresErrorDescriptor | null {
   const message = PostgresDefaultMessages[code]
-  const status = PostgresHttpStatus[code]
+  const descriptor = getPostgresErrorResponseDescriptor(code)
 
-  if (!message || !status) {
+  if (!message || !descriptor) {
     return null
   }
 
   return {
     message,
-    status,
+    status: descriptor.status,
+  }
+}
+
+export function getPostgresErrorResponseDescriptor(
+  code: string,
+): PostgresErrorResponseDescriptor | null {
+  switch (code) {
+    case PostgresErrorCode.UNIQUE_VIOLATION:
+      return {
+        message: PostgresDefaultMessages[code],
+        status: 200,
+        responseCode: BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+      }
+    case PostgresErrorCode.NOT_NULL_VIOLATION:
+    case PostgresErrorCode.CHECK_VIOLATION:
+      return {
+        message: PostgresDefaultMessages[code],
+        status: 400,
+        responseCode: PlatformErrorCode.BAD_REQUEST,
+      }
+    case PostgresErrorCode.SERIALIZATION_FAILURE:
+      return {
+        message: PostgresDefaultMessages[code],
+        status: 200,
+        responseCode: BusinessErrorCode.STATE_CONFLICT,
+      }
+    default:
+      return null
   }
 }

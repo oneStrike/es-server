@@ -3,9 +3,9 @@ import { IS_PUBLIC_KEY } from '@libs/platform/decorators/public.decorator'
 import { AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -57,7 +57,7 @@ export class AppUserStatusGuard implements CanActivate {
     }
 
     if (!user.isEnabled) {
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_DISABLED)
+      throw new ForbiddenException(AppAuthErrorMessages.ACCOUNT_DISABLED)
     }
 
     this.userCoreService.ensureAppUserNotBanned(user)

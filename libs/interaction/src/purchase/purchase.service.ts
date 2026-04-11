@@ -1,8 +1,13 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { GrowthAssetTypeEnum, GrowthLedgerActionEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
-import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service';
-import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time';
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerActionEnum,
+} from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import {
@@ -160,12 +165,18 @@ export class PurchaseService {
               this.logger.warn(
                 `purchase_failed_points_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${targetPrice}`,
               )
-              throw new BadRequestException('积分不足')
+              throw new BusinessException(
+                BusinessErrorCode.QUOTA_NOT_ENOUGH,
+                '积分不足',
+              )
             }
             this.logger.warn(
               `purchase_failed_ledger_reject userId=${userId} targetType=${targetType} targetId=${targetId} reason=${consumeResult.reason ?? 'unknown'}`,
             )
-            throw new BadRequestException('积分扣减失败，请稍后重试')
+            throw new BusinessException(
+              BusinessErrorCode.STATE_CONFLICT,
+              '积分扣减失败，请稍后重试',
+            )
           }
         }
 

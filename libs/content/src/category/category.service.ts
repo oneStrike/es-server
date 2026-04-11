@@ -1,8 +1,10 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { jsonParse } from '@libs/platform/utils/jsonParse';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { BusinessException } from '@libs/platform/exceptions'
+import { jsonParse } from '@libs/platform/utils/jsonParse'
+import { Injectable } from '@nestjs/common'
 import { and, arrayOverlaps, eq, isNull } from 'drizzle-orm'
 import {
   CreateCategoryDto,
@@ -75,9 +77,7 @@ export class WorkCategoryService {
     const conditions: SQL[] = []
 
     if (name) {
-      conditions.push(
-        buildILikeCondition(this.workCategory.name, name)!,
-      )
+      conditions.push(buildILikeCondition(this.workCategory.name, name)!)
     }
     if (isEnabled !== undefined) {
       conditions.push(eq(this.workCategory.isEnabled, isEnabled))
@@ -110,7 +110,10 @@ export class WorkCategoryService {
       where: { id: input.id },
     })
     if (!category) {
-      throw new BadRequestException('分类不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '分类不存在',
+      )
     }
     return category
   }
@@ -128,7 +131,10 @@ export class WorkCategoryService {
       updateData.isEnabled === false &&
       (await this.checkCategoryHasWorks(id))
     ) {
-      throw new BadRequestException('该分类存在关联作品，不能禁用。')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该分类存在关联作品，不能禁用。',
+      )
     }
 
     await this.drizzle.withErrorHandling(
@@ -154,13 +160,19 @@ export class WorkCategoryService {
       !updateStatusDto.isEnabled &&
       (await this.checkCategoryHasWorks(updateStatusDto.id))
     ) {
-      throw new BadRequestException('该分类存在关联作品，不能禁用。')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该分类存在关联作品，不能禁用。',
+      )
     }
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workCategory)
-        .set({ isEnabled: updateStatusDto.isEnabled })
-        .where(eq(this.workCategory.id, updateStatusDto.id)), { notFound: '分类不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workCategory)
+          .set({ isEnabled: updateStatusDto.isEnabled })
+          .where(eq(this.workCategory.id, updateStatusDto.id)),
+      { notFound: '分类不存在' },
+    )
     return true
   }
 
@@ -184,14 +196,18 @@ export class WorkCategoryService {
    */
   async deleteCategory(input: IdDto) {
     if (await this.checkCategoryHasWorks(input.id)) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '该分类存在关联作品，不能删除。',
       )
     }
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.workCategory)
-        .where(eq(this.workCategory.id, input.id)), { notFound: '分类不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .delete(this.workCategory)
+          .where(eq(this.workCategory.id, input.id)),
+      { notFound: '分类不存在' },
+    )
     return true
   }
 

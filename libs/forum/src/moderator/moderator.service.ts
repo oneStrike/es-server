@@ -3,11 +3,9 @@ import type { ForumModeratorSelect, ForumSectionSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type { NormalizedModeratorScope } from './moderator.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import {
   AssignForumModeratorSectionDto,
@@ -114,7 +112,10 @@ export class ForumModeratorService {
     })
 
     if (!user) {
-      throw new BadRequestException(`ID【${userId}】数据不存在`)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        `ID【${userId}】数据不存在`,
+      )
     }
   }
 
@@ -132,7 +133,10 @@ export class ForumModeratorService {
     })
 
     if (!group) {
-      throw new BadRequestException(`分组ID不存在: ${groupId}`)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        `分组ID不存在: ${groupId}`,
+      )
     }
   }
 
@@ -163,7 +167,8 @@ export class ForumModeratorService {
     )
 
     if (missingSectionIds.length > 0) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
         `板块ID不存在: ${missingSectionIds.join(', ')}`,
       )
     }
@@ -531,7 +536,10 @@ export class ForumModeratorService {
     })
 
     if (!moderator) {
-      throw new NotFoundException('版主不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '版主不存在',
+      )
     }
 
     const [detail] = await this.buildModeratorViews([moderator])
@@ -553,7 +561,10 @@ export class ForumModeratorService {
     })
 
     if (existing && existing.deletedAt === null) {
-      throw new BadRequestException('该用户已是版主')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '该用户已是版主',
+      )
     }
 
     const scope = await this.normalizeScope(input, { isCreate: true })
@@ -631,7 +642,10 @@ export class ForumModeratorService {
     })
 
     if (!moderator) {
-      throw new NotFoundException('版主不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '版主不存在',
+      )
     }
 
     await this.drizzle.withErrorHandling(async () =>
@@ -664,7 +678,10 @@ export class ForumModeratorService {
     })
 
     if (!moderator) {
-      throw new NotFoundException('版主不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '版主不存在',
+      )
     }
 
     if (moderator.roleType !== ForumModeratorRoleTypeEnum.SECTION) {
@@ -784,7 +801,10 @@ export class ForumModeratorService {
     })
 
     if (!moderator) {
-      throw new NotFoundException('版主不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '版主不存在',
+      )
     }
 
     const currentSectionScopes = await this.getModeratorSectionScopes(input.id)

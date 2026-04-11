@@ -25,11 +25,12 @@ import {
   GrowthLedgerSourceEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
-  NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common'
 import dayjs from 'dayjs'
 import { and, asc, eq, sql } from 'drizzle-orm'
@@ -135,23 +136,30 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       input.recordType === CheckInRecordTypeEnum.NORMAL &&
       input.signDate !== today
     ) {
-      throw new BadRequestException('签到日期非法')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '签到日期非法',
+      )
     }
     if (
       input.recordType === CheckInRecordTypeEnum.MAKEUP &&
       input.signDate >= today
     ) {
-      throw new BadRequestException('补签只能发生在今天之前')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '补签只能发生在今天之前',
+      )
     }
 
     const plan = await this.getCurrentActivePlan(now)
-    const rewardDefinition =
-      this.getPlanRewardDefinition(plan, { allowEmpty: true }) ?? {
-        baseRewardConfig: null,
-        dateRewardRules: [],
-        patternRewardRules: [],
-        streakRewardRules: [],
-      }
+    const rewardDefinition = this.getPlanRewardDefinition(plan, {
+      allowEmpty: true,
+    }) ?? {
+      baseRewardConfig: null,
+      dateRewardRules: [],
+      patternRewardRules: [],
+      streakRewardRules: [],
+    }
     const action = await this.performSignWithRetry(
       plan,
       rewardDefinition,
@@ -222,7 +230,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             tx,
           )
           if (existingRecord) {
-            throw new ConflictException(
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
               input.recordType === CheckInRecordTypeEnum.NORMAL
                 ? '今日已签到，请勿重复操作'
                 : '该日期已签到，请勿重复补签',
@@ -240,7 +249,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                 signDate: input.signDate,
                 recordType: input.recordType,
                 operatorType: input.operatorType,
-                rewardApplicable: Boolean(rewardResolution.resolvedRewardConfig),
+                rewardApplicable: Boolean(
+                  rewardResolution.resolvedRewardConfig,
+                ),
                 resolvedRewardSourceType:
                   rewardResolution.resolvedRewardSourceType,
                 resolvedRewardRuleKey: rewardResolution.resolvedRewardRuleKey,
@@ -259,9 +270,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
               tx,
             )
             if (!duplicatedRecord) {
-              throw new NotFoundException('签到记录创建失败')
+              throw new BusinessException(
+                BusinessErrorCode.RESOURCE_NOT_FOUND,
+                '签到记录创建失败',
+              )
             }
-            throw new ConflictException(
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
               input.recordType === CheckInRecordTypeEnum.NORMAL
                 ? '今日已签到，请勿重复操作'
                 : '该日期已签到，请勿重复补签',
@@ -271,7 +286,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           const records = await this.listCycleRecords(cycle.id, tx)
           const aggregation = this.recomputeCycleAggregation(records)
           if (aggregation.makeupUsedCount > plan.allowMakeupCountPerCycle) {
-            throw new BadRequestException('已超过当前周期补签上限')
+            throw new BusinessException(
+              BusinessErrorCode.QUOTA_NOT_ENOUGH,
+              '已超过当前周期补签上限',
+            )
           }
 
           const cycleUpdateResult = await tx
@@ -357,13 +375,19 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         }
 
         if (error instanceof CheckInCycleVersionConflictError) {
-          throw new ConflictException('签到周期并发冲突，请稍后重试')
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '签到周期并发冲突，请稍后重试',
+          )
         }
         throw error
       }
     }
 
-    throw new ConflictException('签到周期并发冲突，请稍后重试')
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      '签到周期并发冲突，请稍后重试',
+    )
   }
 
   /**
@@ -424,7 +448,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       .limit(1)
 
     if (!cycle) {
-      throw new NotFoundException('签到周期创建失败')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '签到周期创建失败',
+      )
     }
 
     return cycle
@@ -673,10 +700,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         ? CheckInRewardStatusEnum.PENDING
         : null,
       resolvedRewardSourceType: input.rewardApplicable
-        ? input.resolvedRewardSourceType ?? null
+        ? (input.resolvedRewardSourceType ?? null)
         : null,
       resolvedRewardRuleKey: input.rewardApplicable
-        ? input.resolvedRewardRuleKey ?? null
+        ? (input.resolvedRewardRuleKey ?? null)
         : null,
       resolvedRewardConfig: input.resolvedRewardConfig ?? null,
       bizKey: this.buildRecordBizKey(
@@ -737,13 +764,22 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     const cycleEndDate = this.toDateOnlyValue(cycle.cycleEndDate)
 
     if (signDate < cycleStartDate || signDate > cycleEndDate) {
-      throw new BadRequestException('补签日期不在当前周期内')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '补签日期不在当前周期内',
+      )
     }
     if (signDate >= today) {
-      throw new BadRequestException('补签日期必须早于今天')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '补签日期必须早于今天',
+      )
     }
     if (allowMakeupCountPerCycle <= 0) {
-      throw new BadRequestException('当前计划不支持补签')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '当前计划不支持补签',
+      )
     }
   }
 
@@ -758,7 +794,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       .where(eq(this.checkInRecordTable.id, recordId))
       .limit(1)
     if (!record) {
-      throw new NotFoundException('签到记录不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '签到记录不存在',
+      )
     }
 
     const [cycle] = await this.db
@@ -767,7 +806,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       .where(eq(this.checkInCycleTable.id, record.cycleId))
       .limit(1)
     if (!cycle) {
-      throw new NotFoundException('签到周期不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '签到周期不存在',
+      )
     }
 
     const [plan] = await this.db
@@ -776,7 +818,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       .where(eq(this.checkInPlanTable.id, record.planId))
       .limit(1)
     if (!plan) {
-      throw new NotFoundException('签到计划不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '签到计划不存在',
+      )
     }
 
     return {
@@ -823,7 +868,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           .where(eq(this.checkInRecordTable.id, recordId))
           .limit(1)
         if (!record) {
-          throw new NotFoundException('签到记录不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '签到记录不存在',
+          )
         }
 
         const rewardConfig = this.parseStoredRewardConfig(
@@ -861,7 +909,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
       return true
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (
+        error instanceof BusinessException &&
+        error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
+      ) {
         throw error
       }
 
@@ -903,7 +954,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           .where(eq(this.checkInStreakRewardGrantTable.id, grantId))
           .limit(1)
         if (!grant) {
-          throw new NotFoundException('连续奖励发放事实不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '连续奖励发放事实不存在',
+          )
         }
 
         const rewardConfig = this.parseStoredRewardConfig(grant.rewardConfig, {
@@ -939,7 +993,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
       return true
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (
+        error instanceof BusinessException &&
+        error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
+      ) {
         throw error
       }
 
@@ -1028,7 +1085,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     for (const result of results) {
       if (!result.success) {
-        throw new BadRequestException('签到奖励发放失败')
+        throw new InternalServerErrorException('签到奖励发放失败')
       }
     }
 

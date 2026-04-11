@@ -1,9 +1,15 @@
 import type { ForumModeratorApplicationSelect } from '@db/schema'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, SQL } from 'drizzle-orm'
-import { ALL_FORUM_MODERATOR_PERMISSIONS, FORUM_MODERATOR_PERMISSION_LABELS, ForumModeratorPermissionEnum } from '../moderator/moderator.constant';
-import { ForumModeratorService } from '../moderator/moderator.service';
+import {
+  ALL_FORUM_MODERATOR_PERMISSIONS,
+  FORUM_MODERATOR_PERMISSION_LABELS,
+  ForumModeratorPermissionEnum,
+} from '../moderator/moderator.constant'
+import { ForumModeratorService } from '../moderator/moderator.service'
 import {
   AuditForumModeratorApplicationDto,
   CreateForumModeratorApplicationDto,
@@ -86,7 +92,10 @@ export class ForumModeratorApplicationService {
     })
 
     if (!user) {
-      throw new BadRequestException('申请用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '申请用户不存在',
+      )
     }
   }
 
@@ -105,7 +114,10 @@ export class ForumModeratorApplicationService {
     })
 
     if (!section) {
-      throw new BadRequestException('申请板块不存在或已禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '申请板块不存在或已禁用',
+      )
     }
   }
 
@@ -123,7 +135,10 @@ export class ForumModeratorApplicationService {
     })
 
     if (moderator) {
-      throw new BadRequestException('当前用户已是版主，无需重复申请')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '当前用户已是版主，无需重复申请',
+      )
     }
   }
 
@@ -131,9 +146,7 @@ export class ForumModeratorApplicationService {
    * 批量装配版主申请视图。
    * 统一补齐申请人、审核人、板块和权限名称，避免 controller 层再做拼装。
    */
-  private async buildApplicationViews(
-    rows: ForumModeratorApplicationSelect[],
-  ) {
+  private async buildApplicationViews(rows: ForumModeratorApplicationSelect[]) {
     if (rows.length === 0) {
       return []
     }
@@ -208,15 +221,20 @@ export class ForumModeratorApplicationService {
    * 仅返回未软删除记录，缺失时抛出稳定的 not-found 异常。
    */
   async getApplicationDetail(id: number) {
-    const application = await this.db.query.forumModeratorApplication.findFirst({
-      where: {
-        id,
-        deletedAt: { isNull: true },
+    const application = await this.db.query.forumModeratorApplication.findFirst(
+      {
+        where: {
+          id,
+          deletedAt: { isNull: true },
+        },
       },
-    })
+    )
 
     if (!application) {
-      throw new NotFoundException('版主申请不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '版主申请不存在',
+      )
     }
 
     const [detail] = await this.buildApplicationViews([application])
@@ -228,16 +246,21 @@ export class ForumModeratorApplicationService {
    * 通过 applicantId 绑定当前用户，避免越权读取他人申请单。
    */
   async getMyApplicationDetail(userId: number, id: number) {
-    const application = await this.db.query.forumModeratorApplication.findFirst({
-      where: {
-        id,
-        applicantId: userId,
-        deletedAt: { isNull: true },
+    const application = await this.db.query.forumModeratorApplication.findFirst(
+      {
+        where: {
+          id,
+          applicantId: userId,
+          deletedAt: { isNull: true },
+        },
       },
-    })
+    )
 
     if (!application) {
-      throw new NotFoundException('版主申请不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '版主申请不存在',
+      )
     }
 
     const [detail] = await this.buildApplicationViews([application])
@@ -273,7 +296,10 @@ export class ForumModeratorApplicationService {
       existing.deletedAt === null &&
       existing.status === ForumModeratorApplicationStatusEnum.PENDING
     ) {
-      throw new BadRequestException('当前板块已有待审核申请')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '当前板块已有待审核申请',
+      )
     }
 
     await this.drizzle.withErrorHandling(async () =>
@@ -296,16 +322,14 @@ export class ForumModeratorApplicationService {
           return true
         }
 
-        await tx
-          .insert(this.forumModeratorApplication)
-          .values({
-            applicantId,
-            sectionId: input.sectionId,
-            status: ForumModeratorApplicationStatusEnum.PENDING,
-            permissions,
-            reason: input.reason,
-            remark: input.remark,
-          })
+        await tx.insert(this.forumModeratorApplication).values({
+          applicantId,
+          sectionId: input.sectionId,
+          status: ForumModeratorApplicationStatusEnum.PENDING,
+          permissions,
+          reason: input.reason,
+          remark: input.remark,
+        })
         return true
       }),
     )
@@ -327,7 +351,9 @@ export class ForumModeratorApplicationService {
       )
     }
     if (query.sectionId !== undefined) {
-      conditions.push(eq(this.forumModeratorApplication.sectionId, query.sectionId))
+      conditions.push(
+        eq(this.forumModeratorApplication.sectionId, query.sectionId),
+      )
     }
     if (query.status !== undefined) {
       conditions.push(eq(this.forumModeratorApplication.status, query.status))
@@ -388,22 +414,33 @@ export class ForumModeratorApplicationService {
     input: AuditForumModeratorApplicationDto,
   ) {
     if (input.status === ForumModeratorApplicationStatusEnum.PENDING) {
-      throw new BadRequestException('审核结果不能为待审核')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '审核结果不能为待审核',
+      )
     }
 
-    const application = await this.db.query.forumModeratorApplication.findFirst({
-      where: {
-        id: input.id,
-        deletedAt: { isNull: true },
+    const application = await this.db.query.forumModeratorApplication.findFirst(
+      {
+        where: {
+          id: input.id,
+          deletedAt: { isNull: true },
+        },
       },
-    })
+    )
 
     if (!application) {
-      throw new NotFoundException('版主申请不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '版主申请不存在',
+      )
     }
 
     if (application.status !== ForumModeratorApplicationStatusEnum.PENDING) {
-      throw new BadRequestException('该申请已处理，请勿重复审核')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该申请已处理，请勿重复审核',
+      )
     }
 
     await this.ensureSectionExists(application.sectionId)
@@ -438,18 +475,21 @@ export class ForumModeratorApplicationService {
    * 仅对未软删除记录生效，并通过受影响行数统一抛出缺失异常。
    */
   async deleteApplication(id: number) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumModeratorApplication)
-        .set({
-          deletedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(this.forumModeratorApplication.id, id),
-            isNull(this.forumModeratorApplication.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.forumModeratorApplication)
+          .set({
+            deletedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(this.forumModeratorApplication.id, id),
+              isNull(this.forumModeratorApplication.deletedAt),
+            ),
           ),
-        ), { notFound: '版主申请不存在' },)
+      { notFound: '版主申请不存在' },
+    )
     return true
   }
 
@@ -458,19 +498,22 @@ export class ForumModeratorApplicationService {
    * 删除条件会同时绑定 applicantId，防止用户删除他人申请单。
    */
   async deleteMyApplication(userId: number, id: number) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumModeratorApplication)
-        .set({
-          deletedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(this.forumModeratorApplication.id, id),
-            eq(this.forumModeratorApplication.applicantId, userId),
-            isNull(this.forumModeratorApplication.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.forumModeratorApplication)
+          .set({
+            deletedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(this.forumModeratorApplication.id, id),
+              eq(this.forumModeratorApplication.applicantId, userId),
+              isNull(this.forumModeratorApplication.deletedAt),
+            ),
           ),
-        ), { notFound: '版主申请不存在' },)
+      { notFound: '版主申请不存在' },
+    )
     return true
   }
 }

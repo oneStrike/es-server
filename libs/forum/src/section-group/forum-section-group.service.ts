@@ -1,14 +1,12 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
-import { FollowService } from '@libs/interaction/follow/follow.service';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
+import { FollowService } from '@libs/interaction/follow/follow.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
-import { ForumPermissionService } from '../permission/forum-permission.service';
+import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   CreateForumSectionGroupDto,
   QueryForumSectionGroupDto,
@@ -68,7 +66,10 @@ export class ForumSectionGroupService {
     })
 
     if (!group) {
-      throw new NotFoundException('板块分组不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块分组不存在',
+      )
     }
     return group
   }
@@ -205,9 +206,7 @@ export class ForumSectionGroupService {
    * 更新板块分组。
    * 写后校验受影响行数，确保分组存在且未被软删除。
    */
-  async updateSectionGroup(
-    updateSectionGroupDto: UpdateForumSectionGroupDto,
-  ) {
+  async updateSectionGroup(updateSectionGroupDto: UpdateForumSectionGroupDto) {
     const { id, ...updateData } = updateSectionGroupDto
     await this.drizzle.withErrorHandling(
       () =>
@@ -244,23 +243,32 @@ export class ForumSectionGroupService {
     })
 
     if (!group) {
-      throw new NotFoundException('板块分组不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块分组不存在',
+      )
     }
 
     if (group.sections.length > 0) {
-      throw new BadRequestException('该分组下还有板块，无法删除')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该分组下还有板块，无法删除',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumSectionGroup)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(
-            eq(this.forumSectionGroup.id, id),
-            isNull(this.forumSectionGroup.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.forumSectionGroup)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(this.forumSectionGroup.id, id),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
           ),
-        ), { notFound: '板块分组不存在' },)
+      { notFound: '板块分组不存在' },
+    )
     return true
   }
 
@@ -282,16 +290,19 @@ export class ForumSectionGroupService {
     updateSectionGroupEnabledDto: UpdateForumSectionGroupEnabledDto,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumSectionGroup)
-        .set({ isEnabled })
-        .where(
-          and(
-            eq(this.forumSectionGroup.id, id),
-            isNull(this.forumSectionGroup.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.forumSectionGroup)
+          .set({ isEnabled })
+          .where(
+            and(
+              eq(this.forumSectionGroup.id, id),
+              isNull(this.forumSectionGroup.deletedAt),
+            ),
           ),
-        ), { notFound: '板块分组不存在' },)
+      { notFound: '板块分组不存在' },
+    )
     return true
   }
 

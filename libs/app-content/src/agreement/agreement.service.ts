@@ -1,11 +1,9 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
   CreateAgreementDto,
@@ -47,7 +45,10 @@ export class AgreementService {
     })
 
     if (!agreement) {
-      throw new NotFoundException('协议不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '协议不存在',
+      )
     }
 
     return agreement
@@ -63,9 +64,8 @@ export class AgreementService {
       title: string
       publishedAt?: Date | null
     },
-  >(
-    agreements: T[],
-  ) {
+  >(agreements: T[]
+) {
     const seenTitles = new Set<string>()
 
     return [...agreements]
@@ -117,7 +117,8 @@ export class AgreementService {
     const { id, ...updateData } = dto
     const agreement = await this.findAgreementLifecycle(id)
     if (agreement.isPublished) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '已发布协议不允许直接修改，请新建版本后发布',
       )
     }
@@ -143,18 +144,24 @@ export class AgreementService {
   async updatePublishStatus(dto: UpdatePublishedStatusDto) {
     const agreement = await this.findAgreementLifecycle(dto.id)
     if (!dto.isPublished && !agreement.isPublished) {
-      throw new BadRequestException('未发布协议不允许下线')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '未发布协议不允许下线',
+      )
     }
 
     const updateData = dto.isPublished
       ? { isPublished: true, publishedAt: new Date() }
       : { isPublished: false }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.agreement)
-        .set(updateData)
-        .where(eq(this.agreement.id, dto.id)), { notFound: '协议不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.agreement)
+          .set(updateData)
+          .where(eq(this.agreement.id, dto.id)),
+      { notFound: '协议不存在' },
+    )
     return true
   }
 
@@ -176,7 +183,10 @@ export class AgreementService {
     })
 
     if (!agreement) {
-      throw new NotFoundException('协议不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '协议不存在',
+      )
     }
     return agreement
   }

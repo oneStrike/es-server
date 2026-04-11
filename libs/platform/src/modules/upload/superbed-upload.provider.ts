@@ -5,7 +5,7 @@ import type {
   UploadSystemConfig,
 } from './upload.types'
 import { createReadStream } from 'node:fs'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import axios from 'axios'
 import NodeFormData from 'form-data'
 
@@ -19,7 +19,7 @@ export class SuperbedUploadProvider {
   ): Promise<UploadExecutionResult> {
     const config = systemConfig.superbed
     if (!config.token) {
-      throw new BadRequestException('Superbed 上传配置不完整')
+      throw new InternalServerErrorException('Superbed 上传配置不完整')
     }
 
     const form = new NodeFormData()
@@ -45,25 +45,21 @@ export class SuperbedUploadProvider {
       })
 
       if (data?.err !== 0 || !data?.url) {
-        throw new BadRequestException(data?.msg || 'Superbed 上传失败')
+        throw new InternalServerErrorException(data?.msg || 'Superbed 上传失败')
       }
 
       return {
         filePath: data.url,
       }
     } catch (error) {
-      if (error instanceof BadRequestException) {
+      if (error instanceof InternalServerErrorException) {
         throw error
       }
-      throw new BadRequestException('Superbed 上传失败')
+      throw new InternalServerErrorException('Superbed 上传失败')
     }
   }
 
-  private appendOptionalBoolean(
-    form: FormData,
-    name: string,
-    value?: boolean,
-  ) {
+  private appendOptionalBoolean(form: FormData, name: string, value?: boolean) {
     if (typeof value === 'boolean') {
       form.append(name, String(value))
     }

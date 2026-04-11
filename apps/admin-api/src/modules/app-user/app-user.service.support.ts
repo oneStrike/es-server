@@ -1,14 +1,13 @@
 import type { DrizzleService } from '@db/core'
 import type { UserService as UserCoreService } from '@libs/user/user.service'
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import {
   buildDateOnlyRangeInAppTimeZone,
   formatDateOnlyInAppTimeZone,
 } from '@libs/platform/utils'
-import {
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common'
+import { ForbiddenException } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 
 type AppUserCountView = Pick<
@@ -105,7 +104,10 @@ export abstract class AppUserServiceSupport {
       .limit(1)
 
     if (!adminUser) {
-      throw new NotFoundException('管理端用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '管理端用户不存在',
+      )
     }
 
     if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
@@ -129,8 +131,7 @@ export abstract class AppUserServiceSupport {
       followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
-      forumTopicReceivedLikeCount:
-        counts?.forumTopicReceivedLikeCount ?? 0,
+      forumTopicReceivedLikeCount: counts?.forumTopicReceivedLikeCount ?? 0,
       forumTopicReceivedFavoriteCount:
         counts?.forumTopicReceivedFavoriteCount ?? 0,
     }

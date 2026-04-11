@@ -1,6 +1,7 @@
 import type { Db, PgTable, SQL, TableConfig } from '../core/drizzle.type'
-import { NotFoundException } from '@nestjs/common'
 import { and, gte, sql } from 'drizzle-orm'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 
 /**
  * 应用计数器增量更新
@@ -10,7 +11,7 @@ import { and, gte, sql } from 'drizzle-orm'
  * @param where - 查询条件
  * @param field - 要更新的计数字段名
  * @param delta - 增量值（正数增加，负数减少）
- * @throws NotFoundException - 当字段不存在或目标记录不存在时抛出
+ * @throws BusinessException - 当字段不存在或目标记录不存在时抛出
  */
 export async function applyCountDelta(
   db: Db,
@@ -28,7 +29,10 @@ export async function applyCountDelta(
   const tableAsAny = table as any
   const column = tableAsAny[field]
   if (!column) {
-    throw new NotFoundException(`字段 "${field}" 不存在`)
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      `字段 "${field}" 不存在`,
+    )
   }
 
   // 正数增量：直接增加字段值
@@ -40,7 +44,10 @@ export async function applyCountDelta(
       .returning()
 
     if (updated.length === 0) {
-      throw new NotFoundException('目标不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '目标不存在',
+      )
     }
     return
   }
@@ -55,6 +62,9 @@ export async function applyCountDelta(
     .returning()
 
   if (updated.length === 0) {
-    throw new NotFoundException('目标不存在或计数不足')
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      '目标不存在或计数不足',
+    )
   }
 }

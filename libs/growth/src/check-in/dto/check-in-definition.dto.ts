@@ -13,11 +13,11 @@ import {
   CreateCheckInDateRewardRuleDto,
 } from './check-in-date-reward-rule.dto'
 import { CheckInPageNoDateDto } from './check-in-fragment.dto'
-import { BaseCheckInPlanDto } from './check-in-plan.dto'
 import {
   CheckInPatternRewardRuleItemDto,
   CreateCheckInPatternRewardRuleDto,
 } from './check-in-pattern-reward-rule.dto'
+import { BaseCheckInPlanDto } from './check-in-plan.dto'
 import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 import {
   CheckInStreakRewardRuleItemDto,

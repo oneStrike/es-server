@@ -1,15 +1,15 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { IPurchaseTargetResolver } from '@libs/interaction/purchase/interfaces/purchase-target-resolver.interface';
-import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.constant';
-import { PurchaseService } from '@libs/interaction/purchase/purchase.service';
-import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
+import { IPurchaseTargetResolver } from '@libs/interaction/purchase/interfaces/purchase-target-resolver.interface'
+import { PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.constant'
+import { PurchaseService } from '@libs/interaction/purchase/purchase.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
+  ContentTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
@@ -59,15 +59,24 @@ export class WorkNovelChapterPurchaseResolver
     })
 
     if (!chapter) {
-      throw new NotFoundException('小说章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '小说章节不存在',
+      )
     }
 
     if (chapter.viewRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BadRequestException('该小说章节不支持购买')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该小说章节不支持购买',
+      )
     }
 
     if (chapter.price < 0) {
-      throw new BadRequestException('小说章节价格配置错误')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '小说章节价格配置错误',
+      )
     }
 
     return {

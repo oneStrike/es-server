@@ -1,5 +1,9 @@
-import type { ChapterContentComicRequestDto, DetailComicRequestDto, SearchComicRequestDto } from '@libs/content/work/content/dto/content.dto';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import type {
+  ChapterContentComicRequestDto,
+  DetailComicRequestDto,
+  SearchComicRequestDto,
+} from '@libs/content/work/content/dto/content.dto'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 
 /**
@@ -55,7 +59,7 @@ export class CopyService {
       const detail = axios.isAxiosError(error)
         ? error.response?.data?.detail
         : undefined
-      throw new BadRequestException(
+      throw new InternalServerErrorException(
         typeof error === 'string'
           ? error
           : detail || '解析服务出现错误，请稍后再试！',
@@ -89,7 +93,7 @@ export class CopyService {
       const detail = axios.isAxiosError(error)
         ? error.response?.data?.detail
         : undefined
-      throw new BadRequestException(
+      throw new InternalServerErrorException(
         typeof error === 'string'
           ? error
           : detail || '解析服务出现错误，请稍后再试！',
@@ -115,7 +119,7 @@ export class CopyService {
       const detail = axios.isAxiosError(error)
         ? error.response?.data?.detail
         : undefined
-      throw new BadRequestException(
+      throw new InternalServerErrorException(
         typeof error === 'string'
           ? error
           : detail || '解析服务出现错误，请稍后再试！',
@@ -141,7 +145,7 @@ export class CopyService {
       const detail = axios.isAxiosError(error)
         ? error.response?.data?.detail
         : undefined
-      throw new BadRequestException(
+      throw new InternalServerErrorException(
         typeof error === 'string'
           ? error
           : detail || '解析服务出现错误，请稍后再试！',

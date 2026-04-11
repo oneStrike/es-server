@@ -1,5 +1,7 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth/auth.types'
 import { DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant'
 import {
   ChangePasswordDto,
@@ -8,7 +10,12 @@ import {
 import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 import { UserService as UserCoreService } from '@libs/user/user.service'
-import { BadRequestException, Inject, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+} from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
 import { SmsService } from './sms.service'
@@ -88,7 +95,10 @@ export class PasswordService {
       })
       .from(this.appUser)
       .where(
-        and(eq(this.appUser.phoneNumber, phone), isNull(this.appUser.deletedAt)),
+        and(
+          eq(this.appUser.phoneNumber, phone),
+          isNull(this.appUser.deletedAt),
+        ),
       )
       .limit(1)
 
@@ -98,7 +108,7 @@ export class PasswordService {
     }
 
     if (!user.isEnabled) {
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_DISABLED)
+      throw new ForbiddenException(AppAuthErrorMessages.ACCOUNT_DISABLED)
     }
 
     this.userCoreService.ensureAppUserNotBanned(user)
@@ -106,12 +116,15 @@ export class PasswordService {
     await this.smsService.validateVerifyCode({ phone, code })
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({ password: hashedPassword })
-        .where(eq(this.appUser.id, user.id))
-        .returning({ id: this.appUser.id }), { notFound: AppAuthErrorMessages.ACCOUNT_NOT_FOUND },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appUser)
+          .set({ password: hashedPassword })
+          .where(eq(this.appUser.id, user.id))
+          .returning({ id: this.appUser.id }),
+      { notFound: AppAuthErrorMessages.ACCOUNT_NOT_FOUND },
+    )
 
     await this.tokenStorageService.revokeAllByUserId(
       user.id,
@@ -135,7 +148,10 @@ export class PasswordService {
       .limit(1)
 
     if (!user) {
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        AppAuthErrorMessages.ACCOUNT_NOT_FOUND,
+      )
     }
 
     // 验证旧密码
@@ -146,7 +162,10 @@ export class PasswordService {
     )
 
     if (!isPasswordValid) {
-      throw new BadRequestException('旧密码错误')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '旧密码错误',
+      )
     }
 
     // 验证新密码
@@ -156,17 +175,23 @@ export class PasswordService {
     )
 
     if (newPassword !== confirmNewPassword) {
-      throw new BadRequestException('两次输入的密码不一致')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '两次输入的密码不一致',
+      )
     }
 
     // 更新密码
     const hashedPassword = await this.scryptService.encryptPassword(newPassword)
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appUser)
-        .set({ password: hashedPassword })
-        .where(eq(this.appUser.id, userId))
-        .returning({ id: this.appUser.id }), { notFound: AppAuthErrorMessages.ACCOUNT_NOT_FOUND },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appUser)
+          .set({ password: hashedPassword })
+          .where(eq(this.appUser.id, userId))
+          .returning({ id: this.appUser.id }),
+      { notFound: AppAuthErrorMessages.ACCOUNT_NOT_FOUND },
+    )
 
     // 撤销其他设备登录
     await this.tokenStorageService.revokeAllByUserId(

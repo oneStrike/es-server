@@ -1,12 +1,10 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import {
   CreateDictionaryDto,
@@ -90,7 +88,10 @@ export class LibDictionaryService {
     })
 
     if (!data) {
-      throw new BadRequestException('数据字典不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '数据字典不存在',
+      )
     }
   }
 
@@ -107,14 +108,17 @@ export class LibDictionaryService {
   }
 
   /**
-   * 按主键查询字典详情，未命中时抛出 `NotFoundException`。
+   * 按主键查询字典详情，未命中时抛出 `BusinessException`。
    */
   async findDictionaryById(dto: IdDto) {
     const data = await this.db.query.dictionary.findFirst({
       where: { id: dto.id },
     })
     if (!data) {
-      throw new NotFoundException('字典不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '字典不存在',
+      )
     }
     return data
   }
@@ -147,12 +151,14 @@ export class LibDictionaryService {
       })
 
       if (!currentDictionary) {
-        throw new NotFoundException('字典不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '字典不存在',
+        )
       }
 
-      const updateData = code === undefined
-        ? otherUpdateData
-        : { ...otherUpdateData, code }
+      const updateData =
+        code === undefined ? otherUpdateData : { ...otherUpdateData, code }
       const result = await tx
         .update(this.dictionary)
         .set(updateData)
@@ -176,11 +182,14 @@ export class LibDictionaryService {
    * 切换字典启用状态。
    */
   async updateDictionaryStatus(dto: UpdateEnabledStatusDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.dictionary)
-        .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.dictionary.id, dto.id)), { notFound: '字典不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.dictionary)
+          .set({ isEnabled: dto.isEnabled })
+          .where(eq(this.dictionary.id, dto.id)),
+      { notFound: '字典不存在' },
+    )
     return true
   }
 
@@ -194,11 +203,17 @@ export class LibDictionaryService {
       where: { dictionaryCode: dictionary.code },
     })
     if (hasItems) {
-      throw new BadRequestException('该字典还有关联字典项，无法删除')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该字典还有关联字典项，无法删除',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionary).where(eq(this.dictionary.id, dto.id)), { notFound: '字典不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db.delete(this.dictionary).where(eq(this.dictionary.id, dto.id)),
+      { notFound: '字典不存在' },
+    )
     return true
   }
 
@@ -212,7 +227,9 @@ export class LibDictionaryService {
     const dictionaryCodes = this.parseDictionaryCodes(dictionaryCode)
 
     if (dictionaryCodes.length > 0) {
-      conditions.push(inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes))
+      conditions.push(
+        inArray(this.dictionaryItem.dictionaryCode, dictionaryCodes),
+      )
     }
 
     const orderBy = queryDto.orderBy?.trim()
@@ -265,14 +282,17 @@ export class LibDictionaryService {
       await this.assertDictionaryExists(dto.dictionaryCode)
     }
     const { id, sortOrder, ...data } = dto
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.dictionaryItem)
-        .set({
-          ...data,
-          sortOrder: sortOrder ?? undefined,
-        })
-        .where(eq(this.dictionaryItem.id, id)), { notFound: '字典项不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.dictionaryItem)
+          .set({
+            ...data,
+            sortOrder: sortOrder ?? undefined,
+          })
+          .where(eq(this.dictionaryItem.id, id)),
+      { notFound: '字典项不存在' },
+    )
     return true
   }
 
@@ -280,11 +300,14 @@ export class LibDictionaryService {
    * 切换字典项启用状态。
    */
   async updateDictionaryItemStatus(dto: UpdateEnabledStatusDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.dictionaryItem)
-        .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.dictionaryItem.id, dto.id)), { notFound: '字典项不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.dictionaryItem)
+          .set({ isEnabled: dto.isEnabled })
+          .where(eq(this.dictionaryItem.id, dto.id)),
+      { notFound: '字典项不存在' },
+    )
     return true
   }
 
@@ -303,8 +326,13 @@ export class LibDictionaryService {
    * 删除字典项。
    */
   async deleteDictionaryItem(dto: IdDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.dictionaryItem).where(eq(this.dictionaryItem.id, dto.id)), { notFound: '字典项不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .delete(this.dictionaryItem)
+          .where(eq(this.dictionaryItem.id, dto.id)),
+      { notFound: '字典项不存在' },
+    )
     return true
   }
 }

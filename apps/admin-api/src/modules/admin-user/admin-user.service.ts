@@ -1,16 +1,20 @@
-import type { ChangePasswordDto, UpdateUserDto, UserPageDto, UserRegisterDto } from '@libs/identity/dto/admin-user.dto';
+import type {
+  ChangePasswordDto,
+  UpdateUserDto,
+  UserPageDto,
+  UserRegisterDto,
+} from '@libs/identity/dto/admin-user.dto'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
-import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
-import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service';
-import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant'
+import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { and, eq } from 'drizzle-orm'
@@ -50,7 +54,10 @@ export class AdminUserService {
       .where(eq(this.adminUser.id, userId))
       .limit(1)
     if (!adminUser) {
-      throw new NotFoundException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     if (adminUser.role !== AdminUserRoleEnum.SUPER_ADMIN) {
@@ -61,10 +68,7 @@ export class AdminUserService {
   /**
    * 更新用户信息
    */
-  async updateUserInfo(
-    userId: number,
-    updateData: UpdateUserDto,
-  ) {
+  async updateUserInfo(userId: number, updateData: UpdateUserDto) {
     await this.isSuperAdmin(userId)
     // 先读取当前快照，避免把同一账号自己的用户名或手机号误判成冲突。
     const [user] = await this.db
@@ -77,7 +81,10 @@ export class AdminUserService {
       .where(eq(this.adminUser.id, updateData.id))
       .limit(1)
     if (!user) {
-      throw new NotFoundException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     // 如果要更新用户名，检查是否已存在
@@ -89,7 +96,10 @@ export class AdminUserService {
         .limit(1)
 
       if (existingUser?.id) {
-        throw new BadRequestException('用户名已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '用户名已存在',
+        )
       }
     }
 
@@ -101,28 +111,37 @@ export class AdminUserService {
         .limit(1)
 
       if (existingUser?.id) {
-        throw new BadRequestException('手机号已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '手机号已存在',
+        )
       }
     }
 
     const { id: _id, ...data } = updateData
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.adminUser)
-        .set(data)
-        .where(eq(this.adminUser.id, updateData.id)), { notFound: '用户不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.adminUser)
+          .set(data)
+          .where(eq(this.adminUser.id, updateData.id)),
+      { notFound: '用户不存在' },
+    )
     return true
   }
 
-   /**
-    * 注册管理员用户
-    */
+  /**
+   * 注册管理员用户
+   */
   async register(operatorId: number, data: UserRegisterDto) {
     await this.isSuperAdmin(operatorId)
     const { username, password, avatar, role, mobile, confirmPassword } = data
 
     if (password !== confirmPassword) {
-      throw new BadRequestException('两次输入的密码不一致')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '两次输入的密码不一致',
+      )
     }
 
     // 检查用户名是否已存在
@@ -132,7 +151,10 @@ export class AdminUserService {
       .where(eq(this.adminUser.username, username))
       .limit(1)
     if (usernameExists) {
-      throw new BadRequestException('用户名已存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '用户名已存在',
+      )
     }
     // 检查手机号是否已存在
     const [mobileExists] = mobile
@@ -143,23 +165,24 @@ export class AdminUserService {
           .limit(1)
       : []
     if (mobileExists) {
-      throw new BadRequestException('手机号已存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '手机号已存在',
+      )
     }
 
     // 加密密码
     const encryptedPassword = await this.scryptService.encryptPassword(password)
 
     await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.adminUser)
-        .values({
-          username,
-          password: encryptedPassword,
-          avatar,
-          mobile,
-          role: role || AdminUserRoleEnum.NORMAL_ADMIN,
-          isEnabled: true,
-        }),
+      this.db.insert(this.adminUser).values({
+        username,
+        password: encryptedPassword,
+        avatar,
+        mobile,
+        role: role || AdminUserRoleEnum.NORMAL_ADMIN,
+        isEnabled: true,
+      }),
     )
     return true
   }
@@ -175,7 +198,10 @@ export class AdminUserService {
       .limit(1)
 
     if (!user) {
-      throw new NotFoundException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     // 返回用户信息（不包含密码）
@@ -197,14 +223,10 @@ export class AdminUserService {
       conditions.push(eq(this.adminUser.role, role))
     }
     if (username) {
-      conditions.push(
-        buildILikeCondition(this.adminUser.username, username)!,
-      )
+      conditions.push(buildILikeCondition(this.adminUser.username, username)!)
     }
     if (mobile) {
-      conditions.push(
-        buildILikeCondition(this.adminUser.mobile, mobile)!,
-      )
+      conditions.push(buildILikeCondition(this.adminUser.mobile, mobile)!)
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -221,20 +243,23 @@ export class AdminUserService {
   /**
    * 修改密码
    */
-  async changePassword(
-    userId: number,
-    changePasswordDto: ChangePasswordDto,
-  ) {
+  async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto
 
     // 检查新密码和确认密码是否一致
     if (newPassword !== confirmPassword) {
-      throw new BadRequestException('新密码和确认密码不一致')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '新密码和确认密码不一致',
+      )
     }
 
     // 检查新密码与旧密码是否相同
     if (oldPassword === newPassword) {
-      throw new BadRequestException('新密码不能与旧密码相同')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '新密码不能与旧密码相同',
+      )
     }
 
     // 查找用户（优化：只选择密码字段）
@@ -244,7 +269,10 @@ export class AdminUserService {
       .where(eq(this.adminUser.id, userId))
       .limit(1)
     if (!user) {
-      throw new NotFoundException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     // 验证旧密码
@@ -253,17 +281,23 @@ export class AdminUserService {
       user.password,
     )
     if (!isPasswordValid) {
-      throw new UnauthorizedException('旧密码错误')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '旧密码错误',
+      )
     }
 
     // 更新密码
-    await this.drizzle.withErrorHandling(async () =>
-      this.db
-        .update(this.adminUser)
-        .set({
-          password: await this.scryptService.encryptPassword(newPassword),
-        })
-        .where(eq(this.adminUser.id, userId)), { notFound: '用户不存在' },)
+    await this.drizzle.withErrorHandling(
+      async () =>
+        this.db
+          .update(this.adminUser)
+          .set({
+            password: await this.scryptService.encryptPassword(newPassword),
+          })
+          .where(eq(this.adminUser.id, userId)),
+      { notFound: '用户不存在' },
+    )
 
     await this.tokenStorageService.revokeAllByUserId(
       userId,
@@ -286,7 +320,10 @@ export class AdminUserService {
       .where(eq(this.adminUser.id, userId))
       .limit(1)
     if (!user) {
-      throw new NotFoundException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     // 解锁用户（清除 Redis 锁）
@@ -304,17 +341,21 @@ export class AdminUserService {
   async resetPassword(userId: number, id: number) {
     await this.isSuperAdmin(userId)
     // 重置密码为默认密码（Aa@123456）
-    const defaultPassword = this.configService.get<string>('app.defaultPassword')!
-    const encryptedPassword = await this.scryptService.encryptPassword(
-      defaultPassword,
+    const defaultPassword = this.configService.get<string>(
+      'app.defaultPassword',
+    )!
+    const encryptedPassword =
+      await this.scryptService.encryptPassword(defaultPassword)
+    await this.drizzle.withErrorHandling(
+      async () =>
+        this.db
+          .update(this.adminUser)
+          .set({
+            password: encryptedPassword,
+          })
+          .where(eq(this.adminUser.id, id)),
+      { notFound: '用户不存在' },
     )
-    await this.drizzle.withErrorHandling(async () =>
-      this.db
-        .update(this.adminUser)
-        .set({
-          password: encryptedPassword,
-        })
-        .where(eq(this.adminUser.id, id)), { notFound: '用户不存在' },)
 
     await this.tokenStorageService.revokeAllByUserId(
       id,

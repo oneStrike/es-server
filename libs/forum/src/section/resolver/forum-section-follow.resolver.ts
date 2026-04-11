@@ -1,15 +1,13 @@
 import type { Db } from '@db/core'
-import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.interface';
+import type { IFollowTargetResolver } from '@libs/interaction/follow/interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
-import { FollowService } from '@libs/interaction/follow/follow.service';
-import {
-  BadRequestException,
-  Injectable,
-  OnModuleInit,
-} from '@nestjs/common'
-import { ForumCounterService } from '../../counter/forum-counter.service';
-import { ForumPermissionService } from '../../permission/forum-permission.service';
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
+import { FollowService } from '@libs/interaction/follow/follow.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
+import { ForumCounterService } from '../../counter/forum-counter.service'
+import { ForumPermissionService } from '../../permission/forum-permission.service'
 
 /**
  * 论坛板块关注解析器
@@ -52,14 +50,21 @@ export class ForumSectionFollowResolver
     })
 
     if (!section) {
-      throw new BadRequestException('板块不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块不存在',
+      )
     }
 
     return {}
   }
 
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
-    await this.forumCounterService.updateSectionFollowersCount(tx, targetId, delta)
+    await this.forumCounterService.updateSectionFollowersCount(
+      tx,
+      targetId,
+      delta,
+    )
   }
 
   async batchGetDetails(targetIds: number[]) {

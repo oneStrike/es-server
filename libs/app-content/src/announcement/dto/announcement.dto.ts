@@ -1,5 +1,4 @@
 import { EnablePlatformEnum } from '@libs/platform/constant/base.constant';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
 import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';

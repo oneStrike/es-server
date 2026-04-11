@@ -1,15 +1,12 @@
 import type { Db } from '@db/core'
 
 import { workAuthorRelation } from '@db/schema'
-import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
-import { CommentService } from '@libs/interaction/comment/comment.service';
-import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { CommentService } from '@libs/interaction/comment/comment.service'
+import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { WorkCounterService } from '../../counter/work-counter.service'
 
@@ -46,20 +43,13 @@ export class WorkNovelCommentResolver
    * @param delta - 变更量（+1 增加，-1 减少）
    */
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
-    try {
-      await this.workCounterService.updateWorkCommentCount(
-        tx,
-        targetId,
-        this.workType,
-        delta,
-        '小说作品不存在',
-      )
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new BadRequestException(error.message)
-      }
-      throw error
-    }
+    await this.workCounterService.updateWorkCommentCount(
+      tx,
+      targetId,
+      this.workType,
+      delta,
+      '小说作品不存在',
+    )
   }
 
   /**
@@ -81,11 +71,17 @@ export class WorkNovelCommentResolver
     })
 
     if (!target) {
-      throw new BadRequestException('小说作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '小说作品不存在',
+      )
     }
 
     if (!target.canComment) {
-      throw new BadRequestException('该小说作品不允许评论')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该小说作品不允许评论',
+      )
     }
   }
 

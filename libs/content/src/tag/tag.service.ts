@@ -1,7 +1,9 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import {
   CreateTagDto,
@@ -94,7 +96,10 @@ export class WorkTagService {
       where: { id: input.id },
     })
     if (!tag) {
-      throw new BadRequestException('标签不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '标签不存在',
+      )
     }
     return tag
   }
@@ -137,14 +142,20 @@ export class WorkTagService {
    */
   async updateTagStatus(input: UpdateEnabledStatusDto) {
     if (!input.isEnabled && (await this.checkTagHasWorks(input.id))) {
-      throw new BadRequestException('标签存在关联的作品，不能禁用')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '标签存在关联的作品，不能禁用',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workTag)
-        .set({ isEnabled: input.isEnabled })
-        .where(eq(this.workTag.id, input.id)), { notFound: '标签不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workTag)
+          .set({ isEnabled: input.isEnabled })
+          .where(eq(this.workTag.id, input.id)),
+      { notFound: '标签不存在' },
+    )
     return true
   }
 
@@ -159,15 +170,23 @@ export class WorkTagService {
         eq(this.workTag.id, dto.id),
       ))
     ) {
-      throw new BadRequestException('标签不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '标签不存在',
+      )
     }
 
     if (await this.checkTagHasWorks(dto.id)) {
-      throw new BadRequestException('标签存在关联的作品，不能删除')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '标签存在关联的作品，不能删除',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.workTag).where(eq(this.workTag.id, dto.id)), { notFound: '标签不存在' },)
+    await this.drizzle.withErrorHandling(
+      () => this.db.delete(this.workTag).where(eq(this.workTag.id, dto.id)),
+      { notFound: '标签不存在' },
+    )
     return true
   }
 

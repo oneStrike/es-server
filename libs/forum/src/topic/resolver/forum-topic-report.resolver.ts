@@ -1,10 +1,12 @@
 import type { Db } from '@db/core'
-import { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.interface';
-import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant';
-import { ReportService } from '@libs/interaction/report/report.service';
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { IReportTargetResolver } from '@libs/interaction/report/interfaces/report-target-resolver.interface'
+import { ReportTargetTypeEnum } from '@libs/interaction/report/report.constant'
+import { ReportService } from '@libs/interaction/report/report.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 
 /**
  * 论坛主题举报解析器
@@ -33,7 +35,7 @@ export class ForumTopicReportResolver
    * @param tx - 事务客户端
    * @param targetId - 主题ID
    * @returns 包含场景类型、场景ID和主题作者的元数据对象
-   * @throws NotFoundException 当主题不存在时抛出异常
+   * @throws BusinessException 当主题不存在时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
     const topic = await tx.query.forumTopic.findFirst({
@@ -63,7 +65,10 @@ export class ForumTopicReportResolver
       topic.section.deletedAt ||
       !topic.section.isEnabled
     ) {
-      throw new NotFoundException('帖子不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     return {

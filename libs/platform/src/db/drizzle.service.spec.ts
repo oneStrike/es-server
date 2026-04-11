@@ -1,5 +1,7 @@
 import { DrizzleService } from '@db/core'
-import { HttpException, NotFoundException } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant/error-code.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException } from '@nestjs/common'
 
 describe('drizzle service', () => {
   let service: DrizzleService
@@ -16,46 +18,68 @@ describe('drizzle service', () => {
     )
   })
 
-  it('传入 notFound 时 update 未命中会抛出 NotFoundException', async () => {
-    await expect(service.withErrorHandling(
-      async () => ({ rowCount: 0 }),
-      { notFound: '用户不存在' } as any,
-    )).rejects.toThrow(new NotFoundException('用户不存在'))
+  it('传入 notFound 时 update 未命中会抛出 BusinessException', async () => {
+    await expect(
+      service.withErrorHandling(async () => ({ rowCount: 0 }), {
+        notFound: '用户不存在',
+      } as any),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.RESOURCE_NOT_FOUND,
+      message: '用户不存在',
+    })
   })
 
-  it('传入 notFound 时 returning 空数组也会抛出 NotFoundException', async () => {
-    await expect(service.withErrorHandling(
-      async () => [],
-      { notFound: '记录不存在' } as any,
-    )).rejects.toThrow(new NotFoundException('记录不存在'))
+  it('传入 notFound 时 returning 空数组也会抛出 BusinessException', async () => {
+    await expect(
+      service.withErrorHandling(async () => [], {
+        notFound: '记录不存在',
+      } as any),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.RESOURCE_NOT_FOUND,
+      message: '记录不存在',
+    })
   })
 
-  it('未传 notFound 时保留原有 withErrorHandling 语义', async () => {
-    await expect(service.withErrorHandling(
-      async () => ({ rowCount: 0 }),
-    )).resolves.toEqual({ rowCount: 0 })
-  })
+  it('唯一约束冲突映射为资源已存在业务异常并保留 cause', async () => {
+    const error = Object.assign(
+      new Error('duplicate key value violates unique constraint'),
+      {
+        code: '23505',
+        constraint: 'app_user_phone_key',
+      },
+    )
 
-  it('同时传 duplicate 和 notFound 时仍优先保留数据库唯一约束语义', async () => {
     try {
       await service.withErrorHandling(
         async () => {
-          throw Object.assign(new Error('duplicate key value violates unique constraint'), {
-            code: '23505',
-          })
+          throw error
         },
         {
-          duplicate: '数据已存在',
-          notFound: '记录不存在',
+          duplicate: '手机号已存在',
         },
       )
-    } catch (error) {
-      expect(error).toBeInstanceOf(HttpException)
-      expect((error as HttpException).message).toBe('数据已存在')
-      expect((error as HttpException).getStatus()).toBe(409)
+    } catch (caught) {
+      expect(caught).toBeInstanceOf(BusinessException)
+      expect(caught).toMatchObject({
+        code: BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        message: '手机号已存在',
+        cause: error,
+      })
       return
     }
 
     throw new Error('expected unique violation to be rethrown')
+  })
+
+  it('非空约束冲突仍保留 400 异常语义', async () => {
+    const error = Object.assign(new Error('null value violates not-null'), {
+      code: '23502',
+    })
+
+    await expect(
+      service.withErrorHandling(async () => {
+        throw error
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException)
   })
 })

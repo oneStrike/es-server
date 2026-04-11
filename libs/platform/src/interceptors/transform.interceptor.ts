@@ -1,6 +1,7 @@
 import type { CallHandler, ExecutionContext } from '@nestjs/common'
 import type { Observable } from 'rxjs'
 import type { Response } from './transform.types'
+import { ApiSuccessCode } from '@libs/platform/constant'
 import { Injectable, NestInterceptor } from '@nestjs/common'
 import { ClsService } from 'nestjs-cls'
 import { map } from 'rxjs/operators'
@@ -28,7 +29,7 @@ export class TransformInterceptor<T> implements NestInterceptor<
         }
 
         return {
-          code: 200,
+          code: ApiSuccessCode,
           data,
           message: 'success',
         }

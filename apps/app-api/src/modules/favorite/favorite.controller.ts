@@ -9,7 +9,6 @@ import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

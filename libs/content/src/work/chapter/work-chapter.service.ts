@@ -1,19 +1,21 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant';
-import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
-import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
-import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant';
-import { DownloadService } from '@libs/interaction/download/download.service';
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
-import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
-import { LikeService } from '@libs/interaction/like/like.service';
-import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
-import { jsonParse } from '@libs/platform/utils/jsonParse';
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
+import { DownloadService } from '@libs/interaction/download/download.service'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { jsonParse } from '@libs/platform/utils/jsonParse'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ContentPermissionService } from '../../permission/content-permission.service';
+import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   CreateWorkChapterDto,
   QueryWorkChapterDto,
@@ -115,7 +117,10 @@ export class WorkChapterService {
         and(eq(this.work.id, workId), isNull(this.work.deletedAt)),
       ))
     ) {
-      throw new BadRequestException('关联的作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '关联的作品不存在',
+      )
     }
 
     await this.drizzle.withErrorHandling(
@@ -152,9 +157,7 @@ export class WorkChapterService {
       conditions.push(eq(this.workChapter.canComment, dto.canComment))
     }
     if (dto.title) {
-      conditions.push(
-        buildILikeCondition(this.workChapter.title, dto.title)!,
-      )
+      conditions.push(buildILikeCondition(this.workChapter.title, dto.title)!)
     }
 
     const where = and(...conditions)
@@ -204,7 +207,10 @@ export class WorkChapterService {
     })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
     const work = await this.db.query.work.findFirst({
@@ -218,7 +224,10 @@ export class WorkChapterService {
     })
 
     if (!work || !work.isPublished) {
-      throw new BadRequestException('章节所属作品未发布或不存在')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '章节所属作品未发布或不存在',
+      )
     }
 
     if (chapter.workType === ContentTypeEnum.COMIC) {
@@ -235,7 +244,10 @@ export class WorkChapterService {
       }
     }
 
-    throw new BadRequestException('章节类型不支持评论')
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '章节类型不支持评论',
+    )
   }
 
   /**
@@ -269,11 +281,14 @@ export class WorkChapterService {
     })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
-    const parsedContent
-      = chapter.workType === ContentTypeEnum.COMIC
+    const parsedContent =
+      chapter.workType === ContentTypeEnum.COMIC
         ? (jsonParse(chapter.content, []) as unknown as string)
         : chapter.content
 
@@ -417,7 +432,10 @@ export class WorkChapterService {
     })
 
     if (!currentChapter) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
     const adjacentChapter = await this.db.query.workChapter.findFirst({
@@ -466,7 +484,10 @@ export class WorkChapterService {
         eq(this.userLevelRule.id, requiredViewLevelId),
       ))
     ) {
-      throw new BadRequestException('指定的阅读会员等级不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '指定的阅读会员等级不存在',
+      )
     }
 
     await this.drizzle.withErrorHandling(
@@ -495,13 +516,19 @@ export class WorkChapterService {
    * @throws BadRequestException 章节不存在
    */
   async deleteChapter(id: number) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(eq(this.workChapter.id, id), isNull(this.workChapter.deletedAt)),
-        ), { notFound: '章节不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(this.workChapter.id, id),
+              isNull(this.workChapter.deletedAt),
+            ),
+          ),
+      { notFound: '章节不存在' },
+    )
     return true
   }
 

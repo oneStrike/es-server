@@ -1,6 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
-import { UserIdDto } from '@libs/platform/dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ChangeMyPhoneDto,

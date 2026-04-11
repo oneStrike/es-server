@@ -1,10 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   AssignForumTagToTopicDto,
@@ -79,7 +77,10 @@ export class ForumTagService {
     })
 
     if (existingTag) {
-      throw new BadRequestException('该标签名称已存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '该标签名称已存在',
+      )
     }
 
     await this.drizzle.withErrorHandling(() =>
@@ -147,7 +148,7 @@ export class ForumTagService {
    * 根据ID获取论坛标签详情
    * @param id 标签ID
    * @returns 标签详情，包含最近使用该标签的主题
-   * @throws NotFoundException 如果标签不存在
+   * @throws BusinessException 如果标签不存在
    */
   async getTagById(id: number) {
     const tag = await this.db.query.forumTag.findFirst({
@@ -155,7 +156,10 @@ export class ForumTagService {
     })
 
     if (!tag) {
-      throw new NotFoundException('标签不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '标签不存在',
+      )
     }
 
     const topicRows = await this.db
@@ -191,7 +195,7 @@ export class ForumTagService {
    * 更新论坛标签信息
    * @param updateForumTagDto 更新标签的数据传输对象
    * @returns 更新后的标签
-   * @throws NotFoundException 如果标签不存在
+   * @throws BusinessException 如果标签不存在
    * @throws BadRequestException 如果标签名称已存在
    */
   async updateTag(updateForumTagDto: UpdateForumTagDto) {
@@ -200,7 +204,10 @@ export class ForumTagService {
     const tag = await this.db.query.forumTag.findFirst({ where: { id } })
 
     if (!tag) {
-      throw new NotFoundException('标签不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '标签不存在',
+      )
     }
 
     if (name) {
@@ -209,19 +216,28 @@ export class ForumTagService {
       })
 
       if (existingTag && existingTag.id !== id) {
-        throw new BadRequestException('该标签名称已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '该标签名称已存在',
+        )
       }
     }
 
     if (updateData.isEnabled === false && (await this.checkTagHasTopics(id))) {
-      throw new BadRequestException('该标签已被使用，无法禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '该标签已被使用，无法禁用',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.forumTag)
-        .set({ name, ...updateData })
-        .where(eq(this.forumTag.id, id)), { notFound: '标签不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.forumTag)
+          .set({ name, ...updateData })
+          .where(eq(this.forumTag.id, id)),
+      { notFound: '标签不存在' },
+    )
     return true
   }
 
@@ -229,22 +245,30 @@ export class ForumTagService {
    * 删除论坛标签
    * @param id 标签ID
    * @returns 删除操作结果
-   * @throws NotFoundException 如果标签不存在
+   * @throws BusinessException 如果标签不存在
    * @throws BadRequestException 如果标签已被使用
    */
   async deleteTag(id: number) {
     const tag = await this.db.query.forumTag.findFirst({ where: { id } })
 
     if (!tag) {
-      throw new NotFoundException('标签不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '标签不存在',
+      )
     }
 
     if (await this.checkTagHasTopics(id)) {
-      throw new BadRequestException('该标签已被使用，无法删除')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '该标签已被使用，无法删除',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db.delete(this.forumTag).where(eq(this.forumTag.id, id)), { notFound: '标签不存在' },)
+    await this.drizzle.withErrorHandling(
+      () => this.db.delete(this.forumTag).where(eq(this.forumTag.id, id)),
+      { notFound: '标签不存在' },
+    )
 
     return true
   }
@@ -253,7 +277,7 @@ export class ForumTagService {
    * 为主题分配标签
    * @param assignTagToTopicDto 分配标签的数据传输对象
    * @returns 创建的主题标签关联
-   * @throws NotFoundException 如果主题或标签不存在
+   * @throws BusinessException 如果主题或标签不存在
    * @throws BadRequestException 如果标签未启用或已关联
    */
   async assignTagToTopic(assignTagToTopicDto: AssignForumTagToTopicDto) {
@@ -264,17 +288,26 @@ export class ForumTagService {
     })
 
     if (!topic) {
-      throw new NotFoundException('主题不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
     }
 
     const tag = await this.db.query.forumTag.findFirst({ where: { id: tagId } })
 
     if (!tag) {
-      throw new NotFoundException('标签不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '标签不存在',
+      )
     }
 
     if (!tag.isEnabled) {
-      throw new BadRequestException('该标签未启用')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该标签未启用',
+      )
     }
 
     const existingRelation = await this.db.query.forumTopicTag.findFirst({
@@ -282,7 +315,10 @@ export class ForumTagService {
     })
 
     if (existingRelation) {
-      throw new BadRequestException('该主题已关联此标签')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '该主题已关联此标签',
+      )
     }
 
     // 关联关系与使用次数同步更新
@@ -306,11 +342,9 @@ export class ForumTagService {
    * 从主题移除标签
    * @param removeTagFromTopicDto 移除标签的数据传输对象
    * @returns 移除操作结果
-   * @throws NotFoundException 如果主题未关联该标签
+   * @throws BusinessException 如果主题未关联该标签
    */
-  async removeTagFromTopic(
-    removeTagFromTopicDto: AssignForumTagToTopicDto,
-  ) {
+  async removeTagFromTopic(removeTagFromTopicDto: AssignForumTagToTopicDto) {
     const { topicId, tagId } = removeTagFromTopicDto
 
     const topicTag = await this.db.query.forumTopicTag.findFirst({
@@ -318,7 +352,10 @@ export class ForumTagService {
     })
 
     if (!topicTag) {
-      throw new NotFoundException('该主题未关联此标签')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '该主题未关联此标签',
+      )
     }
 
     // 解除关联并回收使用次数
@@ -346,7 +383,7 @@ export class ForumTagService {
    * 获取主题的所有标签
    * @param topicId 主题ID
    * @returns 主题关联的标签列表
-   * @throws NotFoundException 如果主题不存在
+   * @throws BusinessException 如果主题不存在
    */
   async getTopicTags(topicId: number) {
     const topic = await this.db.query.forumTopic.findFirst({
@@ -354,7 +391,10 @@ export class ForumTagService {
     })
 
     if (!topic) {
-      throw new NotFoundException('主题不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
     }
 
     return this.db

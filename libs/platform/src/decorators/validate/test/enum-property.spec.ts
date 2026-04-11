@@ -1,11 +1,8 @@
-import 'reflect-metadata'
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
+import { EnumArrayProperty } from '../enum-array-property'
 import { EnumProperty } from '../enum-property'
-
-const { EnumArrayProperty } = require('../index') as {
-  EnumArrayProperty?: (options: Record<string, unknown>) => PropertyDecorator
-}
+import 'reflect-metadata'
 
 enum NotificationChannelEnum {
   SITE = 'SITE',
@@ -38,10 +35,6 @@ describe('enum property decorators', () => {
   })
 
   it('枚举数组属性应导出并支持数字枚举字符串数组', () => {
-    if (!EnumArrayProperty) {
-      throw new Error('EnumArrayProperty export missing')
-    }
-
     class NumericEnumArrayDto {
       @EnumArrayProperty({
         description: '权限列表',
@@ -65,10 +58,6 @@ describe('enum property decorators', () => {
   })
 
   it('枚举数组属性应对字符串枚举逐项去空白后校验', () => {
-    if (!EnumArrayProperty) {
-      throw new Error('EnumArrayProperty export missing')
-    }
-
     class StringEnumArrayDto {
       @EnumArrayProperty({
         description: '渠道列表',

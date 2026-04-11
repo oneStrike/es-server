@@ -23,7 +23,7 @@ describe('check-in runtime service', () => {
           },
         },
       },
-      buildPage: jest.fn((input: { pageIndex?: number; pageSize?: number }) => {
+      buildPage: jest.fn((input: { pageIndex?: number, pageSize?: number }) => {
         const pageIndex = Math.max(1, Math.floor(Number(input.pageIndex ?? 1)))
         const pageSize = Math.min(
           Math.max(1, Math.floor(Number(input.pageSize ?? 15))),

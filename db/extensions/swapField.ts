@@ -1,6 +1,8 @@
 import type { Db, PgTable, TableConfig } from '../core/drizzle.type'
-import { BadRequestException } from '@nestjs/common'
+import { InternalServerErrorException } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 
 /**
  * 生成临时值用于字段交换
@@ -52,17 +54,17 @@ export async function swapField(
   // 验证必要字段是否存在
   const idColumn = tableAsAny.id
   if (!idColumn) {
-    throw new BadRequestException('字段 "id" 不存在')
+    throw new InternalServerErrorException('字段 "id" 不存在')
   }
 
   const fieldColumn = tableAsAny[field]
   if (!fieldColumn) {
-    throw new BadRequestException(`字段 "${field}" 不存在`)
+    throw new InternalServerErrorException(`字段 "${field}" 不存在`)
   }
 
   const sourceColumn = sourceField ? tableAsAny[sourceField] : null
   if (sourceField && !sourceColumn) {
-    throw new BadRequestException(`字段 "${sourceField}" 不存在`)
+    throw new InternalServerErrorException(`字段 "${sourceField}" 不存在`)
   }
 
   // 在事务中执行交换操作
@@ -86,12 +88,18 @@ export async function swapField(
       .limit(1)
 
     if (!record1 || !record2) {
-      throw new BadRequestException('数据不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '数据不存在',
+      )
     }
 
     // 如果指定了来源字段，验证两条记录是否属于同一来源
     if (sourceField && record1[sourceField] !== record2[sourceField]) {
-      throw new BadRequestException('数据不是同一来源')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '数据不是同一来源',
+      )
     }
 
     const value1 = record1[field]

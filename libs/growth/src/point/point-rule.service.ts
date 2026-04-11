@@ -1,5 +1,7 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
@@ -73,7 +75,10 @@ export class UserPointRuleService {
       .limit(1)
 
     if (!rule) {
-      throw new BadRequestException('Point rule not found')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Point rule not found',
+      )
     }
 
     return rule
@@ -133,8 +138,8 @@ export class UserPointRuleService {
     >,
   ) {
     if (
-      dto.type !== undefined
-      && !Object.values(GrowthRuleTypeEnum).includes(dto.type)
+      dto.type !== undefined &&
+      !Object.values(GrowthRuleTypeEnum).includes(dto.type)
     ) {
       throw new BadRequestException('无效的积分规则类型')
     }

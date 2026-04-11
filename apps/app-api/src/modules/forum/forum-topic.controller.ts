@@ -7,8 +7,8 @@ import {
   PublicForumTopicDetailDto,
   PublicForumTopicPageItemDto,
   QueryForumTopicCommentPageDto,
-  QueryUserForumTopicDto,
   QueryPublicForumTopicDto,
+  QueryUserForumTopicDto,
   UpdateForumTopicDto,
 } from '@libs/forum/topic/dto/forum-topic.dto'
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'

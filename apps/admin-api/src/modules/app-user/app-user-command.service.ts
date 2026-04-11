@@ -1,7 +1,9 @@
 import type { AppUserInsert } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { AppUserTokenStorageService } from '@libs/identity/token/app-user-token-storage.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { GenderEnum } from '@libs/platform/constant/profile.constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant'
 import { RsaService, ScryptService } from '@libs/platform/modules/crypto'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
@@ -14,17 +16,8 @@ import {
   UpdateAdminAppUserStatusDto,
 } from '@libs/user/dto/admin-app-user.dto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common'
-import {
-  and,
-  asc,
-  eq,
-  isNotNull,
-  isNull,
-} from 'drizzle-orm'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, asc, eq, isNotNull, isNull } from 'drizzle-orm'
 import { AppUserServiceSupport } from './app-user.service.support'
 
 type AppUserProfileUpdateInput = Partial<
@@ -69,9 +62,8 @@ export class AppUserCommandService extends AppUserServiceSupport {
     await this.ensureSuperAdmin(adminUserId)
     const account = await this.generateUniqueAccount()
     const plainPassword = this.rsaService.decryptWith(dto.password)
-    const hashedPassword = await this.scryptService.encryptPassword(
-      plainPassword,
-    )
+    const hashedPassword =
+      await this.scryptService.encryptPassword(plainPassword)
 
     try {
       await this.drizzle.withErrorHandling(async () =>
@@ -112,7 +104,10 @@ export class AppUserCommandService extends AppUserServiceSupport {
       )
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('手机号或邮箱已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '手机号或邮箱已存在',
+        )
       }
       throw error
     }
@@ -167,7 +162,10 @@ export class AppUserCommandService extends AppUserServiceSupport {
       }
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('手机号或邮箱已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '手机号或邮箱已存在',
+        )
       }
       throw error
     }

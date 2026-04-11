@@ -1,7 +1,16 @@
 import { DrizzleService } from '@db/core'
-import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from '@libs/interaction/purchase/purchase.constant';
-import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  PurchaseStatusEnum,
+  PurchaseTargetTypeEnum,
+} from '@libs/interaction/purchase/purchase.constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { PERMISSION_ERROR_MESSAGE } from './content-permission.constant'
 import {
   AccessRuleContext,
@@ -85,7 +94,10 @@ export class ContentPermissionService {
       },
     })
     if (!work) {
-      throw new BadRequestException(PERMISSION_ERROR_MESSAGE.WORK_NOT_FOUND)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        PERMISSION_ERROR_MESSAGE.WORK_NOT_FOUND,
+      )
     }
     return work
   }
@@ -114,7 +126,10 @@ export class ContentPermissionService {
       },
     })
     if (!chapter) {
-      throw new BadRequestException(PERMISSION_ERROR_MESSAGE.CHAPTER_NOT_FOUND)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        PERMISSION_ERROR_MESSAGE.CHAPTER_NOT_FOUND,
+      )
     }
     const permission = await this.resolveChapterPermissionFromData(chapter)
     return {
@@ -141,7 +156,10 @@ export class ContentPermissionService {
       },
     })
     if (!user) {
-      throw new BadRequestException(PERMISSION_ERROR_MESSAGE.USER_NOT_FOUND)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        PERMISSION_ERROR_MESSAGE.USER_NOT_FOUND,
+      )
     }
     return user
   }
@@ -156,7 +174,10 @@ export class ContentPermissionService {
       columns: { id: true },
     })
     if (!user) {
-      throw new BadRequestException(PERMISSION_ERROR_MESSAGE.USER_NOT_FOUND)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        PERMISSION_ERROR_MESSAGE.USER_NOT_FOUND,
+      )
     }
   }
 
@@ -173,19 +194,22 @@ export class ContentPermissionService {
     requiredExperience: number | null,
   ) {
     if (!user.levelId || !user.level) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.QUOTA_NOT_ENOUGH,
         PERMISSION_ERROR_MESSAGE.MEMBER_LEVEL_INSUFFICIENT,
       )
     }
 
     if (requiredExperience === null) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
         PERMISSION_ERROR_MESSAGE.REQUIRED_MEMBER_LEVEL_NOT_FOUND,
       )
     }
 
     if (user.level.requiredExperience < requiredExperience) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.QUOTA_NOT_ENOUGH,
         PERMISSION_ERROR_MESSAGE.MEMBER_LEVEL_INSUFFICIENT,
       )
     }
@@ -251,20 +275,22 @@ export class ContentPermissionService {
 
     if (viewRule === WorkViewPermissionEnum.PURCHASE) {
       if (scope !== 'chapter' || !chapterId) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
           PERMISSION_ERROR_MESSAGE.WORK_PURCHASE_UNSUPPORTED,
         )
       }
       await this.validateUserExists(userId)
       if (!(await this.validateChapterPurchasePermission(userId, chapterId))) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
           PERMISSION_ERROR_MESSAGE.CHAPTER_PURCHASE_REQUIRED,
         )
       }
       return true
     }
 
-    throw new BadRequestException(
+    throw new InternalServerErrorException(
       PERMISSION_ERROR_MESSAGE.UNKNOWN_PERMISSION_TYPE,
     )
   }
@@ -302,7 +328,10 @@ export class ContentPermissionService {
     })
 
     if (!chapter) {
-      throw new BadRequestException(PERMISSION_ERROR_MESSAGE.CHAPTER_NOT_FOUND)
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        PERMISSION_ERROR_MESSAGE.CHAPTER_NOT_FOUND,
+      )
     }
 
     // 解析权限配置
@@ -314,7 +343,7 @@ export class ContentPermissionService {
       !permission.isPreview &&
       permission.viewRule !== WorkViewPermissionEnum.ALL
     ) {
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         PERMISSION_ERROR_MESSAGE.CHAPTER_ACCESS_REQUIRED,
       )
     }
@@ -386,7 +415,8 @@ export class ContentPermissionService {
     const permission =
       resolvedPermission ?? (await this.resolveChapterPermission(chapterId))
     if (!permission.canDownload) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         PERMISSION_ERROR_MESSAGE.CHAPTER_DOWNLOAD_FORBIDDEN,
       )
     }

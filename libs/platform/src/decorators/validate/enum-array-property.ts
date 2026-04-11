@@ -9,12 +9,12 @@ import {
   IsArray,
   IsOptional,
 } from 'class-validator'
+import { buildContractPropertyDecorators } from './contract'
 import {
   createEnumValueValidator,
   normalizeEnumArrayItem,
   resolveEnumValidationArtifacts,
 } from './enum-shared'
-import { buildContractPropertyDecorators } from './contract'
 
 /**
  * 枚举数组属性装饰器

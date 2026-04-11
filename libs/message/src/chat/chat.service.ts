@@ -1,17 +1,19 @@
-import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type';
-import type { PageDto } from '@libs/platform/dto/page.dto';
+import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
+import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { ChatMessageCreatedOutboxPayload } from '../outbox/outbox.type'
 import { DrizzleService } from '@db/core'
-import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
-import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service';
-import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service';
-import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant';
 import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common'
+  appUser,
+  chatConversation,
+  chatConversationMember,
+  chatMessage,
+} from '@db/schema'
+import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
+import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
+import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   and,
   asc,
@@ -97,9 +99,15 @@ export class MessageChatService {
    * @returns 会话详情，包含成员信息和未读数
    */
   async openDirectConversation(userId: number, dto: OpenDirectConversationDto) {
-    const targetUserId = this.parsePositiveInteger(dto.targetUserId, 'targetUserId')
+    const targetUserId = this.parsePositiveInteger(
+      dto.targetUserId,
+      'targetUserId',
+    )
     if (targetUserId === userId) {
-      throw new BadRequestException('Cannot create direct conversation with yourself')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        'Cannot create direct conversation with yourself',
+      )
     }
     const targetUser = await this.db.query.appUser.findFirst({
       where: {
@@ -110,7 +118,10 @@ export class MessageChatService {
       columns: { id: true },
     })
     if (!targetUser) {
-      throw new NotFoundException('Target user not found')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Target user not found',
+      )
     }
     const bizKey = this.buildDirectBizKey(userId, targetUserId)
     const conversation = await this.drizzle.withErrorHandling(async () =>
@@ -125,7 +136,10 @@ export class MessageChatService {
           .returning({ id: chatConversation.id })
         const item = insertedConversation[0]
         if (!item) {
-          throw new NotFoundException('Conversation not found')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            'Conversation not found',
+          )
         }
 
         await tx
@@ -137,7 +151,10 @@ export class MessageChatService {
             leftAt: null,
           })
           .onConflictDoUpdate({
-            target: [chatConversationMember.conversationId, chatConversationMember.userId],
+            target: [
+              chatConversationMember.conversationId,
+              chatConversationMember.userId,
+            ],
             set: {
               leftAt: null,
               role: ChatConversationMemberRoleEnum.OWNER,
@@ -153,7 +170,10 @@ export class MessageChatService {
             leftAt: null,
           })
           .onConflictDoUpdate({
-            target: [chatConversationMember.conversationId, chatConversationMember.userId],
+            target: [
+              chatConversationMember.conversationId,
+              chatConversationMember.userId,
+            ],
             set: {
               leftAt: null,
               role: ChatConversationMemberRoleEnum.MEMBER,
@@ -186,10 +206,12 @@ export class MessageChatService {
       this.db
         .select({ total: sql<number>`count(*)` })
         .from(chatConversationMember)
-        .where(and(
-          eq(chatConversationMember.userId, userId),
-          isNull(chatConversationMember.leftAt),
-        )),
+        .where(
+          and(
+            eq(chatConversationMember.userId, userId),
+            isNull(chatConversationMember.leftAt),
+          ),
+        ),
       this.db
         .select({
           id: chatConversation.id,
@@ -207,7 +229,10 @@ export class MessageChatService {
             isNull(chatConversationMember.leftAt),
           ),
         )
-        .orderBy(sql`${chatConversation.lastMessageAt} desc nulls last`, desc(chatConversation.id))
+        .orderBy(
+          sql`${chatConversation.lastMessageAt} desc nulls last`,
+          desc(chatConversation.id),
+        )
         .offset(page.offset)
         .limit(page.limit),
     ])
@@ -236,10 +261,12 @@ export class MessageChatService {
         })
         .from(chatConversationMember)
         .innerJoin(appUser, eq(appUser.id, chatConversationMember.userId))
-        .where(and(
-          inArray(chatConversationMember.conversationId, conversationIds),
-          isNull(chatConversationMember.leftAt),
-        )),
+        .where(
+          and(
+            inArray(chatConversationMember.conversationId, conversationIds),
+            isNull(chatConversationMember.leftAt),
+          ),
+        ),
       this.getMessageMapByIds(
         conversationRows
           .map((item) => item.lastMessageId)
@@ -247,13 +274,16 @@ export class MessageChatService {
       ),
     ])
 
-    const memberMap = new Map<number, Array<{
-      userId: number
-      unreadCount: number
-      lastReadAt: Date | null
-      lastReadMessageId: bigint | null
-      user: { id: number, nickname: string | null, avatar: string | null }
-    }>>()
+    const memberMap = new Map<
+      number,
+      Array<{
+        userId: number
+        unreadCount: number
+        lastReadAt: Date | null
+        lastReadMessageId: bigint | null
+        user: { id: number, nickname: string | null, avatar: string | null }
+      }>
+    >()
     for (const member of members) {
       const list = memberMap.get(member.conversationId) ?? []
       list.push({
@@ -285,7 +315,8 @@ export class MessageChatService {
           item.lastMessageId
             ? lastMessageMap.get(item.lastMessageId.toString())?.content
             : undefined,
-        )),
+        ),
+      ),
       total: Number(totalRows[0]?.total ?? 0),
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
@@ -309,12 +340,17 @@ export class MessageChatService {
     userId: number,
     dto: QueryChatConversationMessagesDto,
   ) {
-    const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
+    const conversationId = this.parsePositiveInteger(
+      dto.conversationId,
+      'conversationId',
+    )
     const cursor = this.parseBigintCursor(dto.cursor, 'cursor')
     const afterSeq = this.parseBigintCursor(dto.afterSeq, 'afterSeq')
     const limit = this.normalizeMessageLimit(dto.limit)
     if (cursor !== undefined && afterSeq !== undefined) {
-      throw new BadRequestException('cursor and afterSeq cannot be used together')
+      throw new BadRequestException(
+        'cursor 和 afterSeq 不能同时使用',
+      )
     }
     await this.ensureConversationMember(conversationId, userId)
     if (afterSeq !== undefined) {
@@ -322,11 +358,13 @@ export class MessageChatService {
       const messages = await this.db
         .select()
         .from(chatMessage)
-        .where(and(
-          eq(chatMessage.conversationId, conversationId),
-          ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
-          gt(chatMessage.messageSeq, afterSeq),
-        ))
+        .where(
+          and(
+            eq(chatMessage.conversationId, conversationId),
+            ne(chatMessage.status, ChatMessageStatusEnum.DELETED),
+            gt(chatMessage.messageSeq, afterSeq),
+          ),
+        )
         .orderBy(asc(chatMessage.messageSeq))
         .limit(limit)
       const list = messages.map((item) => this.toMessageOutput(item))
@@ -369,11 +407,14 @@ export class MessageChatService {
    * @returns 消息ID、序列号等信息
    */
   async sendMessage(userId: number, dto: SendChatMessageDto) {
-    const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
+    const conversationId = this.parsePositiveInteger(
+      dto.conversationId,
+      'conversationId',
+    )
     const messageType = this.parseMessageType(dto.messageType)
     const content = dto.content?.trim()
     if (!content) {
-      throw new BadRequestException('Message content cannot be empty')
+      throw new BadRequestException('消息内容不能为空')
     }
     const clientMessageId = this.normalizeClientMessageId(dto.clientMessageId)
 
@@ -464,14 +505,19 @@ export class MessageChatService {
     ])
 
     if (!message) {
-      throw new NotFoundException('Chat outbox message not found')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Chat outbox message not found',
+      )
     }
 
     if (message.status !== ChatMessageStatusEnum.NORMAL) {
       return
     }
 
-    const messageOutput = this.toMessageOutput(message as typeof chatMessage.$inferSelect)
+    const messageOutput = this.toMessageOutput(
+      message as typeof chatMessage.$inferSelect,
+    )
     await Promise.all(
       memberStates.map(async (member) => {
         this.messageNotificationRealtimeService.emitChatConversationUpdate(
@@ -490,10 +536,13 @@ export class MessageChatService {
             lastMessageContent: messageOutput.content,
           },
         )
-        this.messageNotificationRealtimeService.emitChatMessageNew(member.userId, {
-          conversationId,
-          message: messageOutput,
-        })
+        this.messageNotificationRealtimeService.emitChatMessageNew(
+          member.userId,
+          {
+            conversationId,
+            message: messageOutput,
+          },
+        )
         const summary = await this.messageInboxService.getSummary(member.userId)
         this.messageNotificationRealtimeService.emitInboxSummaryUpdate(
           member.userId,
@@ -520,7 +569,10 @@ export class MessageChatService {
    * @returns 已读标记结果
    */
   async markConversationRead(userId: number, dto: MarkConversationReadDto) {
-    const conversationId = this.parsePositiveInteger(dto.conversationId, 'conversationId')
+    const conversationId = this.parsePositiveInteger(
+      dto.conversationId,
+      'conversationId',
+    )
     const messageId = this.parseBigintId(dto.messageId, 'messageId')
     const result = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
@@ -536,7 +588,10 @@ export class MessageChatService {
           },
         })
         if (!member || member.leftAt) {
-          throw new NotFoundException('Conversation not found')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            'Conversation not found',
+          )
         }
         const targetMessage = await tx.query.chatMessage.findFirst({
           where: {
@@ -549,7 +604,10 @@ export class MessageChatService {
           },
         })
         if (!targetMessage) {
-          throw new NotFoundException('Message not found')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            'Message not found',
+          )
         }
         let finalReadMessageId = targetMessage.id
         let finalReadMessageSeq = targetMessage.messageSeq
@@ -565,8 +623,8 @@ export class MessageChatService {
             },
           })
           if (
-            previousReadMessage
-            && previousReadMessage.messageSeq > finalReadMessageSeq
+            previousReadMessage &&
+            previousReadMessage.messageSeq > finalReadMessageSeq
           ) {
             finalReadMessageId = previousReadMessage.id
             finalReadMessageSeq = previousReadMessage.messageSeq
@@ -589,10 +647,12 @@ export class MessageChatService {
             lastReadAt: now,
             unreadCount,
           })
-          .where(and(
-            eq(chatConversationMember.conversationId, conversationId),
-            eq(chatConversationMember.userId, userId),
-          ))
+          .where(
+            and(
+              eq(chatConversationMember.conversationId, conversationId),
+              eq(chatConversationMember.userId, userId),
+            ),
+          )
         this.drizzle.assertAffectedRows(updateResult, 'Conversation not found')
 
         return {
@@ -675,14 +735,20 @@ export class MessageChatService {
             },
           })
           if (!member || member.leftAt) {
-            throw new NotFoundException('Conversation not found')
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              'Conversation not found',
+            )
           }
           const conversation = await tx.query.chatConversation.findFirst({
             where: { id: conversationId },
             columns: { id: true },
           })
           if (!conversation) {
-            throw new NotFoundException('Conversation not found')
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              'Conversation not found',
+            )
           }
           await tx.execute(sql`SELECT pg_advisory_xact_lock(${conversationId})`)
           if (clientMessageId) {
@@ -722,7 +788,10 @@ export class MessageChatService {
             .returning()
           const message = insertedMessage[0]
           if (!message) {
-            throw new NotFoundException('Message not found')
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              'Message not found',
+            )
           }
 
           const outboxPayload = {
@@ -748,24 +817,32 @@ export class MessageChatService {
               lastSenderId: userId,
             })
             .where(eq(chatConversation.id, conversationId))
-          this.drizzle.assertAffectedRows(updateConversationResult, 'Conversation not found')
+          this.drizzle.assertAffectedRows(
+            updateConversationResult,
+            'Conversation not found',
+          )
 
           await tx
             .update(chatConversationMember)
             .set({
               unreadCount: sql`${chatConversationMember.unreadCount} + 1`,
             })
-            .where(and(
-              eq(chatConversationMember.conversationId, conversationId),
-              ne(chatConversationMember.userId, userId),
-              isNull(chatConversationMember.leftAt),
-            ))
+            .where(
+              and(
+                eq(chatConversationMember.conversationId, conversationId),
+                ne(chatConversationMember.userId, userId),
+                isNull(chatConversationMember.leftAt),
+              ),
+            )
 
-          await this.messageOutboxService.enqueueChatMessageCreatedEventInTx(tx, {
-            bizKey: outboxBizKey,
-            eventType: ChatOutboxEventTypeEnum.MESSAGE_CREATED,
-            payload: outboxPayload,
-          })
+          await this.messageOutboxService.enqueueChatMessageCreatedEventInTx(
+            tx,
+            {
+              bizKey: outboxBizKey,
+              eventType: ChatOutboxEventTypeEnum.MESSAGE_CREATED,
+              payload: outboxPayload,
+            },
+          )
 
           return {
             message,
@@ -853,9 +930,12 @@ export class MessageChatService {
    *
    * @param conversationId - 会话ID
    * @param userId - 用户ID
-   * @throws NotFoundException 如果用户不是会话成员或已退出
+   * @throws BusinessException 如果用户不是会话成员或已退出
    */
-  private async ensureConversationMember(conversationId: number, userId: number) {
+  private async ensureConversationMember(
+    conversationId: number,
+    userId: number,
+  ) {
     const member = await this.db.query.chatConversationMember.findFirst({
       where: {
         conversationId,
@@ -866,7 +946,10 @@ export class MessageChatService {
       },
     })
     if (!member || member.leftAt) {
-      throw new NotFoundException('Conversation not found')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Conversation not found',
+      )
     }
   }
 
@@ -882,7 +965,10 @@ export class MessageChatService {
    * @param userId - 用户ID
    * @returns 会话详情
    */
-  private async getConversationDetailForUser(conversationId: number, userId: number) {
+  private async getConversationDetailForUser(
+    conversationId: number,
+    userId: number,
+  ) {
     const conversationRows = await this.db
       .select({
         id: chatConversation.id,
@@ -904,7 +990,10 @@ export class MessageChatService {
       .limit(1)
     const conversation = conversationRows[0]
     if (!conversation) {
-      throw new NotFoundException('Conversation not found')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Conversation not found',
+      )
     }
     const members = await this.db
       .select({
@@ -918,18 +1007,20 @@ export class MessageChatService {
       })
       .from(chatConversationMember)
       .innerJoin(appUser, eq(appUser.id, chatConversationMember.userId))
-      .where(and(
-        eq(chatConversationMember.conversationId, conversationId),
-        isNull(chatConversationMember.leftAt),
-      ))
+      .where(
+        and(
+          eq(chatConversationMember.conversationId, conversationId),
+          isNull(chatConversationMember.leftAt),
+        ),
+      )
 
     const lastMessage = conversation.lastMessageId
       ? await this.db.query.chatMessage.findFirst({
-        where: { id: conversation.lastMessageId },
-        columns: {
-          content: true,
-        },
-      })
+          where: { id: conversation.lastMessageId },
+          columns: {
+            content: true,
+          },
+        })
       : null
 
     return this.toConversationOutput(
@@ -997,12 +1088,19 @@ export class MessageChatService {
     lastMessageContent?: string,
   ) {
     // 找到当前用户的成员记录
-    const selfMember = conversation.members.find((member) => member.userId === userId)
+    const selfMember = conversation.members.find(
+      (member) => member.userId === userId,
+    )
     if (!selfMember) {
-      throw new NotFoundException('Conversation not found')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Conversation not found',
+      )
     }
     // 找到对端用户（私聊场景下只有一个对端）
-    const peerMember = conversation.members.find((member) => member.userId !== userId)
+    const peerMember = conversation.members.find(
+      (member) => member.userId !== userId,
+    )
 
     return {
       id: conversation.id,
@@ -1024,10 +1122,10 @@ export class MessageChatService {
       // 对端用户信息
       peerUser: peerMember
         ? {
-          id: peerMember.user.id,
-          nickname: peerMember.user.nickname ?? undefined,
-          avatar: peerMember.user.avatar ?? undefined,
-        }
+            id: peerMember.user.id,
+            nickname: peerMember.user.nickname ?? undefined,
+            avatar: peerMember.user.avatar ?? undefined,
+          }
         : undefined,
     }
   }
@@ -1140,7 +1238,7 @@ export class MessageChatService {
   private parsePositiveInteger(value: unknown, fieldName: string) {
     const normalized = Number(value)
     if (!Number.isInteger(normalized) || normalized <= 0) {
-      throw new BadRequestException(`${fieldName} must be a positive integer`)
+      throw new BadRequestException(`${fieldName} 必须是正整数`)
     }
     return normalized
   }
@@ -1157,7 +1255,9 @@ export class MessageChatService {
    */
   private parseBigintId(value: unknown, fieldName: string) {
     if (typeof value !== 'string' || !DIGIT_STRING_REGEX.test(value.trim())) {
-      throw new BadRequestException(`${fieldName} must be a valid integer string`)
+      throw new BadRequestException(
+        `${fieldName} 必须是合法的整数字符串`,
+      )
     }
     return BigInt(value.trim())
   }
@@ -1176,7 +1276,9 @@ export class MessageChatService {
       return undefined
     }
     if (!DIGIT_STRING_REGEX.test(cursor.trim())) {
-      throw new BadRequestException(`${fieldName} must be a valid integer string`)
+      throw new BadRequestException(
+        `${fieldName} 必须是合法的整数字符串`,
+      )
     }
     return BigInt(cursor.trim())
   }
@@ -1195,11 +1297,11 @@ export class MessageChatService {
     try {
       const data = JSON.parse(payload) as unknown
       if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-        throw new BadRequestException('payload must be a JSON object')
+        throw new BadRequestException('payload 必须是 JSON 对象')
       }
       return data as Record<string, unknown>
     } catch {
-      throw new BadRequestException('payload must be valid JSON')
+      throw new BadRequestException('payload 不是有效的 JSON 格式')
     }
   }
 
@@ -1215,14 +1317,14 @@ export class MessageChatService {
   private parseMessageType(value: unknown) {
     const messageType = Number(value)
     if (!Number.isInteger(messageType)) {
-      throw new BadRequestException('messageType is invalid')
+      throw new BadRequestException('messageType 无效')
     }
     if (
-      messageType !== ChatMessageTypeEnum.TEXT
-      && messageType !== ChatMessageTypeEnum.IMAGE
-      && messageType !== ChatMessageTypeEnum.SYSTEM
+      messageType !== ChatMessageTypeEnum.TEXT &&
+      messageType !== ChatMessageTypeEnum.IMAGE &&
+      messageType !== ChatMessageTypeEnum.SYSTEM
     ) {
-      throw new BadRequestException('messageType is invalid')
+      throw new BadRequestException('messageType 无效')
     }
     return messageType
   }
@@ -1243,11 +1345,15 @@ export class MessageChatService {
       return undefined
     }
     if (typeof clientMessageId !== 'string' || !clientMessageId.trim()) {
-      throw new BadRequestException('clientMessageId must be a non-empty string')
+      throw new BadRequestException(
+        'clientMessageId 必须是非空字符串',
+      )
     }
     const normalized = clientMessageId.trim()
     if (normalized.length > 64) {
-      throw new BadRequestException('clientMessageId must be at most 64 characters')
+      throw new BadRequestException(
+        'clientMessageId 最长不能超过 64 个字符',
+      )
     }
     return normalized
   }

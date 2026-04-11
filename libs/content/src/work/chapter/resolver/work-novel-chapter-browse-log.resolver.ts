@@ -1,9 +1,11 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant';
-import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
-import { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.interface';
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
+import { IBrowseLogTargetResolver } from '@libs/interaction/browse-log/interfaces/browse-log-target-resolver.interface'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { WorkCounterService } from '../../counter/work-counter.service'
 
@@ -80,7 +82,10 @@ export class WorkNovelChapterBrowseLogResolver
       .limit(1)
 
     if (!chapter[0]) {
-      throw new NotFoundException('小说章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '小说章节不存在',
+      )
     }
   }
 }

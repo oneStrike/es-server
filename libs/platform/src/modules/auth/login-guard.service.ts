@@ -1,7 +1,13 @@
 import type { Cache } from 'cache-manager'
 import type { LoginGuardConfig } from './login-guard.types'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { BadRequestException, Inject, Injectable } from '@nestjs/common'
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common'
 
 /**
  * 登录安全防护服务
@@ -20,7 +26,10 @@ export class LoginGuardService {
     const unlockTime = await this.cacheManager.get<number>(lockKey)
     if (unlockTime && unlockTime > Date.now()) {
       const minutes = Math.ceil((unlockTime - Date.now()) / 1000 / 60)
-      throw new BadRequestException(`账号已锁定，请在 ${minutes} 分钟后重试`)
+      throw new HttpException(
+        `账号已锁定，请在 ${minutes} 分钟后重试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
     }
   }
 
@@ -45,11 +54,14 @@ export class LoginGuardService {
       await this.cacheManager.set(lockKey, unlockTime, config.lockTtl * 1000)
 
       const minutes = Math.ceil(config.lockTtl / 60)
-      throw new BadRequestException(`账号已锁定，请在 ${minutes} 分钟后重试`)
+      throw new HttpException(
+        `账号已锁定，请在 ${minutes} 分钟后重试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
     }
 
     const remaining = config.maxAttempts - count
-    throw new BadRequestException(`账号或密码错误，还剩 ${remaining} 次机会`)
+    throw new UnauthorizedException(`账号或密码错误，还剩 ${remaining} 次机会`)
   }
 
   /**

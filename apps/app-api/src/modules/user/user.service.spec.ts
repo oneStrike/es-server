@@ -1,6 +1,6 @@
+import type { UserService as UserCoreService } from '@libs/user/user.service'
 import { GenderEnum } from '@libs/platform/constant/profile.constant'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import { UserService as UserCoreService } from '@libs/user/user.service'
 import { UserService } from './user.service'
 
 describe('app user service', () => {

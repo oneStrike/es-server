@@ -1,16 +1,27 @@
-import type { UserLoginDto } from '@libs/identity/dto/admin-auth.dto';
+import type { UserLoginDto } from '@libs/identity/dto/admin-auth.dto'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
-import { AuthSessionService } from '@libs/identity/session.service';
-import { AuthConstants, AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant';
-import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service';
-import { RefreshTokenDto, TokenDto } from '@libs/platform/modules/auth/dto/auth-scene.dto';
-import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service';
-import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service';
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
-import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service';
-import { isProduction } from '@libs/platform/utils/env';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { AuthSessionService } from '@libs/identity/session.service'
+import {
+  AuthConstants,
+  AuthErrorMessages,
+} from '@libs/platform/modules/auth/auth.constant'
+import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
+import {
+  RefreshTokenDto,
+  TokenDto,
+} from '@libs/platform/modules/auth/dto/auth-scene.dto'
+import { LoginGuardService } from '@libs/platform/modules/auth/login-guard.service'
+import { CaptchaService } from '@libs/platform/modules/captcha/captcha.service'
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
+import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+import { isProduction } from '@libs/platform/utils/env'
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { AdminAuthCacheKeys, AdminAuthRedisKeys } from './auth.constant'
 
@@ -79,15 +90,17 @@ export class AuthService {
       .where(eq(this.adminUserTable.username, body.username))
       .limit(1)
     if (!user) {
-      throw new BadRequestException('账号或密码错误')
+      throw new UnauthorizedException('账号或密码错误')
     }
 
     if (!user.isEnabled) {
-      throw new BadRequestException('账号已被禁用，请联系管理员。')
+      throw new ForbiddenException('账号已被禁用，请联系管理员。')
     }
 
     // 检查账户是否被锁定
-    await this.loginGuardService.checkLock(AdminAuthRedisKeys.LOGIN_LOCK(user.id))
+    await this.loginGuardService.checkLock(
+      AdminAuthRedisKeys.LOGIN_LOCK(user.id),
+    )
 
     // 解密密码
     let password = body.password
@@ -103,7 +116,7 @@ export class AuthService {
           lockTtl: AuthConstants.ACCOUNT_LOCK_TTL,
         },
       )
-      throw new BadRequestException('账号或密码错误')
+      throw new UnauthorizedException('账号或密码错误')
     }
 
     // 验证密码
@@ -121,7 +134,7 @@ export class AuthService {
           lockTtl: AuthConstants.ACCOUNT_LOCK_TTL,
         },
       )
-      throw new BadRequestException('账号或密码错误')
+      throw new UnauthorizedException('账号或密码错误')
     }
 
     // 更新登录信息
@@ -174,7 +187,7 @@ export class AuthService {
 
     if (!Number.isFinite(userId) || userId <= 0) {
       await this.authSessionService.logout(tokens, { revokeDbTokens: true })
-      throw new BadRequestException(AuthErrorMessages.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     const [user] = await this.db
@@ -188,12 +201,12 @@ export class AuthService {
 
     if (!user) {
       await this.authSessionService.logout(tokens, { revokeDbTokens: true })
-      throw new BadRequestException(AuthErrorMessages.LOGIN_INVALID)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     if (!user.isEnabled) {
       await this.authSessionService.logout(tokens, { revokeDbTokens: true })
-      throw new BadRequestException('账号已被禁用，请联系管理员。')
+      throw new ForbiddenException('账号已被禁用，请联系管理员。')
     }
 
     return tokens

@@ -204,4 +204,3 @@ export interface EnumPropertyOptions extends BaseValidateOptions {
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }
-

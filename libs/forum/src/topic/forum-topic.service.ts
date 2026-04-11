@@ -25,14 +25,16 @@ import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common'
 import { and, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import {
@@ -267,7 +269,10 @@ export class ForumTopicService {
     })
 
     if (!topic) {
-      throw new NotFoundException('主题不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
     }
 
     return topic
@@ -296,13 +301,17 @@ export class ForumTopicService {
     })
 
     if (!section) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
         options?.notFoundMessage ?? '板块不存在或已禁用',
       )
     }
 
     if (options?.requireEnabled && !section.isEnabled) {
-      throw new BadRequestException('板块不存在或已禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块不存在或已禁用',
+      )
     }
 
     return section.topicReviewPolicy as ForumReviewPolicyEnum
@@ -520,7 +529,10 @@ export class ForumTopicService {
     })
 
     if (!topic) {
-      throw new NotFoundException('主题不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
     }
 
     return topic
@@ -557,7 +569,10 @@ export class ForumTopicService {
     })
 
     if (!topic) {
-      throw new NotFoundException('主题不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
     }
 
     await this.forumPermissionService.ensureUserCanAccessSection(
@@ -570,7 +585,10 @@ export class ForumTopicService {
     )
 
     if (!topic.user) {
-      throw new NotFoundException('主题作者不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题作者不存在',
+      )
     }
 
     return topic
@@ -590,7 +608,10 @@ export class ForumTopicService {
     },
   ): PublicForumTopicDetailDto {
     if (!topic.user) {
-      throw new NotFoundException('主题作者不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题作者不存在',
+      )
     }
 
     return {
@@ -1065,7 +1086,10 @@ export class ForumTopicService {
     const { id, images, videos, ...updateData } = updateForumTopicDto
 
     if (topic.isLocked) {
-      throw new BadRequestException('主题已锁定，无法编辑')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '主题已锁定，无法编辑',
+      )
     }
 
     const reviewPolicy = await this.getSectionTopicReviewPolicy(
@@ -1122,7 +1146,10 @@ export class ForumTopicService {
           )
           .returning()
         if (!nextTopic) {
-          throw new NotFoundException('主题不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '主题不存在',
+          )
         }
 
         await this.forumCounterService.syncSectionVisibleState(
@@ -1315,7 +1342,10 @@ export class ForumTopicService {
     })
 
     if (!currentTopic) {
-      throw new NotFoundException('主题不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
     }
 
     return this.drizzle.withErrorHandling(async () =>
@@ -1445,7 +1475,10 @@ export class ForumTopicService {
     })
 
     if (!currentTopic) {
-      throw new NotFoundException('主题不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
     }
 
     await this.drizzle.withErrorHandling(async () =>
@@ -1493,7 +1526,7 @@ export class ForumTopicService {
     const topic = await this.getActiveTopicOrThrow(input.id)
 
     if (topic.userId !== userId) {
-      throw new BadRequestException('无权修改该主题')
+      throw new ForbiddenException('无权修改该主题')
     }
 
     return this.updateTopicWithCurrent(topic, input, context)
@@ -1511,7 +1544,7 @@ export class ForumTopicService {
     const topic = await this.getActiveTopicOrThrow(id)
 
     if (topic.userId !== userId) {
-      throw new BadRequestException('无权删除该主题')
+      throw new ForbiddenException('无权删除该主题')
     }
 
     return this.deleteTopicWithCurrent(topic, context)

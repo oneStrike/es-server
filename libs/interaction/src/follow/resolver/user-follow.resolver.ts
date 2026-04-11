@@ -1,15 +1,12 @@
 import type { Db } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { AppUserCountService } from '@libs/user/app-user-count.service';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
+import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { inArray } from 'drizzle-orm'
 import { FollowTargetTypeEnum } from '../follow.constant'
 import { FollowService } from '../follow.service'
@@ -46,7 +43,10 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
    */
   async ensureExists(tx: Db, targetId: number, actorUserId: number) {
     if (targetId === actorUserId) {
-      throw new BadRequestException('不能关注自己')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '不能关注自己',
+      )
     }
 
     const user = await tx.query.appUser.findFirst({
@@ -59,7 +59,10 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     })
 
     if (!user) {
-      throw new BadRequestException('目标用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '目标用户不存在',
+      )
     }
 
     return { ownerUserId: targetId }
@@ -79,7 +82,10 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     })
 
     if (!user) {
-      throw new NotFoundException('目标用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '目标用户不存在',
+      )
     }
 
     await this.appUserCountService.updateFollowersCount(tx, targetId, delta)
@@ -100,22 +106,19 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
       return
     }
 
-    await this.messageOutboxService.enqueueNotificationEventInTx(
-      tx,
-      {
-        eventType: MessageNotificationTypeEnum.USER_FOLLOW,
-        bizKey: `notify:follow:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${receiverUserId}`,
-        payload: {
-          receiverUserId,
-          actorUserId,
-          type: MessageNotificationTypeEnum.USER_FOLLOW,
-          targetType: this.targetType,
-          targetId,
-          title: '你有新的关注',
-          content: '有人关注了你',
-        },
+    await this.messageOutboxService.enqueueNotificationEventInTx(tx, {
+      eventType: MessageNotificationTypeEnum.USER_FOLLOW,
+      bizKey: `notify:follow:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${receiverUserId}`,
+      payload: {
+        receiverUserId,
+        actorUserId,
+        type: MessageNotificationTypeEnum.USER_FOLLOW,
+        targetType: this.targetType,
+        targetId,
+        title: '你有新的关注',
+        content: '有人关注了你',
       },
-    )
+    })
   }
 
   /**
@@ -152,7 +155,9 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
           .from(this.appUserCount)
           .where(inArray(this.appUserCount.userId, userIds))
       : []
-    const countMap = new Map(countRows.map((item) => [item.userId, item] as const))
+    const countMap = new Map(
+      countRows.map((item) => [item.userId, item] as const),
+    )
 
     return new Map(
       users.map((user) => [

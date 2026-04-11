@@ -5,9 +5,16 @@ import type {
   ForumSectionPermissionContext,
 } from './forum-permission.type'
 import { DrizzleService } from '@db/core'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { and, desc, eq, gte } from 'drizzle-orm'
 
 /**
@@ -64,7 +71,10 @@ export class ForumPermissionService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     return user
@@ -122,13 +132,17 @@ export class ForumPermissionService {
     })
 
     if (!section) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
         options?.notFoundMessage ?? '板块不存在或已禁用',
       )
     }
 
     if (options?.requireEnabled && !section.isEnabled) {
-      throw new BadRequestException('板块不存在或已禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块不存在或已禁用',
+      )
     }
 
     return {
@@ -143,7 +157,10 @@ export class ForumPermissionService {
    */
   private ensurePostingUserAvailable(user: ForumPostingUserContext) {
     if (!user.isEnabled) {
-      throw new BadRequestException('用户不存在或已被禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在或已被禁用',
+      )
     }
 
     if (
@@ -154,7 +171,10 @@ export class ForumPermissionService {
         UserStatusEnum.PERMANENT_BANNED,
       ].includes(user.status)
     ) {
-      throw new BadRequestException('用户已被禁言或封禁，无法发布主题')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '用户已被禁言或封禁，无法发布主题',
+      )
     }
   }
 
@@ -172,8 +192,24 @@ export class ForumPermissionService {
   ) {
     const accessState = this.resolveSectionAccessState(section, user)
     if (!accessState.canAccess) {
-      throw new BadRequestException(accessState.accessDeniedReason)
+      this.throwSectionAccessDenied(accessState)
     }
+  }
+
+  private throwSectionAccessDenied(
+    accessState: ForumSectionAccessState,
+  ): never {
+    const reason = accessState.accessDeniedReason ?? '当前操作不允许执行'
+
+    if (reason.includes('请先登录')) {
+      throw new UnauthorizedException(reason)
+    }
+
+    if (reason.includes('更高等级')) {
+      throw new BusinessException(BusinessErrorCode.QUOTA_NOT_ENOUGH, reason)
+    }
+
+    throw new BusinessException(BusinessErrorCode.OPERATION_NOT_ALLOWED, reason)
   }
 
   /**
@@ -257,7 +293,8 @@ export class ForumPermissionService {
       )
 
       if (usedToday >= level.dailyTopicLimit) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.QUOTA_NOT_ENOUGH,
           `今日发帖次数已达上限（${level.dailyTopicLimit}）`,
         )
       }
@@ -297,8 +334,9 @@ export class ForumPermissionService {
       )
 
       if (secondsSinceLastPost < level.postInterval) {
-        throw new BadRequestException(
+        throw new HttpException(
           `操作过于频繁，请 ${level.postInterval - secondsSinceLastPost} 秒后再试`,
+          HttpStatus.TOO_MANY_REQUESTS,
         )
       }
     }

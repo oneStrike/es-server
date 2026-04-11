@@ -6,11 +6,9 @@ import type {
 } from './app-user-count.type'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 /**
@@ -204,8 +202,14 @@ export class AppUserCountService {
       }
       await this.drizzle.withErrorHandling(async () => execute(this.db))
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException(message)
+      if (
+        error instanceof BusinessException &&
+        error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
+      ) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          message,
+        )
       }
       throw error
     }

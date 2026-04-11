@@ -3,15 +3,12 @@ import type {
   TaskEventProgressResult,
 } from './task.type'
 import { DrizzleService } from '@db/core'
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
-import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
+import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
 import {
@@ -72,7 +69,10 @@ export class TaskExecutionService extends TaskServiceSupport {
       userId,
       now,
     )
-    const pagedTasks = filteredTasks.slice(page.offset, page.offset + page.limit)
+    const pagedTasks = filteredTasks.slice(
+      page.offset,
+      page.offset + page.limit,
+    )
 
     await this.ensureAutoAssignmentsForUser(userId, now)
     await this.tryNotifyAvailableTasksFromPage(userId, pagedTasks, now)
@@ -158,7 +158,10 @@ export class TaskExecutionService extends TaskServiceSupport {
           and(
             eq(this.taskAssignmentTable.userId, userId),
             isNull(this.taskAssignmentTable.deletedAt),
-            eq(this.taskAssignmentTable.status, TaskAssignmentStatusEnum.PENDING),
+            eq(
+              this.taskAssignmentTable.status,
+              TaskAssignmentStatusEnum.PENDING,
+            ),
           ),
         ),
       this.db
@@ -248,7 +251,10 @@ export class TaskExecutionService extends TaskServiceSupport {
           now,
         )
       } else {
-        throw new BadRequestException('任务未领取')
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '任务未领取',
+        )
       }
     }
 
@@ -261,7 +267,10 @@ export class TaskExecutionService extends TaskServiceSupport {
       return true
     }
     if (assignment.status === TaskAssignmentStatusEnum.EXPIRED) {
-      throw new BadRequestException('任务已过期')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务已过期',
+      )
     }
 
     const nextProgress = Math.min(
@@ -317,7 +326,10 @@ export class TaskExecutionService extends TaskServiceSupport {
     })
 
     if (updatedRows === 0) {
-      throw new ConflictException('任务进度更新冲突，请重试')
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '任务进度更新冲突，请重试',
+      )
     }
 
     if (
@@ -353,7 +365,10 @@ export class TaskExecutionService extends TaskServiceSupport {
     )
 
     if (!assignment) {
-      throw new BadRequestException('任务未领取')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务未领取',
+      )
     }
     if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
       await this.settleCompletedAssignmentRewardIfNeeded(
@@ -364,10 +379,16 @@ export class TaskExecutionService extends TaskServiceSupport {
       return true
     }
     if (assignment.status === TaskAssignmentStatusEnum.EXPIRED) {
-      throw new BadRequestException('任务已过期')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务已过期',
+      )
     }
     if (assignment.progress < assignment.target) {
-      throw new BadRequestException('任务进度未达成')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务进度未达成',
+      )
     }
 
     const finalProgress = Math.max(assignment.progress, assignment.target)
@@ -407,7 +428,10 @@ export class TaskExecutionService extends TaskServiceSupport {
     })
 
     if (updatedRows === 0) {
-      throw new ConflictException('任务完成状态更新冲突，请重试')
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '任务完成状态更新冲突，请重试',
+      )
     }
 
     await this.emitTaskCompleteEvent(
@@ -661,13 +685,22 @@ export class TaskExecutionService extends TaskServiceSupport {
     })
 
     if (!assignment) {
-      throw new NotFoundException('任务分配不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务分配不存在',
+      )
     }
     if (assignment.status !== TaskAssignmentStatusEnum.COMPLETED) {
-      throw new BadRequestException('仅已完成任务允许重试奖励结算')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '仅已完成任务允许重试奖励结算',
+      )
     }
     if (assignment.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS) {
-      throw new BadRequestException('任务奖励已结算成功，无需重试')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务奖励已结算成功，无需重试',
+      )
     }
 
     await this.emitTaskCompleteEvent(

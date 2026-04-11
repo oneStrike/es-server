@@ -1,8 +1,15 @@
 import { DrizzleService } from '@db/core'
-import { CheckVerifyCodeDto, SendVerifyCodeDto } from '@libs/platform/modules/sms/dto/sms.dto';
-import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant';
-import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  CheckVerifyCodeDto,
+  SendVerifyCodeDto,
+} from '@libs/platform/modules/sms/dto/sms.dto'
+import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
+import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service'
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
 
@@ -39,13 +46,14 @@ export class SmsService {
         .select({ id: this.appUser.id })
         .from(this.appUser)
         .where(
-          and(eq(this.appUser.phoneNumber, dto.phone), isNull(this.appUser.deletedAt)),
+          and(
+            eq(this.appUser.phoneNumber, dto.phone),
+            isNull(this.appUser.deletedAt),
+          ),
         )
         .limit(1)
       if (
-        SmsTemplateCodeEnum.BIND_NEW_PHONE === dto.templateCode
-          ? user
-          : !user
+        SmsTemplateCodeEnum.BIND_NEW_PHONE === dto.templateCode ? user : !user
       ) {
         // 对外统一返回，避免通过发送验证码接口枚举手机号是否存在。
         return true
@@ -54,7 +62,9 @@ export class SmsService {
     if (await this.libSmsService.sendVerifyCode(dto)) {
       return true
     }
-    throw new BadRequestException(AppAuthErrorMessages.VERIFY_CODE_SEND_FAILED)
+    throw new InternalServerErrorException(
+      AppAuthErrorMessages.VERIFY_CODE_SEND_FAILED,
+    )
   }
 
   /**
@@ -65,7 +75,7 @@ export class SmsService {
     if (await this.libSmsService.checkVerifyCode(dto)) {
       return true
     }
-    throw new BadRequestException(
+    throw new UnauthorizedException(
       AppAuthErrorMessages.VERIFY_CODE_CHECK_FAILED,
     )
   }

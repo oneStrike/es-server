@@ -1,4 +1,8 @@
-import type { ChapterContentComicRequestDto, DetailComicRequestDto, SearchComicRequestDto } from '@libs/content/work/content/dto/content.dto';
+import type {
+  ChapterContentComicRequestDto,
+  DetailComicRequestDto,
+  SearchComicRequestDto,
+} from '@libs/content/work/content/dto/content.dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { CopyService } from './libs/copy.service'
 
@@ -6,24 +10,21 @@ import { CopyService } from './libs/copy.service'
 export class ComicThirdPartyService {
   constructor(private readonly copy: CopyService) {}
 
+  private resolvePlatform(platform: string) {
+    const provider = this[platform as keyof this] as CopyService | undefined
+    if (!provider || typeof provider.searchWord !== 'function') {
+      throw new BadRequestException('暂不支持该平台')
+    }
+    return provider
+  }
+
   /**
    * 搜索漫画
    * @param searchDto 搜索参数
    * @returns 搜索结果
    */
   async searchComic(searchDto: SearchComicRequestDto) {
-    const { platform } = searchDto
-
-    // 验证平台是否支持
-    if (!this[platform] || !this[platform].searchWord) {
-      throw new BadRequestException('暂不支持该平台')
-    }
-
-    try {
-      return this[platform].searchWord(searchDto)
-    } catch {
-      throw new BadRequestException('搜索失败，请稍后重试')
-    }
+    return this.resolvePlatform(searchDto.platform).searchWord(searchDto)
   }
 
   /**
@@ -32,7 +33,7 @@ export class ComicThirdPartyService {
    * @returns 漫画详情
    */
   async detail(searchDto: DetailComicRequestDto) {
-    return this[searchDto.platform].detail(searchDto)
+    return this.resolvePlatform(searchDto.platform).detail(searchDto)
   }
 
   /**
@@ -41,7 +42,7 @@ export class ComicThirdPartyService {
    * @returns 漫画章节
    */
   async chapter(searchDto: DetailComicRequestDto) {
-    return this[searchDto.platform].chapter(searchDto)
+    return this.resolvePlatform(searchDto.platform).chapter(searchDto)
   }
 
   /**
@@ -50,6 +51,6 @@ export class ComicThirdPartyService {
    * @returns 漫画章节内容
    */
   async content(searchDto: ChapterContentComicRequestDto) {
-    return this[searchDto.platform].content(searchDto)
+    return this.resolvePlatform(searchDto.platform).content(searchDto)
   }
 }

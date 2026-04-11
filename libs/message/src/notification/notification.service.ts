@@ -437,7 +437,7 @@ export class MessageNotificationService {
     }
     const normalized = Number(value)
     if (!Number.isInteger(normalized) || normalized < 0 || normalized > 32767) {
-      throw new BadRequestException(`${fieldName} must be a valid smallint`)
+      throw new BadRequestException(`${fieldName} 必须是合法的 smallint`)
     }
     return normalized
   }

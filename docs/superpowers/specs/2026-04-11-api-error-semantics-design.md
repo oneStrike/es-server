@@ -52,18 +52,18 @@
 | 场景                                           | HTTP 状态码        | 响应体 `code` |
 | ---------------------------------------------- | ------------------ | ------------- |
 | 成功                                           | `200`              | `0`           |
-| 业务资源不存在                                 | `200`              | `20001`      |
-| 重复资源 / 已存在 / 已绑定 / 已关联            | `200`              | `20002`      |
-| 业务状态冲突 / 并发冲突 / 重复提交             | `200`              | `20003`      |
-| 业务规则不允许 / 状态不满足 / 无法执行当前动作 | `200`              | `20004`      |
-| 配额不足 / 库存不足 / 积分不足 / 等级不足      | `200`              | `20005`      |
-| DTO 校验失败 / 参数格式错误 / 非法请求体       | `400`              | `10001`      |
-| 未登录 / Token 无效                            | `401`              | `10002`      |
-| 已登录但无权限                                 | `403`              | `10003`      |
-| 路由不存在                                     | `404`              | `10004`      |
-| 上传体过大等请求约束错误                       | `413` 等协议层状态 | `10005`      |
-| 限流                                           | `429`              | `10006`      |
-| 未预期异常                                     | `500`              | `100500`      |
+| 业务资源不存在                                 | `200`              | `20001`       |
+| 重复资源 / 已存在 / 已绑定 / 已关联            | `200`              | `20002`       |
+| 业务状态冲突 / 并发冲突 / 重复提交             | `200`              | `20003`       |
+| 业务规则不允许 / 状态不满足 / 无法执行当前动作 | `200`              | `20004`       |
+| 配额不足 / 库存不足 / 积分不足 / 等级不足      | `200`              | `20005`       |
+| DTO 校验失败 / 参数格式错误 / 非法请求体       | `400`              | `10001`       |
+| 未登录 / Token 无效                            | `401`              | `10002`       |
+| 已登录但无权限                                 | `403`              | `10003`       |
+| 路由不存在                                     | `404`              | `10004`       |
+| 上传体过大等请求约束错误                       | `413` 等协议层状态 | `10005`       |
+| 限流                                           | `429`              | `10006`       |
+| 未预期异常                                     | `500`              | `50001`       |
 
 ## 6. 响应结构
 
@@ -124,10 +124,11 @@ interface ApiResponse<T> {
 ### 6.5 数字 code 规则
 
 - 成功固定使用 `0`。
-- 协议层 / 平台层错误统一使用 `100xxx`。
-- 通用业务错误统一使用 `200xxx`。
+- 协议层 / 平台层固定 code 使用 `10001` 到 `10006`，未预期异常固定使用 `50001`。
+- 通用业务错误固定使用 `20001` 到 `20005`。
 - 业务错误只按**错误类型**区分，不按业务域、模块或资源类型继续细分。
-- 除成功码 `0` 外，所有对外 code 一律使用 `6` 位数字，避免与 HTTP 状态码混淆。
+- 不再使用 `100xxx`、`200xxx`、`6` 位数字这类抽象写法。
+- 除成功码 `0` 外，所有对外 code 一律使用 **5 位数字**，避免与 HTTP 状态码混淆。
 
 ## 7. 异常模型
 
@@ -144,11 +145,15 @@ interface ApiResponse<T> {
 
 ```ts
 class BusinessException extends Error {
+  public readonly cause?: unknown
+
   constructor(
     public readonly code: number,
     public readonly message: string,
+    options?: { cause?: unknown },
   ) {
-    super(message)
+    super(message, options)
+    this.cause = options?.cause
   }
 }
 ```
@@ -160,6 +165,10 @@ class BusinessException extends Error {
 - 响应体中的 `code` 使用异常内定义的错误类型码。
 - `message` 使用稳定业务文案。
 - `data` 固定为 `null`。
+- 当业务异常由数据库错误、外部依赖错误或下层异常转换而来时，必须保留原始 `cause`。
+- 全局过滤器日志同时记录 `businessCode` 与底层 `cause` 元信息；对 PostgreSQL 错误继续记录 `errorCode / constraint / table / column / detail`。
+- 平台层只保留 `BusinessException` 这一种业务异常载体，不提供根据 `message` 反推业务码的异常工厂。
+- 业务模块必须显式选择共享错误类型码，再自行编写返回给前端的 `message` 文案。
 
 ### 7.3 框架异常
 
@@ -201,9 +210,9 @@ class BusinessException extends Error {
 
 以下错误仍保留协议层状态码：
 
-- 非空约束导致的无效请求，可继续映射到 `400`
-- 非法输入导致的 check constraint，可继续映射到 `400`
-- 未预期的数据库错误，映射到 `500`
+- 语法、格式、DTO、JSON 结构、枚举值、字段类型、分页参数、排序参数非法，一律映射到 `400 / 10001`
+- 由数据库约束兜底暴露出来的输入非法，例如 `NOT NULL` / `CHECK` 约束失败，继续映射到 `400 / 10001`
+- 未预期的数据库错误，映射到 `500 / 50001`
 
 ### 9.2 改为业务码的场景
 
@@ -215,9 +224,10 @@ class BusinessException extends Error {
 
 落地原则：
 
-- `withErrorHandling` 与 `assertAffectedRows` 不再默认翻译为 `HttpException`。
-- 业务层需要把这些可预期错误收口为 `BusinessException`。
-- `db/core` 只负责提取数据库错误元信息，不再直接决定全部业务语义。
+- `withErrorHandling` 与 `assertAffectedRows` 不再默认把可预期业务失败翻译为 `HttpException`。
+- `db/core` 负责提取数据库错误元信息，并构造带 `cause` 的业务异常或可继续分类的错误对象。
+- 唯一约束冲突默认归入 `20002`，序列化 / 乐观并发冲突默认归入 `20003`，0 行变更导致的目标不存在默认归入 `20001`。
+- 所有数据库错误转换都必须保留原始 `cause`，不能为了对外业务码而丢失底层错误链。
 
 ## 10. 全项目替换策略
 
@@ -229,9 +239,12 @@ class BusinessException extends Error {
    - `BusinessException` -> HTTP `200`
    - 框架异常 -> 保持真实 HTTP 状态码
 4. 业务层中的 `NotFoundException`、`ConflictException` 与业务用途的 `BadRequestException`，统一替换为 `BusinessException`，并映射到共享错误类型码。
-5. 仅保留协议层必要的 `BadRequestException`、`UnauthorizedException`、`ForbiddenException`、限流与未知异常。
-6. 更新 Swagger 文档与 DTO 注释，明确 `code` 含义已经变更。
-7. 同步修正相关单测，删除基于旧状态码语义的断言。
+5. 语法 / 格式 / DTO / 枚举值 / 字段结构非法的 `BadRequestException` 保留协议层语义，继续返回 `400 / 10001`。
+6. 仅保留协议层必要的 `BadRequestException`、`UnauthorizedException`、`ForbiddenException`、限流与未知异常。
+7. 更新 Swagger 文档与 DTO 注释，明确 `code` 含义已经变更。
+8. 同步更新 `.trae/rules/PROJECT_RULES.md`，确保设计文档与规范事实源同一轮落地，不允许一边先变、一边滞后。
+9. 同步修正相关单测，删除基于旧状态码语义的断言。
+10. 删除任何平台层“根据 message 猜测业务码”的兼容逻辑或异常工厂，避免基础设施层反向绑定业务语义。
 
 ## 11. 编码规范
 
@@ -243,19 +256,21 @@ class BusinessException extends Error {
 - 业务错误码只反映**错误类型**，不反映业务域。
 - 同一业务文案可以因错误类型不同落入不同 code，但同一错误类型在全仓必须复用同一个 code。
 - `message` 继续保留具体业务语义，例如「用户不存在」「帖子不存在」「任务不存在」可以共用同一个 code。
+- 业务代码抛出 `BusinessException` 时，必须引用共享错误码常量，不允许直接手写裸数字 `20001`、`20002` 等字面量。
+- 业务模块可以封装本域私有 helper 来复用高频报错，但该 helper 只能做“固定 code + 固定 message”的显式封装，不能根据 message 推断 code。
 
 ### 11.2 固定 code 表
 
-| code     | 名称                    | 说明                                     |
-| -------- | ----------------------- | ---------------------------------------- |
-| `0`      | SUCCESS                 | 成功                                     |
+| code    | 名称                    | 说明                                     |
+| ------- | ----------------------- | ---------------------------------------- |
+| `0`     | SUCCESS                 | 成功                                     |
 | `10001` | BAD_REQUEST             | DTO 校验失败、参数格式错误、非法请求体   |
 | `10002` | UNAUTHORIZED            | 未登录、Token 无效、会话无效             |
 | `10003` | FORBIDDEN               | 无权限、被禁用、禁止访问                 |
 | `10004` | ROUTE_NOT_FOUND         | 接口或路由不存在                         |
 | `10005` | PAYLOAD_TOO_LARGE       | 上传体过大、文件数量超限等请求体约束错误 |
 | `10006` | RATE_LIMITED            | 触发限流                                 |
-| `1000` | INTERNAL_SERVER_ERROR   | 未预期异常                               |
+| `50001` | INTERNAL_SERVER_ERROR   | 未预期异常                               |
 | `20001` | RESOURCE_NOT_FOUND      | 业务资源不存在                           |
 | `20002` | RESOURCE_ALREADY_EXISTS | 资源已存在、已绑定、已关联、不可重复创建 |
 | `20003` | STATE_CONFLICT          | 状态冲突、并发冲突、重复提交             |
@@ -266,34 +281,47 @@ class BusinessException extends Error {
 
 以下不是新增 code，而是说明当前仓库中高频业务失败如何映射到这组固定错误类型。
 
-#### 11.3.1 归入 `20001 RESOURCE_NOT_FOUND`
+#### 11.3.1 归入 `10001 BAD_REQUEST`
+
+- 所有 DTO / `ValidationPipe` 报错
+- 所有语法、格式、JSON 结构、字段类型、枚举值、分页、排序参数非法
+- 典型示例：
+  - `orderBy 参数格式不合法`
+  - `eventCode 不是受支持的成长事件编码`
+  - `repeatRule 必须是 JSON 对象`
+  - `通知类型非法`
+  - `购买业务类型不支持`
+  - `不支持的举报目标类型`
+  - `不支持的阅读状态业务类型`
+- 即使这些校验当前是在业务方法里手写抛出的 `BadRequestException`，只要本质是“请求本身非法”，都归 `400 / 10001`
+
+#### 11.3.2 归入 `20001 RESOURCE_NOT_FOUND`
 
 - 所有“用户不存在”“帖子不存在”“主题不存在”“作品不存在”“章节不存在”“任务不存在”“会话不存在”“消息不存在”
 - 所有 `assertAffectedRows(..., 'xxx 不存在')`
 - 所有查询已成功进入业务层，但目标对象未命中的情况
 
-#### 11.3.2 归入 `20002 RESOURCE_ALREADY_EXISTS`
+#### 11.3.3 归入 `20002 RESOURCE_ALREADY_EXISTS`
 
 - 所有“邮箱已被使用”“手机号已被使用”“标签名称已存在”“任务编码已存在”“模板已存在”
 - 所有“该主题已关联此标签”“已绑定”“已领取且不允许重复领取”“已创建且不允许重复创建”
 - 所有唯一约束冲突，且业务语义是“资源已存在/不可重复”
 
-#### 11.3.3 归入 `20003 STATE_CONFLICT`
+#### 11.3.4 归入 `20003 STATE_CONFLICT`
 
 - 所有“任务进度更新冲突，请重试”“任务完成状态更新冲突，请重试”
 - 所有乐观锁 / 序列化失败 / 并发写冲突
 - 所有业务对象状态在当前瞬间发生竞争，需要调用方重试的情况
 
-#### 11.3.4 归入 `20004 OPERATION_NOT_ALLOWED`
+#### 11.3.5 归入 `20004 OPERATION_NOT_ALLOWED`
 
+- 前提：请求格式合法，且对象上下文已成立，但当前动作按业务规则不允许执行
 - 所有“当前手机号与已绑定手机号不一致”“新手机号不能与当前手机号相同”“旧密码错误”
 - 所有“任务未领取”“任务已过期”“任务进度未达成”“任务奖励已结算成功，无需重试”
-- 所有“主题已锁定，无法编辑或评论”“无权修改该主题”“无权删除该主题”
-- 所有“不支持的 xxx 类型”“通知类型非法”“购买业务类型不支持”“阅读状态业务类型不支持”
-- 所有“已处理举报不能重复裁决”“当前正在切换 IP 属地库，请稍后重试”
+- 所有“主题已锁定，无法编辑或评论”“已处理举报不能重复裁决”“当前正在切换 IP 属地库，请稍后重试”
 - 所有对象存在，但按业务规则当前不允许执行动作的情况
 
-#### 11.3.5 归入 `20005 QUOTA_NOT_ENOUGH`
+#### 11.3.6 归入 `20005 QUOTA_NOT_ENOUGH`
 
 - 所有“积分不足”“会员等级不足”“库存不足”“配额不足”
 - 所有资源存在、规则也允许，但额度或能力不足导致失败的情况
@@ -306,6 +334,7 @@ class BusinessException extends Error {
 - `libs/platform/src/filters/*`
 - `db/core/error/*`
 - `db/core/drizzle.service.ts`
+- `.trae/rules/PROJECT_RULES.md`
 - 业务层中所有将资源不存在、唯一冲突、状态冲突翻译为 Nest HTTP 异常的 Service / Resolver
 - 复用 `Response<T>` 或等效响应 DTO 的声明位置
 - 全项目共享错误码常量定义位置
@@ -340,11 +369,12 @@ class BusinessException extends Error {
 1. 任一成功接口，响应体 `code` 为 `0`。
 2. 任一业务资源不存在场景，HTTP 状态码为 `200`，响应体 `code` 为对应业务码。
 3. 任一原 `409` 业务冲突场景，HTTP 状态码为 `200`，响应体 `code` 为对应业务码。
-4. DTO 校验失败仍返回 `400`。
+4. 语法、格式、DTO、JSON 结构、枚举值、字段类型、分页排序参数非法，仍返回 `400 / 10001`。
 5. 鉴权失败仍返回 `401/403`。
 6. 路由不存在仍返回 `404`。
-7. 未知异常仍返回 `500`。
-8. 全仓不再出现“响应体 `code` 只是 HTTP status 镜像”的实现。
+7. 未知异常仍返回 `500 / 50001`。
+8. [设计文档](/E:/Code/es/es-server/docs/superpowers/specs/2026-04-11-api-error-semantics-design.md) 与 [PROJECT_RULES](/E:/Code/es/es-server/.trae/rules/PROJECT_RULES.md) 的错误语义不再冲突。
+9. 全仓不再出现“响应体 `code` 只是 HTTP status 镜像”的实现。
 
 ## 15. 后续实现约束
 
@@ -354,3 +384,4 @@ class BusinessException extends Error {
 - 不保留“旧接口返回 HTTP status 镜像，新接口返回数字 bizCode”的混合状态。
 - 以全局抽象替换为主，避免在 Controller 层逐个手写兼容判断。
 - 先收敛基础设施层抽象，再批量替换业务域异常。
+- 平台层只允许提供 `BusinessException` 与共享错误码常量；禁止新增 `createBusinessExceptionByMessage`、`badRequestOrBusinessException` 一类会根据文案猜测业务语义的封装。

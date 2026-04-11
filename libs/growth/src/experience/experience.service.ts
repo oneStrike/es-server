@@ -1,11 +1,18 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common'
 import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
 import {
   GrowthAssetTypeEnum,
+  GrowthLedgerFailReasonLabel,
   GrowthLedgerSourceEnum,
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
@@ -104,7 +111,10 @@ export class UserExperienceService {
       .limit(1)
 
     if (!rule) {
-      throw new BadRequestException('经验规则不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '经验规则不存在',
+      )
     }
 
     return rule
@@ -145,13 +155,19 @@ export class UserExperienceService {
       .limit(1)
 
     if (!rule) {
-      throw new BadRequestException('经验规则不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '经验规则不存在',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.userExperienceRule)
-        .where(eq(this.userExperienceRule.id, id)), { notFound: '经验规则不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .delete(this.userExperienceRule)
+          .where(eq(this.userExperienceRule.id, id)),
+      { notFound: '经验规则不存在' },
+    )
     return true
   }
 
@@ -178,12 +194,15 @@ export class UserExperienceService {
     })
 
     if (!user || user.status === UserStatusEnum.PERMANENT_BANNED) {
-      throw new BadRequestException('用户不存在或已被永久封禁')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在或已被永久封禁',
+      )
     }
 
     const bizKey =
-      addExperienceDto.bizKey
-      ?? this.buildStableBizKey('experience:rule', {
+      addExperienceDto.bizKey ??
+      this.buildStableBizKey('experience:rule', {
         userId,
         ruleType,
         targetType: addExperienceDto.targetType,
@@ -205,19 +224,22 @@ export class UserExperienceService {
       })
 
       if (!result.success && !result.duplicated) {
-        throw new BadRequestException(this.mapRuleFailReason(result.reason))
+        this.throwExperienceGrantFailure(result.reason)
       }
 
       const recordId = result.recordId
       if (!recordId) {
-        throw new BadRequestException('经验发放失败')
+        throw new InternalServerErrorException('经验发放失败')
       }
 
       const record = await tx.query.growthLedgerRecord.findFirst({
         where: { id: recordId },
       })
       if (!record) {
-        throw new BadRequestException('经验记录不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '经验记录不存在',
+        )
       }
     })
     return true
@@ -242,15 +264,16 @@ export class UserExperienceService {
       )
     }
     // 历史上这里走 JSON 字符串默认排序，现统一收口为字面量对象，减少调用层分支。
-    const orderBy = dto.orderBy?.trim()
-      ? dto.orderBy
-      : { id: 'desc' as const }
+    const orderBy = dto.orderBy?.trim() ? dto.orderBy : { id: 'desc' as const }
 
-    const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
-      where: and(...conditions),
-      ...dto,
-      orderBy,
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.growthLedgerRecord,
+      {
+        where: and(...conditions),
+        ...dto,
+        orderBy,
+      },
+    )
 
     return {
       ...page,
@@ -275,7 +298,10 @@ export class UserExperienceService {
     })
 
     if (!record) {
-      throw new BadRequestException('经验记录不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '经验记录不存在',
+      )
     }
 
     return {
@@ -298,7 +324,10 @@ export class UserExperienceService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     const today = startOfTodayInAppTimeZone()
@@ -369,13 +398,44 @@ export class UserExperienceService {
       total_limit: 'Total experience limit reached',
     }
 
-    return reason ? (reasonMap[reason] ?? 'Experience grant failed') : 'Experience grant failed'
+    return reason
+      ? (reasonMap[reason] ?? 'Experience grant failed')
+      : 'Experience grant failed'
   }
 
-  private buildStableBizKey(
-    prefix: string,
-    payload: Record<string, unknown>,
-  ) {
+  /** 按成长账本拒绝原因映射经验发放失败语义。 */
+  private throwExperienceGrantFailure(
+    reason?: keyof typeof GrowthLedgerFailReasonLabel,
+  ): never {
+    if (!reason) {
+      throw new InternalServerErrorException('经验发放失败')
+    }
+
+    if (reason === 'rule_not_found') {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        this.mapRuleFailReason(reason),
+      )
+    }
+
+    if (reason === 'daily_limit' || reason === 'total_limit') {
+      throw new BusinessException(
+        BusinessErrorCode.QUOTA_NOT_ENOUGH,
+        this.mapRuleFailReason(reason),
+      )
+    }
+
+    if (reason === 'rule_disabled' || reason === 'cooldown') {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        this.mapRuleFailReason(reason),
+      )
+    }
+
+    throw new InternalServerErrorException(this.mapRuleFailReason(reason))
+  }
+
+  private buildStableBizKey(prefix: string, payload: Record<string, unknown>) {
     const serializedPayload = Object.entries(payload)
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => `${key}=${String(value)}`)
@@ -397,8 +457,8 @@ export class UserExperienceService {
     >,
   ) {
     if (
-      dto.type !== undefined
-      && !Object.values(GrowthRuleTypeEnum).includes(dto.type)
+      dto.type !== undefined &&
+      !Object.values(GrowthRuleTypeEnum).includes(dto.type)
     ) {
       throw new BadRequestException('经验规则类型无效')
     }

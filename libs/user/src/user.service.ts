@@ -1,12 +1,10 @@
 import type { AppUserSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
-import { formatDateTimeInAppTimeZone } from '@libs/platform/utils/time';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { formatDateTimeInAppTimeZone } from '@libs/platform/utils/time'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { ForbiddenException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
 
@@ -48,7 +46,10 @@ export class UserService {
       .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
       .limit(1)
     if (!user) {
-      throw new NotFoundException('应用用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '应用用户不存在',
+      )
     }
     return user
   }

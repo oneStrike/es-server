@@ -1,10 +1,10 @@
 import { DrizzleService } from '@db/core'
-import { IS_PUBLIC_KEY } from '@libs/platform/decorators/public.decorator';
-import { AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant';
+import { IS_PUBLIC_KEY } from '@libs/platform/decorators/public.decorator'
+import { AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant'
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -49,7 +49,7 @@ export class AdminUserStatusGuard implements CanActivate {
     }
 
     if (!user.isEnabled) {
-      throw new BadRequestException('账号已被禁用，请联系管理员。')
+      throw new ForbiddenException('账号已被禁用，请联系管理员。')
     }
 
     return true

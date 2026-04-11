@@ -1,13 +1,14 @@
 import type { Db } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
-import { createDefinedEventEnvelope, EventEnvelopeGovernanceStatusEnum } from '@libs/growth/event-definition/event-envelope.type';
-import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+  createDefinedEventEnvelope,
+  EventEnvelopeGovernanceStatusEnum,
+} from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import {
   CreateReportCommandDto,
@@ -29,7 +30,12 @@ type CreateUserReportPayload = CreateReportCommandDto &
       handlerId?: number | null
       handlingNote?: string | null
     },
-    'sceneType' | 'sceneId' | 'commentLevel' | 'status' | 'handlerId' | 'handlingNote'
+    | 'sceneType'
+    | 'sceneId'
+    | 'commentLevel'
+    | 'status'
+    | 'handlerId'
+    | 'handlingNote'
   >
 
 interface CreateUserReportOptions {
@@ -232,7 +238,10 @@ export class ReportService {
       .limit(1)
 
     if (!report) {
-      throw new NotFoundException('举报记录不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '举报记录不存在',
+      )
     }
 
     return report
@@ -301,7 +310,10 @@ export class ReportService {
       .limit(1)
 
     if (!report) {
-      throw new NotFoundException('举报记录不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '举报记录不存在',
+      )
     }
 
     return report
@@ -327,7 +339,10 @@ export class ReportService {
         })
 
         if (!current) {
-          throw new NotFoundException('举报记录不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '举报记录不存在',
+          )
         }
 
         this.ensureCanHandleReportStatus(current.status, input.status)
@@ -345,7 +360,10 @@ export class ReportService {
           .returning()
 
         if (!updated) {
-          throw new NotFoundException('举报记录不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '举报记录不存在',
+          )
         }
 
         return updated
@@ -393,7 +411,8 @@ export class ReportService {
           })
           .returning(),
       {
-        duplicate: options.duplicateMessage ?? '您已经举报过该内容，请勿重复举报',
+        duplicate:
+          options.duplicateMessage ?? '您已经举报过该内容，请勿重复举报',
       },
     )
     return rows[0]
@@ -410,7 +429,10 @@ export class ReportService {
       eq(this.drizzle.schema.appUser.id, reporterId),
     )
     if (!existed) {
-      throw new BadRequestException('举报人不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '举报人不存在',
+      )
     }
   }
 
@@ -422,7 +444,10 @@ export class ReportService {
    */
   private ensureCanReportOwnTarget(reporterId: number, ownerUserId?: number) {
     if (ownerUserId && ownerUserId === reporterId) {
-      throw new BadRequestException('不能举报自己')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '不能举报自己',
+      )
     }
   }
 
@@ -459,17 +484,20 @@ export class ReportService {
     nextStatus: ReportStatusEnum,
   ) {
     if (
-      nextStatus !== ReportStatusEnum.RESOLVED
-      && nextStatus !== ReportStatusEnum.REJECTED
+      nextStatus !== ReportStatusEnum.RESOLVED &&
+      nextStatus !== ReportStatusEnum.REJECTED
     ) {
       throw new BadRequestException('举报处理结果只允许为已解决或已驳回')
     }
 
     if (
-      currentStatus !== ReportStatusEnum.PENDING
-      && currentStatus !== ReportStatusEnum.PROCESSING
+      currentStatus !== ReportStatusEnum.PENDING &&
+      currentStatus !== ReportStatusEnum.PROCESSING
     ) {
-      throw new BadRequestException('已处理举报不能重复裁决')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '已处理举报不能重复裁决',
+      )
     }
   }
 }

@@ -1,6 +1,14 @@
-import type { Db, PgTable, SQL, SQLWrapper, TableConfig } from '../core/drizzle.type'
+import type {
+  Db,
+  PgTable,
+  SQL,
+  SQLWrapper,
+  TableConfig,
+} from '../core/drizzle.type'
 import { BadRequestException } from '@nestjs/common'
 import { and, isNull } from 'drizzle-orm'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 
 /**
  * 获取表的 deletedAt 字段
@@ -39,7 +47,10 @@ export async function softDelete(
   const [target] = await db.select().from(table).where(condition).limit(1)
 
   if (!target) {
-    throw new BadRequestException('删除失败：数据不存在')
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_NOT_FOUND,
+      '删除失败：数据不存在',
+    )
   }
 
   // 执行软删除，设置 deletedAt 为当前时间

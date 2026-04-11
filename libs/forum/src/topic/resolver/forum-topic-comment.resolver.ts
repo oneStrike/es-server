@@ -1,12 +1,14 @@
 import type { Db } from '@db/core'
-import type { VisibleCommentEffectPayload } from '@libs/interaction/comment/comment.type';
-import type { CommentTargetMeta } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface';
-import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
-import { CommentService } from '@libs/interaction/comment/comment.service';
-import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface';
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import type { VisibleCommentEffectPayload } from '@libs/interaction/comment/comment.type'
+import type { CommentTargetMeta } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { CommentService } from '@libs/interaction/comment/comment.service'
+import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 
@@ -43,11 +45,7 @@ export class ForumTopicCommentResolver
    * @param _targetId - 目标帖子ID
    * @param _delta - 变更量（+1 增加，-1 减少）
    */
-  async applyCountDelta(
-    _tx: Db,
-    _targetId: number,
-    _delta: number,
-  ) {}
+  async applyCountDelta(_tx: Db, _targetId: number, _delta: number) {}
 
   /**
    * 校验是否允许对该帖子发表评论
@@ -76,12 +74,23 @@ export class ForumTopicCommentResolver
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
-      throw new BadRequestException('帖子不存在')
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     if (topic.isLocked) {
-      throw new BadRequestException('帖子已被锁定，无法评论')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '帖子已被锁定，无法评论',
+      )
     }
   }
 
@@ -112,8 +121,16 @@ export class ForumTopicCommentResolver
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
-      throw new BadRequestException('帖子不存在')
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     return {
@@ -129,7 +146,10 @@ export class ForumTopicCommentResolver
     meta: CommentTargetMeta,
   ) {
     if (!meta.sectionId) {
-      throw new BadRequestException('帖子板块信息缺失')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子板块信息缺失',
+      )
     }
 
     await this.forumCounterService.syncTopicCommentState(tx, comment.targetId)
@@ -176,7 +196,10 @@ export class ForumTopicCommentResolver
     meta: CommentTargetMeta,
   ) {
     if (!meta.sectionId) {
-      throw new BadRequestException('帖子板块信息缺失')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子板块信息缺失',
+      )
     }
 
     await this.forumCounterService.syncTopicCommentState(tx, comment.targetId)

@@ -1,13 +1,9 @@
 import type { SQL } from 'drizzle-orm'
-import type {
-  ValidateEmojiAssetPayload,
-} from './emoji.type'
+import type { ValidateEmojiAssetPayload } from './emoji.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import {
   CreateEmojiAssetDto,
@@ -54,14 +50,10 @@ export class EmojiAssetService {
     const conditions: SQL[] = [isNull(this.emojiPack.deletedAt)]
 
     if (dto.code) {
-      conditions.push(
-        buildILikeCondition(this.emojiPack.code, dto.code)!,
-      )
+      conditions.push(buildILikeCondition(this.emojiPack.code, dto.code)!)
     }
     if (dto.name) {
-      conditions.push(
-        buildILikeCondition(this.emojiPack.name, dto.name)!,
-      )
+      conditions.push(buildILikeCondition(this.emojiPack.name, dto.name)!)
     }
     if (dto.isEnabled !== undefined) {
       conditions.push(eq(this.emojiPack.isEnabled, dto.isEnabled))
@@ -84,7 +76,7 @@ export class EmojiAssetService {
   /**
    * 获取表情包详情。
    * - 仅返回未删除的记录。
-   * @throws NotFoundException 表情包不存在或已删除
+   * @throws BusinessException 表情包不存在或已删除
    */
   async getPackDetail(id: number) {
     const pack = await this.db.query.emojiPack.findFirst({
@@ -95,7 +87,10 @@ export class EmojiAssetService {
     })
 
     if (!pack) {
-      throw new NotFoundException('表情包不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '表情包不存在',
+      )
     }
     return pack
   }
@@ -105,7 +100,7 @@ export class EmojiAssetService {
    * - 自动计算 sortOrder（未指定时取当前最大排序值 +1）。
    * - sceneType 必须包含至少一个有效场景。
    * @throws BadRequestException sceneType 校验失败
-   * @throws ConflictException 表情包编码已存在（由 withErrorHandling 转换）
+   * @throws BusinessException 表情包编码已存在（由 withErrorHandling 转换）
    */
   async createPack(dto: CreateEmojiPackDto, adminUserId: number) {
     this.validateSceneType(dto.sceneType)
@@ -138,8 +133,8 @@ export class EmojiAssetService {
    * 更新表情包。
    * - 允许部分字段更新，未传入的字段保持原值。
    * - 若更新 sceneType，需重新校验场景有效性。
-   * @throws NotFoundException 表情包不存在或已删除
-   * @throws ConflictException 表情包编码已存在（由 withErrorHandling 转换）
+   * @throws BusinessException 表情包不存在或已删除
+   * @throws BusinessException 表情包编码已存在（由 withErrorHandling 转换）
    */
   async updatePack(dto: UpdateEmojiPackDto, adminUserId: number) {
     if (dto.sceneType) {
@@ -169,23 +164,26 @@ export class EmojiAssetService {
   /**
    * 更新表情包启用状态。
    * - 用于管理端的启用/禁用切换。
-   * @throws NotFoundException 表情包不存在或已删除
+   * @throws BusinessException 表情包不存在或已删除
    */
   async updatePackEnabled(
     id: number,
     isEnabled: boolean,
     adminUserId?: number,
   ) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.emojiPack)
-        .set({
-          isEnabled,
-          ...(adminUserId !== undefined ? { updatedById: adminUserId } : {}),
-        })
-        .where(
-          and(eq(this.emojiPack.id, id), isNull(this.emojiPack.deletedAt)),
-        ), { notFound: '表情包不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.emojiPack)
+          .set({
+            isEnabled,
+            ...(adminUserId !== undefined ? { updatedById: adminUserId } : {}),
+          })
+          .where(
+            and(eq(this.emojiPack.id, id), isNull(this.emojiPack.deletedAt)),
+          ),
+      { notFound: '表情包不存在' },
+    )
     return true
   }
 
@@ -193,23 +191,29 @@ export class EmojiAssetService {
    * 更新表情包场景类型。
    * - 独立接口用于单独修改场景可见性。
    * @throws BadRequestException sceneType 校验失败
-   * @throws NotFoundException 表情包不存在或已删除
+   * @throws BusinessException 表情包不存在或已删除
    */
   async updatePackSceneType(
     dto: UpdateEmojiPackSceneTypeDto,
     adminUserId: number,
   ) {
     this.validateSceneType(dto.sceneType)
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.emojiPack)
-        .set({
-          sceneType: dto.sceneType,
-          updatedById: adminUserId,
-        })
-        .where(
-          and(eq(this.emojiPack.id, dto.id), isNull(this.emojiPack.deletedAt)),
-        ), { notFound: '表情包不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.emojiPack)
+          .set({
+            sceneType: dto.sceneType,
+            updatedById: adminUserId,
+          })
+          .where(
+            and(
+              eq(this.emojiPack.id, dto.id),
+              isNull(this.emojiPack.deletedAt),
+            ),
+          ),
+      { notFound: '表情包不存在' },
+    )
     return true
   }
 
@@ -226,7 +230,7 @@ export class EmojiAssetService {
   /**
    * 删除表情包（软删除）。
    * - 删除前校验：若表情包下存在未删除的资源，禁止删除以避免孤儿资源。
-   * @throws NotFoundException 表情包不存在或已删除
+   * @throws BusinessException 表情包不存在或已删除
    * @throws BadRequestException 表情包下仍有资源
    */
   async deletePack(id: number) {
@@ -249,21 +253,30 @@ export class EmojiAssetService {
     ])
 
     if (!pack) {
-      throw new NotFoundException('表情包不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '表情包不存在',
+      )
     }
 
     const assetCount = Number(assetCountRow?.count ?? 0)
     if (assetCount > 0) {
-      throw new BadRequestException('该表情包下还有表情资源，无法删除')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该表情包下还有表情资源，无法删除',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.emojiPack)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(eq(this.emojiPack.id, id), isNull(this.emojiPack.deletedAt)),
-        ), { notFound: '表情包不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.emojiPack)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(eq(this.emojiPack.id, id), isNull(this.emojiPack.deletedAt)),
+          ),
+      { notFound: '表情包不存在' },
+    )
     return true
   }
 
@@ -309,7 +322,7 @@ export class EmojiAssetService {
   /**
    * 获取表情资源详情。
    * - 仅返回未删除的记录。
-   * @throws NotFoundException 表情资源不存在或已删除
+   * @throws BusinessException 表情资源不存在或已删除
    */
   async getAssetDetail(id: number) {
     const asset = await this.db.query.emojiAsset.findFirst({
@@ -319,7 +332,10 @@ export class EmojiAssetService {
       },
     })
     if (!asset) {
-      throw new NotFoundException('表情资源不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '表情资源不存在',
+      )
     }
     return asset
   }
@@ -361,7 +377,7 @@ export class EmojiAssetService {
    * 更新表情资源。
    * - 允许部分字段更新，未传入的字段保持原值。
    * - 若更新 kind，需重新校验字段完整性。
-   * @throws NotFoundException 表情资源不存在或已删除
+   * @throws BusinessException 表情资源不存在或已删除
    * @throws BadRequestException 目标表情包不存在或字段校验失败
    */
   async updateAsset(dto: UpdateEmojiAssetDto, adminUserId: number) {
@@ -373,7 +389,10 @@ export class EmojiAssetService {
       where: { id: dto.id, deletedAt: { isNull: true } },
     })
     if (!current) {
-      throw new NotFoundException('表情资源不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '表情资源不存在',
+      )
     }
 
     const nextKind = dto.kind ?? current.kind
@@ -383,39 +402,45 @@ export class EmojiAssetService {
     })
 
     const { id, ...updateData } = dto
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.emojiAsset)
-        .set({
-          ...updateData,
-          updatedById: adminUserId,
-        })
-        .where(
-          and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
-        ), { notFound: '表情资源不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.emojiAsset)
+          .set({
+            ...updateData,
+            updatedById: adminUserId,
+          })
+          .where(
+            and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
+          ),
+      { notFound: '表情资源不存在' },
+    )
     return true
   }
 
   /**
    * 更新表情资源启用状态。
    * - 用于管理端的启用/禁用切换。
-   * @throws NotFoundException 表情资源不存在或已删除
+   * @throws BusinessException 表情资源不存在或已删除
    */
   async updateAssetEnabled(
     id: number,
     isEnabled: boolean,
     adminUserId?: number,
   ) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.emojiAsset)
-        .set({
-          isEnabled,
-          ...(adminUserId !== undefined ? { updatedById: adminUserId } : {}),
-        })
-        .where(
-          and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
-        ), { notFound: '表情资源不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.emojiAsset)
+          .set({
+            isEnabled,
+            ...(adminUserId !== undefined ? { updatedById: adminUserId } : {}),
+          })
+          .where(
+            and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
+          ),
+      { notFound: '表情资源不存在' },
+    )
     return true
   }
 
@@ -433,16 +458,19 @@ export class EmojiAssetService {
 
   /**
    * 删除表情资源（软删除）。
-   * @throws NotFoundException 表情资源不存在或已删除
+   * @throws BusinessException 表情资源不存在或已删除
    */
   async deleteAsset(id: number) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.emojiAsset)
-        .set({ deletedAt: new Date() })
-        .where(
-          and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
-        ), { notFound: '表情资源不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.emojiAsset)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(eq(this.emojiAsset.id, id), isNull(this.emojiAsset.deletedAt)),
+          ),
+      { notFound: '表情资源不存在' },
+    )
     return true
   }
 
@@ -499,7 +527,10 @@ export class EmojiAssetService {
       columns: { id: true },
     })
     if (!pack) {
-      throw new BadRequestException('表情包不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '表情包不存在',
+      )
     }
   }
 }

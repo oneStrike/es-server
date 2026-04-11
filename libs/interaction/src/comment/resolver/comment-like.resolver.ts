@@ -1,16 +1,16 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
-import { MessageNotificationSubjectTypeEnum, MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant';
-import { AppUserCountService } from '@libs/user/app-user-count.service';
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+} from '@libs/message/notification/notification.constant'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   ILikeTargetResolver,
@@ -54,7 +54,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
    * @param tx - 事务客户端
    * @param targetId - 评论ID
    * @returns 包含场景类型、场景ID和评论层级的元数据对象
-   * @throws NotFoundException 当评论不存在时抛出异常
+   * @throws BusinessException 当评论不存在时抛出异常
    * @throws BadRequestException 当评论挂载的目标类型不合法时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
@@ -69,7 +69,10 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
     })
 
     if (!comment) {
-      throw new NotFoundException('评论不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
     }
 
     const sceneType = mapCommentTargetTypeToSceneType(
@@ -111,7 +114,10 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
       .where(and(eq(userComment.id, targetId), isNull(userComment.deletedAt)))
       .returning({ id: userComment.id, userId: userComment.userId })
     if (!updated[0]) {
-      throw new NotFoundException('评论不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
     }
 
     await this.appUserCountService.updateCommentReceivedLikeCount(

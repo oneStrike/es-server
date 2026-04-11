@@ -9,8 +9,10 @@ import type {
   PublicGrowthLedgerRecord,
 } from './growth-ledger.internal'
 import { DrizzleService } from '@db/core'
-import { formatDateKeyInAppTimeZone } from '@libs/platform/utils/time';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { formatDateKeyInAppTimeZone } from '@libs/platform/utils/time'
+import { Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { QueryGrowthLedgerPageDto } from './dto/growth-ledger-record.dto'
 import {
@@ -69,8 +71,8 @@ export class GrowthLedgerService {
     return this.drizzle.schema.userPointRule
   }
 
-  private readonly publicGrowthLedgerContextKeys:
-    readonly PublicGrowthLedgerContextKey[] = PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS
+  private readonly publicGrowthLedgerContextKeys: readonly PublicGrowthLedgerContextKey[] =
+    PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS
 
   /**
    * 按规则结算（发放）
@@ -434,7 +436,10 @@ export class GrowthLedgerService {
         const value = (context as Record<string, unknown>)[key]
         return this.isPublicContextValue(value) ? [key, value] : null
       })
-      .filter((entry): entry is [string, PublicGrowthLedgerContextValue] => entry !== null)
+      .filter(
+        (entry): entry is [string, PublicGrowthLedgerContextValue] =>
+          entry !== null,
+      )
 
     if (sanitizedEntries.length === 0) {
       return undefined
@@ -486,11 +491,14 @@ export class GrowthLedgerService {
       ? dto.orderBy
       : JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }])
 
-    const page = await this.drizzle.ext.findPagination(this.growthLedgerRecord, {
-      where: and(...conditions),
-      ...dto,
-      orderBy,
-    })
+    const page = await this.drizzle.ext.findPagination(
+      this.growthLedgerRecord,
+      {
+        where: and(...conditions),
+        ...dto,
+        orderBy,
+      },
+    )
 
     return {
       ...page,
@@ -631,10 +639,10 @@ export class GrowthLedgerService {
     value: unknown,
   ): value is PublicGrowthLedgerContextValue {
     return (
-      value === null
-      || typeof value === 'boolean'
-      || typeof value === 'number'
-      || typeof value === 'string'
+      value === null ||
+      typeof value === 'boolean' ||
+      typeof value === 'number' ||
+      typeof value === 'string'
     )
   }
 
@@ -913,7 +921,10 @@ export class GrowthLedgerService {
     )
     const user = rows[0]
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
     return user
   }

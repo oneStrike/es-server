@@ -1,5 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import { extractError, getPostgresErrorDescriptor } from '@db/core'
+import { extractError, getPostgresErrorResponseDescriptor } from '@db/core'
+import {
+  getPlatformErrorCode,
+  PlatformErrorCode,
+} from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { LoggerService } from '@libs/platform/modules/logger'
 import { buildRequestLogFields } from '@libs/platform/utils'
 import {
@@ -12,8 +17,12 @@ import {
 
 interface ErrorDescriptor {
   status: HttpStatus
+  responseCode: number
   message: string
+  businessCode?: number
 }
+
+const ROUTE_NOT_FOUND_MESSAGE_REGEX = /^Cannot\b/i
 
 /**
  * 全局异常过滤器
@@ -35,14 +44,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private readonly errorDescriptorMap: Record<string, ErrorDescriptor> = {
     FST_REQ_FILE_TOO_LARGE: {
       status: HttpStatus.PAYLOAD_TOO_LARGE,
+      responseCode: PlatformErrorCode.PAYLOAD_TOO_LARGE,
       message: '上传文件大小超出系统限制',
     },
     FST_FILES_LIMIT: {
       status: HttpStatus.PAYLOAD_TOO_LARGE,
+      responseCode: PlatformErrorCode.PAYLOAD_TOO_LARGE,
       message: '上传文件数量超出系统限制',
     },
     FST_INVALID_MULTIPART_CONTENT_TYPE: {
       status: HttpStatus.BAD_REQUEST,
+      responseCode: PlatformErrorCode.BAD_REQUEST,
       message: '上传文件不能为空',
     },
   }
@@ -59,12 +71,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const {
       status,
+      responseCode,
       message,
       code,
       constraint,
       table,
       column,
       detail,
+      businessCode,
     } = this.extractErrorInfo(exception)
     const parsed = this.safeParse(request)
     const logger = this.loggerService.getLoggerWithContext('http-exception')
@@ -77,6 +91,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       errorTable: table,
       errorColumn: column,
       errorDetail: detail,
+      businessCode,
       errorMessage: message,
       stack: exception instanceof Error ? exception.stack : undefined,
       status,
@@ -87,7 +102,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     })
 
     response.code(status).send({
-      code: status,
+      code: responseCode,
       data: null,
       message,
     })
@@ -102,12 +117,30 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private extractErrorInfo(exception: unknown) {
     const postgresError = this.extractPostgresError(exception)
 
+    if (exception instanceof BusinessException) {
+      return {
+        status: HttpStatus.OK,
+        responseCode: exception.code,
+        message: exception.message,
+        businessCode: exception.code,
+        code: postgresError?.code,
+        constraint: postgresError?.constraint,
+        table: postgresError?.table,
+        column: postgresError?.column,
+        detail: postgresError?.detail,
+      }
+    }
+
     if (exception instanceof HttpException) {
       const status = exception.getStatus()
       const response = exception.getResponse() as any
+      const message = this.normalizeMessage(response?.message ?? response)
       return {
         status,
-        message: response?.message ?? response,
+        responseCode: this.isRouteNotFoundMessage(message)
+          ? PlatformErrorCode.ROUTE_NOT_FOUND
+          : getPlatformErrorCode(status),
+        message,
         code: postgresError?.code,
         constraint: postgresError?.constraint,
         table: postgresError?.table,
@@ -119,11 +152,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (postgresError) {
       const code = postgresError.code
       const descriptor =
-        getPostgresErrorDescriptor(code) ?? this.errorDescriptorMap[code]
+        getPostgresErrorResponseDescriptor(code) ??
+        this.errorDescriptorMap[code]
       if (descriptor) {
         return {
           status: descriptor.status,
+          responseCode: descriptor.responseCode,
           message: descriptor.message,
+          businessCode:
+            descriptor.status === HttpStatus.OK
+              ? descriptor.responseCode
+              : undefined,
           code,
           constraint: postgresError.constraint,
           table: postgresError.table,
@@ -134,6 +173,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
+        responseCode: PlatformErrorCode.INTERNAL_SERVER_ERROR,
         message: '内部服务器错误',
         code,
         constraint: postgresError.constraint,
@@ -145,6 +185,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
+      responseCode: PlatformErrorCode.INTERNAL_SERVER_ERROR,
       message: '内部服务器错误',
     }
   }
@@ -165,6 +206,37 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     return null
+  }
+
+  private normalizeMessage(payload: unknown): string {
+    if (Array.isArray(payload)) {
+      const messages = payload
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean)
+      return messages.length > 0 ? messages.join('；') : '内部服务器错误'
+    }
+
+    if (typeof payload === 'string') {
+      return payload
+    }
+
+    if (
+      typeof payload === 'object' &&
+      payload !== null &&
+      'message' in payload &&
+      typeof (payload as { message?: unknown }).message === 'string'
+    ) {
+      return (payload as { message: string }).message
+    }
+
+    return '内部服务器错误'
+  }
+
+  private isRouteNotFoundMessage(message: string) {
+    return (
+      message === 'Not Found' || ROUTE_NOT_FOUND_MESSAGE_REGEX.test(message)
+    )
   }
 
   /**

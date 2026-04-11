@@ -1,15 +1,13 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
-import { FollowService } from '@libs/interaction/follow/follow.service';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
+import { FollowService } from '@libs/interaction/follow/follow.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ForumCounterService } from '../counter/forum-counter.service';
-import { ForumPermissionService } from '../permission/forum-permission.service';
+import { ForumCounterService } from '../counter/forum-counter.service'
+import { ForumPermissionService } from '../permission/forum-permission.service'
 import {
   CreateForumSectionDto,
   QueryForumSectionDto,
@@ -69,12 +67,10 @@ export class ForumSectionService {
    * 未分组板块允许直接展示；有分组时要求分组启用且未删除。
    */
   private isAvailablePublicGroup(
-    group?:
-      | {
-          isEnabled: boolean
-          deletedAt: Date | null
-        }
-        | null,
+    group?: {
+      isEnabled: boolean
+      deletedAt: Date | null
+    } | null,
   ) {
     return Boolean(group && group.isEnabled && !group.deletedAt)
   }
@@ -231,11 +227,17 @@ export class ForumSectionService {
     })
 
     if (!section) {
-      throw new NotFoundException('板块不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块不存在',
+      )
     }
 
     if (section.groupId && !this.isAvailablePublicGroup(section.group)) {
-      throw new NotFoundException('板块不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '板块不存在',
+      )
     }
 
     const { group, work, ...data } = section
@@ -329,7 +331,10 @@ export class ForumSectionService {
       columns: { id: true },
     })
     if (existed) {
-      throw new BadRequestException('板块名称已存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '板块名称已存在',
+      )
     }
 
     if (groupId) {
@@ -338,7 +343,10 @@ export class ForumSectionService {
         columns: { id: true },
       })
       if (!group) {
-        throw new BadRequestException('板块分组不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '板块分组不存在',
+        )
       }
     }
     if (userLevelRuleId) {
@@ -347,19 +355,20 @@ export class ForumSectionService {
         columns: { id: true },
       })
       if (!levelRule) {
-        throw new BadRequestException('用户等级规则不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '用户等级规则不存在',
+        )
       }
     }
 
     await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.forumSection)
-        .values({
-          name,
-          ...sectionData,
-          userLevelRuleId,
-          groupId,
-        }),
+      this.db.insert(this.forumSection).values({
+        name,
+        ...sectionData,
+        userLevelRuleId,
+        groupId,
+      }),
     )
     return true
   }
@@ -397,9 +406,7 @@ export class ForumSectionService {
       conditions.push(eq(this.forumSection.groupId, groupId))
     }
     if (name) {
-      conditions.push(
-        buildILikeCondition(this.forumSection.name, name)!,
-      )
+      conditions.push(buildILikeCondition(this.forumSection.name, name)!)
     }
 
     const where = and(...conditions)
@@ -423,7 +430,10 @@ export class ForumSectionService {
     })
 
     if (!section) {
-      throw new BadRequestException('论坛板块不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '论坛板块不存在',
+      )
     }
 
     const group = section.groupId
@@ -490,7 +500,10 @@ export class ForumSectionService {
     })
 
     if (!existingSection) {
-      throw new BadRequestException('论坛板块不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '论坛板块不存在',
+      )
     }
 
     if (name && name !== existingSection.name) {
@@ -501,7 +514,10 @@ export class ForumSectionService {
         },
       })
       if (duplicateSection && duplicateSection.id !== id) {
-        throw new BadRequestException('板块名称已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '板块名称已存在',
+        )
       }
     }
 
@@ -517,14 +533,17 @@ export class ForumSectionService {
       if (updateData.userLevelRuleId === null) {
         updatePayload.userLevelRuleId = null
       } else {
-      const levelRule = await this.db.query.userLevelRule.findFirst({
-        where: { id: updateData.userLevelRuleId },
-        columns: { id: true },
-      })
+        const levelRule = await this.db.query.userLevelRule.findFirst({
+          where: { id: updateData.userLevelRuleId },
+          columns: { id: true },
+        })
 
-      if (!levelRule) {
-        throw new BadRequestException('用户等级规则不存在')
-      }
+        if (!levelRule) {
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '用户等级规则不存在',
+          )
+        }
       }
     }
 
@@ -534,7 +553,10 @@ export class ForumSectionService {
         columns: { id: true },
       })
       if (!group) {
-        throw new BadRequestException('板块分组不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '板块分组不存在',
+        )
       }
       updatePayload.groupId = groupId
     } else if (groupId === null && existingSection.groupId !== null) {
@@ -546,8 +568,11 @@ export class ForumSectionService {
         .update(this.forumSection)
         .set(updatePayload)
         .where(
-          and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)),
-        )
+          and(
+            eq(this.forumSection.id, id),
+            isNull(this.forumSection.deletedAt),
+          ),
+        ),
     )
     this.drizzle.assertAffectedRows(result, '论坛板块不存在')
     return true
@@ -563,11 +588,15 @@ export class ForumSectionService {
     })
 
     if (!section) {
-      throw new BadRequestException('论坛板块不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '论坛板块不存在',
+      )
     }
 
     if (section.topicCount > 0) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         `该板块还有 ${section.topicCount} 个主题，无法删除`,
       )
     }
@@ -577,8 +606,11 @@ export class ForumSectionService {
         .update(this.forumSection)
         .set({ deletedAt: new Date() })
         .where(
-          and(eq(this.forumSection.id, id), isNull(this.forumSection.deletedAt)),
-        )
+          and(
+            eq(this.forumSection.id, id),
+            isNull(this.forumSection.deletedAt),
+          ),
+        ),
     )
     this.drizzle.assertAffectedRows(result, '论坛板块不存在')
     return true
@@ -598,7 +630,7 @@ export class ForumSectionService {
             eq(this.forumSection.id, dto.id),
             isNull(this.forumSection.deletedAt),
           ),
-        )
+        ),
     )
     this.drizzle.assertAffectedRows(result, '论坛板块不存在')
     return true

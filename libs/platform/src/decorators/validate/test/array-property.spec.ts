@@ -1,8 +1,8 @@
-import 'reflect-metadata'
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
 import { ArrayProperty } from '../array-property'
 import { StringProperty } from '../string-property'
+import 'reflect-metadata'
 
 class NestedTagDto {
   @StringProperty({

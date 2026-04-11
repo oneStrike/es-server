@@ -1,14 +1,11 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
-import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { WorkCounterService } from '../../counter/work-counter.service'
 import { WorkService } from '../work.service'
 
@@ -61,7 +58,10 @@ export class WorkNovelFavoriteResolver
     })
 
     if (!target) {
-      throw new BadRequestException('小说作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '小说作品不存在',
+      )
     }
 
     return {}
@@ -75,20 +75,13 @@ export class WorkNovelFavoriteResolver
    * @param delta - 计数变化量（+1 表示收藏，-1 表示取消收藏）
    */
   async applyCountDelta(tx: Db, targetId: number, delta: number) {
-    try {
-      await this.workCounterService.updateWorkFavoriteCount(
-        tx,
-        targetId,
-        this.targetType,
-        delta,
-        '小说作品不存在',
-      )
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new BadRequestException(error.message)
-      }
-      throw error
-    }
+    await this.workCounterService.updateWorkFavoriteCount(
+      tx,
+      targetId,
+      this.targetType,
+      delta,
+      '小说作品不存在',
+    )
   }
 
   /**

@@ -1,13 +1,15 @@
 import type { UserFollowSelect } from '@db/schema'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { AppUserCountService } from '@libs/user/app-user-count.service';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { and, eq, inArray } from 'drizzle-orm'
+import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
-  FollowPageCommandDto,
-  FollowRecordDto,
-} from './dto/follow.dto'
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common'
+import { and, eq, inArray } from 'drizzle-orm'
+import { FollowPageCommandDto, FollowRecordDto } from './dto/follow.dto'
 import { FollowGrowthService } from './follow-growth.service'
 import { FollowTargetTypeEnum } from './follow.constant'
 
@@ -119,9 +121,7 @@ export class FollowService {
     return statusMap
   }
 
-  async follow(
-    input: FollowRecordDto,
-  ): Promise<Pick<UserFollowSelect, 'id'>> {
+  async follow(input: FollowRecordDto): Promise<Pick<UserFollowSelect, 'id'>> {
     const { targetType, targetId, userId } = input
     const resolver = this.getResolver(targetType)
 
@@ -145,7 +145,7 @@ export class FollowService {
       )
       const followRecord = rows[0]
       if (!followRecord) {
-        throw new BadRequestException('关注失败')
+        throw new InternalServerErrorException('关注失败')
       }
 
       await this.appUserCountService.updateFollowingCountByTargetType(

@@ -1,4 +1,4 @@
-import type { IdDto } from '@libs/platform/dto/base.dto';
+import type { IdDto } from '@libs/platform/dto/base.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
   AssignUserBadgeDto,
@@ -9,11 +9,9 @@ import type {
   UpdateUserBadgeStatusDto,
 } from './dto/user-badge-management.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 @Injectable()
@@ -77,15 +75,24 @@ export class UserBadgeService {
   async updateBadge(dto: UpdateUserBadgeDto) {
     const { id, ...updateData } = dto
 
-    if (updateData.isEnabled === false && (await this.checkBadgeHasAssignments(id))) {
-      throw new BadRequestException('徽章已被分配，无法禁用')
+    if (
+      updateData.isEnabled === false &&
+      (await this.checkBadgeHasAssignments(id))
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '徽章已被分配，无法禁用',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.userBadge)
-        .set(updateData)
-        .where(eq(this.userBadge.id, id)), { notFound: '徽章不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.userBadge)
+          .set(updateData)
+          .where(eq(this.userBadge.id, id)),
+      { notFound: '徽章不存在' },
+    )
     return true
   }
 
@@ -95,13 +102,16 @@ export class UserBadgeService {
    */
   async deleteBadge(dto: IdDto) {
     if (await this.checkBadgeHasAssignments(dto.id)) {
-      throw new BadRequestException('徽章已被分配，无法删除')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '徽章已被分配，无法删除',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.userBadge)
-        .where(eq(this.userBadge.id, dto.id)), { notFound: '徽章不存在' },)
+    await this.drizzle.withErrorHandling(
+      () => this.db.delete(this.userBadge).where(eq(this.userBadge.id, dto.id)),
+      { notFound: '徽章不存在' },
+    )
     return true
   }
 
@@ -111,14 +121,20 @@ export class UserBadgeService {
    */
   async updateBadgeStatus(dto: UpdateUserBadgeStatusDto) {
     if (!dto.isEnabled && (await this.checkBadgeHasAssignments(dto.id))) {
-      throw new BadRequestException('徽章已被分配，无法禁用')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '徽章已被分配，无法禁用',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.userBadge)
-        .set({ isEnabled: dto.isEnabled })
-        .where(eq(this.userBadge.id, dto.id)), { notFound: '徽章不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.userBadge)
+          .set({ isEnabled: dto.isEnabled })
+          .where(eq(this.userBadge.id, dto.id)),
+      { notFound: '徽章不存在' },
+    )
     return true
   }
 
@@ -130,9 +146,7 @@ export class UserBadgeService {
     const conditions: SQL[] = []
 
     if (dto.name) {
-      conditions.push(
-        buildILikeCondition(this.userBadge.name, dto.name)!,
-      )
+      conditions.push(buildILikeCondition(this.userBadge.name, dto.name)!)
     }
     if (dto.type !== undefined) {
       conditions.push(eq(this.userBadge.type, dto.type))
@@ -160,13 +174,18 @@ export class UserBadgeService {
 
   /**
    * 获取徽章详情。
-   * 未命中时抛出 `NotFoundException`，供后台详情页和编辑页复用。
+   * 未命中时抛出 `BusinessException`，供后台详情页和编辑页复用。
    */
   async getBadgeDetail(dto: IdDto) {
-    const badge = await this.db.query.userBadge.findFirst({ where: { id: dto.id } })
+    const badge = await this.db.query.userBadge.findFirst({
+      where: { id: dto.id },
+    })
 
     if (!badge) {
-      throw new NotFoundException('徽章不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '徽章不存在',
+      )
     }
 
     return badge
@@ -195,24 +214,32 @@ export class UserBadgeService {
   async assignBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
-    const badge = await this.db.query.userBadge.findFirst({ where: { id: badgeId } })
+    const badge = await this.db.query.userBadge.findFirst({
+      where: { id: badgeId },
+    })
     if (!badge) {
-      throw new NotFoundException('徽章不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '徽章不存在',
+      )
     }
 
-    const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId },
+    })
     if (!user) {
-      throw new NotFoundException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     await this.drizzle.withErrorHandling(
       () =>
-        this.db
-          .insert(this.userBadgeAssignment)
-          .values({
-            userId,
-            badgeId,
-          }),
+        this.db.insert(this.userBadgeAssignment).values({
+          userId,
+          badgeId,
+        }),
       {
         duplicate: '用户已拥有该徽章',
       },
@@ -227,15 +254,18 @@ export class UserBadgeService {
   async revokeBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.userBadgeAssignment)
-        .where(
-          and(
-            eq(this.userBadgeAssignment.userId, userId),
-            eq(this.userBadgeAssignment.badgeId, badgeId),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .delete(this.userBadgeAssignment)
+          .where(
+            and(
+              eq(this.userBadgeAssignment.userId, userId),
+              eq(this.userBadgeAssignment.badgeId, badgeId),
+            ),
           ),
-        ), { notFound: '用户徽章记录不存在' },)
+      { notFound: '用户徽章记录不存在' },
+    )
     return true
   }
 
@@ -244,9 +274,14 @@ export class UserBadgeService {
    * 列表按分配时间倒序返回，便于后台优先查看最近发放的徽章。
    */
   async getUserBadges(userId: number, dto: QueryUserBadgeDto) {
-    const user = await this.db.query.appUser.findFirst({ where: { id: userId } })
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId },
+    })
     if (!user) {
-      throw new NotFoundException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
     const badgeWhere = this.buildBadgeWhere(dto)
     const where = badgeWhere
@@ -278,9 +313,14 @@ export class UserBadgeService {
    */
   async getBadgeUsers(dto: QueryBadgeUserPageDto) {
     const { badgeId } = dto
-    const badge = await this.db.query.userBadge.findFirst({ where: { id: badgeId } })
+    const badge = await this.db.query.userBadge.findFirst({
+      where: { id: badgeId },
+    })
     if (!badge) {
-      throw new NotFoundException('徽章不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '徽章不存在',
+      )
     }
 
     const page = this.drizzle.buildPage(dto)
@@ -318,8 +358,14 @@ export class UserBadgeService {
         this.userBadge,
         eq(this.userBadge.id, this.userBadgeAssignment.badgeId),
       )
-      .innerJoin(this.appUser, eq(this.appUser.id, this.userBadgeAssignment.userId))
-      .leftJoin(this.userLevelRule, eq(this.userLevelRule.id, this.appUser.levelId))
+      .innerJoin(
+        this.appUser,
+        eq(this.appUser.id, this.userBadgeAssignment.userId),
+      )
+      .leftJoin(
+        this.userLevelRule,
+        eq(this.userLevelRule.id, this.appUser.levelId),
+      )
       .where(where)
       .orderBy(...order.orderBySql)
       .limit(page.limit)
@@ -340,33 +386,38 @@ export class UserBadgeService {
    * 该接口服务于后台看板，因此会额外查询热门徽章详情并拼装返回。
    */
   async getBadgeStatistics() {
-    const [totalBadgesRow, enabledCountRow, totalAssignmentsRow, typeCounts, topBadges] =
-      await Promise.all([
-        this.db.select({ total: sql<number>`count(*)` }).from(this.userBadge),
-        this.db
-          .select({ total: sql<number>`count(*)` })
-          .from(this.userBadge)
-          .where(eq(this.userBadge.isEnabled, true)),
-        this.db
-          .select({ total: sql<number>`count(*)` })
-          .from(this.userBadgeAssignment),
-        this.db
-          .select({
-            type: this.userBadge.type,
-            count: sql<number>`count(*)`,
-          })
-          .from(this.userBadge)
-          .groupBy(this.userBadge.type),
-        this.db
-          .select({
-            badgeId: this.userBadgeAssignment.badgeId,
-            count: sql<number>`count(*)`,
-          })
-          .from(this.userBadgeAssignment)
-          .groupBy(this.userBadgeAssignment.badgeId)
-          .orderBy(sql`count(*) desc`)
-          .limit(5),
-      ])
+    const [
+      totalBadgesRow,
+      enabledCountRow,
+      totalAssignmentsRow,
+      typeCounts,
+      topBadges,
+    ] = await Promise.all([
+      this.db.select({ total: sql<number>`count(*)` }).from(this.userBadge),
+      this.db
+        .select({ total: sql<number>`count(*)` })
+        .from(this.userBadge)
+        .where(eq(this.userBadge.isEnabled, true)),
+      this.db
+        .select({ total: sql<number>`count(*)` })
+        .from(this.userBadgeAssignment),
+      this.db
+        .select({
+          type: this.userBadge.type,
+          count: sql<number>`count(*)`,
+        })
+        .from(this.userBadge)
+        .groupBy(this.userBadge.type),
+      this.db
+        .select({
+          badgeId: this.userBadgeAssignment.badgeId,
+          count: sql<number>`count(*)`,
+        })
+        .from(this.userBadgeAssignment)
+        .groupBy(this.userBadgeAssignment.badgeId)
+        .orderBy(sql`count(*) desc`)
+        .limit(5),
+    ])
 
     const badgeIds = topBadges.map((item) => item.badgeId)
     const badges =

@@ -1,9 +1,14 @@
-import type { NotificationSyncAction } from '@libs/message/outbox/outbox.type';
+import type { NotificationSyncAction } from '@libs/message/outbox/outbox.type'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { MessageNotificationSubjectTypeEnum, MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto';
+import {
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+} from '@libs/message/notification/notification.constant'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { BusinessException } from '@libs/platform/exceptions'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, or, sql } from 'drizzle-orm'
@@ -28,7 +33,7 @@ export class AppAnnouncementService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly messageOutboxService: MessageOutboxService,
-  ) { }
+  ) {}
 
   /** 数据库连接实例 */
   private get db() {
@@ -75,20 +80,28 @@ export class AppAnnouncementService {
         columns: { id: true },
       })
       if (!page) {
-        throw new BadRequestException('关联页面不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '关联页面不存在',
+        )
       }
     }
 
     const [createdAnnouncement] = await this.drizzle.withErrorHandling(() =>
-      this.db.insert(this.appAnnouncement).values({
-        ...others,
-        pageId: pageId ?? null,
-      }).returning({
-        id: this.appAnnouncement.id,
-      }),
+      this.db
+        .insert(this.appAnnouncement)
+        .values({
+          ...others,
+          pageId: pageId ?? null,
+        })
+        .returning({
+          id: this.appAnnouncement.id,
+        }),
     )
 
-    await this.tryFanoutImportantAnnouncementNotification(createdAnnouncement?.id)
+    await this.tryFanoutImportantAnnouncementNotification(
+      createdAnnouncement?.id,
+    )
     return true
   }
 
@@ -118,9 +131,7 @@ export class AppAnnouncementService {
       : queryAnnouncementDto.isPublished
 
     if (title) {
-      conditions.push(
-        buildILikeCondition(this.appAnnouncement.title, title)!,
-      )
+      conditions.push(buildILikeCondition(this.appAnnouncement.title, title)!)
     }
     if (publishStartTime != null) {
       conditions.push(
@@ -128,16 +139,16 @@ export class AppAnnouncementService {
       )
     }
     if (publishEndTime != null) {
-      conditions.push(
-        gte(this.appAnnouncement.publishEndTime, publishEndTime),
-      )
+      conditions.push(gte(this.appAnnouncement.publishEndTime, publishEndTime))
     }
     if (platforms && platforms.length > 0) {
       const platformArray = sql`ARRAY[${sql.join(
         platforms.map((item) => sql`${item}`),
         sql`, `,
       )}]::integer[]`
-      conditions.push(sql`${this.appAnnouncement.enablePlatform} && ${platformArray}`)
+      conditions.push(
+        sql`${this.appAnnouncement.enablePlatform} && ${platformArray}`,
+      )
     }
     if (queryAnnouncementDto.announcementType !== undefined) {
       conditions.push(
@@ -149,7 +160,10 @@ export class AppAnnouncementService {
     }
     if (queryAnnouncementDto.priorityLevel !== undefined) {
       conditions.push(
-        eq(this.appAnnouncement.priorityLevel, queryAnnouncementDto.priorityLevel),
+        eq(
+          this.appAnnouncement.priorityLevel,
+          queryAnnouncementDto.priorityLevel,
+        ),
       )
     }
     if (isPublished !== undefined) {
@@ -157,17 +171,23 @@ export class AppAnnouncementService {
     }
     if (options?.publishedOnly) {
       const now = new Date()
-      conditions.push(or(
-        isNull(this.appAnnouncement.publishStartTime),
-        lte(this.appAnnouncement.publishStartTime, now),
-      )!)
-      conditions.push(or(
-        isNull(this.appAnnouncement.publishEndTime),
-        gte(this.appAnnouncement.publishEndTime, now),
-      )!)
+      conditions.push(
+        or(
+          isNull(this.appAnnouncement.publishStartTime),
+          lte(this.appAnnouncement.publishStartTime, now),
+        )!,
+      )
+      conditions.push(
+        or(
+          isNull(this.appAnnouncement.publishEndTime),
+          gte(this.appAnnouncement.publishEndTime, now),
+        )!,
+      )
     }
     if (queryAnnouncementDto.isPinned !== undefined) {
-      conditions.push(eq(this.appAnnouncement.isPinned, queryAnnouncementDto.isPinned))
+      conditions.push(
+        eq(this.appAnnouncement.isPinned, queryAnnouncementDto.isPinned),
+      )
     }
     if (queryAnnouncementDto.showAsPopup !== undefined) {
       conditions.push(
@@ -175,7 +195,9 @@ export class AppAnnouncementService {
       )
     }
     if (queryAnnouncementDto.pageId != null) {
-      conditions.push(eq(this.appAnnouncement.pageId, queryAnnouncementDto.pageId))
+      conditions.push(
+        eq(this.appAnnouncement.pageId, queryAnnouncementDto.pageId),
+      )
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -205,7 +227,10 @@ export class AppAnnouncementService {
     })
 
     if (!announcement) {
-      throw new BadRequestException('公告不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '公告不存在',
+      )
     }
 
     assertValidTimeRange(
@@ -222,7 +247,10 @@ export class AppAnnouncementService {
           columns: { id: true },
         })
         if (!page) {
-          throw new BadRequestException('关联页面不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '关联页面不存在',
+          )
         }
       }
     }
@@ -234,11 +262,14 @@ export class AppAnnouncementService {
       nextUpdateData.pageId = pageId
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appAnnouncement)
-        .set(nextUpdateData)
-        .where(eq(this.appAnnouncement.id, id)), { notFound: '公告不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appAnnouncement)
+          .set(nextUpdateData)
+          .where(eq(this.appAnnouncement.id, id)),
+      { notFound: '公告不存在' },
+    )
     await this.tryFanoutImportantAnnouncementNotification(id)
     return true
   }
@@ -247,11 +278,14 @@ export class AppAnnouncementService {
    * 切换公告发布状态，并在成功后重新评估通知 sidecar。
    */
   async updateAnnouncementStatus(dto: UpdatePublishedStatusDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appAnnouncement)
-        .set({ isPublished: dto.isPublished })
-        .where(eq(this.appAnnouncement.id, dto.id)), { notFound: '公告不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appAnnouncement)
+          .set({ isPublished: dto.isPublished })
+          .where(eq(this.appAnnouncement.id, dto.id)),
+      { notFound: '公告不存在' },
+    )
     await this.tryFanoutImportantAnnouncementNotification(dto.id)
     return true
   }
@@ -261,11 +295,14 @@ export class AppAnnouncementService {
    */
   async deleteAnnouncement(dto: IdDto) {
     const { id } = dto
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appAnnouncement)
-        .set({ isPublished: false })
-        .where(eq(this.appAnnouncement.id, id)), { notFound: '公告不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appAnnouncement)
+          .set({ isPublished: false })
+          .where(eq(this.appAnnouncement.id, id)),
+      { notFound: '公告不存在' },
+    )
     await this.tryFanoutImportantAnnouncementNotification(id)
     return true
   }
@@ -293,13 +330,16 @@ export class AppAnnouncementService {
    * 以原子自增方式累加浏览量，避免并发读改写覆盖。
    */
   async incrementViewCount(dto: IdDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appAnnouncement)
-        .set({
-          viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
-        })
-        .where(eq(this.appAnnouncement.id, dto.id)), { notFound: '公告不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appAnnouncement)
+          .set({
+            viewCount: sql`${this.appAnnouncement.viewCount} + 1`,
+          })
+          .where(eq(this.appAnnouncement.id, dto.id)),
+      { notFound: '公告不存在' },
+    )
     return true
   }
 
@@ -308,7 +348,9 @@ export class AppAnnouncementService {
    *
    * 仅对“重要且当前已发布”的公告执行 fanout，普通公告继续保留在内容域展示。
    */
-  private async tryFanoutImportantAnnouncementNotification(announcementId?: number) {
+  private async tryFanoutImportantAnnouncementNotification(
+    announcementId?: number,
+  ) {
     if (!announcementId) {
       return
     }
@@ -333,17 +375,19 @@ export class AppAnnouncementService {
       if (!announcement) {
         return
       }
-      const receiverUserIds = await this.collectAnnouncementNotificationReceiverUserIds(
-        announcement.id,
-      )
+      const receiverUserIds =
+        await this.collectAnnouncementNotificationReceiverUserIds(
+          announcement.id,
+        )
       if (receiverUserIds.length === 0) {
         return
       }
 
-      const syncAction: NotificationSyncAction = shouldAnnouncementEnterNotificationCenter(announcement)
-        && isAnnouncementPublishedNow(announcement)
-        ? 'UPSERT'
-        : 'DELETE'
+      const syncAction: NotificationSyncAction =
+        shouldAnnouncementEnterNotificationCenter(announcement) &&
+        isAnnouncementPublishedNow(announcement)
+          ? 'UPSERT'
+          : 'DELETE'
       const notificationContent = this.buildAnnouncementNotificationContent(
         announcement.summary,
         announcement.content,
@@ -377,7 +421,8 @@ export class AppAnnouncementService {
     summary?: string | null,
     content?: string | null,
   ) {
-    const value = (summary?.trim() || content?.trim() || '你收到一条新的重要公告。')
+    const value =
+      summary?.trim() || content?.trim() || '你收到一条新的重要公告。'
     return value.slice(0, 180)
   }
 
@@ -449,7 +494,9 @@ export class AppAnnouncementService {
    * 收敛公告通知接收人。
    * 需要同时包含当前活跃用户和历史上已经收到该公告通知的用户，才能在下线时清干净旧通知。
    */
-  private async collectAnnouncementNotificationReceiverUserIds(announcementId: number) {
+  private async collectAnnouncementNotificationReceiverUserIds(
+    announcementId: number,
+  ) {
     const [activeUsers, existingReceivers] = await Promise.all([
       this.db
         .select({
@@ -457,10 +504,7 @@ export class AppAnnouncementService {
         })
         .from(this.appUser)
         .where(
-          and(
-            eq(this.appUser.isEnabled, true),
-            isNull(this.appUser.deletedAt),
-          ),
+          and(eq(this.appUser.isEnabled, true), isNull(this.appUser.deletedAt)),
         ),
       this.db.query.userNotification.findMany({
         where: {
@@ -473,10 +517,12 @@ export class AppAnnouncementService {
       }),
     ])
 
-    return [...new Set([
-      ...existingReceivers.map((item) => item.userId),
-      ...activeUsers.map((item) => item.id),
-    ])]
+    return [
+      ...new Set([
+        ...existingReceivers.map((item) => item.userId),
+        ...activeUsers.map((item) => item.id),
+      ]),
+    ]
   }
 
   /**

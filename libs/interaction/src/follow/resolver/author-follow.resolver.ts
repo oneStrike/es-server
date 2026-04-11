@@ -1,8 +1,10 @@
 import type { Db } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { WorkAuthorService } from '@libs/content/author/author.service';
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
+import { WorkAuthorService } from '@libs/content/author/author.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { FollowTargetTypeEnum } from '../follow.constant'
 import { FollowService } from '../follow.service'
 
@@ -37,7 +39,10 @@ export class AuthorFollowResolver
     })
 
     if (!author) {
-      throw new BadRequestException('作者不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作者不存在',
+      )
     }
 
     return {}

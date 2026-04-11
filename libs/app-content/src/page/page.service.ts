@@ -1,8 +1,10 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { EnablePlatformEnum } from '@libs/platform/constant/base.constant'
 import { IdDto, IdsDto } from '@libs/platform/dto/base.dto'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, arrayOverlaps, eq, inArray } from 'drizzle-orm'
 import {
   CreateAppPageDto,
@@ -101,7 +103,7 @@ export class AppPageService {
   }
 
   /**
-   * 按主键查询页面详情，未命中时抛出 `NotFoundException`。
+   * 按主键查询页面详情，未命中时抛出 `BusinessException`。
    */
   async findById(dto: IdDto) {
     const page = await this.db.query.appPage.findFirst({
@@ -109,7 +111,10 @@ export class AppPageService {
     })
 
     if (!page) {
-      throw new NotFoundException('页面不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '页面不存在',
+      )
     }
     return page
   }
@@ -123,7 +128,10 @@ export class AppPageService {
     })
 
     if (!page) {
-      throw new NotFoundException('页面不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '页面不存在',
+      )
     }
     return page
   }
@@ -155,11 +163,14 @@ export class AppPageService {
    */
   async batchDelete(dto: IdsDto) {
     const { ids } = dto
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.appPage)
-        .set({ isEnabled: false })
-        .where(inArray(this.appPage.id, ids)), { notFound: '页面不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.appPage)
+          .set({ isEnabled: false })
+          .where(inArray(this.appPage.id, ids)),
+      { notFound: '页面不存在' },
+    )
     return true
   }
 
@@ -186,8 +197,7 @@ export class AppPageService {
     const platforms = parsedValue.map((item) => Number(item))
     if (
       platforms.some(
-        (item) =>
-          !Number.isInteger(item) || !ENABLE_PLATFORM_VALUES.has(item),
+        (item) => !Number.isInteger(item) || !ENABLE_PLATFORM_VALUES.has(item),
       )
     ) {
       throw new BadRequestException('启用平台筛选必须是平台枚举值数组')

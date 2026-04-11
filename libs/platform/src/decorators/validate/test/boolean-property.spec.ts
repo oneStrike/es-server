@@ -1,7 +1,7 @@
-import 'reflect-metadata'
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
 import { BooleanProperty } from '../boolean-property'
+import 'reflect-metadata'
 
 class BooleanDto {
   @BooleanProperty({

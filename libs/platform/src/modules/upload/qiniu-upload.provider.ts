@@ -3,7 +3,7 @@ import type {
   UploadExecutionResult,
   UploadSystemConfig,
 } from './upload.types'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import * as qiniu from 'qiniu'
 
 const TRAILING_SLASH_REGEX = /\/+$/
@@ -16,8 +16,13 @@ export class QiniuUploadProvider {
     systemConfig: UploadSystemConfig,
   ): Promise<UploadExecutionResult> {
     const config = systemConfig.qiniu
-    if (!config.accessKey || !config.secretKey || !config.bucket || !config.domain) {
-      throw new BadRequestException('七牛上传配置不完整')
+    if (
+      !config.accessKey ||
+      !config.secretKey ||
+      !config.bucket ||
+      !config.domain
+    ) {
+      throw new InternalServerErrorException('七牛上传配置不完整')
     }
 
     const mac = new qiniu.auth.digest.Mac(config.accessKey, config.secretKey)
@@ -29,7 +34,9 @@ export class QiniuUploadProvider {
 
     const qiniuConfig = new qiniu.conf.Config()
     if (config.region) {
-      qiniuConfig.regionsProvider = qiniu.httpc.Region.fromRegionId(config.region)
+      qiniuConfig.regionsProvider = qiniu.httpc.Region.fromRegionId(
+        config.region,
+      )
     }
     qiniuConfig.useHttpsDomain = config.useHttps
 
@@ -46,7 +53,7 @@ export class QiniuUploadProvider {
       )
 
       if (resp.statusCode !== 200) {
-        throw new BadRequestException(
+        throw new InternalServerErrorException(
           `七牛上传失败: ${data?.error || resp.statusCode}`,
         )
       }
@@ -55,17 +62,17 @@ export class QiniuUploadProvider {
         filePath: this.joinDomain(config.domain, objectKey, config.useHttps),
       }
     } catch (error) {
-      if (error instanceof BadRequestException) {
+      if (error instanceof InternalServerErrorException) {
         throw error
       }
-      throw new BadRequestException('七牛上传失败')
+      throw new InternalServerErrorException('七牛上传失败')
     }
   }
 
   private buildObjectKey(pathPrefix: string, objectKey: string) {
     const normalizedPrefix = pathPrefix
       .split('/')
-      .map(part => part.trim())
+      .map((part) => part.trim())
       .filter(Boolean)
       .join('/')
 

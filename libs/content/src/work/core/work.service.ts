@@ -1,18 +1,20 @@
 import type { WorkSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service';
-import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
-import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant';
-import { FollowService } from '@libs/interaction/follow/follow.service';
-import { LikeService } from '@libs/interaction/like/like.service';
-import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
-import { isNotNil } from '@libs/platform/utils/is';
+import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
+import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
+import { FollowService } from '@libs/interaction/follow/follow.service'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { isNotNil } from '@libs/platform/utils/is'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { WorkAuthorService } from '../../author/author.service';
+import { WorkAuthorService } from '../../author/author.service'
 import {
   CreateWorkDto,
   QueryWorkDto,
@@ -225,11 +227,17 @@ export class WorkService {
     ])
 
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作品不存在',
+      )
     }
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
     return { work, user }
   }
@@ -280,13 +288,22 @@ export class WorkService {
       ])
 
     if (existingAuthors.length !== authorIds.length) {
-      throw new BadRequestException('部分作者不存在或已禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '部分作者不存在或已禁用',
+      )
     }
     if (existingCategories.length !== categoryIds.length) {
-      throw new BadRequestException('部分分类不存在或已禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '部分分类不存在或已禁用',
+      )
     }
     if (existingTags.length !== tagIds.length) {
-      throw new BadRequestException('部分标签不存在或已禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '部分标签不存在或已禁用',
+      )
     }
   }
 
@@ -324,7 +341,10 @@ export class WorkService {
     })
 
     if (existingWork) {
-      throw new BadRequestException('同类型作品名称已存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+        '同类型作品名称已存在',
+      )
     }
 
     // 验证关联的作者、分类、标签是否存在且已启用
@@ -424,7 +444,10 @@ export class WorkService {
       },
     })
     if (!existingWork) {
-      throw new BadRequestException('作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作品不存在',
+      )
     }
 
     // 如果更新名称，需要验证同类型下是否重名
@@ -438,7 +461,10 @@ export class WorkService {
         },
       })
       if (duplicateWork) {
-        throw new BadRequestException('同类型作品名称已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '同类型作品名称已存在',
+        )
       }
     }
 
@@ -593,7 +619,10 @@ export class WorkService {
       },
     })
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作品不存在',
+      )
     }
     return this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
@@ -746,9 +775,7 @@ export class WorkService {
       conditions.push(eq(this.work.isNew, otherDto.isNew))
     }
     if (normalizedName) {
-      conditions.push(
-        buildILikeCondition(this.work.name, normalizedName)!,
-      )
+      conditions.push(buildILikeCondition(this.work.name, normalizedName)!)
     }
     if (normalizedPublisher) {
       conditions.push(
@@ -979,11 +1006,17 @@ export class WorkService {
     })
 
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作品不存在',
+      )
     }
 
     if (!work.isPublished) {
-      throw new BadRequestException('作品未发布')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作品未发布',
+      )
     }
 
     if (work.type === ContentTypeEnum.COMIC) {
@@ -1000,7 +1033,10 @@ export class WorkService {
       }
     }
 
-    throw new BadRequestException('作品类型不支持评论')
+    throw new BusinessException(
+      BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      '作品类型不支持评论',
+    )
   }
 
   /**
@@ -1049,11 +1085,17 @@ export class WorkService {
     })
 
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作品不存在',
+      )
     }
 
     if (!bypassVisibilityCheck && !work.isPublished) {
-      throw new BadRequestException('作品未发布')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '作品未发布',
+      )
     }
 
     const { authors, categories, tags, ...workData } = work
@@ -1218,7 +1260,8 @@ export class WorkService {
     )
 
     if (chapterCount > 0) {
-      throw new BadRequestException(
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
         `该作品还有 ${chapterCount} 个关联章节，无法删除`,
       )
     }
@@ -1234,7 +1277,10 @@ export class WorkService {
     })
 
     if (!work) {
-      throw new BadRequestException('作品不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '作品不存在',
+      )
     }
 
     // 使用事务确保作品删除和作者作品数更新的一致性

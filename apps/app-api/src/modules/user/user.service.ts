@@ -10,16 +10,28 @@ import type { SQL } from 'drizzle-orm'
  * - 用户成长信息（积分、经验、等级、徽章）
  */
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { UserExperienceService } from '@libs/growth/experience/experience.service';
-import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant';
-import { UserPointService } from '@libs/growth/point/point.service';
-import { TaskService } from '@libs/growth/task/task.service';
-import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.service';
-import { MessageInboxService } from '@libs/message/inbox/inbox.service';
-import { formatDateOnlyInAppTimeZone, startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
-import { ChangeMyPhoneDto, QueryMyBadgeDto, QueryMyExperienceRecordDto, QueryMyPointRecordDto, UpdateMyProfileDto, UserCenterDto } from '@libs/user/dto/user-self.dto';
-import { UserService as UserCoreService } from '@libs/user/user.service';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { UserExperienceService } from '@libs/growth/experience/experience.service'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { UserPointService } from '@libs/growth/point/point.service'
+import { TaskService } from '@libs/growth/task/task.service'
+import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.service'
+import { MessageInboxService } from '@libs/message/inbox/inbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import {
+  formatDateOnlyInAppTimeZone,
+  startOfTodayInAppTimeZone,
+} from '@libs/platform/utils/time'
+import {
+  ChangeMyPhoneDto,
+  QueryMyBadgeDto,
+  QueryMyExperienceRecordDto,
+  QueryMyPointRecordDto,
+  UpdateMyProfileDto,
+  UserCenterDto,
+} from '@libs/user/dto/user-self.dto'
+import { UserService as UserCoreService } from '@libs/user/user.service'
+import { Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'
 import { SmsService } from '../auth/sms.service'
@@ -53,10 +65,7 @@ type UserCenterAssetsView = Pick<
 
 type UserCenterTaskSummaryView = Pick<
   Awaited<ReturnType<TaskService['getUserTaskSummary']>>,
-  | 'claimableCount'
-  | 'claimedCount'
-  | 'inProgressCount'
-  | 'rewardPendingCount'
+  'claimableCount' | 'claimedCount' | 'inProgressCount' | 'rewardPendingCount'
 >
 
 @Injectable()
@@ -113,8 +122,7 @@ export class UserService {
       followersCount: counts?.followersCount ?? 0,
       forumTopicCount: counts?.forumTopicCount ?? 0,
       commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
-      forumTopicReceivedLikeCount:
-        counts?.forumTopicReceivedLikeCount ?? 0,
+      forumTopicReceivedLikeCount: counts?.forumTopicReceivedLikeCount ?? 0,
       forumTopicReceivedFavoriteCount:
         counts?.forumTopicReceivedFavoriteCount ?? 0,
     }
@@ -139,7 +147,9 @@ export class UserService {
   /**
    * 收敛用户中心任务摘要，避免执行层内部辅助字段透传到 HTTP 契约。
    */
-  private mapUserCenterTaskSummary(taskSummary?: Partial<UserCenterTaskSummaryView>) {
+  private mapUserCenterTaskSummary(
+    taskSummary?: Partial<UserCenterTaskSummaryView>,
+  ) {
     return {
       claimableCount: taskSummary?.claimableCount ?? 0,
       claimedCount: taskSummary?.claimedCount ?? 0,
@@ -163,25 +173,31 @@ export class UserService {
     await this.userCoreService.ensureUserExists(userId)
 
     try {
-      await this.drizzle.withErrorHandling(() =>
-        this.db
-          .update(this.appUser)
-          .set({
-            nickname: dto.nickname,
-            avatarUrl: dto.avatarUrl,
-            emailAddress: dto.emailAddress,
-            genderType: dto.genderType,
-            signature: dto.signature,
-            bio: dto.bio,
-            birthDate: dto.birthDate
-              ? formatDateOnlyInAppTimeZone(dto.birthDate)
-              : undefined,
-          })
-          .where(eq(this.appUser.id, userId)), { notFound: '用户不存在' },)
+      await this.drizzle.withErrorHandling(
+        () =>
+          this.db
+            .update(this.appUser)
+            .set({
+              nickname: dto.nickname,
+              avatarUrl: dto.avatarUrl,
+              emailAddress: dto.emailAddress,
+              genderType: dto.genderType,
+              signature: dto.signature,
+              bio: dto.bio,
+              birthDate: dto.birthDate
+                ? formatDateOnlyInAppTimeZone(dto.birthDate)
+                : undefined,
+            })
+            .where(eq(this.appUser.id, userId)),
+        { notFound: '用户不存在' },
+      )
       return true
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('邮箱已被使用')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '邮箱已被使用',
+        )
       }
       throw error
     }
@@ -201,13 +217,22 @@ export class UserService {
     const user = await this.userCoreService.ensureUserExists(userId)
 
     if (!user.phoneNumber) {
-      throw new BadRequestException('当前账号未绑定手机号')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '当前账号未绑定手机号',
+      )
     }
     if (dto.currentPhone !== user.phoneNumber) {
-      throw new BadRequestException('当前手机号与已绑定手机号不一致')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '当前手机号与已绑定手机号不一致',
+      )
     }
     if (dto.newPhone === user.phoneNumber) {
-      throw new BadRequestException('新手机号不能与当前手机号相同')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '新手机号不能与当前手机号相同',
+      )
     }
 
     await this.smsService.validateVerifyCode({
@@ -220,17 +245,23 @@ export class UserService {
     })
 
     try {
-      await this.drizzle.withErrorHandling(() =>
-        this.db
-          .update(this.appUser)
-          .set({
-            phoneNumber: dto.newPhone,
-          })
-          .where(eq(this.appUser.id, userId)), { notFound: '用户不存在' },)
+      await this.drizzle.withErrorHandling(
+        () =>
+          this.db
+            .update(this.appUser)
+            .set({
+              phoneNumber: dto.newPhone,
+            })
+            .where(eq(this.appUser.id, userId)),
+        { notFound: '用户不存在' },
+      )
       return true
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException(AppAuthErrorMessages.PHONE_EXISTS)
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          AppAuthErrorMessages.PHONE_EXISTS,
+        )
       }
       throw error
     }
@@ -434,9 +465,7 @@ export class UserService {
     const badgeConditions: SQL[] = []
 
     if (name) {
-      badgeConditions.push(
-        buildILikeCondition(this.userBadge.name, name)!,
-      )
+      badgeConditions.push(buildILikeCondition(this.userBadge.name, name)!)
     }
     if (type !== undefined) {
       badgeConditions.push(eq(this.userBadge.type, type))
@@ -503,7 +532,10 @@ export class UserService {
         const badge = badgeMap.get(item.badgeId)
 
         if (!badge) {
-          throw new BadRequestException('徽章不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '徽章不存在',
+          )
         }
 
         return {

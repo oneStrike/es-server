@@ -13,17 +13,14 @@ import type {
 import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
 import type { CreateCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
 import type { CreateCheckInStreakRewardRuleDto } from './dto/check-in-streak-reward-rule.dto'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import {
   formatDateOnlyInAppTimeZone,
   getAppTimeZone,
   parseDateOnlyInAppTimeZone,
 } from '@libs/platform/utils/time'
-import {
-  BadRequestException,
-  ConflictException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common'
+import { BadRequestException, Logger } from '@nestjs/common'
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
@@ -283,7 +280,10 @@ export abstract class CheckInServiceSupport {
           throw new BadRequestException('WEEKDAY 规则必须提供 1..7 的 weekday')
         }
         if (monthDay !== null) {
-          throw new BadRequestException('WEEKDAY 规则不能同时配置 monthDay')
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            'WEEKDAY 规则不能同时配置 monthDay',
+          )
         }
       }
 
@@ -299,13 +299,17 @@ export abstract class CheckInServiceSupport {
           )
         }
         if (weekday !== null) {
-          throw new BadRequestException('MONTH_DAY 规则不能同时配置 weekday')
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            'MONTH_DAY 规则不能同时配置 weekday',
+          )
         }
       }
 
       if (patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY) {
         if (weekday !== null || monthDay !== null) {
-          throw new BadRequestException(
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
             'MONTH_LAST_DAY 规则不能配置 weekday / monthDay',
           )
         }
@@ -344,7 +348,6 @@ export abstract class CheckInServiceSupport {
           `周期模式奖励规则重复：MONTH_DAY=${duplicateMonthDay}`,
         )
       }
-
     }
 
     return normalizedRules.sort((left, right) =>
@@ -735,7 +738,10 @@ export abstract class CheckInServiceSupport {
       .limit(2)
 
     if (plans.length > 1) {
-      throw new ConflictException('当前存在多个有效签到计划')
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '当前存在多个有效签到计划',
+      )
     }
     return plans[0]
   }
@@ -744,7 +750,10 @@ export abstract class CheckInServiceSupport {
   protected async getCurrentActivePlan(now = new Date(), db: Db = this.db) {
     const plan = await this.findCurrentActivePlan(now, db)
     if (!plan) {
-      throw new NotFoundException('当前无有效签到计划')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '当前无有效签到计划',
+      )
     }
     return plan
   }
@@ -773,7 +782,10 @@ export abstract class CheckInServiceSupport {
       .limit(1)
 
     if (otherPlan) {
-      throw new ConflictException('当前已有其他生效中的签到计划')
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '当前已有其他生效中的签到计划',
+      )
     }
   }
 
@@ -791,7 +803,10 @@ export abstract class CheckInServiceSupport {
       .limit(1)
 
     if (!plan) {
-      throw new NotFoundException('签到计划不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '签到计划不存在',
+      )
     }
     return plan
   }
@@ -875,7 +890,8 @@ export abstract class CheckInServiceSupport {
     if (cycleType === CheckInCycleTypeEnum.MONTHLY) {
       const monthLastDayRule = rules.find(
         (rule) =>
-          rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
+          rule.patternType ===
+          CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
           this.matchesPatternRewardRule(cycleType, rule, signDate),
       )
       if (monthLastDayRule) {

@@ -1,9 +1,11 @@
 import type { Db } from '@db/core'
-import { ILikeTargetResolver } from '@libs/interaction/like/interfaces/like-target-resolver.interface';
-import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant';
-import { LikeService } from '@libs/interaction/like/like.service';
-import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { ILikeTargetResolver } from '@libs/interaction/like/interfaces/like-target-resolver.interface'
+import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
@@ -38,7 +40,7 @@ export class WorkNovelChapterLikeResolver
    * @param tx - 事务客户端
    * @param targetId - 章节ID
    * @returns 包含场景类型和场景ID的元数据对象
-   * @throws NotFoundException 当章节不存在时抛出异常
+   * @throws BusinessException 当章节不存在时抛出异常
    */
   async resolveMeta(tx: Db, targetId: number) {
     const chapter = await tx.query.workChapter.findFirst({
@@ -51,7 +53,10 @@ export class WorkNovelChapterLikeResolver
     })
 
     if (!chapter) {
-      throw new NotFoundException('小说章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '小说章节不存在',
+      )
     }
 
     return {

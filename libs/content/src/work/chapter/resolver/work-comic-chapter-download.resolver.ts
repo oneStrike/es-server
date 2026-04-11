@@ -1,9 +1,11 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant';
-import { DownloadService } from '@libs/interaction/download/download.service';
-import { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.interface';
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common'
+import { DownloadTargetTypeEnum } from '@libs/interaction/download/download.constant'
+import { DownloadService } from '@libs/interaction/download/download.service'
+import { IDownloadTargetResolver } from '@libs/interaction/download/interfaces/download-target-resolver.interface'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
@@ -49,11 +51,17 @@ export class WorkComicChapterDownloadResolver
     })
 
     if (!chapter) {
-      throw new NotFoundException('漫画章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '漫画章节不存在',
+      )
     }
 
     if (!chapter.content) {
-      throw new NotFoundException('下载内容不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '下载内容不存在',
+      )
     }
 
     return chapter.content

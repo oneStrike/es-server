@@ -4,10 +4,13 @@ import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
 import { AuthSessionService } from '@libs/identity/session.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { GenderEnum } from '@libs/platform/constant/profile.constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import {
   AuthConstants,
   AuthDefaultValue,
+  AuthErrorMessages,
 } from '@libs/platform/modules/auth/auth.constant'
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service'
 import {
@@ -22,8 +25,9 @@ import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
   BadRequestException,
-  ConflictException,
+  ForbiddenException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { and, eq, isNull, or } from 'drizzle-orm'
 import { AppAuthErrorMessages, AppAuthRedisKeys } from './auth.constant'
@@ -67,7 +71,7 @@ export class AuthService {
     banUntil: Date | null
   }) {
     if (!user.isEnabled) {
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_DISABLED)
+      throw new ForbiddenException(AppAuthErrorMessages.ACCOUNT_DISABLED)
     }
 
     this.userCoreService.ensureAppUserNotBanned(user)
@@ -94,7 +98,10 @@ export class AuthService {
       }
     }
 
-    throw new ConflictException(AppAuthErrorMessages.REGISTER_RETRY_FAILED)
+    throw new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
+      AppAuthErrorMessages.REGISTER_RETRY_FAILED,
+    )
   }
 
   /**
@@ -178,19 +185,23 @@ export class AuthService {
         return this.register(body, clientContext)
       }
 
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR,
       )
     }
     if (body.code) {
       if (!user.phoneNumber) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
           AppAuthErrorMessages.ACCOUNT_NOT_BOUND_PHONE,
         )
       }
 
       if (body.phone && body.phone !== user.phoneNumber) {
-        throw new BadRequestException(AppAuthErrorMessages.PHONE_MISMATCH)
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          AppAuthErrorMessages.PHONE_MISMATCH,
+        )
       }
 
       // `await this.smsService.validateVerifyCode({
@@ -269,7 +280,7 @@ export class AuthService {
 
     if (!user) {
       await this.authSessionService.logout(tokens, { revokeDbTokens: true })
-      throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
 
     try {
@@ -330,7 +341,8 @@ export class AuthService {
     phone: string,
     hashedPassword: string,
   ): Promise<AppUserSelect> {
-    let lastError: unknown = new ConflictException(
+    let lastError: unknown = new BusinessException(
+      BusinessErrorCode.STATE_CONFLICT,
       AppAuthErrorMessages.REGISTER_RETRY_FAILED,
     )
 
@@ -366,7 +378,8 @@ export class AuthService {
         }
 
         if (attempt >= APP_USER_ACCOUNT_MAX_RETRIES - 1) {
-          throw new ConflictException(
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
             AppAuthErrorMessages.REGISTER_RETRY_FAILED,
             {
               cause: error,
@@ -401,7 +414,7 @@ export class AuthService {
       },
     )
 
-    throw new BadRequestException(
+    throw new UnauthorizedException(
       AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR,
     )
   }

@@ -1,6 +1,8 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, asc, desc, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
 import {
@@ -94,9 +96,7 @@ export class UserLevelRuleService {
       )
     }
     if (dto.name) {
-      conditions.push(
-        buildILikeCondition(this.userLevelRule.name, dto.name)!,
-      )
+      conditions.push(buildILikeCondition(this.userLevelRule.name, dto.name)!)
     }
 
     const orderBy = dto.orderBy?.trim()
@@ -120,7 +120,10 @@ export class UserLevelRuleService {
       where: { id },
     })
     if (!rule) {
-      throw new BadRequestException('等级规则不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '等级规则不存在',
+      )
     }
     return rule
   }
@@ -158,7 +161,10 @@ export class UserLevelRuleService {
     })
 
     if (!rule) {
-      throw new BadRequestException('等级规则不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '等级规则不存在',
+      )
     }
 
     const users = await this.countByCondition(
@@ -166,13 +172,17 @@ export class UserLevelRuleService {
       eq(this.appUser.levelId, id),
     )
     if (users > 0) {
-      throw new BadRequestException('该等级规则下还有用户，无法删除')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '该等级规则下还有用户，无法删除',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.userLevelRule)
-        .where(eq(this.userLevelRule.id, id)), { notFound: '等级规则不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
+      { notFound: '等级规则不存在' },
+    )
     return true
   }
 
@@ -194,11 +204,17 @@ export class UserLevelRuleService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     if (!user.level) {
-      throw new BadRequestException('用户等级规则不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户等级规则不存在',
+      )
     }
 
     const [nextLevelRule] = await this.db
@@ -283,11 +299,17 @@ export class UserLevelRuleService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     if (!user.level) {
-      throw new BadRequestException('用户等级规则不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户等级规则不存在',
+      )
     }
 
     const level = user.level
@@ -391,7 +413,10 @@ export class UserLevelRuleService {
             this.userFavorite,
             and(
               eq(this.userFavorite.userId, userId),
-              eq(this.userFavorite.targetType, this.forumTopicFavoriteTargetType),
+              eq(
+                this.userFavorite.targetType,
+                this.forumTopicFavoriteTargetType,
+              ),
               gte(this.userFavorite.createdAt, today),
             ),
           )
@@ -431,16 +456,17 @@ export class UserLevelRuleService {
       .from(this.userLevelRule)
 
     const levelIds = levels.map((item) => item.id)
-    const distributionRows = levelIds.length > 0
-      ? await this.db
-        .select({
-          levelId: this.appUser.levelId,
-          total: sql<number>`count(*)`,
-        })
-        .from(this.appUser)
-        .where(inArray(this.appUser.levelId, levelIds))
-        .groupBy(this.appUser.levelId)
-      : []
+    const distributionRows =
+      levelIds.length > 0
+        ? await this.db
+            .select({
+              levelId: this.appUser.levelId,
+              total: sql<number>`count(*)`,
+            })
+            .from(this.appUser)
+            .where(inArray(this.appUser.levelId, levelIds))
+            .groupBy(this.appUser.levelId)
+        : []
     const distributionMap = new Map(
       distributionRows.map((item) => [item.levelId, Number(item.total)]),
     )

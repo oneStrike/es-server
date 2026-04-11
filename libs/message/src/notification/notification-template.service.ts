@@ -5,12 +5,9 @@ import type {
   RenderNotificationTemplateInput,
 } from './notification-template.type'
 import { DrizzleService } from '@db/core'
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import {
   CreateNotificationTemplateDto,
@@ -50,8 +47,14 @@ const NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP = new Map<
   [MessageNotificationTypeEnum.COMMENT_LIKE, new Set([])],
   [MessageNotificationTypeEnum.CONTENT_FAVORITE, new Set([])],
   [MessageNotificationTypeEnum.USER_FOLLOW, new Set([])],
-  [MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT, new Set(['title', 'content', 'announcementId'])],
-  [MessageNotificationTypeEnum.CHAT_MESSAGE, new Set(['conversationId', 'content'])],
+  [
+    MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
+    new Set(['title', 'content', 'announcementId']),
+  ],
+  [
+    MessageNotificationTypeEnum.CHAT_MESSAGE,
+    new Set(['conversationId', 'content']),
+  ],
   [MessageNotificationTypeEnum.TASK_REMINDER, new Set(['title', 'content'])],
   [
     MessageNotificationTypeEnum.TOPIC_LIKE,
@@ -126,10 +129,7 @@ export class MessageNotificationTemplateService {
       where: conditions.length > 0 ? and(...conditions) : undefined,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
-      orderBy: [
-        { updatedAt: 'desc' as const },
-        { id: 'asc' as const },
-      ],
+      orderBy: [{ updatedAt: 'desc' as const }, { id: 'asc' as const }],
     })
   }
 
@@ -142,7 +142,10 @@ export class MessageNotificationTemplateService {
       where: { id },
     })
     if (!template) {
-      throw new NotFoundException('通知模板不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '通知模板不存在',
+      )
     }
     return template
   }
@@ -188,7 +191,10 @@ export class MessageNotificationTemplateService {
       )
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('该通知类型的模板已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '该通知类型的模板已存在',
+        )
       }
       throw error
     }
@@ -206,21 +212,24 @@ export class MessageNotificationTemplateService {
     const currentNotificationType = this.ensureSupportedNotificationType(
       current.notificationType,
     )
-    const nextNotificationType = input.notificationType !== undefined
-      ? this.ensureSupportedNotificationType(input.notificationType)
-      : currentNotificationType
-    const nextTitleTemplate = input.titleTemplate !== undefined
-      ? this.normalizeTemplateText(
-        input.titleTemplate,
-        '通知标题模板不能为空',
-      )
-      : current.titleTemplate
-    const nextContentTemplate = input.contentTemplate !== undefined
-      ? this.normalizeTemplateText(
-        input.contentTemplate,
-        '通知正文模板不能为空',
-      )
-      : current.contentTemplate
+    const nextNotificationType =
+      input.notificationType !== undefined
+        ? this.ensureSupportedNotificationType(input.notificationType)
+        : currentNotificationType
+    const nextTitleTemplate =
+      input.titleTemplate !== undefined
+        ? this.normalizeTemplateText(
+            input.titleTemplate,
+            '通知标题模板不能为空',
+          )
+        : current.titleTemplate
+    const nextContentTemplate =
+      input.contentTemplate !== undefined
+        ? this.normalizeTemplateText(
+            input.contentTemplate,
+            '通知正文模板不能为空',
+          )
+        : current.contentTemplate
     this.ensureTemplatePlaceholdersValid(
       nextNotificationType,
       nextTitleTemplate,
@@ -232,10 +241,12 @@ export class MessageNotificationTemplateService {
       'contentTemplate',
     )
 
-    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> = {}
+    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> =
+      {}
     if (input.notificationType !== undefined) {
       updateData.notificationType = nextNotificationType
-      updateData.templateKey = getMessageNotificationTemplateKey(nextNotificationType)
+      updateData.templateKey =
+        getMessageNotificationTemplateKey(nextNotificationType)
     }
     if (input.titleTemplate !== undefined) {
       updateData.titleTemplate = nextTitleTemplate
@@ -255,14 +266,20 @@ export class MessageNotificationTemplateService {
     }
 
     try {
-      await this.drizzle.withErrorHandling(() =>
-        this.db
-          .update(this.notificationTemplate)
-          .set(updateData)
-          .where(eq(this.notificationTemplate.id, input.id)), { notFound: '通知模板不存在' },)
+      await this.drizzle.withErrorHandling(
+        () =>
+          this.db
+            .update(this.notificationTemplate)
+            .set(updateData)
+            .where(eq(this.notificationTemplate.id, input.id)),
+        { notFound: '通知模板不存在' },
+      )
     } catch (error) {
       if (this.drizzle.isUniqueViolation(error)) {
-        throw new BadRequestException('该通知类型的模板已存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+          '该通知类型的模板已存在',
+        )
       }
       throw error
     }
@@ -283,11 +300,14 @@ export class MessageNotificationTemplateService {
     const notificationType = this.ensureSupportedNotificationType(
       current.notificationType,
     )
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.notificationTemplate)
-        .set({ isEnabled: input.isEnabled })
-        .where(eq(this.notificationTemplate.id, input.id)), { notFound: '通知模板不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.notificationTemplate)
+          .set({ isEnabled: input.isEnabled })
+          .where(eq(this.notificationTemplate.id, input.id)),
+      { notFound: '通知模板不存在' },
+    )
     this.invalidateTemplateCache(notificationType)
     return true
   }
@@ -301,10 +321,13 @@ export class MessageNotificationTemplateService {
     const notificationType = this.ensureSupportedNotificationType(
       current.notificationType,
     )
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .delete(this.notificationTemplate)
-        .where(eq(this.notificationTemplate.id, id)), { notFound: '通知模板不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .delete(this.notificationTemplate)
+          .where(eq(this.notificationTemplate.id, id)),
+      { notFound: '通知模板不存在' },
+    )
     this.invalidateTemplateCache(notificationType)
     return true
   }
@@ -489,7 +512,9 @@ export class MessageNotificationTemplateService {
    * 失效模板缓存
    * 模板增删改与启停切换成功后立即清理对应类型缓存，避免本地缓存继续返回旧模板。
    */
-  private invalidateTemplateCache(notificationType: MessageNotificationTypeEnum) {
+  private invalidateTemplateCache(
+    notificationType: MessageNotificationTypeEnum,
+  ) {
     this.templateCache.delete(notificationType)
   }
 
@@ -502,15 +527,19 @@ export class MessageNotificationTemplateService {
     templateText: string,
     fieldName: 'titleTemplate' | 'contentTemplate',
   ) {
-    const allowedPayloadFields = NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP.get(
-      notificationType,
-    )
+    const allowedPayloadFields =
+      NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP.get(notificationType)
     if (!allowedPayloadFields) {
-      throw new BadRequestException(`通知类型 ${notificationType} 未注册模板 payload 白名单`)
+      throw new BadRequestException(
+        `通知类型 ${notificationType} 未注册模板 payload 白名单`,
+      )
     }
 
     const placeholders = new Set(
-      Array.from(templateText.matchAll(TEMPLATE_PLACEHOLDER_REGEXP), (match) => match[1]),
+      Array.from(
+        templateText.matchAll(TEMPLATE_PLACEHOLDER_REGEXP),
+        (match) => match[1],
+      ),
     )
 
     for (const path of placeholders) {
@@ -520,9 +549,7 @@ export class MessageNotificationTemplateService {
 
       const segments = path.split('.')
       if (segments[0] !== 'payload') {
-        throw new BadRequestException(
-          `${fieldName} 存在非法占位符: ${path}`,
-        )
+        throw new BadRequestException(`${fieldName} 存在非法占位符: ${path}`)
       }
       if (segments.length !== 2 || !segments[1]) {
         throw new BadRequestException(

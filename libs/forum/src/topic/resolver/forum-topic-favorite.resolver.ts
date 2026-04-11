@@ -1,17 +1,17 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
-import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant';
-import { FavoriteService } from '@libs/interaction/favorite/favorite.service';
-import { FavoriteTargetContext, IFavoriteTargetResolver } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface';
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service';
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
+import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
+import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common'
+  FavoriteTargetContext,
+  IFavoriteTargetResolver,
+} from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
+import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { ForumCounterService } from '../../counter/forum-counter.service'
 import { ForumTopicService } from '../forum-topic.service'
 
@@ -75,7 +75,10 @@ export class ForumTopicFavoriteResolver
       topic.section.deletedAt ||
       !topic.section.isEnabled
     ) {
-      throw new BadRequestException('帖子不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     return {
@@ -105,7 +108,10 @@ export class ForumTopicFavoriteResolver
     })
 
     if (!topic) {
-      throw new NotFoundException('帖子不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     await this.forumCounterService.updateTopicFavoriteRelatedCounts(

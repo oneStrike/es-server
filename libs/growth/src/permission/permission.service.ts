@@ -1,5 +1,7 @@
 import { DrizzleService } from '@db/core'
-import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 /**
@@ -41,7 +43,10 @@ export class UserPermissionService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     return user
@@ -78,7 +83,10 @@ export class UserPermissionService {
 
     // 需要登录的权限，但未提供用户ID
     if (!userId) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     const user = await this.getUserWithLevel(userId)
@@ -92,7 +100,10 @@ export class UserPermissionService {
     if (viewRule === WorkViewPermissionEnum.MEMBER) {
       // 验证用户是否有会员等级
       if (!user.levelId || !user.level) {
-        throw new BadRequestException('会员等级不足')
+        throw new BusinessException(
+          BusinessErrorCode.QUOTA_NOT_ENOUGH,
+          '会员等级不足',
+        )
       }
 
       // 如果指定了最低等级要求，验证用户等级是否满足
@@ -102,12 +113,18 @@ export class UserPermissionService {
         })
 
         if (!requiredLevel) {
-          throw new BadRequestException('指定的阅读会员等级不存在')
+          throw new BusinessException(
+            BusinessErrorCode.RESOURCE_NOT_FOUND,
+            '指定的阅读会员等级不存在',
+          )
         }
 
         // 比较用户当前等级与要求等级的经验值
         if (user.level.requiredExperience < requiredLevel.requiredExperience) {
-          throw new BadRequestException('会员等级不足')
+          throw new BusinessException(
+            BusinessErrorCode.QUOTA_NOT_ENOUGH,
+            '会员等级不足',
+          )
         }
       }
     }
@@ -126,11 +143,17 @@ export class UserPermissionService {
     })
 
     if (!user) {
-      throw new BadRequestException('用户不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
     }
 
     if (user.points < points) {
-      throw new BadRequestException('积分不足')
+      throw new BusinessException(
+        BusinessErrorCode.QUOTA_NOT_ENOUGH,
+        '积分不足',
+      )
     }
 
     return user

@@ -17,19 +17,17 @@ import {
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
 import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import {
   AuditRoleEnum,
   AuditStatusEnum,
 } from '@libs/platform/constant/audit.constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { ConfigReader } from '@libs/system-config/config-reader'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
 import { EmojiParserService } from '../emoji/emoji-parser.service'
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
@@ -304,7 +302,10 @@ export class CommentService {
       currentStatus !== AuditStatusEnum.PENDING &&
       nextStatus === AuditStatusEnum.PENDING
     ) {
-      throw new BadRequestException('已审核评论不能回退为待审核')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '已审核评论不能回退为待审核',
+      )
     }
   }
 
@@ -706,7 +707,10 @@ export class CommentService {
 
     // 校验被回复评论是否存在
     if (!replyTo || replyTo.deletedAt) {
-      throw new BadRequestException('回复目标不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '回复目标不存在',
+      )
     }
 
     const { targetType, targetId } = replyTo
@@ -860,7 +864,10 @@ export class CommentService {
         },
       })
       if (!found) {
-        throw new BadRequestException('删除失败：数据不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '删除失败：数据不存在',
+        )
       }
 
       await tx
@@ -1415,7 +1422,10 @@ export class CommentService {
     })
 
     if (!comment) {
-      throw new NotFoundException('评论不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
     }
 
     return this.omitGeoSource(comment)
@@ -1452,7 +1462,10 @@ export class CommentService {
     })
 
     if (!current) {
-      throw new NotFoundException('评论不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
     }
 
     this.ensureCanUpdateCommentAuditStatus(
@@ -1534,7 +1547,10 @@ export class CommentService {
     })
 
     if (!current) {
-      throw new NotFoundException('评论不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '评论不存在',
+      )
     }
 
     const handled = await this.drizzle.withErrorHandling(async () =>

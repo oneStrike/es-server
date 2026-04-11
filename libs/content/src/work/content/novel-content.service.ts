@@ -1,11 +1,13 @@
 import type { FastifyRequest } from 'fastify'
 import { DrizzleService } from '@db/core'
-import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
-import { UploadService } from '@libs/platform/modules/upload/upload.service';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { UploadService } from '@libs/platform/modules/upload/upload.service'
+import { Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { ContentPermissionService } from '../../permission/content-permission.service';
+import { ContentPermissionService } from '../../permission/content-permission.service'
 import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()
@@ -64,7 +66,10 @@ export class NovelContentService {
     })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
     return chapter.content
@@ -83,7 +88,10 @@ export class NovelContentService {
         ),
       ))
     ) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
     const file = await this.uploadService.uploadFile(req, [
@@ -93,16 +101,19 @@ export class NovelContentService {
       chapterId.toString(),
     ])
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: file.filePath })
-        .where(
-          and(
-            eq(this.workChapter.id, chapterId),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content: file.filePath })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
           ),
-        ), { notFound: '章节不存在' },)
+      { notFound: '章节不存在' },
+    )
 
     return file
   }
@@ -114,19 +125,25 @@ export class NovelContentService {
     })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '章节不存在',
+      )
     }
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.workChapter)
-        .set({ content: null })
-        .where(
-          and(
-            eq(this.workChapter.id, chapterId),
-            isNull(this.workChapter.deletedAt),
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.workChapter)
+          .set({ content: null })
+          .where(
+            and(
+              eq(this.workChapter.id, chapterId),
+              isNull(this.workChapter.deletedAt),
+            ),
           ),
-        ), { notFound: '章节不存在' },)
+      { notFound: '章节不存在' },
+    )
 
     return true
   }

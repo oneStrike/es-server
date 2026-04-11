@@ -1,9 +1,14 @@
 import type { DrizzleErrorMessages } from '../drizzle.type'
 import type { PostgresError } from './postgres-error'
-import { HttpException, InternalServerErrorException } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import {
+  BadRequestException,
+  HttpException,
+  InternalServerErrorException,
+} from '@nestjs/common'
 import {
   getPostgresError,
-  getPostgresErrorDescriptor,
   PostgresDefaultMessages,
   PostgresErrorCode,
 } from './postgres-error'
@@ -37,8 +42,7 @@ export function handleError(
   error: unknown,
   messages?: DrizzleErrorMessages,
 ): never {
-  // 内层已完成 PG -> HTTP 翻译时，外层包装不应再次覆盖消息和状态码。
-  if (error instanceof HttpException) {
+  if (error instanceof BusinessException || error instanceof HttpException) {
     throw error
   }
 
@@ -61,17 +65,27 @@ export function handleError(
     message = PostgresDefaultMessages[code]
   }
 
-  const descriptor = message
-    ? {
-        message,
-        status: getPostgresErrorDescriptor(code)?.status,
-      }
-    : getPostgresErrorDescriptor(code)
+  if (code === PostgresErrorCode.UNIQUE_VIOLATION) {
+    throw new BusinessException(
+      BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
+      message,
+      {
+        cause: error,
+      },
+    )
+  }
 
-  if (descriptor?.status) {
-    throw new HttpException(descriptor.message, descriptor.status, {
+  if (code === PostgresErrorCode.SERIALIZATION_FAILURE) {
+    throw new BusinessException(BusinessErrorCode.STATE_CONFLICT, message, {
       cause: error,
     })
+  }
+
+  if (
+    code === PostgresErrorCode.NOT_NULL_VIOLATION ||
+    code === PostgresErrorCode.CHECK_VIOLATION
+  ) {
+    throw new BadRequestException(message, { cause: error })
   }
 
   throw new InternalServerErrorException('数据库操作失败', {
@@ -86,7 +100,6 @@ export async function executeWithErrorHandling<T>(
   try {
     return await fn()
   } catch (error) {
-    console.error(error)
     handleError(error, messages)
   }
 }

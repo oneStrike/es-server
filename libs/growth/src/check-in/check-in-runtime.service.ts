@@ -10,8 +10,8 @@ import type {
   CheckInVirtualCycleView,
 } from './check-in.type'
 import type {
-  CheckInLeaderboardItemDto,
   CheckInCalendarDayDto,
+  CheckInLeaderboardItemDto,
   CheckInRecordItemDto,
   QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,

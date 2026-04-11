@@ -1,9 +1,11 @@
 import { DrizzleService } from '@db/core'
 import { UserLevelRuleSelect } from '@db/schema'
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { and, desc, eq, gte } from 'drizzle-orm'
 import { CommentTargetTypeEnum } from './comment.constant'
 
@@ -46,7 +48,10 @@ export class CommentPermissionService {
     })
 
     if (!user || !user.isEnabled) {
-      throw new BadRequestException('用户不存在或已被禁用')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在或已被禁用',
+      )
     }
 
     if (
@@ -57,7 +62,10 @@ export class CommentPermissionService {
         UserStatusEnum.PERMANENT_BANNED,
       ].includes(user.status)
     ) {
-      throw new BadRequestException('用户已被禁言或封禁，无法评论')
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '用户已被禁言或封禁，无法评论',
+      )
     }
 
     if (
@@ -101,8 +109,16 @@ export class CommentPermissionService {
       },
     })
 
-    if (!topic || !topic.section || topic.section.deletedAt || !topic.section.isEnabled) {
-      throw new BadRequestException('帖子不存在')
+    if (
+      !topic ||
+      !topic.section ||
+      topic.section.deletedAt ||
+      !topic.section.isEnabled
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '帖子不存在',
+      )
     }
 
     const requiredExperience = topic.section.userLevelRule?.requiredExperience
@@ -112,13 +128,19 @@ export class CommentPermissionService {
       requiredExperience !== null &&
       user.experience < requiredExperience
     ) {
-      throw new BadRequestException('当前板块需要更高等级')
+      throw new BusinessException(
+        BusinessErrorCode.QUOTA_NOT_ENOUGH,
+        '当前板块需要更高等级',
+      )
     }
   }
 
   private async ensureUserLevelRateLimit(
     userId: number,
-    level: Pick<UserLevelRuleSelect, 'dailyReplyCommentLimit' | 'postInterval'> | null,
+    level: Pick<
+      UserLevelRuleSelect,
+      'dailyReplyCommentLimit' | 'postInterval'
+    > | null,
   ): Promise<void> {
     if (!level) {
       return
@@ -136,7 +158,8 @@ export class CommentPermissionService {
       )
 
       if (usedToday >= level.dailyReplyCommentLimit) {
-        throw new BadRequestException(
+        throw new BusinessException(
+          BusinessErrorCode.QUOTA_NOT_ENOUGH,
           `今日评论次数已达上限（${level.dailyReplyCommentLimit}）`,
         )
       }
@@ -173,32 +196,14 @@ export class CommentPermissionService {
           (Date.now() - lastPostAt.getTime()) / 1000,
         )
         if (secondsSinceLastPost < level.postInterval) {
-          throw new BadRequestException(
+          throw new HttpException(
             `操作过于频繁，请 ${
               level.postInterval - secondsSinceLastPost
             } 秒后再试`,
+            HttpStatus.TOO_MANY_REQUESTS,
           )
         }
       }
-    }
-  }
-
-  private ensureExists<T extends { deletedAt: Date | null }>(
-    target: T | null,
-    message: string,
-  ): void {
-    if (!target || target.deletedAt !== null) {
-      throw new BadRequestException(message)
-    }
-  }
-
-  private ensureTypeMatch(
-    actualType: number,
-    expectedType: number,
-    message: string,
-  ): void {
-    if (actualType !== expectedType) {
-      throw new BadRequestException(message)
     }
   }
 }

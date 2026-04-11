@@ -1,9 +1,11 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { applyCountDelta } from '@db/extensions'
-import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 
 type WorkCountField =
@@ -112,10 +114,11 @@ export class WorkCounterService {
 
   private rethrowNotFound(error: unknown, message: string) {
     if (
-      error instanceof NotFoundException
-      && !error.message.includes('计数不足')
+      error instanceof BusinessException &&
+      error.code === BusinessErrorCode.RESOURCE_NOT_FOUND &&
+      !error.message.includes('计数不足')
     ) {
-      throw new NotFoundException(message)
+      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message)
     }
     throw error
   }
@@ -282,7 +285,14 @@ export class WorkCounterService {
     delta: number,
     message = '作品不存在',
   ) {
-    await this.updateWorkCountField(tx, workId, workType, 'likeCount', delta, message)
+    await this.updateWorkCountField(
+      tx,
+      workId,
+      workType,
+      'likeCount',
+      delta,
+      message,
+    )
   }
 
   async updateWorkFavoriteCount(
@@ -326,7 +336,14 @@ export class WorkCounterService {
     delta: number,
     message = '作品不存在',
   ) {
-    await this.updateWorkCountField(tx, workId, workType, 'viewCount', delta, message)
+    await this.updateWorkCountField(
+      tx,
+      workId,
+      workType,
+      'viewCount',
+      delta,
+      message,
+    )
   }
 
   async updateWorkDownloadCount(
@@ -460,7 +477,10 @@ export class WorkCounterService {
       })
 
       if (!chapter) {
-        throw new NotFoundException(chapterMessage)
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          chapterMessage,
+        )
       }
 
       try {
@@ -570,9 +590,7 @@ export class WorkCounterService {
               isNull(this.workChapter.deletedAt),
             ),
           )
-          .where(
-            eq(this.userDownloadRecord.targetType, downloadTargetType),
-          )
+          .where(eq(this.userDownloadRecord.targetType, downloadTargetType))
           .then((rows) => rows[0]),
       ])
     const downloadCount = Number(downloadRow?.count ?? 0)

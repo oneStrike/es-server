@@ -1,6 +1,8 @@
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
 import {
@@ -83,7 +85,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
       },
     })
     if (!existingTask) {
-      throw new NotFoundException('任务不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务不存在',
+      )
     }
 
     const objectiveType =
@@ -164,16 +169,22 @@ export class TaskDefinitionService extends TaskServiceSupport {
    * 该接口只处理后台快速开关，不承担复杂配置变更校验。
    */
   async updateTaskStatus(dto: UpdateTaskStatusDto) {
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .update(this.taskTable)
-        .set({
-          status: dto.status,
-          isEnabled: dto.isEnabled,
-        })
-        .where(
-          and(eq(this.taskTable.id, dto.id), isNull(this.taskTable.deletedAt)),
-        ), { notFound: '任务不存在' },)
+    await this.drizzle.withErrorHandling(
+      () =>
+        this.db
+          .update(this.taskTable)
+          .set({
+            status: dto.status,
+            isEnabled: dto.isEnabled,
+          })
+          .where(
+            and(
+              eq(this.taskTable.id, dto.id),
+              isNull(this.taskTable.deletedAt),
+            ),
+          ),
+      { notFound: '任务不存在' },
+    )
     return true
   }
 
@@ -192,7 +203,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
         },
       })
       if (!targetTask) {
-        throw new NotFoundException('任务不存在')
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '任务不存在',
+        )
       }
 
       await tx
@@ -262,7 +276,10 @@ export class TaskDefinitionService extends TaskServiceSupport {
     })
 
     if (!taskRecord) {
-      throw new NotFoundException('任务不存在')
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务不存在',
+      )
     }
     const runtimeHealthMap = await this.getTaskRuntimeHealthMap([taskRecord.id])
     return this.toAdminTaskView(taskRecord, runtimeHealthMap.get(taskRecord.id))

@@ -12,12 +12,7 @@ import type {
   DrizzlePageQueryOptions,
 } from './query/page-query'
 import { resolveDbQueryConfig } from '@libs/platform/config'
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  OnApplicationShutdown,
-} from '@nestjs/common'
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Pool } from 'pg'
 import * as schema from '../schema'
@@ -35,6 +30,8 @@ import {
 } from './error/error-handler'
 import { buildDrizzleOrderBy } from './query/order-by'
 import { buildDrizzlePageQuery } from './query/page-query'
+import { BusinessException } from '@libs/platform/exceptions'
+import { BusinessErrorCode } from '@libs/platform/constant'
 
 /**
  * 统一封装仓库级 Drizzle 入口、查询默认值和错误处理能力。
@@ -145,7 +142,7 @@ export class DrizzleService implements OnApplicationShutdown {
    */
   assertNotEmpty<T>(arr: T[], message = '记录不存在'): T[] {
     if (arr.length === 0) {
-      throw new NotFoundException(message)
+      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message)
     }
     return arr
   }
@@ -156,13 +153,16 @@ export class DrizzleService implements OnApplicationShutdown {
   assertAffectedRows(result: DrizzleMutationResult, message = '记录不存在') {
     if (Array.isArray(result)) {
       if (result.length === 0) {
-        throw new NotFoundException(message)
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          message,
+        )
       }
       return
     }
 
     if (result?.rowCount === 0) {
-      throw new NotFoundException(message)
+      throw new BusinessException(BusinessErrorCode.RESOURCE_NOT_FOUND, message)
     }
   }
 
@@ -176,7 +176,10 @@ export class DrizzleService implements OnApplicationShutdown {
   ): Promise<T> {
     const result = await this.executeWithErrorHandling(fn, messages)
     if (messages?.notFound) {
-      this.assertAffectedRows(result as DrizzleMutationResult, messages.notFound)
+      this.assertAffectedRows(
+        result as DrizzleMutationResult,
+        messages.notFound,
+      )
     }
     return result
   }

@@ -3,6 +3,8 @@ import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, join } from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import {
   GEO_RUNTIME_SOURCE,
   GeoService,
@@ -11,7 +13,6 @@ import {
 import { LoggerService } from '@libs/platform/modules/logger'
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   PayloadTooLargeException,
 } from '@nestjs/common'
@@ -63,7 +64,10 @@ export class Ip2regionService {
    */
   async uploadAndActivate(req: FastifyRequest, operatorUserId?: number) {
     if (this.reloading) {
-      throw new ConflictException('当前正在切换 IP 属地库，请稍后重试')
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '当前正在切换 IP 属地库，请稍后重试',
+      )
     }
 
     this.reloading = true
