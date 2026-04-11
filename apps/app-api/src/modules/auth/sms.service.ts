@@ -1,10 +1,11 @@
 import { DrizzleService } from '@db/core'
 import {
   CheckVerifyCodeDto,
+  SmsService as LibSmsService,
   SendVerifyCodeDto,
-} from '@libs/platform/modules/sms/dto/sms.dto'
-import { SmsTemplateCodeEnum } from '@libs/platform/modules/sms/sms.constant'
-import { SmsService as LibSmsService } from '@libs/platform/modules/sms/sms.service'
+  SmsTemplateCodeEnum,
+} from '@libs/platform/modules/sms'
+
 import {
   Injectable,
   InternalServerErrorException,

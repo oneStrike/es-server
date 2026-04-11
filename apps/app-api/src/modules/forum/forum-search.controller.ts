@@ -1,8 +1,14 @@
-import { ForumSearchDto, ForumSearchResultDto } from '@libs/forum/search/dto/search.dto';
-import { ForumSearchService } from '@libs/forum/search/search.service';
-import { ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
+import {
+  ForumSearchDto,
+  ForumSearchResultDto,
+} from '@libs/forum/search/dto/search.dto'
+import { ForumSearchService } from '@libs/forum/search/search.service'
+import {
+  ApiPageDoc,
+  CurrentUser,
+  OptionalAuth,
+} from '@libs/platform/decorators'
+
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

@@ -1,10 +1,16 @@
 import type { FastifyRequest } from 'fastify'
-import { CommentService } from '@libs/interaction/comment/comment.service';
-import { BaseCommentDto, CommentReplyItemDto, CreateCommentBodyDto, QueryCommentRepliesDto, QueryMyCommentPageDto, ReplyCommentBodyDto } from '@libs/interaction/comment/dto/comment.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { GeoService } from '@libs/platform/modules/geo';
+import { CommentService } from '@libs/interaction/comment/comment.service'
+import {
+  BaseCommentDto,
+  CommentReplyItemDto,
+  CreateCommentBodyDto,
+  QueryCommentRepliesDto,
+  QueryMyCommentPageDto,
+  ReplyCommentBodyDto,
+} from '@libs/interaction/comment/dto/comment.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+import { IdDto } from '@libs/platform/dto'
+import { GeoService } from '@libs/platform/modules/geo'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -26,10 +32,13 @@ export class CommentController {
     @CurrentUser('sub') userId: number,
     @Req() req: FastifyRequest,
   ) {
-    return this.commentService.createComment({
-      ...body,
-      userId,
-    }, await this.geoService.buildClientRequestContext(req))
+    return this.commentService.createComment(
+      {
+        ...body,
+        userId,
+      },
+      await this.geoService.buildClientRequestContext(req),
+    )
   }
 
   @Post('reply')
@@ -42,10 +51,13 @@ export class CommentController {
     @CurrentUser('sub') userId: number,
     @Req() req: FastifyRequest,
   ) {
-    return this.commentService.replyComment({
-      ...body,
-      userId,
-    }, await this.geoService.buildClientRequestContext(req))
+    return this.commentService.replyComment(
+      {
+        ...body,
+        userId,
+      },
+      await this.geoService.buildClientRequestContext(req),
+    )
   }
 
   @Post('delete')

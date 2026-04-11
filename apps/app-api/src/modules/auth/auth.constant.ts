@@ -1,4 +1,4 @@
-import { createAuthRedisKeys } from '@libs/platform/modules/auth/auth.helpers';
+import { createAuthRedisKeys } from '@libs/platform/modules/auth'
 
 export const AppAuthRedisKeys = createAuthRedisKeys('app')
 
@@ -20,8 +20,7 @@ export const AppAuthErrorMessages = {
   PHONE_MISMATCH: '验证码登录的手机号与账号绑定的手机号不一致',
   VERIFY_CODE_SEND_FAILED: '验证码发送失败',
   VERIFY_CODE_CHECK_FAILED: '验证码已过期或错误',
-  ACCOUNT_LOCKED: (minutes: number) =>
-    `账号已锁定，请在 ${minutes} 分钟后重试`,
+  ACCOUNT_LOCKED: (minutes: number) => `账号已锁定，请在 ${minutes} 分钟后重试`,
   PASSWORD_ERROR_WITH_REMAINING: (remaining: number) =>
     `账号或密码错误，还剩 ${remaining} 次机会`,
 } as const

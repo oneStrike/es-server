@@ -49,100 +49,99 @@ export interface MessageNotificationTemplateDefinition {
  * 站内通知模板定义表
  * 当前按通知类型一对一配置，后续若扩展渠道也不在本阶段复用此结构
  */
-export const MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS: readonly MessageNotificationTemplateDefinition[] = [
-  {
-    notificationType: MessageNotificationTypeEnum.COMMENT_REPLY,
-    templateKey: 'notification.comment-reply',
-    label: '评论回复通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '{{payload.actorNickname}} 回复了你的评论',
-    defaultContentTemplate: '{{payload.replyExcerpt}}',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.COMMENT_LIKE,
-    templateKey: 'notification.comment-like',
-    label: '评论点赞通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '你的评论收到点赞',
-    defaultContentTemplate: '有人点赞了你的评论',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
-    templateKey: 'notification.content-favorite',
-    label: '内容收藏通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '你的内容被收藏了',
-    defaultContentTemplate: '有人收藏了你的内容',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.USER_FOLLOW,
-    templateKey: 'notification.user-follow',
-    label: '关注通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '你有新的关注',
-    defaultContentTemplate: '有人关注了你',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-    templateKey: 'notification.system-announcement',
-    label: '系统公告通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '{{payload.title}}',
-    defaultContentTemplate: '{{payload.content}}',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.CHAT_MESSAGE,
-    templateKey: 'notification.chat-message',
-    label: '聊天消息通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '新聊天消息',
-    defaultContentTemplate: '你收到一条新的聊天消息',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.TASK_REMINDER,
-    templateKey: 'notification.task-reminder',
-    label: '任务提醒',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '{{payload.title}}',
-    defaultContentTemplate: '{{payload.content}}',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.TOPIC_LIKE,
-    templateKey: 'notification.topic-like',
-    label: '主题点赞通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '{{payload.actorNickname}} 点赞了你的主题',
-    defaultContentTemplate: '{{payload.topicTitle}}',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.TOPIC_FAVORITE,
-    templateKey: 'notification.topic-favorite',
-    label: '主题收藏通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '{{payload.actorNickname}} 收藏了你的主题',
-    defaultContentTemplate: '{{payload.topicTitle}}',
-  },
-  {
-    notificationType: MessageNotificationTypeEnum.TOPIC_COMMENT,
-    templateKey: 'notification.topic-comment',
-    label: '主题评论通知',
-    defaultPreferenceEnabled: true,
-    defaultTitleTemplate: '{{payload.actorNickname}} 评论了你的主题',
-    defaultContentTemplate: '{{payload.commentExcerpt}}',
-  },
-] as const
+export const MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS: readonly MessageNotificationTemplateDefinition[] =
+  [
+    {
+      notificationType: MessageNotificationTypeEnum.COMMENT_REPLY,
+      templateKey: 'notification.comment-reply',
+      label: '评论回复通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.actorNickname}} 回复了你的评论',
+      defaultContentTemplate: '{{payload.replyExcerpt}}',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.COMMENT_LIKE,
+      templateKey: 'notification.comment-like',
+      label: '评论点赞通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '你的评论收到点赞',
+      defaultContentTemplate: '有人点赞了你的评论',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
+      templateKey: 'notification.content-favorite',
+      label: '内容收藏通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '你的内容被收藏了',
+      defaultContentTemplate: '有人收藏了你的内容',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.USER_FOLLOW,
+      templateKey: 'notification.user-follow',
+      label: '关注通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '你有新的关注',
+      defaultContentTemplate: '有人关注了你',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
+      templateKey: 'notification.system-announcement',
+      label: '系统公告通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.title}}',
+      defaultContentTemplate: '{{payload.content}}',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.CHAT_MESSAGE,
+      templateKey: 'notification.chat-message',
+      label: '聊天消息通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '新聊天消息',
+      defaultContentTemplate: '你收到一条新的聊天消息',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.TASK_REMINDER,
+      templateKey: 'notification.task-reminder',
+      label: '任务提醒',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.title}}',
+      defaultContentTemplate: '{{payload.content}}',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.TOPIC_LIKE,
+      templateKey: 'notification.topic-like',
+      label: '主题点赞通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.actorNickname}} 点赞了你的主题',
+      defaultContentTemplate: '{{payload.topicTitle}}',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.TOPIC_FAVORITE,
+      templateKey: 'notification.topic-favorite',
+      label: '主题收藏通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.actorNickname}} 收藏了你的主题',
+      defaultContentTemplate: '{{payload.topicTitle}}',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.TOPIC_COMMENT,
+      templateKey: 'notification.topic-comment',
+      label: '主题评论通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.actorNickname}} 评论了你的主题',
+      defaultContentTemplate: '{{payload.commentExcerpt}}',
+    },
+  ] as const
 
 /** 站内通知类型值列表 */
-export const MESSAGE_NOTIFICATION_TYPE_VALUES = MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS.map(
-  (item) => item.notificationType,
-)
+export const MESSAGE_NOTIFICATION_TYPE_VALUES =
+  MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS.map((item) => item.notificationType)
 
 /** 通知类型到模板定义的稳定映射 */
 export const MESSAGE_NOTIFICATION_TEMPLATE_DEFINITION_MAP = new Map(
-  MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS.map((item) => [
-    item.notificationType,
-    item,
-  ] as const),
+  MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS.map(
+    (item) => [item.notificationType, item] as const,
+  ),
 )
 
 /**
@@ -152,8 +151,8 @@ export const MESSAGE_NOTIFICATION_TEMPLATE_DEFINITION_MAP = new Map(
 export function getMessageNotificationTemplateDefinition(
   notificationType: MessageNotificationTypeEnum,
 ) {
-  const definition
-    = MESSAGE_NOTIFICATION_TEMPLATE_DEFINITION_MAP.get(notificationType)
+  const definition =
+    MESSAGE_NOTIFICATION_TEMPLATE_DEFINITION_MAP.get(notificationType)
   if (!definition) {
     throw new Error(`Unsupported notification type: ${notificationType}`)
   }
@@ -178,9 +177,8 @@ export function getMessageNotificationTypeLabel(
 export function getMessageNotificationDefaultPreferenceEnabled(
   notificationType: MessageNotificationTypeEnum,
 ) {
-  return getMessageNotificationTemplateDefinition(
-    notificationType,
-  ).defaultPreferenceEnabled
+  return getMessageNotificationTemplateDefinition(notificationType)
+    .defaultPreferenceEnabled
 }
 
 /**

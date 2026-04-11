@@ -1,8 +1,14 @@
-import { PurchasedWorkChapterItemDto, PurchasedWorkItemDto, PurchaseTargetBodyDto, QueryPurchasedWorkChapterDto, QueryPurchasedWorkDto } from '@libs/interaction/purchase/dto/purchase.dto';
-import { PurchaseService } from '@libs/interaction/purchase/purchase.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import {
+  PurchasedWorkChapterItemDto,
+  PurchasedWorkItemDto,
+  PurchaseTargetBodyDto,
+  QueryPurchasedWorkChapterDto,
+  QueryPurchasedWorkDto,
+} from '@libs/interaction/purchase/dto/purchase.dto'
+import { PurchaseService } from '@libs/interaction/purchase/purchase.service'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

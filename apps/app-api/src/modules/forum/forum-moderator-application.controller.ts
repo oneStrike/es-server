@@ -1,8 +1,12 @@
-import { CreateForumModeratorApplicationDto, ForumModeratorApplicationDto, QueryForumModeratorApplicationDto } from '@libs/forum/moderator-application/dto/moderator-application.dto';
-import { ForumModeratorApplicationService } from '@libs/forum/moderator-application/moderator-application.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import {
+  CreateForumModeratorApplicationDto,
+  ForumModeratorApplicationDto,
+  QueryForumModeratorApplicationDto,
+} from '@libs/forum/moderator-application/dto/moderator-application.dto'
+import { ForumModeratorApplicationService } from '@libs/forum/moderator-application/moderator-application.service'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -22,7 +26,10 @@ export class ForumModeratorApplicationController {
     @Query() query: QueryForumModeratorApplicationDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.forumModeratorApplicationService.getMyApplicationPage(userId, query)
+    return this.forumModeratorApplicationService.getMyApplicationPage(
+      userId,
+      query,
+    )
   }
 
   @Get('detail')

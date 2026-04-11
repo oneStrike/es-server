@@ -1,14 +1,28 @@
-import { MessageChatService } from '@libs/message/chat/chat.service';
-import { ChatConversationDto, ChatConversationMessagesResponseDto, OpenDirectConversationDto, QueryChatConversationMessagesDto } from '@libs/message/chat/dto/chat.dto';
-import { InboxSummaryDto, InboxTimelineItemDto } from '@libs/message/inbox/dto/inbox.dto';
-import { MessageInboxService } from '@libs/message/inbox/inbox.service';
-import { NotificationUnreadCountDto, QueryUserNotificationListDto, UpdateUserNotificationPreferencesDto, UserNotificationDto, UserNotificationPreferenceListDto } from '@libs/message/notification/dto/notification.dto';
-import { MessageNotificationPreferenceService } from '@libs/message/notification/notification-preference.service';
-import { MessageNotificationService } from '@libs/message/notification/notification.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { MessageChatService } from '@libs/message/chat/chat.service'
+import {
+  ChatConversationDto,
+  ChatConversationMessagesResponseDto,
+  OpenDirectConversationDto,
+  QueryChatConversationMessagesDto,
+} from '@libs/message/chat/dto/chat.dto'
+import {
+  InboxSummaryDto,
+  InboxTimelineItemDto,
+} from '@libs/message/inbox/dto/inbox.dto'
+import { MessageInboxService } from '@libs/message/inbox/inbox.service'
+import {
+  NotificationUnreadCountDto,
+  QueryUserNotificationListDto,
+  UpdateUserNotificationPreferencesDto,
+  UserNotificationDto,
+  UserNotificationPreferenceListDto,
+} from '@libs/message/notification/dto/notification.dto'
+import { MessageNotificationPreferenceService } from '@libs/message/notification/notification-preference.service'
+import { MessageNotificationService } from '@libs/message/notification/notification.service'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { IdDto, PageDto } from '@libs/platform/dto'
+
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -53,10 +67,9 @@ export class MessageController {
   })
   async getNotificationPreferences(@CurrentUser('sub') userId: number) {
     return {
-      list:
-        await this.messageNotificationPreferenceService.getUserNotificationPreferenceList(
-          userId,
-        ),
+      list: await this.messageNotificationPreferenceService.getUserNotificationPreferenceList(
+        userId,
+      ),
     }
   }
 
@@ -70,11 +83,10 @@ export class MessageController {
     @CurrentUser('sub') userId: number,
   ) {
     return {
-      list:
-        await this.messageNotificationPreferenceService.updateUserNotificationPreferences(
-          userId,
-          body,
-        ),
+      list: await this.messageNotificationPreferenceService.updateUserNotificationPreferences(
+        userId,
+        body,
+      ),
     }
   }
 

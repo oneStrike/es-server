@@ -1,14 +1,19 @@
-import { LikePageItemDto, LikePageQueryDto, LikeStatusResponseDto, LikeTargetDto } from '@libs/interaction/like/dto/like.dto';
-import { LikeService } from '@libs/interaction/like/like.service';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import {
+  LikePageItemDto,
+  LikePageQueryDto,
+  LikeStatusResponseDto,
+  LikeTargetDto,
+} from '@libs/interaction/like/dto/like.dto'
+import { LikeService } from '@libs/interaction/like/like.service'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('点赞')
 @Controller('app/like')
 export class LikeController {
-  constructor(private readonly likeService: LikeService) { }
+  constructor(private readonly likeService: LikeService) {}
 
   @Post('like')
   @ApiDoc({
@@ -61,7 +66,10 @@ export class LikeController {
     summary: '分页查询我的点赞记录',
     model: LikePageItemDto,
   })
-  async my(@Query() query: LikePageQueryDto, @CurrentUser('sub') userId: number) {
+  async my(
+    @Query() query: LikePageQueryDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     return this.likeService.getUserLikes({
       ...query,
       userId,

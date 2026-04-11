@@ -1,21 +1,15 @@
-import type { ITokenStorageService } from '@libs/platform/modules/auth/auth.types'
+import type { ITokenStorageService } from '@libs/platform/modules/auth'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant'
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
-} from '@libs/platform/modules/auth/dto/auth-scene.dto'
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
-import { ScryptService } from '@libs/platform/modules/crypto/scrypt.service'
+  RevokeTokenReasonEnum,
+} from '@libs/platform/modules/auth'
+import { RsaService, ScryptService } from '@libs/platform/modules/crypto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
-import {
-  BadRequestException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-} from '@nestjs/common'
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
 import { AppAuthErrorMessages } from './auth.constant'
 import { SmsService } from './sms.service'

@@ -1,6 +1,6 @@
 import { DrizzleService } from '@db/core'
-import { IS_PUBLIC_KEY } from '@libs/platform/decorators/public.decorator'
-import { AuthErrorMessages } from '@libs/platform/modules/auth/auth.constant'
+import { IS_PUBLIC_KEY } from '@libs/platform/decorators'
+import { AuthErrorMessages } from '@libs/platform/modules/auth'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import {
   CanActivate,

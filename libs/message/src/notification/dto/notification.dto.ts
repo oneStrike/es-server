@@ -1,12 +1,15 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { PageDto } from '@libs/platform/dto'
 import {
   getMessageNotificationTypeLabel,
   MessageNotificationDispatchStatusEnum,
@@ -188,14 +191,16 @@ export class UpdateUserNotificationPreferencesDto {
 
 export class QueryNotificationDeliveryPageDto extends PageDto {
   @StringProperty({
-    description: '业务投递结果（DELIVERED / FAILED / RETRYING / SKIPPED_DUPLICATE / SKIPPED_SELF / SKIPPED_PREFERENCE）',
+    description:
+      '业务投递结果（DELIVERED / FAILED / RETRYING / SKIPPED_DUPLICATE / SKIPPED_SELF / SKIPPED_PREFERENCE）',
     example: MessageNotificationDispatchStatusEnum.FAILED,
     required: false,
   })
   status?: MessageNotificationDispatchStatusEnum
 
   @NumberProperty({
-    description: '通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息,7=任务提醒,8=主题点赞,9=主题收藏,10=主题评论）',
+    description:
+      '通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息,7=任务提醒,8=主题点赞,9=主题收藏,10=主题评论）',
     example: MessageNotificationTypeEnum.COMMENT_REPLY,
     required: false,
   })
@@ -225,7 +230,8 @@ export class QueryNotificationDeliveryPageDto extends PageDto {
   outboxId?: string
 
   @StringProperty({
-    description: '任务提醒子类型（如 task_available / task_expiring_soon / task_reward_granted）',
+    description:
+      '任务提醒子类型（如 task_available / task_expiring_soon / task_reward_granted）',
     example: 'task_reward_granted',
     required: false,
     maxLength: 40,

@@ -1,7 +1,7 @@
 import { LibDictionaryService } from '@libs/dictionary/dictionary.service';
 import { BaseDictionaryItemDto, QueryAllDictionaryItemDto } from '@libs/dictionary/dto/dictionary.dto';
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { Public } from '@libs/platform/decorators/public.decorator';
+import { ApiDoc, Public } from '@libs/platform/decorators';
+
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

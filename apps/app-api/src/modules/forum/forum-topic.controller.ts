@@ -14,10 +14,14 @@ import {
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
-import { OptionalAuth } from '@libs/platform/decorators/public.decorator'
-import { IdDto } from '@libs/platform/dto/base.dto'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  OptionalAuth,
+} from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
 import { GeoService } from '@libs/platform/modules/geo'
 import {
   extractRequestContext,

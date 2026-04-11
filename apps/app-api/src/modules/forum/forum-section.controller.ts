@@ -1,8 +1,12 @@
-import { PublicForumSectionDetailDto, PublicForumSectionListItemDto, QueryPublicForumSectionDetailDto, QueryPublicForumSectionDto } from '@libs/forum/section/dto/forum-section.dto';
-import { ForumSectionService } from '@libs/forum/section/forum-section.service';
-import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { OptionalAuth } from '@libs/platform/decorators/public.decorator';
+import {
+  PublicForumSectionDetailDto,
+  PublicForumSectionListItemDto,
+  QueryPublicForumSectionDetailDto,
+  QueryPublicForumSectionDto,
+} from '@libs/forum/section/dto/forum-section.dto'
+import { ForumSectionService } from '@libs/forum/section/forum-section.service'
+import { ApiDoc, CurrentUser, OptionalAuth } from '@libs/platform/decorators'
+
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
