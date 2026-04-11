@@ -5,9 +5,9 @@ import type { SQL } from 'drizzle-orm'
 import type {
   CheckInDateRewardRuleView,
   CheckInPatternRewardRuleView,
+  CheckInResolvedReward,
   CheckInRewardConfig,
   CheckInRewardDefinition,
-  CheckInResolvedReward,
   CheckInStreakRewardRuleView,
 } from './check-in.type'
 import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
@@ -114,10 +114,7 @@ export abstract class CheckInServiceSupport {
   }
 
   /** 校验计划日期范围：结束日期不能早于开始日期。 */
-  protected ensurePlanDateRange(
-    startDate: string,
-    endDate?: string | null,
-  ) {
+  protected ensurePlanDateRange(startDate: string, endDate?: string | null) {
     if (endDate && endDate < startDate) {
       throw new BadRequestException('计划日期范围非法')
     }
@@ -209,7 +206,10 @@ export abstract class CheckInServiceSupport {
    * 归一化具体日期奖励规则输入，并提前拦截计划窗口外和重复日期配置。
    */
   protected normalizeDateRewardRules(
-    rules: CreateCheckInDateRewardRuleDto[] | CheckInDateRewardRuleView[] | undefined,
+    rules:
+      | CreateCheckInDateRewardRuleDto[]
+      | CheckInDateRewardRuleView[]
+      | undefined,
     startDate: string,
     endDate?: string | null,
   ) {
@@ -444,7 +444,9 @@ export abstract class CheckInServiceSupport {
 
     return {
       baseRewardConfig: this.parseRewardConfig(
-        this.asRecord(record.baseRewardConfig) as CheckInRewardConfig | undefined,
+        this.asRecord(record.baseRewardConfig) as
+        | CheckInRewardConfig
+        | undefined,
         { allowEmpty: true },
       ),
       dateRewardRules: this.normalizeDateRewardRules(
@@ -474,7 +476,9 @@ export abstract class CheckInServiceSupport {
     startDate: string
     endDate?: string | null
     baseRewardConfig?: CheckInRewardConfig | null
-    dateRewardRules?: CreateCheckInDateRewardRuleDto[] | CheckInDateRewardRuleView[]
+    dateRewardRules?:
+      | CreateCheckInDateRewardRuleDto[]
+      | CheckInDateRewardRuleView[]
     patternRewardRules?:
       | CreateCheckInPatternRewardRuleDto[]
       | CheckInPatternRewardRuleView[]
@@ -495,7 +499,9 @@ export abstract class CheckInServiceSupport {
         input.patternRewardRules,
         input.cycleType,
       ),
-      streakRewardRules: this.normalizeStreakRewardRules(input.streakRewardRules),
+      streakRewardRules: this.normalizeStreakRewardRules(
+        input.streakRewardRules,
+      ),
     } satisfies CheckInRewardDefinition
   }
 
@@ -906,7 +912,12 @@ export abstract class CheckInServiceSupport {
   }
 
   /** 构建周期模式奖励规则稳定键。 */
-  private buildPatternRuleKey(rule: Pick<CheckInPatternRewardRuleView, 'patternType' | 'weekday' | 'monthDay'>) {
+  private buildPatternRuleKey(
+    rule: Pick<
+      CheckInPatternRewardRuleView,
+      'patternType' | 'weekday' | 'monthDay'
+    >,
+  ) {
     if (rule.patternType === CheckInPatternRewardRuleTypeEnum.WEEKDAY) {
       return `WEEKDAY:${rule.weekday}`
     }
