@@ -737,7 +737,6 @@ COMMENT ON COLUMN "public"."user_level_rule"."required_experience" IS E'所需�
 COMMENT ON COLUMN "public"."user_level_rule"."login_days" IS E'所需登录天数';
 COMMENT ON COLUMN "public"."user_level_rule"."description" IS E'等级描述';
 COMMENT ON COLUMN "public"."user_level_rule"."icon" IS E'等级图标URL';
-COMMENT ON COLUMN "public"."user_level_rule"."badge" IS E'等级徽章URL';
 COMMENT ON COLUMN "public"."user_level_rule"."color" IS E'等级专属颜色（十六进制）';
 COMMENT ON COLUMN "public"."user_level_rule"."sort_order" IS E'排序值（数值越小越靠前）';
 COMMENT ON COLUMN "public"."user_level_rule"."is_enabled" IS E'是否启用';

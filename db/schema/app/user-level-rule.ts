@@ -33,10 +33,6 @@ export const userLevelRule = pgTable("user_level_rule", {
    */
   icon: varchar({ length: 255 }),
   /**
-   * 等级徽章URL
-   */
-  badge: varchar({ length: 255 }),
-  /**
    * 等级专属颜色（十六进制）
    */
   color: varchar({ length: 20 }),

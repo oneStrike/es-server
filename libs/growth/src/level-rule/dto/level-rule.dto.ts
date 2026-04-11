@@ -143,13 +143,6 @@ export class BaseUserLevelRuleDto extends BaseDto {
   })
   color?: string
 
-  @StringProperty({
-    description: '等级徽章URL',
-    example: 'https://example.com/badges/level1.png',
-    required: false,
-    maxLength: 255,
-  })
-  badge?: string
 }
 
 export class CreateUserLevelRuleDto extends OmitType(
@@ -207,14 +200,6 @@ export class UserLevelInfoDto {
     validation: false,
   })
   levelColor?: string
-
-  @StringProperty({
-    description: '等级徽章URL',
-    example: 'https://example.com/badges/level1.png',
-    required: false,
-    validation: false,
-  })
-  levelBadge?: string
 
   @NumberProperty({ description: '当前经验值', example: 100, validation: false })
   currentExperience!: number

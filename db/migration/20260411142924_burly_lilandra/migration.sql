@@ -1,0 +1,1 @@
+ALTER TABLE "user_level_rule" DROP COLUMN "badge";

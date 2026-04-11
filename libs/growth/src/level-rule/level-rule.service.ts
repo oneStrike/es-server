@@ -251,7 +251,6 @@ export class UserLevelRuleService {
       levelDescription: user.level.description ?? '',
       levelIcon: user.level.icon ?? '',
       levelColor: user.level.color ?? '',
-      levelBadge: user.level.badge ?? '',
       currentExperience: user.experience,
       nextLevelExperience,
       progressPercentage,
