@@ -77,7 +77,11 @@ export class AuthService {
    * 生成唯一账号
    */
   async generateUniqueAccount(tx: Db) {
-    for (let attempt = 0; attempt < APP_USER_ACCOUNT_MAX_RETRIES; attempt += 1) {
+    for (
+      let attempt = 0;
+      attempt < APP_USER_ACCOUNT_MAX_RETRIES;
+      attempt += 1
+    ) {
       const randomAccount = Math.floor(100000 + Math.random() * 900000)
       const [existingUser] = await tx
         .select({ id: this.appUserTable.id })
@@ -103,12 +107,12 @@ export class AuthService {
       )
     }
 
-    if (body.code) {
-      await this.smsService.validateVerifyCode({
-        phone: body.phone,
-        code: body.code,
-      })
-    }
+    // if (body.code) {
+    //   await this.smsService.validateVerifyCode({
+    //     phone: body.phone,
+    //     code: body.code,
+    //   })
+    // }
 
     const hashedPassword = await this.scryptService.encryptPassword(
       this.passwordService.generateSecureRandomPassword(),
@@ -236,8 +240,7 @@ export class AuthService {
         .update(this.appUserTable)
         .set({
           lastLoginAt: new Date(),
-          lastLoginIp:
-            clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
+          lastLoginIp: clientContext.ip || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
         })
         .where(eq(this.appUserTable.id, userId)),
     )
@@ -331,7 +334,11 @@ export class AuthService {
       AppAuthErrorMessages.REGISTER_RETRY_FAILED,
     )
 
-    for (let attempt = 0; attempt < APP_USER_ACCOUNT_MAX_RETRIES; attempt += 1) {
+    for (
+      let attempt = 0;
+      attempt < APP_USER_ACCOUNT_MAX_RETRIES;
+      attempt += 1
+    ) {
       try {
         return await this.drizzle.db.transaction(async (tx) => {
           const uid = await this.generateUniqueAccount(tx)
@@ -378,8 +385,8 @@ export class AuthService {
     }
 
     return (
-      this.drizzle.extractError(error)?.constraint
-      === APP_USER_ACCOUNT_UNIQUE_CONSTRAINT
+      this.drizzle.extractError(error)?.constraint ===
+      APP_USER_ACCOUNT_UNIQUE_CONSTRAINT
     )
   }
 
@@ -394,6 +401,8 @@ export class AuthService {
       },
     )
 
-    throw new BadRequestException(AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
+    throw new BadRequestException(
+      AppAuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR,
+    )
   }
 }

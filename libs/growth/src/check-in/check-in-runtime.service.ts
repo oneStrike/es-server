@@ -10,8 +10,10 @@ import type {
   CheckInVirtualCycleView,
 } from './check-in.type'
 import type {
+  CheckInLeaderboardItemDto,
   CheckInCalendarDayDto,
   CheckInRecordItemDto,
+  QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
 import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
@@ -19,7 +21,7 @@ import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { and, asc, eq, exists, gte, lte, or } from 'drizzle-orm'
+import { and, asc, eq, exists, gt, gte, lte, or } from 'drizzle-orm'
 import {
   CheckInCycleTypeEnum,
   CheckInRecordTypeEnum,
@@ -302,6 +304,73 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
   }
 
+  /** 分页读取当前生效签到计划的连续签到排行榜。 */
+  async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
+    const pageQuery = this.drizzle.buildPage(query)
+    const now = new Date()
+    const today = this.formatDateOnly(now)
+    const plan = await this.findCurrentActivePlan(now)
+
+    if (!plan) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: pageQuery.pageIndex,
+        pageSize: pageQuery.pageSize,
+      }
+    }
+
+    const page = await this.drizzle.ext.findPagination(this.checkInCycleTable, {
+      where: and(
+        eq(this.checkInCycleTable.planId, plan.id),
+        lte(this.checkInCycleTable.cycleStartDate, today),
+        gte(this.checkInCycleTable.cycleEndDate, today),
+        gt(this.checkInCycleTable.currentStreak, 0),
+      ),
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
+      orderBy: JSON.stringify([
+        { currentStreak: 'desc' },
+        { lastSignedDate: 'desc' },
+        { userId: 'asc' },
+      ]),
+    })
+
+    if (page.list.length === 0) {
+      return page
+    }
+
+    const userMap = await this.buildLeaderboardUserMap(
+      page.list.map((item) => item.userId),
+    )
+    const rankOffset = (page.pageIndex - 1) * page.pageSize
+
+    return {
+      ...page,
+      list: page.list.flatMap((item, index) => {
+        const user = userMap.get(item.userId)
+        if (!user) {
+          return []
+        }
+
+        return [
+          {
+            rank: rankOffset + index + 1,
+            currentStreak: item.currentStreak,
+            lastSignedDate: item.lastSignedDate
+              ? this.toDateOnlyValue(item.lastSignedDate)
+              : undefined,
+            user: {
+              id: user.id,
+              nickname: user.nickname,
+              avatarUrl: user.avatarUrl ?? undefined,
+            },
+          } satisfies CheckInLeaderboardItemDto,
+        ]
+      }),
+    }
+  }
+
   /**
    * 获取当前周期读模型。
    *
@@ -312,13 +381,14 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     plan: CheckInPlanSelect,
     now: Date,
   ) {
-    const rewardDefinition =
-      this.getPlanRewardDefinition(plan, { allowEmpty: true }) ?? {
-        baseRewardConfig: null,
-        dateRewardRules: [],
-        patternRewardRules: [],
-        streakRewardRules: [],
-      }
+    const rewardDefinition = this.getPlanRewardDefinition(plan, {
+      allowEmpty: true,
+    }) ?? {
+      baseRewardConfig: null,
+      dateRewardRules: [],
+      patternRewardRules: [],
+      streakRewardRules: [],
+    }
     const today = this.formatDateOnly(now)
     const cycle = await this.findCycleContainingDate(userId, plan.id, today)
     if (cycle) {
@@ -404,6 +474,38 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
 
     return grantMap
+  }
+
+  /**
+   * 批量读取排行榜用户的最小展示信息。
+   *
+   * 仅查询榜单卡片展示需要的字段，避免把完整用户资料带入签到读模型。
+   */
+  private async buildLeaderboardUserMap(userIds: number[]) {
+    const uniqueUserIds = [...new Set(userIds)]
+    if (uniqueUserIds.length === 0) {
+      return new Map<
+        number,
+        {
+          id: number
+          nickname: string
+          avatarUrl: string | null
+        }
+      >()
+    }
+
+    const users = await this.db.query.appUser.findMany({
+      where: {
+        id: { in: uniqueUserIds },
+      },
+      columns: {
+        id: true,
+        nickname: true,
+        avatarUrl: true,
+      },
+    })
+
+    return new Map(users.map((user) => [user.id, user] as const))
   }
 
   /**

@@ -16,7 +16,27 @@ describe('check-in runtime service', () => {
 
   beforeEach(() => {
     drizzle = {
-      db: {},
+      db: {
+        query: {
+          appUser: {
+            findMany: jest.fn(),
+          },
+        },
+      },
+      buildPage: jest.fn((input: { pageIndex?: number; pageSize?: number }) => {
+        const pageIndex = Math.max(1, Math.floor(Number(input.pageIndex ?? 1)))
+        const pageSize = Math.min(
+          Math.max(1, Math.floor(Number(input.pageSize ?? 15))),
+          500,
+        )
+
+        return {
+          pageIndex,
+          pageSize,
+          limit: pageSize,
+          offset: (pageIndex - 1) * pageSize,
+        }
+      }),
       ext: {
         findPagination: jest.fn(),
       },
@@ -107,7 +127,9 @@ describe('check-in runtime service', () => {
         createdAt: new Date('2026-04-09T12:00:00.000Z'),
       },
     ])
-    jest.spyOn(service as any, 'buildGrantMapForRecords').mockResolvedValue(new Map())
+    jest
+      .spyOn(service as any, 'buildGrantMapForRecords')
+      .mockResolvedValue(new Map())
 
     const result = await service.getSummary(9)
 
@@ -190,7 +212,9 @@ describe('check-in runtime service', () => {
         createdAt: new Date('2026-04-30T12:00:00.000Z'),
       },
     ])
-    jest.spyOn(service as any, 'buildGrantMapForRecords').mockResolvedValue(new Map())
+    jest
+      .spyOn(service as any, 'buildGrantMapForRecords')
+      .mockResolvedValue(new Map())
 
     const result = await service.getCalendar(9)
 
@@ -285,5 +309,140 @@ describe('check-in runtime service', () => {
         ],
       }),
     ])
+  })
+
+  it('leaderboard page 会按连续签到天数返回排行榜与用户简要信息', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-09T12:00:00.000Z'))
+
+    jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue({
+      id: 1,
+      planCode: 'growth-check-in',
+      planName: '成长签到',
+      status: 1,
+      cycleType: CheckInCycleTypeEnum.MONTHLY,
+      startDate: '2026-04-01',
+      endDate: '2026-04-30',
+      allowMakeupCountPerCycle: 2,
+      rewardDefinition: {
+        baseRewardConfig: { points: 5 },
+        dateRewardRules: [],
+        patternRewardRules: [],
+        streakRewardRules: [],
+      },
+    })
+    drizzle.ext.findPagination.mockResolvedValue({
+      list: [
+        {
+          id: 21,
+          userId: 11,
+          planId: 1,
+          cycleKey: 'month-2026-04-01',
+          cycleStartDate: '2026-04-01',
+          cycleEndDate: '2026-04-30',
+          currentStreak: 9,
+          lastSignedDate: '2026-04-09',
+        },
+        {
+          id: 20,
+          userId: 9,
+          planId: 1,
+          cycleKey: 'month-2026-04-01',
+          cycleStartDate: '2026-04-01',
+          cycleEndDate: '2026-04-30',
+          currentStreak: 7,
+          lastSignedDate: '2026-04-08',
+        },
+      ],
+      total: 2,
+      pageIndex: 2,
+      pageSize: 2,
+    })
+    drizzle.db.query.appUser.findMany.mockResolvedValue([
+      {
+        id: 9,
+        nickname: '张三',
+        avatarUrl: 'https://cdn.example.com/avatar-9.png',
+      },
+      {
+        id: 11,
+        nickname: '李四',
+        avatarUrl: null,
+      },
+    ])
+
+    const result = await service.getLeaderboardPage({
+      pageIndex: 2,
+      pageSize: 2,
+    })
+
+    expect(drizzle.ext.findPagination).toHaveBeenCalledWith(
+      schema.checkInCycle,
+      expect.objectContaining({
+        pageIndex: 2,
+        pageSize: 2,
+        orderBy: JSON.stringify([
+          { currentStreak: 'desc' },
+          { lastSignedDate: 'desc' },
+          { userId: 'asc' },
+        ]),
+      }),
+    )
+    expect(drizzle.db.query.appUser.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: [11, 9] },
+      },
+      columns: {
+        id: true,
+        nickname: true,
+        avatarUrl: true,
+      },
+    })
+    expect(result).toEqual({
+      list: [
+        {
+          rank: 3,
+          currentStreak: 9,
+          lastSignedDate: '2026-04-09',
+          user: {
+            id: 11,
+            nickname: '李四',
+            avatarUrl: undefined,
+          },
+        },
+        {
+          rank: 4,
+          currentStreak: 7,
+          lastSignedDate: '2026-04-08',
+          user: {
+            id: 9,
+            nickname: '张三',
+            avatarUrl: 'https://cdn.example.com/avatar-9.png',
+          },
+        },
+      ],
+      total: 2,
+      pageIndex: 2,
+      pageSize: 2,
+    })
+  })
+
+  it('leaderboard page 在没有生效计划时返回空分页', async () => {
+    jest
+      .spyOn(service as any, 'findCurrentActivePlan')
+      .mockResolvedValue(undefined)
+
+    const result = await service.getLeaderboardPage({
+      pageIndex: 0,
+      pageSize: 999,
+    })
+
+    expect(drizzle.ext.findPagination).not.toHaveBeenCalled()
+    expect(drizzle.db.query.appUser.findMany).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      list: [],
+      total: 0,
+      pageIndex: 1,
+      pageSize: 500,
+    })
   })
 })

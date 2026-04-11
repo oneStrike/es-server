@@ -4,8 +4,10 @@ import {
   MakeupCheckInDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
 import {
+  CheckInLeaderboardItemDto,
   CheckInCalendarResponseDto,
   CheckInRecordItemDto,
+  QueryCheckInLeaderboardDto,
   CheckInSummaryResponseDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
@@ -47,6 +49,15 @@ export class CheckInController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.checkInService.getMyRecords(query, userId)
+  }
+
+  @Get('leaderboard/page')
+  @ApiPageDoc({
+    summary: '分页获取签到排行榜',
+    model: CheckInLeaderboardItemDto,
+  })
+  async getLeaderboardPage(@Query() query: QueryCheckInLeaderboardDto) {
+    return this.checkInService.getLeaderboardPage(query)
   }
 
   @Post('sign')

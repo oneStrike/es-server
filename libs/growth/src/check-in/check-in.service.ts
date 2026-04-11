@@ -10,7 +10,10 @@ import type {
   MakeupCheckInDto,
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
-import type { QueryCheckInReconciliationDto } from './dto/check-in-runtime.dto'
+import type {
+  QueryCheckInLeaderboardDto,
+  QueryCheckInReconciliationDto,
+} from './dto/check-in-runtime.dto'
 import { Injectable } from '@nestjs/common'
 import { CheckInDefinitionService } from './check-in-definition.service'
 import { CheckInExecutionService } from './check-in-execution.service'
@@ -68,6 +71,11 @@ export class CheckInService {
   /** 分页读取当前用户的签到记录。 */
   async getMyRecords(query: PageDto, userId: number) {
     return this.checkInRuntimeService.getMyRecords(query, userId)
+  }
+
+  /** 分页读取 App 侧签到排行榜。 */
+  async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
+    return this.checkInRuntimeService.getLeaderboardPage(query)
   }
 
   /** 执行今日签到。 */

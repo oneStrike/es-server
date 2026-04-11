@@ -17,12 +17,47 @@ import { TaskService } from '@libs/growth/task/task.service';
 import { UserAssetsService } from '@libs/interaction/user-assets/user-assets.service';
 import { MessageInboxService } from '@libs/message/inbox/inbox.service';
 import { formatDateOnlyInAppTimeZone, startOfTodayInAppTimeZone } from '@libs/platform/utils/time';
-import { ChangeMyPhoneDto, QueryMyBadgeDto, QueryMyExperienceRecordDto, QueryMyPointRecordDto, UpdateMyProfileDto } from '@libs/user/dto/user-self.dto';
+import { ChangeMyPhoneDto, QueryMyBadgeDto, QueryMyExperienceRecordDto, QueryMyPointRecordDto, UpdateMyProfileDto, UserCenterDto } from '@libs/user/dto/user-self.dto';
 import { UserService as UserCoreService } from '@libs/user/user.service';
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gt, gte, inArray, sql } from 'drizzle-orm'
 import { AppAuthErrorMessages } from '../auth/auth.constant'
 import { SmsService } from '../auth/sms.service'
+
+type UserCenterCountsView = Pick<
+  Awaited<ReturnType<UserCoreService['getUserCounts']>>,
+  | 'commentCount'
+  | 'likeCount'
+  | 'favoriteCount'
+  | 'followingUserCount'
+  | 'followingAuthorCount'
+  | 'followingSectionCount'
+  | 'followersCount'
+  | 'forumTopicCount'
+  | 'commentReceivedLikeCount'
+  | 'forumTopicReceivedLikeCount'
+  | 'forumTopicReceivedFavoriteCount'
+>
+
+type UserCenterAssetsView = Pick<
+  Awaited<ReturnType<UserAssetsService['getUserAssetsSummary']>>,
+  | 'purchasedWorkCount'
+  | 'purchasedChapterCount'
+  | 'downloadedWorkCount'
+  | 'downloadedChapterCount'
+  | 'favoriteCount'
+  | 'likeCount'
+  | 'viewCount'
+  | 'commentCount'
+>
+
+type UserCenterTaskSummaryView = Pick<
+  Awaited<ReturnType<TaskService['getUserTaskSummary']>>,
+  | 'claimableCount'
+  | 'claimedCount'
+  | 'inProgressCount'
+  | 'rewardPendingCount'
+>
 
 @Injectable()
 export class UserService {
@@ -59,6 +94,58 @@ export class UserService {
 
   private get growthLedgerRecord() {
     return this.drizzle.schema.growthLedgerRecord
+  }
+
+  /**
+   * 将共享用户计数读模型收敛为用户中心 DTO 约定结构。
+   *
+   * 运行时显式排除 `userId` 等内部字段，并为缺失值兜底为 0，
+   * 避免下游读模型扩展后直接漂移到用户中心 HTTP 契约。
+   */
+  private mapUserCenterCounts(counts?: Partial<UserCenterCountsView>) {
+    return {
+      commentCount: counts?.commentCount ?? 0,
+      likeCount: counts?.likeCount ?? 0,
+      favoriteCount: counts?.favoriteCount ?? 0,
+      followingUserCount: counts?.followingUserCount ?? 0,
+      followingAuthorCount: counts?.followingAuthorCount ?? 0,
+      followingSectionCount: counts?.followingSectionCount ?? 0,
+      followersCount: counts?.followersCount ?? 0,
+      forumTopicCount: counts?.forumTopicCount ?? 0,
+      commentReceivedLikeCount: counts?.commentReceivedLikeCount ?? 0,
+      forumTopicReceivedLikeCount:
+        counts?.forumTopicReceivedLikeCount ?? 0,
+      forumTopicReceivedFavoriteCount:
+        counts?.forumTopicReceivedFavoriteCount ?? 0,
+    }
+  }
+
+  /**
+   * 收敛用户资产摘要输出，避免资产域内部补充字段后直接外泄到用户中心契约。
+   */
+  private mapUserCenterAssets(assets?: Partial<UserCenterAssetsView>) {
+    return {
+      purchasedWorkCount: assets?.purchasedWorkCount ?? 0,
+      purchasedChapterCount: assets?.purchasedChapterCount ?? 0,
+      downloadedWorkCount: assets?.downloadedWorkCount ?? 0,
+      downloadedChapterCount: assets?.downloadedChapterCount ?? 0,
+      favoriteCount: assets?.favoriteCount ?? 0,
+      likeCount: assets?.likeCount ?? 0,
+      viewCount: assets?.viewCount ?? 0,
+      commentCount: assets?.commentCount ?? 0,
+    }
+  }
+
+  /**
+   * 收敛用户中心任务摘要，避免执行层内部辅助字段透传到 HTTP 契约。
+   */
+  private mapUserCenterTaskSummary(taskSummary?: Partial<UserCenterTaskSummaryView>) {
+    return {
+      claimableCount: taskSummary?.claimableCount ?? 0,
+      claimedCount: taskSummary?.claimedCount ?? 0,
+      inProgressCount: taskSummary?.inProgressCount ?? 0,
+      rewardPendingCount: taskSummary?.rewardPendingCount ?? 0,
+    }
   }
 
   /**
@@ -152,7 +239,7 @@ export class UserService {
   /**
    * 获取用户中心汇总信息
    */
-  async getUserCenter(userId: number) {
+  async getUserCenter(userId: number): Promise<UserCenterDto> {
     const [user, counts, badgeCount, assets, messageSummary, taskSummary] =
       await Promise.all([
         this.userCoreService.ensureUserExists(userId),
@@ -191,14 +278,14 @@ export class UserService {
         status: user.status,
         banReason: user.banReason ?? undefined,
         banUntil: user.banUntil ?? undefined,
-        counts,
+        counts: this.mapUserCenterCounts(counts),
       },
-      assets,
+      assets: this.mapUserCenterAssets(assets),
       message: {
         notificationUnreadCount: messageSummary.notificationUnreadCount,
         totalUnreadCount: messageSummary.totalUnreadCount,
       },
-      task: taskSummary,
+      task: this.mapUserCenterTaskSummary(taskSummary),
     }
   }
 

@@ -4,7 +4,7 @@ import type {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
 import fastifyHelmet from '@fastify/helmet'
-import { isDevelopment } from '@libs/platform/utils/env';
+import { isDevelopment } from '@libs/platform/utils/env'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { setupCompression } from './compression'
 import { setupMultipart } from './multipart'
@@ -24,7 +24,7 @@ export async function setupApp(
   app: NestFastifyApplication,
   fastifyAdapter: FastifyAdapter,
   config: AppConfigInterface,
-): Promise<void> {
+) {
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER))
 
   app.setGlobalPrefix(config.globalApiPrefix)

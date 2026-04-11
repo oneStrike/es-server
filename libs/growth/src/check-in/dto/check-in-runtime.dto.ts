@@ -1,7 +1,9 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   IntersectionType,
   OmitType,
@@ -83,6 +85,36 @@ export class QueryCheckInReconciliationDto extends IntersectionType(
   OptionalCheckInRecordIdDto,
   OptionalCheckInGrantIdDto,
 ) {}
+
+export class QueryCheckInLeaderboardDto extends PickType(PageDto, [
+  'pageIndex',
+  'pageSize',
+] as const) {}
+
+export class CheckInLeaderboardUserDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+] as const) {}
+
+export class CheckInLeaderboardItemDto extends PickType(BaseCheckInCycleDto, [
+  'currentStreak',
+  'lastSignedDate',
+] as const) {
+  @NumberProperty({
+    description: '当前榜单名次（从 1 开始）。',
+    example: 1,
+    validation: false,
+  })
+  rank!: number
+
+  @NestedProperty({
+    description: '上榜用户基础信息。',
+    type: CheckInLeaderboardUserDto,
+    validation: false,
+  })
+  user!: CheckInLeaderboardUserDto
+}
 
 export class CheckInRecordItemDto extends OmitType(BaseCheckInRecordDto, [
   'bizKey',
@@ -185,7 +217,8 @@ export class CheckInCalendarDayDto extends IntersectionType(
   inPlanWindow!: boolean
 
   @NestedProperty({
-    description: '该自然日计划基础奖励；若当天未命中具体日期和周期模式奖励则回退计划默认基础奖励，为空表示当天没有基础奖励。',
+    description:
+      '该自然日计划基础奖励；若当天未命中具体日期和周期模式奖励则回退计划默认基础奖励，为空表示当天没有基础奖励。',
     type: CheckInRewardConfigDto,
     required: false,
     nullable: true,
