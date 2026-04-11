@@ -501,7 +501,7 @@ export class MyTaskPageItemDto extends PickType(BaseTaskAssignmentDto, [
     required: false,
     type: MyTaskRelatedTaskDto,
     validation: false,
-    nullable: true,
+    nullable: false,
   })
   task?: MyTaskRelatedTaskDto | null
 }
@@ -591,7 +591,7 @@ export class AdminTaskPageResponseDto extends PickType(BaseTaskDto, [
     type: AdminTaskReminderSummaryDto,
     required: false,
     validation: false,
-    nullable: true,
+    nullable: false,
   })
   latestReminder?: AdminTaskReminderSummaryDto | null
 }
@@ -647,7 +647,7 @@ export class AdminTaskAssignmentPageResponseDto extends PickType(
     type: AdminTaskAssignmentRelatedTaskDto,
     required: false,
     validation: false,
-    nullable: true,
+    nullable: false,
   })
   task?: AdminTaskAssignmentRelatedTaskDto | null
 }
@@ -739,7 +739,7 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
     type: AdminTaskRewardReminderDto,
     required: false,
     validation: false,
-    nullable: true,
+    nullable: false,
   })
   rewardReminder?: AdminTaskRewardReminderDto | null
 
@@ -748,7 +748,7 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
     type: AdminTaskAssignmentRelatedTaskDto,
     required: false,
     validation: false,
-    nullable: true,
+    nullable: false,
   })
   task?: AdminTaskAssignmentRelatedTaskDto | null
 }

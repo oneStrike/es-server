@@ -160,17 +160,14 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       today,
     )
 
-    if (!action.alreadyExisted) {
-      await this.settleRecordReward(action.recordId, {
-        source: 'record_reward',
-      })
-      for (const grantId of action.triggeredGrantIds) {
-        await this.settleGrantReward(grantId, { source: 'streak_reward' })
-      }
+    await this.settleRecordReward(action.recordId, {
+      source: 'record_reward',
+    })
+    for (const grantId of action.triggeredGrantIds) {
+      await this.settleGrantReward(grantId, { source: 'streak_reward' })
     }
 
     return this.buildLatestActionView(action.recordId, {
-      alreadyExisted: action.alreadyExisted,
       triggeredGrantIds: action.triggeredGrantIds,
     })
   }
@@ -225,10 +222,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             tx,
           )
           if (existingRecord) {
-            return this.buildActionResultFromExisting(
-              existingRecord,
-              cycle,
-              plan.allowMakeupCountPerCycle,
+            throw new ConflictException(
+              input.recordType === CheckInRecordTypeEnum.NORMAL
+                ? '今日已签到，请勿重复操作'
+                : '该日期已签到，请勿重复补签',
             )
           }
 
@@ -264,10 +261,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             if (!duplicatedRecord) {
               throw new NotFoundException('签到记录创建失败')
             }
-            return this.buildActionResultFromExisting(
-              duplicatedRecord,
-              cycle,
-              plan.allowMakeupCountPerCycle,
+            throw new ConflictException(
+              input.recordType === CheckInRecordTypeEnum.NORMAL
+                ? '今日已签到，请勿重复操作'
+                : '该日期已签到，请勿重复补签',
             )
           }
 
@@ -750,51 +747,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
-  /** 使用已存在签到事实构建幂等返回结果，避免重复落库后丢失当前周期摘要。 */
-  private buildActionResultFromExisting(
-    record: CheckInRecordSelect,
-    cycle: {
-      id: number
-      signedCount: number
-      makeupUsedCount: number
-      currentStreak: number
-    },
-    allowMakeupCountPerCycle: number,
-  ) {
-    return {
-      recordId: record.id,
-      cycleId: cycle.id,
-      signDate: this.toDateOnlyValue(record.signDate),
-      recordType: record.recordType,
-      rewardStatus: record.rewardStatus,
-      rewardResultType: record.rewardResultType,
-      resolvedRewardSourceType:
-        record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
-      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-      resolvedRewardConfig: this.parseStoredRewardConfig(
-        record.resolvedRewardConfig,
-        {
-          allowEmpty: true,
-        },
-      ),
-      currentStreak: cycle.currentStreak,
-      signedCount: cycle.signedCount,
-      remainingMakeupCount: Math.max(
-        allowMakeupCountPerCycle - cycle.makeupUsedCount,
-        0,
-      ),
-      triggeredGrantIds: [],
-      alreadyExisted: true,
-    }
-  }
-
   /** 基于最新记录和周期摘要回填前端动作返回视图。 */
   private async buildLatestActionView(
     recordId: number,
-    actionMeta: Pick<
-      CheckInActionResponseDto,
-      'alreadyExisted' | 'triggeredGrantIds'
-    >,
+    actionMeta: Pick<CheckInActionResponseDto, 'triggeredGrantIds'>,
   ) {
     const [record] = await this.db
       .select()
@@ -846,7 +802,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         0,
       ),
       triggeredGrantIds: actionMeta.triggeredGrantIds,
-      alreadyExisted: actionMeta.alreadyExisted,
+      alreadyExisted: false,
     } satisfies CheckInActionResponseDto
   }
 
@@ -857,7 +813,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number; source: string },
+    context: { actorUserId?: number, source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -937,7 +893,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number; source: string },
+    context: { actorUserId?: number, source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {

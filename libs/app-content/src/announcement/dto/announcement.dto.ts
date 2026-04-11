@@ -20,6 +20,7 @@ import { BaseAppPageDto } from '../../page/dto/page.dto'
 import {
   AnnouncementPriorityEnum,
   AnnouncementTypeEnum,
+  PopupBackgroundPositionEnum,
 } from '../announcement.constant'
 
 /**
@@ -95,6 +96,16 @@ export class BaseAnnouncementDto extends BaseDto {
     maxLength: 200,
   })
   popupBackgroundImage?: string | null
+
+  @EnumProperty({
+    description:
+      '弹窗背景图片位置（支持 CSS background-position 多方位定位：center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+    example: PopupBackgroundPositionEnum.CENTER,
+    required: false,
+    enum: PopupBackgroundPositionEnum,
+    default: PopupBackgroundPositionEnum.CENTER,
+  })
+  popupBackgroundPosition?: PopupBackgroundPositionEnum
 
   @BooleanProperty({
     description: '是否发布',
@@ -190,7 +201,7 @@ export class AnnouncementDetailDto extends BaseAnnouncementDto {
   @NestedProperty({
     description: '公告关联页面',
     required: false,
-    nullable: true,
+    nullable: false,
     type: AnnouncementRelatedPageDto,
     validation: false,
   })

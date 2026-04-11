@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "69ba0cd5-5bfd-4078-b0ba-c3823b7a215a",
+  "id": "aa0de599-e37b-45a7-bc6e-a2043c1791ab",
   "prevIds": [
-    "2cc8ec26-b6ed-4fd5-a63c-873958fef1b8"
+    "e848c539-4907-422c-b2e8-a13a37391e9a"
   ],
   "ddl": [
     {
@@ -80,19 +80,7 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "check_in_date_reward_rule",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
       "name": "check_in_plan",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "check_in_pattern_reward_rule",
       "entityType": "tables",
       "schema": "public"
     },
@@ -105,12 +93,6 @@
     {
       "isRlsEnabled": false,
       "name": "check_in_streak_reward_grant",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "check_in_streak_reward_rule",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1231,6 +1213,19 @@
       "generated": null,
       "identity": null,
       "name": "popup_background_image",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "app_announcement"
+    },
+    {
+      "type": "varchar(20)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'center'",
+      "generated": null,
+      "identity": null,
+      "name": "popup_background_position",
       "entityType": "columns",
       "schema": "public",
       "table": "app_announcement"
@@ -2559,32 +2554,6 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_snapshot_version",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_cycle"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_snapshot",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_cycle"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
       "default": "0",
       "generated": null,
       "identity": null,
@@ -2618,106 +2587,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_cycle"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "check_in_date_reward_rule_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_version",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "type": "date",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "reward_date",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "reward_config",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
     },
     {
       "type": "integer",
@@ -2827,20 +2696,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "base_reward_config",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_plan"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "1",
-      "generated": null,
-      "identity": null,
-      "name": "version",
+      "name": "reward_definition",
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_plan"
@@ -2922,132 +2778,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_plan"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "check_in_pattern_reward_rule_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_version",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "varchar(32)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "pattern_type",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "smallint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "weekday",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "smallint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "month_day",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "reward_config",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
     },
     {
       "type": "integer",
@@ -3176,14 +2906,14 @@
       "table": "check_in_record"
     },
     {
-      "type": "integer",
+      "type": "varchar(32)",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "resolved_reward_rule_id",
+      "name": "resolved_reward_rule_key",
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_record"
@@ -3380,6 +3110,19 @@
       "table": "check_in_streak_reward_grant"
     },
     {
+      "type": "varchar(50)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rule_code",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "check_in_streak_reward_grant"
+    },
+    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -3387,7 +3130,33 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "rule_id",
+      "name": "streak_days",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "check_in_streak_reward_grant"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reward_config",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "check_in_streak_reward_grant"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "repeatable",
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_streak_reward_grant"
@@ -3471,19 +3240,6 @@
       "table": "check_in_streak_reward_grant"
     },
     {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_snapshot_version",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_grant"
-    },
-    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": false,
@@ -3534,158 +3290,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "check_in_streak_reward_grant"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": {
-        "type": "always",
-        "name": "check_in_streak_reward_rule_id_seq",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1,
-        "cycle": false
-      },
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "plan_version",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "varchar(50)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "rule_code",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "streak_days",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "reward_config",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "repeatable",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "smallint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "1",
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deleted_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
     },
     {
       "type": "integer",
@@ -13982,55 +13586,6 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "plan_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "plan_version",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_date_reward_rule_plan_id_version_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "reward_date",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_date_reward_rule_reward_date_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "status",
           "isExpression": false,
           "asc": true,
@@ -14110,153 +13665,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "check_in_plan"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "plan_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "plan_version",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_pattern_reward_rule_plan_id_version_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "pattern_type",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_pattern_reward_rule_pattern_type_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "plan_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "plan_version",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "weekday",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": "\"pattern_type\" = 'WEEKDAY'",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_pattern_reward_rule_weekday_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "plan_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "plan_version",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "month_day",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": "\"pattern_type\" = 'MONTH_DAY'",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_pattern_reward_rule_month_day_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "plan_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "plan_version",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": "\"pattern_type\" = 'MONTH_LAST_DAY'",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_pattern_reward_rule_month_last_day_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
     },
     {
       "nameExplicit": true,
@@ -14402,7 +13810,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "rule_id",
+          "value": "rule_code",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -14414,7 +13822,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "check_in_streak_grant_rule_id_idx",
+      "name": "check_in_streak_grant_rule_code_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "check_in_streak_reward_grant"
@@ -14460,62 +13868,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "check_in_streak_reward_grant"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "plan_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "plan_version",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "status",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_streak_rule_plan_id_status_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "deleted_at",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "check_in_streak_rule_deleted_at_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
     },
     {
       "nameExplicit": true,
@@ -20735,29 +20087,9 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "check_in_date_reward_rule_pkey",
-      "schema": "public",
-      "table": "check_in_date_reward_rule",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
       "name": "check_in_plan_pkey",
       "schema": "public",
       "table": "check_in_plan",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "check_in_pattern_reward_rule_pkey",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule",
       "entityType": "pks"
     },
     {
@@ -20778,16 +20110,6 @@
       "name": "check_in_streak_reward_grant_pkey",
       "schema": "public",
       "table": "check_in_streak_reward_grant",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "check_in_streak_reward_rule_pkey",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule",
       "entityType": "pks"
     },
     {
@@ -21407,19 +20729,6 @@
     {
       "nameExplicit": true,
       "columns": [
-        "plan_id",
-        "plan_version",
-        "reward_date"
-      ],
-      "nullsNotDistinct": false,
-      "name": "check_in_date_reward_rule_plan_reward_date_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
         "plan_code"
       ],
       "nullsNotDistinct": false,
@@ -21464,32 +20773,6 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "check_in_streak_reward_grant"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "plan_id",
-        "plan_version",
-        "rule_code"
-      ],
-      "nullsNotDistinct": false,
-      "name": "check_in_streak_rule_plan_rule_code_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        "plan_id",
-        "plan_version",
-        "streak_days"
-      ],
-      "nullsNotDistinct": false,
-      "name": "check_in_streak_rule_plan_streak_days_key",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
     },
     {
       "nameExplicit": true,
@@ -22002,25 +21285,11 @@
       "table": "check_in_cycle"
     },
     {
-      "value": "\"plan_snapshot_version\" > 0",
-      "name": "check_in_cycle_snapshot_version_positive_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_cycle"
-    },
-    {
       "value": "\"cycle_end_date\" >= \"cycle_start_date\"",
       "name": "check_in_cycle_date_range_valid_chk",
       "entityType": "checks",
       "schema": "public",
       "table": "check_in_cycle"
-    },
-    {
-      "value": "\"plan_version\" > 0",
-      "name": "check_in_date_reward_rule_plan_version_positive_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_date_reward_rule"
     },
     {
       "value": "\"allow_makeup_count_per_cycle\" >= 0",
@@ -22044,53 +21313,11 @@
       "table": "check_in_plan"
     },
     {
-      "value": "\"version\" > 0",
-      "name": "check_in_plan_version_positive_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_plan"
-    },
-    {
       "value": "\"end_date\" is null or \"end_date\" >= \"start_date\"",
       "name": "check_in_plan_date_range_valid_chk",
       "entityType": "checks",
       "schema": "public",
       "table": "check_in_plan"
-    },
-    {
-      "value": "\"plan_version\" > 0",
-      "name": "check_in_pattern_reward_rule_plan_version_positive_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "value": "\"pattern_type\" in ('WEEKDAY', 'MONTH_DAY', 'MONTH_LAST_DAY')",
-      "name": "check_in_pattern_reward_rule_pattern_type_valid_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "value": "(\n      \"pattern_type\" <> 'WEEKDAY'\n    ) or (\n      \"weekday\" between 1 and 7\n      and \"month_day\" is null\n    )",
-      "name": "check_in_pattern_reward_rule_weekday_consistent_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "value": "(\n      \"pattern_type\" <> 'MONTH_DAY'\n    ) or (\n      \"month_day\" between 1 and 31\n      and \"weekday\" is null\n    )",
-      "name": "check_in_pattern_reward_rule_month_day_consistent_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
-    },
-    {
-      "value": "(\n      \"pattern_type\" <> 'MONTH_LAST_DAY'\n    ) or (\n      \"weekday\" is null\n      and \"month_day\" is null\n    )",
-      "name": "check_in_pattern_reward_rule_month_last_day_consistent_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_pattern_reward_rule"
     },
     {
       "value": "\"record_type\" in (1, 2)",
@@ -22135,7 +21362,7 @@
       "table": "check_in_record"
     },
     {
-      "value": "(\n      \"reward_status\" is null\n      and \"resolved_reward_source_type\" is null\n      and \"resolved_reward_rule_id\" is null\n      and \"resolved_reward_config\" is null\n    ) or (\n      \"reward_status\" in (0, 1, 2)\n      and \"resolved_reward_source_type\" in ('BASE_REWARD', 'DATE_RULE', 'PATTERN_RULE')\n      and (\n        (\"resolved_reward_source_type\" = 'BASE_REWARD' and \"resolved_reward_rule_id\" is null)\n        or (\"resolved_reward_source_type\" in ('DATE_RULE', 'PATTERN_RULE') and \"resolved_reward_rule_id\" is not null)\n      )\n      and \"resolved_reward_config\" is not null\n    )",
+      "value": "(\n      \"reward_status\" is null\n      and \"resolved_reward_source_type\" is null\n      and \"resolved_reward_rule_key\" is null\n      and \"resolved_reward_config\" is null\n    ) or (\n      \"reward_status\" in (0, 1, 2)\n      and \"resolved_reward_source_type\" in ('BASE_REWARD', 'DATE_RULE', 'PATTERN_RULE')\n      and \"resolved_reward_config\" is not null\n    )",
       "name": "check_in_record_reward_resolution_consistent_chk",
       "entityType": "checks",
       "schema": "public",
@@ -22163,32 +21390,11 @@
       "table": "check_in_streak_reward_grant"
     },
     {
-      "value": "\"plan_snapshot_version\" > 0",
-      "name": "check_in_streak_grant_snapshot_version_positive_chk",
+      "value": "\"streak_days\" > 0",
+      "name": "check_in_streak_grant_streak_days_positive_chk",
       "entityType": "checks",
       "schema": "public",
       "table": "check_in_streak_reward_grant"
-    },
-    {
-      "value": "\"streak_days\" > 0",
-      "name": "check_in_streak_rule_streak_days_positive_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "value": "\"plan_version\" > 0",
-      "name": "check_in_streak_rule_plan_version_positive_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
-    },
-    {
-      "value": "\"status\" in (0, 1)",
-      "name": "check_in_streak_rule_status_valid_chk",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "check_in_streak_reward_rule"
     },
     {
       "value": "\"kind\" in (1, 2)",

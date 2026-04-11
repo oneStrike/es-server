@@ -29,7 +29,7 @@ class CheckInPlanRewardConfigFieldsDto {
     description: '计划默认基础奖励配置；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
     type: CheckInRewardConfigDto,
     required: false,
-    nullable: true,
+    nullable: false,
   })
   baseRewardConfig?: CheckInRewardConfigDto | null
 

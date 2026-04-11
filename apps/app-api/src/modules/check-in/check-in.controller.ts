@@ -4,11 +4,11 @@ import {
   MakeupCheckInDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
 import {
-  CheckInLeaderboardItemDto,
   CheckInCalendarResponseDto,
+  CheckInLeaderboardItemDto,
   CheckInRecordItemDto,
-  QueryCheckInLeaderboardDto,
   CheckInSummaryResponseDto,
+  QueryCheckInLeaderboardDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 

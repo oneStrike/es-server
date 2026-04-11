@@ -158,7 +158,7 @@ export class CheckInSummaryResponseDto {
     description: '当前生效计划摘要。',
     type: CheckInSummaryPlanDto,
     required: false,
-    nullable: true,
+    nullable: false,
     validation: false,
   })
   plan?: CheckInSummaryPlanDto | null
@@ -167,7 +167,7 @@ export class CheckInSummaryResponseDto {
     description: '当前周期摘要。',
     type: CheckInSummaryCycleDto,
     required: false,
-    nullable: true,
+    nullable: false,
     validation: false,
   })
   cycle?: CheckInSummaryCycleDto | null
@@ -183,7 +183,7 @@ export class CheckInSummaryResponseDto {
     description: '下一档连续奖励。',
     type: CheckInStreakRewardRuleItemDto,
     required: false,
-    nullable: true,
+    nullable: false,
     validation: false,
   })
   nextStreakReward?: CheckInStreakRewardRuleItemDto | null
@@ -192,7 +192,7 @@ export class CheckInSummaryResponseDto {
     description: '最近一条签到记录。',
     type: CheckInRecordItemDto,
     required: false,
-    nullable: true,
+    nullable: false,
     validation: false,
   })
   latestRecord?: CheckInRecordItemDto | null
@@ -221,7 +221,7 @@ export class CheckInCalendarDayDto extends IntersectionType(
       '该自然日计划基础奖励；若当天未命中具体日期和周期模式奖励则回退计划默认基础奖励，为空表示当天没有基础奖励。',
     type: CheckInRewardConfigDto,
     required: false,
-    nullable: true,
+    nullable: false,
     validation: false,
   })
   planRewardConfig?: CheckInRewardConfigDto | null

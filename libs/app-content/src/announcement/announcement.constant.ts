@@ -28,6 +28,29 @@ export enum AnnouncementPriorityEnum {
   URGENT = 3,
 }
 
+/// 弹窗背景图片位置枚举
+/// 支持 CSS background-position 多方位定位，用于控制弹窗背景图的对齐方式
+export enum PopupBackgroundPositionEnum {
+  /** 居中（默认） */
+  CENTER = 'center',
+  /** 顶部居中 */
+  TOP_CENTER = 'top center',
+  /** 顶部靠左 */
+  TOP_LEFT = 'top left',
+  /** 顶部靠右 */
+  TOP_RIGHT = 'top right',
+  /** 底部居中 */
+  BOTTOM_CENTER = 'bottom center',
+  /** 底部靠左 */
+  BOTTOM_LEFT = 'bottom left',
+  /** 底部靠右 */
+  BOTTOM_RIGHT = 'bottom right',
+  /** 左侧居中 */
+  LEFT_CENTER = 'left center',
+  /** 右侧居中 */
+  RIGHT_CENTER = 'right center',
+}
+
 /**
  * 判断公告是否应进入通知中心
  *

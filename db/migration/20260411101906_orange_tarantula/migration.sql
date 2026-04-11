@@ -1,0 +1,1 @@
+ALTER TABLE "app_announcement" ADD COLUMN "popup_background_position" varchar(20) DEFAULT 'center';

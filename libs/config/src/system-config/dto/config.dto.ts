@@ -69,7 +69,7 @@ export class AliyunConfigDto {
     description: '短信服务配置',
     type: AliyunSmsConfigDto,
     required: false,
-    nullable: true,
+    nullable: false,
   })
   sms?: AliyunSmsConfigDto | null
 }
@@ -189,7 +189,7 @@ export class ContentReviewPolicyDto {
     description: '严重敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
-    nullable: true,
+    nullable: false,
   })
   severeAction?: ContentReviewActionDto | null
 
@@ -197,7 +197,7 @@ export class ContentReviewPolicyDto {
     description: '一般敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
-    nullable: true,
+    nullable: false,
   })
   generalAction?: ContentReviewActionDto | null
 
@@ -205,7 +205,7 @@ export class ContentReviewPolicyDto {
     description: '轻微敏感词处理策略',
     type: ContentReviewActionDto,
     required: false,
-    nullable: true,
+    nullable: false,
   })
   lightAction?: ContentReviewActionDto | null
 
@@ -340,7 +340,7 @@ export class UploadConfigDto {
     description: '七牛上传配置',
     type: QiniuUploadConfigDto,
     required: false,
-    nullable: true,
+    nullable: false,
   })
   qiniu?: QiniuUploadConfigDto | null
 
@@ -348,7 +348,7 @@ export class UploadConfigDto {
     description: 'Superbed 上传配置',
     type: SuperbedUploadConfigDto,
     required: false,
-    nullable: true,
+    nullable: false,
   })
   superbed?: SuperbedUploadConfigDto | null
 }
@@ -383,7 +383,7 @@ export class BaseSystemConfigDto extends BaseDto {
       },
     },
     required: false,
-    nullable: true,
+    nullable: false,
   })
   aliyunConfig?: AliyunConfigDto | null
 
@@ -400,7 +400,7 @@ export class BaseSystemConfigDto extends BaseDto {
       icpNumber: '粤ICP备xxxxxx号',
     },
     required: false,
-    nullable: true,
+    nullable: false,
   })
   siteConfig?: SiteConfigDto | null
 
@@ -412,7 +412,7 @@ export class BaseSystemConfigDto extends BaseDto {
       maintenanceMessage: '系统维护中，请稍后再试',
     },
     required: false,
-    nullable: true,
+    nullable: false,
   })
   maintenanceConfig?: MaintenanceConfigDto | null
 
@@ -435,7 +435,7 @@ export class BaseSystemConfigDto extends BaseDto {
       recordHits: true,
     },
     required: false,
-    nullable: true,
+    nullable: false,
   })
   contentReviewPolicy?: ContentReviewPolicyDto | null
 
@@ -464,7 +464,7 @@ export class BaseSystemConfigDto extends BaseDto {
       },
     },
     required: false,
-    nullable: true,
+    nullable: false,
   })
   uploadConfig?: UploadConfigDto | null
 }

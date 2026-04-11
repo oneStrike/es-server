@@ -91,7 +91,6 @@ export class BaseCheckInRecordDto extends BaseDto {
     type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
     required: false,
-    nullable: true,
     validation: false,
   })
   resolvedRewardConfig?: CheckInRewardConfigDto | null

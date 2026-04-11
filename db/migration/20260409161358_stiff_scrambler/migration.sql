@@ -1,1 +1,0 @@
-ALTER TABLE "app_agreement" ALTER COLUMN "title" SET DATA TYPE varchar(100) USING "title"::varchar(100);
