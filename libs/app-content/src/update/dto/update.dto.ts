@@ -11,11 +11,7 @@ import {
 import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { HTTP_URL_REGEXP } from '@libs/platform/utils/regExp'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   APP_UPDATE_CHANNEL_CODE_REGEXP,
   AppUpdatePackageSourceEnum,
@@ -36,14 +32,6 @@ export class BaseAppUpdateStoreLinkDto extends BaseDto {
   })
   channelCode!: string
 
-  @StringProperty({
-    description: '渠道名称',
-    example: '默认渠道',
-    required: true,
-    maxLength: 50,
-  })
-  channelName!: string
-
   @RegexProperty({
     description: '应用商店地址',
     example: 'https://apps.apple.com/app/id123456789',
@@ -55,18 +43,31 @@ export class BaseAppUpdateStoreLinkDto extends BaseDto {
 }
 
 /**
+ * 商店地址展示 DTO。
+ */
+export class BaseAppUpdateStoreLinkSnapshotDto extends BaseAppUpdateStoreLinkDto {
+  @StringProperty({
+    description: '渠道名称',
+    example: '默认渠道',
+    required: true,
+    maxLength: 50,
+  })
+  channelName!: string
+}
+
+/**
  * 商店地址写入 DTO。
  */
 export class AppUpdateStoreLinkInputDto extends PickType(
   BaseAppUpdateStoreLinkDto,
-  ['channelCode', 'channelName', 'storeUrl'] as const,
+  ['channelCode', 'storeUrl'] as const,
 ) {}
 
 /**
  * 商店地址快照 DTO。
  */
 export class AppUpdateStoreLinkSnapshotDto extends PickType(
-  BaseAppUpdateStoreLinkDto,
+  BaseAppUpdateStoreLinkSnapshotDto,
   ['channelCode', 'channelName', 'storeUrl'] as const,
 ) {}
 
@@ -330,12 +331,12 @@ export class QueryAppUpdateReleaseDto extends IntersectionType(
 export class AppUpdateReleaseDetailDto extends BaseAppUpdateReleaseDto {
   @ArrayProperty({
     description: '应用商店地址列表',
-    itemClass: BaseAppUpdateStoreLinkDto,
+    itemClass: AppUpdateStoreLinkSnapshotDto,
     required: false,
     validation: false,
     default: [],
   })
-  storeLinks?: BaseAppUpdateStoreLinkDto[]
+  storeLinks?: AppUpdateStoreLinkSnapshotDto[]
 }
 
 /**

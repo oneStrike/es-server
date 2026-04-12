@@ -1,9 +1,11 @@
 import type {
+  BuildCommentMentionNotificationEventInput,
   BuildCommentReplyNotificationEventInput,
   BuildMessageNotificationEventInput,
   BuildTopicCommentNotificationEventInput,
   BuildTopicFavoriteNotificationEventInput,
   BuildTopicLikeNotificationEventInput,
+  BuildTopicMentionNotificationEventInput,
   MessageNotificationComposedEvent,
 } from './notification.type'
 import { Injectable } from '@nestjs/common'
@@ -195,6 +197,59 @@ export class MessageNotificationComposerService {
         actorNickname,
         replyExcerpt,
         targetDisplayTitle,
+      },
+    })
+  }
+
+  /**
+   * 构造评论提及通知事件。
+   * 优先使用评论摘要，缺失时回退到目标标题。
+   */
+  buildCommentMentionEvent(
+    input: BuildCommentMentionNotificationEventInput,
+  ) {
+    const actorNickname = this.normalizeActorNickname(input.payload.actorNickname)
+    const targetDisplayTitle = this.normalizeDisplayText(
+      input.payload.targetDisplayTitle,
+    )
+    const commentExcerpt = this.normalizeExcerpt(input.payload.commentExcerpt)
+      ?? targetDisplayTitle
+
+    return this.buildEvent({
+      ...input,
+      type: MessageNotificationTypeEnum.COMMENT_MENTION,
+      subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+      title: `${actorNickname} 在评论中提到了你`,
+      content: commentExcerpt ?? '你在评论中被提及了',
+      payload: {
+        ...input.payload,
+        actorNickname,
+        commentExcerpt,
+        targetDisplayTitle,
+      },
+    })
+  }
+
+  /**
+   * 构造主题提及通知事件。
+   * 主题标题是该类型的稳定正文展示字段。
+   */
+  buildTopicMentionEvent(
+    input: BuildTopicMentionNotificationEventInput,
+  ) {
+    const actorNickname = this.normalizeActorNickname(input.payload.actorNickname)
+    const topicTitle = this.normalizeTopicTitle(input.payload.topicTitle)
+
+    return this.buildEvent({
+      ...input,
+      type: MessageNotificationTypeEnum.TOPIC_MENTION,
+      subjectType: MessageNotificationSubjectTypeEnum.TOPIC,
+      title: `${actorNickname} 在主题中提到了你`,
+      content: topicTitle,
+      payload: {
+        ...input.payload,
+        actorNickname,
+        topicTitle,
       },
     })
   }

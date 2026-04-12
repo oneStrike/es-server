@@ -5,6 +5,7 @@ import { EmojiModule } from '@libs/interaction/emoji/emoji.module';
 import { FavoriteModule } from '@libs/interaction/favorite/favorite.module';
 import { FollowModule } from '@libs/interaction/follow/follow.module';
 import { LikeModule } from '@libs/interaction/like/like.module';
+import { MentionModule } from '@libs/interaction/mention/mention.module';
 import { ReportModule } from '@libs/interaction/report/report.module';
 import { MessageModule } from '@libs/message/message.module';
 import { SensitiveWordModule } from '@libs/sensitive-word/sensitive-word.module';
@@ -35,6 +36,7 @@ import { ForumTopicReportResolver } from './resolver/forum-topic-report.resolver
     FavoriteModule,
     FollowModule,
     LikeModule,
+    MentionModule,
     ReportModule,
     UserModule,
     ForumCounterModule,

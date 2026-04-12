@@ -28,6 +28,11 @@ export enum AppUpdateTypeEnum {
 export const DEFAULT_APP_UPDATE_CHANNEL_CODE = 'default'
 
 /**
+ * App 更新渠道字典编码。
+ */
+export const APP_UPDATE_CHANNEL_DICTIONARY_CODE = 'app_update_channel'
+
+/**
  * 商店渠道编码格式。
  * 使用小写英数、下划线和中划线，便于客户端稳定透传。
  */

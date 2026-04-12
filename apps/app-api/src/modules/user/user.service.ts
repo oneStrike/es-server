@@ -26,6 +26,7 @@ import {
   ChangeMyPhoneDto,
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
+  QueryUserMentionPageDto,
   QueryMyPointRecordDto,
   UpdateMyProfileDto,
   UserCenterDto,
@@ -557,5 +558,13 @@ export class UserService {
   async getUserAssetsSummary(userId: number) {
     await this.userCoreService.ensureUserExists(userId)
     return this.userAssetsService.getUserAssetsSummary(userId)
+  }
+
+  /**
+   * 获取 @ 提及候选用户。
+   * 仅代理共享用户域的轻量搜索结果，不在 app 层重复拼接额外字段。
+   */
+  async getMentionCandidates(query: QueryUserMentionPageDto) {
+    return this.userCoreService.queryMentionCandidates(query)
   }
 }

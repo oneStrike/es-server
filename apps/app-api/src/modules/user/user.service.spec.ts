@@ -10,6 +10,7 @@ describe('app user service', () => {
       getUserCounts: jest.fn(),
       getBadgeCount: jest.fn(),
       getLevelInfo: jest.fn(),
+      queryMentionCandidates: jest.fn(),
     } as unknown as jest.Mocked<UserCoreService>
 
     const taskService = {
@@ -170,6 +171,49 @@ describe('app user service', () => {
         inProgressCount: 24,
         rewardPendingCount: 25,
       },
+    })
+  })
+
+  it('getMentionCandidates 只透传轻量候选参数并返回最小字段集', async () => {
+    const { service, userCoreService } = createService()
+
+    userCoreService.queryMentionCandidates.mockResolvedValue({
+      list: [
+        {
+          id: 7,
+          nickname: '测试用户',
+          avatarUrl: 'https://example.com/avatar.png',
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 10,
+      totalPages: 1,
+    } as never)
+
+    const result = await service.getMentionCandidates({
+      q: '测试',
+      pageIndex: 1,
+      pageSize: 10,
+    } as never)
+
+    expect(userCoreService.queryMentionCandidates).toHaveBeenCalledWith({
+      q: '测试',
+      pageIndex: 1,
+      pageSize: 10,
+    })
+    expect(result).toEqual({
+      list: [
+        {
+          id: 7,
+          nickname: '测试用户',
+          avatarUrl: 'https://example.com/avatar.png',
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 10,
+      totalPages: 1,
     })
   })
 })

@@ -213,6 +213,12 @@ export type EmojiParseToken =
       type: 'text'
       text: string
     }
+  | {
+      type: 'mentionUser'
+      userId: number
+      nickname: string
+      text: string
+    }
     | {
       type: 'emojiUnicode'
       unicodeSequence: string

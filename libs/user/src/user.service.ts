@@ -5,8 +5,9 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { formatDateTimeInAppTimeZone } from '@libs/platform/utils/time'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { ForbiddenException, Injectable } from '@nestjs/common'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { AppUserCountService } from './app-user-count.service'
+import { QueryUserMentionPageDto } from './dto/user-self.dto'
 
 /**
  * 用户域共享服务。
@@ -64,6 +65,95 @@ export class UserService {
       .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
       .limit(1)
     return user
+  }
+
+  /**
+   * 批量查询当前仍可被提及的用户。
+   * 仅返回 mention 场景需要的最小字段集。
+   */
+  async findAvailableUsersByIds(userIds: number[]) {
+    const uniqueUserIds = [...new Set(userIds)]
+    if (uniqueUserIds.length === 0) {
+      return [] as Array<Pick<AppUserSelect, 'id' | 'nickname' | 'avatarUrl'>>
+    }
+
+    return this.db
+      .select({
+        id: this.appUser.id,
+        nickname: this.appUser.nickname,
+        avatarUrl: this.appUser.avatarUrl,
+      })
+      .from(this.appUser)
+      .where(
+        and(
+          inArray(this.appUser.id, uniqueUserIds),
+          eq(this.appUser.isEnabled, true),
+          isNull(this.appUser.deletedAt),
+        ),
+      )
+  }
+
+  /**
+   * 分页查询提及候选用户。
+   * 空关键字直接返回空页，避免把接口误用成通用用户搜索。
+   */
+  async queryMentionCandidates(query: QueryUserMentionPageDto) {
+    const keyword = query.q?.trim()
+    const page = this.drizzle.buildPage(
+      {
+        pageIndex: query.pageIndex,
+        pageSize: query.pageSize,
+      },
+      {
+      defaultPageSize: 10,
+      maxPageSize: 20,
+      },
+    )
+
+    if (!keyword) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: page.pageIndex,
+        pageSize: page.pageSize,
+        totalPages: 0,
+      }
+    }
+
+    const condition = and(
+      eq(this.appUser.isEnabled, true),
+      isNull(this.appUser.deletedAt),
+      sql`${this.appUser.nickname} ILIKE ${`%${keyword}%`}`,
+    )
+
+    const [list, totalRows] = await Promise.all([
+      this.db
+        .select({
+          id: this.appUser.id,
+          nickname: this.appUser.nickname,
+          avatarUrl: this.appUser.avatarUrl,
+        })
+        .from(this.appUser)
+        .where(condition)
+        .orderBy(desc(this.appUser.id))
+        .limit(page.limit)
+        .offset(page.offset),
+      this.db
+        .select({
+          count: sql<number>`count(*)::int`,
+        })
+        .from(this.appUser)
+        .where(condition),
+    ])
+
+    const total = Number(totalRows[0]?.count ?? 0)
+    return {
+      list,
+      total,
+      pageIndex: page.pageIndex,
+      pageSize: page.pageSize,
+      totalPages: total === 0 ? 0 : Math.ceil(total / page.pageSize),
+    }
   }
 
   /**

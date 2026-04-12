@@ -18,6 +18,7 @@ import {
 } from '@libs/platform/decorators'
 
 import { UserIdDto } from '@libs/platform/dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import { OmitType, PartialType, PickType } from '@nestjs/swagger'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
@@ -29,6 +30,29 @@ export {
 } from '@libs/growth/badge/dto/user-badge-management.dto'
 
 export class QueryUserCenterDto extends PartialType(UserIdDto) {}
+
+/**
+ * app 端提及候选分页查询 DTO。
+ * 仅提供轻量昵称检索，不承担完整用户搜索能力。
+ */
+export class QueryUserMentionPageDto extends PageDto {
+  @StringProperty({
+    description: '昵称关键字',
+    example: '测试',
+    required: false,
+    maxLength: 100,
+  })
+  q?: string
+}
+
+/**
+ * 提及候选用户 DTO。
+ */
+export class UserMentionCandidateDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+] as const) {}
 
 /**
  * 更新用户资料 DTO。

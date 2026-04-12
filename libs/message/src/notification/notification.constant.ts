@@ -24,6 +24,10 @@ export enum MessageNotificationTypeEnum {
   TOPIC_FAVORITE = 9,
   /** 主题评论通知 */
   TOPIC_COMMENT = 10,
+  /** 评论提及通知 */
+  COMMENT_MENTION = 11,
+  /** 主题提及通知 */
+  TOPIC_MENTION = 12,
 }
 
 /**
@@ -131,6 +135,22 @@ export const MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS: readonly MessageNotifica
       defaultTitleTemplate: '{{payload.actorNickname}} 评论了你的主题',
       defaultContentTemplate: '{{payload.commentExcerpt}}',
     },
+    {
+      notificationType: MessageNotificationTypeEnum.COMMENT_MENTION,
+      templateKey: 'notification.comment-mention',
+      label: '评论提及通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.actorNickname}} 在评论中提到了你',
+      defaultContentTemplate: '{{payload.commentExcerpt}}',
+    },
+    {
+      notificationType: MessageNotificationTypeEnum.TOPIC_MENTION,
+      templateKey: 'notification.topic-mention',
+      label: '主题提及通知',
+      defaultPreferenceEnabled: true,
+      defaultTitleTemplate: '{{payload.actorNickname}} 在主题中提到了你',
+      defaultContentTemplate: '{{payload.topicTitle}}',
+    },
   ] as const
 
 /** 站内通知类型值列表 */
@@ -235,4 +255,6 @@ export enum MessageNotificationSubjectTypeEnum {
   USER = 3,
   /** 系统 */
   SYSTEM = 4,
+  /** 论坛主题 */
+  TOPIC = 5,
 }

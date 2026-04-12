@@ -29,10 +29,11 @@ import { ConfigReader } from '@libs/system-config/config-reader'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
-import { EmojiParserService } from '../emoji/emoji-parser.service'
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
+import { MentionSourceTypeEnum } from '../mention/mention.constant'
+import { MentionService } from '../mention/mention.service'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from './comment.constant'
@@ -73,8 +74,8 @@ export class CommentService {
     private readonly messageOutboxService: MessageOutboxService,
     private readonly messageNotificationComposerService: MessageNotificationComposerService,
     private readonly appUserCountService: AppUserCountService,
-    private readonly emojiParserService: EmojiParserService,
     private readonly drizzle: DrizzleService,
+    private readonly mentionService: MentionService,
   ) {}
 
   private get db() {
@@ -743,7 +744,15 @@ export class CommentService {
       return
     }
 
-    // 非回复评论无需发送通知
+    await this.mentionService.dispatchCommentMentionsInTx(tx, {
+      commentId: comment.id,
+      actorUserId: comment.userId,
+      targetType: comment.targetType,
+      targetId: comment.targetId,
+      content: comment.content,
+      targetDisplayTitle: meta.targetDisplayTitle,
+    })
+
     if (!comment.replyToId) {
       return
     }
@@ -815,9 +824,10 @@ export class CommentService {
     input: CreateCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, targetType, targetId, content } = input
-    const bodyTokens = await this.emojiParserService.parse({
-      body: content,
+    const { userId, targetType, targetId, content, mentions } = input
+    const bodyTokens = await this.mentionService.buildBodyTokens({
+      content,
+      mentions,
       scene: EmojiSceneEnum.COMMENT,
     })
 
@@ -878,6 +888,14 @@ export class CommentService {
                   content: this.userComment.content,
                   createdAt: this.userComment.createdAt,
                 })
+
+              await this.mentionService.replaceMentionsInTx({
+                tx,
+                sourceType: MentionSourceTypeEnum.COMMENT,
+                sourceId: newComment.id,
+                content,
+                mentions,
+              })
 
               await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
@@ -958,9 +976,10 @@ export class CommentService {
     input: ReplyCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, content, replyToId } = input
-    const bodyTokens = await this.emojiParserService.parse({
-      body: content,
+    const { userId, content, replyToId, mentions } = input
+    const bodyTokens = await this.mentionService.buildBodyTokens({
+      content,
+      mentions,
       scene: EmojiSceneEnum.COMMENT,
     })
 
@@ -1035,6 +1054,14 @@ export class CommentService {
           content: this.userComment.content,
           createdAt: this.userComment.createdAt,
         })
+
+      await this.mentionService.replaceMentionsInTx({
+        tx,
+        sourceType: MentionSourceTypeEnum.COMMENT,
+        sourceId: newComment.id,
+        content,
+        mentions,
+      })
 
       await this.appUserCountService.updateCommentCount(tx, userId, 1)
 
@@ -1149,6 +1176,12 @@ export class CommentService {
           deletedAt: new Date(),
         })
         .where(eq(this.userComment.id, found.id))
+
+      await this.mentionService.deleteMentionsInTx({
+        tx,
+        sourceType: MentionSourceTypeEnum.COMMENT,
+        sourceIds: [found.id],
+      })
 
       await this.appUserCountService.updateCommentCount(tx, found.userId, -1)
       if (found.likeCount > 0) {

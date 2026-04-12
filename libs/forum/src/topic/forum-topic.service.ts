@@ -1,3 +1,4 @@
+import type { Db } from '@db/core'
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
@@ -17,7 +18,6 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
-import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
@@ -25,6 +25,8 @@ import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
+import { MentionSourceTypeEnum } from '@libs/interaction/mention/mention.constant'
+import { MentionService } from '@libs/interaction/mention/mention.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -80,7 +82,7 @@ export class ForumTopicService {
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
     private readonly followService: FollowService,
-    private readonly emojiParserService: EmojiParserService,
+    private readonly mentionService: MentionService,
   ) {}
 
   private get db() {
@@ -396,6 +398,60 @@ export class ForumTopicService {
   }
 
   /**
+   * 判断主题当前是否对外可见。
+   * 主题 mention 仅在真正可见时发送，避免待审核/隐藏内容提前触达接收人。
+   */
+  private isTopicVisible(topic: {
+    auditStatus: AuditStatusEnum
+    isHidden: boolean
+    deletedAt?: Date | null
+  }) {
+    return (
+      topic.auditStatus === AuditStatusEnum.APPROVED &&
+      !topic.isHidden &&
+      topic.deletedAt == null
+    )
+  }
+
+  /**
+   * 同步主题从不可见到可见时的 mention 补偿。
+   * 仅在首次转可见时补发尚未通知的 receiver。
+   */
+  private async syncTopicMentionVisibilityTransitionInTx(
+    tx: Db,
+    params: {
+      topicId: number
+      actorUserId: number
+      topicTitle: string
+      currentAuditStatus: AuditStatusEnum
+      currentIsHidden: boolean
+      nextAuditStatus: AuditStatusEnum
+      nextIsHidden: boolean
+    },
+  ) {
+    const wasVisible = this.isTopicVisible({
+      auditStatus: params.currentAuditStatus,
+      isHidden: params.currentIsHidden,
+      deletedAt: null,
+    })
+    const willBeVisible = this.isTopicVisible({
+      auditStatus: params.nextAuditStatus,
+      isHidden: params.nextIsHidden,
+      deletedAt: null,
+    })
+
+    if (wasVisible || !willBeVisible) {
+      return
+    }
+
+    await this.mentionService.dispatchTopicMentionsInTx(tx, {
+      topicId: params.topicId,
+      actorUserId: params.actorUserId,
+      topicTitle: params.topicTitle,
+    })
+  }
+
+  /**
    * 创建论坛主题。
    * - 敏感词检测与审核策略计算在写入前完成
    * - 计数更新与板块状态同步在同一事务中执行
@@ -406,7 +462,8 @@ export class ForumTopicService {
     createTopicDto: CreateForumTopicDto,
     context: ForumTopicClientContext = {},
   ) {
-    const { sectionId, userId, images, videos, ...topicData } = createTopicDto
+    const { sectionId, userId, images, videos, mentions, ...topicData } =
+      createTopicDto
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
       userId,
@@ -424,8 +481,9 @@ export class ForumTopicService {
       reviewPolicy,
       highestLevel,
     )
-    const bodyTokens = await this.emojiParserService.parse({
-      body: topicData.content,
+    const bodyTokens = await this.mentionService.buildBodyTokens({
+      content: topicData.content,
+      mentions,
       scene: EmojiSceneEnum.FORUM,
     })
 
@@ -454,6 +512,14 @@ export class ForumTopicService {
           .values(createPayload)
           .returning()
 
+        await this.mentionService.replaceMentionsInTx({
+          tx,
+          sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
+          sourceId: newTopic.id,
+          content: topicData.content,
+          mentions,
+        })
+
         await this.forumCounterService.updateTopicRelatedCounts(
           tx,
           sectionId,
@@ -461,6 +527,20 @@ export class ForumTopicService {
           1,
         )
         await this.forumCounterService.syncSectionVisibleState(tx, sectionId)
+
+        if (
+          this.isTopicVisible({
+            auditStatus: newTopic.auditStatus as AuditStatusEnum,
+            isHidden: newTopic.isHidden,
+            deletedAt: newTopic.deletedAt,
+          })
+        ) {
+          await this.mentionService.dispatchTopicMentionsInTx(tx, {
+            topicId: newTopic.id,
+            actorUserId: userId,
+            topicTitle: newTopic.title,
+          })
+        }
 
         const { deletedAt, ...data } = newTopic
         return data
@@ -1083,7 +1163,7 @@ export class ForumTopicService {
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
   ) {
-    const { id, images, videos, ...updateData } = updateForumTopicDto
+    const { id, images, videos, mentions, ...updateData } = updateForumTopicDto
 
     if (topic.isLocked) {
       throw new BusinessException(
@@ -1111,8 +1191,9 @@ export class ForumTopicService {
       highestLevel,
     )
     const nextContent = updateData.content || topic.content
-    const bodyTokens = await this.emojiParserService.parse({
-      body: nextContent,
+    const bodyTokens = await this.mentionService.buildBodyTokens({
+      content: nextContent,
+      mentions,
       scene: EmojiSceneEnum.FORUM,
     })
 
@@ -1152,10 +1233,33 @@ export class ForumTopicService {
           )
         }
 
+        await this.mentionService.replaceMentionsInTx({
+          tx,
+          sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
+          sourceId: nextTopic.id,
+          content: nextContent,
+          mentions,
+        })
+
         await this.forumCounterService.syncSectionVisibleState(
           tx,
           topic.sectionId,
         )
+
+        if (
+          this.isTopicVisible({
+            auditStatus: nextTopic.auditStatus as AuditStatusEnum,
+            isHidden: nextTopic.isHidden,
+            deletedAt: nextTopic.deletedAt,
+          })
+        ) {
+          await this.mentionService.dispatchTopicMentionsInTx(tx, {
+            topicId: nextTopic.id,
+            actorUserId: topic.userId,
+            topicTitle: nextTopic.title,
+          })
+        }
+
         return nextTopic
       }),
     )
@@ -1207,7 +1311,7 @@ export class ForumTopicService {
             targetId: id,
             deletedAt: { isNull: true },
           },
-          columns: { userId: true, likeCount: true },
+          columns: { id: true, userId: true, likeCount: true },
         })
 
         await tx
@@ -1234,6 +1338,17 @@ export class ForumTopicService {
             ),
           )
         this.drizzle.assertAffectedRows(result, '主题不存在')
+
+        await this.mentionService.deleteMentionsInTx({
+          tx,
+          sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
+          sourceIds: [id],
+        })
+        await this.mentionService.deleteMentionsInTx({
+          tx,
+          sourceType: MentionSourceTypeEnum.COMMENT,
+          sourceIds: commentRows.map((item) => item.id),
+        })
 
         await this.forumCounterService.updateTopicRelatedCounts(
           tx,
@@ -1398,15 +1513,60 @@ export class ForumTopicService {
    * 隐藏状态变更会影响板块可见主题统计，需同步更新板块状态。
    */
   async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenDto) {
-    return this.updateTopicStatus(
-      updateTopicHiddenDto.id,
-      {
-        isHidden: updateTopicHiddenDto.isHidden,
+    const currentTopic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id: updateTopicHiddenDto.id,
+        deletedAt: { isNull: true },
       },
-      {
-        syncSectionVisibility: true,
+      columns: {
+        id: true,
+        sectionId: true,
+        userId: true,
+        title: true,
+        auditStatus: true,
+        isHidden: true,
       },
+    })
+
+    if (!currentTopic) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '主题不存在',
+      )
+    }
+
+    await this.drizzle.withErrorHandling(async () =>
+      this.db.transaction(async (tx) => {
+        const result = await tx
+          .update(this.forumTopicTable)
+          .set({
+            isHidden: updateTopicHiddenDto.isHidden,
+          })
+          .where(
+            and(
+              eq(this.forumTopicTable.id, updateTopicHiddenDto.id),
+              isNull(this.forumTopicTable.deletedAt),
+            ),
+          )
+        this.drizzle.assertAffectedRows(result, '主题不存在')
+
+        await this.forumCounterService.syncSectionVisibleState(
+          tx,
+          currentTopic.sectionId,
+        )
+        await this.syncTopicMentionVisibilityTransitionInTx(tx, {
+          topicId: currentTopic.id,
+          actorUserId: currentTopic.userId,
+          topicTitle: currentTopic.title,
+          currentAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
+          currentIsHidden: currentTopic.isHidden,
+          nextAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
+          nextIsHidden: updateTopicHiddenDto.isHidden,
+        })
+      }),
     )
+
+    return true
   }
 
   /**
@@ -1470,7 +1630,9 @@ export class ForumTopicService {
         id: true,
         sectionId: true,
         userId: true,
+        title: true,
         auditStatus: true,
+        isHidden: true,
       },
     })
 
@@ -1501,6 +1663,15 @@ export class ForumTopicService {
           tx,
           currentTopic.sectionId,
         )
+        await this.syncTopicMentionVisibilityTransitionInTx(tx, {
+          topicId: currentTopic.id,
+          actorUserId: currentTopic.userId,
+          topicTitle: currentTopic.title,
+          currentAuditStatus: currentTopic.auditStatus as AuditStatusEnum,
+          currentIsHidden: currentTopic.isHidden,
+          nextAuditStatus: auditStatus,
+          nextIsHidden: currentTopic.isHidden,
+        })
       }),
     )
 

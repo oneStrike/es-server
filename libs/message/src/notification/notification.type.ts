@@ -54,6 +54,24 @@ export interface TopicCommentNotificationPayload
   > {}
 
 /**
+ * 评论提及通知展示快照
+ */
+export interface CommentMentionNotificationPayload
+  extends Pick<
+    MessageNotificationSnapshotPayloadBase,
+    'actorNickname' | 'commentExcerpt' | 'targetDisplayTitle'
+  > {}
+
+/**
+ * 主题提及通知展示快照
+ */
+export interface TopicMentionNotificationPayload
+  extends Pick<
+    MessageNotificationSnapshotPayloadBase,
+    'actorNickname' | 'topicTitle'
+  > {}
+
+/**
  * 评论回复通知展示快照
  */
 export interface CommentReplyNotificationPayload
@@ -152,6 +170,38 @@ export interface BuildCommentReplyNotificationEventInput {
   targetId: number
   subjectId: number
   payload: CommentReplyNotificationPayload
+  aggregateKey?: string
+  aggregateCount?: number
+  expiredAt?: Date | string
+}
+
+/**
+ * 评论提及通知构造入参
+ */
+export interface BuildCommentMentionNotificationEventInput {
+  bizKey: string
+  receiverUserId: number
+  actorUserId: number
+  targetType: number
+  targetId: number
+  subjectId: number
+  payload: CommentMentionNotificationPayload
+  aggregateKey?: string
+  aggregateCount?: number
+  expiredAt?: Date | string
+}
+
+/**
+ * 主题提及通知构造入参
+ */
+export interface BuildTopicMentionNotificationEventInput {
+  bizKey: string
+  receiverUserId: number
+  actorUserId: number
+  targetType: number
+  targetId: number
+  subjectId: number
+  payload: TopicMentionNotificationPayload
   aggregateKey?: string
   aggregateCount?: number
   expiredAt?: Date | string

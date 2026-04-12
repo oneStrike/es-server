@@ -6,8 +6,8 @@ import { AppAnnouncementService } from '@libs/app-content/announcement/announcem
 import { BaseAnnouncementDto, QueryAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto';
 import { BaseAppPageDto } from '@libs/app-content/page/dto/page.dto';
 import { AppPageService } from '@libs/app-content/page/page.service';
-import { AppUpdateService } from '@libs/app-content/update/update.service';
 import { AppUpdateCheckDto, AppUpdateCheckResponseDto } from '@libs/app-content/update/dto/update.dto';
+import { AppUpdateService } from '@libs/app-content/update/update.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Public } from '@libs/platform/decorators/public.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';

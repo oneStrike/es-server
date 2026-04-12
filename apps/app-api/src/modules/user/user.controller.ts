@@ -5,11 +5,13 @@ import {
   ChangeMyPhoneDto,
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
+  QueryUserMentionPageDto,
   QueryMyPointRecordDto,
   QueryUserCenterDto,
   UpdateMyProfileDto,
   UserBadgeItemDto,
   UserCenterDto,
+  UserMentionCandidateDto,
   UserExperienceRecordDto,
   UserExperienceStatsDto,
   UserPointRecordDto,
@@ -161,5 +163,17 @@ export class UserController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.userService.getUserBadges(userId, query)
+  }
+
+  /**
+   * 查询 @ 提及候选用户。
+   */
+  @Get('mention/page')
+  @ApiPageDoc({
+    summary: '查询 @ 提及候选用户',
+    model: UserMentionCandidateDto,
+  })
+  async getMentionCandidates(@Query() query: QueryUserMentionPageDto) {
+    return this.userService.getMentionCandidates(query)
   }
 }

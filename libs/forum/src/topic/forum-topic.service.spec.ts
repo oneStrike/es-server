@@ -1,4 +1,6 @@
 import * as schema from '@db/schema'
+import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
+import { ForumReviewPolicyEnum } from '../forum.constant'
 import { ForumTopicService } from './forum-topic.service'
 
 describe('forumTopicService', () => {
@@ -7,6 +9,19 @@ describe('forumTopicService', () => {
   let selectWhereMock: jest.Mock
   let likeService: { checkStatusBatch: jest.Mock }
   let favoriteService: { checkStatusBatch: jest.Mock }
+  let growthEventBridgeService: { dispatchDefinedEvent: jest.Mock }
+  let sensitiveWordDetectService: { getMatchedWords: jest.Mock }
+  let forumCounterService: {
+    updateTopicRelatedCounts: jest.Mock
+    syncSectionVisibleState: jest.Mock
+  }
+  let actionLogService: { createActionLog: jest.Mock }
+  let forumPermissionService: { ensureUserCanCreateTopic: jest.Mock }
+  let mentionService: {
+    buildBodyTokens: jest.Mock
+    replaceMentionsInTx: jest.Mock
+    dispatchTopicMentionsInTx: jest.Mock
+  }
 
   beforeEach(() => {
     selectWhereMock = jest.fn()
@@ -18,7 +33,9 @@ describe('forumTopicService', () => {
             where: selectWhereMock,
           })),
         })),
+        transaction: jest.fn(),
       },
+      withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
       schema,
     }
 
@@ -28,20 +45,44 @@ describe('forumTopicService', () => {
     favoriteService = {
       checkStatusBatch: jest.fn().mockResolvedValue(new Map([[11, false]])),
     }
+    growthEventBridgeService = {
+      dispatchDefinedEvent: jest.fn(),
+    }
+    sensitiveWordDetectService = {
+      getMatchedWords: jest.fn().mockReturnValue({
+        hits: [],
+        highestLevel: undefined,
+      }),
+    }
+    forumCounterService = {
+      updateTopicRelatedCounts: jest.fn(),
+      syncSectionVisibleState: jest.fn(),
+    }
+    actionLogService = {
+      createActionLog: jest.fn(),
+    }
+    forumPermissionService = {
+      ensureUserCanCreateTopic: jest.fn(),
+    }
+    mentionService = {
+      buildBodyTokens: jest.fn(),
+      replaceMentionsInTx: jest.fn(),
+      dispatchTopicMentionsInTx: jest.fn(),
+    }
 
-    service = new ForumTopicService(
+    service = new (ForumTopicService as any)(
       drizzle,
+      growthEventBridgeService as any,
+      sensitiveWordDetectService as any,
       {} as any,
+      forumCounterService as any,
       {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      actionLogService as any,
+      forumPermissionService as any,
       likeService as any,
       favoriteService as any,
       {} as any,
-      {} as any,
+      mentionService as any,
     )
   })
 
@@ -150,5 +191,87 @@ describe('forumTopicService', () => {
       }),
     )
     expect(result).not.toHaveProperty('geoSource')
+  })
+
+  it('创建可见主题会构建 mention token 并同步 TOPIC_MENTION 通知', async () => {
+    const createdAt = new Date('2026-04-12T10:00:00.000Z')
+    const tx = {
+      insert: jest.fn().mockReturnValue({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([
+            {
+              id: 101,
+              sectionId: 7,
+              userId: 9,
+              title: '提及主题',
+              content: '欢迎 @测试用户 一起讨论',
+              bodyTokens: [
+                {
+                  type: 'mentionUser',
+                  userId: 5,
+                  nickname: '测试用户',
+                  text: '@测试用户',
+                },
+              ],
+              images: [],
+              videos: [],
+              auditStatus: 1,
+              isHidden: false,
+              sensitiveWordHits: null,
+              createdAt,
+              updatedAt: createdAt,
+            },
+          ]),
+        }),
+      }),
+    }
+    drizzle.db.transaction.mockImplementation(async (callback: any) => callback(tx))
+    forumPermissionService.ensureUserCanCreateTopic.mockResolvedValue({
+      topicReviewPolicy: ForumReviewPolicyEnum.NONE,
+    })
+    mentionService.buildBodyTokens.mockResolvedValue([
+      {
+        type: 'mentionUser',
+        userId: 5,
+        nickname: '测试用户',
+        text: '@测试用户',
+      },
+    ])
+
+    await service.createForumTopic({
+      sectionId: 7,
+      userId: 9,
+      title: '提及主题',
+      content: '欢迎 @测试用户 一起讨论',
+      mentions: [
+        {
+          userId: 5,
+          nickname: '测试用户',
+          start: 3,
+          end: 8,
+        },
+      ],
+    } as any)
+
+    expect(mentionService.buildBodyTokens).toHaveBeenCalledWith({
+      content: '欢迎 @测试用户 一起讨论',
+      mentions: [
+        {
+          userId: 5,
+          nickname: '测试用户',
+          start: 3,
+          end: 8,
+        },
+      ],
+      scene: EmojiSceneEnum.FORUM,
+    })
+    expect(mentionService.dispatchTopicMentionsInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        topicId: 101,
+        actorUserId: 9,
+        topicTitle: '提及主题',
+      }),
+    )
   })
 })

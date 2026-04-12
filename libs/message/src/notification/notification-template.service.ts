@@ -68,6 +68,14 @@ const NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP = new Map<
     MessageNotificationTypeEnum.TOPIC_COMMENT,
     new Set(['actorNickname', 'topicTitle', 'commentExcerpt']),
   ],
+  [
+    MessageNotificationTypeEnum.COMMENT_MENTION,
+    new Set(['actorNickname', 'commentExcerpt', 'targetDisplayTitle']),
+  ],
+  [
+    MessageNotificationTypeEnum.TOPIC_MENTION,
+    new Set(['actorNickname', 'topicTitle']),
+  ],
 ])
 
 interface NotificationTemplateCacheEntry {

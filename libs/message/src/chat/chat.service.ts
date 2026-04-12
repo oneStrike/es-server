@@ -884,7 +884,12 @@ export class MessageChatService {
   private buildRecentEmojiUsageItems(bodyTokens: EmojiParseToken[]) {
     const useCountMap = new Map<number, number>()
     for (const token of bodyTokens) {
-      if (token.type === 'text' || !token.emojiAssetId) {
+      if (
+        token.type === 'text' ||
+        token.type === 'mentionUser' ||
+        !('emojiAssetId' in token) ||
+        !token.emojiAssetId
+      ) {
         continue
       }
       useCountMap.set(

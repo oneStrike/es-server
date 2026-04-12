@@ -1,4 +1,4 @@
-import { createAuthRedisKeys } from '@libs/platform/modules/auth'
+import { createAuthRedisKeys } from '@libs/platform/modules/auth/auth.helpers'
 
 export const AppAuthRedisKeys = createAuthRedisKeys('app')
 

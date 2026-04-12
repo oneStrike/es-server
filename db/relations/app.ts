@@ -38,7 +38,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     }),
   },
   appUpdateRelease: {
-    storeLinks: r.many.appUpdateStoreLink(),
     createdBy: r.one.adminUser({
       from: r.appUpdateRelease.createdById,
       to: r.adminUser.id,
@@ -48,12 +47,6 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.appUpdateRelease.updatedById,
       to: r.adminUser.id,
       alias: 'AppUpdateReleaseUpdatedBy',
-    }),
-  },
-  appUpdateStoreLink: {
-    release: r.one.appUpdateRelease({
-      from: r.appUpdateStoreLink.releaseId,
-      to: r.appUpdateRelease.id,
     }),
   },
   appPage: {

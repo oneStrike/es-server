@@ -13,10 +13,10 @@ describe('app update dto validation', () => {
 
     const errors = validateSync(dto)
 
-    expect(errors.some(error => error.property === 'platform')).toBe(true)
+    expect(errors.some((error) => error.property === 'platform')).toBe(true)
   })
 
-  it('rejects invalid download urls in release dto', async () => {
+  it('accepts store links without channel name and rejects invalid download urls', async () => {
     const { CreateAppUpdateReleaseDto } = await import('./update.dto')
 
     const dto = plainToInstance(CreateAppUpdateReleaseDto, {
@@ -28,7 +28,6 @@ describe('app update dto validation', () => {
       storeLinks: [
         {
           channelCode: 'default',
-          channelName: '默认渠道',
           storeUrl: 'not-a-url',
         },
       ],
@@ -36,9 +35,9 @@ describe('app update dto validation', () => {
 
     const errors = validateSync(dto, { whitelist: true })
 
-    expect(errors.some(error => error.property === 'customDownloadUrl')).toBe(
+    expect(errors.some((error) => error.property === 'customDownloadUrl')).toBe(
       true,
     )
-    expect(errors.some(error => error.property === 'storeLinks')).toBe(true)
+    expect(errors.some((error) => error.property === 'storeLinks')).toBe(true)
   })
 })

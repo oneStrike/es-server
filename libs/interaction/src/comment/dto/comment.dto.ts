@@ -15,6 +15,7 @@ import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from '../comment.constant'
+import { MentionDraftDto } from '../../mention/dto/mention.dto'
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
@@ -51,11 +52,17 @@ export class BaseCommentDto extends BaseDto {
   content!: string
 
   @JsonProperty({
-    description: '评论正文解析 token（EmojiParser 输出）',
+    description: '评论正文解析 token（表情与提及混合输出）',
     required: false,
     validation: false,
     example: [
       { type: 'text', text: 'hello ' },
+      {
+        type: 'mentionUser',
+        userId: 9,
+        nickname: '测试用户',
+        text: '@测试用户',
+      },
       {
         type: 'emojiCustom',
         emojiAssetId: 1001,
@@ -67,6 +74,14 @@ export class BaseCommentDto extends BaseDto {
     ],
   })
   bodyTokens?: unknown | null
+
+  @ArrayProperty({
+    description: '结构化提及列表，仅写入时使用',
+    required: false,
+    itemClass: MentionDraftDto,
+    contract: false,
+  })
+  mentions?: MentionDraftDto[]
 
   @NumberProperty({
     description: '楼层号',
@@ -252,12 +267,12 @@ export class ReplyTargetDto {
 
 export class CreateCommentBodyDto extends IntersectionType(
   CommentTargetDto,
-  PickType(BaseCommentDto, ['content'] as const),
+  PickType(BaseCommentDto, ['content', 'mentions'] as const),
 ) {}
 
 export class ReplyCommentBodyDto extends IntersectionType(
   ReplyTargetDto,
-  PickType(BaseCommentDto, ['content'] as const),
+  PickType(BaseCommentDto, ['content', 'mentions'] as const),
 ) {}
 
 export class CommentSortDto {

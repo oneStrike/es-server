@@ -24,6 +24,7 @@ export const DICTIONARY_CODES = {
   workRegion: 'work_region',
   workPublisher: 'work_publisher',
   workAgeRating: 'work_age_rating',
+  appUpdateChannel: 'app_update_channel',
 } as const
 
 export const DICTIONARY_ITEMS = {
@@ -53,6 +54,14 @@ export const DICTIONARY_ITEMS = {
     pg13: 'PG13',
     r15: 'R15',
     r18: 'R18',
+  },
+  appUpdateChannel: {
+    default: 'default',
+    appStore: 'app_store',
+    huawei: 'huawei',
+    xiaomi: 'xiaomi',
+    oppo: 'oppo',
+    vivo: 'vivo',
   },
 } as const
 

@@ -40,6 +40,13 @@ describe('commentService', () => {
   let messageOutboxService: { enqueueNotificationEventInTx: jest.Mock }
   let messageNotificationComposerService: {
     buildCommentReplyEvent: jest.Mock
+    buildCommentMentionEvent: jest.Mock
+  }
+  let mentionService: {
+    buildBodyTokens: jest.Mock
+    replaceMentionsInTx: jest.Mock
+    dispatchCommentMentionsInTx: jest.Mock
+    deleteMentionsInTx: jest.Mock
   }
 
   beforeEach(() => {
@@ -78,9 +85,16 @@ describe('commentService', () => {
     }
     messageNotificationComposerService = {
       buildCommentReplyEvent: jest.fn(),
+      buildCommentMentionEvent: jest.fn(),
+    }
+    mentionService = {
+      buildBodyTokens: jest.fn(),
+      replaceMentionsInTx: jest.fn(),
+      dispatchCommentMentionsInTx: jest.fn(),
+      deleteMentionsInTx: jest.fn(),
     }
 
-    service = new CommentService(
+    service = new (CommentService as any)(
       {} as any,
       {} as any,
       {} as any,
@@ -89,8 +103,8 @@ describe('commentService', () => {
       messageOutboxService as any,
       messageNotificationComposerService as any,
       {} as any,
-      {} as any,
       drizzle,
+      mentionService as any,
     )
   })
 
@@ -489,6 +503,68 @@ describe('commentService', () => {
         payload: expect.objectContaining({
           type: MessageNotificationTypeEnum.COMMENT_REPLY,
         }),
+      }),
+    )
+  })
+
+  it('可见回复评论命中提及时会补发 COMMENT_MENTION 通知', async () => {
+    const createdAt = new Date('2026-04-08T00:00:00.000Z')
+    const tx = {
+      query: {
+        appUser: {
+          findFirst: jest.fn().mockResolvedValue({
+            nickname: '回复者',
+          }),
+        },
+        userComment: {
+          findFirst: jest.fn(),
+        },
+      },
+    }
+    const eventEnvelope = (service as any).buildCommentCreatedEventEnvelope({
+      commentId: 11,
+      userId: 9,
+      targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+      targetId: 7,
+      replyToId: 1,
+      occurredAt: createdAt,
+      auditStatus: AuditStatusEnum.APPROVED,
+      isHidden: false,
+    })
+    messageNotificationComposerService.buildCommentReplyEvent.mockReturnValue({
+      bizKey: 'comment:reply:11:to:3',
+      payload: {
+        type: MessageNotificationTypeEnum.COMMENT_REPLY,
+      },
+    })
+
+    await (service as any).compensateVisibleCommentEffects(
+      tx,
+      {
+        id: 11,
+        userId: 9,
+        targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+        targetId: 7,
+        replyToId: 1,
+        content: '回复内容并 @测试用户',
+        createdAt,
+        replyTargetUserId: 3,
+      },
+      {
+        targetDisplayTitle: '论坛主题',
+      },
+      eventEnvelope,
+    )
+
+    expect(mentionService.dispatchCommentMentionsInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        commentId: 11,
+        actorUserId: 9,
+        targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+        targetId: 7,
+        content: '回复内容并 @测试用户',
+        targetDisplayTitle: '论坛主题',
       }),
     )
   })

@@ -23,6 +23,7 @@ import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { MentionDraftDto } from '@libs/interaction/mention/dto/mention.dto'
 
 /**
  * 论坛主题基础 DTO。
@@ -45,15 +46,29 @@ export class BaseForumTopicDto extends BaseDto {
   content!: string
 
   @JsonProperty({
-    description: '主题正文解析 token（EmojiParser 输出）',
+    description: '主题正文解析 token（表情与提及混合输出）',
     required: false,
     validation: false,
     example: [
       { type: 'text', text: '欢迎来到论坛 ' },
+      {
+        type: 'mentionUser',
+        userId: 9,
+        nickname: '测试用户',
+        text: '@测试用户',
+      },
       { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
   bodyTokens?: unknown | null
+
+  @ArrayProperty({
+    description: '结构化提及列表，仅写入时使用',
+    required: false,
+    itemClass: MentionDraftDto,
+    contract: false,
+  })
+  mentions?: MentionDraftDto[]
 
   @ArrayProperty({
     description: '主题图片列表',
@@ -295,7 +310,7 @@ export class BaseForumTopicDto extends BaseDto {
  * 统一约束标题、正文和可选媒体列表，避免 app/admin 入口重复声明。
  */
 export class ForumTopicWritableFieldsDto extends IntersectionType(
-  PickType(BaseForumTopicDto, ['title', 'content'] as const),
+  PickType(BaseForumTopicDto, ['title', 'content', 'mentions'] as const),
   PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
 ) {}
 
