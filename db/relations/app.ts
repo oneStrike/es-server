@@ -37,6 +37,25 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       alias: 'AppConfigUpdater',
     }),
   },
+  appUpdateRelease: {
+    storeLinks: r.many.appUpdateStoreLink(),
+    createdBy: r.one.adminUser({
+      from: r.appUpdateRelease.createdById,
+      to: r.adminUser.id,
+      alias: 'AppUpdateReleaseCreatedBy',
+    }),
+    updatedBy: r.one.adminUser({
+      from: r.appUpdateRelease.updatedById,
+      to: r.adminUser.id,
+      alias: 'AppUpdateReleaseUpdatedBy',
+    }),
+  },
+  appUpdateStoreLink: {
+    release: r.one.appUpdateRelease({
+      from: r.appUpdateStoreLink.releaseId,
+      to: r.appUpdateRelease.id,
+    }),
+  },
   appPage: {
     announcements: r.many.appAnnouncement({
       from: r.appPage.id,

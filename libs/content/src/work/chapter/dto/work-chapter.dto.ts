@@ -1,12 +1,17 @@
-import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
+import {
+  PurchasePricingDto,
+  PurchasePricingFieldsDto,
+} from '@libs/interaction/purchase/dto/purchase-pricing.dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -229,13 +234,21 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'sortOrder',
   'viewRule',
   'canDownload',
-  'price',
   'requiredViewLevelId',
   'publishAt',
   'createdAt',
   'updatedAt',
   'isPublished',
-] as const) {}
+] as const) {
+  @NestedProperty({
+    description: '购买价格信息',
+    type: PurchasePricingDto,
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  purchasePricing!: PurchasePricingDto | null
+}
 
 class ChapterUserStatusFieldsDto {
   @BooleanProperty({
@@ -263,7 +276,7 @@ class ChapterUserStatusFieldsDto {
   downloaded!: boolean
 }
 
-class WorkChapterDetailBodyDto extends PickType(BaseWorkChapterDto, [
+class WorkChapterDetailBodyBaseDto extends PickType(BaseWorkChapterDto, [
   'id',
   'workId',
   'workType',
@@ -277,7 +290,6 @@ class WorkChapterDetailBodyDto extends PickType(BaseWorkChapterDto, [
   'publishAt',
   'viewRule',
   'requiredViewLevelId',
-  'price',
   'canDownload',
   'canComment',
   'content',
@@ -290,6 +302,11 @@ class WorkChapterDetailBodyDto extends PickType(BaseWorkChapterDto, [
   'createdAt',
   'updatedAt',
 ] as const) {}
+
+class WorkChapterDetailBodyDto extends IntersectionType(
+  WorkChapterDetailBodyBaseDto,
+  PurchasePricingFieldsDto,
+) {}
 
 /**
  * 漫画章节内容 DTO。

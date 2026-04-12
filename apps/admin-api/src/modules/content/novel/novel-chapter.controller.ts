@@ -1,9 +1,13 @@
-import { CreateWorkChapterDto, QueryWorkChapterDto, UpdateWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto';
-import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service';
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
+import {
+  CreateWorkChapterDto,
+  QueryWorkChapterDto,
+  UpdateWorkChapterDto,
+} from '@libs/content/work/chapter/dto/work-chapter.dto'
+import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
@@ -36,7 +40,9 @@ export class NovelChapterController {
     model: IdDto,
   })
   async getPage(@Query() query: QueryWorkChapterDto) {
-    return this.workChapterService.getChapterPage(query)
+    return this.workChapterService.getChapterPage(query, {
+      bypassVisibilityCheck: true,
+    })
   }
 
   @Get('detail')
@@ -79,7 +85,10 @@ export class NovelChapterController {
     summary: '交换章节序号',
     model: Boolean,
   })
-  @Audit({ actionType: AuditActionTypeEnum.UPDATE, content: '交换小说章节序号' })
+  @Audit({
+    actionType: AuditActionTypeEnum.UPDATE,
+    content: '交换小说章节序号',
+  })
   async swapSortOrder(@Body() body: DragReorderDto) {
     return this.workChapterService.swapChapterNumbers(body)
   }

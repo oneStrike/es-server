@@ -211,7 +211,7 @@ export class AuthService {
 
       let password = ''
       try {
-        password = this.rsaService.decryptWith(body.password)
+        password = this.rsaService.decryptWith(body.password!)
       } catch {
         await this.recordPasswordLoginFailure(user.id)
       }

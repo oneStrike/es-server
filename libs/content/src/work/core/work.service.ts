@@ -6,15 +6,20 @@ import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constan
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
+import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
+import {
+  ContentTypeEnum,
+  WorkViewPermissionEnum,
+} from '@libs/platform/constant/content.constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { isNotNil } from '@libs/platform/utils/is'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { WorkAuthorService } from '../../author/author.service'
+import { ContentPermissionService } from '../../permission/content-permission.service'
 import {
   CreateWorkDto,
   QueryWorkDto,
@@ -74,6 +79,7 @@ export class WorkService {
     private readonly followService: FollowService,
     private readonly browseLogService: BrowseLogService,
     private readonly readingStateService: ReadingStateService,
+    private readonly contentPermissionService: ContentPermissionService,
   ) {}
 
   /** 统一复用当前模块的 Drizzle 数据库实例。 */
@@ -166,8 +172,9 @@ export class WorkService {
     authors: Array<Record<string, any>>
     categories: Array<Record<string, any>>
     tags: Array<Record<string, any>>
+    chapterPurchasePricing: PurchasePricingDto | null
   }) {
-    const { work, authors, categories, tags } = params
+    const { work, authors, categories, tags, chapterPurchasePricing } = params
     return {
       id: work.id,
       name: work.name,
@@ -195,7 +202,7 @@ export class WorkService {
       viewRule: work.viewRule,
       requiredViewLevelId: work.requiredViewLevelId,
       forumSectionId: work.forumSectionId,
-      chapterPrice: work.chapterPrice,
+      chapterPurchasePricing,
       canComment: work.canComment,
       viewCount: work.viewCount,
       favoriteCount: work.favoriteCount,
@@ -1099,6 +1106,19 @@ export class WorkService {
     }
 
     const { authors, categories, tags, ...workData } = work
+    const chapterPayableRate = bypassVisibilityCheck
+      ? undefined
+      : await this.contentPermissionService.resolveUserPurchasePayableRate(
+          userId,
+        )
+    const chapterPurchasePricing = bypassVisibilityCheck
+      ? null
+      : workData.viewRule === WorkViewPermissionEnum.PURCHASE
+        ? this.contentPermissionService.buildPurchasePricing(
+            workData.chapterPrice,
+            chapterPayableRate ?? 1,
+          )
+        : null
 
     const workAuthors = authors.map((author) => ({
       ...author,
@@ -1109,6 +1129,7 @@ export class WorkService {
       authors: workAuthors,
       categories,
       tags,
+      chapterPurchasePricing,
     })
 
     // 为匿名用户保持稳定的响应结构，使应用可以重用相同的DTO而无需条件解析
@@ -1224,6 +1245,7 @@ export class WorkService {
         authors: resolvedAuthors,
         categories,
         tags,
+        chapterPurchasePricing,
       }),
       liked,
       favorited,

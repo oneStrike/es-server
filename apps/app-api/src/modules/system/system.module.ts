@@ -2,6 +2,7 @@ import { AppConfigModule } from '@libs/app-config/config.module';
 import { AgreementModule } from '@libs/app-content/agreement/agreement.module';
 import { AppAnnouncementModule } from '@libs/app-content/announcement/announcement.module';
 import { AppPageModule } from '@libs/app-content/page/page.module';
+import { AppUpdateModule } from '@libs/app-content/update/update.module';
 import { Module } from '@nestjs/common'
 import { SystemController } from './system.controller'
 
@@ -15,6 +16,7 @@ import { SystemController } from './system.controller'
     AgreementModule,
     AppAnnouncementModule,
     AppConfigModule,
+    AppUpdateModule,
     AppPageModule,
   ],
   controllers: [SystemController],

@@ -1,11 +1,11 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -128,12 +128,12 @@ export class BaseUserLevelRuleDto extends BaseDto {
   workCollectionLimit!: number
 
   @StringProperty({
-    description: '积分购买折扣（0-1之间的小数）',
-    example: '0.80',
+    description: '积分支付比例（0-1之间的小数，1表示原价支付）',
+    example: '0.90',
     required: true,
     maxLength: 4,
   })
-  discount!: string
+  purchasePayableRate!: string
 
   @StringProperty({
     description: '等级专属颜色（十六进制）',
@@ -142,7 +142,6 @@ export class BaseUserLevelRuleDto extends BaseDto {
     maxLength: 20,
   })
   color?: string
-
 }
 
 export class CreateUserLevelRuleDto extends OmitType(
@@ -174,7 +173,11 @@ export class UserLevelInfoDto {
   @NumberProperty({ description: '等级ID', example: 1, validation: false })
   levelId!: number
 
-  @StringProperty({ description: '等级名称', example: '新手', validation: false })
+  @StringProperty({
+    description: '等级名称',
+    example: '新手',
+    validation: false,
+  })
   levelName!: string
 
   @StringProperty({
@@ -201,7 +204,11 @@ export class UserLevelInfoDto {
   })
   levelColor?: string
 
-  @NumberProperty({ description: '当前经验值', example: 100, validation: false })
+  @NumberProperty({
+    description: '当前经验值',
+    example: 100,
+    validation: false,
+  })
   currentExperience!: number
 
   @NumberProperty({
@@ -247,10 +254,18 @@ export class CheckUserLevelPermissionDto {
 }
 
 export class UserLevelPermissionResultDto {
-  @BooleanProperty({ description: '是否有权限', example: true, validation: false })
+  @BooleanProperty({
+    description: '是否有权限',
+    example: true,
+    validation: false,
+  })
   hasPermission!: boolean
 
-  @StringProperty({ description: '当前等级名称', example: '新手', validation: false })
+  @StringProperty({
+    description: '当前等级名称',
+    example: '新手',
+    validation: false,
+  })
   currentLevel!: string
 
   @NumberProperty({
@@ -282,10 +297,18 @@ export class UserLevelDistributionItemDto {
   @NumberProperty({ description: '等级ID', example: 1, validation: false })
   levelId!: number
 
-  @StringProperty({ description: '等级名称', example: '新手', validation: false })
+  @StringProperty({
+    description: '等级名称',
+    example: '新手',
+    validation: false,
+  })
   levelName!: string
 
-  @NumberProperty({ description: '该等级用户数量', example: 150, validation: false })
+  @NumberProperty({
+    description: '该等级用户数量',
+    example: 150,
+    validation: false,
+  })
   userCount!: number
 }
 
@@ -293,7 +316,11 @@ export class UserLevelStatisticsDto {
   @NumberProperty({ description: '总等级数量', example: 10, validation: false })
   totalLevels!: number
 
-  @NumberProperty({ description: '启用的等级数量', example: 8, validation: false })
+  @NumberProperty({
+    description: '启用的等级数量',
+    example: 8,
+    validation: false,
+  })
   enabledLevels!: number
 
   @ArrayProperty({

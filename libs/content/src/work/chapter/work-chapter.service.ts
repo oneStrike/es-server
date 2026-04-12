@@ -84,9 +84,10 @@ export class WorkChapterService {
       isPublished: chapter.isPublished,
       isPreview: chapter.isPreview,
       publishAt: chapter.publishAt,
-      viewRule: chapter.viewRule,
-      requiredViewLevelId: chapter.requiredViewLevelId,
-      price: chapter.price,
+      viewRule: chapter.resolvedViewRule ?? chapter.viewRule,
+      requiredViewLevelId:
+        chapter.resolvedRequiredViewLevelId ?? chapter.requiredViewLevelId,
+      purchasePricing: chapter.purchasePricing ?? null,
       canDownload: chapter.canDownload,
       canComment: chapter.canComment,
       content: chapter.content,
@@ -135,7 +136,11 @@ export class WorkChapterService {
    * @param dto - 查询参数，支持按 workId、title 筛选
    * @returns 分页章节列表
    */
-  async getChapterPage(dto: QueryWorkChapterDto) {
+  async getChapterPage(
+    dto: QueryWorkChapterDto,
+    context: { userId?: number; bypassVisibilityCheck?: boolean } = {},
+  ) {
+    const { userId, bypassVisibilityCheck = false } = context
     const conditions: SQL[] = [isNull(this.workChapter.deletedAt)]
 
     if (dto.workId !== undefined) {
@@ -171,6 +176,43 @@ export class WorkChapterService {
       orderBy,
     })
 
+    if (bypassVisibilityCheck) {
+      return {
+        ...page,
+        list: page.list.map((chapter) => ({
+          id: chapter.id,
+          isPreview: chapter.isPreview,
+          cover: chapter.cover,
+          title: chapter.title,
+          subtitle: chapter.subtitle,
+          price: chapter.price,
+          canComment: chapter.canComment,
+          sortOrder: chapter.sortOrder,
+          viewRule: chapter.viewRule,
+          canDownload: chapter.canDownload,
+          requiredViewLevelId: chapter.requiredViewLevelId,
+          publishAt: chapter.publishAt,
+          createdAt: chapter.createdAt,
+          updatedAt: chapter.updatedAt,
+          isPublished: chapter.isPublished,
+        })),
+      }
+    }
+
+    const permissionEntries = await Promise.all(
+      page.list.map(
+        async (chapter) =>
+          [
+            chapter.id,
+            await this.contentPermissionService.resolveChapterPermission(
+              chapter.id,
+              userId,
+            ),
+          ] as const,
+      ),
+    )
+    const permissionMap = new Map(permissionEntries)
+
     return {
       ...page,
       list: page.list.map((chapter) => ({
@@ -179,12 +221,15 @@ export class WorkChapterService {
         cover: chapter.cover,
         title: chapter.title,
         subtitle: chapter.subtitle,
-        price: chapter.price,
         canComment: chapter.canComment,
         sortOrder: chapter.sortOrder,
-        viewRule: chapter.viewRule,
-        canDownload: chapter.canDownload,
-        requiredViewLevelId: chapter.requiredViewLevelId,
+        viewRule: permissionMap.get(chapter.id)?.viewRule ?? chapter.viewRule,
+        canDownload:
+          permissionMap.get(chapter.id)?.canDownload ?? chapter.canDownload,
+        requiredViewLevelId:
+          permissionMap.get(chapter.id)?.requiredViewLevelId ??
+          chapter.requiredViewLevelId,
+        purchasePricing: permissionMap.get(chapter.id)?.purchasePricing ?? null,
         publishAt: chapter.publishAt,
         createdAt: chapter.createdAt,
         updatedAt: chapter.updatedAt,
@@ -291,6 +336,9 @@ export class WorkChapterService {
       chapter.workType === ContentTypeEnum.COMIC
         ? (jsonParse(chapter.content, []) as unknown as string)
         : chapter.content
+    const resolvedPermission = bypassVisibilityCheck
+      ? undefined
+      : await this.contentPermissionService.resolveChapterPermission(id, userId)
 
     // 未登录用户直接返回基础信息
     if (!userId) {
@@ -303,6 +351,10 @@ export class WorkChapterService {
         ...this.buildPublicChapterDetail({
           ...chapter,
           content: parsedContent,
+          resolvedViewRule: resolvedPermission?.viewRule,
+          resolvedRequiredViewLevelId:
+            resolvedPermission?.requiredViewLevelId ?? null,
+          purchasePricing: resolvedPermission?.purchasePricing ?? null,
         }),
         liked: false,
         downloaded: false,
@@ -369,6 +421,10 @@ export class WorkChapterService {
       liked,
       downloaded,
       purchased,
+      resolvedViewRule: resolvedPermission?.viewRule,
+      resolvedRequiredViewLevelId:
+        resolvedPermission?.requiredViewLevelId ?? null,
+      purchasePricing: resolvedPermission?.purchasePricing ?? null,
     }
 
     if (bypassVisibilityCheck) {

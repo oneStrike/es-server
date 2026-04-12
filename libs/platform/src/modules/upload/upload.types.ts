@@ -71,6 +71,7 @@ export type UploadFileCategory =
   | 'video'
   | 'document'
   | 'archive'
+  | 'package'
 
 export interface PreparedUploadFile {
   tempPath: string

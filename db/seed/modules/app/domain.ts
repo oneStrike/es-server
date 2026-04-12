@@ -78,7 +78,7 @@ const LEVEL_FIXTURES = [
     dailyFavoriteLimit: 10,
     blacklistLimit: 20,
     workCollectionLimit: 50,
-    discount: '0.00',
+    purchasePayableRate: '1.00',
   },
   {
     name: '活跃读者',
@@ -97,7 +97,7 @@ const LEVEL_FIXTURES = [
     dailyFavoriteLimit: 20,
     blacklistLimit: 30,
     workCollectionLimit: 120,
-    discount: '0.05',
+    purchasePayableRate: '0.95',
   },
   {
     name: '资深读者',
@@ -116,7 +116,7 @@ const LEVEL_FIXTURES = [
     dailyFavoriteLimit: 50,
     blacklistLimit: 50,
     workCollectionLimit: 300,
-    discount: '0.10',
+    purchasePayableRate: '0.90',
   },
 ] as const
 
@@ -1134,7 +1134,9 @@ export async function seedAppActivityDomain(db: Db) {
       targetType: 1,
       targetId: aotChapterTwo.id,
       userId: userA.id,
-      price: 30,
+      originalPrice: 30,
+      paidPrice: 30,
+      payableRate: '1.00',
       status: 2,
       paymentMethod: 1,
       outTradeNo: 'seed-purchase-aot-chapter-2',
@@ -1145,7 +1147,9 @@ export async function seedAppActivityDomain(db: Db) {
       targetType: 2,
       targetId: whiteNightChapterTwo.id,
       userId: userB.id,
-      price: 25,
+      originalPrice: 25,
+      paidPrice: 25,
+      payableRate: '1.00',
       status: 2,
       paymentMethod: 1,
       outTradeNo: 'seed-purchase-byh-chapter-2',
@@ -1701,7 +1705,9 @@ export async function seedAppActivityDomain(db: Db) {
         ),
         lastTopicId: lastTopic?.id ?? null,
         lastPostAt:
-          lastTopic?.lastCommentAt ?? lastTopic?.createdAt ?? section.lastPostAt,
+          lastTopic?.lastCommentAt ??
+          lastTopic?.createdAt ??
+          section.lastPostAt,
       })
       .where(eq(forumSection.id, section.id))
   }

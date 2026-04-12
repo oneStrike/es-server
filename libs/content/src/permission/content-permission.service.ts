@@ -3,6 +3,7 @@ import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from '@libs/interaction/purchase/purchase.constant'
+import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -15,6 +16,7 @@ import { PERMISSION_ERROR_MESSAGE } from './content-permission.constant'
 import {
   AccessRuleContext,
   PermissionChapterData,
+  ResolvedChapterPermission,
   UserWithLevel,
 } from './content-permission.types'
 
@@ -106,7 +108,7 @@ export class ContentPermissionService {
    * 解析章节级访问权限摘要。
    * 章节权限可能继承作品配置，因此这里会统一返回“已展开”的访问规则给下载、阅读等调用方复用。
    */
-  async resolveChapterPermission(chapterId: number) {
+  async resolveChapterPermission(chapterId: number, userId?: number) {
     const chapter = await this.db.query.workChapter.findFirst({
       where: { id: chapterId, deletedAt: { isNull: true } },
       columns: {
@@ -131,15 +133,75 @@ export class ContentPermissionService {
         PERMISSION_ERROR_MESSAGE.CHAPTER_NOT_FOUND,
       )
     }
-    const permission = await this.resolveChapterPermissionFromData(chapter)
-    return {
-      workType: chapter.workType,
-      canDownload: permission.canDownload,
-      viewRule: permission.viewRule,
-      requiredExperience: permission.requiredExperience,
-      isPreview: permission.isPreview,
-      price: permission.price,
+    return this.resolveChapterPermissionFromData(chapter, userId)
+  }
+
+  /**
+   * 解析用户积分支付比例。
+   * 用户未登录、无等级、等级失效或比例非法时统一按原价支付处理。
+   */
+  async resolveUserPurchasePayableRate(userId?: number) {
+    if (!userId) {
+      return 1
     }
+
+    const user = await this.db.query.appUser.findFirst({
+      where: { id: userId, deletedAt: { isNull: true } },
+      columns: {
+        id: true,
+      },
+      with: {
+        level: {
+          columns: {
+            purchasePayableRate: true,
+            isEnabled: true,
+          },
+        },
+      },
+    })
+
+    const rawRate = user?.level?.isEnabled
+      ? user.level.purchasePayableRate
+      : undefined
+    const parsedRate = Number(rawRate ?? 1)
+
+    if (!Number.isFinite(parsedRate) || parsedRate < 0 || parsedRate > 1) {
+      return 1
+    }
+
+    return Number(parsedRate.toFixed(2))
+  }
+
+  /**
+   * 根据原价和支付比例构建统一价格读模型。
+   * 折后价统一向上取整，避免低价章节被折扣直接降到 0 积分。
+   */
+  buildPurchasePricing(
+    originalPrice: number,
+    payableRate: number,
+  ): PurchasePricingDto {
+    const normalizedOriginalPrice = Math.max(0, Math.trunc(originalPrice))
+    const normalizedRate = Number(payableRate.toFixed(2))
+    const payablePrice = Math.ceil(normalizedOriginalPrice * normalizedRate)
+
+    return {
+      originalPrice: normalizedOriginalPrice,
+      payableRate: normalizedRate,
+      payablePrice,
+      discountAmount: normalizedOriginalPrice - payablePrice,
+    }
+  }
+
+  /**
+   * 解析指定用户在当前原价下的购买价格。
+   * 该方法供章节展示、作品展示与购买扣减链路共用，避免重复实现折扣公式。
+   */
+  async resolvePurchasePricing(
+    originalPrice: number,
+    userId?: number,
+  ): Promise<PurchasePricingDto> {
+    const payableRate = await this.resolveUserPurchasePayableRate(userId)
+    return this.buildPurchasePricing(originalPrice, payableRate)
   }
 
   /**
@@ -377,27 +439,45 @@ export class ContentPermissionService {
    * @param chapter 已查询的章节数据
    * @returns 解析后的权限配置
    */
-  private async resolveChapterPermissionFromData(
+  async resolveChapterPermissionFromData(
     chapter: PermissionChapterData,
-  ) {
+    userId?: number,
+  ): Promise<ResolvedChapterPermission> {
+    const payableRate = await this.resolveUserPurchasePayableRate(userId)
+
     if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
       const workPermission = await this.resolveWorkPermission(chapter.workId)
+      const viewRule = workPermission.viewRule as WorkViewPermissionEnum
       return {
-        viewRule: workPermission.viewRule as WorkViewPermissionEnum,
+        workType: chapter.workType,
+        viewRule,
         isPreview: chapter.isPreview,
         canDownload: chapter.canDownload,
-        price: workPermission.chapterPrice,
+        requiredViewLevelId: workPermission.requiredViewLevelId ?? null,
         requiredExperience:
           workPermission.requiredViewLevel?.requiredExperience ?? null,
+        purchasePricing:
+          viewRule === WorkViewPermissionEnum.PURCHASE
+            ? this.buildPurchasePricing(
+                workPermission.chapterPrice,
+                payableRate,
+              )
+            : null,
       }
     }
 
+    const viewRule = chapter.viewRule as WorkViewPermissionEnum
     return {
-      viewRule: chapter.viewRule as WorkViewPermissionEnum,
+      workType: chapter.workType,
+      viewRule,
       isPreview: chapter.isPreview,
       canDownload: chapter.canDownload,
-      price: chapter.price,
+      requiredViewLevelId: chapter.requiredViewLevelId ?? null,
       requiredExperience: chapter.requiredViewLevel?.requiredExperience ?? null,
+      purchasePricing:
+        viewRule === WorkViewPermissionEnum.PURCHASE
+          ? this.buildPurchasePricing(chapter.price, payableRate)
+          : null,
     }
   }
 

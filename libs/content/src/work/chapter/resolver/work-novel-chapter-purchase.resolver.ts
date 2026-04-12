@@ -10,6 +10,7 @@ import {
 } from '@libs/platform/constant/content.constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable, OnModuleInit } from '@nestjs/common'
+import { ContentPermissionService } from '../../../permission/content-permission.service'
 import { WorkCounterService } from '../../counter/work-counter.service'
 
 /**
@@ -28,6 +29,7 @@ export class WorkNovelChapterPurchaseResolver
     private readonly purchaseService: PurchaseService,
     private readonly drizzle: DrizzleService,
     private readonly workCounterService: WorkCounterService,
+    private readonly contentPermissionService: ContentPermissionService,
   ) {}
 
   private get db() {
@@ -49,30 +51,27 @@ export class WorkNovelChapterPurchaseResolver
    * 校验是否可以购买并获取价格
    */
   async ensurePurchaseable(targetId: number) {
-    const chapter = await this.db.query.workChapter.findFirst({
-      where: {
-        id: targetId,
-        workType: this.workType,
-        deletedAt: { isNull: true },
-      },
-      columns: { price: true, viewRule: true },
-    })
+    const permission =
+      await this.contentPermissionService.resolveChapterPermission(targetId)
 
-    if (!chapter) {
+    if (permission.workType !== this.workType) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '小说章节不存在',
       )
     }
 
-    if (chapter.viewRule !== WorkViewPermissionEnum.PURCHASE) {
+    if (permission.viewRule !== WorkViewPermissionEnum.PURCHASE) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '该小说章节不支持购买',
       )
     }
 
-    if (chapter.price < 0) {
+    if (
+      !permission.purchasePricing ||
+      permission.purchasePricing.originalPrice < 0
+    ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '小说章节价格配置错误',
@@ -80,7 +79,7 @@ export class WorkNovelChapterPurchaseResolver
     }
 
     return {
-      price: chapter.price,
+      originalPrice: permission.purchasePricing.originalPrice,
     }
   }
 

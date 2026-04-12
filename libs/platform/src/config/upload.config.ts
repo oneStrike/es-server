@@ -4,6 +4,11 @@ import { parseBytes } from '@libs/platform/utils/bytes';
 import { registerAs } from '@nestjs/config'
 import mime from 'mime-types'
 
+export const UPLOAD_CUSTOM_MIME_BY_EXT = {
+  apk: 'application/vnd.android.package-archive',
+  ipa: 'application/octet-stream',
+} as const
+
 // 允许的文件扩展名配置
 const allowExtensions = {
   image: [
@@ -37,6 +42,7 @@ const allowExtensions = {
     'csv',
   ],
   archive: ['zip', 'rar', '7z', 'gz', 'tar'],
+  package: ['apk', 'ipa'],
 }
 
 const {
@@ -54,7 +60,7 @@ const allowMimeTypes: Partial<typeof allowExtensions> = {}
 for (const key in allowExtensions) {
   const element = allowExtensions[key]
   allowMimeTypes[key as keyof typeof allowExtensions] = element
-    .map((ext) => mime.lookup(ext))
+    .map((ext) => UPLOAD_CUSTOM_MIME_BY_EXT[ext] || mime.lookup(ext))
     .filter((item) => item !== false)
 }
 

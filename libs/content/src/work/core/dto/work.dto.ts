@@ -1,6 +1,7 @@
 import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
 import { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
 import { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
+import { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import {
   WorkTypeEnum,
   WorkViewPermissionEnum,
@@ -510,7 +511,6 @@ class WorkDetailExtraDto extends PickType(BaseWorkDto, [
   'viewRule',
   'requiredViewLevelId',
   'forumSectionId',
-  'chapterPrice',
   'canComment',
   'viewCount',
   'favoriteCount',
@@ -518,7 +518,16 @@ class WorkDetailExtraDto extends PickType(BaseWorkDto, [
   'commentCount',
   'downloadCount',
   'rating',
-] as const) {}
+] as const) {
+  @NestedProperty({
+    description: '章节默认购买价格信息',
+    type: PurchasePricingDto,
+    required: false,
+    validation: false,
+    nullable: true,
+  })
+  chapterPurchasePricing!: PurchasePricingDto | null
+}
 
 class WorkDetailBodyDto extends IntersectionType(
   PageWorkDto,

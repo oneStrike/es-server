@@ -34,11 +34,13 @@ export function resolveStaticFileHeaders(
       }
     }
 
-    const { document, archive } = uploadConfig.allowExtensions
+    const { document, archive, package: packageExtensions } =
+      uploadConfig.allowExtensions
     const isDoc = document?.includes(ext)
     const isArchive = archive?.includes(ext)
+    const isPackage = packageExtensions?.includes(ext)
 
-    if (isDoc || isArchive) {
+    if (isDoc || isArchive || isPackage) {
       return {
         'Content-Disposition': 'attachment',
         'X-Content-Type-Options': 'nosniff',

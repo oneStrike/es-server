@@ -1,4 +1,5 @@
 import {
+  PurchaseChapterResultDto,
   PurchasedWorkChapterItemDto,
   PurchasedWorkItemDto,
   PurchaseTargetBodyDto,
@@ -7,8 +8,6 @@ import {
 } from '@libs/interaction/purchase/dto/purchase.dto'
 import { PurchaseService } from '@libs/interaction/purchase/purchase.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
-
-import { IdDto } from '@libs/platform/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -50,7 +49,7 @@ export class PurchaseController {
   @Post('chapter')
   @ApiDoc({
     summary: '购买章节（漫画/小说）',
-    model: IdDto,
+    model: PurchaseChapterResultDto,
   })
   async purchaseChapter(
     @Body() body: PurchaseTargetBodyDto,

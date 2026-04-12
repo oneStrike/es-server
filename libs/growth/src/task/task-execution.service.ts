@@ -228,8 +228,8 @@ export class TaskExecutionService extends TaskServiceSupport {
    * 已完成 assignment 会走奖励补偿分支，不再重复推进。
    */
   async reportProgress(dto: TaskProgressDto, userId: number) {
-    if (dto.delta <= 0) {
-      throw new BadRequestException('进度增量必须大于0')
+    if (!Number.isInteger(dto.delta) || dto.delta <= 0) {
+      throw new BadRequestException('进度增量必须是大于0的整数')
     }
 
     const now = new Date()

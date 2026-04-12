@@ -1,18 +1,15 @@
-import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto';
-import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto';
-import { WorkTypeEnum } from '@libs/platform/constant/content.constant';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
+import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
+import { WorkTypeEnum } from '@libs/platform/constant/content.constant'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { PurchasePricingFieldsDto } from './purchase-pricing.dto'
 import {
   PaymentMethodEnum,
   PurchaseStatusEnum,
@@ -44,14 +41,6 @@ export class BasePurchaseRecordDto extends BaseDto {
     required: true,
   })
   userId!: number
-
-  @NumberProperty({
-    description: '购买价格',
-    example: 20,
-    required: true,
-    validation: false,
-  })
-  price!: number
 
   @EnumProperty({
     description: '购买状态（1=成功；2=失败；3=退款中；4=已退款）',
@@ -91,7 +80,10 @@ export class PurchaseTargetCommandDto extends IntersectionType(
 
 export class QueryPurchasedWorkDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BasePurchaseRecordDto), ['targetType', 'status'] as const),
+  PickType(PartialType(BasePurchaseRecordDto), [
+    'targetType',
+    'status',
+  ] as const),
 ) {
   @EnumProperty({
     description: '作品类型（1=漫画；2=小说）',
@@ -168,7 +160,10 @@ export class PurchasedChapterInfoDto extends PickType(BaseWorkChapterDto, [
   'publishAt',
 ] as const) {}
 
-export class PurchasedWorkChapterItemDto extends BasePurchaseRecordDto {
+export class PurchasedWorkChapterItemDto extends IntersectionType(
+  BasePurchaseRecordDto,
+  PurchasePricingFieldsDto,
+) {
   @NestedProperty({
     description: '章节信息',
     type: PurchasedChapterInfoDto,
@@ -178,3 +173,8 @@ export class PurchasedWorkChapterItemDto extends BasePurchaseRecordDto {
   })
   chapter!: PurchasedChapterInfoDto
 }
+
+export class PurchaseChapterResultDto extends IntersectionType(
+  BasePurchaseRecordDto,
+  PurchasePricingFieldsDto,
+) {}

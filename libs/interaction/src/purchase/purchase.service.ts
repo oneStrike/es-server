@@ -1,5 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
+import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import {
   GrowthAssetTypeEnum,
   GrowthLedgerActionEnum,
@@ -11,10 +12,12 @@ import { buildDateOnlyRangeInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import {
+  PurchaseChapterResultDto,
   PurchaseTargetCommandDto,
   QueryPurchasedWorkChapterCommandDto,
   QueryPurchasedWorkCommandDto,
 } from './dto/purchase.dto'
+import type { PurchasePricingDto } from './dto/purchase-pricing.dto'
 import { IPurchaseTargetResolver } from './interfaces/purchase-target-resolver.interface'
 import {
   PURCHASE_WORK_CHAPTER_TARGET_TYPES,
@@ -38,6 +41,7 @@ export class PurchaseService {
   constructor(
     private readonly growthLedgerService: GrowthLedgerService,
     private readonly drizzle: DrizzleService,
+    private readonly contentPermissionService: ContentPermissionService,
   ) {}
 
   private get db() {
@@ -115,16 +119,44 @@ export class PurchaseService {
   }
 
   /**
+   * 将订单快照映射为统一价格读模型。
+   * 历史订单展示统一读取冻结值，避免后续等级变动导致已购记录漂移。
+   */
+  private toPurchasePricingSnapshot(input: {
+    originalPrice: number
+    paidPrice: number
+    payableRate: number | string
+  }): PurchasePricingDto {
+    const payableRate = Number(input.payableRate)
+
+    return {
+      originalPrice: input.originalPrice,
+      payableRate,
+      payablePrice: input.paidPrice,
+      discountAmount: input.originalPrice - input.paidPrice,
+    }
+  }
+
+  /**
    * 执行购买逻辑
    */
-  async purchaseTarget(input: PurchaseTargetCommandDto) {
+  async purchaseTarget(
+    input: PurchaseTargetCommandDto,
+  ): Promise<PurchaseChapterResultDto> {
     const { targetType, targetId, userId, paymentMethod, outTradeNo } = input
     const resolver = this.getResolver(targetType)
 
-    const { price: targetPrice } = await resolver.ensurePurchaseable(targetId)
+    const { originalPrice } = await resolver.ensurePurchaseable(targetId)
+    const purchasePricing =
+      await this.contentPermissionService.resolvePurchasePricing(
+        originalPrice,
+        userId,
+      )
+    const paidPrice = purchasePricing.payablePrice
+    const payableRate = purchasePricing.payableRate.toFixed(2)
 
     this.logger.log(
-      `purchase_start userId=${userId} targetType=${targetType} targetId=${targetId} price=${targetPrice}`,
+      `purchase_start userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} paidPrice=${paidPrice}`,
     )
 
     try {
@@ -135,19 +167,21 @@ export class PurchaseService {
             targetType,
             targetId,
             userId,
-            price: targetPrice,
+            originalPrice,
+            paidPrice,
+            payableRate,
             status: PurchaseStatusEnum.SUCCESS,
             paymentMethod,
             outTradeNo,
           })
           .returning()
 
-        if (targetPrice > 0) {
+        if (paidPrice > 0) {
           const consumeResult = await this.growthLedgerService.applyDelta(tx, {
             userId,
             assetType: GrowthAssetTypeEnum.POINTS,
             action: GrowthLedgerActionEnum.CONSUME,
-            amount: targetPrice,
+            amount: paidPrice,
             bizKey: `purchase:${record.id}:consume`,
             source: 'purchase',
             remark: '购买积分扣减',
@@ -163,7 +197,7 @@ export class PurchaseService {
           if (!consumeResult.success && !consumeResult.duplicated) {
             if (consumeResult.reason === 'insufficient_balance') {
               this.logger.warn(
-                `purchase_failed_points_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${targetPrice}`,
+                `purchase_failed_points_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${paidPrice}`,
               )
               throw new BusinessException(
                 BusinessErrorCode.QUOTA_NOT_ENOUGH,
@@ -184,10 +218,21 @@ export class PurchaseService {
         await resolver.applyCountDelta(tx, targetId, 1)
 
         this.logger.log(
-          `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} price=${targetPrice} purchaseId=${record.id}`,
+          `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} originalPrice=${originalPrice} paidPrice=${paidPrice} purchaseId=${record.id}`,
         )
 
-        return record
+        return {
+          id: record.id,
+          targetType: record.targetType,
+          targetId: record.targetId,
+          userId: record.userId,
+          status: record.status,
+          paymentMethod: record.paymentMethod,
+          outTradeNo: record.outTradeNo,
+          createdAt: record.createdAt,
+          updatedAt: record.updatedAt,
+          purchasePricing,
+        }
       })
     } catch (error) {
       if (this.isUniqueConstraintError(error)) {
@@ -336,7 +381,9 @@ export class PurchaseService {
           upr.target_type AS "targetType",
           upr.target_id AS "targetId",
           upr.user_id AS "userId",
-          upr.price AS "price",
+          upr.original_price AS "originalPrice",
+          upr.paid_price AS "paidPrice",
+          upr.payable_rate AS "payableRate",
           upr.status AS "status",
           upr.payment_method AS "paymentMethod",
           upr.out_trade_no AS "outTradeNo",
@@ -385,7 +432,9 @@ export class PurchaseService {
       targetType: number
       targetId: number
       userId: number
-      price: number
+      originalPrice: number
+      paidPrice: number
+      payableRate: string | number
       status: number
       paymentMethod: number
       outTradeNo: string | null
@@ -410,7 +459,11 @@ export class PurchaseService {
         targetType: row.targetType,
         targetId: row.targetId,
         userId: row.userId,
-        price: row.price,
+        purchasePricing: this.toPurchasePricingSnapshot({
+          originalPrice: row.originalPrice,
+          paidPrice: row.paidPrice,
+          payableRate: row.payableRate,
+        }),
         status: row.status,
         paymentMethod: row.paymentMethod,
         outTradeNo: row.outTradeNo,

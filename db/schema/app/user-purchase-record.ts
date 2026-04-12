@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm'
 import {
   index,
   integer,
+  numeric,
   pgTable,
   smallint,
   timestamp,
@@ -38,9 +39,17 @@ export const userPurchaseRecord = pgTable(
      */
     userId: integer().notNull(),
     /**
-     * 购买价格（实际支付金额）
+     * 原价快照
      */
-    price: integer().notNull(),
+    originalPrice: integer().notNull(),
+    /**
+     * 实付价格快照
+     */
+    paidPrice: integer().notNull(),
+    /**
+     * 支付比例快照（1=原价支付，0.9=9折）
+     */
+    payableRate: numeric({ precision: 3, scale: 2 }).default('1.00').notNull(),
     /**
      * 购买状态（1=成功, 2=失败, 3=退款中, 4=已退款）
      */

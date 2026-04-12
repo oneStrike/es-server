@@ -26,6 +26,7 @@ import { ConfigService } from '@nestjs/config'
 import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type'
 import mime from 'mime-types'
 import { v4 as uuidv4 } from 'uuid'
+import { UPLOAD_CUSTOM_MIME_BY_EXT } from '../../config/upload.config'
 import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'
 import { SuperbedUploadProvider } from './superbed-upload.provider'
@@ -366,7 +367,10 @@ export class UploadService {
     const filenameExt = extname(originalName)
       .replace(LEADING_DOT_REGEX, '')
       .toLowerCase()
-    const ext = (detectedExt || filenameExt).toLowerCase()
+    const ext = this.resolvePreferredExtension(
+      detectedExt?.toLowerCase(),
+      filenameExt,
+    )
     if (!ext) {
       return null
     }
@@ -377,6 +381,7 @@ export class UploadService {
     }
 
     const mime =
+      UPLOAD_CUSTOM_MIME_BY_EXT[ext] ||
       detectedMime?.toLowerCase() ||
       (requestMime && requestMime !== 'application/octet-stream'
         ? requestMime.toLowerCase()
@@ -396,8 +401,30 @@ export class UploadService {
 
   /** 根据扩展名查找标准 MIME。 */
   private lookupMimeByExt(ext: string) {
+    if (UPLOAD_CUSTOM_MIME_BY_EXT[ext]) {
+      return UPLOAD_CUSTOM_MIME_BY_EXT[ext]
+    }
+
     const lookupValue = mime.lookup(ext)
     return lookupValue ? String(lookupValue).toLowerCase() : ''
+  }
+
+  /**
+   * 对安装包这类 zip 容器优先尊重原始扩展名。
+   * 避免 `apk/ipa` 被 file-type 统一识别为 `zip` 后误判成压缩包。
+   */
+  private resolvePreferredExtension(
+    detectedExt: string | undefined,
+    filenameExt: string,
+  ) {
+    if (
+      detectedExt === 'zip'
+      && ['apk', 'ipa'].includes(filenameExt)
+    ) {
+      return filenameExt
+    }
+
+    return detectedExt || filenameExt
   }
 
   /** 根据扩展名解析仓库内定义的文件分类。 */

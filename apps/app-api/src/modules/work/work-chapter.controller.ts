@@ -1,15 +1,25 @@
 import type { FastifyRequest } from 'fastify'
-import { ComicChapterContentDto, NovelChapterContentDto, PageWorkChapterDto, QueryWorkChapterCommentPageDto, QueryWorkChapterDto, WorkChapterDetailWithUserStatusDto } from '@libs/content/work/chapter/dto/work-chapter.dto';
-import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service';
-import { ComicContentService } from '@libs/content/work/content/comic-content.service';
-import { NovelContentService } from '@libs/content/work/content/novel-content.service';
-import { CommentService } from '@libs/interaction/comment/comment.service';
-import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { OptionalAuth, Public } from '@libs/platform/decorators/public.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { extractRequestContext, serializeDeviceInfo } from '@libs/platform/utils';
+import {
+  ComicChapterContentDto,
+  NovelChapterContentDto,
+  PageWorkChapterDto,
+  QueryWorkChapterCommentPageDto,
+  QueryWorkChapterDto,
+  WorkChapterDetailWithUserStatusDto,
+} from '@libs/content/work/chapter/dto/work-chapter.dto'
+import { WorkChapterService } from '@libs/content/work/chapter/work-chapter.service'
+import { ComicContentService } from '@libs/content/work/content/comic-content.service'
+import { NovelContentService } from '@libs/content/work/content/novel-content.service'
+import { CommentService } from '@libs/interaction/comment/comment.service'
+import { TargetCommentItemDto } from '@libs/interaction/comment/dto/comment.dto'
+import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { OptionalAuth } from '@libs/platform/decorators/public.decorator'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import {
+  extractRequestContext,
+  serializeDeviceInfo,
+} from '@libs/platform/utils'
 import { Controller, Get, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -24,13 +34,16 @@ export class WorkChapterController {
   ) {}
 
   @Get('page')
-  @Public()
+  @OptionalAuth()
   @ApiPageDoc({
     summary: '分页查询作品章节',
     model: PageWorkChapterDto,
   })
-  async getWorkChapterPage(@Query() query: QueryWorkChapterDto) {
-    return this.workChapterService.getChapterPage(query)
+  async getWorkChapterPage(
+    @Query() query: QueryWorkChapterDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.workChapterService.getChapterPage(query, { userId })
   }
 
   @Get('detail')
@@ -63,7 +76,9 @@ export class WorkChapterController {
     @Query() query: QueryWorkChapterCommentPageDto,
     @CurrentUser('sub') userId?: number,
   ) {
-    const target = await this.workChapterService.getChapterCommentTarget(query.id)
+    const target = await this.workChapterService.getChapterCommentTarget(
+      query.id,
+    )
     return this.commentService.getTargetComments({
       ...target,
       pageIndex: query.pageIndex,

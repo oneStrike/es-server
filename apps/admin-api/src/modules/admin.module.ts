@@ -5,6 +5,7 @@ import { AgreementModule } from './app-content/agreement/agreement.module'
 import { AdminAnnouncementModule } from './app-content/announcement/announcement.module'
 import { AppConfigModule } from './app-content/config/config.module'
 import { AppPageModule } from './app-content/page/page.module'
+import { AppUpdateModule } from './app-content/update/update.module'
 import { AppUserModule } from './app-user/app-user.module'
 import { AuthModule } from './auth/auth.module'
 import { CheckInModule } from './check-in/check-in.module'
@@ -32,6 +33,7 @@ import { TaskModule } from './task/task.module'
     SystemConfigModule,
     AppPageModule,
     AppConfigModule,
+    AppUpdateModule,
     AgreementModule,
     DictionaryModule,
     AdminAnnouncementModule,

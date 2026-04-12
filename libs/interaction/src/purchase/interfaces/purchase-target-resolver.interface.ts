@@ -13,9 +13,9 @@ export interface IPurchaseTargetResolver {
   /**
    * 检查购买目标是否满足购买条件 (如状态、价格等)
    * @param targetId - 目标 ID
-   * @returns 价格等必要信息
+   * @returns 原价等必要信息
    */
-  ensurePurchaseable: (targetId: number) => Promise<{ price: number }>
+  ensurePurchaseable: (targetId: number) => Promise<{ originalPrice: number }>
 
   /**
    * 更新目标的购买统计数

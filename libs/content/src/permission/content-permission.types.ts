@@ -1,5 +1,6 @@
 import type { appUser, work, workChapter } from '@db/schema'
-import type { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant';
+import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
+import type { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
 
 /**
  * 携带等级快照的用户结构。
@@ -48,4 +49,18 @@ export interface AccessRuleContext {
   viewRule: WorkViewPermissionEnum
   isPreview?: boolean
   chapterId?: number
+}
+
+/**
+ * 章节展开后的生效权限结构。
+ * 统一承载 app 侧章节展示和购买链路所需的最终权限、等级与价格信息。
+ */
+export interface ResolvedChapterPermission {
+  workType: PermissionChapterData['workType']
+  canDownload: PermissionChapterData['canDownload']
+  viewRule: WorkViewPermissionEnum
+  requiredViewLevelId: number | null
+  requiredExperience: number | null
+  isPreview: PermissionChapterData['isPreview']
+  purchasePricing: PurchasePricingDto | null
 }

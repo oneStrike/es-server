@@ -6,6 +6,8 @@ import { AppAnnouncementService } from '@libs/app-content/announcement/announcem
 import { BaseAnnouncementDto, QueryAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto';
 import { BaseAppPageDto } from '@libs/app-content/page/dto/page.dto';
 import { AppPageService } from '@libs/app-content/page/page.service';
+import { AppUpdateService } from '@libs/app-content/update/update.service';
+import { AppUpdateCheckDto, AppUpdateCheckResponseDto } from '@libs/app-content/update/dto/update.dto';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Public } from '@libs/platform/decorators/public.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
@@ -26,6 +28,7 @@ export class SystemController {
     private readonly agreementService: AgreementService,
     private readonly appConfigService: AppConfigService,
     private readonly appPageService: AppPageService,
+    private readonly appUpdateService: AppUpdateService,
   ) {}
 
   @Get('config')
@@ -36,6 +39,16 @@ export class SystemController {
   @Public()
   async findActive() {
     return this.appConfigService.findActiveConfig()
+  }
+
+  @Get('update/check')
+  @ApiDoc({
+    summary: '检查 APP 更新',
+    model: AppUpdateCheckResponseDto,
+  })
+  @Public()
+  async checkUpdate(@Query() query: AppUpdateCheckDto) {
+    return this.appUpdateService.checkUpdate(query)
   }
 
   @Get('page/list')

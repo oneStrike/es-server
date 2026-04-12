@@ -20,6 +20,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { IsInt } from 'class-validator'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import {
   TaskAssignmentRewardResultTypeEnum,
@@ -390,7 +391,12 @@ export class TaskProgressDto {
   @NumberProperty({ description: '任务ID', example: 1 })
   taskId!: number
 
-  @NumberProperty({ description: '进度增量', example: 1 })
+  @NumberProperty({
+    description: '进度增量，必须为大于 0 的整数',
+    example: 1,
+    min: 1,
+  })
+  @IsInt({ message: '进度增量必须是整数' })
   delta!: number
 
   @JsonProperty({
