@@ -3,6 +3,7 @@ import {
   PurchasePricingDto,
   PurchasePricingFieldsDto,
 } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
+import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property'
@@ -219,6 +220,7 @@ export class UpdateWorkChapterDto extends IntersectionType(
 export class QueryWorkChapterCommentPageDto extends IntersectionType(
   PageDto,
   IdDto,
+  PartialType(CommentSortDto),
 ) {}
 
 /**

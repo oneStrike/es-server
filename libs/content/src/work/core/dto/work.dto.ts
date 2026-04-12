@@ -2,6 +2,7 @@ import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
 import { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
 import { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
 import { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
+import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
 import {
   WorkTypeEnum,
   WorkViewPermissionEnum,
@@ -365,7 +366,11 @@ export class UpdateWorkNewDto extends IntersectionType(
   PickType(BaseWorkDto, ['isNew'] as const),
 ) {}
 
-export class QueryWorkCommentPageDto extends IntersectionType(PageDto, IdDto) {}
+export class QueryWorkCommentPageDto extends IntersectionType(
+  PageDto,
+  IdDto,
+  PartialType(CommentSortDto),
+) {}
 
 class AuthorInfoDto extends PickType(BaseAuthorDto, [
   'id',

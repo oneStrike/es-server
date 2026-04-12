@@ -110,6 +110,8 @@ export class ForumTopicController {
       ...target,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
+      sort: query.sort,
+      onlyAuthor: query.onlyAuthor,
       userId,
     })
   }

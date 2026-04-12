@@ -18,6 +18,17 @@ export enum CommentTargetTypeEnum {
 }
 
 /**
+ * 评论排序类型枚举。
+ * latest=最新；hot=最热。
+ */
+export enum CommentSortTypeEnum {
+  /** 最新 */
+  LATEST = 'latest',
+  /** 最热 */
+  HOT = 'hot',
+}
+
+/**
  * 评论模块只允许挂载到根业务对象，不支持继续挂载评论。
  */
 export function mapCommentTargetTypeToSceneType(

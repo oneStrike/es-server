@@ -10,6 +10,7 @@ describe('messageNotificationService', () => {
   let templateService: any
   let deleteWhereMock: jest.Mock
   let insertValuesMock: jest.Mock
+  let insertOnConflictDoNothingMock: jest.Mock
   let insertReturningMock: jest.Mock
   let transactionMock: jest.Mock
 
@@ -35,8 +36,12 @@ describe('messageNotificationService', () => {
         createdAt: new Date('2026-04-07T00:00:00.000Z'),
       },
     ])
+    insertOnConflictDoNothingMock = jest.fn(() => ({
+      returning: insertReturningMock,
+    }))
     insertValuesMock = jest.fn(() => ({
       returning: insertReturningMock,
+      onConflictDoNothing: insertOnConflictDoNothingMock,
     }))
     transactionMock = jest.fn(async (callback: (tx: any) => Promise<unknown>) => {
       const tx = {
@@ -52,6 +57,9 @@ describe('messageNotificationService', () => {
 
     drizzle = {
       db: {
+        insert: jest.fn(() => ({
+          values: insertValuesMock,
+        })),
         delete: jest.fn(() => ({
           where: deleteWhereMock,
         })),
@@ -154,6 +162,83 @@ describe('messageNotificationService', () => {
     expect(realtimeService.emitNotificationNew).not.toHaveBeenCalled()
     expect(result).toEqual({
       status: MessageNotificationDispatchStatusEnum.DELIVERED,
+    })
+  })
+
+  it('自己给自己发通知会返回自通知跳过状态', async () => {
+    const result = await service.createFromOutbox(
+      'comment:reply:11:to:7',
+      {
+        receiverUserId: 7,
+        actorUserId: 7,
+        type: MessageNotificationTypeEnum.COMMENT_REPLY,
+        targetType: 5,
+        targetId: 11,
+        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+        subjectId: 11,
+        title: '有人回复了你',
+        content: '回复内容',
+      } as any,
+    )
+
+    expect(preferenceService.getEffectiveNotificationPreference).not.toHaveBeenCalled()
+    expect(insertValuesMock).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      status: MessageNotificationDispatchStatusEnum.SKIPPED_SELF,
+    })
+  })
+
+  it('通知偏好关闭时会返回偏好跳过状态', async () => {
+    preferenceService.getEffectiveNotificationPreference.mockResolvedValue({
+      isEnabled: false,
+    })
+
+    const result = await service.createFromOutbox(
+      'comment:reply:11:to:7',
+      {
+        receiverUserId: 7,
+        actorUserId: 9,
+        type: MessageNotificationTypeEnum.COMMENT_REPLY,
+        targetType: 5,
+        targetId: 11,
+        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+        subjectId: 11,
+        title: '有人回复了你',
+        content: '回复内容',
+      } as any,
+    )
+
+    expect(templateService.renderNotificationTemplate).not.toHaveBeenCalled()
+    expect(insertValuesMock).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      status: MessageNotificationDispatchStatusEnum.SKIPPED_PREFERENCE,
+      preference: expect.objectContaining({
+        isEnabled: false,
+      }),
+    })
+  })
+
+  it('幂等冲突时会返回重复跳过状态而不是创建新通知', async () => {
+    insertReturningMock.mockResolvedValue([])
+
+    const result = await service.createFromOutbox(
+      'comment:reply:11:to:7',
+      {
+        receiverUserId: 7,
+        actorUserId: 9,
+        type: MessageNotificationTypeEnum.COMMENT_REPLY,
+        targetType: 5,
+        targetId: 11,
+        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+        subjectId: 11,
+        title: '有人回复了你',
+        content: '回复内容',
+      } as any,
+    )
+
+    expect(realtimeService.emitNotificationNew).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      status: MessageNotificationDispatchStatusEnum.SKIPPED_DUPLICATE,
     })
   })
 })

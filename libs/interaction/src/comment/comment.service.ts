@@ -28,14 +28,14 @@ import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-
 import { ConfigReader } from '@libs/system-config/config-reader'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
 import { EmojiParserService } from '../emoji/emoji-parser.service'
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
-import { CommentTargetTypeEnum } from './comment.constant'
+import { CommentSortTypeEnum, CommentTargetTypeEnum } from './comment.constant'
 import {
   CreateCommentBodyDto,
   QueryAdminCommentPageDto,
@@ -87,6 +87,10 @@ export class CommentService {
 
   private get appUser() {
     return this.drizzle.schema.appUser
+  }
+
+  private get forumTopic() {
+    return this.drizzle.schema.forumTopic
   }
 
   /** 目标类型到解析器的映射表 */
@@ -246,6 +250,275 @@ export class CommentService {
     const nextItem = { ...item } as T & { geoSource?: unknown }
     delete nextItem.geoSource
     return nextItem
+  }
+
+  /**
+   * 构建评论列表排序规则。
+   * latest 按最新时间倒序；hot 对回复和我的评论优先按点赞数排序。
+   */
+  private buildCommentOrderBy(sort?: CommentSortTypeEnum) {
+    if (sort === CommentSortTypeEnum.HOT) {
+      return [
+        { likeCount: 'desc' },
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ] as Array<Record<string, 'asc' | 'desc'>>
+    }
+
+    return [
+      { createdAt: 'desc' },
+      { id: 'desc' },
+    ] as Array<Record<string, 'asc' | 'desc'>>
+  }
+
+  /**
+   * 解析论坛主题作者用户 ID。
+   * 非论坛主题场景固定返回 undefined，供作者标记与作者筛选复用。
+   */
+  private async getForumTopicAuthorUserId(
+    targetType: CommentTargetTypeEnum,
+    targetId: number,
+  ) {
+    if (targetType !== CommentTargetTypeEnum.FORUM_TOPIC) {
+      return undefined
+    }
+
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id: targetId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        userId: true,
+      },
+    })
+
+    return topic?.userId
+  }
+
+  /**
+   * 通过一级评论解析论坛主题作者。
+   * 回复分页的作者标记依赖 commentId 先回溯到挂载目标。
+   */
+  private async getForumTopicAuthorUserIdByRootCommentId(commentId: number) {
+    const rootComment = await this.db.query.userComment.findFirst({
+      where: {
+        id: commentId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        targetType: true,
+        targetId: true,
+      },
+    })
+
+    if (!rootComment) {
+      return undefined
+    }
+
+    return this.getForumTopicAuthorUserId(
+      rootComment.targetType as CommentTargetTypeEnum,
+      rootComment.targetId,
+    )
+  }
+
+  /**
+   * 构建一级评论查询条件。
+   * 统一收口目标维度、可见性和“仅作者评论”过滤，避免 latest/hot 两条链路口径漂移。
+   */
+  private buildVisibleRootCommentConditions(params: {
+    targetType: CommentTargetTypeEnum
+    targetId: number
+    authorUserId?: number
+  }) {
+    const conditions: SQL[] = [
+      eq(this.userComment.targetType, params.targetType),
+      eq(this.userComment.targetId, params.targetId),
+      isNull(this.userComment.replyToId),
+      eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.userComment.isHidden, false),
+      isNull(this.userComment.deletedAt),
+    ]
+
+    if (params.authorUserId !== undefined) {
+      conditions.push(eq(this.userComment.userId, params.authorUserId))
+    }
+
+    return conditions
+  }
+
+  /**
+   * 构建可见回复查询条件。
+   * 支持按根评论集合和“仅主题作者回复”两种维度裁剪。
+   */
+  private buildVisibleReplyConditions(params: {
+    rootCommentId?: number
+    rootCommentIds?: number[]
+    authorUserId?: number
+  }) {
+    const conditions: SQL[] = [
+      eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.userComment.isHidden, false),
+      isNull(this.userComment.deletedAt),
+    ]
+
+    if (params.rootCommentId !== undefined) {
+      conditions.push(eq(this.userComment.actualReplyToId, params.rootCommentId))
+    }
+    if (params.rootCommentIds?.length) {
+      conditions.push(inArray(this.userComment.actualReplyToId, params.rootCommentIds))
+    }
+    if (params.authorUserId !== undefined) {
+      conditions.push(eq(this.userComment.userId, params.authorUserId))
+    }
+
+    return conditions
+  }
+
+  /**
+   * 加载一级评论下的回复预览与回复数。
+   * 预览仍按创建时间正序返回，但 replyCount 会严格遵循“仅作者回复”过滤口径。
+   */
+  private async loadReplyPreviewBundle(params: {
+    rootIds: number[]
+    previewReplyLimit: number
+    authorUserId?: number
+  }) {
+    const previewReplies: Array<{
+      id: number
+      userId: number
+      actualReplyToId: number | null
+      replyToId: number | null
+      content: string
+      bodyTokens: unknown
+      likeCount: number
+      geoCountry: string | null
+      geoProvince: string | null
+      geoCity: string | null
+      geoIsp: string | null
+      createdAt: Date
+      totalCount?: number
+    }> = []
+    const replyCountMap = new Map<number, number>()
+    const previewRepliesByRoot = new Map<
+      number,
+      Array<{
+        id: number
+        userId: number
+        actualReplyToId: number
+        replyToId: number | null
+        content: string
+        bodyTokens: unknown
+        likeCount: number
+        geoCountry?: string
+        geoProvince?: string
+        geoCity?: string
+        geoIsp?: string
+        createdAt: Date
+      }>
+    >()
+
+    if (params.rootIds.length === 0) {
+      return {
+        previewReplies,
+        replyCountMap,
+        previewRepliesByRoot,
+      }
+    }
+
+    const replyConditions = this.buildVisibleReplyConditions({
+      rootCommentIds: params.rootIds,
+      authorUserId: params.authorUserId,
+    })
+
+    let loadedPreviewReplies = previewReplies
+
+    if (params.previewReplyLimit > 0) {
+      const subquery = this.db
+        .select({
+          id: this.userComment.id,
+          userId: this.userComment.userId,
+          actualReplyToId: this.userComment.actualReplyToId,
+          replyToId: this.userComment.replyToId,
+          content: this.userComment.content,
+          bodyTokens: this.userComment.bodyTokens,
+          likeCount: this.userComment.likeCount,
+          geoCountry: this.userComment.geoCountry,
+          geoProvince: this.userComment.geoProvince,
+          geoCity: this.userComment.geoCity,
+          geoIsp: this.userComment.geoIsp,
+          createdAt: this.userComment.createdAt,
+          rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
+            'rn',
+          ),
+          totalCount:
+            sql<number>`COUNT(*) OVER (PARTITION BY ${this.userComment.actualReplyToId})`.as(
+              'totalCount',
+            ),
+        })
+        .from(this.userComment)
+        .where(and(...replyConditions))
+        .as('t')
+
+      loadedPreviewReplies = await this.db
+        .select()
+        .from(subquery)
+        .where(lte(subquery.rn, params.previewReplyLimit))
+
+      for (const reply of loadedPreviewReplies) {
+        if (
+          reply.actualReplyToId !== null &&
+          !replyCountMap.has(reply.actualReplyToId)
+        ) {
+          replyCountMap.set(reply.actualReplyToId, Number(reply.totalCount))
+        }
+      }
+    } else {
+      const replyCountRows = await this.db
+        .select({
+          rootId: this.userComment.actualReplyToId,
+          count: sql<number>`count(*)`,
+        })
+        .from(this.userComment)
+        .where(and(...replyConditions))
+        .groupBy(this.userComment.actualReplyToId)
+
+      for (const row of replyCountRows) {
+        if (row.rootId !== null) {
+          replyCountMap.set(row.rootId, Number(row.count))
+        }
+      }
+    }
+
+    for (const reply of loadedPreviewReplies) {
+      if (!reply.actualReplyToId) {
+        continue
+      }
+
+      const rootReplyList =
+        previewRepliesByRoot.get(reply.actualReplyToId) ?? []
+      rootReplyList.push({
+        id: reply.id,
+        userId: reply.userId,
+        actualReplyToId: reply.actualReplyToId,
+        replyToId: reply.replyToId,
+        content: reply.content,
+        bodyTokens: reply.bodyTokens,
+        likeCount: reply.likeCount,
+        geoCountry: reply.geoCountry ?? undefined,
+        geoProvince: reply.geoProvince ?? undefined,
+        geoCity: reply.geoCity ?? undefined,
+        geoIsp: reply.geoIsp ?? undefined,
+        createdAt: reply.createdAt,
+      })
+      previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
+    }
+
+    return {
+      previewReplies: loadedPreviewReplies,
+      replyCountMap,
+      previewRepliesByRoot,
+    }
   }
 
   /**
@@ -931,19 +1204,23 @@ export class CommentService {
    * @returns 分页的回复列表，包含用户基本信息
    */
   async getReplies(query: QueryCommentRepliesDto & { userId?: number }) {
-    const { commentId, pageIndex, pageSize, userId } = query
+    const { commentId, pageIndex, pageSize, userId, sort, onlyAuthor } = query
+    const topicAuthorUserId =
+      await this.getForumTopicAuthorUserIdByRootCommentId(commentId)
+    const replyAuthorUserId =
+      onlyAuthor && topicAuthorUserId !== undefined
+        ? topicAuthorUserId
+        : undefined
     const page = await this.drizzle.ext.findPagination(this.userComment, {
       where: and(
-        eq(this.userComment.actualReplyToId, commentId),
-        eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-        eq(this.userComment.isHidden, false),
-        isNull(this.userComment.deletedAt),
+        ...this.buildVisibleReplyConditions({
+          rootCommentId: commentId,
+          authorUserId: replyAuthorUserId,
+        }),
       ),
       pageIndex,
       pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: this.buildCommentOrderBy(sort),
       pick: [
         'id',
         'targetType',
@@ -990,6 +1267,9 @@ export class CommentService {
         return {
           ...this.omitGeoSource(item),
           liked: likedMap.get(item.id) ?? false,
+          isAuthorComment:
+            topicAuthorUserId !== undefined &&
+            item.userId === topicAuthorUserId,
           user: user ?? undefined,
         }
       }),
@@ -1016,176 +1296,121 @@ export class CommentService {
       pageSize,
       previewReplyLimit = 3,
       userId,
+      sort,
+      onlyAuthor,
     } = query
     const limit = Math.max(0, Math.min(previewReplyLimit, 10))
-    const page = await this.drizzle.ext.findPagination(this.userComment, {
-      where: and(
-        eq(this.userComment.targetType, targetType),
-        eq(this.userComment.targetId, targetId),
-        isNull(this.userComment.replyToId),
-        eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-        eq(this.userComment.isHidden, false),
-        isNull(this.userComment.deletedAt),
-      ),
-      pageIndex,
-      pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      pick: [
-        'id',
-        'userId',
-        'targetType',
-        'targetId',
-        'content',
-        'bodyTokens',
-        'floor',
-        'likeCount',
-        'geoCountry',
-        'geoProvince',
-        'geoCity',
-        'geoIsp',
-        'createdAt',
-      ],
+    const topicAuthorUserId = await this.getForumTopicAuthorUserId(
+      targetType,
+      targetId,
+    )
+    const rootCommentAuthorUserId =
+      onlyAuthor && topicAuthorUserId !== undefined
+        ? topicAuthorUserId
+        : undefined
+    const rootConditions = this.buildVisibleRootCommentConditions({
+      targetType,
+      targetId,
+      authorUserId: rootCommentAuthorUserId,
     })
+
+    const page =
+      sort === CommentSortTypeEnum.HOT
+        ? await (async () => {
+            const pageQuery = this.drizzle.buildPage({
+              pageIndex,
+              pageSize,
+            })
+            const replyCountSql = sql<number>`(
+              select count(*)::int
+              from "user_comment" as "reply"
+              where "reply"."actual_reply_to_id" = ${this.userComment.id}
+                and "reply"."audit_status" = ${AuditStatusEnum.APPROVED}
+                and "reply"."is_hidden" = ${false}
+                and "reply"."deleted_at" is null
+                ${
+                  rootCommentAuthorUserId !== undefined
+                    ? sql`and "reply"."user_id" = ${rootCommentAuthorUserId}`
+                    : sql``
+                }
+            )`
+
+            const [list, totalRows] = await Promise.all([
+              this.db
+                .select({
+                  id: this.userComment.id,
+                  userId: this.userComment.userId,
+                  targetType: this.userComment.targetType,
+                  targetId: this.userComment.targetId,
+                  content: this.userComment.content,
+                  bodyTokens: this.userComment.bodyTokens,
+                  floor: this.userComment.floor,
+                  likeCount: this.userComment.likeCount,
+                  geoCountry: this.userComment.geoCountry,
+                  geoProvince: this.userComment.geoProvince,
+                  geoCity: this.userComment.geoCity,
+                  geoIsp: this.userComment.geoIsp,
+                  createdAt: this.userComment.createdAt,
+                  replyCount: replyCountSql.as('replyCount'),
+                })
+                .from(this.userComment)
+                .where(and(...rootConditions))
+                .orderBy(
+                  desc(this.userComment.likeCount),
+                  desc(replyCountSql),
+                  desc(this.userComment.createdAt),
+                  desc(this.userComment.id),
+                )
+                .limit(pageQuery.limit)
+                .offset(pageQuery.offset),
+              this.db
+                .select({
+                  count: sql<number>`count(*)::int`,
+                })
+                .from(this.userComment)
+                .where(and(...rootConditions)),
+            ])
+
+            return {
+              list,
+              total: Number(totalRows[0]?.count ?? 0),
+              pageIndex: pageQuery.pageIndex,
+              pageSize: pageQuery.pageSize,
+            }
+          })()
+        : await this.drizzle.ext.findPagination(this.userComment, {
+            where: and(...rootConditions),
+            pageIndex,
+            pageSize,
+            orderBy: this.buildCommentOrderBy(sort),
+            pick: [
+              'id',
+              'userId',
+              'targetType',
+              'targetId',
+              'content',
+              'bodyTokens',
+              'floor',
+              'likeCount',
+              'geoCountry',
+              'geoProvince',
+              'geoCity',
+              'geoIsp',
+              'createdAt',
+            ],
+          })
 
     if (page.list.length === 0) {
       return page
     }
 
     const rootIds = page.list.map((item) => item.id)
-
-    let previewReplies: {
-      id: number
-      userId: number
-      actualReplyToId: number | null
-      replyToId: number | null
-      content: string
-      bodyTokens: unknown
-      likeCount: number
-      geoCountry: string | null
-      geoProvince: string | null
-      geoCity: string | null
-      geoIsp: string | null
-      createdAt: Date
-      totalCount?: number
-    }[] = []
-    const replyCountMap = new Map<number, number>()
-
-    if (limit > 0) {
-      // 合并计数与预览查询：使用窗口函数同时获取前 N 条回复和总回复数
-      const subquery = this.db
-        .select({
-          id: this.userComment.id,
-          userId: this.userComment.userId,
-          actualReplyToId: this.userComment.actualReplyToId,
-          replyToId: this.userComment.replyToId,
-          content: this.userComment.content,
-          bodyTokens: this.userComment.bodyTokens,
-          likeCount: this.userComment.likeCount,
-          geoCountry: this.userComment.geoCountry,
-          geoProvince: this.userComment.geoProvince,
-          geoCity: this.userComment.geoCity,
-          geoIsp: this.userComment.geoIsp,
-          createdAt: this.userComment.createdAt,
-          rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${this.userComment.actualReplyToId} ORDER BY ${this.userComment.createdAt} ASC)`.as(
-            'rn',
-          ),
-          totalCount:
-            sql<number>`COUNT(*) OVER (PARTITION BY ${this.userComment.actualReplyToId})`.as(
-              'totalCount',
-            ),
-        })
-        .from(this.userComment)
-        .where(
-          and(
-            inArray(this.userComment.actualReplyToId, rootIds),
-            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-            eq(this.userComment.isHidden, false),
-            isNull(this.userComment.deletedAt),
-          ),
-        )
-        .as('t')
-
-      previewReplies = await this.db
-        .select()
-        .from(subquery)
-        .where(lte(subquery.rn, limit))
-
-      // 从预览结果中提取总计数
-      for (const reply of previewReplies) {
-        if (
-          reply.actualReplyToId &&
-          !replyCountMap.has(reply.actualReplyToId)
-        ) {
-          replyCountMap.set(reply.actualReplyToId, Number(reply.totalCount))
-        }
-      }
-    } else {
-      // 如果不需要预览，则只查询总计数
-      const replyCountRows = await this.db
-        .select({
-          rootId: this.userComment.actualReplyToId,
-          count: sql<number>`count(*)`,
-        })
-        .from(this.userComment)
-        .where(
-          and(
-            inArray(this.userComment.actualReplyToId, rootIds),
-            eq(this.userComment.auditStatus, AuditStatusEnum.APPROVED),
-            eq(this.userComment.isHidden, false),
-            isNull(this.userComment.deletedAt),
-          ),
-        )
-        .groupBy(this.userComment.actualReplyToId)
-
-      for (const row of replyCountRows) {
-        if (row.rootId !== null) {
-          replyCountMap.set(row.rootId, Number(row.count))
-        }
-      }
-    }
-
-    const previewRepliesByRoot = new Map<
-      number,
-      {
-        id: number
-        userId: number
-        actualReplyToId: number
-        replyToId: number | null
-        content: string
-        bodyTokens: unknown
-        likeCount: number
-        geoCountry?: string
-        geoProvince?: string
-        geoCity?: string
-        geoIsp?: string
-        createdAt: Date
-      }[]
-    >()
-
-    for (const reply of previewReplies) {
-      if (!reply.actualReplyToId) {
-        continue
-      }
-      const rootReplyList =
-        previewRepliesByRoot.get(reply.actualReplyToId) ?? []
-      rootReplyList.push({
-        id: reply.id,
-        userId: reply.userId,
-        actualReplyToId: reply.actualReplyToId,
-        replyToId: reply.replyToId,
-        content: reply.content,
-        bodyTokens: reply.bodyTokens,
-        likeCount: reply.likeCount,
-        geoCountry: reply.geoCountry ?? undefined,
-        geoProvince: reply.geoProvince ?? undefined,
-        geoCity: reply.geoCity ?? undefined,
-        geoIsp: reply.geoIsp ?? undefined,
-        createdAt: reply.createdAt,
+    const { previewReplies, previewRepliesByRoot, replyCountMap } =
+      await this.loadReplyPreviewBundle({
+        rootIds,
+        previewReplyLimit: limit,
+        authorUserId: rootCommentAuthorUserId,
       })
-      previewRepliesByRoot.set(reply.actualReplyToId, rootReplyList)
-    }
 
     const userIds = [
       ...new Set([
@@ -1229,6 +1454,9 @@ export class CommentService {
             geoIsp: reply.geoIsp,
             createdAt: reply.createdAt,
             liked: likedMap.get(reply.id) ?? false,
+            isAuthorComment:
+              topicAuthorUserId !== undefined &&
+              reply.userId === topicAuthorUserId,
             user: userMap.get(reply.userId) ?? undefined,
           }),
         )
@@ -1240,6 +1468,9 @@ export class CommentService {
           geoCity: item.geoCity ?? undefined,
           geoIsp: item.geoIsp ?? undefined,
           liked: likedMap.get(item.id) ?? false,
+          isAuthorComment:
+            topicAuthorUserId !== undefined &&
+            item.userId === topicAuthorUserId,
           user: userMap.get(item.userId) ?? undefined,
           replyCount,
           previewReplies,
@@ -1279,9 +1510,7 @@ export class CommentService {
       where: and(...conditions),
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: this.buildCommentOrderBy(query.sort),
     })
 
     return {

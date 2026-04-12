@@ -83,6 +83,7 @@ export class WorkChapterController {
       ...target,
       pageIndex: query.pageIndex,
       pageSize: query.pageSize,
+      sort: query.sort,
       previewReplyLimit: 3,
       userId,
     })

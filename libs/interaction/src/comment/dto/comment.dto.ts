@@ -14,7 +14,7 @@ import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { CommentTargetTypeEnum } from '../comment.constant'
+import { CommentSortTypeEnum, CommentTargetTypeEnum } from '../comment.constant'
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
@@ -260,8 +260,28 @@ export class ReplyCommentBodyDto extends IntersectionType(
   PickType(BaseCommentDto, ['content'] as const),
 ) {}
 
+export class CommentSortDto {
+  @EnumProperty({
+    description: '排序类型（latest=最新，hot=最热）',
+    enum: CommentSortTypeEnum,
+    example: CommentSortTypeEnum.LATEST,
+    required: false,
+  })
+  sort?: CommentSortTypeEnum
+}
+
+export class CommentOnlyAuthorDto {
+  @BooleanProperty({
+    description: '是否仅查看主题作者的评论；仅论坛主题评论场景生效',
+    example: false,
+    required: false,
+  })
+  onlyAuthor?: boolean
+}
+
 export class QueryMyCommentPageDto extends IntersectionType(
   PageDto,
+  PartialType(CommentSortDto),
   PartialType(CommentTargetDto),
   PickType(PartialType(BaseCommentDto), ['auditStatus'] as const),
 ) {}
@@ -269,11 +289,15 @@ export class QueryMyCommentPageDto extends IntersectionType(
 export class QueryCommentRepliesDto extends IntersectionType(
   PageDto,
   CommentIdDto,
+  PartialType(CommentSortDto),
+  PartialType(CommentOnlyAuthorDto),
 ) {}
 
 export class QueryTargetCommentsDto extends IntersectionType(
   PageDto,
   CommentTargetDto,
+  PartialType(CommentSortDto),
+  PartialType(CommentOnlyAuthorDto),
 ) {
   @NumberProperty({
     description: '预览回复数量上限',
@@ -376,6 +400,14 @@ export class CommentReplyItemDto extends PickType(BaseCommentDto, [
   })
   liked!: boolean
 
+  @BooleanProperty({
+    description: '当前回复是否为主题作者发表；非论坛主题场景固定为 false',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  isAuthorComment!: boolean
+
   @NestedProperty({
     description: '回复用户',
     required: false,
@@ -409,6 +441,14 @@ export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   liked!: boolean
+
+  @BooleanProperty({
+    description: '当前回复是否为主题作者发表；非论坛主题场景固定为 false',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  isAuthorComment!: boolean
 
   @NestedProperty({
     description: '回复用户',
@@ -454,6 +494,14 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   liked!: boolean
+
+  @BooleanProperty({
+    description: '当前评论是否为主题作者发表；非论坛主题场景固定为 false',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  isAuthorComment!: boolean
 
   @NumberProperty({
     description: '楼中楼回复总数',

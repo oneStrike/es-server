@@ -2,6 +2,10 @@ import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
 import { BaseForumTagDto } from '@libs/forum/tag/dto/forum-tag.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
 import {
+  CommentOnlyAuthorDto,
+  CommentSortDto,
+} from '@libs/interaction/comment/dto/comment.dto'
+import {
   AuditRoleEnum,
   AuditStatusEnum,
 } from '@libs/platform/constant/audit.constant'
@@ -487,6 +491,8 @@ export class MyForumTopicItemDto extends IntersectionType(
 export class QueryForumTopicCommentPageDto extends IntersectionType(
   PageDto,
   IdDto,
+  PartialType(CommentSortDto),
+  PartialType(CommentOnlyAuthorDto),
 ) {}
 
 export class UpdateForumTopicAuditStatusDto extends IntersectionType(
