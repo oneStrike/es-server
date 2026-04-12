@@ -28,7 +28,7 @@ export class BaseCheckInPlanDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '签到计划状态（0=草稿，仅后台编辑；1=已发布，满足时间窗口时可对用户生效；2=已下线，不再对外开放；3=已停用，表示人工禁用）。',
+      '签到计划状态（0=草稿；1=已发布；2=已下线；3=已停用）',
     example: CheckInPlanStatusEnum.DRAFT,
     enum: CheckInPlanStatusEnum,
   })
@@ -36,7 +36,7 @@ export class BaseCheckInPlanDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '周期类型（weekly=按周切分签到周期；monthly=按月切分签到周期）。',
+      '周期类型（weekly=按周切分；monthly=按月切分）',
     example: CheckInCycleTypeEnum.WEEKLY,
     enum: CheckInCycleTypeEnum,
   })

@@ -14,7 +14,7 @@ export class BaseUserBrowseLogDto {
   id!: number
 
   @EnumProperty({
-    description: '浏览目标类型',
+    description: '浏览目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛话题）',
     enum: BrowseLogTargetTypeEnum,
     example: BrowseLogTargetTypeEnum.COMIC,
     required: true,

@@ -46,7 +46,7 @@ export class BaseAdminUserDto extends BaseDto {
   avatar?: string
 
   @EnumProperty({
-    description: '角色 0普通管理员 1超级管理员',
+    description: '角色（0=普通管理员；1=超级管理员）',
     example: AdminUserRoleEnum.NORMAL_ADMIN,
     default: AdminUserRoleEnum.NORMAL_ADMIN,
     enum: AdminUserRoleEnum,

@@ -90,10 +90,6 @@ export class CommentService {
     return this.drizzle.schema.appUser
   }
 
-  private get forumTopic() {
-    return this.drizzle.schema.forumTopic
-  }
-
   /** 目标类型到解析器的映射表 */
   private readonly resolvers = new Map<
     CommentTargetTypeEnum,
@@ -266,10 +262,9 @@ export class CommentService {
       ] as Array<Record<string, 'asc' | 'desc'>>
     }
 
-    return [
-      { createdAt: 'desc' },
-      { id: 'desc' },
-    ] as Array<Record<string, 'asc' | 'desc'>>
+    return [{ createdAt: 'desc' }, { id: 'desc' }] as Array<
+      Record<string, 'asc' | 'desc'>
+    >
   }
 
   /**
@@ -364,10 +359,14 @@ export class CommentService {
     ]
 
     if (params.rootCommentId !== undefined) {
-      conditions.push(eq(this.userComment.actualReplyToId, params.rootCommentId))
+      conditions.push(
+        eq(this.userComment.actualReplyToId, params.rootCommentId),
+      )
     }
     if (params.rootCommentIds?.length) {
-      conditions.push(inArray(this.userComment.actualReplyToId, params.rootCommentIds))
+      conditions.push(
+        inArray(this.userComment.actualReplyToId, params.rootCommentIds),
+      )
     }
     if (params.authorUserId !== undefined) {
       conditions.push(eq(this.userComment.userId, params.authorUserId))

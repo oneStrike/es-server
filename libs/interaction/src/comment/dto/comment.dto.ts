@@ -14,12 +14,12 @@ import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { MentionDraftDto, MentionDraftListDto } from '../../mention/dto/mention.dto'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from '../comment.constant'
-import { MentionDraftDto } from '../../mention/dto/mention.dto'
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
-    description: '目标类型',
+    description: '目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛主题）',
     enum: CommentTargetTypeEnum,
     example: CommentTargetTypeEnum.COMIC,
     required: true,
@@ -116,7 +116,7 @@ export class BaseCommentDto extends BaseDto {
   isHidden!: boolean
 
   @EnumProperty({
-    description: '审核状态',
+    description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
     enum: AuditStatusEnum,
     example: AuditStatusEnum.APPROVED,
     required: true,
@@ -133,7 +133,7 @@ export class BaseCommentDto extends BaseDto {
   auditById?: number | null
 
   @EnumProperty({
-    description: '审核角色（0=版主, 1=管理员）',
+    description: '审核角色（0=版主；1=管理员）',
     enum: AuditRoleEnum,
     example: AuditRoleEnum.ADMIN,
     required: false,
@@ -247,7 +247,7 @@ export class CommentTargetDto {
   targetId!: number
 
   @EnumProperty({
-    description: '评论目标类型',
+    description: '评论目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛主题）',
     enum: CommentTargetTypeEnum,
     example: CommentTargetTypeEnum.COMIC,
     required: true,
@@ -265,14 +265,19 @@ export class ReplyTargetDto {
   replyToId!: number
 }
 
+export class CommentWritableFieldsDto extends IntersectionType(
+  PickType(BaseCommentDto, ['content'] as const),
+  MentionDraftListDto,
+) {}
+
 export class CreateCommentBodyDto extends IntersectionType(
   CommentTargetDto,
-  PickType(BaseCommentDto, ['content', 'mentions'] as const),
+  CommentWritableFieldsDto,
 ) {}
 
 export class ReplyCommentBodyDto extends IntersectionType(
   ReplyTargetDto,
-  PickType(BaseCommentDto, ['content', 'mentions'] as const),
+  CommentWritableFieldsDto,
 ) {}
 
 export class CommentSortDto {

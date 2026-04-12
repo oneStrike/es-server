@@ -36,7 +36,7 @@ export class BaseLikeDto extends IntersectionType(IdDto, UserIdDto) {
   targetType!: LikeTargetTypeEnum
 
   @EnumProperty({
-    description: '业务场景类型',
+    description: '业务场景类型（1=漫画作品；2=小说作品；3=论坛主题；10=漫画章节；11=小说章节；12=用户主页）',
     enum: SceneTypeEnum,
     example: SceneTypeEnum.COMIC_WORK,
     required: true,
@@ -51,7 +51,7 @@ export class BaseLikeDto extends IntersectionType(IdDto, UserIdDto) {
   sceneId!: number
 
   @EnumProperty({
-    description: '评论层级（仅评论目标有值）',
+    description: '评论层级（1=根评论；2=回复评论）',
     enum: CommentLevelEnum,
     example: CommentLevelEnum.ROOT,
     required: false,

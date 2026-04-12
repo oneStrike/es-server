@@ -1,5 +1,6 @@
 import * as schema from '@db/schema'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
+import { BadRequestException } from '@nestjs/common'
 import { ForumReviewPolicyEnum } from '../forum.constant'
 import { ForumTopicService } from './forum-topic.service'
 
@@ -271,6 +272,177 @@ describe('forumTopicService', () => {
         topicId: 101,
         actorUserId: 9,
         topicTitle: '提及主题',
+      }),
+    )
+  })
+
+  it('更新未改正文且未传 mentions 时不会重建 mentions 结构', async () => {
+    const currentTopic = {
+      id: 101,
+      sectionId: 7,
+      userId: 9,
+      title: '旧标题',
+      content: '欢迎 @测试用户 一起讨论',
+      bodyTokens: [
+        {
+          type: 'mentionUser',
+          userId: 5,
+          nickname: '测试用户',
+          text: '@测试用户',
+        },
+      ],
+      images: [],
+      videos: [],
+      auditStatus: 1,
+      isHidden: false,
+      isLocked: false,
+      deletedAt: null,
+      createdAt: new Date('2026-04-12T10:00:00.000Z'),
+    }
+    const tx = {
+      update: jest.fn().mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([
+              {
+                ...currentTopic,
+                title: '新标题',
+              },
+            ]),
+          }),
+        }),
+      }),
+    }
+
+    drizzle.db.transaction.mockImplementation(async (callback: any) => callback(tx))
+    jest
+      .spyOn(service as any, 'getSectionTopicReviewPolicy')
+      .mockResolvedValue(ForumReviewPolicyEnum.NONE)
+
+    await (service as any).updateTopicWithCurrent(
+      currentTopic,
+      {
+        id: 101,
+        title: '新标题',
+        content: currentTopic.content,
+      },
+      {},
+    )
+
+    expect(mentionService.buildBodyTokens).not.toHaveBeenCalled()
+    expect(mentionService.replaceMentionsInTx).not.toHaveBeenCalled()
+  })
+
+  it('更新正文但未显式传入 mentions 时会拒绝请求', async () => {
+    const currentTopic = {
+      id: 101,
+      sectionId: 7,
+      userId: 9,
+      title: '旧标题',
+      content: '旧正文',
+      bodyTokens: null,
+      images: [],
+      videos: [],
+      auditStatus: 1,
+      isHidden: false,
+      isLocked: false,
+      deletedAt: null,
+      createdAt: new Date('2026-04-12T10:00:00.000Z'),
+    }
+
+    jest
+      .spyOn(service as any, 'getSectionTopicReviewPolicy')
+      .mockResolvedValue(ForumReviewPolicyEnum.NONE)
+
+    await expect(
+      (service as any).updateTopicWithCurrent(
+        currentTopic,
+        {
+          id: 101,
+          title: '新标题',
+          content: '新正文',
+        },
+        {},
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
+
+  it('后台更新主题时 TOPIC_MENTION 通知会使用当前操作者', async () => {
+    const currentTopic = {
+      id: 101,
+      sectionId: 7,
+      userId: 9,
+      title: '旧标题',
+      content: '欢迎 @测试用户 一起讨论',
+      bodyTokens: null,
+      images: [],
+      videos: [],
+      auditStatus: 1,
+      isHidden: false,
+      isLocked: false,
+      deletedAt: null,
+      createdAt: new Date('2026-04-12T10:00:00.000Z'),
+    }
+    const tx = {
+      update: jest.fn().mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([
+              {
+                ...currentTopic,
+                bodyTokens: [
+                  {
+                    type: 'mentionUser',
+                    userId: 5,
+                    nickname: '测试用户',
+                    text: '@测试用户',
+                  },
+                ],
+              },
+            ]),
+          }),
+        }),
+      }),
+    }
+
+    drizzle.db.transaction.mockImplementation(async (callback: any) => callback(tx))
+    jest.spyOn(service as any, 'getActiveTopicOrThrow').mockResolvedValue(currentTopic)
+    jest
+      .spyOn(service as any, 'getSectionTopicReviewPolicy')
+      .mockResolvedValue(ForumReviewPolicyEnum.NONE)
+    mentionService.buildBodyTokens.mockResolvedValue([
+      {
+        type: 'mentionUser',
+        userId: 5,
+        nickname: '测试用户',
+        text: '@测试用户',
+      },
+    ])
+
+    await (service as any).updateTopic(
+      {
+        id: 101,
+        title: currentTopic.title,
+        content: currentTopic.content,
+        mentions: [
+          {
+            userId: 5,
+            nickname: '测试用户',
+            start: 3,
+            end: 8,
+          },
+        ],
+      },
+      {},
+      77,
+    )
+
+    expect(mentionService.dispatchTopicMentionsInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        topicId: 101,
+        actorUserId: 77,
+        topicTitle: '旧标题',
       }),
     )
   })

@@ -69,7 +69,7 @@ export class BaseAuthorDto extends BaseDto {
   nationality?: string | null
 
   @EnumProperty({
-    description: '性别（0=未知；1=男性；2=女性；3=其他）',
+    description: '性别（0=未知；1=男性；2=女性；3=其他；4=保密）',
     example: GenderEnum.MALE,
     required: true,
     enum: GenderEnum,

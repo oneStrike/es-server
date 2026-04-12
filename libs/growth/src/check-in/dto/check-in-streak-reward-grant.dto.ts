@@ -55,7 +55,7 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '连续奖励发放状态（0=待处理，表示发放事实已创建但尚未结算；1=已成功；2=已失败）。',
+      '连续奖励发放状态（0=待处理；1=已成功；2=已失败）',
     example: CheckInRewardStatusEnum.PENDING,
     enum: CheckInRewardStatusEnum,
   })
@@ -63,7 +63,7 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '连续奖励发放结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）。',
+      '连续奖励发放结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）',
     example: CheckInRewardResultTypeEnum.APPLIED,
     enum: CheckInRewardResultTypeEnum,
     required: false,

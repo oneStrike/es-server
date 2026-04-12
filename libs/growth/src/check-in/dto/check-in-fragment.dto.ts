@@ -42,7 +42,7 @@ export class CheckInRemainingMakeupCountDto {
 
 export class CheckInRepairTargetTypeDto {
   @EnumProperty({
-    description: '补偿目标类型（1=基础签到奖励；2=连续签到奖励）。',
+    description: '补偿目标类型（1=基础签到奖励；2=连续签到奖励）',
     example: CheckInRepairTargetTypeEnum.RECORD_REWARD,
     enum: CheckInRepairTargetTypeEnum,
   })

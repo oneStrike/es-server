@@ -33,7 +33,7 @@ export class BaseUserExperienceRecordDto extends IdDto {
   ruleId?: number | null
 
   @EnumProperty({
-    description: '资产类型',
+    description: '资产类型（1=积分；2=经验）',
     example: GrowthAssetTypeEnum.EXPERIENCE,
     required: true,
     enum: GrowthAssetTypeEnum,

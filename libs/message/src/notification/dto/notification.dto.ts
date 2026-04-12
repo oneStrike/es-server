@@ -35,7 +35,7 @@ export class BaseUserNotificationDto {
   userId!: number
 
   @EnumProperty({
-    description: '通知类型',
+    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
     example: MessageNotificationTypeEnum.COMMENT_REPLY,
     enum: MessageNotificationTypeEnum,
   })
@@ -71,7 +71,7 @@ export class BaseUserNotificationDto {
   targetId?: number
 
   @EnumProperty({
-    description: '主体类型',
+    description: '主体类型（1=评论；2=作品；3=用户；4=系统；5=论坛主题）',
     example: MessageNotificationSubjectTypeEnum.COMMENT,
     enum: MessageNotificationSubjectTypeEnum,
     required: false,
@@ -156,7 +156,7 @@ export class QueryUserNotificationListDto extends PageDto {
   isRead?: boolean
 
   @EnumProperty({
-    description: '通知类型',
+    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
     required: false,
     example: MessageNotificationTypeEnum.COMMENT_REPLY,
     enum: MessageNotificationTypeEnum,
@@ -166,7 +166,7 @@ export class QueryUserNotificationListDto extends PageDto {
 
 export class UpdateUserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: '通知类型',
+    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
     example: MessageNotificationTypeEnum.COMMENT_REPLY,
     enum: MessageNotificationTypeEnum,
   })
@@ -190,11 +190,11 @@ export class UpdateUserNotificationPreferencesDto {
 }
 
 export class QueryNotificationDeliveryPageDto extends PageDto {
-  @StringProperty({
-    description:
-      '业务投递结果（DELIVERED / FAILED / RETRYING / SKIPPED_DUPLICATE / SKIPPED_SELF / SKIPPED_PREFERENCE）',
+  @EnumProperty({
+    description: '业务投递结果状态（DELIVERED=已投递；FAILED=投递失败；RETRYING=重试中；SKIPPED_DUPLICATE=幂等跳过；SKIPPED_SELF=自通知跳过；SKIPPED_PREFERENCE=偏好关闭跳过）',
     example: MessageNotificationDispatchStatusEnum.FAILED,
     required: false,
+    enum: MessageNotificationDispatchStatusEnum,
   })
   status?: MessageNotificationDispatchStatusEnum
 
@@ -308,7 +308,7 @@ export class NotificationUnreadCountDto {
  */
 export class UserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: '通知类型',
+    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
     example: MessageNotificationTypeEnum.COMMENT_REPLY,
     enum: MessageNotificationTypeEnum,
   })
@@ -335,7 +335,7 @@ export class UserNotificationPreferenceItemDto {
   defaultEnabled!: boolean
 
   @EnumProperty({
-    description: '当前状态来源，default=默认策略，explicit=用户显式覆盖',
+    description: '状态来源（default=默认策略；explicit=用户显式覆盖）',
     example: MessageNotificationPreferenceSourceEnum.DEFAULT,
     enum: MessageNotificationPreferenceSourceEnum,
   })

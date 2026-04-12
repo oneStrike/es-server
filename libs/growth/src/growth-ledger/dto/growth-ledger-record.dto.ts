@@ -23,7 +23,7 @@ export class BaseGrowthLedgerRecordDto extends IdDto {
   userId!: number
 
   @EnumProperty({
-    description: '资产类型',
+    description: '资产类型（1=积分；2=经验）',
     example: GrowthAssetTypeEnum.POINTS,
     required: true,
     enum: GrowthAssetTypeEnum,

@@ -86,7 +86,7 @@ export class BaseAppUserDto extends BaseDto {
   isEnabled!: boolean
 
   @EnumProperty({
-    description: '性别（0=未知，1=男，2=女，3=其他，4=保密）',
+    description: '性别（0=未知；1=男性；2=女性；3=其他；4=保密）',
     enum: GenderEnum,
     example: GenderEnum.MALE,
     default: GenderEnum.UNKNOWN,
@@ -118,7 +118,7 @@ export class BaseAppUserDto extends BaseDto {
   experience!: number
 
   @EnumProperty({
-    description: '用户状态',
+    description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
     default: UserStatusEnum.NORMAL,

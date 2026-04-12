@@ -49,7 +49,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   isEnabled!: boolean
 
   @EnumProperty({
-    description: '敏感词级别',
+    description: '敏感词级别（1=严重；2=一般；3=轻微）',
     required: true,
     example: SensitiveWordLevelEnum.SEVERE,
     default: SensitiveWordLevelEnum.SEVERE,
@@ -58,7 +58,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   level!: SensitiveWordLevelEnum
 
   @EnumProperty({
-    description: '敏感词类型',
+    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
     required: true,
     example: SensitiveWordTypeEnum.OTHER,
     default: SensitiveWordTypeEnum.OTHER,
@@ -67,7 +67,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   type!: SensitiveWordTypeEnum
 
   @EnumProperty({
-    description: '匹配模式',
+    description: '匹配模式（1=精确匹配；2=模糊匹配；3=正则匹配）',
     required: true,
     example: MatchModeEnum.EXACT,
     default: MatchModeEnum.EXACT,
@@ -148,7 +148,7 @@ export class BaseSensitiveWordHitDto {
   end!: number
 
   @EnumProperty({
-    description: '敏感词级别',
+    description: '敏感词级别（1=严重；2=一般；3=轻微）',
     example: SensitiveWordLevelEnum.SEVERE,
     enum: SensitiveWordLevelEnum,
     validation: false,
@@ -156,7 +156,7 @@ export class BaseSensitiveWordHitDto {
   level!: SensitiveWordLevelEnum
 
   @EnumProperty({
-    description: '敏感词类型',
+    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
     example: SensitiveWordTypeEnum.POLITICS,
     enum: SensitiveWordTypeEnum,
     validation: false,
@@ -212,7 +212,7 @@ export class SensitiveWordDetectDto {
   content!: string
 
   @EnumProperty({
-    description: '匹配模式',
+    description: '匹配模式（1=精确匹配；2=模糊匹配；3=正则匹配）',
     required: false,
     enum: MatchModeEnum,
     example: MatchModeEnum.EXACT,
@@ -239,7 +239,7 @@ export class SensitiveWordDetectResponseDto {
   hits!: BaseSensitiveWordHitDto[]
 
   @EnumProperty({
-    description: '最高敏感等级',
+    description: '最高敏感等级（1=严重；2=一般；3=轻微）',
     example: SensitiveWordLevelEnum.SEVERE,
     enum: SensitiveWordLevelEnum,
     required: false,
@@ -295,7 +295,7 @@ export class SensitiveWordCountResponseDto {
 
 export class SensitiveWordLevelStatisticsDto {
   @EnumProperty({
-    description: '敏感词级别',
+    description: '敏感词级别（1=严重；2=一般；3=轻微）',
     enum: SensitiveWordLevelEnum,
     example: SensitiveWordLevelEnum.SEVERE,
     validation: false,
@@ -326,7 +326,7 @@ export class SensitiveWordLevelStatisticsDto {
 
 export class SensitiveWordTypeStatisticsDto {
   @EnumProperty({
-    description: '敏感词类型',
+    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
     enum: SensitiveWordTypeEnum,
     example: SensitiveWordTypeEnum.POLITICS,
     validation: false,
@@ -363,7 +363,7 @@ export class SensitiveWordTopHitStatisticsDto {
   hitCount!: number
 
   @EnumProperty({
-    description: '敏感词级别',
+    description: '敏感词级别（1=严重；2=一般；3=轻微）',
     enum: SensitiveWordLevelEnum,
     example: SensitiveWordLevelEnum.SEVERE,
     validation: false,
@@ -371,7 +371,7 @@ export class SensitiveWordTopHitStatisticsDto {
   level!: SensitiveWordLevelEnum
 
   @EnumProperty({
-    description: '敏感词类型',
+    description: '敏感词类型（1=政治；2=色情；3=暴力；4=广告；5=其他）',
     enum: SensitiveWordTypeEnum,
     example: SensitiveWordTypeEnum.POLITICS,
     validation: false,

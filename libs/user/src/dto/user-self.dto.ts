@@ -209,7 +209,7 @@ export class UserStatusSummaryDto {
   isEnabled!: boolean
 
   @EnumProperty({
-    description: '用户状态',
+    description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
     validation: false,
@@ -465,7 +465,7 @@ export class UserCenterProfileDto {
   bio?: string
 
   @EnumProperty({
-    description: '用户状态',
+    description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
     validation: false,

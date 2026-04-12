@@ -31,7 +31,7 @@ export class Ip2regionRuntimeStatusDto {
 
   @EnumProperty({
     description:
-      '当前生效库来源（managed-active=托管 active 目录；configured-path=环境变量显式路径；default-path=仓库默认路径；unavailable=当前无可用属地库）',
+      '生效库来源（managed-active=托管 active 目录；configured-path=环境变量显式路径；default-path=仓库默认路径；unavailable=无可用属地库）',
     enum: GEO_RUNTIME_SOURCE,
     example: GEO_RUNTIME_SOURCE.MANAGED_ACTIVE,
     required: true,

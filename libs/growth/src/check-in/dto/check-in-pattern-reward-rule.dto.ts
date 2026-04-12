@@ -8,7 +8,7 @@ import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 class CheckInPatternRewardRuleFieldsDto {
   @EnumProperty({
     description:
-      '周期模式类型（WEEKDAY=每周固定星期几；MONTH_DAY=每月固定几号；MONTH_LAST_DAY=每月最后一天）。',
+      '周期模式类型（WEEKDAY=每周固定星期几；MONTH_DAY=每月固定几号；MONTH_LAST_DAY=每月最后一天）',
     example: CheckInPatternRewardRuleTypeEnum.WEEKDAY,
     enum: CheckInPatternRewardRuleTypeEnum,
   })

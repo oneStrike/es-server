@@ -23,7 +23,7 @@ export class BaseMessageNotificationTemplateDto {
   id!: number
 
   @EnumProperty({
-    description: '通知类型',
+    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
     example: MessageNotificationTypeEnum.COMMENT_REPLY,
     enum: MessageNotificationTypeEnum,
   })

@@ -245,7 +245,7 @@ export class CheckUserLevelPermissionDto {
   userId!: number
 
   @EnumProperty({
-    description: '权限类型',
+    description: '权限类型（dailyTopicLimit=每日发帖数量上限；dailyReplyCommentLimit=每日回复和评论数量上限；postInterval=发帖间隔秒数；dailyLikeLimit=每日点赞次数上限；dailyFavoriteLimit=每日收藏次数上限）',
     example: UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
     required: true,
     enum: UserLevelRulePermissionEnum,

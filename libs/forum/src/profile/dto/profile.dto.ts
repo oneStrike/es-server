@@ -39,7 +39,7 @@ export class QueryUserProfileListDto extends IntersectionType(
   ),
 ) {
   @EnumProperty({
-    description: '用户状态',
+    description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.NORMAL,
     required: false,
@@ -49,7 +49,7 @@ export class QueryUserProfileListDto extends IntersectionType(
 
 export class UpdateUserStatusDto extends IdDto {
   @EnumProperty({
-    description: '用户状态',
+    description: '用户状态（1=正常；2=禁言；3=永久禁言；4=封禁；5=永久封禁）',
     enum: UserStatusEnum,
     example: UserStatusEnum.BANNED,
   })

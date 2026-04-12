@@ -86,7 +86,7 @@ export class BaseForumSectionDto extends BaseDto {
   isEnabled!: boolean
 
   @EnumProperty({
-    description: '审核策略',
+    description: '审核策略（0=不审核；1=严重敏感词触发审核；2=一般敏感词触发审核；3=轻度敏感词触发审核；4=强制人工审核）',
     example: ForumReviewPolicyEnum.NONE,
     required: true,
     default: ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD,

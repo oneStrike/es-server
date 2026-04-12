@@ -42,7 +42,7 @@ export class BaseReportDto extends BaseDto {
   targetId!: number
 
   @EnumProperty({
-    description: '举报目标类型',
+    description: '举报目标类型（1=漫画；2=小说；3=漫画章节；4=小说章节；5=论坛主题；6=评论；7=用户）',
     enum: ReportTargetTypeEnum,
     example: ReportTargetTypeEnum.COMIC,
     required: true,
@@ -50,7 +50,7 @@ export class BaseReportDto extends BaseDto {
   targetType!: ReportTargetTypeEnum
 
   @EnumProperty({
-    description: '业务场景类型',
+    description: '业务场景类型（1=漫画作品；2=小说作品；3=论坛主题；10=漫画章节；11=小说章节；12=用户主页）',
     enum: SceneTypeEnum,
     example: SceneTypeEnum.COMIC_WORK,
     required: true,
@@ -65,7 +65,7 @@ export class BaseReportDto extends BaseDto {
   sceneId!: number
 
   @EnumProperty({
-    description: '评论层级（仅评论目标有值）',
+    description: '评论层级（1=根评论；2=回复评论）',
     enum: CommentLevelEnum,
     example: CommentLevelEnum.ROOT,
     required: false,
@@ -73,7 +73,7 @@ export class BaseReportDto extends BaseDto {
   commentLevel?: CommentLevelEnum | null
 
   @EnumProperty({
-    description: '举报原因类型',
+    description: '举报原因类型（1=垃圾信息；2=不当内容；3=骚扰；4=版权侵权；99=其他）',
     enum: ReportReasonEnum,
     example: ReportReasonEnum.INAPPROPRIATE_CONTENT,
     required: true,
@@ -94,7 +94,7 @@ export class BaseReportDto extends BaseDto {
   evidenceUrl?: string | null
 
   @EnumProperty({
-    description: '举报状态',
+    description: '举报状态（1=待处理；2=处理中；3=已解决；4=已驳回）',
     enum: ReportStatusEnum,
     example: ReportStatusEnum.PENDING,
     required: true,

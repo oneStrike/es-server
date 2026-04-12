@@ -165,7 +165,7 @@ export class MaintenanceConfigDto {
  */
 export class ContentReviewActionDto {
   @EnumProperty({
-    description: '审核状态：0=待审核，1=已通过，2=已拒绝',
+    description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
     example: AuditStatusEnum.REJECTED,
     enum: AuditStatusEnum,
     required: false,
@@ -321,7 +321,7 @@ export class SuperbedUploadConfigDto {
 
 export class UploadConfigDto {
   @EnumProperty({
-    description: '上传提供方：local=本地存储，qiniu=七牛云存储，superbed=Superbed图床',
+    description: '上传提供方（local=本地存储；qiniu=七牛云存储；superbed=Superbed图床）',
     enum: UploadProviderEnum,
     example: UploadProviderEnum.LOCAL,
     required: false,

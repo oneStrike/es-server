@@ -38,7 +38,7 @@ class CheckInStreakRewardRuleFieldsDto {
   repeatable!: boolean
 
   @EnumProperty({
-    description: '规则状态（0=已停用；1=已启用）。',
+    description: '规则状态（0=已停用；1=已启用）',
     example: CheckInStreakRewardRuleStatusEnum.ENABLED,
     enum: CheckInStreakRewardRuleStatusEnum,
   })

@@ -3,6 +3,7 @@ import type { FastifyRequest } from 'fastify'
 import { AdminForumTopicDetailDto, AdminForumTopicPageItemDto, CreateForumTopicDto, QueryForumTopicDto, UpdateForumTopicAuditStatusDto, UpdateForumTopicDto, UpdateForumTopicFeaturedDto, UpdateForumTopicHiddenDto, UpdateForumTopicLockedDto, UpdateForumTopicPinnedDto } from '@libs/forum/topic/dto/forum-topic.dto';
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { GeoService } from '@libs/platform/modules/geo';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
@@ -165,10 +166,15 @@ export class ForumTopicController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async update(@Body() body: UpdateForumTopicDto, @Req() req: FastifyRequest) {
+  async update(
+    @Body() body: UpdateForumTopicDto,
+    @Req() req: FastifyRequest,
+    @CurrentUser('sub') userId: number,
+  ) {
     return this.forumTopicService.updateTopic(
       body,
       await this.buildTopicClientContext(req),
+      userId,
     )
   }
 

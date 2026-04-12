@@ -76,7 +76,7 @@ export class BaseWorkChapterDto extends BaseDto {
   publishAt?: Date
 
   @EnumProperty({
-    description: '查看规则',
+    description: '查看规则（-1=继承作品；0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
     example: WorkViewPermissionEnum.INHERIT,
     required: true,
     enum: WorkViewPermissionEnum,

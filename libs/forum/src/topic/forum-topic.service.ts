@@ -1162,6 +1162,7 @@ export class ForumTopicService {
     topic: ForumTopicSelect,
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
+    actorUserId = topic.userId,
   ) {
     const { id, images, videos, mentions, ...updateData } = updateForumTopicDto
 
@@ -1179,23 +1180,34 @@ export class ForumTopicService {
       },
     )
 
+    const nextTitle = updateData.title ?? topic.title
+    const nextContent = updateData.content ?? topic.content
+    const contentChanged =
+      updateData.content !== undefined && updateData.content !== topic.content
+
+    if (contentChanged && mentions === undefined) {
+      throw new BadRequestException(
+        '更新正文时必须显式传入 mentions；无提及时请传空数组',
+      )
+    }
+
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
-        content:
-          (updateData.content || topic.content) +
-          (updateData.title || topic.title),
+        content: nextContent + nextTitle,
       })
 
     const { auditStatus, isHidden } = this.calculateAuditStatus(
       reviewPolicy,
       highestLevel,
     )
-    const nextContent = updateData.content || topic.content
-    const bodyTokens = await this.mentionService.buildBodyTokens({
-      content: nextContent,
-      mentions,
-      scene: EmojiSceneEnum.FORUM,
-    })
+    const shouldRebuildMentions = mentions !== undefined
+    const bodyTokens = shouldRebuildMentions
+      ? await this.mentionService.buildBodyTokens({
+          content: nextContent,
+          mentions,
+          scene: EmojiSceneEnum.FORUM,
+        })
+      : undefined
 
     const media = this.normalizeTopicMedia(
       { images, videos },
@@ -1208,7 +1220,9 @@ export class ForumTopicService {
     const updatePayload = {
       ...updateData,
       ...media,
-      bodyTokens: bodyTokens.length ? bodyTokens : null,
+      ...(bodyTokens !== undefined
+        ? { bodyTokens: bodyTokens.length ? bodyTokens : null }
+        : {}),
       auditStatus,
       sensitiveWordHits: hits?.length ? hits : null,
       isHidden,
@@ -1233,13 +1247,15 @@ export class ForumTopicService {
           )
         }
 
-        await this.mentionService.replaceMentionsInTx({
-          tx,
-          sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
-          sourceId: nextTopic.id,
-          content: nextContent,
-          mentions,
-        })
+        if (mentions !== undefined) {
+          await this.mentionService.replaceMentionsInTx({
+            tx,
+            sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
+            sourceId: nextTopic.id,
+            content: nextContent,
+            mentions,
+          })
+        }
 
         await this.forumCounterService.syncSectionVisibleState(
           tx,
@@ -1252,10 +1268,11 @@ export class ForumTopicService {
             isHidden: nextTopic.isHidden,
             deletedAt: nextTopic.deletedAt,
           })
+          && mentions !== undefined
         ) {
           await this.mentionService.dispatchTopicMentionsInTx(tx, {
             topicId: nextTopic.id,
-            actorUserId: topic.userId,
+            actorUserId,
             topicTitle: nextTopic.title,
           })
         }
@@ -1286,9 +1303,15 @@ export class ForumTopicService {
   async updateTopic(
     updateForumTopicDto: UpdateForumTopicDto,
     context: ForumTopicClientContext = {},
+    actorUserId?: number,
   ) {
     const topic = await this.getActiveTopicOrThrow(updateForumTopicDto.id)
-    return this.updateTopicWithCurrent(topic, updateForumTopicDto, context)
+    return this.updateTopicWithCurrent(
+      topic,
+      updateForumTopicDto,
+      context,
+      actorUserId ?? topic.userId,
+    )
   }
 
   /**
@@ -1383,7 +1406,7 @@ export class ForumTopicService {
             commentReceivedLikeCountByUser.set(
               comment.userId,
               (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-              comment.likeCount,
+                comment.likeCount,
             )
           }
         }
@@ -1700,7 +1723,7 @@ export class ForumTopicService {
       throw new ForbiddenException('无权修改该主题')
     }
 
-    return this.updateTopicWithCurrent(topic, input, context)
+    return this.updateTopicWithCurrent(topic, input, context, userId)
   }
 
   /**

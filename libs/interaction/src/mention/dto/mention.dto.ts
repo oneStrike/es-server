@@ -1,6 +1,8 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import {
+  ArrayProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 
 /**
  * 单条提及草稿 DTO。

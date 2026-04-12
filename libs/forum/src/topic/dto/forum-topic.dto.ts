@@ -23,7 +23,10 @@ import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { MentionDraftDto } from '@libs/interaction/mention/dto/mention.dto'
+import {
+  MentionDraftDto,
+  MentionDraftListDto,
+} from '@libs/interaction/mention/dto/mention.dto'
 
 /**
  * 论坛主题基础 DTO。
@@ -140,7 +143,7 @@ export class BaseForumTopicDto extends BaseDto {
   isHidden!: boolean
 
   @EnumProperty({
-    description: '审核角色（0=版主, 1=管理员）',
+    description: '审核角色（0=版主；1=管理员）',
     example: AuditRoleEnum.MODERATOR,
     required: false,
     enum: AuditRoleEnum,
@@ -157,7 +160,7 @@ export class BaseForumTopicDto extends BaseDto {
   auditById?: number
 
   @EnumProperty({
-    description: '审核状态（0=待审核, 1=已通过, 2=已拒绝）',
+    description: '审核状态（0=待审核；1=已通过；2=已拒绝）',
     example: AuditStatusEnum.APPROVED,
     required: true,
     enum: AuditStatusEnum,
@@ -310,7 +313,8 @@ export class BaseForumTopicDto extends BaseDto {
  * 统一约束标题、正文和可选媒体列表，避免 app/admin 入口重复声明。
  */
 export class ForumTopicWritableFieldsDto extends IntersectionType(
-  PickType(BaseForumTopicDto, ['title', 'content', 'mentions'] as const),
+  PickType(BaseForumTopicDto, ['title', 'content'] as const),
+  MentionDraftListDto,
   PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
 ) {}
 

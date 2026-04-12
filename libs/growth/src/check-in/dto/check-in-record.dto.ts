@@ -43,7 +43,7 @@ export class BaseCheckInRecordDto extends BaseDto {
   signDate!: string
 
   @EnumProperty({
-    description: '签到类型（1=正常签到；2=补签）。',
+    description: '签到类型（1=正常签到；2=补签）',
     example: CheckInRecordTypeEnum.NORMAL,
     enum: CheckInRecordTypeEnum,
   })
@@ -51,7 +51,7 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '基础奖励状态（0=待处理，表示已创建事实但尚未结算；1=已成功；2=已失败）。',
+      '基础奖励状态（0=待处理；1=已成功；2=已失败）',
     example: CheckInRewardStatusEnum.PENDING,
     enum: CheckInRewardStatusEnum,
     required: false,
@@ -60,7 +60,7 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '基础奖励结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）。',
+      '基础奖励结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）',
     example: CheckInRewardResultTypeEnum.APPLIED,
     enum: CheckInRewardResultTypeEnum,
     required: false,
@@ -69,7 +69,7 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '本次基础奖励解析来源（BASE_REWARD=计划默认基础奖励；DATE_RULE=具体日期奖励规则；PATTERN_RULE=周期模式奖励规则）。',
+      '基础奖励来源（BASE_REWARD=默认基础奖励；DATE_RULE=日期奖励规则；PATTERN_RULE=周期模式奖励规则）',
     example: CheckInRewardSourceTypeEnum.DATE_RULE,
     enum: CheckInRewardSourceTypeEnum,
     required: false,
@@ -113,7 +113,7 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '操作来源类型（1=用户主动操作；2=管理员补偿或修复；3=系统任务补偿）。',
+      '操作来源类型（1=用户主动操作；2=管理员补偿或修复；3=系统任务补偿）',
     example: CheckInOperatorTypeEnum.USER,
     enum: CheckInOperatorTypeEnum,
   })
