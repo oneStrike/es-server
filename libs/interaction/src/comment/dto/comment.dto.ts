@@ -14,12 +14,16 @@ import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { MentionDraftDto, MentionDraftListDto } from '../../mention/dto/mention.dto'
+import {
+  MentionDraftDto,
+  RequiredMentionDraftListDto,
+} from '../../mention/dto/mention.dto'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from '../comment.constant'
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
-    description: '目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛主题）',
+    description:
+      '目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛主题）',
     enum: CommentTargetTypeEnum,
     example: CommentTargetTypeEnum.COMIC,
     required: true,
@@ -247,7 +251,8 @@ export class CommentTargetDto {
   targetId!: number
 
   @EnumProperty({
-    description: '评论目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛主题）',
+    description:
+      '评论目标类型（1=漫画作品；2=小说作品；3=漫画章节；4=小说章节；5=论坛主题）',
     enum: CommentTargetTypeEnum,
     example: CommentTargetTypeEnum.COMIC,
     required: true,
@@ -267,7 +272,7 @@ export class ReplyTargetDto {
 
 export class CommentWritableFieldsDto extends IntersectionType(
   PickType(BaseCommentDto, ['content'] as const),
-  MentionDraftListDto,
+  RequiredMentionDraftListDto,
 ) {}
 
 export class CreateCommentBodyDto extends IntersectionType(
@@ -394,6 +399,23 @@ export class CommentUserDto extends PickType(BaseAppUserDto, [
 ] as const) {}
 
 /**
+ * 用户侧评论被回复目标 DTO。
+ */
+export class CommentReplyTargetDto extends PickType(BaseCommentDto, [
+  'id',
+  'userId',
+] as const) {
+  @NestedProperty({
+    description: '被回复用户',
+    required: false,
+    nullable: false,
+    type: CommentUserDto,
+    validation: false,
+  })
+  user!: CommentUserDto
+}
+
+/**
  * 评论回复分页项 DTO。
  */
 export class CommentReplyItemDto extends PickType(BaseCommentDto, [
@@ -436,6 +458,15 @@ export class CommentReplyItemDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   user!: CommentUserDto
+
+  @NestedProperty({
+    description: '被回复目标简要信息',
+    required: false,
+    nullable: false,
+    type: CommentReplyTargetDto,
+    validation: false,
+  })
+  replyTo?: CommentReplyTargetDto
 }
 
 /**
@@ -478,6 +509,15 @@ export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
     validation: false,
   })
   user!: CommentUserDto
+
+  @NestedProperty({
+    description: '被回复目标简要信息',
+    required: false,
+    nullable: false,
+    type: CommentReplyTargetDto,
+    validation: false,
+  })
+  replyTo?: CommentReplyTargetDto
 }
 
 /**
@@ -546,6 +586,45 @@ export class TargetCommentItemDto extends PickType(BaseCommentDto, [
     example: true,
   })
   hasMoreReplies!: boolean
+}
+
+/**
+ * 我的评论分页项 DTO。
+ */
+export class MyCommentPageItemDto extends PickType(BaseCommentDto, [
+  'id',
+  'targetType',
+  'targetId',
+  'userId',
+  'content',
+  'bodyTokens',
+  'floor',
+  'replyToId',
+  'actualReplyToId',
+  'isHidden',
+  'auditStatus',
+  'auditById',
+  'auditRole',
+  'auditReason',
+  'auditAt',
+  'likeCount',
+  'sensitiveWordHits',
+  'geoCountry',
+  'geoProvince',
+  'geoCity',
+  'geoIsp',
+  'deletedAt',
+  'createdAt',
+  'updatedAt',
+] as const) {
+  @NestedProperty({
+    description: '被回复目标简要信息',
+    required: false,
+    nullable: false,
+    type: CommentReplyTargetDto,
+    validation: false,
+  })
+  replyTo?: CommentReplyTargetDto
 }
 
 export class AdminCommentUserDto extends PickType(BaseAppUserDto, [

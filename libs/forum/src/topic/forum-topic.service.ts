@@ -19,6 +19,8 @@ import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
+import { buildRecentEmojiUsageItems } from '@libs/interaction/emoji/emoji-recent-usage.helper'
+import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -83,6 +85,7 @@ export class ForumTopicService {
     private readonly favoriteService: FavoriteService,
     private readonly followService: FollowService,
     private readonly mentionService: MentionService,
+    private readonly emojiCatalogService: EmojiCatalogService,
   ) {}
 
   private get db() {
@@ -259,6 +262,20 @@ export class ForumTopicService {
         fallback: fallback.videos,
       }),
     }
+  }
+
+  /**
+   * 校验论坛主题正文写入链路显式传入 mentions。
+   * 新规则要求主题创建和正文更新都必须携带 mentions，空数组表示无提及。
+   */
+  private ensureMentionsProvided(
+    mentions: CreateForumTopicDto['mentions'] | UpdateForumTopicDto['mentions'],
+  ) {
+    if (!Array.isArray(mentions)) {
+      throw new BadRequestException('mentions 为必填字段；无提及时请传空数组')
+    }
+
+    return mentions
   }
 
   /**
@@ -462,8 +479,8 @@ export class ForumTopicService {
     createTopicDto: CreateForumTopicDto,
     context: ForumTopicClientContext = {},
   ) {
-    const { sectionId, userId, images, videos, mentions, ...topicData } =
-      createTopicDto
+    const { sectionId, userId, images, videos, ...topicData } = createTopicDto
+    const mentions = this.ensureMentionsProvided(createTopicDto.mentions)
 
     const section = await this.forumPermissionService.ensureUserCanCreateTopic(
       userId,
@@ -486,6 +503,7 @@ export class ForumTopicService {
       mentions,
       scene: EmojiSceneEnum.FORUM,
     })
+    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
 
     const media = this.normalizeTopicMedia({ images, videos })
 
@@ -518,6 +536,11 @@ export class ForumTopicService {
           sourceId: newTopic.id,
           content: topicData.content,
           mentions,
+        })
+        await this.emojiCatalogService.recordRecentUsageInTx(tx, {
+          userId,
+          scene: EmojiSceneEnum.FORUM,
+          items: recentUsageItems,
         })
 
         await this.forumCounterService.updateTopicRelatedCounts(
@@ -1164,7 +1187,8 @@ export class ForumTopicService {
     context: ForumTopicClientContext = {},
     actorUserId = topic.userId,
   ) {
-    const { id, images, videos, mentions, ...updateData } = updateForumTopicDto
+    const { id, images, videos, ...updateData } = updateForumTopicDto
+    const mentions = this.ensureMentionsProvided(updateForumTopicDto.mentions)
 
     if (topic.isLocked) {
       throw new BusinessException(
@@ -1182,14 +1206,6 @@ export class ForumTopicService {
 
     const nextTitle = updateData.title ?? topic.title
     const nextContent = updateData.content ?? topic.content
-    const contentChanged =
-      updateData.content !== undefined && updateData.content !== topic.content
-
-    if (contentChanged && mentions === undefined) {
-      throw new BadRequestException(
-        '更新正文时必须显式传入 mentions；无提及时请传空数组',
-      )
-    }
 
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
@@ -1200,14 +1216,12 @@ export class ForumTopicService {
       reviewPolicy,
       highestLevel,
     )
-    const shouldRebuildMentions = mentions !== undefined
-    const bodyTokens = shouldRebuildMentions
-      ? await this.mentionService.buildBodyTokens({
-          content: nextContent,
-          mentions,
-          scene: EmojiSceneEnum.FORUM,
-        })
-      : undefined
+    const bodyTokens = await this.mentionService.buildBodyTokens({
+      content: nextContent,
+      mentions,
+      scene: EmojiSceneEnum.FORUM,
+    })
+    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
 
     const media = this.normalizeTopicMedia(
       { images, videos },
@@ -1220,9 +1234,7 @@ export class ForumTopicService {
     const updatePayload = {
       ...updateData,
       ...media,
-      ...(bodyTokens !== undefined
-        ? { bodyTokens: bodyTokens.length ? bodyTokens : null }
-        : {}),
+      bodyTokens: bodyTokens.length ? bodyTokens : null,
       auditStatus,
       sensitiveWordHits: hits?.length ? hits : null,
       isHidden,
@@ -1247,15 +1259,18 @@ export class ForumTopicService {
           )
         }
 
-        if (mentions !== undefined) {
-          await this.mentionService.replaceMentionsInTx({
-            tx,
-            sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
-            sourceId: nextTopic.id,
-            content: nextContent,
-            mentions,
-          })
-        }
+        await this.mentionService.replaceMentionsInTx({
+          tx,
+          sourceType: MentionSourceTypeEnum.FORUM_TOPIC,
+          sourceId: nextTopic.id,
+          content: nextContent,
+          mentions,
+        })
+        await this.emojiCatalogService.recordRecentUsageInTx(tx, {
+          userId: actorUserId,
+          scene: EmojiSceneEnum.FORUM,
+          items: recentUsageItems,
+        })
 
         await this.forumCounterService.syncSectionVisibleState(
           tx,
@@ -1268,7 +1283,6 @@ export class ForumTopicService {
             isHidden: nextTopic.isHidden,
             deletedAt: nextTopic.deletedAt,
           })
-          && mentions !== undefined
         ) {
           await this.mentionService.dispatchTopicMentionsInTx(tx, {
             topicId: nextTopic.id,

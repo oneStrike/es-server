@@ -79,4 +79,36 @@ describe('forum topic dto write contract', () => {
       ],
     })
   })
+
+  it('rejects user create topic requests without mentions', async () => {
+    await expect(
+      pipe.transform(
+        {
+          sectionId: 7,
+          title: '纯文本主题',
+          content: '没有提及',
+        },
+        {
+          type: 'body',
+          metatype: CreateUserForumTopicDto,
+        },
+      ),
+    ).rejects.toThrow()
+  })
+
+  it('rejects update topic requests without mentions', async () => {
+    await expect(
+      pipe.transform(
+        {
+          id: 101,
+          title: '纯文本主题',
+          content: '没有提及',
+        },
+        {
+          type: 'body',
+          metatype: UpdateForumTopicDto,
+        },
+      ),
+    ).rejects.toThrow()
+  })
 })

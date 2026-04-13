@@ -1,8 +1,6 @@
 import * as schema from '@db/schema'
 import { ForumTopicCommentResolver } from '@libs/forum/topic/resolver/forum-topic-comment.resolver'
-import {
-  MessageNotificationTypeEnum,
-} from '@libs/message/notification/notification.constant'
+import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from './comment.constant'
 import { CommentService } from './comment.service'
@@ -36,12 +34,22 @@ describe('commentService', () => {
   let selectWhereMock: jest.Mock
   let forumTopicFindFirstMock: jest.Mock
   let userCommentFindFirstMock: jest.Mock
+  let withTransactionMock: jest.Mock
+  let sensitiveWordDetectService: { getMatchedWords: jest.Mock }
+  let configReader: { getContentReviewPolicy: jest.Mock }
+  let commentGrowthService: { rewardCommentCreated: jest.Mock }
   let likeService: { checkStatusBatch: jest.Mock }
   let messageOutboxService: { enqueueNotificationEventInTx: jest.Mock }
   let messageNotificationComposerService: {
     buildCommentReplyEvent: jest.Mock
     buildCommentMentionEvent: jest.Mock
   }
+  let commentPermissionService: { ensureCanComment: jest.Mock }
+  let appUserCountService: {
+    updateCommentCount: jest.Mock
+    updateCommentReceivedLikeCount: jest.Mock
+  }
+  let emojiCatalogService: { recordRecentUsageInTx: jest.Mock }
   let mentionService: {
     buildBodyTokens: jest.Mock
     replaceMentionsInTx: jest.Mock
@@ -54,6 +62,33 @@ describe('commentService', () => {
     selectWhereMock = jest.fn()
     forumTopicFindFirstMock = jest.fn()
     userCommentFindFirstMock = jest.fn()
+    withTransactionMock = jest.fn()
+    sensitiveWordDetectService = {
+      getMatchedWords: jest.fn().mockReturnValue({
+        hits: [],
+        highestLevel: undefined,
+      }),
+    }
+    configReader = {
+      getContentReviewPolicy: jest.fn().mockReturnValue({
+        severeAction: {
+          auditStatus: AuditStatusEnum.REJECTED,
+          isHidden: true,
+        },
+        generalAction: {
+          auditStatus: AuditStatusEnum.PENDING,
+          isHidden: false,
+        },
+        lightAction: {
+          auditStatus: AuditStatusEnum.APPROVED,
+          isHidden: false,
+        },
+        recordHits: true,
+      }),
+    }
+    commentGrowthService = {
+      rewardCommentCreated: jest.fn(),
+    }
 
     drizzle = {
       db: {
@@ -75,6 +110,7 @@ describe('commentService', () => {
         findPagination: findPaginationMock,
       },
       schema,
+      withTransaction: withTransactionMock,
     }
 
     likeService = {
@@ -87,6 +123,16 @@ describe('commentService', () => {
       buildCommentReplyEvent: jest.fn(),
       buildCommentMentionEvent: jest.fn(),
     }
+    commentPermissionService = {
+      ensureCanComment: jest.fn(),
+    }
+    appUserCountService = {
+      updateCommentCount: jest.fn(),
+      updateCommentReceivedLikeCount: jest.fn(),
+    }
+    emojiCatalogService = {
+      recordRecentUsageInTx: jest.fn(),
+    }
     mentionService = {
       buildBodyTokens: jest.fn(),
       replaceMentionsInTx: jest.fn(),
@@ -95,16 +141,17 @@ describe('commentService', () => {
     }
 
     service = new (CommentService as any)(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      sensitiveWordDetectService as any,
+      configReader as any,
+      commentPermissionService as any,
+      commentGrowthService as any,
       likeService as any,
       messageOutboxService as any,
       messageNotificationComposerService as any,
-      {} as any,
+      appUserCountService as any,
       drizzle,
       mentionService as any,
+      emojiCatalogService as any,
     )
   })
 
@@ -133,13 +180,27 @@ describe('commentService', () => {
       pageIndex: 1,
       pageSize: 10,
     })
-    selectWhereMock.mockResolvedValue([
-      {
-        id: 3,
-        nickname: '测试用户',
-        avatarUrl: null,
-      },
-    ])
+    selectWhereMock
+      .mockResolvedValueOnce([
+        {
+          id: 3,
+          nickname: '测试用户',
+          avatarUrl: null,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 1,
+          userId: 4,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 4,
+          nickname: '被回复用户',
+          avatarUrl: null,
+        },
+      ])
 
     const result = await service.getReplies({
       commentId: 1,
@@ -156,6 +217,15 @@ describe('commentService', () => {
         geoCity: '深圳市',
         geoIsp: '电信',
         liked: true,
+        replyTo: {
+          id: 1,
+          userId: 4,
+          user: {
+            id: 4,
+            nickname: '被回复用户',
+            avatarUrl: null,
+          },
+        },
       }),
     )
     expect(result.list[0]).not.toHaveProperty('geoSource')
@@ -212,11 +282,7 @@ describe('commentService', () => {
     expect(findPaginationMock).toHaveBeenCalledWith(
       schema.userComment,
       expect.objectContaining({
-        orderBy: [
-          { likeCount: 'desc' },
-          { createdAt: 'desc' },
-          { id: 'desc' },
-        ],
+        orderBy: [{ likeCount: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
       }),
     )
     expect(result.list[0]).toEqual(
@@ -238,8 +304,8 @@ describe('commentService', () => {
           content: '我的评论',
           bodyTokens: null,
           floor: 1,
-          replyToId: null,
-          actualReplyToId: null,
+          replyToId: 11,
+          actualReplyToId: 11,
           isHidden: false,
           auditStatus: 1,
           auditById: null,
@@ -262,6 +328,20 @@ describe('commentService', () => {
       pageIndex: 1,
       pageSize: 10,
     })
+    selectWhereMock
+      .mockResolvedValueOnce([
+        {
+          id: 11,
+          userId: 4,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 4,
+          nickname: '被回复用户',
+          avatarUrl: null,
+        },
+      ])
 
     const result = await service.getUserComments(
       {
@@ -277,6 +357,15 @@ describe('commentService', () => {
         geoCountry: '中国',
         geoCity: '深圳市',
         geoIsp: '电信',
+        replyTo: {
+          id: 11,
+          userId: 4,
+          user: {
+            id: 4,
+            nickname: '被回复用户',
+            avatarUrl: null,
+          },
+        },
       }),
     )
     expect(result.list[0]).not.toHaveProperty('geoSource')
@@ -302,11 +391,7 @@ describe('commentService', () => {
     expect(findPaginationMock).toHaveBeenCalledWith(
       schema.userComment,
       expect.objectContaining({
-        orderBy: [
-          { likeCount: 'desc' },
-          { createdAt: 'desc' },
-          { id: 'desc' },
-        ],
+        orderBy: [{ likeCount: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
       }),
     )
   })
@@ -357,6 +442,16 @@ describe('commentService', () => {
       if (fieldKeys.includes('totalCount')) {
         return createSelectChain({
           asResult: { rn: 1 },
+        })
+      }
+
+      if (
+        fieldKeys.length === 2 &&
+        fieldKeys.includes('id') &&
+        fieldKeys.includes('userId')
+      ) {
+        return createSelectChain({
+          whereResult: [{ id: 101, userId: 5 }],
         })
       }
 
@@ -441,6 +536,121 @@ describe('commentService', () => {
       expect.objectContaining({
         id: 201,
         isAuthorComment: true,
+        replyTo: expect.objectContaining({
+          id: 101,
+          userId: 5,
+        }),
+      }),
+    )
+  })
+
+  it('回复隐藏评论时会拒绝请求', async () => {
+    mentionService.buildBodyTokens.mockResolvedValue([])
+    userCommentFindFirstMock.mockResolvedValue({
+      id: 1,
+      targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+      targetId: 7,
+      userId: 3,
+      replyToId: null,
+      actualReplyToId: null,
+      deletedAt: null,
+      auditStatus: AuditStatusEnum.APPROVED,
+      isHidden: true,
+    })
+
+    await expect(
+      service.replyComment({
+        userId: 9,
+        replyToId: 1,
+        content: '回复隐藏评论',
+        mentions: [],
+      } as any),
+    ).rejects.toThrow('回复目标不存在')
+  })
+
+  it('可见回复评论会记录 COMMENT 场景 recent emoji usage', async () => {
+    const createdAt = new Date('2026-04-08T00:00:00.000Z')
+    const tx = {
+      insert: jest.fn().mockReturnValue({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([
+            {
+              id: 11,
+              userId: 9,
+              targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+              targetId: 7,
+              replyToId: 1,
+              content: '回复 :smile:',
+              createdAt,
+            },
+          ]),
+        }),
+      }),
+      query: {
+        appUser: {
+          findFirst: jest.fn().mockResolvedValue({
+            nickname: '回复者',
+          }),
+        },
+      },
+    }
+    const mockResolver = {
+      targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+      ensureCanComment: jest.fn(),
+      applyCountDelta: jest.fn(),
+      resolveMeta: jest.fn().mockResolvedValue({
+        targetDisplayTitle: '论坛主题',
+      }),
+    }
+    service.registerResolver(mockResolver as any)
+    withTransactionMock.mockImplementation(async (callback: any) =>
+      callback(tx),
+    )
+    mentionService.buildBodyTokens.mockResolvedValue([
+      {
+        type: 'emojiCustom',
+        emojiAssetId: 1001,
+        shortcode: 'smile',
+        packCode: 'default',
+        imageUrl: 'https://cdn.example.com/smile.gif',
+        isAnimated: true,
+      },
+    ])
+    mentionService.replaceMentionsInTx.mockResolvedValue({
+      mentionedUserIds: [],
+      pendingUserIds: [],
+    })
+    userCommentFindFirstMock.mockResolvedValue({
+      id: 1,
+      targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+      targetId: 7,
+      userId: 3,
+      replyToId: null,
+      actualReplyToId: null,
+      deletedAt: null,
+      auditStatus: AuditStatusEnum.APPROVED,
+      isHidden: false,
+    })
+    messageNotificationComposerService.buildCommentReplyEvent.mockReturnValue({
+      bizKey: 'comment:reply:11:to:3',
+      payload: {
+        type: MessageNotificationTypeEnum.COMMENT_REPLY,
+      },
+    })
+
+    await service.replyComment({
+      userId: 9,
+      replyToId: 1,
+      content: '回复 :smile:',
+      mentions: [],
+    } as any)
+
+    expect(emojiCatalogService.recordRecentUsageInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        userId: 9,
+        scene: 2,
+        items: [{ emojiAssetId: 1001, useCount: 1 }],
       }),
     )
   })
@@ -497,7 +707,9 @@ describe('commentService', () => {
     expect(
       messageNotificationComposerService.buildCommentReplyEvent,
     ).toHaveBeenCalled()
-    expect(messageOutboxService.enqueueNotificationEventInTx).toHaveBeenCalledWith(
+    expect(
+      messageOutboxService.enqueueNotificationEventInTx,
+    ).toHaveBeenCalledWith(
       tx,
       expect.objectContaining({
         payload: expect.objectContaining({

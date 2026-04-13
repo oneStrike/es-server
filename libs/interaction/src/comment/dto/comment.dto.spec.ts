@@ -77,4 +77,35 @@ describe('comment dto write contract', () => {
       ],
     })
   })
+
+  it('rejects create comment requests without mentions', async () => {
+    await expect(
+      pipe.transform(
+        {
+          targetType: 5,
+          targetId: 7,
+          content: '纯文本评论',
+        },
+        {
+          type: 'body',
+          metatype: CreateCommentBodyDto,
+        },
+      ),
+    ).rejects.toThrow()
+  })
+
+  it('rejects reply comment requests without mentions', async () => {
+    await expect(
+      pipe.transform(
+        {
+          replyToId: 11,
+          content: '纯文本回复',
+        },
+        {
+          type: 'body',
+          metatype: ReplyCommentBodyDto,
+        },
+      ),
+    ).rejects.toThrow()
+  })
 })

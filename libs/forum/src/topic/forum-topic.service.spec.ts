@@ -23,6 +23,9 @@ describe('forumTopicService', () => {
     replaceMentionsInTx: jest.Mock
     dispatchTopicMentionsInTx: jest.Mock
   }
+  let emojiCatalogService: {
+    recordRecentUsageInTx: jest.Mock
+  }
 
   beforeEach(() => {
     selectWhereMock = jest.fn()
@@ -70,6 +73,9 @@ describe('forumTopicService', () => {
       replaceMentionsInTx: jest.fn(),
       dispatchTopicMentionsInTx: jest.fn(),
     }
+    emojiCatalogService = {
+      recordRecentUsageInTx: jest.fn(),
+    }
 
     service = new (ForumTopicService as any)(
       drizzle,
@@ -84,6 +90,7 @@ describe('forumTopicService', () => {
       favoriteService as any,
       {} as any,
       mentionService as any,
+      emojiCatalogService as any,
     )
   })
 
@@ -213,6 +220,14 @@ describe('forumTopicService', () => {
                   nickname: '测试用户',
                   text: '@测试用户',
                 },
+                {
+                  type: 'emojiCustom',
+                  emojiAssetId: 1001,
+                  shortcode: 'smile',
+                  packCode: 'default',
+                  imageUrl: 'https://cdn.example.com/emoji/smile.gif',
+                  isAnimated: true,
+                },
               ],
               images: [],
               videos: [],
@@ -226,7 +241,9 @@ describe('forumTopicService', () => {
         }),
       }),
     }
-    drizzle.db.transaction.mockImplementation(async (callback: any) => callback(tx))
+    drizzle.db.transaction.mockImplementation(async (callback: any) =>
+      callback(tx),
+    )
     forumPermissionService.ensureUserCanCreateTopic.mockResolvedValue({
       topicReviewPolicy: ForumReviewPolicyEnum.NONE,
     })
@@ -236,6 +253,14 @@ describe('forumTopicService', () => {
         userId: 5,
         nickname: '测试用户',
         text: '@测试用户',
+      },
+      {
+        type: 'emojiCustom',
+        emojiAssetId: 1001,
+        shortcode: 'smile',
+        packCode: 'default',
+        imageUrl: 'https://cdn.example.com/emoji/smile.gif',
+        isAnimated: true,
       },
     ])
 
@@ -274,9 +299,17 @@ describe('forumTopicService', () => {
         topicTitle: '提及主题',
       }),
     )
+    expect(emojiCatalogService.recordRecentUsageInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        userId: 9,
+        scene: EmojiSceneEnum.FORUM,
+        items: [{ emojiAssetId: 1001, useCount: 1 }],
+      }),
+    )
   })
 
-  it('更新未改正文且未传 mentions 时不会重建 mentions 结构', async () => {
+  it('更新主题未传 mentions 时会拒绝请求', async () => {
     const currentTopic = {
       id: 101,
       sectionId: 7,
@@ -314,42 +347,9 @@ describe('forumTopicService', () => {
       }),
     }
 
-    drizzle.db.transaction.mockImplementation(async (callback: any) => callback(tx))
-    jest
-      .spyOn(service as any, 'getSectionTopicReviewPolicy')
-      .mockResolvedValue(ForumReviewPolicyEnum.NONE)
-
-    await (service as any).updateTopicWithCurrent(
-      currentTopic,
-      {
-        id: 101,
-        title: '新标题',
-        content: currentTopic.content,
-      },
-      {},
+    drizzle.db.transaction.mockImplementation(async (callback: any) =>
+      callback(tx),
     )
-
-    expect(mentionService.buildBodyTokens).not.toHaveBeenCalled()
-    expect(mentionService.replaceMentionsInTx).not.toHaveBeenCalled()
-  })
-
-  it('更新正文但未显式传入 mentions 时会拒绝请求', async () => {
-    const currentTopic = {
-      id: 101,
-      sectionId: 7,
-      userId: 9,
-      title: '旧标题',
-      content: '旧正文',
-      bodyTokens: null,
-      images: [],
-      videos: [],
-      auditStatus: 1,
-      isHidden: false,
-      isLocked: false,
-      deletedAt: null,
-      createdAt: new Date('2026-04-12T10:00:00.000Z'),
-    }
-
     jest
       .spyOn(service as any, 'getSectionTopicReviewPolicy')
       .mockResolvedValue(ForumReviewPolicyEnum.NONE)
@@ -360,7 +360,7 @@ describe('forumTopicService', () => {
         {
           id: 101,
           title: '新标题',
-          content: '新正文',
+          content: currentTopic.content,
         },
         {},
       ),
@@ -397,6 +397,11 @@ describe('forumTopicService', () => {
                     nickname: '测试用户',
                     text: '@测试用户',
                   },
+                  {
+                    type: 'emojiUnicode',
+                    unicodeSequence: '😀',
+                    emojiAssetId: 2001,
+                  },
                 ],
               },
             ]),
@@ -405,8 +410,12 @@ describe('forumTopicService', () => {
       }),
     }
 
-    drizzle.db.transaction.mockImplementation(async (callback: any) => callback(tx))
-    jest.spyOn(service as any, 'getActiveTopicOrThrow').mockResolvedValue(currentTopic)
+    drizzle.db.transaction.mockImplementation(async (callback: any) =>
+      callback(tx),
+    )
+    jest
+      .spyOn(service as any, 'getActiveTopicOrThrow')
+      .mockResolvedValue(currentTopic)
     jest
       .spyOn(service as any, 'getSectionTopicReviewPolicy')
       .mockResolvedValue(ForumReviewPolicyEnum.NONE)
@@ -416,6 +425,11 @@ describe('forumTopicService', () => {
         userId: 5,
         nickname: '测试用户',
         text: '@测试用户',
+      },
+      {
+        type: 'emojiUnicode',
+        unicodeSequence: '😀',
+        emojiAssetId: 2001,
       },
     ])
 
@@ -443,6 +457,14 @@ describe('forumTopicService', () => {
         topicId: 101,
         actorUserId: 77,
         topicTitle: '旧标题',
+      }),
+    )
+    expect(emojiCatalogService.recordRecentUsageInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        userId: 77,
+        scene: EmojiSceneEnum.FORUM,
+        items: [{ emojiAssetId: 2001, useCount: 1 }],
       }),
     )
   })

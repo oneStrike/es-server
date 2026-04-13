@@ -25,7 +25,7 @@ import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   MentionDraftDto,
-  MentionDraftListDto,
+  RequiredMentionDraftListDto,
 } from '@libs/interaction/mention/dto/mention.dto'
 
 /**
@@ -314,7 +314,7 @@ export class BaseForumTopicDto extends BaseDto {
  */
 export class ForumTopicWritableFieldsDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['title', 'content'] as const),
-  MentionDraftListDto,
+  RequiredMentionDraftListDto,
   PartialType(PickType(BaseForumTopicDto, ['images', 'videos'] as const)),
 ) {}
 

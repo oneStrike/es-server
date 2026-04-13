@@ -3,6 +3,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
+import { Type } from 'class-transformer'
+import { IsArray, IsDefined, ValidateNested } from 'class-validator'
 
 /**
  * 单条提及草稿 DTO。
@@ -53,4 +55,23 @@ export class MentionDraftListDto {
     itemClass: MentionDraftDto,
   })
   mentions?: MentionDraftDto[]
+}
+
+/**
+ * 必填提及列表写入 DTO。
+ * 用于正文写接口强制要求显式传入 mentions，空数组表示无提及。
+ */
+export class RequiredMentionDraftListDto {
+  @IsDefined({ message: 'mentions 不能为空' })
+  @IsArray({ message: 'mentions 必须是数组类型' })
+  @ValidateNested({ each: true })
+  @Type(() => MentionDraftDto)
+  @ArrayProperty({
+    description: '正文中的结构化提及列表；无提及时传空数组',
+    required: true,
+    itemClass: MentionDraftDto,
+    validation: false,
+    default: [],
+  })
+  mentions!: MentionDraftDto[]
 }

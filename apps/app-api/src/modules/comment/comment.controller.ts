@@ -1,9 +1,9 @@
 import type { FastifyRequest } from 'fastify'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import {
-  BaseCommentDto,
   CommentReplyItemDto,
   CreateCommentBodyDto,
+  MyCommentPageItemDto,
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
   ReplyCommentBodyDto,
@@ -72,7 +72,7 @@ export class CommentController {
   @Get('my/page')
   @ApiPageDoc({
     summary: '分页查询我的评论',
-    model: BaseCommentDto,
+    model: MyCommentPageItemDto,
   })
   async page(
     @Query() query: QueryMyCommentPageDto,

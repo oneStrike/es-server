@@ -30,6 +30,8 @@ import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, desc, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
+import { buildRecentEmojiUsageItems } from '../emoji/emoji-recent-usage.helper'
+import { EmojiCatalogService } from '../emoji/emoji-catalog.service'
 import { LikeTargetTypeEnum } from '../like/like.constant'
 import { LikeService } from '../like/like.service'
 import { MentionSourceTypeEnum } from '../mention/mention.constant'
@@ -76,6 +78,7 @@ export class CommentService {
     private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
     private readonly mentionService: MentionService,
+    private readonly emojiCatalogService: EmojiCatalogService,
   ) {}
 
   private get db() {
@@ -241,6 +244,110 @@ export class CommentService {
       commentIds,
       userId,
     )
+  }
+
+  /**
+   * 批量加载评论作者精简信息。
+   * 统一复用回复分页、目标评论分页和我的评论分页的用户装配逻辑。
+   */
+  private async getCommentUserMap(userIds: number[]) {
+    const uniqueUserIds = [...new Set(userIds)]
+    if (uniqueUserIds.length === 0) {
+      return new Map<
+        number,
+        {
+          id: number
+          nickname: string | null
+          avatarUrl: string | null
+        }
+      >()
+    }
+
+    const users = await this.db
+      .select({
+        id: this.appUser.id,
+        nickname: this.appUser.nickname,
+        avatarUrl: this.appUser.avatarUrl,
+      })
+      .from(this.appUser)
+      .where(inArray(this.appUser.id, uniqueUserIds))
+
+    return new Map(users.map((item) => [item.id, item] as const))
+  }
+
+  /**
+   * 批量加载被回复目标简要信息。
+   * 只返回未删除的父评论；已删除或缺失的父评论统一视为 undefined。
+   */
+  private async getReplyTargetMap(
+    replyToIds: Array<number | null | undefined>,
+  ) {
+    const uniqueReplyToIds = [
+      ...new Set(
+        replyToIds.filter(
+          (replyToId): replyToId is number => typeof replyToId === 'number',
+        ),
+      ),
+    ]
+
+    if (uniqueReplyToIds.length === 0) {
+      return new Map<
+        number,
+        {
+          id: number
+          userId: number
+          user?: {
+            id: number
+            nickname: string | null
+            avatarUrl: string | null
+          }
+        }
+      >()
+    }
+
+    const replyTargets = await this.db
+      .select({
+        id: this.userComment.id,
+        userId: this.userComment.userId,
+      })
+      .from(this.userComment)
+      .where(
+        and(
+          inArray(this.userComment.id, uniqueReplyToIds),
+          isNull(this.userComment.deletedAt),
+        ),
+      )
+
+    const userMap = await this.getCommentUserMap(
+      replyTargets.map((item) => item.userId),
+    )
+
+    return new Map(
+      replyTargets.map((item) => [
+        item.id,
+        {
+          id: item.id,
+          userId: item.userId,
+          user: userMap.get(item.userId) ?? undefined,
+        },
+      ]),
+    )
+  }
+
+  /**
+   * 校验正文写入链路已显式传入 mentions。
+   * 新规则要求评论正文必须显式携带 mentions，空数组表示无提及。
+   */
+  private ensureMentionsProvided(
+    mentions:
+      | CreateCommentBodyDto['mentions']
+      | ReplyCommentBodyDto['mentions'],
+  ) {
+    if (!Array.isArray(mentions)) {
+      throw new BadRequestException('mentions 为必填字段；无提及时请传空数组')
+    }
+
+    return mentions
   }
 
   private omitGeoSource<T>(item: T): Omit<T, 'geoSource'> {
@@ -823,12 +930,14 @@ export class CommentService {
     input: CreateCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, targetType, targetId, content, mentions } = input
+    const { userId, targetType, targetId, content } = input
+    const mentions = this.ensureMentionsProvided(input.mentions)
     const bodyTokens = await this.mentionService.buildBodyTokens({
       content,
       mentions,
       scene: EmojiSceneEnum.COMMENT,
     })
+    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
 
     // 校验用户是否有权限在该目标下评论
     await this.commentPermissionService.ensureCanComment(
@@ -894,6 +1003,11 @@ export class CommentService {
                 sourceId: newComment.id,
                 content,
                 mentions,
+              })
+              await this.emojiCatalogService.recordRecentUsageInTx(tx, {
+                userId,
+                scene: EmojiSceneEnum.COMMENT,
+                items: recentUsageItems,
               })
 
               await this.appUserCountService.updateCommentCount(tx, userId, 1)
@@ -975,12 +1089,14 @@ export class CommentService {
     input: ReplyCommentBodyDto & { userId: number },
     context: CommentWriteContext = {},
   ) {
-    const { userId, content, replyToId, mentions } = input
+    const { userId, content, replyToId } = input
+    const mentions = this.ensureMentionsProvided(input.mentions)
     const bodyTokens = await this.mentionService.buildBodyTokens({
       content,
       mentions,
       scene: EmojiSceneEnum.COMMENT,
     })
+    const recentUsageItems = buildRecentEmojiUsageItems(bodyTokens)
 
     // 查询被回复的评论
     const replyTo = await this.db.query.userComment.findFirst({
@@ -993,11 +1109,18 @@ export class CommentService {
         replyToId: true,
         actualReplyToId: true,
         deletedAt: true,
+        auditStatus: true,
+        isHidden: true,
       },
     })
 
     // 校验被回复评论是否存在
-    if (!replyTo || replyTo.deletedAt) {
+    if (
+      !replyTo ||
+      replyTo.deletedAt ||
+      replyTo.auditStatus !== AuditStatusEnum.APPROVED ||
+      replyTo.isHidden
+    ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '回复目标不存在',
@@ -1060,6 +1183,11 @@ export class CommentService {
         sourceId: newComment.id,
         content,
         mentions,
+      })
+      await this.emojiCatalogService.recordRecentUsageInTx(tx, {
+        userId,
+        scene: EmojiSceneEnum.COMMENT,
+        items: recentUsageItems,
       })
 
       await this.appUserCountService.updateCommentCount(tx, userId, 1)
@@ -1277,32 +1405,26 @@ export class CommentService {
 
     const userIds = [...new Set(page.list.map((item) => item.userId))]
     const commentIds = page.list.map((item) => item.id)
-    const [users, likedMap] = await Promise.all([
-      userIds.length
-        ? this.db
-            .select({
-              id: this.appUser.id,
-              nickname: this.appUser.nickname,
-              avatarUrl: this.appUser.avatarUrl,
-            })
-            .from(this.appUser)
-            .where(inArray(this.appUser.id, userIds))
-        : Promise.resolve([]),
+    const [userMap, replyTargetMap, likedMap] = await Promise.all([
+      this.getCommentUserMap(userIds),
+      this.getReplyTargetMap(page.list.map((item) => item.replyToId)),
       this.getCommentLikedMap(commentIds, userId),
     ])
-    const userMap = new Map(users.map((item) => [item.id, item] as const))
 
     return {
       ...page,
       list: page.list.map((item) => {
-        const user = userMap.get(item.userId)
         return {
           ...this.omitGeoSource(item),
           liked: likedMap.get(item.id) ?? false,
           isAuthorComment:
             topicAuthorUserId !== undefined &&
             item.userId === topicAuthorUserId,
-          user: user ?? undefined,
+          user: userMap.get(item.userId) ?? undefined,
+          replyTo:
+            item.replyToId === null
+              ? undefined
+              : (replyTargetMap.get(item.replyToId) ?? undefined),
         }
       }),
     }
@@ -1353,19 +1475,23 @@ export class CommentService {
               pageIndex,
               pageSize,
             })
-            const replyCountSql = sql<number>`(
-              select count(*)::int
-              from "user_comment" as "reply"
-              where "reply"."actual_reply_to_id" = ${this.userComment.id}
-                and "reply"."audit_status" = ${AuditStatusEnum.APPROVED}
-                and "reply"."is_hidden" = ${false}
-                and "reply"."deleted_at" is null
-                ${
-                  rootCommentAuthorUserId !== undefined
-                    ? sql`and "reply"."user_id" = ${rootCommentAuthorUserId}`
-                    : sql``
-                }
-            )`
+            const replyAggregationConditions = [
+              eq(this.userComment.targetType, targetType),
+              eq(this.userComment.targetId, targetId),
+              ...this.buildVisibleReplyConditions({
+                authorUserId: rootCommentAuthorUserId,
+              }),
+            ]
+            const replyCountSubquery = this.db
+              .select({
+                rootId: this.userComment.actualReplyToId,
+                replyCount: sql<number>`count(*)::int`,
+              })
+              .from(this.userComment)
+              .where(and(...replyAggregationConditions))
+              .groupBy(this.userComment.actualReplyToId)
+              .as('reply_count')
+            const replyCountSql = sql<number>`coalesce(${replyCountSubquery.replyCount}, 0)::int`
 
             const [list, totalRows] = await Promise.all([
               this.db
@@ -1386,6 +1512,10 @@ export class CommentService {
                   replyCount: replyCountSql.as('replyCount'),
                 })
                 .from(this.userComment)
+                .leftJoin(
+                  replyCountSubquery,
+                  eq(this.userComment.id, replyCountSubquery.rootId),
+                )
                 .where(and(...rootConditions))
                 .orderBy(
                   desc(this.userComment.likeCount),
@@ -1453,20 +1583,11 @@ export class CommentService {
     const commentIds = [
       ...new Set([...rootIds, ...previewReplies.map((item) => item.id)]),
     ]
-    const [users, likedMap] = await Promise.all([
-      userIds.length
-        ? this.db
-            .select({
-              id: this.appUser.id,
-              nickname: this.appUser.nickname,
-              avatarUrl: this.appUser.avatarUrl,
-            })
-            .from(this.appUser)
-            .where(inArray(this.appUser.id, userIds))
-        : Promise.resolve([]),
+    const [userMap, replyTargetMap, likedMap] = await Promise.all([
+      this.getCommentUserMap(userIds),
+      this.getReplyTargetMap(previewReplies.map((item) => item.replyToId)),
       this.getCommentLikedMap(commentIds, userId),
     ])
-    const userMap = new Map(users.map((item) => [item.id, item] as const))
 
     return {
       ...page,
@@ -1490,6 +1611,10 @@ export class CommentService {
               topicAuthorUserId !== undefined &&
               reply.userId === topicAuthorUserId,
             user: userMap.get(reply.userId) ?? undefined,
+            replyTo:
+              reply.replyToId === null
+                ? undefined
+                : (replyTargetMap.get(reply.replyToId) ?? undefined),
           }),
         )
 
@@ -1545,9 +1670,19 @@ export class CommentService {
       orderBy: this.buildCommentOrderBy(query.sort),
     })
 
+    const replyTargetMap = await this.getReplyTargetMap(
+      page.list.map((item) => item.replyToId),
+    )
+
     return {
       ...page,
-      list: page.list.map((item) => this.omitGeoSource(item)),
+      list: page.list.map((item) => ({
+        ...this.omitGeoSource(item),
+        replyTo:
+          item.replyToId === null
+            ? undefined
+            : (replyTargetMap.get(item.replyToId) ?? undefined),
+      })),
     }
   }
 
