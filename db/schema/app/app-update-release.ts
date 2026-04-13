@@ -87,6 +87,16 @@ export const appUpdateRelease = pgTable(
      */
     customDownloadUrl: varchar({ length: 1000 }),
     /**
+     * 更新弹窗背景图地址。
+     * 仅在客户端需要展示品牌化更新弹窗时使用。
+     */
+    popupBackgroundImage: varchar({ length: 255 }),
+    /**
+     * 更新弹窗背景图位置。
+     * 直接复用 CSS `background-position` 语义。
+     */
+    popupBackgroundPosition: varchar({ length: 20 }).default('center'),
+    /**
      * 商店地址列表。
      * 仅持久化渠道编码和商店地址，渠道名称由字典项动态回填。
      */

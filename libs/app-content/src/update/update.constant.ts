@@ -23,6 +23,22 @@ export enum AppUpdateTypeEnum {
 }
 
 /**
+ * 更新弹窗背景图片位置枚举。
+ * 语义与公告弹窗保持一致，前端可直接映射到 CSS `background-position`。
+ */
+export enum AppUpdatePopupBackgroundPositionEnum {
+  CENTER = 'center',
+  TOP_CENTER = 'top center',
+  TOP_LEFT = 'top left',
+  TOP_RIGHT = 'top right',
+  BOTTOM_CENTER = 'bottom center',
+  BOTTOM_LEFT = 'bottom left',
+  BOTTOM_RIGHT = 'bottom right',
+  LEFT_CENTER = 'left center',
+  RIGHT_CENTER = 'right center',
+}
+
+/**
  * 默认兜底渠道编码。
  */
 export const DEFAULT_APP_UPDATE_CHANNEL_CODE = 'default'

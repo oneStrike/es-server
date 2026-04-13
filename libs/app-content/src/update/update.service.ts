@@ -28,6 +28,7 @@ import {
   APP_UPDATE_CHANNEL_DICTIONARY_CODE,
   DEFAULT_APP_UPDATE_CHANNEL_CODE,
   AppUpdatePackageSourceEnum,
+  AppUpdatePopupBackgroundPositionEnum,
   AppUpdateTypeEnum,
 } from './update.constant'
 
@@ -299,6 +300,10 @@ export class AppUpdateService {
       releaseNotes: latestRelease.releaseNotes,
       packageUrl: latestRelease.packageUrl,
       customDownloadUrl: latestRelease.customDownloadUrl,
+      popupBackgroundImage: latestRelease.popupBackgroundImage,
+      popupBackgroundPosition:
+        latestRelease.popupBackgroundPosition ??
+        AppUpdatePopupBackgroundPositionEnum.CENTER,
       storeLinks,
       matchedStoreLink,
     }
@@ -376,6 +381,9 @@ export class AppUpdateService {
     const customDownloadUrl = this.normalizeNullableString(
       dto.customDownloadUrl,
     )
+    const popupBackgroundImage = this.normalizeNullableString(
+      dto.popupBackgroundImage,
+    )
     const packageOriginalName = this.normalizeNullableString(
       dto.packageOriginalName,
     )
@@ -436,6 +444,10 @@ export class AppUpdateService {
           ? packageMimeType
           : null,
       customDownloadUrl,
+      popupBackgroundImage,
+      popupBackgroundPosition:
+        dto.popupBackgroundPosition ??
+        AppUpdatePopupBackgroundPositionEnum.CENTER,
       storeLinks,
     }
 
@@ -531,6 +543,9 @@ export class AppUpdateService {
   ) {
     return {
       ...release,
+      popupBackgroundPosition:
+        release.popupBackgroundPosition ??
+        AppUpdatePopupBackgroundPositionEnum.CENTER,
       storeLinks: this.toStoreLinkSnapshots(
         release.storeLinks ?? [],
         channelNameMap,

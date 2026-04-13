@@ -155,6 +155,55 @@ describe('app update service', () => {
     })
   })
 
+  it('persists popup background fields when creating a release', async () => {
+    const { AppUpdateService } = await import('./update.service')
+
+    const releaseTable = { id: 'id' }
+    const insertValuesMock = jest.fn().mockResolvedValue(undefined)
+    const tx = {
+      insert: jest.fn(() => ({
+        values: insertValuesMock,
+      })),
+    }
+
+    const service = new AppUpdateService({
+      db: {
+        query: {
+          dictionaryItem: {
+            findMany: jest.fn().mockResolvedValue([]),
+          },
+        },
+      },
+      schema: {
+        appUpdateRelease: releaseTable,
+      },
+      withErrorHandling: jest.fn(async (callback) => callback()),
+      withTransaction: jest.fn(async (callback) => callback(tx)),
+    } as any)
+
+    await service.create(
+      {
+        platform: 'android',
+        versionName: '1.2.0',
+        buildCode: 120,
+        forceUpdate: false,
+        packageSourceType: 'url',
+        packageUrl: 'https://example.com/app-release.apk',
+        popupBackgroundImage: 'https://cdn.example.com/app-update/bg.png',
+        popupBackgroundPosition: 'top center',
+        storeLinks: [],
+      } as any,
+      9,
+    )
+
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        popupBackgroundImage: 'https://cdn.example.com/app-update/bg.png',
+        popupBackgroundPosition: 'top center',
+      }),
+    )
+  })
+
   it('publishing a draft unpublishes the previous release on the same platform', async () => {
     const { AppUpdateService } = await import('./update.service')
 
@@ -230,6 +279,9 @@ describe('app update service', () => {
               forceUpdate: false,
               packageUrl: 'https://example.com/app-release.apk',
               customDownloadUrl: null,
+              popupBackgroundImage:
+                'https://cdn.example.com/app-update/detail-bg.png',
+              popupBackgroundPosition: 'top center',
               isPublished: false,
               publishedAt: null,
               createdAt: new Date('2026-04-12T10:30:00.000Z'),
@@ -276,6 +328,9 @@ describe('app update service', () => {
     await expect(service.findDetail({ id: 3 })).resolves.toEqual(
       expect.objectContaining({
         id: 3,
+        popupBackgroundImage:
+          'https://cdn.example.com/app-update/detail-bg.png',
+        popupBackgroundPosition: 'top center',
         storeLinks: [
           expect.objectContaining({
             channelCode: 'default',
@@ -306,6 +361,9 @@ describe('app update service', () => {
               forceUpdate: true,
               packageUrl: 'https://example.com/app-release.apk',
               customDownloadUrl: 'https://download.example.com/app',
+              popupBackgroundImage:
+                'https://cdn.example.com/app-update/check-bg.png',
+              popupBackgroundPosition: 'bottom center',
               storeLinks: [
                 {
                   channelCode: 'default',
@@ -360,6 +418,9 @@ describe('app update service', () => {
         latestBuildCode: 120,
         packageUrl: 'https://example.com/app-release.apk',
         customDownloadUrl: 'https://download.example.com/app',
+        popupBackgroundImage:
+          'https://cdn.example.com/app-update/check-bg.png',
+        popupBackgroundPosition: 'bottom center',
         matchedStoreLink: expect.objectContaining({
           channelCode: 'huawei',
           channelName: '华为应用市场',

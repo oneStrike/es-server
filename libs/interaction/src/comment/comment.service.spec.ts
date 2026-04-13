@@ -164,6 +164,7 @@ describe('commentService', () => {
           bodyTokens: null,
           floor: 2,
           replyToId: 1,
+          actualReplyToId: 1,
           likeCount: 0,
           geoCountry: '中国',
           geoProvince: null,
@@ -177,27 +178,13 @@ describe('commentService', () => {
       pageIndex: 1,
       pageSize: 10,
     })
-    selectWhereMock
-      .mockResolvedValueOnce([
-        {
-          id: 3,
-          nickname: '测试用户',
-          avatarUrl: null,
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 1,
-          userId: 4,
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 4,
-          nickname: '被回复用户',
-          avatarUrl: null,
-        },
-      ])
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        id: 3,
+        nickname: '测试用户',
+        avatarUrl: null,
+      },
+    ])
 
     const result = await service.getReplies({
       commentId: 1,
@@ -214,8 +201,74 @@ describe('commentService', () => {
         geoCity: '深圳市',
         geoIsp: '电信',
         liked: true,
+      }),
+    )
+    expect(result.list[0]).not.toHaveProperty('geoSource')
+    expect(result.list[0]).not.toHaveProperty('actualReplyToId')
+    expect(result.list[0]).not.toHaveProperty('replyTo')
+  })
+
+  it('评论回复分页仅在回复楼中楼时返回 replyTo', async () => {
+    findPaginationMock.mockResolvedValue({
+      list: [
+        {
+          id: 12,
+          targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+          targetId: 7,
+          userId: 3,
+          content: '回复二级评论',
+          bodyTokens: null,
+          floor: 3,
+          replyToId: 10,
+          actualReplyToId: 1,
+          likeCount: 0,
+          geoCountry: '中国',
+          geoProvince: null,
+          geoCity: '深圳市',
+          geoIsp: '电信',
+          createdAt: new Date('2026-04-08T00:10:00.000Z'),
+        },
+      ],
+      total: 1,
+      pageIndex: 1,
+      pageSize: 10,
+    })
+    selectWhereMock
+      .mockResolvedValueOnce([
+        {
+          id: 3,
+          nickname: '测试用户',
+          avatarUrl: null,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 10,
+          userId: 4,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 4,
+          nickname: '被回复用户',
+          avatarUrl: null,
+        },
+      ])
+    likeService.checkStatusBatch.mockResolvedValueOnce(new Map([[12, true]]))
+
+    const result = await service.getReplies({
+      commentId: 1,
+      pageIndex: 1,
+      pageSize: 10,
+      userId: 99,
+    })
+
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        id: 12,
+        liked: true,
         replyTo: {
-          id: 1,
+          id: 10,
           userId: 4,
           user: {
             id: 4,
@@ -225,7 +278,6 @@ describe('commentService', () => {
         },
       }),
     )
-    expect(result.list[0]).not.toHaveProperty('geoSource')
   })
 
   it('评论回复热度排序会按点赞数优先并返回作者评论标记', async () => {
@@ -240,6 +292,7 @@ describe('commentService', () => {
           bodyTokens: null,
           floor: 2,
           replyToId: 1,
+          actualReplyToId: 1,
           likeCount: 9,
           geoCountry: '中国',
           geoProvince: null,
@@ -325,20 +378,6 @@ describe('commentService', () => {
       pageIndex: 1,
       pageSize: 10,
     })
-    selectWhereMock
-      .mockResolvedValueOnce([
-        {
-          id: 11,
-          userId: 4,
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 4,
-          nickname: '被回复用户',
-          avatarUrl: null,
-        },
-      ])
 
     const result = await service.getUserComments(
       {
@@ -354,18 +393,10 @@ describe('commentService', () => {
         geoCountry: '中国',
         geoCity: '深圳市',
         geoIsp: '电信',
-        replyTo: {
-          id: 11,
-          userId: 4,
-          user: {
-            id: 4,
-            nickname: '被回复用户',
-            avatarUrl: null,
-          },
-        },
       }),
     )
     expect(result.list[0]).not.toHaveProperty('geoSource')
+    expect(result.list[0]).not.toHaveProperty('replyTo')
   })
 
   it('我的评论分页支持热度排序', async () => {
@@ -533,11 +564,10 @@ describe('commentService', () => {
       expect.objectContaining({
         id: 201,
         isAuthorComment: true,
-        replyTo: expect.objectContaining({
-          id: 101,
-          userId: 5,
-        }),
       }),
+    )
+    expect((result.list[0] as any).previewReplies[0]).not.toHaveProperty(
+      'replyTo',
     )
   })
 

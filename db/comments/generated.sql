@@ -114,6 +114,8 @@ COMMENT ON COLUMN "public"."app_update_release"."package_original_name" IS E'上
 COMMENT ON COLUMN "public"."app_update_release"."package_file_size" IS E'上传安装包大小（字节）。';
 COMMENT ON COLUMN "public"."app_update_release"."package_mime_type" IS E'上传安装包 MIME 类型。';
 COMMENT ON COLUMN "public"."app_update_release"."custom_download_url" IS E'自定义下载页地址。';
+COMMENT ON COLUMN "public"."app_update_release"."popup_background_image" IS E'更新弹窗背景图地址。\n仅在客户端需要展示品牌化更新弹窗时使用。';
+COMMENT ON COLUMN "public"."app_update_release"."popup_background_position" IS E'更新弹窗背景图位置。\n直接复用 CSS `background-position` 语义。';
 COMMENT ON COLUMN "public"."app_update_release"."store_links" IS E'商店地址列表。\n仅持久化渠道编码和商店地址，渠道名称由字典项动态回填。';
 COMMENT ON COLUMN "public"."app_update_release"."is_published" IS E'是否已发布。';
 COMMENT ON COLUMN "public"."app_update_release"."published_at" IS E'发布时间。';

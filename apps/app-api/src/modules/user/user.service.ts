@@ -302,6 +302,8 @@ export class UserService {
         experience: user.experience,
         levelId: user.levelId ?? undefined,
         levelName: level?.name ?? undefined,
+        levelIcon: level?.icon ?? undefined,
+        levelColor: level?.color ?? undefined,
         badgeCount,
       },
       profile: {

@@ -403,6 +403,22 @@ export class UserCenterGrowthDto {
   })
   levelName?: string
 
+  @StringProperty({
+    description: '当前等级图标 URL',
+    example: 'https://cdn.example.com/level/rookie.png',
+    required: false,
+    validation: false,
+  })
+  levelIcon?: string
+
+  @StringProperty({
+    description: '当前等级颜色',
+    example: '#FF5733',
+    required: false,
+    validation: false,
+  })
+  levelColor?: string
+
   @NumberProperty({
     description: '徽章数量',
     example: 3,

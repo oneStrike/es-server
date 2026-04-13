@@ -337,6 +337,45 @@ export class CommentService {
   }
 
   /**
+   * 判断用户侧响应是否需要拼接 replyTo。
+   * 直接回复主楼时不再回填 replyTo，只有回复某条楼中楼回复时才返回被回复目标。
+   */
+  private shouldAttachReplyTarget(
+    replyToId?: number | null,
+    actualReplyToId?: number | null,
+  ) {
+    return (
+      typeof replyToId === 'number' &&
+      typeof actualReplyToId === 'number' &&
+      replyToId !== actualReplyToId
+    )
+  }
+
+  /**
+   * 返回用户侧真正需要拼接的 replyToId。
+   * 直接回复主楼时统一返回 undefined，避免调用方重复写分支。
+   */
+  private getReplyTargetId(
+    replyToId?: number | null,
+    actualReplyToId?: number | null,
+  ): number | undefined {
+    return this.shouldAttachReplyTarget(replyToId, actualReplyToId)
+      ? (replyToId ?? undefined)
+      : undefined
+  }
+
+  /**
+   * 从用户侧回复分页结果中移除内部使用的 actualReplyToId。
+   */
+  private omitActualReplyToId<T extends { actualReplyToId?: number | null }>(
+    item: T,
+  ) {
+    const { actualReplyToId, ...rest } = item
+    void actualReplyToId
+    return rest
+  }
+
+  /**
    * 校验正文写入链路已显式传入 mentions。
    * 新规则要求评论正文必须显式携带 mentions，空数组表示无提及。
    */
@@ -1389,6 +1428,7 @@ export class CommentService {
         'bodyTokens',
         'floor',
         'replyToId',
+        'actualReplyToId',
         'likeCount',
         'geoCountry',
         'geoProvince',
@@ -1406,24 +1446,39 @@ export class CommentService {
     const commentIds = page.list.map((item) => item.id)
     const [userMap, replyTargetMap, likedMap] = await Promise.all([
       this.getCommentUserMap(userIds),
-      this.getReplyTargetMap(page.list.map((item) => item.replyToId)),
+      this.getReplyTargetMap(
+        page.list
+          .map((item) =>
+            this.getReplyTargetId(item.replyToId, item.actualReplyToId),
+          )
+          .filter(
+            (replyToId): replyToId is number => typeof replyToId === 'number',
+          ),
+      ),
       this.getCommentLikedMap(commentIds, userId),
     ])
 
     return {
       ...page,
       list: page.list.map((item) => {
+        const replyTargetId = this.getReplyTargetId(
+          item.replyToId,
+          item.actualReplyToId,
+        )
+        const replyItem = this.omitActualReplyToId(this.omitGeoSource(item))
+        const replyTo =
+          replyTargetId === undefined
+            ? undefined
+            : (replyTargetMap.get(replyTargetId) ?? undefined)
+
         return {
-          ...this.omitGeoSource(item),
+          ...replyItem,
           liked: likedMap.get(item.id) ?? false,
           isAuthorComment:
             topicAuthorUserId !== undefined &&
             item.userId === topicAuthorUserId,
           user: userMap.get(item.userId) ?? undefined,
-          replyTo:
-            item.replyToId === null
-              ? undefined
-              : (replyTargetMap.get(item.replyToId) ?? undefined),
+          ...(replyTo ? { replyTo } : {}),
         }
       }),
     }
@@ -1584,7 +1639,15 @@ export class CommentService {
     ]
     const [userMap, replyTargetMap, likedMap] = await Promise.all([
       this.getCommentUserMap(userIds),
-      this.getReplyTargetMap(previewReplies.map((item) => item.replyToId)),
+      this.getReplyTargetMap(
+        previewReplies
+          .map((item) =>
+            this.getReplyTargetId(item.replyToId, item.actualReplyToId),
+          )
+          .filter(
+            (replyToId): replyToId is number => typeof replyToId === 'number',
+          ),
+      ),
       this.getCommentLikedMap(commentIds, userId),
     ])
 
@@ -1593,28 +1656,36 @@ export class CommentService {
       list: page.list.map((item) => {
         const replyCount = replyCountMap.get(item.id) ?? 0
         const previewReplies = (previewRepliesByRoot.get(item.id) ?? []).map(
-          (reply) => ({
-            id: reply.id,
-            userId: reply.userId,
-            content: reply.content,
-            bodyTokens: reply.bodyTokens,
-            replyToId: reply.replyToId,
-            likeCount: reply.likeCount,
-            geoCountry: reply.geoCountry,
-            geoProvince: reply.geoProvince,
-            geoCity: reply.geoCity,
-            geoIsp: reply.geoIsp,
-            createdAt: reply.createdAt,
-            liked: likedMap.get(reply.id) ?? false,
-            isAuthorComment:
-              topicAuthorUserId !== undefined &&
-              reply.userId === topicAuthorUserId,
-            user: userMap.get(reply.userId) ?? undefined,
-            replyTo:
-              reply.replyToId === null
+          (reply) => {
+            const replyTargetId = this.getReplyTargetId(
+              reply.replyToId,
+              reply.actualReplyToId,
+            )
+            const replyTo =
+              replyTargetId === undefined
                 ? undefined
-                : (replyTargetMap.get(reply.replyToId) ?? undefined),
-          }),
+                : (replyTargetMap.get(replyTargetId) ?? undefined)
+
+            return {
+              id: reply.id,
+              userId: reply.userId,
+              content: reply.content,
+              bodyTokens: reply.bodyTokens,
+              replyToId: reply.replyToId,
+              likeCount: reply.likeCount,
+              geoCountry: reply.geoCountry,
+              geoProvince: reply.geoProvince,
+              geoCity: reply.geoCity,
+              geoIsp: reply.geoIsp,
+              createdAt: reply.createdAt,
+              liked: likedMap.get(reply.id) ?? false,
+              isAuthorComment:
+                topicAuthorUserId !== undefined &&
+                reply.userId === topicAuthorUserId,
+              user: userMap.get(reply.userId) ?? undefined,
+              ...(replyTo ? { replyTo } : {}),
+            }
+          },
         )
 
         return {
@@ -1670,18 +1741,32 @@ export class CommentService {
     })
 
     const replyTargetMap = await this.getReplyTargetMap(
-      page.list.map((item) => item.replyToId),
+      page.list
+        .map((item) =>
+          this.getReplyTargetId(item.replyToId, item.actualReplyToId),
+        )
+        .filter(
+          (replyToId): replyToId is number => typeof replyToId === 'number',
+        ),
     )
 
     return {
       ...page,
-      list: page.list.map((item) => ({
-        ...this.omitGeoSource(item),
-        replyTo:
-          item.replyToId === null
+      list: page.list.map((item) => {
+        const replyTargetId = this.getReplyTargetId(
+          item.replyToId,
+          item.actualReplyToId,
+        )
+        const replyTo =
+          replyTargetId === undefined
             ? undefined
-            : (replyTargetMap.get(item.replyToId) ?? undefined),
-      })),
+            : (replyTargetMap.get(replyTargetId) ?? undefined)
+
+        return {
+          ...this.omitGeoSource(item),
+          ...(replyTo ? { replyTo } : {}),
+        }
+      }),
     }
   }
 

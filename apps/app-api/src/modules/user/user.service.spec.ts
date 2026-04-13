@@ -81,6 +81,8 @@ describe('app user service', () => {
     userCoreService.getLevelInfo.mockResolvedValue({
       id: 8,
       name: '新手',
+      icon: 'https://cdn.example.com/level/rookie.png',
+      color: '#FF5733',
       requiredExperience: 300,
     })
 
@@ -129,6 +131,8 @@ describe('app user service', () => {
         experience: 350,
         levelId: 8,
         levelName: '新手',
+        levelIcon: 'https://cdn.example.com/level/rookie.png',
+        levelColor: '#FF5733',
         badgeCount: 3,
       },
       profile: {

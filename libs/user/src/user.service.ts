@@ -315,6 +315,8 @@ export class UserService {
       .select({
         id: this.userLevelRule.id,
         name: this.userLevelRule.name,
+        icon: this.userLevelRule.icon,
+        color: this.userLevelRule.color,
         requiredExperience: this.userLevelRule.requiredExperience,
       })
       .from(this.userLevelRule)

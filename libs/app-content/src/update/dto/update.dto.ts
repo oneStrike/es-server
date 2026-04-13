@@ -16,6 +16,7 @@ import {
   APP_UPDATE_CHANNEL_CODE_REGEXP,
   AppUpdatePackageSourceEnum,
   AppUpdatePlatformEnum,
+  AppUpdatePopupBackgroundPositionEnum,
   AppUpdateTypeEnum,
 } from '../update.constant'
 
@@ -163,6 +164,24 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
   })
   customDownloadUrl?: string | null
 
+  @StringProperty({
+    description: '更新弹窗背景图地址',
+    example: 'https://cdn.example.com/app-update/bg.png',
+    required: false,
+    maxLength: 255,
+  })
+  popupBackgroundImage?: string | null
+
+  @EnumProperty({
+    description:
+      '更新弹窗背景图位置（center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+    example: AppUpdatePopupBackgroundPositionEnum.CENTER,
+    enum: AppUpdatePopupBackgroundPositionEnum,
+    required: false,
+    default: AppUpdatePopupBackgroundPositionEnum.CENTER,
+  })
+  popupBackgroundPosition?: AppUpdatePopupBackgroundPositionEnum
+
   @BooleanProperty({
     description: '是否已发布',
     example: false,
@@ -285,6 +304,24 @@ export class AppUpdateReleaseWriteDto {
     message: '自定义下载页地址必须是合法的 HTTP/HTTPS URL',
   })
   customDownloadUrl?: string
+
+  @StringProperty({
+    description: '更新弹窗背景图地址',
+    example: 'https://cdn.example.com/app-update/bg.png',
+    required: false,
+    maxLength: 255,
+  })
+  popupBackgroundImage?: string
+
+  @EnumProperty({
+    description:
+      '更新弹窗背景图位置（center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+    example: AppUpdatePopupBackgroundPositionEnum.CENTER,
+    enum: AppUpdatePopupBackgroundPositionEnum,
+    required: false,
+    default: AppUpdatePopupBackgroundPositionEnum.CENTER,
+  })
+  popupBackgroundPosition?: AppUpdatePopupBackgroundPositionEnum
 
   @ArrayProperty({
     description: '应用商店地址列表',
@@ -479,6 +516,24 @@ export class AppUpdateCheckResponseDto {
     validation: false,
   })
   customDownloadUrl?: string | null
+
+  @StringProperty({
+    description: '更新弹窗背景图地址',
+    example: 'https://cdn.example.com/app-update/bg.png',
+    required: false,
+    validation: false,
+  })
+  popupBackgroundImage?: string | null
+
+  @EnumProperty({
+    description:
+      '更新弹窗背景图位置（center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+    example: AppUpdatePopupBackgroundPositionEnum.CENTER,
+    enum: AppUpdatePopupBackgroundPositionEnum,
+    required: false,
+    validation: false,
+  })
+  popupBackgroundPosition?: AppUpdatePopupBackgroundPositionEnum
 
   @ArrayProperty({
     description: '应用商店地址列表',
