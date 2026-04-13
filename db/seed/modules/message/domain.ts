@@ -1,11 +1,5 @@
 import type { Db } from '../../db-client'
 import { and, eq } from 'drizzle-orm'
-import { ChatOutboxEventTypeEnum } from '../../../../libs/message/src/chat/chat.constant'
-import {
-  MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS,
-  MessageNotificationTypeEnum,
-} from '../../../../libs/message/src/notification/notification.constant'
-import { MessageOutboxDomainEnum } from '../../../../libs/message/src/outbox/outbox.constant'
 import {
   appAnnouncement,
   appUser,
@@ -13,7 +7,6 @@ import {
   chatConversationMember,
   chatMessage,
   forumTopic,
-  messageOutbox,
   messageWsMetric,
   notificationTemplate,
   userComment,
@@ -21,23 +14,82 @@ import {
 } from '../../../schema'
 import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
+const templateFixtures = [
+  {
+    categoryKey: 'comment_reply',
+    titleTemplate: '{{payload.actorNickname}} 回复了你的评论',
+    contentTemplate: '{{payload.replyExcerpt}}',
+    remark: 'seed default template: 评论回复',
+  },
+  {
+    categoryKey: 'comment_mention',
+    titleTemplate: '{{payload.actorNickname}} 在评论中提到了你',
+    contentTemplate: '{{payload.commentExcerpt}}',
+    remark: 'seed default template: 评论提及',
+  },
+  {
+    categoryKey: 'comment_like',
+    titleTemplate: '{{payload.actorNickname}} 点赞了你的评论',
+    contentTemplate: '{{payload.actorNickname}} 点赞了你的评论',
+    remark: 'seed default template: 评论点赞',
+  },
+  {
+    categoryKey: 'topic_like',
+    titleTemplate: '{{payload.actorNickname}} 点赞了你的主题',
+    contentTemplate: '{{payload.topicTitle}}',
+    remark: 'seed default template: 主题点赞',
+  },
+  {
+    categoryKey: 'topic_favorited',
+    titleTemplate: '{{payload.actorNickname}} 收藏了你的主题',
+    contentTemplate: '{{payload.topicTitle}}',
+    remark: 'seed default template: 主题收藏',
+  },
+  {
+    categoryKey: 'topic_commented',
+    titleTemplate: '{{payload.actorNickname}} 评论了你的主题',
+    contentTemplate: '{{payload.commentExcerpt}}',
+    remark: 'seed default template: 主题评论',
+  },
+  {
+    categoryKey: 'topic_mentioned',
+    titleTemplate: '{{payload.actorNickname}} 在主题中提到了你',
+    contentTemplate: '{{payload.topicTitle}}',
+    remark: 'seed default template: 主题提及',
+  },
+  {
+    categoryKey: 'user_followed',
+    titleTemplate: '{{payload.actorNickname}} 关注了你',
+    contentTemplate: '{{payload.actorNickname}} 关注了你',
+    remark: 'seed default template: 用户关注',
+  },
+  {
+    categoryKey: 'system_announcement',
+    titleTemplate: '{{payload.title}}',
+    contentTemplate: '{{payload.content}}',
+    remark: 'seed default template: 系统公告',
+  },
+  {
+    categoryKey: 'task_reminder',
+    titleTemplate: '{{payload.title}}',
+    contentTemplate: '{{payload.content}}',
+    remark: 'seed default template: 任务提醒',
+  },
+] as const
+
 export async function seedMessageDomain(db: Db) {
   console.log('🌱 初始化消息域数据...')
 
-  for (const definition of MESSAGE_NOTIFICATION_TEMPLATE_DEFINITIONS) {
+  for (const definition of templateFixtures) {
     const existing = await db.query.notificationTemplate.findFirst({
-      where: eq(
-        notificationTemplate.notificationType,
-        definition.notificationType,
-      ),
+      where: eq(notificationTemplate.categoryKey, definition.categoryKey),
     })
     const payload = {
-      notificationType: definition.notificationType,
-      templateKey: definition.templateKey,
-      titleTemplate: definition.defaultTitleTemplate,
-      contentTemplate: definition.defaultContentTemplate,
+      categoryKey: definition.categoryKey,
+      titleTemplate: definition.titleTemplate,
+      contentTemplate: definition.contentTemplate,
       isEnabled: true,
-      remark: `seed default template: ${definition.label}`,
+      remark: definition.remark,
     }
 
     if (!existing) {
@@ -143,9 +195,7 @@ export async function seedMessageDomain(db: Db) {
     where: eq(chatMessage.conversationId, conversation.id),
   })
   const lastMessage = [...messages]
-    .sort((left, right) => {
-      return Number(left.messageSeq - right.messageSeq)
-    })
+    .sort((left, right) => Number(left.messageSeq - right.messageSeq))
     .at(-1)
 
   if (lastMessage) {
@@ -162,7 +212,7 @@ export async function seedMessageDomain(db: Db) {
   console.log('  ✓ 会话与消息完成')
 
   const messageBySeq = new Map<bigint, (typeof messages)[number]>(
-    messages.map((item) => [item.messageSeq, item]),
+    messages.map(item => [item.messageSeq, item]),
   )
   const memberFixtures = [
     {
@@ -227,28 +277,24 @@ export async function seedMessageDomain(db: Db) {
   })
   const commentTopic = rootReply?.targetId
     ? await db.query.forumTopic.findFirst({
-      where: eq(forumTopic.id, rootReply.targetId),
-      columns: {
-        id: true,
-        userId: true,
-        title: true,
-      },
-    })
+        where: eq(forumTopic.id, rootReply.targetId),
+        columns: {
+          id: true,
+          userId: true,
+          title: true,
+        },
+      })
     : null
   const topicCommentActorNickname = [userA, userB, userC].find(
-    (user) => user.id === rootReply?.userId,
+    user => user.id === rootReply?.userId,
   )?.nickname ?? '有人'
 
   const notificationFixtures = [
     {
-      userId: commentTopic?.userId ?? userA.id,
-      type: MessageNotificationTypeEnum.TOPIC_COMMENT,
-      bizKey: 'seed:notif:topic-comment:aot',
+      receiverUserId: commentTopic?.userId ?? userA.id,
+      categoryKey: 'topic_commented',
+      projectionKey: 'seed:notif:topic-comment:aot',
       actorUserId: rootReply?.userId ?? userB.id,
-      targetType: rootReply?.targetType ?? 5,
-      targetId: rootReply?.targetId ?? commentTopic?.id ?? null,
-      subjectType: 1,
-      subjectId: rootReply?.id ?? null,
       title: `${topicCommentActorNickname} 评论了你的主题`,
       content: '我觉得第一卷就把未来冲突埋得很深。',
       payload: {
@@ -256,78 +302,51 @@ export async function seedMessageDomain(db: Db) {
         topicTitle: commentTopic?.title ?? '进击的巨人：前三卷伏笔整理',
         commentExcerpt: '我觉得第一卷就把未来冲突埋得很深。',
       },
-      aggregateKey: 'seed:topic-comment:aot',
-      aggregateCount: 1,
       isRead: false,
       readAt: null,
-      expiredAt: null,
+      expiresAt: null,
     },
     {
-      userId: userB.id,
-      type: MessageNotificationTypeEnum.COMMENT_REPLY,
-      bizKey: 'seed:notif:comment-reply:aot',
+      receiverUserId: userB.id,
+      categoryKey: 'comment_reply',
+      projectionKey: 'seed:notif:comment-reply:aot',
       actorUserId: userA.id,
-      targetType: 4,
-      targetId: rootReply?.id ?? null,
-      subjectType: 1,
-      subjectId: replyComment?.id ?? null,
       title: '小光 回复了你的评论',
       content: '而且艾伦和调查兵团的立场差异很早就有预警。',
       payload: {
         actorNickname: '小光',
         replyExcerpt: '而且艾伦和调查兵团的立场差异很早就有预警。',
         targetDisplayTitle: '进击的巨人：前三卷伏笔整理',
+        replyCommentId: replyComment?.id ?? null,
       },
-      aggregateKey: 'seed:comment-reply:aot',
-      aggregateCount: 1,
       isRead: false,
       readAt: null,
-      expiredAt: null,
+      expiresAt: null,
     },
     {
-      userId: userC.id,
-      type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-      bizKey: 'seed:notif:system-announcement:2026-spring',
+      receiverUserId: userC.id,
+      categoryKey: 'system_announcement',
+      projectionKey: `announcement:notify:${announcement?.id ?? 42}:user:${userC.id}`,
       actorUserId: null,
-      targetType: null,
-      targetId: announcement?.id ?? null,
-      subjectType: 2,
-      subjectId: announcement?.id ?? null,
       title: '春季版本更新公告',
       content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
-      payload: { announcementId: announcement?.id ?? null },
-      aggregateKey: 'seed:system-announcement',
-      aggregateCount: 1,
+      payload: {
+        title: '春季版本更新公告',
+        content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
+        announcementId: announcement?.id ?? null,
+      },
       isRead: false,
       readAt: null,
-      expiredAt: null,
-    },
-    {
-      userId: userA.id,
-      type: MessageNotificationTypeEnum.CHAT_MESSAGE,
-      bizKey: 'seed:notif:chat-message:direct',
-      actorUserId: userB.id,
-      targetType: 6,
-      targetId: userB.id,
-      subjectType: 3,
-      subjectId: userB.id,
-      title: '你收到一条新私信',
-      content: '阿澈刚刚给你发送了一条消息。',
-      payload: { conversationId: conversation.id, lastMessageSeq: 3 },
-      aggregateKey: 'seed:chat:direct',
-      aggregateCount: 1,
-      isRead: false,
-      readAt: null,
-      expiredAt: null,
+      expiresAt: null,
     },
   ] as const
 
   for (const fixture of notificationFixtures) {
     const existing = await db.query.userNotification.findFirst({
-      where: and(
-        eq(userNotification.userId, fixture.userId),
-        eq(userNotification.bizKey, fixture.bizKey),
-      ),
+      where: {
+        receiverUserId: fixture.receiverUserId,
+        projectionKey: fixture.projectionKey,
+      },
     })
 
     if (!existing) {
@@ -340,63 +359,6 @@ export async function seedMessageDomain(db: Db) {
     }
   }
   console.log('  ✓ 站内通知完成')
-
-  const outboxFixtures = [
-    {
-      domain: MessageOutboxDomainEnum.NOTIFICATION,
-      eventType: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-      bizKey: 'seed:outbox:notif:2026-spring',
-      payload: {
-        receiverUserId: userC.id,
-        type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-        title: '春季版本更新公告',
-        content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
-        targetId: announcement?.id ?? null,
-        subjectType: 2,
-        subjectId: announcement?.id ?? null,
-        payload: {
-          announcementId: announcement?.id ?? null,
-        },
-      },
-      status: 2,
-      retryCount: 0,
-      nextRetryAt: null,
-      lastError: null,
-      processedAt: addMinutes(SEED_TIMELINE.seedAt, -8),
-    },
-    {
-      domain: MessageOutboxDomainEnum.CHAT,
-      eventType: ChatOutboxEventTypeEnum.MESSAGE_CREATED,
-      bizKey: 'seed:outbox:chat:direct',
-      payload: {
-        conversationId: conversation.id,
-        messageId: messageBySeq.get(3n)?.id?.toString() ?? '',
-      },
-      status: 2,
-      retryCount: 0,
-      nextRetryAt: null,
-      lastError: null,
-      processedAt: addMinutes(SEED_TIMELINE.seedAt, -7),
-    },
-  ] as const
-
-  for (const fixture of outboxFixtures) {
-    const [existing] = await db
-      .select()
-      .from(messageOutbox)
-      .where(eq(messageOutbox.bizKey, fixture.bizKey))
-      .limit(1)
-
-    if (!existing) {
-      await db.insert(messageOutbox).values(fixture)
-    } else {
-      await db
-        .update(messageOutbox)
-        .set(fixture)
-        .where(eq(messageOutbox.id, existing.id))
-    }
-  }
-  console.log('  ✓ Outbox 完成')
 
   const [existingMetric] = await db
     .select()

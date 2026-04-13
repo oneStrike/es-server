@@ -1,6 +1,5 @@
 import * as schema from '@db/schema'
 import { ForumTopicCommentResolver } from '@libs/forum/topic/resolver/forum-topic-comment.resolver'
-import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { CommentSortTypeEnum, CommentTargetTypeEnum } from './comment.constant'
 import { CommentService } from './comment.service'
@@ -39,10 +38,9 @@ describe('commentService', () => {
   let configReader: { getContentReviewPolicy: jest.Mock }
   let commentGrowthService: { rewardCommentCreated: jest.Mock }
   let likeService: { checkStatusBatch: jest.Mock }
-  let messageOutboxService: { enqueueNotificationEventInTx: jest.Mock }
-  let messageNotificationComposerService: {
-    buildCommentReplyEvent: jest.Mock
-    buildCommentMentionEvent: jest.Mock
+  let messageDomainEventPublisher: { publishInTx: jest.Mock }
+  let messageDomainEventFactoryService: {
+    buildCommentRepliedEvent: jest.Mock
   }
   let commentPermissionService: { ensureCanComment: jest.Mock }
   let appUserCountService: {
@@ -116,12 +114,11 @@ describe('commentService', () => {
     likeService = {
       checkStatusBatch: jest.fn().mockResolvedValue(new Map([[11, true]])),
     }
-    messageOutboxService = {
-      enqueueNotificationEventInTx: jest.fn(),
+    messageDomainEventPublisher = {
+      publishInTx: jest.fn(),
     }
-    messageNotificationComposerService = {
-      buildCommentReplyEvent: jest.fn(),
-      buildCommentMentionEvent: jest.fn(),
+    messageDomainEventFactoryService = {
+      buildCommentRepliedEvent: jest.fn(),
     }
     commentPermissionService = {
       ensureCanComment: jest.fn(),
@@ -146,8 +143,8 @@ describe('commentService', () => {
       commentPermissionService as any,
       commentGrowthService as any,
       likeService as any,
-      messageOutboxService as any,
-      messageNotificationComposerService as any,
+      messageDomainEventPublisher as any,
+      messageDomainEventFactoryService as any,
       appUserCountService as any,
       drizzle,
       mentionService as any,
@@ -631,11 +628,9 @@ describe('commentService', () => {
       auditStatus: AuditStatusEnum.APPROVED,
       isHidden: false,
     })
-    messageNotificationComposerService.buildCommentReplyEvent.mockReturnValue({
-      bizKey: 'comment:reply:11:to:3',
-      payload: {
-        type: MessageNotificationTypeEnum.COMMENT_REPLY,
-      },
+    messageDomainEventFactoryService.buildCommentRepliedEvent.mockReturnValue({
+      eventKey: 'comment.replied',
+      projectionKey: 'comment:reply:11:to:3',
     })
 
     await service.replyComment({
@@ -679,11 +674,9 @@ describe('commentService', () => {
       auditStatus: AuditStatusEnum.APPROVED,
       isHidden: false,
     })
-    messageNotificationComposerService.buildCommentReplyEvent.mockReturnValue({
-      bizKey: 'comment:reply:11:to:3',
-      payload: {
-        type: MessageNotificationTypeEnum.COMMENT_REPLY,
-      },
+    messageDomainEventFactoryService.buildCommentRepliedEvent.mockReturnValue({
+      eventKey: 'comment.replied',
+      projectionKey: 'comment:reply:11:to:3',
     })
 
     await (service as any).compensateVisibleCommentEffects(
@@ -705,16 +698,14 @@ describe('commentService', () => {
     )
 
     expect(
-      messageNotificationComposerService.buildCommentReplyEvent,
+      messageDomainEventFactoryService.buildCommentRepliedEvent,
     ).toHaveBeenCalled()
     expect(
-      messageOutboxService.enqueueNotificationEventInTx,
+      messageDomainEventPublisher.publishInTx,
     ).toHaveBeenCalledWith(
       tx,
       expect.objectContaining({
-        payload: expect.objectContaining({
-          type: MessageNotificationTypeEnum.COMMENT_REPLY,
-        }),
+        eventKey: 'comment.replied',
       }),
     )
   })
@@ -743,11 +734,9 @@ describe('commentService', () => {
       auditStatus: AuditStatusEnum.APPROVED,
       isHidden: false,
     })
-    messageNotificationComposerService.buildCommentReplyEvent.mockReturnValue({
-      bizKey: 'comment:reply:11:to:3',
-      payload: {
-        type: MessageNotificationTypeEnum.COMMENT_REPLY,
-      },
+    messageDomainEventFactoryService.buildCommentRepliedEvent.mockReturnValue({
+      eventKey: 'comment.replied',
+      projectionKey: 'comment:reply:11:to:3',
     })
 
     await (service as any).compensateVisibleCommentEffects(
@@ -782,15 +771,13 @@ describe('commentService', () => {
   })
 
   it('论坛主题只有一级评论会触发 TOPIC_COMMENT 通知', async () => {
-    const messageOutbox = {
-      enqueueNotificationEventInTx: jest.fn(),
+    const messageDomainEventPublisherForResolver = {
+      publishInTx: jest.fn(),
     }
-    const notificationComposer = {
-      buildTopicCommentEvent: jest.fn().mockReturnValue({
-        bizKey: 'notify:topic-comment:5:7:comment:101:receiver:5',
-        payload: {
-          type: MessageNotificationTypeEnum.TOPIC_COMMENT,
-        },
+    const domainEventFactory = {
+      buildTopicCommentedEvent: jest.fn().mockReturnValue({
+        eventKey: 'topic.commented',
+        projectionKey: 'notify:topic-comment:5:7:comment:101:receiver:5',
       }),
     }
     const forumCounterService = {
@@ -801,8 +788,8 @@ describe('commentService', () => {
       {
         registerResolver: jest.fn(),
       } as any,
-      messageOutbox as any,
-      notificationComposer as any,
+      messageDomainEventPublisherForResolver as any,
+      domainEventFactory as any,
       forumCounterService as any,
     )
     const tx = {
@@ -851,13 +838,11 @@ describe('commentService', () => {
       },
     )
 
-    expect(notificationComposer.buildTopicCommentEvent).toHaveBeenCalledTimes(1)
-    expect(messageOutbox.enqueueNotificationEventInTx).toHaveBeenCalledWith(
+    expect(domainEventFactory.buildTopicCommentedEvent).toHaveBeenCalledTimes(1)
+    expect(messageDomainEventPublisherForResolver.publishInTx).toHaveBeenCalledWith(
       tx,
       expect.objectContaining({
-        payload: expect.objectContaining({
-          type: MessageNotificationTypeEnum.TOPIC_COMMENT,
-        }),
+        eventKey: 'topic.commented',
       }),
     )
   })

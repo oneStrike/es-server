@@ -80,7 +80,7 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     }),
     receivedNotifications: r.many.userNotification({
       from: r.appUser.id,
-      to: r.userNotification.userId,
+      to: r.userNotification.receiverUserId,
       alias: 'UserNotificationReceiver',
     }),
     notificationPreferences: r.many.notificationPreference({

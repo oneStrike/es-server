@@ -1,20 +1,15 @@
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { IdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
-  getMessageNotificationTypeLabel,
-  MessageNotificationTypeEnum,
+  getMessageNotificationCategoryLabel,
+  MessageNotificationCategoryKey,
 } from '../notification.constant'
 
-/**
- * 通知模板基础 DTO
- * 直接映射 notification_template 表的对外字段，用于管理端复用
- */
 export class BaseMessageNotificationTemplateDto {
   @NumberProperty({
     description: '模板 ID',
@@ -22,30 +17,23 @@ export class BaseMessageNotificationTemplateDto {
   })
   id!: number
 
-  @EnumProperty({
-    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
-  })
-  notificationType!: MessageNotificationTypeEnum
-
   @StringProperty({
-    description: '模板唯一键',
-    example: 'notification.comment-reply',
+    description: '通知分类键',
+    example: 'comment_reply',
     maxLength: 80,
   })
-  templateKey!: string
+  categoryKey!: MessageNotificationCategoryKey
 
   @StringProperty({
     description: '标题模板',
-    example: '收到新的评论回复',
+    example: '{{payload.actorNickname}} 回复了你的评论',
     maxLength: 200,
   })
   titleTemplate!: string
 
   @StringProperty({
     description: '正文模板',
-    example: '你收到了一条新的评论回复',
+    example: '{{payload.replyExcerpt}}',
     maxLength: 1000,
   })
   contentTemplate!: string
@@ -58,7 +46,7 @@ export class BaseMessageNotificationTemplateDto {
 
   @StringProperty({
     description: '备注',
-    example: '默认评论回复通知模板',
+    example: '默认评论回复模板',
     required: false,
     maxLength: 500,
   })
@@ -66,20 +54,20 @@ export class BaseMessageNotificationTemplateDto {
 
   @DateProperty({
     description: '创建时间',
-    example: '2026-03-28T12:00:00.000Z',
+    example: '2026-04-13T12:00:00.000Z',
   })
   createdAt!: Date
 
   @DateProperty({
     description: '更新时间',
-    example: '2026-03-28T12:30:00.000Z',
+    example: '2026-04-13T12:30:00.000Z',
   })
   updatedAt!: Date
 }
 
 class MessageNotificationTemplateMutableDto extends PickType(
   BaseMessageNotificationTemplateDto,
-  ['notificationType', 'titleTemplate', 'contentTemplate'] as const,
+  ['categoryKey', 'titleTemplate', 'contentTemplate'] as const,
 ) {}
 
 class MessageNotificationTemplateOptionalConfigDto extends PartialType(
@@ -90,8 +78,7 @@ export class QueryNotificationTemplatePageDto extends IntersectionType(
   PageDto,
   PartialType(
     PickType(BaseMessageNotificationTemplateDto, [
-      'notificationType',
-      'templateKey',
+      'categoryKey',
       'isEnabled',
     ] as const),
   ),
@@ -114,10 +101,8 @@ export class UpdateNotificationTemplateEnabledDto extends IntersectionType(
 
 export class AdminMessageNotificationTemplateDto extends BaseMessageNotificationTemplateDto {
   @StringProperty({
-    description: '通知类型中文标签',
-    example: getMessageNotificationTypeLabel(
-      MessageNotificationTypeEnum.COMMENT_REPLY,
-    ),
+    description: '通知分类中文标签',
+    example: getMessageNotificationCategoryLabel('comment_reply'),
   })
-  notificationTypeLabel!: string
+  categoryLabel!: string
 }

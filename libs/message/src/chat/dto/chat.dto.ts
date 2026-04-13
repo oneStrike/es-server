@@ -58,7 +58,7 @@ export class SendChatMessageDto {
   conversationId!: number
 
   @EnumProperty({
-    description: '消息类型（1=文本；2=图片；3=系统）',
+    description: '消息类型（1=文本；2=图片）',
     example: ChatMessageTypeEnum.TEXT,
     enum: ChatMessageTypeEnum,
   })
@@ -153,7 +153,7 @@ export class BaseChatMessageDto {
   senderId!: number
 
   @EnumProperty({
-    description: '消息类型（1=文本,2=图片,3=系统）',
+    description: '消息类型（1=文本,2=图片）',
     example: ChatMessageTypeEnum.TEXT,
     enum: ChatMessageTypeEnum,
   })

@@ -6,8 +6,10 @@ import {
   FavoriteTargetContext,
   IFavoriteTargetResolver,
 } from '@libs/interaction/favorite/interfaces/favorite-target-resolver.interface'
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import {
+  MessageDomainEventFactoryService,
+} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -29,8 +31,8 @@ export class ForumTopicFavoriteResolver
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly favoriteService: FavoriteService,
-    private readonly messageOutboxService: MessageOutboxService,
-    private readonly messageNotificationComposerService: MessageNotificationComposerService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
+    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
     private readonly forumTopicService: ForumTopicService,
   ) {}
@@ -147,18 +149,15 @@ export class ForumTopicFavoriteResolver
       columns: { nickname: true },
     })
 
-    await this.messageOutboxService.enqueueNotificationEventInTx(
+    await this.messageDomainEventPublisher.publishInTx(
       tx,
-      this.messageNotificationComposerService.buildTopicFavoriteEvent({
-        bizKey: `notify:favorite:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${receiverUserId}`,
+      this.messageDomainEventFactoryService.buildTopicFavoritedEvent({
         receiverUserId,
         actorUserId,
         targetType: this.targetType,
         targetId,
-        payload: {
-          actorNickname: actor?.nickname?.trim() || '有人',
-          topicTitle: targetTitle?.trim() || '你的主题',
-        },
+        actorNickname: actor?.nickname,
+        topicTitle: targetTitle,
       }),
     )
   }

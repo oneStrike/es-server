@@ -4,8 +4,10 @@ import type { CommentTargetMeta } from '@libs/interaction/comment/interfaces/com
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import {
+  MessageDomainEventFactoryService,
+} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -25,8 +27,8 @@ export class ForumTopicCommentResolver
 
   constructor(
     private readonly commentService: CommentService,
-    private readonly messageOutboxService: MessageOutboxService,
-    private readonly messageNotificationComposerService: MessageNotificationComposerService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
+    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
   ) {}
 
@@ -169,20 +171,17 @@ export class ForumTopicCommentResolver
       columns: { nickname: true },
     })
 
-    await this.messageOutboxService.enqueueNotificationEventInTx(
+    await this.messageDomainEventPublisher.publishInTx(
       tx,
-      this.messageNotificationComposerService.buildTopicCommentEvent({
-        bizKey: `notify:topic-comment:${comment.targetType}:${comment.targetId}:comment:${comment.id}:receiver:${receiverUserId}`,
+      this.messageDomainEventFactoryService.buildTopicCommentedEvent({
         receiverUserId,
         actorUserId: comment.userId,
+        commentId: comment.id,
         targetType: comment.targetType,
         targetId: comment.targetId,
-        subjectId: comment.id,
-        payload: {
-          actorNickname: actor?.nickname,
-          topicTitle: meta.targetDisplayTitle,
-          commentExcerpt: comment.content,
-        },
+        actorNickname: actor?.nickname,
+        topicTitle: meta.targetDisplayTitle,
+        commentExcerpt: comment.content,
       }),
     )
   }

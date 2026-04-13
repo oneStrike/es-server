@@ -15,8 +15,10 @@ import {
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import {
+  MessageDomainEventFactoryService,
+} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import {
   AuditRoleEnum,
@@ -72,9 +74,9 @@ export class CommentService {
     /** 评论成长服务，处理评论相关的积分/经验奖励 */
     private readonly commentGrowthService: CommentGrowthService,
     private readonly likeService: LikeService,
-    /** 消息发件箱服务，用于发送通知消息 */
-    private readonly messageOutboxService: MessageOutboxService,
-    private readonly messageNotificationComposerService: MessageNotificationComposerService,
+    /** 消息域事件发布器，用于发送通知事件 */
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
+    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
     private readonly mentionService: MentionService,
@@ -891,20 +893,17 @@ export class CommentService {
     })
 
     // 将回复通知加入消息队列
-    await this.messageOutboxService.enqueueNotificationEventInTx(
+    await this.messageDomainEventPublisher.publishInTx(
       tx,
-      this.messageNotificationComposerService.buildCommentReplyEvent({
-        bizKey: `comment:reply:${comment.id}:to:${replyTargetUserId}`,
+      this.messageDomainEventFactoryService.buildCommentRepliedEvent({
         receiverUserId: replyTargetUserId,
         actorUserId: comment.userId,
+        commentId: comment.id,
         targetType: comment.targetType,
         targetId: comment.targetId,
-        subjectId: comment.id,
-        payload: {
-          actorNickname: actor?.nickname,
-          replyExcerpt: comment.content,
-          targetDisplayTitle: meta.targetDisplayTitle,
-        },
+        actorNickname: actor?.nickname,
+        replyExcerpt: comment.content,
+        targetDisplayTitle: meta.targetDisplayTitle,
       }),
     )
 

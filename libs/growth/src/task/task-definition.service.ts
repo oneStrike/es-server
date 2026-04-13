@@ -1,5 +1,5 @@
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
@@ -28,9 +28,9 @@ export class TaskDefinitionService extends TaskServiceSupport {
   constructor(
     drizzle: DrizzleService,
     userGrowthRewardService: UserGrowthRewardService,
-    messageOutboxService: MessageOutboxService,
+    messageDomainEventPublisher: MessageDomainEventPublisher,
   ) {
-    super(drizzle, userGrowthRewardService, messageOutboxService)
+    super(drizzle, userGrowthRewardService, messageDomainEventPublisher)
   }
 
   /**

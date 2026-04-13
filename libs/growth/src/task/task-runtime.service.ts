@@ -1,5 +1,5 @@
 import { DrizzleService } from '@db/core'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service';
+import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher';
 import { Injectable } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { and, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
@@ -21,10 +21,10 @@ export class TaskRuntimeService extends TaskServiceSupport {
   constructor(
     drizzle: DrizzleService,
     userGrowthRewardService: UserGrowthRewardService,
-    messageOutboxService: MessageOutboxService,
+    messageDomainEventPublisher: MessageDomainEventPublisher,
     protected readonly taskExecutionService: TaskExecutionService,
   ) {
-    super(drizzle, userGrowthRewardService, messageOutboxService)
+    super(drizzle, userGrowthRewardService, messageDomainEventPublisher)
   }
 
   /**
@@ -94,29 +94,27 @@ export class TaskRuntimeService extends TaskServiceSupport {
       return
     }
 
-    await this.messageOutboxService.enqueueNotificationEvents(
-      assignments
-        .filter((item): item is typeof item & { expiredAt: Date } =>
-          Boolean(item.expiredAt),
-        )
-        .map((item) =>
-          this.taskNotificationService.createExpiringSoonReminderEvent({
-            bizKey:
-              this.taskNotificationService.buildExpiringSoonReminderBizKey(
-                item.assignmentId,
-              ),
-            receiverUserId: item.userId,
-            task: {
-              id: item.taskId,
-              code: item.code,
-              title: item.title,
-              type: item.type,
-            },
-            cycleKey: item.cycleKey,
-            assignmentId: item.assignmentId,
-            expiredAt: item.expiredAt,
-          }),
-        ),
-    )
+    for (const item of assignments.filter((item): item is typeof item & { expiredAt: Date } =>
+      Boolean(item.expiredAt),
+    )) {
+      await this.publishTaskReminderIfNeeded(
+        this.taskNotificationService.createExpiringSoonReminderEvent({
+          bizKey:
+            this.taskNotificationService.buildExpiringSoonReminderBizKey(
+              item.assignmentId,
+            ),
+          receiverUserId: item.userId,
+          task: {
+            id: item.taskId,
+            code: item.code,
+            title: item.title,
+            type: item.type,
+          },
+          cycleKey: item.cycleKey,
+          assignmentId: item.assignmentId,
+          expiredAt: item.expiredAt,
+        }),
+      )
+    }
   }
 }

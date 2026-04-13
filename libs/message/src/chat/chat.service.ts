@@ -1,6 +1,6 @@
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { PageDto } from '@libs/platform/dto/page.dto'
-import type { ChatMessageCreatedOutboxPayload } from '../outbox/outbox.type'
+import type { DomainEventRecord } from '@libs/platform/modules/eventing'
 import { DrizzleService } from '@db/core'
 import {
   appUser,
@@ -15,6 +15,10 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
+  DomainEventConsumerEnum,
+  DomainEventDispatchService,
+} from '@libs/platform/modules/eventing'
+import {
   and,
   asc,
   desc,
@@ -26,18 +30,16 @@ import {
   ne,
   sql,
 } from 'drizzle-orm'
+import { MessageDomainEventPublisher } from '../eventing/message-domain-event.publisher'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
-import { MessageOutboxDomainEnum } from '../outbox/outbox.constant'
-import { MessageOutboxService } from '../outbox/outbox.service'
 import {
   CHAT_MESSAGE_PAGE_LIMIT_DEFAULT,
   CHAT_MESSAGE_PAGE_LIMIT_MAX,
   ChatConversationMemberRoleEnum,
   ChatMessageStatusEnum,
   ChatMessageTypeEnum,
-  ChatOutboxEventTypeEnum,
 } from './chat.constant'
 import {
   MarkConversationReadDto,
@@ -48,6 +50,11 @@ import {
 
 /** 数字字符串正则表达式（模块作用域，避免重复编译） */
 const DIGIT_STRING_REGEX = /^\d+$/
+
+interface ChatMessageCreatedDomainEventPayload {
+  conversationId: number
+  messageId: string
+}
 
 /**
  * 私聊聊天服务
@@ -76,7 +83,8 @@ export class MessageChatService {
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
     private readonly messageWsMonitorService: MessageWsMonitorService,
-    private readonly messageOutboxService: MessageOutboxService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
+    private readonly domainEventDispatchService: DomainEventDispatchService,
   ) {}
 
   private get db() {
@@ -439,10 +447,10 @@ export class MessageChatService {
     )
 
     const message = this.toMessageOutput(result.message)
-    if (result.isNew && result.outboxPayload && result.outboxBizKey) {
-      await this.tryDispatchMessageCreatedOutbox(
-        result.outboxBizKey,
-        result.outboxPayload,
+    if (result.isNew && result.domainEventId && result.domainEventPayload) {
+      await this.tryDispatchMessageCreatedDomainEvent(
+        result.domainEventId,
+        result.domainEventPayload,
       )
     }
 
@@ -457,13 +465,16 @@ export class MessageChatService {
   }
 
   /**
-   * 分发 CHAT 域“消息已创建” outbox 事件。
+   * 分发 CHAT 域“消息已创建”领域事件。
    * - 由 sendMessage 在提交后做一次即时补偿，worker 失败重试时也会复用同一入口
    * - 读取当前 chat 事实表而不是信任历史快照，避免旧未读数覆盖新状态
    */
-  async dispatchMessageCreatedOutboxEvent(
-    payload: ChatMessageCreatedOutboxPayload,
-  ) {
+  async dispatchMessageCreatedDomainEvent(event: DomainEventRecord) {
+    const payload = this.parseChatMessageCreatedDomainEvent(event)
+    await this.dispatchMessageCreatedPayload(payload)
+  }
+
+  private async dispatchMessageCreatedPayload(payload: ChatMessageCreatedDomainEventPayload) {
     const conversationId = this.parsePositiveInteger(
       payload.conversationId,
       'conversationId',
@@ -507,7 +518,7 @@ export class MessageChatService {
     if (!message) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
-        'Chat outbox message not found',
+        'Chat message event target not found',
       )
     }
 
@@ -544,7 +555,7 @@ export class MessageChatService {
           },
         )
         const summary = await this.messageInboxService.getSummary(member.userId)
-        this.messageNotificationRealtimeService.emitInboxSummaryUpdate(
+        this.messageNotificationRealtimeService.emitInboxSummaryUpdated(
           member.userId,
           summary,
         )
@@ -669,7 +680,7 @@ export class MessageChatService {
       lastReadMessageId: result.lastReadMessageId.toString(),
     })
     const summary = await this.messageInboxService.getSummary(userId)
-    this.messageNotificationRealtimeService.emitInboxSummaryUpdate(
+    this.messageNotificationRealtimeService.emitInboxSummaryUpdated(
       userId,
       summary,
     )
@@ -701,7 +712,7 @@ export class MessageChatService {
    * @param bodyTokens - Emoji 解析后的正文 token 列表
    * @param payload - 消息载荷
    * @param clientMessageId - 客户端消息ID（用于幂等）
-   * @returns 消息信息、是否为新消息，以及可选的 outbox 补偿锚点
+   * @returns 消息信息、是否为新消息，以及可选的领域事件即时补偿锚点
    */
   private async createMessageWithRetry(
     conversationId: number,
@@ -714,8 +725,8 @@ export class MessageChatService {
   ): Promise<{
     message: typeof chatMessage.$inferSelect
     isNew: boolean
-    outboxBizKey?: string
-    outboxPayload?: ChatMessageCreatedOutboxPayload
+    domainEventId?: bigint
+    domainEventPayload?: ChatMessageCreatedDomainEventPayload
   }> {
     let lastError: unknown
     const maxRetry = 3
@@ -794,11 +805,10 @@ export class MessageChatService {
             )
           }
 
-          const outboxPayload = {
+          const domainEventPayload = {
             conversationId,
             messageId: message.id.toString(),
-          } satisfies ChatMessageCreatedOutboxPayload
-          const outboxBizKey = `chat:message:created:${message.id.toString()}`
+          } satisfies ChatMessageCreatedDomainEventPayload
 
           if (messageType === ChatMessageTypeEnum.TEXT) {
             const recentUsageItems = this.buildRecentEmojiUsageItems(bodyTokens)
@@ -835,20 +845,25 @@ export class MessageChatService {
               ),
             )
 
-          await this.messageOutboxService.enqueueChatMessageCreatedEventInTx(
+          const publishedEvent = await this.messageDomainEventPublisher.publishInTx(
             tx,
             {
-              bizKey: outboxBizKey,
-              eventType: ChatOutboxEventTypeEnum.MESSAGE_CREATED,
-              payload: outboxPayload,
+              eventKey: 'chat.message.created',
+              subjectType: 'user',
+              subjectId: userId,
+              targetType: 'chat_conversation',
+              targetId: conversationId,
+              operatorId: userId,
+              occurredAt: message.createdAt,
+              context: domainEventPayload,
             },
           )
 
           return {
             message,
             isNew: true,
-            outboxBizKey,
-            outboxPayload,
+            domainEventId: publishedEvent.event.id,
+            domainEventPayload,
           }
         })
       } catch (error) {
@@ -1182,24 +1197,83 @@ export class MessageChatService {
   }
 
   /**
-   * 提交后尝试即时分发新消息 outbox 事件。
-   * - 即时分发失败不回滚主链路，保留 outbox 待 worker 重试
-   * - 即时分发成功后再尝试将 outbox 标记为 success，避免后续重复 fanout
+   * 提交后尝试即时分发新消息领域事件。
+   * - 即时分发失败不回滚主链路，保留 dispatch 待 worker 重试
+   * - 即时分发成功后标记 dispatch 为 success，避免后续重复 fanout
    */
-  private async tryDispatchMessageCreatedOutbox(
-    outboxBizKey: string,
-    payload: ChatMessageCreatedOutboxPayload,
+  private async tryDispatchMessageCreatedDomainEvent(
+    eventId: bigint,
+    payload: ChatMessageCreatedDomainEventPayload,
   ) {
+    let claimedDispatch:
+      | Awaited<
+          ReturnType<DomainEventDispatchService['claimPendingDispatchByEvent']>
+        >
+      | null
+      = null
     try {
-      await this.dispatchMessageCreatedOutboxEvent(payload)
-      await this.messageOutboxService.markEventSucceededByBizKey({
-        bizKey: outboxBizKey,
-        domain: MessageOutboxDomainEnum.CHAT,
-      })
-    } catch (error) {
-      this.logger.warn(
-        `dispatch_chat_message_created_failed bizKey=${outboxBizKey} conversationId=${payload.conversationId} messageId=${payload.messageId} reason=${this.stringifyError(error)}`,
+      claimedDispatch
+        = await this.domainEventDispatchService.claimPendingDispatchByEvent(
+          eventId,
+          DomainEventConsumerEnum.CHAT_REALTIME,
+        )
+      if (!claimedDispatch) {
+        return
+      }
+
+      await this.dispatchMessageCreatedPayload(payload)
+      await this.domainEventDispatchService.markDispatchSucceeded(
+        claimedDispatch.id,
       )
+    } catch (error) {
+      if (claimedDispatch) {
+        try {
+          await this.domainEventDispatchService.markDispatchFailed(
+            claimedDispatch,
+            error,
+          )
+        } catch (releaseError) {
+          this.logger.warn(
+            `release_chat_message_created_dispatch_failed eventId=${eventId.toString()} reason=${this.stringifyError(releaseError)}`,
+          )
+        }
+      }
+      this.logger.warn(
+        `dispatch_chat_message_created_failed eventId=${eventId.toString()} conversationId=${payload.conversationId} messageId=${payload.messageId} reason=${this.stringifyError(error)}`,
+      )
+    }
+  }
+
+  private parseChatMessageCreatedDomainEvent(
+    event: DomainEventRecord,
+  ): ChatMessageCreatedDomainEventPayload {
+    const context = event.context
+    if (!context || typeof context !== 'object' || Array.isArray(context)) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Chat domain event context is invalid',
+      )
+    }
+
+    const conversationId = Number(
+      (context as Record<string, unknown>).conversationId,
+    )
+    const messageId = (context as Record<string, unknown>).messageId
+    if (
+      !Number.isInteger(conversationId)
+      || conversationId <= 0
+      || typeof messageId !== 'string'
+      || !DIGIT_STRING_REGEX.test(messageId)
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        'Chat domain event context is invalid',
+      )
+    }
+
+    return {
+      conversationId,
+      messageId,
     }
   }
 
@@ -1313,7 +1387,7 @@ export class MessageChatService {
   /**
    * 解析并校验消息类型
    *
-   * 支持的消息类型：TEXT(文本)、IMAGE(图片)、SYSTEM(系统消息)
+   * 客户端支持的消息类型：TEXT(文本)、IMAGE(图片)
    *
    * @param value - 原始值
    * @returns 消息类型枚举值
@@ -1326,8 +1400,7 @@ export class MessageChatService {
     }
     if (
       messageType !== ChatMessageTypeEnum.TEXT &&
-      messageType !== ChatMessageTypeEnum.IMAGE &&
-      messageType !== ChatMessageTypeEnum.SYSTEM
+      messageType !== ChatMessageTypeEnum.IMAGE
     ) {
       throw new BadRequestException('messageType 无效')
     }

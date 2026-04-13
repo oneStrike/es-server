@@ -1,108 +1,47 @@
-/**
- * Auto-converted from legacy schema.
- */
-
-import { boolean, index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, timestamp, unique, varchar } from 'drizzle-orm/pg-core'
 
 /**
- * 用户通知表
- * 统一承载站内通知（回复/点赞/收藏/关注/系统消息）
+ * 用户通知投影表。
+ * 只承载通知中心对用户可见的读模型，不再承担 producer 侧通知类型事实源职责。
  */
-export const userNotification = pgTable("user_notification", {
-  /**
-   * 主键ID
-   */
+export const userNotification = pgTable('user_notification', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  /**
-   * 通知接收用户ID
-   */
-  userId: integer().notNull(),
-  /**
-   * 通知类型（既有编码固定：1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息,7=任务提醒；新增类型仅允许追加：8=主题点赞,9=主题收藏,10=主题评论）
-   */
-  type: smallint().notNull(),
-  /**
-   * 幂等业务键（接收人维度）
-   */
-  bizKey: varchar({ length: 160 }).notNull(),
-  /**
-   * 触发用户ID
-   */
+  categoryKey: varchar({ length: 80 }).notNull(),
+  projectionKey: varchar({ length: 180 }).notNull(),
+  receiverUserId: integer().notNull(),
   actorUserId: integer(),
-  /**
-   * 目标类型
-   */
-  targetType: smallint(),
-  /**
-   * 目标ID
-   */
-  targetId: integer(),
-  /**
-   * 主体类型（1=评论,2=作品,3=用户,4=系统）
-   */
-  subjectType: smallint(),
-  /**
-   * 主体ID
-   */
-  subjectId: integer(),
-  /**
-   * 标题
-   */
   title: varchar({ length: 200 }).notNull(),
-  /**
-   * 内容
-   */
   content: varchar({ length: 1000 }).notNull(),
-  /**
-   * 扩展载荷
-   */
   payload: jsonb(),
-  /**
-   * 聚合键
-   */
-  aggregateKey: varchar({ length: 160 }),
-  /**
-   * 聚合计数
-   */
-  aggregateCount: integer().default(1).notNull(),
-  /**
-   * 已读标记
-   */
   isRead: boolean().default(false).notNull(),
-  /**
-   * 已读时间
-   */
   readAt: timestamp({ withTimezone: true, precision: 6 }),
-  /**
-   * 过期时间
-   */
-  expiredAt: timestamp({ withTimezone: true, precision: 6 }),
-  /**
-   * 创建时间
-   */
+  expiresAt: timestamp({ withTimezone: true, precision: 6 }),
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
-}, (table) => [
-    /**
-     * 唯一约束：接收人维度幂等
-     */
-    unique("user_notification_user_id_biz_key_key").on(table.userId, table.bizKey),
-    /**
-     * 列表查询索引：按已读状态分组分页
-     */
-    index("user_notification_user_id_is_read_created_at_idx").on(table.userId, table.isRead, table.createdAt.desc()),
-    /**
-     * 列表查询索引：按时间分页
-     */
-    index("user_notification_user_id_created_at_idx").on(table.userId, table.createdAt.desc()),
-    /**
-     * 类型筛选索引
-     */
-    index("user_notification_type_created_at_idx").on(table.type, table.createdAt.desc()),
-    /**
-     * 聚合查询索引
-     */
-    index("user_notification_user_id_aggregate_key_created_at_idx").on(table.userId, table.aggregateKey, table.createdAt.desc()),
-]);
+  updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
+}, table => [
+  unique('user_notification_receiver_user_id_projection_key_key').on(
+    table.receiverUserId,
+    table.projectionKey,
+  ),
+  index('user_notification_receiver_user_id_is_read_created_at_idx').on(
+    table.receiverUserId,
+    table.isRead,
+    table.createdAt.desc(),
+  ),
+  index('user_notification_receiver_user_id_category_key_created_at_idx').on(
+    table.receiverUserId,
+    table.categoryKey,
+    table.createdAt.desc(),
+  ),
+  index('user_notification_receiver_user_id_created_at_idx').on(
+    table.receiverUserId,
+    table.createdAt.desc(),
+  ),
+  index('user_notification_receiver_user_id_expires_at_idx').on(
+    table.receiverUserId,
+    table.expiresAt,
+  ),
+])
 
 export type UserNotificationSelect = typeof userNotification.$inferSelect
 export type UserNotificationInsert = typeof userNotification.$inferInsert

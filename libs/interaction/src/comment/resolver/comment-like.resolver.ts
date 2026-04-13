@@ -2,10 +2,9 @@ import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
 import {
-  MessageNotificationSubjectTypeEnum,
-  MessageNotificationTypeEnum,
-} from '@libs/message/notification/notification.constant'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+  MessageDomainEventFactoryService,
+} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -35,7 +34,8 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
 
   constructor(
     private readonly likeService: LikeService,
-    private readonly messageOutboxService: MessageOutboxService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
+    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly appUserCountService: AppUserCountService,
     private readonly drizzle: DrizzleService,
   ) {}
@@ -155,21 +155,22 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
       return
     }
 
-    await this.messageOutboxService.enqueueNotificationEventInTx(tx, {
-      eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
-      bizKey: `notify:comment:like:${comment.id}:actor:${actorUserId}:receiver:${comment.userId}`,
-      payload: {
+    const actor = await tx.query.appUser.findFirst({
+      where: { id: actorUserId },
+      columns: { nickname: true },
+    })
+
+    await this.messageDomainEventPublisher.publishInTx(
+      tx,
+      this.messageDomainEventFactoryService.buildCommentLikeEvent({
         receiverUserId: comment.userId,
         actorUserId,
-        type: MessageNotificationTypeEnum.COMMENT_LIKE,
+        commentId: comment.id,
         targetType: comment.targetType,
         targetId: comment.targetId,
-        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
-        subjectId: comment.id,
-        title: '你的评论收到点赞',
-        content: '有人点赞了你的评论',
-      },
-    })
+        actorNickname: actor?.nickname ?? undefined,
+      }),
+    )
   }
 
   /**

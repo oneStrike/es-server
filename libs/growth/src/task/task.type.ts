@@ -337,9 +337,7 @@ export type TaskReminderNotificationTaskInfo = Omit<
  * 自动分配提醒复用的最小任务视图。
  */
 export type TaskAutoAssignmentReminderTaskInput =
-  TaskReminderNotificationTaskInfo & {
-  claimMode?: Task['claimMode']
-}
+  TaskReminderNotificationTaskInfo
 
 /**
  * 任务提醒链路复用的最小 assignment 视图。
@@ -357,12 +355,8 @@ export interface TaskReminderBaseInput {
   assignmentId?: TaskReminderAssignmentInput['id']
 }
 
-/**
- * “可领取任务”提醒入参。
- */
-export interface TaskAvailableReminderEventInput extends TaskReminderBaseInput {
-  claimMode?: Task['claimMode']
-}
+export interface TaskAutoAssignedReminderEventInput
+  extends TaskReminderBaseInput {}
 
 /**
  * “即将过期”提醒入参。
@@ -388,7 +382,6 @@ export interface TaskRewardGrantedReminderEventInput
 export interface TaskReminderNotificationEventInput
   extends TaskReminderBaseInput {
   reminderKind: TaskReminderKindEnum
-  claimMode?: Task['claimMode']
   expiredAt?: NonNullable<TaskAssignment['expiredAt']>
   points?: number
   experience?: number

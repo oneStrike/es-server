@@ -1,191 +1,81 @@
-import { getMessageNotificationDispatchStatusLabel, getMessageNotificationTypeLabel, MessageNotificationDispatchStatusEnum, MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import {
+  getMessageNotificationCategoryLabel,
+  getMessageNotificationDispatchStatusLabel,
+  MessageNotificationDispatchStatusEnum,
+} from '@libs/message/notification/notification.constant'
+import {
+  DomainEventDispatchStatusEnum,
+} from '@libs/platform/modules/eventing'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { PageDto } from '@libs/platform/dto/page.dto'
 
-export class QueryMessageOutboxMonitorDto {
-  @NumberProperty({
-    description: '统计窗口（小时）',
-    example: 24,
+export class QueryMessageDispatchPageDto extends PageDto {
+  @EnumProperty({
+    description: '领域事件 dispatch 技术状态',
+    example: DomainEventDispatchStatusEnum.FAILED,
     required: false,
-    default: 24,
-    min: 1,
-    max: 168,
+    enum: DomainEventDispatchStatusEnum,
   })
-  windowHours?: number
+  dispatchStatus?: DomainEventDispatchStatusEnum
 
-  @NumberProperty({
-    description: '错误分布返回条数',
-    example: 5,
+  @EnumProperty({
+    description: '通知投影业务状态',
+    example: MessageNotificationDispatchStatusEnum.FAILED,
     required: false,
-    default: 5,
-    min: 1,
-    max: 20,
+    enum: MessageNotificationDispatchStatusEnum,
   })
-  topErrorsLimit?: number
-}
+  deliveryStatus?: MessageNotificationDispatchStatusEnum
 
-export class MessageOutboxDomainStatusItemDto {
-  @NumberProperty({
-    description: '事件域（1=通知,2=聊天）',
-    example: 1,
-  })
-  domain!: number
-
-  @NumberProperty({
-    description: '状态（1=待处理,2=处理中,3=成功,4=失败）',
-    example: 1,
-  })
-  status!: number
-
-  @NumberProperty({
-    description: '数量',
-    example: 12,
-  })
-  count!: number
-}
-
-export class MessageOutboxErrorItemDto {
   @StringProperty({
-    description: '错误信息',
-    example: 'payload must be valid',
+    description: '领域事件键',
+    example: 'comment.replied',
+    required: false,
+    maxLength: 120,
   })
-  message!: string
+  eventKey?: string
+
+  @StringProperty({
+    description: '事件域',
+    example: 'message',
+    required: false,
+    maxLength: 40,
+  })
+  domain?: string
 
   @NumberProperty({
-    description: '出现次数',
-    example: 4,
-  })
-  count!: number
-}
-
-export class MessageOutboxMonitorSummaryDto {
-  @DateProperty({
-    description: '快照时间',
-    example: '2026-03-07T12:00:00.000Z',
-  })
-  snapshotAt!: Date
-
-  @DateProperty({
-    description: '统计窗口起始时间',
-    example: '2026-03-06T12:00:00.000Z',
-  })
-  windowStartAt!: Date
-
-  @NumberProperty({
-    description: '统计窗口（小时）',
-    example: 24,
-  })
-  windowHours!: number
-
-  @NumberProperty({
-    description: '待处理数量',
-    example: 10,
-  })
-  pendingCount!: number
-
-  @NumberProperty({
-    description: '处理中数量',
-    example: 2,
-  })
-  processingCount!: number
-
-  @NumberProperty({
-    description: '失败数量',
-    example: 1,
-  })
-  failedCount!: number
-
-  @NumberProperty({
-    description: '可立即消费数量（nextRetryAt 为空或已到期）',
-    example: 8,
-  })
-  readyToConsumeCount!: number
-
-  @NumberProperty({
-    description: '延迟重试中的待处理数量',
-    example: 3,
-  })
-  delayedPendingCount!: number
-
-  @NumberProperty({
-    description: '已发生重试的待处理数量',
-    example: 4,
-  })
-  retryingPendingCount!: number
-
-  @DateProperty({
-    description: '最老待处理消息创建时间',
-    example: '2026-03-07T10:00:00.000Z',
+    description: '接收用户 ID',
+    example: 1001,
     required: false,
   })
-  oldestPendingCreatedAt?: Date
+  receiverUserId?: number
 
-  @NumberProperty({
-    description: '最老待处理消息滞留秒数',
-    example: 7200,
+  @StringProperty({
+    description: '通知投影键模糊匹配',
+    example: 'announcement:42:user:7',
     required: false,
+    maxLength: 180,
   })
-  oldestPendingAgeSeconds?: number
+  projectionKey?: string
 
-  @NumberProperty({
-    description: '窗口内成功处理数量',
-    example: 120,
-  })
-  processedSuccessCountInWindow!: number
-
-  @NumberProperty({
-    description: '窗口内失败处理数量',
-    example: 3,
-  })
-  processedFailedCountInWindow!: number
-
-  @NumberProperty({
-    description: '窗口内总处理数量',
-    example: 123,
-  })
-  processedTotalCountInWindow!: number
-
-  @NumberProperty({
-    description: '窗口内平均每分钟处理量',
-    example: 0.09,
-  })
-  averageProcessedPerMinute!: number
-
-  @NumberProperty({
-    description: '当前最大重试次数',
-    example: 5,
-  })
-  maxRetryCount!: number
-
-  @NumberProperty({
-    description: '当前平均重试次数',
-    example: 1.2,
-  })
-  avgRetryCount!: number
-
-  @NumberProperty({
-    description: '失败但无错误文本的数量',
-    example: 0,
-  })
-  failedWithoutErrorCount!: number
-
-  @ArrayProperty({
-    description: '按域+状态的分布',
-    itemClass: MessageOutboxDomainStatusItemDto,
+  @StringProperty({
+    description: '领域事件 ID',
+    example: '10001',
     required: false,
-    default: [],
+    maxLength: 32,
   })
-  domainStatus!: MessageOutboxDomainStatusItemDto[]
+  eventId?: string
 
-  @ArrayProperty({
-    description: '失败错误分布 TopN',
-    itemClass: MessageOutboxErrorItemDto,
+  @StringProperty({
+    description: 'dispatch ID',
+    example: '10088',
     required: false,
-    default: [],
+    maxLength: 32,
   })
-  topErrors!: MessageOutboxErrorItemDto[]
+  dispatchId?: string
 }
 
 export class QueryMessageWsMonitorDto {
@@ -276,12 +166,12 @@ export class MessageWsMonitorSummaryDto {
 
 export class RetryMessageNotificationDeliveryDto {
   @StringProperty({
-    description: '通知 outbox 业务幂等键',
-    example: 'task:reminder:reward:assignment:88',
+    description: '通知 dispatch ID',
+    example: '10088',
     required: true,
-    maxLength: 180,
+    maxLength: 32,
   })
-  bizKey!: string
+  dispatchId!: string
 }
 
 export class MessageNotificationDeliveryItemDto {
@@ -292,32 +182,37 @@ export class MessageNotificationDeliveryItemDto {
   id!: number
 
   @StringProperty({
-    description: '关联的 outbox 事件 ID',
+    description: '关联的领域事件 ID',
     example: '10001',
   })
-  outboxId!: string
+  eventId!: string
 
   @StringProperty({
-    description: '业务幂等键',
-    example: 'comment:reply:1:to:1001',
+    description: 'dispatch ID',
+    example: '10088',
   })
-  bizKey!: string
-
-  @NumberProperty({
-    description: '通知类型',
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    required: false,
-  })
-  notificationType!: MessageNotificationTypeEnum | null
+  dispatchId!: string
 
   @StringProperty({
-    description: '通知类型中文标签',
-    example: getMessageNotificationTypeLabel(
-      MessageNotificationTypeEnum.COMMENT_REPLY,
-    ),
+    description: '领域事件键',
+    example: 'comment.replied',
     required: false,
   })
-  notificationTypeLabel?: string
+  eventKey!: string
+
+  @StringProperty({
+    description: '通知分类键',
+    example: 'comment_reply',
+    required: false,
+  })
+  categoryKey?: string
+
+  @StringProperty({
+    description: '通知分类中文标签',
+    example: getMessageNotificationCategoryLabel('comment_reply'),
+    required: false,
+  })
+  categoryLabel?: string
 
   @NumberProperty({
     description: '接收用户 ID',
@@ -325,6 +220,13 @@ export class MessageNotificationDeliveryItemDto {
     required: false,
   })
   receiverUserId!: number | null
+
+  @StringProperty({
+    description: '通知投影键',
+    example: 'announcement:notify:42:user:7',
+    required: false,
+  })
+  projectionKey!: string | null
 
   @NumberProperty({
     description: '关联的站内通知 ID',
@@ -348,60 +250,32 @@ export class MessageNotificationDeliveryItemDto {
   statusLabel!: string
 
   @NumberProperty({
-    description: '当前重试次数',
+    description: '命中的模板 ID',
     example: 3,
+    required: false,
   })
-  retryCount!: number
+  templateId!: number | null
+
+  @BooleanProperty({
+    description: '是否命中启用模板',
+    example: true,
+  })
+  usedTemplate!: boolean
+
+  @StringProperty({
+    description: '模板回退原因',
+    example: 'missing_or_disabled',
+    required: false,
+  })
+  fallbackReason!: string | null
 
   @StringProperty({
     description: '最近一次失败原因',
-    example: '通知事件缺少必要字段',
+    example: 'notification template render failed',
     required: false,
     maxLength: 500,
   })
   failureReason!: string | null
-
-  @StringProperty({
-    description: '任务提醒子类型',
-    example: 'task_reward_granted',
-    required: false,
-  })
-  reminderKind?: string
-
-  @NumberProperty({
-    description: '任务 ID',
-    example: 18,
-    required: false,
-  })
-  taskId?: number
-
-  @NumberProperty({
-    description: '任务分配 ID',
-    example: 88,
-    required: false,
-  })
-  assignmentId?: number
-
-  @StringProperty({
-    description: '任务编码',
-    example: 'complete_profile',
-    required: false,
-  })
-  taskCode?: string
-
-  @NumberProperty({
-    description: '任务场景类型',
-    example: 2,
-    required: false,
-  })
-  sceneType?: number
-
-  @NumberProperty({
-    description: '任务通知 payload 版本',
-    example: 1,
-    required: false,
-  })
-  payloadVersion?: number
 
   @DateProperty({
     description: '最近一次业务投递尝试时间',
@@ -420,4 +294,92 @@ export class MessageNotificationDeliveryItemDto {
     example: '2026-03-28T15:35:10.000Z',
   })
   updatedAt!: Date
+}
+
+export class MessageDispatchPageItemDto {
+  @StringProperty({
+    description: 'dispatch ID',
+    example: '10088',
+  })
+  dispatchId!: string
+
+  @StringProperty({
+    description: '领域事件 ID',
+    example: '10001',
+  })
+  eventId!: string
+
+  @StringProperty({
+    description: 'consumer',
+    example: 'notification',
+  })
+  consumer!: string
+
+  @EnumProperty({
+    description: '领域事件 dispatch 技术状态',
+    example: DomainEventDispatchStatusEnum.FAILED,
+    enum: DomainEventDispatchStatusEnum,
+  })
+  dispatchStatus!: DomainEventDispatchStatusEnum
+
+  @NumberProperty({
+    description: '重试次数',
+    example: 2,
+  })
+  retryCount!: number
+
+  @StringProperty({
+    description: '最后一次技术失败原因',
+    example: 'notification-consumer-boom',
+    required: false,
+  })
+  lastError!: string | null
+
+  @DateProperty({
+    description: '下次重试时间',
+    example: '2026-04-13T12:35:00.000Z',
+    required: false,
+  })
+  nextRetryAt!: Date | null
+
+  @DateProperty({
+    description: '处理完成时间',
+    example: '2026-04-13T12:34:50.000Z',
+    required: false,
+  })
+  processedAt!: Date | null
+
+  @StringProperty({
+    description: '领域事件键',
+    example: 'comment.replied',
+  })
+  eventKey!: string
+
+  @StringProperty({
+    description: '领域事件域',
+    example: 'message',
+  })
+  domain!: string
+
+  @NumberProperty({
+    description: '接收用户 ID',
+    example: 1001,
+    required: false,
+  })
+  receiverUserId!: number | null
+
+  @StringProperty({
+    description: '通知投影键',
+    example: 'announcement:notify:42:user:7',
+    required: false,
+  })
+  projectionKey!: string | null
+
+  @EnumProperty({
+    description: '通知投影业务状态',
+    example: MessageNotificationDispatchStatusEnum.RETRYING,
+    enum: MessageNotificationDispatchStatusEnum,
+    required: false,
+  })
+  deliveryStatus!: MessageNotificationDispatchStatusEnum | null
 }

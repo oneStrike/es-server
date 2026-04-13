@@ -543,8 +543,7 @@ export class MessageWebSocketService {
   private isValidMessageType(value: unknown) {
     return (
       value === ChatMessageTypeEnum.TEXT ||
-      value === ChatMessageTypeEnum.IMAGE ||
-      value === ChatMessageTypeEnum.SYSTEM
+      value === ChatMessageTypeEnum.IMAGE
     )
   }
 

@@ -1,92 +1,113 @@
-import type { MessageOutboxSelect } from '@db/schema'
+import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing'
+import type { NotificationDeliveryPageItem, } from './notification-delivery.type'
+import type { NotificationProjectionApplyResult } from '../eventing/message-event.type'
 import type { SQL } from 'drizzle-orm'
-import type {
-  NotificationDeliveryPageItem,
-  UpsertNotificationDeliveryInput,
-} from './notification-delivery.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, sql } from 'drizzle-orm'
+import {
+  getMessageDomainEventDefinition,
+  MessageDomainEventKey,
+} from '../eventing/message-event.constant'
 import { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import {
+  getMessageNotificationCategoryLabel,
   getMessageNotificationDispatchStatusLabel,
-  getMessageNotificationTypeLabel,
-  MESSAGE_NOTIFICATION_TYPE_VALUES,
   MessageNotificationDispatchStatusEnum,
-  MessageNotificationTypeEnum,
+  MessageNotificationCategoryKey,
+  MESSAGE_NOTIFICATION_CATEGORY_KEYS,
 } from './notification.constant'
 
-/**
- * 通知投递结果服务
- * 负责持久化 outbox 对应的业务投递结果，并向管理端提供最小排障查询能力
- */
 @Injectable()
 export class MessageNotificationDeliveryService {
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
-  /** notification_delivery 表访问入口。 */
   private get notificationDelivery() {
     return this.drizzle.schema.notificationDelivery
   }
 
-  /** message_outbox 表访问入口，用于补充提醒 payload 上下文。 */
-  private get messageOutbox() {
-    return this.drizzle.schema.messageOutbox
+  private get domainEvent() {
+    return this.drizzle.schema.domainEvent
   }
 
-  /**
-   * 依据 outbox 事件写入或更新投递结果
-   * 采用一条 outbox 事件对应一条 delivery 记录的策略，重试时覆盖最新业务结果
-   */
-  async upsertDeliveryForOutboxEvent(
-    event: Pick<MessageOutboxSelect, 'id' | 'bizKey' | 'eventType' | 'payload'>,
-    input: UpsertNotificationDeliveryInput,
+  async recordHandledDispatch(
+    event: DomainEventRecord,
+    dispatch: DomainEventDispatchRecord,
+    result: NotificationProjectionApplyResult,
   ) {
-    const now = input.lastAttemptAt ?? new Date()
-    const notificationType = this.parseOptionalNotificationType(event.eventType)
-    const receiverUserId = this.parseOptionalReceiverUserId(event.payload)
-    const failureReason = this.normalizeFailureReason(input.failureReason)
+    const notification = (result.notification ?? null) as
+      | {
+          id?: number
+          categoryKey?: string
+          projectionKey?: string
+          receiverUserId?: number
+        }
+      | null
 
-    await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.notificationDelivery)
-        .values({
-          outboxId: event.id,
-          bizKey: event.bizKey,
-          notificationType,
-          receiverUserId,
-          notificationId: input.notificationId ?? null,
-          status: input.status,
-          retryCount: input.retryCount,
-          failureReason,
-          lastAttemptAt: now,
-        })
-        .onConflictDoUpdate({
-          target: this.notificationDelivery.outboxId,
-          set: {
-            bizKey: event.bizKey,
-            notificationType,
-            receiverUserId,
-            notificationId: input.notificationId ?? null,
-            status: input.status,
-            retryCount: input.retryCount,
-            failureReason,
-            lastAttemptAt: now,
-            updatedAt: now,
-          },
-        }),
-    )
+    const categoryKey =
+      typeof notification?.categoryKey === 'string'
+        ? notification.categoryKey
+        : this.resolveEventCategoryKey(event)
+    const projectionKey =
+      typeof notification?.projectionKey === 'string'
+        ? notification.projectionKey
+        : result.projectionKey
+    const receiverUserId =
+      typeof notification?.receiverUserId === 'number'
+        ? notification.receiverUserId
+        : result.receiverUserId
+    const status = this.resolveHandledStatus(result)
+    const failureReason = result.action === 'skip' ? result.reason : undefined
+
+    await this.upsertDeliveryRecord({
+      event,
+      dispatch,
+      receiverUserId,
+      projectionKey,
+      categoryKey,
+      notificationId:
+        typeof notification?.id === 'number' ? notification.id : null,
+      status,
+      templateId: result.templateId ?? null,
+      usedTemplate: result.usedTemplate ?? false,
+      fallbackReason: result.fallbackReason ?? null,
+      failureReason,
+    })
   }
 
-  /**
-   * 分页查询通知投递结果
-   * 当前仅提供最小排障能力，按最新更新时间倒序返回业务结果
-   */
+  async recordFailedDispatch(
+    event: DomainEventRecord,
+    dispatch: DomainEventDispatchRecord,
+    input: {
+      status: MessageNotificationDispatchStatusEnum.FAILED | MessageNotificationDispatchStatusEnum.RETRYING
+      failureReason?: string | null
+    },
+  ) {
+    const categoryKey = this.resolveEventCategoryKey(event)
+    const projectionKey = this.parseOptionalString(event.context?.projectionKey)
+    const receiverUserId = this.parseOptionalReceiverUserId(
+      event.context?.receiverUserId,
+    )
+
+    await this.upsertDeliveryRecord({
+      event,
+      dispatch,
+      receiverUserId,
+      projectionKey,
+      categoryKey,
+      notificationId: null,
+      status: input.status,
+      templateId: null,
+      usedTemplate: false,
+      fallbackReason: null,
+      failureReason: input.failureReason,
+    })
+  }
+
   async getNotificationDeliveryPage(
     query: QueryNotificationDeliveryPageDto,
   ): Promise<{
@@ -100,25 +121,32 @@ export class MessageNotificationDeliveryService {
     if (query.status) {
       conditions.push(eq(this.notificationDelivery.status, query.status))
     }
-    if (query.notificationType !== undefined) {
+    if (query.categoryKey?.trim()) {
       conditions.push(
-        eq(this.notificationDelivery.notificationType, query.notificationType),
+        eq(
+          this.notificationDelivery.categoryKey,
+          query.categoryKey.trim() as MessageNotificationCategoryKey,
+        ),
       )
+    }
+    if (query.eventKey?.trim()) {
+      conditions.push(eq(this.notificationDelivery.eventKey, query.eventKey.trim()))
     }
     if (query.receiverUserId !== undefined) {
+      conditions.push(eq(this.notificationDelivery.receiverUserId, query.receiverUserId))
+    }
+    if (query.projectionKey?.trim()) {
       conditions.push(
-        eq(this.notificationDelivery.receiverUserId, query.receiverUserId),
+        buildILikeCondition(
+          this.notificationDelivery.projectionKey,
+          query.projectionKey,
+        )!,
       )
     }
-    if (query.bizKey?.trim()) {
-      conditions.push(
-        buildILikeCondition(this.notificationDelivery.bizKey, query.bizKey)!,
-      )
-    }
-    if (query.outboxId?.trim()) {
+    if (query.eventId?.trim()) {
       try {
         conditions.push(
-          eq(this.notificationDelivery.outboxId, BigInt(query.outboxId.trim())),
+          eq(this.notificationDelivery.eventId, BigInt(query.eventId.trim())),
         )
       } catch {
         return {
@@ -129,227 +157,180 @@ export class MessageNotificationDeliveryService {
         }
       }
     }
-    if (query.reminderKind?.trim()) {
-      conditions.push(
-        eq(
-          this.notificationDelivery.notificationType,
-          MessageNotificationTypeEnum.TASK_REMINDER,
-        ),
-      )
-      conditions.push(
-        sql`${this.messageOutbox.payload} -> 'payload' ->> 'reminderKind' = ${query.reminderKind.trim()}`,
-      )
-    }
-    if (query.taskId !== undefined) {
-      conditions.push(
-        eq(
-          this.notificationDelivery.notificationType,
-          MessageNotificationTypeEnum.TASK_REMINDER,
-        ),
-      )
-      conditions.push(
-        sql`(${this.messageOutbox.payload} -> 'payload' ->> 'taskId')::int = ${query.taskId}`,
-      )
-    }
-    if (query.assignmentId !== undefined) {
-      conditions.push(
-        eq(
-          this.notificationDelivery.notificationType,
-          MessageNotificationTypeEnum.TASK_REMINDER,
-        ),
-      )
-      conditions.push(
-        sql`(${this.messageOutbox.payload} -> 'payload' ->> 'assignmentId')::int = ${query.assignmentId}`,
-      )
+    if (query.dispatchId?.trim()) {
+      try {
+        conditions.push(
+          eq(this.notificationDelivery.dispatchId, BigInt(query.dispatchId.trim())),
+        )
+      } catch {
+        return {
+          list: [],
+          total: 0,
+          pageIndex: query.pageIndex ?? 1,
+          pageSize: query.pageSize ?? 15,
+        }
+      }
     }
 
-    const page = this.normalizePage(query)
+    const pageIndex
+      = Number.isInteger(query.pageIndex) && Number(query.pageIndex) > 0
+        ? Number(query.pageIndex)
+        : 1
+    const pageSize
+      = Number.isInteger(query.pageSize) && Number(query.pageSize) > 0
+        ? Math.min(Number(query.pageSize), 100)
+        : 15
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
     const [totalRow] = await this.db
       .select({ count: sql<number>`COUNT(*)::int` })
       .from(this.notificationDelivery)
-      .leftJoin(
-        this.messageOutbox,
-        eq(this.notificationDelivery.outboxId, this.messageOutbox.id),
-      )
       .where(whereClause)
 
     const rows = await this.db
-      .select({
-        id: this.notificationDelivery.id,
-        outboxId: this.notificationDelivery.outboxId,
-        bizKey: this.notificationDelivery.bizKey,
-        notificationType: this.notificationDelivery.notificationType,
-        receiverUserId: this.notificationDelivery.receiverUserId,
-        notificationId: this.notificationDelivery.notificationId,
-        status: this.notificationDelivery.status,
-        retryCount: this.notificationDelivery.retryCount,
-        failureReason: this.notificationDelivery.failureReason,
-        lastAttemptAt: this.notificationDelivery.lastAttemptAt,
-        createdAt: this.notificationDelivery.createdAt,
-        updatedAt: this.notificationDelivery.updatedAt,
-        outboxPayload: this.messageOutbox.payload,
-      })
+      .select()
       .from(this.notificationDelivery)
-      .leftJoin(
-        this.messageOutbox,
-        eq(this.notificationDelivery.outboxId, this.messageOutbox.id),
-      )
       .where(whereClause)
       .orderBy(
         desc(this.notificationDelivery.updatedAt),
         desc(this.notificationDelivery.id),
       )
-      .limit(page.pageSize)
-      .offset(page.offset)
+      .limit(pageSize)
+      .offset((pageIndex - 1) * pageSize)
 
     return {
-      list: rows.map((item) => this.mapDeliveryPageItem(item)),
+      list: rows.map(item => ({
+        ...item,
+        eventId: item.eventId.toString(),
+        dispatchId: item.dispatchId.toString(),
+        status: item.status as MessageNotificationDispatchStatusEnum,
+        categoryLabel:
+          item.categoryKey && MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(item.categoryKey as MessageNotificationCategoryKey)
+            ? getMessageNotificationCategoryLabel(
+                item.categoryKey as MessageNotificationCategoryKey,
+              )
+            : undefined,
+        statusLabel: getMessageNotificationDispatchStatusLabel(
+          item.status as MessageNotificationDispatchStatusEnum,
+        ),
+      })),
       total: Number(totalRow?.count ?? 0),
-      pageIndex: page.pageIndex,
-      pageSize: page.pageSize,
+      pageIndex,
+      pageSize,
     }
   }
 
-  /**
-   * 映射投递结果分页项
-   * 统一完成 bigint ID 序列化与状态/类型中文标签补充
-   */
-  private mapDeliveryPageItem(
-    item: typeof this.notificationDelivery.$inferSelect & {
-      outboxPayload?: unknown
-    },
-  ): NotificationDeliveryPageItem {
-    const taskReminder = this.parseTaskReminderContext(item.outboxPayload)
+  private async upsertDeliveryRecord(input: {
+    event: DomainEventRecord
+    dispatch: DomainEventDispatchRecord
+    receiverUserId?: number
+    projectionKey?: string
+    categoryKey?: string
+    notificationId: number | null
+    status: MessageNotificationDispatchStatusEnum
+    templateId: number | null
+    usedTemplate: boolean
+    fallbackReason: string | null
+    failureReason?: string | null
+  }) {
+    const attemptedAt = new Date()
 
-    return {
-      ...item,
-      outboxId: item.outboxId.toString(),
-      status: item.status as MessageNotificationDispatchStatusEnum,
-      notificationTypeLabel:
-        item.notificationType === null
-          ? undefined
-          : getMessageNotificationTypeLabel(item.notificationType),
-      statusLabel: getMessageNotificationDispatchStatusLabel(
-        item.status as MessageNotificationDispatchStatusEnum,
-      ),
-      reminderKind: taskReminder.reminderKind,
-      taskId: taskReminder.taskId,
-      assignmentId: taskReminder.assignmentId,
-      taskCode: taskReminder.taskCode,
-      sceneType: taskReminder.sceneType,
-      payloadVersion: taskReminder.payloadVersion,
-    }
-  }
-
-  private parseTaskReminderContext(payload: unknown) {
-    const root = this.asRecord(payload)
-    const notificationPayload = this.asRecord(root?.payload)
-    const reminderKind =
-      typeof notificationPayload?.reminderKind === 'string'
-        ? notificationPayload.reminderKind
-        : undefined
-
-    if (!reminderKind) {
-      return {
-        reminderKind: undefined,
-        taskId: undefined,
-        assignmentId: undefined,
-        taskCode: undefined,
-        sceneType: undefined,
-        payloadVersion: undefined,
-      }
-    }
-
-    const notificationPayloadRecord = notificationPayload!
-
-    return {
-      reminderKind,
-      taskId: this.parseOptionalPositiveInt(notificationPayloadRecord.taskId),
-      assignmentId: this.parseOptionalPositiveInt(
-        notificationPayloadRecord.assignmentId,
-      ),
-      taskCode:
-        typeof notificationPayloadRecord.taskCode === 'string'
-          ? notificationPayloadRecord.taskCode
-          : undefined,
-      sceneType: this.parseOptionalPositiveInt(notificationPayloadRecord.sceneType),
-      payloadVersion: this.parseOptionalPositiveInt(
-        notificationPayloadRecord.payloadVersion,
-      ),
-    }
-  }
-
-  /**
-   * 从 outbox payload 尝试解析接收用户
-   * delivery 记录不负责纠正异常 payload，只在能安全读取时保留最小排障上下文
-   */
-  private parseOptionalReceiverUserId(payload: unknown) {
-    if (!payload || typeof payload !== 'object') {
-      return null
-    }
-    const receiverUserId = Number(
-      (payload as Record<string, unknown>).receiverUserId,
+    await this.drizzle.withErrorHandling(() =>
+      this.db
+        .insert(this.notificationDelivery)
+        .values({
+          eventId: input.event.id,
+          dispatchId: input.dispatch.id,
+          eventKey: input.event.eventKey,
+          receiverUserId: input.receiverUserId ?? null,
+          projectionKey: input.projectionKey ?? null,
+          categoryKey: input.categoryKey ?? null,
+          notificationId: input.notificationId,
+          status: input.status,
+          templateId: input.templateId,
+          usedTemplate: input.usedTemplate,
+          fallbackReason: input.fallbackReason,
+          failureReason: this.normalizeFailureReason(input.failureReason),
+          lastAttemptAt: attemptedAt,
+        })
+        .onConflictDoUpdate({
+          target: this.notificationDelivery.dispatchId,
+          set: {
+            eventKey: input.event.eventKey,
+            receiverUserId: input.receiverUserId ?? null,
+            projectionKey: input.projectionKey ?? null,
+            categoryKey: input.categoryKey ?? null,
+            notificationId: input.notificationId,
+            status: input.status,
+            templateId: input.templateId,
+            usedTemplate: input.usedTemplate,
+            fallbackReason: input.fallbackReason,
+            failureReason: this.normalizeFailureReason(input.failureReason),
+            lastAttemptAt: attemptedAt,
+            updatedAt: attemptedAt,
+          },
+        }),
     )
+  }
+
+  private resolveHandledStatus(result: NotificationProjectionApplyResult) {
+    if (result.action !== 'skip') {
+      return MessageNotificationDispatchStatusEnum.DELIVERED
+    }
+
+    return result.reason === 'preference_disabled'
+      ? MessageNotificationDispatchStatusEnum.SKIPPED_PREFERENCE
+      : MessageNotificationDispatchStatusEnum.FAILED
+  }
+
+  private parseOptionalReceiverUserId(value: unknown) {
+    const receiverUserId = Number(value)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
-      return null
+      return undefined
     }
     return receiverUserId
   }
 
-  /**
-   * 尝试将 outbox eventType 解析为通知类型
-   * 非法值场景保留为空，避免 delivery 落表再次失败
-   */
-  private parseOptionalNotificationType(value: unknown) {
-    const notificationType = Number(value)
-    if (
-      !Number.isInteger(notificationType)
-      || !MESSAGE_NOTIFICATION_TYPE_VALUES.includes(notificationType)
-    ) {
-      return null
+  private parseOptionalString(value: unknown) {
+    if (typeof value !== 'string') {
+      return undefined
     }
-    return notificationType as MessageNotificationTypeEnum
+    const normalized = value.trim()
+    return normalized || undefined
   }
 
-  /**
-   * 规范化失败原因
-   * 跳过和成功场景保持为空；失败场景统一截断到表字段长度
-   */
+  private parseOptionalCategoryKey(value: unknown) {
+    const normalized = this.parseOptionalString(value)
+    if (!normalized) {
+      return undefined
+    }
+    return MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(
+      normalized as MessageNotificationCategoryKey,
+    )
+      ? normalized
+      : undefined
+  }
+
+  private resolveEventCategoryKey(event: DomainEventRecord) {
+    const categoryKey = this.parseOptionalCategoryKey(event.context?.categoryKey)
+    if (categoryKey) {
+      return categoryKey
+    }
+
+    try {
+      const definition = getMessageDomainEventDefinition(
+        event.eventKey as MessageDomainEventKey,
+      )
+      return 'notification' in definition
+        ? definition.notification?.categoryKey
+        : undefined
+    } catch {
+      return undefined
+    }
+  }
+
   private normalizeFailureReason(value?: string | null) {
     const normalized = value?.trim()
     return normalized ? normalized.slice(0, 500) : null
-  }
-
-  private normalizePage(query: QueryNotificationDeliveryPageDto) {
-    const pageIndex =
-      Number.isInteger(query.pageIndex) && Number(query.pageIndex) > 0
-        ? Number(query.pageIndex)
-        : 1
-    const pageSize =
-      Number.isInteger(query.pageSize) && Number(query.pageSize) > 0
-        ? Math.min(Number(query.pageSize), 100)
-        : 15
-
-    return {
-      pageIndex,
-      pageSize,
-      offset: (pageIndex - 1) * pageSize,
-    }
-  }
-
-  private asRecord(input: unknown) {
-    if (!input || typeof input !== 'object' || Array.isArray(input)) {
-      return null
-    }
-    return input as Record<string, unknown>
-  }
-
-  private parseOptionalPositiveInt(value: unknown) {
-    const normalized = Number(value)
-    if (!Number.isInteger(normalized) || normalized <= 0) {
-      return undefined
-    }
-    return normalized
   }
 }

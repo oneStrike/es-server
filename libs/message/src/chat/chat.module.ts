@@ -1,9 +1,9 @@
 import { EmojiModule } from '@libs/interaction/emoji/emoji.module';
 import { Module } from '@nestjs/common'
+import { MessageDomainEventModule } from '../eventing/message-domain-event.module'
 import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageMonitorModule } from '../monitor/monitor.module'
 import { MessageNotificationModule } from '../notification/notification.module'
-import { MessageOutboxModule } from '../outbox/outbox.module'
 import { MESSAGE_CHAT_SERVICE_TOKEN } from './chat.constant'
 import { MessageChatService } from './chat.service'
 
@@ -12,7 +12,7 @@ import { MessageChatService } from './chat.service'
     MessageNotificationModule,
     MessageInboxModule,
     MessageMonitorModule,
-    MessageOutboxModule,
+    MessageDomainEventModule,
     EmojiModule,
   ],
   providers: [

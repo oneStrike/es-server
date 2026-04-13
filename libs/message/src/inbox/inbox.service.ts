@@ -1,12 +1,9 @@
-import type { PageDto } from '@libs/platform/dto/page.dto';
+import type { PageDto } from '@libs/platform/dto/page.dto'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm'
+import { getMessageNotificationCategoryLabel, MessageNotificationCategoryKey } from '../notification/notification.constant'
 
-/**
- * 消息收件箱服务
- * 提供收件箱摘要和时间线功能
- */
 @Injectable()
 export class MessageInboxService {
   constructor(private readonly drizzle: DrizzleService) {}
@@ -31,21 +28,25 @@ export class MessageInboxService {
     return this.drizzle.schema.chatMessage
   }
 
-  /**
-   * 获取用户收件箱摘要
-   * 包含通知未读数、聊天未读数、最新通知和最新聊天
-   */
   async getSummary(userId: number) {
+    const now = new Date()
+    const notificationWhere = and(
+      eq(this.notification.receiverUserId, userId),
+      or(
+        isNull(this.notification.expiresAt),
+        gt(this.notification.expiresAt, now),
+      ),
+    )
     const [
       notificationUnreadCount,
       chatUnreadAgg,
-      latestNotification,
+      latestNotificationRows,
       latestConversationRows,
     ] = await Promise.all([
-      this.db.$count(this.notification, and(
-        eq(this.notification.userId, userId),
-        eq(this.notification.isRead, false),
-      )),
+      this.db.$count(
+        this.notification,
+        and(notificationWhere, eq(this.notification.isRead, false)),
+      ),
       this.db
         .select({
           unreadCount: sql<number>`coalesce(sum(${this.conversationMember.unreadCount}), 0)`,
@@ -55,19 +56,22 @@ export class MessageInboxService {
           eq(this.conversationMember.userId, userId),
           isNull(this.conversationMember.leftAt),
         )),
-      this.db.query.userNotification.findFirst({
-        where: {
-          userId,
-        },
-        orderBy: { createdAt: 'desc' },
-        columns: {
-          id: true,
-          type: true,
-          title: true,
-          content: true,
-          createdAt: true,
-        },
-      }),
+      this.db
+        .select({
+          id: this.notification.id,
+          categoryKey: this.notification.categoryKey,
+          title: this.notification.title,
+          content: this.notification.content,
+          createdAt: this.notification.createdAt,
+          expiresAt: this.notification.expiresAt,
+        })
+        .from(this.notification)
+        .where(notificationWhere)
+        .orderBy(
+          sql`${this.notification.createdAt} desc`,
+          sql`${this.notification.id} desc`,
+        )
+        .limit(1),
       this.db
         .select({
           id: this.conversation.id,
@@ -85,12 +89,16 @@ export class MessageInboxService {
           ),
         )
         .where(isNotNull(this.conversation.lastMessageAt))
-        .orderBy(sql`${this.conversation.lastMessageAt} desc`, sql`${this.conversation.id} desc`)
+        .orderBy(
+          sql`${this.conversation.lastMessageAt} desc`,
+          sql`${this.conversation.id} desc`,
+        )
         .limit(1),
     ])
 
     const chatUnreadCount = Number(chatUnreadAgg[0]?.unreadCount ?? 0)
     const totalUnreadCount = notificationUnreadCount + chatUnreadCount
+    const latestNotification = latestNotificationRows[0]
 
     let latestChat:
       | {
@@ -100,7 +108,7 @@ export class MessageInboxService {
           lastMessageContent?: string
           lastSenderId?: number
         }
-        | undefined
+      | undefined
 
     const latestConversation = latestConversationRows[0]
 
@@ -126,28 +134,49 @@ export class MessageInboxService {
       }
     }
 
+    const activeLatestNotification
+      = latestNotification
+        && (!latestNotification.expiresAt
+          || latestNotification.expiresAt > now)
+        ? {
+            id: latestNotification.id,
+            categoryKey: latestNotification.categoryKey,
+            categoryLabel: getMessageNotificationCategoryLabel(
+              latestNotification.categoryKey as MessageNotificationCategoryKey,
+            ),
+            title: latestNotification.title,
+            content: latestNotification.content,
+            createdAt: latestNotification.createdAt,
+          }
+        : undefined
+
     return {
       notificationUnreadCount,
       chatUnreadCount,
       totalUnreadCount,
-      latestNotification: latestNotification ?? undefined,
+      latestNotification: activeLatestNotification,
       latestChat,
     }
   }
 
-  /**
-   * 获取用户收件箱时间线
-   * 合并通知和聊天消息，按时间倒序排列
-   */
   async getTimeline(userId: number, dto: PageDto) {
     const page = this.drizzle.buildPage(dto, {
       maxPageSize: 100,
     })
     const fetchTake = page.offset + page.pageSize + 20
+    const now = new Date()
 
-    const [notificationTotal, conversationTotalRows, notifications, conversations] =
-      await Promise.all([
-        this.db.$count(this.notification, eq(this.notification.userId, userId)),
+    const notificationWhere = and(
+      eq(this.notification.receiverUserId, userId),
+      or(
+        isNull(this.notification.expiresAt),
+        gt(this.notification.expiresAt, now),
+      ),
+    )
+
+    const [notificationTotal, conversationTotalRows, notifications, conversations]
+      = await Promise.all([
+        this.db.$count(this.notification, notificationWhere),
         this.db
           .select({
             total: sql<number>`count(distinct ${this.conversation.id})`,
@@ -162,19 +191,22 @@ export class MessageInboxService {
             ),
           )
           .where(isNotNull(this.conversation.lastMessageAt)),
-        this.db.query.userNotification.findMany({
-          where: {
-            userId,
-          },
-          orderBy: { createdAt: 'desc' },
-          limit: fetchTake,
-          columns: {
-            id: true,
-            title: true,
-            content: true,
-            createdAt: true,
-          },
-        }),
+        this.db
+          .select({
+            id: this.notification.id,
+            categoryKey: this.notification.categoryKey,
+            title: this.notification.title,
+            content: this.notification.content,
+            createdAt: this.notification.createdAt,
+            expiresAt: this.notification.expiresAt,
+          })
+          .from(this.notification)
+          .where(notificationWhere)
+          .orderBy(
+            sql`${this.notification.createdAt} desc`,
+            sql`${this.notification.id} desc`,
+          )
+          .limit(fetchTake),
         this.db
           .select({
             id: this.conversation.id,
@@ -191,12 +223,15 @@ export class MessageInboxService {
             ),
           )
           .where(isNotNull(this.conversation.lastMessageAt))
-          .orderBy(sql`${this.conversation.lastMessageAt} desc`, sql`${this.conversation.id} desc`)
+          .orderBy(
+            sql`${this.conversation.lastMessageAt} desc`,
+            sql`${this.conversation.id} desc`,
+          )
           .limit(fetchTake),
       ])
 
     const lastMessageIds = conversations
-      .map((item) => item.lastMessageId)
+      .map(item => item.lastMessageId)
       .filter((item): item is bigint => typeof item === 'bigint')
 
     const lastMessages = lastMessageIds.length
@@ -214,20 +249,26 @@ export class MessageInboxService {
       : []
 
     const lastMessageMap = new Map(
-      lastMessages.map((item) => [item.id.toString(), item]),
+      lastMessages.map(item => [item.id.toString(), item]),
     )
 
     const timeline = [
-      ...notifications.map((item) => ({
-        sourceType: 'notification' as const,
-        createdAt: item.createdAt,
-        title: item.title,
-        content: item.content,
-        bizId: `n:${item.id}`,
-      })),
-      ...conversations.map((item) => {
-        const message =
-          typeof item.lastMessageId === 'bigint'
+      ...notifications
+        .filter(item => !item.expiresAt || item.expiresAt > now)
+        .map(item => ({
+          sourceType: 'notification' as const,
+          createdAt: item.createdAt,
+          title: item.title,
+          content: item.content,
+          bizId: `n:${item.id}`,
+          categoryKey: item.categoryKey,
+          categoryLabel: getMessageNotificationCategoryLabel(
+            item.categoryKey as MessageNotificationCategoryKey,
+          ),
+        })),
+      ...conversations.map(item => {
+        const message
+          = typeof item.lastMessageId === 'bigint'
             ? lastMessageMap.get(item.lastMessageId.toString())
             : undefined
 

@@ -2,8 +2,8 @@ import type { AppUserSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { UserService } from '@libs/user/user.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
@@ -27,8 +27,8 @@ export class MentionService {
     private readonly drizzle: DrizzleService,
     private readonly emojiParserService: EmojiParserService,
     private readonly userService: UserService,
-    private readonly messageOutboxService: MessageOutboxService,
-    private readonly messageNotificationComposerService: MessageNotificationComposerService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisher,
+    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
   ) {}
 
   private get userMention() {
@@ -193,20 +193,17 @@ export class MentionService {
 
     const actor = await this.getActorSnapshot(tx, input.actorUserId)
     for (const receiverUserId of receiverUserIds) {
-      await this.messageOutboxService.enqueueNotificationEventInTx(
+      await this.messageDomainEventPublisher.publishInTx(
         tx,
-        this.messageNotificationComposerService.buildCommentMentionEvent({
-          bizKey: `notify:comment-mention:${input.commentId}:receiver:${receiverUserId}`,
+        this.messageDomainEventFactoryService.buildCommentMentionEvent({
           receiverUserId,
           actorUserId: input.actorUserId,
+          commentId: input.commentId,
           targetType: input.targetType,
           targetId: input.targetId,
-          subjectId: input.commentId,
-          payload: {
-            actorNickname: actor?.nickname,
-            commentExcerpt: input.content,
-            targetDisplayTitle: input.targetDisplayTitle,
-          },
+          actorNickname: actor?.nickname,
+          commentExcerpt: input.content,
+          targetDisplayTitle: input.targetDisplayTitle,
         }),
       )
     }
@@ -238,19 +235,14 @@ export class MentionService {
 
     const actor = await this.getActorSnapshot(tx, input.actorUserId)
     for (const receiverUserId of receiverUserIds) {
-      await this.messageOutboxService.enqueueNotificationEventInTx(
+      await this.messageDomainEventPublisher.publishInTx(
         tx,
-        this.messageNotificationComposerService.buildTopicMentionEvent({
-          bizKey: `notify:topic-mention:${input.topicId}:receiver:${receiverUserId}`,
+        this.messageDomainEventFactoryService.buildTopicMentionEvent({
           receiverUserId,
           actorUserId: input.actorUserId,
-          targetType: CommentTargetTypeEnum.FORUM_TOPIC,
-          targetId: input.topicId,
-          subjectId: input.topicId,
-          payload: {
-            actorNickname: actor?.nickname,
-            topicTitle: input.topicTitle,
-          },
+          topicId: input.topicId,
+          actorNickname: actor?.nickname,
+          topicTitle: input.topicTitle,
         }),
       )
     }

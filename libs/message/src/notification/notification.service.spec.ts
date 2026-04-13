@@ -1,4 +1,6 @@
-import { MessageNotificationDispatchStatusEnum, MessageNotificationSubjectTypeEnum, MessageNotificationTypeEnum } from './notification.constant'
+import { plainToInstance } from 'class-transformer'
+import { validateSync } from 'class-validator'
+import { QueryUserNotificationListDto } from './dto/notification.dto'
 import { MessageNotificationService } from './notification.service'
 
 describe('messageNotificationService', () => {
@@ -6,76 +8,66 @@ describe('messageNotificationService', () => {
   let drizzle: any
   let realtimeService: any
   let inboxService: any
-  let preferenceService: any
-  let templateService: any
-  let deleteWhereMock: jest.Mock
-  let insertValuesMock: jest.Mock
-  let insertOnConflictDoNothingMock: jest.Mock
-  let insertReturningMock: jest.Mock
-  let transactionMock: jest.Mock
+  let updateWhereMock: jest.Mock
 
   beforeEach(() => {
-    deleteWhereMock = jest.fn().mockResolvedValue({ rowCount: 1 })
-    insertReturningMock = jest.fn().mockResolvedValue([
-      {
-        id: 101,
-        userId: 7,
-        type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-        actorUserId: null,
-        targetType: null,
-        targetId: 42,
-        subjectType: MessageNotificationSubjectTypeEnum.SYSTEM,
-        subjectId: 42,
-        title: '新的系统公告',
-        content: '新的内容',
-        payload: { announcementId: 42 },
-        aggregateKey: null,
-        aggregateCount: 1,
-        isRead: false,
-        readAt: null,
-        createdAt: new Date('2026-04-07T00:00:00.000Z'),
-      },
-    ])
-    insertOnConflictDoNothingMock = jest.fn(() => ({
-      returning: insertReturningMock,
-    }))
-    insertValuesMock = jest.fn(() => ({
-      returning: insertReturningMock,
-      onConflictDoNothing: insertOnConflictDoNothingMock,
-    }))
-    transactionMock = jest.fn(async (callback: (tx: any) => Promise<unknown>) => {
-      const tx = {
-        delete: jest.fn(() => ({
-          where: deleteWhereMock,
-        })),
-        insert: jest.fn(() => ({
-          values: insertValuesMock,
-        })),
-      }
-      return callback(tx)
-    })
+    updateWhereMock = jest.fn().mockResolvedValue({ rowCount: 1 })
 
     drizzle = {
       db: {
-        insert: jest.fn(() => ({
-          values: insertValuesMock,
-        })),
-        delete: jest.fn(() => ({
-          where: deleteWhereMock,
+        $count: jest.fn().mockResolvedValue(3),
+        query: {
+          appUser: {
+            findMany: jest.fn().mockResolvedValue([
+              {
+                id: 9,
+                nickname: '回复者',
+                avatarUrl: 'https://example.com/avatar.png',
+              },
+            ]),
+          },
+        },
+        update: jest.fn(() => ({
+          set: jest.fn(() => ({
+            where: updateWhereMock,
+          })),
         })),
       },
       schema: {
         userNotification: {},
-        appUser: {},
+      },
+      ext: {
+        findPagination: jest.fn().mockResolvedValue({
+          list: [
+            {
+              id: 101,
+              receiverUserId: 7,
+              categoryKey: 'comment_reply',
+              projectionKey: 'comment-replied:101:receiver:7',
+              actorUserId: 9,
+              title: '有人回复了你的评论',
+              content: '回复内容',
+              payload: { replyCommentId: 101 },
+              isRead: false,
+              readAt: null,
+              expiresAt: null,
+              createdAt: new Date('2026-04-13T00:00:00.000Z'),
+              updatedAt: new Date('2026-04-13T00:00:00.000Z'),
+            },
+          ],
+          total: 1,
+          pageIndex: 1,
+          pageSize: 10,
+        }),
       },
       withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
-      withTransaction: jest.fn(async (fn: (tx: any) => Promise<unknown>) => transactionMock(fn)),
     }
 
     realtimeService = {
-      emitNotificationNew: jest.fn(),
-      emitInboxSummaryUpdate: jest.fn(),
+      emitNotificationReadSync: jest.fn(),
+      emitInboxSummaryUpdated: jest.fn(),
     }
+
     inboxService = {
       getSummary: jest.fn().mockResolvedValue({
         notificationUnreadCount: 1,
@@ -83,162 +75,84 @@ describe('messageNotificationService', () => {
         totalUnreadCount: 1,
       }),
     }
-    preferenceService = {
-      getEffectiveNotificationPreference: jest.fn().mockResolvedValue({
-        isEnabled: true,
-      }),
-    }
-    templateService = {
-      renderNotificationTemplate: jest.fn().mockResolvedValue({
-        title: '新的系统公告',
-        content: '新的内容',
-        templateKey: 'notification.system-announcement',
-        usedTemplate: false,
-      }),
-    }
 
     service = new MessageNotificationService(
       drizzle,
       realtimeService,
       inboxService,
-      preferenceService,
-      templateService,
     )
   })
 
-  it('upsert 同步动作会先清理旧通知再插入最新版本', async () => {
-    const result = await service.createFromOutbox(
-      'announcement:notify:42:user:7',
-      {
-        receiverUserId: 7,
-        type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-        targetId: 42,
-        subjectType: MessageNotificationSubjectTypeEnum.SYSTEM,
-        subjectId: 42,
-        title: '新的系统公告',
-        content: '新的内容',
-        payload: { announcementId: 42 },
-        syncAction: 'UPSERT',
-      } as any,
-    )
+  it('分页查询会补充分类中文标签和触发用户信息', async () => {
+    const result = await service.queryUserNotificationList(7, {
+      pageIndex: 1,
+      pageSize: 10,
+    } as any)
 
-    expect(drizzle.withTransaction).toHaveBeenCalledTimes(1)
-    expect(deleteWhereMock).toHaveBeenCalledTimes(1)
-    expect(insertValuesMock).toHaveBeenCalledTimes(1)
-    expect(realtimeService.emitNotificationNew).toHaveBeenCalledWith(
+    expect(result.list[0]).toEqual(
+      expect.objectContaining({
+        categoryKey: 'comment_reply',
+        categoryLabel: '评论回复',
+        actorUser: expect.objectContaining({
+          id: 9,
+          nickname: '回复者',
+        }),
+      }),
+    )
+  })
+
+  it('QueryUserNotificationListDto 支持 categoryKeys 数组并对单值 query 做数组收敛', () => {
+    const dto = plainToInstance(QueryUserNotificationListDto, {
+      categoryKeys: 'comment_reply',
+    })
+
+    const errors = validateSync(dto)
+
+    expect(errors).toHaveLength(0)
+    expect(dto.categoryKeys).toEqual(['comment_reply'])
+  })
+
+  it('QueryUserNotificationListDto 会拦截非法 categoryKeys', () => {
+    const dto = plainToInstance(QueryUserNotificationListDto, {
+      categoryKeys: ['comment_reply', 'unknown_key'],
+    })
+
+    const errors = validateSync(dto)
+
+    expect(errors).not.toHaveLength(0)
+  })
+
+  it('会把 categoryKeys 归一化为去重数组', () => {
+    const result = (service as any).normalizeCategoryKeysFilter([
+      'comment_reply',
+      'comment_like',
+      'comment_reply',
+    ])
+
+    expect(result).toEqual(['comment_reply', 'comment_like'])
+  })
+
+  it('未读数量只走当前读模型统计入口', async () => {
+    const result = await service.getUnreadCount(7)
+    expect(result).toEqual({ count: 3 })
+    expect(drizzle.db.$count).toHaveBeenCalledTimes(1)
+  })
+
+  it('标记单条已读后会发实时同步并刷新收件箱摘要', async () => {
+    const result = await service.markRead(7, 101)
+
+    expect(result).toBe(true)
+    expect(realtimeService.emitNotificationReadSync).toHaveBeenCalledWith(
+      7,
       expect.objectContaining({
         id: 101,
-        userId: 7,
-        title: '新的系统公告',
       }),
     )
-    expect(result).toEqual({
-      status: MessageNotificationDispatchStatusEnum.DELIVERED,
-      notification: expect.objectContaining({
-        id: 101,
+    expect(realtimeService.emitInboxSummaryUpdated).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({
+        notificationUnreadCount: 1,
       }),
-    })
-  })
-
-  it('delete 同步动作会绕过偏好检查并删除现有通知', async () => {
-    const result = await service.createFromOutbox(
-      'announcement:notify:42:user:7',
-      {
-        receiverUserId: 7,
-        type: MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-        targetId: 42,
-        subjectType: MessageNotificationSubjectTypeEnum.SYSTEM,
-        subjectId: 42,
-        title: '旧公告',
-        content: '旧内容',
-        syncAction: 'DELETE',
-      } as any,
     )
-
-    expect(preferenceService.getEffectiveNotificationPreference).not.toHaveBeenCalled()
-    expect(drizzle.db.delete).toHaveBeenCalledTimes(1)
-    expect(deleteWhereMock).toHaveBeenCalledTimes(1)
-    expect(insertValuesMock).not.toHaveBeenCalled()
-    expect(realtimeService.emitNotificationNew).not.toHaveBeenCalled()
-    expect(result).toEqual({
-      status: MessageNotificationDispatchStatusEnum.DELIVERED,
-    })
-  })
-
-  it('自己给自己发通知会返回自通知跳过状态', async () => {
-    const result = await service.createFromOutbox(
-      'comment:reply:11:to:7',
-      {
-        receiverUserId: 7,
-        actorUserId: 7,
-        type: MessageNotificationTypeEnum.COMMENT_REPLY,
-        targetType: 5,
-        targetId: 11,
-        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
-        subjectId: 11,
-        title: '有人回复了你',
-        content: '回复内容',
-      } as any,
-    )
-
-    expect(preferenceService.getEffectiveNotificationPreference).not.toHaveBeenCalled()
-    expect(insertValuesMock).not.toHaveBeenCalled()
-    expect(result).toEqual({
-      status: MessageNotificationDispatchStatusEnum.SKIPPED_SELF,
-    })
-  })
-
-  it('通知偏好关闭时会返回偏好跳过状态', async () => {
-    preferenceService.getEffectiveNotificationPreference.mockResolvedValue({
-      isEnabled: false,
-    })
-
-    const result = await service.createFromOutbox(
-      'comment:reply:11:to:7',
-      {
-        receiverUserId: 7,
-        actorUserId: 9,
-        type: MessageNotificationTypeEnum.COMMENT_REPLY,
-        targetType: 5,
-        targetId: 11,
-        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
-        subjectId: 11,
-        title: '有人回复了你',
-        content: '回复内容',
-      } as any,
-    )
-
-    expect(templateService.renderNotificationTemplate).not.toHaveBeenCalled()
-    expect(insertValuesMock).not.toHaveBeenCalled()
-    expect(result).toEqual({
-      status: MessageNotificationDispatchStatusEnum.SKIPPED_PREFERENCE,
-      preference: expect.objectContaining({
-        isEnabled: false,
-      }),
-    })
-  })
-
-  it('幂等冲突时会返回重复跳过状态而不是创建新通知', async () => {
-    insertReturningMock.mockResolvedValue([])
-
-    const result = await service.createFromOutbox(
-      'comment:reply:11:to:7',
-      {
-        receiverUserId: 7,
-        actorUserId: 9,
-        type: MessageNotificationTypeEnum.COMMENT_REPLY,
-        targetType: 5,
-        targetId: 11,
-        subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
-        subjectId: 11,
-        title: '有人回复了你',
-        content: '回复内容',
-      } as any,
-    )
-
-    expect(realtimeService.emitNotificationNew).not.toHaveBeenCalled()
-    expect(result).toEqual({
-      status: MessageNotificationDispatchStatusEnum.SKIPPED_DUPLICATE,
-    })
   })
 })

@@ -211,8 +211,8 @@ export enum TaskRepeatTypeEnum {
  * 任务提醒类型枚举
  */
 export enum TaskReminderKindEnum {
-  /** 新任务可领 */
-  AVAILABLE = 'task_available',
+  /** 自动分配的新任务 */
+  AUTO_ASSIGNED = 'task_auto_assigned',
   /** 任务即将过期 */
   EXPIRING_SOON = 'task_expiring_soon',
   /** 奖励到账 */
@@ -222,7 +222,5 @@ export enum TaskReminderKindEnum {
 export const TASK_COMPLETE_EVENT_CODE = 'task.complete'
 export const TASK_COMPLETE_EVENT_KEY = 'TASK_COMPLETE'
 
-/** 新任务提醒默认只覆盖最近 24 小时进入可领取状态的任务 */
-export const TASK_AVAILABLE_REMINDER_RECENT_HOURS = 24
 /** 即将过期提醒窗口，默认在过期前 24 小时内触发 */
 export const TASK_EXPIRING_SOON_REMINDER_HOURS = 24

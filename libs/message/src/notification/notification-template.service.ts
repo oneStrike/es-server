@@ -16,66 +16,17 @@ import {
   UpdateNotificationTemplateEnabledDto,
 } from './dto/notification-template.dto'
 import {
-  getMessageNotificationTemplateDefinition,
-  getMessageNotificationTemplateKey,
-  MessageNotificationTypeEnum,
+  MESSAGE_NOTIFICATION_CATEGORY_KEYS,
+  MessageNotificationCategoryKey,
 } from './notification.constant'
 
 const TEMPLATE_PLACEHOLDER_REGEXP = /\{\{\s*([\w.]+)\s*\}\}/g
 const NOTIFICATION_TEMPLATE_CACHE_TTL_MS = 60 * 1000
 const NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST = new Set([
-  'notificationType',
-  'templateKey',
+  'categoryKey',
   'receiverUserId',
   'actorUserId',
-  'targetType',
-  'targetId',
-  'subjectType',
-  'subjectId',
-  'aggregateKey',
-  'aggregateCount',
-  'expiredAt',
-])
-const NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP = new Map<
-  MessageNotificationTypeEnum,
-  ReadonlySet<string>
->([
-  [
-    MessageNotificationTypeEnum.COMMENT_REPLY,
-    new Set(['actorNickname', 'replyExcerpt', 'targetDisplayTitle']),
-  ],
-  [MessageNotificationTypeEnum.COMMENT_LIKE, new Set([])],
-  [MessageNotificationTypeEnum.CONTENT_FAVORITE, new Set([])],
-  [MessageNotificationTypeEnum.USER_FOLLOW, new Set([])],
-  [
-    MessageNotificationTypeEnum.SYSTEM_ANNOUNCEMENT,
-    new Set(['title', 'content', 'announcementId']),
-  ],
-  [
-    MessageNotificationTypeEnum.CHAT_MESSAGE,
-    new Set(['conversationId', 'content']),
-  ],
-  [MessageNotificationTypeEnum.TASK_REMINDER, new Set(['title', 'content'])],
-  [
-    MessageNotificationTypeEnum.TOPIC_LIKE,
-    new Set(['actorNickname', 'topicTitle']),
-  ],
-  [
-    MessageNotificationTypeEnum.TOPIC_FAVORITE,
-    new Set(['actorNickname', 'topicTitle']),
-  ],
-  [
-    MessageNotificationTypeEnum.TOPIC_COMMENT,
-    new Set(['actorNickname', 'topicTitle', 'commentExcerpt']),
-  ],
-  [
-    MessageNotificationTypeEnum.COMMENT_MENTION,
-    new Set(['actorNickname', 'commentExcerpt', 'targetDisplayTitle']),
-  ],
-  [
-    MessageNotificationTypeEnum.TOPIC_MENTION,
-    new Set(['actorNickname', 'topicTitle']),
-  ],
+  'expiresAt',
 ])
 
 interface NotificationTemplateCacheEntry {
@@ -87,47 +38,30 @@ interface NotificationTemplateCacheEntry {
   } | null
 }
 
-/**
- * 通知模板服务
- * 负责模板配置 CRUD、稳定模板键推导以及通知文案渲染与 fallback
- */
 @Injectable()
 export class MessageNotificationTemplateService {
   private readonly logger = new Logger(MessageNotificationTemplateService.name)
   private readonly templateCache = new Map<
-    MessageNotificationTypeEnum,
+    MessageNotificationCategoryKey,
     NotificationTemplateCacheEntry
   >()
 
   constructor(private readonly drizzle: DrizzleService) {}
 
-  /** 统一复用当前模块的 Drizzle 数据库实例。 */
   private get db() {
     return this.drizzle.db
   }
 
-  /** notification_template 表访问入口。 */
   private get notificationTemplate() {
     return this.drizzle.schema.notificationTemplate
   }
 
-  /**
-   * 分页查询通知模板
-   * 当前仅支持按通知类型、模板键和启用状态筛选
-   */
   async getNotificationTemplatePage(query: QueryNotificationTemplatePageDto) {
     const conditions: SQL[] = []
 
-    if (query.notificationType !== undefined) {
-      this.ensureSupportedNotificationType(query.notificationType)
-      conditions.push(
-        eq(this.notificationTemplate.notificationType, query.notificationType),
-      )
-    }
-    if (query.templateKey?.trim()) {
-      conditions.push(
-        eq(this.notificationTemplate.templateKey, query.templateKey.trim()),
-      )
+    if (query.categoryKey !== undefined) {
+      const categoryKey = this.ensureSupportedCategoryKey(query.categoryKey)
+      conditions.push(eq(this.notificationTemplate.categoryKey, categoryKey))
     }
     if (query.isEnabled !== undefined) {
       conditions.push(eq(this.notificationTemplate.isEnabled, query.isEnabled))
@@ -141,10 +75,6 @@ export class MessageNotificationTemplateService {
     })
   }
 
-  /**
-   * 获取通知模板详情
-   * 不存在时抛出显式业务异常，便于管理端直接展示
-   */
   async getNotificationTemplateDetail(id: number) {
     const template = await this.db.query.notificationTemplate.findFirst({
       where: { id },
@@ -158,15 +88,8 @@ export class MessageNotificationTemplateService {
     return template
   }
 
-  /**
-   * 创建通知模板
-   * 模板键始终由通知类型推导，避免管理端写入漂移键值
-   */
   async createNotificationTemplate(input: CreateNotificationTemplateDto) {
-    const notificationType = this.ensureSupportedNotificationType(
-      input.notificationType,
-    )
-    const templateKey = getMessageNotificationTemplateKey(notificationType)
+    const categoryKey = this.ensureSupportedCategoryKey(input.categoryKey)
     const titleTemplate = this.normalizeTemplateText(
       input.titleTemplate,
       '通知标题模板不能为空',
@@ -175,22 +98,13 @@ export class MessageNotificationTemplateService {
       input.contentTemplate,
       '通知正文模板不能为空',
     )
-    this.ensureTemplatePlaceholdersValid(
-      notificationType,
-      titleTemplate,
-      'titleTemplate',
-    )
-    this.ensureTemplatePlaceholdersValid(
-      notificationType,
-      contentTemplate,
-      'contentTemplate',
-    )
+    this.ensureTemplatePlaceholdersValid(titleTemplate, 'titleTemplate')
+    this.ensureTemplatePlaceholdersValid(contentTemplate, 'contentTemplate')
 
     try {
       await this.drizzle.withErrorHandling(() =>
         this.db.insert(this.notificationTemplate).values({
-          notificationType,
-          templateKey,
+          categoryKey,
           titleTemplate,
           contentTemplate,
           isEnabled: input.isEnabled ?? true,
@@ -201,60 +115,44 @@ export class MessageNotificationTemplateService {
       if (this.drizzle.isUniqueViolation(error)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          '该通知类型的模板已存在',
+          '该通知分类的模板已存在',
         )
       }
       throw error
     }
 
-    this.invalidateTemplateCache(notificationType)
+    this.invalidateTemplateCache(categoryKey)
     return true
   }
 
-  /**
-   * 更新通知模板
-   * 若通知类型变化，会同步重算模板键并保持一类通知一份模板的约束
-   */
   async updateNotificationTemplate(input: UpdateNotificationTemplateDto) {
     const current = await this.getNotificationTemplateDetail(input.id)
-    const currentNotificationType = this.ensureSupportedNotificationType(
-      current.notificationType,
-    )
-    const nextNotificationType =
-      input.notificationType !== undefined
-        ? this.ensureSupportedNotificationType(input.notificationType)
-        : currentNotificationType
-    const nextTitleTemplate =
-      input.titleTemplate !== undefined
+    const currentCategoryKey = this.ensureSupportedCategoryKey(current.categoryKey)
+    const nextCategoryKey
+      = input.categoryKey !== undefined
+        ? this.ensureSupportedCategoryKey(input.categoryKey)
+        : currentCategoryKey
+    const nextTitleTemplate
+      = input.titleTemplate !== undefined
         ? this.normalizeTemplateText(
             input.titleTemplate,
             '通知标题模板不能为空',
           )
         : current.titleTemplate
-    const nextContentTemplate =
-      input.contentTemplate !== undefined
+    const nextContentTemplate
+      = input.contentTemplate !== undefined
         ? this.normalizeTemplateText(
             input.contentTemplate,
             '通知正文模板不能为空',
           )
         : current.contentTemplate
-    this.ensureTemplatePlaceholdersValid(
-      nextNotificationType,
-      nextTitleTemplate,
-      'titleTemplate',
-    )
-    this.ensureTemplatePlaceholdersValid(
-      nextNotificationType,
-      nextContentTemplate,
-      'contentTemplate',
-    )
 
-    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> =
-      {}
-    if (input.notificationType !== undefined) {
-      updateData.notificationType = nextNotificationType
-      updateData.templateKey =
-        getMessageNotificationTemplateKey(nextNotificationType)
+    this.ensureTemplatePlaceholdersValid(nextTitleTemplate, 'titleTemplate')
+    this.ensureTemplatePlaceholdersValid(nextContentTemplate, 'contentTemplate')
+
+    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> = {}
+    if (input.categoryKey !== undefined) {
+      updateData.categoryKey = nextCategoryKey
     }
     if (input.titleTemplate !== undefined) {
       updateData.titleTemplate = nextTitleTemplate
@@ -286,28 +184,22 @@ export class MessageNotificationTemplateService {
       if (this.drizzle.isUniqueViolation(error)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
-          '该通知类型的模板已存在',
+          '该通知分类的模板已存在',
         )
       }
       throw error
     }
 
-    this.invalidateTemplateCache(currentNotificationType)
-    this.invalidateTemplateCache(nextNotificationType)
+    this.invalidateTemplateCache(currentCategoryKey)
+    this.invalidateTemplateCache(nextCategoryKey)
     return true
   }
 
-  /**
-   * 更新通知模板启用状态
-   * 单独拆出开关接口，方便运营不改文案时直接停用模板
-   */
   async updateNotificationTemplateEnabled(
     input: UpdateNotificationTemplateEnabledDto,
   ) {
     const current = await this.getNotificationTemplateDetail(input.id)
-    const notificationType = this.ensureSupportedNotificationType(
-      current.notificationType,
-    )
+    const categoryKey = this.ensureSupportedCategoryKey(current.categoryKey)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -316,19 +208,13 @@ export class MessageNotificationTemplateService {
           .where(eq(this.notificationTemplate.id, input.id)),
       { notFound: '通知模板不存在' },
     )
-    this.invalidateTemplateCache(notificationType)
+    this.invalidateTemplateCache(categoryKey)
     return true
   }
 
-  /**
-   * 删除通知模板
-   * 删除后通知主链路仍会继续使用业务方 fallback 文案发送
-   */
   async deleteNotificationTemplate(id: number) {
     const current = await this.getNotificationTemplateDetail(id)
-    const notificationType = this.ensureSupportedNotificationType(
-      current.notificationType,
-    )
+    const categoryKey = this.ensureSupportedCategoryKey(current.categoryKey)
     await this.drizzle.withErrorHandling(
       () =>
         this.db
@@ -336,27 +222,22 @@ export class MessageNotificationTemplateService {
           .where(eq(this.notificationTemplate.id, id)),
       { notFound: '通知模板不存在' },
     )
-    this.invalidateTemplateCache(notificationType)
+    this.invalidateTemplateCache(categoryKey)
     return true
   }
 
-  /**
-   * 渲染通知文案
-   * 模板缺失、禁用或渲染失败时统一回退到 outbox payload 中的 fallback 文案
-   */
   async renderNotificationTemplate(
     input: RenderNotificationTemplateInput,
   ): Promise<NotificationTemplateRenderResult> {
-    const notificationType = this.ensureSupportedNotificationType(input.type)
-    const templateKey = getMessageNotificationTemplateKey(notificationType)
+    const categoryKey = this.ensureSupportedCategoryKey(input.categoryKey)
     const fallback = {
       title: input.title,
       content: input.content,
-      templateKey,
+      categoryKey,
       usedTemplate: false,
     } satisfies NotificationTemplateRenderResult
 
-    const template = await this.getEnabledNotificationTemplate(notificationType)
+    const template = await this.getEnabledNotificationTemplate(categoryKey)
     if (!template) {
       return {
         ...fallback,
@@ -365,7 +246,7 @@ export class MessageNotificationTemplateService {
     }
 
     try {
-      const context = this.buildRenderContext(input, templateKey)
+      const context = this.buildRenderContext(input)
       return {
         title: this.renderTemplateText(
           template.titleTemplate,
@@ -379,13 +260,13 @@ export class MessageNotificationTemplateService {
           'contentTemplate',
           1000,
         ),
+        categoryKey,
         templateId: template.id,
-        templateKey,
         usedTemplate: true,
       }
     } catch (error) {
       this.logger.warn(
-        `notification template render failed: templateKey=${templateKey}, templateId=${template.id}, reason=${this.stringifyError(error)}`,
+        `notification template render failed: categoryKey=${categoryKey}, templateId=${template.id}, reason=${this.stringifyError(error)}`,
       )
       return {
         ...fallback,
@@ -395,34 +276,18 @@ export class MessageNotificationTemplateService {
     }
   }
 
-  /**
-   * 构建模板渲染上下文
-   * 仅暴露当前通知 payload 的最小字段，避免模板层侵入业务主链路判断
-   */
   private buildRenderContext(
     input: RenderNotificationTemplateInput,
-    templateKey: string,
   ): NotificationTemplateRenderContext {
     return {
-      notificationType: input.type,
-      templateKey,
+      categoryKey: input.categoryKey,
       receiverUserId: input.receiverUserId,
       actorUserId: input.actorUserId,
-      targetType: input.targetType,
-      targetId: input.targetId,
-      subjectType: input.subjectType,
-      subjectId: input.subjectId,
-      aggregateKey: input.aggregateKey,
-      aggregateCount: input.aggregateCount,
-      expiredAt: input.expiredAt,
+      expiresAt: input.expiresAt,
       payload: input.payload,
     }
   }
 
-  /**
-   * 渲染单个模板字符串
-   * 当前仅支持 `{{path.to.value}}` 形式的轻量变量替换；变量缺失时视为模板异常
-   */
   private renderTemplateText(
     templateText: string,
     context: NotificationTemplateRenderContext,
@@ -450,10 +315,6 @@ export class MessageNotificationTemplateService {
     return rendered
   }
 
-  /**
-   * 解析模板变量路径
-   * 仅支持按对象属性逐级读取，不做函数调用或表达式求值
-   */
   private resolveContextValue(
     context: NotificationTemplateRenderContext,
     path: string,
@@ -469,10 +330,6 @@ export class MessageNotificationTemplateService {
     }, context)
   }
 
-  /**
-   * 规范化模板文本
-   * 空白字符串会被拒绝，避免写入无法使用的模板内容
-   */
   private normalizeTemplateText(value: string, errorMessage: string) {
     const normalized = value.trim()
     if (!normalized) {
@@ -481,24 +338,20 @@ export class MessageNotificationTemplateService {
     return normalized
   }
 
-  /**
-   * 读取启用模板
-   * 优先命中类型级本地缓存，并缓存“不存在模板”结果，避免 worker 链路重复查库。
-   */
   private async getEnabledNotificationTemplate(
-    notificationType: MessageNotificationTypeEnum,
+    categoryKey: MessageNotificationCategoryKey,
   ) {
-    const cached = this.templateCache.get(notificationType)
+    const cached = this.templateCache.get(categoryKey)
     if (cached && cached.expiresAt > Date.now()) {
       return cached.template
     }
     if (cached) {
-      this.templateCache.delete(notificationType)
+      this.templateCache.delete(categoryKey)
     }
 
     const template = await this.db.query.notificationTemplate.findFirst({
       where: {
-        notificationType,
+        categoryKey,
         isEnabled: true,
       },
       columns: {
@@ -508,7 +361,7 @@ export class MessageNotificationTemplateService {
       },
     })
 
-    this.templateCache.set(notificationType, {
+    this.templateCache.set(categoryKey, {
       expiresAt: Date.now() + NOTIFICATION_TEMPLATE_CACHE_TTL_MS,
       template: template ?? null,
     })
@@ -516,37 +369,18 @@ export class MessageNotificationTemplateService {
     return template
   }
 
-  /**
-   * 失效模板缓存
-   * 模板增删改与启停切换成功后立即清理对应类型缓存，避免本地缓存继续返回旧模板。
-   */
-  private invalidateTemplateCache(
-    notificationType: MessageNotificationTypeEnum,
-  ) {
-    this.templateCache.delete(notificationType)
+  private invalidateTemplateCache(categoryKey: MessageNotificationCategoryKey) {
+    this.templateCache.delete(categoryKey)
   }
 
-  /**
-   * 校验模板占位符
-   * 仅允许固定根字段与通知类型对应的 payload 字段，尽量把模板错误前移到保存期。
-   */
   private ensureTemplatePlaceholdersValid(
-    notificationType: MessageNotificationTypeEnum,
     templateText: string,
     fieldName: 'titleTemplate' | 'contentTemplate',
   ) {
-    const allowedPayloadFields =
-      NOTIFICATION_TEMPLATE_ALLOWED_PAYLOAD_FIELD_MAP.get(notificationType)
-    if (!allowedPayloadFields) {
-      throw new BadRequestException(
-        `通知类型 ${notificationType} 未注册模板 payload 白名单`,
-      )
-    }
-
     const placeholders = new Set(
       Array.from(
         templateText.matchAll(TEMPLATE_PLACEHOLDER_REGEXP),
-        (match) => match[1],
+        match => match[1],
       ),
     )
 
@@ -554,28 +388,12 @@ export class MessageNotificationTemplateService {
       if (NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST.has(path)) {
         continue
       }
-
-      const segments = path.split('.')
-      if (segments[0] !== 'payload') {
+      if (!path.startsWith('payload.')) {
         throw new BadRequestException(`${fieldName} 存在非法占位符: ${path}`)
-      }
-      if (segments.length !== 2 || !segments[1]) {
-        throw new BadRequestException(
-          `${fieldName} 仅允许使用 payload 下一级字段: ${path}`,
-        )
-      }
-      if (!allowedPayloadFields.has(segments[1])) {
-        throw new BadRequestException(
-          `${fieldName} 不支持当前通知类型的 payload 字段: ${path}`,
-        )
       }
     }
   }
 
-  /**
-   * 规范化备注字段
-   * 空字符串统一回写为 null，避免在表中混入无意义空值
-   */
   private normalizeRemark(value?: string | null) {
     if (value === undefined) {
       return undefined
@@ -584,29 +402,17 @@ export class MessageNotificationTemplateService {
     return normalized || null
   }
 
-  /**
-   * 校验通知类型是否已注册模板定义
-   * 以统一定义层阻断模板键与通知类型的漂移
-   */
-  private ensureSupportedNotificationType(value: unknown) {
-    const notificationType = Number(value)
-    if (!Number.isInteger(notificationType)) {
-      throw new BadRequestException('通知类型非法')
+  private ensureSupportedCategoryKey(value: unknown) {
+    if (typeof value !== 'string' || !value.trim()) {
+      throw new BadRequestException('通知分类非法')
     }
-    try {
-      getMessageNotificationTemplateDefinition(
-        notificationType as MessageNotificationTypeEnum,
-      )
-    } catch {
-      throw new BadRequestException('通知类型非法')
+    const categoryKey = value.trim() as MessageNotificationCategoryKey
+    if (!MESSAGE_NOTIFICATION_CATEGORY_KEYS.includes(categoryKey)) {
+      throw new BadRequestException('通知分类非法')
     }
-    return notificationType as MessageNotificationTypeEnum
+    return categoryKey
   }
 
-  /**
-   * 序列化模板渲染异常
-   * 仅用于 warning 日志，避免异常对象影响主链路 fallback
-   */
   private stringifyError(error: unknown) {
     if (error instanceof Error) {
       return error.message

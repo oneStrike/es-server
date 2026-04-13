@@ -6,8 +6,10 @@ import {
 } from '@libs/interaction/like/interfaces/like-target-resolver.interface'
 import { LikeTargetTypeEnum } from '@libs/interaction/like/like.constant'
 import { LikeService } from '@libs/interaction/like/like.service'
-import { MessageNotificationComposerService } from '@libs/message/notification/notification-composer.service'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import {
+  MessageDomainEventFactoryService,
+} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { SceneTypeEnum } from '@libs/platform/constant/interaction.constant'
@@ -29,8 +31,8 @@ export class ForumTopicLikeResolver
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly likeService: LikeService,
-    private readonly messageOutboxService: MessageOutboxService,
-    private readonly messageNotificationComposerService: MessageNotificationComposerService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
+    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
     private readonly forumCounterService: ForumCounterService,
   ) {}
 
@@ -148,18 +150,15 @@ export class ForumTopicLikeResolver
       columns: { nickname: true },
     })
 
-    await this.messageOutboxService.enqueueNotificationEventInTx(
+    await this.messageDomainEventPublisher.publishInTx(
       tx,
-      this.messageNotificationComposerService.buildTopicLikeEvent({
-        bizKey: `notify:like:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${receiverUserId}`,
+      this.messageDomainEventFactoryService.buildTopicLikedEvent({
         receiverUserId,
         actorUserId,
         targetType: this.targetType,
         targetId,
-        payload: {
-          actorNickname: actor?.nickname?.trim() || '有人',
-          topicTitle: meta.targetTitle?.trim() || '你的主题',
-        },
+        actorNickname: actor?.nickname,
+        topicTitle: meta.targetTitle,
       }),
     )
   }

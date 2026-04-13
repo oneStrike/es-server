@@ -4,7 +4,8 @@ import type {
   TaskAssignmentSelect,
   TaskSelect,
 } from '@db/schema'
-import type { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import type { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
+import type { PublishMessageDomainEventInput } from '@libs/message/eventing/message-event.type'
 import type { Dayjs } from 'dayjs'
 import type { SQL } from 'drizzle-orm'
 import type { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
@@ -56,7 +57,6 @@ import {
   createEventEnvelope,
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
-import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Logger } from '@nestjs/common'
@@ -82,7 +82,6 @@ import {
   getTaskTypeFilterValues,
   normalizeTaskObjectiveType,
   normalizeTaskType,
-  TASK_AVAILABLE_REMINDER_RECENT_HOURS,
   TASK_COMPLETE_EVENT_CODE,
   TASK_COMPLETE_EVENT_KEY,
   TaskAssignmentRewardResultTypeEnum,
@@ -118,7 +117,7 @@ export abstract class TaskServiceSupport {
   constructor(
     protected readonly drizzle: DrizzleService,
     protected readonly userGrowthRewardService: UserGrowthRewardService,
-    protected readonly messageOutboxService: MessageOutboxService,
+    protected readonly messageDomainEventPublisher: MessageDomainEventPublisher,
   ) {}
 
   /** 数据库连接实例 */
@@ -146,9 +145,9 @@ export abstract class TaskServiceSupport {
     return this.drizzle.schema.notificationDelivery
   }
 
-  /** 消息发件箱表 */
-  protected get messageOutboxTable() {
-    return this.drizzle.schema.messageOutbox
+  /** 领域事件表 */
+  protected get domainEventTable() {
+    return this.drizzle.schema.domainEvent
   }
 
   // ==================== 查询投影与分页 ====================
@@ -1606,61 +1605,6 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 尝试发送“新任务可领”提醒
-   *
-   * 当前仅对手动领取任务生效，并限制为最近 24 小时进入可领取状态的任务，
-   * 避免用户首次打开任务页时收到历史积压提醒。
-   */
-  protected async tryNotifyAvailableTasksFromPage(
-    userId: number,
-    tasks: TaskSelect[],
-    now: Date,
-  ) {
-    const recentBoundary = this.addHours(
-      now,
-      -TASK_AVAILABLE_REMINDER_RECENT_HOURS,
-    )
-    const notifications = tasks
-      .filter(
-        (taskRecord) =>
-          taskRecord.claimMode === TaskClaimModeEnum.MANUAL &&
-          this.getTaskAvailableReferenceTime(taskRecord).getTime() >=
-          recentBoundary.getTime(),
-      )
-      .map((taskRecord) => {
-        const cycleKey = this.buildCycleKey(taskRecord, now)
-        return this.taskNotificationService.createAvailableReminderEvent({
-          bizKey: this.taskNotificationService.buildAvailableReminderBizKey(
-            taskRecord.id,
-            userId,
-            cycleKey,
-          ),
-          receiverUserId: userId,
-          task: {
-            id: taskRecord.id,
-            code: taskRecord.code,
-            title: taskRecord.title,
-            type: taskRecord.type,
-          },
-          cycleKey,
-          claimMode: taskRecord.claimMode,
-        })
-      })
-
-    if (notifications.length === 0) {
-      return
-    }
-
-    try {
-      await this.messageOutboxService.enqueueNotificationEvents(notifications)
-    } catch (error) {
-      this.logger.warn(
-        `task_available_reminder_enqueue_failed userId=${userId} count=${notifications.length} error=${this.stringifyError(error)}`,
-      )
-    }
-  }
-
-  /**
    * 尝试发送“自动分配的新任务”提醒
    *
    * 自动领取任务创建 assignment 后立刻补一条提醒，帮助用户感知任务已进入“我的任务”。
@@ -1672,12 +1616,10 @@ export abstract class TaskServiceSupport {
     cycleKey: string,
   ) {
     try {
-      await this.messageOutboxService.enqueueNotificationEvent(
-        this.taskNotificationService.createAvailableReminderEvent({
-          bizKey: this.taskNotificationService.buildAvailableReminderBizKey(
-            taskRecord.id,
-            userId,
-            cycleKey,
+      await this.publishTaskReminderIfNeeded(
+        this.taskNotificationService.createAutoAssignedReminderEvent({
+          bizKey: this.taskNotificationService.buildAutoAssignedReminderBizKey(
+            assignment.id,
           ),
           receiverUserId: userId,
           task: {
@@ -1687,7 +1629,6 @@ export abstract class TaskServiceSupport {
             type: taskRecord.type,
           },
           cycleKey,
-          claimMode: taskRecord.claimMode,
           assignmentId: assignment.id,
         }),
       )
@@ -1724,7 +1665,7 @@ export abstract class TaskServiceSupport {
     }
 
     try {
-      await this.messageOutboxService.enqueueNotificationEvent(
+      await this.publishTaskReminderIfNeeded(
         this.taskNotificationService.createRewardGrantedReminderEvent({
           bizKey: this.taskNotificationService.buildRewardGrantedReminderBizKey(
             assignment.id,
@@ -1747,6 +1688,70 @@ export abstract class TaskServiceSupport {
         `task_reward_reminder_enqueue_failed userId=${userId} taskId=${taskRecord.id} assignmentId=${assignment.id} error=${this.stringifyError(error)}`,
       )
     }
+  }
+
+  /**
+   * 发布任务提醒前先按稳定 projectionKey 做幂等判重。
+   * 当前判重事实源使用已写入的 message domain_event，避免重复读接口和定时任务反复制造同一提醒事件。
+   */
+  protected async publishTaskReminderIfNeeded(
+    notification: PublishMessageDomainEventInput,
+  ) {
+    const projectionKey = notification.context?.projectionKey
+    if (typeof projectionKey !== 'string' || !projectionKey.length) {
+      await this.messageDomainEventPublisher.publish(notification)
+      return true
+    }
+
+    const publishedProjectionKeys =
+      await this.queryPublishedTaskReminderProjectionKeys([projectionKey])
+    if (publishedProjectionKeys.has(projectionKey)) {
+      return false
+    }
+
+    await this.messageDomainEventPublisher.publish(notification)
+    return true
+  }
+
+  /**
+   * 批量查询已发布过的任务提醒 projectionKey。
+   * 只看 message 域 task.reminder.* 事件，确保可领/自动分配/过期/奖励到账四条链路共用同一幂等口径。
+   */
+  protected async queryPublishedTaskReminderProjectionKeys(
+    projectionKeys: string[],
+  ) {
+    const uniqueProjectionKeys = [...new Set(projectionKeys.filter(Boolean))]
+    if (uniqueProjectionKeys.length === 0) {
+      return new Set<string>()
+    }
+
+    const projectionKeySql =
+      sql<string>`${this.domainEventTable.context} ->> 'projectionKey'`
+    const rows = await this.db
+      .select({
+        projectionKey: projectionKeySql,
+      })
+      .from(this.domainEventTable)
+      .where(
+        and(
+          eq(this.domainEventTable.domain, 'message'),
+          inArray(this.domainEventTable.eventKey, [
+            'task.reminder.auto_assigned',
+            'task.reminder.expiring',
+            'task.reminder.reward_granted',
+          ]),
+          inArray(projectionKeySql, uniqueProjectionKeys),
+        ),
+      )
+
+    return new Set(
+      rows
+        .map((row) => row.projectionKey)
+        .filter(
+          (projectionKey): projectionKey is string =>
+            typeof projectionKey === 'string' && projectionKey.length > 0,
+        ),
+    )
   }
 
   // ==================== 视图映射与对账查询 ====================
@@ -2083,10 +2088,10 @@ export abstract class TaskServiceSupport {
    * 查询任务维度最近一次提醒投递结果。
    */
   protected async queryLatestTaskReminderRows(taskIds: number[]) {
-    const taskIdSql = sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'taskId')::int`
+    const taskIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' ->> 'taskId')::int`
     const reminderKindSql = sql<
       string | null
-    >`${this.messageOutboxTable.payload} -> 'payload' ->> 'reminderKind'`
+    >`${this.domainEventTable.context} -> 'payload' ->> 'reminderKind'`
 
     const rows = await this.db
       .select({
@@ -2099,15 +2104,12 @@ export abstract class TaskServiceSupport {
       })
       .from(this.notificationDeliveryTable)
       .leftJoin(
-        this.messageOutboxTable,
-        eq(this.notificationDeliveryTable.outboxId, this.messageOutboxTable.id),
+        this.domainEventTable,
+        eq(this.notificationDeliveryTable.eventId, this.domainEventTable.id),
       )
       .where(
         and(
-          eq(
-            this.notificationDeliveryTable.notificationType,
-            MessageNotificationTypeEnum.TASK_REMINDER,
-          ),
+          eq(this.notificationDeliveryTable.categoryKey, 'task_reminder'),
           inArray(taskIdSql, taskIds),
         ),
       )
@@ -2180,23 +2182,20 @@ export abstract class TaskServiceSupport {
       return undefined
     }
 
-    const assignmentIdSql = sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'assignmentId')::int`
+    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' ->> 'assignmentId')::int`
     const reminderKindSql = sql<
       string | null
-    >`${this.messageOutboxTable.payload} -> 'payload' ->> 'reminderKind'`
+    >`${this.domainEventTable.context} -> 'payload' ->> 'reminderKind'`
     const rows = await this.db
       .select({ assignmentId: assignmentIdSql })
       .from(this.notificationDeliveryTable)
       .leftJoin(
-        this.messageOutboxTable,
-        eq(this.notificationDeliveryTable.outboxId, this.messageOutboxTable.id),
+        this.domainEventTable,
+        eq(this.notificationDeliveryTable.eventId, this.domainEventTable.id),
       )
       .where(
         and(
-          eq(
-            this.notificationDeliveryTable.notificationType,
-            MessageNotificationTypeEnum.TASK_REMINDER,
-          ),
+          eq(this.notificationDeliveryTable.categoryKey, 'task_reminder'),
           eq(
             this.notificationDeliveryTable.status,
             queryDto.notificationStatus,
@@ -2261,14 +2260,14 @@ export abstract class TaskServiceSupport {
       return new Map<number, TaskAssignmentRewardReminderSummary>()
     }
 
-    const assignmentIdSql = sql<number>`(${this.messageOutboxTable.payload} -> 'payload' ->> 'assignmentId')::int`
+    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' ->> 'assignmentId')::int`
     const reminderKindSql = sql<
       string | null
-    >`${this.messageOutboxTable.payload} -> 'payload' ->> 'reminderKind'`
+    >`${this.domainEventTable.context} -> 'payload' ->> 'reminderKind'`
     const rows = await this.db
       .select({
         assignmentId: assignmentIdSql,
-        bizKey: this.notificationDeliveryTable.bizKey,
+        bizKey: this.notificationDeliveryTable.projectionKey,
         status: this.notificationDeliveryTable.status,
         failureReason: this.notificationDeliveryTable.failureReason,
         lastAttemptAt: this.notificationDeliveryTable.lastAttemptAt,
@@ -2276,15 +2275,12 @@ export abstract class TaskServiceSupport {
       })
       .from(this.notificationDeliveryTable)
       .leftJoin(
-        this.messageOutboxTable,
-        eq(this.notificationDeliveryTable.outboxId, this.messageOutboxTable.id),
+        this.domainEventTable,
+        eq(this.notificationDeliveryTable.eventId, this.domainEventTable.id),
       )
       .where(
         and(
-          eq(
-            this.notificationDeliveryTable.notificationType,
-            MessageNotificationTypeEnum.TASK_REMINDER,
-          ),
+          eq(this.notificationDeliveryTable.categoryKey, 'task_reminder'),
           inArray(assignmentIdSql, uniqueAssignmentIds),
           eq(reminderKindSql, TaskReminderKindEnum.REWARD_GRANTED),
         ),
@@ -2297,7 +2293,7 @@ export abstract class TaskServiceSupport {
         continue
       }
       result.set(row.assignmentId, {
-        bizKey: row.bizKey,
+        bizKey: row.bizKey ?? '',
         status: row.status as TaskAssignmentRewardReminderSummary['status'],
         failureReason: row.failureReason,
         lastAttemptAt: row.lastAttemptAt,

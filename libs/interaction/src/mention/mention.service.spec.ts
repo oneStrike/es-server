@@ -31,11 +31,11 @@ describe('mentionService', () => {
       findAvailableUsersByIds: jest.fn(),
     }
 
-    const messageOutboxService = {
-      enqueueNotificationEventInTx: jest.fn(),
+    const messageDomainEventPublisher = {
+      publishInTx: jest.fn(),
     }
 
-    const messageNotificationComposerService = {
+    const messageDomainEventFactoryService = {
       buildCommentMentionEvent: jest.fn(),
       buildTopicMentionEvent: jest.fn(),
     }
@@ -44,8 +44,8 @@ describe('mentionService', () => {
       drizzle as never,
       emojiParserService as never,
       userService as never,
-      messageOutboxService as never,
-      messageNotificationComposerService as never,
+      messageDomainEventPublisher as never,
+      messageDomainEventFactoryService as never,
     )
 
     return {

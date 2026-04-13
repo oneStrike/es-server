@@ -4,6 +4,7 @@ import type { ValidationError } from 'class-validator'
 import type { PlatformModuleOptions } from './platform.module.types'
 import { DrizzleModule } from '@db/core'
 import { LoggerModule } from '@libs/platform/modules/logger'
+import { EventingModule } from '@libs/platform/modules/eventing'
 import {
   BadRequestException,
   DynamicModule,
@@ -72,6 +73,7 @@ export class PlatformModule {
           idGenerator: (req: any) => req.headers['x-request-id'] || uuidv4(),
         },
       }),
+      EventingModule,
     ]
 
     // 全局验证管道 - 数据格式校验

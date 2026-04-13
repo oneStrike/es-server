@@ -1,4 +1,4 @@
-import { MessageNotificationDeliveryItemDto, MessageOutboxMonitorSummaryDto, MessageWsMonitorSummaryDto, QueryMessageOutboxMonitorDto, QueryMessageWsMonitorDto, RetryMessageNotificationDeliveryDto } from '@libs/message/monitor/dto/message-monitor.dto';
+import { MessageDispatchPageItemDto, MessageNotificationDeliveryItemDto, MessageWsMonitorSummaryDto, QueryMessageDispatchPageDto, QueryMessageWsMonitorDto, RetryMessageNotificationDeliveryDto } from '@libs/message/monitor/dto/message-monitor.dto';
 import { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -25,7 +25,7 @@ export class MessageController {
 
   @Post('monitor/delivery/retry')
   @ApiAuditDoc({
-    summary: '按 bizKey 重试失败的通知投递',
+    summary: '按 dispatch ID 重试失败的通知投递',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
@@ -34,18 +34,20 @@ export class MessageController {
   async retryNotificationDelivery(
     @Body() body: RetryMessageNotificationDeliveryDto,
   ) {
-    return this.messageMonitorService.retryNotificationDeliveryByBizKey(
-      body.bizKey,
+    return this.messageMonitorService.retryNotificationDeliveryByDispatchId(
+      body.dispatchId,
     )
   }
 
-  @Get('monitor/outbox/summary')
-  @ApiDoc({
-    summary: '获取消息 outbox 监控摘要',
-    model: MessageOutboxMonitorSummaryDto,
+  @Get('monitor/dispatch/page')
+  @ApiPageDoc({
+    summary: '分页查询通知 dispatch 调度结果',
+    model: MessageDispatchPageItemDto,
   })
-  async getOutboxMonitorSummary(@Query() query: QueryMessageOutboxMonitorDto) {
-    return this.messageMonitorService.getOutboxMonitorSummary(query)
+  async getNotificationDispatchPage(
+    @Query() query: QueryMessageDispatchPageDto,
+  ) {
+    return this.messageMonitorService.getNotificationDispatchPage(query)
   }
 
   @Get('monitor/ws/summary')

@@ -1,42 +1,37 @@
-import type { CreateNotificationOutboxEventDto } from '@libs/message/outbox/dto/outbox-event.dto';
+import type { PublishMessageDomainEventInput } from '@libs/message/eventing/message-event.type'
 import type {
-  TaskAvailableReminderEventInput,
+  TaskAutoAssignedReminderEventInput,
   TaskExpiringSoonReminderEventInput,
   TaskReminderNotificationEventInput,
   TaskReminderNotificationPayload,
   TaskReminderRewardSummary,
   TaskRewardGrantedReminderEventInput,
 } from './task.type'
-import { MessageNotificationTypeEnum } from '@libs/message/notification-constant'
 import {
   normalizeTaskType,
-  TaskClaimModeEnum,
   TaskReminderKindEnum,
 } from './task.constant'
 
 /**
- * 任务通知组装器
- *
- * 负责统一生成任务提醒的 outbox 事件、稳定 bizKey 和 payload 合同，
- * 避免 TaskService 长期直接拼装任务通知细节。
+ * 任务提醒事件组装器。
+ * 统一生成任务提醒领域事件与稳定 projectionKey/context 合同。
  */
 export class TaskNotificationService {
   private readonly payloadVersion = 1
 
-  createAvailableReminderEvent(
-    params: TaskAvailableReminderEventInput,
-  ): CreateNotificationOutboxEventDto {
-    return this.buildTaskReminderNotificationEvent({
+  createAutoAssignedReminderEvent(
+    params: TaskAutoAssignedReminderEventInput,
+  ): PublishMessageDomainEventInput {
+    return this.buildTaskReminderDomainEvent({
       ...params,
-      reminderKind: TaskReminderKindEnum.AVAILABLE,
-      claimMode: params.claimMode,
+      reminderKind: TaskReminderKindEnum.AUTO_ASSIGNED,
     })
   }
 
   createExpiringSoonReminderEvent(
     params: TaskExpiringSoonReminderEventInput,
-  ): CreateNotificationOutboxEventDto {
-    return this.buildTaskReminderNotificationEvent({
+  ): PublishMessageDomainEventInput {
+    return this.buildTaskReminderDomainEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.EXPIRING_SOON,
       expiredAt: params.expiredAt,
@@ -45,8 +40,8 @@ export class TaskNotificationService {
 
   createRewardGrantedReminderEvent(
     params: TaskRewardGrantedReminderEventInput,
-  ): CreateNotificationOutboxEventDto {
-    return this.buildTaskReminderNotificationEvent({
+  ): PublishMessageDomainEventInput {
+    return this.buildTaskReminderDomainEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.REWARD_GRANTED,
       points: params.points,
@@ -55,8 +50,8 @@ export class TaskNotificationService {
     })
   }
 
-  buildAvailableReminderBizKey(taskId: number, userId: number, cycleKey: string) {
-    return `task:reminder:available:task:${taskId}:cycle:${cycleKey}:user:${userId}`
+  buildAutoAssignedReminderBizKey(assignmentId: number) {
+    return `task:reminder:auto-assigned:assignment:${assignmentId}`
   }
 
   buildExpiringSoonReminderBizKey(assignmentId: number) {
@@ -67,9 +62,9 @@ export class TaskNotificationService {
     return `task:reminder:reward:assignment:${assignmentId}`
   }
 
-  private buildTaskReminderNotificationEvent(
+  private buildTaskReminderDomainEvent(
     params: TaskReminderNotificationEventInput,
-  ) {
+  ): PublishMessageDomainEventInput {
     const message = this.buildTaskReminderMessage(params)
     const rewardSummary: TaskReminderRewardSummary | undefined =
       params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED
@@ -80,6 +75,7 @@ export class TaskNotificationService {
             ledgerRecordIds: params.ledgerRecordIds ?? [],
           }
         : undefined
+
     const payload: TaskReminderNotificationPayload = {
       payloadVersion: this.payloadVersion,
       reminderKind: params.reminderKind,
@@ -91,10 +87,7 @@ export class TaskNotificationService {
       cycleKey: params.cycleKey,
       assignmentId: params.assignmentId,
       expiredAt: params.expiredAt,
-      actionUrl: this.buildTaskReminderActionUrl(
-        params.reminderKind,
-        params.claimMode,
-      ),
+      actionUrl: this.buildTaskReminderActionUrl(params.reminderKind),
       rewardSummary,
       points: params.points,
       experience: params.experience,
@@ -102,17 +95,36 @@ export class TaskNotificationService {
     }
 
     return {
-      eventType: MessageNotificationTypeEnum.TASK_REMINDER,
-      bizKey: params.bizKey,
-      payload: {
+      eventKey: this.resolveTaskReminderEventKey(params),
+      subjectType: 'user',
+      subjectId: params.receiverUserId,
+      targetType: 'task',
+      targetId: params.task.id,
+      operatorId: undefined,
+      context: {
         receiverUserId: params.receiverUserId,
-        type: MessageNotificationTypeEnum.TASK_REMINDER,
-        targetId: params.task.id,
+        projectionKey: params.bizKey,
         title: message.title,
         content: message.content,
+        expiresAt: params.expiredAt,
         payload,
       },
     }
+  }
+
+  private resolveTaskReminderEventKey(
+    params: TaskReminderNotificationEventInput,
+  ): PublishMessageDomainEventInput['eventKey'] {
+    if (params.reminderKind === TaskReminderKindEnum.AUTO_ASSIGNED) {
+      return 'task.reminder.auto_assigned'
+    }
+    if (params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED) {
+      return 'task.reminder.reward_granted'
+    }
+    if (params.reminderKind === TaskReminderKindEnum.EXPIRING_SOON) {
+      return 'task.reminder.expiring'
+    }
+    throw new Error(`Unsupported task reminder kind: ${params.reminderKind}`)
   }
 
   private buildTaskReminderMessage(params: TaskReminderNotificationEventInput) {
@@ -137,30 +149,25 @@ export class TaskNotificationService {
       }
     }
 
-    if (params.claimMode === TaskClaimModeEnum.AUTO) {
+    if (params.reminderKind === TaskReminderKindEnum.AUTO_ASSIGNED) {
       return {
         title: '你有新的任务待完成',
         content: `任务《${params.task.title}》已自动加入你的任务列表。`,
       }
     }
-
-    return {
-      title: '发现新的可领取任务',
-      content: `任务《${params.task.title}》现已可领取。`,
-    }
+    throw new Error(`Unsupported task reminder kind: ${params.reminderKind}`)
   }
 
   private buildTaskReminderActionUrl(
     reminderKind: TaskReminderKindEnum,
-    claimMode?: TaskAvailableReminderEventInput['claimMode'],
-  ) {
+  ): TaskReminderNotificationPayload['actionUrl'] {
     if (
-      reminderKind === TaskReminderKindEnum.EXPIRING_SOON
+      reminderKind === TaskReminderKindEnum.AUTO_ASSIGNED
+      || reminderKind === TaskReminderKindEnum.EXPIRING_SOON
       || reminderKind === TaskReminderKindEnum.REWARD_GRANTED
-      || claimMode === TaskClaimModeEnum.AUTO
     ) {
       return '/task/my'
     }
-    return '/task/available'
+    throw new Error(`Unsupported task reminder kind: ${reminderKind}`)
   }
 }

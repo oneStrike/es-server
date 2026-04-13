@@ -1,6 +1,9 @@
 import type { CreateNotificationTemplateDto, QueryNotificationTemplatePageDto, UpdateNotificationTemplateDto, UpdateNotificationTemplateEnabledDto } from '@libs/message/notification/dto/notification-template.dto';
 import { MessageNotificationTemplateService } from '@libs/message/notification/notification-template.service';
-import { getMessageNotificationTypeLabel } from '@libs/message/notification/notification.constant';
+import {
+  getMessageNotificationCategoryLabel,
+  isMessageNotificationCategoryKey,
+} from '@libs/message/notification/notification.constant';
 import { Injectable } from '@nestjs/common'
 
 /**
@@ -15,7 +18,7 @@ export class MessageTemplateService {
 
   /**
    * 获取通知模板分页
-   * 在表字段基础上补充通知类型中文标签，方便管理端直接展示
+   * 在表字段基础上补充通知分类中文标签，方便管理端直接展示
    */
   async getNotificationTemplatePage(query: QueryNotificationTemplatePageDto) {
     const page
@@ -83,7 +86,7 @@ export class MessageTemplateService {
 
   /**
    * 映射管理端通知模板视图
-   * 在稳定表字段上补充 label，避免每个调用方重复做枚举解释
+   * 在稳定表字段上补充 label，避免每个调用方重复做分类解释
    */
   private mapTemplateView(
     template: Awaited<
@@ -92,9 +95,14 @@ export class MessageTemplateService {
   ) {
     return {
       ...template,
-      notificationTypeLabel: getMessageNotificationTypeLabel(
-        template.notificationType,
-      ),
+      categoryLabel: this.getCategoryLabel(template.categoryKey),
     }
+  }
+
+  private getCategoryLabel(categoryKey: string) {
+    if (!isMessageNotificationCategoryKey(categoryKey)) {
+      throw new Error(`Unsupported notification category key: ${categoryKey}`)
+    }
+    return getMessageNotificationCategoryLabel(categoryKey)
   }
 }

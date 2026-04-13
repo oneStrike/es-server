@@ -7,42 +7,38 @@ export class MessageNotificationRealtimeService {
     private readonly messageWebSocketService: MessageWebSocketService,
   ) {}
 
-  emitNotificationNew(notification: {
-    id: number
-    userId: number
-    type: number
-    actorUserId: number | null
-    targetType: number | null
-    targetId: number | null
-    subjectType: number | null
-    subjectId: number | null
-    title: string
-    content: string
-    payload: unknown
-    aggregateKey: string | null
-    aggregateCount: number
-    isRead: boolean
-    readAt: Date | null
-    createdAt: Date
-  }) {
-    this.messageWebSocketService.emitToUser(notification.userId, 'notification.new', {
-      id: notification.id,
-      userId: notification.userId,
-      type: notification.type,
-      actorUserId: notification.actorUserId,
-      targetType: notification.targetType,
-      targetId: notification.targetId,
-      subjectType: notification.subjectType,
-      subjectId: notification.subjectId,
-      title: notification.title,
-      content: notification.content,
-      payload: notification.payload,
-      aggregateKey: notification.aggregateKey,
-      aggregateCount: notification.aggregateCount,
-      isRead: notification.isRead,
-      readAt: notification.readAt,
-      createdAt: notification.createdAt,
-    })
+  emitNotificationCreated(notification: Record<string, unknown>) {
+    const receiverUserId = Number(notification.receiverUserId)
+    if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
+      return
+    }
+    this.messageWebSocketService.emitToUser(
+      receiverUserId,
+      'notification.created',
+      notification,
+    )
+  }
+
+  emitNotificationUpdated(notification: Record<string, unknown>) {
+    const receiverUserId = Number(notification.receiverUserId)
+    if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
+      return
+    }
+    this.messageWebSocketService.emitToUser(
+      receiverUserId,
+      'notification.updated',
+      notification,
+    )
+  }
+
+  emitNotificationDeleted(
+    userId: number,
+    payload: {
+      notificationId?: number
+      projectionKey: string
+    },
+  ) {
+    this.messageWebSocketService.emitToUser(userId, 'notification.deleted', payload)
   }
 
   emitNotificationReadSync(userId: number, payload: { id?: number, readAt: Date }) {
@@ -81,10 +77,14 @@ export class MessageNotificationRealtimeService {
       lastMessageContent?: string
     },
   ) {
-    this.messageWebSocketService.emitToUser(userId, 'chat.conversation.update', payload)
+    this.messageWebSocketService.emitToUser(
+      userId,
+      'chat.conversation.update',
+      payload,
+    )
   }
 
-  emitInboxSummaryUpdate(
+  emitInboxSummaryUpdated(
     userId: number,
     payload: {
       notificationUnreadCount: number
@@ -94,6 +94,6 @@ export class MessageNotificationRealtimeService {
       latestChat?: unknown
     },
   ) {
-    this.messageWebSocketService.emitToUser(userId, 'inbox.summary.update', payload)
+    this.messageWebSocketService.emitToUser(userId, 'inbox.summary.updated', payload)
   }
 }

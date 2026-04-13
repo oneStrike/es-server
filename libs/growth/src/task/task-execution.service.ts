@@ -5,7 +5,7 @@ import type {
 import { DrizzleService } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
 import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -42,9 +42,9 @@ export class TaskExecutionService extends TaskServiceSupport {
   constructor(
     drizzle: DrizzleService,
     userGrowthRewardService: UserGrowthRewardService,
-    messageOutboxService: MessageOutboxService,
+    messageDomainEventPublisher: MessageDomainEventPublisher,
   ) {
-    super(drizzle, userGrowthRewardService, messageOutboxService)
+    super(drizzle, userGrowthRewardService, messageDomainEventPublisher)
   }
 
   /**
@@ -75,7 +75,6 @@ export class TaskExecutionService extends TaskServiceSupport {
     )
 
     await this.ensureAutoAssignmentsForUser(userId, now)
-    await this.tryNotifyAvailableTasksFromPage(userId, pagedTasks, now)
 
     return {
       list: pagedTasks.map((taskRecord) => this.toAppTaskView(taskRecord)),

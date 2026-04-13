@@ -660,7 +660,7 @@ export class AdminTaskAssignmentPageResponseDto extends PickType(
 
 export class AdminTaskRewardReminderDto {
   @StringProperty({
-    description: '奖励到账提醒 outbox bizKey',
+    description: '奖励到账提醒投影键',
     example: 'task:reminder:reward:assignment:88',
     required: false,
     validation: false,
@@ -725,7 +725,7 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
   latestEventCode?: number | null
 
   @StringProperty({
-    description: '最近一次命中 assignment 的事件 bizKey',
+    description: '最近一次命中 assignment 的事件投影键',
     example: 'comment:create:topic:100:user:9',
     required: false,
     validation: false,

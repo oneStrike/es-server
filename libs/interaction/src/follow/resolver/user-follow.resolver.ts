@@ -1,8 +1,10 @@
 import type { Db } from '@db/core'
 import type { IFollowTargetResolver } from '../interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { MessageNotificationTypeEnum } from '@libs/message/notification/notification.constant'
-import { MessageOutboxService } from '@libs/message/outbox/outbox.service'
+import {
+  MessageDomainEventFactoryService,
+} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
@@ -23,7 +25,8 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
     private readonly drizzle: DrizzleService,
     private readonly followService: FollowService,
     private readonly appUserCountService: AppUserCountService,
-    private readonly messageOutboxService: MessageOutboxService,
+    private readonly messageDomainEventPublisher: MessageDomainEventPublisherService,
+    private readonly messageDomainEventFactoryService: MessageDomainEventFactoryService,
   ) {}
 
   private get appUserCount() {
@@ -106,19 +109,21 @@ export class UserFollowResolver implements IFollowTargetResolver, OnModuleInit {
       return
     }
 
-    await this.messageOutboxService.enqueueNotificationEventInTx(tx, {
-      eventType: MessageNotificationTypeEnum.USER_FOLLOW,
-      bizKey: `notify:follow:${this.targetType}:${targetId}:actor:${actorUserId}:receiver:${receiverUserId}`,
-      payload: {
+    const actor = await tx.query.appUser.findFirst({
+      where: { id: actorUserId },
+      columns: { nickname: true },
+    })
+
+    await this.messageDomainEventPublisher.publishInTx(
+      tx,
+      this.messageDomainEventFactoryService.buildUserFollowedEvent({
         receiverUserId,
         actorUserId,
-        type: MessageNotificationTypeEnum.USER_FOLLOW,
         targetType: this.targetType,
         targetId,
-        title: '你有新的关注',
-        content: '有人关注了你',
-      },
-    })
+        actorNickname: actor?.nickname ?? undefined,
+      }),
+    )
   }
 
   /**

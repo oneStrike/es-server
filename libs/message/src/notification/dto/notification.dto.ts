@@ -2,123 +2,84 @@ import {
   ArrayProperty,
   BooleanProperty,
   DateProperty,
+  EnumArrayProperty,
   EnumProperty,
   JsonProperty,
   NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-
 import { PageDto } from '@libs/platform/dto'
 import {
-  getMessageNotificationTypeLabel,
+  getMessageNotificationCategoryLabel,
+  isMessageNotificationCategoryKey,
+  MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+  MessageNotificationCategoryKey,
   MessageNotificationDispatchStatusEnum,
   MessageNotificationPreferenceSourceEnum,
-  MessageNotificationSubjectTypeEnum,
-  MessageNotificationTypeEnum,
 } from '../notification.constant'
 
-/**
- * 用户通知基础数据传输对象
- */
 export class BaseUserNotificationDto {
   @NumberProperty({
-    description: '通知ID',
+    description: '通知 ID',
     example: 1,
   })
   id!: number
 
   @NumberProperty({
-    description: '接收用户ID',
+    description: '接收用户 ID',
     example: 10001,
   })
-  userId!: number
+  receiverUserId!: number
 
   @EnumProperty({
-    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
+    description: '通知分类键',
+    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
-  type!: MessageNotificationTypeEnum
+  categoryKey!: MessageNotificationCategoryKey
 
   @StringProperty({
-    description: '业务幂等键',
-    example: 'comment:reply:123:to:10001',
-    maxLength: 160,
+    description: '通知分类中文标签',
+    example: getMessageNotificationCategoryLabel('comment_reply'),
+  })
+  categoryLabel!: string
+
+  @StringProperty({
+    description: '通知投影键',
+    example: 'comment-replied:101:receiver:7',
+    maxLength: 180,
     contract: false,
   })
-  bizKey!: string
+  projectionKey!: string
 
   @NumberProperty({
-    description: '触发用户ID',
+    description: '触发用户 ID',
     example: 10002,
     required: false,
   })
   actorUserId?: number
 
-  @NumberProperty({
-    description: '目标类型',
-    example: 5,
-    required: false,
-  })
-  targetType?: number
-
-  @NumberProperty({
-    description: '目标ID',
-    example: 99,
-    required: false,
-  })
-  targetId?: number
-
-  @EnumProperty({
-    description: '主体类型（1=评论；2=作品；3=用户；4=系统；5=论坛主题）',
-    example: MessageNotificationSubjectTypeEnum.COMMENT,
-    enum: MessageNotificationSubjectTypeEnum,
-    required: false,
-  })
-  subjectType?: MessageNotificationSubjectTypeEnum
-
-  @NumberProperty({
-    description: '主体ID',
-    example: 123,
-    required: false,
-  })
-  subjectId?: number
-
   @StringProperty({
     description: '通知标题',
-    example: '收到新的评论回复',
+    example: '有人回复了你的评论',
     maxLength: 200,
   })
   title!: string
 
   @StringProperty({
-    description: '通知内容',
-    example: '你收到了一条新的评论回复',
+    description: '通知正文',
+    example: '回复内容',
     maxLength: 1000,
   })
   content!: string
 
   @JsonProperty({
     description: '扩展载荷',
-    example: '{"extra":"value"}',
+    example: '{"replyCommentId":101}',
     required: false,
   })
   payload?: string
-
-  @StringProperty({
-    description: '聚合键',
-    example: 'comment_like:to:10001:target:5:99',
-    maxLength: 160,
-    required: false,
-  })
-  aggregateKey?: string
-
-  @NumberProperty({
-    description: '聚合计数',
-    example: 1,
-  })
-  aggregateCount!: number
 
   @BooleanProperty({
     description: '是否已读',
@@ -128,23 +89,29 @@ export class BaseUserNotificationDto {
 
   @DateProperty({
     description: '已读时间',
-    example: '2026-03-07T12:00:00.000Z',
+    example: '2026-04-13T12:00:00.000Z',
     required: false,
   })
   readAt?: Date
 
   @DateProperty({
     description: '过期时间',
-    example: '2026-03-14T12:00:00.000Z',
+    example: '2026-04-14T12:00:00.000Z',
     required: false,
   })
-  expiredAt?: Date
+  expiresAt?: Date
 
   @DateProperty({
     description: '创建时间',
-    example: '2026-03-07T12:00:00.000Z',
+    example: '2026-04-13T12:00:00.000Z',
   })
   createdAt!: Date
+
+  @DateProperty({
+    description: '更新时间',
+    example: '2026-04-13T12:30:00.000Z',
+  })
+  updatedAt!: Date
 }
 
 export class QueryUserNotificationListDto extends PageDto {
@@ -155,25 +122,34 @@ export class QueryUserNotificationListDto extends PageDto {
   })
   isRead?: boolean
 
-  @EnumProperty({
-    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
+  @EnumArrayProperty({
+    description: '通知分类键列表',
     required: false,
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
+    example: [
+      MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
+      MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE,
+    ],
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+    transform: ({ value }) => {
+      if (value === undefined || value === null || value === '') {
+        return undefined
+      }
+      return Array.isArray(value) ? value : [value]
+    },
   })
-  type?: MessageNotificationTypeEnum
+  categoryKeys?: MessageNotificationCategoryKey[]
 }
 
 export class UpdateUserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
+    description: '通知分类键',
+    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
-  notificationType!: MessageNotificationTypeEnum
+  categoryKey!: MessageNotificationCategoryKey
 
   @BooleanProperty({
-    description: '是否启用该通知类型',
+    description: '是否启用该分类通知',
     example: false,
   })
   isEnabled!: boolean
@@ -191,20 +167,28 @@ export class UpdateUserNotificationPreferencesDto {
 
 export class QueryNotificationDeliveryPageDto extends PageDto {
   @EnumProperty({
-    description: '业务投递结果状态（DELIVERED=已投递；FAILED=投递失败；RETRYING=重试中；SKIPPED_DUPLICATE=幂等跳过；SKIPPED_SELF=自通知跳过；SKIPPED_PREFERENCE=偏好关闭跳过）',
+    description: '通知投影处理状态',
     example: MessageNotificationDispatchStatusEnum.FAILED,
     required: false,
     enum: MessageNotificationDispatchStatusEnum,
   })
   status?: MessageNotificationDispatchStatusEnum
 
-  @NumberProperty({
-    description:
-      '通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息,7=任务提醒,8=主题点赞,9=主题收藏,10=主题评论,11=评论提及,12=主题提及）',
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+  @EnumProperty({
+    description: '通知分类键',
+    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.TASK_REMINDER,
     required: false,
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
-  notificationType?: MessageNotificationTypeEnum
+  categoryKey?: MessageNotificationCategoryKey
+
+  @StringProperty({
+    description: '领域事件键',
+    example: 'announcement.published',
+    required: false,
+    maxLength: 120,
+  })
+  eventKey?: string
 
   @NumberProperty({
     description: '接收用户 ID',
@@ -214,50 +198,32 @@ export class QueryNotificationDeliveryPageDto extends PageDto {
   receiverUserId?: number
 
   @StringProperty({
-    description: '业务幂等键模糊匹配',
-    example: 'comment:reply:1:to:1001',
+    description: '通知投影键模糊匹配',
+    example: 'announcement:42:user:7',
     required: false,
     maxLength: 180,
   })
-  bizKey?: string
+  projectionKey?: string
 
   @StringProperty({
-    description: 'outbox 事件 ID',
+    description: '领域事件 ID',
     example: '10001',
     required: false,
     maxLength: 32,
   })
-  outboxId?: string
+  eventId?: string
 
   @StringProperty({
-    description:
-      '任务提醒子类型（如 task_available / task_expiring_soon / task_reward_granted）',
-    example: 'task_reward_granted',
+    description: 'dispatch ID',
+    example: '10088',
     required: false,
-    maxLength: 40,
+    maxLength: 32,
   })
-  reminderKind?: string
-
-  @NumberProperty({
-    description: '任务 ID',
-    example: 18,
-    required: false,
-  })
-  taskId?: number
-
-  @NumberProperty({
-    description: '任务分配 ID',
-    example: 88,
-    required: false,
-  })
-  assignmentId?: number
+  dispatchId?: string
 }
 
-/**
- * 通知触发用户 DTO。
- */
 export class NotificationActorDto {
-  @NumberProperty({ description: '用户ID', example: 1, validation: false })
+  @NumberProperty({ description: '用户 ID', example: 1, validation: false })
   id!: number
 
   @StringProperty({
@@ -277,9 +243,6 @@ export class NotificationActorDto {
   avatarUrl?: string
 }
 
-/**
- * 用户通知 DTO。
- */
 export class UserNotificationDto extends BaseUserNotificationDto {
   @NestedProperty({
     description: '触发用户信息',
@@ -288,12 +251,9 @@ export class UserNotificationDto extends BaseUserNotificationDto {
     validation: false,
     nullable: false,
   })
-  actorUser!: NotificationActorDto
+  actorUser?: NotificationActorDto
 }
 
-/**
- * 未读通知数 DTO。
- */
 export class NotificationUnreadCountDto {
   @NumberProperty({
     description: '未读通知数量',
@@ -303,24 +263,19 @@ export class NotificationUnreadCountDto {
   count!: number
 }
 
-/**
- * 用户通知偏好项 DTO。
- */
 export class UserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: '通知类型（1=评论回复；2=评论点赞；3=内容收藏；4=用户关注；5=系统公告；6=聊天消息；7=任务提醒；8=主题点赞；9=主题收藏；10=主题评论；11=评论提及；12=主题提及）',
-    example: MessageNotificationTypeEnum.COMMENT_REPLY,
-    enum: MessageNotificationTypeEnum,
+    description: '通知分类键',
+    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
-  notificationType!: MessageNotificationTypeEnum
+  categoryKey!: MessageNotificationCategoryKey
 
   @StringProperty({
-    description: '通知类型中文标签',
-    example: getMessageNotificationTypeLabel(
-      MessageNotificationTypeEnum.COMMENT_REPLY,
-    ),
+    description: '通知分类中文标签',
+    example: getMessageNotificationCategoryLabel('comment_reply'),
   })
-  notificationTypeLabel!: string
+  categoryLabel!: string
 
   @BooleanProperty({
     description: '当前是否启用',
@@ -329,7 +284,7 @@ export class UserNotificationPreferenceItemDto {
   isEnabled!: boolean
 
   @BooleanProperty({
-    description: '该通知类型的默认启用状态',
+    description: '该通知分类的默认启用状态',
     example: true,
   })
   defaultEnabled!: boolean
@@ -343,15 +298,12 @@ export class UserNotificationPreferenceItemDto {
 
   @DateProperty({
     description: '最近一次显式覆盖更新时间',
-    example: '2026-03-28T12:00:00.000Z',
+    example: '2026-04-13T12:30:00.000Z',
     required: false,
   })
   updatedAt?: Date
 }
 
-/**
- * 用户通知偏好列表 DTO。
- */
 export class UserNotificationPreferenceListDto {
   @ArrayProperty({
     description: '通知偏好列表',

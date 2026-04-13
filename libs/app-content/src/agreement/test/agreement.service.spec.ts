@@ -42,7 +42,7 @@ describe('agreement service', () => {
         id: 1,
         title: '隐私政策',
       } as any),
-    ).rejects.toThrow(
+    ).rejects.toMatchObject(
       new BadRequestException('已发布协议不允许直接修改，请新建版本后发布'),
     )
 
@@ -126,7 +126,7 @@ describe('agreement service', () => {
         id: 3,
         isPublished: false,
       }),
-    ).rejects.toThrow(
+    ).rejects.toMatchObject(
       new BadRequestException('未发布协议不允许下线'),
     )
 

@@ -297,7 +297,7 @@ describe('check-in execution service', () => {
         } as any,
         99,
       ),
-    ).rejects.toThrow(new NotFoundException('签到记录不存在'))
+    ).rejects.toMatchObject(new NotFoundException('签到记录不存在'))
   })
 
   it('repairReward 遇到不存在的连续奖励发放事实时会保留 404 语义', async () => {
@@ -337,7 +337,7 @@ describe('check-in execution service', () => {
         } as any,
         99,
       ),
-    ).rejects.toThrow(new NotFoundException('连续奖励发放事实不存在'))
+    ).rejects.toMatchObject(new NotFoundException('连续奖励发放事实不存在'))
   })
 
   it('周期聚合版本冲突时会重试签到事务', async () => {
