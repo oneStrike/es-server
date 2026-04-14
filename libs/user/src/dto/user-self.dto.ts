@@ -307,6 +307,8 @@ export class UserPointStatsDto {
 export class UserLevelSummaryDto extends PickType(BaseUserLevelRuleDto, [
   'id',
   'name',
+  'icon',
+  'color',
   'requiredExperience',
 ] as const) {}
 

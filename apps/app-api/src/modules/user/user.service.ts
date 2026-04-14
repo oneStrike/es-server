@@ -389,6 +389,8 @@ export class UserService {
             .select({
               id: this.userLevelRule.id,
               name: this.userLevelRule.name,
+              icon: this.userLevelRule.icon,
+              color: this.userLevelRule.color,
               requiredExperience: this.userLevelRule.requiredExperience,
             })
             .from(this.userLevelRule)
@@ -398,6 +400,8 @@ export class UserService {
         .select({
           id: this.userLevelRule.id,
           name: this.userLevelRule.name,
+          icon: this.userLevelRule.icon,
+          color: this.userLevelRule.color,
           requiredExperience: this.userLevelRule.requiredExperience,
         })
         .from(this.userLevelRule)
@@ -421,6 +425,8 @@ export class UserService {
         ? {
             id: level.id,
             name: level.name,
+            icon: level.icon ?? undefined,
+            color: level.color ?? undefined,
             requiredExperience: level.requiredExperience,
           }
         : undefined,
@@ -428,6 +434,8 @@ export class UserService {
         ? {
             id: nextLevel.id,
             name: nextLevel.name,
+            icon: nextLevel.icon ?? undefined,
+            color: nextLevel.color ?? undefined,
             requiredExperience: nextLevel.requiredExperience,
           }
         : undefined,
