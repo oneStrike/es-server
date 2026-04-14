@@ -1,14 +1,14 @@
-import { EnablePlatformEnum } from '@libs/platform/constant/base.constant';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { EnablePlatformEnum } from '@libs/platform/constant/base.constant'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -50,7 +50,8 @@ export class BaseAnnouncementDto extends BaseDto {
   summary?: string | null
 
   @EnumProperty({
-    description: '公告类型（0=平台公告；1=活动公告；2=维护公告；3=更新公告；4=政策公告）',
+    description:
+      '公告类型（0=平台公告；1=活动公告；2=维护公告；3=更新公告；4=政策公告）',
     example: AnnouncementTypeEnum.PLATFORM,
     required: true,
     enum: AnnouncementTypeEnum,
@@ -98,7 +99,7 @@ export class BaseAnnouncementDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '弹窗背景图片位置（支持 CSS background-position 多方位定位：center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+      '弹窗背景图片位置（center top，center top，lefttop，right bottom，center bottom，left bottom，right left，center right，center）',
     example: PopupBackgroundPositionEnum.CENTER,
     required: false,
     enum: PopupBackgroundPositionEnum,

@@ -527,7 +527,7 @@ export class AppUpdateCheckResponseDto {
 
   @EnumProperty({
     description:
-      '更新弹窗背景图位置（center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+      '更新弹窗背景图位置（center top，center top，lefttop，right bottom，center bottom，left bottom，right left，center right，center）',
     example: AppUpdatePopupBackgroundPositionEnum.CENTER,
     enum: AppUpdatePopupBackgroundPositionEnum,
     required: false,
