@@ -198,8 +198,11 @@
 
 - 常规 schema 差异默认使用 `pnpm db:generate` 生成。
 - 若生成过程中出现交互，必须停止并由用户亲自执行。
+- migration 只允许新建，不允许在已存在、已提交或已执行的 migration 文件中继续追加新 DDL；发现迁移范围变化时，必须新建后续增量 migration。
 - 无法生成的 DDL 可手写补充，但必须说明原因、范围与风险。
 - 当任务明确要求手写 migration 时，不应再把 `pnpm db:generate` 当作默认路径；交付说明中必须写清手写 migration 的映射关系、破坏性范围与风险。
+- migration 必须显式处理历史数据：字段改类型、改值域、改约束、改数组元素、改 JSON 内部枚举时，都要在 migration 中完成历史数据刷值，不允许依赖丢弃历史数据、清空字段、跳过旧值或要求人工自行清库。
+- 即使业务代码按“破坏性更新 / 无兼容层”执行，migration 仍必须保证历史数据可被迁移到新结构；“不做兼容层”不等于“允许丢历史数据”。
 - 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并确保生成结果 `Warnings: 0`。
 - `db/schema`、手写 / 生成 migration、`db/comments/generated.sql` 三者必须同轮一致，不能只改其中一层。
 

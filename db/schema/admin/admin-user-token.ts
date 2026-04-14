@@ -48,7 +48,7 @@ export const adminUserToken = pgTable("admin_user_token", {
   /**
    * 用户代理
    */
-  userAgent: varchar({ length: 500 }),
+  userAgent: varchar({ length: 400 }),
   /**
    * 登录态创建时解析到的国家/地区
    * 仅记录新写入 token 的属地快照，无法解析或历史记录时为空
