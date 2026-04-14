@@ -119,7 +119,7 @@ COMMENT ON COLUMN "public"."app_update_release"."version_name" IS E'展示版本
 COMMENT ON COLUMN "public"."app_update_release"."build_code" IS E'内部构建号。\n用于客户端更新比较，必须为正整数。';
 COMMENT ON COLUMN "public"."app_update_release"."release_notes" IS E'更新说明。';
 COMMENT ON COLUMN "public"."app_update_release"."force_update" IS E'是否强制更新。';
-COMMENT ON COLUMN "public"."app_update_release"."package_source_type" IS E'安装包来源类型（1=后台上传，2=外部下载地址）。\n为空表示当前版本未配置安装包地址。';
+COMMENT ON COLUMN "public"."app_update_release"."package_source_type" IS E'安装包来源类型（1=后台上传，2=外部下载地址，3=外部中间页）。';
 COMMENT ON COLUMN "public"."app_update_release"."package_url" IS E'安装包地址。\nupload 模式下可为本地 `/files/...` 或 CDN 绝对地址。';
 COMMENT ON COLUMN "public"."app_update_release"."package_original_name" IS E'上传安装包原始文件名。';
 COMMENT ON COLUMN "public"."app_update_release"."package_file_size" IS E'上传安装包大小（字节）。';
