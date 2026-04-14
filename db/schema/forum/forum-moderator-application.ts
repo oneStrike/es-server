@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { check, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 论坛版主申请表 - 管理用户申请成为版主的申请记录，包括申请信息、审核状态、审核结果等
@@ -32,7 +32,7 @@ export const forumModeratorApplication = pgTable("forum_moderator_application", 
   /**
    * 申请的权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）
    */
-  permissions: integer().array().default(sql`ARRAY[]::integer[]`),
+  permissions: smallint().array().default(sql`ARRAY[]::smallint[]`),
   /**
    * 申请理由
    */
@@ -90,6 +90,20 @@ export const forumModeratorApplication = pgTable("forum_moderator_application", 
      * 删除时间索引
      */
     index("forum_moderator_application_deleted_at_idx").on(table.deletedAt),
+    /**
+     * 申请状态值域约束
+     */
+    check(
+      "forum_moderator_application_status_valid_chk",
+      sql`${table.status} in (0, 1, 2)`,
+    ),
+    /**
+     * 权限数组值域约束
+     */
+    check(
+      "forum_moderator_application_permissions_valid_chk",
+      sql`${table.permissions} is null or ${table.permissions} <@ ARRAY[1,2,3,4,5,6]::smallint[]`,
+    ),
 ]);
 
 export type ForumModeratorApplicationSelect = typeof forumModeratorApplication.$inferSelect;

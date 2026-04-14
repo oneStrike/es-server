@@ -34,9 +34,9 @@ export const adminUserToken = pgTable("admin_user_token", {
    */
   revokedAt: timestamp({ withTimezone: true }),
   /**
-   * 撤销原因（PASSWORD_CHANGE:密码修改, USER_LOGOUT:用户退出, ADMIN_REVOKE:管理员撤销, SECURITY:安全原因）
+   * 撤销原因（1=密码修改后强制下线，2=刷新令牌轮换，3=用户主动退出登录，4=管理员强制下线，5=安全风控撤销，6=令牌自然过期）
    */
-  revokeReason: varchar({ length: 50 }),
+  revokeReason: smallint(),
   /**
    * 设备信息（JSON格式，包含设备类型、操作系统、浏览器等）
    */
@@ -114,4 +114,8 @@ export const adminUserToken = pgTable("admin_user_token", {
      */
     index("admin_user_token_user_id_token_type_idx").on(table.userId, table.tokenType),
     check("admin_user_token_token_type_valid_chk", sql`${table.tokenType} in (1, 2)`),
+    check(
+      "admin_user_token_revoke_reason_valid_chk",
+      sql`${table.revokeReason} is null or ${table.revokeReason} in (1, 2, 3, 4, 5, 6)`,
+    ),
 ]);

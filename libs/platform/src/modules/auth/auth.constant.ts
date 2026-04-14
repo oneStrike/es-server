@@ -27,18 +27,18 @@ export const AuthDefaultValue = {
  * 令牌注销原因枚举
  */
 export enum RevokeTokenReasonEnum {
-  /** 密码变更 */
-  PASSWORD_CHANGE = 'PASSWORD_CHANGE',
-  /** 刷新令牌轮换 */
-  TOKEN_REFRESH = 'TOKEN_REFRESH',
-  /** 用户主动注销 */
-  USER_LOGOUT = 'USER_LOGOUT',
-  /** 管理员主动注销 */
-  ADMIN_REVOKE = 'ADMIN_REVOKE',
-  /** 安全问题答案错误 */
-  SECURITY = 'SECURITY',
-  /** 令牌过期 */
-  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
+  /** 密码修改后强制下线 */
+  PASSWORD_CHANGE = 1,
+  /** 刷新令牌轮换导致旧令牌失效 */
+  TOKEN_REFRESH = 2,
+  /** 用户主动退出登录 */
+  USER_LOGOUT = 3,
+  /** 管理员主动强制下线 */
+  ADMIN_REVOKE = 4,
+  /** 命中安全风控后撤销 */
+  SECURITY = 5,
+  /** 令牌自然过期后回收 */
+  TOKEN_EXPIRED = 6,
 }
 
 /**

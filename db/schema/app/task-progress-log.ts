@@ -1,4 +1,6 @@
+import { sql } from 'drizzle-orm'
 import {
+  check,
   index,
   integer,
   jsonb,
@@ -103,6 +105,14 @@ export const taskProgressLog = pgTable('task_progress_log', {
     table.eventCode,
     table.createdAt,
   ),
+  /**
+   * 动作类型值域约束
+   */
+  check('task_progress_log_action_type_valid_chk', sql`${table.actionType} in (1, 2, 3, 4)`),
+  /**
+   * 推进来源值域约束
+   */
+  check('task_progress_log_progress_source_valid_chk', sql`${table.progressSource} in (1, 2, 3)`),
 ])
 
 export type TaskProgressLog = typeof taskProgressLog.$inferSelect

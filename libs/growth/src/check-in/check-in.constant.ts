@@ -26,12 +26,12 @@ export enum CheckInCycleTypeEnum {
  * 周期模式奖励规则类型枚举。
  */
 export enum CheckInPatternRewardRuleTypeEnum {
-  /** 每周固定星期几 */
-  WEEKDAY = 'WEEKDAY',
-  /** 每月固定几号 */
-  MONTH_DAY = 'MONTH_DAY',
-  /** 每月最后一天 */
-  MONTH_LAST_DAY = 'MONTH_LAST_DAY',
+  /** 按周固定星期几 */
+  WEEKDAY = 1,
+  /** 按月固定日期 */
+  MONTH_DAY = 2,
+  /** 按月最后一天 */
+  MONTH_LAST_DAY = 3,
 }
 
 /**

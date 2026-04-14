@@ -1,6 +1,8 @@
 import type { Db } from '../../db-client'
 import {
   GrowthAssetTypeEnum,
+  GrowthAuditDecisionEnum,
+  GrowthLedgerActionEnum,
   GrowthRuleUsageSlotTypeEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { TokenTypeEnum } from '@libs/platform/modules/auth/token-storage.types'
@@ -1405,9 +1407,9 @@ export async function seedAppActivityDomain(db: Db) {
       requestId: 'seed-request-purchase',
       bizKey: 'purchase:seed:aot:chapter-2',
       assetType: GrowthAssetTypeEnum.POINTS,
-      action: 'CONSUME',
+      action: GrowthLedgerActionEnum.CONSUME,
       ruleType: 302,
-      decision: 'allow',
+      decision: GrowthAuditDecisionEnum.ALLOW,
       reason: null,
       deltaRequested: -30,
       deltaApplied: -30,
@@ -1418,9 +1420,9 @@ export async function seedAppActivityDomain(db: Db) {
       requestId: 'seed-request-topic',
       bizKey: 'topic:create:seed:aot',
       assetType: GrowthAssetTypeEnum.EXPERIENCE,
-      action: 'GRANT',
+      action: GrowthLedgerActionEnum.GRANT,
       ruleType: 1,
-      decision: 'allow',
+      decision: GrowthAuditDecisionEnum.ALLOW,
       reason: null,
       deltaRequested: 20,
       deltaApplied: 20,

@@ -142,6 +142,29 @@ export const taskAssignment = pgTable('task_assignment', {
    * 目标次数必须大于 0
    */
   check('task_assignment_target_positive_chk', sql`${table.target} > 0`),
+  /**
+   * 分配状态值域约束
+   */
+  check('task_assignment_status_valid_chk', sql`${table.status} in (0, 1, 2, 3)`),
+  /**
+   * 奖励结算状态值域约束
+   */
+  check('task_assignment_reward_status_valid_chk', sql`${table.rewardStatus} in (0, 1, 2)`),
+  /**
+   * 奖励结算结果值域约束
+   */
+  check(
+    'task_assignment_reward_result_type_valid_chk',
+    sql`${table.rewardResultType} is null or ${table.rewardResultType} in (1, 2, 3)`,
+  ),
+  /**
+   * 当前进度不能为负数
+   */
+  check('task_assignment_progress_non_negative_chk', sql`${table.progress} >= 0`),
+  /**
+   * 版本号不能为负数
+   */
+  check('task_assignment_version_non_negative_chk', sql`${table.version} >= 0`),
 ]);
 
 export type TaskAssignment = typeof taskAssignment.$inferSelect

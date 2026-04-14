@@ -156,6 +156,30 @@ export const task = pgTable('task', {
    * 目标次数必须大于 0
    */
   check('task_target_count_positive_chk', sql`${table.targetCount} > 0`),
+  /**
+   * 任务场景类型值域约束
+   */
+  check('task_type_valid_chk', sql`${table.type} in (1, 2, 4)`),
+  /**
+   * 任务状态值域约束
+   */
+  check('task_status_valid_chk', sql`${table.status} in (0, 1, 2)`),
+  /**
+   * 优先级不能为负数
+   */
+  check('task_priority_non_negative_chk', sql`${table.priority} >= 0`),
+  /**
+   * 领取方式值域约束
+   */
+  check('task_claim_mode_valid_chk', sql`${table.claimMode} in (1, 2)`),
+  /**
+   * 完成方式值域约束
+   */
+  check('task_complete_mode_valid_chk', sql`${table.completeMode} in (1, 2)`),
+  /**
+   * 目标类型值域约束
+   */
+  check('task_objective_type_valid_chk', sql`${table.objectiveType} in (1, 2)`),
 ]);
 
 export type Task = typeof task.$inferSelect

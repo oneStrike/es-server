@@ -81,7 +81,10 @@ export class BaseTaskDto extends BaseDto {
   })
   status!: TaskStatusEnum
 
-  @NumberProperty({ description: '优先级', example: 10 })
+  @NumberProperty({
+    description: '任务排序优先级（0=默认优先级，数值越大越靠前）',
+    example: 10,
+  })
   priority!: number
 
   @BooleanProperty({ description: '启用状态', example: true })

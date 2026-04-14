@@ -31,17 +31,17 @@ export const growthAuditLog = pgTable("growth_audit_log", {
    */
   assetType: smallint().notNull(),
   /**
-   * 动作（GRANT / CONSUME / APPLY_RULE / ASSIGN_BADGE）
+   * 动作（1=发放资产，2=扣减资产，3=规则判定过程，4=授予徽章）
    */
-  action: varchar({ length: 30 }).notNull(),
+  action: smallint().notNull(),
   /**
    * 规则类型（可选，取值见成长规则枚举）
    */
   ruleType: smallint(),
   /**
-   * 判定结果（allow / deny）
+   * 判定结果（1=允许执行，2=拒绝执行）
    */
-  decision: varchar({ length: 20 }).notNull(),
+  decision: smallint().notNull(),
   /**
    * 拒绝或处理原因
    */
@@ -76,4 +76,6 @@ export const growthAuditLog = pgTable("growth_audit_log", {
    */
   index("growth_audit_log_request_id_idx").on(table.requestId),
   check("growth_audit_log_asset_type_valid_chk", sql`${table.assetType} in (1, 2, 3)`),
+  check("growth_audit_log_action_valid_chk", sql`${table.action} in (1, 2, 3, 4)`),
+  check("growth_audit_log_decision_valid_chk", sql`${table.decision} in (1, 2)`),
 ]);

@@ -77,7 +77,7 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @StringProperty({
     description:
-      '本次基础奖励命中的规则键；命中默认基础奖励时为空。DATE:YYYY-MM-DD / WEEKDAY:n / MONTH_DAY:n / MONTH_LAST_DAY。',
+      '本次基础奖励命中的规则键；命中默认基础奖励时为空。格式为 DATE:YYYY-MM-DD（具体日期）、WEEKDAY:n（按周星期）、MONTH_DAY:n（按月日期）或 MONTH_LAST_DAY（月末规则）。',
     example: 'DATE:2026-04-03',
     required: false,
     validation: false,

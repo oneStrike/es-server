@@ -35,14 +35,19 @@
   - `cycleType`：由字符串改为数字
     - `1=按周切分`
     - `2=按月切分`
+  - `patternRewardRules[].patternType`：由字符串改为数字
+    - `1=按周固定星期几`
+    - `2=按月固定日期`
+    - `3=按月最后一天`
   - `resolvedRewardSourceType`：由字符串改为数字
     - `1=默认基础奖励`
     - `2=具体日期奖励`
     - `3=周期模式奖励`
 - 前端必须调整：
   - 计划编辑页的周期类型下拉值
+  - 周期模式奖励规则编辑器里的类型选项、回填值和提交值
   - 对账页奖励来源的筛选、标签、导出文案
-  - 旧值 `weekly/monthly/BASE_REWARD/DATE_RULE/PATTERN_RULE` 全部失效
+  - 旧值 `weekly/monthly/WEEKDAY/MONTH_DAY/MONTH_LAST_DAY/BASE_REWARD/DATE_RULE/PATTERN_RULE` 全部失效
 
 ## 3. 消息监控
 

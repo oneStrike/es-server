@@ -2,7 +2,8 @@
  * Auto-converted from legacy schema.
  */
 
-import { boolean, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import { boolean, check, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 管理端用户
@@ -77,6 +78,10 @@ export const adminUser = pgTable("admin_user", {
      * 最近登录时间索引
      */
     index("admin_user_last_login_at_idx").on(table.lastLoginAt),
+    /**
+     * 角色值域约束
+     */
+    check("admin_user_role_valid_chk", sql`${table.role} in (0, 1)`),
 ]);
 
 /**

@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 应用页面表 - 管理应用内的页面配置和路由
@@ -44,7 +44,7 @@ export const appPage = pgTable("app_page", {
   /**
    * 启用的平台列表（1=H5, 2=App, 3=小程序；默认值为全部平台）
    */
-  enablePlatform: integer().array().default(sql`ARRAY[1,2,3]::integer[]`),
+  enablePlatform: smallint().array().default(sql`ARRAY[1,2,3]::smallint[]`),
   /**
    * 创建时间
    */
@@ -66,6 +66,17 @@ export const appPage = pgTable("app_page", {
      * 访问级别与启用状态索引
      */
     index("app_page_access_level_is_enabled_idx").on(table.accessLevel, table.isEnabled),
+    /**
+     * 访问级别值域约束
+     */
+    check("app_page_access_level_valid_chk", sql`${table.accessLevel} in (0, 1, 2, 3)`),
+    /**
+     * 平台数组值域约束
+     */
+    check(
+      "app_page_enable_platform_valid_chk",
+      sql`${table.enablePlatform} is null or ${table.enablePlatform} <@ ARRAY[1,2,3]::smallint[]`,
+    ),
 ]);
 
 export type AppPageSelect = typeof appPage.$inferSelect;

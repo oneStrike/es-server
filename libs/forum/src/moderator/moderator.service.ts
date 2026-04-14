@@ -63,23 +63,18 @@ export class ForumModeratorService {
    * 仅保留仓库定义的合法权限值，并按系统标准顺序返回，避免写库时出现脏枚举或乱序数组。
    */
   private normalizePermissions(
-    permissions?: Array<number | string | null | undefined> | null,
+    permissions?: Array<number | null | undefined> | null,
   ) {
     const normalized = new Set<ForumModeratorPermissionEnum>()
 
     for (const permission of permissions ?? []) {
-      const parsed =
-        typeof permission === 'number'
-          ? permission
-          : Number.parseInt(String(permission), 10)
-
       if (
-        Number.isInteger(parsed) &&
+        Number.isInteger(permission) &&
         ALL_FORUM_MODERATOR_PERMISSIONS.includes(
-          parsed as ForumModeratorPermissionEnum,
+          permission as ForumModeratorPermissionEnum,
         )
       ) {
-        normalized.add(parsed as ForumModeratorPermissionEnum)
+        normalized.add(permission as ForumModeratorPermissionEnum)
       }
     }
 
@@ -198,7 +193,7 @@ export class ForumModeratorService {
     input: {
       roleType?: number
       groupId?: number | null
-      permissions?: Array<number | string | null | undefined> | null
+      permissions?: Array<number | null | undefined> | null
       sectionIds?: number[]
     },
     options: {
@@ -360,9 +355,7 @@ export class ForumModeratorService {
    * 用于构造板块最终生效权限，避免重复值影响前端展示。
    */
   private mergePermissions(
-    ...permissionSets: Array<
-      Array<number | string | null | undefined> | undefined
-    >
+    ...permissionSets: Array<Array<number | null | undefined> | undefined>
   ) {
     return this.normalizePermissions(permissionSets.flat())
   }
@@ -374,7 +367,7 @@ export class ForumModeratorService {
   private buildSectionView(
     section: Pick<ForumSectionSelect, 'id' | 'name'>,
     basePermissions: ForumModeratorPermissionEnum[],
-    customPermissions?: Array<number | string | null | undefined> | null,
+    customPermissions?: Array<number | null | undefined> | null,
   ) {
     const normalizedCustomPermissions =
       this.normalizePermissions(customPermissions)

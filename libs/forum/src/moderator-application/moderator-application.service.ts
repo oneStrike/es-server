@@ -43,23 +43,18 @@ export class ForumModeratorApplicationService {
    * 仅保留系统支持的权限值，防止重复值或非法值进入审核与授权路径。
    */
   private normalizePermissions(
-    permissions?: Array<number | string | null | undefined> | null,
+    permissions?: Array<number | null | undefined> | null,
   ) {
     const normalized = new Set<ForumModeratorPermissionEnum>()
 
     for (const permission of permissions ?? []) {
-      const parsed =
-        typeof permission === 'number'
-          ? permission
-          : Number.parseInt(String(permission), 10)
-
       if (
-        Number.isInteger(parsed) &&
+        Number.isInteger(permission) &&
         ALL_FORUM_MODERATOR_PERMISSIONS.includes(
-          parsed as ForumModeratorPermissionEnum,
+          permission as ForumModeratorPermissionEnum,
         )
       ) {
-        normalized.add(parsed as ForumModeratorPermissionEnum)
+        normalized.add(permission as ForumModeratorPermissionEnum)
       }
     }
 

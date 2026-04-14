@@ -259,14 +259,14 @@ export abstract class CheckInServiceSupport {
 
       if (cycleType === CheckInCycleTypeEnum.WEEKLY) {
         if (patternType !== CheckInPatternRewardRuleTypeEnum.WEEKDAY) {
-          throw new BadRequestException('周计划仅支持 WEEKDAY 模式奖励规则')
+          throw new BadRequestException('周计划仅支持按周固定星期几的奖励规则')
         }
       } else if (
         patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
         patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY
       ) {
         throw new BadRequestException(
-          '月计划仅支持 MONTH_DAY / MONTH_LAST_DAY 模式奖励规则',
+          '月计划仅支持按月固定日期或按月最后一天的奖励规则',
         )
       }
 
@@ -277,12 +277,12 @@ export abstract class CheckInServiceSupport {
           weekday < 1 ||
           weekday > 7
         ) {
-          throw new BadRequestException('WEEKDAY 规则必须提供 1..7 的 weekday')
+          throw new BadRequestException('按周固定星期几的规则必须提供 1..7 的 weekday')
         }
         if (monthDay !== null) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            'WEEKDAY 规则不能同时配置 monthDay',
+            '按周固定星期几的规则不能同时配置 monthDay',
           )
         }
       }
@@ -295,13 +295,13 @@ export abstract class CheckInServiceSupport {
           monthDay > 31
         ) {
           throw new BadRequestException(
-            'MONTH_DAY 规则必须提供 1..31 的 monthDay',
+            '按月固定日期的规则必须提供 1..31 的 monthDay',
           )
         }
         if (weekday !== null) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            'MONTH_DAY 规则不能同时配置 weekday',
+            '按月固定日期的规则不能同时配置 weekday',
           )
         }
       }
@@ -310,7 +310,7 @@ export abstract class CheckInServiceSupport {
         if (weekday !== null || monthDay !== null) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,
-            'MONTH_LAST_DAY 规则不能配置 weekday / monthDay',
+            '按月最后一天的规则不能配置 weekday 或 monthDay',
           )
         }
       }
@@ -331,7 +331,7 @@ export abstract class CheckInServiceSupport {
       )
       if (duplicateWeekday) {
         throw new BadRequestException(
-          `周期模式奖励规则重复：WEEKDAY=${duplicateWeekday}`,
+          `周期模式奖励规则重复：按周星期=${duplicateWeekday}`,
         )
       }
     } else {
@@ -345,7 +345,7 @@ export abstract class CheckInServiceSupport {
       )
       if (duplicateMonthDay) {
         throw new BadRequestException(
-          `周期模式奖励规则重复：MONTH_DAY=${duplicateMonthDay}`,
+          `周期模式奖励规则重复：按月日期=${duplicateMonthDay}`,
         )
       }
     }
@@ -579,7 +579,7 @@ export abstract class CheckInServiceSupport {
    * 基于当前计划奖励定义解析指定签到日期的基础奖励配置。
    *
    * 解析顺序固定为：具体日期奖励 > 周期模式奖励 > 默认基础奖励。
-   * 月计划内若同日同时命中 MONTH_LAST_DAY 与 MONTH_DAY，则 MONTH_LAST_DAY 优先。
+   * 月计划内若同日同时命中“按月最后一天”和“按月固定日期”，则优先按“按月最后一天”解析。
    */
   protected resolveRewardForDate(
     cycleType: CheckInCycleTypeEnum,
@@ -866,7 +866,7 @@ export abstract class CheckInServiceSupport {
       'patternType' | 'weekday' | 'monthDay'
     >,
   ) {
-    const typeCompare = left.patternType.localeCompare(right.patternType)
+    const typeCompare = left.patternType - right.patternType
     if (typeCompare !== 0) {
       return typeCompare
     }

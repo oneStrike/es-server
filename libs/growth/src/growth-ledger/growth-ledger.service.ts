@@ -17,6 +17,7 @@ import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { QueryGrowthLedgerPageDto } from './dto/growth-ledger-record.dto'
 import {
   GrowthAssetTypeEnum,
+  GrowthAuditDecisionEnum,
   GrowthLedgerActionEnum,
   GrowthLedgerFailReasonEnum,
   GrowthLedgerSourceEnum,
@@ -114,7 +115,7 @@ export class GrowthLedgerService {
         assetType,
         action: GrowthLedgerActionEnum.GRANT,
         ruleType,
-        decision: 'deny',
+        decision: GrowthAuditDecisionEnum.DENY,
         reason: GrowthLedgerFailReasonEnum.RULE_NOT_FOUND,
         context,
       })
@@ -132,7 +133,7 @@ export class GrowthLedgerService {
         assetType,
         action: GrowthLedgerActionEnum.GRANT,
         ruleType,
-        decision: 'deny',
+        decision: GrowthAuditDecisionEnum.DENY,
         reason: GrowthLedgerFailReasonEnum.RULE_DISABLED,
         context,
       })
@@ -153,7 +154,7 @@ export class GrowthLedgerService {
         assetType,
         action: GrowthLedgerActionEnum.GRANT,
         ruleType,
-        decision: 'deny',
+        decision: GrowthAuditDecisionEnum.DENY,
         reason: GrowthLedgerFailReasonEnum.RULE_ZERO,
         context,
       })
@@ -204,7 +205,7 @@ export class GrowthLedgerService {
           assetType,
           action: GrowthLedgerActionEnum.GRANT,
           ruleType,
-          decision: 'deny',
+          decision: GrowthAuditDecisionEnum.DENY,
           reason: GrowthLedgerFailReasonEnum.DAILY_LIMIT,
           deltaRequested: delta,
           context,
@@ -235,7 +236,7 @@ export class GrowthLedgerService {
           assetType,
           action: GrowthLedgerActionEnum.GRANT,
           ruleType,
-          decision: 'deny',
+          decision: GrowthAuditDecisionEnum.DENY,
           reason: GrowthLedgerFailReasonEnum.TOTAL_LIMIT,
           deltaRequested: delta,
           context,
@@ -269,7 +270,7 @@ export class GrowthLedgerService {
       assetType,
       action: GrowthLedgerActionEnum.GRANT,
       ruleType,
-      decision: 'allow',
+      decision: GrowthAuditDecisionEnum.ALLOW,
       deltaRequested: delta,
       deltaApplied: delta,
       context,
@@ -322,15 +323,15 @@ export class GrowthLedgerService {
         bizKey,
         assetType,
         action,
-        decision: 'deny',
+        decision: GrowthAuditDecisionEnum.DENY,
         reason: GrowthLedgerFailReasonEnum.RULE_ZERO,
         context,
       })
       return { success: false, reason: GrowthLedgerFailReasonEnum.RULE_ZERO }
     }
 
-    // 根据操作类型计算带符号的变动值
-    // CONSUME 为负数，GRANT 为正数
+    // 根据动作类型计算带符号的变动值。
+    // 扣减为负数，发放为正数。
     const signedDelta =
       action === GrowthLedgerActionEnum.CONSUME ? -amount : amount
 
@@ -369,7 +370,7 @@ export class GrowthLedgerService {
           bizKey,
           assetType,
           action,
-          decision: 'deny',
+          decision: GrowthAuditDecisionEnum.DENY,
           reason: GrowthLedgerFailReasonEnum.INSUFFICIENT_BALANCE,
           deltaRequested: signedDelta,
           context,
@@ -402,7 +403,7 @@ export class GrowthLedgerService {
       bizKey,
       assetType,
       action,
-      decision: 'allow',
+      decision: GrowthAuditDecisionEnum.ALLOW,
       deltaRequested: signedDelta,
       deltaApplied: signedDelta,
       context,
@@ -697,8 +698,8 @@ export class GrowthLedgerService {
       userId: number
       bizKey: string
       assetType: GrowthAssetTypeEnum
-      action: GrowthLedgerActionEnum | 'GRANT' | 'CONSUME'
-      decision: 'allow' | 'deny'
+      action: GrowthLedgerActionEnum
+      decision: GrowthAuditDecisionEnum
       ruleType?: number
       reason?: string
       deltaRequested?: number

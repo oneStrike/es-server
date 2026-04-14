@@ -1,5 +1,6 @@
 import type {
   GrowthAssetTypeEnum,
+  GrowthLedgerActionEnum,
   GrowthLedgerFailReasonEnum,
 } from './growth-ledger.constant'
 
@@ -71,7 +72,7 @@ export interface ApplyRuleParams {
 export interface ApplyDeltaParams {
   userId: number
   assetType: GrowthAssetTypeEnum
-  action: 'GRANT' | 'CONSUME'
+  action: GrowthLedgerActionEnum.GRANT | GrowthLedgerActionEnum.CONSUME
   amount: number
   bizKey: string
   source: string

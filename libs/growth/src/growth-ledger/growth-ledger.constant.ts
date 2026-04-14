@@ -11,8 +11,24 @@ export enum GrowthAssetTypeEnum {
  * 成长结算动作
  */
 export enum GrowthLedgerActionEnum {
-  GRANT = 'GRANT',
-  CONSUME = 'CONSUME',
+  /** 发放资产 */
+  GRANT = 1,
+  /** 扣减资产 */
+  CONSUME = 2,
+  /** 规则判定过程 */
+  APPLY_RULE = 3,
+  /** 授予徽章 */
+  ASSIGN_BADGE = 4,
+}
+
+/**
+ * 成长审计判定结果
+ */
+export enum GrowthAuditDecisionEnum {
+  /** 允许执行 */
+  ALLOW = 1,
+  /** 拒绝执行 */
+  DENY = 2,
 }
 
 /**
