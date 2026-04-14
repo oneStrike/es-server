@@ -45,8 +45,7 @@ export const appUpdateRelease = pgTable(
      */
     forceUpdate: boolean().default(false).notNull(),
     /**
-     * 安装包来源类型（1=后台上传，2=外部下载地址）。
-     * 为空表示当前版本未配置安装包地址。
+     * 安装包来源类型（1=后台上传，2=外部下载地址，3=外部中间页）。
      */
     packageSourceType: smallint(),
     /**
@@ -148,7 +147,7 @@ export const appUpdateRelease = pgTable(
      */
     check(
       'app_update_release_package_source_type_valid_chk',
-      sql`${table.packageSourceType} is null or ${table.packageSourceType} in (1, 2)`,
+      sql`${table.packageSourceType} is null or ${table.packageSourceType} in (1, 2, 3)`,
     ),
   ],
 )

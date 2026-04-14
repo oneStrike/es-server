@@ -6,10 +6,15 @@ import {
   RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { HTTP_URL_REGEXP } from '@libs/platform/utils/regExp'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import {
   AppUpdatePackageSourceEnum,
   AppUpdatePlatformEnum,
@@ -19,6 +24,7 @@ import {
 
 /**
  * 更新发布基础 DTO。
+ * 严格对应 app_update_release 表的对外字段。
  */
 export class BaseAppUpdateReleaseDto extends BaseDto {
   @EnumProperty({
@@ -62,7 +68,7 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
   forceUpdate!: boolean
 
   @EnumProperty({
-    description: '安装包来源（1=后台上传；2=外部下载地址）',
+    description: '安装包来源（1=后台上传；2=外部下载地址；3=外部中转页）',
     example: AppUpdatePackageSourceEnum.UPLOAD,
     enum: AppUpdatePackageSourceEnum,
     required: false,
@@ -106,6 +112,7 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
     example: 'https://download.example.com/app',
     required: false,
     maxLength: 1000,
+    type: 'url',
   })
   customDownloadUrl?: string | null
 
@@ -147,100 +154,33 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
     example: 1,
     required: false,
   })
-  createdById?: number | null
+  createdById?: number
 
   @NumberProperty({
     description: '更新人 ID',
     example: 1,
     required: false,
   })
-  updatedById?: number | null
+  updatedById?: number
 }
+
+/** 写入场景需排除的字段：基础字段 + 发布状态 + 审计字段 */
+const WRITE_OMIT_FIELDS = [
+  ...OMIT_BASE_FIELDS,
+  'isPublished',
+  'publishedAt',
+  'createdById',
+  'updatedById',
+] as const
 
 /**
  * 更新发布写入 DTO。
+ * 基于基础 DTO 排除不可写入字段，仅对 customDownloadUrl 追加 URL 格式校验。
  */
-export class AppUpdateReleaseWriteDto {
-  @EnumProperty({
-    description: '发布平台（1=苹果端；2=安卓端）',
-    example: AppUpdatePlatformEnum.ANDROID,
-    enum: AppUpdatePlatformEnum,
-    required: true,
-  })
-  platform!: AppUpdatePlatformEnum
-
-  @StringProperty({
-    description: '展示版本号',
-    example: '1.2.0',
-    required: true,
-    maxLength: 50,
-  })
-  versionName!: string
-
-  @NumberProperty({
-    description: '内部构建号',
-    example: 120,
-    required: true,
-    min: 1,
-  })
-  buildCode!: number
-
-  @StringProperty({
-    description: '更新说明',
-    example: '修复已知问题并优化安装流程',
-    required: false,
-    maxLength: 5000,
-  })
-  releaseNotes?: string
-
-  @BooleanProperty({
-    description: '是否强制更新',
-    example: false,
-    required: true,
-    default: false,
-  })
-  forceUpdate!: boolean
-
-  @EnumProperty({
-    description: '安装包来源（1=后台上传；2=外部下载地址）',
-    example: AppUpdatePackageSourceEnum.UPLOAD,
-    enum: AppUpdatePackageSourceEnum,
-    required: false,
-  })
-  packageSourceType?: AppUpdatePackageSourceEnum
-
-  @StringProperty({
-    description: '安装包地址',
-    example: '/files/appupdate/2026-04-12/package/release.apk',
-    required: false,
-    maxLength: 1000,
-  })
-  packageUrl?: string
-
-  @StringProperty({
-    description: '上传安装包原始文件名',
-    example: 'release.apk',
-    required: false,
-    maxLength: 255,
-  })
-  packageOriginalName?: string
-
-  @NumberProperty({
-    description: '上传安装包大小（字节）',
-    example: 104857600,
-    required: false,
-    min: 1,
-  })
-  packageFileSize?: number
-
-  @StringProperty({
-    description: '上传安装包 MIME 类型',
-    example: 'application/vnd.android.package-archive',
-    required: false,
-    maxLength: 100,
-  })
-  packageMimeType?: string
-
+export class AppUpdateReleaseWriteDto extends OmitType(
+  BaseAppUpdateReleaseDto,
+  WRITE_OMIT_FIELDS,
+) {
   @RegexProperty({
     description: '自定义下载页地址',
     example: 'https://download.example.com/app',
@@ -249,24 +189,6 @@ export class AppUpdateReleaseWriteDto {
     message: '自定义下载页地址必须是合法的 HTTP/HTTPS URL',
   })
   customDownloadUrl?: string
-
-  @StringProperty({
-    description: '更新弹窗背景图地址',
-    example: 'https://cdn.example.com/app-update/bg.png',
-    required: false,
-    maxLength: 255,
-  })
-  popupBackgroundImage?: string
-
-  @EnumProperty({
-    description:
-      '更新弹窗背景图位置（居中、顶部居中、顶部靠左、顶部靠右、底部居中、底部靠左、底部靠右、左侧居中、右侧居中）',
-    example: AppUpdatePopupBackgroundPositionEnum.CENTER,
-    enum: AppUpdatePopupBackgroundPositionEnum,
-    required: false,
-    default: AppUpdatePopupBackgroundPositionEnum.CENTER,
-  })
-  popupBackgroundPosition?: AppUpdatePopupBackgroundPositionEnum
 }
 
 /**
@@ -340,36 +262,29 @@ export class AppUpdateReleaseListItemDto extends PickType(
 /**
  * App 端更新检查 DTO。
  */
-export class AppUpdateCheckDto {
-  @EnumProperty({
-    description: '客户端平台（1=苹果端；2=安卓端）',
-    example: AppUpdatePlatformEnum.ANDROID,
-    enum: AppUpdatePlatformEnum,
-    required: true,
-  })
-  platform!: AppUpdatePlatformEnum
+export class AppUpdateCheckDto extends IntersectionType(
+  PickType(BaseAppUpdateReleaseDto, ['platform'] as const),
+  PartialType(PickType(BaseAppUpdateReleaseDto, ['versionName'] as const)),
+  PickType(BaseAppUpdateReleaseDto, ['buildCode'] as const),
+) {}
 
-  @StringProperty({
-    description: '客户端展示版本号',
-    example: '1.0.0',
-    required: false,
-    maxLength: 50,
-  })
-  versionName?: string
-
-  @NumberProperty({
-    description: '客户端内部构建号',
-    example: 100,
-    required: true,
-    min: 1,
-  })
-  buildCode!: number
-}
+/**
+ * App 端更新检查响应字段（从 BaseAppUpdateReleaseDto 中选取）。
+ */
+const UPDATE_RESPONSE_PICK_FIELDS = [
+  'releaseNotes',
+  'packageUrl',
+  'customDownloadUrl',
+  'popupBackgroundImage',
+  'popupBackgroundPosition',
+] as const
 
 /**
  * App 端更新检查响应 DTO。
  */
-export class AppUpdateCheckResponseDto {
+export class AppUpdateCheckResponseDto extends IntersectionType(
+  PartialType(PickType(BaseAppUpdateReleaseDto, UPDATE_RESPONSE_PICK_FIELDS)),
+) {
   @BooleanProperty({
     description: '是否存在更新',
     example: true,
@@ -387,6 +302,7 @@ export class AppUpdateCheckResponseDto {
   })
   updateType?: AppUpdateTypeEnum
 
+  // 覆盖字段名以区分客户端版本与最新版本
   @StringProperty({
     description: '最新展示版本号',
     example: '1.2.0',
@@ -402,46 +318,4 @@ export class AppUpdateCheckResponseDto {
     validation: false,
   })
   latestBuildCode?: number
-
-  @StringProperty({
-    description: '更新说明',
-    example: '修复已知问题并优化安装流程',
-    required: false,
-    validation: false,
-  })
-  releaseNotes?: string | null
-
-  @StringProperty({
-    description: '安装包地址',
-    example: 'https://cdn.example.com/app-release.apk',
-    required: false,
-    validation: false,
-  })
-  packageUrl?: string | null
-
-  @StringProperty({
-    description: '自定义下载页地址',
-    example: 'https://download.example.com/app',
-    required: false,
-    validation: false,
-  })
-  customDownloadUrl?: string | null
-
-  @StringProperty({
-    description: '更新弹窗背景图地址',
-    example: 'https://cdn.example.com/app-update/bg.png',
-    required: false,
-    validation: false,
-  })
-  popupBackgroundImage?: string | null
-
-  @EnumProperty({
-    description:
-      '更新弹窗背景图位置（居中、顶部居中、顶部靠左、顶部靠右、底部居中、底部靠左、底部靠右、左侧居中、右侧居中）',
-    example: AppUpdatePopupBackgroundPositionEnum.CENTER,
-    enum: AppUpdatePopupBackgroundPositionEnum,
-    required: false,
-    validation: false,
-  })
-  popupBackgroundPosition?: AppUpdatePopupBackgroundPositionEnum
 }

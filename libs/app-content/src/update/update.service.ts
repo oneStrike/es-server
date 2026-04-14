@@ -1,6 +1,10 @@
-import type { AppUpdateReleaseInsert, AppUpdateReleaseSelect } from '@db/schema'
+import type {
+  AppUpdateReleaseInsert,
+  AppUpdateReleaseSelect,
+} from '@db/schema/app/app-update-release'
 import type { SQL } from 'drizzle-orm'
 import type {
+  AppUpdateCheckResponseDto,
   AppUpdateReleaseDetailDto,
   AppUpdateReleaseListItemDto,
 } from './dto/update.dto'
@@ -260,7 +264,7 @@ export class AppUpdateService {
    * 客户端检查更新。
    * 仅按平台挑选最新发布版本，更新判断只依赖 buildCode。
    */
-  async checkUpdate(dto: AppUpdateCheckDto) {
+  async checkUpdate(dto: AppUpdateCheckDto): Promise<AppUpdateCheckResponseDto> {
     const latestRelease = await this.findLatestPublishedRelease(dto.platform)
     if (!latestRelease || dto.buildCode >= latestRelease.buildCode) {
       return { hasUpdate: false }
@@ -278,7 +282,7 @@ export class AppUpdateService {
       customDownloadUrl: latestRelease.customDownloadUrl,
       popupBackgroundImage: latestRelease.popupBackgroundImage,
       popupBackgroundPosition:
-        latestRelease.popupBackgroundPosition ??
+        (latestRelease.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum | null) ??
         AppUpdatePopupBackgroundPositionEnum.CENTER,
     }
   }
@@ -354,11 +358,17 @@ export class AppUpdateService {
       }
     }
 
-    if (dto.packageSourceType === AppUpdatePackageSourceEnum.URL) {
+    if (
+      dto.packageSourceType &&
+      [
+        AppUpdatePackageSourceEnum.URL,
+        AppUpdatePackageSourceEnum.CUSTOM,
+      ].includes(dto.packageSourceType)
+    ) {
       if (!this.isHttpUrl(packageUrl)) {
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
-          '外部安装包地址必须是合法的 HTTP/HTTPS URL',
+          '外部安装包地址必须是合法的 HTTPS URL',
         )
       }
     }
@@ -443,7 +453,7 @@ export class AppUpdateService {
     return {
       ...release,
       popupBackgroundPosition:
-        release.popupBackgroundPosition ??
+        (release.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum | null) ??
         AppUpdatePopupBackgroundPositionEnum.CENTER,
     } as AppUpdateReleaseDetailDto
   }

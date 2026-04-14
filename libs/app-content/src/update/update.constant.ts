@@ -12,6 +12,7 @@ export enum AppUpdatePlatformEnum {
 export enum AppUpdatePackageSourceEnum {
   UPLOAD = 1,
   URL = 2,
+  CUSTOM = 3,
 }
 
 /**

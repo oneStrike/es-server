@@ -23,7 +23,7 @@ export interface StringPropertyOptions extends BaseValidateOptions {
   /** 默认值 */
   default?: string | null
   /** 字符串类型，支持ISO8601日期格式 */
-  type?: 'ISO8601'
+  type?: 'ISO8601' | 'url'
   /** 最大长度 */
   maxLength?: number
   /** 最小长度 */
@@ -85,13 +85,13 @@ export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 } & (
-  | {
+    | {
         /** 数组元素类型 */
         itemType: 'string' | 'number' | 'boolean'
         /** 基础类型不需要 itemClass */
         itemClass?: never
       }
-      | {
+    | {
         /** 数组元素DTO类型（必传，用于深度校验和API文档） */
         itemClass: new (...args: any[]) => any
         /** 对象数组不再通过 itemType 指定 */

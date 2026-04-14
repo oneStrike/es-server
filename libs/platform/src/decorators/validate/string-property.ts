@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsStrongPassword,
+  IsUrl,
   MaxLength,
   MinLength,
 } from 'class-validator'
@@ -87,6 +88,10 @@ export function StringProperty(options: StringPropertyOptions) {
 
     if (options.type === 'ISO8601') {
       decorators.push(IsISO8601({}, { message: '必须是有效的ISO8601日期格式' }))
+    }
+
+    if (options.type === 'url') {
+      decorators.push(IsUrl({}, { message: '必须是有效的URL地址' }))
     }
 
     if (!(options.required ?? true)) {
