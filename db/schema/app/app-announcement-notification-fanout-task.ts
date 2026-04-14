@@ -18,19 +18,24 @@ export const appAnnouncementNotificationFanoutTask = pgTable(
     lastError: varchar({ length: 500 }),
     startedAt: timestamp({ withTimezone: true, precision: 6 }),
     finishedAt: timestamp({ withTimezone: true, precision: 6 }),
-    createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
-    updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
+    createdAt: timestamp({ withTimezone: true, precision: 6 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp({ withTimezone: true, precision: 6 })
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
-  table => [
+  (table) => [
     unique('app_announcement_notification_fanout_task_announcement_id_key').on(
       table.announcementId,
     ),
     index('app_announcement_notification_fanout_task_status_idx').on(
       table.status,
     ),
-    index(
-      'app_announcement_notification_fanout_task_status_updated_at_idx',
-    ).on(table.status, table.updatedAt.desc()),
+    index('app_announcement_notification_fanout_task_status_updated_at_idx').on(
+      table.status,
+      table.updatedAt.desc(),
+    ),
   ],
 )
 
