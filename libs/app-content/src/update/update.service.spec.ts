@@ -148,7 +148,6 @@ describe('app update service', () => {
       platform: 2,
       isPublished: false,
       packageUrl: 'https://example.com/release.apk',
-      customDownloadUrl: null,
     }
 
     const txWhereMock = jest.fn().mockResolvedValue({ rowCount: 1 })
@@ -214,7 +213,6 @@ describe('app update service', () => {
               releaseNotes: '修复已知问题',
               forceUpdate: false,
               packageUrl: 'https://example.com/app-release.apk',
-              customDownloadUrl: null,
               popupBackgroundImage:
                 'https://cdn.example.com/app-update/detail-bg.png',
               popupBackgroundPosition: 'top center',
@@ -244,6 +242,7 @@ describe('app update service', () => {
 
     const detail = await service.findDetail({ id: 3 })
     expect(detail).not.toHaveProperty('storeLinks')
+    expect(detail).not.toHaveProperty('customDownloadUrl')
   })
 
   it('returns update info without app store payload and does not require version name', async () => {
@@ -261,7 +260,6 @@ describe('app update service', () => {
               releaseNotes: '修复已知问题',
               forceUpdate: true,
               packageUrl: 'https://example.com/app-release.apk',
-              customDownloadUrl: 'https://download.example.com/app',
               popupBackgroundImage:
                 'https://cdn.example.com/app-update/check-bg.png',
               popupBackgroundPosition: 'bottom center',
@@ -276,21 +274,63 @@ describe('app update service', () => {
       withTransaction: jest.fn(async (callback) => callback({})),
     } as any)
 
-    await expect(
-      service.checkUpdate({
-        platform: 2,
-        buildCode: 100,
-      } as any),
-    ).resolves.toEqual(
+    const result = await service.checkUpdate({
+      platform: 2,
+      buildCode: 100,
+    } as any)
+
+    expect(result).toEqual(
       expect.objectContaining({
         hasUpdate: true,
         updateType: 'force',
         latestVersionName: '1.2.0',
         latestBuildCode: 120,
         packageUrl: 'https://example.com/app-release.apk',
-        customDownloadUrl: 'https://download.example.com/app',
         popupBackgroundImage: 'https://cdn.example.com/app-update/check-bg.png',
         popupBackgroundPosition: 'bottom center',
+      }),
+    )
+    expect(result).not.toHaveProperty('customDownloadUrl')
+  })
+
+  it('allows custom package source to reuse packageUrl', async () => {
+    const { AppUpdateService } = await import('./update.service')
+
+    const releaseTable = { id: 'id' }
+    const insertValuesMock = jest.fn().mockResolvedValue(undefined)
+    const tx = {
+      insert: jest.fn(() => ({
+        values: insertValuesMock,
+      })),
+    }
+
+    const service = new AppUpdateService({
+      db: { query: {} },
+      schema: {
+        appUpdateRelease: releaseTable,
+      },
+      withErrorHandling: jest.fn(async (callback) => callback()),
+      withTransaction: jest.fn(async (callback) => callback(tx)),
+    } as any)
+
+    await expect(
+      service.create(
+        {
+          platform: 2,
+          versionName: '1.3.0',
+          buildCode: 130,
+          forceUpdate: false,
+          packageSourceType: 3,
+          packageUrl: 'https://download.example.com/landing-page',
+        } as any,
+        9,
+      ),
+    ).resolves.toBe(true)
+
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        packageSourceType: 3,
+        packageUrl: 'https://download.example.com/landing-page',
       }),
     )
   })

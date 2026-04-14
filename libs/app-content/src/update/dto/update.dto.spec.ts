@@ -51,7 +51,7 @@ describe('app update dto validation', () => {
     expect(errors.some((error) => error.property === 'versionName')).toBe(false)
   })
 
-  it('rejects invalid download urls and popup positions in release dto', async () => {
+  it('rejects invalid package source and popup positions in release dto', async () => {
     const { CreateAppUpdateReleaseDto } = await import('./update.dto')
 
     const dto = plainToInstance(CreateAppUpdateReleaseDto, {
@@ -60,15 +60,11 @@ describe('app update dto validation', () => {
       buildCode: 100,
       forceUpdate: false,
       packageSourceType: 9,
-      customDownloadUrl: 'ftp://example.com/package',
       popupBackgroundPosition: 'middle',
     }) as object
 
     const errors = validateSync(dto, { whitelist: true })
 
-    expect(errors.some((error) => error.property === 'customDownloadUrl')).toBe(
-      true,
-    )
     expect(errors.some((error) => error.property === 'packageSourceType')).toBe(
       true,
     )

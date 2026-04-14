@@ -105,7 +105,6 @@ export class AppUpdateService {
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         hasPackageUrl: Boolean(item.packageUrl),
-        hasCustomDownloadUrl: Boolean(item.customDownloadUrl),
       })),
     }
   }
@@ -264,7 +263,9 @@ export class AppUpdateService {
    * 客户端检查更新。
    * 仅按平台挑选最新发布版本，更新判断只依赖 buildCode。
    */
-  async checkUpdate(dto: AppUpdateCheckDto): Promise<AppUpdateCheckResponseDto> {
+  async checkUpdate(
+    dto: AppUpdateCheckDto,
+  ): Promise<AppUpdateCheckResponseDto> {
     const latestRelease = await this.findLatestPublishedRelease(dto.platform)
     if (!latestRelease || dto.buildCode >= latestRelease.buildCode) {
       return { hasUpdate: false }
@@ -279,10 +280,9 @@ export class AppUpdateService {
       latestBuildCode: latestRelease.buildCode,
       releaseNotes: latestRelease.releaseNotes,
       packageUrl: latestRelease.packageUrl,
-      customDownloadUrl: latestRelease.customDownloadUrl,
       popupBackgroundImage: latestRelease.popupBackgroundImage,
       popupBackgroundPosition:
-        (latestRelease.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum | null) ??
+        (latestRelease.popupBackgroundPosition as AppUpdatePopupBackgroundPositionEnum) ??
         AppUpdatePopupBackgroundPositionEnum.CENTER,
     }
   }
@@ -325,9 +325,6 @@ export class AppUpdateService {
   private async normalizeWriteDto(dto: AppUpdateReleaseWriteDto) {
     const releaseNotes = this.normalizeNullableString(dto.releaseNotes)
     const packageUrl = this.normalizeNullableString(dto.packageUrl)
-    const customDownloadUrl = this.normalizeNullableString(
-      dto.customDownloadUrl,
-    )
     const popupBackgroundImage = this.normalizeNullableString(
       dto.popupBackgroundImage,
     )
@@ -365,6 +362,7 @@ export class AppUpdateService {
         AppUpdatePackageSourceEnum.CUSTOM,
       ].includes(dto.packageSourceType)
     ) {
+      console.log(1111, packageUrl)
       if (!this.isHttpUrl(packageUrl)) {
         throw new BusinessException(
           BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -396,7 +394,6 @@ export class AppUpdateService {
         dto.packageSourceType === AppUpdatePackageSourceEnum.UPLOAD
           ? packageMimeType
           : null,
-      customDownloadUrl,
       popupBackgroundImage,
       popupBackgroundPosition:
         dto.popupBackgroundPosition ??
@@ -410,8 +407,7 @@ export class AppUpdateService {
    * 发布前校验至少存在一种分发目标。
    */
   private assertDistributionTargets(release: AppUpdateReleaseRecord) {
-    const hasDistributionTarget =
-      Boolean(release.packageUrl) || Boolean(release.customDownloadUrl)
+    const hasDistributionTarget = Boolean(release.packageUrl)
 
     if (!hasDistributionTarget) {
       throw new BusinessException(

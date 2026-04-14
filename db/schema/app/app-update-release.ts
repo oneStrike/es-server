@@ -50,7 +50,8 @@ export const appUpdateRelease = pgTable(
     packageSourceType: smallint(),
     /**
      * 安装包地址。
-     * upload 模式下可为本地 `/files/...` 或 CDN 绝对地址。
+     * upload 模式下可为本地 `/files/...` 或 CDN 绝对地址；
+     * url / custom 模式下为外部下载地址或中转页地址。
      */
     packageUrl: varchar({ length: 1000 }),
     /**
@@ -65,10 +66,6 @@ export const appUpdateRelease = pgTable(
      * 上传安装包 MIME 类型。
      */
     packageMimeType: varchar({ length: 100 }),
-    /**
-     * 自定义下载页地址。
-     */
-    customDownloadUrl: varchar({ length: 1000 }),
     /**
      * 更新弹窗背景图地址。
      * 仅在客户端需要展示品牌化更新弹窗时使用。

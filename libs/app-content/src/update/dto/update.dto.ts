@@ -3,12 +3,10 @@ import {
   DateProperty,
   EnumProperty,
   NumberProperty,
-  RegexProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
-import { HTTP_URL_REGEXP } from '@libs/platform/utils/regExp'
 import {
   IntersectionType,
   OmitType,
@@ -76,7 +74,8 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
   packageSourceType?: AppUpdatePackageSourceEnum | null
 
   @StringProperty({
-    description: '安装包地址',
+    description:
+      '安装包地址（UPLOAD=上传文件地址；URL=外部下载地址；CUSTOM=外部中转页地址）',
     example: '/files/appupdate/2026-04-12/package/release.apk',
     required: false,
     maxLength: 1000,
@@ -108,15 +107,6 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
   packageMimeType?: string | null
 
   @StringProperty({
-    description: '自定义下载页地址',
-    example: 'https://download.example.com/app',
-    required: false,
-    maxLength: 1000,
-    type: 'url',
-  })
-  customDownloadUrl?: string | null
-
-  @StringProperty({
     description: '更新弹窗背景图地址',
     example: 'https://cdn.example.com/app-update/bg.png',
     required: false,
@@ -126,7 +116,7 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '更新弹窗背景图位置（居中、顶部居中、顶部靠左、顶部靠右、底部居中、底部靠左、底部靠右、左侧居中、右侧居中）',
+      '更新弹窗背景图位置（center=居中；top center=顶部居中；top left=顶部靠左；top right=顶部靠右；bottom center=底部居中；bottom left=底部靠左；bottom right=底部靠右；left center=左侧居中；right center=右侧居中）',
     example: AppUpdatePopupBackgroundPositionEnum.CENTER,
     enum: AppUpdatePopupBackgroundPositionEnum,
     required: false,
@@ -175,21 +165,12 @@ const WRITE_OMIT_FIELDS = [
 
 /**
  * 更新发布写入 DTO。
- * 基于基础 DTO 排除不可写入字段，仅对 customDownloadUrl 追加 URL 格式校验。
+ * 基于基础 DTO 排除不可写入字段。
  */
 export class AppUpdateReleaseWriteDto extends OmitType(
   BaseAppUpdateReleaseDto,
   WRITE_OMIT_FIELDS,
-) {
-  @RegexProperty({
-    description: '自定义下载页地址',
-    example: 'https://download.example.com/app',
-    required: false,
-    regex: HTTP_URL_REGEXP,
-    message: '自定义下载页地址必须是合法的 HTTP/HTTPS URL',
-  })
-  customDownloadUrl?: string
-}
+) {}
 
 /**
  * 创建更新发布 DTO。
@@ -250,13 +231,6 @@ export class AppUpdateReleaseListItemDto extends PickType(
   })
   hasPackageUrl!: boolean
 
-  @BooleanProperty({
-    description: '是否配置自定义下载页地址',
-    example: true,
-    required: true,
-    validation: false,
-  })
-  hasCustomDownloadUrl!: boolean
 }
 
 /**
@@ -274,7 +248,6 @@ export class AppUpdateCheckDto extends IntersectionType(
 const UPDATE_RESPONSE_PICK_FIELDS = [
   'releaseNotes',
   'packageUrl',
-  'customDownloadUrl',
   'popupBackgroundImage',
   'popupBackgroundPosition',
 ] as const
