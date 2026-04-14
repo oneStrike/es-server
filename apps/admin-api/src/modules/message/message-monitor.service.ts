@@ -5,7 +5,12 @@ import type {
 import type { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
-import { domainEvent, domainEventDispatch, messageWsMetric, notificationDelivery } from '@db/schema'
+import {
+  domainEvent,
+  domainEventDispatch,
+  messageWsMetric,
+  notificationDelivery,
+} from '@db/schema'
 import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
 import {
   DomainEventConsumerEnum,
@@ -26,9 +31,7 @@ export class MessageMonitorService {
     return this.drizzle.db
   }
 
-  async getNotificationDeliveryPage(
-    query: QueryNotificationDeliveryPageDto,
-  ) {
+  async getNotificationDeliveryPage(query: QueryNotificationDeliveryPageDto) {
     return this.messageNotificationDeliveryService.getNotificationDeliveryPage(
       query,
     )
@@ -52,16 +55,23 @@ export class MessageMonitorService {
       conditions.push(eq(domainEvent.domain, query.domain.trim()))
     }
     if (query.receiverUserId !== undefined) {
-      conditions.push(eq(notificationDelivery.receiverUserId, query.receiverUserId))
+      conditions.push(
+        eq(notificationDelivery.receiverUserId, query.receiverUserId),
+      )
     }
     if (query.projectionKey?.trim()) {
       conditions.push(
-        buildILikeCondition(notificationDelivery.projectionKey, query.projectionKey)!,
+        buildILikeCondition(
+          notificationDelivery.projectionKey,
+          query.projectionKey,
+        )!,
       )
     }
     if (query.eventId?.trim()) {
       try {
-        conditions.push(eq(domainEventDispatch.eventId, BigInt(query.eventId.trim())))
+        conditions.push(
+          eq(domainEventDispatch.eventId, BigInt(query.eventId.trim())),
+        )
       } catch {
         return {
           list: [],
@@ -73,7 +83,9 @@ export class MessageMonitorService {
     }
     if (query.dispatchId?.trim()) {
       try {
-        conditions.push(eq(domainEventDispatch.id, BigInt(query.dispatchId.trim())))
+        conditions.push(
+          eq(domainEventDispatch.id, BigInt(query.dispatchId.trim())),
+        )
       } catch {
         return {
           list: [],
@@ -98,7 +110,10 @@ export class MessageMonitorService {
       .select({ count: sql<number>`COUNT(*)::int` })
       .from(domainEventDispatch)
       .leftJoin(domainEvent, eq(domainEventDispatch.eventId, domainEvent.id))
-      .leftJoin(notificationDelivery, eq(notificationDelivery.dispatchId, domainEventDispatch.id))
+      .leftJoin(
+        notificationDelivery,
+        eq(notificationDelivery.dispatchId, domainEventDispatch.id),
+      )
       .where(whereClause)
 
     const rows = await this.db
@@ -119,9 +134,15 @@ export class MessageMonitorService {
       })
       .from(domainEventDispatch)
       .leftJoin(domainEvent, eq(domainEventDispatch.eventId, domainEvent.id))
-      .leftJoin(notificationDelivery, eq(notificationDelivery.dispatchId, domainEventDispatch.id))
+      .leftJoin(
+        notificationDelivery,
+        eq(notificationDelivery.dispatchId, domainEventDispatch.id),
+      )
       .where(whereClause)
-      .orderBy(desc(domainEventDispatch.updatedAt), desc(domainEventDispatch.id))
+      .orderBy(
+        desc(domainEventDispatch.updatedAt),
+        desc(domainEventDispatch.id),
+      )
       .limit(pageSize)
       .offset((pageIndex - 1) * pageSize)
 
@@ -147,7 +168,7 @@ export class MessageMonitorService {
       return false
     }
     try {
-      return this.domainEventDispatchService.retryFailedDispatch(
+      return await this.domainEventDispatchService.retryFailedDispatch(
         BigInt(normalizedDispatchId),
         DomainEventConsumerEnum.NOTIFICATION,
       )

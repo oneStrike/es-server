@@ -99,7 +99,10 @@
 - 禁止新增纯别名 DTO 或 DTO barrel。
 - `contract: false` 用于排除不对外字段。
 - 枚举数组字段统一使用 `ArrayProperty` + `itemEnum`，类型为 `XxxEnum[]`。
-- 枚举字段描述使用“实际枚举值=业务含义”。
+- `EnumProperty`、`EnumArrayProperty` 的 `description` 必须使用中文业务语义，不允许直接写英文常量名、技术 key 或旧字符串枚举值。
+- 枚举字段描述统一使用“实际枚举值=业务含义”，例如 `1=草稿；2=已发布；3=已下线`。
+- 禁止写法：`PENDING`、`FAILED`、`BASE_REWARD`、`weekly`、`upload`、`ios`、`android` 这类直接暴露常量名的描述。
+- 若字段本质上是开放业务键（如 `eventKey`、`categoryKey`、`projectionKey`），应继续使用字符串说明，不适用枚举描述规则。
 
 ## 4. TypeScript 类型规范
 
@@ -123,10 +126,21 @@
 - Service/Resolver/Extension/Helper 的公共入口方法与关键私有方法。
 - `*.type.ts` 中导出的稳定领域类型。
 - 事务/幂等/重试/补偿/原生 SQL 等关键语义。
+- `db/schema/**/*.ts` 中所有闭集 `smallint` / `smallint[]` 字段。
+- `priority`、`sortOrder`、`dailyLimit`、`postInterval` 这类使用 `smallint` 的非枚举配置字段。
 
-### 5.3 禁止写法
+### 5.3 数据表字段注释要求
+
+- 闭集状态 / 类型 / 模式 / 角色 / 平台 / 目标 / 场景字段，JSDoc 必须写清数值语义。
+- `smallint` / `smallint[]` 字段统一写成 `1=...`、`2=...` 这样的中文说明，不要求读者跳转业务代码反推。
+- 对 `priority`、`sortOrder`、`dailyLimit`、`postInterval` 等非枚举 `smallint` 字段，必须写清 `0` 或默认值的业务含义，例如 `0=默认优先级`、`0=不限制`、`0=默认排序`。
+- 若字段是开放字符串、事件键、模板键、路由键、MIME 类型、来源快照或其他非闭集业务键，应继续保持字符串，并在注释中说明这是开放值，不要求改成 `smallint`。
+
+### 5.4 禁止写法
 
 - 模板化空注释、逐行翻译、与实际行为不一致的历史描述。
+- 对闭集 `smallint` 字段只写“状态”“类型”“角色”“模式”这类空泛描述。
+- 在 `EnumProperty.description` 或字段注释中直接写英文常量名、旧字符串枚举值或技术 key。
 
 ## 6. 错误处理规范
 
@@ -164,6 +178,9 @@
 
 - 统一通过 `DrizzleService` 使用 `drizzle.db`、`drizzle.schema`、`drizzle.ext`。
 - 事务通过 `db.transaction(async (tx) => ...)` 并沿链路显式透传。
+- 闭集状态 / 类型 / 模式字段默认使用 `smallint` / `smallint[]`，并同步补 `check(...)` 约束。
+- 若 DTO / 常量层已经收敛为数字枚举，但 `db/schema` 仍使用 `integer`、`varchar` 或 `integer[]`，视为规范违例，应在同轮改造中统一。
+- 开放业务键继续保持字符串，不为“统一 smallint”而强行数字化；典型例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、弹窗位置等。
 
 ### 7.2 查询与分页
 
@@ -182,6 +199,17 @@
 - 常规 schema 差异默认使用 `pnpm db:generate` 生成。
 - 若生成过程中出现交互，必须停止并由用户亲自执行。
 - 无法生成的 DDL 可手写补充，但必须说明原因、范围与风险。
+- 当任务明确要求手写 migration 时，不应再把 `pnpm db:generate` 当作默认路径；交付说明中必须写清手写 migration 的映射关系、破坏性范围与风险。
+- 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并确保生成结果 `Warnings: 0`。
+- `db/schema`、手写 / 生成 migration、`db/comments/generated.sql` 三者必须同轮一致，不能只改其中一层。
+
+## 7.5 破坏性更新联动规范
+
+- 当任务明确声明“破坏性更新 / 不做兼容层”时，`db/schema`、相关常量 / 枚举、DTO、service / resolver / controller、前端破坏性更新文档必须同轮改完。
+- 禁止只改表、不改接口合同。
+- 禁止只改 DTO、不改底层持久化值域。
+- 禁止保留临时双读、旧值 fallback、旧字符串兼容映射，除非任务明确要求兼容期。
+- 若改动同时影响 `admin` 和 `app` 前端，破坏性更新说明应拆成两份独立文档，避免一份文档混合承载两类客户端影响。
 
 ## 8. 测试规范
 

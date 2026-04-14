@@ -2,9 +2,7 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
-import type {
-  NotificationEventHandler,
-} from './message-event.type'
+import type { NotificationEventHandler } from './message-event.type'
 import { Injectable } from '@nestjs/common'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
@@ -18,8 +16,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     categoryKey: definition.notification!.categoryKey,
     projectionKey: String(event.context?.projectionKey ?? ''),
     mandatory: definition.notification!.mandatory,
-    actorUserId:
-      event.operatorId ?? undefined,
+    actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
@@ -148,7 +145,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
       eventKey: event.eventKey,
     },
   }),
-  'announcement.unpublished': ({ definition, event }) => ({
+  'announcement.unpublished': ({ event }) => ({
     mode: 'delete' as const,
     receiverUserId: Number((event.context?.receiverUserId as number) ?? 0),
     projectionKey: String(event.context?.projectionKey ?? ''),
