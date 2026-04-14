@@ -1,14 +1,8 @@
-import type {
-  AppUpdateReleaseInsert,
-  AppUpdateReleaseSelect,
-  AppUpdateStoreLinkValue,
-} from '@db/schema'
+import type { AppUpdateReleaseInsert, AppUpdateReleaseSelect } from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   AppUpdateReleaseDetailDto,
   AppUpdateReleaseListItemDto,
-  AppUpdateStoreLinkInputDto,
-  AppUpdateStoreLinkSnapshotDto,
 } from './dto/update.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -25,15 +19,13 @@ import {
   UpdateAppUpdateReleaseDto,
 } from './dto/update.dto'
 import {
-  APP_UPDATE_CHANNEL_DICTIONARY_CODE,
   AppUpdatePackageSourceEnum,
   AppUpdatePlatformEnum,
   AppUpdatePopupBackgroundPositionEnum,
   AppUpdateTypeEnum,
-  DEFAULT_APP_UPDATE_CHANNEL_CODE,
 } from './update.constant'
 
-type ReleaseWithStoreLinks = AppUpdateReleaseSelect
+type AppUpdateReleaseRecord = AppUpdateReleaseSelect
 
 /**
  * App 更新服务。
@@ -110,14 +102,13 @@ export class AppUpdateService {
         updatedAt: item.updatedAt,
         hasPackageUrl: Boolean(item.packageUrl),
         hasCustomDownloadUrl: Boolean(item.customDownloadUrl),
-        storeLinkCount: item.storeLinks?.length ?? 0,
       })),
     }
   }
 
   /**
    * 查询版本发布详情。
-   * 详情接口补齐商店地址列表，供后台编辑表单直接回填。
+   * 详情接口直接回填版本配置，避免管理端自行补默认值。
    */
   async findDetail(dto: IdDto): Promise<AppUpdateReleaseDetailDto> {
     const release = await this.findReleaseById(dto.id)
@@ -128,16 +119,12 @@ export class AppUpdateService {
       )
     }
 
-    const channelNameMap = await this.findEnabledChannelNameMap(
-      release.storeLinks?.map((item) => item.channelCode) ?? [],
-    )
-
-    return this.toReleaseDetailDto(release, channelNameMap)
+    return this.toReleaseDetailDto(release)
   }
 
   /**
    * 创建更新草稿。
-   * 写入前会规范化地址与渠道编码，并校验同平台构建号唯一约束。
+   * 写入前会规范化地址，并校验同平台构建号唯一约束。
    */
   async create(dto: CreateAppUpdateReleaseDto, userId: number) {
     const normalized = await this.normalizeWriteDto(dto)
@@ -271,25 +258,13 @@ export class AppUpdateService {
 
   /**
    * 客户端检查更新。
-   * 仅按平台挑选最新发布版本，渠道只影响商店地址匹配，不影响版本选择。
+   * 仅按平台挑选最新发布版本，更新判断只依赖 buildCode。
    */
   async checkUpdate(dto: AppUpdateCheckDto) {
     const latestRelease = await this.findLatestPublishedRelease(dto.platform)
     if (!latestRelease || dto.buildCode >= latestRelease.buildCode) {
       return { hasUpdate: false }
     }
-
-    const channelNameMap = await this.findEnabledChannelNameMap(
-      latestRelease.storeLinks?.map((item) => item.channelCode) ?? [],
-    )
-    const storeLinks = this.toStoreLinkSnapshots(
-      latestRelease.storeLinks ?? [],
-      channelNameMap,
-    )
-    const matchedStoreLink = this.resolveMatchedStoreLink(
-      storeLinks,
-      dto.channelCode,
-    )
 
     return {
       hasUpdate: true,
@@ -305,21 +280,19 @@ export class AppUpdateService {
       popupBackgroundPosition:
         latestRelease.popupBackgroundPosition ??
         AppUpdatePopupBackgroundPositionEnum.CENTER,
-      storeLinks,
-      matchedStoreLink,
     }
   }
 
   /**
    * 查询单条发布记录。
-   * 商店地址已经内联在发布记录 JSONB 字段里，不再额外走关联表。
+   * 统一从发布表读取草稿或已发布版本。
    */
   private async findReleaseById(id: number) {
     const release = await this.db.query.appUpdateRelease.findFirst({
       where: { id },
     })
 
-    return release as ReleaseWithStoreLinks | undefined
+    return release as AppUpdateReleaseRecord | undefined
   }
 
   /**
@@ -338,45 +311,14 @@ export class AppUpdateService {
       ],
     })
 
-    return release as ReleaseWithStoreLinks | undefined
-  }
-
-  /**
-   * 查询已启用渠道名称映射。
-   * 更新模块统一只存渠道编码，展示名称始终以字典项为准。
-   */
-  private async findEnabledChannelNameMap(channelCodes: string[]) {
-    const normalizedChannelCodes = [
-      ...new Set(
-        channelCodes.map((code) => code.trim().toLowerCase()).filter(Boolean),
-      ),
-    ]
-
-    if (normalizedChannelCodes.length === 0) {
-      return new Map<string, string>()
-    }
-
-    const rows = await this.db.query.dictionaryItem.findMany({
-      where: {
-        dictionaryCode: APP_UPDATE_CHANNEL_DICTIONARY_CODE,
-        code: { in: normalizedChannelCodes },
-        isEnabled: true,
-      },
-      columns: {
-        code: true,
-        name: true,
-      },
-    })
-
-    return new Map(rows.map((row) => [row.code.trim().toLowerCase(), row.name]))
+    return release as AppUpdateReleaseRecord | undefined
   }
 
   /**
    * 标准化写入 DTO。
-   * 统一收口地址、包来源、商店渠道编码和可空字段，避免 create/update 分叉。
+   * 统一收口地址、包来源和可空字段，避免 create/update 分叉。
    */
   private async normalizeWriteDto(dto: AppUpdateReleaseWriteDto) {
-    const storeLinks = await this.normalizeStoreLinks(dto.storeLinks)
     const releaseNotes = this.normalizeNullableString(dto.releaseNotes)
     const packageUrl = this.normalizeNullableString(dto.packageUrl)
     const customDownloadUrl = this.normalizeNullableString(
@@ -449,58 +391,17 @@ export class AppUpdateService {
       popupBackgroundPosition:
         dto.popupBackgroundPosition ??
         AppUpdatePopupBackgroundPositionEnum.CENTER,
-      storeLinks,
     }
 
-    return {
-      release,
-      storeLinks,
-    }
-  }
-
-  /**
-   * 标准化商店地址输入。
-   * 渠道编码统一转小写，并强制要求命中启用中的渠道字典项。
-   */
-  private async normalizeStoreLinks(storeLinks?: AppUpdateStoreLinkInputDto[]) {
-    const normalizedLinks = (storeLinks ?? []).map((item) => ({
-      channelCode: item.channelCode.trim().toLowerCase(),
-      storeUrl: item.storeUrl.trim(),
-    }))
-
-    const seenChannelCodes = new Set<string>()
-    for (const link of normalizedLinks) {
-      if (seenChannelCodes.has(link.channelCode)) {
-        throw new BusinessException(
-          BusinessErrorCode.STATE_CONFLICT,
-          '商店渠道编码不能重复',
-        )
-      }
-
-      seenChannelCodes.add(link.channelCode)
-    }
-
-    const channelNameMap = await this.findEnabledChannelNameMap(
-      normalizedLinks.map((link) => link.channelCode),
-    )
-    if (channelNameMap.size !== seenChannelCodes.size) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '商店渠道不存在或已禁用',
-      )
-    }
-
-    return normalizedLinks
+    return { release }
   }
 
   /**
    * 发布前校验至少存在一种分发目标。
    */
-  private assertDistributionTargets(release: ReleaseWithStoreLinks) {
+  private assertDistributionTargets(release: AppUpdateReleaseRecord) {
     const hasDistributionTarget =
-      Boolean(release.packageUrl) ||
-      Boolean(release.customDownloadUrl) ||
-      Boolean(release.storeLinks?.length)
+      Boolean(release.packageUrl) || Boolean(release.customDownloadUrl)
 
     if (!hasDistributionTarget) {
       throw new BusinessException(
@@ -536,97 +437,14 @@ export class AppUpdateService {
 
   /**
    * 后台详情映射。
-   * 统一保证商店地址输出顺序稳定，减少管理端 diff 抖动。
+   * 统一补齐可空默认值，减少管理端 diff 抖动。
    */
-  private toReleaseDetailDto(
-    release: ReleaseWithStoreLinks,
-    channelNameMap: Map<string, string>,
-  ) {
+  private toReleaseDetailDto(release: AppUpdateReleaseRecord) {
     return {
       ...release,
       popupBackgroundPosition:
         release.popupBackgroundPosition ??
         AppUpdatePopupBackgroundPositionEnum.CENTER,
-      storeLinks: this.toStoreLinkSnapshots(
-        release.storeLinks ?? [],
-        channelNameMap,
-      ),
     } as AppUpdateReleaseDetailDto
-  }
-
-  /**
-   * 商店地址输出快照。
-   * app 侧只消费渠道与地址，不暴露内部审计字段。
-   */
-  private toStoreLinkSnapshot(
-    storeLink: Pick<AppUpdateStoreLinkValue, 'channelCode' | 'storeUrl'>,
-    channelNameMap: Map<string, string>,
-  ): AppUpdateStoreLinkSnapshotDto {
-    return {
-      channelCode: storeLink.channelCode,
-      channelName:
-        channelNameMap.get(storeLink.channelCode) ?? storeLink.channelCode,
-      storeUrl: storeLink.storeUrl,
-    }
-  }
-
-  /**
-   * 批量映射商店地址快照。
-   */
-  private toStoreLinkSnapshots(
-    storeLinks: AppUpdateReleaseSelect['storeLinks'],
-    channelNameMap: Map<string, string>,
-  ) {
-    return this.sortStoreLinks(storeLinks).map((item) =>
-      this.toStoreLinkSnapshot(item, channelNameMap),
-    )
-  }
-
-  /**
-   * 商店地址排序。
-   * `default` 渠道优先，其余渠道按编码升序输出，保证前后端结果稳定。
-   */
-  private sortStoreLinks(storeLinks: AppUpdateReleaseSelect['storeLinks']) {
-    return [...storeLinks].sort((left, right) => {
-      if (
-        left.channelCode === DEFAULT_APP_UPDATE_CHANNEL_CODE &&
-        right.channelCode !== DEFAULT_APP_UPDATE_CHANNEL_CODE
-      ) {
-        return -1
-      }
-      if (
-        right.channelCode === DEFAULT_APP_UPDATE_CHANNEL_CODE &&
-        left.channelCode !== DEFAULT_APP_UPDATE_CHANNEL_CODE
-      ) {
-        return 1
-      }
-
-      return left.channelCode.localeCompare(right.channelCode)
-    })
-  }
-
-  /**
-   * 根据客户端渠道匹配商店地址。
-   * 匹配顺序：精确渠道 -> default -> null。
-   */
-  private resolveMatchedStoreLink(
-    storeLinks: AppUpdateStoreLinkSnapshotDto[],
-    channelCode?: string,
-  ) {
-    const normalizedChannelCode = channelCode?.trim().toLowerCase()
-    if (normalizedChannelCode) {
-      const exactMatch = storeLinks.find(
-        (item) => item.channelCode === normalizedChannelCode,
-      )
-      if (exactMatch) {
-        return exactMatch
-      }
-    }
-
-    return (
-      storeLinks.find(
-        (item) => item.channelCode === DEFAULT_APP_UPDATE_CHANNEL_CODE,
-      ) ?? null
-    )
   }
 }

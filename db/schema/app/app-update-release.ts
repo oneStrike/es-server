@@ -4,28 +4,12 @@ import {
   check,
   index,
   integer,
-  jsonb,
   pgTable,
   smallint,
   timestamp,
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
-
-/**
- * App 更新商店地址 JSON 结构。
- * 只保留稳定渠道编码和地址，展示名称统一由系统字典派生。
- */
-export interface AppUpdateStoreLinkValue {
-  /**
-   * 渠道编码。
-   */
-  channelCode: string
-  /**
-   * 商店地址。
-   */
-  storeUrl: string
-}
 
 /**
  * App 更新发布表。
@@ -96,14 +80,6 @@ export const appUpdateRelease = pgTable(
      * 直接复用 CSS `background-position` 语义。
      */
     popupBackgroundPosition: varchar({ length: 20 }).default('center'),
-    /**
-     * 商店地址列表。
-     * 仅持久化渠道编码和商店地址，渠道名称由字典项动态回填。
-     */
-    storeLinks: jsonb()
-      .$type<AppUpdateStoreLinkValue[]>()
-      .default(sql`'[]'::jsonb`)
-      .notNull(),
     /**
      * 是否已发布。
      */

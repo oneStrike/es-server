@@ -1,9 +1,7 @@
 import {
-  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
-  NestedProperty,
   NumberProperty,
   RegexProperty,
   StringProperty,
@@ -13,64 +11,11 @@ import { PageDto } from '@libs/platform/dto/page.dto'
 import { HTTP_URL_REGEXP } from '@libs/platform/utils/regExp'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
-  APP_UPDATE_CHANNEL_CODE_REGEXP,
   AppUpdatePackageSourceEnum,
   AppUpdatePlatformEnum,
   AppUpdatePopupBackgroundPositionEnum,
   AppUpdateTypeEnum,
 } from '../update.constant'
-
-/**
- * 商店地址基础 DTO。
- */
-export class BaseAppUpdateStoreLinkDto extends BaseDto {
-  @RegexProperty({
-    description: '渠道编码',
-    example: 'default',
-    required: true,
-    regex: APP_UPDATE_CHANNEL_CODE_REGEXP,
-    message: '渠道编码格式不正确',
-  })
-  channelCode!: string
-
-  @RegexProperty({
-    description: '应用商店地址',
-    example: 'https://apps.apple.com/app/id123456789',
-    required: true,
-    regex: HTTP_URL_REGEXP,
-    message: '商店地址必须是合法的 HTTP/HTTPS URL',
-  })
-  storeUrl!: string
-}
-
-/**
- * 商店地址展示 DTO。
- */
-export class BaseAppUpdateStoreLinkSnapshotDto extends BaseAppUpdateStoreLinkDto {
-  @StringProperty({
-    description: '渠道名称',
-    example: '默认渠道',
-    required: true,
-    maxLength: 50,
-  })
-  channelName!: string
-}
-
-/**
- * 商店地址写入 DTO。
- */
-export class AppUpdateStoreLinkInputDto extends PickType(
-  BaseAppUpdateStoreLinkDto,
-  ['channelCode', 'storeUrl'] as const,
-) {}
-
-/**
- * 商店地址快照 DTO。
- */
-export class AppUpdateStoreLinkSnapshotDto extends PickType(
-  BaseAppUpdateStoreLinkSnapshotDto,
-  ['channelCode', 'channelName', 'storeUrl'] as const,
-) {}
 
 /**
  * 更新发布基础 DTO。
@@ -322,15 +267,6 @@ export class AppUpdateReleaseWriteDto {
     default: AppUpdatePopupBackgroundPositionEnum.CENTER,
   })
   popupBackgroundPosition?: AppUpdatePopupBackgroundPositionEnum
-
-  @ArrayProperty({
-    description: '应用商店地址列表',
-    itemClass: AppUpdateStoreLinkInputDto,
-    required: false,
-    default: [],
-    maxLength: 20,
-  })
-  storeLinks?: AppUpdateStoreLinkInputDto[]
 }
 
 /**
@@ -365,16 +301,7 @@ export class QueryAppUpdateReleaseDto extends IntersectionType(
 /**
  * 后台详情 DTO。
  */
-export class AppUpdateReleaseDetailDto extends BaseAppUpdateReleaseDto {
-  @ArrayProperty({
-    description: '应用商店地址列表',
-    itemClass: AppUpdateStoreLinkSnapshotDto,
-    required: false,
-    validation: false,
-    default: [],
-  })
-  storeLinks?: AppUpdateStoreLinkSnapshotDto[]
-}
+export class AppUpdateReleaseDetailDto extends BaseAppUpdateReleaseDto {}
 
 /**
  * 后台列表 DTO。
@@ -408,14 +335,6 @@ export class AppUpdateReleaseListItemDto extends PickType(
     validation: false,
   })
   hasCustomDownloadUrl!: boolean
-
-  @NumberProperty({
-    description: '商店地址数量',
-    example: 2,
-    required: true,
-    validation: false,
-  })
-  storeLinkCount!: number
 }
 
 /**
@@ -433,10 +352,10 @@ export class AppUpdateCheckDto {
   @StringProperty({
     description: '客户端展示版本号',
     example: '1.0.0',
-    required: true,
+    required: false,
     maxLength: 50,
   })
-  versionName!: string
+  versionName?: string
 
   @NumberProperty({
     description: '客户端内部构建号',
@@ -445,15 +364,6 @@ export class AppUpdateCheckDto {
     min: 1,
   })
   buildCode!: number
-
-  @RegexProperty({
-    description: '客户端安装渠道编码',
-    example: 'huawei',
-    required: false,
-    regex: APP_UPDATE_CHANNEL_CODE_REGEXP,
-    message: '渠道编码格式不正确',
-  })
-  channelCode?: string
 }
 
 /**
@@ -534,22 +444,4 @@ export class AppUpdateCheckResponseDto {
     validation: false,
   })
   popupBackgroundPosition?: AppUpdatePopupBackgroundPositionEnum
-
-  @ArrayProperty({
-    description: '应用商店地址列表',
-    itemClass: AppUpdateStoreLinkSnapshotDto,
-    required: false,
-    validation: false,
-    default: [],
-  })
-  storeLinks?: AppUpdateStoreLinkSnapshotDto[]
-
-  @NestedProperty({
-    description: '命中的商店地址',
-    type: AppUpdateStoreLinkSnapshotDto,
-    required: false,
-    validation: false,
-    nullable: false,
-  })
-  matchedStoreLink?: AppUpdateStoreLinkSnapshotDto
 }

@@ -95,43 +95,6 @@ const DICTIONARY_FIXTURES = [
       { name: 'R18', code: DICTIONARY_ITEMS.workAgeRating.r18, sortOrder: 4 },
     ],
   },
-  {
-    name: 'App 更新渠道',
-    code: DICTIONARY_CODES.appUpdateChannel,
-    description: 'App 更新渠道字典，供更新管理配置和客户端渠道匹配复用',
-    items: [
-      {
-        name: '默认渠道',
-        code: DICTIONARY_ITEMS.appUpdateChannel.default,
-        sortOrder: 1,
-      },
-      {
-        name: 'App Store',
-        code: DICTIONARY_ITEMS.appUpdateChannel.appStore,
-        sortOrder: 2,
-      },
-      {
-        name: '华为应用市场',
-        code: DICTIONARY_ITEMS.appUpdateChannel.huawei,
-        sortOrder: 3,
-      },
-      {
-        name: '小米应用商店',
-        code: DICTIONARY_ITEMS.appUpdateChannel.xiaomi,
-        sortOrder: 4,
-      },
-      {
-        name: 'OPPO 软件商店',
-        code: DICTIONARY_ITEMS.appUpdateChannel.oppo,
-        sortOrder: 5,
-      },
-      {
-        name: 'vivo 应用商店',
-        code: DICTIONARY_ITEMS.appUpdateChannel.vivo,
-        sortOrder: 6,
-      },
-    ],
-  },
 ] as const
 
 const SENSITIVE_WORD_FIXTURES = [

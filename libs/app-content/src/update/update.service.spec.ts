@@ -6,23 +6,21 @@ jest.mock('@db/core', () => ({
 }))
 
 describe('app update service', () => {
-  it('rejects unknown channel codes when creating a release', async () => {
+  it('creates a release without persisting app store fields', async () => {
     const { AppUpdateService } = await import('./update.service')
 
     const releaseTable = { id: 'id' }
-    const dictionaryItemTable = {
-      code: 'code',
-      dictionaryCode: 'dictionaryCode',
-      isEnabled: 'isEnabled',
-      name: 'name',
-    }
+    const insertValuesMock = jest.fn().mockResolvedValue(undefined)
     const tx = {
       insert: jest.fn((table) => {
         if (table === releaseTable) {
           return {
-            values: jest.fn(() => ({
-              returning: jest.fn().mockResolvedValue([{ id: 1 }]),
-            })),
+            values: jest.fn((values) => {
+              insertValuesMock(values)
+              return {
+                returning: jest.fn().mockResolvedValue([{ id: 1 }]),
+              }
+            }),
           }
         }
 
@@ -33,16 +31,9 @@ describe('app update service', () => {
     }
 
     const service = new AppUpdateService({
-      db: {
-        query: {
-          dictionaryItem: {
-            findMany: jest.fn().mockResolvedValue([]),
-          },
-        },
-      },
+      db: { query: {} },
       schema: {
         appUpdateRelease: releaseTable,
-        dictionaryItem: dictionaryItemTable,
       },
       withErrorHandling: jest.fn(async (callback) => callback()),
       withTransaction: jest.fn(async (callback) => callback(tx)),
@@ -57,18 +48,16 @@ describe('app update service', () => {
           forceUpdate: false,
           packageSourceType: 2,
           packageUrl: 'https://example.com/app-release.apk',
-          storeLinks: [
-            {
-              channelCode: 'unknown-channel',
-              storeUrl: 'https://example.com/store',
-            },
-          ],
         } as any,
         9,
       ),
-    ).rejects.toMatchObject({
-      message: '商店渠道不存在或已禁用',
-    })
+    ).resolves.toBe(true)
+
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        storeLinks: expect.anything(),
+      }),
+    )
   })
 
   it('rejects updating a published release in place', async () => {
@@ -101,57 +90,11 @@ describe('app update service', () => {
           versionName: '1.2.0',
           buildCode: 120,
           forceUpdate: false,
-          storeLinks: [],
         } as any,
         9,
       ),
     ).rejects.toMatchObject({
       message: '已发布版本不允许直接修改，请基于草稿继续维护',
-    })
-  })
-
-  it('rejects duplicate channel codes after normalization', async () => {
-    const { AppUpdateService } = await import('./update.service')
-
-    const service = new AppUpdateService({
-      db: {
-        query: {
-          appUpdateRelease: {
-            findFirst: jest.fn().mockResolvedValue(null),
-          },
-        },
-      },
-      schema: {
-        appUpdateRelease: { id: 'id' },
-      },
-      withErrorHandling: jest.fn(async (callback) => callback()),
-      withTransaction: jest.fn(async (callback) => callback({})),
-    } as any)
-
-    await expect(
-      service.create(
-        {
-          platform: 2,
-          versionName: '1.2.0',
-          buildCode: 120,
-          forceUpdate: false,
-          packageSourceType: 2,
-          packageUrl: 'https://example.com/app-release.apk',
-          storeLinks: [
-            {
-              channelCode: 'Huawei',
-              storeUrl: 'https://example.com/huawei',
-            },
-            {
-              channelCode: 'huawei',
-              storeUrl: 'https://example.com/huawei-backup',
-            },
-          ],
-        } as any,
-        9,
-      ),
-    ).rejects.toMatchObject({
-      message: '商店渠道编码不能重复',
     })
   })
 
@@ -167,13 +110,7 @@ describe('app update service', () => {
     }
 
     const service = new AppUpdateService({
-      db: {
-        query: {
-          dictionaryItem: {
-            findMany: jest.fn().mockResolvedValue([]),
-          },
-        },
-      },
+      db: { query: {} },
       schema: {
         appUpdateRelease: releaseTable,
       },
@@ -191,7 +128,6 @@ describe('app update service', () => {
         packageUrl: 'https://example.com/app-release.apk',
         popupBackgroundImage: 'https://cdn.example.com/app-update/bg.png',
         popupBackgroundPosition: 'top center',
-        storeLinks: [],
       } as any,
       9,
     )
@@ -263,7 +199,7 @@ describe('app update service', () => {
     expect((txSetMock.mock.calls as any)[1][0].publishedAt).toBeInstanceOf(Date)
   })
 
-  it('hydrates channel names from dictionary when loading release detail', async () => {
+  it('returns release detail without app store fields', async () => {
     const { AppUpdateService } = await import('./update.service')
 
     const service = new AppUpdateService({
@@ -286,40 +222,12 @@ describe('app update service', () => {
               publishedAt: null,
               createdAt: new Date('2026-04-12T10:30:00.000Z'),
               updatedAt: new Date('2026-04-12T10:30:00.000Z'),
-              storeLinks: [
-                {
-                  channelCode: 'default',
-                  storeUrl: 'https://example.com/default',
-                },
-                {
-                  channelCode: 'huawei',
-                  storeUrl: 'https://example.com/huawei',
-                },
-              ],
             }),
-          },
-          dictionaryItem: {
-            findMany: jest.fn().mockResolvedValue([
-              {
-                code: 'default',
-                name: '默认渠道',
-              },
-              {
-                code: 'huawei',
-                name: '华为应用市场',
-              },
-            ]),
           },
         },
       },
       schema: {
         appUpdateRelease: { id: 'id' },
-        dictionaryItem: {
-          code: 'code',
-          dictionaryCode: 'dictionaryCode',
-          isEnabled: 'isEnabled',
-          name: 'name',
-        },
       },
       withErrorHandling: jest.fn(async (callback) => callback()),
       withTransaction: jest.fn(async (callback) => callback({})),
@@ -331,21 +239,14 @@ describe('app update service', () => {
         popupBackgroundImage:
           'https://cdn.example.com/app-update/detail-bg.png',
         popupBackgroundPosition: 'top center',
-        storeLinks: [
-          expect.objectContaining({
-            channelCode: 'default',
-            channelName: '默认渠道',
-          }),
-          expect.objectContaining({
-            channelCode: 'huawei',
-            channelName: '华为应用市场',
-          }),
-        ],
       }),
     )
+
+    const detail = await service.findDetail({ id: 3 })
+    expect(detail).not.toHaveProperty('storeLinks')
   })
 
-  it('returns matched store link and full address set when client needs update', async () => {
+  it('returns update info without app store payload and does not require version name', async () => {
     const { AppUpdateService } = await import('./update.service')
 
     const service = new AppUpdateService({
@@ -364,40 +265,12 @@ describe('app update service', () => {
               popupBackgroundImage:
                 'https://cdn.example.com/app-update/check-bg.png',
               popupBackgroundPosition: 'bottom center',
-              storeLinks: [
-                {
-                  channelCode: 'default',
-                  storeUrl: 'https://example.com/default',
-                },
-                {
-                  channelCode: 'huawei',
-                  storeUrl: 'https://example.com/huawei',
-                },
-              ],
             }),
-          },
-          dictionaryItem: {
-            findMany: jest.fn().mockResolvedValue([
-              {
-                code: 'default',
-                name: '默认渠道',
-              },
-              {
-                code: 'huawei',
-                name: '华为应用市场',
-              },
-            ]),
           },
         },
       },
       schema: {
         appUpdateRelease: { id: 'id' },
-        dictionaryItem: {
-          code: 'code',
-          dictionaryCode: 'dictionaryCode',
-          isEnabled: 'isEnabled',
-          name: 'name',
-        },
       },
       withErrorHandling: jest.fn(async (callback) => callback()),
       withTransaction: jest.fn(async (callback) => callback({})),
@@ -406,8 +279,6 @@ describe('app update service', () => {
     await expect(
       service.checkUpdate({
         platform: 2,
-        channelCode: 'huawei',
-        versionName: '1.0.0',
         buildCode: 100,
       } as any),
     ).resolves.toEqual(
@@ -418,23 +289,8 @@ describe('app update service', () => {
         latestBuildCode: 120,
         packageUrl: 'https://example.com/app-release.apk',
         customDownloadUrl: 'https://download.example.com/app',
-        popupBackgroundImage:
-          'https://cdn.example.com/app-update/check-bg.png',
+        popupBackgroundImage: 'https://cdn.example.com/app-update/check-bg.png',
         popupBackgroundPosition: 'bottom center',
-        matchedStoreLink: expect.objectContaining({
-          channelCode: 'huawei',
-          channelName: '华为应用市场',
-        }),
-        storeLinks: expect.arrayContaining([
-          expect.objectContaining({
-            channelCode: 'default',
-            channelName: '默认渠道',
-          }),
-          expect.objectContaining({
-            channelCode: 'huawei',
-            channelName: '华为应用市场',
-          }),
-        ]),
       }),
     )
   })
@@ -453,7 +309,6 @@ describe('app update service', () => {
               buildCode: 200,
               releaseNotes: '新版本',
               forceUpdate: false,
-              storeLinks: [],
             }),
           },
         },
@@ -468,7 +323,6 @@ describe('app update service', () => {
     await expect(
       service.checkUpdate({
         platform: 1,
-        versionName: '2.0.0',
         buildCode: 200,
       } as any),
     ).resolves.toEqual({ hasUpdate: false })
