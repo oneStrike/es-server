@@ -1,1 +1,0 @@
-ALTER TABLE "admin_user_token" ALTER COLUMN "user_agent" SET DATA TYPE varchar(400) USING "user_agent"::varchar(400);

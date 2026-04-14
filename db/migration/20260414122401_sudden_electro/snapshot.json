@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "75f4020b-b32d-4383-a31e-45be3d4d93d2",
+  "id": "a22e0e0c-daea-417f-aba9-f1fd6ee1c1db",
   "prevIds": [
-    "f6521343-75e1-4b8b-a3be-d549f95a9f9c"
+    "b28a89b7-ca52-42e9-9176-9aa507ab6a36"
   ],
   "ddl": [
     {
@@ -747,7 +747,7 @@
       "table": "admin_user_token"
     },
     {
-      "type": "varchar(400)",
+      "type": "varchar(500)",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -2040,19 +2040,6 @@
       "generated": null,
       "identity": null,
       "name": "popup_background_position",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "app_update_release"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'[]'",
-      "generated": null,
-      "identity": null,
-      "name": "store_links",
       "entityType": "columns",
       "schema": "public",
       "table": "app_update_release"
