@@ -1,8 +1,8 @@
-import { NotificationEventConsumer } from './notification-event.consumer'
-import type { DomainEventRecord, DomainEventDispatchRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
+import { NotificationEventConsumer } from './notification-event.consumer'
 
-describe('NotificationEventConsumer', () => {
+describe('notificationEventConsumer', () => {
   let service: NotificationEventConsumer
   let projectionService: any
   let deliveryService: any

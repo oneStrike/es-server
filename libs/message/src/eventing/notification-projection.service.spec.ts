@@ -5,7 +5,7 @@ import type {
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 import { NotificationProjectionService } from './notification-projection.service'
 
-describe('NotificationProjectionService', () => {
+describe('notificationProjectionService', () => {
   const event = {
     id: 11n,
     eventKey: 'comment.replied',

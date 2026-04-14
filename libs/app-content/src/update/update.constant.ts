@@ -61,4 +61,4 @@ export const APP_UPDATE_CHANNEL_DICTIONARY_CODE = 'app_update_channel'
  * 商店渠道编码格式。
  * 使用小写英数、下划线和中划线，便于客户端稳定透传。
  */
-export const APP_UPDATE_CHANNEL_CODE_REGEXP = /^[a-z0-9][a-z0-9_-]{0,49}$/i
+export const APP_UPDATE_CHANNEL_CODE_REGEXP = /^[a-z0-9][\w-]{0,49}$/i

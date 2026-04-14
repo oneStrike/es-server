@@ -1,8 +1,8 @@
 import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing'
+import type { MessageChatService } from '../chat/chat.service'
 import { Injectable } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { MESSAGE_CHAT_SERVICE_TOKEN } from '../chat/chat.constant'
-import type { MessageChatService } from '../chat/chat.service'
 
 /**
  * 聊天实时事件 consumer。

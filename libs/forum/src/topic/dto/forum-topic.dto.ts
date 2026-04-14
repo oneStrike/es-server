@@ -6,6 +6,10 @@ import {
   CommentSortDto,
 } from '@libs/interaction/comment/dto/comment.dto'
 import {
+  MentionDraftDto,
+  RequiredMentionDraftListDto,
+} from '@libs/interaction/mention/dto/mention.dto'
+import {
   AuditRoleEnum,
   AuditStatusEnum,
 } from '@libs/platform/constant/audit.constant'
@@ -23,10 +27,6 @@ import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import {
-  MentionDraftDto,
-  RequiredMentionDraftListDto,
-} from '@libs/interaction/mention/dto/mention.dto'
 
 /**
  * 论坛主题基础 DTO。

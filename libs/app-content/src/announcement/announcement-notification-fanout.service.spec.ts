@@ -2,7 +2,7 @@ import * as schema from '@db/schema'
 import { AnnouncementNotificationFanoutService } from './announcement-notification-fanout.service'
 import { AnnouncementPriorityEnum } from './announcement.constant'
 
-describe('AnnouncementNotificationFanoutService', () => {
+describe('announcementNotificationFanoutService', () => {
   function createService() {
     const insertValuesMock = jest.fn(() => ({
       onConflictDoUpdate: jest.fn().mockResolvedValue(undefined),
@@ -42,7 +42,7 @@ describe('AnnouncementNotificationFanoutService', () => {
       }
     })
     let updateCall = 0
-    const updateWhereMock = jest.fn(() => {
+    const updateWhereMock = jest.fn(async () => {
       updateCall += 1
       if (updateCall === 1) {
         return {

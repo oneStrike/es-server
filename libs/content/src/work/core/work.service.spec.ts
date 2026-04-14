@@ -1,7 +1,7 @@
 import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
 import { WorkService } from './work.service'
 
-describe('WorkService', () => {
+describe('workService', () => {
   it('returns chapterPurchasePricing for public work detail', async () => {
     const buildPurchasePricing = jest.fn().mockReturnValue({
       originalPrice: 30,

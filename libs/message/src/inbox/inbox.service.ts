@@ -108,7 +108,7 @@ export class MessageInboxService {
           lastMessageContent?: string
           lastSenderId?: number
         }
-      | undefined
+        | undefined
 
     const latestConversation = latestConversationRows[0]
 

@@ -1,3 +1,10 @@
+import { ComicArchiveImportService } from './comic-archive-import.service'
+import {
+  ComicArchiveImportItemStatusEnum,
+  ComicArchivePreviewModeEnum,
+  ComicArchiveTaskStatusEnum,
+} from './comic-archive-import.type'
+
 jest.mock('@libs/platform/modules/upload/upload.service', () => ({
   UploadService: class {},
 }))
@@ -6,14 +13,7 @@ jest.mock('uuid', () => ({
   v4: () => 'mock-task-id',
 }))
 
-import {
-  ComicArchiveImportItemStatusEnum,
-  ComicArchivePreviewModeEnum,
-  ComicArchiveTaskStatusEnum,
-} from './comic-archive-import.type'
-import { ComicArchiveImportService } from './comic-archive-import.service'
-
-describe('ComicArchiveImportService', () => {
+describe('comicArchiveImportService', () => {
   function createService() {
     return new ComicArchiveImportService(
       {

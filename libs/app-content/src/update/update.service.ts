@@ -3,20 +3,20 @@ import type {
   AppUpdateReleaseSelect,
   AppUpdateStoreLinkValue,
 } from '@db/schema'
-import { buildILikeCondition, DrizzleService } from '@db/core'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
-import { BusinessException } from '@libs/platform/exceptions'
-import { HTTP_URL_REGEXP } from '@libs/platform/utils/regExp'
-import { Injectable } from '@nestjs/common'
 import type { SQL } from 'drizzle-orm'
-import { and, eq } from 'drizzle-orm'
 import type {
   AppUpdateReleaseDetailDto,
   AppUpdateReleaseListItemDto,
   AppUpdateStoreLinkInputDto,
   AppUpdateStoreLinkSnapshotDto,
 } from './dto/update.dto'
+import { buildILikeCondition, DrizzleService } from '@db/core'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
+import { BusinessException } from '@libs/platform/exceptions'
+import { HTTP_URL_REGEXP } from '@libs/platform/utils/regExp'
+import { Injectable } from '@nestjs/common'
+import { and, eq } from 'drizzle-orm'
 import {
   AppUpdateCheckDto,
   AppUpdateReleaseWriteDto,
@@ -26,11 +26,11 @@ import {
 } from './dto/update.dto'
 import {
   APP_UPDATE_CHANNEL_DICTIONARY_CODE,
-  DEFAULT_APP_UPDATE_CHANNEL_CODE,
-  AppUpdatePlatformEnum,
   AppUpdatePackageSourceEnum,
+  AppUpdatePlatformEnum,
   AppUpdatePopupBackgroundPositionEnum,
   AppUpdateTypeEnum,
+  DEFAULT_APP_UPDATE_CHANNEL_CODE,
 } from './update.constant'
 
 type ReleaseWithStoreLinks = AppUpdateReleaseSelect
@@ -143,7 +143,7 @@ export class AppUpdateService {
     const normalized = await this.normalizeWriteDto(dto)
 
     await this.drizzle.withErrorHandling(
-      () =>
+      async () =>
         this.drizzle.withTransaction(async (tx) => {
           await tx.insert(this.appUpdateRelease).values({
             ...normalized.release,
@@ -180,7 +180,7 @@ export class AppUpdateService {
     const normalized = await this.normalizeWriteDto(writeDto)
 
     await this.drizzle.withErrorHandling(
-      () =>
+      async () =>
         this.drizzle.withTransaction(async (tx) => {
           const result = await tx
             .update(this.appUpdateRelease)
@@ -516,7 +516,7 @@ export class AppUpdateService {
    */
   private normalizeNullableString(value?: string | null) {
     const trimmed = value?.trim()
-    return trimmed ? trimmed : null
+    return trimmed || null
   }
 
   /**

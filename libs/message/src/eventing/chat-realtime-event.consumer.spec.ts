@@ -1,7 +1,7 @@
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 import { ChatRealtimeEventConsumer } from './chat-realtime-event.consumer'
 
-describe('ChatRealtimeEventConsumer', () => {
+describe('chatRealtimeEventConsumer', () => {
   it('chat.message.created 会转给 MessageChatService 处理', async () => {
     const dispatchMessageCreatedDomainEvent = jest.fn().mockResolvedValue(undefined)
     const moduleRef = {

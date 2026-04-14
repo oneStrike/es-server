@@ -101,7 +101,7 @@ describe('messageNotificationService', () => {
     )
   })
 
-  it('QueryUserNotificationListDto 支持 categoryKeys 数组并对单值 query 做数组收敛', () => {
+  it('queryUserNotificationListDto 支持 categoryKeys 数组并对单值 query 做数组收敛', () => {
     const dto = plainToInstance(QueryUserNotificationListDto, {
       categoryKeys: 'comment_reply',
     })
@@ -112,7 +112,7 @@ describe('messageNotificationService', () => {
     expect(dto.categoryKeys).toEqual(['comment_reply'])
   })
 
-  it('QueryUserNotificationListDto 会拦截非法 categoryKeys', () => {
+  it('queryUserNotificationListDto 会拦截非法 categoryKeys', () => {
     const dto = plainToInstance(QueryUserNotificationListDto, {
       categoryKeys: ['comment_reply', 'unknown_key'],
     })

@@ -6,11 +6,11 @@ import type { QueryNotificationDeliveryPageDto } from '@libs/message/notificatio
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { domainEvent, domainEventDispatch, messageWsMetric, notificationDelivery } from '@db/schema'
+import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
 import {
   DomainEventConsumerEnum,
   DomainEventDispatchService,
 } from '@libs/platform/modules/eventing'
-import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, gte, sql } from 'drizzle-orm'
 

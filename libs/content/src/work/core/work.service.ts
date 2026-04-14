@@ -1,4 +1,5 @@
 import type { WorkSelect } from '@db/schema'
+import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
@@ -6,7 +7,6 @@ import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constan
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
 import { FollowService } from '@libs/interaction/follow/follow.service'
-import type { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import { LikeService } from '@libs/interaction/like/like.service'
 import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
 import { BusinessErrorCode } from '@libs/platform/constant'

@@ -1,4 +1,3 @@
-import { AppUpdateService } from '@libs/app-content/update/update.service'
 import {
   AppUpdateReleaseDetailDto,
   AppUpdateReleaseListItemDto,
@@ -6,6 +5,7 @@ import {
   QueryAppUpdateReleaseDto,
   UpdateAppUpdateReleaseDto,
 } from '@libs/app-content/update/dto/update.dto'
+import { AppUpdateService } from '@libs/app-content/update/update.service'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'

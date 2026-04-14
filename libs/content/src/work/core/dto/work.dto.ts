@@ -1,8 +1,8 @@
 import { BaseAuthorDto } from '@libs/content/author/dto/author.dto'
 import { BaseCategoryDto } from '@libs/content/category/dto/category.dto'
 import { BaseTagDto } from '@libs/content/tag/dto/tag.dto'
-import { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
+import { PurchasePricingDto } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
 import {
   WorkTypeEnum,
   WorkViewPermissionEnum,

@@ -4,7 +4,6 @@ import type {
 } from '@libs/platform/modules/eventing'
 import type {
   NotificationEventHandler,
-  NotificationProjectionCommand,
 } from './message-event.type'
 import { Injectable } from '@nestjs/common'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'
@@ -20,14 +19,12 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     projectionKey: String(event.context?.projectionKey ?? ''),
     mandatory: definition.notification!.mandatory,
     actorUserId:
-      event.operatorId === null || event.operatorId === undefined
-        ? undefined
-        : event.operatorId,
+      event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -41,8 +38,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -56,8 +53,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -71,8 +68,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -86,8 +83,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -101,8 +98,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -116,8 +113,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -131,8 +128,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -146,8 +143,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -169,8 +166,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
       ? new Date(String(event.context.expiresAt))
       : undefined,
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -187,8 +184,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
       ? new Date(String(event.context.expiresAt))
       : undefined,
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),
@@ -202,8 +199,8 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
     payload: (event.context?.payload as
-      | Record<string, unknown>
-      | undefined) ?? {
+    | Record<string, unknown>
+    | undefined) ?? {
       eventKey: event.eventKey,
     },
   }),

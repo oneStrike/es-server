@@ -1,14 +1,15 @@
+import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
+
+import { MessageNotificationTemplateService } from '@libs/message/notification/notification-template.service'
+import { MODULE_METADATA } from '@nestjs/common/constants'
+import { MessageModule } from './message.module'
 import 'reflect-metadata'
+
 jest.mock('uuid', () => ({
   v4: () => 'mock-uuid',
 }))
 
-import { MODULE_METADATA } from '@nestjs/common/constants'
-import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
-import { MessageNotificationTemplateService } from '@libs/message/notification/notification-template.service'
-import { MessageModule } from './message.module'
-
-describe('Admin MessageModule metadata', () => {
+describe('admin MessageModule metadata', () => {
   it('不应在入口层重复声明消息域模板和投递 service provider', () => {
     const providers = Reflect.getMetadata(
       MODULE_METADATA.PROVIDERS,

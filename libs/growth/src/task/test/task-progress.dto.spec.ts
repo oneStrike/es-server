@@ -1,7 +1,7 @@
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
-import 'reflect-metadata'
 import { TaskProgressDto } from '../dto/task.dto'
+import 'reflect-metadata'
 
 describe('task progress dto', () => {
   it('允许正整数进度增量', () => {

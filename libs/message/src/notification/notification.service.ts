@@ -4,12 +4,12 @@ import { Injectable } from '@nestjs/common'
 import { and, eq, gt, inArray, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { QueryUserNotificationListDto } from './dto/notification.dto'
+import { MessageNotificationRealtimeService } from './notification-realtime.service'
 import {
   getMessageNotificationCategoryLabel,
   isMessageNotificationCategoryKey,
   MessageNotificationCategoryKey,
 } from './notification.constant'
-import { MessageNotificationRealtimeService } from './notification-realtime.service'
 
 /**
  * 用户通知读模型服务。

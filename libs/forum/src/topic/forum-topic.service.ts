@@ -18,9 +18,9 @@ import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
-import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
-import { buildRecentEmojiUsageItems } from '@libs/interaction/emoji/emoji-recent-usage.helper'
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
+import { buildRecentEmojiUsageItems } from '@libs/interaction/emoji/emoji-recent-usage.helper'
+import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'
 import { FavoriteService } from '@libs/interaction/favorite/favorite.service'
 import { FollowTargetTypeEnum } from '@libs/interaction/follow/follow.constant'
@@ -1420,7 +1420,7 @@ export class ForumTopicService {
             commentReceivedLikeCountByUser.set(
               comment.userId,
               (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-                comment.likeCount,
+              comment.likeCount,
             )
           }
         }

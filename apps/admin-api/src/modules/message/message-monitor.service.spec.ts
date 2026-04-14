@@ -1,13 +1,10 @@
-import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing'
-import {
-  DomainEventDispatchStatusEnum,
-} from '@libs/platform/modules/eventing'
 import {
   MessageNotificationDispatchStatusEnum,
 } from '@libs/message/notification/notification.constant'
+import { DomainEventConsumerEnum, DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 import { MessageMonitorService } from './message-monitor.service'
 
-describe('MessageMonitorService', () => {
+describe('messageMonitorService', () => {
   function createService() {
     const rows = [
       {

@@ -28,7 +28,7 @@ export class DomainEventPublisher {
   }
 
   async publish(input: PublishDomainEventInput): Promise<PublishDomainEventResult> {
-    return this.drizzle.withTransaction(tx => this.publishInTx(tx, input))
+    return this.drizzle.withTransaction(async tx => this.publishInTx(tx, input))
   }
 
   async publishInTx(

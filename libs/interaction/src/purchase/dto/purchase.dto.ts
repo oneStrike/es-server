@@ -9,12 +9,12 @@ import { StringProperty } from '@libs/platform/decorators/validate/string-proper
 import { BaseDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { PurchasePricingFieldsDto } from './purchase-pricing.dto'
 import {
   PaymentMethodEnum,
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
 } from '../purchase.constant'
+import { PurchasePricingFieldsDto } from './purchase-pricing.dto'
 
 /**
  * 基础购买记录 DTO

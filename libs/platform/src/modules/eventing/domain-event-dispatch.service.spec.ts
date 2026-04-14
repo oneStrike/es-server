@@ -4,7 +4,7 @@ import {
   DomainEventDispatchStatusEnum,
 } from './eventing.constant'
 
-describe('DomainEventDispatchService', () => {
+describe('domainEventDispatchService', () => {
   it('uses numeric dispatch status enums', () => {
     expect(DomainEventDispatchStatusEnum.PENDING).toBe(0)
     expect(DomainEventDispatchStatusEnum.PROCESSING).toBe(1)

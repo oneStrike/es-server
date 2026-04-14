@@ -1,4 +1,5 @@
 import type { SQL } from 'drizzle-orm'
+import type { PurchasePricingDto } from './dto/purchase-pricing.dto'
 import { DrizzleService } from '@db/core'
 import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import {
@@ -17,7 +18,6 @@ import {
   QueryPurchasedWorkChapterCommandDto,
   QueryPurchasedWorkCommandDto,
 } from './dto/purchase.dto'
-import type { PurchasePricingDto } from './dto/purchase-pricing.dto'
 import { IPurchaseTargetResolver } from './interfaces/purchase-target-resolver.interface'
 import {
   PURCHASE_WORK_CHAPTER_TARGET_TYPES,

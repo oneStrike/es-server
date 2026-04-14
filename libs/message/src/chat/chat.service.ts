@@ -13,11 +13,11 @@ import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   DomainEventConsumerEnum,
   DomainEventDispatchService,
 } from '@libs/platform/modules/eventing'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   and,
   asc,
@@ -1209,7 +1209,7 @@ export class MessageChatService {
       | Awaited<
           ReturnType<DomainEventDispatchService['claimPendingDispatchByEvent']>
         >
-      | null
+        | null
       = null
     try {
       claimedDispatch
@@ -1256,9 +1256,9 @@ export class MessageChatService {
     }
 
     const conversationId = Number(
-      (context as Record<string, unknown>).conversationId,
+      (context).conversationId,
     )
-    const messageId = (context as Record<string, unknown>).messageId
+    const messageId = (context).messageId
     if (
       !Number.isInteger(conversationId)
       || conversationId <= 0

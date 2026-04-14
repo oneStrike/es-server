@@ -138,7 +138,7 @@ export class WorkChapterService {
    */
   async getChapterPage(
     dto: QueryWorkChapterDto,
-    context: { userId?: number; bypassVisibilityCheck?: boolean } = {},
+    context: { userId?: number, bypassVisibilityCheck?: boolean } = {},
   ) {
     const { userId, bypassVisibilityCheck = false } = context
     const conditions: SQL[] = [isNull(this.workChapter.deletedAt)]

@@ -1,12 +1,12 @@
-import { BadRequestException } from '@nestjs/common'
 import {
   DomainEventConsumerEnum,
   DomainEventDispatchStatusEnum,
 } from '@libs/platform/modules/eventing'
+import { BadRequestException } from '@nestjs/common'
 import { ChatMessageTypeEnum } from './chat.constant'
 import { MessageChatService } from './chat.service'
 
-describe('MessageChatService', () => {
+describe('messageChatService', () => {
   function createService() {
     const domainEventDispatchService = {
       claimPendingDispatchByEvent: jest.fn(),

@@ -1,6 +1,6 @@
 import { mkdtempSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 jest.mock(
   'file-type',
@@ -88,7 +88,7 @@ describe('upload service install package support', () => {
     const ipaPath = join(tempDir, 'release.ipa')
     writeFileSync(
       ipaPath,
-      Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]),
+      Buffer.from([0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]),
     )
 
     const { service, localUploadProvider } = await createService()
@@ -113,7 +113,7 @@ describe('upload service install package support', () => {
     const apkPath = join(tempDir, 'release.apk')
     writeFileSync(
       apkPath,
-      Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]),
+      Buffer.from([0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]),
     )
 
     const { service, localUploadProvider } = await createService()

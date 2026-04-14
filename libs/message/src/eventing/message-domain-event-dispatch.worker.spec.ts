@@ -1,12 +1,12 @@
 import {
+  DOMAIN_EVENT_DISPATCH_MAX_RETRY,
   DomainEventConsumerEnum,
   DomainEventDispatchStatusEnum,
-  DOMAIN_EVENT_DISPATCH_MAX_RETRY,
 } from '@libs/platform/modules/eventing'
 import { MessageNotificationDispatchStatusEnum } from '../notification/notification.constant'
 import { MessageDomainEventDispatchWorker } from './message-domain-event-dispatch.worker'
 
-describe('MessageDomainEventDispatchWorker', () => {
+describe('messageDomainEventDispatchWorker', () => {
   function buildDispatch(retryCount: number) {
     return {
       id: 21n,

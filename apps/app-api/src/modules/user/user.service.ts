@@ -26,8 +26,8 @@ import {
   ChangeMyPhoneDto,
   QueryMyBadgeDto,
   QueryMyExperienceRecordDto,
-  QueryUserMentionPageDto,
   QueryMyPointRecordDto,
+  QueryUserMentionPageDto,
   UpdateMyProfileDto,
   UserCenterDto,
 } from '@libs/user/dto/user-self.dto'

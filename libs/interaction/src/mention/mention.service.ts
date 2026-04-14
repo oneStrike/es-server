@@ -1,13 +1,4 @@
 import type { AppUserSelect } from '@db/schema'
-import { DrizzleService } from '@db/core'
-import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
-import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
-import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
-import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
-import { UserService } from '@libs/user/user.service'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
-import { MentionSourceTypeEnum } from './mention.constant'
 import type {
   BuildMentionBodyTokensInput,
   DeleteMentionsInTxInput,
@@ -16,6 +7,14 @@ import type {
   NormalizedMentionDraft,
   ReplaceMentionsInTxInput,
 } from './mention.type'
+import { DrizzleService } from '@db/core'
+import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
+import { UserService } from '@libs/user/user.service'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { MentionSourceTypeEnum } from './mention.constant'
 
 /**
  * mentions 共享服务。
@@ -270,7 +269,7 @@ export class MentionService {
         and(
           eq(this.userMention.sourceType, input.sourceType),
           input.sourceIds.length === 1
-            ? eq(this.userMention.sourceId, input.sourceIds[0]!)
+            ? eq(this.userMention.sourceId, input.sourceIds[0])
             : inArray(this.userMention.sourceId, input.sourceIds),
         ),
       )

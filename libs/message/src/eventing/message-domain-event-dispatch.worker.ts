@@ -1,12 +1,12 @@
 import {
-  DomainEventConsumerEnum,
   DOMAIN_EVENT_DISPATCH_MAX_RETRY,
+  DomainEventConsumerEnum,
   DomainEventDispatchService,
 } from '@libs/platform/modules/eventing'
 import { Injectable } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
-import { MessageNotificationDispatchStatusEnum } from '../notification/notification.constant'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'
+import { MessageNotificationDispatchStatusEnum } from '../notification/notification.constant'
 import { ChatRealtimeEventConsumer } from './chat-realtime-event.consumer'
 import { NotificationEventConsumer } from './notification-event.consumer'
 

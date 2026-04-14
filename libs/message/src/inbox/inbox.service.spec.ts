@@ -1,6 +1,6 @@
 import { MessageInboxService } from './inbox.service'
 
-describe('MessageInboxService', () => {
+describe('messageInboxService', () => {
   function createSummaryService() {
     const countMock = jest.fn().mockResolvedValue(1)
     const selectMock = jest

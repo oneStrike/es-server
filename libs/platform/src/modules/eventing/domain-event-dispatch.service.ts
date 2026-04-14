@@ -1,5 +1,6 @@
 import type { DomainEventDispatchRecord, DomainEventRecord } from './domain-event.type'
 import { DrizzleService } from '@db/core'
+import { Injectable } from '@nestjs/common'
 import { and, asc, eq, isNull, lte, or } from 'drizzle-orm'
 import {
   DOMAIN_EVENT_DISPATCH_BATCH_SIZE,
@@ -8,7 +9,6 @@ import {
   DomainEventConsumerEnum,
   DomainEventDispatchStatusEnum,
 } from './eventing.constant'
-import { Injectable } from '@nestjs/common'
 
 /**
  * 通用领域事件 dispatch 状态机服务。
@@ -65,7 +65,7 @@ export class DomainEventDispatchService {
       .from(this.domainEventDispatch)
       .where(and(
         consumers.length === 1
-          ? eq(this.domainEventDispatch.consumer, consumers[0]!)
+          ? eq(this.domainEventDispatch.consumer, consumers[0])
           : or(...consumers.map(consumer => eq(this.domainEventDispatch.consumer, consumer))),
         eq(this.domainEventDispatch.status, DomainEventDispatchStatusEnum.PENDING),
         or(
@@ -175,7 +175,7 @@ export class DomainEventDispatchService {
       .from(this.domainEventDispatch)
       .where(and(
         consumers.length === 1
-          ? eq(this.domainEventDispatch.consumer, consumers[0]!)
+          ? eq(this.domainEventDispatch.consumer, consumers[0])
           : or(...consumers.map(consumer => eq(this.domainEventDispatch.consumer, consumer))),
         eq(this.domainEventDispatch.status, DomainEventDispatchStatusEnum.PROCESSING),
         lte(this.domainEventDispatch.nextRetryAt, now),

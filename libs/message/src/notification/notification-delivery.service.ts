@@ -1,7 +1,7 @@
 import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing'
-import type { NotificationDeliveryPageItem, } from './notification-delivery.type'
-import type { NotificationProjectionApplyResult } from '../eventing/message-event.type'
 import type { SQL } from 'drizzle-orm'
+import type { NotificationProjectionApplyResult } from '../eventing/message-event.type'
+import type { NotificationDeliveryPageItem, } from './notification-delivery.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, sql } from 'drizzle-orm'
@@ -13,9 +13,9 @@ import { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import {
   getMessageNotificationCategoryLabel,
   getMessageNotificationDispatchStatusLabel,
-  MessageNotificationDispatchStatusEnum,
-  MessageNotificationCategoryKey,
   MESSAGE_NOTIFICATION_CATEGORY_KEYS,
+  MessageNotificationCategoryKey,
+  MessageNotificationDispatchStatusEnum,
 } from './notification.constant'
 
 @Injectable()
@@ -46,7 +46,7 @@ export class MessageNotificationDeliveryService {
           projectionKey?: string
           receiverUserId?: number
         }
-      | null
+        | null
 
     const categoryKey =
       typeof notification?.categoryKey === 'string'

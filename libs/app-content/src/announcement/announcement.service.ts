@@ -6,12 +6,12 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { assertValidTimeRange } from '@libs/platform/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq, gte, isNull, lte, or, sql } from 'drizzle-orm'
+import { AnnouncementNotificationFanoutService } from './announcement-notification-fanout.service'
 import {
   CreateAnnouncementDto,
   QueryAnnouncementDto,
   UpdateAnnouncementDto,
 } from './dto/announcement.dto'
-import { AnnouncementNotificationFanoutService } from './announcement-notification-fanout.service'
 
 /**
  * 系统公告服务
@@ -353,5 +353,4 @@ export class AppAnnouncementService {
 
     return platforms.length > 0 ? [...new Set(platforms)] : undefined
   }
-
 }

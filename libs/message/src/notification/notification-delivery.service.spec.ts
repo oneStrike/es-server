@@ -3,10 +3,10 @@ import type {
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
-import { MessageNotificationDispatchStatusEnum } from './notification.constant'
 import { MessageNotificationDeliveryService } from './notification-delivery.service'
+import { MessageNotificationDispatchStatusEnum } from './notification.constant'
 
-describe('MessageNotificationDeliveryService', () => {
+describe('messageNotificationDeliveryService', () => {
   it('uses numeric dispatch status enums', async () => {
     const { MessageNotificationDispatchStatusEnum } = await import(
       './notification.constant'

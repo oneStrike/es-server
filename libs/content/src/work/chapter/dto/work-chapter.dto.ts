@@ -1,9 +1,9 @@
-import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
+import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
 import {
   PurchasePricingDto,
   PurchasePricingFieldsDto,
 } from '@libs/interaction/purchase/dto/purchase-pricing.dto'
-import { CommentSortDto } from '@libs/interaction/comment/dto/comment.dto'
+import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property'

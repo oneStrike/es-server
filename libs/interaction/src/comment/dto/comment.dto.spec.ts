@@ -1,6 +1,6 @@
-import 'reflect-metadata'
 import { ValidationPipe } from '@nestjs/common'
 import { CreateCommentBodyDto, ReplyCommentBodyDto } from './comment.dto'
+import 'reflect-metadata'
 
 describe('comment dto write contract', () => {
   const pipe = new ValidationPipe({

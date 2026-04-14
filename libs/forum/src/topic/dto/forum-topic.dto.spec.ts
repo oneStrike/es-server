@@ -1,6 +1,6 @@
-import 'reflect-metadata'
 import { ValidationPipe } from '@nestjs/common'
 import { CreateUserForumTopicDto, UpdateForumTopicDto } from './forum-topic.dto'
+import 'reflect-metadata'
 
 describe('forum topic dto write contract', () => {
   const pipe = new ValidationPipe({

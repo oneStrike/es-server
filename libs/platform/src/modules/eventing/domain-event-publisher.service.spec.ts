@@ -1,10 +1,10 @@
+import { DomainEventPublisher } from './domain-event-publisher.service'
 import {
   DomainEventConsumerEnum,
   DomainEventDispatchStatusEnum,
 } from './eventing.constant'
-import { DomainEventPublisher } from './domain-event-publisher.service'
 
-describe('DomainEventPublisher', () => {
+describe('domainEventPublisher', () => {
   let service: DomainEventPublisher
   let drizzle: any
   let insertDispatchValuesMock: jest.Mock

@@ -12,7 +12,6 @@ import {
 import { PageDto } from '@libs/platform/dto'
 import {
   getMessageNotificationCategoryLabel,
-  isMessageNotificationCategoryKey,
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   MessageNotificationCategoryKey,
   MessageNotificationDispatchStatusEnum,

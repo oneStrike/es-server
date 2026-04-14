@@ -1,4 +1,4 @@
-import { ContentPermissionService } from '@libs/content/permission/content-permission.service'
+import type { ContentPermissionService } from '@libs/content/permission/content-permission.service'
 import {
   PaymentMethodEnum,
   PurchaseStatusEnum,
