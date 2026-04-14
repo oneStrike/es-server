@@ -67,11 +67,11 @@ export const forumTopic = pgTable("forum_topic", {
    */
   isHidden: boolean().default(false).notNull(),
   /**
-   * 审核状态
+   * 审核状态（0=待审核，1=已通过，2=已拒绝）
    */
   auditStatus: smallint().default(1).notNull(),
   /**
-   * 审核角色
+   * 审核角色（0=版主，1=管理员）
    */
   auditRole: smallint(),
   /**

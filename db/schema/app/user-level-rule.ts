@@ -33,7 +33,7 @@ export const userLevelRule = pgTable(
      */
     requiredExperience: integer().notNull(),
     /**
-     * 所需登录天数
+     * 所需登录天数（0=无登录天数要求）
      */
     loginDays: smallint().default(0).notNull(),
     /**
@@ -49,7 +49,7 @@ export const userLevelRule = pgTable(
      */
     color: varchar({ length: 20 }),
     /**
-     * 排序值（数值越小越靠前）
+     * 排序值（0=默认排序，数值越小越靠前）
      */
     sortOrder: smallint().default(0).notNull(),
     /**
@@ -61,31 +61,31 @@ export const userLevelRule = pgTable(
      */
     business: varchar({ length: 20 }),
     /**
-     * 每日发帖数量上限，0表示无限制
+     * 每日发帖数量上限（0=不限制）
      */
     dailyTopicLimit: smallint().default(0).notNull(),
     /**
-     * 每日回复和评论数量上限，0表示无限制
+     * 每日回复和评论数量上限（0=不限制）
      */
     dailyReplyCommentLimit: smallint().default(0).notNull(),
     /**
-     * 发帖间隔秒数（防刷屏），0表示无限制
+     * 发帖间隔秒数（0=不限制）
      */
     postInterval: smallint().default(0).notNull(),
     /**
-     * 每日点赞次数上限，0表示无限制
+     * 每日点赞次数上限（0=不限制）
      */
     dailyLikeLimit: smallint().default(0).notNull(),
     /**
-     * 每日收藏次数上限，0表示无限制
+     * 每日收藏次数上限（0=不限制）
      */
     dailyFavoriteLimit: smallint().default(0).notNull(),
     /**
-     * 黑名单上限
+     * 黑名单上限（默认值 10）
      */
     blacklistLimit: smallint().default(10).notNull(),
     /**
-     * 作品收藏上限
+     * 作品收藏上限（默认值 100）
      */
     workCollectionLimit: smallint().default(100).notNull(),
     /**

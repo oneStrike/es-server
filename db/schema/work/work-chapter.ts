@@ -31,7 +31,7 @@ export const workChapter = pgTable(
      */
     workId: integer().notNull(),
     /**
-     * 作品类型
+     * 作品类型（1=漫画，2=小说）
      */
     workType: smallint().notNull(),
     /**
@@ -67,7 +67,7 @@ export const workChapter = pgTable(
      */
     publishAt: timestamp({ withTimezone: true, precision: 6 }),
     /**
-     * 阅读规则
+     * 阅读规则（-1=继承作品，0=所有人可见，1=登录用户可见，2=会员可见，3=需购买可见）
      */
     viewRule: smallint().default(-1).notNull(),
     /**

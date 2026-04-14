@@ -1051,27 +1051,40 @@ export class ComicArchiveImportService {
   }
 
   private normalizeTaskStatus(value: unknown) {
-    return Object.values(ComicArchiveTaskStatusEnum).includes(
-      value as ComicArchiveTaskStatusEnum,
-    )
-      ? (value as ComicArchiveTaskStatusEnum)
-      : ComicArchiveTaskStatusEnum.DRAFT
+    if (
+      value === ComicArchiveTaskStatusEnum.DRAFT ||
+      value === ComicArchiveTaskStatusEnum.PENDING ||
+      value === ComicArchiveTaskStatusEnum.PROCESSING ||
+      value === ComicArchiveTaskStatusEnum.SUCCESS ||
+      value === ComicArchiveTaskStatusEnum.PARTIAL_FAILED ||
+      value === ComicArchiveTaskStatusEnum.FAILED ||
+      value === ComicArchiveTaskStatusEnum.EXPIRED ||
+      value === ComicArchiveTaskStatusEnum.CANCELLED
+    ) {
+      return value
+    }
+    throw new InternalServerErrorException('漫画压缩包导入任务状态非法')
   }
 
   private normalizePreviewMode(value: unknown) {
-    return Object.values(ComicArchivePreviewModeEnum).includes(
-      value as ComicArchivePreviewModeEnum,
-    )
-      ? (value as ComicArchivePreviewModeEnum)
-      : ComicArchivePreviewModeEnum.SINGLE_CHAPTER
+    if (
+      value === ComicArchivePreviewModeEnum.SINGLE_CHAPTER ||
+      value === ComicArchivePreviewModeEnum.MULTI_CHAPTER
+    ) {
+      return value
+    }
+    throw new InternalServerErrorException('漫画压缩包导入任务模式非法')
   }
 
   private normalizeImportItemStatus(value: unknown) {
-    return Object.values(ComicArchiveImportItemStatusEnum).includes(
-      value as ComicArchiveImportItemStatusEnum,
-    )
-      ? (value as ComicArchiveImportItemStatusEnum)
-      : ComicArchiveImportItemStatusEnum.FAILED
+    if (
+      value === ComicArchiveImportItemStatusEnum.PENDING ||
+      value === ComicArchiveImportItemStatusEnum.SUCCESS ||
+      value === ComicArchiveImportItemStatusEnum.FAILED
+    ) {
+      return value
+    }
+    throw new InternalServerErrorException('漫画压缩包导入结果状态非法')
   }
 
   private normalizeIgnoreReason(value: unknown) {

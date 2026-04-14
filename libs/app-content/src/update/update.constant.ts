@@ -2,16 +2,16 @@
  * App 更新平台枚举。
  */
 export enum AppUpdatePlatformEnum {
-  IOS = 'ios',
-  ANDROID = 'android',
+  IOS = 1,
+  ANDROID = 2,
 }
 
 /**
  * 安装包来源枚举。
  */
 export enum AppUpdatePackageSourceEnum {
-  UPLOAD = 'upload',
-  URL = 'url',
+  UPLOAD = 1,
+  URL = 2,
 }
 
 /**

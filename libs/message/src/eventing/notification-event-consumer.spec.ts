@@ -1,5 +1,6 @@
 import { NotificationEventConsumer } from './notification-event.consumer'
 import type { DomainEventRecord, DomainEventDispatchRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 
 describe('NotificationEventConsumer', () => {
   let service: NotificationEventConsumer
@@ -62,7 +63,7 @@ describe('NotificationEventConsumer', () => {
       id: 21n,
       eventId: 11n,
       consumer: 'notification',
-      status: 'processing',
+      status: DomainEventDispatchStatusEnum.PROCESSING,
       retryCount: 0,
       nextRetryAt: null,
       lastError: null,

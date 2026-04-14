@@ -37,9 +37,9 @@ export const checkInStreakRewardGrant = pgTable('check_in_streak_reward_grant', 
   repeatable: boolean().default(false).notNull(),
   /** 触发本次连续奖励的签到日期。 */
   triggerSignDate: date().notNull(),
-  /** 连续奖励发放状态。 */
+  /** 连续奖励发放状态（0=待处理，1=已成功，2=已失败）。 */
   grantStatus: smallint().default(0).notNull(),
-  /** 连续奖励发放结果类型。 */
+  /** 连续奖励发放结果类型（1=本次真实落账，2=命中幂等未重复落账，3=本次处理失败）。 */
   grantResultType: smallint(),
   /** 业务幂等键。 */
   bizKey: varchar({ length: 200 }).notNull(),

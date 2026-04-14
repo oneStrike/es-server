@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common'
 import {
   CheckInCycleTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
+  CheckInRewardSourceTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from '../check-in.constant'
 import { CheckInServiceSupport } from '../check-in.service.support'
@@ -187,7 +188,7 @@ describe('check-in service support reward rules', () => {
     )
 
     expect(dateHit).toEqual({
-      resolvedRewardSourceType: 'DATE_RULE',
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
       resolvedRewardRuleKey: 'DATE:2026-04-30',
       resolvedRewardConfig: { points: 300 },
     })
@@ -216,7 +217,7 @@ describe('check-in service support reward rules', () => {
     )
 
     expect(monthLastDayHit).toEqual({
-      resolvedRewardSourceType: 'PATTERN_RULE',
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
       resolvedRewardRuleKey: 'MONTH_LAST_DAY',
       resolvedRewardConfig: { points: 30 },
     })
@@ -245,7 +246,7 @@ describe('check-in service support reward rules', () => {
     )
 
     expect(patternHit).toEqual({
-      resolvedRewardSourceType: 'PATTERN_RULE',
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
       resolvedRewardRuleKey: 'MONTH_DAY:15',
       resolvedRewardConfig: { experience: 15 },
     })
@@ -261,7 +262,7 @@ describe('check-in service support reward rules', () => {
     )
 
     expect(fallbackHit).toEqual({
-      resolvedRewardSourceType: 'BASE_REWARD',
+      resolvedRewardSourceType: CheckInRewardSourceTypeEnum.BASE_REWARD,
       resolvedRewardRuleKey: null,
       resolvedRewardConfig: { points: 5 },
     })

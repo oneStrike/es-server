@@ -1,3 +1,4 @@
+import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 import { ChatRealtimeEventConsumer } from './chat-realtime-event.consumer'
 
 describe('ChatRealtimeEventConsumer', () => {
@@ -32,7 +33,7 @@ describe('ChatRealtimeEventConsumer', () => {
         id: 21n,
         eventId: 11n,
         consumer: 'chat_realtime',
-        status: 'processing',
+        status: DomainEventDispatchStatusEnum.PROCESSING,
         retryCount: 0,
         nextRetryAt: null,
         lastError: null,

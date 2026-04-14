@@ -1,4 +1,5 @@
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { boolean, check, index, integer, jsonb, pgTable, smallint, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core'
 
 /**
  * 漫画压缩包导入任务表。
@@ -20,13 +21,13 @@ export const workComicArchiveImportTask = pgTable(
      */
     workId: integer().notNull(),
     /**
-     * 预解析模式。
+     * 预解析模式（1=单章节压缩包，2=多章节压缩包）。
      */
-    mode: varchar({ length: 32 }).notNull(),
+    mode: smallint().notNull(),
     /**
-     * 当前任务状态。
+     * 当前任务状态（0=草稿，1=待处理，2=处理中，3=成功，4=部分失败，5=失败，6=已过期，7=已取消）。
      */
-    status: varchar({ length: 32 }).notNull(),
+    status: smallint().notNull(),
     /**
      * 原始压缩包文件名。
      */
@@ -116,6 +117,20 @@ export const workComicArchiveImportTask = pgTable(
      * 创建时间索引。
      */
     index('work_comic_archive_import_task_created_at_idx').on(table.createdAt),
+    /**
+     * 预解析模式枚举约束。
+     */
+    check(
+      'work_comic_archive_import_task_mode_valid_chk',
+      sql`${table.mode} in (1, 2)`,
+    ),
+    /**
+     * 任务状态枚举约束。
+     */
+    check(
+      'work_comic_archive_import_task_status_valid_chk',
+      sql`${table.status} in (0, 1, 2, 3, 4, 5, 6, 7)`,
+    ),
   ],
 )
 

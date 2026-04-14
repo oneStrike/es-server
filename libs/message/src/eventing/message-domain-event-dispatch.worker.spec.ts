@@ -1,5 +1,6 @@
 import {
   DomainEventConsumerEnum,
+  DomainEventDispatchStatusEnum,
   DOMAIN_EVENT_DISPATCH_MAX_RETRY,
 } from '@libs/platform/modules/eventing'
 import { MessageNotificationDispatchStatusEnum } from '../notification/notification.constant'
@@ -11,7 +12,7 @@ describe('MessageDomainEventDispatchWorker', () => {
       id: 21n,
       eventId: 11n,
       consumer: DomainEventConsumerEnum.NOTIFICATION,
-      status: 'processing',
+      status: DomainEventDispatchStatusEnum.PROCESSING,
       retryCount,
       nextRetryAt: null,
       lastError: null,

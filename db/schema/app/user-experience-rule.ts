@@ -13,10 +13,8 @@ export const userExperienceRule = pgTable("user_experience_rule", {
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
-   * 规则类型。
-   * 取值与语义统一以 GrowthRuleTypeEnum 为准；
-   * 举报奖励当前以 REPORT_VALID / REPORT_INVALID 表达裁决结果，*_REPORT 仅保留历史兼容语义；
-   * 章节类编码已统一收敛到 300 / 400 段。
+   * 规则类型（取值见成长规则枚举）。
+   * 举报奖励当前以“举报有效 / 举报无效”表达裁决结果，章节类编码统一收敛到 300 / 400 段。
    */
   type: smallint().notNull(),
   /**

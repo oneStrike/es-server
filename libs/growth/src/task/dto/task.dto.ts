@@ -68,14 +68,14 @@ export class BaseTaskDto extends BaseDto {
   cover?: string
 
   @EnumProperty({
-    description: '任务场景类型',
+    description: '任务场景类型（1=新手引导任务；2=日常任务；4=活动任务）',
     example: TaskTypeEnum.ONBOARDING,
     enum: TaskTypeEnum,
   })
   type!: TaskTypeEnum
 
   @EnumProperty({
-    description: '任务状态',
+    description: '任务状态（0=草稿；1=已发布；2=已下线）',
     example: TaskStatusEnum.DRAFT,
     enum: TaskStatusEnum,
   })
@@ -88,28 +88,28 @@ export class BaseTaskDto extends BaseDto {
   isEnabled!: boolean
 
   @EnumProperty({
-    description: '领取模式',
+    description: '领取模式（1=自动领取；2=手动领取）',
     example: TaskClaimModeEnum.AUTO,
     enum: TaskClaimModeEnum,
   })
   claimMode!: TaskClaimModeEnum
 
   @EnumProperty({
-    description: '完成模式',
+    description: '完成模式（1=自动完成；2=手动完成）',
     example: TaskCompleteModeEnum.AUTO,
     enum: TaskCompleteModeEnum,
   })
   completeMode!: TaskCompleteModeEnum
 
   @EnumProperty({
-    description: '任务目标类型',
+    description: '任务目标类型（1=手动推进；2=事件累计次数驱动）',
     example: TaskObjectiveTypeEnum.MANUAL,
     enum: TaskObjectiveTypeEnum,
   })
   objectiveType!: TaskObjectiveTypeEnum
 
   @EnumProperty({
-    description: '目标事件编码，EVENT_COUNT 任务必填',
+    description: '目标事件编码；仅“事件累计次数驱动”任务需要填写',
     example: GrowthRuleTypeEnum.COMIC_CHAPTER_READ,
     enum: GrowthRuleTypeEnum,
     required: false,
@@ -131,7 +131,7 @@ export class BaseTaskDto extends BaseDto {
   rewardConfig?: TaskRewardConfig | null
 
   @JsonProperty({
-    description: '目标附加配置，EVENT_COUNT 任务可用于表达额外过滤条件',
+    description: '目标附加配置；“事件累计次数驱动”任务可用于表达额外过滤条件',
     example: { sectionId: 10 },
     required: false,
   })
@@ -153,7 +153,7 @@ export class BaseTaskDto extends BaseDto {
 
   @JsonProperty({
     description:
-      '周期规则，当前仅识别 type=once/daily/weekly/monthly；timezone 可选，使用 IANA 时区标识',
+      '周期规则，当前仅识别一次性、每日、每周、每月四种类型；timezone 可选，使用 IANA 时区标识',
     example: { type: 'daily', timezone: 'Asia/Shanghai' },
     required: false,
   })
@@ -191,21 +191,22 @@ export class BaseTaskAssignmentDto extends BaseDto {
   cycleKey!: string
 
   @EnumProperty({
-    description: '任务分配状态，PENDING 表示已领取待开始',
+    description: '任务分配状态（0=已领取待开始；1=进行中；2=已完成；3=已过期）',
     example: TaskAssignmentStatusEnum.PENDING,
     enum: TaskAssignmentStatusEnum,
   })
   status!: TaskAssignmentStatusEnum
 
   @EnumProperty({
-    description: '奖励结算状态',
+    description: '奖励结算状态（0=待结算；1=已结算成功；2=结算失败）',
     example: TaskAssignmentRewardStatusEnum.PENDING,
     enum: TaskAssignmentRewardStatusEnum,
   })
   rewardStatus!: TaskAssignmentRewardStatusEnum
 
   @EnumProperty({
-    description: '奖励结算结果类型',
+    description:
+      '奖励结算结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次结算失败）',
     example: TaskAssignmentRewardResultTypeEnum.APPLIED,
     enum: TaskAssignmentRewardResultTypeEnum,
     required: false,
@@ -357,7 +358,7 @@ export class QueryTaskAssignmentReconciliationDto extends IntersectionType(
   eventBizKey?: string
 
   @EnumProperty({
-    description: '奖励到账提醒投递状态',
+    description: '奖励到账提醒投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.DELIVERED,
     enum: MessageNotificationDispatchStatusEnum,
     required: false,
@@ -375,7 +376,7 @@ export class QueryMyTaskDto extends IntersectionType(
   PartialType(PickType(BaseTaskAssignmentDto, ['status'] as const)),
 ) {
   @EnumProperty({
-    description: '任务场景类型',
+    description: '任务场景类型（1=新手引导任务；2=日常任务；4=活动任务）',
     example: TaskTypeEnum.DAILY,
     required: false,
     enum: TaskTypeEnum,
@@ -446,7 +447,7 @@ export class AvailableTaskPageItemDto extends PickType(BaseTaskDto, [
   'repeatRule',
 ] as const) {
   @EnumProperty({
-    description: '用户可见任务状态',
+    description: '用户可见任务状态（可领取、已领取、进行中、已完成、奖励待补偿、奖励已到账、已过期、不可用）',
     example: TaskUserVisibleStatusEnum.CLAIMABLE,
     enum: TaskUserVisibleStatusEnum,
     validation: false,
@@ -495,7 +496,7 @@ export class MyTaskPageItemDto extends PickType(BaseTaskAssignmentDto, [
   'lastRewardError',
 ] as const) {
   @EnumProperty({
-    description: '用户可见任务状态',
+    description: '用户可见任务状态（可领取、已领取、进行中、已完成、奖励待补偿、奖励已到账、已过期、不可用）',
     example: TaskUserVisibleStatusEnum.IN_PROGRESS,
     enum: TaskUserVisibleStatusEnum,
     validation: false,
@@ -579,7 +580,7 @@ export class AdminTaskPageResponseDto extends PickType(BaseTaskDto, [
   'repeatRule',
 ] as const) {
   @NumberProperty({
-    description: '活跃 assignment 数（PENDING/IN_PROGRESS/COMPLETED）',
+    description: '活跃任务实例数（已领取待开始、进行中、已完成三种状态之和）',
     example: 12,
     validation: false,
   })
@@ -668,7 +669,7 @@ export class AdminTaskRewardReminderDto {
   bizKey?: string
 
   @EnumProperty({
-    description: '奖励到账提醒投递状态',
+    description: '奖励到账提醒投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.DELIVERED,
     enum: MessageNotificationDispatchStatusEnum,
     required: false,

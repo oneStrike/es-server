@@ -26,10 +26,10 @@ export const checkInPlan = pgTable('check_in_plan', {
   planCode: varchar({ length: 50 }).notNull(),
   /** 签到计划名称。 */
   planName: varchar({ length: 200 }).notNull(),
-  /** 计划状态。 */
+  /** 计划状态（0=草稿，1=已发布，2=已下线，3=已停用）。 */
   status: smallint().default(0).notNull(),
-  /** 周期类型。 */
-  cycleType: varchar({ length: 16 }).notNull(),
+  /** 周期类型（1=按周切分，2=按月切分）。 */
+  cycleType: smallint().notNull(),
   /** 计划开始日期。 */
   startDate: date().notNull(),
   /** 每周期可补签次数。 */
@@ -68,7 +68,7 @@ export const checkInPlan = pgTable('check_in_plan', {
   ),
   check(
     'check_in_plan_cycle_type_valid_chk',
-    sql`${table.cycleType} in ('weekly', 'monthly')`,
+    sql`${table.cycleType} in (1, 2)`,
   ),
   check(
     'check_in_plan_date_range_valid_chk',

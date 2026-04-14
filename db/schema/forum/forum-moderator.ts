@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 论坛版主表 - 管理论坛版主信息，包括角色类型、权限设置、启用状态等
@@ -24,11 +24,11 @@ export const forumModerator = pgTable("forum_moderator", {
   /**
    * 版主角色类型（1=超级版主，2=分组版主，3=板块版主）
    */
-  roleType: integer().default(3).notNull(),
+  roleType: smallint().default(3).notNull(),
   /**
    * 权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）
    */
-  permissions: integer().array().default(sql`ARRAY[]::integer[]`),
+  permissions: smallint().array().default(sql`ARRAY[]::smallint[]`),
   /**
    * 是否启用
    */
@@ -74,6 +74,8 @@ export const forumModerator = pgTable("forum_moderator", {
      * 删除时间索引
      */
     index("forum_moderator_deleted_at_idx").on(table.deletedAt),
+    check("forum_moderator_role_type_valid_chk", sql`${table.roleType} in (1, 2, 3)`),
+    check("forum_moderator_permissions_valid_chk", sql`${table.permissions} is null or ${table.permissions} <@ ARRAY[1,2,3,4,5,6]::smallint[]`),
 ]);
 
 export type ForumModeratorSelect = typeof forumModerator.$inferSelect;

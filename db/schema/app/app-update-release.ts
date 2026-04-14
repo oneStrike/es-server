@@ -6,6 +6,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  smallint,
   timestamp,
   unique,
   varchar,
@@ -38,10 +39,9 @@ export const appUpdateRelease = pgTable(
      */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     /**
-     * 发布平台。
-     * 当前仅支持 ios / android。
+     * 发布平台（1=苹果端，2=安卓端）。
      */
-    platform: varchar({ length: 20 }).notNull(),
+    platform: smallint().notNull(),
     /**
      * 展示版本号。
      * 用于后台管理与客户端提示。
@@ -61,10 +61,10 @@ export const appUpdateRelease = pgTable(
      */
     forceUpdate: boolean().default(false).notNull(),
     /**
-     * 安装包来源类型。
-     * upload=后台上传，url=外部地址。
+     * 安装包来源类型（1=后台上传，2=外部下载地址）。
+     * 为空表示当前版本未配置安装包地址。
      */
-    packageSourceType: varchar({ length: 20 }),
+    packageSourceType: smallint(),
     /**
      * 安装包地址。
      * upload 模式下可为本地 `/files/...` 或 CDN 绝对地址。
@@ -159,6 +159,20 @@ export const appUpdateRelease = pgTable(
     check(
       'app_update_release_build_code_positive_chk',
       sql`${table.buildCode} > 0`,
+    ),
+    /**
+     * 平台枚举约束。
+     */
+    check(
+      'app_update_release_platform_valid_chk',
+      sql`${table.platform} in (1, 2)`,
+    ),
+    /**
+     * 安装包来源枚举约束。
+     */
+    check(
+      'app_update_release_package_source_type_valid_chk',
+      sql`${table.packageSourceType} is null or ${table.packageSourceType} in (1, 2)`,
     ),
   ],
 )

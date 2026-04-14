@@ -1,4 +1,7 @@
-import { DomainEventConsumerEnum } from './eventing.constant'
+import {
+  DomainEventConsumerEnum,
+  DomainEventDispatchStatusEnum,
+} from './eventing.constant'
 import { DomainEventPublisher } from './domain-event-publisher.service'
 
 describe('DomainEventPublisher', () => {
@@ -28,7 +31,7 @@ describe('DomainEventPublisher', () => {
         id: 21n,
         eventId: 11n,
         consumer: DomainEventConsumerEnum.NOTIFICATION,
-        status: 'pending',
+        status: DomainEventDispatchStatusEnum.PENDING,
         retryCount: 0,
         nextRetryAt: null,
         lastError: null,
@@ -40,7 +43,7 @@ describe('DomainEventPublisher', () => {
         id: 22n,
         eventId: 11n,
         consumer: DomainEventConsumerEnum.CHAT_REALTIME,
-        status: 'pending',
+        status: DomainEventDispatchStatusEnum.PENDING,
         retryCount: 0,
         nextRetryAt: null,
         lastError: null,

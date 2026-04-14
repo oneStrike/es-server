@@ -51,11 +51,11 @@ describe('app update service', () => {
     await expect(
       service.create(
         {
-          platform: 'android',
+          platform: 2,
           versionName: '1.2.0',
           buildCode: 120,
           forceUpdate: false,
-          packageSourceType: 'url',
+          packageSourceType: 2,
           packageUrl: 'https://example.com/app-release.apk',
           storeLinks: [
             {
@@ -80,7 +80,7 @@ describe('app update service', () => {
           appUpdateRelease: {
             findFirst: jest.fn().mockResolvedValue({
               id: 1,
-              platform: 'ios',
+              platform: 1,
               isPublished: true,
             }),
           },
@@ -97,7 +97,7 @@ describe('app update service', () => {
       service.update(
         {
           id: 1,
-          platform: 'ios',
+          platform: 1,
           versionName: '1.2.0',
           buildCode: 120,
           forceUpdate: false,
@@ -131,11 +131,11 @@ describe('app update service', () => {
     await expect(
       service.create(
         {
-          platform: 'android',
+          platform: 2,
           versionName: '1.2.0',
           buildCode: 120,
           forceUpdate: false,
-          packageSourceType: 'url',
+          packageSourceType: 2,
           packageUrl: 'https://example.com/app-release.apk',
           storeLinks: [
             {
@@ -183,11 +183,11 @@ describe('app update service', () => {
 
     await service.create(
       {
-        platform: 'android',
+        platform: 2,
         versionName: '1.2.0',
         buildCode: 120,
         forceUpdate: false,
-        packageSourceType: 'url',
+        packageSourceType: 2,
         packageUrl: 'https://example.com/app-release.apk',
         popupBackgroundImage: 'https://cdn.example.com/app-update/bg.png',
         popupBackgroundPosition: 'top center',
@@ -209,7 +209,7 @@ describe('app update service', () => {
 
     const targetRelease = {
       id: 8,
-      platform: 'android',
+      platform: 2,
       isPublished: false,
       packageUrl: 'https://example.com/release.apk',
       customDownloadUrl: null,
@@ -272,7 +272,7 @@ describe('app update service', () => {
           appUpdateRelease: {
             findFirst: jest.fn().mockResolvedValue({
               id: 3,
-              platform: 'android',
+              platform: 2,
               versionName: '1.2.0',
               buildCode: 120,
               releaseNotes: '修复已知问题',
@@ -354,7 +354,7 @@ describe('app update service', () => {
           appUpdateRelease: {
             findFirst: jest.fn().mockResolvedValue({
               id: 3,
-              platform: 'android',
+              platform: 2,
               versionName: '1.2.0',
               buildCode: 120,
               releaseNotes: '修复已知问题',
@@ -405,7 +405,7 @@ describe('app update service', () => {
 
     await expect(
       service.checkUpdate({
-        platform: 'android',
+        platform: 2,
         channelCode: 'huawei',
         versionName: '1.0.0',
         buildCode: 100,
@@ -448,7 +448,7 @@ describe('app update service', () => {
           appUpdateRelease: {
             findFirst: jest.fn().mockResolvedValue({
               id: 4,
-              platform: 'ios',
+              platform: 1,
               versionName: '2.0.0',
               buildCode: 200,
               releaseNotes: '新版本',
@@ -467,7 +467,7 @@ describe('app update service', () => {
 
     await expect(
       service.checkUpdate({
-        platform: 'ios',
+        platform: 1,
         versionName: '2.0.0',
         buildCode: 200,
       } as any),

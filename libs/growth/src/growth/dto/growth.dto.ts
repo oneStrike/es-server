@@ -134,7 +134,7 @@ export class GrowthRuleTaskBindingSummaryDto {
   enabledTaskCount!: number
 
   @EnumArrayProperty({
-    description: '关联任务场景类型列表（daily=每日任务；weekly=每周任务；campaign=活动任务）',
+    description: '关联任务场景类型列表（1=新手引导任务；2=日常任务；4=活动任务）',
     enum: TaskTypeEnum,
     required: true,
     validation: false,

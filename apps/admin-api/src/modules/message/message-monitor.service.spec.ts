@@ -1,4 +1,10 @@
 import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing'
+import {
+  DomainEventDispatchStatusEnum,
+} from '@libs/platform/modules/eventing'
+import {
+  MessageNotificationDispatchStatusEnum,
+} from '@libs/message/notification/notification.constant'
 import { MessageMonitorService } from './message-monitor.service'
 
 describe('MessageMonitorService', () => {
@@ -8,7 +14,7 @@ describe('MessageMonitorService', () => {
         dispatchId: 21n,
         eventId: 11n,
         consumer: DomainEventConsumerEnum.NOTIFICATION,
-        dispatchStatus: 'failed',
+        dispatchStatus: DomainEventDispatchStatusEnum.FAILED,
         retryCount: 2,
         lastError: 'consumer boom',
         nextRetryAt: null,
@@ -17,7 +23,7 @@ describe('MessageMonitorService', () => {
         domain: 'message',
         receiverUserId: 7,
         projectionKey: 'comment-replied:101:receiver:7',
-        deliveryStatus: 'FAILED',
+        deliveryStatus: MessageNotificationDispatchStatusEnum.FAILED,
       },
     ]
     let selectCall = 0
@@ -81,7 +87,8 @@ describe('MessageMonitorService', () => {
           eventId: '11',
           consumer: DomainEventConsumerEnum.NOTIFICATION,
           eventKey: 'comment.replied',
-          deliveryStatus: 'FAILED',
+          dispatchStatus: DomainEventDispatchStatusEnum.FAILED,
+          deliveryStatus: MessageNotificationDispatchStatusEnum.FAILED,
         }),
       ],
       total: 1,

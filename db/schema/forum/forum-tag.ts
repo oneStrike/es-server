@@ -25,7 +25,7 @@ export const forumTag = pgTable("forum_tag", {
    */
   description: varchar({ length: 200 }),
   /**
-   * 排序值（数值越小越靠前）
+   * 排序值（0=默认排序，数值越小越靠前）
    */
   sortOrder: smallint().default(0).notNull(),
   /**

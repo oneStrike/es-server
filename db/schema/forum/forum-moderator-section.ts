@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { index, integer, pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { check, index, integer, pgTable, primaryKey, smallint } from "drizzle-orm/pg-core";
 
 /**
  * 论坛版主板块关联表 - 管理板块版主与板块的多对多关系，一个板块版主可以管理多个板块
@@ -18,9 +18,9 @@ export const forumModeratorSection = pgTable("forum_moderator_section", {
    */
   sectionId: integer().notNull(),
   /**
-   * 自定义权限数组（与版主基础权限做合并）
+   * 自定义权限数组（1=置顶，2=加精，3=锁定，4=删除，5=审核，6=移动）
    */
-  permissions: integer().array().default(sql`ARRAY[]::integer[]`),
+  permissions: smallint().array().default(sql`ARRAY[]::smallint[]`),
 }, (table) => [
     /**
      * 板块索引
@@ -30,6 +30,7 @@ export const forumModeratorSection = pgTable("forum_moderator_section", {
      * 版主与板块复合主键
      */
     primaryKey({ columns: [table.moderatorId, table.sectionId] }),
+    check("forum_moderator_section_permissions_valid_chk", sql`${table.permissions} is null or ${table.permissions} <@ ARRAY[1,2,3,4,5,6]::smallint[]`),
 ]);
 
 export type ForumModeratorSectionSelect = typeof forumModeratorSection.$inferSelect;

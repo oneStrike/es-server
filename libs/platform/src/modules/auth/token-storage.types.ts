@@ -1,10 +1,13 @@
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
 
 /**
- * Token 类型定义
- * 统一管理 Token 类型字面量
+ * Token 类型定义。
+ * 1=访问令牌，2=刷新令牌。
  */
-export type TokenType = 'ACCESS' | 'REFRESH'
+export enum TokenTypeEnum {
+  ACCESS = 1,
+  REFRESH = 2,
+}
 
 /**
  * Token 实体接口
@@ -18,7 +21,7 @@ export interface ITokenEntity extends GeoSnapshot {
   /** 用户 ID */
   userId: number
   /** Token 类型 */
-  tokenType: string
+  tokenType: TokenTypeEnum
   /** 过期时间 */
   expiresAt: Date
   /** 撤销时间 */
@@ -43,7 +46,7 @@ export interface CreateTokenInput extends GeoSnapshot {
   /** JWT ID */
   jti: string
   /** Token 类型 */
-  tokenType: TokenType
+  tokenType: TokenTypeEnum
   /** 过期时间 */
   expiresAt: Date
   /** 设备信息（结构化 JSON） */

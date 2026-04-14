@@ -71,7 +71,7 @@ export const userComment = pgTable(
      */
     auditById: integer(),
     /**
-     * 审核角色
+     * 审核角色（0=版主，1=管理员）
      */
     auditRole: smallint(),
     /**

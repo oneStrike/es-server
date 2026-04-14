@@ -2,7 +2,8 @@
  * Auto-converted from legacy schema.
  */
 
-import { index, integer, jsonb, pgTable, smallint, timestamp, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import { check, index, integer, jsonb, pgTable, smallint, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 成长结算审计日志表
@@ -26,15 +27,15 @@ export const growthAuditLog = pgTable("growth_audit_log", {
    */
   bizKey: varchar({ length: 120 }).notNull(),
   /**
-   * 资产类型（POINTS / EXPERIENCE / BADGE）
+   * 资产类型（1=积分，2=经验值，3=徽章）
    */
-  assetType: varchar({ length: 30 }).notNull(),
+  assetType: smallint().notNull(),
   /**
    * 动作（GRANT / CONSUME / APPLY_RULE / ASSIGN_BADGE）
    */
   action: varchar({ length: 30 }).notNull(),
   /**
-   * 规则类型（可选）
+   * 规则类型（可选，取值见成长规则枚举）
    */
   ruleType: smallint(),
   /**
@@ -74,4 +75,5 @@ export const growthAuditLog = pgTable("growth_audit_log", {
    * 请求链路索引
    */
   index("growth_audit_log_request_id_idx").on(table.requestId),
+  check("growth_audit_log_asset_type_valid_chk", sql`${table.assetType} in (1, 2, 3)`),
 ]);

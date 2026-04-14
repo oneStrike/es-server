@@ -77,7 +77,7 @@ export class AppUpdateStoreLinkSnapshotDto extends PickType(
  */
 export class BaseAppUpdateReleaseDto extends BaseDto {
   @EnumProperty({
-    description: '发布平台（ios=苹果端；android=安卓端）',
+    description: '发布平台（1=苹果端；2=安卓端）',
     example: AppUpdatePlatformEnum.ANDROID,
     enum: AppUpdatePlatformEnum,
     required: true,
@@ -117,7 +117,7 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
   forceUpdate!: boolean
 
   @EnumProperty({
-    description: '安装包来源（upload=后台上传；url=外部下载地址）',
+    description: '安装包来源（1=后台上传；2=外部下载地址）',
     example: AppUpdatePackageSourceEnum.UPLOAD,
     enum: AppUpdatePackageSourceEnum,
     required: false,
@@ -174,7 +174,7 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '更新弹窗背景图位置（center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+      '更新弹窗背景图位置（居中、顶部居中、顶部靠左、顶部靠右、底部居中、底部靠左、底部靠右、左侧居中、右侧居中）',
     example: AppUpdatePopupBackgroundPositionEnum.CENTER,
     enum: AppUpdatePopupBackgroundPositionEnum,
     required: false,
@@ -217,7 +217,7 @@ export class BaseAppUpdateReleaseDto extends BaseDto {
  */
 export class AppUpdateReleaseWriteDto {
   @EnumProperty({
-    description: '发布平台（ios=苹果端；android=安卓端）',
+    description: '发布平台（1=苹果端；2=安卓端）',
     example: AppUpdatePlatformEnum.ANDROID,
     enum: AppUpdatePlatformEnum,
     required: true,
@@ -257,7 +257,7 @@ export class AppUpdateReleaseWriteDto {
   forceUpdate!: boolean
 
   @EnumProperty({
-    description: '安装包来源（upload=后台上传；url=外部下载地址）',
+    description: '安装包来源（1=后台上传；2=外部下载地址）',
     example: AppUpdatePackageSourceEnum.UPLOAD,
     enum: AppUpdatePackageSourceEnum,
     required: false,
@@ -315,7 +315,7 @@ export class AppUpdateReleaseWriteDto {
 
   @EnumProperty({
     description:
-      '更新弹窗背景图位置（center/top center/top left/top right/bottom center/bottom left/bottom right/left center/right center）',
+      '更新弹窗背景图位置（居中、顶部居中、顶部靠左、顶部靠右、底部居中、底部靠左、底部靠右、左侧居中、右侧居中）',
     example: AppUpdatePopupBackgroundPositionEnum.CENTER,
     enum: AppUpdatePopupBackgroundPositionEnum,
     required: false,
@@ -423,7 +423,7 @@ export class AppUpdateReleaseListItemDto extends PickType(
  */
 export class AppUpdateCheckDto {
   @EnumProperty({
-    description: '客户端平台（ios=苹果端；android=安卓端）',
+    description: '客户端平台（1=苹果端；2=安卓端）',
     example: AppUpdatePlatformEnum.ANDROID,
     enum: AppUpdatePlatformEnum,
     required: true,
@@ -527,7 +527,7 @@ export class AppUpdateCheckResponseDto {
 
   @EnumProperty({
     description:
-      '更新弹窗背景图位置（center top，center top，lefttop，right bottom，center bottom，left bottom，right left，center right，center）',
+      '更新弹窗背景图位置（居中、顶部居中、顶部靠左、顶部靠右、底部居中、底部靠左、底部靠右、左侧居中、右侧居中）',
     example: AppUpdatePopupBackgroundPositionEnum.CENTER,
     enum: AppUpdatePopupBackgroundPositionEnum,
     required: false,

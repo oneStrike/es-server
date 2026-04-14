@@ -1,5 +1,8 @@
 import { BadRequestException } from '@nestjs/common'
-import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing'
+import {
+  DomainEventConsumerEnum,
+  DomainEventDispatchStatusEnum,
+} from '@libs/platform/modules/eventing'
 import { ChatMessageTypeEnum } from './chat.constant'
 import { MessageChatService } from './chat.service'
 
@@ -36,7 +39,7 @@ describe('MessageChatService', () => {
       id: 21n,
       eventId: 11n,
       consumer: DomainEventConsumerEnum.CHAT_REALTIME,
-      status: 'processing',
+      status: DomainEventDispatchStatusEnum.PROCESSING,
       retryCount: 0,
       nextRetryAt: null,
       lastError: null,

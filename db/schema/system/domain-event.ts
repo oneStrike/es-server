@@ -15,16 +15,27 @@ import {
 export const domainEvent = pgTable(
   'domain_event',
   {
+    /** 主键 ID。 */
     id: bigint({ mode: 'bigint' }).primaryKey().generatedAlwaysAsIdentity(),
+    /** 领域事件键。 */
     eventKey: varchar({ length: 120 }).notNull(),
+    /** 事件所属业务域。 */
     domain: varchar({ length: 40 }).notNull(),
+    /** 事件主体类型。 */
     subjectType: varchar({ length: 40 }).notNull(),
+    /** 事件主体 ID。 */
     subjectId: integer().notNull(),
+    /** 事件目标类型。 */
     targetType: varchar({ length: 40 }).notNull(),
+    /** 事件目标 ID。 */
     targetId: integer().notNull(),
+    /** 操作人 ID。 */
     operatorId: integer(),
+    /** 事件发生时间。 */
     occurredAt: timestamp({ withTimezone: true, precision: 6 }).notNull(),
+    /** 事件上下文。 */
     context: jsonb(),
+    /** 创建时间。 */
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),

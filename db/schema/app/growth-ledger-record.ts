@@ -43,7 +43,7 @@ export const growthLedgerRecord = pgTable("growth_ledger_record", {
    */
   source: varchar({ length: 40 }).notNull(),
   /**
-   * 规则类型（可选）
+   * 规则类型（可选，取值见成长规则枚举）
    */
   ruleType: smallint(),
   /**
@@ -51,7 +51,7 @@ export const growthLedgerRecord = pgTable("growth_ledger_record", {
    */
   ruleId: integer(),
   /**
-   * 目标类型（可选）
+   * 目标类型（可选，按业务目标类型枚举存储；取值见对应业务模块的目标类型定义）
    */
   targetType: smallint(),
   /**

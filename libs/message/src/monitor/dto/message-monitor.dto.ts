@@ -235,9 +235,10 @@ export class MessageNotificationDeliveryItemDto {
   })
   notificationId!: number | null
 
-  @StringProperty({
+  @EnumProperty({
     description: '业务投递结果',
     example: MessageNotificationDispatchStatusEnum.FAILED,
+    enum: MessageNotificationDispatchStatusEnum,
   })
   status!: MessageNotificationDispatchStatusEnum
 

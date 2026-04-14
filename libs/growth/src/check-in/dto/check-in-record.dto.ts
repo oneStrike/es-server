@@ -1,12 +1,12 @@
 import type { CheckInRewardConfig } from '../check-in.type'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto } from '@libs/platform/dto/base.dto';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto } from '@libs/platform/dto/base.dto'
 import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
@@ -50,8 +50,7 @@ export class BaseCheckInRecordDto extends BaseDto {
   recordType!: CheckInRecordTypeEnum
 
   @EnumProperty({
-    description:
-      '基础奖励状态（0=待处理；1=已成功；2=已失败）',
+    description: '基础奖励状态（0=待处理；1=已成功；2=已失败）',
     example: CheckInRewardStatusEnum.PENDING,
     enum: CheckInRewardStatusEnum,
     required: false,
@@ -68,8 +67,7 @@ export class BaseCheckInRecordDto extends BaseDto {
   rewardResultType?: CheckInRewardResultTypeEnum | null
 
   @EnumProperty({
-    description:
-      '基础奖励来源（BASE_REWARD=默认基础奖励；DATE_RULE=日期奖励规则；PATTERN_RULE=周期模式奖励规则）',
+    description: '基础奖励来源（1=默认基础奖励；2=具体日期奖励；3=周期模式奖励）',
     example: CheckInRewardSourceTypeEnum.DATE_RULE,
     enum: CheckInRewardSourceTypeEnum,
     required: false,
@@ -87,7 +85,8 @@ export class BaseCheckInRecordDto extends BaseDto {
   resolvedRewardRuleKey?: string | null
 
   @NestedProperty({
-    description: '本次基础奖励解析结果快照；来源可能是具体日期奖励、周期模式奖励或计划默认基础奖励，为空表示该签到事实没有基础奖励。',
+    description:
+      '本次基础奖励解析结果快照；来源可能是具体日期奖励、周期模式奖励或计划默认基础奖励，为空表示该签到事实没有基础奖励。',
     type: CheckInRewardConfigDto,
     example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
     required: false,
@@ -97,7 +96,8 @@ export class BaseCheckInRecordDto extends BaseDto {
 
   @StringProperty({
     description: '业务幂等键；仅内部补偿、重试与排障使用。',
-    example: 'checkin:record:plan:1:cycle:week-2026-04-01:user:9:date:2026-04-03',
+    example:
+      'checkin:record:plan:1:cycle:week-2026-04-01:user:9:date:2026-04-03',
     maxLength: 180,
     contract: false,
   })

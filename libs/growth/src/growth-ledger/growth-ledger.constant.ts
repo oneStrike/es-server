@@ -29,6 +29,15 @@ export enum GrowthLedgerSourceEnum {
 }
 
 /**
+ * 成长规则限流槽位类型。
+ */
+export enum GrowthRuleUsageSlotTypeEnum {
+  DAILY = 1,
+  TOTAL = 2,
+  COOLDOWN = 3,
+}
+
+/**
  * 成长结算失败原因
  */
 export enum GrowthLedgerFailReasonEnum {

@@ -36,7 +36,7 @@ export class BaseCheckInPlanDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '周期类型（weekly=按周切分；monthly=按月切分）',
+      '周期类型（1=weekly；2=monthly）',
     example: CheckInCycleTypeEnum.WEEKLY,
     enum: CheckInCycleTypeEnum,
   })

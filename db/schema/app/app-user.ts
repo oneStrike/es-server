@@ -2,7 +2,8 @@
  * Auto-converted from legacy schema.
  */
 
-import { boolean, date, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import { boolean, check, date, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 应用用户表
@@ -54,7 +55,7 @@ export const appUser = pgTable("app_user", {
    */
   isEnabled: boolean().default(true).notNull(),
   /**
-   * 性别（0=未知，1=男，2=女）
+   * 性别（0=未知，1=男性，2=女性，3=其他，4=保密）
    */
   genderType: smallint().default(0).notNull(),
   /**
@@ -70,9 +71,9 @@ export const appUser = pgTable("app_user", {
    */
   experience: integer().default(0).notNull(),
   /**
-   * 用户状态
+   * 用户状态（1=正常，2=禁言，3=永久禁言，4=封禁，5=永久封禁）
    */
-  status: integer().default(1).notNull(),
+  status: smallint().default(1).notNull(),
   /**
    * 封禁原因
    */
@@ -115,6 +116,10 @@ export const appUser = pgTable("app_user", {
     index("app_user_status_idx").on(table.status),
     index("app_user_level_id_idx").on(table.levelId),
     index("app_user_deleted_at_idx").on(table.deletedAt),
+    check("app_user_gender_type_valid_chk", sql`${table.genderType} in (0, 1, 2, 3, 4)`),
+    check("app_user_status_valid_chk", sql`${table.status} in (1, 2, 3, 4, 5)`),
+    check("app_user_points_non_negative_chk", sql`${table.points} >= 0`),
+    check("app_user_experience_non_negative_chk", sql`${table.experience} >= 0`),
 ]);
 
 /**

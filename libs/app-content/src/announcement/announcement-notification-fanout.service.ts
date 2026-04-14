@@ -11,10 +11,14 @@ import {
 } from './announcement.constant'
 
 const ANNOUNCEMENT_FANOUT_BATCH_SIZE = 200
-const ANNOUNCEMENT_FANOUT_RUNNABLE_STATUSES = ['pending', 'failed'] as const
-const ANNOUNCEMENT_FANOUT_PROCESSING_STATUS = 'processing'
-const ANNOUNCEMENT_FANOUT_SUCCESS_STATUS = 'success'
-const ANNOUNCEMENT_FANOUT_FAILED_STATUS = 'failed'
+const ANNOUNCEMENT_FANOUT_PENDING_STATUS = 0
+const ANNOUNCEMENT_FANOUT_PROCESSING_STATUS = 1
+const ANNOUNCEMENT_FANOUT_SUCCESS_STATUS = 2
+const ANNOUNCEMENT_FANOUT_FAILED_STATUS = 3
+const ANNOUNCEMENT_FANOUT_RUNNABLE_STATUSES = [
+  ANNOUNCEMENT_FANOUT_PENDING_STATUS,
+  ANNOUNCEMENT_FANOUT_FAILED_STATUS,
+] as const
 
 @Injectable()
 export class AnnouncementNotificationFanoutService {
@@ -60,7 +64,7 @@ export class AnnouncementNotificationFanoutService {
         .values({
           announcementId,
           desiredEventKey,
-          status: 'pending',
+          status: ANNOUNCEMENT_FANOUT_PENDING_STATUS,
           cursorUserId: null,
           lastError: null,
           startedAt: null,
@@ -71,7 +75,7 @@ export class AnnouncementNotificationFanoutService {
           target: this.fanoutTask.announcementId,
           set: {
             desiredEventKey,
-            status: 'pending',
+            status: ANNOUNCEMENT_FANOUT_PENDING_STATUS,
             cursorUserId: null,
             lastError: null,
             startedAt: null,

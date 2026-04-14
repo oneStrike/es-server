@@ -2,10 +2,22 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
+import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 import { MessageNotificationDispatchStatusEnum } from './notification.constant'
 import { MessageNotificationDeliveryService } from './notification-delivery.service'
 
 describe('MessageNotificationDeliveryService', () => {
+  it('uses numeric dispatch status enums', async () => {
+    const { MessageNotificationDispatchStatusEnum } = await import(
+      './notification.constant'
+    )
+
+    expect(MessageNotificationDispatchStatusEnum.DELIVERED).toBe(1)
+    expect(MessageNotificationDispatchStatusEnum.FAILED).toBe(2)
+    expect(MessageNotificationDispatchStatusEnum.RETRYING).toBe(3)
+    expect(MessageNotificationDispatchStatusEnum.SKIPPED_PREFERENCE).toBe(4)
+  })
+
   it('失败投递记录会回填事件定义里的 categoryKey', async () => {
     const onConflictDoUpdate = jest.fn().mockResolvedValue(undefined)
     const values = jest.fn(() => ({
@@ -47,7 +59,7 @@ describe('MessageNotificationDeliveryService', () => {
       id: 21n,
       eventId: 11n,
       consumer: 'notification',
-      status: 'processing',
+      status: DomainEventDispatchStatusEnum.PROCESSING,
       retryCount: 0,
       nextRetryAt: null,
       lastError: null,

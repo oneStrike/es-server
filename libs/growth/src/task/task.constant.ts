@@ -3,7 +3,6 @@
  *
  * 注意：
  * - 周期语义统一由 `repeatRule` 表达；
- * - 历史库中的 `REPEAT(3)`、`OPERATION(5)` 会在读取与筛选时兼容映射；
  * - 新写入只允许稳定场景值。
  */
 export enum TaskTypeEnum {
@@ -25,32 +24,27 @@ export enum TaskObjectiveTypeEnum {
   EVENT_COUNT = 2,
 }
 
-const LEGACY_TASK_TYPE_NORMALIZED_MAP = {
-  1: TaskTypeEnum.ONBOARDING,
-  2: TaskTypeEnum.DAILY,
-  3: TaskTypeEnum.DAILY,
-  4: TaskTypeEnum.CAMPAIGN,
-  5: TaskTypeEnum.CAMPAIGN,
-} as const satisfies Record<number, TaskTypeEnum>
-
 const TASK_TYPE_FILTER_VALUES = {
   [TaskTypeEnum.ONBOARDING]: [TaskTypeEnum.ONBOARDING],
-  [TaskTypeEnum.DAILY]: [TaskTypeEnum.DAILY, 3],
-  [TaskTypeEnum.CAMPAIGN]: [TaskTypeEnum.CAMPAIGN, 5],
+  [TaskTypeEnum.DAILY]: [TaskTypeEnum.DAILY],
+  [TaskTypeEnum.CAMPAIGN]: [TaskTypeEnum.CAMPAIGN],
 } as const satisfies Record<TaskTypeEnum, readonly number[]>
 
 /**
  * 归一化任务场景类型。
- *
- * 旧值兼容关系：
- * - `3(REPEAT)` -> `DAILY`
- * - `5(OPERATION)` -> `CAMPAIGN`
  */
 export function normalizeTaskType(type: number | null | undefined) {
   if (type === null || type === undefined) {
     return TaskTypeEnum.ONBOARDING
   }
-  return LEGACY_TASK_TYPE_NORMALIZED_MAP[type] ?? TaskTypeEnum.ONBOARDING
+  if (
+    type === TaskTypeEnum.ONBOARDING ||
+    type === TaskTypeEnum.DAILY ||
+    type === TaskTypeEnum.CAMPAIGN
+  ) {
+    return type
+  }
+  return TaskTypeEnum.ONBOARDING
 }
 
 /**

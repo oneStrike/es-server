@@ -16,20 +16,33 @@ import {
 export const userNotification = pgTable(
   'user_notification',
   {
+    /** 主键 ID。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    /** 通知分类键。 */
     categoryKey: varchar({ length: 80 }).notNull(),
+    /** 通知投影键。 */
     projectionKey: varchar({ length: 180 }).notNull(),
+    /** 接收用户 ID。 */
     receiverUserId: integer().notNull(),
+    /** 触发用户 ID。 */
     actorUserId: integer(),
+    /** 通知标题。 */
     title: varchar({ length: 200 }).notNull(),
+    /** 通知正文。 */
     content: varchar({ length: 1000 }).notNull(),
+    /** 通知扩展载荷。 */
     payload: jsonb(),
+    /** 是否已读。 */
     isRead: boolean().default(false).notNull(),
+    /** 已读时间。 */
     readAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 过期时间。 */
     expiresAt: timestamp({ withTimezone: true, precision: 6 }),
+    /** 创建时间。 */
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /** 更新时间。 */
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),

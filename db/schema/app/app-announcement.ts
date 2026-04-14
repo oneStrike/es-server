@@ -5,6 +5,7 @@
 import { sql } from 'drizzle-orm'
 import {
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -45,7 +46,7 @@ export const appAnnouncement = pgTable(
      */
     announcementType: smallint().default(0).notNull(),
     /**
-     * 优先级（数值越大越重要）
+     * 优先级（0=低优先级，1=中优先级，2=高优先级，3=紧急）
      */
     priorityLevel: smallint().default(1).notNull(),
     /**
@@ -72,9 +73,9 @@ export const appAnnouncement = pgTable(
     /**
      * 启用的平台列表（1=H5, 2=App, 3=小程序；默认值为全部平台）
      */
-    enablePlatform: integer()
+    enablePlatform: smallint()
       .array()
-      .default(sql`ARRAY[1,2,3]::integer[]`),
+      .default(sql`ARRAY[1,2,3]::smallint[]`),
     /**
      * 发布开始时间
      */
@@ -138,6 +139,18 @@ export const appAnnouncement = pgTable(
     index('app_announcement_show_as_popup_is_published_idx').on(
       table.showAsPopup,
       table.isPublished,
+    ),
+    check(
+      'app_announcement_priority_level_valid_chk',
+      sql`${table.priorityLevel} in (0, 1, 2, 3)`,
+    ),
+    check(
+      'app_announcement_enable_platform_valid_chk',
+      sql`${table.enablePlatform} is null or ${table.enablePlatform} <@ ARRAY[1,2,3]::smallint[]`,
+    ),
+    check(
+      'app_announcement_view_count_non_negative_chk',
+      sql`${table.viewCount} >= 0`,
     ),
   ],
 )

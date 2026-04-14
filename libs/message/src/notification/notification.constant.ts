@@ -71,10 +71,10 @@ export function getMessageNotificationCategoryLabel(
  * 通知投影处理状态。
  */
 export enum MessageNotificationDispatchStatusEnum {
-  DELIVERED = 'DELIVERED',
-  FAILED = 'FAILED',
-  RETRYING = 'RETRYING',
-  SKIPPED_PREFERENCE = 'SKIPPED_PREFERENCE',
+  DELIVERED = 1,
+  FAILED = 2,
+  RETRYING = 3,
+  SKIPPED_PREFERENCE = 4,
 }
 
 const MESSAGE_NOTIFICATION_DISPATCH_STATUS_LABEL_MAP: Record<

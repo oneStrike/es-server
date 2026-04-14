@@ -11,7 +11,7 @@ describe('AnnouncementNotificationFanoutService', () => {
       id: 1,
       announcementId: 42,
       desiredEventKey: 'announcement.published',
-      status: 'pending',
+      status: 0,
       cursorUserId: null,
       lastError: null,
       startedAt: null,
@@ -21,7 +21,7 @@ describe('AnnouncementNotificationFanoutService', () => {
     }
     const processingTask = {
       ...pendingTask,
-      status: 'processing',
+      status: 1,
       startedAt: new Date('2026-04-13T00:00:00.000Z'),
     }
     let selectCall = 0
@@ -114,7 +114,7 @@ describe('AnnouncementNotificationFanoutService', () => {
       expect.objectContaining({
         announcementId: 42,
         desiredEventKey: 'announcement.published',
-        status: 'pending',
+        status: 0,
       }),
     )
   })

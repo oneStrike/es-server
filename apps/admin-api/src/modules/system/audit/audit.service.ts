@@ -150,7 +150,7 @@ export class AuditService {
     }
   }
 
-  private decorateRequestLog<T extends { actionType: string | null }>(
+  private decorateRequestLog<T extends { actionType: number | null }>(
     requestLog: T,
   ) {
     return {

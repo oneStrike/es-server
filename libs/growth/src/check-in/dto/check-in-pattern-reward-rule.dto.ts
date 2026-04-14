@@ -8,7 +8,7 @@ import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 class CheckInPatternRewardRuleFieldsDto {
   @EnumProperty({
     description:
-      '周期模式类型（WEEKDAY=每周固定星期几；MONTH_DAY=每月固定几号；MONTH_LAST_DAY=每月最后一天）',
+      '周期模式类型（1=每周固定星期几；2=每月固定几号；3=每月最后一天）',
     example: CheckInPatternRewardRuleTypeEnum.WEEKDAY,
     enum: CheckInPatternRewardRuleTypeEnum,
   })
@@ -16,7 +16,7 @@ class CheckInPatternRewardRuleFieldsDto {
 
   @NumberProperty({
     description:
-      '星期值；仅 patternType=WEEKDAY 时填写（1=周一；2=周二；3=周三；4=周四；5=周五；6=周六；7=周日）。',
+      '星期值；仅在“每周固定星期几”模式下填写（1=周一；2=周二；3=周三；4=周四；5=周五；6=周六；7=周日）。',
     example: 1,
     required: false,
     min: 1,
@@ -26,7 +26,7 @@ class CheckInPatternRewardRuleFieldsDto {
 
   @NumberProperty({
     description:
-      '每月日期；仅 patternType=MONTH_DAY 时填写，取值范围为 1..31。',
+      '每月日期；仅在“每月固定几号”模式下填写，取值范围为 1..31。',
     example: 15,
     required: false,
     min: 1,

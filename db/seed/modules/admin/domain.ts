@@ -1,4 +1,5 @@
 import type { Db } from '../../db-client'
+import { TokenTypeEnum } from '@libs/platform/modules/auth/token-storage.types'
 import { eq } from 'drizzle-orm'
 import { adminUser, adminUserToken } from '../../../schema'
 import {
@@ -21,7 +22,7 @@ const ADMIN_FIXTURE = {
 
 const ADMIN_TOKEN_FIXTURE = {
   jti: 'seed-admin-access-token',
-  tokenType: 'ACCESS',
+  tokenType: TokenTypeEnum.ACCESS,
   expiresAt: new Date('2026-12-31T23:59:59.000Z'),
   deviceInfo: {
     device: 'desktop',

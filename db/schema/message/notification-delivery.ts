@@ -4,10 +4,13 @@ import {
   index,
   integer,
   pgTable,
+  smallint,
   timestamp,
   unique,
   varchar,
+  check,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 /**
  * 通知 consumer 处理结果表。
@@ -16,23 +19,39 @@ import {
 export const notificationDelivery = pgTable(
   'notification_delivery',
   {
+    /** 主键 ID。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    /** 关联的领域事件 ID。 */
     eventId: bigint({ mode: 'bigint' }).notNull(),
+    /** 关联的 dispatch ID。 */
     dispatchId: bigint({ mode: 'bigint' }).notNull(),
+    /** 领域事件键。 */
     eventKey: varchar({ length: 120 }).notNull(),
+    /** 接收用户 ID。 */
     receiverUserId: integer(),
+    /** 通知投影键。 */
     projectionKey: varchar({ length: 180 }),
+    /** 通知分类键。 */
     categoryKey: varchar({ length: 80 }),
+    /** 关联的站内通知 ID。 */
     notificationId: integer(),
-    status: varchar({ length: 32 }).notNull(),
+    /** 业务投递状态（1=已投递，2=投递失败，3=重试中，4=因偏好关闭而跳过）。 */
+    status: smallint().notNull(),
+    /** 命中的模板 ID。 */
     templateId: integer(),
+    /** 是否命中启用模板。 */
     usedTemplate: boolean().default(false).notNull(),
+    /** 模板回退原因。 */
     fallbackReason: varchar({ length: 64 }),
+    /** 最近一次失败原因。 */
     failureReason: varchar({ length: 500 }),
+    /** 最近一次投递尝试时间。 */
     lastAttemptAt: timestamp({ withTimezone: true, precision: 6 }).notNull(),
+    /** 创建时间。 */
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
       .notNull(),
+    /** 更新时间。 */
     updatedAt: timestamp({ withTimezone: true, precision: 6 })
       .$onUpdate(() => new Date())
       .notNull(),
@@ -53,6 +72,10 @@ export const notificationDelivery = pgTable(
       table.updatedAt.desc(),
     ),
     index('notification_delivery_event_id_idx').on(table.eventId),
+    check(
+      'notification_delivery_status_valid_chk',
+      sql`${table.status} in (1, 2, 3, 4)`,
+    ),
   ],
 )
 

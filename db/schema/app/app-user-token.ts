@@ -2,7 +2,8 @@
  * Auto-converted from legacy schema.
  */
 
-import { index, integer, jsonb, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import { check, index, integer, jsonb, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 应用用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
@@ -21,9 +22,9 @@ export const appUserToken = pgTable("app_user_token", {
    */
   userId: integer().notNull(),
   /**
-   * 令牌类型（ACCESS:访问令牌, REFRESH:刷新令牌）
+   * 令牌类型（1=访问令牌，2=刷新令牌）
    */
-  tokenType: varchar({ length: 20 }).notNull(),
+  tokenType: smallint().notNull(),
   /**
    * 令牌过期时间
    */
@@ -112,6 +113,7 @@ export const appUserToken = pgTable("app_user_token", {
    * 用户与类型索引
    */
   index("app_user_token_user_id_token_type_idx").on(table.userId, table.tokenType),
+  check("app_user_token_token_type_valid_chk", sql`${table.tokenType} in (1, 2)`),
 ]);
 
 /**

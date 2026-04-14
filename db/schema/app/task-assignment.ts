@@ -19,37 +19,30 @@ import {
 export const taskAssignment = pgTable('task_assignment', {
   /**
    * assignment 主键。
-   * 仅用于执行态关联和排障定位，不承载业务上的“周期唯一键”语义。
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 任务 ID。
-   * 关联任务模板；即使模板后续被下线，assignment 仍保留快照与执行痕迹。
    */
   taskId: integer().notNull(),
   /**
    * 任务归属用户 ID。
-   * 与 taskId + cycleKey 共同限定“同用户同周期唯一实例”。
    */
   userId: integer().notNull(),
   /**
    * 周期标识。
-   * 用于约束同一用户在同一周期内只拥有一条 assignment。
    */
   cycleKey: varchar({ length: 32 }).notNull(),
   /**
-   * 分配状态。
-   * 表示领取、推进、完成和过期等执行阶段。
+   * 分配状态。0=已领取待开始，1=进行中，2=已完成，3=已过期。
    */
   status: smallint().notNull(),
   /**
-   * 奖励结算状态。
-   * 仅描述任务 bonus 的到账结果，不覆盖其他成长事件奖励。
+   * 奖励结算状态。0=待结算，1=已结算成功，2=结算失败。
    */
   rewardStatus: smallint().default(0).notNull(),
   /**
-   * 奖励结算结果类型。
-   * 用于区分真实落账、幂等命中和失败，便于后台对账与补偿。
+   * 奖励结算结果类型。1=本次真实落账，2=命中幂等未重复落账，3=本次结算失败。
    */
   rewardResultType: smallint(),
   /**

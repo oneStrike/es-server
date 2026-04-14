@@ -21,17 +21,14 @@ import {
 export const task = pgTable('task', {
   /**
    * 任务模板主键。
-   * 仅用于内部关联和后台运维，不承载业务语义。
    */
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   /**
    * 任务稳定编码。
-   * 用于后台配置、灰度排障和外部引用，要求全局唯一。
    */
   code: varchar({ length: 50 }).notNull(),
   /**
    * 任务标题。
-   * 直接用于 app/admin 展示，变更不会影响历史 assignment 快照。
    */
   title: varchar({ length: 200 }).notNull(),
   /**
@@ -43,98 +40,79 @@ export const task = pgTable('task', {
    */
   cover: varchar({ length: 255 }),
   /**
-   * 任务场景类型。
-   * 新写入只允许稳定值，历史兼容值在读层归一化处理。
+   * 任务场景类型。1=新手引导任务，2=日常任务，4=活动任务。
    */
   type: smallint().notNull(),
   /**
-   * 任务发布状态。
-   * 草稿/发布/下线只影响模板可用性，不直接代表 assignment 执行状态。
+   * 任务发布状态。0=草稿，1=已发布，2=已下线。
    */
   status: smallint().notNull(),
   /**
    * 是否启用。
-   * 用于紧急关闭任务模板，但保留配置与审计信息。
    */
   isEnabled: boolean().default(true).notNull(),
   /**
-   * 任务优先级。
-   * 数值越大越靠前，仅影响任务列表展示与自动领取处理顺序。
+   * 任务优先级。0=默认优先级，数值越大越靠前。
    */
   priority: smallint().default(0).notNull(),
   /**
-   * 领取方式。
-   * AUTO 会在读链路或事件链路中自动补齐 assignment。
+   * 领取方式。1=自动领取，2=手动领取。
    */
   claimMode: smallint().notNull(),
   /**
-   * 完成方式。
-   * AUTO 允许进度达标后直接进入完成态，MANUAL 需要显式 complete。
+   * 完成方式。1=自动完成，2=手动完成。
    */
   completeMode: smallint().notNull(),
   /**
-   * 任务目标类型。
-   * MANUAL 表示人工推进，EVENT_COUNT 表示由事件累计驱动。
+   * 任务目标类型。 1=手动推进，2=事件累计次数驱动。
    */
   objectiveType: smallint().default(1).notNull(),
   /**
    * 目标事件编码。
-   * 仅 `objectiveType=EVENT_COUNT` 时有意义，映射成长事件定义中的稳定编码。
    */
   eventCode: integer(),
   /**
    * 目标次数。
-   * 作为完成判定阈值，必须始终保持为大于 0 的整数。
    */
   targetCount: integer().default(1).notNull(),
   /**
    * 目标附加配置。
-   * 用于约束事件上下文，例如限定某个业务子场景、资源范围或标签条件。
    */
   objectiveConfig: jsonb(),
   /**
    * 奖励配置。
-   * 当前仅支持 `points` / `experience` 正整数，`null` 表示无任务奖励。
    */
   rewardConfig: jsonb(),
   /**
    * 重复规则。
-   * `timezone` 仅影响周期切分和 cycleKey 计算，不改变时间字段的存储时区。
    */
   repeatRule: jsonb(),
   /**
    * 发布开始时间。
-   * `null` 表示不限制开始时间，任务一旦发布即可参与领取/推进。
    */
   publishStartAt: timestamp({ withTimezone: true, precision: 6 }),
   /**
    * 发布结束时间。
-   * `null` 表示不限制结束时间；存在值时会同步约束 assignment 的可用窗口。
    */
   publishEndAt: timestamp({ withTimezone: true, precision: 6 }),
   /**
    * 创建人 ID。
-   * 仅用于后台审计，允许历史数据为空。
    */
   createdById: integer(),
   /**
    * 更新人 ID。
-   * 仅用于后台审计，允许历史数据为空。
    */
   updatedById: integer(),
   /**
    * 模板创建时间。
-   * 属于后台审计字段，不参与任务可用性判断。
    */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
   /**
    * 模板最近更新时间。
-   * 用于后台审计和排障，不作为任务周期边界。
    */
   updatedAt: timestamp({ withTimezone: true, precision: 6 }).$onUpdate(() => new Date()).notNull(),
   /**
    * 软删除时间。
-   * 非空表示模板已从正常可见范围移除，但历史 assignment 与审计记录仍保留。
    */
   deletedAt: timestamp({ withTimezone: true, precision: 6 }),
 }, (table) => [

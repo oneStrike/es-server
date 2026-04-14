@@ -1,12 +1,18 @@
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
 import { IdDto } from '@libs/platform/dto/base.dto';
 import { PageDto } from '@libs/platform/dto/page.dto';
 import { PickType } from '@nestjs/swagger'
+import {
+  ComicArchiveImportItemStatusEnum,
+  ComicArchivePreviewModeEnum,
+  ComicArchiveTaskStatusEnum,
+} from '../comic-archive-import.type'
 
 export class UploadContentDto {
   @NumberProperty({ description: '章节ID', example: 1, required: true })
@@ -140,8 +146,14 @@ export class ComicArchiveResultItemDto {
   @NumberProperty({ description: '已导入图片数量', example: 23, required: true, validation: false })
   importedImageCount!: number
 
-  @StringProperty({ description: '执行状态', example: 'success', required: true, validation: false })
-  status!: string
+  @EnumProperty({
+    description: '执行状态（0=待处理；1=成功；2=失败）',
+    example: ComicArchiveImportItemStatusEnum.SUCCESS,
+    enum: ComicArchiveImportItemStatusEnum,
+    required: true,
+    validation: false,
+  })
+  status!: ComicArchiveImportItemStatusEnum
 
   @StringProperty({ description: '执行结果说明', example: '章节 101 导入成功', required: true, validation: false })
   message!: string
@@ -151,11 +163,23 @@ export class ComicArchiveTaskResponseDto extends ComicArchiveTaskIdDto {
   @NumberProperty({ description: '作品ID', example: 1, required: true, validation: false })
   workId!: number
 
-  @StringProperty({ description: '预解析模式', example: 'multi_chapter', required: true, validation: false })
-  mode!: string
+  @EnumProperty({
+    description: '预解析模式（1=单章节压缩包；2=多章节压缩包）',
+    example: ComicArchivePreviewModeEnum.MULTI_CHAPTER,
+    enum: ComicArchivePreviewModeEnum,
+    required: true,
+    validation: false,
+  })
+  mode!: ComicArchivePreviewModeEnum
 
-  @StringProperty({ description: '任务状态', example: 'draft', required: true, validation: false })
-  status!: string
+  @EnumProperty({
+    description: '任务状态（0=草稿；1=待处理；2=处理中；3=成功；4=部分失败；5=失败；6=已过期；7=已取消）',
+    example: ComicArchiveTaskStatusEnum.DRAFT,
+    enum: ComicArchiveTaskStatusEnum,
+    required: true,
+    validation: false,
+  })
+  status!: ComicArchiveTaskStatusEnum
 
   @BooleanProperty({ description: '是否需要用户确认', example: true, required: true, validation: false })
   requireConfirm!: boolean

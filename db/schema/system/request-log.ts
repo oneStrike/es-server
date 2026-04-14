@@ -2,7 +2,8 @@
  * Auto-converted from legacy schema.
  */
 
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import { boolean, check, index, integer, jsonb, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 /**
  * 请求日志
@@ -21,9 +22,9 @@ export const requestLog = pgTable("sys_request_log", {
    */
   username: text(),
   /**
-   * 接口类型（admin/app/system等，可空）
+   * 接口类型（1=管理端，2=应用端，3=系统端，4=公共端）
    */
-  apiType: varchar({ length: 20 }),
+  apiType: smallint(),
   /**
    * 请求方法（GET/POST等）
    */
@@ -74,9 +75,9 @@ export const requestLog = pgTable("sys_request_log", {
    */
   geoSource: varchar({ length: 50 }),
   /**
-   * 操作类型（如登录/注册）
+   * 操作类型（1=登录，2=登出，3=创建，4=更新，5=删除，6=上传，7=下载，8=导出，9=导入）
    */
-  actionType: varchar({ length: 50 }),
+  actionType: smallint(),
   /**
    * 操作结果
    */
@@ -110,4 +111,6 @@ export const requestLog = pgTable("sys_request_log", {
      * 请求结果索引
      */
     index("sys_request_log_is_success_idx").on(table.isSuccess),
+    check("sys_request_log_api_type_valid_chk", sql`${table.apiType} is null or ${table.apiType} in (1, 2, 3, 4)`),
+    check("sys_request_log_action_type_valid_chk", sql`${table.actionType} is null or ${table.actionType} in (1, 2, 3, 4, 5, 6, 7, 8, 9)`),
 ]);

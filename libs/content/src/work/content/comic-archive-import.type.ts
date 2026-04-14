@@ -3,14 +3,14 @@
  * 用于预解析草稿、确认导入和后台执行阶段的状态流转。
  */
 export enum ComicArchiveTaskStatusEnum {
-  DRAFT = 'draft',
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  SUCCESS = 'success',
-  PARTIAL_FAILED = 'partial_failed',
-  FAILED = 'failed',
-  EXPIRED = 'expired',
-  CANCELLED = 'cancelled',
+  DRAFT = 0,
+  PENDING = 1,
+  PROCESSING = 2,
+  SUCCESS = 3,
+  PARTIAL_FAILED = 4,
+  FAILED = 5,
+  EXPIRED = 6,
+  CANCELLED = 7,
 }
 
 /**
@@ -18,8 +18,8 @@ export enum ComicArchiveTaskStatusEnum {
  * 根目录直接是图片时按单章节处理，根目录存在章节目录时按多章节处理。
  */
 export enum ComicArchivePreviewModeEnum {
-  SINGLE_CHAPTER = 'single_chapter',
-  MULTI_CHAPTER = 'multi_chapter',
+  SINGLE_CHAPTER = 1,
+  MULTI_CHAPTER = 2,
 }
 
 /**
@@ -39,9 +39,9 @@ export enum ComicArchiveIgnoreReasonEnum {
  * 用于前端查看每个确认章节的执行结果。
  */
 export enum ComicArchiveImportItemStatusEnum {
-  PENDING = 'pending',
-  SUCCESS = 'success',
-  FAILED = 'failed',
+  PENDING = 0,
+  SUCCESS = 1,
+  FAILED = 2,
 }
 
 /**

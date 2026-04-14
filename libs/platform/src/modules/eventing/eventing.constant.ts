@@ -4,10 +4,10 @@ export enum DomainEventConsumerEnum {
 }
 
 export enum DomainEventDispatchStatusEnum {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  SUCCESS = 'success',
-  FAILED = 'failed',
+  PENDING = 0,
+  PROCESSING = 1,
+  SUCCESS = 2,
+  FAILED = 3,
 }
 
 export const DOMAIN_EVENT_DISPATCH_BATCH_SIZE = 100

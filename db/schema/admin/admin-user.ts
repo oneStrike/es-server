@@ -29,7 +29,7 @@ export const adminUser = pgTable("admin_user", {
    */
   avatar: varchar({ length: 200 }),
   /**
-   * 账号角色
+   * 账号角色（0=普通管理员，1=超级管理员）
    */
   role: smallint().default(0).notNull(),
   /**

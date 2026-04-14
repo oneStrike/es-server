@@ -1,4 +1,9 @@
 import type { Db } from '../../db-client'
+import {
+  GrowthAssetTypeEnum,
+  GrowthRuleUsageSlotTypeEnum,
+} from '@libs/growth/growth-ledger/growth-ledger.constant'
+import { TokenTypeEnum } from '@libs/platform/modules/auth/token-storage.types'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
   adminUser,
@@ -524,7 +529,7 @@ export async function seedAppCoreDomain(db: Db) {
     {
       account: SEED_ACCOUNTS.readerA,
       jti: 'seed-app-access-001',
-      tokenType: 'ACCESS',
+      tokenType: TokenTypeEnum.ACCESS,
       expiresAt: new Date('2026-12-31T23:59:59.000Z'),
       deviceInfo: { device: 'ios', os: 'iOS 18', appVersion: '1.0.0-seed' },
       ipAddress: '127.0.0.21',
@@ -533,7 +538,7 @@ export async function seedAppCoreDomain(db: Db) {
     {
       account: SEED_ACCOUNTS.readerB,
       jti: 'seed-app-access-002',
-      tokenType: 'ACCESS',
+      tokenType: TokenTypeEnum.ACCESS,
       expiresAt: new Date('2026-12-31T23:59:59.000Z'),
       deviceInfo: {
         device: 'android',
@@ -1399,7 +1404,7 @@ export async function seedAppActivityDomain(db: Db) {
       userId: userA.id,
       requestId: 'seed-request-purchase',
       bizKey: 'purchase:seed:aot:chapter-2',
-      assetType: 'POINTS',
+      assetType: GrowthAssetTypeEnum.POINTS,
       action: 'CONSUME',
       ruleType: 302,
       decision: 'allow',
@@ -1412,7 +1417,7 @@ export async function seedAppActivityDomain(db: Db) {
       userId: userA.id,
       requestId: 'seed-request-topic',
       bizKey: 'topic:create:seed:aot',
-      assetType: 'EXPERIENCE',
+      assetType: GrowthAssetTypeEnum.EXPERIENCE,
       action: 'GRANT',
       ruleType: 1,
       decision: 'allow',
@@ -1444,16 +1449,16 @@ export async function seedAppActivityDomain(db: Db) {
   const slotFixtures = [
     {
       userId: userA.id,
-      assetType: 'POINTS',
+      assetType: GrowthAssetTypeEnum.POINTS,
       ruleKey: 'points:302',
-      slotType: 'TOTAL',
+      slotType: GrowthRuleUsageSlotTypeEnum.TOTAL,
       slotValue: 'purchase:seed:aot:chapter-2',
     },
     {
       userId: userA.id,
-      assetType: 'EXPERIENCE',
+      assetType: GrowthAssetTypeEnum.EXPERIENCE,
       ruleKey: 'experience:1',
-      slotType: 'DAILY',
+      slotType: GrowthRuleUsageSlotTypeEnum.DAILY,
       slotValue: '2026-03-19',
     },
   ] as const

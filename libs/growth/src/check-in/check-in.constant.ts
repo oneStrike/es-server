@@ -17,9 +17,9 @@ export enum CheckInPlanStatusEnum {
  */
 export enum CheckInCycleTypeEnum {
   /** 按周切周期 */
-  WEEKLY = 'weekly',
+  WEEKLY = 1,
   /** 按月切周期 */
-  MONTHLY = 'monthly',
+  MONTHLY = 2,
 }
 
 /**
@@ -73,11 +73,11 @@ export enum CheckInRewardResultTypeEnum {
  */
 export enum CheckInRewardSourceTypeEnum {
   /** 命中计划默认基础奖励 */
-  BASE_REWARD = 'BASE_REWARD',
+  BASE_REWARD = 1,
   /** 命中具体日期奖励规则 */
-  DATE_RULE = 'DATE_RULE',
+  DATE_RULE = 2,
   /** 命中周期模式奖励规则 */
-  PATTERN_RULE = 'PATTERN_RULE',
+  PATTERN_RULE = 3,
 }
 
 /**

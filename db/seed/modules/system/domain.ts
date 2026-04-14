@@ -1,4 +1,5 @@
 import type { Db } from '../../db-client'
+import { ApiTypeEnum } from '@libs/platform/constant/base.constant'
 import { and, desc, eq } from 'drizzle-orm'
 import {
   adminUser,
@@ -307,14 +308,14 @@ export async function seedSystemOperationalData(db: Db) {
     {
       userId: admin?.id,
       username: admin?.username ?? null,
-      apiType: 'admin',
+      apiType: ApiTypeEnum.ADMIN,
       method: 'POST',
       path: '/api/admin/task/create',
       params: { code: 'daily_read_chapter' },
       ip: '127.0.0.1',
       userAgent: 'seed-script/admin',
       device: { platform: 'desktop', role: 'admin' },
-      actionType: 'TASK_CREATE',
+      actionType: 3,
       isSuccess: true,
       content: 'seed admin create task',
       createdAt: SEED_TIMELINE.previousDay,
@@ -322,14 +323,14 @@ export async function seedSystemOperationalData(db: Db) {
     {
       userId: readerA?.id,
       username: readerA?.account ?? null,
-      apiType: 'app',
+      apiType: ApiTypeEnum.APP,
       method: 'POST',
       path: '/api/app/chat/send-message',
       params: { bizKey: 'seed-chat' },
       ip: '127.0.0.1',
       userAgent: 'seed-script/app',
       device: { platform: 'mobile', role: 'reader' },
-      actionType: 'SEND_MESSAGE',
+      actionType: 3,
       isSuccess: true,
       content: 'seed reader send message',
       createdAt: SEED_TIMELINE.seedAt,

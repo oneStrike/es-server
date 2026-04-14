@@ -2,15 +2,15 @@
  * 管理后台审计常用操作类型。
  */
 export enum AuditActionTypeEnum {
-  LOGIN = 'LOGIN',
-  LOGOUT = 'LOGOUT',
-  CREATE = 'CREATE',
-  UPDATE = 'UPDATE',
-  DELETE = 'DELETE',
-  UPLOAD = 'UPLOAD',
-  DOWNLOAD = 'DOWNLOAD',
-  EXPORT = 'EXPORT',
-  IMPORT = 'IMPORT',
+  LOGIN = 1,
+  LOGOUT = 2,
+  CREATE = 3,
+  UPDATE = 4,
+  DELETE = 5,
+  UPLOAD = 6,
+  DOWNLOAD = 7,
+  EXPORT = 8,
+  IMPORT = 9,
 }
 
 export const AuditActionTypeLabels: Readonly<Record<AuditActionTypeEnum, string>>

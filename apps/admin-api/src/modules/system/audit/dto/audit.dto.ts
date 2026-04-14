@@ -31,8 +31,8 @@ export class BaseAuditDto extends BaseDto {
   username?: string
 
   @EnumProperty({
-    description: '接口类型（admin/app/system等）',
-    example: 'admin',
+    description: '接口类型（1=管理端；2=应用端；3=系统端；4=公共端）',
+    example: ApiTypeEnum.ADMIN,
     required: false,
     enum: ApiTypeEnum,
   })
@@ -70,7 +70,8 @@ export class BaseAuditDto extends BaseDto {
   params?: string
 
   @EnumProperty({
-    description: '操作类型编码',
+    description:
+      '操作类型（1=登录；2=登出；3=创建；4=更新；5=删除；6=上传；7=下载；8=导出；9=导入）',
     example: AuditActionTypeEnum.LOGIN,
     required: false,
     enum: AuditActionTypeEnum,

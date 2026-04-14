@@ -18,7 +18,7 @@ export interface DomainEventDispatchRecord {
   id: bigint
   eventId: bigint
   consumer: DomainEventConsumerEnum | string
-  status: DomainEventDispatchStatusEnum | string
+  status: DomainEventDispatchStatusEnum
   retryCount: number
   nextRetryAt: Date | null
   lastError: string | null

@@ -1,43 +1,30 @@
 import { AuditActionTypeEnum, AuditActionTypeLabels } from '../../../common/audit/audit-action.constant'
 
 const AUDIT_ACTION_TYPES = new Set<AuditActionTypeEnum>(
-  Object.values(AuditActionTypeEnum) as AuditActionTypeEnum[],
-)
-
-const AUDIT_ACTION_TYPE_LABEL_TO_ENUM_MAP = Object.entries(
-  AuditActionTypeLabels,
-).reduce(
-  (result, [actionType, label]) => {
-    result[label] = actionType as AuditActionTypeEnum
-    return result
-  },
-  {} as Record<string, AuditActionTypeEnum>,
+  Object.values(AuditActionTypeEnum).filter(
+    (value): value is AuditActionTypeEnum => typeof value === 'number',
+  ),
 )
 
 export function normalizeAuditActionType(
-  actionType?: AuditActionTypeEnum | string | null,
+  actionType?: AuditActionTypeEnum | number | null,
 ): AuditActionTypeEnum | null {
   if (!actionType) {
     return null
   }
 
-  if (AUDIT_ACTION_TYPES.has(actionType as AuditActionTypeEnum)) {
+  if (typeof actionType === 'number' && AUDIT_ACTION_TYPES.has(actionType as AuditActionTypeEnum)) {
     return actionType as AuditActionTypeEnum
   }
-
-  return AUDIT_ACTION_TYPE_LABEL_TO_ENUM_MAP[actionType] ?? null
+  return null
 }
 
 export function getAuditActionTypeLabel(
-  actionType?: AuditActionTypeEnum | string | null,
+  actionType?: AuditActionTypeEnum | number | null,
 ): string | null {
   const normalizedActionType = normalizeAuditActionType(actionType)
   if (normalizedActionType) {
     return AuditActionTypeLabels[normalizedActionType]
-  }
-
-  if (typeof actionType === 'string' && actionType.length > 0) {
-    return actionType
   }
 
   return null
@@ -45,6 +32,6 @@ export function getAuditActionTypeLabel(
 
 export function resolveAuditActionTypeSearchTerms(
   actionType: AuditActionTypeEnum,
-): string[] {
-  return [...new Set([actionType, AuditActionTypeLabels[actionType]])]
+): number[] {
+  return [actionType]
 }

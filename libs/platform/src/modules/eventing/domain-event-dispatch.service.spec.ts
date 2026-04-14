@@ -5,6 +5,13 @@ import {
 } from './eventing.constant'
 
 describe('DomainEventDispatchService', () => {
+  it('uses numeric dispatch status enums', () => {
+    expect(DomainEventDispatchStatusEnum.PENDING).toBe(0)
+    expect(DomainEventDispatchStatusEnum.PROCESSING).toBe(1)
+    expect(DomainEventDispatchStatusEnum.SUCCESS).toBe(2)
+    expect(DomainEventDispatchStatusEnum.FAILED).toBe(3)
+  })
+
   let service: DomainEventDispatchService
   let drizzle: any
   beforeEach(() => {

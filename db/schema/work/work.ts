@@ -60,7 +60,7 @@ export const work = pgTable("work", {
    */
   ageRating: varchar({ length: 10 }),
   /**
-   * 连载状态
+   * 连载状态（0=未开始，1=连载中，2=已完结，3=暂停更新，4=已停更）
    */
   serialStatus: smallint().default(0).notNull(),
   /**
@@ -108,7 +108,7 @@ export const work = pgTable("work", {
    */
   lastUpdated: timestamp({ withTimezone: true, precision: 6 }),
   /**
-   * 阅读规则
+   * 阅读规则（0=所有人可见，1=登录用户可见，2=会员可见，3=需购买可见）
    */
   viewRule: smallint().default(0).notNull(),
   /**

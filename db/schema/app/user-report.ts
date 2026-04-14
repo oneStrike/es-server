@@ -22,8 +22,7 @@ export const userReport = pgTable("user_report", {
    */
   handlerId: integer(),
   /**
-   * 举报直接目标类型
-   * 取值见 ReportTargetTypeEnum
+   * 举报直接目标类型（1=漫画作品，2=小说作品，3=漫画章节，4=小说章节，5=论坛主题，6=评论，7=用户）
    */
   targetType: smallint().notNull(),
   /**
@@ -31,8 +30,7 @@ export const userReport = pgTable("user_report", {
    */
   targetId: integer().notNull(),
   /**
-   * 目标所属业务场景类型
-   * 取值见 SceneTypeEnum
+   * 目标所属业务场景类型（1=漫画作品场景，2=小说作品场景，3=论坛主题场景，10=漫画章节场景，11=小说章节场景，12=用户主页场景）
    */
   sceneType: smallint().notNull(),
   /**
@@ -41,14 +39,12 @@ export const userReport = pgTable("user_report", {
    */
   sceneId: integer().notNull(),
   /**
-   * 评论层级类型
-   * 仅当 targetType=COMMENT 时有值
-   * 取值见 CommentLevelEnum
+   * 评论层级类型（1=根评论，2=回复评论）
+   * 仅当 targetType=评论时有值。
    */
   commentLevel: smallint(),
   /**
-   * 举报原因类型
-   * 取值见 ReportReasonEnum
+   * 举报原因类型（1=垃圾信息，2=不当内容，3=骚扰，4=版权侵权，99=其他）
    */
   reasonType: smallint().notNull(),
   /**
@@ -60,8 +56,7 @@ export const userReport = pgTable("user_report", {
    */
   evidenceUrl: varchar({ length: 500 }),
   /**
-   * 举报状态
-   * 取值见 ReportStatusEnum
+   * 举报状态（1=待处理，2=处理中，3=已解决，4=已驳回）
    */
   status: smallint().default(1).notNull(),
   /**

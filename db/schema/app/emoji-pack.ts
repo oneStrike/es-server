@@ -64,7 +64,8 @@ export const emojiPack = pgTable(
     /**
      * 场景集合。
      * - 使用 smallint[] 存储生效场景。
-     * - 默认对 chat/comment/forum 全场景可见。
+     * - 1=聊天，2=评论，3=论坛。
+     * - 默认对聊天、评论、论坛全场景可见。
      */
     sceneType: smallint().array().default(sql`ARRAY[1,2,3]::smallint[]`).notNull(),
     /**

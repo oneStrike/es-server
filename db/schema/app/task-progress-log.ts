@@ -31,13 +31,11 @@ export const taskProgressLog = pgTable('task_progress_log', {
    */
   userId: integer().notNull(),
   /**
-   * 操作类型。
-   * 区分领取、普通推进、完成和过期等不同状态迁移。
+   * 操作类型。 1=领取，2=上报进度，3=完成，4=过期。
    */
   actionType: smallint().notNull(),
   /**
-   * 推进来源。
-   * 用于区分用户手动操作、事件驱动和系统补偿。
+   * 推进来源。 1=用户手动操作，2=事件驱动，3=系统补偿或自动推进。
    */
   progressSource: smallint().default(1).notNull(),
   /**

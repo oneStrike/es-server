@@ -1,4 +1,5 @@
 import type { ITokenStorageService } from '@libs/platform/modules/auth/auth.types';
+import { TokenTypeEnum } from '@libs/platform/modules/auth/token-storage.types'
 import type { SessionClientContext } from './session.type'
 import { AuthDefaultValue, AuthErrorMessages, RevokeTokenReasonEnum } from '@libs/platform/modules/auth/auth.constant';
 import { AuthService as BaseAuthService } from '@libs/platform/modules/auth/auth.service';
@@ -36,7 +37,7 @@ export class AuthSessionService {
       {
         userId,
         jti: accessPayload.jti,
-        tokenType: 'ACCESS',
+        tokenType: TokenTypeEnum.ACCESS,
         expiresAt: new Date(accessPayload.exp * 1000),
         deviceInfo,
         ipAddress,
@@ -50,7 +51,7 @@ export class AuthSessionService {
       {
         userId,
         jti: refreshPayload.jti,
-        tokenType: 'REFRESH',
+        tokenType: TokenTypeEnum.REFRESH,
         expiresAt: new Date(refreshPayload.exp * 1000),
         deviceInfo,
         ipAddress,

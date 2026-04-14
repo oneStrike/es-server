@@ -37,7 +37,7 @@ export const userBadge = pgTable("user_badge", {
    */
   eventKey: varchar({ length: 50 }),
   /**
-   * 排序值（数值越小越靠前）
+   * 排序值（0=默认排序，数值越小越靠前）
    */
   sortOrder: smallint().default(0).notNull(),
   /**

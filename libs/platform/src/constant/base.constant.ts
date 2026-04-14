@@ -15,13 +15,13 @@ export enum EnablePlatformEnum {
 /// 接口所属类型枚举
 export enum ApiTypeEnum {
   /** 管理端 */
-  ADMIN = 'admin',
+  ADMIN = 1,
   /** 应用端 */
-  APP = 'app',
+  APP = 2,
   /** 系统端 */
-  SYSTEM = 'system',
+  SYSTEM = 3,
   /** 公共端 */
-  PUBLIC = 'public',
+  PUBLIC = 4,
 }
 
 /// HTTP 方法枚举

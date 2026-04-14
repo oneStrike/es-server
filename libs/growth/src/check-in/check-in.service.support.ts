@@ -118,7 +118,7 @@ export abstract class CheckInServiceSupport {
   }
 
   /** 解析并校验签到周期类型。 */
-  protected parseCycleType(value?: string | null) {
+  protected parseCycleType(value?: number | null) {
     if (
       value === CheckInCycleTypeEnum.WEEKLY ||
       value === CheckInCycleTypeEnum.MONTHLY

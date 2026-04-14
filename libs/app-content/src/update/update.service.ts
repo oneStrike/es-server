@@ -27,6 +27,7 @@ import {
 import {
   APP_UPDATE_CHANNEL_DICTIONARY_CODE,
   DEFAULT_APP_UPDATE_CHANNEL_CODE,
+  AppUpdatePlatformEnum,
   AppUpdatePackageSourceEnum,
   AppUpdatePopupBackgroundPositionEnum,
   AppUpdateTypeEnum,
@@ -325,7 +326,7 @@ export class AppUpdateService {
    * 查询指定平台当前最新发布版本。
    * 若同平台历史上存在多个已发布版本，统一以 buildCode 和 id 倒序收口到最新一条。
    */
-  private async findLatestPublishedRelease(platform: string) {
+  private async findLatestPublishedRelease(platform: AppUpdatePlatformEnum) {
     const release = await this.db.query.appUpdateRelease.findFirst({
       where: {
         platform,

@@ -2,6 +2,7 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
+import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 import { NotificationProjectionService } from './notification-projection.service'
 
 describe('NotificationProjectionService', () => {
@@ -23,7 +24,7 @@ describe('NotificationProjectionService', () => {
     id: 21n,
     eventId: 11n,
     consumer: 'notification',
-    status: 'processing',
+    status: DomainEventDispatchStatusEnum.PROCESSING,
     retryCount: 0,
     nextRetryAt: null,
     lastError: null,

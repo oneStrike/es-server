@@ -20,6 +20,7 @@ import {
   GrowthLedgerActionEnum,
   GrowthLedgerFailReasonEnum,
   GrowthLedgerSourceEnum,
+  GrowthRuleUsageSlotTypeEnum,
 } from './growth-ledger.constant'
 import { PUBLIC_GROWTH_LEDGER_CONTEXT_KEYS } from './growth-ledger.internal'
 
@@ -190,7 +191,7 @@ export class GrowthLedgerService {
         userId,
         assetType,
         ruleKey,
-        slotType: 'DAILY',
+        slotType: GrowthRuleUsageSlotTypeEnum.DAILY,
         slotScope: dayKey,
         limit: rule.dailyLimit,
       })
@@ -221,7 +222,7 @@ export class GrowthLedgerService {
         userId,
         assetType,
         ruleKey,
-        slotType: 'TOTAL',
+        slotType: GrowthRuleUsageSlotTypeEnum.TOTAL,
         slotScope: 'all',
         limit: rule.totalLimit,
       })
@@ -574,7 +575,7 @@ export class GrowthLedgerService {
       userId: number
       assetType: GrowthAssetTypeEnum
       ruleKey: string
-      slotType: 'DAILY' | 'TOTAL'
+      slotType: GrowthRuleUsageSlotTypeEnum
       slotScope: string
       limit: number
     },
@@ -709,7 +710,7 @@ export class GrowthLedgerService {
       tx.insert(this.growthAuditLog).values({
         userId: params.userId,
         bizKey: params.bizKey,
-        assetType: String(params.assetType),
+        assetType: params.assetType,
         action: params.action,
         ruleType: params.ruleType,
         decision: params.decision,
@@ -867,7 +868,7 @@ export class GrowthLedgerService {
       userId: number
       assetType: GrowthAssetTypeEnum
       ruleKey: string
-      slotType: 'DAILY' | 'TOTAL'
+      slotType: GrowthRuleUsageSlotTypeEnum
       slotValue: string
     },
   ): Promise<boolean> {
@@ -876,7 +877,7 @@ export class GrowthLedgerService {
         .insert(this.growthRuleUsageSlot)
         .values({
           userId: params.userId,
-          assetType: String(params.assetType),
+          assetType: params.assetType,
           ruleKey: params.ruleKey,
           slotType: params.slotType,
           slotValue: params.slotValue,

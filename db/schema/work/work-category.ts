@@ -25,11 +25,11 @@ export const workCategory = pgTable("work_category", {
    */
   icon: varchar({ length: 255 }),
   /**
-   * 关联内容类型（如：1漫画、2小说、4插画、8写真）
+   * 关联内容类型（1=漫画，2=小说，4=插画，8=写真）
    */
   contentType: smallint().array(),
   /**
-   * 排序值（数值越小越靠前）
+   * 排序值（0=默认排序，数值越小越靠前）
    */
   sortOrder: smallint().default(0).notNull(),
   /**
