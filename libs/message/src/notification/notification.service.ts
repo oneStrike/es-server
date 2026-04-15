@@ -4,9 +4,12 @@ import { Injectable } from '@nestjs/common'
 import { and, eq, gt, inArray, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { QueryUserNotificationListDto } from './dto/notification.dto'
+import {
+  mapUserNotificationToPublicView,
+  type NotificationActorSource,
+} from './notification-public.mapper'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
 import {
-  getMessageNotificationCategoryLabel,
   isMessageNotificationCategoryKey,
   MessageNotificationCategoryKey,
 } from './notification.constant'
@@ -82,15 +85,12 @@ export class MessageNotificationService {
 
     return {
       ...page,
-      list: page.list.map(item => ({
-        ...item,
-        categoryLabel: getMessageNotificationCategoryLabel(
-          item.categoryKey as MessageNotificationCategoryKey,
+      list: page.list.map(item =>
+        mapUserNotificationToPublicView(
+          item,
+          this.resolveNotificationActor(actorMap, item.actorUserId),
         ),
-        actorUser: item.actorUserId
-          ? actorMap.get(item.actorUserId)
-          : undefined,
-      })),
+      ),
     }
   }
 
@@ -194,5 +194,16 @@ export class MessageNotificationService {
       receiverUserId,
       summary,
     )
+  }
+
+  private resolveNotificationActor(
+    actorMap: Map<number, NotificationActorSource>,
+    actorUserId?: number | null,
+  ) {
+    if (typeof actorUserId !== 'number') {
+      return undefined
+    }
+
+    return actorMap.get(actorUserId)
   }
 }

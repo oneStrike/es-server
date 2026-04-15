@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -182,6 +183,8 @@ export class UserExperienceService {
       source?: string
       targetType?: number
       targetId?: number
+      context?: Record<string, unknown>
+      adminUserId?: number
     },
   ) {
     const { userId, ruleType, remark } = addExperienceDto
@@ -200,15 +203,19 @@ export class UserExperienceService {
       )
     }
 
+    const source =
+      addExperienceDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE
+    const context = this.buildAddExperienceContext(addExperienceDto)
     const bizKey =
       addExperienceDto.bizKey ??
-      this.buildStableBizKey('experience:rule', {
+      this.buildAddExperienceBizKey({
         userId,
         ruleType,
         targetType: addExperienceDto.targetType,
         targetId: addExperienceDto.targetId,
         remark,
-        source: addExperienceDto.source,
+        source,
+        adminUserId: addExperienceDto.adminUserId,
       })
 
     await this.drizzle.withTransaction(async (tx) => {
@@ -217,10 +224,11 @@ export class UserExperienceService {
         assetType: GrowthAssetTypeEnum.EXPERIENCE,
         ruleType,
         bizKey,
-        source: addExperienceDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE,
+        source,
         remark,
         targetType: addExperienceDto.targetType,
         targetId: addExperienceDto.targetId,
+        context,
       })
 
       if (!result.success && !result.duplicated) {
@@ -442,6 +450,59 @@ export class UserExperienceService {
       .sort()
       .join('|')
     return `${prefix}:${serializedPayload}`
+  }
+
+  private buildAddExperienceBizKey(params: {
+    userId: number
+    ruleType: GrowthRuleTypeEnum
+    targetType?: number
+    targetId?: number
+    remark?: string
+    source: string
+    adminUserId?: number
+  }) {
+    if (this.isAdminManualGrantSource(params.source)) {
+      return this.buildManualGrantBizKey(params.userId, params.adminUserId)
+    }
+
+    return this.buildStableBizKey('experience:rule', {
+      userId: params.userId,
+      ruleType: params.ruleType,
+      targetType: params.targetType,
+      targetId: params.targetId,
+      remark: params.remark,
+      source: params.source,
+    })
+  }
+
+  private buildManualGrantBizKey(userId: number, adminUserId?: number) {
+    return `experience:manual-grant:user:${userId}:admin:${adminUserId ?? 0}:ts:${Date.now()}:rand:${randomUUID().replace(/-/g, '')}`
+  }
+
+  private buildAddExperienceContext(
+    addExperienceDto: Pick<
+      AddUserExperienceDto,
+      never
+    > & {
+      context?: Record<string, unknown>
+      adminUserId?: number
+    },
+  ) {
+    if (
+      !addExperienceDto.context &&
+      addExperienceDto.adminUserId === undefined
+    ) {
+      return undefined
+    }
+
+    return {
+      ...(addExperienceDto.context ?? {}),
+      actorUserId: addExperienceDto.adminUserId,
+    }
+  }
+
+  private isAdminManualGrantSource(source: string) {
+    return source === 'admin_experience_rule_grant'
   }
 
   /**

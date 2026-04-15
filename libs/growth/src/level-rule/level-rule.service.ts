@@ -4,7 +4,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import {
   CheckUserLevelPermissionDto,
   CreateUserLevelRuleDto,
@@ -155,35 +155,54 @@ export class UserLevelRuleService {
    * @returns 删除结果
    */
   async deleteLevelRule(id: number) {
-    const rule = await this.db.query.userLevelRule.findFirst({
-      where: { id },
-      columns: { id: true },
+    return this.drizzle.withTransaction(async (tx) => {
+      const rule = await tx.query.userLevelRule.findFirst({
+        where: { id },
+        columns: { id: true },
+      })
+
+      if (!rule) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '等级规则不存在',
+        )
+      }
+
+      const [activeUsers] = await tx
+        .select({ total: sql<number>`count(*)` })
+        .from(this.appUser)
+        .where(
+          and(
+            eq(this.appUser.levelId, id),
+            isNull(this.appUser.deletedAt),
+          ),
+        )
+
+      if (Number(activeUsers?.total ?? 0) > 0) {
+        throw new BusinessException(
+          BusinessErrorCode.OPERATION_NOT_ALLOWED,
+          '该等级规则下还有用户，无法删除',
+        )
+      }
+
+      await this.drizzle.withErrorHandling(() =>
+        tx
+          .update(this.appUser)
+          .set({ levelId: null })
+          .where(
+            and(
+              eq(this.appUser.levelId, id),
+              isNotNull(this.appUser.deletedAt),
+            ),
+          ),
+      )
+
+      await this.drizzle.withErrorHandling(
+        () => tx.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
+        { notFound: '等级规则不存在' },
+      )
+      return true
     })
-
-    if (!rule) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '等级规则不存在',
-      )
-    }
-
-    const users = await this.countByCondition(
-      this.appUser,
-      eq(this.appUser.levelId, id),
-    )
-    if (users > 0) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '该等级规则下还有用户，无法删除',
-      )
-    }
-
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db.delete(this.userLevelRule).where(eq(this.userLevelRule.id, id)),
-      { notFound: '等级规则不存在' },
-    )
-    return true
   }
 
   /**

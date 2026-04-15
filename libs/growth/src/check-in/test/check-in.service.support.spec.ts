@@ -36,6 +36,10 @@ class CheckInServiceSupportHarness extends CheckInServiceSupport {
   callResolveRewardForDate(...args: unknown[]) {
     return getSupportMethod('resolveRewardForDate').call(this, ...args)
   }
+
+  callResolveEffectiveCurrentStreak(...args: unknown[]) {
+    return getSupportMethod('resolveEffectiveCurrentStreak').call(this, ...args)
+  }
 }
 
 describe('check-in service support reward rules', () => {
@@ -99,6 +103,24 @@ describe('check-in service support reward rules', () => {
         },
       ]),
     )
+  })
+
+  it('会拦截重复的 MONTH_LAST_DAY 奖励规则', () => {
+    expect(() =>
+      service.callNormalizePatternRewardRules(
+        [
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+            rewardConfig: { points: 88 },
+          },
+          {
+            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+            rewardConfig: { experience: 31 },
+          },
+        ],
+        CheckInCycleTypeEnum.MONTHLY,
+      ),
+    ).toThrow(new BadRequestException('周期模式奖励规则重复：按月最后一天'))
   })
 
   it('构建奖励定义时会统一收口默认奖励、具体日期规则、周期模式规则和连续奖励规则', () => {
@@ -266,5 +288,32 @@ describe('check-in service support reward rules', () => {
       resolvedRewardRuleKey: null,
       resolvedRewardConfig: { points: 5 },
     })
+  })
+
+  it('会把早于昨天的连续签到快照衰减为 0', () => {
+    expect(
+      service.callResolveEffectiveCurrentStreak(
+        7,
+        '2026-04-07',
+        '2026-04-10',
+      ),
+    ).toBe(0)
+  })
+
+  it('会保留今天或昨天的连续签到快照', () => {
+    expect(
+      service.callResolveEffectiveCurrentStreak(
+        7,
+        '2026-04-10',
+        '2026-04-10',
+      ),
+    ).toBe(7)
+    expect(
+      service.callResolveEffectiveCurrentStreak(
+        7,
+        '2026-04-09',
+        '2026-04-10',
+      ),
+    ).toBe(7)
   })
 })

@@ -1,14 +1,21 @@
+import type { Db } from '@db/core'
 import type { Cache } from 'cache-manager'
-import type {
-  ConfigAllowedTemplate,
-} from './system-config.type'
+import type { ConfigAllowedTemplate } from './system-config.type'
 import { DrizzleService } from '@db/core'
-import { AesService } from '@libs/platform/modules/crypto/aes.service';
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
-import { isMasked, maskString } from '@libs/platform/utils/mask';
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
+import { AesService } from '@libs/platform/modules/crypto/aes.service'
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
+import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
+import { isMasked, maskString } from '@libs/platform/utils/mask'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
-import { desc } from 'drizzle-orm'
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common'
+import { desc, sql } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
 import { UpdateSystemConfigDto } from './dto/config.dto'
 import {
@@ -17,6 +24,9 @@ import {
   CONFIG_SECURITY_META,
   DEFAULT_CONFIG,
 } from './system-config.constant'
+
+const SYSTEM_CONFIG_UPDATE_LOCK_KEY = 1_048_002
+const SYSTEM_CONFIG_CONFLICT_MESSAGE = '系统配置已更新，请刷新后重试'
 
 /**
  * 系统配置管理服务（管理端专用）
@@ -72,21 +82,14 @@ export class SystemConfigService implements OnModuleInit {
    * @returns 脱敏后的配置对象
    */
   async findMaskedConfig() {
-    const config = this.configReader.get()
-    const maskedConfig = JSON.parse(JSON.stringify(config))
-
-    for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
-      const configItem = maskedConfig[key]
-      if (configItem) {
-        for (const path of metadata.sensitivePaths) {
-          const value = this.getValueByPath(configItem, path)
-          if (typeof value === 'string' && value) {
-            this.setValueByPath(configItem, path, maskString(value))
-          }
-        }
-      }
+    const latestConfig = await this.findLatestConfig()
+    if (!latestConfig) {
+      await this.initCache()
+      return this.findMaskedConfig()
     }
-    return maskedConfig
+
+    const readableSnapshot = await this.buildReadableSnapshot(latestConfig)
+    return this.maskSensitiveSnapshot(readableSnapshot)
   }
 
   /**
@@ -101,56 +104,75 @@ export class SystemConfigService implements OnModuleInit {
    * 管理端只允许更新 DTO 明确定义的顶层配置节点；未知字段会在进入该方法前被 whitelist 过滤。
    */
   async updateConfig(dto: UpdateSystemConfigDto, userId: number) {
-    const currentConfig = this.cloneConfig(this.configReader.get())
-    const nextConfig = this.cloneConfig(currentConfig)
+    const result = await this.drizzle.withTransaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(${SYSTEM_CONFIG_UPDATE_LOCK_KEY})`,
+      )
 
-    for (const key of Object.keys(dto)) {
-      if (!(key in DEFAULT_CONFIG)) {
-        continue
+      const latestConfig = await this.findLatestConfig(tx)
+      if (!latestConfig || latestConfig.id !== dto.id) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          SYSTEM_CONFIG_CONFLICT_MESSAGE,
+        )
       }
 
-      const allowedTemplate = (DEFAULT_CONFIG as ConfigAllowedTemplate)[key] as
-        | ConfigAllowedTemplate
-        | undefined
-      const filteredInput = this.filterAllowedFields(
-        dto[key as keyof UpdateSystemConfigDto],
-        allowedTemplate ?? {},
+      const currentConfig = this.cloneConfig(
+        this.mergeWithDefaults(latestConfig),
       )
-      const meta = CONFIG_SECURITY_META[key]
-      const currentItem = (currentConfig as Record<string, unknown>)[key] as
-        | Record<string, unknown>
-        | null
+      const nextConfig = this.cloneConfig(currentConfig)
 
-      const processedInput = meta
-        ? await this.processSensitiveFields(
-            filteredInput,
-            currentItem,
-            meta.sensitivePaths,
-          )
-        : filteredInput
+      for (const key of Object.keys(dto)) {
+        if (key === 'id' || !(key in DEFAULT_CONFIG)) {
+          continue
+        }
 
-      const mergedValue = this.deepMerge(
-        this.cloneConfig(
-          ((currentConfig as Record<string, unknown>)[key] ??
-            (DEFAULT_CONFIG as Record<string, unknown>)[key]) as Record<
-            string,
-            unknown
-          >,
-        ),
-        processedInput,
+        const allowedTemplate = (DEFAULT_CONFIG as ConfigAllowedTemplate)[
+          key
+        ] as ConfigAllowedTemplate | undefined
+        const filteredInput = this.filterAllowedFields(
+          dto[key as keyof UpdateSystemConfigDto],
+          allowedTemplate ?? {},
+        )
+        const meta = CONFIG_SECURITY_META[key]
+        const currentItem = (latestConfig as Record<string, unknown>)[
+          key
+        ] as Record<string, unknown> | null
+
+        const processedInput = meta
+          ? await this.processSensitiveFields(
+              filteredInput,
+              currentItem,
+              meta.sensitivePaths,
+            )
+          : filteredInput
+
+        const mergedValue = this.deepMerge(
+          this.cloneConfig(
+            ((currentConfig as Record<string, unknown>)[key] ??
+              (DEFAULT_CONFIG as Record<string, unknown>)[key]) as Record<
+              string,
+              unknown
+            >,
+          ),
+          processedInput,
+        )
+
+        ;(nextConfig as Record<string, unknown>)[key] = mergedValue
+      }
+
+      this.validateUploadConfig(
+        (nextConfig as Record<string, unknown>).uploadConfig,
       )
 
-      ;(nextConfig as Record<string, unknown>)[key] = mergedValue
-    }
+      const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
 
-    const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
+      const [insertedSnapshot] = await this.drizzle.withErrorHandling(() =>
+        tx.insert(this.systemConfig).values(snapshot).returning(),
+      )
 
-    const [result] = await this.drizzle.withErrorHandling(() =>
-      this.db
-        .insert(this.systemConfig)
-        .values(snapshot)
-        .returning(),
-    )
+      return insertedSnapshot
+    })
 
     await this.refreshCache(result)
     return true
@@ -204,8 +226,16 @@ export class SystemConfigService implements OnModuleInit {
 
       const inputValue = this.getValueByPath(input, path)
 
-      if (typeof inputValue === 'string' && inputValue && isMasked(inputValue)) {
-        this.setValueByPath(input, path, this.getValueByPath(current, path) || '')
+      if (
+        typeof inputValue === 'string' &&
+        inputValue &&
+        isMasked(inputValue)
+      ) {
+        this.setValueByPath(
+          input,
+          path,
+          this.getValueByPath(current, path) || '',
+        )
       } else if (typeof inputValue === 'string' && inputValue) {
         try {
           const decryptedValue = this.rsaService.decryptWith(inputValue)
@@ -232,8 +262,7 @@ export class SystemConfigService implements OnModuleInit {
    * 缓存内始终保存合并默认值且已解密的配置快照，供业务模块同步读取。
    */
   private async refreshCache(config: any) {
-    const mergedConfig = this.mergeWithDefaults(config)
-    await this.decryptSensitiveFields(mergedConfig)
+    const mergedConfig = await this.buildReadableSnapshot(config)
     await this.cacheManager.set(
       CACHE_KEY.CONFIG,
       mergedConfig,
@@ -262,11 +291,11 @@ export class SystemConfigService implements OnModuleInit {
   /**
    * 读取最新一条系统配置快照。
    */
-  private async findLatestConfig() {
-    const configs = await this.db
+  private async findLatestConfig(db: Db = this.db) {
+    const configs = await db
       .select()
       .from(this.systemConfig)
-      .orderBy(desc(this.systemConfig.createdAt))
+      .orderBy(desc(this.systemConfig.id))
       .limit(1)
 
     return configs[0] ?? null
@@ -320,6 +349,40 @@ export class SystemConfigService implements OnModuleInit {
   }
 
   /**
+   * 把持久化快照转换成可读配置快照。
+   * 该快照保留 id / createdAt / updatedAt 等元信息，供管理端作为版本基线使用。
+   */
+  private async buildReadableSnapshot(config: Record<string, unknown>) {
+    const mergedConfig = this.mergeWithDefaults(config)
+    await this.decryptSensitiveFields(mergedConfig)
+    return mergedConfig
+  }
+
+  /**
+   * 复制一份配置快照并对敏感字段做脱敏展示。
+   * 仅管理端读取接口使用，不会回写缓存。
+   */
+  private maskSensitiveSnapshot<T extends Record<string, any>>(config: T) {
+    const maskedConfig = this.cloneConfig(config)
+
+    for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
+      const configItem = maskedConfig[key]
+      if (!configItem) {
+        continue
+      }
+
+      for (const path of metadata.sensitivePaths) {
+        const value = this.getValueByPath(configItem, path)
+        if (typeof value === 'string' && value) {
+          this.setValueByPath(configItem, path, maskString(value))
+        }
+      }
+    }
+
+    return maskedConfig
+  }
+
+  /**
    * 将持久化快照与默认配置合并，补齐缺失节点。
    */
   private mergeWithDefaults(config: Record<string, unknown>) {
@@ -354,10 +417,7 @@ export class SystemConfigService implements OnModuleInit {
     source: Record<string, any>,
   ): Record<string, any> {
     for (const [key, sourceValue] of Object.entries(source)) {
-      if (
-        this.isPlainObject(sourceValue) &&
-        this.isPlainObject(target[key])
-      ) {
+      if (this.isPlainObject(sourceValue) && this.isPlainObject(target[key])) {
         target[key] = this.deepMerge(target[key], sourceValue)
       } else if (sourceValue !== undefined) {
         target[key] = sourceValue
@@ -386,7 +446,7 @@ export class SystemConfigService implements OnModuleInit {
    */
   private removeNullValues<T>(value: T) {
     if (Array.isArray(value)) {
-      return value.map(item => this.removeNullValues(item)) as T
+      return value.map((item) => this.removeNullValues(item)) as T
     }
 
     if (this.isPlainObject(value)) {
@@ -467,5 +527,57 @@ export class SystemConfigService implements OnModuleInit {
   private getRandomTTL(baseTTL: number) {
     const offset = Math.floor(baseTTL * 0.1)
     return baseTTL + Math.floor(Math.random() * (2 * offset + 1)) - offset
+  }
+
+  /**
+   * 保存前校验上传配置的 provider 与子配置是否一致。
+   * 本轮只做静态字段完整性校验，不做网络探测。
+   */
+  private validateUploadConfig(uploadConfig: unknown) {
+    if (!this.isPlainObject(uploadConfig)) {
+      return
+    }
+
+    const provider = uploadConfig.provider
+
+    if (provider === UploadProviderEnum.QINIU) {
+      this.assertRequiredStringFields(
+        uploadConfig.qiniu,
+        ['accessKey', 'secretKey', 'bucket', 'domain'],
+        '七牛上传配置不完整',
+      )
+      return
+    }
+
+    if (provider === UploadProviderEnum.SUPERBED) {
+      this.assertRequiredStringFields(
+        uploadConfig.superbed,
+        ['token'],
+        'Superbed 上传配置不完整',
+      )
+    }
+  }
+
+  /**
+   * 断言对象上的必填字符串字段全部存在且非空。
+   */
+  private assertRequiredStringFields(
+    target: unknown,
+    requiredFields: string[],
+    errorPrefix: string,
+  ) {
+    const record = this.isPlainObject(target)
+      ? target
+      : ({} as Record<string, unknown>)
+    const missingFields = requiredFields.filter((field) => {
+      const value = record[field]
+      return typeof value !== 'string' || value.trim() === ''
+    })
+
+    if (missingFields.length > 0) {
+      throw new BadRequestException(
+        `${errorPrefix}：缺少 ${missingFields.join('、')}`,
+      )
+    }
   }
 }

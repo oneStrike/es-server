@@ -1,6 +1,8 @@
 import type { sensitiveWord } from '@db/schema'
 import type {
   MatchModeEnum,
+  SensitiveWordHitEntityTypeEnum,
+  SensitiveWordHitOperationTypeEnum,
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
   StatisticsTypeEnum,
@@ -35,8 +37,6 @@ export interface DetectOptions {
   replace?: boolean
   /** 替换字符 */
   replaceChar?: string
-  /** 匹配模式 */
-  matchMode?: MatchModeEnum
 }
 
 /**
@@ -91,7 +91,6 @@ export interface UpdateSensitiveWordStatusInput {
  */
 export interface SensitiveWordDetectInput {
   content: string
-  matchMode?: MatchModeEnum
 }
 
 /**
@@ -109,6 +108,49 @@ export interface SensitiveWordReplaceInput extends SensitiveWordDetectInput {
 export interface SensitiveWordDetectResult {
   hits: MatchedWord[]
   highestLevel?: SensitiveWordLevelEnum
+}
+
+/**
+ * 内部富命中结果。
+ * 在公开命中结构基础上补齐词条 ID 与词条匹配模式，供统计与替换裁剪使用。
+ */
+export interface SensitiveWordDetectedHit extends MatchedWord {
+  sensitiveWordId: number
+  matchMode: MatchModeEnum
+}
+
+/**
+ * 内部检测结果。
+ * 同时返回富命中结构与对外命中结构，避免调用方重复做 strip。
+ */
+export interface SensitiveWordInternalDetectResult {
+  hits: SensitiveWordDetectedHit[]
+  publicHits: MatchedWord[]
+  highestLevel?: SensitiveWordLevelEnum
+}
+
+/**
+ * 命中实体类型键。
+ * 仅用于业务服务入参，可读性优先。
+ */
+export type SensitiveWordHitEntityTypeKey = 'topic' | 'comment'
+
+/**
+ * 命中操作类型键。
+ * 仅用于业务服务入参，可读性优先。
+ */
+export type SensitiveWordHitOperationTypeKey = 'create' | 'update'
+
+/**
+ * 业务实体命中记录入参。
+ * 用于在持久化链路中写命中明细并同步词表快照。
+ */
+export interface RecordSensitiveWordEntityHitsInput {
+  entityType: SensitiveWordHitEntityTypeKey
+  entityId: number
+  operationType: SensitiveWordHitOperationTypeKey
+  hits: SensitiveWordDetectedHit[]
+  occurredAt?: Date
 }
 
 /**
@@ -184,6 +226,30 @@ export interface SensitiveWordStatisticsData {
   typeStatistics: SensitiveWordTypeStatistics[]
   topHitWords: SensitiveWordTopHitStatistics[]
   recentHitWords: SensitiveWordRecentHitStatistics[]
+}
+
+/**
+ * 命中实体类型映射。
+ * 字符串键只在业务层使用，落库前统一映射到 smallint。
+ */
+export const SensitiveWordHitEntityTypeMap: Record<
+  SensitiveWordHitEntityTypeKey,
+  SensitiveWordHitEntityTypeEnum
+> = {
+  topic: 1,
+  comment: 2,
+}
+
+/**
+ * 命中操作类型映射。
+ * 字符串键只在业务层使用，落库前统一映射到 smallint。
+ */
+export const SensitiveWordHitOperationTypeMap: Record<
+  SensitiveWordHitOperationTypeKey,
+  SensitiveWordHitOperationTypeEnum
+> = {
+  create: 1,
+  update: 2,
 }
 
 /**

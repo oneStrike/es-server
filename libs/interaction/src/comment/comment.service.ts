@@ -15,9 +15,7 @@ import {
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
-import {
-  MessageDomainEventFactoryService,
-} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import {
@@ -27,10 +25,11 @@ import {
 import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { ConfigReader } from '@libs/system-config/config-reader'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, desc, eq, inArray, isNull, lte, max, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lte, max, or, sql } from 'drizzle-orm'
 import { EmojiCatalogService } from '../emoji/emoji-catalog.service'
 import { buildRecentEmojiUsageItems } from '../emoji/emoji-recent-usage.helper'
 import { EmojiSceneEnum } from '../emoji/emoji.constant'
@@ -81,6 +80,7 @@ export class CommentService {
     private readonly drizzle: DrizzleService,
     private readonly mentionService: MentionService,
     private readonly emojiCatalogService: EmojiCatalogService,
+    private readonly sensitiveWordStatisticsService: SensitiveWordStatisticsService,
   ) {}
 
   private get db() {
@@ -826,7 +826,9 @@ export class CommentService {
    */
   private resolveAuditDecision(content: string) {
     // 检测内容中的敏感词
-    const result = this.sensitiveWordDetectService.getMatchedWords({ content })
+    const result = this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
+      content,
+    })
     // 获取内容审核策略配置
     const policy = this.configReader.getContentReviewPolicy()
 
@@ -856,7 +858,10 @@ export class CommentService {
       isHidden,
       // 根据配置决定是否记录命中详情
       sensitiveWordHits:
-        policy.recordHits && result.hits?.length ? result.hits : undefined,
+        policy.recordHits && result.publicHits.length
+          ? result.publicHits
+          : undefined,
+      statisticsHits: result.hits,
     }
   }
 
@@ -952,6 +957,97 @@ export class CommentService {
   }
 
   /**
+   * 计算删除评论时需要覆盖的评论范围。
+   * - 删除回复：仅删除当前回复自身
+   * - 删除一级评论：级联删除根评论及其整棵楼中楼回复树
+   */
+  private async getDeleteScopeComments(
+    tx: Db,
+    found: {
+      id: number
+      userId: number
+      targetType: number
+      targetId: number
+      replyToId: number | null
+      createdAt: Date
+      auditStatus: number
+      isHidden: boolean
+      likeCount: number
+      deletedAt: Date | null
+    },
+  ) {
+    if (found.replyToId !== null) {
+      return [found]
+    }
+
+    return tx
+      .select({
+        id: this.userComment.id,
+        userId: this.userComment.userId,
+        targetType: this.userComment.targetType,
+        targetId: this.userComment.targetId,
+        replyToId: this.userComment.replyToId,
+        createdAt: this.userComment.createdAt,
+        auditStatus: this.userComment.auditStatus,
+        isHidden: this.userComment.isHidden,
+        likeCount: this.userComment.likeCount,
+        deletedAt: this.userComment.deletedAt,
+      })
+      .from(this.userComment)
+      .where(
+        and(
+          isNull(this.userComment.deletedAt),
+          or(
+            eq(this.userComment.id, found.id),
+            eq(this.userComment.actualReplyToId, found.id),
+          ),
+        ),
+      )
+  }
+
+  /**
+   * 回退被删除评论作者的评论数与评论获赞数。
+   * 一级评论级联删除时按作者聚合后再写入，避免逐条更新放大事务开销。
+   */
+  private async rollbackDeletedCommentAuthorCounts(
+    tx: Db,
+    comments: Array<{
+      userId: number
+      likeCount: number
+    }>,
+  ) {
+    const authorDeltas = new Map<
+      number,
+      { commentCount: number; receivedLikeCount: number }
+    >()
+
+    for (const comment of comments) {
+      const current = authorDeltas.get(comment.userId) ?? {
+        commentCount: 0,
+        receivedLikeCount: 0,
+      }
+      current.commentCount += 1
+      current.receivedLikeCount += comment.likeCount
+      authorDeltas.set(comment.userId, current)
+    }
+
+    for (const [userId, delta] of authorDeltas) {
+      await this.appUserCountService.updateCommentCount(
+        tx,
+        userId,
+        -delta.commentCount,
+      )
+      if (delta.receivedLikeCount > 0) {
+        await this.appUserCountService.updateCommentReceivedLikeCount(
+          tx,
+          userId,
+          -delta.receivedLikeCount,
+        )
+      }
+    }
+  }
+
+  /**
    * 创建一级评论
    *
    * 在目标对象下创建新的评论（非回复）。
@@ -986,6 +1082,7 @@ export class CommentService {
 
     // 根据敏感词检测结果确定审核决策
     const decision = this.resolveAuditDecision(content)
+    const { statisticsHits, ...persistedDecision } = decision
     const resolver = this.getResolver(targetType)
 
     const created = await this.drizzle.withErrorHandling(
@@ -1018,7 +1115,7 @@ export class CommentService {
                   content,
                   bodyTokens: bodyTokens.length ? bodyTokens : null,
                   floor,
-                  ...decision,
+                  ...persistedDecision,
                   geoCountry: context.geoCountry,
                   geoProvince: context.geoProvince,
                   geoCity: context.geoCity,
@@ -1034,6 +1131,17 @@ export class CommentService {
                   content: this.userComment.content,
                   createdAt: this.userComment.createdAt,
                 })
+
+              await this.sensitiveWordStatisticsService.recordEntityHitsInTx(
+                tx,
+                {
+                  entityType: 'comment',
+                  entityId: newComment.id,
+                  operationType: 'create',
+                  hits: statisticsHits,
+                  occurredAt: newComment.createdAt,
+                },
+              )
 
               await this.mentionService.replaceMentionsInTx({
                 tx,
@@ -1099,7 +1207,7 @@ export class CommentService {
         EventDefinitionConsumerEnum.GROWTH,
       )
     ) {
-      await this.commentGrowthService.rewardCommentCreated(this.db, {
+      await this.commentGrowthService.rewardCommentCreated({
         userId: created.comment.userId,
         id: created.comment.id,
         targetType: created.comment.targetType,
@@ -1183,6 +1291,7 @@ export class CommentService {
 
     // 根据敏感词检测结果确定审核决策
     const decision = this.resolveAuditDecision(content)
+    const { statisticsHits, ...persistedDecision } = decision
     const resolver = this.getResolver(targetType as CommentTargetTypeEnum)
 
     const created = await this.drizzle.withTransaction(async (tx) => {
@@ -1198,7 +1307,7 @@ export class CommentService {
           bodyTokens: bodyTokens.length ? bodyTokens : null,
           replyToId,
           actualReplyToId,
-          ...decision,
+          ...persistedDecision,
           geoCountry: context.geoCountry,
           geoProvince: context.geoProvince,
           geoCity: context.geoCity,
@@ -1214,6 +1323,14 @@ export class CommentService {
           content: this.userComment.content,
           createdAt: this.userComment.createdAt,
         })
+
+      await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+        entityType: 'comment',
+        entityId: newComment.id,
+        operationType: 'create',
+        hits: statisticsHits,
+        occurredAt: newComment.createdAt,
+      })
 
       await this.mentionService.replaceMentionsInTx({
         tx,
@@ -1279,7 +1396,7 @@ export class CommentService {
         EventDefinitionConsumerEnum.GROWTH,
       )
     ) {
-      await this.commentGrowthService.rewardCommentCreated(this.db, {
+      await this.commentGrowthService.rewardCommentCreated({
         userId: created.comment.userId,
         id: created.comment.id,
         targetType: created.comment.targetType,
@@ -1326,6 +1443,7 @@ export class CommentService {
           auditStatus: true,
           isHidden: true,
           likeCount: true,
+          deletedAt: true,
         },
       })
       if (!found) {
@@ -1335,30 +1453,34 @@ export class CommentService {
         )
       }
 
+      const deleteScopeComments = await this.getDeleteScopeComments(tx, found)
+      const deleteScopeIds = deleteScopeComments.map((item) => item.id)
+      const deletedAt = new Date()
+
       await tx
         .update(this.userComment)
         .set({
-          deletedAt: new Date(),
+          deletedAt,
         })
-        .where(eq(this.userComment.id, found.id))
+        .where(
+          deleteScopeIds.length === 1
+            ? eq(this.userComment.id, found.id)
+            : inArray(this.userComment.id, deleteScopeIds),
+        )
 
       await this.mentionService.deleteMentionsInTx({
         tx,
         sourceType: MentionSourceTypeEnum.COMMENT,
-        sourceIds: [found.id],
+        sourceIds: deleteScopeIds,
       })
 
-      await this.appUserCountService.updateCommentCount(tx, found.userId, -1)
-      if (found.likeCount > 0) {
-        await this.appUserCountService.updateCommentReceivedLikeCount(
-          tx,
-          found.userId,
-          -found.likeCount,
-        )
-      }
+      await this.rollbackDeletedCommentAuthorCounts(tx, deleteScopeComments)
 
-      if (!this.isVisible({ ...found, deletedAt: null })) {
-        return { id: found.id }
+      const visibleDeletedCount = deleteScopeComments.filter((comment) =>
+        this.isVisible(comment),
+      ).length
+      if (visibleDeletedCount === 0) {
+        return true
       }
 
       const resolver = this.getResolver(
@@ -1369,7 +1491,7 @@ export class CommentService {
         tx,
         found.targetType as CommentTargetTypeEnum,
         found.targetId,
-        -1,
+        -visibleDeletedCount,
       )
 
       const meta = await resolver.resolveMeta(tx, found.targetId)
@@ -1388,7 +1510,7 @@ export class CommentService {
         )
       }
 
-      return { id: found.id }
+      return true
     })
   }
 
@@ -1948,6 +2070,10 @@ export class CommentService {
       )
     }
 
+    if ((current.auditStatus as AuditStatusEnum) === input.auditStatus) {
+      return true
+    }
+
     this.ensureCanUpdateCommentAuditStatus(
       current.auditStatus as AuditStatusEnum,
       input.auditStatus,
@@ -1956,7 +2082,7 @@ export class CommentService {
     const handled = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
         const auditAt = new Date()
-        const result = await tx
+        const [updated] = await tx
           .update(this.userComment)
           .set({
             auditStatus: input.auditStatus,
@@ -1969,9 +2095,46 @@ export class CommentService {
             and(
               eq(this.userComment.id, input.id),
               isNull(this.userComment.deletedAt),
+              eq(this.userComment.auditStatus, current.auditStatus),
+              eq(this.userComment.isHidden, current.isHidden),
             ),
           )
-        this.drizzle.assertAffectedRows(result, '评论不存在')
+          .returning({
+            id: this.userComment.id,
+          })
+
+        if (!updated) {
+          const latest = await tx.query.userComment.findFirst({
+            where: {
+              id: input.id,
+              deletedAt: { isNull: true },
+            },
+            columns: {
+              auditStatus: true,
+              isHidden: true,
+            },
+          })
+          if (!latest) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '评论不存在',
+            )
+          }
+          if ((latest.auditStatus as AuditStatusEnum) === input.auditStatus) {
+            return {
+              rewardComment: null,
+              eventEnvelope: null,
+            }
+          }
+          this.ensureCanUpdateCommentAuditStatus(
+            latest.auditStatus as AuditStatusEnum,
+            input.auditStatus,
+          )
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '评论状态已变化，请刷新后重试',
+          )
+        }
 
         return this.syncCommentVisibilityTransition(tx, {
           current: current as CommentModerationState,
@@ -1989,7 +2152,7 @@ export class CommentService {
         EventDefinitionConsumerEnum.GROWTH,
       )
     ) {
-      await this.commentGrowthService.rewardCommentCreated(this.db, {
+      await this.commentGrowthService.rewardCommentCreated({
         userId: handled.rewardComment.userId,
         id: handled.rewardComment.id,
         targetType: handled.rewardComment.targetType,
@@ -2033,9 +2196,13 @@ export class CommentService {
       )
     }
 
+    if (current.isHidden === input.isHidden) {
+      return true
+    }
+
     const handled = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const result = await tx
+        const [updated] = await tx
           .update(this.userComment)
           .set({
             isHidden: input.isHidden,
@@ -2044,9 +2211,42 @@ export class CommentService {
             and(
               eq(this.userComment.id, input.id),
               isNull(this.userComment.deletedAt),
+              eq(this.userComment.auditStatus, current.auditStatus),
+              eq(this.userComment.isHidden, current.isHidden),
             ),
           )
-        this.drizzle.assertAffectedRows(result, '评论不存在')
+          .returning({
+            id: this.userComment.id,
+          })
+
+        if (!updated) {
+          const latest = await tx.query.userComment.findFirst({
+            where: {
+              id: input.id,
+              deletedAt: { isNull: true },
+            },
+            columns: {
+              auditStatus: true,
+              isHidden: true,
+            },
+          })
+          if (!latest) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '评论不存在',
+            )
+          }
+          if (latest.isHidden === input.isHidden) {
+            return {
+              rewardComment: null,
+              eventEnvelope: null,
+            }
+          }
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            '评论状态已变化，请刷新后重试',
+          )
+        }
 
         return this.syncCommentVisibilityTransition(tx, {
           current: current as CommentModerationState,
@@ -2064,7 +2264,7 @@ export class CommentService {
         EventDefinitionConsumerEnum.GROWTH,
       )
     ) {
-      await this.commentGrowthService.rewardCommentCreated(this.db, {
+      await this.commentGrowthService.rewardCommentCreated({
         userId: handled.rewardComment.userId,
         id: handled.rewardComment.id,
         targetType: handled.rewardComment.targetType,

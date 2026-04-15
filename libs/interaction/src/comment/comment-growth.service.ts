@@ -1,4 +1,3 @@
-import type { Db } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import { UserCommentSelect } from '@db/schema'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
@@ -14,7 +13,6 @@ export class CommentGrowthService {
   ) {}
 
   async rewardCommentCreated(
-    tx: Db,
     params: Pick<UserCommentSelect, 'userId' | 'id' | 'targetType' | 'targetId'> & {
       occurredAt?: Date
       eventEnvelope?: EventEnvelope<GrowthRuleTypeEnum>
@@ -51,7 +49,6 @@ export class CommentGrowthService {
     })
 
     await this.growthEventBridgeService.dispatchDefinedEvent({
-      tx,
       eventEnvelope: eventEnvelope ?? fallbackEventEnvelope,
       bizKey: baseBizKey,
       source: 'comment',
@@ -62,7 +59,6 @@ export class CommentGrowthService {
   }
 
   async rewardCommentLiked(
-    tx: Db,
     params: Pick<UserCommentSelect, 'id' | 'userId'> & { likerUserId: number },
   ) {
     const { id: commentId, userId: authorUserId, likerUserId } = params
@@ -85,7 +81,6 @@ export class CommentGrowthService {
     })
 
     await this.growthEventBridgeService.dispatchDefinedEvent({
-      tx,
       eventEnvelope: commentLikedEvent,
       bizKey: baseBizKey,
       source: 'comment_like',

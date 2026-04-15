@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import type { UserNotificationPublicView } from './notification-public.mapper'
 import { MessageWebSocketService } from './notification-websocket.service'
 
 @Injectable()
@@ -7,7 +8,7 @@ export class MessageNotificationRealtimeService {
     private readonly messageWebSocketService: MessageWebSocketService,
   ) {}
 
-  emitNotificationCreated(notification: Record<string, unknown>) {
+  emitNotificationCreated(notification: UserNotificationPublicView) {
     const receiverUserId = Number(notification.receiverUserId)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       return
@@ -19,7 +20,7 @@ export class MessageNotificationRealtimeService {
     )
   }
 
-  emitNotificationUpdated(notification: Record<string, unknown>) {
+  emitNotificationUpdated(notification: UserNotificationPublicView) {
     const receiverUserId = Number(notification.receiverUserId)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       return
@@ -34,8 +35,7 @@ export class MessageNotificationRealtimeService {
   emitNotificationDeleted(
     userId: number,
     payload: {
-      notificationId?: number
-      projectionKey: string
+      id: number
     },
   ) {
     this.messageWebSocketService.emitToUser(userId, 'notification.deleted', payload)

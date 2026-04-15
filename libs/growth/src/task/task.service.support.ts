@@ -2233,20 +2233,79 @@ export abstract class TaskServiceSupport {
           sql`${this.taskProgressLogTable.eventCode} IS NOT NULL`,
         ),
       )
-      .orderBy(desc(this.taskProgressLogTable.id))
 
-    const result = new Map<number, TaskAssignmentEventProgressSummary>()
+    const result = new Map<number, {
+      rowId: number
+      summary: TaskAssignmentEventProgressSummary
+    }>()
     for (const row of rows) {
-      if (result.has(row.assignmentId)) {
+      const current = result.get(row.assignmentId)
+      const candidate = {
+        rowId: row.id,
+        summary: {
+          eventCode: row.eventCode,
+          eventBizKey: row.eventBizKey,
+          eventOccurredAt: row.eventOccurredAt,
+        },
+      }
+
+      if (
+        current &&
+        !this.shouldReplaceLatestTaskEventProgressSummary(current, candidate)
+      ) {
         continue
       }
       result.set(row.assignmentId, {
-        eventCode: row.eventCode,
-        eventBizKey: row.eventBizKey,
-        eventOccurredAt: row.eventOccurredAt,
+        rowId: row.id,
+        summary: candidate.summary,
       })
     }
-    return result
+
+    return new Map(
+      Array.from(result.entries(), ([assignmentId, value]) => [
+        assignmentId,
+        value.summary,
+      ]),
+    )
+  }
+
+  /**
+   * 判断候选事件摘要是否应该覆盖当前“最近一次事件”。
+   *
+   * 统一按 `eventOccurredAt` 作为主排序键；若发生时间相同，再用日志 ID 兜底，
+   * 避免对账页把“晚写入的旧事件”误判成最近一次业务事件。
+   */
+  protected shouldReplaceLatestTaskEventProgressSummary(
+    current: {
+      rowId: number
+      summary: Pick<TaskAssignmentEventProgressSummary, 'eventOccurredAt'>
+    },
+    candidate: {
+      rowId: number
+      summary: Pick<TaskAssignmentEventProgressSummary, 'eventOccurredAt'>
+    },
+  ) {
+    const currentOccurredAt = current.summary.eventOccurredAt?.getTime()
+    const candidateOccurredAt = candidate.summary.eventOccurredAt?.getTime()
+
+    if (
+      typeof currentOccurredAt === 'number'
+      && typeof candidateOccurredAt === 'number'
+    ) {
+      if (candidateOccurredAt !== currentOccurredAt) {
+        return candidateOccurredAt > currentOccurredAt
+      }
+      return candidate.rowId > current.rowId
+    }
+
+    if (typeof candidateOccurredAt === 'number') {
+      return true
+    }
+    if (typeof currentOccurredAt === 'number') {
+      return false
+    }
+
+    return candidate.rowId > current.rowId
   }
 
   /**

@@ -25,8 +25,7 @@ class CheckInPatternRewardRuleFieldsDto {
   weekday?: number | null
 
   @NumberProperty({
-    description:
-      '每月日期；仅在“每月固定几号”模式下填写，取值范围为 1..31。',
+    description: '每月日期；仅在“每月固定几号”模式下填写，取值范围为 1..31。',
     example: 15,
     required: false,
     min: 1,

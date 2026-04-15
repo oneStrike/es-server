@@ -1,6 +1,6 @@
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto } from '@libs/platform/dto/base.dto';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto } from '@libs/platform/dto/base.dto'
 
 export class BaseCheckInCycleDto extends BaseDto {
   @NumberProperty({ description: '用户 ID。', example: 10001 })
@@ -48,7 +48,8 @@ export class BaseCheckInCycleDto extends BaseDto {
   makeupUsedCount!: number
 
   @NumberProperty({
-    description: '当前周期连续签到天数。',
+    description:
+      '当前周期有效连续签到天数；断签超过 1 个自然日后，对外展示会衰减为 0。',
     example: 3,
     validation: false,
   })

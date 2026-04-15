@@ -34,6 +34,7 @@ import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
+import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service'
 import { AppUserCountService } from '@libs/user/app-user-count.service'
 import {
   BadRequestException,
@@ -86,6 +87,7 @@ export class ForumTopicService {
     private readonly followService: FollowService,
     private readonly mentionService: MentionService,
     private readonly emojiCatalogService: EmojiCatalogService,
+    private readonly sensitiveWordStatisticsService: SensitiveWordStatisticsService,
   ) {}
 
   private get db() {
@@ -487,8 +489,8 @@ export class ForumTopicService {
       sectionId,
     )
 
-    const { hits, highestLevel } =
-      this.sensitiveWordDetectService.getMatchedWords({
+    const { hits, publicHits, highestLevel }
+      = this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
         content: topicData.content + topicData.title,
       })
 
@@ -519,7 +521,7 @@ export class ForumTopicService {
       geoSource: context.geoSource ?? undefined,
       ...media,
       auditStatus,
-      sensitiveWordHits: hits?.length ? hits : undefined,
+      sensitiveWordHits: publicHits.length ? publicHits : undefined,
       isHidden,
     }
 
@@ -529,6 +531,14 @@ export class ForumTopicService {
           .insert(this.forumTopicTable)
           .values(createPayload)
           .returning()
+
+        await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+          entityType: 'topic',
+          entityId: newTopic.id,
+          operationType: 'create',
+          hits,
+          occurredAt: newTopic.createdAt,
+        })
 
         await this.mentionService.replaceMentionsInTx({
           tx,
@@ -1207,8 +1217,8 @@ export class ForumTopicService {
     const nextTitle = updateData.title ?? topic.title
     const nextContent = updateData.content ?? topic.content
 
-    const { hits, highestLevel } =
-      this.sensitiveWordDetectService.getMatchedWords({
+    const { hits, publicHits, highestLevel }
+      = this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
         content: nextContent + nextTitle,
       })
 
@@ -1236,7 +1246,7 @@ export class ForumTopicService {
       ...media,
       bodyTokens: bodyTokens.length ? bodyTokens : null,
       auditStatus,
-      sensitiveWordHits: hits?.length ? hits : null,
+      sensitiveWordHits: publicHits.length ? publicHits : null,
       isHidden,
     }
 
@@ -1258,6 +1268,14 @@ export class ForumTopicService {
             '主题不存在',
           )
         }
+
+        await this.sensitiveWordStatisticsService.recordEntityHitsInTx(tx, {
+          entityType: 'topic',
+          entityId: nextTopic.id,
+          operationType: 'update',
+          hits,
+          occurredAt: nextTopic.updatedAt ?? new Date(),
+        })
 
         await this.mentionService.replaceMentionsInTx({
           tx,

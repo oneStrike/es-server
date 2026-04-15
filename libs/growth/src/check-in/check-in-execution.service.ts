@@ -33,7 +33,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
@@ -858,7 +858,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -872,6 +872,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             BusinessErrorCode.RESOURCE_NOT_FOUND,
             '签到记录不存在',
           )
+        }
+
+        if (
+          record.rewardStatus === CheckInRewardStatusEnum.SUCCESS &&
+          record.rewardSettledAt
+        ) {
+          return
         }
 
         const rewardConfig = this.parseStoredRewardConfig(
@@ -931,7 +938,15 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             rewardSettledAt: new Date(),
             lastRewardError: message,
           })
-          .where(eq(this.checkInRecordTable.id, recordId)),
+          .where(
+            and(
+              eq(this.checkInRecordTable.id, recordId),
+              inArray(this.checkInRecordTable.rewardStatus, [
+                CheckInRewardStatusEnum.PENDING,
+                CheckInRewardStatusEnum.FAILED,
+              ]),
+            ),
+          ),
       )
       return false
     }
@@ -944,7 +959,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number; source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -958,6 +973,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             BusinessErrorCode.RESOURCE_NOT_FOUND,
             '连续奖励发放事实不存在',
           )
+        }
+
+        if (
+          grant.grantStatus === CheckInRewardStatusEnum.SUCCESS &&
+          grant.grantSettledAt
+        ) {
+          return
         }
 
         const rewardConfig = this.parseStoredRewardConfig(grant.rewardConfig, {
@@ -1015,7 +1037,15 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             grantSettledAt: new Date(),
             lastGrantError: message,
           })
-          .where(eq(this.checkInStreakRewardGrantTable.id, grantId)),
+          .where(
+            and(
+              eq(this.checkInStreakRewardGrantTable.id, grantId),
+              inArray(this.checkInStreakRewardGrantTable.grantStatus, [
+                CheckInRewardStatusEnum.PENDING,
+                CheckInRewardStatusEnum.FAILED,
+              ]),
+            ),
+          ),
       )
       return false
     }

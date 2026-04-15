@@ -1,15 +1,11 @@
 import type { SQL } from 'drizzle-orm'
 import type {
-  SensitiveWordLevelStatistics,
-  SensitiveWordRecentHitStatistics,
   SensitiveWordStatisticsResponse,
-  SensitiveWordTopHitStatistics,
-  SensitiveWordTypeStatistics,
 } from './sensitive-word.types'
 import { buildLikePattern, DrizzleService } from '@db/core'
 import { UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
 import { Injectable } from '@nestjs/common'
-import { and, desc, eq, gt, isNotNull, like, sql } from 'drizzle-orm'
+import { and, eq, like } from 'drizzle-orm'
 import {
   CreateSensitiveWordDto,
   QuerySensitiveWordDto,
@@ -17,12 +13,9 @@ import {
   UpdateSensitiveWordDto,
 } from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
-import {
-  SensitiveWordLevelNames,
-  SensitiveWordTypeNames,
-  StatisticsTypeEnum,
-} from './sensitive-word-constant'
+import { StatisticsTypeEnum } from './sensitive-word-constant'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
+import { SensitiveWordStatisticsService } from './sensitive-word-statistics.service'
 
 /**
  * 敏感词服务类
@@ -34,6 +27,7 @@ export class SensitiveWordService {
     private readonly drizzle: DrizzleService,
     private readonly cacheService: SensitiveWordCacheService,
     private readonly detectService: SensitiveWordDetectService,
+    private readonly statisticsService: SensitiveWordStatisticsService,
   ) {}
 
   /** 数据库连接实例 */
@@ -138,104 +132,6 @@ export class SensitiveWordService {
   }
 
   /**
-   * 获取级别统计
-   * @returns 级别统计列表
-   */
-  private async getLevelStatistics() {
-    const results = await this.db
-      .select({
-        level: this.sensitiveWord.level,
-        count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
-      })
-      .from(this.sensitiveWord)
-      .groupBy(this.sensitiveWord.level)
-
-    return results.map((result) => ({
-      level: result.level,
-      count: Number(result.count),
-      levelName: SensitiveWordLevelNames[result.level] || '未知',
-      hitCount: Number(result.hitCount) || 0,
-    }))
-  }
-
-  /**
-   * 获取类型统计
-   * @returns 类型统计列表
-   */
-  private async getTypeStatistics() {
-    const results = await this.db
-      .select({
-        type: this.sensitiveWord.type,
-        count: sql<number>`count(*)`,
-        hitCount: sql<number>`sum(${this.sensitiveWord.hitCount})`,
-      })
-      .from(this.sensitiveWord)
-      .groupBy(this.sensitiveWord.type)
-
-    return results.map((result) => ({
-      type: result.type,
-      count: Number(result.count),
-      typeName: SensitiveWordTypeNames[result.type] || '未知',
-      hitCount: Number(result.hitCount) || 0,
-    }))
-  }
-
-  /**
-   * 获取顶部命中统计
-   * @returns 命中次数最高的敏感词
-   */
-  private async getTopHitStatistics() {
-    const results = await this.db
-      .select({
-        word: this.sensitiveWord.word,
-        hitCount: this.sensitiveWord.hitCount,
-        level: this.sensitiveWord.level,
-        type: this.sensitiveWord.type,
-        lastHitAt: this.sensitiveWord.lastHitAt,
-      })
-      .from(this.sensitiveWord)
-      .where(gt(this.sensitiveWord.hitCount, 0))
-      .orderBy(desc(this.sensitiveWord.hitCount))
-      .limit(20)
-
-    return results.map((result) => ({
-      word: result.word,
-      hitCount: result.hitCount,
-      level: result.level,
-      type: result.type,
-      lastHitAt: result.lastHitAt ?? undefined,
-    }))
-  }
-
-  /**
-   * 获取最近命中统计
-   * @returns 最近命中的敏感词
-   */
-  private async getRecentHitStatistics() {
-    const results = await this.db
-      .select({
-        word: this.sensitiveWord.word,
-        hitCount: this.sensitiveWord.hitCount,
-        level: this.sensitiveWord.level,
-        type: this.sensitiveWord.type,
-        lastHitAt: this.sensitiveWord.lastHitAt,
-      })
-      .from(this.sensitiveWord)
-      .where(isNotNull(this.sensitiveWord.lastHitAt))
-      .orderBy(desc(this.sensitiveWord.lastHitAt))
-      .limit(20)
-
-    return results.map((result) => ({
-      word: result.word,
-      hitCount: result.hitCount,
-      level: result.level,
-      type: result.type,
-      lastHitAt: result.lastHitAt!,
-    }))
-  }
-
-  /**
    * 获取统计查询结果
    * @param dto 统计查询参数
    * @returns 统计结果
@@ -245,27 +141,23 @@ export class SensitiveWordService {
   ): Promise<SensitiveWordStatisticsResponse> {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
-    let data:
-      | SensitiveWordLevelStatistics[]
-      | SensitiveWordTypeStatistics[]
-      | SensitiveWordRecentHitStatistics[]
-      | SensitiveWordTopHitStatistics[]
+    let data: SensitiveWordStatisticsResponse['data']
 
     switch (type) {
       case StatisticsTypeEnum.LEVEL:
-        data = await this.getLevelStatistics()
+        data = await this.statisticsService.getLevelStatistics()
         break
       case StatisticsTypeEnum.TYPE:
-        data = await this.getTypeStatistics()
+        data = await this.statisticsService.getTypeStatistics()
         break
       case StatisticsTypeEnum.TOP_HITS:
-        data = await this.getTopHitStatistics()
+        data = await this.statisticsService.getTopHitWords()
         break
       case StatisticsTypeEnum.RECENT_HITS:
-        data = await this.getRecentHitStatistics()
+        data = await this.statisticsService.getRecentHitWords()
         break
       default:
-        data = await this.getLevelStatistics()
+        data = await this.statisticsService.getLevelStatistics()
     }
 
     return {

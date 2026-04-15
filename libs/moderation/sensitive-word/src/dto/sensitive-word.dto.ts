@@ -67,7 +67,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   type!: SensitiveWordTypeEnum
 
   @EnumProperty({
-    description: '匹配模式（1=精确匹配；2=模糊匹配；3=正则匹配）',
+    description: '匹配模式（1=精确匹配；2=模糊匹配）',
     required: true,
     example: MatchModeEnum.EXACT,
     default: MatchModeEnum.EXACT,
@@ -210,14 +210,6 @@ export class SensitiveWordDetectDto {
     example: '这里是一段待检测的文本',
   })
   content!: string
-
-  @EnumProperty({
-    description: '匹配模式（1=精确匹配；2=模糊匹配；3=正则匹配）',
-    required: false,
-    enum: MatchModeEnum,
-    example: MatchModeEnum.EXACT,
-  })
-  matchMode?: MatchModeEnum
 }
 
 export class SensitiveWordReplaceDto extends SensitiveWordDetectDto {

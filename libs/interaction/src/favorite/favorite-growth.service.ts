@@ -1,4 +1,3 @@
-import { DrizzleService } from '@db/core'
 import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
@@ -25,7 +24,6 @@ export class FavoriteGrowthService {
 
   constructor(
     private readonly growthEventBridgeService: GrowthEventBridgeService,
-    private readonly drizzle: DrizzleService,
   ) {}
 
   /**
@@ -54,14 +52,11 @@ export class FavoriteGrowthService {
     })
 
     try {
-      await this.drizzle.withTransaction(async (tx) => {
-        await this.growthEventBridgeService.dispatchDefinedEvent({
-          tx,
-          eventEnvelope: favoriteCreatedEvent,
-          bizKey: baseBizKey,
-          source: 'favorite',
-          targetType,
-        })
+      await this.growthEventBridgeService.dispatchDefinedEvent({
+        eventEnvelope: favoriteCreatedEvent,
+        bizKey: baseBizKey,
+        source: 'favorite',
+        targetType,
       })
     } catch (error) {
       this.logger.warn(

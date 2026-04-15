@@ -1,4 +1,3 @@
-import type { Db } from '@db/core'
 import type { EventDefinitionConsumerEnum } from '../event-definition/event-definition.type'
 import type { EventEnvelope } from '../event-definition/event-envelope.type'
 import type {
@@ -63,7 +62,6 @@ export interface DispatchDefinedGrowthEventPayload {
   targetType?: number
   targetId?: number
   context?: Record<string, unknown>
-  tx?: Db
 }
 
 export interface DispatchDefinedGrowthEventResult {

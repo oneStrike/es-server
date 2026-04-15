@@ -8,28 +8,6 @@ export const SENSITIVE_WORD_CACHE_KEYS = {
    * 用于存储完整的敏感词列表
    */
   ALL_WORDS: 'sensitive-word:all',
-
-  /**
-   * 按敏感等级分组的缓存键生成器
-   * @param level - 敏感等级（1-低，2-中，3-高）
-   * @returns 缓存键名
-   */
-  WORDS_BY_LEVEL: (level: number) => `sensitive-word:level:${level}`,
-
-  /**
-   * 按敏感词类型分组的缓存键生成器
-   * @param type - 敏感词类型（如：政治、色情、暴力等）
-   * @returns 缓存键名
-   */
-  WORDS_BY_TYPE: (type: number) => `sensitive-word:type:${type}`,
-
-  /**
-   * 按匹配模式分组的缓存键生成器
-   * @param matchMode - 匹配模式（1-精确匹配，2-模糊匹配）
-   * @returns 缓存键名
-   */
-  WORDS_BY_MATCH_MODE: (matchMode: number) =>
-    `sensitive-word:match-mode:${matchMode}`,
 }
 
 /**

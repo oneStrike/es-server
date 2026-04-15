@@ -21,7 +21,7 @@ import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { and, asc, eq, exists, gt, gte, lte, or } from 'drizzle-orm'
+import { and, asc, desc, eq, exists, gte, lte, or, sql } from 'drizzle-orm'
 import {
   CheckInCycleTypeEnum,
   CheckInRecordTypeEnum,
@@ -63,6 +63,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const cycle = await this.getCurrentCycleView(userId, plan, now)
     const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
     const grantMap = await this.buildGrantMapForRecords(records)
+    const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
+      cycle.currentStreak,
+      cycle.lastSignedDate,
+      today,
+    )
     const recordViews = records.map((record) =>
       this.toRecordView(
         record,
@@ -96,7 +101,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
           plan.allowMakeupCountPerCycle - cycle.makeupUsedCount,
           0,
         ),
-        currentStreak: cycle.currentStreak,
+        currentStreak: effectiveCurrentStreak,
         lastSignedDate: cycle.lastSignedDate,
       },
       todaySigned: records.some(
@@ -105,7 +110,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       nextStreakReward:
         this.resolveNextStreakReward(
           cycle.rewardDefinition.streakRewardRules,
-          cycle.currentStreak,
+          effectiveCurrentStreak,
         ) ?? null,
       latestRecord: latestRecord ?? null,
     }
@@ -309,6 +314,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const pageQuery = this.drizzle.buildPage(query)
     const now = new Date()
     const today = this.formatDateOnly(now)
+    const yesterday = dayjs
+      .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
+      .subtract(1, 'day')
+      .format('YYYY-MM-DD')
     const plan = await this.findCurrentActivePlan(now)
 
     if (!plan) {
@@ -320,21 +329,47 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       }
     }
 
-    const page = await this.drizzle.ext.findPagination(this.checkInCycleTable, {
-      where: and(
-        eq(this.checkInCycleTable.planId, plan.id),
-        lte(this.checkInCycleTable.cycleStartDate, today),
-        gte(this.checkInCycleTable.cycleEndDate, today),
-        gt(this.checkInCycleTable.currentStreak, 0),
-      ),
+    const effectiveCurrentStreakSql = sql<number>`
+      case
+        when ${this.checkInCycleTable.lastSignedDate} is not null
+          and (
+            ${this.checkInCycleTable.lastSignedDate} = ${today}
+            or ${this.checkInCycleTable.lastSignedDate} = ${yesterday}
+          )
+        then ${this.checkInCycleTable.currentStreak}
+        else 0
+      end
+    `
+    const where = and(
+      eq(this.checkInCycleTable.planId, plan.id),
+      lte(this.checkInCycleTable.cycleStartDate, today),
+      gte(this.checkInCycleTable.cycleEndDate, today),
+      sql`${effectiveCurrentStreakSql} > 0`,
+    )
+    const [rows, total] = await Promise.all([
+      this.db
+        .select({
+          userId: this.checkInCycleTable.userId,
+          currentStreak: effectiveCurrentStreakSql,
+          lastSignedDate: this.checkInCycleTable.lastSignedDate,
+        })
+        .from(this.checkInCycleTable)
+        .where(where)
+        .limit(pageQuery.limit)
+        .offset(pageQuery.offset)
+        .orderBy(
+          desc(effectiveCurrentStreakSql),
+          desc(this.checkInCycleTable.lastSignedDate),
+          asc(this.checkInCycleTable.userId),
+        ),
+      this.db.$count(this.checkInCycleTable, where),
+    ])
+    const page = {
+      list: rows,
+      total,
       pageIndex: pageQuery.pageIndex,
       pageSize: pageQuery.pageSize,
-      orderBy: JSON.stringify([
-        { currentStreak: 'desc' },
-        { lastSignedDate: 'desc' },
-        { userId: 'asc' },
-      ]),
-    })
+    }
 
     if (page.list.length === 0) {
       return page

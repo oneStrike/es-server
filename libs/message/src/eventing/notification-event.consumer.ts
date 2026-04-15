@@ -1,10 +1,16 @@
+import type { UserNotificationSelect } from '@db/schema'
 import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
+import { DrizzleService } from '@db/core'
 import type { NotificationEventHandler } from './message-event.type'
 import { Injectable } from '@nestjs/common'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'
+import {
+  mapUserNotificationToPublicView,
+  type NotificationActorSource,
+} from '../notification/notification-public.mapper'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
 import { getMessageDomainEventDefinition } from './message-event.constant'
 import { NotificationProjectionService } from './notification-projection.service'
@@ -210,10 +216,15 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
 @Injectable()
 export class NotificationEventConsumer {
   constructor(
+    private readonly drizzle: DrizzleService,
     private readonly notificationProjectionService: NotificationProjectionService,
     private readonly messageNotificationDeliveryService: MessageNotificationDeliveryService,
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
   ) {}
+
+  private get db() {
+    return this.drizzle.db
+  }
 
   async consume(event: DomainEventRecord, dispatch: DomainEventDispatchRecord) {
     const definition = getMessageDomainEventDefinition(event.eventKey as never)
@@ -247,29 +258,30 @@ export class NotificationEventConsumer {
     )
 
     if (result.action === 'append' && result.notification) {
-      this.messageNotificationRealtimeService.emitNotificationCreated(
+      const publicNotification = await this.buildPublicNotificationView(
         result.notification,
+      )
+      this.messageNotificationRealtimeService.emitNotificationCreated(
+        publicNotification,
       )
     }
     if (result.action === 'upsert' && result.notification) {
-      this.messageNotificationRealtimeService.emitNotificationUpdated(
+      const publicNotification = await this.buildPublicNotificationView(
         result.notification,
+      )
+      this.messageNotificationRealtimeService.emitNotificationUpdated(
+        publicNotification,
       )
     }
     if (
       result.action === 'delete' &&
       result.receiverUserId &&
-      result.projectionKey
+      typeof (result.notification as { id?: unknown } | undefined)?.id === 'number'
     ) {
       this.messageNotificationRealtimeService.emitNotificationDeleted(
         result.receiverUserId,
         {
-          projectionKey: result.projectionKey,
-          notificationId:
-            typeof (result.notification as { id?: unknown } | undefined)?.id ===
-            'number'
-              ? (result.notification as { id?: number }).id
-              : undefined,
+          id: (result.notification as { id: number }).id,
         },
       )
     }
@@ -291,5 +303,27 @@ export class NotificationEventConsumer {
     )
 
     return result
+  }
+
+  private async buildPublicNotificationView(notification: Record<string, unknown>) {
+    const typedNotification = notification as UserNotificationSelect
+    const actor =
+      typeof typedNotification.actorUserId === 'number'
+        ? await this.db.query.appUser.findFirst({
+            where: {
+              id: typedNotification.actorUserId,
+            },
+            columns: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          })
+        : undefined
+
+    return mapUserNotificationToPublicView(
+      typedNotification,
+      actor as NotificationActorSource | undefined,
+    )
   }
 }

@@ -33,7 +33,7 @@ export const checkInCycle = pgTable('check_in_cycle', {
   signedCount: integer().default(0).notNull(),
   /** 当前周期已使用补签次数。 */
   makeupUsedCount: integer().default(0).notNull(),
-  /** 当前周期连续签到天数。 */
+  /** 当前周期最近一次有效签到时的连续签到天数快照；对外展示前需结合 `lastSignedDate` 做自然日衰减。 */
   currentStreak: integer().default(0).notNull(),
   /** 最近一次有效签到日期。 */
   lastSignedDate: date(),

@@ -277,7 +277,9 @@ export abstract class CheckInServiceSupport {
           weekday < 1 ||
           weekday > 7
         ) {
-          throw new BadRequestException('按周固定星期几的规则必须提供 1..7 的 weekday')
+          throw new BadRequestException(
+            '按周固定星期几的规则必须提供 1..7 的 weekday',
+          )
         }
         if (monthDay !== null) {
           throw new BusinessException(
@@ -347,6 +349,14 @@ export abstract class CheckInServiceSupport {
         throw new BadRequestException(
           `周期模式奖励规则重复：按月日期=${duplicateMonthDay}`,
         )
+      }
+
+      const monthLastDayRuleCount = normalizedRules.filter(
+        (rule) =>
+          rule.patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+      ).length
+      if (monthLastDayRuleCount > 1) {
+        throw new BadRequestException('周期模式奖励规则重复：按月最后一天')
       }
     }
 
@@ -431,8 +441,8 @@ export abstract class CheckInServiceSupport {
     return {
       baseRewardConfig: this.parseRewardConfig(
         this.asRecord(record.baseRewardConfig) as
-        | CheckInRewardConfig
-        | undefined,
+          | CheckInRewardConfig
+          | undefined,
         { allowEmpty: true },
       ),
       dateRewardRules: this.normalizeDateRewardRules(
@@ -573,6 +583,37 @@ export abstract class CheckInServiceSupport {
 
     const weekday = date.day()
     return weekday === 0 ? 7 : weekday
+  }
+
+  /**
+   * 计算对外展示时应使用的有效连续签到天数。
+   *
+   * `check_in_cycle.current_streak` 只记录最近一次有效签到时的 streak 快照；
+   * 当最后签到日早于昨天时，当前自然日已经断签，对外必须衰减为 0。
+   */
+  protected resolveEffectiveCurrentStreak(
+    currentStreak: number | null | undefined,
+    lastSignedDate: string | Date | null | undefined,
+    today = this.formatDateOnly(new Date()),
+  ) {
+    if (!currentStreak || currentStreak <= 0) {
+      return 0
+    }
+
+    const normalizedLastSignedDate = this.toDateOnlyValue(lastSignedDate)
+    if (!normalizedLastSignedDate) {
+      return 0
+    }
+
+    const yesterday = dayjs
+      .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
+      .subtract(1, 'day')
+      .format('YYYY-MM-DD')
+
+    return normalizedLastSignedDate === today ||
+        normalizedLastSignedDate === yesterday
+      ? currentStreak
+      : 0
   }
 
   /**
@@ -891,7 +932,7 @@ export abstract class CheckInServiceSupport {
       const monthLastDayRule = rules.find(
         (rule) =>
           rule.patternType ===
-          CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
+            CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
           this.matchesPatternRewardRule(cycleType, rule, signDate),
       )
       if (monthLastDayRule) {

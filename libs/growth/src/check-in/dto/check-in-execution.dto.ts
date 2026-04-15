@@ -1,5 +1,5 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { BaseCheckInCycleDto } from './check-in-cycle.dto'
 import {

@@ -266,6 +266,7 @@ export class PurchaseService {
 
   /**
    * 获取已购作品列表
+   * 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
    */
   async getPurchasedWorks(query: QueryPurchasedWorkCommandDto) {
     const {
@@ -301,8 +302,6 @@ export class PurchaseService {
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
           AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
@@ -317,8 +316,6 @@ export class PurchaseService {
         WHERE upr.user_id = ${userId}
           AND upr.status = ${status}
           AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),
@@ -353,6 +350,7 @@ export class PurchaseService {
 
   /**
    * 获取已购章节列表
+   * 保留历史购买记录展示口径，不因作品或章节被软删除而隐藏已购历史。
    */
   async getPurchasedWorkChapters(query: QueryPurchasedWorkChapterCommandDto) {
     const {
@@ -405,8 +403,6 @@ export class PurchaseService {
           AND upr.status = ${status}
           AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.work_id = ${workId}
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         ORDER BY upr.created_at DESC
@@ -421,8 +417,6 @@ export class PurchaseService {
           AND upr.status = ${status}
           AND upr.target_type IN (${PURCHASE_WORK_CHAPTER_TARGET_TYPES_SQL})
           AND wc.work_id = ${workId}
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),

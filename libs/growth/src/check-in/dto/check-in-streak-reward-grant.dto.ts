@@ -54,8 +54,7 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   triggerSignDate!: string
 
   @EnumProperty({
-    description:
-      '连续奖励发放状态（0=待处理；1=已成功；2=已失败）',
+    description: '连续奖励发放状态（0=待处理；1=已成功；2=已失败）',
     example: CheckInRewardStatusEnum.PENDING,
     enum: CheckInRewardStatusEnum,
   })
@@ -72,7 +71,8 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
 
   @StringProperty({
     description: '业务幂等键；仅内部补偿、重试与排障使用。',
-    example: 'checkin:grant:plan:1:cycle:12:rule:streak-7:user:9:date:2026-04-03',
+    example:
+      'checkin:grant:plan:1:cycle:12:rule:streak-7:user:9:date:2026-04-03',
     maxLength: 200,
     contract: false,
   })

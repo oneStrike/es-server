@@ -80,10 +80,7 @@ export class PurchaseTargetCommandDto extends IntersectionType(
 
 export class QueryPurchasedWorkDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BasePurchaseRecordDto), [
-    'targetType',
-    'status',
-  ] as const),
+  PickType(PartialType(BasePurchaseRecordDto), ['status'] as const),
 ) {
   @EnumProperty({
     description: '作品类型（1=漫画；2=小说）',

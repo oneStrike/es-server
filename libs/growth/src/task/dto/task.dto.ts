@@ -721,7 +721,7 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
   ] as const,
 ) {
   @NumberProperty({
-    description: '最近一次命中 assignment 的事件编码',
+    description: '按事件发生时间选出的最近一次命中 assignment 的事件编码',
     example: 10,
     required: false,
     validation: false,
@@ -729,7 +729,7 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
   latestEventCode?: number | null
 
   @StringProperty({
-    description: '最近一次命中 assignment 的事件投影键',
+    description: '按事件发生时间选出的最近一次命中 assignment 的事件投影键',
     example: 'comment:create:topic:100:user:9',
     required: false,
     validation: false,
@@ -737,7 +737,7 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
   latestEventBizKey?: string | null
 
   @DateProperty({
-    description: '最近一次命中 assignment 的事件发生时间',
+    description: '按事件发生时间选出的最近一次命中 assignment 的事件发生时间',
     example: '2026-03-31T08:55:00.000Z',
     required: false,
     validation: false,

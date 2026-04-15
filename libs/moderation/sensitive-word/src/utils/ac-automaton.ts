@@ -32,12 +32,12 @@ export class ACAutomaton {
    * @param words - 敏感词列表
    */
   build(words: string[]) {
+    this.clear()
+    this.built = false
+
     if (!words || words.length === 0) {
       return
     }
-
-    this.clear()
-    this.built = false
 
     for (const word of words) {
       if (!word || word.length === 0) {
