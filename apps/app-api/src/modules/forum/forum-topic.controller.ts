@@ -131,7 +131,7 @@ export class ForumTopicController {
   @Post('create')
   @ApiDoc({
     summary: '创建论坛主题',
-    model: Boolean,
+    model: IdDto,
   })
   async create(
     @Body() body: CreateUserForumTopicDto,

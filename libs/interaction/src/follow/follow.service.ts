@@ -303,9 +303,9 @@ export class FollowService {
   }
 
   /**
-   * 分页查询当前用户关注的作者。
+   * 分页查询指定用户关注的作者。
    */
-  async getUserAuthorFollows(query: FollowPageCommandDto) {
+  async getFollowedAuthorPage(query: FollowPageCommandDto) {
     const { page, detailMap } = await this.getFollowPageByTargetType(
       query,
       FollowTargetTypeEnum.AUTHOR,
@@ -331,9 +331,9 @@ export class FollowService {
   }
 
   /**
-   * 分页查询当前用户关注的论坛板块。
+   * 分页查询指定用户关注的论坛板块。
    */
-  async getUserSectionFollows(query: FollowPageCommandDto) {
+  async getFollowedSectionPage(query: FollowPageCommandDto) {
     const { page, detailMap } = await this.getFollowPageByTargetType(
       query,
       FollowTargetTypeEnum.FORUM_SECTION,
@@ -358,7 +358,10 @@ export class FollowService {
     }
   }
 
-  async getMyFollowingUserPage(query: FollowPageCommandDto) {
+  /**
+   * 分页查询指定用户关注的用户。
+   */
+  async getFollowingUserPage(query: FollowPageCommandDto) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
       where: and(
         eq(this.userFollow.userId, query.userId),
@@ -401,7 +404,10 @@ export class FollowService {
     }
   }
 
-  async getMyFollowerUserPage(query: FollowPageCommandDto) {
+  /**
+   * 分页查询关注指定用户的用户。
+   */
+  async getFollowerUserPage(query: FollowPageCommandDto) {
     const page = await this.drizzle.ext.findPagination(this.userFollow, {
       where: and(
         eq(this.userFollow.targetType, FollowTargetTypeEnum.USER),

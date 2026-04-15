@@ -489,8 +489,8 @@ export class ForumTopicService {
       sectionId,
     )
 
-    const { hits, publicHits, highestLevel }
-      = this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
+    const { hits, publicHits, highestLevel } =
+      this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
         content: topicData.content + topicData.title,
       })
 
@@ -620,7 +620,7 @@ export class ForumTopicService {
       })
     }
 
-    return true
+    return { id: topic.id }
   }
 
   async getTopicById(id: number) {
@@ -1217,8 +1217,8 @@ export class ForumTopicService {
     const nextTitle = updateData.title ?? topic.title
     const nextContent = updateData.content ?? topic.content
 
-    const { hits, publicHits, highestLevel }
-      = this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
+    const { hits, publicHits, highestLevel } =
+      this.sensitiveWordDetectService.getMatchedWordsWithMetadata({
         content: nextContent + nextTitle,
       })
 
@@ -1438,7 +1438,7 @@ export class ForumTopicService {
             commentReceivedLikeCountByUser.set(
               comment.userId,
               (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-              comment.likeCount,
+                comment.likeCount,
             )
           }
         }

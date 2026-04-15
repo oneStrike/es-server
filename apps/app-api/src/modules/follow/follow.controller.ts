@@ -4,11 +4,12 @@ import {
   FollowStatusResponseDto,
   FollowTargetDto,
   FollowUserPageItemDto,
+  QueryUserFollowPageDto,
 } from '@libs/interaction/follow/dto/follow.dto'
 import { FollowService } from '@libs/interaction/follow/follow.service'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 
-import { IdDto, PageDto } from '@libs/platform/dto'
+import { IdDto } from '@libs/platform/dto'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -65,61 +66,61 @@ export class FollowController {
 
   @Get('author/page')
   @ApiPageDoc({
-    summary: '分页查询我关注的作者',
+    summary: '分页查询用户关注的作者',
     model: FollowAuthorPageItemDto,
   })
-  async authorPage(
-    @Query() query: PageDto,
-    @CurrentUser('sub') userId: number,
+  async followedAuthorPage(
+    @Query() query: QueryUserFollowPageDto,
+    @CurrentUser('sub') currentUserId: number,
   ) {
-    return this.followService.getUserAuthorFollows({
+    return this.followService.getFollowedAuthorPage({
       ...query,
-      userId,
+      userId: query.userId || currentUserId,
     })
   }
 
   @Get('section/page')
   @ApiPageDoc({
-    summary: '分页查询我关注的论坛板块',
+    summary: '分页查询用户关注的论坛板块',
     model: FollowSectionPageItemDto,
   })
-  async sectionPage(
-    @Query() query: PageDto,
-    @CurrentUser('sub') userId: number,
+  async followedSectionPage(
+    @Query() query: QueryUserFollowPageDto,
+    @CurrentUser('sub') currentUserId: number,
   ) {
-    return this.followService.getUserSectionFollows({
+    return this.followService.getFollowedSectionPage({
       ...query,
-      userId,
+      userId: query.userId || currentUserId,
     })
   }
 
-  @Get('my/following/page')
+  @Get('user/following/page')
   @ApiPageDoc({
-    summary: '分页查询我关注的用户',
+    summary: '分页查询用户关注的用户',
     model: FollowUserPageItemDto,
   })
-  async myFollowing(
-    @Query() query: PageDto,
-    @CurrentUser('sub') userId: number,
+  async followingUserPage(
+    @Query() query: QueryUserFollowPageDto,
+    @CurrentUser('sub') currentUserId: number,
   ) {
-    return this.followService.getMyFollowingUserPage({
+    return this.followService.getFollowingUserPage({
       ...query,
-      userId,
+      userId: query.userId || currentUserId,
     })
   }
 
-  @Get('my/follower/page')
+  @Get('user/follower/page')
   @ApiPageDoc({
-    summary: '分页查询关注我的用户',
+    summary: '分页查询关注用户的用户',
     model: FollowUserPageItemDto,
   })
-  async myFollower(
-    @Query() query: PageDto,
-    @CurrentUser('sub') userId: number,
+  async followerUserPage(
+    @Query() query: QueryUserFollowPageDto,
+    @CurrentUser('sub') currentUserId: number,
   ) {
-    return this.followService.getMyFollowerUserPage({
+    return this.followService.getFollowerUserPage({
       ...query,
-      userId,
+      userId: query.userId || currentUserId,
     })
   }
 }

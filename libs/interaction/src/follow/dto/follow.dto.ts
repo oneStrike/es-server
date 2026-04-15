@@ -8,7 +8,7 @@ import { NumberProperty } from '@libs/platform/decorators/validate/number-proper
 import { IdDto, UserIdDto } from '@libs/platform/dto/base.dto';
 import { PageDto } from '@libs/platform/dto/page.dto';
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
-import { IntersectionType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { FollowTargetTypeEnum } from '../follow.constant'
 
 /**
@@ -51,6 +51,15 @@ export class FollowRecordDto extends IntersectionType(
 export class FollowPageCommandDto extends IntersectionType(
   PageDto,
   PickType(BaseFollowDto, ['userId'] as const),
+) {}
+
+/**
+ * 用户关注分页查询 DTO。
+ * userId 非必填；未传时由控制层回退到 CurrentUser。
+ */
+export class QueryUserFollowPageDto extends IntersectionType(
+  PartialType(UserIdDto),
+  PageDto,
 ) {}
 
 /**
