@@ -5,6 +5,7 @@ import { AppPageModule } from '@libs/app-content/page/page.module';
 import { AppUpdateModule } from '@libs/app-content/update/update.module';
 import { Module } from '@nestjs/common'
 import { SystemController } from './system.controller'
+import { UploadModule } from './upload/upload.module'
 
 /**
  * 系统模块
@@ -18,6 +19,7 @@ import { SystemController } from './system.controller'
     AppConfigModule,
     AppUpdateModule,
     AppPageModule,
+    UploadModule,
   ],
   controllers: [SystemController],
   providers: [],
