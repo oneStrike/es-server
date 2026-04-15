@@ -80,7 +80,6 @@ export class GrowthEventBridgeService {
     }
 
     const growthResult = await this.userGrowthRewardService.tryRewardByRule({
-      tx: input.tx,
       userId: input.eventEnvelope.subjectId,
       ruleType: input.eventEnvelope.code,
       bizKey: input.bizKey,

@@ -34,7 +34,10 @@ describe('commentService', () => {
   let forumTopicFindFirstMock: jest.Mock
   let userCommentFindFirstMock: jest.Mock
   let withTransactionMock: jest.Mock
-  let sensitiveWordDetectService: { getMatchedWords: jest.Mock }
+  let sensitiveWordDetectService: {
+    getMatchedWords: jest.Mock
+    getMatchedWordsWithMetadata: jest.Mock
+  }
   let configReader: { getContentReviewPolicy: jest.Mock }
   let commentGrowthService: { rewardCommentCreated: jest.Mock }
   let likeService: { checkStatusBatch: jest.Mock }
@@ -48,6 +51,7 @@ describe('commentService', () => {
     updateCommentReceivedLikeCount: jest.Mock
   }
   let emojiCatalogService: { recordRecentUsageInTx: jest.Mock }
+  let sensitiveWordStatisticsService: { recordEntityHitsInTx: jest.Mock }
   let mentionService: {
     buildBodyTokens: jest.Mock
     replaceMentionsInTx: jest.Mock
@@ -64,6 +68,11 @@ describe('commentService', () => {
     sensitiveWordDetectService = {
       getMatchedWords: jest.fn().mockReturnValue({
         hits: [],
+        highestLevel: undefined,
+      }),
+      getMatchedWordsWithMetadata: jest.fn().mockReturnValue({
+        hits: [],
+        publicHits: [],
         highestLevel: undefined,
       }),
     }
@@ -95,6 +104,7 @@ describe('commentService', () => {
             where: selectWhereMock,
           })),
         })),
+        transaction: withTransactionMock,
         query: {
           forumTopic: {
             findFirst: forumTopicFindFirstMock,
@@ -108,6 +118,8 @@ describe('commentService', () => {
         findPagination: findPaginationMock,
       },
       schema,
+      withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+      isSerializationFailure: jest.fn().mockReturnValue(false),
       withTransaction: withTransactionMock,
     }
 
@@ -130,6 +142,9 @@ describe('commentService', () => {
     emojiCatalogService = {
       recordRecentUsageInTx: jest.fn(),
     }
+    sensitiveWordStatisticsService = {
+      recordEntityHitsInTx: jest.fn(),
+    }
     mentionService = {
       buildBodyTokens: jest.fn(),
       replaceMentionsInTx: jest.fn(),
@@ -149,6 +164,7 @@ describe('commentService', () => {
       drizzle,
       mentionService as any,
       emojiCatalogService as any,
+      sensitiveWordStatisticsService as any,
     )
   })
 
@@ -662,6 +678,28 @@ describe('commentService', () => {
       eventKey: 'comment.replied',
       projectionKey: 'comment:reply:11:to:3',
     })
+    sensitiveWordDetectService.getMatchedWordsWithMetadata.mockReturnValue({
+      hits: [
+        {
+          sensitiveWordId: 1,
+          word: '回复',
+          start: 0,
+          end: 1,
+          level: 1,
+          type: 4,
+        },
+      ],
+      publicHits: [
+        {
+          word: '回复',
+          start: 0,
+          end: 1,
+          level: 1,
+          type: 4,
+        },
+      ],
+      highestLevel: 1,
+    })
 
     await service.replyComment({
       userId: 9,
@@ -676,6 +714,102 @@ describe('commentService', () => {
         userId: 9,
         scene: 2,
         items: [{ emojiAssetId: 1001, useCount: 1 }],
+      }),
+    )
+    expect(sensitiveWordStatisticsService.recordEntityHitsInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        entityType: 'comment',
+        entityId: 11,
+        operationType: 'create',
+      }),
+    )
+  })
+
+  it('创建一级评论会在事务内记录敏感词命中统计', async () => {
+    const tx = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn().mockResolvedValue([{ floor: 0 }]),
+        })),
+      })),
+      insert: jest.fn().mockReturnValue({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([
+            {
+              id: 21,
+              userId: 9,
+              targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+              targetId: 7,
+              replyToId: null,
+              content: '一级评论内容',
+              createdAt: new Date('2026-04-15T10:00:00.000Z'),
+            },
+          ]),
+        }),
+      }),
+      query: {
+        appUser: {
+          findFirst: jest.fn().mockResolvedValue({
+            nickname: '评论者',
+          }),
+        },
+      },
+    }
+    const mockResolver = {
+      targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+      ensureCanComment: jest.fn(),
+      applyCountDelta: jest.fn(),
+      resolveMeta: jest.fn().mockResolvedValue({
+        ownerUserId: 3,
+        targetDisplayTitle: '论坛主题',
+      }),
+      postCommentHook: jest.fn(),
+    }
+    service.registerResolver(mockResolver as any)
+    withTransactionMock.mockImplementation(async (callback: any) => callback(tx))
+    mentionService.buildBodyTokens.mockResolvedValue([])
+    mentionService.replaceMentionsInTx.mockResolvedValue({
+      mentionedUserIds: [],
+      pendingUserIds: [],
+    })
+    sensitiveWordDetectService.getMatchedWordsWithMetadata.mockReturnValue({
+      hits: [
+        {
+          sensitiveWordId: 2,
+          word: '评论',
+          start: 0,
+          end: 1,
+          level: 2,
+          type: 5,
+        },
+      ],
+      publicHits: [
+        {
+          word: '评论',
+          start: 0,
+          end: 1,
+          level: 2,
+          type: 5,
+        },
+      ],
+      highestLevel: 2,
+    })
+
+    await service.createComment({
+      userId: 9,
+      targetType: CommentTargetTypeEnum.FORUM_TOPIC,
+      targetId: 7,
+      content: '一级评论内容',
+      mentions: [],
+    } as any)
+
+    expect(sensitiveWordStatisticsService.recordEntityHitsInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        entityType: 'comment',
+        entityId: 21,
+        operationType: 'create',
       }),
     )
   })

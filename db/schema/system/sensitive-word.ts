@@ -1,8 +1,15 @@
-/**
- * Auto-converted from legacy schema.
- */
-
-import { boolean, index, integer, pgTable, smallint, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm'
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  pgTable,
+  smallint,
+  timestamp,
+  unique,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 通用敏感词表 - 存储敏感词信息，用于内容过滤和审核
@@ -29,7 +36,7 @@ export const sensitiveWord = pgTable("sensitive_word", {
    */
   type: smallint().default(5).notNull(),
   /**
-   * 匹配模式（1=精确匹配, 2=模糊匹配, 3=正则匹配）
+   * 匹配模式（1=精确匹配；2=模糊匹配）
    */
   matchMode: smallint().default(1).notNull(),
   /**
@@ -97,4 +104,8 @@ export const sensitiveWord = pgTable("sensitive_word", {
      * 创建时间索引
      */
     index("sensitive_word_created_at_idx").on(table.createdAt),
+    check(
+      'sensitive_word_match_mode_valid_chk',
+      sql`${table.matchMode} in (1, 2)`,
+    ),
 ]);

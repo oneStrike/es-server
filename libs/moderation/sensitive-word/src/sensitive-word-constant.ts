@@ -54,8 +54,26 @@ export enum MatchModeEnum {
   EXACT = 1,
   /** 模糊匹配 */
   FUZZY = 2,
-  /** 正则匹配 */
-  REGEX = 3,
+}
+
+/**
+ * 敏感词命中实体类型
+ */
+export enum SensitiveWordHitEntityTypeEnum {
+  /** 主题 */
+  TOPIC = 1,
+  /** 评论 */
+  COMMENT = 2,
+}
+
+/**
+ * 敏感词命中操作类型
+ */
+export enum SensitiveWordHitOperationTypeEnum {
+  /** 创建 */
+  CREATE = 1,
+  /** 更新 */
+  UPDATE = 2,
 }
 
 /**

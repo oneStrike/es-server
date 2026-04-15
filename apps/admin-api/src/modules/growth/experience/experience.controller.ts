@@ -1,5 +1,6 @@
 import { AddUserExperienceDto, QueryUserExperienceRecordDto, UserExperienceRecordDetailDto, UserExperienceRecordDto, UserExperienceStatsDto } from '@libs/growth/experience/dto/experience-record.dto';
 import { BaseUserExperienceRuleDto, CreateUserExperienceRuleDto, QueryUserExperienceRuleDto, UpdateUserExperienceRuleDto } from '@libs/growth/experience/dto/experience-rule.dto';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { UserExperienceService } from '@libs/growth/experience/experience.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
@@ -80,8 +81,15 @@ export class ExperienceController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async grantExperience(@Body() dto: AddUserExperienceDto) {
-    return this.experienceService.addExperience(dto)
+  async grantExperience(
+    @Body() dto: AddUserExperienceDto,
+    @CurrentUser('sub') adminUserId: number,
+  ) {
+    return this.experienceService.addExperience({
+      ...dto,
+      source: 'admin_experience_rule_grant',
+      adminUserId,
+    })
   }
 
   @Get('record/page')

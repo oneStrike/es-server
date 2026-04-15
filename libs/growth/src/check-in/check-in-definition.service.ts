@@ -113,6 +113,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
    * 会在写入前校验补签额度、计划起止日期以及“当前只允许一个生效计划”的运营约束。
    */
   async createPlan(dto: CreateCheckInPlanDto, adminUserId: number) {
+    const planCode = this.normalizeRequiredPlanCode(dto.planCode)
+    const planName = this.normalizeRequiredPlanName(dto.planName)
     const cycleType = this.parseCycleType(dto.cycleType)
     const startDate = this.parseDateOnly(dto.startDate, '计划开始日期')
     const endDate = dto.endDate
@@ -157,8 +159,8 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         const [createdPlan] = await tx
           .insert(this.checkInPlanTable)
           .values({
-            planCode: dto.planCode.trim(),
-            planName: dto.planName.trim(),
+            planCode,
+            planName,
             ...this.buildPlanStatusPersistence(dto.status),
             cycleType,
             startDate,
@@ -200,8 +202,14 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           dto.patternRewardRules !== undefined ||
           dto.streakRewardRules !== undefined
         const nextPlan = {
-          planCode: dto.planCode?.trim() ?? currentPlan.planCode,
-          planName: dto.planName?.trim() ?? currentPlan.planName,
+          planCode:
+            dto.planCode !== undefined
+              ? this.normalizeRequiredPlanCode(dto.planCode)
+              : currentPlan.planCode,
+          planName:
+            dto.planName !== undefined
+              ? this.normalizeRequiredPlanName(dto.planName)
+              : currentPlan.planName,
           status: dto.status ?? currentStatus,
           cycleType:
             dto.cycleType !== undefined
@@ -297,11 +305,15 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
   /** 更新计划状态，并拦截会破坏单生效计划合同的配置。 */
   async updatePlanStatus(dto: UpdateCheckInPlanStatusDto, adminUserId: number) {
+    if (dto.status === undefined) {
+      throw new BadRequestException('status 不能为空')
+    }
+
     await this.drizzle.withTransaction(async (tx) => {
       await this.acquirePlanMutationLock(tx)
 
       const plan = await this.getPlanById(dto.id, tx)
-      const nextStatus = dto.status ?? this.resolvePlanStatus(plan)
+      const nextStatus = dto.status
 
       if (nextStatus === CheckInPlanStatusEnum.PUBLISHED) {
         await this.assertPublishedPlanWindowAvailable(
@@ -336,6 +348,24 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       this.drizzle.assertAffectedRows(result, '签到计划不存在')
     })
     return true
+  }
+
+  /** 归一化并校验计划编码不能为空白字符串。 */
+  private normalizeRequiredPlanCode(value: string) {
+    const planCode = value.trim()
+    if (!planCode) {
+      throw new BadRequestException('计划编码不能为空')
+    }
+    return planCode
+  }
+
+  /** 归一化并校验计划名称不能为空白字符串。 */
+  private normalizeRequiredPlanName(value: string) {
+    const planName = value.trim()
+    if (!planName) {
+      throw new BadRequestException('计划名称不能为空')
+    }
+    return planName
   }
 
   /**

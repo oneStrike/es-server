@@ -4,7 +4,9 @@ import type {
   FuzzyMatchResult,
   MatchedWord,
   MatchResult,
+  SensitiveWordDetectedHit,
   SensitiveWordDetectResult,
+  SensitiveWordInternalDetectResult,
 } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import {
@@ -23,7 +25,7 @@ import { FuzzyMatcher } from './utils/fuzzy-matcher'
  */
 @Injectable()
 export class SensitiveWordDetectService implements OnModuleInit {
-  private readonly logger = new Logger(SensitiveWordCacheService.name)
+  private readonly logger = new Logger(SensitiveWordDetectService.name)
   private automaton: ACAutomaton
   private fuzzyMatcher: FuzzyMatcher
   private wordMap: Map<string, typeof sensitiveWord.$inferSelect>
@@ -62,11 +64,12 @@ export class SensitiveWordDetectService implements OnModuleInit {
       return
     }
 
-    const wordList = words
+    const exactWordList = words
       .filter((w) => w.isEnabled && w.word)
+      .filter((w) => w.matchMode === MatchModeEnum.EXACT)
       .map((w) => w.word)
 
-    this.automaton.build(wordList)
+    this.automaton.build(exactWordList)
 
     const fuzzyWordList = words
       .filter(
@@ -85,7 +88,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
 
     this.isInitialized = true
     this.logger.log(
-      `初始化敏感词检测器，共 ${wordList.length} 个敏感词（${fuzzyWordList.length} 个模糊匹配）`,
+      `初始化敏感词检测器，共 ${this.wordMap.size} 个敏感词（${exactWordList.length} 个精确匹配，${fuzzyWordList.length} 个模糊匹配）`,
     )
   }
 
@@ -100,51 +103,41 @@ export class SensitiveWordDetectService implements OnModuleInit {
   }
 
   /**
+   * 获取包含内部元数据的敏感词命中结果。
+   * 该结果供写路径记录命中统计与替换裁剪使用，不直接暴露给 HTTP 层。
+   */
+  getMatchedWordsWithMetadata(
+    dto: SensitiveWordDetectDto,
+  ): SensitiveWordInternalDetectResult {
+    const { content } = dto
+
+    if (!this.isInitialized || !content) {
+      return {
+        hits: [],
+        publicHits: [],
+      }
+    }
+
+    const hits = this.collectDetectedHits(content)
+
+    return {
+      hits,
+      publicHits: hits.map((hit) => this.toPublicHit(hit)),
+      highestLevel: this.resolveHighestLevel(hits),
+    }
+  }
+
+  /**
    * 获取内容中匹配的敏感词列表
    * @param dto 检测参数，包含文本与匹配模式
    * @returns 匹配的敏感词列表
    */
   getMatchedWords(dto: SensitiveWordDetectDto): SensitiveWordDetectResult {
-    const { content, matchMode = MatchModeEnum.EXACT } = dto
-
-    if (!this.isInitialized || !content) {
-      return {
-        hits: [],
-      }
-    }
-
-    let results: (MatchResult | FuzzyMatchResult)[] = []
-
-    if (matchMode === MatchModeEnum.FUZZY) {
-      results = this.fuzzyMatcher.match(content)
-    } else {
-      results = this.automaton.match(content)
-    }
-
-    const matchedWords: MatchedWord[] = []
-    let highestLevel: SensitiveWordLevelEnum | undefined
-
-    results.forEach((result) => {
-      const wordInfo = this.wordMap.get(result.word)
-      if (wordInfo) {
-        matchedWords.push({
-          word: result.word,
-          start: result.start,
-          end: result.end,
-          level: wordInfo.level,
-          type: wordInfo.type,
-          replaceWord: wordInfo.replaceWord,
-        })
-
-        if (highestLevel === undefined || wordInfo.level < highestLevel) {
-          highestLevel = wordInfo.level
-        }
-      }
-    })
+    const result = this.getMatchedWordsWithMetadata(dto)
 
     return {
-      hits: matchedWords,
-      highestLevel,
+      hits: result.publicHits,
+      highestLevel: result.highestLevel,
     }
   }
 
@@ -168,13 +161,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @returns 敏感词最高等级，如果没有敏感词则返回 undefined
    */
   getHighestSensitiveWordLevel(dto: SensitiveWordDetectDto) {
-    if (!this.isInitialized || !dto.content) {
-      return undefined
-    }
-
-    const { highestLevel } = this.getMatchedWords(dto)
-
-    return highestLevel
+    return this.getMatchedWordsWithMetadata(dto).highestLevel
   }
 
   /**
@@ -187,16 +174,14 @@ export class SensitiveWordDetectService implements OnModuleInit {
       return dto.content
     }
 
-    const { hits: matchedWords } = this.getMatchedWords(dto)
+    const { hits } = this.getMatchedWordsWithMetadata(dto)
+    const replacementHits = this.resolveReplacementHits(hits)
 
-    if (matchedWords?.length === 0) {
+    if (replacementHits.length === 0) {
       return dto.content
     }
 
-    if (matchedWords) {
-      return this.replaceWords(dto.content, matchedWords, dto.replaceChar)
-    }
-    return dto.content
+    return this.replaceWords(dto.content, replacementHits, dto.replaceChar)
   }
 
   /**
@@ -208,28 +193,28 @@ export class SensitiveWordDetectService implements OnModuleInit {
    */
   private replaceWords(
     text: string,
-    matchedWords: MatchedWord[],
+    matchedWords: SensitiveWordDetectedHit[],
     replaceChar?: string,
   ): string {
     if (matchedWords.length === 0) {
       return text
     }
 
-    const result = text.split('')
+    let cursor = 0
+    let result = ''
+
     matchedWords.forEach((matched) => {
       const replacement = matched.replaceWord
         ? matched.replaceWord
         : (replaceChar || '*').repeat(matched.word.length)
 
-      for (let i = 0; i < matched.word.length; i++) {
-        const charIndex = matched.start + i
-        if (charIndex < result.length && i < replacement.length) {
-          result[charIndex] = replacement[i]
-        }
-      }
+      result += text.slice(cursor, matched.start)
+      result += replacement
+      cursor = matched.end + 1
     })
 
-    return result.join('')
+    result += text.slice(cursor)
+    return result
   }
 
   /**
@@ -245,6 +230,247 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @returns 敏感词数量
    */
   getWordCount(): number {
-    return this.automaton.getWordCount()
+    return this.wordMap.size
+  }
+
+  /**
+   * 收集所有模式下的命中结果，并在同一词条同一区间维度做去重。
+   */
+  private collectDetectedHits(content: string): SensitiveWordDetectedHit[] {
+    const exactHits = this.normalizeResults(
+      this.automaton.match(content),
+      MatchModeEnum.EXACT,
+    )
+    const fuzzyHits = this.normalizeFuzzyResults(this.fuzzyMatcher.match(content))
+
+    const dedupeMap = new Map<string, SensitiveWordDetectedHit>()
+    ;[...exactHits, ...fuzzyHits].forEach((hit) => {
+      const key = `${hit.sensitiveWordId}:${hit.start}:${hit.end}`
+      const existing = dedupeMap.get(key)
+      if (!existing || this.compareHitPriority(hit, existing) < 0) {
+        dedupeMap.set(key, hit)
+      }
+    })
+
+    return this.collapseOverlappingWordHits(
+      [...dedupeMap.values()].sort((prev, next) =>
+        this.compareHitPriority(prev, next),
+      ),
+    )
+  }
+
+  /**
+   * 将 AC / BK-Tree 原始结果归一化为内部富命中结构。
+   */
+  private normalizeResults(
+    results: Array<MatchResult | FuzzyMatchResult>,
+    matchMode: MatchModeEnum,
+  ): SensitiveWordDetectedHit[] {
+    return results.flatMap((result) => {
+      const wordInfo = this.wordMap.get(result.word)
+      if (!wordInfo || wordInfo.matchMode !== matchMode) {
+        return []
+      }
+
+      return [
+        {
+          sensitiveWordId: wordInfo.id,
+          word: result.word,
+          start: result.start,
+          end: result.end,
+          level: wordInfo.level,
+          type: wordInfo.type,
+          replaceWord: wordInfo.replaceWord,
+          matchMode: wordInfo.matchMode,
+        },
+      ]
+    })
+  }
+
+  /**
+   * 归一化模糊匹配结果，并按“同词条同起点”保留最佳候选。
+   * BK-Tree 会产出多个不同长度的候选子串，这里统一裁成稳定结果。
+   */
+  private normalizeFuzzyResults(results: FuzzyMatchResult[]) {
+    const candidateMap = new Map<string, SensitiveWordDetectedHit & { distance: number }>()
+
+    results.forEach((result) => {
+      const wordInfo = this.wordMap.get(result.word)
+      if (!wordInfo || wordInfo.matchMode !== MatchModeEnum.FUZZY) {
+        return
+      }
+
+      const candidate: SensitiveWordDetectedHit & { distance: number } = {
+        sensitiveWordId: wordInfo.id,
+        word: result.word,
+        start: result.start,
+        end: result.end,
+        level: wordInfo.level,
+        type: wordInfo.type,
+        replaceWord: wordInfo.replaceWord,
+        matchMode: wordInfo.matchMode,
+        distance: result.distance,
+      }
+      const key = `${candidate.sensitiveWordId}:${candidate.start}`
+      const existing = candidateMap.get(key)
+
+      if (
+        !existing ||
+        candidate.distance < existing.distance ||
+        (candidate.distance === existing.distance &&
+          this.compareHitPriority(candidate, existing) < 0)
+      ) {
+        candidateMap.set(key, candidate)
+      }
+    })
+
+    const collapsedCandidates: Array<
+      SensitiveWordDetectedHit & { distance: number }
+    > = []
+
+    ;[...candidateMap.values()]
+      .sort((prev, next) => {
+        if (prev.start !== next.start) {
+          return prev.start - next.start
+        }
+
+        if (prev.distance !== next.distance) {
+          return prev.distance - next.distance
+        }
+
+        return this.compareHitPriority(prev, next)
+      })
+      .forEach((candidate) => {
+        const lastCandidate = collapsedCandidates.at(-1)
+        if (
+          lastCandidate &&
+          lastCandidate.sensitiveWordId === candidate.sensitiveWordId &&
+          candidate.start <= lastCandidate.end
+        ) {
+          if (
+            candidate.distance < lastCandidate.distance ||
+            (candidate.distance === lastCandidate.distance &&
+              this.compareHitPriority(candidate, lastCandidate) < 0)
+          ) {
+            collapsedCandidates[collapsedCandidates.length - 1] = candidate
+          }
+          return
+        }
+
+        collapsedCandidates.push(candidate)
+      })
+
+    return collapsedCandidates.map(({ distance: _distance, ...hit }) => hit)
+  }
+
+  /**
+   * 将内部富命中结构裁成对外命中结构。
+   */
+  private toPublicHit(hit: SensitiveWordDetectedHit): MatchedWord {
+    return {
+      word: hit.word,
+      start: hit.start,
+      end: hit.end,
+      level: hit.level,
+      type: hit.type,
+      replaceWord: hit.replaceWord,
+    }
+  }
+
+  /**
+   * 计算命中结果中的最高敏感等级。
+   * 数值越小表示等级越高。
+   */
+  private resolveHighestLevel(
+    hits: SensitiveWordDetectedHit[],
+  ): SensitiveWordLevelEnum | undefined {
+    return hits.reduce<SensitiveWordLevelEnum | undefined>((current, hit) => {
+      if (current === undefined || hit.level < current) {
+        return hit.level
+      }
+
+      return current
+    }, undefined)
+  }
+
+  /**
+   * 替换前裁剪重叠命中区间。
+   * 优先级固定为：start 更小优先；同 start 取更长命中；再取更高严重级；最后取 EXACT。
+   */
+  private resolveReplacementHits(hits: SensitiveWordDetectedHit[]) {
+    const sortedHits = this.collapseOverlappingWordHits(
+      [...hits].sort((prev, next) => this.compareHitPriority(prev, next)),
+    )
+    const selectedHits: SensitiveWordDetectedHit[] = []
+
+    for (const hit of sortedHits) {
+      const lastSelected = selectedHits.at(-1)
+      if (lastSelected && hit.start <= lastSelected.end) {
+        continue
+      }
+
+      selectedHits.push(hit)
+    }
+
+    return selectedHits
+  }
+
+  /**
+   * 统一比较命中优先级。
+   * 兼容检测结果排序、同位命中去重与替换冲突裁剪。
+   */
+  private compareHitPriority(
+    prev: SensitiveWordDetectedHit,
+    next: SensitiveWordDetectedHit,
+  ) {
+    if (prev.start !== next.start) {
+      return prev.start - next.start
+    }
+
+    const prevLength = prev.end - prev.start
+    const nextLength = next.end - next.start
+    if (prevLength !== nextLength) {
+      return nextLength - prevLength
+    }
+
+    if (prev.level !== next.level) {
+      return prev.level - next.level
+    }
+
+    if (prev.matchMode !== next.matchMode) {
+      return prev.matchMode - next.matchMode
+    }
+
+    if (prev.end !== next.end) {
+      return prev.end - next.end
+    }
+
+    return prev.word.localeCompare(next.word)
+  }
+
+  /**
+   * 折叠同一词条的重叠命中区间。
+   * 主要用于压缩 BK-Tree 产出的相邻候选，避免同一处模糊命中被重复上报。
+   */
+  private collapseOverlappingWordHits(hits: SensitiveWordDetectedHit[]) {
+    const collapsedHits: SensitiveWordDetectedHit[] = []
+
+    hits.forEach((hit) => {
+      const lastHit = collapsedHits.at(-1)
+      if (
+        lastHit &&
+        lastHit.sensitiveWordId === hit.sensitiveWordId &&
+        hit.start <= lastHit.end
+      ) {
+        if (this.compareHitPriority(hit, lastHit) < 0) {
+          collapsedHits[collapsedHits.length - 1] = hit
+        }
+        return
+      }
+
+      collapsedHits.push(hit)
+    })
+
+    return collapsedHits
   }
 }

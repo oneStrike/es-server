@@ -170,6 +170,20 @@ export interface JsonPropertyOptions extends BaseValidateOptions {
 }
 
 /**
+ * 开放对象属性选项
+ */
+export interface ObjectPropertyOptions extends BaseValidateOptions {
+  /** 示例值 */
+  example?: Record<string, unknown> | null
+  /** 默认值 */
+  default?: Record<string, unknown> | null
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
+  /** 是否启用校验，默认为 true。设置为 false 时仅使用 ApiProperty */
+  validation?: boolean
+}
+
+/**
  * 正则表达式属性选项
  */
 export interface RegexPropertyOptions extends BaseValidateOptions {

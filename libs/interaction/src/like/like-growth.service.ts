@@ -119,15 +119,12 @@ export class LikeGrowthService {
     const baseBizKey = `like:${targetType}:${targetId}:user:${userId}`
 
     try {
-      await this.drizzle.withTransaction(async (tx) => {
-        await this.growthEventBridgeService.dispatchDefinedEvent({
-          tx,
-          eventEnvelope: likeCreatedEvent,
-          bizKey: baseBizKey,
-          source: 'like',
-          remark: `点赞目标 #${likeCreatedEvent.targetId}`,
-          targetType,
-        })
+      await this.growthEventBridgeService.dispatchDefinedEvent({
+        eventEnvelope: likeCreatedEvent,
+        bizKey: baseBizKey,
+        source: 'like',
+        remark: `点赞目标 #${likeCreatedEvent.targetId}`,
+        targetType,
       })
     } catch (error) {
       this.logger.warn(
@@ -165,14 +162,11 @@ export class LikeGrowthService {
     const baseBizKey = `comment:liked:${commentId}:liker:${likerUserId}:author:${comment.userId}`
 
     try {
-      await this.drizzle.withTransaction(async (tx) => {
-        await this.growthEventBridgeService.dispatchDefinedEvent({
-          tx,
-          eventEnvelope: commentLikedEvent,
-          bizKey: baseBizKey,
-          source: 'comment_like',
-          remark: `评论被点赞 #${commentLikedEvent.targetId}`,
-        })
+      await this.growthEventBridgeService.dispatchDefinedEvent({
+        eventEnvelope: commentLikedEvent,
+        bizKey: baseBizKey,
+        source: 'comment_like',
+        remark: `评论被点赞 #${commentLikedEvent.targetId}`,
       })
     } catch (error) {
       this.logger.warn(

@@ -340,6 +340,105 @@ describe('check-in execution service', () => {
     ).rejects.toMatchObject(new NotFoundException('连续奖励发放事实不存在'))
   })
 
+  it('已成功的基础奖励再次补偿时会直接复用成功态而不降级状态', async () => {
+    const applyDeltaMock = jest.fn()
+    const tx = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue([
+              {
+                id: 100,
+                userId: 9,
+                planId: 1,
+                cycleId: 2,
+                rewardStatus: CheckInRewardStatusEnum.SUCCESS,
+                rewardSettledAt: new Date('2026-04-10T12:00:00.000Z'),
+                resolvedRewardConfig: { points: 30 },
+              },
+            ]),
+          })),
+        })),
+      })),
+      update: jest.fn(),
+    }
+
+    const service = new CheckInExecutionService(
+      {
+        db: {
+          update: jest.fn(),
+        },
+        schema,
+        withTransaction: jest.fn(
+          async (fn: (input: typeof tx) => Promise<unknown>) => fn(tx),
+        ),
+        withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+      } as any,
+      {
+        applyDelta: applyDeltaMock,
+      } as any,
+    )
+
+    const result = await (service as any).settleRecordReward(100, {
+      actorUserId: 99,
+      source: 'admin_repair',
+    })
+
+    expect(result).toBe(true)
+    expect(applyDeltaMock).not.toHaveBeenCalled()
+    expect(tx.update).not.toHaveBeenCalled()
+  })
+
+  it('已成功的连续奖励再次补偿时会直接复用成功态而不降级状态', async () => {
+    const applyDeltaMock = jest.fn()
+    const tx = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          where: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue([
+              {
+                id: 200,
+                userId: 9,
+                planId: 1,
+                cycleId: 2,
+                ruleCode: 'streak-7',
+                grantStatus: CheckInRewardStatusEnum.SUCCESS,
+                grantSettledAt: new Date('2026-04-10T12:00:00.000Z'),
+                rewardConfig: { points: 70 },
+              },
+            ]),
+          })),
+        })),
+      })),
+      update: jest.fn(),
+    }
+
+    const service = new CheckInExecutionService(
+      {
+        db: {
+          update: jest.fn(),
+        },
+        schema,
+        withTransaction: jest.fn(
+          async (fn: (input: typeof tx) => Promise<unknown>) => fn(tx),
+        ),
+        withErrorHandling: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+      } as any,
+      {
+        applyDelta: applyDeltaMock,
+      } as any,
+    )
+
+    const result = await (service as any).settleGrantReward(200, {
+      actorUserId: 99,
+      source: 'admin_repair',
+    })
+
+    expect(result).toBe(true)
+    expect(applyDeltaMock).not.toHaveBeenCalled()
+    expect(tx.update).not.toHaveBeenCalled()
+  })
+
   it('周期聚合版本冲突时会重试签到事务', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-04-10T12:00:00.000Z'))
 
@@ -426,7 +525,9 @@ describe('check-in execution service', () => {
       makeupUsedCount: 0,
       currentStreak: 0,
     })
-    jest.spyOn(service as any, 'findRecordByUniqueKey').mockResolvedValue(undefined)
+    jest
+      .spyOn(service as any, 'findRecordByUniqueKey')
+      .mockResolvedValue(undefined)
     jest.spyOn(service as any, 'listCycleRecords').mockResolvedValue([
       {
         signDate: '2026-04-10',

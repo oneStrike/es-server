@@ -1,4 +1,3 @@
-import { DrizzleService } from '@db/core'
 import { createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
@@ -23,7 +22,6 @@ export class BrowseLogGrowthService {
   constructor(
     /** 成长奖励服务 */
     private readonly growthEventBridgeService: GrowthEventBridgeService,
-    private readonly drizzle: DrizzleService,
   ) {}
 
   /**
@@ -55,15 +53,12 @@ export class BrowseLogGrowthService {
     })
 
     try {
-      await this.drizzle.withTransaction(async (tx) => {
-        await this.growthEventBridgeService.dispatchDefinedEvent({
-          tx,
-          eventEnvelope: browseRecordedEvent,
-          bizKey: baseBizKey,
-          source: 'browse_log',
-          remark: `浏览目标 #${targetId}`,
-          targetType,
-        })
+      await this.growthEventBridgeService.dispatchDefinedEvent({
+        eventEnvelope: browseRecordedEvent,
+        bizKey: baseBizKey,
+        source: 'browse_log',
+        remark: `浏览目标 #${targetId}`,
+        targetType,
       })
     } catch (error) {
       this.logger.warn(

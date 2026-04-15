@@ -67,7 +67,8 @@ export class BaseCheckInRecordDto extends BaseDto {
   rewardResultType?: CheckInRewardResultTypeEnum | null
 
   @EnumProperty({
-    description: '基础奖励来源（1=默认基础奖励；2=具体日期奖励；3=周期模式奖励）',
+    description:
+      '基础奖励来源（1=默认基础奖励；2=具体日期奖励；3=周期模式奖励）',
     example: CheckInRewardSourceTypeEnum.DATE_RULE,
     enum: CheckInRewardSourceTypeEnum,
     required: false,

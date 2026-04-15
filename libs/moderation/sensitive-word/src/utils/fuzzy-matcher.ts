@@ -128,15 +128,18 @@ export class FuzzyMatcher {
     const textLen = text.length
 
     for (let i = 0; i < textLen; i++) {
-      const maxEnd = Math.min(i + this.maxDistance * 2 + 10, textLen)
-      for (let j = i + 1; j <= maxEnd; j++) {
-        const substring = text.substring(i, j)
-        const matchedWords = this.bkTree.search(substring)
+        const maxEnd = Math.min(i + this.maxDistance * 2 + 10, textLen)
+        for (let j = i + 1; j <= maxEnd; j++) {
+          const substring = text.substring(i, j)
+          const matchedWords = this.bkTree.search(substring)
 
-        for (const word of matchedWords) {
-          const distance = this.calculateLevenshteinDistance(word, substring)
-          if (distance <= this.maxDistance) {
-            results.push({
+          for (const word of matchedWords) {
+            if (!this.quickFilter(word, substring)) {
+              continue
+            }
+            const distance = this.calculateLevenshteinDistance(word, substring)
+            if (distance <= this.maxDistance) {
+              results.push({
               word,
               start: i,
               end: j - 1,
@@ -218,6 +221,10 @@ export class FuzzyMatcher {
     const commonChars = [...wordSet].filter((char) =>
       substringSet.has(char),
     ).length
+
+    if (commonChars === 0) {
+      return false
+    }
 
     if (wordSet.size - commonChars > this.maxDistance) {
       return false

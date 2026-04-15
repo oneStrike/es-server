@@ -63,13 +63,13 @@
 
 ### 2.4 返回语义
 
-- 纯成功确认类接口优先 `boolean` 或 `204 No Content`。
+- 纯成功确认类接口优先 `boolean`，特殊场景可按照业务需求返回其他类型。
 - `create`、需要立即回显新状态的 `update`、需要返回快照的动作型接口，可返回 `id`、最小成功载荷或资源快照。
 
 ### 2.5 权限与审计
 
 - admin-api 默认受保护，`@Public()` 只用于认证或明确公开能力。
-- admin 侧变更类接口优先补齐审计装饰器。
+- admin 侧变更类接口优先使用`@ApiAuditDoc()` ，记录变更操作与影响。
 
 ### 2.6 兼容与维护
 
@@ -95,7 +95,7 @@
 
 ### 3.3 复用与收敛
 
-- 优先 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 组合，避免字段复制。
+- 优先 `PickType`、`OmitType`、`PartialType`、`IntersectionType` 组合，避免字段复制、重复定义。
 - 禁止新增纯别名 DTO 或 DTO barrel。
 - `contract: false` 用于排除不对外字段。
 - 枚举数组字段统一使用 `ArrayProperty` + `itemEnum`，类型为 `XxxEnum[]`。
@@ -112,6 +112,9 @@
 - 与 DTO 同构的 `Input/View` 类型不重复定义。
 - `*.type.ts` 只承载非 HTTP 契约结构。
 - 纯类型依赖统一使用 `import type`。
+- 尽量使用类型推导、联合类型、交叉类型等 TypeScript 特性，避免手动定义类型。
+- 禁止使用 `any`、`unknown` 等宽泛类型。
+- 方法返回值尽量使用类型推导，必要时才手动指定类型。
 
 ## 5. 注释规范
 

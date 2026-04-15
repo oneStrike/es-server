@@ -185,6 +185,40 @@ describe('check-in definition service', () => {
     ).rejects.toThrow('周计划开始日期必须对齐周一')
   })
 
+  it('创建计划时会拦截空白 planCode', async () => {
+    await expect(
+      service.createPlan(
+        {
+          planCode: '   ',
+          planName: '成长签到',
+          status: CheckInPlanStatusEnum.DRAFT,
+          cycleType: CheckInCycleTypeEnum.MONTHLY,
+          startDate: '2026-04-01',
+          endDate: '2026-04-30',
+          allowMakeupCountPerCycle: 2,
+        },
+        99,
+      ),
+    ).rejects.toThrow('计划编码不能为空')
+  })
+
+  it('创建计划时会拦截空白 planName', async () => {
+    await expect(
+      service.createPlan(
+        {
+          planCode: 'growth-check-in',
+          planName: '   ',
+          status: CheckInPlanStatusEnum.DRAFT,
+          cycleType: CheckInCycleTypeEnum.MONTHLY,
+          startDate: '2026-04-01',
+          endDate: '2026-04-30',
+          allowMakeupCountPerCycle: 2,
+        },
+        99,
+      ),
+    ).rejects.toThrow('计划名称不能为空')
+  })
+
   it('已发布计划创建时会拦截与其他已发布窗口重叠的时间段', async () => {
     txSelectLimitMock.mockResolvedValueOnce([{ id: 99 }])
     jest.spyOn(service as any, 'findCurrentActivePlan').mockResolvedValue(null)
@@ -362,43 +396,43 @@ describe('check-in definition service', () => {
 
     expect(planUpdateSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-      rewardDefinition: {
-        baseRewardConfig: { points: 5 },
-        dateRewardRules: [
-          {
-            rewardDate: '2026-04-01',
-            rewardConfig: { points: 10 },
-          },
-          {
-            rewardDate: '2026-04-03',
-            rewardConfig: { experience: 30 },
-          },
-        ],
-        patternRewardRules: [
-          {
-            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
-            weekday: null,
-            monthDay: 15,
-            rewardConfig: { experience: 15 },
-          },
-          {
-            patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
-            weekday: null,
-            monthDay: null,
-            rewardConfig: { points: 30 },
-          },
-        ],
-        streakRewardRules: [
-          {
-            ruleCode: 'streak-7',
-            streakDays: 7,
-            rewardConfig: { points: 70 },
-            repeatable: false,
-            status: 1,
-          },
-        ],
-      },
-      updatedById: 99,
+        rewardDefinition: {
+          baseRewardConfig: { points: 5 },
+          dateRewardRules: [
+            {
+              rewardDate: '2026-04-01',
+              rewardConfig: { points: 10 },
+            },
+            {
+              rewardDate: '2026-04-03',
+              rewardConfig: { experience: 30 },
+            },
+          ],
+          patternRewardRules: [
+            {
+              patternType: CheckInPatternRewardRuleTypeEnum.MONTH_DAY,
+              weekday: null,
+              monthDay: 15,
+              rewardConfig: { experience: 15 },
+            },
+            {
+              patternType: CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY,
+              weekday: null,
+              monthDay: null,
+              rewardConfig: { points: 30 },
+            },
+          ],
+          streakRewardRules: [
+            {
+              ruleCode: 'streak-7',
+              streakDays: 7,
+              rewardConfig: { points: 70 },
+              repeatable: false,
+              status: 1,
+            },
+          ],
+        },
+        updatedById: 99,
       }),
     )
   })
@@ -499,5 +533,16 @@ describe('check-in definition service', () => {
     expect(txExecuteMock).toHaveBeenCalledTimes(1)
     const rendered = dialect.sqlToQuery(txExecuteMock.mock.calls[0][0]).sql
     expect(rendered).toContain('pg_advisory_xact_lock')
+  })
+
+  it('更新计划状态时缺少 status 会直接报错', async () => {
+    await expect(
+      service.updatePlanStatus(
+        {
+          id: 11,
+        } as any,
+        99,
+      ),
+    ).rejects.toThrow('status 不能为空')
   })
 })

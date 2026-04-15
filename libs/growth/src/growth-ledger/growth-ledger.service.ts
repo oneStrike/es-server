@@ -187,8 +187,9 @@ export class GrowthLedgerService {
     const dayKey = this.formatDateKey(occurredAt)
 
     // 检查每日限额：通过槽位占用实现并发安全
+    let reservedDailySlotValue: string | null = null
     if (rule.dailyLimit > 0) {
-      const reservedDaily = await this.reserveLimitedSlots(tx, {
+      reservedDailySlotValue = await this.reserveLimitedSlots(tx, {
         userId,
         assetType,
         ruleKey,
@@ -196,7 +197,7 @@ export class GrowthLedgerService {
         slotScope: dayKey,
         limit: rule.dailyLimit,
       })
-      if (!reservedDaily) {
+      if (!reservedDailySlotValue) {
         // 每日限额已达，回滚账本记录
         await this.deleteLedgerRecordById(tx, gate.recordId)
         await this.writeAuditLog(tx, {
@@ -219,7 +220,7 @@ export class GrowthLedgerService {
 
     // 检查总限额：通过槽位占用实现并发安全
     if (rule.totalLimit > 0) {
-      const reservedTotal = await this.reserveLimitedSlots(tx, {
+      const reservedTotalSlotValue = await this.reserveLimitedSlots(tx, {
         userId,
         assetType,
         ruleKey,
@@ -227,9 +228,18 @@ export class GrowthLedgerService {
         slotScope: 'all',
         limit: rule.totalLimit,
       })
-      if (!reservedTotal) {
+      if (!reservedTotalSlotValue) {
         // 总限额已达，回滚账本记录
         await this.deleteLedgerRecordById(tx, gate.recordId)
+        if (reservedDailySlotValue) {
+          await this.deleteUsageSlot(tx, {
+            userId,
+            assetType,
+            ruleKey,
+            slotType: GrowthRuleUsageSlotTypeEnum.DAILY,
+            slotValue: reservedDailySlotValue,
+          })
+        }
         await this.writeAuditLog(tx, {
           userId,
           bizKey,
@@ -568,7 +578,7 @@ export class GrowthLedgerService {
    * 对于 limit=N，仅允许成功占用 N 个唯一槽位，超出即失败
    * 通过尝试占用 slotNo=1 到 limit 的槽位来实现并发安全
    *
-   * @returns 是否成功占用槽位
+   * @returns 成功占用的槽位值；未占用成功则返回 null
    */
   private async reserveLimitedSlots(
     tx: Tx,
@@ -580,25 +590,26 @@ export class GrowthLedgerService {
       slotScope: string
       limit: number
     },
-  ): Promise<boolean> {
+  ): Promise<string | null> {
     if (params.limit > this.maxSlotReserveLimit) {
       throw new Error(
         `slot limit ${params.limit} exceeds max ${this.maxSlotReserveLimit}`,
       )
     }
     for (let slotNo = 1; slotNo <= params.limit; slotNo += 1) {
+      const slotValue = `${params.slotScope}:${slotNo}`
       const inserted = await this.insertUsageSlot(tx, {
         userId: params.userId,
         assetType: params.assetType,
         ruleKey: params.ruleKey,
         slotType: params.slotType,
-        slotValue: `${params.slotScope}:${slotNo}`,
+        slotValue,
       })
       if (inserted) {
-        return true
+        return slotValue
       }
     }
-    return false
+    return null
   }
 
   private toPublicGrowthLedgerRecord(record: {
@@ -895,6 +906,31 @@ export class GrowthLedgerService {
         .returning({ id: this.growthRuleUsageSlot.id }),
     )
     return rows.length > 0
+  }
+
+  private async deleteUsageSlot(
+    tx: Tx,
+    params: {
+      userId: number
+      assetType: GrowthAssetTypeEnum
+      ruleKey: string
+      slotType: GrowthRuleUsageSlotTypeEnum
+      slotValue: string
+    },
+  ) {
+    await this.drizzle.withErrorHandling(() =>
+      tx
+        .delete(this.growthRuleUsageSlot)
+        .where(
+          and(
+            eq(this.growthRuleUsageSlot.userId, params.userId),
+            eq(this.growthRuleUsageSlot.assetType, params.assetType),
+            eq(this.growthRuleUsageSlot.ruleKey, params.ruleKey),
+            eq(this.growthRuleUsageSlot.slotType, params.slotType),
+            eq(this.growthRuleUsageSlot.slotValue, params.slotValue),
+          ),
+        ),
+    )
   }
 
   private async incrementAndReturnUserBalance(

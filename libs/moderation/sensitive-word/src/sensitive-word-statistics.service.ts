@@ -1,15 +1,22 @@
+import type { Db } from '@db/core'
 import type {
+  RecordSensitiveWordEntityHitsInput,
   SensitiveWordRecentHitStatistics,
+  SensitiveWordTopHitStatistics,
 } from './sensitive-word.types'
 import { DrizzleService } from '@db/core'
 import { startOfTodayInAppTimeZone, subtractDaysInAppTimeZone, subtractMonthsInAppTimeZone } from '@libs/platform/utils/time';
 import { Injectable, Logger } from '@nestjs/common'
-import { desc, eq, gt, gte, isNotNull, sql } from 'drizzle-orm'
+import { desc, eq, gt, isNotNull, sql } from 'drizzle-orm'
 import { SensitiveWordStatisticsDataDto } from './dto/sensitive-word.dto'
 import {
   SensitiveWordLevelNames,
   SensitiveWordTypeNames,
 } from './sensitive-word-constant'
+import {
+  SensitiveWordHitEntityTypeMap,
+  SensitiveWordHitOperationTypeMap,
+} from './sensitive-word.types'
 
 /**
  * 敏感词统计服务
@@ -29,6 +36,11 @@ export class SensitiveWordStatisticsService {
   /** 敏感词表 */
   private get sensitiveWord() {
     return this.drizzle.schema.sensitiveWord
+  }
+
+  /** 敏感词命中明细表 */
+  private get sensitiveWordHitLog() {
+    return this.drizzle.schema.sensitiveWordHitLog
   }
 
   /**
@@ -135,7 +147,7 @@ export class SensitiveWordStatisticsService {
     const [result] = await this.db
       .select({ sum: sql<number>`sum(${this.sensitiveWord.hitCount})` })
       .from(this.sensitiveWord)
-      .where(gte(this.sensitiveWord.lastHitAt, startDate))
+      .where(sql`${this.sensitiveWord.lastHitAt} >= ${startDate}`)
     return Number(result?.sum ?? 0)
   }
 
@@ -174,7 +186,7 @@ export class SensitiveWordStatisticsService {
    * 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
    * @returns 级别统计列表
    */
-  private async getLevelStatistics() {
+  async getLevelStatistics() {
     const results = await this.db
       .select({
         level: this.sensitiveWord.level,
@@ -197,7 +209,7 @@ export class SensitiveWordStatisticsService {
    * 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
    * @returns 类型统计列表
    */
-  private async getTypeStatistics() {
+  async getTypeStatistics() {
     const results = await this.db
       .select({
         type: this.sensitiveWord.type,
@@ -220,7 +232,7 @@ export class SensitiveWordStatisticsService {
    * 返回命中次数最高的20个敏感词
    * @returns 热门敏感词列表
    */
-  private async getTopHitWords() {
+  async getTopHitWords(): Promise<SensitiveWordTopHitStatistics[]> {
     const results = await this.db
       .select({
         word: this.sensitiveWord.word,
@@ -248,7 +260,7 @@ export class SensitiveWordStatisticsService {
    * 返回最近命中的20个敏感词，按最后命中时间倒序排列
    * @returns 最近命中的敏感词列表
    */
-  private async getRecentHitWords(): Promise<
+  async getRecentHitWords(): Promise<
     SensitiveWordRecentHitStatistics[]
   > {
     const results = await this.db
@@ -269,45 +281,56 @@ export class SensitiveWordStatisticsService {
       hitCount: result.hitCount,
       level: result.level,
       type: result.type,
-      lastHitAt: result.lastHitAt!,
+      lastHitAt: result.lastHitAt ?? undefined,
     }))
   }
 
   /**
-   * 更新敏感词命中次数
-   * 将指定敏感词的命中次数加1，并更新最后命中时间
-   * @param word - 敏感词
+   * 在业务写事务中记录敏感词命中，并同步词表累计快照。
+   * 管理端检测/替换接口不调用该方法，避免把调试流量混入业务统计。
    */
-  async incrementHitCount(word: string): Promise<void> {
-    try {
-      await this.drizzle.withErrorHandling(() =>
-        this.db
-          .update(this.sensitiveWord)
-          .set({
-            hitCount: sql`${this.sensitiveWord.hitCount} + 1`,
-            lastHitAt: new Date(),
-          })
-          .where(eq(this.sensitiveWord.word, word)),
-      )
-    } catch (error) {
-      this.logger.error(`更新敏感词命中次数失败: ${word}`, error)
-    }
-  }
-
-  /**
-   * 批量更新敏感词命中次数
-   * 将多个敏感词的命中次数分别加1，并更新各自的最后命中时间
-   * @param words - 敏感词列表
-   */
-  async incrementHitCounts(words: string[]): Promise<void> {
-    if (words.length === 0) {
+  async recordEntityHitsInTx(
+    tx: Db,
+    input: RecordSensitiveWordEntityHitsInput,
+  ) {
+    if (input.hits.length === 0) {
       return
     }
 
-    try {
-      await Promise.all(words.map(async (word) => this.incrementHitCount(word)))
-    } catch (error) {
-      this.logger.error('批量更新敏感词命中次数失败', error)
+    const occurredAt = input.occurredAt ?? new Date()
+    const logRows = input.hits.map((hit) => ({
+      sensitiveWordId: hit.sensitiveWordId,
+      entityType: SensitiveWordHitEntityTypeMap[input.entityType],
+      entityId: input.entityId,
+      operationType: SensitiveWordHitOperationTypeMap[input.operationType],
+      matchedWord: hit.word,
+      level: hit.level,
+      type: hit.type,
+      createdAt: occurredAt,
+    }))
+
+    await this.drizzle.withErrorHandling(() =>
+      tx.insert(this.sensitiveWordHitLog).values(logRows),
+    )
+
+    const aggregateMap = new Map<number, number>()
+    input.hits.forEach((hit) => {
+      aggregateMap.set(
+        hit.sensitiveWordId,
+        (aggregateMap.get(hit.sensitiveWordId) ?? 0) + 1,
+      )
+    })
+
+    for (const [sensitiveWordId, hitCount] of aggregateMap.entries()) {
+      await this.drizzle.withErrorHandling(() =>
+        tx
+          .update(this.sensitiveWord)
+          .set({
+            hitCount: sql`${this.sensitiveWord.hitCount} + ${hitCount}`,
+            lastHitAt: occurredAt,
+          })
+          .where(eq(this.sensitiveWord.id, sensitiveWordId)),
+      )
     }
   }
 }

@@ -4,9 +4,9 @@ import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto } from '@libs/platform/dto/base.dto';
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto';
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
-import { PartialType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 // ============================================================================
 // 阿里云配置
@@ -469,12 +469,15 @@ export class BaseSystemConfigDto extends BaseDto {
   uploadConfig?: UploadConfigDto | null
 }
 
-export class UpdateSystemConfigDto extends PartialType(
-  PickType(BaseSystemConfigDto, [
-    'aliyunConfig',
-    'siteConfig',
-    'maintenanceConfig',
-    'contentReviewPolicy',
-    'uploadConfig',
-  ] as const),
+export class UpdateSystemConfigDto extends IntersectionType(
+  IdDto,
+  PartialType(
+    PickType(BaseSystemConfigDto, [
+      'aliyunConfig',
+      'siteConfig',
+      'maintenanceConfig',
+      'contentReviewPolicy',
+      'uploadConfig',
+    ] as const),
+  ),
 ) {}

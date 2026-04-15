@@ -26,7 +26,8 @@ import {
 
 class CheckInPlanRewardConfigFieldsDto {
   @NestedProperty({
-    description: '计划默认基础奖励配置；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
+    description:
+      '计划默认基础奖励配置；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
     type: CheckInRewardConfigDto,
     required: false,
     nullable: false,
@@ -73,7 +74,7 @@ export class UpdateCheckInPlanDto extends IntersectionType(
 
 export class UpdateCheckInPlanStatusDto extends IntersectionType(
   IdDto,
-  PartialType(PickType(BaseCheckInPlanDto, ['status'] as const)),
+  PickType(BaseCheckInPlanDto, ['status'] as const),
 ) {}
 
 export class QueryCheckInPlanDto extends IntersectionType(

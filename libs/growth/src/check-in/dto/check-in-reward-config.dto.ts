@@ -1,5 +1,5 @@
 import type { CheckInRewardConfig } from '../check-in.type'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 
 export class CheckInRewardConfigDto implements CheckInRewardConfig {
   @NumberProperty({

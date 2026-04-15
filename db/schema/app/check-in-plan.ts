@@ -71,6 +71,14 @@ export const checkInPlan = pgTable('check_in_plan', {
     sql`${table.cycleType} in (1, 2)`,
   ),
   check(
+    'check_in_plan_plan_code_not_blank_chk',
+    sql`btrim(${table.planCode}) <> ''`,
+  ),
+  check(
+    'check_in_plan_plan_name_not_blank_chk',
+    sql`btrim(${table.planName}) <> ''`,
+  ),
+  check(
     'check_in_plan_date_range_valid_chk',
     sql`${table.endDate} is null or ${table.endDate} >= ${table.startDate}`,
   ),

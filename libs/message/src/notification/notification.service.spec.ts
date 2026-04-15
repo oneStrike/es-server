@@ -83,7 +83,7 @@ describe('messageNotificationService', () => {
     )
   })
 
-  it('分页查询会补充分类中文标签和触发用户信息', async () => {
+  it('分页查询会返回公开通知视图，不暴露 projectionKey 且 payload 保持对象', async () => {
     const result = await service.queryUserNotificationList(7, {
       pageIndex: 1,
       pageSize: 10,
@@ -93,12 +93,16 @@ describe('messageNotificationService', () => {
       expect.objectContaining({
         categoryKey: 'comment_reply',
         categoryLabel: '评论回复',
+        payload: {
+          replyCommentId: 101,
+        },
         actorUser: expect.objectContaining({
           id: 9,
           nickname: '回复者',
         }),
       }),
     )
+    expect(result.list[0]).not.toHaveProperty('projectionKey')
   })
 
   it('queryUserNotificationListDto 支持 categoryKeys 数组并对单值 query 做数组收敛', () => {

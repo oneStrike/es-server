@@ -324,29 +324,33 @@ export class ReportService {
    * 只允许 PENDING / PROCESSING 进入 RESOLVED / REJECTED，并在裁决后触发奖励结算。
    */
   async handleReport(input: HandleAdminReportCommandDto) {
+    const current = await this.db.query.userReport.findFirst({
+      where: { id: input.id },
+      columns: {
+        id: true,
+        reporterId: true,
+        targetType: true,
+        targetId: true,
+        status: true,
+        handlingNote: true,
+      },
+    })
+
+    if (!current) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '举报记录不存在',
+      )
+    }
+
+    if (current.status === input.status) {
+      return true
+    }
+
+    this.ensureCanHandleReportStatus(current.status, input.status)
+
     const handledReport = await this.drizzle.withErrorHandling(async () =>
       this.db.transaction(async (tx) => {
-        const current = await tx.query.userReport.findFirst({
-          where: { id: input.id },
-          columns: {
-            id: true,
-            reporterId: true,
-            targetType: true,
-            targetId: true,
-            status: true,
-            handlingNote: true,
-          },
-        })
-
-        if (!current) {
-          throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '举报记录不存在',
-          )
-        }
-
-        this.ensureCanHandleReportStatus(current.status, input.status)
-
         const [updated] = await tx
           .update(this.userReport)
           .set({
@@ -356,19 +360,44 @@ export class ReportService {
             handlingNote:
               input.handlingNote?.trim() || current.handlingNote || null,
           })
-          .where(eq(this.userReport.id, input.id))
+          .where(
+            and(
+              eq(this.userReport.id, input.id),
+              eq(this.userReport.status, current.status),
+            ),
+          )
           .returning()
 
         if (!updated) {
+          const latest = await tx.query.userReport.findFirst({
+            where: { id: input.id },
+            columns: {
+              status: true,
+            },
+          })
+          if (!latest) {
+            throw new BusinessException(
+              BusinessErrorCode.RESOURCE_NOT_FOUND,
+              '举报记录不存在',
+            )
+          }
+          if (latest.status === input.status) {
+            return null
+          }
+          this.ensureCanHandleReportStatus(latest.status, input.status)
           throw new BusinessException(
-            BusinessErrorCode.RESOURCE_NOT_FOUND,
-            '举报记录不存在',
+            BusinessErrorCode.STATE_CONFLICT,
+            '举报状态已变化，请刷新后重试',
           )
         }
 
         return updated
       }),
     )
+
+    if (!handledReport) {
+      return true
+    }
 
     const handledReportEvent = this.buildHandledReportEventEnvelope({
       reportId: handledReport.id,

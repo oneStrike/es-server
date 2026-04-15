@@ -15,6 +15,7 @@ export class BaseCheckInPlanDto extends BaseDto {
   @StringProperty({
     description: '签到计划编码。',
     example: 'growth-check-in',
+    minLength: 1,
     maxLength: 50,
   })
   planCode!: string
@@ -22,21 +23,20 @@ export class BaseCheckInPlanDto extends BaseDto {
   @StringProperty({
     description: '签到计划名称。',
     example: '成长签到',
+    minLength: 1,
     maxLength: 200,
   })
   planName!: string
 
   @EnumProperty({
-    description:
-      '签到计划状态（0=草稿；1=已发布；2=已下线；3=已停用）',
+    description: '签到计划状态（0=草稿；1=已发布；2=已下线；3=已停用）',
     example: CheckInPlanStatusEnum.DRAFT,
     enum: CheckInPlanStatusEnum,
   })
   status!: CheckInPlanStatusEnum
 
   @EnumProperty({
-    description:
-      '周期类型（1=按周切周期；2=按月切周期）',
+    description: '周期类型（1=按周切周期；2=按月切周期）',
     example: CheckInCycleTypeEnum.WEEKLY,
     enum: CheckInCycleTypeEnum,
   })

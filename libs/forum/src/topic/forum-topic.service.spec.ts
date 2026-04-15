@@ -11,7 +11,10 @@ describe('forumTopicService', () => {
   let likeService: { checkStatusBatch: jest.Mock }
   let favoriteService: { checkStatusBatch: jest.Mock }
   let growthEventBridgeService: { dispatchDefinedEvent: jest.Mock }
-  let sensitiveWordDetectService: { getMatchedWords: jest.Mock }
+  let sensitiveWordDetectService: {
+    getMatchedWords: jest.Mock
+    getMatchedWordsWithMetadata: jest.Mock
+  }
   let forumCounterService: {
     updateTopicRelatedCounts: jest.Mock
     syncSectionVisibleState: jest.Mock
@@ -25,6 +28,9 @@ describe('forumTopicService', () => {
   }
   let emojiCatalogService: {
     recordRecentUsageInTx: jest.Mock
+  }
+  let sensitiveWordStatisticsService: {
+    recordEntityHitsInTx: jest.Mock
   }
 
   beforeEach(() => {
@@ -57,6 +63,11 @@ describe('forumTopicService', () => {
         hits: [],
         highestLevel: undefined,
       }),
+      getMatchedWordsWithMetadata: jest.fn().mockReturnValue({
+        hits: [],
+        publicHits: [],
+        highestLevel: undefined,
+      }),
     }
     forumCounterService = {
       updateTopicRelatedCounts: jest.fn(),
@@ -76,6 +87,9 @@ describe('forumTopicService', () => {
     emojiCatalogService = {
       recordRecentUsageInTx: jest.fn(),
     }
+    sensitiveWordStatisticsService = {
+      recordEntityHitsInTx: jest.fn(),
+    }
 
     service = new (ForumTopicService as any)(
       drizzle,
@@ -91,6 +105,7 @@ describe('forumTopicService', () => {
       {} as any,
       mentionService as any,
       emojiCatalogService as any,
+      sensitiveWordStatisticsService as any,
     )
   })
 
@@ -247,6 +262,28 @@ describe('forumTopicService', () => {
     forumPermissionService.ensureUserCanCreateTopic.mockResolvedValue({
       topicReviewPolicy: ForumReviewPolicyEnum.NONE,
     })
+    sensitiveWordDetectService.getMatchedWordsWithMetadata.mockReturnValue({
+      hits: [
+        {
+          sensitiveWordId: 1,
+          word: '测试',
+          start: 0,
+          end: 1,
+          level: 1,
+          type: 4,
+        },
+      ],
+      publicHits: [
+        {
+          word: '测试',
+          start: 0,
+          end: 1,
+          level: 1,
+          type: 4,
+        },
+      ],
+      highestLevel: 1,
+    })
     mentionService.buildBodyTokens.mockResolvedValue([
       {
         type: 'mentionUser',
@@ -305,6 +342,14 @@ describe('forumTopicService', () => {
         userId: 9,
         scene: EmojiSceneEnum.FORUM,
         items: [{ emojiAssetId: 1001, useCount: 1 }],
+      }),
+    )
+    expect(sensitiveWordStatisticsService.recordEntityHitsInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        entityType: 'topic',
+        entityId: 101,
+        operationType: 'create',
       }),
     )
   })
@@ -419,6 +464,28 @@ describe('forumTopicService', () => {
     jest
       .spyOn(service as any, 'getSectionTopicReviewPolicy')
       .mockResolvedValue(ForumReviewPolicyEnum.NONE)
+    sensitiveWordDetectService.getMatchedWordsWithMetadata.mockReturnValue({
+      hits: [
+        {
+          sensitiveWordId: 2,
+          word: '旧标题',
+          start: 0,
+          end: 2,
+          level: 2,
+          type: 5,
+        },
+      ],
+      publicHits: [
+        {
+          word: '旧标题',
+          start: 0,
+          end: 2,
+          level: 2,
+          type: 5,
+        },
+      ],
+      highestLevel: 2,
+    })
     mentionService.buildBodyTokens.mockResolvedValue([
       {
         type: 'mentionUser',
@@ -465,6 +532,14 @@ describe('forumTopicService', () => {
         userId: 77,
         scene: EmojiSceneEnum.FORUM,
         items: [{ emojiAssetId: 2001, useCount: 1 }],
+      }),
+    )
+    expect(sensitiveWordStatisticsService.recordEntityHitsInTx).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        entityType: 'topic',
+        entityId: 101,
+        operationType: 'update',
       }),
     )
   })

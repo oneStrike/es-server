@@ -4,9 +4,9 @@ import {
   DateProperty,
   EnumArrayProperty,
   EnumProperty,
-  JsonProperty,
   NestedProperty,
   NumberProperty,
+  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
@@ -44,14 +44,6 @@ export class BaseUserNotificationDto {
   })
   categoryLabel!: string
 
-  @StringProperty({
-    description: '通知投影键',
-    example: 'comment-replied:101:receiver:7',
-    maxLength: 180,
-    contract: false,
-  })
-  projectionKey!: string
-
   @NumberProperty({
     description: '触发用户 ID',
     example: 10002,
@@ -73,12 +65,13 @@ export class BaseUserNotificationDto {
   })
   content!: string
 
-  @JsonProperty({
+  @ObjectProperty({
     description: '扩展载荷',
-    example: '{"replyCommentId":101}',
+    example: { replyCommentId: 101 },
     required: false,
+    nullable: true,
   })
-  payload?: string
+  payload?: Record<string, unknown> | null
 
   @BooleanProperty({
     description: '是否已读',
