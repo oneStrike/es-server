@@ -1,17 +1,20 @@
-import type { Cache } from 'cache-manager'
-import type {
-  ConfigAllowedTemplate,
-} from './system-config.type'
 import type { Db } from '@db/core'
+import type { Cache } from 'cache-manager'
+import type { ConfigAllowedTemplate } from './system-config.type'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
-import { AesService } from '@libs/platform/modules/crypto/aes.service';
-import { RsaService } from '@libs/platform/modules/crypto/rsa.service';
+import { AesService } from '@libs/platform/modules/crypto/aes.service'
+import { RsaService } from '@libs/platform/modules/crypto/rsa.service'
 import { UploadProviderEnum } from '@libs/platform/modules/upload/upload.types'
-import { isMasked, maskString } from '@libs/platform/utils/mask';
+import { isMasked, maskString } from '@libs/platform/utils/mask'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common'
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common'
 import { desc, sql } from 'drizzle-orm'
 import { ConfigReader } from './config-reader'
 import { UpdateSystemConfigDto } from './dto/config.dto'
@@ -114,7 +117,9 @@ export class SystemConfigService implements OnModuleInit {
         )
       }
 
-      const currentConfig = this.cloneConfig(this.mergeWithDefaults(latestConfig))
+      const currentConfig = this.cloneConfig(
+        this.mergeWithDefaults(latestConfig),
+      )
       const nextConfig = this.cloneConfig(currentConfig)
 
       for (const key of Object.keys(dto)) {
@@ -122,17 +127,17 @@ export class SystemConfigService implements OnModuleInit {
           continue
         }
 
-        const allowedTemplate = (DEFAULT_CONFIG as ConfigAllowedTemplate)[key] as
-          | ConfigAllowedTemplate
-          | undefined
+        const allowedTemplate = (DEFAULT_CONFIG as ConfigAllowedTemplate)[
+          key
+        ] as ConfigAllowedTemplate | undefined
         const filteredInput = this.filterAllowedFields(
           dto[key as keyof UpdateSystemConfigDto],
           allowedTemplate ?? {},
         )
         const meta = CONFIG_SECURITY_META[key]
-        const currentItem = (latestConfig as Record<string, unknown>)[key] as
-          | Record<string, unknown>
-          | null
+        const currentItem = (latestConfig as Record<string, unknown>)[
+          key
+        ] as Record<string, unknown> | null
 
         const processedInput = meta
           ? await this.processSensitiveFields(
@@ -163,10 +168,7 @@ export class SystemConfigService implements OnModuleInit {
       const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
 
       const [insertedSnapshot] = await this.drizzle.withErrorHandling(() =>
-        tx
-          .insert(this.systemConfig)
-          .values(snapshot)
-          .returning(),
+        tx.insert(this.systemConfig).values(snapshot).returning(),
       )
 
       return insertedSnapshot
@@ -224,8 +226,16 @@ export class SystemConfigService implements OnModuleInit {
 
       const inputValue = this.getValueByPath(input, path)
 
-      if (typeof inputValue === 'string' && inputValue && isMasked(inputValue)) {
-        this.setValueByPath(input, path, this.getValueByPath(current, path) || '')
+      if (
+        typeof inputValue === 'string' &&
+        inputValue &&
+        isMasked(inputValue)
+      ) {
+        this.setValueByPath(
+          input,
+          path,
+          this.getValueByPath(current, path) || '',
+        )
       } else if (typeof inputValue === 'string' && inputValue) {
         try {
           const decryptedValue = this.rsaService.decryptWith(inputValue)
@@ -302,7 +312,7 @@ export class SystemConfigService implements OnModuleInit {
       orderBy: {
         createdAt: 'desc',
       },
-    })L
+    })
 
     return {
       list: result.list,
@@ -407,10 +417,7 @@ export class SystemConfigService implements OnModuleInit {
     source: Record<string, any>,
   ): Record<string, any> {
     for (const [key, sourceValue] of Object.entries(source)) {
-      if (
-        this.isPlainObject(sourceValue) &&
-        this.isPlainObject(target[key])
-      ) {
+      if (this.isPlainObject(sourceValue) && this.isPlainObject(target[key])) {
         target[key] = this.deepMerge(target[key], sourceValue)
       } else if (sourceValue !== undefined) {
         target[key] = sourceValue
@@ -439,7 +446,7 @@ export class SystemConfigService implements OnModuleInit {
    */
   private removeNullValues<T>(value: T) {
     if (Array.isArray(value)) {
-      return value.map(item => this.removeNullValues(item)) as T
+      return value.map((item) => this.removeNullValues(item)) as T
     }
 
     if (this.isPlainObject(value)) {
