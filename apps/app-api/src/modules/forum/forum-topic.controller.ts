@@ -59,7 +59,7 @@ export class ForumTopicController {
   @Get('page')
   @OptionalAuth()
   @ApiPageDoc({
-    summary: '分页查询论坛主题',
+    summary: '分页查询论坛主题（综合/板块）',
     model: PublicForumTopicPageItemDto,
   })
   async getPage(
@@ -67,6 +67,37 @@ export class ForumTopicController {
     @CurrentUser('sub') userId?: number,
   ) {
     return this.forumTopicService.getPublicTopics({
+      ...query,
+      userId,
+    })
+  }
+
+  @Get('hot/page')
+  @OptionalAuth()
+  @ApiPageDoc({
+    summary: '分页查询热门论坛主题',
+    model: PublicForumTopicPageItemDto,
+  })
+  async getHotPage(
+    @Query() query: QueryPublicForumTopicDto,
+    @CurrentUser('sub') userId?: number,
+  ) {
+    return this.forumTopicService.getHotPublicTopics({
+      ...query,
+      userId,
+    })
+  }
+
+  @Get('following/page')
+  @ApiPageDoc({
+    summary: '分页查询关注论坛主题',
+    model: PublicForumTopicPageItemDto,
+  })
+  async getFollowingPage(
+    @Query() query: QueryPublicForumTopicDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.forumTopicService.getFollowingPublicTopics({
       ...query,
       userId,
     })

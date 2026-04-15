@@ -1,4 +1,7 @@
-import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing'
+import type {
+  DomainEventDispatchRecord,
+  DomainEventRecord,
+} from '@libs/platform/modules/eventing'
 import type {
   NotificationProjectionApplyResult,
   NotificationProjectionCommand,
@@ -46,10 +49,12 @@ export class NotificationProjectionService {
     if (command.mode === 'delete') {
       const deletedRows = await this.db
         .delete(this.notification)
-        .where(and(
-          eq(this.notification.receiverUserId, command.receiverUserId),
-          eq(this.notification.projectionKey, command.projectionKey),
-        ))
+        .where(
+          and(
+            eq(this.notification.receiverUserId, command.receiverUserId),
+            eq(this.notification.projectionKey, command.projectionKey),
+          ),
+        )
         .returning({
           id: this.notification.id,
           receiverUserId: this.notification.receiverUserId,
@@ -62,27 +67,6 @@ export class NotificationProjectionService {
         receiverUserId: command.receiverUserId,
         projectionKey: command.projectionKey,
         notification: deleted,
-      }
-    }
-
-    if (command.mode === 'append') {
-      const existing = await this.db.query.userNotification.findFirst({
-        where: {
-          receiverUserId: command.receiverUserId,
-          projectionKey: command.projectionKey,
-        },
-      })
-
-      if (existing) {
-        return {
-          action: 'append',
-          receiverUserId: command.receiverUserId,
-          projectionKey: command.projectionKey,
-          notification: existing,
-          templateId: undefined,
-          usedTemplate: false,
-          fallbackReason: 'idempotent_existing',
-        }
       }
     }
 
@@ -124,52 +108,49 @@ export class NotificationProjectionService {
           payload: command.payload,
           expiresAt: command.expiresAt,
         })
+        .onConflictDoNothing({
+          target: [
+            this.notification.receiverUserId,
+            this.notification.projectionKey,
+          ],
+        })
         .returning()
+
+      const inserted = insertedRows[0]
+      if (inserted) {
+        return {
+          action: 'append',
+          receiverUserId: command.receiverUserId,
+          projectionKey: command.projectionKey,
+          notification: inserted,
+          templateId: rendered.templateId,
+          usedTemplate: rendered.usedTemplate,
+          fallbackReason: rendered.fallbackReason,
+        }
+      }
+
+      const existing = await this.db.query.userNotification.findFirst({
+        where: {
+          receiverUserId: command.receiverUserId,
+          projectionKey: command.projectionKey,
+        },
+      })
+      if (!existing) {
+        throw new Error('通知投影幂等命中后未找到既有通知')
+      }
 
       return {
         action: 'append',
         receiverUserId: command.receiverUserId,
         projectionKey: command.projectionKey,
-        notification: insertedRows[0],
-        templateId: rendered.templateId,
-        usedTemplate: rendered.usedTemplate,
-        fallbackReason: rendered.fallbackReason,
+        notification: existing,
+        templateId: undefined,
+        usedTemplate: false,
+        fallbackReason: 'idempotent_existing',
       }
     }
 
-    const existing = await this.db.query.userNotification.findFirst({
-      where: {
-        receiverUserId: command.receiverUserId,
-        projectionKey: command.projectionKey,
-      },
-    })
-
-    if (existing) {
-      const updatedRows = await this.db
-        .update(this.notification)
-        .set({
-          categoryKey: command.categoryKey,
-          actorUserId: command.actorUserId,
-          title: rendered.title,
-          content: rendered.content,
-          payload: command.payload,
-          expiresAt: command.expiresAt,
-        })
-        .where(eq(this.notification.id, existing.id))
-        .returning()
-
-      return {
-        action: 'upsert',
-        receiverUserId: command.receiverUserId,
-        projectionKey: command.projectionKey,
-        notification: updatedRows[0],
-        templateId: rendered.templateId,
-        usedTemplate: rendered.usedTemplate,
-        fallbackReason: rendered.fallbackReason,
-      }
-    }
-
-    const insertedRows = await this.db
+    const upsertedRows = await this.db
       .insert(this.notification)
       .values({
         categoryKey: command.categoryKey,
@@ -181,13 +162,27 @@ export class NotificationProjectionService {
         payload: command.payload,
         expiresAt: command.expiresAt,
       })
+      .onConflictDoUpdate({
+        target: [
+          this.notification.receiverUserId,
+          this.notification.projectionKey,
+        ],
+        set: {
+          categoryKey: command.categoryKey,
+          actorUserId: command.actorUserId,
+          title: rendered.title,
+          content: rendered.content,
+          payload: command.payload,
+          expiresAt: command.expiresAt,
+        },
+      })
       .returning()
 
     return {
       action: 'upsert',
       receiverUserId: command.receiverUserId,
       projectionKey: command.projectionKey,
-      notification: insertedRows[0],
+      notification: upsertedRows[0],
       templateId: rendered.templateId,
       usedTemplate: rendered.usedTemplate,
       fallbackReason: rendered.fallbackReason,

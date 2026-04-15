@@ -103,6 +103,12 @@ describe('messageNotificationService', () => {
       }),
     )
     expect(result.list[0]).not.toHaveProperty('projectionKey')
+    expect(drizzle.ext.findPagination).toHaveBeenCalledWith(
+      drizzle.schema.userNotification,
+      expect.objectContaining({
+        orderBy: '[{"createdAt":"desc"},{"id":"desc"}]',
+      }),
+    )
   })
 
   it('queryUserNotificationListDto 支持 categoryKeys 数组并对单值 query 做数组收敛', () => {

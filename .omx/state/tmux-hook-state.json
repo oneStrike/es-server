@@ -4,6 +4,6 @@
   "session_counts": {},
   "recent_keys": {},
   "last_injection_ts": 0,
-  "last_reason": "disabled",
-  "last_event_at": "2026-04-15T15:17:03.370Z"
+  "last_reason": "tmux_session_mismatch",
+  "last_event_at": "2026-04-15T16:18:00.096Z"
 }

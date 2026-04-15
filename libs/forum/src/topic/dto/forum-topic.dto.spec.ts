@@ -1,5 +1,9 @@
 import { ValidationPipe } from '@nestjs/common'
-import { CreateUserForumTopicDto, UpdateForumTopicDto } from './forum-topic.dto'
+import {
+  CreateUserForumTopicDto,
+  QueryPublicForumTopicDto,
+  UpdateForumTopicDto,
+} from './forum-topic.dto'
 import 'reflect-metadata'
 
 describe('forum topic dto write contract', () => {
@@ -110,5 +114,24 @@ describe('forum topic dto write contract', () => {
         },
       ),
     ).rejects.toThrow()
+  })
+
+  it('allows public topic page query without sectionId', async () => {
+    const transformed = await pipe.transform(
+      {
+        pageIndex: 1,
+        pageSize: 10,
+      },
+      {
+        type: 'query',
+        metatype: QueryPublicForumTopicDto,
+      },
+    )
+
+    expect(transformed).toMatchObject({
+      pageIndex: 1,
+      pageSize: 10,
+    })
+    expect(transformed).not.toHaveProperty('sectionId')
   })
 })

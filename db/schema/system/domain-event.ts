@@ -5,6 +5,7 @@ import {
   jsonb,
   pgTable,
   timestamp,
+  unique,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -21,6 +22,8 @@ export const domainEvent = pgTable(
     eventKey: varchar({ length: 120 }).notNull(),
     /** 事件所属业务域。 */
     domain: varchar({ length: 40 }).notNull(),
+    /** 主题内幂等键。为空时表示该事件不参与发布侧幂等。 */
+    idempotencyKey: varchar({ length: 180 }),
     /** 事件主体类型。 */
     subjectType: varchar({ length: 40 }).notNull(),
     /** 事件主体 ID。 */
@@ -41,6 +44,10 @@ export const domainEvent = pgTable(
       .notNull(),
   },
   (table) => [
+    unique('domain_event_domain_idempotency_key_key').on(
+      table.domain,
+      table.idempotencyKey,
+    ),
     index('domain_event_event_key_created_at_idx').on(
       table.eventKey,
       table.createdAt.desc(),

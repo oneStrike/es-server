@@ -13,11 +13,14 @@ import { getMessageDomainEventDefinition } from './message-event.constant'
 export class MessageDomainEventPublisher {
   constructor(private readonly domainEventPublisher: DomainEventPublisher) {}
 
-  async publish(input: PublishMessageDomainEventInput): Promise<PublishDomainEventResult> {
+  async publish(
+    input: PublishMessageDomainEventInput,
+  ): Promise<PublishDomainEventResult> {
     const definition = getMessageDomainEventDefinition(input.eventKey)
     return this.domainEventPublisher.publish({
       eventKey: input.eventKey,
       domain: definition.domain,
+      idempotencyKey: this.resolveIdempotencyKey(input),
       subjectType: input.subjectType,
       subjectId: input.subjectId,
       targetType: input.targetType,
@@ -37,6 +40,7 @@ export class MessageDomainEventPublisher {
     return this.domainEventPublisher.publishInTx(tx, {
       eventKey: input.eventKey,
       domain: definition.domain,
+      idempotencyKey: this.resolveIdempotencyKey(input),
       subjectType: input.subjectType,
       subjectId: input.subjectId,
       targetType: input.targetType,
@@ -46,5 +50,21 @@ export class MessageDomainEventPublisher {
       consumers: [...definition.consumers],
       context: input.context,
     })
+  }
+
+  private resolveIdempotencyKey(input: PublishMessageDomainEventInput) {
+    if (
+      typeof input.idempotencyKey === 'string' &&
+      input.idempotencyKey.trim()
+    ) {
+      return input.idempotencyKey.trim()
+    }
+
+    const projectionKey = input.context?.projectionKey
+    if (typeof projectionKey === 'string' && projectionKey.trim()) {
+      return projectionKey.trim()
+    }
+
+    return undefined
   }
 }

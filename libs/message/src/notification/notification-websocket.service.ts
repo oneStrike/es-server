@@ -474,37 +474,15 @@ export class MessageWebSocketService {
 
   /**
    * 从原生 WS 请求中提取访问令牌。
-   * 优先读取 query token，其次回退到 Authorization 头。
+   * 只接受 Authorization 头，避免通过 URL query 暴露 access token。
    */
   private extractNativeRequestToken(request: IncomingMessage) {
-    const queryToken = this.getQueryToken(request)
-    if (queryToken) {
-      return this.normalizeBearerToken(queryToken)
-    }
-
     const authorization = request.headers.authorization
     if (typeof authorization === 'string' && authorization.trim()) {
       return this.normalizeBearerToken(authorization)
     }
 
     return null
-  }
-
-  /**
-   * 读取原生 WS 握手 query 参数里的 token。
-   */
-  private getQueryToken(request: IncomingMessage) {
-    try {
-      const host =
-        typeof request.headers.host === 'string' && request.headers.host.trim()
-          ? request.headers.host
-          : 'localhost'
-      const url = new URL(request.url ?? '/', `http://${host}`)
-      const token = url.searchParams.get('token')
-      return token?.trim() || null
-    } catch {
-      return null
-    }
   }
 
   /**
@@ -542,8 +520,7 @@ export class MessageWebSocketService {
    */
   private isValidMessageType(value: unknown) {
     return (
-      value === ChatMessageTypeEnum.TEXT ||
-      value === ChatMessageTypeEnum.IMAGE
+      value === ChatMessageTypeEnum.TEXT || value === ChatMessageTypeEnum.IMAGE
     )
   }
 

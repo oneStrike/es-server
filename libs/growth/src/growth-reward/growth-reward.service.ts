@@ -1,5 +1,5 @@
 import type { Db } from '@db/core'
-import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.internal'
 import type {
   GrowthRuleRewardSettlementResult,
@@ -79,6 +79,12 @@ export class UserGrowthRewardService {
           context: this.buildRuleRewardContext(params),
           occurredAt: params.occurredAt,
         })
+        this.ensureRuleRewardApplySucceeded(
+          params,
+          '积分',
+          GrowthAssetTypeEnum.POINTS,
+          pointsResult,
+        )
 
         // 发放经验
         experienceResult = await this.growthLedgerService.applyByRule(tx, {
@@ -93,10 +99,13 @@ export class UserGrowthRewardService {
           context: this.buildRuleRewardContext(params),
           occurredAt: params.occurredAt,
         })
+        this.ensureRuleRewardApplySucceeded(
+          params,
+          '经验',
+          GrowthAssetTypeEnum.EXPERIENCE,
+          experienceResult,
+        )
       })
-
-      this.logSkippedRuleReward(params, 'POINTS', pointsResult)
-      this.logSkippedRuleReward(params, 'EXPERIENCE', experienceResult)
 
       return this.buildRuleRewardSettlementResult({
         params,
@@ -118,9 +127,9 @@ export class UserGrowthRewardService {
         dedupeResult: GrowthRewardDedupeResultEnum.FAILED,
         ledgerRecordIds: [],
         errorMessage:
-          error instanceof Error ? error.message : '基础奖励发放失败，请稍后重试',
-        pointsResult,
-        experienceResult,
+          error instanceof Error
+            ? error.message
+            : '基础奖励发放失败，请稍后重试',
       }
     }
   }
@@ -143,6 +152,44 @@ export class UserGrowthRewardService {
         result.reason ?? 'unknown'
       }`,
     )
+  }
+
+  private ensureRuleRewardApplySucceeded(
+    params: RewardByRuleParams,
+    assetLabel: '积分' | '经验',
+    assetType: GrowthAssetTypeEnum.POINTS | GrowthAssetTypeEnum.EXPERIENCE,
+    result?: GrowthLedgerApplyResult,
+  ) {
+    if (
+      !result ||
+      (result.success && !result.duplicated) ||
+      result.duplicated
+    ) {
+      return
+    }
+
+    this.logSkippedRuleReward(
+      params,
+      assetType === GrowthAssetTypeEnum.POINTS ? 'POINTS' : 'EXPERIENCE',
+      result,
+    )
+
+    throw new Error(
+      this.buildRuleRewardRejectedMessage(assetLabel, assetType, result),
+    )
+  }
+
+  private buildRuleRewardRejectedMessage(
+    assetLabel: '积分' | '经验',
+    assetType: GrowthAssetTypeEnum.POINTS | GrowthAssetTypeEnum.EXPERIENCE,
+    result: GrowthLedgerApplyResult,
+  ) {
+    const assetName =
+      assetType === GrowthAssetTypeEnum.POINTS ? 'POINTS' : 'EXPERIENCE'
+
+    return `基础奖励发放失败（${assetLabel}/${assetName}）：${
+      result.reason ? GrowthLedgerFailReasonLabel[result.reason] : '未知原因'
+    }`
   }
 
   /**
@@ -254,14 +301,16 @@ export class UserGrowthRewardService {
         settledAt,
         resultType: TaskAssignmentRewardResultTypeEnum.FAILED,
         errorMessage:
-          error instanceof Error ? error.message : '任务奖励发放失败，请稍后重试',
+          error instanceof Error
+            ? error.message
+            : '任务奖励发放失败，请稍后重试',
       })
     }
   }
 
   private buildTaskRewardSettlementResult(params: {
     bizKey: string
-    reward: { points: number, experience: number }
+    reward: { points: number; experience: number }
     settledAt: Date
     resultType: TaskAssignmentRewardResultTypeEnum
     pointsResult?: GrowthLedgerApplyResult
@@ -281,8 +330,10 @@ export class UserGrowthRewardService {
       params.resultType === TaskAssignmentRewardResultTypeEnum.FAILED,
     )
 
-    const ledgerRecordIds = [pointsReward.recordId, experienceReward.recordId]
-      .filter((id): id is number => typeof id === 'number')
+    const ledgerRecordIds = [
+      pointsReward.recordId,
+      experienceReward.recordId,
+    ].filter((id): id is number => typeof id === 'number')
 
     return {
       success: params.resultType !== TaskAssignmentRewardResultTypeEnum.FAILED,
@@ -334,15 +385,16 @@ export class UserGrowthRewardService {
     if (attemptedResults.some((item) => item.success && !item.duplicated)) {
       return GrowthRewardDedupeResultEnum.APPLIED
     }
-    if (attemptedResults.length > 0 && attemptedResults.every((item) => item.duplicated)) {
+    if (
+      attemptedResults.length > 0 &&
+      attemptedResults.every((item) => item.duplicated)
+    ) {
       return GrowthRewardDedupeResultEnum.IDEMPOTENT
     }
     return GrowthRewardDedupeResultEnum.SKIPPED
   }
 
-  private resolveTaskRewardResultType(
-    results: TaskRewardAssetResult[],
-  ) {
+  private resolveTaskRewardResultType(results: TaskRewardAssetResult[]) {
     const attemptedResults = results.filter((item) => !item.skipped)
     if (attemptedResults.length === 0) {
       return TaskAssignmentRewardResultTypeEnum.APPLIED
@@ -409,11 +461,17 @@ export class UserGrowthRewardService {
     assetType: GrowthAssetTypeEnum.POINTS | GrowthAssetTypeEnum.EXPERIENCE,
     result?: GrowthLedgerApplyResult,
   ) {
-    if (!result || (result.success && !result.duplicated) || result.duplicated) {
+    if (
+      !result ||
+      (result.success && !result.duplicated) ||
+      result.duplicated
+    ) {
       return
     }
 
-    throw new Error(this.buildTaskRewardRejectedMessage(assetLabel, assetType, result))
+    throw new Error(
+      this.buildTaskRewardRejectedMessage(assetLabel, assetType, result),
+    )
   }
 
   private buildTaskRewardRejectedMessage(
@@ -430,12 +488,10 @@ export class UserGrowthRewardService {
   }
 
   private buildTaskRewardContext(params: RewardTaskCompleteParams) {
-    const context =
-      this.asRecord(params.eventEnvelope?.context)
-      ?? {
-        taskId: params.taskId,
-        assignmentId: params.assignmentId,
-      }
+    const context = this.asRecord(params.eventEnvelope?.context) ?? {
+      taskId: params.taskId,
+      assignmentId: params.assignmentId,
+    }
 
     return {
       ...context,

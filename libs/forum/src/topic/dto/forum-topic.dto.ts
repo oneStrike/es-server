@@ -357,7 +357,7 @@ export class QueryForumTopicDto extends IntersectionType(
 
 export class QueryPublicForumTopicDto extends IntersectionType(
   PageDto,
-  PickType(BaseForumTopicDto, ['sectionId'] as const),
+  PartialType(PickType(BaseForumTopicDto, ['sectionId'] as const)),
 ) {}
 
 export class QueryUserForumTopicDto extends IntersectionType(

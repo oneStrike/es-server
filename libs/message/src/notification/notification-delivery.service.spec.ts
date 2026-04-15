@@ -8,9 +8,8 @@ import { MessageNotificationDispatchStatusEnum } from './notification.constant'
 
 describe('messageNotificationDeliveryService', () => {
   it('uses numeric dispatch status enums', async () => {
-    const { MessageNotificationDispatchStatusEnum } = await import(
-      './notification.constant'
-    )
+    const { MessageNotificationDispatchStatusEnum } =
+      await import('./notification.constant')
 
     expect(MessageNotificationDispatchStatusEnum.DELIVERED).toBe(1)
     expect(MessageNotificationDispatchStatusEnum.FAILED).toBe(2)
@@ -43,6 +42,7 @@ describe('messageNotificationDeliveryService', () => {
       id: 11n,
       eventKey: 'comment.replied',
       domain: 'message',
+      idempotencyKey: 'comment-replied:101:receiver:7',
       subjectType: 'user',
       subjectId: 9,
       targetType: 'comment',

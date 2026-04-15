@@ -67,6 +67,44 @@ import {
   FORUM_TOPIC_VIDEO_MAX_COUNT,
 } from './forum-topic.constant'
 
+type PublicTopicPageRow = Pick<
+  ForumTopicSelect,
+  | 'id'
+  | 'sectionId'
+  | 'userId'
+  | 'title'
+  | 'geoCountry'
+  | 'geoProvince'
+  | 'geoCity'
+  | 'geoIsp'
+  | 'images'
+  | 'videos'
+  | 'isPinned'
+  | 'isFeatured'
+  | 'isLocked'
+  | 'viewCount'
+  | 'commentCount'
+  | 'likeCount'
+  | 'favoriteCount'
+  | 'lastCommentAt'
+  | 'createdAt'
+> & {
+  contentSnippet: string
+}
+
+const DEFAULT_PUBLIC_TOPIC_FEED_ORDER: Array<Record<string, 'asc' | 'desc'>> = [
+  { isPinned: 'desc' as const },
+  { lastCommentAt: 'desc' as const },
+  { createdAt: 'desc' as const },
+]
+
+const HOT_PUBLIC_TOPIC_FEED_ORDER: Array<Record<string, 'asc' | 'desc'>> = [
+  { commentCount: 'desc' as const },
+  { likeCount: 'desc' as const },
+  { viewCount: 'desc' as const },
+  { createdAt: 'desc' as const },
+]
+
 /**
  * 论坛主题服务，负责主题的增删改查、审核、置顶、精华、锁定等核心业务。
  * 写操作统一记录操作日志，计数变更与主题状态同步在同一事务中完成。
@@ -100,6 +138,10 @@ export class ForumTopicService {
 
   get userCommentTable() {
     return this.drizzle.schema.userComment
+  }
+
+  get userFollowTable() {
+    return this.drizzle.schema.userFollow
   }
 
   /**
@@ -186,6 +228,210 @@ export class ForumTopicService {
     })
 
     return new Map(sections.map((section) => [section.id, section]))
+  }
+
+  private buildPublicTopicPageSelect() {
+    return {
+      id: this.forumTopicTable.id,
+      sectionId: this.forumTopicTable.sectionId,
+      userId: this.forumTopicTable.userId,
+      title: this.forumTopicTable.title,
+      contentSnippet: this.buildTopicContentSnippetSql(),
+      geoCountry: this.forumTopicTable.geoCountry,
+      geoProvince: this.forumTopicTable.geoProvince,
+      geoCity: this.forumTopicTable.geoCity,
+      geoIsp: this.forumTopicTable.geoIsp,
+      images: this.forumTopicTable.images,
+      videos: this.forumTopicTable.videos,
+      isPinned: this.forumTopicTable.isPinned,
+      isFeatured: this.forumTopicTable.isFeatured,
+      isLocked: this.forumTopicTable.isLocked,
+      viewCount: this.forumTopicTable.viewCount,
+      commentCount: this.forumTopicTable.commentCount,
+      likeCount: this.forumTopicTable.likeCount,
+      favoriteCount: this.forumTopicTable.favoriteCount,
+      lastCommentAt: this.forumTopicTable.lastCommentAt,
+      createdAt: this.forumTopicTable.createdAt,
+    }
+  }
+
+  private async resolvePublicTopicSectionIds(
+    sectionId: number | undefined,
+    userId?: number,
+  ) {
+    if (sectionId !== undefined) {
+      await this.forumPermissionService.ensureUserCanAccessSection(
+        sectionId,
+        userId,
+        {
+          requireEnabled: true,
+        },
+      )
+
+      return [sectionId]
+    }
+
+    return this.forumPermissionService.getAccessibleSectionIds(userId)
+  }
+
+  private async getFollowingFeedTargetIds(userId: number) {
+    const follows = await this.db
+      .select({
+        targetType: this.userFollowTable.targetType,
+        targetId: this.userFollowTable.targetId,
+      })
+      .from(this.userFollowTable)
+      .where(eq(this.userFollowTable.userId, userId))
+
+    const followingUserIds: number[] = []
+    const followingSectionIds: number[] = []
+    for (const follow of follows) {
+      if (follow.targetType === FollowTargetTypeEnum.USER) {
+        followingUserIds.push(follow.targetId)
+        continue
+      }
+
+      if (follow.targetType === FollowTargetTypeEnum.FORUM_SECTION) {
+        followingSectionIds.push(follow.targetId)
+      }
+    }
+
+    return {
+      followingUserIds: [...new Set(followingUserIds)],
+      followingSectionIds: [...new Set(followingSectionIds)],
+    }
+  }
+
+  private async hydratePublicTopicPageItems(
+    rows: PublicTopicPageRow[],
+    options: {
+      userId?: number
+      sectionId?: number
+    },
+  ) {
+    if (rows.length === 0) {
+      return []
+    }
+
+    const topicIds = rows.map((item) => item.id)
+    const userIds = rows.map((item) => item.userId)
+    const [singleSection, sectionMap, userMap, likedMap, favoritedMap] =
+      await Promise.all([
+        options.sectionId !== undefined
+          ? this.getTopicSectionBrief(options.sectionId)
+          : Promise.resolve(null),
+        options.sectionId === undefined
+          ? this.getTopicSectionBriefMap(
+              rows.map((item) => item.sectionId),
+              { requireEnabled: true },
+            )
+          : Promise.resolve(new Map()),
+        this.getTopicUserBriefMap(userIds),
+        options.userId
+          ? this.likeService.checkStatusBatch(
+              LikeTargetTypeEnum.FORUM_TOPIC,
+              topicIds,
+              options.userId,
+            )
+          : Promise.resolve(new Map<number, boolean>()),
+        options.userId
+          ? this.favoriteService.checkStatusBatch(
+              FavoriteTargetTypeEnum.FORUM_TOPIC,
+              topicIds,
+              options.userId,
+            )
+          : Promise.resolve(new Map<number, boolean>()),
+      ])
+
+    return rows
+      .map((item) => {
+        const section =
+          options.sectionId !== undefined
+            ? singleSection
+            : sectionMap.get(item.sectionId)
+
+        if (!section) {
+          return null
+        }
+
+        return {
+          ...item,
+          geoCountry: item.geoCountry ?? undefined,
+          geoProvince: item.geoProvince ?? undefined,
+          geoCity: item.geoCity ?? undefined,
+          geoIsp: item.geoIsp ?? undefined,
+          liked: likedMap.get(item.id) ?? false,
+          favorited: favoritedMap.get(item.id) ?? false,
+          user: userMap.get(item.userId),
+          section,
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+  }
+
+  private async getPublicTopicPageByConditions(
+    query: QueryPublicForumTopicDto & {
+      userId?: number
+    },
+    sectionIds: number[],
+    fallbackOrderBy: Array<Record<string, 'asc' | 'desc'>>,
+    extraCondition?: SQL,
+  ) {
+    const pageQuery = this.drizzle.buildPage({
+      pageIndex: query.pageIndex,
+      pageSize: query.pageSize,
+    })
+
+    if (sectionIds.length === 0) {
+      return {
+        list: [],
+        total: 0,
+        pageIndex: pageQuery.pageIndex,
+        pageSize: pageQuery.pageSize,
+      }
+    }
+
+    const conditions: SQL[] = [
+      inArray(this.forumTopicTable.sectionId, [...new Set(sectionIds)]),
+      isNull(this.forumTopicTable.deletedAt),
+      eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
+      eq(this.forumTopicTable.isHidden, false),
+    ]
+    if (extraCondition) {
+      conditions.push(extraCondition)
+    }
+
+    const where = and(...conditions)
+    const order = this.drizzle.buildOrderBy(undefined, {
+      table: this.forumTopicTable,
+      fallbackOrderBy,
+    })
+    const listQuery = this.db
+      .select(this.buildPublicTopicPageSelect())
+      .from(this.forumTopicTable)
+      .where(where)
+      .limit(pageQuery.limit)
+      .offset(pageQuery.offset)
+
+    const [list, total] = await Promise.all([
+      order.orderBySql.length > 0
+        ? listQuery.orderBy(...order.orderBySql)
+        : listQuery,
+      this.db.$count(this.forumTopicTable, where),
+    ])
+
+    return {
+      list: await this.hydratePublicTopicPageItems(
+        list as PublicTopicPageRow[],
+        {
+          userId: query.userId,
+          sectionId: query.sectionId,
+        },
+      ),
+      total,
+      pageIndex: pageQuery.pageIndex,
+      pageSize: pageQuery.pageSize,
+    }
   }
 
   /**
@@ -943,136 +1189,101 @@ export class ForumTopicService {
   /**
    * 获取公开主题分页列表。
    * - 只返回已审核通过且未隐藏的主题
+   * - sectionId 为空时返回综合 feed；传入时保持单板块主题页语义
    * - 排序规则：置顶优先，其次按最后评论时间倒序，再按创建时间倒序
-   * - 会校验用户对板块的访问权限
    * - 会补充每条主题的发帖用户简要信息与所属板块简要信息
    * - 登录用户会返回每条主题的点赞与收藏状态
    */
   async getPublicTopics(query: QueryPublicForumTopicDto & { userId?: number }) {
-    await this.forumPermissionService.ensureUserCanAccessSection(
+    const sectionIds = await this.resolvePublicTopicSectionIds(
       query.sectionId,
       query.userId,
-      {
-        requireEnabled: true,
-      },
     )
 
-    const where = and(
-      eq(this.forumTopicTable.sectionId, query.sectionId),
-      isNull(this.forumTopicTable.deletedAt),
-      eq(this.forumTopicTable.auditStatus, AuditStatusEnum.APPROVED),
-      eq(this.forumTopicTable.isHidden, false),
+    return this.getPublicTopicPageByConditions(
+      query,
+      sectionIds,
+      DEFAULT_PUBLIC_TOPIC_FEED_ORDER,
     )
-    const pageQuery = this.drizzle.buildPage({
-      pageIndex: query.pageIndex,
-      pageSize: query.pageSize,
-    })
-    const order = this.drizzle.buildOrderBy(undefined, {
-      table: this.forumTopicTable,
-      fallbackOrderBy: [
-        { isPinned: 'desc' },
-        { lastCommentAt: 'desc' },
-        { createdAt: 'desc' },
-      ],
-    })
-    const listQuery = this.db
-      .select({
-        id: this.forumTopicTable.id,
-        sectionId: this.forumTopicTable.sectionId,
-        userId: this.forumTopicTable.userId,
-        title: this.forumTopicTable.title,
-        contentSnippet: this.buildTopicContentSnippetSql(),
-        geoCountry: this.forumTopicTable.geoCountry,
-        geoProvince: this.forumTopicTable.geoProvince,
-        geoCity: this.forumTopicTable.geoCity,
-        geoIsp: this.forumTopicTable.geoIsp,
-        images: this.forumTopicTable.images,
-        videos: this.forumTopicTable.videos,
-        isPinned: this.forumTopicTable.isPinned,
-        isFeatured: this.forumTopicTable.isFeatured,
-        isLocked: this.forumTopicTable.isLocked,
-        viewCount: this.forumTopicTable.viewCount,
-        commentCount: this.forumTopicTable.commentCount,
-        likeCount: this.forumTopicTable.likeCount,
-        favoriteCount: this.forumTopicTable.favoriteCount,
-        lastCommentAt: this.forumTopicTable.lastCommentAt,
-        createdAt: this.forumTopicTable.createdAt,
-      })
-      .from(this.forumTopicTable)
-      .where(where)
-      .limit(pageQuery.limit)
-      .offset(pageQuery.offset)
+  }
 
-    const [list, total] = await Promise.all([
-      order.orderBySql.length > 0
-        ? listQuery.orderBy(...order.orderBySql)
-        : listQuery,
-      this.db.$count(this.forumTopicTable, where),
-    ])
-    const page = {
-      list,
-      total,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
+  /**
+   * 获取公开主题热门分页列表。
+   * - 基于可访问板块聚合公开主题
+   * - 排序规则：评论数、点赞数、浏览数、发布时间倒序
+   */
+  async getHotPublicTopics(
+    query: QueryPublicForumTopicDto & { userId?: number },
+  ) {
+    const sectionIds = await this.resolvePublicTopicSectionIds(
+      query.sectionId,
+      query.userId,
+    )
+
+    return this.getPublicTopicPageByConditions(
+      query,
+      sectionIds,
+      HOT_PUBLIC_TOPIC_FEED_ORDER,
+    )
+  }
+
+  /**
+   * 获取关注主题分页列表。
+   * - 聚合“关注用户发帖”与“关注板块下主题”两类来源
+   * - 仅返回当前用户仍可访问板块下的公开主题
+   */
+  async getFollowingPublicTopics(
+    query: QueryPublicForumTopicDto & {
+      userId: number
+    },
+  ) {
+    const sectionIds = await this.resolvePublicTopicSectionIds(
+      query.sectionId,
+      query.userId,
+    )
+    if (sectionIds.length === 0) {
+      return this.getPublicTopicPageByConditions(
+        query,
+        [],
+        DEFAULT_PUBLIC_TOPIC_FEED_ORDER,
+      )
     }
 
-    if (page.list.length === 0) {
-      return page
+    const { followingUserIds, followingSectionIds } =
+      await this.getFollowingFeedTargetIds(query.userId)
+    const visibleSectionIds = new Set(sectionIds)
+    const followedVisibleSectionIds = followingSectionIds.filter((id) =>
+      visibleSectionIds.has(id),
+    )
+    const followConditions: SQL[] = []
+
+    if (followingUserIds.length > 0) {
+      followConditions.push(
+        inArray(this.forumTopicTable.userId, followingUserIds),
+      )
+    }
+    if (followedVisibleSectionIds.length > 0) {
+      followConditions.push(
+        inArray(this.forumTopicTable.sectionId, followedVisibleSectionIds),
+      )
     }
 
-    const userIds = page.list.map((item) => item.userId)
-
-    if (!query.userId) {
-      const [section, userMap] = await Promise.all([
-        this.getTopicSectionBrief(query.sectionId),
-        this.getTopicUserBriefMap(userIds),
-      ])
-      return {
-        ...page,
-        list: page.list.map((item) => ({
-          ...item,
-          geoCountry: item.geoCountry ?? undefined,
-          geoProvince: item.geoProvince ?? undefined,
-          geoCity: item.geoCity ?? undefined,
-          geoIsp: item.geoIsp ?? undefined,
-          liked: false,
-          favorited: false,
-          user: userMap.get(item.userId),
-          section,
-        })),
-      }
+    if (followConditions.length === 0) {
+      return this.getPublicTopicPageByConditions(
+        query,
+        [],
+        DEFAULT_PUBLIC_TOPIC_FEED_ORDER,
+      )
     }
 
-    const topicIds = page.list.map((item) => item.id)
-    const [section, userMap, likedMap, favoritedMap] = await Promise.all([
-      this.getTopicSectionBrief(query.sectionId),
-      this.getTopicUserBriefMap(userIds),
-      this.likeService.checkStatusBatch(
-        LikeTargetTypeEnum.FORUM_TOPIC,
-        topicIds,
-        query.userId,
-      ),
-      this.favoriteService.checkStatusBatch(
-        FavoriteTargetTypeEnum.FORUM_TOPIC,
-        topicIds,
-        query.userId,
-      ),
-    ])
-
-    return {
-      ...page,
-      list: page.list.map((item) => ({
-        ...item,
-        geoCountry: item.geoCountry ?? undefined,
-        geoProvince: item.geoProvince ?? undefined,
-        geoCity: item.geoCity ?? undefined,
-        geoIsp: item.geoIsp ?? undefined,
-        liked: likedMap.get(item.id) ?? false,
-        favorited: favoritedMap.get(item.id) ?? false,
-        user: userMap.get(item.userId),
-        section,
-      })),
-    }
+    return this.getPublicTopicPageByConditions(
+      query,
+      sectionIds,
+      DEFAULT_PUBLIC_TOPIC_FEED_ORDER,
+      followConditions.length === 1
+        ? followConditions[0]
+        : or(...followConditions),
+    )
   }
 
   /**
@@ -1085,28 +1296,7 @@ export class ForumTopicService {
     }
 
     const topics = await this.db
-      .select({
-        id: this.forumTopicTable.id,
-        sectionId: this.forumTopicTable.sectionId,
-        userId: this.forumTopicTable.userId,
-        title: this.forumTopicTable.title,
-        contentSnippet: this.buildTopicContentSnippetSql(),
-        geoCountry: this.forumTopicTable.geoCountry,
-        geoProvince: this.forumTopicTable.geoProvince,
-        geoCity: this.forumTopicTable.geoCity,
-        geoIsp: this.forumTopicTable.geoIsp,
-        images: this.forumTopicTable.images,
-        videos: this.forumTopicTable.videos,
-        isPinned: this.forumTopicTable.isPinned,
-        isFeatured: this.forumTopicTable.isFeatured,
-        isLocked: this.forumTopicTable.isLocked,
-        viewCount: this.forumTopicTable.viewCount,
-        commentCount: this.forumTopicTable.commentCount,
-        likeCount: this.forumTopicTable.likeCount,
-        favoriteCount: this.forumTopicTable.favoriteCount,
-        lastCommentAt: this.forumTopicTable.lastCommentAt,
-        createdAt: this.forumTopicTable.createdAt,
-      })
+      .select(this.buildPublicTopicPageSelect())
       .from(this.forumTopicTable)
       .where(
         and(

@@ -1,9 +1,14 @@
-import type { CreateNotificationTemplateDto, QueryNotificationTemplatePageDto, UpdateNotificationTemplateDto, UpdateNotificationTemplateEnabledDto } from '@libs/message/notification/dto/notification-template.dto';
-import { MessageNotificationTemplateService } from '@libs/message/notification/notification-template.service';
+import type {
+  CreateNotificationTemplateDto,
+  QueryNotificationTemplatePageDto,
+  UpdateNotificationTemplateDto,
+  UpdateNotificationTemplateEnabledDto,
+} from '@libs/message/notification/dto/notification-template.dto'
+import { MessageNotificationTemplateService } from '@libs/message/notification/notification-template.service'
 import {
   getMessageNotificationCategoryLabel,
   isMessageNotificationCategoryKey,
-} from '@libs/message/notification/notification.constant';
+} from '@libs/message/notification/notification.constant'
 import { Injectable } from '@nestjs/common'
 
 /**
@@ -21,8 +26,8 @@ export class MessageTemplateService {
    * 在表字段基础上补充通知分类中文标签，方便管理端直接展示
    */
   async getNotificationTemplatePage(query: QueryNotificationTemplatePageDto) {
-    const page
-      = await this.messageNotificationTemplateService.getNotificationTemplatePage(
+    const page =
+      await this.messageNotificationTemplateService.getNotificationTemplatePage(
         query,
       )
 
@@ -37,8 +42,8 @@ export class MessageTemplateService {
    * 详情页与分页项使用同一映射口径，避免管理端两套文案解释
    */
   async getNotificationTemplateDetail(id: number) {
-    const template
-      = await this.messageNotificationTemplateService.getNotificationTemplateDetail(
+    const template =
+      await this.messageNotificationTemplateService.getNotificationTemplateDetail(
         id,
       )
     return this.mapTemplateView(template)
@@ -81,7 +86,9 @@ export class MessageTemplateService {
    * 删除后通知主链路会自动回退到业务 fallback 文案
    */
   async deleteNotificationTemplate(id: number) {
-    return this.messageNotificationTemplateService.deleteNotificationTemplate(id)
+    return this.messageNotificationTemplateService.deleteNotificationTemplate(
+      id,
+    )
   }
 
   /**
@@ -90,7 +97,9 @@ export class MessageTemplateService {
    */
   private mapTemplateView(
     template: Awaited<
-      ReturnType<MessageNotificationTemplateService['getNotificationTemplateDetail']>
+      ReturnType<
+        MessageNotificationTemplateService['getNotificationTemplateDetail']
+      >
     >,
   ) {
     return {
@@ -101,7 +110,7 @@ export class MessageTemplateService {
 
   private getCategoryLabel(categoryKey: string) {
     if (!isMessageNotificationCategoryKey(categoryKey)) {
-      throw new Error(`Unsupported notification category key: ${categoryKey}`)
+      return `未知分类(${categoryKey})`
     }
     return getMessageNotificationCategoryLabel(categoryKey)
   }

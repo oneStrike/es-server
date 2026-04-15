@@ -1,9 +1,13 @@
-import type { DomainEventConsumerEnum, DomainEventDispatchStatusEnum } from './eventing.constant'
+import type {
+  DomainEventConsumerEnum,
+  DomainEventDispatchStatusEnum,
+} from './eventing.constant'
 
 export interface DomainEventRecord {
   id: bigint
   eventKey: string
   domain: string
+  idempotencyKey: string | null
   subjectType: string
   subjectId: number
   targetType: string
@@ -30,6 +34,7 @@ export interface DomainEventDispatchRecord {
 export interface PublishDomainEventInput {
   eventKey: string
   domain: string
+  idempotencyKey?: string
   subjectType: string
   subjectId: number
   targetType: string
@@ -41,6 +46,7 @@ export interface PublishDomainEventInput {
 }
 
 export interface PublishDomainEventResult {
+  duplicated: boolean
   event: DomainEventRecord
   dispatches: DomainEventDispatchRecord[]
 }

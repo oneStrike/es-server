@@ -39,6 +39,9 @@ export class MessageNotificationService {
     queryDto: QueryUserNotificationListDto,
   ) {
     const { isRead, categoryKeys, ...pagination } = queryDto
+    const orderBy = pagination.orderBy?.trim()
+      ? pagination.orderBy
+      : JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }])
     const conditions: Array<SQL | undefined> = [
       this.buildActiveNotificationWhere(receiverUserId),
     ]
@@ -46,46 +49,46 @@ export class MessageNotificationService {
     if (isRead !== undefined) {
       conditions.push(eq(this.notification.isRead, isRead))
     }
-    const normalizedCategoryKeys = this.normalizeCategoryKeysFilter(categoryKeys)
+    const normalizedCategoryKeys =
+      this.normalizeCategoryKeysFilter(categoryKeys)
     if (normalizedCategoryKeys && normalizedCategoryKeys.length > 0) {
       conditions.push(
-        inArray(
-          this.notification.categoryKey,
-          normalizedCategoryKeys,
-        ),
+        inArray(this.notification.categoryKey, normalizedCategoryKeys),
       )
     }
 
     const page = await this.drizzle.ext.findPagination(this.notification, {
       where: and(...conditions),
       ...pagination,
+      orderBy,
     })
     const actorUserIds = [
       ...new Set(
         page.list
-          .map(item => item.actorUserId)
+          .map((item) => item.actorUserId)
           .filter((item): item is number => typeof item === 'number'),
       ),
     ]
-    const actors = actorUserIds.length > 0
-      ? await this.db.query.appUser.findMany({
-          where: {
-            id: {
-              in: actorUserIds,
+    const actors =
+      actorUserIds.length > 0
+        ? await this.db.query.appUser.findMany({
+            where: {
+              id: {
+                in: actorUserIds,
+              },
             },
-          },
-          columns: {
-            id: true,
-            nickname: true,
-            avatarUrl: true,
-          },
-        })
-      : []
-    const actorMap = new Map(actors.map(item => [item.id, item]))
+            columns: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          })
+        : []
+    const actorMap = new Map(actors.map((item) => [item.id, item]))
 
     return {
       ...page,
-      list: page.list.map(item =>
+      list: page.list.map((item) =>
         mapUserNotificationToPublicView(
           item,
           this.resolveNotificationActor(actorMap, item.actorUserId),
@@ -116,11 +119,13 @@ export class MessageNotificationService {
             isRead: true,
             readAt: now,
           })
-          .where(and(
-            eq(this.notification.id, id),
-            eq(this.notification.receiverUserId, receiverUserId),
-            eq(this.notification.isRead, false),
-          )),
+          .where(
+            and(
+              eq(this.notification.id, id),
+              eq(this.notification.receiverUserId, receiverUserId),
+              eq(this.notification.isRead, false),
+            ),
+          ),
       { notFound: '通知不存在或已读' },
     )
 
@@ -144,10 +149,12 @@ export class MessageNotificationService {
           isRead: true,
           readAt: now,
         })
-        .where(and(
-          this.buildActiveNotificationWhere(receiverUserId),
-          eq(this.notification.isRead, false),
-        )),
+        .where(
+          and(
+            this.buildActiveNotificationWhere(receiverUserId),
+            eq(this.notification.isRead, false),
+          ),
+        ),
     )
 
     if ((result.rowCount ?? 0) > 0) {
@@ -180,7 +187,7 @@ export class MessageNotificationService {
     const normalized = [
       ...new Set(
         categoryKeys
-          .map(item => item.trim())
+          .map((item) => item.trim())
           .filter(isMessageNotificationCategoryKey),
       ),
     ]

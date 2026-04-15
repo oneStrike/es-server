@@ -1,12 +1,16 @@
-import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing'
+import type {
+  DomainEventDispatchRecord,
+  DomainEventRecord,
+} from '@libs/platform/modules/eventing'
 import type {
   MessageDomainEventDefinition,
   MessageDomainEventKey,
-  MessageNotificationCategoryKey,
 } from './message-event.constant'
+import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 
 export interface PublishMessageDomainEventInput {
   eventKey: MessageDomainEventKey
+  idempotencyKey?: string
   subjectType: string
   subjectId: number
   targetType: string
@@ -32,10 +36,10 @@ export type NotificationProjectionCommand =
       payload?: Record<string, unknown>
       expiresAt?: Date
     })
-    | (NotificationProjectionCommandBase & {
+  | (NotificationProjectionCommandBase & {
       mode: 'delete'
     })
-    | {
+  | {
       mode: 'skip'
       reason: string
     }

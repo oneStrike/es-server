@@ -3,7 +3,13 @@ import { TaskExecutionService } from '../task-execution.service'
 
 describe('task reminder dedupe', () => {
   function createService() {
-    const publish = jest.fn().mockResolvedValue(undefined)
+    const publish = jest.fn().mockResolvedValue({
+      duplicated: true,
+      event: {
+        id: 11n,
+      },
+      dispatches: [],
+    })
     const service = new TaskExecutionService(
       {
         db: {},
@@ -19,30 +25,30 @@ describe('task reminder dedupe', () => {
     }
   }
 
-  it('命中已发布的 projectionKey 时不会重复发布自动分配提醒', async () => {
+  it('命中稳定幂等键时会依赖发布器去重并返回 false', async () => {
     const { service, publish } = createService()
 
-    ;(service as any).queryPublishedTaskReminderProjectionKeys = jest
-      .fn()
-      .mockResolvedValue(new Set(['task:reminder:auto-assigned:assignment:88']))
-
-    await (service as any).tryNotifyAutoAssignedTask(
-      7,
-      {
-        id: 1,
-        code: 'task-1',
-        title: '任务 1',
-        type: 1,
+    const published = await (service as any).publishTaskReminderIfNeeded({
+      eventKey: 'task.reminder.auto_assigned',
+      subjectType: 'user',
+      subjectId: 7,
+      targetType: 'task',
+      targetId: 1,
+      context: {
+        projectionKey: 'task:reminder:auto-assigned:assignment:88',
       },
-      {
-        id: 88,
-      },
-      '2026-04-13',
-    )
+    })
 
-    expect(
-      (service as any).queryPublishedTaskReminderProjectionKeys,
-    ).toHaveBeenCalledWith(['task:reminder:auto-assigned:assignment:88'])
-    expect(publish).not.toHaveBeenCalled()
+    expect(publish).toHaveBeenCalledWith({
+      eventKey: 'task.reminder.auto_assigned',
+      subjectType: 'user',
+      subjectId: 7,
+      targetType: 'task',
+      targetId: 1,
+      context: {
+        projectionKey: 'task:reminder:auto-assigned:assignment:88',
+      },
+    })
+    expect(published).toBe(false)
   })
 })

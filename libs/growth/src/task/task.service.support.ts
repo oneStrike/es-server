@@ -743,10 +743,10 @@ export abstract class TaskServiceSupport {
       JSON.stringify(
         this.asRecord(dto.objectiveConfig) ?? dto.objectiveConfig ?? null,
       ) !==
-      JSON.stringify(
+        JSON.stringify(
           this.asRecord(taskRecord.objectiveConfig) ??
-          taskRecord.objectiveConfig ??
-          null,
+            taskRecord.objectiveConfig ??
+            null,
         )
     const publishWindowChanged =
       (dto.publishStartAt !== undefined &&
@@ -754,8 +754,8 @@ export abstract class TaskServiceSupport {
           dto.publishStartAt ?? null,
           taskRecord.publishStartAt ?? null,
         )) ||
-        (dto.publishEndAt !== undefined &&
-          !this.isSameNullableDate(
+      (dto.publishEndAt !== undefined &&
+        !this.isSameNullableDate(
           dto.publishEndAt ?? null,
           taskRecord.publishEndAt ?? null,
         ))
@@ -1691,67 +1691,15 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 发布任务提醒前先按稳定 projectionKey 做幂等判重。
-   * 当前判重事实源使用已写入的 message domain_event，避免重复读接口和定时任务反复制造同一提醒事件。
+   * 发布任务提醒事件。
+   * 任务提醒的幂等由消息域事件发布器根据稳定 idempotencyKey 统一兜底，
+   * 不再在 task 域额外做“先查再发”的竞态判重。
    */
   protected async publishTaskReminderIfNeeded(
     notification: PublishMessageDomainEventInput,
   ) {
-    const projectionKey = notification.context?.projectionKey
-    if (typeof projectionKey !== 'string' || !projectionKey.length) {
-      await this.messageDomainEventPublisher.publish(notification)
-      return true
-    }
-
-    const publishedProjectionKeys =
-      await this.queryPublishedTaskReminderProjectionKeys([projectionKey])
-    if (publishedProjectionKeys.has(projectionKey)) {
-      return false
-    }
-
-    await this.messageDomainEventPublisher.publish(notification)
-    return true
-  }
-
-  /**
-   * 批量查询已发布过的任务提醒 projectionKey。
-   * 只看 message 域 task.reminder.* 事件，确保可领/自动分配/过期/奖励到账四条链路共用同一幂等口径。
-   */
-  protected async queryPublishedTaskReminderProjectionKeys(
-    projectionKeys: string[],
-  ) {
-    const uniqueProjectionKeys = [...new Set(projectionKeys.filter(Boolean))]
-    if (uniqueProjectionKeys.length === 0) {
-      return new Set<string>()
-    }
-
-    const projectionKeySql =
-      sql<string>`${this.domainEventTable.context} ->> 'projectionKey'`
-    const rows = await this.db
-      .select({
-        projectionKey: projectionKeySql,
-      })
-      .from(this.domainEventTable)
-      .where(
-        and(
-          eq(this.domainEventTable.domain, 'message'),
-          inArray(this.domainEventTable.eventKey, [
-            'task.reminder.auto_assigned',
-            'task.reminder.expiring',
-            'task.reminder.reward_granted',
-          ]),
-          inArray(projectionKeySql, uniqueProjectionKeys),
-        ),
-      )
-
-    return new Set(
-      rows
-        .map((row) => row.projectionKey)
-        .filter(
-          (projectionKey): projectionKey is string =>
-            typeof projectionKey === 'string' && projectionKey.length > 0,
-        ),
-    )
+    const result = await this.messageDomainEventPublisher.publish(notification)
+    return !result.duplicated
   }
 
   // ==================== 视图映射与对账查询 ====================
@@ -1924,7 +1872,7 @@ export abstract class TaskServiceSupport {
       ),
       objectiveType: normalizeTaskObjectiveType(
         this.readSnapshotPositiveInt(snapshot?.objectiveType) ??
-        liveTask?.objectiveType,
+          liveTask?.objectiveType,
       ),
       eventCode:
         this.readSnapshotPositiveInt(snapshot?.eventCode) ??
@@ -2234,10 +2182,13 @@ export abstract class TaskServiceSupport {
         ),
       )
 
-    const result = new Map<number, {
-      rowId: number
-      summary: TaskAssignmentEventProgressSummary
-    }>()
+    const result = new Map<
+      number,
+      {
+        rowId: number
+        summary: TaskAssignmentEventProgressSummary
+      }
+    >()
     for (const row of rows) {
       const current = result.get(row.assignmentId)
       const candidate = {
@@ -2289,8 +2240,8 @@ export abstract class TaskServiceSupport {
     const candidateOccurredAt = candidate.summary.eventOccurredAt?.getTime()
 
     if (
-      typeof currentOccurredAt === 'number'
-      && typeof candidateOccurredAt === 'number'
+      typeof currentOccurredAt === 'number' &&
+      typeof candidateOccurredAt === 'number'
     ) {
       if (candidateOccurredAt !== currentOccurredAt) {
         return candidateOccurredAt > currentOccurredAt

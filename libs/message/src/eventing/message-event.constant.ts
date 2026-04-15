@@ -1,4 +1,5 @@
 import { DomainEventConsumerEnum } from '@libs/platform/modules/eventing'
+import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 
 export type MessageDomainEventKey =
   | 'comment.replied'
@@ -16,19 +17,11 @@ export type MessageDomainEventKey =
   | 'task.reminder.reward_granted'
   | 'chat.message.created'
 
-export type MessageNotificationCategoryKey =
-  | 'comment_reply'
-  | 'comment_mention'
-  | 'comment_like'
-  | 'topic_like'
-  | 'topic_favorited'
-  | 'topic_commented'
-  | 'topic_mentioned'
-  | 'user_followed'
-  | 'system_announcement'
-  | 'task_reminder'
-
-export type MessageNotificationProjectionMode = 'append' | 'upsert' | 'delete' | 'none'
+export type MessageNotificationProjectionMode =
+  | 'append'
+  | 'upsert'
+  | 'delete'
+  | 'none'
 
 export interface MessageDomainEventDefinition {
   eventKey: MessageDomainEventKey
@@ -180,48 +173,17 @@ export const MESSAGE_DOMAIN_EVENT_DEFINITIONS = [
 ] as const satisfies readonly MessageDomainEventDefinition[]
 
 export const MESSAGE_DOMAIN_EVENT_DEFINITION_MAP = new Map(
-  MESSAGE_DOMAIN_EVENT_DEFINITIONS.map(definition => [definition.eventKey, definition] as const),
+  MESSAGE_DOMAIN_EVENT_DEFINITIONS.map(
+    (definition) => [definition.eventKey, definition] as const,
+  ),
 )
 
-export function getMessageDomainEventDefinition(eventKey: MessageDomainEventKey) {
+export function getMessageDomainEventDefinition(
+  eventKey: MessageDomainEventKey,
+) {
   const definition = MESSAGE_DOMAIN_EVENT_DEFINITION_MAP.get(eventKey)
   if (!definition) {
     throw new Error(`Unsupported message domain event: ${eventKey}`)
   }
   return definition
-}
-
-export const MESSAGE_NOTIFICATION_CATEGORY_KEYS = [
-  'comment_reply',
-  'comment_mention',
-  'comment_like',
-  'topic_like',
-  'topic_favorited',
-  'topic_commented',
-  'topic_mentioned',
-  'user_followed',
-  'system_announcement',
-  'task_reminder',
-] as const satisfies readonly MessageNotificationCategoryKey[]
-
-export const MESSAGE_NOTIFICATION_CATEGORY_LABELS: Record<
-  MessageNotificationCategoryKey,
-  string
-> = {
-  comment_reply: '评论回复',
-  comment_mention: '评论提及',
-  comment_like: '评论点赞',
-  topic_like: '主题点赞',
-  topic_favorited: '主题收藏',
-  topic_commented: '主题评论',
-  topic_mentioned: '主题提及',
-  user_followed: '用户关注',
-  system_announcement: '系统公告',
-  task_reminder: '任务提醒',
-}
-
-export function getMessageNotificationCategoryLabel(
-  categoryKey: MessageNotificationCategoryKey,
-) {
-  return MESSAGE_NOTIFICATION_CATEGORY_LABELS[categoryKey]
 }

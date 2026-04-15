@@ -1,4 +1,7 @@
-import type { DomainEventDispatchRecord, DomainEventRecord } from '@libs/platform/modules/eventing/domain-event.type'
+import type {
+  DomainEventDispatchRecord,
+  DomainEventRecord,
+} from '@libs/platform/modules/eventing/domain-event.type'
 import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing'
 import { NotificationEventConsumer } from './notification-event.consumer'
 
@@ -70,6 +73,7 @@ describe('notificationEventConsumer', () => {
       id: 11n,
       eventKey: 'comment.replied',
       domain: 'message',
+      idempotencyKey: 'comment-replied:101:receiver:7',
       subjectType: 'user',
       subjectId: 9,
       targetType: 'comment',
@@ -148,6 +152,7 @@ describe('notificationEventConsumer', () => {
       id: 11n,
       eventKey: 'announcement.unpublished',
       domain: 'message',
+      idempotencyKey: null,
       subjectType: 'announcement',
       subjectId: 42,
       targetType: 'announcement',
