@@ -13,6 +13,7 @@ import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, extname, join, posix } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
+import { UPLOAD_CUSTOM_MIME_BY_EXT } from '@libs/platform/config'
 import { formatDateOnlyInAppTimeZone } from '@libs/platform/utils/time'
 import {
   BadRequestException,
@@ -26,7 +27,6 @@ import { ConfigService } from '@nestjs/config'
 import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type'
 import mime from 'mime-types'
 import { v4 as uuidv4 } from 'uuid'
-import { UPLOAD_CUSTOM_MIME_BY_EXT } from '../../config/upload.config'
 import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'
 import { SuperbedUploadProvider } from './superbed-upload.provider'
@@ -34,7 +34,7 @@ import { UPLOAD_CONFIG_PROVIDER, UploadProviderEnum } from './upload.types'
 
 const pump = promisify(pipeline)
 const DEFAULT_UPLOAD_SCENE = 'shared'
-const SCENE_NAME_REGEX = /^[a-z0-9]+$/i
+const SCENE_NAME_REGEX = /^[\w-]+$/
 const PATH_SEGMENT_REGEX = /^[\w.-]+$/
 const LEADING_DOT_REGEX = /^\./
 const TRAILING_EXTENSION_REGEX = /\.[^.]+$/
@@ -42,7 +42,7 @@ const RESERVED_PATH_SEGMENTS = new Set(['.', '..'])
 
 interface MultipartFieldLike {
   type?: string
-  value?: string | number | boolean | null
+  value?: string | number
 }
 
 /**
@@ -65,16 +65,13 @@ export class UploadService {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
   }
 
-  async uploadFile(
-    data: FastifyRequest,
-    pathSegments?: string[],
-  ): Promise<UploadResult> {
+  async uploadFile(data: FastifyRequest, pathSegments?: string[]) {
     const targetFile = await data.file()
     if (!targetFile) {
       throw new BadRequestException('上传文件不能为空')
     }
-
     const scene = this.extractScene(targetFile.fields.scene)
+
     if (!scene) {
       await this.consumeStream(targetFile.file)
       throw new BadRequestException('未知的上传场景')
@@ -122,7 +119,7 @@ export class UploadService {
       }
 
       const stats = await fs.stat(tempPath)
-      const preparedFile: PreparedUploadFile = {
+      const preparedFile = {
         tempPath,
         objectKey,
         finalName,
@@ -363,7 +360,7 @@ export class UploadService {
     detectedMime: string | undefined,
     originalName: string,
     requestMime?: string,
-  ): { ext: string, mime: string, fileCategory: UploadFileCategory } | null {
+  ) {
     const filenameExt = extname(originalName)
       .replace(LEADING_DOT_REGEX, '')
       .toLowerCase()
@@ -417,10 +414,7 @@ export class UploadService {
     detectedExt: string | undefined,
     filenameExt: string,
   ) {
-    if (
-      detectedExt === 'zip'
-      && ['apk', 'ipa'].includes(filenameExt)
-    ) {
+    if (detectedExt === 'zip' && ['apk', 'ipa'].includes(filenameExt)) {
       return filenameExt
     }
 
@@ -469,8 +463,8 @@ export class UploadService {
         scene = String(firstField.value)
       }
     }
-
     const normalizedScene = scene?.trim()
+    console.log(normalizedScene)
     if (
       !normalizedScene ||
       !SCENE_NAME_REGEX.test(normalizedScene) ||
