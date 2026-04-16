@@ -9,13 +9,17 @@ export type Db = Omit<CoreDb, 'query'> & {
   query: Record<
     string,
     {
-      findFirst?: (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => Promise<object | undefined>
-      findMany?: (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => Promise<object[]>
+      findFirst?: (config?: {
+        where?: object | ((table: object, ops: typeof operators) => object)
+      }) => Promise<object | undefined>
+      findMany?: (config?: {
+        where?: object | ((table: object, ops: typeof operators) => object)
+      }) => Promise<object[]>
     }
   >
 }
 
-export function getDatabaseUrl(): string {
+export function getDatabaseUrl() {
   const url = process.env.DATABASE_URL
   if (!url) {
     throw new Error('DATABASE_URL environment variable is not set')
@@ -23,7 +27,7 @@ export function getDatabaseUrl(): string {
   return url
 }
 
-export function createDbClient(connectionString: string): Db {
+export function createDbClient(connectionString: string) {
   const pool = new Pool({ connectionString })
 
   const db = drizzle({
@@ -43,7 +47,9 @@ export function createDbClient(connectionString: string): Db {
         }
 
         return {
-          findFirst: async (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => {
+          findFirst: async (config?: {
+            where?: object | ((table: object, ops: typeof operators) => object)
+          }) => {
             const where =
               typeof config?.where === 'function'
                 ? config.where(table, operators)
@@ -54,7 +60,9 @@ export function createDbClient(connectionString: string): Db {
                 : await db.select().from(table).where(where).limit(1)
             return rows[0]
           },
-          findMany: async (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => {
+          findMany: async (config?: {
+            where?: object | ((table: object, ops: typeof operators) => object)
+          }) => {
             const where =
               typeof config?.where === 'function'
                 ? config.where(table, operators)
@@ -71,7 +79,7 @@ export function createDbClient(connectionString: string): Db {
   return db
 }
 
-export async function disconnectDbClient(db: Db): Promise<void> {
+export async function disconnectDbClient(db: Db) {
   // @ts-expect-error - accessing internal pool for cleanup
   const pool = db.$client as Pool
   await pool.end()

@@ -1,22 +1,27 @@
 import type { CallHandler, ExecutionContext } from '@nestjs/common'
 import type { Observable } from 'rxjs'
-import type { Response } from './transform.types'
 import { ApiSuccessCode } from '@libs/platform/constant'
 import { Injectable, NestInterceptor } from '@nestjs/common'
 import { ClsService } from 'nestjs-cls'
 import { map } from 'rxjs/operators'
 
+interface TransformResponse<T> {
+  code: number
+  data: T
+  message: string
+}
+
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<
   T,
-  Response<T>
+  TransformResponse<T>
 > {
   constructor(private readonly clsService: ClsService) {}
 
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<Response<T>> {
+  ): Observable<TransformResponse<T>> {
     const request = context.switchToHttp().getRequest()
     const response = context.switchToHttp().getResponse()
     response.header('x-request-id', this.clsService.getId())

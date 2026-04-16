@@ -1,5 +1,4 @@
 import type { DrizzleErrorMessages } from '../drizzle.type'
-import type { PostgresError } from './postgres-error'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -34,28 +33,28 @@ type PostgresErrorInput =
     | null
     | undefined
 
-export function isErrorCode(error: PostgresErrorInput, code: string): boolean {
+export function isErrorCode(error: PostgresErrorInput, code: string) {
   const pgError = getPostgresError(error)
   return pgError !== null && pgError.code === code
 }
 
-export function isUniqueViolation(error: PostgresErrorInput): boolean {
+export function isUniqueViolation(error: PostgresErrorInput) {
   return isErrorCode(error, PostgresErrorCode.UNIQUE_VIOLATION)
 }
 
-export function isNotNullViolation(error: PostgresErrorInput): boolean {
+export function isNotNullViolation(error: PostgresErrorInput) {
   return isErrorCode(error, PostgresErrorCode.NOT_NULL_VIOLATION)
 }
 
-export function isCheckViolation(error: PostgresErrorInput): boolean {
+export function isCheckViolation(error: PostgresErrorInput) {
   return isErrorCode(error, PostgresErrorCode.CHECK_VIOLATION)
 }
 
-export function isSerializationFailure(error: PostgresErrorInput): boolean {
+export function isSerializationFailure(error: PostgresErrorInput) {
   return isErrorCode(error, PostgresErrorCode.SERIALIZATION_FAILURE)
 }
 
-export function extractError(error: PostgresErrorInput): PostgresError | null {
+export function extractError(error: PostgresErrorInput) {
   return getPostgresError(error)
 }
 

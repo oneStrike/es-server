@@ -105,8 +105,8 @@ export class UserService {
         pageSize: query.pageSize,
       },
       {
-      defaultPageSize: 10,
-      maxPageSize: 20,
+        defaultPageSize: 10,
+        maxPageSize: 20,
       },
     )
 
@@ -160,7 +160,7 @@ export class UserService {
    * 判断状态码是否属于禁言态。
    * 禁言态会限制发帖和回复，但不阻断登录。
    */
-  isMutedStatus(status: number): boolean {
+  isMutedStatus(status: number) {
     return (
       status === UserStatusEnum.MUTED ||
       status === UserStatusEnum.PERMANENT_MUTED
@@ -171,7 +171,7 @@ export class UserService {
    * 判断状态码是否属于封禁态。
    * 封禁态会直接阻断登录，并驱动统一的封禁提示文案。
    */
-  isBannedStatus(status: number): boolean {
+  isBannedStatus(status: number) {
     return (
       status === UserStatusEnum.BANNED ||
       status === UserStatusEnum.PERMANENT_BANNED
@@ -193,7 +193,7 @@ export class UserService {
   buildBanAccessMessage(user: {
     banReason: string | null
     banUntil: Date | null
-  }): string {
+  }) {
     const parts = ['账号已被封禁']
 
     if (user.banReason?.trim()) {

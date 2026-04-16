@@ -118,11 +118,11 @@ export class LoggerService {
    * 获取默认日志器实例
    * @returns 默认日志器
    */
-  getLogger(): Logger {
+  getLogger() {
     return this.logger
   }
 
-  getLoggerWithContext(context: string): Logger {
+  getLoggerWithContext(context: string) {
     return this.logger.child({ context })
   }
 }

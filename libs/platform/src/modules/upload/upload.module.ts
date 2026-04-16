@@ -1,10 +1,10 @@
 import type { DynamicModule, Type } from '@nestjs/common'
+import type { UploadModuleOptions } from './upload.types'
 import { Module } from '@nestjs/common'
 import { LocalUploadProvider } from './local-upload.provider'
 import { QiniuUploadProvider } from './qiniu-upload.provider'
 import { SuperbedUploadProvider } from './superbed-upload.provider'
 import { UploadService } from './upload.service'
-import { UploadModuleOptions } from './upload.types'
 
 /**
  * 文件上传模块 - 重新组织的上传服务模块

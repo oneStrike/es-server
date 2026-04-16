@@ -47,7 +47,7 @@ export class ConfigReader implements OnModuleInit {
   /**
    * 刷新配置（由 SystemConfigService 在更新配置后调用）
    */
-  async refresh(): Promise<void> {
+  async refresh() {
     const cached = await this.cacheManager.get<SystemConfig>(CACHE_KEY.CONFIG)
     if (cached) {
       this.config = cached
@@ -57,49 +57,49 @@ export class ConfigReader implements OnModuleInit {
   /**
    * 获取完整系统配置
    */
-  get(): SystemConfig {
+  get() {
     return this.config
   }
 
   /**
    * 获取阿里云配置
    */
-  getAliyunConfig(): SystemConfig['aliyunConfig'] {
+  getAliyunConfig() {
     return this.config.aliyunConfig
   }
 
   /**
    * 获取站点配置
    */
-  getSiteConfig(): SystemConfig['siteConfig'] {
+  getSiteConfig() {
     return this.config.siteConfig
   }
 
   /**
    * 获取维护模式配置
    */
-  getMaintenanceConfig(): SystemConfig['maintenanceConfig'] {
+  getMaintenanceConfig() {
     return this.config.maintenanceConfig
   }
 
   /**
    * 检查是否处于维护模式
    */
-  isMaintenanceMode(): boolean {
+  isMaintenanceMode() {
     return this.config.maintenanceConfig.enableMaintenanceMode
   }
 
   /**
    * 获取内容审核策略配置
    */
-  getContentReviewPolicy(): SystemConfig['contentReviewPolicy'] {
+  getContentReviewPolicy() {
     return this.config.contentReviewPolicy
   }
 
   /**
    * 获取上传配置
    */
-  getUploadConfig(): SystemConfig['uploadConfig'] {
+  getUploadConfig() {
     return this.config.uploadConfig
   }
 }

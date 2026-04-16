@@ -8,7 +8,7 @@ import process from 'node:process'
  * @returns 当前环境
  */
 
-export function getEnv(): string {
+export function getEnv() {
   return process.env.NODE_ENV || 'development'
 }
 
@@ -16,7 +16,7 @@ export function getEnv(): string {
  * 判断当前是否为开发环境
  * @returns 是否为开发环境
  */
-export function isDevelopment(): boolean {
+export function isDevelopment() {
   return process.env.NODE_ENV === 'development'
 }
 
@@ -24,7 +24,7 @@ export function isDevelopment(): boolean {
  * 判断当前是否为生产环境
  * @returns 是否为生产环境
  */
-export function isProduction(): boolean {
+export function isProduction() {
   return process.env.NODE_ENV === 'production'
 }
 
@@ -32,7 +32,7 @@ export function isProduction(): boolean {
  * 判断当前是否为测试环境
  * @returns 是否为测试环境
  */
-export function isTest(): boolean {
+export function isTest() {
   return process.env.NODE_ENV === 'test'
 }
 
@@ -40,6 +40,6 @@ export function isTest(): boolean {
  * 判断当前是否为预发布环境
  * @returns 是否为预发布环境
  */
-export function isProvision(): boolean {
+export function isProvision() {
   return process.env.NODE_ENV === 'provision'
 }

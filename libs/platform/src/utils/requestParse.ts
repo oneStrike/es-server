@@ -7,7 +7,10 @@ import type {
   RequestContext,
   RequestParams,
 } from './request-parse.types'
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/platform/constant/base.constant'
+import {
+  ApiTypeEnum,
+  HttpMethodEnum,
+} from '@libs/platform/constant/base.constant'
 import { maskString } from './mask'
 
 // 浏览器检测正则表达式（模块作用域，避免重复编译）
@@ -107,7 +110,7 @@ function sanitizeRequestValue<T>(value: T): StructuredValue {
  * @param req - Fastify 请求对象
  * @returns IP 地址字符串，如果无法获取则返回 undefined
  */
-export function extractIpAddress(req: FastifyRequest): string | undefined {
+export function extractIpAddress(req: FastifyRequest) {
   const forwardedFor = req.headers['x-forwarded-for']
   const forwardedForValue = Array.isArray(forwardedFor)
     ? forwardedFor[0]
@@ -141,7 +144,7 @@ export function extractIpAddress(req: FastifyRequest): string | undefined {
  * @param req - Fastify 请求对象
  * @returns HTTP 方法枚举值
  */
-export function extractHttpMethod(req: FastifyRequest): HttpMethodEnum {
+export function extractHttpMethod(req: FastifyRequest) {
   const method = req.method?.toUpperCase() as HttpMethodEnum
   return Object.values(HttpMethodEnum).includes(method)
     ? method
@@ -154,7 +157,7 @@ export function extractHttpMethod(req: FastifyRequest): HttpMethodEnum {
  * @param req - Fastify 请求对象
  * @returns 请求路径字符串
  */
-export function extractRequestPath(req: FastifyRequest): string {
+export function extractRequestPath(req: FastifyRequest) {
   return req.url || '/'
 }
 
@@ -165,9 +168,7 @@ export function extractRequestPath(req: FastifyRequest): string {
  * @param req - Fastify 请求对象
  * @returns 请求参数对象，如果无参数则返回 undefined
  */
-export function extractRequestParams(
-  req: FastifyRequest,
-): RequestParams | undefined {
+export function extractRequestParams(req: FastifyRequest) {
   const params: RequestParams = {}
   let hasParams = false
 
@@ -203,7 +204,7 @@ export function extractRequestParams(
  * @param req - Fastify 请求对象
  * @returns User-Agent 字符串，如果不存在则返回 undefined
  */
-export function extractUserAgent(req: FastifyRequest): string | undefined {
+export function extractUserAgent(req: FastifyRequest) {
   const userAgent = req.headers['user-agent']
   const userAgentValue = Array.isArray(userAgent) ? userAgent[0] : userAgent
   return typeof userAgentValue === 'string' ? userAgentValue.trim() : undefined
@@ -216,7 +217,7 @@ export function extractUserAgent(req: FastifyRequest): string | undefined {
  * @param userAgent - User-Agent 字符串
  * @returns 设备信息对象，如果解析失败则返回 undefined
  */
-export function parseDeviceInfo(userAgent?: string): DeviceInfo | undefined {
+export function parseDeviceInfo(userAgent?: string) {
   if (!userAgent) {
     return undefined
   }
@@ -286,9 +287,7 @@ export function parseDeviceInfo(userAgent?: string): DeviceInfo | undefined {
  * @param deviceInfo - 结构化设备信息
  * @returns 设备信息字符串
  */
-export function serializeDeviceInfo(
-  deviceInfo?: DeviceInfo,
-): string | undefined {
+export function serializeDeviceInfo(deviceInfo?: DeviceInfo) {
   return deviceInfo ? JSON.stringify(deviceInfo) : undefined
 }
 
@@ -299,7 +298,7 @@ export function serializeDeviceInfo(
  * @param path - 请求路径
  * @returns API 类型枚举值，如果无法判断则返回 undefined
  */
-export function extractApiType(path: string): ApiTypeEnum | undefined {
+export function extractApiType(path: string) {
   if (!path) {
     return undefined
   }
