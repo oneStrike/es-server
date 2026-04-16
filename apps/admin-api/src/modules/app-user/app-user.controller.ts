@@ -6,6 +6,7 @@ import { QueryUserExperienceRecordDto } from '@libs/growth/experience/dto/experi
 import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto, UserIdDto } from '@libs/platform/dto'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   AddAdminAppUserExperienceDto,
   AddAdminAppUserPointsDto,
@@ -29,7 +30,6 @@ import {
 } from '@libs/user/dto/admin-app-user.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 import { AppUserService } from './app-user.service'
 

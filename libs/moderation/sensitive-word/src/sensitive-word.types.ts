@@ -40,71 +40,10 @@ export interface DetectOptions {
 }
 
 /**
- * 敏感词分页查询条件。
- * 用于管理端分页与筛选。
- */
-export interface QuerySensitiveWordPageInput {
-  pageIndex?: number
-  pageSize?: number
-  orderBy?: string
-  word?: string
-  isEnabled?: boolean
-  level?: SensitiveWordLevelEnum
-  type?: SensitiveWordTypeEnum
-  matchMode?: MatchModeEnum
-}
-
-/**
- * 敏感词创建入参。
- * 仅包含业务可写字段。
- */
-export interface CreateSensitiveWordInput {
-  word: string
-  replaceWord?: string
-  isEnabled: boolean
-  level: SensitiveWordLevelEnum
-  type: SensitiveWordTypeEnum
-  matchMode: MatchModeEnum
-  remark?: string
-}
-
-/**
- * 敏感词更新入参。
- * 包含记录 id 与业务可写字段。
- */
-export interface UpdateSensitiveWordInput extends CreateSensitiveWordInput {
-  id: number
-}
-
-/**
- * 敏感词状态更新入参。
- * 仅切换启用状态。
- */
-export interface UpdateSensitiveWordStatusInput {
-  id: number
-  isEnabled: boolean
-}
-
-/**
- * 敏感词检测入参。
- * 包含待检测文本与可选匹配模式。
- */
-export interface SensitiveWordDetectInput {
-  content: string
-}
-
-/**
- * 敏感词替换入参。
- * 在检测参数基础上增加替换字符。
- */
-export interface SensitiveWordReplaceInput extends SensitiveWordDetectInput {
-  replaceChar?: string
-}
-
-/**
  * 敏感词检测结果。
  * 返回匹配命中列表与最高等级。
  */
+/** 稳定领域类型 `SensitiveWordDetectResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface SensitiveWordDetectResult {
   hits: MatchedWord[]
   highestLevel?: SensitiveWordLevelEnum
@@ -114,6 +53,7 @@ export interface SensitiveWordDetectResult {
  * 内部富命中结果。
  * 在公开命中结构基础上补齐词条 ID 与词条匹配模式，供统计与替换裁剪使用。
  */
+/** 稳定领域类型 `SensitiveWordDetectedHit`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface SensitiveWordDetectedHit extends MatchedWord {
   sensitiveWordId: number
   matchMode: MatchModeEnum
@@ -123,6 +63,7 @@ export interface SensitiveWordDetectedHit extends MatchedWord {
  * 内部检测结果。
  * 同时返回富命中结构与对外命中结构，避免调用方重复做 strip。
  */
+/** 稳定领域类型 `SensitiveWordInternalDetectResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface SensitiveWordInternalDetectResult {
   hits: SensitiveWordDetectedHit[]
   publicHits: MatchedWord[]
@@ -133,32 +74,27 @@ export interface SensitiveWordInternalDetectResult {
  * 命中实体类型键。
  * 仅用于业务服务入参，可读性优先。
  */
+/** 稳定领域类型 `SensitiveWordHitEntityTypeKey`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type SensitiveWordHitEntityTypeKey = 'topic' | 'comment'
 
 /**
  * 命中操作类型键。
  * 仅用于业务服务入参，可读性优先。
  */
+/** 稳定领域类型 `SensitiveWordHitOperationTypeKey`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type SensitiveWordHitOperationTypeKey = 'create' | 'update'
 
 /**
  * 业务实体命中记录入参。
  * 用于在持久化链路中写命中明细并同步词表快照。
  */
+/** 稳定领域类型 `RecordSensitiveWordEntityHitsInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface RecordSensitiveWordEntityHitsInput {
   entityType: SensitiveWordHitEntityTypeKey
   entityId: number
   operationType: SensitiveWordHitOperationTypeKey
   hits: SensitiveWordDetectedHit[]
   occurredAt?: Date
-}
-
-/**
- * 敏感词统计查询条件。
- * type 表示统计维度。
- */
-export interface SensitiveWordStatisticsQueryInput {
-  type?: StatisticsTypeEnum
 }
 
 /**
@@ -214,6 +150,7 @@ export interface SensitiveWordStatisticsResponse {
  * 完整统计数据聚合。
  * 用于管理端完整统计接口。
  */
+/** 稳定领域类型 `SensitiveWordStatisticsData`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface SensitiveWordStatisticsData {
   totalWords: number
   enabledWords: number
@@ -257,6 +194,7 @@ export const SensitiveWordHitOperationTypeMap: Record<
  *
  * @template T 缓存数据类型
  */
+/** 稳定领域类型 `CacheQueryConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface CacheQueryConfig<T> {
   /** 缓存键 */
   cacheKey: string

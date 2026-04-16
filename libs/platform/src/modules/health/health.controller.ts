@@ -58,7 +58,7 @@ export class HealthController {
       ])
       const checks = { ...database, ...cache, ...disk }
       const status = Object.values(checks).every(
-        (item: any) => item.status === 'up',
+        (item: { status?: string }) => item.status === 'up',
       )
         ? 'ok'
         : 'error'

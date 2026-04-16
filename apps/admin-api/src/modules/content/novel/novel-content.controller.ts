@@ -3,10 +3,10 @@ import { UploadContentDto } from '@libs/content/work/content/dto/content.dto';
 import { NovelContentService } from '@libs/content/work/content/novel-content.service';
 import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/小说管理/章节内容')

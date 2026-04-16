@@ -50,14 +50,14 @@ export class BaseUserLevelRuleDto extends BaseDto {
   requiredExperience!: number
 
   @NumberProperty({
-    description: '所需登录天数',
+    description: '所需登录天数（0=无登录天数要求）',
     example: 0,
     required: true,
   })
   loginDays!: number
 
   @NumberProperty({
-    description: '排序值（数值越小越靠前）',
+    description: '排序值（0=默认排序，数值越小越靠前）',
     example: 1,
     required: true,
   })
@@ -79,49 +79,49 @@ export class BaseUserLevelRuleDto extends BaseDto {
   isEnabled!: boolean
 
   @NumberProperty({
-    description: '每日发帖数量上限，0表示无限制',
+    description: '每日发帖数量上限（0=不限制）',
     example: 10,
     required: true,
   })
   dailyTopicLimit!: number
 
   @NumberProperty({
-    description: '每日回复和评论数量上限，0表示无限制',
+    description: '每日回复和评论数量上限（0=不限制）',
     example: 50,
     required: true,
   })
   dailyReplyCommentLimit!: number
 
   @NumberProperty({
-    description: '发帖间隔秒数（防刷屏），0表示无限制',
+    description: '发帖间隔秒数（0=不限制）',
     example: 30,
     required: true,
   })
   postInterval!: number
 
   @NumberProperty({
-    description: '每日点赞次数上限，0表示无限制',
+    description: '每日点赞次数上限（0=不限制）',
     example: 20,
     required: true,
   })
   dailyLikeLimit!: number
 
   @NumberProperty({
-    description: '每日收藏次数上限，0表示无限制',
+    description: '每日收藏次数上限（0=不限制）',
     example: 10,
     required: true,
   })
   dailyFavoriteLimit!: number
 
   @NumberProperty({
-    description: '黑名单上限',
+    description: '黑名单上限（默认值 10）',
     example: 10,
     required: true,
   })
   blacklistLimit!: number
 
   @NumberProperty({
-    description: '作品收藏上限',
+    description: '作品收藏上限（默认值 100）',
     example: 100,
     required: true,
   })

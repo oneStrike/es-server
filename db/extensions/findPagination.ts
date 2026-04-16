@@ -68,7 +68,7 @@ export async function findPagination<
     throw new InternalServerErrorException('不支持 pick 和 omit 同时使用')
   }
   const hasPick = pickedFields.size > 0
-  const tableColumns = getTableColumns(table as any) as Record<string, unknown>
+  const tableColumns = getTableColumns(table as never) as Record<string, unknown>
   const invalidPickedFields = [...pickedFields].filter(
     (field) => !tableColumns[field],
   )
@@ -108,7 +108,7 @@ export async function findPagination<
     !hasPick && omittedFields.size === 0
       ? db.select().from(table as AnyPgTable)
       : selectedColumnCount > 0
-        ? db.select(selectedColumns as any).from(table as AnyPgTable)
+        ? db.select(selectedColumns as never).from(table as AnyPgTable)
         : (() => {
             throw new InternalServerErrorException(
               'pick 未指定任何有效字段',

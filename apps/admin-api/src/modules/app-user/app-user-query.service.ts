@@ -1,5 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import {
   AppUserDeletedScopeEnum,
 } from '@libs/user/app-user.constant'

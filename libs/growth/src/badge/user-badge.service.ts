@@ -9,6 +9,7 @@ import type {
   UpdateUserBadgeStatusDto,
 } from './dto/user-badge-management.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'

@@ -1,4 +1,5 @@
 import type { FastifyRequest } from 'fastify'
+import type { StructuredObject, StructuredValue } from './jsonParse'
 import type {
   ClientRequestContext,
   DeviceInfo,
@@ -44,7 +45,7 @@ const SENSITIVE_REQUEST_FIELDS = new Set([
   'secret',
 ])
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
+function isPlainObject<T>(value: T): value is Extract<T, StructuredObject> {
   return Object.prototype.toString.call(value) === '[object Object]'
 }
 
@@ -62,7 +63,7 @@ function isSensitiveRequestField(key: string) {
   )
 }
 
-function maskSensitiveValue(value: unknown) {
+function maskSensitiveValue<T>(value: T): StructuredValue | '[REDACTED]' {
   if (typeof value === 'string') {
     return maskString(value, 2, 2)
   }
@@ -75,16 +76,16 @@ function maskSensitiveValue(value: unknown) {
   return value ?? '[REDACTED]'
 }
 
-function sanitizeRequestValue(value: unknown) {
+function sanitizeRequestValue<T>(value: T): StructuredValue {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeRequestValue(item))
   }
 
   if (!isPlainObject(value)) {
-    return value
+    return value as StructuredValue
   }
 
-  const sanitized: Record<string, unknown> = {}
+  const sanitized: StructuredObject = {}
 
   for (const [key, fieldValue] of Object.entries(value)) {
     if (shouldOmitRequestField(key)) {
@@ -180,7 +181,7 @@ export function extractRequestParams(
     typeof req.query === 'object' &&
     Object.keys(req.query).length > 0
   ) {
-    params.query = sanitizeRequestValue(req.query) as Record<string, unknown>
+    params.query = sanitizeRequestValue(req.query) as StructuredObject
     hasParams = true
   }
 
@@ -189,7 +190,7 @@ export function extractRequestParams(
     typeof req.params === 'object' &&
     Object.keys(req.params).length > 0
   ) {
-    params.params = sanitizeRequestValue(req.params) as Record<string, unknown>
+    params.params = sanitizeRequestValue(req.params) as StructuredObject
     hasParams = true
   }
 

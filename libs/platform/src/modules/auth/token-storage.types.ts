@@ -1,4 +1,5 @@
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
+import type { JsonObject } from '@libs/platform/utils/jsonParse'
 
 /**
  * Token 类型定义。
@@ -13,6 +14,7 @@ export enum TokenTypeEnum {
  * Token 实体接口
  * 定义 Token 数据的标准结构
  */
+/** 稳定领域类型 `ITokenEntity`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface ITokenEntity extends GeoSnapshot {
   /** 主键 */
   id: number
@@ -29,7 +31,7 @@ export interface ITokenEntity extends GeoSnapshot {
   /** 创建时间 */
   createdAt: Date
   /** 设备信息 */
-  deviceInfo?: unknown
+  deviceInfo?: JsonObject | null
   /** IP 地址 */
   ipAddress?: string | null
   /** User-Agent */
@@ -40,6 +42,7 @@ export interface ITokenEntity extends GeoSnapshot {
  * 创建 Token 入参。
  * 用于持久化 access/refresh token 的核心字段。
  */
+/** 稳定领域类型 `CreateTokenInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface CreateTokenInput extends GeoSnapshot {
   /** 用户 ID */
   userId: number
@@ -50,7 +53,7 @@ export interface CreateTokenInput extends GeoSnapshot {
   /** 过期时间 */
   expiresAt: Date
   /** 设备信息（结构化 JSON） */
-  deviceInfo?: unknown
+  deviceInfo?: JsonObject | null
   /** IP 地址 */
   ipAddress?: string
   /** User-Agent */
@@ -66,26 +69,30 @@ export interface CreateTokenInput extends GeoSnapshot {
  * @template UpdateInput 更新参数类型
  * @template WhereInput 查询条件类型
  */
+/** 稳定领域类型 `ITokenDelegate`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface ITokenDelegate<
   T,
-  CreateInput = any,
-  UpdateInput = any,
-  WhereInput = any,
+  CreateInput = Record<string, never>,
+  UpdateInput = Record<string, never>,
+  WhereInput = Record<string, never>,
 > {
   /** 创建单条记录 */
   create: (args: { data: CreateInput }) => Promise<T>
   /** 批量创建 */
-  createMany: (args: { data: CreateInput[] }) => Promise<any>
+  createMany: (args: { data: CreateInput[] }) => Promise<number>
   /** 查询单条 */
   findUnique: (args: {
     where: WhereInput & { jti?: string, id?: number }
   }) => Promise<T | null>
   /** 查询多条 */
-  findMany: (args: { where?: WhereInput, [key: string]: any }) => Promise<T[]>
+  findMany: (args: {
+    where?: WhereInput
+    select?: { jti?: boolean }
+  }) => Promise<T[]>
   /** 更新单条 */
   update: (args: { where: WhereInput, data: UpdateInput }) => Promise<T>
   /** 批量更新 */
-  updateMany: (args: { where: WhereInput, data: UpdateInput }) => Promise<any>
+  updateMany: (args: { where: WhereInput, data: UpdateInput }) => Promise<number>
   /** 批量删除 */
-  deleteMany: (args: { where: WhereInput }) => Promise<any>
+  deleteMany: (args: { where: WhereInput }) => Promise<number>
 }

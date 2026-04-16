@@ -54,7 +54,7 @@ export class ReportGrowthService {
     }
   }
 
-  private parseHandledReportContext(context: unknown) {
+  private parseHandledReportContext<T>(context: T) {
     const record =
       context && typeof context === 'object' && !Array.isArray(context)
         ? (context as Record<string, unknown>)

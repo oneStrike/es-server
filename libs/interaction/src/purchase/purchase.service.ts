@@ -75,16 +75,16 @@ export class PurchaseService {
     return resolver
   }
 
-  private isUniqueConstraintError(error: unknown) {
+  private isUniqueConstraintError(error: Error | object | null | undefined) {
     return this.drizzle.isUniqueViolation(error)
   }
 
-  private extractRows<T>(result: unknown) {
+  private extractRows<T>(result: { rows?: T[] | null } | object | null | undefined) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }
-    const rows = (result as { rows?: unknown }).rows
-    return Array.isArray(rows) ? (rows as T[]) : []
+    const rows = (result as { rows?: T[] | null }).rows
+    return Array.isArray(rows) ? rows : []
   }
 
   private buildPurchaseCreatedAtFilter(startDate?: string, endDate?: string) {

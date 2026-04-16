@@ -1,5 +1,6 @@
 import type { Db } from '@db/core'
 import { workAuthorRelation, workChapter } from '@db/schema'
+
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { CommentService } from '@libs/interaction/comment/comment.service'
 import { ICommentTargetResolver } from '@libs/interaction/comment/interfaces/comment-target-resolver.interface'

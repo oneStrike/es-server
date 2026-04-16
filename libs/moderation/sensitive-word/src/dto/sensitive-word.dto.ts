@@ -189,6 +189,11 @@ export class UpdateSensitiveWordDto extends IntersectionType(
   IdDto,
 ) {}
 
+export class UpdateSensitiveWordStatusDto extends IntersectionType(
+  IdDto,
+  PickType(BaseSensitiveWordDto, ['isEnabled'] as const),
+) {}
+
 export class QuerySensitiveWordDto extends IntersectionType(
   PageDto,
   PartialType(

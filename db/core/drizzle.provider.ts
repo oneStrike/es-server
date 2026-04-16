@@ -1,6 +1,5 @@
 import type { Provider } from '@nestjs/common'
 import type { Db } from './drizzle.type'
-import process from 'node:process'
 import { ConfigService } from '@nestjs/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'

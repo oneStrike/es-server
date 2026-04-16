@@ -13,7 +13,7 @@ export interface ApiAuditDocOptions<TModel> extends ApiDocOptions<TModel> {
  * admin-api 组合装饰器。
  * 统一复用接口文档摘要作为审计文案，并保留按需覆盖能力。
  */
-export function ApiAuditDoc<TModel extends Type<any>>(
+export function ApiAuditDoc<TModel extends Type<object>>(
   options: ApiAuditDocOptions<TModel>,
 ) {
   const { audit, ...apiDocOptions } = options

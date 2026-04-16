@@ -112,7 +112,7 @@ export class WorkCounterService {
     await this.drizzle.withErrorHandling(async () => operation(this.db))
   }
 
-  private rethrowNotFound(error: unknown, message: string) {
+  private rethrowNotFound<T>(error: T, message: string) {
     if (
       error instanceof BusinessException &&
       error.code === BusinessErrorCode.RESOURCE_NOT_FOUND &&

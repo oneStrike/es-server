@@ -1,9 +1,7 @@
 import type { Db, DrizzleService } from '@db/core'
-import type {
-  TaskAssignmentInsert,
-  TaskAssignmentSelect,
-  TaskSelect,
-} from '@db/schema'
+
+import type { TaskAssignmentInsert, TaskAssignmentSelect, TaskSelect } from '@db/schema'
+
 import type { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import type { PublishMessageDomainEventInput } from '@libs/message/eventing/message-event.type'
 import type { Dayjs } from 'dayjs'
@@ -533,7 +531,7 @@ export abstract class TaskServiceSupport {
    *
    * 任务奖励配置要求值为正整数，避免非法数值进入奖励结算路径。
    */
-  protected parseRewardConfigPositiveInt(value: unknown, fieldName: string) {
+  protected parseRewardConfigPositiveInt<T>(value: T, fieldName: string) {
     if (!Number.isInteger(value) || Number(value) <= 0) {
       throw new BadRequestException(
         `${fieldName} 必须是大于 0 的整数，清空请传 null 或移除该字段`,
@@ -743,10 +741,10 @@ export abstract class TaskServiceSupport {
       JSON.stringify(
         this.asRecord(dto.objectiveConfig) ?? dto.objectiveConfig ?? null,
       ) !==
-        JSON.stringify(
+      JSON.stringify(
           this.asRecord(taskRecord.objectiveConfig) ??
-            taskRecord.objectiveConfig ??
-            null,
+          taskRecord.objectiveConfig ??
+          null,
         )
     const publishWindowChanged =
       (dto.publishStartAt !== undefined &&
@@ -754,8 +752,8 @@ export abstract class TaskServiceSupport {
           dto.publishStartAt ?? null,
           taskRecord.publishStartAt ?? null,
         )) ||
-      (dto.publishEndAt !== undefined &&
-        !this.isSameNullableDate(
+        (dto.publishEndAt !== undefined &&
+          !this.isSameNullableDate(
           dto.publishEndAt ?? null,
           taskRecord.publishEndAt ?? null,
         ))
@@ -1068,8 +1066,8 @@ export abstract class TaskServiceSupport {
    *
    * 当前只支持浅层 key/value 精确匹配，保证配置语义稳定且便于排障。
    */
-  protected matchesTaskObjectiveConfig(
-    objectiveConfig: unknown,
+  protected matchesTaskObjectiveConfig<T>(
+    objectiveConfig: T,
     eventContext?: Record<string, unknown>,
   ) {
     const normalizedObjectiveConfig = this.asRecord(objectiveConfig)
@@ -1872,7 +1870,7 @@ export abstract class TaskServiceSupport {
       ),
       objectiveType: normalizeTaskObjectiveType(
         this.readSnapshotPositiveInt(snapshot?.objectiveType) ??
-          liveTask?.objectiveType,
+        liveTask?.objectiveType,
       ),
       eventCode:
         this.readSnapshotPositiveInt(snapshot?.eventCode) ??
@@ -2319,7 +2317,7 @@ export abstract class TaskServiceSupport {
    *
    * 只有 points/experience 任一项大于 0，才认为完成态需要展示奖励结算状态。
    */
-  protected hasConfiguredTaskReward(rewardConfig: unknown) {
+  protected hasConfiguredTaskReward<T>(rewardConfig: T) {
     const rewardRecord = this.asRecord(rewardConfig)
     if (!rewardRecord) {
       return false
@@ -2333,14 +2331,14 @@ export abstract class TaskServiceSupport {
   /**
    * 从快照字段读取有效字符串。
    */
-  protected readSnapshotString(value: unknown) {
+  protected readSnapshotString<T>(value: T) {
     return typeof value === 'string' && value.trim() !== '' ? value : undefined
   }
 
   /**
    * 从快照字段读取正整数。
    */
-  protected readSnapshotPositiveInt(value: unknown) {
+  protected readSnapshotPositiveInt<T>(value: T) {
     return typeof value === 'number' && Number.isInteger(value) && value > 0
       ? value
       : undefined
@@ -2374,7 +2372,7 @@ export abstract class TaskServiceSupport {
    * 统一序列化提醒链路异常
    * 仅用于 warning 日志，避免 sidecar 通知失败影响主业务链路。
    */
-  protected stringifyError(error: unknown) {
+  protected stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
     }
@@ -2391,7 +2389,7 @@ export abstract class TaskServiceSupport {
   /**
    * 把弱结构输入收敛成对象记录。
    */
-  protected asRecord(input: unknown) {
+  protected asRecord<T>(input: T) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       return null
     }

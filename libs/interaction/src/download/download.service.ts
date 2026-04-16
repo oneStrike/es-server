@@ -59,12 +59,12 @@ export class DownloadService {
     return resolver
   }
 
-  private extractRows<T>(result: unknown) {
+  private extractRows<T, TResult = object | null | undefined>(result: TResult) {
     if (!result || typeof result !== 'object' || !('rows' in result)) {
       return []
     }
-    const rows = (result as { rows?: unknown }).rows
-    return Array.isArray(rows) ? (rows as T[]) : []
+    const rows = (result as { rows?: T[] }).rows
+    return Array.isArray(rows) ? (rows) : []
   }
 
   private buildDownloadCreatedAtFilter(

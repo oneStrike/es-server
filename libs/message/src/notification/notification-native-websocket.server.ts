@@ -235,7 +235,7 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
       !Array.isArray(envelope.payload) &&
       'token' in envelope.payload
     ) {
-      const token = (envelope.payload as { token?: unknown }).token
+      const token = (envelope.payload as { token?: string | null }).token
       if (typeof token === 'string' && token.trim()) {
         return token.trim()
       }

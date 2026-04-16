@@ -66,6 +66,7 @@ export interface JwtUserInfoInterface {
   username: string
 }
 
+/** 稳定领域类型 `AuthConfigInterface`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface AuthConfigInterface {
   // JWT 过期时间（秒）
   expiresIn: JwtSignOptions['expiresIn']
@@ -79,6 +80,7 @@ export interface AuthConfigInterface {
   strategyKey: string
 }
 
+/** 稳定领域类型 `QueryOrderByInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type QueryOrderByInput = DbQueryOrderBy | string
 
 export interface PageQueryInput {
@@ -87,4 +89,5 @@ export interface PageQueryInput {
   orderBy?: QueryOrderByInput
 }
 
+/** 稳定领域类型 `PageQueryNoOrderInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type PageQueryNoOrderInput = Omit<PageQueryInput, 'orderBy'>

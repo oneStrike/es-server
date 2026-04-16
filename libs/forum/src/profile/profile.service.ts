@@ -1,7 +1,9 @@
 import type { Db } from '@db/core'
 import type { AppUserCountSelect, AppUserSelect } from '@db/schema'
+
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { UserPointService } from '@libs/growth/point/point.service'
 import { FavoriteTargetTypeEnum } from '@libs/interaction/favorite/favorite.constant'

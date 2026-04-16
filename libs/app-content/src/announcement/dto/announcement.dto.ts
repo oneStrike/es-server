@@ -99,7 +99,7 @@ export class BaseAnnouncementDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '弹窗背景图片位置（居中、顶部居中、顶部靠左、顶部靠右、底部居中、底部靠左、底部靠右、左侧居中、右侧居中）',
+      '弹窗背景图片位置（CSS background-position 值，默认 center=居中）',
     example: PopupBackgroundPositionEnum.CENTER,
     required: false,
     enum: PopupBackgroundPositionEnum,

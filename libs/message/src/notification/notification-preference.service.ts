@@ -147,7 +147,7 @@ export class MessageNotificationPreferenceService {
     return normalized
   }
 
-  private ensureSupportedCategoryKey(value: unknown) {
+  private ensureSupportedCategoryKey<T>(value: T) {
     if (typeof value !== 'string' || !value.trim()) {
       throw new BadRequestException('通知分类非法')
     }

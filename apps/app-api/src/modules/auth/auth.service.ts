@@ -337,7 +337,7 @@ export class AuthService {
     phone: string,
     hashedPassword: string,
   ): Promise<AppUserSelect> {
-    let lastError: unknown = new BusinessException(
+    let lastError: Error = new BusinessException(
       BusinessErrorCode.STATE_CONFLICT,
       AppAuthErrorMessages.REGISTER_RETRY_FAILED,
     )
@@ -367,7 +367,7 @@ export class AuthService {
           return newUser
         })
       } catch (error) {
-        lastError = error
+        lastError = error instanceof Error ? error : new Error(String(error))
 
         if (!this.isAccountUniqueViolation(error)) {
           this.drizzle.handleError(error)
@@ -388,7 +388,7 @@ export class AuthService {
     throw lastError
   }
 
-  private isAccountUniqueViolation(error: unknown) {
+  private isAccountUniqueViolation(error: Error | BusinessException | object | null) {
     if (!this.drizzle.isUniqueViolation(error)) {
       return false
     }

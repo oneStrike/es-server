@@ -12,7 +12,15 @@ export function isNotNil<T>(value: T): value is NonNullable<T> {
  * @param value 要检查的值
  * @returns 如果值是布尔类型则返回 true，否则返回 false
  */
-export function isBoolean(value: unknown): value is boolean {
+export function isBoolean(
+  value:
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | object,
+): value is boolean {
   return typeof value === 'boolean'
 }
 

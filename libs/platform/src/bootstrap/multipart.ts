@@ -13,6 +13,10 @@ const EXT_LEADING_DOT_REGEX = /^\./
 export const SVG_CONTENT_SECURITY_POLICY
   = "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
 
+interface StaticHeadersResponse {
+  setHeader: (name: string, value: string) => void
+}
+
 /**
  * 解析静态文件响应头。
  * 文档与压缩包统一走下载策略，SVG 继续允许预览，但额外补充最小安全头。
@@ -80,7 +84,7 @@ export async function setupMultipart(
     etag: true,
     cacheControl: true,
     maxAge: '1h',
-    setHeaders(res: any, filePath: string) {
+    setHeaders(res: StaticHeadersResponse, filePath: string) {
       const headers = resolveStaticFileHeaders(filePath, uploadConfig)
       for (const [name, value] of Object.entries(headers)) {
         res.setHeader(name, value)

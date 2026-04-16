@@ -1,17 +1,20 @@
 import type { Cache } from 'cache-manager'
 import type { ITokenStorageService } from './auth.types'
-import type {
-  CreateTokenInput,
-  ITokenEntity,
-} from './token-storage.types'
+import type { CreateTokenInput } from './token-storage.types'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import { RevokeTokenReasonEnum } from './auth.constant'
 
 const INVALID_TOKEN_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
+interface ActiveTokenEntity {
+  jti: string
+  expiresAt: Date
+  revokedAt?: Date | null
+}
+
 @Injectable()
-export abstract class BaseTokenStorageService<T extends ITokenEntity>
+export abstract class BaseTokenStorageService<T extends ActiveTokenEntity>
   implements ITokenStorageService
 {
   constructor(@Inject(CACHE_MANAGER) protected readonly cacheManager: Cache) {}

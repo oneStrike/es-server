@@ -13,7 +13,7 @@ import { UploadModuleOptions } from './upload.types'
 @Module({})
 export class UploadModule {
   static register(options: UploadModuleOptions = {}): DynamicModule {
-    const imports: (DynamicModule | Type<any>)[] = options.imports ?? []
+    const imports: Array<DynamicModule | Type<object>> = options.imports ?? []
 
     return {
       module: UploadModule,

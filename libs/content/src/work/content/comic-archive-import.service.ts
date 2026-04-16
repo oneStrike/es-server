@@ -3,12 +3,9 @@ import type { UploadConfigInterface } from '@libs/platform/config/upload.types'
 import type { FastifyRequest } from 'fastify'
 import type { Dirent } from 'node:fs'
 import type {
-  ComicArchiveIgnoredItemView,
+  ComicArchiveIgnoredItemSnapshot,
   ComicArchiveMatchedItemRecord,
-  ComicArchiveResultItemView,
-  ComicArchiveSummaryView,
   ComicArchiveTaskRecord,
-  ComicArchiveTaskView,
 } from './comic-archive-import.type'
 import { createWriteStream, promises as fs } from 'node:fs'
 import { basename, dirname, extname, join } from 'node:path'
@@ -36,6 +33,9 @@ import {
   ComicArchiveTaskStatusEnum,
 } from './comic-archive-import.type'
 import {
+  ComicArchiveIgnoredItemDto,
+  ComicArchiveResultItemDto,
+  ComicArchiveSummaryDto,
   ComicArchiveTaskIdDto,
   ComicArchiveTaskResponseDto,
   ConfirmComicArchiveDto,
@@ -388,7 +388,7 @@ export class ComicArchiveImportService {
     >,
   ) {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
-    const ignoredItems: ComicArchiveIgnoredItemView[] = []
+    const ignoredItems: ComicArchiveIgnoredItemSnapshot[] = []
 
     const visibleRootEntries = rootEntries.filter(
       (entry) => !this.shouldAutoIgnoreName(entry.name),
@@ -467,7 +467,7 @@ export class ComicArchiveImportService {
     >,
   ) {
     const matchedItems: ComicArchiveMatchedItemRecord[] = []
-    const ignoredItems: ComicArchiveIgnoredItemView[] = []
+    const ignoredItems: ComicArchiveIgnoredItemSnapshot[] = []
     const visibleRootEntries = rootEntries.filter(
       (entry) => !this.shouldAutoIgnoreName(entry.name),
     )
@@ -544,7 +544,7 @@ export class ComicArchiveImportService {
   private collectImmediateImagePaths(
     dirPath: string,
     entries: Dirent[],
-    ignoredItems: ComicArchiveIgnoredItemView[],
+    ignoredItems: ComicArchiveIgnoredItemSnapshot[],
     dirName: string,
   ) {
     const imagePaths = entries
@@ -739,7 +739,7 @@ export class ComicArchiveImportService {
     return record
   }
 
-  private toTaskView(record: ComicArchiveTaskRecord): ComicArchiveTaskView {
+  private toTaskView(record: ComicArchiveTaskRecord): ComicArchiveTaskResponseDto {
     return {
       taskId: record.taskId,
       workId: record.workId,
@@ -975,7 +975,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  private normalizeSummary(value: unknown): ComicArchiveSummaryView {
+  private normalizeSummary<T>(value: T): ComicArchiveSummaryDto {
     const record = this.asObject(value)
     return {
       matchedChapterCount: this.asNumber(record?.matchedChapterCount),
@@ -984,7 +984,7 @@ export class ComicArchiveImportService {
     }
   }
 
-  private normalizeIgnoredItems(value: unknown): ComicArchiveIgnoredItemView[] {
+  private normalizeIgnoredItems<T>(value: T): ComicArchiveIgnoredItemDto[] {
     if (!Array.isArray(value)) {
       return []
     }
@@ -999,8 +999,8 @@ export class ComicArchiveImportService {
     })
   }
 
-  private normalizeMatchedItems(
-    value: unknown,
+  private normalizeMatchedItems<T>(
+    value: T,
   ): ComicArchiveMatchedItemRecord[] {
     if (!Array.isArray(value)) {
       return []
@@ -1023,7 +1023,7 @@ export class ComicArchiveImportService {
     })
   }
 
-  private normalizeResultItems(value: unknown): ComicArchiveResultItemView[] {
+  private normalizeResultItems<T>(value: T): ComicArchiveResultItemDto[] {
     if (!Array.isArray(value)) {
       return []
     }
@@ -1040,7 +1040,7 @@ export class ComicArchiveImportService {
     })
   }
 
-  private normalizeConfirmedChapterIds(value: unknown) {
+  private normalizeConfirmedChapterIds<T>(value: T) {
     if (!Array.isArray(value)) {
       return []
     }
@@ -1050,7 +1050,7 @@ export class ComicArchiveImportService {
       .filter((chapterId) => chapterId > 0)
   }
 
-  private normalizeTaskStatus(value: unknown) {
+  private normalizeTaskStatus<T>(value: T): ComicArchiveTaskStatusEnum {
     if (
       value === ComicArchiveTaskStatusEnum.DRAFT ||
       value === ComicArchiveTaskStatusEnum.PENDING ||
@@ -1061,33 +1061,35 @@ export class ComicArchiveImportService {
       value === ComicArchiveTaskStatusEnum.EXPIRED ||
       value === ComicArchiveTaskStatusEnum.CANCELLED
     ) {
-      return value
+      return value as ComicArchiveTaskStatusEnum
     }
     throw new InternalServerErrorException('漫画压缩包导入任务状态非法')
   }
 
-  private normalizePreviewMode(value: unknown) {
+  private normalizePreviewMode<T>(value: T): ComicArchivePreviewModeEnum {
     if (
       value === ComicArchivePreviewModeEnum.SINGLE_CHAPTER ||
       value === ComicArchivePreviewModeEnum.MULTI_CHAPTER
     ) {
-      return value
+      return value as ComicArchivePreviewModeEnum
     }
     throw new InternalServerErrorException('漫画压缩包导入任务模式非法')
   }
 
-  private normalizeImportItemStatus(value: unknown) {
+  private normalizeImportItemStatus<T>(
+    value: T,
+  ): ComicArchiveImportItemStatusEnum {
     if (
       value === ComicArchiveImportItemStatusEnum.PENDING ||
       value === ComicArchiveImportItemStatusEnum.SUCCESS ||
       value === ComicArchiveImportItemStatusEnum.FAILED
     ) {
-      return value
+      return value as ComicArchiveImportItemStatusEnum
     }
     throw new InternalServerErrorException('漫画压缩包导入结果状态非法')
   }
 
-  private normalizeIgnoreReason(value: unknown) {
+  private normalizeIgnoreReason<T>(value: T): ComicArchiveIgnoreReasonEnum {
     return Object.values(ComicArchiveIgnoreReasonEnum).includes(
       value as ComicArchiveIgnoreReasonEnum,
     )
@@ -1095,31 +1097,31 @@ export class ComicArchiveImportService {
       : ComicArchiveIgnoreReasonEnum.INVALID_IMAGE_FILE
   }
 
-  private asObject(value: unknown) {
+  private asObject<T>(value: T) {
     return typeof value === 'object' && value !== null
       ? (value as Record<string, unknown>)
       : null
   }
 
-  private asString(value: unknown) {
+  private asString<T>(value: T) {
     return typeof value === 'string' ? value : ''
   }
 
-  private asNumber(value: unknown) {
+  private asNumber<T>(value: T) {
     return typeof value === 'number' && Number.isFinite(value) ? value : 0
   }
 
-  private asBoolean(value: unknown) {
+  private asBoolean<T>(value: T) {
     return typeof value === 'boolean' ? value : false
   }
 
-  private asStringArray(value: unknown) {
+  private asStringArray<T>(value: T) {
     return Array.isArray(value)
       ? value.filter((item): item is string => typeof item === 'string')
       : []
   }
 
-  private stringifyError(error: unknown) {
+  private stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
     }

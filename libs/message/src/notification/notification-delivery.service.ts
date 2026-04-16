@@ -3,6 +3,7 @@ import type { SQL } from 'drizzle-orm'
 import type { NotificationProjectionApplyResult } from '../eventing/message-event.type'
 import type { NotificationDeliveryPageItem, } from './notification-delivery.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { Injectable } from '@nestjs/common'
 import { and, desc, eq, sql } from 'drizzle-orm'
 import {
@@ -283,7 +284,7 @@ export class MessageNotificationDeliveryService {
       : MessageNotificationDispatchStatusEnum.FAILED
   }
 
-  private parseOptionalReceiverUserId(value: unknown) {
+  private parseOptionalReceiverUserId<T>(value: T) {
     const receiverUserId = Number(value)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       return undefined
@@ -291,7 +292,7 @@ export class MessageNotificationDeliveryService {
     return receiverUserId
   }
 
-  private parseOptionalString(value: unknown) {
+  private parseOptionalString<T>(value: T) {
     if (typeof value !== 'string') {
       return undefined
     }
@@ -299,7 +300,7 @@ export class MessageNotificationDeliveryService {
     return normalized || undefined
   }
 
-  private parseOptionalCategoryKey(value: unknown) {
+  private parseOptionalCategoryKey<T>(value: T) {
     const normalized = this.parseOptionalString(value)
     if (!normalized) {
       return undefined

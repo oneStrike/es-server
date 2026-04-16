@@ -72,7 +72,7 @@ export class MessageDomainEventDispatchWorker {
     }
   }
 
-  private stringifyError(error: unknown) {
+  private stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
     }

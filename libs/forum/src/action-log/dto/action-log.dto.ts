@@ -28,7 +28,7 @@ export class BaseForumActionLogDto extends IdDto {
   userId!: number
 
   @EnumProperty({
-    description: '操作类型',
+    description: '操作类型（1=置顶主题；2=取消置顶；3=加精主题；4=取消加精；5=锁定主题；6=解锁主题；7=删除主题；8=移动主题；9=审核主题；10=删除回复）',
     example: ForumUserActionTypeEnum.CREATE_TOPIC,
     required: true,
     enum: ForumUserActionTypeEnum,
@@ -36,7 +36,7 @@ export class BaseForumActionLogDto extends IdDto {
   actionType!: ForumUserActionTypeEnum
 
   @EnumProperty({
-    description: '操作目标类型',
+    description: '操作目标类型（1=主题；2=回复）',
     example: ForumUserActionTargetTypeEnum.TOPIC,
     required: true,
     enum: ForumUserActionTargetTypeEnum,

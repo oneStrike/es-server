@@ -1,3 +1,4 @@
+import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -183,7 +184,7 @@ export class AppPageService {
       return undefined
     }
 
-    let parsedValue: unknown
+    let parsedValue: JsonValue | null
     try {
       parsedValue = JSON.parse(enablePlatform)
     } catch {

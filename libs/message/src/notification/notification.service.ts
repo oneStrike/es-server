@@ -1,12 +1,13 @@
 import type { SQL } from 'drizzle-orm'
+import type {NotificationActorSource} from './notification-public.mapper';
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, inArray, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { QueryUserNotificationListDto } from './dto/notification.dto'
 import {
-  mapUserNotificationToPublicView,
-  type NotificationActorSource,
+  mapUserNotificationToPublicView
+
 } from './notification-public.mapper'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
 import {

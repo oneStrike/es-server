@@ -3,9 +3,9 @@ import { WorkService } from '@libs/content/work/core/work.service';
 import { WorkTypeEnum } from '@libs/platform/constant/content.constant';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/小说管理/基础信息')

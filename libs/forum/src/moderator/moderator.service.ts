@@ -1,8 +1,10 @@
 import type { Db } from '@db/core'
 import type { ForumModeratorSelect, ForumSectionSelect } from '@db/schema'
+
 import type { SQL } from 'drizzle-orm'
 import type { NormalizedModeratorScope } from './moderator.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'

@@ -42,9 +42,9 @@ export function createEnumValueValidator(
 }
 
 export function normalizeEnumPropertyValue(
-  value: unknown,
+  value: string | number | null | undefined,
   artifacts: EnumValidationArtifacts,
-): unknown {
+): string | number | null | undefined {
   if (value === undefined || value === null) {
     return value
   }
@@ -70,9 +70,9 @@ export function normalizeEnumPropertyValue(
 }
 
 export function normalizeEnumArrayItem(
-  item: unknown,
+  item: string | number | boolean | null | undefined,
   artifacts: EnumValidationArtifacts,
-): unknown {
+): string | number | boolean | null | undefined {
   if (typeof item !== 'string') {
     return item
   }

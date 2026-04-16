@@ -30,7 +30,10 @@ export class LoggerService {
    * 构建日志格式化器
    * @returns 包含基础格式和控制台格式的对象
    */
-  buildFormats(): { consoleFmt: any, jsonFmt: any } {
+  buildFormats(): {
+    consoleFmt: ReturnType<typeof format.combine>
+    jsonFmt: ReturnType<typeof format.combine>
+  } {
     // 基础格式：添加 Request ID
     const addRequestId = format((info) => {
       const requestId = this.clsService.getId()

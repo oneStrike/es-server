@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   check,
   index,
@@ -8,7 +9,6 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
 
 /**
  * 公告通知扇出任务表。

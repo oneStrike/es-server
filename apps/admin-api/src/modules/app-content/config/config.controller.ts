@@ -2,9 +2,9 @@ import { AppConfigService } from '@libs/app-config/config.service';
 import { BaseAppConfigDto, UpdateAppConfigDto } from '@libs/app-config/dto/config.dto';
 import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**

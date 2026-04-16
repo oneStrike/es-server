@@ -5,10 +5,10 @@ import type {
   SQLWrapper,
   TableConfig,
 } from '../core/drizzle.type'
-import { BadRequestException } from '@nestjs/common'
-import { and, isNull } from 'drizzle-orm'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { BadRequestException } from '@nestjs/common'
+import { and, isNull } from 'drizzle-orm'
 
 /**
  * 获取表的 deletedAt 字段
@@ -17,8 +17,10 @@ import { BusinessException } from '@libs/platform/exceptions'
  * @throws Error - 当表不包含 deletedAt 字段时抛出
  */
 function getDeletedAtColumn(table: PgTable<TableConfig>) {
-  const tableAsRecord = table as unknown as Record<string, SQLWrapper>
-  const deletedAtColumn = tableAsRecord.deletedAt
+  const deletedAtColumn = Reflect.get(
+    table as object,
+    'deletedAt',
+  ) as SQLWrapper | undefined
   if (!deletedAtColumn) {
     throw new Error('Table does not have deletedAt field')
   }
@@ -56,7 +58,7 @@ export async function softDelete(
   // 执行软删除，设置 deletedAt 为当前时间
   const [updated] = await db
     .update(table)
-    .set({ deletedAt: new Date() } as any)
+    .set({ deletedAt: new Date() } as Record<'deletedAt', Date>)
     .where(condition)
     .returning()
 
@@ -82,7 +84,7 @@ export async function softDeleteMany(
 
   const result = await db
     .update(table)
-    .set({ deletedAt: new Date() } as any)
+    .set({ deletedAt: new Date() } as Record<'deletedAt', Date>)
     .where(condition)
     .returning()
 

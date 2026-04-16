@@ -1,3 +1,4 @@
+import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import {
   AuditRoleEnum,
   AuditStatusEnum,
@@ -77,7 +78,7 @@ export class BaseCommentDto extends BaseDto {
       },
     ],
   })
-  bodyTokens?: unknown | null
+  bodyTokens?: JsonValue | null
 
   @ArrayProperty({
     description: '结构化提及列表，仅写入时使用',
@@ -173,7 +174,7 @@ export class BaseCommentDto extends BaseDto {
     example: ['敏感词1'],
     required: false,
   })
-  sensitiveWordHits?: unknown | null
+  sensitiveWordHits?: string[] | null
 
   @StringProperty({
     description: '评论提交时解析到的国家/地区',

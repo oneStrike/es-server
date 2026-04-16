@@ -1,8 +1,8 @@
 import type { Db } from '@db/core'
+import type { IReadingStateResolver } from '@libs/interaction/reading-state/interfaces/reading-state-resolver.interface'
 import { DrizzleService } from '@db/core'
-import { IReadingStateResolver } from '@libs/interaction/reading-state/interfaces/reading-state-resolver.interface';
-import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service';
-import { ContentTypeEnum } from '@libs/platform/constant/content.constant';
+import { ReadingStateService } from '@libs/interaction/reading-state/reading-state.service'
+import { ContentTypeEnum } from '@libs/platform/constant/content.constant'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 
 /**
@@ -41,7 +41,7 @@ export class WorkReadingStateResolver
     this.readingStateService.registerResolver({
       ...this,
       workType: ContentTypeEnum.NOVEL,
-    } as any)
+    } as WorkReadingStateResolver)
   }
 
   /**

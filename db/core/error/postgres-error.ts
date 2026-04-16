@@ -44,13 +44,34 @@ export interface PostgresErrorResponseDescriptor extends PostgresErrorDescriptor
   responseCode: number
 }
 
+type PostgresErrorSource =
+  | Error
+  | {
+      code?: string
+      constraint?: string
+      table?: string
+      column?: string
+      detail?: string
+      message?: string
+      cause?: {
+        code?: string
+        constraint?: string
+        table?: string
+        column?: string
+        detail?: string
+        message?: string
+      } | null
+    }
+    | null
+    | undefined
+
 /**
  * 从错误对象中提取 PostgreSQL 错误信息
  * 支持两种情况:
  * 1. code 直接在 error 上
  * 2. code 在 error.cause 上 (Drizzle ORM 包装的错误)
  */
-export function getPostgresError(error: unknown): PostgresError | null {
+export function getPostgresError(error: PostgresErrorSource): PostgresError | null {
   if (typeof error !== 'object' || error === null) {
     return null
   }
@@ -85,7 +106,7 @@ export function getPostgresError(error: unknown): PostgresError | null {
   return null
 }
 
-export function isPostgresError(error: unknown): error is PostgresError {
+export function isPostgresError(error: PostgresErrorSource): error is PostgresError {
   return getPostgresError(error) !== null
 }
 

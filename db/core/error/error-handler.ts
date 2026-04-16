@@ -13,33 +13,54 @@ import {
   PostgresErrorCode,
 } from './postgres-error'
 
-export function isErrorCode(error: unknown, code: string): boolean {
+type PostgresErrorInput =
+  | Error
+  | {
+      code?: string
+      constraint?: string
+      table?: string
+      column?: string
+      detail?: string
+      message?: string
+      cause?: {
+        code?: string
+        constraint?: string
+        table?: string
+        column?: string
+        detail?: string
+        message?: string
+      } | null
+    }
+    | null
+    | undefined
+
+export function isErrorCode(error: PostgresErrorInput, code: string): boolean {
   const pgError = getPostgresError(error)
   return pgError !== null && pgError.code === code
 }
 
-export function isUniqueViolation(error: unknown): boolean {
+export function isUniqueViolation(error: PostgresErrorInput): boolean {
   return isErrorCode(error, PostgresErrorCode.UNIQUE_VIOLATION)
 }
 
-export function isNotNullViolation(error: unknown): boolean {
+export function isNotNullViolation(error: PostgresErrorInput): boolean {
   return isErrorCode(error, PostgresErrorCode.NOT_NULL_VIOLATION)
 }
 
-export function isCheckViolation(error: unknown): boolean {
+export function isCheckViolation(error: PostgresErrorInput): boolean {
   return isErrorCode(error, PostgresErrorCode.CHECK_VIOLATION)
 }
 
-export function isSerializationFailure(error: unknown): boolean {
+export function isSerializationFailure(error: PostgresErrorInput): boolean {
   return isErrorCode(error, PostgresErrorCode.SERIALIZATION_FAILURE)
 }
 
-export function extractError(error: unknown): PostgresError | null {
+export function extractError(error: PostgresErrorInput): PostgresError | null {
   return getPostgresError(error)
 }
 
 export function handleError(
-  error: unknown,
+  error: PostgresErrorInput,
   messages?: DrizzleErrorMessages,
 ): never {
   if (error instanceof BusinessException || error instanceof HttpException) {

@@ -1,5 +1,6 @@
+import type { StructuredValue } from '@libs/platform/utils/jsonParse'
+import type { UserNotificationDto } from './dto/notification.dto'
 import { Injectable } from '@nestjs/common'
-import type { UserNotificationPublicView } from './notification-public.mapper'
 import { MessageWebSocketService } from './notification-websocket.service'
 
 @Injectable()
@@ -8,7 +9,7 @@ export class MessageNotificationRealtimeService {
     private readonly messageWebSocketService: MessageWebSocketService,
   ) {}
 
-  emitNotificationCreated(notification: UserNotificationPublicView) {
+  emitNotificationCreated(notification: UserNotificationDto) {
     const receiverUserId = Number(notification.receiverUserId)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       return
@@ -20,7 +21,7 @@ export class MessageNotificationRealtimeService {
     )
   }
 
-  emitNotificationUpdated(notification: UserNotificationPublicView) {
+  emitNotificationUpdated(notification: UserNotificationDto) {
     const receiverUserId = Number(notification.receiverUserId)
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       return
@@ -56,7 +57,7 @@ export class MessageNotificationRealtimeService {
         senderId: number
         messageType: number
         content: string
-        payload?: unknown
+        payload?: StructuredValue
         createdAt: Date
       }
     },
@@ -90,8 +91,8 @@ export class MessageNotificationRealtimeService {
       notificationUnreadCount: number
       chatUnreadCount: number
       totalUnreadCount: number
-      latestNotification?: unknown
-      latestChat?: unknown
+      latestNotification?: StructuredValue
+      latestChat?: StructuredValue
     },
   ) {
     this.messageWebSocketService.emitToUser(userId, 'inbox.summary.updated', payload)

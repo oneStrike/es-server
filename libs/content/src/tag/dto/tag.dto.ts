@@ -41,7 +41,7 @@ export class BaseTagDto extends BaseDto {
   popularity!: number
 
   @NumberProperty({
-    description: '排序值',
+    description: '排序值（0=默认排序，数值越小越靠前）',
     example: 1,
     required: true,
     min: 0,

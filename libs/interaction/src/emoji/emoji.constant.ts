@@ -20,7 +20,7 @@ export const EMOJI_SCENE_VALUES = [
 /**
  * 判断值是否属于 EmojiSceneEnum。
  */
-export function isEmojiScene(value: unknown): value is EmojiSceneEnum {
+export function isEmojiScene<T>(value: T): value is Extract<T, EmojiSceneEnum> {
   return (
     typeof value === 'number' &&
     EMOJI_SCENE_VALUES.includes(value as EmojiSceneEnum)

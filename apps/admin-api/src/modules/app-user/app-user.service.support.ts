@@ -1,4 +1,5 @@
 import type { DrizzleService } from '@db/core'
+import type { AdminAppUserCountDto } from '@libs/user/dto/admin-app-user.dto'
 import type { UserService as UserCoreService } from '@libs/user/user.service'
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -9,21 +10,6 @@ import {
 } from '@libs/platform/utils'
 import { ForbiddenException } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
-
-type AppUserCountView = Pick<
-  Awaited<ReturnType<UserCoreService['getUserCounts']>>,
-  | 'commentCount'
-  | 'likeCount'
-  | 'favoriteCount'
-  | 'followingUserCount'
-  | 'followingAuthorCount'
-  | 'followingSectionCount'
-  | 'followersCount'
-  | 'forumTopicCount'
-  | 'commentReceivedLikeCount'
-  | 'forumTopicReceivedLikeCount'
-  | 'forumTopicReceivedFavoriteCount'
->
 
 /**
  * APP 用户模块共享 support 基类。
@@ -120,7 +106,7 @@ export abstract class AppUserServiceSupport {
    *
    * 运行时显式排除 `userId` 等内部字段，并为缺失值兜底为 0。
    */
-  protected mapAdminAppUserCounts(counts?: Partial<AppUserCountView>) {
+  protected mapAdminAppUserCounts(counts?: Partial<AdminAppUserCountDto>) {
     return {
       commentCount: counts?.commentCount ?? 0,
       likeCount: counts?.likeCount ?? 0,

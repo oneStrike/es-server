@@ -1,5 +1,7 @@
 import type { Db } from '@db/core'
 import type { AppUserSelect, ForumTopicSelect } from '@db/schema'
+
+import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
 import type {
   ForumTopicClientContext,
@@ -7,6 +9,7 @@ import type {
   PublicForumTopicDetailContext,
 } from './forum-topic.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
+
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
 import {
   canConsumeEventEnvelopeByConsumer,
@@ -979,7 +982,7 @@ export class ForumTopicService {
       userId: topic.userId,
       title: topic.title,
       content: topic.content,
-      bodyTokens: topic.bodyTokens,
+      bodyTokens: topic.bodyTokens as JsonValue | undefined,
       geoCountry: topic.geoCountry ?? undefined,
       geoProvince: topic.geoProvince ?? undefined,
       geoCity: topic.geoCity ?? undefined,
@@ -1628,7 +1631,7 @@ export class ForumTopicService {
             commentReceivedLikeCountByUser.set(
               comment.userId,
               (commentReceivedLikeCountByUser.get(comment.userId) ?? 0) +
-                comment.likeCount,
+              comment.likeCount,
             )
           }
         }

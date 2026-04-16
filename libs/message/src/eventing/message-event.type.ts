@@ -2,12 +2,13 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
+import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 import type {
   MessageDomainEventDefinition,
   MessageDomainEventKey,
 } from './message-event.constant'
-import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 
+/** 稳定领域类型 `PublishMessageDomainEventInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface PublishMessageDomainEventInput {
   eventKey: MessageDomainEventKey
   idempotencyKey?: string
@@ -20,11 +21,13 @@ export interface PublishMessageDomainEventInput {
   context?: Record<string, unknown>
 }
 
+/** 稳定领域类型 `NotificationProjectionCommandBase`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface NotificationProjectionCommandBase {
   receiverUserId: number
   projectionKey: string
 }
 
+/** 稳定领域类型 `NotificationProjectionCommand`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type NotificationProjectionCommand =
   | (NotificationProjectionCommandBase & {
       mode: 'append' | 'upsert'
@@ -36,14 +39,15 @@ export type NotificationProjectionCommand =
       payload?: Record<string, unknown>
       expiresAt?: Date
     })
-  | (NotificationProjectionCommandBase & {
+    | (NotificationProjectionCommandBase & {
       mode: 'delete'
     })
-  | {
+    | {
       mode: 'skip'
       reason: string
     }
 
+/** 稳定领域类型 `NotificationProjectionApplyResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface NotificationProjectionApplyResult {
   action: 'append' | 'upsert' | 'delete' | 'skip'
   receiverUserId?: number
@@ -55,12 +59,14 @@ export interface NotificationProjectionApplyResult {
   fallbackReason?: string
 }
 
+/** 稳定领域类型 `NotificationEventHandlerContext`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface NotificationEventHandlerContext {
   definition: MessageDomainEventDefinition
   event: DomainEventRecord
   dispatch: DomainEventDispatchRecord
 }
 
+/** 稳定领域类型 `NotificationEventHandler`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type NotificationEventHandler = (
   context: NotificationEventHandlerContext,
 ) => Promise<NotificationProjectionCommand> | NotificationProjectionCommand

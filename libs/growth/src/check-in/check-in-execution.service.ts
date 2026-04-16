@@ -1,9 +1,6 @@
 import type { Db } from '@db/core'
-import type {
-  CheckInPlanSelect,
-  CheckInRecordSelect,
-  CheckInStreakRewardGrantSelect,
-} from '@db/schema'
+import type { CheckInPlanSelect, CheckInRecordSelect, CheckInStreakRewardGrantSelect } from '@db/schema'
+
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
 import type {
   CheckInCycleAggregation,
@@ -858,7 +855,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number; source: string },
+    context: { actorUserId?: number, source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -959,7 +956,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number; source: string },
+    context: { actorUserId?: number, source: string },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {

@@ -6,6 +6,7 @@ import type {
 } from '@libs/identity/dto/admin-user.dto'
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { AdminUserRoleEnum } from '@libs/identity/admin-user.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'

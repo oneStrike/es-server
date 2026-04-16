@@ -1,5 +1,6 @@
 import type { ForumTopicSelect } from '@db/schema'
 import { buildLikePattern, DrizzleService } from '@db/core'
+
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant';
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant';
 import { Injectable } from '@nestjs/common'

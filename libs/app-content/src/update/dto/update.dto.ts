@@ -230,7 +230,6 @@ export class AppUpdateReleaseListItemDto extends PickType(
     validation: false,
   })
   hasPackageUrl!: boolean
-
 }
 
 /**

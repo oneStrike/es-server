@@ -1,5 +1,6 @@
 import type { FastifyRequest } from 'fastify'
 import type { AuditMetadata } from '../decorators/audit.types'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   CallHandler,
   ExecutionContext,
@@ -7,9 +8,8 @@ import {
   NestInterceptor,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { catchError, Observable, tap } from 'rxjs'
+import { catchError, tap } from 'rxjs'
 import { AuditService } from '../../modules/system/audit/audit.service'
-import { AuditActionTypeEnum } from '../audit/audit-action.constant'
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
@@ -18,7 +18,7 @@ export class AuditInterceptor implements NestInterceptor {
     private readonly auditService: AuditService,
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler) {
     const request = context.switchToHttp().getRequest<FastifyRequest>()
     const metadata = this.reflector.get<AuditMetadata>(
       'audit',

@@ -1,4 +1,4 @@
-import type { AuditActionTypeEnum } from '../audit/audit-action.constant'
+import type { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 
 /**
  * 审计日志装饰器元数据

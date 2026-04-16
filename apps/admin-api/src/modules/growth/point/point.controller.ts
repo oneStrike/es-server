@@ -2,9 +2,9 @@ import { BaseUserPointRuleDto, CreateUserPointRuleDto, QueryUserPointRuleDto, Up
 import { UserPointRuleService } from '@libs/growth/point/point-rule.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**

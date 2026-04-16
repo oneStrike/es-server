@@ -121,7 +121,7 @@ export class DomainEventPublisher {
     }
   }
 
-  private normalizeContext(value: unknown): Record<string, unknown> | null {
+  private normalizeContext<T>(value: T): Record<string, unknown> | null {
     return value && typeof value === 'object' && !Array.isArray(value)
       ? (value as Record<string, unknown>)
       : null

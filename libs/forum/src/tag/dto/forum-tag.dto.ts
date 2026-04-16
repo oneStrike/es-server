@@ -59,7 +59,7 @@ export class BaseForumTagDto extends BaseDto {
   useCount!: number
 
   @NumberProperty({
-    description: '排序权重',
+    description: '排序值（0=默认排序，数值越小越靠前）',
     example: 0,
     required: true,
     min: 0,

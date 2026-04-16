@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto'
 import type { SQL } from 'drizzle-orm'
+import { randomUUID } from 'node:crypto'
 import { DrizzleService } from '@db/core'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -28,6 +28,8 @@ import {
   QueryUserExperienceRuleDto,
   UpdateUserExperienceRuleDto,
 } from './dto/experience-rule.dto'
+
+const UUID_HYPHEN_REGEX = /-/g
 
 /**
  * 经验服务类
@@ -285,7 +287,11 @@ export class UserExperienceService {
 
     return {
       ...page,
-      list: page.list.map((item) => this.toExperienceRecord(item)),
+      list: page.list.map((item) =>
+        this.toExperienceRecord(
+          item as typeof item & { context?: Record<string, unknown> | null },
+        ),
+      ),
     }
   }
 
@@ -313,7 +319,9 @@ export class UserExperienceService {
     }
 
     return {
-      ...this.toExperienceRecord(record),
+      ...this.toExperienceRecord(
+        record as typeof record & { context?: Record<string, unknown> | null },
+      ),
       user: record.user,
     }
   }
@@ -374,7 +382,7 @@ export class UserExperienceService {
     afterValue: number
     bizKey?: string
     remark: string | null
-    context?: unknown
+    context?: Record<string, unknown> | null
     createdAt: Date
     updatedAt?: Date
   }): UserExperienceRecordDto {
@@ -476,7 +484,7 @@ export class UserExperienceService {
   }
 
   private buildManualGrantBizKey(userId: number, adminUserId?: number) {
-    return `experience:manual-grant:user:${userId}:admin:${adminUserId ?? 0}:ts:${Date.now()}:rand:${randomUUID().replace(/-/g, '')}`
+    return `experience:manual-grant:user:${userId}:admin:${adminUserId ?? 0}:ts:${Date.now()}:rand:${randomUUID().replace(UUID_HYPHEN_REGEX, '')}`
   }
 
   private buildAddExperienceContext(

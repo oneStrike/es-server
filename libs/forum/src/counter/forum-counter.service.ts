@@ -91,7 +91,7 @@ export class ForumCounterService {
     this.drizzle.assertAffectedRows(result, message)
   }
 
-  private rethrowNotFound(error: unknown, message: string) {
+  private rethrowNotFound<T>(error: T, message: string) {
     if (
       error instanceof BusinessException &&
       error.code === BusinessErrorCode.RESOURCE_NOT_FOUND &&

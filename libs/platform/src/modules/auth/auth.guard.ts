@@ -58,7 +58,12 @@ export class JwtAuthGuard
     return (await super.canActivate(context)) as boolean
   }
 
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+  handleRequest<TUser>(
+    err: Error | null,
+    user: TUser | null,
+    info: string | Error | null,
+    context: ExecutionContext,
+  ) {
     // 检查是否为可选认证
     const isOptionalAuth = this.reflector.getAllAndOverride<boolean>(
       IS_OPTIONAL_AUTH_KEY,
@@ -71,7 +76,7 @@ export class JwtAuthGuard
     }
 
     // 强制认证时，必须有用户信息
-    if (err || !user) {
+    if (err || info || !user) {
       throw new UnauthorizedException(AuthErrorMessages.LOGIN_INVALID)
     }
     return user

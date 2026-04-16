@@ -76,7 +76,7 @@ export class BrowseLogService {
     targetId: number,
     userId: number,
     deferPostProcess: boolean,
-    error: unknown,
+    error: Error | string | null | undefined,
   ) {
     this.logger.warn(
       `browse_log_post_process_failed targetType=${targetType} targetId=${targetId} userId=${userId} deferPostProcess=${deferPostProcess} error=${

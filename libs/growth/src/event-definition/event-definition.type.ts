@@ -84,6 +84,7 @@ export enum EventDefinitionImplStatusEnum {
  * 单条事件定义。
  * 作为任务、成长、通知与治理共享的统一元数据事实源。
  */
+/** 稳定领域类型 `EventDefinition`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EventDefinition {
   code: GrowthRuleTypeEnum
   key: GrowthRuleTypeKey
@@ -101,12 +102,14 @@ export interface EventDefinition {
  * 事件定义映射表。
  * 使用稳定数值编码作为唯一索引键。
  */
+/** 稳定领域类型 `EventDefinitionMap`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type EventDefinitionMap = Record<GrowthRuleTypeEnum, EventDefinition>
 
 /**
  * 事件定义列表查询条件。
  * 当前重点支持已实现、可配置与下游复用筛选。
  */
+/** 稳定领域类型 `ListEventDefinitionFilters`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface ListEventDefinitionFilters {
   domain?: EventDefinitionDomainEnum
   governanceGate?: EventDefinitionGovernanceGateEnum

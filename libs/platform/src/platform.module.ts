@@ -19,6 +19,12 @@ import { TransformInterceptor } from './interceptors/transform.interceptor'
 import { CustomCacheModule } from './modules/cache/cache.module'
 import { HealthModule } from './modules/health/health.module'
 
+interface RequestIdHeaderCarrier {
+  headers?: {
+    'x-request-id'?: string
+  }
+}
+
 function flattenValidationErrors(
   errors: ValidationError[],
   parentPath = '',
@@ -64,13 +70,14 @@ export class PlatformModule {
     const mergedOptions = { ...defaultOptions, ...options }
 
     // 构建导入模块列表
-    const imports: (DynamicModule | Type<any>)[] = [
+    const imports: Array<DynamicModule | Type<object>> = [
       ClsModule.forRoot({
         global: true,
         middleware: {
           mount: true,
           generateId: true,
-          idGenerator: (req: any) => req.headers['x-request-id'] || uuidv4(),
+          idGenerator: (req: RequestIdHeaderCarrier) =>
+            req.headers?.['x-request-id'] || uuidv4(),
         },
       }),
       EventingModule,

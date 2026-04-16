@@ -1,5 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
 import { BrowseLogService } from '@libs/interaction/browse-log/browse-log.service'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
@@ -334,7 +335,7 @@ export class WorkChapterService {
 
     const parsedContent =
       chapter.workType === ContentTypeEnum.COMIC
-        ? (jsonParse(chapter.content, []) as unknown as string)
+        ? (jsonParse<string>(chapter.content, '') ?? '')
         : chapter.content
     const resolvedPermission = bypassVisibilityCheck
       ? undefined

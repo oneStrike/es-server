@@ -1,3 +1,4 @@
+import type { JsonObject, JsonValue } from '@libs/platform/utils/jsonParse'
 import type { TransformFnParams } from 'class-transformer'
 
 /**
@@ -11,7 +12,7 @@ export interface BaseValidateOptions {
   /** 是否属于对外 HTTP 契约，默认为 true。设置为 false 时隐藏文档并在请求阶段静默过滤 */
   contract?: boolean
   /** 自定义转换函数 */
-  transform?: (params: TransformFnParams) => any
+  transform?: (params: TransformFnParams) => TransformFnParams['value']
 }
 
 /**
@@ -69,7 +70,7 @@ export interface NumberArrayPropertyOptions extends BaseValidateOptions {
 /**
  * 通用数组属性选项
  */
-export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
+export type ArrayPropertyOptions<T = string | number | boolean> = BaseValidateOptions & {
   /** 示例值 */
   example?: T[]
   /** 数组最大长度 */
@@ -79,21 +80,21 @@ export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
   /** 默认值 */
   default?: T[]
   /** 数组元素验证器（可选，用于复杂类型验证） */
-  itemValidator?: (value: any) => boolean
+  itemValidator?: (value: T) => boolean
   /** 数组元素验证失败时的错误消息 */
   itemErrorMessage?: string
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 } & (
-    | {
+  | {
         /** 数组元素类型 */
         itemType: 'string' | 'number' | 'boolean'
         /** 基础类型不需要 itemClass */
         itemClass?: never
       }
-    | {
+      | {
         /** 数组元素DTO类型（必传，用于深度校验和API文档） */
-        itemClass: new (...args: any[]) => any
+        itemClass: new (...args: never[]) => T
         /** 对象数组不再通过 itemType 指定 */
         itemType?: never
       }
@@ -104,13 +105,13 @@ export type ArrayPropertyOptions<T = any> = BaseValidateOptions & {
  */
 export interface EnumArrayPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
-  example?: any[]
+  example?: Array<string | number>
   /** 数组最大长度 */
   maxLength?: number
   /** 数组最小长度 */
   minLength?: number
   /** 默认值 */
-  default?: any[]
+  default?: Array<string | number>
   /** 枚举对象，支持字符串和数字枚举 */
   enum: EnumLike
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
@@ -146,11 +147,11 @@ export interface BooleanPropertyOptions extends BaseValidateOptions {
  */
 export interface NestedPropertyOptions extends BaseValidateOptions {
   /** 嵌套对象的类型（类构造函数） */
-  type: new (...args: any[]) => any
+  type: new (...args: never[]) => object
   /** 示例值 */
-  example?: any
+  example?: JsonValue | null
   /** 默认值 */
-  default?: any
+  default?: JsonValue | null
   /** 是否允许为 null（仅影响文档表现） */
   nullable?: boolean
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
@@ -174,9 +175,9 @@ export interface JsonPropertyOptions extends BaseValidateOptions {
  */
 export interface ObjectPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
-  example?: Record<string, unknown> | null
+  example?: JsonObject | null
   /** 默认值 */
-  default?: Record<string, unknown> | null
+  default?: JsonObject | null
   /** 是否允许为 null（仅影响文档表现） */
   nullable?: boolean
   /** 是否启用校验，默认为 true。设置为 false 时仅使用 ApiProperty */
@@ -210,11 +211,11 @@ export type EnumLike = Record<string | number, string | number>
  */
 export interface EnumPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
-  example?: any
+  example?: string | number | null
   /** 枚举对象，支持字符串和数字枚举 */
   enum: EnumLike
   /** 默认值 */
-  default?: any
+  default?: string | number | null
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }

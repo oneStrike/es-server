@@ -1,12 +1,12 @@
 import { AddUserExperienceDto, QueryUserExperienceRecordDto, UserExperienceRecordDetailDto, UserExperienceRecordDto, UserExperienceStatsDto } from '@libs/growth/experience/dto/experience-record.dto';
 import { BaseUserExperienceRuleDto, CreateUserExperienceRuleDto, QueryUserExperienceRuleDto, UpdateUserExperienceRuleDto } from '@libs/growth/experience/dto/experience-rule.dto';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { UserExperienceService } from '@libs/growth/experience/experience.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
+import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 /**
  * 用户经验规则管理控制器

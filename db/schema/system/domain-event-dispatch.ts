@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
+  check,
   index,
   integer,
   pgTable,
@@ -7,9 +9,7 @@ import {
   timestamp,
   unique,
   varchar,
-  check,
 } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
 
 /**
  * 通用领域事件分发表。

@@ -1,8 +1,8 @@
 import type { Db, PgTable, TableConfig } from '../core/drizzle.type'
-import { InternalServerErrorException } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { InternalServerErrorException } from '@nestjs/common'
+import { eq } from 'drizzle-orm'
 
 /**
  * 生成临时值用于字段交换
@@ -11,7 +11,10 @@ import { BusinessException } from '@libs/platform/exceptions'
  * @param value2 - 第二个值
  * @returns 临时值
  */
-function generateTemporaryValue(value1: unknown, value2: unknown) {
+function generateTemporaryValue(
+  value1: string | number | null | undefined,
+  value2: string | number | null | undefined,
+) {
   // 数值类型：取较小值减1作为临时值
   if (typeof value1 === 'number' && typeof value2 === 'number') {
     const min = Math.min(value1, value2)
@@ -49,20 +52,20 @@ export async function swapField(
   },
 ): Promise<boolean> {
   const { where, field = 'sortOrder', sourceField } = options
-  const tableAsAny = table as any
+  const tableRef = table as object
 
   // 验证必要字段是否存在
-  const idColumn = tableAsAny.id
+  const idColumn = Reflect.get(tableRef, 'id')
   if (!idColumn) {
     throw new InternalServerErrorException('字段 "id" 不存在')
   }
 
-  const fieldColumn = tableAsAny[field]
+  const fieldColumn = Reflect.get(tableRef, field)
   if (!fieldColumn) {
     throw new InternalServerErrorException(`字段 "${field}" 不存在`)
   }
 
-  const sourceColumn = sourceField ? tableAsAny[sourceField] : null
+  const sourceColumn = sourceField ? Reflect.get(tableRef, sourceField) : null
   if (sourceField && !sourceColumn) {
     throw new InternalServerErrorException(`字段 "${sourceField}" 不存在`)
   }
@@ -70,21 +73,21 @@ export async function swapField(
   // 在事务中执行交换操作
   return db.transaction(async (tx) => {
     // 构建查询字段
-    const selectFields: Record<string, any> = { [field]: fieldColumn }
+    const selectFields: Record<string, object> = { [field]: fieldColumn as object }
     if (sourceField && sourceColumn) {
-      selectFields[sourceField] = sourceColumn
+      selectFields[sourceField] = sourceColumn as object
     }
 
     // 查询两条记录
     const [record1] = await tx
-      .select(selectFields)
+      .select(selectFields as never)
       .from(table)
-      .where(eq(idColumn, where[0].id))
+      .where(eq(idColumn as never, where[0].id))
       .limit(1)
     const [record2] = await tx
-      .select(selectFields)
+      .select(selectFields as never)
       .from(table)
-      .where(eq(idColumn, where[1].id))
+      .where(eq(idColumn as never, where[1].id))
       .limit(1)
 
     if (!record1 || !record2) {
@@ -102,8 +105,8 @@ export async function swapField(
       )
     }
 
-    const value1 = record1[field]
-    const value2 = record2[field]
+    const value1 = record1[field] as string | number | null | undefined
+    const value2 = record2[field] as string | number | null | undefined
 
     // 值相同无需交换
     if (value1 === value2) {
@@ -117,20 +120,20 @@ export async function swapField(
     // 1. 将第一条记录的值设为临时值
     await tx
       .update(table)
-      .set({ [field]: temporaryValue } as any)
-      .where(eq(idColumn, where[0].id))
+      .set({ [field]: temporaryValue } as never)
+      .where(eq(idColumn as never, where[0].id))
 
     // 2. 将第二条记录的值设为第一条记录的原值
     await tx
       .update(table)
-      .set({ [field]: value1 } as any)
-      .where(eq(idColumn, where[1].id))
+      .set({ [field]: value1 } as never)
+      .where(eq(idColumn as never, where[1].id))
 
     // 3. 将第一条记录的值设为第二条记录的原值
     await tx
       .update(table)
-      .set({ [field]: value2 } as any)
-      .where(eq(idColumn, where[0].id))
+      .set({ [field]: value2 } as never)
+      .where(eq(idColumn as never, where[0].id))
 
     return true
   })

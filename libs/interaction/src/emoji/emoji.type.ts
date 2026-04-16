@@ -1,10 +1,12 @@
 import type { EmojiAssetSelect, EmojiPackSelect, EmojiRecentUsageSelect } from '@db/schema'
+
 import type { EmojiSceneEnum } from './emoji.constant'
 
 /**
  * 分页查询公共输入。
  * - pageIndex/pageSize 语义与 PageDto 保持一致
  */
+/** 稳定领域类型 `EmojiPageQueryInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EmojiPageQueryInput {
   pageSize?: number
   pageIndex?: number
@@ -12,27 +14,20 @@ export interface EmojiPageQueryInput {
 }
 
 /**
- * 表情目录查询输入。
- * - 按场景筛选可见表情包
+ * 表情场景过滤参数。
+ * - 仅用于内部查询链路，不承载 HTTP DTO 合同。
  */
-export interface EmojiCatalogQueryInput {
+/** 稳定领域类型 `EmojiSceneQueryParams`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface EmojiSceneQueryParams {
   scene: EmojiSceneEnum
-}
-
-/**
- * 表情搜索输入。
- * - 按关键字与场景搜索
- */
-export interface EmojiSearchInput extends EmojiCatalogQueryInput {
-  q: string
-  limit?: number
 }
 
 /**
  * 最近使用列表查询输入。
  * - 关联用户和场景返回最近使用记录
  */
-export interface EmojiRecentListInput extends EmojiCatalogQueryInput {
+/** 稳定领域类型 `EmojiRecentListInput`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface EmojiRecentListInput extends EmojiSceneQueryParams {
   userId: EmojiRecentUsageSelect['userId']
   limit?: number
 }
@@ -41,6 +36,7 @@ export interface EmojiRecentListInput extends EmojiCatalogQueryInput {
  * 最近使用聚合项。
  * - 由上游先按 emojiAssetId 聚合，再写入最近使用表。
  */
+/** 稳定领域类型 `EmojiRecentUsageItem`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EmojiRecentUsageItem {
   emojiAssetId: EmojiRecentUsageSelect['emojiAssetId']
   useCount: EmojiRecentUsageSelect['useCount']
@@ -50,81 +46,17 @@ export interface EmojiRecentUsageItem {
  * 最近使用批量写入输入。
  * - 用于在事实写入成功后批量更新 userId + scene + emojiAssetId 聚合记录。
  */
-export interface RecordEmojiRecentUsageInput extends EmojiCatalogQueryInput {
+/** 稳定领域类型 `RecordEmojiRecentUsageInput`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface RecordEmojiRecentUsageInput extends EmojiSceneQueryParams {
   userId: EmojiRecentUsageSelect['userId']
   items: EmojiRecentUsageItem[]
 }
 
 /**
- * 表情包分页查询输入。
- * - 复用实体字段并支持管理端筛选
- */
-export type QueryEmojiPackPageInput = EmojiPageQueryInput &
-  Partial<Pick<EmojiPackSelect, 'code' | 'name' | 'isEnabled' | 'visibleInPicker'>>
-
-/**
- * 创建表情包输入。
- * - 复用表字段并保留 sceneType 必填约束
- * - sceneType 使用 EmojiSceneEnum[]，避免裸 number[] 语义不清
- */
-export type CreateEmojiPackInput = Pick<EmojiPackSelect, 'code' | 'name'> & {
-  sceneType: EmojiSceneEnum[]
-} & Partial<
-    Pick<EmojiPackSelect, 'description' | 'iconUrl' | 'sortOrder' | 'visibleInPicker'>
-  >
-
-/**
- * 更新表情包输入。
- * - 以 id 定位并按需更新字段
- */
-export type UpdateEmojiPackInput = Pick<EmojiPackSelect, 'id'> &
-  Partial<
-    Pick<
-      EmojiPackSelect,
-      'code' | 'name' | 'description' | 'iconUrl' | 'sortOrder' | 'visibleInPicker'
-    >
-  > & {
-    sceneType?: EmojiSceneEnum[]
-  }
-
-/**
- * 更新表情包场景输入。
- * - 仅允许修改 sceneType
- * - sceneType 单独使用 EmojiSceneEnum[] 约束
- */
-export type UpdateEmojiPackSceneTypeInput = Pick<EmojiPackSelect, 'id'> & {
-  sceneType: EmojiSceneEnum[]
-}
-
-/**
- * 表情资源分页查询输入。
- * - 支持按包、类型、状态和文本字段筛选
- */
-export type QueryEmojiAssetPageInput = EmojiPageQueryInput &
-  Partial<Pick<EmojiAssetSelect, 'packId' | 'kind' | 'isEnabled' | 'shortcode' | 'category'>>
-
-/**
- * 创建表情资源输入。
- * - 复用实体字段并保留 packId/kind 必填
- */
-export type CreateEmojiAssetInput = Pick<EmojiAssetSelect, 'packId' | 'kind'> &
-  Partial<
-    Pick<
-      EmojiAssetSelect,
-      'shortcode' | 'unicodeSequence' | 'imageUrl' | 'staticUrl' | 'isAnimated' | 'category' | 'keywords' | 'sortOrder'
-    >
-  >
-
-/**
- * 更新表情资源输入。
- * - 以 id 定位并按需更新字段
- */
-export type UpdateEmojiAssetInput = Pick<EmojiAssetSelect, 'id'> & Partial<CreateEmojiAssetInput>
-
-/**
  * 表情资源校验载荷。
  * - 用于 custom / unicode 字段完整性判断
  */
+/** 稳定领域类型 `ValidateEmojiAssetPayload`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type ValidateEmojiAssetPayload = Partial<
   Pick<EmojiAssetSelect, 'shortcode' | 'unicodeSequence' | 'imageUrl'>
 >
@@ -133,6 +65,7 @@ export type ValidateEmojiAssetPayload = Partial<
  * 表情资源快照行。
  * - 对应目录/搜索/最近使用查询中的 join 投影
  */
+/** 稳定领域类型 `EmojiAssetSnapshotRow`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type EmojiAssetSnapshotRow = Pick<
   EmojiAssetSelect,
   'id' | 'kind' | 'shortcode' | 'unicodeSequence' | 'imageUrl' | 'staticUrl' | 'isAnimated' | 'category' | 'keywords' | 'packId' | 'sortOrder'
@@ -147,6 +80,7 @@ export type EmojiAssetSnapshotRow = Pick<
  * 表情资源快照。
  * - 统一用于目录、搜索和最近使用返回
  */
+/** 稳定领域类型 `EmojiAssetSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type EmojiAssetSnapshot = Omit<EmojiAssetSnapshotRow, 'keywords'> & {
   keywords: Record<string, string[]> | null
 }
@@ -155,6 +89,7 @@ export type EmojiAssetSnapshot = Omit<EmojiAssetSnapshotRow, 'keywords'> & {
  * 目录中的表情包聚合结果。
  * - 含表情包基础信息与资源列表
  */
+/** 稳定领域类型 `EmojiCatalogPack`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EmojiCatalogPack {
   packId: EmojiPackSelect['id']
   packCode: EmojiPackSelect['code']
@@ -168,6 +103,7 @@ export interface EmojiCatalogPack {
  * 最近使用记录项。
  * - 在资源快照上补充使用时间和次数
  */
+/** 稳定领域类型 `EmojiRecentItem`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type EmojiRecentItem = EmojiAssetSnapshot &
   Pick<EmojiRecentUsageSelect, 'lastUsedAt' | 'useCount'>
 
@@ -175,6 +111,7 @@ export type EmojiRecentItem = EmojiAssetSnapshot &
  * 短码映射结果。
  * - 提供解析器替换 custom 表情所需的最小字段
  */
+/** 稳定领域类型 `EmojiShortcodeAsset`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EmojiShortcodeAsset {
   emojiAssetId: EmojiAssetSelect['id']
   shortcode: NonNullable<EmojiAssetSelect['shortcode']>
@@ -190,6 +127,7 @@ export interface EmojiShortcodeAsset {
  * Unicode 资源映射结果。
  * - 用于解析器为 Unicode token 补齐平台托管的 emojiAssetId。
  */
+/** 稳定领域类型 `EmojiUnicodeAsset`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EmojiUnicodeAsset {
   emojiAssetId: EmojiAssetSelect['id']
   unicodeSequence: NonNullable<EmojiAssetSelect['unicodeSequence']>
@@ -199,6 +137,7 @@ export interface EmojiUnicodeAsset {
  * 文本解析输入。
  * - 在指定场景下执行短码替换
  */
+/** 稳定领域类型 `EmojiParseInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface EmojiParseInput {
   body: string
   scene: EmojiSceneEnum
@@ -208,6 +147,7 @@ export interface EmojiParseInput {
  * 文本解析输出 token。
  * - 保留 text / unicode / custom 三种结构
  */
+/** 稳定领域类型 `EmojiParseToken`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type EmojiParseToken =
   | {
       type: 'text'

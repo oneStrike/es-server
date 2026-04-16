@@ -3,6 +3,7 @@ import { TaskService } from '@libs/growth/task/task.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
   Body,
   Controller,
@@ -12,7 +13,6 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('任务管理/任务配置')

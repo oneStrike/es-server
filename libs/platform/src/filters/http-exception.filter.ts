@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { extractError, getPostgresErrorResponseDescriptor } from '@db/core'
+
 import {
   getPlatformErrorCode,
   PlatformErrorCode,
@@ -23,6 +24,19 @@ interface ErrorDescriptor {
 }
 
 const ROUTE_NOT_FOUND_MESSAGE_REGEX = /^Cannot\b/i
+type FilterErrorInput =
+  | Error
+  | {
+      code?: string
+      constraint?: string
+      table?: string
+      column?: string
+      detail?: string
+      message?: string
+      cause?: object | null
+    }
+    | null
+    | undefined
 
 /**
  * 全局异常过滤器
@@ -64,7 +78,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    *
    * 提取错误信息、记录结构化日志，并返回统一的响应格式。
    */
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(exception: FilterErrorInput, host: ArgumentsHost): void {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<FastifyReply>()
     const request = ctx.getRequest<FastifyRequest>()
@@ -114,7 +128,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * 按优先级处理：HttpException > Postgres 错误 > 未知错误。
    * 对于数据库错误，尽可能提取约束、表名、字段等上下文信息。
    */
-  private extractErrorInfo(exception: unknown) {
+  private extractErrorInfo(exception: FilterErrorInput) {
     const postgresError = this.extractPostgresError(exception)
 
     if (exception instanceof BusinessException) {
@@ -133,8 +147,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus()
-      const response = exception.getResponse() as any
-      const message = this.normalizeMessage(response?.message ?? response)
+      const response = exception.getResponse()
+      const message = this.normalizeMessage(
+        typeof response === 'string' || Array.isArray(response)
+          ? response
+          : response && typeof response === 'object'
+            ? { message: (response as { message?: string }).message }
+            : undefined,
+      )
       return {
         status,
         responseCode: this.isRouteNotFoundMessage(message)
@@ -195,20 +215,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
    *
    * 支持直接抛出的数据库错误，以及 HttpException 包装的数据库错误（通过 cause 传递）。
    */
-  private extractPostgresError(exception: unknown) {
+  private extractPostgresError(exception: FilterErrorInput) {
     const directError = extractError(exception)
     if (directError) {
       return directError
     }
 
     if (exception instanceof HttpException) {
-      return extractError(exception.cause)
+      return extractError(exception.cause as FilterErrorInput)
     }
 
     return null
   }
 
-  private normalizeMessage(payload: unknown): string {
+  private normalizeMessage(payload: string | string[] | { message?: string } | null | undefined): string {
     if (Array.isArray(payload)) {
       const messages = payload
         .filter((item): item is string => typeof item === 'string')
@@ -225,7 +245,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       typeof payload === 'object' &&
       payload !== null &&
       'message' in payload &&
-      typeof (payload as { message?: unknown }).message === 'string'
+      typeof (payload as { message?: string }).message === 'string'
     ) {
       return (payload as { message: string }).message
     }

@@ -1,7 +1,7 @@
 import type { Db, PgTable, SQL, TableConfig } from '../core/drizzle.type'
-import { and, gte, sql } from 'drizzle-orm'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { and, gte, sql } from 'drizzle-orm'
 
 /**
  * 应用计数器增量更新
@@ -26,8 +26,7 @@ export async function applyCountDelta(
   }
 
   // 获取目标字段，验证字段是否存在
-  const tableAsAny = table as any
-  const column = tableAsAny[field]
+  const column = Reflect.get(table as object, field) as SQL | undefined
   if (!column) {
     throw new BusinessException(
       BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -39,7 +38,7 @@ export async function applyCountDelta(
   if (delta > 0) {
     const updated = await db
       .update(table)
-      .set({ [field]: sql`${column} + ${delta}` } as any)
+      .set({ [field]: sql`${column} + ${delta}` } as Record<string, SQL>)
       .where(where)
       .returning()
 
@@ -57,7 +56,7 @@ export async function applyCountDelta(
   const amount = Math.abs(delta)
   const updated = await db
     .update(table)
-    .set({ [field]: sql`${column} - ${amount}` } as any)
+    .set({ [field]: sql`${column} - ${amount}` } as Record<string, SQL>)
     .where(and(where, gte(column, amount)))
     .returning()
 

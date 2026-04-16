@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
 import type {
   CommentModerationState,
@@ -8,6 +9,7 @@ import type {
   VisibleCommentEffectPayload,
 } from './comment.type'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
 import {
   canConsumeEventEnvelopeByConsumer,
@@ -116,7 +118,7 @@ export class CommentService {
     options?: TransactionRetryOptions,
   ): Promise<T> {
     const maxRetries = Math.max(1, options?.maxRetries ?? 3)
-    let lastError: unknown = new Error('事务冲突重试次数已耗尽')
+    let lastError = new Error('事务冲突重试次数已耗尽')
 
     for (let attempt = 0; attempt < maxRetries; attempt += 1) {
       try {
@@ -392,7 +394,7 @@ export class CommentService {
   }
 
   private omitGeoSource<T>(item: T): Omit<T, 'geoSource'> {
-    const nextItem = { ...item } as T & { geoSource?: unknown }
+    const nextItem = { ...item } as T & { geoSource?: string | null }
     delete nextItem.geoSource
     return nextItem
   }
@@ -538,7 +540,7 @@ export class CommentService {
       actualReplyToId: number | null
       replyToId: number | null
       content: string
-      bodyTokens: unknown
+      bodyTokens: JsonValue
       likeCount: number
       geoCountry: string | null
       geoProvince: string | null
@@ -556,7 +558,7 @@ export class CommentService {
         actualReplyToId: number
         replyToId: number | null
         content: string
-        bodyTokens: unknown
+        bodyTokens: JsonValue
         likeCount: number
         geoCountry?: string
         geoProvince?: string
@@ -611,7 +613,7 @@ export class CommentService {
       loadedPreviewReplies = await this.db
         .select()
         .from(subquery)
-        .where(lte(subquery.rn, params.previewReplyLimit))
+        .where(lte(subquery.rn, params.previewReplyLimit)) as typeof previewReplies
 
       for (const reply of loadedPreviewReplies) {
         if (
@@ -1018,7 +1020,7 @@ export class CommentService {
   ) {
     const authorDeltas = new Map<
       number,
-      { commentCount: number; receivedLikeCount: number }
+      { commentCount: number, receivedLikeCount: number }
     >()
 
     for (const comment of comments) {

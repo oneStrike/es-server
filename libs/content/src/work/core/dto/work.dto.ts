@@ -90,7 +90,7 @@ export class BaseWorkDto extends BaseDto {
   ageRating?: string
 
   @EnumProperty({
-    description: '连载状态',
+    description: '连载状态（0=未开始，1=连载中，2=已完结，3=暂停更新，4=已停更）',
     example: WorkSerialStatusEnum.SERIALIZING,
     required: true,
     enum: WorkSerialStatusEnum,
@@ -163,7 +163,7 @@ export class BaseWorkDto extends BaseDto {
   lastUpdated?: Date
 
   @EnumProperty({
-    description: '查看规则',
+    description: '阅读规则（-1=继承作品；0=所有人可见；1=登录用户可见；2=会员可见；3=需购买可见）',
     example: WorkViewPermissionEnum.ALL,
     required: true,
     enum: WorkViewPermissionEnum,

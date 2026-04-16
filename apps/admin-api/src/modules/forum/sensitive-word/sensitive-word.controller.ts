@@ -1,12 +1,12 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto, UpdateEnabledStatusDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { BaseSensitiveWordDto, CreateSensitiveWordDto, QuerySensitiveWordDto, SensitiveWordCountResponseDto, SensitiveWordDetectDto, SensitiveWordDetectResponseDto, SensitiveWordDetectStatusResponseDto, SensitiveWordHighestLevelResponseDto, SensitiveWordReplaceDto, SensitiveWordReplaceResponseDto, SensitiveWordStatisticsDataDto, SensitiveWordStatisticsQueryDto, SensitiveWordStatisticsResponseDto, UpdateSensitiveWordDto } from '@libs/sensitive-word/dto/sensitive-word.dto';
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service';
 import { SensitiveWordStatisticsService } from '@libs/sensitive-word/sensitive-word-statistics.service';
 import { SensitiveWordService } from '@libs/sensitive-word/sensitive-word.service';
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 
 /**

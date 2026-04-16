@@ -437,7 +437,7 @@ export class GrowthLedgerService {
    * 只保留少量稳定、业务可读的白名单键，避免把内部调试载荷直接透出。
    */
   sanitizePublicContext(
-    context?: unknown | null,
+    context?: Record<string, unknown> | null,
   ): PublicGrowthLedgerContext | undefined {
     if (!context || typeof context !== 'object' || Array.isArray(context)) {
       return undefined
@@ -445,7 +445,9 @@ export class GrowthLedgerService {
 
     const sanitizedEntries = this.publicGrowthLedgerContextKeys
       .map((key) => {
-        const value = (context as Record<string, unknown>)[key]
+        const value = (
+          context as Record<string, string | number | boolean | null | undefined>
+        )[key]
         return this.isPublicContextValue(value) ? [key, value] : null
       })
       .filter(
@@ -514,7 +516,11 @@ export class GrowthLedgerService {
 
     return {
       ...page,
-      list: page.list.map((item) => this.toPublicGrowthLedgerRecord(item)),
+      list: page.list.map((item) =>
+        this.toPublicGrowthLedgerRecord(
+          item as typeof item & { context?: Record<string, unknown> | null },
+        ),
+      ),
     }
   }
 
@@ -626,7 +632,7 @@ export class GrowthLedgerService {
     afterValue: number
     bizKey: string
     remark: string | null
-    context?: unknown
+    context?: Record<string, unknown> | null
     createdAt: Date
   }): PublicGrowthLedgerRecord {
     return {
@@ -649,7 +655,7 @@ export class GrowthLedgerService {
   }
 
   private isPublicContextValue(
-    value: unknown,
+    value: string | number | boolean | null | undefined,
   ): value is PublicGrowthLedgerContextValue {
     return (
       value === null ||

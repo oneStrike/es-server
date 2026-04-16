@@ -10,15 +10,24 @@ import { asc, desc, getColumns } from 'drizzle-orm'
 
 export interface DrizzleOrderByOptions<TTable extends AnyPgTable = AnyPgTable> {
   table?: TTable
-  fallbackOrderBy?: unknown
+  fallbackOrderBy?: DrizzleOrderByInput
 }
 
 export type DrizzleRelationOrderBy = DbQueryOrderByRecord
+export type DrizzleOrderByInput =
+  | string
+  | DbQueryOrderBy
+  | DbQueryOrderByRecord
+  | DbQueryOrderByRecord[]
+  | null
+  | undefined
 
 /**
  * 归一化排序方向，避免上层在分页、列表和单条查询场景里各自维护大小写兼容。
  */
-function normalizeOrderDirection(value: unknown) {
+function normalizeOrderDirection(
+  value: string | number | boolean | null | undefined,
+) {
   if (value === 'asc' || value === 'desc') {
     return value
   }
@@ -33,7 +42,7 @@ function normalizeOrderDirection(value: unknown) {
 /**
  * 解析外部传入的 orderBy，兼容 query string JSON 和对象两种入口。
  */
-function parseOrderBy(value: unknown) {
+function parseOrderBy(value: DrizzleOrderByInput) {
   if (value === undefined || value === null) {
     return undefined
   }
@@ -65,7 +74,7 @@ function parseOrderBy(value: unknown) {
  * 这样既能兼容外部数组写法，也能在后续同时生成 RQB v2 和 select 两套输出。
  */
 function normalizeOrderByRecords(
-  value: unknown,
+  value: DrizzleOrderByInput,
   validColumns?: Record<string, unknown>,
 ): DbQueryOrderByRecord[] | undefined {
   const parsed = parseOrderBy(value)
@@ -200,7 +209,7 @@ export function buildOrderBySql(
  * 返回结果保持扁平对象，避免 helper 本身再引入 getter 和缓存状态。
  */
 export function buildDrizzleOrderBy<TTable extends AnyPgTable = AnyPgTable>(
-  inputOrderBy?: unknown,
+  inputOrderBy?: DrizzleOrderByInput,
   options: DrizzleOrderByOptions<TTable> = {},
 ) {
   const validColumns = options.table

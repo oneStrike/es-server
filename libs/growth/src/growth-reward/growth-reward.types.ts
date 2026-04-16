@@ -19,6 +19,7 @@ export enum GrowthRewardDedupeResultEnum {
   FAILED = 'failed',
 }
 
+/** 稳定领域类型 `TaskRewardAssetResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskRewardAssetResult {
   assetType: GrowthAssetTypeEnum.POINTS | GrowthAssetTypeEnum.EXPERIENCE
   configuredAmount: number
@@ -29,6 +30,7 @@ export interface TaskRewardAssetResult {
   reason?: GrowthLedgerFailReasonEnum | 'not_configured'
 }
 
+/** 稳定领域类型 `TaskRewardSettlementResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskRewardSettlementResult {
   success: boolean
   resultType: TaskAssignmentRewardResultTypeEnum
@@ -42,6 +44,7 @@ export interface TaskRewardSettlementResult {
   experienceReward: TaskRewardAssetResult
 }
 
+/** 稳定领域类型 `GrowthRuleRewardSettlementResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface GrowthRuleRewardSettlementResult {
   success: boolean
   source: GrowthLedgerSourceEnum.GROWTH_RULE
@@ -54,6 +57,7 @@ export interface GrowthRuleRewardSettlementResult {
   experienceResult?: GrowthLedgerApplyResult
 }
 
+/** 稳定领域类型 `DispatchDefinedGrowthEventPayload`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface DispatchDefinedGrowthEventPayload {
   eventEnvelope: EventEnvelope<GrowthRuleTypeEnum>
   bizKey: string
@@ -64,6 +68,7 @@ export interface DispatchDefinedGrowthEventPayload {
   context?: Record<string, unknown>
 }
 
+/** 稳定领域类型 `DispatchDefinedGrowthEventResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface DispatchDefinedGrowthEventResult {
   definitionKey: string
   consumers: EventDefinitionConsumerEnum[]

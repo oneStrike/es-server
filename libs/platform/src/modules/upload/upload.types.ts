@@ -12,6 +12,7 @@ export enum UploadProviderEnum {
  * 七牛上传系统配置。
  * 约束鉴权、空间、域名和对象前缀等稳定参数。
  */
+/** 稳定领域类型 `UploadSystemQiniuConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadSystemQiniuConfig {
   accessKey: string
   secretKey: string
@@ -27,6 +28,7 @@ export interface UploadSystemQiniuConfig {
  * Superbed 上传系统配置。
  * 约束 token、分类以及可选的图像处理开关。
  */
+/** 稳定领域类型 `UploadSystemSuperbedConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadSystemSuperbedConfig {
   token: string
   categories: string
@@ -39,6 +41,7 @@ export interface UploadSystemSuperbedConfig {
  * 上传系统总配置。
  * 统一描述当前启用的 provider 与各 provider 的子配置。
  */
+/** 稳定领域类型 `UploadSystemConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadSystemConfig {
   provider: UploadProviderEnum
   superbedNonImageFallbackToLocal: boolean
@@ -50,6 +53,7 @@ export interface UploadSystemConfig {
  * 上传配置提供器契约。
  * 动态模块通过该接口向上传服务暴露最终生效配置。
  */
+/** 稳定领域类型 `UploadConfigProvider`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadConfigProvider {
   getUploadConfig: () => UploadSystemConfig
 }
@@ -58,13 +62,14 @@ export interface UploadConfigProvider {
  * 上传模块动态注册选项。
  */
 export interface UploadModuleOptions {
-  imports?: Array<DynamicModule | Type<any>>
+  imports?: Array<DynamicModule | Type<object>>
 }
 
 /**
  * 上传文件大类。
  * 用于场景校验、对象 key 规划和 provider 兼容处理。
  */
+/** 稳定领域类型 `UploadFileCategory`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type UploadFileCategory =
   | 'image'
   | 'audio'
@@ -73,6 +78,7 @@ export type UploadFileCategory =
   | 'archive'
   | 'package'
 
+/** 稳定领域类型 `PreparedUploadFile`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface PreparedUploadFile {
   tempPath: string
   objectKey: string
@@ -85,6 +91,7 @@ export interface PreparedUploadFile {
   fileSize: number
 }
 
+/** 稳定领域类型 `UploadExecutionResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadExecutionResult {
   filePath: string
 }
@@ -93,6 +100,7 @@ export interface UploadExecutionResult {
  * 本地文件二次上传参数。
  * 用于压缩包解压后的文件继续复用统一上传 provider 流程。
  */
+/** 稳定领域类型 `UploadLocalFileOptions`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadLocalFileOptions {
   localPath: string
   objectKeySegments: string[]
@@ -104,6 +112,7 @@ export interface UploadLocalFileOptions {
  * 上传结果。
  * - 用于 service 返回文件上传后的稳定元数据
  */
+/** 稳定领域类型 `UploadResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface UploadResult {
   filename: string
   originalName: string

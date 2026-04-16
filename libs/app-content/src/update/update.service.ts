@@ -1,7 +1,7 @@
 import type {
   AppUpdateReleaseInsert,
   AppUpdateReleaseSelect,
-} from '@db/schema/app/app-update-release'
+} from '@db/schema'
 import type { SQL } from 'drizzle-orm'
 import type {
   AppUpdateCheckResponseDto,
@@ -9,6 +9,7 @@ import type {
   AppUpdateReleaseListItemDto,
 } from './dto/update.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { IdDto, UpdatePublishedStatusDto } from '@libs/platform/dto/base.dto'
 import { BusinessException } from '@libs/platform/exceptions'

@@ -49,7 +49,7 @@ export function NumberProperty(options: NumberPropertyOptions) {
     throw new Error('NumberProperty: min 不能大于 max')
   }
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
     decorators.push(IsNumber({}, { message: '必须是数字类型' }))

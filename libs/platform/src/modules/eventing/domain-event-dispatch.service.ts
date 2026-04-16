@@ -131,7 +131,7 @@ export class DomainEventDispatchService {
     return processedAt
   }
 
-  async markDispatchFailed(dispatch: DomainEventDispatchRecord, error: unknown) {
+  async markDispatchFailed<T>(dispatch: DomainEventDispatchRecord, error: T) {
     const attemptedAt = new Date()
     const nextRetryCount = dispatch.retryCount + 1
     const errorMessage = this.stringifyError(error).slice(0, 500)
@@ -215,7 +215,7 @@ export class DomainEventDispatchService {
     return (result.rowCount ?? 0) > 0
   }
 
-  private stringifyError(error: unknown) {
+  private stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
     }

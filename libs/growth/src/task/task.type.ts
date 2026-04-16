@@ -1,14 +1,12 @@
-import type {
-  Task,
-  TaskAssignment,
-  TaskProgressLogInsert,
-} from '@db/schema'
+import type { Task, TaskAssignment, TaskProgressLogInsert } from '@db/schema'
+
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant';
 import type {
   PageQueryInput,
   QueryOrderByInput,
 } from '@libs/platform/types'
+import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import type {
@@ -26,6 +24,7 @@ import type {
  * 任务分页排序入参。
  * 支持对象/对象数组和 JSON 字符串两种形式。
  */
+/** 稳定领域类型 `TaskQueryOrderByInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type TaskQueryOrderByInput = QueryOrderByInput
 
 /**
@@ -33,6 +32,7 @@ export type TaskQueryOrderByInput = QueryOrderByInput
  *
  * 当前任务域只支持积分和经验两类成长奖励，字段值统一要求为正整数。
  */
+/** 稳定领域类型 `TaskRewardConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskRewardConfig {
   points?: number
   experience?: number
@@ -43,6 +43,7 @@ export interface TaskRewardConfig {
  *
  * `timezone` 仅影响周期切分口径，不改变数据库内时间字段的 UTC 存储方式。
  */
+/** 稳定领域类型 `TaskRepeatRuleConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskRepeatRuleConfig {
   type: TaskRepeatTypeEnum
   timezone?: string
@@ -53,8 +54,9 @@ export interface TaskRepeatRuleConfig {
  *
  * 主要用于 `EVENT_COUNT` 任务对事件上下文做额外筛选。
  */
+/** 稳定领域类型 `TaskObjectiveConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskObjectiveConfig {
-  [key: string]: unknown
+  [key: string]: JsonValue
 }
 
 /**
@@ -85,6 +87,7 @@ export type TaskSnapshotSource = Pick<
  *
  * 当前与 `TaskSnapshotSource` 等价，保留语义别名用于区分调用场景。
  */
+/** 稳定领域类型 `AutoAssignmentTaskSource`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type AutoAssignmentTaskSource = TaskSnapshotSource
 
 /**
@@ -97,6 +100,7 @@ export type CreateOrGetAssignmentTaskInput = TaskSnapshotSource
  *
  * 复用快照与自动分配链路的稳定任务字段，再补齐列表展示依赖的审计与排序字段。
  */
+/** 稳定领域类型 `AppTaskViewSource`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type AppTaskViewSource = TaskSnapshotSource &
   Pick<Task, 'createdAt' | 'updatedAt' | 'priority'>
 
@@ -152,6 +156,7 @@ export interface QueryTaskAssignmentPageResult {
  *
  * 字段定义优先复用 `task_progress_log` schema，行为语义由 task 域枚举补充约束。
  */
+/** 稳定领域类型 `TaskProgressLogRecordInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskProgressLogRecordInput {
   assignmentId: TaskProgressLogInsert['assignmentId']
   userId: TaskProgressLogInsert['userId']
@@ -215,7 +220,7 @@ export interface ApplyAssignmentEventProgressInput {
 export interface ResolveTaskUserVisibleStatusInput {
   status: TaskAssignmentStatusEnum
   rewardStatus?: TaskAssignmentRewardStatusEnum | null
-  rewardConfig?: unknown
+  rewardConfig?: Task['rewardConfig'] | null
 }
 
 /**
@@ -234,6 +239,7 @@ export interface BuildTaskCompleteEventEnvelopeInput {
  * 分页 helper 固定返回同一组任务摘要字段；值为 `null` 表示 left join 未命中
  * live task，只能回退到 assignment 快照。
  */
+/** 稳定领域类型 `TaskRelationRow`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskRelationRow {
   id: Task['id'] | null
   code: Task['code'] | null
@@ -355,6 +361,7 @@ export interface TaskReminderBaseInput {
   assignmentId?: TaskReminderAssignmentInput['id']
 }
 
+/** 稳定领域类型 `TaskAutoAssignedReminderEventInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface TaskAutoAssignedReminderEventInput
   extends TaskReminderBaseInput {}
 

@@ -7,7 +7,25 @@ import { sql } from 'drizzle-orm'
 
 const PONG_VALUE = 'pong'
 
-function isMemoryStore(store: any) {
+interface CacheStoreLike {
+  opts?: {
+    store?: {
+      constructor?: {
+        name?: string
+      }
+    }
+  }
+  set?: (key: string, value: string, ttl?: number) => Promise<boolean | void>
+  get?: (key: string) => Promise<string | undefined>
+  delete?: (key: string) => Promise<boolean | void>
+  del?: (key: string) => Promise<boolean | void>
+}
+
+interface CacheManagerLike {
+  stores?: CacheStoreLike[]
+}
+
+function isMemoryStore(store: CacheStoreLike | undefined) {
   return (
     !!store?.opts?.store?.constructor &&
     store.opts.store.constructor.name === 'CacheableMemory'
@@ -59,10 +77,13 @@ export class HealthService {
    */
   async checkMemory(key = 'cache_memory') {
     try {
-      const stores: any[] | undefined = (this.cacheManager as any)?.stores
+      const stores = (this.cacheManager as Cache & CacheManagerLike).stores
       if (Array.isArray(stores)) {
         for (const store of stores) {
           if (isMemoryStore(store)) {
+            if (!store.set || !store.get) {
+              continue
+            }
             const k = makePingKey('memory')
             await store.set(k, PONG_VALUE, 10000)
             const value = await store.get(k)
@@ -110,10 +131,13 @@ export class HealthService {
    */
   async checkRedis(key = 'cache_redis') {
     try {
-      const stores: any[] | undefined = (this.cacheManager as any)?.stores
+      const stores = (this.cacheManager as Cache & CacheManagerLike).stores
       if (Array.isArray(stores)) {
         for (const store of stores) {
           if (!isMemoryStore(store)) {
+            if (!store.set || !store.get) {
+              continue
+            }
             const k = makePingKey('redis')
             await store.set(k, PONG_VALUE, 10000)
             const value = await store.get(k)

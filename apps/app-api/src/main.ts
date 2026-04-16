@@ -9,7 +9,14 @@ import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AppModule } from './app.module'
 
-declare const module: any
+interface HotModule {
+  accept: () => void
+  dispose: (callback: () => void | Promise<void>) => void
+}
+
+declare const module: {
+  hot?: HotModule
+}
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({

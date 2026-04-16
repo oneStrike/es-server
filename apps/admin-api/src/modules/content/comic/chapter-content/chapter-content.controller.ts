@@ -4,10 +4,10 @@ import { ComicContentService } from '@libs/content/work/content/comic-content.se
 import { ComicArchiveTaskIdDto, ComicArchiveTaskResponseDto, ConfirmComicArchiveDto, DeleteComicContentDto, MoveComicContentDto, PreviewComicArchiveDto, UpdateComicContentDto, UploadContentDto } from '@libs/content/work/content/dto/content.dto';
 import { ApiDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { IdDto } from '@libs/platform/dto/base.dto';
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { UploadResponseDto } from '@libs/platform/modules/upload/dto/upload.dto';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('内容管理/漫画管理/章节内容')

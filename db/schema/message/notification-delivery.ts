@@ -1,6 +1,8 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -8,9 +10,7 @@ import {
   timestamp,
   unique,
   varchar,
-  check,
 } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
 
 /**
  * 通知 consumer 处理结果表。

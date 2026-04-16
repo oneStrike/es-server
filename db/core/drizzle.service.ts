@@ -6,12 +6,14 @@ import type {
   DrizzleMutationResult,
 } from './drizzle.type'
 import type { PostgresError } from './error/postgres-error'
-import type { DrizzleOrderByOptions } from './query/order-by'
+import type { DrizzleOrderByInput, DrizzleOrderByOptions } from './query/order-by'
 import type {
   DrizzlePageQueryInput,
   DrizzlePageQueryOptions,
 } from './query/page-query'
 import { resolveDbQueryConfig } from '@libs/platform/config'
+import { BusinessErrorCode } from '@libs/platform/constant'
+import { BusinessException } from '@libs/platform/exceptions'
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Pool } from 'pg'
@@ -30,8 +32,21 @@ import {
 } from './error/error-handler'
 import { buildDrizzleOrderBy } from './query/order-by'
 import { buildDrizzlePageQuery } from './query/page-query'
-import { BusinessException } from '@libs/platform/exceptions'
-import { BusinessErrorCode } from '@libs/platform/constant'
+
+type DrizzleErrorInput =
+  | Error
+  | PostgresError
+  | {
+      code?: string
+      constraint?: string
+      table?: string
+      column?: string
+      detail?: string
+      message?: string
+      cause?: object | null
+    }
+    | null
+    | undefined
 
 /**
  * 统一封装仓库级 Drizzle 入口、查询默认值和错误处理能力。
@@ -82,7 +97,7 @@ export class DrizzleService implements OnApplicationShutdown {
    * 提供可复用的排序构造入口，供 findFirst、findMany 和手写查询共享同一套排序语义。
    */
   buildOrderBy<TTable extends AnyPgTable>(
-    input?: unknown,
+    input?: DrizzleOrderByInput,
     options?: DrizzleOrderByOptions<TTable>,
   ) {
     return buildDrizzleOrderBy(input, options)
@@ -91,49 +106,49 @@ export class DrizzleService implements OnApplicationShutdown {
   /**
    * 暴露错误码判断，供需要保留 PostgreSQL 原始错误语义的业务路径复用。
    */
-  isErrorCode(error: unknown, code: string): boolean {
+  isErrorCode(error: DrizzleErrorInput, code: string): boolean {
     return isErrorCode(error, code)
   }
 
   /**
    * 判断错误是否来自唯一约束冲突，避免业务层直接解析数据库驱动错误。
    */
-  isUniqueViolation(error: unknown): boolean {
+  isUniqueViolation(error: DrizzleErrorInput): boolean {
     return isUniqueViolation(error)
   }
 
   /**
    * 判断错误是否来自非空约束冲突。
    */
-  isNotNullViolation(error: unknown): boolean {
+  isNotNullViolation(error: DrizzleErrorInput): boolean {
     return isNotNullViolation(error)
   }
 
   /**
    * 判断错误是否来自 check constraint 失败。
    */
-  isCheckViolation(error: unknown): boolean {
+  isCheckViolation(error: DrizzleErrorInput): boolean {
     return isCheckViolation(error)
   }
 
   /**
    * 判断错误是否为可重试的序列化失败。
    */
-  isSerializationFailure(error: unknown): boolean {
+  isSerializationFailure(error: DrizzleErrorInput): boolean {
     return isSerializationFailure(error)
   }
 
   /**
    * 从未知异常中提取 PostgreSQL 错误元信息，供上层做业务分支或日志输出。
    */
-  extractError(error: unknown): PostgresError | null {
+  extractError(error: DrizzleErrorInput): PostgresError | null {
     return extractError(error)
   }
 
   /**
    * 统一将底层数据库异常翻译为业务可消费的 Nest 异常。
    */
-  handleError(error: unknown, messages?: DrizzleErrorMessages): never {
+  handleError(error: DrizzleErrorInput, messages?: DrizzleErrorMessages): never {
     return handleError(error, messages)
   }
 

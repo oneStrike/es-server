@@ -41,8 +41,8 @@ const TRAILING_EXTENSION_REGEX = /\.[^.]+$/
 const RESERVED_PATH_SEGMENTS = new Set(['.', '..'])
 
 interface MultipartFieldLike {
-  type?: unknown
-  value?: unknown
+  type?: string
+  value?: string | number | boolean | null
 }
 
 /**
@@ -135,7 +135,7 @@ export class UploadService {
       }
 
       return await this.uploadPreparedFile(preparedFile)
-    } catch (error: any) {
+    } catch (error) {
       if (error?.response?.message) {
         throw error
       }
@@ -444,7 +444,7 @@ export class UploadService {
    * 从 multipart 字段中提取上传场景。
    * 非法场景会返回 null，由上层统一转换为业务异常。
    */
-  private extractScene(sceneField: unknown) {
+  private extractScene<T>(sceneField: T) {
     if (sceneField == null) {
       return DEFAULT_UPLOAD_SCENE
     }

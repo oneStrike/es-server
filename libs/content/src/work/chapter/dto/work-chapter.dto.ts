@@ -24,7 +24,7 @@ export class BaseWorkChapterDto extends BaseDto {
   @NumberProperty({ description: '作品ID', example: 1, required: true })
   workId!: number
 
-  @NumberProperty({ description: '作品类型', example: 1, required: true })
+  @NumberProperty({ description: '作品类型（1=漫画，2=小说）', example: 1, required: true })
   workType!: number
 
   @StringProperty({

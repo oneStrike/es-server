@@ -6,6 +6,17 @@ import type {
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 
+interface CopySearchAuthor {
+  name: string
+}
+
+interface CopySearchItem {
+  path_word: string
+  name: string
+  cover: string
+  author: CopySearchAuthor[]
+}
+
 /**
  * 拷贝漫画平台服务
  * 提供拷贝漫画平台的内容解析功能
@@ -46,11 +57,11 @@ export class CopyService {
         total: data.results.total,
         pageIndex: data.results.offset,
         pageSize: data.results.limit,
-        list: data.results.list.map((item: any) => ({
+        list: (data.results.list as CopySearchItem[]).map((item) => ({
           id: item.path_word,
           name: item.name,
           cover: item.cover,
-          author: item.author.map((author: any) => author.name),
+          author: item.author.map((author) => author.name),
           source: '拷贝',
           platform: 'copy',
         })),

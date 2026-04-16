@@ -1,10 +1,22 @@
+export type BusinessExceptionCause =
+  | Error
+  | string
+  | number
+  | boolean
+  | null
+  | {
+      message?: string
+      code?: string | number
+      detail?: string
+    }
+
 export interface BusinessExceptionOptions {
-  cause?: unknown
+  cause?: BusinessExceptionCause
 }
 
 export class BusinessException extends Error {
   readonly code: number
-  override readonly cause?: unknown
+  override readonly cause?: BusinessExceptionCause
 
   constructor(
     code: number,

@@ -68,6 +68,14 @@ export function addHours(date: Date, hours: number) {
   return new Date(date.getTime() + hours * 60 * 60 * 1000)
 }
 
-export function asJsonText(value: unknown) {
+export function asJsonText(
+  value:
+    | string
+    | number
+    | boolean
+    | null
+    | Record<string, string | number | boolean | null>
+    | Array<string | number | boolean | null>,
+) {
   return JSON.stringify(value)
 }

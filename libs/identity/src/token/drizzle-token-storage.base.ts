@@ -1,15 +1,34 @@
-import type { CreateTokenInput, ITokenEntity } from '@libs/platform/modules/auth/token-storage.types';
+import type { adminUserToken, appUserToken } from '@db/schema'
+import type { CreateTokenInput } from '@libs/platform/modules/auth/token-storage.types';
 import type { Cache } from 'cache-manager'
+import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
 import { BaseTokenStorageService } from '@libs/platform/modules/auth/base-token-storage.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject } from '@nestjs/common'
 import { and, eq, gt, inArray, isNotNull, isNull, lt } from 'drizzle-orm'
 
-type WhereInput = Record<string, any>
+type TokenTable = typeof appUserToken | typeof adminUserToken
+
+interface WhereInput {
+  jti?: string | { in?: string[] }
+  userId?: number
+  revokedAt?: null | { not?: null, lt?: Date }
+  expiresAt?: { gt?: Date, lt?: Date }
+}
+
+interface FindManyOptions {
+  select?: {
+    jti?: boolean
+  }
+}
 
 export abstract class BaseDrizzleTokenStorageService<
-  TEntity extends ITokenEntity,
+  TEntity extends {
+    jti: string
+    expiresAt: Date
+    revokedAt?: Date | null
+  },
 > extends BaseTokenStorageService<TEntity> {
   constructor(
     protected readonly drizzle: DrizzleService,
@@ -18,7 +37,7 @@ export abstract class BaseDrizzleTokenStorageService<
     super(cacheManager)
   }
 
-  protected abstract get tokenTable(): any
+  protected abstract get tokenTable(): TokenTable
 
   protected async createOne(data: CreateTokenInput) {
     const rows = await this.drizzle.withErrorHandling(
@@ -30,7 +49,7 @@ export abstract class BaseDrizzleTokenStorageService<
             jti: data.jti,
             tokenType: data.tokenType,
             expiresAt: data.expiresAt,
-            deviceInfo: data.deviceInfo as any,
+            deviceInfo: data.deviceInfo,
             ipAddress: data.ipAddress,
             userAgent: data.userAgent,
             geoCountry: data.geoCountry,
@@ -44,7 +63,7 @@ export abstract class BaseDrizzleTokenStorageService<
         duplicate: '登录状态创建失败，请重试',
       },
     )
-    return rows[0] as TEntity
+    return rows[0] as TEntity & (typeof rows)[number]
   }
 
   protected async createManyItems(data: CreateTokenInput[]) {
@@ -58,7 +77,7 @@ export abstract class BaseDrizzleTokenStorageService<
               jti: token.jti,
               tokenType: token.tokenType,
               expiresAt: token.expiresAt,
-              deviceInfo: token.deviceInfo as any,
+              deviceInfo: token.deviceInfo,
               ipAddress: token.ipAddress,
               userAgent: token.userAgent,
               geoCountry: token.geoCountry,
@@ -90,27 +109,27 @@ export abstract class BaseDrizzleTokenStorageService<
     const rows = await this.drizzle.withErrorHandling(() =>
       this.drizzle.db
         .update(this.tokenTable)
-        .set(data as any)
+        .set(data as Record<string, string | number | Date | null | object>)
         .where(condition)
         .returning({ id: this.tokenTable.id }),
     )
     return rows.length
   }
 
-  protected async findManyItems(where: WhereInput, options?: WhereInput) {
+  protected async findManyItems(where: WhereInput, options?: FindManyOptions) {
     const condition = this.buildWhere(where)
 
     if (options?.select?.jti) {
       return this.drizzle.db
         .select({ jti: this.tokenTable.jti })
         .from(this.tokenTable)
-        .where(condition) as any
+        .where(condition) as Promise<TEntity[]>
     }
 
     return this.drizzle.db
       .select()
       .from(this.tokenTable)
-      .where(condition) as any
+      .where(condition) as Promise<TEntity[]>
   }
 
   protected async deleteManyItems(where: WhereInput) {
@@ -125,7 +144,7 @@ export abstract class BaseDrizzleTokenStorageService<
   }
 
   private buildWhere(where: WhereInput) {
-    const conditions: any[] = []
+    const conditions: SQL[] = []
 
     if (where.jti) {
       if (typeof where.jti === 'string') {

@@ -1,5 +1,6 @@
 import type { Db } from '@db/core'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
+import type { JsonObject } from '@libs/platform/utils/jsonParse'
 import type { GrowthLedgerApplyResult } from '../growth-ledger/growth-ledger.internal'
 import type {
   GrowthRuleRewardSettlementResult,
@@ -32,11 +33,11 @@ interface RewardByRuleParams {
   tx?: Db
 }
 
-interface RewardTaskCompleteParams {
+interface RewardTaskCompleteParams<TRewardConfig = object | null> {
   userId: number
   taskId: number
   assignmentId: number
-  rewardConfig?: unknown
+  rewardConfig?: TRewardConfig
   eventEnvelope?: EventEnvelope
 }
 
@@ -196,8 +197,8 @@ export class UserGrowthRewardService {
    * 发放任务完成奖励
    * 根据任务配置直接发放积分和经验
    */
-  async tryRewardTaskComplete(
-    params: RewardTaskCompleteParams,
+  async tryRewardTaskComplete<TRewardConfig>(
+    params: RewardTaskCompleteParams<TRewardConfig>,
   ): Promise<TaskRewardSettlementResult> {
     const settledAt = new Date()
     const reward = this.parseRewardConfig(params.rewardConfig)
@@ -310,7 +311,7 @@ export class UserGrowthRewardService {
 
   private buildTaskRewardSettlementResult(params: {
     bizKey: string
-    reward: { points: number; experience: number }
+    reward: { points: number, experience: number }
     settledAt: Date
     resultType: TaskAssignmentRewardResultTypeEnum
     pointsResult?: GrowthLedgerApplyResult
@@ -487,7 +488,9 @@ export class UserGrowthRewardService {
     }`
   }
 
-  private buildTaskRewardContext(params: RewardTaskCompleteParams) {
+  private buildTaskRewardContext<TRewardConfig>(
+    params: RewardTaskCompleteParams<TRewardConfig>,
+  ) {
     const context = this.asRecord(params.eventEnvelope?.context) ?? {
       taskId: params.taskId,
       assignmentId: params.assignmentId,
@@ -525,7 +528,7 @@ export class UserGrowthRewardService {
   }
 
   /** 解析奖励配置 */
-  private parseRewardConfig(input: unknown) {
+  private parseRewardConfig<T>(input: T) {
     const record = this.asRecord(input)
     if (!record) {
       return { points: 0, experience: 0 }
@@ -537,14 +540,14 @@ export class UserGrowthRewardService {
     }
   }
 
-  private asRecord(input: unknown) {
+  private asRecord<T>(input: T): JsonObject | null {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       return null
     }
-    return input as Record<string, unknown>
+    return input as JsonObject
   }
 
-  private readPositiveInt(input: unknown) {
+  private readPositiveInt<T>(input: T) {
     if (typeof input === 'number' && Number.isFinite(input) && input > 0) {
       return Math.floor(input)
     }

@@ -1,8 +1,5 @@
-import type {
-  CheckInPlanSelect,
-  CheckInRecordSelect,
-  CheckInStreakRewardGrantSelect,
-} from '@db/schema'
+import type { CheckInPlanSelect, CheckInRecordSelect, CheckInStreakRewardGrantSelect } from '@db/schema'
+
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
 import type {

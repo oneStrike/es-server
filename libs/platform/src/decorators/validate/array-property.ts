@@ -22,11 +22,11 @@ type PrimitiveArrayItemType = 'string' | 'number' | 'boolean'
 interface PrimitiveArrayHelpers {
   apiType: StringConstructor | NumberConstructor | BooleanConstructor
   itemValidator: PropertyDecorator
-  normalizeItem: (item: unknown) => unknown
+  normalizeItem: (item: string | number | boolean | null | undefined) => string | number | boolean | null | undefined
 }
 
-function resolvePrimitiveItemType(
-  options: ArrayPropertyOptions,
+function resolvePrimitiveItemType<TValue extends string | number | boolean>(
+  options: ArrayPropertyOptions<TValue>,
 ): PrimitiveArrayItemType {
   if (options.itemType === undefined) {
     throw new Error('ArrayProperty: 基础类型数组必须提供 itemType')
@@ -35,9 +35,9 @@ function resolvePrimitiveItemType(
   return options.itemType
 }
 
-function createPrimitiveArrayHelpers(
+function createPrimitiveArrayHelpers<TValue extends string | number | boolean>(
   itemType: PrimitiveArrayItemType,
-  options: ArrayPropertyOptions,
+  options: ArrayPropertyOptions<TValue>,
 ): PrimitiveArrayHelpers {
   const itemErrorMessage = options.itemErrorMessage
 
@@ -145,14 +145,21 @@ function createPrimitiveArrayHelpers(
  * @param options 属性选项配置
  * @returns 装饰器函数
  */
-export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
+export function ArrayProperty<T = string | number | boolean>(
+  options: ArrayPropertyOptions<T>,
+) {
   const inContract = options.contract ?? true
   const validation = inContract && (options.validation ?? true)
   const required = options.required ?? true
   const hasItemClass = Boolean(options.itemClass)
   const primitiveHelpers = hasItemClass
     ? undefined
-    : createPrimitiveArrayHelpers(resolvePrimitiveItemType(options), options)
+    : createPrimitiveArrayHelpers(
+        resolvePrimitiveItemType(
+          options as ArrayPropertyOptions<string | number | boolean>,
+        ),
+        options as ArrayPropertyOptions<string | number | boolean>,
+      )
 
   if ((options as { itemType?: string }).itemType === 'object') {
     throw new Error(
@@ -185,7 +192,7 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
     if (hasItemClass && options.itemClass) {
       decorators.push(
         ValidateNested({ each: true }),
-        Type(() => options.itemClass as any),
+        Type(() => options.itemClass),
       )
     }
 
@@ -194,7 +201,7 @@ export function ArrayProperty<T = any>(options: ArrayPropertyOptions<T>) {
         ValidateBy({
           name: 'customItemValidator',
           validator: {
-            validate: (value: any[]) => {
+            validate: (value: T[]) => {
               if (!Array.isArray(value)) {
                 return true
               }

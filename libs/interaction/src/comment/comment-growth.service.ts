@@ -1,5 +1,5 @@
+import type { UserCommentSelect } from '@db/schema'
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
-import { UserCommentSelect } from '@db/schema'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
 import { canConsumeEventEnvelopeByConsumer, createDefinedEventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service';

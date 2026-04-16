@@ -45,56 +45,33 @@ export enum ComicArchiveImportItemStatusEnum {
 }
 
 /**
- * 漫画压缩包预解析入参。
- * 单章节压缩包可显式携带 chapterId，多章节压缩包只使用 workId。
- */
-export interface PreviewComicArchiveInput {
-  workId: number
-  chapterId?: number
-}
-
-/**
- * 漫画压缩包确认导入入参。
- * 前端只提交用户最终确认要执行导入的章节 ID 列表。
- */
-export interface ConfirmComicArchiveImportInput {
-  taskId: string
-  confirmedChapterIds: number[]
-}
-
-/**
- * 漫画压缩包任务详情查询入参。
- * 用于管理端轮询预解析结果和后台导入状态。
- */
-export interface GetComicArchiveTaskDetailInput {
-  taskId: string
-}
-
-/**
- * 漫画压缩包预解析汇总结果。
+ * 漫画压缩包预解析汇总快照。
  * 汇总匹配章节数、忽略项数量和有效图片总数。
  */
-export interface ComicArchiveSummaryView {
+/** 稳定领域类型 `ComicArchiveSummarySnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface ComicArchiveSummarySnapshot {
   matchedChapterCount: number
   ignoredItemCount: number
   imageCount: number
 }
 
 /**
- * 漫画压缩包预解析忽略项。
+ * 漫画压缩包预解析忽略项快照。
  * 每条忽略项都包含稳定原因码和可直接展示给前端用户的提示。
  */
-export interface ComicArchiveIgnoredItemView {
+/** 稳定领域类型 `ComicArchiveIgnoredItemSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface ComicArchiveIgnoredItemSnapshot {
   path: string
   reason: ComicArchiveIgnoreReasonEnum
   message: string
 }
 
 /**
- * 漫画压缩包匹配成功的章节视图。
+ * 漫画压缩包匹配成功的章节快照。
  * 这里会返回章节现有内容数量，便于前端在确认页提示覆盖风险。
  */
-export interface ComicArchiveMatchedItemView {
+/** 稳定领域类型 `ComicArchiveMatchedItemSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface ComicArchiveMatchedItemSnapshot {
   path: string
   chapterId: number
   chapterTitle: string
@@ -107,10 +84,11 @@ export interface ComicArchiveMatchedItemView {
 }
 
 /**
- * 漫画压缩包单章节导入结果。
+ * 漫画压缩包单章节导入结果快照。
  * 用于前端查看确认后的章节执行状态与结果说明。
  */
-export interface ComicArchiveResultItemView {
+/** 稳定领域类型 `ComicArchiveResultItemSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface ComicArchiveResultItemSnapshot {
   chapterId: number
   chapterTitle: string
   importedImageCount: number
@@ -119,30 +97,11 @@ export interface ComicArchiveResultItemView {
 }
 
 /**
- * 漫画压缩包任务对外详情视图。
- * 该视图既用于 preview 返回，也用于 detail 轮询返回。
- */
-export interface ComicArchiveTaskView {
-  taskId: string
-  workId: number
-  mode: ComicArchivePreviewModeEnum
-  status: ComicArchiveTaskStatusEnum
-  requireConfirm: boolean
-  summary: ComicArchiveSummaryView
-  matchedItems: ComicArchiveMatchedItemView[]
-  ignoredItems: ComicArchiveIgnoredItemView[]
-  resultItems: ComicArchiveResultItemView[]
-  startedAt: Date | null
-  finishedAt: Date | null
-  expiresAt: Date
-  lastError: string | null
-}
-
-/**
  * 漫画压缩包匹配项内部记录。
  * 额外保存解压后的本地图片路径，供正式导入阶段使用。
  */
-export interface ComicArchiveMatchedItemRecord extends ComicArchiveMatchedItemView {
+/** 稳定领域类型 `ComicArchiveMatchedItemRecord`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface ComicArchiveMatchedItemRecord extends ComicArchiveMatchedItemSnapshot {
   imagePaths: string[]
 }
 
@@ -150,6 +109,7 @@ export interface ComicArchiveMatchedItemRecord extends ComicArchiveMatchedItemVi
  * 漫画压缩包任务持久化记录。
  * 使用数据库行承载预解析草稿与导入执行状态，临时文件仍保留在本地目录。
  */
+/** 稳定领域类型 `ComicArchiveTaskRecord`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface ComicArchiveTaskRecord {
   taskId: string
   workId: number
@@ -159,10 +119,10 @@ export interface ComicArchiveTaskRecord {
   archivePath: string
   extractPath: string
   requireConfirm: boolean
-  summary: ComicArchiveSummaryView
+  summary: ComicArchiveSummarySnapshot
   matchedItems: ComicArchiveMatchedItemRecord[]
-  ignoredItems: ComicArchiveIgnoredItemView[]
-  resultItems: ComicArchiveResultItemView[]
+  ignoredItems: ComicArchiveIgnoredItemSnapshot[]
+  resultItems: ComicArchiveResultItemSnapshot[]
   confirmedChapterIds: number[]
   startedAt: Date | null
   finishedAt: Date | null

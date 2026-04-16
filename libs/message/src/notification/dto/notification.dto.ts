@@ -10,6 +10,7 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
+import { IntersectionType, PartialType } from '@nestjs/swagger'
 import {
   getMessageNotificationCategoryLabel,
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
@@ -157,9 +158,9 @@ export class UpdateUserNotificationPreferencesDto {
   preferences!: UpdateUserNotificationPreferenceItemDto[]
 }
 
-export class QueryNotificationDeliveryPageDto extends PageDto {
+class BaseNotificationDeliveryQueryDto {
   @EnumProperty({
-    description: '通知投影处理状态',
+    description: '业务投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.FAILED,
     required: false,
     enum: MessageNotificationDispatchStatusEnum,
@@ -213,6 +214,11 @@ export class QueryNotificationDeliveryPageDto extends PageDto {
   })
   dispatchId?: string
 }
+
+export class QueryNotificationDeliveryPageDto extends IntersectionType(
+  PageDto,
+  PartialType(BaseNotificationDeliveryQueryDto),
+) {}
 
 export class NotificationActorDto {
   @NumberProperty({ description: '用户 ID', example: 1, validation: false })

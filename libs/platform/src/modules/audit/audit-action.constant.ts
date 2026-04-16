@@ -1,5 +1,6 @@
 /**
- * 管理后台审计常用操作类型。
+ * 审计常用操作类型。
+ * 供管理端审计日志 DTO、审计装饰器和日志服务复用统一枚举语义。
  */
 export enum AuditActionTypeEnum {
   LOGIN = 1,

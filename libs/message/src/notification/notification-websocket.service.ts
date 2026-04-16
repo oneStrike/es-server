@@ -174,7 +174,7 @@ export class MessageWebSocketService {
    * 向指定用户广播事件。
    * 同时覆盖 Socket.IO 房间和原生 WS 连接集合。
    */
-  emitToUser(userId: number, event: string, payload: unknown) {
+  emitToUser<TPayload>(userId: number, event: string, payload: TPayload) {
     if (!Number.isInteger(userId) || userId <= 0) {
       return
     }
@@ -372,7 +372,7 @@ export class MessageWebSocketService {
   /**
    * 构造原生 WS 事件消息体。
    */
-  createNativeEventMessage(event: string, data?: unknown) {
+  createNativeEventMessage<TPayload>(event: string, data?: TPayload) {
     return JSON.stringify(data === undefined ? { event } : { event, data })
   }
 
@@ -510,7 +510,7 @@ export class MessageWebSocketService {
   /**
    * 判断输入值是否为正整数。
    */
-  private isPositiveInteger(value: unknown) {
+  private isPositiveInteger<T>(value: T) {
     const normalized = Number(value)
     return Number.isInteger(normalized) && normalized > 0
   }
@@ -518,7 +518,7 @@ export class MessageWebSocketService {
   /**
    * 校验消息类型是否在聊天协议允许的枚举集合内。
    */
-  private isValidMessageType(value: unknown) {
+  private isValidMessageType<T>(value: T) {
     return (
       value === ChatMessageTypeEnum.TEXT || value === ChatMessageTypeEnum.IMAGE
     )
@@ -560,7 +560,7 @@ export class MessageWebSocketService {
   /**
    * 把可选扩展 payload 收敛成 JSON 字符串。
    */
-  private stringifyPayloadObject(payload: unknown) {
+  private stringifyPayloadObject<T>(payload: T) {
     if (payload === undefined) {
       return undefined
     }
@@ -579,7 +579,7 @@ export class MessageWebSocketService {
   /**
    * 把领域异常映射为 websocket ack 错误码。
    */
-  private mapErrorToAck(error: unknown) {
+  private mapErrorToAck<T>(error: T) {
     if (error instanceof BusinessException) {
       return {
         code: error.code,
@@ -621,7 +621,7 @@ export class MessageWebSocketService {
       response !== null &&
       'message' in response
     ) {
-      const message = (response as { message?: unknown }).message
+      const message = (response as { message?: string | string[] | null }).message
       if (typeof message === 'string' && message.trim()) {
         return message
       }
@@ -673,7 +673,7 @@ export class MessageWebSocketService {
   /**
    * 把未知错误对象收敛成日志可读文本。
    */
-  private stringifyError(error: unknown) {
+  private stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
     }

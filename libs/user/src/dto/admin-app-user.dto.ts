@@ -422,7 +422,7 @@ export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto
   points!: number
 
   @NumberProperty({
-    description: '关联目标类型',
+    description: '关联目标类型（1=漫画；2=小说；3=漫画章节；4=小说章节；5=论坛主题）',
     example: 3,
     required: false,
   })

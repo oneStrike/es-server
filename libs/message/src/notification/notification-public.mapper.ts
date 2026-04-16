@@ -1,4 +1,5 @@
 import type { UserNotificationSelect } from '@db/schema'
+import type { UserNotificationDto } from './dto/notification.dto'
 import type { MessageNotificationCategoryKey } from './notification.constant'
 import {
   getMessageNotificationCategoryLabel,
@@ -17,24 +18,7 @@ export interface NotificationActorSource {
   avatarUrl?: string | null
 }
 
-export interface UserNotificationPublicView {
-  id: number
-  receiverUserId: number
-  categoryKey: MessageNotificationCategoryKey
-  categoryLabel: string
-  actorUserId?: number
-  title: string
-  content: string
-  payload: Record<string, unknown> | null
-  isRead: boolean
-  readAt?: Date | null
-  expiresAt?: Date | null
-  createdAt: Date
-  updatedAt: Date
-  actorUser?: NotificationPublicActor
-}
-
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
+function isPlainRecord<T>(value: T): value is Extract<T, Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
@@ -63,7 +47,7 @@ export function mapNotificationActor(
 export function mapUserNotificationToPublicView(
   notification: UserNotificationSelect,
   actor?: NotificationActorSource | null,
-): UserNotificationPublicView {
+): UserNotificationDto {
   const rawCategoryKey = notification.categoryKey
   const categoryKey = rawCategoryKey as MessageNotificationCategoryKey
   const categoryLabel = isMessageNotificationCategoryKey(rawCategoryKey)
@@ -80,8 +64,8 @@ export function mapUserNotificationToPublicView(
     content: notification.content,
     payload: isPlainRecord(notification.payload) ? notification.payload : null,
     isRead: notification.isRead,
-    readAt: notification.readAt,
-    expiresAt: notification.expiresAt,
+    readAt: notification.readAt ?? undefined,
+    expiresAt: notification.expiresAt ?? undefined,
     createdAt: notification.createdAt,
     updatedAt: notification.updatedAt,
     actorUser: mapNotificationActor(actor),

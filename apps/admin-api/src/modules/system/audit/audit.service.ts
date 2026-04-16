@@ -1,22 +1,26 @@
-import type { FastifyRequest } from 'fastify'
+import type { requestLog } from '@db/schema'
 import type {
   AuditPageRequestDto,
   CreateRequestLogDto,
   CreateRequestLogSimpleDto,
-} from './dto/audit.dto'
+} from '@libs/platform/modules/audit/dto/audit.dto'
+import type { FastifyRequest } from 'fastify'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { GeoService } from '@libs/platform/modules/geo'
 import { buildRequestLogFields } from '@libs/platform/utils'
 import { Injectable } from '@nestjs/common'
 import { and, eq, or } from 'drizzle-orm'
-import { AuditActionTypeEnum } from '../../../common/audit/audit-action.constant'
 import {
   getAuditActionTypeLabel,
   normalizeAuditActionType,
   resolveAuditActionTypeSearchTerms,
 } from './audit.helpers'
+
+type RequestLogInsert = typeof requestLog.$inferInsert
 
 /**
  * 审计日志服务
@@ -45,11 +49,11 @@ export class AuditService {
     const requestContext = await this.geoService.buildRequestContext(req)
 
     // 处理JSON字段的转换
-    const data = {
+    const data: RequestLogInsert = {
       ...createDto,
       actionType: normalizedActionType ?? undefined,
       ...buildRequestLogFields(requestContext),
-    } as any
+    }
     const [created] = await this.drizzle.withErrorHandling(() =>
       this.db
         .insert(this.requestLog)

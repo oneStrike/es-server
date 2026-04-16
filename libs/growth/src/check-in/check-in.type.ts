@@ -1,9 +1,5 @@
-import type {
-  CheckInCycleInsert,
-  CheckInPlan,
-  CheckInRecordInsert,
-  CheckInStreakRewardGrantInsert,
-} from '@db/schema'
+import type { CheckInCycleInsert, CheckInPlan, CheckInRecordInsert, CheckInStreakRewardGrantInsert } from '@db/schema'
+
 import type {
   CheckInCycleTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
@@ -16,6 +12,7 @@ import type {
  *
  * 当前只支持积分与经验两类资产，字段值统一要求为正整数。
  */
+/** 稳定领域类型 `CheckInRewardConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface CheckInRewardConfig {
   points?: number
   experience?: number
@@ -49,6 +46,7 @@ export interface CheckInStreakRewardRuleView {
  *
  * 当前计划只维护一份生效中的奖励定义；一旦产生签到事实，定义不再允许修改。
  */
+/** 稳定领域类型 `CheckInRewardDefinition`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface CheckInRewardDefinition {
   baseRewardConfig: CheckInRewardConfig | null
   dateRewardRules: CheckInDateRewardRuleView[]

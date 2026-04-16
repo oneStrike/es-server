@@ -11,7 +11,7 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../../../common/audit/audit-action.constant'
+import { AuditActionTypeEnum } from '../audit-action.constant'
 
 export class BaseAuditDto extends BaseDto {
   @NumberProperty({

@@ -4,6 +4,7 @@
  */
 export const GEO_SOURCE = 'ip2region' as const
 
+/** 稳定领域类型 `GeoSource`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type GeoSource = typeof GEO_SOURCE
 
 /**
@@ -21,6 +22,7 @@ export const GEO_RUNTIME_SOURCE = {
  * 统一属地快照。
  * 所有写入链路与对外 DTO 统一复用这一组固定字段。
  */
+/** 稳定领域类型 `GeoSnapshot`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface GeoSnapshot {
   geoCountry?: string | null
   geoProvince?: string | null
@@ -33,6 +35,7 @@ export interface GeoSnapshot {
  * 属地查询结果。
  * 与持久化快照保持同构，便于直接透传到客户端上下文与写库链路。
  */
+/** 稳定领域类型 `GeoLookupResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type GeoLookupResult = GeoSnapshot
 
 /**

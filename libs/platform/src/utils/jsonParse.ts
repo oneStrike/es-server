@@ -8,13 +8,29 @@
 // BOM 字符正则表达式（模块作用域，避免重复编译）
 const BOM_REGEX = /^\uFEFF/
 
+export type JsonPrimitive = string | number | boolean | null
+export interface JsonObject {
+  [key: string]: JsonValue
+}
+export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject
+export type JsonInput = JsonValue | undefined
+export interface StructuredObject {
+  [key: string]: StructuredValue
+}
+export type StructuredValue =
+  | JsonPrimitive
+  | Date
+  | object
+  | StructuredValue[]
+  | StructuredObject
+
 function isObjectLike(
-  value: unknown,
-): value is Record<string, unknown> | unknown[] {
+  value: JsonInput,
+): value is Exclude<JsonValue, JsonPrimitive> {
   return typeof value === 'object' && value !== null
 }
 
-function normalizeInputToString(input: unknown) {
+function normalizeInputToString(input: JsonInput) {
   if (input == null) {
     return null
   } // null 或 undefined
@@ -43,7 +59,7 @@ function normalizeInputToString(input: unknown) {
  * 安全解析 JSON。
  * 仅两个参数：原始值与解析失败时的默认值。
  */
-export function jsonParse<T>(input: unknown, defaultValue?: T): T | null {
+export function jsonParse<T>(input: JsonInput, defaultValue?: T): T | null {
   // 若已是对象/数组，直接交由调用方处理，不再做字符串解析
   if (isObjectLike(input)) {
     return input as T

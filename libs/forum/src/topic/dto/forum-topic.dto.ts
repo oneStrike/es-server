@@ -1,3 +1,4 @@
+import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
 import { BaseForumTagDto } from '@libs/forum/tag/dto/forum-tag.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
@@ -63,7 +64,7 @@ export class BaseForumTopicDto extends BaseDto {
       { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
-  bodyTokens?: unknown | null
+  bodyTokens?: JsonValue | null
 
   @ArrayProperty({
     description: '结构化提及列表，仅写入时使用',

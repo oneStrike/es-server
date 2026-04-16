@@ -428,7 +428,7 @@ export class ContentPermissionService {
               (chapter as Record<string, unknown>)[key],
             ]),
           )
-        : (chapter as unknown as Record<string, unknown>),
+        : (chapter as Record<string, unknown>),
     }
   }
 

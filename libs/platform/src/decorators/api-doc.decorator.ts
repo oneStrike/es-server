@@ -23,7 +23,7 @@ export interface ApiDocOptions<TModel> {
 }
 
 // 工具函数：判断是否是类
-function isClass(model: any): model is Type<unknown> {
+function isClass(model: object): model is Type<object> {
   return typeof model === 'function' && model.prototype
 }
 
@@ -54,7 +54,7 @@ function baseResponse(summary: string) {
   }
 }
 
-export function ApiDoc<TModel extends Type<any>>(
+export function ApiDoc<TModel extends Type<object>>(
   options: ApiDocOptions<TModel>,
 ) {
   const { summary, model, isArray } = options
@@ -105,7 +105,7 @@ export function ApiDoc<TModel extends Type<any>>(
   return applyDecorators(...decorators)
 }
 
-export function ApiPageDoc<TModel extends Type<any>>(
+export function ApiPageDoc<TModel extends Type<object>>(
   options: ApiDocOptions<TModel>,
 ) {
   const { summary, model } = options

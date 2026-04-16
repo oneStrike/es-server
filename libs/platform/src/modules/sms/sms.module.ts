@@ -7,7 +7,7 @@ import { SmsService } from './sms.service'
  * 提供短信发送、验证码发送等功能
  */
 export interface SmsModuleOptions {
-  imports?: Array<DynamicModule | Type<any>>
+  imports?: Array<DynamicModule | Type<object>>
   providers?: Provider[]
 }
 

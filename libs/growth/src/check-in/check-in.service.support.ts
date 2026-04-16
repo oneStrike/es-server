@@ -1,4 +1,5 @@
 import type { Db, DrizzleService } from '@db/core'
+
 import type { CheckInPlanSelect } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { SQL } from 'drizzle-orm'
@@ -103,7 +104,7 @@ export abstract class CheckInServiceSupport {
    *
    * 数组和原始值统一视为无效结构，避免奖励定义误判。
    */
-  protected asRecord(value: unknown) {
+  protected asRecord<T>(value: T) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return undefined
     }
@@ -189,8 +190,8 @@ export abstract class CheckInServiceSupport {
    *
    * 数据库存储允许使用 JSON 容器，但领域层继续只消费显式奖励配置对象。
    */
-  protected parseStoredRewardConfig(
-    value: unknown,
+  protected parseStoredRewardConfig<T>(
+    value: T,
     options: { allowEmpty: boolean } = { allowEmpty: true },
   ) {
     return this.parseRewardConfig(
@@ -441,8 +442,8 @@ export abstract class CheckInServiceSupport {
     return {
       baseRewardConfig: this.parseRewardConfig(
         this.asRecord(record.baseRewardConfig) as
-          | CheckInRewardConfig
-          | undefined,
+        | CheckInRewardConfig
+        | undefined,
         { allowEmpty: true },
       ),
       dateRewardRules: this.normalizeDateRewardRules(
@@ -611,7 +612,7 @@ export abstract class CheckInServiceSupport {
       .format('YYYY-MM-DD')
 
     return normalizedLastSignedDate === today ||
-        normalizedLastSignedDate === yesterday
+      normalizedLastSignedDate === yesterday
       ? currentStreak
       : 0
   }
@@ -932,7 +933,7 @@ export abstract class CheckInServiceSupport {
       const monthLastDayRule = rules.find(
         (rule) =>
           rule.patternType ===
-            CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
+          CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
           this.matchesPatternRewardRule(cycleType, rule, signDate),
       )
       if (monthLastDayRule) {

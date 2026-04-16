@@ -1,5 +1,5 @@
+import type { UserLevelRuleSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
-import { UserLevelRuleSelect } from '@db/schema'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { BusinessException } from '@libs/platform/exceptions'

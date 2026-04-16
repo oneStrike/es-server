@@ -7,8 +7,14 @@ import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'
 
-// Webpack HMR 声明模块类型
-declare const module: any
+interface HotModule {
+  accept: () => void
+  dispose: (callback: () => void | Promise<void>) => void
+}
+
+declare const module: {
+  hot?: HotModule
+}
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({

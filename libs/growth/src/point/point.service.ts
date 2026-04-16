@@ -34,7 +34,7 @@ interface LedgerRecordShape {
   createdAt: Date
   updatedAt?: Date
   remark: string | null
-  context?: unknown
+  context?: Record<string, unknown> | null
 }
 
 /**
@@ -310,7 +310,11 @@ export class UserPointService {
 
     return {
       ...page,
-      list: page.list.map((item) => this.toPointRecord(item)),
+      list: page.list.map((item) =>
+        this.toPointRecord(
+          item as typeof item & { context?: Record<string, unknown> | null },
+        ),
+      ),
     }
   }
 
@@ -338,7 +342,9 @@ export class UserPointService {
     }
 
     return {
-      ...this.toPointRecord(record),
+      ...this.toPointRecord(
+        record as typeof record & { context?: Record<string, unknown> | null },
+      ),
       user: record.user,
     }
   }
@@ -525,7 +531,7 @@ export class UserPointService {
     afterValue: number
     bizKey?: string
     remark: string | null
-    context?: unknown
+    context?: Record<string, unknown> | null
     createdAt: Date
   }) {
     return {

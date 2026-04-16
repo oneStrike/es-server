@@ -18,9 +18,9 @@ import {
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto'
+import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { AuditActionTypeEnum } from '../../common/audit/audit-action.constant'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
 @ApiTags('签到管理/签到计划')

@@ -2,12 +2,8 @@ import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing'
 import { DrizzleService } from '@db/core'
-import {
-  appUser,
-  chatConversation,
-  chatConversationMember,
-  chatMessage,
-} from '@db/schema'
+import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
+
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
 import { EmojiSceneEnum } from '@libs/interaction/emoji/emoji.constant'
@@ -728,7 +724,7 @@ export class MessageChatService {
     domainEventId?: bigint
     domainEventPayload?: ChatMessageCreatedDomainEventPayload
   }> {
-    let lastError: unknown
+    let lastError = new Error('chat message creation failed')
     const maxRetry = 3
 
     // 重试循环：处理并发冲突
@@ -1314,7 +1310,7 @@ export class MessageChatService {
    * @returns 解析后的正整数
    * @throws BadRequestException 如果值不是正整数
    */
-  private parsePositiveInteger(value: unknown, fieldName: string) {
+  private parsePositiveInteger<T>(value: T, fieldName: string) {
     const normalized = Number(value)
     if (!Number.isInteger(normalized) || normalized <= 0) {
       throw new BadRequestException(`${fieldName} 必须是正整数`)
@@ -1332,7 +1328,7 @@ export class MessageChatService {
    * @returns BigInt 值
    * @throws BadRequestException 如果值格式无效
    */
-  private parseBigintId(value: unknown, fieldName: string) {
+  private parseBigintId<T>(value: T, fieldName: string) {
     if (typeof value !== 'string' || !DIGIT_STRING_REGEX.test(value.trim())) {
       throw new BadRequestException(
         `${fieldName} 必须是合法的整数字符串`,
@@ -1374,11 +1370,11 @@ export class MessageChatService {
       return undefined
     }
     try {
-      const data = JSON.parse(payload) as unknown
+      const data = JSON.parse(payload) as Record<string, unknown>
       if (typeof data !== 'object' || data === null || Array.isArray(data)) {
         throw new BadRequestException('payload 必须是 JSON 对象')
       }
-      return data as Record<string, unknown>
+      return data
     } catch {
       throw new BadRequestException('payload 不是有效的 JSON 格式')
     }
@@ -1393,7 +1389,7 @@ export class MessageChatService {
    * @returns 消息类型枚举值
    * @throws BadRequestException 如果消息类型无效
    */
-  private parseMessageType(value: unknown) {
+  private parseMessageType<T>(value: T) {
     const messageType = Number(value)
     if (!Number.isInteger(messageType)) {
       throw new BadRequestException('messageType 无效')
@@ -1473,7 +1469,7 @@ export class MessageChatService {
     void this.messageWsMonitorService.recordResyncSuccess().catch(() => {})
   }
 
-  private stringifyError(error: unknown) {
+  private stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
     }

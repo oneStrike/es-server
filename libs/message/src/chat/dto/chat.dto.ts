@@ -1,3 +1,4 @@
+import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
 import { DateProperty } from '@libs/platform/decorators/validate/date-property';
@@ -6,6 +7,7 @@ import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
 import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { PickType } from '@nestjs/swagger'
 import {
   ChatMessageTypeEnum,
 } from '../chat.constant'
@@ -18,7 +20,7 @@ export class OpenDirectConversationDto {
   targetUserId!: number
 }
 
-export class QueryChatConversationMessagesDto {
+class BaseChatConversationMessagesQueryDto {
   @NumberProperty({
     description: '会话 ID',
     example: 1,
@@ -49,6 +51,11 @@ export class QueryChatConversationMessagesDto {
   })
   limit?: number
 }
+
+export class QueryChatConversationMessagesDto extends PickType(
+  BaseChatConversationMessagesQueryDto,
+  ['conversationId', 'cursor', 'afterSeq', 'limit'] as const,
+) {}
 
 export class SendChatMessageDto {
   @NumberProperty({
@@ -175,7 +182,7 @@ export class BaseChatMessageDto {
       { type: 'emojiUnicode', unicodeSequence: '😀', emojiAssetId: 1001 },
     ],
   })
-  bodyTokens?: unknown
+  bodyTokens?: JsonValue
 
   @StringProperty({
     description: '客户端幂等键',

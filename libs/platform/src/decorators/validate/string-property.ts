@@ -48,7 +48,7 @@ export function StringProperty(options: StringPropertyOptions) {
     throw new Error('StringProperty: minLength 不能大于 maxLength')
   }
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
     decorators.push(IsString({ message: '必须是字符串类型' }))

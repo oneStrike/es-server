@@ -1,4 +1,5 @@
 import type { Db } from '@db/core'
+import type { StructuredValue } from '@libs/platform/utils/jsonParse'
 import type { Cache } from 'cache-manager'
 import type { ConfigAllowedTemplate } from './system-config.type'
 import { DrizzleService } from '@db/core'
@@ -149,7 +150,7 @@ export class SystemConfigService implements OnModuleInit {
 
         const mergedValue = this.deepMerge(
           this.cloneConfig(
-            ((currentConfig as Record<string, unknown>)[key] ??
+            ((currentConfig)[key] ??
               (DEFAULT_CONFIG as Record<string, unknown>)[key]) as Record<
               string,
               unknown
@@ -158,11 +159,11 @@ export class SystemConfigService implements OnModuleInit {
           processedInput,
         )
 
-        ;(nextConfig as Record<string, unknown>)[key] = mergedValue
+        ;(nextConfig)[key] = mergedValue
       }
 
       this.validateUploadConfig(
-        (nextConfig as Record<string, unknown>).uploadConfig,
+        (nextConfig).uploadConfig,
       )
 
       const snapshot = this.buildPersistedSnapshot(nextConfig, userId)
@@ -182,8 +183,8 @@ export class SystemConfigService implements OnModuleInit {
    * 递归过滤输入对象，只保留 DEFAULT_CONFIG 白名单中存在的字段。
    * 这样即使前端绕过 DTO 传入额外节点，也不会写入持久化快照。
    */
-  private filterAllowedFields(
-    input: unknown,
+  private filterAllowedFields<T>(
+    input: T,
     allowedFields: ConfigAllowedTemplate,
   ): Record<string, unknown> {
     if (!input || typeof input !== 'object') {
@@ -261,7 +262,7 @@ export class SystemConfigService implements OnModuleInit {
    * 刷新缓存并通知 ConfigReader 重新装载。
    * 缓存内始终保存合并默认值且已解密的配置快照，供业务模块同步读取。
    */
-  private async refreshCache(config: any) {
+  private async refreshCache(config: Record<string, unknown>) {
     const mergedConfig = await this.buildReadableSnapshot(config)
     await this.cacheManager.set(
       CACHE_KEY.CONFIG,
@@ -326,9 +327,9 @@ export class SystemConfigService implements OnModuleInit {
    * 解密快照中的敏感字段。
    * 解密失败时保留原值，避免单个字段损坏导致整份配置不可读。
    */
-  private async decryptSensitiveFields(config: Record<string, any>) {
+  private async decryptSensitiveFields(config: Record<string, unknown>) {
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
-      const configItem = config[key]
+      const configItem = config[key] as Record<string, unknown> | undefined
       if (configItem) {
         for (const path of metadata.sensitivePaths) {
           const value = this.getValueByPath(configItem, path)
@@ -362,11 +363,11 @@ export class SystemConfigService implements OnModuleInit {
    * 复制一份配置快照并对敏感字段做脱敏展示。
    * 仅管理端读取接口使用，不会回写缓存。
    */
-  private maskSensitiveSnapshot<T extends Record<string, any>>(config: T) {
+  private maskSensitiveSnapshot<T extends Record<string, unknown>>(config: T) {
     const maskedConfig = this.cloneConfig(config)
 
     for (const [key, metadata] of Object.entries(CONFIG_SECURITY_META)) {
-      const configItem = maskedConfig[key]
+      const configItem = maskedConfig[key] as Record<string, unknown> | undefined
       if (!configItem) {
         continue
       }
@@ -413,9 +414,9 @@ export class SystemConfigService implements OnModuleInit {
    * 递归合并对象，`undefined` 不覆盖目标值。
    */
   private deepMerge(
-    target: Record<string, any>,
-    source: Record<string, any>,
-  ): Record<string, any> {
+    target: Record<string, unknown>,
+    source: Record<string, unknown>,
+  ): Record<string, unknown> {
     for (const [key, sourceValue] of Object.entries(source)) {
       if (this.isPlainObject(sourceValue) && this.isPlainObject(target[key])) {
         target[key] = this.deepMerge(target[key], sourceValue)
@@ -430,7 +431,7 @@ export class SystemConfigService implements OnModuleInit {
   /**
    * 判断值是否为可递归处理的普通对象。
    */
-  private isPlainObject(value: unknown): value is Record<string, unknown> {
+  private isPlainObject<T>(value: T): value is Extract<T, Record<string, unknown>> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
   }
 
@@ -468,33 +469,50 @@ export class SystemConfigService implements OnModuleInit {
   /**
    * 按路径读取对象值，路径格式为 `a.b.c`。
    */
-  private getValueByPath(target: Record<string, any> | null, path: string) {
+  private getValueByPath(target: Record<string, unknown> | null, path: string) {
     if (!target) {
       return undefined
     }
 
-    return path
-      .split('.')
-      .reduce<any>((current, segment) => current?.[segment], target)
+    let current:
+      | Record<string, unknown>
+      | string
+      | number
+      | boolean
+      | null
+      | undefined = target
+    for (const segment of path.split('.')) {
+      if (!this.isPlainObject(current)) {
+        return undefined
+      }
+      current = current[segment] as
+      | Record<string, unknown>
+      | string
+      | number
+      | boolean
+      | null
+      | undefined
+    }
+    return current
   }
 
   /**
    * 按路径写入对象值，缺失的中间节点会自动补成空对象。
    */
   private setValueByPath(
-    target: Record<string, any>,
+    target: Record<string, unknown>,
     path: string,
-    value: unknown,
+    value: StructuredValue,
   ) {
     const segments = path.split('.')
-    let current: Record<string, any> = target
+    let current: Record<string, unknown> = target
 
     for (let i = 0; i < segments.length - 1; i += 1) {
       const segment = segments[i]
       if (!this.isPlainObject(current[segment])) {
         current[segment] = {}
       }
-      current = current[segment]
+      current = current[segment] as Record<string, unknown>
     }
 
     const lastSegment = segments.at(-1)
@@ -507,15 +525,15 @@ export class SystemConfigService implements OnModuleInit {
   /**
    * 判断对象上是否存在指定路径。
    */
-  private hasPath(target: Record<string, any>, path: string) {
+  private hasPath(target: Record<string, unknown>, path: string) {
     const segments = path.split('.')
-    let current: any = target
+    let current: Record<string, unknown> | undefined = target
 
     for (const segment of segments) {
       if (!this.isPlainObject(current) || !(segment in current)) {
         return false
       }
-      current = current[segment]
+      current = current[segment] as Record<string, unknown> | undefined
     }
 
     return true
@@ -533,7 +551,7 @@ export class SystemConfigService implements OnModuleInit {
    * 保存前校验上传配置的 provider 与子配置是否一致。
    * 本轮只做静态字段完整性校验，不做网络探测。
    */
-  private validateUploadConfig(uploadConfig: unknown) {
+  private validateUploadConfig<T>(uploadConfig: T) {
     if (!this.isPlainObject(uploadConfig)) {
       return
     }
@@ -561,8 +579,8 @@ export class SystemConfigService implements OnModuleInit {
   /**
    * 断言对象上的必填字符串字段全部存在且非空。
    */
-  private assertRequiredStringFields(
-    target: unknown,
+  private assertRequiredStringFields<T>(
+    target: T,
     requiredFields: string[],
     errorPrefix: string,
   ) {

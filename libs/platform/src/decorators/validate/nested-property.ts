@@ -40,7 +40,7 @@ export function NestedProperty(options: NestedPropertyOptions) {
   const inContract = options.contract ?? true
   const validation = inContract && (options.validation ?? true)
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
     decorators.push(

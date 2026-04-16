@@ -37,7 +37,7 @@ export function DateProperty(options: DatePropertyOptions) {
   const inContract = options.contract ?? true
   const validation = inContract && (options.validation ?? true)
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
     decorators.push(IsDate({ message: '必须是有效的日期格式' }))

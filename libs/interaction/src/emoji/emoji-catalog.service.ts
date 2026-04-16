@@ -10,6 +10,7 @@ import type {
   RecordEmojiRecentUsageInput,
 } from './emoji.type'
 import { buildLikePattern, DrizzleService } from '@db/core'
+
 import { Injectable } from '@nestjs/common'
 import {
   and,

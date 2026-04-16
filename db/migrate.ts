@@ -11,6 +11,15 @@ const MIGRATIONS_SCHEMA = 'public'
 const MIGRATIONS_TABLE = '__drizzle_migrations__'
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS'
+type LogValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Error
+  | Record<string, string | number | boolean | null>
+  | Array<string | number | boolean | null>
 
 interface LocalMigrationMeta {
   name: string
@@ -36,7 +45,7 @@ function hasRunnableLocalMigrations(localMigrations: LocalMigrationMeta[]) {
   return localMigrations.some(migration => migration.hasMigrationSql)
 }
 
-function log(level: LogLevel, message: string, details?: Record<string, unknown>) {
+function log(level: LogLevel, message: string, details?: Record<string, LogValue>) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`)
 
   if (!details) {
@@ -48,7 +57,7 @@ function log(level: LogLevel, message: string, details?: Record<string, unknown>
   }
 }
 
-function formatLogValue(value: unknown) {
+function formatLogValue(value: LogValue) {
   if (value === undefined) {
     return 'undefined'
   }
@@ -99,7 +108,7 @@ function getRuntimeLabel() {
     : `node ${process.version}`
 }
 
-function serializeError(error: unknown) {
+function serializeError(error: Error | string | number | boolean | null | undefined) {
   if (error instanceof Error) {
     return error.stack ?? `${error.name}: ${error.message}`
   }

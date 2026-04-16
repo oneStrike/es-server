@@ -17,7 +17,8 @@ const COMPRESSIBLE_CONTENT_TYPES = /^text\/|application\/json|application\/javas
  * @param fastifyAdapter - Fastify 适配器实例
  */
 export async function setupCompression(fastifyAdapter: FastifyAdapter) {
-  await fastifyAdapter.register(fastifyCompress as any, {
+  type RegisterPlugin = Parameters<FastifyAdapter['register']>[0]
+  await fastifyAdapter.register(fastifyCompress as RegisterPlugin, {
     global: true,
     threshold: 1024,
 

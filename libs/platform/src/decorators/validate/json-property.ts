@@ -37,7 +37,7 @@ export function JsonProperty(options: JsonPropertyOptions) {
   const inContract = options.contract ?? true
   const validation = inContract && (options.validation ?? true)
 
-  const decorators: any[] = []
+  const decorators: PropertyDecorator[] = []
 
   if (validation) {
     decorators.push(IsJSON({ message: '必须是有效的JSON字符串格式' }))

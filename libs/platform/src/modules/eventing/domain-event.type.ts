@@ -3,6 +3,7 @@ import type {
   DomainEventDispatchStatusEnum,
 } from './eventing.constant'
 
+/** 稳定领域类型 `DomainEventRecord`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface DomainEventRecord {
   id: bigint
   eventKey: string
@@ -18,6 +19,7 @@ export interface DomainEventRecord {
   createdAt: Date
 }
 
+/** 稳定领域类型 `DomainEventDispatchRecord`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface DomainEventDispatchRecord {
   id: bigint
   eventId: bigint
@@ -31,6 +33,7 @@ export interface DomainEventDispatchRecord {
   updatedAt: Date
 }
 
+/** 稳定领域类型 `PublishDomainEventInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface PublishDomainEventInput {
   eventKey: string
   domain: string
@@ -45,6 +48,7 @@ export interface PublishDomainEventInput {
   context?: Record<string, unknown>
 }
 
+/** 稳定领域类型 `PublishDomainEventResult`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface PublishDomainEventResult {
   duplicated: boolean
   event: DomainEventRecord

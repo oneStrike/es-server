@@ -6,7 +6,13 @@ import { Pool } from 'pg'
 import * as schema from '../schema'
 
 export type Db = Omit<CoreDb, 'query'> & {
-  query: Record<string, any>
+  query: Record<
+    string,
+    {
+      findFirst?: (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => Promise<object | undefined>
+      findMany?: (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => Promise<object[]>
+    }
+  >
 }
 
 export function getDatabaseUrl(): string {
@@ -31,13 +37,13 @@ export function createDbClient(connectionString: string): Db {
     {},
     {
       get: (_target, tableKey) => {
-        const table = (schema as Record<string, any>)[String(tableKey)]
+        const table = (schema as Record<string, object>)[String(tableKey)]
         if (!table || typeof table !== 'object') {
           return undefined
         }
 
         return {
-          findFirst: async (config?: { where?: any }) => {
+          findFirst: async (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => {
             const where =
               typeof config?.where === 'function'
                 ? config.where(table, operators)
@@ -48,7 +54,7 @@ export function createDbClient(connectionString: string): Db {
                 : await db.select().from(table).where(where).limit(1)
             return rows[0]
           },
-          findMany: async (config?: { where?: any }) => {
+          findMany: async (config?: { where?: object | ((table: object, ops: typeof operators) => object) }) => {
             const where =
               typeof config?.where === 'function'
                 ? config.where(table, operators)

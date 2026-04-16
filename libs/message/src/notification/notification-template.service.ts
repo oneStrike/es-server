@@ -319,15 +319,33 @@ export class MessageNotificationTemplateService {
     context: NotificationTemplateRenderContext,
     path: string,
   ) {
-    return path.split('.').reduce<unknown>((current, key) => {
+    let current:
+      | object
+      | string
+      | number
+      | boolean
+      | Date
+      | undefined
+      | null = context
+
+    for (const key of path.split('.')) {
       if (current === undefined || current === null) {
         return undefined
       }
       if (typeof current !== 'object') {
         return undefined
       }
-      return (current as Record<string, unknown>)[key]
-    }, context)
+      current = (current as Record<string, unknown>)[key] as
+      | object
+      | string
+      | number
+      | boolean
+      | Date
+      | undefined
+      | null
+    }
+
+    return current
   }
 
   private normalizeTemplateText(value: string, errorMessage: string) {
@@ -402,7 +420,7 @@ export class MessageNotificationTemplateService {
     return normalized || null
   }
 
-  private ensureSupportedCategoryKey(value: unknown) {
+  private ensureSupportedCategoryKey<T>(value: T) {
     if (typeof value !== 'string' || !value.trim()) {
       throw new BadRequestException('通知分类非法')
     }
@@ -413,7 +431,7 @@ export class MessageNotificationTemplateService {
     return categoryKey
   }
 
-  private stringifyError(error: unknown) {
+  private stringifyError<T>(error: T) {
     if (error instanceof Error) {
       return error.message
     }

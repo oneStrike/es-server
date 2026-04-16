@@ -1,6 +1,7 @@
 import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
+
 import {
   MessageDomainEventFactoryService,
 } from '@libs/message/eventing/message-domain-event.factory'

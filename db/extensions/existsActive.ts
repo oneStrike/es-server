@@ -22,8 +22,7 @@ export async function existsActive(
   where?: SQL,
 ): Promise<boolean> {
   // 获取 deletedAt 字段，验证表是否支持软删除
-  const tableAsRecord = table as unknown as Record<string, SQLWrapper>
-  const deletedAtColumn = tableAsRecord.deletedAt
+  const deletedAtColumn = Reflect.get(table as object, 'deletedAt') as SQLWrapper | undefined
 
   if (!deletedAtColumn) {
     throw new Error('Table does not have deletedAt field')

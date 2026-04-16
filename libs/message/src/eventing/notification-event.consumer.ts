@@ -3,13 +3,14 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
-import { DrizzleService } from '@db/core'
+import type {NotificationActorSource} from '../notification/notification-public.mapper';
 import type { NotificationEventHandler } from './message-event.type'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'
 import {
-  mapUserNotificationToPublicView,
-  type NotificationActorSource,
+  mapUserNotificationToPublicView
+
 } from '../notification/notification-public.mapper'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
 import { getMessageDomainEventDefinition } from './message-event.constant'
@@ -276,7 +277,7 @@ export class NotificationEventConsumer {
     if (
       result.action === 'delete' &&
       result.receiverUserId &&
-      typeof (result.notification as { id?: unknown } | undefined)?.id === 'number'
+      typeof (result.notification as { id?: number } | undefined)?.id === 'number'
     ) {
       this.messageNotificationRealtimeService.emitNotificationDeleted(
         result.receiverUserId,
