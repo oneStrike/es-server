@@ -181,3 +181,6 @@ bundle-analyzer-report.html
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml (uncomment if you want to ignore it)
+
+# OMX local state
+.omx/
