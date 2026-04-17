@@ -12,70 +12,29 @@ import {
   userComment,
   userNotification,
 } from '../../../schema'
+import { getCanonicalNotificationTemplateContract } from '../../../libs/message/src/notification/notification-template-contract'
 import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
 const templateFixtures = [
-  {
-    categoryKey: 'comment_reply',
-    titleTemplate: '{{payload.actorNickname}} 回复了你的评论',
-    contentTemplate: '{{payload.replyExcerpt}}',
-    remark: 'seed default template: 评论回复',
-  },
-  {
-    categoryKey: 'comment_mention',
-    titleTemplate: '{{payload.actorNickname}} 在评论中提到了你',
-    contentTemplate: '{{payload.commentExcerpt}}',
-    remark: 'seed default template: 评论提及',
-  },
-  {
-    categoryKey: 'comment_like',
-    titleTemplate: '{{payload.actorNickname}} 点赞了你的评论',
-    contentTemplate: '{{payload.actorNickname}} 点赞了你的评论',
-    remark: 'seed default template: 评论点赞',
-  },
-  {
-    categoryKey: 'topic_like',
-    titleTemplate: '{{payload.actorNickname}} 点赞了你的主题',
-    contentTemplate: '{{payload.topicTitle}}',
-    remark: 'seed default template: 主题点赞',
-  },
-  {
-    categoryKey: 'topic_favorited',
-    titleTemplate: '{{payload.actorNickname}} 收藏了你的主题',
-    contentTemplate: '{{payload.topicTitle}}',
-    remark: 'seed default template: 主题收藏',
-  },
-  {
-    categoryKey: 'topic_commented',
-    titleTemplate: '{{payload.actorNickname}} 评论了你的主题',
-    contentTemplate: '{{payload.commentExcerpt}}',
-    remark: 'seed default template: 主题评论',
-  },
-  {
-    categoryKey: 'topic_mentioned',
-    titleTemplate: '{{payload.actorNickname}} 在主题中提到了你',
-    contentTemplate: '{{payload.topicTitle}}',
-    remark: 'seed default template: 主题提及',
-  },
-  {
-    categoryKey: 'user_followed',
-    titleTemplate: '{{payload.actorNickname}} 关注了你',
-    contentTemplate: '{{payload.actorNickname}} 关注了你',
-    remark: 'seed default template: 用户关注',
-  },
-  {
-    categoryKey: 'system_announcement',
-    titleTemplate: '{{payload.title}}',
-    contentTemplate: '{{payload.content}}',
-    remark: 'seed default template: 系统公告',
-  },
-  {
-    categoryKey: 'task_reminder',
-    titleTemplate: '{{payload.title}}',
-    contentTemplate: '{{payload.content}}',
-    remark: 'seed default template: 任务提醒',
-  },
-] as const
+  'comment_reply',
+  'comment_mention',
+  'comment_like',
+  'topic_like',
+  'topic_favorited',
+  'topic_commented',
+  'topic_mentioned',
+  'user_followed',
+  'system_announcement',
+  'task_reminder',
+].map((categoryKey) => {
+  const contract = getCanonicalNotificationTemplateContract(categoryKey)
+  return {
+    categoryKey,
+    titleTemplate: contract.titleTemplate,
+    contentTemplate: contract.contentTemplate,
+    remark: contract.remark,
+  }
+}) as const
 
 export async function seedMessageDomain(db: Db) {
   console.log('🌱 初始化消息域数据...')
@@ -212,7 +171,7 @@ export async function seedMessageDomain(db: Db) {
   console.log('  ✓ 会话与消息完成')
 
   const messageBySeq = new Map<bigint, (typeof messages)[number]>(
-    messages.map(item => [item.messageSeq, item]),
+    messages.map((item) => [item.messageSeq, item]),
   )
   const memberFixtures = [
     {
@@ -282,12 +241,13 @@ export async function seedMessageDomain(db: Db) {
           id: true,
           userId: true,
           title: true,
+          sectionId: true,
         },
       })
     : null
-  const topicCommentActorNickname = [userA, userB, userC].find(
-    user => user.id === rootReply?.userId,
-  )?.nickname ?? '有人'
+  const topicCommentActorNickname =
+    [userA, userB, userC].find((user) => user.id === rootReply?.userId)
+      ?.nickname ?? '有人'
 
   const notificationFixtures = [
     {
@@ -299,8 +259,19 @@ export async function seedMessageDomain(db: Db) {
       content: '我觉得第一卷就把未来冲突埋得很深。',
       payload: {
         actorNickname: topicCommentActorNickname,
-        topicTitle: commentTopic?.title ?? '进击的巨人：前三卷伏笔整理',
         commentExcerpt: '我觉得第一卷就把未来冲突埋得很深。',
+        subject: {
+          kind: 'topic',
+          id: commentTopic?.id ?? rootReply?.targetId ?? 1,
+          title: commentTopic?.title ?? '进击的巨人：前三卷伏笔整理',
+          ...(commentTopic?.sectionId
+            ? {
+                extra: {
+                  sectionId: commentTopic.sectionId,
+                },
+              }
+            : {}),
+        },
       },
       isRead: false,
       readAt: null,
@@ -316,8 +287,19 @@ export async function seedMessageDomain(db: Db) {
       payload: {
         actorNickname: '小光',
         replyExcerpt: '而且艾伦和调查兵团的立场差异很早就有预警。',
-        targetDisplayTitle: '进击的巨人：前三卷伏笔整理',
-        replyCommentId: replyComment?.id ?? null,
+        ...(replyComment?.id ? { commentId: replyComment.id } : {}),
+        subject: {
+          kind: 'topic',
+          id: commentTopic?.id ?? rootReply?.targetId ?? 1,
+          title: commentTopic?.title ?? '进击的巨人：前三卷伏笔整理',
+          ...(commentTopic?.sectionId
+            ? {
+                extra: {
+                  sectionId: commentTopic.sectionId,
+                },
+              }
+            : {}),
+        },
       },
       isRead: false,
       readAt: null,
@@ -331,9 +313,35 @@ export async function seedMessageDomain(db: Db) {
       title: '春季版本更新公告',
       content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
       payload: {
-        title: '春季版本更新公告',
-        content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
-        announcementId: announcement?.id ?? null,
+        ...(announcement?.id ? { announcementId: announcement.id } : {}),
+        ...(announcement?.announcementType !== undefined
+          ? { announcementType: announcement.announcementType }
+          : {}),
+        ...(announcement?.priorityLevel !== undefined
+          ? { priorityLevel: announcement.priorityLevel }
+          : {}),
+        subject: {
+          kind: 'announcement',
+          id: announcement?.id ?? 42,
+          title: announcement?.title ?? '春季版本更新公告',
+          ...(announcement?.announcementType !== undefined ||
+          announcement?.priorityLevel !== undefined ||
+          announcement?.summary
+            ? {
+                extra: {
+                  ...(announcement?.announcementType !== undefined
+                    ? { announcementType: announcement.announcementType }
+                    : {}),
+                  ...(announcement?.priorityLevel !== undefined
+                    ? { priorityLevel: announcement.priorityLevel }
+                    : {}),
+                  ...(announcement?.summary
+                    ? { summary: announcement.summary }
+                    : {}),
+                },
+              }
+            : {}),
+        },
       },
       isRead: false,
       readAt: null,

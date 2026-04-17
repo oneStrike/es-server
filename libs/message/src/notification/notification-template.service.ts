@@ -26,6 +26,8 @@ const NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST = new Set([
   'categoryKey',
   'receiverUserId',
   'actorUserId',
+  'title',
+  'content',
   'expiresAt',
 ])
 
@@ -127,20 +129,22 @@ export class MessageNotificationTemplateService {
 
   async updateNotificationTemplate(input: UpdateNotificationTemplateDto) {
     const current = await this.getNotificationTemplateDetail(input.id)
-    const currentCategoryKey = this.ensureSupportedCategoryKey(current.categoryKey)
-    const nextCategoryKey
-      = input.categoryKey !== undefined
+    const currentCategoryKey = this.ensureSupportedCategoryKey(
+      current.categoryKey,
+    )
+    const nextCategoryKey =
+      input.categoryKey !== undefined
         ? this.ensureSupportedCategoryKey(input.categoryKey)
         : currentCategoryKey
-    const nextTitleTemplate
-      = input.titleTemplate !== undefined
+    const nextTitleTemplate =
+      input.titleTemplate !== undefined
         ? this.normalizeTemplateText(
             input.titleTemplate,
             '通知标题模板不能为空',
           )
         : current.titleTemplate
-    const nextContentTemplate
-      = input.contentTemplate !== undefined
+    const nextContentTemplate =
+      input.contentTemplate !== undefined
         ? this.normalizeTemplateText(
             input.contentTemplate,
             '通知正文模板不能为空',
@@ -150,7 +154,8 @@ export class MessageNotificationTemplateService {
     this.ensureTemplatePlaceholdersValid(nextTitleTemplate, 'titleTemplate')
     this.ensureTemplatePlaceholdersValid(nextContentTemplate, 'contentTemplate')
 
-    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> = {}
+    const updateData: Partial<typeof this.notificationTemplate.$inferInsert> =
+      {}
     if (input.categoryKey !== undefined) {
       updateData.categoryKey = nextCategoryKey
     }
@@ -283,6 +288,8 @@ export class MessageNotificationTemplateService {
       categoryKey: input.categoryKey,
       receiverUserId: input.receiverUserId,
       actorUserId: input.actorUserId,
+      title: input.title,
+      content: input.content,
       expiresAt: input.expiresAt,
       payload: input.payload,
     }
@@ -319,14 +326,8 @@ export class MessageNotificationTemplateService {
     context: NotificationTemplateRenderContext,
     path: string,
   ) {
-    let current:
-      | object
-      | string
-      | number
-      | boolean
-      | Date
-      | undefined
-      | null = context
+    let current: object | string | number | boolean | Date | undefined | null =
+      context
 
     for (const key of path.split('.')) {
       if (current === undefined || current === null) {
@@ -336,13 +337,13 @@ export class MessageNotificationTemplateService {
         return undefined
       }
       current = (current as Record<string, unknown>)[key] as
-      | object
-      | string
-      | number
-      | boolean
-      | Date
-      | undefined
-      | null
+        | object
+        | string
+        | number
+        | boolean
+        | Date
+        | undefined
+        | null
     }
 
     return current
@@ -398,7 +399,7 @@ export class MessageNotificationTemplateService {
     const placeholders = new Set(
       Array.from(
         templateText.matchAll(TEMPLATE_PLACEHOLDER_REGEXP),
-        match => match[1],
+        (match) => match[1],
       ),
     )
 

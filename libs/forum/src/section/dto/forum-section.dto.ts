@@ -1,4 +1,4 @@
-import { BaseForumSectionGroupDto } from '@libs/forum/section-group/dto/forum-section-group.dto'
+import { ForumSectionGroupSummaryDto } from '@libs/forum/section-group/dto/forum-section-group-summary.dto'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
@@ -228,7 +228,7 @@ export class QueryPublicForumSectionDetailDto extends IntersectionType(
  * 公开板块分组摘要 DTO。
  */
 export class ForumSectionGroupBriefDto extends PickType(
-  BaseForumSectionGroupDto,
+  ForumSectionGroupSummaryDto,
   ['id', 'name', 'description', 'sortOrder'] as const,
 ) {}
 

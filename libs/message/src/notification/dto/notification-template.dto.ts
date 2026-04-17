@@ -1,4 +1,9 @@
-import { BooleanProperty, DateProperty, NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  BooleanProperty,
+  DateProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
 import { IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -21,15 +26,17 @@ export class BaseMessageNotificationTemplateDto {
   categoryKey!: MessageNotificationCategoryKey
 
   @StringProperty({
-    description: '标题模板',
-    example: '{{payload.actorNickname}} 回复了你的评论',
+    description:
+      '标题模板；支持 {{title}}、{{payload.subject.title}}、{{payload.actorNickname}} 等占位符',
+    example: '{{payload.actorNickname}} 点赞了你的主题',
     maxLength: 200,
   })
   titleTemplate!: string
 
   @StringProperty({
-    description: '正文模板',
-    example: '{{payload.replyExcerpt}}',
+    description:
+      '正文模板；支持 {{content}}、{{payload.subject.title}}、{{payload.replyExcerpt}} 等占位符',
+    example: '{{payload.subject.title}}',
     maxLength: 1000,
   })
   contentTemplate!: string
@@ -67,7 +74,10 @@ class MessageNotificationTemplateMutableDto extends PickType(
 ) {}
 
 class MessageNotificationTemplateOptionalConfigDto extends PartialType(
-  PickType(BaseMessageNotificationTemplateDto, ['isEnabled', 'remark'] as const),
+  PickType(BaseMessageNotificationTemplateDto, [
+    'isEnabled',
+    'remark',
+  ] as const),
 ) {}
 
 export class QueryNotificationTemplatePageDto extends IntersectionType(

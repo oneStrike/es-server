@@ -11,6 +11,7 @@ import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageNotificationPreferenceService } from '../notification/notification-preference.service'
+import { MessageNotificationSubjectPayloadService } from '../notification/notification-subject-payload.service'
 import { MessageNotificationTemplateService } from '../notification/notification-template.service'
 
 /**
@@ -22,6 +23,7 @@ export class NotificationProjectionService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly messageNotificationPreferenceService: MessageNotificationPreferenceService,
+    private readonly messageNotificationSubjectPayloadService: MessageNotificationSubjectPayloadService,
     private readonly messageNotificationTemplateService: MessageNotificationTemplateService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
@@ -84,6 +86,11 @@ export class NotificationProjectionService {
       }
     }
 
+    const normalizedPayload =
+      await this.messageNotificationSubjectPayloadService.normalizePayload(
+        command.categoryKey,
+        command.payload,
+      )
     const rendered =
       await this.messageNotificationTemplateService.renderNotificationTemplate({
         categoryKey: command.categoryKey,
@@ -91,7 +98,7 @@ export class NotificationProjectionService {
         actorUserId: command.actorUserId,
         title: command.title,
         content: command.content,
-        payload: command.payload,
+        payload: normalizedPayload,
         expiresAt: command.expiresAt,
       })
 
@@ -105,7 +112,7 @@ export class NotificationProjectionService {
           actorUserId: command.actorUserId,
           title: rendered.title,
           content: rendered.content,
-          payload: command.payload,
+          payload: normalizedPayload,
           expiresAt: command.expiresAt,
         })
         .onConflictDoNothing({
@@ -159,7 +166,7 @@ export class NotificationProjectionService {
         actorUserId: command.actorUserId,
         title: rendered.title,
         content: rendered.content,
-        payload: command.payload,
+        payload: normalizedPayload,
         expiresAt: command.expiresAt,
       })
       .onConflictDoUpdate({
@@ -172,7 +179,7 @@ export class NotificationProjectionService {
           actorUserId: command.actorUserId,
           title: rendered.title,
           content: rendered.content,
-          payload: command.payload,
+          payload: normalizedPayload,
           expiresAt: command.expiresAt,
         },
       })

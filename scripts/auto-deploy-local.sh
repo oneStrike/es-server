@@ -133,6 +133,43 @@ docker_build() {
   )
 }
 
+refresh_frontend_proxies_after_server_deploy() {
+  # 线上发布 es-server 时只重建 backend，若前端容器内代理缓存了旧 upstream IP，
+  # 请求可能继续命中错误容器。这里保持与正式脚本一致，重建前端容器触发重新解析。
+  log "刷新 admin/app 前端容器，重置可能缓存的 backend IP..."
+  docker compose up -d --force-recreate admin app
+}
+
+declare -a PENDING_PROJECTS=()
+
+has_pending_frontend_deploys() {
+  local pending_project
+
+  for pending_project in "${PENDING_PROJECTS[@]:1}"; do
+    case "$pending_project" in
+      es-admin|es-app-v2)
+        return 0
+        ;;
+    esac
+  done
+
+  return 1
+}
+
+should_refresh_frontend_after_server_deploy() {
+  if [ "${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY:-true}" != "true" ]; then
+    log "跳过前端代理刷新 (REFRESH_FRONTEND_AFTER_SERVER_DEPLOY=${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY})"
+    return 1
+  fi
+
+  if has_pending_frontend_deploys; then
+    log "后续仍有前端项目待部署，跳过本次 server 阶段的中间代理刷新"
+    return 1
+  fi
+
+  return 0
+}
+
 build_project() {
   local project_name="$1"
   local project_dir="$2"
@@ -193,7 +230,10 @@ deploy_services() {
         ;;
       es-server)
         log "启动 API 服务（迁移由 compose 编排自动处理）..."
-        docker compose up -d --remove-orphans --force-recreate admin-server app-server
+        docker compose up -d --remove-orphans --force-recreate admin-server app-server || exit 1
+        if should_refresh_frontend_after_server_deploy; then
+          refresh_frontend_proxies_after_server_deploy
+        fi
         ;;
     esac
   )
@@ -241,7 +281,7 @@ collect_projects() {
     return 0
   fi
 
-  for project in es-admin es-app-v2 es-server; do
+  for project in es-server es-admin es-app-v2; do
     if project_exists "$project"; then
       detected+=("$project")
     fi
@@ -287,6 +327,7 @@ main() {
     error "未找到可部署的本地项目"
     return 1
   }
+  PENDING_PROJECTS=("${projects[@]}")
 
   for project in "${projects[@]}"; do
     if ! deploy_project "$project"; then
@@ -297,6 +338,7 @@ main() {
       fi
       warn "【${project}】部署失败，继续执行下一个项目"
     fi
+    PENDING_PROJECTS=("${PENDING_PROJECTS[@]:1}")
   done
 
   echo ""

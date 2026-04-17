@@ -2,7 +2,7 @@
 
 # Multi-Project Auto Deploy Script
 # Supports: es-admin, es-app-v2, es-server
-# Function: Pull code, build images, and deploy using docker-compose
+# Function: Force-sync code, build images, and deploy using docker-compose
 #
 # Directory structure on server:
 # /path/to/deploy/
@@ -44,7 +44,6 @@ error() {
 }
 
 # Git retry configuration
-readonly MAX_RETRIES=5
 readonly GIT_TIMEOUT_SECONDS="${GIT_TIMEOUT_SECONDS:-90}"
 readonly GIT_FETCH_TIMEOUT_SECONDS="${GIT_FETCH_TIMEOUT_SECONDS:-${GIT_FETCH_MAIN_TIMEOUT_SECONDS:-30}}"
 readonly GIT_CONNECT_TIMEOUT_SECONDS="${GIT_CONNECT_TIMEOUT_SECONDS:-15}"
@@ -137,48 +136,6 @@ _run_git_cmd() {
     return "$exit_code"
 }
 
-# Git retry function - executes git command with retry logic.
-# Retries on ALL failures (timeout, network slow, transient errors) up to MAX_RETRIES times.
-# Network operations like pull can fail with exit code 1 due to low-speed errors,
-# which are just as retriable as timeouts.
-# Usage: git_with_retry <git_args...>
-git_with_retry() {
-    local attempt=1
-    local git_cmd="git $*"
-    local exit_code
-
-    log "执行: $git_cmd"
-
-    while [ $attempt -le $MAX_RETRIES ]; do
-        if [ $attempt -gt 1 ]; then
-            warn "第 $attempt 次重试: $git_cmd"
-        fi
-
-        _run_git_cmd "$@"
-        exit_code=$?
-
-        if [ $exit_code -eq 0 ]; then
-            return 0
-        fi
-
-        if [ $exit_code -eq 124 ]; then
-            error "执行超时 (${GIT_TIMEOUT_SECONDS}s)"
-        else
-            # 包括网络慢 (Operation too slow)、连接重置等，均视为可重试的网络错误
-            error "执行失败 (退出码: $exit_code)"
-        fi
-
-        if [ $attempt -lt $MAX_RETRIES ]; then
-            warn "等待 1 秒后重试..."
-            sleep 1
-        fi
-        attempt=$((attempt + 1))
-    done
-
-    error "$git_cmd 在 $MAX_RETRIES 次尝试后仍然失败"
-    return 1
-}
-
 # Dedicated policy for: git fetch origin <branch>
 # Retries indefinitely on timeout; returns immediately on non-timeout errors.
 git_fetch_branch_until_success() {
@@ -224,30 +181,6 @@ git_fetch_branch_until_success() {
     done
 }
 
-# Git Stash Helpers - Per-project stash state using associative array
-declare -A STASH_NEEDED
-
-# Restore stash for the given directory (quiet)
-cleanup_stash_for_dir() {
-    local dir="$1"
-    if [ "${STASH_NEEDED[$dir]:-false}" = true ]; then
-        git -C "$dir" stash pop 2>/dev/null || true
-        STASH_NEEDED[$dir]=false
-    fi
-}
-
-stash_changes() {
-    local dir
-    dir="$(pwd)"
-    if [[ -n $(git status -s) ]]; then
-        warn "检测到本地修改，正在暂存..."
-        git stash save "Auto-deploy stash $(date +'%Y-%m-%d %H:%M:%S')" 2>/dev/null
-        STASH_NEEDED[$dir]=true
-    else
-        STASH_NEEDED[$dir]=false
-    fi
-}
-
 # Docker build helper function (full output)
 # Usage: docker_build <dockerfile_path> <build_args> <tags> <project_name>
 docker_build() {
@@ -264,6 +197,60 @@ docker_build() {
         $cache_args \
         $tags \
         .
+}
+
+refresh_frontend_proxies_after_server_deploy() {
+    # admin/app 前端容器通常会在启动时解析一次 backend 主机名。
+    # 当 admin-server / app-server 被重建后，旧 IP 可能被复用，导致代理继续把流量打到错误容器。
+    # 这里强制重建前端容器，让它们重新解析 upstream。
+    log "刷新 admin/app 前端容器，重置可能缓存的 backend IP..."
+    if ! docker compose up -d --force-recreate admin app; then
+        error "前端代理刷新失败"
+        return 1
+    fi
+
+    return 0
+}
+
+declare -a PENDING_PROJECTS=()
+
+has_pending_frontend_deploys() {
+    local pending_project
+
+    for pending_project in "${PENDING_PROJECTS[@]:1}"; do
+        case "$pending_project" in
+            es-admin|es-app-v2)
+                return 0
+                ;;
+        esac
+    done
+
+    return 1
+}
+
+should_refresh_frontend_after_server_deploy() {
+    if [ "${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY:-true}" != "true" ]; then
+        log "跳过前端代理刷新 (REFRESH_FRONTEND_AFTER_SERVER_DEPLOY=${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY})"
+        return 1
+    fi
+
+    if has_pending_frontend_deploys; then
+        log "后续仍有前端项目待部署，跳过本次 server 阶段的中间代理刷新"
+        return 1
+    fi
+
+    return 0
+}
+
+warn_on_untracked_files() {
+    local untracked
+    untracked="$(git ls-files --others --exclude-standard)"
+    if [ -n "$untracked" ]; then
+        warn "检测到未跟踪文件，这些文件不会被远端强制同步覆盖:"
+        while IFS= read -r file; do
+            [ -n "$file" ] && warn "  - $file"
+        done <<< "$untracked"
+    fi
 }
 
 # Deploy single project function.
@@ -283,21 +270,19 @@ deploy_project() {
 
     pushd "$project_dir" > /dev/null || { error "无法切换到项目目录"; CURRENT_PROJECT=""; return 1; }
 
-    stash_changes
-
     local CURRENT_BRANCH
+    local TARGET_HASH
     CURRENT_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null)" || {
         error "获取当前分支失败"
-        cleanup_stash_for_dir "$project_dir"
         popd > /dev/null
         CURRENT_PROJECT=""
         return 1
     }
     log "当前分支: $CURRENT_BRANCH"
+    warn_on_untracked_files
 
     if ! git_fetch_branch_until_success "${CURRENT_BRANCH}"; then
         error "Fetch 失败，跳过此项目"
-        cleanup_stash_for_dir "$project_dir"
         popd > /dev/null
         CURRENT_PROJECT=""
         return 1
@@ -308,20 +293,20 @@ deploy_project() {
     REMOTE_HASH=$(git rev-parse "origin/${CURRENT_BRANCH}")
 
     if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
-        log "发现新版本，正在拉取 [$CURRENT_BRANCH]..."
-        if ! git_with_retry pull origin "${CURRENT_BRANCH}"; then
-            error "Git pull 失败，跳过此项目"
-            cleanup_stash_for_dir "$project_dir"
+        log "检测到远端新提交，强制同步 [$CURRENT_BRANCH]: ${LOCAL_HASH:0:12} -> ${REMOTE_HASH:0:12}"
+        if ! _run_git_cmd reset --hard "origin/${CURRENT_BRANCH}"; then
+            error "Git reset 失败，跳过此项目"
             popd > /dev/null
             CURRENT_PROJECT=""
             return 1
         fi
+        TARGET_HASH="$REMOTE_HASH"
     else
         if [ "$FORCE_DEPLOY" = "true" ]; then
             log "强制部署 [$CURRENT_BRANCH]"
+            TARGET_HASH="$LOCAL_HASH"
         else
             log "已是最新，跳过"
-            cleanup_stash_for_dir "$project_dir"
             popd > /dev/null
             CURRENT_PROJECT=""
             return 0
@@ -385,7 +370,6 @@ deploy_project() {
             ;;
     esac
 
-    cleanup_stash_for_dir "$project_dir"
     popd > /dev/null
 
     if [ "$build_failed" = true ]; then
@@ -400,7 +384,6 @@ deploy_project() {
     case "$project_name" in
         es-admin)
             log "部署服务 admin..."
-            docker compose rm -s -f admin 2>/dev/null || true
             if ! docker compose up -d --force-recreate --remove-orphans admin; then
                 error "admin 部署失败"
                 deploy_failed=true
@@ -409,7 +392,6 @@ deploy_project() {
 
         es-app-v2)
             log "部署服务 app..."
-            docker compose rm -s -f app 2>/dev/null || true
             if ! docker compose up -d --force-recreate --remove-orphans app; then
                 error "app 部署失败"
                 deploy_failed=true
@@ -429,10 +411,17 @@ deploy_project() {
             if [ "$deploy_failed" = false ]; then
                 # 两个服务合并为一条命令同时启动，避免分步使用 --remove-orphans 时互相干扰
                 log "重启 admin-server 和 app-server..."
-                docker compose rm -s -f admin-server app-server 2>/dev/null || true
                 if ! docker compose up -d --force-recreate --remove-orphans admin-server app-server; then
                     error "server 启动失败"
                     deploy_failed=true
+                fi
+            fi
+
+            if [ "$deploy_failed" = false ]; then
+                if should_refresh_frontend_after_server_deploy; then
+                    if ! refresh_frontend_proxies_after_server_deploy; then
+                        deploy_failed=true
+                    fi
                 fi
             fi
             ;;
@@ -455,7 +444,7 @@ deploy_project() {
         return 1
     fi
 
-    log "部署成功"
+    log "部署成功 (commit: ${TARGET_HASH:0:12})"
     return 0
 }
 
@@ -502,7 +491,8 @@ if [ ! -f "${ROOT_DIR}/docker-compose.yml" ]; then
 fi
 
 # Projects to deploy (in order)
-PROJECTS=("es-admin" "es-app-v2" "es-server")
+PROJECTS=("es-server" "es-admin" "es-app-v2")
+PENDING_PROJECTS=("${PROJECTS[@]}")
 FAILURES=0
 
 for PROJECT in "${PROJECTS[@]}"; do
@@ -511,6 +501,7 @@ for PROJECT in "${PROJECTS[@]}"; do
         FAILURES=$((FAILURES + 1))
         warn "项目 $PROJECT 失败，继续处理下一个项目..."
     fi
+    PENDING_PROJECTS=("${PENDING_PROJECTS[@]:1}")
 done
 
 echo ""

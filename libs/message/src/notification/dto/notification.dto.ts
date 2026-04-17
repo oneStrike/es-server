@@ -67,8 +67,32 @@ export class BaseUserNotificationDto {
   content!: string
 
   @ObjectProperty({
-    description: '扩展载荷',
-    example: { replyCommentId: 101 },
+    description:
+      '扩展载荷；主体统一收敛到 payload.subject，章节额外通过 payload.parentSubject 返回所属作品',
+    example: {
+      actorNickname: '张三',
+      commentId: 101,
+      subject: {
+        kind: 'chapter',
+        id: 17,
+        title: '第 17 话',
+        subtitle: '暴雨将至',
+        cover: 'https://example.com/chapter-cover.png',
+        extra: {
+          workId: 8,
+          workType: 1,
+        },
+      },
+      parentSubject: {
+        kind: 'work',
+        id: 8,
+        title: '作品标题',
+        cover: 'https://example.com/work-cover.png',
+        extra: {
+          type: 1,
+        },
+      },
+    },
     required: false,
     nullable: true,
   })

@@ -1,4 +1,4 @@
-import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module';
+import { JwtAuthModule } from '@libs/platform/modules/auth/auth.module'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { MessageInboxModule } from '../inbox/inbox.module'
@@ -7,13 +7,19 @@ import { MessageNotificationDeliveryService } from './notification-delivery.serv
 import { MessageNativeWebSocketServer } from './notification-native-websocket.server'
 import { MessageNotificationPreferenceService } from './notification-preference.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
+import { MessageNotificationSubjectPayloadService } from './notification-subject-payload.service'
 import { MessageNotificationTemplateService } from './notification-template.service'
 import { MessageWebSocketService } from './notification-websocket.service'
 import { MessageGateway } from './notification.gateway'
 import { MessageNotificationService } from './notification.service'
 
 @Module({
-  imports: [ConfigModule, JwtAuthModule, MessageInboxModule, MessageMonitorModule],
+  imports: [
+    ConfigModule,
+    JwtAuthModule,
+    MessageInboxModule,
+    MessageMonitorModule,
+  ],
   providers: [
     MessageWebSocketService,
     MessageNativeWebSocketServer,
@@ -21,6 +27,7 @@ import { MessageNotificationService } from './notification.service'
     MessageNotificationDeliveryService,
     MessageNotificationRealtimeService,
     MessageNotificationPreferenceService,
+    MessageNotificationSubjectPayloadService,
     MessageNotificationTemplateService,
     MessageNotificationService,
   ],
@@ -30,6 +37,7 @@ import { MessageNotificationService } from './notification.service'
     MessageNotificationPreferenceService,
     MessageNotificationService,
     MessageNotificationRealtimeService,
+    MessageNotificationSubjectPayloadService,
     MessageNotificationTemplateService,
     MessageWebSocketService,
   ],

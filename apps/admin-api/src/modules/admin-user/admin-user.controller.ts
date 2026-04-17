@@ -1,7 +1,13 @@
-import { AdminUserResponseDto, ChangePasswordDto, UpdateUserDto, UserPageDto, UserRegisterDto } from '@libs/identity/dto/admin-user.dto';
-import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
-import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
-import { IdDto } from '@libs/platform/dto/base.dto';
+import {
+  AdminUserResponseDto,
+  ChangePasswordDto,
+  UpdateUserDto,
+  UserPageDto,
+  UserRegisterDto,
+} from '@libs/identity/dto/admin-user.dto'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
+
+import { IdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -138,10 +144,7 @@ export class AdminUserController {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async unlockUser(
-    @Body() query: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
+  async unlockUser(@Body() query: IdDto, @CurrentUser('sub') userId: number) {
     return this.adminUserService.unlockUser(userId, query.id)
   }
 }
