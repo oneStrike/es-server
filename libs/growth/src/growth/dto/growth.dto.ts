@@ -1,19 +1,23 @@
-import { EventDefinitionDomainEnum, EventDefinitionGovernanceGateEnum, EventDefinitionImplStatusEnum } from '@libs/growth/event-definition/event-definition.type';
-import { TaskTypeEnum } from '@libs/growth/task/task.constant';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import {
+  EventDefinitionDomainEnum,
+  EventDefinitionGovernanceGateEnum,
+  EventDefinitionImplStatusEnum,
+} from '@libs/growth/event-definition/event-definition.type'
+import { TaskTypeEnum } from '@libs/growth/task/task.constant'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import { IntersectionType, PartialType } from '@nestjs/swagger'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
 export class QueryGrowthRuleEventFilterDto {
   @EnumProperty({
-    description: '成长事件编码（1=发表主题；2=发表回复；3=主题被点赞；4=回复被点赞；5=主题被收藏；6=每日签到；7=管理员操作；8=主题被浏览；9=主题举报；16=帖子被评论；10=发表评论；11=评论被点赞；12=评论举报；100=漫画作品浏览；101=漫画作品点赞；102=漫画作品收藏；103=漫画作品举报；104=漫画作品评论；200=小说作品浏览；201=小说作品点赞；202=小说作品收藏；203=小说作品举报；204=小说作品评论；300=漫画章节阅读；301=漫画章节点赞；302=漫画章节购买；303=漫画章节下载；304=漫画章节兑换；305=漫画章节举报；306=漫画章节评论；400=小说章节阅读；401=小说章节点赞；402=小说章节购买；403=小说章节下载；404=小说章节兑换；405=小说章节举报；406=小说章节评论；600=获得徽章；601=资料完善；602=头像上传；700=关注用户；701=被关注；702=分享内容；703=邀请用户；800=举报有效；801=举报无效）',
+    description:
+      '成长事件编码（1=发表主题；2=发表回复；3=主题被点赞；4=回复被点赞；5=主题被收藏；6=每日签到；7=管理员操作；8=主题被浏览；9=主题举报；16=帖子被评论；10=发表评论；11=评论被点赞；12=评论举报；100=漫画作品浏览；101=漫画作品点赞；102=漫画作品收藏；103=漫画作品举报；104=漫画作品评论；200=小说作品浏览；201=小说作品点赞；202=小说作品收藏；203=小说作品举报；204=小说作品评论；300=漫画章节阅读；301=漫画章节点赞；302=漫画章节购买；303=漫画章节下载；304=漫画章节兑换；305=漫画章节举报；306=漫画章节评论；400=小说章节阅读；401=小说章节点赞；402=小说章节购买；403=小说章节下载；404=小说章节兑换；405=小说章节举报；406=小说章节评论；600=获得徽章；601=资料完善；602=头像上传；700=关注用户；701=被关注；702=分享内容；703=邀请用户；800=举报有效；801=举报无效）',
     example: GrowthRuleTypeEnum.CREATE_TOPIC,
     enum: GrowthRuleTypeEnum,
     required: false,
@@ -133,9 +137,10 @@ export class GrowthRuleTaskBindingSummaryDto {
   })
   enabledTaskCount!: number
 
-  @EnumArrayProperty({
-    description: '关联任务场景类型列表（1=新手引导任务；2=日常任务；4=活动任务）',
-    enum: TaskTypeEnum,
+  @ArrayProperty({
+    description:
+      '关联任务场景类型列表（1=新手引导任务；2=日常任务；4=活动任务）',
+    itemEnum: TaskTypeEnum,
     required: true,
     validation: false,
     example: [TaskTypeEnum.DAILY, TaskTypeEnum.CAMPAIGN],
@@ -154,7 +159,8 @@ export class GrowthRuleTaskBindingSummaryDto {
 
 export class GrowthRuleEventPageItemDto {
   @EnumProperty({
-    description: '成长事件编码（1=发表主题；2=发表回复；3=主题被点赞；4=回复被点赞；5=主题被收藏；6=每日签到；7=管理员操作；8=主题被浏览；9=主题举报；16=帖子被评论；10=发表评论；11=评论被点赞；12=评论举报；100=漫画作品浏览；101=漫画作品点赞；102=漫画作品收藏；103=漫画作品举报；104=漫画作品评论；200=小说作品浏览；201=小说作品点赞；202=小说作品收藏；203=小说作品举报；204=小说作品评论；300=漫画章节阅读；301=漫画章节点赞；302=漫画章节购买；303=漫画章节下载；304=漫画章节兑换；305=漫画章节举报；306=漫画章节评论；400=小说章节阅读；401=小说章节点赞；402=小说章节购买；403=小说章节下载；404=小说章节兑换；405=小说章节举报；406=小说章节评论；600=获得徽章；601=资料完善；602=头像上传；700=关注用户；701=被关注；702=分享内容；703=邀请用户；800=举报有效；801=举报无效）',
+    description:
+      '成长事件编码（1=发表主题；2=发表回复；3=主题被点赞；4=回复被点赞；5=主题被收藏；6=每日签到；7=管理员操作；8=主题被浏览；9=主题举报；16=帖子被评论；10=发表评论；11=评论被点赞；12=评论举报；100=漫画作品浏览；101=漫画作品点赞；102=漫画作品收藏；103=漫画作品举报；104=漫画作品评论；200=小说作品浏览；201=小说作品点赞；202=小说作品收藏；203=小说作品举报；204=小说作品评论；300=漫画章节阅读；301=漫画章节点赞；302=漫画章节购买；303=漫画章节下载；304=漫画章节兑换；305=漫画章节举报；306=漫画章节评论；400=小说章节阅读；401=小说章节点赞；402=小说章节购买；403=小说章节下载；404=小说章节兑换；405=小说章节举报；406=小说章节评论；600=获得徽章；601=资料完善；602=头像上传；700=关注用户；701=被关注；702=分享内容；703=邀请用户；800=举报有效；801=举报无效）',
     example: GrowthRuleTypeEnum.CREATE_TOPIC,
     enum: GrowthRuleTypeEnum,
     validation: false,
@@ -176,7 +182,8 @@ export class GrowthRuleEventPageItemDto {
   eventName!: string
 
   @EnumProperty({
-    description: '事件所属领域（forum=论坛；comment=评论；comic_work=漫画作品；novel_work=小说作品；comic_chapter=漫画章节；novel_chapter=小说章节；engagement=互动；badge=徽章；profile=资料；social=社交；report=举报；system=系统）',
+    description:
+      '事件所属领域（forum=论坛；comment=评论；comic_work=漫画作品；novel_work=小说作品；comic_chapter=漫画章节；novel_chapter=小说章节；engagement=互动；badge=徽章；profile=资料；social=社交；report=举报；system=系统）',
     example: EventDefinitionDomainEnum.FORUM,
     enum: EventDefinitionDomainEnum,
     validation: false,
@@ -184,7 +191,8 @@ export class GrowthRuleEventPageItemDto {
   domain!: EventDefinitionDomainEnum
 
   @EnumProperty({
-    description: '治理闸门类型（none=无闸门；topic_approval=主题审核；comment_approval=评论审核；report_judgement=举报裁决）',
+    description:
+      '治理闸门类型（none=无闸门；topic_approval=主题审核；comment_approval=评论审核；report_judgement=举报裁决）',
     example: EventDefinitionGovernanceGateEnum.NONE,
     enum: EventDefinitionGovernanceGateEnum,
     validation: false,
@@ -192,7 +200,8 @@ export class GrowthRuleEventPageItemDto {
   governanceGate!: EventDefinitionGovernanceGateEnum
 
   @EnumProperty({
-    description: '实现状态（declared=已声明；implemented=已实现；legacy_compat=历史兼容）',
+    description:
+      '实现状态（declared=已声明；implemented=已实现；legacy_compat=历史兼容）',
     example: EventDefinitionImplStatusEnum.IMPLEMENTED,
     enum: EventDefinitionImplStatusEnum,
     validation: false,

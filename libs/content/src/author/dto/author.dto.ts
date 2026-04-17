@@ -1,7 +1,7 @@
 import { GenderEnum } from '@libs/platform/constant/profile.constant'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
@@ -52,11 +52,11 @@ export class BaseAuthorDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @EnumArrayProperty({
+  @ArrayProperty({
     description: '作者角色类型（1=漫画家；2=轻小说作者）',
     example: [AuthorTypeEnum.NOVEL],
     required: false,
-    enum: AuthorTypeEnum,
+    itemEnum: AuthorTypeEnum,
   })
   type?: AuthorTypeEnum[] | null
 

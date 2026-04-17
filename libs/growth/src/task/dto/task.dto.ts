@@ -3,17 +3,17 @@ import type {
   TaskRepeatRuleConfig,
   TaskRewardConfig,
 } from '../task.type'
-import { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -21,6 +21,7 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import { IsInt } from 'class-validator'
+import { GROWTH_RULE_EVENT_CODE_DTO_DESCRIPTION } from '../../event-definition/event-definition.constant'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import {
   TaskAssignmentRewardResultTypeEnum,
@@ -112,7 +113,7 @@ export class BaseTaskDto extends BaseDto {
   objectiveType!: TaskObjectiveTypeEnum
 
   @EnumProperty({
-    description: '目标事件编码；仅“事件累计次数驱动”任务需要填写',
+    description: GROWTH_RULE_EVENT_CODE_DTO_DESCRIPTION,
     example: GrowthRuleTypeEnum.COMIC_CHAPTER_READ,
     enum: GrowthRuleTypeEnum,
     required: false,
@@ -335,7 +336,11 @@ export class QueryTaskAssignmentDto extends IntersectionType(
 export class QueryTaskAssignmentReconciliationDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseTaskAssignmentDto, ['taskId', 'userId', 'rewardStatus'] as const),
+    PickType(BaseTaskAssignmentDto, [
+      'taskId',
+      'userId',
+      'rewardStatus',
+    ] as const),
   ),
 ) {
   @NumberProperty({
@@ -361,7 +366,8 @@ export class QueryTaskAssignmentReconciliationDto extends IntersectionType(
   eventBizKey?: string
 
   @EnumProperty({
-    description: '奖励到账提醒投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
+    description:
+      '奖励到账提醒投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.DELIVERED,
     enum: MessageNotificationDispatchStatusEnum,
     required: false,
@@ -450,7 +456,8 @@ export class AvailableTaskPageItemDto extends PickType(BaseTaskDto, [
   'repeatRule',
 ] as const) {
   @EnumProperty({
-    description: '用户可见任务状态（可领取、已领取、进行中、已完成、奖励待补偿、奖励已到账、已过期、不可用）',
+    description:
+      '用户可见任务状态（可领取；已领取待开始；进行中；已完成；奖励待补偿；奖励已到账；已过期；不可用）',
     example: TaskUserVisibleStatusEnum.CLAIMABLE,
     enum: TaskUserVisibleStatusEnum,
     validation: false,
@@ -499,7 +506,8 @@ export class MyTaskPageItemDto extends PickType(BaseTaskAssignmentDto, [
   'lastRewardError',
 ] as const) {
   @EnumProperty({
-    description: '用户可见任务状态（可领取、已领取、进行中、已完成、奖励待补偿、奖励已到账、已过期、不可用）',
+    description:
+      '用户可见任务状态（可领取；已领取待开始；进行中；已完成；奖励待补偿；奖励已到账；已过期；不可用）',
     example: TaskUserVisibleStatusEnum.IN_PROGRESS,
     enum: TaskUserVisibleStatusEnum,
     validation: false,
@@ -526,7 +534,8 @@ export class AdminTaskReminderSummaryDto {
   reminderKind?: string
 
   @EnumProperty({
-    description: '最近一次提醒投递状态',
+    description:
+      '最近一次提醒投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.DELIVERED,
     enum: MessageNotificationDispatchStatusEnum,
     required: false,
@@ -645,7 +654,8 @@ export class AdminTaskAssignmentPageResponseDto extends PickType(
   ] as const,
 ) {
   @EnumProperty({
-    description: '统一后的用户可见状态',
+    description:
+      '统一后的用户可见状态（可领取；已领取待开始；进行中；已完成；奖励待补偿；奖励已到账；已过期；不可用）',
     example: TaskUserVisibleStatusEnum.REWARD_GRANTED,
     enum: TaskUserVisibleStatusEnum,
     validation: false,
@@ -672,7 +682,8 @@ export class AdminTaskRewardReminderDto {
   bizKey?: string
 
   @EnumProperty({
-    description: '奖励到账提醒投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
+    description:
+      '奖励到账提醒投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.DELIVERED,
     enum: MessageNotificationDispatchStatusEnum,
     required: false,

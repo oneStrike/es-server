@@ -20,7 +20,16 @@ import {
 import { UserIdDto } from '@libs/platform/dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
-import { OmitType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
+import {
+  UserExperienceDeltaFieldsDto,
+  UserPointDeltaFieldsDto,
+} from './app-user-growth-shared.dto'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
 import { BaseAppUserDto } from './base-app-user.dto'
 
@@ -114,35 +123,17 @@ export class QueryMyPointRecordDto extends OmitType(QueryUserPointRecordDto, [
 /**
  * 用户积分记录 DTO。
  */
-export class UserPointRecordDto extends OmitType(BaseUserPointRecordDto, [
-  'assetType',
-  'delta',
-  'beforeValue',
-  'afterValue',
-  'bizKey',
-  'updatedAt',
-] as const) {
-  @NumberProperty({
-    description: '积分变化（正数为获得，负数为消费）',
-    example: 5,
-    validation: false,
-  })
-  points!: number
-
-  @NumberProperty({
-    description: '变化前积分',
-    example: 100,
-    validation: false,
-  })
-  beforePoints!: number
-
-  @NumberProperty({
-    description: '变化后积分',
-    example: 105,
-    validation: false,
-  })
-  afterPoints!: number
-}
+export class UserPointRecordDto extends IntersectionType(
+  OmitType(BaseUserPointRecordDto, [
+    'assetType',
+    'delta',
+    'beforeValue',
+    'afterValue',
+    'bizKey',
+    'updatedAt',
+  ] as const),
+  UserPointDeltaFieldsDto,
+) {}
 
 /**
  * 查询我的经验记录 DTO。
@@ -155,38 +146,17 @@ export class QueryMyExperienceRecordDto extends OmitType(
 /**
  * 用户经验记录 DTO。
  */
-export class UserExperienceRecordDto extends OmitType(
-  BaseUserExperienceRecordDto,
-  [
+export class UserExperienceRecordDto extends IntersectionType(
+  OmitType(BaseUserExperienceRecordDto, [
     'assetType',
     'delta',
     'beforeValue',
     'afterValue',
     'bizKey',
     'updatedAt',
-  ] as const,
-) {
-  @NumberProperty({
-    description: '经验值变化',
-    example: 5,
-    validation: false,
-  })
-  experience!: number
-
-  @NumberProperty({
-    description: '变化前经验值',
-    example: 100,
-    validation: false,
-  })
-  beforeExperience!: number
-
-  @NumberProperty({
-    description: '变化后经验值',
-    example: 105,
-    validation: false,
-  })
-  afterExperience!: number
-}
+  ] as const),
+  UserExperienceDeltaFieldsDto,
+) {}
 
 /**
  * 用户计数 DTO。
@@ -273,32 +243,6 @@ export class UserStatusSummaryDto {
     validation: false,
   })
   until?: Date
-}
-
-/**
- * 用户积分统计 DTO。
- */
-export class UserPointStatsDto {
-  @NumberProperty({
-    description: '当前积分',
-    example: 120,
-    validation: false,
-  })
-  currentPoints!: number
-
-  @NumberProperty({
-    description: '今日获得积分',
-    example: 15,
-    validation: false,
-  })
-  todayEarned!: number
-
-  @NumberProperty({
-    description: '今日消耗积分',
-    example: 5,
-    validation: false,
-  })
-  todayConsumed!: number
 }
 
 /**

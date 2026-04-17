@@ -1,5 +1,6 @@
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
+import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ChangeMyPhoneDto,
@@ -15,7 +16,6 @@ import {
   UserExperienceStatsDto,
   UserMentionCandidateDto,
   UserPointRecordDto,
-  UserPointStatsDto,
   UserStatusSummaryDto,
 } from '@libs/user/dto/user-self.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -102,7 +102,7 @@ export class UserController {
   @Get('points/stats')
   @ApiDoc({
     summary: '获取用户积分统计',
-    model: UserPointStatsDto,
+    model: UserPointStatsFieldsDto,
   })
   async getPointStats(@CurrentUser('sub') userId: number) {
     return this.userService.getUserPointStats(userId)

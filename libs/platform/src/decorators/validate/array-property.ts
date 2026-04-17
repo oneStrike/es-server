@@ -16,13 +16,20 @@ import {
   ValidateNested,
 } from 'class-validator'
 import { buildContractPropertyDecorators } from './contract'
+import {
+  createEnumValueValidator,
+  normalizeEnumArrayItem,
+  resolveEnumValidationArtifacts,
+} from './enum-shared'
 
 type PrimitiveArrayItemType = 'string' | 'number' | 'boolean'
 
 interface PrimitiveArrayHelpers {
   apiType: StringConstructor | NumberConstructor | BooleanConstructor
   itemValidator: PropertyDecorator
-  normalizeItem: (item: string | number | boolean | null | undefined) => string | number | boolean | null | undefined
+  normalizeItem: (
+    item: string | number | boolean | null | undefined,
+  ) => string | number | boolean | null | undefined
 }
 
 function resolvePrimitiveItemType<TValue extends string | number | boolean>(
@@ -48,8 +55,7 @@ function createPrimitiveArrayHelpers<TValue extends string | number | boolean>(
         each: true,
         message: itemErrorMessage || '数组中的每个元素都必须是字符串类型',
       }),
-      normalizeItem: item =>
-        typeof item === 'string' ? item : String(item),
+      normalizeItem: (item) => (typeof item === 'string' ? item : String(item)),
     },
     number: {
       apiType: Number,
@@ -152,14 +158,20 @@ export function ArrayProperty<T = string | number | boolean>(
   const validation = inContract && (options.validation ?? true)
   const required = options.required ?? true
   const hasItemClass = Boolean(options.itemClass)
-  const primitiveHelpers = hasItemClass
-    ? undefined
-    : createPrimitiveArrayHelpers(
-        resolvePrimitiveItemType(
+  const hasItemEnum = 'itemEnum' in options && Boolean(options.itemEnum)
+  const enumLike = hasItemEnum ? options.itemEnum! : undefined
+  const enumArtifacts = hasItemEnum
+    ? resolveEnumValidationArtifacts(enumLike!)
+    : undefined
+  const primitiveHelpers =
+    hasItemClass || hasItemEnum
+      ? undefined
+      : createPrimitiveArrayHelpers(
+          resolvePrimitiveItemType(
+            options as ArrayPropertyOptions<string | number | boolean>,
+          ),
           options as ArrayPropertyOptions<string | number | boolean>,
-        ),
-        options as ArrayPropertyOptions<string | number | boolean>,
-      )
+        )
 
   if ((options as { itemType?: string }).itemType === 'object') {
     throw new Error(
@@ -180,13 +192,18 @@ export function ArrayProperty<T = string | number | boolean>(
   if (validation) {
     decorators.push(
       IsArray({ message: '必须是数组类型' }),
-      primitiveHelpers
-        ? primitiveHelpers.itemValidator
-        : IsObject({
+      enumArtifacts
+        ? createEnumValueValidator(enumLike!, enumArtifacts, {
             each: true,
-            message:
-              options.itemErrorMessage || '数组中的每个元素都必须是对象类型',
-          }),
+            message: `数组中的元素必须是有效的枚举值: ${enumArtifacts.validValues.join(', ')}`,
+          })
+        : primitiveHelpers
+          ? primitiveHelpers.itemValidator
+          : IsObject({
+              each: true,
+              message:
+                options.itemErrorMessage || '数组中的每个元素都必须是对象类型',
+            }),
     )
 
     if (hasItemClass && options.itemClass) {
@@ -249,6 +266,10 @@ export function ArrayProperty<T = string | number | boolean>(
 
         if (Array.isArray(value)) {
           return value.map((item) => {
+            if (enumArtifacts) {
+              return normalizeEnumArrayItem(item, enumArtifacts)
+            }
+
             if (!primitiveHelpers) {
               if (typeof item === 'string') {
                 try {
@@ -282,8 +303,19 @@ export function ArrayProperty<T = string | number | boolean>(
         required,
         default: options.default,
         nullable: false,
-        type: options.itemClass ?? primitiveHelpers?.apiType ?? Object,
+        type:
+          options.itemClass ??
+          (enumArtifacts
+            ? enumArtifacts.isNumericEnum
+              ? Number
+              : String
+            : primitiveHelpers?.apiType) ??
+            Object,
         isArray: true,
+      }
+
+      if (enumArtifacts) {
+        apiPropertyOptions.enum = enumLike!
       }
 
       if (options.minLength !== undefined) {

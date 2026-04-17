@@ -1,16 +1,15 @@
-import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto';
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
-import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto';
+import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { ForumModeratorPermissionEnum } from '../../moderator/moderator.constant';
+import { ForumModeratorPermissionEnum } from '../../moderator/moderator.constant'
 import { ForumModeratorApplicationStatusEnum } from '../moderator-application.constant'
 
 /**
@@ -50,10 +49,10 @@ export class BaseForumModeratorApplicationDto extends BaseDto {
   })
   status!: ForumModeratorApplicationStatusEnum
 
-  @EnumArrayProperty({
+  @ArrayProperty({
     description:
       '申请权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    enum: ForumModeratorPermissionEnum,
+    itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 5],
     required: false,
   })
@@ -150,13 +149,10 @@ class ForumModeratorApplicationUserDto extends PickType(BaseAppUserDto, [
   'avatarUrl',
 ] as const) {}
 
-class ForumModeratorApplicationSectionDto extends PickType(BaseForumSectionDto, [
-  'id',
-  'name',
-  'description',
-  'icon',
-  'cover',
-] as const) {}
+class ForumModeratorApplicationSectionDto extends PickType(
+  BaseForumSectionDto,
+  ['id', 'name', 'description', 'icon', 'cover'] as const,
+) {}
 
 export class ForumModeratorApplicationDto extends BaseForumModeratorApplicationDto {
   @ArrayProperty({

@@ -1,13 +1,17 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, UserIdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  UserIdDto,
+} from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -23,7 +27,10 @@ import {
  * 版主基础 DTO。
  * 严格对应 forum_moderator 表对外暴露的稳定字段。
  */
-export class BaseForumModeratorDto extends IntersectionType(BaseDto, UserIdDto) {
+export class BaseForumModeratorDto extends IntersectionType(
+  BaseDto,
+  UserIdDto,
+) {
   @NumberProperty({
     description: '分组ID（为空表示非分组版主）',
     example: 1,
@@ -40,10 +47,10 @@ export class BaseForumModeratorDto extends IntersectionType(BaseDto, UserIdDto) 
   })
   roleType!: ForumModeratorRoleTypeEnum
 
-  @EnumArrayProperty({
+  @ArrayProperty({
     description:
       '版主权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    enum: ForumModeratorPermissionEnum,
+    itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4, 5, 6],
     required: false,
   })
@@ -175,18 +182,20 @@ export class ForumModeratorSectionItemDto {
   })
   inheritFromParent!: boolean
 
-  @EnumArrayProperty({
-    description: '板块自定义权限（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    enum: ForumModeratorPermissionEnum,
+  @ArrayProperty({
+    description:
+      '板块自定义权限（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
+    itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2],
     required: true,
     validation: false,
   })
   customPermissions!: ForumModeratorPermissionEnum[]
 
-  @EnumArrayProperty({
-    description: '板块最终生效权限（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    enum: ForumModeratorPermissionEnum,
+  @ArrayProperty({
+    description:
+      '板块最终生效权限（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
+    itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4],
     required: true,
     validation: false,
@@ -195,9 +204,9 @@ export class ForumModeratorSectionItemDto {
 }
 
 export class ForumModeratorDto extends BaseForumModeratorDto {
-  @EnumArrayProperty({
+  @ArrayProperty({
     description: '权限列表（1=置顶；2=加精；3=锁定；4=删除；5=审核；6=移动）',
-    enum: ForumModeratorPermissionEnum,
+    itemEnum: ForumModeratorPermissionEnum,
     example: [1, 2, 3, 4, 5, 6],
     required: true,
     validation: false,

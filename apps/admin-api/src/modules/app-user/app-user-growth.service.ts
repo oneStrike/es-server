@@ -9,27 +9,16 @@ import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.co
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { QueryUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
 import { UserPointService } from '@libs/growth/point/point.service'
+import { startOfTodayInAppTimeZone } from '@libs/platform/utils'
 import {
-  startOfTodayInAppTimeZone,
-} from '@libs/platform/utils'
-import {
-  AddAdminAppUserExperienceDto,
-  AddAdminAppUserPointsDto,
+  AdminAppUserGrowthRuleActionDto,
   ConsumeAdminAppUserPointsDto,
   QueryAdminAppUserBadgeDto,
   QueryAdminAppUserGrowthLedgerDto,
 } from '@libs/user/dto/admin-app-user.dto'
 import { UserService as UserCoreService } from '@libs/user/user.service'
 import { Injectable } from '@nestjs/common'
-import {
-  and,
-  eq,
-  gt,
-  gte,
-  inArray,
-  isNull,
-  sql,
-} from 'drizzle-orm'
+import { and, eq, gt, gte, inArray, isNull, sql } from 'drizzle-orm'
 import { AppUserServiceSupport } from './app-user.service.support'
 
 /**
@@ -70,7 +59,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
    */
   async addAppUserPoints(
     adminUserId: number,
-    dto: AddAdminAppUserPointsDto,
+    dto: AdminAppUserGrowthRuleActionDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
@@ -151,10 +140,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
         .where(
           and(
             eq(this.userLevelRuleTable.isEnabled, true),
-            gt(
-              this.userLevelRuleTable.requiredExperience,
-              user.experience,
-            ),
+            gt(this.userLevelRuleTable.requiredExperience, user.experience),
           ),
         )
         .orderBy(this.userLevelRuleTable.requiredExperience)
@@ -193,9 +179,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
   }
 
   /** 获取 APP 用户混合成长流水分页。 */
-  async getAppUserGrowthLedgerRecords(
-    query: QueryAdminAppUserGrowthLedgerDto,
-  ) {
+  async getAppUserGrowthLedgerRecords(query: QueryAdminAppUserGrowthLedgerDto) {
     await this.userCoreService.ensureUserExists(query.userId)
     return this.growthLedgerService.getGrowthLedgerPage(query)
   }
@@ -207,7 +191,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
    */
   async addAppUserExperience(
     adminUserId: number,
-    dto: AddAdminAppUserExperienceDto,
+    dto: AdminAppUserGrowthRuleActionDto,
   ) {
     await this.ensureSuperAdmin(adminUserId)
     await this.userCoreService.ensureUserExists(dto.userId)
@@ -238,9 +222,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     const badgeConditions: SQL[] = []
 
     if (name) {
-      badgeConditions.push(
-        buildILikeCondition(this.userBadgeTable.name, name)!,
-      )
+      badgeConditions.push(buildILikeCondition(this.userBadgeTable.name, name)!)
     }
     if (type !== undefined) {
       badgeConditions.push(eq(this.userBadgeTable.type, type))

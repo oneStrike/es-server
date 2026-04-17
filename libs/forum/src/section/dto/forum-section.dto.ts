@@ -1,12 +1,18 @@
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS, UserIdDto } from '@libs/platform/dto/base.dto';
-import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { BaseForumSectionGroupDto } from '@libs/forum/section-group/dto/forum-section-group.dto'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  UserIdDto,
+} from '@libs/platform/dto/base.dto'
+import { DragReorderDto } from '@libs/platform/dto/drag-reorder.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -86,7 +92,8 @@ export class BaseForumSectionDto extends BaseDto {
   isEnabled!: boolean
 
   @EnumProperty({
-    description: '审核策略（0=不审核；1=严重敏感词触发审核；2=一般敏感词触发审核；3=轻度敏感词触发审核；4=强制人工审核）',
+    description:
+      '审核策略（0=不审核；1=严重敏感词触发审核；2=一般敏感词触发审核；3=轻度敏感词触发审核；4=强制人工审核）',
     example: ForumReviewPolicyEnum.NONE,
     required: true,
     default: ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD,
@@ -155,17 +162,14 @@ export class BaseForumSectionDto extends BaseDto {
   deletedAt?: Date | null
 }
 
-export class CreateForumSectionDto extends OmitType(
-  BaseForumSectionDto,
-  [
-    ...OMIT_BASE_FIELDS,
-    'lastTopicId',
-    'topicCount',
-    'commentCount',
-    'lastPostAt',
-    'deletedAt',
-  ] as const,
-) {}
+export class CreateForumSectionDto extends OmitType(BaseForumSectionDto, [
+  ...OMIT_BASE_FIELDS,
+  'lastTopicId',
+  'topicCount',
+  'commentCount',
+  'lastPostAt',
+  'deletedAt',
+] as const) {}
 
 export class UpdateForumSectionDto extends IntersectionType(
   IdDto,
@@ -223,56 +227,33 @@ export class QueryPublicForumSectionDetailDto extends IntersectionType(
 /**
  * 公开板块分组摘要 DTO。
  */
-export class ForumSectionGroupBriefDto {
-  @NumberProperty({
-    description: '分组 ID',
-    example: 1,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '分组名称',
-    example: '技术讨论',
-    validation: false,
-  })
-  name!: string
-
-  @StringProperty({
-    description: '分组描述',
-    example: '包含所有技术相关的板块',
-    required: false,
-    validation: false,
-  })
-  description?: string | null
-
-  @NumberProperty({
-    description: '排序权重',
-    example: 0,
-    validation: false,
-  })
-  sortOrder!: number
-}
+export class ForumSectionGroupBriefDto extends PickType(
+  BaseForumSectionGroupDto,
+  ['id', 'name', 'description', 'sortOrder'] as const,
+) {}
 
 /**
  * 公开板块列表项 DTO。
  */
-export class PublicForumSectionListItemDto extends PickType(BaseForumSectionDto, [
-  'id',
-  'groupId',
-  'userLevelRuleId',
-  'name',
-  'description',
-  'icon',
-  'cover',
-  'sortOrder',
-  'isEnabled',
-  'topicReviewPolicy',
-  'topicCount',
-  'commentCount',
-  'followersCount',
-  'lastPostAt',
-] as const) {
+export class PublicForumSectionListItemDto extends PickType(
+  BaseForumSectionDto,
+  [
+    'id',
+    'groupId',
+    'userLevelRuleId',
+    'name',
+    'description',
+    'icon',
+    'cover',
+    'sortOrder',
+    'isEnabled',
+    'topicReviewPolicy',
+    'topicCount',
+    'commentCount',
+    'followersCount',
+    'lastPostAt',
+  ] as const,
+) {
   @BooleanProperty({
     description: '当前用户是否已关注该板块',
     example: true,

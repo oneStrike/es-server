@@ -18,8 +18,8 @@ import {
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
+import { UserGrowthRuleActionDto } from '../growth/dto/growth-shared.dto'
 import {
-  AddUserExperienceDto,
   QueryUserExperienceRecordDto,
   UserExperienceRecordDto,
 } from './dto/experience-record.dto'
@@ -180,7 +180,7 @@ export class UserExperienceService {
    * @returns 增加经验的结果
    */
   async addExperience(
-    addExperienceDto: AddUserExperienceDto & {
+    addExperienceDto: UserGrowthRuleActionDto & {
       bizKey?: string
       source?: string
       targetType?: number
@@ -205,8 +205,7 @@ export class UserExperienceService {
       )
     }
 
-    const source =
-      addExperienceDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE
+    const source = addExperienceDto.source ?? GrowthLedgerSourceEnum.GROWTH_RULE
     const context = this.buildAddExperienceContext(addExperienceDto)
     const bizKey =
       addExperienceDto.bizKey ??
@@ -488,10 +487,7 @@ export class UserExperienceService {
   }
 
   private buildAddExperienceContext(
-    addExperienceDto: Pick<
-      AddUserExperienceDto,
-      never
-    > & {
+    addExperienceDto: Pick<UserGrowthRuleActionDto, never> & {
       context?: Record<string, unknown>
       adminUserId?: number
     },

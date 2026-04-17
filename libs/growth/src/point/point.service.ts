@@ -13,8 +13,8 @@ import {
 } from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
+import { UserGrowthRuleActionDto } from '../growth/dto/growth-shared.dto'
 import {
-  AddUserPointsDto,
   ConsumeUserPointsDto,
   QueryUserPointRecordDto,
 } from './dto/point-record.dto'
@@ -70,7 +70,10 @@ export class UserPointService {
    * @returns 增加积分的结果
    */
   async addPoints(
-    addPointsDto: AddUserPointsDto & { bizKey?: string, source?: string },
+    addPointsDto: UserGrowthRuleActionDto & {
+      bizKey?: string
+      source?: string
+    },
   ) {
     const { userId, ruleType, remark } = addPointsDto
 

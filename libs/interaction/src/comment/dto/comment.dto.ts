@@ -470,56 +470,32 @@ export class CommentReplyItemDto extends PickType(BaseCommentDto, [
   replyTo?: CommentReplyTargetDto
 }
 
+class BaseCommentReplyViewDto extends PickType(CommentReplyItemDto, [
+  'liked',
+  'isAuthorComment',
+  'user',
+  'replyTo',
+] as const) {}
+
 /**
  * 一级评论下的回复预览 DTO。
  */
-export class CommentPreviewReplyDto extends PickType(BaseCommentDto, [
-  'id',
-  'userId',
-  'content',
-  'bodyTokens',
-  'replyToId',
-  'likeCount',
-  'geoCountry',
-  'geoProvince',
-  'geoCity',
-  'geoIsp',
-  'createdAt',
-] as const) {
-  @BooleanProperty({
-    description: '当前用户是否已点赞该回复',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  liked!: boolean
-
-  @BooleanProperty({
-    description: '当前回复是否为主题作者发表；非论坛主题场景固定为 false',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  isAuthorComment!: boolean
-
-  @NestedProperty({
-    description: '回复用户',
-    required: false,
-    nullable: false,
-    type: CommentUserDto,
-    validation: false,
-  })
-  user!: CommentUserDto
-
-  @NestedProperty({
-    description: '被回复目标简要信息',
-    required: false,
-    nullable: false,
-    type: CommentReplyTargetDto,
-    validation: false,
-  })
-  replyTo?: CommentReplyTargetDto
-}
+export class CommentPreviewReplyDto extends IntersectionType(
+  PickType(BaseCommentDto, [
+    'id',
+    'userId',
+    'content',
+    'bodyTokens',
+    'replyToId',
+    'likeCount',
+    'geoCountry',
+    'geoProvince',
+    'geoCity',
+    'geoIsp',
+    'createdAt',
+  ] as const),
+  BaseCommentReplyViewDto,
+) {}
 
 /**
  * 目标评论分页项 DTO。

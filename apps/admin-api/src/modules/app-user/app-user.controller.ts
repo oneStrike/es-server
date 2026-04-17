@@ -8,16 +8,14 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { IdDto, UserIdDto } from '@libs/platform/dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import {
-  AddAdminAppUserExperienceDto,
-  AddAdminAppUserPointsDto,
   AdminAppUserDetailDto,
   AdminAppUserExperienceRecordDto,
   AdminAppUserExperienceStatsDto,
   AdminAppUserFollowCountRepairResultDto,
   AdminAppUserGrowthLedgerRecordDto,
+  AdminAppUserGrowthRuleActionDto,
   AdminAppUserPageItemDto,
   AdminAppUserPointRecordDto,
-  AdminAppUserPointStatsDto,
   ConsumeAdminAppUserPointsDto,
   CreateAdminAppUserDto,
   QueryAdminAppUserBadgeDto,
@@ -28,6 +26,7 @@ import {
   UpdateAdminAppUserProfileDto,
   UpdateAdminAppUserStatusDto,
 } from '@libs/user/dto/admin-app-user.dto'
+import { UserPointStatsFieldsDto } from '@libs/user/dto/app-user-growth-shared.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
@@ -210,7 +209,7 @@ export class AppUserController {
   @Get('points/stats')
   @ApiDoc({
     summary: '获取 APP 用户积分统计',
-    model: AdminAppUserPointStatsDto,
+    model: UserPointStatsFieldsDto,
   })
   async getAppUserPointStats(@Query() query: UserIdDto) {
     return this.appUserService.getAppUserPointStats(query.userId)
@@ -240,7 +239,7 @@ export class AppUserController {
     },
   })
   async addAppUserPoints(
-    @Body() body: AddAdminAppUserPointsDto,
+    @Body() body: AdminAppUserGrowthRuleActionDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.appUserService.addAppUserPoints(userId, body)
@@ -316,7 +315,7 @@ export class AppUserController {
     },
   })
   async addAppUserExperience(
-    @Body() body: AddAdminAppUserExperienceDto,
+    @Body() body: AdminAppUserGrowthRuleActionDto,
     @CurrentUser('sub') userId: number,
   ) {
     return this.appUserService.addAppUserExperience(userId, body)

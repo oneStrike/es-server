@@ -1,3 +1,4 @@
+import { NotificationDeliveryLookupFilterDto } from '@libs/message/notification/dto/notification-delivery-filter.dto'
 import {
   getMessageNotificationCategoryLabel,
   getMessageNotificationDispatchStatusLabel,
@@ -9,13 +10,16 @@ import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { PageDto } from '@libs/platform/dto/page.dto'
-import {
-  DomainEventDispatchStatusEnum,
-} from '@libs/platform/modules/eventing'
+import { DomainEventDispatchStatusEnum } from '@libs/platform/modules/eventing/eventing.constant'
+import { IntersectionType, PartialType } from '@nestjs/swagger'
 
-export class QueryMessageDispatchPageDto extends PageDto {
+export class QueryMessageDispatchPageDto extends IntersectionType(
+  PageDto,
+  PartialType(NotificationDeliveryLookupFilterDto),
+) {
   @EnumProperty({
-    description: '领域事件 dispatch 技术状态',
+    description:
+      '领域事件 dispatch 技术状态（0=待处理；1=处理中；2=成功；3=失败）',
     example: DomainEventDispatchStatusEnum.FAILED,
     required: false,
     enum: DomainEventDispatchStatusEnum,
@@ -23,20 +27,13 @@ export class QueryMessageDispatchPageDto extends PageDto {
   dispatchStatus?: DomainEventDispatchStatusEnum
 
   @EnumProperty({
-    description: '通知投影业务状态',
+    description:
+      '通知投影业务状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.FAILED,
     required: false,
     enum: MessageNotificationDispatchStatusEnum,
   })
   deliveryStatus?: MessageNotificationDispatchStatusEnum
-
-  @StringProperty({
-    description: '领域事件键',
-    example: 'comment.replied',
-    required: false,
-    maxLength: 120,
-  })
-  eventKey?: string
 
   @StringProperty({
     description: '事件域',
@@ -45,37 +42,6 @@ export class QueryMessageDispatchPageDto extends PageDto {
     maxLength: 40,
   })
   domain?: string
-
-  @NumberProperty({
-    description: '接收用户 ID',
-    example: 1001,
-    required: false,
-  })
-  receiverUserId?: number
-
-  @StringProperty({
-    description: '通知投影键模糊匹配',
-    example: 'announcement:42:user:7',
-    required: false,
-    maxLength: 180,
-  })
-  projectionKey?: string
-
-  @StringProperty({
-    description: '领域事件 ID',
-    example: '10001',
-    required: false,
-    maxLength: 32,
-  })
-  eventId?: string
-
-  @StringProperty({
-    description: 'dispatch ID',
-    example: '10088',
-    required: false,
-    maxLength: 32,
-  })
-  dispatchId?: string
 }
 
 export class QueryMessageWsMonitorDto {
@@ -236,7 +202,8 @@ export class MessageNotificationDeliveryItemDto {
   notificationId!: number | null
 
   @EnumProperty({
-    description: '业务投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
+    description:
+      '业务投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.FAILED,
     enum: MessageNotificationDispatchStatusEnum,
   })
@@ -317,7 +284,8 @@ export class MessageDispatchPageItemDto {
   consumer!: string
 
   @EnumProperty({
-    description: '领域事件 dispatch 技术状态',
+    description:
+      '领域事件 dispatch 技术状态（0=待处理；1=处理中；2=成功；3=失败）',
     example: DomainEventDispatchStatusEnum.FAILED,
     enum: DomainEventDispatchStatusEnum,
   })
@@ -377,7 +345,8 @@ export class MessageDispatchPageItemDto {
   projectionKey!: string | null
 
   @EnumProperty({
-    description: '通知投影业务状态',
+    description:
+      '通知投影业务状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.RETRYING,
     enum: MessageNotificationDispatchStatusEnum,
     required: false,

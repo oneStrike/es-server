@@ -70,35 +70,48 @@ export interface NumberArrayPropertyOptions extends BaseValidateOptions {
 /**
  * 通用数组属性选项
  */
-export type ArrayPropertyOptions<T = string | number | boolean> = BaseValidateOptions & {
-  /** 示例值 */
-  example?: T[]
-  /** 数组最大长度 */
-  maxLength?: number
-  /** 数组最小长度 */
-  minLength?: number
-  /** 默认值 */
-  default?: T[]
-  /** 数组元素验证器（可选，用于复杂类型验证） */
-  itemValidator?: (value: T) => boolean
-  /** 数组元素验证失败时的错误消息 */
-  itemErrorMessage?: string
-  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
-  validation?: boolean
-} & (
-  | {
-        /** 数组元素类型 */
-        itemType: 'string' | 'number' | 'boolean'
-        /** 基础类型不需要 itemClass */
-        itemClass?: never
-      }
-      | {
-        /** 数组元素DTO类型（必传，用于深度校验和API文档） */
-        itemClass: new (...args: never[]) => T
-        /** 对象数组不再通过 itemType 指定 */
-        itemType?: never
-      }
-  )
+export type ArrayPropertyOptions<T = string | number | boolean> =
+  BaseValidateOptions & {
+    /** 示例值 */
+    example?: T[]
+    /** 数组最大长度 */
+    maxLength?: number
+    /** 数组最小长度 */
+    minLength?: number
+    /** 默认值 */
+    default?: T[]
+    /** 数组元素验证器（可选，用于复杂类型验证） */
+    itemValidator?: (value: T) => boolean
+    /** 数组元素验证失败时的错误消息 */
+    itemErrorMessage?: string
+    /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+    validation?: boolean
+  } & (
+    | {
+          /** 数组元素类型 */
+          itemType: 'string' | 'number' | 'boolean'
+          /** 基础类型不需要 itemClass */
+          itemClass?: never
+          /** 基础类型数组不需要 itemEnum */
+          itemEnum?: never
+        }
+        | {
+          /** 数组元素DTO类型（必传，用于深度校验和API文档） */
+          itemClass: new (...args: never[]) => T
+          /** 对象数组不再通过 itemType 指定 */
+          itemType?: never
+          /** DTO 数组不需要 itemEnum */
+          itemEnum?: never
+        }
+        | {
+          /** 枚举数组元素 */
+          itemEnum: EnumLike
+          /** 枚举数组不需要 itemType */
+          itemType?: never
+          /** 枚举数组不需要 itemClass */
+          itemClass?: never
+        }
+    )
 
 /**
  * 枚举数组属性选项

@@ -1,11 +1,11 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
+import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -172,17 +172,14 @@ export class BaseSensitiveWordHitDto {
   replaceWord?: string | null
 }
 
-export class CreateSensitiveWordDto extends OmitType(
-  BaseSensitiveWordDto,
-  [
-    ...OMIT_BASE_FIELDS,
-    'version',
-    'createdBy',
-    'updatedBy',
-    'hitCount',
-    'lastHitAt',
-  ] as const,
-) {}
+export class CreateSensitiveWordDto extends OmitType(BaseSensitiveWordDto, [
+  ...OMIT_BASE_FIELDS,
+  'version',
+  'createdBy',
+  'updatedBy',
+  'hitCount',
+  'lastHitAt',
+] as const) {}
 
 export class UpdateSensitiveWordDto extends IntersectionType(
   CreateSensitiveWordDto,
@@ -256,7 +253,7 @@ export class SensitiveWordReplaceResponseDto {
 
 export class SensitiveWordHighestLevelResponseDto {
   @EnumProperty({
-    description: '敏感词最高等级',
+    description: '敏感词最高等级（1=严重；2=一般；3=轻微）',
     example: SensitiveWordLevelEnum.SEVERE,
     enum: SensitiveWordLevelEnum,
     required: false,
@@ -386,7 +383,8 @@ export class SensitiveWordTopHitStatisticsDto {
 
 export class SensitiveWordStatisticsQueryDto {
   @EnumProperty({
-    description: '统计类型',
+    description:
+      '统计类型（按级别统计；按类型统计；热门敏感词统计；最近命中统计）',
     required: false,
     enum: StatisticsTypeEnum,
     example: StatisticsTypeEnum.LEVEL,
@@ -396,7 +394,8 @@ export class SensitiveWordStatisticsQueryDto {
 
 export class SensitiveWordStatisticsResponseDto {
   @EnumProperty({
-    description: '统计类型',
+    description:
+      '统计类型（按级别统计；按类型统计；热门敏感词统计；最近命中统计）',
     enum: StatisticsTypeEnum,
     example: StatisticsTypeEnum.LEVEL,
     validation: false,
@@ -425,16 +424,32 @@ export class SensitiveWordStatisticsDataDto {
   @NumberProperty({ description: '禁用词数', example: 20, validation: false })
   disabledWords!: number
 
-  @NumberProperty({ description: '总命中次数', example: 1000, validation: false })
+  @NumberProperty({
+    description: '总命中次数',
+    example: 1000,
+    validation: false,
+  })
   totalHits!: number
 
-  @NumberProperty({ description: '今日命中次数', example: 12, validation: false })
+  @NumberProperty({
+    description: '今日命中次数',
+    example: 12,
+    validation: false,
+  })
   todayHits!: number
 
-  @NumberProperty({ description: '最近一周命中次数', example: 55, validation: false })
+  @NumberProperty({
+    description: '最近一周命中次数',
+    example: 55,
+    validation: false,
+  })
   lastWeekHits!: number
 
-  @NumberProperty({ description: '最近一月命中次数', example: 180, validation: false })
+  @NumberProperty({
+    description: '最近一月命中次数',
+    example: 180,
+    validation: false,
+  })
   lastMonthHits!: number
 
   @ArrayProperty({

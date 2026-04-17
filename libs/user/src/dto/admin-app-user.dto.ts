@@ -1,18 +1,19 @@
-import { QueryUserBadgeDto } from '@libs/growth/badge/dto/user-badge-management.dto';
-import { GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION } from '@libs/growth/event-definition/event-definition.doc';
-import { BaseUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto';
-import { BaseGrowthLedgerRecordDto } from '@libs/growth/growth-ledger/dto/growth-ledger-record.dto';
-import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant';
-import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto';
-import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-            import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-            import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-            import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-            import { RegexProperty } from '@libs/platform/decorators/validate/regex-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { UserIdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import { QueryUserBadgeDto } from '@libs/growth/badge/dto/user-badge-management.dto'
+import { GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION } from '@libs/growth/event-definition/event-definition.constant'
+import { BaseUserExperienceRecordDto } from '@libs/growth/experience/dto/experience-record.dto'
+import { BaseGrowthLedgerRecordDto } from '@libs/growth/growth-ledger/dto/growth-ledger-record.dto'
+import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
+import { UserGrowthRuleActionDto } from '@libs/growth/growth/dto/growth-shared.dto'
+import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
+import { BaseUserPointRecordDto } from '@libs/growth/point/dto/point-record.dto'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { RegexProperty } from '@libs/platform/decorators/validate/regex-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { UserIdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
 import {
   IntersectionType,
   OmitType,
@@ -23,6 +24,11 @@ import {
   APP_USER_MANUAL_OPERATION_KEY_REGEX,
   AppUserDeletedScopeEnum,
 } from '../app-user.constant'
+import {
+  UserExperienceDeltaFieldsDto,
+  UserPointDeltaFieldsDto,
+  UserPointStatsFieldsDto,
+} from './app-user-growth-shared.dto'
 import { BaseAppUserCountDto } from './base-app-user-count.dto'
 import { BaseAppUserDto } from './base-app-user.dto'
 
@@ -48,29 +54,6 @@ export class AdminAppUserCountDto extends OmitType(BaseAppUserCountDto, [
   'createdAt',
   'updatedAt',
 ] as const) {}
-
-export class AdminAppUserPointStatsDto {
-  @NumberProperty({
-    description: '当前积分',
-    example: 120,
-    validation: false,
-  })
-  currentPoints!: number
-
-  @NumberProperty({
-    description: '今日获得积分',
-    example: 15,
-    validation: false,
-  })
-  todayEarned!: number
-
-  @NumberProperty({
-    description: '今日消耗积分',
-    example: 5,
-    validation: false,
-  })
-  todayConsumed!: number
-}
 
 export class AdminAppUserExperienceStatsDto {
   @NumberProperty({
@@ -112,6 +95,18 @@ export class AdminAppUserExperienceStatsDto {
     validation: false,
   })
   gapToNextLevel?: number
+}
+
+export class AdminAppUserGrowthRuleActionDto extends IntersectionType(
+  AdminAppUserManualOperationDto,
+  PickType(UserGrowthRuleActionDto, ['remark'] as const),
+) {
+  @EnumProperty({
+    description: GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION,
+    example: GrowthRuleTypeEnum.CREATE_TOPIC,
+    enum: GrowthRuleTypeEnum,
+  })
+  ruleType!: GrowthRuleTypeEnum
 }
 
 export class AdminAppUserPageItemDto extends BaseAppUserDto {
@@ -160,11 +155,11 @@ export class AdminAppUserDetailDto extends BaseAppUserDto {
 
   @NestedProperty({
     description: '积分统计',
-    type: AdminAppUserPointStatsDto,
+    type: UserPointStatsFieldsDto,
     validation: false,
     nullable: false,
   })
-  pointStats!: AdminAppUserPointStatsDto
+  pointStats!: UserPointStatsFieldsDto
 
   @NestedProperty({
     description: '经验统计',
@@ -304,9 +299,8 @@ export class UpdateAdminAppUserStatusDto extends PickType(BaseAppUserDto, [
   banUntil?: Date
 }
 
-export class AdminAppUserPointRecordDto extends OmitType(
-  BaseUserPointRecordDto,
-  [
+export class AdminAppUserPointRecordDto extends IntersectionType(
+  OmitType(BaseUserPointRecordDto, [
     'assetType',
     'delta',
     'beforeValue',
@@ -314,33 +308,12 @@ export class AdminAppUserPointRecordDto extends OmitType(
     'bizKey',
     'source',
     'updatedAt',
-  ] as const,
-) {
-  @NumberProperty({
-    description: '积分变化（正数为获得，负数为消费）',
-    example: 5,
-    validation: false,
-  })
-  points!: number
+  ] as const),
+  UserPointDeltaFieldsDto,
+) {}
 
-  @NumberProperty({
-    description: '变化前积分',
-    example: 100,
-    validation: false,
-  })
-  beforePoints!: number
-
-  @NumberProperty({
-    description: '变化后积分',
-    example: 105,
-    validation: false,
-  })
-  afterPoints!: number
-}
-
-export class AdminAppUserExperienceRecordDto extends OmitType(
-  BaseUserExperienceRecordDto,
-  [
+export class AdminAppUserExperienceRecordDto extends IntersectionType(
+  OmitType(BaseUserExperienceRecordDto, [
     'assetType',
     'delta',
     'beforeValue',
@@ -348,29 +321,9 @@ export class AdminAppUserExperienceRecordDto extends OmitType(
     'bizKey',
     'source',
     'updatedAt',
-  ] as const,
-) {
-  @NumberProperty({
-    description: '经验值变化',
-    example: 5,
-    validation: false,
-  })
-  experience!: number
-
-  @NumberProperty({
-    description: '变化前经验值',
-    example: 100,
-    validation: false,
-  })
-  beforeExperience!: number
-
-  @NumberProperty({
-    description: '变化后经验值',
-    example: 105,
-    validation: false,
-  })
-  afterExperience!: number
-}
+  ] as const),
+  UserExperienceDeltaFieldsDto,
+) {}
 
 export class AdminAppUserGrowthLedgerRecordDto extends OmitType(
   BaseGrowthLedgerRecordDto,
@@ -396,23 +349,6 @@ export class QueryAdminAppUserBadgeDto extends IntersectionType(
   QueryUserBadgeDto,
 ) {}
 
-export class AddAdminAppUserPointsDto extends AdminAppUserManualOperationDto {
-  @EnumProperty({
-    description: GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION,
-    example: GrowthRuleTypeEnum.CREATE_TOPIC,
-    enum: GrowthRuleTypeEnum,
-  })
-  ruleType!: GrowthRuleTypeEnum
-
-  @StringProperty({
-    description: '备注',
-    example: '管理员发放积分',
-    required: false,
-    maxLength: 500,
-  })
-  remark?: string
-}
-
 export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto {
   @NumberProperty({
     description: '消费积分数量',
@@ -422,7 +358,8 @@ export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto
   points!: number
 
   @NumberProperty({
-    description: '关联目标类型（1=漫画；2=小说；3=漫画章节；4=小说章节；5=论坛主题）',
+    description:
+      '关联目标类型（1=漫画；2=小说；3=漫画章节；4=小说章节；5=论坛主题）',
     example: 3,
     required: false,
   })
@@ -445,23 +382,6 @@ export class ConsumeAdminAppUserPointsDto extends AdminAppUserManualOperationDto
   @StringProperty({
     description: '备注',
     example: '管理员扣减积分',
-    required: false,
-    maxLength: 500,
-  })
-  remark?: string
-}
-
-export class AddAdminAppUserExperienceDto extends AdminAppUserManualOperationDto {
-  @EnumProperty({
-    description: GROWTH_RULE_TYPE_ADMIN_ACTION_DTO_DESCRIPTION,
-    example: GrowthRuleTypeEnum.CREATE_TOPIC,
-    enum: GrowthRuleTypeEnum,
-  })
-  ruleType!: GrowthRuleTypeEnum
-
-  @StringProperty({
-    description: '备注',
-    example: '管理员发放经验',
     required: false,
     maxLength: 500,
   })

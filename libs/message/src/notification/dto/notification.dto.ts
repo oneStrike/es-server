@@ -2,7 +2,6 @@ import {
   ArrayProperty,
   BooleanProperty,
   DateProperty,
-  EnumArrayProperty,
   EnumProperty,
   NestedProperty,
   NumberProperty,
@@ -18,6 +17,7 @@ import {
   MessageNotificationDispatchStatusEnum,
   MessageNotificationPreferenceSourceEnum,
 } from '../notification.constant'
+import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
 
 export class BaseUserNotificationDto {
   @NumberProperty({
@@ -115,14 +115,14 @@ export class QueryUserNotificationListDto extends PageDto {
   })
   isRead?: boolean
 
-  @EnumArrayProperty({
+  @ArrayProperty({
     description: '通知分类键列表',
     required: false,
     example: [
       MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
       MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE,
     ],
-    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+    itemEnum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
     transform: ({ value }) => {
       if (value === undefined || value === null || value === '') {
         return undefined
@@ -158,9 +158,10 @@ export class UpdateUserNotificationPreferencesDto {
   preferences!: UpdateUserNotificationPreferenceItemDto[]
 }
 
-class BaseNotificationDeliveryQueryDto {
+class BaseNotificationDeliveryQueryDto extends NotificationDeliveryLookupFilterDto {
   @EnumProperty({
-    description: '业务投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
+    description:
+      '业务投递状态（1=已投递；2=投递失败；3=重试中；4=因偏好关闭而跳过）',
     example: MessageNotificationDispatchStatusEnum.FAILED,
     required: false,
     enum: MessageNotificationDispatchStatusEnum,
@@ -174,45 +175,6 @@ class BaseNotificationDeliveryQueryDto {
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
   categoryKey?: MessageNotificationCategoryKey
-
-  @StringProperty({
-    description: '领域事件键',
-    example: 'announcement.published',
-    required: false,
-    maxLength: 120,
-  })
-  eventKey?: string
-
-  @NumberProperty({
-    description: '接收用户 ID',
-    example: 1001,
-    required: false,
-  })
-  receiverUserId?: number
-
-  @StringProperty({
-    description: '通知投影键模糊匹配',
-    example: 'announcement:42:user:7',
-    required: false,
-    maxLength: 180,
-  })
-  projectionKey?: string
-
-  @StringProperty({
-    description: '领域事件 ID',
-    example: '10001',
-    required: false,
-    maxLength: 32,
-  })
-  eventId?: string
-
-  @StringProperty({
-    description: 'dispatch ID',
-    example: '10088',
-    required: false,
-    maxLength: 32,
-  })
-  dispatchId?: string
 }
 
 export class QueryNotificationDeliveryPageDto extends IntersectionType(
@@ -288,7 +250,7 @@ export class UserNotificationPreferenceItemDto {
   defaultEnabled!: boolean
 
   @EnumProperty({
-    description: '状态来源（default=默认策略；explicit=用户显式覆盖）',
+    description: '状态来源（默认策略；用户显式覆盖）',
     example: MessageNotificationPreferenceSourceEnum.DEFAULT,
     enum: MessageNotificationPreferenceSourceEnum,
   })

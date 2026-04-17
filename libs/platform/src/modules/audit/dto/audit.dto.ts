@@ -47,7 +47,7 @@ export class BaseAuditDto extends BaseDto {
   ip?: string
 
   @EnumProperty({
-    description: '请求方法',
+    description: '请求方法（GET；POST；PUT；DELETE；PATCH；HEAD；OPTIONS）',
     example: 'POST',
     required: true,
     enum: HttpMethodEnum,

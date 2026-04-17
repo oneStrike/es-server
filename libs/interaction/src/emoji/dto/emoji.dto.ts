@@ -1,13 +1,15 @@
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property';
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumArrayProperty } from '@libs/platform/decorators/validate/enum-array-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
+import {
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/platform/dto'
+
 import {
   IntersectionType,
   OmitType,
@@ -78,9 +80,9 @@ export class BaseEmojiPackDto extends BaseDto {
   })
   visibleInPicker!: boolean
 
-  @EnumArrayProperty({
+  @ArrayProperty({
     description: '场景类型（1=聊天,2=评论,3=论坛主题）',
-    enum: EmojiSceneEnum,
+    itemEnum: EmojiSceneEnum,
     example: [...EMOJI_SCENE_VALUES],
     default: [...EMOJI_SCENE_VALUES],
   })

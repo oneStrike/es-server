@@ -1,15 +1,14 @@
-import { CommentLevelEnum, SceneTypeEnum } from '@libs/platform/constant/interaction.constant';
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
-import { BaseDto, IdDto } from '@libs/platform/dto/base.dto';
-import { PageDto } from '@libs/platform/dto/page.dto';
 import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+  CommentLevelEnum,
+  SceneTypeEnum,
+} from '@libs/platform/constant/interaction.constant'
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseDto, IdDto } from '@libs/platform/dto/base.dto'
+import { PageDto } from '@libs/platform/dto/page.dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ReportReasonEnum,
   ReportStatusEnum,
@@ -42,7 +41,8 @@ export class BaseReportDto extends BaseDto {
   targetId!: number
 
   @EnumProperty({
-    description: '举报目标类型（1=漫画；2=小说；3=漫画章节；4=小说章节；5=论坛主题；6=评论；7=用户）',
+    description:
+      '举报目标类型（1=漫画；2=小说；3=漫画章节；4=小说章节；5=论坛主题；6=评论；7=用户）',
     enum: ReportTargetTypeEnum,
     example: ReportTargetTypeEnum.COMIC,
     required: true,
@@ -50,7 +50,8 @@ export class BaseReportDto extends BaseDto {
   targetType!: ReportTargetTypeEnum
 
   @EnumProperty({
-    description: '业务场景类型（1=漫画作品；2=小说作品；3=论坛主题；10=漫画章节；11=小说章节；12=用户主页）',
+    description:
+      '业务场景类型（1=漫画作品；2=小说作品；3=论坛主题；10=漫画章节；11=小说章节；12=用户主页）',
     enum: SceneTypeEnum,
     example: SceneTypeEnum.COMIC_WORK,
     required: true,
@@ -73,7 +74,8 @@ export class BaseReportDto extends BaseDto {
   commentLevel?: CommentLevelEnum | null
 
   @EnumProperty({
-    description: '举报原因类型（1=垃圾信息；2=不当内容；3=骚扰；4=版权侵权；99=其他）',
+    description:
+      '举报原因类型（1=垃圾信息；2=不当内容；3=骚扰；4=版权侵权；99=其他）',
     enum: ReportReasonEnum,
     example: ReportReasonEnum.INAPPROPRIATE_CONTENT,
     required: true,
@@ -178,7 +180,7 @@ const AdminHandleReportStatusEnum = {
 
 export class HandleAdminReportDto extends IdDto {
   @EnumProperty({
-    description: '裁决结果，仅允许已解决或已驳回',
+    description: '裁决结果（3=已解决；4=已驳回）',
     enum: AdminHandleReportStatusEnum,
     example: ReportStatusEnum.RESOLVED,
   })
