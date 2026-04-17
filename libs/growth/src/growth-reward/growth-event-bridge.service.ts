@@ -6,7 +6,7 @@ import { EventDefinitionService } from '@libs/growth/event-definition/event-defi
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
 import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type';
 import { TaskService } from '@libs/growth/task/task.service';
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { UserGrowthRewardService } from './growth-reward.service'
 
 /**
@@ -16,6 +16,8 @@ import { UserGrowthRewardService } from './growth-reward.service'
  */
 @Injectable()
 export class GrowthEventBridgeService {
+  private readonly logger = new Logger(GrowthEventBridgeService.name)
+
   constructor(
     private readonly eventDefinitionService: EventDefinitionService,
     private readonly userGrowthRewardService: UserGrowthRewardService,
@@ -58,13 +60,25 @@ export class GrowthEventBridgeService {
           input.eventEnvelope,
           EventDefinitionConsumerEnum.NOTIFICATION,
         )
-    const taskHandled = taskEligible
-    const taskResult = taskEligible
-      ? await this.taskService.consumeEventProgress({
+    let taskHandled = false
+    let taskResult: DispatchDefinedGrowthEventResult['taskResult']
+    let taskErrorMessage: string | undefined
+
+    if (taskEligible) {
+      try {
+        taskResult = await this.taskService.consumeEventProgress({
           eventEnvelope: input.eventEnvelope,
           bizKey: input.bizKey,
         })
-      : undefined
+        taskHandled = true
+      } catch (error) {
+        taskErrorMessage =
+          error instanceof Error ? error.message : String(error)
+        this.logger.warn(
+          `growth_task_consumer_failed bizKey=${input.bizKey} eventKey=${input.eventEnvelope.key} error=${taskErrorMessage}`,
+        )
+      }
+    }
 
     if (!growthDeclared || growthBlockedByGovernance) {
       return {
@@ -75,6 +89,7 @@ export class GrowthEventBridgeService {
         taskHandled,
         taskEligible,
         notificationEligible,
+        taskErrorMessage,
         taskResult,
       }
     }
@@ -99,6 +114,7 @@ export class GrowthEventBridgeService {
       taskHandled,
       taskEligible,
       notificationEligible,
+      taskErrorMessage,
       growthResult,
       taskResult,
     }

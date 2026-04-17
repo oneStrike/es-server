@@ -200,42 +200,17 @@ docker_build() {
 }
 
 refresh_frontend_proxies_after_server_deploy() {
+    if [ "${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY:-true}" != "true" ]; then
+        log "跳过前端代理刷新 (REFRESH_FRONTEND_AFTER_SERVER_DEPLOY=${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY})"
+        return 0
+    fi
+
     # admin/app 前端容器通常会在启动时解析一次 backend 主机名。
     # 当 admin-server / app-server 被重建后，旧 IP 可能被复用，导致代理继续把流量打到错误容器。
     # 这里强制重建前端容器，让它们重新解析 upstream。
     log "刷新 admin/app 前端容器，重置可能缓存的 backend IP..."
     if ! docker compose up -d --force-recreate admin app; then
         error "前端代理刷新失败"
-        return 1
-    fi
-
-    return 0
-}
-
-declare -a PENDING_PROJECTS=()
-
-has_pending_frontend_deploys() {
-    local pending_project
-
-    for pending_project in "${PENDING_PROJECTS[@]:1}"; do
-        case "$pending_project" in
-            es-admin|es-app-v2)
-                return 0
-                ;;
-        esac
-    done
-
-    return 1
-}
-
-should_refresh_frontend_after_server_deploy() {
-    if [ "${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY:-true}" != "true" ]; then
-        log "跳过前端代理刷新 (REFRESH_FRONTEND_AFTER_SERVER_DEPLOY=${REFRESH_FRONTEND_AFTER_SERVER_DEPLOY})"
-        return 1
-    fi
-
-    if has_pending_frontend_deploys; then
-        log "后续仍有前端项目待部署，跳过本次 server 阶段的中间代理刷新"
         return 1
     fi
 
@@ -418,10 +393,8 @@ deploy_project() {
             fi
 
             if [ "$deploy_failed" = false ]; then
-                if should_refresh_frontend_after_server_deploy; then
-                    if ! refresh_frontend_proxies_after_server_deploy; then
-                        deploy_failed=true
-                    fi
+                if ! refresh_frontend_proxies_after_server_deploy; then
+                    deploy_failed=true
                 fi
             fi
             ;;
@@ -492,7 +465,6 @@ fi
 
 # Projects to deploy (in order)
 PROJECTS=("es-server" "es-admin" "es-app-v2")
-PENDING_PROJECTS=("${PROJECTS[@]}")
 FAILURES=0
 
 for PROJECT in "${PROJECTS[@]}"; do
@@ -501,7 +473,6 @@ for PROJECT in "${PROJECTS[@]}"; do
         FAILURES=$((FAILURES + 1))
         warn "项目 $PROJECT 失败，继续处理下一个项目..."
     fi
-    PENDING_PROJECTS=("${PENDING_PROJECTS[@]:1}")
 done
 
 echo ""

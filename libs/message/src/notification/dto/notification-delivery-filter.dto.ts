@@ -1,4 +1,10 @@
-import { NumberProperty, StringProperty } from '@libs/platform/decorators'
+import {
+  NumberProperty,
+  RegexProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+const POSITIVE_BIGINT_QUERY_ID_REGEX = /^[1-9]\d*$/
 
 export class NotificationDeliveryLookupFilterDto {
   @StringProperty({
@@ -24,19 +30,21 @@ export class NotificationDeliveryLookupFilterDto {
   })
   projectionKey?: string
 
-  @StringProperty({
-    description: '领域事件 ID',
+  @RegexProperty({
+    description: '领域事件 ID（正整数字符串）',
     example: '10001',
     required: false,
-    maxLength: 32,
+    regex: POSITIVE_BIGINT_QUERY_ID_REGEX,
+    message: 'eventId 必须是合法的正整数字符串',
   })
   eventId?: string
 
-  @StringProperty({
-    description: 'dispatch ID',
+  @RegexProperty({
+    description: 'dispatch ID（正整数字符串）',
     example: '10088',
     required: false,
-    maxLength: 32,
+    regex: POSITIVE_BIGINT_QUERY_ID_REGEX,
+    message: 'dispatchId 必须是合法的正整数字符串',
   })
   dispatchId?: string
 }

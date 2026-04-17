@@ -11,14 +11,15 @@ import {
   UpdateUserExperienceRuleDto,
 } from '@libs/growth/experience/dto/experience-rule.dto'
 import { UserExperienceService } from '@libs/growth/experience/experience.service'
-import { UserGrowthRuleActionDto } from '@libs/growth/growth/dto/growth-shared.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
 import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
+import { AdminAppUserGrowthRuleActionDto } from '@libs/user/dto/admin-app-user.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
+import { AppUserService } from '../../app-user/app-user.service'
 /**
  * 用户经验规则管理控制器
  * 提供经验规则的创建、更新、删除、查询等管理接口
@@ -28,7 +29,10 @@ import { ApiAuditDoc } from '../../../common/decorators/api-audit-doc.decorator'
 @Controller('admin/growth/experience-rules')
 @ApiTags('用户成长/经验管理')
 export class ExperienceController {
-  constructor(private readonly experienceService: UserExperienceService) {}
+  constructor(
+    private readonly experienceService: UserExperienceService,
+    private readonly appUserService: AppUserService,
+  ) {}
 
   @Get('page')
   @ApiPageDoc({
@@ -93,14 +97,10 @@ export class ExperienceController {
     },
   })
   async grantExperience(
-    @Body() dto: UserGrowthRuleActionDto,
+    @Body() dto: AdminAppUserGrowthRuleActionDto,
     @CurrentUser('sub') adminUserId: number,
   ) {
-    return this.experienceService.addExperience({
-      ...dto,
-      source: 'admin_experience_rule_grant',
-      adminUserId,
-    })
+    return this.appUserService.addAppUserExperience(adminUserId, dto)
   }
 
   @Get('record/page')

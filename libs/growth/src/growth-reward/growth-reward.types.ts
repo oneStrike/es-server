@@ -77,6 +77,7 @@ export interface DispatchDefinedGrowthEventResult {
   taskHandled: boolean
   taskEligible: boolean
   notificationEligible: boolean
+  taskErrorMessage?: string
   growthResult?: GrowthRuleRewardSettlementResult
   taskResult?: TaskEventProgressResult
 }

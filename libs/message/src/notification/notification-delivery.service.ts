@@ -18,6 +18,7 @@ import {
   MessageNotificationCategoryKey,
   MessageNotificationDispatchStatusEnum,
 } from './notification.constant'
+import { parsePositiveBigintQueryId } from './notification-query-id.util'
 
 @Injectable()
 export class MessageNotificationDeliveryService {
@@ -145,32 +146,20 @@ export class MessageNotificationDeliveryService {
       )
     }
     if (query.eventId?.trim()) {
-      try {
-        conditions.push(
-          eq(this.notificationDelivery.eventId, BigInt(query.eventId.trim())),
-        )
-      } catch {
-        return {
-          list: [],
-          total: 0,
-          pageIndex: query.pageIndex ?? 1,
-          pageSize: query.pageSize ?? 15,
-        }
-      }
+      conditions.push(
+        eq(
+          this.notificationDelivery.eventId,
+          parsePositiveBigintQueryId(query.eventId, 'eventId'),
+        ),
+      )
     }
     if (query.dispatchId?.trim()) {
-      try {
-        conditions.push(
-          eq(this.notificationDelivery.dispatchId, BigInt(query.dispatchId.trim())),
-        )
-      } catch {
-        return {
-          list: [],
-          total: 0,
-          pageIndex: query.pageIndex ?? 1,
-          pageSize: query.pageSize ?? 15,
-        }
-      }
+      conditions.push(
+        eq(
+          this.notificationDelivery.dispatchId,
+          parsePositiveBigintQueryId(query.dispatchId, 'dispatchId'),
+        ),
+      )
     }
 
     const pageIndex

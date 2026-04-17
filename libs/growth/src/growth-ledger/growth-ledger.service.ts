@@ -177,7 +177,7 @@ export class GrowthLedgerService {
     })
     if (gate.duplicated) {
       if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
-        await this.syncUserLevelByExperience(tx, userId, gate.result.afterValue)
+        await this.syncUserLevelByCurrentExperience(tx, userId)
       }
       return gate.result
     }
@@ -359,7 +359,7 @@ export class GrowthLedgerService {
     })
     if (gate.duplicated) {
       if (assetType === GrowthAssetTypeEnum.EXPERIENCE) {
-        await this.syncUserLevelByExperience(tx, userId, gate.result.afterValue)
+        await this.syncUserLevelByCurrentExperience(tx, userId)
       }
       return gate.result
     }
@@ -756,6 +756,23 @@ export class GrowthLedgerService {
     }
 
     await this.syncUserLevel(tx, userId, levelRule.id)
+  }
+
+  private async syncUserLevelByCurrentExperience(
+    tx: Tx,
+    userId: number,
+  ): Promise<void> {
+    const user = await tx.query.appUser.findFirst({
+      where: { id: userId },
+      columns: { experience: true },
+    })
+    if (!user) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '用户不存在',
+      )
+    }
+    await this.syncUserLevelByExperience(tx, userId, user.experience)
   }
 
   /** 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键 */

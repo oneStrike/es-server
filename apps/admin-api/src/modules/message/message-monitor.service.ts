@@ -9,6 +9,7 @@ import { buildILikeCondition, DrizzleService } from '@db/core'
 import { domainEvent, domainEventDispatch, messageWsMetric, notificationDelivery } from '@db/schema'
 
 import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
+import { parsePositiveBigintQueryId } from '@libs/message/notification/notification-query-id.util'
 import {
   DomainEventConsumerEnum,
   DomainEventDispatchService,
@@ -65,32 +66,20 @@ export class MessageMonitorService {
       )
     }
     if (query.eventId?.trim()) {
-      try {
-        conditions.push(
-          eq(domainEventDispatch.eventId, BigInt(query.eventId.trim())),
-        )
-      } catch {
-        return {
-          list: [],
-          total: 0,
-          pageIndex: query.pageIndex ?? 1,
-          pageSize: query.pageSize ?? 15,
-        }
-      }
+      conditions.push(
+        eq(
+          domainEventDispatch.eventId,
+          parsePositiveBigintQueryId(query.eventId, 'eventId'),
+        ),
+      )
     }
     if (query.dispatchId?.trim()) {
-      try {
-        conditions.push(
-          eq(domainEventDispatch.id, BigInt(query.dispatchId.trim())),
-        )
-      } catch {
-        return {
-          list: [],
-          total: 0,
-          pageIndex: query.pageIndex ?? 1,
-          pageSize: query.pageSize ?? 15,
-        }
-      }
+      conditions.push(
+        eq(
+          domainEventDispatch.id,
+          parsePositiveBigintQueryId(query.dispatchId, 'dispatchId'),
+        ),
+      )
     }
 
     const pageIndex =
