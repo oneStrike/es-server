@@ -27,9 +27,14 @@ export const growthAuditLog = pgTable("growth_audit_log", {
    */
   bizKey: varchar({ length: 120 }).notNull(),
   /**
-   * 资产类型（1=积分，2=经验值，3=徽章）
+   * 资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）
    */
   assetType: smallint().notNull(),
+  /**
+   * 资产键。
+   * 积分/经验等无需附加主键的资产固定为空字符串；扩展资产使用稳定业务键。
+   */
+  assetKey: varchar({ length: 64 }).default('').notNull(),
   /**
    * 动作（1=发放资产，2=扣减资产，3=规则判定过程，4=授予徽章）
    */
@@ -75,7 +80,7 @@ export const growthAuditLog = pgTable("growth_audit_log", {
    * 请求链路索引
    */
   index("growth_audit_log_request_id_idx").on(table.requestId),
-  check("growth_audit_log_asset_type_valid_chk", sql`${table.assetType} in (1, 2, 3)`),
+  check("growth_audit_log_asset_type_valid_chk", sql`${table.assetType} in (1, 2, 3, 4, 5)`),
   check("growth_audit_log_action_valid_chk", sql`${table.action} in (1, 2, 3, 4)`),
   check("growth_audit_log_decision_valid_chk", sql`${table.decision} in (1, 2)`),
 ]);

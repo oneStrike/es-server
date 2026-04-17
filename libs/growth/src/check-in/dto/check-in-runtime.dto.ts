@@ -1,5 +1,8 @@
+import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
+import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { PageDto } from '@libs/platform/dto/page.dto'
@@ -19,8 +22,10 @@ import {
   OptionalCheckInRecordIdDto,
 } from './check-in-fragment.dto'
 import { BaseCheckInPlanDto } from './check-in-plan.dto'
-import { BaseCheckInRecordDto } from './check-in-record.dto'
-import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
+import {
+  BaseCheckInRecordDto,
+  CheckInRewardSettlementSummaryDto,
+} from './check-in-record.dto'
 import { CheckInGrantItemDto } from './check-in-streak-reward-grant.dto'
 import { CheckInStreakRewardRuleItemDto } from './check-in-streak-reward-rule.dto'
 
@@ -34,29 +39,34 @@ class OptionalCycleIdDto {
   id?: number
 }
 
-class CheckInGrantStatusFilterDto extends PartialType(
-  PickType(CheckInGrantItemDto, ['grantStatus'] as const),
-) {}
+class CheckInGrantStatusFilterDto {
+  @EnumProperty({
+    description: '连续奖励结算状态（0=待补偿重试；1=已补偿成功；2=终态失败）',
+    example: GrowthRewardSettlementStatusEnum.PENDING,
+    enum: GrowthRewardSettlementStatusEnum,
+    required: false,
+  })
+  grantSettlementStatus?: GrowthRewardSettlementStatusEnum
+}
 
 class OptionalCheckInRecordStateDto extends PartialType(
-  PickType(BaseCheckInRecordDto, [
-    'recordType',
-    'rewardStatus',
-    'rewardResultType',
-  ] as const),
+  PickType(BaseCheckInRecordDto, ['recordType'] as const),
 ) {}
 
 class CheckInReconciliationFilterDto extends IntersectionType(
   PartialType(
-    PickType(BaseCheckInRecordDto, [
-      'planId',
-      'userId',
-      'cycleId',
-      'rewardStatus',
-    ] as const),
+    PickType(BaseCheckInRecordDto, ['planId', 'userId', 'cycleId'] as const),
   ),
   CheckInGrantStatusFilterDto,
-) {}
+) {
+  @EnumProperty({
+    description: '基础奖励结算状态（0=待补偿重试；1=已补偿成功；2=终态失败）',
+    example: GrowthRewardSettlementStatusEnum.PENDING,
+    enum: GrowthRewardSettlementStatusEnum,
+    required: false,
+  })
+  recordSettlementStatus?: GrowthRewardSettlementStatusEnum
+}
 
 class CheckInReconciliationRecordBaseDto extends OmitType(
   BaseCheckInRecordDto,
@@ -67,7 +77,6 @@ class CheckInReconciliationRecordBaseDto extends OmitType(
     'operatorType',
     'remark',
     'context',
-    'rewardSettledAt',
   ] as const,
 ) {}
 
@@ -132,6 +141,15 @@ export class CheckInRecordItemDto extends OmitType(BaseCheckInRecordDto, [
     validation: false,
   })
   grants!: CheckInGrantItemDto[]
+
+  @NestedProperty({
+    description: '基础奖励结算摘要。',
+    type: CheckInRewardSettlementSummaryDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  rewardSettlement?: CheckInRewardSettlementSummaryDto | null
 }
 
 export class CheckInSummaryPlanDto extends OmitType(BaseCheckInPlanDto, [
@@ -216,15 +234,14 @@ export class CheckInCalendarDayDto extends IntersectionType(
   })
   inPlanWindow!: boolean
 
-  @NestedProperty({
+  @ArrayProperty({
     description:
-      '该自然日计划基础奖励；若当天未命中具体日期和周期模式奖励则回退计划默认基础奖励，为空表示当天没有基础奖励。',
-    type: CheckInRewardConfigDto,
+      '该自然日计划基础奖励项；若当天未命中具体日期和周期模式奖励则回退计划默认基础奖励，为空表示当天没有基础奖励。',
+    itemClass: GrowthRewardItemDto,
     required: false,
-    nullable: false,
     validation: false,
   })
-  planRewardConfig?: CheckInRewardConfigDto | null
+  planRewardItems?: GrowthRewardItemDto[] | null
 
   @BooleanProperty({
     description: '是否为今天。',
@@ -253,6 +270,15 @@ export class CheckInCalendarDayDto extends IntersectionType(
     validation: false,
   })
   grantCount!: number
+
+  @NestedProperty({
+    description: '基础奖励结算摘要。',
+    type: CheckInRewardSettlementSummaryDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  rewardSettlement?: CheckInRewardSettlementSummaryDto | null
 }
 
 class CheckInCalendarContextDto {

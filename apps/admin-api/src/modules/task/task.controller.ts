@@ -1,4 +1,4 @@
-import { AdminTaskAssignmentPageResponseDto, AdminTaskAssignmentReconciliationPageResponseDto, AdminTaskPageResponseDto, CreateTaskDto, QueryTaskAssignmentDto, QueryTaskAssignmentReconciliationDto, QueryTaskDto, RetryCompletedTaskRewardsDto, RetryCompletedTaskRewardsResponseDto, UpdateTaskDto, UpdateTaskStatusDto } from '@libs/growth/task/dto/task.dto';
+import { AdminTaskAssignmentPageResponseDto, AdminTaskAssignmentReconciliationPageResponseDto, AdminTaskPageResponseDto, CreateTaskDto, QueryTaskAssignmentDto, QueryTaskAssignmentReconciliationDto, QueryTaskDto, UpdateTaskDto, UpdateTaskStatusDto } from '@libs/growth/task/dto/task.dto';
 import { TaskService } from '@libs/growth/task/task.service';
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator';
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator';
@@ -110,29 +110,5 @@ export class TaskController {
     @Query() query: QueryTaskAssignmentReconciliationDto,
   ) {
     return this.taskService.getTaskAssignmentReconciliationPage(query)
-  }
-
-  @Post('assignment/retry-reward')
-  @ApiAuditDoc({
-    summary: '重试单条任务奖励结算',
-    model: Boolean,
-    audit: {
-      actionType: AuditActionTypeEnum.UPDATE,
-    },
-  })
-  async retryAssignmentReward(@Body() body: IdDto) {
-    return this.taskService.retryTaskAssignmentReward(body.id)
-  }
-
-  @Post('assignment/retry-reward/batch')
-  @ApiAuditDoc({
-    summary: '批量扫描并重试待补偿任务奖励',
-    model: RetryCompletedTaskRewardsResponseDto,
-    audit: {
-      actionType: AuditActionTypeEnum.UPDATE,
-    },
-  })
-  async retryCompletedRewards(@Body() body: RetryCompletedTaskRewardsDto) {
-    return this.taskService.retryCompletedAssignmentRewardsBatch(body.limit)
   }
 }

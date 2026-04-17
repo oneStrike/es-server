@@ -7,7 +7,6 @@ import {
   integer,
   jsonb,
   pgTable,
-  smallint,
   timestamp,
   unique,
   varchar,
@@ -31,26 +30,18 @@ export const checkInStreakRewardGrant = pgTable('check_in_streak_reward_grant', 
   ruleCode: varchar({ length: 50 }).notNull(),
   /** 命中的连续签到阈值。 */
   streakDays: integer().notNull(),
-  /** 连续奖励配置快照。 */
-  rewardConfig: jsonb().notNull(),
+  /** 连续奖励项快照。 */
+  rewardItems: jsonb().notNull(),
   /** 是否允许重复发放。 */
   repeatable: boolean().default(false).notNull(),
   /** 触发本次连续奖励的签到日期。 */
   triggerSignDate: date().notNull(),
-  /** 连续奖励发放状态（0=待处理，1=已成功，2=已失败）。 */
-  grantStatus: smallint().default(0).notNull(),
-  /** 连续奖励发放结果类型（1=本次真实落账，2=命中幂等未重复落账，3=本次处理失败）。 */
-  grantResultType: smallint(),
+  /** 关联的奖励结算事实 ID。 */
+  rewardSettlementId: integer(),
   /** 业务幂等键。 */
   bizKey: varchar({ length: 200 }).notNull(),
-  /** 连续奖励到账本记录 ID 列表。 */
-  ledgerIds: integer().array().default(sql`ARRAY[]::integer[]`).notNull(),
-  /** 最近一次连续奖励失败原因。 */
-  lastGrantError: varchar({ length: 500 }),
   /** 发放扩展上下文。 */
   context: jsonb(),
-  /** 最近一次发放状态落定时间。 */
-  grantSettledAt: timestamp({ withTimezone: true, precision: 6 }),
   /** 发放事实创建时间。 */
   createdAt: timestamp({ withTimezone: true, precision: 6 }).defaultNow().notNull(),
   /** 发放事实最近更新时间。 */
@@ -65,32 +56,12 @@ export const checkInStreakRewardGrant = pgTable('check_in_streak_reward_grant', 
     table.userId,
     table.planId,
   ),
+  index('check_in_streak_grant_reward_settlement_id_idx').on(table.rewardSettlementId),
   index('check_in_streak_grant_rule_code_idx').on(table.ruleCode),
   index('check_in_streak_grant_trigger_sign_date_idx').on(table.triggerSignDate),
-  index('check_in_streak_grant_status_idx').on(table.grantStatus),
   check(
-    'check_in_streak_grant_status_valid_chk',
-    sql`${table.grantStatus} in (0, 1, 2)`,
-  ),
-  check(
-    'check_in_streak_grant_result_type_valid_chk',
-    sql`${table.grantResultType} is null or ${table.grantResultType} in (1, 2, 3)`,
-  ),
-  check(
-    'check_in_streak_grant_state_consistent_chk',
-    sql`(
-      ${table.grantStatus} = 0
-      and ${table.grantResultType} is null
-      and ${table.grantSettledAt} is null
-    ) or (
-      ${table.grantStatus} = 1
-      and ${table.grantResultType} in (1, 2)
-      and ${table.grantSettledAt} is not null
-    ) or (
-      ${table.grantStatus} = 2
-      and ${table.grantResultType} = 3
-      and ${table.grantSettledAt} is not null
-    )`,
+    'check_in_streak_grant_reward_settlement_id_positive_chk',
+    sql`${table.rewardSettlementId} is null or ${table.rewardSettlementId} > 0`,
   ),
   check(
     'check_in_streak_grant_streak_days_positive_chk',

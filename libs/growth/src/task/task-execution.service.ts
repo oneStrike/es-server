@@ -5,11 +5,12 @@ import type {
 import { DrizzleService } from '@db/core'
 import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type'
 import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
 import { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import { UserGrowthRewardService } from '../growth-reward/growth-reward.service'
 import {
   ClaimTaskDto,
@@ -22,7 +23,6 @@ import {
 } from './dto/task.dto'
 import {
   getTaskTypeFilterValues,
-  TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
@@ -179,6 +179,13 @@ export class TaskExecutionService extends TaskServiceSupport {
       this.db
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(this.taskAssignmentTable)
+        .leftJoin(
+          this.growthRewardSettlementTable,
+          eq(
+            this.taskAssignmentTable.rewardSettlementId,
+            this.growthRewardSettlementTable.id,
+          ),
+        )
         .where(
           and(
             eq(this.taskAssignmentTable.userId, userId),
@@ -187,12 +194,16 @@ export class TaskExecutionService extends TaskServiceSupport {
               this.taskAssignmentTable.status,
               TaskAssignmentStatusEnum.COMPLETED,
             ),
-            inArray(this.taskAssignmentTable.rewardStatus, [
-              TaskAssignmentRewardStatusEnum.PENDING,
-              TaskAssignmentRewardStatusEnum.FAILED,
-            ]),
+          eq(this.taskAssignmentTable.rewardApplicable, 1),
+          or(
+            isNull(this.taskAssignmentTable.rewardSettlementId),
+            eq(
+              this.growthRewardSettlementTable.settlementStatus,
+              GrowthRewardSettlementStatusEnum.PENDING,
+            ),
           ),
         ),
+      ),
     ])
 
     return {
@@ -255,6 +266,12 @@ export class TaskExecutionService extends TaskServiceSupport {
           '任务未领取',
         )
       }
+    }
+    if (!assignment) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务分配不存在',
+      )
     }
 
     if (assignment.status === TaskAssignmentStatusEnum.COMPLETED) {
@@ -570,9 +587,12 @@ export class TaskExecutionService extends TaskServiceSupport {
         eq(this.taskAssignmentTable.userId, queryDto.userId),
       )
     }
-    if (queryDto.rewardStatus !== undefined) {
+    if (queryDto.settlementStatus !== undefined) {
       assignmentConditions.push(
-        eq(this.taskAssignmentTable.rewardStatus, queryDto.rewardStatus),
+        eq(
+          this.growthRewardSettlementTable.settlementStatus,
+          queryDto.settlementStatus,
+        ),
       )
     }
 
@@ -635,21 +655,19 @@ export class TaskExecutionService extends TaskServiceSupport {
           userId: item.userId,
           cycleKey: item.cycleKey,
           status: item.status,
-          rewardStatus: item.rewardStatus,
-          rewardResultType: item.rewardResultType,
+          rewardApplicable: item.rewardApplicable,
+          rewardSettlementId: item.rewardSettlementId,
           progress: item.progress,
           target: item.target,
           claimedAt: item.claimedAt,
           completedAt: item.completedAt,
           expiredAt: item.expiredAt,
-          rewardSettledAt: item.rewardSettledAt,
-          rewardLedgerIds: item.rewardLedgerIds,
-          lastRewardError: item.lastRewardError,
           visibleStatus: this.resolveTaskUserVisibleStatus({
             status: item.status,
-            rewardStatus: item.rewardStatus,
-            rewardConfig: taskView?.rewardConfig,
+            rewardApplicable: item.rewardApplicable === 1,
+            rewardSettlementStatus: item.rewardSettlement?.settlementStatus,
           }),
+          rewardSettlement: item.rewardSettlement,
           task: taskView,
           latestEventCode: latestEvent?.eventCode ?? null,
           latestEventBizKey: latestEvent?.eventBizKey ?? null,
@@ -672,7 +690,7 @@ export class TaskExecutionService extends TaskServiceSupport {
    *
    * 该入口依赖 assignment 快照重放完成事件，避免模板变更后补偿语义漂移。
    */
-  async retryTaskAssignmentReward(assignmentId: number) {
+  async retryTaskAssignmentReward(assignmentId: number, isRetry = false) {
     const assignment = await this.db.query.taskAssignment.findFirst({
       where: {
         id: assignmentId,
@@ -680,6 +698,7 @@ export class TaskExecutionService extends TaskServiceSupport {
       },
       with: {
         task: true,
+        rewardSettlement: true,
       },
     })
 
@@ -695,10 +714,24 @@ export class TaskExecutionService extends TaskServiceSupport {
         '仅已完成任务允许重试奖励结算',
       )
     }
-    if (assignment.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS) {
+    if (
+      assignment.rewardSettlementId
+      && assignment.rewardSettlement?.settlementStatus
+      === GrowthRewardSettlementStatusEnum.SUCCESS
+    ) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '任务奖励已结算成功，无需重试',
+      )
+    }
+    if (
+      assignment.rewardSettlementId
+      && assignment.rewardSettlement?.settlementStatus
+      === GrowthRewardSettlementStatusEnum.TERMINAL
+    ) {
+      throw new BusinessException(
+        BusinessErrorCode.OPERATION_NOT_ALLOWED,
+        '任务奖励已进入终态失败，无需重试',
       )
     }
 
@@ -713,6 +746,7 @@ export class TaskExecutionService extends TaskServiceSupport {
         id: assignment.id,
         completedAt: assignment.completedAt,
       },
+      { isRetry },
     )
     return true
   }
@@ -733,12 +767,19 @@ export class TaskExecutionService extends TaskServiceSupport {
         code: this.taskTable.code,
         title: this.taskTable.title,
         type: this.taskTable.type,
-        rewardConfig: this.taskTable.rewardConfig,
+        rewardItems: this.taskTable.rewardItems,
       })
       .from(this.taskAssignmentTable)
       .leftJoin(
         this.taskTable,
         eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+      )
+      .leftJoin(
+        this.growthRewardSettlementTable,
+        eq(
+          this.taskAssignmentTable.rewardSettlementId,
+          this.growthRewardSettlementTable.id,
+        ),
       )
       .where(
         and(
@@ -747,10 +788,14 @@ export class TaskExecutionService extends TaskServiceSupport {
             this.taskAssignmentTable.status,
             TaskAssignmentStatusEnum.COMPLETED,
           ),
-          inArray(this.taskAssignmentTable.rewardStatus, [
-            TaskAssignmentRewardStatusEnum.PENDING,
-            TaskAssignmentRewardStatusEnum.FAILED,
-          ]),
+          eq(this.taskAssignmentTable.rewardApplicable, 1),
+          or(
+            isNull(this.taskAssignmentTable.rewardSettlementId),
+            eq(
+              this.growthRewardSettlementTable.settlementStatus,
+              GrowthRewardSettlementStatusEnum.PENDING,
+            ),
+          ),
         ),
       )
       .orderBy(asc(this.taskAssignmentTable.id))

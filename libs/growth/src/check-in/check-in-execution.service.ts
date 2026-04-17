@@ -4,8 +4,8 @@ import type { CheckInPlanSelect, CheckInRecordSelect, CheckInStreakRewardGrantSe
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
 import type {
   CheckInCycleAggregation,
-  CheckInRewardConfig,
   CheckInRewardDefinition,
+  CheckInRewardItems,
   CreateCheckInCycleInput,
   CreateCheckInGrantInput,
   CreateCheckInRecordInput,
@@ -22,6 +22,8 @@ import {
   GrowthLedgerSourceEnum,
 } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
+import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import {
@@ -30,14 +32,14 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { and, asc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
+import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
   CheckInRewardSourceTypeEnum,
-  CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
@@ -60,6 +62,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   constructor(
     drizzle: DrizzleService,
     growthLedgerService: GrowthLedgerService,
+    private readonly growthRewardSettlementService: GrowthRewardSettlementService,
   ) {
     super(drizzle, growthLedgerService)
   }
@@ -98,6 +101,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         success: await this.settleRecordReward(dto.recordId, {
           actorUserId: adminUserId,
           source: 'admin_repair',
+          isRetry: true,
         }),
       }
     }
@@ -111,6 +115,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       success: await this.settleGrantReward(dto.grantId, {
         actorUserId: adminUserId,
         source: 'admin_repair',
+        isRetry: true,
       }),
     }
   }
@@ -152,7 +157,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     const rewardDefinition = this.getPlanRewardDefinition(plan, {
       allowEmpty: true,
     }) ?? {
-      baseRewardConfig: null,
+      baseRewardItems: null,
       dateRewardRules: [],
       patternRewardRules: [],
       streakRewardRules: [],
@@ -246,13 +251,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                 signDate: input.signDate,
                 recordType: input.recordType,
                 operatorType: input.operatorType,
-                rewardApplicable: Boolean(
-                  rewardResolution.resolvedRewardConfig,
-                ),
                 resolvedRewardSourceType:
                   rewardResolution.resolvedRewardSourceType,
                 resolvedRewardRuleKey: rewardResolution.resolvedRewardRuleKey,
-                resolvedRewardConfig: rewardResolution.resolvedRewardConfig,
+                resolvedRewardItems: rewardResolution.resolvedRewardItems,
                 context: input.context,
               }),
             )
@@ -328,7 +330,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
                   triggerSignDate: candidate.triggerSignDate,
                   ruleCode: candidate.rule.ruleCode,
                   streakDays: candidate.rule.streakDays,
-                  rewardConfig: candidate.rule.rewardConfig,
+                  rewardItems: candidate.rule.rewardItems,
                   repeatable: candidate.rule.repeatable,
                   context: {
                     source:
@@ -348,11 +350,16 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
           return {
             recordId: insertedRecord.id,
+            userId: insertedRecord.userId,
+            planId: insertedRecord.planId,
             cycleId: cycle.id,
             signDate: input.signDate,
             recordType: insertedRecord.recordType,
-            rewardStatus: insertedRecord.rewardStatus,
-            rewardResultType: insertedRecord.rewardResultType,
+            rewardSettlementId: insertedRecord.rewardSettlementId,
+            resolvedRewardSourceType:
+              rewardResolution.resolvedRewardSourceType ?? null,
+            resolvedRewardRuleKey: rewardResolution.resolvedRewardRuleKey ?? null,
+            resolvedRewardItems: rewardResolution.resolvedRewardItems,
             currentStreak: aggregation.currentStreak,
             signedCount: aggregation.signedCount,
             remainingMakeupCount: Math.max(
@@ -361,7 +368,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             ),
             triggeredGrantIds,
             alreadyExisted: false,
-          } satisfies CheckInActionResponseDto
+          }
         })
       } catch (error) {
         if (
@@ -681,10 +688,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     signDate: string
     recordType: CheckInRecordTypeEnum
     operatorType: CheckInOperatorTypeEnum
-    rewardApplicable: boolean
     resolvedRewardSourceType?: CreateCheckInRecordInput['resolvedRewardSourceType']
     resolvedRewardRuleKey?: string | null
-    resolvedRewardConfig?: CheckInRewardConfig | null
+    resolvedRewardItems?: CheckInRewardItems | null
     context?: Record<string, unknown>
   }): CreateCheckInRecordInput {
     return {
@@ -693,16 +699,14 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       cycleId: input.cycleId,
       signDate: input.signDate,
       recordType: input.recordType,
-      rewardStatus: input.rewardApplicable
-        ? CheckInRewardStatusEnum.PENDING
-        : null,
-      resolvedRewardSourceType: input.rewardApplicable
+      resolvedRewardSourceType: input.resolvedRewardItems
         ? (input.resolvedRewardSourceType ?? null)
         : null,
-      resolvedRewardRuleKey: input.rewardApplicable
+      resolvedRewardRuleKey: input.resolvedRewardItems
         ? (input.resolvedRewardRuleKey ?? null)
         : null,
-      resolvedRewardConfig: input.resolvedRewardConfig ?? null,
+      resolvedRewardItems: input.resolvedRewardItems ?? null,
+      rewardSettlementId: null,
       bizKey: this.buildRecordBizKey(
         input.planId,
         input.cycleKey,
@@ -722,7 +726,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     triggerSignDate: string
     ruleCode: string
     streakDays: number
-    rewardConfig: CheckInRewardConfig
+    rewardItems: CheckInRewardItems
     repeatable: boolean
     context?: Record<string, unknown>
   }): CreateCheckInGrantInput {
@@ -731,7 +735,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       planId: input.planId,
       cycleId: input.cycleId,
       triggerSignDate: input.triggerSignDate,
-      grantStatus: CheckInRewardStatusEnum.PENDING,
+      rewardSettlementId: null,
       bizKey: this.buildGrantFactBizKey(
         input.planId,
         input.cycleId,
@@ -741,7 +745,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       ),
       ruleCode: input.ruleCode,
       streakDays: input.streakDays,
-      rewardConfig: input.rewardConfig,
+      rewardItems: input.rewardItems,
       repeatable: input.repeatable,
       context: input.context,
     }
@@ -823,20 +827,24 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     return {
       recordId: record.id,
-      cycleId: cycle.id,
-      signDate: this.toDateOnlyValue(record.signDate),
-      recordType: record.recordType,
-      rewardStatus: record.rewardStatus,
-      rewardResultType: record.rewardResultType,
-      resolvedRewardSourceType:
-        record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
-      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-      resolvedRewardConfig: this.parseStoredRewardConfig(
-        record.resolvedRewardConfig,
+      userId: record.userId,
+        planId: record.planId,
+        cycleId: cycle.id,
+        signDate: this.toDateOnlyValue(record.signDate),
+        recordType: record.recordType,
+        rewardSettlementId: record.rewardSettlementId,
+        resolvedRewardSourceType:
+          record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
+        resolvedRewardRuleKey: record.resolvedRewardRuleKey,
+        resolvedRewardItems: this.parseStoredRewardItems(
+          record.resolvedRewardItems,
         {
           allowEmpty: true,
         },
       ),
+      rewardSettlement: record.rewardSettlementId
+        ? await this.getSettlementById(record.rewardSettlementId)
+        : null,
       currentStreak: cycle.currentStreak,
       signedCount: cycle.signedCount,
       remainingMakeupCount: Math.max(
@@ -845,7 +853,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       ),
       triggeredGrantIds: actionMeta.triggeredGrantIds,
       alreadyExisted: false,
-    } satisfies CheckInActionResponseDto
+    }
   }
 
   /**
@@ -855,7 +863,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number, source: string, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -872,25 +880,47 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         }
 
         if (
-          record.rewardStatus === CheckInRewardStatusEnum.SUCCESS &&
-          record.rewardSettledAt
+          record.resolvedRewardItems === null
+          || record.resolvedRewardItems === undefined
         ) {
           return
         }
-
-        const rewardConfig = this.parseStoredRewardConfig(
-          record.resolvedRewardConfig,
-          {
-            allowEmpty: true,
-          },
-        )
-        if (!rewardConfig) {
+        const rawRewardItems = this.asArray(record.resolvedRewardItems)
+        if (rawRewardItems && rawRewardItems.length === 0) {
           return
         }
 
-        const settlement = await this.applyRewardConfig(tx, {
+        const rewardSettlement = await this.ensureRecordRewardSettlement(record, tx)
+        const latestSettlement = await this.getSettlementById(
+          rewardSettlement.id,
+          tx,
+        )
+        if (
+          latestSettlement?.settlementStatus
+          === GrowthRewardSettlementStatusEnum.SUCCESS
+        ) {
+          return
+        }
+        if (
+          latestSettlement?.settlementStatus
+          === GrowthRewardSettlementStatusEnum.TERMINAL
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '签到奖励已进入终态失败，无需重试',
+          )
+        }
+
+        const rewardItems = this.parseStoredRewardItems(
+          record.resolvedRewardItems,
+          {
+            allowEmpty: false,
+          },
+        )!
+
+        const appliedReward = await this.applyRewardItems(tx, {
           userId: record.userId,
-          rewardConfig,
+          rewardItems,
           baseBizKey: this.buildBaseRewardBizKey(record.id, record.userId),
           source: GrowthLedgerSourceEnum.CHECK_IN_BASE_BONUS,
           planId: record.planId,
@@ -899,23 +929,25 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           actorUserId: context.actorUserId,
         })
 
-        await tx
-          .update(this.checkInRecordTable)
-          .set({
-            rewardStatus: CheckInRewardStatusEnum.SUCCESS,
-            rewardResultType: settlement.resultType,
-            baseRewardLedgerIds: settlement.ledgerIds,
-            rewardSettledAt: new Date(),
-            lastRewardError: null,
-          })
-          .where(eq(this.checkInRecordTable.id, record.id))
+        await this.growthRewardSettlementService.syncManualSettlementResult(
+          rewardSettlement.id,
+          {
+            success: true,
+            resultType: appliedReward.resultType,
+            ledgerRecordIds: appliedReward.ledgerIds,
+          },
+          { isRetry: context.isRetry, tx },
+        )
       })
 
       return true
     } catch (error) {
       if (
         error instanceof BusinessException &&
-        error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
+        (
+          error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
+          || error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
+        )
       ) {
         throw error
       }
@@ -926,25 +958,22 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         `check_in_record_reward_failed recordId=${recordId} error=${message}`,
       )
 
-      await this.drizzle.withErrorHandling(() =>
-        this.db
-          .update(this.checkInRecordTable)
-          .set({
-            rewardStatus: CheckInRewardStatusEnum.FAILED,
-            rewardResultType: CheckInRewardResultTypeEnum.FAILED,
-            rewardSettledAt: new Date(),
-            lastRewardError: message,
-          })
-          .where(
-            and(
-              eq(this.checkInRecordTable.id, recordId),
-              inArray(this.checkInRecordTable.rewardStatus, [
-                CheckInRewardStatusEnum.PENDING,
-                CheckInRewardStatusEnum.FAILED,
-              ]),
-            ),
-          ),
-      )
+      const record = await this.db.query.checkInRecord.findFirst({
+        where: { id: recordId },
+      })
+      if (record && this.hasRewardPayloadSnapshot(record.resolvedRewardItems)) {
+        const rewardSettlement = await this.ensureRecordRewardSettlement(record)
+        await this.growthRewardSettlementService.syncManualSettlementResult(
+          rewardSettlement.id,
+          {
+            success: false,
+            resultType: CheckInRewardResultTypeEnum.FAILED,
+            ledgerRecordIds: [],
+            errorMessage: message,
+          },
+          { isRetry: context.isRetry },
+        )
+      }
       return false
     }
   }
@@ -956,7 +985,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
    */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, source: string },
+    context: { actorUserId?: number, source: string, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -972,19 +1001,34 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           )
         }
 
+        const rewardSettlement =
+          await this.ensureGrantRewardSettlement(grant, tx)
+        const latestSettlement = await this.getSettlementById(
+          rewardSettlement.id,
+          tx,
+        )
         if (
-          grant.grantStatus === CheckInRewardStatusEnum.SUCCESS &&
-          grant.grantSettledAt
+          latestSettlement?.settlementStatus
+          === GrowthRewardSettlementStatusEnum.SUCCESS
         ) {
           return
         }
+        if (
+          latestSettlement?.settlementStatus
+          === GrowthRewardSettlementStatusEnum.TERMINAL
+        ) {
+          throw new BusinessException(
+            BusinessErrorCode.OPERATION_NOT_ALLOWED,
+            '签到奖励已进入终态失败，无需重试',
+          )
+        }
 
-        const rewardConfig = this.parseStoredRewardConfig(grant.rewardConfig, {
+        const rewardItems = this.parseStoredRewardItems(grant.rewardItems, {
           allowEmpty: false,
         })!
-        const settlement = await this.applyRewardConfig(tx, {
+        const appliedReward = await this.applyRewardItems(tx, {
           userId: grant.userId,
-          rewardConfig,
+          rewardItems,
           baseBizKey: this.buildStreakRewardBizKey(
             grant.id,
             grant.ruleCode,
@@ -998,23 +1042,25 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           actorUserId: context.actorUserId,
         })
 
-        await tx
-          .update(this.checkInStreakRewardGrantTable)
-          .set({
-            grantStatus: CheckInRewardStatusEnum.SUCCESS,
-            grantResultType: settlement.resultType,
-            ledgerIds: settlement.ledgerIds,
-            grantSettledAt: new Date(),
-            lastGrantError: null,
-          })
-          .where(eq(this.checkInStreakRewardGrantTable.id, grant.id))
+        await this.growthRewardSettlementService.syncManualSettlementResult(
+          rewardSettlement.id,
+          {
+            success: true,
+            resultType: appliedReward.resultType,
+            ledgerRecordIds: appliedReward.ledgerIds,
+          },
+          { isRetry: context.isRetry, tx },
+        )
       })
 
       return true
     } catch (error) {
       if (
         error instanceof BusinessException &&
-        error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
+        (
+          error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
+          || error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
+        )
       ) {
         throw error
       }
@@ -1025,35 +1071,32 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         `check_in_streak_grant_reward_failed grantId=${grantId} error=${message}`,
       )
 
-      await this.drizzle.withErrorHandling(() =>
-        this.db
-          .update(this.checkInStreakRewardGrantTable)
-          .set({
-            grantStatus: CheckInRewardStatusEnum.FAILED,
-            grantResultType: CheckInRewardResultTypeEnum.FAILED,
-            grantSettledAt: new Date(),
-            lastGrantError: message,
-          })
-          .where(
-            and(
-              eq(this.checkInStreakRewardGrantTable.id, grantId),
-              inArray(this.checkInStreakRewardGrantTable.grantStatus, [
-                CheckInRewardStatusEnum.PENDING,
-                CheckInRewardStatusEnum.FAILED,
-              ]),
-            ),
-          ),
-      )
+      const grant = await this.db.query.checkInStreakRewardGrant.findFirst({
+        where: { id: grantId },
+      })
+      if (grant) {
+        const rewardSettlement = await this.ensureGrantRewardSettlement(grant)
+        await this.growthRewardSettlementService.syncManualSettlementResult(
+          rewardSettlement.id,
+          {
+            success: false,
+            resultType: CheckInRewardResultTypeEnum.FAILED,
+            ledgerRecordIds: [],
+            errorMessage: message,
+          },
+          { isRetry: context.isRetry },
+        )
+      }
       return false
     }
   }
 
-  /** 按奖励配置批量写入成长账本，并统一汇总账本记录 ID 与结果类型。 */
-  private async applyRewardConfig(
+  /** 按奖励项列表批量写入成长账本，并统一汇总账本记录 ID 与结果类型。 */
+  private async applyRewardItems(
     tx: Db,
     input: {
       userId: number
-      rewardConfig: CheckInRewardConfig
+      rewardItems: CheckInRewardItems
       baseBizKey: string
       source: GrowthLedgerSourceEnum
       planId: number
@@ -1066,38 +1109,17 @@ export class CheckInExecutionService extends CheckInServiceSupport {
   ) {
     const results: GrowthLedgerApplyResult[] = []
 
-    if (input.rewardConfig.points) {
+    for (const rewardItem of input.rewardItems) {
+      const assetType = this.resolveLedgerAssetType(rewardItem.assetType)
       results.push(
         await this.growthLedgerService.applyDelta(tx, {
           userId: input.userId,
-          assetType: GrowthAssetTypeEnum.POINTS,
+          assetType,
           action: GrowthLedgerActionEnum.GRANT,
-          amount: input.rewardConfig.points,
-          bizKey: `${input.baseBizKey}:POINTS`,
+          amount: rewardItem.amount,
+          bizKey: this.buildRewardItemBizKey(input.baseBizKey, rewardItem.assetType),
           source: input.source,
-          remark: '签到奖励（积分）',
-          context: {
-            actorUserId: input.actorUserId,
-            planId: input.planId,
-            cycleId: input.cycleId,
-            recordId: input.recordId,
-            grantId: input.grantId,
-            ruleCode: input.ruleCode,
-          },
-        }),
-      )
-    }
-
-    if (input.rewardConfig.experience) {
-      results.push(
-        await this.growthLedgerService.applyDelta(tx, {
-          userId: input.userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          action: GrowthLedgerActionEnum.GRANT,
-          amount: input.rewardConfig.experience,
-          bizKey: `${input.baseBizKey}:EXPERIENCE`,
-          source: input.source,
-          remark: '签到奖励（经验）',
+          remark: this.buildRewardItemRemark(rewardItem.assetType),
           context: {
             actorUserId: input.actorUserId,
             planId: input.planId,
@@ -1122,6 +1144,136 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         .filter((id): id is number => typeof id === 'number'),
       resultType: this.resolveRewardResultType(results),
     }
+  }
+
+  private async ensureRecordRewardSettlement(record: {
+    id: number
+    userId: number
+    planId: number
+    cycleId: number
+    signDate: string | Date
+    resolvedRewardItems: unknown
+    rewardSettlementId?: number | null
+  }, tx?: Db) {
+    const existing = record.rewardSettlementId
+      ? await this.getSettlementById(record.rewardSettlementId, tx)
+      : null
+    if (existing) {
+      return existing
+    }
+
+    const settlement =
+      await this.growthRewardSettlementService.ensureCheckInRecordRewardSettlement(
+        {
+          recordId: record.id,
+          userId: record.userId,
+          planId: record.planId,
+          cycleId: record.cycleId,
+          signDate: this.toDateOnlyValue(record.signDate),
+          rewardItems: this.asArray(record.resolvedRewardItems) ?? null,
+        },
+        tx,
+      )
+
+    await this.drizzle.withErrorHandling(() =>
+      (tx ?? this.db)
+        .update(this.checkInRecordTable)
+        .set({ rewardSettlementId: settlement.id })
+        .where(eq(this.checkInRecordTable.id, record.id)),
+    )
+    return settlement
+  }
+
+  private async ensureGrantRewardSettlement(grant: {
+    id: number
+    userId: number
+    planId: number
+    cycleId: number
+    ruleCode: string
+    triggerSignDate: string | Date
+    rewardItems: unknown
+    rewardSettlementId?: number | null
+  }, tx?: Db) {
+    const existing = grant.rewardSettlementId
+      ? await this.getSettlementById(grant.rewardSettlementId, tx)
+      : null
+    if (existing) {
+      return existing
+    }
+
+    const settlement =
+      await this.growthRewardSettlementService.ensureCheckInStreakRewardSettlement(
+        {
+          grantId: grant.id,
+          userId: grant.userId,
+          planId: grant.planId,
+          cycleId: grant.cycleId,
+          ruleCode: grant.ruleCode,
+          triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
+          rewardItems: this.asArray(grant.rewardItems) ?? null,
+        },
+        tx,
+      )
+
+    await this.drizzle.withErrorHandling(() =>
+      (tx ?? this.db)
+        .update(this.checkInStreakRewardGrantTable)
+        .set({ rewardSettlementId: settlement.id })
+        .where(eq(this.checkInStreakRewardGrantTable.id, grant.id)),
+    )
+    return settlement
+  }
+
+  private async getSettlementById(id: number, tx?: Db) {
+    return (tx ?? this.db).query.growthRewardSettlement.findFirst({
+      where: { id },
+    })
+  }
+
+  private hasRewardPayloadSnapshot(value: unknown) {
+    if (value === null || value === undefined) {
+      return false
+    }
+    const rewardItems = this.asArray(value)
+    if (rewardItems) {
+      return rewardItems.length > 0
+    }
+    return true
+  }
+
+  /** 把统一奖励资产类型映射到当前账本支持的资产枚举。 */
+  private resolveLedgerAssetType(assetType: GrowthRewardRuleAssetTypeEnum) {
+    if (
+      assetType !== GrowthRewardRuleAssetTypeEnum.POINTS
+      && assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+    ) {
+      throw new InternalServerErrorException(
+        `暂不支持的签到奖励资产类型：${assetType}`,
+      )
+    }
+
+    return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
+      ? GrowthAssetTypeEnum.POINTS
+      : GrowthAssetTypeEnum.EXPERIENCE
+  }
+
+  /** 构建签到奖励单项账本幂等键。 */
+  private buildRewardItemBizKey(
+    baseBizKey: string,
+    assetType: GrowthRewardRuleAssetTypeEnum,
+  ) {
+    return `${baseBizKey}:${
+      assetType === GrowthRewardRuleAssetTypeEnum.POINTS
+        ? 'POINTS'
+        : 'EXPERIENCE'
+    }`
+  }
+
+  /** 构建签到奖励单项账本备注。 */
+  private buildRewardItemRemark(assetType: GrowthRewardRuleAssetTypeEnum) {
+    return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
+      ? '签到奖励（积分）'
+      : '签到奖励（经验）'
   }
 
   /** 只要本次有任一资产真实落账，就把奖励结果视为 APPLIED。 */

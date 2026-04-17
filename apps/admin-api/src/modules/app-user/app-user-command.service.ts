@@ -93,8 +93,6 @@ export class AppUserCommandService extends AppUserServiceSupport {
               birthDate: this.normalizeBirthDate(dto.birthDate),
               isEnabled: dto.isEnabled ?? true,
               status: dto.status ?? UserStatusEnum.NORMAL,
-              points: 0,
-              experience: 0,
               levelId: defaultLevel?.id ?? null,
             })
             .returning({ id: this.appUserTable.id })

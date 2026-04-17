@@ -7,6 +7,7 @@ import type {
   TaskReminderRewardSummary,
   TaskRewardGrantedReminderEventInput,
 } from './task.type'
+import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
   normalizeTaskType,
   TaskReminderKindEnum,
@@ -44,8 +45,7 @@ export class TaskNotificationService {
     return this.buildTaskReminderDomainEvent({
       ...params,
       reminderKind: TaskReminderKindEnum.REWARD_GRANTED,
-      points: params.points,
-      experience: params.experience,
+      rewardItems: params.rewardItems,
       ledgerRecordIds: params.ledgerRecordIds,
     })
   }
@@ -68,10 +68,9 @@ export class TaskNotificationService {
     const message = this.buildTaskReminderMessage(params)
     const rewardSummary: TaskReminderRewardSummary | undefined =
       params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED
-      && ((params.points ?? 0) > 0 || (params.experience ?? 0) > 0)
+      && (params.rewardItems?.length ?? 0) > 0
         ? {
-            points: params.points ?? 0,
-            experience: params.experience ?? 0,
+            rewardItems: params.rewardItems ?? [],
             ledgerRecordIds: params.ledgerRecordIds ?? [],
           }
         : undefined
@@ -89,9 +88,6 @@ export class TaskNotificationService {
       expiredAt: params.expiredAt,
       actionUrl: this.buildTaskReminderActionUrl(params.reminderKind),
       rewardSummary,
-      points: params.points,
-      experience: params.experience,
-      ledgerRecordIds: params.ledgerRecordIds,
     }
 
     return {
@@ -130,11 +126,17 @@ export class TaskNotificationService {
   private buildTaskReminderMessage(params: TaskReminderNotificationEventInput) {
     if (params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED) {
       const rewardParts: string[] = []
-      if (params.points && params.points > 0) {
-        rewardParts.push(`积分 +${params.points}`)
-      }
-      if (params.experience && params.experience > 0) {
-        rewardParts.push(`经验 +${params.experience}`)
+      for (const rewardItem of params.rewardItems ?? []) {
+        if (rewardItem.amount <= 0) {
+          continue
+        }
+        if (rewardItem.assetType === GrowthRewardRuleAssetTypeEnum.POINTS) {
+          rewardParts.push(`积分 +${rewardItem.amount}`)
+          continue
+        }
+        if (rewardItem.assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE) {
+          rewardParts.push(`经验 +${rewardItem.amount}`)
+        }
       }
       return {
         title: '任务奖励已到账',

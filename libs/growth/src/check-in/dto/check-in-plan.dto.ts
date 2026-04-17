@@ -1,7 +1,7 @@
-import type { CheckInRewardConfig } from '../check-in.type'
+import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { DateProperty } from '@libs/platform/decorators/validate/date-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto } from '@libs/platform/dto/base.dto'
@@ -9,7 +9,6 @@ import {
   CheckInCycleTypeEnum,
   CheckInPlanStatusEnum,
 } from '../check-in.constant'
-import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 export class BaseCheckInPlanDto extends BaseDto {
   @StringProperty({
@@ -56,14 +55,14 @@ export class BaseCheckInPlanDto extends BaseDto {
   })
   allowMakeupCountPerCycle!: number
 
-  @NestedProperty({
+  @ArrayProperty({
     description:
-      '计划默认基础奖励配置；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
-    type: CheckInRewardConfigDto,
-    example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
+      '计划默认基础奖励项；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
+    itemClass: GrowthRewardItemDto,
+    example: [{ assetType: 1, amount: 10 }, { assetType: 2, amount: 5 }],
     required: false,
   })
-  baseRewardConfig?: CheckInRewardConfigDto | null
+  baseRewardItems?: GrowthRewardItemDto[] | null
 
   @StringProperty({
     description: '计划结束日期（date 语义）；为空表示长期有效。',

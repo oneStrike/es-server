@@ -113,18 +113,6 @@ export enum TaskAssignmentStatusEnum {
 }
 
 /**
- * 任务奖励结算状态枚举
- */
-export enum TaskAssignmentRewardStatusEnum {
-  /** 待结算 */
-  PENDING = 0,
-  /** 已结算成功 */
-  SUCCESS = 1,
-  /** 结算失败 */
-  FAILED = 2,
-}
-
-/**
  * 任务奖励结算结果类型枚举
  */
 export enum TaskAssignmentRewardResultTypeEnum {

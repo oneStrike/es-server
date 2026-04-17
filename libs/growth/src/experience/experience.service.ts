@@ -6,7 +6,6 @@ import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
 import { UserStatusEnum } from '@libs/user/app-user.constant'
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common'
@@ -23,11 +22,6 @@ import {
   QueryUserExperienceRecordDto,
   UserExperienceRecordDto,
 } from './dto/experience-record.dto'
-import {
-  CreateUserExperienceRuleDto,
-  QueryUserExperienceRuleDto,
-  UpdateUserExperienceRuleDto,
-} from './dto/experience-rule.dto'
 
 const UUID_HYPHEN_REGEX = /-/g
 
@@ -50,11 +44,8 @@ export class UserExperienceService {
     return this.drizzle.schema.growthLedgerRecord
   }
 
-  /**
-   * 获取经验规则数据库访问器
-   */
-  get userExperienceRule() {
-    return this.drizzle.schema.userExperienceRule
+  private get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
   }
 
   /**
@@ -62,116 +53,6 @@ export class UserExperienceService {
    */
   get appUser() {
     return this.drizzle.schema.appUser
-  }
-
-  /**
-   * 创建经验规则
-   * @param dto 创建规则的数据
-   * @returns 创建的规则信息
-   */
-  async createExperienceRule(dto: CreateUserExperienceRuleDto) {
-    this.validateExperienceRuleWrite(dto)
-    await this.drizzle.withErrorHandling(
-      () => this.db.insert(this.userExperienceRule).values(dto),
-      {
-        duplicate: 'Experience rule type already exists',
-      },
-    )
-    return true
-  }
-
-  /**
-   * 分页查询经验规则列表
-   * @param dto 查询条件
-   * @returns 分页的规则列表
-   */
-  async getExperienceRulePage(dto: QueryUserExperienceRuleDto) {
-    const conditions: SQL[] = []
-
-    if (dto.isEnabled !== undefined) {
-      conditions.push(eq(this.userExperienceRule.isEnabled, dto.isEnabled))
-    }
-    if (dto.type !== undefined) {
-      conditions.push(eq(this.userExperienceRule.type, dto.type))
-    }
-
-    return this.drizzle.ext.findPagination(this.userExperienceRule, {
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      ...dto,
-    })
-  }
-
-  /**
-   * 获取经验规则详情
-   * @param id 规则ID
-   * @returns 规则详情信息
-   */
-  async getExperienceRuleDetail(id: number) {
-    const [rule] = await this.db
-      .select()
-      .from(this.userExperienceRule)
-      .where(eq(this.userExperienceRule.id, id))
-      .limit(1)
-
-    if (!rule) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '经验规则不存在',
-      )
-    }
-
-    return rule
-  }
-
-  /**
-   * 更新经验规则
-   * @param dto 更新规则的数据
-   * @returns 更新后的规则信息
-   */
-  async updateExperienceRule(dto: UpdateUserExperienceRuleDto) {
-    this.validateExperienceRuleWrite(dto)
-    const { id, ...updateData } = dto
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .update(this.userExperienceRule)
-          .set(updateData)
-          .where(eq(this.userExperienceRule.id, id)),
-      {
-        duplicate: 'Experience rule type already exists',
-        notFound: '经验规则不存在',
-      },
-    )
-    return true
-  }
-
-  /**
-   * 删除经验规则
-   * @param id 规则ID
-   * @returns 删除结果
-   */
-  async deleteExperienceRule(id: number) {
-    const [rule] = await this.db
-      .select({ id: this.userExperienceRule.id })
-      .from(this.userExperienceRule)
-      .where(eq(this.userExperienceRule.id, id))
-      .limit(1)
-
-    if (!rule) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '经验规则不存在',
-      )
-    }
-
-    await this.drizzle.withErrorHandling(
-      () =>
-        this.db
-          .delete(this.userExperienceRule)
-          .where(eq(this.userExperienceRule.id, id)),
-      { notFound: '经验规则不存在' },
-    )
-    return true
   }
 
   /**
@@ -362,10 +243,25 @@ export class UserExperienceService {
       )
 
     return {
-      currentExperience: user.experience,
+      currentExperience: await this.getCurrentExperience(userId),
       todayEarned: Number(todayEarned?.total ?? 0),
       level: user.level,
     }
+  }
+
+  private async getCurrentExperience(userId: number) {
+    const balance = await this.db.query.userAssetBalance.findFirst({
+      where: {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+      },
+      columns: {
+        balance: true,
+      },
+    })
+
+    return balance?.balance ?? 0
   }
 
   private toExperienceRecord(record: {
@@ -507,52 +403,5 @@ export class UserExperienceService {
 
   private isAdminManualGrantSource(source: string) {
     return source === 'admin_experience_rule_grant'
-  }
-
-  /**
-   * 统一校验经验规则写入语义。
-   *
-   * experience rule 只承载“发奖规则”，因此 experience 必须是正整数，
-   * dailyLimit / totalLimit 只允许非负整数。
-   */
-  private validateExperienceRuleWrite(
-    dto: Pick<
-      UpdateUserExperienceRuleDto,
-      'type' | 'experience' | 'dailyLimit' | 'totalLimit'
-    >,
-  ) {
-    if (
-      dto.type !== undefined &&
-      !Object.values(GrowthRuleTypeEnum).includes(dto.type)
-    ) {
-      throw new BadRequestException('经验规则类型无效')
-    }
-    if (dto.experience !== undefined) {
-      this.validatePositiveInteger(dto.experience, '经验规则值')
-    }
-    if (dto.dailyLimit !== undefined) {
-      this.validateNonNegativeInteger(dto.dailyLimit, '经验规则每日上限')
-    }
-    if (dto.totalLimit !== undefined) {
-      this.validateNonNegativeInteger(dto.totalLimit, '经验规则总上限')
-    }
-  }
-
-  /**
-   * 校验必须为正整数的数值字段。
-   */
-  private validatePositiveInteger(value: number, fieldLabel: string) {
-    if (!Number.isInteger(value) || value <= 0) {
-      throw new BadRequestException(`${fieldLabel}必须是大于0的整数`)
-    }
-  }
-
-  /**
-   * 校验必须为非负整数的数值字段。
-   */
-  private validateNonNegativeInteger(value: number, fieldLabel: string) {
-    if (!Number.isInteger(value) || value < 0) {
-      throw new BadRequestException(`${fieldLabel}必须是大于等于0的整数`)
-    }
   }
 }

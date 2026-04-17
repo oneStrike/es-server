@@ -37,6 +37,10 @@ export class UserService {
     return this.drizzle.schema.userBadgeAssignment
   }
 
+  private get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
+  }
+
   /**
    * 确保用户存在
    */
@@ -65,6 +69,33 @@ export class UserService {
       .where(and(eq(this.appUser.id, userId), isNull(this.appUser.deletedAt)))
       .limit(1)
     return user
+  }
+
+  /**
+   * 读取用户成长余额快照。
+   * 当前统一返回积分与经验两类热余额，供用户域和权限域复用。
+   */
+  async getUserGrowthSnapshot(userId: number) {
+    const rows = await this.db
+      .select({
+        assetType: this.userAssetBalance.assetType,
+        balance: this.userAssetBalance.balance,
+      })
+      .from(this.userAssetBalance)
+      .where(
+        and(
+          eq(this.userAssetBalance.userId, userId),
+          inArray(this.userAssetBalance.assetType, [1, 2]),
+          eq(this.userAssetBalance.assetKey, ''),
+        ),
+      )
+
+    return {
+      points:
+        rows.find((item) => item.assetType === 1)?.balance ?? 0,
+      experience:
+        rows.find((item) => item.assetType === 2)?.balance ?? 0,
+    }
   }
 
   /**
@@ -227,7 +258,10 @@ export class UserService {
    * 将数据库用户实体映射为安全的对外用户对象。
    * 运行时明确排除 deletedAt 等内部审计字段，避免响应泄露只靠 Swagger 隐藏兜底。
    */
-  mapBaseUser(user: AppUserSelect) {
+  mapBaseUser(
+    user: AppUserSelect,
+    growth?: { points: number, experience: number },
+  ) {
     return {
       id: user.id,
       account: user.account,
@@ -241,8 +275,8 @@ export class UserService {
       isEnabled: user.isEnabled,
       genderType: user.genderType,
       birthDate: user.birthDate ?? undefined,
-      points: user.points,
-      experience: user.experience,
+      points: growth?.points ?? 0,
+      experience: growth?.experience ?? 0,
       status: user.status,
       banReason: user.banReason ?? undefined,
       banUntil: user.banUntil ?? undefined,

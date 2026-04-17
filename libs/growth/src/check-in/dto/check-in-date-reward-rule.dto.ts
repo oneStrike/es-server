@@ -1,7 +1,6 @@
-import type { CheckInRewardConfig } from '../check-in.type'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 class CheckInDateRewardRuleFieldsDto {
   @StringProperty({
@@ -11,12 +10,12 @@ class CheckInDateRewardRuleFieldsDto {
   })
   rewardDate!: string
 
-  @NestedProperty({
-    description: '该自然日命中的基础奖励配置。',
-    type: CheckInRewardConfigDto,
-    example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
+  @ArrayProperty({
+    description: '该自然日命中的奖励项列表。',
+    itemClass: GrowthRewardItemDto,
+    example: [{ assetType: 1, amount: 10 }, { assetType: 2, amount: 5 }],
   })
-  rewardConfig!: CheckInRewardConfigDto
+  rewardItems!: GrowthRewardItemDto[]
 }
 
 export class CreateCheckInDateRewardRuleDto extends CheckInDateRewardRuleFieldsDto {}

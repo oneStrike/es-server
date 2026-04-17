@@ -1,7 +1,13 @@
+import type {
+  QueryGrowthRewardSettlementPageDto,
+} from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
 import type { QueryGrowthRuleEventPageDto } from '@libs/growth/growth/dto/growth.dto';
 import { DrizzleService } from '@db/core'
 import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service';
 import { EventDefinitionConsumerEnum, EventDefinitionImplStatusEnum } from '@libs/growth/event-definition/event-definition.type';
+import { GrowthRewardSettlementRetryService } from '@libs/growth/growth-reward/growth-reward-settlement-retry.service'
+import { GrowthRewardSettlementService } from '@libs/growth/growth-reward/growth-reward-settlement.service'
+import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import { normalizeTaskType, TaskObjectiveTypeEnum, TaskStatusEnum } from '@libs/growth/task/task.constant';
 import { Injectable } from '@nestjs/common'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
@@ -11,18 +17,39 @@ export class GrowthService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly eventDefinitionService: EventDefinitionService,
+    private readonly growthRewardSettlementStore: GrowthRewardSettlementService,
+    private readonly growthRewardSettlementRetryService: GrowthRewardSettlementRetryService,
   ) {}
 
   private get db() {
     return this.drizzle.db
   }
 
-  private get userPointRule() {
-    return this.drizzle.schema.userPointRule
+  async getGrowthRewardSettlementPage(
+    query: QueryGrowthRewardSettlementPageDto,
+  ) {
+    return this.growthRewardSettlementStore.getSettlementPage(query)
   }
 
-  private get userExperienceRule() {
-    return this.drizzle.schema.userExperienceRule
+  async retryGrowthRewardSettlement(id: number, adminUserId: number) {
+    return this.growthRewardSettlementRetryService.retrySettlement(
+      id,
+      adminUserId,
+    )
+  }
+
+  async retryPendingGrowthRewardSettlementsBatch(
+    limit: number | undefined,
+    adminUserId: number,
+  ) {
+    return this.growthRewardSettlementRetryService.retryPendingSettlementsBatch(
+      limit,
+      adminUserId,
+    )
+  }
+
+  private get growthRewardRule() {
+    return this.drizzle.schema.growthRewardRule
   }
 
   private get taskTable() {
@@ -52,22 +79,39 @@ export class GrowthService {
       })
 
     const ruleTypes = definitions.map((item) => item.code)
-    const [pointRules, experienceRules, taskRows] = await Promise.all([
-      this.queryPointRules(ruleTypes),
-      this.queryExperienceRules(ruleTypes),
+    const [rewardRules, taskRows] = await Promise.all([
+      this.queryRewardRules(ruleTypes),
       this.queryEventTasks(ruleTypes),
     ])
 
-    const pointRuleMap = new Map(pointRules.map((item) => [item.type, item]))
-    const experienceRuleMap = new Map(
-      experienceRules.map((item) => [item.type, item]),
-    )
+    const assetRuleMap = new Map<number, typeof rewardRules>()
+    for (const rewardRule of rewardRules) {
+      const current = assetRuleMap.get(rewardRule.type) ?? []
+      current.push(rewardRule)
+      assetRuleMap.set(rewardRule.type, current)
+    }
     const taskBindingMap = this.buildTaskBindingMap(taskRows)
 
     const rows = definitions
       .map((definition) => {
-        const pointRule = pointRuleMap.get(definition.code)
-        const experienceRule = experienceRuleMap.get(definition.code)
+        const assetRules = (assetRuleMap.get(definition.code) ?? [])
+          .sort((prev, next) => {
+            if (prev.assetType !== next.assetType) {
+              return prev.assetType - next.assetType
+            }
+            return prev.id - next.id
+          })
+          .map((item) => ({
+            assetType: item.assetType as GrowthRewardRuleAssetTypeEnum,
+            assetKey: item.assetKey || undefined,
+            exists: true,
+            id: item.id,
+            isEnabled: item.isEnabled,
+            amount: item.delta,
+            dailyLimit: item.dailyLimit,
+            totalLimit: item.totalLimit,
+            remark: item.remark ?? undefined,
+          }))
         const taskBinding = taskBindingMap.get(definition.code) ?? {
           exists: false,
           relatedTaskCount: 0,
@@ -91,26 +135,9 @@ export class GrowthService {
           ),
           rewardPolicy:
             '基础奖励与任务 bonus 默认可叠加；任务奖励属于额外 bonus。',
-          hasBaseReward: Boolean(pointRule || experienceRule),
+          hasBaseReward: assetRules.length > 0,
           hasTask: taskBinding.exists,
-          pointRule: {
-            exists: Boolean(pointRule),
-            id: pointRule?.id,
-            isEnabled: pointRule?.isEnabled,
-            amount: pointRule?.points,
-            dailyLimit: pointRule?.dailyLimit,
-            totalLimit: pointRule?.totalLimit,
-            remark: pointRule?.remark ?? undefined,
-          },
-          experienceRule: {
-            exists: Boolean(experienceRule),
-            id: experienceRule?.id,
-            isEnabled: experienceRule?.isEnabled,
-            amount: experienceRule?.experience,
-            dailyLimit: experienceRule?.dailyLimit,
-            totalLimit: experienceRule?.totalLimit,
-            remark: experienceRule?.remark ?? undefined,
-          },
+          assetRules,
           taskBinding,
         }
       })
@@ -137,24 +164,14 @@ export class GrowthService {
     }
   }
 
-  private async queryPointRules(ruleTypes: number[]) {
+  private async queryRewardRules(ruleTypes: number[]) {
     if (ruleTypes.length === 0) {
       return []
     }
     return this.db
       .select()
-      .from(this.userPointRule)
-      .where(inArray(this.userPointRule.type, ruleTypes))
-  }
-
-  private async queryExperienceRules(ruleTypes: number[]) {
-    if (ruleTypes.length === 0) {
-      return []
-    }
-    return this.db
-      .select()
-      .from(this.userExperienceRule)
-      .where(inArray(this.userExperienceRule.type, ruleTypes))
+      .from(this.growthRewardRule)
+      .where(inArray(this.growthRewardRule.type, ruleTypes))
   }
 
   private async queryEventTasks(ruleTypes: number[]) {

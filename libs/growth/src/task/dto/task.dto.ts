@@ -1,8 +1,16 @@
 import type {
   TaskObjectiveConfig,
   TaskRepeatRuleConfig,
-  TaskRewardConfig,
+  TaskRewardItems,
 } from '../task.type'
+import {
+  BaseGrowthRewardSettlementDto,
+} from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
+import {
+  GrowthRewardSettlementResultTypeEnum,
+  GrowthRewardSettlementStatusEnum,
+} from '@libs/growth/growth-reward/growth-reward.constant'
+import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
@@ -24,8 +32,6 @@ import { IsInt } from 'class-validator'
 import { GROWTH_RULE_EVENT_CODE_DTO_DESCRIPTION } from '../../event-definition/event-definition.constant'
 import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 import {
-  TaskAssignmentRewardResultTypeEnum,
-  TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
@@ -127,12 +133,13 @@ export class BaseTaskDto extends BaseDto {
   })
   targetCount!: number
 
-  @JsonProperty({
-    description: '奖励配置，当前仅支持 points / experience，且值必须为正整数',
-    example: { points: 10, experience: 5 },
+  @ArrayProperty({
+    description: '奖励项列表，当前仅支持积分与经验奖励项',
+    example: [{ assetType: 1, amount: 10 }, { assetType: 2, amount: 5 }],
     required: false,
+    itemClass: GrowthRewardItemDto,
   })
-  rewardConfig?: TaskRewardConfig | null
+  rewardItems?: TaskRewardItems | null
 
   @JsonProperty({
     description: '目标附加配置；“事件累计次数驱动”任务可用于表达额外过滤条件',
@@ -201,21 +208,18 @@ export class BaseTaskAssignmentDto extends BaseDto {
   })
   status!: TaskAssignmentStatusEnum
 
-  @EnumProperty({
-    description: '奖励结算状态（0=待结算；1=已结算成功；2=结算失败）',
-    example: TaskAssignmentRewardStatusEnum.PENDING,
-    enum: TaskAssignmentRewardStatusEnum,
+  @NumberProperty({
+    description: '是否需要奖励结算（0=无奖励任务；1=需要奖励结算）',
+    example: 1,
   })
-  rewardStatus!: TaskAssignmentRewardStatusEnum
+  rewardApplicable!: number
 
-  @EnumProperty({
-    description:
-      '奖励结算结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次结算失败）',
-    example: TaskAssignmentRewardResultTypeEnum.APPLIED,
-    enum: TaskAssignmentRewardResultTypeEnum,
+  @NumberProperty({
+    description: '关联的奖励结算事实 ID',
+    example: 501,
     required: false,
   })
-  rewardResultType?: TaskAssignmentRewardResultTypeEnum | null
+  rewardSettlementId?: number | null
 
   @NumberProperty({ description: '当前进度', example: 0 })
   progress!: number
@@ -253,34 +257,9 @@ export class BaseTaskAssignmentDto extends BaseDto {
   })
   expiredAt?: Date | null
 
-  @DateProperty({
-    description: '奖励结算时间',
-    example: '2026-02-13T08:00:01.000Z',
-    required: false,
-  })
-  rewardSettledAt?: Date | null
-
-  @ArrayProperty({
-    description: '本次奖励关联到账本记录 ID 列表',
-    itemType: 'number',
-    example: [101, 102],
-    required: true,
-    validation: false,
-  })
-  rewardLedgerIds!: number[]
-
-  @StringProperty({
-    description: '上次奖励失败原因',
-    example: '任务奖励发放失败：用户不存在',
-    required: false,
-    maxLength: 500,
-    validation: false,
-  })
-  lastRewardError?: string | null
-
   @JsonProperty({
     description: '任务快照',
-    example: { title: '完善个人资料', rewardConfig: { points: 10 } },
+    example: { title: '完善个人资料', rewardItems: [{ assetType: 1, amount: 10 }] },
     required: false,
   })
   taskSnapshot?: Record<string, unknown> | null
@@ -339,7 +318,7 @@ export class QueryTaskAssignmentReconciliationDto extends IntersectionType(
     PickType(BaseTaskAssignmentDto, [
       'taskId',
       'userId',
-      'rewardStatus',
+      'rewardSettlementId',
     ] as const),
   ),
 ) {
@@ -364,6 +343,14 @@ export class QueryTaskAssignmentReconciliationDto extends IntersectionType(
     maxLength: 180,
   })
   eventBizKey?: string
+
+  @EnumProperty({
+    description: '补偿状态（0=待补偿重试；1=已补偿成功；2=终态失败）',
+    example: GrowthRewardSettlementStatusEnum.PENDING,
+    enum: GrowthRewardSettlementStatusEnum,
+    required: false,
+  })
+  settlementStatus?: GrowthRewardSettlementStatusEnum
 
   @EnumProperty({
     description:
@@ -450,7 +437,7 @@ export class AvailableTaskPageItemDto extends PickType(BaseTaskDto, [
   'eventCode',
   'objectiveConfig',
   'targetCount',
-  'rewardConfig',
+  'rewardItems',
   'publishStartAt',
   'publishEndAt',
   'repeatRule',
@@ -478,11 +465,35 @@ export class MyTaskRelatedTaskDto extends PickType(BaseTaskDto, [
   'objectiveType',
   'eventCode',
   'objectiveConfig',
-  'rewardConfig',
+  'rewardItems',
   'targetCount',
   'completeMode',
   'claimMode',
 ] as const) {}
+
+export class TaskRewardSettlementSummaryDto extends PickType(
+  BaseGrowthRewardSettlementDto,
+  [
+    'id',
+    'settlementStatus',
+    'settlementResultType',
+    'ledgerRecordIds',
+    'retryCount',
+    'lastRetryAt',
+    'settledAt',
+    'lastError',
+  ] as const,
+) {
+  @EnumProperty({
+    description:
+      '补偿结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）',
+    example: GrowthRewardSettlementResultTypeEnum.APPLIED,
+    enum: GrowthRewardSettlementResultTypeEnum,
+    required: false,
+    validation: false,
+  })
+  settlementResultType?: GrowthRewardSettlementResultTypeEnum | null
+}
 
 /**
  * 我的任务分页项 DTO。
@@ -494,16 +505,13 @@ export class MyTaskPageItemDto extends PickType(BaseTaskAssignmentDto, [
   'taskId',
   'cycleKey',
   'status',
-  'rewardStatus',
-  'rewardResultType',
+  'rewardApplicable',
+  'rewardSettlementId',
   'progress',
   'target',
   'claimedAt',
   'completedAt',
   'expiredAt',
-  'rewardSettledAt',
-  'rewardLedgerIds',
-  'lastRewardError',
 ] as const) {
   @EnumProperty({
     description:
@@ -522,6 +530,15 @@ export class MyTaskPageItemDto extends PickType(BaseTaskAssignmentDto, [
     nullable: false,
   })
   task?: MyTaskRelatedTaskDto | null
+
+  @NestedProperty({
+    description: '奖励结算摘要',
+    required: false,
+    type: TaskRewardSettlementSummaryDto,
+    validation: false,
+    nullable: false,
+  })
+  rewardSettlement?: TaskRewardSettlementSummaryDto | null
 }
 
 export class AdminTaskReminderSummaryDto {
@@ -586,7 +603,7 @@ export class AdminTaskPageResponseDto extends PickType(BaseTaskDto, [
   'eventCode',
   'objectiveConfig',
   'targetCount',
-  'rewardConfig',
+  'rewardItems',
   'publishStartAt',
   'publishEndAt',
   'repeatRule',
@@ -625,7 +642,7 @@ export class AdminTaskAssignmentRelatedTaskDto extends PickType(BaseTaskDto, [
   'objectiveType',
   'eventCode',
   'objectiveConfig',
-  'rewardConfig',
+  'rewardItems',
   'targetCount',
   'completeMode',
   'claimMode',
@@ -641,16 +658,13 @@ export class AdminTaskAssignmentPageResponseDto extends PickType(
     'userId',
     'cycleKey',
     'status',
-    'rewardStatus',
-    'rewardResultType',
+    'rewardApplicable',
+    'rewardSettlementId',
     'progress',
     'target',
     'claimedAt',
     'completedAt',
     'expiredAt',
-    'rewardSettledAt',
-    'rewardLedgerIds',
-    'lastRewardError',
   ] as const,
 ) {
   @EnumProperty({
@@ -670,6 +684,15 @@ export class AdminTaskAssignmentPageResponseDto extends PickType(
     nullable: false,
   })
   task?: AdminTaskAssignmentRelatedTaskDto | null
+
+  @NestedProperty({
+    description: '奖励结算摘要',
+    type: TaskRewardSettlementSummaryDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  rewardSettlement?: TaskRewardSettlementSummaryDto | null
 }
 
 export class AdminTaskRewardReminderDto {
@@ -718,16 +741,13 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
     'userId',
     'cycleKey',
     'status',
-    'rewardStatus',
-    'rewardResultType',
+    'rewardApplicable',
+    'rewardSettlementId',
     'progress',
     'target',
     'claimedAt',
     'completedAt',
     'expiredAt',
-    'rewardSettledAt',
-    'rewardLedgerIds',
-    'lastRewardError',
     'visibleStatus',
   ] as const,
 ) {
@@ -772,6 +792,15 @@ export class AdminTaskAssignmentReconciliationPageResponseDto extends PickType(
     nullable: false,
   })
   task?: AdminTaskAssignmentRelatedTaskDto | null
+
+  @NestedProperty({
+    description: '奖励结算摘要',
+    type: TaskRewardSettlementSummaryDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  rewardSettlement?: TaskRewardSettlementSummaryDto | null
 }
 
 export class RetryCompletedTaskRewardsResponseDto {

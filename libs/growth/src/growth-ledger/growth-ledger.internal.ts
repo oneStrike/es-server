@@ -42,6 +42,7 @@ export interface GrowthLedgerApplyResult {
   success: boolean
   duplicated?: boolean
   reason?: GrowthLedgerFailReasonEnum
+  assetKey?: string
   deltaApplied?: number
   beforeValue?: number
   afterValue?: number
@@ -56,6 +57,7 @@ export interface GrowthLedgerApplyResult {
 export interface ApplyRuleParams {
   userId: number
   assetType: GrowthAssetTypeEnum
+  assetKey?: string
   ruleType: number
   bizKey: string
   source?: string
@@ -72,6 +74,7 @@ export interface ApplyRuleParams {
 export interface ApplyDeltaParams {
   userId: number
   assetType: GrowthAssetTypeEnum
+  assetKey?: string
   action: GrowthLedgerActionEnum.GRANT | GrowthLedgerActionEnum.CONSUME
   amount: number
   bizKey: string
@@ -90,6 +93,7 @@ export interface PublicGrowthLedgerRecord {
   id: number
   userId: number
   assetType: GrowthAssetTypeEnum
+  assetKey?: string
   source: string
   ruleId?: number
   ruleType?: number

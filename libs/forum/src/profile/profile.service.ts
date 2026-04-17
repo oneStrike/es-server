@@ -75,6 +75,10 @@ export class UserProfileService {
     return this.drizzle.schema.growthLedgerRecord
   }
 
+  get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
+  }
+
   get userBadge() {
     return this.drizzle.schema.userBadge
   }
@@ -105,7 +109,10 @@ export class UserProfileService {
     }
   }
 
-  private mapUser(user: AppUserSelect) {
+  private mapUser(
+    user: AppUserSelect,
+    growth: { points: number, experience: number },
+  ) {
     return {
       id: user.id,
       account: user.account,
@@ -119,8 +126,8 @@ export class UserProfileService {
       isEnabled: user.isEnabled,
       genderType: user.genderType,
       birthDate: user.birthDate ?? undefined,
-      points: user.points,
-      experience: user.experience,
+      points: growth.points,
+      experience: growth.experience,
       status: user.status,
       banReason: user.banReason ?? undefined,
       banUntil: user.banUntil ?? undefined,
@@ -235,9 +242,12 @@ export class UserProfileService {
       badgeMap.set(row.userId, list)
     }
 
+    const growthMap = await this.buildGrowthSnapshotMap(page.list.map((item) => item.id))
+
     const list = page.list.map((item) => {
+      const growth = growthMap.get(item.id) ?? { points: 0, experience: 0 }
       return {
-        ...this.mapUser(item),
+        ...this.mapUser(item, growth),
         avatar: item.avatarUrl ?? undefined,
         counts: this.mapCountRow(countMap.get(item.id), item.id),
         userBadges: badgeMap.get(item.id) ?? [],
@@ -263,6 +273,7 @@ export class UserProfileService {
         '用户不存在',
       )
     }
+    const growth = await this.getGrowthSnapshot(user.id)
     const [counts] = await this.db
       .select({
         userId: this.appUserCount.userId,
@@ -300,7 +311,7 @@ export class UserProfileService {
         asc(this.userBadgeAssignment.badgeId),
       )
     return {
-      ...this.mapUser(user),
+      ...this.mapUser(user, growth),
       avatar: user.avatarUrl ?? undefined,
       counts: this.mapCountRow(counts, userId),
       userBadges,
@@ -565,8 +576,6 @@ export class UserProfileService {
     await client
       .update(this.appUser)
       .set({
-        points: UserDefaults.INITIAL_POINTS,
-        experience: UserDefaults.INITIAL_EXPERIENCE,
         levelId: defaultLevel?.id ?? null,
         status: UserStatusEnum.NORMAL,
         signature: '',
@@ -574,6 +583,96 @@ export class UserProfileService {
       })
       .where(eq(this.appUser.id, userId))
 
+    await client
+      .insert(this.userAssetBalance)
+      .values([
+        {
+          userId,
+          assetType: GrowthAssetTypeEnum.POINTS,
+          assetKey: '',
+          balance: UserDefaults.INITIAL_POINTS,
+        },
+        {
+          userId,
+          assetType: GrowthAssetTypeEnum.EXPERIENCE,
+          assetKey: '',
+          balance: UserDefaults.INITIAL_EXPERIENCE,
+        },
+      ])
+      .onConflictDoNothing()
+
     await this.appUserCountService.initUserCounts(client, userId)
+  }
+
+  private async getGrowthSnapshot(userId: number) {
+    const rows = await this.db
+      .select({
+        assetType: this.userAssetBalance.assetType,
+        balance: this.userAssetBalance.balance,
+      })
+      .from(this.userAssetBalance)
+      .where(
+        and(
+          eq(this.userAssetBalance.userId, userId),
+          inArray(this.userAssetBalance.assetType, [
+            GrowthAssetTypeEnum.POINTS,
+            GrowthAssetTypeEnum.EXPERIENCE,
+          ]),
+          eq(this.userAssetBalance.assetKey, ''),
+        ),
+      )
+
+    return {
+      points:
+        rows.find((item) => item.assetType === GrowthAssetTypeEnum.POINTS)?.balance
+        ?? 0,
+      experience:
+        rows.find((item) => item.assetType === GrowthAssetTypeEnum.EXPERIENCE)?.balance
+        ?? 0,
+    }
+  }
+
+  private async buildGrowthSnapshotMap(userIds: number[]) {
+    const uniqueUserIds = [...new Set(userIds)]
+    if (uniqueUserIds.length === 0) {
+      return new Map<number, { points: number, experience: number }>()
+    }
+
+    const rows = await this.db
+      .select({
+        userId: this.userAssetBalance.userId,
+        assetType: this.userAssetBalance.assetType,
+        balance: this.userAssetBalance.balance,
+      })
+      .from(this.userAssetBalance)
+      .where(
+        and(
+          inArray(this.userAssetBalance.userId, uniqueUserIds),
+          inArray(this.userAssetBalance.assetType, [
+            GrowthAssetTypeEnum.POINTS,
+            GrowthAssetTypeEnum.EXPERIENCE,
+          ]),
+          eq(this.userAssetBalance.assetKey, ''),
+        ),
+      )
+
+    const growthMap = new Map<number, { points: number, experience: number }>()
+    for (const userId of uniqueUserIds) {
+      growthMap.set(userId, { points: 0, experience: 0 })
+    }
+    for (const row of rows) {
+      const current = growthMap.get(row.userId) ?? {
+        points: 0,
+        experience: 0,
+      }
+      if (row.assetType === GrowthAssetTypeEnum.POINTS) {
+        current.points = row.balance
+      } else if (row.assetType === GrowthAssetTypeEnum.EXPERIENCE) {
+        current.experience = row.balance
+      }
+      growthMap.set(row.userId, current)
+    }
+
+    return growthMap
   }
 }

@@ -10,6 +10,7 @@ import type {
 } from './dto/user-badge-management.dto'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
@@ -42,6 +43,11 @@ export class UserBadgeService {
   /** 等级规则表。 */
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
+  }
+
+  /** 统一用户资产余额表。 */
+  get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
   }
 
   /**
@@ -351,7 +357,6 @@ export class UserBadgeService {
           nickname: this.appUser.nickname,
           avatar: this.appUser.avatarUrl,
           level: this.userLevelRule.name,
-          point: this.appUser.points,
         },
       })
       .from(this.userBadgeAssignment)
@@ -372,14 +377,45 @@ export class UserBadgeService {
       .limit(page.limit)
       .offset(page.offset)
 
+    const pointMap = await this.buildPointsMap(list.map((item) => item.userId))
+
     const total = Number(totalRow?.total ?? 0)
     return {
-      list,
+      list: list.map((item) => ({
+        ...item,
+        user: {
+          ...item.user,
+          point: pointMap.get(item.userId) ?? 0,
+        },
+      })),
       total,
       pageIndex: page.pageIndex,
       pageSize: page.pageSize,
       totalPage: Math.ceil(total / page.pageSize),
     }
+  }
+
+  private async buildPointsMap(userIds: number[]) {
+    const uniqueUserIds = [...new Set(userIds)]
+    if (uniqueUserIds.length === 0) {
+      return new Map<number, number>()
+    }
+
+    const rows = await this.db
+      .select({
+        userId: this.userAssetBalance.userId,
+        balance: this.userAssetBalance.balance,
+      })
+      .from(this.userAssetBalance)
+      .where(
+        and(
+          inArray(this.userAssetBalance.userId, uniqueUserIds),
+          eq(this.userAssetBalance.assetType, GrowthAssetTypeEnum.POINTS),
+          eq(this.userAssetBalance.assetKey, ''),
+        ),
+      )
+
+    return new Map(rows.map((item) => [item.userId, item.balance]))
   }
 
   /**

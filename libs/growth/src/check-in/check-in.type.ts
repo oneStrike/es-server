@@ -1,4 +1,5 @@
 import type { CheckInCycleInsert, CheckInPlan, CheckInRecordInsert, CheckInStreakRewardGrantInsert } from '@db/schema'
+import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 
 import type {
   CheckInCycleTypeEnum,
@@ -8,20 +9,18 @@ import type {
 } from './check-in.constant'
 
 /**
- * 签到奖励配置。
+ * 签到奖励项列表。
  *
- * 当前只支持积分与经验两类资产，字段值统一要求为正整数。
+ * 当前正式合同统一为 `rewardItems[]`；当前实现仅支持积分/经验资产，
+ * 但字段结构已与统一奖励中心保持一致。
  */
-/** 稳定领域类型 `CheckInRewardConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface CheckInRewardConfig {
-  points?: number
-  experience?: number
-}
+/** 稳定领域类型 `CheckInRewardItems`。仅供内部领域/服务链路复用，避免重复定义。 */
+export type CheckInRewardItems = GrowthRewardItems
 
 /** 具体日期奖励规则。 */
 export interface CheckInDateRewardRuleView {
   rewardDate: string
-  rewardConfig: CheckInRewardConfig
+  rewardItems: CheckInRewardItems
 }
 
 /** 周期模式奖励规则。 */
@@ -29,14 +28,14 @@ export interface CheckInPatternRewardRuleView {
   patternType: CheckInPatternRewardRuleTypeEnum
   weekday: number | null
   monthDay: number | null
-  rewardConfig: CheckInRewardConfig
+  rewardItems: CheckInRewardItems
 }
 
 /** 连续签到奖励规则。 */
 export interface CheckInStreakRewardRuleView {
   ruleCode: string
   streakDays: number
-  rewardConfig: CheckInRewardConfig
+  rewardItems: CheckInRewardItems
   repeatable: boolean
   status: CheckInStreakRewardRuleStatusEnum
 }
@@ -48,7 +47,7 @@ export interface CheckInStreakRewardRuleView {
  */
 /** 稳定领域类型 `CheckInRewardDefinition`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface CheckInRewardDefinition {
-  baseRewardConfig: CheckInRewardConfig | null
+  baseRewardItems: CheckInRewardItems | null
   dateRewardRules: CheckInDateRewardRuleView[]
   patternRewardRules: CheckInPatternRewardRuleView[]
   streakRewardRules: CheckInStreakRewardRuleView[]
@@ -114,10 +113,10 @@ export type CreateCheckInRecordInput = Pick<
   | 'cycleId'
   | 'signDate'
   | 'recordType'
-  | 'rewardStatus'
   | 'resolvedRewardSourceType'
   | 'resolvedRewardRuleKey'
-  | 'resolvedRewardConfig'
+  | 'resolvedRewardItems'
+  | 'rewardSettlementId'
   | 'bizKey'
   | 'operatorType'
   | 'context'
@@ -130,11 +129,11 @@ export type CreateCheckInGrantInput = Pick<
   | 'planId'
   | 'cycleId'
   | 'triggerSignDate'
-  | 'grantStatus'
+  | 'rewardSettlementId'
   | 'bizKey'
   | 'ruleCode'
   | 'streakDays'
-  | 'rewardConfig'
+  | 'rewardItems'
   | 'repeatable'
   | 'context'
 >
@@ -143,7 +142,7 @@ export type CreateCheckInGrantInput = Pick<
 export interface CheckInResolvedReward {
   resolvedRewardSourceType: CheckInRewardSourceTypeEnum | null
   resolvedRewardRuleKey: string | null
-  resolvedRewardConfig: CheckInRewardConfig | null
+  resolvedRewardItems: CheckInRewardItems | null
 }
 
 /** 当前周期读视图。 */
@@ -157,7 +156,7 @@ export interface CheckInVirtualCycleView
 export interface CheckInGrantRuleSnapshot {
   ruleCode: string
   streakDays: number
-  rewardConfig: CheckInRewardConfig
+  rewardItems: CheckInRewardItems
   repeatable: boolean
 }
 
@@ -173,5 +172,5 @@ export type CheckInPlanSummaryView = Pick<
   | 'allowMakeupCountPerCycle'
 > & {
   cycleType: CheckInCycleTypeEnum
-  baseRewardConfig: CheckInRewardConfig | null
+  baseRewardItems: CheckInRewardItems | null
 }

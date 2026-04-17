@@ -135,7 +135,8 @@ export class UserService {
    */
   async getUserProfile(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
-    return this.userCoreService.mapBaseUser(user)
+    const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
+    return this.userCoreService.mapBaseUser(user, growth)
   }
 
   /**
@@ -243,9 +244,10 @@ export class UserService {
    * 获取用户中心汇总信息
    */
   async getUserCenter(userId: number): Promise<UserCenterDto> {
-    const [user, counts, badgeCount, assets, messageSummary, taskSummary] =
+    const [user, growth, counts, badgeCount, assets, messageSummary, taskSummary] =
       await Promise.all([
         this.userCoreService.ensureUserExists(userId),
+        this.userCoreService.getUserGrowthSnapshot(userId),
         this.userCoreService.getUserCounts(userId),
         this.userCoreService.getBadgeCount(userId),
         this.getUserAssetsSummary(userId),
@@ -269,8 +271,8 @@ export class UserService {
         birthDate: user.birthDate ?? undefined,
       },
       growth: {
-        points: user.points,
-        experience: user.experience,
+        points: growth.points,
+        experience: growth.experience,
         levelId: user.levelId ?? undefined,
         levelName: level?.name ?? undefined,
         levelIcon: level?.icon ?? undefined,
@@ -334,6 +336,7 @@ export class UserService {
    */
   async getUserExperienceStats(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
+    const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
 
     // 获取今日开始时间
     const today = startOfTodayInAppTimeZone()
@@ -379,7 +382,7 @@ export class UserService {
         .where(
           and(
             eq(this.userLevelRule.isEnabled, true),
-            gt(this.userLevelRule.requiredExperience, user.experience),
+            gt(this.userLevelRule.requiredExperience, growth.experience),
           ),
         )
         .orderBy(this.userLevelRule.requiredExperience)
@@ -390,7 +393,7 @@ export class UserService {
     const nextLevel = nextLevelRows[0]
 
     return {
-      currentExperience: user.experience,
+      currentExperience: growth.experience,
       todayEarned,
       level: level
         ? {
@@ -411,7 +414,7 @@ export class UserService {
           }
         : undefined,
       gapToNextLevel: nextLevel
-        ? Math.max(nextLevel.requiredExperience - user.experience, 0)
+        ? Math.max(nextLevel.requiredExperience - growth.experience, 0)
         : undefined,
     }
   }

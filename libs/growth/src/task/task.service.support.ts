@@ -39,9 +39,10 @@ import type {
   TaskRelationRow,
   TaskReminderAssignmentInput,
   TaskRepeatRuleConfig,
-  TaskRewardConfig,
+  TaskRewardItems,
   TaskRewardReminderTaskInput,
   TaskRewardSettlementAssignmentInput,
+  TaskRewardSettlementRelationRow,
   TaskRewardSettlementTaskInput,
   TaskRewardTaskRecord,
   TaskRewardTaskRecordBuildAssignmentInput,
@@ -55,6 +56,10 @@ import {
   createEventEnvelope,
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
+import {
+  GrowthRewardSettlementStatusEnum,
+  GrowthRewardSettlementTypeEnum,
+} from '@libs/growth/growth-reward/growth-reward.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Logger } from '@nestjs/common'
@@ -75,6 +80,7 @@ import {
   sql,
 } from 'drizzle-orm'
 import { GROWTH_RULE_TYPE_VALUES } from '../growth-rule.constant'
+import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import { TaskNotificationService } from './task-notification.service'
 import {
   getTaskTypeFilterValues,
@@ -83,7 +89,6 @@ import {
   TASK_COMPLETE_EVENT_CODE,
   TASK_COMPLETE_EVENT_KEY,
   TaskAssignmentRewardResultTypeEnum,
-  TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
@@ -133,6 +138,11 @@ export abstract class TaskServiceSupport {
     return this.drizzle.schema.taskAssignment
   }
 
+  /** 任务奖励结算事实表 */
+  protected get growthRewardSettlementTable() {
+    return this.drizzle.schema.growthRewardSettlement
+  }
+
   /** 任务进度日志表 */
   protected get taskProgressLogTable() {
     return this.drizzle.schema.taskProgressLog
@@ -164,10 +174,27 @@ export abstract class TaskServiceSupport {
       objectiveType: this.taskTable.objectiveType,
       eventCode: this.taskTable.eventCode,
       objectiveConfig: this.taskTable.objectiveConfig,
-      rewardConfig: this.taskTable.rewardConfig,
+      rewardItems: this.taskTable.rewardItems,
       targetCount: this.taskTable.targetCount,
       completeMode: this.taskTable.completeMode,
       claimMode: this.taskTable.claimMode,
+    }
+  }
+
+  /**
+   * 构建 assignment 列表联表查询使用的奖励结算摘要投影。
+   */
+  protected buildTaskRewardSettlementSelection() {
+    return {
+      id: this.growthRewardSettlementTable.id,
+      settlementStatus: this.growthRewardSettlementTable.settlementStatus,
+      settlementResultType:
+        this.growthRewardSettlementTable.settlementResultType,
+      retryCount: this.growthRewardSettlementTable.retryCount,
+      lastRetryAt: this.growthRewardSettlementTable.lastRetryAt,
+      settledAt: this.growthRewardSettlementTable.settledAt,
+      lastError: this.growthRewardSettlementTable.lastError,
+      ledgerRecordIds: this.growthRewardSettlementTable.ledgerRecordIds,
     }
   }
 
@@ -186,7 +213,7 @@ export abstract class TaskServiceSupport {
       objectiveType: this.taskTable.objectiveType,
       eventCode: this.taskTable.eventCode,
       objectiveConfig: this.taskTable.objectiveConfig,
-      rewardConfig: this.taskTable.rewardConfig,
+      rewardItems: this.taskTable.rewardItems,
       targetCount: this.taskTable.targetCount,
       claimMode: this.taskTable.claimMode,
       publishStartAt: this.taskTable.publishStartAt,
@@ -230,11 +257,19 @@ export abstract class TaskServiceSupport {
         .select({
           assignment: this.taskAssignmentTable,
           task: this.buildTaskRelationSelection(),
+          rewardSettlement: this.buildTaskRewardSettlementSelection(),
         })
         .from(this.taskAssignmentTable)
         .leftJoin(
           this.taskTable,
           eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+        )
+        .leftJoin(
+          this.growthRewardSettlementTable,
+          eq(
+            this.taskAssignmentTable.rewardSettlementId,
+            this.growthRewardSettlementTable.id,
+          ),
         )
         .where(whereClause)
         .limit(page.limit)
@@ -251,6 +286,9 @@ export abstract class TaskServiceSupport {
       list: list.map((item) => ({
         ...item.assignment,
         task: item.task ? this.normalizeTaskRelation(item.task) : item.task,
+        rewardSettlement: item.rewardSettlement?.id
+          ? this.normalizeTaskRewardSettlement(item.rewardSettlement)
+          : null,
       })),
       total,
       pageIndex: page.pageIndex,
@@ -269,22 +307,21 @@ export abstract class TaskServiceSupport {
     taskWhereClause: SQL | undefined,
     whereClause: SQL | undefined,
   ) {
-    if (taskWhereClause) {
-      const [countResult] = await this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(this.taskAssignmentTable)
-        .leftJoin(
-          this.taskTable,
-          eq(this.taskAssignmentTable.taskId, this.taskTable.id),
-        )
-        .where(whereClause)
-      return countResult?.count ?? 0
-    }
-
     const [countResult] = await this.db
       .select({ count: sql<number>`count(*)::int` })
       .from(this.taskAssignmentTable)
-      .where(assignmentWhereClause)
+      .leftJoin(
+        this.taskTable,
+        eq(this.taskAssignmentTable.taskId, this.taskTable.id),
+      )
+      .leftJoin(
+        this.growthRewardSettlementTable,
+        eq(
+          this.taskAssignmentTable.rewardSettlementId,
+          this.growthRewardSettlementTable.id,
+        ),
+      )
+      .where(taskWhereClause ? whereClause : (whereClause ?? assignmentWhereClause))
     return countResult?.count ?? 0
   }
 
@@ -345,11 +382,12 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 解析并校验任务奖励配置。
-   * 当前只允许 points / experience 两个正整数字段，空对象会被归一化为 null。
+   * 解析并校验任务奖励项列表。
+   *
+   * 当前任务奖励正式合同为 `rewardItems[]`，且只接受积分/经验两类资产。
    */
-  protected parseTaskRewardConfig(
-    value?: string | TaskRewardConfig | Record<string, unknown> | null,
+  protected parseTaskRewardItems(
+    value?: unknown,
   ) {
     if (value === undefined || value === '') {
       return undefined
@@ -362,35 +400,28 @@ export abstract class TaskServiceSupport {
     if (parsed === null) {
       return null
     }
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new BadRequestException('rewardConfig 必须是 JSON 对象')
+    if (!Array.isArray(parsed)) {
+      throw new BadRequestException('rewardItems 必须是数组')
+    }
+    if (parsed.length === 0) {
+      return null
     }
 
-    const record = parsed
-    const unsupportedKeys = Object.keys(record).filter(
-      (key) => !['points', 'experience'].includes(key),
+    const rewardItems = parsed.map((item, index) =>
+      this.parseTaskRewardItem(item, index),
     )
-    if (unsupportedKeys.length > 0) {
-      throw new BadRequestException(
-        `rewardConfig 暂只支持 points、experience，暂不支持字段：${unsupportedKeys.join(', ')}`,
-      )
+    const dedupeKeySet = new Set<string>()
+    for (const rewardItem of rewardItems) {
+      const dedupeKey = `${rewardItem.assetType}:${rewardItem.assetKey ?? ''}`
+      if (dedupeKeySet.has(dedupeKey)) {
+        throw new BadRequestException(
+          `rewardItems 存在重复奖励项：assetType=${rewardItem.assetType} assetKey=${rewardItem.assetKey ?? ''}`,
+        )
+      }
+      dedupeKeySet.add(dedupeKey)
     }
 
-    const rewardConfig: TaskRewardConfig = {}
-    if ('points' in record && record.points !== undefined) {
-      rewardConfig.points = this.parseRewardConfigPositiveInt(
-        record.points,
-        'rewardConfig.points',
-      )
-    }
-    if ('experience' in record && record.experience !== undefined) {
-      rewardConfig.experience = this.parseRewardConfigPositiveInt(
-        record.experience,
-        'rewardConfig.experience',
-      )
-    }
-
-    return Object.keys(rewardConfig).length > 0 ? rewardConfig : null
+    return rewardItems
   }
 
   /**
@@ -527,9 +558,9 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 校验奖励配置中的正整数值。
+   * 校验奖励数量字段中的正整数值。
    *
-   * 任务奖励配置要求值为正整数，避免非法数值进入奖励结算路径。
+   * 统一用于 `rewardItems[].amount` 解析，避免非法数值进入奖励结算路径。
    */
   protected parseRewardConfigPositiveInt<T>(value: T, fieldName: string) {
     if (!Number.isInteger(value) || Number(value) <= 0) {
@@ -538,6 +569,60 @@ export abstract class TaskServiceSupport {
       )
     }
     return Number(value)
+  }
+
+  /**
+   * 解析单个任务奖励项。
+   *
+   * 当前任务域只支持积分/经验奖励，因此会在这里提前拦截未支持资产类型。
+   */
+  protected parseTaskRewardItem(
+    value: unknown,
+    index: number,
+  ): NonNullable<TaskRewardItems>[number] {
+    const record = this.asRecord(value)
+    if (!record) {
+      throw new BadRequestException(`rewardItems[${index}] 必须是 JSON 对象`)
+    }
+
+    const unsupportedKeys = Object.keys(record).filter(
+      (key) => !['assetType', 'assetKey', 'amount'].includes(key),
+    )
+    if (unsupportedKeys.length > 0) {
+      throw new BadRequestException(
+        `rewardItems[${index}] 暂不支持字段：${unsupportedKeys.join(', ')}`,
+      )
+    }
+
+    const assetType = Number(record.assetType)
+    if (
+      !Number.isInteger(assetType)
+      || (
+        assetType !== GrowthRewardRuleAssetTypeEnum.POINTS
+        && assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+      )
+    ) {
+      throw new BadRequestException(
+        `rewardItems[${index}].assetType 仅支持 1=积分、2=经验`,
+      )
+    }
+
+    const assetKey =
+      typeof record.assetKey === 'string' ? record.assetKey.trim() : ''
+    if (assetKey !== '') {
+      throw new BadRequestException(
+        `rewardItems[${index}].assetKey 当前必须为空字符串`,
+      )
+    }
+
+    return {
+      assetType,
+      assetKey,
+      amount: this.parseRewardConfigPositiveInt(
+        record.amount,
+        `rewardItems[${index}].amount`,
+      ),
+    }
   }
 
   /**
@@ -846,8 +931,18 @@ export abstract class TaskServiceSupport {
     cycleKey: string,
   ) {
     const [assignment] = await this.db
-      .select()
+      .select({
+        assignment: this.taskAssignmentTable,
+        rewardSettlement: this.buildTaskRewardSettlementSelection(),
+      })
       .from(this.taskAssignmentTable)
+      .leftJoin(
+        this.growthRewardSettlementTable,
+        eq(
+          this.taskAssignmentTable.rewardSettlementId,
+          this.growthRewardSettlementTable.id,
+        ),
+      )
       .where(
         and(
           eq(this.taskAssignmentTable.taskId, taskId),
@@ -857,7 +952,15 @@ export abstract class TaskServiceSupport {
         ),
       )
       .limit(1)
-    return assignment
+    if (!assignment) {
+      return undefined
+    }
+    return {
+      ...assignment.assignment,
+      rewardSettlement: assignment.rewardSettlement?.id
+        ? this.normalizeTaskRewardSettlement(assignment.rewardSettlement)
+        : null,
+    }
   }
 
   /**
@@ -946,6 +1049,9 @@ export abstract class TaskServiceSupport {
       userId,
       cycleKey,
       status: TaskAssignmentStatusEnum.PENDING,
+      rewardApplicable: this.hasConfiguredTaskReward(taskRecord.rewardItems)
+        ? 1
+        : 0,
       progress: 0,
       target: taskRecord.targetCount,
       claimedAt: now,
@@ -1016,7 +1122,10 @@ export abstract class TaskServiceSupport {
       )
     }
 
-    return assignment
+    return {
+      ...assignment,
+      rewardSettlement: null,
+    }
   }
 
   /**
@@ -1116,6 +1225,12 @@ export abstract class TaskServiceSupport {
           notifyAutoAssignment: false,
           progressSource: TaskProgressSourceEnum.EVENT,
         },
+      )
+    }
+    if (!assignment) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '任务分配不存在',
       )
     }
 
@@ -1457,7 +1572,7 @@ export abstract class TaskServiceSupport {
       repeatRule: taskRecord.repeatRule,
       publishStartAt: taskRecord.publishStartAt,
       publishEndAt: taskRecord.publishEndAt,
-      rewardConfig: taskRecord.rewardConfig,
+      rewardItems: this.parseTaskRewardItems(taskRecord.rewardItems) ?? null,
       targetCount: taskRecord.targetCount,
     }
   }
@@ -1484,7 +1599,10 @@ export abstract class TaskServiceSupport {
       code: snapshotCode ?? currentTask?.code,
       title: snapshotTitle ?? currentTask?.title,
       type: snapshotType ?? currentTask?.type,
-      rewardConfig: snapshot?.rewardConfig ?? currentTask?.rewardConfig,
+      rewardItems:
+        this.parseTaskRewardItems(this.asArray(snapshot?.rewardItems) ?? null)
+        ?? this.parseTaskRewardItems(currentTask?.rewardItems ?? null)
+        ?? null,
     }
 
     return taskRecord
@@ -1499,7 +1617,19 @@ export abstract class TaskServiceSupport {
     userId: number,
     taskRecord: TaskCompleteEventTaskInput,
     assignment: TaskCompleteEventAssignmentInput,
+    options?: { isRetry?: boolean },
   ) {
+    if (!this.hasConfiguredTaskReward(taskRecord.rewardItems)) {
+      return
+    }
+
+    const settlement = await this.ensureTaskRewardSettlementLink({
+      assignmentId: assignment.id,
+      taskId: taskRecord.id,
+      userId,
+      rewardItems: taskRecord.rewardItems ?? null,
+      occurredAt: assignment.completedAt ?? undefined,
+    })
     const taskCompleteEvent = this.buildTaskCompleteEventEnvelope({
       userId,
       taskId: taskRecord.id,
@@ -1512,11 +1642,15 @@ export abstract class TaskServiceSupport {
         userId,
         taskId: taskRecord.id,
         assignmentId: assignment.id,
-        rewardConfig: taskRecord.rewardConfig,
+        rewardItems: taskRecord.rewardItems,
         eventEnvelope: taskCompleteEvent,
       })
 
-    await this.syncTaskAssignmentRewardState(assignment.id, rewardResult)
+    await this.syncTaskRewardSettlementState(
+      settlement.id,
+      rewardResult,
+      options,
+    )
     await this.tryNotifyTaskRewardGranted(
       userId,
       taskRecord,
@@ -1535,7 +1669,13 @@ export abstract class TaskServiceSupport {
     taskRecord: TaskRewardSettlementTaskInput,
     assignment: TaskRewardSettlementAssignmentInput,
   ) {
-    if (assignment.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS) {
+    if (!assignment.rewardApplicable) {
+      return
+    }
+    if (
+      assignment.rewardSettlement?.settlementStatus
+      === GrowthRewardSettlementStatusEnum.SUCCESS
+    ) {
       return
     }
 
@@ -1543,26 +1683,126 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 同步任务分配奖励状态。
+   * 确保任务奖励结算事实存在，并把 assignment 挂接到唯一结算记录。
    *
-   * 奖励结算流程属于可降级副作用，写库失败时只记录日志，不阻断主流程。
+   * 该步骤是 task 奖励状态的单一事实源入口；一旦需要奖励结算，就必须先创建
+   * `growth_reward_settlement`，而不是继续写 assignment 内部状态字段。
    */
-  protected async syncTaskAssignmentRewardState(
-    assignmentId: number,
+  protected async ensureTaskRewardSettlementLink(params: {
+    assignmentId: number
+    taskId: number
+    userId: number
+    rewardItems?: TaskRewardItems | null
+    occurredAt?: Date
+  }) {
+    const bizKey = this.buildTaskRewardSettlementBizKey(params)
+    const requestPayload = {
+      kind: 'task_reward',
+      assignmentId: params.assignmentId,
+      taskId: params.taskId,
+      userId: params.userId,
+      rewardItems: params.rewardItems ?? null,
+      occurredAt: (params.occurredAt ?? new Date()).toISOString(),
+    }
+
+    return this.drizzle.withTransaction(async (tx) => {
+      const [createdSettlement] = await tx
+        .insert(this.growthRewardSettlementTable)
+        .values({
+          userId: params.userId,
+          bizKey,
+          settlementType: GrowthRewardSettlementTypeEnum.TASK_REWARD,
+          source: 'task_bonus',
+          sourceRecordId: params.assignmentId,
+          targetId: params.taskId,
+          eventOccurredAt: params.occurredAt ?? new Date(),
+          settlementStatus: GrowthRewardSettlementStatusEnum.PENDING,
+          requestPayload,
+        })
+        .onConflictDoNothing()
+        .returning({
+          id: this.growthRewardSettlementTable.id,
+          bizKey: this.growthRewardSettlementTable.bizKey,
+        })
+
+      const settlement =
+        createdSettlement
+        ?? (
+          await tx.query.growthRewardSettlement.findFirst({
+            where: {
+              userId: params.userId,
+              bizKey,
+            },
+            columns: {
+              id: true,
+              bizKey: true,
+            },
+          })
+        )
+
+      if (!settlement) {
+        throw new BusinessException(
+          BusinessErrorCode.STATE_CONFLICT,
+          '任务奖励结算事实创建失败',
+        )
+      }
+
+      await tx
+        .update(this.taskAssignmentTable)
+        .set({ rewardSettlementId: settlement.id })
+        .where(eq(this.taskAssignmentTable.id, params.assignmentId))
+
+      return settlement
+    })
+  }
+
+  /**
+   * 同步任务奖励结算事实状态。
+   */
+  protected async syncTaskRewardSettlementState(
+    settlementId: number,
     rewardResult: TaskRewardSettlementResult,
+    options?: { isRetry?: boolean },
   ) {
     try {
-      const updateResult = await this.drizzle.withErrorHandling(() =>
-        this.db
-          .update(this.taskAssignmentTable)
-          .set(this.buildTaskAssignmentRewardStateUpdate(rewardResult))
-          .where(eq(this.taskAssignmentTable.id, assignmentId)),
-      )
+      const settlement = await this.db.query.growthRewardSettlement.findFirst({
+        where: { id: settlementId },
+        columns: {
+          retryCount: true,
+          lastRetryAt: true,
+        },
+      })
 
-      this.drizzle.assertAffectedRows(updateResult, '任务分配不存在')
+      if (!settlement) {
+        throw new BusinessException(
+          BusinessErrorCode.RESOURCE_NOT_FOUND,
+          '任务奖励结算事实不存在',
+        )
+      }
+
+      await this.drizzle.withErrorHandling(() =>
+        this.db
+          .update(this.growthRewardSettlementTable)
+          .set({
+            settlementStatus: rewardResult.success
+              ? GrowthRewardSettlementStatusEnum.SUCCESS
+              : GrowthRewardSettlementStatusEnum.PENDING,
+            settlementResultType: rewardResult.resultType,
+            ledgerRecordIds: rewardResult.ledgerRecordIds,
+            retryCount: options?.isRetry
+              ? settlement.retryCount + 1
+              : settlement.retryCount,
+            lastRetryAt: options?.isRetry ? new Date() : settlement.lastRetryAt,
+            settledAt: rewardResult.success ? rewardResult.settledAt : null,
+            lastError: rewardResult.success
+              ? null
+              : (rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试'),
+          })
+          .where(eq(this.growthRewardSettlementTable.id, settlementId)),
+      )
     } catch (error) {
       this.logger.warn(
-        `task_reward_state_sync_failed assignmentId=${assignmentId} resultType=${rewardResult.resultType} error=${
+        `task_reward_state_sync_failed settlementId=${settlementId} resultType=${rewardResult.resultType} error=${
           error instanceof Error ? error.message : String(error)
         }`,
       )
@@ -1570,36 +1810,22 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 构建奖励结算回写 assignment 的字段集合。
+   * 构建任务奖励结算事实的稳定幂等键。
    */
-  protected buildTaskAssignmentRewardStateUpdate(
-    rewardResult: TaskRewardSettlementResult,
-  ): Pick<
-    TaskAssignmentSelect,
-    | 'rewardStatus'
-    | 'rewardResultType'
-    | 'rewardSettledAt'
-    | 'rewardLedgerIds'
-    | 'lastRewardError'
-  > {
-    if (rewardResult.success) {
-      return {
-        rewardStatus: TaskAssignmentRewardStatusEnum.SUCCESS,
-        rewardResultType: rewardResult.resultType,
-        rewardSettledAt: rewardResult.settledAt,
-        rewardLedgerIds: rewardResult.ledgerRecordIds,
-        lastRewardError: null,
-      }
-    }
-
-    return {
-      rewardStatus: TaskAssignmentRewardStatusEnum.FAILED,
-      rewardResultType: TaskAssignmentRewardResultTypeEnum.FAILED,
-      rewardSettledAt: rewardResult.settledAt,
-      rewardLedgerIds: rewardResult.ledgerRecordIds,
-      lastRewardError:
-        rewardResult.errorMessage ?? '任务奖励发放失败，请稍后重试',
-    }
+  protected buildTaskRewardSettlementBizKey(params: {
+    assignmentId: number
+    taskId: number
+    userId: number
+  }) {
+    return [
+      'task',
+      'complete',
+      params.taskId,
+      'assignment',
+      params.assignmentId,
+      'user',
+      params.userId,
+    ].join(':')
   }
 
   /**
@@ -1654,11 +1880,8 @@ export abstract class TaskServiceSupport {
       return
     }
 
-    const grantedPoints = this.getAppliedRewardAmount(rewardResult.pointsReward)
-    const grantedExperience = this.getAppliedRewardAmount(
-      rewardResult.experienceReward,
-    )
-    if (grantedPoints <= 0 && grantedExperience <= 0) {
+    const grantedRewardItems = this.getAppliedRewardItems(rewardResult)
+    if (grantedRewardItems.length === 0) {
       return
     }
 
@@ -1676,8 +1899,7 @@ export abstract class TaskServiceSupport {
             type: taskRecord.type,
           },
           assignmentId: assignment.id,
-          points: grantedPoints,
-          experience: grantedExperience,
+          rewardItems: grantedRewardItems,
           ledgerRecordIds: rewardResult.ledgerRecordIds,
         }),
       )
@@ -1735,7 +1957,7 @@ export abstract class TaskServiceSupport {
       eventCode: taskRecord.eventCode,
       objectiveConfig: taskRecord.objectiveConfig,
       targetCount: taskRecord.targetCount,
-      rewardConfig: taskRecord.rewardConfig,
+      rewardItems: this.parseTaskRewardItems(taskRecord.rewardItems) ?? null,
       publishStartAt: taskRecord.publishStartAt,
       publishEndAt: taskRecord.publishEndAt,
       repeatRule: taskRecord.repeatRule,
@@ -1757,21 +1979,19 @@ export abstract class TaskServiceSupport {
       taskId: item.taskId,
       cycleKey: item.cycleKey,
       status: item.status,
-      rewardStatus: item.rewardStatus,
-      rewardResultType: item.rewardResultType,
+      rewardApplicable: item.rewardApplicable,
+      rewardSettlementId: item.rewardSettlementId,
       progress: item.progress,
       target: item.target,
       claimedAt: item.claimedAt,
       completedAt: item.completedAt,
       expiredAt: item.expiredAt,
-      rewardSettledAt: item.rewardSettledAt,
-      rewardLedgerIds: item.rewardLedgerIds,
-      lastRewardError: item.lastRewardError,
       visibleStatus: this.resolveTaskUserVisibleStatus({
         status: item.status,
-        rewardStatus: item.rewardStatus,
-        rewardConfig: taskView?.rewardConfig,
+        rewardApplicable: item.rewardApplicable === 1,
+        rewardSettlementStatus: item.rewardSettlement?.settlementStatus,
       }),
+      rewardSettlement: item.rewardSettlement,
       task: taskView,
     }
   }
@@ -1801,8 +2021,8 @@ export abstract class TaskServiceSupport {
       ...item,
       visibleStatus: this.resolveTaskUserVisibleStatus({
         status: item.status,
-        rewardStatus: item.rewardStatus,
-        rewardConfig: taskView?.rewardConfig,
+        rewardApplicable: item.rewardApplicable === 1,
+        rewardSettlementStatus: item.rewardSettlement?.settlementStatus,
       }),
       task: taskView,
     }
@@ -1831,6 +2051,18 @@ export abstract class TaskServiceSupport {
       ...record,
       type: normalizeTaskType(record.type),
       objectiveType: normalizeTaskObjectiveType(record.objectiveType),
+    }
+  }
+
+  /**
+   * 归一化任务奖励结算关联摘要。
+   */
+  protected normalizeTaskRewardSettlement(
+    record: TaskRewardSettlementRelationRow,
+  ) {
+    return {
+      ...record,
+      ledgerRecordIds: record.ledgerRecordIds ?? [],
     }
   }
 
@@ -1878,7 +2110,10 @@ export abstract class TaskServiceSupport {
         null,
       objectiveConfig:
         snapshot?.objectiveConfig ?? liveTask?.objectiveConfig ?? null,
-      rewardConfig: snapshot?.rewardConfig ?? liveTask?.rewardConfig ?? null,
+      rewardItems:
+        this.parseTaskRewardItems(this.asArray(snapshot?.rewardItems) ?? null)
+        ?? this.parseTaskRewardItems(liveTask?.rewardItems ?? null)
+        ?? null,
       targetCount:
         this.readSnapshotPositiveInt(snapshot?.targetCount) ??
         liveTask?.targetCount ??
@@ -1912,10 +2147,10 @@ export abstract class TaskServiceSupport {
       return TaskUserVisibleStatusEnum.CLAIMED
     }
     if (params.status === TaskAssignmentStatusEnum.COMPLETED) {
-      if (!this.hasConfiguredTaskReward(params.rewardConfig)) {
+      if (!params.rewardApplicable) {
         return TaskUserVisibleStatusEnum.COMPLETED
       }
-      return params.rewardStatus === TaskAssignmentRewardStatusEnum.SUCCESS
+      return params.rewardSettlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
         ? TaskUserVisibleStatusEnum.REWARD_GRANTED
         : TaskUserVisibleStatusEnum.REWARD_PENDING
     }
@@ -1958,6 +2193,13 @@ export abstract class TaskServiceSupport {
           count: sql<number>`COUNT(*)::int`,
         })
         .from(this.taskAssignmentTable)
+        .leftJoin(
+          this.growthRewardSettlementTable,
+          eq(
+            this.taskAssignmentTable.rewardSettlementId,
+            this.growthRewardSettlementTable.id,
+          ),
+        )
         .where(
           and(
             isNull(this.taskAssignmentTable.deletedAt),
@@ -1966,12 +2208,16 @@ export abstract class TaskServiceSupport {
               this.taskAssignmentTable.status,
               TaskAssignmentStatusEnum.COMPLETED,
             ),
-            inArray(this.taskAssignmentTable.rewardStatus, [
-              TaskAssignmentRewardStatusEnum.PENDING,
-              TaskAssignmentRewardStatusEnum.FAILED,
-            ]),
+          eq(this.taskAssignmentTable.rewardApplicable, 1),
+          or(
+            isNull(this.taskAssignmentTable.rewardSettlementId),
+            eq(
+              this.growthRewardSettlementTable.settlementStatus,
+              GrowthRewardSettlementStatusEnum.PENDING,
+            ),
           ),
-        )
+        ),
+      )
         .groupBy(this.taskAssignmentTable.taskId),
       this.queryLatestTaskReminderRows(uniqueTaskIds),
     ])
@@ -2317,15 +2563,16 @@ export abstract class TaskServiceSupport {
    *
    * 只有 points/experience 任一项大于 0，才认为完成态需要展示奖励结算状态。
    */
-  protected hasConfiguredTaskReward<T>(rewardConfig: T) {
-    const rewardRecord = this.asRecord(rewardConfig)
-    if (!rewardRecord) {
+  protected hasConfiguredTaskReward<T>(rewardItems: T) {
+    const rewardItemArray = this.asArray(rewardItems)
+    if (!rewardItemArray) {
       return false
     }
-    return (
-      (this.readSnapshotPositiveInt(rewardRecord.points) ?? 0) > 0 ||
-      (this.readSnapshotPositiveInt(rewardRecord.experience) ?? 0) > 0
-    )
+
+    return rewardItemArray.some((item) => {
+      const rewardRecord = this.asRecord(item)
+      return (this.readSnapshotPositiveInt(rewardRecord?.amount) ?? 0) > 0
+    })
   }
 
   /**
@@ -2345,17 +2592,23 @@ export abstract class TaskServiceSupport {
   }
 
   /**
-   * 计算真实到账的奖励数量
+   * 计算真实到账的奖励项列表。
    *
-   * 仅统计本次真实落账成功的奖励，幂等命中与未配置奖励都会返回 0。
+   * 仅统计本次真实落账成功的奖励；幂等命中、失败或未配置奖励都会被过滤掉。
    */
-  protected getAppliedRewardAmount(
-    reward: TaskRewardSettlementResult['pointsReward'],
+  protected getAppliedRewardItems(
+    rewardResult: TaskRewardSettlementResult,
   ) {
-    if (!reward.success || reward.duplicated || reward.skipped) {
-      return 0
-    }
-    return reward.configuredAmount
+    return rewardResult.rewardResults.flatMap((reward) => {
+      if (!reward.success || reward.duplicated || reward.skipped) {
+        return []
+      }
+      return [{
+        assetType: reward.assetType,
+        assetKey: reward.assetKey,
+        amount: reward.configuredAmount,
+      }]
+    })
   }
 
   /**
@@ -2394,6 +2647,13 @@ export abstract class TaskServiceSupport {
       return null
     }
     return input as Record<string, unknown>
+  }
+
+  /**
+   * 把弱结构输入收敛成数组。
+   */
+  protected asArray<T>(input: T) {
+    return Array.isArray(input) ? input : null
   }
 
   /**

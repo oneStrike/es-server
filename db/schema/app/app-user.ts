@@ -63,14 +63,6 @@ export const appUser = pgTable("app_user", {
    */
   birthDate: date(),
   /**
-   * 积分
-   */
-  points: integer().default(0).notNull(),
-  /**
-   * 经验值
-   */
-  experience: integer().default(0).notNull(),
-  /**
    * 用户状态（1=正常，2=禁言，3=永久禁言，4=封禁，5=永久封禁）
    */
   status: smallint().default(1).notNull(),
@@ -112,14 +104,11 @@ export const appUser = pgTable("app_user", {
     index("app_user_last_login_at_idx").on(table.lastLoginAt),
     index("app_user_phone_number_idx").on(table.phoneNumber),
     index("app_user_email_address_idx").on(table.emailAddress),
-    index("app_user_points_idx").on(table.points),
     index("app_user_status_idx").on(table.status),
     index("app_user_level_id_idx").on(table.levelId),
     index("app_user_deleted_at_idx").on(table.deletedAt),
     check("app_user_gender_type_valid_chk", sql`${table.genderType} in (0, 1, 2, 3, 4)`),
     check("app_user_status_valid_chk", sql`${table.status} in (1, 2, 3, 4, 5)`),
-    check("app_user_points_non_negative_chk", sql`${table.points} >= 0`),
-    check("app_user_experience_non_negative_chk", sql`${table.experience} >= 0`),
 ]);
 
 /**

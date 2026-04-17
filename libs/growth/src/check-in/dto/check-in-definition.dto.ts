@@ -1,5 +1,5 @@
+import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { IdDto } from '@libs/platform/dto/base.dto'
 import {
@@ -18,21 +18,19 @@ import {
   CreateCheckInPatternRewardRuleDto,
 } from './check-in-pattern-reward-rule.dto'
 import { BaseCheckInPlanDto } from './check-in-plan.dto'
-import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 import {
   CheckInStreakRewardRuleItemDto,
   CreateCheckInStreakRewardRuleDto,
 } from './check-in-streak-reward-rule.dto'
 
 class CheckInPlanRewardConfigFieldsDto {
-  @NestedProperty({
+  @ArrayProperty({
     description:
-      '计划默认基础奖励配置；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
-    type: CheckInRewardConfigDto,
+      '计划默认基础奖励项；当天未命中具体日期奖励和周期模式奖励时回退到该配置。',
+    itemClass: GrowthRewardItemDto,
     required: false,
-    nullable: false,
   })
-  baseRewardConfig?: CheckInRewardConfigDto | null
+  baseRewardItems?: GrowthRewardItemDto[] | null
 
   @ArrayProperty({
     description: '具体日期奖励规则列表。',
@@ -62,7 +60,7 @@ export class CreateCheckInPlanDto extends IntersectionType(
     'id',
     'createdAt',
     'updatedAt',
-    'baseRewardConfig',
+    'baseRewardItems',
   ] as const),
   PartialType(CheckInPlanRewardConfigFieldsDto),
 ) {}

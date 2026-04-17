@@ -143,8 +143,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.userBadge.id.through(r.userBadgeAssignment.badgeId),
     }),
     growthLedgerRecords: r.many.growthLedgerRecord(),
+    growthRewardSettlements: r.many.growthRewardSettlement(),
     growthAuditLogs: r.many.growthAuditLog(),
-    growthRuleUsageSlots: r.many.growthRuleUsageSlot(),
+    assetBalances: r.many.userAssetBalance(),
+    growthRuleUsageCounters: r.many.growthRuleUsageCounter(),
     checkInCycles: r.many.checkInCycle(),
     checkInRecords: r.many.checkInRecord(),
     checkInStreakRewardGrants: r.many.checkInStreakRewardGrant(),
@@ -201,15 +203,27 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   growthAuditLog: {
     user: r.one.appUser({ from: r.growthAuditLog.userId, to: r.appUser.id }),
   },
+  userAssetBalance: {
+    user: r.one.appUser({
+      from: r.userAssetBalance.userId,
+      to: r.appUser.id,
+    }),
+  },
   growthLedgerRecord: {
     user: r.one.appUser({
       from: r.growthLedgerRecord.userId,
       to: r.appUser.id,
     }),
   },
-  growthRuleUsageSlot: {
+  growthRewardSettlement: {
     user: r.one.appUser({
-      from: r.growthRuleUsageSlot.userId,
+      from: r.growthRewardSettlement.userId,
+      to: r.appUser.id,
+    }),
+  },
+  growthRuleUsageCounter: {
+    user: r.one.appUser({
+      from: r.growthRuleUsageCounter.userId,
       to: r.appUser.id,
     }),
   },
@@ -253,6 +267,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.checkInRecord.cycleId,
       to: r.checkInCycle.id,
     }),
+    rewardSettlement: r.one.growthRewardSettlement({
+      from: r.checkInRecord.rewardSettlementId,
+      to: r.growthRewardSettlement.id,
+    }),
   },
   checkInStreakRewardGrant: {
     user: r.one.appUser({
@@ -266,6 +284,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     cycle: r.one.checkInCycle({
       from: r.checkInStreakRewardGrant.cycleId,
       to: r.checkInCycle.id,
+    }),
+    rewardSettlement: r.one.growthRewardSettlement({
+      from: r.checkInStreakRewardGrant.rewardSettlementId,
+      to: r.growthRewardSettlement.id,
     }),
   },
   task: {
@@ -284,6 +306,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
   taskAssignment: {
     task: r.one.task({ from: r.taskAssignment.taskId, to: r.task.id }),
     user: r.one.appUser({ from: r.taskAssignment.userId, to: r.appUser.id }),
+    rewardSettlement: r.one.growthRewardSettlement({
+      from: r.taskAssignment.rewardSettlementId,
+      to: r.growthRewardSettlement.id,
+    }),
     progressLogs: r.many.taskProgressLog(),
   },
   taskProgressLog: {

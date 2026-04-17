@@ -1,20 +1,18 @@
-import type { CheckInRewardConfig } from '../check-in.type'
+import { BaseGrowthRewardSettlementDto } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
+import { GrowthRewardSettlementResultTypeEnum } from '@libs/growth/growth-reward/growth-reward.constant'
+import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto } from '@libs/platform/dto/base.dto'
+import { PickType } from '@nestjs/swagger'
 import {
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
-  CheckInRewardResultTypeEnum,
   CheckInRewardSourceTypeEnum,
-  CheckInRewardStatusEnum,
 } from '../check-in.constant'
-import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 export class BaseCheckInRecordDto extends BaseDto {
   @NumberProperty({
@@ -50,23 +48,6 @@ export class BaseCheckInRecordDto extends BaseDto {
   recordType!: CheckInRecordTypeEnum
 
   @EnumProperty({
-    description: '基础奖励状态（0=待处理；1=已成功；2=已失败）',
-    example: CheckInRewardStatusEnum.PENDING,
-    enum: CheckInRewardStatusEnum,
-    required: false,
-  })
-  rewardStatus?: CheckInRewardStatusEnum | null
-
-  @EnumProperty({
-    description:
-      '基础奖励结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）',
-    example: CheckInRewardResultTypeEnum.APPLIED,
-    enum: CheckInRewardResultTypeEnum,
-    required: false,
-  })
-  rewardResultType?: CheckInRewardResultTypeEnum | null
-
-  @EnumProperty({
     description:
       '基础奖励来源（1=默认基础奖励；2=具体日期奖励；3=周期模式奖励）',
     example: CheckInRewardSourceTypeEnum.DATE_RULE,
@@ -85,15 +66,23 @@ export class BaseCheckInRecordDto extends BaseDto {
   })
   resolvedRewardRuleKey?: string | null
 
-  @NestedProperty({
+  @ArrayProperty({
     description:
       '本次基础奖励解析结果快照；来源可能是具体日期奖励、周期模式奖励或计划默认基础奖励，为空表示该签到事实没有基础奖励。',
-    type: CheckInRewardConfigDto,
-    example: { points: 10, experience: 5 } satisfies CheckInRewardConfig,
+    itemClass: GrowthRewardItemDto,
+    example: [{ assetType: 1, amount: 10 }, { assetType: 2, amount: 5 }],
     required: false,
     validation: false,
   })
-  resolvedRewardConfig?: CheckInRewardConfigDto | null
+  resolvedRewardItems?: GrowthRewardItemDto[] | null
+
+  @NumberProperty({
+    description: '关联的奖励结算事实 ID。',
+    example: 601,
+    required: false,
+    validation: false,
+  })
+  rewardSettlementId?: number | null
 
   @StringProperty({
     description: '业务幂等键；仅内部补偿、重试与排障使用。',
@@ -103,14 +92,6 @@ export class BaseCheckInRecordDto extends BaseDto {
     contract: false,
   })
   bizKey!: string
-
-  @ArrayProperty({
-    description: '基础奖励账本记录 ID 列表。',
-    itemType: 'number',
-    example: [101, 102],
-    validation: false,
-  })
-  baseRewardLedgerIds!: number[]
 
   @EnumProperty({
     description:
@@ -129,15 +110,6 @@ export class BaseCheckInRecordDto extends BaseDto {
   })
   remark?: string | null
 
-  @StringProperty({
-    description: '最近一次基础奖励失败原因。',
-    example: '签到基础奖励发放失败',
-    required: false,
-    maxLength: 500,
-    validation: false,
-  })
-  lastRewardError?: string | null
-
   @JsonProperty({
     description: '签到上下文；用于保存排障或入口补充信息。',
     example: { source: 'app' },
@@ -145,12 +117,28 @@ export class BaseCheckInRecordDto extends BaseDto {
     validation: false,
   })
   context?: Record<string, unknown> | null
+}
 
-  @DateProperty({
-    description: '最近一次基础奖励结算时间。',
-    example: '2026-04-01T00:01:00.000Z',
+export class CheckInRewardSettlementSummaryDto extends PickType(
+  BaseGrowthRewardSettlementDto,
+  [
+    'id',
+    'settlementStatus',
+    'settlementResultType',
+    'ledgerRecordIds',
+    'retryCount',
+    'lastRetryAt',
+    'settledAt',
+    'lastError',
+  ] as const,
+) {
+  @EnumProperty({
+    description:
+      '补偿结果类型（1=本次真实落账；2=命中幂等未重复落账；3=本次处理失败）',
+    example: GrowthRewardSettlementResultTypeEnum.APPLIED,
+    enum: GrowthRewardSettlementResultTypeEnum,
     required: false,
     validation: false,
   })
-  rewardSettledAt?: Date | null
+  settlementResultType?: GrowthRewardSettlementResultTypeEnum | null
 }

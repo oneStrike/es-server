@@ -3,6 +3,7 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { WorkViewPermissionEnum } from '@libs/platform/constant/content.constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
 
 /**
  * 用户权限服务
@@ -28,6 +29,10 @@ export class UserPermissionService {
    */
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
+  }
+
+  get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
   }
 
   /**
@@ -149,7 +154,18 @@ export class UserPermissionService {
       )
     }
 
-    if (user.points < points) {
+    const balance = await this.db.query.userAssetBalance.findFirst({
+      where: {
+        userId,
+        assetType: GrowthAssetTypeEnum.POINTS,
+        assetKey: '',
+      },
+      columns: {
+        balance: true,
+      },
+    })
+
+    if ((balance?.balance ?? 0) < points) {
       throw new BusinessException(
         BusinessErrorCode.QUOTA_NOT_ENOUGH,
         '积分不足',

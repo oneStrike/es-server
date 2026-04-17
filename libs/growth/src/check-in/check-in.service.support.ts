@@ -1,14 +1,14 @@
 import type { Db, DrizzleService } from '@db/core'
 
-import type { CheckInPlanSelect } from '@db/schema'
+import type { CheckInPlanSelect, GrowthRewardSettlementSelect } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { SQL } from 'drizzle-orm'
 import type {
   CheckInDateRewardRuleView,
   CheckInPatternRewardRuleView,
   CheckInResolvedReward,
-  CheckInRewardConfig,
   CheckInRewardDefinition,
+  CheckInRewardItems,
   CheckInStreakRewardRuleView,
 } from './check-in.type'
 import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
@@ -26,6 +26,7 @@ import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 import { and, asc, desc, eq, gte, isNull, lte, ne, or } from 'drizzle-orm'
+import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
   CheckInCycleTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
@@ -76,6 +77,11 @@ export abstract class CheckInServiceSupport {
     return this.drizzle.schema.checkInStreakRewardGrant
   }
 
+  /** 奖励结算事实表。 */
+  protected get growthRewardSettlementTable() {
+    return this.drizzle.schema.growthRewardSettlement
+  }
+
   /** 获取当前部署统一使用的业务时区。 */
   protected getAppTimeZone() {
     return getAppTimeZone()
@@ -111,6 +117,37 @@ export abstract class CheckInServiceSupport {
     return value as Record<string, unknown>
   }
 
+  /** 将未知 JSON 值安全收敛成数组。 */
+  protected asArray<T>(value: T) {
+    return Array.isArray(value) ? value : undefined
+  }
+
+  /** 归一化奖励结算摘要。 */
+  protected toRewardSettlementSummary(
+    settlement:
+      | Pick<
+          GrowthRewardSettlementSelect,
+          | 'id'
+          | 'settlementStatus'
+          | 'settlementResultType'
+          | 'ledgerRecordIds'
+          | 'retryCount'
+          | 'lastRetryAt'
+          | 'settledAt'
+          | 'lastError'
+        >
+        | null
+        | undefined,
+  ) {
+    if (!settlement) {
+      return null
+    }
+    return {
+      ...settlement,
+      ledgerRecordIds: settlement.ledgerRecordIds ?? [],
+    }
+  }
+
   /** 校验计划日期范围：结束日期不能早于开始日期。 */
   protected ensurePlanDateRange(startDate: string, endDate?: string | null) {
     if (endDate && endDate < startDate) {
@@ -130,74 +167,120 @@ export abstract class CheckInServiceSupport {
   }
 
   /**
-   * 解析并校验签到奖励配置。
+   * 解析并校验签到奖励项列表。
    *
-   * 当前仅支持 `points` / `experience` 两类正整数奖励。
+   * 当前正式合同统一为 `rewardItems[]`，运行时仅接受积分/经验两类资产。
    */
-  protected parseRewardConfig(
-    value?: CheckInRewardConfig | null,
+  protected parseRewardItems(
+    value?: CheckInRewardItems | null,
     options: { allowEmpty: boolean } = { allowEmpty: true },
   ) {
     if (value === null || value === undefined) {
       if (options.allowEmpty) {
         return null
       }
-      throw new BadRequestException('奖励配置不能为空')
+      throw new BadRequestException('奖励项不能为空')
     }
 
-    if (typeof value !== 'object' || Array.isArray(value)) {
-      throw new BadRequestException('奖励配置非法')
+    if (!Array.isArray(value)) {
+      throw new BadRequestException('奖励项非法')
     }
-    const record = value as Record<string, unknown>
-
-    const unsupportedKeys = Object.keys(record).filter(
-      (key) => !['points', 'experience'].includes(key),
-    )
-    if (unsupportedKeys.length > 0) {
-      throw new BadRequestException('奖励配置仅支持 points / experience')
-    }
-
-    const normalizedConfig: CheckInRewardConfig = {}
-    const points = record.points
-    const experience = record.experience
-
-    if (points !== undefined) {
-      if (!Number.isInteger(points) || Number(points) <= 0) {
-        throw new BadRequestException('points 必须为正整数')
-      }
-      normalizedConfig.points = Number(points)
-    }
-
-    if (experience !== undefined) {
-      if (!Number.isInteger(experience) || Number(experience) <= 0) {
-        throw new BadRequestException('experience 必须为正整数')
-      }
-      normalizedConfig.experience = Number(experience)
-    }
-
-    if (Object.keys(normalizedConfig).length === 0) {
+    if (value.length === 0) {
       if (options.allowEmpty) {
         return null
       }
-      throw new BadRequestException('奖励配置不能为空')
+      throw new BadRequestException('奖励项不能为空')
     }
 
-    return normalizedConfig
+    const rewardItems = value.map((item, index) =>
+      this.parseRewardItem(item, index),
+    )
+    const dedupeKeySet = new Set<string>()
+    for (const rewardItem of rewardItems) {
+      const dedupeKey = `${rewardItem.assetType}:${rewardItem.assetKey ?? ''}`
+      if (dedupeKeySet.has(dedupeKey)) {
+        throw new BadRequestException(
+          `奖励项重复：assetType=${rewardItem.assetType} assetKey=${rewardItem.assetKey ?? ''}`,
+        )
+      }
+      dedupeKeySet.add(dedupeKey)
+    }
+
+    return rewardItems
   }
 
   /**
-   * 从存储层 `jsonb` 字段恢复奖励配置对象。
+   * 从存储层 `jsonb` 字段恢复奖励项列表。
    *
-   * 数据库存储允许使用 JSON 容器，但领域层继续只消费显式奖励配置对象。
+   * 数据库存储允许使用 JSON 容器，但领域层继续只消费显式奖励项数组。
    */
-  protected parseStoredRewardConfig<T>(
+  protected parseStoredRewardItems<T>(
     value: T,
     options: { allowEmpty: boolean } = { allowEmpty: true },
   ) {
-    return this.parseRewardConfig(
-      this.asRecord(value) as CheckInRewardConfig | undefined,
+    const rewardItems = this.asArray(value)
+    return this.parseRewardItems(
+      rewardItems as CheckInRewardItems | undefined,
       options,
     )
+  }
+
+  /**
+   * 解析单个签到奖励项。
+   *
+   * 当前签到域只支持积分/经验奖励，因此会在这里阻断未支持的资产类型。
+   */
+  protected parseRewardItem(
+    value: unknown,
+    index: number,
+  ): NonNullable<CheckInRewardItems>[number] {
+    const record = this.asRecord(value)
+    if (!record) {
+      throw new BadRequestException(`rewardItems[${index}] 必须是对象`)
+    }
+
+    const unsupportedKeys = Object.keys(record).filter(
+      (key) => !['assetType', 'assetKey', 'amount'].includes(key),
+    )
+    if (unsupportedKeys.length > 0) {
+      throw new BadRequestException(
+        `rewardItems[${index}] 暂不支持字段：${unsupportedKeys.join(', ')}`,
+      )
+    }
+
+    const assetType = Number(record.assetType)
+    if (
+      !Number.isInteger(assetType)
+      || (
+        assetType !== GrowthRewardRuleAssetTypeEnum.POINTS
+        && assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+      )
+    ) {
+      throw new BadRequestException(
+        `rewardItems[${index}].assetType 仅支持 1=积分、2=经验`,
+      )
+    }
+
+    const amount = Number(record.amount)
+    if (!Number.isInteger(amount) || amount <= 0) {
+      throw new BadRequestException(
+        `rewardItems[${index}].amount 必须是正整数`,
+      )
+    }
+
+    const assetKey =
+      typeof record.assetKey === 'string' ? record.assetKey.trim() : ''
+    if (assetKey !== '') {
+      throw new BadRequestException(
+        `rewardItems[${index}].assetKey 当前必须为空字符串`,
+      )
+    }
+
+    return {
+      assetType,
+      assetKey,
+      amount,
+    }
   }
 
   /**
@@ -219,7 +302,7 @@ export abstract class CheckInServiceSupport {
 
       return {
         rewardDate,
-        rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+        rewardItems: this.parseRewardItems(rule.rewardItems, {
           allowEmpty: false,
         })!,
       } satisfies CheckInDateRewardRuleView
@@ -322,7 +405,7 @@ export abstract class CheckInServiceSupport {
         patternType,
         weekday,
         monthDay,
-        rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+        rewardItems: this.parseRewardItems(rule.rewardItems, {
           allowEmpty: false,
         })!,
       } satisfies CheckInPatternRewardRuleView
@@ -387,7 +470,7 @@ export abstract class CheckInServiceSupport {
       return {
         ruleCode,
         streakDays: rule.streakDays,
-        rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+        rewardItems: this.parseRewardItems(rule.rewardItems, {
           allowEmpty: false,
         })!,
         repeatable: rule.repeatable ?? false,
@@ -440,10 +523,8 @@ export abstract class CheckInServiceSupport {
     const cycleType = this.parseCycleType(plan.cycleType)
 
     return {
-      baseRewardConfig: this.parseRewardConfig(
-        this.asRecord(record.baseRewardConfig) as
-        | CheckInRewardConfig
-        | undefined,
+      baseRewardItems: this.parseStoredRewardItems(
+        record.baseRewardItems,
         { allowEmpty: true },
       ),
       dateRewardRules: this.normalizeDateRewardRules(
@@ -472,7 +553,7 @@ export abstract class CheckInServiceSupport {
     cycleType: CheckInCycleTypeEnum
     startDate: string
     endDate?: string | null
-    baseRewardConfig?: CheckInRewardConfig | null
+    baseRewardItems?: CheckInRewardItems | null
     dateRewardRules?:
       | CreateCheckInDateRewardRuleDto[]
       | CheckInDateRewardRuleView[]
@@ -484,7 +565,7 @@ export abstract class CheckInServiceSupport {
       | CheckInStreakRewardRuleView[]
   }) {
     return {
-      baseRewardConfig: this.parseRewardConfig(input.baseRewardConfig, {
+      baseRewardItems: this.parseRewardItems(input.baseRewardItems, {
         allowEmpty: true,
       }),
       dateRewardRules: this.normalizeDateRewardRules(
@@ -507,7 +588,7 @@ export abstract class CheckInServiceSupport {
     return {
       ruleCode: rule.ruleCode,
       streakDays: rule.streakDays,
-      rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+      rewardItems: this.parseRewardItems(rule.rewardItems, {
         allowEmpty: false,
       })!,
       repeatable: rule.repeatable,
@@ -521,7 +602,7 @@ export abstract class CheckInServiceSupport {
   ): CheckInDateRewardRuleView {
     return {
       rewardDate: this.toDateOnlyValue(rule.rewardDate),
-      rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+      rewardItems: this.parseRewardItems(rule.rewardItems, {
         allowEmpty: false,
       })!,
     }
@@ -535,7 +616,7 @@ export abstract class CheckInServiceSupport {
       patternType: rule.patternType,
       weekday: rule.weekday,
       monthDay: rule.monthDay,
-      rewardConfig: this.parseRewardConfig(rule.rewardConfig, {
+      rewardItems: this.parseRewardItems(rule.rewardItems, {
         allowEmpty: false,
       })!,
     }
@@ -627,7 +708,7 @@ export abstract class CheckInServiceSupport {
     cycleType: CheckInCycleTypeEnum,
     rewardDefinition: Pick<
       CheckInRewardDefinition,
-      'baseRewardConfig' | 'dateRewardRules' | 'patternRewardRules'
+      'baseRewardItems' | 'dateRewardRules' | 'patternRewardRules'
     >,
     signDate: string,
   ): CheckInResolvedReward {
@@ -638,7 +719,7 @@ export abstract class CheckInServiceSupport {
       return {
         resolvedRewardSourceType: CheckInRewardSourceTypeEnum.DATE_RULE,
         resolvedRewardRuleKey: `DATE:${dateRule.rewardDate}`,
-        resolvedRewardConfig: dateRule.rewardConfig,
+        resolvedRewardItems: dateRule.rewardItems,
       }
     }
 
@@ -651,22 +732,22 @@ export abstract class CheckInServiceSupport {
       return {
         resolvedRewardSourceType: CheckInRewardSourceTypeEnum.PATTERN_RULE,
         resolvedRewardRuleKey: this.buildPatternRuleKey(patternRule),
-        resolvedRewardConfig: patternRule.rewardConfig,
+        resolvedRewardItems: patternRule.rewardItems,
       }
     }
 
-    if (rewardDefinition.baseRewardConfig) {
+    if (rewardDefinition.baseRewardItems) {
       return {
         resolvedRewardSourceType: CheckInRewardSourceTypeEnum.BASE_REWARD,
         resolvedRewardRuleKey: null,
-        resolvedRewardConfig: rewardDefinition.baseRewardConfig,
+        resolvedRewardItems: rewardDefinition.baseRewardItems,
       }
     }
 
     return {
       resolvedRewardSourceType: null,
       resolvedRewardRuleKey: null,
-      resolvedRewardConfig: null,
+      resolvedRewardItems: null,
     }
   }
 

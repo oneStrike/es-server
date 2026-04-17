@@ -1,6 +1,7 @@
 import type { Db, PgTable, SQL, TableConfig } from '@db/core'
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
@@ -41,6 +42,11 @@ export class UserLevelRuleService {
   /** 等级规则表。 */
   get userLevelRule() {
     return this.drizzle.schema.userLevelRule
+  }
+
+  /** 统一用户资产余额表。 */
+  get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
   }
 
   /** 主题表。 */
@@ -236,6 +242,7 @@ export class UserLevelRuleService {
         '用户等级规则不存在',
       )
     }
+    const currentExperience = await this.getCurrentExperience(user.id)
 
     const [nextLevelRule] = await this.db
       .select()
@@ -243,7 +250,7 @@ export class UserLevelRuleService {
       .where(
         and(
           eq(this.userLevelRule.isEnabled, true),
-          gt(this.userLevelRule.requiredExperience, user.experience),
+          gt(this.userLevelRule.requiredExperience, currentExperience),
         ),
       )
       .orderBy(asc(this.userLevelRule.requiredExperience))
@@ -258,7 +265,7 @@ export class UserLevelRuleService {
       nextLevelExperience = nextLevelExperienceValue
       const previousLevelExperience = user.level.requiredExperience
       const totalRange = nextLevelExperienceValue - previousLevelExperience
-      const currentProgress = user.experience - previousLevelExperience
+      const currentProgress = currentExperience - previousLevelExperience
       progressPercentage =
         totalRange > 0 ? Math.round((currentProgress / totalRange) * 100) : 100
     } else {
@@ -271,7 +278,7 @@ export class UserLevelRuleService {
       levelDescription: user.level.description ?? '',
       levelIcon: user.level.icon ?? '',
       levelColor: user.level.color ?? '',
-      currentExperience: user.experience,
+      currentExperience,
       nextLevelExperience,
       progressPercentage,
       permissions: {
@@ -286,6 +293,21 @@ export class UserLevelRuleService {
 
   async getHighestLevelRuleByExperience(experience: number) {
     return this.getHighestLevelRuleByExperienceInTx(this.db, experience)
+  }
+
+  private async getCurrentExperience(userId: number) {
+    const balance = await this.db.query.userAssetBalance.findFirst({
+      where: {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+      },
+      columns: {
+        balance: true,
+      },
+    })
+
+    return balance?.balance ?? 0
   }
 
   /**

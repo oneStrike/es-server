@@ -27,6 +27,5 @@ import { AppUserService } from './app-user.service'
     AppUserGrowthService,
     AppUserTokenStorageService,
   ],
-  exports: [AppUserService],
 })
 export class AppUserModule {}

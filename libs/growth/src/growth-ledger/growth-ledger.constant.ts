@@ -1,10 +1,13 @@
 /**
  * 成长账本资产类型
- * 统一积分与经验的资产标识
+ * 统一可计量成长资产的标识
  */
 export enum GrowthAssetTypeEnum {
   POINTS = 1,
   EXPERIENCE = 2,
+  ITEM = 3,
+  CURRENCY = 4,
+  LEVEL = 5,
 }
 
 /**

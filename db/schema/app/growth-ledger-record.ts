@@ -18,9 +18,14 @@ export const growthLedgerRecord = pgTable("growth_ledger_record", {
    */
   userId: integer().notNull(),
   /**
-   * 资产类型（1=积分 2=经验值）
+   * 资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）
    */
   assetType: smallint().notNull(),
+  /**
+   * 资产键。
+   * 积分/经验等无需附加主键的资产固定为空字符串；扩展资产使用稳定业务键。
+   */
+  assetKey: varchar({ length: 64 }).default('').notNull(),
   /**
    * 变更值（正数发放，负数扣减）
    */
@@ -80,7 +85,16 @@ export const growthLedgerRecord = pgTable("growth_ledger_record", {
    */
   index("growth_ledger_record_user_id_asset_type_created_at_idx").on(table.userId, table.assetType, table.createdAt),
   /**
+   * 资产键检索索引
+   */
+  index("growth_ledger_record_user_id_asset_type_asset_key_created_idx").on(table.userId, table.assetType, table.assetKey, table.createdAt),
+  /**
    * 目标检索索引
    */
   index("growth_ledger_record_target_type_target_id_idx").on(table.targetType, table.targetId),
+  index('growth_ledger_record_rule_type_asset_type_created_at_idx').on(
+    table.ruleType,
+    table.assetType,
+    table.createdAt,
+  ),
 ]);

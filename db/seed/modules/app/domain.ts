@@ -23,20 +23,20 @@ import {
   forumUserActionLog,
   growthAuditLog,
   growthLedgerRecord,
-  growthRuleUsageSlot,
+  growthRewardRule,
+  growthRuleUsageCounter,
   task,
   taskAssignment,
   taskProgressLog,
+  userAssetBalance,
   userBadge,
   userBadgeAssignment,
   userBrowseLog,
   userComment,
   userDownloadRecord,
-  userExperienceRule,
   userFavorite,
   userLevelRule,
   userLike,
-  userPointRule,
   userPurchaseRecord,
   userReport,
   userWorkReadingState,
@@ -127,42 +127,48 @@ const LEVEL_FIXTURES = [
   },
 ] as const
 
-const POINT_RULE_FIXTURES = [
+const REWARD_RULE_FIXTURES = [
   {
     type: 1,
-    points: 20,
+    assetType: GrowthAssetTypeEnum.POINTS,
+    assetKey: '',
+    delta: 20,
     dailyLimit: 40,
     totalLimit: 0,
     remark: '发表主题奖励',
   },
-  { type: 2, points: 5, dailyLimit: 50, totalLimit: 0, remark: '发表回复奖励' },
+  {
+    type: 2,
+    assetType: GrowthAssetTypeEnum.POINTS,
+    assetKey: '',
+    delta: 5,
+    dailyLimit: 50,
+    totalLimit: 0,
+    remark: '发表回复奖励',
+  },
   {
     type: 300,
-    points: 3,
+    assetType: GrowthAssetTypeEnum.POINTS,
+    assetKey: '',
+    delta: 3,
     dailyLimit: 30,
     totalLimit: 0,
     remark: '章节阅读奖励',
   },
   {
-    type: 302,
-    points: -30,
-    dailyLimit: 0,
-    totalLimit: 0,
-    remark: '章节购买消耗',
-  },
-] as const
-
-const EXPERIENCE_RULE_FIXTURES = [
-  {
     type: 1,
-    experience: 20,
+    assetType: GrowthAssetTypeEnum.EXPERIENCE,
+    assetKey: '',
+    delta: 20,
     dailyLimit: 40,
     totalLimit: 0,
     remark: '发帖经验奖励',
   },
   {
     type: 2,
-    experience: 8,
+    assetType: GrowthAssetTypeEnum.EXPERIENCE,
+    assetKey: '',
+    delta: 8,
     dailyLimit: 80,
     totalLimit: 0,
     remark: '回复经验奖励',
@@ -346,7 +352,10 @@ const TASK_FIXTURES = [
     claimMode: 1,
     completeMode: 1,
     targetCount: 1,
-    rewardConfig: { points: 5, experience: 12 },
+    rewardItems: [
+      { assetType: 1, assetKey: '', amount: 5 },
+      { assetType: 2, assetKey: '', amount: 12 },
+    ],
     repeatRule: { type: 'daily' },
   },
   {
@@ -359,7 +368,10 @@ const TASK_FIXTURES = [
     claimMode: 2,
     completeMode: 1,
     targetCount: 1,
-    rewardConfig: { points: 3, experience: 8 },
+    rewardItems: [
+      { assetType: 1, assetKey: '', amount: 3 },
+      { assetType: 2, assetKey: '', amount: 8 },
+    ],
     repeatRule: { type: 'daily' },
   },
 ] as const
@@ -393,53 +405,35 @@ export async function seedAppCoreDomain(db: Db) {
   }
   console.log('  ✓ 等级规则完成')
 
-  for (const ruleFixture of POINT_RULE_FIXTURES) {
+  for (const ruleFixture of REWARD_RULE_FIXTURES) {
     const [existing] = await db
       .select()
-      .from(userPointRule)
-      .where(eq(userPointRule.type, ruleFixture.type))
+      .from(growthRewardRule)
+      .where(
+        and(
+          eq(growthRewardRule.type, ruleFixture.type),
+          eq(growthRewardRule.assetType, ruleFixture.assetType),
+          eq(growthRewardRule.assetKey, ruleFixture.assetKey),
+        ),
+      )
       .limit(1)
 
     if (!existing) {
-      await db.insert(userPointRule).values({
+      await db.insert(growthRewardRule).values({
         ...ruleFixture,
         isEnabled: true,
       })
     } else {
       await db
-        .update(userPointRule)
+        .update(growthRewardRule)
         .set({
           ...ruleFixture,
           isEnabled: true,
         })
-        .where(eq(userPointRule.id, existing.id))
+        .where(eq(growthRewardRule.id, existing.id))
     }
   }
-  console.log('  ✓ 积分规则完成')
-
-  for (const ruleFixture of EXPERIENCE_RULE_FIXTURES) {
-    const [existing] = await db
-      .select()
-      .from(userExperienceRule)
-      .where(eq(userExperienceRule.type, ruleFixture.type))
-      .limit(1)
-
-    if (!existing) {
-      await db.insert(userExperienceRule).values({
-        ...ruleFixture,
-        isEnabled: true,
-      })
-    } else {
-      await db
-        .update(userExperienceRule)
-        .set({
-          ...ruleFixture,
-          isEnabled: true,
-        })
-        .where(eq(userExperienceRule.id, existing.id))
-    }
-  }
-  console.log('  ✓ 经验规则完成')
+  console.log('  ✓ 成长奖励规则完成')
 
   for (const badgeFixture of BADGE_FIXTURES) {
     const existing = await db.query.userBadge.findFirst({
@@ -510,8 +504,6 @@ export async function seedAppCoreDomain(db: Db) {
       isEnabled: true,
       genderType: userFixture.genderType,
       birthDate: userFixture.birthDate,
-      points: userFixture.points,
-      experience: userFixture.experience,
       status: userFixture.status,
       banReason: null,
       banUntil: null,
@@ -526,6 +518,50 @@ export async function seedAppCoreDomain(db: Db) {
     }
   }
   console.log('  ✓ 应用用户完成')
+
+  for (const userFixture of USER_FIXTURES) {
+    const user = await db.query.appUser.findFirst({
+      where: eq(appUser.account, userFixture.account),
+    })
+    if (!user) {
+      continue
+    }
+
+    const balanceFixtures = [
+      {
+        userId: user.id,
+        assetType: GrowthAssetTypeEnum.POINTS,
+        assetKey: '',
+        balance: userFixture.points,
+      },
+      {
+        userId: user.id,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+        balance: userFixture.experience,
+      },
+    ] as const
+
+    for (const balanceFixture of balanceFixtures) {
+      const existingBalance = await db.query.userAssetBalance.findFirst({
+        where: and(
+          eq(userAssetBalance.userId, balanceFixture.userId),
+          eq(userAssetBalance.assetType, balanceFixture.assetType),
+          eq(userAssetBalance.assetKey, balanceFixture.assetKey),
+        ),
+      })
+
+      if (!existingBalance) {
+        await db.insert(userAssetBalance).values(balanceFixture)
+      } else {
+        await db
+          .update(userAssetBalance)
+          .set({ balance: balanceFixture.balance })
+          .where(eq(userAssetBalance.id, existingBalance.id))
+      }
+    }
+  }
+  console.log('  ✓ 用户资产余额完成')
 
   const tokenFixtures = [
     {
@@ -1341,13 +1377,23 @@ export async function seedAppActivityDomain(db: Db) {
 
   const [pointPurchaseRule] = await db
     .select()
-    .from(userPointRule)
-    .where(eq(userPointRule.type, 302))
+    .from(growthRewardRule)
+    .where(
+      and(
+        eq(growthRewardRule.type, 302),
+        eq(growthRewardRule.assetType, GrowthAssetTypeEnum.POINTS),
+      ),
+    )
     .limit(1)
   const [experienceTopicRule] = await db
     .select()
-    .from(userExperienceRule)
-    .where(eq(userExperienceRule.type, 1))
+    .from(growthRewardRule)
+    .where(
+      and(
+        eq(growthRewardRule.type, 1),
+        eq(growthRewardRule.assetType, GrowthAssetTypeEnum.EXPERIENCE),
+      ),
+    )
     .limit(1)
 
   const ledgerFixtures = [
@@ -1452,32 +1498,37 @@ export async function seedAppActivityDomain(db: Db) {
     {
       userId: userA.id,
       assetType: GrowthAssetTypeEnum.POINTS,
+      assetKey: '',
       ruleKey: 'points:302',
-      slotType: GrowthRuleUsageSlotTypeEnum.TOTAL,
-      slotValue: 'purchase:seed:aot:chapter-2',
+      scopeType: GrowthRuleUsageSlotTypeEnum.TOTAL,
+      scopeKey: 'purchase:seed:aot:chapter-2',
+      usedCount: 1,
     },
     {
       userId: userA.id,
       assetType: GrowthAssetTypeEnum.EXPERIENCE,
+      assetKey: '',
       ruleKey: 'experience:1',
-      slotType: GrowthRuleUsageSlotTypeEnum.DAILY,
-      slotValue: '2026-03-19',
+      scopeType: GrowthRuleUsageSlotTypeEnum.DAILY,
+      scopeKey: '2026-03-19',
+      usedCount: 1,
     },
   ] as const
 
   for (const slotFixture of slotFixtures) {
-    const existingSlot = await db.query.growthRuleUsageSlot.findFirst({
+    const existingSlot = await db.query.growthRuleUsageCounter.findFirst({
       where: and(
-        eq(growthRuleUsageSlot.userId, slotFixture.userId),
-        eq(growthRuleUsageSlot.assetType, slotFixture.assetType),
-        eq(growthRuleUsageSlot.ruleKey, slotFixture.ruleKey),
-        eq(growthRuleUsageSlot.slotType, slotFixture.slotType),
-        eq(growthRuleUsageSlot.slotValue, slotFixture.slotValue),
+        eq(growthRuleUsageCounter.userId, slotFixture.userId),
+        eq(growthRuleUsageCounter.assetType, slotFixture.assetType),
+        eq(growthRuleUsageCounter.assetKey, slotFixture.assetKey),
+        eq(growthRuleUsageCounter.ruleKey, slotFixture.ruleKey),
+        eq(growthRuleUsageCounter.scopeType, slotFixture.scopeType),
+        eq(growthRuleUsageCounter.scopeKey, slotFixture.scopeKey),
       ),
     })
 
     if (!existingSlot) {
-      await db.insert(growthRuleUsageSlot).values(slotFixture)
+      await db.insert(growthRuleUsageCounter).values(slotFixture)
     }
   }
   console.log('  ✓ 成长流水完成')

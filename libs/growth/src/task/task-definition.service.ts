@@ -51,7 +51,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
       eventCode,
       objectiveConfig,
     })
-    const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
+    const rewardItems = this.parseTaskRewardItems(dto.rewardItems)
     const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
 
     await this.drizzle.withErrorHandling(
@@ -61,7 +61,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
           objectiveType,
           eventCode,
           objectiveConfig,
-          rewardConfig,
+          rewardItems,
           repeatRule,
           createdById: adminUserId,
           updatedById: adminUserId,
@@ -115,7 +115,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
       | null
       | undefined,
     })
-    const rewardConfig = this.parseTaskRewardConfig(dto.rewardConfig)
+    const rewardItems = this.parseTaskRewardItems(dto.rewardItems)
     const repeatRule = this.parseTaskRepeatRule(dto.repeatRule)
     const nextPublishStartAt =
       dto.publishStartAt !== undefined
@@ -146,7 +146,7 @@ export class TaskDefinitionService extends TaskServiceSupport {
             objectiveType,
             eventCode,
             objectiveConfig,
-            rewardConfig,
+            rewardItems,
             repeatRule,
             updatedById: adminUserId,
           })

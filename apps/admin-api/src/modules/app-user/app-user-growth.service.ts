@@ -107,6 +107,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
    */
   async getAppUserExperienceStats(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
+    const growth = await this.userCoreService.getUserGrowthSnapshot(userId)
 
     const today = startOfTodayInAppTimeZone()
 
@@ -140,7 +141,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
         .where(
           and(
             eq(this.userLevelRuleTable.isEnabled, true),
-            gt(this.userLevelRuleTable.requiredExperience, user.experience),
+            gt(this.userLevelRuleTable.requiredExperience, growth.experience),
           ),
         )
         .orderBy(this.userLevelRuleTable.requiredExperience)
@@ -150,7 +151,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
     const nextLevel = nextLevelRows[0]
 
     return {
-      currentExperience: user.experience,
+      currentExperience: growth.experience,
       todayEarned,
       level: level
         ? {
@@ -167,7 +168,7 @@ export class AppUserGrowthService extends AppUserServiceSupport {
           }
         : undefined,
       gapToNextLevel: nextLevel
-        ? Math.max(nextLevel.requiredExperience - user.experience, 0)
+        ? Math.max(nextLevel.requiredExperience - growth.experience, 0)
         : undefined,
     }
   }

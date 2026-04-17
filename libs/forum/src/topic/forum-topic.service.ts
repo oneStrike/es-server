@@ -16,6 +16,7 @@ import {
   createDefinedEventEnvelope,
   EventEnvelopeGovernanceStatusEnum,
 } from '@libs/growth/event-definition/event-envelope.type'
+import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
 import { GrowthEventBridgeService } from '@libs/growth/growth-reward/growth-event-bridge.service'
 import { GrowthRuleTypeEnum } from '@libs/growth/growth-rule.constant'
 import { BrowseLogTargetTypeEnum } from '@libs/interaction/browse-log/browse-log.constant'
@@ -117,6 +118,7 @@ export class ForumTopicService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly growthEventBridgeService: GrowthEventBridgeService,
+    private readonly growthBalanceQueryService: GrowthBalanceQueryService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly browseLogService: BrowseLogService,
     private readonly forumCounterService: ForumCounterService,
@@ -897,7 +899,21 @@ export class ForumTopicService {
       )
     }
 
-    return topic
+    if (!topic.user) {
+      return topic
+    }
+
+    const growth = await this.growthBalanceQueryService.getUserGrowthSnapshot(
+      topic.userId,
+    )
+
+    return {
+      ...topic,
+      user: {
+        ...topic.user,
+        points: growth.points,
+      },
+    }
   }
 
   /**

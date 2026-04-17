@@ -2,137 +2,78 @@ import type {
   DispatchDefinedGrowthEventPayload,
   DispatchDefinedGrowthEventResult,
 } from './growth-reward.types'
-import { EventDefinitionService } from '@libs/growth/event-definition/event-definition.service';
-import { EventDefinitionConsumerEnum } from '@libs/growth/event-definition/event-definition.type';
-import { canConsumeEventEnvelopeByConsumer } from '@libs/growth/event-definition/event-envelope.type';
-import { TaskService } from '@libs/growth/task/task.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import { UserGrowthRewardService } from './growth-reward.service'
+import { GrowthEventDispatchService } from './growth-event-dispatch.service'
+import { GrowthRewardSettlementService } from './growth-reward-settlement.service'
 
 /**
- * 成长事件桥接服务
- * 统一接收 producer 侧构造好的定义型事件 envelope，并按 consumer 合同派发基础奖励。
- * 当前阶段先收口 growth 主链路与幂等上下文，task / notification 仅返回可消费判定，不在此处直接执行。
+ * 成长事件桥接服务。
+ *
+ * 统一接收 producer 侧构造好的定义型事件 envelope，并在执行派发后补齐
+ * 通用成长奖励的 durable 失败事实与补偿状态收口。
  */
 @Injectable()
 export class GrowthEventBridgeService {
   private readonly logger = new Logger(GrowthEventBridgeService.name)
 
   constructor(
-    private readonly eventDefinitionService: EventDefinitionService,
-    private readonly userGrowthRewardService: UserGrowthRewardService,
-    private readonly taskService: TaskService,
+    private readonly growthEventDispatchService: GrowthEventDispatchService,
+    private readonly growthRewardSettlementService: GrowthRewardSettlementService,
   ) {}
 
   /**
    * 派发已进入定义层的成长事件。
-   * producer 统一提供稳定 envelope 与 bizKey，桥接层负责判断 consumer 可消费性，并发放基础奖励。
+   * producer 统一提供稳定 envelope 与 bizKey；桥接层负责在派发后维护补偿事实。
    */
   async dispatchDefinedEvent(
     input: DispatchDefinedGrowthEventPayload,
   ): Promise<DispatchDefinedGrowthEventResult> {
-    const definition = this.eventDefinitionService.getEventDefinition(
-      input.eventEnvelope.code,
-    )
+    try {
+      const dispatchResult =
+        await this.growthEventDispatchService.dispatchDefinedEvent(input)
 
-    if (!definition) {
-      throw new BadRequestException(
-        `未找到事件定义：${input.eventEnvelope.code}`,
-      )
-    }
+      if (!dispatchResult.growthHandled) {
+        return dispatchResult
+      }
 
-    const growthBlockedByGovernance = !canConsumeEventEnvelopeByConsumer(
-      input.eventEnvelope,
-      EventDefinitionConsumerEnum.GROWTH,
-    )
-    const growthDeclared = definition.consumers.includes(
-      EventDefinitionConsumerEnum.GROWTH,
-    )
-    const taskEligible
-      = definition.consumers.includes(EventDefinitionConsumerEnum.TASK)
-        && canConsumeEventEnvelopeByConsumer(
-          input.eventEnvelope,
-          EventDefinitionConsumerEnum.TASK,
+      if (dispatchResult.growthResult?.success) {
+        await this.growthRewardSettlementService.markSettlementSucceeded(
+          input.eventEnvelope.subjectId,
+          input.bizKey,
+          dispatchResult.growthResult,
         )
-    const notificationEligible
-      = definition.consumers.includes(EventDefinitionConsumerEnum.NOTIFICATION)
-        && canConsumeEventEnvelopeByConsumer(
-          input.eventEnvelope,
-          EventDefinitionConsumerEnum.NOTIFICATION,
-        )
-    let taskHandled = false
-    let taskResult: DispatchDefinedGrowthEventResult['taskResult']
-    let taskErrorMessage: string | undefined
+        return dispatchResult
+      }
 
-    if (taskEligible) {
+      if (dispatchResult.growthResult) {
+        await this.growthRewardSettlementService.recordUnsuccessfulSettlement(
+          input,
+          dispatchResult.growthResult,
+        )
+      }
+
+      return dispatchResult
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error
+      }
+
       try {
-        taskResult = await this.taskService.consumeEventProgress({
-          eventEnvelope: input.eventEnvelope,
-          bizKey: input.bizKey,
-        })
-        taskHandled = true
-      } catch (error) {
-        taskErrorMessage =
-          error instanceof Error ? error.message : String(error)
+        await this.growthRewardSettlementService.recordExceptionSettlement(
+          input,
+          error,
+        )
+      } catch (settlementError) {
         this.logger.warn(
-          `growth_task_consumer_failed bizKey=${input.bizKey} eventKey=${input.eventEnvelope.key} error=${taskErrorMessage}`,
+          `growth_reward_settlement_record_failed bizKey=${input.bizKey} eventKey=${input.eventEnvelope.key} error=${
+            settlementError instanceof Error
+              ? settlementError.message
+              : String(settlementError)
+          }`,
         )
       }
-    }
 
-    if (!growthDeclared || growthBlockedByGovernance) {
-      return {
-        definitionKey: definition.key,
-        consumers: [...definition.consumers],
-        growthHandled: false,
-        growthBlockedByGovernance,
-        taskHandled,
-        taskEligible,
-        notificationEligible,
-        taskErrorMessage,
-        taskResult,
-      }
-    }
-
-    const growthResult = await this.userGrowthRewardService.tryRewardByRule({
-      userId: input.eventEnvelope.subjectId,
-      ruleType: input.eventEnvelope.code,
-      bizKey: input.bizKey,
-      source: input.source,
-      remark: input.remark,
-      targetType: input.targetType,
-      targetId: input.targetId ?? input.eventEnvelope.targetId,
-      context: this.buildEventRewardContext(input),
-      occurredAt: input.eventEnvelope.occurredAt,
-    })
-
-    return {
-      definitionKey: definition.key,
-      consumers: [...definition.consumers],
-      growthHandled: true,
-      growthBlockedByGovernance: false,
-      taskHandled,
-      taskEligible,
-      notificationEligible,
-      taskErrorMessage,
-      growthResult,
-      taskResult,
-    }
-  }
-
-  private buildEventRewardContext(input: DispatchDefinedGrowthEventPayload) {
-    return {
-      ...(input.eventEnvelope.context ?? {}),
-      ...(input.context ?? {}),
-      eventCode: input.eventEnvelope.code,
-      eventKey: input.eventEnvelope.key,
-      eventSubjectId: input.eventEnvelope.subjectId,
-      eventSubjectType: input.eventEnvelope.subjectType,
-      eventTargetId: input.eventEnvelope.targetId,
-      eventTargetType: input.eventEnvelope.targetType,
-      eventOperatorId: input.eventEnvelope.operatorId,
-      governanceStatus: input.eventEnvelope.governanceStatus,
-      occurredAt: input.eventEnvelope.occurredAt.toISOString(),
+      throw error
     }
   }
 }

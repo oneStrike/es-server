@@ -8,7 +8,7 @@ import {
   ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { PageDto } from '@libs/platform/dto'
+import { BaseDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType } from '@nestjs/swagger'
 import {
   getMessageNotificationCategoryLabel,
@@ -19,13 +19,7 @@ import {
 } from '../notification.constant'
 import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
 
-export class BaseUserNotificationDto {
-  @NumberProperty({
-    description: '通知 ID',
-    example: 1,
-  })
-  id!: number
-
+export class BaseUserNotificationDto extends BaseDto {
   @NumberProperty({
     description: '接收用户 ID',
     example: 10001,
@@ -117,18 +111,6 @@ export class BaseUserNotificationDto {
     required: false,
   })
   expiresAt?: Date
-
-  @DateProperty({
-    description: '创建时间',
-    example: '2026-04-13T12:00:00.000Z',
-  })
-  createdAt!: Date
-
-  @DateProperty({
-    description: '更新时间',
-    example: '2026-04-13T12:30:00.000Z',
-  })
-  updatedAt!: Date
 }
 
 export class QueryUserNotificationListDto extends PageDto {

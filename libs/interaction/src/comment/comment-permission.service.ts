@@ -1,5 +1,6 @@
 import type { UserLevelRuleSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { AuditStatusEnum } from '@libs/platform/constant/audit.constant'
 import { BusinessException } from '@libs/platform/exceptions'
@@ -35,7 +36,6 @@ export class CommentPermissionService {
       columns: {
         isEnabled: true,
         status: true,
-        experience: true,
       },
       with: {
         level: {
@@ -72,7 +72,9 @@ export class CommentPermissionService {
       targetType === CommentTargetTypeEnum.FORUM_TOPIC &&
       typeof targetId === 'number'
     ) {
-      await this.ensureForumTopicSectionAccess(targetId, user)
+      await this.ensureForumTopicSectionAccess(targetId, {
+        experience: await this.getUserExperience(userId),
+      })
     }
 
     await this.ensureUserLevelRateLimit(userId, user.level)
@@ -133,6 +135,21 @@ export class CommentPermissionService {
         '当前板块需要更高等级',
       )
     }
+  }
+
+  private async getUserExperience(userId: number) {
+    const balance = await this.db.query.userAssetBalance.findFirst({
+      where: {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+      },
+      columns: {
+        balance: true,
+      },
+    })
+
+    return balance?.balance ?? 0
   }
 
   private async ensureUserLevelRateLimit(

@@ -1,4 +1,4 @@
-import type { AppUserSelect, ForumSectionSelect, UserLevelRuleSelect } from '@db/schema'
+import type { ForumSectionSelect, UserLevelRuleSelect } from '@db/schema'
 
 /**
  * 发帖权限校验使用的用户上下文。
@@ -6,7 +6,15 @@ import type { AppUserSelect, ForumSectionSelect, UserLevelRuleSelect } from '@db
  */
 /** 稳定领域类型 `ForumPostingUserContext`。仅供内部领域/服务链路复用，避免重复定义。 */
 export interface ForumPostingUserContext
-  extends Pick<AppUserSelect, 'id' | 'isEnabled' | 'status' | 'experience'> {
+  extends Pick<
+    {
+      id: number
+      isEnabled: boolean
+      status: number
+      experience: number
+    },
+    'id' | 'isEnabled' | 'status' | 'experience'
+  > {
   level: Pick<UserLevelRuleSelect, 'dailyTopicLimit' | 'postInterval'> | null
 }
 
@@ -28,10 +36,11 @@ export interface ForumSectionPermissionContext
  * 只关心用户是否可用以及当前经验值。
  */
 /** 稳定领域类型 `ForumAccessUserContext`。仅供内部领域/服务链路复用，避免重复定义。 */
-export type ForumAccessUserContext = Pick<
-  AppUserSelect,
-  'id' | 'isEnabled' | 'experience'
->
+export interface ForumAccessUserContext {
+  id: number
+  isEnabled: boolean
+  experience: number
+}
 
 /**
  * 板块访问状态。

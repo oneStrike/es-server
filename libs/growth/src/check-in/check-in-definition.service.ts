@@ -9,14 +9,12 @@ import type {
 import { buildILikeCondition, DrizzleService } from '@db/core'
 
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
+import { GrowthRewardSettlementStatusEnum } from '@libs/growth/growth-reward/growth-reward.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { and, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm'
-import {
-  CheckInPlanStatusEnum,
-  CheckInRewardStatusEnum,
-} from './check-in.constant'
+import { and, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
+import { CheckInPlanStatusEnum } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
 const CHECK_IN_PLAN_MUTATION_LOCK_KEY = 1_048_101
@@ -74,7 +72,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         const { rewardDefinition: _rewardDefinition, ...rest } = plan
         return {
           ...rest,
-          baseRewardConfig: rewardDefinition?.baseRewardConfig ?? null,
+          baseRewardItems: rewardDefinition?.baseRewardItems ?? null,
           status: this.resolvePlanStatus(plan),
           ...summaries[index],
         }
@@ -93,7 +91,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
 
     return {
       ...rest,
-      baseRewardConfig: rewardDefinition?.baseRewardConfig ?? null,
+      baseRewardItems: rewardDefinition?.baseRewardItems ?? null,
       status: this.resolvePlanStatus(plan),
       ...summary,
       dateRewardRules: (rewardDefinition?.dateRewardRules ?? []).map((rule) =>
@@ -135,7 +133,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       startDate,
       endDate,
       rewardDefinition: null,
-      baseRewardConfig: dto.baseRewardConfig,
+      baseRewardItems: dto.baseRewardItems,
       dateRewardRules: dto.dateRewardRules,
       patternRewardRules: dto.patternRewardRules,
       streakRewardRules: dto.streakRewardRules,
@@ -198,7 +196,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           },
         )
         const shouldUpdateRewardDefinition =
-          dto.baseRewardConfig !== undefined ||
+          dto.baseRewardItems !== undefined ||
           dto.dateRewardRules !== undefined ||
           dto.patternRewardRules !== undefined ||
           dto.streakRewardRules !== undefined
@@ -270,7 +268,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
           startDate: nextPlan.startDate,
           endDate: nextPlan.endDate,
           rewardDefinition: currentRewardDefinition,
-          baseRewardConfig: dto.baseRewardConfig,
+          baseRewardItems: dto.baseRewardItems,
           dateRewardRules: dto.dateRewardRules,
           patternRewardRules: dto.patternRewardRules,
           streakRewardRules: dto.streakRewardRules,
@@ -408,13 +406,13 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     rewardDefinition: ReturnType<
       CheckInDefinitionService['getPlanRewardDefinition']
     >
-    baseRewardConfig?: CreateCheckInPlanDto['baseRewardConfig']
+    baseRewardItems?: CreateCheckInPlanDto['baseRewardItems']
     dateRewardRules?: CreateCheckInPlanDto['dateRewardRules']
     patternRewardRules?: CreateCheckInPlanDto['patternRewardRules']
     streakRewardRules?: CreateCheckInPlanDto['streakRewardRules']
   }) {
     const hasRewardFieldInput =
-      input.baseRewardConfig !== undefined ||
+      input.baseRewardItems !== undefined ||
       input.dateRewardRules !== undefined ||
       input.patternRewardRules !== undefined ||
       input.streakRewardRules !== undefined
@@ -423,10 +421,10 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
       cycleType: input.cycleType,
       startDate: input.startDate,
       endDate: input.endDate,
-      baseRewardConfig:
-        input.baseRewardConfig !== undefined
-          ? input.baseRewardConfig
-          : (input.rewardDefinition?.baseRewardConfig ?? null),
+      baseRewardItems:
+        input.baseRewardItems !== undefined
+          ? input.baseRewardItems
+          : (input.rewardDefinition?.baseRewardItems ?? null),
       dateRewardRules:
         input.dateRewardRules !== undefined
           ? input.dateRewardRules
@@ -442,7 +440,7 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
     })
 
     if (
-      nextRewardDefinition.baseRewardConfig === null &&
+      nextRewardDefinition.baseRewardItems === null &&
       nextRewardDefinition.dateRewardRules.length === 0 &&
       nextRewardDefinition.patternRewardRules.length === 0 &&
       nextRewardDefinition.streakRewardRules.length === 0
@@ -539,25 +537,54 @@ export class CheckInDefinitionService extends CheckInServiceSupport {
         this.db
           .select({ count: sql<number>`count(*)::int` })
           .from(this.checkInRecordTable)
+          .leftJoin(
+            this.growthRewardSettlementTable,
+            eq(
+              this.checkInRecordTable.rewardSettlementId,
+              this.growthRewardSettlementTable.id,
+            ),
+          )
           .where(
             and(
               eq(this.checkInRecordTable.planId, planId),
-              inArray(this.checkInRecordTable.rewardStatus, [
-                CheckInRewardStatusEnum.PENDING,
-                CheckInRewardStatusEnum.FAILED,
-              ]),
+              ne(this.checkInRecordTable.resolvedRewardItems, null),
+              or(
+                isNull(this.checkInRecordTable.rewardSettlementId),
+                eq(
+                  this.growthRewardSettlementTable.settlementStatus,
+                  GrowthRewardSettlementStatusEnum.PENDING,
+                ),
+                eq(
+                  this.growthRewardSettlementTable.settlementStatus,
+                  GrowthRewardSettlementStatusEnum.TERMINAL,
+                ),
+              ),
             ),
           ),
         this.db
           .select({ count: sql<number>`count(*)::int` })
           .from(this.checkInStreakRewardGrantTable)
+          .leftJoin(
+            this.growthRewardSettlementTable,
+            eq(
+              this.checkInStreakRewardGrantTable.rewardSettlementId,
+              this.growthRewardSettlementTable.id,
+            ),
+          )
           .where(
             and(
               eq(this.checkInStreakRewardGrantTable.planId, planId),
-              inArray(this.checkInStreakRewardGrantTable.grantStatus, [
-                CheckInRewardStatusEnum.PENDING,
-                CheckInRewardStatusEnum.FAILED,
-              ]),
+              or(
+                isNull(this.checkInStreakRewardGrantTable.rewardSettlementId),
+                eq(
+                  this.growthRewardSettlementTable.settlementStatus,
+                  GrowthRewardSettlementStatusEnum.PENDING,
+                ),
+                eq(
+                  this.growthRewardSettlementTable.settlementStatus,
+                  GrowthRewardSettlementStatusEnum.TERMINAL,
+                ),
+              ),
             ),
           ),
       ])

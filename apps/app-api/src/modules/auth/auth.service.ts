@@ -304,9 +304,10 @@ export class AuthService {
     })
 
     await this.authSessionService.persistTokens(user.id, tokens, clientContext)
+    const growth = await this.userCoreService.getUserGrowthSnapshot(user.id)
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(user, growth),
       tokens,
     }
   }
@@ -314,7 +315,10 @@ export class AuthService {
   /**
    * 脱敏返回用户信息
    */
-  private sanitizeUser(user: AppUserSelect) {
+  private sanitizeUser(
+    user: AppUserSelect,
+    growth: { points: number, experience: number },
+  ) {
     return {
       id: user.id,
       account: user.account,
@@ -326,8 +330,8 @@ export class AuthService {
       birthDate: user.birthDate ?? undefined,
       signature: user.signature ?? undefined,
       bio: user.bio ?? undefined,
-      points: user.points ?? 0,
-      experience: user.experience ?? 0,
+      points: growth.points,
+      experience: growth.experience,
       status: user.status ?? UserStatusEnum.NORMAL,
       isEnabled: user.isEnabled,
     }

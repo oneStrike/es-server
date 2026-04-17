@@ -1,5 +1,6 @@
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 import { BaseCheckInCycleDto } from './check-in-cycle.dto'
 import {
@@ -9,17 +10,19 @@ import {
   OptionalCheckInGrantIdDto,
   OptionalCheckInRecordIdDto,
 } from './check-in-fragment.dto'
-import { BaseCheckInRecordDto } from './check-in-record.dto'
+import {
+  BaseCheckInRecordDto,
+  CheckInRewardSettlementSummaryDto,
+} from './check-in-record.dto'
 
 class CheckInActionBaseDto extends IntersectionType(
   PickType(BaseCheckInRecordDto, [
     'signDate',
     'recordType',
-    'rewardStatus',
-    'rewardResultType',
+    'rewardSettlementId',
     'resolvedRewardSourceType',
     'resolvedRewardRuleKey',
-    'resolvedRewardConfig',
+    'resolvedRewardItems',
   ] as const),
   PickType(BaseCheckInCycleDto, ['currentStreak', 'signedCount'] as const),
 ) {}
@@ -50,7 +53,7 @@ export class RepairCheckInRewardResponseDto extends IntersectionType(
 export class CheckInActionResponseDto extends IntersectionType(
   CheckInActionBaseDto,
   CheckInRecordIdDto,
-  PickType(BaseCheckInRecordDto, ['cycleId'] as const),
+  PickType(BaseCheckInRecordDto, ['userId', 'planId', 'cycleId'] as const),
   CheckInRemainingMakeupCountDto,
 ) {
   @ArrayProperty({
@@ -67,4 +70,13 @@ export class CheckInActionResponseDto extends IntersectionType(
     validation: false,
   })
   alreadyExisted!: boolean
+
+  @NestedProperty({
+    description: '基础奖励结算摘要。',
+    type: CheckInRewardSettlementSummaryDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  rewardSettlement?: CheckInRewardSettlementSummaryDto | null
 }

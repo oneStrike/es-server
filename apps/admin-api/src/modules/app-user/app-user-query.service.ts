@@ -1,5 +1,6 @@
 import type { SQL } from 'drizzle-orm'
 import { buildILikeCondition, DrizzleService } from '@db/core'
+import { GrowthBalanceQueryService } from '@libs/growth/growth-ledger/growth-balance-query.service'
 
 import {
   AppUserDeletedScopeEnum,
@@ -32,6 +33,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
   constructor(
     drizzle: DrizzleService,
     userCoreService: UserCoreService,
+    private readonly growthBalanceQueryService: GrowthBalanceQueryService,
     private readonly appUserGrowthService: AppUserGrowthService,
   ) {
     super(drizzle, userCoreService)
@@ -166,11 +168,17 @@ export class AppUserQueryService extends AppUserServiceSupport {
     const countMap = new Map(
       countRows.map((item) => [item.userId, item] as const),
     )
+    const growthMap = await this.growthBalanceQueryService.getUserGrowthSnapshotMap(
+      page.list.map((item) => item.id),
+    )
 
     return {
       ...page,
       list: page.list.map((item) => ({
-        ...this.userCoreService.mapBaseUser(item),
+        ...this.userCoreService.mapBaseUser(
+          item,
+          growthMap.get(item.id),
+        ),
         levelName: item.levelId ? levelMap.get(item.levelId) : undefined,
         counts: this.mapAdminAppUserCounts(countMap.get(item.id)),
       })),
@@ -184,6 +192,9 @@ export class AppUserQueryService extends AppUserServiceSupport {
    */
   async getAppUserDetail(userId: number) {
     const user = await this.userCoreService.ensureUserExists(userId)
+    const growth = await this.growthBalanceQueryService.getUserGrowthSnapshot(
+      userId,
+    )
 
     const [level, counts, badgeCount, pointStats, experienceStats] =
       await Promise.all([
@@ -197,7 +208,7 @@ export class AppUserQueryService extends AppUserServiceSupport {
       ])
 
     return {
-      ...this.userCoreService.mapBaseUser(user),
+      ...this.userCoreService.mapBaseUser(user, growth),
       level: level
         ? {
             id: level.id,

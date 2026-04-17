@@ -18,7 +18,6 @@ import {
   ConsumeUserPointsDto,
   QueryUserPointRecordDto,
 } from './dto/point-record.dto'
-import { UserPointRuleService } from './point-rule.service'
 
 interface LedgerRecordShape {
   id: number
@@ -45,7 +44,6 @@ interface LedgerRecordShape {
 export class UserPointService {
   constructor(
     private readonly drizzle: DrizzleService,
-    private readonly pointRuleService: UserPointRuleService,
     private readonly growthLedgerService: GrowthLedgerService,
   ) {}
 
@@ -62,6 +60,10 @@ export class UserPointService {
   /** 用户表。 */
   get appUser() {
     return this.drizzle.schema.appUser
+  }
+
+  private get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
   }
 
   /**
@@ -86,17 +88,6 @@ export class UserPointService {
         BusinessErrorCode.RESOURCE_NOT_FOUND,
         '用户不存在',
       )
-    }
-
-    const rule = await this.pointRuleService.getEnabledRuleByType(ruleType)
-    if (!rule) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '积分规则不存在',
-      )
-    }
-    if (rule.points <= 0) {
-      throw new InternalServerErrorException('积分规则配置错误')
     }
 
     const bizKey =
@@ -360,7 +351,7 @@ export class UserPointService {
   async getUserPointStats(userId: number) {
     const user = await this.db.query.appUser.findFirst({
       where: { id: userId },
-      columns: { id: true, points: true },
+      columns: { id: true },
     })
 
     if (!user) {
@@ -387,10 +378,25 @@ export class UserPointService {
       )
 
     return {
-      currentPoints: user.points,
+      currentPoints: await this.getCurrentPoints(userId),
       todayEarned: Number(todayStats?.earned ?? 0),
       todayConsumed: Number(todayStats?.consumed ?? 0),
     }
+  }
+
+  private async getCurrentPoints(userId: number) {
+    const balance = await this.db.query.userAssetBalance.findFirst({
+      where: {
+        userId,
+        assetType: GrowthAssetTypeEnum.POINTS,
+        assetKey: '',
+      },
+      columns: {
+        balance: true,
+      },
+    })
+
+    return balance?.balance ?? 0
   }
 
   /**

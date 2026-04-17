@@ -80,14 +80,17 @@ describe('dTO governance regressions', () => {
       ),
       'utf8',
     )
-    const pointRule = fs.readFileSync(
-      path.join(repoRoot, 'libs/growth/src/point/dto/point-rule.dto.ts'),
-      'utf8',
-    )
-    const experienceRule = fs.readFileSync(
+    const rewardRule = fs.readFileSync(
       path.join(
         repoRoot,
-        'libs/growth/src/experience/dto/experience-rule.dto.ts',
+        'libs/growth/src/reward-rule/dto/reward-rule.dto.ts',
+      ),
+      'utf8',
+    )
+    const rewardItem = fs.readFileSync(
+      path.join(
+        repoRoot,
+        'libs/growth/src/reward-rule/dto/reward-item.dto.ts',
       ),
       'utf8',
     )
@@ -95,7 +98,18 @@ describe('dTO governance regressions', () => {
     expect(pointRecord).toContain('BaseGrowthRecordSharedDto')
     expect(experienceRecord).toContain('BaseGrowthRecordSharedDto')
     expect(growthLedgerRecord).toContain('BaseGrowthRecordSharedDto')
-    expect(pointRule).toContain('BaseGrowthRuleConfigDto')
-    expect(experienceRule).toContain('BaseGrowthRuleConfigDto')
+    expect(rewardRule).toContain('BaseGrowthRuleConfigDto')
+    expect(rewardItem).toContain('GrowthRewardRuleAssetTypeEnum')
+  })
+
+  it('removes the legacy check-in reward config DTO file', () => {
+    expect(
+      fs.existsSync(
+        path.join(
+          repoRoot,
+          'libs/growth/src/check-in/dto/check-in-reward-config.dto.ts',
+        ),
+      ),
+    ).toBe(false)
   })
 })

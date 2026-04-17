@@ -38,13 +38,15 @@ export const taskAssignment = pgTable('task_assignment', {
    */
   status: smallint().notNull(),
   /**
-   * 奖励结算状态。0=待结算，1=已结算成功，2=结算失败。
+   * 是否需要奖励结算。
+   * true=该 assignment 需要补发奖励；false=无奖励任务，不生成结算事实。
    */
-  rewardStatus: smallint().default(0).notNull(),
+  rewardApplicable: smallint().default(0).notNull(),
   /**
-   * 奖励结算结果类型。1=本次真实落账，2=命中幂等未重复落账，3=本次结算失败。
+   * 关联的奖励结算事实 ID。
+   * 任务完成后统一挂接到 `growth_reward_settlement`，不再在 assignment 冗余保存奖励状态。
    */
-  rewardResultType: smallint(),
+  rewardSettlementId: integer(),
   /**
    * 当前进度。
    * 与 `target` 对比后决定是否满足完成条件。
@@ -84,21 +86,6 @@ export const taskAssignment = pgTable('task_assignment', {
    */
   expiredAt: timestamp({ withTimezone: true, precision: 6 }),
   /**
-   * 奖励结算时间。
-   * 记录任务 bonus 最后一次成功或失败结算的处理时间。
-   */
-  rewardSettledAt: timestamp({ withTimezone: true, precision: 6 }),
-  /**
-   * 本次奖励关联到账本记录 ID 列表。
-   * 仅记录任务 bonus 真正落账的流水，幂等命中时通常为空数组。
-   */
-  rewardLedgerIds: integer().array().default(sql`ARRAY[]::integer[]`).notNull(),
-  /**
-   * 上次奖励失败原因。
-   * 仅在最近一次奖励补偿失败时保留，用于后台排障。
-   */
-  lastRewardError: varchar({ length: 500 }),
-  /**
    * assignment 创建时间。
    * 主要用于审计和列表排序，不等同于 claimedAt。
    */
@@ -135,6 +122,10 @@ export const taskAssignment = pgTable('task_assignment', {
    */
   index('task_assignment_expired_at_idx').on(table.expiredAt),
   /**
+   * 奖励结算事实索引
+   */
+  index('task_assignment_reward_settlement_id_idx').on(table.rewardSettlementId),
+  /**
    * 删除时间索引
    */
   index('task_assignment_deleted_at_idx').on(table.deletedAt),
@@ -146,17 +137,7 @@ export const taskAssignment = pgTable('task_assignment', {
    * 分配状态值域约束
    */
   check('task_assignment_status_valid_chk', sql`${table.status} in (0, 1, 2, 3)`),
-  /**
-   * 奖励结算状态值域约束
-   */
-  check('task_assignment_reward_status_valid_chk', sql`${table.rewardStatus} in (0, 1, 2)`),
-  /**
-   * 奖励结算结果值域约束
-   */
-  check(
-    'task_assignment_reward_result_type_valid_chk',
-    sql`${table.rewardResultType} is null or ${table.rewardResultType} in (1, 2, 3)`,
-  ),
+  check('task_assignment_reward_applicable_valid_chk', sql`${table.rewardApplicable} in (0, 1)`),
   /**
    * 当前进度不能为负数
    */
@@ -165,6 +146,10 @@ export const taskAssignment = pgTable('task_assignment', {
    * 版本号不能为负数
    */
   check('task_assignment_version_non_negative_chk', sql`${table.version} >= 0`),
+  check(
+    'task_assignment_reward_settlement_id_positive_chk',
+    sql`${table.rewardSettlementId} is null or ${table.rewardSettlementId} > 0`,
+  ),
 ]);
 
 export type TaskAssignment = typeof taskAssignment.$inferSelect

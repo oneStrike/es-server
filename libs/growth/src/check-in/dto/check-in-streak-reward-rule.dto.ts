@@ -1,11 +1,10 @@
-import type { CheckInRewardConfig } from '../check-in.type'
+import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
+import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
 import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { CheckInStreakRewardRuleStatusEnum } from '../check-in.constant'
-import { CheckInRewardConfigDto } from './check-in-reward-config.dto'
 
 class CheckInStreakRewardRuleFieldsDto {
   @StringProperty({
@@ -22,12 +21,12 @@ class CheckInStreakRewardRuleFieldsDto {
   })
   streakDays!: number
 
-  @NestedProperty({
-    description: '连续奖励配置。',
-    type: CheckInRewardConfigDto,
-    example: { points: 70 } satisfies CheckInRewardConfig,
+  @ArrayProperty({
+    description: '连续奖励项列表。',
+    itemClass: GrowthRewardItemDto,
+    example: [{ assetType: 1, amount: 70 }],
   })
-  rewardConfig!: CheckInRewardConfigDto
+  rewardItems!: GrowthRewardItemDto[]
 
   @BooleanProperty({
     description:

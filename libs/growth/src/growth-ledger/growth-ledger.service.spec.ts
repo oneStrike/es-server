@@ -4,27 +4,26 @@ import { GrowthLedgerService } from './growth-ledger.service'
 
 interface ExperienceRuleStub {
   id: number
-  experience: number
   dailyLimit: number
   totalLimit: number
   isEnabled: boolean
 }
 
 interface GateDuplicateResultStub {
-  duplicated: true
-  result: {
-    success: true
-    duplicated: true
-    deltaApplied: number
-    beforeValue: number
-    afterValue: number
-    recordId: number
-  }
+  id: number
+  assetKey: string
+  delta: number
+  beforeValue: number
+  afterValue: number
 }
 
 interface TxStub {
+  execute: jest.Mock
   query: {
     appUser: {
+      findFirst: jest.Mock
+    }
+    userAssetBalance: {
       findFirst: jest.Mock
     }
   }
@@ -37,10 +36,10 @@ function createDrizzleStub() {
       appUser: {},
       growthAuditLog: {},
       growthLedgerRecord: {},
-      growthRuleUsageSlot: {},
-      userExperienceRule: {},
+      growthRuleUsageCounter: {},
+      userAssetBalance: {},
+      growthRewardRule: {},
       userLevelRule: {},
-      userPointRule: {},
     },
     withErrorHandling: async <T>(callback: () => Promise<T> | T) => callback(),
   } as unknown as DrizzleService
@@ -51,9 +50,13 @@ describe('growthLedgerService', () => {
     const service = new GrowthLedgerService(createDrizzleStub())
     const serviceRecord = service as unknown as Record<string, unknown>
     const txStub: TxStub = {
+      execute: jest.fn(),
       query: {
         appUser: {
-          findFirst: jest.fn().mockResolvedValue({ experience: 999 }),
+          findFirst: jest.fn().mockResolvedValue({ id: 7 }),
+        },
+        userAssetBalance: {
+          findFirst: jest.fn().mockResolvedValue({ balance: 999 }),
         },
       },
     }
@@ -63,28 +66,26 @@ describe('growthLedgerService', () => {
       unknown[]
     >().mockResolvedValue({
       id: 1,
-      experience: 20,
       dailyLimit: 0,
       totalLimit: 0,
       isEnabled: true,
     })
     serviceRecord.findRuleByType = findRuleByTypeMock
 
-    const createLedgerGateMock = jest.fn<
+    serviceRecord.ensureLedgerOperationLock = jest
+      .fn<Promise<void>, unknown[]>()
+      .mockResolvedValue(undefined)
+    const existingLedgerMock = jest.fn<
       Promise<GateDuplicateResultStub>,
       unknown[]
     >().mockResolvedValue({
-      duplicated: true,
-      result: {
-        success: true,
-        duplicated: true,
-        deltaApplied: 20,
-        beforeValue: 80,
-        afterValue: 100,
-        recordId: 11,
-      },
+      id: 11,
+      assetKey: '',
+      delta: 20,
+      beforeValue: 80,
+      afterValue: 100,
     })
-    serviceRecord.createLedgerGate = createLedgerGateMock
+    serviceRecord.findLedgerByUserBizKey = existingLedgerMock
 
     const syncSpy = jest.fn<Promise<void>, [unknown, number, number?]>()
     syncSpy.mockResolvedValue(undefined)
@@ -98,9 +99,9 @@ describe('growthLedgerService', () => {
     })
 
     expect(result.duplicated).toBe(true)
-    expect(txStub.query.appUser.findFirst).toHaveBeenCalledWith({
-      where: { id: 7 },
-      columns: { experience: true },
+    expect(txStub.query.userAssetBalance.findFirst).toHaveBeenCalledWith({
+      where: { userId: 7, assetType: GrowthAssetTypeEnum.EXPERIENCE, assetKey: '' },
+      columns: { balance: true },
     })
     expect(syncSpy).toHaveBeenCalledWith(txStub, 7, 999)
   })
@@ -109,28 +110,31 @@ describe('growthLedgerService', () => {
     const service = new GrowthLedgerService(createDrizzleStub())
     const serviceRecord = service as unknown as Record<string, unknown>
     const txStub: TxStub = {
+      execute: jest.fn(),
       query: {
         appUser: {
-          findFirst: jest.fn().mockResolvedValue({ experience: 1200 }),
+          findFirst: jest.fn().mockResolvedValue({ id: 8 }),
+        },
+        userAssetBalance: {
+          findFirst: jest.fn().mockResolvedValue({ balance: 1200 }),
         },
       },
     }
 
-    const createLedgerGateMock = jest.fn<
+    serviceRecord.ensureLedgerOperationLock = jest
+      .fn<Promise<void>, unknown[]>()
+      .mockResolvedValue(undefined)
+    const existingLedgerMock = jest.fn<
       Promise<GateDuplicateResultStub>,
       unknown[]
     >().mockResolvedValue({
-      duplicated: true,
-      result: {
-        success: true,
-        duplicated: true,
-        deltaApplied: 50,
-        beforeValue: 150,
-        afterValue: 200,
-        recordId: 15,
-      },
+      id: 15,
+      assetKey: '',
+      delta: 50,
+      beforeValue: 150,
+      afterValue: 200,
     })
-    serviceRecord.createLedgerGate = createLedgerGateMock
+    serviceRecord.findLedgerByUserBizKey = existingLedgerMock
 
     const syncSpy = jest.fn<Promise<void>, [unknown, number, number?]>()
     syncSpy.mockResolvedValue(undefined)
@@ -146,9 +150,9 @@ describe('growthLedgerService', () => {
     })
 
     expect(result.duplicated).toBe(true)
-    expect(txStub.query.appUser.findFirst).toHaveBeenCalledWith({
-      where: { id: 8 },
-      columns: { experience: true },
+    expect(txStub.query.userAssetBalance.findFirst).toHaveBeenCalledWith({
+      where: { userId: 8, assetType: GrowthAssetTypeEnum.EXPERIENCE, assetKey: '' },
+      columns: { balance: true },
     })
     expect(syncSpy).toHaveBeenCalledWith(txStub, 8, 1200)
   })

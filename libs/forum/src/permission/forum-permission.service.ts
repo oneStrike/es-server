@@ -5,6 +5,7 @@ import type {
   ForumSectionPermissionContext,
 } from './forum-permission.type'
 import { DrizzleService } from '@db/core'
+import { GrowthAssetTypeEnum } from '@libs/growth/growth-ledger/growth-ledger.constant'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { startOfTodayInAppTimeZone } from '@libs/platform/utils/time'
@@ -45,6 +46,10 @@ export class ForumPermissionService {
     return this.drizzle.schema.userComment
   }
 
+  private get userAssetBalance() {
+    return this.drizzle.schema.userAssetBalance
+  }
+
   /**
    * 获取发帖所需的用户上下文，包含等级配置中的频控参数。
    */
@@ -58,7 +63,6 @@ export class ForumPermissionService {
         id: true,
         isEnabled: true,
         status: true,
-        experience: true,
       },
       with: {
         level: {
@@ -77,7 +81,11 @@ export class ForumPermissionService {
       )
     }
 
-    return user
+    const experience = await this.getUserExperience(userId)
+    return {
+      ...user,
+      experience,
+    }
   }
 
   /**
@@ -93,11 +101,32 @@ export class ForumPermissionService {
       columns: {
         id: true,
         isEnabled: true,
-        experience: true,
       },
     })
 
-    return user ?? null
+    if (!user) {
+      return null
+    }
+
+    return {
+      ...user,
+      experience: await this.getUserExperience(userId),
+    }
+  }
+
+  private async getUserExperience(userId: number) {
+    const balance = await this.db.query.userAssetBalance.findFirst({
+      where: {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        assetKey: '',
+      },
+      columns: {
+        balance: true,
+      },
+    })
+
+    return balance?.balance ?? 0
   }
 
   /**

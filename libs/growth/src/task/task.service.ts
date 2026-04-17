@@ -92,14 +92,19 @@ export class TaskService {
   }
 
   /**
-   * 重试单条任务奖励结算。
+   * 按 assignment 维度重放任务奖励结算。
+   * 仅供通用奖励补偿服务内部调用，不作为独立 HTTP 接口暴露。
    */
-  async retryTaskAssignmentReward(assignmentId: number) {
-    return this.taskExecutionService.retryTaskAssignmentReward(assignmentId)
+  async retryTaskAssignmentReward(assignmentId: number, isRetry = false) {
+    return this.taskExecutionService.retryTaskAssignmentReward(
+      assignmentId,
+      isRetry,
+    )
   }
 
   /**
    * 批量补偿已完成任务奖励。
+   * 仅供任务运行时 cron 复用，不再对外暴露独立管理端接口。
    */
   async retryCompletedAssignmentRewardsBatch(limit = 100) {
     return this.taskExecutionService.retryCompletedAssignmentRewardsBatch(limit)

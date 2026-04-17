@@ -80,9 +80,10 @@ export const task = pgTable('task', {
    */
   objectiveConfig: jsonb(),
   /**
-   * 奖励配置。
+   * 奖励项列表。
+   * 使用统一 `rewardItems[]` 合同表达任务奖励。
    */
-  rewardConfig: jsonb(),
+  rewardItems: jsonb(),
   /**
    * 重复规则。
    */

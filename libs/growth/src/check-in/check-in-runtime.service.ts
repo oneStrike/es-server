@@ -1,4 +1,8 @@
-import type { CheckInPlanSelect, CheckInRecordSelect, CheckInStreakRewardGrantSelect } from '@db/schema'
+import type {
+  CheckInPlanSelect,
+  CheckInRecordSelect,
+  CheckInStreakRewardGrantSelect,
+} from '@db/schema'
 
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
@@ -18,12 +22,21 @@ import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { and, asc, desc, eq, exists, gte, lte, or, sql } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  exists,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm'
 import {
   CheckInCycleTypeEnum,
   CheckInRecordTypeEnum,
-  CheckInRewardResultTypeEnum,
-  CheckInRewardStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
@@ -59,6 +72,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
 
     const cycle = await this.getCurrentCycleView(userId, plan, now)
     const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
+    const recordSettlementMap = await this.buildSettlementMapById(
+      records
+        .map((record) => record.rewardSettlementId)
+        .filter((id): id is number => typeof id === 'number'),
+    )
     const grantMap = await this.buildGrantMapForRecords(records)
     const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
       cycle.currentStreak,
@@ -71,6 +89,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         grantMap.get(
           `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
         ) ?? [],
+        record.rewardSettlementId
+          ? recordSettlementMap.get(record.rewardSettlementId) ?? null
+          : null,
       ),
     )
     const latestRecord = recordViews.at(-1)
@@ -85,7 +106,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         startDate: this.toDateOnlyValue(plan.startDate),
         endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
         allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
-        baseRewardConfig: cycle.rewardDefinition.baseRewardConfig,
+        baseRewardItems: cycle.rewardDefinition.baseRewardItems,
       },
       cycle: {
         id: cycle.id,
@@ -124,6 +145,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const today = this.formatDateOnly(now)
     const cycle = await this.getCurrentCycleView(userId, plan, now)
     const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
+    const recordSettlementMap = await this.buildSettlementMapById(
+      records
+        .map((record) => record.rewardSettlementId)
+        .filter((id): id is number => typeof id === 'number'),
+    )
     const grantMap = await this.buildGrantMapForRecords(records)
     const recordViews = records.map((record) =>
       this.toRecordView(
@@ -131,6 +157,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         grantMap.get(
           `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
         ) ?? [],
+        record.rewardSettlementId
+          ? recordSettlementMap.get(record.rewardSettlementId) ?? null
+          : null,
       ),
     )
 
@@ -181,6 +210,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       },
     )
 
+    const recordSettlementMap = await this.buildSettlementMapById(
+      page.list
+        .map((record) => record.rewardSettlementId)
+        .filter((id): id is number => typeof id === 'number'),
+    )
     const grantMap = await this.buildGrantMapForRecords(page.list)
     return {
       ...page,
@@ -190,6 +224,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
           grantMap.get(
             `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
           ) ?? [],
+          record.rewardSettlementId
+            ? recordSettlementMap.get(record.rewardSettlementId) ?? null
+            : null,
         ),
       ),
     }
@@ -211,9 +248,25 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     if (query.cycleId !== undefined) {
       conditions.push(eq(this.checkInRecordTable.cycleId, query.cycleId))
     }
-    if (query.rewardStatus != null) {
+    if (query.recordSettlementStatus != null) {
       conditions.push(
-        eq(this.checkInRecordTable.rewardStatus, query.rewardStatus),
+        exists(
+          this.db
+            .select({ id: this.growthRewardSettlementTable.id })
+            .from(this.growthRewardSettlementTable)
+            .where(
+              and(
+                eq(
+                  this.growthRewardSettlementTable.id,
+                  this.checkInRecordTable.rewardSettlementId,
+                ),
+                eq(
+                  this.growthRewardSettlementTable.settlementStatus,
+                  query.recordSettlementStatus,
+                ),
+              ),
+            ),
+        ),
       )
     }
     if (query.grantId !== undefined) {
@@ -238,12 +291,19 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         ),
       )
     }
-    if (query.grantStatus != null) {
+    if (query.grantSettlementStatus != null) {
       conditions.push(
         exists(
           this.db
             .select({ id: this.checkInStreakRewardGrantTable.id })
             .from(this.checkInStreakRewardGrantTable)
+            .leftJoin(
+              this.growthRewardSettlementTable,
+              eq(
+                this.checkInStreakRewardGrantTable.rewardSettlementId,
+                this.growthRewardSettlementTable.id,
+              ),
+            )
             .where(
               and(
                 eq(
@@ -255,8 +315,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
                   this.checkInRecordTable.signDate,
                 ),
                 eq(
-                  this.checkInStreakRewardGrantTable.grantStatus,
-                  query.grantStatus,
+                  this.growthRewardSettlementTable.settlementStatus,
+                  query.grantSettlementStatus,
                 ),
               ),
             ),
@@ -275,6 +335,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       },
     )
 
+    const recordSettlementMap = await this.buildSettlementMapById(
+      page.list
+        .map((record) => record.rewardSettlementId)
+        .filter((id): id is number => typeof id === 'number'),
+    )
     const grantMap = await this.buildGrantMapForRecords(page.list)
     return {
       ...page,
@@ -285,18 +350,18 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         cycleId: record.cycleId,
         signDate: this.toDateOnlyValue(record.signDate),
         recordType: record.recordType,
-        rewardStatus: record.rewardStatus,
-        rewardResultType: record.rewardResultType,
+        rewardSettlementId: record.rewardSettlementId,
         resolvedRewardSourceType: record.resolvedRewardSourceType,
         resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-        resolvedRewardConfig: this.parseStoredRewardConfig(
-          record.resolvedRewardConfig,
+        resolvedRewardItems: this.parseStoredRewardItems(
+          record.resolvedRewardItems,
           {
             allowEmpty: true,
           },
         ),
-        baseRewardLedgerIds: record.baseRewardLedgerIds,
-        lastRewardError: record.lastRewardError,
+        rewardSettlement: record.rewardSettlementId
+          ? recordSettlementMap.get(record.rewardSettlementId) ?? null
+          : null,
         grants:
           grantMap.get(
             `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
@@ -416,7 +481,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     const rewardDefinition = this.getPlanRewardDefinition(plan, {
       allowEmpty: true,
     }) ?? {
-      baseRewardConfig: null,
+      baseRewardItems: null,
       dateRewardRules: [],
       patternRewardRules: [],
       streakRewardRules: [],
@@ -472,7 +537,10 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
    * 这里按 `(cycleId, signDate)` 聚合返回，避免逐条 N+1 查询。
    */
   private async buildGrantMapForRecords(
-    records: Pick<CheckInRecordSelect, 'cycleId' | 'signDate'>[],
+    records: Pick<
+      CheckInRecordSelect,
+      'cycleId' | 'signDate' | 'rewardSettlementId'
+    >[],
   ) {
     const grantMap = new Map<string, CheckInGrantItemDto[]>()
     if (records.length === 0) {
@@ -498,14 +566,56 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         asc(this.checkInStreakRewardGrantTable.id),
       )
 
+    const settlementMap = await this.buildSettlementMapById(
+      grants
+        .map((grant) => grant.rewardSettlementId)
+        .filter((id): id is number => typeof id === 'number'),
+    )
+
     for (const grant of grants) {
       const key = `${grant.cycleId}:${this.toDateOnlyValue(grant.triggerSignDate)}`
       const current = grantMap.get(key) ?? []
-      current.push(this.toGrantView(grant))
+      current.push(
+        this.toGrantView(
+          grant,
+          grant.rewardSettlementId
+            ? settlementMap.get(grant.rewardSettlementId) ?? null
+            : null,
+        ),
+      )
       grantMap.set(key, current)
     }
 
     return grantMap
+  }
+
+  private async buildSettlementMapById(settlementIds: number[]) {
+    const uniqueSettlementIds = [...new Set(settlementIds.filter((id) => id > 0))]
+    if (uniqueSettlementIds.length === 0) {
+      return new Map<number, ReturnType<CheckInRuntimeService['toRewardSettlementSummary']>>()
+    }
+
+    const settlements = await this.db
+      .select({
+        id: this.growthRewardSettlementTable.id,
+        settlementStatus: this.growthRewardSettlementTable.settlementStatus,
+        settlementResultType:
+          this.growthRewardSettlementTable.settlementResultType,
+        ledgerRecordIds: this.growthRewardSettlementTable.ledgerRecordIds,
+        retryCount: this.growthRewardSettlementTable.retryCount,
+        lastRetryAt: this.growthRewardSettlementTable.lastRetryAt,
+        settledAt: this.growthRewardSettlementTable.settledAt,
+        lastError: this.growthRewardSettlementTable.lastError,
+      })
+      .from(this.growthRewardSettlementTable)
+      .where(inArray(this.growthRewardSettlementTable.id, uniqueSettlementIds))
+
+    return new Map(
+      settlements.map((settlement) => [
+        settlement.id,
+        this.toRewardSettlementSummary(settlement),
+      ]),
+    )
   }
 
   /**
@@ -577,13 +687,12 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         signDate,
         dayIndex: this.resolveRewardDayIndex(cycleType, signDate),
         inPlanWindow: true,
-        planRewardConfig: rewardResolution.resolvedRewardConfig,
+        planRewardItems: rewardResolution.resolvedRewardItems,
         isToday: signDate === today,
         isFuture: signDate > today,
         isSigned: Boolean(record),
         recordType: record?.recordType,
-        rewardStatus: record?.rewardStatus,
-        rewardResultType: record?.rewardResultType,
+        rewardSettlement: record?.rewardSettlement ?? null,
         grantCount: record?.grants.length ?? 0,
       })
       cursor = cursor.add(1, 'day')
@@ -599,37 +708,30 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       | 'id'
       | 'signDate'
       | 'recordType'
-      | 'rewardStatus'
-      | 'rewardResultType'
       | 'resolvedRewardSourceType'
       | 'resolvedRewardRuleKey'
-      | 'resolvedRewardConfig'
-      | 'baseRewardLedgerIds'
-      | 'lastRewardError'
-      | 'rewardSettledAt'
+      | 'resolvedRewardItems'
+      | 'rewardSettlementId'
       | 'createdAt'
     >,
     grants: CheckInGrantItemDto[] = [],
+    rewardSettlement: ReturnType<CheckInRuntimeService['toRewardSettlementSummary']> | null = null,
   ): CheckInRecordItemDto {
     return {
       id: record.id,
       signDate: this.toDateOnlyValue(record.signDate),
       recordType: record.recordType as CheckInRecordTypeEnum,
-      rewardStatus: record.rewardStatus as CheckInRewardStatusEnum | null,
-      rewardResultType:
-        record.rewardResultType as CheckInRewardResultTypeEnum | null,
+      rewardSettlementId: record.rewardSettlementId,
       resolvedRewardSourceType:
         record.resolvedRewardSourceType as CheckInRecordItemDto['resolvedRewardSourceType'],
       resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-      resolvedRewardConfig: this.parseStoredRewardConfig(
-        record.resolvedRewardConfig,
+      resolvedRewardItems: this.parseStoredRewardItems(
+        record.resolvedRewardItems,
         {
           allowEmpty: true,
         },
       ),
-      baseRewardLedgerIds: record.baseRewardLedgerIds,
-      lastRewardError: record.lastRewardError,
-      rewardSettledAt: record.rewardSettledAt,
+      rewardSettlement,
       grants,
       createdAt: record.createdAt,
     }
@@ -642,27 +744,22 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       | 'id'
       | 'ruleCode'
       | 'streakDays'
-      | 'rewardConfig'
+      | 'rewardItems'
       | 'triggerSignDate'
-      | 'grantStatus'
-      | 'grantResultType'
-      | 'ledgerIds'
-      | 'lastGrantError'
+      | 'rewardSettlementId'
     >,
+    rewardSettlement: ReturnType<CheckInRuntimeService['toRewardSettlementSummary']> | null = null,
   ): CheckInGrantItemDto {
     return {
       id: grant.id,
       ruleCode: grant.ruleCode,
       streakDays: grant.streakDays,
-      rewardConfig: this.parseStoredRewardConfig(grant.rewardConfig, {
+      rewardItems: this.parseStoredRewardItems(grant.rewardItems, {
         allowEmpty: false,
       })!,
       triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
-      grantStatus: grant.grantStatus as CheckInRewardStatusEnum,
-      grantResultType:
-        grant.grantResultType as CheckInRewardResultTypeEnum | null,
-      ledgerIds: grant.ledgerIds,
-      lastGrantError: grant.lastGrantError,
+      rewardSettlementId: grant.rewardSettlementId,
+      rewardSettlement,
     }
   }
 }

@@ -31,12 +31,8 @@ export const checkInRecord = pgTable(
     cycleId: integer().notNull(),
     /** 签到自然日。 */
     signDate: date().notNull(),
-  /** 签到类型（1=正常签到，2=补签）。 */
-  recordType: smallint().notNull(),
-  /** 基础签到奖励状态（0=待处理，1=已成功，2=已失败）。 */
-  rewardStatus: smallint(),
-  /** 基础签到奖励结果类型（1=本次真实落账，2=命中幂等未重复落账，3=本次处理失败）。 */
-  rewardResultType: smallint(),
+    /** 签到类型（1=正常签到，2=补签）。 */
+    recordType: smallint().notNull(),
     /** 本次基础奖励解析来源（1=默认基础奖励，2=具体日期奖励，3=周期模式奖励）。 */
     resolvedRewardSourceType: smallint(),
     /**
@@ -46,24 +42,17 @@ export const checkInRecord = pgTable(
      */
     resolvedRewardRuleKey: varchar({ length: 32 }),
     /** 本次基础奖励解析结果快照。 */
-    resolvedRewardConfig: jsonb(),
+    resolvedRewardItems: jsonb(),
+    /** 关联的奖励结算事实 ID。 */
+    rewardSettlementId: integer(),
     /** 业务幂等键。 */
     bizKey: varchar({ length: 180 }).notNull(),
-    /** 基础奖励对应到账本记录 ID 列表。 */
-    baseRewardLedgerIds: integer()
-      .array()
-      .default(sql`ARRAY[]::integer[]`)
-      .notNull(),
-  /** 操作来源类型（1=用户主动操作，2=管理员补偿或修复，3=系统任务补偿）。 */
-  operatorType: smallint().notNull(),
+    /** 操作来源类型（1=用户主动操作，2=管理员补偿或修复，3=系统任务补偿）。 */
+    operatorType: smallint().notNull(),
     /** 备注。 */
     remark: varchar({ length: 500 }),
-    /** 最近一次基础奖励失败原因。 */
-    lastRewardError: varchar({ length: 500 }),
     /** 签到扩展上下文。 */
     context: jsonb(),
-    /** 最近一次基础奖励状态落定时间。 */
-    rewardSettledAt: timestamp({ withTimezone: true, precision: 6 }),
     /** 签到事实创建时间。 */
     createdAt: timestamp({ withTimezone: true, precision: 6 })
       .defaultNow()
@@ -82,19 +71,11 @@ export const checkInRecord = pgTable(
     unique('check_in_record_user_biz_key_key').on(table.userId, table.bizKey),
     index('check_in_record_cycle_id_idx').on(table.cycleId),
     index('check_in_record_user_id_plan_id_idx').on(table.userId, table.planId),
+    index('check_in_record_reward_settlement_id_idx').on(table.rewardSettlementId),
     index('check_in_record_sign_date_idx').on(table.signDate),
-    index('check_in_record_reward_status_idx').on(table.rewardStatus),
     check(
       'check_in_record_record_type_valid_chk',
       sql`${table.recordType} in (1, 2)`,
-    ),
-    check(
-      'check_in_record_reward_status_valid_chk',
-      sql`${table.rewardStatus} is null or ${table.rewardStatus} in (0, 1, 2)`,
-    ),
-    check(
-      'check_in_record_reward_result_type_valid_chk',
-      sql`${table.rewardResultType} is null or ${table.rewardResultType} in (1, 2, 3)`,
     ),
     check(
       'check_in_record_operator_type_valid_chk',
@@ -105,36 +86,18 @@ export const checkInRecord = pgTable(
       sql`${table.resolvedRewardSourceType} is null or ${table.resolvedRewardSourceType} in (1, 2, 3)`,
     ),
     check(
-      'check_in_record_reward_state_consistent_chk',
-      sql`(
-      ${table.rewardStatus} is null
-      and ${table.rewardResultType} is null
-      and ${table.rewardSettledAt} is null
-    ) or (
-      ${table.rewardStatus} = 0
-      and ${table.rewardResultType} is null
-      and ${table.rewardSettledAt} is null
-    ) or (
-      ${table.rewardStatus} = 1
-      and ${table.rewardResultType} in (1, 2)
-      and ${table.rewardSettledAt} is not null
-    ) or (
-      ${table.rewardStatus} = 2
-      and ${table.rewardResultType} = 3
-      and ${table.rewardSettledAt} is not null
-    )`,
+      'check_in_record_reward_settlement_id_positive_chk',
+      sql`${table.rewardSettlementId} is null or ${table.rewardSettlementId} > 0`,
     ),
     check(
       'check_in_record_reward_resolution_consistent_chk',
       sql`(
-      ${table.rewardStatus} is null
+      ${table.resolvedRewardItems} is null
       and ${table.resolvedRewardSourceType} is null
       and ${table.resolvedRewardRuleKey} is null
-      and ${table.resolvedRewardConfig} is null
     ) or (
-      ${table.rewardStatus} in (0, 1, 2)
+      ${table.resolvedRewardItems} is not null
       and ${table.resolvedRewardSourceType} in (1, 2, 3)
-      and ${table.resolvedRewardConfig} is not null
     )`,
     ),
   ],

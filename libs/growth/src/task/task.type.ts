@@ -1,4 +1,9 @@
-import type { Task, TaskAssignment, TaskProgressLogInsert } from '@db/schema'
+import type {
+  GrowthRewardSettlement,
+  Task,
+  TaskAssignment,
+  TaskProgressLogInsert,
+} from '@db/schema'
 
 import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
 import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant';
@@ -8,9 +13,10 @@ import type {
 } from '@libs/platform/types'
 import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
+import type { GrowthRewardSettlementStatusEnum } from '../growth-reward/growth-reward.constant'
 import type { GrowthRuleTypeEnum } from '../growth-rule.constant'
+import type { GrowthRewardItem } from '../reward-rule/reward-item.type'
 import type {
-  TaskAssignmentRewardStatusEnum,
   TaskAssignmentStatusEnum,
   TaskObjectiveTypeEnum,
   TaskProgressActionTypeEnum,
@@ -27,16 +33,7 @@ import type {
 /** 稳定领域类型 `TaskQueryOrderByInput`。仅供内部领域/服务链路复用，避免重复定义。 */
 export type TaskQueryOrderByInput = QueryOrderByInput
 
-/**
- * 任务奖励配置。
- *
- * 当前任务域只支持积分和经验两类成长奖励，字段值统一要求为正整数。
- */
-/** 稳定领域类型 `TaskRewardConfig`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface TaskRewardConfig {
-  points?: number
-  experience?: number
-}
+export type TaskRewardItems = GrowthRewardItem[]
 
 /**
  * 任务重复规则。
@@ -78,7 +75,7 @@ export type TaskSnapshotSource = Pick<
   | 'repeatRule'
   | 'publishStartAt'
   | 'publishEndAt'
-  | 'rewardConfig'
+  | 'rewardItems'
   | 'targetCount'
 >
 
@@ -219,8 +216,8 @@ export interface ApplyAssignmentEventProgressInput {
  */
 export interface ResolveTaskUserVisibleStatusInput {
   status: TaskAssignmentStatusEnum
-  rewardStatus?: TaskAssignmentRewardStatusEnum | null
-  rewardConfig?: Task['rewardConfig'] | null
+  rewardApplicable: boolean
+  rewardSettlementStatus?: GrowthRewardSettlementStatusEnum | null
 }
 
 /**
@@ -250,7 +247,7 @@ export interface TaskRelationRow {
   objectiveType: Task['objectiveType'] | null
   eventCode: Task['eventCode'] | null
   objectiveConfig: Task['objectiveConfig'] | null
-  rewardConfig: Task['rewardConfig'] | null
+  rewardItems: Task['rewardItems'] | null
   targetCount: Task['targetCount'] | null
   completeMode: Task['completeMode'] | null
   claimMode: Task['claimMode'] | null
@@ -261,14 +258,32 @@ export interface TaskRelationRow {
  */
 export interface TaskAssignmentWithTaskRow extends TaskAssignment {
   task?: TaskRelationRow | null
+  rewardSettlement?: TaskRewardSettlementRelationRow | null
+}
+
+/**
+ * assignment 关联的奖励结算摘要行。
+ */
+export interface TaskRewardSettlementRelationRow {
+  id: GrowthRewardSettlement['id']
+  settlementStatus: GrowthRewardSettlement['settlementStatus']
+  settlementResultType: GrowthRewardSettlement['settlementResultType']
+  retryCount: GrowthRewardSettlement['retryCount']
+  lastRetryAt: GrowthRewardSettlement['lastRetryAt']
+  settledAt: GrowthRewardSettlement['settledAt']
+  lastError: GrowthRewardSettlement['lastError']
+  ledgerRecordIds: GrowthRewardSettlement['ledgerRecordIds']
 }
 
 /**
  * 构建奖励结算最小任务视图时使用的 live task 来源。
  */
-export type TaskRewardTaskRecordBuildCurrentTaskInput = Partial<
-  Omit<TaskRewardTaskRecord, 'id'>
->
+export interface TaskRewardTaskRecordBuildCurrentTaskInput {
+  code?: Task['code'] | null
+  title?: Task['title'] | null
+  type?: Task['type'] | null
+  rewardItems?: unknown
+}
 
 /**
  * 构建奖励结算最小任务视图时使用的 assignment 来源。
@@ -286,7 +301,7 @@ export interface TaskRewardTaskRecord {
   code?: Task['code'] | null
   title?: Task['title'] | null
   type?: Task['type'] | null
-  rewardConfig: Task['rewardConfig'] | undefined
+  rewardItems: TaskRewardItems | null | undefined
 }
 
 /**
@@ -294,7 +309,7 @@ export interface TaskRewardTaskRecord {
  */
 export type TaskCompleteEventTaskInput = Pick<
   TaskRewardTaskRecord,
-  'id' | 'title' | 'rewardConfig'
+  'id' | 'title' | 'rewardItems'
 >
 
 /**
@@ -310,7 +325,7 @@ export interface TaskCompleteEventAssignmentInput {
  */
 export type TaskRewardSettlementTaskInput = Pick<
   TaskRewardTaskRecord,
-  'id' | 'rewardConfig'
+  'id' | 'rewardItems'
 >
 
 /**
@@ -318,8 +333,10 @@ export type TaskRewardSettlementTaskInput = Pick<
  */
 export type TaskRewardSettlementAssignmentInput = Pick<
   TaskAssignment,
-  'id' | 'rewardStatus'
->
+  'id' | 'rewardApplicable' | 'rewardSettlementId'
+> & {
+  rewardSettlement?: TaskRewardSettlementRelationRow | null
+}
 
 /**
  * 奖励到账提醒复用的最小任务视图。
@@ -378,8 +395,7 @@ export interface TaskExpiringSoonReminderEventInput
  */
 export interface TaskRewardGrantedReminderEventInput
   extends TaskReminderBaseInput {
-  points: number
-  experience: number
+  rewardItems: TaskRewardItems
   ledgerRecordIds: number[]
 }
 
@@ -390,8 +406,7 @@ export interface TaskReminderNotificationEventInput
   extends TaskReminderBaseInput {
   reminderKind: TaskReminderKindEnum
   expiredAt?: NonNullable<TaskAssignment['expiredAt']>
-  points?: number
-  experience?: number
+  rewardItems?: TaskRewardItems
   ledgerRecordIds?: number[]
 }
 
@@ -399,8 +414,7 @@ export interface TaskReminderNotificationEventInput
  * 任务提醒 payload 中的奖励摘要。
  */
 export interface TaskReminderRewardSummary {
-  points: number
-  experience: number
+  rewardItems: TaskRewardItems
   ledgerRecordIds: number[]
 }
 
@@ -420,9 +434,6 @@ export interface TaskReminderNotificationPayload {
   expiredAt?: NonNullable<TaskAssignment['expiredAt']>
   actionUrl: '/task/my' | '/task/available'
   rewardSummary?: TaskReminderRewardSummary
-  points?: number
-  experience?: number
-  ledgerRecordIds?: number[]
 }
 
 /**

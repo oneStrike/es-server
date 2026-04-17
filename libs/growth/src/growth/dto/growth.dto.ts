@@ -3,6 +3,7 @@ import {
   EventDefinitionGovernanceGateEnum,
   EventDefinitionImplStatusEnum,
 } from '@libs/growth/event-definition/event-definition.type'
+import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import { TaskTypeEnum } from '@libs/growth/task/task.constant'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
@@ -39,7 +40,7 @@ export class QueryGrowthRuleEventFilterDto {
   hasTask?: boolean
 
   @BooleanProperty({
-    description: '是否只看已配置基础奖励的事件（积分或经验任一存在即可）',
+    description: '是否只看已配置任一基础奖励资产的事件',
     example: true,
     required: false,
   })
@@ -52,6 +53,22 @@ export class QueryGrowthRuleEventPageDto extends IntersectionType(
 ) {}
 
 export class GrowthRuleAssetSummaryDto {
+  @EnumProperty({
+    description: '资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）',
+    example: GrowthRewardRuleAssetTypeEnum.POINTS,
+    enum: GrowthRewardRuleAssetTypeEnum,
+    validation: false,
+  })
+  assetType!: GrowthRewardRuleAssetTypeEnum
+
+  @StringProperty({
+    description: '资产键；积分/经验为空字符串，扩展资产使用稳定业务键',
+    example: '',
+    required: false,
+    validation: false,
+  })
+  assetKey?: string
+
   @BooleanProperty({
     description: '该资产规则是否存在',
     example: true,
@@ -243,21 +260,12 @@ export class GrowthRuleEventPageItemDto {
   })
   hasTask!: boolean
 
-  @NestedProperty({
-    description: '积分基础奖励规则摘要',
-    type: GrowthRuleAssetSummaryDto,
+  @ArrayProperty({
+    description: '基础奖励资产规则摘要列表',
+    itemClass: GrowthRuleAssetSummaryDto,
     validation: false,
-    nullable: false,
   })
-  pointRule!: GrowthRuleAssetSummaryDto
-
-  @NestedProperty({
-    description: '经验基础奖励规则摘要',
-    type: GrowthRuleAssetSummaryDto,
-    validation: false,
-    nullable: false,
-  })
-  experienceRule!: GrowthRuleAssetSummaryDto
+  assetRules!: GrowthRuleAssetSummaryDto[]
 
   @NestedProperty({
     description: '关联任务摘要',
