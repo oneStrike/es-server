@@ -147,4 +147,41 @@ describe('MessageNotificationSubjectPayloadService', () => {
       },
     })
   })
+
+  it('re-enriches a minimal canonical topic subject snapshot', async () => {
+    const service = new MessageNotificationSubjectPayloadService(
+      createDrizzleServiceStub({
+        forumTopic: {
+          id: 12,
+          title: '重建后的主题标题',
+          sectionId: 7,
+          images: ['https://example.com/rebuilt-topic-cover.png'],
+        },
+      }),
+    )
+
+    const payload = await service.normalizePayload(
+      MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.TOPIC_LIKE,
+      {
+        actorNickname: '周六',
+        subject: {
+          kind: 'topic',
+          id: 12,
+        },
+      },
+    )
+
+    expect(payload).toEqual({
+      actorNickname: '周六',
+      subject: {
+        kind: 'topic',
+        id: 12,
+        title: '重建后的主题标题',
+        cover: 'https://example.com/rebuilt-topic-cover.png',
+        extra: {
+          sectionId: 7,
+        },
+      },
+    })
+  })
 })

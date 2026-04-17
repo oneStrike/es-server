@@ -200,7 +200,11 @@ WITH "topic_source" AS (
     "n"."id",
     "n"."category_key",
     "n"."payload",
-    COALESCE(("n"."payload" ->> 'topicId')::integer, ("n"."payload" ->> 'targetId')::integer) AS "topic_id",
+    COALESCE(
+      ("n"."payload" ->> 'topicId')::integer,
+      ("n"."payload" ->> 'targetId')::integer,
+      ("n"."payload" -> 'subject' ->> 'id')::integer
+    ) AS "topic_id",
     "t"."title" AS "topic_title",
     "t"."section_id" AS "section_id",
     "t"."images"[1] AS "topic_cover"

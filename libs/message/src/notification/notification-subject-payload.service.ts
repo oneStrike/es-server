@@ -1,4 +1,3 @@
-import type { DrizzleService } from '@db/core'
 import type { StructuredValue } from '@libs/platform/utils/jsonParse'
 import type {
   NotificationPayloadNormalizationResult,
@@ -7,6 +6,7 @@ import type {
   NotificationPayloadSubjectKind,
 } from './notification-subject-payload.type'
 import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
+import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import {
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
@@ -268,7 +268,11 @@ export class MessageNotificationSubjectPayloadService {
     existingParentSubject?: NotificationPayloadSubject,
   ) {
     if (existingSubject) {
-      if (existingSubject.kind !== 'chapter' || existingParentSubject) {
+      if (
+        !isMinimalSubject(existingSubject) &&
+        (existingSubject.kind !== 'chapter' ||
+          (existingParentSubject && !isMinimalSubject(existingParentSubject)))
+      ) {
         return {
           subject: existingSubject,
           parentSubject: existingParentSubject,
