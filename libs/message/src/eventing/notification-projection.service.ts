@@ -2,6 +2,7 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
+import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 import type {
   NotificationProjectionApplyResult,
   NotificationProjectionCommand,
@@ -11,8 +12,38 @@ import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageNotificationPreferenceService } from '../notification/notification-preference.service'
-import { MessageNotificationSubjectPayloadService } from '../notification/notification-subject-payload.service'
 import { MessageNotificationTemplateService } from '../notification/notification-template.service'
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function toPositiveInteger(value: unknown) {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
+    return value
+  }
+  return undefined
+}
+
+function toNonEmptyString(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value
+    : undefined
+}
+
+function firstNonEmptyString(values: unknown) {
+  if (!Array.isArray(values)) {
+    return undefined
+  }
+  return values.find((value) => typeof value === 'string' && value.trim()) as
+    | string
+    | undefined
+}
+
+function compactRecord<T extends Record<string, unknown>>(value: T) {
+  const entries = Object.entries(value).filter(([, item]) => item !== undefined)
+  return Object.fromEntries(entries) as T
+}
 
 /**
  * 通知投影服务。
@@ -23,7 +54,6 @@ export class NotificationProjectionService {
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly messageNotificationPreferenceService: MessageNotificationPreferenceService,
-    private readonly messageNotificationSubjectPayloadService: MessageNotificationSubjectPayloadService,
     private readonly messageNotificationTemplateService: MessageNotificationTemplateService,
     private readonly messageInboxService: MessageInboxService,
   ) {}
@@ -86,11 +116,10 @@ export class NotificationProjectionService {
       }
     }
 
-    const normalizedPayload =
-      await this.messageNotificationSubjectPayloadService.normalizePayload(
-        command.categoryKey,
-        command.payload,
-      )
+    const normalizedPayload = await this.normalizeNotificationPayload(
+      command.categoryKey,
+      command.payload,
+    )
     const rendered =
       await this.messageNotificationTemplateService.renderNotificationTemplate({
         categoryKey: command.categoryKey,
@@ -98,7 +127,7 @@ export class NotificationProjectionService {
         actorUserId: command.actorUserId,
         title: command.title,
         content: command.content,
-        payload: normalizedPayload,
+        data: normalizedPayload,
         expiresAt: command.expiresAt,
       })
 
@@ -208,5 +237,272 @@ export class NotificationProjectionService {
         gt(this.notification.expiresAt, now),
       ),
     )
+  }
+
+  private async normalizeNotificationPayload(
+    categoryKey: MessageNotificationCategoryKey,
+    payload?: Record<string, unknown> | null,
+  ) {
+    if (payload === null || payload === undefined) {
+      return null
+    }
+    if (!isPlainRecord(payload)) {
+      return null
+    }
+    if (categoryKey === 'task_reminder') {
+      return this.normalizeTaskReminderPayload(payload)
+    }
+    if (
+      categoryKey === 'comment_reply' ||
+      categoryKey === 'comment_mention' ||
+      categoryKey === 'comment_like'
+    ) {
+      return this.normalizeCommentActionPayload(payload)
+    }
+    return payload
+  }
+
+  private normalizeTaskReminderPayload(payload: Record<string, unknown>) {
+    const normalized = compactRecord({
+      object: isPlainRecord(payload.object) ? payload.object : undefined,
+      reminder: isPlainRecord(payload.reminder) ? payload.reminder : undefined,
+      reward: isPlainRecord(payload.reward) ? payload.reward : undefined,
+    })
+
+    return Object.keys(normalized).length > 0 ? normalized : null
+  }
+
+  private async normalizeCommentActionPayload(
+    payload: Record<string, unknown>,
+  ) {
+    const object = isPlainRecord(payload.object) ? payload.object : undefined
+    const container = isPlainRecord(payload.container)
+      ? payload.container
+      : undefined
+    const currentParentContainer = isPlainRecord(payload.parentContainer)
+      ? payload.parentContainer
+      : undefined
+
+    if (!object || !container) {
+      return payload
+    }
+
+    const normalizedObject = await this.normalizeCommentObject(object)
+    const normalizedContainer = await this.normalizeCommentContainer(
+      container,
+      currentParentContainer,
+    )
+
+    return compactRecord({
+      object: normalizedObject,
+      container: normalizedContainer.container,
+      parentContainer:
+        normalizedContainer.parentContainer ?? currentParentContainer,
+    })
+  }
+
+  private async normalizeCommentObject(object: Record<string, unknown>) {
+    if (object.kind !== 'comment') {
+      return object
+    }
+
+    const commentId = toPositiveInteger(object.id)
+    if (!commentId) {
+      return object
+    }
+
+    const commentRecord =
+      toNonEmptyString(object.snippet) === undefined
+        ? await this.db.query.userComment.findFirst({
+            where: {
+              id: commentId,
+              deletedAt: { isNull: true },
+            },
+            columns: {
+              content: true,
+            },
+          })
+        : undefined
+
+    return compactRecord({
+      kind: 'comment',
+      id: commentId,
+      snippet:
+        toNonEmptyString(object.snippet) ??
+        toNonEmptyString(commentRecord?.content) ??
+        undefined,
+    })
+  }
+
+  private async normalizeCommentContainer(
+    container: Record<string, unknown>,
+    parentContainer?: Record<string, unknown>,
+  ): Promise<{
+    container: Record<string, unknown>
+    parentContainer?: Record<string, unknown>
+  }> {
+    const containerId = toPositiveInteger(container.id)
+    if (!containerId || typeof container.kind !== 'string') {
+      return {
+        container,
+        parentContainer,
+      }
+    }
+
+    if (container.kind === 'work') {
+      return {
+        container: await this.normalizeWorkContainer(containerId, container),
+        parentContainer,
+      }
+    }
+    if (container.kind === 'topic') {
+      return {
+        container: await this.normalizeTopicContainer(containerId, container),
+        parentContainer,
+      }
+    }
+    if (container.kind === 'chapter') {
+      return this.normalizeChapterContainer(
+        containerId,
+        container,
+        parentContainer,
+      )
+    }
+
+    return {
+      container,
+      parentContainer,
+    }
+  }
+
+  private async normalizeWorkContainer(
+    workId: number,
+    current: Record<string, unknown>,
+  ) {
+    const work = await this.db.query.work.findFirst({
+      where: {
+        id: workId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        name: true,
+        cover: true,
+        type: true,
+      },
+    })
+
+    return compactRecord({
+      kind: 'work',
+      id: workId,
+      title: toNonEmptyString(work?.name) ?? toNonEmptyString(current.title),
+      cover: toNonEmptyString(work?.cover) ?? toNonEmptyString(current.cover),
+      workType:
+        toPositiveInteger(work?.type) ?? toPositiveInteger(current.workType),
+    })
+  }
+
+  private async normalizeTopicContainer(
+    topicId: number,
+    current: Record<string, unknown>,
+  ) {
+    const topic = await this.db.query.forumTopic.findFirst({
+      where: {
+        id: topicId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        title: true,
+        sectionId: true,
+        images: true,
+      },
+    })
+
+    return compactRecord({
+      kind: 'topic',
+      id: topicId,
+      title: toNonEmptyString(topic?.title) ?? toNonEmptyString(current.title),
+      cover:
+        firstNonEmptyString(topic?.images) ?? toNonEmptyString(current.cover),
+      sectionId:
+        toPositiveInteger(topic?.sectionId) ??
+        toPositiveInteger(current.sectionId),
+    })
+  }
+
+  private async normalizeChapterContainer(
+    chapterId: number,
+    current: Record<string, unknown>,
+    parentContainer?: Record<string, unknown>,
+  ) {
+    const chapter = await this.db.query.workChapter.findFirst({
+      where: {
+        id: chapterId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        title: true,
+        subtitle: true,
+        cover: true,
+        workId: true,
+        workType: true,
+      },
+      with: {
+        work: {
+          columns: {
+            id: true,
+            name: true,
+            cover: true,
+            type: true,
+          },
+        },
+      },
+    })
+
+    const resolvedParentContainer =
+      chapter?.workId || toPositiveInteger(parentContainer?.id)
+        ? compactRecord({
+            kind: 'work',
+            id: chapter?.workId ?? toPositiveInteger(parentContainer?.id),
+            title:
+              toNonEmptyString(chapter?.work?.name) ??
+              toNonEmptyString(parentContainer?.title),
+            cover:
+              toNonEmptyString(chapter?.work?.cover) ??
+              toNonEmptyString(parentContainer?.cover),
+            workType:
+              toPositiveInteger(chapter?.work?.type) ??
+              toPositiveInteger(parentContainer?.workType),
+          })
+        : undefined
+
+    return {
+      container: compactRecord({
+        kind: 'chapter',
+        id: chapterId,
+        title:
+          toNonEmptyString(chapter?.title) ?? toNonEmptyString(current.title),
+        subtitle:
+          toNonEmptyString(chapter?.subtitle) ??
+          toNonEmptyString(current.subtitle),
+        cover:
+          toNonEmptyString(chapter?.cover) ??
+          toNonEmptyString(chapter?.work?.cover) ??
+          toNonEmptyString(current.cover),
+        workId:
+          toPositiveInteger(chapter?.workId) ??
+          toPositiveInteger(current.workId),
+        workType:
+          toPositiveInteger(chapter?.workType) ??
+          toPositiveInteger(current.workType),
+      }),
+      parentContainer:
+        resolvedParentContainer &&
+        typeof resolvedParentContainer.id === 'number'
+          ? resolvedParentContainer
+          : parentContainer,
+    }
   }
 }

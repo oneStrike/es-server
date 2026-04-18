@@ -1,4 +1,5 @@
 import type { PublishMessageDomainEventInput } from './message-event.type'
+import { CommentTargetTypeEnum } from '@libs/interaction/comment/comment.constant'
 import { Injectable } from '@nestjs/common'
 
 const MESSAGE_NOTIFICATION_WHITESPACE_REGEX = /\s+/g
@@ -18,7 +19,9 @@ export class MessageDomainEventFactoryService {
   }
 
   private normalizeDisplayText(value?: string) {
-    const normalized = value?.replace(MESSAGE_NOTIFICATION_WHITESPACE_REGEX, ' ').trim()
+    const normalized = value
+      ?.replace(MESSAGE_NOTIFICATION_WHITESPACE_REGEX, ' ')
+      .trim()
     return normalized || undefined
   }
 
@@ -27,10 +30,65 @@ export class MessageDomainEventFactoryService {
     if (!normalized) {
       return undefined
     }
-    if (normalized.length <= MessageDomainEventFactoryService.EXCERPT_MAX_LENGTH) {
+    if (
+      normalized.length <= MessageDomainEventFactoryService.EXCERPT_MAX_LENGTH
+    ) {
       return normalized
     }
-    return `${normalized.slice(0, MessageDomainEventFactoryService.EXCERPT_MAX_LENGTH).trimEnd()}...`
+    return `${normalized
+      .slice(0, MessageDomainEventFactoryService.EXCERPT_MAX_LENGTH)
+      .trimEnd()}...`
+  }
+
+  private buildCommentSnapshot(commentId: number, snippet?: string) {
+    return {
+      kind: 'comment' as const,
+      id: commentId,
+      snippet,
+    }
+  }
+
+  private buildCommentContainerSnapshot(
+    targetType: number,
+    targetId: number,
+    title?: string,
+  ) {
+    switch (targetType) {
+      case CommentTargetTypeEnum.COMIC:
+      case CommentTargetTypeEnum.NOVEL:
+        return {
+          kind: 'work' as const,
+          id: targetId,
+          title,
+        }
+      case CommentTargetTypeEnum.COMIC_CHAPTER:
+      case CommentTargetTypeEnum.NOVEL_CHAPTER:
+        return {
+          kind: 'chapter' as const,
+          id: targetId,
+          title,
+        }
+      case CommentTargetTypeEnum.FORUM_TOPIC:
+        return {
+          kind: 'topic' as const,
+          id: targetId,
+          title,
+        }
+      default:
+        return {
+          kind: 'topic' as const,
+          id: targetId,
+          title,
+        }
+    }
+  }
+
+  private buildTopicSnapshot(topicId: number, title?: string) {
+    return {
+      kind: 'topic' as const,
+      id: topicId,
+      title,
+    }
   }
 
   buildCommentMentionEvent(input: {
@@ -44,8 +102,12 @@ export class MessageDomainEventFactoryService {
     targetDisplayTitle?: string
   }): PublishMessageDomainEventInput {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
-    const targetDisplayTitle = this.normalizeDisplayText(input.targetDisplayTitle)
-    const commentExcerpt = this.normalizeExcerpt(input.commentExcerpt) ?? targetDisplayTitle
+    const targetDisplayTitle = this.normalizeDisplayText(
+      input.targetDisplayTitle,
+    )
+    const commentExcerpt =
+      this.normalizeExcerpt(input.commentExcerpt) ?? targetDisplayTitle
+
     return {
       eventKey: 'comment.mentioned',
       subjectType: 'user',
@@ -59,12 +121,12 @@ export class MessageDomainEventFactoryService {
         title: `${actorNickname} 在评论中提到了你`,
         content: commentExcerpt ?? '你在评论中被提及了',
         payload: {
-          actorNickname,
-          commentExcerpt,
-          targetDisplayTitle,
-          commentId: input.commentId,
-          targetType: input.targetType,
-          targetId: input.targetId,
+          object: this.buildCommentSnapshot(input.commentId, commentExcerpt),
+          container: this.buildCommentContainerSnapshot(
+            input.targetType,
+            input.targetId,
+            targetDisplayTitle,
+          ),
         },
       },
     }
@@ -79,6 +141,7 @@ export class MessageDomainEventFactoryService {
   }): PublishMessageDomainEventInput {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const topicTitle = this.normalizeTopicTitle(input.topicTitle)
+
     return {
       eventKey: 'topic.mentioned',
       subjectType: 'user',
@@ -92,9 +155,7 @@ export class MessageDomainEventFactoryService {
         title: `${actorNickname} 在主题中提到了你`,
         content: topicTitle,
         payload: {
-          actorNickname,
-          topicTitle,
-          topicId: input.topicId,
+          object: this.buildTopicSnapshot(input.topicId, topicTitle),
         },
       },
     }
@@ -107,8 +168,11 @@ export class MessageDomainEventFactoryService {
     targetType: number
     targetId: number
     actorNickname?: string
+    commentExcerpt?: string
   }): PublishMessageDomainEventInput {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
+    const commentExcerpt = this.normalizeExcerpt(input.commentExcerpt)
+
     return {
       eventKey: 'comment.liked',
       subjectType: 'user',
@@ -120,12 +184,13 @@ export class MessageDomainEventFactoryService {
         receiverUserId: input.receiverUserId,
         projectionKey: `notify:comment:like:${input.commentId}:actor:${input.actorUserId}:receiver:${input.receiverUserId}`,
         title: `${actorNickname} 点赞了你的评论`,
-        content: `${actorNickname} 点赞了你的评论`,
+        content: commentExcerpt ?? `${actorNickname} 点赞了你的评论`,
         payload: {
-          actorNickname,
-          commentId: input.commentId,
-          targetType: input.targetType,
-          targetId: input.targetId,
+          object: this.buildCommentSnapshot(input.commentId, commentExcerpt),
+          container: this.buildCommentContainerSnapshot(
+            input.targetType,
+            input.targetId,
+          ),
         },
       },
     }
@@ -151,11 +216,7 @@ export class MessageDomainEventFactoryService {
         projectionKey: `notify:follow:${input.targetType}:${input.targetId}:actor:${input.actorUserId}:receiver:${input.receiverUserId}`,
         title: `${actorNickname} 关注了你`,
         content: `${actorNickname} 关注了你`,
-        payload: {
-          actorNickname,
-          targetType: input.targetType,
-          targetId: input.targetId,
-        },
+        payload: null,
       },
     }
   }
@@ -183,10 +244,7 @@ export class MessageDomainEventFactoryService {
         title: `${actorNickname} 点赞了你的主题`,
         content: topicTitle,
         payload: {
-          actorNickname,
-          topicTitle,
-          targetType: input.targetType,
-          targetId: input.targetId,
+          object: this.buildTopicSnapshot(input.targetId, topicTitle),
         },
       },
     }
@@ -215,10 +273,7 @@ export class MessageDomainEventFactoryService {
         title: `${actorNickname} 收藏了你的主题`,
         content: topicTitle,
         payload: {
-          actorNickname,
-          topicTitle,
-          targetType: input.targetType,
-          targetId: input.targetId,
+          object: this.buildTopicSnapshot(input.targetId, topicTitle),
         },
       },
     }
@@ -236,7 +291,8 @@ export class MessageDomainEventFactoryService {
   }): PublishMessageDomainEventInput {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const topicTitle = this.normalizeTopicTitle(input.topicTitle)
-    const commentExcerpt = this.normalizeExcerpt(input.commentExcerpt) ?? topicTitle
+    const commentExcerpt =
+      this.normalizeExcerpt(input.commentExcerpt) ?? topicTitle
     return {
       eventKey: 'topic.commented',
       subjectType: 'user',
@@ -250,12 +306,8 @@ export class MessageDomainEventFactoryService {
         title: `${actorNickname} 评论了你的主题`,
         content: commentExcerpt,
         payload: {
-          actorNickname,
-          topicTitle,
-          commentExcerpt,
-          commentId: input.commentId,
-          targetType: input.targetType,
-          targetId: input.targetId,
+          object: this.buildCommentSnapshot(input.commentId, commentExcerpt),
+          container: this.buildTopicSnapshot(input.targetId, topicTitle),
         },
       },
     }
@@ -272,8 +324,11 @@ export class MessageDomainEventFactoryService {
     targetDisplayTitle?: string
   }): PublishMessageDomainEventInput {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
-    const targetDisplayTitle = this.normalizeDisplayText(input.targetDisplayTitle)
-    const replyExcerpt = this.normalizeExcerpt(input.replyExcerpt) ?? targetDisplayTitle
+    const targetDisplayTitle = this.normalizeDisplayText(
+      input.targetDisplayTitle,
+    )
+    const replyExcerpt =
+      this.normalizeExcerpt(input.replyExcerpt) ?? targetDisplayTitle
     return {
       eventKey: 'comment.replied',
       subjectType: 'user',
@@ -287,12 +342,12 @@ export class MessageDomainEventFactoryService {
         title: `${actorNickname} 回复了你的评论`,
         content: replyExcerpt ?? '你收到了一条新的评论回复',
         payload: {
-          actorNickname,
-          replyExcerpt,
-          targetDisplayTitle,
-          commentId: input.commentId,
-          targetType: input.targetType,
-          targetId: input.targetId,
+          object: this.buildCommentSnapshot(input.commentId, replyExcerpt),
+          container: this.buildCommentContainerSnapshot(
+            input.targetType,
+            input.targetId,
+            targetDisplayTitle,
+          ),
         },
       },
     }

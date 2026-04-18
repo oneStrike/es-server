@@ -2,9 +2,7 @@ import type { Db } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { appUser, userComment } from '@db/schema'
 
-import {
-  MessageDomainEventFactoryService,
-} from '@libs/message/eventing/message-domain-event.factory'
+import { MessageDomainEventFactoryService } from '@libs/message/eventing/message-domain-event.factory'
 import { MessageDomainEventPublisher as MessageDomainEventPublisherService } from '@libs/message/eventing/message-domain-event.publisher'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { CommentLevelEnum } from '@libs/platform/constant/interaction.constant'
@@ -147,6 +145,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
       columns: {
         id: true,
         userId: true,
+        content: true,
         targetType: true,
         targetId: true,
       },
@@ -170,6 +169,7 @@ export class CommentLikeResolver implements ILikeTargetResolver, OnModuleInit {
         targetType: comment.targetType,
         targetId: comment.targetId,
         actorNickname: actor?.nickname ?? undefined,
+        commentExcerpt: comment.content,
       }),
     )
   }

@@ -1,6 +1,10 @@
 import type { Db, DrizzleService } from '@db/core'
 
-import type { TaskAssignmentInsert, TaskAssignmentSelect, TaskSelect } from '@db/schema'
+import type {
+  TaskAssignmentInsert,
+  TaskAssignmentSelect,
+  TaskSelect,
+} from '@db/schema'
 
 import type { MessageDomainEventPublisher } from '@libs/message/eventing/message-domain-event.publisher'
 import type { PublishMessageDomainEventInput } from '@libs/message/eventing/message-event.type'
@@ -321,7 +325,9 @@ export abstract class TaskServiceSupport {
           this.growthRewardSettlementTable.id,
         ),
       )
-      .where(taskWhereClause ? whereClause : (whereClause ?? assignmentWhereClause))
+      .where(
+        taskWhereClause ? whereClause : (whereClause ?? assignmentWhereClause),
+      )
     return countResult?.count ?? 0
   }
 
@@ -386,9 +392,7 @@ export abstract class TaskServiceSupport {
    *
    * 当前任务奖励正式合同为 `rewardItems[]`，且只接受积分/经验两类资产。
    */
-  protected parseTaskRewardItems(
-    value?: unknown,
-  ) {
+  protected parseTaskRewardItems(value?: unknown) {
     if (value === undefined || value === '') {
       return undefined
     }
@@ -596,11 +600,9 @@ export abstract class TaskServiceSupport {
 
     const assetType = Number(record.assetType)
     if (
-      !Number.isInteger(assetType)
-      || (
-        assetType !== GrowthRewardRuleAssetTypeEnum.POINTS
-        && assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
-      )
+      !Number.isInteger(assetType) ||
+      (assetType !== GrowthRewardRuleAssetTypeEnum.POINTS &&
+        assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE)
     ) {
       throw new BadRequestException(
         `rewardItems[${index}].assetType 仅支持 1=积分、2=经验`,
@@ -826,10 +828,10 @@ export abstract class TaskServiceSupport {
       JSON.stringify(
         this.asRecord(dto.objectiveConfig) ?? dto.objectiveConfig ?? null,
       ) !==
-      JSON.stringify(
+        JSON.stringify(
           this.asRecord(taskRecord.objectiveConfig) ??
-          taskRecord.objectiveConfig ??
-          null,
+            taskRecord.objectiveConfig ??
+            null,
         )
     const publishWindowChanged =
       (dto.publishStartAt !== undefined &&
@@ -837,8 +839,8 @@ export abstract class TaskServiceSupport {
           dto.publishStartAt ?? null,
           taskRecord.publishStartAt ?? null,
         )) ||
-        (dto.publishEndAt !== undefined &&
-          !this.isSameNullableDate(
+      (dto.publishEndAt !== undefined &&
+        !this.isSameNullableDate(
           dto.publishEndAt ?? null,
           taskRecord.publishEndAt ?? null,
         ))
@@ -1600,9 +1602,11 @@ export abstract class TaskServiceSupport {
       title: snapshotTitle ?? currentTask?.title,
       type: snapshotType ?? currentTask?.type,
       rewardItems:
-        this.parseTaskRewardItems(this.asArray(snapshot?.rewardItems) ?? null)
-        ?? this.parseTaskRewardItems(currentTask?.rewardItems ?? null)
-        ?? null,
+        this.parseTaskRewardItems(
+          this.asArray(snapshot?.rewardItems) ?? null,
+        ) ??
+        this.parseTaskRewardItems(currentTask?.rewardItems ?? null) ??
+        null,
     }
 
     return taskRecord
@@ -1673,8 +1677,8 @@ export abstract class TaskServiceSupport {
       return
     }
     if (
-      assignment.rewardSettlement?.settlementStatus
-      === GrowthRewardSettlementStatusEnum.SUCCESS
+      assignment.rewardSettlement?.settlementStatus ===
+      GrowthRewardSettlementStatusEnum.SUCCESS
     ) {
       return
     }
@@ -1726,19 +1730,17 @@ export abstract class TaskServiceSupport {
         })
 
       const settlement =
-        createdSettlement
-        ?? (
-          await tx.query.growthRewardSettlement.findFirst({
-            where: {
-              userId: params.userId,
-              bizKey,
-            },
-            columns: {
-              id: true,
-              bizKey: true,
-            },
-          })
-        )
+        createdSettlement ??
+        (await tx.query.growthRewardSettlement.findFirst({
+          where: {
+            userId: params.userId,
+            bizKey,
+          },
+          columns: {
+            id: true,
+            bizKey: true,
+          },
+        }))
 
       if (!settlement) {
         throw new BusinessException(
@@ -2102,7 +2104,7 @@ export abstract class TaskServiceSupport {
       ),
       objectiveType: normalizeTaskObjectiveType(
         this.readSnapshotPositiveInt(snapshot?.objectiveType) ??
-        liveTask?.objectiveType,
+          liveTask?.objectiveType,
       ),
       eventCode:
         this.readSnapshotPositiveInt(snapshot?.eventCode) ??
@@ -2111,9 +2113,11 @@ export abstract class TaskServiceSupport {
       objectiveConfig:
         snapshot?.objectiveConfig ?? liveTask?.objectiveConfig ?? null,
       rewardItems:
-        this.parseTaskRewardItems(this.asArray(snapshot?.rewardItems) ?? null)
-        ?? this.parseTaskRewardItems(liveTask?.rewardItems ?? null)
-        ?? null,
+        this.parseTaskRewardItems(
+          this.asArray(snapshot?.rewardItems) ?? null,
+        ) ??
+        this.parseTaskRewardItems(liveTask?.rewardItems ?? null) ??
+        null,
       targetCount:
         this.readSnapshotPositiveInt(snapshot?.targetCount) ??
         liveTask?.targetCount ??
@@ -2150,7 +2154,8 @@ export abstract class TaskServiceSupport {
       if (!params.rewardApplicable) {
         return TaskUserVisibleStatusEnum.COMPLETED
       }
-      return params.rewardSettlementStatus === GrowthRewardSettlementStatusEnum.SUCCESS
+      return params.rewardSettlementStatus ===
+        GrowthRewardSettlementStatusEnum.SUCCESS
         ? TaskUserVisibleStatusEnum.REWARD_GRANTED
         : TaskUserVisibleStatusEnum.REWARD_PENDING
     }
@@ -2208,16 +2213,16 @@ export abstract class TaskServiceSupport {
               this.taskAssignmentTable.status,
               TaskAssignmentStatusEnum.COMPLETED,
             ),
-          eq(this.taskAssignmentTable.rewardApplicable, 1),
-          or(
-            isNull(this.taskAssignmentTable.rewardSettlementId),
-            eq(
-              this.growthRewardSettlementTable.settlementStatus,
-              GrowthRewardSettlementStatusEnum.PENDING,
+            eq(this.taskAssignmentTable.rewardApplicable, 1),
+            or(
+              isNull(this.taskAssignmentTable.rewardSettlementId),
+              eq(
+                this.growthRewardSettlementTable.settlementStatus,
+                GrowthRewardSettlementStatusEnum.PENDING,
+              ),
             ),
           ),
-        ),
-      )
+        )
         .groupBy(this.taskAssignmentTable.taskId),
       this.queryLatestTaskReminderRows(uniqueTaskIds),
     ])
@@ -2280,10 +2285,10 @@ export abstract class TaskServiceSupport {
    * 查询任务维度最近一次提醒投递结果。
    */
   protected async queryLatestTaskReminderRows(taskIds: number[]) {
-    const taskIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' ->> 'taskId')::int`
+    const taskIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' -> 'object' ->> 'id')::int`
     const reminderKindSql = sql<
       string | null
-    >`${this.domainEventTable.context} -> 'payload' ->> 'reminderKind'`
+    >`${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'kind'`
 
     const rows = await this.db
       .select({
@@ -2374,10 +2379,10 @@ export abstract class TaskServiceSupport {
       return undefined
     }
 
-    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' ->> 'assignmentId')::int`
+    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'assignmentId')::int`
     const reminderKindSql = sql<
       string | null
-    >`${this.domainEventTable.context} -> 'payload' ->> 'reminderKind'`
+    >`${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'kind'`
     const rows = await this.db
       .select({ assignmentId: assignmentIdSql })
       .from(this.notificationDeliveryTable)
@@ -2392,7 +2397,7 @@ export abstract class TaskServiceSupport {
             this.notificationDeliveryTable.status,
             queryDto.notificationStatus,
           ),
-          eq(reminderKindSql, TaskReminderKindEnum.REWARD_GRANTED),
+          eq(reminderKindSql, 'reward_granted'),
         ),
       )
 
@@ -2514,10 +2519,10 @@ export abstract class TaskServiceSupport {
       return new Map<number, TaskAssignmentRewardReminderSummary>()
     }
 
-    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' ->> 'assignmentId')::int`
+    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'assignmentId')::int`
     const reminderKindSql = sql<
       string | null
-    >`${this.domainEventTable.context} -> 'payload' ->> 'reminderKind'`
+    >`${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'kind'`
     const rows = await this.db
       .select({
         assignmentId: assignmentIdSql,
@@ -2536,7 +2541,7 @@ export abstract class TaskServiceSupport {
         and(
           eq(this.notificationDeliveryTable.categoryKey, 'task_reminder'),
           inArray(assignmentIdSql, uniqueAssignmentIds),
-          eq(reminderKindSql, TaskReminderKindEnum.REWARD_GRANTED),
+          eq(reminderKindSql, 'reward_granted'),
         ),
       )
       .orderBy(desc(this.notificationDeliveryTable.id))
@@ -2596,18 +2601,18 @@ export abstract class TaskServiceSupport {
    *
    * 仅统计本次真实落账成功的奖励；幂等命中、失败或未配置奖励都会被过滤掉。
    */
-  protected getAppliedRewardItems(
-    rewardResult: TaskRewardSettlementResult,
-  ) {
+  protected getAppliedRewardItems(rewardResult: TaskRewardSettlementResult) {
     return rewardResult.rewardResults.flatMap((reward) => {
       if (!reward.success || reward.duplicated || reward.skipped) {
         return []
       }
-      return [{
-        assetType: reward.assetType,
-        assetKey: reward.assetKey,
-        amount: reward.configuredAmount,
-      }]
+      return [
+        {
+          assetType: reward.assetType,
+          assetKey: reward.assetKey,
+          amount: reward.configuredAmount,
+        },
+      ]
     })
   }
 

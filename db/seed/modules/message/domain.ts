@@ -1,5 +1,6 @@
 import type { Db } from '../../db-client'
 import { and, eq } from 'drizzle-orm'
+import { getCanonicalNotificationTemplateContract } from '../../../libs/message/src/notification/notification-template-contract'
 import {
   appAnnouncement,
   appUser,
@@ -12,7 +13,6 @@ import {
   userComment,
   userNotification,
 } from '../../../schema'
-import { getCanonicalNotificationTemplateContract } from '../../../libs/message/src/notification/notification-template-contract'
 import { addMinutes, SEED_ACCOUNTS, SEED_TIMELINE } from '../../shared'
 
 const templateFixtures = [
@@ -245,9 +245,10 @@ export async function seedMessageDomain(db: Db) {
         },
       })
     : null
-  const topicCommentActorNickname =
-    [userA, userB, userC].find((user) => user.id === rootReply?.userId)
-      ?.nickname ?? '有人'
+  const topicCommentActor = [userA, userB, userC].find(
+    (user) => user.id === rootReply?.userId,
+  )
+  const topicCommentActorNickname = topicCommentActor?.nickname ?? '有人'
 
   const notificationFixtures = [
     {
@@ -258,17 +259,18 @@ export async function seedMessageDomain(db: Db) {
       title: `${topicCommentActorNickname} 评论了你的主题`,
       content: '我觉得第一卷就把未来冲突埋得很深。',
       payload: {
-        actorNickname: topicCommentActorNickname,
-        commentExcerpt: '我觉得第一卷就把未来冲突埋得很深。',
-        subject: {
+        object: {
+          kind: 'comment',
+          id: rootReply?.id ?? 1,
+          snippet: '我觉得第一卷就把未来冲突埋得很深。',
+        },
+        container: {
           kind: 'topic',
           id: commentTopic?.id ?? rootReply?.targetId ?? 1,
           title: commentTopic?.title ?? '进击的巨人：前三卷伏笔整理',
           ...(commentTopic?.sectionId
             ? {
-                extra: {
-                  sectionId: commentTopic.sectionId,
-                },
+                sectionId: commentTopic.sectionId,
               }
             : {}),
         },
@@ -285,18 +287,18 @@ export async function seedMessageDomain(db: Db) {
       title: '小光 回复了你的评论',
       content: '而且艾伦和调查兵团的立场差异很早就有预警。',
       payload: {
-        actorNickname: '小光',
-        replyExcerpt: '而且艾伦和调查兵团的立场差异很早就有预警。',
-        ...(replyComment?.id ? { commentId: replyComment.id } : {}),
-        subject: {
+        object: {
+          kind: 'comment',
+          id: replyComment?.id ?? 1,
+          snippet: '而且艾伦和调查兵团的立场差异很早就有预警。',
+        },
+        container: {
           kind: 'topic',
           id: commentTopic?.id ?? rootReply?.targetId ?? 1,
           title: commentTopic?.title ?? '进击的巨人：前三卷伏笔整理',
           ...(commentTopic?.sectionId
             ? {
-                extra: {
-                  sectionId: commentTopic.sectionId,
-                },
+                sectionId: commentTopic.sectionId,
               }
             : {}),
         },
@@ -313,34 +315,17 @@ export async function seedMessageDomain(db: Db) {
       title: '春季版本更新公告',
       content: '系统已更新到 2026.03 seed 版本，包含完整联调数据。',
       payload: {
-        ...(announcement?.id ? { announcementId: announcement.id } : {}),
-        ...(announcement?.announcementType !== undefined
-          ? { announcementType: announcement.announcementType }
-          : {}),
-        ...(announcement?.priorityLevel !== undefined
-          ? { priorityLevel: announcement.priorityLevel }
-          : {}),
-        subject: {
+        object: {
           kind: 'announcement',
           id: announcement?.id ?? 42,
           title: announcement?.title ?? '春季版本更新公告',
-          ...(announcement?.announcementType !== undefined ||
-          announcement?.priorityLevel !== undefined ||
-          announcement?.summary
-            ? {
-                extra: {
-                  ...(announcement?.announcementType !== undefined
-                    ? { announcementType: announcement.announcementType }
-                    : {}),
-                  ...(announcement?.priorityLevel !== undefined
-                    ? { priorityLevel: announcement.priorityLevel }
-                    : {}),
-                  ...(announcement?.summary
-                    ? { summary: announcement.summary }
-                    : {}),
-                },
-              }
+          ...(announcement?.announcementType !== undefined
+            ? { announcementType: announcement.announcementType }
             : {}),
+          ...(announcement?.priorityLevel !== undefined
+            ? { priorityLevel: announcement.priorityLevel }
+            : {}),
+          ...(announcement?.summary ? { summary: announcement.summary } : {}),
         },
       },
       isRead: false,

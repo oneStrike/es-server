@@ -1,4 +1,5 @@
 import type { SQL } from 'drizzle-orm'
+import type { NotificationUserSnapshot } from './notification-contract.type'
 import type {
   NotificationTemplateRenderContext,
   NotificationTemplateRenderResult,
@@ -29,6 +30,8 @@ const NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST = new Set([
   'title',
   'content',
   'expiresAt',
+  'actor',
+  'data',
 ])
 
 interface NotificationTemplateCacheEntry {
@@ -39,6 +42,15 @@ interface NotificationTemplateCacheEntry {
     contentTemplate: string
   } | null
 }
+
+type NotificationTemplateContextValue =
+  | object
+  | string
+  | number
+  | boolean
+  | Date
+  | undefined
+  | null
 
 @Injectable()
 export class MessageNotificationTemplateService {
@@ -251,7 +263,7 @@ export class MessageNotificationTemplateService {
     }
 
     try {
-      const context = this.buildRenderContext(input)
+      const context = await this.buildRenderContext(input)
       return {
         title: this.renderTemplateText(
           template.titleTemplate,
@@ -281,17 +293,39 @@ export class MessageNotificationTemplateService {
     }
   }
 
-  private buildRenderContext(
+  private async buildRenderContext(
     input: RenderNotificationTemplateInput,
-  ): NotificationTemplateRenderContext {
+  ): Promise<NotificationTemplateRenderContext> {
+    let actor: NotificationUserSnapshot | undefined
+    if (typeof input.actorUserId === 'number') {
+      const actorRecord = await this.db.query.appUser.findFirst({
+        where: {
+          id: input.actorUserId,
+        },
+        columns: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+        },
+      })
+      if (actorRecord) {
+        actor = {
+          id: actorRecord.id,
+          nickname: actorRecord.nickname ?? undefined,
+          avatarUrl: actorRecord.avatarUrl ?? undefined,
+        }
+      }
+    }
+
     return {
       categoryKey: input.categoryKey,
       receiverUserId: input.receiverUserId,
       actorUserId: input.actorUserId,
+      actor,
       title: input.title,
       content: input.content,
       expiresAt: input.expiresAt,
-      payload: input.payload,
+      data: (input.data ?? null) as NotificationTemplateRenderContext['data'],
     }
   }
 
@@ -326,8 +360,7 @@ export class MessageNotificationTemplateService {
     context: NotificationTemplateRenderContext,
     path: string,
   ) {
-    let current: object | string | number | boolean | Date | undefined | null =
-      context
+    let current: NotificationTemplateContextValue = context
 
     for (const key of path.split('.')) {
       if (current === undefined || current === null) {
@@ -336,14 +369,9 @@ export class MessageNotificationTemplateService {
       if (typeof current !== 'object') {
         return undefined
       }
-      current = (current as Record<string, unknown>)[key] as
-        | object
-        | string
-        | number
-        | boolean
-        | Date
-        | undefined
-        | null
+      current = (current as Record<string, unknown>)[
+        key
+      ] as NotificationTemplateContextValue
     }
 
     return current
@@ -407,7 +435,7 @@ export class MessageNotificationTemplateService {
       if (NOTIFICATION_TEMPLATE_ROOT_FIELD_ALLOWLIST.has(path)) {
         continue
       }
-      if (!path.startsWith('payload.')) {
+      if (!path.startsWith('data.') && !path.startsWith('actor.')) {
         throw new BadRequestException(`${fieldName} 存在非法占位符: ${path}`)
       }
     }

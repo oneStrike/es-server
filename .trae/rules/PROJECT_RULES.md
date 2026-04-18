@@ -99,6 +99,7 @@
 - 禁止新增纯别名 DTO 或 DTO barrel。
 - `contract: false` 用于排除不对外字段。
 - 枚举数组字段统一使用 `ArrayProperty` + `itemEnum`，类型为 `XxxEnum[]`。
+- 若 DTO、通知快照、JSON payload 中的字段语义直接对应数据库闭集枚举值（如 `reward.items[].assetType`），必须直接复用数据库一致的数字值域 / 共享枚举类型；禁止改成 `'points'`、`'experience'` 这类字符串标签，也禁止无依据收窄成仅覆盖当前业务子集的字面量联合类型。
 - `EnumProperty`、`EnumArrayProperty` 的 `description` 必须使用中文业务语义，不允许直接写英文常量名、技术 key 或旧字符串枚举值。
 - 枚举字段描述统一使用“实际枚举值=业务含义”，例如 `1=草稿；2=已发布；3=已下线`。
 - 禁止写法：`PENDING`、`FAILED`、`BASE_REWARD`、`weekly`、`upload`、`ios`、`android` 这类直接暴露常量名的描述。

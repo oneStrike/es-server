@@ -3,18 +3,33 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
-import type {NotificationActorSource} from '../notification/notification-public.mapper';
+import type { NotificationActorSource } from '../notification/notification-public.mapper'
 import type { NotificationEventHandler } from './message-event.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { MessageNotificationDeliveryService } from '../notification/notification-delivery.service'
-import {
-  mapUserNotificationToPublicView
-
-} from '../notification/notification-public.mapper'
+import { mapUserNotificationToPublicView } from '../notification/notification-public.mapper'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
 import { getMessageDomainEventDefinition } from './message-event.constant'
 import { NotificationProjectionService } from './notification-projection.service'
+
+export function getNotificationEventPayload(event: DomainEventRecord) {
+  const payload = event.context?.payload
+  if (payload === undefined) {
+    return {
+      eventKey: event.eventKey,
+    }
+  }
+  if (payload === null) {
+    return null
+  }
+  if (typeof payload === 'object' && !Array.isArray(payload)) {
+    return payload as Record<string, unknown>
+  }
+  return {
+    eventKey: event.eventKey,
+  }
+}
 
 const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
   'comment.replied': ({ definition, event }) => ({
@@ -26,11 +41,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'comment.mentioned': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -41,11 +52,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'comment.liked': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -56,11 +63,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'topic.liked': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -71,11 +74,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'topic.favorited': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -86,11 +85,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'topic.commented': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -101,11 +96,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'topic.mentioned': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -116,11 +107,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'user.followed': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -131,11 +118,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'announcement.published': ({ definition, event }) => ({
     mode: 'upsert' as const,
@@ -146,11 +129,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'announcement.unpublished': ({ event }) => ({
     mode: 'delete' as const,
@@ -169,11 +148,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     expiresAt: event.context?.expiresAt
       ? new Date(String(event.context.expiresAt))
       : undefined,
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'task.reminder.expiring': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -187,11 +162,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     expiresAt: event.context?.expiresAt
       ? new Date(String(event.context.expiresAt))
       : undefined,
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
   'task.reminder.reward_granted': ({ definition, event }) => ({
     mode: 'append' as const,
@@ -202,11 +173,7 @@ const NOTIFICATION_EVENT_HANDLERS: Record<string, NotificationEventHandler> = {
     actorUserId: event.operatorId ?? undefined,
     title: String(event.context?.title ?? ''),
     content: String(event.context?.content ?? ''),
-    payload: (event.context?.payload as
-    | Record<string, unknown>
-    | undefined) ?? {
-      eventKey: event.eventKey,
-    },
+    payload: getNotificationEventPayload(event),
   }),
 }
 
@@ -263,6 +230,7 @@ export class NotificationEventConsumer {
         result.notification,
       )
       this.messageNotificationRealtimeService.emitNotificationCreated(
+        result.receiverUserId!,
         publicNotification,
       )
     }
@@ -271,18 +239,22 @@ export class NotificationEventConsumer {
         result.notification,
       )
       this.messageNotificationRealtimeService.emitNotificationUpdated(
+        result.receiverUserId!,
         publicNotification,
       )
     }
+    const deletedNotificationId = (
+      result.notification as { id?: number } | undefined
+    )?.id
     if (
       result.action === 'delete' &&
       result.receiverUserId &&
-      typeof (result.notification as { id?: number } | undefined)?.id === 'number'
+      typeof deletedNotificationId === 'number'
     ) {
       this.messageNotificationRealtimeService.emitNotificationDeleted(
         result.receiverUserId,
         {
-          id: (result.notification as { id: number }).id,
+          id: deletedNotificationId,
         },
       )
     }
@@ -306,25 +278,25 @@ export class NotificationEventConsumer {
     return result
   }
 
-  private async buildPublicNotificationView(notification: Record<string, unknown>) {
+  private async buildPublicNotificationView(
+    notification: Record<string, unknown>,
+  ) {
     const typedNotification = notification as UserNotificationSelect
-    const actor =
-      typeof typedNotification.actorUserId === 'number'
-        ? await this.db.query.appUser.findFirst({
-            where: {
-              id: typedNotification.actorUserId,
-            },
-            columns: {
-              id: true,
-              nickname: true,
-              avatarUrl: true,
-            },
-          })
-        : undefined
+    let actor: NotificationActorSource | undefined
+    if (typeof typedNotification.actorUserId === 'number') {
+      const actorRecord = await this.db.query.appUser.findFirst({
+        where: {
+          id: typedNotification.actorUserId,
+        },
+        columns: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+        },
+      })
+      actor = actorRecord as NotificationActorSource | undefined
+    }
 
-    return mapUserNotificationToPublicView(
-      typedNotification,
-      actor as NotificationActorSource | undefined,
-    )
+    return mapUserNotificationToPublicView(typedNotification, actor)
   }
 }

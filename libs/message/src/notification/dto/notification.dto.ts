@@ -1,3 +1,4 @@
+import type { MessageNotificationData } from '../notification-contract.type'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -35,78 +36,110 @@ function IsValidNotificationCategoryKeysFilter(): PropertyDecorator {
   })
 }
 
-export class BaseUserNotificationDto extends BaseDto {
-  @NumberProperty({
-    description: '接收用户 ID',
-    example: 10001,
-  })
-  receiverUserId!: number
-
-  @EnumProperty({
-    description: '通知分类键',
-    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
-    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
-  })
-  categoryKey!: MessageNotificationCategoryKey
-
-  @StringProperty({
-    description: '通知分类中文标签',
-    example: getMessageNotificationCategoryLabel('comment_reply'),
-  })
-  categoryLabel!: string
-
-  @NumberProperty({
-    description: '触发用户 ID',
-    example: 10002,
-    required: false,
-  })
-  actorUserId?: number
-
+export class NotificationMessageDto {
   @StringProperty({
     description: '通知标题',
     example: '有人回复了你的评论',
-    maxLength: 200,
+    validation: false,
   })
   title!: string
 
   @StringProperty({
     description: '通知正文',
     example: '回复内容',
-    maxLength: 1000,
+    validation: false,
   })
-  content!: string
+  body!: string
+}
+
+export class NotificationActorDto {
+  @NumberProperty({ description: '用户 ID', example: 1, validation: false })
+  id!: number
+
+  @StringProperty({
+    description: '昵称',
+    example: '测试用户',
+    required: false,
+    validation: false,
+  })
+  nickname?: string
+
+  @StringProperty({
+    description: '头像地址',
+    example: 'https://example.com/avatar.png',
+    required: false,
+    validation: false,
+  })
+  avatarUrl?: string
+}
+
+export class BaseUserNotificationDto extends BaseDto {
+  @EnumProperty({
+    description: '通知类型键',
+    example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
+    enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+  })
+  type!: MessageNotificationCategoryKey
+
+  @NestedProperty({
+    description: '通知文案',
+    type: NotificationMessageDto,
+    validation: false,
+  })
+  message!: NotificationMessageDto
 
   @ObjectProperty({
     description:
-      '扩展载荷；主体统一收敛到 payload.subject，章节额外通过 payload.parentSubject 返回所属作品',
+      '结构化通知数据；评论类返回 object/container/parentContainer，任务类返回 object/reminder/reward',
     example: {
-      actorNickname: '张三',
-      commentId: 101,
-      subject: {
+      object: {
+        kind: 'comment',
+        id: 101,
+        snippet: '这条评论很关键',
+      },
+      container: {
         kind: 'chapter',
         id: 17,
         title: '第 17 话',
         subtitle: '暴雨将至',
         cover: 'https://example.com/chapter-cover.png',
-        extra: {
-          workId: 8,
-          workType: 1,
-        },
+        workId: 8,
+        workType: 1,
       },
-      parentSubject: {
+      parentContainer: {
         kind: 'work',
         id: 8,
         title: '作品标题',
         cover: 'https://example.com/work-cover.png',
-        extra: {
-          type: 1,
-        },
+        workType: 1,
+      },
+      reminder: {
+        kind: 'reward_granted',
+        assignmentId: 10,
+      },
+      reward: {
+        items: [
+          {
+            assetType: 1,
+            amount: 5,
+          },
+        ],
+        ledgerRecordIds: [101],
       },
     },
-    required: false,
+    required: true,
     nullable: true,
   })
-  payload?: Record<string, unknown> | null
+  data!: MessageNotificationData | null
+
+  @NestedProperty({
+    description: '触发用户信息',
+    type: NotificationActorDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  actor?: NotificationActorDto
 
   @BooleanProperty({
     description: '是否已读',
@@ -198,37 +231,7 @@ export class QueryNotificationDeliveryPageDto extends IntersectionType(
   PartialType(BaseNotificationDeliveryQueryDto),
 ) {}
 
-export class NotificationActorDto {
-  @NumberProperty({ description: '用户 ID', example: 1, validation: false })
-  id!: number
-
-  @StringProperty({
-    description: '昵称',
-    example: '测试用户',
-    required: false,
-    validation: false,
-  })
-  nickname?: string
-
-  @StringProperty({
-    description: '头像地址',
-    example: 'https://example.com/avatar.png',
-    required: false,
-    validation: false,
-  })
-  avatarUrl?: string
-}
-
-export class UserNotificationDto extends BaseUserNotificationDto {
-  @NestedProperty({
-    description: '触发用户信息',
-    type: NotificationActorDto,
-    required: false,
-    validation: false,
-    nullable: false,
-  })
-  actorUser?: NotificationActorDto
-}
+export class UserNotificationDto extends BaseUserNotificationDto {}
 
 export class NotificationUnreadCountDto {
   @NumberProperty({

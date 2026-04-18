@@ -1,57 +1,115 @@
-# App Message Notification Payload Breaking Change
+# App Message Notification Contract Breaking Change
 
 ## Scope
 
 - API: `GET app/message/notification/page`
-- Domain: 消息通知 `payload`
+- Domain: 消息通知对外读模型
 - Change type: 破坏性更新，无兼容层
 
 ## What Changed
 
-通知主体统一收敛为共享结构：
+通知列表返回结构从旧版：
 
 ```ts
-payload.subject
-payload.parentSubject
-```
-
-- `subject`：通知直接关联的业务主体
-- `parentSubject`：仅章节类通知返回，表示所属作品
-
-## Removed Keys
-
-以下旧字段不再作为客户端读取入口：
-
-- `payload.topicTitle`
-- `payload.topicId`
-- `payload.targetType`
-- `payload.targetId`
-- `payload.targetDisplayTitle`
-- `payload.replyCommentId`
-- `payload.title`
-- `payload.content`
-- `payload.taskTitle`
-- `payload.payloadVersion`
-
-说明：
-
-- 这些字段在 canonical payload 中已被 `subject` / `parentSubject` 覆盖。
-- 客户端不得再依赖这些字段完成跳转或渲染。
-
-## Canonical Structure
-
-```ts
-type NotificationPayloadSubject = {
-  kind: 'work' | 'chapter' | 'topic' | 'announcement' | 'task'
-  id: number
-  title?: string
-  subtitle?: string
-  cover?: string
-  extra?: Record<string, unknown>
+{
+  categoryKey
+  categoryLabel
+  actorUserId
+  title
+  content
+  payload
+  actorUser
 }
 ```
 
-## Category Rules
+切换为新版：
+
+```ts
+{
+  id
+  type
+  actor?
+  message: {
+    title
+    body
+  }
+  data
+  isRead
+  readAt?
+  expiresAt?
+  createdAt
+  updatedAt
+}
+```
+
+## Core Principles
+
+- `message` 只负责最终展示文案。
+- `data` 只负责结构化业务事实。
+- 不再返回顶层 `target`。
+- `user_followed` 的 `data` 固定为 `null`。
+- 评论相关通知统一返回“被操作评论本身”的快照，`comment_like` 会返回评论摘要。
+
+## Removed Fields
+
+- `categoryKey`
+- `categoryLabel`
+- `actorUserId`
+- `title`
+- `content`
+- `payload`
+- `actorUser`
+- 所有旧 payload 兼容字段：
+  - `actorNickname`
+  - `subject`
+  - `parentSubject`
+  - `topicTitle`
+  - `topicId`
+  - `targetType`
+  - `targetId`
+  - `targetDisplayTitle`
+  - `replyCommentId`
+  - `taskTitle`
+  - `payloadVersion`
+  - `actionUrl`
+
+## New Top-Level Structure
+
+```ts
+type NotificationType =
+  | 'comment_reply'
+  | 'comment_mention'
+  | 'comment_like'
+  | 'topic_like'
+  | 'topic_favorited'
+  | 'topic_commented'
+  | 'topic_mentioned'
+  | 'user_followed'
+  | 'system_announcement'
+  | 'task_reminder'
+
+type Notification = {
+  id: number
+  type: NotificationType
+  actor?: {
+    id: number
+    nickname?: string
+    avatarUrl?: string
+  }
+  message: {
+    title: string
+    body: string
+  }
+  data: Record<string, unknown> | null
+  isRead: boolean
+  readAt?: string
+  expiresAt?: string
+  createdAt: string
+  updatedAt: string
+}
+```
+
+## Category Structures
 
 ### Comment notifications
 
@@ -59,97 +117,217 @@ type NotificationPayloadSubject = {
 - `comment_mention`
 - `comment_like`
 
-规则：
+```ts
+data = {
+  object: {
+    kind: 'comment'
+    id: number
+    snippet?: string
+  }
+  container: {
+    kind: 'work' | 'chapter' | 'topic'
+    id: number
+    title?: string
+    subtitle?: string
+    cover?: string
+    workId?: number
+    workType?: number
+    sectionId?: number
+  }
+  parentContainer?: {
+    kind: 'work'
+    id: number
+    title?: string
+    cover?: string
+    workType?: number
+  }
+}
+```
 
-- 作品评论：`payload.subject.kind = 'work'`
-- 帖子评论：`payload.subject.kind = 'topic'`
-- 章节评论：
-  - `payload.subject.kind = 'chapter'`
-  - `payload.parentSubject.kind = 'work'`
+说明：
+
+- `comment_like` 现在会返回被点赞评论的 `snippet`。
+- 当 `container.kind = 'chapter'` 时，额外返回 `parentContainer`。
 
 ### Topic notifications
 
 - `topic_like`
 - `topic_favorited`
-- `topic_commented`
 - `topic_mentioned`
 
-规则：
+```ts
+data = {
+  object: {
+    kind: 'topic'
+    id: number
+    title?: string
+    cover?: string
+    sectionId?: number
+  }
+}
+```
 
-- 统一读取 `payload.subject.kind = 'topic'`
+### Topic commented
 
-### Announcement notifications
+```ts
+data = {
+  object: {
+    kind: 'comment'
+    id: number
+    snippet?: string
+  }
+  container: {
+    kind: 'topic'
+    id: number
+    title?: string
+    cover?: string
+    sectionId?: number
+  }
+}
+```
 
-- `system_announcement`
-
-规则：
-
-- 读取 `payload.subject.kind = 'announcement'`
-
-### Task notifications
-
-- `task_reminder`
-
-规则：
-
-- 读取 `payload.subject.kind = 'task'`
-
-### No-subject notifications
+### Follow notification
 
 - `user_followed`
 
-规则：
+```ts
+data = null
+```
 
-- 不返回 `payload.subject`
+说明：
+
+- 关注人信息只从顶层 `actor` 读取。
+
+### Announcement notification
+
+- `system_announcement`
+
+```ts
+data = {
+  object: {
+    kind: 'announcement'
+    id: number
+    title?: string
+    summary?: string
+    announcementType?: number
+    priorityLevel?: number
+  }
+}
+```
+
+### Task reminder
+
+- `task_reminder`
+
+```ts
+data = {
+  object: {
+    kind: 'task'
+    id: number
+    code?: string
+    title?: string
+    cover?: string
+    sceneType?: number
+  }
+  reminder: {
+    kind: 'auto_assigned' | 'expiring_soon' | 'reward_granted'
+    assignmentId?: number
+    cycleKey?: string
+    expiredAt?: string
+  }
+  reward?: {
+    items: Array<{
+      assetType: 1 | 2 | 3 | 4 | 5
+      amount: number
+    }>
+    ledgerRecordIds: number[]
+  }
+}
+```
+
+说明：
+
+- `reward.items[].assetType` 直接复用数据库奖励资产枚举值域。
+- `1=积分`
+- `2=经验`
+- `3=道具`
+- `4=虚拟货币`
+- `5=等级`
+- 当前 task 奖励链路的业务校验仍主要产出 `1/2`，但合同层不再收窄为该子集，便于后续扩展。
 
 ## Migration Guidance
 
-### Topic title
+### Render text
 
 旧：
 
 ```ts
-payload.topicTitle
-payload.topicId
+item.title
+item.content
 ```
 
 新：
 
 ```ts
-payload.subject?.title
+item.message.title
+item.message.body
 ```
 
-### Comment target jump
+### Actor
 
 旧：
 
 ```ts
+item.actorUser
+item.actorUserId
+payload.actorNickname
+```
+
+新：
+
+```ts
+item.actor
+```
+
+### Comment jump / render
+
+旧：
+
+```ts
+payload.commentId
+payload.subject
+payload.parentSubject
 payload.targetType
 payload.targetId
-payload.targetDisplayTitle
-payload.replyCommentId
 ```
 
 新：
 
 ```ts
-payload.subject?.kind
-payload.subject?.id
-payload.parentSubject?.kind
-payload.parentSubject?.id
+data.object
+data.container
+data.parentContainer
 ```
 
-### Chapter target rendering
+### Task reminder
 
 旧：
 
-- 客户端无法直接拿到所属作品摘要
+```ts
+payload.taskId
+payload.taskCode
+payload.taskTitle
+payload.actionUrl
+payload.reminderKind
+payload.rewardSummary
+```
 
 新：
 
 ```ts
-payload.subject // chapter
-payload.parentSubject // work
+data.object
+data.reminder
+data.reward
 ```
 
 ## Notes

@@ -1,15 +1,15 @@
-import { MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM } from './notification.constant'
 import { getCanonicalNotificationTemplateContract } from './notification-template-contract'
+import { MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM } from './notification.constant'
 
 describe('getCanonicalNotificationTemplateContract', () => {
-  it('migrates topic templates to payload.subject.title', () => {
+  it('uses actor/data placeholders for topic templates', () => {
     expect(
       getCanonicalNotificationTemplateContract(
         MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.TOPIC_LIKE,
       ),
     ).toEqual({
-      titleTemplate: '{{payload.actorNickname}} 点赞了你的主题',
-      contentTemplate: '{{payload.subject.title}}',
+      titleTemplate: '{{actor.nickname}} 点赞了你的主题',
+      contentTemplate: '{{data.object.title}}',
       remark: 'canonical notification template: 主题点赞',
     })
   })

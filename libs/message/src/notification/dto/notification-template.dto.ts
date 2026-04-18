@@ -27,16 +27,16 @@ export class BaseMessageNotificationTemplateDto {
 
   @StringProperty({
     description:
-      '标题模板；支持 {{title}}、{{payload.subject.title}}、{{payload.actorNickname}} 等占位符',
-    example: '{{payload.actorNickname}} 点赞了你的主题',
+      '标题模板；支持 {{title}}、{{actor.nickname}}、{{data.object.title}} 等占位符',
+    example: '{{actor.nickname}} 点赞了你的主题',
     maxLength: 200,
   })
   titleTemplate!: string
 
   @StringProperty({
     description:
-      '正文模板；支持 {{content}}、{{payload.subject.title}}、{{payload.replyExcerpt}} 等占位符',
-    example: '{{payload.subject.title}}',
+      '正文模板；支持 {{content}}、{{data.object.title}}、{{data.object.snippet}} 等占位符',
+    example: '{{data.object.title}}',
     maxLength: 1000,
   })
   contentTemplate!: string

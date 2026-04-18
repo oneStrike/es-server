@@ -36,13 +36,13 @@ export type NotificationProjectionCommand =
       title: string
       content: string
       actorUserId?: number
-      payload?: Record<string, unknown>
+      payload?: Record<string, unknown> | null
       expiresAt?: Date
     })
-    | (NotificationProjectionCommandBase & {
+  | (NotificationProjectionCommandBase & {
       mode: 'delete'
     })
-    | {
+  | {
       mode: 'skip'
       reason: string
     }

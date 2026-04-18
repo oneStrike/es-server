@@ -1,4 +1,8 @@
 import type { StructuredValue } from '@libs/platform/utils/jsonParse'
+import type {
+  MessageNotificationData,
+  NotificationUserSnapshot,
+} from './notification-contract.type'
 import type { MessageNotificationCategoryKey } from './notification.constant'
 
 /** 稳定领域类型 `NotificationTemplateRenderContext`。仅供内部领域/服务链路复用，避免重复定义。 */
@@ -6,10 +10,11 @@ export interface NotificationTemplateRenderContext {
   categoryKey: MessageNotificationCategoryKey
   receiverUserId: number
   actorUserId?: number
+  actor?: NotificationUserSnapshot
   title: string
   content: string
   expiresAt?: Date | string
-  payload?: StructuredValue
+  data?: MessageNotificationData | null
 }
 
 /** 稳定领域类型 `NotificationTemplateFallbackReason`。仅供内部领域/服务链路复用，避免重复定义。 */
@@ -34,6 +39,6 @@ export interface RenderNotificationTemplateInput {
   actorUserId?: number
   title: string
   content: string
-  payload?: StructuredValue
+  data?: StructuredValue
   expiresAt?: Date | string
 }

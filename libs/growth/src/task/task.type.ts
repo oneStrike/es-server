@@ -5,12 +5,13 @@ import type {
   TaskProgressLogInsert,
 } from '@db/schema'
 
-import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type';
-import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant';
+import type { EventEnvelope } from '@libs/growth/event-definition/event-envelope.type'
 import type {
-  PageQueryInput,
-  QueryOrderByInput,
-} from '@libs/platform/types'
+  NotificationTaskReminderData,
+  NotificationTaskRewardSnapshot,
+} from '@libs/message/notification/notification-contract.type'
+import type { MessageNotificationDispatchStatusEnum } from '@libs/message/notification/notification.constant'
+import type { PageQueryInput, QueryOrderByInput } from '@libs/platform/types'
 import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
 import type { GrowthRewardSettlementStatusEnum } from '../growth-reward/growth-reward.constant'
@@ -23,7 +24,6 @@ import type {
   TaskProgressSourceEnum,
   TaskReminderKindEnum,
   TaskRepeatTypeEnum,
-  TaskTypeEnum,
 } from './task.constant'
 
 /**
@@ -379,22 +379,19 @@ export interface TaskReminderBaseInput {
 }
 
 /** 稳定领域类型 `TaskAutoAssignedReminderEventInput`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface TaskAutoAssignedReminderEventInput
-  extends TaskReminderBaseInput {}
+export interface TaskAutoAssignedReminderEventInput extends TaskReminderBaseInput {}
 
 /**
  * “即将过期”提醒入参。
  */
-export interface TaskExpiringSoonReminderEventInput
-  extends TaskReminderBaseInput {
+export interface TaskExpiringSoonReminderEventInput extends TaskReminderBaseInput {
   expiredAt: NonNullable<TaskAssignment['expiredAt']>
 }
 
 /**
  * “奖励到账”提醒入参。
  */
-export interface TaskRewardGrantedReminderEventInput
-  extends TaskReminderBaseInput {
+export interface TaskRewardGrantedReminderEventInput extends TaskReminderBaseInput {
   rewardItems: TaskRewardItems
   ledgerRecordIds: number[]
 }
@@ -402,8 +399,7 @@ export interface TaskRewardGrantedReminderEventInput
 /**
  * 任务提醒内部组装阶段的统一输入。
  */
-export interface TaskReminderNotificationEventInput
-  extends TaskReminderBaseInput {
+export interface TaskReminderNotificationEventInput extends TaskReminderBaseInput {
   reminderKind: TaskReminderKindEnum
   expiredAt?: NonNullable<TaskAssignment['expiredAt']>
   rewardItems?: TaskRewardItems
@@ -413,28 +409,12 @@ export interface TaskReminderNotificationEventInput
 /**
  * 任务提醒 payload 中的奖励摘要。
  */
-export interface TaskReminderRewardSummary {
-  rewardItems: TaskRewardItems
-  ledgerRecordIds: number[]
-}
+export type TaskReminderRewardSummary = NotificationTaskRewardSnapshot
 
 /**
  * 任务提醒 payload 的稳定业务合同。
  */
-export interface TaskReminderNotificationPayload {
-  payloadVersion: number
-  reminderKind: TaskReminderKindEnum
-  taskId: Task['id']
-  taskCode: string
-  title: string
-  taskTitle: string
-  sceneType: TaskTypeEnum
-  cycleKey?: string
-  assignmentId?: TaskReminderAssignmentInput['id']
-  expiredAt?: NonNullable<TaskAssignment['expiredAt']>
-  actionUrl: '/task/my' | '/task/available'
-  rewardSummary?: TaskReminderRewardSummary
-}
+export type TaskReminderNotificationPayload = NotificationTaskReminderData
 
 /**
  * 管理端任务运行态中最近一次提醒摘要。

@@ -7,7 +7,6 @@ import { MessageNotificationDeliveryService } from './notification-delivery.serv
 import { MessageNativeWebSocketServer } from './notification-native-websocket.server'
 import { MessageNotificationPreferenceService } from './notification-preference.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
-import { MessageNotificationSubjectPayloadService } from './notification-subject-payload.service'
 import { MessageNotificationTemplateService } from './notification-template.service'
 import { MessageWebSocketService } from './notification-websocket.service'
 import { MessageGateway } from './notification.gateway'
@@ -27,7 +26,6 @@ import { MessageNotificationService } from './notification.service'
     MessageNotificationDeliveryService,
     MessageNotificationRealtimeService,
     MessageNotificationPreferenceService,
-    MessageNotificationSubjectPayloadService,
     MessageNotificationTemplateService,
     MessageNotificationService,
   ],
@@ -37,7 +35,6 @@ import { MessageNotificationService } from './notification.service'
     MessageNotificationPreferenceService,
     MessageNotificationService,
     MessageNotificationRealtimeService,
-    MessageNotificationSubjectPayloadService,
     MessageNotificationTemplateService,
     MessageWebSocketService,
   ],

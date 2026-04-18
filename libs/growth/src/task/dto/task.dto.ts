@@ -3,9 +3,7 @@ import type {
   TaskRepeatRuleConfig,
   TaskRewardItems,
 } from '../task.type'
-import {
-  BaseGrowthRewardSettlementDto,
-} from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
+import { BaseGrowthRewardSettlementDto } from '@libs/growth/growth-reward/dto/growth-reward-settlement.dto'
 import {
   GrowthRewardSettlementResultTypeEnum,
   GrowthRewardSettlementStatusEnum,
@@ -135,7 +133,10 @@ export class BaseTaskDto extends BaseDto {
 
   @ArrayProperty({
     description: '奖励项列表，当前仅支持积分与经验奖励项',
-    example: [{ assetType: 1, amount: 10 }, { assetType: 2, amount: 5 }],
+    example: [
+      { assetType: 1, amount: 10 },
+      { assetType: 2, amount: 5 },
+    ],
     required: false,
     itemClass: GrowthRewardItemDto,
   })
@@ -259,7 +260,10 @@ export class BaseTaskAssignmentDto extends BaseDto {
 
   @JsonProperty({
     description: '任务快照',
-    example: { title: '完善个人资料', rewardItems: [{ assetType: 1, amount: 10 }] },
+    example: {
+      title: '完善个人资料',
+      rewardItems: [{ assetType: 1, amount: 10 }],
+    },
     required: false,
   })
   taskSnapshot?: Record<string, unknown> | null
@@ -544,7 +548,7 @@ export class MyTaskPageItemDto extends PickType(BaseTaskAssignmentDto, [
 export class AdminTaskReminderSummaryDto {
   @StringProperty({
     description: '最近一次任务提醒子类型',
-    example: 'task_reward_granted',
+    example: 'reward_granted',
     required: false,
     validation: false,
   })

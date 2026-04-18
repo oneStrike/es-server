@@ -1,10 +1,10 @@
 import type { UserNotificationSelect } from '@db/schema'
 import type { UserNotificationDto } from './dto/notification.dto'
-import type { MessageNotificationCategoryKey } from './notification.constant'
-import {
-  getMessageNotificationCategoryLabel,
-  isMessageNotificationCategoryKey,
-} from './notification.constant'
+import type {
+  MessageNotificationData,
+  MessageNotificationPublicView,
+} from './notification-contract.type'
+import { isMessageNotificationCategoryKey } from './notification.constant'
 
 export interface NotificationPublicActor {
   id: number
@@ -18,7 +18,9 @@ export interface NotificationActorSource {
   avatarUrl?: string | null
 }
 
-function isPlainRecord<T>(value: T): value is Extract<T, Record<string, unknown>> {
+function isPlainRecord<T>(
+  value: T,
+): value is Extract<T, Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
@@ -49,25 +51,31 @@ export function mapUserNotificationToPublicView(
   actor?: NotificationActorSource | null,
 ): UserNotificationDto {
   const rawCategoryKey = notification.categoryKey
-  const categoryKey = rawCategoryKey as MessageNotificationCategoryKey
-  const categoryLabel = isMessageNotificationCategoryKey(rawCategoryKey)
-    ? getMessageNotificationCategoryLabel(categoryKey)
-    : rawCategoryKey
+  if (!isMessageNotificationCategoryKey(rawCategoryKey)) {
+    throw new TypeError(
+      `Unsupported notification category key: ${rawCategoryKey}`,
+    )
+  }
 
-  return {
+  const mapped: MessageNotificationPublicView = {
     id: notification.id,
-    receiverUserId: notification.receiverUserId,
-    categoryKey,
-    categoryLabel,
-    actorUserId: notification.actorUserId ?? undefined,
-    title: notification.title,
-    content: notification.content,
-    payload: isPlainRecord(notification.payload) ? notification.payload : null,
+    type: rawCategoryKey,
+    actor: mapNotificationActor(actor),
+    message: {
+      title: notification.title,
+      body: notification.content,
+    },
+    data: (isPlainRecord(notification.payload)
+      ? notification.payload
+      : notification.payload === null
+        ? null
+        : null) as MessageNotificationData | null,
     isRead: notification.isRead,
     readAt: notification.readAt ?? undefined,
     expiresAt: notification.expiresAt ?? undefined,
     createdAt: notification.createdAt,
     updatedAt: notification.updatedAt,
-    actorUser: mapNotificationActor(actor),
   }
+
+  return mapped
 }

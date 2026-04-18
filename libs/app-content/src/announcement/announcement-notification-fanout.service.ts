@@ -48,7 +48,8 @@ export class AnnouncementNotificationFanoutService {
   }
 
   async enqueueAnnouncementFanout(announcementId: number) {
-    const announcement = await this.loadAnnouncementDecisionSnapshot(announcementId)
+    const announcement =
+      await this.loadAnnouncementDecisionSnapshot(announcementId)
     if (!announcement) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -99,9 +100,16 @@ export class AnnouncementNotificationFanoutService {
   }
 
   private async processTask(task: AppAnnouncementNotificationFanoutTaskSelect) {
-    const announcement = await this.loadAnnouncementPayloadSnapshot(task.announcementId)
+    const announcement = await this.loadAnnouncementPayloadSnapshot(
+      task.announcementId,
+    )
     if (task.desiredEventKey === 'announcement.published' && !announcement) {
-      await this.markTaskFailed(task.id, task.desiredEventKey, task.cursorUserId, 'announcement_not_found')
+      await this.markTaskFailed(
+        task.id,
+        task.desiredEventKey,
+        task.cursorUserId,
+        'announcement_not_found',
+      )
       return
     }
 
@@ -111,7 +119,10 @@ export class AnnouncementNotificationFanoutService {
       const receiverUserIds =
         task.desiredEventKey === 'announcement.published'
           ? await this.loadPublishedReceiverUserIds(cursorUserId)
-          : await this.loadUnpublishedReceiverUserIds(task.announcementId, cursorUserId)
+          : await this.loadUnpublishedReceiverUserIds(
+              task.announcementId,
+              cursorUserId,
+            )
 
       if (receiverUserIds.length === 0) {
         await this.markTaskSucceeded(task.id, task.desiredEventKey)
@@ -121,9 +132,12 @@ export class AnnouncementNotificationFanoutService {
       let lastProcessedUserId = cursorUserId ?? null
 
       try {
+        const eventKey = task.desiredEventKey as
+          | 'announcement.published'
+          | 'announcement.unpublished'
         for (const receiverUserId of receiverUserIds) {
           await this.messageDomainEventPublisher.publish({
-            eventKey: task.desiredEventKey as 'announcement.published' | 'announcement.unpublished',
+            eventKey,
             subjectType: 'system',
             subjectId: task.announcementId,
             targetType: 'announcement',
@@ -172,7 +186,11 @@ export class AnnouncementNotificationFanoutService {
     const rows = await this.db
       .select()
       .from(this.fanoutTask)
-      .where(inArray(this.fanoutTask.status, [...ANNOUNCEMENT_FANOUT_RUNNABLE_STATUSES]))
+      .where(
+        inArray(this.fanoutTask.status, [
+          ...ANNOUNCEMENT_FANOUT_RUNNABLE_STATUSES,
+        ]),
+      )
       .orderBy(asc(this.fanoutTask.updatedAt), asc(this.fanoutTask.id))
       .limit(1)
 
@@ -281,7 +299,9 @@ export class AnnouncementNotificationFanoutService {
     const conditions = [
       eq(this.appUser.isEnabled, true),
       isNull(this.appUser.deletedAt),
-      cursorUserId !== undefined ? gt(this.appUser.id, cursorUserId) : undefined,
+      cursorUserId !== undefined
+        ? gt(this.appUser.id, cursorUserId)
+        : undefined,
     ].filter(Boolean)
 
     const rows = await this.db
@@ -358,8 +378,8 @@ export class AnnouncementNotificationFanoutService {
     publishStartTime?: Date | null
     publishEndTime?: Date | null
   }) {
-    return shouldAnnouncementEnterNotificationCenter(input)
-      && isAnnouncementPublishedNow(input)
+    return shouldAnnouncementEnterNotificationCenter(input) &&
+      isAnnouncementPublishedNow(input)
       ? 'announcement.published'
       : 'announcement.unpublished'
   }
@@ -396,11 +416,14 @@ export class AnnouncementNotificationFanoutService {
       title: params.title ?? '',
       content: params.content ?? '',
       payload: {
-        title: params.title ?? '',
-        content: params.content ?? '',
-        announcementId: params.announcementId,
-        announcementType: params.announcementType ?? 0,
-        priorityLevel: params.priorityLevel ?? 0,
+        object: {
+          kind: 'announcement',
+          id: params.announcementId,
+          title: params.title ?? undefined,
+          summary: params.content ?? undefined,
+          announcementType: params.announcementType ?? 0,
+          priorityLevel: params.priorityLevel ?? 0,
+        },
       },
     }
   }

@@ -8,18 +8,13 @@ import type {
   TaskRewardGrantedReminderEventInput,
 } from './task.type'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
-import {
-  normalizeTaskType,
-  TaskReminderKindEnum,
-} from './task.constant'
+import { normalizeTaskType, TaskReminderKindEnum } from './task.constant'
 
 /**
  * 任务提醒事件组装器。
  * 统一生成任务提醒领域事件与稳定 projectionKey/context 合同。
  */
 export class TaskNotificationService {
-  private readonly payloadVersion = 1
-
   createAutoAssignedReminderEvent(
     params: TaskAutoAssignedReminderEventInput,
   ): PublishMessageDomainEventInput {
@@ -66,29 +61,41 @@ export class TaskNotificationService {
     params: TaskReminderNotificationEventInput,
   ): PublishMessageDomainEventInput {
     const message = this.buildTaskReminderMessage(params)
+    const normalizedTaskType = normalizeTaskType(params.task.type)
+    const normalizedReminderKind = this.mapReminderKind(params.reminderKind)
     const rewardSummary: TaskReminderRewardSummary | undefined =
-      params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED
-      && (params.rewardItems?.length ?? 0) > 0
+      params.reminderKind === TaskReminderKindEnum.REWARD_GRANTED &&
+      (params.rewardItems?.length ?? 0) > 0
         ? {
-            rewardItems: params.rewardItems ?? [],
+            items: (params.rewardItems ?? []).flatMap((item) => {
+              if (
+                item.amount <= 0 ||
+                !this.isNotificationTaskRewardAssetType(item.assetType)
+              ) {
+                return []
+              }
+              return [{ assetType: item.assetType, amount: item.amount }]
+            }),
             ledgerRecordIds: params.ledgerRecordIds ?? [],
           }
         : undefined
 
-    const payload: TaskReminderNotificationPayload = {
-      payloadVersion: this.payloadVersion,
-      reminderKind: params.reminderKind,
-      taskId: params.task.id,
-      taskCode: params.task.code ?? `task-${params.task.id}`,
-      title: params.task.title,
-      taskTitle: params.task.title,
-      sceneType: normalizeTaskType(params.task.type),
-      cycleKey: params.cycleKey,
-      assignmentId: params.assignmentId,
-      expiredAt: params.expiredAt,
-      actionUrl: this.buildTaskReminderActionUrl(params.reminderKind),
-      rewardSummary,
-    }
+    const payload = {
+      object: {
+        kind: 'task',
+        id: params.task.id,
+        code: params.task.code ?? `task-${params.task.id}`,
+        title: params.task.title,
+        sceneType: normalizedTaskType,
+      },
+      reminder: {
+        kind: normalizedReminderKind,
+        assignmentId: params.assignmentId,
+        cycleKey: params.cycleKey,
+        expiredAt: params.expiredAt?.toISOString(),
+      },
+      reward: rewardSummary,
+    } satisfies TaskReminderNotificationPayload
 
     return {
       eventKey: this.resolveTaskReminderEventKey(params),
@@ -106,6 +113,33 @@ export class TaskNotificationService {
         payload,
       },
     }
+  }
+
+  private mapReminderKind(
+    reminderKind: TaskReminderKindEnum,
+  ): TaskReminderNotificationPayload['reminder']['kind'] {
+    if (reminderKind === TaskReminderKindEnum.AUTO_ASSIGNED) {
+      return 'auto_assigned'
+    }
+    if (reminderKind === TaskReminderKindEnum.EXPIRING_SOON) {
+      return 'expiring_soon'
+    }
+    if (reminderKind === TaskReminderKindEnum.REWARD_GRANTED) {
+      return 'reward_granted'
+    }
+    throw new Error(`Unsupported task reminder kind: ${reminderKind}`)
+  }
+
+  private isNotificationTaskRewardAssetType(
+    assetType: GrowthRewardRuleAssetTypeEnum,
+  ): assetType is NonNullable<TaskReminderRewardSummary>['items'][number]['assetType'] {
+    return (
+      assetType === GrowthRewardRuleAssetTypeEnum.POINTS ||
+      assetType === GrowthRewardRuleAssetTypeEnum.EXPERIENCE ||
+      assetType === GrowthRewardRuleAssetTypeEnum.ITEM ||
+      assetType === GrowthRewardRuleAssetTypeEnum.CURRENCY ||
+      assetType === GrowthRewardRuleAssetTypeEnum.LEVEL
+    )
   }
 
   private resolveTaskReminderEventKey(
@@ -158,18 +192,5 @@ export class TaskNotificationService {
       }
     }
     throw new Error(`Unsupported task reminder kind: ${params.reminderKind}`)
-  }
-
-  private buildTaskReminderActionUrl(
-    reminderKind: TaskReminderKindEnum,
-  ): TaskReminderNotificationPayload['actionUrl'] {
-    if (
-      reminderKind === TaskReminderKindEnum.AUTO_ASSIGNED
-      || reminderKind === TaskReminderKindEnum.EXPIRING_SOON
-      || reminderKind === TaskReminderKindEnum.REWARD_GRANTED
-    ) {
-      return '/task/my'
-    }
-    throw new Error(`Unsupported task reminder kind: ${reminderKind}`)
   }
 }
