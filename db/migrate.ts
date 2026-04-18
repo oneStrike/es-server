@@ -108,9 +108,21 @@ function getRuntimeLabel() {
     : `node ${process.version}`
 }
 
-function serializeError(error: Error | string | number | boolean | null | undefined) {
+function serializeError(error: Error | string | number | boolean | null | undefined): string {
   if (error instanceof Error) {
-    return error.stack ?? `${error.name}: ${error.message}`
+    const parts: string[] = []
+    parts.push(error.stack ?? `${error.name}: ${error.message}`)
+
+    // 处理嵌套错误（如 DrizzleQueryError 的 cause）
+    let cause = (error as any).cause
+    let depth = 0
+    while (cause instanceof Error && depth < 5) {
+      parts.push(`\n  Caused by: ${cause.stack ?? `${cause.name}: ${cause.message}`}`)
+      cause = (cause as any).cause
+      depth++
+    }
+
+    return parts.join('')
   }
 
   return String(error)
