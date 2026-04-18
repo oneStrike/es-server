@@ -1,5 +1,5 @@
-import { BadRequestException } from '@nestjs/common'
 import type { DrizzleService } from '@db/core'
+import { BadRequestException } from '@nestjs/common'
 import { MessageMonitorService } from './message-monitor.service'
 
 function createDrizzleStub() {
@@ -8,7 +8,7 @@ function createDrizzleStub() {
   } as unknown as DrizzleService
 }
 
-describe('MessageMonitorService', () => {
+describe('messageMonitorService', () => {
   it('throws 400 for invalid eventId filter', async () => {
     const service = new MessageMonitorService(
       createDrizzleStub(),

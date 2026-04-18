@@ -4,7 +4,7 @@ import { MessageDomainEventPublisher } from '@libs/message/eventing/message-doma
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
-import { and, asc, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNull } from 'drizzle-orm'
 import {
   isAnnouncementPublishedNow,
   shouldAnnouncementEnterNotificationCenter,

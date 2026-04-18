@@ -14,6 +14,7 @@ import {
   MessageDomainEventKey,
 } from '../eventing/message-event.constant'
 import { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
+import { parsePositiveBigintQueryId } from './notification-query-id.util'
 import {
   getMessageNotificationCategoryLabel,
   getMessageNotificationDispatchStatusLabel,
@@ -21,7 +22,6 @@ import {
   MessageNotificationCategoryKey,
   MessageNotificationDispatchStatusEnum,
 } from './notification.constant'
-import { parsePositiveBigintQueryId } from './notification-query-id.util'
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -175,7 +175,7 @@ export class MessageNotificationDeliveryService {
         eq(
           this.notificationDelivery.projectionKey,
           query.projectionKey.trim(),
-        )!,
+        ),
       )
     }
     if (query.eventId?.trim()) {

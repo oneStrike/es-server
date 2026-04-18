@@ -59,7 +59,7 @@ function createChatDrizzleStub() {
   }
 }
 
-describe('MessageChatService', () => {
+describe('messageChatService', () => {
   it('uses limit+1 semantics to avoid false hasMore on exact page size', async () => {
     const { drizzle, selectBuilder } = createChatDrizzleStub()
     const service = new MessageChatService(

@@ -62,7 +62,7 @@ function createDrizzleStub() {
   return drizzle
 }
 
-describe('MessageInboxService', () => {
+describe('messageInboxService', () => {
   it('builds a notification-driven summary without loading latest chat message content', async () => {
     const drizzle = createDrizzleStub()
     const service = new MessageInboxService(drizzle)

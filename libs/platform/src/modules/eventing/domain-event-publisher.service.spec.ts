@@ -1,6 +1,6 @@
 import type { Db, DrizzleService } from '@db/core'
-import { DomainEventConsumerEnum } from './eventing.constant'
 import { DomainEventPublisher } from './domain-event-publisher.service'
+import { DomainEventConsumerEnum } from './eventing.constant'
 
 function createPublisherDrizzleStub() {
   const insertedEvents = [
@@ -73,7 +73,7 @@ function createPublisherDrizzleStub() {
   }
 }
 
-describe('DomainEventPublisher', () => {
+describe('domainEventPublisher', () => {
   it('batch publishes by idempotency key and only creates dispatches for inserted events', async () => {
     const { drizzle, eventInsertBuilder, dispatchInsertBuilder } =
       createPublisherDrizzleStub()

@@ -99,7 +99,6 @@ import {
   TaskObjectiveTypeEnum,
   TaskProgressActionTypeEnum,
   TaskProgressSourceEnum,
-  TaskReminderKindEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
   TaskUserVisibleStatusEnum,
@@ -828,10 +827,10 @@ export abstract class TaskServiceSupport {
       JSON.stringify(
         this.asRecord(dto.objectiveConfig) ?? dto.objectiveConfig ?? null,
       ) !==
-        JSON.stringify(
+      JSON.stringify(
           this.asRecord(taskRecord.objectiveConfig) ??
-            taskRecord.objectiveConfig ??
-            null,
+          taskRecord.objectiveConfig ??
+          null,
         )
     const publishWindowChanged =
       (dto.publishStartAt !== undefined &&
@@ -839,8 +838,8 @@ export abstract class TaskServiceSupport {
           dto.publishStartAt ?? null,
           taskRecord.publishStartAt ?? null,
         )) ||
-      (dto.publishEndAt !== undefined &&
-        !this.isSameNullableDate(
+        (dto.publishEndAt !== undefined &&
+          !this.isSameNullableDate(
           dto.publishEndAt ?? null,
           taskRecord.publishEndAt ?? null,
         ))
@@ -2104,7 +2103,7 @@ export abstract class TaskServiceSupport {
       ),
       objectiveType: normalizeTaskObjectiveType(
         this.readSnapshotPositiveInt(snapshot?.objectiveType) ??
-          liveTask?.objectiveType,
+        liveTask?.objectiveType,
       ),
       eventCode:
         this.readSnapshotPositiveInt(snapshot?.eventCode) ??

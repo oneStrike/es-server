@@ -1,6 +1,6 @@
+import { QueryMessageDispatchPageDto } from '@libs/message/monitor/dto/message-monitor.dto'
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
-import { QueryMessageDispatchPageDto } from '@libs/message/monitor/dto/message-monitor.dto'
 import { QueryNotificationDeliveryPageDto } from './notification.dto'
 import 'reflect-metadata'
 

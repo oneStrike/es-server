@@ -1,9 +1,9 @@
 import type { DrizzleService } from '@db/core'
+import { DomainEventDispatchService } from './domain-event-dispatch.service'
 import {
   DomainEventConsumerEnum,
   DomainEventDispatchStatusEnum,
 } from './eventing.constant'
-import { DomainEventDispatchService } from './domain-event-dispatch.service'
 
 function createDrizzleStub() {
   const dispatchRows = [
@@ -90,7 +90,7 @@ function createDrizzleStub() {
   }
 }
 
-describe('DomainEventDispatchService', () => {
+describe('domainEventDispatchService', () => {
   it('claims a batch and hydrates events with a single findMany call', async () => {
     const { drizzle } = createDrizzleStub()
     const service = new DomainEventDispatchService(drizzle)

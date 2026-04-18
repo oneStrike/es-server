@@ -7,6 +7,8 @@ export default antfu(
       'dist/**',
       'build/**',
       'prisma/seed/**',
+      '**/*.spec.ts',
+      '**/*.spec.js',
     ],
 
     formatters: {

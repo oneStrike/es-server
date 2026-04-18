@@ -1,5 +1,5 @@
-import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module';
 import { GrowthLedgerModule } from '@libs/growth/growth-ledger/growth-ledger.module'
+import { GrowthEventBridgeModule } from '@libs/growth/growth-reward/growth-event-bridge.module';
 import { BrowseLogModule } from '@libs/interaction/browse-log/browse-log.module';
 import { CommentModule } from '@libs/interaction/comment/comment.module';
 import { EmojiModule } from '@libs/interaction/emoji/emoji.module';

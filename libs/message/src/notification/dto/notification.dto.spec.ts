@@ -47,11 +47,11 @@ describe('query user notification list dto', () => {
       UserNotificationDto.prototype,
       'data',
     ) as
-      | {
+    | {
           nullable?: boolean
           oneOf?: Array<{ $ref: string }>
         }
-      | undefined
+        | undefined
 
     expect(metadata?.nullable).toBe(true)
     expect(metadata?.oneOf).toEqual([

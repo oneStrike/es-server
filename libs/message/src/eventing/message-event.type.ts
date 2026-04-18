@@ -40,10 +40,10 @@ export type NotificationProjectionCommand =
       payload?: Record<string, unknown> | null
       expiresAt?: Date
     })
-  | (NotificationProjectionCommandBase & {
+    | (NotificationProjectionCommandBase & {
       mode: 'delete'
     })
-  | {
+    | {
       mode: 'skip'
       reason: string
     }

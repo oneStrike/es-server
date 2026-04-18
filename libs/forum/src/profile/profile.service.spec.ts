@@ -1,3 +1,5 @@
+import { UserProfileService } from './profile.service'
+
 jest.mock('drizzle-orm', () => {
   const actual = jest.requireActual('drizzle-orm')
 
@@ -20,8 +22,6 @@ jest.mock('drizzle-orm', () => {
     sql: jest.fn(() => 'contentSnippetSql'),
   }
 })
-
-import { UserProfileService } from './profile.service'
 
 function createSelectChain(result: unknown) {
   const resultPromise = Promise.resolve(result) as Promise<unknown> & {
@@ -48,7 +48,7 @@ function createImmediateSelectChain(result: unknown) {
   }
 }
 
-describe('UserProfileService', () => {
+describe('userProfileService', () => {
   it('uses the viewer user id for like and favorite status when querying another user topics', async () => {
     const pageList = [
       {

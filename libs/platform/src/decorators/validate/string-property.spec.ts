@@ -1,5 +1,5 @@
-import 'reflect-metadata'
 import { StringProperty } from './string-property'
+import 'reflect-metadata'
 
 const previousNodeEnv = process.env.NODE_ENV
 process.env.NODE_ENV = 'development'
@@ -14,7 +14,7 @@ class StringPropertyNullableDto {
   value!: string | null
 }
 
-describe('StringProperty', () => {
+describe('stringProperty', () => {
   afterAll(() => {
     process.env.NODE_ENV = previousNodeEnv
   })

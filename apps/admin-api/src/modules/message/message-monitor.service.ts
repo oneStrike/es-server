@@ -64,7 +64,7 @@ export class MessageMonitorService {
     }
     if (query.projectionKey?.trim()) {
       conditions.push(
-        eq(notificationDelivery.projectionKey, query.projectionKey.trim())!,
+        eq(notificationDelivery.projectionKey, query.projectionKey.trim()),
       )
     }
     if (query.eventId?.trim()) {
