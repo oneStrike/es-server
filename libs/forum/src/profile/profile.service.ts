@@ -155,8 +155,8 @@ export class UserProfileService {
   }
 
   /**
-   * 构建“我的主题”列表使用的正文摘要 SQL。
-   * 直接在数据库侧截取前 60 个字符，避免个人列表读取完整正文。
+   * 构建用户主题列表使用的正文摘要 SQL。
+   * 直接在数据库侧截取前 60 个字符，避免列表读取完整正文。
    */
   private buildTopicContentSnippetSql() {
     return sql<string>`left(trim(${this.forumTopic.content}), 60)`
@@ -346,12 +346,14 @@ export class UserProfileService {
   }
 
   /**
-   * 查看我的主题，并补充当前用户对这些主题的交互状态、用户简要信息与板块简要信息。
-   * @param userId - 用户ID
+   * 查看指定用户发布的主题，并补充当前查看者对这些主题的交互状态、用户简要信息与板块简要信息。
+   * @param targetUserId - 被查看的用户 ID
+   * @param viewerUserId - 当前查看者用户 ID
    * @returns 分页的主题列表，包含板块信息、liked/favorited 状态和发帖用户简要信息
    */
-  async getMyTopics(
-    userId: number,
+  async getUserTopics(
+    targetUserId: number,
+    viewerUserId: number,
     query?: {
       sectionId?: number
       pageIndex?: number
@@ -360,7 +362,7 @@ export class UserProfileService {
     },
   ) {
     const conditions: SQL[] = [
-      eq(this.forumTopic.userId, userId),
+      eq(this.forumTopic.userId, targetUserId),
       isNull(this.forumTopic.deletedAt),
     ]
 
@@ -430,12 +432,12 @@ export class UserProfileService {
       this.likeService.checkStatusBatch(
         LikeTargetTypeEnum.FORUM_TOPIC,
         topicIds,
-        userId,
+        viewerUserId,
       ),
       this.favoriteService.checkStatusBatch(
         FavoriteTargetTypeEnum.FORUM_TOPIC,
         topicIds,
-        userId,
+        viewerUserId,
       ),
       sectionIds.length
         ? this.db
@@ -460,7 +462,7 @@ export class UserProfileService {
               cover: string | null
             }>
           >([]),
-      this.getTopicUserBriefById(userId),
+      this.getTopicUserBriefById(targetUserId),
     ])
     const sectionMap = new Map(sections.map((item) => [item.id, item]))
     const list = page.list.map((item) => {

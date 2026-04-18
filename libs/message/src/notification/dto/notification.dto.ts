@@ -10,6 +10,11 @@ import {
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType } from '@nestjs/swagger'
+import { ValidateBy } from 'class-validator'
+import {
+  isValidMessageNotificationCategoryKeysFilter,
+  serializeMessageNotificationCategoryKeysFilter,
+} from '../notification-category-key-filter.util'
 import {
   getMessageNotificationCategoryLabel,
   MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
@@ -18,6 +23,17 @@ import {
   MessageNotificationPreferenceSourceEnum,
 } from '../notification.constant'
 import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
+
+function IsValidNotificationCategoryKeysFilter(): PropertyDecorator {
+  return ValidateBy({
+    name: 'isValidNotificationCategoryKeysFilter',
+    validator: {
+      validate: (value: string | undefined) =>
+        isValidMessageNotificationCategoryKeysFilter(value),
+      defaultMessage: () => 'categoryKeys 中存在非法的通知分类键',
+    },
+  })
+}
 
 export class BaseUserNotificationDto extends BaseDto {
   @NumberProperty({
@@ -121,22 +137,16 @@ export class QueryUserNotificationListDto extends PageDto {
   })
   isRead?: boolean
 
-  @ArrayProperty({
-    description: '通知分类键列表',
+  @IsValidNotificationCategoryKeysFilter()
+  @StringProperty({
+    description: '通知分类键列表，使用逗号、中文逗号、分号或竖线分隔',
     required: false,
-    example: [
-      MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
-      MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE,
-    ],
-    itemEnum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
+    example: `${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY},${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE}`,
     transform: ({ value }) => {
-      if (value === undefined || value === null || value === '') {
-        return undefined
-      }
-      return Array.isArray(value) ? value : [value]
+      return serializeMessageNotificationCategoryKeysFilter(value)
     },
   })
-  categoryKeys?: MessageNotificationCategoryKey[]
+  categoryKeys?: string
 }
 
 export class UpdateUserNotificationPreferenceItemDto {

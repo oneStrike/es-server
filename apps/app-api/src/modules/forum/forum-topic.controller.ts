@@ -3,13 +3,13 @@ import type { FastifyRequest } from 'fastify'
 import { UserProfileService } from '@libs/forum/profile/profile.service'
 import {
   CreateUserForumTopicDto,
-  MyForumTopicItemDto,
   PublicForumTopicDetailDto,
   PublicForumTopicPageItemDto,
   QueryForumTopicCommentPageDto,
   QueryPublicForumTopicDto,
   QueryUserForumTopicDto,
   UpdateForumTopicDto,
+  UserForumTopicItemDto,
 } from '@libs/forum/topic/dto/forum-topic.dto'
 import { ForumTopicService } from '@libs/forum/topic/forum-topic.service'
 import { CommentService } from '@libs/interaction/comment/comment.service'
@@ -147,16 +147,16 @@ export class ForumTopicController {
     })
   }
 
-  @Get('my/page')
+  @Get('user/page')
   @ApiPageDoc({
     summary: '分页查询用户发布的主题',
-    model: MyForumTopicItemDto,
+    model: UserForumTopicItemDto,
   })
-  async getMyTopicPage(
+  async getUserTopicPage(
     @Query() query: QueryUserForumTopicDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.userProfileService.getMyTopics(query.userId || userId, query)
+    return this.userProfileService.getUserTopics(query.userId ?? userId, userId, query)
   }
 
   @Post('create')

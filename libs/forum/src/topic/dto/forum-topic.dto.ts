@@ -504,7 +504,7 @@ export class PublicForumTopicDetailDto extends IntersectionType(
   tags!: ForumTopicTagItemDto[]
 }
 
-export class MyForumTopicItemDto extends IntersectionType(
+export class UserForumTopicItemDto extends IntersectionType(
   PublicForumTopicPageItemDto,
   PickType(BaseForumTopicDto, ['auditStatus'] as const),
 ) {}

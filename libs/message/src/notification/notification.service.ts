@@ -6,14 +6,12 @@ import { and, eq, gt, inArray, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { QueryUserNotificationListDto } from './dto/notification.dto'
 import {
-  mapUserNotificationToPublicView
-
+  normalizeMessageNotificationCategoryKeysFilter,
+} from './notification-category-key-filter.util'
+import {
+  mapUserNotificationToPublicView,
 } from './notification-public.mapper'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
-import {
-  isMessageNotificationCategoryKey,
-  MessageNotificationCategoryKey,
-} from './notification.constant'
 
 /**
  * 用户通知读模型服务。
@@ -179,21 +177,9 @@ export class MessageNotificationService {
   }
 
   private normalizeCategoryKeysFilter(
-    categoryKeys?: MessageNotificationCategoryKey[],
+    categoryKeys?: string,
   ) {
-    if (!Array.isArray(categoryKeys) || categoryKeys.length === 0) {
-      return undefined
-    }
-
-    const normalized = [
-      ...new Set(
-        categoryKeys
-          .map((item) => item.trim())
-          .filter(isMessageNotificationCategoryKey),
-      ),
-    ]
-
-    return normalized.length > 0 ? normalized : undefined
+    return normalizeMessageNotificationCategoryKeysFilter(categoryKeys)
   }
 
   private async emitInboxSummaryUpdated(receiverUserId: number) {
