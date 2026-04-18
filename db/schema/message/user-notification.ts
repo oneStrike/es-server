@@ -1,5 +1,6 @@
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -8,6 +9,7 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 /**
  * 用户通知投影表。
@@ -32,6 +34,8 @@ export const userNotification = pgTable(
     content: varchar({ length: 1000 }).notNull(),
     /** 通知扩展载荷。 */
     payload: jsonb(),
+    /** 公告 ID（system_announcement 场景冗余列，用于反查已通知用户）。 */
+    announcementId: integer(),
     /** 是否已读。 */
     isRead: boolean().default(false).notNull(),
     /** 已读时间。 */
@@ -69,6 +73,15 @@ export const userNotification = pgTable(
     index('user_notification_receiver_user_id_expires_at_idx').on(
       table.receiverUserId,
       table.expiresAt,
+    ),
+    index('user_notification_category_announcement_receiver_idx').on(
+      table.categoryKey,
+      table.announcementId,
+      table.receiverUserId,
+    ),
+    check(
+      'user_notification_system_announcement_requires_announcement_id_chk',
+      sql`${table.categoryKey} <> 'system_announcement' OR ${table.announcementId} IS NOT NULL`,
     ),
   ],
 )

@@ -135,8 +135,8 @@ export class AnnouncementNotificationFanoutService {
         const eventKey = task.desiredEventKey as
           | 'announcement.published'
           | 'announcement.unpublished'
-        for (const receiverUserId of receiverUserIds) {
-          await this.messageDomainEventPublisher.publish({
+        await this.messageDomainEventPublisher.publishMany(
+          receiverUserIds.map((receiverUserId) => ({
             eventKey,
             subjectType: 'system',
             subjectId: task.announcementId,
@@ -156,9 +156,9 @@ export class AnnouncementNotificationFanoutService {
               announcementType: announcement?.announcementType,
               priorityLevel: announcement?.priorityLevel,
             }),
-          })
-          lastProcessedUserId = receiverUserId
-        }
+          })),
+        )
+        lastProcessedUserId = receiverUserIds.at(-1) ?? lastProcessedUserId
       } catch (error) {
         await this.markTaskFailed(
           task.id,
@@ -320,10 +320,9 @@ export class AnnouncementNotificationFanoutService {
     announcementId: number,
     cursorUserId?: number,
   ) {
-    const projectionKeyPrefix = `announcement:notify:${announcementId}:user:%`
     const conditions = [
       eq(this.userNotification.categoryKey, 'system_announcement'),
-      sql`${this.userNotification.projectionKey} like ${projectionKeyPrefix}`,
+      eq(this.userNotification.announcementId, announcementId),
       cursorUserId !== undefined
         ? gt(this.userNotification.receiverUserId, cursorUserId)
         : undefined,

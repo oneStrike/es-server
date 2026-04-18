@@ -2285,29 +2285,20 @@ export abstract class TaskServiceSupport {
    * 查询任务维度最近一次提醒投递结果。
    */
   protected async queryLatestTaskReminderRows(taskIds: number[]) {
-    const taskIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' -> 'object' ->> 'id')::int`
-    const reminderKindSql = sql<
-      string | null
-    >`${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'kind'`
-
     const rows = await this.db
       .select({
-        taskId: taskIdSql,
-        reminderKind: reminderKindSql,
+        taskId: this.notificationDeliveryTable.taskId,
+        reminderKind: this.notificationDeliveryTable.reminderKind,
         status: this.notificationDeliveryTable.status,
         failureReason: this.notificationDeliveryTable.failureReason,
         lastAttemptAt: this.notificationDeliveryTable.lastAttemptAt,
         updatedAt: this.notificationDeliveryTable.updatedAt,
       })
       .from(this.notificationDeliveryTable)
-      .leftJoin(
-        this.domainEventTable,
-        eq(this.notificationDeliveryTable.eventId, this.domainEventTable.id),
-      )
       .where(
         and(
           eq(this.notificationDeliveryTable.categoryKey, 'task_reminder'),
-          inArray(taskIdSql, taskIds),
+          inArray(this.notificationDeliveryTable.taskId, taskIds),
         ),
       )
       .orderBy(
@@ -2379,17 +2370,9 @@ export abstract class TaskServiceSupport {
       return undefined
     }
 
-    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'assignmentId')::int`
-    const reminderKindSql = sql<
-      string | null
-    >`${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'kind'`
     const rows = await this.db
-      .select({ assignmentId: assignmentIdSql })
+      .select({ assignmentId: this.notificationDeliveryTable.assignmentId })
       .from(this.notificationDeliveryTable)
-      .leftJoin(
-        this.domainEventTable,
-        eq(this.notificationDeliveryTable.eventId, this.domainEventTable.id),
-      )
       .where(
         and(
           eq(this.notificationDeliveryTable.categoryKey, 'task_reminder'),
@@ -2397,11 +2380,17 @@ export abstract class TaskServiceSupport {
             this.notificationDeliveryTable.status,
             queryDto.notificationStatus,
           ),
-          eq(reminderKindSql, 'reward_granted'),
+          eq(this.notificationDeliveryTable.reminderKind, 'reward_granted'),
         ),
       )
 
-    return [...new Set(rows.map((item) => item.assignmentId).filter(Boolean))]
+    return [
+      ...new Set(
+        rows
+          .map((item) => item.assignmentId)
+          .filter((item): item is number => typeof item === 'number'),
+      ),
+    ]
   }
 
   /**
@@ -2519,13 +2508,9 @@ export abstract class TaskServiceSupport {
       return new Map<number, TaskAssignmentRewardReminderSummary>()
     }
 
-    const assignmentIdSql = sql<number>`(${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'assignmentId')::int`
-    const reminderKindSql = sql<
-      string | null
-    >`${this.domainEventTable.context} -> 'payload' -> 'reminder' ->> 'kind'`
     const rows = await this.db
       .select({
-        assignmentId: assignmentIdSql,
+        assignmentId: this.notificationDeliveryTable.assignmentId,
         bizKey: this.notificationDeliveryTable.projectionKey,
         status: this.notificationDeliveryTable.status,
         failureReason: this.notificationDeliveryTable.failureReason,
@@ -2533,15 +2518,14 @@ export abstract class TaskServiceSupport {
         id: this.notificationDeliveryTable.id,
       })
       .from(this.notificationDeliveryTable)
-      .leftJoin(
-        this.domainEventTable,
-        eq(this.notificationDeliveryTable.eventId, this.domainEventTable.id),
-      )
       .where(
         and(
           eq(this.notificationDeliveryTable.categoryKey, 'task_reminder'),
-          inArray(assignmentIdSql, uniqueAssignmentIds),
-          eq(reminderKindSql, 'reward_granted'),
+          inArray(
+            this.notificationDeliveryTable.assignmentId,
+            uniqueAssignmentIds,
+          ),
+          eq(this.notificationDeliveryTable.reminderKind, 'reward_granted'),
         ),
       )
       .orderBy(desc(this.notificationDeliveryTable.id))

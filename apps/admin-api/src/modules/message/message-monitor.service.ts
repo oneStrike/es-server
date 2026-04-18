@@ -4,9 +4,14 @@ import type {
 } from '@libs/message/monitor/dto/message-monitor.dto'
 import type { QueryNotificationDeliveryPageDto } from '@libs/message/notification/dto/notification.dto'
 import type { SQL } from 'drizzle-orm'
-import { buildILikeCondition, DrizzleService } from '@db/core'
+import { DrizzleService } from '@db/core'
 
-import { domainEvent, domainEventDispatch, messageWsMetric, notificationDelivery } from '@db/schema'
+import {
+  domainEvent,
+  domainEventDispatch,
+  messageWsMetric,
+  notificationDelivery,
+} from '@db/schema'
 
 import { MessageNotificationDeliveryService } from '@libs/message/notification/notification-delivery.service'
 import { parsePositiveBigintQueryId } from '@libs/message/notification/notification-query-id.util'
@@ -59,10 +64,7 @@ export class MessageMonitorService {
     }
     if (query.projectionKey?.trim()) {
       conditions.push(
-        buildILikeCondition(
-          notificationDelivery.projectionKey,
-          query.projectionKey,
-        )!,
+        eq(notificationDelivery.projectionKey, query.projectionKey.trim())!,
       )
     }
     if (query.eventId?.trim()) {

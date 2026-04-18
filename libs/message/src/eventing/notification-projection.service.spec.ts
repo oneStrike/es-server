@@ -84,6 +84,7 @@ function createProjectionDrizzleStub(options?: {
         receiverUserId: 'receiverUserId',
         projectionKey: 'projectionKey',
         categoryKey: 'categoryKey',
+        announcementId: 'announcementId',
         actorUserId: 'actorUserId',
         title: 'title',
         content: 'content',
@@ -315,5 +316,62 @@ describe('notification projection service', () => {
         workType: 1,
       },
     })
+  })
+
+  it('stores typed announcement lookup fields for system announcements', async () => {
+    const { service, inserted } = createProjectionService()
+
+    await service.applyCommand(
+      {
+        mode: 'upsert',
+        receiverUserId: 7,
+        projectionKey: 'announcement:notify:42:user:7',
+        categoryKey: 'system_announcement',
+        mandatory: true,
+        title: '版本更新',
+        content: '公告内容',
+        payload: {
+          object: {
+            kind: 'announcement',
+            id: 42,
+            title: '版本更新',
+          },
+        },
+      },
+      {} as never,
+      {} as never,
+    )
+
+    expect(inserted[0]).toMatchObject({
+      announcementId: 42,
+    })
+  })
+
+  it('rejects system announcements without typed lookup id', async () => {
+    const { service } = createProjectionService()
+
+    await expect(
+      service.applyCommand(
+        {
+          mode: 'upsert',
+          receiverUserId: 7,
+          projectionKey: 'announcement:notify:42:user:7',
+          categoryKey: 'system_announcement',
+          mandatory: true,
+          title: '版本更新',
+          content: '公告内容',
+          payload: {
+            object: {
+              kind: 'announcement',
+              title: '版本更新',
+            },
+          },
+        },
+        {} as never,
+        {} as never,
+      ),
+    ).rejects.toThrow(
+      'system_announcement notification must provide payload.object.id',
+    )
   })
 })

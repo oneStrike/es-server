@@ -2,7 +2,12 @@ import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing'
 import { DrizzleService } from '@db/core'
-import { appUser, chatConversation, chatConversationMember, chatMessage } from '@db/schema'
+import {
+  appUser,
+  chatConversation,
+  chatConversationMember,
+  chatMessage,
+} from '@db/schema'
 
 import { EmojiCatalogService } from '@libs/interaction/emoji/emoji-catalog.service'
 import { EmojiParserService } from '@libs/interaction/emoji/emoji-parser.service'
@@ -24,6 +29,7 @@ import {
   isNull,
   lt,
   ne,
+  or,
   sql,
 } from 'drizzle-orm'
 import { MessageDomainEventPublisher } from '../eventing/message-domain-event.publisher'
@@ -133,12 +139,16 @@ export class MessageChatService {
         const insertedConversation = await tx
           .insert(chatConversation)
           .values({ bizKey })
-          .onConflictDoUpdate({
+          .onConflictDoNothing({
             target: chatConversation.bizKey,
-            set: { bizKey },
           })
           .returning({ id: chatConversation.id })
-        const item = insertedConversation[0]
+        const item =
+          insertedConversation[0] ??
+          (await tx.query.chatConversation.findFirst({
+            where: { bizKey },
+            columns: { id: true },
+          }))
         if (!item) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -154,16 +164,32 @@ export class MessageChatService {
             role: ChatConversationMemberRoleEnum.OWNER,
             leftAt: null,
           })
-          .onConflictDoUpdate({
+          .onConflictDoNothing({
             target: [
               chatConversationMember.conversationId,
               chatConversationMember.userId,
             ],
-            set: {
-              leftAt: null,
-              role: ChatConversationMemberRoleEnum.OWNER,
-            },
           })
+
+        await tx
+          .update(chatConversationMember)
+          .set({
+            leftAt: null,
+            role: ChatConversationMemberRoleEnum.OWNER,
+          })
+          .where(
+            and(
+              eq(chatConversationMember.conversationId, item.id),
+              eq(chatConversationMember.userId, userId),
+              or(
+                ne(
+                  chatConversationMember.role,
+                  ChatConversationMemberRoleEnum.OWNER,
+                ),
+                sql`${chatConversationMember.leftAt} is not null`,
+              ),
+            ),
+          )
 
         await tx
           .insert(chatConversationMember)
@@ -173,16 +199,32 @@ export class MessageChatService {
             role: ChatConversationMemberRoleEnum.MEMBER,
             leftAt: null,
           })
-          .onConflictDoUpdate({
+          .onConflictDoNothing({
             target: [
               chatConversationMember.conversationId,
               chatConversationMember.userId,
             ],
-            set: {
-              leftAt: null,
-              role: ChatConversationMemberRoleEnum.MEMBER,
-            },
           })
+
+        await tx
+          .update(chatConversationMember)
+          .set({
+            leftAt: null,
+            role: ChatConversationMemberRoleEnum.MEMBER,
+          })
+          .where(
+            and(
+              eq(chatConversationMember.conversationId, item.id),
+              eq(chatConversationMember.userId, targetUserId),
+              or(
+                ne(
+                  chatConversationMember.role,
+                  ChatConversationMemberRoleEnum.MEMBER,
+                ),
+                sql`${chatConversationMember.leftAt} is not null`,
+              ),
+            ),
+          )
 
         return item
       }),
@@ -285,7 +327,7 @@ export class MessageChatService {
         unreadCount: number
         lastReadAt: Date | null
         lastReadMessageId: bigint | null
-        user: { id: number, nickname: string | null, avatar: string | null }
+        user: { id: number; nickname: string | null; avatar: string | null }
       }>
     >()
     for (const member of members) {
@@ -352,9 +394,7 @@ export class MessageChatService {
     const afterSeq = this.parseBigintCursor(dto.afterSeq, 'afterSeq')
     const limit = this.normalizeMessageLimit(dto.limit)
     if (cursor !== undefined && afterSeq !== undefined) {
-      throw new BadRequestException(
-        'cursor 和 afterSeq 不能同时使用',
-      )
+      throw new BadRequestException('cursor 和 afterSeq 不能同时使用')
     }
     await this.ensureConversationMember(conversationId, userId)
     if (afterSeq !== undefined) {
@@ -370,13 +410,16 @@ export class MessageChatService {
           ),
         )
         .orderBy(asc(chatMessage.messageSeq))
-        .limit(limit)
-      const list = messages.map((item) => this.toMessageOutput(item))
+        .limit(limit + 1)
+      const hasMore = messages.length > limit
+      const list = messages
+        .slice(0, limit)
+        .map((item) => this.toMessageOutput(item))
       this.recordResyncSuccessMetric()
       return {
         list,
         nextCursor: list?.length ? list.at(-1)?.messageSeq : null,
-        hasMore: list.length >= limit,
+        hasMore,
       }
     }
     const where = and(
@@ -389,12 +432,15 @@ export class MessageChatService {
       .from(chatMessage)
       .where(where)
       .orderBy(desc(chatMessage.messageSeq))
-      .limit(limit)
-    const list = messages.map((item) => this.toMessageOutput(item))
+      .limit(limit + 1)
+    const hasMore = messages.length > limit
+    const list = messages
+      .slice(0, limit)
+      .map((item) => this.toMessageOutput(item))
     return {
       list,
       nextCursor: list.length ? list.at(-1)?.messageSeq : null,
-      hasMore: list.length >= limit,
+      hasMore,
     }
   }
 
@@ -470,7 +516,9 @@ export class MessageChatService {
     await this.dispatchMessageCreatedPayload(payload)
   }
 
-  private async dispatchMessageCreatedPayload(payload: ChatMessageCreatedDomainEventPayload) {
+  private async dispatchMessageCreatedPayload(
+    payload: ChatMessageCreatedDomainEventPayload,
+  ) {
     const conversationId = this.parsePositiveInteger(
       payload.conversationId,
       'conversationId',
@@ -841,9 +889,8 @@ export class MessageChatService {
               ),
             )
 
-          const publishedEvent = await this.messageDomainEventPublisher.publishInTx(
-            tx,
-            {
+          const publishedEvent =
+            await this.messageDomainEventPublisher.publishInTx(tx, {
               eventKey: 'chat.message.created',
               subjectType: 'user',
               subjectId: userId,
@@ -852,8 +899,7 @@ export class MessageChatService {
               operatorId: userId,
               occurredAt: message.createdAt,
               context: domainEventPayload,
-            },
-          )
+            })
 
           return {
             message,
@@ -1156,7 +1202,7 @@ export class MessageChatService {
    */
   private async getMessageMapByIds(ids: bigint[]) {
     if (!ids.length) {
-      return new Map<string, { id: bigint, content: string }>()
+      return new Map<string, { id: bigint; content: string }>()
     }
     const rows = await this.db
       .select({
@@ -1201,15 +1247,12 @@ export class MessageChatService {
     eventId: bigint,
     payload: ChatMessageCreatedDomainEventPayload,
   ) {
-    let claimedDispatch:
-      | Awaited<
-          ReturnType<DomainEventDispatchService['claimPendingDispatchByEvent']>
-        >
-        | null
-      = null
+    let claimedDispatch: Awaited<
+      ReturnType<DomainEventDispatchService['claimPendingDispatchByEvent']>
+    > | null = null
     try {
-      claimedDispatch
-        = await this.domainEventDispatchService.claimPendingDispatchByEvent(
+      claimedDispatch =
+        await this.domainEventDispatchService.claimPendingDispatchByEvent(
           eventId,
           DomainEventConsumerEnum.CHAT_REALTIME,
         )
@@ -1251,15 +1294,13 @@ export class MessageChatService {
       )
     }
 
-    const conversationId = Number(
-      (context).conversationId,
-    )
-    const messageId = (context).messageId
+    const conversationId = Number(context.conversationId)
+    const messageId = context.messageId
     if (
-      !Number.isInteger(conversationId)
-      || conversationId <= 0
-      || typeof messageId !== 'string'
-      || !DIGIT_STRING_REGEX.test(messageId)
+      !Number.isInteger(conversationId) ||
+      conversationId <= 0 ||
+      typeof messageId !== 'string' ||
+      !DIGIT_STRING_REGEX.test(messageId)
     ) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -1330,9 +1371,7 @@ export class MessageChatService {
    */
   private parseBigintId<T>(value: T, fieldName: string) {
     if (typeof value !== 'string' || !DIGIT_STRING_REGEX.test(value.trim())) {
-      throw new BadRequestException(
-        `${fieldName} 必须是合法的整数字符串`,
-      )
+      throw new BadRequestException(`${fieldName} 必须是合法的整数字符串`)
     }
     return BigInt(value.trim())
   }
@@ -1351,9 +1390,7 @@ export class MessageChatService {
       return undefined
     }
     if (!DIGIT_STRING_REGEX.test(cursor.trim())) {
-      throw new BadRequestException(
-        `${fieldName} 必须是合法的整数字符串`,
-      )
+      throw new BadRequestException(`${fieldName} 必须是合法的整数字符串`)
     }
     return BigInt(cursor.trim())
   }
@@ -1419,15 +1456,11 @@ export class MessageChatService {
       return undefined
     }
     if (typeof clientMessageId !== 'string' || !clientMessageId.trim()) {
-      throw new BadRequestException(
-        'clientMessageId 必须是非空字符串',
-      )
+      throw new BadRequestException('clientMessageId 必须是非空字符串')
     }
     const normalized = clientMessageId.trim()
     if (normalized.length > 64) {
-      throw new BadRequestException(
-        'clientMessageId 最长不能超过 64 个字符',
-      )
+      throw new BadRequestException('clientMessageId 最长不能超过 64 个字符')
     }
     return normalized
   }

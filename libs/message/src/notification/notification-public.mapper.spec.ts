@@ -67,4 +67,35 @@ describe('mapUserNotificationToPublicView', () => {
       updatedAt: new Date('2026-04-18T00:00:00.000Z'),
     })
   })
+
+  it('keeps actor avatarUrl as null when the source value is empty', () => {
+    const mapped = mapUserNotificationToPublicView(
+      {
+        id: 2,
+        categoryKey: 'comment_like',
+        projectionKey: 'k2',
+        receiverUserId: 9,
+        actorUserId: 3,
+        title: '李四 点赞了你的评论',
+        content: '另一条评论',
+        payload: null,
+        isRead: false,
+        readAt: null,
+        expiresAt: null,
+        createdAt: new Date('2026-04-18T00:00:00.000Z'),
+        updatedAt: new Date('2026-04-18T00:00:00.000Z'),
+      } as never,
+      {
+        id: 3,
+        nickname: '李四',
+        avatarUrl: null,
+      },
+    )
+
+    expect(mapped.actor).toEqual({
+      id: 3,
+      nickname: '李四',
+      avatarUrl: null,
+    })
+  })
 })

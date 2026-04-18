@@ -1,7 +1,10 @@
-import type { DomainEventDispatchRecord, DomainEventRecord } from './domain-event.type'
+import type {
+  DomainEventDispatchRecord,
+  DomainEventRecord,
+} from './domain-event.type'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
-import { and, asc, eq, isNull, lte, or } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, lte, or } from 'drizzle-orm'
 import {
   DOMAIN_EVENT_DISPATCH_BATCH_SIZE,
   DOMAIN_EVENT_DISPATCH_MAX_RETRY,
@@ -48,11 +51,16 @@ export class DomainEventDispatchService {
         status: DomainEventDispatchStatusEnum.PROCESSING,
         nextRetryAt: this.buildProcessingDeadline(),
       })
-      .where(and(
-        eq(this.domainEventDispatch.eventId, eventId),
-        eq(this.domainEventDispatch.consumer, consumer),
-        eq(this.domainEventDispatch.status, DomainEventDispatchStatusEnum.PENDING),
-      ))
+      .where(
+        and(
+          eq(this.domainEventDispatch.eventId, eventId),
+          eq(this.domainEventDispatch.consumer, consumer),
+          eq(
+            this.domainEventDispatch.status,
+            DomainEventDispatchStatusEnum.PENDING,
+          ),
+        ),
+      )
       .returning()
 
     return claimedRows[0] ?? null
@@ -60,55 +68,96 @@ export class DomainEventDispatchService {
 
   async claimPendingDispatchBatch(consumers: DomainEventConsumerEnum[]) {
     const now = new Date()
-    const dispatchRows = await this.db
+    const candidateRows = await this.db
       .select()
       .from(this.domainEventDispatch)
-      .where(and(
-        consumers.length === 1
-          ? eq(this.domainEventDispatch.consumer, consumers[0])
-          : or(...consumers.map(consumer => eq(this.domainEventDispatch.consumer, consumer))),
-        eq(this.domainEventDispatch.status, DomainEventDispatchStatusEnum.PENDING),
-        or(
-          isNull(this.domainEventDispatch.nextRetryAt),
-          lte(this.domainEventDispatch.nextRetryAt, now),
+      .where(
+        and(
+          consumers.length === 1
+            ? eq(this.domainEventDispatch.consumer, consumers[0])
+            : or(
+                ...consumers.map((consumer) =>
+                  eq(this.domainEventDispatch.consumer, consumer),
+                ),
+              ),
+          eq(
+            this.domainEventDispatch.status,
+            DomainEventDispatchStatusEnum.PENDING,
+          ),
+          or(
+            isNull(this.domainEventDispatch.nextRetryAt),
+            lte(this.domainEventDispatch.nextRetryAt, now),
+          ),
         ),
-      ))
+      )
       .orderBy(asc(this.domainEventDispatch.id))
       .limit(DOMAIN_EVENT_DISPATCH_BATCH_SIZE)
+
+    const candidateDispatchIds = candidateRows.map((dispatch) => dispatch.id)
+    if (candidateDispatchIds.length === 0) {
+      return []
+    }
+
+    const claimedRows = await this.db
+      .update(this.domainEventDispatch)
+      .set({
+        status: DomainEventDispatchStatusEnum.PROCESSING,
+        nextRetryAt: this.buildProcessingDeadline(),
+      })
+      .where(
+        and(
+          inArray(this.domainEventDispatch.id, candidateDispatchIds),
+          eq(
+            this.domainEventDispatch.status,
+            DomainEventDispatchStatusEnum.PENDING,
+          ),
+        ),
+      )
+      .returning()
+
+    if (claimedRows.length === 0) {
+      return []
+    }
+
+    const uniqueEventIds = [...new Set(claimedRows.map((row) => row.eventId))]
+    const events = await this.db.query.domainEvent.findMany({
+      where: {
+        id: {
+          in: uniqueEventIds,
+        },
+      },
+    })
+    const eventMap = new Map(
+      events.map((event) => [
+        event.id,
+        {
+          ...event,
+          context:
+            event.context &&
+            typeof event.context === 'object' &&
+            !Array.isArray(event.context)
+              ? (event.context as Record<string, unknown>)
+              : null,
+        } satisfies DomainEventRecord,
+      ]),
+    )
 
     const claimedPairs: Array<{
       dispatch: DomainEventDispatchRecord
       event: DomainEventRecord
     }> = []
 
-    for (const dispatch of dispatchRows) {
-      const claimed = await this.claimPendingDispatchByEvent(
-        dispatch.eventId,
-        dispatch.consumer as DomainEventConsumerEnum,
-      )
-      if (!claimed) {
-        continue
-      }
-
-      const event = await this.db.query.domainEvent.findFirst({
-        where: {
-          id: claimed.eventId,
-        },
-      })
-
+    for (const claimed of claimedRows.sort((prev, next) =>
+      Number(prev.id - next.id),
+    )) {
+      const event = eventMap.get(claimed.eventId)
       if (!event) {
         continue
       }
 
       claimedPairs.push({
         dispatch: claimed,
-        event: {
-          ...event,
-          context:
-            event.context && typeof event.context === 'object' && !Array.isArray(event.context)
-              ? (event.context as Record<string, unknown>)
-              : null,
-        },
+        event,
       })
     }
 
@@ -173,13 +222,22 @@ export class DomainEventDispatchService {
     const staleRows = await this.db
       .select()
       .from(this.domainEventDispatch)
-      .where(and(
-        consumers.length === 1
-          ? eq(this.domainEventDispatch.consumer, consumers[0])
-          : or(...consumers.map(consumer => eq(this.domainEventDispatch.consumer, consumer))),
-        eq(this.domainEventDispatch.status, DomainEventDispatchStatusEnum.PROCESSING),
-        lte(this.domainEventDispatch.nextRetryAt, now),
-      ))
+      .where(
+        and(
+          consumers.length === 1
+            ? eq(this.domainEventDispatch.consumer, consumers[0])
+            : or(
+                ...consumers.map((consumer) =>
+                  eq(this.domainEventDispatch.consumer, consumer),
+                ),
+              ),
+          eq(
+            this.domainEventDispatch.status,
+            DomainEventDispatchStatusEnum.PROCESSING,
+          ),
+          lte(this.domainEventDispatch.nextRetryAt, now),
+        ),
+      )
 
     for (const dispatch of staleRows) {
       await this.markDispatchFailed(

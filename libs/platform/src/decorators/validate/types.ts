@@ -23,6 +23,8 @@ export interface StringPropertyOptions extends BaseValidateOptions {
   example?: string | null
   /** 默认值 */
   default?: string | null
+  /** 是否允许为 null（仅影响文档表现） */
+  nullable?: boolean
   /** 字符串类型，支持ISO8601日期格式 */
   type?: 'ISO8601' | 'url'
   /** 最大长度 */

@@ -1,4 +1,5 @@
 import type { MessageNotificationData } from '../notification-contract.type'
+import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -6,11 +7,16 @@ import {
   EnumProperty,
   NestedProperty,
   NumberProperty,
-  ObjectProperty,
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
-import { IntersectionType, PartialType } from '@nestjs/swagger'
+import {
+  ApiExtraModels,
+  ApiProperty,
+  getSchemaPath,
+  IntersectionType,
+  PartialType,
+} from '@nestjs/swagger'
 import { ValidateBy } from 'class-validator'
 import {
   isValidMessageNotificationCategoryKeysFilter,
@@ -67,10 +73,429 @@ export class NotificationActorDto {
   @StringProperty({
     description: '头像地址',
     example: 'https://example.com/avatar.png',
+    required: true,
+    nullable: true,
+    validation: false,
+  })
+  avatarUrl!: string | null
+}
+
+export class NotificationCommentSnapshotDto {
+  @StringProperty({
+    description: '对象类型，固定为 comment',
+    example: 'comment',
+    validation: false,
+  })
+  kind!: 'comment'
+
+  @NumberProperty({
+    description: '评论 ID',
+    example: 101,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '评论摘要',
+    example: '这条评论很关键',
     required: false,
     validation: false,
   })
-  avatarUrl?: string
+  snippet?: string
+}
+
+export class NotificationTopicSnapshotDto {
+  @StringProperty({
+    description: '对象类型，固定为 topic',
+    example: 'topic',
+    validation: false,
+  })
+  kind!: 'topic'
+
+  @NumberProperty({
+    description: '主题 ID',
+    example: 8,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '主题标题',
+    example: '帖子标题',
+    required: false,
+    validation: false,
+  })
+  title?: string
+
+  @StringProperty({
+    description: '主题封面',
+    example: 'https://example.com/topic-cover.png',
+    required: false,
+    validation: false,
+  })
+  cover?: string
+
+  @NumberProperty({
+    description: '所属分区 ID',
+    example: 12,
+    required: false,
+    validation: false,
+  })
+  sectionId?: number
+}
+
+export class NotificationWorkSnapshotDto {
+  @StringProperty({
+    description: '对象类型，固定为 work',
+    example: 'work',
+    validation: false,
+  })
+  kind!: 'work'
+
+  @NumberProperty({
+    description: '作品 ID',
+    example: 5,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '作品标题',
+    example: '鬼灭之刃',
+    required: false,
+    validation: false,
+  })
+  title?: string
+
+  @StringProperty({
+    description: '作品封面',
+    example: 'https://example.com/work-cover.png',
+    required: false,
+    validation: false,
+  })
+  cover?: string
+
+  @NumberProperty({
+    description: '作品类型',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  workType?: number
+}
+
+export class NotificationChapterSnapshotDto {
+  @StringProperty({
+    description: '对象类型，固定为 chapter',
+    example: 'chapter',
+    validation: false,
+  })
+  kind!: 'chapter'
+
+  @NumberProperty({
+    description: '章节 ID',
+    example: 17,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '章节标题',
+    example: '第 17 话',
+    required: false,
+    validation: false,
+  })
+  title?: string
+
+  @StringProperty({
+    description: '章节副标题',
+    example: '暴雨将至',
+    required: false,
+    validation: false,
+  })
+  subtitle?: string
+
+  @StringProperty({
+    description: '章节封面',
+    example: 'https://example.com/chapter-cover.png',
+    required: false,
+    validation: false,
+  })
+  cover?: string
+
+  @NumberProperty({
+    description: '所属作品 ID',
+    example: 8,
+    required: false,
+    validation: false,
+  })
+  workId?: number
+
+  @NumberProperty({
+    description: '所属作品类型',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  workType?: number
+}
+
+export class NotificationAnnouncementSnapshotDto {
+  @StringProperty({
+    description: '对象类型，固定为 announcement',
+    example: 'announcement',
+    validation: false,
+  })
+  kind!: 'announcement'
+
+  @NumberProperty({
+    description: '公告 ID',
+    example: 42,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '公告标题',
+    example: '版本更新',
+    required: false,
+    validation: false,
+  })
+  title?: string
+
+  @StringProperty({
+    description: '公告摘要',
+    example: '公告摘要',
+    required: false,
+    validation: false,
+  })
+  summary?: string
+
+  @NumberProperty({
+    description: '公告类型',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  announcementType?: number
+
+  @NumberProperty({
+    description: '优先级',
+    example: 2,
+    required: false,
+    validation: false,
+  })
+  priorityLevel?: number
+}
+
+export class NotificationTaskSnapshotDto {
+  @StringProperty({
+    description: '对象类型，固定为 task',
+    example: 'task',
+    validation: false,
+  })
+  kind!: 'task'
+
+  @NumberProperty({
+    description: '任务 ID',
+    example: 5,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '任务编码',
+    example: 'daily-comment',
+    required: false,
+    validation: false,
+  })
+  code?: string
+
+  @StringProperty({
+    description: '任务标题',
+    example: '每日评论',
+    required: false,
+    validation: false,
+  })
+  title?: string
+
+  @StringProperty({
+    description: '任务封面',
+    example: 'https://example.com/task-cover.png',
+    required: false,
+    validation: false,
+  })
+  cover?: string
+
+  @NumberProperty({
+    description: '任务场景类型',
+    example: 2,
+    required: false,
+    validation: false,
+  })
+  sceneType?: number
+}
+
+export class NotificationTaskReminderInfoDto {
+  @StringProperty({
+    description:
+      '提醒子类型：auto_assigned=自动分配；expiring_soon=即将过期；reward_granted=奖励到账',
+    example: 'reward_granted',
+    validation: false,
+  })
+  kind!: 'auto_assigned' | 'expiring_soon' | 'reward_granted'
+
+  @NumberProperty({
+    description: '任务分配 ID',
+    example: 10,
+    required: false,
+    validation: false,
+  })
+  assignmentId?: number
+
+  @StringProperty({
+    description: '周期键',
+    example: '2026-04-18',
+    required: false,
+    validation: false,
+  })
+  cycleKey?: string
+
+  @StringProperty({
+    description: '过期时间',
+    example: '2026-04-19T12:00:00.000Z',
+    required: false,
+    validation: false,
+    type: 'ISO8601',
+  })
+  expiredAt?: string
+}
+
+export class NotificationTaskRewardItemDto {
+  @EnumProperty({
+    description: '奖励资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）',
+    example: GrowthRewardRuleAssetTypeEnum.POINTS,
+    enum: GrowthRewardRuleAssetTypeEnum,
+    validation: false,
+  })
+  assetType!: GrowthRewardRuleAssetTypeEnum
+
+  @NumberProperty({
+    description: '奖励数量',
+    example: 5,
+    validation: false,
+  })
+  amount!: number
+}
+
+export class NotificationTaskRewardSnapshotDto {
+  @ArrayProperty({
+    description: '奖励项列表',
+    itemClass: NotificationTaskRewardItemDto,
+    required: true,
+    validation: false,
+  })
+  items!: NotificationTaskRewardItemDto[]
+
+  @ArrayProperty({
+    description: '奖励流水记录 ID 列表',
+    itemType: 'number',
+    required: true,
+    validation: false,
+    example: [101],
+  })
+  ledgerRecordIds!: number[]
+}
+
+export class NotificationCommentActionDataDto {
+  @NestedProperty({
+    description: '被操作评论快照',
+    type: NotificationCommentSnapshotDto,
+    validation: false,
+  })
+  object!: NotificationCommentSnapshotDto
+
+  @ApiProperty({
+    description: '评论挂载容器快照',
+    required: true,
+    oneOf: [
+      { $ref: getSchemaPath(NotificationWorkSnapshotDto) },
+      { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
+      { $ref: getSchemaPath(NotificationChapterSnapshotDto) },
+    ],
+  })
+  container!:
+    | NotificationWorkSnapshotDto
+    | NotificationTopicSnapshotDto
+    | NotificationChapterSnapshotDto
+
+  @NestedProperty({
+    description: '父级容器快照，仅章节场景返回所属作品',
+    type: NotificationWorkSnapshotDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  parentContainer?: NotificationWorkSnapshotDto
+}
+
+export class NotificationTopicObjectDataDto {
+  @NestedProperty({
+    description: '主题快照',
+    type: NotificationTopicSnapshotDto,
+    validation: false,
+  })
+  object!: NotificationTopicSnapshotDto
+}
+
+export class NotificationTopicCommentedDataDto {
+  @NestedProperty({
+    description: '评论快照',
+    type: NotificationCommentSnapshotDto,
+    validation: false,
+  })
+  object!: NotificationCommentSnapshotDto
+
+  @NestedProperty({
+    description: '主题快照',
+    type: NotificationTopicSnapshotDto,
+    validation: false,
+  })
+  container!: NotificationTopicSnapshotDto
+}
+
+export class NotificationAnnouncementDataDto {
+  @NestedProperty({
+    description: '公告快照',
+    type: NotificationAnnouncementSnapshotDto,
+    validation: false,
+  })
+  object!: NotificationAnnouncementSnapshotDto
+}
+
+export class NotificationTaskReminderDataDto {
+  @NestedProperty({
+    description: '任务快照',
+    type: NotificationTaskSnapshotDto,
+    validation: false,
+  })
+  object!: NotificationTaskSnapshotDto
+
+  @NestedProperty({
+    description: '提醒信息',
+    type: NotificationTaskReminderInfoDto,
+    validation: false,
+  })
+  reminder!: NotificationTaskReminderInfoDto
+
+  @NestedProperty({
+    description: '奖励快照，仅奖励到账场景返回',
+    type: NotificationTaskRewardSnapshotDto,
+    required: false,
+    validation: false,
+    nullable: false,
+  })
+  reward?: NotificationTaskRewardSnapshotDto
 }
 
 export class BaseUserNotificationDto extends BaseDto {
@@ -88,9 +513,9 @@ export class BaseUserNotificationDto extends BaseDto {
   })
   message!: NotificationMessageDto
 
-  @ObjectProperty({
+  @ApiProperty({
     description:
-      '结构化通知数据；评论类返回 object/container/parentContainer，任务类返回 object/reminder/reward',
+      '结构化通知数据；根据 type 返回不同结构，user_followed 固定返回 null',
     example: {
       object: {
         kind: 'comment',
@@ -129,6 +554,13 @@ export class BaseUserNotificationDto extends BaseDto {
     },
     required: true,
     nullable: true,
+    oneOf: [
+      { $ref: getSchemaPath(NotificationCommentActionDataDto) },
+      { $ref: getSchemaPath(NotificationTopicObjectDataDto) },
+      { $ref: getSchemaPath(NotificationTopicCommentedDataDto) },
+      { $ref: getSchemaPath(NotificationAnnouncementDataDto) },
+      { $ref: getSchemaPath(NotificationTaskReminderDataDto) },
+    ],
   })
   data!: MessageNotificationData | null
 
@@ -231,6 +663,22 @@ export class QueryNotificationDeliveryPageDto extends IntersectionType(
   PartialType(BaseNotificationDeliveryQueryDto),
 ) {}
 
+@ApiExtraModels(
+  NotificationCommentSnapshotDto,
+  NotificationTopicSnapshotDto,
+  NotificationWorkSnapshotDto,
+  NotificationChapterSnapshotDto,
+  NotificationAnnouncementSnapshotDto,
+  NotificationTaskSnapshotDto,
+  NotificationTaskReminderInfoDto,
+  NotificationTaskRewardItemDto,
+  NotificationTaskRewardSnapshotDto,
+  NotificationCommentActionDataDto,
+  NotificationTopicObjectDataDto,
+  NotificationTopicCommentedDataDto,
+  NotificationAnnouncementDataDto,
+  NotificationTaskReminderDataDto,
+)
 export class UserNotificationDto extends BaseUserNotificationDto {}
 
 export class NotificationUnreadCountDto {

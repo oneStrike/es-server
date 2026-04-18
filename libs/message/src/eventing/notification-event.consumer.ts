@@ -228,6 +228,7 @@ export class NotificationEventConsumer {
     if (result.action === 'append' && result.notification) {
       const publicNotification = await this.buildPublicNotificationView(
         result.notification,
+        result.actor,
       )
       this.messageNotificationRealtimeService.emitNotificationCreated(
         result.receiverUserId!,
@@ -237,6 +238,7 @@ export class NotificationEventConsumer {
     if (result.action === 'upsert' && result.notification) {
       const publicNotification = await this.buildPublicNotificationView(
         result.notification,
+        result.actor,
       )
       this.messageNotificationRealtimeService.emitNotificationUpdated(
         result.receiverUserId!,
@@ -260,9 +262,10 @@ export class NotificationEventConsumer {
     }
 
     if (result.receiverUserId) {
-      const summary = await this.notificationProjectionService.getInboxSummary(
-        result.receiverUserId,
-      )
+      const summary =
+        await this.notificationProjectionService.getNotificationInboxSummary(
+          result.receiverUserId,
+        )
       this.messageNotificationRealtimeService.emitInboxSummaryUpdated(
         result.receiverUserId,
         summary,
@@ -280,10 +283,11 @@ export class NotificationEventConsumer {
 
   private async buildPublicNotificationView(
     notification: Record<string, unknown>,
+    actorOverride?: NotificationActorSource,
   ) {
     const typedNotification = notification as UserNotificationSelect
-    let actor: NotificationActorSource | undefined
-    if (typeof typedNotification.actorUserId === 'number') {
+    let actor: NotificationActorSource | undefined = actorOverride
+    if (!actor && typeof typedNotification.actorUserId === 'number') {
       const actorRecord = await this.db.query.appUser.findFirst({
         where: {
           id: typedNotification.actorUserId,

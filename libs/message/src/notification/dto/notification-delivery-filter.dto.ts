@@ -23,7 +23,7 @@ export class NotificationDeliveryLookupFilterDto {
   receiverUserId?: number
 
   @StringProperty({
-    description: '通知投影键模糊匹配',
+    description: '通知投影键精确匹配',
     example: 'announcement:42:user:7',
     required: false,
     maxLength: 180,

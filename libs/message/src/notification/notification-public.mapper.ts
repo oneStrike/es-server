@@ -9,7 +9,7 @@ import { isMessageNotificationCategoryKey } from './notification.constant'
 export interface NotificationPublicActor {
   id: number
   nickname?: string
-  avatarUrl?: string
+  avatarUrl: string | null
 }
 
 export interface NotificationActorSource {
@@ -33,14 +33,14 @@ export function mapNotificationActor(
 
   const mapped: NotificationPublicActor = {
     id: actor.id,
+    avatarUrl:
+      typeof actor.avatarUrl === 'string' && actor.avatarUrl.trim()
+        ? actor.avatarUrl
+        : null,
   }
 
   if (typeof actor.nickname === 'string' && actor.nickname.trim()) {
     mapped.nickname = actor.nickname
-  }
-
-  if (typeof actor.avatarUrl === 'string' && actor.avatarUrl.trim()) {
-    mapped.avatarUrl = actor.avatarUrl
   }
 
   return mapped

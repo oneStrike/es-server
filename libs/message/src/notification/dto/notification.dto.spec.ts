@@ -1,9 +1,10 @@
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
+import { MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM } from '../notification.constant'
 import {
-  MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
-} from '../notification.constant'
-import { QueryUserNotificationListDto } from './notification.dto'
+  QueryUserNotificationListDto,
+  UserNotificationDto,
+} from './notification.dto'
 import 'reflect-metadata'
 
 describe('query user notification list dto', () => {
@@ -38,5 +39,27 @@ describe('query user notification list dto', () => {
     })
 
     expect(validateSync(dto)).toHaveLength(1)
+  })
+
+  it('documents notification data with explicit oneOf schemas', () => {
+    const metadata = Reflect.getMetadata(
+      'swagger/apiModelProperties',
+      UserNotificationDto.prototype,
+      'data',
+    ) as
+      | {
+          nullable?: boolean
+          oneOf?: Array<{ $ref: string }>
+        }
+      | undefined
+
+    expect(metadata?.nullable).toBe(true)
+    expect(metadata?.oneOf).toEqual([
+      { $ref: '#/components/schemas/NotificationCommentActionDataDto' },
+      { $ref: '#/components/schemas/NotificationTopicObjectDataDto' },
+      { $ref: '#/components/schemas/NotificationTopicCommentedDataDto' },
+      { $ref: '#/components/schemas/NotificationAnnouncementDataDto' },
+      { $ref: '#/components/schemas/NotificationTaskReminderDataDto' },
+    ])
   })
 })

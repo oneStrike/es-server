@@ -2,6 +2,7 @@ import type {
   DomainEventDispatchRecord,
   DomainEventRecord,
 } from '@libs/platform/modules/eventing'
+import type { NotificationUserSnapshot } from '../notification/notification-contract.type'
 import type { MessageNotificationCategoryKey } from '../notification/notification.constant'
 import type {
   MessageDomainEventDefinition,
@@ -53,6 +54,7 @@ export interface NotificationProjectionApplyResult {
   receiverUserId?: number
   projectionKey?: string
   notification?: Record<string, unknown>
+  actor?: NotificationUserSnapshot
   reason?: string
   templateId?: number
   usedTemplate?: boolean

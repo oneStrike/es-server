@@ -247,10 +247,12 @@ export class MessageNotificationTemplateService {
     input: RenderNotificationTemplateInput,
   ): Promise<NotificationTemplateRenderResult> {
     const categoryKey = this.ensureSupportedCategoryKey(input.categoryKey)
+    const context = await this.buildRenderContext(input)
     const fallback = {
       title: input.title,
       content: input.content,
       categoryKey,
+      actor: context.actor,
       usedTemplate: false,
     } satisfies NotificationTemplateRenderResult
 
@@ -263,7 +265,6 @@ export class MessageNotificationTemplateService {
     }
 
     try {
-      const context = await this.buildRenderContext(input)
       return {
         title: this.renderTemplateText(
           template.titleTemplate,
@@ -278,6 +279,7 @@ export class MessageNotificationTemplateService {
           1000,
         ),
         categoryKey,
+        actor: context.actor,
         templateId: template.id,
         usedTemplate: true,
       }
@@ -312,7 +314,7 @@ export class MessageNotificationTemplateService {
         actor = {
           id: actorRecord.id,
           nickname: actorRecord.nickname ?? undefined,
-          avatarUrl: actorRecord.avatarUrl ?? undefined,
+          avatarUrl: actorRecord.avatarUrl ?? null,
         }
       }
     }

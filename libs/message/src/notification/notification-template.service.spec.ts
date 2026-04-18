@@ -110,6 +110,11 @@ describe('message notification template service', () => {
       title: '张三 点赞了你的评论',
       content: '很关键的一条评论',
       categoryKey: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE,
+      actor: {
+        id: 2,
+        nickname: '张三',
+        avatarUrl: null,
+      },
       templateId: 1,
       usedTemplate: true,
     })

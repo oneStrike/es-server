@@ -55,6 +55,10 @@ export const domainEventDispatch = pgTable(
       table.id,
     ),
     index('domain_event_dispatch_event_id_idx').on(table.eventId),
+    index('domain_event_dispatch_updated_at_id_idx').on(
+      table.updatedAt.desc(),
+      table.id.desc(),
+    ),
     check(
       'domain_event_dispatch_status_valid_chk',
       sql`${table.status} in (0, 1, 2, 3)`,

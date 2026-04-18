@@ -14,7 +14,7 @@ export interface NotificationMessageBlock {
 export interface NotificationUserSnapshot {
   id: number
   nickname?: string
-  avatarUrl?: string
+  avatarUrl: string | null
 }
 
 /** 稳定评论快照。 */

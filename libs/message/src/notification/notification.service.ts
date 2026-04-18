@@ -1,16 +1,12 @@
 import type { SQL } from 'drizzle-orm'
-import type {NotificationActorSource} from './notification-public.mapper';
+import type { NotificationActorSource } from './notification-public.mapper'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, inArray, isNull, or } from 'drizzle-orm'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { QueryUserNotificationListDto } from './dto/notification.dto'
-import {
-  normalizeMessageNotificationCategoryKeysFilter,
-} from './notification-category-key-filter.util'
-import {
-  mapUserNotificationToPublicView,
-} from './notification-public.mapper'
+import { normalizeMessageNotificationCategoryKeysFilter } from './notification-category-key-filter.util'
+import { mapUserNotificationToPublicView } from './notification-public.mapper'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
 
 /**
@@ -176,14 +172,13 @@ export class MessageNotificationService {
     )
   }
 
-  private normalizeCategoryKeysFilter(
-    categoryKeys?: string,
-  ) {
+  private normalizeCategoryKeysFilter(categoryKeys?: string) {
     return normalizeMessageNotificationCategoryKeysFilter(categoryKeys)
   }
 
   private async emitInboxSummaryUpdated(receiverUserId: number) {
-    const summary = await this.messageInboxService.getSummary(receiverUserId)
+    const summary =
+      await this.messageInboxService.getNotificationSummary(receiverUserId)
     this.messageNotificationRealtimeService.emitInboxSummaryUpdated(
       receiverUserId,
       summary,

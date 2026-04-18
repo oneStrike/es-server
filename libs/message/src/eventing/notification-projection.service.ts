@@ -45,6 +45,12 @@ function compactRecord<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(entries) as T
 }
 
+function extractPositiveInteger<T>(value: T) {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0
+    ? value
+    : undefined
+}
+
 /**
  * 通知投影服务。
  * 负责将 notification command 物化为 user_notification 读模型，并返回后续实时同步所需的最小结果。
@@ -120,6 +126,11 @@ export class NotificationProjectionService {
       command.categoryKey,
       command.payload,
     )
+    const notificationFacts = this.extractNotificationFacts(
+      command.categoryKey,
+      normalizedPayload,
+    )
+    this.assertRequiredNotificationFacts(command.categoryKey, notificationFacts)
     const rendered =
       await this.messageNotificationTemplateService.renderNotificationTemplate({
         categoryKey: command.categoryKey,
@@ -142,6 +153,7 @@ export class NotificationProjectionService {
           title: rendered.title,
           content: rendered.content,
           payload: normalizedPayload,
+          announcementId: notificationFacts.announcementId,
           expiresAt: command.expiresAt,
         })
         .onConflictDoNothing({
@@ -159,6 +171,7 @@ export class NotificationProjectionService {
           receiverUserId: command.receiverUserId,
           projectionKey: command.projectionKey,
           notification: inserted,
+          actor: rendered.actor,
           templateId: rendered.templateId,
           usedTemplate: rendered.usedTemplate,
           fallbackReason: rendered.fallbackReason,
@@ -180,6 +193,7 @@ export class NotificationProjectionService {
         receiverUserId: command.receiverUserId,
         projectionKey: command.projectionKey,
         notification: existing,
+        actor: rendered.actor,
         templateId: undefined,
         usedTemplate: false,
         fallbackReason: 'idempotent_existing',
@@ -196,6 +210,7 @@ export class NotificationProjectionService {
         title: rendered.title,
         content: rendered.content,
         payload: normalizedPayload,
+        announcementId: notificationFacts.announcementId,
         expiresAt: command.expiresAt,
       })
       .onConflictDoUpdate({
@@ -209,6 +224,7 @@ export class NotificationProjectionService {
           title: rendered.title,
           content: rendered.content,
           payload: normalizedPayload,
+          announcementId: notificationFacts.announcementId,
           expiresAt: command.expiresAt,
         },
       })
@@ -219,6 +235,7 @@ export class NotificationProjectionService {
       receiverUserId: command.receiverUserId,
       projectionKey: command.projectionKey,
       notification: upsertedRows[0],
+      actor: rendered.actor,
       templateId: rendered.templateId,
       usedTemplate: rendered.usedTemplate,
       fallbackReason: rendered.fallbackReason,
@@ -227,6 +244,10 @@ export class NotificationProjectionService {
 
   async getInboxSummary(userId: number) {
     return this.messageInboxService.getSummary(userId)
+  }
+
+  async getNotificationInboxSummary(userId: number) {
+    return this.messageInboxService.getNotificationSummary(userId)
   }
 
   buildActiveNotificationWhere(receiverUserId: number, now = new Date()) {
@@ -270,6 +291,41 @@ export class NotificationProjectionService {
     })
 
     return Object.keys(normalized).length > 0 ? normalized : null
+  }
+
+  private extractNotificationFacts(
+    categoryKey: MessageNotificationCategoryKey,
+    payload: Record<string, unknown> | null,
+  ) {
+    if (
+      categoryKey === 'system_announcement' &&
+      payload &&
+      isPlainRecord(payload.object)
+    ) {
+      return {
+        announcementId: extractPositiveInteger(payload.object.id),
+      }
+    }
+
+    return {
+      announcementId: undefined,
+    }
+  }
+
+  private assertRequiredNotificationFacts(
+    categoryKey: MessageNotificationCategoryKey,
+    facts: {
+      announcementId?: number
+    },
+  ) {
+    if (
+      categoryKey === 'system_announcement' &&
+      typeof facts.announcementId !== 'number'
+    ) {
+      throw new Error(
+        'system_announcement notification must provide payload.object.id for typed announcement lookup',
+      )
+    }
   }
 
   private async normalizeCommentActionPayload(

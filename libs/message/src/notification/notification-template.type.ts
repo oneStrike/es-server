@@ -27,6 +27,7 @@ export interface NotificationTemplateRenderResult {
   title: string
   content: string
   categoryKey: MessageNotificationCategoryKey
+  actor?: NotificationUserSnapshot
   templateId?: number
   usedTemplate: boolean
   fallbackReason?: NotificationTemplateFallbackReason

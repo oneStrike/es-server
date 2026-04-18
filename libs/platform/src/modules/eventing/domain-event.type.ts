@@ -54,3 +54,11 @@ export interface PublishDomainEventResult {
   event: DomainEventRecord
   dispatches: DomainEventDispatchRecord[]
 }
+
+/** 稳定领域类型 `PublishDomainEventBatchResult`。仅供内部领域/服务链路复用，避免重复定义。 */
+export interface PublishDomainEventBatchResult {
+  insertedCount: number
+  duplicatedCount: number
+  events: DomainEventRecord[]
+  dispatches: DomainEventDispatchRecord[]
+}
