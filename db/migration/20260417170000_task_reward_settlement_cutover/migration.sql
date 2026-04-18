@@ -30,7 +30,8 @@ INSERT INTO "growth_reward_settlement" (
   "last_retry_at",
   "settled_at",
   "last_error",
-  "request_payload"
+  "request_payload",
+  "updated_at"
 )
 SELECT
   "ta"."user_id",
@@ -76,7 +77,8 @@ SELECT
       COALESCE("ta"."completed_at", "ta"."updated_at", "ta"."created_at"),
       'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
     )
-  ) AS "request_payload"
+  ) AS "request_payload",
+  COALESCE("ta"."completed_at", "ta"."updated_at", "ta"."created_at") AS "updated_at"
 FROM "task_assignment" AS "ta"
 WHERE "ta"."reward_applicable" = 1;
 

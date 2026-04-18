@@ -28,7 +28,8 @@ INSERT INTO "growth_reward_settlement" (
   "last_retry_at",
   "settled_at",
   "last_error",
-  "request_payload"
+  "request_payload",
+  "updated_at"
 )
 SELECT
   "cir"."user_id",
@@ -63,7 +64,8 @@ SELECT
     'cycleId', "cir"."cycle_id",
     'signDate', "cir"."sign_date",
     'rewardConfig', COALESCE("cir"."resolved_reward_config", 'null'::jsonb)
-  )
+  ),
+  COALESCE("cir"."reward_settled_at", "cir"."created_at")
 FROM "check_in_record" AS "cir"
 WHERE "cir"."resolved_reward_config" IS NOT NULL;
 
@@ -84,7 +86,8 @@ INSERT INTO "growth_reward_settlement" (
   "last_retry_at",
   "settled_at",
   "last_error",
-  "request_payload"
+  "request_payload",
+  "updated_at"
 )
 SELECT
   "grant"."user_id",
@@ -127,7 +130,8 @@ SELECT
     'ruleCode', "grant"."rule_code",
     'triggerSignDate', "grant"."trigger_sign_date",
     'rewardConfig', "grant"."reward_config"
-  )
+  ),
+  COALESCE("grant"."grant_settled_at", "grant"."created_at")
 FROM "check_in_streak_reward_grant" AS "grant";
 
 UPDATE "check_in_record" AS "cir"
