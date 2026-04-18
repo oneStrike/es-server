@@ -6,10 +6,10 @@ ALTER TABLE "growth_reward_settlement"
   CHECK ("settlement_type" in (1, 2, 3, 4));
 
 ALTER TABLE "check_in_record"
-  ADD COLUMN "reward_settlement_id" integer;
+  ADD COLUMN IF NOT EXISTS "reward_settlement_id" integer;
 
 ALTER TABLE "check_in_streak_reward_grant"
-  ADD COLUMN "reward_settlement_id" integer;
+  ADD COLUMN IF NOT EXISTS "reward_settlement_id" integer;
 
 INSERT INTO "growth_reward_settlement" (
   "user_id",
@@ -142,11 +142,17 @@ FROM "growth_reward_settlement" AS "grs"
 WHERE "grs"."settlement_type" = 4
   AND "grs"."source_record_id" = "grant"."id";
 
-ALTER TABLE "check_in_record"
-  ADD CONSTRAINT "check_in_record_reward_settlement_id_positive_chk"
-  CHECK ("reward_settlement_id" is null or "reward_settlement_id" > 0);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_in_record_reward_settlement_id_positive_chk'
+  ) THEN
+    ALTER TABLE "check_in_record"
+      ADD CONSTRAINT "check_in_record_reward_settlement_id_positive_chk"
+      CHECK ("reward_settlement_id" is null or "reward_settlement_id" > 0);
+  END IF;
+END $$;
 
-CREATE INDEX "check_in_record_reward_settlement_id_idx"
+CREATE INDEX IF NOT EXISTS "check_in_record_reward_settlement_id_idx"
   ON "check_in_record" ("reward_settlement_id");
 
 ALTER TABLE "check_in_record"
@@ -173,11 +179,17 @@ ALTER TABLE "check_in_record"
 ALTER TABLE "check_in_record"
   DROP COLUMN "reward_settled_at";
 
-ALTER TABLE "check_in_streak_reward_grant"
-  ADD CONSTRAINT "check_in_streak_grant_reward_settlement_id_positive_chk"
-  CHECK ("reward_settlement_id" is null or "reward_settlement_id" > 0);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_in_streak_grant_reward_settlement_id_positive_chk'
+  ) THEN
+    ALTER TABLE "check_in_streak_reward_grant"
+      ADD CONSTRAINT "check_in_streak_grant_reward_settlement_id_positive_chk"
+      CHECK ("reward_settlement_id" is null or "reward_settlement_id" > 0);
+  END IF;
+END $$;
 
-CREATE INDEX "check_in_streak_grant_reward_settlement_id_idx"
+CREATE INDEX IF NOT EXISTS "check_in_streak_grant_reward_settlement_id_idx"
   ON "check_in_streak_reward_grant" ("reward_settlement_id");
 
 ALTER TABLE "check_in_streak_reward_grant"
