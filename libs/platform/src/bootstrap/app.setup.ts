@@ -37,33 +37,13 @@ export async function setupApp(
   }
 
   const fastifyInstance = fastifyAdapter.getInstance()
-  const defaultJsonParser = fastifyInstance.getDefaultJsonParser(
-    'error',
-    'error',
-  )
 
   fastifyInstance.get('/favicon.ico', async (_req, reply) => {
     reply.type('image/x-icon').code(204).send()
   })
 
-  // Fastify 默认会把空 application/json body 视为 400。
-  // 这里对空字符串回落为 {}，让无参 POST 继续走到业务层，其余 JSON 仍复用默认解析器。
-  fastifyInstance.removeContentTypeParser('application/json')
-  fastifyInstance.addContentTypeParser(
-    'application/json',
-    { parseAs: 'string' },
-    (request, body, done) => {
-      if (body.length === 0) {
-        done(null, {})
-        return
-      }
-
-      defaultJsonParser(request, body, done)
-    },
-  )
-
-  // 兼容客户端 POST 请求未携带 Content-Type 或 Content-Type 不标准的情况。
-  // 未命中明确 parser 的请求保持透传，交给具体路由或插件自行处理。
+  // 兼容客户端 POST 请求未携带 Content-Type 或 Content-Type 不标准的情况
+  // 避免无 Body 的 POST 接口（如签到）因 Fastify content type 解析失败而返回 415
   fastifyInstance.addContentTypeParser('*', (request, payload, done) => {
     done(null, payload)
   })
