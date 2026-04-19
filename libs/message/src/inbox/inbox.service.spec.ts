@@ -1,9 +1,26 @@
 import type { DrizzleService } from '@db/core'
 import { MessageInboxService } from './inbox.service'
 
+const EXPECTED_UNREAD_BY_CATEGORY = {
+  comment_reply: 0,
+  comment_mention: 0,
+  comment_like: 2,
+  topic_like: 1,
+  topic_favorited: 0,
+  topic_commented: 0,
+  topic_mentioned: 0,
+  user_followed: 0,
+  system_announcement: 0,
+  task_reminder: 0,
+} as const
+
 function createDrizzleStub() {
   const countMock = jest.fn().mockResolvedValue(3)
   const chatUnreadRows = [{ unreadCount: 5 }]
+  const notificationUnreadRows = [
+    { categoryKey: 'comment_like', count: 2 },
+    { categoryKey: 'topic_like', count: 1 },
+  ]
   const latestNotificationRows = [
     {
       id: 101,
@@ -20,6 +37,11 @@ function createDrizzleStub() {
       $count: countMock,
       select: jest
         .fn()
+        .mockImplementationOnce(() => ({
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          groupBy: jest.fn().mockResolvedValue(notificationUnreadRows),
+        }))
         .mockImplementationOnce(() => ({
           from: jest.fn().mockReturnThis(),
           where: jest.fn().mockResolvedValue(chatUnreadRows),
@@ -70,7 +92,10 @@ describe('messageInboxService', () => {
     const result = await service.getNotificationSummary(7)
 
     expect(result).toEqual({
-      notificationUnreadCount: 3,
+      notificationUnread: {
+        total: 3,
+        byCategory: EXPECTED_UNREAD_BY_CATEGORY,
+      },
       chatUnreadCount: 5,
       totalUnreadCount: 8,
       latestNotification: {
@@ -83,6 +108,17 @@ describe('messageInboxService', () => {
       },
     })
     expect(drizzle.db.query.chatMessage.findFirst).not.toHaveBeenCalled()
+  })
+
+  it('keeps the current public byCategory key set explicit in the summary contract', async () => {
+    const drizzle = createDrizzleStub()
+    const service = new MessageInboxService(drizzle)
+
+    const result = await service.getNotificationSummary(7)
+
+    expect(result.notificationUnread.byCategory).toEqual(
+      EXPECTED_UNREAD_BY_CATEGORY,
+    )
   })
 
   it('uses database-level merged pagination for inbox timeline', async () => {
@@ -114,7 +150,6 @@ describe('messageInboxService', () => {
         },
       ],
     })
-    drizzle.db.$count = jest.fn().mockResolvedValue(3)
     drizzle.db.select = jest.fn().mockReturnValue({
       from: jest.fn().mockReturnThis(),
       innerJoin: jest.fn().mockReturnThis(),

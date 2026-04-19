@@ -219,7 +219,9 @@ export class GrowthRewardSettlementService {
     params: {
       grantId: number
       userId: number
-      roundConfigId: number
+      scopeType: number
+      configVersionId: number | null
+      activityId: number | null
       ruleCode: string
       triggerSignDate: string
       rewardItems?: Record<string, unknown>[] | null
@@ -240,7 +242,9 @@ export class GrowthRewardSettlementService {
       kind: 'check_in_streak_reward',
       grantId: params.grantId,
       userId: params.userId,
-      roundConfigId: params.roundConfigId,
+      scopeType: params.scopeType,
+      configVersionId: params.configVersionId,
+      activityId: params.activityId,
       ruleCode: params.ruleCode,
       triggerSignDate: params.triggerSignDate,
       rewardItems: params.rewardItems ?? null,
@@ -268,7 +272,7 @@ export class GrowthRewardSettlementService {
       ledgerRecordIds: number[]
       errorMessage?: string | null
     },
-    options?: { isRetry?: boolean, tx?: Db },
+    options?: { isRetry?: boolean; tx?: Db },
   ) {
     const runner = options?.tx ?? this.db
     const current = await runner.query.growthRewardSettlement.findFirst({

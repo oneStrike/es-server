@@ -1,7 +1,8 @@
-import { DateProperty } from '@libs/platform/decorators/validate/date-property';
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property';
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property';
-import { StringProperty } from '@libs/platform/decorators/validate/string-property';
+import { DateProperty } from '@libs/platform/decorators/validate/date-property'
+import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
+import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
+import { StringProperty } from '@libs/platform/decorators/validate/string-property'
+import { BaseNotificationUnreadDto } from '../../notification/dto/notification-unread.dto'
 /**
  * 收件箱通知摘要 DTO。
  */
@@ -75,11 +76,21 @@ export class InboxChatBriefDto {
 }
 
 /**
+ * 收件箱通知未读摘要 DTO。
+ */
+export class InboxNotificationUnreadDto extends BaseNotificationUnreadDto {}
+
+/**
  * 收件箱摘要 DTO。
  */
 export class InboxSummaryDto {
-  @NumberProperty({ description: '通知未读数', example: 1, validation: false })
-  notificationUnreadCount!: number
+  @NestedProperty({
+    description: '通知未读摘要',
+    type: InboxNotificationUnreadDto,
+    validation: false,
+    nullable: false,
+  })
+  notificationUnread!: InboxNotificationUnreadDto
 
   @NumberProperty({ description: '聊天未读数', example: 2, validation: false })
   chatUnreadCount!: number

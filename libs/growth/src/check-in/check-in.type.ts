@@ -1,21 +1,25 @@
 import type {
+  CheckInActivityStreakInsert,
+  CheckInActivityStreakProgressInsert,
   CheckInMakeupAccountInsert,
   CheckInMakeupFactInsert,
+  CheckInDailyStreakConfigInsert,
+  CheckInDailyStreakProgressInsert,
   CheckInRecordInsert,
-  CheckInStreakProgressInsert,
-  CheckInStreakRewardGrantInsert,
-  CheckInStreakRoundConfigInsert,
+  CheckInStreakGrantInsert,
 } from '@db/schema'
 import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 
 import type {
+  CheckInActivityStreakStatusEnum,
+  CheckInDailyStreakConfigStatusEnum,
+  CheckInDailyStreakPublishStrategyEnum,
   CheckInMakeupPeriodTypeEnum,
   CheckInMakeupSourceTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
-  CheckInStreakNextRoundStrategyEnum,
+  CheckInStreakScopeTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
-  CheckInStreakRoundStatusEnum,
 } from './check-in.constant'
 
 /** 稳定领域类型 `CheckInRewardItems`。 */
@@ -51,14 +55,14 @@ export interface CheckInRewardDefinition {
   patternRewardRules: CheckInPatternRewardRuleView[]
 }
 
-/** 连续奖励轮次定义。 */
-export interface CheckInStreakRoundDefinition {
-  roundCode: string
+/** 日常连续签到配置定义。 */
+export interface CheckInDailyStreakConfigDefinition {
   version: number
-  status: CheckInStreakRoundStatusEnum
+  status: CheckInDailyStreakConfigStatusEnum
+  publishStrategy: CheckInDailyStreakPublishStrategyEnum
   rewardRules: CheckInStreakRewardRuleView[]
-  nextRoundStrategy: CheckInStreakNextRoundStrategyEnum
-  nextRoundConfigId: number | null
+  effectiveFrom: Date
+  effectiveTo: Date | null
 }
 
 /** 当前补签周期窗口。 */
@@ -77,14 +81,22 @@ export interface CheckInMakeupAccountView extends CheckInMakeupWindowView {
   eventAvailable: number
 }
 
-/** 当前连续奖励进度读模型。 */
-export interface CheckInStreakProgressView {
-  roundConfigId: number
-  roundCode: string
-  roundIteration: number
+/** 日常连续签到进度读模型。 */
+export interface CheckInDailyStreakProgressView {
   currentStreak: number
-  roundStartedAt?: string
+  streakStartedAt?: string
   lastSignedDate?: string
+  nextReward?: CheckInStreakRewardRuleView | null
+}
+
+/** 活动连续签到定义。 */
+export interface CheckInActivityStreakDefinition {
+  activityKey: string
+  title: string
+  status: CheckInActivityStreakStatusEnum
+  effectiveFrom: Date
+  effectiveTo: Date
+  rewardRules: CheckInStreakRewardRuleView[]
 }
 
 /** 补签事实写入入参。 */
@@ -134,10 +146,11 @@ export type CreateCheckInRecordInput = Pick<
 
 /** 连续奖励事实写入入参。 */
 export type CreateCheckInGrantInput = Pick<
-  CheckInStreakRewardGrantInsert,
+  CheckInStreakGrantInsert,
   | 'userId'
-  | 'roundConfigId'
-  | 'roundIteration'
+  | 'scopeType'
+  | 'configVersionId'
+  | 'activityId'
   | 'triggerSignDate'
   | 'rewardSettlementId'
   | 'bizKey'
@@ -148,28 +161,45 @@ export type CreateCheckInGrantInput = Pick<
   | 'context'
 >
 
-/** 连续奖励进度写入入参。 */
-export type CreateCheckInStreakProgressInput = Pick<
-  CheckInStreakProgressInsert,
-  | 'userId'
-  | 'roundConfigId'
-  | 'roundIteration'
-  | 'currentStreak'
-  | 'roundStartedAt'
-  | 'lastSignedDate'
-  | 'version'
->
-
-/** 连续奖励轮次配置写入入参。 */
-export type CreateCheckInStreakRoundConfigInput = Pick<
-  CheckInStreakRoundConfigInsert,
-  | 'roundCode'
+/** 日常连续签到配置写入入参。 */
+export type CreateCheckInDailyStreakConfigInput = Pick<
+  CheckInDailyStreakConfigInsert,
   | 'version'
   | 'status'
+  | 'publishStrategy'
   | 'rewardRules'
-  | 'nextRoundStrategy'
-  | 'nextRoundConfigId'
+  | 'effectiveFrom'
+  | 'effectiveTo'
   | 'updatedById'
+>
+
+/** 日常连续签到进度写入入参。 */
+export type CreateCheckInDailyStreakProgressInput = Pick<
+  CheckInDailyStreakProgressInsert,
+  'userId' | 'currentStreak' | 'streakStartedAt' | 'lastSignedDate' | 'version'
+>
+
+/** 活动连续签到定义写入入参。 */
+export type CreateCheckInActivityStreakInput = Pick<
+  CheckInActivityStreakInsert,
+  | 'activityKey'
+  | 'title'
+  | 'status'
+  | 'effectiveFrom'
+  | 'effectiveTo'
+  | 'rewardRules'
+  | 'updatedById'
+>
+
+/** 活动连续签到进度写入入参。 */
+export type CreateCheckInActivityStreakProgressInput = Pick<
+  CheckInActivityStreakProgressInsert,
+  | 'activityId'
+  | 'userId'
+  | 'currentStreak'
+  | 'streakStartedAt'
+  | 'lastSignedDate'
+  | 'version'
 >
 
 /** 当前签到日命中的基础奖励解析结果。 */
@@ -187,9 +217,17 @@ export interface CheckInGrantRuleSnapshot {
   repeatable: boolean
 }
 
+/** 连续奖励发放作用域快照。 */
+export interface CheckInGrantScopeSnapshot {
+  scopeType: CheckInStreakScopeTypeEnum
+  configVersionId: number | null
+  activityId: number | null
+}
+
 /** 重算连续签到聚合结果。 */
 export interface CheckInStreakAggregation {
   currentStreak: number
+  streakStartedAt?: string
   lastSignedDate?: string
   streakByDate: Record<string, number>
 }

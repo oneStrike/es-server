@@ -4,6 +4,11 @@
 
 本次覆盖消息通知链路 P1 + P2 修复项。
 
+补充：
+
+- 文档中涉及“通知未读数字段”的描述已被后续 breaking change 更新。
+- 当前字段命名与示例以 [app-message-notification-unread.md](./app-message-notification-unread.md) 为准。
+
 包含：
 
 - `domain_event_dispatch` 批量 claim / hydration 优化
@@ -42,7 +47,7 @@
 新行为：
 
 - 通知驱动的 summary 更新只保证：
-  - `notificationUnreadCount`
+  - `notificationUnread`
   - `chatUnreadCount`
   - `totalUnreadCount`
   - `latestNotification`
@@ -61,7 +66,7 @@
 3. 如果前端需要强一致的最新聊天摘要：
    - 在必要场景主动调用 `GET app/message/inbox/summary` 重新拉取完整摘要。
 4. 处理通知已读 / 新通知到达时：
-   - 只用这次事件里的计数字段更新 badge / summary count
+   - 只用这次事件里的 `notificationUnread.total`、`notificationUnread.byCategory`、`chatUnreadCount`、`totalUnreadCount` 更新 badge / summary count
    - 不要把缺失的 `latestChat` 解释成“没有最新聊天”
 
 ### 2. 管理端 `projectionKey` 搜索改为精确匹配

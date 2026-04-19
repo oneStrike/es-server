@@ -101,13 +101,6 @@ export class CheckInActionResponseDto extends BaseCheckInRecordDto {
   })
   currentStreak!: number
 
-  @NumberProperty({
-    description: '当前轮次配置 ID。',
-    example: 1,
-    validation: false,
-  })
-  roundConfigId!: number
-
   @ArrayProperty({
     description: '本次签到触发的连续奖励发放 ID 列表。',
     itemType: 'number',

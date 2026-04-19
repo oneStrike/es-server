@@ -1,19 +1,43 @@
 import type { DrizzleService } from '@db/core'
+import { inspect } from 'node:util'
+import { BusinessException } from '@libs/platform/exceptions'
 import { CheckInRuntimeService } from './check-in-runtime.service'
-import { CheckInMakeupPeriodTypeEnum } from './check-in.constant'
+import {
+  CheckInActivityStreakStatusEnum,
+  CheckInMakeupPeriodTypeEnum,
+} from './check-in.constant'
+
+const deprecatedRoundConfigField = 'round' + 'ConfigId'
+const deprecatedRoundIterationField = 'round' + 'Iteration'
 
 function createDrizzleStub() {
+  const makeSelectChain = () => {
+    const joinedChain = {
+      where: jest.fn().mockReturnThis(),
+    }
+    const fromChain = {
+      where: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnValue(joinedChain),
+      orderBy: jest.fn().mockResolvedValue([]),
+      limit: jest.fn().mockResolvedValue([]),
+    }
+
+    return {
+      from: jest.fn().mockReturnValue(fromChain),
+    }
+  }
+
   return {
     db: {
       query: {
-        checkInStreakProgress: {
+        checkInDailyStreakProgress: {
           findFirst: jest.fn(),
         },
-        checkInStreakRoundConfig: {
+        checkInDailyStreakConfig: {
           findFirst: jest.fn(),
         },
       },
-      select: jest.fn(),
+      select: jest.fn().mockImplementation(() => makeSelectChain()),
     },
     schema: {
       appUser: {
@@ -24,11 +48,29 @@ function createDrizzleStub() {
       checkInConfig: {},
       checkInMakeupFact: {},
       checkInMakeupAccount: {},
-      checkInRecord: {},
-      checkInStreakRoundConfig: {},
-      checkInStreakProgress: {},
-      checkInStreakRewardGrant: {},
-      growthRewardSettlement: {},
+      checkInRecord: {
+        id: 'id',
+        userId: 'userId',
+        signDate: 'signDate',
+        rewardSettlementId: 'rewardSettlementId',
+      },
+      checkInDailyStreakConfig: {},
+      checkInDailyStreakProgress: {},
+      checkInActivityStreak: {},
+      checkInActivityStreakProgress: {},
+      checkInStreakGrant: {
+        id: 'id',
+        userId: 'userId',
+        triggerSignDate: 'triggerSignDate',
+        scopeType: 'scopeType',
+        configVersionId: 'configVersionId',
+        activityId: 'activityId',
+        rewardSettlementId: 'rewardSettlementId',
+      },
+      growthRewardSettlement: {
+        id: 'id',
+        settlementStatus: 'settlementStatus',
+      },
     },
     ext: {
       findPagination: jest.fn(),
@@ -39,7 +81,7 @@ function createDrizzleStub() {
 }
 
 describe('checkInRuntimeService', () => {
-  it('resets stale streaks before deriving summary next reward', async () => {
+  it('resets stale daily streaks before deriving summary next reward', async () => {
     const drizzle = createDrizzleStub()
     const service = new CheckInRuntimeService(drizzle, {} as never)
 
@@ -66,41 +108,42 @@ describe('checkInRuntimeService', () => {
         periodicRemaining: 2,
         eventAvailable: 0,
       })
-    jest.spyOn(service as any, 'getRequiredActiveRound').mockResolvedValue({
-      id: 10,
-      roundCode: 'active-round',
-      version: 3,
-      status: 1,
-      rewardRules: [],
-      nextRoundStrategy: 1,
-      nextRoundConfigId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
+    jest
+      .spyOn(service as any, 'getRequiredCurrentDailyStreakConfig')
+      .mockResolvedValue({
+        id: 10,
+        version: 3,
+        status: 2,
+        publishStrategy: 2,
+        effectiveFrom: new Date(),
+        effectiveTo: null,
+        rewardRules: [],
+        nextRoundStrategy: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
     ;(
-      drizzle.db.query.checkInStreakProgress.findFirst as jest.Mock
+      drizzle.db.query.checkInDailyStreakProgress.findFirst as jest.Mock
     ).mockResolvedValue({
       id: 1,
       userId: 7,
-      roundConfigId: 99,
-      roundIteration: 2,
       currentStreak: 4,
-      roundStartedAt: '2026-04-10',
+      streakStartedAt: '2026-04-10',
       lastSignedDate: '2026-01-01',
       version: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
     ;(
-      drizzle.db.query.checkInStreakRoundConfig.findFirst as jest.Mock
+      drizzle.db.query.checkInDailyStreakConfig.findFirst as jest.Mock
     ).mockResolvedValue({
       id: 99,
-      roundCode: 'bound-round',
       version: 7,
-      status: 1,
+      status: 2,
+      publishStrategy: 2,
+      effectiveFrom: new Date(),
+      effectiveTo: null,
       rewardRules: [{ ruleCode: 'rule-1', streakDays: 1 }],
-      nextRoundStrategy: 1,
-      nextRoundConfigId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
@@ -111,22 +154,17 @@ describe('checkInRuntimeService', () => {
       dateRewardRules: [],
       patternRewardRules: [],
     })
-    jest.spyOn(service as any, 'parseStreakRoundDefinition').mockReturnValue({
-      roundCode: 'bound-round',
-      version: 7,
-      status: 1,
-      rewardRules: [{ ruleCode: 'rule-1', streakDays: 1 }],
-      nextRoundStrategy: 1,
-      nextRoundConfigId: null,
-    })
-    jest.spyOn(service as any, 'toConfigDetailView').mockReturnValue({ id: 1 })
     jest
-      .spyOn(service as any, 'toRoundDetailView')
-      .mockImplementation((round: any) => ({
-        id: round.id,
-        roundCode: round.roundCode,
-        version: round.version,
-      }))
+      .spyOn(service as any, 'parseDailyStreakConfigDefinition')
+      .mockReturnValue({
+        version: 7,
+        status: 2,
+        publishStrategy: 2,
+        effectiveFrom: new Date(),
+        effectiveTo: null,
+        rewardRules: [{ ruleCode: 'rule-1', streakDays: 1 }],
+      })
+    jest.spyOn(service as any, 'toConfigDetailView').mockReturnValue({ id: 1 })
     const nextReward = { ruleCode: 'rule-1', streakDays: 1 }
     const resolveNextStreakRewardSpy = jest
       .spyOn(service as any, 'resolveNextStreakReward')
@@ -136,14 +174,19 @@ describe('checkInRuntimeService', () => {
 
     expect(summary.streak.currentStreak).toBe(0)
     expect(summary.streak.lastSignedDate).toBeUndefined()
+    expect(summary.streak.streakStartedAt).toBeUndefined()
     expect(summary.streak.nextReward).toBe(nextReward)
+    expect(summary.streak).not.toHaveProperty(deprecatedRoundConfigField)
+    expect(summary.streak).not.toHaveProperty('roundCode')
+    expect(summary.streak).not.toHaveProperty(deprecatedRoundIterationField)
+    expect(summary.streak).not.toHaveProperty('round')
     expect(resolveNextStreakRewardSpy).toHaveBeenCalledWith(
       [{ ruleCode: 'rule-1', streakDays: 1 }],
       0,
     )
   })
 
-  it('uses the user-bound round instead of the current active round in summary', async () => {
+  it('uses the user-bound daily config version instead of the latest current config in summary calculations', async () => {
     const drizzle = createDrizzleStub()
     const service = new CheckInRuntimeService(drizzle, {} as never)
 
@@ -170,41 +213,42 @@ describe('checkInRuntimeService', () => {
         periodicRemaining: 2,
         eventAvailable: 0,
       })
-    jest.spyOn(service as any, 'getRequiredActiveRound').mockResolvedValue({
-      id: 10,
-      roundCode: 'active-round',
-      version: 3,
-      status: 1,
-      rewardRules: [],
-      nextRoundStrategy: 1,
-      nextRoundConfigId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
+    jest
+      .spyOn(service as any, 'getRequiredCurrentDailyStreakConfig')
+      .mockResolvedValue({
+        id: 10,
+        version: 3,
+        status: 2,
+        publishStrategy: 2,
+        effectiveFrom: new Date(),
+        effectiveTo: null,
+        rewardRules: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
     ;(
-      drizzle.db.query.checkInStreakProgress.findFirst as jest.Mock
+      drizzle.db.query.checkInDailyStreakProgress.findFirst as jest.Mock
     ).mockResolvedValue({
       id: 1,
       userId: 7,
-      roundConfigId: 99,
-      roundIteration: 2,
+      configVersionId: 99,
       currentStreak: 4,
-      roundStartedAt: '2026-04-10',
+      streakStartedAt: '2026-04-10',
       lastSignedDate: '2026-04-18',
       version: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
     ;(
-      drizzle.db.query.checkInStreakRoundConfig.findFirst as jest.Mock
+      drizzle.db.query.checkInDailyStreakConfig.findFirst as jest.Mock
     ).mockResolvedValue({
       id: 99,
-      roundCode: 'bound-round',
       version: 7,
-      status: 2,
+      status: 3,
+      publishStrategy: 3,
+      effectiveFrom: new Date('2026-04-10T00:00:00.000Z'),
+      effectiveTo: null,
       rewardRules: [],
-      nextRoundStrategy: 1,
-      nextRoundConfigId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
@@ -215,29 +259,27 @@ describe('checkInRuntimeService', () => {
       dateRewardRules: [],
       patternRewardRules: [],
     })
-    jest.spyOn(service as any, 'parseStreakRoundDefinition').mockReturnValue({
-      roundCode: 'bound-round',
-      version: 7,
-      status: 1,
-      rewardRules: [],
-      nextRoundStrategy: 1,
-      nextRoundConfigId: null,
-    })
-    jest.spyOn(service as any, 'toConfigDetailView').mockReturnValue({ id: 1 })
     jest
-      .spyOn(service as any, 'toRoundDetailView')
-      .mockImplementation((round: any) => ({
-        id: round.id,
-        roundCode: round.roundCode,
-        version: round.version,
-      }))
+      .spyOn(service as any, 'parseDailyStreakConfigDefinition')
+      .mockReturnValue({
+        version: 7,
+        status: 3,
+        publishStrategy: 3,
+        effectiveFrom: new Date('2026-04-10T00:00:00.000Z'),
+        effectiveTo: null,
+        rewardRules: [],
+      })
+    jest.spyOn(service as any, 'toConfigDetailView').mockReturnValue({ id: 1 })
     jest.spyOn(service as any, 'resolveNextStreakReward').mockReturnValue(null)
 
     const summary = await service.getSummary(7)
 
-    expect(summary.streak.roundConfigId).toBe(99)
-    expect(summary.streak.roundCode).toBe('bound-round')
-    expect(summary.streak.version).toBe(7)
+    expect(summary.streak.currentStreak).toBe(4)
+    expect(summary.streak.streakStartedAt).toBe('2026-04-10')
+    expect(summary.streak.lastSignedDate).toBe('2026-04-18')
+    expect(summary.streak).not.toHaveProperty(deprecatedRoundConfigField)
+    expect(summary.streak).not.toHaveProperty('roundCode')
+    expect(summary.streak).not.toHaveProperty('version')
   })
 
   it('passes an active-streak filter into leaderboard pagination', async () => {
@@ -245,7 +287,7 @@ describe('checkInRuntimeService', () => {
     const service = new CheckInRuntimeService(drizzle, {} as never)
     const whereToken = { kind: 'active-streak-filter' }
     jest
-      .spyOn(service as any, 'buildActiveStreakProgressWhere')
+      .spyOn(service as any, 'buildActiveDailyStreakProgressWhere')
       .mockReturnValue(whereToken)
     ;(drizzle.ext.findPagination as jest.Mock).mockResolvedValue({
       list: [],
@@ -262,6 +304,31 @@ describe('checkInRuntimeService', () => {
         where: whereToken,
       }),
     )
+  })
+
+  it('combines grant-side reconciliation filters into one correlated exists clause', () => {
+    const drizzle = createDrizzleStub()
+    const fromChain = {
+      where: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockResolvedValue([]),
+      limit: jest.fn().mockResolvedValue([]),
+    }
+    ;(drizzle.db.select as jest.Mock).mockImplementation(() => ({
+      from: jest.fn().mockReturnValue(fromChain),
+    }))
+    const service = new CheckInRuntimeService(drizzle, {} as never)
+
+    const condition = (service as any).buildGrantReconciliationCondition({
+      scopeType: 1,
+      activityId: 22,
+    })
+    const inspected = inspect(fromChain.where.mock.calls[0]?.[0], { depth: 20 })
+
+    expect(condition).toBeDefined()
+    expect(inspected).toContain("'scopeType'")
+    expect(inspected).toContain("'activityId'")
+    expect(inspected).toContain("'triggerSignDate'")
   })
 
   it('uses frozen record reward snapshot for signed calendar days', async () => {
@@ -323,5 +390,28 @@ describe('checkInRuntimeService', () => {
     expect(calendar.days[0]?.rewardItems).toEqual([
       { assetType: 1, assetKey: '', amount: 10 },
     ])
+  })
+
+  it('rejects invisible activity details for app clients', async () => {
+    const drizzle = createDrizzleStub()
+    const service = new CheckInRuntimeService(drizzle, {} as never)
+
+    ;(
+      drizzle.db.query as unknown as Record<string, { findFirst: jest.Mock }>
+    ).checkInActivityStreak = {
+      findFirst: jest.fn().mockResolvedValue({
+        id: 8,
+        activityKey: 'summer-sign-in',
+        title: '夏日连续签到',
+        status: CheckInActivityStreakStatusEnum.DRAFT,
+        effectiveFrom: new Date('2099-04-19T00:00:00.000Z'),
+        effectiveTo: new Date('2099-04-26T23:59:59.999Z'),
+        rewardRules: [],
+      }),
+    }
+
+    await expect(service.getActivityDetail({ id: 8 }, 7)).rejects.toThrow(
+      BusinessException,
+    )
   })
 })

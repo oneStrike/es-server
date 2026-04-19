@@ -1,8 +1,4 @@
 import type { Db } from '@db/core'
-import type {
-  CheckInStreakProgressSelect,
-  CheckInStreakRoundConfigSelect,
-} from '@db/schema'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
 import type { CheckInRewardItems } from './check-in.type'
 import type {
@@ -25,16 +21,16 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common'
-import dayjs from 'dayjs'
-import { and, asc, eq, gte } from 'drizzle-orm'
+import { and, asc, eq, gte, lte } from 'drizzle-orm'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
+  CheckInDailyStreakConfigStatusEnum,
   CheckInMakeupPeriodTypeEnum,
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
-  CheckInStreakNextRoundStrategyEnum,
+  CheckInStreakScopeTypeEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
@@ -43,7 +39,7 @@ const CHECK_IN_WRITE_RETRY_LIMIT = 3
 /**
  * 签到执行服务。
  *
- * 负责今日签到、补签、连续奖励发放和签到奖励补偿重试。
+ * 负责今日签到、补签、日常连续奖励与活动连续奖励发放，以及签到奖励补偿重试。
  */
 @Injectable()
 export class CheckInExecutionService extends CheckInServiceSupport {
@@ -138,7 +134,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           recordId: number
           triggeredGrantIds: number[]
         }
-        | undefined
+      | undefined
 
     for (let attempt = 0; attempt < CHECK_IN_WRITE_RETRY_LIMIT; attempt++) {
       try {
@@ -211,6 +207,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
               ],
             })
             .returning()
+
           if (!record) {
             const concurrentRecord = await tx.query.checkInRecord.findFirst({
               where: {
@@ -232,190 +229,20 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             )
           }
 
-          const activeRound = await this.getRequiredActiveRound(tx)
-          let progress = await this.getOrCreateProgress(
-            input.userId,
-            activeRound,
-            tx,
-          )
-          const boundRound = await this.getBoundRoundConfig(
-            progress,
-            activeRound,
-            tx,
-          )
-          const roundDefinition = this.parseStreakRoundDefinition(boundRound)
-          const roundStartedAt = progress.roundStartedAt
-            ? this.toDateOnlyValue(progress.roundStartedAt)
-            : input.signDate
-
-          if (!progress.roundStartedAt) {
-            const [nextProgress] = await tx
-              .update(this.checkInStreakProgressTable)
-              .set({
-                roundStartedAt: input.signDate,
-                version: progress.version + 1,
-              })
-              .where(
-                and(
-                  eq(this.checkInStreakProgressTable.id, progress.id),
-                  eq(this.checkInStreakProgressTable.version, progress.version),
-                ),
-              )
-              .returning()
-            if (!nextProgress) {
-              throw new BusinessException(
-                BusinessErrorCode.STATE_CONFLICT,
-                '签到连续奖励进度并发冲突，请稍后重试',
-              )
-            }
-            progress = nextProgress
-          }
-
-          const scopedRecords = await this.listRoundScopedRecords(
-            input.userId,
-            roundStartedAt,
-            tx,
-          )
-          const aggregation = this.recomputeStreakAggregation(scopedRecords, {
-            roundStartedAt,
-          })
-          const existingGrants = await tx
-            .select()
-            .from(this.checkInStreakRewardGrantTable)
-            .where(
-              and(
-                eq(this.checkInStreakRewardGrantTable.userId, input.userId),
-                eq(
-                  this.checkInStreakRewardGrantTable.roundConfigId,
-                  progress.roundConfigId,
-                ),
-              ),
-            )
-            .orderBy(
-              asc(this.checkInStreakRewardGrantTable.triggerSignDate),
-              asc(this.checkInStreakRewardGrantTable.id),
-            )
-
-          const grantCandidates = this.resolveEligibleGrantRules(
-            roundDefinition,
-            aggregation.streakByDate,
-            existingGrants,
-            progress,
-          )
-
           const triggeredGrantIds: number[] = []
-          for (const candidate of grantCandidates) {
-            const [grant] = await tx
-              .insert(this.checkInStreakRewardGrantTable)
-              .values({
-                userId: input.userId,
-                roundConfigId: progress.roundConfigId,
-                roundIteration: progress.roundIteration,
-                triggerSignDate: candidate.triggerSignDate,
-                rewardSettlementId: null,
-                bizKey: this.buildGrantBizKey(
-                  input.userId,
-                  progress.roundConfigId,
-                  progress.roundIteration,
-                  candidate.rule.ruleCode,
-                  candidate.triggerSignDate,
-                ),
-                ruleCode: candidate.rule.ruleCode,
-                streakDays: candidate.rule.streakDays,
-                rewardItems: candidate.rule.rewardItems,
-                repeatable: candidate.rule.repeatable,
-                context: {
-                  source:
-                    input.recordType === CheckInRecordTypeEnum.MAKEUP
-                      ? 'makeup_recompute'
-                      : 'sign_recompute',
-                },
-              })
-              .returning()
-            if (grant) {
-              triggeredGrantIds.push(grant.id)
-            }
-          }
-
-          const maxThreshold = Math.max(
-            0,
-            ...roundDefinition.rewardRules
-              .filter((rule) => rule.status === 1)
-              .map((rule) => rule.streakDays),
+          const dailyGrantIds = await this.processDailyStreakGrants(
+            input.userId,
+            tx,
+            now,
           )
-          const completionDates = Object.entries(aggregation.streakByDate)
-            .filter(([, streak]) => streak === maxThreshold)
-            .map(([date]) => date)
-          const earliestCompletionDate = completionDates[0]
-          if (
-            input.recordType === CheckInRecordTypeEnum.MAKEUP &&
-            maxThreshold > 0 &&
-            earliestCompletionDate &&
-            aggregation.lastSignedDate &&
-            earliestCompletionDate < aggregation.lastSignedDate
-          ) {
-            throw new BusinessException(
-              BusinessErrorCode.OPERATION_NOT_ALLOWED,
-              '当前补签会影响已形成的连续奖励轮次，请联系管理员处理',
-            )
-          }
-          const shouldTransitionRound =
-            maxThreshold > 0 &&
-            !!earliestCompletionDate &&
-            aggregation.lastSignedDate === earliestCompletionDate &&
-            aggregation.currentStreak >= maxThreshold
+          triggeredGrantIds.push(...dailyGrantIds)
 
-          if (shouldTransitionRound) {
-            const nextRound = await this.resolveNextRoundConfig(
-              boundRound,
-              roundDefinition,
-              tx,
-            )
-            const [updated] = await tx
-              .update(this.checkInStreakProgressTable)
-              .set({
-                roundConfigId: nextRound.id,
-                roundIteration: progress.roundIteration + 1,
-                currentStreak: 0,
-                roundStartedAt: this.nextDate(earliestCompletionDate),
-                lastSignedDate: null,
-                version: progress.version + 1,
-              })
-              .where(
-                and(
-                  eq(this.checkInStreakProgressTable.id, progress.id),
-                  eq(this.checkInStreakProgressTable.version, progress.version),
-                ),
-              )
-              .returning({ id: this.checkInStreakProgressTable.id })
-            if (!updated) {
-              throw new BusinessException(
-                BusinessErrorCode.STATE_CONFLICT,
-                '签到连续奖励进度并发冲突，请稍后重试',
-              )
-            }
-          } else {
-            const [updated] = await tx
-              .update(this.checkInStreakProgressTable)
-              .set({
-                currentStreak: aggregation.currentStreak,
-                lastSignedDate: aggregation.lastSignedDate ?? null,
-                version: progress.version + 1,
-              })
-              .where(
-                and(
-                  eq(this.checkInStreakProgressTable.id, progress.id),
-                  eq(this.checkInStreakProgressTable.version, progress.version),
-                ),
-              )
-              .returning({ id: this.checkInStreakProgressTable.id })
-            if (!updated) {
-              throw new BusinessException(
-                BusinessErrorCode.STATE_CONFLICT,
-                '签到连续奖励进度并发冲突，请稍后重试',
-              )
-            }
-          }
+          const activityGrantIds = await this.processActivityStreakGrants(
+            input.userId,
+            input.signDate,
+            tx,
+          )
+          triggeredGrantIds.push(...activityGrantIds)
 
           return {
             recordId: record.id,
@@ -448,6 +275,201 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
 
     return this.buildActionResponse(action.recordId, action.triggeredGrantIds)
+  }
+
+  private async processDailyStreakGrants(userId: number, tx: Db, now: Date) {
+    const progress = await this.getOrCreateDailyProgress(userId, tx)
+    const records = await this.listUserRecords(userId, tx)
+    const aggregation = this.recomputeStreakAggregation(records)
+    const dailyConfigs = (await this.listDailyStreakConfigs(tx)).filter(
+      (config) =>
+        config.status !== CheckInDailyStreakConfigStatusEnum.DRAFT &&
+        config.status !== CheckInDailyStreakConfigStatusEnum.TERMINATED,
+    )
+    const streakByConfigId = new Map<number, Record<string, number>>()
+    for (const [triggerSignDate, streak] of Object.entries(
+      aggregation.streakByDate,
+    )) {
+      const config = this.resolveDailyStreakConfigForSignDate(
+        triggerSignDate,
+        dailyConfigs,
+      )
+      if (!config) {
+        continue
+      }
+      const scopedStreaks = streakByConfigId.get(config.id) ?? {}
+      scopedStreaks[triggerSignDate] = streak
+      streakByConfigId.set(config.id, scopedStreaks)
+    }
+
+    const existingGrants = await tx
+      .select({
+        ruleCode: this.checkInStreakGrantTable.ruleCode,
+        triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
+        configVersionId: this.checkInStreakGrantTable.configVersionId,
+      })
+      .from(this.checkInStreakGrantTable)
+      .where(
+        and(
+          eq(this.checkInStreakGrantTable.userId, userId),
+          eq(
+            this.checkInStreakGrantTable.scopeType,
+            CheckInStreakScopeTypeEnum.DAILY,
+          ),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInStreakGrantTable.triggerSignDate),
+        asc(this.checkInStreakGrantTable.id),
+      )
+
+    const triggeredGrantIds: number[] = []
+    for (const config of dailyConfigs) {
+      const scopedStreakByDate = streakByConfigId.get(config.id)
+      if (!scopedStreakByDate) {
+        continue
+      }
+
+      const definition = this.parseDailyStreakConfigDefinition(config)
+      const grantCandidates = this.resolveEligibleScopeGrantRules(
+        definition.rewardRules,
+        scopedStreakByDate,
+        existingGrants.filter((grant) => grant.configVersionId === config.id),
+        aggregation.streakStartedAt,
+      )
+
+      for (const candidate of grantCandidates) {
+        const [grant] = await tx
+          .insert(this.checkInStreakGrantTable)
+          .values({
+            userId,
+            scopeType: CheckInStreakScopeTypeEnum.DAILY,
+            configVersionId: config.id,
+            activityId: null,
+            triggerSignDate: candidate.triggerSignDate,
+            rewardSettlementId: null,
+            bizKey: this.buildDailyGrantBizKey(
+              userId,
+              config.id,
+              candidate.rule.ruleCode,
+              candidate.triggerSignDate,
+            ),
+            ruleCode: candidate.rule.ruleCode,
+            streakDays: candidate.rule.streakDays,
+            rewardItems: candidate.rule.rewardItems,
+            repeatable: candidate.rule.repeatable,
+            context: {
+              source:
+                candidate.triggerSignDate === this.formatDateOnly(now)
+                  ? 'daily_sign'
+                  : 'daily_recompute',
+            },
+          })
+          .onConflictDoNothing({
+            target: [
+              this.checkInStreakGrantTable.userId,
+              this.checkInStreakGrantTable.bizKey,
+            ],
+          })
+          .returning()
+        if (grant) {
+          triggeredGrantIds.push(grant.id)
+        }
+      }
+    }
+
+    await this.updateDailyProgress(progress, aggregation, tx)
+
+    return triggeredGrantIds
+  }
+
+  private async processActivityStreakGrants(
+    userId: number,
+    signDate: string,
+    tx: Db,
+  ) {
+    const activities = await this.listEffectiveActivityStreaks(signDate, tx)
+    const triggeredGrantIds: number[] = []
+
+    for (const activity of activities) {
+      const definition = this.parseActivityStreakDefinition(activity)
+      const progress = await this.getOrCreateActivityProgress(
+        activity.id,
+        userId,
+        tx,
+      )
+      const records = await this.listActivityScopedRecords(
+        userId,
+        activity.id,
+        tx,
+      )
+      const aggregation = this.recomputeStreakAggregation(records)
+      const existingGrants = await tx
+        .select({
+          ruleCode: this.checkInStreakGrantTable.ruleCode,
+          triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
+        })
+        .from(this.checkInStreakGrantTable)
+        .where(
+          and(
+            eq(this.checkInStreakGrantTable.userId, userId),
+            eq(
+              this.checkInStreakGrantTable.scopeType,
+              CheckInStreakScopeTypeEnum.ACTIVITY,
+            ),
+            eq(this.checkInStreakGrantTable.activityId, activity.id),
+          ),
+        )
+        .orderBy(
+          asc(this.checkInStreakGrantTable.triggerSignDate),
+          asc(this.checkInStreakGrantTable.id),
+        )
+
+      const grantCandidates = this.resolveEligibleScopeGrantRules(
+        definition.rewardRules,
+        aggregation.streakByDate,
+        existingGrants,
+        aggregation.streakStartedAt,
+      )
+
+      for (const candidate of grantCandidates) {
+        const [grant] = await tx
+          .insert(this.checkInStreakGrantTable)
+          .values({
+            userId,
+            scopeType: CheckInStreakScopeTypeEnum.ACTIVITY,
+            configVersionId: null,
+            activityId: activity.id,
+            triggerSignDate: candidate.triggerSignDate,
+            rewardSettlementId: null,
+            bizKey: this.buildActivityGrantBizKey(
+              userId,
+              activity.id,
+              candidate.rule.ruleCode,
+              candidate.triggerSignDate,
+            ),
+            ruleCode: candidate.rule.ruleCode,
+            streakDays: candidate.rule.streakDays,
+            rewardItems: candidate.rule.rewardItems,
+            repeatable: candidate.rule.repeatable,
+            context: { source: 'activity_recompute' },
+          })
+          .onConflictDoNothing({
+            target: [
+              this.checkInStreakGrantTable.userId,
+              this.checkInStreakGrantTable.bizKey,
+            ],
+          })
+          .returning()
+        if (grant) {
+          triggeredGrantIds.push(grant.id)
+        }
+      }
+
+      await this.updateActivityProgress(progress, aggregation, tx)
+    }
+
+    return triggeredGrantIds
   }
 
   private assertMakeupAllowed(
@@ -489,7 +511,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       config,
       this.formatDateOnly(new Date()),
     )
-    const progress = await this.db.query.checkInStreakProgress.findFirst({
+    const progress = await this.db.query.checkInDailyStreakProgress.findFirst({
       where: { userId: record.userId },
     })
     const settlement = record.rewardSettlementId
@@ -519,14 +541,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       periodicRemaining: makeup.periodicRemaining,
       eventAvailable: makeup.eventAvailable,
       currentStreak: progress?.currentStreak ?? 0,
-      roundConfigId: progress?.roundConfigId ?? 0,
       triggeredGrantIds,
     }
   }
 
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, isRetry?: boolean },
+    context: { actorUserId?: number; isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -622,11 +643,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, isRetry?: boolean },
+    context: { actorUserId?: number; isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
-        const grant = await tx.query.checkInStreakRewardGrant.findFirst({
+        const grant = await tx.query.checkInStreakGrant.findFirst({
           where: { id: grantId },
         })
         if (!grant) {
@@ -694,7 +715,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         `check_in_streak_grant_reward_failed grantId=${grantId} error=${message}`,
       )
 
-      const grant = await this.db.query.checkInStreakRewardGrant.findFirst({
+      const grant = await this.db.query.checkInStreakGrant.findFirst({
         where: { id: grantId },
       })
       if (grant) {
@@ -785,24 +806,154 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return CheckInRewardResultTypeEnum.IDEMPOTENT
   }
 
+  private async listUserRecords(userId: number, tx: Db) {
+    return tx
+      .select({
+        signDate: this.checkInRecordTable.signDate,
+      })
+      .from(this.checkInRecordTable)
+      .where(eq(this.checkInRecordTable.userId, userId))
+      .orderBy(
+        asc(this.checkInRecordTable.signDate),
+        asc(this.checkInRecordTable.id),
+      )
+  }
+
+  private async listActivityScopedRecords(
+    userId: number,
+    activityId: number,
+    tx: Db,
+  ) {
+    const activity = await tx.query.checkInActivityStreak.findFirst({
+      where: { id: activityId },
+    })
+    if (!activity) {
+      throw new BusinessException(
+        BusinessErrorCode.RESOURCE_NOT_FOUND,
+        '活动连续签到不存在',
+      )
+    }
+
+    const startDate = this.formatDateOnly(activity.effectiveFrom)
+    const endDate = this.formatDateOnly(activity.effectiveTo)
+
+    return tx
+      .select({
+        signDate: this.checkInRecordTable.signDate,
+      })
+      .from(this.checkInRecordTable)
+      .where(
+        and(
+          eq(this.checkInRecordTable.userId, userId),
+          gte(this.checkInRecordTable.signDate, startDate),
+          lte(this.checkInRecordTable.signDate, endDate),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInRecordTable.signDate),
+        asc(this.checkInRecordTable.id),
+      )
+  }
+
+  private async updateDailyProgress(
+    progress: Awaited<
+      ReturnType<CheckInExecutionService['getOrCreateDailyProgress']>
+    >,
+    aggregation: ReturnType<
+      CheckInExecutionService['recomputeStreakAggregation']
+    >,
+    tx: Db,
+  ) {
+    const [updated] = await tx
+      .update(this.checkInDailyStreakProgressTable)
+      .set({
+        currentStreak: aggregation.currentStreak,
+        streakStartedAt: aggregation.streakStartedAt ?? null,
+        lastSignedDate: aggregation.lastSignedDate ?? null,
+        version: progress.version + 1,
+      })
+      .where(
+        and(
+          eq(this.checkInDailyStreakProgressTable.id, progress.id),
+          eq(this.checkInDailyStreakProgressTable.version, progress.version),
+        ),
+      )
+      .returning({ id: this.checkInDailyStreakProgressTable.id })
+    if (!updated) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '日常连续签到进度并发冲突，请稍后重试',
+      )
+    }
+  }
+
+  private async updateActivityProgress(
+    progress: Awaited<
+      ReturnType<CheckInExecutionService['getOrCreateActivityProgress']>
+    >,
+    aggregation: ReturnType<
+      CheckInExecutionService['recomputeStreakAggregation']
+    >,
+    tx: Db,
+  ) {
+    const [updated] = await tx
+      .update(this.checkInActivityStreakProgressTable)
+      .set({
+        currentStreak: aggregation.currentStreak,
+        streakStartedAt: aggregation.streakStartedAt ?? null,
+        lastSignedDate: aggregation.lastSignedDate ?? null,
+        version: progress.version + 1,
+      })
+      .where(
+        and(
+          eq(this.checkInActivityStreakProgressTable.id, progress.id),
+          eq(this.checkInActivityStreakProgressTable.version, progress.version),
+        ),
+      )
+      .returning({ id: this.checkInActivityStreakProgressTable.id })
+    if (!updated) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '活动连续签到进度并发冲突，请稍后重试',
+      )
+    }
+  }
+
   private buildRecordBizKey(userId: number, signDate: string) {
     return `checkin:record:user:${userId}:date:${signDate}`
   }
 
-  private buildGrantBizKey(
+  private buildDailyGrantBizKey(
     userId: number,
-    roundConfigId: number,
-    roundIteration: number,
+    configVersionId: number,
     ruleCode: string,
     triggerSignDate: string,
   ) {
     return [
       'checkin',
       'grant',
-      'round',
-      roundConfigId,
-      'iteration',
-      roundIteration,
+      'daily',
+      configVersionId,
+      'rule',
+      ruleCode,
+      'user',
+      userId,
+      'date',
+      triggerSignDate,
+    ].join(':')
+  }
+
+  private buildActivityGrantBizKey(
+    userId: number,
+    activityId: number,
+    ruleCode: string,
+    triggerSignDate: string,
+  ) {
+    return [
+      'checkin',
+      'grant',
+      'activity',
+      activityId,
       'rule',
       ruleCode,
       'user',
@@ -822,85 +973,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     userId: number,
   ) {
     return `checkin:streak:grant:${grantId}:rule:${ruleCode}:user:${userId}`
-  }
-
-  private nextDate(date: string) {
-    return dayjs
-      .tz(date, 'YYYY-MM-DD', this.getAppTimeZone())
-      .add(1, 'day')
-      .format('YYYY-MM-DD')
-  }
-
-  private async getBoundRoundConfig(
-    progress: CheckInStreakProgressSelect,
-    fallback: CheckInStreakRoundConfigSelect,
-    tx: Db,
-  ) {
-    const bound = await tx.query.checkInStreakRoundConfig.findFirst({
-      where: { id: progress.roundConfigId },
-    })
-    return bound ?? fallback
-  }
-
-  private async listRoundScopedRecords(
-    userId: number,
-    roundStartedAt: string,
-    tx: Db,
-  ) {
-    return tx
-      .select()
-      .from(this.checkInRecordTable)
-      .where(
-        and(
-          eq(this.checkInRecordTable.userId, userId),
-          gte(this.checkInRecordTable.signDate, roundStartedAt),
-        ),
-      )
-      .orderBy(
-        asc(this.checkInRecordTable.signDate),
-        asc(this.checkInRecordTable.id),
-      )
-  }
-
-  private async resolveNextRoundConfig(
-    currentRound: CheckInStreakRoundConfigSelect,
-    roundDefinition: ReturnType<
-      CheckInExecutionService['parseStreakRoundDefinition']
-    >,
-    tx: Db,
-  ) {
-    if (
-      roundDefinition.nextRoundStrategy !==
-      CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT
-    ) {
-      return currentRound
-    }
-
-    if (!roundDefinition.nextRoundConfigId) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '连续奖励轮次缺少下一轮配置',
-      )
-    }
-
-    if (roundDefinition.nextRoundConfigId === currentRound.id) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '连续奖励轮次存在自引用下一轮配置',
-      )
-    }
-
-    const explicitNext = await tx.query.checkInStreakRoundConfig.findFirst({
-      where: { id: roundDefinition.nextRoundConfigId },
-    })
-    if (!explicitNext) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '连续奖励轮次下一轮配置不存在',
-      )
-    }
-
-    return explicitNext
   }
 
   private async ensureRecordRewardSettlement(
@@ -946,7 +1018,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     grant: {
       id: number
       userId: number
-      roundConfigId: number
+      scopeType: number
+      configVersionId?: number | null
+      activityId?: number | null
       ruleCode: string
       triggerSignDate: string | Date
       rewardItems: unknown
@@ -966,7 +1040,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         {
           grantId: grant.id,
           userId: grant.userId,
-          roundConfigId: grant.roundConfigId,
+          scopeType: grant.scopeType,
+          configVersionId: grant.configVersionId ?? null,
+          activityId: grant.activityId ?? null,
           ruleCode: grant.ruleCode,
           triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
           rewardItems: this.asArray(grant.rewardItems) ?? null,
@@ -976,9 +1052,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     await this.drizzle.withErrorHandling(() =>
       (tx ?? this.db)
-        .update(this.checkInStreakRewardGrantTable)
+        .update(this.checkInStreakGrantTable)
         .set({ rewardSettlementId: settlement.id })
-        .where(eq(this.checkInStreakRewardGrantTable.id, grant.id)),
+        .where(eq(this.checkInStreakGrantTable.id, grant.id)),
     )
     return settlement
   }

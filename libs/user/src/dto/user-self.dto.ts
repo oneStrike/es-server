@@ -8,6 +8,7 @@ import {
   QueryUserPointRecordDto,
 } from '@libs/growth/point/dto/point-record.dto'
 import { BaseUserAssetsSummaryDto } from '@libs/interaction/user-assets/dto/user-assets.dto'
+import { BaseNotificationUnreadDto } from '@libs/message/notification/dto/notification-unread.dto'
 import {
   BooleanProperty,
   DateProperty,
@@ -460,15 +461,21 @@ export class UserCenterProfileDto {
 }
 
 /**
+ * 用户中心通知未读摘要 DTO。
+ */
+export class UserCenterNotificationUnreadDto extends BaseNotificationUnreadDto {}
+
+/**
  * 用户中心消息摘要 DTO。
  */
 export class UserCenterMessageDto {
-  @NumberProperty({
-    description: '未读通知数量',
-    example: 3,
+  @NestedProperty({
+    description: '通知未读摘要',
+    type: UserCenterNotificationUnreadDto,
     validation: false,
+    nullable: false,
   })
-  notificationUnreadCount!: number
+  notificationUnread!: UserCenterNotificationUnreadDto
 
   @NumberProperty({
     description: '收件箱未读消息总数',

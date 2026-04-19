@@ -17,12 +17,14 @@ function createDrizzleStub() {
     db: {},
     schema: {
       checkInConfig: {},
+      checkInDailyStreakConfig: {},
+      checkInDailyStreakProgress: {},
+      checkInActivityStreak: {},
+      checkInActivityStreakProgress: {},
+      checkInStreakGrant: {},
       checkInMakeupFact: {},
       checkInMakeupAccount: {},
       checkInRecord: {},
-      checkInStreakRoundConfig: {},
-      checkInStreakProgress: {},
-      checkInStreakRewardGrant: {},
       growthRewardSettlement: {},
     },
   } as unknown as DrizzleService

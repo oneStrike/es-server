@@ -93,15 +93,7 @@ export class MessageNotificationService {
   }
 
   async getUnreadCount(receiverUserId: number) {
-    return {
-      count: await this.db.$count(
-        this.notification,
-        and(
-          this.buildActiveNotificationWhere(receiverUserId),
-          eq(this.notification.isRead, false),
-        ),
-      ),
-    }
+    return this.messageInboxService.getNotificationUnreadSummary(receiverUserId)
   }
 
   async markRead(receiverUserId: number, id: number) {

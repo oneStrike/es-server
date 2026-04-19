@@ -47,11 +47,11 @@ describe('query user notification list dto', () => {
       UserNotificationDto.prototype,
       'data',
     ) as
-    | {
+      | {
           nullable?: boolean
           oneOf?: Array<{ $ref: string }>
         }
-        | undefined
+      | undefined
 
     expect(metadata?.nullable).toBe(true)
     expect(metadata?.oneOf).toEqual([
@@ -61,5 +61,49 @@ describe('query user notification list dto', () => {
       { $ref: '#/components/schemas/NotificationAnnouncementDataDto' },
       { $ref: '#/components/schemas/NotificationTaskReminderDataDto' },
     ])
+  })
+
+  it('documents unread byCategory as a number-valued map', () => {
+    const previousNodeEnv = process.env.NODE_ENV
+    try {
+      process.env.NODE_ENV = 'development'
+      jest.resetModules()
+      const { BaseNotificationUnreadDto, NotificationUnreadByCategoryDto } =
+        require('./notification-unread.dto') as typeof import('./notification-unread.dto')
+
+      const metadata = Reflect.getMetadata(
+        'swagger/apiModelProperties',
+        BaseNotificationUnreadDto.prototype,
+        'byCategory',
+      ) as
+        | {
+            type?: unknown
+          }
+        | undefined
+
+      expect(metadata?.type).toBe(NotificationUnreadByCategoryDto)
+
+      const commentReplyMetadata = Reflect.getMetadata(
+        'swagger/apiModelProperties',
+        NotificationUnreadByCategoryDto.prototype,
+        'comment_reply',
+      ) as { description?: string; example?: number } | undefined
+      const taskReminderMetadata = Reflect.getMetadata(
+        'swagger/apiModelProperties',
+        NotificationUnreadByCategoryDto.prototype,
+        'task_reminder',
+      ) as { description?: string; example?: number } | undefined
+
+      expect(commentReplyMetadata).toMatchObject({
+        description: '评论回复未读数',
+        example: 2,
+      })
+      expect(taskReminderMetadata).toMatchObject({
+        description: '任务提醒未读数',
+        example: 0,
+      })
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv
+    }
   })
 })

@@ -119,9 +119,7 @@ export class UserService {
   /**
    * 收敛用户中心任务摘要，避免执行层内部辅助字段透传到 HTTP 契约。
    */
-  private mapUserCenterTaskSummary(
-    taskSummary?: Partial<UserCenterTaskDto>,
-  ) {
+  private mapUserCenterTaskSummary(taskSummary?: Partial<UserCenterTaskDto>) {
     return {
       claimableCount: taskSummary?.claimableCount ?? 0,
       claimedCount: taskSummary?.claimedCount ?? 0,
@@ -244,16 +242,23 @@ export class UserService {
    * 获取用户中心汇总信息
    */
   async getUserCenter(userId: number): Promise<UserCenterDto> {
-    const [user, growth, counts, badgeCount, assets, messageSummary, taskSummary] =
-      await Promise.all([
-        this.userCoreService.ensureUserExists(userId),
-        this.userCoreService.getUserGrowthSnapshot(userId),
-        this.userCoreService.getUserCounts(userId),
-        this.userCoreService.getBadgeCount(userId),
-        this.getUserAssetsSummary(userId),
-        this.messageInboxService.getSummary(userId),
-        this.taskService.getUserTaskSummary(userId),
-      ])
+    const [
+      user,
+      growth,
+      counts,
+      badgeCount,
+      assets,
+      messageSummary,
+      taskSummary,
+    ] = await Promise.all([
+      this.userCoreService.ensureUserExists(userId),
+      this.userCoreService.getUserGrowthSnapshot(userId),
+      this.userCoreService.getUserCounts(userId),
+      this.userCoreService.getBadgeCount(userId),
+      this.getUserAssetsSummary(userId),
+      this.messageInboxService.getSummary(userId),
+      this.taskService.getUserTaskSummary(userId),
+    ])
 
     const level = user.levelId
       ? await this.userCoreService.getLevelInfo(user.levelId)
@@ -289,7 +294,7 @@ export class UserService {
       },
       assets: this.mapUserCenterAssets(assets),
       message: {
-        notificationUnreadCount: messageSummary.notificationUnreadCount,
+        notificationUnread: messageSummary.notificationUnread,
         totalUnreadCount: messageSummary.totalUnreadCount,
       },
       task: this.mapUserCenterTaskSummary(taskSummary),

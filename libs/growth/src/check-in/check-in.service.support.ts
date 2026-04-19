@@ -1,17 +1,20 @@
 import type { Db, DrizzleService } from '@db/core'
 import type {
+  CheckInActivityStreakSelect,
+  CheckInActivityStreakProgressSelect,
   CheckInConfigSelect,
+  CheckInDailyStreakConfigSelect,
+  CheckInDailyStreakProgressSelect,
   CheckInMakeupAccountSelect,
   CheckInRecordSelect,
-  CheckInStreakProgressSelect,
-  CheckInStreakRewardGrantSelect,
-  CheckInStreakRoundConfigSelect,
+  CheckInStreakGrantSelect,
   GrowthRewardSettlementSelect,
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { SQL } from 'drizzle-orm'
-import type { CheckInStreakNextRoundStrategyEnum } from './check-in.constant'
 import type {
+  CheckInActivityStreakDefinition,
+  CheckInDailyStreakConfigDefinition,
   CheckInDateRewardRuleView,
   CheckInMakeupAccountView,
   CheckInMakeupConsumePlanItem,
@@ -21,7 +24,6 @@ import type {
   CheckInRewardItems,
   CheckInStreakAggregation,
   CheckInStreakRewardRuleView,
-  CheckInStreakRoundDefinition,
 } from './check-in.type'
 import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
 import type { CreateCheckInPatternRewardRuleDto } from './dto/check-in-pattern-reward-rule.dto'
@@ -38,16 +40,19 @@ import { BadRequestException, Logger } from '@nestjs/common'
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { and, desc, eq, gt, inArray, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, or, sql } from 'drizzle-orm'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
+  CheckInActivityStreakStatusEnum,
+  CheckInDailyStreakConfigStatusEnum,
+  CheckInDailyStreakPublishStrategyEnum,
   CheckInMakeupFactTypeEnum,
   CheckInMakeupPeriodTypeEnum,
   CheckInMakeupSourceTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
+  CheckInStreakScopeTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
-  CheckInStreakRoundStatusEnum,
 } from './check-in.constant'
 
 dayjs.extend(utc)
@@ -87,16 +92,24 @@ export abstract class CheckInServiceSupport {
     return this.drizzle.schema.checkInRecord
   }
 
-  protected get checkInStreakRoundConfigTable() {
-    return this.drizzle.schema.checkInStreakRoundConfig
+  protected get checkInDailyStreakConfigTable() {
+    return this.drizzle.schema.checkInDailyStreakConfig
   }
 
-  protected get checkInStreakProgressTable() {
-    return this.drizzle.schema.checkInStreakProgress
+  protected get checkInDailyStreakProgressTable() {
+    return this.drizzle.schema.checkInDailyStreakProgress
   }
 
-  protected get checkInStreakRewardGrantTable() {
-    return this.drizzle.schema.checkInStreakRewardGrant
+  protected get checkInActivityStreakTable() {
+    return this.drizzle.schema.checkInActivityStreak
+  }
+
+  protected get checkInActivityStreakProgressTable() {
+    return this.drizzle.schema.checkInActivityStreakProgress
+  }
+
+  protected get checkInStreakGrantTable() {
+    return this.drizzle.schema.checkInStreakGrant
   }
 
   protected get growthRewardSettlementTable() {
@@ -300,7 +313,9 @@ export abstract class CheckInServiceSupport {
           patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
           patternType !== CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY
         ) {
-          throw new BadRequestException('按月模式下仅支持按月日期或月末奖励规则')
+          throw new BadRequestException(
+            '按月模式下仅支持按月日期或月末奖励规则',
+          )
         }
         if (
           patternType === CheckInPatternRewardRuleTypeEnum.MONTH_DAY &&
@@ -321,7 +336,9 @@ export abstract class CheckInServiceSupport {
           patternType === CheckInPatternRewardRuleTypeEnum.MONTH_LAST_DAY &&
           (weekday !== null || monthDay !== null)
         ) {
-          throw new BadRequestException('按月最后一天规则不能配置 weekday 或 monthDay')
+          throw new BadRequestException(
+            '按月最后一天规则不能配置 weekday 或 monthDay',
+          )
         }
       }
 
@@ -450,30 +467,141 @@ export abstract class CheckInServiceSupport {
     } satisfies CheckInRewardDefinition
   }
 
-  protected parseStreakRoundDefinition(
-    round: Pick<
-      CheckInStreakRoundConfigSelect,
-      | 'roundCode'
+  protected parseDailyStreakConfigDefinition(
+    config: Pick<
+      CheckInDailyStreakConfigSelect,
       | 'version'
       | 'status'
+      | 'publishStrategy'
       | 'rewardRules'
-      | 'nextRoundStrategy'
-      | 'nextRoundConfigId'
+      | 'effectiveFrom'
+      | 'effectiveTo'
     >,
   ) {
     return {
-      roundCode: round.roundCode,
-      version: round.version,
-      status: round.status as CheckInStreakRoundStatusEnum,
+      version: config.version,
+      status: config.status as CheckInDailyStreakConfigStatusEnum,
+      publishStrategy:
+        config.publishStrategy as CheckInDailyStreakPublishStrategyEnum,
       rewardRules: this.normalizeStreakRewardRules(
-        Array.isArray(round.rewardRules)
-          ? (round.rewardRules as CheckInStreakRewardRuleView[])
+        Array.isArray(config.rewardRules)
+          ? (config.rewardRules as CheckInStreakRewardRuleView[])
           : [],
       ),
-      nextRoundStrategy:
-        round.nextRoundStrategy as CheckInStreakNextRoundStrategyEnum,
-      nextRoundConfigId: round.nextRoundConfigId ?? null,
-    } satisfies CheckInStreakRoundDefinition
+      effectiveFrom: config.effectiveFrom,
+      effectiveTo: config.effectiveTo ?? null,
+    } satisfies CheckInDailyStreakConfigDefinition
+  }
+
+  protected resolveDailyStreakConfigStatus(
+    config: Pick<
+      CheckInDailyStreakConfigSelect,
+      'status' | 'effectiveFrom' | 'effectiveTo'
+    >,
+    at = new Date(),
+  ) {
+    if (config.status === CheckInDailyStreakConfigStatusEnum.DRAFT) {
+      return CheckInDailyStreakConfigStatusEnum.DRAFT
+    }
+    if (config.status === CheckInDailyStreakConfigStatusEnum.TERMINATED) {
+      return CheckInDailyStreakConfigStatusEnum.TERMINATED
+    }
+    if (config.effectiveFrom > at) {
+      return CheckInDailyStreakConfigStatusEnum.SCHEDULED
+    }
+    if (config.effectiveTo && config.effectiveTo <= at) {
+      return CheckInDailyStreakConfigStatusEnum.EXPIRED
+    }
+    return CheckInDailyStreakConfigStatusEnum.ACTIVE
+  }
+
+  protected isCurrentDailyStreakConfig(
+    config: Pick<
+      CheckInDailyStreakConfigSelect,
+      'status' | 'effectiveFrom' | 'effectiveTo'
+    >,
+    at = new Date(),
+  ) {
+    return (
+      this.resolveDailyStreakConfigStatus(config, at) ===
+      CheckInDailyStreakConfigStatusEnum.ACTIVE
+    )
+  }
+
+  protected resolveDailyConfigLookupAt(signDate: string) {
+    return dayjs
+      .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
+      .startOf('day')
+      .toDate()
+  }
+
+  protected buildAppDayBounds(date: string) {
+    const startAt = parseDateOnlyInAppTimeZone(date)
+    if (!startAt) {
+      throw new BadRequestException('日期非法')
+    }
+
+    return {
+      startAt,
+      nextDayStartAt: dayjs(startAt)
+        .tz(this.getAppTimeZone())
+        .add(1, 'day')
+        .toDate(),
+    }
+  }
+
+  protected resolveDailyStreakConfigForSignDate(
+    signDate: string,
+    configs: Array<
+      Pick<
+        CheckInDailyStreakConfigSelect,
+        'id' | 'status' | 'effectiveFrom' | 'effectiveTo'
+      >
+    >,
+  ) {
+    const lookupAt = this.resolveDailyConfigLookupAt(signDate)
+    return configs.find((config) =>
+      this.isCurrentDailyStreakConfig(config, lookupAt),
+    )
+  }
+
+  protected isActivityVisibleForApp(
+    activity: Pick<
+      CheckInActivityStreakSelect,
+      'status' | 'effectiveFrom' | 'effectiveTo'
+    >,
+    at = new Date(),
+  ) {
+    return (
+      activity.status === CheckInActivityStreakStatusEnum.PUBLISHED &&
+      activity.effectiveFrom <= at &&
+      activity.effectiveTo >= at
+    )
+  }
+
+  protected parseActivityStreakDefinition(
+    activity: Pick<
+      CheckInActivityStreakSelect,
+      | 'activityKey'
+      | 'title'
+      | 'status'
+      | 'effectiveFrom'
+      | 'effectiveTo'
+      | 'rewardRules'
+    >,
+  ) {
+    return {
+      activityKey: activity.activityKey,
+      title: activity.title,
+      status: activity.status as CheckInActivityStreakStatusEnum,
+      effectiveFrom: activity.effectiveFrom,
+      effectiveTo: activity.effectiveTo,
+      rewardRules: this.normalizeStreakRewardRules(
+        Array.isArray(activity.rewardRules)
+          ? (activity.rewardRules as CheckInStreakRewardRuleView[])
+          : [],
+      ),
+    } satisfies CheckInActivityStreakDefinition
   }
 
   protected async getCurrentConfig(db: Db = this.db) {
@@ -510,40 +638,85 @@ export abstract class CheckInServiceSupport {
     return config
   }
 
-  protected async getActiveRound(db: Db = this.db) {
-    const rounds = await db
+  protected async getCurrentDailyStreakConfig(
+    at = new Date(),
+    db: Db = this.db,
+  ) {
+    const rows = await db
       .select()
-      .from(this.checkInStreakRoundConfigTable)
+      .from(this.checkInDailyStreakConfigTable)
       .where(
-        eq(
-          this.checkInStreakRoundConfigTable.status,
-          CheckInStreakRoundStatusEnum.ACTIVE,
+        and(
+          sql`${this.checkInDailyStreakConfigTable.status} <> ${CheckInDailyStreakConfigStatusEnum.DRAFT}`,
+          sql`${this.checkInDailyStreakConfigTable.status} <> ${CheckInDailyStreakConfigStatusEnum.TERMINATED}`,
+          sql`${this.checkInDailyStreakConfigTable.effectiveFrom} <= ${at}`,
+          or(
+            sql`${this.checkInDailyStreakConfigTable.effectiveTo} is null`,
+            sql`${this.checkInDailyStreakConfigTable.effectiveTo} > ${at}`,
+          ),
         ),
       )
       .orderBy(
-        desc(this.checkInStreakRoundConfigTable.createdAt),
-        desc(this.checkInStreakRoundConfigTable.id),
+        desc(this.checkInDailyStreakConfigTable.effectiveFrom),
+        desc(this.checkInDailyStreakConfigTable.id),
       )
       .limit(2)
 
-    if (rounds.length > 1) {
+    if (rows.length > 1) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
-        '当前存在多个启用中的连续奖励轮次',
+        '当前存在多个生效中的日常连续签到配置',
       )
     }
-    return rounds[0]
+    return rows[0]
   }
 
-  protected async getRequiredActiveRound(db: Db = this.db) {
-    const round = await this.getActiveRound(db)
-    if (!round) {
+  protected async getRequiredCurrentDailyStreakConfig(
+    at = new Date(),
+    db: Db = this.db,
+  ) {
+    const config = await this.getCurrentDailyStreakConfig(at, db)
+    if (!config) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '连续奖励轮次不存在',
+        '日常连续签到配置不存在',
       )
     }
-    return round
+    return config
+  }
+
+  protected async listDailyStreakConfigs(db: Db = this.db) {
+    return db
+      .select()
+      .from(this.checkInDailyStreakConfigTable)
+      .orderBy(
+        desc(this.checkInDailyStreakConfigTable.effectiveFrom),
+        desc(this.checkInDailyStreakConfigTable.id),
+      )
+  }
+
+  protected async listEffectiveActivityStreaks(
+    targetDate: string,
+    db: Db = this.db,
+  ) {
+    const { startAt, nextDayStartAt } = this.buildAppDayBounds(targetDate)
+    return db
+      .select()
+      .from(this.checkInActivityStreakTable)
+      .where(
+        and(
+          eq(
+            this.checkInActivityStreakTable.status,
+            CheckInActivityStreakStatusEnum.PUBLISHED,
+          ),
+          sql`${this.checkInActivityStreakTable.effectiveFrom} < ${nextDayStartAt}`,
+          sql`${this.checkInActivityStreakTable.effectiveTo} >= ${startAt}`,
+        ),
+      )
+      .orderBy(
+        asc(this.checkInActivityStreakTable.effectiveFrom),
+        asc(this.checkInActivityStreakTable.id),
+      )
   }
 
   protected buildMakeupWindow(
@@ -877,12 +1050,8 @@ export abstract class CheckInServiceSupport {
     }
   }
 
-  protected async getOrCreateProgress(
-    userId: number,
-    activeRound: CheckInStreakRoundConfigSelect,
-    tx: Db,
-  ) {
-    const existing = await tx.query.checkInStreakProgress.findFirst({
+  protected async getOrCreateDailyProgress(userId: number, tx: Db) {
+    const existing = await tx.query.checkInDailyStreakProgress.findFirst({
       where: { userId },
     })
     if (existing) {
@@ -890,31 +1059,74 @@ export abstract class CheckInServiceSupport {
     }
 
     const [created] = await tx
-      .insert(this.checkInStreakProgressTable)
+      .insert(this.checkInDailyStreakProgressTable)
       .values({
         userId,
-        roundConfigId: activeRound.id,
-        roundIteration: 1,
         currentStreak: 0,
-        roundStartedAt: null,
+        streakStartedAt: null,
         lastSignedDate: null,
         version: 0,
       })
       .onConflictDoNothing({
-        target: [this.checkInStreakProgressTable.userId],
+        target: [this.checkInDailyStreakProgressTable.userId],
       })
       .returning()
     if (created) {
       return created
     }
 
-    const concurrent = await tx.query.checkInStreakProgress.findFirst({
+    const concurrent = await tx.query.checkInDailyStreakProgress.findFirst({
       where: { userId },
     })
     if (!concurrent) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
-        '连续奖励进度初始化冲突，请稍后重试',
+        '日常连续签到进度初始化冲突，请稍后重试',
+      )
+    }
+    return concurrent
+  }
+
+  protected async getOrCreateActivityProgress(
+    activityId: number,
+    userId: number,
+    tx: Db,
+  ) {
+    const existing = await tx.query.checkInActivityStreakProgress.findFirst({
+      where: { activityId, userId },
+    })
+    if (existing) {
+      return existing
+    }
+
+    const [created] = await tx
+      .insert(this.checkInActivityStreakProgressTable)
+      .values({
+        activityId,
+        userId,
+        currentStreak: 0,
+        streakStartedAt: null,
+        lastSignedDate: null,
+        version: 0,
+      })
+      .onConflictDoNothing({
+        target: [
+          this.checkInActivityStreakProgressTable.activityId,
+          this.checkInActivityStreakProgressTable.userId,
+        ],
+      })
+      .returning()
+    if (created) {
+      return created
+    }
+
+    const concurrent = await tx.query.checkInActivityStreakProgress.findFirst({
+      where: { activityId, userId },
+    })
+    if (!concurrent) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '活动连续签到进度初始化冲突，请稍后重试',
       )
     }
     return concurrent
@@ -966,6 +1178,13 @@ export abstract class CheckInServiceSupport {
 
     return {
       currentStreak: latestDate ? streakByDate[latestDate] : 0,
+      streakStartedAt:
+        latestDate && streakByDate[latestDate] > 0
+          ? dayjs
+              .tz(latestDate, 'YYYY-MM-DD', this.getAppTimeZone())
+              .subtract(streakByDate[latestDate] - 1, 'day')
+              .format('YYYY-MM-DD')
+          : undefined,
       lastSignedDate: latestDate,
       streakByDate,
     }
@@ -1108,37 +1327,41 @@ export abstract class CheckInServiceSupport {
       .format('YYYY-MM-DD')
 
     return (
-      normalizedLastSignedDate === today || normalizedLastSignedDate === yesterday
+      normalizedLastSignedDate === today ||
+      normalizedLastSignedDate === yesterday
     )
   }
 
-  protected buildActiveStreakProgressWhere(today: string): SQL {
+  protected buildActiveDailyStreakProgressWhere(today: string): SQL {
     const yesterday = dayjs
       .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
       .subtract(1, 'day')
       .format('YYYY-MM-DD')
 
     return and(
-      gt(this.checkInStreakProgressTable.currentStreak, 0),
+      gt(this.checkInDailyStreakProgressTable.currentStreak, 0),
       or(
-        eq(this.checkInStreakProgressTable.lastSignedDate, today),
-        eq(this.checkInStreakProgressTable.lastSignedDate, yesterday),
+        eq(this.checkInDailyStreakProgressTable.lastSignedDate, today),
+        eq(this.checkInDailyStreakProgressTable.lastSignedDate, yesterday),
       ),
     )!
   }
 
-  protected resolveEligibleGrantRules(
-    roundDefinition: CheckInStreakRoundDefinition,
+  protected resolveEligibleScopeGrantRules(
+    rules: CheckInStreakRewardRuleView[],
     streakByDate: Record<string, number>,
     existingGrants: Pick<
-      CheckInStreakRewardGrantSelect,
-      'roundIteration' | 'ruleCode' | 'triggerSignDate'
+      CheckInStreakGrantSelect,
+      'ruleCode' | 'triggerSignDate'
     >[],
-    progress: Pick<CheckInStreakProgressSelect, 'roundIteration'>,
+    streakStartedAt?: string,
   ) {
-    const scopedExistingGrants = existingGrants.filter(
-      (grant) => grant.roundIteration === progress.roundIteration,
-    )
+    const scopedExistingGrants = streakStartedAt
+      ? existingGrants.filter(
+          (grant) =>
+            this.toDateOnlyValue(grant.triggerSignDate) >= streakStartedAt,
+        )
+      : existingGrants
     const existingGrantKeys = new Set(
       scopedExistingGrants.map(
         (grant) =>
@@ -1148,23 +1371,27 @@ export abstract class CheckInServiceSupport {
     const existingRuleCodes = new Set(
       scopedExistingGrants.map((grant) => grant.ruleCode),
     )
-
     const streakEntries = Object.entries(streakByDate).sort(([left], [right]) =>
       left.localeCompare(right),
     )
     const candidates: Array<{
-      rule: CheckInStreakRoundDefinition['rewardRules'][number]
+      rule: CheckInStreakRewardRuleView
       triggerSignDate: string
     }> = []
 
-    for (const rule of roundDefinition.rewardRules) {
+    for (const rule of rules) {
       if (rule.status !== CheckInStreakRewardRuleStatusEnum.ENABLED) {
         continue
       }
 
       const triggerDates = streakEntries
-        .filter(([, streak]) => streak === rule.streakDays)
+        .filter(
+          ([triggerDate, streak]) =>
+            (!streakStartedAt || triggerDate >= streakStartedAt) &&
+            streak === rule.streakDays,
+        )
         .map(([triggerDate]) => triggerDate)
+
       if (triggerDates.length === 0) {
         continue
       }
@@ -1173,13 +1400,13 @@ export abstract class CheckInServiceSupport {
         if (existingRuleCodes.has(rule.ruleCode)) {
           continue
         }
-        candidates.push({ rule, triggerSignDate: triggerDates[0] })
+        candidates.push({ rule, triggerSignDate: triggerDates[0]! })
         continue
       }
 
       for (const triggerSignDate of triggerDates) {
-        const grantKey = `${rule.ruleCode}:${triggerSignDate}`
-        if (!existingGrantKeys.has(grantKey)) {
+        const key = `${rule.ruleCode}:${triggerSignDate}`
+        if (!existingGrantKeys.has(key)) {
           candidates.push({ rule, triggerSignDate })
         }
       }
@@ -1201,8 +1428,8 @@ export abstract class CheckInServiceSupport {
           | 'settledAt'
           | 'lastError'
         >
-        | null
-        | undefined,
+      | null
+      | undefined,
   ): CheckInRewardSettlementSummaryDto | null {
     if (!settlement) {
       return null

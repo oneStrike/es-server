@@ -3,10 +3,10 @@ import { checkInRecord } from '@db/schema'
 import { inspect } from 'node:util'
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { CheckInExecutionService } from './check-in-execution.service'
-import {
-  CheckInStreakNextRoundStrategyEnum,
-  CheckInStreakRoundStatusEnum,
-} from './check-in.constant'
+import { CheckInStreakScopeTypeEnum } from './check-in.constant'
+
+const deprecatedRoundConfigField = 'round' + 'ConfigId'
+const deprecatedRoundIterationField = 'round' + 'Iteration'
 
 function createDrizzleStub(params?: {
   record?: {
@@ -32,7 +32,10 @@ function createDrizzleStub(params?: {
           checkInRecord: {
             findFirst: jest.fn().mockResolvedValue(record),
           },
-          checkInStreakRewardGrant: {
+          checkInStreakGrant: {
+            findFirst: jest.fn().mockResolvedValue(null),
+          },
+          checkInDailyStreakProgress: {
             findFirst: jest.fn().mockResolvedValue(null),
           },
           growthRewardSettlement: {
@@ -58,7 +61,10 @@ function createDrizzleStub(params?: {
         checkInRecord: {
           findFirst: jest.fn().mockResolvedValue(record),
         },
-        checkInStreakRewardGrant: {
+        checkInStreakGrant: {
+          findFirst: jest.fn().mockResolvedValue(null),
+        },
+        checkInDailyStreakProgress: {
           findFirst: jest.fn().mockResolvedValue(null),
         },
         growthRewardSettlement: {
@@ -74,9 +80,11 @@ function createDrizzleStub(params?: {
       checkInMakeupFact: {},
       checkInMakeupAccount: {},
       checkInRecord: { id: 'id', rewardSettlementId: 'rewardSettlementId' },
-      checkInStreakRoundConfig: { id: 'id' },
-      checkInStreakProgress: { id: 'id' },
-      checkInStreakRewardGrant: {
+      checkInDailyStreakConfig: { id: 'id' },
+      checkInDailyStreakProgress: { id: 'id' },
+      checkInActivityStreak: { id: 'id' },
+      checkInActivityStreakProgress: { id: 'id' },
+      checkInStreakGrant: {
         id: 'id',
         rewardSettlementId: 'rewardSettlementId',
       },
@@ -131,9 +139,11 @@ function createDuplicateConflictDrizzleStub(signDate: string) {
         userId: 'userId',
         signDate: 'signDate',
       },
-      checkInStreakRoundConfig: {},
-      checkInStreakProgress: {},
-      checkInStreakRewardGrant: {},
+      checkInDailyStreakConfig: {},
+      checkInDailyStreakProgress: {},
+      checkInActivityStreak: {},
+      checkInActivityStreakProgress: {},
+      checkInStreakGrant: {},
       growthRewardSettlement: {},
     },
   } as unknown as DrizzleService
@@ -278,118 +288,101 @@ describe('checkInExecutionService', () => {
     expect(syncManualSettlementResult).not.toHaveBeenCalled()
   })
 
-  it('returns an archived successor for archived-bound progress', async () => {
+  it('builds action responses without round-bound fields', async () => {
+    const drizzle = createDrizzleStub()
     const service = new CheckInExecutionService(
-      createDrizzleStub(),
+      drizzle,
       {} as never,
       {} as never,
     )
+    jest.spyOn(service as any, 'getRequiredConfig').mockResolvedValue({
+      id: 1,
+      enabled: 1,
+      makeupPeriodType: 1,
+      periodicAllowance: 2,
+      baseRewardItems: null,
+      dateRewardRules: [],
+      patternRewardRules: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    jest
+      .spyOn(service as any, 'buildCurrentMakeupAccountView')
+      .mockResolvedValue({
+        periodType: 1,
+        periodKey: 'week-2026-04-14',
+        periodStartDate: '2026-04-14',
+        periodEndDate: '2026-04-20',
+        periodicGranted: 2,
+        periodicUsed: 0,
+        periodicRemaining: 2,
+        eventAvailable: 0,
+      })
+    ;(
+      drizzle.db.query.checkInDailyStreakProgress.findFirst as jest.Mock
+    ).mockResolvedValue({
+      id: 1,
+      userId: 7,
+      currentStreak: 3,
+      streakStartedAt: '2026-04-17',
+      lastSignedDate: '2026-04-19',
+      version: 0,
+    })
+    ;(
+      drizzle.db.query.growthRewardSettlement.findFirst as jest.Mock
+    ).mockResolvedValue(null)
 
-    const nextRound = await (service as any).resolveNextRoundConfig(
+    return (service as any)
+      .buildActionResponse(5, [12, 13])
+      .then((response: any) => {
+        expect(response.currentStreak).toBe(3)
+        expect(response.triggeredGrantIds).toEqual([12, 13])
+        expect(response).not.toHaveProperty(deprecatedRoundConfigField)
+        expect(response).not.toHaveProperty(deprecatedRoundIterationField)
+      })
+  })
+
+  it('delegates streak settlement with scope-aware grant identity', async () => {
+    const ensureCheckInStreakRewardSettlement = jest.fn().mockResolvedValue({
+      id: 8,
+    })
+    const service = new CheckInExecutionService(
+      createDrizzleStub(),
+      {} as never,
       {
-        id: 11,
-      },
-      {
-        nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
-        nextRoundConfigId: 12,
-      },
-      {
-        query: {
-          checkInStreakRoundConfig: {
-            findFirst: jest.fn().mockResolvedValue({
-              id: 12,
-              status: CheckInStreakRoundStatusEnum.ARCHIVED,
-            }),
-          },
-        },
-      },
+        ensureCheckInStreakRewardSettlement,
+        syncManualSettlementResult: jest.fn(),
+      } as never,
     )
 
-    expect(nextRound).toMatchObject({
-      id: 12,
-      status: CheckInStreakRoundStatusEnum.ARCHIVED,
-    })
+    return (service as any)
+      .ensureGrantRewardSettlement({
+        id: 4,
+        userId: 7,
+        scopeType: CheckInStreakScopeTypeEnum.ACTIVITY,
+        configVersionId: null,
+        activityId: 22,
+        ruleCode: 'activity-day-5',
+        triggerSignDate: '2026-04-19',
+        rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
+        rewardSettlementId: null,
+      })
+      .then(() => {
+        expect(ensureCheckInStreakRewardSettlement).toHaveBeenCalledWith(
+          expect.objectContaining({
+            grantId: 4,
+            userId: 7,
+            scopeType: CheckInStreakScopeTypeEnum.ACTIVITY,
+            configVersionId: null,
+            activityId: 22,
+            ruleCode: 'activity-day-5',
+          }),
+          undefined,
+        )
+      })
   })
 
-  it('raises state conflict when explicit-next is missing its target id', async () => {
-    const service = new CheckInExecutionService(
-      createDrizzleStub(),
-      {} as never,
-      {} as never,
-    )
-
-    await expect(
-      (service as any).resolveNextRoundConfig(
-        {
-          id: 11,
-        },
-        {
-          nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
-          nextRoundConfigId: null,
-        },
-        { query: { checkInStreakRoundConfig: { findFirst: jest.fn() } } },
-      ),
-    ).rejects.toMatchObject({
-      code: BusinessErrorCode.STATE_CONFLICT,
-      message: '连续奖励轮次缺少下一轮配置',
-    })
-  })
-
-  it('raises state conflict when explicit-next points to itself', async () => {
-    const service = new CheckInExecutionService(
-      createDrizzleStub(),
-      {} as never,
-      {} as never,
-    )
-
-    await expect(
-      (service as any).resolveNextRoundConfig(
-        {
-          id: 11,
-        },
-        {
-          nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
-          nextRoundConfigId: 11,
-        },
-        { query: { checkInStreakRoundConfig: { findFirst: jest.fn() } } },
-      ),
-    ).rejects.toMatchObject({
-      code: BusinessErrorCode.STATE_CONFLICT,
-      message: '连续奖励轮次存在自引用下一轮配置',
-    })
-  })
-
-  it('raises state conflict when explicit-next target does not exist', async () => {
-    const service = new CheckInExecutionService(
-      createDrizzleStub(),
-      {} as never,
-      {} as never,
-    )
-
-    await expect(
-      (service as any).resolveNextRoundConfig(
-        {
-          id: 11,
-        },
-        {
-          nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
-          nextRoundConfigId: 12,
-        },
-        {
-          query: {
-            checkInStreakRoundConfig: {
-              findFirst: jest.fn().mockResolvedValue(null),
-            },
-          },
-        },
-      ),
-    ).rejects.toMatchObject({
-      code: BusinessErrorCode.STATE_CONFLICT,
-      message: '连续奖励轮次下一轮配置不存在',
-    })
-  })
-
-  it('builds the round-scoped record query with a signDate lower bound', async () => {
+  it('builds the user record query ordered by signDate', async () => {
     const drizzle = createDrizzleStub()
     ;(drizzle as { schema: Record<string, unknown> }).schema.checkInRecord =
       checkInRecord
@@ -409,14 +402,11 @@ describe('checkInExecutionService', () => {
       }),
     }
 
-    await (service as any).listRoundScopedRecords(7, '2026-04-10', tx)
+    await (service as any).listUserRecords(7, tx)
 
     const whereArg = chain.where.mock.calls[0]?.[0]
     const inspectedWhere = inspect(whereArg, { depth: 10 })
 
     expect(inspectedWhere).toContain("name: 'userId'")
-    expect(inspectedWhere).toContain("name: 'signDate'")
-    expect(inspectedWhere).toContain("value: '2026-04-10'")
-    expect(inspectedWhere).toContain("' >= '")
   })
 })

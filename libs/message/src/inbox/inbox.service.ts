@@ -2,10 +2,19 @@ import type { PageDto } from '@libs/platform/dto/page.dto'
 import { DrizzleService } from '@db/core'
 import { Injectable } from '@nestjs/common'
 import { and, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm'
+import { buildNotificationUnreadSummary } from '../notification/notification-unread.type'
 import {
   getMessageNotificationCategoryLabel,
   MessageNotificationCategoryKey,
 } from '../notification/notification.constant'
+
+export interface InboxLatestChatSummary {
+  conversationId: number
+  lastMessageId?: string
+  lastMessageAt?: Date
+  lastMessageContent?: string
+  lastSenderId?: number
+}
 
 @Injectable()
 export class MessageInboxService {
@@ -77,15 +86,30 @@ export class MessageInboxService {
       : undefined
   }
 
+  async getNotificationUnreadSummary(userId: number, now = new Date()) {
+    const rows = await this.db
+      .select({
+        categoryKey: this.notification.categoryKey,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(this.notification)
+      .where(
+        and(
+          this.buildNotificationWhere(userId, now),
+          eq(this.notification.isRead, false),
+        ),
+      )
+      .groupBy(this.notification.categoryKey)
+
+    return buildNotificationUnreadSummary(rows)
+  }
+
   async getNotificationSummary(userId: number) {
     const now = new Date()
     const notificationWhere = this.buildNotificationWhere(userId, now)
-    const [notificationUnreadCount, chatUnreadAgg, latestNotificationRows] =
+    const [notificationUnread, chatUnreadAgg, latestNotificationRows] =
       await Promise.all([
-        this.db.$count(
-          this.notification,
-          and(notificationWhere, eq(this.notification.isRead, false)),
-        ),
+        this.getNotificationUnreadSummary(userId, now),
         this.db
           .select({
             unreadCount: sql<number>`coalesce(sum(${this.conversationMember.unreadCount}), 0)`,
@@ -118,9 +142,9 @@ export class MessageInboxService {
     const chatUnreadCount = Number(chatUnreadAgg[0]?.unreadCount ?? 0)
 
     return {
-      notificationUnreadCount,
+      notificationUnread,
       chatUnreadCount,
-      totalUnreadCount: notificationUnreadCount + chatUnreadCount,
+      totalUnreadCount: notificationUnread.total + chatUnreadCount,
       latestNotification: this.buildLatestNotificationOutput(
         latestNotificationRows[0],
         now,
@@ -132,15 +156,12 @@ export class MessageInboxService {
     const now = new Date()
     const notificationWhere = this.buildNotificationWhere(userId, now)
     const [
-      notificationUnreadCount,
+      notificationUnread,
       chatUnreadAgg,
       latestNotificationRows,
       latestConversationRows,
     ] = await Promise.all([
-      this.db.$count(
-        this.notification,
-        and(notificationWhere, eq(this.notification.isRead, false)),
-      ),
+      this.getNotificationUnreadSummary(userId, now),
       this.db
         .select({
           unreadCount: sql<number>`coalesce(sum(${this.conversationMember.unreadCount}), 0)`,
@@ -193,18 +214,10 @@ export class MessageInboxService {
     ])
 
     const chatUnreadCount = Number(chatUnreadAgg[0]?.unreadCount ?? 0)
-    const totalUnreadCount = notificationUnreadCount + chatUnreadCount
+    const totalUnreadCount = notificationUnread.total + chatUnreadCount
     const latestNotification = latestNotificationRows[0]
 
-    let latestChat:
-      | {
-          conversationId: number
-          lastMessageId?: string
-          lastMessageAt?: Date
-          lastMessageContent?: string
-          lastSenderId?: number
-        }
-        | undefined
+    let latestChat: InboxLatestChatSummary | undefined
 
     const latestConversation = latestConversationRows[0]
 
@@ -231,7 +244,7 @@ export class MessageInboxService {
     }
 
     return {
-      notificationUnreadCount,
+      notificationUnread,
       chatUnreadCount,
       totalUnreadCount,
       latestNotification: this.buildLatestNotificationOutput(

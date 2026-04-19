@@ -30,6 +30,7 @@ import {
   MessageNotificationPreferenceSourceEnum,
 } from '../notification.constant'
 import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
+import { BaseNotificationUnreadDto } from './notification-unread.dto'
 
 function IsValidNotificationCategoryKeysFilter(): PropertyDecorator {
   return ValidateBy({
@@ -681,14 +682,7 @@ export class QueryNotificationDeliveryPageDto extends IntersectionType(
 )
 export class UserNotificationDto extends BaseUserNotificationDto {}
 
-export class NotificationUnreadCountDto {
-  @NumberProperty({
-    description: '未读通知数量',
-    example: 3,
-    validation: false,
-  })
-  count!: number
-}
+export class NotificationUnreadDto extends BaseNotificationUnreadDto {}
 
 export class UserNotificationPreferenceItemDto {
   @EnumProperty({

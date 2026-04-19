@@ -9,11 +9,12 @@ import { StringProperty } from '@libs/platform/decorators/validate/string-proper
 import { PageDto } from '@libs/platform/dto/page.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import { PickType } from '@nestjs/swagger'
-import { CheckInMakeupPeriodTypeEnum } from '../check-in.constant'
 import {
-  CheckInConfigDetailResponseDto,
-  CheckInStreakRoundDetailResponseDto,
-} from './check-in-definition.dto'
+  CheckInActivityStreakStatusEnum,
+  CheckInMakeupPeriodTypeEnum,
+  CheckInStreakScopeTypeEnum,
+} from '../check-in.constant'
+import { CheckInConfigDetailResponseDto } from './check-in-definition.dto'
 import {
   BaseCheckInRecordDto,
   CheckInRewardSettlementSummaryDto,
@@ -25,6 +26,8 @@ export class QueryCheckInLeaderboardDto extends PickType(PageDto, [
   'pageIndex',
   'pageSize',
 ] as const) {}
+
+export class QueryCheckInActivityStreakPageDto extends PageDto {}
 
 export class QueryCheckInReconciliationDto extends PageDto {
   @NumberProperty({
@@ -51,13 +54,29 @@ export class QueryCheckInReconciliationDto extends PageDto {
   })
   userId?: number
 
+  @EnumProperty({
+    description: '连续奖励作用域（1=日常连续签到；2=活动连续签到）。',
+    example: CheckInStreakScopeTypeEnum.DAILY,
+    enum: CheckInStreakScopeTypeEnum,
+    required: false,
+  })
+  scopeType?: CheckInStreakScopeTypeEnum
+
   @NumberProperty({
-    description: '轮次配置 ID。',
+    description: '日常连续签到配置版本 ID。',
     example: 1,
     required: false,
     validation: false,
   })
-  roundConfigId?: number
+  configVersionId?: number
+
+  @NumberProperty({
+    description: '活动连续签到活动 ID。',
+    example: 1,
+    required: false,
+    validation: false,
+  })
+  activityId?: number
 
   @EnumProperty({
     description: '基础奖励结算状态（0=待补偿重试；1=已补偿成功；2=终态失败）。',
@@ -111,13 +130,6 @@ export class CheckInLeaderboardItemDto {
     validation: false,
   })
   lastSignedDate?: string
-
-  @NumberProperty({
-    description: '当前轮次迭代号。',
-    example: 1,
-    validation: false,
-  })
-  roundIteration!: number
 }
 
 export class CheckInRecordItemDto extends BaseCheckInRecordDto {
@@ -197,35 +209,7 @@ export class CheckInMakeupSummaryDto {
   eventAvailable!: number
 }
 
-export class CheckInStreakSummaryDto {
-  @NumberProperty({
-    description: '当前轮次配置 ID。',
-    example: 1,
-    validation: false,
-  })
-  roundConfigId!: number
-
-  @StringProperty({
-    description: '当前轮次编码。',
-    example: 'default-round',
-    validation: false,
-  })
-  roundCode!: string
-
-  @NumberProperty({
-    description: '当前轮次版本号。',
-    example: 1,
-    validation: false,
-  })
-  version!: number
-
-  @NumberProperty({
-    description: '当前轮次迭代号。',
-    example: 1,
-    validation: false,
-  })
-  roundIteration!: number
-
+export class CheckInDailyStreakSummaryDto {
   @NumberProperty({
     description: '当前连续签到天数。',
     example: 3,
@@ -234,12 +218,12 @@ export class CheckInStreakSummaryDto {
   currentStreak!: number
 
   @StringProperty({
-    description: '当前轮开始日期。',
+    description: '当前连续区间开始日期。',
     example: '2026-04-17',
     required: false,
     validation: false,
   })
-  roundStartedAt?: string
+  streakStartedAt?: string
 
   @StringProperty({
     description: '最近一次有效签到日期。',
@@ -248,13 +232,6 @@ export class CheckInStreakSummaryDto {
     validation: false,
   })
   lastSignedDate?: string
-
-  @NestedProperty({
-    description: '当前轮次详情。',
-    type: CheckInStreakRoundDetailResponseDto,
-    validation: false,
-  })
-  round!: CheckInStreakRoundDetailResponseDto
 
   @NestedProperty({
     description: '下一档连续奖励。',
@@ -282,11 +259,11 @@ export class CheckInSummaryResponseDto {
   makeup!: CheckInMakeupSummaryDto
 
   @NestedProperty({
-    description: '当前连续奖励进度摘要。',
-    type: CheckInStreakSummaryDto,
+    description: '当前日常连续签到摘要。',
+    type: CheckInDailyStreakSummaryDto,
     validation: false,
   })
-  streak!: CheckInStreakSummaryDto
+  streak!: CheckInDailyStreakSummaryDto
 
   @BooleanProperty({
     description: '今天是否已签到。',
@@ -303,6 +280,92 @@ export class CheckInSummaryResponseDto {
     validation: false,
   })
   latestRecord?: CheckInRecordItemDto | null
+}
+
+export class CheckInActivityStreakItemDto {
+  @NumberProperty({
+    description: '活动 ID。',
+    example: 1,
+    validation: false,
+  })
+  id!: number
+
+  @StringProperty({
+    description: '活动稳定键。',
+    example: 'summer-sign-in',
+    validation: false,
+  })
+  activityKey!: string
+
+  @StringProperty({
+    description: '活动标题。',
+    example: '夏日连续签到',
+    validation: false,
+  })
+  title!: string
+
+  @EnumProperty({
+    description: '活动状态（0=草稿；1=已发布；2=已下线；3=已归档）。',
+    example: CheckInActivityStreakStatusEnum.PUBLISHED,
+    enum: CheckInActivityStreakStatusEnum,
+    validation: false,
+  })
+  status!: CheckInActivityStreakStatusEnum
+
+  @StringProperty({
+    description: '活动开始时间。',
+    example: '2026-04-19T00:00:00.000Z',
+    validation: false,
+  })
+  effectiveFrom!: string | Date
+
+  @StringProperty({
+    description: '活动结束时间。',
+    example: '2026-04-26T23:59:59.999Z',
+    validation: false,
+  })
+  effectiveTo!: string | Date
+
+  @NumberProperty({
+    description: '当前活动连续签到天数。',
+    example: 3,
+    validation: false,
+  })
+  currentStreak!: number
+
+  @StringProperty({
+    description: '最近一次活动有效签到日期。',
+    example: '2026-04-19',
+    required: false,
+    validation: false,
+  })
+  lastSignedDate?: string
+
+  @NestedProperty({
+    description: '下一档活动连续奖励。',
+    type: CheckInStreakRewardRuleItemDto,
+    required: false,
+    nullable: false,
+    validation: false,
+  })
+  nextReward?: CheckInStreakRewardRuleItemDto | null
+}
+
+export class CheckInActivityStreakDetailResponseDto extends CheckInActivityStreakItemDto {
+  @StringProperty({
+    description: '当前活动连续区间开始日期。',
+    example: '2026-04-17',
+    required: false,
+    validation: false,
+  })
+  streakStartedAt?: string
+
+  @ArrayProperty({
+    description: '活动连续奖励规则列表。',
+    itemClass: CheckInStreakRewardRuleItemDto,
+    validation: false,
+  })
+  rewardRules!: CheckInStreakRewardRuleItemDto[]
 }
 
 export class CheckInCalendarDayDto {
@@ -342,14 +405,14 @@ export class CheckInCalendarDayDto {
   isSigned!: boolean
 
   @NumberProperty({
-    description: '该日期触发的连续奖励数量。',
+    description: '该日触发的连续奖励数量。',
     example: 1,
     validation: false,
   })
   grantCount!: number
 
   @ArrayProperty({
-    description: '该日期命中的基础奖励项。',
+    description: '该日基础奖励快照。',
     itemClass: GrowthRewardItemDto,
     required: false,
     validation: false,
@@ -357,7 +420,7 @@ export class CheckInCalendarDayDto {
   rewardItems?: GrowthRewardItemDto[] | null
 
   @NestedProperty({
-    description: '基础奖励补偿摘要。',
+    description: '该日基础奖励补偿摘要。',
     type: CheckInRewardSettlementSummaryDto,
     required: false,
     nullable: false,
@@ -368,7 +431,7 @@ export class CheckInCalendarDayDto {
 
 export class CheckInCalendarResponseDto {
   @EnumProperty({
-    description: '当前补签周期类型（1=按自然周；2=按自然月）。',
+    description: '补签周期类型（1=按自然周；2=按自然月）。',
     example: CheckInMakeupPeriodTypeEnum.WEEKLY,
     enum: CheckInMakeupPeriodTypeEnum,
     validation: false,
@@ -376,46 +439,32 @@ export class CheckInCalendarResponseDto {
   periodType!: CheckInMakeupPeriodTypeEnum
 
   @StringProperty({
-    description: '当前补签周期键。',
+    description: '补签周期键。',
     example: 'week-2026-04-14',
     validation: false,
   })
   periodKey!: string
 
   @StringProperty({
-    description: '当前补签周期开始日期。',
+    description: '周期开始日期。',
     example: '2026-04-14',
     validation: false,
   })
   periodStartDate!: string
 
   @StringProperty({
-    description: '当前补签周期结束日期。',
+    description: '周期结束日期。',
     example: '2026-04-20',
     validation: false,
   })
   periodEndDate!: string
 
   @ArrayProperty({
-    description: '当前周期日历。',
+    description: '周期内日历列表。',
     itemClass: CheckInCalendarDayDto,
     validation: false,
   })
   days!: CheckInCalendarDayDto[]
 }
 
-export class CheckInReconciliationItemDto extends CheckInRecordItemDto {
-  @NumberProperty({
-    description: '签到记录 ID。',
-    example: 1,
-    validation: false,
-  })
-  recordId!: number
-
-  @NumberProperty({
-    description: '归属用户 ID。',
-    example: 1,
-    validation: false,
-  })
-  userId!: number
-}
+export class CheckInReconciliationItemDto extends CheckInRecordItemDto {}

@@ -11,7 +11,7 @@ import {
 } from '@libs/message/inbox/dto/inbox.dto'
 import { MessageInboxService } from '@libs/message/inbox/inbox.service'
 import {
-  NotificationUnreadCountDto,
+  NotificationUnreadDto,
   QueryUserNotificationListDto,
   UpdateUserNotificationPreferencesDto,
   UserNotificationDto,
@@ -54,7 +54,7 @@ export class MessageController {
   @Get('notification/unread-count')
   @ApiDoc({
     summary: '获取未读通知数量',
-    model: NotificationUnreadCountDto,
+    model: NotificationUnreadDto,
   })
   async unreadCount(@CurrentUser('sub') userId: number) {
     return this.messageNotificationService.getUnreadCount(userId)

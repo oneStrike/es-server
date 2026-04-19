@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { Pool } from 'pg'
@@ -8,7 +8,6 @@ type Stage = 'post-reset' | 'post-contract'
 interface CheckResult {
   ok: boolean
   label: string
-  details?: string
 }
 
 function parseStage(): Stage {
@@ -45,77 +44,58 @@ async function tableCount(pool: Pool, tableName: string) {
   return Number(result.rows[0]?.count ?? 0)
 }
 
-async function settlementTypeCount(pool: Pool, settlementType: number) {
-  const result = await pool.query<{ count: string }>(
-    `
-      SELECT COUNT(*)::text AS "count"
-      FROM "growth_reward_settlement"
-      WHERE "settlement_type" = $1
-    `,
-    [settlementType],
-  )
-  return Number(result.rows[0]?.count ?? 0)
-}
-
-async function totalSettlementCount(pool: Pool) {
-  const result = await pool.query<{ count: string }>(
-    `
-      SELECT COUNT(*)::text AS "count"
-      FROM "growth_reward_settlement"
-    `,
-  )
-  return Number(result.rows[0]?.count ?? 0)
-}
-
-async function activeRoundCount(pool: Pool) {
-  const result = await pool.query<{ count: string }>(
-    `
-      SELECT COUNT(*)::text AS "count"
-      FROM "check_in_streak_round_config"
-      WHERE "status" = 1
-    `,
-  )
-  return Number(result.rows[0]?.count ?? 0)
-}
-
 function verifyContractFiles(): CheckResult[] {
-  const adminControllerPath = resolve(
-    process.cwd(),
-    'apps/admin-api/src/modules/check-in/check-in.controller.ts',
+  const adminController = readFileSync(
+    resolve(
+      process.cwd(),
+      'apps/admin-api/src/modules/check-in/check-in.controller.ts',
+    ),
+    'utf8',
   )
-  const appControllerPath = resolve(
-    process.cwd(),
-    'apps/app-api/src/modules/check-in/check-in.controller.ts',
+  const appController = readFileSync(
+    resolve(
+      process.cwd(),
+      'apps/app-api/src/modules/check-in/check-in.controller.ts',
+    ),
+    'utf8',
   )
-  const legacyPlanDtoPath = resolve(
-    process.cwd(),
-    'libs/growth/src/check-in/dto/check-in-plan.dto.ts',
+  const adminBreakingDoc = readFileSync(
+    resolve(process.cwd(), 'docs/breaking-changes/admin-check-in-module.md'),
+    'utf8',
   )
-  const legacyCycleDtoPath = resolve(
-    process.cwd(),
-    'libs/growth/src/check-in/dto/check-in-cycle.dto.ts',
+  const appBreakingDoc = readFileSync(
+    resolve(process.cwd(), 'docs/breaking-changes/app-check-in-module.md'),
+    'utf8',
   )
-
-  const adminController = readFileSync(adminControllerPath, 'utf8')
-  const appController = readFileSync(appControllerPath, 'utf8')
 
   return [
     {
       ok:
-        adminController.includes('config/detail') &&
-        !adminController.includes('plan/detail'),
+        adminController.includes('daily-streak/detail') &&
+        adminController.includes('activity-streak/page') &&
+        !adminController.includes('streak-round/detail'),
       label:
-        'admin controller routes switched to config/streak-round semantics',
+        'admin controller switched from streak-round to daily/activity routes',
     },
     {
       ok:
-        appController.includes('app/check-in') &&
-        !appController.includes('model: CheckInSummaryPlanDto'),
-      label: 'app controller no longer references plan-shaped app contracts',
+        appController.includes('activity/page') &&
+        !appController.includes('roundConfigId') &&
+        !appController.includes('streak-round'),
+      label:
+        'app controller switched to daily summary + activity routes without round contracts',
     },
     {
-      ok: !existsSync(legacyPlanDtoPath) && !existsSync(legacyCycleDtoPath),
-      label: 'legacy plan/cycle DTO files removed',
+      ok: adminBreakingDoc.includes('仅支持三种发布策略'),
+      label: 'admin breaking doc only advertises supported publish strategies',
+    },
+    {
+      ok:
+        appBreakingDoc.includes('仅返回当前对 app 用户可见的活动') &&
+        appBreakingDoc.includes(
+          'app 不再读取草稿、下线、归档或已失效的活动详情',
+        ),
+      label: 'app breaking doc documents activity visibility gate',
     },
   ]
 }
@@ -132,47 +112,53 @@ async function run() {
   try {
     const checks: CheckResult[] = [
       {
-        ok: (await tableCount(pool, 'check_in_plan')) === 0,
-        label: 'legacy check_in_plan rows = 0',
+        ok: !(await tableExists(pool, 'check_in_streak_round_config')),
+        label: 'legacy check_in_streak_round_config removed',
       },
       {
-        ok: (await tableCount(pool, 'check_in_cycle')) === 0,
-        label: 'legacy check_in_cycle rows = 0',
+        ok: !(await tableExists(pool, 'check_in_streak_progress')),
+        label: 'legacy check_in_streak_progress removed',
       },
       {
-        ok: (await settlementTypeCount(pool, 3)) === 0,
-        label: 'legacy check-in record settlements removed',
+        ok: !(await tableExists(pool, 'check_in_streak_reward_grant')),
+        label: 'legacy check_in_streak_reward_grant removed',
       },
       {
-        ok: (await settlementTypeCount(pool, 4)) === 0,
-        label: 'legacy check-in streak settlements removed',
+        ok: await tableExists(pool, 'check_in_daily_streak_config'),
+        label: 'check_in_daily_streak_config exists',
       },
       {
-        ok: (await tableCount(pool, 'check_in_config')) === 1,
-        label: 'new config row count = 1',
+        ok: await tableExists(pool, 'check_in_daily_streak_progress'),
+        label: 'check_in_daily_streak_progress exists',
       },
       {
-        ok: (await activeRoundCount(pool)) === 1,
-        label: 'active round row count = 1',
+        ok: await tableExists(pool, 'check_in_activity_streak'),
+        label: 'check_in_activity_streak exists',
       },
       {
-        ok:
-          (await totalSettlementCount(pool)) ===
-          (await settlementTypeCount(pool, 1)) +
-            (await settlementTypeCount(pool, 2)),
-        label: 'all remaining settlements are non check-in types',
+        ok: await tableExists(pool, 'check_in_activity_streak_progress'),
+        label: 'check_in_activity_streak_progress exists',
+      },
+      {
+        ok: await tableExists(pool, 'check_in_streak_grant'),
+        label: 'check_in_streak_grant exists',
       },
     ]
 
     if (stage === 'post-reset') {
       checks.push(
         {
-          ok: (await tableCount(pool, 'check_in_record')) === 0,
-          label: 'new check_in_record rows = 0 after reset',
+          ok: (await tableCount(pool, 'check_in_daily_streak_progress')) === 0,
+          label: 'daily streak progress row count = 0 after reset',
         },
         {
-          ok: (await tableCount(pool, 'check_in_streak_reward_grant')) === 0,
-          label: 'new check_in_streak_reward_grant rows = 0 after reset',
+          ok:
+            (await tableCount(pool, 'check_in_activity_streak_progress')) === 0,
+          label: 'activity streak progress row count = 0 after reset',
+        },
+        {
+          ok: (await tableCount(pool, 'check_in_streak_grant')) === 0,
+          label: 'shared streak grant row count = 0 after reset',
         },
       )
     }
@@ -183,9 +169,7 @@ async function run() {
 
     const failed = checks.filter((check) => !check.ok)
     for (const check of checks) {
-      console.log(
-        `${check.ok ? 'PASS' : 'FAIL'}: ${check.label}${check.details ? ` — ${check.details}` : ''}`,
-      )
+      console.log(`${check.ok ? 'PASS' : 'FAIL'}: ${check.label}`)
     }
 
     if (failed.length > 0) {

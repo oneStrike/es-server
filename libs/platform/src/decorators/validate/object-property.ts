@@ -48,7 +48,7 @@ export function ObjectProperty(options: ObjectPropertyOptions) {
         default: options.default,
         nullable: options.nullable ?? !(options.required ?? true),
         type: Object,
-        additionalProperties: true,
+        additionalProperties: options.additionalProperties ?? true,
       }
 
       return apiPropertyOptions

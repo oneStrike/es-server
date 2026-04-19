@@ -1,5 +1,6 @@
 import type { StructuredValue } from '@libs/platform/utils/jsonParse'
 import type { UserNotificationDto } from './dto/notification.dto'
+import type { NotificationUnreadSummary } from './notification-unread.type'
 import { Injectable } from '@nestjs/common'
 import { MessageWebSocketService } from './notification-websocket.service'
 
@@ -38,7 +39,7 @@ interface NotificationChatConversationUpdatePayload {
 }
 
 interface NotificationInboxSummaryUpdatedPayload {
-  notificationUnreadCount: number
+  notificationUnread: NotificationUnreadSummary
   chatUnreadCount: number
   totalUnreadCount: number
   latestNotification?: StructuredValue

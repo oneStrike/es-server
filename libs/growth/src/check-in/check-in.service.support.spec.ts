@@ -31,6 +31,10 @@ class CheckInServiceSupportTestHarness extends CheckInServiceSupport {
     return this.buildMakeupWindow(date, periodType)
   }
 
+  exposeBuildAppDayBounds(date: string) {
+    return this.buildAppDayBounds(date)
+  }
+
   exposeNormalizePatternRewardRules(
     rules: unknown,
     periodType: CheckInMakeupPeriodTypeEnum,
@@ -44,12 +48,14 @@ function createDrizzleStub() {
     db: {},
     schema: {
       checkInConfig: {},
+      checkInDailyStreakConfig: {},
+      checkInDailyStreakProgress: {},
+      checkInActivityStreak: {},
+      checkInActivityStreakProgress: {},
+      checkInStreakGrant: {},
       checkInMakeupFact: {},
       checkInMakeupAccount: {},
       checkInRecord: {},
-      checkInStreakRoundConfig: {},
-      checkInStreakProgress: {},
-      checkInStreakRewardGrant: {},
       growthRewardSettlement: {},
     },
   } as unknown as DrizzleService
@@ -124,6 +130,20 @@ describe('checkInServiceSupport', () => {
       periodStartDate: '2026-04-13',
       periodEndDate: '2026-04-19',
     })
+  })
+
+  it('builds app-local day bounds instead of UTC-midnight bounds', () => {
+    const service = new CheckInServiceSupportTestHarness(
+      createDrizzleStub(),
+      {} as never,
+    )
+
+    const bounds = service.exposeBuildAppDayBounds('2026-04-19')
+
+    expect(bounds.startAt.toISOString()).toBe('2026-04-18T16:00:00.000Z')
+    expect(bounds.nextDayStartAt.toISOString()).toBe(
+      '2026-04-19T16:00:00.000Z',
+    )
   })
 
   it('rejects weekday rules in monthly mode', () => {
