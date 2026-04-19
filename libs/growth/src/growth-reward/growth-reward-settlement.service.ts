@@ -74,8 +74,8 @@ export class GrowthRewardSettlementService {
       settlementResultType: GrowthRewardSettlementResultTypeEnum.FAILED,
       ledgerRecordIds: growthResult.ledgerRecordIds,
       lastError:
-        growthResult.errorMessage
-        ?? (settlementStatus === GrowthRewardSettlementStatusEnum.TERMINAL
+        growthResult.errorMessage ??
+        (settlementStatus === GrowthRewardSettlementStatusEnum.TERMINAL
           ? '奖励规则拒绝落账'
           : '基础奖励发放失败'),
     })
@@ -120,14 +120,13 @@ export class GrowthRewardSettlementService {
     }
     if (query.settlementType !== undefined) {
       conditions.push(
-        eq(
-          this.growthRewardSettlement.settlementType,
-          query.settlementType,
-        ),
+        eq(this.growthRewardSettlement.settlementType, query.settlementType),
       )
     }
     if (query.eventCode !== undefined && query.eventCode !== null) {
-      conditions.push(eq(this.growthRewardSettlement.eventCode, query.eventCode))
+      conditions.push(
+        eq(this.growthRewardSettlement.eventCode, query.eventCode),
+      )
     }
     if (query.settlementStatus !== undefined) {
       conditions.push(
@@ -175,14 +174,16 @@ export class GrowthRewardSettlementService {
       .limit(limit)
   }
 
-  async ensureCheckInRecordRewardSettlement(params: {
-    recordId: number
-    userId: number
-    planId: number
-    cycleId: number
-    signDate: string
-    rewardItems?: Record<string, unknown>[] | null
-  }, tx?: Db) {
+  async ensureCheckInRecordRewardSettlement(
+    params: {
+      recordId: number
+      userId: number
+      configId: number
+      signDate: string
+      rewardItems?: Record<string, unknown>[] | null
+    },
+    tx?: Db,
+  ) {
     const bizKey = [
       'checkin',
       'base',
@@ -195,32 +196,36 @@ export class GrowthRewardSettlementService {
       kind: 'check_in_record_reward',
       recordId: params.recordId,
       userId: params.userId,
-      planId: params.planId,
-      cycleId: params.cycleId,
+      configId: params.configId,
       signDate: params.signDate,
       rewardItems: params.rewardItems ?? null,
     }
 
-    return this.ensureManualSettlement({
-      userId: params.userId,
-      bizKey,
-      settlementType: GrowthRewardSettlementTypeEnum.CHECK_IN_RECORD_REWARD,
-      source: 'check_in_base_bonus',
-      sourceRecordId: params.recordId,
-      eventOccurredAt: new Date(`${params.signDate}T00:00:00.000Z`),
-      requestPayload,
-    }, tx)
+    return this.ensureManualSettlement(
+      {
+        userId: params.userId,
+        bizKey,
+        settlementType: GrowthRewardSettlementTypeEnum.CHECK_IN_RECORD_REWARD,
+        source: 'check_in_base_bonus',
+        sourceRecordId: params.recordId,
+        eventOccurredAt: new Date(`${params.signDate}T00:00:00.000Z`),
+        requestPayload,
+      },
+      tx,
+    )
   }
 
-  async ensureCheckInStreakRewardSettlement(params: {
-    grantId: number
-    userId: number
-    planId: number
-    cycleId: number
-    ruleCode: string
-    triggerSignDate: string
-    rewardItems?: Record<string, unknown>[] | null
-  }, tx?: Db) {
+  async ensureCheckInStreakRewardSettlement(
+    params: {
+      grantId: number
+      userId: number
+      roundConfigId: number
+      ruleCode: string
+      triggerSignDate: string
+      rewardItems?: Record<string, unknown>[] | null
+    },
+    tx?: Db,
+  ) {
     const bizKey = [
       'checkin',
       'streak',
@@ -235,22 +240,24 @@ export class GrowthRewardSettlementService {
       kind: 'check_in_streak_reward',
       grantId: params.grantId,
       userId: params.userId,
-      planId: params.planId,
-      cycleId: params.cycleId,
+      roundConfigId: params.roundConfigId,
       ruleCode: params.ruleCode,
       triggerSignDate: params.triggerSignDate,
       rewardItems: params.rewardItems ?? null,
     }
 
-    return this.ensureManualSettlement({
-      userId: params.userId,
-      bizKey,
-      settlementType: GrowthRewardSettlementTypeEnum.CHECK_IN_STREAK_REWARD,
-      source: 'check_in_streak_bonus',
-      sourceRecordId: params.grantId,
-      eventOccurredAt: new Date(`${params.triggerSignDate}T00:00:00.000Z`),
-      requestPayload,
-    }, tx)
+    return this.ensureManualSettlement(
+      {
+        userId: params.userId,
+        bizKey,
+        settlementType: GrowthRewardSettlementTypeEnum.CHECK_IN_STREAK_REWARD,
+        source: 'check_in_streak_bonus',
+        sourceRecordId: params.grantId,
+        eventOccurredAt: new Date(`${params.triggerSignDate}T00:00:00.000Z`),
+        requestPayload,
+      },
+      tx,
+    )
   }
 
   async syncManualSettlementResult(
@@ -279,29 +286,40 @@ export class GrowthRewardSettlementService {
       )
     }
 
-    await this.updateSettlementState(settlementId, {
-      settlementStatus: result.success
-        ? GrowthRewardSettlementStatusEnum.SUCCESS
-        : GrowthRewardSettlementStatusEnum.PENDING,
-      settlementResultType:
-        result.resultType as GrowthRewardSettlementResultTypeEnum,
-      ledgerRecordIds: result.ledgerRecordIds,
-      retryCount: options?.isRetry ? current.retryCount + 1 : current.retryCount,
-      lastRetryAt: options?.isRetry ? new Date() : current.lastRetryAt,
-      settledAt: result.success ? new Date() : null,
-      lastError: result.success ? null : (result.errorMessage ?? '奖励补偿失败'),
-    }, options?.tx)
+    await this.updateSettlementState(
+      settlementId,
+      {
+        settlementStatus: result.success
+          ? GrowthRewardSettlementStatusEnum.SUCCESS
+          : GrowthRewardSettlementStatusEnum.PENDING,
+        settlementResultType:
+          result.resultType as GrowthRewardSettlementResultTypeEnum,
+        ledgerRecordIds: result.ledgerRecordIds,
+        retryCount: options?.isRetry
+          ? current.retryCount + 1
+          : current.retryCount,
+        lastRetryAt: options?.isRetry ? new Date() : current.lastRetryAt,
+        settledAt: result.success ? new Date() : null,
+        lastError: result.success
+          ? null
+          : (result.errorMessage ?? '奖励补偿失败'),
+      },
+      options?.tx,
+    )
   }
 
-  private async ensureManualSettlement(params: {
-    userId: number
-    bizKey: string
-    settlementType: GrowthRewardSettlementTypeEnum
-    source: string
-    sourceRecordId: number
-    eventOccurredAt: Date
-    requestPayload: Record<string, unknown>
-  }, tx?: Db) {
+  private async ensureManualSettlement(
+    params: {
+      userId: number
+      bizKey: string
+      settlementType: GrowthRewardSettlementTypeEnum
+      source: string
+      sourceRecordId: number
+      eventOccurredAt: Date
+      requestPayload: Record<string, unknown>
+    },
+    tx?: Db,
+  ) {
     const runner = tx ?? this.db
     const rows = await this.drizzle.withErrorHandling(() =>
       runner
@@ -431,12 +449,10 @@ export class GrowthRewardSettlementService {
     )
   }
 
-  private resolveFailureStatus(
-    growthResult: GrowthRuleRewardSettlementResult,
-  ) {
+  private resolveFailureStatus(growthResult: GrowthRuleRewardSettlementResult) {
     if (
-      growthResult.failureReason
-      && NON_RETRYABLE_FAILURE_REASONS.has(growthResult.failureReason)
+      growthResult.failureReason &&
+      NON_RETRYABLE_FAILURE_REASONS.has(growthResult.failureReason)
     ) {
       return GrowthRewardSettlementStatusEnum.TERMINAL
     }
@@ -446,13 +462,13 @@ export class GrowthRewardSettlementService {
       .filter((item) => item !== undefined)
 
     if (
-      results.length > 0
-      && results.every(
+      results.length > 0 &&
+      results.every(
         (item) =>
-          item.success !== true
-          && item.duplicated !== true
-          && item.reason !== undefined
-          && NON_RETRYABLE_FAILURE_REASONS.has(item.reason),
+          item.success !== true &&
+          item.duplicated !== true &&
+          item.reason !== undefined &&
+          NON_RETRYABLE_FAILURE_REASONS.has(item.reason),
       )
     ) {
       return GrowthRewardSettlementStatusEnum.TERMINAL

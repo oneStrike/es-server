@@ -147,8 +147,10 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
     growthAuditLogs: r.many.growthAuditLog(),
     assetBalances: r.many.userAssetBalance(),
     growthRuleUsageCounters: r.many.growthRuleUsageCounter(),
-    checkInCycles: r.many.checkInCycle(),
+    checkInMakeupFacts: r.many.checkInMakeupFact(),
+    checkInMakeupAccounts: r.many.checkInMakeupAccount(),
     checkInRecords: r.many.checkInRecord(),
+    checkInStreakProgresses: r.many.checkInStreakProgress(),
     checkInStreakRewardGrants: r.many.checkInStreakRewardGrant(),
     taskAssignments: r.many.taskAssignment(),
     taskProgressLogs: r.many.taskProgressLog(),
@@ -227,45 +229,48 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       to: r.appUser.id,
     }),
   },
-  checkInPlan: {
-    cycles: r.many.checkInCycle(),
-    records: r.many.checkInRecord(),
-    streakGrants: r.many.checkInStreakRewardGrant(),
-    createdBy: r.one.adminUser({
-      from: r.checkInPlan.createdById,
-      to: r.adminUser.id,
-      alias: 'CheckInPlanCreatedBy',
-    }),
+  checkInConfig: {
     updatedBy: r.one.adminUser({
-      from: r.checkInPlan.updatedById,
+      from: r.checkInConfig.updatedById,
       to: r.adminUser.id,
-      alias: 'CheckInPlanUpdatedBy',
+      alias: 'CheckInConfigUpdatedBy',
     }),
   },
-  checkInCycle: {
+  checkInMakeupFact: {
     user: r.one.appUser({
-      from: r.checkInCycle.userId,
+      from: r.checkInMakeupFact.userId,
       to: r.appUser.id,
     }),
-    plan: r.one.checkInPlan({
-      from: r.checkInCycle.planId,
-      to: r.checkInPlan.id,
+  },
+  checkInMakeupAccount: {
+    user: r.one.appUser({
+      from: r.checkInMakeupAccount.userId,
+      to: r.appUser.id,
     }),
-    records: r.many.checkInRecord(),
-    streakGrants: r.many.checkInStreakRewardGrant(),
+  },
+  checkInStreakRoundConfig: {
+    updatedBy: r.one.adminUser({
+      from: r.checkInStreakRoundConfig.updatedById,
+      to: r.adminUser.id,
+      alias: 'CheckInStreakRoundUpdatedBy',
+    }),
+    progresses: r.many.checkInStreakProgress(),
+    grants: r.many.checkInStreakRewardGrant(),
+  },
+  checkInStreakProgress: {
+    user: r.one.appUser({
+      from: r.checkInStreakProgress.userId,
+      to: r.appUser.id,
+    }),
+    roundConfig: r.one.checkInStreakRoundConfig({
+      from: r.checkInStreakProgress.roundConfigId,
+      to: r.checkInStreakRoundConfig.id,
+    }),
   },
   checkInRecord: {
     user: r.one.appUser({
       from: r.checkInRecord.userId,
       to: r.appUser.id,
-    }),
-    plan: r.one.checkInPlan({
-      from: r.checkInRecord.planId,
-      to: r.checkInPlan.id,
-    }),
-    cycle: r.one.checkInCycle({
-      from: r.checkInRecord.cycleId,
-      to: r.checkInCycle.id,
     }),
     rewardSettlement: r.one.growthRewardSettlement({
       from: r.checkInRecord.rewardSettlementId,
@@ -277,13 +282,9 @@ export const appRelations = defineRelationsPart(schema, (r) => ({
       from: r.checkInStreakRewardGrant.userId,
       to: r.appUser.id,
     }),
-    plan: r.one.checkInPlan({
-      from: r.checkInStreakRewardGrant.planId,
-      to: r.checkInPlan.id,
-    }),
-    cycle: r.one.checkInCycle({
-      from: r.checkInStreakRewardGrant.cycleId,
-      to: r.checkInCycle.id,
+    roundConfig: r.one.checkInStreakRoundConfig({
+      from: r.checkInStreakRewardGrant.roundConfigId,
+      to: r.checkInStreakRoundConfig.id,
     }),
     rewardSettlement: r.one.growthRewardSettlement({
       from: r.checkInStreakRewardGrant.rewardSettlementId,

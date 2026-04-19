@@ -15,8 +15,8 @@ import {
 /**
  * 每日签到事实。
  *
- * 同一用户在同一计划、同一自然日只能拥有一条有效签到记录；补签不会生成
- * 第二条同日事实，而是以 `recordType` 标记本次事实来源。
+ * 同一用户在同一自然日只能拥有一条签到事实。奖励配置在写入时直接冻结到
+ * `resolvedRewardItems`，后续配置更新不回溯影响历史事实。
  */
 export const checkInRecord = pgTable(
   'check_in_record',
@@ -25,10 +25,6 @@ export const checkInRecord = pgTable(
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     /** 记录归属用户 ID。 */
     userId: integer().notNull(),
-    /** 记录归属计划 ID。 */
-    planId: integer().notNull(),
-    /** 记录归属周期 ID。 */
-    cycleId: integer().notNull(),
     /** 签到自然日。 */
     signDate: date().notNull(),
     /** 签到类型（1=正常签到，2=补签）。 */
@@ -63,15 +59,18 @@ export const checkInRecord = pgTable(
       .notNull(),
   },
   (table) => [
-    unique('check_in_record_user_plan_sign_date_key').on(
+    unique('check_in_record_user_sign_date_key').on(
       table.userId,
-      table.planId,
       table.signDate,
     ),
     unique('check_in_record_user_biz_key_key').on(table.userId, table.bizKey),
-    index('check_in_record_cycle_id_idx').on(table.cycleId),
-    index('check_in_record_user_id_plan_id_idx').on(table.userId, table.planId),
-    index('check_in_record_reward_settlement_id_idx').on(table.rewardSettlementId),
+    index('check_in_record_user_id_sign_date_idx').on(
+      table.userId,
+      table.signDate,
+    ),
+    index('check_in_record_reward_settlement_id_idx').on(
+      table.rewardSettlementId,
+    ),
     index('check_in_record_sign_date_idx').on(table.signDate),
     check(
       'check_in_record_record_type_valid_chk',

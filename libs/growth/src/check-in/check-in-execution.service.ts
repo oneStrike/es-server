@@ -1,17 +1,11 @@
 import type { Db } from '@db/core'
-import type { CheckInPlanSelect, CheckInRecordSelect, CheckInStreakRewardGrantSelect } from '@db/schema'
-
+import type {
+  CheckInStreakProgressSelect,
+  CheckInStreakRoundConfigSelect,
+} from '@db/schema'
 import type { GrowthLedgerApplyResult } from '@libs/growth/growth-ledger/growth-ledger.internal'
+import type { CheckInRewardItems } from './check-in.type'
 import type {
-  CheckInCycleAggregation,
-  CheckInRewardDefinition,
-  CheckInRewardItems,
-  CreateCheckInCycleInput,
-  CreateCheckInGrantInput,
-  CreateCheckInRecordInput,
-} from './check-in.type'
-import type {
-  CheckInActionResponseDto,
   MakeupCheckInDto,
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
@@ -32,30 +26,24 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common'
 import dayjs from 'dayjs'
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, gte } from 'drizzle-orm'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
+  CheckInMakeupPeriodTypeEnum,
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
-  CheckInRewardSourceTypeEnum,
-  CheckInStreakRewardRuleStatusEnum,
+  CheckInStreakNextRoundStrategyEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
-const CHECK_IN_CYCLE_WRITE_RETRY_LIMIT = 3
-
-class CheckInCycleVersionConflictError extends Error {
-  constructor() {
-    super('check-in cycle version conflict')
-  }
-}
+const CHECK_IN_WRITE_RETRY_LIMIT = 3
 
 /**
  * 签到执行服务。
  *
- * 落实签到/补签、奖励结算和补偿入口，遵循“签到事实成功即主成功，奖励失败可补偿”。
+ * 负责今日签到、补签、连续奖励发放和签到奖励补偿重试。
  */
 @Injectable()
 export class CheckInExecutionService extends CheckInServiceSupport {
@@ -67,7 +55,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     super(drizzle, growthLedgerService)
   }
 
-  /** 发起今日签到，固定写入当前自然日的正常签到事实。 */
   async signToday(userId: number) {
     return this.performSign({
       userId,
@@ -78,7 +65,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     })
   }
 
-  /** 发起补签，统一走签到主链路并切换为补签语义。 */
   async makeup(dto: MakeupCheckInDto, userId: number) {
     return this.performSign({
       userId,
@@ -89,7 +75,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     })
   }
 
-  /** 按目标类型触发基础奖励或连续奖励补偿。 */
   async repairReward(dto: RepairCheckInRewardDto, adminUserId: number) {
     if (dto.targetType === CheckInRepairTargetTypeEnum.RECORD_REWARD) {
       if (!dto.recordId) {
@@ -100,7 +85,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         recordId: dto.recordId,
         success: await this.settleRecordReward(dto.recordId, {
           actorUserId: adminUserId,
-          source: 'admin_repair',
           isRetry: true,
         }),
       }
@@ -114,17 +98,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       grantId: dto.grantId,
       success: await this.settleGrantReward(dto.grantId, {
         actorUserId: adminUserId,
-        source: 'admin_repair',
         isRetry: true,
       }),
     }
   }
 
-  /**
-   * 执行签到主流程。
-   *
-   * 事务内只负责事实写入、周期重算和连续奖励发放事实创建；账本结算放到事务外并允许失败补偿。
-   */
   private async performSign(input: {
     userId: number
     signDate: string
@@ -153,85 +131,26 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       )
     }
 
-    const plan = await this.getCurrentActivePlan(now)
-    const rewardDefinition = this.getPlanRewardDefinition(plan, {
-      allowEmpty: true,
-    }) ?? {
-      baseRewardItems: null,
-      dateRewardRules: [],
-      patternRewardRules: [],
-      streakRewardRules: [],
-    }
-    const action = await this.performSignWithRetry(
-      plan,
-      rewardDefinition,
-      input,
-      now,
-      today,
-    )
+    const config = await this.getEnabledConfig()
+    const rewardDefinition = this.parseRewardDefinition(config)
+    let action:
+      | {
+          recordId: number
+          triggeredGrantIds: number[]
+        }
+        | undefined
 
-    await this.settleRecordReward(action.recordId, {
-      source: 'record_reward',
-    })
-    for (const grantId of action.triggeredGrantIds) {
-      await this.settleGrantReward(grantId, { source: 'streak_reward' })
-    }
-
-    return this.buildLatestActionView(action.recordId, {
-      triggeredGrantIds: action.triggeredGrantIds,
-    })
-  }
-
-  /**
-   * 对周期聚合回写使用版本冲突重试。
-   *
-   * 同一周期内不同签到日可能并发进入，因此在 `check_in_cycle.version` 冲突时重跑整笔事务，
-   * 重新读取周期事实并按最新聚合结果回写摘要。
-   */
-  private async performSignWithRetry(
-    plan: CheckInPlanSelect,
-    rewardDefinition: CheckInRewardDefinition,
-    input: {
-      userId: number
-      signDate: string
-      recordType: CheckInRecordTypeEnum
-      operatorType: CheckInOperatorTypeEnum
-      context?: Record<string, unknown>
-    },
-    now: Date,
-    today: string,
-  ) {
-    const cycleType = this.parseCycleType(plan.cycleType)
-    for (
-      let attempt = 0;
-      attempt < CHECK_IN_CYCLE_WRITE_RETRY_LIMIT;
-      attempt++
-    ) {
+    for (let attempt = 0; attempt < CHECK_IN_WRITE_RETRY_LIMIT; attempt++) {
       try {
-        return await this.drizzle.withTransaction(async (tx) => {
-          const cycle = await this.createOrGetCycle(tx, plan, input.userId, now)
-
-          if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
-            this.assertMakeupAllowed(
-              input.signDate,
-              today,
-              cycle,
-              plan.allowMakeupCountPerCycle,
-            )
-          }
-          const rewardResolution = this.resolveRewardForDate(
-            cycleType,
-            rewardDefinition,
-            input.signDate,
-          )
-
-          const existingRecord = await this.findRecordByUniqueKey(
-            input.userId,
-            plan.id,
-            input.signDate,
-            tx,
-          )
-          if (existingRecord) {
+        action = await this.drizzle.withTransaction(async (tx) => {
+          await this.ensureUserExists(input.userId, tx)
+          const existing = await tx.query.checkInRecord.findFirst({
+            where: {
+              userId: input.userId,
+              signDate: input.signDate,
+            },
+          })
+          if (existing) {
             throw new BusinessException(
               BusinessErrorCode.OPERATION_NOT_ALLOWED,
               input.recordType === CheckInRecordTypeEnum.NORMAL
@@ -240,560 +159,323 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             )
           }
 
-          const [insertedRecord] = await tx
-            .insert(this.checkInRecordTable)
-            .values(
-              this.buildRecordInsert({
-                userId: input.userId,
-                planId: plan.id,
-                cycleId: cycle.id,
-                cycleKey: cycle.cycleKey,
-                signDate: input.signDate,
-                recordType: input.recordType,
-                operatorType: input.operatorType,
-                resolvedRewardSourceType:
-                  rewardResolution.resolvedRewardSourceType,
-                resolvedRewardRuleKey: rewardResolution.resolvedRewardRuleKey,
-                resolvedRewardItems: rewardResolution.resolvedRewardItems,
-                context: input.context,
-              }),
-            )
-            .onConflictDoNothing()
-            .returning()
+          let account = await this.ensureCurrentMakeupAccount(
+            input.userId,
+            config,
+            today,
+            tx,
+          )
+          const window = this.buildMakeupWindow(
+            today,
+            config.makeupPeriodType as CheckInMakeupPeriodTypeEnum,
+          )
 
-          if (!insertedRecord) {
-            const duplicatedRecord = await this.findRecordByUniqueKey(
-              input.userId,
-              plan.id,
-              input.signDate,
+          if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
+            this.assertMakeupAllowed(input.signDate, today, window)
+            const consumePlan = this.buildMakeupConsumePlan(account)
+            account = await this.consumeMakeupAllowance(
+              account,
+              consumePlan,
               tx,
             )
-            if (!duplicatedRecord) {
+          }
+
+          const rewardResolution = this.resolveRewardForDate(
+            rewardDefinition,
+            input.signDate,
+            config.makeupPeriodType as CheckInMakeupPeriodTypeEnum,
+          )
+
+          const [record] = await tx
+            .insert(this.checkInRecordTable)
+            .values({
+              userId: input.userId,
+              signDate: input.signDate,
+              recordType: input.recordType,
+              resolvedRewardSourceType: rewardResolution.resolvedRewardItems
+                ? (rewardResolution.resolvedRewardSourceType ?? null)
+                : null,
+              resolvedRewardRuleKey: rewardResolution.resolvedRewardItems
+                ? (rewardResolution.resolvedRewardRuleKey ?? null)
+                : null,
+              resolvedRewardItems: rewardResolution.resolvedRewardItems ?? null,
+              rewardSettlementId: null,
+              bizKey: this.buildRecordBizKey(input.userId, input.signDate),
+              operatorType: input.operatorType,
+              context: input.context,
+            })
+            .onConflictDoNothing({
+              target: [
+                this.checkInRecordTable.userId,
+                this.checkInRecordTable.signDate,
+              ],
+            })
+            .returning()
+          if (!record) {
+            const concurrentRecord = await tx.query.checkInRecord.findFirst({
+              where: {
+                userId: input.userId,
+                signDate: input.signDate,
+              },
+            })
+            if (concurrentRecord) {
               throw new BusinessException(
-                BusinessErrorCode.RESOURCE_NOT_FOUND,
-                '签到记录创建失败',
+                BusinessErrorCode.OPERATION_NOT_ALLOWED,
+                input.recordType === CheckInRecordTypeEnum.NORMAL
+                  ? '今日已签到，请勿重复操作'
+                  : '该日期已签到，请勿重复补签',
               )
             }
             throw new BusinessException(
-              BusinessErrorCode.OPERATION_NOT_ALLOWED,
-              input.recordType === CheckInRecordTypeEnum.NORMAL
-                ? '今日已签到，请勿重复操作'
-                : '该日期已签到，请勿重复补签',
+              BusinessErrorCode.STATE_CONFLICT,
+              '签到写入冲突，请稍后重试',
             )
           }
 
-          const records = await this.listCycleRecords(cycle.id, tx)
-          const aggregation = this.recomputeCycleAggregation(records)
-          if (aggregation.makeupUsedCount > plan.allowMakeupCountPerCycle) {
-            throw new BusinessException(
-              BusinessErrorCode.QUOTA_NOT_ENOUGH,
-              '已超过当前周期补签上限',
-            )
+          const activeRound = await this.getRequiredActiveRound(tx)
+          let progress = await this.getOrCreateProgress(
+            input.userId,
+            activeRound,
+            tx,
+          )
+          const boundRound = await this.getBoundRoundConfig(
+            progress,
+            activeRound,
+            tx,
+          )
+          const roundDefinition = this.parseStreakRoundDefinition(boundRound)
+          const roundStartedAt = progress.roundStartedAt
+            ? this.toDateOnlyValue(progress.roundStartedAt)
+            : input.signDate
+
+          if (!progress.roundStartedAt) {
+            const [nextProgress] = await tx
+              .update(this.checkInStreakProgressTable)
+              .set({
+                roundStartedAt: input.signDate,
+                version: progress.version + 1,
+              })
+              .where(
+                and(
+                  eq(this.checkInStreakProgressTable.id, progress.id),
+                  eq(this.checkInStreakProgressTable.version, progress.version),
+                ),
+              )
+              .returning()
+            if (!nextProgress) {
+              throw new BusinessException(
+                BusinessErrorCode.STATE_CONFLICT,
+                '签到连续奖励进度并发冲突，请稍后重试',
+              )
+            }
+            progress = nextProgress
           }
 
-          const cycleUpdateResult = await tx
-            .update(this.checkInCycleTable)
-            .set({
-              currentStreak: aggregation.currentStreak,
-              lastSignedDate: aggregation.lastSignedDate ?? null,
-              makeupUsedCount: aggregation.makeupUsedCount,
-              signedCount: aggregation.signedCount,
-              version: sql`${this.checkInCycleTable.version} + 1`,
-            })
+          const scopedRecords = await this.listRoundScopedRecords(
+            input.userId,
+            roundStartedAt,
+            tx,
+          )
+          const aggregation = this.recomputeStreakAggregation(scopedRecords, {
+            roundStartedAt,
+          })
+          const existingGrants = await tx
+            .select()
+            .from(this.checkInStreakRewardGrantTable)
             .where(
               and(
-                eq(this.checkInCycleTable.id, cycle.id),
-                eq(this.checkInCycleTable.version, cycle.version),
+                eq(this.checkInStreakRewardGrantTable.userId, input.userId),
+                eq(
+                  this.checkInStreakRewardGrantTable.roundConfigId,
+                  progress.roundConfigId,
+                ),
               ),
             )
+            .orderBy(
+              asc(this.checkInStreakRewardGrantTable.triggerSignDate),
+              asc(this.checkInStreakRewardGrantTable.id),
+            )
 
-          if (cycleUpdateResult.rowCount === 0) {
-            throw new CheckInCycleVersionConflictError()
-          }
-
-          const existingGrants = await this.listCycleGrants(cycle.id, tx)
-          const candidates = this.resolveEligibleGrantCandidates(
-            rewardDefinition.streakRewardRules,
+          const grantCandidates = this.resolveEligibleGrantRules(
+            roundDefinition,
             aggregation.streakByDate,
             existingGrants,
+            progress,
           )
 
           const triggeredGrantIds: number[] = []
-          for (const candidate of candidates) {
+          for (const candidate of grantCandidates) {
             const [grant] = await tx
               .insert(this.checkInStreakRewardGrantTable)
-              .values(
-                this.buildGrantInsert({
-                  userId: input.userId,
-                  planId: plan.id,
-                  cycleId: cycle.id,
-                  triggerSignDate: candidate.triggerSignDate,
-                  ruleCode: candidate.rule.ruleCode,
-                  streakDays: candidate.rule.streakDays,
-                  rewardItems: candidate.rule.rewardItems,
-                  repeatable: candidate.rule.repeatable,
-                  context: {
-                    source:
-                      input.recordType === CheckInRecordTypeEnum.MAKEUP
-                        ? 'makeup_recompute'
-                        : 'sign_recompute',
-                  },
-                }),
-              )
-              .onConflictDoNothing()
+              .values({
+                userId: input.userId,
+                roundConfigId: progress.roundConfigId,
+                roundIteration: progress.roundIteration,
+                triggerSignDate: candidate.triggerSignDate,
+                rewardSettlementId: null,
+                bizKey: this.buildGrantBizKey(
+                  input.userId,
+                  progress.roundConfigId,
+                  progress.roundIteration,
+                  candidate.rule.ruleCode,
+                  candidate.triggerSignDate,
+                ),
+                ruleCode: candidate.rule.ruleCode,
+                streakDays: candidate.rule.streakDays,
+                rewardItems: candidate.rule.rewardItems,
+                repeatable: candidate.rule.repeatable,
+                context: {
+                  source:
+                    input.recordType === CheckInRecordTypeEnum.MAKEUP
+                      ? 'makeup_recompute'
+                      : 'sign_recompute',
+                },
+              })
               .returning()
-
             if (grant) {
               triggeredGrantIds.push(grant.id)
             }
           }
 
+          const maxThreshold = Math.max(
+            0,
+            ...roundDefinition.rewardRules
+              .filter((rule) => rule.status === 1)
+              .map((rule) => rule.streakDays),
+          )
+          const completionDates = Object.entries(aggregation.streakByDate)
+            .filter(([, streak]) => streak === maxThreshold)
+            .map(([date]) => date)
+          const earliestCompletionDate = completionDates[0]
+          if (
+            input.recordType === CheckInRecordTypeEnum.MAKEUP &&
+            maxThreshold > 0 &&
+            earliestCompletionDate &&
+            aggregation.lastSignedDate &&
+            earliestCompletionDate < aggregation.lastSignedDate
+          ) {
+            throw new BusinessException(
+              BusinessErrorCode.OPERATION_NOT_ALLOWED,
+              '当前补签会影响已形成的连续奖励轮次，请联系管理员处理',
+            )
+          }
+          const shouldTransitionRound =
+            maxThreshold > 0 &&
+            !!earliestCompletionDate &&
+            aggregation.lastSignedDate === earliestCompletionDate &&
+            aggregation.currentStreak >= maxThreshold
+
+          if (shouldTransitionRound) {
+            const nextRound = await this.resolveNextRoundConfig(
+              boundRound,
+              roundDefinition,
+              tx,
+            )
+            const [updated] = await tx
+              .update(this.checkInStreakProgressTable)
+              .set({
+                roundConfigId: nextRound.id,
+                roundIteration: progress.roundIteration + 1,
+                currentStreak: 0,
+                roundStartedAt: this.nextDate(earliestCompletionDate),
+                lastSignedDate: null,
+                version: progress.version + 1,
+              })
+              .where(
+                and(
+                  eq(this.checkInStreakProgressTable.id, progress.id),
+                  eq(this.checkInStreakProgressTable.version, progress.version),
+                ),
+              )
+              .returning({ id: this.checkInStreakProgressTable.id })
+            if (!updated) {
+              throw new BusinessException(
+                BusinessErrorCode.STATE_CONFLICT,
+                '签到连续奖励进度并发冲突，请稍后重试',
+              )
+            }
+          } else {
+            const [updated] = await tx
+              .update(this.checkInStreakProgressTable)
+              .set({
+                currentStreak: aggregation.currentStreak,
+                lastSignedDate: aggregation.lastSignedDate ?? null,
+                version: progress.version + 1,
+              })
+              .where(
+                and(
+                  eq(this.checkInStreakProgressTable.id, progress.id),
+                  eq(this.checkInStreakProgressTable.version, progress.version),
+                ),
+              )
+              .returning({ id: this.checkInStreakProgressTable.id })
+            if (!updated) {
+              throw new BusinessException(
+                BusinessErrorCode.STATE_CONFLICT,
+                '签到连续奖励进度并发冲突，请稍后重试',
+              )
+            }
+          }
+
           return {
-            recordId: insertedRecord.id,
-            userId: insertedRecord.userId,
-            planId: insertedRecord.planId,
-            cycleId: cycle.id,
-            signDate: input.signDate,
-            recordType: insertedRecord.recordType,
-            rewardSettlementId: insertedRecord.rewardSettlementId,
-            resolvedRewardSourceType:
-              rewardResolution.resolvedRewardSourceType ?? null,
-            resolvedRewardRuleKey: rewardResolution.resolvedRewardRuleKey ?? null,
-            resolvedRewardItems: rewardResolution.resolvedRewardItems,
-            currentStreak: aggregation.currentStreak,
-            signedCount: aggregation.signedCount,
-            remainingMakeupCount: Math.max(
-              plan.allowMakeupCountPerCycle - aggregation.makeupUsedCount,
-              0,
-            ),
+            recordId: record.id,
             triggeredGrantIds,
-            alreadyExisted: false,
           }
         })
+        break
       } catch (error) {
         if (
-          error instanceof CheckInCycleVersionConflictError &&
-          attempt < CHECK_IN_CYCLE_WRITE_RETRY_LIMIT - 1
+          error instanceof BusinessException &&
+          error.code === BusinessErrorCode.STATE_CONFLICT &&
+          attempt < CHECK_IN_WRITE_RETRY_LIMIT - 1
         ) {
           continue
-        }
-
-        if (error instanceof CheckInCycleVersionConflictError) {
-          throw new BusinessException(
-            BusinessErrorCode.STATE_CONFLICT,
-            '签到周期并发冲突，请稍后重试',
-          )
         }
         throw error
       }
     }
 
-    throw new BusinessException(
-      BusinessErrorCode.STATE_CONFLICT,
-      '签到周期并发冲突，请稍后重试',
-    )
-  }
-
-  /**
-   * 创建或复用当前周期实例。
-   *
-   * 执行链路必须在同一事务内复用并发下已创建的周期，并返回唯一周期记录。
-   */
-  private async createOrGetCycle(
-    tx: Db,
-    plan: CheckInPlanSelect,
-    userId: number,
-    now: Date,
-  ) {
-    const today = this.formatDateOnly(now)
-    const existingCycle = await this.findCycleContainingDate(
-      userId,
-      plan.id,
-      today,
-      tx,
-    )
-    if (existingCycle) {
-      return existingCycle
-    }
-
-    const frame = this.buildCycleFrame(plan, now)
-    const cycleInsert: CreateCheckInCycleInput = {
-      userId,
-      planId: plan.id,
-      cycleKey: frame.cycleKey,
-      cycleStartDate: frame.cycleStartDate,
-      cycleEndDate: frame.cycleEndDate,
-      signedCount: 0,
-      makeupUsedCount: 0,
-      currentStreak: 0,
-      lastSignedDate: null,
-    }
-
-    const [createdCycle] = await tx
-      .insert(this.checkInCycleTable)
-      .values(cycleInsert)
-      .onConflictDoNothing()
-      .returning()
-
-    if (createdCycle) {
-      return createdCycle
-    }
-
-    const [cycle] = await tx
-      .select()
-      .from(this.checkInCycleTable)
-      .where(
-        and(
-          eq(this.checkInCycleTable.userId, userId),
-          eq(this.checkInCycleTable.planId, plan.id),
-          eq(this.checkInCycleTable.cycleKey, frame.cycleKey),
-        ),
-      )
-      .limit(1)
-
-    if (!cycle) {
+    if (!action) {
       throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '签到周期创建失败',
+        BusinessErrorCode.STATE_CONFLICT,
+        '签到写入冲突，请稍后重试',
       )
     }
 
-    return cycle
-  }
-
-  /** 按用户、计划、签到日读取唯一签到事实。 */
-  private async findRecordByUniqueKey(
-    userId: number,
-    planId: number,
-    signDate: string,
-    db: Db = this.db,
-  ) {
-    const [record] = await db
-      .select()
-      .from(this.checkInRecordTable)
-      .where(
-        and(
-          eq(this.checkInRecordTable.userId, userId),
-          eq(this.checkInRecordTable.planId, planId),
-          eq(this.checkInRecordTable.signDate, signDate),
-        ),
-      )
-      .limit(1)
-
-    return record
-  }
-
-  /** 按周期读取连续奖励发放事实。 */
-  private async listCycleGrants(cycleId: number, db: Db = this.db) {
-    return db
-      .select()
-      .from(this.checkInStreakRewardGrantTable)
-      .where(eq(this.checkInStreakRewardGrantTable.cycleId, cycleId))
-      .orderBy(
-        asc(this.checkInStreakRewardGrantTable.triggerSignDate),
-        asc(this.checkInStreakRewardGrantTable.id),
-      )
-  }
-
-  /**
-   * 基于当前周期全部签到事实重算聚合摘要。
-   *
-   * 补签会重新排列历史日期，因此连续签到、已签天数和补签已用次数都必须全量重算。
-   */
-  private recomputeCycleAggregation(
-    records: Pick<CheckInRecordSelect, 'signDate' | 'recordType'>[],
-  ): CheckInCycleAggregation {
-    const streakByDate: Record<string, number> = {}
-    let previousDate: string | undefined
-    let latestDate: string | undefined
-    let streak = 0
-
-    const sortedRecords = [...records].sort((left, right) =>
-      this.toDateOnlyValue(left.signDate).localeCompare(
-        this.toDateOnlyValue(right.signDate),
-      ),
-    )
-
-    for (const record of sortedRecords) {
-      const signDate = this.toDateOnlyValue(record.signDate)
-      if (
-        previousDate &&
-        dayjs
-          .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
-          .diff(
-            dayjs.tz(previousDate, 'YYYY-MM-DD', this.getAppTimeZone()),
-            'day',
-          ) === 1
-      ) {
-        streak += 1
-      } else {
-        streak = 1
-      }
-      streakByDate[signDate] = streak
-      previousDate = signDate
-      latestDate = signDate
+    await this.settleRecordReward(action.recordId, {})
+    for (const grantId of action.triggeredGrantIds) {
+      await this.settleGrantReward(grantId, {})
     }
 
-    return {
-      signedCount: sortedRecords.length,
-      makeupUsedCount: sortedRecords.filter(
-        (record) => record.recordType === CheckInRecordTypeEnum.MAKEUP,
-      ).length,
-      currentStreak: latestDate ? streakByDate[latestDate] : 0,
-      lastSignedDate: latestDate,
-      streakByDate,
-    }
+    return this.buildActionResponse(action.recordId, action.triggeredGrantIds)
   }
 
-  /**
-   * 根据重算后的连续天数识别本次应创建的连续奖励发放事实。
-   *
-   * 非重复奖励在单周期内最多发一次；重复奖励按 `triggerSignDate` 维度去重。
-   */
-  private resolveEligibleGrantCandidates(
-    rules: CheckInRewardDefinition['streakRewardRules'],
-    streakByDate: Record<string, number>,
-    existingGrants: Pick<
-      CheckInStreakRewardGrantSelect,
-      'ruleCode' | 'triggerSignDate'
-    >[],
-  ) {
-    const existingGrantKeys = new Set(
-      existingGrants.map(
-        (grant) =>
-          `${grant.ruleCode}:${this.toDateOnlyValue(grant.triggerSignDate)}`,
-      ),
-    )
-    const existingRuleCodes = new Set(
-      existingGrants.map((grant) => grant.ruleCode),
-    )
-    const streakEntries = Object.entries(streakByDate).sort(([left], [right]) =>
-      left.localeCompare(right),
-    )
-
-    const candidates: Array<{
-      rule: CheckInRewardDefinition['streakRewardRules'][number]
-      triggerSignDate: string
-    }> = []
-
-    for (const rule of rules) {
-      if (rule.status !== CheckInStreakRewardRuleStatusEnum.ENABLED) {
-        continue
-      }
-
-      const triggerDates = streakEntries
-        .filter(([, streak]) => streak === rule.streakDays)
-        .map(([date]) => date)
-      if (triggerDates.length === 0) {
-        continue
-      }
-
-      if (!rule.repeatable) {
-        if (existingRuleCodes.has(rule.ruleCode)) {
-          continue
-        }
-        candidates.push({ rule, triggerSignDate: triggerDates[0] })
-        continue
-      }
-
-      for (const triggerSignDate of triggerDates) {
-        const grantKey = `${rule.ruleCode}:${triggerSignDate}`
-        if (!existingGrantKeys.has(grantKey)) {
-          candidates.push({ rule, triggerSignDate })
-        }
-      }
-    }
-
-    return candidates
-  }
-
-  /** 构建签到事实幂等键。 */
-  private buildRecordBizKey(
-    planId: number,
-    cycleKey: string,
-    userId: number,
-    signDate: string,
-  ) {
-    return [
-      'checkin',
-      'record',
-      'plan',
-      planId,
-      'cycle',
-      cycleKey,
-      'user',
-      userId,
-      'date',
-      signDate,
-    ].join(':')
-  }
-
-  /** 构建连续奖励发放事实幂等键。 */
-  private buildGrantFactBizKey(
-    planId: number,
-    cycleId: number,
-    ruleCode: string,
-    userId: number,
-    triggerSignDate: string,
-  ) {
-    return [
-      'checkin',
-      'grant',
-      'plan',
-      planId,
-      'cycle',
-      cycleId,
-      'rule',
-      ruleCode,
-      'user',
-      userId,
-      'date',
-      triggerSignDate,
-    ].join(':')
-  }
-
-  /** 构建基础签到奖励账本业务键前缀。 */
-  private buildBaseRewardBizKey(recordId: number, userId: number) {
-    return ['checkin', 'base', 'record', recordId, 'user', userId].join(':')
-  }
-
-  /** 构建连续奖励账本业务键前缀。 */
-  private buildStreakRewardBizKey(
-    grantId: number,
-    ruleCode: string,
-    userId: number,
-  ) {
-    return [
-      'checkin',
-      'streak',
-      'grant',
-      grantId,
-      'rule',
-      ruleCode,
-      'user',
-      userId,
-    ].join(':')
-  }
-
-  /**
-   * 构建签到事实写表载荷。
-   *
-   * 没有基础奖励时，这里会直接把奖励状态置空，明确表达“无奖励而非待结算”。
-   */
-  private buildRecordInsert(input: {
-    userId: number
-    planId: number
-    cycleId: number
-    cycleKey: string
-    signDate: string
-    recordType: CheckInRecordTypeEnum
-    operatorType: CheckInOperatorTypeEnum
-    resolvedRewardSourceType?: CreateCheckInRecordInput['resolvedRewardSourceType']
-    resolvedRewardRuleKey?: string | null
-    resolvedRewardItems?: CheckInRewardItems | null
-    context?: Record<string, unknown>
-  }): CreateCheckInRecordInput {
-    return {
-      userId: input.userId,
-      planId: input.planId,
-      cycleId: input.cycleId,
-      signDate: input.signDate,
-      recordType: input.recordType,
-      resolvedRewardSourceType: input.resolvedRewardItems
-        ? (input.resolvedRewardSourceType ?? null)
-        : null,
-      resolvedRewardRuleKey: input.resolvedRewardItems
-        ? (input.resolvedRewardRuleKey ?? null)
-        : null,
-      resolvedRewardItems: input.resolvedRewardItems ?? null,
-      rewardSettlementId: null,
-      bizKey: this.buildRecordBizKey(
-        input.planId,
-        input.cycleKey,
-        input.userId,
-        input.signDate,
-      ),
-      operatorType: input.operatorType,
-      context: input.context,
-    }
-  }
-
-  /** 构建连续奖励发放事实写表载荷。 */
-  private buildGrantInsert(input: {
-    userId: number
-    planId: number
-    cycleId: number
-    triggerSignDate: string
-    ruleCode: string
-    streakDays: number
-    rewardItems: CheckInRewardItems
-    repeatable: boolean
-    context?: Record<string, unknown>
-  }): CreateCheckInGrantInput {
-    return {
-      userId: input.userId,
-      planId: input.planId,
-      cycleId: input.cycleId,
-      triggerSignDate: input.triggerSignDate,
-      rewardSettlementId: null,
-      bizKey: this.buildGrantFactBizKey(
-        input.planId,
-        input.cycleId,
-        input.ruleCode,
-        input.userId,
-        input.triggerSignDate,
-      ),
-      ruleCode: input.ruleCode,
-      streakDays: input.streakDays,
-      rewardItems: input.rewardItems,
-      repeatable: input.repeatable,
-      context: input.context,
-    }
-  }
-
-  /** 校验补签日期必须位于当前周期内，且满足“早于今天且计划允许补签”的合同。 */
   private assertMakeupAllowed(
     signDate: string,
     today: string,
-    cycle: {
-      cycleStartDate: string | Date
-      cycleEndDate: string | Date
-    },
-    allowMakeupCountPerCycle: number,
+    window: ReturnType<CheckInExecutionService['buildMakeupWindow']>,
   ) {
-    const cycleStartDate = this.toDateOnlyValue(cycle.cycleStartDate)
-    const cycleEndDate = this.toDateOnlyValue(cycle.cycleEndDate)
-
-    if (signDate < cycleStartDate || signDate > cycleEndDate) {
-      throw new BusinessException(
-        BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '补签日期不在当前周期内',
-      )
-    }
     if (signDate >= today) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
         '补签日期必须早于今天',
       )
     }
-    if (allowMakeupCountPerCycle <= 0) {
+    if (!this.isDateWithinMakeupWindow(signDate, window)) {
       throw new BusinessException(
         BusinessErrorCode.OPERATION_NOT_ALLOWED,
-        '当前计划不支持补签',
+        '补签日期不在当前补签周期内',
       )
     }
   }
 
-  /** 基于最新记录和周期摘要回填前端动作返回视图。 */
-  private async buildLatestActionView(
+  private async buildActionResponse(
     recordId: number,
-    actionMeta: Pick<CheckInActionResponseDto, 'triggeredGrantIds'>,
+    triggeredGrantIds: number[],
   ) {
-    const [record] = await this.db
-      .select()
-      .from(this.checkInRecordTable)
-      .where(eq(this.checkInRecordTable.id, recordId))
-      .limit(1)
+    const record = await this.db.query.checkInRecord.findFirst({
+      where: { id: recordId },
+    })
     if (!record) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
@@ -801,109 +483,82 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       )
     }
 
-    const [cycle] = await this.db
-      .select()
-      .from(this.checkInCycleTable)
-      .where(eq(this.checkInCycleTable.id, record.cycleId))
-      .limit(1)
-    if (!cycle) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '签到周期不存在',
-      )
-    }
-
-    const [plan] = await this.db
-      .select()
-      .from(this.checkInPlanTable)
-      .where(eq(this.checkInPlanTable.id, record.planId))
-      .limit(1)
-    if (!plan) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '签到计划不存在',
-      )
-    }
+    const config = await this.getRequiredConfig()
+    const makeup = await this.buildCurrentMakeupAccountView(
+      record.userId,
+      config,
+      this.formatDateOnly(new Date()),
+    )
+    const progress = await this.db.query.checkInStreakProgress.findFirst({
+      where: { userId: record.userId },
+    })
+    const settlement = record.rewardSettlementId
+      ? await this.db.query.growthRewardSettlement.findFirst({
+          where: { id: record.rewardSettlementId },
+        })
+      : null
 
     return {
-      recordId: record.id,
-      userId: record.userId,
-        planId: record.planId,
-        cycleId: cycle.id,
-        signDate: this.toDateOnlyValue(record.signDate),
-        recordType: record.recordType,
-        rewardSettlementId: record.rewardSettlementId,
-        resolvedRewardSourceType:
-          record.resolvedRewardSourceType as CheckInRewardSourceTypeEnum | null,
-        resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-        resolvedRewardItems: this.parseStoredRewardItems(
-          record.resolvedRewardItems,
+      id: record.id,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+      signDate: this.toDateOnlyValue(record.signDate),
+      recordType: record.recordType,
+      rewardSettlementId: record.rewardSettlementId,
+      resolvedRewardSourceType: record.resolvedRewardSourceType,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
+      resolvedRewardItems: this.parseStoredRewardItems(
+        record.resolvedRewardItems,
         {
           allowEmpty: true,
         },
       ),
-      rewardSettlement: record.rewardSettlementId
-        ? await this.getSettlementById(record.rewardSettlementId)
-        : null,
-      currentStreak: cycle.currentStreak,
-      signedCount: cycle.signedCount,
-      remainingMakeupCount: Math.max(
-        plan.allowMakeupCountPerCycle - cycle.makeupUsedCount,
-        0,
-      ),
-      triggeredGrantIds: actionMeta.triggeredGrantIds,
-      alreadyExisted: false,
+      rewardSettlement: this.toRewardSettlementSummary(settlement),
+      currentMakeupPeriodType: makeup.periodType,
+      currentMakeupPeriodKey: makeup.periodKey,
+      periodicRemaining: makeup.periodicRemaining,
+      eventAvailable: makeup.eventAvailable,
+      currentStreak: progress?.currentStreak ?? 0,
+      roundConfigId: progress?.roundConfigId ?? 0,
+      triggeredGrantIds,
     }
   }
 
-  /**
-   * 结算基础签到奖励。
-   *
-   * 奖励失败不会回滚签到事实，而是把失败状态和错误原因写回记录，等待后续补偿。
-   */
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number, source: string, isRetry?: boolean },
+    context: { actorUserId?: number, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
-        const [record] = await tx
-          .select()
-          .from(this.checkInRecordTable)
-          .where(eq(this.checkInRecordTable.id, recordId))
-          .limit(1)
+        const record = await tx.query.checkInRecord.findFirst({
+          where: { id: recordId },
+        })
         if (!record) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
             '签到记录不存在',
           )
         }
-
-        if (
-          record.resolvedRewardItems === null
-          || record.resolvedRewardItems === undefined
-        ) {
+        if (!record.resolvedRewardItems) {
           return
         }
-        const rawRewardItems = this.asArray(record.resolvedRewardItems)
-        if (rawRewardItems && rawRewardItems.length === 0) {
-          return
-        }
-
-        const rewardSettlement = await this.ensureRecordRewardSettlement(record, tx)
-        const latestSettlement = await this.getSettlementById(
-          rewardSettlement.id,
-          tx,
-        )
+        const rewardItems = this.parseStoredRewardItems(
+          record.resolvedRewardItems,
+          {
+            allowEmpty: false,
+          },
+        )!
+        const settlement = await this.ensureRecordRewardSettlement(record, tx)
+        const latestSettlement = await this.getSettlementById(settlement.id, tx)
         if (
-          latestSettlement?.settlementStatus
-          === GrowthRewardSettlementStatusEnum.SUCCESS
+          latestSettlement?.settlementStatus ===
+          GrowthRewardSettlementStatusEnum.SUCCESS
         ) {
           return
         }
         if (
-          latestSettlement?.settlementStatus
-          === GrowthRewardSettlementStatusEnum.TERMINAL
+          latestSettlement?.settlementStatus ===
+          GrowthRewardSettlementStatusEnum.TERMINAL
         ) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -911,43 +566,30 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           )
         }
 
-        const rewardItems = this.parseStoredRewardItems(
-          record.resolvedRewardItems,
-          {
-            allowEmpty: false,
-          },
-        )!
-
-        const appliedReward = await this.applyRewardItems(tx, {
+        const rewardResult = await this.applyRewardItems(tx, {
           userId: record.userId,
           rewardItems,
           baseBizKey: this.buildBaseRewardBizKey(record.id, record.userId),
           source: GrowthLedgerSourceEnum.CHECK_IN_BASE_BONUS,
-          planId: record.planId,
-          cycleId: record.cycleId,
-          recordId: record.id,
           actorUserId: context.actorUserId,
         })
 
         await this.growthRewardSettlementService.syncManualSettlementResult(
-          rewardSettlement.id,
+          settlement.id,
           {
             success: true,
-            resultType: appliedReward.resultType,
-            ledgerRecordIds: appliedReward.ledgerIds,
+            resultType: rewardResult.resultType,
+            ledgerRecordIds: rewardResult.ledgerIds,
           },
           { isRetry: context.isRetry, tx },
         )
       })
-
       return true
     } catch (error) {
       if (
         error instanceof BusinessException &&
-        (
-          error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
-          || error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
-        )
+        (error.code === BusinessErrorCode.RESOURCE_NOT_FOUND ||
+          error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED)
       ) {
         throw error
       }
@@ -961,10 +603,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       const record = await this.db.query.checkInRecord.findFirst({
         where: { id: recordId },
       })
-      if (record && this.hasRewardPayloadSnapshot(record.resolvedRewardItems)) {
-        const rewardSettlement = await this.ensureRecordRewardSettlement(record)
+      if (record && this.asArray(record.resolvedRewardItems)?.length) {
+        const settlement = await this.ensureRecordRewardSettlement(record)
         await this.growthRewardSettlementService.syncManualSettlementResult(
-          rewardSettlement.id,
+          settlement.id,
           {
             success: false,
             resultType: CheckInRewardResultTypeEnum.FAILED,
@@ -978,44 +620,32 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
-  /**
-   * 结算连续签到奖励。
-   *
-   * 失败后只回写发放事实状态，不反向破坏已命中的连续奖励事实。
-   */
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number, source: string, isRetry?: boolean },
+    context: { actorUserId?: number, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
-        const [grant] = await tx
-          .select()
-          .from(this.checkInStreakRewardGrantTable)
-          .where(eq(this.checkInStreakRewardGrantTable.id, grantId))
-          .limit(1)
+        const grant = await tx.query.checkInStreakRewardGrant.findFirst({
+          where: { id: grantId },
+        })
         if (!grant) {
           throw new BusinessException(
             BusinessErrorCode.RESOURCE_NOT_FOUND,
             '连续奖励发放事实不存在',
           )
         }
-
-        const rewardSettlement =
-          await this.ensureGrantRewardSettlement(grant, tx)
-        const latestSettlement = await this.getSettlementById(
-          rewardSettlement.id,
-          tx,
-        )
+        const settlement = await this.ensureGrantRewardSettlement(grant, tx)
+        const latestSettlement = await this.getSettlementById(settlement.id, tx)
         if (
-          latestSettlement?.settlementStatus
-          === GrowthRewardSettlementStatusEnum.SUCCESS
+          latestSettlement?.settlementStatus ===
+          GrowthRewardSettlementStatusEnum.SUCCESS
         ) {
           return
         }
         if (
-          latestSettlement?.settlementStatus
-          === GrowthRewardSettlementStatusEnum.TERMINAL
+          latestSettlement?.settlementStatus ===
+          GrowthRewardSettlementStatusEnum.TERMINAL
         ) {
           throw new BusinessException(
             BusinessErrorCode.OPERATION_NOT_ALLOWED,
@@ -1026,7 +656,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         const rewardItems = this.parseStoredRewardItems(grant.rewardItems, {
           allowEmpty: false,
         })!
-        const appliedReward = await this.applyRewardItems(tx, {
+        const rewardResult = await this.applyRewardItems(tx, {
           userId: grant.userId,
           rewardItems,
           baseBizKey: this.buildStreakRewardBizKey(
@@ -1035,32 +665,25 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             grant.userId,
           ),
           source: GrowthLedgerSourceEnum.CHECK_IN_STREAK_BONUS,
-          planId: grant.planId,
-          cycleId: grant.cycleId,
-          grantId: grant.id,
-          ruleCode: grant.ruleCode,
           actorUserId: context.actorUserId,
         })
 
         await this.growthRewardSettlementService.syncManualSettlementResult(
-          rewardSettlement.id,
+          settlement.id,
           {
             success: true,
-            resultType: appliedReward.resultType,
-            ledgerRecordIds: appliedReward.ledgerIds,
+            resultType: rewardResult.resultType,
+            ledgerRecordIds: rewardResult.ledgerIds,
           },
           { isRetry: context.isRetry, tx },
         )
       })
-
       return true
     } catch (error) {
       if (
         error instanceof BusinessException &&
-        (
-          error.code === BusinessErrorCode.RESOURCE_NOT_FOUND
-          || error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED
-        )
+        (error.code === BusinessErrorCode.RESOURCE_NOT_FOUND ||
+          error.code === BusinessErrorCode.OPERATION_NOT_ALLOWED)
       ) {
         throw error
       }
@@ -1075,9 +698,9 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         where: { id: grantId },
       })
       if (grant) {
-        const rewardSettlement = await this.ensureGrantRewardSettlement(grant)
+        const settlement = await this.ensureGrantRewardSettlement(grant)
         await this.growthRewardSettlementService.syncManualSettlementResult(
-          rewardSettlement.id,
+          settlement.id,
           {
             success: false,
             resultType: CheckInRewardResultTypeEnum.FAILED,
@@ -1091,7 +714,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
-  /** 按奖励项列表批量写入成长账本，并统一汇总账本记录 ID 与结果类型。 */
   private async applyRewardItems(
     tx: Db,
     input: {
@@ -1099,11 +721,6 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       rewardItems: CheckInRewardItems
       baseBizKey: string
       source: GrowthLedgerSourceEnum
-      planId: number
-      cycleId: number
-      recordId?: number
-      grantId?: number
-      ruleCode?: string
       actorUserId?: number
     },
   ) {
@@ -1117,16 +734,11 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           assetType,
           action: GrowthLedgerActionEnum.GRANT,
           amount: rewardItem.amount,
-          bizKey: this.buildRewardItemBizKey(input.baseBizKey, rewardItem.assetType),
+          bizKey: `${input.baseBizKey}:${rewardItem.assetType}`,
           source: input.source,
           remark: this.buildRewardItemRemark(rewardItem.assetType),
           context: {
             actorUserId: input.actorUserId,
-            planId: input.planId,
-            cycleId: input.cycleId,
-            recordId: input.recordId,
-            grantId: input.grantId,
-            ruleCode: input.ruleCode,
           },
         }),
       )
@@ -1146,15 +758,161 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     }
   }
 
-  private async ensureRecordRewardSettlement(record: {
-    id: number
-    userId: number
-    planId: number
-    cycleId: number
-    signDate: string | Date
-    resolvedRewardItems: unknown
-    rewardSettlementId?: number | null
-  }, tx?: Db) {
+  private resolveLedgerAssetType(assetType: GrowthRewardRuleAssetTypeEnum) {
+    if (
+      assetType !== GrowthRewardRuleAssetTypeEnum.POINTS &&
+      assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
+    ) {
+      throw new InternalServerErrorException(
+        `暂不支持的签到奖励资产类型：${assetType}`,
+      )
+    }
+    return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
+      ? GrowthAssetTypeEnum.POINTS
+      : GrowthAssetTypeEnum.EXPERIENCE
+  }
+
+  private buildRewardItemRemark(assetType: GrowthRewardRuleAssetTypeEnum) {
+    return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
+      ? '签到奖励（积分）'
+      : '签到奖励（经验）'
+  }
+
+  private resolveRewardResultType(results: GrowthLedgerApplyResult[]) {
+    if (results.some((result) => result.duplicated !== true)) {
+      return CheckInRewardResultTypeEnum.APPLIED
+    }
+    return CheckInRewardResultTypeEnum.IDEMPOTENT
+  }
+
+  private buildRecordBizKey(userId: number, signDate: string) {
+    return `checkin:record:user:${userId}:date:${signDate}`
+  }
+
+  private buildGrantBizKey(
+    userId: number,
+    roundConfigId: number,
+    roundIteration: number,
+    ruleCode: string,
+    triggerSignDate: string,
+  ) {
+    return [
+      'checkin',
+      'grant',
+      'round',
+      roundConfigId,
+      'iteration',
+      roundIteration,
+      'rule',
+      ruleCode,
+      'user',
+      userId,
+      'date',
+      triggerSignDate,
+    ].join(':')
+  }
+
+  private buildBaseRewardBizKey(recordId: number, userId: number) {
+    return `checkin:base:record:${recordId}:user:${userId}`
+  }
+
+  private buildStreakRewardBizKey(
+    grantId: number,
+    ruleCode: string,
+    userId: number,
+  ) {
+    return `checkin:streak:grant:${grantId}:rule:${ruleCode}:user:${userId}`
+  }
+
+  private nextDate(date: string) {
+    return dayjs
+      .tz(date, 'YYYY-MM-DD', this.getAppTimeZone())
+      .add(1, 'day')
+      .format('YYYY-MM-DD')
+  }
+
+  private async getBoundRoundConfig(
+    progress: CheckInStreakProgressSelect,
+    fallback: CheckInStreakRoundConfigSelect,
+    tx: Db,
+  ) {
+    const bound = await tx.query.checkInStreakRoundConfig.findFirst({
+      where: { id: progress.roundConfigId },
+    })
+    return bound ?? fallback
+  }
+
+  private async listRoundScopedRecords(
+    userId: number,
+    roundStartedAt: string,
+    tx: Db,
+  ) {
+    return tx
+      .select()
+      .from(this.checkInRecordTable)
+      .where(
+        and(
+          eq(this.checkInRecordTable.userId, userId),
+          gte(this.checkInRecordTable.signDate, roundStartedAt),
+        ),
+      )
+      .orderBy(
+        asc(this.checkInRecordTable.signDate),
+        asc(this.checkInRecordTable.id),
+      )
+  }
+
+  private async resolveNextRoundConfig(
+    currentRound: CheckInStreakRoundConfigSelect,
+    roundDefinition: ReturnType<
+      CheckInExecutionService['parseStreakRoundDefinition']
+    >,
+    tx: Db,
+  ) {
+    if (
+      roundDefinition.nextRoundStrategy !==
+      CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT
+    ) {
+      return currentRound
+    }
+
+    if (!roundDefinition.nextRoundConfigId) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '连续奖励轮次缺少下一轮配置',
+      )
+    }
+
+    if (roundDefinition.nextRoundConfigId === currentRound.id) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '连续奖励轮次存在自引用下一轮配置',
+      )
+    }
+
+    const explicitNext = await tx.query.checkInStreakRoundConfig.findFirst({
+      where: { id: roundDefinition.nextRoundConfigId },
+    })
+    if (!explicitNext) {
+      throw new BusinessException(
+        BusinessErrorCode.STATE_CONFLICT,
+        '连续奖励轮次下一轮配置不存在',
+      )
+    }
+
+    return explicitNext
+  }
+
+  private async ensureRecordRewardSettlement(
+    record: {
+      id: number
+      userId: number
+      signDate: string | Date
+      resolvedRewardItems: unknown
+      rewardSettlementId?: number | null
+    },
+    tx?: Db,
+  ) {
     const existing = record.rewardSettlementId
       ? await this.getSettlementById(record.rewardSettlementId, tx)
       : null
@@ -1162,13 +920,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       return existing
     }
 
+    const config = await this.getRequiredConfig(tx ?? this.db)
     const settlement =
       await this.growthRewardSettlementService.ensureCheckInRecordRewardSettlement(
         {
           recordId: record.id,
           userId: record.userId,
-          planId: record.planId,
-          cycleId: record.cycleId,
+          configId: config.id,
           signDate: this.toDateOnlyValue(record.signDate),
           rewardItems: this.asArray(record.resolvedRewardItems) ?? null,
         },
@@ -1184,16 +942,18 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return settlement
   }
 
-  private async ensureGrantRewardSettlement(grant: {
-    id: number
-    userId: number
-    planId: number
-    cycleId: number
-    ruleCode: string
-    triggerSignDate: string | Date
-    rewardItems: unknown
-    rewardSettlementId?: number | null
-  }, tx?: Db) {
+  private async ensureGrantRewardSettlement(
+    grant: {
+      id: number
+      userId: number
+      roundConfigId: number
+      ruleCode: string
+      triggerSignDate: string | Date
+      rewardItems: unknown
+      rewardSettlementId?: number | null
+    },
+    tx?: Db,
+  ) {
     const existing = grant.rewardSettlementId
       ? await this.getSettlementById(grant.rewardSettlementId, tx)
       : null
@@ -1206,8 +966,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         {
           grantId: grant.id,
           userId: grant.userId,
-          planId: grant.planId,
-          cycleId: grant.cycleId,
+          roundConfigId: grant.roundConfigId,
           ruleCode: grant.ruleCode,
           triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
           rewardItems: this.asArray(grant.rewardItems) ?? null,
@@ -1228,59 +987,5 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return (tx ?? this.db).query.growthRewardSettlement.findFirst({
       where: { id },
     })
-  }
-
-  private hasRewardPayloadSnapshot(value: unknown) {
-    if (value === null || value === undefined) {
-      return false
-    }
-    const rewardItems = this.asArray(value)
-    if (rewardItems) {
-      return rewardItems.length > 0
-    }
-    return true
-  }
-
-  /** 把统一奖励资产类型映射到当前账本支持的资产枚举。 */
-  private resolveLedgerAssetType(assetType: GrowthRewardRuleAssetTypeEnum) {
-    if (
-      assetType !== GrowthRewardRuleAssetTypeEnum.POINTS
-      && assetType !== GrowthRewardRuleAssetTypeEnum.EXPERIENCE
-    ) {
-      throw new InternalServerErrorException(
-        `暂不支持的签到奖励资产类型：${assetType}`,
-      )
-    }
-
-    return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
-      ? GrowthAssetTypeEnum.POINTS
-      : GrowthAssetTypeEnum.EXPERIENCE
-  }
-
-  /** 构建签到奖励单项账本幂等键。 */
-  private buildRewardItemBizKey(
-    baseBizKey: string,
-    assetType: GrowthRewardRuleAssetTypeEnum,
-  ) {
-    return `${baseBizKey}:${
-      assetType === GrowthRewardRuleAssetTypeEnum.POINTS
-        ? 'POINTS'
-        : 'EXPERIENCE'
-    }`
-  }
-
-  /** 构建签到奖励单项账本备注。 */
-  private buildRewardItemRemark(assetType: GrowthRewardRuleAssetTypeEnum) {
-    return assetType === GrowthRewardRuleAssetTypeEnum.POINTS
-      ? '签到奖励（积分）'
-      : '签到奖励（经验）'
-  }
-
-  /** 只要本次有任一资产真实落账，就把奖励结果视为 APPLIED。 */
-  private resolveRewardResultType(results: GrowthLedgerApplyResult[]) {
-    if (results.some((result) => result.duplicated !== true)) {
-      return CheckInRewardResultTypeEnum.APPLIED
-    }
-    return CheckInRewardResultTypeEnum.IDEMPOTENT
   }
 }

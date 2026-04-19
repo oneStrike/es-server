@@ -8,40 +8,38 @@ import { CheckInStreakRewardRuleStatusEnum } from '../check-in.constant'
 
 class CheckInStreakRewardRuleFieldsDto {
   @StringProperty({
-    description: '规则编码。',
-    example: 'streak-7',
-    maxLength: 50,
+    description: '连续奖励规则编码。',
+    example: 'default-round-day-7',
   })
   ruleCode!: string
 
   @NumberProperty({
-    description: '连续签到阈值天数。',
+    description: '命中奖励所需的连续签到天数。',
     example: 7,
     min: 1,
   })
   streakDays!: number
 
   @ArrayProperty({
-    description: '连续奖励项列表。',
+    description: '连续奖励奖励项列表。',
     itemClass: GrowthRewardItemDto,
-    example: [{ assetType: 1, amount: 70 }],
   })
   rewardItems!: GrowthRewardItemDto[]
 
   @BooleanProperty({
-    description:
-      '是否允许重复领取；false=同周期同规则最多发放一次；true=命中阈值时可重复发放。',
+    description: '是否允许重复发放。',
     example: false,
-    default: false,
+    required: false,
   })
-  repeatable!: boolean
+  repeatable?: boolean
 
   @EnumProperty({
-    description: '规则状态（0=已停用；1=已启用）',
+    description: '规则状态（0=停用；1=启用）。',
     example: CheckInStreakRewardRuleStatusEnum.ENABLED,
     enum: CheckInStreakRewardRuleStatusEnum,
+    required: false,
   })
-  status!: CheckInStreakRewardRuleStatusEnum
+  status?: CheckInStreakRewardRuleStatusEnum
 }
 
 export class CreateCheckInStreakRewardRuleDto extends CheckInStreakRewardRuleFieldsDto {}

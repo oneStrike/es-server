@@ -1,11 +1,10 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import {
-  CheckInPlanDetailResponseDto,
-  CheckInPlanPageItemDto,
-  CreateCheckInPlanDto,
-  QueryCheckInPlanDto,
-  UpdateCheckInPlanDto,
-  UpdateCheckInPlanStatusDto,
+  CheckInConfigDetailResponseDto,
+  CheckInStreakRoundDetailResponseDto,
+  UpdateCheckInConfigDto,
+  UpdateCheckInEnabledDto,
+  UpdateCheckInStreakRoundDto,
 } from '@libs/growth/check-in/dto/check-in-definition.dto'
 import {
   RepairCheckInRewardDto,
@@ -17,78 +16,77 @@ import {
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc } from '@libs/platform/decorators/api-doc.decorator'
 import { CurrentUser } from '@libs/platform/decorators/current-user.decorator'
-import { IdDto } from '@libs/platform/dto/base.dto'
 import { AuditActionTypeEnum } from '@libs/platform/modules/audit/audit-action.constant'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiAuditDoc } from '../../common/decorators/api-audit-doc.decorator'
 
-@ApiTags('签到管理/签到计划')
+@ApiTags('签到管理')
 @Controller('admin/check-in')
 export class CheckInController {
   constructor(private readonly checkInService: CheckInService) {}
 
-  @Get('plan/page')
-  @ApiPageDoc({
-    summary: '分页查询签到计划',
-    model: CheckInPlanPageItemDto,
-  })
-  async getPlanPage(@Query() query: QueryCheckInPlanDto) {
-    return this.checkInService.getPlanPage(query)
-  }
-
-  @Get('plan/detail')
+  @Get('config/detail')
   @ApiDoc({
-    summary: '查询签到计划详情',
-    model: CheckInPlanDetailResponseDto,
+    summary: '查询签到配置详情',
+    model: CheckInConfigDetailResponseDto,
   })
-  async getPlanDetail(@Query() query: IdDto) {
-    return this.checkInService.getPlanDetail(query)
+  async getConfigDetail() {
+    return this.checkInService.getConfigDetail()
   }
 
-  @Post('plan/create')
+  @Post('config/update')
   @ApiAuditDoc({
-    summary: '创建签到计划',
-    model: IdDto,
-    audit: {
-      actionType: AuditActionTypeEnum.CREATE,
-    },
-  })
-  async createPlan(
-    @Body() body: CreateCheckInPlanDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.createPlan(body, userId)
-  }
-
-  @Post('plan/update')
-  @ApiAuditDoc({
-    summary: '更新签到计划',
+    summary: '更新签到配置',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updatePlan(
-    @Body() body: UpdateCheckInPlanDto,
+  async updateConfig(
+    @Body() body: UpdateCheckInConfigDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.checkInService.updatePlan(body, userId)
+    return this.checkInService.updateConfig(body, userId)
   }
 
-  @Post('plan/update-status')
+  @Post('config/update-enabled')
   @ApiAuditDoc({
-    summary: '更新签到计划状态',
+    summary: '更新签到开关',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async updatePlanStatus(
-    @Body() body: UpdateCheckInPlanStatusDto,
+  async updateEnabled(
+    @Body() body: UpdateCheckInEnabledDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.checkInService.updatePlanStatus(body, userId)
+    return this.checkInService.updateEnabled(body, userId)
+  }
+
+  @Get('streak-round/detail')
+  @ApiDoc({
+    summary: '查询当前连续奖励轮次详情',
+    model: CheckInStreakRoundDetailResponseDto,
+  })
+  async getRoundDetail() {
+    return this.checkInService.getRoundDetail()
+  }
+
+  @Post('streak-round/update')
+  @ApiAuditDoc({
+    summary: '更新连续奖励轮次配置',
+    model: Boolean,
+    audit: {
+      actionType: AuditActionTypeEnum.UPDATE,
+    },
+  })
+  async updateRound(
+    @Body() body: UpdateCheckInStreakRoundDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.checkInService.updateRound(body, userId)
   }
 
   @Get('reconciliation/page')

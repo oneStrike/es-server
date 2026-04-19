@@ -1,20 +1,24 @@
-import type { CheckInCycleInsert, CheckInPlan, CheckInRecordInsert, CheckInStreakRewardGrantInsert } from '@db/schema'
+import type {
+  CheckInMakeupAccountInsert,
+  CheckInMakeupFactInsert,
+  CheckInRecordInsert,
+  CheckInStreakProgressInsert,
+  CheckInStreakRewardGrantInsert,
+  CheckInStreakRoundConfigInsert,
+} from '@db/schema'
 import type { GrowthRewardItems } from '../reward-rule/reward-item.type'
 
 import type {
-  CheckInCycleTypeEnum,
+  CheckInMakeupPeriodTypeEnum,
+  CheckInMakeupSourceTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
+  CheckInStreakNextRoundStrategyEnum,
   CheckInStreakRewardRuleStatusEnum,
+  CheckInStreakRoundStatusEnum,
 } from './check-in.constant'
 
-/**
- * 签到奖励项列表。
- *
- * 当前正式合同统一为 `rewardItems[]`；当前实现仅支持积分/经验资产，
- * 但字段结构已与统一奖励中心保持一致。
- */
-/** 稳定领域类型 `CheckInRewardItems`。仅供内部领域/服务链路复用，避免重复定义。 */
+/** 稳定领域类型 `CheckInRewardItems`。 */
 export type CheckInRewardItems = GrowthRewardItems
 
 /** 具体日期奖励规则。 */
@@ -31,7 +35,7 @@ export interface CheckInPatternRewardRuleView {
   rewardItems: CheckInRewardItems
 }
 
-/** 连续签到奖励规则。 */
+/** 连续奖励规则。 */
 export interface CheckInStreakRewardRuleView {
   ruleCode: string
   streakDays: number
@@ -40,77 +44,83 @@ export interface CheckInStreakRewardRuleView {
   status: CheckInStreakRewardRuleStatusEnum
 }
 
-/**
- * 单计划奖励定义。
- *
- * 当前计划只维护一份生效中的奖励定义；一旦产生签到事实，定义不再允许修改。
- */
-/** 稳定领域类型 `CheckInRewardDefinition`。仅供内部领域/服务链路复用，避免重复定义。 */
+/** 全局签到奖励定义。 */
 export interface CheckInRewardDefinition {
   baseRewardItems: CheckInRewardItems | null
   dateRewardRules: CheckInDateRewardRuleView[]
   patternRewardRules: CheckInPatternRewardRuleView[]
-  streakRewardRules: CheckInStreakRewardRuleView[]
 }
 
-/** 当前周期窗口字段。 */
-export interface CheckInCycleWindowView {
-  cycleKey: string
-  cycleStartDate: string
-  cycleEndDate: string
+/** 连续奖励轮次定义。 */
+export interface CheckInStreakRoundDefinition {
+  roundCode: string
+  version: number
+  status: CheckInStreakRoundStatusEnum
+  rewardRules: CheckInStreakRewardRuleView[]
+  nextRoundStrategy: CheckInStreakNextRoundStrategyEnum
+  nextRoundConfigId: number | null
 }
 
-/** 当前周期聚合进度字段。 */
-export interface CheckInCycleProgressView {
-  signedCount: number
-  makeupUsedCount: number
+/** 当前补签周期窗口。 */
+export interface CheckInMakeupWindowView {
+  periodType: CheckInMakeupPeriodTypeEnum
+  periodKey: string
+  periodStartDate: string
+  periodEndDate: string
+}
+
+/** 当前补签账户读模型。 */
+export interface CheckInMakeupAccountView extends CheckInMakeupWindowView {
+  periodicGranted: number
+  periodicUsed: number
+  periodicRemaining: number
+  eventAvailable: number
+}
+
+/** 当前连续奖励进度读模型。 */
+export interface CheckInStreakProgressView {
+  roundConfigId: number
+  roundCode: string
+  roundIteration: number
   currentStreak: number
+  roundStartedAt?: string
   lastSignedDate?: string
 }
 
-/** App 摘要使用的周期视图。 */
-export interface CheckInSummaryCycleView
-  extends CheckInCycleWindowView, CheckInCycleProgressView {
-  id?: number
-  remainingMakeupCount: number
-}
-
-/** 周期边界计算结果。 */
-export interface CheckInCycleFrame {
-  cycleKey: string
-  cycleStartDate: string
-  cycleEndDate: string
-}
-
-/** 周期聚合重算结果。 */
-export interface CheckInCycleAggregation {
-  signedCount: number
-  makeupUsedCount: number
-  currentStreak: number
-  lastSignedDate?: string
-  streakByDate: Record<string, number>
-}
-
-/** 周期创建入参。 */
-export type CreateCheckInCycleInput = Pick<
-  CheckInCycleInsert,
+/** 补签事实写入入参。 */
+export type CreateCheckInMakeupFactInput = Pick<
+  CheckInMakeupFactInsert,
   | 'userId'
-  | 'planId'
-  | 'cycleKey'
-  | 'cycleStartDate'
-  | 'cycleEndDate'
-  | 'signedCount'
-  | 'makeupUsedCount'
-  | 'currentStreak'
-  | 'lastSignedDate'
+  | 'factType'
+  | 'sourceType'
+  | 'amount'
+  | 'consumedAmount'
+  | 'effectiveAt'
+  | 'expiresAt'
+  | 'periodType'
+  | 'periodKey'
+  | 'sourceRef'
+  | 'bizKey'
+  | 'context'
 >
 
-/** 记录写入入参。 */
+/** 补签账户写入入参。 */
+export type CreateCheckInMakeupAccountInput = Pick<
+  CheckInMakeupAccountInsert,
+  | 'userId'
+  | 'periodType'
+  | 'periodKey'
+  | 'periodicGranted'
+  | 'periodicUsed'
+  | 'eventAvailable'
+  | 'version'
+  | 'lastSyncedFactId'
+>
+
+/** 签到事实写入入参。 */
 export type CreateCheckInRecordInput = Pick<
   CheckInRecordInsert,
   | 'userId'
-  | 'planId'
-  | 'cycleId'
   | 'signDate'
   | 'recordType'
   | 'resolvedRewardSourceType'
@@ -126,8 +136,8 @@ export type CreateCheckInRecordInput = Pick<
 export type CreateCheckInGrantInput = Pick<
   CheckInStreakRewardGrantInsert,
   | 'userId'
-  | 'planId'
-  | 'cycleId'
+  | 'roundConfigId'
+  | 'roundIteration'
   | 'triggerSignDate'
   | 'rewardSettlementId'
   | 'bizKey'
@@ -138,6 +148,30 @@ export type CreateCheckInGrantInput = Pick<
   | 'context'
 >
 
+/** 连续奖励进度写入入参。 */
+export type CreateCheckInStreakProgressInput = Pick<
+  CheckInStreakProgressInsert,
+  | 'userId'
+  | 'roundConfigId'
+  | 'roundIteration'
+  | 'currentStreak'
+  | 'roundStartedAt'
+  | 'lastSignedDate'
+  | 'version'
+>
+
+/** 连续奖励轮次配置写入入参。 */
+export type CreateCheckInStreakRoundConfigInput = Pick<
+  CheckInStreakRoundConfigInsert,
+  | 'roundCode'
+  | 'version'
+  | 'status'
+  | 'rewardRules'
+  | 'nextRoundStrategy'
+  | 'nextRoundConfigId'
+  | 'updatedById'
+>
+
 /** 当前签到日命中的基础奖励解析结果。 */
 export interface CheckInResolvedReward {
   resolvedRewardSourceType: CheckInRewardSourceTypeEnum | null
@@ -145,14 +179,7 @@ export interface CheckInResolvedReward {
   resolvedRewardItems: CheckInRewardItems | null
 }
 
-/** 当前周期读视图。 */
-export interface CheckInVirtualCycleView
-  extends CheckInCycleWindowView, CheckInCycleProgressView {
-  id?: number
-  rewardDefinition: CheckInRewardDefinition
-}
-
-/** 发放事实中冻结的连续奖励规则快照。 */
+/** 连续奖励发放事实中的规则快照。 */
 export interface CheckInGrantRuleSnapshot {
   ruleCode: string
   streakDays: number
@@ -160,17 +187,21 @@ export interface CheckInGrantRuleSnapshot {
   repeatable: boolean
 }
 
-/** 计划在摘要中暴露的稳定字段。 */
-export type CheckInPlanSummaryView = Pick<
-  CheckInPlan,
-  | 'id'
-  | 'planCode'
-  | 'planName'
-  | 'status'
-  | 'startDate'
-  | 'endDate'
-  | 'allowMakeupCountPerCycle'
-> & {
-  cycleType: CheckInCycleTypeEnum
-  baseRewardItems: CheckInRewardItems | null
+/** 重算连续签到聚合结果。 */
+export interface CheckInStreakAggregation {
+  currentStreak: number
+  lastSignedDate?: string
+  streakByDate: Record<string, number>
+}
+
+/** 补签可消费额度结果。 */
+export interface CheckInAvailableMakeupBalance {
+  periodicRemaining: number
+  eventAvailable: number
+}
+
+/** 补签消费来源。 */
+export interface CheckInMakeupConsumePlanItem {
+  sourceType: CheckInMakeupSourceTypeEnum
+  amount: number
 }

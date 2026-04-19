@@ -1,214 +1,225 @@
 import type { DrizzleService } from '@db/core'
+import { checkInRecord } from '@db/schema'
+import { inspect } from 'node:util'
+import { BusinessErrorCode } from '@libs/platform/constant'
 import { CheckInExecutionService } from './check-in-execution.service'
+import {
+  CheckInStreakNextRoundStrategyEnum,
+  CheckInStreakRoundStatusEnum,
+} from './check-in.constant'
 
-function createDrizzleStub(params: {
-  record: {
+function createDrizzleStub(params?: {
+  record?: {
     id: number
     userId: number
-    planId: number
-    cycleId: number
     signDate: string
     resolvedRewardItems: unknown
     rewardSettlementId?: number | null
   }
-  persistedRecord?: {
-    id: number
-    userId?: number
-    planId?: number
-    cycleId?: number
-    signDate?: string
-    resolvedRewardItems?: unknown
-    rewardSettlementId?: number | null
-  }
 }) {
-  const updateCheckInRecord = jest.fn()
-  const txUpdateCheckInRecord = jest.fn()
-  const updateChain = {
-    set: jest.fn().mockReturnThis(),
-    where: jest.fn().mockResolvedValue({ rowCount: 1 }),
-  }
-  updateCheckInRecord.mockReturnValue(updateChain)
-  txUpdateCheckInRecord.mockReturnValue(updateChain)
-  const selectChain = {
-    from: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockResolvedValue([params.record]),
+  const record = params?.record ?? {
+    id: 5,
+    userId: 7,
+    signDate: '2026-04-17',
+    resolvedRewardItems: null,
+    rewardSettlementId: null,
   }
 
   return {
-    withTransaction: async <T>(callback: (tx: unknown) => Promise<T>) =>
+    withTransaction: async <T>(callback: (tx: any) => Promise<T>) =>
       callback({
-        select: jest.fn().mockReturnValue(selectChain),
-        update: txUpdateCheckInRecord,
         query: {
+          checkInRecord: {
+            findFirst: jest.fn().mockResolvedValue(record),
+          },
+          checkInStreakRewardGrant: {
+            findFirst: jest.fn().mockResolvedValue(null),
+          },
           growthRewardSettlement: {
             findFirst: jest.fn().mockResolvedValue(null),
           },
+          checkInConfig: {
+            findFirst: jest.fn().mockResolvedValue({ id: 1 }),
+          },
         },
+        update: jest.fn().mockReturnValue({
+          set: jest.fn().mockReturnThis(),
+          where: jest.fn().mockResolvedValue({ rowCount: 1 }),
+          returning: jest.fn().mockResolvedValue([]),
+        }),
       }),
     withErrorHandling: async <T>(callback: () => Promise<T> | T) => callback(),
     db: {
-      update: updateCheckInRecord,
+      update: jest.fn().mockReturnValue({
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue({ rowCount: 1 }),
+      }),
       query: {
         checkInRecord: {
-          findFirst: jest.fn().mockResolvedValue(
-            params.persistedRecord ?? {
-              id: params.record.id,
-              userId: params.record.userId,
-              planId: params.record.planId,
-              cycleId: params.record.cycleId,
-              signDate: params.record.signDate,
-              resolvedRewardItems: params.record.resolvedRewardItems,
-              rewardSettlementId: params.record.rewardSettlementId ?? null,
-            },
-          ),
+          findFirst: jest.fn().mockResolvedValue(record),
+        },
+        checkInStreakRewardGrant: {
+          findFirst: jest.fn().mockResolvedValue(null),
         },
         growthRewardSettlement: {
           findFirst: jest.fn().mockResolvedValue(null),
         },
+        checkInConfig: {
+          findFirst: jest.fn().mockResolvedValue({ id: 1 }),
+        },
       },
-    },
-    __mocks: {
-      updateCheckInRecord,
-      txUpdateCheckInRecord,
     },
     schema: {
-      checkInPlan: {},
-      checkInCycle: {},
-      checkInRecord: {
-        id: 'id',
-        rewardSettlementId: 'rewardSettlementId',
-      },
+      checkInConfig: { id: 'id' },
+      checkInMakeupFact: {},
+      checkInMakeupAccount: {},
+      checkInRecord: { id: 'id', rewardSettlementId: 'rewardSettlementId' },
+      checkInStreakRoundConfig: { id: 'id' },
+      checkInStreakProgress: { id: 'id' },
       checkInStreakRewardGrant: {
         id: 'id',
         rewardSettlementId: 'rewardSettlementId',
       },
-      growthRewardSettlement: {
-        id: 'id',
-      },
+      growthRewardSettlement: { id: 'id' },
+      growthLedgerRecord: {},
+      growthAuditLog: {},
+      userAssetBalance: {},
+      appUser: {},
+      userLevelRule: {},
+      growthRewardRule: {},
+      growthRuleUsageCounter: {},
     },
-  } as unknown as DrizzleService & {
-    __mocks: {
-      updateCheckInRecord: jest.Mock
-      txUpdateCheckInRecord: jest.Mock
-    }
-  }
+  } as unknown as DrizzleService
 }
 
-describe('checkInExecutionService reward settlement behavior', () => {
-  it('uses the same transaction for settlement ensure and success sync', async () => {
-    const txUpdateCheckInRecord = jest.fn().mockReturnValue({
-      set: jest.fn().mockReturnThis(),
-      where: jest.fn().mockResolvedValue({ rowCount: 1 }),
+function createDuplicateConflictDrizzleStub(signDate: string) {
+  const checkInRecordFindFirst = jest
+    .fn()
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce({
+      id: 8,
+      userId: 7,
+      signDate,
     })
-    const tx = {
-      select: jest.fn().mockReturnValue({
-        from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([
-          {
-            id: 5,
-            userId: 7,
-            planId: 3,
-            cycleId: 8,
-            signDate: '2026-04-17',
-            resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
-            rewardSettlementId: null,
-          },
-        ]),
-      }),
-      update: txUpdateCheckInRecord,
-      query: {
-        growthRewardSettlement: {
-          findFirst: jest.fn().mockResolvedValue(null),
-        },
-      },
-    }
-    const drizzle = {
-      withTransaction: async <T>(callback: (runner: unknown) => Promise<T>) =>
-        callback(tx),
-      withErrorHandling: async <T>(callback: () => Promise<T> | T) => callback(),
-      db: {
-        update: jest.fn(),
+  const insertReturning = jest.fn().mockResolvedValue([])
+  const onConflictDoNothing = jest.fn().mockReturnValue({
+    returning: insertReturning,
+  })
+  const insertValues = jest.fn().mockReturnValue({
+    onConflictDoNothing,
+  })
+
+  return {
+    withTransaction: async <T>(callback: (tx: any) => Promise<T>) =>
+      callback({
         query: {
           checkInRecord: {
-            findFirst: jest.fn(),
-          },
-          growthRewardSettlement: {
-            findFirst: jest.fn().mockResolvedValue(null),
+            findFirst: checkInRecordFindFirst,
           },
         },
-      },
-      schema: {
-        checkInPlan: {},
-        checkInCycle: {},
-        checkInRecord: {
-          id: 'id',
-          rewardSettlementId: 'rewardSettlementId',
-        },
-        checkInStreakRewardGrant: {
-          id: 'id',
-          rewardSettlementId: 'rewardSettlementId',
-        },
-        growthRewardSettlement: {
-          id: 'id',
-        },
-      },
-    } as unknown as DrizzleService
-    const ensureCheckInRecordRewardSettlement = jest
-      .fn()
-      .mockResolvedValue({ id: 55 })
-    const syncManualSettlementResult = jest.fn().mockResolvedValue(undefined)
-    const service = new CheckInExecutionService(
-      drizzle,
-      {
-        applyDelta: jest.fn().mockResolvedValue({
-          success: true,
-          duplicated: false,
-          recordId: 11,
+        insert: jest.fn().mockReturnValue({
+          values: insertValues,
         }),
-      } as never,
-      {
-        ensureCheckInRecordRewardSettlement,
-        syncManualSettlementResult,
-      } as never,
+      }),
+    withErrorHandling: async <T>(callback: () => Promise<T> | T) => callback(),
+    db: {},
+    schema: {
+      checkInConfig: {},
+      checkInMakeupFact: {},
+      checkInMakeupAccount: {},
+      checkInRecord: {
+        userId: 'userId',
+        signDate: 'signDate',
+      },
+      checkInStreakRoundConfig: {},
+      checkInStreakProgress: {},
+      checkInStreakRewardGrant: {},
+      growthRewardSettlement: {},
+    },
+  } as unknown as DrizzleService
+}
+
+function createDuplicateConflictService(drizzle: DrizzleService) {
+  const service = new CheckInExecutionService(drizzle, {} as never, {} as never)
+
+  jest.spyOn(service as any, 'getEnabledConfig').mockResolvedValue({
+    makeupPeriodType: 1,
+  })
+  jest.spyOn(service as any, 'parseRewardDefinition').mockReturnValue({
+    baseRewardItems: null,
+    dateRewardRules: [],
+    patternRewardRules: [],
+  })
+  jest.spyOn(service as any, 'ensureUserExists').mockResolvedValue(undefined)
+  jest.spyOn(service as any, 'ensureCurrentMakeupAccount').mockResolvedValue({
+    id: 1,
+    userId: 7,
+    periodType: 1,
+    periodKey: 'week-2026-04-13',
+    periodicGranted: 2,
+    periodicUsed: 0,
+    eventAvailable: 0,
+    version: 0,
+    lastSyncedFactId: null,
+  })
+  jest.spyOn(service as any, 'resolveRewardForDate').mockReturnValue({
+    resolvedRewardSourceType: null,
+    resolvedRewardRuleKey: null,
+    resolvedRewardItems: null,
+  })
+
+  return service
+}
+
+describe('checkInExecutionService', () => {
+  it('converts duplicate sign conflicts into business errors', async () => {
+    const service = createDuplicateConflictService(
+      createDuplicateConflictDrizzleStub(new Date().toISOString().slice(0, 10)),
     )
 
-    const success = await (service as any).settleRecordReward(5, {
-      source: 'test',
+    await expect(service.signToday(7)).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '今日已签到，请勿重复操作',
+    })
+  })
+
+  it('converts duplicate makeup conflicts into business errors', async () => {
+    const makeupDate = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10)
+    const service = createDuplicateConflictService(
+      createDuplicateConflictDrizzleStub(makeupDate),
+    )
+    jest.spyOn(service as any, 'assertMakeupAllowed').mockReturnValue(undefined)
+    jest.spyOn(service as any, 'buildMakeupConsumePlan').mockReturnValue([
+      {
+        sourceType: 1,
+        amount: 1,
+      },
+    ])
+    jest.spyOn(service as any, 'consumeMakeupAllowance').mockResolvedValue({
+      id: 1,
+      userId: 7,
+      periodType: 1,
+      periodKey: 'week-2026-04-13',
+      periodicGranted: 2,
+      periodicUsed: 1,
+      eventAvailable: 0,
+      version: 1,
+      lastSyncedFactId: 1,
     })
 
-    expect(success).toBe(true)
-    expect(ensureCheckInRecordRewardSettlement).toHaveBeenCalledWith(
-      expect.any(Object),
-      tx,
-    )
-    expect(syncManualSettlementResult).toHaveBeenCalledWith(
-      55,
-      expect.objectContaining({
-        success: true,
-      }),
-      {
-        isRetry: undefined,
-        tx,
-      },
-    )
+    await expect(
+      service.makeup({ signDate: makeupDate }, 7),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.OPERATION_NOT_ALLOWED,
+      message: '该日期已签到，请勿重复补签',
+    })
   })
 
   it('marks record reward repair as retry', async () => {
-    const drizzle = createDrizzleStub({
-      record: {
-        id: 3,
-        userId: 7,
-        planId: 3,
-        cycleId: 8,
-        signDate: '2026-04-17',
-        resolvedRewardItems: null,
-        rewardSettlementId: null,
-      },
-    })
     const service = new CheckInExecutionService(
-      drizzle,
+      createDrizzleStub(),
       {} as never,
       {} as never,
     )
@@ -216,38 +227,20 @@ describe('checkInExecutionService reward settlement behavior', () => {
       .spyOn(service as any, 'settleRecordReward')
       .mockResolvedValue(true)
 
-    await service.repairReward(
-      {
-        targetType: 1,
-        recordId: 3,
-      } as never,
-      9,
-    )
+    await service.repairReward({ targetType: 1, recordId: 3 } as never, 9)
 
     expect(settleRecordRewardSpy).toHaveBeenCalledWith(
       3,
       expect.objectContaining({
         actorUserId: 9,
-        source: 'admin_repair',
         isRetry: true,
       }),
     )
   })
 
   it('marks streak reward repair as retry', async () => {
-    const drizzle = createDrizzleStub({
-      record: {
-        id: 4,
-        userId: 7,
-        planId: 3,
-        cycleId: 8,
-        signDate: '2026-04-17',
-        resolvedRewardItems: null,
-        rewardSettlementId: null,
-      },
-    })
     const service = new CheckInExecutionService(
-      drizzle,
+      createDrizzleStub(),
       {} as never,
       {} as never,
     )
@@ -255,191 +248,175 @@ describe('checkInExecutionService reward settlement behavior', () => {
       .spyOn(service as any, 'settleGrantReward')
       .mockResolvedValue(true)
 
-    await service.repairReward(
-      {
-        targetType: 2,
-        grantId: 4,
-      } as never,
-      9,
-    )
+    await service.repairReward({ targetType: 2, grantId: 4 } as never, 9)
 
     expect(settleGrantRewardSpy).toHaveBeenCalledWith(
       4,
       expect.objectContaining({
         actorUserId: 9,
-        source: 'admin_repair',
         isRetry: true,
       }),
     )
   })
 
-  it('rejects manual repair when record reward settlement is terminal', async () => {
-    const drizzle = createDrizzleStub({
-      record: {
-        id: 6,
-        userId: 7,
-        planId: 3,
-        cycleId: 8,
-        signDate: '2026-04-17',
-        resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
-        rewardSettlementId: null,
-      },
-    })
-    const service = new CheckInExecutionService(
-      drizzle,
-      {} as never,
-      {
-        ensureCheckInRecordRewardSettlement: jest
-          .fn()
-          .mockResolvedValue({ id: 55 }),
-        syncManualSettlementResult: jest.fn(),
-      } as never,
-    )
-    jest
-      .spyOn(service as any, 'getSettlementById')
-      .mockResolvedValue({
-        id: 55,
-        settlementStatus: 2,
-      })
-
-    await expect(
-      service.repairReward(
-        {
-          targetType: 1,
-          recordId: 6,
-        } as never,
-        9,
-      ),
-    ).rejects.toThrow('签到奖励已进入终态失败，无需重试')
-  })
-
-  it('rejects manual repair when streak reward settlement is terminal', async () => {
-    const drizzle = createDrizzleStub({
-      record: {
-        id: 7,
-        userId: 7,
-        planId: 3,
-        cycleId: 8,
-        signDate: '2026-04-17',
-        resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
-        rewardSettlementId: null,
-        triggerSignDate: '2026-04-17',
-        rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
-        ruleCode: 'streak-7',
-      } as never,
-    })
-    const service = new CheckInExecutionService(
-      drizzle,
-      {} as never,
-      {
-        ensureCheckInStreakRewardSettlement: jest
-          .fn()
-          .mockResolvedValue({ id: 66 }),
-        syncManualSettlementResult: jest.fn(),
-      } as never,
-    )
-    jest
-      .spyOn(service as any, 'getSettlementById')
-      .mockResolvedValue({
-        id: 66,
-        settlementStatus: 2,
-      })
-
-    await expect(
-      service.repairReward(
-        {
-          targetType: 2,
-          grantId: 7,
-        } as never,
-        9,
-      ),
-    ).rejects.toThrow('签到奖励已进入终态失败，无需重试')
-  })
-
   it('does not create settlement when resolved reward items are empty', async () => {
-    const drizzle = createDrizzleStub({
-      record: {
-        id: 1,
-        userId: 7,
-        planId: 3,
-        cycleId: 8,
-        signDate: '2026-04-17',
-        resolvedRewardItems: null,
-        rewardSettlementId: null,
-      },
-    })
     const ensureCheckInRecordRewardSettlement = jest.fn()
     const syncManualSettlementResult = jest.fn()
-    const settlementService = {
-      ensureCheckInRecordRewardSettlement,
-      syncManualSettlementResult,
-    }
     const service = new CheckInExecutionService(
-      drizzle,
+      createDrizzleStub(),
       {} as never,
-      settlementService as never,
+      {
+        ensureCheckInRecordRewardSettlement,
+        syncManualSettlementResult,
+      } as never,
     )
 
-    const success = await (service as any).settleRecordReward(1, {
-      source: 'test',
-    })
+    const success = await (service as any).settleRecordReward(5, {})
 
     expect(success).toBe(true)
-    expect(
-      ensureCheckInRecordRewardSettlement,
-    ).not.toHaveBeenCalled()
+    expect(ensureCheckInRecordRewardSettlement).not.toHaveBeenCalled()
     expect(syncManualSettlementResult).not.toHaveBeenCalled()
-    expect(drizzle.__mocks.updateCheckInRecord).not.toHaveBeenCalled()
   })
 
-  it('keeps durable failure when reward payload is non-empty but invalid', async () => {
-    const drizzle = createDrizzleStub({
-      record: {
-        id: 2,
-        userId: 7,
-        planId: 3,
-        cycleId: 8,
-        signDate: '2026-04-17',
-        resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 0 }],
-        rewardSettlementId: null,
+  it('returns an archived successor for archived-bound progress', async () => {
+    const service = new CheckInExecutionService(
+      createDrizzleStub(),
+      {} as never,
+      {} as never,
+    )
+
+    const nextRound = await (service as any).resolveNextRoundConfig(
+      {
+        id: 11,
       },
-      persistedRecord: {
-        id: 2,
-        userId: 7,
-        planId: 3,
-        cycleId: 8,
-        signDate: '2026-04-17',
-        resolvedRewardItems: [{ assetType: 1, assetKey: '', amount: 0 }],
-        rewardSettlementId: null,
+      {
+        nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
+        nextRoundConfigId: 12,
       },
+      {
+        query: {
+          checkInStreakRoundConfig: {
+            findFirst: jest.fn().mockResolvedValue({
+              id: 12,
+              status: CheckInStreakRoundStatusEnum.ARCHIVED,
+            }),
+          },
+        },
+      },
+    )
+
+    expect(nextRound).toMatchObject({
+      id: 12,
+      status: CheckInStreakRoundStatusEnum.ARCHIVED,
     })
-    const ensureCheckInRecordRewardSettlement = jest
-      .fn()
-      .mockResolvedValue({ id: 55 })
-    const syncManualSettlementResult = jest.fn().mockResolvedValue(undefined)
-    const settlementService = {
-      ensureCheckInRecordRewardSettlement,
-      syncManualSettlementResult,
-    }
+  })
+
+  it('raises state conflict when explicit-next is missing its target id', async () => {
+    const service = new CheckInExecutionService(
+      createDrizzleStub(),
+      {} as never,
+      {} as never,
+    )
+
+    await expect(
+      (service as any).resolveNextRoundConfig(
+        {
+          id: 11,
+        },
+        {
+          nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
+          nextRoundConfigId: null,
+        },
+        { query: { checkInStreakRoundConfig: { findFirst: jest.fn() } } },
+      ),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.STATE_CONFLICT,
+      message: '连续奖励轮次缺少下一轮配置',
+    })
+  })
+
+  it('raises state conflict when explicit-next points to itself', async () => {
+    const service = new CheckInExecutionService(
+      createDrizzleStub(),
+      {} as never,
+      {} as never,
+    )
+
+    await expect(
+      (service as any).resolveNextRoundConfig(
+        {
+          id: 11,
+        },
+        {
+          nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
+          nextRoundConfigId: 11,
+        },
+        { query: { checkInStreakRoundConfig: { findFirst: jest.fn() } } },
+      ),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.STATE_CONFLICT,
+      message: '连续奖励轮次存在自引用下一轮配置',
+    })
+  })
+
+  it('raises state conflict when explicit-next target does not exist', async () => {
+    const service = new CheckInExecutionService(
+      createDrizzleStub(),
+      {} as never,
+      {} as never,
+    )
+
+    await expect(
+      (service as any).resolveNextRoundConfig(
+        {
+          id: 11,
+        },
+        {
+          nextRoundStrategy: CheckInStreakNextRoundStrategyEnum.EXPLICIT_NEXT,
+          nextRoundConfigId: 12,
+        },
+        {
+          query: {
+            checkInStreakRoundConfig: {
+              findFirst: jest.fn().mockResolvedValue(null),
+            },
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: BusinessErrorCode.STATE_CONFLICT,
+      message: '连续奖励轮次下一轮配置不存在',
+    })
+  })
+
+  it('builds the round-scoped record query with a signDate lower bound', async () => {
+    const drizzle = createDrizzleStub()
+    ;(drizzle as { schema: Record<string, unknown> }).schema.checkInRecord =
+      checkInRecord
     const service = new CheckInExecutionService(
       drizzle,
       {} as never,
-      settlementService as never,
+      {} as never,
     )
-
-    const success = await (service as any).settleRecordReward(2, {
-      source: 'test',
-    })
-
-    expect(success).toBe(false)
-    expect(ensureCheckInRecordRewardSettlement).toHaveBeenCalledTimes(2)
-    expect(syncManualSettlementResult).toHaveBeenCalledTimes(1)
-    expect(syncManualSettlementResult).toHaveBeenCalledWith(
-      55,
-      expect.objectContaining({
-        success: false,
+    const chain = {
+      where: jest.fn(),
+      orderBy: jest.fn().mockResolvedValue([]),
+    }
+    chain.where.mockReturnValue(chain)
+    const tx = {
+      select: jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue(chain),
       }),
-      { isRetry: undefined },
-    )
+    }
+
+    await (service as any).listRoundScopedRecords(7, '2026-04-10', tx)
+
+    const whereArg = chain.where.mock.calls[0]?.[0]
+    const inspectedWhere = inspect(whereArg, { depth: 10 })
+
+    expect(inspectedWhere).toContain("name: 'userId'")
+    expect(inspectedWhere).toContain("name: 'signDate'")
+    expect(inspectedWhere).toContain("value: '2026-04-10'")
+    expect(inspectedWhere).toContain("' >= '")
   })
 })

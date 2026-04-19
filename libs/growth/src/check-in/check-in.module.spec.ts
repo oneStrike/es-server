@@ -4,15 +4,22 @@ import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.se
 import { Module } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { GrowthRewardSettlementService } from '../growth-reward/growth-reward-settlement.service'
+import { CheckInDefinitionService } from './check-in-definition.service'
 import { CheckInExecutionService } from './check-in-execution.service'
+import { CheckInRuntimeService } from './check-in-runtime.service'
+import { CheckInService } from './check-in.service'
 
 function createDrizzleStub() {
   return {
     db: {},
+    query: {},
     schema: {
-      checkInPlan: {},
-      checkInCycle: {},
+      checkInConfig: {},
+      checkInMakeupFact: {},
+      checkInMakeupAccount: {},
       checkInRecord: {},
+      checkInStreakRoundConfig: {},
+      checkInStreakProgress: {},
       checkInStreakRewardGrant: {},
       growthRewardSettlement: {},
       growthLedgerRecord: {},
@@ -21,9 +28,11 @@ function createDrizzleStub() {
       appUser: {},
       userLevelRule: {},
       growthRewardRule: {},
+      growthRuleUsageCounter: {},
     },
     ext: {},
     buildPage: jest.fn(),
+    withErrorHandling: async <T>(callback: () => Promise<T> | T) => callback(),
   } as unknown as DrizzleService
 }
 
@@ -39,12 +48,15 @@ function createDrizzleStub() {
 })
 class SettlementStorageTestModule {}
 
-describe('checkInExecutionService dependency graph', () => {
+describe('checkIn module dependency graph', () => {
   it('compiles when settlement storage is supplied by module imports', async () => {
     const moduleRef = Test.createTestingModule({
       imports: [SettlementStorageTestModule],
       providers: [
+        CheckInDefinitionService,
         CheckInExecutionService,
+        CheckInRuntimeService,
+        CheckInService,
         {
           provide: GrowthLedgerService,
           useValue: {},

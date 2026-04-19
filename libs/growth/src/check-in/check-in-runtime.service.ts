@@ -1,50 +1,20 @@
-import type {
-  CheckInPlanSelect,
-  CheckInRecordSelect,
-  CheckInStreakRewardGrantSelect,
-} from '@db/schema'
-
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
-  CheckInRewardDefinition,
-  CheckInVirtualCycleView,
-} from './check-in.type'
-import type {
-  CheckInCalendarDayDto,
-  CheckInLeaderboardItemDto,
-  CheckInRecordItemDto,
   QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
-import type { CheckInGrantItemDto } from './dto/check-in-streak-reward-grant.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  exists,
-  gte,
-  inArray,
-  lte,
-  or,
-  sql,
-} from 'drizzle-orm'
-import {
-  CheckInCycleTypeEnum,
-  CheckInRecordTypeEnum,
-  CheckInStreakRewardRuleStatusEnum,
-} from './check-in.constant'
+import { and, asc, desc, eq, exists, gte, inArray, lte } from 'drizzle-orm'
 import { CheckInServiceSupport } from './check-in.service.support'
 
 /**
- * 签到运行态读服务。
+ * 签到运行时读模型服务。
  *
- * 提供 App 摘要、日历、记录，以及 Admin 对账页需要的查询结果。
+ * 负责 app 侧摘要、日历、记录、排行榜以及 admin 侧对账读模型。
  */
 @Injectable()
 export class CheckInRuntimeService extends CheckInServiceSupport {
@@ -55,133 +25,136 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     super(drizzle, growthLedgerService)
   }
 
-  /** 汇总当前用户的生效计划、周期摘要、下一档连续奖励和最近签到记录。 */
   async getSummary(userId: number) {
     const now = new Date()
     const today = this.formatDateOnly(now)
-    const plan = await this.findCurrentActivePlan(now)
-    if (!plan) {
-      return {
-        plan: null,
-        cycle: null,
-        todaySigned: false,
-        nextStreakReward: null,
-        latestRecord: null,
-      }
-    }
-
-    const cycle = await this.getCurrentCycleView(userId, plan, now)
-    const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
-    const recordSettlementMap = await this.buildSettlementMapById(
-      records
-        .map((record) => record.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
-    const grantMap = await this.buildGrantMapForRecords(records)
-    const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
-      cycle.currentStreak,
-      cycle.lastSignedDate,
+    const config = await this.getRequiredConfig()
+    const makeup = await this.buildCurrentMakeupAccountView(
+      userId,
+      config,
       today,
     )
-    const recordViews = records.map((record) =>
-      this.toRecordView(
-        record,
-        grantMap.get(
-          `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
-        ) ?? [],
-        record.rewardSettlementId
-          ? recordSettlementMap.get(record.rewardSettlementId) ?? null
-          : null,
-      ),
+    const activeRound = await this.getRequiredActiveRound()
+    const progress = await this.db.query.checkInStreakProgress.findFirst({
+      where: { userId },
+    })
+    const boundRound = progress
+      ? await this.db.query.checkInStreakRoundConfig.findFirst({
+          where: { id: progress.roundConfigId },
+        })
+      : activeRound
+    const effectiveRound = boundRound ?? activeRound
+    const roundDefinition = this.parseStreakRoundDefinition(effectiveRound)
+    const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
+      progress?.currentStreak ?? 0,
+      progress?.lastSignedDate,
+      today,
     )
-    const latestRecord = recordViews.at(-1)
+    const effectiveLastSignedDate = this.resolveEffectiveLastSignedDate(
+      progress?.lastSignedDate,
+      today,
+    )
+    const latestRecord = await this.getLatestRecord(userId)
+    const latestRecordView = latestRecord
+      ? await this.buildRecordItemView(latestRecord)
+      : null
 
     return {
-      plan: {
-        id: plan.id,
-        planCode: plan.planCode,
-        planName: plan.planName,
-        status: this.resolvePlanStatus(plan),
-        cycleType: this.parseCycleType(plan.cycleType),
-        startDate: this.toDateOnlyValue(plan.startDate),
-        endDate: plan.endDate ? this.toDateOnlyValue(plan.endDate) : null,
-        allowMakeupCountPerCycle: plan.allowMakeupCountPerCycle,
-        baseRewardItems: cycle.rewardDefinition.baseRewardItems,
-      },
-      cycle: {
-        id: cycle.id,
-        cycleKey: cycle.cycleKey,
-        cycleStartDate: cycle.cycleStartDate,
-        cycleEndDate: cycle.cycleEndDate,
-        signedCount: cycle.signedCount,
-        makeupUsedCount: cycle.makeupUsedCount,
-        remainingMakeupCount: Math.max(
-          plan.allowMakeupCountPerCycle - cycle.makeupUsedCount,
-          0,
-        ),
+      config: this.toConfigDetailView(config),
+      makeup,
+      streak: {
+        roundConfigId: progress?.roundConfigId ?? effectiveRound.id,
+        roundCode: effectiveRound.roundCode,
+        version: effectiveRound.version,
+        roundIteration: progress?.roundIteration ?? 1,
         currentStreak: effectiveCurrentStreak,
-        lastSignedDate: cycle.lastSignedDate,
+        roundStartedAt: progress?.roundStartedAt
+          ? this.toDateOnlyValue(progress.roundStartedAt)
+          : undefined,
+        lastSignedDate: effectiveLastSignedDate,
+        round: this.toRoundDetailView(effectiveRound),
+        nextReward:
+          this.resolveNextStreakReward(
+            roundDefinition.rewardRules,
+            effectiveCurrentStreak,
+          ) ?? null,
       },
-      todaySigned: records.some(
-        (record) => this.toDateOnlyValue(record.signDate) === today,
-      ),
-      nextStreakReward:
-        this.resolveNextStreakReward(
-          cycle.rewardDefinition.streakRewardRules,
-          effectiveCurrentStreak,
-        ) ?? null,
-      latestRecord: latestRecord ?? null,
+      todaySigned: await this.hasRecordForDate(userId, today),
+      latestRecord: latestRecordView,
     }
   }
 
-  /** 读取当前周期签到日历，并为未签到日期补齐占位视图。 */
   async getCalendar(userId: number) {
-    const now = new Date()
-    const plan = await this.findCurrentActivePlan(now)
-    if (!plan) {
-      return { days: [] }
-    }
-
-    const today = this.formatDateOnly(now)
-    const cycle = await this.getCurrentCycleView(userId, plan, now)
-    const records = cycle.id ? await this.listCycleRecords(cycle.id) : []
-    const recordSettlementMap = await this.buildSettlementMapById(
+    const today = this.formatDateOnly(new Date())
+    const config = await this.getRequiredConfig()
+    const rewardDefinition = this.parseRewardDefinition(config)
+    const makeup = await this.buildCurrentMakeupAccountView(
+      userId,
+      config,
+      today,
+    )
+    const records = await this.listRecordsInDateRange(
+      userId,
+      makeup.periodStartDate,
+      makeup.periodEndDate,
+    )
+    const settlementMap = await this.buildSettlementMapById(
       records
         .map((record) => record.rewardSettlementId)
         .filter((id): id is number => typeof id === 'number'),
     )
     const grantMap = await this.buildGrantMapForRecords(records)
-    const recordViews = records.map((record) =>
-      this.toRecordView(
-        record,
-        grantMap.get(
-          `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
-        ) ?? [],
-        record.rewardSettlementId
-          ? recordSettlementMap.get(record.rewardSettlementId) ?? null
-          : null,
-      ),
+    const recordMap = new Map(
+      records.map((record) => [this.toDateOnlyValue(record.signDate), record]),
     )
 
+    const days: Array<Record<string, unknown>> = []
+    let cursor = makeup.periodStartDate
+    let dayIndex = 1
+    while (cursor <= makeup.periodEndDate) {
+      const record = recordMap.get(cursor)
+      const rewardItems = record
+        ? this.parseStoredRewardItems(record.resolvedRewardItems, {
+            allowEmpty: true,
+          })
+        : this.resolveRewardForDate(rewardDefinition, cursor, makeup.periodType)
+            .resolvedRewardItems
+      days.push({
+        signDate: cursor,
+        dayIndex,
+        isToday: cursor === today,
+        isFuture: cursor > today,
+        isSigned: !!record,
+        grantCount: grantMap.get(`${userId}:${cursor}`)?.length ?? 0,
+        rewardItems,
+        rewardSettlement: record?.rewardSettlementId
+          ? this.toRewardSettlementSummary(
+              settlementMap.get(record.rewardSettlementId) ?? null,
+            )
+          : null,
+      })
+      cursor = this.formatDateOnly(
+        new Date(
+          dayjs
+            .tz(cursor, 'YYYY-MM-DD', this.getAppTimeZone())
+            .add(1, 'day')
+            .toISOString(),
+        ),
+      )
+      dayIndex += 1
+    }
+
     return {
-      planId: plan.id,
-      cycleId: cycle.id,
-      cycleKey: cycle.cycleKey,
-      cycleStartDate: cycle.cycleStartDate,
-      cycleEndDate: cycle.cycleEndDate,
-      days: this.buildCalendarDays(
-        cycle,
-        this.parseCycleType(plan.cycleType),
-        recordViews,
-        today,
-      ),
+      periodType: makeup.periodType,
+      periodKey: makeup.periodKey,
+      periodStartDate: makeup.periodStartDate,
+      periodEndDate: makeup.periodEndDate,
+      days,
     }
   }
 
-  /** 分页读取当前用户签到记录，并批量拼装同日触发的连续奖励列表。 */
   async getMyRecords(query: PageDto, userId: number) {
-    const conditions: SQL[] = [eq(this.checkInRecordTable.userId, userId)]
-
+    const conditions = [eq(this.checkInRecordTable.userId, userId)]
     if (query.startDate) {
       conditions.push(
         gte(
@@ -198,7 +171,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         ),
       )
     }
-    const orderBy = query.orderBy?.trim()
 
     const page = await this.drizzle.ext.findPagination(
       this.checkInRecordTable,
@@ -206,47 +178,86 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         where: and(...conditions),
         ...query,
         orderBy:
-          orderBy || JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
+          query.orderBy?.trim() ||
+          JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
       },
     )
 
-    const recordSettlementMap = await this.buildSettlementMapById(
-      page.list
-        .map((record) => record.rewardSettlementId)
-        .filter((id): id is number => typeof id === 'number'),
-    )
-    const grantMap = await this.buildGrantMapForRecords(page.list)
     return {
       ...page,
-      list: page.list.map((record) =>
-        this.toRecordView(
-          record,
-          grantMap.get(
-            `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
-          ) ?? [],
-          record.rewardSettlementId
-            ? recordSettlementMap.get(record.rewardSettlementId) ?? null
-            : null,
-        ),
+      list: await Promise.all(
+        page.list.map(async (record) => this.buildRecordItemView(record)),
       ),
     }
   }
 
-  /** 分页读取签到奖励对账结果，并按记录维度挂载连续奖励发放列表。 */
+  async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
+    const today = this.formatDateOnly(new Date())
+    const page = await this.drizzle.ext.findPagination(
+      this.checkInStreakProgressTable,
+      {
+        where: this.buildActiveStreakProgressWhere(today),
+        ...query,
+        orderBy: JSON.stringify([
+          { currentStreak: 'desc' },
+          { lastSignedDate: 'desc' },
+          { id: 'asc' },
+        ]),
+      },
+    )
+
+    const userIds = page.list.map((item) => item.userId)
+    const users =
+      userIds.length === 0
+        ? []
+        : await this.db
+            .select({
+              id: this.drizzle.schema.appUser.id,
+              nickname: this.drizzle.schema.appUser.nickname,
+              avatarUrl: this.drizzle.schema.appUser.avatarUrl,
+            })
+            .from(this.drizzle.schema.appUser)
+            .where(inArray(this.drizzle.schema.appUser.id, userIds))
+    const userMap = new Map(users.map((user) => [user.id, user]))
+
+    return {
+      ...page,
+      list: page.list.map((item, index) => ({
+        rank: (page.pageIndex - 1) * page.pageSize + index + 1,
+        user: userMap.get(item.userId),
+        currentStreak: item.currentStreak,
+        lastSignedDate: item.lastSignedDate
+          ? this.toDateOnlyValue(item.lastSignedDate)
+          : undefined,
+        roundIteration: item.roundIteration,
+      })),
+    }
+  }
+
   async getReconciliationPage(query: QueryCheckInReconciliationDto) {
     const conditions: SQL[] = []
 
     if (query.recordId !== undefined) {
       conditions.push(eq(this.checkInRecordTable.id, query.recordId))
     }
-    if (query.planId !== undefined) {
-      conditions.push(eq(this.checkInRecordTable.planId, query.planId))
-    }
     if (query.userId !== undefined) {
       conditions.push(eq(this.checkInRecordTable.userId, query.userId))
     }
-    if (query.cycleId !== undefined) {
-      conditions.push(eq(this.checkInRecordTable.cycleId, query.cycleId))
+    if (query.startDate) {
+      conditions.push(
+        gte(
+          this.checkInRecordTable.signDate,
+          this.parseDateOnly(query.startDate, '开始日期'),
+        ),
+      )
+    }
+    if (query.endDate) {
+      conditions.push(
+        lte(
+          this.checkInRecordTable.signDate,
+          this.parseDateOnly(query.endDate, '结束日期'),
+        ),
+      )
     }
     if (query.recordSettlementStatus != null) {
       conditions.push(
@@ -269,6 +280,31 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         ),
       )
     }
+    if (query.roundConfigId !== undefined) {
+      conditions.push(
+        exists(
+          this.db
+            .select({ id: this.checkInStreakRewardGrantTable.id })
+            .from(this.checkInStreakRewardGrantTable)
+            .where(
+              and(
+                eq(
+                  this.checkInStreakRewardGrantTable.userId,
+                  this.checkInRecordTable.userId,
+                ),
+                eq(
+                  this.checkInStreakRewardGrantTable.triggerSignDate,
+                  this.checkInRecordTable.signDate,
+                ),
+                eq(
+                  this.checkInStreakRewardGrantTable.roundConfigId,
+                  query.roundConfigId,
+                ),
+              ),
+            ),
+        ),
+      )
+    }
     if (query.grantId !== undefined) {
       conditions.push(
         exists(
@@ -279,8 +315,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
               and(
                 eq(this.checkInStreakRewardGrantTable.id, query.grantId),
                 eq(
-                  this.checkInStreakRewardGrantTable.cycleId,
-                  this.checkInRecordTable.cycleId,
+                  this.checkInStreakRewardGrantTable.userId,
+                  this.checkInRecordTable.userId,
                 ),
                 eq(
                   this.checkInStreakRewardGrantTable.triggerSignDate,
@@ -307,8 +343,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
             .where(
               and(
                 eq(
-                  this.checkInStreakRewardGrantTable.cycleId,
-                  this.checkInRecordTable.cycleId,
+                  this.checkInStreakRewardGrantTable.userId,
+                  this.checkInRecordTable.userId,
                 ),
                 eq(
                   this.checkInStreakRewardGrantTable.triggerSignDate,
@@ -323,7 +359,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         ),
       )
     }
-    const orderBy = query.orderBy?.trim()
 
     const page = await this.drizzle.ext.findPagination(
       this.checkInRecordTable,
@@ -331,23 +366,23 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         where: conditions.length > 0 ? and(...conditions) : undefined,
         ...query,
         orderBy:
-          orderBy || JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
+          query.orderBy?.trim() ||
+          JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
       },
     )
 
-    const recordSettlementMap = await this.buildSettlementMapById(
+    const settlementMap = await this.buildSettlementMapById(
       page.list
         .map((record) => record.rewardSettlementId)
         .filter((id): id is number => typeof id === 'number'),
     )
     const grantMap = await this.buildGrantMapForRecords(page.list)
+
     return {
       ...page,
       list: page.list.map((record) => ({
         recordId: record.id,
         userId: record.userId,
-        planId: record.planId,
-        cycleId: record.cycleId,
         signDate: this.toDateOnlyValue(record.signDate),
         recordType: record.recordType,
         rewardSettlementId: record.rewardSettlementId,
@@ -360,207 +395,168 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
           },
         ),
         rewardSettlement: record.rewardSettlementId
-          ? recordSettlementMap.get(record.rewardSettlementId) ?? null
+          ? this.toRewardSettlementSummary(
+              settlementMap.get(record.rewardSettlementId) ?? null,
+            )
           : null,
         grants:
           grantMap.get(
-            `${record.cycleId}:${this.toDateOnlyValue(record.signDate)}`,
+            `${record.userId}:${this.toDateOnlyValue(record.signDate)}`,
           ) ?? [],
         createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
       })),
     }
   }
 
-  /** 分页读取当前生效签到计划的连续签到排行榜。 */
-  async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
-    const pageQuery = this.drizzle.buildPage(query)
-    const now = new Date()
-    const today = this.formatDateOnly(now)
-    const yesterday = dayjs
-      .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
-      .subtract(1, 'day')
-      .format('YYYY-MM-DD')
-    const plan = await this.findCurrentActivePlan(now)
-
-    if (!plan) {
-      return {
-        list: [],
-        total: 0,
-        pageIndex: pageQuery.pageIndex,
-        pageSize: pageQuery.pageSize,
-      }
-    }
-
-    const effectiveCurrentStreakSql = sql<number>`
-      case
-        when ${this.checkInCycleTable.lastSignedDate} is not null
-          and (
-            ${this.checkInCycleTable.lastSignedDate} = ${today}
-            or ${this.checkInCycleTable.lastSignedDate} = ${yesterday}
-          )
-        then ${this.checkInCycleTable.currentStreak}
-        else 0
-      end
-    `
-    const where = and(
-      eq(this.checkInCycleTable.planId, plan.id),
-      lte(this.checkInCycleTable.cycleStartDate, today),
-      gte(this.checkInCycleTable.cycleEndDate, today),
-      sql`${effectiveCurrentStreakSql} > 0`,
-    )
-    const [rows, total] = await Promise.all([
-      this.db
-        .select({
-          userId: this.checkInCycleTable.userId,
-          currentStreak: effectiveCurrentStreakSql,
-          lastSignedDate: this.checkInCycleTable.lastSignedDate,
-        })
-        .from(this.checkInCycleTable)
-        .where(where)
-        .limit(pageQuery.limit)
-        .offset(pageQuery.offset)
-        .orderBy(
-          desc(effectiveCurrentStreakSql),
-          desc(this.checkInCycleTable.lastSignedDate),
-          asc(this.checkInCycleTable.userId),
-        ),
-      this.db.$count(this.checkInCycleTable, where),
-    ])
-    const page = {
-      list: rows,
-      total,
-      pageIndex: pageQuery.pageIndex,
-      pageSize: pageQuery.pageSize,
-    }
-
-    if (page.list.length === 0) {
-      return page
-    }
-
-    const userMap = await this.buildLeaderboardUserMap(
-      page.list.map((item) => item.userId),
-    )
-    const rankOffset = (page.pageIndex - 1) * page.pageSize
-
-    return {
-      ...page,
-      list: page.list.flatMap((item, index) => {
-        const user = userMap.get(item.userId)
-        if (!user) {
-          return []
-        }
-
-        return [
-          {
-            rank: rankOffset + index + 1,
-            currentStreak: item.currentStreak,
-            lastSignedDate: item.lastSignedDate
-              ? this.toDateOnlyValue(item.lastSignedDate)
-              : undefined,
-            user: {
-              id: user.id,
-              nickname: user.nickname,
-              avatarUrl: user.avatarUrl ?? undefined,
-            },
-          } satisfies CheckInLeaderboardItemDto,
-        ]
-      }),
-    }
+  private async hasRecordForDate(userId: number, signDate: string) {
+    const record = await this.db.query.checkInRecord.findFirst({
+      where: {
+        userId,
+        signDate,
+      },
+      columns: { id: true },
+    })
+    return !!record
   }
 
-  /**
-   * 获取当前周期读模型。
-   *
-   * 若数据库中尚未落周期实例，则返回基于当前计划推导出的虚拟周期视图。
-   */
-  private async getCurrentCycleView(
-    userId: number,
-    plan: CheckInPlanSelect,
-    now: Date,
-  ) {
-    const rewardDefinition = this.getPlanRewardDefinition(plan, {
-      allowEmpty: true,
-    }) ?? {
-      baseRewardItems: null,
-      dateRewardRules: [],
-      patternRewardRules: [],
-      streakRewardRules: [],
-    }
-    const today = this.formatDateOnly(now)
-    const cycle = await this.findCycleContainingDate(userId, plan.id, today)
-    if (cycle) {
-      return {
-        id: cycle.id,
-        cycleKey: cycle.cycleKey,
-        cycleStartDate: this.toDateOnlyValue(cycle.cycleStartDate),
-        cycleEndDate: this.toDateOnlyValue(cycle.cycleEndDate),
-        signedCount: cycle.signedCount,
-        makeupUsedCount: cycle.makeupUsedCount,
-        currentStreak: cycle.currentStreak,
-        lastSignedDate: cycle.lastSignedDate
-          ? this.toDateOnlyValue(cycle.lastSignedDate)
-          : undefined,
-        rewardDefinition,
-      }
-    }
-
-    const frame = this.buildCycleFrame(plan, now)
-    return {
-      cycleKey: frame.cycleKey,
-      cycleStartDate: frame.cycleStartDate,
-      cycleEndDate: frame.cycleEndDate,
-      signedCount: 0,
-      makeupUsedCount: 0,
-      currentStreak: 0,
-      rewardDefinition,
-    }
-  }
-
-  /** 解析下一档可见的连续奖励。 */
-  private resolveNextStreakReward(
-    rules: CheckInRewardDefinition['streakRewardRules'],
-    currentStreak: number,
-  ) {
-    const nextRule = rules
-      .filter(
-        (rule) => rule.status === CheckInStreakRewardRuleStatusEnum.ENABLED,
+  private async getLatestRecord(userId: number) {
+    const [record] = await this.db
+      .select()
+      .from(this.checkInRecordTable)
+      .where(eq(this.checkInRecordTable.userId, userId))
+      .orderBy(
+        desc(this.checkInRecordTable.signDate),
+        desc(this.checkInRecordTable.id),
       )
-      .sort((left, right) => left.streakDays - right.streakDays)
-      .find((rule) => rule.streakDays > currentStreak)
-
-    return nextRule ? this.toStreakRuleView(nextRule) : undefined
+      .limit(1)
+    return record
   }
 
-  /**
-   * 批量查询签到记录关联的连续奖励发放列表。
-   *
-   * 这里按 `(cycleId, signDate)` 聚合返回，避免逐条 N+1 查询。
-   */
-  private async buildGrantMapForRecords(
-    records: Pick<
-      CheckInRecordSelect,
-      'cycleId' | 'signDate' | 'rewardSettlementId'
-    >[],
+  private async listRecordsInDateRange(
+    userId: number,
+    startDate: string,
+    endDate: string,
   ) {
-    const grantMap = new Map<string, CheckInGrantItemDto[]>()
-    if (records.length === 0) {
-      return grantMap
-    }
-
-    const predicates = records.map((record) =>
-      and(
-        eq(this.checkInStreakRewardGrantTable.cycleId, record.cycleId),
-        eq(
-          this.checkInStreakRewardGrantTable.triggerSignDate,
-          this.toDateOnlyValue(record.signDate),
+    return this.db
+      .select()
+      .from(this.checkInRecordTable)
+      .where(
+        and(
+          eq(this.checkInRecordTable.userId, userId),
+          gte(this.checkInRecordTable.signDate, startDate),
+          lte(this.checkInRecordTable.signDate, endDate),
         ),
-      ),
+      )
+      .orderBy(
+        asc(this.checkInRecordTable.signDate),
+        asc(this.checkInRecordTable.id),
+      )
+  }
+
+  private async buildRecordItemView(
+    record: typeof this.checkInRecordTable.$inferSelect,
+  ) {
+    const settlementMap = await this.buildSettlementMapById(
+      typeof record.rewardSettlementId === 'number'
+        ? [record.rewardSettlementId]
+        : [],
+    )
+    const grants = await this.listGrantsForRecord(
+      record.userId,
+      this.toDateOnlyValue(record.signDate),
     )
 
+    return {
+      id: record.id,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+      signDate: this.toDateOnlyValue(record.signDate),
+      recordType: record.recordType,
+      rewardSettlementId: record.rewardSettlementId,
+      resolvedRewardSourceType: record.resolvedRewardSourceType,
+      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
+      resolvedRewardItems: this.parseStoredRewardItems(
+        record.resolvedRewardItems,
+        {
+          allowEmpty: true,
+        },
+      ),
+      rewardSettlement: record.rewardSettlementId
+        ? this.toRewardSettlementSummary(
+            settlementMap.get(record.rewardSettlementId) ?? null,
+          )
+        : null,
+      grants,
+    }
+  }
+
+  private async listGrantsForRecord(userId: number, signDate: string) {
     const grants = await this.db
       .select()
       .from(this.checkInStreakRewardGrantTable)
-      .where(predicates.length === 1 ? predicates[0] : or(...predicates))
+      .where(
+        and(
+          eq(this.checkInStreakRewardGrantTable.userId, userId),
+          eq(this.checkInStreakRewardGrantTable.triggerSignDate, signDate),
+        ),
+      )
+      .orderBy(asc(this.checkInStreakRewardGrantTable.id))
+
+    const settlementMap = await this.buildSettlementMapById(
+      grants
+        .map((grant) => grant.rewardSettlementId)
+        .filter((id): id is number => typeof id === 'number'),
+    )
+    return grants.map((grant) => ({
+      id: grant.id,
+      createdAt: grant.createdAt,
+      updatedAt: grant.updatedAt,
+      userId: grant.userId,
+      roundConfigId: grant.roundConfigId,
+      roundIteration: grant.roundIteration,
+      ruleCode: grant.ruleCode,
+      streakDays: grant.streakDays,
+      rewardItems: this.parseStoredRewardItems(grant.rewardItems, {
+        allowEmpty: false,
+      })!,
+      repeatable: grant.repeatable,
+      triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
+      rewardSettlementId: grant.rewardSettlementId,
+      rewardSettlement: grant.rewardSettlementId
+        ? this.toRewardSettlementSummary(
+            settlementMap.get(grant.rewardSettlementId) ?? null,
+          )
+        : null,
+    }))
+  }
+
+  private async buildGrantMapForRecords(
+    records: Array<
+      Pick<typeof this.checkInRecordTable.$inferSelect, 'userId' | 'signDate'>
+    >,
+  ) {
+    if (records.length === 0) {
+      return new Map<string, Array<Record<string, unknown>>>()
+    }
+    const userIds = [...new Set(records.map((record) => record.userId))]
+    const signDates = [
+      ...new Set(
+        records.map((record) => this.toDateOnlyValue(record.signDate)),
+      ),
+    ]
+    const grants = await this.db
+      .select()
+      .from(this.checkInStreakRewardGrantTable)
+      .where(
+        and(
+          inArray(this.checkInStreakRewardGrantTable.userId, userIds),
+          inArray(
+            this.checkInStreakRewardGrantTable.triggerSignDate,
+            signDates,
+          ),
+        ),
+      )
       .orderBy(
         asc(this.checkInStreakRewardGrantTable.triggerSignDate),
         asc(this.checkInStreakRewardGrantTable.id),
@@ -572,194 +568,67 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         .filter((id): id is number => typeof id === 'number'),
     )
 
+    const grantMap = new Map<string, Array<Record<string, unknown>>>()
     for (const grant of grants) {
-      const key = `${grant.cycleId}:${this.toDateOnlyValue(grant.triggerSignDate)}`
-      const current = grantMap.get(key) ?? []
-      current.push(
-        this.toGrantView(
-          grant,
-          grant.rewardSettlementId
-            ? settlementMap.get(grant.rewardSettlementId) ?? null
-            : null,
-        ),
-      )
-      grantMap.set(key, current)
+      const key = `${grant.userId}:${this.toDateOnlyValue(grant.triggerSignDate)}`
+      const items = grantMap.get(key) ?? []
+      items.push({
+        id: grant.id,
+        createdAt: grant.createdAt,
+        updatedAt: grant.updatedAt,
+        userId: grant.userId,
+        roundConfigId: grant.roundConfigId,
+        roundIteration: grant.roundIteration,
+        ruleCode: grant.ruleCode,
+        streakDays: grant.streakDays,
+        rewardItems: this.parseStoredRewardItems(grant.rewardItems, {
+          allowEmpty: false,
+        })!,
+        repeatable: grant.repeatable,
+        triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
+        rewardSettlementId: grant.rewardSettlementId,
+        rewardSettlement: grant.rewardSettlementId
+          ? this.toRewardSettlementSummary(
+              settlementMap.get(grant.rewardSettlementId) ?? null,
+            )
+          : null,
+      })
+      grantMap.set(key, items)
     }
-
     return grantMap
   }
 
-  private async buildSettlementMapById(settlementIds: number[]) {
-    const uniqueSettlementIds = [...new Set(settlementIds.filter((id) => id > 0))]
-    if (uniqueSettlementIds.length === 0) {
-      return new Map<number, ReturnType<CheckInRuntimeService['toRewardSettlementSummary']>>()
-    }
-
-    const settlements = await this.db
-      .select({
-        id: this.growthRewardSettlementTable.id,
-        settlementStatus: this.growthRewardSettlementTable.settlementStatus,
-        settlementResultType:
-          this.growthRewardSettlementTable.settlementResultType,
-        ledgerRecordIds: this.growthRewardSettlementTable.ledgerRecordIds,
-        retryCount: this.growthRewardSettlementTable.retryCount,
-        lastRetryAt: this.growthRewardSettlementTable.lastRetryAt,
-        settledAt: this.growthRewardSettlementTable.settledAt,
-        lastError: this.growthRewardSettlementTable.lastError,
-      })
-      .from(this.growthRewardSettlementTable)
-      .where(inArray(this.growthRewardSettlementTable.id, uniqueSettlementIds))
-
-    return new Map(
-      settlements.map((settlement) => [
-        settlement.id,
-        this.toRewardSettlementSummary(settlement),
-      ]),
-    )
-  }
-
-  /**
-   * 批量读取排行榜用户的最小展示信息。
-   *
-   * 仅查询榜单卡片展示需要的字段，避免把完整用户资料带入签到读模型。
-   */
-  private async buildLeaderboardUserMap(userIds: number[]) {
-    const uniqueUserIds = [...new Set(userIds)]
-    if (uniqueUserIds.length === 0) {
-      return new Map<
-        number,
-        {
-          id: number
-          nickname: string
-          avatarUrl: string | null
-        }
-      >()
-    }
-
-    const users = await this.db.query.appUser.findMany({
-      where: {
-        id: { in: uniqueUserIds },
-      },
-      columns: {
-        id: true,
-        nickname: true,
-        avatarUrl: true,
-      },
-    })
-
-    return new Map(users.map((user) => [user.id, user] as const))
-  }
-
-  /**
-   * 构建当前周期日历视图。
-   *
-   * 即使某天没有签到事实，也要返回占位项供前端明确区分未来日和漏签日。
-   */
-  private buildCalendarDays(
-    cycle: Pick<
-      CheckInVirtualCycleView,
-      'cycleStartDate' | 'cycleEndDate' | 'rewardDefinition'
-    >,
-    cycleType: CheckInCycleTypeEnum,
-    records: CheckInRecordItemDto[],
-    today: string,
+  private toConfigDetailView(
+    config: typeof this.checkInConfigTable.$inferSelect,
   ) {
-    const recordMap = new Map(
-      records.map((record) => [record.signDate, record]),
-    )
-    const days: CheckInCalendarDayDto[] = []
-    let cursor = dayjs
-      .tz(cycle.cycleStartDate, 'YYYY-MM-DD', this.getAppTimeZone())
-      .startOf('day')
-    const end = dayjs
-      .tz(cycle.cycleEndDate, 'YYYY-MM-DD', this.getAppTimeZone())
-      .startOf('day')
-
-    while (cursor.isSame(end) || cursor.isBefore(end)) {
-      const signDate = cursor.format('YYYY-MM-DD')
-      const record = recordMap.get(signDate)
-      const rewardResolution = this.resolveRewardForDate(
-        cycleType,
-        cycle.rewardDefinition,
-        signDate,
-      )
-      days.push({
-        signDate,
-        dayIndex: this.resolveRewardDayIndex(cycleType, signDate),
-        inPlanWindow: true,
-        planRewardItems: rewardResolution.resolvedRewardItems,
-        isToday: signDate === today,
-        isFuture: signDate > today,
-        isSigned: Boolean(record),
-        recordType: record?.recordType,
-        rewardSettlement: record?.rewardSettlement ?? null,
-        grantCount: record?.grants.length ?? 0,
-      })
-      cursor = cursor.add(1, 'day')
-    }
-
-    return days
-  }
-
-  /** 把签到事实映射成稳定读模型。 */
-  private toRecordView(
-    record: Pick<
-      CheckInRecordSelect,
-      | 'id'
-      | 'signDate'
-      | 'recordType'
-      | 'resolvedRewardSourceType'
-      | 'resolvedRewardRuleKey'
-      | 'resolvedRewardItems'
-      | 'rewardSettlementId'
-      | 'createdAt'
-    >,
-    grants: CheckInGrantItemDto[] = [],
-    rewardSettlement: ReturnType<CheckInRuntimeService['toRewardSettlementSummary']> | null = null,
-  ): CheckInRecordItemDto {
+    const rewardDefinition = this.parseRewardDefinition(config)
     return {
-      id: record.id,
-      signDate: this.toDateOnlyValue(record.signDate),
-      recordType: record.recordType as CheckInRecordTypeEnum,
-      rewardSettlementId: record.rewardSettlementId,
-      resolvedRewardSourceType:
-        record.resolvedRewardSourceType as CheckInRecordItemDto['resolvedRewardSourceType'],
-      resolvedRewardRuleKey: record.resolvedRewardRuleKey,
-      resolvedRewardItems: this.parseStoredRewardItems(
-        record.resolvedRewardItems,
-        {
-          allowEmpty: true,
-        },
-      ),
-      rewardSettlement,
-      grants,
-      createdAt: record.createdAt,
+      id: config.id,
+      enabled: config.enabled === 1,
+      makeupPeriodType: config.makeupPeriodType,
+      periodicAllowance: config.periodicAllowance,
+      baseRewardItems: rewardDefinition.baseRewardItems,
+      dateRewardRules: rewardDefinition.dateRewardRules,
+      patternRewardRules: rewardDefinition.patternRewardRules,
+      createdAt: config.createdAt,
+      updatedAt: config.updatedAt,
     }
   }
 
-  /** 把连续奖励发放事实映射成稳定读模型。 */
-  private toGrantView(
-    grant: Pick<
-      CheckInStreakRewardGrantSelect,
-      | 'id'
-      | 'ruleCode'
-      | 'streakDays'
-      | 'rewardItems'
-      | 'triggerSignDate'
-      | 'rewardSettlementId'
-    >,
-    rewardSettlement: ReturnType<CheckInRuntimeService['toRewardSettlementSummary']> | null = null,
-  ): CheckInGrantItemDto {
+  private toRoundDetailView(
+    round: typeof this.checkInStreakRoundConfigTable.$inferSelect,
+  ) {
+    const definition = this.parseStreakRoundDefinition(round)
     return {
-      id: grant.id,
-      ruleCode: grant.ruleCode,
-      streakDays: grant.streakDays,
-      rewardItems: this.parseStoredRewardItems(grant.rewardItems, {
-        allowEmpty: false,
-      })!,
-      triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
-      rewardSettlementId: grant.rewardSettlementId,
-      rewardSettlement,
+      id: round.id,
+      roundCode: definition.roundCode,
+      version: definition.version,
+      status: definition.status,
+      nextRoundStrategy: definition.nextRoundStrategy,
+      nextRoundConfigId: definition.nextRoundConfigId,
+      rewardRules: definition.rewardRules,
+      createdAt: round.createdAt,
+      updatedAt: round.updatedAt,
     }
   }
 }
