@@ -1,9 +1,4 @@
-import {
-  BooleanProperty,
-  DateProperty,
-  NumberProperty,
-  StringProperty,
-} from '@libs/platform/decorators'
+import { BooleanProperty, StringProperty } from '@libs/platform/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {

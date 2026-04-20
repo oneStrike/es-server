@@ -86,7 +86,7 @@ export class TaskNotificationService {
         id: params.task.id,
         code: params.task.code ?? `task-${params.task.id}`,
         title: params.task.title,
-        sceneType: normalizedTaskType,
+        type: normalizedTaskType,
       },
       reminder: {
         kind: normalizedReminderKind,

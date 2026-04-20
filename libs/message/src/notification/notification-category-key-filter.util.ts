@@ -1,10 +1,7 @@
 import type { MessageNotificationCategoryKey } from './notification.constant'
-import {
-  isMessageNotificationCategoryKey,
-} from './notification.constant'
+import { isMessageNotificationCategoryKey } from './notification.constant'
 
-const MESSAGE_NOTIFICATION_CATEGORY_KEY_FILTER_DELIMITER_REGEX =
-  /[\s,，;；|]+/u
+const MESSAGE_NOTIFICATION_CATEGORY_KEY_FILTER_DELIMITER_REGEX = /[\s,，;；|]+/u
 
 export function splitMessageNotificationCategoryKeysFilter(
   value?: string | string[] | null,

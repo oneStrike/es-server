@@ -4,7 +4,11 @@ import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.
 import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
 import { BaseForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
-import { BaseTaskDto } from '@libs/growth/task/dto/task.dto'
+import {
+  BaseTaskAssignmentDto,
+  BaseTaskDto,
+  QueryTaskAssignmentReconciliationDto,
+} from '@libs/growth/task/dto/task.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -39,6 +43,12 @@ import {
 import { NotificationDeliveryLookupFilterDto } from './notification-delivery-filter.dto'
 import { BaseNotificationUnreadDto } from './notification-unread.dto'
 
+/**
+ * 通知分类键过滤器校验装饰器
+ *
+ * 用于校验 categoryKeys 参数是否为合法的通知分类键组合字符串
+ * 支持逗号、中文逗号、分号或竖线分隔多个分类键
+ */
 function IsValidNotificationCategoryKeysFilter(): PropertyDecorator {
   return ValidateBy({
     name: 'isValidNotificationCategoryKeysFilter',
@@ -50,6 +60,11 @@ function IsValidNotificationCategoryKeysFilter(): PropertyDecorator {
   })
 }
 
+/**
+ * 通知消息 DTO
+ *
+ * 表示通知的文本内容，包含标题和正文
+ */
 export class NotificationMessageDto {
   @StringProperty({
     description: '通知标题',
@@ -66,12 +81,24 @@ export class NotificationMessageDto {
   body!: string
 }
 
+/**
+ * 通知触发者 DTO
+ *
+ * 表示触发通知的用户基本信息，从 BaseAppUserDto 中选取关键字段
+ * 用于在通知列表中展示"谁触发了这条通知"
+ */
 export class NotificationActorDto extends PickType(BaseAppUserDto, [
   'id',
   'nickname',
   'avatarUrl',
 ]) {}
 
+/**
+ * 评论快照 DTO
+ *
+ * 在通知中展示被操作的评论基本信息
+ * 用于评论回复、评论点赞、评论提及等场景
+ */
 export class NotificationCommentSnapshotDto {
   @StringProperty({
     description: '对象类型，固定为 comment',
@@ -96,6 +123,12 @@ export class NotificationCommentSnapshotDto {
   snippet?: string
 }
 
+/**
+ * 主题快照 DTO
+ *
+ * 在通知中展示主题（帖子）的基本信息
+ * 用于主题点赞、主题收藏、主题提及等场景
+ */
 export class NotificationTopicSnapshotDto extends PickType(BaseForumTopicDto, [
   'id',
   'title',
@@ -109,6 +142,12 @@ export class NotificationTopicSnapshotDto extends PickType(BaseForumTopicDto, [
   kind!: 'topic'
 }
 
+/**
+ * 作品快照 DTO
+ *
+ * 在通知中展示作品的基本信息
+ * 用于作品相关评论通知场景，展示作品封面和类型
+ */
 export class NotificationWorkSnapshotDto extends IntersectionType(
   PickType(BaseWorkDto, ['id', 'cover']),
   PickType(BaseWorkChapterDto, ['workType']),
@@ -129,6 +168,12 @@ export class NotificationWorkSnapshotDto extends IntersectionType(
   title?: string
 }
 
+/**
+ * 章节快照 DTO
+ *
+ * 在通知中展示章节的基本信息
+ * 用于章节评论相关通知场景，包含所属作品 ID 和类型
+ */
 export class NotificationChapterSnapshotDto extends PickType(
   BaseWorkChapterDto,
   ['id', 'title', 'subtitle', 'cover', 'workId', 'workType'],
@@ -141,6 +186,12 @@ export class NotificationChapterSnapshotDto extends PickType(
   kind!: 'chapter'
 }
 
+/**
+ * 公告快照 DTO
+ *
+ * 在通知中展示系统公告的基本信息
+ * 用于系统公告类通知场景
+ */
 export class NotificationAnnouncementSnapshotDto extends PickType(
   BaseAnnouncementDto,
   ['id', 'title', 'summary', 'announcementType', 'priorityLevel'],
@@ -153,6 +204,12 @@ export class NotificationAnnouncementSnapshotDto extends PickType(
   kind!: 'announcement'
 }
 
+/**
+ * 任务快照 DTO
+ *
+ * 在通知中展示任务的基本信息
+ * 用于任务提醒类通知场景
+ */
 export class NotificationTaskSnapshotDto extends PickType(BaseTaskDto, [
   'id',
   'code',
@@ -168,7 +225,18 @@ export class NotificationTaskSnapshotDto extends PickType(BaseTaskDto, [
   kind!: 'task'
 }
 
-export class NotificationTaskReminderInfoDto {
+/**
+ * 任务提醒信息 DTO
+ *
+ * 描述任务提醒的具体类型和相关信息
+ * - auto_assigned: 任务自动分配提醒
+ * - expiring_soon: 任务即将过期提醒
+ * - reward_granted: 任务奖励到账提醒
+ */
+export class NotificationTaskReminderInfoDto extends IntersectionType(
+  PickType(BaseTaskAssignmentDto, ['cycleKey', 'expiredAt']),
+  PickType(QueryTaskAssignmentReconciliationDto, ['assignmentId']),
+) {
   @StringProperty({
     description:
       '提醒子类型：auto_assigned=自动分配；expiring_soon=即将过期；reward_granted=奖励到账',
@@ -176,33 +244,13 @@ export class NotificationTaskReminderInfoDto {
     validation: false,
   })
   kind!: 'auto_assigned' | 'expiring_soon' | 'reward_granted'
-
-  @NumberProperty({
-    description: '任务分配 ID',
-    example: 10,
-    required: false,
-    validation: false,
-  })
-  assignmentId?: number
-
-  @StringProperty({
-    description: '周期键',
-    example: '2026-04-18',
-    required: false,
-    validation: false,
-  })
-  cycleKey?: string
-
-  @StringProperty({
-    description: '过期时间',
-    example: '2026-04-19T12:00:00.000Z',
-    required: false,
-    validation: false,
-    type: 'ISO8601',
-  })
-  expiredAt?: string
 }
 
+/**
+ * 任务奖励项 DTO
+ *
+ * 描述单个奖励项的资产类型和数量
+ */
 export class NotificationTaskRewardItemDto {
   @EnumProperty({
     description: '奖励资产类型（1=积分；2=经验；3=道具；4=虚拟货币；5=等级）',
@@ -220,6 +268,12 @@ export class NotificationTaskRewardItemDto {
   amount!: number
 }
 
+/**
+ * 任务奖励快照 DTO
+ *
+ * 描述任务奖励的完整信息，包含奖励项列表和对应的流水记录 ID
+ * 仅在任务奖励到账场景中使用
+ */
 export class NotificationTaskRewardSnapshotDto {
   @ArrayProperty({
     description: '奖励项列表',
@@ -239,6 +293,12 @@ export class NotificationTaskRewardSnapshotDto {
   ledgerRecordIds!: number[]
 }
 
+/**
+ * 评论操作通知数据 DTO
+ *
+ * 用于评论回复、评论点赞、评论提及等场景
+ * 包含被操作的评论快照和其挂载的容器（作品/主题/章节）信息
+ */
 export class NotificationCommentActionDataDto {
   @NestedProperty({
     description: '被操作评论快照',
@@ -271,6 +331,12 @@ export class NotificationCommentActionDataDto {
   parentContainer?: NotificationWorkSnapshotDto
 }
 
+/**
+ * 主题对象通知数据 DTO
+ *
+ * 用于主题点赞、主题收藏、主题提及等场景
+ * 仅包含主题快照信息
+ */
 export class NotificationTopicObjectDataDto {
   @NestedProperty({
     description: '主题快照',
@@ -280,6 +346,12 @@ export class NotificationTopicObjectDataDto {
   object!: NotificationTopicSnapshotDto
 }
 
+/**
+ * 主题评论通知数据 DTO
+ *
+ * 用于"主题被评论"场景
+ * 包含评论快照和所属主题快照
+ */
 export class NotificationTopicCommentedDataDto {
   @NestedProperty({
     description: '评论快照',
@@ -296,6 +368,12 @@ export class NotificationTopicCommentedDataDto {
   container!: NotificationTopicSnapshotDto
 }
 
+/**
+ * 公告通知数据 DTO
+ *
+ * 用于系统公告类通知
+ * 包含公告快照信息
+ */
 export class NotificationAnnouncementDataDto {
   @NestedProperty({
     description: '公告快照',
@@ -305,6 +383,12 @@ export class NotificationAnnouncementDataDto {
   object!: NotificationAnnouncementSnapshotDto
 }
 
+/**
+ * 任务提醒通知数据 DTO
+ *
+ * 用于任务提醒类通知（自动分配、即将过期、奖励到账）
+ * 包含任务快照、提醒信息和奖励快照（仅奖励到账场景）
+ */
 export class NotificationTaskReminderDataDto {
   @NestedProperty({
     description: '任务快照',
@@ -330,6 +414,17 @@ export class NotificationTaskReminderDataDto {
   reward?: NotificationTaskRewardSnapshotDto
 }
 
+/**
+ * 用户通知基础 DTO
+ *
+ * 定义用户通知的核心字段，包括：
+ * - type: 通知分类键（决定通知类型）
+ * - message: 通知文案（标题和正文）
+ * - data: 结构化数据（根据 type 返回不同结构）
+ * - actor: 触发用户信息
+ * - isRead/readAt: 已读状态和时间
+ * - expiresAt: 过期时间
+ */
 export class BaseUserNotificationDto extends BaseDto {
   @EnumProperty({
     description:
@@ -427,6 +522,12 @@ export class BaseUserNotificationDto extends BaseDto {
   expiresAt?: Date
 }
 
+/**
+ * 查询用户通知列表 DTO
+ *
+ * 支持分页查询，可按已读状态和通知分类键筛选
+ * categoryKeys 支持多分类键筛选，使用分隔符连接
+ */
 export class QueryUserNotificationListDto extends PageDto {
   @BooleanProperty({
     description: '是否已读',
@@ -447,6 +548,11 @@ export class QueryUserNotificationListDto extends PageDto {
   categoryKeys?: string
 }
 
+/**
+ * 更新用户通知偏好项 DTO
+ *
+ * 用于设置单个通知分类的启用状态
+ */
 export class UpdateUserNotificationPreferenceItemDto {
   @EnumProperty({
     description:
@@ -463,6 +569,11 @@ export class UpdateUserNotificationPreferenceItemDto {
   isEnabled!: boolean
 }
 
+/**
+ * 更新用户通知偏好列表 DTO
+ *
+ * 批量更新多个通知分类的启用状态
+ */
 export class UpdateUserNotificationPreferencesDto {
   @ArrayProperty({
     description: '通知偏好更新项列表',
@@ -473,6 +584,12 @@ export class UpdateUserNotificationPreferencesDto {
   preferences!: UpdateUserNotificationPreferenceItemDto[]
 }
 
+/**
+ * 通知投递查询基础 DTO
+ *
+ * 用于管理后台查询通知投递记录
+ * 可按投递状态和通知分类键筛选
+ */
 class BaseNotificationDeliveryQueryDto extends NotificationDeliveryLookupFilterDto {
   @EnumProperty({
     description:
@@ -493,11 +610,23 @@ class BaseNotificationDeliveryQueryDto extends NotificationDeliveryLookupFilterD
   categoryKey?: MessageNotificationCategoryKey
 }
 
+/**
+ * 分页查询通知投递记录 DTO
+ *
+ * 继承分页参数和投递查询条件
+ * 用于管理后台查看通知投递情况
+ */
 export class QueryNotificationDeliveryPageDto extends IntersectionType(
   PageDto,
   PartialType(BaseNotificationDeliveryQueryDto),
 ) {}
 
+/**
+ * 用户通知 DTO（完整版）
+ *
+ * 继承 BaseUserNotificationDto，通过 @ApiExtraModels 注册所有可能用到的子模型
+ * 用于 Swagger 文档生成正确的 OpenAPI Schema
+ */
 @ApiExtraModels(
   NotificationCommentSnapshotDto,
   NotificationTopicSnapshotDto,
@@ -516,8 +645,23 @@ export class QueryNotificationDeliveryPageDto extends IntersectionType(
 )
 export class UserNotificationDto extends BaseUserNotificationDto {}
 
+/**
+ * 用户通知未读统计 DTO
+ *
+ * 继承自基础未读统计 DTO
+ */
 export class NotificationUnreadDto extends BaseNotificationUnreadDto {}
 
+/**
+ * 用户通知偏好项 DTO
+ *
+ * 描述单个通知分类的偏好设置，包括：
+ * - categoryKey/categoryLabel: 分类键和中文标签
+ * - isEnabled: 当前是否启用
+ * - defaultEnabled: 默认启用状态
+ * - source: 状态来源（默认策略或用户显式覆盖）
+ * - updatedAt: 最近更新时间
+ */
 export class UserNotificationPreferenceItemDto {
   @EnumProperty({
     description:
@@ -560,6 +704,11 @@ export class UserNotificationPreferenceItemDto {
   updatedAt?: Date
 }
 
+/**
+ * 用户通知偏好列表 DTO
+ *
+ * 返回用户所有通知分类的偏好设置列表
+ */
 export class UserNotificationPreferenceListDto {
   @ArrayProperty({
     description: '通知偏好列表',
