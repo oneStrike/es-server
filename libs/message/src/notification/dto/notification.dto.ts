@@ -1,3 +1,7 @@
+import type {
+  ReferenceObject,
+  SchemaObject,
+} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 import type { MessageNotificationData } from '../notification-contract.type'
 import { BaseAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto'
 import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
@@ -59,6 +63,15 @@ function IsValidNotificationCategoryKeysFilter(): PropertyDecorator {
     },
   })
 }
+
+const NOTIFICATION_CATEGORY_KEY_DESCRIPTION =
+  '通知分类键，用于标识评论互动、主题互动、用户关注、系统公告或任务提醒等业务场景'
+
+const NOTIFICATION_CATEGORY_KEYS_FILTER_DESCRIPTION =
+  '通知分类键列表，使用逗号、中文逗号、分号或竖线分隔多个通知业务场景'
+
+const NOTIFICATION_PREFERENCE_SOURCE_DESCRIPTION =
+  '偏好来源，表示当前配置来自系统默认值或用户显式覆盖'
 
 /**
  * 通知消息 DTO
@@ -238,8 +251,7 @@ export class NotificationTaskReminderInfoDto extends IntersectionType(
   PickType(QueryTaskAssignmentReconciliationDto, ['assignmentId']),
 ) {
   @StringProperty({
-    description:
-      '提醒子类型：auto_assigned=自动分配；expiring_soon=即将过期；reward_granted=奖励到账',
+    description: '任务提醒子类型，表示自动分配、即将过期或奖励到账三类业务场景',
     example: 'reward_granted',
     validation: false,
   })
@@ -293,125 +305,87 @@ export class NotificationTaskRewardSnapshotDto {
   ledgerRecordIds!: number[]
 }
 
-/**
- * 评论操作通知数据 DTO
- *
- * 用于评论回复、评论点赞、评论提及等场景
- * 包含被操作的评论快照和其挂载的容器（作品/主题/章节）信息
- */
-export class NotificationCommentActionDataDto {
-  @NestedProperty({
-    description: '被操作评论快照',
-    type: NotificationCommentSnapshotDto,
-    validation: false,
-  })
-  object!: NotificationCommentSnapshotDto
-
-  @ApiProperty({
-    description: '评论挂载容器快照',
-    required: true,
-    oneOf: [
-      { $ref: getSchemaPath(NotificationWorkSnapshotDto) },
-      { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
-      { $ref: getSchemaPath(NotificationChapterSnapshotDto) },
-    ],
-  })
-  container!:
-    | NotificationWorkSnapshotDto
-    | NotificationTopicSnapshotDto
-    | NotificationChapterSnapshotDto
-
-  @NestedProperty({
-    description: '父级容器快照，仅章节场景返回所属作品',
-    type: NotificationWorkSnapshotDto,
-    required: false,
-    validation: false,
-    nullable: false,
-  })
-  parentContainer?: NotificationWorkSnapshotDto
+function createNotificationCommentContainerOneOfSchemas() {
+  return [
+    { $ref: getSchemaPath(NotificationWorkSnapshotDto) },
+    { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
+    { $ref: getSchemaPath(NotificationChapterSnapshotDto) },
+  ] satisfies ReferenceObject[]
 }
 
-/**
- * 主题对象通知数据 DTO
- *
- * 用于主题点赞、主题收藏、主题提及等场景
- * 仅包含主题快照信息
- */
-export class NotificationTopicObjectDataDto {
-  @NestedProperty({
-    description: '主题快照',
-    type: NotificationTopicSnapshotDto,
-    validation: false,
-  })
-  object!: NotificationTopicSnapshotDto
-}
+function createNotificationDataOneOfSchemas() {
+  const commentActionProperties: Record<string, SchemaObject | ReferenceObject> =
+    {
+      object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
+      container: {
+        oneOf: createNotificationCommentContainerOneOfSchemas(),
+      },
+      parentContainer: {
+        $ref: getSchemaPath(NotificationWorkSnapshotDto),
+      },
+    }
 
-/**
- * 主题评论通知数据 DTO
- *
- * 用于"主题被评论"场景
- * 包含评论快照和所属主题快照
- */
-export class NotificationTopicCommentedDataDto {
-  @NestedProperty({
-    description: '评论快照',
-    type: NotificationCommentSnapshotDto,
-    validation: false,
-  })
-  object!: NotificationCommentSnapshotDto
+  const topicObjectProperties: Record<string, SchemaObject | ReferenceObject> = {
+    object: { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
+  }
 
-  @NestedProperty({
-    description: '主题快照',
-    type: NotificationTopicSnapshotDto,
-    validation: false,
-  })
-  container!: NotificationTopicSnapshotDto
-}
+  const topicCommentedProperties: Record<
+    string,
+    SchemaObject | ReferenceObject
+  > = {
+    object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
+    container: { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
+  }
 
-/**
- * 公告通知数据 DTO
- *
- * 用于系统公告类通知
- * 包含公告快照信息
- */
-export class NotificationAnnouncementDataDto {
-  @NestedProperty({
-    description: '公告快照',
-    type: NotificationAnnouncementSnapshotDto,
-    validation: false,
-  })
-  object!: NotificationAnnouncementSnapshotDto
-}
+  const announcementProperties: Record<string, SchemaObject | ReferenceObject> =
+    {
+      object: { $ref: getSchemaPath(NotificationAnnouncementSnapshotDto) },
+    }
 
-/**
- * 任务提醒通知数据 DTO
- *
- * 用于任务提醒类通知（自动分配、即将过期、奖励到账）
- * 包含任务快照、提醒信息和奖励快照（仅奖励到账场景）
- */
-export class NotificationTaskReminderDataDto {
-  @NestedProperty({
-    description: '任务快照',
-    type: NotificationTaskSnapshotDto,
-    validation: false,
-  })
-  object!: NotificationTaskSnapshotDto
+  const taskReminderProperties: Record<string, SchemaObject | ReferenceObject> =
+    {
+      object: { $ref: getSchemaPath(NotificationTaskSnapshotDto) },
+      reminder: { $ref: getSchemaPath(NotificationTaskReminderInfoDto) },
+      reward: { $ref: getSchemaPath(NotificationTaskRewardSnapshotDto) },
+    }
 
-  @NestedProperty({
-    description: '提醒信息',
-    type: NotificationTaskReminderInfoDto,
-    validation: false,
-  })
-  reminder!: NotificationTaskReminderInfoDto
-
-  @NestedProperty({
-    description: '奖励快照，仅奖励到账场景返回',
-    type: NotificationTaskRewardSnapshotDto,
-    required: false,
-    validation: false,
-    nullable: false,
-  })
-  reward?: NotificationTaskRewardSnapshotDto
+  return [
+    {
+      title: '评论互动通知数据',
+      type: 'object',
+      additionalProperties: false,
+      required: ['object', 'container'],
+      properties: commentActionProperties,
+    },
+    {
+      title: '主题互动通知数据',
+      type: 'object',
+      additionalProperties: false,
+      required: ['object'],
+      properties: topicObjectProperties,
+    },
+    {
+      title: '主题评论通知数据',
+      type: 'object',
+      additionalProperties: false,
+      required: ['object', 'container'],
+      properties: topicCommentedProperties,
+    },
+    {
+      title: '系统公告通知数据',
+      type: 'object',
+      additionalProperties: false,
+      required: ['object'],
+      properties: announcementProperties,
+    },
+    {
+      title: '任务提醒通知数据',
+      type: 'object',
+      additionalProperties: false,
+      required: ['object', 'reminder'],
+      properties: taskReminderProperties,
+    },
+  ] satisfies SchemaObject[]
 }
 
 /**
@@ -427,8 +401,7 @@ export class NotificationTaskReminderDataDto {
  */
 export class BaseUserNotificationDto extends BaseDto {
   @EnumProperty({
-    description:
-      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
+    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -443,7 +416,7 @@ export class BaseUserNotificationDto extends BaseDto {
 
   @ApiProperty({
     description:
-      '结构化通知数据；根据 type 返回不同结构，user_followed 固定返回 null',
+      '结构化通知数据；根据通知分类返回不同结构，用户关注场景固定返回 null',
     example: {
       object: {
         kind: 'comment',
@@ -482,13 +455,7 @@ export class BaseUserNotificationDto extends BaseDto {
     },
     required: true,
     nullable: true,
-    oneOf: [
-      { $ref: getSchemaPath(NotificationCommentActionDataDto) },
-      { $ref: getSchemaPath(NotificationTopicObjectDataDto) },
-      { $ref: getSchemaPath(NotificationTopicCommentedDataDto) },
-      { $ref: getSchemaPath(NotificationAnnouncementDataDto) },
-      { $ref: getSchemaPath(NotificationTaskReminderDataDto) },
-    ],
+    oneOf: createNotificationDataOneOfSchemas(),
   })
   data!: MessageNotificationData | null
 
@@ -538,7 +505,7 @@ export class QueryUserNotificationListDto extends PageDto {
 
   @IsValidNotificationCategoryKeysFilter()
   @StringProperty({
-    description: '通知分类键列表，使用逗号、中文逗号、分号或竖线分隔',
+    description: NOTIFICATION_CATEGORY_KEYS_FILTER_DESCRIPTION,
     required: false,
     example: `${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY},${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE}`,
     transform: ({ value }) => {
@@ -555,8 +522,7 @@ export class QueryUserNotificationListDto extends PageDto {
  */
 export class UpdateUserNotificationPreferenceItemDto {
   @EnumProperty({
-    description:
-      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
+    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -601,8 +567,7 @@ class BaseNotificationDeliveryQueryDto extends NotificationDeliveryLookupFilterD
   status?: MessageNotificationDispatchStatusEnum
 
   @EnumProperty({
-    description:
-      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
+    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.TASK_REMINDER,
     required: false,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
@@ -637,11 +602,6 @@ export class QueryNotificationDeliveryPageDto extends IntersectionType(
   NotificationTaskReminderInfoDto,
   NotificationTaskRewardItemDto,
   NotificationTaskRewardSnapshotDto,
-  NotificationCommentActionDataDto,
-  NotificationTopicObjectDataDto,
-  NotificationTopicCommentedDataDto,
-  NotificationAnnouncementDataDto,
-  NotificationTaskReminderDataDto,
 )
 export class UserNotificationDto extends BaseUserNotificationDto {}
 
@@ -664,8 +624,7 @@ export class NotificationUnreadDto extends BaseNotificationUnreadDto {}
  */
 export class UserNotificationPreferenceItemDto {
   @EnumProperty({
-    description:
-      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
+    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -690,7 +649,7 @@ export class UserNotificationPreferenceItemDto {
   defaultEnabled!: boolean
 
   @EnumProperty({
-    description: '状态来源（default=默认策略；explicit=用户显式覆盖）',
+    description: NOTIFICATION_PREFERENCE_SOURCE_DESCRIPTION,
     example: MessageNotificationPreferenceSourceEnum.DEFAULT,
     enum: MessageNotificationPreferenceSourceEnum,
   })

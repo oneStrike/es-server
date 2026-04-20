@@ -21,7 +21,7 @@ interface NotificationUnreadCountRow {
 
 export function createNotificationUnreadByCategory(
   overrides?: Partial<NotificationUnreadByCategory>,
-): NotificationUnreadByCategory {
+) {
   const result = {} as NotificationUnreadByCategory
 
   for (const categoryKey of MESSAGE_NOTIFICATION_CATEGORY_KEYS) {
@@ -33,7 +33,7 @@ export function createNotificationUnreadByCategory(
 
 export function buildNotificationUnreadSummary(
   rows: readonly NotificationUnreadCountRow[],
-): NotificationUnreadSummary {
+) {
   const byCategory = createNotificationUnreadByCategory()
 
   for (const row of rows) {
@@ -52,7 +52,7 @@ export function buildNotificationUnreadSummary(
   }
 }
 
-export function buildNotificationUnreadSummaryExample(): NotificationUnreadSummary {
+export function buildNotificationUnreadSummaryExample() {
   return {
     total: 3,
     byCategory: createNotificationUnreadByCategory({

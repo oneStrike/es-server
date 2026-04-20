@@ -4,7 +4,7 @@ import type {
 } from '@libs/platform/modules/eventing'
 import type { SQL } from 'drizzle-orm'
 import type { NotificationProjectionApplyResult } from '../eventing/message-event.type'
-import type { NotificationDeliveryPageItem } from './notification-delivery.type'
+import type { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import { DrizzleService } from '@db/core'
 
 import { Injectable } from '@nestjs/common'
@@ -13,7 +13,6 @@ import {
   getMessageDomainEventDefinition,
   MessageDomainEventKey,
 } from '../eventing/message-event.constant'
-import { QueryNotificationDeliveryPageDto } from './dto/notification.dto'
 import { parsePositiveBigintQueryId } from './notification-query-id.util'
 import {
   getMessageNotificationCategoryLabel,
@@ -141,12 +140,7 @@ export class MessageNotificationDeliveryService {
 
   async getNotificationDeliveryPage(
     query: QueryNotificationDeliveryPageDto,
-  ): Promise<{
-    list: NotificationDeliveryPageItem[]
-    total: number
-    pageIndex: number
-    pageSize: number
-  }> {
+  ) {
     const conditions: SQL[] = []
 
     if (query.status) {

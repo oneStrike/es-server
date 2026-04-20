@@ -298,7 +298,7 @@ export class NotificationEventConsumer {
           avatarUrl: true,
         },
       })
-      actor = actorRecord as NotificationActorSource | undefined
+      actor = actorRecord
     }
 
     return mapUserNotificationToPublicView(typedNotification, actor)

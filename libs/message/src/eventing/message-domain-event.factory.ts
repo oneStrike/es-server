@@ -100,7 +100,7 @@ export class MessageDomainEventFactoryService {
     actorNickname?: string
     commentExcerpt?: string
     targetDisplayTitle?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const targetDisplayTitle = this.normalizeDisplayText(
       input.targetDisplayTitle,
@@ -129,7 +129,7 @@ export class MessageDomainEventFactoryService {
           ),
         },
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 
   buildTopicMentionEvent(input: {
@@ -138,7 +138,7 @@ export class MessageDomainEventFactoryService {
     topicId: number
     actorNickname?: string
     topicTitle?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const topicTitle = this.normalizeTopicTitle(input.topicTitle)
 
@@ -158,7 +158,7 @@ export class MessageDomainEventFactoryService {
           object: this.buildTopicSnapshot(input.topicId, topicTitle),
         },
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 
   buildCommentLikeEvent(input: {
@@ -169,7 +169,7 @@ export class MessageDomainEventFactoryService {
     targetId: number
     actorNickname?: string
     commentExcerpt?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const commentExcerpt = this.normalizeExcerpt(input.commentExcerpt)
 
@@ -193,7 +193,7 @@ export class MessageDomainEventFactoryService {
           ),
         },
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 
   buildUserFollowedEvent(input: {
@@ -202,7 +202,7 @@ export class MessageDomainEventFactoryService {
     targetType: number
     targetId: number
     actorNickname?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     return {
       eventKey: 'user.followed',
@@ -218,7 +218,7 @@ export class MessageDomainEventFactoryService {
         content: `${actorNickname} 关注了你`,
         payload: null,
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 
   buildTopicLikedEvent(input: {
@@ -228,7 +228,7 @@ export class MessageDomainEventFactoryService {
     targetId: number
     actorNickname?: string
     topicTitle?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const topicTitle = this.normalizeTopicTitle(input.topicTitle)
     return {
@@ -247,7 +247,7 @@ export class MessageDomainEventFactoryService {
           object: this.buildTopicSnapshot(input.targetId, topicTitle),
         },
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 
   buildTopicFavoritedEvent(input: {
@@ -257,7 +257,7 @@ export class MessageDomainEventFactoryService {
     targetId: number
     actorNickname?: string
     topicTitle?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const topicTitle = this.normalizeTopicTitle(input.topicTitle)
     return {
@@ -276,7 +276,7 @@ export class MessageDomainEventFactoryService {
           object: this.buildTopicSnapshot(input.targetId, topicTitle),
         },
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 
   buildTopicCommentedEvent(input: {
@@ -288,7 +288,7 @@ export class MessageDomainEventFactoryService {
     actorNickname?: string
     topicTitle?: string
     commentExcerpt?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const topicTitle = this.normalizeTopicTitle(input.topicTitle)
     const commentExcerpt =
@@ -310,7 +310,7 @@ export class MessageDomainEventFactoryService {
           container: this.buildTopicSnapshot(input.targetId, topicTitle),
         },
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 
   buildCommentRepliedEvent(input: {
@@ -322,7 +322,7 @@ export class MessageDomainEventFactoryService {
     actorNickname?: string
     replyExcerpt?: string
     targetDisplayTitle?: string
-  }): PublishMessageDomainEventInput {
+  }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
     const targetDisplayTitle = this.normalizeDisplayText(
       input.targetDisplayTitle,
@@ -350,6 +350,6 @@ export class MessageDomainEventFactoryService {
           ),
         },
       },
-    }
+    } satisfies PublishMessageDomainEventInput
   }
 }

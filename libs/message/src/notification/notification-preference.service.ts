@@ -1,15 +1,12 @@
 import type {
-  EffectiveMessageNotificationPreference,
-  NotificationPreferenceSnapshot,
-} from './notification-preference.type'
+  UpdateUserNotificationPreferenceItemDto,
+  UpdateUserNotificationPreferencesDto,
+} from './dto/notification.dto'
+import type { NotificationPreferenceSnapshot } from './notification-preference.type'
 import type { MessageNotificationCategoryKey } from './notification.constant'
 import { DrizzleService } from '@db/core'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
-import {
-  UpdateUserNotificationPreferenceItemDto,
-  UpdateUserNotificationPreferencesDto,
-} from './dto/notification.dto'
 import {
   getMessageNotificationCategoryLabel,
   MESSAGE_NOTIFICATION_CATEGORY_KEYS,
@@ -28,7 +25,9 @@ export class MessageNotificationPreferenceService {
     return this.drizzle.schema.notificationPreference
   }
 
-  async getUserNotificationPreferenceList(userId: number) {
+  async getUserNotificationPreferenceList(
+    userId: number,
+  ) {
     const preferences = await this.db.query.notificationPreference.findMany({
       where: { userId },
     })
@@ -105,7 +104,7 @@ export class MessageNotificationPreferenceService {
   private buildEffectivePreference(
     categoryKey: MessageNotificationCategoryKey,
     preference?: NotificationPreferenceSnapshot,
-  ): EffectiveMessageNotificationPreference {
+  ) {
     const defaultEnabled = this.getDefaultEnabled(categoryKey)
     const source: MessageNotificationPreferenceSourceEnum = preference
       ? MessageNotificationPreferenceSourceEnum.EXPLICIT

@@ -1,8 +1,5 @@
 import type { StructuredValue } from '@libs/platform/utils/jsonParse'
-import type {
-  MessageNotificationData,
-  NotificationUserSnapshot,
-} from './notification-contract.type'
+import type { NotificationUserSnapshot } from './notification-contract.type'
 import type { MessageNotificationCategoryKey } from './notification.constant'
 
 /** 稳定领域类型 `NotificationTemplateRenderContext`。仅供内部领域/服务链路复用，避免重复定义。 */
@@ -14,7 +11,7 @@ export interface NotificationTemplateRenderContext {
   title: string
   content: string
   expiresAt?: Date | string
-  data?: MessageNotificationData | null
+  data?: StructuredValue | null
 }
 
 /** 稳定领域类型 `NotificationTemplateFallbackReason`。仅供内部领域/服务链路复用，避免重复定义。 */

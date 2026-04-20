@@ -1,75 +1,78 @@
+import type {
+  AppAnnouncementSelect,
+  AppUserSelect,
+  ForumTopicSelect,
+  TaskAssignmentSelect,
+  TaskSelect,
+  UserCommentSelect,
+  WorkChapterSelect,
+  WorkSelect,
+} from '@db/schema'
 import type { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
 import type { StructuredValue } from '@libs/platform/utils/jsonParse'
 import type { MessageNotificationCategoryKey } from './notification.constant'
 
 export type MessageNotificationType = MessageNotificationCategoryKey
 
-/** 稳定通知文案块：只承载最终展示结果。 */
-export interface NotificationMessageBlock {
-  title: string
-  body: string
-}
-
 /** 稳定触发者快照：通知页只展示最小用户信息。 */
-export interface NotificationUserSnapshot {
-  id: number
-  nickname?: string
-  avatarUrl: string | null
-}
+export type NotificationUserSnapshot = Pick<
+  AppUserSelect,
+  'id' | 'nickname' | 'avatarUrl'
+>
 
 /** 稳定评论快照。 */
 export interface NotificationCommentSnapshot {
   kind: 'comment'
-  id: number
-  snippet?: string
+  id: UserCommentSelect['id']
+  snippet?: UserCommentSelect['content']
 }
 
 /** 稳定主题快照。 */
 export interface NotificationTopicSnapshot {
   kind: 'topic'
-  id: number
-  title?: string
-  sectionId?: number
+  id: ForumTopicSelect['id']
+  title?: ForumTopicSelect['title']
+  sectionId?: ForumTopicSelect['sectionId']
 }
 
 /** 稳定作品快照。 */
 export interface NotificationWorkSnapshot {
   kind: 'work'
-  id: number
-  title?: string
-  cover?: string
-  workType?: number
+  id: WorkSelect['id']
+  title?: WorkSelect['name']
+  cover?: WorkSelect['cover']
+  workType?: WorkSelect['type']
 }
 
 /** 稳定章节快照。 */
 export interface NotificationChapterSnapshot {
   kind: 'chapter'
-  id: number
-  title?: string
-  subtitle?: string
-  cover?: string
-  workId?: number
-  workType?: number
+  id: WorkChapterSelect['id']
+  title?: WorkChapterSelect['title']
+  subtitle?: WorkChapterSelect['subtitle']
+  cover?: WorkChapterSelect['cover']
+  workId?: WorkChapterSelect['workId']
+  workType?: WorkChapterSelect['workType']
 }
 
 /** 稳定公告快照。 */
 export interface NotificationAnnouncementSnapshot {
   kind: 'announcement'
-  id: number
-  title?: string
-  summary?: string
-  announcementType?: number
-  priorityLevel?: number
+  id: AppAnnouncementSelect['id']
+  title?: AppAnnouncementSelect['title']
+  summary?: AppAnnouncementSelect['summary']
+  announcementType?: AppAnnouncementSelect['announcementType']
+  priorityLevel?: AppAnnouncementSelect['priorityLevel']
 }
 
 /** 稳定任务快照。 */
 export interface NotificationTaskSnapshot {
   kind: 'task'
-  id: number
-  code?: string
-  title?: string
-  cover?: string
-  type?: number
+  id: TaskSelect['id']
+  code?: TaskSelect['code']
+  title?: TaskSelect['title']
+  cover?: TaskSelect['cover']
+  type?: TaskSelect['type']
 }
 
 /** 评论类通知复用的容器快照。 */
@@ -111,9 +114,9 @@ export interface NotificationTaskRewardSnapshot {
 /** 任务提醒信息。 */
 export interface NotificationTaskReminderInfo {
   kind: 'auto_assigned' | 'expiring_soon' | 'reward_granted'
-  assignmentId?: number
-  cycleKey?: string
-  expiredAt?: string
+  assignmentId?: TaskAssignmentSelect['id']
+  cycleKey?: TaskAssignmentSelect['cycleKey']
+  expiredAt?: TaskAssignmentSelect['expiredAt'] | string
 }
 
 /** 任务提醒通知数据。 */
@@ -147,22 +150,6 @@ export interface NotificationDataByTypeMap {
 
 export type MessageNotificationData =
   NotificationDataByTypeMap[MessageNotificationType]
-
-/** 通知对外读模型。 */
-export interface MessageNotificationPublicView<
-  TType extends MessageNotificationType = MessageNotificationType,
-> {
-  id: number
-  type: TType
-  actor?: NotificationUserSnapshot
-  message: NotificationMessageBlock
-  data: NotificationDataByTypeMap[TType]
-  isRead: boolean
-  readAt?: Date
-  expiresAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
 
 /** JSON 归一化后允许写入 payload 列的新通知数据。 */
 export type MessageNotificationStoredData =

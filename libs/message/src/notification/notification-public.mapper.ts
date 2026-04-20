@@ -1,22 +1,11 @@
-import type { UserNotificationSelect } from '@db/schema'
-import type { UserNotificationDto } from './dto/notification.dto'
-import type {
-  MessageNotificationData,
-  MessageNotificationPublicView,
-} from './notification-contract.type'
+import type { AppUserSelect, UserNotificationSelect } from '@db/schema'
+import type { UserNotificationDataDto } from './dto/notification.dto'
 import { isMessageNotificationCategoryKey } from './notification.constant'
 
-export interface NotificationPublicActor {
-  id: number
-  nickname?: string
-  avatarUrl: string | null
-}
-
-export interface NotificationActorSource {
-  id: number
-  nickname?: string | null
-  avatarUrl?: string | null
-}
+export type NotificationActorSource = Pick<
+  AppUserSelect,
+  'id' | 'nickname' | 'avatarUrl'
+>
 
 function isPlainRecord<T>(
   value: T,
@@ -24,32 +13,33 @@ function isPlainRecord<T>(
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-export function mapNotificationActor(
-  actor?: NotificationActorSource | null,
-): NotificationPublicActor | undefined {
+export function mapNotificationActor(actor?: NotificationActorSource | null) {
   if (!actor) {
     return undefined
   }
 
-  const mapped: NotificationPublicActor = {
+  return {
     id: actor.id,
     avatarUrl:
       typeof actor.avatarUrl === 'string' && actor.avatarUrl.trim()
         ? actor.avatarUrl
         : null,
+    nickname: actor.nickname,
+  }
+}
+
+function mapNotificationData(payload: UserNotificationSelect['payload']) {
+  if (isPlainRecord(payload)) {
+    return payload as UserNotificationDataDto
   }
 
-  if (typeof actor.nickname === 'string' && actor.nickname.trim()) {
-    mapped.nickname = actor.nickname
-  }
-
-  return mapped
+  return null
 }
 
 export function mapUserNotificationToPublicView(
   notification: UserNotificationSelect,
   actor?: NotificationActorSource | null,
-): UserNotificationDto {
+) {
   const rawCategoryKey = notification.categoryKey
   if (!isMessageNotificationCategoryKey(rawCategoryKey)) {
     throw new TypeError(
@@ -57,7 +47,7 @@ export function mapUserNotificationToPublicView(
     )
   }
 
-  const mapped: MessageNotificationPublicView = {
+  return {
     id: notification.id,
     type: rawCategoryKey,
     actor: mapNotificationActor(actor),
@@ -65,17 +55,11 @@ export function mapUserNotificationToPublicView(
       title: notification.title,
       body: notification.content,
     },
-    data: (isPlainRecord(notification.payload)
-      ? notification.payload
-      : notification.payload === null
-        ? null
-        : null) as MessageNotificationData | null,
+    data: mapNotificationData(notification.payload),
     isRead: notification.isRead,
     readAt: notification.readAt ?? undefined,
     expiresAt: notification.expiresAt ?? undefined,
     createdAt: notification.createdAt,
     updatedAt: notification.updatedAt,
   }
-
-  return mapped
 }

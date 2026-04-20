@@ -1,4 +1,10 @@
 import type { SQL } from 'drizzle-orm'
+import type {
+  CreateNotificationTemplateDto,
+  QueryNotificationTemplatePageDto,
+  UpdateNotificationTemplateDto,
+  UpdateNotificationTemplateEnabledDto,
+} from './dto/notification-template.dto'
 import type { NotificationUserSnapshot } from './notification-contract.type'
 import type {
   NotificationTemplateRenderContext,
@@ -10,12 +16,6 @@ import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
-import {
-  CreateNotificationTemplateDto,
-  QueryNotificationTemplatePageDto,
-  UpdateNotificationTemplateDto,
-  UpdateNotificationTemplateEnabledDto,
-} from './dto/notification-template.dto'
 import {
   MESSAGE_NOTIFICATION_CATEGORY_KEYS,
   MessageNotificationCategoryKey,
@@ -313,8 +313,8 @@ export class MessageNotificationTemplateService {
       if (actorRecord) {
         actor = {
           id: actorRecord.id,
-          nickname: actorRecord.nickname ?? undefined,
-          avatarUrl: actorRecord.avatarUrl ?? null,
+          nickname: actorRecord.nickname,
+          avatarUrl: actorRecord.avatarUrl,
         }
       }
     }
@@ -327,7 +327,7 @@ export class MessageNotificationTemplateService {
       title: input.title,
       content: input.content,
       expiresAt: input.expiresAt,
-      data: (input.data ?? null) as NotificationTemplateRenderContext['data'],
+      data: input.data ?? null,
     }
   }
 
