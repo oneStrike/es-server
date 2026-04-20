@@ -52,8 +52,8 @@ export enum CheckInStreakRewardRuleStatusEnum {
   ENABLED = 1,
 }
 
-/** 日常连续签到配置生效状态枚举。 */
-export enum CheckInDailyStreakConfigStatusEnum {
+/** 连续签到配置状态枚举。 */
+export enum CheckInStreakConfigStatusEnum {
   /** 草稿。 */
   DRAFT = 0,
   /** 已排期。 */
@@ -66,34 +66,14 @@ export enum CheckInDailyStreakConfigStatusEnum {
   TERMINATED = 4,
 }
 
-/** 日常连续签到发布策略枚举。 */
-export enum CheckInDailyStreakPublishStrategyEnum {
+/** 连续签到发布策略枚举。 */
+export enum CheckInStreakPublishStrategyEnum {
   /** 立即生效。 */
   IMMEDIATE = 1,
   /** 次日生效。 */
   NEXT_DAY = 2,
   /** 指定时间生效。 */
   SCHEDULED_AT = 3,
-}
-
-/** 连续奖励作用域枚举。 */
-export enum CheckInStreakScopeTypeEnum {
-  /** 日常连续签到。 */
-  DAILY = 1,
-  /** 活动连续签到。 */
-  ACTIVITY = 2,
-}
-
-/** 活动连续签到状态枚举。 */
-export enum CheckInActivityStreakStatusEnum {
-  /** 草稿。 */
-  DRAFT = 0,
-  /** 已发布。 */
-  PUBLISHED = 1,
-  /** 已下线。 */
-  DISABLED = 2,
-  /** 已归档。 */
-  ARCHIVED = 3,
 }
 
 /** 补签额度事实类型枚举。 */

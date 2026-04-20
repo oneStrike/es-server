@@ -21,16 +21,15 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common'
-import { and, asc, eq, gte, lte } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
-  CheckInDailyStreakConfigStatusEnum,
   CheckInMakeupPeriodTypeEnum,
   CheckInOperatorTypeEnum,
   CheckInRecordTypeEnum,
   CheckInRepairTargetTypeEnum,
   CheckInRewardResultTypeEnum,
-  CheckInStreakScopeTypeEnum,
+  CheckInStreakConfigStatusEnum,
 } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
@@ -39,7 +38,7 @@ const CHECK_IN_WRITE_RETRY_LIMIT = 3
 /**
  * 签到执行服务。
  *
- * 负责今日签到、补签、日常连续奖励发放、活动连续奖励发放，以及签到奖励补偿重试。
+ * 负责今日签到、补签、统一连续奖励发放，以及签到奖励补偿重试。
  */
 @Injectable()
 export class CheckInExecutionService extends CheckInServiceSupport {
@@ -169,11 +168,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           if (input.recordType === CheckInRecordTypeEnum.MAKEUP) {
             this.assertMakeupAllowed(input.signDate, today, window)
             const consumePlan = this.buildMakeupConsumePlan(account)
-            account = await this.consumeMakeupAllowance(
-              account,
-              consumePlan,
-              tx,
-            )
+            account = await this.consumeMakeupAllowance(account, consumePlan, tx)
           }
 
           const rewardResolution = this.resolveRewardForDate(
@@ -229,16 +224,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             )
           }
 
-          const triggeredGrantIds: number[] = []
-          triggeredGrantIds.push(
-            ...(await this.processDailyStreakGrants(input.userId, tx, now)),
-          )
-          triggeredGrantIds.push(
-            ...(await this.processActivityStreakGrants(
-              input.userId,
-              input.signDate,
-              tx,
-            )),
+          const triggeredGrantIds = await this.processStreakGrants(
+            input.userId,
+            tx,
+            now,
           )
 
           return {
@@ -274,24 +263,21 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return this.buildActionResponse(action.recordId, action.triggeredGrantIds)
   }
 
-  private async processDailyStreakGrants(userId: number, tx: Db, now: Date) {
-    const progress = await this.getOrCreateDailyProgress(userId, tx)
+  private async processStreakGrants(userId: number, tx: Db, now: Date) {
+    const progress = await this.getOrCreateStreakProgress(userId, tx)
     const records = await this.listUserRecords(userId, tx)
     const aggregation = this.recomputeStreakAggregation(records)
-    const dailyConfigs = (await this.listDailyStreakConfigs(tx)).filter(
+    const configs = (await this.listStreakConfigs(tx)).filter(
       (config) =>
-        config.status !== CheckInDailyStreakConfigStatusEnum.DRAFT &&
-        config.status !== CheckInDailyStreakConfigStatusEnum.TERMINATED,
+        config.status !== CheckInStreakConfigStatusEnum.DRAFT &&
+        config.status !== CheckInStreakConfigStatusEnum.TERMINATED,
     )
 
     const streakByConfigId = new Map<number, Record<string, number>>()
     for (const [triggerSignDate, streak] of Object.entries(
       aggregation.streakByDate,
     )) {
-      const config = this.resolveDailyStreakConfigForSignDate(
-        triggerSignDate,
-        dailyConfigs,
-      )
+      const config = this.resolveStreakConfigForSignDate(triggerSignDate, configs)
       if (!config) {
         continue
       }
@@ -305,18 +291,10 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         id: this.checkInStreakGrantTable.id,
         ruleCode: this.checkInStreakGrantTable.ruleCode,
         triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
-        configVersionId: this.checkInStreakGrantTable.configVersionId,
+        configId: this.checkInStreakGrantTable.configId,
       })
       .from(this.checkInStreakGrantTable)
-      .where(
-        and(
-          eq(this.checkInStreakGrantTable.userId, userId),
-          eq(
-            this.checkInStreakGrantTable.scopeType,
-            CheckInStreakScopeTypeEnum.DAILY,
-          ),
-        ),
-      )
+      .where(eq(this.checkInStreakGrantTable.userId, userId))
       .orderBy(
         asc(this.checkInStreakGrantTable.triggerSignDate),
         asc(this.checkInStreakGrantTable.id),
@@ -324,18 +302,18 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
     const triggeredGrantIds: number[] = []
 
-    for (const config of dailyConfigs) {
+    for (const config of configs) {
       const scopedStreakByDate = streakByConfigId.get(config.id)
       if (!scopedStreakByDate) {
         continue
       }
 
-      const rewardRules = await this.loadDailyStreakRewardRules(config.id, tx)
-      const grantCandidates = this.resolveEligibleScopeGrantRules(
+      const rewardRules = await this.loadStreakRewardRules(config.id, tx)
+      const grantCandidates = this.resolveEligibleGrantRules(
         rewardRules,
         scopedStreakByDate,
         existingGrants
-          .filter((grant) => grant.configVersionId === config.id)
+          .filter((grant) => grant.configId === config.id)
           .map((grant) => ({
             ruleCode: grant.ruleCode,
             triggerSignDate: grant.triggerSignDate,
@@ -343,27 +321,31 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         aggregation.streakStartedAt,
       )
 
-      const dailyRules = await tx
+      const configRules = await tx
         .select()
-        .from(this.checkInDailyStreakRuleTable)
-        .where(eq(this.checkInDailyStreakRuleTable.configId, config.id))
+        .from(this.checkInStreakRuleTable)
+        .where(eq(this.checkInStreakRuleTable.configId, config.id))
       const ruleIdMap = new Map(
-        dailyRules.map((rule) => [rule.ruleCode, rule.id]),
+        configRules.map((rule) => [rule.ruleCode, rule.id]),
       )
 
       for (const candidate of grantCandidates) {
+        const ruleId = ruleIdMap.get(candidate.rule.ruleCode)
+        if (!ruleId) {
+          throw new BusinessException(
+            BusinessErrorCode.STATE_CONFLICT,
+            `连续奖励规则不存在：${candidate.rule.ruleCode}`,
+          )
+        }
         const [grant] = await tx
           .insert(this.checkInStreakGrantTable)
           .values({
             userId,
-            scopeType: CheckInStreakScopeTypeEnum.DAILY,
-            configVersionId: config.id,
-            dailyRuleId: ruleIdMap.get(candidate.rule.ruleCode) ?? null,
-            activityId: null,
-            activityRuleId: null,
+            configId: config.id,
+            ruleId,
             triggerSignDate: candidate.triggerSignDate,
             rewardSettlementId: null,
-            bizKey: this.buildDailyGrantBizKey(
+            bizKey: this.buildGrantBizKey(
               userId,
               config.id,
               candidate.rule.ruleCode,
@@ -375,8 +357,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
             context: {
               source:
                 candidate.triggerSignDate === this.formatDateOnly(now)
-                  ? 'daily_sign'
-                  : 'daily_recompute',
+                  ? 'sign'
+                  : 'recompute',
             },
           })
           .onConflictDoNothing({
@@ -389,124 +371,12 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         if (!grant) {
           continue
         }
-        await this.insertGrantRewardItems(
-          grant.id,
-          candidate.rule.rewardItems,
-          tx,
-        )
+        await this.insertGrantRewardItems(grant.id, candidate.rule.rewardItems, tx)
         triggeredGrantIds.push(grant.id)
       }
     }
 
-    await this.updateDailyProgress(progress, aggregation, tx)
-    return triggeredGrantIds
-  }
-
-  private async processActivityStreakGrants(
-    userId: number,
-    signDate: string,
-    tx: Db,
-  ) {
-    const activities = await this.listEffectiveActivityStreaks(signDate, tx)
-    const triggeredGrantIds: number[] = []
-
-    for (const activity of activities) {
-      const progress = await this.getOrCreateActivityProgress(
-        activity.id,
-        userId,
-        tx,
-      )
-      const records = await this.listActivityScopedRecords(
-        userId,
-        activity.id,
-        tx,
-      )
-      const aggregation = this.recomputeStreakAggregation(records)
-      const activityRules = await this.loadActivityStreakRewardRuleRows(
-        activity.id,
-        tx,
-      )
-      const rewardRules = this.toStreakRewardRuleViews(activityRules)
-      const existingGrants = await tx
-        .select({
-          id: this.checkInStreakGrantTable.id,
-          ruleCode: this.checkInStreakGrantTable.ruleCode,
-          triggerSignDate: this.checkInStreakGrantTable.triggerSignDate,
-        })
-        .from(this.checkInStreakGrantTable)
-        .where(
-          and(
-            eq(this.checkInStreakGrantTable.userId, userId),
-            eq(
-              this.checkInStreakGrantTable.scopeType,
-              CheckInStreakScopeTypeEnum.ACTIVITY,
-            ),
-            eq(this.checkInStreakGrantTable.activityId, activity.id),
-          ),
-        )
-        .orderBy(
-          asc(this.checkInStreakGrantTable.triggerSignDate),
-          asc(this.checkInStreakGrantTable.id),
-        )
-
-      const grantCandidates = this.resolveEligibleScopeGrantRules(
-        rewardRules,
-        aggregation.streakByDate,
-        existingGrants.map((grant) => ({
-          ruleCode: grant.ruleCode,
-          triggerSignDate: grant.triggerSignDate,
-        })),
-        aggregation.streakStartedAt,
-      )
-
-      const ruleIdMap = new Map(
-        activityRules.map((rule) => [rule.ruleCode, rule.id]),
-      )
-
-      for (const candidate of grantCandidates) {
-        const [grant] = await tx
-          .insert(this.checkInStreakGrantTable)
-          .values({
-            userId,
-            scopeType: CheckInStreakScopeTypeEnum.ACTIVITY,
-            configVersionId: null,
-            dailyRuleId: null,
-            activityId: activity.id,
-            activityRuleId: ruleIdMap.get(candidate.rule.ruleCode) ?? null,
-            triggerSignDate: candidate.triggerSignDate,
-            rewardSettlementId: null,
-            bizKey: this.buildActivityGrantBizKey(
-              userId,
-              activity.id,
-              candidate.rule.ruleCode,
-              candidate.triggerSignDate,
-            ),
-            ruleCode: candidate.rule.ruleCode,
-            streakDays: candidate.rule.streakDays,
-            repeatable: candidate.rule.repeatable,
-            context: { source: 'activity_recompute' },
-          })
-          .onConflictDoNothing({
-            target: [
-              this.checkInStreakGrantTable.userId,
-              this.checkInStreakGrantTable.bizKey,
-            ],
-          })
-          .returning({ id: this.checkInStreakGrantTable.id })
-        if (!grant) {
-          continue
-        }
-        await this.insertGrantRewardItems(
-          grant.id,
-          candidate.rule.rewardItems,
-          tx,
-        )
-        triggeredGrantIds.push(grant.id)
-      }
-
-      await this.updateActivityProgress(progress, aggregation, tx)
-    }
-
+    await this.updateStreakProgress(progress, aggregation, tx)
     return triggeredGrantIds
   }
 
@@ -549,7 +419,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       config,
       this.formatDateOnly(new Date()),
     )
-    const progress = await this.db.query.checkInDailyStreakProgress.findFirst({
+    const progress = await this.db.query.checkInStreakProgress.findFirst({
       where: { userId: record.userId },
     })
     const settlement = record.rewardSettlementId
@@ -752,8 +622,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         throw error
       }
 
-      const message =
-        error instanceof Error ? error.message : '连续奖励发放失败'
+      const message = error instanceof Error ? error.message : '连续奖励发放失败'
       this.logger.warn(
         `check_in_streak_grant_reward_failed grantId=${grantId} error=${message}`,
       )
@@ -866,53 +735,13 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       )
   }
 
-  private async listActivityScopedRecords(
-    userId: number,
-    activityId: number,
-    tx: Db,
-  ) {
-    const activity = await tx.query.checkInActivityStreak.findFirst({
-      where: { id: activityId },
-    })
-    if (!activity) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '活动连续签到不存在',
-      )
-    }
-
-    const startDate = this.formatDateOnly(activity.effectiveFrom)
-    const endDate = this.formatDateOnly(activity.effectiveTo)
-
-    return tx
-      .select({
-        signDate: this.checkInRecordTable.signDate,
-      })
-      .from(this.checkInRecordTable)
-      .where(
-        and(
-          eq(this.checkInRecordTable.userId, userId),
-          gte(this.checkInRecordTable.signDate, startDate),
-          lte(this.checkInRecordTable.signDate, endDate),
-        ),
-      )
-      .orderBy(
-        asc(this.checkInRecordTable.signDate),
-        asc(this.checkInRecordTable.id),
-      )
-  }
-
-  private async updateDailyProgress(
-    progress: Awaited<
-      ReturnType<CheckInExecutionService['getOrCreateDailyProgress']>
-    >,
-    aggregation: ReturnType<
-      CheckInExecutionService['recomputeStreakAggregation']
-    >,
+  private async updateStreakProgress(
+    progress: Awaited<ReturnType<CheckInExecutionService['getOrCreateStreakProgress']>>,
+    aggregation: ReturnType<CheckInExecutionService['recomputeStreakAggregation']>,
     tx: Db,
   ) {
     const [updated] = await tx
-      .update(this.checkInDailyStreakProgressTable)
+      .update(this.checkInStreakProgressTable)
       .set({
         currentStreak: aggregation.currentStreak,
         streakStartedAt: aggregation.streakStartedAt ?? null,
@@ -921,47 +750,15 @@ export class CheckInExecutionService extends CheckInServiceSupport {
       })
       .where(
         and(
-          eq(this.checkInDailyStreakProgressTable.id, progress.id),
-          eq(this.checkInDailyStreakProgressTable.version, progress.version),
+          eq(this.checkInStreakProgressTable.id, progress.id),
+          eq(this.checkInStreakProgressTable.version, progress.version),
         ),
       )
-      .returning({ id: this.checkInDailyStreakProgressTable.id })
+      .returning({ id: this.checkInStreakProgressTable.id })
     if (!updated) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
-        '日常连续签到进度并发冲突，请稍后重试',
-      )
-    }
-  }
-
-  private async updateActivityProgress(
-    progress: Awaited<
-      ReturnType<CheckInExecutionService['getOrCreateActivityProgress']>
-    >,
-    aggregation: ReturnType<
-      CheckInExecutionService['recomputeStreakAggregation']
-    >,
-    tx: Db,
-  ) {
-    const [updated] = await tx
-      .update(this.checkInActivityStreakProgressTable)
-      .set({
-        currentStreak: aggregation.currentStreak,
-        streakStartedAt: aggregation.streakStartedAt ?? null,
-        lastSignedDate: aggregation.lastSignedDate ?? null,
-        version: progress.version + 1,
-      })
-      .where(
-        and(
-          eq(this.checkInActivityStreakProgressTable.id, progress.id),
-          eq(this.checkInActivityStreakProgressTable.version, progress.version),
-        ),
-      )
-      .returning({ id: this.checkInActivityStreakProgressTable.id })
-    if (!updated) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '活动连续签到进度并发冲突，请稍后重试',
+        '连续签到进度并发冲突，请稍后重试',
       )
     }
   }
@@ -989,37 +786,17 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     return `checkin:record:user:${userId}:date:${signDate}`
   }
 
-  private buildDailyGrantBizKey(
+  private buildGrantBizKey(
     userId: number,
-    configVersionId: number,
+    configId: number,
     ruleCode: string,
     triggerSignDate: string,
   ) {
     return [
       'checkin',
       'grant',
-      'daily',
-      configVersionId,
-      'rule',
-      ruleCode,
-      'user',
-      userId,
-      'date',
-      triggerSignDate,
-    ].join(':')
-  }
-
-  private buildActivityGrantBizKey(
-    userId: number,
-    activityId: number,
-    ruleCode: string,
-    triggerSignDate: string,
-  ) {
-    return [
-      'checkin',
-      'grant',
-      'activity',
-      activityId,
+      'config',
+      configId,
       'rule',
       ruleCode,
       'user',
@@ -1084,9 +861,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
     grant: {
       id: number
       userId: number
-      scopeType: number
-      configVersionId?: number | null
-      activityId?: number | null
+      configId: number
+      ruleId: number
       ruleCode: string
       triggerSignDate: string | Date
       rewardItems: unknown
@@ -1106,9 +882,8 @@ export class CheckInExecutionService extends CheckInServiceSupport {
         {
           grantId: grant.id,
           userId: grant.userId,
-          scopeType: grant.scopeType,
-          configVersionId: grant.configVersionId ?? null,
-          activityId: grant.activityId ?? null,
+          configId: grant.configId,
+          ruleId: grant.ruleId,
           ruleCode: grant.ruleCode,
           triggerSignDate: this.toDateOnlyValue(grant.triggerSignDate),
           rewardItems: this.asArray(grant.rewardItems) ?? null,

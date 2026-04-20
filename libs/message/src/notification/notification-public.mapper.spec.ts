@@ -24,6 +24,16 @@ function createNotification(
         id: 101,
         snippet: '这条评论很关键',
       },
+      parentComment: {
+        kind: 'comment',
+        id: 88,
+        snippet: '这是上一条评论',
+      },
+      container: {
+        kind: 'topic',
+        id: 7,
+        title: '主题标题',
+      },
     },
     announcementId: null,
     isRead: false,
@@ -72,6 +82,29 @@ describe('notification-public.mapper', () => {
 
     expect(result.actor).toBeUndefined()
     expect(result.data).toBeNull()
+  })
+
+  it('keeps old comment_reply payloads readable when parentComment is absent', () => {
+    const notification = createNotification({
+      payload: {
+        object: {
+          kind: 'comment',
+          id: 101,
+          snippet: '只有回复内容',
+        },
+        container: {
+          kind: 'topic',
+          id: 7,
+          title: '主题标题',
+        },
+      },
+    })
+
+    const result = mapUserNotificationToPublicView(notification)
+
+    expect(expectPublicNotificationData(result.data)).toEqual(
+      notification.payload,
+    )
   })
 
   it('rejects unsupported notification category keys', () => {

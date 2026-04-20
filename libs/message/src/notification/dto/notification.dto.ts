@@ -310,6 +310,11 @@ export interface NotificationCommentActionDataDto {
   parentContainer?: NotificationWorkSnapshotDto
 }
 
+export interface NotificationCommentReplyDataDto
+  extends NotificationCommentActionDataDto {
+  parentComment?: NotificationCommentSnapshotDto
+}
+
 export interface NotificationTopicObjectDataDto {
   object: NotificationTopicSnapshotDto
 }
@@ -330,7 +335,7 @@ export interface NotificationTaskReminderDataDto {
 }
 
 export interface NotificationDataByTypeDto {
-  comment_reply: NotificationCommentActionDataDto
+  comment_reply: NotificationCommentReplyDataDto
   comment_mention: NotificationCommentActionDataDto
   comment_like: NotificationCommentActionDataDto
   topic_like: NotificationTopicObjectDataDto
@@ -355,7 +360,23 @@ function createNotificationCommentContainerOneOfSchemas() {
   ] satisfies ReferenceObject[]
 }
 
-function createNotificationDataOneOfSchemas() {
+function createNotificationDataAnyOfSchemas() {
+  const commentReplyProperties: Record<
+    string,
+    SchemaObject | ReferenceObject
+  > = {
+    object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
+    container: {
+      oneOf: createNotificationCommentContainerOneOfSchemas(),
+    },
+    parentContainer: {
+      $ref: getSchemaPath(NotificationWorkSnapshotDto),
+    },
+    parentComment: {
+      $ref: getSchemaPath(NotificationCommentSnapshotDto),
+    },
+  }
+
   const commentActionProperties: Record<
     string,
     SchemaObject | ReferenceObject
@@ -396,7 +417,14 @@ function createNotificationDataOneOfSchemas() {
 
   return [
     {
-      title: '评论互动通知数据',
+      title: '评论回复通知数据',
+      type: 'object',
+      additionalProperties: false,
+      required: ['object', 'container'],
+      properties: commentReplyProperties,
+    },
+    {
+      title: '评论提及 / 点赞通知数据',
       type: 'object',
       additionalProperties: false,
       required: ['object', 'container'],
@@ -484,6 +512,11 @@ export class BaseUserNotificationDto extends BaseDto {
         cover: 'https://example.com/work-cover.png',
         workType: 1,
       },
+      parentComment: {
+        kind: 'comment',
+        id: 88,
+        snippet: '上一条被回复的评论',
+      },
       reminder: {
         kind: 'reward_granted',
         assignmentId: 10,
@@ -500,7 +533,7 @@ export class BaseUserNotificationDto extends BaseDto {
     },
     required: true,
     nullable: true,
-    oneOf: createNotificationDataOneOfSchemas(),
+    anyOf: createNotificationDataAnyOfSchemas(),
   })
   data!: UserNotificationDataDto | null
 

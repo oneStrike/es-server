@@ -269,7 +269,7 @@ export class NotificationProjectionService {
       categoryKey === 'comment_mention' ||
       categoryKey === 'comment_like'
     ) {
-      return this.normalizeCommentActionPayload(payload)
+      return this.normalizeCommentActionPayload(categoryKey, payload)
     }
     return payload
   }
@@ -320,12 +320,17 @@ export class NotificationProjectionService {
   }
 
   private async normalizeCommentActionPayload(
+    categoryKey: MessageNotificationCategoryKey,
     payload: Record<string, unknown>,
   ) {
     const object = isPlainRecord(payload.object) ? payload.object : undefined
     const container = isPlainRecord(payload.container)
       ? payload.container
       : undefined
+    const currentParentComment =
+      categoryKey === 'comment_reply' && isPlainRecord(payload.parentComment)
+        ? payload.parentComment
+        : undefined
     const currentParentContainer = isPlainRecord(payload.parentContainer)
       ? payload.parentContainer
       : undefined
@@ -335,6 +340,9 @@ export class NotificationProjectionService {
     }
 
     const normalizedObject = await this.normalizeCommentObject(object)
+    const normalizedParentComment = currentParentComment
+      ? await this.normalizeCommentObject(currentParentComment)
+      : undefined
     const normalizedContainer = await this.normalizeCommentContainer(
       container,
       currentParentContainer,
@@ -342,6 +350,7 @@ export class NotificationProjectionService {
 
     return compactRecord({
       object: normalizedObject,
+      parentComment: normalizedParentComment,
       container: normalizedContainer.container,
       parentContainer:
         normalizedContainer.parentContainer ?? currentParentContainer,

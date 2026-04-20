@@ -48,6 +48,10 @@ export async function setupApp(
     done(null, payload)
   })
 
+  if (isDevelopment() || config.swaggerConfig.enable) {
+    setupSwagger(app, config.swaggerConfig)
+  }
+
   await setupCompression(fastifyAdapter)
 
   await setupMultipart(fastifyAdapter, app)
@@ -59,7 +63,4 @@ export async function setupApp(
     hidePoweredBy: true,
   })
 
-  if (isDevelopment() || config.swaggerConfig.enable) {
-    setupSwagger(app, config.swaggerConfig)
-  }
 }

@@ -321,6 +321,8 @@ export class MessageDomainEventFactoryService {
     targetId: number
     actorNickname?: string
     replyExcerpt?: string
+    parentCommentId?: number
+    parentCommentExcerpt?: string
     targetDisplayTitle?: string
   }) {
     const actorNickname = this.normalizeActorNickname(input.actorNickname)
@@ -329,6 +331,7 @@ export class MessageDomainEventFactoryService {
     )
     const replyExcerpt =
       this.normalizeExcerpt(input.replyExcerpt) ?? targetDisplayTitle
+    const parentCommentExcerpt = this.normalizeExcerpt(input.parentCommentExcerpt)
     return {
       eventKey: 'comment.replied',
       subjectType: 'user',
@@ -343,6 +346,14 @@ export class MessageDomainEventFactoryService {
         content: replyExcerpt ?? '你收到了一条新的评论回复',
         payload: {
           object: this.buildCommentSnapshot(input.commentId, replyExcerpt),
+          ...(typeof input.parentCommentId === 'number'
+            ? {
+                parentComment: this.buildCommentSnapshot(
+                  input.parentCommentId,
+                  parentCommentExcerpt,
+                ),
+              }
+            : {}),
           container: this.buildCommentContainerSnapshot(
             input.targetType,
             input.targetId,

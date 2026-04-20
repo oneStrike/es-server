@@ -292,6 +292,15 @@ export async function seedMessageDomain(db: Db) {
           id: replyComment?.id ?? 1,
           snippet: '而且艾伦和调查兵团的立场差异很早就有预警。',
         },
+        ...(rootReply
+          ? {
+              parentComment: {
+                kind: 'comment',
+                id: rootReply.id,
+                snippet: rootReply.content,
+              },
+            }
+          : {}),
         container: {
           kind: 'topic',
           id: commentTopic?.id ?? rootReply?.targetId ?? 1,

@@ -1,12 +1,9 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
-import { QueryCheckInActivityStreakPageDto } from '@libs/growth/check-in/dto/check-in-definition.dto'
 import {
   CheckInActionResponseDto,
   MakeupCheckInDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
 import {
-  CheckInActivityStreakDetailResponseDto,
-  CheckInActivityStreakItemDto,
   CheckInCalendarResponseDto,
   CheckInLeaderboardItemDto,
   CheckInRecordItemDto,
@@ -15,7 +12,6 @@ import {
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'
 import { PageDto } from '@libs/platform/dto'
-import { IdDto } from '@libs/platform/dto/base.dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -61,30 +57,6 @@ export class CheckInController {
   })
   async getLeaderboardPage(@Query() query: QueryCheckInLeaderboardDto) {
     return this.checkInService.getLeaderboardPage(query)
-  }
-
-  @Get('activity/page')
-  @ApiPageDoc({
-    summary: '分页获取活动连续签到列表',
-    model: CheckInActivityStreakItemDto,
-  })
-  async getActivityPage(
-    @Query() query: QueryCheckInActivityStreakPageDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.getActivityPage(query, userId)
-  }
-
-  @Get('activity/detail')
-  @ApiDoc({
-    summary: '获取活动连续签到详情',
-    model: CheckInActivityStreakDetailResponseDto,
-  })
-  async getActivityDetail(
-    @Query() query: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.getActivityDetail(query, userId)
   }
 
   @Post('sign')

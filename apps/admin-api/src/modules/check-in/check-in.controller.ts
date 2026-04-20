@@ -1,16 +1,10 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
 import {
-  CheckInActivityStreakDetailResponseDto,
-  CheckInActivityStreakPageItemDto,
   CheckInConfigDetailResponseDto,
-  CheckInDailyStreakConfigDetailResponseDto,
-  CheckInDailyStreakConfigHistoryPageItemDto,
-  CreateCheckInActivityStreakDto,
-  PublishCheckInDailyStreakConfigDto,
-  QueryCheckInActivityStreakPageDto,
-  QueryCheckInDailyStreakConfigHistoryPageDto,
-  UpdateCheckInActivityStreakDto,
-  UpdateCheckInActivityStreakStatusDto,
+  CheckInStreakConfigDetailResponseDto,
+  CheckInStreakConfigHistoryPageItemDto,
+  PublishCheckInStreakConfigDto,
+  QueryCheckInStreakConfigHistoryPageDto,
   UpdateCheckInConfigDto,
   UpdateCheckInEnabledDto,
 } from '@libs/growth/check-in/dto/check-in-definition.dto'
@@ -74,140 +68,63 @@ export class CheckInController {
     return this.checkInService.updateEnabled(body, userId)
   }
 
-  @Get('daily-streak/detail')
+  @Get('streak/detail')
   @ApiDoc({
-    summary: '查询当前日常连续签到配置详情',
-    model: CheckInDailyStreakConfigDetailResponseDto,
+    summary: '查询当前连续签到配置详情',
+    model: CheckInStreakConfigDetailResponseDto,
   })
-  async getDailyStreakConfigDetail() {
-    return this.checkInService.getDailyStreakConfigDetail()
+  async getStreakConfigDetail() {
+    return this.checkInService.getStreakConfigDetail()
   }
 
-  @Get('daily-streak/history/page')
+  @Get('streak/history/page')
   @ApiPageDoc({
-    summary: '分页查询日常连续签到配置历史',
-    model: CheckInDailyStreakConfigHistoryPageItemDto,
+    summary: '分页查询连续签到配置历史',
+    model: CheckInStreakConfigHistoryPageItemDto,
   })
-  async getDailyStreakConfigHistoryPage(
-    @Query() query: QueryCheckInDailyStreakConfigHistoryPageDto,
+  async getStreakConfigHistoryPage(
+    @Query() query: QueryCheckInStreakConfigHistoryPageDto,
   ) {
-    return this.checkInService.getDailyStreakConfigHistoryPage(query)
+    return this.checkInService.getStreakConfigHistoryPage(query)
   }
 
-  @Get('daily-streak/history/detail')
+  @Get('streak/history/detail')
   @ApiDoc({
-    summary: '查询日常连续签到配置历史详情',
-    model: CheckInDailyStreakConfigDetailResponseDto,
+    summary: '查询连续签到配置历史详情',
+    model: CheckInStreakConfigDetailResponseDto,
   })
-  async getDailyStreakConfigHistoryDetail(@Query() query: IdDto) {
-    return this.checkInService.getDailyStreakConfigHistoryDetail(query)
+  async getStreakConfigHistoryDetail(@Query() query: IdDto) {
+    return this.checkInService.getStreakConfigHistoryDetail(query)
   }
 
-  @Post('daily-streak/publish')
+  @Post('streak/publish')
   @ApiAuditDoc({
-    summary: '发布日常连续签到配置',
+    summary: '发布连续签到配置',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async publishDailyStreakConfig(
-    @Body() body: PublishCheckInDailyStreakConfigDto,
+  async publishStreakConfig(
+    @Body() body: PublishCheckInStreakConfigDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.checkInService.publishDailyStreakConfig(body, userId)
+    return this.checkInService.publishStreakConfig(body, userId)
   }
 
-  @Post('daily-streak/terminate')
+  @Post('streak/terminate')
   @ApiAuditDoc({
-    summary: '终止日常连续签到配置',
+    summary: '终止连续签到配置',
     model: Boolean,
     audit: {
       actionType: AuditActionTypeEnum.UPDATE,
     },
   })
-  async terminateDailyStreakConfig(
+  async terminateStreakConfig(
     @Body() body: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.checkInService.terminateDailyStreakConfig(body, userId)
-  }
-
-  @Get('activity-streak/page')
-  @ApiPageDoc({
-    summary: '分页查询活动连续签到',
-    model: CheckInActivityStreakPageItemDto,
-  })
-  async getActivityStreakPage(
-    @Query() query: QueryCheckInActivityStreakPageDto,
-  ) {
-    return this.checkInService.getActivityStreakPage(query)
-  }
-
-  @Get('activity-streak/detail')
-  @ApiDoc({
-    summary: '查询活动连续签到详情',
-    model: CheckInActivityStreakDetailResponseDto,
-  })
-  async getActivityStreakDetail(@Query() query: IdDto) {
-    return this.checkInService.getActivityStreakDetail(query)
-  }
-
-  @Post('activity-streak/create')
-  @ApiAuditDoc({
-    summary: '创建活动连续签到',
-    model: Boolean,
-    audit: {
-      actionType: AuditActionTypeEnum.CREATE,
-    },
-  })
-  async createActivityStreak(
-    @Body() body: CreateCheckInActivityStreakDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.createActivityStreak(body, userId)
-  }
-
-  @Post('activity-streak/update')
-  @ApiAuditDoc({
-    summary: '更新活动连续签到',
-    model: Boolean,
-    audit: {
-      actionType: AuditActionTypeEnum.UPDATE,
-    },
-  })
-  async updateActivityStreak(
-    @Body() body: UpdateCheckInActivityStreakDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.updateActivityStreak(body, userId)
-  }
-
-  @Post('activity-streak/update-status')
-  @ApiAuditDoc({
-    summary: '更新活动连续签到状态',
-    model: Boolean,
-    audit: {
-      actionType: AuditActionTypeEnum.UPDATE,
-    },
-  })
-  async updateActivityStreakStatus(
-    @Body() body: UpdateCheckInActivityStreakStatusDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.checkInService.updateActivityStreakStatus(body, userId)
-  }
-
-  @Post('activity-streak/delete')
-  @ApiAuditDoc({
-    summary: '删除活动连续签到',
-    model: Boolean,
-    audit: {
-      actionType: AuditActionTypeEnum.DELETE,
-    },
-  })
-  async deleteActivityStreak(@Body() body: IdDto) {
-    return this.checkInService.deleteActivityStreak(body)
+    return this.checkInService.terminateStreakConfig(body, userId)
   }
 
   @Get('reconciliation/page')

@@ -2,20 +2,18 @@
 import type { DrizzleService } from '@db/core'
 import { CheckInDefinitionService } from './check-in-definition.service'
 import {
-  CheckInActivityStreakStatusEnum,
-  CheckInDailyStreakConfigStatusEnum,
-  CheckInDailyStreakPublishStrategyEnum,
+  CheckInStreakConfigStatusEnum,
+  CheckInStreakPublishStrategyEnum,
 } from './check-in.constant'
 
 function createDefinitionHarness(options?: {
-  latestDailyConfig?: { id: number; version: number } | null
-  currentDailyConfig?: {
+  latestConfig?: { id: number; version: number } | null
+  currentConfig?: {
     id: number
     effectiveFrom: Date
     effectiveTo: Date | null
     status: number
   } | null
-  updatedActivityRows?: Array<{ id: number }>
 }) {
   const insertCalls: Array<{ table: string; payload: unknown }> = []
   const updatePayloads: Array<Record<string, unknown>> = []
@@ -25,144 +23,55 @@ function createDefinitionHarness(options?: {
     checkInMakeupFact: {},
     checkInMakeupAccount: {},
     checkInRecord: {},
-    checkInDailyStreakConfig: { __table: 'dailyConfig', id: 'id' },
-    checkInDailyStreakRule: { __table: 'dailyRule', id: 'id' },
-    checkInDailyStreakRuleRewardItem: {
-      __table: 'dailyRuleRewardItem',
-      id: 'id',
-    },
-    checkInDailyStreakProgress: {},
-    checkInActivityStreak: { __table: 'activity', id: 'id' },
-    checkInActivityStreakRule: { __table: 'activityRule', id: 'id' },
-    checkInActivityStreakRuleRewardItem: {
-      __table: 'activityRuleRewardItem',
-      id: 'id',
-    },
+    checkInStreakConfig: { __table: 'streakConfig', id: 'id' },
+    checkInStreakRule: { __table: 'streakRule', id: 'id' },
+    checkInStreakRuleRewardItem: { __table: 'streakRuleRewardItem', id: 'id' },
+    checkInStreakProgress: {},
     checkInStreakGrant: {},
     checkInStreakGrantRewardItem: {},
     growthRewardSettlement: {},
   }
 
-  let insertedDailyRuleId = 300
-  let insertedActivityRuleId = 500
-
-  const selectRowsByTable = (tableName?: string) => {
-    if (tableName === 'dailyConfig') {
-      const rows: Array<Record<string, unknown>> = []
-      if (options?.currentDailyConfig) {
-        rows.push(options.currentDailyConfig)
-      }
-      if (
-        options?.latestDailyConfig &&
-        !rows.some((row) => row.id === options.latestDailyConfig?.id)
-      ) {
-        rows.push(options.latestDailyConfig)
-      }
-      return rows
-    }
-    if (tableName === 'activityRule') {
-      return []
-    }
-    return []
-  }
-
-  const buildSelectChain = (tableName?: string) => {
-    const rows = selectRowsByTable(tableName)
-    return {
-      where: jest.fn().mockResolvedValue(rows),
-      orderBy: jest.fn().mockReturnValue({
-        limit: jest.fn().mockResolvedValue(rows),
-      }),
-    }
-  }
+  let insertedRuleId = 300
 
   const tx = {
     execute: jest.fn().mockResolvedValue(undefined),
     insert: jest.fn((table: { __table?: string }) => ({
       values: jest.fn((payload: unknown) => {
         insertCalls.push({ table: table.__table ?? 'unknown', payload })
-
-        if (table.__table === 'dailyConfig') {
+        if (table.__table === 'streakConfig') {
           return {
             returning: jest.fn().mockResolvedValue([{ id: 101 }]),
           }
         }
-
-        if (table.__table === 'dailyRule') {
+        if (table.__table === 'streakRule') {
           const rows = Array.isArray(payload) ? payload : [payload]
           return {
             returning: jest
               .fn()
-              .mockResolvedValue(
-                rows.map(() => ({ id: insertedDailyRuleId++ })),
-              ),
+              .mockResolvedValue(rows.map(() => ({ id: insertedRuleId++ }))),
           }
         }
-
-        if (table.__table === 'dailyRuleRewardItem') {
-          return {
-            returning: jest.fn().mockResolvedValue([]),
-          }
-        }
-
-        if (table.__table === 'activity') {
-          return {
-            returning: jest.fn().mockResolvedValue([{ id: 201 }]),
-          }
-        }
-
-        if (table.__table === 'activityRule') {
-          const rows = Array.isArray(payload) ? payload : [payload]
-          return {
-            returning: jest
-              .fn()
-              .mockResolvedValue(
-                rows.map(() => ({ id: insertedActivityRuleId++ })),
-              ),
-          }
-        }
-
-        if (table.__table === 'activityRuleRewardItem') {
-          return {
-            returning: jest.fn().mockResolvedValue([]),
-          }
-        }
-
         return {
           returning: jest.fn().mockResolvedValue([]),
         }
       }),
     })),
-    update: jest.fn().mockImplementation((table: { __table?: string }) => {
-      const updatedActivityRows = options?.updatedActivityRows ?? [{ id: 201 }]
+    update: jest.fn().mockImplementation(() => {
       const chain = {
         set: jest.fn((payload: Record<string, unknown>) => {
           updatePayloads.push(payload)
           return chain
         }),
-        where: jest.fn().mockReturnValue({
-          returning: jest.fn().mockResolvedValue(
-            table.__table === 'activity' ? updatedActivityRows : [],
-          ),
-        }),
+        where: jest.fn().mockResolvedValue({ rowCount: 1 }),
       }
       return chain
     }),
     query: {
-      checkInDailyStreakConfig: {
-        findFirst: jest
-          .fn()
-          .mockResolvedValue(options?.currentDailyConfig ?? null),
-      },
-      checkInActivityStreak: {
-        findFirst: jest.fn().mockResolvedValue(null),
+      checkInStreakConfig: {
+        findFirst: jest.fn().mockResolvedValue(options?.currentConfig ?? null),
       },
     },
-    select: jest.fn().mockReturnValue({
-      from: jest.fn((table: { __table?: string }) =>
-        buildSelectChain(table.__table),
-      ),
-    }),
   }
 
   const drizzle = {
@@ -188,36 +97,34 @@ function createDefinitionHarness(options?: {
   }
 }
 
-describe('checkInDefinitionService relational streak persistence', () => {
-  it('publishes daily streak config via head + rule + reward-item tables', async () => {
+describe('checkInDefinitionService unified streak persistence', () => {
+  it('publishes streak config via head + rule + reward-item tables', async () => {
     const harness = createDefinitionHarness({
-      latestDailyConfig: { id: 11, version: 2 },
-      currentDailyConfig: {
+      latestConfig: { id: 11, version: 2 },
+      currentConfig: {
         id: 11,
         effectiveFrom: new Date('2026-04-19T00:00:00.000Z'),
         effectiveTo: null,
-        status: CheckInDailyStreakConfigStatusEnum.ACTIVE,
+        status: CheckInStreakConfigStatusEnum.ACTIVE,
       },
     })
     const service = new CheckInDefinitionService(harness.drizzle, {} as never)
-    jest
-      .spyOn(service as any, 'findLatestDailyStreakConfig')
-      .mockResolvedValue({
-        id: 11,
-        version: 2,
-      })
-    jest.spyOn(service as any, 'listDailyStreakConfigs').mockResolvedValue([
+    jest.spyOn(service as any, 'findLatestStreakConfig').mockResolvedValue({
+      id: 11,
+      version: 2,
+    })
+    jest.spyOn(service as any, 'listStreakConfigs').mockResolvedValue([
       {
         id: 11,
         effectiveFrom: new Date('2026-04-19T00:00:00.000Z'),
         effectiveTo: null,
-        status: CheckInDailyStreakConfigStatusEnum.ACTIVE,
+        status: CheckInStreakConfigStatusEnum.ACTIVE,
       },
     ])
 
-    await service.publishDailyStreakConfig(
+    await service.publishStreakConfig(
       {
-        publishStrategy: CheckInDailyStreakPublishStrategyEnum.NEXT_DAY,
+        publishStrategy: CheckInStreakPublishStrategyEnum.NEXT_DAY,
         rewardRules: [
           {
             ruleCode: 'day-3',
@@ -240,45 +147,42 @@ describe('checkInDefinitionService relational streak persistence', () => {
     )
 
     expect(harness.insertCalls.map((item) => item.table)).toEqual([
-      'dailyConfig',
-      'dailyRule',
-      'dailyRuleRewardItem',
+      'streakConfig',
+      'streakRule',
+      'streakRuleRewardItem',
     ])
 
-    const dailyConfigInsert = harness.insertCalls.find(
-      (item) => item.table === 'dailyConfig',
+    const configInsert = harness.insertCalls.find(
+      (item) => item.table === 'streakConfig',
     )?.payload as Record<string, unknown>
-    expect(dailyConfigInsert).toMatchObject({
+    expect(configInsert).toMatchObject({
       version: 3,
-      publishStrategy: CheckInDailyStreakPublishStrategyEnum.NEXT_DAY,
+      publishStrategy: CheckInStreakPublishStrategyEnum.NEXT_DAY,
       updatedById: 9,
     })
-    expect(dailyConfigInsert).not.toHaveProperty('rewardRules')
 
-    const dailyRuleInsert = harness.insertCalls.find(
-      (item) => item.table === 'dailyRule',
+    const ruleInsert = harness.insertCalls.find(
+      (item) => item.table === 'streakRule',
     )?.payload as Array<Record<string, unknown>>
-    expect(dailyRuleInsert).toHaveLength(2)
-    expect(dailyRuleInsert).toEqual(
+    expect(ruleInsert).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           configId: 101,
-          streakDays: 3,
           ruleCode: 'day-3',
+          streakDays: 3,
         }),
         expect.objectContaining({
           configId: 101,
-          streakDays: 7,
           ruleCode: 'day-7',
+          streakDays: 7,
         }),
       ]),
     )
 
-    const dailyRewardItemInsert = harness.insertCalls.find(
-      (item) => item.table === 'dailyRuleRewardItem',
+    const rewardItemInsert = harness.insertCalls.find(
+      (item) => item.table === 'streakRuleRewardItem',
     )?.payload as Array<Record<string, unknown>>
-    expect(dailyRewardItemInsert).toHaveLength(3)
-    expect(dailyRewardItemInsert).toEqual(
+    expect(rewardItemInsert).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           ruleId: 300,
@@ -297,97 +201,143 @@ describe('checkInDefinitionService relational streak persistence', () => {
         }),
       ]),
     )
+    expect((harness.drizzle.db.execute as jest.Mock).mock.calls).toHaveLength(1)
   })
 
-  it('creates activity streak via activity head + rule + reward-item tables', async () => {
-    const harness = createDefinitionHarness()
+  it('terminates later scheduled configs when publishing an earlier config', async () => {
+    const harness = createDefinitionHarness({
+      latestConfig: { id: 12, version: 3 },
+      currentConfig: {
+        id: 11,
+        effectiveFrom: new Date('2026-04-19T00:00:00.000Z'),
+        effectiveTo: null,
+        status: CheckInStreakConfigStatusEnum.ACTIVE,
+      },
+    })
     const service = new CheckInDefinitionService(harness.drizzle, {} as never)
-
-    await service.createActivityStreak(
+    jest.spyOn(service as any, 'findLatestStreakConfig').mockResolvedValue({
+      id: 12,
+      version: 3,
+    })
+    jest.spyOn(service as any, 'listStreakConfigs').mockResolvedValue([
       {
-        activityKey: 'summer-sign',
-        title: '夏日连续签到',
-        status: CheckInActivityStreakStatusEnum.PUBLISHED,
-        effectiveFrom: '2026-04-20T00:00:00.000Z',
-        effectiveTo: '2026-04-30T23:59:59.999Z',
+        id: 12,
+        effectiveFrom: new Date('2026-04-22T00:00:00.000Z'),
+        effectiveTo: null,
+        status: CheckInStreakConfigStatusEnum.SCHEDULED,
+      },
+      {
+        id: 11,
+        effectiveFrom: new Date('2026-04-19T00:00:00.000Z'),
+        effectiveTo: null,
+        status: CheckInStreakConfigStatusEnum.ACTIVE,
+      },
+    ])
+
+    await service.publishStreakConfig(
+      {
+        publishStrategy: CheckInStreakPublishStrategyEnum.SCHEDULED_AT,
+        effectiveFrom: '2026-04-21T00:00:00.000Z',
         rewardRules: [
           {
-            ruleCode: 'activity-day-2',
-            streakDays: 2,
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 8 }],
+            ruleCode: 'day-3',
+            streakDays: 3,
+            repeatable: false,
+            rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
           },
         ],
       } as never,
       9,
     )
 
-    expect(harness.insertCalls.map((item) => item.table)).toEqual([
-      'activity',
-      'activityRule',
-      'activityRuleRewardItem',
-    ])
-
-    const activityInsert = harness.insertCalls.find(
-      (item) => item.table === 'activity',
-    )?.payload as Record<string, unknown>
-    expect(activityInsert).toMatchObject({
-      activityKey: 'summer-sign',
-      title: '夏日连续签到',
-      status: CheckInActivityStreakStatusEnum.PUBLISHED,
-      updatedById: 9,
-    })
-    expect(activityInsert).not.toHaveProperty('rewardRules')
-
-    const activityRuleInsert = harness.insertCalls.find(
-      (item) => item.table === 'activityRule',
-    )?.payload as Array<Record<string, unknown>>
-    expect(activityRuleInsert).toEqual([
-      expect.objectContaining({
-        activityId: 201,
-        streakDays: 2,
-        ruleCode: 'activity-day-2',
-      }),
-    ])
-
-    const activityRewardItemInsert = harness.insertCalls.find(
-      (item) => item.table === 'activityRuleRewardItem',
-    )?.payload as Array<Record<string, unknown>>
-    expect(activityRewardItemInsert).toEqual([
-      expect.objectContaining({
-        ruleId: 500,
-        assetType: 1,
-        amount: 8,
-      }),
-    ])
+    expect(harness.updatePayloads).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          effectiveTo: new Date('2026-04-21T00:00:00.000Z'),
+          status: CheckInStreakConfigStatusEnum.ACTIVE,
+          updatedById: 9,
+        }),
+        expect.objectContaining({
+          status: CheckInStreakConfigStatusEnum.TERMINATED,
+          updatedById: 9,
+        }),
+      ]),
+    )
   })
 
-  it('rejects activity updates for nonexistent ids before rewriting rules', async () => {
+  it('reopens predecessor window when terminating a scheduled config', async () => {
     const harness = createDefinitionHarness({
-      updatedActivityRows: [],
+      currentConfig: {
+        id: 12,
+        effectiveFrom: new Date('2026-04-22T00:00:00.000Z'),
+        effectiveTo: null,
+        status: CheckInStreakConfigStatusEnum.SCHEDULED,
+      },
     })
+    const service = new CheckInDefinitionService(harness.drizzle, {} as never)
+    jest.spyOn(service as any, 'listStreakConfigs').mockResolvedValue([
+      {
+        id: 13,
+        effectiveFrom: new Date('2026-04-25T00:00:00.000Z'),
+        effectiveTo: null,
+        status: CheckInStreakConfigStatusEnum.SCHEDULED,
+      },
+      {
+        id: 12,
+        effectiveFrom: new Date('2026-04-22T00:00:00.000Z'),
+        effectiveTo: null,
+        status: CheckInStreakConfigStatusEnum.SCHEDULED,
+      },
+      {
+        id: 11,
+        effectiveFrom: new Date('2026-04-19T00:00:00.000Z'),
+        effectiveTo: new Date('2026-04-22T00:00:00.000Z'),
+        status: CheckInStreakConfigStatusEnum.ACTIVE,
+      },
+    ])
+
+    await service.terminateStreakConfig({ id: 12 }, 9)
+
+    expect(harness.updatePayloads).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          status: CheckInStreakConfigStatusEnum.TERMINATED,
+          updatedById: 9,
+        }),
+        expect.objectContaining({
+          effectiveTo: new Date('2026-04-25T00:00:00.000Z'),
+          status: CheckInStreakConfigStatusEnum.ACTIVE,
+          updatedById: 9,
+        }),
+      ]),
+    )
+    expect((harness.drizzle.db.execute as jest.Mock).mock.calls).toHaveLength(1)
+  })
+
+  it('rejects scheduled publish times that are not later than now', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-20T00:00:00.000Z'))
+
+    const harness = createDefinitionHarness()
     const service = new CheckInDefinitionService(harness.drizzle, {} as never)
 
     await expect(
-      service.updateActivityStreak(
+      service.publishStreakConfig(
         {
-          id: 999,
-          activityKey: 'summer-sign',
-          title: '夏日连续签到',
-          status: CheckInActivityStreakStatusEnum.PUBLISHED,
+          publishStrategy: CheckInStreakPublishStrategyEnum.SCHEDULED_AT,
           effectiveFrom: '2026-04-20T00:00:00.000Z',
-          effectiveTo: '2026-04-30T23:59:59.999Z',
           rewardRules: [
             {
-              ruleCode: 'activity-day-2',
-              streakDays: 2,
-              rewardItems: [{ assetType: 1, assetKey: '', amount: 8 }],
+              ruleCode: 'day-3',
+              streakDays: 3,
+              repeatable: false,
+              rewardItems: [{ assetType: 1, assetKey: '', amount: 10 }],
             },
           ],
         } as never,
         9,
       ),
-    ).rejects.toThrow('活动连续签到不存在')
+    ).rejects.toThrow('指定生效时间必须晚于当前时间')
 
-    expect(harness.insertCalls).toEqual([])
+    jest.useRealTimers()
   })
 })

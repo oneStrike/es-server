@@ -7,7 +7,6 @@ import {
   integer,
   jsonb,
   pgTable,
-  smallint,
   timestamp,
   unique,
   varchar,
@@ -16,7 +15,7 @@ import {
 /**
  * 连续签到奖励发放事实。
  *
- * 统一记录日常连续签到和活动连续签到的奖励发放结果，通过 `scopeType` 区分归属。
+ * 统一记录单一连续签到模型下的奖励发放头信息。
  */
 export const checkInStreakGrant = pgTable(
   'check_in_streak_grant',
@@ -25,19 +24,13 @@ export const checkInStreakGrant = pgTable(
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     /** 发放归属用户 ID。 */
     userId: integer().notNull(),
-    /** 发放作用域（1=日常连续签到；2=活动连续签到）。 */
-    scopeType: smallint().notNull(),
-    /** 日常连续签到配置版本 ID。 */
-    configVersionId: integer(),
-    /** 日常连续签到规则 ID。 */
-    dailyRuleId: integer(),
-    /** 活动连续签到活动 ID。 */
-    activityId: integer(),
-    /** 活动连续签到规则 ID。 */
-    activityRuleId: integer(),
-    /** 命中的规则编码。 */
+    /** 归属配置版本 ID。 */
+    configId: integer().notNull(),
+    /** 归属规则 ID。 */
+    ruleId: integer().notNull(),
+    /** 命中的规则编码快照。 */
     ruleCode: varchar({ length: 50 }).notNull(),
-    /** 命中的连续签到阈值。 */
+    /** 命中的连续签到阈值快照。 */
     streakDays: integer().notNull(),
     /** 是否允许重复发放。 */
     repeatable: boolean().default(false).notNull(),
@@ -63,15 +56,8 @@ export const checkInStreakGrant = pgTable(
       table.userId,
       table.bizKey,
     ),
-    index('check_in_streak_grant_scope_type_idx').on(table.scopeType),
-    index('check_in_streak_grant_config_version_id_idx').on(
-      table.configVersionId,
-    ),
-    index('check_in_streak_grant_daily_rule_id_idx').on(table.dailyRuleId),
-    index('check_in_streak_grant_activity_id_idx').on(table.activityId),
-    index('check_in_streak_grant_activity_rule_id_idx').on(
-      table.activityRuleId,
-    ),
+    index('check_in_streak_grant_config_id_idx').on(table.configId),
+    index('check_in_streak_grant_rule_id_idx').on(table.ruleId),
     index('check_in_streak_grant_user_trigger_sign_date_idx').on(
       table.userId,
       table.triggerSignDate,
@@ -80,48 +66,20 @@ export const checkInStreakGrant = pgTable(
       table.rewardSettlementId,
     ),
     check(
-      'check_in_streak_grant_scope_type_valid_chk',
-      sql`${table.scopeType} in (1, 2)`,
+      'check_in_streak_grant_config_id_positive_chk',
+      sql`${table.configId} > 0`,
+    ),
+    check(
+      'check_in_streak_grant_rule_id_positive_chk',
+      sql`${table.ruleId} > 0`,
     ),
     check(
       'check_in_streak_grant_streak_days_positive_chk',
       sql`${table.streakDays} > 0`,
     ),
     check(
-      'check_in_streak_grant_config_version_id_positive_chk',
-      sql`${table.configVersionId} is null or ${table.configVersionId} > 0`,
-    ),
-    check(
-      'check_in_streak_grant_daily_rule_id_positive_chk',
-      sql`${table.dailyRuleId} is null or ${table.dailyRuleId} > 0`,
-    ),
-    check(
-      'check_in_streak_grant_activity_id_positive_chk',
-      sql`${table.activityId} is null or ${table.activityId} > 0`,
-    ),
-    check(
-      'check_in_streak_grant_activity_rule_id_positive_chk',
-      sql`${table.activityRuleId} is null or ${table.activityRuleId} > 0`,
-    ),
-    check(
       'check_in_streak_grant_reward_settlement_id_positive_chk',
       sql`${table.rewardSettlementId} is null or ${table.rewardSettlementId} > 0`,
-    ),
-    check(
-      'check_in_streak_grant_scope_ref_consistent_chk',
-      sql`(
-        ${table.scopeType} = 1
-        and ${table.configVersionId} is not null
-        and ${table.dailyRuleId} is not null
-        and ${table.activityId} is null
-        and ${table.activityRuleId} is null
-      ) or (
-        ${table.scopeType} = 2
-        and ${table.configVersionId} is null
-        and ${table.dailyRuleId} is null
-        and ${table.activityId} is not null
-        and ${table.activityRuleId} is not null
-      )`,
     ),
   ],
 )

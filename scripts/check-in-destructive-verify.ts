@@ -2,13 +2,12 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { Pool } from 'pg'
+import {
+  type CheckResult,
+  buildContractCheckResults,
+} from './check-in-destructive-verify.helper'
 
 type Stage = 'post-reset' | 'post-contract'
-
-interface CheckResult {
-  ok: boolean
-  label: string
-}
 
 function parseStage(): Stage {
   const stageIndex = process.argv.indexOf('--stage')
@@ -67,38 +66,31 @@ function verifyContractFiles(): CheckResult[] {
     resolve(process.cwd(), 'docs/breaking-changes/app-check-in-module.md'),
     'utf8',
   )
+  const schemaIndex = readFileSync(
+    resolve(process.cwd(), 'db/schema/index.ts'),
+    'utf8',
+  )
+  const relationsFile = readFileSync(
+    resolve(process.cwd(), 'db/relations/app.ts'),
+    'utf8',
+  )
+  const migrationFile = readFileSync(
+    resolve(
+      process.cwd(),
+      'db/migration/20260420172000_check_in_unified_streak_single_model/migration.sql',
+    ),
+    'utf8',
+  )
 
-  return [
-    {
-      ok:
-        adminController.includes('daily-streak/detail') &&
-        adminController.includes('activity-streak/page') &&
-        !adminController.includes('streak-round/detail'),
-      label:
-        'admin controller switched from streak-round to daily/activity routes',
-    },
-    {
-      ok:
-        appController.includes('activity/page') &&
-        !appController.includes('roundConfigId') &&
-        !appController.includes('streak-round'),
-      label:
-        'app controller switched to daily summary + activity routes without round contracts',
-    },
-    {
-      ok:
-        adminBreakingDoc.includes('按天规则') ||
-        adminBreakingDoc.includes('一天一条规则'),
-      label: 'admin breaking doc describes relational day-rule streak model',
-    },
-    {
-      ok:
-        appBreakingDoc.includes('按天规则') ||
-        appBreakingDoc.includes('grant 奖励项快照明细'),
-      label:
-        'app breaking doc describes relational streak rule and grant item model',
-    },
-  ]
+  return buildContractCheckResults({
+    adminController,
+    appController,
+    adminBreakingDoc,
+    appBreakingDoc,
+    schemaIndex,
+    relationsFile,
+    migrationFile,
+  })
 }
 
 async function run() {
@@ -117,47 +109,56 @@ async function run() {
         label: 'legacy check_in_streak_round_config removed',
       },
       {
-        ok: !(await tableExists(pool, 'check_in_streak_progress')),
-        label: 'legacy check_in_streak_progress removed',
-      },
-      {
         ok: !(await tableExists(pool, 'check_in_streak_reward_grant')),
         label: 'legacy check_in_streak_reward_grant removed',
       },
       {
-        ok: await tableExists(pool, 'check_in_daily_streak_config'),
-        label: 'check_in_daily_streak_config exists',
+        ok: !(await tableExists(pool, 'check_in_daily_streak_config')),
+        label: 'legacy check_in_daily_streak_config removed',
       },
       {
-        ok: await tableExists(pool, 'check_in_daily_streak_rule'),
-        label: 'check_in_daily_streak_rule exists',
+        ok: !(await tableExists(pool, 'check_in_daily_streak_rule')),
+        label: 'legacy check_in_daily_streak_rule removed',
       },
       {
-        ok: await tableExists(pool, 'check_in_daily_streak_rule_reward_item'),
-        label: 'check_in_daily_streak_rule_reward_item exists',
+        ok: !(await tableExists(pool, 'check_in_daily_streak_rule_reward_item')),
+        label: 'legacy check_in_daily_streak_rule_reward_item removed',
       },
       {
-        ok: await tableExists(pool, 'check_in_daily_streak_progress'),
-        label: 'check_in_daily_streak_progress exists',
+        ok: !(await tableExists(pool, 'check_in_daily_streak_progress')),
+        label: 'legacy check_in_daily_streak_progress removed',
       },
       {
-        ok: await tableExists(pool, 'check_in_activity_streak'),
-        label: 'check_in_activity_streak exists',
+        ok: !(await tableExists(pool, 'check_in_activity_streak')),
+        label: 'legacy check_in_activity_streak removed',
       },
       {
-        ok: await tableExists(pool, 'check_in_activity_streak_rule'),
-        label: 'check_in_activity_streak_rule exists',
+        ok: !(await tableExists(pool, 'check_in_activity_streak_rule')),
+        label: 'legacy check_in_activity_streak_rule removed',
       },
       {
-        ok: await tableExists(
-          pool,
-          'check_in_activity_streak_rule_reward_item',
-        ),
-        label: 'check_in_activity_streak_rule_reward_item exists',
+        ok: !(await tableExists(pool, 'check_in_activity_streak_rule_reward_item')),
+        label: 'legacy check_in_activity_streak_rule_reward_item removed',
       },
       {
-        ok: await tableExists(pool, 'check_in_activity_streak_progress'),
-        label: 'check_in_activity_streak_progress exists',
+        ok: !(await tableExists(pool, 'check_in_activity_streak_progress')),
+        label: 'legacy check_in_activity_streak_progress removed',
+      },
+      {
+        ok: await tableExists(pool, 'check_in_streak_config'),
+        label: 'check_in_streak_config exists',
+      },
+      {
+        ok: await tableExists(pool, 'check_in_streak_rule'),
+        label: 'check_in_streak_rule exists',
+      },
+      {
+        ok: await tableExists(pool, 'check_in_streak_rule_reward_item'),
+        label: 'check_in_streak_rule_reward_item exists',
+      },
+      {
+        ok: await tableExists(pool, 'check_in_streak_progress'),
+        label: 'check_in_streak_progress exists',
       },
       {
         ok: await tableExists(pool, 'check_in_streak_grant'),
@@ -172,21 +173,15 @@ async function run() {
     if (stage === 'post-reset') {
       checks.push(
         {
-          ok: (await tableCount(pool, 'check_in_daily_streak_progress')) === 0,
-          label: 'daily streak progress row count = 0 after reset',
-        },
-        {
-          ok:
-            (await tableCount(pool, 'check_in_activity_streak_progress')) === 0,
-          label: 'activity streak progress row count = 0 after reset',
+          ok: (await tableCount(pool, 'check_in_streak_progress')) === 0,
+          label: 'streak progress row count = 0 after reset',
         },
         {
           ok: (await tableCount(pool, 'check_in_streak_grant')) === 0,
-          label: 'shared streak grant row count = 0 after reset',
+          label: 'streak grant row count = 0 after reset',
         },
         {
-          ok:
-            (await tableCount(pool, 'check_in_streak_grant_reward_item')) === 0,
+          ok: (await tableCount(pool, 'check_in_streak_grant_reward_item')) === 0,
           label: 'grant reward item row count = 0 after reset',
         },
       )

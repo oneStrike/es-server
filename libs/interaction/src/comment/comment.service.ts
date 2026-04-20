@@ -917,22 +917,20 @@ export class CommentService {
       return
     }
 
+    const replyTarget = await tx.query.userComment.findFirst({
+      where: {
+        id: comment.replyToId,
+        deletedAt: { isNull: true },
+      },
+      columns: {
+        id: true,
+        userId: true,
+        content: true,
+      },
+    })
+
     // 查询被回复的评论，获取被回复者信息
-    let replyTargetUserId = comment.replyTargetUserId
-
-    if (replyTargetUserId === undefined) {
-      const replyTarget = await tx.query.userComment.findFirst({
-        where: {
-          id: comment.replyToId,
-          deletedAt: { isNull: true },
-        },
-        columns: {
-          userId: true,
-        },
-      })
-
-      replyTargetUserId = replyTarget?.userId
-    }
+    const replyTargetUserId = comment.replyTargetUserId ?? replyTarget?.userId
 
     // 被回复评论不存在或自己回复自己，无需通知
     if (!replyTargetUserId || replyTargetUserId === comment.userId) {
@@ -955,6 +953,8 @@ export class CommentService {
         targetId: comment.targetId,
         actorNickname: actor?.nickname,
         replyExcerpt: comment.content,
+        parentCommentId: replyTarget?.id,
+        parentCommentExcerpt: replyTarget?.content,
         targetDisplayTitle: meta.targetDisplayTitle,
       }),
     )

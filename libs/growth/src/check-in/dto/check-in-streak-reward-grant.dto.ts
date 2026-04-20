@@ -1,12 +1,10 @@
 import { GrowthRewardItemDto } from '@libs/growth/reward-rule/dto/reward-item.dto'
 import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
 import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
 import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
 import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
 import { StringProperty } from '@libs/platform/decorators/validate/string-property'
 import { BaseDto } from '@libs/platform/dto/base.dto'
-import { CheckInStreakScopeTypeEnum } from '../check-in.constant'
 import { CheckInRewardSettlementSummaryDto } from './check-in-record.dto'
 
 export class BaseCheckInStreakRewardGrantDto extends BaseDto {
@@ -17,33 +15,23 @@ export class BaseCheckInStreakRewardGrantDto extends BaseDto {
   })
   userId!: number
 
-  @EnumProperty({
-    description: '连续奖励作用域（1=日常连续签到；2=活动连续签到）。',
-    example: CheckInStreakScopeTypeEnum.DAILY,
-    enum: CheckInStreakScopeTypeEnum,
+  @NumberProperty({
+    description: '连续签到配置 ID。',
+    example: 1,
     validation: false,
   })
-  scopeType!: CheckInStreakScopeTypeEnum
+  configId!: number
 
   @NumberProperty({
-    description: '日常连续签到配置版本 ID。',
+    description: '连续签到规则 ID。',
     example: 1,
-    required: false,
     validation: false,
   })
-  configVersionId?: number | null
-
-  @NumberProperty({
-    description: '活动连续签到活动 ID。',
-    example: 1,
-    required: false,
-    validation: false,
-  })
-  activityId?: number | null
+  ruleId!: number
 
   @StringProperty({
     description: '连续奖励规则编码。',
-    example: 'default-round-day-7',
+    example: 'day-7',
     validation: false,
   })
   ruleCode!: string

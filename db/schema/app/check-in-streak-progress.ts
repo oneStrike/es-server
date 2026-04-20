@@ -1,20 +1,13 @@
 import { sql } from 'drizzle-orm'
-import {
-  check,
-  date,
-  integer,
-  pgTable,
-  timestamp,
-  unique,
-} from 'drizzle-orm/pg-core'
+import { check, date, integer, pgTable, timestamp, unique } from 'drizzle-orm/pg-core'
 
 /**
- * 日常连续签到用户进度。
+ * 连续签到用户进度。
  *
- * 运行时只记录用户当前连续状态，不再绑定任何 round 或版本分流信息。
+ * 运行时只记录用户当前连续状态，不再区分日常与活动两套进度。
  */
-export const checkInDailyStreakProgress = pgTable(
-  'check_in_daily_streak_progress',
+export const checkInStreakProgress = pgTable(
+  'check_in_streak_progress',
   {
     /** 进度主键。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -38,20 +31,18 @@ export const checkInDailyStreakProgress = pgTable(
       .notNull(),
   },
   (table) => [
-    unique('check_in_daily_streak_progress_user_id_key').on(table.userId),
+    unique('check_in_streak_progress_user_id_key').on(table.userId),
     check(
-      'check_in_daily_streak_progress_current_streak_non_negative_chk',
+      'check_in_streak_progress_current_streak_non_negative_chk',
       sql`${table.currentStreak} >= 0`,
     ),
     check(
-      'check_in_daily_streak_progress_version_non_negative_chk',
+      'check_in_streak_progress_version_non_negative_chk',
       sql`${table.version} >= 0`,
     ),
   ],
 )
 
-export type CheckInDailyStreakProgress =
-  typeof checkInDailyStreakProgress.$inferSelect
-export type CheckInDailyStreakProgressSelect = CheckInDailyStreakProgress
-export type CheckInDailyStreakProgressInsert =
-  typeof checkInDailyStreakProgress.$inferInsert
+export type CheckInStreakProgress = typeof checkInStreakProgress.$inferSelect
+export type CheckInStreakProgressSelect = CheckInStreakProgress
+export type CheckInStreakProgressInsert = typeof checkInStreakProgress.$inferInsert

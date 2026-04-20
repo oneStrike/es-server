@@ -7,50 +7,50 @@
   - `GET app/check-in/calendar`
   - `GET app/check-in/my/page`
   - `GET app/check-in/leaderboard/page`
-  - `GET app/check-in/activity/page`
-  - `GET app/check-in/activity/detail`
   - `POST app/check-in/sign`
   - `POST app/check-in/makeup`
-- Domain: app 侧签到摘要、连续签到、活动连续签到、签到奖励展示
+- Domain: app 侧签到摘要、连续签到、签到奖励展示
 - Change type: 破坏性更新，无兼容层
 
 ## Preconditions
 
 - 本次改造按破坏性更新处理。
 - 上线前默认清理连续签到相关数据，不围绕历史连续签到数据做迁移或重建。
-- 基础签到记录与补签能力继续保留，但不作为旧 round 兼容层。
+- 基础签到记录与补签能力继续保留。
 
-## Daily Streak Contract Changes
+## Removed Routes
 
-### Relational streak rule model
+下列连续签到相关入口已下线：
 
-日常连续签到奖励不再来自单条配置里的 `rewardRules json`。
+- `GET app/check-in/activity/page`
+- `GET app/check-in/activity/detail`
 
-现在的事实源改为：
+app 侧现在只读取一套统一连续签到配置，不再区分“日常”和“活动”两个连续签到入口。
 
-- 日常连续签到配置头表
-- 日常连续签到按天规则表
-- 日常连续签到规则奖励项表
+## Unified Runtime Model
 
-业务语义：
+连续签到运行时不再绑定 round，也不再绑定独立 activity。
 
-- “第几天有什么奖励”改为数据库中的**一天一条规则记录**
-- 每条规则下的奖励项也改为独立明细记录
+当前运行时只关心三件事：
 
-### Removed runtime fields
+1. 用户当前连续签到天数是多少
+2. 当前生效配置是什么
+3. 第几天对应什么奖励
 
-以下日常连续签到运行时字段已从 app 合同下线：
+底层事实源改为：
 
-- `roundConfigId`
-- `roundCode`
-- `version`
-- `roundIteration`
-- `roundStartedAt`
-- `round`
+- `check_in_streak_config`
+- `check_in_streak_rule`
+- `check_in_streak_rule_reward_item`
 
-### New summary shape
+也就是：
 
-`summary.streak` 现在统一表达为：
+- “第几天有什么奖励”已改成数据库中的一天一条规则记录
+- 奖励项是关系型明细，不再从 streak JSON 读取
+
+## Summary Shape
+
+`summary.streak` 统一表达为：
 
 ```ts
 {
@@ -63,45 +63,38 @@
 
 说明：
 
-- app 侧不再感知“用户绑定哪一轮”。
-- app 侧只关心“当前连续签到天数”和“下一档奖励”。
+- app 不再感知“当前在哪一轮”。
+- app 只读取当前生效配置。
+- 下一档奖励来自统一 `check_in_streak_rule` 的关系数据。
 
-## Activity Streak Contract Changes
+## Removed Runtime Fields
 
-活动连续签到不再混入日常 `summary`。
+以下连续签到运行时字段已下线：
 
-新增独立读模型：
-
-- `GET app/check-in/activity/page`
-- `GET app/check-in/activity/detail`
-
-说明：
-
-- 日常连续签到与活动连续签到在 app 侧分开读取。
-- 活动连续签到拥有独立的活动标识、时间窗口、当前进度和下一档奖励。
-- `GET app/check-in/activity/page` / `detail` 仅返回当前对 app 用户可见的活动：
-  - 状态必须为 `PUBLISHED`
-  - 当前时间必须落在活动有效时间窗内
+- `roundConfigId`
+- `roundCode`
+- `roundIteration`
+- `roundStartedAt`
+- `round`
 
 ## Grant Payload Changes
 
-连续奖励 `grant` 不再返回旧 round 归因字段：
+连续奖励 `grant` 现在统一归因到：
 
-- `roundConfigId`
-- `roundIteration`
+- `configId`
+- `ruleId`
 
-现在统一为：
+下列旧字段已下线：
 
 - `scopeType`
 - `configVersionId`
 - `activityId`
+- `activityRuleId`
 
-语义：
+同时：
 
-- `scopeType=1`：日常连续签到
-- `scopeType=2`：活动连续签到
-
-同时，grant 的奖励快照不再来自 `rewardItems json`，而是来自 grant 奖励项明细表。
+- grant 奖励快照不再来自 `rewardItems json`
+- 奖励项改为 `check_in_streak_grant_reward_item` 明细
 
 ## Action Response Changes
 
@@ -109,18 +102,10 @@
 
 - 保留 `currentStreak`
 - 保留 `triggeredGrantIds`
-- 下线 `roundConfigId`
-
-## Calendar / Record Behavior
-
-- 基础签到奖励仍冻结到 `resolvedRewardItems`
-- 连续签到奖励仍通过 `grants[]` 展示
-- 但 `grants[]` 已切换为新的 daily/activity 统一归因模型
+- 不再返回任何 round / activity 连续签到字段
 
 ## Notes
 
-- 本次不提供旧字段 fallback。
 - 客户端不得再依赖 round 运行时字段解释连续签到状态。
-- 活动连续签到需要改走独立 activity 读模型。
-- app 不再读取草稿、下线、归档或已失效的活动详情。
+- 不再存在独立活动连续签到详情页或列表页。
 - 连续签到奖励现在是关系型按天规则模型，不再从 streak 配置 JSON 中读取。

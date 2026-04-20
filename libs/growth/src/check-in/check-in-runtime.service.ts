@@ -1,24 +1,20 @@
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
-import type { QueryCheckInActivityStreakPageDto } from './dto/check-in-definition.dto'
 import type {
   QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
-import { BusinessErrorCode } from '@libs/platform/constant'
-import { BusinessException } from '@libs/platform/exceptions'
 import { Injectable } from '@nestjs/common'
 import dayjs from 'dayjs'
 import { and, asc, desc, eq, exists, gte, inArray, lte } from 'drizzle-orm'
-import { CheckInActivityStreakStatusEnum } from './check-in.constant'
 import { CheckInServiceSupport } from './check-in.service.support'
 
 /**
  * 签到运行时读模型服务。
  *
- * 负责 app 侧摘要、日历、记录、排行榜、活动连续签到读模型以及 admin 侧对账读模型。
+ * 负责 app 侧摘要、日历、记录、排行榜以及 admin 侧对账读模型。
  */
 @Injectable()
 export class CheckInRuntimeService extends CheckInServiceSupport {
@@ -38,16 +34,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       config,
       today,
     )
-    const currentDailyConfig =
-      await this.getRequiredCurrentDailyStreakConfig(now)
-    const dailyRewardRules = await this.loadDailyStreakRewardRules(
-      currentDailyConfig.id,
-    )
-    const configDefinition = this.parseDailyStreakConfigDefinition({
-      ...currentDailyConfig,
-      rewardRules: dailyRewardRules,
-    })
-    const progress = await this.db.query.checkInDailyStreakProgress.findFirst({
+    const currentConfig = await this.getRequiredCurrentStreakConfig(now)
+    const rewardRules = await this.loadStreakRewardRules(currentConfig.id)
+    const progress = await this.db.query.checkInStreakProgress.findFirst({
       where: { userId },
     })
     const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
@@ -60,9 +49,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       today,
     )
     const latestRecord = await this.getLatestRecord(userId)
-    const latestRecordView = latestRecord
-      ? await this.buildRecordItemView(latestRecord)
-      : null
 
     return {
       config: this.toConfigDetailView(config),
@@ -75,13 +61,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
             : undefined,
         lastSignedDate: effectiveLastSignedDate,
         nextReward:
-          this.resolveNextStreakReward(
-            configDefinition.rewardRules,
-            effectiveCurrentStreak,
-          ) ?? null,
+          this.resolveNextStreakReward(rewardRules, effectiveCurrentStreak) ??
+          null,
       },
       todaySigned: await this.hasRecordForDate(userId, today),
-      latestRecord: latestRecordView,
+      latestRecord: latestRecord
+        ? await this.buildRecordItemView(latestRecord)
+        : null,
     }
   }
 
@@ -173,16 +159,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       )
     }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.checkInRecordTable,
-      {
-        where: and(...conditions),
-        ...query,
-        orderBy:
-          query.orderBy?.trim() ||
-          JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
-      },
-    )
+    const page = await this.drizzle.ext.findPagination(this.checkInRecordTable, {
+      where: and(...conditions),
+      ...query,
+      orderBy:
+        query.orderBy?.trim() ||
+        JSON.stringify([{ signDate: 'desc' }, { id: 'desc' }]),
+    })
 
     return {
       ...page,
@@ -195,9 +178,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
     const today = this.formatDateOnly(new Date())
     const page = await this.drizzle.ext.findPagination(
-      this.checkInDailyStreakProgressTable,
+      this.checkInStreakProgressTable,
       {
-        where: this.buildActiveDailyStreakProgressWhere(today),
+        where: this.buildActiveStreakProgressWhere(today),
         ...query,
         orderBy: JSON.stringify([
           { currentStreak: 'desc' },
@@ -231,144 +214,6 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
           ? this.toDateOnlyValue(item.lastSignedDate)
           : undefined,
       })),
-    }
-  }
-
-  async getActivityPage(
-    query: QueryCheckInActivityStreakPageDto,
-    userId: number,
-  ) {
-    const now = new Date()
-    const page = await this.drizzle.ext.findPagination(
-      this.checkInActivityStreakTable,
-      {
-        where: and(
-          eq(
-            this.checkInActivityStreakTable.status,
-            CheckInActivityStreakStatusEnum.PUBLISHED,
-          ),
-          lte(this.checkInActivityStreakTable.effectiveFrom, now),
-          gte(this.checkInActivityStreakTable.effectiveTo, now),
-        ),
-        ...query,
-        orderBy:
-          query.orderBy?.trim() ||
-          JSON.stringify([{ effectiveFrom: 'asc' }, { id: 'asc' }]),
-      },
-    )
-
-    const activityIds = page.list.map((item) => item.id)
-    const progresses =
-      activityIds.length === 0
-        ? []
-        : await this.db
-            .select()
-            .from(this.checkInActivityStreakProgressTable)
-            .where(
-              and(
-                eq(this.checkInActivityStreakProgressTable.userId, userId),
-                inArray(
-                  this.checkInActivityStreakProgressTable.activityId,
-                  activityIds,
-                ),
-              ),
-            )
-    const progressMap = new Map(
-      progresses.map((item) => [item.activityId, item]),
-    )
-    const today = this.formatDateOnly(now)
-
-    return {
-      ...page,
-      list: await Promise.all(
-        page.list.map(async (activity) => {
-          const progress = progressMap.get(activity.id)
-          const rewardRules = await this.loadActivityStreakRewardRules(
-            activity.id,
-          )
-          const definition = this.parseActivityStreakDefinition(
-            activity,
-            rewardRules,
-          )
-          const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
-            progress?.currentStreak ?? 0,
-            progress?.lastSignedDate,
-            today,
-          )
-
-          return {
-            id: activity.id,
-            activityKey: activity.activityKey,
-            title: activity.title,
-            status: activity.status,
-            effectiveFrom: activity.effectiveFrom,
-            effectiveTo: activity.effectiveTo,
-            currentStreak: effectiveCurrentStreak,
-            lastSignedDate: this.resolveEffectiveLastSignedDate(
-              progress?.lastSignedDate,
-              today,
-            ),
-            nextReward:
-              this.resolveNextStreakReward(
-                definition.rewardRules,
-                effectiveCurrentStreak,
-              ) ?? null,
-          }
-        }),
-      ),
-    }
-  }
-
-  async getActivityDetail(query: { id: number }, userId: number) {
-    const now = new Date()
-    const activity = await this.db.query.checkInActivityStreak.findFirst({
-      where: { id: query.id },
-    })
-    if (!activity || !this.isActivityVisibleForApp(activity, now)) {
-      throw new BusinessException(
-        BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '活动连续签到不存在',
-      )
-    }
-
-    const progress =
-      await this.db.query.checkInActivityStreakProgress.findFirst({
-        where: {
-          activityId: activity.id,
-          userId,
-        },
-      })
-    const today = this.formatDateOnly(now)
-    const rewardRules = await this.loadActivityStreakRewardRules(activity.id)
-    const definition = this.parseActivityStreakDefinition(activity, rewardRules)
-    const effectiveCurrentStreak = this.resolveEffectiveCurrentStreak(
-      progress?.currentStreak ?? 0,
-      progress?.lastSignedDate,
-      today,
-    )
-
-    return {
-      id: activity.id,
-      activityKey: definition.activityKey,
-      title: definition.title,
-      status: definition.status,
-      effectiveFrom: definition.effectiveFrom,
-      effectiveTo: definition.effectiveTo,
-      currentStreak: effectiveCurrentStreak,
-      streakStartedAt:
-        effectiveCurrentStreak > 0 && progress?.streakStartedAt
-          ? this.toDateOnlyValue(progress.streakStartedAt)
-          : undefined,
-      lastSignedDate: this.resolveEffectiveLastSignedDate(
-        progress?.lastSignedDate,
-        today,
-      ),
-      nextReward:
-        this.resolveNextStreakReward(
-          definition.rewardRules,
-          effectiveCurrentStreak,
-        ) ?? null,
-      rewardRules: definition.rewardRules,
     }
   }
 
@@ -423,16 +268,13 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       conditions.push(grantCondition)
     }
 
-    const page = await this.drizzle.ext.findPagination(
-      this.checkInRecordTable,
-      {
-        where: conditions.length > 0 ? and(...conditions) : undefined,
-        ...query,
-        orderBy:
-          query.orderBy?.trim() ||
-          JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
-      },
-    )
+    const page = await this.drizzle.ext.findPagination(this.checkInRecordTable, {
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      ...query,
+      orderBy:
+        query.orderBy?.trim() ||
+        JSON.stringify([{ createdAt: 'desc' }, { id: 'desc' }]),
+    })
 
     const settlementMap = await this.buildSettlementMapById(
       page.list
@@ -579,11 +421,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       createdAt: grant.createdAt,
       updatedAt: grant.updatedAt,
       userId: grant.userId,
-      scopeType: grant.scopeType,
-      configVersionId: grant.configVersionId,
-      dailyRuleId: grant.dailyRuleId,
-      activityId: grant.activityId,
-      activityRuleId: grant.activityRuleId,
+      configId: grant.configId,
+      ruleId: grant.ruleId,
       ruleCode: grant.ruleCode,
       streakDays: grant.streakDays,
       rewardItems: rewardItemMap.get(grant.id) ?? [],
@@ -608,9 +447,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     }
     const userIds = [...new Set(records.map((record) => record.userId))]
     const signDates = [
-      ...new Set(
-        records.map((record) => this.toDateOnlyValue(record.signDate)),
-      ),
+      ...new Set(records.map((record) => this.toDateOnlyValue(record.signDate))),
     ]
     const grants = await this.db
       .select()
@@ -644,11 +481,8 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
         createdAt: grant.createdAt,
         updatedAt: grant.updatedAt,
         userId: grant.userId,
-        scopeType: grant.scopeType,
-        configVersionId: grant.configVersionId,
-        dailyRuleId: grant.dailyRuleId,
-        activityId: grant.activityId,
-        activityRuleId: grant.activityRuleId,
+        configId: grant.configId,
+        ruleId: grant.ruleId,
         ruleCode: grant.ruleCode,
         streakDays: grant.streakDays,
         rewardItems: rewardItemMap.get(grant.id) ?? [],
@@ -671,20 +505,11 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
   ) {
     const grantConditions: SQL[] = []
 
-    if (query.scopeType !== undefined) {
-      grantConditions.push(
-        eq(this.checkInStreakGrantTable.scopeType, query.scopeType),
-      )
+    if (query.configId !== undefined) {
+      grantConditions.push(eq(this.checkInStreakGrantTable.configId, query.configId))
     }
-    if (query.configVersionId !== undefined) {
-      grantConditions.push(
-        eq(this.checkInStreakGrantTable.configVersionId, query.configVersionId),
-      )
-    }
-    if (query.activityId !== undefined) {
-      grantConditions.push(
-        eq(this.checkInStreakGrantTable.activityId, query.activityId),
-      )
+    if (query.ruleId !== undefined) {
+      grantConditions.push(eq(this.checkInStreakGrantTable.ruleId, query.ruleId))
     }
     if (query.grantId !== undefined) {
       grantConditions.push(eq(this.checkInStreakGrantTable.id, query.grantId))
@@ -735,9 +560,7 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     )
   }
 
-  private toConfigDetailView(
-    config: typeof this.checkInConfigTable.$inferSelect,
-  ) {
+  private toConfigDetailView(config: typeof this.checkInConfigTable.$inferSelect) {
     const rewardDefinition = this.parseRewardDefinition(config)
     return {
       id: config.id,

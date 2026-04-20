@@ -219,9 +219,8 @@ export class GrowthRewardSettlementService {
     params: {
       grantId: number
       userId: number
-      scopeType: number
-      configVersionId: number | null
-      activityId: number | null
+      configId: number
+      ruleId: number
       ruleCode: string
       triggerSignDate: string
       rewardItems?: Record<string, unknown>[] | null
@@ -242,9 +241,8 @@ export class GrowthRewardSettlementService {
       kind: 'check_in_streak_reward',
       grantId: params.grantId,
       userId: params.userId,
-      scopeType: params.scopeType,
-      configVersionId: params.configVersionId,
-      activityId: params.activityId,
+      configId: params.configId,
+      ruleId: params.ruleId,
       ruleCode: params.ruleCode,
       triggerSignDate: params.triggerSignDate,
       rewardItems: params.rewardItems ?? null,

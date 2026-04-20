@@ -5,6 +5,7 @@ import type {
   NotificationChapterSnapshotDto,
   NotificationCommentActionDataDto,
   NotificationCommentContainerDto,
+  NotificationCommentReplyDataDto,
   NotificationCommentSnapshotDto,
   NotificationDataByTypeDto,
   NotificationTaskReminderDataDto,
@@ -50,6 +51,9 @@ export type NotificationCommentContainerSnapshot =
 
 /** 评论操作类通知数据。 */
 export type NotificationCommentActionData = NotificationCommentActionDataDto
+
+/** 评论回复通知数据。 */
+export type NotificationCommentReplyData = NotificationCommentReplyDataDto
 
 /** 主题评论通知数据。 */
 export type NotificationTopicCommentedData = NotificationTopicCommentedDataDto

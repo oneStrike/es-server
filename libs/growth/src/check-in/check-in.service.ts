@@ -1,11 +1,7 @@
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type {
-  CreateCheckInActivityStreakDto,
-  PublishCheckInDailyStreakConfigDto,
-  QueryCheckInActivityStreakPageDto,
-  QueryCheckInDailyStreakConfigHistoryPageDto,
-  UpdateCheckInActivityStreakDto,
-  UpdateCheckInActivityStreakStatusDto,
+  PublishCheckInStreakConfigDto,
+  QueryCheckInStreakConfigHistoryPageDto,
   UpdateCheckInConfigDto,
   UpdateCheckInEnabledDto,
 } from './dto/check-in-definition.dto'
@@ -47,73 +43,27 @@ export class CheckInService {
     return this.checkInDefinitionService.updateEnabled(dto, adminUserId)
   }
 
-  async getDailyStreakConfigDetail() {
-    return this.checkInDefinitionService.getDailyStreakConfigDetail()
+  async getStreakConfigDetail() {
+    return this.checkInDefinitionService.getStreakConfigDetail()
   }
 
-  async getDailyStreakConfigHistoryPage(
-    query: QueryCheckInDailyStreakConfigHistoryPageDto,
-  ) {
-    return this.checkInDefinitionService.getDailyStreakConfigHistoryPage(query)
+  async getStreakConfigHistoryPage(query: QueryCheckInStreakConfigHistoryPageDto) {
+    return this.checkInDefinitionService.getStreakConfigHistoryPage(query)
   }
 
-  async getDailyStreakConfigHistoryDetail(query: { id: number }) {
-    return this.checkInDefinitionService.getDailyStreakConfigHistoryDetail(
-      query,
-    )
+  async getStreakConfigHistoryDetail(query: { id: number }) {
+    return this.checkInDefinitionService.getStreakConfigHistoryDetail(query)
   }
 
-  async publishDailyStreakConfig(
-    dto: PublishCheckInDailyStreakConfigDto,
+  async publishStreakConfig(
+    dto: PublishCheckInStreakConfigDto,
     adminUserId: number,
   ) {
-    return this.checkInDefinitionService.publishDailyStreakConfig(
-      dto,
-      adminUserId,
-    )
+    return this.checkInDefinitionService.publishStreakConfig(dto, adminUserId)
   }
 
-  async terminateDailyStreakConfig(query: { id: number }, adminUserId: number) {
-    return this.checkInDefinitionService.terminateDailyStreakConfig(
-      query,
-      adminUserId,
-    )
-  }
-
-  async getActivityStreakPage(query: QueryCheckInActivityStreakPageDto) {
-    return this.checkInDefinitionService.getActivityStreakPage(query)
-  }
-
-  async getActivityStreakDetail(query: { id: number }) {
-    return this.checkInDefinitionService.getActivityStreakDetail(query)
-  }
-
-  async createActivityStreak(
-    dto: CreateCheckInActivityStreakDto,
-    adminUserId: number,
-  ) {
-    return this.checkInDefinitionService.createActivityStreak(dto, adminUserId)
-  }
-
-  async updateActivityStreak(
-    dto: UpdateCheckInActivityStreakDto,
-    adminUserId: number,
-  ) {
-    return this.checkInDefinitionService.updateActivityStreak(dto, adminUserId)
-  }
-
-  async updateActivityStreakStatus(
-    dto: UpdateCheckInActivityStreakStatusDto,
-    adminUserId: number,
-  ) {
-    return this.checkInDefinitionService.updateActivityStreakStatus(
-      dto,
-      adminUserId,
-    )
-  }
-
-  async deleteActivityStreak(query: { id: number }) {
-    return this.checkInDefinitionService.deleteActivityStreak(query)
+  async terminateStreakConfig(query: { id: number }, adminUserId: number) {
+    return this.checkInDefinitionService.terminateStreakConfig(query, adminUserId)
   }
 
   async getSummary(userId: number) {
@@ -130,17 +80,6 @@ export class CheckInService {
 
   async getLeaderboardPage(query: QueryCheckInLeaderboardDto) {
     return this.checkInRuntimeService.getLeaderboardPage(query)
-  }
-
-  async getActivityPage(
-    query: QueryCheckInActivityStreakPageDto,
-    userId: number,
-  ) {
-    return this.checkInRuntimeService.getActivityPage(query, userId)
-  }
-
-  async getActivityDetail(query: { id: number }, userId: number) {
-    return this.checkInRuntimeService.getActivityDetail(query, userId)
   }
 
   async signToday(userId: number) {

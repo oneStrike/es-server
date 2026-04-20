@@ -71,7 +71,7 @@
 
 | 通知类型              | 中文标签 | 来源领域事件                                                                              | projectionMode      | mandatory | 当前 `data` 结构                               |
 | --------------------- | -------- | ----------------------------------------------------------------------------------------- | ------------------- | --------- | ---------------------------------------------- |
-| `comment_reply`       | 评论回复 | `comment.replied`                                                                         | `append`            | 否        | `NotificationCommentActionData`                |
+| `comment_reply`       | 评论回复 | `comment.replied`                                                                         | `append`            | 否        | `NotificationCommentReplyData`                 |
 | `comment_mention`     | 评论提及 | `comment.mentioned`                                                                       | `append`            | 否        | `NotificationCommentActionData`                |
 | `comment_like`        | 评论点赞 | `comment.liked`                                                                           | `append`            | 否        | `NotificationCommentActionData`                |
 | `topic_like`          | 主题点赞 | `topic.liked`                                                                             | `append`            | 否        | `{ object: NotificationTopicSnapshot }`        |
@@ -437,12 +437,17 @@ data = {
   object: NotificationCommentSnapshot
   container: NotificationWorkSnapshot | NotificationChapterSnapshot | NotificationTopicSnapshot
   parentContainer?: NotificationWorkSnapshot
+  parentComment?: NotificationCommentSnapshot
 }
 ```
 
 - `object`
   - 被回复后的那条评论快照。
   - `snippet` 表示“回复内容摘要”。
+- `parentComment`
+  - 直接被回复的父评论快照。
+  - 仅 `comment_reply` 使用。
+  - 语义对应 `replyToId`，不是 `actualReplyToId` 指向的根评论。
 - `container`
   - 该评论直接挂载的目标对象。
   - 可能是作品、章节或论坛主题。
@@ -455,8 +460,10 @@ data = {
 - producer 先写基础结构。
 - projection 会对这类评论动作通知做补全：
   - `object.snippet` 可从评论表回填
+  - `parentComment.snippet` 在字段存在时也可从评论表回填
   - `container` 可从 `work` / `workChapter` / `forumTopic` 回填更多快照字段
   - 章节场景会自动补出 `parentContainer`
+- 历史 `comment_reply` 记录可能没有 `parentComment`
 
 ### 6.2 `comment_mention`
 
@@ -730,7 +737,7 @@ App 侧与通知直接相关的接口位于 `apps/app-api/src/modules/message/me
 
 这意味着：
 
-- 评论动作类通知的 `comment/container/parentContainer` 更完整
+- 评论回复通知会额外携带 `parentComment`；其他评论动作通知仍只返回 `comment/container/parentContainer`
 - 主题类通知的 `cover` / `sectionId` 当前通常不会被自动补齐
 
 ### 8.3 类型允许，不等于当前 producer 一定会写

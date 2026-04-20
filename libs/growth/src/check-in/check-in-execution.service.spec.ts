@@ -2,38 +2,22 @@
 import type { DrizzleService } from '@db/core'
 import { CheckInExecutionService } from './check-in-execution.service'
 import {
-  CheckInDailyStreakConfigStatusEnum,
-  CheckInStreakScopeTypeEnum,
+  CheckInStreakConfigStatusEnum,
+  CheckInStreakPublishStrategyEnum,
 } from './check-in.constant'
 
 function createDrizzleStub() {
   const insertCalls: Array<{ table: string; payload: unknown }> = []
   const schema = {
     checkInConfig: {},
-    checkInDailyStreakConfig: { __table: 'dailyConfig', id: 'id' },
-    checkInDailyStreakRule: { __table: 'dailyRule', id: 'id' },
-    checkInDailyStreakRuleRewardItem: {
-      __table: 'dailyRuleRewardItem',
-      id: 'id',
-    },
-    checkInDailyStreakProgress: {
-      __table: 'dailyProgress',
-      id: 'id',
-      version: 'version',
-    },
-    checkInActivityStreak: {},
-    checkInActivityStreakRule: {},
-    checkInActivityStreakRuleRewardItem: {},
-    checkInActivityStreakProgress: {},
+    checkInStreakConfig: { __table: 'streakConfig', id: 'id' },
+    checkInStreakRule: { __table: 'streakRule', id: 'id' },
+    checkInStreakRuleRewardItem: { __table: 'streakRuleRewardItem', id: 'id' },
+    checkInStreakProgress: { __table: 'streakProgress', id: 'id', version: 'version' },
     checkInMakeupFact: {},
     checkInMakeupAccount: {},
     checkInRecord: { signDate: 'signDate', id: 'id' },
-    checkInStreakGrant: {
-      __table: 'grant',
-      id: 'id',
-      userId: 'userId',
-      bizKey: 'bizKey',
-    },
+    checkInStreakGrant: { __table: 'grant', id: 'id', userId: 'userId', bizKey: 'bizKey' },
     checkInStreakGrantRewardItem: { __table: 'grantRewardItem', id: 'id' },
     growthRewardSettlement: {},
   }
@@ -71,7 +55,7 @@ function createDrizzleStub() {
       }),
     }),
     query: {
-      checkInDailyStreakProgress: {
+      checkInStreakProgress: {
         findFirst: jest.fn().mockResolvedValue({
           id: 1,
           userId: 7,
@@ -95,8 +79,8 @@ function createDrizzleStub() {
   return { drizzle, tx, insertCalls }
 }
 
-describe('checkInExecutionService relational grant snapshot writes', () => {
-  it('writes grant head and reward-item rows separately for daily streak grants', async () => {
+describe('checkInExecutionService unified streak grant snapshot writes', () => {
+  it('writes grant head and reward-item rows separately for streak grants', async () => {
     const harness = createDrizzleStub()
     const service = new CheckInExecutionService(
       harness.drizzle,
@@ -104,20 +88,19 @@ describe('checkInExecutionService relational grant snapshot writes', () => {
       {} as never,
     )
 
-    jest.spyOn(service as any, 'listDailyStreakConfigs').mockResolvedValue([
+    jest.spyOn(service as any, 'listStreakConfigs').mockResolvedValue([
       {
         id: 9,
-        status: CheckInDailyStreakConfigStatusEnum.ACTIVE,
+        status: CheckInStreakConfigStatusEnum.ACTIVE,
+        publishStrategy: CheckInStreakPublishStrategyEnum.NEXT_DAY,
         effectiveFrom: new Date('2026-04-20T00:00:00.000Z'),
         effectiveTo: null,
       },
     ])
-    jest
-      .spyOn(service as any, 'resolveDailyStreakConfigForSignDate')
-      .mockReturnValue({
-        id: 9,
-      })
-    jest.spyOn(service as any, 'loadDailyStreakRewardRules').mockResolvedValue([
+    jest.spyOn(service as any, 'resolveStreakConfigForSignDate').mockReturnValue({
+      id: 9,
+    })
+    jest.spyOn(service as any, 'loadStreakRewardRules').mockResolvedValue([
       {
         ruleCode: 'day-3',
         streakDays: 3,
@@ -129,13 +112,11 @@ describe('checkInExecutionService relational grant snapshot writes', () => {
         ],
       },
     ])
-    jest
-      .spyOn(service as any, 'listUserRecords')
-      .mockResolvedValue([
-        { signDate: '2026-04-18' },
-        { signDate: '2026-04-19' },
-        { signDate: '2026-04-20' },
-      ])
+    jest.spyOn(service as any, 'listUserRecords').mockResolvedValue([
+      { signDate: '2026-04-18' },
+      { signDate: '2026-04-19' },
+      { signDate: '2026-04-20' },
+    ])
     jest.spyOn(service as any, 'recomputeStreakAggregation').mockReturnValue({
       currentStreak: 3,
       streakStartedAt: '2026-04-18',
@@ -146,23 +127,21 @@ describe('checkInExecutionService relational grant snapshot writes', () => {
         '2026-04-20': 3,
       },
     })
-    jest
-      .spyOn(service as any, 'resolveEligibleScopeGrantRules')
-      .mockReturnValue([
-        {
-          rule: {
-            ruleCode: 'day-3',
-            streakDays: 3,
-            repeatable: false,
-            status: 1,
-            rewardItems: [
-              { assetType: 1, assetKey: '', amount: 10 },
-              { assetType: 2, assetKey: '', amount: 5 },
-            ],
-          },
-          triggerSignDate: '2026-04-20',
+    jest.spyOn(service as any, 'resolveEligibleGrantRules').mockReturnValue([
+      {
+        rule: {
+          ruleCode: 'day-3',
+          streakDays: 3,
+          repeatable: false,
+          status: 1,
+          rewardItems: [
+            { assetType: 1, assetKey: '', amount: 10 },
+            { assetType: 2, assetKey: '', amount: 5 },
+          ],
         },
-      ])
+        triggerSignDate: '2026-04-20',
+      },
+    ])
     ;(harness.tx.select as jest.Mock).mockReturnValueOnce({
       from: jest.fn().mockReturnValue({
         where: jest.fn().mockReturnValue({
@@ -175,11 +154,9 @@ describe('checkInExecutionService relational grant snapshot writes', () => {
         where: jest.fn().mockResolvedValue([{ id: 301, ruleCode: 'day-3' }]),
       }),
     })
-    jest
-      .spyOn(service as any, 'updateDailyProgress')
-      .mockResolvedValue(undefined)
+    jest.spyOn(service as any, 'updateStreakProgress').mockResolvedValue(undefined)
 
-    const result = await (service as any).processDailyStreakGrants(
+    const result = await (service as any).processStreakGrants(
       7,
       harness.tx,
       new Date('2026-04-20T09:00:00.000Z'),
@@ -196,9 +173,8 @@ describe('checkInExecutionService relational grant snapshot writes', () => {
     )?.payload as Record<string, unknown>
     expect(grantInsert).toMatchObject({
       userId: 7,
-      scopeType: CheckInStreakScopeTypeEnum.DAILY,
-      configVersionId: 9,
-      dailyRuleId: 301,
+      configId: 9,
+      ruleId: 301,
       ruleCode: 'day-3',
       streakDays: 3,
     })
@@ -221,97 +197,5 @@ describe('checkInExecutionService relational grant snapshot writes', () => {
         }),
       ]),
     )
-  })
-
-  it('reuses the initially loaded activity rule rows for grant snapshots', async () => {
-    const harness = createDrizzleStub()
-    const service = new CheckInExecutionService(
-      harness.drizzle,
-      {} as never,
-      {} as never,
-    )
-
-    jest
-      .spyOn(service as any, 'listEffectiveActivityStreaks')
-      .mockResolvedValue([{ id: 21 }])
-    jest
-      .spyOn(service as any, 'getOrCreateActivityProgress')
-      .mockResolvedValue({ id: 1, version: 0 })
-    jest
-      .spyOn(service as any, 'listActivityScopedRecords')
-      .mockResolvedValue([
-        { signDate: '2026-04-19' },
-        { signDate: '2026-04-20' },
-      ])
-    jest.spyOn(service as any, 'recomputeStreakAggregation').mockReturnValue({
-      currentStreak: 2,
-      streakStartedAt: '2026-04-19',
-      lastSignedDate: '2026-04-20',
-      streakByDate: {
-        '2026-04-19': 1,
-        '2026-04-20': 2,
-      },
-    })
-    jest
-      .spyOn(service as any, 'loadActivityStreakRewardRuleRows')
-      .mockResolvedValue([
-        {
-          id: 701,
-          ruleCode: 'activity-day-2',
-          streakDays: 2,
-          repeatable: false,
-          status: 1,
-          rewardItems: [{ assetType: 1, assetKey: '', amount: 8 }],
-        },
-      ])
-    jest
-      .spyOn(service as any, 'resolveEligibleScopeGrantRules')
-      .mockReturnValue([
-        {
-          rule: {
-            ruleCode: 'activity-day-2',
-            streakDays: 2,
-            repeatable: false,
-            status: 1,
-            rewardItems: [{ assetType: 1, assetKey: '', amount: 8 }],
-          },
-          triggerSignDate: '2026-04-20',
-        },
-      ])
-    jest
-      .spyOn(service as any, 'updateActivityProgress')
-      .mockResolvedValue(undefined)
-    ;(harness.tx.select as jest.Mock)
-      .mockImplementationOnce(() => ({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            orderBy: jest.fn().mockResolvedValue([]),
-          }),
-        }),
-      }))
-      .mockImplementation(() => {
-        throw new Error('unexpected second select')
-      })
-
-    const result = await (service as any).processActivityStreakGrants(
-      7,
-      '2026-04-20',
-      harness.tx,
-    )
-
-    expect(result).toEqual([401])
-    expect(harness.tx.select).toHaveBeenCalledTimes(1)
-
-    const grantInsert = harness.insertCalls.find(
-      (item) => item.table === 'grant',
-    )?.payload as Record<string, unknown>
-    expect(grantInsert).toMatchObject({
-      userId: 7,
-      scopeType: CheckInStreakScopeTypeEnum.ACTIVITY,
-      activityId: 21,
-      activityRuleId: 701,
-      ruleCode: 'activity-day-2',
-      streakDays: 2,
-    })
   })
 })

@@ -7,10 +7,9 @@ import { StringProperty } from '@libs/platform/decorators/validate/string-proper
 import { BaseDto } from '@libs/platform/dto/base.dto'
 import { PageDto } from '@libs/platform/dto/page.dto'
 import {
-  CheckInActivityStreakStatusEnum,
-  CheckInDailyStreakConfigStatusEnum,
-  CheckInDailyStreakPublishStrategyEnum,
   CheckInMakeupPeriodTypeEnum,
+  CheckInStreakConfigStatusEnum,
+  CheckInStreakPublishStrategyEnum,
 } from '../check-in.constant'
 import {
   CheckInDateRewardRuleItemDto,
@@ -122,13 +121,13 @@ export class CheckInConfigDetailResponseDto extends BaseDto {
   patternRewardRules!: CheckInPatternRewardRuleItemDto[]
 }
 
-export class PublishCheckInDailyStreakConfigDto {
+export class PublishCheckInStreakConfigDto {
   @EnumProperty({
     description: '发布策略（1=立即生效；2=次日生效；3=指定时间生效）。',
-    example: CheckInDailyStreakPublishStrategyEnum.NEXT_DAY,
-    enum: CheckInDailyStreakPublishStrategyEnum,
+    example: CheckInStreakPublishStrategyEnum.NEXT_DAY,
+    enum: CheckInStreakPublishStrategyEnum,
   })
-  publishStrategy!: CheckInDailyStreakPublishStrategyEnum
+  publishStrategy!: CheckInStreakPublishStrategyEnum
 
   @StringProperty({
     description: '指定生效时间；仅当发布策略需要明确时间点时传入。',
@@ -138,13 +137,13 @@ export class PublishCheckInDailyStreakConfigDto {
   effectiveFrom?: string
 
   @ArrayProperty({
-    description: '日常连续签到奖励规则列表。',
+    description: '连续签到奖励规则列表。',
     itemClass: CreateCheckInStreakRewardRuleDto,
   })
   rewardRules!: CreateCheckInStreakRewardRuleDto[]
 }
 
-export class CheckInDailyStreakConfigDetailResponseDto extends BaseDto {
+export class CheckInStreakConfigDetailResponseDto extends BaseDto {
   @NumberProperty({
     description: '配置版本号。',
     example: 1,
@@ -154,19 +153,19 @@ export class CheckInDailyStreakConfigDetailResponseDto extends BaseDto {
 
   @EnumProperty({
     description: '配置状态（0=草稿；1=已排期；2=生效中；3=已过期；4=已终止）。',
-    example: CheckInDailyStreakConfigStatusEnum.ACTIVE,
-    enum: CheckInDailyStreakConfigStatusEnum,
+    example: CheckInStreakConfigStatusEnum.ACTIVE,
+    enum: CheckInStreakConfigStatusEnum,
     validation: false,
   })
-  status!: CheckInDailyStreakConfigStatusEnum
+  status!: CheckInStreakConfigStatusEnum
 
   @EnumProperty({
     description: '发布策略（1=立即生效；2=次日生效；3=指定时间生效）。',
-    example: CheckInDailyStreakPublishStrategyEnum.NEXT_DAY,
-    enum: CheckInDailyStreakPublishStrategyEnum,
+    example: CheckInStreakPublishStrategyEnum.NEXT_DAY,
+    enum: CheckInStreakPublishStrategyEnum,
     validation: false,
   })
-  publishStrategy!: CheckInDailyStreakPublishStrategyEnum
+  publishStrategy!: CheckInStreakPublishStrategyEnum
 
   @BooleanProperty({
     description: '是否为当前生效配置。',
@@ -191,124 +190,13 @@ export class CheckInDailyStreakConfigDetailResponseDto extends BaseDto {
   effectiveTo?: string | Date | null
 
   @ArrayProperty({
-    description: '日常连续签到奖励规则列表。',
+    description: '连续签到奖励规则列表。',
     itemClass: CheckInStreakRewardRuleItemDto,
     validation: false,
   })
   rewardRules!: CheckInStreakRewardRuleItemDto[]
 }
 
-export class QueryCheckInDailyStreakConfigHistoryPageDto extends PageDto {}
+export class QueryCheckInStreakConfigHistoryPageDto extends PageDto {}
 
-export class CheckInDailyStreakConfigHistoryPageItemDto extends CheckInDailyStreakConfigDetailResponseDto {}
-
-export class CreateCheckInActivityStreakDto {
-  @StringProperty({
-    description: '活动稳定键。',
-    example: 'summer-sign-in',
-  })
-  activityKey!: string
-
-  @StringProperty({
-    description: '活动标题。',
-    example: '夏日连续签到',
-  })
-  title!: string
-
-  @EnumProperty({
-    description: '活动状态（0=草稿；1=已发布；2=已下线；3=已归档）。',
-    example: CheckInActivityStreakStatusEnum.PUBLISHED,
-    enum: CheckInActivityStreakStatusEnum,
-  })
-  status!: CheckInActivityStreakStatusEnum
-
-  @StringProperty({
-    description: '活动开始时间。',
-    example: '2026-04-19T00:00:00.000Z',
-  })
-  effectiveFrom!: string
-
-  @StringProperty({
-    description: '活动结束时间。',
-    example: '2026-04-26T23:59:59.999Z',
-  })
-  effectiveTo!: string
-
-  @ArrayProperty({
-    description: '活动连续签到奖励规则列表。',
-    itemClass: CreateCheckInStreakRewardRuleDto,
-  })
-  rewardRules!: CreateCheckInStreakRewardRuleDto[]
-}
-
-export class UpdateCheckInActivityStreakDto extends CreateCheckInActivityStreakDto {
-  @NumberProperty({
-    description: '活动 ID。',
-    example: 1,
-  })
-  id!: number
-}
-
-export class UpdateCheckInActivityStreakStatusDto {
-  @NumberProperty({
-    description: '活动 ID。',
-    example: 1,
-  })
-  id!: number
-
-  @EnumProperty({
-    description: '活动状态（0=草稿；1=已发布；2=已下线；3=已归档）。',
-    example: CheckInActivityStreakStatusEnum.DISABLED,
-    enum: CheckInActivityStreakStatusEnum,
-  })
-  status!: CheckInActivityStreakStatusEnum
-}
-
-export class QueryCheckInActivityStreakPageDto extends PageDto {}
-
-export class CheckInActivityStreakPageItemDto extends BaseDto {
-  @StringProperty({
-    description: '活动稳定键。',
-    example: 'summer-sign-in',
-    validation: false,
-  })
-  activityKey!: string
-
-  @StringProperty({
-    description: '活动标题。',
-    example: '夏日连续签到',
-    validation: false,
-  })
-  title!: string
-
-  @EnumProperty({
-    description: '活动状态（0=草稿；1=已发布；2=已下线；3=已归档）。',
-    example: CheckInActivityStreakStatusEnum.PUBLISHED,
-    enum: CheckInActivityStreakStatusEnum,
-    validation: false,
-  })
-  status!: CheckInActivityStreakStatusEnum
-
-  @StringProperty({
-    description: '活动开始时间。',
-    example: '2026-04-19T00:00:00.000Z',
-    validation: false,
-  })
-  effectiveFrom!: string | Date
-
-  @StringProperty({
-    description: '活动结束时间。',
-    example: '2026-04-26T23:59:59.999Z',
-    validation: false,
-  })
-  effectiveTo!: string | Date
-}
-
-export class CheckInActivityStreakDetailResponseDto extends CheckInActivityStreakPageItemDto {
-  @ArrayProperty({
-    description: '活动连续签到奖励规则列表。',
-    itemClass: CheckInStreakRewardRuleItemDto,
-    validation: false,
-  })
-  rewardRules!: CheckInStreakRewardRuleItemDto[]
-}
+export class CheckInStreakConfigHistoryPageItemDto extends CheckInStreakConfigDetailResponseDto {}

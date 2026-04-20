@@ -10,12 +10,12 @@ import {
 } from 'drizzle-orm/pg-core'
 
 /**
- * 日常连续签到配置版本。
+ * 连续签到配置版本。
  *
- * 全站同一时刻只允许一套日常连续签到规则对运行时生效；历史版本仅用于审计和奖励归因。
+ * 系统任一时刻只允许一套连续签到规则对运行时生效；历史版本仅用于审计和奖励归因。
  */
-export const checkInDailyStreakConfig = pgTable(
-  'check_in_daily_streak_config',
+export const checkInStreakConfig = pgTable(
+  'check_in_streak_config',
   {
     /** 配置版本主键。 */
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -41,35 +41,29 @@ export const checkInDailyStreakConfig = pgTable(
       .notNull(),
   },
   (table) => [
-    unique('check_in_daily_streak_config_version_key').on(table.version),
-    index('check_in_daily_streak_config_status_idx').on(table.status),
-    index('check_in_daily_streak_config_effective_from_idx').on(
-      table.effectiveFrom,
-    ),
-    index('check_in_daily_streak_config_effective_to_idx').on(
-      table.effectiveTo,
-    ),
+    unique('check_in_streak_config_version_key').on(table.version),
+    index('check_in_streak_config_status_idx').on(table.status),
+    index('check_in_streak_config_effective_from_idx').on(table.effectiveFrom),
+    index('check_in_streak_config_effective_to_idx').on(table.effectiveTo),
     check(
-      'check_in_daily_streak_config_version_positive_chk',
+      'check_in_streak_config_version_positive_chk',
       sql`${table.version} > 0`,
     ),
     check(
-      'check_in_daily_streak_config_status_valid_chk',
+      'check_in_streak_config_status_valid_chk',
       sql`${table.status} in (0, 1, 2, 3, 4)`,
     ),
     check(
-      'check_in_daily_streak_config_publish_strategy_valid_chk',
+      'check_in_streak_config_publish_strategy_valid_chk',
       sql`${table.publishStrategy} in (1, 2, 3)`,
     ),
     check(
-      'check_in_daily_streak_config_effective_window_valid_chk',
+      'check_in_streak_config_effective_window_valid_chk',
       sql`${table.effectiveTo} is null or ${table.effectiveTo} > ${table.effectiveFrom}`,
     ),
   ],
 )
 
-export type CheckInDailyStreakConfig =
-  typeof checkInDailyStreakConfig.$inferSelect
-export type CheckInDailyStreakConfigSelect = CheckInDailyStreakConfig
-export type CheckInDailyStreakConfigInsert =
-  typeof checkInDailyStreakConfig.$inferInsert
+export type CheckInStreakConfig = typeof checkInStreakConfig.$inferSelect
+export type CheckInStreakConfigSelect = CheckInStreakConfig
+export type CheckInStreakConfigInsert = typeof checkInStreakConfig.$inferInsert

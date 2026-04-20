@@ -111,9 +111,51 @@ type Notification = {
 
 ## Category Structures
 
-### Comment notifications
+### Comment reply notification
 
 - `comment_reply`
+
+```ts
+data = {
+  object: {
+    kind: 'comment'
+    id: number
+    snippet?: string
+  }
+  container: {
+    kind: 'work' | 'chapter' | 'topic'
+    id: number
+    title?: string
+    subtitle?: string
+    cover?: string
+    workId?: number
+    workType?: number
+    sectionId?: number
+  }
+  parentContainer?: {
+    kind: 'work'
+    id: number
+    title?: string
+    cover?: string
+    workType?: number
+  }
+  parentComment?: {
+    kind: 'comment'
+    id: number
+    snippet?: string
+  }
+}
+```
+
+说明：
+
+- `parentComment` 是新增字段，仅 `comment_reply` 返回。
+- `parentComment` 表示 `replyToId` 对应的直接被回复评论，不是楼中楼扁平化后的根评论。
+- 历史 `comment_reply` 记录可能没有 `parentComment`。
+- 当 `container.kind = 'chapter'` 时，额外返回 `parentContainer`。
+
+### Comment mention / like notifications
+
 - `comment_mention`
 - `comment_like`
 
@@ -147,7 +189,7 @@ data = {
 说明：
 
 - `comment_like` 现在会返回被点赞评论的 `snippet`。
-- 当 `container.kind = 'chapter'` 时，额外返回 `parentContainer`。
+- `comment_mention` / `comment_like` 不返回 `parentComment`。
 
 ### Topic notifications
 
@@ -305,6 +347,7 @@ payload.targetId
 
 ```ts
 data.object
+data.parentComment
 data.container
 data.parentContainer
 ```

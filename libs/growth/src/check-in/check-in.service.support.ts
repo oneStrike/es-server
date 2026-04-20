@@ -1,24 +1,17 @@
 import type { Db, DrizzleService } from '@db/core'
 import type {
-  CheckInActivityStreakSelect,
-  CheckInActivityStreakRuleRewardItemSelect,
-  CheckInActivityStreakRuleSelect,
   CheckInConfigSelect,
-  CheckInDailyStreakConfigSelect,
-  CheckInDailyStreakRuleRewardItemSelect,
-  CheckInDailyStreakRuleSelect,
   CheckInMakeupAccountSelect,
   CheckInRecordSelect,
-  CheckInStreakGrantRewardItemSelect,
+  CheckInStreakConfigSelect,
   CheckInStreakGrantSelect,
+  CheckInStreakRuleRewardItemSelect,
+  CheckInStreakRuleSelect,
   GrowthRewardSettlementSelect,
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { SQL } from 'drizzle-orm'
-import type { CheckInDailyStreakPublishStrategyEnum } from './check-in.constant'
 import type {
-  CheckInActivityStreakDefinition,
-  CheckInDailyStreakConfigDefinition,
   CheckInDateRewardRuleView,
   CheckInMakeupAccountView,
   CheckInMakeupConsumePlanItem,
@@ -27,6 +20,7 @@ import type {
   CheckInRewardDefinition,
   CheckInRewardItems,
   CheckInStreakAggregation,
+  CheckInStreakConfigDefinition,
   CheckInStreakRewardRuleView,
 } from './check-in.type'
 import type { CreateCheckInDateRewardRuleDto } from './dto/check-in-date-reward-rule.dto'
@@ -47,13 +41,12 @@ import utc from 'dayjs/plugin/utc'
 import { and, asc, desc, eq, gt, inArray, or, sql } from 'drizzle-orm'
 import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.constant'
 import {
-  CheckInActivityStreakStatusEnum,
-  CheckInDailyStreakConfigStatusEnum,
   CheckInMakeupFactTypeEnum,
   CheckInMakeupPeriodTypeEnum,
   CheckInMakeupSourceTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
+  CheckInStreakConfigStatusEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 
@@ -61,10 +54,9 @@ dayjs.extend(utc)
 dayjs.extend(timezone)
 
 /**
- * 新签到域共享 support 基类。
+ * 统一签到域 support 基类。
  *
- * 统一收口签到配置解析、补签周期窗口、补签账户虚拟视图、连续奖励轮次解析、
- * 奖励项校验与常用底层查询。
+ * 收口签到配置解析、补签账户窗口、连续签到规则关系查询与公共校验逻辑。
  */
 export abstract class CheckInServiceSupport {
   protected readonly logger = new Logger(CheckInServiceSupport.name)
@@ -94,36 +86,20 @@ export abstract class CheckInServiceSupport {
     return this.drizzle.schema.checkInRecord
   }
 
-  protected get checkInDailyStreakConfigTable() {
-    return this.drizzle.schema.checkInDailyStreakConfig
+  protected get checkInStreakConfigTable() {
+    return this.drizzle.schema.checkInStreakConfig
   }
 
-  protected get checkInDailyStreakProgressTable() {
-    return this.drizzle.schema.checkInDailyStreakProgress
+  protected get checkInStreakRuleTable() {
+    return this.drizzle.schema.checkInStreakRule
   }
 
-  protected get checkInDailyStreakRuleTable() {
-    return this.drizzle.schema.checkInDailyStreakRule
+  protected get checkInStreakRuleRewardItemTable() {
+    return this.drizzle.schema.checkInStreakRuleRewardItem
   }
 
-  protected get checkInDailyStreakRuleRewardItemTable() {
-    return this.drizzle.schema.checkInDailyStreakRuleRewardItem
-  }
-
-  protected get checkInActivityStreakTable() {
-    return this.drizzle.schema.checkInActivityStreak
-  }
-
-  protected get checkInActivityStreakRuleTable() {
-    return this.drizzle.schema.checkInActivityStreakRule
-  }
-
-  protected get checkInActivityStreakRuleRewardItemTable() {
-    return this.drizzle.schema.checkInActivityStreakRuleRewardItem
-  }
-
-  protected get checkInActivityStreakProgressTable() {
-    return this.drizzle.schema.checkInActivityStreakProgress
+  protected get checkInStreakProgressTable() {
+    return this.drizzle.schema.checkInStreakProgress
   }
 
   protected get checkInStreakGrantTable() {
@@ -489,9 +465,9 @@ export abstract class CheckInServiceSupport {
     } satisfies CheckInRewardDefinition
   }
 
-  protected parseDailyStreakConfigDefinition(
+  protected parseStreakConfigDefinition(
     config: Pick<
-      CheckInDailyStreakConfigSelect,
+      CheckInStreakConfigSelect,
       'version' | 'status' | 'publishStrategy' | 'effectiveFrom' | 'effectiveTo'
     > & {
       rewardRules: CheckInStreakRewardRuleView[]
@@ -499,128 +475,114 @@ export abstract class CheckInServiceSupport {
   ) {
     return {
       version: config.version,
-      status: config.status as CheckInDailyStreakConfigStatusEnum,
-      publishStrategy:
-        config.publishStrategy as CheckInDailyStreakPublishStrategyEnum,
+      status: config.status as CheckInStreakConfigStatusEnum,
+      publishStrategy: config.publishStrategy,
       rewardRules: this.normalizeStreakRewardRules(config.rewardRules),
       effectiveFrom: config.effectiveFrom,
       effectiveTo: config.effectiveTo ?? null,
-    } satisfies CheckInDailyStreakConfigDefinition
+    } satisfies CheckInStreakConfigDefinition
   }
 
-  protected resolveDailyStreakConfigStatus(
+  protected resolveStreakConfigStatus(
     config: Pick<
-      CheckInDailyStreakConfigSelect,
+      CheckInStreakConfigSelect,
       'status' | 'effectiveFrom' | 'effectiveTo'
     >,
     at = new Date(),
   ) {
-    if (config.status === CheckInDailyStreakConfigStatusEnum.DRAFT) {
-      return CheckInDailyStreakConfigStatusEnum.DRAFT
+    if (config.status === CheckInStreakConfigStatusEnum.DRAFT) {
+      return CheckInStreakConfigStatusEnum.DRAFT
     }
-    if (config.status === CheckInDailyStreakConfigStatusEnum.TERMINATED) {
-      return CheckInDailyStreakConfigStatusEnum.TERMINATED
+    if (config.status === CheckInStreakConfigStatusEnum.TERMINATED) {
+      return CheckInStreakConfigStatusEnum.TERMINATED
     }
     if (config.effectiveFrom > at) {
-      return CheckInDailyStreakConfigStatusEnum.SCHEDULED
+      return CheckInStreakConfigStatusEnum.SCHEDULED
     }
     if (config.effectiveTo && config.effectiveTo <= at) {
-      return CheckInDailyStreakConfigStatusEnum.EXPIRED
+      return CheckInStreakConfigStatusEnum.EXPIRED
     }
-    return CheckInDailyStreakConfigStatusEnum.ACTIVE
+    return CheckInStreakConfigStatusEnum.ACTIVE
   }
 
-  protected isCurrentDailyStreakConfig(
-    config: Pick<
-      CheckInDailyStreakConfigSelect,
-      'status' | 'effectiveFrom' | 'effectiveTo'
-    >,
-    at = new Date(),
-  ) {
-    return (
-      this.resolveDailyStreakConfigStatus(config, at) ===
-      CheckInDailyStreakConfigStatusEnum.ACTIVE
-    )
-  }
-
-  protected resolveDailyConfigLookupAt(signDate: string) {
+  protected resolveConfigLookupAt(signDate: string) {
     return dayjs
       .tz(signDate, 'YYYY-MM-DD', this.getAppTimeZone())
       .startOf('day')
       .toDate()
   }
 
-  protected buildAppDayBounds(date: string) {
-    const startAt = parseDateOnlyInAppTimeZone(date)
-    if (!startAt) {
-      throw new BadRequestException('日期非法')
-    }
-
-    return {
-      startAt,
-      nextDayStartAt: dayjs(startAt)
-        .tz(this.getAppTimeZone())
-        .add(1, 'day')
-        .toDate(),
-    }
-  }
-
-  protected resolveDailyStreakConfigForSignDate(
+  protected resolveStreakConfigForSignDate(
     signDate: string,
     configs: Array<
       Pick<
-        CheckInDailyStreakConfigSelect,
+        CheckInStreakConfigSelect,
         'id' | 'status' | 'effectiveFrom' | 'effectiveTo'
       >
     >,
   ) {
-    const lookupAt = this.resolveDailyConfigLookupAt(signDate)
-    return configs.find((config) =>
-      this.isCurrentDailyStreakConfig(config, lookupAt),
+    const lookupAt = this.resolveConfigLookupAt(signDate)
+    return configs.find(
+      (config) =>
+        this.resolveStreakConfigStatus(config, lookupAt) ===
+        CheckInStreakConfigStatusEnum.ACTIVE,
     )
   }
 
-  protected isActivityVisibleForApp(
-    activity: Pick<
-      CheckInActivityStreakSelect,
-      'status' | 'effectiveFrom' | 'effectiveTo'
-    >,
-    at = new Date(),
+  protected async loadStreakRewardRuleRows(
+    configId: number,
+    db: Db = this.db,
   ) {
-    return (
-      activity.status === CheckInActivityStreakStatusEnum.PUBLISHED &&
-      activity.effectiveFrom <= at &&
-      activity.effectiveTo >= at
-    )
+    const rules = await db
+      .select()
+      .from(this.checkInStreakRuleTable)
+      .where(eq(this.checkInStreakRuleTable.configId, configId))
+      .orderBy(
+        asc(this.checkInStreakRuleTable.streakDays),
+        asc(this.checkInStreakRuleTable.id),
+      )
+
+    const ruleIds = rules.map((rule) => rule.id)
+    const rewardItems =
+      ruleIds.length === 0
+        ? []
+        : await db
+            .select()
+            .from(this.checkInStreakRuleRewardItemTable)
+            .where(inArray(this.checkInStreakRuleRewardItemTable.ruleId, ruleIds))
+            .orderBy(
+              asc(this.checkInStreakRuleRewardItemTable.sortOrder),
+              asc(this.checkInStreakRuleRewardItemTable.id),
+            )
+
+    const rewardMap = new Map<number, typeof rewardItems>()
+    for (const item of rewardItems) {
+      const items = rewardMap.get(item.ruleId) ?? []
+      items.push(item)
+      rewardMap.set(item.ruleId, items)
+    }
+
+    return rules.map((rule) => ({
+      ...rule,
+      rewardItems: rewardMap.get(rule.id) ?? [],
+    }))
   }
 
-  protected parseActivityStreakDefinition(
-    activity: Pick<
-      CheckInActivityStreakSelect,
-      'activityKey' | 'title' | 'status' | 'effectiveFrom' | 'effectiveTo'
-    >,
-    rewardRules: CheckInStreakRewardRuleView[],
-  ) {
-    return {
-      activityKey: activity.activityKey,
-      title: activity.title,
-      status: activity.status as CheckInActivityStreakStatusEnum,
-      effectiveFrom: activity.effectiveFrom,
-      effectiveTo: activity.effectiveTo,
-      rewardRules: this.normalizeStreakRewardRules(rewardRules),
-    } satisfies CheckInActivityStreakDefinition
+  protected async loadStreakRewardRules(configId: number, db: Db = this.db) {
+    return this.toStreakRewardRuleViews(
+      await this.loadStreakRewardRuleRows(configId, db),
+    )
   }
 
   protected toStreakRewardRuleViews(
     rules: Array<
       Pick<
-        CheckInDailyStreakRuleSelect | CheckInActivityStreakRuleSelect,
+        CheckInStreakRuleSelect,
         'ruleCode' | 'streakDays' | 'repeatable' | 'status'
       > & {
         rewardItems: Array<
           Pick<
-            | CheckInDailyStreakRuleRewardItemSelect
-            | CheckInActivityStreakRuleRewardItemSelect,
+            CheckInStreakRuleRewardItemSelect,
             'assetType' | 'assetKey' | 'amount'
           >
         >
@@ -639,112 +601,6 @@ export abstract class CheckInServiceSupport {
           amount: item.amount,
         })),
       })),
-    )
-  }
-
-  protected async loadDailyStreakRewardRuleRows(
-    configId: number,
-    db: Db = this.db,
-  ) {
-    const rules = await db
-      .select()
-      .from(this.checkInDailyStreakRuleTable)
-      .where(eq(this.checkInDailyStreakRuleTable.configId, configId))
-      .orderBy(
-        asc(this.checkInDailyStreakRuleTable.streakDays),
-        asc(this.checkInDailyStreakRuleTable.id),
-      )
-
-    const ruleIds = rules.map((rule) => rule.id)
-    const rewardItems =
-      ruleIds.length === 0
-        ? []
-        : await db
-            .select()
-            .from(this.checkInDailyStreakRuleRewardItemTable)
-            .where(
-              inArray(
-                this.checkInDailyStreakRuleRewardItemTable.ruleId,
-                ruleIds,
-              ),
-            )
-            .orderBy(
-              asc(this.checkInDailyStreakRuleRewardItemTable.sortOrder),
-              asc(this.checkInDailyStreakRuleRewardItemTable.id),
-            )
-
-    const rewardMap = new Map<number, typeof rewardItems>()
-    for (const item of rewardItems) {
-      const items = rewardMap.get(item.ruleId) ?? []
-      items.push(item)
-      rewardMap.set(item.ruleId, items)
-    }
-
-    return rules.map((rule) => ({
-      ...rule,
-      rewardItems: rewardMap.get(rule.id) ?? [],
-    }))
-  }
-
-  protected async loadDailyStreakRewardRules(
-    configId: number,
-    db: Db = this.db,
-  ) {
-    return this.toStreakRewardRuleViews(
-      await this.loadDailyStreakRewardRuleRows(configId, db),
-    )
-  }
-
-  protected async loadActivityStreakRewardRuleRows(
-    activityId: number,
-    db: Db = this.db,
-  ) {
-    const rules = await db
-      .select()
-      .from(this.checkInActivityStreakRuleTable)
-      .where(eq(this.checkInActivityStreakRuleTable.activityId, activityId))
-      .orderBy(
-        asc(this.checkInActivityStreakRuleTable.streakDays),
-        asc(this.checkInActivityStreakRuleTable.id),
-      )
-
-    const ruleIds = rules.map((rule) => rule.id)
-    const rewardItems =
-      ruleIds.length === 0
-        ? []
-        : await db
-            .select()
-            .from(this.checkInActivityStreakRuleRewardItemTable)
-            .where(
-              inArray(
-                this.checkInActivityStreakRuleRewardItemTable.ruleId,
-                ruleIds,
-              ),
-            )
-            .orderBy(
-              asc(this.checkInActivityStreakRuleRewardItemTable.sortOrder),
-              asc(this.checkInActivityStreakRuleRewardItemTable.id),
-            )
-
-    const rewardMap = new Map<number, typeof rewardItems>()
-    for (const item of rewardItems) {
-      const items = rewardMap.get(item.ruleId) ?? []
-      items.push(item)
-      rewardMap.set(item.ruleId, items)
-    }
-
-    return rules.map((rule) => ({
-      ...rule,
-      rewardItems: rewardMap.get(rule.id) ?? [],
-    }))
-  }
-
-  protected async loadActivityStreakRewardRules(
-    activityId: number,
-    db: Db = this.db,
-  ) {
-    return this.toStreakRewardRuleViews(
-      await this.loadActivityStreakRewardRuleRows(activityId, db),
     )
   }
 
@@ -813,84 +669,57 @@ export abstract class CheckInServiceSupport {
     return config
   }
 
-  protected async getCurrentDailyStreakConfig(
-    at = new Date(),
-    db: Db = this.db,
-  ) {
+  protected async getCurrentStreakConfig(at = new Date(), db: Db = this.db) {
     const rows = await db
       .select()
-      .from(this.checkInDailyStreakConfigTable)
+      .from(this.checkInStreakConfigTable)
       .where(
         and(
-          sql`${this.checkInDailyStreakConfigTable.status} <> ${CheckInDailyStreakConfigStatusEnum.DRAFT}`,
-          sql`${this.checkInDailyStreakConfigTable.status} <> ${CheckInDailyStreakConfigStatusEnum.TERMINATED}`,
-          sql`${this.checkInDailyStreakConfigTable.effectiveFrom} <= ${at}`,
+          sql`${this.checkInStreakConfigTable.status} <> ${CheckInStreakConfigStatusEnum.DRAFT}`,
+          sql`${this.checkInStreakConfigTable.status} <> ${CheckInStreakConfigStatusEnum.TERMINATED}`,
+          sql`${this.checkInStreakConfigTable.effectiveFrom} <= ${at}`,
           or(
-            sql`${this.checkInDailyStreakConfigTable.effectiveTo} is null`,
-            sql`${this.checkInDailyStreakConfigTable.effectiveTo} > ${at}`,
+            sql`${this.checkInStreakConfigTable.effectiveTo} is null`,
+            sql`${this.checkInStreakConfigTable.effectiveTo} > ${at}`,
           ),
         ),
       )
       .orderBy(
-        desc(this.checkInDailyStreakConfigTable.effectiveFrom),
-        desc(this.checkInDailyStreakConfigTable.id),
+        desc(this.checkInStreakConfigTable.effectiveFrom),
+        desc(this.checkInStreakConfigTable.id),
       )
       .limit(2)
 
     if (rows.length > 1) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
-        '当前存在多个生效中的日常连续签到配置',
+        '当前存在多个生效中的连续签到配置',
       )
     }
     return rows[0]
   }
 
-  protected async getRequiredCurrentDailyStreakConfig(
+  protected async getRequiredCurrentStreakConfig(
     at = new Date(),
     db: Db = this.db,
   ) {
-    const config = await this.getCurrentDailyStreakConfig(at, db)
+    const config = await this.getCurrentStreakConfig(at, db)
     if (!config) {
       throw new BusinessException(
         BusinessErrorCode.RESOURCE_NOT_FOUND,
-        '日常连续签到配置不存在',
+        '连续签到配置不存在',
       )
     }
     return config
   }
 
-  protected async listDailyStreakConfigs(db: Db = this.db) {
+  protected async listStreakConfigs(db: Db = this.db) {
     return db
       .select()
-      .from(this.checkInDailyStreakConfigTable)
+      .from(this.checkInStreakConfigTable)
       .orderBy(
-        desc(this.checkInDailyStreakConfigTable.effectiveFrom),
-        desc(this.checkInDailyStreakConfigTable.id),
-      )
-  }
-
-  protected async listEffectiveActivityStreaks(
-    targetDate: string,
-    db: Db = this.db,
-  ) {
-    const { startAt, nextDayStartAt } = this.buildAppDayBounds(targetDate)
-    return db
-      .select()
-      .from(this.checkInActivityStreakTable)
-      .where(
-        and(
-          eq(
-            this.checkInActivityStreakTable.status,
-            CheckInActivityStreakStatusEnum.PUBLISHED,
-          ),
-          sql`${this.checkInActivityStreakTable.effectiveFrom} < ${nextDayStartAt}`,
-          sql`${this.checkInActivityStreakTable.effectiveTo} >= ${startAt}`,
-        ),
-      )
-      .orderBy(
-        asc(this.checkInActivityStreakTable.effectiveFrom),
-        asc(this.checkInActivityStreakTable.id),
+        desc(this.checkInStreakConfigTable.effectiveFrom),
+        desc(this.checkInStreakConfigTable.id),
       )
   }
 
@@ -1225,8 +1054,8 @@ export abstract class CheckInServiceSupport {
     }
   }
 
-  protected async getOrCreateDailyProgress(userId: number, tx: Db) {
-    const existing = await tx.query.checkInDailyStreakProgress.findFirst({
+  protected async getOrCreateStreakProgress(userId: number, tx: Db) {
+    const existing = await tx.query.checkInStreakProgress.findFirst({
       where: { userId },
     })
     if (existing) {
@@ -1234,7 +1063,7 @@ export abstract class CheckInServiceSupport {
     }
 
     const [created] = await tx
-      .insert(this.checkInDailyStreakProgressTable)
+      .insert(this.checkInStreakProgressTable)
       .values({
         userId,
         currentStreak: 0,
@@ -1243,65 +1072,20 @@ export abstract class CheckInServiceSupport {
         version: 0,
       })
       .onConflictDoNothing({
-        target: [this.checkInDailyStreakProgressTable.userId],
+        target: [this.checkInStreakProgressTable.userId],
       })
       .returning()
     if (created) {
       return created
     }
 
-    const concurrent = await tx.query.checkInDailyStreakProgress.findFirst({
+    const concurrent = await tx.query.checkInStreakProgress.findFirst({
       where: { userId },
     })
     if (!concurrent) {
       throw new BusinessException(
         BusinessErrorCode.STATE_CONFLICT,
-        '日常连续签到进度初始化冲突，请稍后重试',
-      )
-    }
-    return concurrent
-  }
-
-  protected async getOrCreateActivityProgress(
-    activityId: number,
-    userId: number,
-    tx: Db,
-  ) {
-    const existing = await tx.query.checkInActivityStreakProgress.findFirst({
-      where: { activityId, userId },
-    })
-    if (existing) {
-      return existing
-    }
-
-    const [created] = await tx
-      .insert(this.checkInActivityStreakProgressTable)
-      .values({
-        activityId,
-        userId,
-        currentStreak: 0,
-        streakStartedAt: null,
-        lastSignedDate: null,
-        version: 0,
-      })
-      .onConflictDoNothing({
-        target: [
-          this.checkInActivityStreakProgressTable.activityId,
-          this.checkInActivityStreakProgressTable.userId,
-        ],
-      })
-      .returning()
-    if (created) {
-      return created
-    }
-
-    const concurrent = await tx.query.checkInActivityStreakProgress.findFirst({
-      where: { activityId, userId },
-    })
-    if (!concurrent) {
-      throw new BusinessException(
-        BusinessErrorCode.STATE_CONFLICT,
-        '活动连续签到进度初始化冲突，请稍后重试',
+        '连续签到进度初始化冲突，请稍后重试',
       )
     }
     return concurrent
@@ -1309,10 +1093,10 @@ export abstract class CheckInServiceSupport {
 
   protected recomputeStreakAggregation(
     records: Pick<CheckInRecordSelect, 'signDate'>[],
-    options?: { roundStartedAt?: string | null },
+    options?: { streakStartedAt?: string | null },
   ): CheckInStreakAggregation {
-    const startDate = options?.roundStartedAt
-      ? this.toDateOnlyValue(options.roundStartedAt)
+    const startDate = options?.streakStartedAt
+      ? this.toDateOnlyValue(options.streakStartedAt)
       : ''
     const scopedRecords = startDate
       ? records.filter(
@@ -1507,28 +1291,25 @@ export abstract class CheckInServiceSupport {
     )
   }
 
-  protected buildActiveDailyStreakProgressWhere(today: string): SQL {
+  protected buildActiveStreakProgressWhere(today: string): SQL {
     const yesterday = dayjs
       .tz(today, 'YYYY-MM-DD', this.getAppTimeZone())
       .subtract(1, 'day')
       .format('YYYY-MM-DD')
 
     return and(
-      gt(this.checkInDailyStreakProgressTable.currentStreak, 0),
+      gt(this.checkInStreakProgressTable.currentStreak, 0),
       or(
-        eq(this.checkInDailyStreakProgressTable.lastSignedDate, today),
-        eq(this.checkInDailyStreakProgressTable.lastSignedDate, yesterday),
+        eq(this.checkInStreakProgressTable.lastSignedDate, today),
+        eq(this.checkInStreakProgressTable.lastSignedDate, yesterday),
       ),
     )!
   }
 
-  protected resolveEligibleScopeGrantRules(
+  protected resolveEligibleGrantRules(
     rules: CheckInStreakRewardRuleView[],
     streakByDate: Record<string, number>,
-    existingGrants: Pick<
-      CheckInStreakGrantSelect,
-      'ruleCode' | 'triggerSignDate'
-    >[],
+    existingGrants: Pick<CheckInStreakGrantSelect, 'ruleCode' | 'triggerSignDate'>[],
     streakStartedAt?: string,
   ) {
     const scopedExistingGrants = streakStartedAt
