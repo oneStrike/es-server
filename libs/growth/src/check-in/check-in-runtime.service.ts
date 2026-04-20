@@ -1,10 +1,10 @@
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
+import type { QueryCheckInActivityStreakPageDto } from './dto/check-in-definition.dto'
 import type {
   QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
-import type { QueryCheckInActivityStreakPageDto } from './dto/check-in-definition.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'

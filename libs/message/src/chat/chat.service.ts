@@ -1,3 +1,4 @@
+import type { PostgresErrorSourceObject } from '@db/core'
 import type { EmojiParseToken } from '@libs/interaction/emoji/emoji.type'
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { DomainEventRecord } from '@libs/platform/modules/eventing'
@@ -909,9 +910,15 @@ export class MessageChatService {
           }
         })
       } catch (error) {
-        lastError = error
+        lastError = error instanceof Error ? error : new Error(String(error))
+        const drizzleError =
+          error instanceof Error
+            ? error
+            : typeof error === 'object' && error !== null
+              ? (error as PostgresErrorSourceObject)
+              : undefined
 
-        if (!this.drizzle.isUniqueViolation(error)) {
+        if (!this.drizzle.isUniqueViolation(drizzleError)) {
           throw error
         }
 

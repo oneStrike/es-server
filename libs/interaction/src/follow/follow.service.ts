@@ -1,3 +1,4 @@
+import type { PostgresErrorSourceObject } from '@db/core'
 import type { UserFollowSelect } from '@db/schema'
 import type { IFollowTargetResolver } from './interfaces/follow-target-resolver.interface'
 import { DrizzleService } from '@db/core'
@@ -43,7 +44,9 @@ export class FollowService {
     return [...new Set(targetIds)]
   }
 
-  private resolveErrorCode(error: Error | object | null | undefined) {
+  private resolveErrorCode(
+    error: Error | PostgresErrorSourceObject | null | undefined,
+  ) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
@@ -290,8 +293,14 @@ export class FollowService {
         detailMap,
       }
     } catch (error) {
+      const drizzleError =
+        error instanceof Error
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as PostgresErrorSourceObject)
+            : undefined
       this.logger.warn(
-        `follow_detail_resolve_failed targetType=${targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
+        `follow_detail_resolve_failed targetType=${targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(drizzleError)} error=${
           error instanceof Error ? error.message : String(error)
         }`,
       )

@@ -1,9 +1,9 @@
 import { CheckInService } from '@libs/growth/check-in/check-in.service'
+import { QueryCheckInActivityStreakPageDto } from '@libs/growth/check-in/dto/check-in-definition.dto'
 import {
   CheckInActionResponseDto,
   MakeupCheckInDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
-import { QueryCheckInActivityStreakPageDto } from '@libs/growth/check-in/dto/check-in-definition.dto'
 import {
   CheckInActivityStreakDetailResponseDto,
   CheckInActivityStreakItemDto,

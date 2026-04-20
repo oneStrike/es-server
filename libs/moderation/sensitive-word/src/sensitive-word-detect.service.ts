@@ -47,9 +47,15 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * 预加载缓存并初始化敏感词检测器
    */
   async onModuleInit(): Promise<void> {
-    await this.cacheService.preloadCache()
-    const words = await this.cacheService.getAllWords()
-    this.initialize(words)
+    try {
+      await this.cacheService.preloadCache()
+      const words = await this.cacheService.getAllWords()
+      this.initialize(words)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.logger.warn(`敏感词检测器初始化失败，已回退为空缓存：${message}`)
+      this.initialize([])
+    }
   }
 
   /**

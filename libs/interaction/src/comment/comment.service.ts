@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, PostgresErrorSourceObject } from '@db/core'
 import type { JsonValue } from '@libs/platform/utils/jsonParse'
 import type { SQL } from 'drizzle-orm'
 import type {
@@ -124,9 +124,15 @@ export class CommentService {
       try {
         return await operation()
       } catch (error) {
-        lastError = error
+        lastError = error instanceof Error ? error : new Error(String(error))
+        const drizzleError =
+          error instanceof Error
+            ? error
+            : typeof error === 'object' && error !== null
+              ? (error as PostgresErrorSourceObject)
+              : undefined
         if (
-          !this.drizzle.isSerializationFailure(error) ||
+          !this.drizzle.isSerializationFailure(drizzleError) ||
           attempt >= maxRetries - 1
         ) {
           throw error

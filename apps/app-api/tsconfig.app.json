@@ -1,8 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "declaration": false,
     "rootDir": "../../",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "declaration": false,
     "outDir": "../../dist/apps/app-api"
   },
   "include": ["src/**/*", "../../libs/**/*"],

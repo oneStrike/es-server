@@ -1,3 +1,4 @@
+import type { PostgresErrorSourceObject } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type { PurchasePricingDto } from './dto/purchase-pricing.dto'
 import { DrizzleService } from '@db/core'
@@ -75,7 +76,9 @@ export class PurchaseService {
     return resolver
   }
 
-  private isUniqueConstraintError(error: Error | object | null | undefined) {
+  private isUniqueConstraintError(
+    error: Error | PostgresErrorSourceObject | null | undefined,
+  ) {
     return this.drizzle.isUniqueViolation(error)
   }
 
@@ -235,7 +238,13 @@ export class PurchaseService {
         }
       })
     } catch (error) {
-      if (this.isUniqueConstraintError(error)) {
+      const drizzleError =
+        error instanceof Error
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as PostgresErrorSourceObject)
+            : undefined
+      if (this.isUniqueConstraintError(drizzleError)) {
         this.logger.warn(
           `purchase_failed_duplicate userId=${userId} targetType=${targetType} targetId=${targetId}`,
         )

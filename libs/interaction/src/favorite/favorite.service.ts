@@ -1,3 +1,4 @@
+import type { PostgresErrorSourceObject } from '@db/core'
 import type { UserFavoriteSelect } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service';
@@ -41,7 +42,9 @@ export class FavoriteService {
     return [...new Set(targetIds)]
   }
 
-  private resolveErrorCode(error: Error | object | null | undefined) {
+  private resolveErrorCode(
+    error: Error | PostgresErrorSourceObject | null | undefined,
+  ) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
@@ -259,8 +262,14 @@ export class FavoriteService {
             }
           }
         } catch (error) {
+          const drizzleError =
+            error instanceof Error
+              ? error
+              : typeof error === 'object' && error !== null
+                ? (error as PostgresErrorSourceObject)
+                : undefined
           this.logger.warn(
-            `favorite_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
+            `favorite_detail_resolve_failed targetType=${type} batchSize=${uniqueIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(drizzleError)} error=${
               error instanceof Error ? error.message : String(error)
             }`,
           )

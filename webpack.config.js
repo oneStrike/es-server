@@ -1,8 +1,28 @@
+const fs = require('node:fs')
 const path = require('node:path')
 const process = require('node:process')
 const dotenv = require('dotenv')
 const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin')
 const nodeExternals = require('webpack-node-externals')
+
+function loadTsconfigAliases() {
+  const tsconfigPath = path.resolve(__dirname, 'tsconfig.json')
+  const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'))
+  const aliases = {}
+
+  for (const [key, targets] of Object.entries(tsconfig.compilerOptions?.paths || {})) {
+    const target = Array.isArray(targets) ? targets[0] : undefined
+    if (!target) {
+      continue
+    }
+
+    const aliasKey = key.endsWith('/*') ? key.slice(0, -2) : key
+    const aliasTarget = target.endsWith('/*') ? target.slice(0, -2) : target
+    aliases[aliasKey] = path.resolve(__dirname, aliasTarget)
+  }
+
+  return aliases
+}
 
 module.exports = function (options, webpack) {
   const projectName = options.entry.includes('app-api')
@@ -35,6 +55,7 @@ module.exports = function (options, webpack) {
   // 如果是 monorepo 结构，通常源码在 apps/项目名
   // 这里做一个简单的回退处理
   const appSrcPath = path.resolve(__dirname, 'apps', projectName)
+  const tsconfigAliases = loadTsconfigAliases()
 
   // 2. 动态加载环境变量
   dotenv.config({
@@ -65,6 +86,10 @@ module.exports = function (options, webpack) {
   const existingConditionNames = config.resolve?.conditionNames || []
   config.resolve = {
     ...config.resolve,
+    alias: {
+      ...(config.resolve?.alias || {}),
+      ...tsconfigAliases,
+    },
     conditionNames: [
       'import',
       ...existingConditionNames.filter((name) => name !== 'import'),
@@ -122,6 +147,20 @@ module.exports = function (options, webpack) {
         keyboard: true,
       }),
     ]
+  }
+
+  if (Array.isArray(config.plugins)) {
+    config.plugins.forEach((plugin) => {
+      if (plugin?.constructor?.name === 'ForkTsCheckerWebpackPlugin') {
+        plugin.options = {
+          ...plugin.options,
+          typescript: {
+            ...plugin.options?.typescript,
+            memoryLimit: 4096,
+          },
+        }
+      }
+    })
   }
 
   return config

@@ -35,6 +35,19 @@ export interface PostgresError {
   message: string
 }
 
+export interface PostgresErrorCauseObject {
+  code?: string
+  constraint?: string
+  table?: string
+  column?: string
+  detail?: string
+  message?: string
+}
+
+export interface PostgresErrorSourceObject extends PostgresErrorCauseObject {
+  cause?: PostgresErrorCauseObject | null
+}
+
 export interface PostgresErrorDescriptor {
   message: string
   status: number
@@ -44,26 +57,11 @@ export interface PostgresErrorResponseDescriptor extends PostgresErrorDescriptor
   responseCode: number
 }
 
-type PostgresErrorSource =
+export type PostgresErrorSource =
   | Error
-  | {
-      code?: string
-      constraint?: string
-      table?: string
-      column?: string
-      detail?: string
-      message?: string
-      cause?: {
-        code?: string
-        constraint?: string
-        table?: string
-        column?: string
-        detail?: string
-        message?: string
-      } | null
-    }
-    | null
-    | undefined
+  | PostgresErrorSourceObject
+  | null
+  | undefined
 
 /**
  * 从错误对象中提取 PostgreSQL 错误信息
@@ -72,33 +70,33 @@ type PostgresErrorSource =
  * 2. code 在 error.cause 上 (Drizzle ORM 包装的错误)
  */
 export function getPostgresError(error: PostgresErrorSource): PostgresError | null {
-  if (typeof error !== 'object' || error === null) {
+  if (!error || typeof error !== 'object') {
     return null
   }
 
-  const err = error as Record<string, unknown>
+  const err = error as PostgresErrorSourceObject
 
-  if ('code' in err && typeof err.code === 'string') {
+  if (typeof err.code === 'string') {
     return {
       code: err.code,
-      constraint: err.constraint as string | undefined,
-      table: err.table as string | undefined,
-      column: err.column as string | undefined,
-      detail: err.detail as string | undefined,
-      message: err.message as string,
+      constraint: err.constraint,
+      table: err.table,
+      column: err.column,
+      detail: err.detail,
+      message: err.message ?? '数据库操作失败',
     }
   }
 
-  if ('cause' in err && typeof err.cause === 'object' && err.cause !== null) {
-    const cause = err.cause as Record<string, unknown>
-    if ('code' in cause && typeof cause.code === 'string') {
+  if (err.cause && typeof err.cause.code === 'string') {
+    const cause = err.cause
+    if (cause.code) {
       return {
         code: cause.code,
-        constraint: cause.constraint as string | undefined,
-        table: cause.table as string | undefined,
-        column: cause.column as string | undefined,
-        detail: cause.detail as string | undefined,
-        message: (cause.message as string) || (err.message as string),
+        constraint: cause.constraint,
+        table: cause.table,
+        column: cause.column,
+        detail: cause.detail,
+        message: cause.message || err.message || '数据库操作失败',
       }
     }
   }

@@ -10,28 +10,10 @@ import {
   getPostgresError,
   PostgresDefaultMessages,
   PostgresErrorCode,
+  type PostgresErrorSource,
 } from './postgres-error'
 
-type PostgresErrorInput =
-  | Error
-  | {
-      code?: string
-      constraint?: string
-      table?: string
-      column?: string
-      detail?: string
-      message?: string
-      cause?: {
-        code?: string
-        constraint?: string
-        table?: string
-        column?: string
-        detail?: string
-        message?: string
-      } | null
-    }
-    | null
-    | undefined
+type PostgresErrorInput = PostgresErrorSource
 
 export function isErrorCode(error: PostgresErrorInput, code: string) {
   const pgError = getPostgresError(error)
@@ -120,6 +102,12 @@ export async function executeWithErrorHandling<T>(
   try {
     return await fn()
   } catch (error) {
-    handleError(error, messages)
+    const postgresError =
+      error instanceof Error
+        ? error
+        : typeof error === 'object' && error !== null
+          ? error
+          : undefined
+    handleError(postgresError, messages)
   }
 }

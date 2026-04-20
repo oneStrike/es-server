@@ -91,15 +91,10 @@ export class SensitiveWordCacheService {
    * 仅预热全量词缓存，避免维护无消费方使用的维度缓存分支
    */
   async preloadCache(): Promise<void> {
-    try {
-      this.logger.log('正在预加载敏感词缓存...')
-      const allWords = await this.getAllWords()
-      this.logger.log(
-        `敏感词缓存预加载成功，共加载 ${allWords.length} 个敏感词`,
-      )
-    } catch (error) {
-      this.logger.error('预加载敏感词缓存失败', error)
-      throw error
-    }
+    this.logger.log('正在预加载敏感词缓存...')
+    const allWords = await this.getAllWords()
+    this.logger.log(
+      `敏感词缓存预加载成功，共加载 ${allWords.length} 个敏感词`,
+    )
   }
 }

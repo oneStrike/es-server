@@ -1,5 +1,11 @@
 import type { adminUserToken, appUserToken } from '@db/schema'
-import type { CreateTokenInput } from '@libs/platform/modules/auth/token-storage.types';
+import type {
+  CreateTokenInput,
+  ITokenEntity,
+  TokenStorageFindManyOptions,
+  TokenStorageUpdateInput,
+  TokenStorageWhereInput,
+} from '@libs/platform/modules/auth/token-storage.types'
 import type { Cache } from 'cache-manager'
 import type { SQL } from 'drizzle-orm'
 import { DrizzleService } from '@db/core'
@@ -10,25 +16,8 @@ import { and, eq, gt, inArray, isNotNull, isNull, lt } from 'drizzle-orm'
 
 type TokenTable = typeof appUserToken | typeof adminUserToken
 
-interface WhereInput {
-  jti?: string | { in?: string[] }
-  userId?: number
-  revokedAt?: null | { not?: null, lt?: Date }
-  expiresAt?: { gt?: Date, lt?: Date }
-}
-
-interface FindManyOptions {
-  select?: {
-    jti?: boolean
-  }
-}
-
 export abstract class BaseDrizzleTokenStorageService<
-  TEntity extends {
-    jti: string
-    expiresAt: Date
-    revokedAt?: Date | null
-  },
+  TEntity extends ITokenEntity,
 > extends BaseTokenStorageService<TEntity> {
   constructor(
     protected readonly drizzle: DrizzleService,
@@ -104,7 +93,10 @@ export abstract class BaseDrizzleTokenStorageService<
     return (token as TEntity) ?? null
   }
 
-  protected async updateManyItems(where: WhereInput, data: WhereInput) {
+  protected async updateManyItems(
+    where: TokenStorageWhereInput,
+    data: TokenStorageUpdateInput,
+  ) {
     const condition = this.buildWhere(where)
     const rows = await this.drizzle.withErrorHandling(() =>
       this.drizzle.db
@@ -116,7 +108,10 @@ export abstract class BaseDrizzleTokenStorageService<
     return rows.length
   }
 
-  protected async findManyItems(where: WhereInput, options?: FindManyOptions) {
+  protected async findManyItems(
+    where: TokenStorageWhereInput,
+    options?: TokenStorageFindManyOptions,
+  ) {
     const condition = this.buildWhere(where)
 
     if (options?.select?.jti) {
@@ -132,7 +127,7 @@ export abstract class BaseDrizzleTokenStorageService<
       .where(condition) as Promise<TEntity[]>
   }
 
-  protected async deleteManyItems(where: WhereInput) {
+  protected async deleteManyItems(where: TokenStorageWhereInput) {
     const condition = this.buildWhere(where)
     const rows = await this.drizzle.withErrorHandling(() =>
       this.drizzle.db
@@ -143,7 +138,7 @@ export abstract class BaseDrizzleTokenStorageService<
     return rows.length
   }
 
-  private buildWhere(where: WhereInput) {
+  private buildWhere(where: TokenStorageWhereInput) {
     const conditions: SQL[] = []
 
     if (where.jti) {

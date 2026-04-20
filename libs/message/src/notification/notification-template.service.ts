@@ -1,3 +1,4 @@
+import type { PostgresErrorSourceObject } from '@db/core'
 import type { SQL } from 'drizzle-orm'
 import type {
   CreateNotificationTemplateDto,
@@ -126,7 +127,13 @@ export class MessageNotificationTemplateService {
         }),
       )
     } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
+      const drizzleError =
+        error instanceof Error
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as PostgresErrorSourceObject)
+            : undefined
+      if (this.drizzle.isUniqueViolation(drizzleError)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '该通知分类的模板已存在',
@@ -198,7 +205,13 @@ export class MessageNotificationTemplateService {
         { notFound: '通知模板不存在' },
       )
     } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
+      const drizzleError =
+        error instanceof Error
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as PostgresErrorSourceObject)
+            : undefined
+      if (this.drizzle.isUniqueViolation(drizzleError)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '该通知分类的模板已存在',

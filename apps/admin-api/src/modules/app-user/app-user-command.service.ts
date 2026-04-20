@@ -1,3 +1,4 @@
+import type { PostgresErrorSourceObject } from '@db/core'
 import type { AppUserInsert } from '@db/schema'
 import { DrizzleService } from '@db/core'
 import { AppUserTokenStorageService } from '@libs/identity/token/app-user-token-storage.service'
@@ -101,7 +102,13 @@ export class AppUserCommandService extends AppUserServiceSupport {
         }),
       )
     } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
+      const drizzleError =
+        error instanceof Error
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as PostgresErrorSourceObject)
+            : undefined
+      if (this.drizzle.isUniqueViolation(drizzleError)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '手机号或邮箱已存在',
@@ -159,7 +166,13 @@ export class AppUserCommandService extends AppUserServiceSupport {
         )
       }
     } catch (error) {
-      if (this.drizzle.isUniqueViolation(error)) {
+      const drizzleError =
+        error instanceof Error
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as PostgresErrorSourceObject)
+            : undefined
+      if (this.drizzle.isUniqueViolation(drizzleError)) {
         throw new BusinessException(
           BusinessErrorCode.RESOURCE_ALREADY_EXISTS,
           '手机号或邮箱已存在',

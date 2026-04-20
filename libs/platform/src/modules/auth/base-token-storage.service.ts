@@ -1,20 +1,20 @@
 import type { Cache } from 'cache-manager'
 import type { ITokenStorageService } from './auth.types'
-import type { CreateTokenInput } from './token-storage.types'
+import type {
+  CreateTokenInput,
+  ITokenEntity,
+  TokenStorageFindManyOptions,
+  TokenStorageUpdateInput,
+  TokenStorageWhereInput,
+} from './token-storage.types'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import { RevokeTokenReasonEnum } from './auth.constant'
 
 const INVALID_TOKEN_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
-interface ActiveTokenEntity {
-  jti: string
-  expiresAt: Date
-  revokedAt?: Date | null
-}
-
 @Injectable()
-export abstract class BaseTokenStorageService<T extends ActiveTokenEntity>
+export abstract class BaseTokenStorageService<T extends ITokenEntity>
   implements ITokenStorageService
 {
   constructor(@Inject(CACHE_MANAGER) protected readonly cacheManager: Cache) {}
@@ -30,18 +30,18 @@ export abstract class BaseTokenStorageService<T extends ActiveTokenEntity>
 
   /** 按条件批量更新 token 记录。 */
   protected abstract updateManyItems(
-    where: Record<string, unknown>,
-    data: Record<string, unknown>,
+    where: TokenStorageWhereInput,
+    data: TokenStorageUpdateInput,
   ): Promise<number>
 
   /** 按条件批量查询 token 记录。 */
   protected abstract findManyItems(
-    where: Record<string, unknown>,
-    options?: Record<string, unknown>,
+    where: TokenStorageWhereInput,
+    options?: TokenStorageFindManyOptions,
   ): Promise<T[]>
 
   /** 按条件批量删除 token 记录。 */
-  protected abstract deleteManyItems(where: Record<string, unknown>): Promise<number>
+  protected abstract deleteManyItems(where: TokenStorageWhereInput): Promise<number>
 
   /** 计算 token 距离过期的剩余毫秒数，供缓存 TTL 复用。 */
   private getTokenTtlMs(expiresAt: Date) {

@@ -1,4 +1,4 @@
-import type { Db } from '@db/core'
+import type { Db, PostgresErrorSourceObject } from '@db/core'
 import type { AppUserSelect } from '@db/schema'
 import type { SessionClientContext } from '@libs/identity/session.type'
 import { DrizzleService } from '@db/core'
@@ -372,9 +372,15 @@ export class AuthService {
         })
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
+        const drizzleError =
+          error instanceof Error
+            ? error
+            : typeof error === 'object' && error !== null
+              ? (error as PostgresErrorSourceObject)
+              : undefined
 
-        if (!this.isAccountUniqueViolation(error)) {
-          this.drizzle.handleError(error)
+        if (!this.isAccountUniqueViolation(drizzleError)) {
+          this.drizzle.handleError(drizzleError)
         }
 
         if (attempt >= APP_USER_ACCOUNT_MAX_RETRIES - 1) {
@@ -382,7 +388,7 @@ export class AuthService {
             BusinessErrorCode.STATE_CONFLICT,
             AppAuthErrorMessages.REGISTER_RETRY_FAILED,
             {
-              cause: error,
+              cause: drizzleError ?? lastError,
             },
           )
         }
@@ -392,7 +398,9 @@ export class AuthService {
     throw lastError
   }
 
-  private isAccountUniqueViolation(error: Error | BusinessException | object | null) {
+  private isAccountUniqueViolation(
+    error: Error | PostgresErrorSourceObject | null | undefined,
+  ) {
     if (!this.drizzle.isUniqueViolation(error)) {
       return false
     }

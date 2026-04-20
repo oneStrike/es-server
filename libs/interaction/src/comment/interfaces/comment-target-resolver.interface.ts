@@ -23,7 +23,7 @@ export interface CommentTargetHookPayload {
   userId: number
   targetType: CommentTargetTypeEnum
   targetId: number
-  replyToId?: number | null
+  replyToId: number | null
   content?: string
   createdAt: Date
   replyTargetUserId?: number

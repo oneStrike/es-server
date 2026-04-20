@@ -1,14 +1,19 @@
+export interface BusinessExceptionCauseObject {
+  message?: string
+  code?: string | number
+  detail?: string
+  constraint?: string
+  table?: string
+  column?: string
+}
+
 export type BusinessExceptionCause =
   | Error
   | string
   | number
   | boolean
   | null
-  | {
-      message?: string
-      code?: string | number
-      detail?: string
-    }
+  | BusinessExceptionCauseObject
 
 export interface BusinessExceptionOptions {
   cause?: BusinessExceptionCause

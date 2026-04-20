@@ -45,6 +45,12 @@ interface MultipartFieldLike {
   value?: string | number
 }
 
+interface UploadResponseCarrier {
+  response?: {
+    message?: string | string[]
+  }
+}
+
 /**
  * 上传服务。
  * 统一处理 multipart 上传、本地文件二次上传以及 provider 选择，保证文件校验与落库口径一致。
@@ -133,7 +139,11 @@ export class UploadService {
 
       return await this.uploadPreparedFile(preparedFile)
     } catch (error) {
-      if (error?.response?.message) {
+      const responseCarrier =
+        typeof error === 'object' && error !== null
+          ? (error as UploadResponseCarrier)
+          : undefined
+      if (responseCarrier && this.hasResponseMessage(responseCarrier)) {
         throw error
       }
       if (
@@ -223,6 +233,17 @@ export class UploadService {
           categories: '',
         },
       }
+    )
+  }
+
+  private hasResponseMessage(error: UploadResponseCarrier) {
+    if (!error.response) {
+      return false
+    }
+    const { message } = error.response
+    return (
+      typeof message === 'string'
+      || (Array.isArray(message) && message.some((item) => typeof item === 'string'))
     )
   }
 

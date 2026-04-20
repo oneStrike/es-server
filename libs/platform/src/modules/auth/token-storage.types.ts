@@ -1,5 +1,6 @@
+import type { adminUserToken, appUserToken } from '@db/schema'
 import type { GeoSnapshot } from '@libs/platform/modules/geo/geo.types'
-import type { JsonObject } from '@libs/platform/utils/jsonParse'
+import type { DeviceInfo } from '@libs/platform/utils'
 
 /**
  * Token 类型定义。
@@ -15,28 +16,9 @@ export enum TokenTypeEnum {
  * 定义 Token 数据的标准结构
  */
 /** 稳定领域类型 `ITokenEntity`。仅供内部领域/服务链路复用，避免重复定义。 */
-export interface ITokenEntity extends GeoSnapshot {
-  /** 主键 */
-  id: number
-  /** JWT ID */
-  jti: string
-  /** 用户 ID */
-  userId: number
-  /** Token 类型 */
-  tokenType: TokenTypeEnum
-  /** 过期时间 */
-  expiresAt: Date
-  /** 撤销时间 */
-  revokedAt?: Date | null
-  /** 创建时间 */
-  createdAt: Date
-  /** 设备信息 */
-  deviceInfo?: JsonObject | null
-  /** IP 地址 */
-  ipAddress?: string | null
-  /** User-Agent */
-  userAgent?: string | null
-}
+export type ITokenEntity =
+  | typeof appUserToken.$inferSelect
+  | typeof adminUserToken.$inferSelect
 
 /**
  * 创建 Token 入参。
@@ -53,11 +35,29 @@ export interface CreateTokenInput extends GeoSnapshot {
   /** 过期时间 */
   expiresAt: Date
   /** 设备信息（结构化 JSON） */
-  deviceInfo?: JsonObject | null
+  deviceInfo?: DeviceInfo | null
   /** IP 地址 */
   ipAddress?: string
   /** User-Agent */
   userAgent?: string
+}
+
+export interface TokenStorageWhereInput {
+  jti?: string | { in?: string[] }
+  userId?: number
+  revokedAt?: null | { not?: null, lt?: Date }
+  expiresAt?: { gt?: Date, lt?: Date }
+}
+
+export interface TokenStorageUpdateInput {
+  revokedAt?: Date | null
+  revokeReason?: number
+}
+
+export interface TokenStorageFindManyOptions {
+  select?: {
+    jti?: boolean
+  }
 }
 
 /**

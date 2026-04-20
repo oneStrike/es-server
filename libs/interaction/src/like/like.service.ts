@@ -1,3 +1,4 @@
+import type { PostgresErrorSourceObject } from '@db/core'
 import { DrizzleService } from '@db/core'
 import { AppUserCountService } from '@libs/user/app-user-count.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -42,7 +43,9 @@ export class LikeService {
     return [...new Set(targetIds)]
   }
 
-  private resolveErrorCode(error: Error | object | null | undefined) {
+  private resolveErrorCode(
+    error: Error | PostgresErrorSourceObject | null | undefined,
+  ) {
     return this.drizzle.extractError(error)?.code ?? 'unknown'
   }
 
@@ -286,8 +289,14 @@ export class LikeService {
     try {
       detailMap = await resolver.batchGetDetails(targetIds)
     } catch (error) {
+      const drizzleError =
+        error instanceof Error
+          ? error
+          : typeof error === 'object' && error !== null
+            ? (error as PostgresErrorSourceObject)
+            : undefined
       this.logger.warn(
-        `like_detail_resolve_failed targetType=${query.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(error)} error=${
+        `like_detail_resolve_failed targetType=${query.targetType} batchSize=${targetIds.length} elapsedMs=${Date.now() - startedAt} errorCode=${this.resolveErrorCode(drizzleError)} error=${
           error instanceof Error ? error.message : String(error)
         }`,
       )

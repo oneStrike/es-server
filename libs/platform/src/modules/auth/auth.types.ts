@@ -1,4 +1,8 @@
 import type { RevokeTokenReasonEnum } from './auth.constant'
+import type {
+  CreateTokenInput,
+  ITokenEntity,
+} from './token-storage.types'
 
 type JwtPayloadField =
   | string
@@ -28,7 +32,7 @@ export interface ITokenStorageService {
    * @param jti JWT Token ID
    * @returns Token 记录或 null
    */
-  findByJti: (jti: string) => Promise<object | null>
+  findByJti: (jti: string) => Promise<ITokenEntity | null>
 
   /**
    * 检查 Token 是否有效
@@ -38,9 +42,9 @@ export interface ITokenStorageService {
    */
   isTokenValid: (jti: string) => Promise<boolean>
 
-  createToken: (data: object) => Promise<object>
+  createToken: (data: CreateTokenInput) => Promise<ITokenEntity>
 
-  createTokens: (data: object[]) => Promise<object | number>
+  createTokens: (data: CreateTokenInput[]) => Promise<number>
 
   revokeByJti: (jti: string, reason: RevokeTokenReasonEnum) => Promise<void> | void
 
@@ -55,7 +59,7 @@ export interface ITokenStorageService {
 
   revokeAllByUserId: (userId: number, reason: RevokeTokenReasonEnum) => Promise<void> | void
 
-  findActiveTokensByUserId: (userId: number) => Promise<object[]>
+  findActiveTokensByUserId: (userId: number) => Promise<ITokenEntity[]>
 
   /**
    * 清理过期 Token

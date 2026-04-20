@@ -5,7 +5,7 @@ import type {
   DrizzleErrorMessages,
   DrizzleMutationResult,
 } from './drizzle.type'
-import type { PostgresError } from './error/postgres-error'
+import type { PostgresError, PostgresErrorSource } from './error/postgres-error'
 import type { DrizzleOrderByInput, DrizzleOrderByOptions } from './query/order-by'
 import type {
   DrizzlePageQueryInput,
@@ -33,20 +33,7 @@ import {
 import { buildDrizzleOrderBy } from './query/order-by'
 import { buildDrizzlePageQuery } from './query/page-query'
 
-type DrizzleErrorInput =
-  | Error
-  | PostgresError
-  | {
-      code?: string
-      constraint?: string
-      table?: string
-      column?: string
-      detail?: string
-      message?: string
-      cause?: object | null
-    }
-    | null
-    | undefined
+type DrizzleErrorInput = PostgresErrorSource
 
 /**
  * 统一封装仓库级 Drizzle 入口、查询默认值和错误处理能力。
