@@ -1,10 +1,10 @@
 import type { PageDto } from '@libs/platform/dto/page.dto'
 import type { SQL } from 'drizzle-orm'
 import type {
-  QueryCheckInActivityStreakPageDto,
   QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
+import type { QueryCheckInActivityStreakPageDto } from './dto/check-in-definition.dto'
 import { DrizzleService } from '@db/core'
 import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import { BusinessErrorCode } from '@libs/platform/constant'
@@ -604,7 +604,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
     ]
 
     if (query.scopeType !== undefined) {
-      conditions.push(eq(this.checkInStreakGrantTable.scopeType, query.scopeType))
+      conditions.push(
+        eq(this.checkInStreakGrantTable.scopeType, query.scopeType),
+      )
     }
     if (query.configVersionId !== undefined) {
       conditions.push(
@@ -612,7 +614,9 @@ export class CheckInRuntimeService extends CheckInServiceSupport {
       )
     }
     if (query.activityId !== undefined) {
-      conditions.push(eq(this.checkInStreakGrantTable.activityId, query.activityId))
+      conditions.push(
+        eq(this.checkInStreakGrantTable.activityId, query.activityId),
+      )
     }
     if (query.grantId !== undefined) {
       conditions.push(eq(this.checkInStreakGrantTable.id, query.grantId))

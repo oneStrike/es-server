@@ -14,7 +14,6 @@ import type {
   RepairCheckInRewardDto,
 } from './dto/check-in-execution.dto'
 import type {
-  QueryCheckInActivityStreakPageDto as QueryAppCheckInActivityStreakPageDto,
   QueryCheckInLeaderboardDto,
   QueryCheckInReconciliationDto,
 } from './dto/check-in-runtime.dto'
@@ -134,7 +133,7 @@ export class CheckInService {
   }
 
   async getActivityPage(
-    query: QueryAppCheckInActivityStreakPageDto,
+    query: QueryCheckInActivityStreakPageDto,
     userId: number,
   ) {
     return this.checkInRuntimeService.getActivityPage(query, userId)

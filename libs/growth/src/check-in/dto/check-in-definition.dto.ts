@@ -202,16 +202,6 @@ export class QueryCheckInDailyStreakConfigHistoryPageDto extends PageDto {}
 
 export class CheckInDailyStreakConfigHistoryPageItemDto extends CheckInDailyStreakConfigDetailResponseDto {}
 
-export class CheckInDailyStreakConfigHistoryDetailResponseDto extends CheckInDailyStreakConfigDetailResponseDto {}
-
-export class TerminateCheckInDailyStreakConfigDto {
-  @NumberProperty({
-    description: '需要终止的日常连续签到配置 ID。',
-    example: 1,
-  })
-  id!: number
-}
-
 export class CreateCheckInActivityStreakDto {
   @StringProperty({
     description: '活动稳定键。',

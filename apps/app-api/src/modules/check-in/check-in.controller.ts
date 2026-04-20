@@ -3,6 +3,7 @@ import {
   CheckInActionResponseDto,
   MakeupCheckInDto,
 } from '@libs/growth/check-in/dto/check-in-execution.dto'
+import { QueryCheckInActivityStreakPageDto } from '@libs/growth/check-in/dto/check-in-definition.dto'
 import {
   CheckInActivityStreakDetailResponseDto,
   CheckInActivityStreakItemDto,
@@ -10,7 +11,6 @@ import {
   CheckInLeaderboardItemDto,
   CheckInRecordItemDto,
   CheckInSummaryResponseDto,
-  QueryCheckInActivityStreakPageDto,
   QueryCheckInLeaderboardDto,
 } from '@libs/growth/check-in/dto/check-in-runtime.dto'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/platform/decorators'

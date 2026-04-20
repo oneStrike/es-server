@@ -27,8 +27,6 @@ export class QueryCheckInLeaderboardDto extends PickType(PageDto, [
   'pageSize',
 ] as const) {}
 
-export class QueryCheckInActivityStreakPageDto extends PageDto {}
-
 export class QueryCheckInReconciliationDto extends PageDto {
   @NumberProperty({
     description: '签到记录 ID。',
