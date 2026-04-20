@@ -4,20 +4,14 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/platform/decorators'
-import { IdDto, PageDto } from '@libs/platform/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/platform/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   getMessageNotificationCategoryLabel,
   MessageNotificationCategoryKey,
 } from '../notification.constant'
 
-export class BaseMessageNotificationTemplateDto {
-  @NumberProperty({
-    description: '模板 ID',
-    example: 1,
-  })
-  id!: number
-
+export class BaseMessageNotificationTemplateDto extends BaseDto {
   @StringProperty({
     description: '通知分类键',
     example: 'comment_reply',
@@ -54,18 +48,6 @@ export class BaseMessageNotificationTemplateDto {
     maxLength: 500,
   })
   remark?: string
-
-  @DateProperty({
-    description: '创建时间',
-    example: '2026-04-13T12:00:00.000Z',
-  })
-  createdAt!: Date
-
-  @DateProperty({
-    description: '更新时间',
-    example: '2026-04-13T12:30:00.000Z',
-  })
-  updatedAt!: Date
 }
 
 class MessageNotificationTemplateMutableDto extends PickType(

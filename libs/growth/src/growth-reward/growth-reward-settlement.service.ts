@@ -272,7 +272,7 @@ export class GrowthRewardSettlementService {
       ledgerRecordIds: number[]
       errorMessage?: string | null
     },
-    options?: { isRetry?: boolean; tx?: Db },
+    options?: { isRetry?: boolean, tx?: Db },
   ) {
     const runner = options?.tx ?? this.db
     const current = await runner.query.growthRewardSettlement.findFirst({

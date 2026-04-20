@@ -1,10 +1,8 @@
 import type { Db, DrizzleService } from '@db/core'
 import type {
   CheckInActivityStreakSelect,
-  CheckInActivityStreakProgressSelect,
   CheckInConfigSelect,
   CheckInDailyStreakConfigSelect,
-  CheckInDailyStreakProgressSelect,
   CheckInMakeupAccountSelect,
   CheckInRecordSelect,
   CheckInStreakGrantSelect,
@@ -12,6 +10,9 @@ import type {
 } from '@db/schema'
 import type { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.service'
 import type { SQL } from 'drizzle-orm'
+import type {
+  CheckInDailyStreakPublishStrategyEnum
+} from './check-in.constant';
 import type {
   CheckInActivityStreakDefinition,
   CheckInDailyStreakConfigDefinition,
@@ -45,13 +46,11 @@ import { GrowthRewardRuleAssetTypeEnum } from '../reward-rule/reward-rule.consta
 import {
   CheckInActivityStreakStatusEnum,
   CheckInDailyStreakConfigStatusEnum,
-  CheckInDailyStreakPublishStrategyEnum,
   CheckInMakeupFactTypeEnum,
   CheckInMakeupPeriodTypeEnum,
   CheckInMakeupSourceTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
-  CheckInStreakScopeTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
 } from './check-in.constant'
 
@@ -1400,7 +1399,7 @@ export abstract class CheckInServiceSupport {
         if (existingRuleCodes.has(rule.ruleCode)) {
           continue
         }
-        candidates.push({ rule, triggerSignDate: triggerDates[0]! })
+        candidates.push({ rule, triggerSignDate: triggerDates[0] })
         continue
       }
 
@@ -1428,8 +1427,8 @@ export abstract class CheckInServiceSupport {
           | 'settledAt'
           | 'lastError'
         >
-      | null
-      | undefined,
+        | null
+        | undefined,
   ): CheckInRewardSettlementSummaryDto | null {
     if (!settlement) {
       return null

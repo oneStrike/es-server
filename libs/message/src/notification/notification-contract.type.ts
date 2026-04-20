@@ -29,7 +29,6 @@ export interface NotificationTopicSnapshot {
   kind: 'topic'
   id: number
   title?: string
-  cover?: string
   sectionId?: number
 }
 
@@ -70,7 +69,7 @@ export interface NotificationTaskSnapshot {
   code?: string
   title?: string
   cover?: string
-  sceneType?: number
+  type?: number
 }
 
 /** 评论类通知复用的容器快照。 */

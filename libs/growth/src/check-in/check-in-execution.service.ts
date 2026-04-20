@@ -134,7 +134,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
           recordId: number
           triggeredGrantIds: number[]
         }
-      | undefined
+        | undefined
 
     for (let attempt = 0; attempt < CHECK_IN_WRITE_RETRY_LIMIT; attempt++) {
       try {
@@ -547,7 +547,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   private async settleRecordReward(
     recordId: number,
-    context: { actorUserId?: number; isRetry?: boolean },
+    context: { actorUserId?: number, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {
@@ -643,7 +643,7 @@ export class CheckInExecutionService extends CheckInServiceSupport {
 
   private async settleGrantReward(
     grantId: number,
-    context: { actorUserId?: number; isRetry?: boolean },
+    context: { actorUserId?: number, isRetry?: boolean },
   ) {
     try {
       await this.drizzle.withTransaction(async (tx) => {

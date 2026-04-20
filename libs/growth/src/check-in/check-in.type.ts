@@ -1,10 +1,10 @@
 import type {
   CheckInActivityStreakInsert,
   CheckInActivityStreakProgressInsert,
-  CheckInMakeupAccountInsert,
-  CheckInMakeupFactInsert,
   CheckInDailyStreakConfigInsert,
   CheckInDailyStreakProgressInsert,
+  CheckInMakeupAccountInsert,
+  CheckInMakeupFactInsert,
   CheckInRecordInsert,
   CheckInStreakGrantInsert,
 } from '@db/schema'
@@ -18,8 +18,8 @@ import type {
   CheckInMakeupSourceTypeEnum,
   CheckInPatternRewardRuleTypeEnum,
   CheckInRewardSourceTypeEnum,
-  CheckInStreakScopeTypeEnum,
   CheckInStreakRewardRuleStatusEnum,
+  CheckInStreakScopeTypeEnum,
 } from './check-in.constant'
 
 /** 稳定领域类型 `CheckInRewardItems`。 */

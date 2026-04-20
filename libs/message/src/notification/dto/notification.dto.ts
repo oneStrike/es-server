@@ -1,5 +1,10 @@
 import type { MessageNotificationData } from '../notification-contract.type'
+import { BaseAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto'
+import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
+import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
+import { BaseForumTopicDto } from '@libs/forum/topic/dto/forum-topic.dto'
 import { GrowthRewardRuleAssetTypeEnum } from '@libs/growth/reward-rule/reward-rule.constant'
+import { BaseTaskDto } from '@libs/growth/task/dto/task.dto'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -10,12 +15,14 @@ import {
   StringProperty,
 } from '@libs/platform/decorators'
 import { BaseDto, PageDto } from '@libs/platform/dto'
+import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'
 import {
   ApiExtraModels,
   ApiProperty,
   getSchemaPath,
   IntersectionType,
   PartialType,
+  PickType,
 } from '@nestjs/swagger'
 import { ValidateBy } from 'class-validator'
 import {
@@ -59,27 +66,11 @@ export class NotificationMessageDto {
   body!: string
 }
 
-export class NotificationActorDto {
-  @NumberProperty({ description: '用户 ID', example: 1, validation: false })
-  id!: number
-
-  @StringProperty({
-    description: '昵称',
-    example: '测试用户',
-    required: false,
-    validation: false,
-  })
-  nickname?: string
-
-  @StringProperty({
-    description: '头像地址',
-    example: 'https://example.com/avatar.png',
-    required: true,
-    nullable: true,
-    validation: false,
-  })
-  avatarUrl!: string | null
-}
+export class NotificationActorDto extends PickType(BaseAppUserDto, [
+  'id',
+  'nickname',
+  'avatarUrl',
+]) {}
 
 export class NotificationCommentSnapshotDto {
   @StringProperty({
@@ -105,60 +96,29 @@ export class NotificationCommentSnapshotDto {
   snippet?: string
 }
 
-export class NotificationTopicSnapshotDto {
+export class NotificationTopicSnapshotDto extends PickType(BaseForumTopicDto, [
+  'id',
+  'title',
+  'sectionId',
+]) {
   @StringProperty({
     description: '对象类型，固定为 topic',
     example: 'topic',
     validation: false,
   })
   kind!: 'topic'
-
-  @NumberProperty({
-    description: '主题 ID',
-    example: 8,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '主题标题',
-    example: '帖子标题',
-    required: false,
-    validation: false,
-  })
-  title?: string
-
-  @StringProperty({
-    description: '主题封面',
-    example: 'https://example.com/topic-cover.png',
-    required: false,
-    validation: false,
-  })
-  cover?: string
-
-  @NumberProperty({
-    description: '所属分区 ID',
-    example: 12,
-    required: false,
-    validation: false,
-  })
-  sectionId?: number
 }
 
-export class NotificationWorkSnapshotDto {
+export class NotificationWorkSnapshotDto extends IntersectionType(
+  PickType(BaseWorkDto, ['id', 'cover']),
+  PickType(BaseWorkChapterDto, ['workType']),
+) {
   @StringProperty({
     description: '对象类型，固定为 work',
     example: 'work',
     validation: false,
   })
   kind!: 'work'
-
-  @NumberProperty({
-    description: '作品 ID',
-    example: 5,
-    validation: false,
-  })
-  id!: number
 
   @StringProperty({
     description: '作品标题',
@@ -167,174 +127,45 @@ export class NotificationWorkSnapshotDto {
     validation: false,
   })
   title?: string
-
-  @StringProperty({
-    description: '作品封面',
-    example: 'https://example.com/work-cover.png',
-    required: false,
-    validation: false,
-  })
-  cover?: string
-
-  @NumberProperty({
-    description: '作品类型',
-    example: 1,
-    required: false,
-    validation: false,
-  })
-  workType?: number
 }
 
-export class NotificationChapterSnapshotDto {
+export class NotificationChapterSnapshotDto extends PickType(
+  BaseWorkChapterDto,
+  ['id', 'title', 'subtitle', 'cover', 'workId', 'workType'],
+) {
   @StringProperty({
     description: '对象类型，固定为 chapter',
     example: 'chapter',
     validation: false,
   })
   kind!: 'chapter'
-
-  @NumberProperty({
-    description: '章节 ID',
-    example: 17,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '章节标题',
-    example: '第 17 话',
-    required: false,
-    validation: false,
-  })
-  title?: string
-
-  @StringProperty({
-    description: '章节副标题',
-    example: '暴雨将至',
-    required: false,
-    validation: false,
-  })
-  subtitle?: string
-
-  @StringProperty({
-    description: '章节封面',
-    example: 'https://example.com/chapter-cover.png',
-    required: false,
-    validation: false,
-  })
-  cover?: string
-
-  @NumberProperty({
-    description: '所属作品 ID',
-    example: 8,
-    required: false,
-    validation: false,
-  })
-  workId?: number
-
-  @NumberProperty({
-    description: '所属作品类型',
-    example: 1,
-    required: false,
-    validation: false,
-  })
-  workType?: number
 }
 
-export class NotificationAnnouncementSnapshotDto {
+export class NotificationAnnouncementSnapshotDto extends PickType(
+  BaseAnnouncementDto,
+  ['id', 'title', 'summary', 'announcementType', 'priorityLevel'],
+) {
   @StringProperty({
     description: '对象类型，固定为 announcement',
     example: 'announcement',
     validation: false,
   })
   kind!: 'announcement'
-
-  @NumberProperty({
-    description: '公告 ID',
-    example: 42,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '公告标题',
-    example: '版本更新',
-    required: false,
-    validation: false,
-  })
-  title?: string
-
-  @StringProperty({
-    description: '公告摘要',
-    example: '公告摘要',
-    required: false,
-    validation: false,
-  })
-  summary?: string
-
-  @NumberProperty({
-    description: '公告类型',
-    example: 1,
-    required: false,
-    validation: false,
-  })
-  announcementType?: number
-
-  @NumberProperty({
-    description: '优先级',
-    example: 2,
-    required: false,
-    validation: false,
-  })
-  priorityLevel?: number
 }
 
-export class NotificationTaskSnapshotDto {
+export class NotificationTaskSnapshotDto extends PickType(BaseTaskDto, [
+  'id',
+  'code',
+  'cover',
+  'title',
+  'type',
+]) {
   @StringProperty({
     description: '对象类型，固定为 task',
     example: 'task',
     validation: false,
   })
   kind!: 'task'
-
-  @NumberProperty({
-    description: '任务 ID',
-    example: 5,
-    validation: false,
-  })
-  id!: number
-
-  @StringProperty({
-    description: '任务编码',
-    example: 'daily-comment',
-    required: false,
-    validation: false,
-  })
-  code?: string
-
-  @StringProperty({
-    description: '任务标题',
-    example: '每日评论',
-    required: false,
-    validation: false,
-  })
-  title?: string
-
-  @StringProperty({
-    description: '任务封面',
-    example: 'https://example.com/task-cover.png',
-    required: false,
-    validation: false,
-  })
-  cover?: string
-
-  @NumberProperty({
-    description: '任务场景类型',
-    example: 2,
-    required: false,
-    validation: false,
-  })
-  sceneType?: number
 }
 
 export class NotificationTaskReminderInfoDto {
@@ -501,7 +332,8 @@ export class NotificationTaskReminderDataDto {
 
 export class BaseUserNotificationDto extends BaseDto {
   @EnumProperty({
-    description: '通知类型键',
+    description:
+      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -617,7 +449,8 @@ export class QueryUserNotificationListDto extends PageDto {
 
 export class UpdateUserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: '通知分类键',
+    description:
+      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -651,7 +484,8 @@ class BaseNotificationDeliveryQueryDto extends NotificationDeliveryLookupFilterD
   status?: MessageNotificationDispatchStatusEnum
 
   @EnumProperty({
-    description: '通知分类键',
+    description:
+      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.TASK_REMINDER,
     required: false,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
@@ -686,7 +520,8 @@ export class NotificationUnreadDto extends BaseNotificationUnreadDto {}
 
 export class UserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: '通知分类键',
+    description:
+      '通知分类键（comment_reply=评论回复；comment_mention=评论提及；comment_like=评论点赞；topic_like=主题点赞；topic_favorited=主题收藏；topic_commented=主题评论；topic_mentioned=主题提及；user_followed=用户关注；system_announcement=系统公告；task_reminder=任务提醒）',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -711,7 +546,7 @@ export class UserNotificationPreferenceItemDto {
   defaultEnabled!: boolean
 
   @EnumProperty({
-    description: '状态来源（默认策略；用户显式覆盖）',
+    description: '状态来源（default=默认策略；explicit=用户显式覆盖）',
     example: MessageNotificationPreferenceSourceEnum.DEFAULT,
     enum: MessageNotificationPreferenceSourceEnum,
   })

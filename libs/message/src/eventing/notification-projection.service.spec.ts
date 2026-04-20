@@ -149,7 +149,7 @@ describe('notification projection service', () => {
             id: 5,
             code: 'daily-comment',
             title: '每日评论',
-            sceneType: 2,
+            type: 2,
           },
           reminder: {
             kind: 'reward_granted',
@@ -178,7 +178,7 @@ describe('notification projection service', () => {
             id: 5,
             code: 'daily-comment',
             title: '每日评论',
-            sceneType: 2,
+            type: 2,
           },
           reminder: {
             kind: 'reward_granted',
@@ -202,7 +202,7 @@ describe('notification projection service', () => {
         id: 5,
         code: 'daily-comment',
         title: '每日评论',
-        sceneType: 2,
+        type: 2,
       },
       reminder: {
         kind: 'reward_granted',

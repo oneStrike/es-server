@@ -31,15 +31,6 @@ function toNonEmptyString(value: unknown) {
     : undefined
 }
 
-function firstNonEmptyString(values: unknown) {
-  if (!Array.isArray(values)) {
-    return undefined
-  }
-  return values.find((value) => typeof value === 'string' && value.trim()) as
-    | string
-    | undefined
-}
-
 function compactRecord<T extends Record<string, unknown>>(value: T) {
   const entries = Object.entries(value).filter(([, item]) => item !== undefined)
   return Object.fromEntries(entries) as T
@@ -471,7 +462,6 @@ export class NotificationProjectionService {
         id: true,
         title: true,
         sectionId: true,
-        images: true,
       },
     })
 
@@ -479,8 +469,6 @@ export class NotificationProjectionService {
       kind: 'topic',
       id: topicId,
       title: toNonEmptyString(topic?.title) ?? toNonEmptyString(current.title),
-      cover:
-        firstNonEmptyString(topic?.images) ?? toNonEmptyString(current.cover),
       sectionId:
         toPositiveInteger(topic?.sectionId) ??
         toPositiveInteger(current.sectionId),

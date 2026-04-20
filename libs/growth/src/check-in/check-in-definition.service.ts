@@ -14,10 +14,9 @@ import { GrowthLedgerService } from '@libs/growth/growth-ledger/growth-ledger.se
 import { BusinessErrorCode } from '@libs/platform/constant'
 import { BusinessException } from '@libs/platform/exceptions'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { desc, eq, sql } from 'drizzle-orm'
 import dayjs from 'dayjs'
+import { desc, eq, sql } from 'drizzle-orm'
 import {
-  CheckInActivityStreakStatusEnum,
   CheckInDailyStreakConfigStatusEnum,
   CheckInDailyStreakPublishStrategyEnum,
 } from './check-in.constant'
