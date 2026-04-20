@@ -27,6 +27,7 @@
 - 若所需结构本身需要 Swagger 文档或字段校验，就应该继续定义为 DTO；不要把本应是 DTO 的结构下沉成 `type`。
 - 若所需结构只是内部领域类型，不承担文档和校验职责，也无法从 DTO 组合得到，才允许定义新的 `type` / `interface`。
 - 若所需结构已存在于 schema select / insert 类型中，优先从 schema 推导；不要手写数据库字段镜像类型。
+- 基于 Drizzle `typeof table.$inferSelect / $inferInsert` 导出的公共类型，统一直接命名为 `XxxSelect`、`XxxInsert`；不要先定义 `Xxx = typeof table.$inferSelect`，再把 `XxxSelect = Xxx` 作为二次别名。
 - 字段裁剪默认规则：保留字段更少时用 `Pick`；排除字段更少时用 `Omit`。
 - 禁止无意义别名：若新类型只是原类型改名，且没有新增语义、边界或复用价值，直接使用原类型。
 
@@ -51,6 +52,7 @@
 - 禁止在类型文件中承载 service 调用、数据库访问或业务执行逻辑。
 - 禁止为了缩短路径或“看起来统一”而新增转发型类型文件。
 - 禁止把仅当前文件内部使用的临时类型强行提升为公共导出类型。
+- 禁止为 Drizzle `inferSelect` / `inferInsert` 再套一层无意义别名，例如 `type CheckInActivityStreak = typeof checkInActivityStreak.$inferSelect` 后再写 `type CheckInActivityStreakSelect = CheckInActivityStreak`。
 
 ## 正反例
 
@@ -60,11 +62,13 @@
 - 允许：`type SessionClientContext = ClientRequestContext`，前提是它表达了稳定业务语义。
 - 允许：在 service 文件内定义仅本文件使用的私有 helper type，例如查询行结构、临时聚合结果。
 - 允许：在事件、模板、开放 payload 边界使用 `Record<string, unknown>`，但后续必须收窄。
+- 允许：`export type CheckInActivityStreakSelect = typeof checkInActivityStreak.$inferSelect`
 - 禁止：为了让内部结构“看起来统一”，新建一个不带校验和文档价值的 `UserSummaryDto` 替代 `type TopicAuthorView = Pick<BaseAppUserDto, ...>`。
 - 禁止：内部只想拿一个字段子集时，新建 `UserSummaryDto` 但既不用于 Swagger，也不参与校验。
 - 禁止：为了复用 `BaseAppUserDto` 的字段，重新手写一个同构 `ForumTopicUserShape`。
 - 禁止：把 HTTP 返回体结构改写成 `*.type.ts` 类型，再让 Controller 手动拼响应。
 - 禁止：声明 `type UserInfo = BaseAppUserDto` 这类没有新增语义的纯改名别名。
+- 禁止：`export type CheckInActivityStreak = typeof checkInActivityStreak.$inferSelect` + `export type CheckInActivityStreakSelect = CheckInActivityStreak`
 
 ## 示例
 

@@ -5,7 +5,7 @@
 ## 默认动作
 
 - 业务场景 DTO 统一定义在 `libs/*`；`apps/*` 只消费 DTO，不新增 `*.dto.ts`。
-- HTTP Controller 的入参与出参必须使用 DTO；非 HTTP 的内部领域结构放在 `*.type.ts` / `*.types.ts`，不要混进 DTO 文件。
+- HTTP Controller 的入参必须使用 DTO；出参优先使用输出 DTO，但允许 `boolean`、`number`、`string` 等基础类型作为稳定 contract；非 HTTP 的内部领域结构放在 `*.type.ts` / `*.types.ts`，不要混进 DTO 文件。
 - DTO 中的定义必须直接服务 Swagger 文档、字段校验或对外 contract；如果一个结构既不服务文档，也不服务校验，就不要为了“统一都叫 DTO”硬造 DTO。
 - 若跨模块复用现有字段，默认导入目标 DTO 并组合；不要在当前模块手写复制别的模块字段。
 - 实体字段与物理约束以 Drizzle Table 为准；`BaseXxxDto` 及其衍生字段默认向对应 Drizzle table / schema 看齐，不手写脱锚字段。
@@ -30,6 +30,7 @@
 - 优先用组合工具复用字段，避免字段复制、重复定义。
 - 跨模块复用 DTO 时，先导入目标 DTO，再做字段裁剪或合并；禁止重复定义其他模块已存在的字段。
 - DTO 文件禁止引入 `*.type.ts`、`*.types.ts`；内部类型应反向复用 DTO 或 Drizzle，不允许 DTO 反向依赖 type。
+- Controller 返回基础类型时，不要为了“统一都叫 DTO”额外包一层空心 DTO；只有当响应需要字段文档、嵌套结构、可扩展返回 contract 或校验语义时，才定义输出 DTO。
 - 字段选择默认规则：保留字段更少时用 `PickType`；排除字段更少时用 `OmitType`。
 - `PartialType` 仅用于现有字段集的“整体可选化”；优先写成 `PartialType(CreateXxxDto)` 或 `PartialType(PickType(...))`，不要重新手写一份“几乎一样但全可选”的 DTO。
 - `FieldsDto` / `WritableFieldsDto` 只用于同域内可复用字段块；若字段块只服务单一场景且不会复用，直接放在对应场景 DTO 附近。
@@ -65,6 +66,7 @@
 - 允许：导入跨模块 DTO 后组合，例如 `PickType(BaseAppUserDto, ['id', 'nickname'] as const)`。
 - 允许：`ForumTopicWritableFieldsDto`、`UserPointDeltaFieldsDto` 这类语义明确、可复用的字段块 DTO。
 - 允许：`UserNotificationDto extends BaseUserNotificationDto {}`，前提是它用于稳定返回体命名或后续扩展锚点。
+- 允许：Controller 直接返回 `boolean`、`number`、`string` 等基础类型，前提是接口 contract 本身就是该基础类型，且不需要额外字段描述或嵌套结构。
 - 允许：长文案、事实源说明或跨文件共享文案提取为常量，例如多个 DTO/文档共用的统一提示语。
 - 禁止：在 DTO 文件里 `import type { GrowthRewardItem } from '../reward-item.type'` 再把内部 type 暴露成 DTO 字段来源。
 - 禁止：在 `apps/app-api` 下新增一个和 `libs/forum/.../forum-topic.dto.ts` 同构的 `forum-topic.dto.ts`。

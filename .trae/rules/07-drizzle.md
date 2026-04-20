@@ -8,6 +8,7 @@
 - 闭集状态 / 类型 / 模式 / 角色字段默认使用 `smallint` / `smallint[]`，并同步补 `check(...)` 约束。
 - 开放业务键继续保持字符串，不为了“统一 smallint”而强行数字化；典型例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、模板键、路由键等。
 - DTO、常量 / 枚举、`db/schema` 中同一闭集值域必须同轮对齐；不能一层改成数字枚举，另一层仍保留旧字符串或不一致的数值范围。
+- `db/schema/**/*.ts` 中导出的 Drizzle 推导类型统一使用 `XxxSelect = typeof table.$inferSelect`、`XxxInsert = typeof table.$inferInsert`；不要额外导出 `Xxx = typeof table.$inferSelect` 这类无意义中间别名。
 
 ## 默认动作
 
@@ -57,6 +58,7 @@
 - 禁止把闭集业务值域留在 `varchar` / `integer[]` 中继续漂移。
 - 禁止用原生 SQL 字符串拼接代替 `sql` 模板。
 - 禁止 schema、DTO、常量 / 枚举、migration 四层脱节。
+- 禁止在 `db/schema` 中为 `inferSelect` / `inferInsert` 再套一层仅做改名的别名链，例如 `Foo = typeof foo.$inferSelect` 后再导出 `FooSelect = Foo`。
 
 ## 正反例
 
