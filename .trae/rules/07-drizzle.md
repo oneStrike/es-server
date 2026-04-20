@@ -1,43 +1,69 @@
 # Drizzle 使用规范
 
-适用范围：`libs/*` 与 `apps/*` 中使用 Drizzle ORM 的数据库操作。
+适用范围：`libs/*` 与 `apps/*` 中使用 Drizzle ORM 的数据库操作，以及对应的 schema / migration 联动。
 
-## 核心原则
+## 仓库约定
 
-- 统一通过 `DrizzleService` 使用 `drizzle.db`、`drizzle.schema`、`drizzle.ext`。
-- 事务通过 `db.transaction(async (tx) => ...)` 并沿链路显式透传。
-- 闭集状态 / 类型 / 模式字段默认使用 `smallint` / `smallint[]`，并同步补 `check(...)` 约束。
-- 若 DTO / 常量层已经收敛为数字枚举，但 `db/schema` 仍使用 `integer`、`varchar` 或 `integer[]`，视为规范违例，应在同轮改造中统一。
-- 开放业务键继续保持字符串，不为"统一 smallint"而强行数字化；典型例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、弹窗位置等。
+- 本仓库统一通过注入的 `DrizzleService` 使用 `drizzle.db`、`drizzle.schema`、`drizzle.ext`；不在业务层自行创建新的 Drizzle 实例。
+- 闭集状态 / 类型 / 模式 / 角色字段默认使用 `smallint` / `smallint[]`，并同步补 `check(...)` 约束。
+- 开放业务键继续保持字符串，不为了“统一 smallint”而强行数字化；典型例外包括 `eventKey`、`categoryKey`、`projectionKey`、`domain`、`packageMimeType`、模板键、路由键等。
+- DTO、常量 / 枚举、`db/schema` 中同一闭集值域必须同轮对齐；不能一层改成数字枚举，另一层仍保留旧字符串或不一致的数值范围。
 
-## 查询与分页
+## 默认动作
 
-- 常规分页使用 `drizzle.ext.findPagination(...)`。
-- 分页统一 1-based `pageIndex`。
-- 动态条件使用 `SQL[] + and(...)`。
-- 排序字段必须显式声明。
+- 查询表、关系表、扩展能力时，默认从 `this.drizzle.schema`、`this.drizzle.ext` 取用。
+- 事务默认通过 `db.transaction(async (tx) => ...)` 或 `drizzle.withTransaction(async (tx) => ...)` 启动，并沿调用链显式透传 `tx`。
+- 常规分页默认使用 `drizzle.ext.findPagination(...)`。
+- 分页统一采用 1-based `pageIndex`。
+- 动态查询条件默认使用 `SQL[]` 收集，再通过 `and(...)` / `or(...)` 组合。
+- 排序字段必须显式声明；禁止依赖数据库返回“自然顺序”。
 
-## 写路径与原生 SQL
+## 查询与写路径
 
-- 计数、余额、库存等增减使用原子更新并与事实写入同事务。
-- 原生 SQL 仅允许 `sql\`...\``与`db.execute`，禁止字符串拼接。
+- `count`、余额、库存、计数器、乐观锁版本号等增减，必须使用原子更新并与事实写入位于同一事务。
+- 0 行 update / delete 若业务语义是“目标不存在”，应通过 `assertAffectedRows(...)` 或 `withErrorHandling(..., { notFound: ... })` 收口。
+- 需要复用的分页、排序、存在性判断、最大序号、交换字段等公共模式，优先复用 `drizzle.ext` 中已有能力，不要在业务层重复造轮子。
+- 读路径需要补记浏览、日志、统计时，优先与主业务分离，并确保附带写入可降级。
 
-## Migration 规范
+## 原生 SQL
 
-- 常规 schema 差异默认使用 `pnpm db:generate` 生成。
-- 若生成过程中出现交互，必须停止并由用户亲自执行。
-- migration 只允许新建，不允许在已存在、已提交或已执行的 migration 文件中继续追加新 DDL；发现迁移范围变化时，必须新建后续增量 migration。
-- 无法生成的 DDL 可手写补充，但必须说明原因、范围与风险。
-- 当任务明确要求手写 migration 时，不应再把 `pnpm db:generate` 当作默认路径；交付说明中必须写清手写 migration 的映射关系、破坏性范围与风险。
-- migration 必须显式处理历史数据：字段改类型、改值域、改约束、改数组元素、改 JSON 内部枚举时，都要在 migration 中完成历史数据刷值，不允许依赖丢弃历史数据、清空字段、跳过旧值或要求人工自行清库。
-- 即使业务代码按"破坏性更新 / 无兼容层"执行，migration 仍必须保证历史数据可被迁移到新结构；"不做兼容层"不等于"允许丢历史数据"。
+- 原生 SQL 仅允许通过 `` sql`...` `` 和 `db.execute(...)` 编写。
+- 禁止字符串拼接 SQL。
+- 使用原生 SQL 时必须说明原因，例如 Drizzle 表达能力不足、需要数据库原子表达式、需要复杂聚合或批量更新。
+- 原生 SQL 中的分页、排序、where 条件、数组处理、JSON 处理仍要遵守本仓库的统一契约，不得各写一套。
+
+## Schema 与 migration 联动
+
+- 常规 schema 差异默认通过 `pnpm db:generate` 生成 migration。
+- 若生成过程中出现交互，必须停止并由用户亲自执行；不要替用户继续回答交互提示。
+- migration 只允许新建，不允许在已存在、已提交或已执行的 migration 文件中继续追加新 DDL。
+- 无法自动生成的 DDL 可手写补充，但必须说明原因、范围与风险。
+- 字段改类型、改值域、改数组元素、改 JSON 内部枚举、改约束时，migration 必须同步处理历史数据；不能依赖清库、丢字段、跳过旧值或要求人工补数据。
 - 修改 schema 注释后，必须同步刷新 `db/comments/generated.sql`，并确保生成结果 `Warnings: 0`。
-- `db/schema`、手写 / 生成 migration、`db/comments/generated.sql` 三者必须同轮一致，不能只改其中一层。
+- `db/schema`、migration、`db/comments/generated.sql` 三者必须同轮一致，不能只改其中一层。
 
-## 破坏性更新联动规范
+## 破坏性更新
 
-- 当任务明确声明"破坏性更新 / 不做兼容层"时，`db/schema`、相关常量 / 枚举、DTO、service / resolver / controller、前端破坏性更新文档必须同轮改完。
+- 当任务明确声明“破坏性更新 / 不做兼容层”时，`db/schema`、相关常量 / 枚举、DTO、service / resolver / controller、破坏性更新文档必须同轮改完。
 - 禁止只改表、不改接口合同。
-- 禁止只改 DTO、不改底层持久化值域。
+- 禁止只改 DTO / 常量、不改底层持久化值域。
 - 禁止保留临时双读、旧值 fallback、旧字符串兼容映射，除非任务明确要求兼容期。
-- 若改动同时影响 `admin` 和 `app` 前端，破坏性更新说明应拆成两份独立文档，避免一份文档混合承载两类客户端影响。
+
+## 禁止项
+
+- 禁止在业务层直接 new Drizzle 或绕开 `DrizzleService` 访问数据库。
+- 禁止隐式事务；事务上下文必须显式透传。
+- 禁止分页不写排序字段。
+- 禁止把闭集业务值域留在 `varchar` / `integer[]` 中继续漂移。
+- 禁止用原生 SQL 字符串拼接代替 `sql` 模板。
+- 禁止 schema、DTO、常量 / 枚举、migration 四层脱节。
+
+## 正反例
+
+- 允许：`return this.drizzle.ext.findPagination(this.workTable, { pageIndex, pageSize, orderBy })`
+- 允许：`await this.drizzle.withTransaction(async (tx) => { ... })`
+- 允许：`viewCount: sql\`${this.table.viewCount} + 1\``
+- 允许：闭集状态字段使用 `smallint().default(1).notNull()` 并补 `check(...)`
+- 禁止：在 service 内自行创建新的数据库连接或 Drizzle 实例。
+- 禁止：`db.execute('UPDATE ... ' + userInput)`
+- 禁止：schema 已改为数字枚举，但 DTO / 常量仍保留旧字符串值域。

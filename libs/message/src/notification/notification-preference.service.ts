@@ -25,17 +25,15 @@ export class MessageNotificationPreferenceService {
     return this.drizzle.schema.notificationPreference
   }
 
-  async getUserNotificationPreferenceList(
-    userId: number,
-  ) {
+  async getUserNotificationPreferenceList(userId: number) {
     const preferences = await this.db.query.notificationPreference.findMany({
       where: { userId },
     })
     const preferenceMap = new Map(
-      preferences.map(item => [item.categoryKey, item] as const),
+      preferences.map((item) => [item.categoryKey, item] as const),
     )
 
-    return MESSAGE_NOTIFICATION_CATEGORY_KEYS.map(categoryKey =>
+    return MESSAGE_NOTIFICATION_CATEGORY_KEYS.map((categoryKey) =>
       this.buildEffectivePreference(
         categoryKey,
         preferenceMap.get(categoryKey),
@@ -50,15 +48,23 @@ export class MessageNotificationPreferenceService {
     const preferences = this.normalizeUpdatePreferences(input.preferences)
 
     await this.drizzle.withErrorHandling(async () =>
-      this.db.transaction(async tx => {
+      this.db.transaction(async (tx) => {
         for (const preference of preferences) {
-          if (preference.isEnabled === this.getDefaultEnabled(preference.categoryKey)) {
+          if (
+            preference.isEnabled ===
+            this.getDefaultEnabled(preference.categoryKey)
+          ) {
             await tx
               .delete(this.notificationPreference)
-              .where(and(
-                eq(this.notificationPreference.userId, userId),
-                eq(this.notificationPreference.categoryKey, preference.categoryKey),
-              ))
+              .where(
+                and(
+                  eq(this.notificationPreference.userId, userId),
+                  eq(
+                    this.notificationPreference.categoryKey,
+                    preference.categoryKey,
+                  ),
+                ),
+              )
             continue
           }
 
@@ -116,7 +122,6 @@ export class MessageNotificationPreferenceService {
       isEnabled: preference?.isEnabled ?? defaultEnabled,
       defaultEnabled,
       source,
-      preferenceId: preference?.id,
       updatedAt: preference?.updatedAt,
     }
   }
@@ -132,7 +137,9 @@ export class MessageNotificationPreferenceService {
     const seenKeys = new Set<string>()
 
     for (const preference of preferences) {
-      const categoryKey = this.ensureSupportedCategoryKey(preference.categoryKey)
+      const categoryKey = this.ensureSupportedCategoryKey(
+        preference.categoryKey,
+      )
       if (seenKeys.has(categoryKey)) {
         throw new BadRequestException('preferences 中存在重复的通知分类')
       }

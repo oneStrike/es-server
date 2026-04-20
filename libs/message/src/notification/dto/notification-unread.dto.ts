@@ -1,5 +1,22 @@
 import { NestedProperty, NumberProperty } from '@libs/platform/decorators'
-import { buildNotificationUnreadSummaryExample } from '../notification-unread.type'
+
+export const NOTIFICATION_UNREAD_BY_CATEGORY_EXAMPLE = {
+  comment_reply: 2,
+  comment_mention: 0,
+  comment_like: 0,
+  topic_like: 1,
+  topic_favorited: 0,
+  topic_commented: 0,
+  topic_mentioned: 0,
+  user_followed: 0,
+  system_announcement: 0,
+  task_reminder: 0,
+}
+
+export const NOTIFICATION_UNREAD_SUMMARY_EXAMPLE = {
+  total: 3,
+  byCategory: NOTIFICATION_UNREAD_BY_CATEGORY_EXAMPLE,
+}
 
 export class NotificationUnreadByCategoryDto {
   @NumberProperty({
@@ -84,7 +101,7 @@ export class BaseNotificationUnreadDto {
   @NestedProperty({
     description: '按通知类型拆分的未读数量',
     type: NotificationUnreadByCategoryDto,
-    example: buildNotificationUnreadSummaryExample().byCategory,
+    example: NOTIFICATION_UNREAD_BY_CATEGORY_EXAMPLE,
     validation: false,
   })
   byCategory!: NotificationUnreadByCategoryDto

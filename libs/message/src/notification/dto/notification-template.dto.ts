@@ -7,12 +7,9 @@ import {
   MessageNotificationCategoryKey,
 } from '../notification.constant'
 
-const NOTIFICATION_TEMPLATE_CATEGORY_KEY_DESCRIPTION =
-  '通知分类键，用于标识评论互动、主题互动、用户关注、系统公告或任务提醒等模板场景'
-
 export class BaseMessageNotificationTemplateDto extends BaseDto {
   @StringProperty({
-    description: NOTIFICATION_TEMPLATE_CATEGORY_KEY_DESCRIPTION,
+    description: '通知分类键，表示模板所属通知业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     maxLength: 80,
   })

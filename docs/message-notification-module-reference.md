@@ -8,8 +8,8 @@
   - 2 个公告事件共同驱动 `system_announcement`
   - 3 个任务提醒事件共同驱动 `task_reminder`
 - App 侧对外通知接口是 `GET app/message/notification/page`，对外通知对象的事实源是：
-  - `libs/message/src/notification/notification-contract.type.ts`
   - `libs/message/src/notification/dto/notification.dto.ts`
+  - `libs/message/src/notification/notification-public.mapper.ts`
   - `apps/app-api/src/modules/message/message.controller.ts`
 - `system_announcement` 是唯一 **mandatory** 通知类型，不受用户偏好关闭影响；其他类型都受通知偏好控制，且当前默认全部开启。
 
@@ -110,7 +110,7 @@ type MessageNotificationPublicView = {
     title: string
     body: string
   }
-  data: MessageNotificationData | null
+  data: UserNotificationDataDto | null
   isRead: boolean
   readAt?: Date
   expiresAt?: Date

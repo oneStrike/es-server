@@ -1,4 +1,7 @@
-import type { NotificationPreferenceSelect, UserNotificationSelect } from '@db/schema'
+import type {
+  NotificationPreferenceSelect,
+  UserNotificationSelect,
+} from '@db/schema'
 
 import type {
   MessageNotificationCategoryKey,
@@ -13,7 +16,6 @@ export interface EffectiveMessageNotificationPreference {
   isEnabled: boolean
   defaultEnabled: boolean
   source: MessageNotificationPreferenceSourceEnum
-  preferenceId?: number
   updatedAt?: Date
 }
 

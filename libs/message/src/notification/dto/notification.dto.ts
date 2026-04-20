@@ -2,7 +2,6 @@ import type {
   ReferenceObject,
   SchemaObject,
 } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
-import type { MessageNotificationData } from '../notification-contract.type'
 import { BaseAnnouncementDto } from '@libs/app-content/announcement/dto/announcement.dto'
 import { BaseWorkChapterDto } from '@libs/content/work/chapter/dto/work-chapter.dto'
 import { BaseWorkDto } from '@libs/content/work/core/dto/work.dto'
@@ -63,15 +62,6 @@ function IsValidNotificationCategoryKeysFilter(): PropertyDecorator {
     },
   })
 }
-
-const NOTIFICATION_CATEGORY_KEY_DESCRIPTION =
-  '通知分类键，用于标识评论互动、主题互动、用户关注、系统公告或任务提醒等业务场景'
-
-const NOTIFICATION_CATEGORY_KEYS_FILTER_DESCRIPTION =
-  '通知分类键列表，使用逗号、中文逗号、分号或竖线分隔多个通知业务场景'
-
-const NOTIFICATION_PREFERENCE_SOURCE_DESCRIPTION =
-  '偏好来源，表示当前配置来自系统默认值或用户显式覆盖'
 
 /**
  * 通知消息 DTO
@@ -246,10 +236,14 @@ export class NotificationTaskSnapshotDto extends PickType(BaseTaskDto, [
  * - expiring_soon: 任务即将过期提醒
  * - reward_granted: 任务奖励到账提醒
  */
-export class NotificationTaskReminderInfoDto extends IntersectionType(
-  PickType(BaseTaskAssignmentDto, ['cycleKey', 'expiredAt']),
-  PickType(QueryTaskAssignmentReconciliationDto, ['assignmentId']),
-) {
+class NotificationTaskReminderOptionalFieldsDto extends PartialType(
+  IntersectionType(
+    PickType(BaseTaskAssignmentDto, ['cycleKey', 'expiredAt']),
+    PickType(QueryTaskAssignmentReconciliationDto, ['assignmentId']),
+  ),
+) {}
+
+export class NotificationTaskReminderInfoDto extends NotificationTaskReminderOptionalFieldsDto {
   @StringProperty({
     description: '任务提醒子类型，表示自动分配、即将过期或奖励到账三类业务场景',
     example: 'reward_granted',
@@ -305,6 +299,54 @@ export class NotificationTaskRewardSnapshotDto {
   ledgerRecordIds!: number[]
 }
 
+export type NotificationCommentContainerDto =
+  | NotificationWorkSnapshotDto
+  | NotificationTopicSnapshotDto
+  | NotificationChapterSnapshotDto
+
+export interface NotificationCommentActionDataDto {
+  object: NotificationCommentSnapshotDto
+  container: NotificationCommentContainerDto
+  parentContainer?: NotificationWorkSnapshotDto
+}
+
+export interface NotificationTopicObjectDataDto {
+  object: NotificationTopicSnapshotDto
+}
+
+export interface NotificationTopicCommentedDataDto {
+  object: NotificationCommentSnapshotDto
+  container: NotificationTopicSnapshotDto
+}
+
+export interface NotificationAnnouncementDataDto {
+  object: NotificationAnnouncementSnapshotDto
+}
+
+export interface NotificationTaskReminderDataDto {
+  object: NotificationTaskSnapshotDto
+  reminder: NotificationTaskReminderInfoDto
+  reward?: NotificationTaskRewardSnapshotDto
+}
+
+export interface NotificationDataByTypeDto {
+  comment_reply: NotificationCommentActionDataDto
+  comment_mention: NotificationCommentActionDataDto
+  comment_like: NotificationCommentActionDataDto
+  topic_like: NotificationTopicObjectDataDto
+  topic_favorited: NotificationTopicObjectDataDto
+  topic_commented: NotificationTopicCommentedDataDto
+  topic_mentioned: NotificationTopicObjectDataDto
+  user_followed: null
+  system_announcement: NotificationAnnouncementDataDto
+  task_reminder: NotificationTaskReminderDataDto
+}
+
+export type UserNotificationDataDto = Exclude<
+  NotificationDataByTypeDto[MessageNotificationCategoryKey],
+  null
+>
+
 function createNotificationCommentContainerOneOfSchemas() {
   return [
     { $ref: getSchemaPath(NotificationWorkSnapshotDto) },
@@ -314,20 +356,23 @@ function createNotificationCommentContainerOneOfSchemas() {
 }
 
 function createNotificationDataOneOfSchemas() {
-  const commentActionProperties: Record<string, SchemaObject | ReferenceObject> =
-    {
-      object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
-      container: {
-        oneOf: createNotificationCommentContainerOneOfSchemas(),
-      },
-      parentContainer: {
-        $ref: getSchemaPath(NotificationWorkSnapshotDto),
-      },
-    }
-
-  const topicObjectProperties: Record<string, SchemaObject | ReferenceObject> = {
-    object: { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
+  const commentActionProperties: Record<
+    string,
+    SchemaObject | ReferenceObject
+  > = {
+    object: { $ref: getSchemaPath(NotificationCommentSnapshotDto) },
+    container: {
+      oneOf: createNotificationCommentContainerOneOfSchemas(),
+    },
+    parentContainer: {
+      $ref: getSchemaPath(NotificationWorkSnapshotDto),
+    },
   }
+
+  const topicObjectProperties: Record<string, SchemaObject | ReferenceObject> =
+    {
+      object: { $ref: getSchemaPath(NotificationTopicSnapshotDto) },
+    }
 
   const topicCommentedProperties: Record<
     string,
@@ -401,7 +446,7 @@ function createNotificationDataOneOfSchemas() {
  */
 export class BaseUserNotificationDto extends BaseDto {
   @EnumProperty({
-    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
+    description: '通知分类键，表示通知所属业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -457,7 +502,7 @@ export class BaseUserNotificationDto extends BaseDto {
     nullable: true,
     oneOf: createNotificationDataOneOfSchemas(),
   })
-  data!: MessageNotificationData | null
+  data!: UserNotificationDataDto | null
 
   @NestedProperty({
     description: '触发用户信息',
@@ -505,7 +550,8 @@ export class QueryUserNotificationListDto extends PageDto {
 
   @IsValidNotificationCategoryKeysFilter()
   @StringProperty({
-    description: NOTIFICATION_CATEGORY_KEYS_FILTER_DESCRIPTION,
+    description:
+      '通知分类键筛选列表，多个分类键使用逗号、中文逗号、分号或竖线分隔',
     required: false,
     example: `${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY},${MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_LIKE}`,
     transform: ({ value }) => {
@@ -522,7 +568,7 @@ export class QueryUserNotificationListDto extends PageDto {
  */
 export class UpdateUserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
+    description: '通知分类键，表示通知所属业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -567,7 +613,7 @@ class BaseNotificationDeliveryQueryDto extends NotificationDeliveryLookupFilterD
   status?: MessageNotificationDispatchStatusEnum
 
   @EnumProperty({
-    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
+    description: '通知分类键，表示通知所属业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.TASK_REMINDER,
     required: false,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
@@ -624,7 +670,7 @@ export class NotificationUnreadDto extends BaseNotificationUnreadDto {}
  */
 export class UserNotificationPreferenceItemDto {
   @EnumProperty({
-    description: NOTIFICATION_CATEGORY_KEY_DESCRIPTION,
+    description: '通知分类键，表示通知所属业务分类',
     example: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM.COMMENT_REPLY,
     enum: MESSAGE_NOTIFICATION_CATEGORY_KEY_ENUM,
   })
@@ -649,7 +695,7 @@ export class UserNotificationPreferenceItemDto {
   defaultEnabled!: boolean
 
   @EnumProperty({
-    description: NOTIFICATION_PREFERENCE_SOURCE_DESCRIPTION,
+    description: '偏好来源，表示当前配置来自系统默认值或用户显式覆盖',
     example: MessageNotificationPreferenceSourceEnum.DEFAULT,
     enum: MessageNotificationPreferenceSourceEnum,
   })

@@ -1,4 +1,5 @@
 import type { UserNotificationSelect } from '@db/schema'
+import type { UserNotificationDataDto } from './dto/notification.dto'
 import {
   mapNotificationActor,
   mapUserNotificationToPublicView,
@@ -35,6 +36,10 @@ function createNotification(
 }
 
 describe('notification-public.mapper', () => {
+  function expectPublicNotificationData(data: UserNotificationDataDto | null) {
+    return data
+  }
+
   it('maps actor and payload into the public notification dto', () => {
     const notification = createNotification()
 
@@ -53,7 +58,9 @@ describe('notification-public.mapper', () => {
       title: notification.title,
       body: notification.content,
     })
-    expect(result.data).toEqual(notification.payload)
+    expect(expectPublicNotificationData(result.data)).toEqual(
+      notification.payload,
+    )
   })
 
   it('drops actor and non-object payload values', () => {

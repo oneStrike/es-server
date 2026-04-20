@@ -1,4 +1,4 @@
-import type { JsonValue } from '@libs/platform/utils/jsonParse'
+import type { JsonValue } from '@libs/platform/utils'
 import { BaseForumSectionDto } from '@libs/forum/section/dto/forum-section.dto'
 import { BaseForumTagDto } from '@libs/forum/tag/dto/forum-tag.dto'
 import { BaseUserLevelRuleDto } from '@libs/growth/level-rule/dto/level-rule.dto'
@@ -10,20 +10,20 @@ import {
   MentionDraftDto,
   RequiredMentionDraftListDto,
 } from '@libs/interaction/mention/dto/mention.dto'
+import { AuditRoleEnum, AuditStatusEnum } from '@libs/platform/constant'
 import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-} from '@libs/platform/constant/audit.constant'
-import { ArrayProperty } from '@libs/platform/decorators/validate/array-property'
-import { BooleanProperty } from '@libs/platform/decorators/validate/boolean-property'
-import { DateProperty } from '@libs/platform/decorators/validate/date-property'
-import { EnumProperty } from '@libs/platform/decorators/validate/enum-property'
-import { JsonProperty } from '@libs/platform/decorators/validate/json-property'
-import { NestedProperty } from '@libs/platform/decorators/validate/nested-property'
-import { NumberProperty } from '@libs/platform/decorators/validate/number-property'
-import { StringProperty } from '@libs/platform/decorators/validate/string-property'
-import { BaseDto, IdDto, UserIdDto } from '@libs/platform/dto/base.dto'
-import { PageDto } from '@libs/platform/dto/page.dto'
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/platform/decorators'
+
+import { BaseDto, IdDto, PageDto, UserIdDto } from '@libs/platform/dto'
+
 import { BaseSensitiveWordHitDto } from '@libs/sensitive-word/dto/sensitive-word.dto'
 import { BaseAppUserCountDto } from '@libs/user/dto/base-app-user-count.dto'
 import { BaseAppUserDto } from '@libs/user/dto/base-app-user.dto'

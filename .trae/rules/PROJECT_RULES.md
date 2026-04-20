@@ -21,6 +21,3 @@
 - [错误处理规范](./06-error-handling.md) - 错误处理、异常与业务码规范
 - [Drizzle 使用规范](./07-drizzle.md) - Drizzle ORM 使用、查询与 Migration 规范
 - [测试规范](./08-testing.md) - 测试原则与验证命令
-- [数据库表命名规范](./09-database-naming.md) - 表名、前缀与后缀规则
-- [计数器规范](./10-counter.md) - 计数器更新与一致性约束
-- [文档规范](./11-documentation.md) - 方案与清单文档标准

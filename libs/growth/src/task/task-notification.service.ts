@@ -92,7 +92,7 @@ export class TaskNotificationService {
         kind: normalizedReminderKind,
         assignmentId: params.assignmentId,
         cycleKey: params.cycleKey,
-        expiredAt: params.expiredAt?.toISOString(),
+        expiredAt: params.expiredAt,
       },
       reward: rewardSummary,
     } satisfies TaskReminderNotificationPayload

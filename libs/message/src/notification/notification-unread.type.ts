@@ -51,13 +51,3 @@ export function buildNotificationUnreadSummary(
     byCategory,
   }
 }
-
-export function buildNotificationUnreadSummaryExample() {
-  return {
-    total: 3,
-    byCategory: createNotificationUnreadByCategory({
-      comment_reply: 2,
-      topic_like: 1,
-    }),
-  }
-}
